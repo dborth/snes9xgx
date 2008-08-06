@@ -392,10 +392,10 @@ clearscreen (int colour)
   VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], colour);
 #ifdef HW_RVL
   // on wii copy from memory
-  //memcpy ((char *) xfb[whichfb], (char *) backdrop, 640 * screenheight * 2);
+  memcpy ((char *) xfb[whichfb], (char *) backdrop, 640 * screenheight * 2);
 #else
   // on gc copy from aram
-  //ARAMFetch ((char *) xfb[whichfb], (char *) AR_BACKDROP, 640 * screenheight * 2);			// FIX
+  ARAMFetch ((char *) xfb[whichfb], (char *) AR_BACKDROP, 640 * screenheight * 2);			// FIX
 #endif
 }
 

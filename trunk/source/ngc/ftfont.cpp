@@ -29,11 +29,12 @@
 #include "video.h"
 #include "ftfont.h"
 #include "dkpro.h"
-#include "tempgfx.h"
 #include "snes9xGX.h"
 
 #include "aram.h"
 #include <zlib.h>
+
+#include "gfx_bg.h"
 
 /*** Globals ***/
 FT_Library ftlibrary;
@@ -228,7 +229,7 @@ licence ()
   else
     ypos += 24;
 
-  setfontsize (16);					// FIX
+  setfontsize (16);
   setfontcolour (0x00, 0x00, 0x00);
 
   DrawText (-1, ypos += 40, (char*)"Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
@@ -237,7 +238,7 @@ licence ()
   DrawText (-1, ypos += 20, (char*)"redistribute it under the conditions of the");
   DrawText (-1, ypos += 20, (char*)"GNU GENERAL PUBLIC LICENSE Version 2");
   DrawText (-1, ypos +=
-	    20, (char*)"Additionally, the developers of this port disclaims");
+	    20, (char*)"Additionally, the developers of this port disclaim");
   DrawText (-1, ypos +=
 	    20, (char*)"all copyright interests in the Nintendo GameCube");
   DrawText (-1, ypos +=
@@ -281,7 +282,7 @@ showdklogo ()
   int w, h, p, dispoffset;
   p = 0;
   dispoffset =
-    ((screenheight != 480 ? 360 : 350) * 320) + ((640 - dkpro_WIDTH) >> 2);
+    ((screenheight != 480 ? 365 : 355) * 320) + ((640 - dkpro_WIDTH) >> 2);
 
   dkunpack ();
 
@@ -354,11 +355,11 @@ unpackbackdrop ()
 
    /*** If it's PAL50, need to move down a few lines ***/
   offset = ((screenheight - 480) >> 1) * 320;
-  inbytes = tempgfx_COMPRESSED;
-  outbytes = tempgfx_RAW;
+  inbytes = BG_COMPRESSED;
+  outbytes = BG_RAW;
 
   res =
-    uncompress ((Bytef *) backdrop + offset, &outbytes, (Bytef *) tempgfx,
+    uncompress ((Bytef *) backdrop + offset, &outbytes, (Bytef *) bg,
 		inbytes);
 
 #ifndef HW_RVL
@@ -390,11 +391,11 @@ void
 WaitButtonA ()
 {
 #ifdef HW_RVL
-  while ( (PAD_ButtonsDown (0) & PAD_BUTTON_A) || (WPAD_ButtonsDown(0) & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) );
-  while (!(PAD_ButtonsDown (0) & PAD_BUTTON_A) && !(WPAD_ButtonsDown(0) & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) );
+  while ( (PAD_ButtonsDown (0) & PAD_BUTTON_A) || (WPAD_ButtonsDown(0) & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) ) VIDEO_WaitVSync();
+  while (!(PAD_ButtonsDown (0) & PAD_BUTTON_A) && !(WPAD_ButtonsDown(0) & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) ) VIDEO_WaitVSync();
 #else
-  while ( PAD_ButtonsDown (0) & PAD_BUTTON_A );
-  while (!(PAD_ButtonsDown (0) & PAD_BUTTON_A) );
+  while ( PAD_ButtonsDown (0) & PAD_BUTTON_A ) VIDEO_WaitVSync();
+  while (!(PAD_ButtonsDown (0) & PAD_BUTTON_A) ) VIDEO_WaitVSync();
 #endif
 }
 
@@ -410,7 +411,7 @@ WaitButtonAB ()
   
     while ( (PAD_ButtonsDown (0) & (PAD_BUTTON_A | PAD_BUTTON_B)) 
 			|| (WPAD_ButtonsDown(0) & (WPAD_BUTTON_A | WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_A | WPAD_CLASSIC_BUTTON_B)) 
-			);
+			) VIDEO_WaitVSync();
   
     while ( TRUE )
     {
@@ -424,7 +425,7 @@ WaitButtonAB ()
 #else
     u32 gc_btns;
   
-    while ( (PAD_ButtonsDown (0) & (PAD_BUTTON_A | PAD_BUTTON_B)) );
+    while ( (PAD_ButtonsDown (0) & (PAD_BUTTON_A | PAD_BUTTON_B)) ) VIDEO_WaitVSync();
   
     while ( TRUE )
     {
@@ -504,7 +505,7 @@ ShowAction (char *msg)
  * Generic Menu Routines
  ****************************************************************************/
 void
-DrawMenu (char items[][20], char *title, int maxitems, int selected)
+DrawMenu (char items[][20], char *title, int maxitems, int selected, int fontsize)
 {
   int i, w;
   int ypos;
@@ -516,7 +517,8 @@ DrawMenu (char items[][20], char *title, int maxitems, int selected)
   };
 #endif
 
-  ypos = (screenheight - (maxitems * 32)) >> 1;
+  //ypos = (screenheight - (maxitems * 32)) >> 1; previous
+  ypos = (screenheight - (maxitems * (fontsize + 8))) >> 1;
 
   if (screenheight == 480)
     ypos += 52;
@@ -525,30 +527,36 @@ DrawMenu (char items[][20], char *title, int maxitems, int selected)
 
   clearscreen ();
 
-#if 0
-  DrawPolygon (4, bounding, 0x00, 0x00, 0xc0);
-  DrawPolygon (4, base, 0x00, 0x00, 0xc0);
-  setfontsize (32);
-  DrawText (-1, 80, title);
-  DrawText (-1, screenheight - 50, "Snes9x - GX 2.0");
-#endif
+//#if 0
+//  DrawPolygon (4, bounding, 0x00, 0x00, 0xc0);
+//  DrawPolygon (4, base, 0x00, 0x00, 0xc0);
+  setfontsize (30);
+  if (title != NULL)
+	DrawText (-1, 60, title);
+  setfontsize (12);
+  DrawText (510, screenheight - 20, "Snes9x GX 003");
+//#endif
 
-  setfontsize (24);
+  setfontsize (fontsize);	// set font size
   setfontcolour (0, 0, 0);
 
   for (i = 0; i < maxitems; i++)
     {
       if (i == selected)
 	{
-	  for( w = 0; w < 32; w++ )
-		  DrawLineFast( 30, 610, (i << 5) + (ypos-26) + w, 0x80, 0x80, 0x80 );
+	  //for( w = 0; w < 32; w++ )
+	  for( w = 0; w < (fontsize + 8); w++ )
+		  //DrawLineFast( 30, 610, (i << 5) + (ypos-26) + w, 0x80, 0x80, 0x80 ); previous
+		  DrawLineFast( 30, 610, i * (fontsize + 8) + (ypos-(fontsize + 2)) + w, 0x80, 0x80, 0x80 );
 
           setfontcolour (0xff, 0xff, 0xff);
-          DrawText (-1, (i << 5) + ypos, items[i]);
+          //DrawText (-1, (i << 5) + ypos, items[i]); previous
+		  DrawText (-1, i * (fontsize + 8) + ypos, items[i]);
           setfontcolour (0x00, 0x00, 0x00);
 	}
       else
-	DrawText (-1, i * 32 + ypos, items[i]);
+	  DrawText (-1, i * (fontsize + 8) + ypos, items[i]);
+	//DrawText (-1, i * 32 + ypos, items[i]);  previous
     }
 
   showscreen ();
@@ -563,7 +571,7 @@ DrawMenu (char items[][20], char *title, int maxitems, int selected)
  ****************************************************************************/
 int menu = 0;
 int
-RunMenu (char items[][20], int maxitems, char *title)
+RunMenu (char items[][20], int maxitems, char *title, int fontsize)
 {
     int redraw = 1;
     int quit = 0;
@@ -578,7 +586,7 @@ RunMenu (char items[][20], int maxitems, char *title)
     {
         if (redraw)
         {
-            DrawMenu (&items[0], title, maxitems, menu);
+            DrawMenu (&items[0], title, maxitems, menu, fontsize);
             redraw = 0;
         }
         

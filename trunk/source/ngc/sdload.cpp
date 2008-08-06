@@ -14,7 +14,7 @@
 #include <string.h>
 #include <ogcsys.h>
 #include "sdload.h"
-#include "ngcunzip.h"
+#include "unzip.h"
 #include "memmap.h"
 #include "video.h"
 #include "ftfont.h"
@@ -27,12 +27,39 @@
 extern unsigned char savebuffer[];
 extern char output[16384];
 FILE * filehandle;
-char rootSDdir[MAXPATHLEN] = "fat:/";
+
 char currSDdir[MAXPATHLEN];
 extern int offset;
 extern int selection;
 
 extern FILEENTRIES filelist[MAXFILES];
+
+/***************************************************************************
+ * FileSortCallback
+ *
+ * Quick sort callback to sort file entries with the following order:
+ *   .
+ *   ..
+ *   <dirs>
+ *   <files>
+ ***************************************************************************/ 
+static int FileSortCallback(const void *f1, const void *f2)
+{
+	/* Special case for implicit directories */
+	if(((FILEENTRIES *)f1)->filename[0] == '.' || ((FILEENTRIES *)f2)->filename[0] == '.')
+	{
+		if(strcmp(((FILEENTRIES *)f1)->filename, ".") == 0) { return -1; }
+		if(strcmp(((FILEENTRIES *)f2)->filename, ".") == 0) { return 1; }
+		if(strcmp(((FILEENTRIES *)f1)->filename, "..") == 0) { return -1; }
+		if(strcmp(((FILEENTRIES *)f2)->filename, "..") == 0) { return 1; }
+	}
+	
+	/* If one is a file and one is a directory the directory is first. */
+	if(((FILEENTRIES *)f1)->flags == 1 && ((FILEENTRIES *)f2)->flags == 0) return -1;
+	if(((FILEENTRIES *)f1)->flags == 0 && ((FILEENTRIES *)f2)->flags == 1) return 1;
+	
+	return stricmp(((FILEENTRIES *)f1)->filename, ((FILEENTRIES *)f2)->filename);
+}
 
 /***************************************************************************
  * Update SDCARD curent directory name 
@@ -75,7 +102,7 @@ int updateSDdirname()
 			/* handles root name */
 			sprintf(temp, "/%s/..", SNESROMDIR);
 			if (strcmp(currSDdir, temp) == 0) 
-				sprintf(currSDdir,"%s",rootSDdir);
+				sprintf(currSDdir,"%s",ROOTSDDIR);
 	 
 			/* update current directory name */
 			sprintf(currSDdir, "%s/%s",currSDdir, filelist[selection].filename);
@@ -103,7 +130,7 @@ int parseSDdirectory() {
     /* open the directory */ 
     sddir = diropen(currSDdir);
     if (sddir == NULL) {
-        sprintf(currSDdir,"%s",rootSDdir);	// if we can't open the previous dir, open root dir
+        sprintf(currSDdir,"%s",ROOTSDDIR);	// if we can't open the previous dir, open root dir
         sddir = diropen(currSDdir);
         WaitPrompt(msg);
         if (sddir == NULL) {
@@ -127,6 +154,9 @@ int parseSDdirectory() {
   
     /*** close directory ***/
     dirclose(sddir);
+	
+	/* Sort the file list */
+	qsort(filelist, nbfiles, sizeof(FILEENTRIES), FileSortCallback);
   
     return nbfiles;
 }
@@ -141,14 +171,10 @@ LoadSDFile (char *filename, int length)
   char zipbuffer[2048];
   char filepath[MAXPATHLEN];
   FILE *handle;
-  char *rbuffer;
-  PKZIPHEADER pkzip;
-  z_stream zs;
-  int res, outbytes = 0;
-  int size;
-  int have;
+  unsigned char *rbuffer;
+  u32 size;
 
-  rbuffer = (char *) Memory.ROM;
+  rbuffer = (unsigned char *) Memory.ROM;
 
   /* Check filename length */
   if ((strlen(currSDdir)+1+strlen(filelist[selection].filename)) < MAXPATHLEN)
@@ -167,67 +193,11 @@ LoadSDFile (char *filename, int length)
 
 	      if (IsZipFile (zipbuffer))
 		{
-				/*** Unzip the ROM ***/
-		  memcpy (&pkzip, zipbuffer, sizeof (PKZIPHEADER));
-		  pkzip.uncompressedSize = FLIP32 (pkzip.uncompressedSize);
-		  memset (&zs, 0, sizeof (zs));
-		  zs.zalloc = Z_NULL;
-		  zs.zfree = Z_NULL;
-		  zs.opaque = Z_NULL;
-		  zs.avail_in = 0;
-		  zs.next_in = Z_NULL;
-
-		  res = inflateInit2 (&zs, -MAX_WBITS);
-
-		  if (res != Z_OK)
-		    {
-		      fclose (handle);
-		      return 0;
-		    }
-
-		  size = (sizeof (PKZIPHEADER) +
-			  FLIP16 (pkzip.filenameLength) +
-			  FLIP16 (pkzip.extraDataLength));
-
-		  do
-		    {
-		      zs.avail_in = 2048 - size;
-		      zs.next_in = (Bytef *) zipbuffer + size;
-
-		      do
-			{
-			  zs.avail_out = 16384;
-			  zs.next_out = (Bytef *) output;
-
-			  res = inflate (&zs, Z_NO_FLUSH);
-
-			  have = 16384 - zs.avail_out;
-
-			  if (have)
-			    {
-			      memcpy (rbuffer + outbytes, output, have);
-			      outbytes += have;
-			    }
-
-			}
-		      while (zs.avail_out == 0);
-
-		      sprintf (filepath, "Read %d bytes of %d", outbytes,
-			       pkzip.uncompressedSize);
-		      //ShowAction (filepath);
-		      ShowProgress (filepath, outbytes, pkzip.uncompressedSize);
-
-		      size = 0;
-		      fread (zipbuffer, 1, 2048, handle);
-
-		    }
-		  while (res != Z_STREAM_END
-			 && (u32) outbytes < pkzip.uncompressedSize);
-
-		  inflateEnd (&zs);
+			/*** Unzip the ROM ***/
+		  size = UnZipBuffer (rbuffer, 0, 0, handle);	// unzip from SD
 
 		  fclose (handle);
-		  return pkzip.uncompressedSize;
+		  return size;
 
 		}
 	      else
@@ -326,18 +296,19 @@ SaveBufferToSD (char *filepath, int datasize, bool silent)
 /****************************************************************************
  * Save SRAM to SD Card
  ****************************************************************************/
-void SaveSRAMToSD (int slot, bool silent)
+void SaveSRAMToSD (bool silent)
 {
     char filepath[1024];
     int datasize;
     int offset;
 
-    ShowAction ((char*) "Saving SRAM to SD...");
+	if (!silent)
+		ShowAction ((char*) "Saving SRAM to SD...");
     
 #ifdef SDUSE_LFN
-    sprintf (filepath, "%s/%s/%s.srm", rootSDdir, SNESSAVEDIR, Memory.ROMName);
+    sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMName);
 #else
-    sprintf (filepath, "%s/SNESSAVE/%08x.srm", rootSDdir, Memory.ROMCRC32);
+    sprintf (filepath, "%s/%s/%08x.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMCRC32);
 #endif
     
     datasize = prepareEXPORTsavedata ();
@@ -359,7 +330,7 @@ void SaveSRAMToSD (int slot, bool silent)
  * Load SRAM From SD Card
  ****************************************************************************/
 void
-LoadSRAMFromSD (int slot, bool silent)
+LoadSRAMFromSD (bool silent)
 {
     char filepath[1024];
     int offset = 0;
@@ -367,9 +338,9 @@ LoadSRAMFromSD (int slot, bool silent)
     ShowAction ((char*) "Loading SRAM from SD...");
     
 #ifdef SDUSE_LFN
-    sprintf (filepath, "%s/%s/%s.srm", rootSDdir, SNESSAVEDIR, Memory.ROMName);
+    sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMName);
 #else
-    sprintf (filepath, "%s/%s/%08x.srm", rootSDdir, SNESSAVEDIR, Memory.ROMCRC32);
+    sprintf (filepath, "%s/%s/%08x.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMCRC32);
 #endif
     
     offset = LoadBufferFromSD (filepath, silent);
@@ -391,18 +362,19 @@ LoadSRAMFromSD (int slot, bool silent)
  * Save Preferences to SD Card
  ****************************************************************************/
 void
-SavePrefsToSD (int slot, bool silent)
+SavePrefsToSD (bool silent)
 {
   char filepath[1024];
   int datasize;
   int offset;
 
-    ShowAction ((char*) "Saving prefs to SD...");
+	if (!silent)
+		ShowAction ((char*) "Saving prefs to SD...");
     
 #ifdef SDUSE_LFN
-    sprintf (filepath, "%s/%s/%s", rootSDdir, SNESSAVEDIR, PREFS_FILE_NAME);
+    sprintf (filepath, "%s/%s/%s", ROOTSDDIR, SNESSAVEDIR, PREFS_FILE_NAME);
 #else
-    sprintf (filepath, "%s/%s/%s", rootSDdir, SNESSAVEDIR, PREFS_FILE_NAME);
+    sprintf (filepath, "%s/%s/%s", ROOTSDDIR, SNESSAVEDIR, PREFS_FILE_NAME);
 #endif
     
     datasize = preparePrefsData ();
@@ -420,7 +392,7 @@ SavePrefsToSD (int slot, bool silent)
  * Load Preferences from SD Card
  ****************************************************************************/
 void
-LoadPrefsFromSD (int slot, bool silent)
+LoadPrefsFromSD (bool silent)
 {
     char filepath[1024];
     int offset = 0;
@@ -428,9 +400,9 @@ LoadPrefsFromSD (int slot, bool silent)
     ShowAction ((char*) "Loading prefs from SD...");
     
 #ifdef SDUSE_LFN
-    sprintf (filepath, "%s/%s/%s", rootSDdir, SNESSAVEDIR, PREFS_FILE_NAME);
+    sprintf (filepath, "%s/%s/%s", ROOTSDDIR, SNESSAVEDIR, PREFS_FILE_NAME);
 #else
-    sprintf (filepath, "%s/%s/%s", rootSDdir, SNESSAVEDIR, PREFS_FILE_NAME);
+    sprintf (filepath, "%s/%s/%s", ROOTSDDIR, SNESSAVEDIR, PREFS_FILE_NAME);
 #endif
     
     offset = LoadBufferFromSD (filepath, silent);

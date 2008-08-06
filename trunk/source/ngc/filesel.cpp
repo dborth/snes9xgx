@@ -31,7 +31,7 @@
 #include "ftfont.h"
 #include "video.h"
 #include "aram.h"
-#include "ngcunzip.h"
+#include "unzip.h"
 #include "filesel.h"
 #include "smbload.h"
 #include "sdload.h"
@@ -140,13 +140,17 @@ int selection = 0;
 int
 FileSelector ()
 {
-    u32 p, wp;
-    signed char a;
+    u32 p, wp, ph, wh;
+    signed char a, c;
     int haverom = 0;
     int redraw = 1;
     int selectit = 0;
 	float mag = 0;
 	u16 ang = 0;
+	int scroll_delay = 0;
+	bool move_selection = 0;
+	#define SCROLL_INITIAL_DELAY	15
+	#define SCROLL_LOOP_DELAY		4
     
     while (haverom == 0)    
     {
@@ -154,17 +158,25 @@ FileSelector ()
             ShowFiles (offset, selection);
         redraw = 0;
 
+		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
+		
         p = PAD_ButtonsDown (0);
+		ph = PAD_ButtonsHeld (0);
 #ifdef HW_RVL
 		wp = WPAD_ButtonsDown (0);
+		wh = WPAD_ButtonsHeld (0);
 		wpad_get_analogues(0, &mag, &ang);		// get joystick info from wii expansions
 #else
 		wp = 0;
+		wh = 0;
 #endif
 		a = PAD_StickY (0);
-		
-		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
+		c = PAD_SubStickX (0);
         
+		/*** Check for exit combo ***/
+		if ( (c < -70) || (wp & WPAD_BUTTON_HOME) || (wp & WPAD_CLASSIC_BUTTON_HOME) ) return 0;
+		
+		/*** Check buttons, perform actions ***/
         if ( (p & PAD_BUTTON_A) || selectit || (wp & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) )
         {
             if ( selectit )
@@ -274,28 +286,57 @@ FileSelector ()
                 return 0;
 			}
         }	// End of B
-        if ( (p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (a < -PADCAL) || (mag>JOY_THRESHOLD && (ang>130 && ang<230)) )
+        if ( ((p | ph) & PAD_BUTTON_DOWN) || ((wp | wh) & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (a < -PADCAL) || (mag>JOY_THRESHOLD && (ang>130 && ang<230)) )
         {
-            selection++;
-            if (selection == maxfiles)
-                selection = offset = 0;
-            if ((selection - offset) >= PAGESIZE)
-                offset += PAGESIZE;
-            redraw = 1;
+			if ( (p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) ) { /*** Button just pressed ***/
+				scroll_delay = SCROLL_INITIAL_DELAY;	// reset scroll delay.
+				move_selection = 1;	//continue (move selection)
+			} 
+			else if (scroll_delay == 0) { 		/*** Button is held ***/
+				scroll_delay = SCROLL_LOOP_DELAY;
+				move_selection = 1;	//continue (move selection)
+			} else {
+				scroll_delay--;	// wait
+			}
+				
+			if (move_selection)
+			{
+	            selection++;
+	            if (selection == maxfiles)
+	                selection = offset = 0;
+	            if ((selection - offset) >= PAGESIZE)
+	                offset += PAGESIZE;
+	            redraw = 1;
+				move_selection = 0;
+			}
         }	// End of down
-        if ( (p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (a > PADCAL) || (mag>JOY_THRESHOLD && (ang>300 || ang<50)) )
-        {
-            selection--;
-            if (selection < 0)
-            {
-                selection = maxfiles - 1;
-                offset = selection - PAGESIZE + 1;
-            }
-            if (selection < offset)
-                offset -= PAGESIZE;
-            if (offset < 0)
-                offset = 0;
-            redraw = 1;
+        if ( ((p | ph) & PAD_BUTTON_UP) || ((wp | wh) & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (a > PADCAL) || (mag>JOY_THRESHOLD && (ang>300 || ang<50)) )
+        {	
+			if ( (p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) ) { /*** Button just pressed***/
+				scroll_delay = SCROLL_INITIAL_DELAY;	// reset scroll delay.
+				move_selection = 1;	//continue (move selection)
+			} 
+			else if (scroll_delay == 0) { 		/*** Button is held ***/
+				scroll_delay = SCROLL_LOOP_DELAY;
+				move_selection = 1;	//continue (move selection)
+			} else {
+				scroll_delay--;	// wait
+			}
+			
+			if (move_selection)
+			{
+	            selection--;
+	            if (selection < 0) {
+	                selection = maxfiles - 1;
+	                offset = selection - PAGESIZE + 1;
+	            }
+	            if (selection < offset)
+	                offset -= PAGESIZE;
+	            if (offset < 0)
+	                offset = 0;
+	            redraw = 1;
+				move_selection = 0;
+			}
         }	// End of Up
         if ( (p & PAD_BUTTON_LEFT) || (wp & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT)) )
         {
@@ -400,7 +441,7 @@ OpenSMB ()
  * Function to load from an SD Card
  */
 int
-OpenSD (int slot)
+OpenSD ()
 {
     char msg[80];
 	char buf[50] = "";
@@ -412,8 +453,8 @@ OpenSD (int slot)
         /* don't mess with DVD entries */
         havedir = 0;	// gamecube only
         
-        /* get current SDCARD directory */
-        sprintf ( currSDdir, getcwd(buf,50) );	// FIX: necessary?
+        /* change current dir to snes roms directory */
+        sprintf ( currSDdir, "%s/%s", ROOTSDDIR, SNESROMDIR );
 		
         
         /* Parse initial root directory and get entries list */
@@ -425,7 +466,7 @@ OpenSD (int slot)
         else
         {
             /* no entries found */
-            sprintf (msg, "SNESROMS not found on SDCARD");		// FIX: update error msg
+            sprintf (msg, "No Files Found!");
             WaitPrompt (msg);
             return 0;
         }
@@ -492,7 +533,7 @@ LoadDVDFile (unsigned char *buffer)
   else
 
     {
-      return UnZipBuffer (buffer, discoffset, rootdirlength);
+      return UnZipBuffer (buffer, discoffset, 1, NULL);	// unzip from dvd
     }
   return rootdirlength;
 }

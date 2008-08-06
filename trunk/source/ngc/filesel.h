@@ -12,12 +12,13 @@
 
 int OpenDVD ();
 int OpenSMB ();
-int OpenSD (int slot);
+int OpenSD ();
 
 #define LOAD_DVD 1
 #define LOAD_SMB 2
 #define LOAD_SDC 4
-#define SNESROMDIR "SNESROMS"
-#define SNESSAVEDIR "SNESSAVE"
+#define ROOTSDDIR "fat:/"
+#define SNESROMDIR "snes9x/roms"
+#define SNESSAVEDIR "snes9x/saves"
 
 #endif

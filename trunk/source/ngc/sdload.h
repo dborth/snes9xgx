@@ -21,15 +21,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+static int FileSortCallback(const void *f1, const void *f2);
 int updateSDdirname();
 int parseSDdirectory();
 int LoadSDFile (char *filename, int length);
-void SaveSRAMToSD (int slot, bool silent);
-void LoadSRAMFromSD (int slot, bool silent);
-void SavePrefsToSD (int slot, bool silent);
-void LoadPrefsFromSD (int slot, bool silent);
+void SaveSRAMToSD (bool silent);
+void LoadSRAMFromSD (bool silent);
+void SavePrefsToSD (bool silent);
+void LoadPrefsFromSD (bool silent);
 
-extern char rootSDdir[MAXPATHLEN];
 extern char currSDdir[MAXPATHLEN];
 
 #endif

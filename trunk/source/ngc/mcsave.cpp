@@ -500,7 +500,8 @@ SaveSRAMToMC (int slot, int silent)
 	int datasize;
 	int offset;
 
-    ShowAction ((char*) "Saving SRAM to MC...");
+	if (!silent)
+		ShowAction ((char*) "Saving SRAM to MC...");
 
 	/*** Build SRAM filename ***/
 	sprintf (filename, "%s.srm", Memory.ROMName);
@@ -551,7 +552,8 @@ SavePrefsToMC (int slot, int silent)
 	int offset;
 	char msg[80];
 
-    ShowAction ((char*) "Saving Prefs to MC...");
+	if (!silent)
+		ShowAction ((char*) "Saving Prefs to MC...");
 
     datasize = preparePrefsData ();
 	offset = SaveBufferToMC (savebuffer, slot, PREFS_FILE_NAME, datasize, silent);
