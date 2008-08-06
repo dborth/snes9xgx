@@ -25,7 +25,13 @@
 extern unsigned char savebuffer[];
 extern int currconfig[4];
 
-#define PREFSVERSTRING "Snes9x GX 2.0.1b8 Prefs"
+// button map configurations
+extern unsigned int gcpadmap[];
+extern unsigned int wmpadmap[];
+extern unsigned int ccpadmap[];
+extern unsigned int ncpadmap[];
+
+#define PREFSVERSTRING "Snes9x GX 002 Prefs"
 
 char prefscomment[2][32] = { {PREFSVERSTRING}, {"Preferences"} };
 
@@ -59,6 +65,17 @@ preparePrefsData ()
   memcpy (savebuffer + offset, &GCSettings, size);
   offset += size;
   
+  /*** Save buttonmaps ***/
+  size = sizeof (unsigned int) *12;	// this size applies to all padmaps
+  memcpy (savebuffer + offset, &gcpadmap, size);
+  offset += size;
+  memcpy (savebuffer + offset, &wmpadmap, size);
+  offset += size;
+  memcpy (savebuffer + offset, &ccpadmap, size);
+  offset += size;
+  memcpy (savebuffer + offset, &ncpadmap, size);
+  offset += size;
+  
   return offset;
 }
 
@@ -71,6 +88,7 @@ decodePrefsData ()
 {
   int offset;
   char prefscomment[32];
+  int size;
   
     offset = sizeof (saveicon);
     memcpy (prefscomment, savebuffer + offset, 32);
@@ -81,6 +99,16 @@ decodePrefsData ()
 	  memcpy (&Settings, savebuffer + offset, sizeof (Settings));
 	  offset += sizeof (Settings);
 	  memcpy (&GCSettings, savebuffer + offset, sizeof (GCSettings));
+	  offset += sizeof (GCSettings);
+	  // load padmaps (order important)
+	  size = sizeof (unsigned int) *12;
+	  memcpy (&gcpadmap, savebuffer + offset, size);
+	  offset += size;
+	  memcpy (&wmpadmap, savebuffer + offset, size);
+	  offset += size;
+	  memcpy (&ccpadmap, savebuffer + offset, size);
+	  offset += size;
+	  memcpy (&ncpadmap, savebuffer + offset, size);
 	}
     else
 	  WaitPrompt((char*) "Preferences reset - check settings!");

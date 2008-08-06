@@ -40,6 +40,11 @@
 #include "sram.h"
 #include "preferences.h"
 
+#include "button_mapping.h"
+#include "ftfont.h"
+
+extern void DrawMenu (char items[][20], char *title, int maxitems, int selected);
+
 #define PSOSDLOADID 0x7c6000a6
 extern int menu;
 extern unsigned long ARAM_ROMSIZE;
@@ -86,12 +91,12 @@ FreezeManager ()
     {
         if ( isWii )   /* Wii menu */
         {
-            ret = RunMenu (freezemenuwii, freezecountwii, "Freeze Manager");
+            ret = RunMenu (freezemenuwii, freezecountwii, (char*)"Freeze Manager");
             if (ret >= freezecountwii-1)
                 ret = freezecount-1;
         }
         else           /* Gamecube menu */
-            ret = RunMenu (freezemenu, freezecount, "Freeze Manager");
+            ret = RunMenu (freezemenu, freezecount, (char*)"Freeze Manager");
         
         switch (ret)
         {
@@ -432,35 +437,227 @@ EmulatorOptions ()
 }
 
 /****************************************************************************
- * Configure Joypads
+ * Controller Configuration
  *
  * Snes9x 1.50 uses a cmd system to work out which button has been pressed.
  * Here, I simply move the designated value to the gcpadmaps array, which saves
  * on updating the cmd sequences.
  ****************************************************************************/
-int padcount = 7;
-char padmenu[][20] = { "SNES BUTTON A - A",
-	"SNES BUTTON B - B",
-	"SNES BUTTON X - X",
-	"SNES BUTTON Y - Y",
-	"ANALOG CLIP   - 70",
-	"Save SRAM/Config",
+u32
+GetInput (u16 ctrlr_type)
+{
+	u32 exp_type, pressed;
+	pressed=0;
+	
+	while( PAD_ButtonsHeld(0)
+#ifdef HW_RVL
+	| WPAD_ButtonsHeld(0)
+#endif
+	) VIDEO_WaitVSync();	// button 'debounce'
+	
+	while (pressed == 0)
+	{
+		VIDEO_WaitVSync();
+		// get input based on controller type
+		//if (ctrlr_type == CTRLR_GCPAD) 
+		//{
+			pressed = PAD_ButtonsHeld (0);
+		//} 
+#ifdef HW_RVL
+		//else 
+		//{	
+		//	if ( WPAD_Probe( 0, &exp_type) == 0)	// check wiimote and expansion status (first if wiimote is connected & no errors)
+		//	{
+				pressed = WPAD_ButtonsHeld (0);
+				
+		//		if (ctrlr_type != CTRLR_WIIMOTE && exp_type != ctrlr_type+1)	// if we need input from an expansion, and its not connected...
+		//			pressed = 0;
+		//	}
+		//}
+#endif
+	}	// end while
+	while( pressed == (PAD_ButtonsHeld(0) 
+#ifdef HW_RVL
+						| WPAD_ButtonsHeld(0)
+#endif
+						) ) VIDEO_WaitVSync();
+	
+	return pressed;
+}	// end GetInput()
+
+int cfg_text_count = 4;
+char cfg_text[][20] = {
+"                   ",
+"Press Any Button",
+"on the",
+"       "	// identify controller
+};
+
+u32
+GetButtonMap(u16 ctrlr_type, char* btn_name)
+{
+	u32 pressed, previous;
+	char title[20];
+	pressed = 0; previous = 1;
+	
+	switch (ctrlr_type) {
+		case CTRLR_NUNCHUK:
+			strncpy (cfg_text[3], (char*)"NUNCHUK", 7);
+			break;
+		case CTRLR_CLASSIC:
+			strncpy (cfg_text[3], (char*)"CLASSIC", 7);
+			break;
+		case CTRLR_GCPAD:
+			strncpy (cfg_text[3], (char*)"GC PAD", 7);
+			break;
+		case CTRLR_WIIMOTE:
+			strncpy (cfg_text[3], (char*)"WIIMOTE", 7);
+			break;
+	}; 
+	
+	sprintf (cfg_text[0], "Remapping %s", btn_name);	// note which button we are remapping
+	
+	DrawMenu(&cfg_text[0], title, cfg_text_count, 1);	// display text
+	
+//	while (previous != pressed && pressed == 0);	// get two consecutive button presses (which are the same)
+//	{
+//		previous = pressed;
+//		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
+		pressed = GetInput(ctrlr_type);
+//	}
+	return pressed;
+}	// end getButtonMap()
+ 
+int cfg_btns_count = 13;
+char cfg_btns_menu[][20] = { 
+	"A        -         ",
+	"B        -         ",
+	"X        -         ",
+	"Y        -         ",
+	"L TRIG   -         ",
+	"R TRIG   -         ",
+	"SELECT   -         ",
+	"START    -         ",
+	"UP       -         ",
+	"DOWN     -         ",
+	"LEFT     -         ",
+	"RIGHT    -         ",
 	"Return to previous"
 };
 
-unsigned short padmap[4] = { PAD_BUTTON_A,
-	PAD_BUTTON_B,
-	PAD_BUTTON_X,
-	PAD_BUTTON_Y
-};
-int currconfig[4] = { 0, 1, 2, 3 };
-static char *padnames = "ABXY";
-
-extern unsigned short gcpadmap[];
-extern int padcal;
+extern unsigned int gcpadmap[];
+extern unsigned int wmpadmap[];
+extern unsigned int ccpadmap[];
+extern unsigned int ncpadmap[];
 
 void
-ConfigureJoyPads ()
+ConfigureButtons (u16 ctrlr_type)
+{
+	int quit = 0;
+	int ret = 0;
+	int oldmenu = menu;
+	menu = 0;
+	char* menu_title;
+	u32 pressed;
+	
+	unsigned int* currentpadmap;
+	char temp[20] = "";
+	int i, j;
+	
+	/*** Update Menu Title (based on controller we're configuring) ***/
+	switch (ctrlr_type) {
+		case CTRLR_NUNCHUK:
+			menu_title = (char*)"SNES     -  NUNCHUK";
+			currentpadmap = ncpadmap;
+			break;
+		case CTRLR_CLASSIC:
+			menu_title = (char*)"SNES     -  CLASSIC";
+			currentpadmap = ccpadmap;
+			break;
+		case CTRLR_GCPAD:
+			menu_title = (char*)"SNES     -   GC PAD";
+			currentpadmap = gcpadmap;
+			break;
+		case CTRLR_WIIMOTE:
+			menu_title = (char*)"SNES     -  WIIMOTE";
+			currentpadmap = wmpadmap;
+			break;
+	};
+	
+	while (quit == 0)
+	{	
+		/*** Update Menu with Current ButtonMap ***/
+		for (i=0; i<12; i++) // snes pad has 12 buttons to config (go thru them)
+		{
+			// get current padmap button name to display
+			for ( j=0; 
+					currentpadmap[i] != ctrlr_def[ctrlr_type].map[j].btn	// match padmap button press with button names
+					&& j < ctrlr_def[ctrlr_type].num_btns
+				; j++ );
+			
+			memset (temp, 0, sizeof(temp));
+			strncpy (temp, cfg_btns_menu[i], 12);	// copy snes button information
+			if (currentpadmap[i] == ctrlr_def[ctrlr_type].map[j].btn)		// check if a match was made
+				strncat (temp, ctrlr_def[ctrlr_type].map[j].name, 6);		// update button map display
+			else
+				strcat (temp, (char*)"---");								// otherwise, button is 'unmapped'
+			strncpy (cfg_btns_menu[i], temp, 19);	// move back updated information
+
+		}
+	
+		ret = RunMenu (cfg_btns_menu, cfg_btns_count, menu_title);
+		
+		switch (ret)
+		{
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+				/*** Change button map ***/
+				// wait for input
+				memset (temp, 0, sizeof(temp));
+				strncpy(temp, cfg_btns_menu[ret], 6);			// get the name of the snes button we're changing
+				pressed = GetButtonMap(ctrlr_type, temp);	// get a button selection from user
+				// FIX: check if input is valid for this controller
+				currentpadmap[ret] = pressed;	// update mapping
+				break;
+
+			case -1: /*** Button B ***/
+			case 12:
+				/*** Return ***/
+				quit = 1;
+				break;
+		}
+	}
+	
+	menu = oldmenu;
+}	// end configurebuttons()
+
+int cfg_ctrlr_count_wii = 6;
+char cfg_ctrlr_menu_wii[][20] = { "Nunchuk",
+	"Classic Controller",
+	"Gamecube Pad",
+	"Wiimote",
+	"Save Prefs Now",
+	"Return to previous"
+};
+
+int cfg_ctrlr_count_gc = 3;
+char cfg_ctrlr_menu_gc[][20] = { "Gamecube Pad",
+	"Save Prefs Now",
+	"Return to previous"
+};
+
+void
+ConfigureControllers ()
 {
 	int quit = 0;
 	int ret = 0;
@@ -468,67 +665,67 @@ ConfigureJoyPads ()
 	menu = 0;
 	
 	while (quit == 0)
-	{
-		/*** Update the menu information ***/
-		for (ret = 0; ret < 4; ret++)
-		padmenu[ret][16] = padnames[currconfig[ret]];
-		
-		sprintf (padmenu[4], "ANALOG CLIP - %d", padcal);
-		
-		ret = RunMenu (padmenu, padcount, (char*)"Configure Joypads");
+	{	
+#ifdef HW_RVL
+		/*** Wii Controller Config Menu ***/
+        ret = RunMenu (cfg_ctrlr_menu_wii, cfg_ctrlr_count_wii, (char*)"Configure Controllers");
 		
 		switch (ret)
 		{
 			case 0:
-				/*** Configure Button A ***/
-				currconfig[0]++;
-				currconfig[0] &= 3;
-				gcpadmap[0] = padmap[currconfig[0]];
+				/*** Configure Nunchuk ***/
+				ConfigureButtons (CTRLR_NUNCHUK);
 				break;
 			
 			case 1:
-				/*** Configure Button B ***/
-				currconfig[1]++;
-				currconfig[1] &= 3;
-				gcpadmap[1] = padmap[currconfig[1]];
+				/*** Configure Classic ***/
+				ConfigureButtons (CTRLR_CLASSIC);
 				break;
 			
 			case 2:
-				/*** Configure Button X ***/
-				currconfig[2]++;
-				currconfig[2] &= 3;
-				gcpadmap[2] = padmap[currconfig[2]];
+				/*** Configure GC Pad ***/
+				ConfigureButtons (CTRLR_GCPAD);
 				break;
 			
 			case 3:
-				/*** Configure Button Y ***/
-				currconfig[3]++;
-				currconfig[3] &= 3;
-				gcpadmap[3] = padmap[currconfig[3]];
+				/*** Configure Wiimote ***/
+				ConfigureButtons (CTRLR_WIIMOTE);
 				break;
-			
-			case 4:
-				/*** Pad Calibration ***/
-				padcal += 5;
-				if (padcal > 80)
-					padcal = 40;
-				break;
-						
-			case 5:
-				/*** Quick Save SRAM ***/
-                if ( ARAM_ROMSIZE > 0 )
-                    quickSaveSRAM(NOTSILENT);
-				else
-				    WaitPrompt((char*) "No ROM loaded - can't save SRAM");
 				
+			case 4:
+				/*** Save Preferences Now ***/
+				quickSavePrefs(NOTSILENT);
 				break;
 
 			case -1: /*** Button B ***/
-			case 6:
+			case 5:
 				/*** Return ***/
 				quit = 1;
 				break;
 		}
+#else
+		/*** Gamecube Controller Config Menu ***/
+        ret = RunMenu (cfg_ctrlr_menu_gc, cfg_ctrlr_count_gc, (char*)"Configure Controllers");
+		
+		switch (ret)
+		{
+			case 0:
+				/*** Configure Nunchuk ***/
+				ConfigureButtons (CTRLR_GCPAD);
+				break;
+				
+			case 1:
+				/*** Save Preferences Now ***/
+				quickSavePrefs(NOTSILENT);
+				break;
+
+			case -1: /*** Button B ***/
+			case 2:
+				/*** Return ***/
+				quit = 1;
+				break;
+		}
+#endif
 	}
 	
 	menu = oldmenu;
@@ -540,7 +737,7 @@ ConfigureJoyPads ()
 int menucount = 10;
 char menuitems[][20] = { "Choose Game",
   "SRAM Manager", "Freeze Manager",
-  "Configure Joypads", "Emulator Options",
+  "Config Controllers", "Emulator Options",
   "Reset Game", "Stop DVD Drive", "Exit to Loader",
   "Reboot System", "Return to Game"
 };
@@ -588,8 +785,8 @@ mainmenu ()
                 break;
 			
 			case 3:
-				/*** Configure Joypads ***/
-				ConfigureJoyPads ();
+				/*** Configure Controllers ***/
+				ConfigureControllers ();
 				break;
 			
 			case 4:
@@ -634,7 +831,12 @@ mainmenu ()
 	}
 	
 	/*** Remove any still held buttons ***/
+#ifdef HW_RVL
 	while( PAD_ButtonsHeld(0) || WPAD_ButtonsHeld(0) )
 	    VIDEO_WaitVSync();
+#else
+	while( PAD_ButtonsHeld(0) )
+	    VIDEO_WaitVSync();
+#endif
 	
 }

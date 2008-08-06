@@ -23,10 +23,10 @@
 #include "smbload.h"
 
 extern unsigned char savebuffer[];
-extern int currconfig[4];
+//extern int currconfig[4];
 extern int padcal;
 extern unsigned short gcpadmap[];
-extern unsigned short padmap[4];
+//extern unsigned short padmap[4];
 
 char sramcomment[2][32] = { {"Snes9x GX 2.0.1b8 SRAM"}, {"Savegame"} };
 
@@ -67,10 +67,10 @@ prepareMCsavedata ()
     offset += size;
   }
 
-  /*** Save Joypad Configuration ***/
-  memcpy (savebuffer + offset, &currconfig, 16);
+//  /*** Save Joypad Configuration ***/
+//  memcpy (savebuffer + offset, &currconfig, 16);
   offset += 16;
-  memcpy (savebuffer + offset, &padcal, 4);
+//  memcpy (savebuffer + offset, &padcal, 4);
   offset += 4;
   
   return offset;
@@ -95,10 +95,10 @@ prepareEXPORTsavedata ()
   memcpy (savebuffer + offset, sramcomment, 64);
   offset += 64;
 
-	/*** Save Joypad Configuration ***/
-  memcpy (savebuffer + offset, &currconfig, 16);
+//	/*** Save Joypad Configuration ***/
+//  memcpy (savebuffer + offset, &currconfig, 16);
   offset += 16;
-  memcpy (savebuffer + offset, &padcal, 4);
+//  memcpy (savebuffer + offset, &padcal, 4);
   offset += 4;
 
   if ( offset <= 512 )
@@ -145,13 +145,13 @@ decodesavedata (int readsize)
     offset = 64;
     
     // Get the control pad configuration
-	memcpy (&currconfig, savebuffer + offset, 16);
+//	memcpy (&currconfig, savebuffer + offset, 16);
 	offset += 16;
-	memcpy (&padcal, savebuffer + offset, 4);
+//	memcpy (&padcal, savebuffer + offset, 4);
 	offset += 4;
     
-	for (size = 0; size < 4; size++)
-	  gcpadmap[size] = padmap[currconfig[size]];
+//	for (size = 0; size < 4; size++)
+//	  gcpadmap[size] = padmap[currconfig[size]];
 	
 	// move to start of SRAM which is after the 512 byte header
 	offset = 512;
@@ -164,7 +164,7 @@ decodesavedata (int readsize)
 	  
 	memcpy (Memory.SRAM, savebuffer + offset, size);
 	offset += size;
-}
+  }
   else
   {
     // else, check for a v2.0 memory card format save
@@ -186,13 +186,13 @@ decodesavedata (int readsize)
 	    offset += sizeof (Settings);
 	  
       // Get the control pad configuration
-      memcpy (&currconfig, savebuffer + offset, 16);
+//      memcpy (&currconfig, savebuffer + offset, 16);
 	  offset += 16;
-	  memcpy (&padcal, savebuffer + offset, 4);
+//	  memcpy (&padcal, savebuffer + offset, 4);
 	  offset += 4;
 	
-	  for (size = 0; size < 4; size++)
-		gcpadmap[size] = padmap[currconfig[size]];
+//	  for (size = 0; size < 4; size++)
+//		gcpadmap[size] = padmap[currconfig[size]];
 	}
     else if ( strncmp (sramcomment, "Snes9x 1.43 SRAM (GX", 20) == 0)
     {
@@ -228,7 +228,7 @@ decodesavedata (int readsize)
 		memcpy (Memory.SRAM, savebuffer, size);
 	  }
 	  else
-	  	WaitPrompt("Incompatible SRAM save!");
+	  	WaitPrompt((char*)"Incompatible SRAM save!");
 	}
   }
 }

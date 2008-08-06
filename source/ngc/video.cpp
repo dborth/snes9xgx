@@ -43,6 +43,7 @@ unsigned int *xfb[2] = { NULL, NULL };		/*** Double buffered ***/
 int whichfb = 0;				/*** Switch ***/
 GXRModeObj *vmode;				/*** General video mode ***/
 int screenheight;
+extern u32* backdrop;
 
 /*** GX ***/
 #define TEX_WIDTH 512
@@ -269,7 +270,9 @@ StartGX ()
  ****************************************************************************/
 void UpdatePadsCB()
 {
+#ifdef HW_RVL
 	WPAD_ScanPads();
+#endif
 	PAD_ScanPads();
 }
  
@@ -386,8 +389,14 @@ void
 clearscreen (int colour)
 {
   whichfb ^= 1;
-  //ARAMFetch ((char *) xfb[whichfb], (char *) AR_BACKDROP, 640 * screenheight * 2);			// FIX
   VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], colour);
+#ifdef HW_RVL
+  // on wii copy from memory
+  //memcpy ((char *) xfb[whichfb], (char *) backdrop, 640 * screenheight * 2);
+#else
+  // on gc copy from aram
+  //ARAMFetch ((char *) xfb[whichfb], (char *) AR_BACKDROP, 640 * screenheight * 2);			// FIX
+#endif
 }
 
 void

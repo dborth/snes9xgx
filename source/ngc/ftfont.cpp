@@ -30,6 +30,7 @@
 #include "ftfont.h"
 #include "dkpro.h"
 #include "tempgfx.h"
+#include "snes9xGX.h"
 
 #include "aram.h"
 #include <zlib.h>
@@ -51,7 +52,12 @@ extern int whichfb;
  * Unpack the devkit pro logo
  */
 static u32 *dkproraw;
-static u32 *backdrop;	/*** Permanent backdrop ***/
+/*** Permanent backdrop ***/
+#ifdef HW_RVL
+u32 *backdrop;
+#else
+static u32 *backdrop;	
+#endif
 static void unpackbackdrop ();
 unsigned int getcolour (u8 r1, u8 g1, u8 b1);
 void DrawLineFast( int startx, int endx, int y, u8 r, u8 g, u8 b );
@@ -338,7 +344,8 @@ unpackbackdrop ()
   int offset;
   int i;
 
-  backdrop = (unsigned int *) malloc (screenheight * 1280);
+//  backdrop = (unsigned int *) malloc (screenheight * 1280);
+  backdrop = (u32 *) malloc (screenheight * 1280);
   colour = getcolour (0x00, 0x00, 0x00);
 
 	/*** Fill with black for now ***/
@@ -354,10 +361,12 @@ unpackbackdrop ()
     uncompress ((Bytef *) backdrop + offset, &outbytes, (Bytef *) tempgfx,
 		inbytes);
 
-		/*** Now store the backdrop in ARAM ***/
+#ifndef HW_RVL
+  /*** Now store the backdrop in ARAM ***/
   ARAMPut ((char *) backdrop, (char *) AR_BACKDROP, 640 * screenheight * 2);
-
   free (backdrop);
+#endif
+	// otherwise (on wii) backdrop is stored in memory
 
 }
 
@@ -380,29 +389,52 @@ legal ()
 void
 WaitButtonA ()
 {
-  while ( (PAD_ButtonsDown (0) & PAD_BUTTON_A) || (WPAD_ButtonsDown(0) & WPAD_BUTTON_A) );
-  while (!(PAD_ButtonsDown (0) & PAD_BUTTON_A) && !(WPAD_ButtonsDown(0) & WPAD_BUTTON_A) );
+#ifdef HW_RVL
+  while ( (PAD_ButtonsDown (0) & PAD_BUTTON_A) || (WPAD_ButtonsDown(0) & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) );
+  while (!(PAD_ButtonsDown (0) & PAD_BUTTON_A) && !(WPAD_ButtonsDown(0) & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) );
+#else
+  while ( PAD_ButtonsDown (0) & PAD_BUTTON_A );
+  while (!(PAD_ButtonsDown (0) & PAD_BUTTON_A) );
+#endif
 }
 
 /**
  * Wait for user to press A or B. Returns 0 = B; 1 = A
  */
+
 int
 WaitButtonAB ()
 {
+#ifdef HW_RVL
     u32 gc_btns, wm_btns;
   
-    while ( (PAD_ButtonsDown (0) & (PAD_BUTTON_A | PAD_BUTTON_B)) || (WPAD_ButtonsDown(0) & (WPAD_BUTTON_A | WPAD_BUTTON_B)) );
+    while ( (PAD_ButtonsDown (0) & (PAD_BUTTON_A | PAD_BUTTON_B)) 
+			|| (WPAD_ButtonsDown(0) & (WPAD_BUTTON_A | WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_A | WPAD_CLASSIC_BUTTON_B)) 
+			);
   
     while ( TRUE )
     {
         gc_btns = PAD_ButtonsDown (0);
 		wm_btns = WPAD_ButtonsDown (0);
-        if ( (gc_btns & PAD_BUTTON_A) || (wm_btns & WPAD_BUTTON_A) )
+        if ( (gc_btns & PAD_BUTTON_A) || (wm_btns & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) )
             return 1;
-        else if ( (gc_btns & PAD_BUTTON_B) || (wm_btns & WPAD_BUTTON_B) )
+        else if ( (gc_btns & PAD_BUTTON_B) || (wm_btns & (WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)) )
             return 0;
     }
+#else
+    u32 gc_btns;
+  
+    while ( (PAD_ButtonsDown (0) & (PAD_BUTTON_A | PAD_BUTTON_B)) );
+  
+    while ( TRUE )
+    {
+        gc_btns = PAD_ButtonsDown (0);
+        if ( gc_btns & PAD_BUTTON_A )
+            return 1;
+        else if ( gc_btns & PAD_BUTTON_B )
+            return 0;
+    }
+#endif
 }
 
 /**
@@ -535,9 +567,11 @@ RunMenu (char items[][20], int maxitems, char *title)
 {
     int redraw = 1;
     int quit = 0;
-    int p, wp;
+    u32 p, wp;
     int ret = 0;
     signed char a;
+	float mag = 0;
+	u16 ang = 0;
     
     //while (!(PAD_ButtonsDown (0) & PAD_BUTTON_B) && (quit == 0))
     while (quit == 0)
@@ -549,30 +583,37 @@ RunMenu (char items[][20], int maxitems, char *title)
         }
         
         p = PAD_ButtonsDown (0);
+#ifdef HW_RVL
 		wp = WPAD_ButtonsDown (0);
-        a = PAD_StickY (0);
-        
+		wpad_get_analogues(0, &mag, &ang);		// get joystick info from wii expansions
+#else
+		wp = 0;
+#endif
+		a = PAD_StickY (0);
+		
+		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
+
         /*** Look for up ***/
-        if ((p & PAD_BUTTON_UP) || (wp & WPAD_BUTTON_UP) || (a > 70))
+        if ( (p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (a > 70) || (mag>JOY_THRESHOLD && (ang>300 || ang<50)) )
         {
             redraw = 1;
             menu--;
         }
         
         /*** Look for down ***/
-        if ((p & PAD_BUTTON_DOWN) || (wp & WPAD_BUTTON_DOWN) || (a < -70))
+        if ( (p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (a < -70) || (mag>JOY_THRESHOLD && (ang>130 && ang<230)) )
         {
             redraw = 1;
             menu++;
         }
         
-        if ((p & PAD_BUTTON_A) || (wp & WPAD_BUTTON_A))
+        if ((p & PAD_BUTTON_A) || (wp & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)))
         {
             quit = 1;
             ret = menu;
         }
         
-        if ((p & PAD_BUTTON_B) || (wp & WPAD_BUTTON_B))
+        if ((p & PAD_BUTTON_B) || (wp & (WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)))
         {
             quit = -1;
             ret = -1;
@@ -584,14 +625,17 @@ RunMenu (char items[][20], int maxitems, char *title)
         if (menu < 0)
             menu = maxitems - 1;
     }
-    
-    if ((PAD_ButtonsDown(0) & PAD_BUTTON_B) || (WPAD_ButtonsDown(0) & WPAD_BUTTON_B))
-    {
-        /*** Wait for B button to be released before proceeding ***/
-        while ((PAD_ButtonsDown(0) & PAD_BUTTON_B) || (WPAD_ButtonsDown(0) & WPAD_BUTTON_B))
-            VIDEO_WaitVSync();
-        return -1;
-    }
+
+	/*** Wait for B button to be released before proceeding ***/
+	while ( (PAD_ButtonsDown(0) & PAD_BUTTON_B) 
+#ifdef HW_RVL
+			|| (WPAD_ButtonsDown(0) & (WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)) 
+#endif
+			)
+	{
+		ret = -1;
+		VIDEO_WaitVSync();
+	}
     
     return ret;
     
