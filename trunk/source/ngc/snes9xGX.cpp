@@ -198,6 +198,8 @@ extern int FrameTimer;
 extern long long prev;
 extern unsigned int timediffallowed;
 
+int scope_x = 0; int scope_y = 0;	// superscope cursor position
+
 extern void fat_enable_readahead_all();
 
 /****************************************************************************
@@ -245,48 +247,35 @@ unsigned int ncpadmap[] = { WPAD_BUTTON_A, WPAD_BUTTON_B,
   WPAD_BUTTON_UP, WPAD_BUTTON_DOWN,
   WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT
 };
+/*** Superscope : GC controller button mapping ***/
+unsigned int gcscopemap[] = { PAD_TRIGGER_Z, PAD_BUTTON_B,
+  PAD_BUTTON_A, PAD_BUTTON_Y,
+  PAD_BUTTON_START
+};
 
-#if 0
-/****************************************************************************
- * decodepad
- * Called per pad with offset
- ****************************************************************************/
-void
-decodepadold (int pad)
-{
-  int i, offset;
-  signed char x, y;
-  unsigned short jp;
+void UpdateCursorPosition (int input_x, int input_y, int &pos_x, int &pos_y)
+{	
+	int SCOPEPADCAL = 30;
 
-	/*** Do analogue updates ***/
-  x = PAD_StickX (pad);
-  y = PAD_StickY (pad);
-  jp = PAD_ButtonsHeld (pad);
+	if (input_x > SCOPEPADCAL){
+		pos_x +=4;
+		if (pos_x > 256) pos_x = 256;
+	}
+	if (input_x < -SCOPEPADCAL){
+		pos_x -=4;
+		if (pos_x < 0) pos_x = 0;
+	}
+   
+	if (input_y < -SCOPEPADCAL){
+		pos_y +=4;
+		if (pos_y > 224) pos_y = 224;
+	}
+	if (input_y > SCOPEPADCAL){
+		pos_y -=4;
+		if (pos_y < 0) pos_y = 0;            
+	}
 
-	/*** Recalc left / right ***/
-  if (x < -padcal)
-    jp |= PAD_BUTTON_LEFT;
-  if (x > padcal)
-    jp |= PAD_BUTTON_RIGHT;
-
-	/*** Recalc up / down ***/
-  if (y > padcal)
-    jp |= PAD_BUTTON_UP;
-  if (y < -padcal)
-    jp |= PAD_BUTTON_DOWN;
-
-	/*** Fix offset to pad ***/
-  offset = ((pad + 1) << 4);
-
-  for (i = 0; i < MAXJP; i++)
-    {
-      if (jp & gcpadmap[i])
-	S9xReportButton (offset + i, true);
-      else
-	S9xReportButton (offset + i, false);
-    }
 }
-#endif
 
 /****************************************************************************
  * This is the joypad algorithm submitted by Krullo.
@@ -295,7 +284,7 @@ void
 decodepad (int pad)
 {
   int i, offset;
-  signed char x, y;
+  signed char pad_x, pad_y;
   //unsigned short jp, wp;	//
   u32 jp, wp;
   float t;
@@ -306,8 +295,8 @@ decodepad (int pad)
   u32 exp_type;
 
   /*** Do analogue updates ***/
-  x = PAD_StickX (pad);
-  y = PAD_StickY (pad);
+  pad_x = PAD_StickX (pad);
+  pad_y = PAD_StickY (pad);
   jp = PAD_ButtonsHeld (pad);
 #ifdef HW_RVL
   exp_type = wpad_get_analogues(pad, &mag, &ang, &mag2, &ang2);	// get joystick info from wii expansions
@@ -320,37 +309,37 @@ decodepad (int pad)
 	Gamecube Joystick input
 	***/
 	// Is XY inside the "zone"?
-	if (x * x + y * y > padcal * padcal)
+	if (pad_x * pad_x + pad_y * pad_y > padcal * padcal)
 	{
 
 		/*** we don't want division by ZERO ***/
-	      if (x > 0 && y == 0)
+	      if (pad_x > 0 && pad_y == 0)
 		jp |= PAD_BUTTON_RIGHT;
-	      if (x < 0 && y == 0)
+	      if (pad_x < 0 && pad_y == 0)
 		jp |= PAD_BUTTON_LEFT;
-	      if (x == 0 && y > 0)
+	      if (pad_x == 0 && pad_y > 0)
 		jp |= PAD_BUTTON_UP;
-	      if (x == 0 && y < 0)
+	      if (pad_x == 0 && pad_y < 0)
 		jp |= PAD_BUTTON_DOWN;
 
-	      if (x != 0 && y != 0)
+	      if (pad_x != 0 && pad_y != 0)
 		{
 
 		/*** Recalc left / right ***/
-		  t = (float) y / x;
+		  t = (float) pad_y / pad_x;
 		  if (t >= -2.41421356237 && t < 2.41421356237)
 		    {
-		      if (x >= 0)
+		      if (pad_x >= 0)
 			jp |= PAD_BUTTON_RIGHT;
 		      else
 			jp |= PAD_BUTTON_LEFT;
 		    }
 
 		/*** Recalc up / down ***/
-		  t = (float) x / y;
+		  t = (float) pad_x / pad_y;
 		  if (t >= -2.41421356237 && t < 2.41421356237)
 		    {
-		      if (y >= 0)
+		      if (pad_y >= 0)
 			jp |= PAD_BUTTON_UP;
 		      else
 			jp |= PAD_BUTTON_DOWN;
@@ -385,23 +374,40 @@ decodepad (int pad)
 #endif
 	
 	/*** Fix offset to pad ***/
-  offset = ((pad + 1) << 4);
+	offset = ((pad + 1) << 4);
 
-  for (i = 0; i < MAXJP; i++)
+	/*** Report pressed buttons (gamepads) ***/
+	for (i = 0; i < MAXJP; i++)
     {
-	  /*** Report pressed buttons ***/
-      if ( (jp & gcpadmap[i])											// gamecube controller
+		if ( (jp & gcpadmap[i])											// gamecube controller
 #ifdef HW_RVL
-			|| ( (exp_type == WPAD_EXP_NONE) && (wp & wmpadmap[i]) )	// wiimote
-			|| ( (exp_type == WPAD_EXP_CLASSIC) && (wp & ccpadmap[i]) )	// classic controller
-			|| ( (exp_type == WPAD_EXP_NUNCHUK) && (wp & ncpadmap[i]) )	// nunchuk + wiimote
+		|| ( (exp_type == WPAD_EXP_NONE) && (wp & wmpadmap[i]) )	// wiimote
+		|| ( (exp_type == WPAD_EXP_CLASSIC) && (wp & ccpadmap[i]) )	// classic controller
+		|| ( (exp_type == WPAD_EXP_NUNCHUK) && (wp & ncpadmap[i]) )	// nunchuk + wiimote
 #endif
-			)
-	S9xReportButton (offset + i, true);
-      else
-	S9xReportButton (offset + i, false);
+		)
+			S9xReportButton (offset + i, true);
+		else
+			S9xReportButton (offset + i, false);
     }
-
+	
+	/*** Superscope ***/
+	if (pad == 0 && Settings.SuperScopeMaster)	// report only once
+	{
+		// buttons
+		offset = 0x50;
+		for (i = 0; i < 6; i++)
+	    {
+		  if ( jp & gcscopemap[i] )
+			S9xReportButton (offset + i, true);
+		  else
+			S9xReportButton (offset + i, false);
+		}
+		// pointer
+		offset = 0x60;
+		UpdateCursorPosition (pad_x, pad_y, scope_x, scope_y);
+		S9xReportPointer(offset, (u16)scope_x, (u16)scope_y);
+	}
 }
 /****************************************************************************
  * setFrameTimerMethod()
@@ -514,7 +520,8 @@ NGCReportButtons ()
 		
 		setFrameTimerMethod(); 	// set frametimer method every time a ROM is loaded
 		
-			// auto load freeze/sram?
+		S9xReportControllers();	// FIX
+		
 		
     }
     else
@@ -627,17 +634,35 @@ SetDefaultButtonMap ()
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Down");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Left");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Right");
-
-  if (Settings.MultiPlayer5Master == false)
+  
+  maxcode = 0x50;
+	/*** Superscope ***/
+  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope AimOffscreen");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Fire");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Cursor");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Pause");
+  
+  maxcode = 0x60;
+  S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Superscope"), false);
+  // add mouses here
+	
+  if (Settings.MultiPlayer5Master == true)
+    {
+	
+      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
+      S9xSetController (1, CTL_MP5, 1, 2, 3, -1);
+    }
+  else if (Settings.SuperScopeMaster == true)
+    {
+      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
+      S9xSetController (1, CTL_SUPERSCOPE, 1, 0, 0, 0);	
+	}
+  else
     {
 	/*** Plugin 2 Joypads by default ***/
       S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
       S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
-    }
-  else
-    {
-      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
-      S9xSetController (1, CTL_MP5, 1, 2, 3, -1);
     }
 
 }
