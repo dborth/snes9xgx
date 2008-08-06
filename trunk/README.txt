@@ -31,7 +31,17 @@ is not based on any previous SNES emulators that have existed for the
 GameCube. You can get more information on SNES9X here from the below URL.
 http://snes9x.ipherswipsite.com/
 
-[What's New 001]
+[What's New 002]
+- added: classic and nunchuk support
+- added: all controllers can now be configured
+- added: GC version (untested)
+- changed: mappings are no longer stored in SRAM, but in config file. 
+           This means no per-game configurations, but one global 
+           config per controller.
+- one makefile to make all versions. (thanks to snes9x143 SVN)
+
+
+[What Was New 001]
 - compiles with latest devkitppc (r15)
 - now uses libfat (can use front sd slot on wii)
 - updated menu items a bit
@@ -195,7 +205,7 @@ tehskeen forums:
 
     http://www.tehskeen.com/forums/
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                   WIIMOTE CONTROLLER MAPPING                  ·oø×O0|
+|0O×øo·                   DEFAULT CONTROLLER MAPPING                  ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 
 Wiimote		SNES
@@ -212,8 +222,40 @@ HOME	    Emulator menu
 
 This configuration allows you to play with the wiimote held sideways.
 
-NOTE: snes Left Trigger and Right Trigger are not mapped.
-You can change the mapping in ngc/snes9xGX.cpp (search 'wmpadmap') and recompile.
+Nunchuk		SNES
+---------------------
+  Z		  Y
+  B		  B
+  A		  A
+  C		  X
+  2		SELECT
+  1		START
+HOME	    Emulator menu
+  -		 LT
+  +		 RT
+
+Classic		SNES
+---------------------
+  X		  Y
+  B		  B
+  A		  A
+  Y		  X
+  -		SELECT
+  +		START
+HOME	    Emulator menu
+ LT		 LT
+ RT		 RT
+
+GC PAD		SNES
+---------------------
+  Y		  Y
+  B		  B
+  A		  A
+  X		  X
+  Z		SELECT
+ START		START
+  LT		 LT
+  RT		 RT
 
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬

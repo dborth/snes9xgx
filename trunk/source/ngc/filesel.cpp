@@ -71,11 +71,6 @@ ShowFiles (int offset, int selection)
     ypos += 24;
   else
     ypos += 10;
-	
-
-	// show offset and selection at top
-	sprintf(text,"offset: %d, selection: %d",offset, selection);
-	DrawText (-1, 20, text);
 
 
   j = 0;
@@ -145,21 +140,32 @@ int selection = 0;
 int
 FileSelector ()
 {
-    int p, wp;
+    u32 p, wp;
     signed char a;
     int haverom = 0;
     int redraw = 1;
     int selectit = 0;
+	float mag = 0;
+	u16 ang = 0;
     
     while (haverom == 0)    
     {
         if (redraw)
             ShowFiles (offset, selection);
         redraw = 0;
+
         p = PAD_ButtonsDown (0);
+#ifdef HW_RVL
 		wp = WPAD_ButtonsDown (0);
-        a = PAD_StickY (0);
-        if ( (p & PAD_BUTTON_A) || (wp & WPAD_BUTTON_A) || selectit )
+		wpad_get_analogues(0, &mag, &ang);		// get joystick info from wii expansions
+#else
+		wp = 0;
+#endif
+		a = PAD_StickY (0);
+		
+		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
+        
+        if ( (p & PAD_BUTTON_A) || selectit || (wp & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) )
         {
             if ( selectit )
                 selectit = 0;
@@ -247,9 +253,13 @@ FileSelector ()
             }
             redraw = 1;
         }	// End of A
-        if ( (p & PAD_BUTTON_B) || (wp & WPAD_BUTTON_B) )
+        if ( (p & PAD_BUTTON_B) || (wp & (WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)) )
         {
-            while ( (PAD_ButtonsDown(0) & PAD_BUTTON_B) || (PAD_ButtonsDown(0) & WPAD_BUTTON_B) )
+            while ( (PAD_ButtonsDown(0) & PAD_BUTTON_B) 
+#ifdef HW_RVL
+					|| (WPAD_ButtonsDown(0) & (WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)) 
+#endif
+					)
                 VIDEO_WaitVSync();
             //if ((strcmp(filelist[1].filename,"..") == 0) && (strlen (filelist[0].filename) != 0))
 			if ( strcmp(filelist[0].filename,"..") == 0 ) 
@@ -264,7 +274,7 @@ FileSelector ()
                 return 0;
 			}
         }	// End of B
-        if ( (p & PAD_BUTTON_DOWN) || (wp & WPAD_BUTTON_DOWN) || (a < -PADCAL) )
+        if ( (p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (a < -PADCAL) || (mag>JOY_THRESHOLD && (ang>130 && ang<230)) )
         {
             selection++;
             if (selection == maxfiles)
@@ -273,7 +283,7 @@ FileSelector ()
                 offset += PAGESIZE;
             redraw = 1;
         }	// End of down
-        if ( (p & PAD_BUTTON_UP) || (wp & WPAD_BUTTON_UP) || (a > PADCAL) )
+        if ( (p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (a > PADCAL) || (mag>JOY_THRESHOLD && (ang>300 || ang<50)) )
         {
             selection--;
             if (selection < 0)
@@ -287,7 +297,7 @@ FileSelector ()
                 offset = 0;
             redraw = 1;
         }	// End of Up
-        if ( (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) || (WPAD_ButtonsHeld(0) & WPAD_BUTTON_LEFT) )
+        if ( (p & PAD_BUTTON_LEFT) || (wp & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT)) )
         {
             /*** Go back a page ***/
             selection -= PAGESIZE;
@@ -302,7 +312,7 @@ FileSelector ()
                 offset = 0;
             redraw = 1;
         }
-        if ( (PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) || (WPAD_ButtonsHeld(0) & WPAD_BUTTON_RIGHT) )
+        if ( (p & PAD_BUTTON_RIGHT) || (wp & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT)) )
         {
             /*** Go forward a page ***/
             selection += PAGESIZE;

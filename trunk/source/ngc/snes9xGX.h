@@ -156,10 +156,12 @@
 #ifndef _SNES9XGX_H_
 #define _SNES9XGX_H_
 
+#include <gccore.h>
 #include "snes9x.h"
 
-#define GCVERSION "2.0.1b8"
-#define GCVERSIONSTRING "Snes9x GX 2.0.1b8"
+// FIX: these are unused, but could be... must also change "freezecomment", PREFSVERSTRING, and "sramcomment"
+#define GCVERSION "002"
+#define GCVERSIONSTRING "Snes9x 1.5 v002"
 
 #define NOTSILENT 0
 #define SILENT 1
@@ -184,7 +186,11 @@ START_EXTERN_C
 extern struct SGCSettings GCSettings;
 extern unsigned short saveicon[1024];
 extern bool8 isWii;
+
+extern u32 wpad_get_analogues(int pad, float* mag, u16* ang);
 END_EXTERN_C
+
+#define	JOY_THRESHOLD	0.70	// for wii (expansion) analogues
 
 #endif
 

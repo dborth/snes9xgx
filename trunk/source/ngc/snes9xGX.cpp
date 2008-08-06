@@ -189,6 +189,7 @@
 #include "memfile.h"
 #include "preferences.h"
 #include "gctime.h"
+#include "button_mapping.h"
 
 unsigned long ARAM_ROMSIZE = 0;
 int ConfigRequested = 0;
@@ -210,19 +211,37 @@ extern unsigned int timediffallowed;
 
 #define MAXJP 12
 int padcal = 50;
-unsigned short gcpadmap[] = { PAD_BUTTON_A, PAD_BUTTON_B,
+/*** Gamecube controller Padmap ***/
+unsigned int gcpadmap[] = { PAD_BUTTON_A, PAD_BUTTON_B,
   PAD_BUTTON_X, PAD_BUTTON_Y,
   PAD_TRIGGER_L, PAD_TRIGGER_R,
   PAD_TRIGGER_Z, PAD_BUTTON_START,
   PAD_BUTTON_UP, PAD_BUTTON_DOWN,
   PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT
 };
-unsigned short wmpadmap[] = { WPAD_BUTTON_B, WPAD_BUTTON_2,
+/*** Wiimote Padmap ***/
+unsigned int wmpadmap[] = { WPAD_BUTTON_B, WPAD_BUTTON_2,
   WPAD_BUTTON_1, WPAD_BUTTON_A,
   0x0000, 0x0000,
   WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
   WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT,
   WPAD_BUTTON_UP, WPAD_BUTTON_DOWN
+};
+/*** Classic Controller Padmap ***/
+unsigned int ccpadmap[] = { WPAD_CLASSIC_BUTTON_A, WPAD_CLASSIC_BUTTON_B,
+  WPAD_CLASSIC_BUTTON_Y, WPAD_CLASSIC_BUTTON_X,
+  WPAD_CLASSIC_BUTTON_FULL_L, WPAD_CLASSIC_BUTTON_FULL_R,
+  WPAD_CLASSIC_BUTTON_MINUS, WPAD_CLASSIC_BUTTON_PLUS,
+  WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN,
+  WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT
+};
+/*** Nunchuk + wiimote Padmap ***/
+unsigned int ncpadmap[] = { WPAD_BUTTON_A, WPAD_BUTTON_B,
+  WPAD_NUNCHUK_BUTTON_C, WPAD_NUNCHUK_BUTTON_Z,
+  WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
+  WPAD_BUTTON_2, WPAD_BUTTON_1,
+  WPAD_BUTTON_UP, WPAD_BUTTON_DOWN,
+  WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT
 };
 
 #if 0
@@ -276,67 +295,107 @@ decodepad (int pad)
   int i, offset;
   signed char x, y;
   //unsigned short jp, wp;	//
-  u16 jp, wp;
+  u32 jp, wp;
   float t;
+  float mag = 0;
+  u16 ang = 0;
+  u32 exp_type;
 
- /*** Do analogue updates ***/
+  /*** Do analogue updates ***/
   x = PAD_StickX (pad);
   y = PAD_StickY (pad);
   jp = PAD_ButtonsHeld (pad);
+#ifdef HW_RVL
+  exp_type = wpad_get_analogues(pad, &mag, &ang);	// get joystick info from wii expansions
   wp = WPAD_ButtonsHeld (pad);	// wiimote
+#else
+  wp = 0;
+#endif
 
-/*** Is XY inside the "zone"? ***/
-  if (x * x + y * y > padcal * padcal)
-    {
-
-/*** we don't want division by ZERO ***/
-      if (x > 0 && y == 0)
-	jp |= PAD_BUTTON_RIGHT;
-      if (x < 0 && y == 0)
-	jp |= PAD_BUTTON_LEFT;
-      if (x == 0 && y > 0)
-	jp |= PAD_BUTTON_UP;
-      if (x == 0 && y < 0)
-	jp |= PAD_BUTTON_DOWN;
-
-      if (x != 0 && y != 0)
+	/***
+	Gamecube Joystick input
+	***/
+	// Is XY inside the "zone"?
+	if (x * x + y * y > padcal * padcal)
 	{
 
-/*** Recalc left / right ***/
-	  t = (float) y / x;
-	  if (t >= -2.41421356237 && t < 2.41421356237)
-	    {
-	      if (x >= 0)
+		/*** we don't want division by ZERO ***/
+	      if (x > 0 && y == 0)
 		jp |= PAD_BUTTON_RIGHT;
-	      else
+	      if (x < 0 && y == 0)
 		jp |= PAD_BUTTON_LEFT;
-	    }
-
-/*** Recalc up / down ***/
-	  t = (float) x / y;
-	  if (t >= -2.41421356237 && t < 2.41421356237)
-	    {
-	      if (y >= 0)
+	      if (x == 0 && y > 0)
 		jp |= PAD_BUTTON_UP;
-	      else
+	      if (x == 0 && y < 0)
 		jp |= PAD_BUTTON_DOWN;
-	    }
-	}
-    }
 
+	      if (x != 0 && y != 0)
+		{
+
+		/*** Recalc left / right ***/
+		  t = (float) y / x;
+		  if (t >= -2.41421356237 && t < 2.41421356237)
+		    {
+		      if (x >= 0)
+			jp |= PAD_BUTTON_RIGHT;
+		      else
+			jp |= PAD_BUTTON_LEFT;
+		    }
+
+		/*** Recalc up / down ***/
+		  t = (float) x / y;
+		  if (t >= -2.41421356237 && t < 2.41421356237)
+		    {
+		      if (y >= 0)
+			jp |= PAD_BUTTON_UP;
+		      else
+			jp |= PAD_BUTTON_DOWN;
+		    }
+		}
+	}
+#ifdef HW_RVL
+	/***
+	Wii Joystick (classic, nunchuk) input
+	***/
+	if (exp_type == WPAD_EXP_NUNCHUK)
+	{
+		if ( mag>JOY_THRESHOLD && (ang>300 || ang<50) )
+			wp |= WPAD_BUTTON_UP;
+		if ( mag>JOY_THRESHOLD && (ang>130 && ang<230) )
+			wp |= WPAD_BUTTON_DOWN;
+		if ( mag>JOY_THRESHOLD && (ang>220 && ang<320) )
+			wp |= WPAD_BUTTON_LEFT;
+		if ( mag>JOY_THRESHOLD && (ang>40 && ang<140) )
+			wp |= WPAD_BUTTON_RIGHT;
+	} else if (exp_type == WPAD_EXP_CLASSIC)
+	{
+		if ( mag>JOY_THRESHOLD && (ang>300 || ang<50) )
+			wp |= WPAD_CLASSIC_BUTTON_UP;
+		if ( mag>JOY_THRESHOLD && (ang>130 && ang<230) )
+			wp |= WPAD_CLASSIC_BUTTON_DOWN;
+		if ( mag>JOY_THRESHOLD && (ang>220 && ang<320) )
+			wp |= WPAD_CLASSIC_BUTTON_LEFT;
+		if ( mag>JOY_THRESHOLD && (ang>40 && ang<140) )
+			wp |= WPAD_CLASSIC_BUTTON_RIGHT;	
+	}
+#endif
+	
 	/*** Fix offset to pad ***/
   offset = ((pad + 1) << 4);
 
   for (i = 0; i < MAXJP; i++)
     {
-      if (jp & gcpadmap[i])
+	  /*** Report pressed buttons ***/
+      if ( (jp & gcpadmap[i])											// gamecube controller
+#ifdef HW_RVL
+			|| ( (exp_type == WPAD_EXP_NONE) && (wp & wmpadmap[i]) )	// wiimote
+			|| ( (exp_type == WPAD_EXP_CLASSIC) && (wp & ccpadmap[i]) )	// classic controller
+			|| ( (exp_type == WPAD_EXP_NUNCHUK) && (wp & ncpadmap[i]) )	// nunchuk + wiimote
+#endif
+			)
 	S9xReportButton (offset + i, true);
       else
 	S9xReportButton (offset + i, false);
-	  if (wp & wmpadmap[i])					// wiimote
-	S9xReportButton (offset + i, true);		//
-      else									//
-	S9xReportButton (offset + i, false);	//
     }
 
 }
@@ -351,7 +410,9 @@ NGCReportButtons ()
 	s8 gc_px = PAD_SubStickX (0);
 	s8 gc_py = PAD_SubStickY (0);
 	u16 gc_pb = PAD_ButtonsHeld (0);
-	u16 wm_pb = WPAD_ButtonsHeld (0);	// wiimote
+#ifdef HW_RVL
+	u32 wm_pb = WPAD_ButtonsHeld (0);	// wiimote
+#endif
 	
 	/*** Check for video zoom ***/
 	if (GCSettings.NGCZoom)
@@ -365,14 +426,17 @@ NGCReportButtons ()
 	/*** Check for menu:
 	       CStick left
 	       OR "L+R+X+Y" (eg. Hombrew/Adapted SNES controllers) 
-	       OR "Home" on the wiimote	***/
+	       OR "Home" on the wiimote or classic controller	***/
 
     if ((gc_px < -70) ||
         ((gc_pb & PAD_TRIGGER_L) &&
          (gc_pb & PAD_TRIGGER_R ) &&
          (gc_pb & PAD_BUTTON_X) &&
-         (gc_pb & PAD_BUTTON_Y )) ||
-		 (wm_pb & WPAD_BUTTON_HOME)		// wiimote
+         (gc_pb & PAD_BUTTON_Y ))
+#ifdef HW_RVL
+		 || (wm_pb & WPAD_BUTTON_HOME)
+		 || (wm_pb & WPAD_CLASSIC_BUTTON_HOME)
+#endif
        )
     {
         ConfigRequested = 1;
@@ -409,6 +473,39 @@ NGCReportButtons ()
             decodepad (i);
     }
 }
+
+/****************************************************************************
+ * wpad_get_analogues()
+ *
+ * gets the analogue stick magnitude and angle values (
+ * from classic or nunchuk expansions)					     
+ ****************************************************************************/
+u32 wpad_get_analogues(int pad, float* mag, u16* ang)
+{
+	*mag = *ang = 0;
+	u32 exp_type = 0;
+#ifdef HW_RVL
+	struct expansion_t exp;
+	memset( &exp, 0, sizeof(exp) );	// FIX: necessary? we only look at the struct if an expansion is connected...
+	
+	if ( WPAD_Probe( pad, &exp_type) == 0)	// check wiimote and expansion status (first if wiimote is connected & no errors)
+	{
+		WPAD_Expansion(pad, &exp);	// expansion connected. get info
+		if (exp_type == WPAD_EXP_CLASSIC)
+		{
+			*ang = exp.classic.ljs.ang;	// left cc joystick
+			*mag = exp.classic.ljs.mag;
+		}
+		else if (exp_type == WPAD_EXP_NUNCHUK)
+		{
+			*ang = exp.nunchuk.js.ang;	// nunchuk joystick
+			*mag = exp.nunchuk.js.mag;
+		}
+	}
+#endif
+	return exp_type;	// return expansion type
+}
+
 
 /****************************************************************************
  * Set the default mapping for NGC
@@ -583,7 +680,9 @@ main ()
         isWii = TRUE;
 #endif
 
+#ifdef HW_RVL
 	WPAD_Init();
+#endif
 
 	
 	/*** Initialise freetype ***/
