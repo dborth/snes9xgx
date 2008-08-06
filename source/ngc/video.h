@@ -11,13 +11,17 @@
 #ifndef _GCVIDEOH_
 
 #define _GCVIDEOH_
+//#include <gccore.h>
+#include <ogcsys.h>
+
 #include "snes9x.h"
 
 void InitGCVideo ();
-void clearscreen ();
+void clearscreen (int colour = COLOR_WHITE);
 void showscreen ();
 void setGFX ();
 void update_video (int width, int height);
 void zoom (float speed);
+void UpdatePadsCB();
 
 #endif

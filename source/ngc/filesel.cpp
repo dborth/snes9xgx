@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wiiuse/wpad.h>
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -37,7 +38,7 @@
 #include "mcsave.h"
 
 #define PAGESIZE 17
-static int maxfiles;
+int maxfiles;
 int havedir = 0;
 int hasloaded = 0;
 int loadtype = 0;
@@ -45,7 +46,9 @@ int LoadDVDFile (unsigned char *buffer);
 int haveSDdir = 0;
 extern unsigned long ARAM_ROMSIZE;
 extern int screenheight;
-		
+
+extern FILEENTRIES filelist[MAXFILES];
+
 /**
  * Showfile screen
  *
@@ -55,13 +58,12 @@ static void
 ShowFiles (int offset, int selection)
 {
   int i, j;
-  char text[80];
+  char text[MAXPATHLEN];
   int ypos;
   int w;
   
+  setfontsize(18);
   clearscreen ();
-
-  setfontsize (16);
 
   ypos = (screenheight - ((PAGESIZE - 1) * 20)) >> 1;
 
@@ -69,12 +71,18 @@ ShowFiles (int offset, int selection)
     ypos += 24;
   else
     ypos += 10;
+	
+
+	// show offset and selection at top
+	sprintf(text,"offset: %d, selection: %d",offset, selection);
+	DrawText (-1, 20, text);
+
 
   j = 0;
   for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
 
     {
-      if (filelist[i].flags)
+      if (filelist[i].flags)	// if a dir
 
         {
           strcpy (text, "[");
@@ -107,8 +115,6 @@ ShowFiles (int offset, int selection)
     }
   showscreen ();
 
-  setfontsize (24);
-
 }
 
 /**
@@ -139,7 +145,7 @@ int selection = 0;
 int
 FileSelector ()
 {
-    short p;
+    int p, wp;
     signed char a;
     int haverom = 0;
     int redraw = 1;
@@ -151,8 +157,9 @@ FileSelector ()
             ShowFiles (offset, selection);
         redraw = 0;
         p = PAD_ButtonsDown (0);
+		wp = WPAD_ButtonsDown (0);
         a = PAD_StickY (0);
-        if ((p & PAD_BUTTON_A) || selectit)
+        if ( (p & PAD_BUTTON_A) || (wp & WPAD_BUTTON_A) || selectit )
         {
             if ( selectit )
                 selectit = 0;
@@ -165,17 +172,17 @@ FileSelector ()
                     
                     /* update current directory and set new entry list if directory has changed */
                     int status = updateSDdirname();
-                    if (status == 1)
+                    if (status == 1)	// ok, open directory
                     {
                         maxfiles = parseSDdirectory();
                         if (!maxfiles)
                         {
-                            WaitPrompt ("Error reading directory !");
+                            WaitPrompt ((char*) "Error reading directory !");
                             haverom   = 1; // quit SD menu
                             haveSDdir = 0; // reset everything at next access
                         }
                     }
-                    else if (status == -1)
+                    else if (status == -1)	// directory name too long
                     {
                         haverom   = 1; // quit SD menu
                         haveSDdir = 0; // reset everything at next access
@@ -195,7 +202,7 @@ FileSelector ()
                     }
                 }
             }
-            else
+            else	// this is a file
             {
                 rootdir = filelist[selection].offset;
                 rootdirlength = filelist[selection].length;
@@ -235,21 +242,29 @@ FileSelector ()
                 }
                 else
                 {
-                    WaitPrompt("Error loading ROM!");
+                    WaitPrompt((char*) "Error loading ROM!");
                 }
             }
             redraw = 1;
-        }
-        if ( p & PAD_BUTTON_B )
+        }	// End of A
+        if ( (p & PAD_BUTTON_B) || (wp & WPAD_BUTTON_B) )
         {
-            while ( PAD_ButtonsDown(0) & PAD_BUTTON_B )
+            while ( (PAD_ButtonsDown(0) & PAD_BUTTON_B) || (PAD_ButtonsDown(0) & WPAD_BUTTON_B) )
                 VIDEO_WaitVSync();
-            if ((strcmp(filelist[1].filename,"..") == 0) && (strlen (filelist[0].filename) != 0))
+            //if ((strcmp(filelist[1].filename,"..") == 0) && (strlen (filelist[0].filename) != 0))
+			if ( strcmp(filelist[0].filename,"..") == 0 ) 
+			{
+				selection = 0;
+				selectit = 1;
+			}
+			else if ( strcmp(filelist[1].filename,"..") == 0 ) 
+			{
                 selection = selectit = 1;
-            else
+			} else {
                 return 0;
-        }
-        if ((p & PAD_BUTTON_DOWN) || (a < -PADCAL))
+			}
+        }	// End of B
+        if ( (p & PAD_BUTTON_DOWN) || (wp & WPAD_BUTTON_DOWN) || (a < -PADCAL) )
         {
             selection++;
             if (selection == maxfiles)
@@ -257,8 +272,8 @@ FileSelector ()
             if ((selection - offset) >= PAGESIZE)
                 offset += PAGESIZE;
             redraw = 1;
-        }                       // End of down
-        if ((p & PAD_BUTTON_UP) || (a > PADCAL))
+        }	// End of down
+        if ( (p & PAD_BUTTON_UP) || (wp & WPAD_BUTTON_UP) || (a > PADCAL) )
         {
             selection--;
             if (selection < 0)
@@ -271,8 +286,8 @@ FileSelector ()
             if (offset < 0)
                 offset = 0;
             redraw = 1;
-        }                       // End of Up
-        if (PAD_ButtonsHeld (0) & PAD_BUTTON_LEFT)
+        }	// End of Up
+        if ( (PAD_ButtonsHeld(0) & PAD_BUTTON_LEFT) || (WPAD_ButtonsHeld(0) & WPAD_BUTTON_LEFT) )
         {
             /*** Go back a page ***/
             selection -= PAGESIZE;
@@ -287,7 +302,7 @@ FileSelector ()
                 offset = 0;
             redraw = 1;
         }
-        if (PAD_ButtonsHeld (0) & PAD_BUTTON_RIGHT)
+        if ( (PAD_ButtonsHeld(0) & PAD_BUTTON_RIGHT) || (WPAD_ButtonsHeld(0) & WPAD_BUTTON_RIGHT) )
         {
             /*** Go forward a page ***/
             selection += PAGESIZE;
@@ -315,7 +330,7 @@ OpenDVD ()
     
     if (!getpvd())
     {
-        ShowAction("Mounting DVD ... Wait");
+        ShowAction((char*) "Mounting DVD ... Wait");
         DVD_Mount();             /* mount the DVD unit again */
         havedir = 0;             /* this may be a new DVD: content need to be parsed again */
         if (!getpvd())
@@ -378,19 +393,18 @@ int
 OpenSD (int slot)
 {
     char msg[80];
+	char buf[50] = "";
     
     loadtype = LOAD_SDC;
     
     if (haveSDdir == 0)
     {
         /* don't mess with DVD entries */
-        havedir = 0;
+        havedir = 0;	// gamecube only
         
-        /* Initialise libOGC SD functions */ 
-        SDCARD_Init ();
-        
-        /* Reset SDCARD root directory */
-        sprintf(rootSDdir,"dev%d:\\SNESROMS", slot);
+        /* get current SDCARD directory */
+        sprintf ( currSDdir, getcwd(buf,50) );	// FIX: necessary?
+		
         
         /* Parse initial root directory and get entries list */
         if ((maxfiles = parseSDdirectory ()))
@@ -401,7 +415,7 @@ OpenSD (int slot)
         else
         {
             /* no entries found */
-            sprintf (msg, "SNESROMS not found on SDCARD (slot %s)", slot ? "B" : "A");
+            sprintf (msg, "SNESROMS not found on SDCARD");		// FIX: update error msg
             WaitPrompt (msg);
             return 0;
         }
@@ -440,7 +454,7 @@ LoadDVDFile (unsigned char *buffer)
   blocks = rootdirlength / 2048;
   offset = 0;
   discoffset = rootdir;
-  ShowAction ("Loading ... Wait");
+  ShowAction ((char*) "Loading ... Wait");
   dvd_read (readbuffer, 2048, discoffset);
 
   if (!IsZipFile (readbuffer))

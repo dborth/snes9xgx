@@ -40,7 +40,7 @@ preparePrefsData ()
   int offset = sizeof (saveicon);
   int size;
 
-  memset (savebuffer, 0, 0x22000);
+  memset (savebuffer, 0, SAVEBUFFERSIZE);
 
 	/*** Copy in save icon ***/
   memcpy (savebuffer, saveicon, offset);
@@ -83,7 +83,7 @@ decodePrefsData ()
 	  memcpy (&GCSettings, savebuffer + offset, sizeof (GCSettings));
 	}
     else
-	  WaitPrompt("Preferences reset - check settings!");
+	  WaitPrompt((char*) "Preferences reset - check settings!");
 }
 
 void quickLoadPrefs (bool8 silent)

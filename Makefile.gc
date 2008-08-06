@@ -7,7 +7,7 @@ ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC)
 endif
 
-include $(DEVKITPPC)/wii_rules
+include $(DEVKITPPC)/gamecube_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -15,7 +15,7 @@ include $(DEVKITPPC)/wii_rules
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	snes9xgx-mm-wii
+TARGET		:=	$(BUILD)/snes9xgx-mm-wii
 BUILD		:=	build
 SOURCES		:=	source/snes9x source/unzip source/ngc source/smb
 DATA		:=	data  
@@ -30,8 +30,8 @@ CFLAGS	=	-g -O2 -Wall $(MACHDEP) $(INCLUDE) \
 			-DSPC700_SHUTDOWN -DNEW_COLOUR_BLENDING \
 			-DNO_INLINE_GET_SET -DSDD1_DECOMP -DCORRECT_VRAM_READS \
 			-DDETECT_NASTY_FX_INTERLEAVE -DNGC_ZOOM -DSDUSE_LFN \
-			-DQUICK_SAVE_SLOT=3 -DSMB_SVID='"Crunchewy"' \
-			-DSMB_IP='"192.168.1.111"' -DGW_IP='"192.168.1.1"' -DFORCE_WII=1 \
+			-DQUICK_SAVE_SLOT=4 -DSMB_SVID='"Crunchewy"' \
+			-DSMB_IP='"192.168.1.111"' -DGW_IP='"192.168.1.1"' -DFORCE_WII=0 \
 			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter -pipe
 CXXFLAGS	=	$(CFLAGS)
 
@@ -41,7 +41,7 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--cref
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lfat -lwiiuse -lz -lbte -logc -lm -lfreetype
+LIBS	:=	 -lfat -lz -lbte -logc -lm -lfreetype -lbba
 # -logcsys
 
 #---------------------------------------------------------------------------------

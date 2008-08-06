@@ -157,6 +157,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <ogcsys.h>
+#include <unistd.h>
+#include <fat.h>
+#include <wiiuse/wpad.h>
+#include <sdcard/card_cmn.h>
+#include <sdcard/wiisd_io.h>
+#include <sdcard/card_io.h>
+
 #include "snes9x.h"
 #include "memmap.h"
 #include "debug.h"
@@ -186,7 +194,7 @@ unsigned long ARAM_ROMSIZE = 0;
 int ConfigRequested = 0;
 extern int FrameTimer;
 
-extern tb_t prev;
+extern long long prev;
 extern unsigned int timediffallowed;
 
 /****************************************************************************
@@ -208,6 +216,13 @@ unsigned short gcpadmap[] = { PAD_BUTTON_A, PAD_BUTTON_B,
   PAD_TRIGGER_Z, PAD_BUTTON_START,
   PAD_BUTTON_UP, PAD_BUTTON_DOWN,
   PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT
+};
+unsigned short wmpadmap[] = { WPAD_BUTTON_B, WPAD_BUTTON_2,
+  WPAD_BUTTON_1, WPAD_BUTTON_A,
+  0x0000, 0x0000,
+  WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
+  WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT,
+  WPAD_BUTTON_UP, WPAD_BUTTON_DOWN
 };
 
 #if 0
@@ -260,13 +275,15 @@ decodepad (int pad)
 {
   int i, offset;
   signed char x, y;
-  unsigned short jp;
+  //unsigned short jp, wp;	//
+  u16 jp, wp;
   float t;
 
  /*** Do analogue updates ***/
   x = PAD_StickX (pad);
   y = PAD_StickY (pad);
   jp = PAD_ButtonsHeld (pad);
+  wp = WPAD_ButtonsHeld (pad);	// wiimote
 
 /*** Is XY inside the "zone"? ***/
   if (x * x + y * y > padcal * padcal)
@@ -316,6 +333,10 @@ decodepad (int pad)
 	S9xReportButton (offset + i, true);
       else
 	S9xReportButton (offset + i, false);
+	  if (wp & wmpadmap[i])					// wiimote
+	S9xReportButton (offset + i, true);		//
+      else									//
+	S9xReportButton (offset + i, false);	//
     }
 
 }
@@ -327,28 +348,31 @@ decodepad (int pad)
 void
 NGCReportButtons ()
 {
-	s8 px = PAD_SubStickX (0);
-	s8 py = PAD_SubStickY (0);
-	u16 pb = PAD_ButtonsHeld (0);
+	s8 gc_px = PAD_SubStickX (0);
+	s8 gc_py = PAD_SubStickY (0);
+	u16 gc_pb = PAD_ButtonsHeld (0);
+	u16 wm_pb = WPAD_ButtonsHeld (0);	// wiimote
 	
 	/*** Check for video zoom ***/
 	if (GCSettings.NGCZoom)
 	{
-		if (py < -18 || py > 18)
-			zoom ((float) py / -18);
+		if (gc_py < -18 || gc_py > 18)
+			zoom ((float) gc_py / -18);
 	}
 
-    Settings.TurboMode = (px > 70);
+    Settings.TurboMode = (gc_px > 70);
 
 	/*** Check for menu:
 	       CStick left
-	       OR "L+R+X+Y" (eg. Hombrew/Adapted SNES controllers) ***/
+	       OR "L+R+X+Y" (eg. Hombrew/Adapted SNES controllers) 
+	       OR "Home" on the wiimote	***/
 
-    if ((px < -70) ||
-        ((pb & PAD_TRIGGER_L) &&
-         (pb & PAD_TRIGGER_R ) &&
-         (pb & PAD_BUTTON_X) &&
-         (pb & PAD_BUTTON_Y ))
+    if ((gc_px < -70) ||
+        ((gc_pb & PAD_TRIGGER_L) &&
+         (gc_pb & PAD_TRIGGER_R ) &&
+         (gc_pb & PAD_BUTTON_X) &&
+         (gc_pb & PAD_BUTTON_Y )) ||
+		 (wm_pb & WPAD_BUTTON_HOME)		// wiimote
        )
     {
         ConfigRequested = 1;
@@ -357,17 +381,17 @@ NGCReportButtons ()
         
         if ( GCSettings.AutoSave == 1 )
         {
-            if ( WaitPromptChoice ("Save SRAM?", "Don't Save", "Save") )
+            if ( WaitPromptChoice ((char*)"Save SRAM?", (char*)"Don't Save", (char*)"Save") )
                 quickSaveSRAM ( SILENT );
         }
         else if ( GCSettings.AutoSave == 2 )
         {
-            if ( WaitPromptChoice ("Save Freeze State?", "Don't Save", "Save") )
+            if ( WaitPromptChoice ((char*)"Save Freeze State?", (char*)"Don't Save", (char*)"Save") )
                 quickSaveFreeze ( SILENT );
         }
         else if ( GCSettings.AutoSave == 3 )
         {
-            if ( WaitPromptChoice ("Save SRAM and Freeze State?", "Don't Save", "Save") )
+            if ( WaitPromptChoice ((char*)"Save SRAM and Freeze State?", (char*)"Don't Save", (char*)"Save") )
             {
                 quickSaveSRAM ( SILENT );
                 quickSaveFreeze ( SILENT );
@@ -476,21 +500,40 @@ SetDefaultButtonMap ()
  ****************************************************************************/
 /* Eke-Eke: initialize frame Sync */
 extern void S9xInitSync();
+extern u8 vmode_60hz;
+int timerstyle;
 
 void
 emulate ()
 {
 
-  S9xSetSoundMute (TRUE);
-//  FrameTimer = 0;
-  AudioStart ();
-  S9xInitSync();
+	S9xSetSoundMute (TRUE);
+	AudioStart ();
+	S9xInitSync();
+	
+	/*
+	Set frametimer method 
+	(timerstyle: 0=NTSC vblank, 1=PAL int timer) 
+	*/
+	if ( Settings.PAL ) {
+		if(vmode_60hz == 1)
+			timerstyle = 1;
+		else
+			timerstyle = 0;
+		//timediffallowed = Settings.FrameTimePAL;
+	} else {
+		if(vmode_60hz == 1)
+			timerstyle = 0;
+		else
+			timerstyle = 1;
+		//timediffallowed = Settings.FrameTimeNTSC;
+	}
 
-  while (1)
-    {
-      S9xMainLoop ();
-      NGCReportButtons ();
-    }
+	while (1)
+	{
+	  S9xMainLoop ();
+	  NGCReportButtons ();
+	}
 }
 
 /****************************************************************************
@@ -521,6 +564,15 @@ main ()
 	/*** Initialise GC ***/
 	InitGCVideo ();	/*** Get the ball rolling ***/
 	
+	/*** Initialize libFAT and SD cards ***/
+	fatInitDefault();
+	//sdio_Startup();				// wii front sd
+	//sdgecko_initIODefault();	// sd gecko
+	
+
+	/*** Initialize DVD subsystem ***/
+	DVD_Init ();
+	
 #ifdef FORCE_WII
 	isWii = TRUE;
 #else
@@ -530,6 +582,9 @@ main ()
     else
         isWii = TRUE;
 #endif
+
+	WPAD_Init();
+
 	
 	/*** Initialise freetype ***/
 	if (FT_Init ())
@@ -537,6 +592,7 @@ main ()
 		printf ("Cannot initialise font subsystem!\n");
 		while (1);
 	}
+	setfontsize (16);/***sets the font size.***/
 	
 	/*** Set defaults ***/
 	DefaultSettings ();
@@ -596,12 +652,8 @@ main ()
 		
 		/*** Load SRAM ***/
 		Memory.LoadSRAM ("DVD");
-		
-        if ( GCSettings.AutoLoad == 1 )
-            quickLoadSRAM ( SILENT );
-        else if ( GCSettings.AutoLoad == 2 )
-            quickLoadFreeze ( SILENT );
 	}
+	
 	/*** Emulate ***/
 	emulate ();
 	

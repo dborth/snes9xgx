@@ -44,6 +44,8 @@ SMBINFO smbinfo =
    SMB_USER, SMB_PWD, SMB_GCID, SMB_SVID, SMB_SHARE
 };
 
+extern FILEENTRIES filelist[MAXFILES];
+
 /****************************************************************************
  * Mount SMB Share
  ****************************************************************************/
@@ -63,19 +65,19 @@ ConnectSMB ()
         
         if (netinited == 0)
         {
-            ShowAction ("Setting up network interface ...");
+            ShowAction ((char*) "Setting up network interface ...");
             ret = if_config (smbinfo.gcip, smbinfo.gwip, smbinfo.mask, 0);
             netinited = 1;
         }
         
-        ShowAction ("Connecting to share ...");
+        ShowAction ((char*) "Connecting to share ...");
         SMB_Destroy ();
         
         if (SMB_Init (smbinfo.smbuser, smbinfo.smbpwd,
             smbinfo.smbgcid, smbinfo.smbsvid, smbinfo.smbshare,
             smbinfo.smbip) != SMB_SUCCESS)
         {
-            WaitPrompt ("Failed to connect to SMB share");
+            WaitPrompt((char*) "Failed to connect to SMB share");
             connected = 0;
             return;
         }
@@ -264,7 +266,7 @@ LoadSMBFile (char *filename, int length)
         }
       else
         {
-          WaitPrompt ("SMB Reading Failed!");
+          WaitPrompt((char*) "SMB Reading Failed!");
           //while (1);
           return 0;
         }
@@ -380,7 +382,7 @@ SaveSRAMToSMB (bool8 silent)
     int offset;
     
     sprintf (filepath, "%s\\%s.srm", SNESSAVEDIR, Memory.ROMName);
-    ShowAction ("Saving SRAM to SMB...");
+    ShowAction ((char*) "Saving SRAM to SMB...");
     
     datasize = prepareEXPORTsavedata ();
 
@@ -406,7 +408,7 @@ LoadSRAMFromSMB (bool8 silent)
     int offset;
     
     sprintf (filepath, "%s\\%s.srm", SNESSAVEDIR, Memory.ROMName);
-    ShowAction ("Loading SRAM from SMB...");
+    ShowAction ((char*) "Loading SRAM from SMB...");
     
     offset = LoadBufferFromSMB (filepath, silent);
 
@@ -434,7 +436,7 @@ SavePrefsToSMB (bool8 silent)
     int offset;
     
     sprintf (filepath, "%s\\%s", SNESSAVEDIR, PREFS_FILE_NAME);
-    ShowAction ("Saving preferences to SMB...");
+    ShowAction ((char*) "Saving preferences to SMB...");
     
     datasize = preparePrefsData ();
 
@@ -460,7 +462,7 @@ LoadPrefsFromSMB (bool8 silent)
     char filepath[1024];
     int offset;
     
-    ShowAction ("Loading preferences from SMB...");
+    ShowAction ((char*) "Loading preferences from SMB...");
     
     sprintf (filepath, "%s\\%s", SNESSAVEDIR, PREFS_FILE_NAME);
     

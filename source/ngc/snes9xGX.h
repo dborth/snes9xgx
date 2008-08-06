@@ -201,17 +201,6 @@ END_EXTERN_C
 #define QUICK_SAVE_SLOT 1
 #endif
 
-/*** if defined, LOAD_TYPE specifies type of load allowed:
-         0 = All load types allowed - show submenu
-         1 = DVD only
-         2 = SMB only
-         3 = SD only
-     This settings is something I use to allow me to make a version for my kids,
-     where I want it to be easy and they'll never be using SD or SMB       ***/
-#ifndef LOAD_TYPE
-#define LOAD_TYPE 0
-#endif
-
 /*** default SMB settings ***/
 #ifndef GC_IP
 #define GC_IP "192.168.1.32"		/*** IP to assign the GameCube ***/

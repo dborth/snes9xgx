@@ -173,7 +173,7 @@ decodesavedata (int readsize)
         
 	if ( strncmp (sramcomment, "Snes9x GX 2.0", 13) == 0 )
 	{
-      //WaitPrompt ("Memory Card format save");
+      //WaitPrompt((char*) "Memory Card format save");
 	  offset += 64;
 	  memcpy (&size, savebuffer + offset, 4);
 	  offset += 4;
