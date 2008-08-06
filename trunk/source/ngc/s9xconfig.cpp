@@ -166,8 +166,8 @@ DefaultSettings ()
   memset (&Settings, 0, sizeof (Settings));
 
 	/*** General ***/
-  Settings.MouseMaster = true;
-  Settings.SuperScopeMaster = true;
+  Settings.MouseMaster = false;
+  Settings.SuperScopeMaster = false;
   Settings.MultiPlayer5Master = false;
   Settings.JustifierMaster = true;
   Settings.ShutdownMaster = false;
@@ -219,6 +219,8 @@ DefaultSettings ()
   GCSettings.NGCZoom = 0;
   GCSettings.VerifySaves = 0;
   GCSettings.render = 0;
+  GCSettings.Superscope = 0;
+  GCSettings.Mouse = 0;
   
   Settings.ForceNTSC = 0;
   Settings.ForcePAL = 0;

@@ -252,28 +252,50 @@ unsigned int gcscopemap[] = { PAD_TRIGGER_Z, PAD_BUTTON_B,
   PAD_BUTTON_A, PAD_BUTTON_Y,
   PAD_BUTTON_START
 };
+/*** Superscope : wiimote button mapping ***/
+unsigned int wmscopemap[] = { WPAD_BUTTON_MINUS, WPAD_BUTTON_B,
+  WPAD_BUTTON_A, WPAD_BUTTON_DOWN,
+  WPAD_BUTTON_PLUS
+};
 
-void UpdateCursorPosition (int input_x, int input_y, int &pos_x, int &pos_y)
+void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
 {	
+	// gc left joystick
+	signed char pad_x = PAD_StickX (pad);	
+	signed char pad_y = PAD_StickY (pad);
 	int SCOPEPADCAL = 30;
+#ifdef HW_RVL
+	// wiimote ir
+	struct ir_t ir;
+#endif
 
-	if (input_x > SCOPEPADCAL){
+	if (pad_x > SCOPEPADCAL){
 		pos_x +=4;
 		if (pos_x > 256) pos_x = 256;
 	}
-	if (input_x < -SCOPEPADCAL){
+	if (pad_x < -SCOPEPADCAL){
 		pos_x -=4;
 		if (pos_x < 0) pos_x = 0;
 	}
    
-	if (input_y < -SCOPEPADCAL){
+	if (pad_y < -SCOPEPADCAL){
 		pos_y +=4;
 		if (pos_y > 224) pos_y = 224;
 	}
-	if (input_y > SCOPEPADCAL){
+	if (pad_y > SCOPEPADCAL){
 		pos_y -=4;
 		if (pos_y < 0) pos_y = 0;            
 	}
+	
+#ifdef HW_RVL
+	// read wiimote IR
+	WPAD_IR(pad, &ir);
+	if (ir.valid)
+	{
+		scope_x = (ir.x * 256) / 640;
+		scope_y = (ir.y * 224) / 480;
+	}
+#endif
 
 }
 
@@ -392,20 +414,24 @@ decodepad (int pad)
     }
 	
 	/*** Superscope ***/
-	if (pad == 0 && Settings.SuperScopeMaster)	// report only once
+	if (pad == GCSettings.Superscope-1)	// report only once
 	{
 		// buttons
 		offset = 0x50;
 		for (i = 0; i < 6; i++)
-	    {
-		  if ( jp & gcscopemap[i] )
+		{
+		  if ( jp & gcscopemap[i] 
+#ifdef HW_RVL
+				|| wp & wmscopemap[i]
+#endif
+		  )
 			S9xReportButton (offset + i, true);
 		  else
 			S9xReportButton (offset + i, false);
 		}
 		// pointer
 		offset = 0x60;
-		UpdateCursorPosition (pad_x, pad_y, scope_x, scope_y);
+		UpdateCursorPosition (pad, scope_x, scope_y);
 		S9xReportPointer(offset, (u16)scope_x, (u16)scope_y);
 	}
 }
@@ -566,6 +592,26 @@ u32 wpad_get_analogues(int pad, float* mag1, u16* ang1, float* mag2, u16* ang2)
 	return exp_type;	// return expansion type
 }
 
+void SetControllers ()
+{
+  if (Settings.MultiPlayer5Master == true)
+    {
+	
+      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
+      S9xSetController (1, CTL_MP5, 1, 2, 3, -1);
+    }
+  else if (Settings.SuperScopeMaster == true)
+    {
+      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
+      S9xSetController (1, CTL_SUPERSCOPE, 1, 0, 0, 0);	
+	}
+  else
+    {
+	/*** Plugin 2 Joypads by default ***/
+      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
+      S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+    }
+}
 
 /****************************************************************************
  * Set the default mapping for NGC
@@ -647,23 +693,7 @@ SetDefaultButtonMap ()
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Superscope"), false);
   // add mouses here
 	
-  if (Settings.MultiPlayer5Master == true)
-    {
-	
-      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
-      S9xSetController (1, CTL_MP5, 1, 2, 3, -1);
-    }
-  else if (Settings.SuperScopeMaster == true)
-    {
-      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
-      S9xSetController (1, CTL_SUPERSCOPE, 1, 0, 0, 0);	
-	}
-  else
-    {
-	/*** Plugin 2 Joypads by default ***/
-      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
-      S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
-    }
+  SetControllers ();
 
 }
 
@@ -742,6 +772,9 @@ main ()
 
 #ifdef HW_RVL
 	WPAD_Init();
+	// read wiimote accelerometer and IR data
+	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
+	WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
 #endif
 
 	

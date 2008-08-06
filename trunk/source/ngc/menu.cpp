@@ -336,7 +336,8 @@ static char emulatorOptions[][20] = { "Reverse Stereo OFF",
   "Interp. Sound ON", "Transparency ON", "FPS Display OFF",
   "MultiTap 5 OFF", "C-Stick Zoom OFF",
   "Auto Load OFF", "Auto Save OFF", "Verify MC Saves OFF",
-  "Video Filtering OFF", "Save Prefs Now", "Return to previous"
+  "Video Filtering OFF", "Superscope OFF",
+  "Save Prefs Now", "Return to previous"
 };
 
 void
@@ -381,8 +382,11 @@ EmulatorOptions ()
 			
 		sprintf (emulatorOptions[9], "Video Filtering %s",
 			GCSettings.render == true ? " ON" : "OFF");
+
+		if (GCSettings.Superscope > 0) sprintf (emulatorOptions[10], "Superscope: Pad %d", GCSettings.Superscope);
+		else sprintf (emulatorOptions[10], "Superscope     OFF");
 		
-		ret = RunMenu (emulatorOptions, emuCount, (char*)"Emulator Options");
+		ret = RunMenu (emulatorOptions, emuCount, (char*)"Emulator Options", 18);
 		
 		switch (ret)
 		{
@@ -440,11 +444,17 @@ EmulatorOptions ()
 				break;
 				
 			case 10:
+				GCSettings.Superscope ++;
+				if (GCSettings.Superscope > 4)
+					GCSettings.Superscope = 0;
+				break;
+				
+			case 11:
 				quickSavePrefs(NOTSILENT);
 				break;
 			
 			case -1: /*** Button B ***/
-			case 11:
+			case 12:
 				quit = 1;
 				break;
 			
@@ -875,4 +885,7 @@ mainmenu ()
 #endif
 	
 	ReInitGCVideo();	// update video after reading settings
+	Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);	// update superscope settings
+	// update mouse/justifier info?
+	SetControllers();
 }
