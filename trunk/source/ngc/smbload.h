@@ -11,7 +11,6 @@
  ****************************************************************************/
 
 #ifndef _NGCSMB_
-
 #define _NGCSMB_
 
 void ConnectSMB ();
@@ -35,6 +34,5 @@ typedef struct
   char smbshare[20];
 }
 SMBINFO;
-
 
 #endif

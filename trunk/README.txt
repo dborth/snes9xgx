@@ -10,13 +10,24 @@
 ­———————————————————————————————————————————————————————————————————————•ßrK•
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                          SNES9XGX v003                        ·oø×O0|
+|0O×øo·                          SNES9XGX v004                        ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 
 PLEASE NOTE: THIS DOCUMENT IS A WORK IN PROGRESS
 
-[What's New 003]
+[What's New 004]
 
+- added: option to disable AA filtering 
+         (snes graphics 'crisper', AA now default OFF)
+- added: mapped zooming and turbo mode to classic controller
+- added: preliminary usb support (loading)
+- changed: sram and freezes now saved by filename, not internal romname. 
+           If you have multiple versions of the same game, you can now have 
+           srams and freezes for each version. A prompt to convert to the 
+           new naming is provided for sram only.
+- changed: by default, autoload/save sram and freeze enabled
+
+[What Was New 003]
 - added: alphabetical file sorting
 - added: background logo/backdrop + nicer menus
 - added: scrolling in ROM selector
@@ -77,11 +88,11 @@ SRAM to any location).
 
   filename                        preferences/sram autoloading location
   -------------------------       -------------------------------------
-  snes9xGX-003-sd-xxxx.dol          SD card
-  snes9xGX-003-mcslota-xxxx.dol     Memory card in slot A
-  snes9xGX-003-mcslotb-xxxx.dol     Memory card in slot B
-  snes9xGX-003-smb-xxxx.dol         SMB share (see SMB section below)
-  snes9xGX-003-noload-xxxx.dol      none - doesn't load prefs nor autosave SRAM
+  snes9xGX-00x-sd-xxxx.dol          SD card
+  snes9xGX-00x-mcslota-xxxx.dol     Memory card in slot A
+  snes9xGX-00x-mcslotb-xxxx.dol     Memory card in slot B
+  snes9xGX-00x-smb-xxxx.dol         SMB share (see SMB section below)
+//  snes9xGX-00x-noload-xxxx.dol      none - doesn't load prefs nor autosave SRAM
 
 The last part of the filename (shown above as xxxx), denotes the wii and gamecube
 versions.

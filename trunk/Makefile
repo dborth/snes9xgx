@@ -1,10 +1,10 @@
-.PHONY = all wii gc wii-clean gc-clean wii-run gc-run mca mcb sd smb mca-clean mcb-clean sd-clean smb-clean specials specials-clean
+.PHONY = all wii gc wii-clean gc-clean wii-run gc-run specials specials-clean specials-wii specials-gc specials-wii-clean specials-gc-clean
 
-VERSION := 003
+VERSION := 004
 
 all: wii gc
 
-clean: wii-clean gc-clean
+clean: wii-clean gc-clean specials-clean
 
 wii:
 	$(MAKE) -f Makefile.wii
@@ -26,39 +26,35 @@ gc-run:
 
 # Custom Quicksave Versions
 	
-specials: sd mcb mca smb
+specials: specials-wii specials-gc
 
-specials-clean: mca-clean mcb-clean smb-clean sd-clean
+specials-clean: specials-wii-clean specials-gc-clean
 
-mca:
+specials-wii:
 	touch source/ngc/snes9xGX.h
 	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=0" "LOADTYPE:='"MCSLOTA"'" "VERSION:=$(VERSION)" -f Makefile.wii
 	touch source/ngc/snes9xGX.h
-	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=0" "LOADTYPE:='"MCSLOTA"'" "VERSION:=$(VERSION)" -f Makefile.gc
-mca-clean:
-	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=0" "LOADTYPE:='"MCSLOTA"'" "VERSION:=$(VERSION)" -f Makefile.wii clean
-	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=0" "LOADTYPE:='"MCSLOTA"'" "VERSION:=$(VERSION)" -f Makefile.gc clean
-	
-mcb:
-	touch source/ngc/snes9xGX.h
 	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=1" "LOADTYPE:='"MCSLOTB"'" "VERSION:=$(VERSION)" -f Makefile.wii
 	touch source/ngc/snes9xGX.h
-	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=1" "LOADTYPE:='"MCSLOTB"'" "VERSION:=$(VERSION)" -f Makefile.gc
-mcb-clean:
-	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=1" "LOADTYPE:='"MCSLOTB"'" "VERSION:=$(VERSION)" -f Makefile.wii clean
-	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=1" "LOADTYPE:='"MCSLOTB"'" "VERSION:=$(VERSION)" -f Makefile.gc clean
-	
-sd:
-	touch source/ngc/snes9xGX.h
 	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=3" "LOADTYPE:='"SD"'" "VERSION:=$(VERSION)" -f Makefile.wii
+
+specials-gc:
+	touch source/ngc/snes9xGX.h
+	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=0" "LOADTYPE:='"MCSLOTA"'" "VERSION:=$(VERSION)" -f Makefile.gc
+	touch source/ngc/snes9xGX.h
+	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=1" "LOADTYPE:='"MCSLOTB"'" "VERSION:=$(VERSION)" -f Makefile.gc
 	touch source/ngc/snes9xGX.h
 	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=3" "LOADTYPE:='"SD"'" "VERSION:=$(VERSION)" -f Makefile.gc
-sd-clean:
-	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=3" "LOADTYPE:='"SD"'" "VERSION:=$(VERSION)" -f Makefile.wii clean
-	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=3" "LOADTYPE:='"SD"'" "VERSION:=$(VERSION)" -f Makefile.gc clean
-
-smb:
 	touch source/ngc/snes9xGX.h
 	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=4" "LOADTYPE:='"SMB"'" "VERSION:=$(VERSION)" -f Makefile.gc
-smb-clean:
+	
+specials-wii-clean:
+	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=0" "LOADTYPE:='"MCSLOTA"'" "VERSION:=$(VERSION)" -f Makefile.wii clean
+	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=1" "LOADTYPE:='"MCSLOTB"'" "VERSION:=$(VERSION)" -f Makefile.wii clean
+	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=3" "LOADTYPE:='"SD"'" "VERSION:=$(VERSION)" -f Makefile.wii clean	
+
+specials-gc-clean:
+	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=0" "LOADTYPE:='"MCSLOTA"'" "VERSION:=$(VERSION)" -f Makefile.gc clean
+	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=1" "LOADTYPE:='"MCSLOTB"'" "VERSION:=$(VERSION)" -f Makefile.gc clean
+	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=3" "LOADTYPE:='"SD"'" "VERSION:=$(VERSION)" -f Makefile.gc clean
 	$(MAKE) "CUSTOMFLAGS:=-DQUICK_SAVE_SLOT=4" "LOADTYPE:='"SMB"'" "VERSION:=$(VERSION)" -f Makefile.gc clean

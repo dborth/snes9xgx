@@ -53,7 +53,7 @@ extern unsigned long ARAM_ROMSIZE;
 
 
 void Reboot() {
-#ifdef __wii__
+#ifdef HW_RVL
     SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 #else
 #define SOFTRESET_ADR ((volatile u32*)0xCC003024)
@@ -149,9 +149,9 @@ FreezeManager ()
 /****************************************************************************
  * Load Manager
  ****************************************************************************/
-int loadmancountwii = 2;
+int loadmancountwii = 3;
 char loadmanwii[][20] = { "Load from SD",
-  "Return to previous"
+  "Load from USB", "Return to previous"
 };
 int loadmancount = 4;
 char loadman[][20] = {  "Load from SD",
@@ -168,15 +168,32 @@ LoadManager ()
     
     while (quit == 0)
     {
-		if ( isWii )   /* Wii menu */
-		{
-			ret = RunMenu (loadmanwii, loadmancountwii, (char*)"Load Manager");
-			if (ret >= loadmancountwii-1)
-				ret = loadmancount-1;
-		}
-		else           /* Gamecube menu */
-			ret = RunMenu (loadman, loadmancount, (char*)"Load Manager");
-        
+#ifdef HW_RVL
+	/* Wii menu */
+		ret = RunMenu (loadmanwii, loadmancountwii, (char*)"Load Manager");
+
+        switch (ret)
+        {
+		    case 0:
+				/*** Load from SD ***/
+                quit = OpenSD ();
+                break;
+				
+            case 1:
+                /*** Load from USB ***/
+                quit = OpenUSB ();
+                break;
+            
+			case -1: /*** Button B ***/
+            case 2:
+                retval = 0;
+                quit = 1;
+                break;
+        }
+#else 
+		/* Gamecube menu */
+		ret = RunMenu (loadman, loadmancount, (char*)"Load Manager");
+
         switch (ret)
         {
 		    case 0:
@@ -199,7 +216,8 @@ LoadManager ()
                 retval = 0;
                 quit = 1;
                 break;
-        }
+        }	
+#endif
     }
 	
 	/*** 
@@ -313,12 +331,12 @@ SaveManager ()
 /****************************************************************************
  * Emulator Options
  ****************************************************************************/
-static int emuCount = 11;
+static int emuCount = 12;
 static char emulatorOptions[][20] = { "Reverse Stereo OFF",
   "Interp. Sound ON", "Transparency ON", "FPS Display OFF",
   "MultiTap 5 OFF", "C-Stick Zoom OFF",
   "Auto Load OFF", "Auto Save OFF", "Verify MC Saves OFF",
-  "Save Prefs Now", "Return to previous"
+  "Video Filtering OFF", "Save Prefs Now", "Return to previous"
 };
 
 void
@@ -360,34 +378,32 @@ EmulatorOptions ()
 			
 		sprintf (emulatorOptions[8], "Verify MC Saves %s",
 			GCSettings.VerifySaves == true ? " ON" : "OFF");
+			
+		sprintf (emulatorOptions[9], "Video Filtering %s",
+			GCSettings.render == true ? " ON" : "OFF");
 		
 		ret = RunMenu (emulatorOptions, emuCount, (char*)"Emulator Options");
 		
 		switch (ret)
 		{
 			case 0:
-				Settings.ReverseStereo =
-					(Settings.ReverseStereo == false ? true : false);
+				Settings.ReverseStereo ^= 1;
 				break;
 			
 			case 1:
-				Settings.InterpolatedSound =
-					(Settings.InterpolatedSound == false ? true : false);
+				Settings.InterpolatedSound ^= 1;
 				break;
 			
 			case 2:
-				Settings.Transparency =
-					(Settings.Transparency == false ? true : false);
+				Settings.Transparency ^= 1;
 				break;
 			
 			case 3:
-				Settings.DisplayFrameRate =
-					(Settings.DisplayFrameRate == false ? true : false);
+				Settings.DisplayFrameRate ^= 1;
 				break;
 			
 			case 4:
-				Settings.MultiPlayer5Master =
-					(Settings.MultiPlayer5Master == false ? true : false);
+				Settings.MultiPlayer5Master ^= 1;
 				
 				if (Settings.MultiPlayer5Master)
 				{
@@ -400,8 +416,7 @@ EmulatorOptions ()
 				break;
 			
 			case 5:
-				GCSettings.NGCZoom =
-					(GCSettings.NGCZoom == false ? true : false);
+				GCSettings.NGCZoom ^= 1;
 				break;
 			
 			case 6:
@@ -417,16 +432,19 @@ EmulatorOptions ()
 				break;
 			
 			case 8:
-				GCSettings.VerifySaves =
-					(GCSettings.VerifySaves == false ? true : false);
+				GCSettings.VerifySaves ^= 1;
 				break;
-			
+
 			case 9:
+				GCSettings.render ^= 1;
+				break;
+				
+			case 10:
 				quickSavePrefs(NOTSILENT);
 				break;
 			
 			case -1: /*** Button B ***/
-			case 10:
+			case 11:
 				quit = 1;
 				break;
 			
@@ -824,7 +842,7 @@ mainmenu ()
 			
 			case 7:
 				/*** Exit to Loader ***/
-				#ifdef __wii__
+				#ifdef HW_RVL
 				exit(0);
 				#else	// gamecube
 				if (psoid[0] == PSOSDLOADID)
@@ -856,4 +874,5 @@ mainmenu ()
 	    VIDEO_WaitVSync();
 #endif
 	
+	ReInitGCVideo();	// update video after reading settings
 }

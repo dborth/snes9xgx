@@ -381,7 +381,7 @@ SaveSRAMToSMB (bool8 silent)
     int datasize;
     int offset;
     
-    sprintf (filepath, "%s\\%s.srm", SNESSAVEDIR, Memory.ROMName);
+    sprintf (filepath, "%s\\%s.srm", SNESSAVEDIR, Memory.ROMFilename);
 	
 	if (!silent)
 		ShowAction ((char*) "Saving SRAM to SMB...");
@@ -409,7 +409,7 @@ LoadSRAMFromSMB (bool8 silent)
     char filepath[1024];
     int offset;
     
-    sprintf (filepath, "%s\\%s.srm", SNESSAVEDIR, Memory.ROMName);
+    sprintf (filepath, "%s\\%s.srm", SNESSAVEDIR, Memory.ROMFilename);
     ShowAction ((char*) "Loading SRAM from SMB...");
     
     offset = LoadBufferFromSMB (filepath, silent);

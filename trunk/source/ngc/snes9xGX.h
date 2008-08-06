@@ -180,6 +180,8 @@ struct SGCSettings{
     char   smbshare[20];
     bool8  NGCZoom;
     uint8  VerifySaves;
+	u16		render;		// 0 - original, 1 - no AA
+	u32		QuickSaveSlot;		       // -1   Disabled - no prefs are loaded, 0   Memory card in slot A, 1   Memory card in slot B, 2   SD card in slot A, 3   SD card in slot B, 4   SMB share, 5	USB
 };
 
 START_EXTERN_C
@@ -187,7 +189,7 @@ extern struct SGCSettings GCSettings;
 extern unsigned short saveicon[1024];
 extern bool8 isWii;
 
-extern u32 wpad_get_analogues(int pad, float* mag, u16* ang);
+extern u32 wpad_get_analogues(int pad, float* mag1, u16* ang1, float* mag2, u16* ang2);
 END_EXTERN_C
 
 #define	JOY_THRESHOLD	0.70	// for wii (expansion) analogues

@@ -28,7 +28,7 @@ extern int padcal;
 extern unsigned short gcpadmap[];
 //extern unsigned short padmap[4];
 
-char sramcomment[2][32] = { {"Snes9x GX 003 SRAM"}, {"Savegame"} };
+char sramcomment[2][32] = { {"Snes9x GX 004 SRAM"}, {"Savegame"} };
 
 /****************************************************************************
  * Prepare Memory Card SRAM Save Data

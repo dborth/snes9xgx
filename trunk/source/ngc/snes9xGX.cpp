@@ -198,6 +198,8 @@ extern int FrameTimer;
 extern long long prev;
 extern unsigned int timediffallowed;
 
+extern void fat_enable_readahead_all();
+
 /****************************************************************************
  * Controller Functions
  *
@@ -298,7 +300,9 @@ decodepad (int pad)
   u32 jp, wp;
   float t;
   float mag = 0;
+  float mag2 = 0;
   u16 ang = 0;
+  u16 ang2 = 0;
   u32 exp_type;
 
   /*** Do analogue updates ***/
@@ -306,7 +310,7 @@ decodepad (int pad)
   y = PAD_StickY (pad);
   jp = PAD_ButtonsHeld (pad);
 #ifdef HW_RVL
-  exp_type = wpad_get_analogues(pad, &mag, &ang);	// get joystick info from wii expansions
+  exp_type = wpad_get_analogues(pad, &mag, &ang, &mag2, &ang2);	// get joystick info from wii expansions
   wp = WPAD_ButtonsHeld (pad);	// wiimote
 #else
   wp = 0;
@@ -438,7 +442,12 @@ NGCReportButtons ()
 	s8 gc_py = PAD_SubStickY (0);
 	u16 gc_pb = PAD_ButtonsHeld (0);
 #ifdef HW_RVL
-	u32 wm_pb = WPAD_ButtonsHeld (0);	// wiimote
+	float mag1 = 0;
+	float mag2 = 0;
+	u16 ang1 = 0;
+	u16 ang2 = 0;
+	u32 wm_pb = WPAD_ButtonsHeld (0);	// wiimote / expansion button info
+	wpad_get_analogues(0, &mag1, &ang1, &mag2, &ang2);		// get joystick info from wii expansions
 #endif
 	
 	/*** Check for video zoom ***/
@@ -446,9 +455,19 @@ NGCReportButtons ()
 	{
 		if (gc_py < -18 || gc_py > 18)
 			zoom ((float) gc_py / -18);
+#ifdef HW_RVL
+		if ( mag2>0.2 && (ang2>340 || ang2<20) )	// classic rjs up
+			zoom ((float) mag2 / -0.2);
+		if ( mag2>0.2 && (ang2>160 && ang2<200) )	// classic rjs down
+			zoom ((float) mag2 / 0.2);
+#endif
 	}
 
-    Settings.TurboMode = (gc_px > 70);
+    Settings.TurboMode = ( (gc_px > 70) 
+#ifdef HW_RVL
+							|| (mag2>JOY_THRESHOLD && ang2>75 && ang2<115) 
+#endif
+							);	// RIGHT on c-stick and on classic ctrlr right joystick
 
 	/*** Check for menu:
 	       CStick left
@@ -512,9 +531,9 @@ NGCReportButtons ()
  * gets the analogue stick magnitude and angle values (
  * from classic or nunchuk expansions)					     
  ****************************************************************************/
-u32 wpad_get_analogues(int pad, float* mag, u16* ang)
+u32 wpad_get_analogues(int pad, float* mag1, u16* ang1, float* mag2, u16* ang2)
 {
-	*mag = *ang = 0;
+	*mag1 = *ang1 = *mag2 = *ang2 = 0;
 	u32 exp_type = 0;
 #ifdef HW_RVL
 	struct expansion_t exp;
@@ -525,13 +544,15 @@ u32 wpad_get_analogues(int pad, float* mag, u16* ang)
 		WPAD_Expansion(pad, &exp);	// expansion connected. get info
 		if (exp_type == WPAD_EXP_CLASSIC)
 		{
-			*ang = exp.classic.ljs.ang;	// left cc joystick
-			*mag = exp.classic.ljs.mag;
+			*ang1 = exp.classic.ljs.ang;	// left cc joystick
+			*mag1 = exp.classic.ljs.mag;
+			*ang2 = exp.classic.rjs.ang;	// right cc joystick
+			*mag2 = exp.classic.rjs.mag;
 		}
 		else if (exp_type == WPAD_EXP_NUNCHUK)
 		{
-			*ang = exp.nunchuk.js.ang;	// nunchuk joystick
-			*mag = exp.nunchuk.js.mag;
+			*ang1 = exp.nunchuk.js.ang;	// nunchuk joystick
+			*mag1 = exp.nunchuk.js.mag;
 		}
 	}
 #endif
@@ -677,8 +698,8 @@ main ()
 	
 	/*** Initialize libFAT and SD cards ***/
 	fatInitDefault();
-	//sdio_Startup();				// wii front sd
-	//sdgecko_initIODefault();	// sd gecko
+	//fatInit(8192, false);
+	//fat_enable_readahead_all();
 	
 
 	/*** Initialize DVD subsystem ***/

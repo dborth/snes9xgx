@@ -31,7 +31,7 @@ extern unsigned int wmpadmap[];
 extern unsigned int ccpadmap[];
 extern unsigned int ncpadmap[];
 
-#define PREFSVERSTRING "Snes9x GX 003 Prefs"
+#define PREFSVERSTRING "Snes9x GX 004 Prefs"
 
 char prefscomment[2][32] = { {PREFSVERSTRING}, {"Preferences"} };
 
