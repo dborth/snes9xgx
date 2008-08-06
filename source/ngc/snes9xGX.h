@@ -160,8 +160,8 @@
 #include "snes9x.h"
 
 // FIX: these are unused, but could be... must also change "freezecomment", PREFSVERSTRING, and "sramcomment"
-#define GCVERSION "002"
-#define GCVERSIONSTRING "Snes9x 1.5 v002"
+//#define GCVERSION "002"
+//#define GCVERSIONSTRING "Snes9x 1.5 v002"
 
 #define NOTSILENT 0
 #define SILENT 1
@@ -204,7 +204,7 @@ END_EXTERN_C
 		3   SD card in slot B
 		4   SMB share         ***/
 #ifndef QUICK_SAVE_SLOT
-#define QUICK_SAVE_SLOT 1
+#define QUICK_SAVE_SLOT 2	// save to SD
 #endif
 
 /*** default SMB settings ***/

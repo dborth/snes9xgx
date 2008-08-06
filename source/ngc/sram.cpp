@@ -28,7 +28,7 @@ extern int padcal;
 extern unsigned short gcpadmap[];
 //extern unsigned short padmap[4];
 
-char sramcomment[2][32] = { {"Snes9x GX 2.0.1b8 SRAM"}, {"Savegame"} };
+char sramcomment[2][32] = { {"Snes9x GX 003 SRAM"}, {"Savegame"} };
 
 /****************************************************************************
  * Prepare Memory Card SRAM Save Data
@@ -140,7 +140,7 @@ decodesavedata (int readsize)
   // Check for exportable format sram - it has the sram comment at the start
   memcpy (sramcomment, savebuffer, 32);
 
-  if ( strncmp (sramcomment, "Snes9x GX 2.0", 13) == 0 )
+  if ( (strncmp (sramcomment, "Snes9x GX 2.0", 13) == 0) || (strncmp (sramcomment, "Snes9x GX 00", 12) == 0) )	// version 2.0.XX or 00x
   {
     offset = 64;
     
@@ -243,7 +243,7 @@ void quickLoadSRAM (bool8 silent)
 	  break;
 	case CARD_SLOTA+2:
 	case CARD_SLOTB+2:
-	  LoadSRAMFromSD(QUICK_SAVE_SLOT-2, silent);
+	  LoadSRAMFromSD(silent);
 	  break;
 	case CARD_SLOTA+4:
 	  LoadSRAMFromSMB(SILENT);
@@ -261,7 +261,7 @@ void quickSaveSRAM (bool8 silent)
 	  break;
 	case CARD_SLOTA+2:
 	case CARD_SLOTB+2:
-	  SaveSRAMToSD(QUICK_SAVE_SLOT-2, silent);
+	  SaveSRAMToSD(silent);
 	  break;
 	case CARD_SLOTA+4:
 	  SaveSRAMToSMB(SILENT);

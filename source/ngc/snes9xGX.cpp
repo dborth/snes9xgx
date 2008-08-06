@@ -229,7 +229,7 @@ unsigned int wmpadmap[] = { WPAD_BUTTON_B, WPAD_BUTTON_2,
 };
 /*** Classic Controller Padmap ***/
 unsigned int ccpadmap[] = { WPAD_CLASSIC_BUTTON_A, WPAD_CLASSIC_BUTTON_B,
-  WPAD_CLASSIC_BUTTON_Y, WPAD_CLASSIC_BUTTON_X,
+  WPAD_CLASSIC_BUTTON_X, WPAD_CLASSIC_BUTTON_Y,
   WPAD_CLASSIC_BUTTON_FULL_L, WPAD_CLASSIC_BUTTON_FULL_R,
   WPAD_CLASSIC_BUTTON_MINUS, WPAD_CLASSIC_BUTTON_PLUS,
   WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN,
@@ -399,7 +399,34 @@ decodepad (int pad)
     }
 
 }
+/****************************************************************************
+ * setFrameTimerMethod()
+ * change frametimer method depending on whether ROM is NTSC or PAL					     
+ ****************************************************************************/
+extern u8 vmode_60hz;
+int timerstyle;
 
+void setFrameTimerMethod()
+{
+	/*
+	Set frametimer method 
+	(timerstyle: 0=NTSC vblank, 1=PAL int timer) 
+	*/
+	if ( Settings.PAL ) {
+		if(vmode_60hz == 1)
+			timerstyle = 1;
+		else
+			timerstyle = 0;
+		//timediffallowed = Settings.FrameTimePAL;
+	} else {
+		if(vmode_60hz == 1)
+			timerstyle = 0;
+		else
+			timerstyle = 1;
+		//timediffallowed = Settings.FrameTimeNTSC;
+	}
+	return;
+}
 /****************************************************************************
  * NGCReportButtons
  * Called on each rendered frame					     
@@ -445,7 +472,7 @@ NGCReportButtons ()
         
         if ( GCSettings.AutoSave == 1 )
         {
-            if ( WaitPromptChoice ((char*)"Save SRAM?", (char*)"Don't Save", (char*)"Save") )
+            //if ( WaitPromptChoice ((char*)"Save SRAM?", (char*)"Don't Save", (char*)"Save") )
                 quickSaveSRAM ( SILENT );
         }
         else if ( GCSettings.AutoSave == 2 )
@@ -465,6 +492,11 @@ NGCReportButtons ()
         mainmenu ();
         FrameTimer = 0;
         ConfigRequested = 0;
+		
+		setFrameTimerMethod(); 	// set frametimer method every time a ROM is loaded
+		
+			// auto load freeze/sram?
+		
     }
     else
     {
@@ -486,7 +518,7 @@ u32 wpad_get_analogues(int pad, float* mag, u16* ang)
 	u32 exp_type = 0;
 #ifdef HW_RVL
 	struct expansion_t exp;
-	memset( &exp, 0, sizeof(exp) );	// FIX: necessary? we only look at the struct if an expansion is connected...
+	memset( &exp, 0, sizeof(exp) );
 	
 	if ( WPAD_Probe( pad, &exp_type) == 0)	// check wiimote and expansion status (first if wiimote is connected & no errors)
 	{
@@ -597,8 +629,6 @@ SetDefaultButtonMap ()
  ****************************************************************************/
 /* Eke-Eke: initialize frame Sync */
 extern void S9xInitSync();
-extern u8 vmode_60hz;
-int timerstyle;
 
 void
 emulate ()
@@ -607,24 +637,8 @@ emulate ()
 	S9xSetSoundMute (TRUE);
 	AudioStart ();
 	S9xInitSync();
-	
-	/*
-	Set frametimer method 
-	(timerstyle: 0=NTSC vblank, 1=PAL int timer) 
-	*/
-	if ( Settings.PAL ) {
-		if(vmode_60hz == 1)
-			timerstyle = 1;
-		else
-			timerstyle = 0;
-		//timediffallowed = Settings.FrameTimePAL;
-	} else {
-		if(vmode_60hz == 1)
-			timerstyle = 0;
-		else
-			timerstyle = 1;
-		//timediffallowed = Settings.FrameTimeNTSC;
-	}
+
+	setFrameTimerMethod();	// also called in NGCReportButtons() 
 
 	while (1)
 	{

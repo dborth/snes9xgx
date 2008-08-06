@@ -47,9 +47,7 @@ extern unsigned char savebuffer[];
 static int bufoffset;
 static char membuffer[MEMBUFFER];
 
-char freezecomment[2][32] = { {"Snes9x GX 2.0.1b8 Freeze"}, {"Freeze"} };
-
-extern char rootSDdir[MAXPATHLEN];
+char freezecomment[2][32] = { {"Snes9x GX 003 Freeze"}, {"Freeze"} };
 
 
 /**
@@ -153,10 +151,10 @@ NGCFreezeGame (int where, bool8 silent)
         /*** Freeze to SDCard in slot A or slot B ***/
 
 #ifdef SDUSE_LFN
-        sprintf (filename, "%s/%s/%s.frz", rootSDdir, SNESSAVEDIR, Memory.ROMName);
+        sprintf (filename, "%s/%s/%s.frz", ROOTSDDIR, SNESSAVEDIR, Memory.ROMName);
 #else
         /*** Until we have LFN on SD ... ***/
-        sprintf (filename, "%s/%s/%08x.frz", rootSDdir, SNESSAVEDIR, Memory.ROMCRC32);
+        sprintf (filename, "%s/%s/%08x.frz", ROOTSDDIR, SNESSAVEDIR, Memory.ROMCRC32);
 #endif
     }
     else
@@ -182,7 +180,8 @@ NGCFreezeGame (int where, bool8 silent)
         
         if (smbfile)
         {
-            ShowAction ((char*) "Saving freeze game...");
+			if (!silent)
+				ShowAction ((char*) "Saving freeze game...");
             
             len = bufoffset;
             offset = 0;
@@ -222,7 +221,8 @@ NGCFreezeGame (int where, bool8 silent)
         
         if (handle > 0)
         {
-            ShowAction ((char*) "Saving freeze game...");
+			if (!silent)
+				ShowAction ((char*) "Saving freeze game...");
             
             len = fwrite (membuffer, 1, bufoffset, handle);
             fclose (handle);
@@ -238,13 +238,14 @@ NGCFreezeGame (int where, bool8 silent)
         }
         else
         {
-            sprintf(msg, "Couldn't save to %s/%s/", rootSDdir, SNESSAVEDIR);
+            sprintf(msg, "Couldn't save to %s/%s/", ROOTSDDIR, SNESSAVEDIR);
             WaitPrompt (msg);
         }
     }
     else  /*** MC in slot A or slot B ***/
     {
-        ShowAction ((char*) "Saving freeze game...");
+		if (!silent)
+			ShowAction ((char*) "Saving freeze game...");
         
         ClearSaveBuffer ();
         
@@ -378,10 +379,10 @@ NGCUnfreezeGame (int from, bool8 silent)
     {
         
 #ifdef SDUSE_LFN
-        sprintf (filename, "%s/%s/%s.frz", rootSDdir, SNESSAVEDIR, Memory.ROMName);
+        sprintf (filename, "%s/%s/%s.frz", ROOTSDDIR, SNESSAVEDIR, Memory.ROMName);
 #else
         /*** From SDCard ***/
-        sprintf (filename, "%s/%s/%08x.frz", rootSDdir, SNESSAVEDIR, Memory.ROMCRC32);
+        sprintf (filename, "%s/%s/%08x.frz", ROOTSDDIR, SNESSAVEDIR, Memory.ROMCRC32);
 #endif
         
         handle = fopen (filename, "rb");

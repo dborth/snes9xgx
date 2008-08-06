@@ -31,7 +31,7 @@ extern unsigned int wmpadmap[];
 extern unsigned int ccpadmap[];
 extern unsigned int ncpadmap[];
 
-#define PREFSVERSTRING "Snes9x GX 002 Prefs"
+#define PREFSVERSTRING "Snes9x GX 003 Prefs"
 
 char prefscomment[2][32] = { {PREFSVERSTRING}, {"Preferences"} };
 
@@ -125,7 +125,7 @@ void quickLoadPrefs (bool8 silent)
 		
 		case CARD_SLOTA+2:
 		case CARD_SLOTB+2:
-			LoadPrefsFromSD(QUICK_SAVE_SLOT-2, silent);
+			LoadPrefsFromSD(silent);
 			break;
 		
 		case CARD_SLOTA+4:
@@ -144,7 +144,7 @@ void quickSavePrefs (bool8 silent)
 			break;
 		case CARD_SLOTA+2:
 		case CARD_SLOTB+2:
-			SavePrefsToSD(QUICK_SAVE_SLOT-2, silent);
+			SavePrefsToSD(silent);
 			break;
 		case CARD_SLOTA+4:
 			SavePrefsToSMB(silent);

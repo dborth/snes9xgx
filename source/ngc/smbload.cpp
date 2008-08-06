@@ -18,7 +18,7 @@ extern "C"
 {
 #include "smb.h"
 }
-#include "ngcunzip.h"
+#include "unzip.h"
 #include "memmap.h"
 #include "video.h"
 #include "ftfont.h"
@@ -382,7 +382,9 @@ SaveSRAMToSMB (bool8 silent)
     int offset;
     
     sprintf (filepath, "%s\\%s.srm", SNESSAVEDIR, Memory.ROMName);
-    ShowAction ((char*) "Saving SRAM to SMB...");
+	
+	if (!silent)
+		ShowAction ((char*) "Saving SRAM to SMB...");
     
     datasize = prepareEXPORTsavedata ();
 
@@ -436,7 +438,9 @@ SavePrefsToSMB (bool8 silent)
     int offset;
     
     sprintf (filepath, "%s\\%s", SNESSAVEDIR, PREFS_FILE_NAME);
-    ShowAction ((char*) "Saving preferences to SMB...");
+	
+	if (!silent)
+		ShowAction ((char*) "Saving preferences to SMB...");
     
     datasize = preparePrefsData ();
 

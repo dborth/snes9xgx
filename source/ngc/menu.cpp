@@ -30,7 +30,7 @@
 #include "video.h"
 #include "mcsave.h"
 #include "filesel.h"
-#include "ngcunzip.h"
+#include "unzip.h"
 #include "smbload.h"
 #include "mcsave.h"
 #include "sdload.h"
@@ -43,7 +43,7 @@
 #include "button_mapping.h"
 #include "ftfont.h"
 
-extern void DrawMenu (char items[][20], char *title, int maxitems, int selected);
+extern void DrawMenu (char items[][20], char *title, int maxitems, int selected, int fontsize);
 
 #define PSOSDLOADID 0x7c6000a6
 extern int menu;
@@ -181,7 +181,7 @@ LoadManager ()
         {
 		    case 0:
 				/*** Load from SD ***/
-                quit = OpenSD (0);
+                quit = OpenSD ();
                 break;
 				
             case 1:
@@ -208,14 +208,14 @@ LoadManager ()
 	if ( retval == 1 ) // if ROM was loaded, load the SRAM & settings
 	{
 		if ( GCSettings.AutoLoad == 1 )
+		{
 			quickLoadSRAM ( SILENT );
+			S9xSoftReset();	// reset after loading sram
+		}
 		else if ( GCSettings.AutoLoad == 2 )
 		{
-			/*** load SRAM first in order to get joypad config ***/
-			quickLoadSRAM ( SILENT );
 			quickLoadFreeze ( SILENT );
 		}
-		S9xSoftReset();	// reset after loading sram
 	}
     
     menu = oldmenu;
@@ -250,23 +250,23 @@ SaveManager ()
     {
         if ( isWii )   /* Wii menu */
         {
-            ret = RunMenu (savemenuwii, savecountwii, (char*)"Save Manager");
+            ret = RunMenu (savemenuwii, savecountwii, (char*)"SRAM Manager");
             if (ret >= savecountwii-1)
                 ret = savecount-1;
         }
         else           /* Gamecube menu */
-            ret = RunMenu (savemenu, savecount, (char*)"Save Manager");
+            ret = RunMenu (savemenu, savecount, (char*)"SRAM Manager");
 
         switch (ret)
         {
 		    case 0:
                 /*** Save to SD***/
-                SaveSRAMToSD (0, NOTSILENT);
+                SaveSRAMToSD (NOTSILENT);
                 break;
             
             case 1:
                 /*** Load from SD***/
-                LoadSRAMFromSD (0, NOTSILENT);
+                LoadSRAMFromSD (NOTSILENT);
                 break;
             
             case 2:
@@ -448,6 +448,7 @@ GetInput (u16 ctrlr_type)
 {
 	u32 exp_type, pressed;
 	pressed=0;
+	s8 gc_px = 0;
 	
 	while( PAD_ButtonsHeld(0)
 #ifdef HW_RVL
@@ -459,13 +460,14 @@ GetInput (u16 ctrlr_type)
 	{
 		VIDEO_WaitVSync();
 		// get input based on controller type
-		//if (ctrlr_type == CTRLR_GCPAD) 
-		//{
+		if (ctrlr_type == CTRLR_GCPAD) 
+		{
 			pressed = PAD_ButtonsHeld (0);
-		//} 
+			gc_px = PAD_SubStickX (0);
+		} 
 #ifdef HW_RVL
-		//else 
-		//{	
+		else 
+		{	
 		//	if ( WPAD_Probe( 0, &exp_type) == 0)	// check wiimote and expansion status (first if wiimote is connected & no errors)
 		//	{
 				pressed = WPAD_ButtonsHeld (0);
@@ -473,8 +475,11 @@ GetInput (u16 ctrlr_type)
 		//		if (ctrlr_type != CTRLR_WIIMOTE && exp_type != ctrlr_type+1)	// if we need input from an expansion, and its not connected...
 		//			pressed = 0;
 		//	}
-		//}
+		}
 #endif
+		/*** check for exit sequence (c-stick left OR home button) ***/
+		if ( (gc_px < -70) || (pressed & WPAD_BUTTON_HOME) || (pressed & WPAD_CLASSIC_BUTTON_HOME) )
+			return 0;
 	}	// end while
 	while( pressed == (PAD_ButtonsHeld(0) 
 #ifdef HW_RVL
@@ -485,19 +490,23 @@ GetInput (u16 ctrlr_type)
 	return pressed;
 }	// end GetInput()
 
-int cfg_text_count = 4;
+int cfg_text_count = 7;
 char cfg_text[][20] = {
-"                   ",
+"Remapping          ",
 "Press Any Button",
 "on the",
-"       "	// identify controller
+"       ",	// identify controller
+"                   ",
+"Press C-Left or",
+"Home to exit"
 };
 
 u32
 GetButtonMap(u16 ctrlr_type, char* btn_name)
 {
 	u32 pressed, previous;
-	char title[20];
+	char temp[20] = "";
+	int k;
 	pressed = 0; previous = 1;
 	
 	switch (ctrlr_type) {
@@ -515,9 +524,13 @@ GetButtonMap(u16 ctrlr_type, char* btn_name)
 			break;
 	}; 
 	
-	sprintf (cfg_text[0], "Remapping %s", btn_name);	// note which button we are remapping
+	/*** note which button we are remapping ***/
+	sprintf (temp, (char*)"Remapping ");
+	for (k=0; k<9-strlen(btn_name) ;k++) strcat(temp, " "); // add whitespace padding to align text
+	strncat (temp, btn_name, 9);		// snes button we are remapping
+	strncpy (cfg_text[0], temp, 19);	// copy this all back to the text we wish to display
 	
-	DrawMenu(&cfg_text[0], title, cfg_text_count, 1);	// display text
+	DrawMenu(&cfg_text[0], NULL, cfg_text_count, 1);	// display text
 	
 //	while (previous != pressed && pressed == 0);	// get two consecutive button presses (which are the same)
 //	{
@@ -562,7 +575,7 @@ ConfigureButtons (u16 ctrlr_type)
 	
 	unsigned int* currentpadmap;
 	char temp[20] = "";
-	int i, j;
+	int i, j, k;
 	
 	/*** Update Menu Title (based on controller we're configuring) ***/
 	switch (ctrlr_type) {
@@ -591,21 +604,24 @@ ConfigureButtons (u16 ctrlr_type)
 		{
 			// get current padmap button name to display
 			for ( j=0; 
+					j < ctrlr_def[ctrlr_type].num_btns &&
 					currentpadmap[i] != ctrlr_def[ctrlr_type].map[j].btn	// match padmap button press with button names
-					&& j < ctrlr_def[ctrlr_type].num_btns
 				; j++ );
 			
 			memset (temp, 0, sizeof(temp));
 			strncpy (temp, cfg_btns_menu[i], 12);	// copy snes button information
 			if (currentpadmap[i] == ctrlr_def[ctrlr_type].map[j].btn)		// check if a match was made
+			{
+				for (k=0; k<7-strlen(ctrlr_def[ctrlr_type].map[j].name) ;k++) strcat(temp, " "); // add whitespace padding to align text
 				strncat (temp, ctrlr_def[ctrlr_type].map[j].name, 6);		// update button map display
+			}
 			else
 				strcat (temp, (char*)"---");								// otherwise, button is 'unmapped'
 			strncpy (cfg_btns_menu[i], temp, 19);	// move back updated information
 
 		}
 	
-		ret = RunMenu (cfg_btns_menu, cfg_btns_count, menu_title);
+		ret = RunMenu (cfg_btns_menu, cfg_btns_count, menu_title, 18);
 		
 		switch (ret)
 		{
@@ -627,7 +643,8 @@ ConfigureButtons (u16 ctrlr_type)
 				strncpy(temp, cfg_btns_menu[ret], 6);			// get the name of the snes button we're changing
 				pressed = GetButtonMap(ctrlr_type, temp);	// get a button selection from user
 				// FIX: check if input is valid for this controller
-				currentpadmap[ret] = pressed;	// update mapping
+				if (pressed != 0)	// check if a the button was configured, or if the user exited.
+					currentpadmap[ret] = pressed;	// update mapping
 				break;
 
 			case -1: /*** Button B ***/
