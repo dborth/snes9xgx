@@ -141,6 +141,7 @@
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
 
+#define _GLOBALS_CPP
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -168,7 +169,7 @@
 
 #include "spc7110.h"
 
-START_EXTERN_C
+//START_EXTERN_C
 char String[513];
 
 struct Missing missing;
@@ -210,12 +211,12 @@ uint8 *RegRAM = NULL;
 
 CMemory Memory;
 
-struct SSNESGameFixes SNESGameFixes;
+SSNESGameFixes SNESGameFixes;
 
 unsigned char OpenBus = 0;
 
 
-END_EXTERN_C
+//END_EXTERN_C
 
 #ifndef ZSNES_FX
 struct FxInit_s SuperFX;

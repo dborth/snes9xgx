@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <wiiuse/wpad.h>
 #include "snes9x.h"
 #include "memmap.h"
 //#include "debug.h"
@@ -40,7 +42,7 @@ extern unsigned int SMBTimer;
 unsigned int *xfb[2] = { NULL, NULL };		/*** Double buffered ***/
 int whichfb = 0;				/*** Switch ***/
 GXRModeObj *vmode;				/*** General video mode ***/
-int screenheight = 480;
+int screenheight;
 
 /*** GX ***/
 #define TEX_WIDTH 512
@@ -54,6 +56,8 @@ static Mtx view;
 int vwidth, vheight, oldvwidth, oldvheight;
 
 u32 FrameTimer = 0;
+
+u8 vmode_60hz = 0;
 
 #define HASPECT 76
 #define VASPECT 54
@@ -259,6 +263,17 @@ StartGX ()
 }
 
 /****************************************************************************
+ * UpdatePads
+ *
+ * called by postRetraceCallback in InitGCVideo - scans gcpad and wpad
+ ****************************************************************************/
+void UpdatePadsCB()
+{
+	WPAD_ScanPads();
+	PAD_ScanPads();
+}
+ 
+/****************************************************************************
  * InitGCVideo
  *
  * This function MUST be called at startup.
@@ -276,7 +291,7 @@ InitGCVideo ()
     
     VIDEO_Init ();
     PAD_Init ();
-    DVD_Init ();
+    //DVD_Init ();
     
     /*** Check to see if this is a GC or a Wii ***/    
 //    int driveid = dvd_driveid();
@@ -293,10 +308,31 @@ InitGCVideo ()
         ARAMPut ((char *) romptr, (char *) AR_SNESROM, ARAM_ROMSIZE);
     }
     
-    /*
-    * Always use NTSC mode - this works on NTSC and PAL, GC and Wii
-    */
-    vmode = &TVNtsc480IntDf;    
+	/*
+	* Always use NTSC mode - this works on NTSC and PAL, GC and Wii
+	vmode = &TVNtsc480IntDf;    
+	*/
+	
+	vmode = VIDEO_GetPreferredMode(NULL);
+
+	switch(vmode->viTVMode)
+	{
+		case VI_TVMODE_PAL_DS:
+		case VI_TVMODE_PAL_INT:
+			vmode_60hz = 0;
+			break;
+
+		case VI_TVMODE_EURGB60_PROG:
+		case VI_TVMODE_EURGB60_DS:
+		case VI_TVMODE_NTSC_DS:
+		case VI_TVMODE_NTSC_INT:
+		case VI_TVMODE_NTSC_PROG:
+		case VI_TVMODE_MPAL_INT:
+		default:
+			vmode_60hz = 1;
+			break;
+	}
+	
     VIDEO_Configure (vmode);
     
     screenheight = vmode->xfbHeight;
@@ -304,14 +340,13 @@ InitGCVideo ()
     /*
     * Allocate the video buffers
     */
-    xfb[0] = (unsigned int *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
-    xfb[1] = (unsigned int *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
+    xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
+    xfb[1] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
     
     /*
     * A console is always useful while debugging.
     */
-    console_init (xfb[0], 20, 64, vmode->fbWidth, vmode->xfbHeight,
-    vmode->fbWidth * 2);
+    console_init (xfb[0], 20, 64, vmode->fbWidth, vmode->xfbHeight, vmode->fbWidth * 2);
     
     /*
     * Clear framebuffers etc.
@@ -323,15 +358,15 @@ InitGCVideo ()
     /*
     * Let libogc populate manage the PADs for us
     */
-    VIDEO_SetPostRetraceCallback (PAD_ScanPads);
-    VIDEO_SetPreRetraceCallback (copy_to_xfb);
+    //VIDEO_SetPostRetraceCallback ((VIRetraceCallback)PAD_ScanPads);
+	VIDEO_SetPostRetraceCallback ((VIRetraceCallback)UpdatePadsCB);
+    VIDEO_SetPreRetraceCallback ((VIRetraceCallback)copy_to_xfb);
     VIDEO_SetBlack (FALSE);
     VIDEO_Flush ();
     VIDEO_WaitVSync ();
     if (vmode->viTVMode & VI_NON_INTERLACE)
     VIDEO_WaitVSync ();
     
-    //  DVD_Init ();
     copynow = GX_FALSE;
     StartGX ();
     
@@ -348,11 +383,11 @@ InitGCVideo ()
  * Drawing screen 
  ****************************************************************************/
 void
-clearscreen ()
+clearscreen (int colour)
 {
   whichfb ^= 1;
-  ARAMFetch ((char *) xfb[whichfb], (char *) AR_BACKDROP,
-	     640 * screenheight * 2);
+  //ARAMFetch ((char *) xfb[whichfb], (char *) AR_BACKDROP, 640 * screenheight * 2);			// FIX
+  VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], colour);
 }
 
 void

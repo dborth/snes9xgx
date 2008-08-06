@@ -409,9 +409,11 @@ typedef struct{
 	uint8 _5A22;
 } SnesModel;
 
+#ifndef _GLOBALS_CPP
 extern SnesModel* Model;
 extern SnesModel M1SNES;
 extern SnesModel M2SNES;
+#endif
 
 #define MAX_5C77_VERSION 0x01
 #define MAX_5C78_VERSION 0x03

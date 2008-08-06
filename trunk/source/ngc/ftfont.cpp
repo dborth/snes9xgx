@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <wiiuse/wpad.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include "video.h"
@@ -75,6 +76,7 @@ FT_Init ()
     return 1;
 
   setfontsize (16);
+  setfontcolour (0xff, 0xff, 0xff);
 
   slot = face->glyph;
 
@@ -220,22 +222,23 @@ licence ()
   else
     ypos += 24;
 
+  setfontsize (16);					// FIX
   setfontcolour (0x00, 0x00, 0x00);
 
-  DrawText (-1, ypos += 40, "Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
+  DrawText (-1, ypos += 40, (char*)"Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
 
-  DrawText (-1, ypos += 40, "This is free software, and you are welcome to");
-  DrawText (-1, ypos += 20, "redistribute it under the conditions of the");
-  DrawText (-1, ypos += 20, "GNU GENERAL PUBLIC LICENSE Version 2");
+  DrawText (-1, ypos += 40, (char*)"This is free software, and you are welcome to");
+  DrawText (-1, ypos += 20, (char*)"redistribute it under the conditions of the");
+  DrawText (-1, ypos += 20, (char*)"GNU GENERAL PUBLIC LICENSE Version 2");
   DrawText (-1, ypos +=
-	    20, "Additionally, the developers of this port disclaims");
+	    20, (char*)"Additionally, the developers of this port disclaims");
   DrawText (-1, ypos +=
-	    20, "all copyright interests in the Nintendo GameCube");
+	    20, (char*)"all copyright interests in the Nintendo GameCube");
   DrawText (-1, ypos +=
-	    20, "porting code. You are free to use it as you wish");
+	    20, (char*)"porting code. You are free to use it as you wish");
 
-  DrawText (-1, ypos += 40, "Developed with DevkitPPC and libOGC");
-  DrawText (-1, ypos += 20, "http://www.devkitpro.org");
+  DrawText (-1, ypos += 40, (char*)"Developed with DevkitPPC and libOGC");
+  DrawText (-1, ypos += 20, (char*)"http://www.devkitpro.org");
 
 }
 
@@ -377,8 +380,8 @@ legal ()
 void
 WaitButtonA ()
 {
-  while (PAD_ButtonsDown (0) & PAD_BUTTON_A);
-  while (!(PAD_ButtonsDown (0) & PAD_BUTTON_A));
+  while ( (PAD_ButtonsDown (0) & PAD_BUTTON_A) || (WPAD_ButtonsDown(0) & WPAD_BUTTON_A) );
+  while (!(PAD_ButtonsDown (0) & PAD_BUTTON_A) && !(WPAD_ButtonsDown(0) & WPAD_BUTTON_A) );
 }
 
 /**
@@ -387,16 +390,17 @@ WaitButtonA ()
 int
 WaitButtonAB ()
 {
-    int btns;
+    u32 gc_btns, wm_btns;
   
-    while ( (PAD_ButtonsDown (0) & (PAD_BUTTON_A | PAD_BUTTON_B)) );
+    while ( (PAD_ButtonsDown (0) & (PAD_BUTTON_A | PAD_BUTTON_B)) || (WPAD_ButtonsDown(0) & (WPAD_BUTTON_A | WPAD_BUTTON_B)) );
   
     while ( TRUE )
     {
-        btns = PAD_ButtonsDown (0);
-        if ( btns & PAD_BUTTON_A )
+        gc_btns = PAD_ButtonsDown (0);
+		wm_btns = WPAD_ButtonsDown (0);
+        if ( (gc_btns & PAD_BUTTON_A) || (wm_btns & WPAD_BUTTON_A) )
             return 1;
-        else if ( btns & PAD_BUTTON_B )
+        else if ( (gc_btns & PAD_BUTTON_B) || (wm_btns & WPAD_BUTTON_B) )
             return 0;
     }
 }
@@ -417,7 +421,7 @@ WaitPrompt (char *msg)
   clearscreen ();
   DrawText (-1, ypos, msg);
   ypos += 30;
-  DrawText (-1, ypos, "Press A to continue");
+  DrawText (-1, ypos, (char*)"Press A to continue");
   showscreen ();
   WaitButtonA ();
 }
@@ -531,7 +535,7 @@ RunMenu (char items[][20], int maxitems, char *title)
 {
     int redraw = 1;
     int quit = 0;
-    short p;
+    int p, wp;
     int ret = 0;
     signed char a;
     
@@ -545,29 +549,30 @@ RunMenu (char items[][20], int maxitems, char *title)
         }
         
         p = PAD_ButtonsDown (0);
+		wp = WPAD_ButtonsDown (0);
         a = PAD_StickY (0);
         
         /*** Look for up ***/
-        if ((p & PAD_BUTTON_UP) || (a > 70))
+        if ((p & PAD_BUTTON_UP) || (wp & WPAD_BUTTON_UP) || (a > 70))
         {
             redraw = 1;
             menu--;
         }
         
         /*** Look for down ***/
-        if ((p & PAD_BUTTON_DOWN) || (a < -70))
+        if ((p & PAD_BUTTON_DOWN) || (wp & WPAD_BUTTON_DOWN) || (a < -70))
         {
             redraw = 1;
             menu++;
         }
         
-        if (p & PAD_BUTTON_A)
+        if ((p & PAD_BUTTON_A) || (wp & WPAD_BUTTON_A))
         {
             quit = 1;
             ret = menu;
         }
         
-        if (p & PAD_BUTTON_B)
+        if ((p & PAD_BUTTON_B) || (wp & WPAD_BUTTON_B))
         {
             quit = -1;
             ret = -1;
@@ -580,10 +585,10 @@ RunMenu (char items[][20], int maxitems, char *title)
             menu = maxitems - 1;
     }
     
-    if (PAD_ButtonsDown (0) & PAD_BUTTON_B)
+    if ((PAD_ButtonsDown(0) & PAD_BUTTON_B) || (WPAD_ButtonsDown(0) & WPAD_BUTTON_B))
     {
         /*** Wait for B button to be released before proceeding ***/
-        while (PAD_ButtonsDown (0) & PAD_BUTTON_B)
+        while ((PAD_ButtonsDown(0) & PAD_BUTTON_B) || (WPAD_ButtonsDown(0) & WPAD_BUTTON_B))
             VIDEO_WaitVSync();
         return -1;
     }

@@ -31,7 +31,15 @@ is not based on any previous SNES emulators that have existed for the
 GameCube. You can get more information on SNES9X here from the below URL.
 http://snes9x.ipherswipsite.com/
 
-[What's New 2.0.1b8]
+[What's New 001]
+- compiles with latest devkitppc (r15)
+- now uses libfat (can use front sd slot on wii)
+- updated menu items a bit
+- wiimote support
+- fixed: autoload sram/freeze
+- fixed: rom plays immediately after loading
+
+[What Was New 2.0.1b8]
 * Added: SD slot B options for freezes, sram and loading of roms
 * Changed: SMB options no longer displayed in menus when run on a Wii
 * Changed: Game auto resumes running after resetting when choosing the "Reset
@@ -186,6 +194,27 @@ how to do any of that. A good source for information on these topics is the
 tehskeen forums:
 
     http://www.tehskeen.com/forums/
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                   WIIMOTE CONTROLLER MAPPING                  ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+Wiimote		SNES
+---------------------
+  1		  Y
+  2		  B
+  A		  A
+  B		  X
+  -		SELECT
+  +		START
+HOME	    Emulator menu
+		 LT
+		 RT
+
+This configuration allows you to play with the wiimote held sideways.
+
+NOTE: snes Left Trigger and Right Trigger are not mapped.
+You can change the mapping in ngc/snes9xGX.cpp (search 'wmpadmap') and recompile.
+
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                        PARTIAL PKZIP SUPPORT                  ·oø×O0|
@@ -307,7 +336,7 @@ TBD
                  GameCube Port 2.0 WIP6 and earlier - SoftDev
                  Additional improvements to 2.0 WIP6 - eke-eke
                    GameCube 2.0.1bx enhancements - crunchy2
-                      >1.36 GB DVD reading on Wii - svpe
+                         v001 updates - michniewski
                         GX - http://www.gc-linux.org
                              Font - Qoob Team
                              libogc - Shagkur

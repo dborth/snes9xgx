@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wiiuse/wpad.h>
 #include "snes9x.h"
 #include "snes9xGx.h"
 #include "memmap.h"
@@ -46,21 +47,28 @@ extern unsigned long ARAM_ROMSIZE;
 #define SOFTRESET_ADR ((volatile u32*)0xCC003024)
 
 
+void Reboot() {
+#ifdef __wii__
+    SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+#else
+#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
+    *SOFTRESET_ADR = 0x00000000;
+#endif
+}
+
 /****************************************************************************
  * Freeze Manager
  ****************************************************************************/
-int freezecountwii = 9;
-char freezemenuwii[][20] = { "Freeze to MC Slot A", "Thaw from MC Slot A",
+int freezecountwii = 7;
+char freezemenuwii[][20] = { "Freeze to SD", "Thaw from SD",
+	 "Freeze to MC Slot A", "Thaw from MC Slot A",
      "Freeze to MC Slot B", "Thaw from MC Slot B",
-     "Freeze to SD Slot A", "Thaw from SD Slot A",
-     "Freeze to SD Slot B", "Thaw from SD Slot B",
      "Return to previous"
 };
-int freezecount = 11;
-char freezemenu[][20] = { "Freeze to MC Slot A", "Thaw from MC Slot A",
+int freezecount = 9;
+char freezemenu[][20] = { "Freeze to SD", "Thaw from SD",
+	 "Freeze to MC Slot A", "Thaw from MC Slot A",
      "Freeze to MC Slot B", "Thaw from MC Slot B",
-     "Freeze to SD Slot A", "Thaw from SD Slot A",
-     "Freeze to SD Slot B", "Thaw from SD Slot B",
      "Freeze to SMB", "Thaw from SMB",
      "Return to previous"
 };
@@ -87,50 +95,42 @@ FreezeManager ()
         
         switch (ret)
         {
-            case 0:/*** Freeze to MC in slot A ***/
-                NGCFreezeGame (0, NOTSILENT);
-                break;
-            
-            case 1:/*** Thaw from MC in slot A ***/
-                quit = loaded = NGCUnfreezeGame (0, NOTSILENT);
-                break;
-             
-            case 2:/*** Freeze to MC in slot B ***/
-                NGCFreezeGame (1, NOTSILENT);
-                break;
-
-            case 3:/*** Thaw from MC in slot B ***/
-                quit = loaded = NGCUnfreezeGame (1, NOTSILENT);
-                break;
-            
-            case 4:/*** Freeze to SDCard in slot A ***/
+            case 0:/*** Freeze to SDCard ***/
                 NGCFreezeGame (2, NOTSILENT);
                 break;
             
-            case 5:/*** Thaw from SDCard in slot A ***/
+            case 1:/*** Thaw from SDCard***/
                 quit = loaded = NGCUnfreezeGame (2, NOTSILENT);
                 break;
-            
-            case 6:/*** Freeze to SDCard in slot B ***/
-                NGCFreezeGame (3, NOTSILENT);
+				
+            case 2:/*** Freeze to MC in slot A ***/
+                NGCFreezeGame (0, NOTSILENT);
                 break;
             
-            case 7:/*** Thaw from SDCard in slot B ***/
-                quit = loaded = NGCUnfreezeGame (3, NOTSILENT);
+            case 3:/*** Thaw from MC in slot A ***/
+                quit = loaded = NGCUnfreezeGame (0, NOTSILENT);
+                break;
+             
+            case 4:/*** Freeze to MC in slot B ***/
+                NGCFreezeGame (1, NOTSILENT);
+                break;
+
+            case 5:/*** Thaw from MC in slot B ***/
+                quit = loaded = NGCUnfreezeGame (1, NOTSILENT);
                 break;
             
-            case 8:/*** Freeze to SMB ***/
+            case 6:/*** Freeze to SMB ***/
                 if ( !isWii )
                     NGCFreezeGame (4, NOTSILENT);
                 break;
             
-            case 9:/*** Thaw from SMB ***/
+            case 7:/*** Thaw from SMB ***/
                 if ( !isWii )
                     quit = loaded = NGCUnfreezeGame (4, NOTSILENT);
                 break;
             
 			case -1: /*** Button B ***/
-            case 10:
+            case 8:
                 quit = 1;
                 break;
         }
@@ -144,13 +144,13 @@ FreezeManager ()
 /****************************************************************************
  * Load Manager
  ****************************************************************************/
-int loadmancountwii = 4;
-char loadmanwii[][20] = { "Load from DVD", "Load from SD Slot A",
-  "Load from SD Slot B", "Return to previous"
+int loadmancountwii = 2;
+char loadmanwii[][20] = { "Load from SD",
+  "Return to previous"
 };
-int loadmancount = 5;
-char loadman[][20] = { "Load from DVD", "Load from SD Slot A",
-  "Load from SD Slot B", "Load from SMB", "Return to previous"
+int loadmancount = 4;
+char loadman[][20] = {  "Load from SD",
+  "Load from DVD", "Load from SMB", "Return to previous"
 };
 int
 LoadManager ()
@@ -158,67 +158,60 @@ LoadManager ()
     int ret;
     int quit = 0;
     int oldmenu = menu;
-    int retval = 0;
+    int retval = 1;
     menu = 0;
     
     while (quit == 0)
     {
-        if ( LOAD_TYPE )
-            ret = LOAD_TYPE-1;
-        else
-        {
-            if ( isWii )   /* Wii menu */
-            {
-                ret = RunMenu (loadmanwii, loadmancountwii, "Load Manager");
-                if (ret >= loadmancountwii-1)
-                    ret = loadmancount-1;
-            }
-            else           /* Gamecube menu */
-                ret = RunMenu (loadman, loadmancount, "Load Manager");
-        }
+		if ( isWii )   /* Wii menu */
+		{
+			ret = RunMenu (loadmanwii, loadmancountwii, (char*)"Load Manager");
+			if (ret >= loadmancountwii-1)
+				ret = loadmancount-1;
+		}
+		else           /* Gamecube menu */
+			ret = RunMenu (loadman, loadmancount, (char*)"Load Manager");
         
         switch (ret)
         {
-            case 0:
-                /*** Load from DVD ***/
-                retval = OpenDVD ();
-                if ( LOAD_TYPE )
-                    quit = 1;
-                else
-                    quit = retval;
+		    case 0:
+				/*** Load from SD ***/
+                quit = OpenSD (0);
                 break;
-            
+				
             case 1:
-                retval = OpenSD (CARD_SLOTA);
-                if ( LOAD_TYPE )
-                    quit = 1;
-                else
-                    quit = retval;
+                /*** Load from DVD ***/
+                quit = OpenDVD ();
                 break;
             
             case 2:
-                retval = OpenSD (CARD_SLOTB);
-                if ( LOAD_TYPE )
-                    quit = 1;
-                else
-                    quit = retval;
-                break;
-            
-            case 3:
-                retval = OpenSMB ();
-                if ( LOAD_TYPE )
-                    quit = 1;
-                else
-                    quit = retval;
-                break;
+				/*** Load from SMB ***/ //(gamecube option)
+	            quit = OpenSMB ();
+	            break;
             
 			case -1: /*** Button B ***/
-            case 4:
+            case 3:
                 retval = 0;
                 quit = 1;
                 break;
         }
     }
+	
+	/*** 
+	* check for autoloadsram / freeze 
+	***/
+	if ( retval == 1 ) // if ROM was loaded, load the SRAM & settings
+	{
+		if ( GCSettings.AutoLoad == 1 )
+			quickLoadSRAM ( SILENT );
+		else if ( GCSettings.AutoLoad == 2 )
+		{
+			/*** load SRAM first in order to get joypad config ***/
+			quickLoadSRAM ( SILENT );
+			quickLoadFreeze ( SILENT );
+		}
+		S9xSoftReset();	// reset after loading sram
+	}
     
     menu = oldmenu;
     return retval;
@@ -227,18 +220,16 @@ LoadManager ()
 /****************************************************************************
  * Save Manager
  ****************************************************************************/
-int savecountwii = 9;
-char savemenuwii[][20] = { "Save to MC SLOT A", "Load from MC SLOT A",
+int savecountwii = 7;
+char savemenuwii[][20] = { "Save to SD", "Load from SD",
+  "Save to MC SLOT A", "Load from MC SLOT A",
   "Save to MC SLOT B", "Load from MC SLOT B",
-  "Save to SD Slot A", "Load from SD Slot A",
-  "Save to SD Slot B", "Load from SD Slot B",
   "Return to previous"
 };
-int savecount = 11;
-char savemenu[][20] = { "Save to MC SLOT A", "Load from MC SLOT A",
+int savecount = 9;
+char savemenu[][20] = { "Save to SD", "Load from SD",
+  "Save to MC SLOT A", "Load from MC SLOT A",
   "Save to MC SLOT B", "Load from MC SLOT B",
-  "Save to SD Slot A", "Load from SD Slot A",
-  "Save to SD Slot B", "Load from SD Slot B",
   "Save to SMB", "Load from SMB",
   "Return to previous"
 };
@@ -254,67 +245,57 @@ SaveManager ()
     {
         if ( isWii )   /* Wii menu */
         {
-            ret = RunMenu (savemenuwii, savecountwii, "Save Manager");
+            ret = RunMenu (savemenuwii, savecountwii, (char*)"Save Manager");
             if (ret >= savecountwii-1)
                 ret = savecount-1;
         }
         else           /* Gamecube menu */
-            ret = RunMenu (savemenu, savecount, "Save Manager");
+            ret = RunMenu (savemenu, savecount, (char*)"Save Manager");
 
         switch (ret)
         {
-            case 0:
+		    case 0:
+                /*** Save to SD***/
+                SaveSRAMToSD (0, NOTSILENT);
+                break;
+            
+            case 1:
+                /*** Load from SD***/
+                LoadSRAMFromSD (0, NOTSILENT);
+                break;
+            
+            case 2:
                 /*** Save to MC slot A ***/
                 SaveSRAMToMC (CARD_SLOTA, NOTSILENT);
                 break;
             
-            case 1:
+            case 3:
                 /*** Load from MC slot A ***/
                 LoadSRAMFromMC (CARD_SLOTA, NOTSILENT);
                 break;
             
-            case 2:
+            case 4:
                 /*** Save to MC slot B ***/
                 SaveSRAMToMC (CARD_SLOTB, NOTSILENT);
                 break;
             
-            case 3:
+            case 5:
                 /*** Load from MC slot B ***/
                 LoadSRAMFromMC (CARD_SLOTB, NOTSILENT);
                 break;
-            
-            case 4:
-                /*** Save to SD slot A ***/
-                SaveSRAMToSD (CARD_SLOTA, NOTSILENT);
-                break;
-            
-            case 5:
-                /*** Load from SD slot A ***/
-                LoadSRAMFromSD (CARD_SLOTA, NOTSILENT);
-                break;
-            
+
             case 6:
-                /*** Save to SD slot B ***/
-                SaveSRAMToSD (CARD_SLOTB, NOTSILENT);
-                break;
-            
-            case 7:
-                /*** Load from SD slot B ***/
-                LoadSRAMFromSD (CARD_SLOTB, NOTSILENT);
-                break;
-            
-            case 8:
                 /*** Save to SMB **/
                 SaveSRAMToSMB (NOTSILENT);
                 break;
             
-            case 9:
+            case 7:
                 /*** Load from SMB ***/
                 LoadSRAMFromSMB (NOTSILENT);
                 break;
             
 			case -1: /*** Button B ***/
-            case 10:
+            case 8:
                 /*** Return ***/
                 quit = 1;
                 break;
@@ -375,7 +356,7 @@ EmulatorOptions ()
 		sprintf (emulatorOptions[8], "Verify MC Saves %s",
 			GCSettings.VerifySaves == true ? " ON" : "OFF");
 		
-		ret = RunMenu (emulatorOptions, emuCount, "Emulator Options");
+		ret = RunMenu (emulatorOptions, emuCount, (char*)"Emulator Options");
 		
 		switch (ret)
 		{
@@ -494,7 +475,7 @@ ConfigureJoyPads ()
 		
 		sprintf (padmenu[4], "ANALOG CLIP - %d", padcal);
 		
-		ret = RunMenu (padmenu, padcount, "Configure Joypads");
+		ret = RunMenu (padmenu, padcount, (char*)"Configure Joypads");
 		
 		switch (ret)
 		{
@@ -538,7 +519,7 @@ ConfigureJoyPads ()
                 if ( ARAM_ROMSIZE > 0 )
                     quickSaveSRAM(NOTSILENT);
 				else
-				    WaitPrompt ("No ROM loaded - can't save SRAM");
+				    WaitPrompt((char*) "No ROM loaded - can't save SRAM");
 				
 				break;
 
@@ -560,8 +541,8 @@ int menucount = 10;
 char menuitems[][20] = { "Choose Game",
   "SRAM Manager", "Freeze Manager",
   "Configure Joypads", "Emulator Options",
-  "Reset Game", "Stop DVD Drive", "PSO Reload",
-  "Reset Gamecube", "Return to Game"
+  "Reset Game", "Stop DVD Drive", "Exit to Loader",
+  "Reboot System", "Return to Game"
 };
 
 void
@@ -581,24 +562,13 @@ mainmenu ()
 	
 	while (quit == 0)
 	{
-		ret = RunMenu (menuitems, menucount, "Main Menu");
+		ret = RunMenu (menuitems, menucount, (char*)"Main Menu");
 		
 		switch (ret)
 		{
 			case 0:
 				/*** Load ROM Menu ***/
 				quit = LoadManager ();
-				if ( quit ) // if ROM was loaded, load the SRAM & settings
-				{
-					if ( GCSettings.AutoLoad == 1 )
-						quickLoadSRAM ( SILENT );
-					else if ( GCSettings.AutoLoad == 2 )
-					{
-					    /*** load SRAM first in order to get joypad config ***/
-						quickLoadSRAM ( SILENT );
-                        quickLoadFreeze ( SILENT );
-                    }
-				}
 				break;
 			
 			case 1:
@@ -606,7 +576,7 @@ mainmenu ()
 				if ( ARAM_ROMSIZE > 0 )
                     SaveManager ();
                 else
-                    WaitPrompt ("No ROM is loaded!");
+                    WaitPrompt((char*) "No ROM is loaded!");
                 break;
 			
 			case 2:
@@ -614,7 +584,7 @@ mainmenu ()
 				if ( ARAM_ROMSIZE > 0 )
                     quit = FreezeManager ();
                 else
-                    WaitPrompt ("No ROM is loaded!");
+                    WaitPrompt((char*) "No ROM is loaded!");
                 break;
 			
 			case 3:
@@ -639,14 +609,18 @@ mainmenu ()
 				break;
 			
 			case 7:
-				/*** PSO Reload ***/
+				/*** Exit to Loader ***/
+				#ifdef __wii__
+				exit(0);
+				#else	// gamecube
 				if (psoid[0] == PSOSDLOADID)
 				PSOReload ();
+				#endif
 				break;
 				
 		    case 8:
-		        /*** Reset the Gamecube ***/
-                *SOFTRESET_ADR = 0x00000000;
+		        /*** Reset the Gamecube/Wii ***/
+                Reboot();
                 break;
 			
 			case -1: /*** Button B ***/
@@ -660,7 +634,7 @@ mainmenu ()
 	}
 	
 	/*** Remove any still held buttons ***/
-	while( PAD_ButtonsHeld(0) )
+	while( PAD_ButtonsHeld(0) || WPAD_ButtonsHeld(0) )
 	    VIDEO_WaitVSync();
 	
 }

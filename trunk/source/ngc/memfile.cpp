@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sdcard.h>
+#include <fat.h>
 #include <zlib.h>
 
 #include "memfile.h"
@@ -48,6 +48,8 @@ static int bufoffset;
 static char membuffer[MEMBUFFER];
 
 char freezecomment[2][32] = { {"Snes9x GX 2.0.1b8 Freeze"}, {"Freeze"} };
+
+extern char rootSDdir[MAXPATHLEN];
 
 
 /**
@@ -135,7 +137,7 @@ NGCFreezeGame (int where, bool8 silent)
 {
     char filename[1024];
     SMBFILE smbfile;
-    sd_file *handle;
+    FILE *handle;
     int len = 0;
     int wrote = 0;
     int offset = 0;
@@ -144,18 +146,17 @@ NGCFreezeGame (int where, bool8 silent)
     if (where == 4)
     {
         /*** Freeze to SMB ***/
-        sprintf (filename, "\\%s\\%s.frz", SNESSAVEDIR, Memory.ROMName);
+        sprintf (filename, "/%s/%s.frz", SNESSAVEDIR, Memory.ROMName);
     }
     else if (where == 2 || where == 3)
     {      
         /*** Freeze to SDCard in slot A or slot B ***/
-        SDCARD_Init ();
 
 #ifdef SDUSE_LFN
-        sprintf (filename, "dev%d:\\%s\\%s.frz", where-2, SNESSAVEDIR, Memory.ROMName);
+        sprintf (filename, "%s/%s/%s.frz", rootSDdir, SNESSAVEDIR, Memory.ROMName);
 #else
         /*** Until we have LFN on SD ... ***/
-        sprintf (filename, "dev%d:\\%s\\%08x.frz", where-2, SNESSAVEDIR, Memory.ROMCRC32);
+        sprintf (filename, "%s/%s/%08x.frz", rootSDdir, SNESSAVEDIR, Memory.ROMCRC32);
 #endif
     }
     else
@@ -181,7 +182,7 @@ NGCFreezeGame (int where, bool8 silent)
         
         if (smbfile)
         {
-            ShowAction ("Saving freeze game...");
+            ShowAction ((char*) "Saving freeze game...");
             
             len = bufoffset;
             offset = 0;
@@ -217,17 +218,17 @@ NGCFreezeGame (int where, bool8 silent)
     }
     else if (where == 2 || where == 3)  /*** SDCard slot A or slot B ***/
     {
-        handle = SDCARD_OpenFile (filename, "wb");
+        handle = fopen (filename, "wb");
         
         if (handle > 0)
         {
-            ShowAction ("Saving freeze game...");
+            ShowAction ((char*) "Saving freeze game...");
             
-            len = SDCARD_WriteFile (handle, membuffer, bufoffset);
-            SDCARD_CloseFile (handle);
+            len = fwrite (membuffer, 1, bufoffset, handle);
+            fclose (handle);
 
             if (len != bufoffset)
-                WaitPrompt ("Error writing freeze file");
+                WaitPrompt((char*) "Error writing freeze file");
             else if ( !silent )
             {
                 sprintf (filename, "Written %d bytes", bufoffset);
@@ -237,13 +238,13 @@ NGCFreezeGame (int where, bool8 silent)
         }
         else
         {
-            sprintf(msg, "Couldn't save to dev%d:\\%s\\", where-2, SNESSAVEDIR);
+            sprintf(msg, "Couldn't save to %s/%s/", rootSDdir, SNESSAVEDIR);
             WaitPrompt (msg);
         }
     }
     else  /*** MC in slot A or slot B ***/
     {
-        ShowAction ("Saving freeze game...");
+        ShowAction ((char*) "Saving freeze game...");
         
         ClearSaveBuffer ();
         
@@ -333,7 +334,7 @@ NGCUnfreezeGame (int from, bool8 silent)
 {
     char filename[1024];
     SMBFILE smbfile;
-    sd_file *handle;
+    FILE *handle;
     int read = 0;
     int offset = 0;
     char msg[80];
@@ -352,7 +353,7 @@ NGCUnfreezeGame (int from, bool8 silent)
         
         if (smbfile)
         {
-            ShowAction ("Loading freeze file...");
+            ShowAction ((char*) "Loading freeze file...");
             while ((read =
                         SMB_Read ((char *) membuffer + offset, 1024, offset,
                         smbfile)) > 0)
@@ -360,68 +361,67 @@ NGCUnfreezeGame (int from, bool8 silent)
             
             SMB_Close (smbfile);
             
-            ShowAction ("Unpacking freeze file");
+            ShowAction ((char*) "Unpacking freeze file");
             if (S9xUnfreezeGame ("AGAME") != SUCCESS)
             {
-                WaitPrompt ("Error thawing");
+                WaitPrompt((char*) "Error thawing");
                 return 0;
             }
         }
         else if ( !silent )
         {
-            WaitPrompt ("No freeze file found");
+            WaitPrompt((char*) "No freeze file found");
             return 0;
         }
     }
     else if (from == 2 || from == 3)  /*** From SD slot A or slot B ***/
     {
-        SDCARD_Init ();
         
 #ifdef SDUSE_LFN
-        sprintf (filename, "dev%d:\\%s\\%s.frz", from-2, SNESSAVEDIR, Memory.ROMName);
+        sprintf (filename, "%s/%s/%s.frz", rootSDdir, SNESSAVEDIR, Memory.ROMName);
 #else
         /*** From SDCard ***/
-        sprintf (filename, "dev%d:\\%s\\%08x.frz", from-2, SNESSAVEDIR, Memory.ROMCRC32);
+        sprintf (filename, "%s/%s/%08x.frz", rootSDdir, SNESSAVEDIR, Memory.ROMCRC32);
 #endif
         
-        handle = SDCARD_OpenFile (filename, "rb");
+        handle = fopen (filename, "rb");
         
         if (handle > 0)
         {
-            ShowAction ("Loading freeze file...");
+            ShowAction ((char*) "Loading freeze file...");
             
             offset = 0;
             /*** Usual chunks into memory ***/
-            while ((read = SDCARD_ReadFile (handle, membuffer + offset, 2048)) >
+            while ((read = fread (membuffer + offset, 1, 2048, handle)) >
                             0)
                 offset += read;
             
-            SDCARD_CloseFile (handle);
+            fclose (handle);
             
-            ShowAction ("Unpacking freeze file");
+            ShowAction ((char*) "Unpacking freeze file");
             
             if (S9xUnfreezeGame ("AGAME") != SUCCESS)
             {
-                WaitPrompt ("Error thawing");
+                WaitPrompt((char*) "Error thawing");
                 return 0;
             }
         }
         else if ( !silent )
         {
-            WaitPrompt ("No freeze file found");
+            WaitPrompt((char*) "No freeze file found");
             return 0;
         }
     }
     else       /*** From MC in slot A or slot B ***/
     {
-        ShowAction ("Loading freeze file...");
+        ShowAction ((char*) "Loading freeze file...");
         
         sprintf (filename, "%s.snz", Memory.ROMName);
         
         int ret = LoadBufferFromMC ( savebuffer, from, filename, silent );
         if ( ret )
         {
-            ShowAction ("Unpacking freeze file");
+            ShowAction ((char*) "Unpacking freeze file");
             
             // skip the saveicon and comment
             offset = (sizeof(saveicon) + 64);
@@ -448,13 +448,13 @@ NGCUnfreezeGame (int from, bool8 silent)
 
             if ( DestBuffSize != decompressedsize )
             {
-                WaitPrompt ("Unzipped size doesn't match expected size!");
+                WaitPrompt((char*) "Unzipped size doesn't match expected size!");
                 return 0;
             }
 
             if (S9xUnfreezeGame ("AGAME") != SUCCESS)
             {
-                WaitPrompt ("Error thawing");
+                WaitPrompt((char*) "Error thawing");
                 return 0;
             }
         }

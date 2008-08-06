@@ -12,16 +12,24 @@
 
 #ifndef _LOADFROMSDC_
 #define _LOADFROMSDC_
-#include <sdcard.h>
+#include <gccore.h>
+#include <stdio.h>
+#include <string.h>
+#include <ogcsys.h>
+#include <fat.h>
+#include <sys/dir.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 int updateSDdirname();
 int parseSDdirectory();
 int LoadSDFile (char *filename, int length);
-void SaveSRAMToSD (uint8 slot, bool8 silent);
-void LoadSRAMFromSD (uint8 slot, bool8 silent);
-void SavePrefsToSD (uint8 slot, bool8 silent);
-void LoadPrefsFromSD (uint8 slot, bool8 silent);
+void SaveSRAMToSD (int slot, bool silent);
+void LoadSRAMFromSD (int slot, bool silent);
+void SavePrefsToSD (int slot, bool silent);
+void LoadPrefsFromSD (int slot, bool silent);
 
-extern char rootSDdir[SDCARD_MAX_PATH_LEN];
+extern char rootSDdir[MAXPATHLEN];
+extern char currSDdir[MAXPATHLEN];
 
 #endif

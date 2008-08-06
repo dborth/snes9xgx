@@ -158,6 +158,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -180,8 +181,8 @@
 
 extern u32 FrameTimer;
 
-tb_t prev;
-tb_t now;
+long long prev;
+long long now;
 
 
 /*** Miscellaneous Functions ***/
@@ -285,19 +286,20 @@ S9xGenerateSound ()
 void S9xInitSync()
 {	
   FrameTimer = 0;
-  mftb(&prev);
+  prev = gettime();
 }
 
 /*** Synchronisation ***/
-void
-S9xSyncSpeed ()
+extern int timerstyle;
+
+void S9xSyncSpeed ()
 {
     uint32 skipFrms = Settings.SkipFrames;
     
     if ( Settings.TurboMode )
         skipFrms = Settings.TurboSkipFrames;
 
-    if ( !Settings.PAL ) /* use NGC vertical sync (VSYNC) with NTSC roms */
+    if ( timerstyle == 0 ) /* use NGC vertical sync (VSYNC) with NTSC roms */
     {
         while (FrameTimer == 0)
         {
@@ -321,13 +323,12 @@ S9xSyncSpeed ()
     else  /* use internal timer for PAL roms */ 
     {
         unsigned int timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
-
-        mftb(&now);
+        now = gettime();
         
-        if (tb_diff_usec(&now, &prev) > timediffallowed)
+        if (diff_usec(prev, now) > timediffallowed)
         {
-            /*while ( tb_diff_usec(&now, &prev) <  timediffallowed * 2) {
-                mftb(&now);
+            /*while ( diff_usec((prev, now) <  timediffallowed * 2) {
+                now = gettime();
             }*/
 
             /* Timer has already expired */
@@ -345,12 +346,12 @@ S9xSyncSpeed ()
         else
         {
             /*** Ahead - so hold up ***/
-            while (tb_diff_usec(&now, &prev) <  timediffallowed) mftb(&now);
+            while (diff_usec(prev, now) <  timediffallowed) now=gettime();
             IPPU.RenderThisFrame = TRUE;
             IPPU.SkippedFrames = 0;
         }
 
-        memcpy(&prev, &now, sizeof(tb_t));
+        prev = now;
     }
     
     if ( !Settings.TurboMode )
