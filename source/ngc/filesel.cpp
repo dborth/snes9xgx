@@ -13,6 +13,9 @@
 #include <string.h>
 #include <wiiuse/wpad.h>
 
+#include <fat.h>
+#include <sys/dir.h>
+
 #include "snes9x.h"
 #include "memmap.h"
 #include "debug.h"
@@ -43,7 +46,8 @@ int havedir = 0;
 int hasloaded = 0;
 int loadtype = 0;
 int LoadDVDFile (unsigned char *buffer);
-int haveSDdir = 0;
+bool haveSDdir = 0;
+bool haveUSBdir = 0;
 extern unsigned long ARAM_ROMSIZE;
 extern int screenheight;
 
@@ -91,7 +95,7 @@ ShowFiles (int offset, int selection)
 
         {
 
-                        /*** Highlighted text entry ***/
+            /*** Highlighted text entry ***/
           for ( w = 0; w < 20; w++ )
                 DrawLineFast( 30, 610, ( j * 20 ) + (ypos-16) + w, 0x80, 0x80, 0x80 );
 
@@ -128,6 +132,18 @@ int SNESROMSOffset()
     return 0;
 }
 
+void strip_ext(char* inputstring, char* returnstring)
+{
+	char* loc_dot;
+	
+	strcpy (returnstring, inputstring);
+	loc_dot = strrchr(returnstring,'.');
+	if (loc_dot != NULL)
+		*loc_dot = '\0';	// strip file extension
+
+	return;
+}
+
 /**
  * FileSelector
  *
@@ -146,7 +162,9 @@ FileSelector ()
     int redraw = 1;
     int selectit = 0;
 	float mag = 0;
+	float mag2 = 0;
 	u16 ang = 0;
+	u16 ang2 = 0;
 	int scroll_delay = 0;
 	bool move_selection = 0;
 	#define SCROLL_INITIAL_DELAY	15
@@ -165,7 +183,7 @@ FileSelector ()
 #ifdef HW_RVL
 		wp = WPAD_ButtonsDown (0);
 		wh = WPAD_ButtonsHeld (0);
-		wpad_get_analogues(0, &mag, &ang);		// get joystick info from wii expansions
+		wpad_get_analogues(0, &mag, &ang, &mag2, &ang2);		// get joystick info from wii expansions
 #else
 		wp = 0;
 		wh = 0;
@@ -183,27 +201,36 @@ FileSelector ()
                 selectit = 0;
             if (filelist[selection].flags)                        /*** This is directory ***/
             {
-                if (loadtype == LOAD_SDC)
+                if (loadtype == LOAD_SDC || loadtype == LOAD_USB)
                 {
                     /* memorize last entries list, actual root directory and selection for next access */
-                    haveSDdir = 1;
+					if (loadtype == LOAD_SDC)
+						haveSDdir = 1;
+					else
+						haveUSBdir = 1;
                     
                     /* update current directory and set new entry list if directory has changed */
-                    int status = updateSDdirname();
+                    int status = updateFATdirname();
                     if (status == 1)	// ok, open directory
                     {
-                        maxfiles = parseSDdirectory();
+                        maxfiles = parseFATdirectory();
                         if (!maxfiles)
                         {
                             WaitPrompt ((char*) "Error reading directory !");
                             haverom   = 1; // quit SD menu
-                            haveSDdir = 0; // reset everything at next access
+                            if (loadtype == LOAD_SDC)  // reset everything at next access
+								haveSDdir = 0;
+							else
+								haveUSBdir = 0;
                         }
                     }
                     else if (status == -1)	// directory name too long
                     {
                         haverom   = 1; // quit SD menu
-                        haveSDdir = 0; // reset everything at next access
+                        if (loadtype == LOAD_SDC)  // reset everything at next access
+							haveSDdir = 0;
+						else
+							haveUSBdir = 0;
                     }
                 }
                 else
@@ -224,6 +251,9 @@ FileSelector ()
             {
                 rootdir = filelist[selection].offset;
                 rootdirlength = filelist[selection].length;
+				
+				/*** store the filename (used for sram/freeze naming) ***/
+				strip_ext(filelist[selection].filename, Memory.ROMFilename);	// store stripped filename in Memory.ROMFilename
                 
                 switch (loadtype)
                 {
@@ -234,11 +264,11 @@ FileSelector ()
                     
                     case LOAD_SMB:
                         /*** Load from SMB ***/
-                        ARAM_ROMSIZE =
-                        LoadSMBFile (filelist[selection].filename,
+                        ARAM_ROMSIZE = LoadSMBFile (filelist[selection].filename,
                              filelist[selection].length);
                         break;
                     
+					case LOAD_USB:
                     case LOAD_SDC:
                         /*** Load from SD Card ***/
                         /* memorize last entries list, actual root directory and selection for next access */
@@ -391,7 +421,8 @@ OpenDVD ()
     if (havedir == 0)
     {
         offset = selection = 0; /* reset file selector */
-        haveSDdir = 0;  /* prevent conflicts with SDCARD file selector */
+        haveSDdir = 0;  /* prevent conflicts with SDCARD, USB file selector */
+		haveUSBdir = 0;
         
         if ((maxfiles = parsedirectory ()))
         {
@@ -435,6 +466,53 @@ OpenSMB ()
     return 0;
 }
 
+
+// is_mounted
+//
+// to check whether FAT media are detected.
+bool fat_is_mounted(PARTITION_INTERFACE partition) {
+    char prefix[] = "fatX:/";
+    prefix[3] = partition + '0';
+    DIR_ITER *dir = diropen(prefix);
+    if (dir) {
+        dirclose(dir);
+        return true;
+    }
+    return false;
+}
+
+void fat_enable_readahead_all() {
+    int i;
+    for (i=1; i <= 4; ++i) {
+        if (fat_is_mounted((PARTITION_INTERFACE)i)) fatEnableReadAhead((PARTITION_INTERFACE)i, 64, 128);
+    }
+}
+
+bool fat_remount(PARTITION_INTERFACE partition) {
+	//ShowAction("remounting...");
+	/*	// removed to make usb work...
+	if (fat_is_mounted(partition))
+	{
+		fatUnmount(partition);
+	}
+	*/
+
+	fatMountNormalInterface(partition, 8);
+	fatSetDefaultInterface(partition);
+	//fatEnableReadAhead(partition, 64, 128);
+
+	if (fat_is_mounted(partition))
+	{
+		//ShowAction("remount successful.");
+		sleep(1);
+		return 1;
+	} else {
+		ShowAction("FAT mount failed.");
+		sleep(1);
+		return 0;
+	}
+}
+
 /**
  * OpenSD
  *
@@ -447,18 +525,89 @@ OpenSD ()
 	char buf[50] = "";
     
     loadtype = LOAD_SDC;
+	
+	/*
+	fatUnmount(PI_INTERNAL_SD);
+	fatMountNormalInterface(PI_INTERNAL_SD,8);
+	//fatEnableReadAhead(PI_INTERNAL_SD, 64, 128);
+	fatSetDefaultInterface(PI_INTERNAL_SD);
+	//chdir("fat0:/");
+	*/
+#ifdef HW_RVL
+	// only remount on wii
+	if (!fat_remount (PI_INTERNAL_SD))
+		return 0;
+#endif
     
     if (haveSDdir == 0)
     {
         /* don't mess with DVD entries */
-        havedir = 0;	// gamecube only
+        havedir = 0;
+		haveUSBdir = 0;
         
         /* change current dir to snes roms directory */
         sprintf ( currSDdir, "%s/%s", ROOTSDDIR, SNESROMDIR );
 		
         
         /* Parse initial root directory and get entries list */
-        if ((maxfiles = parseSDdirectory ()))
+        if ((maxfiles = parseFATdirectory ()))
+        {
+            /* Select an entry */
+            return FileSelector ();
+        }
+        else
+        {
+            /* no entries found */
+            sprintf (msg, "No Files Found!");
+            WaitPrompt (msg);
+            return 0;
+        }
+    }
+    /* Retrieve previous entries list and made a new selection */
+    else
+        return FileSelector ();
+    
+    return 0;
+}
+
+/**
+ * OpenUSB
+ *
+ * Function to load from a USB device (wii only)
+ */
+int
+OpenUSB ()
+{
+    char msg[80];
+	char buf[50] = "";
+	
+	/*
+	//fatUnmount(PI_USBSTORAGE);
+	fatUnmount(PI_INTERNAL_SD);
+	//if(!fatMountNormalInterface(PI_USBSTORAGE,8)) 
+	//	return 0;
+	//fatEnableReadAhead(PI_USBSTORAGE, 64, 128);
+	fatSetDefaultInterface(PI_USBSTORAGE);
+	*/
+#ifdef HW_RVL
+	// make compiler happy
+	if (!fat_remount (PI_USBSTORAGE))
+		return 0;
+#endif
+    
+    loadtype = LOAD_USB;
+    
+    if (haveUSBdir == 0)
+    {
+        /* don't mess with DVD, SDCARD entries */
+        havedir = 0;
+		haveSDdir = 0;
+        
+        /* change current dir to snes roms directory */
+        sprintf ( currSDdir, "%s/%s", ROOTSDDIR, SNESROMDIR );
+        
+        /* Parse initial root directory and get entries list */
+        if ((maxfiles = parseFATdirectory ()))
         {
             /* Select an entry */
             return FileSelector ();

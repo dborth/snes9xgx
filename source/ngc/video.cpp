@@ -29,6 +29,7 @@
 //#include "spc7110.h"
 //#include "controls.h"
 #include "aram.h"
+#include "snes9xGX.h"
 //#include "video.h"
 
 /*** Snes9x GFX Buffer ***/
@@ -382,6 +383,28 @@ InitGCVideo ()
     */
 }
 
+void ReInitGCVideo()
+{
+  Mtx p;
+
+  GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
+  GX_SetDispCopyYScale ((f32) vmode->xfbHeight / (f32) vmode->efbHeight);
+  GX_SetScissor (0, 0, vmode->fbWidth, vmode->efbHeight);
+  GX_SetDispCopySrc (0, 0, vmode->fbWidth, vmode->efbHeight);
+  GX_SetDispCopyDst (vmode->fbWidth, vmode->xfbHeight);
+  GX_SetCopyFilter (vmode->aa, vmode->sample_pattern, GCSettings.render ? GX_TRUE : GX_FALSE,
+		    vmode->vfilter);
+  GX_SetFieldMode (vmode->field_rendering,
+		   ((vmode->viHeight ==
+		     2 * vmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
+  GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
+
+//  GX_CopyDisp (xfb[whichfb], GX_TRUE);
+
+  guPerspective (p, 60, 1.33F, 10.0F, 1000.0F);
+  GX_LoadProjectionMtx (p, GX_PERSPECTIVE);
+}
+
 /****************************************************************************
  * Drawing screen 
  ****************************************************************************/
@@ -419,85 +442,6 @@ setGFX ()
   GFX.Screen = (unsigned short *) snes9xgfx;
   GFX.Pitch = 1024;
 }
-
-#ifndef NGCC
-#if 0
-/****************************************************************************
- * MakeTexture
- *
- * GC requires RGB565 colour tiles of 4 x 4 pixels. 
- * Ok, apparently the pipeline stalls waiting for the indexed register to update.
- * Solution : Use R9 to mirror R4
- *
- * THIS IS NOW UNUSED, BUT LEFT HERE SO I CAN TINKER -;)
- ****************************************************************************/
-void
-MakeTexture (char *src,		/*** R3 Pointer to source ***/
-	     char *dst,			/*** R4 Pointer to output ***/
-	     int width,			/*** R5 Width ***/
-	     int height,			/*** R6 Height ***/
-	     int w1,				/*** R7 Worker ***/
-	     int w2,				/*** R8 Worker ***/
-	     int w3,			/*** R9 Worker ***/
-	     int w4)			/*** R10 Worker ***/
-{
-	/*** How many tiles per row ***/
-  asm ("srwi 5,5,2");		/*** Width / 4 == Tiles ***/
-  asm ("srwi 6,6,2");		/*** Height / 4 == Tiles ***/
-
-  asm ("mr 9,4");			/*** Mirror R4 ***/
-  asm ("subi 4,4,8");		/*** Adjust R4 for index update ***/
-  asm ("subi 9,9,4");		/*** Adjust R9 for index update ***/
-
-	/*** Outer loop ***/
-  asm ("DoAllTiles:");
-
-  asm ("mtctr 5");		/*** Will loop for this number of tiles across ***/
-  asm ("mr 8,3");		/*** Preserve current source position ***/
-
-  asm ("DoOneTile:");
-
-	/*** Store 4 Horizontal Pixels - ROW 1 ***/
-  asm ("lwz	 7,0(3)");
-  asm ("stwu 7,8(4)");
-  asm ("lwz 	 10,4(3)");
-  asm ("stwu 10,8(9)");
-
-	/*** Store 4 Horizontal Pixels - ROW 2 ***/
-  asm ("lwz	 7,1024(3)");
-  asm ("stwu 7,8(4)");
-  asm ("lwz 	 10,1028(3)");
-  asm ("stwu 10,8(9)");
-
-	/*** Store 4 Horizontal Pixels - ROW 3 ***/
-  asm ("lwz	 7,2048(3)");
-  asm ("stwu 7,8(4)");
-  asm ("lwz 	 10,2052(3)");
-  asm ("stwu 10,8(9)");
-
-	/*** Store 4 Horizontal Pixels - ROW 4 ***/
-  asm ("lwz	 7,3072(3)");
-  asm ("stwu 7,8(4)");
-  asm ("lwz 	 10,3076(3)");
-  asm ("stwu 10,8(9)");
-
-	/*** Move along 4 pixels ***/
-  asm ("addi 3,3,8");
-
-	/*** Repeat for next tile ***/
-  asm ("bdnz DoOneTile");
-
-	/*** Update R3 to be 4 rows down ***/
-  asm ("mr 3,8");
-  asm ("addi 3,3,4096");
-
-	/*** Decrement Outer Tile loop ***/
-  asm ("subi 6,6,1");
-  asm ("cmpwi 6,0");
-  asm ("bne DoAllTiles");
-
-}
-#endif
 
 /****************************************************************************
  * MakeTexture 
@@ -544,8 +488,6 @@ MakeTexture (const void *src, void *dst, s32 width, s32 height)
 			"r" (height));
 }
 
-#endif
-
 /****************************************************************************
  * Update Video
  ****************************************************************************/
@@ -584,46 +526,11 @@ update_video (int width, int height)
   GX_SetTevOp (GX_TEVSTAGE0, GX_DECAL);
   GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
 
-#ifdef NGCC
-  int h, w;
-  int *dst = (int *) texturemem;
-  int *src = (int *) GFX.Screen;
-  int hpos;
 
-  /*** Pitch for screen, regardless of size is always the same ***/
-  for (h = 0; h < vheight; h += 4)
-    {
-
-      for (w = 0; w < (vwidth >> 1); w += 2)
-	{
-
-	  hpos = w;
-	  *dst++ = src[hpos++];
-	  *dst++ = src[hpos];
-
-	  hpos = w + 256;
-	  *dst++ = src[hpos++];
-	  *dst++ = src[hpos];
-
-	  hpos = w + 512;
-	  *dst++ = src[hpos++];
-	  *dst++ = src[hpos];
-
-	  hpos = w + 768;
-	  *dst++ = src[hpos++];
-	  *dst++ = src[hpos];
-
-	}
-
-      src += GFX.Pitch;
-
-    }
-
-#else
 
   MakeTexture ((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
 
-#endif
+
 
   DCFlushRange (texturemem, TEX_WIDTH * TEX_HEIGHT * 2);
 

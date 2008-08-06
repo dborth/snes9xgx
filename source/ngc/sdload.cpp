@@ -32,6 +32,8 @@ char currSDdir[MAXPATHLEN];
 extern int offset;
 extern int selection;
 
+extern int loadtype;
+
 extern FILEENTRIES filelist[MAXFILES];
 
 /***************************************************************************
@@ -62,9 +64,9 @@ static int FileSortCallback(const void *f1, const void *f2)
 }
 
 /***************************************************************************
- * Update SDCARD curent directory name 
+ * Update FAT (sdcard, usb) curent directory name 
  ***************************************************************************/ 
-int updateSDdirname()
+int updateFATdirname()
 {
   int size=0;
   char *test;
@@ -115,9 +117,9 @@ int updateSDdirname()
 }
 
 /***************************************************************************
- * Browse SDCARD subdirectories 
+ * Browse FAT (sdcard, usb) subdirectories 
  ***************************************************************************/ 
-int parseSDdirectory() {
+int parseFATdirectory() {
     int nbfiles = 0;
     DIR_ITER *sddir;
     char filename[MAXPATHLEN];
@@ -130,7 +132,13 @@ int parseSDdirectory() {
     /* open the directory */ 
     sddir = diropen(currSDdir);
     if (sddir == NULL) {
-        sprintf(currSDdir,"%s",ROOTSDDIR);	// if we can't open the previous dir, open root dir
+		/*** if we can't open the previous dir, open root dir ***/
+		if (loadtype == LOAD_USB)
+			sprintf(currSDdir,"fat4:/");
+		else // LOAD_SDC
+	        //sprintf(currSDdir,"%s",ROOTSDDIR);	
+			sprintf(currSDdir,"fat3:/");
+			
         sddir = diropen(currSDdir);
         WaitPrompt(msg);
         if (sddir == NULL) {
@@ -164,7 +172,8 @@ int parseSDdirectory() {
 /****************************************************************************
  * LoadSDFile
  ****************************************************************************/
-extern int haveSDdir;
+extern bool haveSDdir;
+extern bool haveUSBdir;
 int
 LoadSDFile (char *filename, int length)
 {
@@ -183,9 +192,10 @@ LoadSDFile (char *filename, int length)
   {
     WaitPrompt((char*) "Maximum Filename Length reached !"); 
     haveSDdir = 0; // reset everything before next access
+	haveUSBdir = 0;
 	return -1;
   }
-
+  
   handle = fopen (filepath, "rb");
   if (handle > 0)
     {
@@ -306,7 +316,7 @@ void SaveSRAMToSD (bool silent)
 		ShowAction ((char*) "Saving SRAM to SD...");
     
 #ifdef SDUSE_LFN
-    sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMName);
+    sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMFilename);
 #else
     sprintf (filepath, "%s/%s/%08x.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMCRC32);
 #endif
@@ -332,13 +342,29 @@ void SaveSRAMToSD (bool silent)
 void
 LoadSRAMFromSD (bool silent)
 {
-    char filepath[1024];
+    char filepath[MAXPATHLEN];
     int offset = 0;
     
     ShowAction ((char*) "Loading SRAM from SD...");
+	
+	// check for 'old' version of sram
+		sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMName); // Build old SRAM filename
+		
+		offset = LoadBufferFromSD (filepath, silent);	// load file
+		
+		if (offset > 0) // old sram found
+		{
+			if (WaitPromptChoice ((char*)"Old SRAM found. Convert and delete?", (char*)"Cancel", (char*)"Do it"))
+			{
+				decodesavedata (offset);
+				remove (filepath);	// delete old sram
+				SaveSRAMToSD (silent);
+			}
+		}
+	//
     
 #ifdef SDUSE_LFN
-    sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMName);
+    sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMFilename);
 #else
     sprintf (filepath, "%s/%s/%08x.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMCRC32);
 #endif

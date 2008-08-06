@@ -203,8 +203,8 @@ DefaultSettings ()
 	/*** SDD1 - Star Ocean Returns -;) ***/
   Settings.SDD1Pack = true;
   
-  GCSettings.AutoLoad = 0;
-  GCSettings.AutoSave = 0;
+  GCSettings.AutoLoad = 1;
+  GCSettings.AutoSave = 1;
   
   strncpy (GCSettings.gcip, GC_IP, 15);
   strncpy (GCSettings.gwip, GW_IP, 15);
@@ -218,6 +218,7 @@ DefaultSettings ()
   
   GCSettings.NGCZoom = 0;
   GCSettings.VerifySaves = 0;
+  GCSettings.render = 0;
   
   Settings.ForceNTSC = 0;
   Settings.ForcePAL = 0;

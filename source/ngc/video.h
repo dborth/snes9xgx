@@ -17,6 +17,7 @@
 #include "snes9x.h"
 
 void InitGCVideo ();
+void ReInitGCVideo();
 void clearscreen (int colour = COLOR_WHITE);
 void showscreen ();
 void setGFX ();

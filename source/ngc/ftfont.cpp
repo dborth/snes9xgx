@@ -534,7 +534,7 @@ DrawMenu (char items[][20], char *title, int maxitems, int selected, int fontsiz
   if (title != NULL)
 	DrawText (-1, 60, title);
   setfontsize (12);
-  DrawText (510, screenheight - 20, "Snes9x GX 003");
+  DrawText (510, screenheight - 20, "Snes9x GX 004");
 //#endif
 
   setfontsize (fontsize);	// set font size
@@ -579,7 +579,9 @@ RunMenu (char items[][20], int maxitems, char *title, int fontsize)
     int ret = 0;
     signed char a;
 	float mag = 0;
+	float mag2 = 0;
 	u16 ang = 0;
+	u16 ang2 = 0;
     
     //while (!(PAD_ButtonsDown (0) & PAD_BUTTON_B) && (quit == 0))
     while (quit == 0)
@@ -593,7 +595,7 @@ RunMenu (char items[][20], int maxitems, char *title, int fontsize)
         p = PAD_ButtonsDown (0);
 #ifdef HW_RVL
 		wp = WPAD_ButtonsDown (0);
-		wpad_get_analogues(0, &mag, &ang);		// get joystick info from wii expansions
+		wpad_get_analogues(0, &mag, &ang, &mag2, &ang2);		// get joystick info from wii expansions
 #else
 		wp = 0;
 #endif

@@ -9,9 +9,8 @@ endif
 
 include $(DEVKITPPC)/wii_rules
 
-
-LOADTYPE = '"sd"'
-VERSION = '"version"'
+LOADTYPE = "sd"
+VERSION = "version"
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output

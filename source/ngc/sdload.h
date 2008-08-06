@@ -22,8 +22,8 @@
 #include <unistd.h>
 
 static int FileSortCallback(const void *f1, const void *f2);
-int updateSDdirname();
-int parseSDdirectory();
+int updateFATdirname();
+int parseFATdirectory();
 int LoadSDFile (char *filename, int length);
 void SaveSRAMToSD (bool silent);
 void LoadSRAMFromSD (bool silent);

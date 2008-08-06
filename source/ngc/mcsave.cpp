@@ -46,6 +46,8 @@ card_dir CardDir;
 card_file CardFile;
 card_stat CardStatus;
 
+extern void uselessinquiry();
+
 
 /****************************************************************************
  * Clear the savebuffer
@@ -92,14 +94,16 @@ int MountCard(int cslot)
 	int ret;
 	int tries;
 	
-	EXI_ProbeReset(); 
-
-	/*** Mount the card ***/
+	
+	EXI_ProbeReset();
+	
+	//Mount the card 
 	ret = CARD_Mount (cslot, SysArea, NULL);
 
 	tries = 0;
 	while ( tries < 3 && ret == CARD_ERROR_IOERROR )
 	{
+		EXI_ProbeReset ();
 		if (cslot == CARD_SLOTA)
 			WaitPrompt((char*) "Replug card in slot A!");
 		else
@@ -113,6 +117,7 @@ int MountCard(int cslot)
 	tries = 0;
 	while ( tries < 5 && ret == CARD_ERROR_NOCARD )
 	{
+		EXI_ProbeReset ();
 		ShowAction ((char*) "Mounting card...");
 		CARD_Unmount (cslot);
 		usleep(500000); // wait half second
@@ -125,6 +130,7 @@ int MountCard(int cslot)
 	tries = 0;
 	while ( tries < 5 && ret == CARD_ERROR_UNLOCKED )
 	{
+		EXI_ProbeReset ();
 		ShowAction ((char*) "Waiting for unlock...");
 		usleep(500000); // wait half second
 		ShowAction ((char*) "");
@@ -468,14 +474,31 @@ SaveBufferToMC (unsigned char *buf, int slot, char *filename, int datasize, bool
 void
 LoadSRAMFromMC (int slot, int silent)
 {
-	char filename[128];
+	char filename[MAXPATHLEN];
+	int offset = 0;
 
     ShowAction ((char*) "Loading SRAM from MC...");
-
-	/*** Build SRAM filename ***/
-	sprintf (filename, "%s.srm", Memory.ROMName);
 	
-	int offset = LoadBufferFromMC (savebuffer, slot, filename, silent);
+	// check for 'old' version of sram
+		sprintf (filename, "%s.srm", Memory.ROMName); // Build old SRAM filename
+		
+		offset = LoadBufferFromMC (savebuffer, slot, filename, silent);	// load file
+		
+		if (offset > 0) // old sram found
+		{
+			if (WaitPromptChoice ((char*)"Old SRAM found. Convert and delete?", (char*)"Cancel", (char*)"Do it"))
+			{
+				decodesavedata (offset);
+				CARD_Delete (slot, filename);	// delete old sram
+				SaveSRAMToMC (slot, silent);
+			}
+		}
+	//
+	
+	/*** Build SRAM filename ***/
+	sprintf (filename, "%s.srm", Memory.ROMFilename);
+	
+	offset = LoadBufferFromMC (savebuffer, slot, filename, silent);
 		
 	if ( offset > 0 )
 	{
@@ -504,7 +527,7 @@ SaveSRAMToMC (int slot, int silent)
 		ShowAction ((char*) "Saving SRAM to MC...");
 
 	/*** Build SRAM filename ***/
-	sprintf (filename, "%s.srm", Memory.ROMName);
+	sprintf (filename, "%s.srm", Memory.ROMFilename);
 
 	datasize = prepareMCsavedata ();
 	offset = SaveBufferToMC (savebuffer, slot, filename, datasize, silent);

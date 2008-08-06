@@ -47,7 +47,7 @@ extern unsigned char savebuffer[];
 static int bufoffset;
 static char membuffer[MEMBUFFER];
 
-char freezecomment[2][32] = { {"Snes9x GX 003 Freeze"}, {"Freeze"} };
+char freezecomment[2][32] = { {"Snes9x GX 004 Freeze"}, {"Freeze"} };
 
 
 /**
@@ -144,14 +144,14 @@ NGCFreezeGame (int where, bool8 silent)
     if (where == 4)
     {
         /*** Freeze to SMB ***/
-        sprintf (filename, "/%s/%s.frz", SNESSAVEDIR, Memory.ROMName);
+        sprintf (filename, "/%s/%s.frz", SNESSAVEDIR, Memory.ROMFilename);
     }
     else if (where == 2 || where == 3)
     {      
         /*** Freeze to SDCard in slot A or slot B ***/
 
 #ifdef SDUSE_LFN
-        sprintf (filename, "%s/%s/%s.frz", ROOTSDDIR, SNESSAVEDIR, Memory.ROMName);
+        sprintf (filename, "%s/%s/%s.frz", ROOTSDDIR, SNESSAVEDIR, Memory.ROMFilename);
 #else
         /*** Until we have LFN on SD ... ***/
         sprintf (filename, "%s/%s/%08x.frz", ROOTSDDIR, SNESSAVEDIR, Memory.ROMCRC32);
@@ -160,7 +160,7 @@ NGCFreezeGame (int where, bool8 silent)
     else
     {
         /*** Freeze to MC in slot A or slot B ***/
-        sprintf (filename, "%s.snz", Memory.ROMName);
+        sprintf (filename, "%s.snz", Memory.ROMFilename);
     }
     
     S9xSetSoundMute (TRUE);
@@ -345,7 +345,7 @@ NGCUnfreezeGame (int from, bool8 silent)
     if (from == 4)
     {
         /*** From SMB ***/
-        sprintf (filename, "\\%s\\%s.frz", SNESSAVEDIR, Memory.ROMName);
+        sprintf (filename, "\\%s\\%s.frz", SNESSAVEDIR, Memory.ROMFilename);
         ConnectSMB ();
         
         /*** Read the file into memory ***/
@@ -379,7 +379,7 @@ NGCUnfreezeGame (int from, bool8 silent)
     {
         
 #ifdef SDUSE_LFN
-        sprintf (filename, "%s/%s/%s.frz", ROOTSDDIR, SNESSAVEDIR, Memory.ROMName);
+        sprintf (filename, "%s/%s/%s.frz", ROOTSDDIR, SNESSAVEDIR, Memory.ROMFilename);
 #else
         /*** From SDCard ***/
         sprintf (filename, "%s/%s/%08x.frz", ROOTSDDIR, SNESSAVEDIR, Memory.ROMCRC32);
@@ -417,7 +417,7 @@ NGCUnfreezeGame (int from, bool8 silent)
     {
         ShowAction ((char*) "Loading freeze file...");
         
-        sprintf (filename, "%s.snz", Memory.ROMName);
+        sprintf (filename, "%s.snz", Memory.ROMFilename);
         
         int ret = LoadBufferFromMC ( savebuffer, from, filename, silent );
         if ( ret )
