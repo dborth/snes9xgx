@@ -12,13 +12,14 @@ By default, ROMs are loaded from "snes9x/roms/" and saves and preferences are
 stored in "snes9x/saves/".  Therefore you should have the following folders:
 
 snes9x/roms/
+
 snes9x/saves/
 
 == Wii ==
 
 On the Wii, you can load roms from any SD card (Front SD, SD Gecko, etc) or from USB.
 
-== GameCube ==
+== Gamecube ==
 
 You can load roms from DVD or SD card. If you create a bootable DVD of Snes9xGx you can put roms on the same DVD.
 
@@ -35,7 +36,7 @@ Remember to also create the snes9x/roms and snes9x/saves directories. See above.
 
 If you haven't installed the homebrew channel yet, read about how to here: http://hbc.hackmii.com/
 
-== GameCube ==
+== Gamecube ==
 
 You can load it via sdload and an SD card in slot A, or by streaming it to your
 cube, or by booting a bootable DVD with it on it. This document doesn't cover
