@@ -36,7 +36,7 @@
 #include "unzip.h"
 #include "filesel.h"
 #include "smbload.h"
-#include "fileload.h"
+#include "fileop.h"
 #include "mcsave.h"
 
 #define PAGESIZE 17
