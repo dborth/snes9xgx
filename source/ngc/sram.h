@@ -13,5 +13,7 @@ int prepareMCsavedata ();
 int prepareEXPORTsavedata ();
 void decodesavedata (int readsize);
 
-void quickLoadSRAM (bool8 silent);
-void quickSaveSRAM (bool8 silent);
+bool SaveSRAM (int method, bool silent);
+bool LoadSRAM (int method, bool silent);
+bool quickLoadSRAM (bool silent);
+bool quickSaveSRAM (bool silent);

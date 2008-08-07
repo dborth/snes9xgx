@@ -9,10 +9,9 @@
  * Preferences save/load preferences utilities
  ****************************************************************************/
 
-#define PREFS_FILE_NAME "snes9xGx.prf"
-
 int preparePrefsData ();
-void decodePrefsData ();
-
-void quickLoadPrefs (bool8 silent);
-void quickSavePrefs (bool8 silent);
+bool decodePrefsData ();
+bool SavePrefs (int method, bool silent);
+bool LoadPrefs (int method, bool silent);
+bool quickLoadPrefs (bool8 silent);
+bool quickSavePrefs (bool8 silent);

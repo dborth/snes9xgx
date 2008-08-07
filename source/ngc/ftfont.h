@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50 
+ * Snes9x 1.50
  *
  * Nintendo Gamecube Screen Font Driver
  *
@@ -22,13 +22,14 @@
 
 int FT_Init ();
 void setfontsize (int pixelsize);
-void DrawText (int x, int y, char *text);
-void legal ();
-void highlight (int on);
-void WaitButtonA ();
 void setfontcolour (u8 r, u8 g, u8 b);
-int RunMenu (char items[][20], int maxitems, char *title, int fontsize = 24);
-void DrawMenu (char items[][20], char *title, int maxitems, int selected, int fontsize = 24);
+void DrawText (int x, int y, char *text);
+void unpackbackdrop ();
+void Credits ();
+void RomInfo ();
+void WaitButtonA ();
+int RunMenu (char items[][50], int maxitems, char *title, int fontsize = 20, int x = -1);
+void DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsize = 20, int x = -1);
 void WaitPrompt (char *msg);
 int WaitPromptChoice (char *msg, char* bmsg, char* amsg);
 void ShowAction (char *msg);

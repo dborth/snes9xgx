@@ -21,6 +21,7 @@
 #include "mcsave.h"
 #include "sdload.h"
 #include "smbload.h"
+#include "filesel.h"
 
 extern unsigned char savebuffer[];
 extern int currconfig[4];
@@ -31,14 +32,15 @@ extern unsigned int wmpadmap[];
 extern unsigned int ccpadmap[];
 extern unsigned int ncpadmap[];
 
-#define PREFSVERSTRING "Snes9x GX 004a Prefs"
+#define PREFS_FILE_NAME "snes9xGx.prf"
+#define PREFSVERSTRING "Snes9x GX 005 Prefs"
 
 char prefscomment[2][32] = { {PREFSVERSTRING}, {"Preferences"} };
 
 /****************************************************************************
  * Prepare Preferences Data
  *
- * This sets up the save buffer for saving to a memory card.
+ * This sets up the save buffer for saving.
  ****************************************************************************/
 int
 preparePrefsData ()
@@ -64,7 +66,7 @@ preparePrefsData ()
   size = sizeof (GCSettings);
   memcpy (savebuffer + offset, &GCSettings, size);
   offset += size;
-  
+
   /*** Save buttonmaps ***/
   size = sizeof (unsigned int) *12;	// this size applies to all padmaps
   memcpy (savebuffer + offset, &gcpadmap, size);
@@ -75,7 +77,7 @@ preparePrefsData ()
   offset += size;
   memcpy (savebuffer + offset, &ncpadmap, size);
   offset += size;
-  
+
   return offset;
 }
 
@@ -83,71 +85,157 @@ preparePrefsData ()
 /****************************************************************************
  * Decode Preferences Data
  ****************************************************************************/
-void
+bool
 decodePrefsData ()
 {
-  int offset;
-  char prefscomment[32];
-  int size;
-  
-    offset = sizeof (saveicon);
-    memcpy (prefscomment, savebuffer + offset, 32);
-        
+	int offset;
+	char prefscomment[32];
+	int size;
+
+	offset = sizeof (saveicon);
+	memcpy (prefscomment, savebuffer + offset, 32);
+
 	if ( strcmp (prefscomment, PREFSVERSTRING) == 0 )
 	{
-	  offset += 64;
-	  memcpy (&Settings, savebuffer + offset, sizeof (Settings));
-	  offset += sizeof (Settings);
-	  memcpy (&GCSettings, savebuffer + offset, sizeof (GCSettings));
-	  offset += sizeof (GCSettings);
-	  // load padmaps (order important)
-	  size = sizeof (unsigned int) *12;
-	  memcpy (&gcpadmap, savebuffer + offset, size);
-	  offset += size;
-	  memcpy (&wmpadmap, savebuffer + offset, size);
-	  offset += size;
-	  memcpy (&ccpadmap, savebuffer + offset, size);
-	  offset += size;
-	  memcpy (&ncpadmap, savebuffer + offset, size);
+		offset += 64;
+		memcpy (&Settings, savebuffer + offset, sizeof (Settings));
+		offset += sizeof (Settings);
+		memcpy (&GCSettings, savebuffer + offset, sizeof (GCSettings));
+		offset += sizeof (GCSettings);
+		// load padmaps (order important)
+		size = sizeof (unsigned int) *12;
+		memcpy (&gcpadmap, savebuffer + offset, size);
+		offset += size;
+		memcpy (&wmpadmap, savebuffer + offset, size);
+		offset += size;
+		memcpy (&ccpadmap, savebuffer + offset, size);
+		offset += size;
+		memcpy (&ncpadmap, savebuffer + offset, size);
+
+		return true;
 	}
-    else
-	  WaitPrompt((char*) "Preferences reset - check settings!");
+	else
+		return false;
 }
 
-void quickLoadPrefs (bool8 silent)
+
+/****************************************************************************
+ * Save Preferences
+ ****************************************************************************/
+bool
+SavePrefs (int method, bool silent)
 {
-	switch ( QUICK_SAVE_SLOT )
+	if(method == METHOD_AUTO)
+		method = autoSaveMethod();
+
+	bool retval = false;
+	char filepath[1024];
+	int datasize;
+	int offset = 0;
+
+	datasize = preparePrefsData ();
+
+	if (!silent)
+		ShowAction ((char*) "Saving preferences...");
+
+	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		case CARD_SLOTA:
-		case CARD_SLOTB:
-			LoadPrefsFromMC(QUICK_SAVE_SLOT, silent);
-			break;
-		
-		case CARD_SLOTA+2:
-		case CARD_SLOTB+2:
-			LoadPrefsFromSD(silent);
-			break;
-		
-		case CARD_SLOTA+4:
-			LoadPrefsFromSMB(silent);
-			break;
+		if(method == METHOD_SD)
+			sprintf (filepath, "%s/%s/%s", ROOTSDDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
+		else
+			sprintf (filepath, "%s/%s/%s", ROOTUSBDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
+		offset = SaveBufferToFAT (filepath, datasize, silent);
 	}
+	else if(method == METHOD_SMB)
+	{
+		sprintf (filepath, "%s\\%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
+		offset = SaveBufferToSMB (filepath, datasize, silent);
+	}
+	else if(method == METHOD_MC_SLOTA)
+	{
+		offset = SaveBufferToMC (savebuffer, CARD_SLOTA, PREFS_FILE_NAME, datasize, silent);
+	}
+	else if(method == METHOD_MC_SLOTB)
+	{
+		offset = SaveBufferToMC (savebuffer, CARD_SLOTB, PREFS_FILE_NAME, datasize, silent);
+	}
+
+	if (offset > 0)
+	{
+		retval = decodePrefsData ();
+		if ( !silent )
+		{
+			sprintf (filepath, "Wrote %d bytes", offset);
+			WaitPrompt (filepath);
+		}
+	}
+	return retval;
 }
 
-void quickSavePrefs (bool8 silent)
+/****************************************************************************
+ * Load Preferences
+ ****************************************************************************/
+bool
+LoadPrefs (int method, bool silent)
 {
-	switch ( QUICK_SAVE_SLOT )
+	if(method == METHOD_AUTO)
+		method = autoSaveMethod(); // we use 'Save' folder because preferences need R/W
+
+	bool retval = false;
+	char filepath[1024];
+	int offset = 0;
+
+	if ( !silent )
+		ShowAction ((char*) "Loading preferences...");
+
+	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		case CARD_SLOTA:
-		case CARD_SLOTB:
-			SavePrefsToMC(QUICK_SAVE_SLOT, silent);
-			break;
-		case CARD_SLOTA+2:
-		case CARD_SLOTB+2:
-			SavePrefsToSD(silent);
-			break;
-		case CARD_SLOTA+4:
-			SavePrefsToSMB(silent);
-			break;
+		if(method == METHOD_SD)
+			sprintf (filepath, "%s/%s/%s", ROOTSDDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
+		else
+			sprintf (filepath, "%s/%s/%s", ROOTUSBDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
+		offset = LoadBufferFromFAT (filepath, silent);
 	}
+	else if(method == METHOD_SMB)
+	{
+		sprintf (filepath, "%s\\%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
+		LoadBufferFromSMB (filepath, silent);
+	}
+	else if(method == METHOD_MC_SLOTA)
+	{
+		offset = LoadBufferFromMC (savebuffer, CARD_SLOTA, PREFS_FILE_NAME, silent);
+	}
+	else if(method == METHOD_MC_SLOTB)
+	{
+		offset = LoadBufferFromMC (savebuffer, CARD_SLOTB, PREFS_FILE_NAME, silent);
+	}
+
+	if (offset > 0)
+	{
+		retval = decodePrefsData ();
+		if ( !silent )
+		{
+			sprintf (filepath, "Loaded %d bytes", offset);
+			WaitPrompt(filepath);
+		}
+	}
+	return retval;
+}
+
+/****************************************************************************
+ * Quick Load Preferences
+ ****************************************************************************/
+
+bool quickLoadPrefs (bool8 silent)
+{
+	return LoadPrefs(GCSettings.SaveMethod, silent);
+}
+
+/****************************************************************************
+ * Quick Save Preferences
+ ****************************************************************************/
+
+bool quickSavePrefs (bool8 silent)
+{
+	return SavePrefs(GCSettings.SaveMethod, silent);
 }

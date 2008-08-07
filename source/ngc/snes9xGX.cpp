@@ -131,8 +131,8 @@
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -159,11 +159,11 @@
 
 #include <ogcsys.h>
 #include <unistd.h>
-#include <fat.h>
 #include <wiiuse/wpad.h>
 #include <sdcard/card_cmn.h>
 #include <sdcard/wiisd_io.h>
 #include <sdcard/card_io.h>
+#include <fat.h>
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -190,6 +190,7 @@
 #include "preferences.h"
 #include "gctime.h"
 #include "button_mapping.h"
+#include "sdload.h"
 
 unsigned long ARAM_ROMSIZE = 0;
 int ConfigRequested = 0;
@@ -523,8 +524,7 @@ NGCReportButtons ()
         
         if ( GCSettings.AutoSave == 1 )
         {
-            //if ( WaitPromptChoice ((char*)"Save SRAM?", (char*)"Don't Save", (char*)"Save") )
-                quickSaveSRAM ( SILENT );
+            quickSaveSRAM ( SILENT );
         }
         else if ( GCSettings.AutoSave == 2 )
         {
@@ -540,7 +540,7 @@ NGCReportButtons ()
             }
         }
         
-        mainmenu ();
+        mainmenu (3); // go to game menu
         FrameTimer = 0;
         ConfigRequested = 0;
 		
@@ -612,6 +612,7 @@ void SetControllers ()
       S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
     }
 }
+
 
 /****************************************************************************
  * Set the default mapping for NGC
@@ -692,7 +693,7 @@ SetDefaultButtonMap ()
   maxcode = 0x60;
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Superscope"), false);
   // add mouses here
-	
+  
   SetControllers ();
 
 }
@@ -701,7 +702,7 @@ SetDefaultButtonMap ()
  * Emulation loop
  *
  * The 'clock' timer is long gone.
- * System now only uses vbl as hardware clock, so force PAL50 if you need 50hz 
+ * System now only uses vbl as hardware clock, so force PAL50 if you need 50hz
  ****************************************************************************/
 /* Eke-Eke: initialize frame Sync */
 extern void S9xInitSync();
@@ -714,7 +715,7 @@ emulate ()
 	AudioStart ();
 	S9xInitSync();
 
-	setFrameTimerMethod();	// also called in NGCReportButtons() 
+	setFrameTimerMethod();	// also called in NGCReportButtons()
 
 	while (1)
 	{
@@ -747,19 +748,19 @@ int
 main ()
 {
 	unsigned int save_flags;
-	
+	int selectedMenu = -1;
+
 	/*** Initialise GC ***/
 	InitGCVideo ();	/*** Get the ball rolling ***/
-	
-	/*** Initialize libFAT and SD cards ***/
+
+	/*** Initialize libFAT for SD and USB ***/
 	fatInitDefault();
 	//fatInit(8192, false);
 	//fat_enable_readahead_all();
 	
-
 	/*** Initialize DVD subsystem ***/
 	DVD_Init ();
-	
+
 #ifdef FORCE_WII
 	isWii = TRUE;
 #else
@@ -777,61 +778,63 @@ main ()
 	WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
 #endif
 
-	
+
 	/*** Initialise freetype ***/
 	if (FT_Init ())
 	{
 		printf ("Cannot initialise font subsystem!\n");
 		while (1);
 	}
-	setfontsize (16);/***sets the font size.***/
-	
+
 	/*** Set defaults ***/
 	DefaultSettings ();
-	
+
 	S9xUnmapAllControls ();
 	SetDefaultButtonMap ();
-	
+
 	printf ("Initialise Memory\n");
 	/*** Allocate SNES Memory ***/
 	if (!Memory.Init ())
 		while (1);
-	
+
 	printf ("Initialise APU\n");
 	/*** Allocate APU ***/
 	if (!S9xInitAPU ())
 		while (1);
-	
+
 	/*** Set Pixel Renderer to match 565 ***/
 	S9xSetRenderPixelFormat (RGB565);
-	
+
 	/*** Initialise Snes Sound System ***/
 	S9xInitSound (5, TRUE, 1024);
-	
+
 	printf ("Initialise GFX\n");
 	/*** Initialise Graphics ***/
 	setGFX ();
 	if (!S9xGraphicsInit ())
 		while (1);
-	
-	legal ();
-	WaitButtonA ();
-	
+
+	unpackbackdrop ();
+
 	// Load preferences
-	quickLoadPrefs(SILENT);
-	
+	if(!quickLoadPrefs(SILENT))
+	{
+		WaitPrompt((char*) "Preferences reset - check settings!");
+		selectedMenu = 2; // change to preferences menu
+	}
+
 	// Correct any relevant saved settings that are invalid
 	Settings.FrameTimeNTSC = 16667;
 	Settings.FrameTimePAL = 20000;
     if ( Settings.TurboSkipFrames <= Settings.SkipFrames )
         Settings.TurboSkipFrames = 20;
-        
+
 	/*** No appended ROM, so get the user to load one ***/
 	if (ARAM_ROMSIZE == 0)
 	{
 		while (ARAM_ROMSIZE == 0)
 		{
-			mainmenu ();
+			mainmenu (selectedMenu);
 		}
 	}
 	else
@@ -841,14 +844,14 @@ main ()
 		if (!Memory.LoadROM ("VIRTUAL.ROM"))
 			while (1);
 		CPU.Flags = save_flags;
-		
+
 		/*** Load SRAM ***/
 		Memory.LoadSRAM ("DVD");
 	}
-	
+
 	/*** Emulate ***/
 	emulate ();
-	
+
 	/*** NO! - We're never leaving here ! ***/
 	while (1);
 	return 0;

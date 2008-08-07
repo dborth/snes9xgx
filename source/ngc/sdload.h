@@ -21,15 +21,17 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-static int FileSortCallback(const void *f1, const void *f2);
-int updateFATdirname();
-int parseFATdirectory();
-int LoadSDFile (char *filename, int length);
-void SaveSRAMToSD (bool silent);
-void LoadSRAMFromSD (bool silent);
-void SavePrefsToSD (bool silent);
-void LoadPrefsFromSD (bool silent);
+#define ROOTSDDIR "fat3:/"
+#define ROOTUSBDIR "fat4:/"
 
-extern char currSDdir[MAXPATHLEN];
+bool fat_remount(PARTITION_INTERFACE partition);
+static int FileSortCallback(const void *f1, const void *f2);
+int updateFATdirname(int method);
+int parseFATdirectory(int method);
+int LoadFATFile (char *filename, int length);
+int SaveBufferToFAT (char *filepath, int datasize, bool silent);
+int LoadBufferFromFAT (char *filepath, bool silent);
+
+extern char currFATdir[MAXPATHLEN];
 
 #endif

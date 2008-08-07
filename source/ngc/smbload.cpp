@@ -53,26 +53,26 @@ void
 ConnectSMB ()
 {
     int ret;
-    
+
     if (SMBTimer > SMBTIMEOUT)
     {
         connected = 0;
         SMBTimer = 0;
     }
-    
+
     if (connected == 0)
     {
-        
+
         if (netinited == 0)
         {
             ShowAction ((char*) "Setting up network interface ...");
             ret = if_config (smbinfo.gcip, smbinfo.gwip, smbinfo.mask, 0);
             netinited = 1;
         }
-        
+
         ShowAction ((char*) "Connecting to share ...");
         SMB_Destroy ();
-        
+
         if (SMB_Init (smbinfo.smbuser, smbinfo.smbpwd,
             smbinfo.smbgcid, smbinfo.smbsvid, smbinfo.smbshare,
             smbinfo.smbip) != SMB_SUCCESS)
@@ -82,7 +82,7 @@ ConnectSMB ()
             return;
         }
     }
-    
+
     connected = 1;
 
 }
@@ -101,7 +101,7 @@ parseSMBDirectory ()
 
   ConnectSMB ();
 
-  strcpy (searchpath, SNESROMDIR);
+  strcpy (searchpath, GCSettings.LoadFolder);
   strcat (searchpath, "\\*.*");
 
   if (SMB_FindFirst
@@ -152,7 +152,7 @@ LoadSMBFile (char *filename, int length)
   z_stream zs;
   int res, outbytes;
 
-  strcpy (filepath, SNESROMDIR);
+  strcpy (filepath, GCSettings.LoadFolder);
   strcat (filepath, "\\");
   strcat (filepath, filename);
   rbuffer = (char *) Memory.ROM;
@@ -160,10 +160,10 @@ LoadSMBFile (char *filename, int length)
   int have = 0;
 
   ConnectSMB ();
-  
+
   if ( connected )
   {
-    
+
         /*** Open the file for reading ***/
       smbfile =
         SMB_Open (filepath, SMB_OPEN_READING | SMB_DENY_NONE, SMB_OF_OPEN);
@@ -172,7 +172,7 @@ LoadSMBFile (char *filename, int length)
           while (total < length)
         {
           bytesread = SMB_Read (zipbuffer, 16384, offset, smbfile);
-    
+
           if (pass == 0)
             {
                     /*** Is this a Zip file ? ***/
@@ -188,13 +188,13 @@ LoadSMBFile (char *filename, int length)
               zs.avail_in = 0;
               zs.next_in = Z_NULL;
               res = inflateInit2 (&zs, -MAX_WBITS);
-    
+
               if (res != Z_OK)
                 {
                   SMB_Close (smbfile);
                   return 0;
                 }
-    
+
               zs.avail_in =
                 16384 - (sizeof (PKZIPHEADER) +
                      FLIP16 (pkzip.filenameLength) +
@@ -205,7 +205,7 @@ LoadSMBFile (char *filename, int length)
                            FLIP16 (pkzip.extraDataLength));
             }
             }
-    
+
           if (zip)
             {
               if (pass)
@@ -213,16 +213,16 @@ LoadSMBFile (char *filename, int length)
               zs.avail_in = bytesread;
               zs.next_in = (Bytef *) zipbuffer;
             }
-    
+
               do
             {
               zs.avail_out = ZIPCHUNK;
               zs.next_out = (Bytef *) output;
-    
+
               res = inflate (&zs, Z_NO_FLUSH);
-    
+
               have = ZIPCHUNK - zs.avail_out;
-    
+
               if (have)
                 {
                   memcpy (rbuffer + outbytes, output, have);
@@ -233,10 +233,10 @@ LoadSMBFile (char *filename, int length)
             }
           else
             memcpy (rbuffer + offset, zipbuffer, bytesread);
-    
+
           total += bytesread;
           offset += bytesread;
-    
+
           if (!zip)
             {
               sprintf (buffer, "Read %d of %d bytes", total, length);
@@ -249,19 +249,19 @@ LoadSMBFile (char *filename, int length)
               ShowProgress (buffer, outbytes, pkzip.uncompressedSize);
             }
           //ShowAction (buffer);
-    
+
           pass++;
-    
+
         }
-    
+
           if (zip)
         {
           inflateEnd (&zs);
           total = outbytes;
         }
-    
+
           SMB_Close (smbfile);
-    
+
           return total;
         }
       else
@@ -271,7 +271,7 @@ LoadSMBFile (char *filename, int length)
           return 0;
         }
     }
-    
+
     return 0;
 }
 
@@ -286,15 +286,15 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
     int dsize = datasize;
     int wrote = 0;
     int offset = 0;
-    
+
     ConnectSMB ();
-    
+
     if ( connected )
     {
         smbfile =
             SMB_Open (filepath, SMB_OPEN_WRITING | SMB_DENY_NONE,
             SMB_OF_CREATE | SMB_OF_TRUNCATE);
-        
+
         if (smbfile)
         {
             while (dsize > 0)
@@ -305,14 +305,14 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
                 else
                     wrote =
                         SMB_Write ((char *) savebuffer + offset, dsize, offset, smbfile);
-                
+
                 offset += wrote;
                 dsize -= wrote;
             }
-            
+
             SMB_Close (smbfile);
             SMBTimer = 0;
-            
+
             return offset;
         }
         else
@@ -322,7 +322,7 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
             WaitPrompt (msg);
         }
     }
-    
+
     return 0;
 }
 
@@ -332,18 +332,19 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
  ****************************************************************************/
 int
 LoadBufferFromSMB (char *filepath, bool8 silent)
+
 {
     SMBFILE smbfile;
     int ret;
     int offset = 0;
-    
+
     ConnectSMB ();
-    
+
     if ( connected )
     {
         smbfile =
             SMB_Open (filepath, SMB_OPEN_READING | SMB_DENY_NONE, SMB_OF_OPEN);
-        
+
         if (!smbfile)
         {
             if (!silent)
@@ -354,131 +355,18 @@ LoadBufferFromSMB (char *filepath, bool8 silent)
             }
             return 0;
         }
-        
+
         memset (savebuffer, 0, 0x22000);
-        
+
         while ((ret =
                 SMB_Read ((char *) savebuffer + offset, 1024, offset,
                 smbfile)) > 0)
             offset += ret;
-        
+
         SMB_Close (smbfile);
-        
+
         return offset;
     }
-    
+
     return 0;
-}
-
-
-/****************************************************************************
- * Save SRAM to SMB
- ****************************************************************************/
-void
-SaveSRAMToSMB (bool8 silent)
-{
-    char filepath[1024];
-    int datasize;
-    int offset;
-    
-    sprintf (filepath, "%s\\%s.srm", SNESSAVEDIR, Memory.ROMFilename);
-	
-	if (!silent)
-		ShowAction ((char*) "Saving SRAM to SMB...");
-    
-    datasize = prepareEXPORTsavedata ();
-
-    if ( datasize )
-    {
-        offset = SaveBufferToSMB (filepath, datasize, silent);
-        
-        if ( (offset > 0) && (!silent) )
-        {
-            sprintf (filepath, "Wrote %d bytes", offset);
-            WaitPrompt (filepath);
-        }
-    }
-}
-
-/****************************************************************************
- * Load SRAM from SMB
- ****************************************************************************/
-void
-LoadSRAMFromSMB (bool8 silent)
-{
-    char filepath[1024];
-    int offset;
-    
-    sprintf (filepath, "%s\\%s.srm", SNESSAVEDIR, Memory.ROMFilename);
-    ShowAction ((char*) "Loading SRAM from SMB...");
-    
-    offset = LoadBufferFromSMB (filepath, silent);
-
-    if (offset > 0)
-    {
-        decodesavedata (offset);
-        if ( !silent )
-        {
-            sprintf (filepath, "Loaded %d bytes", offset);
-            WaitPrompt(filepath);
-        }
-        S9xSoftReset();
-    }
-}
-
-
-/****************************************************************************
- * Save Preferences to SMB
- ****************************************************************************/
-void
-SavePrefsToSMB (bool8 silent)
-{
-    char filepath[1024];
-    int datasize;
-    int offset;
-    
-    sprintf (filepath, "%s\\%s", SNESSAVEDIR, PREFS_FILE_NAME);
-	
-	if (!silent)
-		ShowAction ((char*) "Saving preferences to SMB...");
-    
-    datasize = preparePrefsData ();
-
-    if ( datasize )
-    {
-        offset = SaveBufferToSMB (filepath, datasize, silent);
-        
-        if ( (offset > 0) && (!silent) )
-        {
-            sprintf (filepath, "Wrote %d bytes", offset);
-            WaitPrompt (filepath);
-        }
-    }
-}
-
-
-/****************************************************************************
- * Load Preferences from SMB
- ****************************************************************************/
-void
-LoadPrefsFromSMB (bool8 silent)
-{
-    char filepath[1024];
-    int offset;
-    
-    ShowAction ((char*) "Loading preferences from SMB...");
-    
-    sprintf (filepath, "%s\\%s", SNESSAVEDIR, PREFS_FILE_NAME);
-    
-    offset = LoadBufferFromSMB (filepath, silent);
-
-    if (offset > 0)
-    {
-        decodePrefsData ();
-        if ( !silent )
-        {
-            sprintf (filepath, "Loaded %d bytes", offset);
-            WaitPrompt(filepath);
-        }
-    }
 }

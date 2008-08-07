@@ -131,8 +131,8 @@
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -166,9 +166,23 @@
 #define NOTSILENT 0
 #define SILENT 1
 
+enum {
+	METHOD_AUTO,
+	METHOD_SD,
+	METHOD_USB,
+	METHOD_DVD,
+	METHOD_SMB,
+	METHOD_MC_SLOTA,
+	METHOD_MC_SLOTB
+};
+
 struct SGCSettings{
     uint8  AutoLoad;
     uint8  AutoSave;
+    uint8  LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
+	char   LoadFolder[200]; // Path to game files
+	uint8  SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, Memory Card Slot A, Memory Card Slot B, USB, SMB
+	char   SaveFolder[200]; // Path to save files
     char   gcip[16];
     char   gwip[16];
     char   mask[16];
@@ -181,9 +195,8 @@ struct SGCSettings{
     bool8  NGCZoom;
     uint8  VerifySaves;
 	u16		render;		// 0 - original, 1 - no AA
-	u32		QuickSaveSlot;		       // -1   Disabled - no prefs are loaded, 0   Memory card in slot A, 1   Memory card in slot B, 2   SD card in slot A, 3   SD card in slot B, 4   SMB share, 5	USB
-	u16		Superscope;
-	u16		Mouse;
+	u16 Superscope;
+	u16 Mouse; 
 };
 
 START_EXTERN_C
@@ -196,21 +209,6 @@ extern void SetControllers ();
 END_EXTERN_C
 
 #define	JOY_THRESHOLD	0.70	// for wii (expansion) analogues
-
-#endif
-
-/*** QUICK_SAVE_SLOT defines where preferences are loaded and saved, and also
-     where SRAM and Freezes are auto loaded or saved if enabled:
-     
-       -1   Disabled - no prefs are loaded
-		0   Memory card in slot A
-		1   Memory card in slot B
-		2   SD card in slot A
-		3   SD card in slot B
-		4   SMB share         ***/
-#ifndef QUICK_SAVE_SLOT
-#define QUICK_SAVE_SLOT 2	// save to SD
-#endif
 
 /*** default SMB settings ***/
 #ifndef GC_IP
@@ -239,4 +237,6 @@ END_EXTERN_C
 #endif
 #ifndef SMB_IP
 #define SMB_IP "192.168.1.100"	/*** IP Address of share server ***/
+#endif
+
 #endif

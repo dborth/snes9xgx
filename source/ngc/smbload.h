@@ -11,15 +11,14 @@
  ****************************************************************************/
 
 #ifndef _NGCSMB_
+
 #define _NGCSMB_
 
 void ConnectSMB ();
 int parseSMBDirectory ();
 int LoadSMBFile (char *filename, int length);
-void SaveSRAMToSMB (bool8 silent);
-void LoadSRAMFromSMB (bool8 silent);
-void SavePrefsToSMB (bool8 silent);
-void LoadPrefsFromSMB (bool8 silent);
+int LoadBufferFromSMB (char *filepath, bool8 silent);
+int SaveBufferToSMB (char *filepath, int datasize, bool8 silent);
 
 typedef struct
 {
@@ -34,5 +33,6 @@ typedef struct
   char smbshare[20];
 }
 SMBINFO;
+
 
 #endif

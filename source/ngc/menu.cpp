@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50 
+ * Snes9x 1.50
  *
  * Nintendo Gamecube Menu
  *
@@ -43,7 +43,13 @@
 #include "button_mapping.h"
 #include "ftfont.h"
 
-extern void DrawMenu (char items[][20], char *title, int maxitems, int selected, int fontsize);
+#include "cheats.h"
+#include "cheatmgr.h"
+
+extern void DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsize);
+
+extern SCheatData Cheat;
+
 
 #define PSOSDLOADID 0x7c6000a6
 extern int menu;
@@ -51,6 +57,9 @@ extern unsigned long ARAM_ROMSIZE;
 
 #define SOFTRESET_ADR ((volatile u32*)0xCC003024)
 
+/****************************************************************************
+ * Reboot
+ ****************************************************************************/
 
 void Reboot() {
 #ifdef HW_RVL
@@ -62,406 +71,330 @@ void Reboot() {
 }
 
 /****************************************************************************
- * Freeze Manager
- ****************************************************************************/
-int freezecountwii = 7;
-char freezemenuwii[][20] = { "Freeze to SD", "Thaw from SD",
-	 "Freeze to MC Slot A", "Thaw from MC Slot A",
-     "Freeze to MC Slot B", "Thaw from MC Slot B",
-     "Return to previous"
-};
-int freezecount = 9;
-char freezemenu[][20] = { "Freeze to SD", "Thaw from SD",
-	 "Freeze to MC Slot A", "Thaw from MC Slot A",
-     "Freeze to MC Slot B", "Thaw from MC Slot B",
-     "Freeze to SMB", "Thaw from SMB",
-     "Return to previous"
-};
-int
-FreezeManager ()
-{
-    int ret;
-    int loaded = 0;
-    int quit = 0;
-    int oldmenu = menu;
-    menu = 0;
-    
-    
-    while (quit == 0)
-    {
-        if ( isWii )   /* Wii menu */
-        {
-            ret = RunMenu (freezemenuwii, freezecountwii, (char*)"Freeze Manager");
-            if (ret >= freezecountwii-1)
-                ret = freezecount-1;
-        }
-        else           /* Gamecube menu */
-            ret = RunMenu (freezemenu, freezecount, (char*)"Freeze Manager");
-        
-        switch (ret)
-        {
-            case 0:/*** Freeze to SDCard ***/
-                NGCFreezeGame (2, NOTSILENT);
-                break;
-            
-            case 1:/*** Thaw from SDCard***/
-                quit = loaded = NGCUnfreezeGame (2, NOTSILENT);
-                break;
-				
-            case 2:/*** Freeze to MC in slot A ***/
-                NGCFreezeGame (0, NOTSILENT);
-                break;
-            
-            case 3:/*** Thaw from MC in slot A ***/
-                quit = loaded = NGCUnfreezeGame (0, NOTSILENT);
-                break;
-             
-            case 4:/*** Freeze to MC in slot B ***/
-                NGCFreezeGame (1, NOTSILENT);
-                break;
-
-            case 5:/*** Thaw from MC in slot B ***/
-                quit = loaded = NGCUnfreezeGame (1, NOTSILENT);
-                break;
-            
-            case 6:/*** Freeze to SMB ***/
-                if ( !isWii )
-                    NGCFreezeGame (4, NOTSILENT);
-                break;
-            
-            case 7:/*** Thaw from SMB ***/
-                if ( !isWii )
-                    quit = loaded = NGCUnfreezeGame (4, NOTSILENT);
-                break;
-            
-			case -1: /*** Button B ***/
-            case 8:
-                quit = 1;
-                break;
-        }
-    
-    }
-    
-    menu = oldmenu;
-    return loaded;
-}
-
-/****************************************************************************
  * Load Manager
  ****************************************************************************/
-int loadmancountwii = 3;
-char loadmanwii[][20] = { "Load from SD",
-  "Load from USB", "Return to previous"
-};
-int loadmancount = 4;
-char loadman[][20] = {  "Load from SD",
-  "Load from DVD", "Load from SMB", "Return to previous"
-};
+
 int
 LoadManager ()
 {
-    int ret;
-    int quit = 0;
-    int oldmenu = menu;
-    int retval = 1;
-    menu = 0;
-    
-    while (quit == 0)
-    {
-#ifdef HW_RVL
-	/* Wii menu */
-		ret = RunMenu (loadmanwii, loadmancountwii, (char*)"Load Manager");
+	int loadROM = OpenROM(GCSettings.LoadMethod);
 
-        switch (ret)
-        {
-		    case 0:
-				/*** Load from SD ***/
-                quit = OpenSD ();
-                break;
-				
-            case 1:
-                /*** Load from USB ***/
-                quit = OpenUSB ();
-                break;
-            
-			case -1: /*** Button B ***/
-            case 2:
-                retval = 0;
-                quit = 1;
-                break;
-        }
-#else 
-		/* Gamecube menu */
-		ret = RunMenu (loadman, loadmancount, (char*)"Load Manager");
-
-        switch (ret)
-        {
-		    case 0:
-				/*** Load from SD ***/
-                quit = OpenSD ();
-                break;
-				
-            case 1:
-                /*** Load from DVD ***/
-                quit = OpenDVD ();
-                break;
-            
-            case 2:
-				/*** Load from SMB ***/ //(gamecube option)
-	            quit = OpenSMB ();
-	            break;
-            
-			case -1: /*** Button B ***/
-            case 3:
-                retval = 0;
-                quit = 1;
-                break;
-        }	
-#endif
-    }
-	
-	/*** 
-	* check for autoloadsram / freeze 
+	/***
+	* check for autoloadsram / freeze
 	***/
-	if ( retval == 1 ) // if ROM was loaded, load the SRAM & settings
+	if ( loadROM == 1 ) // if ROM was loaded, load the SRAM & settings
 	{
 		if ( GCSettings.AutoLoad == 1 )
-		{
 			quickLoadSRAM ( SILENT );
-			S9xSoftReset();	// reset after loading sram
-		}
 		else if ( GCSettings.AutoLoad == 2 )
-		{
 			quickLoadFreeze ( SILENT );
-		}
+			
+		// setup cheats
+		SetupCheats();
 	}
-    
-    menu = oldmenu;
-    return retval;
+
+	return loadROM;
 }
 
 /****************************************************************************
- * Save Manager
+ * Preferences Menu
  ****************************************************************************/
-int savecountwii = 7;
-char savemenuwii[][20] = { "Save to SD", "Load from SD",
-  "Save to MC SLOT A", "Load from MC SLOT A",
-  "Save to MC SLOT B", "Load from MC SLOT B",
-  "Return to previous"
-};
-int savecount = 9;
-char savemenu[][20] = { "Save to SD", "Load from SD",
-  "Save to MC SLOT A", "Load from MC SLOT A",
-  "Save to MC SLOT B", "Load from MC SLOT B",
-  "Save to SMB", "Load from SMB",
-  "Return to previous"
-};
-void
-SaveManager ()
-{
-    int ret;
-    int quit = 0;
-    int oldmenu = menu;
-    menu = 0;
-    
-    while (quit == 0)
-    {
-        if ( isWii )   /* Wii menu */
-        {
-            ret = RunMenu (savemenuwii, savecountwii, (char*)"SRAM Manager");
-            if (ret >= savecountwii-1)
-                ret = savecount-1;
-        }
-        else           /* Gamecube menu */
-            ret = RunMenu (savemenu, savecount, (char*)"SRAM Manager");
+static int prefmenuCount = 15;
+static char prefmenu[][50] = {
 
-        switch (ret)
-        {
-		    case 0:
-                /*** Save to SD***/
-                SaveSRAMToSD (NOTSILENT);
-                break;
-            
-            case 1:
-                /*** Load from SD***/
-                LoadSRAMFromSD (NOTSILENT);
-                break;
-            
-            case 2:
-                /*** Save to MC slot A ***/
-                SaveSRAMToMC (CARD_SLOTA, NOTSILENT);
-                break;
-            
-            case 3:
-                /*** Load from MC slot A ***/
-                LoadSRAMFromMC (CARD_SLOTA, NOTSILENT);
-                break;
-            
-            case 4:
-                /*** Save to MC slot B ***/
-                SaveSRAMToMC (CARD_SLOTB, NOTSILENT);
-                break;
-            
-            case 5:
-                /*** Load from MC slot B ***/
-                LoadSRAMFromMC (CARD_SLOTB, NOTSILENT);
-                break;
+	"Load Method",
+	"Load Folder",
+	"Save Method",
+	"Save Folder",
 
-            case 6:
-                /*** Save to SMB **/
-                SaveSRAMToSMB (NOTSILENT);
-                break;
-            
-            case 7:
-                /*** Load from SMB ***/
-                LoadSRAMFromSMB (NOTSILENT);
-                break;
-            
-			case -1: /*** Button B ***/
-            case 8:
-                /*** Return ***/
-                quit = 1;
-                break;
-        }
-    }
-    
-    menu = oldmenu;
-}
+	"Auto Load",
+	"Auto Save",
+	"Verify MC Saves",
 
-/****************************************************************************
- * Emulator Options
- ****************************************************************************/
-static int emuCount = 12;
-static char emulatorOptions[][20] = { "Reverse Stereo OFF",
-  "Interp. Sound ON", "Transparency ON", "FPS Display OFF",
-  "MultiTap 5 OFF", "C-Stick Zoom OFF",
-  "Auto Load OFF", "Auto Save OFF", "Verify MC Saves OFF",
-  "Video Filtering OFF", "Superscope OFF",
-  "Save Prefs Now", "Return to previous"
+	"Reverse Stereo",
+	"Interpolated Sound",
+	"Transparency",
+	"Display Frame Rate",
+	"C-Stick Zoom",
+	"Video Filtering",
+
+	"Save Preferences",
+	"Back to Main Menu"
 };
 
 void
-EmulatorOptions ()
+PreferencesMenu ()
 {
 	int ret = 0;
+	int quit = 0;
+	int oldmenu = menu;
+	menu = 0;
+	while (quit == 0)
+	{
+		// some load/save methods are not implemented - here's where we skip them
+		
+		#ifndef HW_RVL // GameCube mode
+			if(GCSettings.LoadMethod == METHOD_USB)
+				GCSettings.LoadMethod++;
+			if(GCSettings.SaveMethod == METHOD_USB)
+				GCSettings.SaveMethod++;
+		#else // Wii mode
+			if(GCSettings.LoadMethod == METHOD_DVD)
+				GCSettings.LoadMethod++;
+		#endif
+		
+		if(GCSettings.SaveMethod == METHOD_DVD) // saving to DVD is impossible
+			GCSettings.SaveMethod++;
+		
+		if(GCSettings.SaveMethod == METHOD_SMB) // disable SMB - network saving needs some work
+			GCSettings.SaveMethod++;
+		
+		if(GCSettings.LoadMethod == METHOD_SMB) // disable SMB - network loading needs some work
+			GCSettings.LoadMethod++;
+				
+		// correct load/save methods out of bounds
+		if(GCSettings.LoadMethod > 4)
+			GCSettings.LoadMethod = 0;
+		if(GCSettings.SaveMethod > 6)
+			GCSettings.SaveMethod = 0;
+		
+		if (GCSettings.LoadMethod == METHOD_AUTO) sprintf (prefmenu[0],"Load Method AUTO");
+		else if (GCSettings.LoadMethod == METHOD_SD) sprintf (prefmenu[0],"Load Method SD");
+		else if (GCSettings.LoadMethod == METHOD_USB) sprintf (prefmenu[0],"Load Method USB");
+		else if (GCSettings.LoadMethod == METHOD_DVD) sprintf (prefmenu[0],"Load Method DVD");
+		else if (GCSettings.LoadMethod == METHOD_SMB) sprintf (prefmenu[0],"Load Method Network");
+
+		sprintf (prefmenu[1], "Load Folder %s",	GCSettings.LoadFolder);
+
+		if (GCSettings.SaveMethod == METHOD_AUTO) sprintf (prefmenu[2],"Save Method AUTO");
+		else if (GCSettings.SaveMethod == METHOD_SD) sprintf (prefmenu[2],"Save Method SD");
+		else if (GCSettings.SaveMethod == METHOD_USB) sprintf (prefmenu[2],"Save Method USB");
+		else if (GCSettings.SaveMethod == METHOD_SMB) sprintf (prefmenu[2],"Save Method Network");
+		else if (GCSettings.SaveMethod == METHOD_MC_SLOTA) sprintf (prefmenu[2],"Save Method MC Slot A");
+		else if (GCSettings.SaveMethod == METHOD_MC_SLOTB) sprintf (prefmenu[2],"Save Method MC Slot B");
+		
+		sprintf (prefmenu[3], "Save Folder %s",	GCSettings.SaveFolder);
+		
+		// disable changing load/save directories for now
+		prefmenu[1][0] = '\0';
+		prefmenu[3][0] = '\0';
+
+		if (GCSettings.AutoLoad == 0) sprintf (prefmenu[4],"Auto Load OFF");
+		else if (GCSettings.AutoLoad == 1) sprintf (prefmenu[4],"Auto Load SRAM");
+		else if (GCSettings.AutoLoad == 2) sprintf (prefmenu[4],"Auto Load FREEZE");
+
+		if (GCSettings.AutoSave == 0) sprintf (prefmenu[5],"Auto Save OFF");
+		else if (GCSettings.AutoSave == 1) sprintf (prefmenu[5],"Auto Save SRAM");
+		else if (GCSettings.AutoSave == 2) sprintf (prefmenu[5],"Auto Save FREEZE");
+		else if (GCSettings.AutoSave == 3) sprintf (prefmenu[5],"Auto Save BOTH");
+
+		sprintf (prefmenu[6], "Verify MC Saves %s",
+			GCSettings.VerifySaves == true ? " ON" : "OFF");
+
+		sprintf (prefmenu[7], "Reverse Stereo %s",
+			Settings.ReverseStereo == true ? " ON" : "OFF");
+
+		sprintf (prefmenu[8], "Interpolated Sound %s",
+			Settings.InterpolatedSound == true ? " ON" : "OFF");
+
+		sprintf (prefmenu[9], "Transparency %s",
+			Settings.Transparency == true ? " ON" : "OFF");
+
+		sprintf (prefmenu[10], "Display Frame Rate %s",
+			Settings.DisplayFrameRate == true ? " ON" : "OFF");
+
+		sprintf (prefmenu[11], "C-Stick Zoom %s",
+			GCSettings.NGCZoom == true ? " ON" : "OFF");
+			
+		sprintf (prefmenu[12], "Video Filtering %s",
+			GCSettings.render == true ? " ON" : "OFF");
+			
+		ret = RunMenu (prefmenu, prefmenuCount, (char*)"Preferences", 16);
+
+		switch (ret)
+		{
+			case 0:
+				GCSettings.LoadMethod ++;
+				break;
+				
+			case 1:
+				break;
+				
+			case 2:
+				GCSettings.SaveMethod ++;
+				break;
+				
+			case 3:
+				break;
+				
+			case 4:
+				GCSettings.AutoLoad ++;
+				if (GCSettings.AutoLoad > 2)
+					GCSettings.AutoLoad = 0;
+				break;
+				
+			case 5:
+				GCSettings.AutoSave ++;
+				if (GCSettings.AutoSave > 3)
+					GCSettings.AutoSave = 0;
+				break;
+
+			case 6:
+				GCSettings.VerifySaves ^= 1;
+				break;
+
+			case 7:
+				Settings.ReverseStereo ^= 1;
+				break;
+
+			case 8:
+				Settings.InterpolatedSound ^= 1;
+				break;
+
+			case 9:
+				Settings.Transparency ^= 1;
+				break;
+
+			case 10:
+				Settings.DisplayFrameRate ^= 1;
+				break;
+
+			case 11:
+				GCSettings.NGCZoom ^= 1;
+				break;
+				
+			case 12:
+				GCSettings.render ^= 1;
+				break;
+
+			case 13:
+				quickSavePrefs(NOTSILENT);
+				break;
+
+			case -1: /*** Button B ***/
+			case 14:
+				quit = 1;
+				break;
+
+		}
+	}
+	menu = oldmenu;
+}
+
+/****************************************************************************
+ * Cheat Menu
+ ****************************************************************************/
+static int cheatmenuCount = 0;
+static char cheatmenu[MAX_CHEATS][50];
+ 
+void CheatMenu()
+{
+	int ret = -1;
+	int oldmenu = menu;
+	menu = 0;
+		
+	if(Cheat.num_cheats > 0)
+	{
+		cheatmenuCount = Cheat.num_cheats + 1;
+		
+		sprintf (cheatmenu[cheatmenuCount-1], "Back to Game Menu");
+				
+		while(ret != cheatmenuCount-1)
+		{
+			if(ret >= 0)
+			{
+				if(Cheat.c[ret].enabled)
+					S9xDisableCheat(ret);
+				else
+					S9xEnableCheat(ret);
+			}
+			
+			for(uint16 i=0; i < Cheat.num_cheats; i++)
+				sprintf (cheatmenu[i], "%s %s", Cheat.c[i].name, Cheat.c[i].enabled == true ? " ON" : "OFF");
+				
+			ret = RunMenu (cheatmenu, cheatmenuCount, (char*)"Cheats", 16);
+		}
+	}
+	else
+	{
+		WaitPrompt((char*)"Cheat file not found!");
+	}
+	menu = oldmenu;
+}
+
+/****************************************************************************
+ * Game Options Menu
+ ****************************************************************************/
+static int gamemenuCount = 9;
+static char gamemenu[][50] = {
+  "Return to Game",
+  "Reset Game",
+  "ROM Information",
+  "Cheats",
+  "Load SRAM", "Save SRAM",
+  "Load Freeze", "Save Freeze",
+  "Back to Main Menu"
+};
+
+int
+GameMenu ()
+{
+	int ret, retval = 0;
 	int quit = 0;
 	int oldmenu = menu;
 	menu = 0;
 	
 	while (quit == 0)
 	{
-		sprintf (emulatorOptions[0], "Reverse Stereo %s",
-			Settings.ReverseStereo == true ? " ON" : "OFF");
-			
-		sprintf (emulatorOptions[1], "Interp. Sound %s",
-			Settings.InterpolatedSound == true ? " ON" : "OFF");
-			
-		sprintf (emulatorOptions[2], "Transparency %s",
-			Settings.Transparency == true ? " ON" : "OFF");
-			
-		sprintf (emulatorOptions[3], "FPS Display %s",
-			Settings.DisplayFrameRate == true ? " ON" : "OFF");
-			
-		sprintf (emulatorOptions[4], "MultiTap 5 %s",
-			Settings.MultiPlayer5Master == true ? " ON" : "OFF");
-			
-		sprintf (emulatorOptions[5], "C-Stick Zoom %s",
-			GCSettings.NGCZoom == true ? " ON" : "OFF");
-			
-        if (GCSettings.AutoLoad == 0) sprintf (emulatorOptions[6],"Auto Load OFF");
-        else if (GCSettings.AutoLoad == 1) sprintf (emulatorOptions[6],"Auto Load SRAM");
-        else if (GCSettings.AutoLoad == 2) sprintf (emulatorOptions[6],"Auto Load FREEZE");
-        
-        if (GCSettings.AutoSave == 0) sprintf (emulatorOptions[7],"Auto Save OFF");
-        else if (GCSettings.AutoSave == 1) sprintf (emulatorOptions[7],"Auto Save SRAM");
-        else if (GCSettings.AutoSave == 2) sprintf (emulatorOptions[7],"Auto Save FREEZE");
-        else if (GCSettings.AutoSave == 3) sprintf (emulatorOptions[7],"Auto Save BOTH");
-			
-		sprintf (emulatorOptions[8], "Verify MC Saves %s",
-			GCSettings.VerifySaves == true ? " ON" : "OFF");
-			
-		sprintf (emulatorOptions[9], "Video Filtering %s",
-			GCSettings.render == true ? " ON" : "OFF");
+		ret = RunMenu (gamemenu, gamemenuCount, (char*)"Game Options");
 
-		if (GCSettings.Superscope > 0) sprintf (emulatorOptions[10], "Superscope: Pad %d", GCSettings.Superscope);
-		else sprintf (emulatorOptions[10], "Superscope     OFF");
-		
-		ret = RunMenu (emulatorOptions, emuCount, (char*)"Emulator Options", 18);
-		
 		switch (ret)
 		{
-			case 0:
-				Settings.ReverseStereo ^= 1;
-				break;
-			
-			case 1:
-				Settings.InterpolatedSound ^= 1;
-				break;
-			
-			case 2:
-				Settings.Transparency ^= 1;
-				break;
-			
-			case 3:
-				Settings.DisplayFrameRate ^= 1;
-				break;
-			
-			case 4:
-				Settings.MultiPlayer5Master ^= 1;
-				
-				if (Settings.MultiPlayer5Master)
-				{
-					S9xSetController (1, CTL_MP5, 1, 2, 3, -1);
-				}
-				else
-				{
-					S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
-				}
-				break;
-			
-			case 5:
-				GCSettings.NGCZoom ^= 1;
-				break;
-			
-			case 6:
-			    GCSettings.AutoLoad ++;
-		        if (GCSettings.AutoLoad > 2)
-		            GCSettings.AutoLoad = 0;
-				break;
-			
-			case 7:
-				GCSettings.AutoSave ++;
-		        if (GCSettings.AutoSave > 3)
-		            GCSettings.AutoSave = 0;
-				break;
-			
-			case 8:
-				GCSettings.VerifySaves ^= 1;
+			case 0: // Return to Game
+				quit = retval = 1;
 				break;
 
-			case 9:
-				GCSettings.render ^= 1;
+			case 1: // Reset Game
+				S9xSoftReset ();
+				quit = retval = 1;
 				break;
-				
-			case 10:
-				GCSettings.Superscope ++;
-				if (GCSettings.Superscope > 4)
-					GCSettings.Superscope = 0;
+
+			case 2: // ROM Information
+				RomInfo();
+				WaitButtonA ();
 				break;
-				
-			case 11:
-				quickSavePrefs(NOTSILENT);
+
+			case 3: // load cheats
+				CheatMenu();
 				break;
-			
-			case -1: /*** Button B ***/
-			case 12:
+
+			case 4: // Load SRAM
+				LoadSRAM(GCSettings.SaveMethod, NOTSILENT);
+				break;
+
+			case 5: // Save SRAM
+				SaveSRAM(GCSettings.SaveMethod, NOTSILENT);
+				break;
+
+			case 6: // Load Freeze
+				quit = retval = NGCUnfreezeGame (GCSettings.SaveMethod, SILENT);
+				break;
+
+			case 7: // Save Freeze
+				NGCFreezeGame (GCSettings.SaveMethod, NOTSILENT);
+				break;
+
+			case -1: // Button B
+			case 8: // Return to previous menu
+				retval = 0;
 				quit = 1;
 				break;
-			
 		}
 	}
-	
+
 	menu = oldmenu;
+	
+	return retval;
 }
 
 /****************************************************************************
@@ -474,32 +407,33 @@ EmulatorOptions ()
 u32
 GetInput (u16 ctrlr_type)
 {
-	u32 exp_type, pressed;
+	//u32 exp_type;
+	u32 pressed;
 	pressed=0;
 	s8 gc_px = 0;
-	
+
 	while( PAD_ButtonsHeld(0)
 #ifdef HW_RVL
 	| WPAD_ButtonsHeld(0)
 #endif
 	) VIDEO_WaitVSync();	// button 'debounce'
-	
+
 	while (pressed == 0)
 	{
 		VIDEO_WaitVSync();
 		// get input based on controller type
-		if (ctrlr_type == CTRLR_GCPAD) 
+		if (ctrlr_type == CTRLR_GCPAD)
 		{
 			pressed = PAD_ButtonsHeld (0);
 			gc_px = PAD_SubStickX (0);
-		} 
+		}
 #ifdef HW_RVL
-		else 
-		{	
+		else
+		{
 		//	if ( WPAD_Probe( 0, &exp_type) == 0)	// check wiimote and expansion status (first if wiimote is connected & no errors)
 		//	{
 				pressed = WPAD_ButtonsHeld (0);
-				
+
 		//		if (ctrlr_type != CTRLR_WIIMOTE && exp_type != ctrlr_type+1)	// if we need input from an expansion, and its not connected...
 		//			pressed = 0;
 		//	}
@@ -509,17 +443,17 @@ GetInput (u16 ctrlr_type)
 		if ( (gc_px < -70) || (pressed & WPAD_BUTTON_HOME) || (pressed & WPAD_CLASSIC_BUTTON_HOME) )
 			return 0;
 	}	// end while
-	while( pressed == (PAD_ButtonsHeld(0) 
+	while( pressed == (PAD_ButtonsHeld(0)
 #ifdef HW_RVL
 						| WPAD_ButtonsHeld(0)
 #endif
 						) ) VIDEO_WaitVSync();
-	
+
 	return pressed;
 }	// end GetInput()
 
 int cfg_text_count = 7;
-char cfg_text[][20] = {
+char cfg_text[][50] = {
 "Remapping          ",
 "Press Any Button",
 "on the",
@@ -533,10 +467,10 @@ u32
 GetButtonMap(u16 ctrlr_type, char* btn_name)
 {
 	u32 pressed, previous;
-	char temp[20] = "";
+	char temp[50] = "";
 	int k;
 	pressed = 0; previous = 1;
-	
+
 	switch (ctrlr_type) {
 		case CTRLR_NUNCHUK:
 			strncpy (cfg_text[3], (char*)"NUNCHUK", 7);
@@ -550,16 +484,16 @@ GetButtonMap(u16 ctrlr_type, char* btn_name)
 		case CTRLR_WIIMOTE:
 			strncpy (cfg_text[3], (char*)"WIIMOTE", 7);
 			break;
-	}; 
-	
+	};
+
 	/*** note which button we are remapping ***/
 	sprintf (temp, (char*)"Remapping ");
 	for (k=0; k<9-strlen(btn_name) ;k++) strcat(temp, " "); // add whitespace padding to align text
 	strncat (temp, btn_name, 9);		// snes button we are remapping
 	strncpy (cfg_text[0], temp, 19);	// copy this all back to the text we wish to display
-	
+
 	DrawMenu(&cfg_text[0], NULL, cfg_text_count, 1);	// display text
-	
+
 //	while (previous != pressed && pressed == 0);	// get two consecutive button presses (which are the same)
 //	{
 //		previous = pressed;
@@ -568,9 +502,9 @@ GetButtonMap(u16 ctrlr_type, char* btn_name)
 //	}
 	return pressed;
 }	// end getButtonMap()
- 
+
 int cfg_btns_count = 13;
-char cfg_btns_menu[][20] = { 
+char cfg_btns_menu[][50] = {
 	"A        -         ",
 	"B        -         ",
 	"X        -         ",
@@ -600,11 +534,11 @@ ConfigureButtons (u16 ctrlr_type)
 	menu = 0;
 	char* menu_title;
 	u32 pressed;
-	
+
 	unsigned int* currentpadmap;
-	char temp[20] = "";
+	char temp[50] = "";
 	int i, j, k;
-	
+
 	/*** Update Menu Title (based on controller we're configuring) ***/
 	switch (ctrlr_type) {
 		case CTRLR_NUNCHUK:
@@ -624,18 +558,18 @@ ConfigureButtons (u16 ctrlr_type)
 			currentpadmap = wmpadmap;
 			break;
 	};
-	
+
 	while (quit == 0)
-	{	
+	{
 		/*** Update Menu with Current ButtonMap ***/
 		for (i=0; i<12; i++) // snes pad has 12 buttons to config (go thru them)
 		{
 			// get current padmap button name to display
-			for ( j=0; 
+			for ( j=0;
 					j < ctrlr_def[ctrlr_type].num_btns &&
 					currentpadmap[i] != ctrlr_def[ctrlr_type].map[j].btn	// match padmap button press with button names
 				; j++ );
-			
+
 			memset (temp, 0, sizeof(temp));
 			strncpy (temp, cfg_btns_menu[i], 12);	// copy snes button information
 			if (currentpadmap[i] == ctrlr_def[ctrlr_type].map[j].btn)		// check if a match was made
@@ -648,9 +582,9 @@ ConfigureButtons (u16 ctrlr_type)
 			strncpy (cfg_btns_menu[i], temp, 19);	// move back updated information
 
 		}
-	
-		ret = RunMenu (cfg_btns_menu, cfg_btns_count, menu_title, 18);
-		
+
+		ret = RunMenu (cfg_btns_menu, cfg_btns_count, menu_title, 16);
+
 		switch (ret)
 		{
 			case 0:
@@ -682,23 +616,19 @@ ConfigureButtons (u16 ctrlr_type)
 				break;
 		}
 	}
-	
 	menu = oldmenu;
 }	// end configurebuttons()
 
-int cfg_ctrlr_count_wii = 6;
-char cfg_ctrlr_menu_wii[][20] = { "Nunchuk",
+int ctlrmenucount = 8;
+char ctlrmenu[][50] = {
+	"MultiTap",
+	"SuperScope",
+	"Nunchuk",
 	"Classic Controller",
 	"Gamecube Pad",
 	"Wiimote",
-	"Save Prefs Now",
-	"Return to previous"
-};
-
-int cfg_ctrlr_count_gc = 3;
-char cfg_ctrlr_menu_gc[][20] = { "Gamecube Pad",
-	"Save Prefs Now",
-	"Return to previous"
+	"Save Preferences",
+	"Go Back"
 };
 
 void
@@ -708,183 +638,175 @@ ConfigureControllers ()
 	int ret = 0;
 	int oldmenu = menu;
 	menu = 0;
-	
+
+	// disable unavailable controller options if in GC mode
+	#ifndef HW_RVL
+		ctlrmenu[1][0] = '\0';
+		ctlrmenu[2][0] = '\0';
+		ctlrmenu[4][0] = '\0';
+	#endif
+
 	while (quit == 0)
-	{	
-#ifdef HW_RVL
-		/*** Wii Controller Config Menu ***/
-        ret = RunMenu (cfg_ctrlr_menu_wii, cfg_ctrlr_count_wii, (char*)"Configure Controllers");
+	{
+		sprintf (ctlrmenu[0], "MultiTap %s", Settings.MultiPlayer5Master == true ? " ON" : "OFF");
 		
+		if (GCSettings.Superscope > 0)
+			sprintf (ctlrmenu[1], "Superscope: Pad %d", GCSettings.Superscope);
+		else 
+			sprintf (ctlrmenu[1], "Superscope     OFF");
+
+		/*** Controller Config Menu ***/
+        ret = RunMenu (ctlrmenu, ctlrmenucount, (char*)"Configure Controllers");
+
 		switch (ret)
 		{
 			case 0:
+				Settings.MultiPlayer5Master = (Settings.MultiPlayer5Master == false ? true : false);
+				if (Settings.MultiPlayer5Master)
+					S9xSetController (1, CTL_MP5, 1, 2, 3, -1);
+				else
+					S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+				break;
+			case 1:
+				GCSettings.Superscope ++;
+				if (GCSettings.Superscope > 4)
+					GCSettings.Superscope = 0;
+			case 2:
 				/*** Configure Nunchuk ***/
 				ConfigureButtons (CTRLR_NUNCHUK);
 				break;
-			
-			case 1:
+
+			case 3:
 				/*** Configure Classic ***/
 				ConfigureButtons (CTRLR_CLASSIC);
 				break;
-			
-			case 2:
+
+			case 4:
 				/*** Configure GC Pad ***/
 				ConfigureButtons (CTRLR_GCPAD);
 				break;
-			
-			case 3:
+
+			case 5:
 				/*** Configure Wiimote ***/
 				ConfigureButtons (CTRLR_WIIMOTE);
 				break;
-				
-			case 4:
+
+			case 6:
 				/*** Save Preferences Now ***/
 				quickSavePrefs(NOTSILENT);
 				break;
 
 			case -1: /*** Button B ***/
-			case 5:
+			case 7:
 				/*** Return ***/
 				quit = 1;
 				break;
 		}
-#else
-		/*** Gamecube Controller Config Menu ***/
-        ret = RunMenu (cfg_ctrlr_menu_gc, cfg_ctrlr_count_gc, (char*)"Configure Controllers");
-		
-		switch (ret)
-		{
-			case 0:
-				/*** Configure Nunchuk ***/
-				ConfigureButtons (CTRLR_GCPAD);
-				break;
-				
-			case 1:
-				/*** Save Preferences Now ***/
-				quickSavePrefs(NOTSILENT);
-				break;
-
-			case -1: /*** Button B ***/
-			case 2:
-				/*** Return ***/
-				quit = 1;
-				break;
-		}
-#endif
 	}
-	
+
 	menu = oldmenu;
 }
 
 /****************************************************************************
  * Main Menu
  ****************************************************************************/
-int menucount = 10;
-char menuitems[][20] = { "Choose Game",
-  "SRAM Manager", "Freeze Manager",
-  "Config Controllers", "Emulator Options",
-  "Reset Game", "Stop DVD Drive", "Exit to Loader",
-  "Reboot System", "Return to Game"
+int menucount = 7;
+char menuitems[][50] = {
+  "Choose Game", "Controller Configuration", "Preferences",
+  "Game Menu",
+  "Credits", "Reset System", "Exit"
 };
 
 void
-mainmenu ()
+mainmenu (int selectedMenu)
 {
 	int quit = 0;
 	int ret;
 	int *psoid = (int *) 0x80001800;
 	void (*PSOReload) () = (void (*)()) 0x80001800;
-	
-	if ( isWii )
-    	sprintf (menuitems[8],"Reset Wii");
+
+	// disable game-specific menu items if a ROM isn't loaded
+	if ( ARAM_ROMSIZE == 0 )
+    	menuitems[3][0] = '\0';
 	else
-    	sprintf (menuitems[8],"Reset Gamecube");
-	
+		sprintf (menuitems[3], "Game Menu");
+
 	VIDEO_WaitVSync ();
-	
+
 	while (quit == 0)
 	{
-		ret = RunMenu (menuitems, menucount, (char*)"Main Menu");
-		
+		if(selectedMenu >= 0)
+		{
+			ret = selectedMenu;
+			selectedMenu = -1; // default back to main menu
+		}
+		else
+		{
+			ret = RunMenu (menuitems, menucount, (char*)"Main Menu");
+		}
+
 		switch (ret)
 		{
 			case 0:
-				/*** Load ROM Menu ***/
+				// Load ROM Menu
 				quit = LoadManager ();
 				break;
-			
+
 			case 1:
-				/*** SRAM Manager Menu ***/
-				if ( ARAM_ROMSIZE > 0 )
-                    SaveManager ();
-                else
-                    WaitPrompt((char*) "No ROM is loaded!");
-                break;
-			
-			case 2:
-				/*** Do Freeze / Thaw Menu ***/
-				if ( ARAM_ROMSIZE > 0 )
-                    quit = FreezeManager ();
-                else
-                    WaitPrompt((char*) "No ROM is loaded!");
-                break;
-			
-			case 3:
-				/*** Configure Controllers ***/
+				// Configure Controllers
 				ConfigureControllers ();
 				break;
-			
+
+			case 2:
+				// Preferences
+				PreferencesMenu ();
+				break;
+
+			case 3:
+				// Game Options
+				quit = GameMenu ();
+				break;
+
 			case 4:
-				/*** Emulator Options ***/
-				EmulatorOptions ();
-				break;
-			
+				// Credits
+				Credits ();
+				WaitButtonA ();
+                break;
+
 			case 5:
-				/*** Soft reset ***/
-				S9xSoftReset ();
-				quit = 1;
-				break;
-			
+				// Reset the Gamecube/Wii
+			    Reboot();
+                break;
+
 			case 6:
-				/*** Turn off DVD motor ***/
-				dvd_motor_off();
-				break;
-			
-			case 7:
-				/*** Exit to Loader ***/
+				// Exit to Loader
 				#ifdef HW_RVL
-				exit(0);
+					exit(0);
 				#else	// gamecube
-				if (psoid[0] == PSOSDLOADID)
-				PSOReload ();
+					if (psoid[0] == PSOSDLOADID)
+						PSOReload ();
 				#endif
 				break;
-				
-		    case 8:
-		        /*** Reset the Gamecube/Wii ***/
-                Reboot();
-                break;
-			
-			case -1: /*** Button B ***/
-			case 9:
-				/*** Return to Game ***/
+
+			case -1: // Button B
+				// Return to Game
 				quit = 1;
 				break;
-			
 		}
-		
+
 	}
-	
+
 	/*** Remove any still held buttons ***/
-#ifdef HW_RVL
-	while( PAD_ButtonsHeld(0) || WPAD_ButtonsHeld(0) )
-	    VIDEO_WaitVSync();
-#else
-	while( PAD_ButtonsHeld(0) )
-	    VIDEO_WaitVSync();
-#endif
-	
+	#ifdef HW_RVL
+		while( PAD_ButtonsHeld(0) || WPAD_ButtonsHeld(0) )
+		    VIDEO_WaitVSync();
+	#else
+		while( PAD_ButtonsHeld(0) )
+		    VIDEO_WaitVSync();
+	#endif
+
 	ReInitGCVideo();	// update video after reading settings
+	
 	Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);	// update superscope settings
 	// update mouse/justifier info?
 	SetControllers();
