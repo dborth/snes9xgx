@@ -11,9 +11,9 @@
 
 #include "snes9xGx.h"
 #include "memmap.h"
-#include "sdload.h"
+#include "fileop.h"
 #include "cheats.h"
- 
+
 extern SCheatData Cheat;
 
 /****************************************************************************
@@ -34,10 +34,10 @@ SetupCheats()
 		sprintf (cheatFile, "%s/snes9x/cheats/%s.cht", ROOTSDDIR, Memory.ROMFilename);
 	else if(GCSettings.SaveMethod == METHOD_USB)
 		sprintf (cheatFile, "%s/snes9x/cheats/%s.cht", ROOTUSBDIR, Memory.ROMFilename);
-		
+
 	// load cheat file if present
 	if(strlen(cheatFile) > 0)
-	{		
+	{
 		if(S9xLoadCheatFile (cheatFile))
 		{
 			// disable all cheats loaded from the file

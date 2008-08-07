@@ -181,7 +181,7 @@
 #include "snes9xGX.h"
 #include "dvd.h"
 #include "video.h"
-#include "ftfont.h"
+#include "menudraw.h"
 #include "s9xconfig.h"
 #include "audio.h"
 #include "menu.h"
@@ -190,7 +190,7 @@
 #include "preferences.h"
 #include "gctime.h"
 #include "button_mapping.h"
-#include "sdload.h"
+#include "fileop.h"
 
 unsigned long ARAM_ROMSIZE = 0;
 int ConfigRequested = 0;
@@ -260,9 +260,9 @@ unsigned int wmscopemap[] = { WPAD_BUTTON_MINUS, WPAD_BUTTON_B,
 };
 
 void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
-{	
+{
 	// gc left joystick
-	signed char pad_x = PAD_StickX (pad);	
+	signed char pad_x = PAD_StickX (pad);
 	signed char pad_y = PAD_StickY (pad);
 	int SCOPEPADCAL = 30;
 #ifdef HW_RVL
@@ -278,16 +278,16 @@ void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
 		pos_x -=4;
 		if (pos_x < 0) pos_x = 0;
 	}
-   
+
 	if (pad_y < -SCOPEPADCAL){
 		pos_y +=4;
 		if (pos_y > 224) pos_y = 224;
 	}
 	if (pad_y > SCOPEPADCAL){
 		pos_y -=4;
-		if (pos_y < 0) pos_y = 0;            
+		if (pos_y < 0) pos_y = 0;
 	}
-	
+
 #ifdef HW_RVL
 	// read wiimote IR
 	WPAD_IR(pad, &ir);
@@ -392,10 +392,10 @@ decodepad (int pad)
 		if ( mag>JOY_THRESHOLD && (ang>220 && ang<320) )
 			wp |= WPAD_CLASSIC_BUTTON_LEFT;
 		if ( mag>JOY_THRESHOLD && (ang>40 && ang<140) )
-			wp |= WPAD_CLASSIC_BUTTON_RIGHT;	
+			wp |= WPAD_CLASSIC_BUTTON_RIGHT;
 	}
 #endif
-	
+
 	/*** Fix offset to pad ***/
 	offset = ((pad + 1) << 4);
 
@@ -413,7 +413,7 @@ decodepad (int pad)
 		else
 			S9xReportButton (offset + i, false);
     }
-	
+
 	/*** Superscope ***/
 	if (pad == GCSettings.Superscope-1)	// report only once
 	{
@@ -421,7 +421,7 @@ decodepad (int pad)
 		offset = 0x50;
 		for (i = 0; i < 6; i++)
 		{
-		  if ( jp & gcscopemap[i] 
+		  if ( jp & gcscopemap[i]
 #ifdef HW_RVL
 				|| wp & wmscopemap[i]
 #endif
@@ -438,7 +438,7 @@ decodepad (int pad)
 }
 /****************************************************************************
  * setFrameTimerMethod()
- * change frametimer method depending on whether ROM is NTSC or PAL					     
+ * change frametimer method depending on whether ROM is NTSC or PAL
  ****************************************************************************/
 extern u8 vmode_60hz;
 int timerstyle;
@@ -446,8 +446,8 @@ int timerstyle;
 void setFrameTimerMethod()
 {
 	/*
-	Set frametimer method 
-	(timerstyle: 0=NTSC vblank, 1=PAL int timer) 
+	Set frametimer method
+	(timerstyle: 0=NTSC vblank, 1=PAL int timer)
 	*/
 	if ( Settings.PAL ) {
 		if(vmode_60hz == 1)
@@ -466,7 +466,7 @@ void setFrameTimerMethod()
 }
 /****************************************************************************
  * NGCReportButtons
- * Called on each rendered frame					     
+ * Called on each rendered frame
  ****************************************************************************/
 void
 NGCReportButtons ()
@@ -482,7 +482,7 @@ NGCReportButtons ()
 	u32 wm_pb = WPAD_ButtonsHeld (0);	// wiimote / expansion button info
 	wpad_get_analogues(0, &mag1, &ang1, &mag2, &ang2);		// get joystick info from wii expansions
 #endif
-	
+
 	/*** Check for video zoom ***/
 	if (GCSettings.NGCZoom)
 	{
@@ -496,15 +496,15 @@ NGCReportButtons ()
 #endif
 	}
 
-    Settings.TurboMode = ( (gc_px > 70) 
+    Settings.TurboMode = ( (gc_px > 70)
 #ifdef HW_RVL
-							|| (mag2>JOY_THRESHOLD && ang2>75 && ang2<115) 
+							|| (mag2>JOY_THRESHOLD && ang2>75 && ang2<115)
 #endif
 							);	// RIGHT on c-stick and on classic ctrlr right joystick
 
 	/*** Check for menu:
 	       CStick left
-	       OR "L+R+X+Y" (eg. Hombrew/Adapted SNES controllers) 
+	       OR "L+R+X+Y" (eg. Hombrew/Adapted SNES controllers)
 	       OR "Home" on the wiimote or classic controller	***/
 
     if ((gc_px < -70) ||
@@ -519,9 +519,9 @@ NGCReportButtons ()
        )
     {
         ConfigRequested = 1;
-        
+
         VIDEO_WaitVSync ();
-        
+
         if ( GCSettings.AutoSave == 1 )
         {
             quickSaveSRAM ( SILENT );
@@ -539,16 +539,16 @@ NGCReportButtons ()
                 quickSaveFreeze ( SILENT );
             }
         }
-        
+
         mainmenu (3); // go to game menu
         FrameTimer = 0;
         ConfigRequested = 0;
-		
+
 		setFrameTimerMethod(); 	// set frametimer method every time a ROM is loaded
-		
+
 		S9xReportControllers();	// FIX
-		
-		
+
+
     }
     else
     {
@@ -562,7 +562,7 @@ NGCReportButtons ()
  * wpad_get_analogues()
  *
  * gets the analogue stick magnitude and angle values (
- * from classic or nunchuk expansions)					     
+ * from classic or nunchuk expansions)
  ****************************************************************************/
 u32 wpad_get_analogues(int pad, float* mag1, u16* ang1, float* mag2, u16* ang2)
 {
@@ -571,7 +571,7 @@ u32 wpad_get_analogues(int pad, float* mag1, u16* ang1, float* mag2, u16* ang2)
 #ifdef HW_RVL
 	struct expansion_t exp;
 	memset( &exp, 0, sizeof(exp) );
-	
+
 	if ( WPAD_Probe( pad, &exp_type) == 0)	// check wiimote and expansion status (first if wiimote is connected & no errors)
 	{
 		WPAD_Expansion(pad, &exp);	// expansion connected. get info
@@ -596,14 +596,14 @@ void SetControllers ()
 {
   if (Settings.MultiPlayer5Master == true)
     {
-	
+
       S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
       S9xSetController (1, CTL_MP5, 1, 2, 3, -1);
     }
   else if (Settings.SuperScopeMaster == true)
     {
       S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
-      S9xSetController (1, CTL_SUPERSCOPE, 1, 0, 0, 0);	
+      S9xSetController (1, CTL_SUPERSCOPE, 1, 0, 0, 0);
 	}
   else
     {
@@ -681,7 +681,7 @@ SetDefaultButtonMap ()
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Down");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Left");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Right");
-  
+
   maxcode = 0x50;
 	/*** Superscope ***/
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope AimOffscreen");
@@ -689,11 +689,11 @@ SetDefaultButtonMap ()
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Cursor");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Pause");
-  
+
   maxcode = 0x60;
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Superscope"), false);
   // add mouses here
-  
+
   SetControllers ();
 
 }
@@ -757,7 +757,7 @@ main ()
 	fatInitDefault();
 	//fatInit(8192, false);
 	//fat_enable_readahead_all();
-	
+
 	/*** Initialize DVD subsystem ***/
 	DVD_Init ();
 

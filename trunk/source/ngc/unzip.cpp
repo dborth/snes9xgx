@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50 
+ * Snes9x 1.50
  *
  * Nintendo Gamecube Unzip - borrowed from the GPP
  *
@@ -12,7 +12,7 @@
 #include <zlib.h>
 #include "dvd.h"
 #include "video.h"
-#include "ftfont.h"
+#include "menudraw.h"
 #include "unzip.h"
 
 /*
@@ -100,7 +100,7 @@ UnZipBuffer (unsigned char *outbuffer, u64 discoffset, short where, FILE* fileha
   memcpy (&pkzip, readbuffer, sizeof (PKZIPHEADER));
 
   pkzip.uncompressedSize = FLIP32 (pkzip.uncompressedSize);
-  
+
   sprintf (msg, "Unzipping %d bytes ... Wait",
 	   pkzip.uncompressedSize);
   ShowAction (msg);
@@ -157,7 +157,7 @@ UnZipBuffer (unsigned char *outbuffer, u64 discoffset, short where, FILE* fileha
 		/*** Readup the next 2k block ***/
       zipoffset = 0;
       zipchunk = ZIPCHUNK;
-	  
+
 	  switch (where) {
 		case 0:		// SD Card
 			fread (readbuffer, 1, 2048, filehandle);	break;
@@ -165,7 +165,7 @@ UnZipBuffer (unsigned char *outbuffer, u64 discoffset, short where, FILE* fileha
 			discoffset += 2048;
 			dvd_read (readbuffer, 2048, discoffset);	break;
 	  }
-      
+
     }
   while (res != Z_STREAM_END);
 

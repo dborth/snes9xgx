@@ -27,7 +27,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include "video.h"
-#include "ftfont.h"
+#include "menudraw.h"
 #include "dkpro.h"
 #include "snes9xGX.h"
 
@@ -281,12 +281,12 @@ void
 Credits ()
 {
 	clearscreen ();
-	
+
 	setfontcolour (0x00, 0x00, 0x00);
-	
+
 	setfontsize (28);
-	DrawText (-1, 60, (char*)"Credits");	
-	
+	DrawText (-1, 60, (char*)"Credits");
+
 	int ypos = 25;
 
 	if (screenheight == 480)
@@ -296,7 +296,7 @@ Credits ()
 
 	setfontsize (18);
 	DrawText (-1, ypos += 30, (char*)"Technical");
-	
+
 	setfontsize (14);
 	DrawText (-1, ypos += 22, (char*)"Snes9x v1.5.1 - Snes9x Team");
 	DrawText (-1, ypos += 18, (char*)"GameCube Port 2.0 WIP6 and earlier - SoftDev");
@@ -308,16 +308,16 @@ Credits ()
 
 	setfontsize (18);
 	DrawText (-1, ypos += 30, (char*)"Testing");
-	
+
 	setfontsize (14);
 	DrawText (-1, ypos += 22, (char*)"crunchy2 / tehskeen users / others");
 
 	setfontsize (18);
 	DrawText (-1, ypos += 30, (char*)"Documentation");
-	
+
 	setfontsize (14);
 	DrawText (-1, ypos += 22, (char*)"brakken, crunchy2, michniewski");
-	
+
 	setfontsize (12);
 	DrawText (-1, ypos += 50, (char*)"Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
 	DrawText (-1, ypos += 15, (char*)"This software is open source and may be copied, distributed, or modified");

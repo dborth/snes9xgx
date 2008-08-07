@@ -17,9 +17,9 @@
 #include "snes9xGx.h"
 #include "memmap.h"
 #include "srtc.h"
-#include "ftfont.h"
+#include "menudraw.h"
 #include "mcsave.h"
-#include "sdload.h"
+#include "fileop.h"
 #include "smbload.h"
 #include "filesel.h"
 

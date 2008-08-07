@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50 
+ * Snes9x 1.50
  *
  * Nintendo Gamecube Audio
  *
@@ -26,7 +26,7 @@
 #include "controls.h"
 
 #include "video.h"
-#include "ftfont.h"
+#include "menudraw.h"
 
 /*** Double buffered audio ***/
 #define AUDIOBUFFER 2048
@@ -65,8 +65,8 @@ AudioThread (void *arg)
 }
 
 /**
- * MixSamples 
- *      This continually calls S9xMixSamples On each DMA Completion 
+ * MixSamples
+ *      This continually calls S9xMixSamples On each DMA Completion
  */
 static void
 GCMixSamples ()

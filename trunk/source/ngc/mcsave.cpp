@@ -30,7 +30,7 @@
 
 #include "snes9xGX.h"
 #include "video.h"
-#include "ftfont.h"
+#include "menudraw.h"
 #include "s9xconfig.h"
 #include "audio.h"
 #include "menu.h"
@@ -115,7 +115,7 @@ int MountCard(int cslot, bool8 silent)
 	while ( tries < 5 && ret == CARD_ERROR_NOCARD )
 	{
 		EXI_ProbeReset ();
-		
+
 		if(!silent)
 			ShowAction ((char*) "Mounting card...");
 		CARD_Unmount (cslot);
@@ -130,7 +130,7 @@ int MountCard(int cslot, bool8 silent)
 	while ( tries < 5 && ret == CARD_ERROR_UNLOCKED )
 	{
 		EXI_ProbeReset ();
-		
+
 		if(!silent)
 			ShowAction ((char*) "Waiting for unlock...");
 		usleep(500000); // wait half second

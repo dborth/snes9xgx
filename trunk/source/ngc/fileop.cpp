@@ -5,19 +5,19 @@
  * softdev July 2006
  * crunchy2 May 2007
  *
- * sdload.cpp
+ * fileop.cpp
  *
- * Load ROMS from FAT
+ * File operations
  ****************************************************************************/
 #include <gccore.h>
 #include <stdio.h>
 #include <string.h>
 #include <ogcsys.h>
-#include "sdload.h"
+#include "fileop.h"
 #include "unzip.h"
 #include "memmap.h"
 #include "video.h"
-#include "ftfont.h"
+#include "menudraw.h"
 #include "dvd.h"
 #include "filesel.h"
 #include "sram.h"
@@ -54,7 +54,7 @@ bool fat_is_mounted(PARTITION_INTERFACE partition) {
 /****************************************************************************
  * fat_enable_readahead_all
  ****************************************************************************/
- 
+
 void fat_enable_readahead_all() {
     int i;
     for (i=1; i <= 4; ++i) {
@@ -181,7 +181,7 @@ int updateFATdirname(int method)
 /***************************************************************************
  * Browse FAT subdirectories
  ***************************************************************************/
-int parseFATdirectory(int method) 
+int parseFATdirectory(int method)
 {
     int nbfiles = 0;
     DIR_ITER *fatdir;
@@ -198,16 +198,16 @@ int parseFATdirectory(int method)
 	{
         sprintf(msg, "Error opening %s", currFATdir);
         WaitPrompt(msg);
-		
+
 		// if we can't open the previous dir, open root dir
 		if(method == METHOD_SD)
 			sprintf(currFATdir,"%s",ROOTSDDIR);
 		else
 			sprintf(currFATdir,"%s",ROOTUSBDIR);
-			
+
         fatdir = diropen(currFATdir);
-		
-        if (fatdir == NULL) 
+
+        if (fatdir == NULL)
 		{
             sprintf(msg, "Error opening %s", currFATdir);
             WaitPrompt(msg);
