@@ -5,13 +5,13 @@
  * softdev July 2006
  * crunchy2 May 2007
  *
- * sdload.cpp
+ * fileop.h
  *
- * Load ROMS from SD Card
+ * File operations
  ****************************************************************************/
 
-#ifndef _LOADFROMSDC_
-#define _LOADFROMSDC_
+#ifndef _FATFILESC_
+#define _FATFILESC_
 #include <gccore.h>
 #include <stdio.h>
 #include <string.h>

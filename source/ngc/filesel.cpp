@@ -30,13 +30,13 @@
 
 #include "snes9xGx.h"
 #include "dvd.h"
-#include "ftfont.h"
+#include "menudraw.h"
 #include "video.h"
 #include "aram.h"
 #include "unzip.h"
 #include "filesel.h"
 #include "smbload.h"
-#include "sdload.h"
+#include "fileload.h"
 #include "mcsave.h"
 
 #define PAGESIZE 17
@@ -67,38 +67,38 @@ int autoSaveMethod()
 {
 	return METHOD_SD;
 	int method = -1;
-	
+
 	while(method < 0)
 	{
 		WaitPrompt((char*) "Checking SD");
-		
+
 		if(diropen(ROOTSDDIR))
 		{
 			WaitPrompt((char*) "Found SD!");
 			method = METHOD_SD;
 			break;
 		}
-		
+
 		WaitPrompt((char*) "Checking USB");
-		
+
 		if(diropen(ROOTUSBDIR))
 		{
 			WaitPrompt((char*) "Found USB!");
 			method = METHOD_USB;
 			break;
 		}
-		
+
 		WaitPrompt((char*) "Checking Slot A");
-		
+
 		// check Memory Card Slot A
 		if(MountCard(CARD_SLOTA, SILENT) == 0)
 		{
 			WaitPrompt((char*) "Found Memory Card A!");
 			method = METHOD_MC_SLOTA;
 			break;
-		}	
+		}
 		WaitPrompt((char*) "Checking Slot B");
-		
+
 		// check Memory Card Slot B
 		if(MountCard(CARD_SLOTB, SILENT) == 0)
 		{
@@ -106,7 +106,7 @@ int autoSaveMethod()
 			method = METHOD_MC_SLOTB;
 			break;
 		}
-		
+
 		// no method found
 		WaitPrompt((char*) "Error: Could not determine save method.");
 		method = 0;
@@ -123,7 +123,7 @@ int autoSaveMethod()
 void StripExt(char* returnstring, char * inputstring)
 {
 	char* loc_dot;
-	
+
 	strcpy (returnstring, inputstring);
 	loc_dot = strrchr(returnstring,'.');
 	if (loc_dot != NULL)
@@ -147,10 +147,10 @@ ShowFiles (int offset, int selection)
 	int w;
 
 	clearscreen ();
-	
+
 	setfontsize (28);
 	DrawText (-1, 60, (char*)"Choose Game");
-	
+
 	setfontsize(18);
 
 	ypos = (screenheight - ((PAGESIZE - 1) * 20)) >> 1;
@@ -307,8 +307,8 @@ FileSelector (int method)
             {
 				rootdir = filelist[selection].offset;
                 rootdirlength = filelist[selection].length;
-				
-				// store the filename (used for sram/freeze naming) 
+
+				// store the filename (used for sram/freeze naming)
 				StripExt(Memory.ROMFilename, filelist[selection].filename); // store stripped filename in Memory.ROMFilename
 
                 switch (method)
@@ -321,12 +321,12 @@ FileSelector (int method)
                         ARAM_ROMSIZE = LoadFATFile (filelist[selection].filename,
                                          filelist[selection].length);
                         break;
-						
+
 				    case METHOD_DVD:
                         /*** Now load the DVD file to it's offset ***/
                         ARAM_ROMSIZE = LoadDVDFile (Memory.ROM);
                         break;
-					
+
 					case METHOD_SMB:
                         /*** Load from SMB ***/
                         ARAM_ROMSIZE =
@@ -527,7 +527,7 @@ int
 OpenFAT (int method)
 {
 	char msg[80];
-	
+
 	//if (haveFATdir == 0)
 	//{
 	/* don't mess with DVD entries */
@@ -569,7 +569,7 @@ int
 OpenROM (int method)
 {
 	int loadROM = 0;
-	
+
 	if(method == METHOD_AUTO)
 		method = autoLoadMethod();
 
@@ -588,7 +588,7 @@ OpenROM (int method)
 			loadROM = OpenSMB (method);
 			break;
 	}
-	
+
 	return loadROM;
 }
 

@@ -26,14 +26,13 @@
 #include "spc7110.h"
 #include "controls.h"
 #include "aram.h"
-#include "ftfont.h"
 #include "video.h"
 #include "mcsave.h"
 #include "filesel.h"
 #include "unzip.h"
 #include "smbload.h"
 #include "mcsave.h"
-#include "sdload.h"
+#include "fileop.h"
 #include "memfile.h"
 #include "dvd.h"
 #include "s9xconfig.h"
@@ -41,8 +40,7 @@
 #include "preferences.h"
 
 #include "button_mapping.h"
-#include "ftfont.h"
-
+#include "menudraw.h"
 #include "cheats.h"
 #include "cheatmgr.h"
 
@@ -88,7 +86,7 @@ LoadManager ()
 			quickLoadSRAM ( SILENT );
 		else if ( GCSettings.AutoLoad == 2 )
 			quickLoadFreeze ( SILENT );
-			
+
 		// setup cheats
 		SetupCheats();
 	}
@@ -132,7 +130,7 @@ PreferencesMenu ()
 	while (quit == 0)
 	{
 		// some load/save methods are not implemented - here's where we skip them
-		
+
 		#ifndef HW_RVL // GameCube mode
 			if(GCSettings.LoadMethod == METHOD_USB)
 				GCSettings.LoadMethod++;
@@ -142,22 +140,22 @@ PreferencesMenu ()
 			if(GCSettings.LoadMethod == METHOD_DVD)
 				GCSettings.LoadMethod++;
 		#endif
-		
+
 		if(GCSettings.SaveMethod == METHOD_DVD) // saving to DVD is impossible
 			GCSettings.SaveMethod++;
-		
+
 		if(GCSettings.SaveMethod == METHOD_SMB) // disable SMB - network saving needs some work
 			GCSettings.SaveMethod++;
-		
+
 		if(GCSettings.LoadMethod == METHOD_SMB) // disable SMB - network loading needs some work
 			GCSettings.LoadMethod++;
-				
+
 		// correct load/save methods out of bounds
 		if(GCSettings.LoadMethod > 4)
 			GCSettings.LoadMethod = 0;
 		if(GCSettings.SaveMethod > 6)
 			GCSettings.SaveMethod = 0;
-		
+
 		if (GCSettings.LoadMethod == METHOD_AUTO) sprintf (prefmenu[0],"Load Method AUTO");
 		else if (GCSettings.LoadMethod == METHOD_SD) sprintf (prefmenu[0],"Load Method SD");
 		else if (GCSettings.LoadMethod == METHOD_USB) sprintf (prefmenu[0],"Load Method USB");
@@ -172,9 +170,9 @@ PreferencesMenu ()
 		else if (GCSettings.SaveMethod == METHOD_SMB) sprintf (prefmenu[2],"Save Method Network");
 		else if (GCSettings.SaveMethod == METHOD_MC_SLOTA) sprintf (prefmenu[2],"Save Method MC Slot A");
 		else if (GCSettings.SaveMethod == METHOD_MC_SLOTB) sprintf (prefmenu[2],"Save Method MC Slot B");
-		
+
 		sprintf (prefmenu[3], "Save Folder %s",	GCSettings.SaveFolder);
-		
+
 		// disable changing load/save directories for now
 		prefmenu[1][0] = '\0';
 		prefmenu[3][0] = '\0';
@@ -205,10 +203,10 @@ PreferencesMenu ()
 
 		sprintf (prefmenu[11], "C-Stick Zoom %s",
 			GCSettings.NGCZoom == true ? " ON" : "OFF");
-			
+
 		sprintf (prefmenu[12], "Video Filtering %s",
 			GCSettings.render == true ? " ON" : "OFF");
-			
+
 		ret = RunMenu (prefmenu, prefmenuCount, (char*)"Preferences", 16);
 
 		switch (ret)
@@ -216,23 +214,23 @@ PreferencesMenu ()
 			case 0:
 				GCSettings.LoadMethod ++;
 				break;
-				
+
 			case 1:
 				break;
-				
+
 			case 2:
 				GCSettings.SaveMethod ++;
 				break;
-				
+
 			case 3:
 				break;
-				
+
 			case 4:
 				GCSettings.AutoLoad ++;
 				if (GCSettings.AutoLoad > 2)
 					GCSettings.AutoLoad = 0;
 				break;
-				
+
 			case 5:
 				GCSettings.AutoSave ++;
 				if (GCSettings.AutoSave > 3)
@@ -262,7 +260,7 @@ PreferencesMenu ()
 			case 11:
 				GCSettings.NGCZoom ^= 1;
 				break;
-				
+
 			case 12:
 				GCSettings.render ^= 1;
 				break;
@@ -286,19 +284,19 @@ PreferencesMenu ()
  ****************************************************************************/
 static int cheatmenuCount = 0;
 static char cheatmenu[MAX_CHEATS][50];
- 
+
 void CheatMenu()
 {
 	int ret = -1;
 	int oldmenu = menu;
 	menu = 0;
-		
+
 	if(Cheat.num_cheats > 0)
 	{
 		cheatmenuCount = Cheat.num_cheats + 1;
-		
+
 		sprintf (cheatmenu[cheatmenuCount-1], "Back to Game Menu");
-				
+
 		while(ret != cheatmenuCount-1)
 		{
 			if(ret >= 0)
@@ -308,10 +306,10 @@ void CheatMenu()
 				else
 					S9xEnableCheat(ret);
 			}
-			
+
 			for(uint16 i=0; i < Cheat.num_cheats; i++)
 				sprintf (cheatmenu[i], "%s %s", Cheat.c[i].name, Cheat.c[i].enabled == true ? " ON" : "OFF");
-				
+
 			ret = RunMenu (cheatmenu, cheatmenuCount, (char*)"Cheats", 16);
 		}
 	}
@@ -343,7 +341,7 @@ GameMenu ()
 	int quit = 0;
 	int oldmenu = menu;
 	menu = 0;
-	
+
 	while (quit == 0)
 	{
 		ret = RunMenu (gamemenu, gamemenuCount, (char*)"Game Options");
@@ -393,7 +391,7 @@ GameMenu ()
 	}
 
 	menu = oldmenu;
-	
+
 	return retval;
 }
 
@@ -649,10 +647,10 @@ ConfigureControllers ()
 	while (quit == 0)
 	{
 		sprintf (ctlrmenu[0], "MultiTap %s", Settings.MultiPlayer5Master == true ? " ON" : "OFF");
-		
+
 		if (GCSettings.Superscope > 0)
 			sprintf (ctlrmenu[1], "Superscope: Pad %d", GCSettings.Superscope);
-		else 
+		else
 			sprintf (ctlrmenu[1], "Superscope     OFF");
 
 		/*** Controller Config Menu ***/
@@ -806,7 +804,7 @@ mainmenu (int selectedMenu)
 	#endif
 
 	ReInitGCVideo();	// update video after reading settings
-	
+
 	Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);	// update superscope settings
 	// update mouse/justifier info?
 	SetControllers();

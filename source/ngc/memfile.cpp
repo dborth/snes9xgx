@@ -28,9 +28,9 @@
 
 #include "Snes9xGx.h"
 #include "filesel.h"
-#include "ftfont.h"
+#include "menudraw.h"
 #include "smbload.h"
-#include "sdload.h"
+#include "fileop.h"
 #include "mcsave.h"
 
 extern "C"
