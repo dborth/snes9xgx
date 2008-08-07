@@ -605,6 +605,11 @@ void SetControllers ()
       S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
       S9xSetController (1, CTL_SUPERSCOPE, 1, 0, 0, 0);
 	}
+  else if (Settings.MouseMaster == true)
+    {
+	  S9xSetController (0, CTL_MOUSE, 0, 0, 0, 0);
+	  S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+  	}
   else
     {
 	/*** Plugin 2 Joypads by default ***/

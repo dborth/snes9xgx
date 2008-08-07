@@ -617,10 +617,11 @@ ConfigureButtons (u16 ctrlr_type)
 	menu = oldmenu;
 }	// end configurebuttons()
 
-int ctlrmenucount = 8;
+int ctlrmenucount = 9;
 char ctlrmenu[][50] = {
 	"MultiTap",
 	"SuperScope",
+	"Mouse",
 	"Nunchuk",
 	"Classic Controller",
 	"Gamecube Pad",
@@ -653,6 +654,11 @@ ConfigureControllers ()
 		else
 			sprintf (ctlrmenu[1], "Superscope     OFF");
 
+		if (GCSettings.Mouse > 0)
+			sprintf (ctlrmenu[2], "Mouse: Pad %d", GCSettings.Mouse);
+		else
+			sprintf (ctlrmenu[2], "Mouse     OFF");
+
 		/*** Controller Config Menu ***/
         ret = RunMenu (ctlrmenu, ctlrmenucount, (char*)"Configure Controllers");
 
@@ -669,33 +675,39 @@ ConfigureControllers ()
 				GCSettings.Superscope ++;
 				if (GCSettings.Superscope > 4)
 					GCSettings.Superscope = 0;
+				break;
 			case 2:
+				GCSettings.Mouse ++;
+				if (GCSettings.Mouse > 4)
+					GCSettings.Mouse = 0;
+				break;
+			case 3:
 				/*** Configure Nunchuk ***/
 				ConfigureButtons (CTRLR_NUNCHUK);
 				break;
 
-			case 3:
+			case 4:
 				/*** Configure Classic ***/
 				ConfigureButtons (CTRLR_CLASSIC);
 				break;
 
-			case 4:
+			case 5:
 				/*** Configure GC Pad ***/
 				ConfigureButtons (CTRLR_GCPAD);
 				break;
 
-			case 5:
+			case 6:
 				/*** Configure Wiimote ***/
 				ConfigureButtons (CTRLR_WIIMOTE);
 				break;
 
-			case 6:
+			case 7:
 				/*** Save Preferences Now ***/
 				quickSavePrefs(NOTSILENT);
 				break;
 
 			case -1: /*** Button B ***/
-			case 7:
+			case 8:
 				/*** Return ***/
 				quit = 1;
 				break;
@@ -806,6 +818,7 @@ mainmenu (int selectedMenu)
 	ReInitGCVideo();	// update video after reading settings
 
 	Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);	// update superscope settings
+	Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);	// update mouse settings
 	// update mouse/justifier info?
 	SetControllers();
 }
