@@ -1,15 +1,12 @@
 /****************************************************************************
- * Snes9x 1.50 
+ * Snes9x 1.51
  *
- * Nintendo Gamecube Menu
+ * Nintendo Wii/Gamecube Port
+ * Tantric August 2008
  *
- * softdev July 2006
+ * cheatmgr.h
+ *
+ * Cheat handling
  ****************************************************************************/
 
-#ifndef _NGCMENU_
-
-#define _NGCMENU_
-
-void mainmenu (int selectedMenu);
-
-#endif
+void SetupCheats();

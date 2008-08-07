@@ -25,8 +25,8 @@ typedef struct
 }
 MEMFILE;
 
-int NGCFreezeGame (int where, bool8 silent);
-int NGCUnfreezeGame (int from, bool8 silent);
+int NGCFreezeGame (int method, bool8 silent);
+int NGCUnfreezeGame (int method, bool8 silent);
 
 void quickLoadFreeze (bool8 silent);
 void quickSaveFreeze (bool8 silent);

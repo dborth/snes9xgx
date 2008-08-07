@@ -133,8 +133,8 @@
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -162,81 +162,90 @@
 void
 DefaultSettings ()
 {
-    /*** Default ALL to false ***/
-  memset (&Settings, 0, sizeof (Settings));
+	/************** GameCube/Wii Settings *********************/
+	GCSettings.LoadMethod = METHOD_AUTO; // Auto, SD, DVD, USB, Network (SMB)
+	sprintf (GCSettings.LoadFolder,"snes9x/roms"); // Path to game files
+	GCSettings.SaveMethod = METHOD_AUTO; // Auto, SD, Memory Card Slot A, Memory Card Slot B, USB, Network (SMB)
+	sprintf (GCSettings.SaveFolder,"snes9x/saves"); // Path to save files
+	GCSettings.AutoLoad = 1;
+	GCSettings.AutoSave = 1;
+
+	strncpy (GCSettings.gcip, GC_IP, 15);
+	strncpy (GCSettings.gwip, GW_IP, 15);
+	strncpy (GCSettings.mask, MASK, 15);
+	strncpy (GCSettings.smbip, SMB_IP, 15);
+	strncpy (GCSettings.smbuser, SMB_USER, 19);
+	strncpy (GCSettings.smbpwd, SMB_PWD, 19);
+	strncpy (GCSettings.smbgcid, SMB_GCID, 19);
+	strncpy (GCSettings.smbsvid, SMB_SVID, 19);
+	strncpy (GCSettings.smbshare, SMB_SHARE, 19);
+
+	GCSettings.NGCZoom = 0;
+	GCSettings.VerifySaves = 0;
+	GCSettings.render = 0;
+	GCSettings.Superscope = 0;
+    GCSettings.Mouse = 0;
+
+	/****************** SNES9x Settings ***********************/
+
+	/*** Default ALL to false ***/
+	memset (&Settings, 0, sizeof (Settings));
 
 	/*** General ***/
-  Settings.MouseMaster = false;
-  Settings.SuperScopeMaster = false;
-  Settings.MultiPlayer5Master = false;
-  Settings.JustifierMaster = true;
-  Settings.ShutdownMaster = false;
-  Settings.CyclesPercentage = 100; // snes9x 1.50 and earlier
-  
-    /* Eke-Eke: specific to snes9x 1.51 */
-//  Settings.BlockInvalidVRAMAccess = true;
-//  Settings.HDMATimingHack = 100;
+	
+	
+	Settings.MouseMaster = false;
+	Settings.SuperScopeMaster = false;
+	Settings.MultiPlayer5Master = false;
+	Settings.JustifierMaster = true;
+	Settings.ShutdownMaster = false;
+	Settings.CyclesPercentage = 100; // snes9x 1.50 and earlier
+	Settings.ApplyCheats = true;
+
+	/* Eke-Eke: specific to snes9x 1.51 */
+	//  Settings.BlockInvalidVRAMAccess = true;
+	//  Settings.HDMATimingHack = 100;
 
 	/*** Sound defaults. On GC this is 32Khz/16bit/Stereo/InterpolatedSound ***/
-  Settings.APUEnabled = true;
-  Settings.NextAPUEnabled = true;
-  Settings.SoundPlaybackRate = 32000;
-  Settings.Stereo = true;
-  Settings.SixteenBitSound = true;
-  Settings.SoundEnvelopeHeightReading = true;
-  Settings.DisableSampleCaching = true;
-  Settings.InterpolatedSound = true;
-  Settings.ReverseStereo = false;
+	Settings.APUEnabled = true;
+	Settings.NextAPUEnabled = true;
+	Settings.SoundPlaybackRate = 32000;
+	Settings.Stereo = true;
+	Settings.SixteenBitSound = true;
+	Settings.SoundEnvelopeHeightReading = true;
+	Settings.DisableSampleCaching = true;
+	Settings.InterpolatedSound = true;
+	Settings.ReverseStereo = false;
 
 	/*** Graphics ***/
-  Settings.Transparency = true;
-  Settings.SupportHiRes = true;
-  Settings.SkipFrames = 10;
-  Settings.TurboSkipFrames = 19;
-  Settings.DisplayFrameRate = false;
-//  Settings.AutoDisplayMessages = 1;    /*** eke-eke snes9x 1.51 ***/
-  
-    /* Eke-Eke: frame timings in 50hz and 60hz cpu mode */
-  Settings.FrameTimePAL = 20000;
-  Settings.FrameTimeNTSC = 16667;
+	Settings.Transparency = true;
+	Settings.SupportHiRes = true;
+	Settings.SkipFrames = 10;
+	Settings.TurboSkipFrames = 19;
+	Settings.DisplayFrameRate = false;
+	//  Settings.AutoDisplayMessages = 1;    /*** eke-eke snes9x 1.51 ***/
+
+	/* Eke-Eke: frame timings in 50hz and 60hz cpu mode */
+	Settings.FrameTimePAL = 20000;
+	Settings.FrameTimeNTSC = 16667;
 
 	/*** SDD1 - Star Ocean Returns -;) ***/
-  Settings.SDD1Pack = true;
-  
-  GCSettings.AutoLoad = 1;
-  GCSettings.AutoSave = 1;
-  
-  strncpy (GCSettings.gcip, GC_IP, 15);
-  strncpy (GCSettings.gwip, GW_IP, 15);
-  strncpy (GCSettings.mask, MASK, 15);
-  strncpy (GCSettings.smbip, SMB_IP, 15);
-  strncpy (GCSettings.smbuser, SMB_USER, 19);
-  strncpy (GCSettings.smbpwd, SMB_PWD, 19);
-  strncpy (GCSettings.smbgcid, SMB_GCID, 19);
-  strncpy (GCSettings.smbsvid, SMB_SVID, 19);
-  strncpy (GCSettings.smbshare, SMB_SHARE, 19);
-  
-  GCSettings.NGCZoom = 0;
-  GCSettings.VerifySaves = 0;
-  GCSettings.render = 0;
-  GCSettings.Superscope = 0;
-  GCSettings.Mouse = 0;
-  
-  Settings.ForceNTSC = 0;
-  Settings.ForcePAL = 0;
-  Settings.ForceHiROM = 0;
-  Settings.ForceLoROM = 0;
-  Settings.ForceHeader = 0;
-  Settings.ForceNoHeader = 0;
-  Settings.ForceTransparency = 0;
-  Settings.ForceInterleaved = 0;
-  Settings.ForceInterleaved2 = 0;
-  Settings.ForceInterleaveGD24 = 0;
-  Settings.ForceNotInterleaved = 0;
-  Settings.ForceNoSuperFX = 0;
-  Settings.ForceSuperFX = 0;
-  Settings.ForceDSP1 = 0;
-  Settings.ForceNoDSP1 = 0;
-  
+	Settings.SDD1Pack = true;
+
+	Settings.ForceNTSC = 0;
+	Settings.ForcePAL = 0;
+	Settings.ForceHiROM = 0;
+	Settings.ForceLoROM = 0;
+	Settings.ForceHeader = 0;
+	Settings.ForceNoHeader = 0;
+	Settings.ForceTransparency = 0;
+	Settings.ForceInterleaved = 0;
+	Settings.ForceInterleaved2 = 0;
+	Settings.ForceInterleaveGD24 = 0;
+	Settings.ForceNotInterleaved = 0;
+	Settings.ForceNoSuperFX = 0;
+	Settings.ForceSuperFX = 0;
+	Settings.ForceDSP1 = 0;
+	Settings.ForceNoDSP1 = 0;
 }
 

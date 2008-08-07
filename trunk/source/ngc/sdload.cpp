@@ -7,7 +7,7 @@
  *
  * sdload.cpp
  *
- * Load ROMS from SD Card
+ * Load ROMS from FAT
  ****************************************************************************/
 #include <gccore.h>
 #include <stdio.h>
@@ -22,19 +22,74 @@
 #include "filesel.h"
 #include "sram.h"
 #include "preferences.h"
+#include "snes9xGx.h"
 
 #include <zlib.h>
 extern unsigned char savebuffer[];
 extern char output[16384];
 FILE * filehandle;
 
-char currSDdir[MAXPATHLEN];
+char currFATdir[MAXPATHLEN];
 extern int offset;
 extern int selection;
 
-extern int loadtype;
-
 extern FILEENTRIES filelist[MAXFILES];
+
+/****************************************************************************
+ * fat_is_mounted
+ * to check whether FAT media are detected.
+ ****************************************************************************/
+
+bool fat_is_mounted(PARTITION_INTERFACE partition) {
+    char prefix[] = "fatX:/";
+    prefix[3] = partition + '0';
+    DIR_ITER *dir = diropen(prefix);
+    if (dir) {
+        dirclose(dir);
+        return true;
+    }
+    return false;
+}
+
+/****************************************************************************
+ * fat_enable_readahead_all
+ ****************************************************************************/
+ 
+void fat_enable_readahead_all() {
+    int i;
+    for (i=1; i <= 4; ++i) {
+        if (fat_is_mounted((PARTITION_INTERFACE)i)) fatEnableReadAhead((PARTITION_INTERFACE)i, 64, 128);
+    }
+}
+
+/****************************************************************************
+ * fat_remount
+ ****************************************************************************/
+
+bool fat_remount(PARTITION_INTERFACE partition) {
+	//ShowAction("remounting...");
+	/*	// removed to make usb work...
+	if (fat_is_mounted(partition))
+	{
+		fatUnmount(partition);
+	}
+	*/
+
+	fatMountNormalInterface(partition, 8);
+	fatSetDefaultInterface(partition);
+	//fatEnableReadAhead(partition, 64, 128);
+
+	if (fat_is_mounted(partition))
+	{
+		//ShowAction("remount successful.");
+		sleep(1);
+		return 1;
+	} else {
+		ShowAction("FAT mount failed.");
+		sleep(1);
+		return 0;
+	}
+}
 
 /***************************************************************************
  * FileSortCallback
@@ -44,7 +99,7 @@ extern FILEENTRIES filelist[MAXFILES];
  *   ..
  *   <dirs>
  *   <files>
- ***************************************************************************/ 
+ ***************************************************************************/
 static int FileSortCallback(const void *f1, const void *f2)
 {
 	/* Special case for implicit directories */
@@ -55,101 +110,113 @@ static int FileSortCallback(const void *f1, const void *f2)
 		if(strcmp(((FILEENTRIES *)f1)->filename, "..") == 0) { return -1; }
 		if(strcmp(((FILEENTRIES *)f2)->filename, "..") == 0) { return 1; }
 	}
-	
+
 	/* If one is a file and one is a directory the directory is first. */
 	if(((FILEENTRIES *)f1)->flags == 1 && ((FILEENTRIES *)f2)->flags == 0) return -1;
 	if(((FILEENTRIES *)f1)->flags == 0 && ((FILEENTRIES *)f2)->flags == 1) return 1;
-	
+
 	return stricmp(((FILEENTRIES *)f1)->filename, ((FILEENTRIES *)f2)->filename);
 }
 
 /***************************************************************************
- * Update FAT (sdcard, usb) curent directory name 
- ***************************************************************************/ 
-int updateFATdirname()
+ * Update FATCARD curent directory name
+ ***************************************************************************/
+int updateFATdirname(int method)
 {
-  int size=0;
-  char *test;
-  char temp[1024];
+	int size=0;
+	char *test;
+	char temp[1024];
 
-   /* current directory doesn't change */
-   if (strcmp(filelist[selection].filename,".") == 0) return 0; 
-   
-   /* go up to parent directory */
-   else if (strcmp(filelist[selection].filename,"..") == 0) 
-   {
-     /* determine last subdirectory namelength */
-     sprintf(temp,"%s",currSDdir);
-        test = strtok(temp,"/");
-        while (test != NULL) { 
-       size = strlen(test);
-            test = strtok(NULL,"/");
-     }
-  
-     /* remove last subdirectory name */
-     size = strlen(currSDdir) - size - 1;
-     currSDdir[size] = 0;
+	/* current directory doesn't change */
+	if (strcmp(filelist[selection].filename,".") == 0)
+	{
+		return 0;
+	}
+	/* go up to parent directory */
+	else if (strcmp(filelist[selection].filename,"..") == 0)
+	{
+		/* determine last subdirectory namelength */
+		sprintf(temp,"%s",currFATdir);
+		test = strtok(temp,"/");
+		while (test != NULL)
+		{
+			size = strlen(test);
+			test = strtok(NULL,"/");
+		}
 
-	 /* handles root name */
-        if (strcmp(currSDdir, "/") == 0)
-            
-	 
-     return 1;
-   }
-   else		/* Open a directory */
-   {
-     /* test new directory namelength */
-		if ((strlen(currSDdir)+1+strlen(filelist[selection].filename)) < MAXPATHLEN) 
+		/* remove last subdirectory name */
+		size = strlen(currFATdir) - size - 1;
+		currFATdir[size] = 0;
+
+		return 1;
+	}
+	/* Open a directory */
+	else
+	{
+		/* test new directory namelength */
+		if ((strlen(currFATdir)+1+strlen(filelist[selection].filename)) < MAXPATHLEN)
 		{
 			/* handles root name */
-			sprintf(temp, "/%s/..", SNESROMDIR);
-			if (strcmp(currSDdir, temp) == 0) 
-				sprintf(currSDdir,"%s",ROOTSDDIR);
-	 
+			sprintf(temp, "/%s/..", GCSettings.LoadFolder);
+			if (strcmp(currFATdir, temp) == 0)
+			{
+				if(method == METHOD_SD)
+					sprintf(currFATdir,"%s",ROOTSDDIR);
+				else
+					sprintf(currFATdir,"%s",ROOTUSBDIR);
+			}
+
 			/* update current directory name */
-			sprintf(currSDdir, "%s/%s",currSDdir, filelist[selection].filename);
+			sprintf(currFATdir, "%s/%s",currFATdir, filelist[selection].filename);
 			return 1;
-		} else {
-			WaitPrompt((char*)"Dirname is too long !"); 
+		}
+		else
+		{
+			WaitPrompt((char*)"Dirname is too long !");
 			return -1;
 		}
-    } 
+	}
 }
 
 /***************************************************************************
- * Browse FAT (sdcard, usb) subdirectories 
- ***************************************************************************/ 
-int parseFATdirectory() {
+ * Browse FAT subdirectories
+ ***************************************************************************/
+int parseFATdirectory(int method) 
+{
     int nbfiles = 0;
-    DIR_ITER *sddir;
+    DIR_ITER *fatdir;
     char filename[MAXPATHLEN];
     struct stat filestat;
         char msg[128];
-    
+
     /* initialize selection */
     selection = offset = 0;
 
-    /* open the directory */ 
-    sddir = diropen(currSDdir);
-    if (sddir == NULL) {
-		/*** if we can't open the previous dir, open root dir ***/
-		if (loadtype == LOAD_USB)
-			sprintf(currSDdir,"fat4:/");
-		else // LOAD_SDC
-	        //sprintf(currSDdir,"%s",ROOTSDDIR);	
-			sprintf(currSDdir,"fat3:/");
-			
-        sddir = diropen(currSDdir);
+    /* open the directory */
+    fatdir = diropen(currFATdir);
+    if (fatdir == NULL)
+	{
+        sprintf(msg, "Error opening %s", currFATdir);
         WaitPrompt(msg);
-        if (sddir == NULL) {
-            sprintf(msg, "Error opening %s", currSDdir);
+		
+		// if we can't open the previous dir, open root dir
+		if(method == METHOD_SD)
+			sprintf(currFATdir,"%s",ROOTSDDIR);
+		else
+			sprintf(currFATdir,"%s",ROOTUSBDIR);
+			
+        fatdir = diropen(currFATdir);
+		
+        if (fatdir == NULL) 
+		{
+            sprintf(msg, "Error opening %s", currFATdir);
             WaitPrompt(msg);
             return 0;
         }
     }
-    
-  /* Move to DVD structure - this is required for the file selector */ 
-    while(dirnext(sddir,filename,&filestat) == 0) {
+
+  /* Move to DVD structure - this is required for the file selector */
+    while(dirnext(fatdir,filename,&filestat) == 0) {
         if(strcmp(filename,".") != 0) {
             memset(&filelist[nbfiles], 0, sizeof(FILEENTRIES));
             strncpy(filelist[nbfiles].filename, filename, MAXPATHLEN);
@@ -159,23 +226,22 @@ int parseFATdirectory() {
             nbfiles++;
         }
 	}
-  
+
     /*** close directory ***/
-    dirclose(sddir);
-	
+    dirclose(fatdir);
+
 	/* Sort the file list */
 	qsort(filelist, nbfiles, sizeof(FILEENTRIES), FileSortCallback);
-  
+
     return nbfiles;
 }
 
 /****************************************************************************
- * LoadSDFile
+ * LoadFATFile
  ****************************************************************************/
-extern bool haveSDdir;
-extern bool haveUSBdir;
+extern int haveFATdir;
 int
-LoadSDFile (char *filename, int length)
+LoadFATFile (char *filename, int length)
 {
   char zipbuffer[2048];
   char filepath[MAXPATHLEN];
@@ -186,16 +252,15 @@ LoadSDFile (char *filename, int length)
   rbuffer = (unsigned char *) Memory.ROM;
 
   /* Check filename length */
-  if ((strlen(currSDdir)+1+strlen(filelist[selection].filename)) < MAXPATHLEN)
-     sprintf(filepath, "%s/%s",currSDdir,filelist[selection].filename); 
+  if ((strlen(currFATdir)+1+strlen(filelist[selection].filename)) < MAXPATHLEN)
+     sprintf(filepath, "%s/%s",currFATdir,filelist[selection].filename);
   else
   {
-    WaitPrompt((char*) "Maximum Filename Length reached !"); 
-    haveSDdir = 0; // reset everything before next access
-	haveUSBdir = 0;
+    WaitPrompt((char*) "Maximum Filename Length reached !");
+    haveFATdir = 0; // reset everything before next access
 	return -1;
   }
-  
+
   handle = fopen (filepath, "rb");
   if (handle > 0)
     {
@@ -204,7 +269,7 @@ LoadSDFile (char *filename, int length)
 	      if (IsZipFile (zipbuffer))
 		{
 			/*** Unzip the ROM ***/
-		  size = UnZipBuffer (rbuffer, 0, 0, handle);	// unzip from SD
+		  size = UnZipBuffer (rbuffer, 0, 0, handle);	// unzip from FAT
 
 		  fclose (handle);
 		  return size;
@@ -213,17 +278,17 @@ LoadSDFile (char *filename, int length)
 	      else
 		{
 				/*** Just load the file up ***/
-		  
+
 		  fseek(handle, 0, SEEK_END);
 		  length = ftell(handle);				// get filesize
 		  fseek(handle, 2048, SEEK_SET);		// seek back to point where we left off
-		
+
 		  sprintf (filepath, "Loading %d bytes", length);
 		  ShowAction (filepath);
 		  memcpy (rbuffer, zipbuffer, 2048);	// copy what we already read
 		  fread (rbuffer + 2048, 1, length - 2048, handle);
 		  fclose (handle);
-		  
+
 		  return length;
 		}
     }
@@ -236,20 +301,18 @@ LoadSDFile (char *filename, int length)
   return 0;
 }
 
-
-
 /****************************************************************************
- * Load savebuffer from SD card file
+ * Load savebuffer from FAT file
  ****************************************************************************/
 int
-LoadBufferFromSD (char *filepath, bool silent)
+LoadBufferFromFAT (char *filepath, bool silent)
 {
-    FILE *handle;
+	FILE *handle;
     int offset = 0;
     int read = 0;
-    
+
     handle = fopen (filepath, "rb");
-    
+
     if (handle <= 0)
     {
         if ( !silent )
@@ -260,33 +323,32 @@ LoadBufferFromSD (char *filepath, bool silent)
         }
         return 0;
     }
-    
+
     memset (savebuffer, 0, 0x22000);
-    
+
     /*** This is really nice, just load the file and decode it ***/
     while ((read = fread (savebuffer + offset, 1, 1024, handle)) > 0)
     {
         offset += read;
     }
-    
+
     fclose (handle);
-    
+
     return offset;
 }
 
-
 /****************************************************************************
- * Write savebuffer to SD card file
+ * Write savebuffer to FAT card file
  ****************************************************************************/
 int
-SaveBufferToSD (char *filepath, int datasize, bool silent)
+SaveBufferToFAT (char *filepath, int datasize, bool silent)
 {
-    FILE *handle;
-    
+	FILE *handle;
+
     if (datasize)
     {
         handle = fopen (filepath, "wb");
-        
+
         if (handle <= 0)
         {
             char msg[100];
@@ -294,152 +356,10 @@ SaveBufferToSD (char *filepath, int datasize, bool silent)
             WaitPrompt (msg);
             return 0;
         }
-        
+
         fwrite (savebuffer, 1, datasize, handle);
         fclose (handle);
     }
-    
+
     return datasize;
-}
-
-
-/****************************************************************************
- * Save SRAM to SD Card
- ****************************************************************************/
-void SaveSRAMToSD (bool silent)
-{
-    char filepath[1024];
-    int datasize;
-    int offset;
-
-	if (!silent)
-		ShowAction ((char*) "Saving SRAM to SD...");
-    
-#ifdef SDUSE_LFN
-    sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMFilename);
-#else
-    sprintf (filepath, "%s/%s/%08x.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMCRC32);
-#endif
-    
-    datasize = prepareEXPORTsavedata ();
-
-    if ( datasize )
-    {
-        offset = SaveBufferToSD (filepath, datasize, silent);
-        
-        if ( (offset > 0) && (!silent) )
-        {
-            sprintf (filepath, "Wrote %d bytes", offset);
-            WaitPrompt (filepath);
-        }
-    }
-}
-
-
-/****************************************************************************
- * Load SRAM From SD Card
- ****************************************************************************/
-void
-LoadSRAMFromSD (bool silent)
-{
-    char filepath[MAXPATHLEN];
-    int offset = 0;
-    
-    ShowAction ((char*) "Loading SRAM from SD...");
-	
-	// check for 'old' version of sram
-		sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMName); // Build old SRAM filename
-		
-		offset = LoadBufferFromSD (filepath, silent);	// load file
-		
-		if (offset > 0) // old sram found
-		{
-			if (WaitPromptChoice ((char*)"Old SRAM found. Convert and delete?", (char*)"Cancel", (char*)"Do it"))
-			{
-				decodesavedata (offset);
-				remove (filepath);	// delete old sram
-				SaveSRAMToSD (silent);
-			}
-		}
-	//
-    
-#ifdef SDUSE_LFN
-    sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMFilename);
-#else
-    sprintf (filepath, "%s/%s/%08x.srm", ROOTSDDIR, SNESSAVEDIR, Memory.ROMCRC32);
-#endif
-    
-    offset = LoadBufferFromSD (filepath, silent);
-    
-    if (offset > 0)
-    {
-        decodesavedata (offset);
-        if ( !silent )
-        {
-            sprintf (filepath, "Loaded %d bytes", offset);
-            WaitPrompt(filepath);
-        }
-        S9xSoftReset();
-    }
-}
-
-
-/****************************************************************************
- * Save Preferences to SD Card
- ****************************************************************************/
-void
-SavePrefsToSD (bool silent)
-{
-  char filepath[1024];
-  int datasize;
-  int offset;
-
-	if (!silent)
-		ShowAction ((char*) "Saving prefs to SD...");
-    
-#ifdef SDUSE_LFN
-    sprintf (filepath, "%s/%s/%s", ROOTSDDIR, SNESSAVEDIR, PREFS_FILE_NAME);
-#else
-    sprintf (filepath, "%s/%s/%s", ROOTSDDIR, SNESSAVEDIR, PREFS_FILE_NAME);
-#endif
-    
-    datasize = preparePrefsData ();
-    offset = SaveBufferToSD (filepath, datasize, silent);
-    
-    if ( (offset > 0) && (!silent) )
-    {
-        sprintf (filepath, "Wrote %d bytes", offset);
-        WaitPrompt (filepath);
-    }
-}
-
-
-/****************************************************************************
- * Load Preferences from SD Card
- ****************************************************************************/
-void
-LoadPrefsFromSD (bool silent)
-{
-    char filepath[1024];
-    int offset = 0;
-    
-    ShowAction ((char*) "Loading prefs from SD...");
-    
-#ifdef SDUSE_LFN
-    sprintf (filepath, "%s/%s/%s", ROOTSDDIR, SNESSAVEDIR, PREFS_FILE_NAME);
-#else
-    sprintf (filepath, "%s/%s/%s", ROOTSDDIR, SNESSAVEDIR, PREFS_FILE_NAME);
-#endif
-    
-    offset = LoadBufferFromSD (filepath, silent);
-    
-    if (offset > 0)
-    {
-        decodePrefsData ();
-        if ( !silent )
-        {
-            sprintf (filepath, "Loaded %d bytes", offset);
-            WaitPrompt(filepath);
-        }
-    }
 }

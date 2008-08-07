@@ -21,11 +21,6 @@ int VerifyMCFile (unsigned char *buf, int slot, char *filename, int datasize);
 
 int LoadBufferFromMC (unsigned char *buf, int slot, char *filename, bool8 silent);
 int SaveBufferToMC (unsigned char *buf, int slot, char *filename, int datasize, bool8 silent);
-
-void LoadSRAMFromMC (int slot, int silent);
-void SaveSRAMToMC (int slot, int silent);
-
-void LoadPrefsFromMC (int slot, int silent);
-void SavePrefsToMC (int slot, int silent);
+int MountCard(int cslot, bool8 silent);
 
 #endif
