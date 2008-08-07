@@ -1,4 +1,5 @@
 #summary Instructions for loading and running the emulator.
+#labels Featured
 
 Unzip the archive into a folder.  The last part of the filename denotes the Wii and Gamecube version.  Select the one for your console.
 
