@@ -119,8 +119,8 @@
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -151,14 +151,12 @@
 #include "controls.h"
 #include "screenshot.h"
 
-#ifndef NGC
 #include "cheats.h"
-#endif
 
 static void S9xDisplayString(const char *string);
 static void S9xDisplayFrameRate();
 void ComputeClipWindows();
-    
+
 extern struct SLineData LineData[240];
 extern struct SLineMatrixData LineMatrixData [240];
 
@@ -391,10 +389,10 @@ void S9xEndScreenRefresh() {
                 PPU.CGDATA[0] = saved;
             }
 
-#ifndef NGC	   
+#ifndef NGC
             if(Settings.TakeScreenshot)
                 S9xDoScreenshot(IPPU.RenderedScreenWidth, IPPU.RenderedScreenHeight);
-#endif	    
+#endif
             S9xControlEOF();
             if (Settings.DisplayFrameRate)
                 S9xDisplayFrameRate();
@@ -406,9 +404,7 @@ void S9xEndScreenRefresh() {
         S9xControlEOF();
     }
 
-#ifndef NGC
     S9xApplyCheats();
-#endif
 
 #ifdef DEBUGGER
     if(CPU.Flags & FRAME_ADVANCE_FLAG) {

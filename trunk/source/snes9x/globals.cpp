@@ -119,8 +119,8 @@
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -156,9 +156,7 @@
 #include "gfx.h"
 #include "soundux.h"
 
-#ifndef NGC
 #include "cheats.h"
-#endif
 
 #include "sa1.h"
 #include "bsx.h"
@@ -253,7 +251,7 @@ uint32 MAX_GREEN = MAX_GREEN_RGB565;
 uint32 MAX_BLUE = MAX_BLUE_RGB565;
 uint32 SPARE_RGB_BIT_MASK = SPARE_RGB_BIT_MASK_RGB565;
 uint32 GREEN_HI_BIT = (MAX_GREEN_RGB565 + 1) >> 1;
-uint32 RGB_LOW_BITS_MASK = (RED_LOW_BIT_MASK_RGB565 | 
+uint32 RGB_LOW_BITS_MASK = (RED_LOW_BIT_MASK_RGB565 |
 			    GREEN_LOW_BIT_MASK_RGB565 |
 			    BLUE_LOW_BIT_MASK_RGB565);
 uint32 RGB_HI_BITS_MASK = (RED_HI_BIT_MASK_RGB565 |
@@ -276,9 +274,7 @@ uint32 current_graphic_format = RGB565;
 
 uint8 GetBank = 0;
 
-#ifndef NGC
 struct SCheatData Cheat;
-#endif
 
 volatile SoundStatus so;
 
@@ -333,7 +329,7 @@ struct SNetPlay NetPlay;
 #endif
 
 // Raw SPC700 instruction cycle lengths
-int32 S9xAPUCycleLengths [256] = 
+int32 S9xAPUCycleLengths [256] =
 {
     /*        0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
     /* 00 */  2, 8, 4, 5, 3, 4, 3, 6, 2, 6, 5, 4, 5, 4, 6, 8,
