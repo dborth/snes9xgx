@@ -239,7 +239,7 @@ int parseFATdirectory(int method)
     fatdir = diropen(currFATdir);
     if (fatdir == NULL)
 	{
-        sprintf(msg, "Error opening %s", currFATdir);
+        sprintf(msg, "Couldn't find %s", currFATdir);
         WaitPrompt(msg);
 
 		// if we can't open the previous dir, open root dir

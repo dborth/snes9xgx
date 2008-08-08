@@ -657,8 +657,9 @@ void SetControllers ()
   else if (Settings.MouseMaster == true)
     {
 	  // some games (eg: Mario Paint) don't allow the mouse in port 2
-	  S9xSetController (0, CTL_MOUSE, (GCSettings.Mouse == 2), 0, 0, 0);
-	  S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+	  S9xSetController (0, CTL_MOUSE, 0, 0, 0, 0);
+	  if (GCSettings.Mouse == 2) S9xSetController (1, CTL_MOUSE, 1, 0, 0, 0);
+	  else S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
   	}
   else if (Settings.JustifierMaster == true)
     {
