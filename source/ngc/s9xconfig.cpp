@@ -185,6 +185,7 @@ DefaultSettings ()
 	GCSettings.render = 0;
 	GCSettings.Superscope = 0;
     GCSettings.Mouse = 0;
+	GCSettings.Justifier = 0;
 
 	/****************** SNES9x Settings ***********************/
 
@@ -197,7 +198,7 @@ DefaultSettings ()
 	Settings.MouseMaster = false;
 	Settings.SuperScopeMaster = false;
 	Settings.MultiPlayer5Master = false;
-	Settings.JustifierMaster = true;
+	Settings.JustifierMaster = false;
 	Settings.ShutdownMaster = false;
 	Settings.CyclesPercentage = 100; // snes9x 1.50 and earlier
 	Settings.ApplyCheats = true;

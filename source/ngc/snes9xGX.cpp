@@ -199,7 +199,9 @@ extern int FrameTimer;
 extern long long prev;
 extern unsigned int timediffallowed;
 
-int scope_x = 0; int scope_y = 0;	// superscope cursor position
+// hold superscope/mouse/justifier cursor positions
+int cursor_x[5] = {0,0,0,0,0};
+int cursor_y[5] = {0,0,0,0,0};	
 
 extern void fat_enable_readahead_all();
 
@@ -250,41 +252,47 @@ unsigned int ncpadmap[] = { WPAD_BUTTON_A, WPAD_BUTTON_B,
 };
 /*** Superscope : GC controller button mapping ***/
 unsigned int gcscopemap[] = { PAD_TRIGGER_Z, PAD_BUTTON_B,
-  PAD_BUTTON_A, PAD_BUTTON_Y,
-  PAD_BUTTON_START
+  PAD_BUTTON_A, PAD_BUTTON_Y, PAD_BUTTON_START
 };
 /*** Superscope : wiimote button mapping ***/
 unsigned int wmscopemap[] = { WPAD_BUTTON_MINUS, WPAD_BUTTON_B,
-  WPAD_BUTTON_A, WPAD_BUTTON_DOWN,
-  WPAD_BUTTON_PLUS
+  WPAD_BUTTON_A, WPAD_BUTTON_DOWN, WPAD_BUTTON_PLUS
 };
+/*** Mouse : GC controller button mapping ***/
+unsigned int gcmousemap[] = { PAD_BUTTON_A, PAD_BUTTON_B };
+/*** Mouse : wiimote button mapping ***/
+unsigned int wmmousemap[] = { WPAD_BUTTON_A, WPAD_BUTTON_B };
+/*** Justifier : GC controller button mapping ***/
+unsigned int gcjustmap[] = { PAD_BUTTON_A, PAD_BUTTON_B, PAD_BUTTON_START };
+/*** Justifier : wiimote button mapping ***/
+unsigned int wmjustmap[] = { WPAD_BUTTON_A, WPAD_BUTTON_B, WPAD_BUTTON_PLUS };
 
 void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
 {
 	// gc left joystick
 	signed char pad_x = PAD_StickX (pad);
 	signed char pad_y = PAD_StickY (pad);
-	int SCOPEPADCAL = 30;
+	int SCOPEPADCAL = 20;
 #ifdef HW_RVL
 	// wiimote ir
 	struct ir_t ir;
 #endif
 
 	if (pad_x > SCOPEPADCAL){
-		pos_x +=4;
+		pos_x += (pad_x*1.0)/SCOPEPADCAL;
 		if (pos_x > 256) pos_x = 256;
 	}
 	if (pad_x < -SCOPEPADCAL){
-		pos_x -=4;
+		pos_x -= (pad_x*-1.0)/SCOPEPADCAL;
 		if (pos_x < 0) pos_x = 0;
 	}
 
 	if (pad_y < -SCOPEPADCAL){
-		pos_y +=4;
+		pos_y += (pad_y*-1.0)/SCOPEPADCAL;
 		if (pos_y > 224) pos_y = 224;
 	}
 	if (pad_y > SCOPEPADCAL){
-		pos_y -=4;
+		pos_y -= (pad_y*1.0)/SCOPEPADCAL;
 		if (pos_y < 0) pos_y = 0;
 	}
 
@@ -293,8 +301,8 @@ void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
 	WPAD_IR(pad, &ir);
 	if (ir.valid)
 	{
-		scope_x = (ir.x * 256) / 640;
-		scope_y = (ir.y * 224) / 480;
+		pos_x = (ir.x * 256) / 640;
+		pos_y = (ir.y * 224) / 480;
 	}
 #endif
 
@@ -431,9 +439,51 @@ decodepad (int pad)
 			S9xReportButton (offset + i, false);
 		}
 		// pointer
-		offset = 0x60;
-		UpdateCursorPosition (pad, scope_x, scope_y);
-		S9xReportPointer(offset, (u16)scope_x, (u16)scope_y);
+		offset = 0x80;
+		UpdateCursorPosition (pad, cursor_x[0], cursor_y[0]);
+		S9xReportPointer(offset, (u16)cursor_x[0], (u16)cursor_y[0]);
+	}
+	/*** Mouse ***/
+	else if (Settings.MouseMaster && pad < GCSettings.Mouse)
+	{
+		// buttons
+		offset = 0x60+(2*pad);
+		for (i = 0; i < 2; i++)
+		{
+		  if ( jp & gcmousemap[i]
+#ifdef HW_RVL
+				|| wp & wmmousemap[i]
+#endif
+		  )
+			S9xReportButton (offset + i, true);
+		  else
+			S9xReportButton (offset + i, false);
+		}
+		// pointer
+		offset = 0x81;
+		UpdateCursorPosition (pad, cursor_x[1+pad], cursor_y[1+pad]);
+		S9xReportPointer(offset+pad, (u16)cursor_x[1+pad], (u16)cursor_y[1+pad]);
+	}
+	/*** Justifier ***/
+	else if (Settings.JustifierMaster && pad < GCSettings.Justifier)
+	{
+		// buttons
+		offset = 0x70+(3*pad);
+		for (i = 0; i < 3; i++)
+		{
+		  if ( jp & gcjustmap[i]
+#ifdef HW_RVL
+				|| wp & wmjustmap[i]
+#endif
+		  )
+			S9xReportButton (offset + i, true);
+		  else
+			S9xReportButton (offset + i, false);
+		}
+		// pointer
+		offset = 0x83;
+		UpdateCursorPosition (pad, cursor_x[3+pad], cursor_y[3+pad]);
+		S9xReportPointer(offset+pad, (u16)cursor_x[3+pad], (u16)cursor_y[3+pad]);
 	}
 }
 /****************************************************************************
@@ -607,8 +657,13 @@ void SetControllers ()
 	}
   else if (Settings.MouseMaster == true)
     {
-	  S9xSetController (0, CTL_MOUSE, 0, 0, 0, 0);
-	  S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+	  S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
+	  S9xSetController (1, CTL_MOUSE, (GCSettings.Mouse == 2), 0, 0, 0);
+  	}
+  else if (Settings.JustifierMaster == true)
+    {
+	  S9xSetController(0, CTL_JOYPAD, 0, 0, 0, 0);
+	  S9xSetController(1, CTL_JUSTIFIER, (GCSettings.Justifier == 2), 0, 0, 0);
   	}
   else
     {
@@ -694,10 +749,29 @@ SetDefaultButtonMap ()
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Cursor");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Pause");
-
+  
   maxcode = 0x60;
+	/*** Mouse ***/
+  ASSIGN_BUTTON_FALSE (maxcode++, "Mouse1 L");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Mouse1 R");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Mouse2 L");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Mouse2 R");
+  
+  maxcode = 0x70;
+	/*** Justifier ***/
+  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 AimOffscreen");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 Trigger");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 Start");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 AimOffscreen");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 Trigger");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 Start");
+
+  maxcode = 0x80;
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Superscope"), false);
-  // add mouses here
+  S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Mouse1"), false);
+  S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Mouse2"), false);
+  S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Justifier1"), false);
+  S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Justifier2"), false);
 
   SetControllers ();
 
