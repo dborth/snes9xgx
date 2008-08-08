@@ -196,7 +196,8 @@ struct SGCSettings{
     uint8  VerifySaves;
 	u16		render;		// 0 - original, 1 - no AA
 	u16 Superscope;
-	u16 Mouse; 
+	u16 Mouse;
+	u16 Justifier; 
 };
 
 START_EXTERN_C

@@ -523,6 +523,7 @@ DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsiz
 	int i, w = 0;
 	int ypos = 0;
 	int n = 1;
+	int line_height;
 
 	ypos = 65;
 
@@ -547,23 +548,27 @@ DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsiz
 	// Draw menu items
 
 	setfontsize (fontsize);	// set font size
+	
+	line_height = (fontsize + 8);
 
 	for (i = 0; i < maxitems; i++)
 	{
 		if(strlen(items[i]) > 0)
 		{
-			if (i == selected)
+			if ( items[i] == NULL )
+				ypos -= line_height;
+			else if (i == selected)
 			{
-				for( w = 0; w < (fontsize + 8); w++ )
-					DrawLineFast( 30, 610, n * (fontsize + 8) + (ypos-(fontsize + 2)) + w, 0x80, 0x80, 0x80 );
+				for( w = 0; w < line_height; w++ )
+					DrawLineFast( 30, 610, n * line_height + (ypos-line_height+6) + w, 0x80, 0x80, 0x80 );
 
 				setfontcolour (0xff, 0xff, 0xff);
-				DrawText (x, n * (fontsize + 8) + ypos, items[i]);
+				DrawText (x, n * line_height + ypos, items[i]);
 				setfontcolour (0x00, 0x00, 0x00);
 			}
 			else
 			{
-				DrawText (x, n * (fontsize + 8) + ypos, items[i]);
+				DrawText (x, n * line_height + ypos, items[i]);
 			}
 			n++;
 		}

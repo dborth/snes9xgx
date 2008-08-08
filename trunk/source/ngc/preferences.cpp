@@ -33,7 +33,7 @@ extern unsigned int ccpadmap[];
 extern unsigned int ncpadmap[];
 
 #define PREFS_FILE_NAME "snes9xGx.prf"
-#define PREFSVERSTRING "Snes9x GX 005 Prefs"
+#define PREFSVERSTRING "Snes9x GX 005a Prefs"
 
 char prefscomment[2][32] = { {PREFSVERSTRING}, {"Preferences"} };
 

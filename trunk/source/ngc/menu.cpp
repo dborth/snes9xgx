@@ -619,13 +619,16 @@ ConfigureButtons (u16 ctrlr_type)
 
 int ctlrmenucount = 9;
 char ctlrmenu[][50] = {
+	// toggle:
 	"MultiTap",
 	"SuperScope",
-	"Mouse",
+	"Snes Mice",
+	"Justifiers",
+	// config:
 	"Nunchuk",
 	"Classic Controller",
-	"Gamecube Pad",
 	"Wiimote",
+	"Gamecube Pad",
 	"Save Preferences",
 	"Go Back"
 };
@@ -640,24 +643,23 @@ ConfigureControllers ()
 
 	// disable unavailable controller options if in GC mode
 	#ifndef HW_RVL
-		ctlrmenu[1][0] = '\0';
-		ctlrmenu[2][0] = '\0';
 		ctlrmenu[4][0] = '\0';
+		ctlrmenu[5][0] = '\0';
+		ctlrmenu[6][0] = '\0';
 	#endif
 
 	while (quit == 0)
 	{
 		sprintf (ctlrmenu[0], "MultiTap %s", Settings.MultiPlayer5Master == true ? " ON" : "OFF");
 
-		if (GCSettings.Superscope > 0)
-			sprintf (ctlrmenu[1], "Superscope: Pad %d", GCSettings.Superscope);
-		else
-			sprintf (ctlrmenu[1], "Superscope     OFF");
+		if (GCSettings.Superscope > 0) sprintf (ctlrmenu[1], "Superscope: Pad %d", GCSettings.Superscope);
+		else sprintf (ctlrmenu[1], "Superscope     OFF");
 
-		if (GCSettings.Mouse > 0)
-			sprintf (ctlrmenu[2], "Mouse: Pad %d", GCSettings.Mouse);
-		else
-			sprintf (ctlrmenu[2], "Mouse     OFF");
+		if (GCSettings.Mouse > 0) sprintf (ctlrmenu[2], "Mice:   %d", GCSettings.Mouse);
+		else sprintf (ctlrmenu[2], "Mice: OFF");
+		
+		if (GCSettings.Justifier > 0) sprintf (ctlrmenu[3], "Justifiers:   %d", GCSettings.Justifier);
+		else sprintf (ctlrmenu[3], "Justifiers: OFF");
 
 		/*** Controller Config Menu ***/
         ret = RunMenu (ctlrmenu, ctlrmenucount, (char*)"Configure Controllers");
@@ -665,11 +667,7 @@ ConfigureControllers ()
 		switch (ret)
 		{
 			case 0:
-				Settings.MultiPlayer5Master = (Settings.MultiPlayer5Master == false ? true : false);
-				if (Settings.MultiPlayer5Master)
-					S9xSetController (1, CTL_MP5, 1, 2, 3, -1);
-				else
-					S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+				Settings.MultiPlayer5Master ^= 1;
 				break;
 			case 1:
 				GCSettings.Superscope ++;
@@ -678,36 +676,42 @@ ConfigureControllers ()
 				break;
 			case 2:
 				GCSettings.Mouse ++;
-				if (GCSettings.Mouse > 4)
+				if (GCSettings.Mouse > 2)
 					GCSettings.Mouse = 0;
 				break;
 			case 3:
+				GCSettings.Justifier ++;
+				if (GCSettings.Justifier > 2)
+					GCSettings.Justifier = 0;
+				break;
+				
+			case 4:
 				/*** Configure Nunchuk ***/
 				ConfigureButtons (CTRLR_NUNCHUK);
 				break;
 
-			case 4:
+			case 5:
 				/*** Configure Classic ***/
 				ConfigureButtons (CTRLR_CLASSIC);
 				break;
-
-			case 5:
-				/*** Configure GC Pad ***/
-				ConfigureButtons (CTRLR_GCPAD);
-				break;
-
+				
 			case 6:
 				/*** Configure Wiimote ***/
 				ConfigureButtons (CTRLR_WIIMOTE);
 				break;
 
 			case 7:
+				/*** Configure GC Pad ***/
+				ConfigureButtons (CTRLR_GCPAD);
+				break;
+
+			case 8:
 				/*** Save Preferences Now ***/
 				quickSavePrefs(NOTSILENT);
 				break;
 
 			case -1: /*** Button B ***/
-			case 8:
+			case 9:
 				/*** Return ***/
 				quit = 1;
 				break;
@@ -724,7 +728,7 @@ int menucount = 7;
 char menuitems[][50] = {
   "Choose Game", "Controller Configuration", "Preferences",
   "Game Menu",
-  "Credits", "Reset System", "Exit"
+  "Credits", "Reset System", "Return to Loader"
 };
 
 void
@@ -817,8 +821,8 @@ mainmenu (int selectedMenu)
 
 	ReInitGCVideo();	// update video after reading settings
 
-	Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);	// update superscope settings
-	Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);	// update mouse settings
-	// update mouse/justifier info?
+	Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);
+	Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);
+	Settings.JustifierMaster = (GCSettings.Justifier > 0 ? true : false);
 	SetControllers();
 }
