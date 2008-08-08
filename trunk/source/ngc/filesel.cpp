@@ -78,9 +78,9 @@ int autoSaveMethod()
 		return METHOD_SD;
 	else if(changeFATInterface(METHOD_USB))
 		return METHOD_USB;
-	else if(TestCard(CARD_SLOTA, NOTSILENT))
+	else if(TestCard(CARD_SLOTA, SILENT))
 		return METHOD_MC_SLOTA;
-	else if(TestCard(CARD_SLOTB, NOTSILENT))
+	else if(TestCard(CARD_SLOTB, SILENT))
 		return METHOD_MC_SLOTB;
 	else
 	{
