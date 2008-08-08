@@ -201,7 +201,7 @@ extern unsigned int timediffallowed;
 
 // hold superscope/mouse/justifier cursor positions
 int cursor_x[5] = {0,0,0,0,0};
-int cursor_y[5] = {0,0,0,0,0};	
+int cursor_y[5] = {0,0,0,0,0};
 
 extern void fat_enable_readahead_all();
 
@@ -646,7 +646,6 @@ void SetControllers ()
 {
   if (Settings.MultiPlayer5Master == true)
     {
-
       S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
       S9xSetController (1, CTL_MP5, 1, 2, 3, -1);
     }
@@ -657,8 +656,9 @@ void SetControllers ()
 	}
   else if (Settings.MouseMaster == true)
     {
-	  S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
-	  S9xSetController (1, CTL_MOUSE, (GCSettings.Mouse == 2), 0, 0, 0);
+	  // some games (eg: Mario Paint) don't allow the mouse in port 2
+	  S9xSetController (0, CTL_MOUSE, (GCSettings.Mouse == 2), 0, 0, 0);
+	  S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
   	}
   else if (Settings.JustifierMaster == true)
     {
@@ -749,14 +749,14 @@ SetDefaultButtonMap ()
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Cursor");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Pause");
-  
+
   maxcode = 0x60;
 	/*** Mouse ***/
   ASSIGN_BUTTON_FALSE (maxcode++, "Mouse1 L");
   ASSIGN_BUTTON_FALSE (maxcode++, "Mouse1 R");
   ASSIGN_BUTTON_FALSE (maxcode++, "Mouse2 L");
   ASSIGN_BUTTON_FALSE (maxcode++, "Mouse2 R");
-  
+
   maxcode = 0x70;
 	/*** Justifier ***/
   ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 AimOffscreen");
@@ -835,7 +835,9 @@ main ()
 	/*** Initialize libFAT for SD and USB ***/
 	fatInitDefault();
 	//fatInit(8192, false);
+#ifdef HW_RVL
 	//fat_enable_readahead_all();
+#endif
 
 	/*** Initialize DVD subsystem ***/
 	DVD_Init ();

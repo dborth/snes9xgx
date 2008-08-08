@@ -45,40 +45,40 @@ char prefscomment[2][32] = { {PREFSVERSTRING}, {"Preferences"} };
 int
 preparePrefsData ()
 {
-  int offset = sizeof (saveicon);
-  int size;
+	int offset = sizeof (saveicon);
+	int size;
 
-  memset (savebuffer, 0, SAVEBUFFERSIZE);
+	memset (savebuffer, 0, SAVEBUFFERSIZE);
 
 	/*** Copy in save icon ***/
-  memcpy (savebuffer, saveicon, offset);
+	memcpy (savebuffer, saveicon, offset);
 
 	/*** And the prefscomments ***/
-  memcpy (savebuffer + offset, prefscomment, 64);
-  offset += 64;
+	memcpy (savebuffer + offset, prefscomment, 64);
+	offset += 64;
 
-  /*** Save all settings ***/
-  size = sizeof (Settings);
-  memcpy (savebuffer + offset, &Settings, size);
-  offset += size;
+	/*** Save all settings ***/
+	size = sizeof (Settings);
+	memcpy (savebuffer + offset, &Settings, size);
+	offset += size;
 
-  /*** Save GC specific settings ***/
-  size = sizeof (GCSettings);
-  memcpy (savebuffer + offset, &GCSettings, size);
-  offset += size;
+	/*** Save GC specific settings ***/
+	size = sizeof (GCSettings);
+	memcpy (savebuffer + offset, &GCSettings, size);
+	offset += size;
 
-  /*** Save buttonmaps ***/
-  size = sizeof (unsigned int) *12;	// this size applies to all padmaps
-  memcpy (savebuffer + offset, &gcpadmap, size);
-  offset += size;
-  memcpy (savebuffer + offset, &wmpadmap, size);
-  offset += size;
-  memcpy (savebuffer + offset, &ccpadmap, size);
-  offset += size;
-  memcpy (savebuffer + offset, &ncpadmap, size);
-  offset += size;
+	/*** Save buttonmaps ***/
+	size = sizeof (unsigned int) *12;	// this size applies to all padmaps
+	memcpy (savebuffer + offset, &gcpadmap, size);
+	offset += size;
+	memcpy (savebuffer + offset, &wmpadmap, size);
+	offset += size;
+	memcpy (savebuffer + offset, &ccpadmap, size);
+	offset += size;
+	memcpy (savebuffer + offset, &ncpadmap, size);
+	offset += size;
 
-  return offset;
+	return offset;
 }
 
 
@@ -118,7 +118,6 @@ decodePrefsData ()
 		return false;
 }
 
-
 /****************************************************************************
  * Save Preferences
  ****************************************************************************/
@@ -140,10 +139,8 @@ SavePrefs (int method, bool silent)
 
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		if(method == METHOD_SD)
-			sprintf (filepath, "%s/%s/%s", ROOTSDDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
-		else
-			sprintf (filepath, "%s/%s/%s", ROOTUSBDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
+		changeFATInterface(GCSettings.SaveMethod);
+		sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
 		offset = SaveBufferToFAT (filepath, datasize, silent);
 	}
 	else if(method == METHOD_SMB)
@@ -190,10 +187,8 @@ LoadPrefs (int method, bool silent)
 
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		if(method == METHOD_SD)
-			sprintf (filepath, "%s/%s/%s", ROOTSDDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
-		else
-			sprintf (filepath, "%s/%s/%s", ROOTUSBDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
+		changeFATInterface(GCSettings.SaveMethod);
+		sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
 		offset = LoadBufferFromFAT (filepath, silent);
 	}
 	else if(method == METHOD_SMB)

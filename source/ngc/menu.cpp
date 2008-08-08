@@ -617,7 +617,7 @@ ConfigureButtons (u16 ctrlr_type)
 	menu = oldmenu;
 }	// end configurebuttons()
 
-int ctlrmenucount = 9;
+int ctlrmenucount = 10;
 char ctlrmenu[][50] = {
 	// toggle:
 	"MultiTap",
@@ -657,7 +657,7 @@ ConfigureControllers ()
 
 		if (GCSettings.Mouse > 0) sprintf (ctlrmenu[2], "Mice:   %d", GCSettings.Mouse);
 		else sprintf (ctlrmenu[2], "Mice: OFF");
-		
+
 		if (GCSettings.Justifier > 0) sprintf (ctlrmenu[3], "Justifiers:   %d", GCSettings.Justifier);
 		else sprintf (ctlrmenu[3], "Justifiers: OFF");
 
@@ -684,7 +684,7 @@ ConfigureControllers ()
 				if (GCSettings.Justifier > 2)
 					GCSettings.Justifier = 0;
 				break;
-				
+
 			case 4:
 				/*** Configure Nunchuk ***/
 				ConfigureButtons (CTRLR_NUNCHUK);
@@ -694,7 +694,7 @@ ConfigureControllers ()
 				/*** Configure Classic ***/
 				ConfigureButtons (CTRLR_CLASSIC);
 				break;
-				
+
 			case 6:
 				/*** Configure Wiimote ***/
 				ConfigureButtons (CTRLR_WIIMOTE);
@@ -807,7 +807,6 @@ mainmenu (int selectedMenu)
 				quit = 1;
 				break;
 		}
-
 	}
 
 	/*** Remove any still held buttons ***/

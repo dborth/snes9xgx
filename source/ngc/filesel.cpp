@@ -13,7 +13,6 @@
 #include <string.h>
 #include <wiiuse/wpad.h>
 
-#include <fat.h>
 #include <sys/dir.h>
 #include "snes9x.h"
 #include "memmap.h"
@@ -51,67 +50,43 @@ extern int screenheight;
 extern FILEENTRIES filelist[MAXFILES];
 
 /****************************************************************************
-* Auto-determines the load method
-* THIS CODE STILL NEEDS WORK
+* autoLoadMethod()
+* Auto-determines and sets the load method
+* Returns method set
 ****************************************************************************/
 int autoLoadMethod()
 {
-	return METHOD_SD;
+	if(changeFATInterface(METHOD_SD))
+		return METHOD_SD;
+	else if(changeFATInterface(METHOD_USB))
+		return METHOD_USB;
+	else
+	{
+		WaitPrompt((char*) "Unable to auto-determine load method!");
+		return 0; // no method found
+	}
 }
 
 /****************************************************************************
-* Auto-determines the save method
-* THIS CODE STILL NEEDS WORK
+* autoSaveMethod()
+* Auto-determines and sets the save method
+* Returns method set
 ****************************************************************************/
 int autoSaveMethod()
 {
-	return METHOD_SD;
-	int method = -1;
-
-	while(method < 0)
+	if(changeFATInterface(METHOD_SD))
+		return METHOD_SD;
+	else if(changeFATInterface(METHOD_USB))
+		return METHOD_USB;
+	else if(TestCard(CARD_SLOTA, NOTSILENT))
+		return METHOD_MC_SLOTA;
+	else if(TestCard(CARD_SLOTB, NOTSILENT))
+		return METHOD_MC_SLOTB;
+	else
 	{
-		WaitPrompt((char*) "Checking SD");
-
-		if(diropen(ROOTSDDIR))
-		{
-			WaitPrompt((char*) "Found SD!");
-			method = METHOD_SD;
-			break;
-		}
-
-		WaitPrompt((char*) "Checking USB");
-
-		if(diropen(ROOTUSBDIR))
-		{
-			WaitPrompt((char*) "Found USB!");
-			method = METHOD_USB;
-			break;
-		}
-
-		WaitPrompt((char*) "Checking Slot A");
-
-		// check Memory Card Slot A
-		if(MountCard(CARD_SLOTA, SILENT) == 0)
-		{
-			WaitPrompt((char*) "Found Memory Card A!");
-			method = METHOD_MC_SLOTA;
-			break;
-		}
-		WaitPrompt((char*) "Checking Slot B");
-
-		// check Memory Card Slot B
-		if(MountCard(CARD_SLOTB, SILENT) == 0)
-		{
-			WaitPrompt((char*) "Found Memory Card B!");
-			method = METHOD_MC_SLOTB;
-			break;
-		}
-
-		// no method found
-		WaitPrompt((char*) "Error: Could not determine save method.");
-		method = 0;
+		WaitPrompt((char*) "Unable to auto-determine save method!");
+		return 0; // no method found
 	}
-	return method;
 }
 
 /****************************************************************************
@@ -534,10 +509,8 @@ OpenFAT (int method)
 	havedir = 0;	// gamecube only
 
 	/* change current dir to snes roms directory */
-	if(method == METHOD_SD)
-		sprintf ( currFATdir, "%s/%s", ROOTSDDIR, GCSettings.LoadFolder );
-	else
-		sprintf ( currFATdir, "%s/%s", ROOTUSBDIR, GCSettings.LoadFolder );
+	changeFATInterface(GCSettings.LoadMethod);
+	sprintf ( currFATdir, "%s/%s", ROOTFATDIR, GCSettings.LoadFolder );
 
 	/* Parse initial root directory and get entries list */
 	if ((maxfiles = parseFATdirectory (method)))

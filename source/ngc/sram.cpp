@@ -250,11 +250,8 @@ LoadSRAM (int method, bool silent)
 
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		if(method == METHOD_SD)
-			sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-		else
-			sprintf (filepath, "%s/%s/%s.srm", ROOTUSBDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-
+		changeFATInterface(GCSettings.SaveMethod);
+		sprintf (filepath, "%s/%s/%s.srm", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
 		offset = LoadBufferFromFAT (filepath, silent);
 	}
 	else if(method == METHOD_SMB)
@@ -313,10 +310,8 @@ SaveSRAM (int method, bool silent)
 	{
 		if(method == METHOD_SD || method == METHOD_USB)
 		{
-			if(method == METHOD_SD)
-				sprintf (filepath, "%s/%s/%s.srm", ROOTSDDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-			else
-				sprintf (filepath, "%s/%s/%s.srm", ROOTUSBDIR, GCSettings.SaveFolder, Memory.ROMFilename);
+			changeFATInterface(GCSettings.SaveMethod);
+			sprintf (filepath, "%s/%s/%s.srm", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
 			offset = SaveBufferToFAT (filepath, datasize, silent);
 		}
 		else if(method == METHOD_SMB)

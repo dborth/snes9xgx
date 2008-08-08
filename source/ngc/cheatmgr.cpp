@@ -30,10 +30,11 @@ SetupCheats()
 
 	char cheatFile[150] = { '\0' };
 
-	if(GCSettings.SaveMethod == METHOD_SD)
-		sprintf (cheatFile, "%s/snes9x/cheats/%s.cht", ROOTSDDIR, Memory.ROMFilename);
-	else if(GCSettings.SaveMethod == METHOD_USB)
-		sprintf (cheatFile, "%s/snes9x/cheats/%s.cht", ROOTUSBDIR, Memory.ROMFilename);
+	if(GCSettings.SaveMethod == METHOD_SD || GCSettings.SaveMethod == METHOD_USB)
+	{
+		changeFATInterface(GCSettings.SaveMethod);
+		sprintf (cheatFile, "%s/snes9x/cheats/%s.cht", ROOTFATDIR, Memory.ROMFilename);
+	}
 
 	// load cheat file if present
 	if(strlen(cheatFile) > 0)

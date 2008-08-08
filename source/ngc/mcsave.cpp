@@ -66,18 +66,57 @@ ClearSaveBuffer ()
 int
 CardFileExists (char *filename, int slot)
 {
-  int CardError;
+	int CardError;
 
-  CardError = CARD_FindFirst (slot, &CardDir, TRUE);
-  while (CardError != CARD_ERROR_NOFILE)
-    {
-      CardError = CARD_FindNext (&CardDir);
+	CardError = CARD_FindFirst (slot, &CardDir, TRUE);
+	while (CardError != CARD_ERROR_NOFILE)
+	{
+		CardError = CARD_FindNext (&CardDir);
 
-      if (strcmp ((char *) CardDir.filename, filename) == 0)
-	return 1;
-    }
+		if (strcmp ((char *) CardDir.filename, filename) == 0)
+			return 1;
+	}
 
-  return 0;
+	return 0;
+}
+
+/****************************************************************************
+ * TestCard
+ *
+ * Checks to see if a card is in the card slot specified
+ ****************************************************************************/
+bool TestCard(int slot, bool silent)
+{
+	/*** Initialize Card System ***/
+	memset (SysArea, 0, CARD_WORKAREA);
+	CARD_Init ("SNES", "00");
+
+	/*** Try to mount the card ***/
+	if (MountCard(slot, silent) == 0)
+	{
+		// Mount successful!
+		if(!silent)
+		{
+			if (slot == CARD_SLOTA)
+				WaitPrompt((char*) "Mounted Slot A Memory Card!");
+			else
+				WaitPrompt((char*) "Mounted Slot B Memory Card!");
+		}
+		CARD_Unmount (slot);
+		return true;
+	}
+	else
+	{
+		if(!silent)
+		{
+			if (slot == CARD_SLOTA)
+				WaitPrompt((char*) "Unable to Mount Slot A Memory Card!");
+			else
+				WaitPrompt((char*) "Unable to Mount Slot B Memory Card!");
+		}
+
+		return false;
+	}
 }
 
 /****************************************************************************
@@ -87,7 +126,7 @@ CardFileExists (char *filename, int slot)
  * workarounds implemented for when the mount fails.
  * Returns the result of the last attempted CARD_Mount command.
  ****************************************************************************/
-int MountCard(int cslot, bool8 silent)
+int MountCard(int cslot, bool silent)
 {
 	int ret;
 	int tries;
