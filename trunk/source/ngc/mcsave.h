@@ -21,6 +21,7 @@ int VerifyMCFile (unsigned char *buf, int slot, char *filename, int datasize);
 
 int LoadBufferFromMC (unsigned char *buf, int slot, char *filename, bool8 silent);
 int SaveBufferToMC (unsigned char *buf, int slot, char *filename, int datasize, bool8 silent);
-int MountCard(int cslot, bool8 silent);
+int MountCard(int cslot, bool silent);
+bool TestCard(int slot, bool silent);
 
 #endif

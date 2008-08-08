@@ -21,10 +21,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define ROOTSDDIR "fat3:/"
-#define ROOTUSBDIR "fat4:/"
+#define ROOTFATDIR "fat:/"
 
 bool fat_remount(PARTITION_INTERFACE partition);
+bool fat_is_mounted(PARTITION_INTERFACE partition);
+bool changeFATInterface(int method);
 static int FileSortCallback(const void *f1, const void *f2);
 int updateFATdirname(int method);
 int parseFATdirectory(int method);

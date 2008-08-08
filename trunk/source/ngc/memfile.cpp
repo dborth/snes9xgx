@@ -145,13 +145,10 @@ NGCFreezeGame (int method, bool8 silent)
 	int offset = 0;
 	char msg[100];
 
-	if (method == METHOD_SD) // SD
+	if (method == METHOD_SD || method == METHOD_USB) // SD
 	{
-		sprintf (filename, "%s/%s/%s.frz", ROOTSDDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-	}
-	if (method == METHOD_USB) // USB
-	{
-		sprintf (filename, "%s/%s/%s.frz", ROOTUSBDIR, GCSettings.SaveFolder, Memory.ROMFilename);
+		changeFATInterface(GCSettings.SaveMethod);
+		sprintf (filename, "%s/%s/%s.frz", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
 	}
 	else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC Slot A or B
 	{
@@ -192,14 +189,12 @@ NGCFreezeGame (int method, bool8 silent)
 		}
 		else
 		{
-			if(method == METHOD_SD)
-				sprintf(msg, "Couldn't save to %s/%s/", ROOTSDDIR, GCSettings.SaveFolder);
-			else
-				sprintf(msg, "Couldn't save to %s/%s/", ROOTUSBDIR, GCSettings.SaveFolder);
+			changeFATInterface(GCSettings.SaveMethod);
+			sprintf(msg, "Couldn't save to %s/%s/", ROOTFATDIR, GCSettings.SaveFolder);
 			WaitPrompt (msg);
 		}
 	}
-	else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTA) // MC Slot A or B
+	else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC Slot A or B
 	{
 		if (!silent)
 			ShowAction ((char*) "Saving freeze game...");
@@ -353,10 +348,8 @@ NGCUnfreezeGame (int method, bool8 silent)
 
 	if (method == METHOD_SD || method == METHOD_USB) // SD & USB
 	{
-		if(method == METHOD_SD)
-			sprintf (filename, "%s/%s/%s.frz", ROOTSDDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-		else
-			sprintf (filename, "%s/%s/%s.frz", ROOTUSBDIR, GCSettings.SaveFolder, Memory.ROMFilename);
+		changeFATInterface(GCSettings.SaveMethod);
+		sprintf (filename, "%s/%s/%s.frz", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
 
 		handle = fopen (filename, "rb");
 

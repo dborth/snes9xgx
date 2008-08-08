@@ -52,6 +52,52 @@ bool fat_is_mounted(PARTITION_INTERFACE partition) {
 }
 
 /****************************************************************************
+ * changeFATInterface
+ * Checks if the device (method) specified is available, and
+ * sets libfat to use the device
+****************************************************************************/
+bool changeFATInterface(int method)
+{
+	bool devFound = false;
+
+	if(method == METHOD_SD)
+	{
+		// check which SD device is loaded
+
+		#ifdef HW_RVL
+		if (fat_is_mounted(PI_INTERNAL_SD))
+		{
+			devFound = true;
+			fatSetDefaultInterface(PI_INTERNAL_SD);
+		}
+		#endif
+
+		if (!devFound && fat_is_mounted(PI_SDGECKO_A))
+		{
+			devFound = true;
+			fatSetDefaultInterface(PI_SDGECKO_A);
+		}
+		if(!devFound && fat_is_mounted(PI_SDGECKO_B))
+		{
+			devFound = true;
+			fatSetDefaultInterface(PI_SDGECKO_B);
+		}
+	}
+	else if(method == METHOD_USB)
+	{
+		#ifdef HW_RVL
+		if(fat_is_mounted(PI_USBSTORAGE))
+		{
+			devFound = true;
+			fatSetDefaultInterface(PI_USBSTORAGE);
+		}
+		#endif
+	}
+
+	return devFound;
+}
+
+/****************************************************************************
  * fat_enable_readahead_all
  ****************************************************************************/
 
@@ -160,10 +206,7 @@ int updateFATdirname(int method)
 			sprintf(temp, "/%s/..", GCSettings.LoadFolder);
 			if (strcmp(currFATdir, temp) == 0)
 			{
-				if(method == METHOD_SD)
-					sprintf(currFATdir,"%s",ROOTSDDIR);
-				else
-					sprintf(currFATdir,"%s",ROOTUSBDIR);
+				sprintf(currFATdir,"%s",ROOTFATDIR);
 			}
 
 			/* update current directory name */
@@ -200,10 +243,7 @@ int parseFATdirectory(int method)
         WaitPrompt(msg);
 
 		// if we can't open the previous dir, open root dir
-		if(method == METHOD_SD)
-			sprintf(currFATdir,"%s",ROOTSDDIR);
-		else
-			sprintf(currFATdir,"%s",ROOTUSBDIR);
+        sprintf(currFATdir,"%s",ROOTFATDIR);
 
         fatdir = diropen(currFATdir);
 
