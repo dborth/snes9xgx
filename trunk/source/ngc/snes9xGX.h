@@ -177,27 +177,27 @@ enum {
 };
 
 struct SGCSettings{
-    uint8  AutoLoad;
-    uint8  AutoSave;
-    uint8  LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
-	char   LoadFolder[200]; // Path to game files
-	uint8  SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, Memory Card Slot A, Memory Card Slot B, USB, SMB
-	char   SaveFolder[200]; // Path to save files
-    char   gcip[16];
-    char   gwip[16];
-    char   mask[16];
-    char   smbip[16];
-    char   smbuser[20];
-    char   smbpwd[20];
-    char   smbgcid[20];
-    char   smbsvid[20];
-    char   smbshare[20];
-    bool8  NGCZoom;
-    uint8  VerifySaves;
+    uint8	AutoLoad;
+    uint8	AutoSave;
+    uint8	LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
+	char	LoadFolder[200]; // Path to game files
+	uint8	SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, Memory Card Slot A, Memory Card Slot B, USB, SMB
+	char	SaveFolder[200]; // Path to save files
+	char	gcip[16];
+	char	gwip[16];
+	char	mask[16];
+	char	smbip[16];
+	char	smbuser[20];
+	char	smbpwd[20];
+	char	smbgcid[20];
+	char	smbsvid[20];
+	char	smbshare[20];
+    bool8	NGCZoom;
+    uint8	VerifySaves;
 	u16		render;		// 0 - original, 1 - no AA
-	u16 Superscope;
-	u16 Mouse;
-	u16 Justifier; 
+	u16		Superscope;
+	u16		Mouse;
+	u16		Justifier;
 };
 
 START_EXTERN_C
@@ -210,34 +210,5 @@ extern void SetControllers ();
 END_EXTERN_C
 
 #define	JOY_THRESHOLD	0.70	// for wii (expansion) analogues
-
-/*** default SMB settings ***/
-#ifndef GC_IP
-#define GC_IP "192.168.1.32"		/*** IP to assign the GameCube ***/
-#endif
-#ifndef GW_IP
-#define GW_IP "192.168.1.100"	/*** Your gateway IP ***/
-#endif
-#ifndef MASK
-#define MASK "255.255.255.0"	/*** Your subnet mask ***/
-#endif
-#ifndef SMB_USER
-#define SMB_USER "Guest"		/*** Your share user ***/
-#endif
-#ifndef SMB_PWD
-#define SMB_PWD "password"		/*** Your share user password ***/
-#endif
-#ifndef SMB_GCID
-#define SMB_GCID "gamecube"	/*** Machine Name of GameCube ***/
-#endif
-#ifndef SMB_SVID
-#define SMB_SVID "mypc"	/*** Machine Name of Server(Share) ***/
-#endif
-#ifndef SMB_SHARE
-#define SMB_SHARE "gcshare"	/*** Share name on server ***/
-#endif
-#ifndef SMB_IP
-#define SMB_IP "192.168.1.100"	/*** IP Address of share server ***/
-#endif
 
 #endif

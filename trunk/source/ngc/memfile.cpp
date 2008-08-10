@@ -19,24 +19,19 @@
 #include <fat.h>
 #include <zlib.h>
 
-#include "memfile.h"
 #include "snes9x.h"
 #include "memmap.h"
 #include "soundux.h"
 #include "snapshot.h"
 #include "srtc.h"
 
+#include "memfile.h"
 #include "Snes9xGx.h"
 #include "filesel.h"
 #include "menudraw.h"
-#include "smbload.h"
+#include "smbop.h"
 #include "fileop.h"
 #include "mcsave.h"
-
-extern "C"
-{
-#include "smb.h"
-}
 
 #define MEMBUFFER (512 * 1024)
 
@@ -138,16 +133,15 @@ NGCFreezeGame (int method, bool8 silent)
 		method = autoSaveMethod();
 
 	char filename[1024];
-	SMBFILE smbfile;
+	//SMBFILE smbfile;
 	FILE *handle;
 	int len = 0;
-	int wrote = 0;
-	int offset = 0;
+
 	char msg[100];
 
 	if (method == METHOD_SD || method == METHOD_USB) // SD
 	{
-		changeFATInterface(GCSettings.SaveMethod);
+		changeFATInterface(method, NOTSILENT);
 		sprintf (filename, "%s/%s/%s.frz", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
 	}
 	else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC Slot A or B
@@ -189,7 +183,7 @@ NGCFreezeGame (int method, bool8 silent)
 		}
 		else
 		{
-			changeFATInterface(GCSettings.SaveMethod);
+			changeFATInterface(GCSettings.SaveMethod, NOTSILENT);
 			sprintf(msg, "Couldn't save to %s/%s/", ROOTFATDIR, GCSettings.SaveFolder);
 			WaitPrompt (msg);
 		}
@@ -246,10 +240,8 @@ NGCFreezeGame (int method, bool8 silent)
 	}
 	else if (method == METHOD_SMB) // SMB
 	{
-		ConnectSMB ();
-
-		smbfile = SMB_Open (filename, SMB_OPEN_WRITING | SMB_DENY_NONE,
-		SMB_OF_CREATE | SMB_OF_TRUNCATE);
+		/*
+		smbfile = SMB_OpenFile (filename, SMB_OPEN_WRITING,	SMB_OF_CREATE | SMB_OF_TRUNCATE);
 
 		if (smbfile)
 		{
@@ -273,7 +265,7 @@ NGCFreezeGame (int method, bool8 silent)
 				len -= wrote;
 			}
 
-			SMB_Close (smbfile);
+			SMB_CloseFile (smbfile);
 
 			if ( !silent )
 			{
@@ -287,6 +279,7 @@ NGCFreezeGame (int method, bool8 silent)
 			sprintf(msg, "Couldn't save to SMB:\\%s\\", GCSettings.SaveFolder);
 			WaitPrompt (msg);
 		}
+		*/
 	}
     return 0;
 }
@@ -335,7 +328,7 @@ int
 NGCUnfreezeGame (int method, bool8 silent)
 {
     char filename[1024];
-    SMBFILE smbfile;
+    //SMBFILE smbfile;
     FILE *handle;
     int read = 0;
     int offset = 0;
@@ -348,7 +341,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 
 	if (method == METHOD_SD || method == METHOD_USB) // SD & USB
 	{
-		changeFATInterface(GCSettings.SaveMethod);
+		changeFATInterface(method, NOTSILENT);
 		sprintf (filename, "%s/%s/%s.frz", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
 
 		handle = fopen (filename, "rb");
@@ -373,13 +366,11 @@ NGCUnfreezeGame (int method, bool8 silent)
 				WaitPrompt((char*) "Error thawing");
 				return 0;
 			}
+			return 1;
 		}
-		else
-		{
-			WaitPrompt((char*) "No freeze file found");
-			return 0;
-		}
-		return 1;
+
+		WaitPrompt((char*) "Freeze file not found");
+		return 0;
     }
 
     else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC in slot A or slot B
@@ -436,27 +427,24 @@ NGCUnfreezeGame (int method, bool8 silent)
 				return 0;
 			}
 		}
-		else
-		{
-			return 0;
-		}
-		return 1;
+
+		WaitPrompt((char*) "Freeze file not found");
+		return 0;
     }
     else if (method == METHOD_SMB) // Network (SMB)
     {
-		sprintf (filename, "\\%s\\%s.frz", GCSettings.SaveFolder, Memory.ROMFilename);
-		ConnectSMB ();
+		sprintf (filename, "%s/%s.frz", GCSettings.SaveFolder, Memory.ROMFilename);
 
-		/*** Read the file into memory ***/
-		smbfile =
-		SMB_Open (filename, SMB_OPEN_READING | SMB_DENY_NONE, SMB_OF_OPEN);
+		// Read the file into memory
+		/*smbfile =
+		SMB_OpenFile (filename, SMB_OPEN_READING | SMB_DENY_NONE, SMB_OF_OPEN);
 
 		if (smbfile)
 		{
 			if ( !silent )
 				ShowAction ((char*) "Loading freeze file...");
 			while ((read =
-					SMB_Read ((char *) membuffer + offset, 1024, offset,
+					SMB_ReadFile ((char *) membuffer + offset, 1024, offset,
 					smbfile)) > 0)
 			offset += read;
 
@@ -472,22 +460,10 @@ NGCUnfreezeGame (int method, bool8 silent)
 		}
 		else if ( !silent )
 		{
-			WaitPrompt((char*) "No freeze file found");
+			WaitPrompt((char*) "Freeze file not found");
 			return 0;
 		}
-		return 1;
+		return 1;*/
     }
 	return 0; // if we reached here, nothing was done!
-}
-
-
-void quickLoadFreeze (bool8 silent)
-{
-    NGCUnfreezeGame ( GCSettings.SaveMethod, silent );
-}
-
-
-void quickSaveFreeze (bool8 silent)
-{
-    NGCFreezeGame ( GCSettings.SaveMethod, silent );
 }

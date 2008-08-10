@@ -13,5 +13,6 @@
 int OpenROM (int method);
 int autoLoadMethod();
 int autoSaveMethod();
+int FileSortCallback(const void *f1, const void *f2);
 
 #endif

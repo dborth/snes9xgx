@@ -157,7 +157,7 @@
 #include <gccore.h>
 #include "snes9x.h"
 #include "snes9xGX.h"
-#include "smbload.h"
+#include "smbop.h"
 
 void
 DefaultSettings ()
@@ -169,6 +169,18 @@ DefaultSettings ()
 	sprintf (GCSettings.SaveFolder,"snes9x/saves"); // Path to save files
 	GCSettings.AutoLoad = 1;
 	GCSettings.AutoSave = 1;
+
+	// default SMB settings
+
+	#define GC_IP "192.168.0.32"	// IP to assign the GameCube
+	#define GW_IP "192.168.0.150"	// Your gateway IP
+	#define MASK "255.255.255.0"	// Your subnet mask
+	#define SMB_USER "Wiiuser"		// Your share user
+	#define SMB_PWD "password"		// Your share user password
+	#define SMB_GCID "Wii"			// Machine Name of GameCube
+	#define SMB_SVID "Server"		// Machine Name of Server(Share)
+	#define SMB_SHARE "SNES"		// Share name on server
+	#define SMB_IP "192.168.0.1"	// IP Address of share server
 
 	strncpy (GCSettings.gcip, GC_IP, 15);
 	strncpy (GCSettings.gwip, GW_IP, 15);
@@ -193,8 +205,8 @@ DefaultSettings ()
 	memset (&Settings, 0, sizeof (Settings));
 
 	/*** General ***/
-	
-	
+
+
 	Settings.MouseMaster = false;
 	Settings.SuperScopeMaster = false;
 	Settings.MultiPlayer5Master = false;

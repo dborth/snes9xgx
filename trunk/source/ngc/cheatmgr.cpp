@@ -13,6 +13,7 @@
 #include "memmap.h"
 #include "fileop.h"
 #include "cheats.h"
+#include "filesel.h"
 
 extern SCheatData Cheat;
 
@@ -30,9 +31,14 @@ SetupCheats()
 
 	char cheatFile[150] = { '\0' };
 
-	if(GCSettings.SaveMethod == METHOD_SD || GCSettings.SaveMethod == METHOD_USB)
+	int method = GCSettings.SaveMethod;
+
+	if(method == METHOD_AUTO)
+		method = autoSaveMethod();
+
+	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		changeFATInterface(GCSettings.SaveMethod);
+		changeFATInterface(method, NOTSILENT);
 		sprintf (cheatFile, "%s/snes9x/cheats/%s.cht", ROOTFATDIR, Memory.ROMFilename);
 	}
 

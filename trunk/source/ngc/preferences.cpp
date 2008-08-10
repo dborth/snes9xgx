@@ -20,7 +20,7 @@
 #include "menudraw.h"
 #include "mcsave.h"
 #include "fileop.h"
-#include "smbload.h"
+#include "smbop.h"
 #include "filesel.h"
 
 extern unsigned char savebuffer[];
@@ -139,13 +139,13 @@ SavePrefs (int method, bool silent)
 
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		changeFATInterface(GCSettings.SaveMethod);
+		changeFATInterface(GCSettings.SaveMethod, NOTSILENT);
 		sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
 		offset = SaveBufferToFAT (filepath, datasize, silent);
 	}
 	else if(method == METHOD_SMB)
 	{
-		sprintf (filepath, "%s\\%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
+		sprintf (filepath, "%s/%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
 		offset = SaveBufferToSMB (filepath, datasize, silent);
 	}
 	else if(method == METHOD_MC_SLOTA)
@@ -187,13 +187,13 @@ LoadPrefs (int method, bool silent)
 
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		changeFATInterface(GCSettings.SaveMethod);
+		changeFATInterface(GCSettings.SaveMethod, NOTSILENT);
 		sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
 		offset = LoadBufferFromFAT (filepath, silent);
 	}
 	else if(method == METHOD_SMB)
 	{
-		sprintf (filepath, "%s\\%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
+		sprintf (filepath, "%s/%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
 		LoadBufferFromSMB (filepath, silent);
 	}
 	else if(method == METHOD_MC_SLOTA)
@@ -215,22 +215,4 @@ LoadPrefs (int method, bool silent)
 		}
 	}
 	return retval;
-}
-
-/****************************************************************************
- * Quick Load Preferences
- ****************************************************************************/
-
-bool quickLoadPrefs (bool8 silent)
-{
-	return LoadPrefs(GCSettings.SaveMethod, silent);
-}
-
-/****************************************************************************
- * Quick Save Preferences
- ****************************************************************************/
-
-bool quickSavePrefs (bool8 silent)
-{
-	return SavePrefs(GCSettings.SaveMethod, silent);
 }

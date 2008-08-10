@@ -366,35 +366,36 @@ getcolour (u8 r1, u8 g1, u8 b1)
 void
 unpackbackdrop ()
 {
-  unsigned long res, inbytes, outbytes;
-  unsigned int colour;
-  int offset;
-  int i;
+	unsigned long res, inbytes, outbytes;
+	unsigned int colour;
+	int offset;
+	int i;
 
-//  backdrop = (unsigned int *) malloc (screenheight * 1280);
-  backdrop = (u32 *) malloc (screenheight * 1280);
-  colour = getcolour (0x00, 0x00, 0x00);
+	//  backdrop = (unsigned int *) malloc (screenheight * 1280);
+	backdrop = (u32 *) malloc (screenheight * 1280);
+	colour = getcolour (0x00, 0x00, 0x00);
 
 	/*** Fill with black for now ***/
-  for (i = 0; i < (320 * screenheight); i++)
-    backdrop[i] = colour;
+	for (i = 0; i < (320 * screenheight); i++)
+	backdrop[i] = colour;
 
-   /*** If it's PAL50, need to move down a few lines ***/
-  offset = ((screenheight - 480) >> 1) * 320;
-  inbytes = BG_COMPRESSED;
-  outbytes = BG_RAW;
+	/*** If it's PAL50, need to move down a few lines ***/
+	offset = ((screenheight - 480) >> 1) * 320;
+	inbytes = BG_COMPRESSED;
+	outbytes = BG_RAW;
 
-  res =
-    uncompress ((Bytef *) backdrop + offset, &outbytes, (Bytef *) bg,
-		inbytes);
+	res =
+	uncompress ((Bytef *) backdrop + offset, &outbytes, (Bytef *) bg,
+	inbytes);
 
-#ifndef HW_RVL
-  /*** Now store the backdrop in ARAM ***/
-  ARAMPut ((char *) backdrop, (char *) AR_BACKDROP, 640 * screenheight * 2);
-  free (backdrop);
-#endif
+	#ifndef HW_RVL
+	/*** Now store the backdrop in ARAM ***/
+	ARAMPut ((char *) backdrop, (char *) AR_BACKDROP, 640 * screenheight * 2);
+	free (backdrop);
+	#endif
 	// otherwise (on wii) backdrop is stored in memory
-
+	clearscreen ();
+	showscreen ();
 }
 
 /****************************************************************************
@@ -457,19 +458,19 @@ WaitButtonAB ()
 void
 WaitPrompt (char *msg)
 {
-  int ypos = (screenheight - 64) >> 1;
+	int ypos = (screenheight - 64) >> 1;
 
-  if (screenheight == 480)
-    ypos += 52;
-  else
-    ypos += 32;
+	if (screenheight == 480)
+		ypos += 52;
+	else
+		ypos += 32;
 
-  clearscreen ();
-  DrawText (-1, ypos, msg);
-  ypos += 30;
-  DrawText (-1, ypos, (char*)"Press A to continue");
-  showscreen ();
-  WaitButtonA ();
+	clearscreen ();
+	DrawText (-1, ypos, msg);
+	ypos += 30;
+	DrawText (-1, ypos, (char*)"Press A to continue");
+	showscreen ();
+	WaitButtonA ();
 }
 
 /****************************************************************************
@@ -479,21 +480,21 @@ WaitPrompt (char *msg)
 int
 WaitPromptChoice (char *msg, char *bmsg, char *amsg)
 {
-  int ypos = (screenheight - 64) >> 1;
+	int ypos = (screenheight - 64) >> 1;
 
-  if (screenheight == 480)
-    ypos += 37;
-  else
-    ypos += 17;
+	if (screenheight == 480)
+		ypos += 37;
+	else
+		ypos += 17;
 
-  clearscreen ();
-  DrawText (-1, ypos, msg);
-  ypos += 60;
-  char txt[80];
-  sprintf (txt, "B = %s   :   A = %s", bmsg, amsg);
-  DrawText (-1, ypos, txt);
-  showscreen ();
-  return WaitButtonAB ();
+	clearscreen ();
+	DrawText (-1, ypos, msg);
+	ypos += 60;
+	char txt[80];
+	sprintf (txt, "B = %s   :   A = %s", bmsg, amsg);
+	DrawText (-1, ypos, txt);
+	showscreen ();
+	return WaitButtonAB ();
 }
 
 /****************************************************************************
@@ -502,16 +503,16 @@ WaitPromptChoice (char *msg, char *bmsg, char *amsg)
 void
 ShowAction (char *msg)
 {
-  int ypos = (screenheight - 30) >> 1;
+	int ypos = (screenheight - 30) >> 1;
 
-  if (screenheight == 480)
-    ypos += 52;
-  else
-    ypos += 32;
+	if (screenheight == 480)
+		ypos += 52;
+	else
+		ypos += 32;
 
-  clearscreen ();
-  DrawText (-1, ypos, msg);
-  showscreen ();
+	clearscreen ();
+	DrawText (-1, ypos, msg);
+	showscreen ();
 }
 
 /****************************************************************************
@@ -548,7 +549,7 @@ DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsiz
 	// Draw menu items
 
 	setfontsize (fontsize);	// set font size
-	
+
 	line_height = (fontsize + 8);
 
 	for (i = 0; i < maxitems; i++)

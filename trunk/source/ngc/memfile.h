@@ -9,7 +9,6 @@
  * There's just enough here to do SnapShots - you should add anything else you
  * need.
  ****************************************************************************/
-#include "snes9x.h"
 
 #ifndef _NGCMEMFILE_
 #define _NGCMEMFILE_
@@ -27,8 +26,5 @@ MEMFILE;
 
 int NGCFreezeGame (int method, bool8 silent);
 int NGCUnfreezeGame (int method, bool8 silent);
-
-void quickLoadFreeze (bool8 silent);
-void quickSaveFreeze (bool8 silent);
 
 #endif
