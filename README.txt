@@ -10,12 +10,37 @@
 ­———————————————————————————————————————————————————————————————————————•ßrK•
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                          SNES9XGX v004                        ·oø×O0|
+|0O×øo·                          SNES9XGX v005                        ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 
 PLEASE NOTE: THIS DOCUMENT IS A WORK IN PROGRESS
 
-[What's New 004]
+[What's New 005]
+
+michniewski
+- added: Superscope/mouse/justifier support, with Wii remote
+
+Tantric
+- added: cheats menu! Loads .CHT file from /snes9x/cheats folder, 
+         .CHT file name must match file name of ROM
+- added: load/save preference selector. ROM, SRAM, Freeze, and preferences 
+         are saved/loaded according to these
+- added: preliminary Wii SMB support
+- added: 'Auto' settings for save/load - attempts to automatically determine
+         your load/save device(s) - SD, USB, Memory Card, DVD, SMB
+- added: ROM Information page
+- added: Game Menu - all game-specific options are here now: 
+         SRAM save/load, Freeze save/load, game reload, etc
+- added: Credits page
+- fixed: sd gecko works now
+- fixed: full USB support
+- changed: menu structure
+- changed: if Home button is pressed when a game is running, Game Menu pops up
+- changed: if preferences can't be loaded at the start and/or are reset, 
+           preferences menu pops up
+- changed: SRAM load - game reloaded automatically after loading SRAM
+
+[What Was New 004]
 
 - added: option to disable AA filtering 
          (snes graphics 'crisper', AA now default OFF)

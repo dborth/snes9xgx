@@ -1,3 +1,5 @@
+VERSION := 005
+
 #---------------------------------------------------------------------------------
 # Clear the implicit built in rules
 #---------------------------------------------------------------------------------
@@ -9,34 +11,28 @@ endif
 
 include $(DEVKITPPC)/wii_rules
 
-LOADTYPE = "sd"
-VERSION = "version"
-
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	executables/snes9xgx-$(VERSION)-$(LOADTYPE)-wii
+TARGET		:=	executables/snes9xgx-$(VERSION)-wii
 BUILD		:=	build_wii
-SOURCES		:=	source/snes9x source/unzip source/ngc source/smb
+SOURCES		:=	source/snes9x source/ngc
 DATA		:=	data  
-INCLUDES	:=	source/snes9x source/unzip source/ngc source/smb
+INCLUDES	:=	source/snes9x source/ngc
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-
-CUSTOMFLAGS = -DQUICK_SAVE_SLOT=3 -DSMB_SVID='"Crunchewy"' \
-			-DSMB_IP='"192.168.1.111"' -DGW_IP='"192.168.1.1"'
 
 CFLAGS	=	-g -O2 -Wall $(MACHDEP) $(INCLUDE) \
 			-DNGC -DHW_RVL -DNO_ASM -DCPU_SHUTDOWN -DSPC700C \
 			-DSPC700_SHUTDOWN -DNEW_COLOUR_BLENDING \
 			-DNO_INLINE_GET_SET -DSDD1_DECOMP -DCORRECT_VRAM_READS \
 			-DDETECT_NASTY_FX_INTERLEAVE -DNGC_ZOOM -DSDUSE_LFN \
-			-DFORCE_WII=1 $(CUSTOMFLAGS)\
+			-DFORCE_WII=1 $(CUSTOMFLAGS) \
 			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter -pipe
 CXXFLAGS	=	$(CFLAGS)
 
@@ -45,8 +41,7 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--cref
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lfat -lwiiuse -lz -lbte -logc -lm -lfreetype
-# -logcsys
+LIBS	:=	-lfat -lwiiuse -lz -lbte -logc -lm -lfreetype -ltinysmb
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -111,6 +106,7 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile.wii
+	@rm -fr $(OUTPUT).elf
 
 #---------------------------------------------------------------------------------
 clean:
