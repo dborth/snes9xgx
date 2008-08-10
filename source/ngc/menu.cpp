@@ -12,8 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wiiuse/wpad.h>
+
 #include "snes9x.h"
-#include "snes9xGx.h"
 #include "memmap.h"
 #include "debug.h"
 #include "cpuexec.h"
@@ -25,12 +25,15 @@
 #include "spc700.h"
 #include "spc7110.h"
 #include "controls.h"
+#include "cheats.h"
+
+#include "snes9xGx.h"
 #include "aram.h"
 #include "video.h"
 #include "mcsave.h"
 #include "filesel.h"
 #include "unzip.h"
-#include "smbload.h"
+#include "smbop.h"
 #include "mcsave.h"
 #include "fileop.h"
 #include "memfile.h"
@@ -38,10 +41,8 @@
 #include "s9xconfig.h"
 #include "sram.h"
 #include "preferences.h"
-
 #include "button_mapping.h"
 #include "menudraw.h"
-#include "cheats.h"
 #include "cheatmgr.h"
 
 extern void DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsize);
@@ -83,9 +84,9 @@ LoadManager ()
 	if ( loadROM == 1 ) // if ROM was loaded, load the SRAM & settings
 	{
 		if ( GCSettings.AutoLoad == 1 )
-			quickLoadSRAM ( SILENT );
+			LoadSRAM(GCSettings.SaveMethod, SILENT);
 		else if ( GCSettings.AutoLoad == 2 )
-			quickLoadFreeze ( SILENT );
+			NGCUnfreezeGame (GCSettings.SaveMethod, SILENT);
 
 		// setup cheats
 		SetupCheats();
@@ -266,7 +267,7 @@ PreferencesMenu ()
 				break;
 
 			case 13:
-				quickSavePrefs(NOTSILENT);
+				SavePrefs(GCSettings.SaveMethod, NOTSILENT);
 				break;
 
 			case -1: /*** Button B ***/
@@ -367,7 +368,7 @@ GameMenu ()
 				break;
 
 			case 4: // Load SRAM
-				LoadSRAM(GCSettings.SaveMethod, NOTSILENT);
+				quit = retval = LoadSRAM(GCSettings.SaveMethod, SILENT);
 				break;
 
 			case 5: // Save SRAM
@@ -707,7 +708,7 @@ ConfigureControllers ()
 
 			case 8:
 				/*** Save Preferences Now ***/
-				quickSavePrefs(NOTSILENT);
+				SavePrefs(GCSettings.SaveMethod, NOTSILENT);
 				break;
 
 			case -1: /*** Button B ***/

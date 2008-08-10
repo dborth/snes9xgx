@@ -14,13 +14,14 @@
 #include <ogcsys.h>
 
 #include "snes9x.h"
-#include "snes9xGx.h"
 #include "memmap.h"
 #include "srtc.h"
+
+#include "snes9xGx.h"
 #include "menudraw.h"
 #include "mcsave.h"
 #include "fileop.h"
-#include "smbload.h"
+#include "smbop.h"
 #include "filesel.h"
 
 extern unsigned char savebuffer[];
@@ -235,28 +236,24 @@ decodesavedata (int readsize)
 /****************************************************************************
  * Load SRAM
  ****************************************************************************/
-bool
+int
 LoadSRAM (int method, bool silent)
 {
 	if(method == METHOD_AUTO)
 		method = autoLoadMethod();
 
-	bool retval = false;
 	char filepath[1024];
 	int offset = 0;
 
-	if(!silent)
-		ShowAction ((char*) "Loading SRAM...");
-
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		changeFATInterface(method);
+		changeFATInterface(method, NOTSILENT);
 		sprintf (filepath, "%s/%s/%s.srm", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
 		offset = LoadBufferFromFAT (filepath, silent);
 	}
 	else if(method == METHOD_SMB)
 	{
-		sprintf (filepath, "%s\\%s.srm", GCSettings.SaveFolder, Memory.ROMFilename);
+		sprintf (filepath, "%s/%s.srm", GCSettings.SaveFolder, Memory.ROMFilename);
 		offset = LoadBufferFromSMB (filepath, silent);
 	}
 	else if(method == METHOD_MC_SLOTA)
@@ -273,15 +270,15 @@ LoadSRAM (int method, bool silent)
 	if (offset > 0)
 	{
 		decodesavedata (offset);
-		if ( !silent )
-		{
-			sprintf (filepath, "Loaded %d bytes", offset);
-			WaitPrompt(filepath);
-		}
 		S9xSoftReset();
-		retval = true;
+
+		return 1;
 	}
-	return retval;
+
+	if(!silent)
+		WaitPrompt ((char*) "SRAM file not found");
+
+	return 0;
 }
 
 /****************************************************************************
@@ -310,13 +307,13 @@ SaveSRAM (int method, bool silent)
 	{
 		if(method == METHOD_SD || method == METHOD_USB)
 		{
-			changeFATInterface(method);
+			changeFATInterface(method, NOTSILENT);
 			sprintf (filepath, "%s/%s/%s.srm", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
 			offset = SaveBufferToFAT (filepath, datasize, silent);
 		}
 		else if(method == METHOD_SMB)
 		{
-			sprintf (filepath, "%s\\%s.srm", GCSettings.SaveFolder, Memory.ROMFilename);
+			sprintf (filepath, "%s/%s.srm", GCSettings.SaveFolder, Memory.ROMFilename);
 			offset = SaveBufferToSMB (filepath, datasize, silent);
 		}
 		else if(method == METHOD_MC_SLOTA)
@@ -341,22 +338,4 @@ SaveSRAM (int method, bool silent)
 		}
 	}
 	return retval;
-}
-
-/****************************************************************************
- * Quick Load SRAM
- ****************************************************************************/
-
-bool quickLoadSRAM (bool silent)
-{
-	return LoadSRAM(GCSettings.SaveMethod, silent);
-}
-
-/****************************************************************************
- * Quick Save SRAM
- ****************************************************************************/
-
-bool quickSaveSRAM (bool silent)
-{
-	return SaveSRAM(GCSettings.SaveMethod, silent);
 }

@@ -9,11 +9,5 @@
  * SRAM save/load/import/export handling
  ****************************************************************************/
 
-int prepareMCsavedata ();
-int prepareEXPORTsavedata ();
-void decodesavedata (int readsize);
-
 bool SaveSRAM (int method, bool silent);
-bool LoadSRAM (int method, bool silent);
-bool quickLoadSRAM (bool silent);
-bool quickSaveSRAM (bool silent);
+int LoadSRAM (int method, bool silent);

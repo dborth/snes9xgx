@@ -25,9 +25,7 @@
 
 bool fat_remount(PARTITION_INTERFACE partition);
 bool fat_is_mounted(PARTITION_INTERFACE partition);
-bool changeFATInterface(int method);
-static int FileSortCallback(const void *f1, const void *f2);
-int updateFATdirname(int method);
+bool changeFATInterface(int method, bool silent);
 int parseFATdirectory(int method);
 int LoadFATFile (char *filename, int length);
 int SaveBufferToFAT (char *filepath, int datasize, bool silent);

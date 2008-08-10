@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50 
+ * Snes9x 1.50
  *
  * Nintendo Gamecube Video
  *
@@ -107,7 +107,7 @@ static unsigned char vbstack[TSTACK];
  * vbgetback
  *
  * This callback enables the emulator to keep running while waiting for a
- * vertical blank. 
+ * vertical blank.
  *
  * Putting LWP to good use :)
  ****************************************************************************/
@@ -162,7 +162,7 @@ copy_to_xfb (u32 arg)
     }
 
   FrameTimer++;
-  SMBTimer++;
+  //SMBTimer++;
 
 }
 
@@ -276,7 +276,7 @@ void UpdatePadsCB()
 #endif
 	PAD_ScanPads();
 }
- 
+
 /****************************************************************************
  * InitGCVideo
  *
@@ -290,20 +290,20 @@ InitGCVideo ()
     * Before doing anything else under libogc,
     * Call VIDEO_Init
     */
-    
+
     int *romptr = (int *) 0x81000000;
-    
+
     VIDEO_Init ();
     PAD_Init ();
     //DVD_Init ();
-    
-    /*** Check to see if this is a GC or a Wii ***/    
+
+    /*** Check to see if this is a GC or a Wii ***/
 //    int driveid = dvd_driveid();
 //    bool8 isWii = !((driveid == 4) || (driveid == 6) || (driveid == 8));
-    
+
     AUDIO_Init (NULL);
     AR_Init (NULL, 0);
-    
+
     /* Before going any further, let's copy any attached ROM image ** */
     if (memcmp ((char *) romptr, "SNESROM0", 8) == 0)
     {
@@ -311,12 +311,12 @@ InitGCVideo ()
         romptr = (int *) 0x81000020;
         ARAMPut ((char *) romptr, (char *) AR_SNESROM, ARAM_ROMSIZE);
     }
-    
+
 	/*
 	* Always use NTSC mode - this works on NTSC and PAL, GC and Wii
-	vmode = &TVNtsc480IntDf;    
+	vmode = &TVNtsc480IntDf;
 	*/
-	
+
 	vmode = VIDEO_GetPreferredMode(NULL);
 
 	switch(vmode->viTVMode)
@@ -336,29 +336,29 @@ InitGCVideo ()
 			vmode_60hz = 1;
 			break;
 	}
-	
+
     VIDEO_Configure (vmode);
-    
+
     screenheight = vmode->xfbHeight;
-    
+
     /*
     * Allocate the video buffers
     */
     xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
     xfb[1] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
-    
+
     /*
     * A console is always useful while debugging.
     */
     console_init (xfb[0], 20, 64, vmode->fbWidth, vmode->xfbHeight, vmode->fbWidth * 2);
-    
+
     /*
     * Clear framebuffers etc.
     */
     VIDEO_ClearFrameBuffer (vmode, xfb[0], COLOR_BLACK);
     VIDEO_ClearFrameBuffer (vmode, xfb[1], COLOR_BLACK);
     VIDEO_SetNextFramebuffer (xfb[0]);
-    
+
     /*
     * Let libogc populate manage the PADs for us
     */
@@ -370,14 +370,14 @@ InitGCVideo ()
     VIDEO_WaitVSync ();
     if (vmode->viTVMode & VI_NON_INTERLACE)
     VIDEO_WaitVSync ();
-    
+
     copynow = GX_FALSE;
     StartGX ();
-    
+
     #ifdef VIDEO_THREADING
     InitVideoThread ();
     #endif
-    
+
     /*
     * Finally, the video is up and ready for use :)
     */
@@ -406,7 +406,7 @@ void ReInitGCVideo()
 }
 
 /****************************************************************************
- * Drawing screen 
+ * Drawing screen
  ****************************************************************************/
 void
 clearscreen (int colour)
@@ -444,7 +444,7 @@ setGFX ()
 }
 
 /****************************************************************************
- * MakeTexture 
+ * MakeTexture
  *
  * Proper GNU Asm rendition of the above, converted by shagkur. - Thanks!
  ****************************************************************************/
@@ -460,7 +460,7 @@ MakeTexture (const void *src, void *dst, s32 width, s32 height)
 			"	subi		%4,%4,4\n"
 			"2:	mtctr		%6\n"
 			"	mr			%0,%5\n"
-			// 
+			//
 			"1:	lwz			%1,0(%5)\n"
 			"	stwu		%1,8(%4)\n"
 			"	lwz			%2,4(%5)\n"
@@ -482,7 +482,7 @@ MakeTexture (const void *src, void *dst, s32 width, s32 height)
 			"	addi		%5,%0,4096\n"
 			"	subic.		%7,%7,1\n"
 			"	bne			2b"
-			//              0                        1                        2                        3              4                      5                 6               7    
+			//              0                        1                        2                        3              4                      5                 6               7
 			:"=&r" (tmp0), "=&r" (tmp1), "=&r" (tmp2),
 			"=&r" (tmp3), "+r" (dst):"r" (src), "r" (width),
 			"r" (height));

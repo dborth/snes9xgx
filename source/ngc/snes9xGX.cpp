@@ -180,6 +180,7 @@
 
 #include "snes9xGX.h"
 #include "dvd.h"
+#include "smbop.h"
 #include "video.h"
 #include "menudraw.h"
 #include "s9xconfig.h"
@@ -574,19 +575,19 @@ NGCReportButtons ()
 
         if ( GCSettings.AutoSave == 1 )
         {
-            quickSaveSRAM ( SILENT );
+        	SaveSRAM(GCSettings.SaveMethod, SILENT );
         }
         else if ( GCSettings.AutoSave == 2 )
         {
             if ( WaitPromptChoice ((char*)"Save Freeze State?", (char*)"Don't Save", (char*)"Save") )
-                quickSaveFreeze ( SILENT );
+            	NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
         }
         else if ( GCSettings.AutoSave == 3 )
         {
             if ( WaitPromptChoice ((char*)"Save SRAM and Freeze State?", (char*)"Don't Save", (char*)"Save") )
             {
-                quickSaveSRAM ( SILENT );
-                quickSaveFreeze ( SILENT );
+            	SaveSRAM(GCSettings.SaveMethod, SILENT );
+                NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
             }
         }
 
@@ -644,34 +645,38 @@ u32 wpad_get_analogues(int pad, float* mag1, u16* ang1, float* mag2, u16* ang2)
 
 void SetControllers ()
 {
-  if (Settings.MultiPlayer5Master == true)
-    {
-      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
-      S9xSetController (1, CTL_MP5, 1, 2, 3, -1);
-    }
-  else if (Settings.SuperScopeMaster == true)
-    {
-      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
-      S9xSetController (1, CTL_SUPERSCOPE, 1, 0, 0, 0);
+	if (Settings.MultiPlayer5Master == true)
+	{
+		S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
+		S9xSetController (1, CTL_MP5, 1, 2, 3, -1);
 	}
-  else if (Settings.MouseMaster == true)
-    {
-	  // some games (eg: Mario Paint) don't allow the mouse in port 2
-	  S9xSetController (0, CTL_MOUSE, 0, 0, 0, 0);
-	  if (GCSettings.Mouse == 2) S9xSetController (1, CTL_MOUSE, 1, 0, 0, 0);
-	  else S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
-  	}
-  else if (Settings.JustifierMaster == true)
-    {
-	  S9xSetController(0, CTL_JOYPAD, 0, 0, 0, 0);
-	  S9xSetController(1, CTL_JUSTIFIER, (GCSettings.Justifier == 2), 0, 0, 0);
-  	}
-  else
-    {
-	/*** Plugin 2 Joypads by default ***/
-      S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
-      S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
-    }
+	else if (Settings.SuperScopeMaster == true)
+	{
+		S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
+		S9xSetController (1, CTL_SUPERSCOPE, 1, 0, 0, 0);
+	}
+	else if (Settings.MouseMaster == true)
+	{
+		S9xSetController (0, CTL_MOUSE, 0, 0, 0, 0);
+		if (GCSettings.Mouse == 2)
+			S9xSetController (1, CTL_MOUSE, 1, 0, 0, 0);
+		else
+			S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+	}
+	else if (Settings.JustifierMaster == true)
+	{
+		S9xSetController(0, CTL_JUSTIFIER, 0, 0, 0, 0);
+		if(GCSettings.Justifier == 2)
+			S9xSetController(1, CTL_JUSTIFIER, 1, 0, 0, 0);
+		else
+			S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+	}
+	else
+	{
+		// Plugin 2 Joypads by default
+		S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
+		S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+	}
 }
 
 
@@ -830,36 +835,15 @@ main ()
 	unsigned int save_flags;
 	int selectedMenu = -1;
 
-	/*** Initialise GC ***/
-	InitGCVideo ();	/*** Get the ball rolling ***/
-
-	/*** Initialize libFAT for SD and USB ***/
-	fatInitDefault();
-	//fatInit(8192, false);
-#ifdef HW_RVL
-	//fat_enable_readahead_all();
-#endif
-
-	/*** Initialize DVD subsystem ***/
-	DVD_Init ();
-
-#ifdef FORCE_WII
-	isWii = TRUE;
-#else
-    int drvid = dvd_driveid ();
-    if ( drvid == 4 || drvid == 6 || drvid == 8 )
-        isWii = FALSE;
-    else
-        isWii = TRUE;
-#endif
-
-#ifdef HW_RVL
+	#ifdef HW_RVL
 	WPAD_Init();
 	// read wiimote accelerometer and IR data
 	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
 	WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
-#endif
+	#endif
 
+	/*** Initialise GC ***/
+	InitGCVideo ();	/*** Get the ball rolling ***/
 
 	/*** Initialise freetype ***/
 	if (FT_Init ())
@@ -868,18 +852,20 @@ main ()
 		while (1);
 	}
 
+	unpackbackdrop ();
+
 	/*** Set defaults ***/
 	DefaultSettings ();
 
 	S9xUnmapAllControls ();
 	SetDefaultButtonMap ();
 
-	printf ("Initialise Memory\n");
+	//printf ("Initialise Memory\n");
 	/*** Allocate SNES Memory ***/
 	if (!Memory.Init ())
 		while (1);
 
-	printf ("Initialise APU\n");
+	//printf ("Initialise APU\n");
 	/*** Allocate APU ***/
 	if (!S9xInitAPU ())
 		while (1);
@@ -890,16 +876,32 @@ main ()
 	/*** Initialise Snes Sound System ***/
 	S9xInitSound (5, TRUE, 1024);
 
-	printf ("Initialise GFX\n");
+	//printf ("Initialise GFX\n");
 	/*** Initialise Graphics ***/
 	setGFX ();
 	if (!S9xGraphicsInit ())
 		while (1);
 
-	unpackbackdrop ();
+	// Initialize libFAT for SD and USB
+	fatInitDefault();
+	//fatInit(8192, false);
+	//fat_enable_readahead_all();
+
+	// Initialize DVD subsystem
+	DVD_Init ();
+
+	#ifdef FORCE_WII
+	isWii = TRUE;
+	#else
+	int drvid = dvd_driveid ();
+	if ( drvid == 4 || drvid == 6 || drvid == 8 )
+		isWii = FALSE;
+	else
+		isWii = TRUE;
+	#endif
 
 	// Load preferences
-	if(!quickLoadPrefs(SILENT))
+	if(!LoadPrefs(GCSettings.SaveMethod, SILENT))
 	{
 		WaitPrompt((char*) "Preferences reset - check settings!");
 		selectedMenu = 2; // change to preferences menu
@@ -926,9 +928,6 @@ main ()
 		if (!Memory.LoadROM ("VIRTUAL.ROM"))
 			while (1);
 		CPU.Flags = save_flags;
-
-		/*** Load SRAM ***/
-		Memory.LoadSRAM ("DVD");
 	}
 
 	/*** Emulate ***/
@@ -936,6 +935,5 @@ main ()
 
 	/*** NO! - We're never leaving here ! ***/
 	while (1);
-	return 0;
-
+		return 0;
 }
