@@ -558,7 +558,7 @@ OpenSMB (int method)
 	if(ConnectShare ())
 	{
 		// change current dir to root dir
-		sprintf(currentdir, GCSettings.LoadFolder);
+		sprintf(currentdir, "/%s", GCSettings.LoadFolder);
 
 		if (maxfiles = parseSMBdirectory ())
 		{

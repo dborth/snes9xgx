@@ -101,6 +101,22 @@ ConnectShare ()
 }
 
 /****************************************************************************
+ * SMBPath
+ *
+ * Returns a SMB-style path
+ *****************************************************************************/
+
+char * SMBPath(char * path)
+{
+	// fix path - replace all '/' with '\'
+	for(uint i=0; i < strlen(path); i++)
+		if(path[i] == '/')
+			path[i] = '\\';
+
+	return path;
+}
+
+/****************************************************************************
  * parseSMBDirectory
  *
  * Load the directory and put in the filelist array
@@ -113,28 +129,24 @@ parseSMBdirectory ()
 
 	SMBDIRENTRY smbdir;
 
-	sprintf(searchpath, "%s/*", currentdir);
-
-	// fix path - replace all '/' with '\'
-	for(uint i=0; i < strlen(searchpath); i++)
-		if(searchpath[i] == '/')
-			searchpath[i] = '\\';
-
-	ShowAction((char*) "Loading...");
+	if(strlen(searchpath) <= 1) // root
+		sprintf(searchpath, "*");
+	else
+		sprintf(searchpath, "%s/*", currentdir);
 
 	if (SMB_FindFirst
-	(searchpath, SMB_SRCH_READONLY | SMB_SRCH_DIRECTORY, &smbdir, smbconn) != SMB_SUCCESS)
+	(SMBPath(searchpath), SMB_SRCH_READONLY | SMB_SRCH_DIRECTORY, &smbdir, smbconn) != SMB_SUCCESS)
 	{
 		char msg[200];
 		sprintf(msg, "Could not open %s", currentdir);
 		WaitPrompt (msg);
 
 		// if we can't open the dir, open root dir
-		currentdir[0] = '\0';
+		sprintf(searchpath, "/");
 		sprintf(searchpath,"*");
 
 		if (SMB_FindFirst
-		(searchpath, SMB_SRCH_READONLY | SMB_SRCH_DIRECTORY, &smbdir, smbconn) != SMB_SUCCESS)
+		(SMBPath(searchpath), SMB_SRCH_READONLY | SMB_SRCH_DIRECTORY, &smbdir, smbconn) != SMB_SUCCESS)
 			return 0;
 	}
 
@@ -196,16 +208,11 @@ LoadSMBFile (char *filename, int length)
 	else
 		sprintf(filepath, "%s/%s", currentdir, filename);
 
-	// fix path - replace all '/' with '\'
-	for(uint i=0; i < strlen(filepath); i++)
-		if(filepath[i] == '/')
-			filepath[i] = '\\';
-
 	ShowAction((char *)"Loading...");
 
 	// Open the file for reading
 	smbfile =
-	SMB_OpenFile (filepath, SMB_OPEN_READING, SMB_OF_OPEN, smbconn);
+	SMB_OpenFile (SMBPath(filepath), SMB_OPEN_READING, SMB_OF_OPEN, smbconn);
 	if (smbfile)
 	{
 		while (offset < length)
@@ -301,7 +308,6 @@ LoadSMBFile (char *filename, int length)
 	}
 }
 
-
 /****************************************************************************
  * Write savebuffer to SMB file
  ****************************************************************************/
@@ -313,13 +319,8 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
 	int wrote = 0;
 	int offset = 0;
 
-	// fix path - replace all '/' with '\'
-	for(uint i=0; i < strlen(filepath); i++)
-		if(filepath[i] == '/')
-			filepath[i] = '\\';
-
 	smbfile =
-	SMB_OpenFile (filepath, SMB_OPEN_WRITING | SMB_DENY_NONE,
+	SMB_OpenFile (SMBPath(filepath), SMB_OPEN_WRITING | SMB_DENY_NONE,
 	SMB_OF_CREATE | SMB_OF_TRUNCATE, smbconn);
 
 	if (smbfile)
@@ -344,7 +345,7 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
 	else
 	{
 		char msg[100];
-		sprintf(msg, "Couldn't save SMB: %s", filepath);
+		sprintf(msg, "Couldn't save SMB: %s", SMBPath(filepath));
 		WaitPrompt (msg);
 	}
 
@@ -361,20 +362,15 @@ LoadBufferFromSMB (char *filepath, bool8 silent)
 	int ret;
 	int offset = 0;
 
-	// fix path - replace all '/' with '\'
-	for(uint i=0; i < strlen(filepath); i++)
-		if(filepath[i] == '/')
-			filepath[i] = '\\';
-
 	smbfile =
-	SMB_OpenFile (filepath, SMB_OPEN_READING, SMB_OF_OPEN, smbconn);
+	SMB_OpenFile (SMBPath(filepath), SMB_OPEN_READING, SMB_OF_OPEN, smbconn);
 
 	if (!smbfile)
 	{
 		if (!silent)
 		{
 			char msg[100];
-			sprintf(msg, "Couldn't open SMB: %s", filepath);
+			sprintf(msg, "Couldn't open SMB: %s", SMBPath(filepath));
 			WaitPrompt (msg);
 		}
 		return 0;

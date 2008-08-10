@@ -17,6 +17,7 @@
 
 bool InitializeNetwork(bool silent);
 bool ConnectShare ();
+char * SMBPath(char * path);
 int updateSMBdirname();
 int parseSMBdirectory ();
 int LoadSMBFile (char *filename, int length);

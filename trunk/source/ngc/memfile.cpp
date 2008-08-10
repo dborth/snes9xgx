@@ -18,6 +18,7 @@
 #include <string.h>
 #include <fat.h>
 #include <zlib.h>
+#include <smb.h>
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -39,6 +40,7 @@ extern void S9xSRTCPreSaveState ();
 extern void NGCFreezeStruct ();
 extern bool8 S9xUnfreezeGame (const char *filename);
 extern unsigned char savebuffer[];
+extern SMBCONN smbconn;
 
 static int bufoffset;
 static char membuffer[MEMBUFFER];
@@ -133,9 +135,11 @@ NGCFreezeGame (int method, bool8 silent)
 		method = autoSaveMethod();
 
 	char filename[1024];
-	//SMBFILE smbfile;
+	SMBFILE smbfile;
 	FILE *handle;
 	int len = 0;
+	int wrote = 0;
+	int offset = 0;
 
 	char msg[100];
 
@@ -150,7 +154,7 @@ NGCFreezeGame (int method, bool8 silent)
 	}
 	else if (method == METHOD_SMB) // SMB
 	{
-		sprintf (filename, "/%s/%s.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+		sprintf (filename, "%s/%s.frz", GCSettings.SaveFolder, Memory.ROMFilename);
 	}
 
 	S9xSetSoundMute (TRUE);
@@ -240,8 +244,7 @@ NGCFreezeGame (int method, bool8 silent)
 	}
 	else if (method == METHOD_SMB) // SMB
 	{
-		/*
-		smbfile = SMB_OpenFile (filename, SMB_OPEN_WRITING,	SMB_OF_CREATE | SMB_OF_TRUNCATE);
+		smbfile = SMB_OpenFile (SMBPath(filename), SMB_OPEN_WRITING | SMB_DENY_NONE,	SMB_OF_CREATE | SMB_OF_TRUNCATE, smbconn);
 
 		if (smbfile)
 		{
@@ -254,11 +257,11 @@ NGCFreezeGame (int method, bool8 silent)
 			{
 				if (len > 1024)
 				wrote =
-				SMB_Write ((char *) membuffer + offset, 1024, offset,
+				SMB_WriteFile ((char *) membuffer + offset, 1024, offset,
 				smbfile);
 				else
 				wrote =
-				SMB_Write ((char *) membuffer + offset, len, offset,
+				SMB_WriteFile ((char *) membuffer + offset, len, offset,
 				smbfile);
 
 				offset += wrote;
@@ -276,10 +279,9 @@ NGCFreezeGame (int method, bool8 silent)
 		else
 		{
 			char msg[100];
-			sprintf(msg, "Couldn't save to SMB:\\%s\\", GCSettings.SaveFolder);
+			sprintf(msg, "Couldn't save to SMB: %s", GCSettings.SaveFolder);
 			WaitPrompt (msg);
 		}
-		*/
 	}
     return 0;
 }
@@ -328,7 +330,7 @@ int
 NGCUnfreezeGame (int method, bool8 silent)
 {
     char filename[1024];
-    //SMBFILE smbfile;
+    SMBFILE smbfile;
     FILE *handle;
     int read = 0;
     int offset = 0;
@@ -436,8 +438,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 		sprintf (filename, "%s/%s.frz", GCSettings.SaveFolder, Memory.ROMFilename);
 
 		// Read the file into memory
-		/*smbfile =
-		SMB_OpenFile (filename, SMB_OPEN_READING | SMB_DENY_NONE, SMB_OF_OPEN);
+		smbfile = SMB_OpenFile (SMBPath(filename), SMB_OPEN_READING, SMB_OF_OPEN, smbconn);
 
 		if (smbfile)
 		{
@@ -448,7 +449,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 					smbfile)) > 0)
 			offset += read;
 
-			SMB_Close (smbfile);
+			SMB_CloseFile (smbfile);
 
 			if ( !silent )
 				ShowAction ((char*) "Unpacking freeze file");
@@ -463,7 +464,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 			WaitPrompt((char*) "Freeze file not found");
 			return 0;
 		}
-		return 1;*/
+		return 1;
     }
 	return 0; // if we reached here, nothing was done!
 }
