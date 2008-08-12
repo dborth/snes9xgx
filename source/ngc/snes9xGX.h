@@ -180,9 +180,10 @@ struct SGCSettings{
     uint8	AutoLoad;
     uint8	AutoSave;
     uint8	LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
-	char	LoadFolder[200]; // Path to game files
 	uint8	SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, Memory Card Slot A, Memory Card Slot B, USB, SMB
+	char	LoadFolder[200]; // Path to game files
 	char	SaveFolder[200]; // Path to save files
+	char	CheatFolder[200]; // Path to cheat files
 	char	gcip[16];
 	char	gwip[16];
 	char	mask[16];
@@ -202,7 +203,6 @@ struct SGCSettings{
 
 START_EXTERN_C
 extern struct SGCSettings GCSettings;
-extern unsigned short saveicon[1024];
 extern bool8 isWii;
 
 extern u32 wpad_get_analogues(int pad, float* mag1, u16* ang1, float* mag2, u16* ang2);

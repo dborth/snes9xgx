@@ -19,9 +19,9 @@ include $(DEVKITPPC)/gamecube_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	executables/snes9xgx-$(VERSION)-gc
 BUILD		:=	build_gc
-SOURCES		:=	source/snes9x source/ngc
+SOURCES		:=	source/snes9x source/ngc source/libpng source/libpng/pngu
 DATA		:=	data  
-INCLUDES	:=	source/snes9x source/ngc
+INCLUDES	:=	source source/snes9x source/ngc
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -41,13 +41,13 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--cref
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	  -lbba -ltinysmb -lfat -lz -logc -lm -lfreetype
+LIBS	:= -lpng -lbba -ltinysmb -lfat -lz -logc -lm -lfreetype
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=
+LIBDIRS	:= $(CURDIR)
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional

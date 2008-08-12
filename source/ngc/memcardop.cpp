@@ -5,9 +5,9 @@
  * softdev July 2006
  * crunchy2 May-June 2007
  *
- * mcsave.cpp
+ * memcardop.cpp
  *
- * Memory Card Save Routines.
+ * Memory Card Routines.
  ****************************************************************************/
 #include <gccore.h>
 #include <ogcsys.h>
@@ -36,26 +36,16 @@
 #include "menu.h"
 #include "sram.h"
 #include "preferences.h"
-#include "mcsave.h"
+#include "memcardop.h"
+#include "fileop.h"
 
 #define VERIFBUFFERSIZE 65536
 static u8 SysArea[CARD_WORKAREA] ATTRIBUTE_ALIGN (32);
-unsigned char savebuffer[SAVEBUFFERSIZE] ATTRIBUTE_ALIGN (32);
+extern unsigned char savebuffer[];
 unsigned char verifbuffer[VERIFBUFFERSIZE] ATTRIBUTE_ALIGN (32);
 card_dir CardDir;
 card_file CardFile;
 card_stat CardStatus;
-
-
-/****************************************************************************
- * Clear the savebuffer
- ****************************************************************************/
-void
-ClearSaveBuffer ()
-{
-    memset (savebuffer, 0, SAVEBUFFERSIZE);
-}
-
 
 /****************************************************************************
  * CardFileExists
@@ -145,13 +135,12 @@ int MountCard(int cslot, bool silent)
 		else
 			WaitPrompt((char*) "Replug card in slot B!");
 
-		ShowAction ((char*) "");
 		ret = CARD_Mount (cslot, SysArea, NULL);
 		tries++;
 	}
 
 	tries = 0;
-	while ( tries < 5 && ret == CARD_ERROR_NOCARD )
+	while ( tries < 2 && ret == CARD_ERROR_NOCARD )
 	{
 		EXI_ProbeReset ();
 
@@ -159,22 +148,17 @@ int MountCard(int cslot, bool silent)
 			ShowAction ((char*) "Mounting card...");
 		CARD_Unmount (cslot);
 		usleep(500000); // wait half second
-		ShowAction ((char*) "");
-		usleep(500000); // wait half second
 		ret = CARD_Mount (cslot, SysArea, NULL);
 		tries++;
 	}
 
 	tries = 0;
-	while ( tries < 5 && ret == CARD_ERROR_UNLOCKED )
+	while ( tries < 3 && ret == CARD_ERROR_UNLOCKED )
 	{
 		EXI_ProbeReset ();
 
 		if(!silent)
 			ShowAction ((char*) "Waiting for unlock...");
-		usleep(500000); // wait half second
-		if(!silent)
-			ShowAction ((char*) "");
 		usleep(500000); // wait half second
 		ret = CARD_Probe(cslot);
 		tries++;

@@ -27,10 +27,10 @@
 #include "preferences.h"
 #include "snes9xGx.h"
 
-extern unsigned char savebuffer[];
-extern char output[16384];
 FILE * filehandle;
 
+extern unsigned char savebuffer[];
+extern char output[16384];
 extern int offset;
 extern int selection;
 extern char currentdir[MAXPATHLEN];
@@ -41,7 +41,7 @@ extern FILEENTRIES filelist[MAXFILES];
  * to check whether FAT media are detected.
  ****************************************************************************/
 
-bool fat_is_mounted(PARTITION_INTERFACE partition) {
+bool FatIsMounted(PARTITION_INTERFACE partition) {
     char prefix[] = "fatX:/";
     prefix[3] = partition + '0';
     DIR_ITER *dir = diropen(prefix);
@@ -57,7 +57,7 @@ bool fat_is_mounted(PARTITION_INTERFACE partition) {
  * Checks if the device (method) specified is available, and
  * sets libfat to use the device
 ****************************************************************************/
-bool changeFATInterface(int method, bool silent)
+bool ChangeFATInterface(int method, bool silent)
 {
 	bool devFound = false;
 
@@ -66,19 +66,19 @@ bool changeFATInterface(int method, bool silent)
 		// check which SD device is loaded
 
 		#ifdef HW_RVL
-		if (fat_is_mounted(PI_INTERNAL_SD))
+		if (FatIsMounted(PI_INTERNAL_SD))
 		{
 			devFound = true;
 			fatSetDefaultInterface(PI_INTERNAL_SD);
 		}
 		#endif
 
-		if (!devFound && fat_is_mounted(PI_SDGECKO_A))
+		if (!devFound && FatIsMounted(PI_SDGECKO_A))
 		{
 			devFound = true;
 			fatSetDefaultInterface(PI_SDGECKO_A);
 		}
-		if(!devFound && fat_is_mounted(PI_SDGECKO_B))
+		if(!devFound && FatIsMounted(PI_SDGECKO_B))
 		{
 			devFound = true;
 			fatSetDefaultInterface(PI_SDGECKO_B);
@@ -92,7 +92,7 @@ bool changeFATInterface(int method, bool silent)
 	else if(method == METHOD_USB)
 	{
 		#ifdef HW_RVL
-		if(fat_is_mounted(PI_USBSTORAGE))
+		if(FatIsMounted(PI_USBSTORAGE))
 		{
 			devFound = true;
 			fatSetDefaultInterface(PI_USBSTORAGE);
@@ -108,51 +108,11 @@ bool changeFATInterface(int method, bool silent)
 	return devFound;
 }
 
-/****************************************************************************
- * fat_enable_readahead_all
- ****************************************************************************/
-
-void fat_enable_readahead_all() {
-    int i;
-    for (i=1; i <= 4; ++i) {
-        if (fat_is_mounted((PARTITION_INTERFACE)i)) fatEnableReadAhead((PARTITION_INTERFACE)i, 64, 128);
-    }
-}
-
-/****************************************************************************
- * fat_remount
- ****************************************************************************/
-
-bool fat_remount(PARTITION_INTERFACE partition) {
-	//ShowAction("remounting...");
-	/*	// removed to make usb work...
-	if (fat_is_mounted(partition))
-	{
-		fatUnmount(partition);
-	}
-	*/
-
-	fatMountNormalInterface(partition, 8);
-	fatSetDefaultInterface(partition);
-	//fatEnableReadAhead(partition, 64, 128);
-
-	if (fat_is_mounted(partition))
-	{
-		//ShowAction("remount successful.");
-		sleep(1);
-		return 1;
-	} else {
-		ShowAction("FAT mount failed.");
-		sleep(1);
-		return 0;
-	}
-}
-
 /***************************************************************************
  * Browse FAT subdirectories
  ***************************************************************************/
 int
-parseFATdirectory(int method)
+ParseFATdirectory(int method)
 {
 	int nbfiles = 0;
 	DIR_ITER *fatdir;
@@ -225,7 +185,7 @@ LoadFATFile (char *filename, int length)
 		sprintf(filepath, "%s/%s",currentdir,filelist[selection].filename);
 	else
 	{
-		WaitPrompt((char*) "Maximum Filename Length reached !");
+		WaitPrompt((char*) "Maximum filepath length reached!");
 		return -1;
 	}
 
@@ -236,7 +196,7 @@ LoadFATFile (char *filename, int length)
 
 		if (IsZipFile (zipbuffer))
 		{
-			/*** Unzip the ROM ***/
+			// Unzip the ROM
 			size = UnZipBuffer (rbuffer, 0, 0, handle);	// unzip from FAT
 
 			fclose (handle);
@@ -244,13 +204,11 @@ LoadFATFile (char *filename, int length)
 		}
 		else
 		{
-			/*** Just load the file up ***/
+			// Just load the file up
 
 			fseek(handle, 0, SEEK_END);
 			length = ftell(handle);				// get filesize
 			fseek(handle, 2048, SEEK_SET);		// seek back to point where we left off
-
-			ShowAction ((char *)"Loading...");
 			memcpy (rbuffer, zipbuffer, 2048);	// copy what we already read
 			fread (rbuffer + 2048, 1, length - 2048, handle);
 			fclose (handle);
@@ -274,7 +232,7 @@ int
 LoadBufferFromFAT (char *filepath, bool silent)
 {
 	FILE *handle;
-    int offset = 0;
+    int boffset = 0;
     int read = 0;
 
     handle = fopen (filepath, "rb");
@@ -293,14 +251,14 @@ LoadBufferFromFAT (char *filepath, bool silent)
     memset (savebuffer, 0, 0x22000);
 
     /*** This is really nice, just load the file and decode it ***/
-    while ((read = fread (savebuffer + offset, 1, 1024, handle)) > 0)
+    while ((read = fread (savebuffer + boffset, 1, 1024, handle)) > 0)
     {
-        offset += read;
+        boffset += read;
     }
 
     fclose (handle);
 
-    return offset;
+    return boffset;
 }
 
 /****************************************************************************

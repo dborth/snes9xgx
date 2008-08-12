@@ -25,17 +25,16 @@
 #include <math.h>
 #include <wiiuse/wpad.h>
 #include <ft2build.h>
+#include <zlib.h>
 #include FT_FREETYPE_H
-#include "video.h"
-#include "menudraw.h"
-#include "dkpro.h"
-#include "snes9xGX.h"
 
 #include "memmap.h"
-#include "aram.h"
-#include <zlib.h>
 
-#include "gfx_bg.h"
+#include "video.h"
+#include "menudraw.h"
+#include "snes9xGX.h"
+#include "aram.h"
+#include "images/gfx_bg.h"
 
 /*** Globals ***/
 FT_Library ftlibrary;
@@ -50,10 +49,6 @@ extern int screenheight;
 extern unsigned int *xfb[2];
 extern int whichfb;
 
-/****************************************************************************
- * Unpack the devkit pro logo
- ****************************************************************************/
-static u32 *dkproraw;
 /*** Permanent backdrop ***/
 #ifdef HW_RVL
 u32 *backdrop;
@@ -217,59 +212,6 @@ setfontcolour (u8 r, u8 g, u8 b)
   fontcolour = getcolour (r, g, b);
   fonthi = fontcolour & 0xffff0000;
   fontlo = fontcolour & 0xffff;
-}
-
-/****************************************************************************
- * dkunpack
- *
- * Support function to expand the DevkitPro logo
- ****************************************************************************/
-int
-dkunpack ()
-{
-  unsigned long res, inbytes, outbytes;
-
-  inbytes = dkpro_COMPRESSED;
-  outbytes = dkpro_RAW;
-  dkproraw = (u32 *) malloc (dkpro_RAW + 16);
-
-  res = uncompress ((Bytef *) dkproraw, &outbytes, (Bytef *) dkpro, inbytes);
-
-  if (res == Z_OK)
-    return 1;
-
-  return 0;
-}
-
-/****************************************************************************
- * showdklogo
- *
- * Display the DevkitPro logo
- ****************************************************************************/
-void
-showdklogo ()
-{
-  int w, h, p, dispoffset;
-  p = 0;
-  dispoffset =
-    ((screenheight != 480 ? 365 : 355) * 320) + ((640 - dkpro_WIDTH) >> 2);
-
-  dkunpack ();
-
-  for (h = 0; h < dkpro_HEIGHT; h++)
-    {
-      for (w = 0; w < dkpro_WIDTH >> 1; w++)
-	{
-	  if (dkproraw[p] != 0x00800080)
-	    xfb[whichfb][dispoffset + w] = dkproraw[p++];
-	  else
-	    p++;
-	}
-
-      dispoffset += 320;
-    }
-
-  free (dkproraw);
 }
 
 /****************************************************************************
@@ -617,10 +559,8 @@ RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
     u32 p, wp;
     int ret = 0;
     signed char a;
-	float mag = 0;
-	float mag2 = 0;
-	u16 ang = 0;
-	u16 ang2 = 0;
+	float mag, mag2;
+	u16 ang, ang2;
 
     while (quit == 0)
     {
@@ -636,6 +576,10 @@ RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
 		wpad_get_analogues(0, &mag, &ang, &mag2, &ang2);		// get joystick info from wii expansions
 #else
 		wp = 0;
+		ang = 0;
+		ang2 = 0;
+		mag = 0;
+		mag2 = 0;
 #endif
 		a = PAD_StickY (0);
 

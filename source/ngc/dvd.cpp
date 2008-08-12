@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50 
+ * Snes9x 1.50
  *
  * Nintendo Gamecube DVD
  *
@@ -12,7 +12,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dvd.h>
+
+#include "menudraw.h"
 #include "snes9xGx.h"
+#include "unzip.h"
+
+extern int offset;
+extern int selection;
 
 /** DVD I/O Address base **/
 volatile unsigned long *dvd = (volatile unsigned long *) 0xCC006000;
@@ -20,6 +26,7 @@ volatile unsigned long *dvd = (volatile unsigned long *) 0xCC006000;
  /** Due to lack of memory, we'll use this little 2k keyhole for all DVD operations **/
 unsigned char DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);
 unsigned char dvdbuffer[2048];
+
 
 /**
   * dvd_driveid
@@ -38,11 +45,11 @@ int dvd_driveid()
     dvd[5] = 0x80000000;
     dvd[6] = 0x20;
     dvd[7] = 3;
-    
+
     while( dvd[7] & 1 )
         ;
     DCFlushRange((void *)0x80000000, 32);
-    
+
     return (int)inquiry[2];
 }
 
@@ -282,7 +289,7 @@ getentry (int entrycount)
 }
 
 /**
- * parsedirectory
+ * parseDVDdirectory
  *
  * This function will parse the directory tree.
  * It relies on rootdir and rootdirlength being pre-populated by a call to
@@ -291,13 +298,16 @@ getentry (int entrycount)
  * The return value is number of files collected, or 0 on failure.
  */
 int
-parsedirectory ()
+ParseDVDdirectory ()
 {
   int pdlength;
   u64 pdoffset;
   u64 rdoffset;
   int len = 0;
   int filecount = 0;
+
+  // initialize selection
+  	selection = offset = 0;
 
   pdoffset = rdoffset = rootdir;
   pdlength = rootdirlength;
@@ -326,6 +336,62 @@ parsedirectory ()
 
   return filecount;
 }
+
+/****************************************************************************
+ * LoadDVDFile
+ * This function will load a file from DVD, in BIN, SMD or ZIP format.
+ * The values for offset and length are inherited from rootdir and
+ * rootdirlength.
+ *
+ * The buffer parameter should re-use the initial ROM buffer.
+ ****************************************************************************/
+
+int
+LoadDVDFile (unsigned char *buffer)
+{
+  int offset;
+  int blocks;
+  int i;
+  u64 discoffset;
+  char readbuffer[2048];
+
+  // How many 2k blocks to read
+  blocks = rootdirlength / 2048;
+  offset = 0;
+  discoffset = rootdir;
+  ShowAction ((char*) "Loading...");
+  dvd_read (readbuffer, 2048, discoffset);
+
+  if (!IsZipFile (readbuffer))
+
+    {
+      for (i = 0; i < blocks; i++)
+
+        {
+          dvd_read (readbuffer, 2048, discoffset);
+          memcpy (buffer + offset, readbuffer, 2048);
+          offset += 2048;
+          discoffset += 2048;
+        }
+
+                /*** And final cleanup ***/
+      if (rootdirlength % 2048)
+
+        {
+          i = rootdirlength % 2048;
+          dvd_read (readbuffer, 2048, discoffset);
+          memcpy (buffer + offset, readbuffer, i);
+        }
+    }
+
+  else
+
+    {
+      return UnZipBuffer (buffer, discoffset, 1, NULL);	// unzip from dvd
+    }
+  return rootdirlength;
+}
+
 /****************************************************************************
  * uselessinquiry
  *

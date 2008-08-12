@@ -26,23 +26,31 @@
 #include "menudraw.h"
 #include "video.h"
 #include "aram.h"
-#include "unzip.h"
 #include "filesel.h"
 #include "smbop.h"
 #include "fileop.h"
-#include "mcsave.h"
+#include "memcardop.h"
 
 int offset;
 int selection;
 char currentdir[MAXPATHLEN];
 int maxfiles;
 extern int screenheight;
-
 #define PAGESIZE 17
-int LoadDVDFile (unsigned char *buffer);
 extern unsigned long ARAM_ROMSIZE;
 int havedir = 0;
 int hasloaded = 0;
+
+unsigned char savebuffer[SAVEBUFFERSIZE] ATTRIBUTE_ALIGN (32);
+
+/****************************************************************************
+ * Clear the savebuffer
+ ****************************************************************************/
+void
+ClearSaveBuffer ()
+{
+    memset (savebuffer, 0, SAVEBUFFERSIZE);
+}
 
 /****************************************************************************
 * autoLoadMethod()
@@ -51,12 +59,16 @@ int hasloaded = 0;
 ****************************************************************************/
 int autoLoadMethod()
 {
-	if(changeFATInterface(METHOD_SD, SILENT))
+	ShowAction ((char*) "Attempting to determine load method...");
+
+	if(ChangeFATInterface(METHOD_SD, SILENT))
 		return METHOD_SD;
-	else if(changeFATInterface(METHOD_USB, SILENT))
+	else if(ChangeFATInterface(METHOD_USB, SILENT))
 		return METHOD_USB;
-	//else if(ConnectShare ())
-	//	return METHOD_SMB;
+	else if(false) // FIX ME - WARNING - MOUNTING DVD in Wii mode hangs
+		return METHOD_DVD;
+	else if(ConnectShare (SILENT))
+		return METHOD_SMB;
 	else
 	{
 		WaitPrompt((char*) "Unable to auto-determine load method!");
@@ -71,16 +83,18 @@ int autoLoadMethod()
 ****************************************************************************/
 int autoSaveMethod()
 {
-	if(changeFATInterface(METHOD_SD, SILENT))
+	ShowAction ((char*) "Attempting to determine save method...");
+
+	if(ChangeFATInterface(METHOD_SD, SILENT))
 		return METHOD_SD;
-	else if(changeFATInterface(METHOD_USB, SILENT))
+	else if(ChangeFATInterface(METHOD_USB, SILENT))
 		return METHOD_USB;
 	else if(TestCard(CARD_SLOTA, SILENT))
 		return METHOD_MC_SLOTA;
 	else if(TestCard(CARD_SLOTB, SILENT))
 		return METHOD_MC_SLOTB;
-	//else if(ConnectShare ())
-	//	return METHOD_SMB;
+	else if(ConnectShare (SILENT))
+		return METHOD_SMB;
 	else
 	{
 		WaitPrompt((char*) "Unable to auto-determine save method!");
@@ -179,8 +193,6 @@ void StripExt(char* returnstring, char * inputstring)
 	loc_dot = strrchr(returnstring,'.');
 	if (loc_dot != NULL)
 		*loc_dot = '\0';	// strip file extension
-
-	return;
 }
 
 /****************************************************************************
@@ -190,7 +202,7 @@ void StripExt(char* returnstring, char * inputstring)
 ****************************************************************************/
 
 static void
-ShowFiles (int offset, int selection)
+ShowFiles ()
 {
 	int i, j;
 	char text[MAXPATHLEN];
@@ -246,23 +258,6 @@ ShowFiles (int offset, int selection)
 }
 
 /****************************************************************************
-* SNESROMSOffset
-*
-* Function to check for and return offset to a directory called SNESROMS, if
-* any
-****************************************************************************/
-int SNESROMSOffset()
-{
-    int i;
-
-    for ( i = 0; i < maxfiles; i++ )
-        if (strcmp(filelist[i].filename, "SNESROMS") == 0)
-            return i;
-    return 0;
-}
-
-
-/****************************************************************************
  * FileSelector
  *
  * Let user select a file from the listing
@@ -277,8 +272,8 @@ FileSelector (int method)
     int haverom = 0;
     int redraw = 1;
     int selectit = 0;
-	float mag, mag2 = 0;
-	u16 ang, ang2 = 0;
+    float mag, mag2;
+    u16 ang, ang2;
 	int scroll_delay = 0;
 	bool move_selection = 0;
 	#define SCROLL_INITIAL_DELAY	15
@@ -287,7 +282,7 @@ FileSelector (int method)
     while (haverom == 0)
     {
         if (redraw)
-            ShowFiles (offset, selection);
+            ShowFiles ();
         redraw = 0;
 
 		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
@@ -301,6 +296,10 @@ FileSelector (int method)
 #else
 		wp = 0;
 		wh = 0;
+		ang = 0;
+		ang2 = 0;
+		mag = 0;
+		mag2 = 0;
 #endif
 		a = PAD_StickY (0);
 		c = PAD_SubStickX (0);
@@ -310,95 +309,84 @@ FileSelector (int method)
 			return 0;
 
 		/*** Check buttons, perform actions ***/
-        if ( (p & PAD_BUTTON_A) || selectit || (wp & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) )
-        {
-            if ( selectit )
-                selectit = 0;
-            if (filelist[selection].flags) // This is directory
-            {
-				if (method == METHOD_SD || method == METHOD_USB || method == METHOD_SMB)
-                {
-                    /* update current directory and set new entry list if directory has changed */
-                    int status = UpdateDirName();
-                    if (status == 1) // ok, open directory
-                    {
-						if(method == METHOD_SMB)
-							maxfiles = parseSMBdirectory();
-						else
-							maxfiles = parseFATdirectory(method);
+		if ( (p & PAD_BUTTON_A) || selectit || (wp & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) )
+		{
+			if ( selectit )
+				selectit = 0;
+			if (filelist[selection].flags) // This is directory
+			{
+				/* update current directory and set new entry list if directory has changed */
+				int status = UpdateDirName();
+				if (status == 1) // ok, open directory
+				{
+					switch (method)
+					{
+						case METHOD_SD:
+						case METHOD_USB:
+						maxfiles = ParseFATdirectory(method);
+						break;
 
-                        if (!maxfiles)
-                        {
-                            WaitPrompt ((char*) "Error reading directory !");
-                            haverom   = 1; // quit menu
-                        }
-                    }
-                    else if (status == -1)	// directory name too long
-                    {
-                        haverom   = 1; // quit menu
-                    }
-                }
-                else if(method == METHOD_DVD)
-                {
-                    if ( (strcmp (filelist[selection].filename, "..") == 0)
-                        &&  ((unsigned int)rootdir == filelist[selection].offset) )
-                        return 0;
-                    else
-                    {
-                        rootdir = filelist[selection].offset;
-                        rootdirlength = filelist[selection].length;
-                        offset = selection = 0;
-                        maxfiles = parsedirectory ();
-                    }
-                }
-            }
-            else	// this is a file
-            {
-				rootdir = filelist[selection].offset;
-                rootdirlength = filelist[selection].length;
+						case METHOD_DVD:
+						maxfiles = ParseDVDdirectory();
+						break;
 
-				// store the filename (used for sram/freeze naming)
-				StripExt(Memory.ROMFilename, filelist[selection].filename); // store stripped filename in Memory.ROMFilename
+						case METHOD_SMB:
+						maxfiles = ParseSMBdirectory();
+						break;
+					}
 
-                switch (method)
-                {
-                   case METHOD_SD:
-				   case METHOD_USB:
-                        // Load from FAT
-                        ARAM_ROMSIZE = LoadFATFile (filelist[selection].filename,
-                                         filelist[selection].length);
-                        break;
+					if (!maxfiles)
+					{
+						WaitPrompt ((char*) "Error reading directory !");
+						haverom = 1; // quit menu
+					}
+				}
+				else if (status == -1)	// directory name too long
+				{
+					haverom   = 1; // quit menu
+				}
+			}
+			else	// this is a file
+			{
+				// store the filename (w/o ext) - used for sram/freeze naming
+				StripExt(Memory.ROMFilename, filelist[selection].filename);
 
-				    case METHOD_DVD:
-                        /*** Now load the DVD file to it's offset ***/
-                        ARAM_ROMSIZE = LoadDVDFile (Memory.ROM);
-                        break;
+				ShowAction ((char *)"Loading...");
+
+				switch (method)
+				{
+					case METHOD_SD:
+					case METHOD_USB:
+					ARAM_ROMSIZE = LoadFATFile (filelist[selection].filename,
+					 filelist[selection].length);
+					break;
+
+					case METHOD_DVD:
+					ARAM_ROMSIZE = LoadDVDFile (Memory.ROM);
+					break;
 
 					case METHOD_SMB:
-                        /*** Load from SMB ***/
-                        ARAM_ROMSIZE =
-                        LoadSMBFile (filelist[selection].filename,
-                             filelist[selection].length);
-                        break;
-                }
+					ARAM_ROMSIZE =
+					LoadSMBFile (filelist[selection].filename,
+					filelist[selection].length);
+					break;
+				}
 
-                if (ARAM_ROMSIZE > 0)
-                {
-                    hasloaded = 1;
-                    Memory.LoadROM ("BLANK.SMC");
-
-                    Memory.LoadSRAM ("BLANK");
-                    haverom = 1;
-
-                    return 1;
-                }
-                else
-                {
-                    WaitPrompt((char*) "Error loading ROM!");
-                }
-            }
-            redraw = 1;
-        }	// End of A
+				if (ARAM_ROMSIZE > 0)
+				{
+					hasloaded = 1; // indicator for memmap.cpp
+					Memory.LoadROM ("BLANK.SMC");
+					Memory.LoadSRAM ("BLANK");
+					haverom = 1;
+					return 1;
+				}
+				else
+				{
+					WaitPrompt((char*) "Error loading ROM!");
+				}
+			}
+			redraw = 1;
+		}	// End of A
         if ( (p & PAD_BUTTON_B) || (wp & (WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)) )
         {
             while ( (PAD_ButtonsDown(0) & PAD_BUTTON_B)
@@ -509,41 +497,28 @@ FileSelector (int method)
 int
 OpenDVD (int method)
 {
-    int romsdiroffset = 0;
+	if (!getpvd())
+	{
+		ShowAction((char*) "Loading DVD...");
+		DVD_Mount();             /* mount the DVD unit again */
+		havedir = 0;             /* this may be a new DVD: content need to be parsed again */
+		if (!getpvd())
+			return 0; /* no correct ISO9660 DVD */
+	}
 
-    if (!getpvd())
-    {
-        ShowAction((char*) "Loading DVD...");
-        DVD_Mount();             /* mount the DVD unit again */
-        havedir = 0;             /* this may be a new DVD: content need to be parsed again */
-        if (!getpvd())
-            return 0; /* no correct ISO9660 DVD */
-    }
+	if (havedir == 0)
+	{
+		maxfiles = ParseDVDdirectory();
+		if (maxfiles > 0)
+		{
+			return FileSelector (method);
+			havedir = 1;
+		}
+	}
+	else
+		return FileSelector (method);
 
-    if (havedir == 0)
-    {
-        offset = selection = 0; /* reset file selector */
-
-        if ((maxfiles = parsedirectory ()))
-        {
-            if ( romsdiroffset = SNESROMSOffset() )
-            {
-                rootdir = filelist[romsdiroffset].offset;
-                rootdirlength = filelist[romsdiroffset].length;
-                offset = selection = 0;
-                maxfiles = parsedirectory ();
-            }
-
-            int ret = FileSelector (method);
-            havedir = 1;
-            return ret;
-        }
-    }
-
-    else
-        return FileSelector (method);
-
-    return 0;
+	return 0;
 }
 
 /****************************************************************************
@@ -555,12 +530,13 @@ int
 OpenSMB (int method)
 {
 	// Connect to network share
-	if(ConnectShare ())
+	if(ConnectShare (NOTSILENT))
 	{
 		// change current dir to root dir
 		sprintf(currentdir, "/%s", GCSettings.LoadFolder);
 
-		if (maxfiles = parseSMBdirectory ())
+		maxfiles = ParseSMBdirectory ();
+		if (maxfiles > 0)
 		{
 			return FileSelector (method);
 		}
@@ -582,13 +558,14 @@ OpenSMB (int method)
 int
 OpenFAT (int method)
 {
-	if(changeFATInterface(method, NOTSILENT))
+	if(ChangeFATInterface(method, NOTSILENT))
 	{
 		// change current dir to snes roms directory
 		sprintf ( currentdir, "%s/%s", ROOTFATDIR, GCSettings.LoadFolder );
 
 		// Parse initial root directory and get entries list
-		if (maxfiles = parseFATdirectory (method))
+		maxfiles = ParseFATdirectory (method);
+		if (maxfiles > 0)
 		{
 			// Select an entry
 			return FileSelector (method);
@@ -633,63 +610,4 @@ OpenROM (int method)
 	}
 
 	return loadROM;
-}
-
-/****************************************************************************
- * LoadDVDFile
- * This function will load a file from DVD, in BIN, SMD or ZIP format.
- * The values for offset and length are inherited from rootdir and
- * rootdirlength.
- *
- * The buffer parameter should re-use the initial ROM buffer.
- ****************************************************************************/
-
-int
-LoadDVDFile (unsigned char *buffer)
-{
-  int offset;
-  int blocks;
-  int i;
-  u64 discoffset;
-  char readbuffer[2048];
-
-        /*** SDCard Addition ***/
-  if (rootdirlength == 0)
-    return 0;
-
-        /*** How many 2k blocks to read ***/
-  blocks = rootdirlength / 2048;
-  offset = 0;
-  discoffset = rootdir;
-  ShowAction ((char*) "Loading...");
-  dvd_read (readbuffer, 2048, discoffset);
-
-  if (!IsZipFile (readbuffer))
-
-    {
-      for (i = 0; i < blocks; i++)
-
-        {
-          dvd_read (readbuffer, 2048, discoffset);
-          memcpy (buffer + offset, readbuffer, 2048);
-          offset += 2048;
-          discoffset += 2048;
-        }
-
-                /*** And final cleanup ***/
-      if (rootdirlength % 2048)
-
-        {
-          i = rootdirlength % 2048;
-          dvd_read (readbuffer, 2048, discoffset);
-          memcpy (buffer + offset, readbuffer, i);
-        }
-    }
-
-  else
-
-    {
-      return UnZipBuffer (buffer, discoffset, 1, NULL);	// unzip from dvd
-    }
-  return rootdirlength;
 }

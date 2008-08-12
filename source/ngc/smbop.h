@@ -16,10 +16,10 @@
 #define _NGCSMB_
 
 bool InitializeNetwork(bool silent);
-bool ConnectShare ();
+bool ConnectShare (bool silent);
 char * SMBPath(char * path);
-int updateSMBdirname();
-int parseSMBdirectory ();
+int UpdateSMBdirname();
+int ParseSMBdirectory ();
 int LoadSMBFile (char *filename, int length);
 int LoadBufferFromSMB (char *filepath, bool8 silent);
 int SaveBufferToSMB (char *filepath, int datasize, bool8 silent);

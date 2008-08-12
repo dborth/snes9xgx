@@ -23,10 +23,8 @@
 
 #define ROOTFATDIR "fat:/"
 
-bool fat_remount(PARTITION_INTERFACE partition);
-bool fat_is_mounted(PARTITION_INTERFACE partition);
-bool changeFATInterface(int method, bool silent);
-int parseFATdirectory(int method);
+bool ChangeFATInterface(int method, bool silent);
+int ParseFATdirectory(int method);
 int LoadFATFile (char *filename, int length);
 int SaveBufferToFAT (char *filepath, int datasize, bool silent);
 int LoadBufferFromFAT (char *filepath, bool silent);

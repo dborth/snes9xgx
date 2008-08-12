@@ -18,8 +18,9 @@
 #include "srtc.h"
 
 #include "snes9xGx.h"
+#include "images/saveicon.h"
 #include "menudraw.h"
-#include "mcsave.h"
+#include "memcardop.h"
 #include "fileop.h"
 #include "smbop.h"
 #include "filesel.h"
@@ -239,6 +240,8 @@ decodesavedata (int readsize)
 int
 LoadSRAM (int method, bool silent)
 {
+	ShowAction ((char*) "Loading...");
+
 	if(method == METHOD_AUTO)
 		method = autoLoadMethod();
 
@@ -247,7 +250,7 @@ LoadSRAM (int method, bool silent)
 
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		changeFATInterface(method, NOTSILENT);
+		ChangeFATInterface(method, NOTSILENT);
 		sprintf (filepath, "%s/%s/%s.srm", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
 		offset = LoadBufferFromFAT (filepath, silent);
 	}
@@ -271,10 +274,10 @@ LoadSRAM (int method, bool silent)
 	{
 		decodesavedata (offset);
 		S9xSoftReset();
-
 		return 1;
 	}
 
+	// if we reached here, nothing was done!
 	if(!silent)
 		WaitPrompt ((char*) "SRAM file not found");
 
@@ -287,6 +290,8 @@ LoadSRAM (int method, bool silent)
 bool
 SaveSRAM (int method, bool silent)
 {
+	ShowAction ((char*) "Saving...");
+
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod();
 
@@ -294,9 +299,6 @@ SaveSRAM (int method, bool silent)
 	char filepath[1024];
 	int datasize;
 	int offset = 0;
-
-	if (!silent)
-		ShowAction ((char*) "Saving SRAM...");
 
 	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
 		datasize = prepareMCsavedata ();
@@ -307,9 +309,11 @@ SaveSRAM (int method, bool silent)
 	{
 		if(method == METHOD_SD || method == METHOD_USB)
 		{
-			changeFATInterface(method, NOTSILENT);
-			sprintf (filepath, "%s/%s/%s.srm", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-			offset = SaveBufferToFAT (filepath, datasize, silent);
+			if(ChangeFATInterface(method, NOTSILENT))
+			{
+				sprintf (filepath, "%s/%s/%s.srm", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
+				offset = SaveBufferToFAT (filepath, datasize, silent);
+			}
 		}
 		else if(method == METHOD_SMB)
 		{
@@ -330,10 +334,7 @@ SaveSRAM (int method, bool silent)
 		if (offset > 0)
 		{
 			if ( !silent )
-			{
-				sprintf (filepath, "Wrote %d bytes", offset);
-				WaitPrompt(filepath);
-			}
+				WaitPrompt((char *)"Save successful");
 			retval = true;
 		}
 	}

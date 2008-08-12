@@ -25,7 +25,8 @@ Tantric
          .CHT file name must match file name of ROM
 - added: load/save preference selector. ROM, SRAM, Freeze, and preferences 
          are saved/loaded according to these
-- added: preliminary Wii SMB support
+- added: preliminary Wii SMB support - completely working, but you must change
+         settings in s9xconfig.cpp
 - added: 'Auto' settings for save/load - attempts to automatically determine
          your load/save device(s) - SD, USB, Memory Card, DVD, SMB
 - added: ROM Information page
