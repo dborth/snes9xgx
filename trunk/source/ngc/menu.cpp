@@ -30,13 +30,12 @@
 #include "snes9xGx.h"
 #include "aram.h"
 #include "video.h"
-#include "mcsave.h"
 #include "filesel.h"
 #include "unzip.h"
 #include "smbop.h"
-#include "mcsave.h"
+#include "memcardop.h"
 #include "fileop.h"
-#include "memfile.h"
+#include "freeze.h"
 #include "dvd.h"
 #include "s9xconfig.h"
 #include "sram.h"
@@ -49,18 +48,23 @@ extern void DrawMenu (char items[][50], char *title, int maxitems, int selected,
 
 extern SCheatData Cheat;
 
-
-#define PSOSDLOADID 0x7c6000a6
 extern int menu;
 extern unsigned long ARAM_ROMSIZE;
 
 #define SOFTRESET_ADR ((volatile u32*)0xCC003024)
 
 /****************************************************************************
- * Reboot
+ * Reboot / Exit
  ****************************************************************************/
 
-void Reboot() {
+#ifndef HW_RVL
+#define PSOSDLOADID 0x7c6000a6
+int *psoid = (int *) 0x80001800;
+void (*PSOReload) () = (void (*)()) 0x80001800;
+#endif
+
+void Reboot()
+{
 #ifdef HW_RVL
     SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 #else
@@ -132,12 +136,14 @@ PreferencesMenu ()
 	{
 		// some load/save methods are not implemented - here's where we skip them
 
-		#ifndef HW_RVL // GameCube mode
+		#ifndef HW_RVL
+		// no USB ports on GameCube
 			if(GCSettings.LoadMethod == METHOD_USB)
 				GCSettings.LoadMethod++;
 			if(GCSettings.SaveMethod == METHOD_USB)
 				GCSettings.SaveMethod++;
-		#else // Wii mode
+		#else
+		// Wii DVD access not implemented
 			if(GCSettings.LoadMethod == METHOD_DVD)
 				GCSettings.LoadMethod++;
 		#endif
@@ -145,11 +151,13 @@ PreferencesMenu ()
 		if(GCSettings.SaveMethod == METHOD_DVD) // saving to DVD is impossible
 			GCSettings.SaveMethod++;
 
-		if(GCSettings.SaveMethod == METHOD_SMB) // disable SMB - network saving needs some work
+		#ifdef HW_RVL
+		// disable MC saving in Wii mode - does not work for some reason!
+		if(GCSettings.SaveMethod == METHOD_MC_SLOTA)
 			GCSettings.SaveMethod++;
-
-		if(GCSettings.LoadMethod == METHOD_SMB) // disable SMB - network loading needs some work
-			GCSettings.LoadMethod++;
+		if(GCSettings.SaveMethod == METHOD_MC_SLOTB)
+			GCSettings.SaveMethod++;
+		#endif
 
 		// correct load/save methods out of bounds
 		if(GCSettings.LoadMethod > 4)
@@ -368,7 +376,7 @@ GameMenu ()
 				break;
 
 			case 4: // Load SRAM
-				quit = retval = LoadSRAM(GCSettings.SaveMethod, SILENT);
+				quit = retval = LoadSRAM(GCSettings.SaveMethod, NOTSILENT);
 				break;
 
 			case 5: // Save SRAM
@@ -376,7 +384,7 @@ GameMenu ()
 				break;
 
 			case 6: // Load Freeze
-				quit = retval = NGCUnfreezeGame (GCSettings.SaveMethod, SILENT);
+				quit = retval = NGCUnfreezeGame (GCSettings.SaveMethod, NOTSILENT);
 				break;
 
 			case 7: // Save Freeze
@@ -467,7 +475,7 @@ GetButtonMap(u16 ctrlr_type, char* btn_name)
 {
 	u32 pressed, previous;
 	char temp[50] = "";
-	int k;
+	uint k;
 	pressed = 0; previous = 1;
 
 	switch (ctrlr_type) {
@@ -487,7 +495,7 @@ GetButtonMap(u16 ctrlr_type, char* btn_name)
 
 	/*** note which button we are remapping ***/
 	sprintf (temp, (char*)"Remapping ");
-	for (k=0; k<9-strlen(btn_name) ;k++) strcat(temp, " "); // add whitespace padding to align text
+	for (k=0; k<9-strlen(btn_name); k++) strcat(temp, " "); // add whitespace padding to align text
 	strncat (temp, btn_name, 9);		// snes button we are remapping
 	strncpy (cfg_text[0], temp, 19);	// copy this all back to the text we wish to display
 
@@ -531,12 +539,13 @@ ConfigureButtons (u16 ctrlr_type)
 	int ret = 0;
 	int oldmenu = menu;
 	menu = 0;
-	char* menu_title;
+	char* menu_title = NULL;
 	u32 pressed;
 
-	unsigned int* currentpadmap;
+	unsigned int* currentpadmap = 0;
 	char temp[50] = "";
-	int i, j, k;
+	int i, j;
+	uint k;
 
 	/*** Update Menu Title (based on controller we're configuring) ***/
 	switch (ctrlr_type) {
@@ -737,8 +746,6 @@ mainmenu (int selectedMenu)
 {
 	int quit = 0;
 	int ret;
-	int *psoid = (int *) 0x80001800;
-	void (*PSOReload) () = (void (*)()) 0x80001800;
 
 	// disable game-specific menu items if a ROM isn't loaded
 	if ( ARAM_ROMSIZE == 0 )

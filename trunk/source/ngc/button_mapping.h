@@ -1,3 +1,14 @@
+/****************************************************************************
+ * Snes9x 1.50
+ *
+ * Nintendo Wii/Gamecube Port
+ * michniewski August 2008
+ *
+ * button_mapping.h
+ *
+ * Controller button mapping
+ ****************************************************************************/
+
 #ifndef BTN_MAP_H
 #define BTN_MAP_H
 

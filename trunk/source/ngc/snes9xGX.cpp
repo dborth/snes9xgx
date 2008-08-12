@@ -187,7 +187,7 @@
 #include "audio.h"
 #include "menu.h"
 #include "sram.h"
-#include "memfile.h"
+#include "freeze.h"
 #include "preferences.h"
 #include "gctime.h"
 #include "button_mapping.h"
@@ -320,10 +320,8 @@ decodepad (int pad)
   //unsigned short jp, wp;	//
   u32 jp, wp;
   float t;
-  float mag = 0;
-  float mag2 = 0;
-  u16 ang = 0;
-  u16 ang2 = 0;
+  float mag, mag2;
+  u16 ang, ang2;
   u32 exp_type;
 
   /*** Do analogue updates ***/
@@ -334,7 +332,12 @@ decodepad (int pad)
   exp_type = wpad_get_analogues(pad, &mag, &ang, &mag2, &ang2);	// get joystick info from wii expansions
   wp = WPAD_ButtonsHeld (pad);	// wiimote
 #else
+  exp_type = 0;
   wp = 0;
+  ang = 0;
+ang2 = 0;
+mag = 0;
+mag2 = 0;
 #endif
 
 	/***

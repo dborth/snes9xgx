@@ -18,19 +18,8 @@
 #include <wiiuse/wpad.h>
 #include "snes9x.h"
 #include "memmap.h"
-//#include "debug.h"
-//#include "cpuexec.h"
-//#include "ppu.h"
-//#include "apu.h"
-//#include "display.h"
-//#include "gfx.h"
-//#include "soundux.h"
-//#include "spc700.h"
-//#include "spc7110.h"
-//#include "controls.h"
 #include "aram.h"
 #include "snes9xGX.h"
-//#include "video.h"
 
 /*** Snes9x GFX Buffer ***/
 static unsigned char snes9xgfx[1024 * 512 * 2];
@@ -162,8 +151,7 @@ copy_to_xfb (u32 arg)
     }
 
   FrameTimer++;
-  //SMBTimer++;
-
+  SMBTimer++;
 }
 
 /****************************************************************************
@@ -295,11 +283,6 @@ InitGCVideo ()
 
     VIDEO_Init ();
     PAD_Init ();
-    //DVD_Init ();
-
-    /*** Check to see if this is a GC or a Wii ***/
-//    int driveid = dvd_driveid();
-//    bool8 isWii = !((driveid == 4) || (driveid == 6) || (driveid == 8));
 
     AUDIO_Init (NULL);
     AR_Init (NULL, 0);

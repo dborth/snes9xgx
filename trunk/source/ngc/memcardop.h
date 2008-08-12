@@ -5,17 +5,13 @@
  * softdev July 2006
  * crunchy2 May 2007
  *
- * mcsave.cpp
+ * memcardop.h
  *
- * Memory Card Save Routines.
+ * Memory Card Routines.
  ****************************************************************************/
 
 #ifndef _NGCMCSAVE_
 #define _NGCMCSAVE_
-
-#define SAVEBUFFERSIZE ((512 * 1024) + 2048 + 64 + 4 + 4)
-
-void ClearSaveBuffer ();
 
 int VerifyMCFile (unsigned char *buf, int slot, char *filename, int datasize);
 

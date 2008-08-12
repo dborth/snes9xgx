@@ -14,11 +14,13 @@
 #include <ogcsys.h>
 
 #include "snes9x.h"
-#include "snes9xGx.h"
 #include "memmap.h"
 #include "srtc.h"
+
+#include "snes9xGx.h"
+#include "images/saveicon.h"
 #include "menudraw.h"
-#include "mcsave.h"
+#include "memcardop.h"
 #include "fileop.h"
 #include "smbop.h"
 #include "filesel.h"
@@ -33,7 +35,7 @@ extern unsigned int ccpadmap[];
 extern unsigned int ncpadmap[];
 
 #define PREFS_FILE_NAME "snes9xGx.prf"
-#define PREFSVERSTRING "Snes9x GX 005a Prefs"
+#define PREFSVERSTRING "Snes9x GX 005 Prefs"
 
 char prefscomment[2][32] = { {PREFSVERSTRING}, {"Preferences"} };
 
@@ -139,9 +141,11 @@ SavePrefs (int method, bool silent)
 
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		changeFATInterface(GCSettings.SaveMethod, NOTSILENT);
-		sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
-		offset = SaveBufferToFAT (filepath, datasize, silent);
+		if(ChangeFATInterface(method, NOTSILENT))
+		{
+			sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
+			offset = SaveBufferToFAT (filepath, datasize, silent);
+		}
 	}
 	else if(method == METHOD_SMB)
 	{
@@ -150,21 +154,18 @@ SavePrefs (int method, bool silent)
 	}
 	else if(method == METHOD_MC_SLOTA)
 	{
-		offset = SaveBufferToMC (savebuffer, CARD_SLOTA, PREFS_FILE_NAME, datasize, silent);
+		offset = SaveBufferToMC (savebuffer, CARD_SLOTA, (char *)PREFS_FILE_NAME, datasize, silent);
 	}
 	else if(method == METHOD_MC_SLOTB)
 	{
-		offset = SaveBufferToMC (savebuffer, CARD_SLOTB, PREFS_FILE_NAME, datasize, silent);
+		offset = SaveBufferToMC (savebuffer, CARD_SLOTB, (char *)PREFS_FILE_NAME, datasize, silent);
 	}
 
 	if (offset > 0)
 	{
 		retval = decodePrefsData ();
 		if ( !silent )
-		{
-			sprintf (filepath, "Wrote %d bytes", offset);
-			WaitPrompt (filepath);
-		}
+			WaitPrompt ((char *)"Preferences saved");
 	}
 	return retval;
 }
@@ -187,32 +188,31 @@ LoadPrefs (int method, bool silent)
 
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
-		changeFATInterface(GCSettings.SaveMethod, NOTSILENT);
-		sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
-		offset = LoadBufferFromFAT (filepath, silent);
+		if(ChangeFATInterface(method, NOTSILENT))
+		{
+			sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
+			offset = LoadBufferFromFAT (filepath, silent);
+		}
 	}
 	else if(method == METHOD_SMB)
 	{
 		sprintf (filepath, "%s/%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
-		LoadBufferFromSMB (filepath, silent);
+		offset = LoadBufferFromSMB (filepath, silent);
 	}
 	else if(method == METHOD_MC_SLOTA)
 	{
-		offset = LoadBufferFromMC (savebuffer, CARD_SLOTA, PREFS_FILE_NAME, silent);
+		offset = LoadBufferFromMC (savebuffer, CARD_SLOTA, (char *)PREFS_FILE_NAME, silent);
 	}
 	else if(method == METHOD_MC_SLOTB)
 	{
-		offset = LoadBufferFromMC (savebuffer, CARD_SLOTB, PREFS_FILE_NAME, silent);
+		offset = LoadBufferFromMC (savebuffer, CARD_SLOTB, (char *)PREFS_FILE_NAME, silent);
 	}
 
 	if (offset > 0)
 	{
 		retval = decodePrefsData ();
 		if ( !silent )
-		{
-			sprintf (filepath, "Loaded %d bytes", offset);
-			WaitPrompt(filepath);
-		}
+			WaitPrompt((char *)"Preferences loaded");
 	}
 	return retval;
 }

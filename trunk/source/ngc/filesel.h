@@ -10,6 +10,9 @@
 #ifndef _NGCFILESEL_
 #define _NGCFILESEL_
 
+#define SAVEBUFFERSIZE ((512 * 1024) + 2048 + 64 + 4 + 4)
+
+void ClearSaveBuffer ();
 int OpenROM (int method);
 int autoLoadMethod();
 int autoSaveMethod();

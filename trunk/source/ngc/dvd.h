@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50 
+ * Snes9x 1.50
  *
  * Nintendo Gamecube DVD
  *
@@ -24,14 +24,11 @@ typedef struct
 extern u64 rootdir;
 extern int rootdirlength;
 #define MAXFILES 2000			/** Restrict to 2000 files per dir **/
-
-extern int getpvd ();
-extern int parsedirectory ();
 extern FILEENTRIES filelist[MAXFILES];
 
-int dvd_driveid();
-
+int getpvd ();
+int ParseDVDdirectory ();
+int LoadDVDFile (unsigned char *buffer);
 int dvd_read (void *dst, unsigned int len, u64 offset);
-extern void dvd_motor_off ();
 
 #endif

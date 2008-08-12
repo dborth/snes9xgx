@@ -176,7 +176,7 @@
 #include "spc7110.h"
 #include "movie.h"
 #include "controls.h"
-#include "memfile.h"
+#include "freeze.h"
 #include "gccore.h"
 #include "menudraw.h"
 

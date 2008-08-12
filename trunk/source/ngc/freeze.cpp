@@ -26,13 +26,14 @@
 #include "snapshot.h"
 #include "srtc.h"
 
-#include "memfile.h"
 #include "Snes9xGx.h"
+#include "images/saveicon.h"
+#include "freeze.h"
 #include "filesel.h"
 #include "menudraw.h"
 #include "smbop.h"
 #include "fileop.h"
-#include "mcsave.h"
+#include "memcardop.h"
 
 #define MEMBUFFER (512 * 1024)
 
@@ -40,7 +41,6 @@ extern void S9xSRTCPreSaveState ();
 extern void NGCFreezeStruct ();
 extern bool8 S9xUnfreezeGame (const char *filename);
 extern unsigned char savebuffer[];
-extern SMBCONN smbconn;
 
 static int bufoffset;
 static char membuffer[MEMBUFFER];
@@ -56,10 +56,10 @@ char freezecomment[2][32] = { {"Snes9x GX 004 Freeze"}, {"Freeze"} };
 int
 GetMem (char *buffer, int len)
 {
-  memcpy (buffer, membuffer + bufoffset, len);
-  bufoffset += len;
+	memcpy (buffer, membuffer + bufoffset, len);
+	bufoffset += len;
 
-  return len;
+	return len;
 }
 
 /**
@@ -70,22 +70,17 @@ GetMem (char *buffer, int len)
 static void
 PutMem (char *buffer, int len)
 {
-  memcpy (membuffer + bufoffset, buffer, len);
-  bufoffset += len;
+	memcpy (membuffer + bufoffset, buffer, len);
+	bufoffset += len;
 }
 
 void
 NGCFreezeBlock (char *name, uint8 * block, int size)
 {
-  char buffer[512];
-
-//  char msg[90];
-//  sprintf (msg, "name=%s", name);
-//  WaitPrompt(msg);
-
-  sprintf (buffer, "%s:%06d:", name, size);
-  PutMem (buffer, strlen (buffer));
-  PutMem ((char *) block, size);
+	char buffer[512];
+	sprintf (buffer, "%s:%06d:", name, size);
+	PutMem (buffer, strlen (buffer));
+	PutMem ((char *) block, size);
 }
 
 /**
@@ -131,71 +126,40 @@ NGCFreezeMemBuffer ()
 int
 NGCFreezeGame (int method, bool8 silent)
 {
+	ShowAction ((char*) "Saving...");
+
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod();
 
 	char filename[1024];
-	SMBFILE smbfile;
-	FILE *handle;
-	int len = 0;
-	int wrote = 0;
 	int offset = 0;
-
 	char msg[100];
-
-	if (method == METHOD_SD || method == METHOD_USB) // SD
-	{
-		changeFATInterface(method, NOTSILENT);
-		sprintf (filename, "%s/%s/%s.frz", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-	}
-	else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC Slot A or B
-	{
-		sprintf (filename, "%s.snz", Memory.ROMFilename);
-	}
-	else if (method == METHOD_SMB) // SMB
-	{
-		sprintf (filename, "%s/%s.frz", GCSettings.SaveFolder, Memory.ROMFilename);
-	}
 
 	S9xSetSoundMute (TRUE);
 	S9xPrepareSoundForSnapshotSave (FALSE);
 
-	NGCFreezeMemBuffer ();
+	NGCFreezeMemBuffer (); // copy freeze mem into membuffer
+	memcpy (savebuffer, membuffer, bufoffset);
 
 	S9xPrepareSoundForSnapshotSave (TRUE);
 	S9xSetSoundMute (FALSE);
 
 	if (method == METHOD_SD || method == METHOD_USB) // FAT devices
 	{
-		handle = fopen (filename, "wb");
-
-		if (handle > 0)
+		if(ChangeFATInterface(method, NOTSILENT))
 		{
-			if (!silent)
-				ShowAction ((char*) "Saving freeze game...");
-
-			len = fwrite (membuffer, 1, bufoffset, handle);
-			fclose (handle);
-
-			if (len != bufoffset)
-				WaitPrompt((char*) "Error writing freeze file");
-			else if ( !silent )
-			{
-				sprintf (filename, "Written %d bytes", bufoffset);
-				WaitPrompt (filename);
-			}
+			sprintf (filename, "%s/%s/%s.frz", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
+			offset = SaveBufferToFAT (filename, bufoffset, silent);
 		}
-		else
-		{
-			changeFATInterface(GCSettings.SaveMethod, NOTSILENT);
-			sprintf(msg, "Couldn't save to %s/%s/", ROOTFATDIR, GCSettings.SaveFolder);
-			WaitPrompt (msg);
-		}
+	}
+	else if (method == METHOD_SMB) // SMB
+	{
+		sprintf (filename, "%s/%s.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+		offset = SaveBufferToSMB (filename, bufoffset, silent);
 	}
 	else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC Slot A or B
 	{
-		if (!silent)
-			ShowAction ((char*) "Saving freeze game...");
+		sprintf (filename, "%s.snz", Memory.ROMFilename);
 
 		ClearSaveBuffer ();
 
@@ -242,46 +206,12 @@ NGCFreezeGame (int method, bool8 silent)
 			WaitPrompt (filename);
 		}
 	}
-	else if (method == METHOD_SMB) // SMB
+
+	if(offset > 0) // save successful!
 	{
-		smbfile = SMB_OpenFile (SMBPath(filename), SMB_OPEN_WRITING | SMB_DENY_NONE,	SMB_OF_CREATE | SMB_OF_TRUNCATE, smbconn);
-
-		if (smbfile)
-		{
-			if (!silent)
-				ShowAction ((char*) "Saving freeze game...");
-
-			len = bufoffset;
-			offset = 0;
-			while (len > 0)
-			{
-				if (len > 1024)
-				wrote =
-				SMB_WriteFile ((char *) membuffer + offset, 1024, offset,
-				smbfile);
-				else
-				wrote =
-				SMB_WriteFile ((char *) membuffer + offset, len, offset,
-				smbfile);
-
-				offset += wrote;
-				len -= wrote;
-			}
-
-			SMB_CloseFile (smbfile);
-
-			if ( !silent )
-			{
-				sprintf (filename, "Written %d bytes", bufoffset);
-				WaitPrompt (filename);
-			}
-		}
-		else
-		{
-			char msg[100];
-			sprintf(msg, "Couldn't save to SMB: %s", GCSettings.SaveFolder);
-			WaitPrompt (msg);
-		}
+		if(!silent)
+			WaitPrompt((char*) "Save successful");
+		return 1;
 	}
     return 0;
 }
@@ -292,35 +222,35 @@ NGCFreezeGame (int method, bool8 silent)
 int
 NGCUnFreezeBlock (char *name, uint8 * block, int size)
 {
-  char buffer[20], *e;
-  int len = 0;
-  int rem = 0;
+	char buffer[20], *e;
+	int len = 0;
+	int rem = 0;
 
-  GetMem (buffer, 11);
+	GetMem (buffer, 11);
 
-  if (strncmp (buffer, name, 3) != 0 || buffer[3] != ':' ||
-      buffer[10] != ':' || (len = strtol (&buffer[4], &e, 10)) == 0 ||
-      e != buffer + 10)
-    {
-      return WRONG_FORMAT;
-    }
+	if (strncmp (buffer, name, 3) != 0 || buffer[3] != ':' ||
+	buffer[10] != ':' || (len = strtol (&buffer[4], &e, 10)) == 0 ||
+	e != buffer + 10)
+	{
+		return WRONG_FORMAT;
+	}
 
-  if (len > size)
-    {
-      rem = len - size;
-      len = size;
-    }
+	if (len > size)
+	{
+		rem = len - size;
+		len = size;
+	}
 
-  ZeroMemory (block, size);
+	ZeroMemory (block, size);
 
-  GetMem ((char *) block, len);
+	GetMem ((char *) block, len);
 
-  if (rem)
-    {
-      bufoffset += rem;
-    }
+	if (rem)
+	{
+		bufoffset += rem;
+	}
 
-  return SUCCESS;
+	return SUCCESS;
 }
 
 /**
@@ -329,57 +259,31 @@ NGCUnFreezeBlock (char *name, uint8 * block, int size)
 int
 NGCUnfreezeGame (int method, bool8 silent)
 {
-    char filename[1024];
-    SMBFILE smbfile;
-    FILE *handle;
-    int read = 0;
-    int offset = 0;
-    char msg[80];
+	ShowAction ((char*) "Loading...");
+	char filename[1024];
+	int offset = 0;
+	char msg[80];
 
-    bufoffset = 0;
+	bufoffset = 0;
 
     if(method == METHOD_AUTO)
 		method = autoLoadMethod();
 
 	if (method == METHOD_SD || method == METHOD_USB) // SD & USB
 	{
-		changeFATInterface(method, NOTSILENT);
-		sprintf (filename, "%s/%s/%s.frz", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-
-		handle = fopen (filename, "rb");
-
-		if (handle > 0)
+		if(ChangeFATInterface(method, NOTSILENT))
 		{
-			if ( !silent )
-				ShowAction ((char*) "Loading freeze file...");
-
-			offset = 0;
-			/*** Usual chunks into memory ***/
-			while ((read = fread (membuffer + offset, 1, 2048, handle)) > 0)
-				offset += read;
-
-			fclose (handle);
-
-			if ( !silent )
-				ShowAction ((char*) "Unpacking freeze file");
-
-			if (S9xUnfreezeGame ("AGAME") != SUCCESS)
-			{
-				WaitPrompt((char*) "Error thawing");
-				return 0;
-			}
-			return 1;
+			sprintf (filename, "%s/%s/%s.frz", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
+			offset = LoadBufferFromFAT (filename, silent);
 		}
-
-		WaitPrompt((char*) "Freeze file not found");
-		return 0;
-    }
-
+	}
+	else if (method == METHOD_SMB) // Network (SMB)
+	{
+		sprintf (filename, "%s/%s.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+		offset = LoadBufferFromSMB (filename, silent);
+	}
     else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC in slot A or slot B
 	{
-		if ( !silent )
-			ShowAction ((char*) "Loading freeze file...");
-
 		sprintf (filename, "%s.snz", Memory.ROMFilename);
 
 		int ret = 0;
@@ -391,9 +295,6 @@ NGCUnfreezeGame (int method, bool8 silent)
 
 		if ( ret )
 		{
-			if ( !silent )
-				ShowAction ((char*) "Unpacking freeze file");
-
 			// skip the saveicon and comment
 			offset = (sizeof(saveicon) + 64);
 			uLongf zipsize = 0;
@@ -412,7 +313,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 
 			if ( err!=Z_OK )
 			{
-				sprintf (msg, "unzip error %s ",zError(err));
+				sprintf (msg, "Unzip error %s ",zError(err));
 				WaitPrompt (msg);
 				return 0;
 			}
@@ -422,49 +323,22 @@ NGCUnfreezeGame (int method, bool8 silent)
 				WaitPrompt((char*) "Unzipped size doesn't match expected size!");
 				return 0;
 			}
-
-			if (S9xUnfreezeGame ("AGAME") != SUCCESS)
-			{
-				WaitPrompt((char*) "Error thawing");
-				return 0;
-			}
 		}
-
-		WaitPrompt((char*) "Freeze file not found");
-		return 0;
     }
-    else if (method == METHOD_SMB) // Network (SMB)
-    {
-		sprintf (filename, "%s/%s.frz", GCSettings.SaveFolder, Memory.ROMFilename);
 
-		// Read the file into memory
-		smbfile = SMB_OpenFile (SMBPath(filename), SMB_OPEN_READING, SMB_OF_OPEN, smbconn);
+	if(offset > 0)
+	{
+		memcpy (membuffer, savebuffer, offset);
 
-		if (smbfile)
-		{
-			if ( !silent )
-				ShowAction ((char*) "Loading freeze file...");
-			while ((read =
-					SMB_ReadFile ((char *) membuffer + offset, 1024, offset,
-					smbfile)) > 0)
-			offset += read;
-
-			SMB_CloseFile (smbfile);
-
-			if ( !silent )
-				ShowAction ((char*) "Unpacking freeze file");
-			if (S9xUnfreezeGame ("AGAME") != SUCCESS)
-			{
-				WaitPrompt((char*) "Error thawing");
-				return 0;
-			}
-		}
-		else if ( !silent )
-		{
+		if (S9xUnfreezeGame ("AGAME") == SUCCESS)
+			return 1;
+		else
+			WaitPrompt((char*) "Error thawing");
+	}
+	else
+	{
+		if(!silent)
 			WaitPrompt((char*) "Freeze file not found");
-			return 0;
-		}
-		return 1;
-    }
+	}
 	return 0; // if we reached here, nothing was done!
 }

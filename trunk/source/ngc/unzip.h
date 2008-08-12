@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50 
+ * Snes9x 1.50
  *
  * Nintendo Gamecube Unzip - borrowed from the GPP
  *
@@ -9,6 +9,7 @@
 #define _UNZIP_
 
 extern int IsZipFile (char *buffer);
+int UnZipBuffer(unsigned char *outbuffer, unsigned char *inbuffer);
 int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, short where, FILE* filehandle);
 /*
  * Zip file header definition

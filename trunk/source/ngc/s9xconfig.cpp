@@ -159,14 +159,20 @@
 #include "snes9xGX.h"
 #include "smbop.h"
 
+START_EXTERN_C
+struct SGCSettings GCSettings;
+bool8 isWii;
+END_EXTERN_C
+
 void
 DefaultSettings ()
 {
 	/************** GameCube/Wii Settings *********************/
 	GCSettings.LoadMethod = METHOD_AUTO; // Auto, SD, DVD, USB, Network (SMB)
-	sprintf (GCSettings.LoadFolder,"snes9x/roms"); // Path to game files
 	GCSettings.SaveMethod = METHOD_AUTO; // Auto, SD, Memory Card Slot A, Memory Card Slot B, USB, Network (SMB)
+	sprintf (GCSettings.LoadFolder,"snes9x/roms"); // Path to game files
 	sprintf (GCSettings.SaveFolder,"snes9x/saves"); // Path to save files
+	sprintf (GCSettings.CheatFolder,"snes9x/cheats"); // Path to cheat files
 	GCSettings.AutoLoad = 1;
 	GCSettings.AutoSave = 1;
 

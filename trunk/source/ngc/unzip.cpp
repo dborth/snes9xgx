@@ -29,25 +29,25 @@
 u32
 FLIP32 (u32 b)
 {
-  unsigned int c;
+	unsigned int c;
 
-  c = (b & 0xff000000) >> 24;
-  c |= (b & 0xff0000) >> 8;
-  c |= (b & 0xff00) << 8;
-  c |= (b & 0xff) << 24;
+	c = (b & 0xff000000) >> 24;
+	c |= (b & 0xff0000) >> 8;
+	c |= (b & 0xff00) << 8;
+	c |= (b & 0xff) << 24;
 
-  return c;
+	return c;
 }
 
 u16
 FLIP16 (u16 b)
 {
-  u16 c;
+	u16 c;
 
-  c = (b & 0xff00) >> 8;
-  c |= (b & 0xff) << 8;
+	c = (b & 0xff00) >> 8;
+	c |= (b & 0xff) << 8;
 
-  return c;
+	return c;
 }
 
 /****************************************************************************
@@ -58,14 +58,14 @@ FLIP16 (u16 b)
 int
 IsZipFile (char *buffer)
 {
-  unsigned int *check;
+	unsigned int *check;
 
-  check = (unsigned int *) buffer;
+	check = (unsigned int *) buffer;
 
-  if (check[0] == PKZIPID)
-    return 1;
+	if (check[0] == PKZIPID)
+		return 1;
 
-  return 0;
+	return 0;
 }
 
  /*****************************************************************************
@@ -73,112 +73,134 @@ IsZipFile (char *buffer)
  *
  * It should be noted that there is a limit of 5MB total size for any ROM
  ******************************************************************************/
-int
-UnZipBuffer (unsigned char *outbuffer, u64 discoffset, short where, FILE* filehandle)
+unsigned char * uzipbuffer;
+
+int UnZipBuffer(unsigned char *outbuffer, unsigned char *inbuffer)
 {
-  PKZIPHEADER pkzip;
-  int zipoffset = 0;
-  int zipchunk = 0;
-  char out[ZIPCHUNK];
-  z_stream zs;
-  int res;
-  int bufferoffset = 0;
-  int have = 0;
-  char readbuffer[2048];
-  char msg[128];
+	uzipbuffer = inbuffer;
+	return UnZipBuffer(outbuffer, 0, 2, NULL);
+}
+
+int
+UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehandle)
+{
+	PKZIPHEADER pkzip;
+	int zipoffset = 0;
+	int zipchunk = 0;
+	char out[ZIPCHUNK];
+	z_stream zs;
+	int res;
+	int bufferoffset = 0;
+	int have = 0;
+	char readbuffer[2048];
+	char msg[128];
 
 	/*** Read Zip Header ***/
-  switch (where) {
-	case 0:		// SD Card
+	switch (where)
+	{
+		case 0:	// SD Card
 		fseek(filehandle, 0, SEEK_SET);
-		fread (readbuffer, 1, 2048, filehandle);	break;
-	case 1:		// DVD
-		dvd_read (readbuffer, 2048, discoffset);	break;
-  }
+		fread (readbuffer, 1, 2048, filehandle);
+		break;
+
+		case 1: // DVD
+		dvd_read (readbuffer, 2048, inoffset);
+		break;
+
+		case 2: // From buffer
+		memcpy(readbuffer, uzipbuffer, 2048);
+		break;
+	}
 
 	/*** Copy PKZip header to local, used as info ***/
-  memcpy (&pkzip, readbuffer, sizeof (PKZIPHEADER));
+	memcpy (&pkzip, readbuffer, sizeof (PKZIPHEADER));
 
-  pkzip.uncompressedSize = FLIP32 (pkzip.uncompressedSize);
+	pkzip.uncompressedSize = FLIP32 (pkzip.uncompressedSize);
 
-  sprintf (msg, "Unzipping %d bytes ... Wait",
-	   pkzip.uncompressedSize);
-  ShowAction (msg);
+	sprintf (msg, "Unzipping %d bytes ... Wait",
+	pkzip.uncompressedSize);
+	ShowAction (msg);
 
 	/*** Prepare the zip stream ***/
-  memset (&zs, 0, sizeof (z_stream));
-  zs.zalloc = Z_NULL;
-  zs.zfree = Z_NULL;
-  zs.opaque = Z_NULL;
-  zs.avail_in = 0;
-  zs.next_in = Z_NULL;
-  res = inflateInit2 (&zs, -MAX_WBITS);
+	memset (&zs, 0, sizeof (z_stream));
+	zs.zalloc = Z_NULL;
+	zs.zfree = Z_NULL;
+	zs.opaque = Z_NULL;
+	zs.avail_in = 0;
+	zs.next_in = Z_NULL;
+	res = inflateInit2 (&zs, -MAX_WBITS);
 
-  if (res != Z_OK)
-    return 0;
+	if (res != Z_OK)
+		return 0;
 
 	/*** Set ZipChunk for first pass ***/
-  zipoffset =
-    (sizeof (PKZIPHEADER) + FLIP16 (pkzip.filenameLength) +
-     FLIP16 (pkzip.extraDataLength));
-  zipchunk = ZIPCHUNK - zipoffset;
+	zipoffset =
+	(sizeof (PKZIPHEADER) + FLIP16 (pkzip.filenameLength) +
+	FLIP16 (pkzip.extraDataLength));
+	zipchunk = ZIPCHUNK - zipoffset;
 
 	/*** Now do it! ***/
-  do
-    {
-      zs.avail_in = zipchunk;
-      zs.next_in = (Bytef *) & readbuffer[zipoffset];
+	do
+	{
+		zs.avail_in = zipchunk;
+		zs.next_in = (Bytef *) & readbuffer[zipoffset];
 
 		/*** Now inflate until input buffer is exhausted ***/
-      do
-	{
-	  zs.avail_out = ZIPCHUNK;
-	  zs.next_out = (Bytef *) & out;
+		do
+		{
+			zs.avail_out = ZIPCHUNK;
+			zs.next_out = (Bytef *) & out;
 
-	  res = inflate (&zs, Z_NO_FLUSH);
+			res = inflate (&zs, Z_NO_FLUSH);
 
-	  if (res == Z_MEM_ERROR)
-	    {
-	      inflateEnd (&zs);
-	      return 0;
-	    }
+			if (res == Z_MEM_ERROR)
+			{
+			inflateEnd (&zs);
+			return 0;
+			}
 
-	  have = ZIPCHUNK - zs.avail_out;
-	  if (have)
-	    {
-				/*** Copy to normal block buffer ***/
-	      memcpy (&outbuffer[bufferoffset], &out, have);
-	      bufferoffset += have;
-	    }
-
-	}
-      while (zs.avail_out == 0);
+			have = ZIPCHUNK - zs.avail_out;
+			if (have)
+			{
+			/*** Copy to normal block buffer ***/
+			memcpy (&outbuffer[bufferoffset], &out, have);
+			bufferoffset += have;
+			}
+		}
+		while (zs.avail_out == 0);
 
 		/*** Readup the next 2k block ***/
-      zipoffset = 0;
-      zipchunk = ZIPCHUNK;
+		zipoffset = 0;
+		zipchunk = ZIPCHUNK;
 
-	  switch (where) {
-		case 0:		// SD Card
-			fread (readbuffer, 1, 2048, filehandle);	break;
-		case 1:		// DVD
-			discoffset += 2048;
-			dvd_read (readbuffer, 2048, discoffset);	break;
-	  }
+		switch (where)
+		{
+			case 0:		// SD Card
+			fread (readbuffer, 1, 2048, filehandle);
+			break;
 
-    }
-  while (res != Z_STREAM_END);
+			case 1:		// DVD
+			inoffset += 2048;
+			dvd_read (readbuffer, 2048, inoffset);
+			break;
 
-  inflateEnd (&zs);
+			case 2: // From buffer
+			inoffset += 2048;
+			memcpy(readbuffer, uzipbuffer+inoffset, 2048);
+			break;
+		}
+	}
+	while (res != Z_STREAM_END);
 
-  if (res == Z_STREAM_END)
-    {
-      if (pkzip.uncompressedSize == (u32) bufferoffset)
-	return bufferoffset;
-      else
-	return pkzip.uncompressedSize;
-    }
+	inflateEnd (&zs);
 
-  return 0;
+	if (res == Z_STREAM_END)
+	{
+		if (pkzip.uncompressedSize == (u32) bufferoffset)
+			return bufferoffset;
+		else
+			return pkzip.uncompressedSize;
+	}
 
+	return 0;
 }
