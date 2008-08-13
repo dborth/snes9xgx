@@ -1,21 +1,22 @@
 /****************************************************************************
  * Snes9x 1.50
  *
- * Nintendo Gamecube Screen Font Driver
+ * Nintendo Wii/Gamecube Port
+ *
+ * softdev July 2006
+ * crunchy2 June 2007
+ * Tantric August 2008
+ *
+ * menudraw.cpp
+ *
+ * Menu drawing routines
  *
  * Uses libfreetype 2.2.1 compiled for GC with TTF support only.
  * TTF only reduces the library by some 900k bytes!
  *
- * Visit - http://www.freetype.org !
- *
  * **WARNING***
  *
  * ONLY USE GUARANTEED PATENT FREE FONTS.
- * THOSE IN YOUR WINDOWS\FONTS DIRECTORY ARE COPYRIGHT
- * AND MAY NOT BE DISTRIBUTED!
- *
- * softdev July 2006
- * crunchy2 June 2007
  ****************************************************************************/
 #include <gccore.h>
 #include <ogcsys.h>
@@ -33,6 +34,8 @@
 #include "video.h"
 #include "menudraw.h"
 #include "snes9xGX.h"
+#include "filesel.h"
+#include "dvd.h"
 #include "aram.h"
 #include "images/gfx_bg.h"
 
@@ -627,6 +630,116 @@ RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
 
 }
 
+/****************************************************************************
+ * Showfile screen
+ *
+ * Display the file selection to the user
+****************************************************************************/
+
+void
+ShowFiles (FILEENTRIES filelist[], int maxfiles, int offset, int selection)
+{
+	int i, j;
+	char text[MAXPATHLEN];
+	int ypos;
+	int w;
+
+	clearscreen ();
+
+	setfontsize (28);
+	DrawText (-1, 60, (char*)"Choose Game");
+
+	setfontsize(18);
+
+	ypos = (screenheight - ((PAGESIZE - 1) * 20)) >> 1;
+
+	if (screenheight == 480)
+		ypos += 24;
+	else
+		ypos += 10;
+
+	j = 0;
+	for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
+	{
+		if (filelist[i].flags)	// if a dir
+		{
+			strcpy (text, "[");
+			strcat (text, filelist[i].displayname);
+			strcat (text, "]");
+		}
+		else
+		{
+			// hide file extension on listing (.7z, .fig, .smc)
+			StripExt(text, filelist[i].displayname);
+		}
+		if (j == (selection - offset))
+		{
+			/*** Highlighted text entry ***/
+			for ( w = 0; w < 20; w++ )
+				DrawLineFast( 30, 610, ( j * 20 ) + (ypos-16) + w, 0x80, 0x80, 0x80 );
+
+			setfontcolour (0x00, 0x00, 0xe0);
+			DrawText (50, (j * 20) + ypos, text);
+			setfontcolour (0x00, 0x00, 0x00);
+		}
+		else
+		{
+			/*** Normal entry ***/
+			DrawText (50, (j * 20) + ypos, text);
+		}
+		j++;
+	}
+	showscreen ();
+}
+
+/****************************************************************************
+ * Cheats screen
+ *
+ * Displays a scrollable list of cheats to the user
+****************************************************************************/
+
+void
+ShowCheats (char items[][50], char itemvalues[][50], int maxitems, int offset, int selection)
+{
+	int i, j = 0;
+	int ypos;
+	int w;
+
+	clearscreen ();
+
+	setfontsize (28);
+	DrawText (-1, 60, (char*)"Cheats");
+
+	setfontsize(18);
+
+	ypos = (screenheight - ((PAGESIZE - 1) * 20)) >> 1;
+
+	if (screenheight == 480)
+		ypos += 24;
+	else
+		ypos += 10;
+
+	for (i = offset; i < (offset + PAGESIZE) && (i < maxitems); i++)
+	{
+		if (i == selection)
+		{
+			/*** Highlighted text entry ***/
+			for ( w = 0; w < 20; w++ )
+				DrawLineFast( 30, 610, ( j * 20 ) + (ypos-16) + w, 0x80, 0x80, 0x80 );
+
+			DrawText (150, (j * 20) + ypos, items[i]);
+			DrawText (400, (j * 20) + ypos, itemvalues[i]);
+		}
+		else
+		{
+			/*** Normal entry ***/
+			DrawText (150, (j * 20) + ypos, items[i]);
+			DrawText (400, (j * 20) + ypos, itemvalues[i]);
+		}
+		j++;
+	}
+	showscreen ();
+}
 
 /****************************************************************************
  * ROM Information Screen

@@ -85,7 +85,7 @@ UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehand
 	int res;
 	int bufferoffset = 0;
 	int have = 0;
-	char readbuffer[2048];
+	char readbuffer[ZIPCHUNK];
 	char msg[128];
 
 	/*** Read Zip Header ***/
@@ -93,15 +93,15 @@ UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehand
 	{
 		case 0:	// SD Card
 		fseek(filehandle, 0, SEEK_SET);
-		fread (readbuffer, 1, 2048, filehandle);
+		fread (readbuffer, 1, ZIPCHUNK, filehandle);
 		break;
 
 		case 1: // DVD
-		dvd_read (readbuffer, 2048, inoffset);
+		dvd_read (readbuffer, ZIPCHUNK, inoffset);
 		break;
 
 		case 2: // From buffer
-		memcpy(readbuffer, outbuffer, 2048);
+		memcpy(readbuffer, outbuffer, ZIPCHUNK);
 		break;
 	}
 
@@ -148,16 +148,16 @@ UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehand
 
 			if (res == Z_MEM_ERROR)
 			{
-			inflateEnd (&zs);
-			return 0;
+				inflateEnd (&zs);
+				return 0;
 			}
 
 			have = ZIPCHUNK - zs.avail_out;
 			if (have)
 			{
-			/*** Copy to normal block buffer ***/
-			memcpy (&outbuffer[bufferoffset], &out, have);
-			bufferoffset += have;
+				/*** Copy to normal block buffer ***/
+				memcpy (&outbuffer[bufferoffset], &out, have);
+				bufferoffset += have;
 			}
 		}
 		while (zs.avail_out == 0);
@@ -169,17 +169,17 @@ UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehand
 		switch (where)
 		{
 			case 0:		// SD Card
-			fread (readbuffer, 1, 2048, filehandle);
+			fread (readbuffer, 1, ZIPCHUNK, filehandle);
 			break;
 
 			case 1:		// DVD
-			inoffset += 2048;
-			dvd_read (readbuffer, 2048, inoffset);
+			inoffset += ZIPCHUNK;
+			dvd_read (readbuffer, ZIPCHUNK, inoffset);
 			break;
 
 			case 2: // From buffer
-			inoffset += 2048;
-			memcpy(readbuffer, outbuffer+inoffset, 2048);
+			inoffset += ZIPCHUNK;
+			memcpy(readbuffer, outbuffer+inoffset, ZIPCHUNK);
 			break;
 		}
 	}

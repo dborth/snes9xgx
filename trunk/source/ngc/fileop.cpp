@@ -2,6 +2,7 @@
  * Snes9x 1.50
  *
  * Nintendo Wii/Gamecube Port
+ *
  * softdev July 2006
  * crunchy2 May 2007
  * Tantric August 2008
@@ -21,7 +22,6 @@
 #include "unzip.h"
 #include "video.h"
 #include "menudraw.h"
-#include "dvd.h"
 #include "filesel.h"
 #include "sram.h"
 #include "preferences.h"

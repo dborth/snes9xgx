@@ -10,21 +10,8 @@
 #ifndef _NGCDVD_
 #define _NGCDVD_
 
-#define MAXJOLIET 255
-#define MAXDISPLAY 54
-typedef struct
-{
-  u64 offset;
-  unsigned int length;
-  char flags;
-  char filename[MAXJOLIET + 1];
-  char displayname[MAXDISPLAY + 1];
-} FILEENTRIES;
-
 extern u64 rootdir;
 extern int rootdirlength;
-#define MAXFILES 2000			/** Restrict to 2000 files per dir **/
-extern FILEENTRIES filelist[MAXFILES];
 
 int getpvd ();
 int ParseDVDdirectory ();
