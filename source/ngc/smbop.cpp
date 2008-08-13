@@ -2,6 +2,7 @@
  * Snes9x 1.50
  *
  * Nintendo Wii/Gamecube Port
+ *
  * softdev July 2006
  * crunchy2 May 2007
  * Tantric August 2008
@@ -24,7 +25,6 @@
 #include "unzip.h"
 #include "video.h"
 #include "menudraw.h"
-#include "dvd.h"
 #include "filesel.h"
 #include "smbop.h"
 #include "Snes9xGx.h"
@@ -234,7 +234,7 @@ LoadSMBFile (char *filename, int length)
 		{
 			//return UnZipBuffer(rbuffer, 0, 2, NULL);
 			// UNZIP currently crashes - FIX ME
-			WaitPrompt((char*) "Zipped files are currently not supported!");
+			WaitPrompt((char*) "Zipped files are currently not supported over SMB!");
 			return -1;
 		}
 	}
@@ -287,8 +287,10 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
 }
 
 /****************************************************************************
- * Load savebuffer from SMB file
+ * Load up a buffer from SMB file
  ****************************************************************************/
+
+// no buffer is specified - so use savebuffer
 int
 LoadBufferFromSMB (char *filepath, bool8 silent)
 {

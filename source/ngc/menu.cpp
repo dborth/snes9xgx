@@ -1,10 +1,15 @@
 /****************************************************************************
  * Snes9x 1.50
  *
- * Nintendo Gamecube Menu
+ * Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * crunchy2 May-June 2007
+ * Tantric August 2008
+ *
+ * menu.cpp
+ *
+ * Menu flow routines
  ****************************************************************************/
 #include <gccore.h>
 #include <ogcsys.h>
@@ -293,6 +298,9 @@ PreferencesMenu ()
  ****************************************************************************/
 static int cheatmenuCount = 0;
 static char cheatmenu[MAX_CHEATS][50];
+static char cheatmenuvalue[MAX_CHEATS][50];
+
+#define PADCAL 40
 
 void CheatMenu()
 {
@@ -300,9 +308,25 @@ void CheatMenu()
 	int oldmenu = menu;
 	menu = 0;
 
+	int selection = 0;
+	int offset = 0;
+	u32 p, wp, ph, wh;
+	signed char a, c;
+	int redraw = 1;
+	int selectit = 0;
+	float mag, mag2;
+	u16 ang, ang2;
+	int scroll_delay = 0;
+	bool move_selection = 0;
+	#define SCROLL_INITIAL_DELAY	15
+	#define SCROLL_LOOP_DELAY		2
+
 	if(Cheat.num_cheats > 0)
 	{
 		cheatmenuCount = Cheat.num_cheats + 1;
+
+		for(uint16 i=0; i < Cheat.num_cheats; i++)
+			sprintf (cheatmenu[i], "%s", Cheat.c[i].name);
 
 		sprintf (cheatmenu[cheatmenuCount-1], "Back to Game Menu");
 
@@ -314,17 +338,133 @@ void CheatMenu()
 					S9xDisableCheat(ret);
 				else
 					S9xEnableCheat(ret);
+
+				ret = -1;
 			}
 
 			for(uint16 i=0; i < Cheat.num_cheats; i++)
-				sprintf (cheatmenu[i], "%s %s", Cheat.c[i].name, Cheat.c[i].enabled == true ? " ON" : "OFF");
+				sprintf (cheatmenuvalue[i], "%s", Cheat.c[i].enabled == true ? "ON" : "OFF");
 
-			ret = RunMenu (cheatmenu, cheatmenuCount, (char*)"Cheats", 16);
+			if (redraw)
+			    ShowCheats (cheatmenu, cheatmenuvalue, cheatmenuCount, offset, selection);
+
+			redraw = 0;
+
+			VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
+
+			p = PAD_ButtonsDown (0);
+			ph = PAD_ButtonsHeld (0);
+		#ifdef HW_RVL
+			wp = WPAD_ButtonsDown (0);
+			wh = WPAD_ButtonsHeld (0);
+			wpad_get_analogues(0, &mag, &ang, &mag2, &ang2);		// get joystick info from wii expansions
+		#else
+			wp = 0;
+			wh = 0;
+			ang = 0;
+			ang2 = 0;
+			mag = 0;
+			mag2 = 0;
+		#endif
+			a = PAD_StickY (0);
+			c = PAD_SubStickX (0);
+
+			/*** Check for exit combo ***/
+			if ( (c < -70) || (wp & WPAD_BUTTON_HOME) || (wp & WPAD_CLASSIC_BUTTON_HOME) )
+				break;
+
+			/*** Check buttons, perform actions ***/
+			if ( (p & PAD_BUTTON_A) || selectit || (wp & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) )
+			{
+				if ( selectit )
+					selectit = 0;
+
+				redraw = 1;
+				ret = selection;
+			}	// End of A
+
+			if ( ((p | ph) & PAD_BUTTON_DOWN) || ((wp | wh) & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (a < -PADCAL) || (mag>JOY_THRESHOLD && (ang>130 && ang<230)) )
+			{
+				if ( (p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) ) { /*** Button just pressed ***/
+					scroll_delay = SCROLL_INITIAL_DELAY;	// reset scroll delay.
+					move_selection = 1;	//continue (move selection)
+				}
+				else if (scroll_delay == 0) { 		/*** Button is held ***/
+					scroll_delay = SCROLL_LOOP_DELAY;
+					move_selection = 1;	//continue (move selection)
+				} else {
+					scroll_delay--;	// wait
+				}
+
+				if (move_selection)
+				{
+					selection++;
+					if (selection == cheatmenuCount)
+						selection = offset = 0;
+					if ((selection - offset) >= PAGESIZE)
+						offset += PAGESIZE;
+					redraw = 1;
+					move_selection = 0;
+				}
+			}	// End of down
+			if ( ((p | ph) & PAD_BUTTON_UP) || ((wp | wh) & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (a > PADCAL) || (mag>JOY_THRESHOLD && (ang>300 || ang<50)) )
+			{
+				if ( (p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) ) { /*** Button just pressed***/
+					scroll_delay = SCROLL_INITIAL_DELAY;	// reset scroll delay.
+					move_selection = 1;	//continue (move selection)
+				}
+				else if (scroll_delay == 0) { 		/*** Button is held ***/
+					scroll_delay = SCROLL_LOOP_DELAY;
+					move_selection = 1;	//continue (move selection)
+				} else {
+					scroll_delay--;	// wait
+				}
+
+				if (move_selection)
+				{
+					selection--;
+					if (selection < 0) {
+						selection = cheatmenuCount - 1;
+						offset = selection - PAGESIZE + 1;
+					}
+					if (selection < offset)
+						offset -= PAGESIZE;
+					if (offset < 0)
+						offset = 0;
+					redraw = 1;
+					move_selection = 0;
+				}
+			}	// End of Up
+			if ( (p & PAD_BUTTON_LEFT) || (wp & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT)) )
+			{
+				/*** Go back a page ***/
+				selection -= PAGESIZE;
+				if (selection < 0)
+				{
+					selection = cheatmenuCount - 1;
+					offset = selection - PAGESIZE + 1;
+				}
+				if (selection < offset)
+					offset -= PAGESIZE;
+				if (offset < 0)
+					offset = 0;
+				redraw = 1;
+			}
+			if ( (p & PAD_BUTTON_RIGHT) || (wp & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT)) )
+			{
+				/*** Go forward a page ***/
+				selection += PAGESIZE;
+				if (selection > cheatmenuCount - 1)
+					selection = offset = 0;
+				if ((selection - offset) >= PAGESIZE)
+					offset += PAGESIZE;
+				redraw = 1;
+			}
 		}
 	}
 	else
 	{
-		WaitPrompt((char*)"Cheat file not found!");
+		WaitPrompt((char*)"No cheats found!");
 	}
 	menu = oldmenu;
 }

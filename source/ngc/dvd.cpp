@@ -19,6 +19,7 @@
 
 extern int offset;
 extern int selection;
+extern FILEENTRIES filelist[MAXFILES];
 
 /** DVD I/O Address base **/
 volatile unsigned long *dvd = (volatile unsigned long *) 0xCC006000;
@@ -106,9 +107,6 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 static int IsJoliet = 0;
 u64 rootdir = 0;
 int rootdirlength = 0;
-
-/** Global file entry table **/
-FILEENTRIES filelist[MAXFILES];
 
 /**
  * Primary Volume Descriptor

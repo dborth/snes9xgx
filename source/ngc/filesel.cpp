@@ -2,6 +2,7 @@
  * Snes9x 1.50
  *
  * Nintendo Wii/Gamecube Port
+ *
  * softdev July 2006
  * svpe June 2007
  * crunchy2 May-July 2007
@@ -36,10 +37,12 @@ int selection;
 char currentdir[MAXPATHLEN];
 int maxfiles;
 extern int screenheight;
-#define PAGESIZE 17
 extern unsigned long ARAM_ROMSIZE;
 int havedir = 0;
 int hasloaded = 0;
+
+// Global file entry table
+FILEENTRIES filelist[MAXFILES];
 
 unsigned char savebuffer[SAVEBUFFERSIZE] ATTRIBUTE_ALIGN (32);
 
@@ -196,68 +199,6 @@ void StripExt(char* returnstring, char * inputstring)
 }
 
 /****************************************************************************
- * Showfile screen
- *
- * Display the file selection to the user
-****************************************************************************/
-
-static void
-ShowFiles ()
-{
-	int i, j;
-	char text[MAXPATHLEN];
-	int ypos;
-	int w;
-
-	clearscreen ();
-
-	setfontsize (28);
-	DrawText (-1, 60, (char*)"Choose Game");
-
-	setfontsize(18);
-
-	ypos = (screenheight - ((PAGESIZE - 1) * 20)) >> 1;
-
-	if (screenheight == 480)
-		ypos += 24;
-	else
-		ypos += 10;
-
-	j = 0;
-	for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
-	{
-		if (filelist[i].flags)	// if a dir
-		{
-			strcpy (text, "[");
-			strcat (text, filelist[i].displayname);
-			strcat (text, "]");
-		}
-		else
-		{
-			// hide file extension on listing (.7z, .fig, .smc)
-			StripExt(text, filelist[i].displayname);
-		}
-		if (j == (selection - offset))
-		{
-			/*** Highlighted text entry ***/
-			for ( w = 0; w < 20; w++ )
-				DrawLineFast( 30, 610, ( j * 20 ) + (ypos-16) + w, 0x80, 0x80, 0x80 );
-
-			setfontcolour (0x00, 0x00, 0xe0);
-			DrawText (50, (j * 20) + ypos, text);
-			setfontcolour (0x00, 0x00, 0x00);
-		}
-		else
-		{
-			/*** Normal entry ***/
-			DrawText (50, (j * 20) + ypos, text);
-		}
-		j++;
-	}
-	showscreen ();
-}
-
-/****************************************************************************
  * FileSelector
  *
  * Let user select a file from the listing
@@ -282,7 +223,7 @@ FileSelector (int method)
     while (haverom == 0)
     {
         if (redraw)
-            ShowFiles ();
+            ShowFiles (filelist, maxfiles, offset, selection);
         redraw = 0;
 
 		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
