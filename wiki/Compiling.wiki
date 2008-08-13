@@ -3,15 +3,15 @@
 
 Here's some basic instructions on compiling SNES9x GX. You don't need to be a programmer to follow these instructions but you should have some basic computer know-how. There's a few reasons you might want to do this:
 
-1. To use the latest version of the emulator (note that beta versions may be unstable)
-2. To access ROMS/saves from Windows File Sharing (SMB) - just edit s9xconfig.cpp
-3. Make your own custom changes
+  # To use the latest version of the emulator (note that beta versions may be unstable)
+  # To access ROMS/saves from Windows File Sharing (SMB) - just edit s9xconfig.cpp
+  # Make your own custom changes
 
 = Instructions =
 
-1. Download the source either from the Downloads page, or the latest directly from SVN.
-2. Download and install devkitPro (www.devkitpro.com). You only need to install devkitPPC.
-3. Download the devkitPro libraries (devkitPro.zip) from the Downloads page, and overwrite the libraries in your devkitPro installation folder.
-4. Run Programmer's Notepad (installed with devkitPro)
-5. Find the Makefile from the source you downloaded. Click Tools > Make.
-6. You're done!
+  # Download the source either from the Downloads page, or the latest directly from SVN.
+  # Download and install devkitPro (www.devkitpro.com). You only need to install devkitPPC.
+  # Download the devkitPro libraries (devkitPro.zip) from the Downloads page, and overwrite the libraries in your devkitPro installation folder.
+  # Run Programmer's Notepad (installed with devkitPro)
+  # Find the Makefile from the source you downloaded. Click Tools > Make.
+  # You're done!
