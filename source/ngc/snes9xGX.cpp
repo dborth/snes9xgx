@@ -595,14 +595,6 @@ NGCReportButtons ()
         }
 
         mainmenu (3); // go to game menu
-        FrameTimer = 0;
-        ConfigRequested = 0;
-
-		setFrameTimerMethod(); 	// set frametimer method every time a ROM is loaded
-
-		S9xReportControllers();	// FIX
-
-
     }
     else
     {
@@ -803,7 +795,10 @@ emulate ()
 	AudioStart ();
 	S9xInitSync();
 
-	setFrameTimerMethod();	// also called in NGCReportButtons()
+	FrameTimer = 0;
+	ConfigRequested = 0;
+	setFrameTimerMethod(); 	// set frametimer method every time a ROM is loaded
+	S9xReportControllers();	// FIX
 
 	while (1)
 	{

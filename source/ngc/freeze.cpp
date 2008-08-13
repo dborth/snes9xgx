@@ -139,6 +139,8 @@ NGCFreezeGame (int method, bool8 silent)
 	S9xPrepareSoundForSnapshotSave (FALSE);
 
 	NGCFreezeMemBuffer (); // copy freeze mem into membuffer
+
+	ClearSaveBuffer ();
 	memcpy (savebuffer, membuffer, bufoffset);
 
 	S9xPrepareSoundForSnapshotSave (TRUE);
@@ -164,17 +166,17 @@ NGCFreezeGame (int method, bool8 silent)
 		ClearSaveBuffer ();
 
 		/*** Copy in save icon ***/
-		int offset = sizeof (saveicon);
-		memcpy (savebuffer, saveicon, offset);
+		int woffset = sizeof (saveicon);
+		memcpy (savebuffer, saveicon, woffset);
 
 		/*** And the freezecomment ***/
 		sprintf (freezecomment[1], "%s", Memory.ROMFilename);
-		memcpy (savebuffer + offset, freezecomment, 64);
-		offset += 64;
+		memcpy (savebuffer + woffset, freezecomment, 64);
+		woffset += 64;
 
 		/*** Zip and copy in the freeze ***/
 		uLongf DestBuffSize = (uLongf) SAVEBUFFERSIZE;
-		int err= compress2((Bytef*)(savebuffer+offset+8), (uLongf*)&DestBuffSize, (const Bytef*)membuffer, (uLongf)bufoffset, Z_BEST_COMPRESSION);
+		int err= compress2((Bytef*)(savebuffer+woffset+8), (uLongf*)&DestBuffSize, (const Bytef*)membuffer, (uLongf)bufoffset, Z_BEST_COMPRESSION);
 
 		if(err!=Z_OK)
 		{
@@ -184,27 +186,19 @@ NGCFreezeGame (int method, bool8 silent)
 		}
 
 		int zippedsize = (int)DestBuffSize;
-		memcpy (savebuffer + offset, &zippedsize, 4);
-		offset += 4;
+		memcpy (savebuffer + woffset, &zippedsize, 4);
+		woffset += 4;
 
 		int decompressedsize = (int)bufoffset;
-		memcpy (savebuffer + offset, &decompressedsize, 4);
-		offset += 4;
+		memcpy (savebuffer + woffset, &decompressedsize, 4);
+		woffset += 4;
 
-		offset += zippedsize;
-
-		int ret;
+		woffset += zippedsize;
 
 		if(method == METHOD_MC_SLOTA)
-			ret = SaveBufferToMC ( savebuffer, CARD_SLOTA, filename, offset, SILENT );
+			offset = SaveBufferToMC ( savebuffer, CARD_SLOTA, filename, woffset, SILENT );
 		else
-			ret = SaveBufferToMC ( savebuffer, CARD_SLOTB, filename, offset, SILENT );
-
-		if ( ret && !silent )
-		{
-			sprintf (filename, "Written %d bytes", ret);
-			WaitPrompt (filename);
-		}
+			offset = SaveBufferToMC ( savebuffer, CARD_SLOTB, filename, woffset, SILENT );
 	}
 
 	if(offset > 0) // save successful!
@@ -289,12 +283,14 @@ NGCUnfreezeGame (int method, bool8 silent)
 		int ret = 0;
 
 		if(method == METHOD_MC_SLOTA)
-			LoadBufferFromMC ( savebuffer, CARD_SLOTA, filename, silent );
+			ret = LoadBufferFromMC ( savebuffer, CARD_SLOTA, filename, silent );
 		else
-			LoadBufferFromMC ( savebuffer, CARD_SLOTB, filename, silent );
+			ret = LoadBufferFromMC ( savebuffer, CARD_SLOTB, filename, silent );
 
-		if ( ret )
+		if (ret)
 		{
+			char zipbuffer[MEMBUFFER];
+
 			// skip the saveicon and comment
 			offset = (sizeof(saveicon) + 64);
 			uLongf zipsize = 0;
@@ -309,7 +305,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 			memset(membuffer, 0, MEMBUFFER);
 
 			uLongf DestBuffSize = MEMBUFFER;
-			int err= uncompress((Bytef*)membuffer, (uLongf*)&DestBuffSize, (const Bytef*)(savebuffer + offset), zipsize);
+			int err= uncompress((Bytef*)zipbuffer, (uLongf*)&DestBuffSize, (const Bytef*)(savebuffer + offset), zipsize);
 
 			if ( err!=Z_OK )
 			{
@@ -317,11 +313,15 @@ NGCUnfreezeGame (int method, bool8 silent)
 				WaitPrompt (msg);
 				return 0;
 			}
-
-			if ( DestBuffSize != decompressedsize )
+			else if ( DestBuffSize != decompressedsize )
 			{
 				WaitPrompt((char*) "Unzipped size doesn't match expected size!");
 				return 0;
+			}
+			else
+			{
+				offset = MEMBUFFER;
+				memcpy (savebuffer, zipbuffer, MEMBUFFER);
 			}
 		}
     }
@@ -329,6 +329,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 	if(offset > 0)
 	{
 		memcpy (membuffer, savebuffer, offset);
+		ClearSaveBuffer ();
 
 		if (S9xUnfreezeGame ("AGAME") == SUCCESS)
 			return 1;

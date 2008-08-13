@@ -73,13 +73,6 @@ IsZipFile (char *buffer)
  *
  * It should be noted that there is a limit of 5MB total size for any ROM
  ******************************************************************************/
-unsigned char * uzipbuffer;
-
-int UnZipBuffer(unsigned char *outbuffer, unsigned char *inbuffer)
-{
-	uzipbuffer = inbuffer;
-	return UnZipBuffer(outbuffer, 0, 2, NULL);
-}
 
 int
 UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehandle)
@@ -108,7 +101,7 @@ UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehand
 		break;
 
 		case 2: // From buffer
-		memcpy(readbuffer, uzipbuffer, 2048);
+		memcpy(readbuffer, outbuffer, 2048);
 		break;
 	}
 
@@ -186,7 +179,7 @@ UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehand
 
 			case 2: // From buffer
 			inoffset += 2048;
-			memcpy(readbuffer, uzipbuffer+inoffset, 2048);
+			memcpy(readbuffer, outbuffer+inoffset, 2048);
 			break;
 		}
 	}
