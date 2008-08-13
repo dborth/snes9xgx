@@ -235,6 +235,8 @@ LoadBufferFromFAT (char *filepath, bool silent)
     int boffset = 0;
     int read = 0;
 
+    ClearSaveBuffer ();
+
     handle = fopen (filepath, "rb");
 
     if (handle <= 0)
@@ -247,8 +249,6 @@ LoadBufferFromFAT (char *filepath, bool silent)
         }
         return 0;
     }
-
-    memset (savebuffer, 0, 0x22000);
 
     /*** This is really nice, just load the file and decode it ***/
     while ((read = fread (savebuffer + boffset, 1, 1024, handle)) > 0)
@@ -285,5 +285,6 @@ SaveBufferToFAT (char *filepath, int datasize, bool silent)
         fclose (handle);
     }
 
+    ClearSaveBuffer ();
     return datasize;
 }

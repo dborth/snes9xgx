@@ -188,11 +188,11 @@ PreferencesMenu ()
 
 		if (GCSettings.AutoLoad == 0) sprintf (prefmenu[4],"Auto Load OFF");
 		else if (GCSettings.AutoLoad == 1) sprintf (prefmenu[4],"Auto Load SRAM");
-		else if (GCSettings.AutoLoad == 2) sprintf (prefmenu[4],"Auto Load FREEZE");
+		else if (GCSettings.AutoLoad == 2) sprintf (prefmenu[4],"Auto Load SNAPSHOT");
 
 		if (GCSettings.AutoSave == 0) sprintf (prefmenu[5],"Auto Save OFF");
 		else if (GCSettings.AutoSave == 1) sprintf (prefmenu[5],"Auto Save SRAM");
-		else if (GCSettings.AutoSave == 2) sprintf (prefmenu[5],"Auto Save FREEZE");
+		else if (GCSettings.AutoSave == 2) sprintf (prefmenu[5],"Auto Save SNAPSHOT");
 		else if (GCSettings.AutoSave == 3) sprintf (prefmenu[5],"Auto Save BOTH");
 
 		sprintf (prefmenu[6], "Verify MC Saves %s",
@@ -332,20 +332,21 @@ void CheatMenu()
 /****************************************************************************
  * Game Options Menu
  ****************************************************************************/
-static int gamemenuCount = 9;
-static char gamemenu[][50] = {
-  "Return to Game",
-  "Reset Game",
-  "ROM Information",
-  "Cheats",
-  "Load SRAM", "Save SRAM",
-  "Load Freeze", "Save Freeze",
-  "Back to Main Menu"
-};
 
 int
 GameMenu ()
 {
+	int gamemenuCount = 9;
+	char gamemenu[][50] = {
+	  "Return to Game",
+	  "Reset Game",
+	  "ROM Information",
+	  "Cheats",
+	  "Load SRAM", "Save SRAM",
+	  "Load Game Snapshot", "Save Game Snapshot",
+	  "Back to Main Menu"
+	};
+
 	int ret, retval = 0;
 	int quit = 0;
 	int oldmenu = menu;
@@ -353,7 +354,28 @@ GameMenu ()
 
 	while (quit == 0)
 	{
-		ret = RunMenu (gamemenu, gamemenuCount, (char*)"Game Options");
+		// disable SRAM/SNAPSHOT saving/loading if AUTO is on
+
+		if (GCSettings.AutoLoad == 1) // Auto Load SRAM
+			gamemenu[4][0] = '\0';
+		else if (GCSettings.AutoLoad == 2) // Auto Load SNAPSHOT
+			gamemenu[6][0] = '\0';
+
+		if (GCSettings.AutoSave == 1) // Auto Save SRAM
+			gamemenu[5][0] = '\0';
+		else if (GCSettings.AutoSave == 2) // Auto Save SNAPSHOT
+			gamemenu[7][0] = '\0';
+		else if (GCSettings.AutoSave == 3) // Auto Save BOTH
+		{
+			gamemenu[5][0] = '\0';
+			gamemenu[7][0] = '\0';
+		}
+
+		// hide cheats menu if cheats file not present
+		if(Cheat.num_cheats == 0)
+			gamemenu[3][0] = '\0';
+
+		ret = RunMenu (gamemenu, gamemenuCount, (char*)"Game Menu");
 
 		switch (ret)
 		{

@@ -226,14 +226,17 @@ LoadSMBFile (char *filename, int length)
 		return -1;
 	}
 
-	boffset = LoadBufferFromSMB(SMBPath(filepath), NOTSILENT);
+	boffset = LoadBufferFromSMB((char *)rbuffer, SMBPath(filepath), NOTSILENT);
 
 	if(boffset > 0)
 	{
-		if(IsZipFile ((char *)savebuffer))
-			return UnZipBuffer(rbuffer, savebuffer);
-		else
-			memcpy (rbuffer, savebuffer, boffset);
+		if(IsZipFile ((char *)rbuffer))
+		{
+			//return UnZipBuffer(rbuffer, 0, 2, NULL);
+			// UNZIP currently crashes - FIX ME
+			WaitPrompt((char*) "Zipped files are currently not supported!");
+			return -1;
+		}
 	}
 	return boffset;
 }
@@ -270,10 +273,7 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
 			boffset += wrote;
 			dsize -= wrote;
 		}
-
 		SMB_CloseFile (smbfile);
-
-		return boffset;
 	}
 	else
 	{
@@ -282,7 +282,8 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
 		WaitPrompt (msg);
 	}
 
-	return 0;
+	ClearSaveBuffer ();
+	return boffset;
 }
 
 /****************************************************************************
@@ -291,12 +292,19 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
 int
 LoadBufferFromSMB (char *filepath, bool8 silent)
 {
+	ClearSaveBuffer ();
+	return LoadBufferFromSMB((char *)savebuffer, filepath, silent);
+}
+
+int
+LoadBufferFromSMB (char * sbuffer, char *filepath, bool8 silent)
+{
 	if(!ConnectShare (NOTSILENT))
 		return 0;
 
 	SMBFILE smbfile;
 	int ret;
-	int offset = 0;
+	int boffset = 0;
 
 	smbfile =
 	SMB_OpenFile (SMBPath(filepath), SMB_OPEN_READING, SMB_OF_OPEN, smbconn);
@@ -312,14 +320,10 @@ LoadBufferFromSMB (char *filepath, bool8 silent)
 		return 0;
 	}
 
-	memset (savebuffer, 0, 0x22000);
-
-	while ((ret =
-	SMB_ReadFile ((char *) savebuffer + offset, 1024, offset,
-	smbfile)) > 0)
-		offset += ret;
+	while ((ret = SMB_ReadFile (sbuffer + boffset, 1024, boffset, smbfile)) > 0)
+		boffset += ret;
 
 	SMB_CloseFile (smbfile);
 
-	return offset;
+	return boffset;
 }
