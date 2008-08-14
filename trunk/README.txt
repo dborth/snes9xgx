@@ -25,20 +25,21 @@ Tantric
          .CHT file name must match file name of ROM
 - added: load/save preference selector. ROM, SRAM, Freeze, and preferences 
          are saved/loaded according to these
-- added: preliminary Wii SMB support - completely working, but you must change
-         settings in s9xconfig.cpp
+- added: preliminary network share loading/saving (SMB) support on Wii:
+		 completely working, but for now you must change settings in 
+		 s9xconfig.cpp and compile from the source
 - added: 'Auto' settings for save/load - attempts to automatically determine
          your load/save device(s) - SD, USB, Memory Card, DVD, SMB
 - added: ROM Information page
 - added: Game Menu - all game-specific options are here now: 
-         SRAM save/load, Freeze save/load, game reload, etc
+         SRAM save/load, Snapshot save/load, game reload, etc
 - added: Credits page
 - fixed: sd gecko works now
 - fixed: full USB support
 - changed: menu structure
 - changed: if Home button is pressed when a game is running, Game Menu pops up
 - changed: if preferences can't be loaded at the start and/or are reset, 
-           preferences menu pops up
+           preferences menu pops up - remove to save your preferences!
 - changed: SRAM load - game reloaded automatically after loading SRAM
 
 [What Was New 004]
@@ -64,7 +65,7 @@ Tantric
 - fixed: precompiled dols for autosaving to various locations (see readme)
 - changed: GC default quickload slot (to sd) (thanks kerframil)
 - changed: default load/save dirs are now "/snes9x/roms" and 
-           "/snes/save/"  (thanks kerframil)
+           "/snes9x/saves/"  (thanks kerframil)
 - changed: Classic X and Y defaults aren't switched
 - changed: if autosave is enabled, it doesn't ask to save SRAM 
            anymore. It is saved in the background.
@@ -95,9 +96,10 @@ Tantric
 |0Oื๘oท                            FEATURES                           ทo๘ืO0|
 `จ•จจจจจ จจจจจจจจจจจจจจจจ จจจจจจจจจจจจจจจ จจจจจจจจจจจจจจจจจจจจ จจจจจจจจจจจจจ'
 - Based on Snes9x 1.5 - superior ROM compatibility
-- Auto Load/Save Freeze States and SRAM
-- Custom controller configurations
+- Auto Load/Save Game Snapshots and SRAM
+- SNES Superscope, Mouse, Justifier support
 - Wiimote, Nunchuk, Classic, and Gamecube controller support
+- Custom controller configurations
 - Autodetect PAL/NTSC
 - Zip Support
 - Open Source!
@@ -124,48 +126,54 @@ The last part of the filename (shown above as xxxx), denotes the wii and gamecub
 versions.
 
 ----------------------------
-ROMS, Preferences, and Saves:
+Directory Structure Setup
+----------------------------
+
+By default, roms are loaded from "snes9x/roms/", saves and preferences are 
+stored in "snes9x/saves/", and cheats are loaded from "/snes9x/cheats/".
+Therefore you should have the following folder structure at the root
+of your load device (SD/USB/SMB):
+
+  snes9x/
+       roms/
+       saves/
+       cheats/
+       
+----------------------------
+ROMS, Preferences, Saves, and Cheats:
 ----------------------------
 Your SNES rom images must be in the Super Magicom (SMC) or FIG format. Generally,
 all images you find will be in this format, but if you run across one that isn't
 please download RTOOL which will allow you to convert the image into SMC format.
 
-
     Wii
 ----------
-On the Wii, you can load roms from any SD card (Front SD, SD Gecko, etc).
-By default, ROMs are loaded from "snes9x/roms/" and saves and preferences are 
-stored in "snes9x/saves/". Therefore, on your SD card, you should have the following
-folders:
-
-  snes9x/
-       roms/
-       saves/
-
+On the Wii, you can load roms from any SD card (Front SD, SD Gecko, etc). You
+can also load from USB. Note that if you are using the Homebrew Channel, you
+will first have to load Snes9xGx from SD, and then load your roms from USB.
+You can also load roms now from a Windows network share (SMB). However, you will 
+have to edit s9xconfig.cpp with your network settings and recompile the source.
 
   Gamecube
 ------------
-You can load roms from DVD, SD card or SMB share. If you wish to use an SD card
-or SMB share, you must create the same folder tree as above. Put your roms in the 
-"snes9x/roms" folder. On DVD you can either place your roms at the top level, or 
-optionally you may have an SNESROMS folder at the top level of the DVD, in which 
-case the game selectorwill default to showing that folder when first entered. 
-If you create a bootable DVD of Snes9xGx you can put roms on the same DVD.
+You can load roms from DVD, SD card or SMB share. If you create a bootable 
+DVD of Snes9xGx you can put roms on the same DVD. You may save preferences and
+game data to SD, Memory Card, or SMB.
 
 ------------------------------
 Loading / Running the Emulator:
 ------------------------------
 
-Via Homebrew Channel:
+Wii - Via Homebrew Channel:
 --------------------
 The most popular method of running homebrew on the wii is through the Homebrew
 Channel. If you already have the channel installed, just copy over the apps folder
 included in the archive into the root of your SD card (the SD autosaving version 
 for wii is included in the apps/Snes9xGX/ folder renamed to boot.dol).
 
-Remember to also create the snes9x/roms and snes9x/saves directories. See above.
+Remember to also create the directories required. See above.
 
-If you wish to use a version that autosaves to  other available saving locations, 
+If you wish to use a version that autosaves to other available saving locations, 
 just choose the appropriate dol, copy it into the apps/Snes9XGX/ folder, and 
 RENAME it to boot.dol (remove the other version). Then proceed to copy
 the entire apps folder to your sd card and run it with the HBC.
@@ -176,12 +184,11 @@ If you haven't installed the homebrew channel yet, read about how to here:
 
 Gamecube:
 ---------
-You can load it via sdload and an SD card in slot A, or by streaming it to your
-cube, or by booting a bootable DVD (gamecube only) with it on it. This document doesn't cover
-how to do any of that. A good source for information on these topics is the
-tehskeen forums:
+You can load Snes9xGX via sdload and an SD card in slot A, or by streaming 
+it to your Gamecube, or by booting a bootable DVD (gamecube only) with it on it. 
+This document doesn't cover how to do any of that. A good source for information 
+on these topics is the tehskeen forums: http://www.tehskeen.com/forums/
 
-	http://www.tehskeen.com/forums/
 ื—–ญ—–ญ—–ญ—–ญ –ญ—–ญ—–ญ—–ญ—–ญ—–ญ—–ญ—–ญ—–ญ—–ญ— ญ—–ญ—–ญ—–ญ—–ญ—–ญ—–ญ—–ญ—-ญ—–ญ-–•ฌ
 |0Oื๘oท                         ABOUT SNES9X                          ทo๘ืO0|
 `จ•จจจจจ จจจจจจจจจจจจจจจจ จจจจจจจจจจจจจจจ จจจจจจจจจจจจจจจจจจจจ จจจจจจจจจจจจจ'
@@ -263,14 +270,13 @@ To use 7-Zip compression on either linux or windows, use the following command:
 `จ•จจจจจ จจจจจจจจจจจจจจจจ จจจจจจจจจจจจจจจ จจจจจจจจจจจจจจจจจจจจ จจจจจจจจจจจจจ'
 
 Once the DOL file is loaded you will be presented with main menu where you can
-load a ROM, set options for the emulator, set the joypad configuration, save or 
-load freezes, manage SRAM, etc.
+load a ROM, set options for the emulator, set the joypad configuration, etc.
 After loading a game the game will start running immediately. If you have the
 auto-load SRAM option enabled it will automatically load SRAM (if it exists)
 before starting play. 
 
-You can return to the main menu at any time by pressing
-the c-stick (the yellow control stick) to the left, or by pressing L+R+X+Y.
+You can return to the menu at any time by pressing the c-stick (the yellow 
+control stick) to the left, or by pressing L+R+X+Y.
 Return to the game by selecting "Resume Game" or by pressing the B button until
 play resumes.
 
@@ -287,7 +293,7 @@ want normal playback speed to resume.
 |0Oื๘oท                   IMPORTING AND EXPORTING SRAM                ทo๘ืO0|
 `จ•จจจจจ จจจจจจจจจจจจจจจจ จจจจจจจจจจจจจจจ จจจจจจจจจจจจจจจจจจจจ จจจจจจจจจจจจจ'
 
-Snes9xGx 2.0.1 now includes the ability to load SRAM from Snes9x on other
+Snes9xGx now includes the ability to load SRAM from Snes9x on other
 platforms (Mac/PC/Linux/Etc) and to save back to those platforms. To use this
 feature simply save or load SRAM to/from SD card or an SMB share.
 
