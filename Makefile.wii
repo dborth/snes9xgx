@@ -19,9 +19,9 @@ include $(DEVKITPPC)/wii_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	executables/snes9xgx-$(VERSION)-wii
 BUILD		:=	build_wii
-SOURCES		:=	source/snes9x source/ngc source/libpng source/libpng/pngu
+SOURCES		:=	source/snes9x source/ngc
 DATA		:=	data  
-INCLUDES	:=	source source/snes9x source/ngc
+INCLUDES	:=	source/snes9x source/ngc
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -41,7 +41,7 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--cref
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lpng -lfat -lwiiuse -lz -lbte -logc -lm -lfreetype -ltinysmb
+LIBS	:=	-lpng -lmxml -lfat -lwiiuse -lz -lbte -logc -lm -lfreetype -ltinysmb
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
