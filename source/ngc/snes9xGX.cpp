@@ -885,8 +885,10 @@ main ()
 	//fatInit(8192, false);
 	//fat_enable_readahead_all();
 
-	// Initialize DVD subsystem
+	// Initialize DVD subsystem (GameCube only)
+	#ifndef HW_RVL
 	DVD_Init ();
+	#endif
 
 	#ifdef FORCE_WII
 	isWii = TRUE;

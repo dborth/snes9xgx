@@ -38,7 +38,11 @@ char currentdir[MAXPATHLEN];
 int maxfiles;
 extern int screenheight;
 extern unsigned long ARAM_ROMSIZE;
-int havedir = 0;
+
+int havedir = -1;
+extern u64 dvddir;
+extern int dvddirlength;
+
 int hasloaded = 0;
 
 // Global file entry table
@@ -68,7 +72,7 @@ int autoLoadMethod()
 		return METHOD_SD;
 	else if(ChangeFATInterface(METHOD_USB, SILENT))
 		return METHOD_USB;
-	else if(false) // FIX ME - WARNING - MOUNTING DVD in Wii mode hangs
+	else if(TestDVD())
 		return METHOD_DVD;
 	else if(ConnectShare (SILENT))
 		return METHOD_SMB;
@@ -108,11 +112,19 @@ int autoSaveMethod()
 /***************************************************************************
  * Update curent directory name
  ***************************************************************************/
-int UpdateDirName()
+int UpdateDirName(int method)
 {
 	int size=0;
 	char *test;
 	char temp[1024];
+
+	// update DVD directory (does not utilize 'currentdir')
+	if(method == METHOD_DVD)
+	{
+		dvddir = filelist[selection].offset;
+		dvddirlength = filelist[selection].length;
+		return 1;
+	}
 
 	/* current directory doesn't change */
 	if (strcmp(filelist[selection].filename,".") == 0)
@@ -257,7 +269,7 @@ FileSelector (int method)
 			if (filelist[selection].flags) // This is directory
 			{
 				/* update current directory and set new entry list if directory has changed */
-				int status = UpdateDirName();
+				int status = UpdateDirName(method);
 				if (status == 1) // ok, open directory
 				{
 					switch (method)
@@ -284,7 +296,7 @@ FileSelector (int method)
 				}
 				else if (status == -1)	// directory name too long
 				{
-					haverom   = 1; // quit menu
+					haverom = 1; // quit menu
 				}
 			}
 			else	// this is a file
@@ -303,6 +315,8 @@ FileSelector (int method)
 					break;
 
 					case METHOD_DVD:
+					dvddir = filelist[selection].offset;
+					dvddirlength = filelist[selection].length;
 					ARAM_ROMSIZE = LoadDVDFile (Memory.ROM);
 					break;
 
@@ -336,7 +350,6 @@ FileSelector (int method)
 #endif
 					)
                 VIDEO_WaitVSync();
-            //if ((strcmp(filelist[1].filename,"..") == 0) && (strlen (filelist[0].filename) != 0))
 			if ( strcmp(filelist[0].filename,"..") == 0 )
 			{
 				selection = 0;
@@ -441,25 +454,27 @@ OpenDVD (int method)
 	if (!getpvd())
 	{
 		ShowAction((char*) "Loading DVD...");
-		DVD_Mount();             /* mount the DVD unit again */
-		havedir = 0;             /* this may be a new DVD: content need to be parsed again */
+		DVD_Mount(); // mount the DVD unit again
+
 		if (!getpvd())
-			return 0; /* no correct ISO9660 DVD */
+			return 0; // not a ISO9660 DVD
 	}
 
-	if (havedir == 0)
+	maxfiles = ParseDVDdirectory(); // load root folder
+
+	// switch to rom folder
+	SwitchDVDFolder(GCSettings.LoadFolder);
+
+	if (maxfiles > 0)
 	{
-		maxfiles = ParseDVDdirectory();
-		if (maxfiles > 0)
-		{
-			return FileSelector (method);
-			havedir = 1;
-		}
+		return FileSelector (method);
 	}
 	else
-		return FileSelector (method);
-
-	return 0;
+	{
+		// no entries found
+		WaitPrompt ((char *)"No Files Found!");
+		return 0;
+	}
 }
 
 /****************************************************************************

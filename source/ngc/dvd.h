@@ -10,12 +10,11 @@
 #ifndef _NGCDVD_
 #define _NGCDVD_
 
-extern u64 rootdir;
-extern int rootdirlength;
-
 int getpvd ();
 int ParseDVDdirectory ();
 int LoadDVDFile (unsigned char *buffer);
+bool TestDVD();
 int dvd_read (void *dst, unsigned int len, u64 offset);
+bool SwitchDVDFolder(char dir[]);
 
 #endif

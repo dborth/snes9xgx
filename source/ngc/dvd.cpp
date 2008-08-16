@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dvd.h>
 
 #include "menudraw.h"
 #include "snes9xGx.h"
@@ -20,6 +19,10 @@
 extern int offset;
 extern int selection;
 extern FILEENTRIES filelist[MAXFILES];
+extern int maxfiles;
+u64 dvddir = 0;
+u64 dvdrootdir = 0;
+int dvddirlength = 0;
 
 /** DVD I/O Address base **/
 volatile unsigned long *dvd = (volatile unsigned long *) 0xCC006000;
@@ -105,8 +108,6 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 /** Minimal Primary Volume Descriptor **/
 #define PVDROOT 0x9c
 static int IsJoliet = 0;
-u64 rootdir = 0;
-int rootdirlength = 0;
 
 /**
  * Primary Volume Descriptor
@@ -117,62 +118,81 @@ int rootdirlength = 0;
 int
 getpvd ()
 {
-  int sector = 16;
-  u32 rootdir32;
+	int sector = 16;
+	u32 rootdir32;
 
-  rootdir = rootdirlength = 0;
-  IsJoliet = -1;
+	dvddir = dvddirlength = 0;
+	IsJoliet = -1;
 
 	/** Look for Joliet PVD first **/
-  while (sector < 32)
-    {
-      if (dvd_read (dvdbuffer, 2048, (u64)(sector << 11)))
+	while (sector < 32)
 	{
-	  if (memcmp (&dvdbuffer, "\2CD001\1", 8) == 0)
-	    {
-	      memcpy(&rootdir32, &dvdbuffer[PVDROOT + EXTENT], 4);
-	      rootdir = (u64)rootdir32;
-	      rootdir <<= 11;
-    	  memcpy (&rootdirlength, &dvdbuffer[PVDROOT + FILE_LENGTH], 4);
-	      IsJoliet = 1;
-	      break;
-	    }
+		if (dvd_read (dvdbuffer, 2048, (u64)(sector << 11)))
+		{
+			if (memcmp (&dvdbuffer, "\2CD001\1", 8) == 0)
+			{
+				memcpy(&rootdir32, &dvdbuffer[PVDROOT + EXTENT], 4);
+				dvddir = (u64)rootdir32;
+				dvddir <<= 11;
+				dvdrootdir = dvddir;
+				memcpy (&dvddirlength, &dvdbuffer[PVDROOT + FILE_LENGTH], 4);
+				IsJoliet = 1;
+				break;
+				}
+		}
+		else
+			return 0;			/*** Can't read sector! ***/
+		sector++;
 	}
-      else
-	return 0;			/*** Can't read sector! ***/
 
-      sector++;
-    }
+	if (IsJoliet > 0)		/*** Joliet PVD Found ? ***/
+		return 1;
 
-  if (IsJoliet > 0)		/*** Joliet PVD Found ? ***/
-    return 1;
-
-  sector = 16;
+	sector = 16;
 
 	/*** Look for standard ISO9660 PVD ***/
-  while (sector < 32)
-    {
-      if (dvd_read (&dvdbuffer, 2048, sector << 11))
+	while (sector < 32)
 	{
-	  if (memcmp (&dvdbuffer, "\1CD001\1", 8) == 0)
-	    {
-	      memcpy (&rootdir32, &dvdbuffer[PVDROOT + EXTENT], 4);
-	      rootdir = (u64)rootdir32;
-	      rootdir <<= 11;
-	      memcpy (&rootdirlength, &dvdbuffer[PVDROOT + FILE_LENGTH], 4);
-	      IsJoliet = 0;
-	      break;
-	    }
+		if (dvd_read (&dvdbuffer, 2048, sector << 11))
+		{
+			if (memcmp (&dvdbuffer, "\1CD001\1", 8) == 0)
+			{
+				memcpy (&rootdir32, &dvdbuffer[PVDROOT + EXTENT], 4);
+				dvddir = (u64)rootdir32;
+				dvddir <<= 11;
+				dvdrootdir = dvddir;
+				memcpy (&dvddirlength, &dvdbuffer[PVDROOT + FILE_LENGTH], 4);
+				IsJoliet = 0;
+				break;
+			}
+		}
+		else
+			return 0;			/*** Can't read sector! ***/
+		sector++;
 	}
-      else
-	return 0;			/*** Can't read sector! ***/
+	return (IsJoliet == 0);
+}
 
-      sector++;
+/****************************************************************************
+ * TestDVD()
+ *
+ * Tests if a ISO9660 DVD is inserted and available
+ ****************************************************************************/
+bool TestDVD()
+{
+	// DVD not available on Wii - disable
+	#ifdef HW_RVL
+	return false;
+	#endif
 
-    }
+	if (!getpvd())
+	{
+		DVD_Mount();
+		if (!getpvd())
+			return false;
+	}
 
-  return (IsJoliet == 0);
-
+	return true;
 }
 
 /**
@@ -185,112 +205,112 @@ static int diroffset = 0;
 static int
 getentry (int entrycount)
 {
-  char fname[512];		/* Huge, but experience has determined this */
-  char *ptr;
-  char *filename;
-  char *filenamelength;
-  char *rr;
-  int j;
-  u32 offset32;
+	char fname[512];		/* Huge, but experience has determined this */
+	char *ptr;
+	char *filename;
+	char *filenamelength;
+	char *rr;
+	int j;
+	u32 offset32;
 
-  /* Basic checks */
-  if (entrycount >= MAXFILES)
-    return 0;
+	/* Basic checks */
+	if (entrycount >= MAXFILES)
+		return 0;
 
-  if (diroffset >= 2048)
-    return 0;
+	if (diroffset >= 2048)
+		return 0;
 
 	/** Decode this entry **/
-  if (dvdbuffer[diroffset])	/* Record length available */
-    {
-      /* Update offsets into sector buffer */
-      ptr = (char *) &dvdbuffer[0];
-      ptr += diroffset;
-      filename = ptr + FILENAME;
-      filenamelength = ptr + FILENAME_LENGTH;
-
-      /* Check for wrap round - illegal in ISO spec,
-       * but certain crap writers do it! */
-      if ((diroffset + dvdbuffer[diroffset]) > 2048)
-	return 0;
-
-      if (*filenamelength)
+	if (dvdbuffer[diroffset])	/* Record length available */
 	{
-	  memset (&fname, 0, 512);
+		/* Update offsets into sector buffer */
+		ptr = (char *) &dvdbuffer[0];
+		ptr += diroffset;
+		filename = ptr + FILENAME;
+		filenamelength = ptr + FILENAME_LENGTH;
 
-	  if (!IsJoliet)			/*** Do ISO 9660 first ***/
-	    strcpy (fname, filename);
-	  else
-	    {			/*** The more tortuous unicode joliet entries ***/
+		/* Check for wrap round - illegal in ISO spec,
+		* but certain crap writers do it! */
+		if ((diroffset + dvdbuffer[diroffset]) > 2048)
+			return 0;
 
-	      for (j = 0; j < (*filenamelength >> 1); j++)
+		if (*filenamelength)
 		{
-		  fname[j] = filename[j * 2 + 1];
-		}
+			memset (&fname, 0, 512);
 
-	      fname[j] = 0;
+			if (!IsJoliet)			/*** Do ISO 9660 first ***/
+				strcpy (fname, filename);
+			else
+			{			/*** The more tortuous unicode joliet entries ***/
+				for (j = 0; j < (*filenamelength >> 1); j++)
+				{
+					fname[j] = filename[j * 2 + 1];
+				}
 
-	      if (strlen (fname) >= MAXJOLIET)
-		fname[MAXJOLIET] = 0;
+				fname[j] = 0;
 
-	      if (strlen (fname) == 0)
-		fname[0] = filename[0];
-	    }
+				if (strlen (fname) >= MAXJOLIET)
+					fname[MAXJOLIET] = 0;
 
-	  if (strlen (fname) == 0)
-	    strcpy (fname, "ROOT");
-	  else
-	    {
-	      if (fname[0] == 1)
-		strcpy (fname, "..");
-	      else
-		{		/*
-				 * Move *filenamelength to t,
-				 * Only to stop gcc warning for noobs :)
-				 */
-		  int t = *filenamelength;
-		  fname[t] = 0;
-		}
-	    }
+				if (strlen (fname) == 0)
+					fname[0] = filename[0];
+			}
 
+			if (strlen (fname) == 0) // root entry
+			{
+				fname[0] = 0; // we'll skip it by setting the filename to 0 length
+			}
+			else
+			{
+				if (fname[0] == 1)
+				{
+					if(dvddir == dvdrootdir) // at root already, don't show ..
+						fname[0] = 0;
+					else
+						strcpy (fname, "..");
+				}
+				else
+				{
+					/*
+					* Move *filenamelength to t,
+					* Only to stop gcc warning for noobs :)
+					*/
+					int t = *filenamelength;
+					fname[t] = 0;
+				}
+			}
 			/** Rockridge Check **/
-	  rr = strstr (fname, ";");
-	  if (rr != NULL)
-	    *rr = 0;
+			rr = strstr (fname, ";");
+			if (rr != NULL)
+				*rr = 0;
 
-	  strcpy (filelist[entrycount].filename, fname);
-	  fname[MAXDISPLAY] = 0;
-	  strcpy (filelist[entrycount].displayname, fname);
+			strcpy (filelist[entrycount].filename, fname);
+			fname[MAXDISPLAY] = 0;
+			strcpy (filelist[entrycount].displayname, fname);
 
-	  memcpy (&offset32,
-		  &dvdbuffer[diroffset + EXTENT], 4);
-	  filelist[entrycount].offset = (u64)offset32;
-	  memcpy (&filelist[entrycount].length,
-		  &dvdbuffer[diroffset + FILE_LENGTH], 4);
-	  memcpy (&filelist[entrycount].flags,
-		  &dvdbuffer[diroffset + FILE_FLAGS], 1);
+			memcpy (&offset32, &dvdbuffer[diroffset + EXTENT], 4);
 
-	  filelist[entrycount].offset <<= 11;
-	  filelist[entrycount].flags = filelist[entrycount].flags & 2;
+			filelist[entrycount].offset = (u64)offset32;
+			memcpy (&filelist[entrycount].length, &dvdbuffer[diroffset + FILE_LENGTH], 4);
+			memcpy (&filelist[entrycount].flags, &dvdbuffer[diroffset + FILE_FLAGS], 1);
+
+			filelist[entrycount].offset <<= 11;
+			filelist[entrycount].flags = filelist[entrycount].flags & 2;
 
 			/*** Prepare for next entry ***/
-	  diroffset += dvdbuffer[diroffset];
 
-	  return 1;
-
+			diroffset += dvdbuffer[diroffset];
+			return 1;
+		}
 	}
-
-    }
-
-  return 0;
-
+	return 0;
 }
 
 /**
  * parseDVDdirectory
  *
  * This function will parse the directory tree.
- * It relies on rootdir and rootdirlength being pre-populated by a call to
+ * It relies on dvddir and dvddirlength being pre-populated by a call to
  * getpvd, a previous parse or a menu selection.
  *
  * The return value is number of files collected, or 0 on failure.
@@ -298,48 +318,115 @@ getentry (int entrycount)
 int
 ParseDVDdirectory ()
 {
-  int pdlength;
-  u64 pdoffset;
-  u64 rdoffset;
-  int len = 0;
-  int filecount = 0;
+	int pdlength;
+	u64 pdoffset;
+	u64 rdoffset;
+	int len = 0;
+	int filecount = 0;
 
-  // initialize selection
-  	selection = offset = 0;
+	// initialize selection
+	selection = offset = 0;
 
-  pdoffset = rdoffset = rootdir;
-  pdlength = rootdirlength;
-  filecount = 0;
+	pdoffset = rdoffset = dvddir;
+	pdlength = dvddirlength;
+	filecount = 0;
 
-	/*** Clear any existing values ***/
-  memset (&filelist, 0, sizeof (FILEENTRIES) * MAXFILES);
+	// Clear any existing values
+	memset (&filelist, 0, sizeof (FILEENTRIES) * MAXFILES);
 
 	/*** Get as many files as possible ***/
-  while (len < pdlength)
-    {
-      if (dvd_read (&dvdbuffer, 2048, pdoffset) == 0)
-	return 0;
-
-      diroffset = 0;
-
-      while (getentry (filecount))
+	while (len < pdlength)
 	{
-	  if (filecount < MAXFILES)
-	    filecount++;
+		if (dvd_read (&dvdbuffer, 2048, pdoffset) == 0)
+			return 0;
+
+		diroffset = 0;
+
+		while (getentry (filecount))
+		{
+			if(strlen(filelist[filecount].filename) > 0 && filecount < MAXFILES)
+				filecount++;
+		}
+
+		len += 2048;
+		pdoffset = rdoffset + len;
 	}
 
-      len += 2048;
-      pdoffset = rdoffset + len;
-    }
+	// Sort the file list
+	qsort(filelist, filecount, sizeof(FILEENTRIES), FileSortCallback);
 
-  return filecount;
+	return filecount;
+}
+
+/**
+* DirectorySearch
+*
+* Searches for the directory name specified within the current directory
+* Returns the index of the directory, or 0 if not found
+*/
+int DirectorySearch(char dir[512])
+{
+	for (int i = 0; i < maxfiles; i++ )
+		if (strcmp(filelist[i].filename, dir) == 0)
+			return i;
+	return 0;
+}
+
+/**
+* SwitchDVDFolder
+*
+* Function to switch to the directory snes9x/roms, if it exists
+* Also loads the folder contents
+* Recursively searches for any directory path 'dir' specified
+*/
+bool SwitchDVDFolder(char * dir, int maxDepth)
+{
+	if(maxDepth > 8) // only search to a max depth of 8 levels
+		return false;
+
+	bool lastdir = false;
+	char * nextdir = 0;
+	unsigned int t = strcspn(dir, "/");
+
+	if(t != strlen(dir))
+		nextdir = dir + t + 1; // next directory path to find
+	else
+		lastdir = true;
+
+	dir[t] = 0;
+
+	int dirindex = DirectorySearch(dir);
+	if(dirindex)
+	{
+		dvddir = filelist[dirindex].offset;
+		dvddirlength = filelist[dirindex].length;
+		maxfiles = ParseDVDdirectory();
+
+		if(lastdir)
+			return true;
+		else
+			return SwitchDVDFolder(nextdir, maxDepth++);
+	}
+	return false;
+}
+
+bool SwitchDVDFolder(char * dir)
+{
+	// strip off leading/trailing slashes on the directory path
+	// we don't want to screw up our recursion!
+	if(dir[0] == '/')
+		dir = dir + 1;
+	if(dir[strlen(dir)-1] == '/')
+		dir[strlen(dir)-1] = 0;
+
+	return SwitchDVDFolder(dir, 0);
 }
 
 /****************************************************************************
  * LoadDVDFile
  * This function will load a file from DVD, in BIN, SMD or ZIP format.
- * The values for offset and length are inherited from rootdir and
- * rootdirlength.
+ * The values for offset and length are inherited from dvddir and
+ * dvddirlength.
  *
  * The buffer parameter should re-use the initial ROM buffer.
  ****************************************************************************/
@@ -347,47 +434,42 @@ ParseDVDdirectory ()
 int
 LoadDVDFile (unsigned char *buffer)
 {
-  int offset;
-  int blocks;
-  int i;
-  u64 discoffset;
-  char readbuffer[2048];
+	int offset;
+	int blocks;
+	int i;
+	u64 discoffset;
+	char readbuffer[2048];
 
-  // How many 2k blocks to read
-  blocks = rootdirlength / 2048;
-  offset = 0;
-  discoffset = rootdir;
-  ShowAction ((char*) "Loading...");
-  dvd_read (readbuffer, 2048, discoffset);
+	// How many 2k blocks to read
+	blocks = dvddirlength / 2048;
+	offset = 0;
+	discoffset = dvddir;
+	ShowAction ((char*) "Loading...");
+	dvd_read (readbuffer, 2048, discoffset);
 
-  if (!IsZipFile (readbuffer))
+	if (!IsZipFile (readbuffer))
+	{
+		for (i = 0; i < blocks; i++)
+		{
+			dvd_read (readbuffer, 2048, discoffset);
+			memcpy (buffer + offset, readbuffer, 2048);
+			offset += 2048;
+			discoffset += 2048;
+		}
 
-    {
-      for (i = 0; i < blocks; i++)
-
-        {
-          dvd_read (readbuffer, 2048, discoffset);
-          memcpy (buffer + offset, readbuffer, 2048);
-          offset += 2048;
-          discoffset += 2048;
-        }
-
-                /*** And final cleanup ***/
-      if (rootdirlength % 2048)
-
-        {
-          i = rootdirlength % 2048;
-          dvd_read (readbuffer, 2048, discoffset);
-          memcpy (buffer + offset, readbuffer, i);
-        }
-    }
-
-  else
-
-    {
-      return UnZipBuffer (buffer, discoffset, 1, NULL);	// unzip from dvd
-    }
-  return rootdirlength;
+		/*** And final cleanup ***/
+		if (dvddirlength % 2048)
+		{
+			i = dvddirlength % 2048;
+			dvd_read (readbuffer, 2048, discoffset);
+			memcpy (buffer + offset, readbuffer, i);
+		}
+	}
+	else
+	{
+		return UnZipBuffer (buffer, discoffset, 1, NULL);	// unzip from dvd
+	}
+	return dvddirlength;
 }
 
 /****************************************************************************
@@ -401,17 +483,16 @@ LoadDVDFile (unsigned char *buffer)
  ****************************************************************************/
 void uselessinquiry ()
 {
+	dvd[0] = 0;
+	dvd[1] = 0;
+	dvd[2] = 0x12000000;
+	dvd[3] = 0;
+	dvd[4] = 0x20;
+	dvd[5] = 0x80000000;
+	dvd[6] = 0x20;
+	dvd[7] = 1;
 
-  dvd[0] = 0;
-  dvd[1] = 0;
-  dvd[2] = 0x12000000;
-  dvd[3] = 0;
-  dvd[4] = 0x20;
-  dvd[5] = 0x80000000;
-  dvd[6] = 0x20;
-  dvd[7] = 1;
-
-  while (dvd[7] & 1);
+	while (dvd[7] & 1);
 }
 
 void dvd_motor_off( )

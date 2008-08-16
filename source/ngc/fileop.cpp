@@ -123,6 +123,9 @@ ParseFATdirectory(int method)
 	// initialize selection
 	selection = offset = 0;
 
+	// Clear any existing values
+	memset (&filelist, 0, sizeof (FILEENTRIES) * MAXFILES);
+
 	// open the directory
 	fatdir = diropen(currentdir);
 	if (fatdir == NULL)

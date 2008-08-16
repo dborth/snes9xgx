@@ -140,24 +140,36 @@ PreferencesMenu ()
 	while (quit == 0)
 	{
 		// some load/save methods are not implemented - here's where we skip them
+		// they need to be skipped in the order they were enumerated in snes9xGX.h
 
-		#ifndef HW_RVL
 		// no USB ports on GameCube
-			if(GCSettings.LoadMethod == METHOD_USB)
-				GCSettings.LoadMethod++;
-			if(GCSettings.SaveMethod == METHOD_USB)
-				GCSettings.SaveMethod++;
-		#else
-		// Wii DVD access not implemented
-			if(GCSettings.LoadMethod == METHOD_DVD)
-				GCSettings.LoadMethod++;
+		#ifndef HW_RVL
+		if(GCSettings.LoadMethod == METHOD_USB)
+			GCSettings.LoadMethod++;
+		if(GCSettings.SaveMethod == METHOD_USB)
+			GCSettings.SaveMethod++;
 		#endif
 
-		if(GCSettings.SaveMethod == METHOD_DVD) // saving to DVD is impossible
+		// disable DVD access in Wii mode
+		#ifdef HW_RVL
+		if(GCSettings.LoadMethod == METHOD_DVD)
+			GCSettings.LoadMethod++;
+		#endif
+
+		// saving to DVD is impossible
+		if(GCSettings.SaveMethod == METHOD_DVD)
 			GCSettings.SaveMethod++;
 
-		#ifdef HW_RVL
+		// disable SMB in GC mode (stalls out)
+		#ifndef HW_RVL
+		if(GCSettings.LoadMethod == METHOD_SMB)
+			GCSettings.LoadMethod++;
+		if(GCSettings.SaveMethod == METHOD_SMB)
+			GCSettings.SaveMethod++;
+		#endif
+
 		// disable MC saving in Wii mode - does not work for some reason!
+		#ifdef HW_RVL
 		if(GCSettings.SaveMethod == METHOD_MC_SLOTA)
 			GCSettings.SaveMethod++;
 		if(GCSettings.SaveMethod == METHOD_MC_SLOTB)
