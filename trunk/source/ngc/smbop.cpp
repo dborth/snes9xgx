@@ -85,11 +85,13 @@ bool InitializeNetwork(bool silent)
 bool
 ConnectShare (bool silent)
 {
-	// Crashes system in GameCube mode - so disable for now
-	#ifdef HW_RVL // Wii mode
+	// Crashes or stalls system in GameCube mode - so disable
+	#ifndef HW_RVL
+	return false;
+	#endif
+
 	if(!networkInit)
 		networkInit = InitializeNetwork(silent);
-	#endif
 
 	if(networkInit)
 	{
@@ -151,6 +153,9 @@ ParseSMBdirectory ()
 
 	// initialize selection
 	selection = offset = 0;
+
+	// Clear any existing values
+	memset (&filelist, 0, sizeof (FILEENTRIES) * MAXFILES);
 
 	if(strlen(currentdir) <= 1) // root
 		sprintf(searchpath, "*");

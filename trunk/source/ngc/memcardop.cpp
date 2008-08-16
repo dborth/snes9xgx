@@ -77,6 +77,11 @@ CardFileExists (char *filename, int slot)
  ****************************************************************************/
 bool TestCard(int slot, bool silent)
 {
+	// Memory Cards do not work in Wii mode - disable
+	#ifdef HW_RVL
+	return false;
+	#endif
+
 	/*** Initialize Card System ***/
 	memset (SysArea, 0, CARD_WORKAREA);
 	CARD_Init ("SNES", "00");
@@ -112,58 +117,24 @@ bool TestCard(int slot, bool silent)
 /****************************************************************************
  * MountCard
  *
- * Mounts the memory card in the given slot. Error checking is done and
- * workarounds implemented for when the mount fails.
+ * Mounts the memory card in the given slot.
  * Returns the result of the last attempted CARD_Mount command.
  ****************************************************************************/
 int MountCard(int cslot, bool silent)
 {
-	int ret;
-	int tries;
+	int ret = -1;
+	int tries = 0;
 
-	EXI_ProbeReset();
+	*(unsigned long *) (0xcc006800) |= 1 << 13; // Disable Encryption
 
 	// Mount the card
-	ret = CARD_Mount (cslot, SysArea, NULL);
-
-	tries = 0;
-	while ( tries < 3 && ret == CARD_ERROR_IOERROR )
+	while ( tries < 10 && ret != 0)
 	{
 		EXI_ProbeReset ();
-		if (cslot == CARD_SLOTA)
-			WaitPrompt((char*) "Replug card in slot A!");
-		else
-			WaitPrompt((char*) "Replug card in slot B!");
-
 		ret = CARD_Mount (cslot, SysArea, NULL);
+		VIDEO_WaitVSync ();
 		tries++;
 	}
-
-	tries = 0;
-	while ( tries < 2 && ret == CARD_ERROR_NOCARD )
-	{
-		EXI_ProbeReset ();
-
-		if(!silent)
-			ShowAction ((char*) "Mounting card...");
-		CARD_Unmount (cslot);
-		usleep(500000); // wait half second
-		ret = CARD_Mount (cslot, SysArea, NULL);
-		tries++;
-	}
-
-	tries = 0;
-	while ( tries < 3 && ret == CARD_ERROR_UNLOCKED )
-	{
-		EXI_ProbeReset ();
-
-		if(!silent)
-			ShowAction ((char*) "Waiting for unlock...");
-		usleep(500000); // wait half second
-		ret = CARD_Probe(cslot);
-		tries++;
-	}
-
 	return ret;
 }
 
