@@ -92,7 +92,7 @@ prepareEXPORTsavedata ()
   ClearSaveBuffer ();
 
   /*** Copy in the sramcomments ***/
-  sprintf (sramcomment[1], "%s", Memory.ROMFilename);
+  sprintf (sramcomment[1], "%s", Memory.ROMName);
   memcpy (savebuffer + offset, sramcomment, 64);
   offset += 64;
 
