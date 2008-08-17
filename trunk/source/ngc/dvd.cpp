@@ -362,22 +362,22 @@ ParseDVDdirectory ()
 * DirectorySearch
 *
 * Searches for the directory name specified within the current directory
-* Returns the index of the directory, or 0 if not found
+* Returns the index of the directory, or -1 if not found
 */
 int DirectorySearch(char dir[512])
 {
 	for (int i = 0; i < maxfiles; i++ )
 		if (strcmp(filelist[i].filename, dir) == 0)
 			return i;
-	return 0;
+	return -1;
 }
 
 /**
 * SwitchDVDFolder
 *
-* Function to switch to the directory snes9x/roms, if it exists
-* Also loads the folder contents
 * Recursively searches for any directory path 'dir' specified
+* Also loads the directory contents via ParseDVDdirectory()
+* It relies on dvddir, dvddirlength, and filelist being pre-populated
 */
 bool SwitchDVDFolder(char * dir, int maxDepth)
 {
@@ -385,7 +385,7 @@ bool SwitchDVDFolder(char * dir, int maxDepth)
 		return false;
 
 	bool lastdir = false;
-	char * nextdir = 0;
+	char * nextdir = NULL;
 	unsigned int t = strcspn(dir, "/");
 
 	if(t != strlen(dir))
@@ -396,7 +396,8 @@ bool SwitchDVDFolder(char * dir, int maxDepth)
 	dir[t] = 0;
 
 	int dirindex = DirectorySearch(dir);
-	if(dirindex)
+
+	if(dirindex >= 0)
 	{
 		dvddir = filelist[dirindex].offset;
 		dvddirlength = filelist[dirindex].length;
@@ -410,16 +411,22 @@ bool SwitchDVDFolder(char * dir, int maxDepth)
 	return false;
 }
 
-bool SwitchDVDFolder(char * dir)
+bool SwitchDVDFolder(char origdir[])
 {
+	// make a copy of origdir so we don't mess with original
+	char dir[200];
+	strcpy(dir, origdir);
+
+	char * dirptr = dir;
+
 	// strip off leading/trailing slashes on the directory path
 	// we don't want to screw up our recursion!
 	if(dir[0] == '/')
-		dir = dir + 1;
+		dirptr = dirptr + 1;
 	if(dir[strlen(dir)-1] == '/')
 		dir[strlen(dir)-1] = 0;
 
-	return SwitchDVDFolder(dir, 0);
+	return SwitchDVDFolder(dirptr, 0);
 }
 
 /****************************************************************************

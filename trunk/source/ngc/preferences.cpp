@@ -25,8 +25,6 @@
 #include "smbop.h"
 #include "filesel.h"
 
-#include "mxml.h"
-
 extern unsigned char savebuffer[];
 extern int currconfig[4];
 
@@ -40,82 +38,6 @@ extern unsigned int ncpadmap[];
 #define PREFSVERSTRING "Snes9x GX 005 Prefs"
 
 char prefscomment[2][32] = { {PREFSVERSTRING}, {"Preferences"} };
-
-/****************************************************************************
- * Prepare Preferences Data
- *
- * This sets up the save buffer for saving.
- ****************************************************************************/
-
-void CreateXmlFile(char* filename)
-{
-   mxml_node_t *xml;
-   mxml_node_t *data;
-   mxml_node_t *group;
-
-   xml = mxmlNewXML("1.0");
-
-   data = mxmlNewElement(xml, "screen");
-
-   //Create Some config value
-   mxmlElementSetAttr(data, "height","480");
-
-   mxmlElementSetAttr(data, "width","640");
-
-   //Lets do some sub items for funs
-   group = mxmlNewElement(data, "properties");
-   mxmlElementSetAttr(group, "username", "beardface");
-
-   mxmlElementSetAttr(group, "favorite_food", "dead babies");
-
-   /* now lets save the xml file to a file! */
-   FILE *fp;
-   fp = fopen(filename, "w");
-
-   mxmlSaveFile(xml, fp, MXML_NO_CALLBACK);
-
-   /*Time to clean up!*/
-   fclose(fp);
-   mxmlDelete(group);
-   mxmlDelete(data);
-   mxmlDelete(xml);
-}
-
-/****************************************************************************
- * Prepare Preferences Data
- *
- * This sets up the save buffer for saving.
- ****************************************************************************/
-
-void LoadXmlFile(char* filename)
-{
-   FILE *fp;
-   mxml_node_t *tree;
-   mxml_node_t *data;
-   mxml_node_t *group;
-
-   /*Load our xml file! */
-   fp = fopen(filename, "r");
-   tree = mxmlLoadFile(NULL, fp, MXML_NO_CALLBACK);
-   fclose(fp);
-
-   /*Load and printf our values! */
-   /* As a note, its a good idea to normally check if node* is NULL */
-   data = mxmlFindElement(tree, tree, "screen", NULL, NULL, MXML_DESCEND);
-
-   printf("Loaded following values from xml file:\n");
-   printf("  Height: %s\n",mxmlElementGetAttr(data,"height"));
-   printf("  Width: %s\n",mxmlElementGetAttr(data,"width"));
-
-   group = mxmlFindElement(tree, tree, "properties", NULL, NULL, MXML_DESCEND);
-   printf("  %s's favorite food is %s\n",mxmlElementGetAttr(group, "username"), mxmlElementGetAttr(group, "favorite_food"));
-
-   /* Yay Done! Now lets be considerate programmers, and put memory back how
-      we found it before we started playing with it...*/
-   mxmlDelete(group);
-   mxmlDelete(data);
-   mxmlDelete(tree);
-}
 
 /****************************************************************************
  * Prepare Preferences Data

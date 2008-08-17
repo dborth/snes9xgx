@@ -595,6 +595,11 @@ NGCReportButtons ()
         }
 
         mainmenu (3); // go to game menu
+
+        FrameTimer = 0;
+        ConfigRequested = 0;
+        setFrameTimerMethod(); // set frametimer method every time a ROM is loaded
+        S9xReportControllers(); // FIX
     }
     else
     {
@@ -790,15 +795,11 @@ extern void S9xInitSync();
 void
 emulate ()
 {
-
 	S9xSetSoundMute (TRUE);
 	AudioStart ();
 	S9xInitSync();
 
-	FrameTimer = 0;
-	ConfigRequested = 0;
 	setFrameTimerMethod(); 	// set frametimer method every time a ROM is loaded
-	S9xReportControllers();	// FIX
 
 	while (1)
 	{
@@ -928,6 +929,9 @@ main ()
 		if (!Memory.LoadROM ("VIRTUAL.ROM"))
 			while (1);
 		CPU.Flags = save_flags;
+
+		/*** Load SRAM ***/
+		Memory.LoadSRAM ("DVD");
 	}
 
 	/*** Emulate ***/

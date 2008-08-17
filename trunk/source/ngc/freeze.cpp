@@ -50,7 +50,7 @@ extern unsigned char savebuffer[];
 static int bufoffset;
 static char membuffer[MEMBUFFER];
 
-char freezecomment[2][32] = { {"Snes9x GX 004 Freeze"}, {"Freeze"} };
+char freezecomment[2][32] = { {"Snes9x GX 005 Freeze"}, {"Freeze"} };
 
 
 /**
@@ -166,7 +166,7 @@ NGCFreezeGame (int method, bool8 silent)
 	}
 	else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC Slot A or B
 	{
-		sprintf (filename, "%s.snz", Memory.ROMFilename);
+		sprintf (filename, "%s.snz", Memory.ROMName);
 
 		ClearSaveBuffer ();
 
@@ -175,7 +175,7 @@ NGCFreezeGame (int method, bool8 silent)
 		memcpy (savebuffer, saveicon, woffset);
 
 		/*** And the freezecomment ***/
-		sprintf (freezecomment[1], "%s", Memory.ROMFilename);
+		sprintf (freezecomment[1], "%s", Memory.ROMName);
 		memcpy (savebuffer + woffset, freezecomment, 64);
 		woffset += 64;
 
@@ -266,7 +266,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 	bufoffset = 0;
 
     if(method == METHOD_AUTO)
-		method = autoLoadMethod();
+		method = autoSaveMethod(); // we use 'Save' because snapshot needs R/W
 
 	if (method == METHOD_SD || method == METHOD_USB) // SD & USB
 	{
@@ -283,7 +283,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 	}
     else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC in slot A or slot B
 	{
-		sprintf (filename, "%s.snz", Memory.ROMFilename);
+    	sprintf (filename, "%s.snz", Memory.ROMName);
 
 		int ret = 0;
 
