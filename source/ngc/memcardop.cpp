@@ -125,8 +125,6 @@ int MountCard(int cslot, bool silent)
 	int ret = -1;
 	int tries = 0;
 
-	*(unsigned long *) (0xcc006800) |= 1 << 13; // Disable Encryption
-
 	// Mount the card
 	while ( tries < 10 && ret != 0)
 	{
@@ -229,7 +227,6 @@ LoadBufferFromMC (unsigned char *buf, int slot, char *filename, bool8 silent)
 	int CardError;
 	unsigned int blocks;
 	unsigned int SectorSize;
-	char msg[80];
     int bytesleft = 0;
     int bytesread = 0;
 
@@ -247,7 +244,8 @@ LoadBufferFromMC (unsigned char *buf, int slot, char *filename, bool8 silent)
 
 		if (!CardFileExists (filename, slot))
 		{
-			WaitPrompt((char*) "Unable to open file");
+			if (!silent)
+				WaitPrompt((char*) "Unable to open file");
 			return 0;
 		}
 
@@ -271,12 +269,6 @@ LoadBufferFromMC (unsigned char *buf, int slot, char *filename, bool8 silent)
 			CARD_Read (&CardFile, buf + bytesread, SectorSize, bytesread);
 			bytesleft -= SectorSize;
 			bytesread += SectorSize;
-
-            if ( !silent )
-            {
-				sprintf (msg, "Read %d of %d bytes", bytesread, blocks);
-            	ShowProgress (msg, bytesread, blocks);
-			}
 		}
 		CARD_Close (&CardFile);
 		CARD_Unmount (slot);

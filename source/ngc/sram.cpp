@@ -48,7 +48,7 @@ prepareMCsavedata ()
   memcpy (savebuffer, saveicon, offset);
 
   /*** And the sramcomments ***/
-  sprintf (sramcomment[1], "%s", Memory.ROMFilename);
+  sprintf (sramcomment[1], "%s", Memory.ROMName);
   memcpy (savebuffer + offset, sramcomment, 64);
   offset += 64;
 
@@ -81,7 +81,7 @@ prepareMCsavedata ()
  * Prepare Exportable SRAM Save Data
  *
  * This sets up the save buffer for saving in a format compatible with
- * snes9x on other platforms. This is used when saving to SD or SMB.
+ * snes9x on other platforms. This is used when saving to SD / USB / SMB.
  ****************************************************************************/
 int
 prepareEXPORTsavedata ()
@@ -243,7 +243,7 @@ LoadSRAM (int method, bool silent)
 	ShowAction ((char*) "Loading...");
 
 	if(method == METHOD_AUTO)
-		method = autoLoadMethod();
+		method = autoSaveMethod(); // we use 'Save' because SRAM needs R/W
 
 	char filepath[1024];
 	int offset = 0;
@@ -259,15 +259,14 @@ LoadSRAM (int method, bool silent)
 		sprintf (filepath, "%s/%s.srm", GCSettings.SaveFolder, Memory.ROMFilename);
 		offset = LoadBufferFromSMB (filepath, silent);
 	}
-	else if(method == METHOD_MC_SLOTA)
+	else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
 	{
-		sprintf (filepath, "%s.srm", Memory.ROMFilename);
-		offset = LoadBufferFromMC (savebuffer, CARD_SLOTA, filepath, silent);
-	}
-	else if(method == METHOD_MC_SLOTB)
-	{
-		sprintf (filepath, "%s.srm", Memory.ROMFilename);
-		offset = LoadBufferFromMC (savebuffer, CARD_SLOTB, filepath, silent);
+		sprintf (filepath, "%s.srm", Memory.ROMName);
+
+		if(method == METHOD_MC_SLOTA)
+			offset = LoadBufferFromMC (savebuffer, CARD_SLOTA, filepath, silent);
+		else
+			offset = LoadBufferFromMC (savebuffer, CARD_SLOTB, filepath, silent);
 	}
 
 	if (offset > 0)
@@ -320,15 +319,14 @@ SaveSRAM (int method, bool silent)
 			sprintf (filepath, "%s/%s.srm", GCSettings.SaveFolder, Memory.ROMFilename);
 			offset = SaveBufferToSMB (filepath, datasize, silent);
 		}
-		else if(method == METHOD_MC_SLOTA)
+		else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
 		{
-			sprintf (filepath, "%s.srm", Memory.ROMFilename);
-			offset = SaveBufferToMC (savebuffer, CARD_SLOTA, filepath, datasize, silent);
-		}
-		else if(method == METHOD_MC_SLOTB)
-		{
-			sprintf (filepath, "%s.srm", Memory.ROMFilename);
-			offset = SaveBufferToMC (savebuffer, CARD_SLOTB, filepath, datasize, silent);
+			sprintf (filepath, "%s.srm", Memory.ROMName);
+
+			if(method == METHOD_MC_SLOTA)
+				offset = SaveBufferToMC (savebuffer, CARD_SLOTA, filepath, datasize, silent);
+			else
+				offset = SaveBufferToMC (savebuffer, CARD_SLOTB, filepath, datasize, silent);
 		}
 
 		if (offset > 0)
