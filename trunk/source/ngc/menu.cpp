@@ -18,6 +18,10 @@
 #include <string.h>
 #include <wiiuse/wpad.h>
 
+#ifdef WII_DVD
+#include <di/di.h>
+#endif
+
 #include "snes9x.h"
 #include "memmap.h"
 #include "debug.h"
@@ -150,8 +154,8 @@ PreferencesMenu ()
 			GCSettings.SaveMethod++;
 		#endif
 
-		// disable DVD access in Wii mode
-		#ifdef HW_RVL
+		// check if DVD access in Wii mode is disabled
+		#ifndef WII_DVD
 		if(GCSettings.LoadMethod == METHOD_DVD)
 			GCSettings.LoadMethod++;
 		#endif
@@ -977,6 +981,9 @@ mainmenu (int selectedMenu)
 			case 6:
 				// Exit to Loader
 				#ifdef HW_RVL
+					#ifdef WII_DVD
+					DI_Close();
+					#endif
 					exit(0);
 				#else	// gamecube
 					if (psoid[0] == PSOSDLOADID)

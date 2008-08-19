@@ -19,6 +19,10 @@
 #include <wiiuse/wpad.h>
 #include <sys/dir.h>
 
+#ifdef WII_DVD
+#include <di/di.h>
+#endif
+
 #include "snes9x.h"
 #include "memmap.h"
 
@@ -454,10 +458,25 @@ OpenDVD (int method)
 	if (!getpvd())
 	{
 		ShowAction((char*) "Loading DVD...");
+		#ifdef HW_DOL
 		DVD_Mount(); // mount the DVD unit again
+		#elif WII_DVD
+		u32 val;
+		DI_GetCoverRegister(&val);
+		if(val & 0x1)	// True if no disc inside, use (val & 0x2) for true if disc inside.
+		{
+			WaitPrompt("No disc inserted!");
+			return 0;
+		}
+		DI_Mount();
+		while(DI_GetStatus() & DVD_INIT);
+		#endif
 
 		if (!getpvd())
+		{
+			WaitPrompt ((char *)"Invalid DVD.");
 			return 0; // not a ISO9660 DVD
+		}
 	}
 
 	maxfiles = ParseDVDdirectory(); // load root folder

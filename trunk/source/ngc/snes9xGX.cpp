@@ -165,6 +165,10 @@
 #include <sdcard/card_io.h>
 #include <fat.h>
 
+#ifdef WII_DVD
+#include <di/di.h>
+#endif
+
 #include "snes9x.h"
 #include "memmap.h"
 #include "debug.h"
@@ -578,7 +582,7 @@ NGCReportButtons ()
 
         if ( GCSettings.AutoSave == 1 )
         {
-        	SaveSRAM(GCSettings.SaveMethod, SILENT );
+        	SaveSRAM ( GCSettings.SaveMethod, SILENT );
         }
         else if ( GCSettings.AutoSave == 2 )
         {
@@ -831,15 +835,19 @@ emulate ()
 int
 main ()
 {
+#ifdef WII_DVD
+	DI_Init();	// first
+#endif
+	
 	unsigned int save_flags;
 	int selectedMenu = -1;
-
-	#ifdef HW_RVL
+	
+#ifdef HW_RVL
 	WPAD_Init();
 	// read wiimote accelerometer and IR data
 	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
 	WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
-	#endif
+#endif
 
 	/*** Initialise GC ***/
 	InitGCVideo ();	/*** Get the ball rolling ***/
