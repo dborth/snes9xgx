@@ -12,6 +12,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef WII_DVD
+#include <di/di.h>
+#endif
+
 #include "menudraw.h"
 #include "snes9xGx.h"
 #include "unzip.h"
@@ -24,8 +28,10 @@ u64 dvddir = 0;
 u64 dvdrootdir = 0;
 int dvddirlength = 0;
 
+#ifdef HW_DOL
 /** DVD I/O Address base **/
 volatile unsigned long *dvd = (volatile unsigned long *) 0xCC006000;
+#endif
 
  /** Due to lack of memory, we'll use this little 2k keyhole for all DVD operations **/
 unsigned char DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);
@@ -37,10 +43,11 @@ unsigned char dvdbuffer[2048];
   *
   * Gets and returns the dvd driveid
 **/
-static unsigned char *inquiry=(unsigned char *)0x80000004;
-
+#ifdef HW_DOL
 int dvd_driveid()
 {
+	static unsigned char *inquiry=(unsigned char *)0x80000004;
+	
     dvd[0] = 0x2e;
     dvd[1] = 0;
     dvd[2] = 0x12000000;
@@ -56,44 +63,59 @@ int dvd_driveid()
 
     return (int)inquiry[2];
 }
+#endif
+
 
  /**
   * dvd_read
   *
   * The only DVD function we need - you gotta luv gc-linux self-boots!
+  * returns: 1 - ok ; 0 - error
   */
 int
 dvd_read (void *dst, unsigned int len, u64 offset)
 {
 
-  unsigned char *buffer = (unsigned char *) (unsigned int) DVDreadbuffer;
+	unsigned char *buffer = (unsigned char *) (unsigned int) DVDreadbuffer;
 
-  if (len > 2048)
-    return 1;				/*** We only allow 2k reads **/
+	if (len > 2048)
+		return 0;				/*** We only allow 2k reads **/
 
-  DCInvalidateRange ((void *) buffer, len);
+	DCInvalidateRange ((void *) buffer, len);
 
-  if(offset < 0x57057C00 || (isWii == true && offset < 0x118244F00LL)) // don't read past the end of the DVD
-    {
-      offset >>= 2;
-      dvd[0] = 0x2E;
-      dvd[1] = 0;
-      dvd[2] = 0xA8000000;
-      dvd[3] = (u32)offset;
-      dvd[4] = len;
-      dvd[5] = (unsigned long) buffer;
-      dvd[6] = len;
-      dvd[7] = 3;			/*** Enable reading with DMA ***/
-      while (dvd[7] & 1);
-      memcpy (dst, buffer, len);
-    }
-  else				// Let's not read past end of DVD
-    return 0;
-
-  if (dvd[0] & 0x4)		/* Ensure it has completed */
-    return 0;
-
-  return 1;
+	if(offset < 0x57057C00 || (isWii == true && offset < 0x118244F00LL)) // don't read past the end of the DVD
+	{
+		offset >>= 2;
+		
+	#ifdef HW_DOL
+		
+		dvd[0] = 0x2E;
+		dvd[1] = 0;
+		dvd[2] = 0xA8000000;
+		dvd[3] = (u32)offset;
+		dvd[4] = len;
+		dvd[5] = (u32) buffer;
+		dvd[6] = len;
+		dvd[7] = 3;			/*** Enable reading with DMA ***/
+		while (dvd[7] & 1);
+		memcpy (dst, buffer, len);
+		
+		if (dvd[0] & 0x4)		/* Ensure it has completed */
+			return 0;
+			
+		return 1;
+		
+	#elif WII_DVD
+		int ret = 1;
+		ret = DI_ReadDVD(dst, (u32)len, (u32)offset);
+		if (ret==0)
+			return 1;
+		else
+			return 0;
+	#endif
+	}
+	else				// Let's not read past end of DVD
+		return 0;
 
 }
 
@@ -127,7 +149,7 @@ getpvd ()
 	/** Look for Joliet PVD first **/
 	while (sector < 32)
 	{
-		if (dvd_read (dvdbuffer, 2048, (u64)(sector << 11)))
+		if (dvd_read (&dvdbuffer, 2048, (u64)(sector << 11)))
 		{
 			if (memcmp (&dvdbuffer, "\2CD001\1", 8) == 0)
 			{
@@ -138,7 +160,7 @@ getpvd ()
 				memcpy (&dvddirlength, &dvdbuffer[PVDROOT + FILE_LENGTH], 4);
 				IsJoliet = 1;
 				break;
-				}
+			}
 		}
 		else
 			return 0;			/*** Can't read sector! ***/
@@ -180,14 +202,15 @@ getpvd ()
  ****************************************************************************/
 bool TestDVD()
 {
-	// DVD not available on Wii - disable
-	#ifdef HW_RVL
-	return false;
-	#endif
 
 	if (!getpvd())
 	{
+		#ifdef HW_DOL
 		DVD_Mount();
+		#elif WII_DVD
+		DI_Mount();
+		while(DI_GetStatus() & DVD_INIT);
+		#endif
 		if (!getpvd())
 			return false;
 	}
@@ -250,7 +273,7 @@ getentry (int entrycount)
 				fname[j] = 0;
 
 				if (strlen (fname) >= MAXJOLIET)
-					fname[MAXJOLIET] = 0;
+					fname[MAXJOLIET - 1] = 0;
 
 				if (strlen (fname) == 0)
 					fname[0] = filename[0];
@@ -285,7 +308,7 @@ getentry (int entrycount)
 				*rr = 0;
 
 			strcpy (filelist[entrycount].filename, fname);
-			fname[MAXDISPLAY] = 0;
+			fname[MAXDISPLAY - 1] = 0;
 			strcpy (filelist[entrycount].displayname, fname);
 
 			memcpy (&offset32, &dvdbuffer[diroffset + EXTENT], 4);
@@ -488,6 +511,7 @@ LoadDVDFile (unsigned char *buffer)
  *
  * libOGC tends to foul up if you don't, and sometimes does if you do!
  ****************************************************************************/
+#ifdef HW_DOL
 void uselessinquiry ()
 {
 	dvd[0] = 0;
@@ -518,4 +542,5 @@ void dvd_motor_off( )
 	dvd[0] = 0x14;
 	dvd[1] = 0;
 }
+#endif
 
