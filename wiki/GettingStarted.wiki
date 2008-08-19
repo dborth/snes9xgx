@@ -41,5 +41,7 @@ If you haven't installed the homebrew channel yet, read about how to here: http:
 
 You can load it via sdload and an SD card in slot A, or by streaming it to your
 cube, or by booting a bootable DVD with it on it. This document doesn't cover
-how to do any of that. A good source for information on these topics is the
-tehskeen forums: http://www.tehskeen.com/forums/
+how to do any of that. You can find out how to run homebrew on your gamecube here:
+http://www.gc-linux.org/wiki/SDload
+
+If this doesn't help you, check out the tehskeen forums: http://www.tehskeen.com/forums/
