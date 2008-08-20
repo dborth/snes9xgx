@@ -202,13 +202,10 @@ struct SGCSettings{
 };
 
 START_EXTERN_C
+
 extern struct SGCSettings GCSettings;
 extern bool8 isWii;
 
-extern u32 wpad_get_analogues(int pad, float* mag1, u16* ang1, float* mag2, u16* ang2);
-extern void SetControllers ();
 END_EXTERN_C
-
-#define	JOY_THRESHOLD	0.70	// for wii (expansion) analogues
 
 #endif

@@ -38,6 +38,7 @@
 #include "dvd.h"
 #include "aram.h"
 #include "images/gfx_bg.h"
+#include "input.h"
 
 /*** Globals ***/
 FT_Library ftlibrary;
@@ -559,11 +560,12 @@ RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
 {
     int redraw = 1;
     int quit = 0;
-    u32 p, wp;
     int ret = 0;
-    signed char a;
-	float mag, mag2;
-	u16 ang, ang2;
+
+    u32 p = 0;
+	u32 wp = 0;
+    signed char gc_ay = 0;
+	signed char wm_ay = 0;
 
     while (quit == 0)
     {
@@ -573,30 +575,25 @@ RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
             redraw = 0;
         }
 
+		gc_ay = PAD_StickY (0);
         p = PAD_ButtonsDown (0);
 #ifdef HW_RVL
+		wm_ay = WPAD_StickY (0,0);
 		wp = WPAD_ButtonsDown (0);
-		wpad_get_analogues(0, &mag, &ang, &mag2, &ang2);		// get joystick info from wii expansions
-#else
-		wp = 0;
-		ang = 0;
-		ang2 = 0;
-		mag = 0;
-		mag2 = 0;
 #endif
-		a = PAD_StickY (0);
+		
 
 		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
 
         /*** Look for up ***/
-        if ( (p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (a > 70) || (mag>JOY_THRESHOLD && (ang>300 || ang<50)) )
+        if ( (p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (gc_ay > PADCAL) || (wm_ay > PADCAL) )
         {
             redraw = 1;
             menu = FindMenuItem(&items[0], maxitems, menu, -1);
         }
 
         /*** Look for down ***/
-        if ( (p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (a < -70) || (mag>JOY_THRESHOLD && (ang>130 && ang<230)) )
+        if ( (p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (gc_ay < -PADCAL) || (wm_ay < -PADCAL) )
         {
             redraw = 1;
             menu = FindMenuItem(&items[0], maxitems, menu, +1);
