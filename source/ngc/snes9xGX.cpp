@@ -259,7 +259,7 @@ emulate ()
 	{
 		S9xMainLoop ();
 		NGCReportButtons ();
-		
+
 		if (ConfigRequested)
 		{
 			VIDEO_WaitVSync ();
@@ -283,21 +283,21 @@ emulate ()
 			}
 
 			mainmenu (3); // go to game menu
-			
+
 			/*** Update any emulation settings changed in the menu ***/
 			ReInitGCVideo();	// update video after reading settings
 			FrameTimer = 0;
 			setFrameTimerMethod(); // set frametimer method every time a ROM is loaded
-			
+
 			Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);
 			Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);
 			Settings.JustifierMaster = (GCSettings.Justifier > 0 ? true : false);
 			SetControllers();
 			S9xReportControllers(); // FIX
-			
+
 			ConfigRequested = 0;
 		}//if ConfigRequested
-		
+
 	}//while
 }
 
@@ -327,10 +327,10 @@ main ()
 #ifdef WII_DVD
 	DI_Init();	// first
 #endif
-	
+
 	unsigned int save_flags;
 	int selectedMenu = -1;
-	
+
 #ifdef HW_RVL
 	WPAD_Init();
 	// read wiimote accelerometer and IR data
@@ -428,7 +428,7 @@ main ()
 		CPU.Flags = save_flags;
 
 		/*** Load SRAM ***/
-		Memory.LoadSRAM ("DVD");
+		//Memory.LoadSRAM ("DVD");
 	}
 
 	/*** Emulate ***/

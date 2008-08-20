@@ -177,26 +177,16 @@ DefaultSettings ()
 	GCSettings.AutoSave = 1;
 
 	// default SMB settings
+	strncpy (GCSettings.smbip, "192.168.0.1", 15); // IP Address of share server
+	strncpy (GCSettings.smbuser, "Wiiuser", 19); // Your share user
+	strncpy (GCSettings.smbpwd, "password", 19); // Your share user password
+	strncpy (GCSettings.smbshare, "SNES", 19); // Share name on server
 
-	#define GC_IP "192.168.0.32"	// IP to assign the GameCube
-	#define GW_IP "192.168.0.150"	// Your gateway IP
-	#define MASK "255.255.255.0"	// Your subnet mask
-	#define SMB_USER "Wiiuser"		// Your share user
-	#define SMB_PWD "password"		// Your share user password
-	#define SMB_GCID "Wii"			// Machine Name of GameCube
-	#define SMB_SVID "Server"		// Machine Name of Server(Share)
-	#define SMB_SHARE "SNES"		// Share name on server
-	#define SMB_IP "192.168.0.1"	// IP Address of share server
-
-	strncpy (GCSettings.gcip, GC_IP, 15);
-	strncpy (GCSettings.gwip, GW_IP, 15);
-	strncpy (GCSettings.mask, MASK, 15);
-	strncpy (GCSettings.smbip, SMB_IP, 15);
-	strncpy (GCSettings.smbuser, SMB_USER, 19);
-	strncpy (GCSettings.smbpwd, SMB_PWD, 19);
-	strncpy (GCSettings.smbgcid, SMB_GCID, 19);
-	strncpy (GCSettings.smbsvid, SMB_SVID, 19);
-	strncpy (GCSettings.smbshare, SMB_SHARE, 19);
+	GCSettings.gcip[0] = 0;
+	GCSettings.gwip[0] = 0;
+	GCSettings.mask[0] = 0;
+	GCSettings.smbsvid[0] = 0;
+	GCSettings.smbgcid[0] = 0;
 
 	GCSettings.NGCZoom = 0;
 	GCSettings.VerifySaves = 0;

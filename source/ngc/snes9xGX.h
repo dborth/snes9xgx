@@ -177,10 +177,10 @@ enum {
 };
 
 struct SGCSettings{
-    uint8	AutoLoad;
-    uint8	AutoSave;
-    uint8	LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
-	uint8	SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, Memory Card Slot A, Memory Card Slot B, USB, SMB
+    int		AutoLoad;
+    int		AutoSave;
+    int		LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
+	int		SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, Memory Card Slot A, Memory Card Slot B, USB, SMB
 	char	LoadFolder[200]; // Path to game files
 	char	SaveFolder[200]; // Path to save files
 	char	CheatFolder[200]; // Path to cheat files
@@ -193,12 +193,12 @@ struct SGCSettings{
 	char	smbgcid[20];
 	char	smbsvid[20];
 	char	smbshare[20];
-    bool8	NGCZoom;
-    uint8	VerifySaves;
-	u16		render;		// 0 - original, 1 - no AA
-	u16		Superscope;
-	u16		Mouse;
-	u16		Justifier;
+    int		NGCZoom; // 0 - off, 1 - on
+    int		VerifySaves;
+	int		render;		// 0 - original, 1 - no AA
+	int		Superscope;
+	int		Mouse;
+	int		Justifier;
 };
 
 START_EXTERN_C
