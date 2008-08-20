@@ -38,34 +38,6 @@ unsigned char DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);
 unsigned char dvdbuffer[2048];
 
 
-/**
-  * dvd_driveid
-  *
-  * Gets and returns the dvd driveid
-**/
-#ifdef HW_DOL
-int dvd_driveid()
-{
-	static unsigned char *inquiry=(unsigned char *)0x80000004;
-	
-    dvd[0] = 0x2e;
-    dvd[1] = 0;
-    dvd[2] = 0x12000000;
-    dvd[3] = 0;
-    dvd[4] = 0x20;
-    dvd[5] = 0x80000000;
-    dvd[6] = 0x20;
-    dvd[7] = 3;
-
-    while( dvd[7] & 1 )
-        ;
-    DCFlushRange((void *)0x80000000, 32);
-
-    return (int)inquiry[2];
-}
-#endif
-
-
  /**
   * dvd_read
   *
@@ -86,9 +58,9 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 	if(offset < 0x57057C00 || (isWii == true && offset < 0x118244F00LL)) // don't read past the end of the DVD
 	{
 		offset >>= 2;
-		
+
 	#ifdef HW_DOL
-		
+
 		dvd[0] = 0x2E;
 		dvd[1] = 0;
 		dvd[2] = 0xA8000000;
@@ -99,12 +71,12 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 		dvd[7] = 3;			/*** Enable reading with DMA ***/
 		while (dvd[7] & 1);
 		memcpy (dst, buffer, len);
-		
+
 		if (dvd[0] & 0x4)		/* Ensure it has completed */
 			return 0;
-			
+
 		return 1;
-		
+
 	#elif WII_DVD
 		int ret = 1;
 		ret = DI_ReadDVD(dst, (u32)len, (u32)offset);
@@ -114,9 +86,8 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 			return 0;
 	#endif
 	}
-	else				// Let's not read past end of DVD
-		return 0;
 
+	return 0;
 }
 
 /** Minimal ISO Directory Definition **/
@@ -541,6 +512,32 @@ void dvd_motor_off( )
 	/*** PSO Stops blackscreen at reload ***/
 	dvd[0] = 0x14;
 	dvd[1] = 0;
+}
+
+/**
+  * dvd_driveid
+  *
+  * Gets and returns the dvd driveid
+**/
+
+int dvd_driveid()
+{
+	static unsigned char *inquiry=(unsigned char *)0x80000004;
+
+    dvd[0] = 0x2e;
+    dvd[1] = 0;
+    dvd[2] = 0x12000000;
+    dvd[3] = 0;
+    dvd[4] = 0x20;
+    dvd[5] = 0x80000000;
+    dvd[6] = 0x20;
+    dvd[7] = 3;
+
+    while( dvd[7] & 1 )
+        ;
+    DCFlushRange((void *)0x80000000, 32);
+
+    return (int)inquiry[2];
 }
 #endif
 

@@ -230,11 +230,11 @@ int FileSelector (int method)
 	signed char gc_sx = 0;
 	signed char wm_ay = 0;
 	signed char wm_sx = 0;
-	
+
     int haverom = 0;
     int redraw = 1;
     int selectit = 0;
-	
+
 	int scroll_delay = 0;
 	bool move_selection = 0;
 	#define SCROLL_INITIAL_DELAY	15
@@ -250,7 +250,7 @@ int FileSelector (int method)
 
 		gc_ay = PAD_StickY (0);
 		gc_sx = PAD_SubStickX (0);
-		
+
         p = PAD_ButtonsDown (0);
 		ph = PAD_ButtonsHeld (0);
 #ifdef HW_RVL
@@ -465,7 +465,7 @@ OpenDVD (int method)
 		DI_GetCoverRegister(&val);
 		if(val & 0x1)	// True if no disc inside, use (val & 0x2) for true if disc inside.
 		{
-			WaitPrompt("No disc inserted!");
+			WaitPrompt((char *)"No disc inserted!");
 			return 0;
 		}
 		DI_Mount();
