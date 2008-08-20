@@ -35,6 +35,7 @@
 #include "smbop.h"
 #include "fileop.h"
 #include "memcardop.h"
+#include "input.h"
 
 int offset;
 int selection;
@@ -219,18 +220,21 @@ void StripExt(char* returnstring, char * inputstring)
  *
  * Let user select a file from the listing
 ****************************************************************************/
-
-#define PADCAL 40
-int
-FileSelector (int method)
+int FileSelector (int method)
 {
-    u32 p, wp, ph, wh;
-    signed char a, c;
+    u32 p = 0;
+	u32 wp = 0;
+	u32 ph = 0;
+	u32 wh = 0;
+    signed char gc_ay = 0;
+	signed char gc_sx = 0;
+	signed char wm_ay = 0;
+	signed char wm_sx = 0;
+	
     int haverom = 0;
     int redraw = 1;
     int selectit = 0;
-    float mag, mag2;
-    u16 ang, ang2;
+	
 	int scroll_delay = 0;
 	bool move_selection = 0;
 	#define SCROLL_INITIAL_DELAY	15
@@ -244,25 +248,21 @@ FileSelector (int method)
 
 		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
 
+		gc_ay = PAD_StickY (0);
+		gc_sx = PAD_SubStickX (0);
+		
         p = PAD_ButtonsDown (0);
 		ph = PAD_ButtonsHeld (0);
 #ifdef HW_RVL
+		wm_ay = WPAD_StickY (0, 0);
+		wm_sx = WPAD_StickX (0, 1);
+
 		wp = WPAD_ButtonsDown (0);
 		wh = WPAD_ButtonsHeld (0);
-		wpad_get_analogues(0, &mag, &ang, &mag2, &ang2);		// get joystick info from wii expansions
-#else
-		wp = 0;
-		wh = 0;
-		ang = 0;
-		ang2 = 0;
-		mag = 0;
-		mag2 = 0;
 #endif
-		a = PAD_StickY (0);
-		c = PAD_SubStickX (0);
 
 		/*** Check for exit combo ***/
-		if ( (c < -70) || (wp & WPAD_BUTTON_HOME) || (wp & WPAD_CLASSIC_BUTTON_HOME) )
+		if ( (gc_sx < -70) || (wm_sx < -70) || (wp & WPAD_BUTTON_HOME) || (wp & WPAD_CLASSIC_BUTTON_HOME) )
 			return 0;
 
 		/*** Check buttons, perform actions ***/
@@ -366,7 +366,7 @@ FileSelector (int method)
                 return 0;
 			}
         }	// End of B
-        if ( ((p | ph) & PAD_BUTTON_DOWN) || ((wp | wh) & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (a < -PADCAL) || (mag>JOY_THRESHOLD && (ang>130 && ang<230)) )
+        if ( ((p | ph) & PAD_BUTTON_DOWN) || ((wp | wh) & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (gc_ay < -PADCAL) || (wm_ay < -PADCAL) )
         {
 			if ( (p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) ) { /*** Button just pressed ***/
 				scroll_delay = SCROLL_INITIAL_DELAY;	// reset scroll delay.
@@ -390,7 +390,7 @@ FileSelector (int method)
 				move_selection = 0;
 			}
         }	// End of down
-        if ( ((p | ph) & PAD_BUTTON_UP) || ((wp | wh) & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (a > PADCAL) || (mag>JOY_THRESHOLD && (ang>300 || ang<50)) )
+        if ( ((p | ph) & PAD_BUTTON_UP) || ((wp | wh) & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (gc_ay > PADCAL) || (wm_ay > PADCAL) )
         {
 			if ( (p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) ) { /*** Button just pressed***/
 				scroll_delay = SCROLL_INITIAL_DELAY;	// reset scroll delay.

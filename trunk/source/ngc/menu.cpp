@@ -52,6 +52,7 @@
 #include "button_mapping.h"
 #include "menudraw.h"
 #include "cheatmgr.h"
+#include "input.h"
 
 extern void DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsize);
 
@@ -316,8 +317,6 @@ static int cheatmenuCount = 0;
 static char cheatmenu[MAX_CHEATS][50];
 static char cheatmenuvalue[MAX_CHEATS][50];
 
-#define PADCAL 40
-
 void CheatMenu()
 {
 	int ret = -1;
@@ -326,12 +325,18 @@ void CheatMenu()
 
 	int selection = 0;
 	int offset = 0;
-	u32 p, wp, ph, wh;
-	signed char a, c;
 	int redraw = 1;
 	int selectit = 0;
-	float mag, mag2;
-	u16 ang, ang2;
+	
+    u32 p = 0;
+	u32 wp = 0;
+	u32 ph = 0;
+	u32 wh = 0;
+    signed char gc_ay = 0;
+	signed char gc_sx = 0;
+	signed char wm_ay = 0;
+	signed char wm_sx = 0;
+
 	int scroll_delay = 0;
 	bool move_selection = 0;
 	#define SCROLL_INITIAL_DELAY	15
@@ -368,25 +373,20 @@ void CheatMenu()
 
 			VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
 
-			p = PAD_ButtonsDown (0);
+			gc_ay = PAD_StickY (0);
+			gc_sx = PAD_SubStickX (0);
+	        p = PAD_ButtonsDown (0);
 			ph = PAD_ButtonsHeld (0);
-		#ifdef HW_RVL
+			
+			#ifdef HW_RVL
+			wm_ay = WPAD_StickY (0, 0);
+			wm_sx = WPAD_StickX (0, 1);
 			wp = WPAD_ButtonsDown (0);
 			wh = WPAD_ButtonsHeld (0);
-			wpad_get_analogues(0, &mag, &ang, &mag2, &ang2);		// get joystick info from wii expansions
-		#else
-			wp = 0;
-			wh = 0;
-			ang = 0;
-			ang2 = 0;
-			mag = 0;
-			mag2 = 0;
-		#endif
-			a = PAD_StickY (0);
-			c = PAD_SubStickX (0);
+			#endif
 
 			/*** Check for exit combo ***/
-			if ( (c < -70) || (wp & WPAD_BUTTON_HOME) || (wp & WPAD_CLASSIC_BUTTON_HOME) )
+			if ( (gc_sx < -70) || (wm_sx < -70) || (wp & WPAD_BUTTON_HOME) || (wp & WPAD_CLASSIC_BUTTON_HOME) )
 				break;
 
 			/*** Check buttons, perform actions ***/
@@ -399,7 +399,7 @@ void CheatMenu()
 				ret = selection;
 			}	// End of A
 
-			if ( ((p | ph) & PAD_BUTTON_DOWN) || ((wp | wh) & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (a < -PADCAL) || (mag>JOY_THRESHOLD && (ang>130 && ang<230)) )
+			if ( ((p | ph) & PAD_BUTTON_DOWN) || ((wp | wh) & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (gc_ay < -PADCAL) || (wm_ay < -PADCAL) )
 			{
 				if ( (p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) ) { /*** Button just pressed ***/
 					scroll_delay = SCROLL_INITIAL_DELAY;	// reset scroll delay.
@@ -423,7 +423,7 @@ void CheatMenu()
 					move_selection = 0;
 				}
 			}	// End of down
-			if ( ((p | ph) & PAD_BUTTON_UP) || ((wp | wh) & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (a > PADCAL) || (mag>JOY_THRESHOLD && (ang>300 || ang<50)) )
+			if ( ((p | ph) & PAD_BUTTON_UP) || ((wp | wh) & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (gc_ay > PADCAL) || (wm_ay > PADCAL) )
 			{
 				if ( (p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) ) { /*** Button just pressed***/
 					scroll_delay = SCROLL_INITIAL_DELAY;	// reset scroll delay.
@@ -1006,11 +1006,4 @@ mainmenu (int selectedMenu)
 		while( PAD_ButtonsHeld(0) )
 		    VIDEO_WaitVSync();
 	#endif
-
-	ReInitGCVideo();	// update video after reading settings
-
-	Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);
-	Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);
-	Settings.JustifierMaster = (GCSettings.Justifier > 0 ? true : false);
-	SetControllers();
 }
