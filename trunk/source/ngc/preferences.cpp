@@ -227,7 +227,6 @@ void loadXMLController(unsigned int controller[], const char * name)
 
 	if(item)
 	{
-		WaitPrompt((char *)name);
 		// populate buttons
 		for(int i=0; i < 12; i++)
 		{
