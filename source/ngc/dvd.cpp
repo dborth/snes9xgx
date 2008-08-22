@@ -57,14 +57,13 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 
 	if(offset < 0x57057C00 || (isWii == true && offset < 0x118244F00LL)) // don't read past the end of the DVD
 	{
-		offset >>= 2;
 
 	#ifdef HW_DOL
 
 		dvd[0] = 0x2E;
 		dvd[1] = 0;
 		dvd[2] = 0xA8000000;
-		dvd[3] = (u32)offset;
+		dvd[3] = (u32)(offset >> 2);
 		dvd[4] = len;
 		dvd[5] = (u32) buffer;
 		dvd[6] = len;
@@ -79,7 +78,7 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 
 	#elif WII_DVD
 		int ret = 1;
-		ret = DI_ReadDVD(dst, (u32)len, (u32)offset);
+		ret = DI_ReadDVD(dst, len >> 11, (u32)(offset >> 11));
 		if (ret==0)
 			return 1;
 		else

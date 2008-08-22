@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ogcsys.h>
-#include "mxml.h"
+#include <mxml.h>
 
 #include "snes9x.h"
 #include "memmap.h"
