@@ -31,7 +31,7 @@
 #include "snapshot.h"
 #include "srtc.h"
 
-#include "Snes9xGx.h"
+#include "Snes9xGX.h"
 #include "images/saveicon.h"
 #include "freeze.h"
 #include "filesel.h"
@@ -41,6 +41,7 @@
 #include "memcardop.h"
 
 #define MEMBUFFER (512 * 1024)
+#define VERSIONSTRFREEZE = "Snes9x GX 005 Freeze"
 
 extern void S9xSRTCPreSaveState ();
 extern void NGCFreezeStruct ();
@@ -50,7 +51,7 @@ extern unsigned char savebuffer[];
 static int bufoffset;
 static char membuffer[MEMBUFFER];
 
-char freezecomment[2][32] = { {"Snes9x GX 005 Freeze"}, {"Freeze"} };
+char freezecomment[2][32];
 
 
 /**
@@ -175,7 +176,8 @@ NGCFreezeGame (int method, bool8 silent)
 		memcpy (savebuffer, saveicon, woffset);
 
 		/*** And the freezecomment ***/
-		sprintf (freezecomment[1], "%s", Memory.ROMName);
+		sprintf (freezecomment[0], "%s Freeze", VERSIONSTR);
+		sprintf (freezecomment[1], Memory.ROMName);
 		memcpy (savebuffer + woffset, freezecomment, 64);
 		woffset += 64;
 

@@ -118,7 +118,7 @@ s8 WPAD_StickX(u8 chan,u8 right)
 		default:
 			break;
 	}
-	
+
 	/* calculate X value (angle need to be converted into radian) */
 	if (mag > 1.0) mag = 1.0;
 	else if (mag < -1.0) mag = -1.0;
@@ -166,7 +166,7 @@ s8 WPAD_StickY(u8 chan, u8 right)
 	else if (mag < -1.0) mag = -1.0;
 	double val = mag * cos((PI * ang)/180.0f);
 
-	return (s8)(val * 128.0f); 
+	return (s8)(val * 128.0f);
 }
 
 // hold superscope/mouse/justifier cursor positions
@@ -176,7 +176,7 @@ static int cursor_y[5] = {0,0,0,0,0};
 void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
 {
 	#define SCOPEPADCAL 20
-	
+
 	// gc left joystick
 	signed char pad_x = PAD_StickX (pad);
 	signed char pad_y = PAD_StickY (pad);
@@ -241,20 +241,19 @@ void decodepad (int pad)
 {
   int i, offset;
   float t;
- 
-  signed char wm_ax = 0;
-  signed char wm_ay = 0;
-  u32 wp = 0;
-  
+
   signed char pad_x = PAD_StickX (pad);
   signed char pad_y = PAD_StickY (pad);
   u32 jp = PAD_ButtonsHeld (pad);
 
 #ifdef HW_RVL
+  signed char wm_ax = 0;
+  signed char wm_ay = 0;
+  u32 wp = 0;
   wm_ax = WPAD_StickX ((u8)pad, 0);
   wm_ay = WPAD_StickY ((u8)pad, 0);
   wp = WPAD_ButtonsHeld (pad);
-  
+
   u32 exp_type;
   if ( WPAD_Probe(pad, &exp_type) != 0 ) exp_type = WPAD_EXP_NONE;
 #endif
@@ -433,7 +432,7 @@ void NGCReportButtons ()
 {
 	s8 gc_px = PAD_SubStickX (0);
 	s8 gc_py = PAD_SubStickY (0);
-	
+
 	u16 gc_pb = PAD_ButtonsHeld (0);
 
 #ifdef HW_RVL

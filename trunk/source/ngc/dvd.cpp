@@ -468,7 +468,7 @@ LoadDVDFile (unsigned char *buffer)
 	}
 	else
 	{
-		return UnZipBuffer (buffer, discoffset, 1, NULL);	// unzip from dvd
+		return UnZipFile (buffer, discoffset);	// unzip from dvd
 	}
 	return dvddirlength;
 }
