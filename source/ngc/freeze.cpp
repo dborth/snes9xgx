@@ -41,7 +41,6 @@
 #include "memcardop.h"
 
 #define MEMBUFFER (512 * 1024)
-#define VERSIONSTRFREEZE = "Snes9x GX 005 Freeze"
 
 extern void S9xSRTCPreSaveState ();
 extern void NGCFreezeStruct ();
