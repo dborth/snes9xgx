@@ -29,7 +29,7 @@ extern unsigned char savebuffer[];
 extern int padcal;
 extern unsigned short gcpadmap[];
 
-char sramcomment[2][32] = { {"Snes9x GX 005 SRAM"}, {"Savegame"} };
+char sramcomment[2][32];
 
 /****************************************************************************
  * Prepare Memory Card SRAM Save Data
@@ -48,7 +48,8 @@ prepareMCsavedata ()
   memcpy (savebuffer, saveicon, offset);
 
   /*** And the sramcomments ***/
-  sprintf (sramcomment[1], "%s", Memory.ROMName);
+  sprintf (sramcomment[0], "%s SRAM", VERSIONSTR);
+  sprintf (sramcomment[1], Memory.ROMName);
   memcpy (savebuffer + offset, sramcomment, 64);
   offset += 64;
 

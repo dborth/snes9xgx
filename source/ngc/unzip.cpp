@@ -73,9 +73,12 @@ IsZipFile (char *buffer)
  *
  * It should be noted that there is a limit of 5MB total size for any ROM
  ******************************************************************************/
+FILE* fatfile; // FAT
+u64 discoffset; // DVD
+SMBFILE smbfile; // SMB
 
 int
-UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehandle)
+UnZipBuffer (unsigned char *outbuffer, short where)
 {
 	PKZIPHEADER pkzip;
 	int zipoffset = 0;
@@ -84,6 +87,7 @@ UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehand
 	z_stream zs;
 	int res;
 	int bufferoffset = 0;
+	int readoffset = 0;
 	int have = 0;
 	char readbuffer[ZIPCHUNK];
 	char msg[128];
@@ -92,16 +96,16 @@ UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehand
 	switch (where)
 	{
 		case 0:	// SD Card
-		fseek(filehandle, 0, SEEK_SET);
-		fread (readbuffer, 1, ZIPCHUNK, filehandle);
+		fseek(fatfile, 0, SEEK_SET);
+		fread (readbuffer, 1, ZIPCHUNK, fatfile);
 		break;
 
 		case 1: // DVD
-		dvd_read (readbuffer, ZIPCHUNK, inoffset);
+		dvd_read (readbuffer, ZIPCHUNK, discoffset);
 		break;
 
-		case 2: // From buffer
-		memcpy(readbuffer, outbuffer, ZIPCHUNK);
+		case 2: // From SMB
+		SMB_ReadFile(readbuffer, ZIPCHUNK, 0, smbfile);
 		break;
 	}
 
@@ -168,18 +172,18 @@ UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehand
 
 		switch (where)
 		{
-			case 0:		// SD Card
-			fread (readbuffer, 1, ZIPCHUNK, filehandle);
+			case 0:	// SD Card
+			fread (readbuffer, 1, ZIPCHUNK, fatfile);
 			break;
 
-			case 1:		// DVD
-			inoffset += ZIPCHUNK;
-			dvd_read (readbuffer, ZIPCHUNK, inoffset);
+			case 1:	// DVD
+			readoffset += ZIPCHUNK;
+			dvd_read (readbuffer, ZIPCHUNK, discoffset+readoffset);
 			break;
 
-			case 2: // From buffer
-			inoffset += ZIPCHUNK;
-			memcpy(readbuffer, outbuffer+inoffset, ZIPCHUNK);
+			case 2: // From SMB
+			readoffset += ZIPCHUNK;
+			SMB_ReadFile(readbuffer, ZIPCHUNK, readoffset, smbfile);
 			break;
 		}
 	}
@@ -196,4 +200,25 @@ UnZipBuffer (unsigned char *outbuffer, u64 inoffset, short where, FILE* filehand
 	}
 
 	return 0;
+}
+// Reading from FAT
+int
+UnZipFile (unsigned char *outbuffer, FILE* infile)
+{
+	fatfile = infile;
+	return UnZipBuffer(outbuffer, 0);
+}
+// Reading from DVD
+int
+UnZipFile (unsigned char *outbuffer, u64 inoffset)
+{
+	discoffset = inoffset;
+	return UnZipBuffer(outbuffer, 1);
+}
+// Reading from SMB
+int
+UnZipFile (unsigned char *outbuffer, SMBFILE infile)
+{
+	smbfile = infile;
+	return UnZipBuffer(outbuffer, 2);
 }

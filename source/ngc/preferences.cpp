@@ -18,7 +18,7 @@
 #include "memmap.h"
 #include "srtc.h"
 
-#include "snes9xGx.h"
+#include "snes9xGX.h"
 #include "images/saveicon.h"
 #include "menudraw.h"
 #include "memcardop.h"
@@ -36,10 +36,8 @@ extern unsigned int ccpadmap[];
 extern unsigned int ncpadmap[];
 
 #define PREFS_FILE_NAME "SNES9xGX.xml"
-#define PREFSVERSTRING "Snes9x GX 005 Prefs"
-#define VERSIONSTRING "005"
 
-char prefscomment[2][32] = { {PREFSVERSTRING}, {"Preferences"} };
+char prefscomment[2][32];
 
 /****************************************************************************
  * Prepare Preferences Data
@@ -90,6 +88,34 @@ void createXMLController(unsigned int controller[], const char * name, const cha
 	}
 }
 
+const char * XMLSaveCallback(mxml_node_t *node, int where)
+{
+	const char *name;
+
+	name = node->value.element.name;
+
+	if(where == MXML_WS_BEFORE_CLOSE)
+	{
+		if(!strcmp(name, "file") || !strcmp(name, "section"))
+			return ("\n");
+		else if(!strcmp(name, "controller"))
+			return ("\n\t");
+	}
+	if (where == MXML_WS_BEFORE_OPEN)
+	{
+		if(!strcmp(name, "file"))
+			return ("\n");
+		else if(!strcmp(name, "section"))
+			return ("\n\n");
+		else if(!strcmp(name, "setting") || !strcmp(name, "controller"))
+			return ("\n\t");
+		else if(!strcmp(name, "button"))
+			return ("\n\t\t");
+	}
+	return (NULL);
+}
+
+
 int
 preparePrefsData (int method)
 {
@@ -105,14 +131,17 @@ preparePrefsData (int method)
 		memcpy (savebuffer, saveicon, offset);
 
 		// And the comments
+		sprintf (prefscomment[0], "%s Prefs", VERSIONSTR);
+		sprintf (prefscomment[1], "Preferences");
 		memcpy (savebuffer + offset, prefscomment, 64);
 		offset += 64;
 	}
 
 	xml = mxmlNewXML("1.0");
+	mxmlSetWrapMargin(0); // disable line wrapping
 
 	data = mxmlNewElement(xml, "file");
-	mxmlElementSetAttr(data, "version",VERSIONSTRING);
+	mxmlElementSetAttr(data, "version",VERSIONSTR);
 
 	createXMLSection("File", "File Settings");
 
@@ -154,7 +183,7 @@ preparePrefsData (int method)
 	createXMLController(ncpadmap, "ncpadmap", "Nunchuk");
 
 	memset (savebuffer + offset, 0, SAVEBUFFERSIZE);
-	int datasize = mxmlSaveString(xml, (char *)savebuffer, SAVEBUFFERSIZE, MXML_NO_CALLBACK);
+	int datasize = mxmlSaveString(xml, (char *)savebuffer, SAVEBUFFERSIZE, XMLSaveCallback);
 
 	mxmlDelete(xml);
 

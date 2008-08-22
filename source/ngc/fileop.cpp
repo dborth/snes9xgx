@@ -199,25 +199,20 @@ LoadFATFile (char *filename, int length)
 
 		if (IsZipFile (zipbuffer))
 		{
-			// Unzip the ROM
-			size = UnZipBuffer (rbuffer, 0, 0, handle);	// unzip from FAT
-
-			fclose (handle);
-			return size;
+			size = UnZipFile (rbuffer, handle);	// unzip from FAT
 		}
 		else
 		{
 			// Just load the file up
-
 			fseek(handle, 0, SEEK_END);
 			length = ftell(handle);				// get filesize
 			fseek(handle, 2048, SEEK_SET);		// seek back to point where we left off
 			memcpy (rbuffer, zipbuffer, 2048);	// copy what we already read
 			fread (rbuffer + 2048, 1, length - 2048, handle);
-			fclose (handle);
-
-			return length;
+			size = length;
 		}
+		fclose (handle);
+		return size;
 	}
 	else
 	{

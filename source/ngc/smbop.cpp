@@ -21,12 +21,11 @@
 #include <errno.h>
 
 #include "memmap.h"
-
+#include "smbop.h"
 #include "unzip.h"
 #include "video.h"
 #include "menudraw.h"
 #include "filesel.h"
-#include "smbop.h"
 #include "Snes9xGx.h"
 
 bool networkInit = false;
@@ -217,9 +216,6 @@ ParseSMBdirectory ()
 int
 LoadSMBFile (char *filename, int length)
 {
-	unsigned char *rbuffer;
-	rbuffer = (unsigned char *) Memory.ROM;
-	int boffset;
 	char filepath[MAXPATHLEN];
 
 	/* Check filename length */
@@ -231,19 +227,7 @@ LoadSMBFile (char *filename, int length)
 		return -1;
 	}
 
-	boffset = LoadBufferFromSMB((char *)rbuffer, SMBPath(filepath), NOTSILENT);
-
-	if(boffset > 0)
-	{
-		if(IsZipFile ((char *)rbuffer))
-		{
-			//return UnZipBuffer(rbuffer, 0, 2, NULL);
-			// UNZIP currently crashes - FIX ME
-			WaitPrompt((char*) "Zipped files are currently not supported over SMB!");
-			return -1;
-		}
-	}
-	return boffset;
+	return LoadBufferFromSMB((char *)Memory.ROM, SMBPath(filepath), NOTSILENT);
 }
 
 /****************************************************************************
@@ -327,9 +311,18 @@ LoadBufferFromSMB (char * sbuffer, char *filepath, bool8 silent)
 		return 0;
 	}
 
-	while ((ret = SMB_ReadFile (sbuffer + boffset, 1024, boffset, smbfile)) > 0)
-		boffset += ret;
+	ret = SMB_ReadFile (sbuffer, 1024, boffset, smbfile);
 
+	if (IsZipFile (sbuffer))
+	{
+		boffset = UnZipFile ((unsigned char *)sbuffer, smbfile); // unzip from SMB
+	}
+	else
+	{
+		// Just load the file up
+		while ((ret = SMB_ReadFile (sbuffer + boffset, 1024, boffset, smbfile)) > 0)
+			boffset += ret;
+	}
 	SMB_CloseFile (smbfile);
 
 	return boffset;

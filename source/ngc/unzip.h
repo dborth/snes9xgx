@@ -8,9 +8,14 @@
 #ifndef _UNZIP_
 #define _UNZIP_
 
+#include <smb.h>
+
 extern int IsZipFile (char *buffer);
-int UnZipBuffer(unsigned char *outbuffer, unsigned char *inbuffer);
-int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, short where, FILE* filehandle);
+
+int UnZipFile (unsigned char *outbuffer, FILE* infile); // Reading from FAT
+int UnZipFile (unsigned char *outbuffer, u64 inoffset); // Reading from DVD
+int UnZipFile (unsigned char *outbuffer, SMBFILE infile); // Reading from SMB
+
 /*
  * Zip file header definition
  */
