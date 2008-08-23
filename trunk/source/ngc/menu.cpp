@@ -19,7 +19,11 @@
 #include <wiiuse/wpad.h>
 
 #ifdef WII_DVD
+#ifdef __cplusplus
+extern "C" {
 #include <di/di.h>
+}
+#endif
 #endif
 
 #include "snes9x.h"
@@ -327,7 +331,7 @@ void CheatMenu()
 	int offset = 0;
 	int redraw = 1;
 	int selectit = 0;
-	
+
     u32 p = 0;
 	u32 wp = 0;
 	u32 ph = 0;
@@ -377,7 +381,7 @@ void CheatMenu()
 			gc_sx = PAD_SubStickX (0);
 	        p = PAD_ButtonsDown (0);
 			ph = PAD_ButtonsHeld (0);
-			
+
 			#ifdef HW_RVL
 			wm_ay = WPAD_StickY (0, 0);
 			wm_sx = WPAD_StickX (0, 1);
