@@ -239,8 +239,8 @@ PreferencesMenu ()
 		sprintf (prefmenu[11], "C-Stick Zoom %s",
 			GCSettings.NGCZoom == true ? " ON" : "OFF");
 
-		sprintf (prefmenu[12], "Video Filtering %s",
-			GCSettings.render == true ? " ON" : "OFF");
+		sprintf (prefmenu[12], "Render Mode %s",
+			GCSettings.render == true ? "Filtered" : "Original");
 
 		ret = RunMenu (prefmenu, prefmenuCount, (char*)"Preferences", 16);
 

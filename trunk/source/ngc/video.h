@@ -17,12 +17,13 @@
 #include "snes9x.h"
 
 void InitGCVideo ();
-void ReInitGCVideo();
-void clearscreen (int colour = COLOR_WHITE);
-void showscreen ();
+void ResetVideo_Emu ();
+void ResetVideo_Menu ();
 void setGFX ();
 void update_video (int width, int height);
+void clearscreen (int colour = COLOR_BLACK);
+void showscreen ();
 void zoom (float speed);
-void UpdatePadsCB();
+void zoom_reset ();
 
 #endif

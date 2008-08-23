@@ -19,8 +19,6 @@
 #include "video.h"
 #include "input.h"
 
-	#include "menudraw.h"
-
 extern int ConfigRequested;
 
 /****************************************************************************
@@ -486,41 +484,6 @@ void NGCReportButtons ()
             decodepad (i);
     }
 }
-
-/****************************************************************************
- * wpad_get_analogues()
- *
- * gets the analogue stick magnitude and angle values (
- * from classic or nunchuk expansions)
- ***************************************************************************
-u32 wpad_get_analogues(int pad, float* mag1, u16* ang1, float* mag2, u16* ang2)
-{
-	*mag1 = *ang1 = *mag2 = *ang2 = 0;
-	u32 exp_type = 0;
-#ifdef HW_RVL
-	struct expansion_t exp;
-	memset( &exp, 0, sizeof(exp) );
-
-	if ( WPAD_Probe( pad, &exp_type) == 0)	// check wiimote and expansion status (first if wiimote is connected & no errors)
-	{
-		WPAD_Expansion(pad, &exp);	// expansion connected. get info
-		if (exp_type == WPAD_EXP_CLASSIC)
-		{
-			*ang1 = exp.classic.ljs.ang;	// left cc joystick
-			*mag1 = exp.classic.ljs.mag;
-			*ang2 = exp.classic.rjs.ang;	// right cc joystick
-			*mag2 = exp.classic.rjs.mag;
-		}
-		else if (exp_type == WPAD_EXP_NUNCHUK)
-		{
-			*ang1 = exp.nunchuk.js.ang;	// nunchuk joystick
-			*mag1 = exp.nunchuk.js.mag;
-		}
-	}
-#endif
-	return exp_type;	// return expansion type
-}
-*/
 
 void SetControllers ()
 {

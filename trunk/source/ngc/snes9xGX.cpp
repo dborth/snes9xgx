@@ -249,6 +249,7 @@ void setFrameTimerMethod()
  ****************************************************************************/
 /* Eke-Eke: initialize frame Sync */
 extern void S9xInitSync();
+extern int oldvwidth, oldvheight;	// for forcing video reset in video.cpp
 
 void
 emulate ()
@@ -266,7 +267,8 @@ emulate ()
 
 		if (ConfigRequested)
 		{
-			VIDEO_WaitVSync ();
+			// change to menu video mode
+			ResetVideo_Menu ();
 
 			if ( GCSettings.AutoSave == 1 )
 			{
@@ -288,18 +290,19 @@ emulate ()
 
 			mainmenu (3); // go to game menu
 
-			/*** Update any emulation settings changed in the menu ***/
-			ReInitGCVideo();	// update video after reading settings
 			FrameTimer = 0;
-			setFrameTimerMethod(); // set frametimer method every time a ROM is loaded
+			setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
 
 			Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);
 			Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);
 			Settings.JustifierMaster = (GCSettings.Justifier > 0 ? true : false);
-			SetControllers();
-			S9xReportControllers(); // FIX
+			SetControllers ();
+			//S9xReportControllers ();
 
 			ConfigRequested = 0;
+			
+			oldvheight = oldvwidth = 0;	// force video update
+			
 		}//if ConfigRequested
 
 	}//while
