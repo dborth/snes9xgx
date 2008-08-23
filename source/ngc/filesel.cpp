@@ -20,7 +20,11 @@
 #include <sys/dir.h>
 
 #ifdef WII_DVD
+#ifdef __cplusplus
+extern "C" {
 #include <di/di.h>
+}
+#endif
 #endif
 
 #include "snes9x.h"
