@@ -26,8 +26,8 @@ Tantric
 - added: load/save preference selector. ROM, SRAM, Freeze, and preferences 
          are saved/loaded according to these
 - added: preliminary Windows file share loading/saving (SMB) support on Wii:
-		 You can input your network settings into snes9xGX.xml, or in 
-		 s9xconfig.cpp and compile from the source
+		 You can input your network settings into snes9xGX.xml, or edit 
+		 s9xconfig.cpp from the source code and compile.
 - added: 'Auto' settings for save/load - attempts to automatically determine
          your load/save device(s) - SD, USB, Memory Card, DVD, SMB
 - added: ROM Information page
@@ -111,7 +111,7 @@ Tantric
 |0Oื๘oท                         SETUP & INSTALLATION                  ทo๘ืO0|
 `จ•จจจจจ จจจจจจจจจจจจจจจจ จจจจจจจจจจจจจจจ จจจจจจจจจจจจจจจจจจจจ จจจจจจจจจจจจจ'
 
-Unzip the archive into a folder. You will find the following folders:
+Unzip the archive. You will find the following folders inside:
 
 apps			Contains Homebrew Channel ready files
 				(see Homebrew Channel instructions below)
@@ -147,18 +147,21 @@ except with a CHT extension.
 
     Wii
 ----------
-On the Wii, you can load roms from any SD card (Front SD or SD Gecko), USB, DVD,
+On the Wii, you can load roms from SD card (Front SD or SD Gecko), USB, DVD,
 or SMB share. Note that if you are using the Homebrew Channel, to load from 
 USB, DVD, or SMB you will first have to load Snes9xGx from SD, and then set 
-your load method preference. You can now load roms from a Windows network 
-share (SMB). However, you will have to edit snes9xGX.xml on your SD card with 
-your network settings, or edit s9xconfig.cpp from the source code and recompile.
+your load method preference. To load roms from a Windows network share (SMB) 
+you will have to edit snes9xGX.xml on your SD card with your network settings, 
+or edit s9xconfig.cpp from the source code and compile. If you edit and compile 
+the source, you can use wiiload and the Homebrew Channel to load and play 
+Snes9xGx completely over the network, without needing an SD card.
+
 
   Gamecube
 ------------
-You can load roms from DVD, SD card or SMB share. If you create a bootable 
+You can load roms from DVD or SD card. If you create a bootable 
 DVD of Snes9xGx you can put roms on the same DVD. You may save preferences and
-game data to SD, Memory Card, or SMB.
+game data to SD or Memory Card.
 
 ------------------------------
 Loading / Running the Emulator:
