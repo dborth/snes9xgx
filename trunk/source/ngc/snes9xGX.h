@@ -51,10 +51,11 @@ struct SGCSettings{
 	char	smbshare[20];
     int		NGCZoom; // 0 - off, 1 - on
     int		VerifySaves;
-	int		render;		// 0 - original, 1 - no AA
+	int		render;		// 0 - original, 1 - filtered
 	int		Superscope;
 	int		Mouse;
 	int		Justifier;
+	int		widescreen;	// 0 - 4:3 aspect, 1 - 16:9 aspect
 };
 
 START_EXTERN_C

@@ -249,7 +249,8 @@ void setFrameTimerMethod()
  ****************************************************************************/
 /* Eke-Eke: initialize frame Sync */
 extern void S9xInitSync();
-extern int oldvwidth, oldvheight;	// for forcing video reset in video.cpp
+bool CheckVideo = 0;	// for forcing video reset in video.cpp
+extern uint32 prevRenderedFrameCount;
 
 void
 emulate ()
@@ -301,7 +302,8 @@ emulate ()
 
 			ConfigRequested = 0;
 			
-			oldvheight = oldvwidth = 0;	// force video update
+			CheckVideo = 1;	// force video update
+			prevRenderedFrameCount = IPPU.RenderedFramesCount;
 			
 		}//if ConfigRequested
 

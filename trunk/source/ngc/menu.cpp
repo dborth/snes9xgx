@@ -116,7 +116,7 @@ LoadManager ()
 /****************************************************************************
  * Preferences Menu
  ****************************************************************************/
-static int prefmenuCount = 15;
+static int prefmenuCount = 16;
 static char prefmenu[][50] = {
 
 	"Load Method",
@@ -134,6 +134,7 @@ static char prefmenu[][50] = {
 	"Display Frame Rate",
 	"C-Stick Zoom",
 	"Video Filtering",
+	"Widescreen",
 
 	"Save Preferences",
 	"Back to Main Menu"
@@ -241,6 +242,9 @@ PreferencesMenu ()
 
 		sprintf (prefmenu[12], "Render Mode %s",
 			GCSettings.render == true ? "Filtered" : "Original");
+			
+		sprintf (prefmenu[13], "Widescreen %s",
+			GCSettings.widescreen == true ? "ON" : "OFF");
 
 		ret = RunMenu (prefmenu, prefmenuCount, (char*)"Preferences", 16);
 
@@ -299,13 +303,18 @@ PreferencesMenu ()
 			case 12:
 				GCSettings.render ^= 1;
 				break;
-
+				
 			case 13:
+				GCSettings.widescreen ^= 1;
+				if (!GCSettings.render) GCSettings.widescreen = 0;	// don't allow on original render modes
+				break;
+
+			case 14:
 				SavePrefs(GCSettings.SaveMethod, NOTSILENT);
 				break;
 
 			case -1: /*** Button B ***/
-			case 14:
+			case 15:
 				quit = 1;
 				break;
 
