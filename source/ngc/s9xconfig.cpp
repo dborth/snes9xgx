@@ -48,7 +48,10 @@ DefaultSettings ()
 
 	GCSettings.NGCZoom = 0;
 	GCSettings.VerifySaves = 0;
+	
 	GCSettings.render = 0;
+	GCSettings.widescreen = 0;
+	
 	GCSettings.Superscope = 0;
     GCSettings.Mouse = 0;
 	GCSettings.Justifier = 0;

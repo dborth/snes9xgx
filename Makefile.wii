@@ -33,8 +33,8 @@ CFLAGS	=	-g -O2 -Wall $(MACHDEP) $(INCLUDE) \
 			-DNO_INLINE_GET_SET -DSDD1_DECOMP -DCORRECT_VRAM_READS \
 			-DDETECT_NASTY_FX_INTERLEAVE -DNGC_ZOOM -DSDUSE_LFN \
 			-DFORCE_WII -DWII_DVD $(CUSTOMFLAGS) \
-			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter -pipe
-CXXFLAGS	=	$(CFLAGS)
+			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter # -pipe
+CXXFLAGS	=	-save-temps -Xassembler -aln=$@.lst $(CFLAGS)
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 

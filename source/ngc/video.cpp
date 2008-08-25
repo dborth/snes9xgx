@@ -301,8 +301,8 @@ copy_to_xfb (u32 arg)
 
 	if (copynow == GX_TRUE)
 	{
-		GX_SetZMode (GX_TRUE, GX_LEQUAL, GX_TRUE);
-		GX_SetColorUpdate (GX_TRUE);
+		//GX_SetZMode (GX_TRUE, GX_LEQUAL, GX_TRUE);
+		//GX_SetColorUpdate (GX_TRUE);
 		GX_CopyDisp (xfb[whichfb], GX_TRUE);
 		GX_Flush ();
 		copynow = GX_FALSE;
@@ -347,7 +347,7 @@ draw_init ()
 	
 	/* original video mode: force filtering OFF */
     if (!GCSettings.render)
-      GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
+		GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
 
 }
 
@@ -411,7 +411,7 @@ StartGX ()
 	GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
 	GX_SetCullMode (GX_CULL_NONE);
 	GX_SetDispCopyGamma (GX_GM_1_0);
-	GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_TRUE);
+	GX_SetZMode (GX_TRUE, GX_LEQUAL, GX_TRUE);
 	GX_SetColorUpdate (GX_TRUE);
 
 //	guPerspective (p, 60, 1.33F, 10.0F, 1000.0F);
@@ -621,9 +621,10 @@ ResetVideo_Emu ()
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 	
 			// DEBUG
-		char* msg = "";
-		sprintf (msg, "Interlaced: %i, vwidth: %d, vheight: %d, fb_W: %u, efb_H: %u", IPPU.Interlace, vwidth, vheight, rmode->fbWidth, rmode->efbHeight);
+		char* msg = (char*) malloc(256*sizeof(char));
+		sprintf (msg, (char*)"Interlaced: %i, vwidth: %d, vheight: %d, fb_W: %u, efb_H: %u", IPPU.Interlace, vwidth, vheight, rmode->fbWidth, rmode->efbHeight);
 		S9xMessage (0, 0, msg);
+		free(msg);
 
 }
 
@@ -709,10 +710,12 @@ MakeTexture (const void *src, void *dst, s32 width, s32 height)
 /****************************************************************************
  * Update Video
  ****************************************************************************/
+uint32 prevRenderedFrameCount = 0;
+extern bool CheckVideo;
+
 void
 update_video (int width, int height)
 {
-	GXRModeObj *rmode;
 	
 	vwidth = width;
 	vheight = height;
@@ -727,10 +730,11 @@ update_video (int width, int height)
 	  usleep (50);
 	}
 
-
 	whichfb ^= 1;
 
-	if ((oldvheight != vheight) || (oldvwidth != vwidth))		// if rendered width/height changes
+	if ((oldvheight != vheight) || (oldvwidth != vwidth) 								// if rendered width/height changes
+		|| (CheckVideo && (IPPU.RenderedFramesCount != prevRenderedFrameCount))	// or if we get back from the menu, and have rendered at least 1 frame
+		)
 	{
 		int xscale, yscale, xshift, yshift;
 		yshift = xshift = 0;
@@ -748,20 +752,33 @@ update_video (int width, int height)
 			yscale = (vmode_60hz) ? 240 : 287;	// ntsc, pal scaling
 		}
 		
+		// aspect ratio scaling (change width scale)
+		// yes its pretty cheap and ugly, but its easy!
+		if (GCSettings.widescreen && GCSettings.render)	// don't allow this on original render modes because its ugly. 
+			xscale -= (4.0*yscale)/9;
+		
 		square[6] = square[3]  =  xscale + xshift;
 		square[0] = square[9]  = -xscale + xshift;
 		square[4] = square[1]  =  yscale + yshift;
 		square[7] = square[10] = -yscale + yshift;
 
-		draw_init ();		
+		draw_init ();
+		
+		GX_InvVtxCache ();
+		
+					// DEBUG
+		char* msg = (char*) malloc(256*sizeof(char));
+		sprintf (msg, (char*)"xscale: %d, yscale: %d", xscale, yscale);
+		S9xMessage (0, 0, msg);
+		free(msg);
 
 		//GX_SetViewport (0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
 		
 		oldvwidth = vwidth;
 		oldvheight = vheight;
+		CheckVideo = 0;
 	}
 
-	GX_InvVtxCache ();
 	GX_InvalidateTexAll ();
 
 	MakeTexture ((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
