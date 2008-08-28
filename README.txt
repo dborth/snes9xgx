@@ -99,12 +99,13 @@ Tantric
 |0O×øo·                            FEATURES                           ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 - Based on Snes9x 1.5 - superior ROM compatibility
-- Auto Load/Save Game Snapshots and SRAM
-- SNES Superscope, Mouse, Justifier support
 - Wiimote, Nunchuk, Classic, and Gamecube controller support
+- SNES Superscope, Mouse, Justifier support
+- Cheat support
+- Auto Load/Save Game Snapshots and SRAM
 - Custom controller configurations
-- Autodetect PAL/NTSC
-- Zip Support
+- SD, USB, DVD, SMB, GC Memory Card, and Zip support
+- Autodetect PAL/NTSC, 16:9 widescreen support
 - Open Source!
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
