@@ -17,7 +17,8 @@ include $(DEVKITPPC)/gamecube_rules
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	executables/snes9xgx-$(VERSION)-gc
+TARGET		:=	snes9xgx-$(VERSION)-gc
+TARGETDIR   :=  executables
 BUILD		:=	build_gc
 SOURCES		:=	source/snes9x source/ngc
 DATA		:=	data  
@@ -56,7 +57,7 @@ LIBDIRS	:= $(CURDIR)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export OUTPUT	:=	$(CURDIR)/$(TARGETDIR)/$(TARGET)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
@@ -99,12 +100,13 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
 					-L$(LIBOGC_LIB)
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export OUTPUT	:=	$(CURDIR)/$(TARGETDIR)/$(TARGET)
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
+	@[ -d $(TARGETDIR) ] || mkdir -p $(TARGETDIR)
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile.gc
 	@rm -fr $(OUTPUT).elf
 
