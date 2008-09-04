@@ -301,10 +301,10 @@ emulate ()
 			//S9xReportControllers ();
 
 			ConfigRequested = 0;
-			
+
 			CheckVideo = 1;	// force video update
 			prevRenderedFrameCount = IPPU.RenderedFramesCount;
-			
+
 		}//if ConfigRequested
 
 	}//while
@@ -408,7 +408,7 @@ main ()
 	#endif
 
 	// Load preferences
-	if(!LoadPrefs(GCSettings.SaveMethod, SILENT))
+	if(!LoadPrefs())
 	{
 		WaitPrompt((char*) "Preferences reset - check settings!");
 		selectedMenu = 2; // change to preferences menu
