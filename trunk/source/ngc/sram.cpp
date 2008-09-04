@@ -1,8 +1,10 @@
 /****************************************************************************
  * Snes9x 1.50
  *
- * Nintendo Gamecube Port
+ * Nintendo Wii/Gamecube Port
+ *
  * crunchy2 April 2007-July 2007
+ * Tantric September 2008
  *
  * sram.cpp
  *
@@ -79,6 +81,11 @@ preparesavedata (int method)
 		memcpy (savebuffer + offset, Memory.SRAM, size);
 		offset += size;
 	}
+	else
+	{
+		offset = 0;
+		WaitPrompt("No SRAM data to save!");
+	}
 
 	return offset;
 }
@@ -89,7 +96,7 @@ preparesavedata (int method)
 void
 decodesavedata (int method, int readsize)
 {
-	int offset;
+	int offset = 0;
 	char sramsavecomment[32];
 
 	int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
@@ -99,18 +106,20 @@ decodesavedata (int method, int readsize)
 
 	// memory card save
 	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
-		offset = sizeof (saveicon);
-	// move to start of SRAM which is after the 512 byte header
-	else
-		offset = 512;
+		offset = sizeof (saveicon); // skip save icon
 
-	// Check for exportable format sram - it has the sram comment at the start
+	// Check for sram comment
 	memcpy (sramsavecomment, savebuffer+offset, 32);
 
-	// version 2.0.XX or 00x found!
-	if ( (strncmp (sramsavecomment, "Snes9x GX 2.0", 13) == 0)
-	|| (strncmp (sramsavecomment, "Snes9x GX 00", 12) == 0) )
+	// version 0xx found!
+	if ( (strncmp (sramsavecomment, "Snes9x GX 0", 11) == 0) )
 	{
+		// adjust offset
+		if(method == METHOD_MC_SLOTA && method == METHOD_MC_SLOTB)
+			offset = 512; // skip entire 512 byte header
+		else
+			offset += 64; // skip savecomments
+
 		// import the SRAM
 		memcpy (Memory.SRAM, savebuffer + offset, size);
 	}
