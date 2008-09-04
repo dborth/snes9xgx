@@ -40,15 +40,12 @@
 #include "fileop.h"
 #include "memcardop.h"
 
-#define MEMBUFFER (512 * 1024)
-
 extern void S9xSRTCPreSaveState ();
 extern void NGCFreezeStruct ();
 extern bool8 S9xUnfreezeGame (const char *filename);
 extern unsigned char savebuffer[];
 
 static int bufoffset;
-static char membuffer[MEMBUFFER];
 
 char freezecomment[2][32];
 
@@ -61,7 +58,7 @@ char freezecomment[2][32];
 int
 GetMem (char *buffer, int len)
 {
-	memcpy (buffer, membuffer + bufoffset, len);
+	memcpy (buffer, savebuffer + bufoffset, len);
 	bufoffset += len;
 
 	return len;
@@ -75,7 +72,7 @@ GetMem (char *buffer, int len)
 static void
 PutMem (char *buffer, int len)
 {
-	memcpy (membuffer + bufoffset, buffer, len);
+	memcpy (savebuffer + bufoffset, buffer, len);
 	bufoffset += len;
 }
 
@@ -112,7 +109,7 @@ NGCFreezeMemBuffer ()
 
     sprintf (buffer, "%s:%04d\n", SNAPSHOT_MAGIC, SNAPSHOT_VERSION);
     PutMem (buffer, strlen (buffer));
-    sprintf (buffer, "NAM:%06d:%s%c", (int) strlen (Memory.ROMFilename) + 1,
+    sprintf (buffer, "NAM:%06d:%s%c", (int) strlen (Memory.ROMFilename) + 1, 
     Memory.ROMFilename, 0);
 
     PutMem (buffer, strlen (buffer) + 1);
@@ -143,10 +140,8 @@ NGCFreezeGame (int method, bool8 silent)
 	S9xSetSoundMute (TRUE);
 	S9xPrepareSoundForSnapshotSave (FALSE);
 
-	NGCFreezeMemBuffer (); // copy freeze mem into membuffer
-
 	ClearSaveBuffer ();
-	memcpy (savebuffer, membuffer, bufoffset);
+	NGCFreezeMemBuffer (); // copy freeze mem into savebuffer
 
 	S9xPrepareSoundForSnapshotSave (TRUE);
 	S9xSetSoundMute (FALSE);
@@ -168,8 +163,6 @@ NGCFreezeGame (int method, bool8 silent)
 	{
 		sprintf (filename, "%s.snz", Memory.ROMName);
 
-		ClearSaveBuffer ();
-
 		/*** Copy in save icon ***/
 		int woffset = sizeof (saveicon);
 		memcpy (savebuffer, saveicon, woffset);
@@ -182,7 +175,7 @@ NGCFreezeGame (int method, bool8 silent)
 
 		/*** Zip and copy in the freeze ***/
 		uLongf DestBuffSize = (uLongf) SAVEBUFFERSIZE;
-		int err= compress2((Bytef*)(savebuffer+woffset+8), (uLongf*)&DestBuffSize, (const Bytef*)membuffer, (uLongf)bufoffset, Z_BEST_COMPRESSION);
+		int err= compress2((Bytef*)(savebuffer+woffset+8), (uLongf*)&DestBuffSize, (const Bytef*)savebuffer, (uLongf)bufoffset, Z_BEST_COMPRESSION);
 
 		if(err!=Z_OK)
 		{
@@ -295,7 +288,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 
 		if (ret)
 		{
-			char zipbuffer[MEMBUFFER];
+			char zipbuffer[SAVEBUFFERSIZE];
 
 			// skip the saveicon and comment
 			offset = (sizeof(saveicon) + 64);
@@ -308,9 +301,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 			memcpy (&decompressedsize, savebuffer+offset, 4);
 			offset += 4;
 
-			memset(membuffer, 0, MEMBUFFER);
-
-			uLongf DestBuffSize = MEMBUFFER;
+			uLongf DestBuffSize = SAVEBUFFERSIZE;
 			int err= uncompress((Bytef*)zipbuffer, (uLongf*)&DestBuffSize, (const Bytef*)(savebuffer + offset), zipsize);
 
 			if ( err!=Z_OK )
@@ -326,17 +317,14 @@ NGCUnfreezeGame (int method, bool8 silent)
 			}
 			else
 			{
-				offset = MEMBUFFER;
-				memcpy (savebuffer, zipbuffer, MEMBUFFER);
+				offset = SAVEBUFFERSIZE;
+				memcpy (savebuffer, zipbuffer, SAVEBUFFERSIZE);
 			}
 		}
     }
 
 	if(offset > 0)
 	{
-		memcpy (membuffer, savebuffer, offset);
-		ClearSaveBuffer ();
-
 		if (S9xUnfreezeGame ("AGAME") == SUCCESS)
 			return 1;
 		else
