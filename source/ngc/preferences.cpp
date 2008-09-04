@@ -348,7 +348,7 @@ SavePrefs (int method, bool silent)
  * Load Preferences from specified method
  ****************************************************************************/
 bool
-LoadPrefs (int method)
+LoadPrefsFromMethod (int method)
 {
 	bool retval = false;
 	char filepath[1024];
@@ -365,7 +365,7 @@ LoadPrefs (int method)
 	else if(method == METHOD_SMB)
 	{
 		sprintf (filepath, "%s/%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
-		offset = LoadSaveBufferFromSMB (filepath, SILENT);
+		offset = LoadBufferFromSMB (filepath, SILENT);
 	}
 	else if(method == METHOD_MC_SLOTA)
 	{
