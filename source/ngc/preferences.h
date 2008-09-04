@@ -10,4 +10,4 @@
  ****************************************************************************/
 
 bool SavePrefs (int method, bool silent);
-bool LoadPrefs (int method, bool silent);
+bool LoadPrefs ();

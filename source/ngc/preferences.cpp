@@ -182,49 +182,11 @@ preparePrefsData (int method)
 	createXMLController(ccpadmap, "ccpadmap", "Classic Controller");
 	createXMLController(ncpadmap, "ncpadmap", "Nunchuk");
 
-	memset (savebuffer + offset, 0, SAVEBUFFERSIZE);
 	int datasize = mxmlSaveString(xml, (char *)savebuffer, SAVEBUFFERSIZE, XMLSaveCallback);
 
 	mxmlDelete(xml);
 
 	return datasize;
-
-	/*
-	int offset = sizeof (saveicon);
-	int size;
-
-	memset (savebuffer, 0, SAVEBUFFERSIZE);
-
-	// Copy in save icon
-	memcpy (savebuffer, saveicon, offset);
-
-	// And the prefscomments
-	memcpy (savebuffer + offset, prefscomment, 64);
-	offset += 64;
-
-	// Save all settings
-	size = sizeof (Settings);
-	memcpy (savebuffer + offset, &Settings, size);
-	offset += size;
-
-	// Save GC specific settings
-	size = sizeof (GCSettings);
-	memcpy (savebuffer + offset, &GCSettings, size);
-	offset += size;
-
-	// Save buttonmaps
-	size = sizeof (unsigned int) *12;	// this size applies to all padmaps
-	memcpy (savebuffer + offset, &gcpadmap, size);
-	offset += size;
-	memcpy (savebuffer + offset, &wmpadmap, size);
-	offset += size;
-	memcpy (savebuffer + offset, &ccpadmap, size);
-	offset += size;
-	memcpy (savebuffer + offset, &ncpadmap, size);
-	offset += size;
-
-	return offset;
-	*/
 }
 
 
@@ -331,37 +293,6 @@ decodePrefsData (int method)
 	mxmlDelete(xml);
 
 	return true;
-
-	/*
-	int offset;
-	char prefscomment[32];
-	int size;
-
-	offset = sizeof (saveicon);
-	memcpy (prefscomment, savebuffer + offset, 32);
-
-	if ( strcmp (prefscomment, PREFSVERSTRING) == 0 )
-	{
-		offset += 64;
-		memcpy (&Settings, savebuffer + offset, sizeof (Settings));
-		offset += sizeof (Settings);
-		memcpy (&GCSettings, savebuffer + offset, sizeof (GCSettings));
-		offset += sizeof (GCSettings);
-		// load padmaps (order important)
-		size = sizeof (unsigned int) *12;
-		memcpy (&gcpadmap, savebuffer + offset, size);
-		offset += size;
-		memcpy (&wmpadmap, savebuffer + offset, size);
-		offset += size;
-		memcpy (&ccpadmap, savebuffer + offset, size);
-		offset += size;
-		memcpy (&ncpadmap, savebuffer + offset, size);
-
-		return true;
-	}
-	else
-		return false;
-	*/
 }
 
 /****************************************************************************
@@ -414,48 +345,61 @@ SavePrefs (int method, bool silent)
 }
 
 /****************************************************************************
- * Load Preferences
+ * Load Preferences from specified method
  ****************************************************************************/
 bool
-LoadPrefs (int method, bool silent)
+LoadPrefs (int method)
 {
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod(); // we use 'Save' folder because preferences need R/W
-
 	bool retval = false;
 	char filepath[1024];
 	int offset = 0;
-
-	if ( !silent )
-		ShowAction ((char*) "Loading preferences...");
 
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
 		if(ChangeFATInterface(method, NOTSILENT))
 		{
 			sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
-			offset = LoadBufferFromFAT (filepath, silent);
+			offset = LoadBufferFromFAT (filepath, SILENT);
 		}
 	}
 	else if(method == METHOD_SMB)
 	{
 		sprintf (filepath, "%s/%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
-		offset = LoadBufferFromSMB (filepath, silent);
+		offset = LoadSaveBufferFromSMB (filepath, SILENT);
 	}
 	else if(method == METHOD_MC_SLOTA)
 	{
-		offset = LoadBufferFromMC (savebuffer, CARD_SLOTA, (char *)PREFS_FILE_NAME, silent);
+		offset = LoadBufferFromMC (savebuffer, CARD_SLOTA, (char *)PREFS_FILE_NAME, SILENT);
 	}
 	else if(method == METHOD_MC_SLOTB)
 	{
-		offset = LoadBufferFromMC (savebuffer, CARD_SLOTB, (char *)PREFS_FILE_NAME, silent);
+		offset = LoadBufferFromMC (savebuffer, CARD_SLOTB, (char *)PREFS_FILE_NAME, SILENT);
 	}
 
 	if (offset > 0)
-	{
 		retval = decodePrefsData (method);
-		if ( !silent )
-			WaitPrompt((char *)"Preferences loaded");
-	}
+
 	return retval;
+}
+
+/****************************************************************************
+ * Load Preferences
+ * Checks sources consecutively until we find a preference file
+ ****************************************************************************/
+bool LoadPrefs()
+{
+	ShowAction ((char*) "Loading preferences...");
+	bool prefFound = false;
+	if(ChangeFATInterface(METHOD_SD, SILENT))
+		prefFound = LoadPrefsFromMethod(METHOD_SD);
+	if(!prefFound && ChangeFATInterface(METHOD_USB, SILENT))
+		prefFound = LoadPrefsFromMethod(METHOD_USB);
+	if(!prefFound && TestCard(CARD_SLOTA, SILENT))
+		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTA);
+	if(!prefFound && TestCard(CARD_SLOTB, SILENT))
+		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTB);
+	if(!prefFound && ConnectShare (SILENT))
+		prefFound = LoadPrefsFromMethod(METHOD_SMB);
+
+	return prefFound;
 }
