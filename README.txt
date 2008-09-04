@@ -10,10 +10,14 @@
 ­———————————————————————————————————————————————————————————————————————•ßrK•
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                          SNES9XGX v005                        ·oø×O0|
+|0O×øo·                          SNES9X GX                            ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 
-PLEASE NOTE: THIS DOCUMENT IS A WORK IN PROGRESS
+SNES9x GX is a Super Nintendo emulator for the Wii based on the PC emulator 
+SNES9x 1.50 (http://snes9x.ipherswipsite.com/). SoftDev is responsible for 
+the original SNES9x 1.50 GameCube port, whose work was continued by crunchy2. 
+It was updated for the Wii by michniewski and is currently being maintained 
+by michniewski and Tantric.
 
 [What's New 005]
 
@@ -189,7 +193,8 @@ on these topics is the tehskeen forums: http://www.tehskeen.com/forums/
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                         ABOUT SNES9X                          ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-Welcome to the revolution in GameCube emulators! SNES9X is by far the most
+
+Welcome to the revolution in Wii/GameCube emulators! SNES9X is by far the most
 complete and accurate Super Nintendo Entertainment System emulator to date.
 Taking full power of the ATi-GX chipset and packed full of features that are
 to die for after playing your games you'll never want to come back to
@@ -197,10 +202,9 @@ reality.
 
 SNES9X is a very popular open source emulator mainly for the PC platform, but
 has seen many ports to other consoles such as the Nintendo DS, Microsoft XBOX
-and now thanks to SoftDev the Nintendo GameCube! This is a straight port and
-is not based on any previous SNES emulators that have existed for the
-GameCube. You can get more information on SNES9X here from the URL below:
-http://snes9x.ipherswipsite.com/
+,
+and, thanks to SoftDev, the Nintendo GameCube. SoftDev's 1.50 port is not based 
+on any previous SNES emulators that have existed for the GameCube. 
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                   DEFAULT CONTROLLER MAPPING                  ·oø×O0|
