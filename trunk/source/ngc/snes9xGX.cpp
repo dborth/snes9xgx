@@ -347,10 +347,10 @@ main ()
 	WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
 #endif
 
-	/*** Initialise GC ***/
-	InitGCVideo ();	/*** Get the ball rolling ***/
+	// Initialise video
+	InitGCVideo ();
 
-	/*** Initialise freetype ***/
+	// Initialise freetype font system
 	if (FT_Init ())
 	{
 		printf ("Cannot initialise font subsystem!\n");
@@ -359,38 +359,33 @@ main ()
 
 	unpackbackdrop ();
 
-	/*** Set defaults ***/
+	// Set defaults
 	DefaultSettings ();
 
 	S9xUnmapAllControls ();
 	SetDefaultButtonMap ();
 
-	//printf ("Initialise Memory\n");
-	/*** Allocate SNES Memory ***/
+	// Allocate SNES Memory
 	if (!Memory.Init ())
 		while (1);
 
-	//printf ("Initialise APU\n");
-	/*** Allocate APU ***/
+	// Allocate APU
 	if (!S9xInitAPU ())
 		while (1);
 
-	/*** Set Pixel Renderer to match 565 ***/
+	// Set Pixel Renderer to match 565
 	S9xSetRenderPixelFormat (RGB565);
 
-	/*** Initialise Snes Sound System ***/
+	// Initialise Snes Sound System
 	S9xInitSound (5, TRUE, 1024);
 
-	//printf ("Initialise GFX\n");
-	/*** Initialise Graphics ***/
+	// Initialise Graphics
 	setGFX ();
 	if (!S9xGraphicsInit ())
 		while (1);
 
 	// Initialize libFAT for SD and USB
 	fatInitDefault();
-	//fatInit(8192, false);
-	//fat_enable_readahead_all();
 
 	// Initialize DVD subsystem (GameCube only)
 	#ifndef HW_RVL
@@ -414,13 +409,7 @@ main ()
 		selectedMenu = 2; // change to preferences menu
 	}
 
-	// Correct any relevant saved settings that are invalid
-	Settings.FrameTimeNTSC = 16667;
-	Settings.FrameTimePAL = 20000;
-    if ( Settings.TurboSkipFrames <= Settings.SkipFrames )
-        Settings.TurboSkipFrames = 20;
-
-	/*** No appended ROM, so get the user to load one ***/
+	// No appended ROM, so get the user to load one
 	if (ARAM_ROMSIZE == 0)
 	{
 		while (ARAM_ROMSIZE == 0)

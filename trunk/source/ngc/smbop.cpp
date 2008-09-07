@@ -89,6 +89,13 @@ ConnectShare (bool silent)
 	return false;
 	#endif
 
+	// check that all parameter have been set
+	if(strlen(GCSettings.smbuser) == 0 ||
+		strlen(GCSettings.smbpwd) == 0 ||
+		strlen(GCSettings.smbshare) == 0 ||
+		strlen(GCSettings.smbip) == 0)
+		return false;
+
 	if(!networkInit)
 		networkInit = InitializeNetwork(silent);
 

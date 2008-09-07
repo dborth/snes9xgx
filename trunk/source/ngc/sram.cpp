@@ -84,7 +84,7 @@ preparesavedata (int method)
 	else
 	{
 		offset = 0;
-		WaitPrompt("No SRAM data to save!");
+		WaitPrompt((char *)"No SRAM data to save!");
 	}
 
 	return offset;
