@@ -132,8 +132,8 @@
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -202,7 +202,7 @@ S9xExit ()
 {
 	/*** Nintendo Gamecube will NEVER get here ... unless
 	      something major went wrong !!
-	
+
 	      In which case, I'll settle for a reboot first -;)
 	***/
 }
@@ -242,7 +242,7 @@ S9xGetFilenameInc (const char *e, enum s9x_getdirtype dirtype)
 void
 S9xAutoSaveSRAM ()
 {
-  //Memory.SaveSRAM (S9xGetFilename (".srm", SRAM_DIR));
+
 }
 
 /*** Sound based functions ***/
@@ -284,7 +284,7 @@ S9xGenerateSound ()
 
 /* eke-eke */
 void S9xInitSync()
-{	
+{
   FrameTimer = 0;
   prev = gettime();
 }
@@ -295,7 +295,7 @@ extern int timerstyle;
 void S9xSyncSpeed ()
 {
     uint32 skipFrms = Settings.SkipFrames;
-    
+
     if ( Settings.TurboMode )
         skipFrms = Settings.TurboSkipFrames;
 
@@ -305,10 +305,10 @@ void S9xSyncSpeed ()
         {
             usleep (50);
         }
-        
+
         if (FrameTimer > skipFrms)
             FrameTimer = skipFrms;
-        
+
         if ((FrameTimer > 1) && (IPPU.SkippedFrames < skipFrms))
         {
             IPPU.SkippedFrames++;
@@ -320,11 +320,11 @@ void S9xSyncSpeed ()
             IPPU.RenderThisFrame = TRUE;
         }
 	}
-    else  /* use internal timer for PAL roms */ 
+    else  /* use internal timer for PAL roms */
     {
         unsigned int timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
         now = gettime();
-        
+
         if (diff_usec(prev, now) > timediffallowed)
         {
             /*while ( diff_usec((prev, now) <  timediffallowed * 2) {
@@ -353,7 +353,7 @@ void S9xSyncSpeed ()
 
         prev = now;
     }
-    
+
     if ( !Settings.TurboMode )
         FrameTimer--;
     return;
