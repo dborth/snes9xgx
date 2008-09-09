@@ -84,7 +84,6 @@ preparesavedata (int method)
 	else
 	{
 		offset = 0;
-		WaitPrompt((char *)"No SRAM data to save!");
 	}
 
 	return offset;
@@ -240,6 +239,11 @@ SaveSRAM (int method, bool silent)
 				WaitPrompt((char *)"Save successful");
 			retval = true;
 		}
+	}
+	else
+	{
+		if(!silent)
+			WaitPrompt((char *)"No SRAM data to save!");
 	}
 	return retval;
 }
