@@ -202,6 +202,8 @@ extern "C" {
 #include "fileop.h"
 #include "input.h"
 
+#include "gui.h"
+
 unsigned long ARAM_ROMSIZE = 0;
 int ConfigRequested = 0;
 extern int FrameTimer;
@@ -288,6 +290,13 @@ emulate ()
 					NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
 				}
 			}
+			
+			// GUI Stuff
+			gui_makebg ();
+			gui_clearscreen();
+			gui_draw ();
+			gui_showscreen ();
+			//gui_savescreen ();
 
 			mainmenu (3); // go to game menu
 
