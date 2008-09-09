@@ -293,6 +293,7 @@ emulate ()
 			
 			// GUI Stuff
 			/*
+			gui_alloc();
 			gui_makebg ();
 			gui_clearscreen();
 			gui_draw ();

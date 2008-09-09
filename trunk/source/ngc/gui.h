@@ -5,7 +5,7 @@
 
 
 struct sGui {
-	u8 texmem[640 * 480 * 4] ATTRIBUTE_ALIGN (32);	// rgba8 - working draw area
+	void * texmem;	// rgba8 - working draw area
 	int currmenu;
 	int prevmenu;
 	u32 fontcolour;
