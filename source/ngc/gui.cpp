@@ -19,8 +19,10 @@
 struct sGui Gui;
 
 GXTexObj texobj_BG, texobj_MENU;
-u8 texdata_bg[640 * 480 * 4] ATTRIBUTE_ALIGN (32);	// stores the blended menu backdrop
-u8 texdata_menu[640 * 480 * 4] ATTRIBUTE_ALIGN (32);	// stores the menu overlay
+void * texdata_bg;	// stores the blended menu backdrop
+void * texdata_menu;	// stores the menu overlay
+
+bool mem_alloced = 0;
 
 extern GXTexObj texobj;
 extern int vwidth, vheight;
@@ -74,6 +76,32 @@ gui_alphasetup ()
 {
 	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 	GX_SetAlphaUpdate(GX_ENABLE);
+}
+
+void
+gui_alloc ()
+{
+	if (!mem_alloced)
+	{
+		texdata_bg = memalign (32, 640 * 480 * 4);
+		texdata_menu = memalign (32, 640 * 480 * 4);
+		Gui.texmem = memalign (32, 640 * 480 * 4);
+		
+		mem_alloced = 1;
+	}
+}
+
+void
+gui_free ()
+{
+	if (mem_alloced)
+	{
+		free (texdata_bg);
+		free (texdata_menu);
+		free (Gui.texmem);
+		
+		mem_alloced = 0;
+	}
 }
 
 /****************************************************************************

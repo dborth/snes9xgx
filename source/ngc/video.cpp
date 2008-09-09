@@ -587,6 +587,7 @@ ResetVideo_Emu ()
 		int i;
 		for (i=0; i<4; i++) {
 			if (tvmodes[i]->efbHeight == vheight) {
+				// FIX: fix this fix ...
 				tvmodes[i]->fbWidth = vwidth;	// update width - some games are 512x224 (super pang)
 				break;
 			}
@@ -622,14 +623,15 @@ ResetVideo_Emu ()
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 	
 	// clear snes9x render screen
-	memset (snes9xgfx, 0, 1024 * 512 * 2);
+	//memset (snes9xgfx, 0, 1024 * 512 * 2);
 	
-	
+	/*
 			// DEBUG
 		char* msg = (char*) malloc(256*sizeof(char));
 		sprintf (msg, (char*)"Interlaced: %i, vwidth: %d, vheight: %d, fb_W: %u, efb_H: %u", IPPU.Interlace, vwidth, vheight, rmode->fbWidth, rmode->efbHeight);
 		S9xMessage (0, 0, msg);
 		free(msg);
+	*/
 	
 
 }
@@ -738,9 +740,10 @@ update_video (int width, int height)
 
 	whichfb ^= 1;
 
-	if ((oldvheight != vheight) || (oldvwidth != vwidth) 					// if rendered width/height changes
-		|| (CheckVideo && (IPPU.RenderedFramesCount != prevRenderedFrameCount))	// or if we get back from the menu, and have rendered at least 1 frame
-		)
+	if ( oldvheight != vheight || oldvwidth != vwidth )	// if rendered width/height changes, update scaling
+		CheckVideo = 1;
+	
+	if ( CheckVideo && (IPPU.RenderedFramesCount != prevRenderedFrameCount) )	// if we get back from the menu, and have rendered at least 1 frame
 	{
 		int xscale, yscale, xshift, yshift;
 		yshift = xshift = 0;
@@ -779,15 +782,13 @@ update_video (int width, int height)
 	    if (!GCSettings.render)
 			GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
 		
-		/*
-					// DEBUG
+		
+		// DEBUG
 		char* msg = (char*) malloc(256*sizeof(char));
 		sprintf (msg, (char*)"xscale: %d, yscale: %d", xscale, yscale);
 		S9xMessage (0, 0, msg);
 		free(msg);
-		*/
-
-		//GX_SetViewport (0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
+		
 		
 		oldvwidth = vwidth;
 		oldvheight = vheight;
