@@ -21,6 +21,8 @@
 #include "aram.h"
 #include "snes9xGX.h"
 
+#include "gui.h"
+
 /*** Snes9x GFX Buffer ***/
 static unsigned char snes9xgfx[1024 * 512 * 2];
 
@@ -43,7 +45,7 @@ unsigned int copynow = GX_FALSE;
 static unsigned char gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 static unsigned char texturemem[TEX_WIDTH * (TEX_HEIGHT + 8)] ATTRIBUTE_ALIGN (32);
 GXTexObj texobj;
-static Mtx view;
+Mtx view;
 int vwidth, vheight, oldvwidth, oldvheight;
 
 u32 FrameTimer = 0;
@@ -170,8 +172,8 @@ GXRModeObj TV_224p =
 	256,             // fbWidth
 	224,             // efbHeight
 	224,             // xfbHeight
-	(VI_MAX_WIDTH_NTSC - 640)/2,        // viXOrigin
-	(VI_MAX_HEIGHT_NTSC - 480)/2 + 8,	// viYOrigin	// +8 if we want to maintain rendered pixel aspect ratio (not 4:3)
+	(VI_MAX_WIDTH_NTSC - 640)/2,	// viXOrigin
+	(VI_MAX_HEIGHT_NTSC - 480)/2,	// viYOrigin
 	640,             // viWidth
 	480,             // viHeight
 	VI_XFBMODE_SF,   // xFBmode
@@ -301,8 +303,6 @@ copy_to_xfb (u32 arg)
 
 	if (copynow == GX_TRUE)
 	{
-		//GX_SetZMode (GX_TRUE, GX_LEQUAL, GX_TRUE);
-		//GX_SetColorUpdate (GX_TRUE);
 		GX_CopyDisp (xfb[whichfb], GX_TRUE);
 		GX_Flush ();
 		copynow = GX_FALSE;
@@ -341,14 +341,6 @@ draw_init ()
 	memset (&view, 0, sizeof (Mtx));
 	guLookAt(view, &cam.pos, &cam.up, &cam.view);
 	GX_LoadPosMtxImm (view, GX_PNMTX0);
-
-	GX_InvalidateTexAll ();
-	GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-	
-	/* original video mode: force filtering OFF */
-    if (!GCSettings.render)
-		GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
-
 }
 
 static void
@@ -413,6 +405,8 @@ StartGX ()
 	GX_SetDispCopyGamma (GX_GM_1_0);
 	GX_SetZMode (GX_TRUE, GX_LEQUAL, GX_TRUE);
 	GX_SetColorUpdate (GX_TRUE);
+	
+	gui_alphasetup ();
 
 //	guPerspective (p, 60, 1.33F, 10.0F, 1000.0F);
 //	GX_LoadProjectionMtx (p, GX_PERSPECTIVE);
@@ -533,6 +527,12 @@ InitGCVideo ()
 			vmode_60hz = 1;
 			break;
 	}
+	
+	// check for progressive scan
+	if (vmode->viTVMode == VI_TVMODE_NTSC_PROG) {
+		TV_239p.viTVMode = TV_478i.viTVMode = TV_224p.viTVMode = TV_448i.viTVMode = VI_TVMODE_NTSC_PROG;
+		TV_239p.xfbMode = TV_478i.xfbMode = TV_224p.xfbMode = TV_448i.xfbMode = VI_XFBMODE_SF;
+	}
 
     VIDEO_Configure (vmode);
 
@@ -588,7 +588,10 @@ ResetVideo_Emu ()
 	{
 		int i;
 		for (i=0; i<4; i++) {
-			if (tvmodes[i]->efbHeight == vheight) break;
+			if (tvmodes[i]->efbHeight == vheight) {
+				tvmodes[i]->fbWidth = vwidth;	// update width - some games are 512x224 (super pang)
+				break;
+			}
 		}
 		rmode = tvmodes[i];
 	} 
@@ -620,11 +623,16 @@ ResetVideo_Emu ()
 	guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 	
+	// clear snes9x render screen
+	memset (snes9xgfx, 0, 1024 * 512 * 2);
+	
+	
 			// DEBUG
 		char* msg = (char*) malloc(256*sizeof(char));
 		sprintf (msg, (char*)"Interlaced: %i, vwidth: %d, vheight: %d, fb_W: %u, efb_H: %u", IPPU.Interlace, vwidth, vheight, rmode->fbWidth, rmode->efbHeight);
 		S9xMessage (0, 0, msg);
 		free(msg);
+	
 
 }
 
@@ -732,7 +740,7 @@ update_video (int width, int height)
 
 	whichfb ^= 1;
 
-	if ((oldvheight != vheight) || (oldvwidth != vwidth) 								// if rendered width/height changes
+	if ((oldvheight != vheight) || (oldvwidth != vwidth) 					// if rendered width/height changes
 		|| (CheckVideo && (IPPU.RenderedFramesCount != prevRenderedFrameCount))	// or if we get back from the menu, and have rendered at least 1 frame
 		)
 	{
@@ -765,12 +773,21 @@ update_video (int width, int height)
 		draw_init ();
 		
 		GX_InvVtxCache ();
+		GX_InvalidateTexAll ();
 		
+		GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+		
+		/* original video mode: force filtering OFF */
+	    if (!GCSettings.render)
+			GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
+		
+		/*
 					// DEBUG
 		char* msg = (char*) malloc(256*sizeof(char));
 		sprintf (msg, (char*)"xscale: %d, yscale: %d", xscale, yscale);
 		S9xMessage (0, 0, msg);
 		free(msg);
+		*/
 
 		//GX_SetViewport (0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
 		
