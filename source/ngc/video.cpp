@@ -100,10 +100,10 @@ GXRModeObj TV_239p =
 	256,             // fbWidth
 	239,             // efbHeight
 	239,             // xfbHeight
-	(VI_MAX_WIDTH_PAL - 640)/2,         // viXOrigin
-	(VI_MAX_HEIGHT_PAL - 574)/2,        // viYOrigin
-	640,             // viWidth
-	574,             // viHeight
+	(VI_MAX_WIDTH_PAL - 512)/2,         // viXOrigin
+	(VI_MAX_HEIGHT_PAL/2 - 478/2)/2,        // viYOrigin
+	512,             // viWidth
+	478,             // viHeight
 	VI_XFBMODE_SF,   // xFBmode
 	GX_FALSE,        // field_rendering
 	GX_FALSE,        // aa
@@ -135,10 +135,10 @@ GXRModeObj TV_478i =
     512,             // fbWidth
     478,             // efbHeight
     478,             // xfbHeight
-    (VI_MAX_WIDTH_PAL - 640)/2,         // viXOrigin
-    (VI_MAX_HEIGHT_PAL - 572)/2,        // viYOrigin
-    640,             // viWidth
-    574,             // viHeight
+    (VI_MAX_WIDTH_PAL - 512)/2,         // viXOrigin
+    (VI_MAX_HEIGHT_PAL/2 - 478/2)/2,        // viYOrigin
+    512,             // viWidth
+    478,             // viHeight
     VI_XFBMODE_DF,   // xFBmode
     GX_FALSE,         // field_rendering
     GX_FALSE,        // aa
@@ -172,10 +172,10 @@ GXRModeObj TV_224p =
 	256,             // fbWidth
 	224,             // efbHeight
 	224,             // xfbHeight
-	(VI_MAX_WIDTH_NTSC - 640)/2,	// viXOrigin
-	(VI_MAX_HEIGHT_NTSC - 480)/2,	// viYOrigin
-	640,             // viWidth
-	480,             // viHeight
+	(VI_MAX_WIDTH_NTSC - 512)/2,	// viXOrigin
+	(VI_MAX_HEIGHT_NTSC/2 - 448/2)/2,	// viYOrigin
+	512,             // viWidth
+	448,             // viHeight
 	VI_XFBMODE_SF,   // xFBmode
 	GX_FALSE,        // field_rendering
 	GX_FALSE,        // aa
@@ -207,10 +207,10 @@ GXRModeObj TV_448i =
     512,             // fbWidth
     448,             // efbHeight
     448,             // xfbHeight
-    (VI_MAX_WIDTH_NTSC - 640)/2,        // viXOrigin
-    (VI_MAX_HEIGHT_NTSC - 480)/2,       // viYOrigin
-    640,             // viWidth
-    480,             // viHeight
+    (VI_MAX_WIDTH_NTSC - 512)/2,        // viXOrigin
+    (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2,       // viYOrigin
+    512,             // viWidth
+    448,             // viHeight
     VI_XFBMODE_DF,   // xFBmode
     GX_FALSE,         // field_rendering
     GX_FALSE,        // aa
@@ -475,10 +475,11 @@ InitGCVideo ()
 			TV_224p.viTVMode = VI_TVMODE_PAL_DS;
 			TV_448i.viTVMode = VI_TVMODE_PAL_INT;
 			// set VI sizing
-			TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
-			TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
-			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_PAL - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL - 574)/2;
+			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
+			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
+			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_PAL - 512)/2;
+			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 478/2)/2;
+			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 448/2)/2;
 			
 			vmode_60hz = 0;
 
@@ -498,15 +499,11 @@ InitGCVideo ()
 			TV_224p.viTVMode = VI_TVMODE_NTSC_DS;
 			TV_448i.viTVMode = VI_TVMODE_NTSC_INT;
 			// set VI sizing
-			TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
-			TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
-			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 480)/2;
-			
-			// special additions (origin shifts can be moved to rendered square shifts during re-scaling)
-			TV_224p.viYOrigin += 8;		// centering
-			TV_239p.viYOrigin += 2;		//
-			TV_448i.viYOrigin += 16;	//
+			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
+			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
+			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 512)/2;
+			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
+			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
 			
 			vmode_60hz = 1;
 			break;
@@ -519,10 +516,11 @@ InitGCVideo ()
 			TV_224p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
 			TV_448i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
 			// set VI sizing
-			TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
-			TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
-			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 480)/2;
+			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
+			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
+			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 512)/2;
+			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
+			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
 			
 			vmode_60hz = 1;
 			break;
