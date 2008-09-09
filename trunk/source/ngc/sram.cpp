@@ -114,7 +114,7 @@ decodesavedata (int method, int readsize)
 	if ( (strncmp (sramsavecomment, "Snes9x GX 0", 11) == 0) )
 	{
 		// adjust offset
-		if(method == METHOD_MC_SLOTA && method == METHOD_MC_SLOTB)
+		if(method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
 			offset = 512; // skip entire 512 byte header
 		else
 			offset += 64; // skip savecomments
