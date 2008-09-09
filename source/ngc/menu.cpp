@@ -40,7 +40,7 @@ extern "C" {
 #include "controls.h"
 #include "cheats.h"
 
-#include "snes9xGx.h"
+#include "snes9xGX.h"
 #include "aram.h"
 #include "video.h"
 #include "filesel.h"
@@ -242,7 +242,7 @@ PreferencesMenu ()
 
 		sprintf (prefmenu[12], "Render Mode %s",
 			GCSettings.render == true ? "Filtered" : "Original");
-			
+
 		sprintf (prefmenu[13], "Widescreen %s",
 			GCSettings.widescreen == true ? "ON" : "OFF");
 
@@ -303,7 +303,7 @@ PreferencesMenu ()
 			case 12:
 				GCSettings.render ^= 1;
 				break;
-				
+
 			case 13:
 				GCSettings.widescreen ^= 1;
 				if (!GCSettings.render) GCSettings.widescreen = 0;	// don't allow on original render modes

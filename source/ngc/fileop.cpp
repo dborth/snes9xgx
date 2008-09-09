@@ -25,7 +25,7 @@
 #include "filesel.h"
 #include "sram.h"
 #include "preferences.h"
-#include "snes9xGx.h"
+#include "snes9xGX.h"
 
 FILE * filehandle;
 

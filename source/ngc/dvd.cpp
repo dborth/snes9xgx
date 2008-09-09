@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 #include "menudraw.h"
-#include "snes9xGx.h"
+#include "snes9xGX.h"
 #include "unzip.h"
 
 extern int offset;
