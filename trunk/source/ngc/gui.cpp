@@ -184,10 +184,13 @@ gui_draw ()
 	gui_setfontcolour (0,255,0,255);
 	// top bar text
 	setfontsize (32);	// 32/24 depending on whether selected or not
-	gui_DrawText (-1, 113, (char *)"Hello World");
+	gui_DrawText (-1, 35, (char *)"Menu");
 	// main text
 	setfontsize (24);	
-	gui_DrawText (-1, 113, (char *)"Hello World");
+	gui_DrawText (75, 113, (char *)"Hello World");
+	// bottom bar text
+	setfontsize (24);	
+	gui_DrawText (75, 400, (char *)"Description");
 }
 
 void

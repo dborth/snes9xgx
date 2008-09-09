@@ -292,11 +292,13 @@ emulate ()
 			}
 			
 			// GUI Stuff
+			/*
 			gui_makebg ();
 			gui_clearscreen();
 			gui_draw ();
 			gui_showscreen ();
 			//gui_savescreen ();
+			*/
 
 			mainmenu (3); // go to game menu
 
