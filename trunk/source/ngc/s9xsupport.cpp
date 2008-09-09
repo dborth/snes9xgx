@@ -172,10 +172,9 @@
 #include "spc700.h"
 #include "spc7110.h"
 #include "controls.h"
+
 #include "gctime.h"
-#include "snes9xGx.h"
-
-
+#include "snes9xGX.h"
 #include "video.h"
 #include "audio.h"
 

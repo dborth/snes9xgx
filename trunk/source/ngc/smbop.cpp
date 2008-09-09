@@ -19,14 +19,14 @@
 #include <smb.h>
 #include <zlib.h>
 #include <errno.h>
-
 #include "memmap.h"
+
 #include "smbop.h"
 #include "unzip.h"
 #include "video.h"
 #include "menudraw.h"
 #include "filesel.h"
-#include "Snes9xGx.h"
+#include "Snes9xGX.h"
 
 bool networkInit = false;
 bool networkShareInit = false;

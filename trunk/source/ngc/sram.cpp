@@ -19,7 +19,7 @@
 #include "memmap.h"
 #include "srtc.h"
 
-#include "snes9xGx.h"
+#include "snes9xGX.h"
 #include "images/saveicon.h"
 #include "menudraw.h"
 #include "memcardop.h"

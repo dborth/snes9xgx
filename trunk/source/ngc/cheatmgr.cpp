@@ -13,7 +13,7 @@
 #include "memmap.h"
 #include "cheats.h"
 
-#include "snes9xGx.h"
+#include "snes9xGX.h"
 #include "fileop.h"
 #include "filesel.h"
 #include "smbop.h"

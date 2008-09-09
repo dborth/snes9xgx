@@ -30,7 +30,7 @@ extern "C" {
 #include "snes9x.h"
 #include "memmap.h"
 
-#include "snes9xGx.h"
+#include "snes9xGX.h"
 #include "dvd.h"
 #include "menudraw.h"
 #include "video.h"
