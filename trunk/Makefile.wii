@@ -29,11 +29,12 @@ INCLUDES	:=	source/snes9x source/ngc
 #---------------------------------------------------------------------------------
 
 CFLAGS	=	-g -O2 -Wall $(MACHDEP) $(INCLUDE) \
-			-DNGC -DNO_ASM -DCPU_SHUTDOWN -DSPC700C \
-			-DSPC700_SHUTDOWN -DNEW_COLOUR_BLENDING \
-			-DNO_INLINE_GET_SET -DSDD1_DECOMP -DCORRECT_VRAM_READS \
-			-DDETECT_NASTY_FX_INTERLEAVE -DNGC_ZOOM -DSDUSE_LFN \
-			-DFORCE_WII -DWII_DVD $(CUSTOMFLAGS) \
+			-DNGC -DWII_DVD \
+			-DNO_ASM -DRIGHTSHIFT_IS_SAR \
+			-DCPU_SHUTDOWN -DSPC700_SHUTDOWN \
+			-DSPC700_C -DSDD1_DECOMP \
+			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
+			$(CUSTOMFLAGS) \
 			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter # -pipe
 CXXFLAGS	=	-save-temps -Xassembler -aln=$@.lst $(CFLAGS)
 
