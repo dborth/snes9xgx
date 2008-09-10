@@ -101,9 +101,9 @@ GXRModeObj TV_239p =
 	256,             // fbWidth
 	239,             // efbHeight
 	239,             // xfbHeight
-	(VI_MAX_WIDTH_PAL - 512)/2,         // viXOrigin
+	(VI_MAX_WIDTH_PAL - 640)/2,         // viXOrigin
 	(VI_MAX_HEIGHT_PAL/2 - 478/2)/2,        // viYOrigin
-	512,             // viWidth
+	640,             // viWidth
 	478,             // viHeight
 	VI_XFBMODE_SF,   // xFBmode
 	GX_FALSE,        // field_rendering
@@ -136,9 +136,9 @@ GXRModeObj TV_478i =
     512,             // fbWidth
     478,             // efbHeight
     478,             // xfbHeight
-    (VI_MAX_WIDTH_PAL - 512)/2,         // viXOrigin
+    (VI_MAX_WIDTH_PAL - 640)/2,         // viXOrigin
     (VI_MAX_HEIGHT_PAL/2 - 478/2)/2,        // viYOrigin
-    512,             // viWidth
+    640,             // viWidth
     478,             // viHeight
     VI_XFBMODE_DF,   // xFBmode
     GX_FALSE,         // field_rendering
@@ -173,9 +173,9 @@ GXRModeObj TV_224p =
 	256,             // fbWidth
 	224,             // efbHeight
 	224,             // xfbHeight
-	(VI_MAX_WIDTH_NTSC - 512)/2,	// viXOrigin
+	(VI_MAX_WIDTH_NTSC - 640)/2,	// viXOrigin
 	(VI_MAX_HEIGHT_NTSC/2 - 448/2)/2,	// viYOrigin
-	512,             // viWidth
+	640,             // viWidth
 	448,             // viHeight
 	VI_XFBMODE_SF,   // xFBmode
 	GX_FALSE,        // field_rendering
@@ -208,9 +208,9 @@ GXRModeObj TV_448i =
     512,             // fbWidth
     448,             // efbHeight
     448,             // xfbHeight
-    (VI_MAX_WIDTH_NTSC - 512)/2,        // viXOrigin
+    (VI_MAX_WIDTH_NTSC - 640)/2,        // viXOrigin
     (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2,       // viYOrigin
-    512,             // viWidth
+    640,             // viWidth
     448,             // viHeight
     VI_XFBMODE_DF,   // xFBmode
     GX_FALSE,         // field_rendering
@@ -478,7 +478,7 @@ InitGCVideo ()
 			// set VI sizing
 			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
 			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
-			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_PAL - 512)/2;
+			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_PAL - 640)/2;
 			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 478/2)/2;
 			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 448/2)/2;
 
@@ -502,7 +502,7 @@ InitGCVideo ()
 			// set VI sizing
 			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
 			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
-			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 512)/2;
+			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
 			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
 			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
 
@@ -519,7 +519,7 @@ InitGCVideo ()
 			// set VI sizing
 			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
 			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
-			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 512)/2;
+			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
 			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
 			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
 
@@ -531,6 +531,9 @@ InitGCVideo ()
 	if (vmode->viTVMode == VI_TVMODE_NTSC_PROG) {
 		TV_239p.viTVMode = TV_478i.viTVMode = TV_224p.viTVMode = TV_448i.viTVMode = VI_TVMODE_NTSC_PROG;
 		TV_239p.xfbMode = TV_478i.xfbMode = TV_224p.xfbMode = TV_448i.xfbMode = VI_XFBMODE_SF;
+		TV_239p.xfbHeight = TV_478i.xfbHeight = TV_224p.xfbHeight = TV_448i.xfbHeight = 480;
+		TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
+		TV_239p.viYOrigin = TV_478i.viYOrigin = TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 480/2)/2;
 	}
 
     VIDEO_Configure (vmode);
@@ -627,7 +630,7 @@ ResetVideo_Emu ()
 	//memset (snes9xgfx, 0, 1024 * 512 * 2);
 
 	/*
-			// DEBUG
+		// DEBUG
 		char* msg = (char*) malloc(256*sizeof(char));
 		sprintf (msg, (char*)"Interlaced: %i, vwidth: %d, vheight: %d, fb_W: %u, efb_H: %u", IPPU.Interlace, vwidth, vheight, rmode->fbWidth, rmode->efbHeight);
 		S9xMessage (0, 0, msg);
@@ -771,12 +774,12 @@ update_video (int width, int height)
 		square[0] = square[9]  = -xscale + xshift;
 		square[4] = square[1]  =  yscale + yshift;
 		square[7] = square[10] = -yscale + yshift;
-
-		draw_init ();
-
+		
 		GX_InvVtxCache ();
-		GX_InvalidateTexAll ();
 
+		//draw_init ();
+
+		GX_InvalidateTexAll ();
 		GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
 		/* original video mode: force filtering OFF */
@@ -795,9 +798,16 @@ update_video (int width, int height)
 		oldvheight = vheight;
 		CheckVideo = 0;
 
-		clearscreen (); // this hack fixes my 'not updating scaling' problem
+		//clearscreen (); // this hack fixes my 'not updating scaling' problem
 	}
-
+	
+	/*
+	// for zooming
+	memset (&view, 0, sizeof (Mtx));
+	guLookAt(view, &cam.pos, &cam.up, &cam.view);
+	GX_LoadPosMtxImm (view, GX_PNMTX0);
+	*/
+	
 	GX_InvalidateTexAll ();
 
 	MakeTexture ((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
