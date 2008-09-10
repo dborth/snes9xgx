@@ -290,7 +290,7 @@ emulate ()
 					NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
 				}
 			}
-			
+
 			// GUI Stuff
 			/*
 			gui_alloc();
@@ -404,15 +404,8 @@ main ()
 	DVD_Init ();
 	#endif
 
-	#ifdef FORCE_WII
-	isWii = TRUE;
-	#else
-	int drvid = dvd_driveid ();
-	if ( drvid == 4 || drvid == 6 || drvid == 8 )
-		isWii = FALSE;
-	else
-		isWii = TRUE;
-	#endif
+	// Check if DVD drive belongs to a Wii
+	SetDVDDriveType();
 
 	// Load preferences
 	if(!LoadPrefs())

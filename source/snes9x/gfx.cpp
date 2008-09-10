@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,11 +114,24 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
+
 
   Snes9x homepage: http://www.snes9x.com
 
@@ -142,6 +159,8 @@
 **********************************************************************************/
 
 
+
+
 #include "snes9x.h"
 #include "cpuexec.h"
 #include "gfx.h"
@@ -153,9 +172,29 @@
 
 #include "cheats.h"
 
-static void S9xDisplayString(const char *string);
-static void S9xDisplayFrameRate();
-void ComputeClipWindows();
+#ifndef NGC
+#include "movie.h"
+#endif
+
+#include "font.h"
+static int font_width = 8;
+static int font_height = 9;
+
+// private text-displaying functions
+static void S9xDisplayPressedKeys ();
+static void S9xDisplayFrameRate ();
+static void S9xDisplayString (const char *string, int linesFromBottom=5, int pixelsFromLeft=1, bool allowWrap=true);
+#ifndef NGC
+static void S9xDisplayWatchedAddresses ();
+#endif
+// shared params for the above functions and DisplayChar
+uint16* display_screen = NULL;
+int display_ppl, display_width, display_height;
+int display_fontwidth = font_width, display_fontheight = font_height, display_hfontaccessscale = 1, display_vfontaccessscale = 1;
+bool8 display_paramsinited = FALSE;
+#define DisplayString (S9xCustomDisplayString ? S9xCustomDisplayString : S9xDisplayString)
+
+void ComputeClipWindows ();
 
 extern struct SLineData LineData[240];
 extern struct SLineMatrixData LineMatrixData [240];
@@ -170,7 +209,7 @@ bool8 S9xGraphicsInit(){
 
     GFX.DoInterlace=0;
     GFX.InterlaceFrame=0;
-    PPU.BG_Forced=0;
+    Settings.BG_Forced=0;
     IPPU.OBJChanged=TRUE;
     IPPU.DirectColourMapsNeedRebuild=TRUE;
     GFX.RealPPL=GFX.Pitch>>1;
@@ -240,6 +279,8 @@ bool8 S9xGraphicsInit(){
             }
         }
     }
+
+	GFX.Repainting = FALSE;
 
     return TRUE;
 
@@ -341,6 +382,7 @@ void S9xStartScreenRefresh(){
         IPPU.RenderedFramesCount = 0;
         IPPU.FrameCount = 0;
     }
+	++IPPU.TotalEmulatedFrames;
 }
 
 void RenderLine(uint8 C) {
@@ -375,12 +417,71 @@ void RenderLine(uint8 C) {
     }
 }
 
+bool watchesCleared=false;
+#ifndef NGC
+void S9xDisplayWatchedAddresses ()
+{
+	if(!watchesCleared)
+	{
+		for(unsigned int i = 0 ; i < sizeof(watches)/sizeof(*watches) ; i++)
+			watches[i].on = false;
+		watchesCleared = true;
+	}
+
+	for(unsigned int i = 0 ; i < sizeof(watches)/sizeof(*watches) ; i++)
+	{
+		if(!watches[i].on)
+			break;
+
+		int32 displayNumber = 0;
+
+		extern struct SCheatData Cheat;
+		for(int r=0;r<watches[i].size;r++)
+			displayNumber+=(Cheat.CWatchRAM[(watches[i].address - 0x7E0000)+r])<<(8*r);
+
+		char buf [32];
+
+		if(watches[i].format==1)
+			sprintf(buf, "%s,%du = %u", watches[i].desc, watches[i].size, (unsigned int)displayNumber);
+		else if(watches[i].format==3)
+			sprintf(buf, "%s,%dx = %X", watches[i].desc, watches[i].size, (unsigned int)displayNumber);
+		else
+		{
+			// signed
+			if(watches[i].size == 1)
+				displayNumber = (int32)((int8)displayNumber);
+			else if(watches[i].size == 2)
+				displayNumber = (int32)((int16)displayNumber);
+			else if(watches[i].size == 3)
+				if(displayNumber >= 8388608)
+					displayNumber -= 16777216;
+
+			sprintf(buf, "%s,%ds = %d", watches[i].desc, watches[i].size, (int)displayNumber);
+		}
+
+
+		DisplayString(buf, 6+i, 1, false);
+	}
+}
+#endif
+
+void S9xReRefresh ()
+{
+	if(Settings.StopEmulation)
+		return;
+
+	GFX.Repainting = TRUE;
+	S9xDeinitUpdate (IPPU.RenderedScreenWidth, IPPU.RenderedScreenHeight/*, Settings.SixteenBit*/);
+	GFX.Repainting = FALSE;
+}
+
+
 void S9xEndScreenRefresh() {
     if(IPPU.RenderThisFrame) {
         FLUSH_REDRAW();
         if(GFX.DoInterlace && GFX.InterlaceFrame==0){
             S9xControlEOF();
-            // XXX: Invent S9xContinueUpdate()?
+			S9xContinueUpdate(IPPU.RenderedScreenWidth, IPPU.RenderedScreenHeight);
         } else {
             if(IPPU.ColorsChanged) {
                 uint32 saved = PPU.CGDATA[0];
@@ -389,15 +490,15 @@ void S9xEndScreenRefresh() {
                 PPU.CGDATA[0] = saved;
             }
 
-#ifndef NGC
+#ifndef NGC	   
             if(Settings.TakeScreenshot)
                 S9xDoScreenshot(IPPU.RenderedScreenWidth, IPPU.RenderedScreenHeight);
-#endif
+#endif	    
             S9xControlEOF();
-            if (Settings.DisplayFrameRate)
-                S9xDisplayFrameRate();
-            if (GFX.InfoString)
-                S9xDisplayString(GFX.InfoString);
+
+			if(Settings.AutoDisplayMessages || Settings.OpenGLEnable || Settings.GlideEnable)
+				S9xDisplayMessages(GFX.Screen, GFX.RealPPL, IPPU.RenderedScreenWidth, IPPU.RenderedScreenHeight, 1);
+
             S9xDeinitUpdate(IPPU.RenderedScreenWidth, IPPU.RenderedScreenHeight);
         }
     } else {
@@ -497,13 +598,13 @@ void S9xSetupOBJ() {
             } else {
                 GFX.OBJWidths[S]=SmallWidth; Height=SmallHeight;
             }
-            int HPos=PPU.OBJ[S].HPos; if(HPos==-256) HPos=256;
+            int HPos=PPU.OBJ[S].HPos; if(HPos==-256) HPos=0;
             if(HPos>-GFX.OBJWidths[S] && HPos<=256)
             {
                 if(HPos<0){
                     GFX.OBJVisibleTiles[S]=(GFX.OBJWidths[S]+HPos+7)>>3;
-                } else if(HPos+GFX.OBJWidths[S]>=257){
-                    GFX.OBJVisibleTiles[S]=(257-HPos+7)>>3;
+                } else if(HPos+GFX.OBJWidths[S]>255){
+                    GFX.OBJVisibleTiles[S]=(256-HPos+7)>>3;
                 } else {
                     GFX.OBJVisibleTiles[S]=GFX.OBJWidths[S]>>3;
                 }
@@ -905,7 +1006,7 @@ static void DrawBackgroundMosaic(int bg, uint8 Zh, uint8 Zl){
             }
 
             uint32 Width = Right-Left;
-            uint32 f = 0;
+            HPos&=7;
             while(Left<Right){
                 uint32 w=PPU.Mosaic-(Left%PPU.Mosaic);
                 if(w>Width) w=Width;
@@ -923,9 +1024,8 @@ static void DrawBackgroundMosaic(int bg, uint8 Zh, uint8 Zl){
                     }
                 }
                 HPos+=PPU.Mosaic;
-                f+=PPU.Mosaic;
-                while(f>=8){
-                    f-=8;
+                while(HPos>=8){
+                    HPos-=8;
                     if(BG.TileSizeH==8){
                         t++;
                         if(HTile==31) t=b2;
@@ -1328,14 +1428,14 @@ static inline void RenderScreen(bool8 sub){
         GFX.S = GFX.Screen;
         GFX.DB = GFX.ZBuffer;
         GFX.Clip = IPPU.Clip[0];
-        BGActive=Memory.FillRAM[0x212c] & ~PPU.BG_Forced;
+        BGActive=Memory.FillRAM[0x212c] & ~Settings.BG_Forced;
         if(GFX.DoInterlace && GFX.InterlaceFrame) GFX.S+=GFX.RealPPL;
         D=32;
     } else {
         GFX.S = GFX.SubScreen;
         GFX.DB = GFX.SubZBuffer;
         GFX.Clip = IPPU.Clip[1];
-        BGActive=Memory.FillRAM[0x212d] & ~PPU.BG_Forced;
+        BGActive=Memory.FillRAM[0x212d] & ~Settings.BG_Forced;
         D=(Memory.FillRAM[0x2130]&2)<<4; // 'do math' depth flag
     }
 
@@ -1519,76 +1619,291 @@ void S9xUpdateScreen() {
     IPPU.PreviousLine = IPPU.CurrentLine;
 }
 
+extern bool unfreezing_from_stream;
 
 void S9xSetInfoString (const char *string)
 {
-    GFX.InfoString = string;
-    GFX.InfoStringTimeout = 120;
+	if(Settings.InitialInfoStringTimeout > 0)
+	{
+		GFX.InfoString = string;
+		GFX.InfoStringTimeout = Settings.InitialInfoStringTimeout;
+
+		if (Settings.Paused && !unfreezing_from_stream)
+		{
+			//refresh screen to show new message immediately
+			S9xReRefresh();
+		}
+	}
 }
 
-#include "font.h"
+static inline void FontPixToScreen(char p, uint16 *s)
+{
+	if(p == '#')
+	{
+		*s = Settings.DisplayColor;
+	}
+	else if(p == '.')
+	{
+		static const uint16 black = BUILD_PIXEL(0,0,0);
+		*s = black;
+	}
+}
 
 void DisplayChar(uint16 *s, uint8 c) {
-    int line = ((c - 32) >> 4) * font_height;
-    int offset = ((c - 32) & 15) * font_width;
-    int h, w, rws;
-    rws = Settings.OpenGLEnable ? IPPU.RenderedScreenWidth : GFX.RealPPL;
-    for(h=0; h<font_height; h++, line++, s+=rws-font_width) {
-        for(w=0; w<font_width; w++, s++) {
-            uint8 p = font [line][offset + w];
-
-            if(p == '#') {
-                /*
-                if(Memory.Hacked) *s= BUILD_PIXEL(31,0,0);
-                else if(Memory.Iffy) *s= BUILD_PIXEL(31,31,0);
-                else if(Memory.Iformat==1) *s= BUILD_PIXEL(0,31,0);
-                else if(Memory.Iformat==2) *s= BUILD_PIXEL(0,31,31);
-                else *s = 0xffff;
-                */
-                *s=Settings.DisplayColor;
-            } else {
-                if (p == '.') *s = BUILD_PIXEL(0,0,0);
-            }
-        }
-    }
-}
-
-static void S9xDisplayFrameRate() {
-    uint16 *Screen = GFX.Screen + 1 +
-		    (IPPU.RenderedScreenHeight - font_height - 1) * GFX.RealPPL;
-    char string [10];
-    int len = 5;
-
-    sprintf (string, "%02d/%02d", IPPU.DisplayedRenderedFrameCount,
-	     (int) Memory.ROMFramesPerSecond);
-
-    int i;
-    for(i=0; i<len; i++) {
-	DisplayChar(Screen, string [i]);
-	Screen += font_width-1;
-    }
-}
-
-static void S9xDisplayString(const char *string) {
-    uint16 *Screen = GFX.Screen + 1 +
-		    (IPPU.RenderedScreenHeight - font_height * 5) * GFX.RealPPL;
-    int len = strlen (string);
-    int max_chars = IPPU.RenderedScreenWidth / (font_width - 1);
-    int char_count = 0;
-    int i;
-
-    for(i=0; i<len; i++, char_count++) {
-	if (char_count >= max_chars || (unsigned char) string [i] < 32) {
-	    Screen -= (font_width - 1) * max_chars;
-	    Screen += font_height * GFX.RealPPL;
-	    if(Screen >= GFX.Screen+GFX.RealPPL*IPPU.RenderedScreenHeight)
-		break;
-	    char_count -= max_chars;
+    int line = ((c - 32) >> 4) * display_fontheight;
+    int offset = ((c - 32) & 15) * display_fontwidth;
+    int h, w;
+	if(!display_paramsinited) display_ppl = Settings.OpenGLEnable ? IPPU.RenderedScreenWidth : GFX.RealPPL;
+	if(display_hfontaccessscale == 1 && display_vfontaccessscale == 1) {
+		for(h=0; h<display_fontheight; h++, line++, s+=display_ppl-display_fontwidth)
+			for(w=0; w<display_fontwidth; w++, s++)
+				FontPixToScreen(font [(line)] [(offset + w)], s);
+	} else {
+		for(h=0; h<display_fontheight; h++, line++, s+=display_ppl-display_fontwidth)
+			for(w=0; w<display_fontwidth; w++, s++)
+				FontPixToScreen(font [(line)/display_vfontaccessscale] [(offset + w)/display_hfontaccessscale], s);
 	}
-	if((unsigned char) string[i]<32) continue;
-	DisplayChar(Screen, string [i]);
-	Screen += font_width-1;
-    }
+}
+
+static void S9xDisplayFrameRate ()
+{
+    char string[10];
+#ifdef DEBUGGER
+    int len = 8;
+    sprintf(string, "%02d/%02d %02d", (int)IPPU.DisplayedRenderedFrameCount, (int)Memory.ROMFramesPerSecond, (int)IPPU.FrameCount);
+#else
+    int len = 5;
+    sprintf(string, "%02d/%02d", (int)IPPU.DisplayedRenderedFrameCount, (int)Memory.ROMFramesPerSecond);
+#endif
+
+	DisplayString(string, 1, 1+display_width-display_fontheight*len, false);
+}
+
+static void S9xDisplayString (const char *string, int linesFromBottom, int pixelsFromLeft, bool allowWrap)
+{
+	if(linesFromBottom <= 0)
+		linesFromBottom = 1;
+
+	uint16 *Screen = display_screen // text draw position, starting on the screen
+                  + pixelsFromLeft // with this much horizontal offset
+//				    * (Settings.SixteenBit ? 2 : 1)
+                  + (display_height - display_fontheight * linesFromBottom) // and this much vertical offset
+				    * display_ppl;
+
+    int len = strlen(string);
+    int max_chars = display_width / (display_fontwidth-display_hfontaccessscale);
+    int char_count = 0;
+	int prev_hfont_access_scale = display_hfontaccessscale;
+
+	// squash if it won't fit on 1 line and we're drawing greater than 1x scale and we're not allowing wrapping
+	while(len > max_chars && !allowWrap && display_hfontaccessscale > 1)
+	{
+		display_fontwidth /= display_hfontaccessscale;
+		display_hfontaccessscale--;
+		display_fontwidth *= display_hfontaccessscale;
+
+		max_chars = display_width / (display_fontwidth-display_hfontaccessscale);
+	}
+
+	// loop through and draw the characters
+	for(int i = 0 ; i < len ; i++, char_count++)
+	{
+		if(char_count >= max_chars || (unsigned char)string[i] < 32)
+		{
+			if(!allowWrap)
+				break;
+
+			Screen -= /*Settings.SixteenBit ? (display_fontwidth-display_hfontaccessscale)*sizeof(uint16)*max_chars :*/ (display_fontwidth-display_hfontaccessscale)*max_chars;
+			Screen += display_fontheight * display_ppl;
+			if(Screen >= display_screen + display_ppl * display_height)
+				break;
+
+			char_count -= max_chars;
+		}
+		if((unsigned char) string[i]<32) continue;
+
+		DisplayChar(Screen, string[i]);
+		Screen += /*Settings.SixteenBit ? (display_fontwidth-display_hfontaccessscale)*sizeof(uint16) :*/ (display_fontwidth-display_hfontaccessscale);
+	}
+
+	// revert temporary change to font scale, if any
+	if(display_hfontaccessscale != prev_hfont_access_scale)
+	{
+		display_hfontaccessscale = prev_hfont_access_scale;
+		display_fontwidth *= display_hfontaccessscale;
+	}
+}
+
+// input display
+static void S9xDisplayPressedKeys ()
+{
+#ifndef NGC
+	uint16 MovieGetJoypad(int i);
+	bool MovieGetMouse(int i, uint8 out [5]);
+	bool MovieGetScope(int i, uint8 out [6]);
+	bool MovieGetJustifier(int i, uint8 out [11]);
+#endif
+
+	enum controllers controller;
+	int8 ids[4];
+
+	int line = 1;
+#ifndef NGC
+	const static char KeyMap[]=  {'0','1','2','R','L','X','A','>','<','v','^','S','s','Y','B'};
+	const static int KeyOrder[]={8,10,7,9, 0, 6,14,13,5, 1, 4,3, 2, 11,12}; // < ^ > v   A B Y X  L R  S s
+#endif
+	char string[255];
+	int len;
+
+	S9xGetController(1, &controller, &ids[0],&ids[1],&ids[2],&ids[3]);
+#ifndef NGC
+	bool singlePlayer = (controller == CTL_NONE || (controller == CTL_JOYPAD && !(MovieGetJoypad(1) & 0xffff)));
+#else
+	bool singlePlayer = (controller == CTL_NONE || (controller == CTL_JOYPAD));
+#endif
+	for(int port = 0; port < 2; port++)
+    {
+		S9xGetController(port, &controller, &ids[0],&ids[1],&ids[2],&ids[3]);
+		for(int idid = 0; idid < 4; idid++)
+		{
+			const int id = ids[idid];
+			if(id == -1)
+				continue;
+
+			bool skip = false;
+			switch(controller)
+			{
+				default: {
+					skip = true;
+				}	break;
+
+				case CTL_MP5:
+					singlePlayer = false;
+					// no break:
+				case CTL_JOYPAD: {
+					if(line < id+1)
+						line = id+1;
+#ifndef NGC
+					uint16 tempJoypad = MovieGetJoypad(id);
+					if(!(tempJoypad & 0xffff) && id > 0)
+						skip = true;
+					else
+					{
+						sprintf(string, !singlePlayer?"P%d:                    ":"                       ",id+1);
+
+						for (int i=0; i < 15; i++)
+						{
+							int j = KeyOrder[i];
+							int mask = (1 << (j+1));
+							string[strlen("P?: ")+i]= ((tempJoypad & mask)!=0) ? KeyMap[j] : ' ';
+						}
+					}
+#endif
+				}	break;
+
+				case CTL_MOUSE: {
+#ifndef NGC
+					uint8 buf [5] = {0};
+					MovieGetMouse(id, buf);
+					int16 x = ((uint16*)buf)[0];
+					int16 y = ((uint16*)buf)[1];
+					uint8 buttons = buf[4];
+					//if(delta_x < 0) delta_x = 128|-delta_x;
+					//if(delta_y < 0) delta_y = 128|-delta_y;
+					sprintf(string, "(%4d,%4d) %c%c", x, y, (buttons&0x40)?'L':' ', (buttons&0x80)?'R':' ');
+#endif
+				}	break;
+
+				case CTL_SUPERSCOPE: {
+#ifndef NGC
+					uint8 buf [6] = {0};
+					MovieGetScope(id, buf);
+					int16 x = ((uint16*)buf)[0];
+					int16 y = ((uint16*)buf)[1];
+					uint8 buttons = buf[4];
+					sprintf(string, "(%3d,%3d) %c%c%c%c", x, y, (buttons&0x80)?'F':' ', (buttons&0x40)?'C':' ', (buttons&0x20)?'T':' ', (buttons&0x10)?'P':' ');
+#endif
+				}	break;
+
+				case CTL_JUSTIFIER: {
+#ifndef NGC
+					uint8 buf [11] = {0};
+					MovieGetJustifier(port, buf);
+					int16 x1 = ((uint16*)buf)[0];
+					int16 x2 = ((uint16*)buf)[1];
+					int16 y1 = ((uint16*)buf)[2];
+					int16 y2 = ((uint16*)buf)[3];
+					uint8 buttons = buf[8];
+					bool8 offscreen1 = buf[9];
+					bool8 offscreen2 = buf[10];
+					if(id == 1)
+						sprintf(string, "(%3d,%3d) %c%c%c / (%3d,%3d) %c%c%c", x1, y1, (buttons&0x80)?'T':' ', (buttons&0x20)?'S':' ', offscreen1?'O':' ', x2, y2, (buttons&0x40)?'T':' ', (buttons&0x10)?'S':' ', offscreen2?'O':' ');
+					else
+						sprintf(string, "(%3d,%3d) %c%c%c", x1, y1, (buttons&0x80)?'T':' ', (buttons&0x20)?'S':' ', offscreen1?'O':' ');
+#endif
+				}	break;
+			}
+
+			if(skip)
+				continue;
+
+			len=strlen(string);
+
+			DisplayString(string, line, 1, false);
+
+			line++;
+		}
+	}
+}
+
+void S9xDisplayMessages(uint16 *screen, int ppl, int width, int height, int scale)
+{
+	display_screen = screen;
+	display_ppl = ppl;
+	display_width = width;
+	display_height = height;
+	display_fontwidth = font_width * scale;
+	display_fontheight = font_height * scale;
+	display_hfontaccessscale = scale;
+	display_vfontaccessscale = scale;
+	display_paramsinited = TRUE;
+
+	if (Settings.DisplayFrameRate)
+		S9xDisplayFrameRate();
+
+    if (Settings.DisplayPressedKeys==2)
+        S9xDisplayPressedKeys();
+
+	if (GFX.FrameDisplay
+#ifndef NGC
+ && S9xMovieActive()
+#endif
+#ifdef NETPLAY_SUPPORT
+	|| Settings.NetPlay
+#endif
+	)
+		DisplayString(GFX.FrameDisplayString, 4, 1, false);
+
+	if (GFX.InfoString && *GFX.InfoString)
+		DisplayString(GFX.InfoString, 5, 1, !GFX.FrameDisplay
+#ifndef NGC
+|| (!S9xMovieActive()
+#ifdef NETPLAY_SUPPORT
+		&& !Settings.NetPlay
+#endif
+		)
+#endif   
+		 );
+
+#ifndef NGC
+	if (Settings.DisplayWatchedAddresses)
+		S9xDisplayWatchedAddresses();
+#endif
+	display_paramsinited = FALSE;
+	display_fontwidth = font_width;
+	display_fontheight = font_height;
+	display_hfontaccessscale = 1;
+	display_vfontaccessscale = 1;
 }
 
 #include "crosshairs.h"
@@ -1609,7 +1924,7 @@ static uint16 get_crosshair_color(uint8 color){
       case 11: return BUILD_PIXEL(0,23,31); // Sky
       case 12: return BUILD_PIXEL(0,0,31);  // Blue
       case 13: return BUILD_PIXEL(23,0,31); // Violet
-      case 14: return BUILD_PIXEL(31,0,31); // MagicPink
+      case 14: return BUILD_PIXEL(31,0,31); // Magenta
       case 15: return BUILD_PIXEL(31,0,16); // Purple
     }
     return 0; // stupid compiler warning
@@ -1623,26 +1938,33 @@ void S9xDrawCrosshair(const char *crosshair, uint8 fgcolor, uint8 bgcolor, int16
     if(IPPU.DoubleWidthPixels){ cx=2; x*=2; W*=2; }
     if(IPPU.DoubleHeightPixels){ rx=2; y*=2; H*=2; }
     if(crosshair==NULL) return;
+    if(GFX.Screen==NULL) return;
+    if(Settings.StopEmulation) return;
     uint16 fg, bg;
     fg=get_crosshair_color(fgcolor);
     bg=get_crosshair_color(bgcolor);
-    uint16 *s = GFX.Screen + y * GFX.RealPPL + x;
-    rws = Settings.OpenGLEnable ? IPPU.RenderedScreenWidth : GFX.RealPPL;
-    for(r=0; r<15*rx; r++, s+=rws-15*cx) {
-        if(y+r<0){ s+=15*cx; continue; }
-        if(y+r>=H) break;
-        for(c=0; c<15*cx; c++, s++) {
-            if(x+c<0) continue;
-            if(x+c>=W){ s+=15*cx-c; break; }
-            uint8 p = crosshair[(r/rx)*15+(c/cx)];
+#if (defined(__unix) || defined(__linux) || defined(__sun) || defined(__DJGPP)) // XXX: FIXME: why does it crash without this on Linux port? There are no out-of-bound writes without it...
+	if(x >= 0 && y >= 0)
+#endif
+	{
+      uint16 *s = GFX.Screen + y * GFX.RealPPL + x;
+      rws = Settings.OpenGLEnable ? IPPU.RenderedScreenWidth : GFX.RealPPL;
+      for(r=0; r<15*rx; r++, s+=rws-15*cx) {
+          if(y+r<0){ s+=15*cx; continue; } // if y is negative, skip line
+          if(y+r>=H) break;                // if y is past bottom, stop
+          for(c=0; c<15*cx; c++, s++) {
+              if(x+c<0 || s<GFX.Screen) continue; // if x is negative or s is invalid, skip pixel
+              if(x+c>=W){ s+=15*cx-c; break; }    // if x is past right, go to next line
+              uint8 p = crosshair[(r/rx)*15+(c/cx)];
 
-            if(p == '#' && fgcolor) {
-                *s=(fgcolor&0x10)?COLOR_ADD1_2(fg,*s):fg;
-            } else if(p == '.' && bgcolor) {
-                *s=(bgcolor&0x10)?COLOR_ADD1_2(*s,bg):bg;
-            }
-        }
-    }
+              if(p == '#' && fgcolor) {
+                  *s=(fgcolor&0x10)?COLOR_ADD1_2(fg,*s):fg;
+              } else if(p == '.' && bgcolor) {
+                  *s=(bgcolor&0x10)?COLOR_ADD1_2(*s,bg):bg;
+              }
+          }
+      }
+   }
 }
 
 
@@ -1740,3 +2062,4 @@ bool8 S9xSetRenderPixelFormat (int format)
 }
 #endif
 
+void (*S9xCustomDisplayString) (const char *string, int linesFromBottom, int pixelsFromLeft, bool allowWrap) = NULL;

@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -141,6 +158,8 @@
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
 
+
+
 #ifndef _CHEATS_H_
 #define _CHEATS_H_
 
@@ -154,7 +173,7 @@ struct SCheat
     char    name [22];
 };
 
-#define MAX_CHEATS 75
+#define MAX_CHEATS 150
 
 struct SCheatData
 {
@@ -166,10 +185,23 @@ struct SCheatData
     uint8           *RAM;
     uint8           *FillRAM;
     uint8           *SRAM;
-    uint32	    WRAM_BITS [0x20000 >> 3];
-    uint32	    SRAM_BITS [0x10000 >> 3];
-    uint32	    IRAM_BITS [0x2000 >> 3];
+	uint32		ALL_BITS [(0x32000 >> 5)];
+#define			WRAM_BITS					ALL_BITS
+#define			SRAM_BITS					ALL_BITS + (0x20000 >> 5)
+#define			IRAM_BITS					ALL_BITS + (0x30000 >> 5)
+    uint8	    CWatchRAM [0x32000];
 };
+
+
+struct Watch {
+	bool on;
+	int size;
+	int format;
+	uint32 address;
+	char buf[12];
+	char desc[32];
+};
+extern Watch watches [16];
 
 typedef enum
 {
@@ -207,6 +239,8 @@ void S9xSearchForChange (SCheatData *, S9xCheatComparisonType cmp,
 void S9xSearchForValue (SCheatData *, S9xCheatComparisonType cmp,
                         S9xCheatDataSize size, uint32 value,
                         bool8 is_signed, bool8 update);
+void S9xSearchForAddress (SCheatData *, S9xCheatComparisonType cmp,
+                        S9xCheatDataSize size, uint32 address, bool8 update);
 void S9xOutputCheatSearchResults (SCheatData *);
 
 #endif

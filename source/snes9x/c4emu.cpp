@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -141,6 +158,9 @@
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
 
+
+
+#ifndef ZSNES_C4
 #ifdef HAVE_CONFIG_H
 	#include <config.h>
 #endif
@@ -194,7 +214,7 @@ static void C4ConvOAM(void){
     int16 SprX, SprY;
     uint8 SprName, SprAttr;
     uint8 SprCount;
-    
+
     globalX=READ_WORD(Memory.C4RAM+0x0621);
     globalY=READ_WORD(Memory.C4RAM+0x0623);
     OAMptr2=Memory.C4RAM+0x200+(Memory.C4RAM[0x626]>>2);
@@ -208,62 +228,59 @@ static void C4ConvOAM(void){
     if(Memory.C4RAM[0x0620]!=0){
         SprCount=128-Memory.C4RAM[0x626];
         uint8 offset=(Memory.C4RAM[0x626]&3)*2;
-        for(int prio=0x30; prio>=0; prio-=0x10){
-            uint8 *srcptr=Memory.C4RAM+0x220;
-            for(int i=Memory.C4RAM[0x0620]; i>0 && SprCount>0; i--, srcptr+=16){
-                if((srcptr[4]&0x30)!=prio) continue;
-                SprX=READ_WORD(srcptr)-globalX;
-                SprY=READ_WORD(srcptr+2)-globalY;
-                SprName=srcptr[5];
-                SprAttr=srcptr[4] | srcptr[0x06]; // XXX: mask bits?
+        uint8 *srcptr=Memory.C4RAM+0x220;
+        for(int i=Memory.C4RAM[0x0620]; i>0 && SprCount>0; i--, srcptr+=16){
+            SprX=READ_WORD(srcptr)-globalX;
+            SprY=READ_WORD(srcptr+2)-globalY;
+            SprName=srcptr[5];
+            SprAttr=srcptr[4] | srcptr[0x06]; // XXX: mask bits?
 
-                uint8 *sprptr=C4GetMemPointer(READ_3WORD(srcptr+7));
-                if(*sprptr!=0){
-                    int16 X, Y;
-                    for(int SprCnt=*sprptr++; SprCnt>0 && SprCount>0; SprCnt--, sprptr+=4){
-                        X=(int8)sprptr[1];
-                        if(SprAttr&0x40){ // flip X
-                            X=-X-((sprptr[0]&0x20)?16:8);
+            uint8 *sprptr=C4GetMemPointer(READ_3WORD(srcptr+7));
+            if(*sprptr!=0){
+                int16 X, Y;
+                for(int SprCnt=*sprptr++; SprCnt>0 && SprCount>0; SprCnt--, sprptr+=4){
+                    X=(int8)sprptr[1];
+                    if(SprAttr&0x40){ // flip X
+                        X=-X-((sprptr[0]&0x20)?16:8);
+                    }
+                    X+=SprX;
+                    if(X>=-16 && X<=272){
+                        Y=(int8)sprptr[2];
+                        if(SprAttr&0x80){
+                            Y=-Y-((sprptr[0]&0x20)?16:8);
                         }
-                        X+=SprX;
-                        if(X>=-16 && X<=272){
-                            Y=(int8)sprptr[2];
-                            if(SprAttr&0x80){
-                                Y=-Y-((sprptr[0]&0x20)?16:8);
-                            }
-                            Y+=SprY;
-                            if(Y>=-16 && Y<=224){
-                                OAMptr[0]=X&0xff;
-                                OAMptr[1]=(uint8)Y;
-                                OAMptr[2]=SprName+sprptr[3];
-                                OAMptr[3]=SprAttr^(sprptr[0]&0xc0); // XXX: Carry from SprName addition?
-                                *OAMptr2 &= ~(3<<offset);
-                                if(X&0x100) *OAMptr2 |= 1<<offset;
-                                if(sprptr[0]&0x20) *OAMptr2 |= 2<<offset;
-                                OAMptr+=4;
-                                SprCount--;
-                                offset=(offset+2)&6;
-                                if(offset==0) OAMptr2++;
-                            }
+                        Y+=SprY;
+                        if(Y>=-16 && Y<=224){
+                            OAMptr[0]=X&0xff;
+                            OAMptr[1]=(uint8)Y;
+                            OAMptr[2]=SprName+sprptr[3];
+                            OAMptr[3]=SprAttr^(sprptr[0]&0xc0); // XXX: Carry from SprName addition?
+                            *OAMptr2 &= ~(3<<offset);
+                            if(X&0x100) *OAMptr2 |= 1<<offset;
+                            if(sprptr[0]&0x20) *OAMptr2 |= 2<<offset;
+                            OAMptr+=4;
+                            SprCount--;
+                            offset=(offset+2)&6;
+                            if(offset==0) OAMptr2++;
                         }
                     }
-                } else if(SprCount>0){
-                    OAMptr[0]=(uint8)SprX;
-                    OAMptr[1]=(uint8)SprY;
-                    OAMptr[2]=SprName;
-                    OAMptr[3]=SprAttr;
-                    *OAMptr2 &= ~(3<<offset);
-                    if(SprX&0x100) *OAMptr2 |= 3<<offset;
-                    else *OAMptr2 |= 2<<offset;
-                    OAMptr+=4;
-                    SprCount--;
-                    offset=(offset+2)&6;
-                    if(offset==0) OAMptr2++;
                 }
+            } else if(SprCount>0){
+                // XXX: Should we be testing -16<=SprX<=272 and -16<=SprY<=224?
+                OAMptr[0]=(uint8)SprX;
+                OAMptr[1]=(uint8)SprY;
+                OAMptr[2]=SprName;
+                OAMptr[3]=SprAttr;
+                *OAMptr2 &= ~(3<<offset);
+                if(SprX&0x100) *OAMptr2 |= 3<<offset;
+                else *OAMptr2 |= 2<<offset;
+                OAMptr+=4;
+                SprCount--;
+                offset=(offset+2)&6;
+                if(offset==0) OAMptr2++;
             }
         }
     }
-    // XXX: Copy to OAM? I doubt it.
 }
 
 static void C4DoScaleRotate(int row_padding){
@@ -334,7 +351,7 @@ static void C4DoScaleRotate(int row_padding){
     // already have the fractional parts.
     int32 LineX=(Cx<<12) - Cx*A - Cx*B;
     int32 LineY=(Cy<<12) - Cy*C - Cy*D;
-    
+
     // Start loop
     uint32 X, Y;
     uint8 byte;
@@ -363,7 +380,7 @@ static void C4DoScaleRotate(int row_padding){
                 bit=0x80;
                 outidx+=32;
             }
-            
+
             X+=A; // Add 1 to output x => add an A and a C
             Y+=C;
         }
@@ -516,7 +533,7 @@ static void C4BitPlaneWave(){
         0x0600, 0x0602, 0x0604, 0x0606, 0x0608, 0x060A, 0x060C, 0x060E,
         0x0800, 0x0802, 0x0804, 0x0806, 0x0808, 0x080A, 0x080C, 0x080E
     };
-    
+
     uint8 *dst=Memory.C4RAM;
     uint32 waveptr=Memory.C4RAM[0x1f83];
     uint16 mask1=0xc0c0;
@@ -585,7 +602,7 @@ static void C4SprDisintegrate()
 #ifdef DEBUGGER
     if((Cx&~1)!=width/2 || (Cy&~1)!=height/2) printf("Center is not middle of image for disintegrate! (%d, %d) != (%d, %d)\n", Cx, Cy, width/2, height/2);
 #endif
-    
+
     scaleX=(int16)READ_WORD(Memory.C4RAM+0x1f86);
     scaleY=(int16)READ_WORD(Memory.C4RAM+0x1f8f);
     StartX=-Cx*scaleX+(Cx<<8);
@@ -593,7 +610,7 @@ static void C4SprDisintegrate()
     src=Memory.C4RAM+0x600;
 
     memset(Memory.C4RAM, 0, width*height/2);
-    
+
     for(uint32 y=StartY, i=0; i<height; i++, y+=scaleY)
 	{
         for(uint32 x=StartX, j=0; j<width; j++, x+=scaleX)
@@ -665,7 +682,7 @@ static void S9xC4ProcessSprites()
 #endif
         C4BitPlaneWave();
         break;
-        
+
       default:
 #ifdef DEBUGGER
         printf ("Unknown C4 sprite command (%02x)\n", Memory.C4RAM [0x1f4d]);
@@ -679,7 +696,7 @@ void S9xSetC4 (uint8 byte, uint16 Address)
     int i;
 
     Memory.C4RAM [Address-0x6000] = byte;
-    if (Address == 0x7f4f) 
+    if (Address == 0x7f4f)
 	{
         if(Memory.C4RAM[0x1f4d]==0x0e && byte<0x40 && (byte&3)==0)
 		{
@@ -765,6 +782,7 @@ void S9xSetC4 (uint8 byte, uint16 Address)
 #endif
                 C41FXVal=READ_WORD(Memory.C4RAM+0x1f80);
                 C41FYVal=READ_WORD(Memory.C4RAM+0x1f83);
+				//C4Op15(); // optimized to:
                 C41FDist=(int16)sqrt((double)C41FXVal*C41FXVal + (double)C41FYVal*C41FYVal);
                 WRITE_WORD(Memory.C4RAM+0x1f80, C41FDist);
                 break;
@@ -801,10 +819,10 @@ void S9xSetC4 (uint8 byte, uint16 Address)
                         if(y>=0)
                         {
                             left = SAR((int32)tan1*y, 16) -
-                                READ_WORD(Memory.C4RAM+0x1f80) + 
+                                READ_WORD(Memory.C4RAM+0x1f80) +
                                 READ_WORD(Memory.C4RAM+0x1f86);
                             right = SAR((int32)tan2*y, 16) -
-                                READ_WORD(Memory.C4RAM+0x1f80) + 
+                                READ_WORD(Memory.C4RAM+0x1f80) +
                                 READ_WORD(Memory.C4RAM+0x1f86) +
                                 READ_WORD(Memory.C4RAM+0x1f93);
 
@@ -842,7 +860,7 @@ void S9xSetC4 (uint8 byte, uint16 Address)
                 printf("25 Multiply!\n");
                 if(Memory.C4RAM[0x1f4d]!=2) printf("$7f4d=%02x, expected 02 for command 25 %02x\n", Memory.C4RAM[0x1f4d], Memory.C4RAM[0x1f4d]);
 #endif
-                { 
+                {
                     int32 foo=READ_3WORD(Memory.C4RAM+0x1f80);
                     int32 bar=READ_3WORD(Memory.C4RAM+0x1f83);
                     foo*=bar;
@@ -928,7 +946,7 @@ void S9xSetC4 (uint8 byte, uint16 Address)
         if(byte != 0) printf("C4 load: non-0 written to $7f47! Wrote %02x\n", byte);
         if(READ_WORD(Memory.C4RAM+0x1f45) < 0x6000 || (READ_WORD(Memory.C4RAM+0x1f45) + READ_WORD(Memory.C4RAM+0x1f43)) > 0x6c00) printf("C4 load: Dest unusual! It's %04x\n", READ_WORD(Memory.C4RAM+0x1f45));
 #endif
-        memmove(Memory.C4RAM+(READ_WORD(Memory.C4RAM+0x1f45)&0x1fff), 
+        memmove(Memory.C4RAM+(READ_WORD(Memory.C4RAM+0x1f45)&0x1fff),
                 C4GetMemPointer(READ_3WORD(Memory.C4RAM+0x1f40)),
                 READ_WORD(Memory.C4RAM+0x1f43));
     }
@@ -1067,4 +1085,4 @@ int16 C4CosTable[512] = {
      32138,  32214,  32285,  32351,  32413,  32469,  32521,  32568,
      32610,  32647,  32679,  32706,  32728,  32745,  32758,  32765
 };
-
+#endif

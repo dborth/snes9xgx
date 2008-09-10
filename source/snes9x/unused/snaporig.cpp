@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 #include <string.h>
 #ifdef HAVE_STRINGS_H
@@ -201,7 +220,7 @@ static int ReadBlock (const char *key, void *block, int max_len, STREAM snap)
     char buffer [20];
     int len = 0;
     int rem = 0;
-    
+
     if (READ_STREAM (buffer, 11, snap) != 11 ||
 	strncmp (buffer, key, 4) != 0 ||
 	(len = atoi (&buffer [4])) == 0)
@@ -221,7 +240,7 @@ static int ReadBlock (const char *key, void *block, int max_len, STREAM snap)
 	READ_STREAM (junk, rem, snap);
 	delete[] junk;
     }
-	
+
     return (SUCCESS);
 }
 
@@ -400,7 +419,7 @@ static int ReadOrigSnapshot (STREAM snap)
 
     for (i = 0; i < 8; i++)
     {
-	DMA[i].TransferDirection = OrigDMA[i].TransferDirection;
+	DMA[i].ReverseTransfer = OrigDMA[i].ReverseTransfer;
 	DMA[i].AAddressFixed = OrigDMA[i].AAddressFixed;
 	DMA[i].AAddressDecrement = OrigDMA[i].AAddressDecrement;
 	DMA[i].TransferMode = OrigDMA[i].TransferMode;
@@ -420,7 +439,7 @@ static int ReadOrigSnapshot (STREAM snap)
 	return (result);
     if ((result = ReadBlock ("RAM:", Memory.RAM, 0x20000, snap)) != SUCCESS)
 	return (result);
-    if ((result = ReadBlock ("SRA:", ::SRAM, 0x10000, snap)) != SUCCESS)
+    if ((result = ReadBlock ("SRA:", Memory.SRAM, 0x10000, snap)) != SUCCESS)
 	return (result);
     if ((result = ReadBlock ("FIL:", Memory.FillRAM, 0x8000, snap)) != SUCCESS)
 	return (result);
@@ -441,7 +460,7 @@ static int ReadOrigSnapshot (STREAM snap)
 	SoundData.master_volume_left = OrigSoundData.master_volume_left;
 	SoundData.master_volume_right = OrigSoundData.master_volume_right;
 	SoundData.echo_volume_left = OrigSoundData.echo_volume_left;
-	SoundData.echo_volume_right = OrigSoundData.echo_volume_right; 
+	SoundData.echo_volume_right = OrigSoundData.echo_volume_right;
 	SoundData.echo_enable = OrigSoundData.echo_enable;
 	SoundData.echo_feedback = OrigSoundData.echo_feedback;
 	SoundData.echo_ptr = OrigSoundData.echo_ptr;

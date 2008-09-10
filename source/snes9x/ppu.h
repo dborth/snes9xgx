@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 
 #ifndef _PPU_H_
@@ -187,6 +206,7 @@ struct InternalPPU {
     uint32 FrameCount;
     uint32 RenderedFramesCount;
     uint32 DisplayedRenderedFrameCount;
+    uint32 TotalEmulatedFrames;
     uint32 SkippedFrames;
     uint32 FrameSkip;
     uint8  *TileCache [7];
@@ -215,7 +235,7 @@ struct InternalPPU {
 
 struct SOBJ
 {
-    short  HPos;
+    int16  HPos;
     uint16 VPos;
     uint16 Name;
     uint8  VFlip;
@@ -249,7 +269,7 @@ struct SPPU {
     } BG [4];
 
     bool8  CGFLIP;
-    uint16 CGDATA [256]; 
+    uint16 CGDATA [256];
     uint8  FirstSprite;
     uint8  LastSprite;
     struct SOBJ OBJ [128];
@@ -284,7 +304,6 @@ struct SPPU {
     uint16 SavedOAMAddr;
     uint16 ScreenHeight;
     uint32 WRAM;
-    uint8  BG_Forced;
     bool8  ForcedBlanking;
     bool8  OBJThroughMain;
     bool8  OBJThroughSub;
@@ -334,7 +353,7 @@ struct SPPU {
 
 struct SDMA {
     /* $43x0 */
-    bool8  TransferDirection;
+    bool8  ReverseTransfer;
     bool8  HDMAIndirectAddressing;
     bool8  UnusedBit43x0;
     bool8  AAddressFixed;
@@ -392,8 +411,8 @@ uint8 *S9xGetBasePointerC4 (uint16 Address);
 
 void S9xUpdateHVTimerPosition (void);
 void S9xCheckMissingHTimerPosition (int32);
-void S9xCheckMissingHTimerPositionRange (int32, int32);
-void S9xCheckMissingVTimerPosition (void);
+void S9xCheckMissingHTimerRange (int32, int32);
+void S9xCheckMissingHTimerHalt (int32, int32);
 
 extern struct SPPU PPU;
 extern struct SDMA DMA [8];
@@ -409,11 +428,11 @@ typedef struct{
 	uint8 _5A22;
 } SnesModel;
 
-#ifndef _GLOBALS_CPP
+START_EXTERN_C
 extern SnesModel* Model;
 extern SnesModel M1SNES;
 extern SnesModel M2SNES;
-#endif
+END_EXTERN_C
 
 #define MAX_5C77_VERSION 0x01
 #define MAX_5C78_VERSION 0x03
@@ -426,7 +445,7 @@ STATIC inline uint8 REGISTER_4212()
 	CPU.V_Counter < PPU.ScreenHeight + FIRST_VISIBLE_LINE + 3)
 	GetBank = 1;
 
-    GetBank |= CPU.Cycles >= Timings.HBlankStart ? 0x40 : 0;
+    GetBank |= ((CPU.Cycles < Timings.HBlankEnd) || (CPU.Cycles >= Timings.HBlankStart)) ? 0x40 : 0;
     if (CPU.V_Counter >= PPU.ScreenHeight + FIRST_VISIBLE_LINE)
 	GetBank |= 0x80; /* XXX: 0x80 or 0xc0 ? */
 
@@ -526,8 +545,19 @@ STATIC inline void REGISTER_2104 (uint8 byte)
     Memory.FillRAM [0x2104] = byte;
 }
 
+// This code is correct, however due to Snes9x's inaccurate timings, some games might be broken by this chage. :(
+#define CHECK_INBLANK \
+{ \
+	if (Settings.BlockInvalidVRAMAccess && !PPU.ForcedBlanking && CPU.V_Counter < PPU.ScreenHeight + FIRST_VISIBLE_LINE) \
+	{ \
+		return; \
+	} \
+} \
+
 STATIC inline void REGISTER_2118 (uint8 Byte)
 {
+	CHECK_INBLANK;
+
     uint32 address;
     if (PPU.VMA.FullGraphicCount)
     {
@@ -555,13 +585,13 @@ STATIC inline void REGISTER_2118 (uint8 Byte)
     if (!PPU.VMA.High)
     {
 #ifdef DEBUGGER
-	if (Settings.TraceVRAM && !CPU.InDMA)
+	if (Settings.TraceVRAM && !CPU.InDMAorHDMA)
 	{
 	    printf ("VRAM write byte: $%04X (%d,%d)\n", PPU.VMA.Address,
 		    Memory.FillRAM[0x2115] & 3,
 		    (Memory.FillRAM [0x2115] & 0x0c) >> 2);
 	}
-#endif	
+#endif
 	PPU.VMA.Address += PPU.VMA.Increment;
     }
 //    Memory.FillRAM [0x2118] = Byte;
@@ -569,6 +599,8 @@ STATIC inline void REGISTER_2118 (uint8 Byte)
 
 STATIC inline void REGISTER_2118_tile (uint8 Byte)
 {
+	CHECK_INBLANK;
+
     uint32 address;
     uint32 rem = PPU.VMA.Address & PPU.VMA.Mask1;
     address = (((PPU.VMA.Address & ~PPU.VMA.Mask1) +
@@ -593,6 +625,8 @@ STATIC inline void REGISTER_2118_tile (uint8 Byte)
 
 STATIC inline void REGISTER_2118_linear (uint8 Byte)
 {
+	CHECK_INBLANK;
+
     uint32 address;
     Memory.VRAM[address = (PPU.VMA.Address << 1) & 0xFFFF] = Byte;
     IPPU.TileCached [TILE_2BIT][address >> 4] = FALSE;
@@ -613,6 +647,8 @@ STATIC inline void REGISTER_2118_linear (uint8 Byte)
 
 STATIC inline void REGISTER_2119 (uint8 Byte)
 {
+	CHECK_INBLANK;
+
     uint32 address;
     if (PPU.VMA.FullGraphicCount)
     {
@@ -640,13 +676,13 @@ STATIC inline void REGISTER_2119 (uint8 Byte)
     if (PPU.VMA.High)
     {
 #ifdef DEBUGGER
-	if (Settings.TraceVRAM && !CPU.InDMA)
+	if (Settings.TraceVRAM && !CPU.InDMAorHDMA)
 	{
 	    printf ("VRAM write word: $%04X (%d,%d)\n", PPU.VMA.Address,
 		    Memory.FillRAM[0x2115] & 3,
 		    (Memory.FillRAM [0x2115] & 0x0c) >> 2);
 	}
-#endif	
+#endif
 	PPU.VMA.Address += PPU.VMA.Increment;
     }
 //    Memory.FillRAM [0x2119] = Byte;
@@ -654,6 +690,8 @@ STATIC inline void REGISTER_2119 (uint8 Byte)
 
 STATIC inline void REGISTER_2119_tile (uint8 Byte)
 {
+	CHECK_INBLANK;
+
     uint32 rem = PPU.VMA.Address & PPU.VMA.Mask1;
     uint32 address = ((((PPU.VMA.Address & ~PPU.VMA.Mask1) +
 		    (rem >> PPU.VMA.Shift) +
@@ -677,6 +715,8 @@ STATIC inline void REGISTER_2119_tile (uint8 Byte)
 
 STATIC inline void REGISTER_2119_linear (uint8 Byte)
 {
+	CHECK_INBLANK;
+
     uint32 address;
     Memory.VRAM[address = ((PPU.VMA.Address << 1) + 1) & 0xFFFF] = Byte;
     IPPU.TileCached [TILE_2BIT][address >> 4] = FALSE;

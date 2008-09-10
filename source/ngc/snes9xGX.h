@@ -58,11 +58,6 @@ struct SGCSettings{
 	int		widescreen;	// 0 - 4:3 aspect, 1 - 16:9 aspect
 };
 
-START_EXTERN_C
-
 extern struct SGCSettings GCSettings;
-extern bool8 isWii;
-
-END_EXTERN_C
 
 #endif

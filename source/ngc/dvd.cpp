@@ -31,6 +31,7 @@ extern int maxfiles;
 u64 dvddir = 0;
 u64 dvdrootdir = 0;
 int dvddirlength = 0;
+bool isWii = false;
 
 #ifdef HW_DOL
 /** DVD I/O Address base **/
@@ -59,7 +60,7 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 
 	DCInvalidateRange ((void *) buffer, len);
 
-	if(offset < 0x57057C00 || (isWii == true && offset < 0x118244F00LL)) // don't read past the end of the DVD
+	if(offset < 0x57057C00 || (isWii && offset < 0x118244F00LL)) // don't read past the end of the DVD
 	{
 
 	#ifdef HW_DOL
@@ -542,5 +543,18 @@ int dvd_driveid()
 
     return (int)inquiry[2];
 }
+
 #endif
 
+void SetDVDDriveType()
+{
+	#ifdef HW_RVL
+	isWii = true;
+	#else
+	int drvid = dvd_driveid ();
+	if ( drvid == 4 || drvid == 6 || drvid == 8 )
+		isWii = false;
+	else
+		isWii = true;
+	#endif
+}

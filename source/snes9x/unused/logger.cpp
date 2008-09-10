@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -141,63 +158,181 @@
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
 
-//  Input recording/playback code
-//  (c) Copyright 2004 blip
 
-#ifndef _MOVIE_H_
-#define _MOVIE_H_
 
 #include <stdio.h>
-#include <time.h>
+#include <stdlib.h>
 #include "snes9x.h"
+#include "gfx.h"
+#include "soundux.h"
+#include "movie.h"
+#include "display.h"
+#include "logger.h"
 
-#ifndef SUCCESS
-#  define SUCCESS 1
-#  define WRONG_FORMAT (-1)
-#  define WRONG_VERSION (-2)
-#  define FILE_NOT_FOUND (-3)
+#if !(defined(__unix) || defined(__linux) || defined(__sun) || defined(__DJGPP))
+#define __builtin_expect(exp,c) ((exp)!=(c))
 #endif
 
-#define MOVIE_OPT_FROM_SNAPSHOT 0
-#define MOVIE_OPT_FROM_RESET	(1<<0)
-#define MOVIE_OPT_PAL           (1<<1)
-#define MOVIE_MAX_METADATA		512
+int dumpstreams = 0;
+int maxframes = -1;
 
-START_EXTERN_C
-struct MovieInfo
+static int resetno = 0;
+static int framecounter = 0;
+
+int fastforwardpoint = -1;
+int fastforwarddistance = 0;
+
+int keypressscreen = 0;
+
+static int drift = 0;
+
+FILE *video=NULL, *audio=NULL;
+char autodemo[128] = "";
+
+int Logger_FrameCounter()
 {
-	time_t	TimeCreated;
-	uint32	LengthFrames;
-	uint32	RerecordCount;
-	wchar_t	Metadata[MOVIE_MAX_METADATA];		// really should be wchar_t
-	uint8	Opts;
-	uint8	ControllersMask;
-	bool8	ReadOnly;
-};
+	return framecounter;
+}
 
-// methods used by the user-interface code
-int S9xMovieOpen (const char* filename, bool8 read_only);
-int S9xMovieCreate (const char* filename, uint8 controllers_mask, uint8 opts, const wchar_t* metadata, int metadata_length);
-int S9xMovieGetInfo (const char* filename, struct MovieInfo* info);
-void S9xMovieStop (bool8 suppress_message);
-void S9xMovieToggleFrameDisplay ();
-const char *S9xChooseMovieFilename(bool8 read_only);
+void Logger_NextFrame()
+{
+	framecounter++;
+}
 
-// methods used by the emulation
-void S9xMovieInit ();
-void S9xMovieUpdate ();
-//bool8 S9xMovieRewind (uint32 at_frame);
-void S9xMovieFreeze (uint8** buf, uint32* size);
-bool8 S9xMovieUnfreeze (const uint8* buf, uint32 size);
+void breakpoint()
+{
 
-// accessor functions
-bool8 S9xMovieActive ();
-// the following accessors return 0/false if !S9xMovieActive()
-bool8 S9xMovieReadOnly ();
-uint32 S9xMovieGetId ();
-uint32 S9xMovieGetLength ();
-uint32 S9xMovieGetFrameCounter ();
+}
 
-END_EXTERN_C
+void ResetLogger()
+{
+	char buffer[256*224*4];
 
-#endif
+	if (!dumpstreams)
+		return;
+
+	framecounter = 0;
+	drift=0;
+
+	if (video)
+		fclose(video);
+	if (audio)
+		fclose(audio);
+
+	sprintf(buffer, "videostream%d.dat", resetno);
+	video = fopen(buffer, "wb");
+	if (!video)
+	{
+		printf("Opening %s failed. Logging cancelled.\n", buffer);
+		return;
+	}
+
+	sprintf(buffer, "audiostream%d.dat", resetno);
+	audio = fopen(buffer, "wb");
+	if (!audio)
+	{
+		printf("Opening %s failed. Logging cancelled.\n", buffer);
+		fclose(video);
+		return;
+	}
+
+	char *logo = getenv("LOGO");
+	if (!logo)
+		logo = "logo.dat";
+	FILE *l = fopen(logo, "rb");
+	if (l)
+	{
+		const int soundsize = (so.sixteen_bit ? 2 : 1)*(so.stereo?2:1)*so.playback_rate * Settings.FrameTime / 1000000;
+		printf("Soundsize: %d\n", soundsize);
+		while (!feof(l))
+		{
+			if (fread(buffer, 1024,224, l) != 224)
+				break;
+			VideoLogger(buffer, 256, 224, 4,1024);
+			memset(buffer, 0, soundsize);
+			AudioLogger(buffer, soundsize);
+		}
+		fclose(l);
+	}
+	resetno++;
+}
+
+char message[128];
+int messageframe;
+
+
+void VideoLogger(void *pixels, int width, int height, int depth, int bytes_per_line)
+{
+	int fc = S9xMovieGetFrameCounter();
+	if (fc > 0)
+		framecounter = fc;
+	else
+		framecounter++;
+
+	if (video)
+	{
+		int i;
+		char *data = (char*)pixels;
+		for (i=0; i < height; i++)
+			fwrite(data + i*bytes_per_line, depth, width, video);
+		fflush(video);
+		fflush(audio);
+		drift++;
+
+		if (maxframes > 0 && __builtin_expect(framecounter >= maxframes, 0))
+		{
+			printf("-maxframes hit\ndrift:%d\n",drift);
+			S9xExit();
+		}
+
+	}
+
+	if (Settings.DisplayPressedKeys==1 || keypressscreen)
+	{
+		uint16 MovieGetJoypad(int i);
+
+		int buttons = MovieGetJoypad(0);
+		static char buffer[128];
+
+		// This string spacing pattern is optimized for the 256 pixel wide screen.
+                sprintf(buffer, "%s  %s  %s  %s  %s  %s  %c%c%c%c%c%c",
+		buttons & SNES_START_MASK ? "Start" : "_____",
+		buttons & SNES_SELECT_MASK ? "Select" : "______",
+                buttons & SNES_UP_MASK ? "Up" : "__",
+		buttons & SNES_DOWN_MASK ? "Down" : "____",
+		buttons & SNES_LEFT_MASK ? "Left" : "____",
+		buttons & SNES_RIGHT_MASK ? "Right" : "_____",
+		buttons & SNES_A_MASK ? 'A':'_',
+		buttons & SNES_B_MASK ? 'B':'_',
+                buttons & SNES_X_MASK ? 'X':'_',
+                buttons & SNES_Y_MASK ? 'Y':'_',
+		buttons & SNES_TL_MASK ? 'L':'_',
+		buttons & SNES_TR_MASK ? 'R':'_'
+		/*framecounter*/);
+		if (Settings.DisplayPressedKeys==1)
+			fprintf(stderr, "%s %d           \r", buffer, framecounter);
+		//if (keypressscreen)
+                S9xSetInfoString(buffer);
+	}
+
+	if (__builtin_expect(messageframe >= 0 && framecounter == messageframe, 0))
+	{
+		S9xMessage(S9X_INFO, S9X_MOVIE_INFO, message);
+		GFX.InfoStringTimeout = 300;
+		messageframe = -1;
+	}
+
+/*	if (__builtin_expect(fastforwardpoint >= 0 && framecounter >= fastforwardpoint, 0))
+	{
+		Settings.FramesToSkip = fastforwarddistance;
+		fastforwardpoint = -1;
+	}*/
+}
+
+
+void AudioLogger(void *samples, int length)
+{
+	if (audio)
+		fwrite(samples, 1, length, audio);
+	drift--;
+}

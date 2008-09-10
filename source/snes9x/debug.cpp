@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 
 #include <string.h>
@@ -169,12 +188,6 @@ static void WhatsMissing ();
 static void WhatsUsed ();
 EXTERN_C SDMA DMA[8];
 extern struct SCheatData Cheat;
-
-#ifdef SPCTOOL
-#include "spctool/spc700.h"
-extern "C" void TraceSPC (unsigned char *PC, unsigned short YA, unsigned char X,
-			  SPCFlags PS, unsigned char *SP);
-#endif
 
 FILE *trace = NULL;
 FILE *trace2 = NULL;
@@ -223,7 +236,7 @@ char *HelpMessage[] = {
     "bs [Number] [Address] - Enable/Disable Breakpoint",
     "                        [Enable example: BS #2 $02:8002]",
     "                        [Disable example: BS #2]",
-    "c		       - Dump SNES colour palette", 
+    "c		       - Dump SNES colour palette",
     "W		       - Show what SNES hardware features a ROM is using",
     "			 which might not be implemented yet.",
     "w		       - Show some SNES hardware features used so far in this frame",
@@ -718,7 +731,7 @@ uint8 S9xOPrint (char *Line, uint8 Bank, uint16 Address)
 	break;
     }
 // XXX:
-    sprintf (Line, "%-44s A:%04X X:%04X Y:%04X D:%04X DB:%02X S:%04X P:%c%c%c%c%c%c%c%c%c HC:%03d VC:%03ld %02x",
+    sprintf (Line, "%-44s A:%04X X:%04X Y:%04X D:%04X DB:%02X S:%04X P:%c%c%c%c%c%c%c%c%c HC:%04d VC:%03d FC:%02d %02x",
 	     Line, Registers.A.W, Registers.X.W, Registers.Y.W,
 	     Registers.D.W, Registers.DB, Registers.S.W,
 	     CheckEmulation () ? 'E' : 'e',
@@ -732,6 +745,7 @@ uint8 S9xOPrint (char *Line, uint8 Bank, uint16 Address)
 	     CheckCarry () ? 'C' : 'c',
 	     Cycles,
 	     CPU.V_Counter,
+		 IPPU.FrameCount,
 	     CPU.IRQActive);
 
     CPU.Cycles = Cycles;
@@ -1229,7 +1243,7 @@ static void ProcessDebugCommand (char *Line)
 	    S9xAddCheat (TRUE, TRUE, Address, Byte);
 	return;
     }
-    
+
     if (strncasecmp (Line, "dump", 4) == 0)
     {
 	int Count;
@@ -1421,18 +1435,11 @@ static void ProcessDebugCommand (char *Line)
 	extern FILE *apu_trace;
 	if (APU.Flags & TRACE_FLAG)
 	{
-#ifdef SPCTOOL
-	    printf ("ENABLED\n");
-	    _SetSPCDbg (TraceSPC);                   //Install debug handler
-#endif
 	    if (apu_trace == NULL)
 		apu_trace = fopen ("aputrace.log", "wb");
 	}
 	else
 	{
-#ifdef SPCTOOL
-	    _SetSPCDbg (NULL);
-#endif
 	    if (apu_trace)
 	    {
 		fclose (apu_trace);
@@ -1460,7 +1467,7 @@ static void ProcessDebugCommand (char *Line)
 	printf ("SPC700 sample addresses at 0x%04x:\n", APU.DSP [APU_DIR] << 8);
 	for (int i = 0; i < 256; i++)
 	{
-	    uint8 *dir = IAPU.RAM + 
+	    uint8 *dir = IAPU.RAM +
 		    (((APU.DSP [APU_DIR] << 8) +
 		      i * 4) & 0xffff);
 	    int addr = *dir + (*(dir + 1) << 8);
@@ -1499,13 +1506,8 @@ static void ProcessDebugCommand (char *Line)
     {
 	printf ("APU in-ports: %02X %02X %02X %02X\n",
 		IAPU.RAM [0xF4], IAPU.RAM [0xF5], IAPU.RAM [0xF6], IAPU.RAM [0xF7]);
-#ifdef SPCTOOL
-	printf ("APU out-ports: %02X %02X %02X %02X\n",
-		_SPCOutP [0], _SPCOutP [1], _SPCOutP [2], _SPCOutP [3]);
-#else
 	printf ("APU out-ports: %02X %02X %02X %02X\n",
 		APU.OutPorts [0], APU.OutPorts [1], APU.OutPorts [2], APU.OutPorts [3]);
-#endif
 	printf ("ROM/RAM switch: %s\n", (IAPU.RAM [0xf1] & 0x80) ? "ROM" : "RAM");
 	for (int i = 0; i < 3; i++)
 	    if (APU.TimerEnabled [i])
@@ -1747,7 +1749,7 @@ static void ProcessDebugCommand (char *Line)
 		 (Registers.P.W & 1) != 0 ? "C" : "c",
 		 (Registers.P.W & 256) != 0 ? "E" : "e");
 	DPrint (String);
-#endif	
+#endif
 	S9xOPrint (String, Bank, Address);
 	DPrint (String);
     }
@@ -1819,7 +1821,7 @@ static void WhatsUsed ()
     printf ("Screen mode: %d, ", PPU.BGMode);
     if (PPU.BGMode <= 1 && (Memory.FillRAM [0x2105] & 8))
 	printf ("(BG#2 Priority)");
-    
+
     printf ("Brightness: %d", PPU.Brightness);
     if (Memory.FillRAM[0x2100] & 0x80)
 	printf (" (screen blanked)");
@@ -1902,7 +1904,7 @@ static void WhatsUsed ()
     {
 	printf ("BG%d: VOffset:%d, HOffset:%d, W:%d, H:%d, TS:%d, BA:0x%04x, TA:0x%04X\n",
 		i, PPU.BG[i].VOffset, PPU.BG[i].HOffset,
-		(PPU.BG[i].SCSize & 1) * 32 + 32, 
+		(PPU.BG[i].SCSize & 1) * 32 + 32,
 		(PPU.BG[i].SCSize & 2) * 16 + 32,
 		PPU.BG[i].BGSize * 8 + 8,
 		PPU.BG[i].SCBase,
@@ -1937,7 +1939,7 @@ static void WhatsUsed ()
 		printf ("OBJ,");
 		break;
 	    }
-    
+
     switch ((Memory.FillRAM [0x2130] & 0x30) >> 4)
     {
     case 0: s = "always on";   break;
@@ -1945,7 +1947,7 @@ static void WhatsUsed ()
     case 2: s = "outside";   break;
     case 3: s = "always off";   break;
     }
-	
+
     printf ("\nSub-screen (%s): ", s);
     for (i = 0; i < 5; i++)
 	if (Memory.FillRAM[0x212d] & (1 << i))

@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 #include "fxemu.h"
 #include "fxinst.h"
@@ -234,7 +253,7 @@ static void fx_backupCache()
 		    memcpy(t1,&GSU.pvCache[i<<4],a);
 		    memcpy(&GSU.avCacheBackup[(i<<4)+a],t2,16-a);
 		    memcpy(t2,&GSU.pvCache[(i<<4)+a],16-a);
-		}		
+		}
 	    }
 	    c = USEX16(c+16);
 	    v >>= 1;
@@ -270,7 +289,7 @@ static void fx_restoreCache()
 		    memcpy(&GSU.pvCache[i<<4],t1,a);
 		    memcpy(t2,&GSU.avCacheBackup[(i<<4)+a],16-a);
 		    memcpy(&GSU.pvCache[(i<<4)+a],t2,16-a);
-		}		
+		}
 	    }
 	    c = USEX16(c+16);
 	    v >>= 1;
@@ -326,7 +345,7 @@ static void fx_readRegisterSpace()
     GSU.vSign = (GSU.vStatusReg & FLG_S) << 12;
     GSU.vOverflow = (GSU.vStatusReg & FLG_OV) << 16;
     GSU.vCarry = (GSU.vStatusReg & FLG_CY) >> 2;
-    
+
     /* Set bank pointers */
     GSU.pvRamBank = GSU.apvRamBank[GSU.vRamBankReg & 0x3];
     GSU.pvRomBank = GSU.apvRomBank[GSU.vRomBankReg];
@@ -378,7 +397,7 @@ void fx_dirtySCBR()
 
 void fx_computeScreenPointers ()
 {
-    if (GSU.vMode != GSU.vPrevMode || 
+    if (GSU.vMode != GSU.vPrevMode ||
 	GSU.vPrevScreenHeight != GSU.vScreenHeight ||
 	GSU.vSCBRDirty)
     {
@@ -476,7 +495,7 @@ void fx_computeScreenPointers ()
 		    case 0:
 			for (i = 0; i < 32; i++)
 			{
-			    GSU.apvScreen[i] = GSU.pvScreenBase + 
+			    GSU.apvScreen[i] = GSU.pvScreenBase +
 				((i & 0x10) << 9) + ((i & 0xf) << 8);
 			    GSU.x[i] = ((i & 0x10) << 8) + ((i & 0xf) << 4);
 			}
@@ -484,7 +503,7 @@ void fx_computeScreenPointers ()
 		    case 1:
 			for (i = 0; i < 32; i++)
 			{
-			    GSU.apvScreen[i] = GSU.pvScreenBase + 
+			    GSU.apvScreen[i] = GSU.pvScreenBase +
 				((i & 0x10) << 10) + ((i & 0xf) << 9);
 			    GSU.x[i] = ((i & 0x10) << 9) + ((i & 0xf) << 5);
 			}
@@ -493,7 +512,7 @@ void fx_computeScreenPointers ()
 		    case 3:
 			for (i = 0; i < 32; i++)
 			{
-			    GSU.apvScreen[i] = GSU.pvScreenBase + 
+			    GSU.apvScreen[i] = GSU.pvScreenBase +
 				((i & 0x10) << 11) + ((i & 0xf) << 10);
 			    GSU.x[i] = ((i & 0x10) << 10) + ((i & 0xf) << 6);
 			}
@@ -510,7 +529,7 @@ static void fx_writeRegisterSpace()
 {
     int i;
     uint8 *p;
-    
+
     p = GSU.pvRegisters;
     for(i=0; i<16; i++)
     {
@@ -527,7 +546,7 @@ static void fx_writeRegisterSpace()
     else CF(OV);
     if(GSU.vCarry) SF(CY);
     else CF(CY);
-    
+
     p = GSU.pvRegisters;
     p[GSU_SFR] = (uint8)GSU.vStatusReg;
     p[GSU_SFR+1] = (uint8)(GSU.vStatusReg>>8);
@@ -536,7 +555,7 @@ static void fx_writeRegisterSpace()
     p[GSU_RAMBR] = (uint8)GSU.vRamBankReg;
     p[GSU_CBR] = (uint8)GSU.vCacheBaseReg;
     p[GSU_CBR+1] = (uint8)(GSU.vCacheBaseReg>>8);
-    
+
     fx_restoreCache();
 }
 
@@ -550,7 +569,7 @@ void FxReset(struct FxInit_s *psFxInfo)
 	&fx_a_apfFunctionTable[0],
 	&fx_r_apfFunctionTable[0],
 	&fx_ar_apfFunctionTable[0],
-#endif	
+#endif
     };
     static void (**appfPlot[])() = {
 	&fx_apfPlotTable[0],
@@ -558,22 +577,22 @@ void FxReset(struct FxInit_s *psFxInfo)
 	&fx_a_apfPlotTable[0],
 	&fx_r_apfPlotTable[0],
 	&fx_ar_apfPlotTable[0],
-#endif	
+#endif
     };
     static void (**appfOpcode[])() = {
 	&fx_apfOpcodeTable[0],
-#if 0	
+#if 0
 	&fx_a_apfOpcodeTable[0],
 	&fx_r_apfOpcodeTable[0],
 	&fx_ar_apfOpcodeTable[0],
-#endif	
+#endif
     };
 
     /* Get function pointers for the current emulation mode */
     fx_ppfFunctionTable = appfFunction[psFxInfo->vFlags & 0x3];
     fx_ppfPlotTable = appfPlot[psFxInfo->vFlags & 0x3];
     fx_ppfOpcodeTable = appfOpcode[psFxInfo->vFlags & 0x3];
-    
+
     /* Clear all internal variables */
     memset((uint8*)&GSU,0,sizeof(struct FxRegs_s));
 
@@ -592,7 +611,7 @@ void FxReset(struct FxInit_s *psFxInfo)
     /* The GSU can't access more than 2mb (16mbits) */
     if(GSU.nRomBanks > 0x20)
 	GSU.nRomBanks = 0x20;
-    
+
     /* Clear FxChip register space */
     memset(GSU.pvRegisters,0,0x300);
 
@@ -625,7 +644,7 @@ void FxReset(struct FxInit_s *psFxInfo)
 	GSU.apvRamBank[i] = &GSU.pvRam[(i % GSU.nRamBanks) << 16];
 	GSU.apvRomBank[0x70 + i] = GSU.apvRamBank[i];
     }
-    
+
     /* Start with a nop in the pipe */
     GSU.vPipe = 0x01;
 
@@ -640,7 +659,7 @@ static uint8 fx_checkStartAddress()
     /* Check if we start inside the cache */
     if(GSU.bCacheActive && R15 >= GSU.vCacheBaseReg && R15 < (GSU.vCacheBaseReg+512))
 	return TRUE;
-   
+
     /*  Check if we're in an unused area */
 #if 0
     if(GSU.vPrgBankReg < 0x40 && R15 < 0x8000)
@@ -658,7 +677,7 @@ static uint8 fx_checkStartAddress()
     /* If not, we're in ROM, so check if the RON flag is set */
     if(!(SCMR&(1<<4)))
 	return FALSE;
-    
+
     return TRUE;
 }
 
@@ -729,7 +748,7 @@ int FxStepOver(uint32 nInstructions)
 	return 0;
 #endif
     }
-    
+
     if( PIPE >= 0xf0 )
 	GSU.vStepPoint = USEX16(R15+3);
     else if( (PIPE >= 0x05 && PIPE <= 0x0f) || (PIPE >= 0xa0 && PIPE <= 0xaf) )

@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -142,6 +159,8 @@
 **********************************************************************************/
 
 
+
+
 //#define SPC7110_DEBUG
 
 #include "spc7110.h"
@@ -152,11 +171,12 @@
 //Windows includes
 #ifdef __WIN32__
 #ifndef _XBOX				// chdir and getcwd not supported on Xbox hardware
+#include "win32/wsnes9x.h" // FIXME: shouldn't be necessary
 #include <direct.h>
 #define chdir _chdir
 #define getcwd _getcwd
 #endif
-#define FREEZEFOLDER	GUI.FreezeFileDir
+#undef PATH_MAX
 //zinx suggested this, for *nix compatibility
 #define PATH_MAX	MAX_PATH
 #else // Unix
@@ -164,8 +184,6 @@
 #include <unistd.h>
 #ifdef __MACOSX__
 const char * S9xGetSPC7110Directory(void);
-#else
-#define FREEZEFOLDER S9xGetDirectory (PATCH_DIR)
 #endif
 #endif
 #include "display.h"
@@ -173,7 +191,6 @@ const char * S9xGetSPC7110Directory(void);
 #ifndef NGC
 extern "C" char *osd_GetPackDir();
 #endif
-
 //really not needed, but usually MS adds the _ to POSIX functions,
 //while *nix doesn't, so this was to "un-M$" the function.
 #define splitpath _splitpath
@@ -188,6 +205,8 @@ uint16 cacheMegs=5;
 void (*CleanUp7110)(void)=NULL;
 void (*LoadUp7110)(char*)=&SPC7110Load;
 void (*Copy7110)(void)=NULL;
+
+static void SetSPC7110SRAMMap (uint8);
 
 //size and offset of the pack data
 //offset and size of reads from pack
@@ -279,9 +298,9 @@ void S9xSpc7110Init()
 	s7r.offset_add=0;
 	s7r.AlignBy=1;
 
-#ifndef NGC
+	#ifndef NGC
 	(*LoadUp7110)(osd_GetPackDir());
-#endif
+	#endif
 
 	if(Settings.SPC7110RTC)
 		Settings.TurboMode=false;
@@ -301,26 +320,26 @@ void MovePackData()
 		log->used_len=s7r.bank50Internal;
 		log->used_offset=decompack->last_offset;
 	}
-	
+
 	//set up for next logging
 	decompack->last_offset=(s7r.reg4805)|(s7r.reg4806<<8);
-	
+
 	decompack->last_idx=s7r.reg4804;
 
 	//start decompression
 	int table=(s7r.reg4803<<16)|(s7r.reg4802<<8)|s7r.reg4801;
-	
+
 	//the table is a offset multiplier byte and a big-endian pointer
 	int j= 4*s7r.reg4804;
 	j+=s7r.DataRomOffset;
 	j+=table;
-	
+
 	//set proper offsetting.
 	if(s7r.reg480B==0)
 		s7r.AlignBy=0;
 	else
 	{
-		switch(ROM[j])
+		switch(Memory.ROM[j])
 		{
 		case 0x03:
 			s7r.AlignBy=8;
@@ -385,7 +404,7 @@ void ReadPackData()
 	static int table_age_3;
 	static int table_age_4;
 	static int table_age_5;
-	
+
 	int table=(s7r.reg4803<<16)|(s7r.reg4802<<8)|s7r.reg4801;
 
 	if(table==0)
@@ -402,20 +421,20 @@ void ReadPackData()
 		log->used_len=s7r.bank50Internal;
 		log->used_offset=decompack->last_offset;
 	}
-	
+
 	decompack->last_offset=(s7r.reg4805)|(s7r.reg4806<<8);
-	
+
 	decompack->last_idx=s7r.reg4804;
-	
+
 	int j= 4*s7r.reg4804;
 	j+=s7r.DataRomOffset;
 	j+=table;
-	
+
 	if(s7r.reg480B==0)
 		s7r.AlignBy=0;
 	else
 	{
-		switch(ROM[j])
+		switch(Memory.ROM[j])
 		{
 		case 0x03:
 			s7r.AlignBy=8;
@@ -461,10 +480,10 @@ void ReadPackData()
 			table_age_4=table_age_3;
 			table_age_3=table_age_2;
 			table_age_2=decompack->idx;
-			
+
 		#ifdef __MACOSX__
 			char name[PATH_MAX + 1], bfname[11];
-			strcpy(name, S9xGetSPC7110Directory());			
+			strcpy(name, S9xGetSPC7110Directory());
 			sprintf(bfname, "%06X.bin", table);
 			strcat(name, bfname);
 		#else
@@ -474,10 +493,11 @@ void ReadPackData()
 			char dir [_MAX_DIR + 1];
 			char fname [_MAX_FNAME + 1];
 			char ext [_MAX_EXT + 1];
-			if (strlen (FREEZEFOLDER))
+			const char* patchDir = S9xGetDirectory (PATCH_DIR);
+			if (patchDir && strlen (patchDir))
 			{
 				//splitpath (Memory.ROMFilename, drive, dir, fname, ext);
-				strcpy (name, FREEZEFOLDER);
+				strcpy (name, patchDir);
 				strcat (name, "/");
 			}
 			else
@@ -543,21 +563,21 @@ void GetPackData()
 		log->used_len=s7r.bank50Internal;
 		log->used_offset=decompack->last_offset;
 	}
-	
+
 	decompack->last_offset=(s7r.reg4805)|(s7r.reg4806<<8);
-	
+
 	decompack->last_idx=s7r.reg4804;
 	int table=(s7r.reg4803<<16)|(s7r.reg4802<<8)|s7r.reg4801;
-	
+
 	int j= 4*s7r.reg4804;
 	j+=s7r.DataRomOffset;
 	j+=table;
-	
+
 	if(s7r.reg480B==0)
 		s7r.AlignBy=0;
 	else
 	{
-		switch(ROM[j])
+		switch(Memory.ROM[j])
 		{
 		case 0x03:
 			s7r.AlignBy=8;
@@ -641,7 +661,7 @@ uint8 S9xGetSPC7110(uint16 Address)
 			i+=s7r.bank50Internal;
 			i%=DECOMP_BUFFER_SIZE;
 			s7r.reg4800=s7r.bank50[i];
-			
+
 			s7r.bank50Internal++;
 			s7r.bank50Internal%=DECOMP_BUFFER_SIZE;
 #ifdef SPC7110_DEBUG
@@ -678,10 +698,10 @@ uint8 S9xGetSPC7110(uint16 Address)
 	case 0x480B:
 		return s7r.reg480B;
 	//decompression finished: just emulated by switching each read.
-	case 0x480C: 
+	case 0x480C:
 		s7r.reg480C^=0x80;
 		return s7r.reg480C^0x80;
-	
+
 	//Data access port
 	//reads from the data ROM (anywhere over the first 8 mbits
 	//behavior is complex, will document later,
@@ -714,13 +734,13 @@ uint8 S9xGetSPC7110(uint16 Address)
 					else r4814=0;
 					s7r.reg4815=(uint8)(r4814>>8);
 					s7r.reg4814=(uint8)(r4814&0x00FF);
-					
+
 				}
 			}
 			i+=s7r.DataRomOffset;
-			uint8 tmp=ROM[i];
+			uint8 tmp=Memory.ROM[i];
 			i=(s7r.reg4813<<16)|(s7r.reg4812<<8)|s7r.reg4811;
-			
+
 			if(s7r.reg4818&0x02)
 			{
 			}
@@ -730,7 +750,7 @@ uint8 S9xGetSPC7110(uint16 Address)
 				{
 					signed short inc;
 					inc=(s7r.reg4817<<8)|s7r.reg4816;
-					
+
 					if(!(s7r.reg4818&0x10))
 						i+=inc;
 					else
@@ -750,7 +770,7 @@ uint8 S9xGetSPC7110(uint16 Address)
 							r4814+=inc;
 							s7r.reg4815=(r4814&0xFF00)>>8;
 							s7r.reg4814=r4814&0xFF;
-							
+
 						}
 					}
 					//is signed
@@ -778,7 +798,7 @@ uint8 S9xGetSPC7110(uint16 Address)
 							r4814+=inc;
 							s7r.reg4815=(r4814&0xFF00)>>8;
 							s7r.reg4814=r4814&0xFF;
-							
+
 						}
 					}
 				}
@@ -804,15 +824,15 @@ uint8 S9xGetSPC7110(uint16 Address)
 						r4814+=1;
 						s7r.reg4815=(r4814&0xFF00)>>8;
 						s7r.reg4814=r4814&0xFF;
-						
+
 					}
 				}
 			}
-			
+
 #ifdef SPC7110_DEBUG
 			printf("Returned %02X\n", tmp);
 #endif
-			
+
 			i%=s7r.DataRomSize;
 			s7r.reg4811=i&0x00FF;
 			s7r.reg4812=(i&0x00FF00)>>8;
@@ -857,15 +877,15 @@ uint8 S9xGetSPC7110(uint16 Address)
 				adj=(s7r.reg4815<<8)|s7r.reg4814;
 				i+=adj;
 			}
-			
+
 			i%=s7r.DataRomSize;
 			i+=s7r.DataRomOffset;
-			uint8 tmp=ROM[i];
+			uint8 tmp=Memory.ROM[i];
 			i=((s7r.reg4813<<16)|(s7r.reg4812<<8)|s7r.reg4811);
 			if(0x60==(s7r.reg4818&0x60))
 			{
 				i=((s7r.reg4813<<16)|(s7r.reg4812<<8)|s7r.reg4811);
-				
+
 				if(!(s7r.reg4818&0x10))
 				{
 					if(s7r.reg4818&0x08)
@@ -911,7 +931,7 @@ uint8 S9xGetSPC7110(uint16 Address)
 			return tmp;
 		}
 		else return 0;
-	
+
 	//multiplicand low or dividend lowest
 	case 0x4820: return s7r.reg4820;
 	//multiplicand high or divdend lower
@@ -928,7 +948,7 @@ uint8 S9xGetSPC7110(uint16 Address)
 	case 0x4826: return s7r.reg4826;
 	//divisor high
 	case 0x4827: return s7r.reg4827;
-	
+
 	//result lowest
 	case 0x4828:
 		return s7r.reg4828;
@@ -1070,16 +1090,16 @@ void S9xSetSPC7110 (uint8 data, uint16 Address)
 		{
 			s7r.reg480B=data;
 			int table=(s7r.reg4803<<16)|(s7r.reg4802<<8)|s7r.reg4801;
-			
+
 			int j= 4*s7r.reg4804;
 			j+=s7r.DataRomOffset;
 			j+=table;
-			
+
 			if(s7r.reg480B==0)
 				s7r.AlignBy=0;
 			else
 			{
-				switch(ROM[j])
+				switch(Memory.ROM[j])
 				{
 				case 0x03:
 					s7r.AlignBy=8;
@@ -1179,13 +1199,13 @@ void S9xSetSPC7110 (uint8 data, uint16 Address)
 						s7r.reg4813=((i&0xFF0000)>>16);
 					}
 				}
-				
+
 			}
 		}
-		
+
 		s7r.written|=0x08;
 		break;
-		
+
 	//data port adjust high (has a funky immediate increment mode)
 	case 0x4815:
 		s7r.reg4815=data;
@@ -1202,7 +1222,7 @@ void S9xSetSPC7110 (uint8 data, uint16 Address)
 					else
 					{
 						uint32 i=(s7r.reg4813<<16)|(s7r.reg4812<<8)|s7r.reg4811;
-						
+
 						if(s7r.reg4818&0x08)
 						{
 							i+=(signed char)s7r.reg4814;
@@ -1297,7 +1317,7 @@ void S9xSetSPC7110 (uint8 data, uint16 Address)
 			int mul;
 			short m1=(short)((s7r.reg4824)|(s7r.reg4825<<8));
 			short m2=(short)((s7r.reg4820)|(s7r.reg4821<<8));
-			
+
 			mul=m1*m2;
 			s7r.reg4828=(uint8)(mul&0x000000FF);
 			s7r.reg4829=(uint8)((mul&0x0000FF00)>>8);
@@ -1309,7 +1329,7 @@ void S9xSetSPC7110 (uint8 data, uint16 Address)
 			uint32 mul;
 			uint16 m1=(uint16)((s7r.reg4824)|(s7r.reg4825<<8));
 			uint16 m2=(uint16)((s7r.reg4820)|(s7r.reg4821<<8));
-			
+
 			mul=m1*m2;
 			s7r.reg4828=(uint8)(mul&0x000000FF);
 			s7r.reg4829=(uint8)((mul&0x0000FF00)>>8);
@@ -1386,7 +1406,7 @@ void S9xSetSPC7110 (uint8 data, uint16 Address)
 
 	//SRAM toggle
 	case 0x4830:
-		Memory.SPC7110Sram(data);
+		SetSPC7110SRAMMap(data);
 		s7r.reg4830=data;
 		break;
 	//Bank DX mapping
@@ -1439,7 +1459,7 @@ void S9xSetSPC7110 (uint8 data, uint16 Address)
 			}
 			else
 			{
-				
+
 				if(0x0D==rtc_f9.index)
 				{
 					if(data&0x08)
@@ -1530,7 +1550,7 @@ uint8 S9xGetSPC7110Byte(uint32 Address)
 	}
 	i+=Address&0x000FFFFF;
 	i+=s7r.DataRomOffset;
-	return ROM[i];
+	return Memory.ROM[i];
 }
 }
 /**********************************************************************************************/
@@ -1541,7 +1561,7 @@ uint8 S9xGetSPC7110Byte(uint32 Address)
 int	S9xRTCDaysInMonth( int month, int year )
 {
     int		mdays;
-	
+
     switch ( month )
     {
 	case 2:
@@ -1550,19 +1570,19 @@ int	S9xRTCDaysInMonth( int month, int year )
 		else
 			mdays = 28;
 		break;
-		
+
 	case 4:
 	case 6:
 	case 9:
 	case 11:
 		mdays = 30;
 		break;
-		
+
 	default:	// months 1,3,5,7,8,10,12
 		mdays = 31;
 		break;
     }
-	
+
     return mdays;
 }
 
@@ -1581,22 +1601,22 @@ void	S9xUpdateRTC ()
 {
 	time_t	cur_systime;
 	long    time_diff;
-	
+
     // Keep track of game time by computing the number of seconds that pass on the system
     // clock and adding the same number of seconds to the RTC clock structure.
-	
+
     if (rtc_f9.init && 0==(rtc_f9.reg[0x0D]&0x01) && 0==(rtc_f9.reg[0x0F]&0x03))
     {
         cur_systime = time (NULL);
-		
+
         // This method assumes one time_t clock tick is one second
         //        which should work on PCs and GNU systems.
         //        If your tick interval is different adjust the
 		//        DAYTICK, HOURTICK, and MINUTETICK defines
-		
+
         time_diff = (long) (cur_systime - rtc_f9.last_used);
 		rtc_f9.last_used = cur_systime;
-        
+
         if ( time_diff > 0 )
         {
 			int		seconds;
@@ -1606,12 +1626,12 @@ void	S9xUpdateRTC ()
 			int		month;
 			int		year;
 			int		temp_days;
-			
+
 			int		year_hundreds;
 			int		year_tens;
 			int		year_ones;
-			
-			
+
+
 			if ( time_diff > DAYTICKS )
 			{
 				days = time_diff / DAYTICKS;
@@ -1621,7 +1641,7 @@ void	S9xUpdateRTC ()
 			{
 				days = 0;
 			}
-			
+
 			if ( time_diff > HOURTICKS )
 			{
 				hours = time_diff / HOURTICKS;
@@ -1631,7 +1651,7 @@ void	S9xUpdateRTC ()
 			{
 				hours = 0;
 			}
-			
+
 			if ( time_diff > MINUTETICKS )
 			{
 				minutes = time_diff / MINUTETICKS;
@@ -1641,7 +1661,7 @@ void	S9xUpdateRTC ()
 			{
 				minutes = 0;
 			}
-			
+
 			if ( time_diff > 0 )
 			{
 				seconds = time_diff;
@@ -1650,29 +1670,29 @@ void	S9xUpdateRTC ()
 			{
 				seconds = 0;
 			}
-			
-			
+
+
 			seconds += (rtc_f9.reg[1]*10 + rtc_f9.reg[0]);
 			if ( seconds >= 60 )
 			{
 				seconds -= 60;
 				minutes += 1;
 			}
-			
+
 			minutes += (rtc_f9.reg[3]*10 + rtc_f9.reg[2]);
 			if ( minutes >= 60 )
 			{
 				minutes -= 60;
 				hours += 1;
 			}
-			
+
 			hours += (rtc_f9.reg[5]*10 + rtc_f9.reg[4]);
 			if ( hours >= 24 )
 			{
 				hours -= 24;
 				days += 1;
 			}
-			
+
 			year =  rtc_f9.reg[11]*10 + rtc_f9.reg[10];
 			year += ( 1900 );
 			month = rtc_f9.reg[8]+10*rtc_f9.reg[9];
@@ -1696,7 +1716,7 @@ void	S9xUpdateRTC ()
 			year_ones = year_tens % 10;
 			year_tens /= 10;
 			year_hundreds = (year - 1000) / 100;
-			
+
 			rtc_f9.reg[0] = seconds % 10;
 			rtc_f9.reg[1] = seconds / 10;
 			rtc_f9.reg[2] = minutes % 10;
@@ -1734,7 +1754,7 @@ uint8* Get7110BasePtr(uint32 Address)
 	default:i=0;
 	}
 	i+=Address&0x000F0000;
-	return &ROM[i];
+	return &Memory.ROM[i];
 }
 //end extern
 }
@@ -1773,7 +1793,7 @@ bool Load7110Index(char* filename)
 		decompack->tableEnts[i].location[index].size=size;
 		decompack->tableEnts[i].location[index].used_len=0;
 		decompack->tableEnts[i].location[index].used_offset=0;
-		
+
 	}
 	while(!feof(fp));
 	fclose(fp);
@@ -1784,7 +1804,6 @@ bool Load7110Index(char* filename)
 //Cache 1 load function
 void SPC7110Load(char* dirname)
 {
-#ifndef NGC
 	char temp_path[PATH_MAX];
 	int i=0;
 
@@ -1795,14 +1814,12 @@ void SPC7110Load(char* dirname)
 #endif
 
 	ZeroMemory(decompack, sizeof(Pack7110));
-	
-#ifndef _XBOX 
-#ifndef NGC
+
+#ifndef _XBOX
 		if(-1==chdir(dirname))
 		{
 			S9xMessage(0,0,"Graphics Pack not found!");
 		}
-#endif
 #endif
 
 #ifndef _XBOX
@@ -1823,11 +1840,8 @@ void SPC7110Load(char* dirname)
 			sprintf(binname,"%s%06X.bin",filename,decompack->tableEnts[i].table);
 #endif
 			struct stat buf;
-
-#ifndef NGC			
 			if(-1!=stat(binname, &buf))
 				decompack->binfiles[i]=new uint8[buf.st_size];
-#endif
 			FILE* fp=fopen(binname, "rb");
 			if(fp)
 			{
@@ -1837,10 +1851,8 @@ void SPC7110Load(char* dirname)
 		}
 	}
 
-#ifndef _XBOX 
-#ifndef NGC
+#ifndef _XBOX
 	chdir(temp_path);
-#endif
 #endif
 
 	Copy7110=&MovePackData;
@@ -1865,7 +1877,7 @@ void SPC7110Open(char* dirname)
 #endif
 
 	ZeroMemory(decompack, sizeof(Pack7110));
-	
+
 #ifndef _XBOX
 		if(-1==chdir(dirname))
 		{
@@ -1915,7 +1927,7 @@ void SPC7110Grab(char* dirname)
 
 	ZeroMemory(decompack, sizeof(Pack7110));
 #ifndef _XBOX
-  
+
 		if(-1==chdir(dirname))
 		{
 			S9xMessage(0,0,"Graphics Pack not found!");
@@ -1941,8 +1953,6 @@ void SPC7110Grab(char* dirname)
 #endif
 			struct stat buf;
 //add load/no load calculations here
-
-#ifndef NGC
 			if(-1!=stat(binname, &buf))
 			{
 				if(buf.st_size<buffer_size)
@@ -1965,8 +1975,6 @@ void SPC7110Grab(char* dirname)
 					}
 				}
 			}
-
-#endif
 		}
 	}
 
@@ -1983,9 +1991,6 @@ void SPC7110Grab(char* dirname)
 		EnableMenuItem(GUI.hMenu, IDM_LOG_7110, MF_ENABLED);
 	#endif
 #endif
-
-#endif
-
 }
 
 //Cache 1 clean up function
@@ -2151,14 +2156,14 @@ void Do7110Logging()
 	uint8 ent_temp;
 	FILE* flog;
 	int entries=0;
-	
+
 	if(Settings.SPC7110)
 	{
 		//flush last read into logging
 		(*Copy7110)();
-		
+
 #ifdef __MACOSX__
-		char name[PATH_MAX + 1];		
+		char name[PATH_MAX + 1];
 		strcpy(name, S9xGetFilename(".dat", DEFAULT_DIR));
 		flog = fopen(name, "rb");
 #else
@@ -2203,7 +2208,7 @@ void Do7110Logging()
 #endif
 		}
 #endif
-		
+
 		if(flog)
 		{
 			uint8 buffer[8];
@@ -2236,11 +2241,11 @@ void Do7110Logging()
 			while(!feof(flog));
 			fclose(flog);
 		}
-		
+
 #ifdef __MACOSX__
 		strcpy(name, S9xGetFilename(".dat", DEFAULT_DIR));
 		flog = fopen(name, "rb");
-#else	
+#else
 		if(!strncmp((char*)&Memory.ROM [0xffc0], "SUPER POWER LEAG 4   ", 21))
 		{
 #ifdef _XBOX	// cwd could be the dvd-rom, so write to T:\\ which is storage region for each title
@@ -2310,14 +2315,14 @@ void Do7110Logging()
 			fwrite(&temp,1,4,flog);
 			fwrite(&temp,1,4,flog);
 			fwrite(&temp,1,4,flog);
-			
+
 			ent_temp=0;
 			fwrite(&ent_temp,1,1,flog);
 			ent_temp=0;
 			fwrite(&ent_temp,1,1,flog);
 			ent_temp=0;
 			fwrite(&ent_temp,1,1,flog);
-			
+
 			for(j=0;j<MAX_TABLES;j++)
 			{
 				for(int k=0;k<256;k++)
@@ -2333,7 +2338,7 @@ void Do7110Logging()
 						ent_temp=k&0xFF;
 						fwrite(&ent_temp,1,1,flog);//804
 						ent_temp=decompack->tableEnts[j].location[k].used_len&0xFF;
-						fwrite(&ent_temp,1,1,flog);//lsb of 
+						fwrite(&ent_temp,1,1,flog);//lsb of
 						ent_temp=(decompack->tableEnts[j].location[k].used_len>>8)&0xFF;
 						fwrite(&ent_temp,1,1,flog);//msb of
 						ent_temp=(decompack->tableEnts[j].location[k].used_offset)&0xFF;
@@ -2349,6 +2354,25 @@ void Do7110Logging()
 		}
 	}
 }
+
+static void SetSPC7110SRAMMap (uint8 newstate)
+{
+	if (newstate & 0x80)
+	{
+		Memory.Map[0x006] = (uint8 *) Memory.MAP_HIROM_SRAM;
+		Memory.Map[0x007] = (uint8 *) Memory.MAP_HIROM_SRAM;
+		Memory.Map[0x306] = (uint8 *) Memory.MAP_HIROM_SRAM;
+		Memory.Map[0x307] = (uint8 *) Memory.MAP_HIROM_SRAM;
+	}
+	else
+	{
+		Memory.Map[0x006] = (uint8 *) Memory.MAP_RONLY_SRAM;
+		Memory.Map[0x007] = (uint8 *) Memory.MAP_RONLY_SRAM;
+		Memory.Map[0x306] = (uint8 *) Memory.MAP_RONLY_SRAM;
+		Memory.Map[0x307] = (uint8 *) Memory.MAP_RONLY_SRAM;
+	}
+}
+
 bool8 S9xSaveSPC7110RTC (S7RTC *rtc_f9)
 {
     FILE* fp;
@@ -2396,7 +2420,7 @@ bool8 S9xLoadSPC7110RTC (S7RTC *rtc_f9)
 	rtc_f9->index|=(temp<<8);
 	fread(&rtc_f9->control,1,1,fp);
 	fread(&rtc_f9->init,1,1,fp);
-	
+
 	fread(&temp,1,1,fp);
 	rtc_f9->last_used=temp;
 	fread(&temp,1,1,fp);

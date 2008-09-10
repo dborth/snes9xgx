@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -142,22 +159,30 @@
 **********************************************************************************/
 
 
+
+
 /* This file is for core emulator messages. Use a port-specific file for  *
  * GUI strings and the like. Thank you.                                   */
 
 /* Movie Messages */
 
+#define MOVIE_ERR_SNAPSHOT_WRONG_MOVIE "Snapshot not from this movie"
+#define MOVIE_ERR_SNAPSHOT_NOT_MOVIE "Not a movie snapshot"
 #define MOVIE_INFO_REPLAY "Movie replay"
 #define MOVIE_INFO_RECORD "Movie record"
 #define MOVIE_INFO_RERECORD "Movie re-record"
 #define MOVIE_INFO_REWIND "Movie rewind"
 #define MOVIE_INFO_STOP "Movie stop"
 #define MOVIE_INFO_END "Movie end"
-#define MOVIE_INFO_RECORDING_ENABLED "Recording enabled"
-#define MOVIE_INFO_RECORDING_DISABLED "Recording disabled"
-#define MOVIE_ERR_SNAPSHOT_WRONG_MOVIE "Snapshot not from this movie"
-#define MOVIE_ERR_SNAPSHOT_NOT_MOVIE "Not a movie snapshot"
-#define MOVIE_ERR_COULD_NOT_OPEN "Could not open movie file."
-#define MOVIE_ERR_NOT_FOUND "File not found."
-#define MOVIE_ERR_WRONG_FORMAT "File is wrong format."
-#define MOVIE_ERR_WRONG_VERSION "File is wrong version."
+#define MOVIE_INFO_SNAPSHOT "Movie snapshot"
+#define MOVIE_ERR_SNAPSHOT_INCONSISTENT "Snapshot inconsistent with movie"
+
+/* Snapshot Messages */
+
+#define SAVE_INFO_SNAPSHOT "Saved"
+#define SAVE_INFO_LOAD "Loaded"
+#define SAVE_ERR_WRONG_FORMAT "File not in Snes9x freeze format"
+#define SAVE_ERR_WRONG_VERSION "Incompatable Snes9x freeze file format version"
+#define SAVE_ERR_ROM_NOT_FOUND "ROM image \"%s\" for freeze file not found"
+#define SAVE_ERR_SAVE_NOT_FOUND "Save file %s does not exist."
+

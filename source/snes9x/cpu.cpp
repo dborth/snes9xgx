@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 
 #include "snes9x.h"
@@ -162,6 +181,9 @@
 #include "obc1.h"
 #include "bsx.h"
 #include "snapshot.h"
+#ifndef NGC
+#include "logger.h"
+#endif
 
 
 #ifndef ZSNES_FX
@@ -203,12 +225,17 @@ void S9xSoftResetCPU ()
     CPU.NMIActive = FALSE;
     CPU.IRQActive = FALSE;
     CPU.WaitingForInterrupt = FALSE;
-    CPU.InDMA = CPU.InWRAM_DMA = FALSE;
+	CPU.InDMA = FALSE;
+	CPU.InHDMA = FALSE;
+    CPU.InDMAorHDMA = FALSE;
+	CPU.InWRAMDMAorHDMA = FALSE;
+	CPU.HDMARanInDMA = 0;
     CPU.PCBase = NULL;
     CPU.PBPCAtOpcodeStart = 0xffffffff;
     CPU.WaitAddress = 0xffffffff;
     CPU.WaitCounter = 0;
     CPU.Cycles = 182; // Or 188. This is the cycle count just after the jump to the Reset Vector.
+	CPU.PrevCycles = -1;
     CPU.V_Counter = 0;
     CPU.MemSpeed = SLOW_ONE_CYCLE;
     CPU.MemSpeedx2 = SLOW_ONE_CYCLE * 2;
@@ -216,7 +243,7 @@ void S9xSoftResetCPU ()
     CPU.AutoSaveTimer = 0;
     CPU.SRAMModified = FALSE;
     CPU.BRKTriggered = FALSE;
-    //CPU.TriedInterleavedMode2 = FALSE; // Reset when ROM image loaded
+	CPU.IRQPending = 0;
 
 	Timings.InterlaceField = FALSE;
 	Timings.H_Max = Timings.H_Max_Master;
@@ -235,7 +262,7 @@ void S9xSoftResetCPU ()
     ICPU.S9xOpcodes = S9xOpcodesE1;
     ICPU.S9xOpLengths = S9xOpLengthsM1X1;
     ICPU.CPUExecuting = TRUE;
-	
+
     S9xUnpackStatus();
 }
 
@@ -244,7 +271,10 @@ void S9xResetCPU ()
     S9xSoftResetCPU ();
     Registers.SL = 0xFF;
     Registers.P.W = 0;
-    SetFlags (MemoryFlag | IndexFlag | IRQ | Emulation);
+    Registers.A.W = 0;
+    Registers.X.W = 0;
+    Registers.Y.W = 0;
+	SetFlags (MemoryFlag | IndexFlag | IRQ | Emulation);
     ClearFlags (Decimal);
 }
 
@@ -259,6 +289,7 @@ END_EXTERN_C
 void S9xReset (void)
 {
 #ifndef NGC
+    ResetLogger();
     S9xResetSaveTimer (FALSE);
 #endif
 
@@ -282,7 +313,6 @@ void S9xReset (void)
     S9xSA1Init ();
     if (Settings.C4)
         S9xInitC4 ();
-
 #ifndef NGC    
     S9xInitCheatData ();
 #endif

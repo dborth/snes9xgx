@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 #include <math.h>
 #include <stdlib.h>
@@ -164,22 +183,22 @@ void C4TransfWireFrame ()
     c4x = (double) C4WFXVal;
     c4y = (double) C4WFYVal;
     c4z = (double) C4WFZVal - 0x95;
-    
+
     // Rotate X
     tanval = -(double) C4WFX2Val * 3.14159265 * 2 / 128;
     c4y2 = c4y * cos (tanval) - c4z * sin (tanval);
     c4z2 = c4y * sin (tanval) + c4z * cos (tanval);
-    
+
     // Rotate Y
     tanval = -(double)C4WFY2Val*3.14159265*2/128;
     c4x2 = c4x * cos (tanval) + c4z2 * sin (tanval);
     c4z = c4x * - sin (tanval) + c4z2 * cos (tanval);
-    
+
     // Rotate Z
     tanval = -(double) C4WFDist * 3.14159265*2 / 128;
     c4x = c4x2 * cos (tanval) - c4y2 * sin (tanval);
     c4y = c4x2 * sin (tanval) + c4y2 * cos (tanval);
-    
+
     // Scale
     C4WFXVal = (short) (c4x*(double)C4WFScale/(0x90*(c4z+0x95))*0x95);
     C4WFYVal = (short) (c4y*(double)C4WFScale/(0x90*(c4z+0x95))*0x95);
@@ -190,22 +209,22 @@ void C4TransfWireFrame2 ()
     c4x = (double)C4WFXVal;
     c4y = (double)C4WFYVal;
     c4z = (double)C4WFZVal;
-    
+
     // Rotate X
     tanval = -(double) C4WFX2Val * 3.14159265 * 2 / 128;
     c4y2 = c4y * cos (tanval) - c4z * sin (tanval);
     c4z2 = c4y * sin (tanval) + c4z * cos (tanval);
-    
+
     // Rotate Y
     tanval = -(double) C4WFY2Val * 3.14159265 * 2 / 128;
     c4x2 = c4x * cos (tanval) + c4z2 * sin (tanval);
     c4z = c4x * -sin (tanval) + c4z2 * cos (tanval);
-    
+
     // Rotate Z
     tanval = -(double)C4WFDist * 3.14159265 * 2 / 128;
     c4x = c4x2 * cos (tanval) - c4y2 * sin (tanval);
     c4y = c4x2 * sin (tanval) + c4y2 * cos (tanval);
-    
+
     // Scale
     C4WFXVal =(short)(c4x * (double)C4WFScale / 0x100);
     C4WFYVal =(short)(c4y * (double)C4WFScale / 0x100);
@@ -221,21 +240,21 @@ void C4CalcWireFrame ()
         C4WFYVal = (short) (256 * (double) C4WFYVal / abs (C4WFXVal));
         if (C4WFXVal < 0)
             C4WFXVal = -256;
-        else 
+        else
             C4WFXVal = 256;
     }
     else
     {
-        if (C4WFYVal != 0) 
+        if (C4WFYVal != 0)
         {
             C4WFDist = abs(C4WFYVal)+1;
             C4WFXVal = (short) (256 * (double)C4WFXVal / abs (C4WFYVal));
             if (C4WFYVal < 0)
                 C4WFYVal = -256;
-            else 
+            else
                 C4WFYVal = 256;
         }
-        else 
+        else
             C4WFDist = 0;
     }
 }
@@ -248,19 +267,19 @@ short C41FDistVal;
 
 void C4Op1F ()
 {
-    if (C41FXVal == 0) 
+    if (C41FXVal == 0)
     {
-        if (C41FYVal > 0) 
+        if (C41FYVal > 0)
             C41FAngleRes = 0x80;
-        else 
+        else
             C41FAngleRes = 0x180;
     }
-    else 
+    else
     {
         tanval = (double) C41FYVal / C41FXVal;
         C41FAngleRes = (short) (atan (tanval) / (3.141592675 * 2) * 512);
         C41FAngleRes = C41FAngleRes;
-        if (C41FXVal< 0) 
+        if (C41FXVal< 0)
             C41FAngleRes += 0x100;
         C41FAngleRes &= 0x1FF;
     }
@@ -283,7 +302,7 @@ void C4Op0D()
 #ifdef ZSNES_C4
 EXTERN_C void C4LoaDMem(char *C4RAM)
 {
-  memmove(C4RAM+(READ_WORD(C4RAM+0x1f45)&0x1fff), 
+  memmove(C4RAM+(READ_WORD(C4RAM+0x1f45)&0x1fff),
           C4GetMemPointer(READ_3WORD(C4RAM+0x1f40)),
           READ_WORD(C4RAM+0x1f43));
 }

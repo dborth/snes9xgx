@@ -94,7 +94,11 @@ ConnectShare (bool silent)
 		strlen(GCSettings.smbpwd) == 0 ||
 		strlen(GCSettings.smbshare) == 0 ||
 		strlen(GCSettings.smbip) == 0)
+	{
+		if(!silent)
+			WaitPrompt((char*) "Invalid network settings. Check SNES9xGX.xml.");
 		return false;
+	}
 
 	if(!networkInit)
 		networkInit = InitializeNetwork(silent);
