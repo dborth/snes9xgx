@@ -95,6 +95,7 @@ DefaultSettings ()
 	Settings.TurboSkipFrames = 19;
 	Settings.DisplayFrameRate = false;
 	Settings.AutoDisplayMessages = 1; // SNES9x 1.51
+	Settings.InitialInfoStringTimeout = 200; // # frames to display messages for
 
 	// Frame timings in 50hz and 60hz cpu mode
 	Settings.FrameTimePAL = 20000;
