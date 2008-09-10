@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -142,6 +159,8 @@
 **********************************************************************************/
 
 
+
+
 #include "snes9x.h"
 #include "memmap.h"
 #include "ppu.h"
@@ -152,17 +171,15 @@
 #include "gfx.h"
 #include "display.h"
 #include "sa1.h"
-
-#ifndef NGC
-#include "netplay.h"
-#endif
-
 #include "sdd1.h"
 #include "srtc.h"
 #include "spc7110.h"
 #include "bsx.h"
-#include "movie.h"
+//#include "movie.h"
 #include "controls.h"
+#ifdef NETPLAY_SUPPORT
+#include "netplay.h"
+#endif
 
 #ifndef ZSNES_FX
 #include "fxemu.h"
@@ -193,23 +210,23 @@ static inline void S9xLatchCounters (bool force)
 #endif
         PPU.HVBeamCounterLatched = 1;
         PPU.VBeamPosLatched = (uint16) CPU.V_Counter;
-		
+
 		// From byuu:
-		// All dots are 4 cycles long, except dots 322 and 326. dots 322 and 326 are 6 cycles long. 
+		// All dots are 4 cycles long, except dots 322 and 326. dots 322 and 326 are 6 cycles long.
 		// This holds true for all scanlines except scanline 240 on non-interlace odd frames.
 		// The reason for this is because this scanline is only 1360 cycles long,
 		// instead of 1364 like all other scanlines.
 		// This makes the effective range of hscan_pos 0-339 at all times.
 		int32	hc = CPU.Cycles;
-        
+
 		if (Timings.H_Max == Timings.H_Max_Master)	// 1364
-		{			
+		{
 			if (hc >= 1292)
 				hc -= (ONE_DOT_CYCLE / 2);
 			if (hc >= 1308)
 				hc -= (ONE_DOT_CYCLE / 2);
 		}
-			
+
 		PPU.HBeamPosLatched = (uint16) (hc / ONE_DOT_CYCLE);
 
         // Causes screen flicker for Yoshi's Island if uncommented
@@ -218,7 +235,7 @@ static inline void S9xLatchCounters (bool force)
         Memory.FillRAM [0x213F] |= 0x40;
 
     }
-	
+
     if (CPU.V_Counter >  PPU.GunVLatch ||
        (CPU.V_Counter == PPU.GunVLatch && CPU.Cycles >= PPU.GunHLatch * ONE_DOT_CYCLE))
 	{
@@ -250,7 +267,7 @@ static inline void S9xTryGunLatch (bool force)
 
 			Memory.FillRAM [0x213F] |= 0x40;
 		}
-		
+
 		PPU.GunVLatch = 1000;
 	}
 }
@@ -267,8 +284,20 @@ void S9xCheckMissingHTimerPosition (int32 hc)
 	}
 }
 
-void S9xCheckMissingHTimerPositionRange (int32 hc_from, int32 range)
-{			
+void S9xCheckMissingHTimerHalt (int32 hc_from, int32 range)
+{
+	if ((PPU.HTimerPosition >= hc_from) && (PPU.HTimerPosition < (hc_from + range)))
+	{
+		if (PPU.HTimerEnabled && (!PPU.VTimerEnabled || (CPU.V_Counter == PPU.VTimerPosition)))
+			CPU.IRQPending = 1;
+		else
+		if (PPU.VTimerEnabled && (CPU.V_Counter == PPU.VTimerPosition))
+			CPU.IRQPending = 1;
+	}
+}
+
+void S9xCheckMissingHTimerRange (int32 hc_from, int32 range)
+{
 	if ((PPU.HTimerPosition >= hc_from) && (PPU.HTimerPosition < (hc_from + range)))
 	{
 		if (PPU.HTimerEnabled && (!PPU.VTimerEnabled || (CPU.V_Counter == PPU.VTimerPosition)))
@@ -277,12 +306,6 @@ void S9xCheckMissingHTimerPositionRange (int32 hc_from, int32 range)
 		if (PPU.VTimerEnabled && (CPU.V_Counter == PPU.VTimerPosition))
 			S9xSetIRQ(PPU_V_BEAM_IRQ_SOURCE);
 	}
-}
-
-void S9xCheckMissingVTimerPosition (void)
-{
-	if (PPU.VTimerEnabled && !PPU.HTimerEnabled && (CPU.V_Counter == PPU.VTimerPosition) && (CPU.Cycles >= PPU.HTimerPosition))
-		S9xSetIRQ(PPU_V_BEAM_IRQ_SOURCE);
 }
 
 void S9xUpdateHVTimerPosition (void)
@@ -297,7 +320,7 @@ void S9xUpdateHVTimerPosition (void)
 			// IRQ_read
 			PPU.HTimerPosition = PPU.IRQHBeamPos * ONE_DOT_CYCLE;
 			if (Timings.H_Max == Timings.H_Max_Master)	// 1364
-			{			
+			{
 				if (PPU.IRQHBeamPos > 322)
 					PPU.HTimerPosition += (ONE_DOT_CYCLE / 2);
 				if (PPU.IRQHBeamPos > 326)
@@ -319,7 +342,7 @@ void S9xUpdateHVTimerPosition (void)
 
 	if ((PPU.HTimerPosition >= Timings.H_Max) && (PPU.IRQHBeamPos < 340))
 	{
-		PPU.HTimerPosition -= Timings.H_Max;			
+		PPU.HTimerPosition -= Timings.H_Max;
 		PPU.VTimerPosition++;
 		// FIXME
 		if (PPU.VTimerPosition >= Timings.V_Max)
@@ -334,27 +357,27 @@ void S9xUpdateHVTimerPosition (void)
 				CPU.WhichEvent = HC_HDMA_START_EVENT;
 				CPU.NextEvent  = Timings.HDMAStart;
 				break;
-				
+
 			case HC_IRQ_3_5_EVENT:
 				CPU.WhichEvent = HC_HCOUNTER_MAX_EVENT;
 				CPU.NextEvent  = Timings.H_Max;
 				break;
-				
+
 			case HC_IRQ_5_7_EVENT:
 				CPU.WhichEvent = HC_HDMA_INIT_EVENT;
 				CPU.NextEvent  = Timings.HDMAInit;
 				break;
-			
+
 			case HC_IRQ_7_9_EVENT:
 				CPU.WhichEvent = HC_RENDER_EVENT;
 				CPU.NextEvent  = Timings.RenderPos;
 				break;
-				
+
 			case HC_IRQ_9_A_EVENT:
 				CPU.WhichEvent = HC_WRAM_REFRESH_EVENT;
 				CPU.NextEvent  = Timings.WRAMRefreshPos;
 				break;
-				
+
 			case HC_IRQ_A_1_EVENT:
 				CPU.WhichEvent = HC_HBLANK_START_EVENT;
 				CPU.NextEvent  = Timings.HBlankStart;
@@ -362,32 +385,32 @@ void S9xUpdateHVTimerPosition (void)
 		}
 	}
 	else
-	if (PPU.HTimerPosition < CPU.NextEvent)
+	if ((PPU.HTimerPosition < CPU.NextEvent) || (!(CPU.WhichEvent & 1) && (PPU.HTimerPosition == CPU.NextEvent)))
 	{
 		CPU.NextEvent = PPU.HTimerPosition;
-		
+
 		switch (CPU.WhichEvent)
 		{
 			case HC_HDMA_START_EVENT:
 				CPU.WhichEvent = HC_IRQ_1_3_EVENT;
 				break;
-				
+
 			case HC_HCOUNTER_MAX_EVENT:
 				CPU.WhichEvent = HC_IRQ_3_5_EVENT;
 				break;
-				
+
 			case HC_HDMA_INIT_EVENT:
 				CPU.WhichEvent = HC_IRQ_5_7_EVENT;
 				break;
-				
+
 			case HC_RENDER_EVENT:
 				CPU.WhichEvent = HC_IRQ_7_9_EVENT;
 				break;
-				
+
 			case HC_WRAM_REFRESH_EVENT:
 				CPU.WhichEvent = HC_IRQ_9_A_EVENT;
 				break;
-				
+
 			case HC_HBLANK_START_EVENT:
 				CPU.WhichEvent = HC_IRQ_A_1_EVENT;
 				break;
@@ -401,27 +424,27 @@ void S9xUpdateHVTimerPosition (void)
 				CPU.WhichEvent = HC_HDMA_START_EVENT;
 				CPU.NextEvent  = Timings.HDMAStart;
 				break;
-				
+
 			case HC_IRQ_3_5_EVENT:
 				CPU.WhichEvent = HC_HCOUNTER_MAX_EVENT;
 				CPU.NextEvent  = Timings.H_Max;
 				break;
-				
+
 			case HC_IRQ_5_7_EVENT:
 				CPU.WhichEvent = HC_HDMA_INIT_EVENT;
 				CPU.NextEvent  = Timings.HDMAInit;
 				break;
-			
+
 			case HC_IRQ_7_9_EVENT:
 				CPU.WhichEvent = HC_RENDER_EVENT;
 				CPU.NextEvent  = Timings.RenderPos;
 				break;
-				
+
 			case HC_IRQ_9_A_EVENT:
 				CPU.WhichEvent = HC_WRAM_REFRESH_EVENT;
 				CPU.NextEvent  = Timings.WRAMRefreshPos;
 				break;
-				
+
 			case HC_IRQ_A_1_EVENT:
 				CPU.WhichEvent = HC_HBLANK_START_EVENT;
 				CPU.NextEvent  = Timings.HBlankStart;
@@ -452,7 +475,7 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 //    fprintf(stderr, "%03d: %02x to %04x\n", CPU.V_Counter, Byte, Address);
 
     // Take care of DMA wrapping
-    if(CPU.InDMA && Address>0x21ff) Address=0x2100+(Address&0xff);
+    if(CPU.InDMAorHDMA && Address>0x21ff) Address=0x2100+(Address&0xff);
 
 	if (Address <= 0x219F)
 	{
@@ -477,6 +500,17 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 					IPPU.ColorsChanged = TRUE;
 					PPU.ForcedBlanking = (Byte >> 7) & 1;
 				}
+			}
+			if ((Memory.FillRAM[0x2100] & 0x80) && CPU.V_Counter==PPU.ScreenHeight+FIRST_VISIBLE_LINE){
+				PPU.OAMAddr = PPU.SavedOAMAddr;
+				uint8 tmp = 0;
+				if(PPU.OAMPriorityRotation)
+					tmp = (PPU.OAMAddr & 0xFE) >> 1;
+				if((PPU.OAMFlip&1) || PPU.FirstSprite!=tmp){
+					PPU.FirstSprite = tmp;
+					IPPU.OBJChanged = TRUE;
+				}
+				PPU.OAMFlip = 0;
 			}
 			break;
 
@@ -650,7 +684,7 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 
 		  case 0x210E:
                         // Yes, the two formulas are supposed to be different.
-			PPU.BG[0].VOffset = (Byte<<8) | (PPU.BGnxOFSbyte&~7) | ((PPU.BG[0].VOffset>>8)&7);
+			PPU.BG[0].VOffset = (Byte<<8) | PPU.BGnxOFSbyte;
 			PPU.M7VOFS = (Byte<<8) | PPU.M7byte;
 			PPU.BGnxOFSbyte = Byte;
 			PPU.M7byte = Byte;
@@ -662,7 +696,7 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 			break;
 
 		  case 0x2110:
-			PPU.BG[1].VOffset = (Byte<<8) | (PPU.BGnxOFSbyte&~7) | ((PPU.BG[1].VOffset>>8)&7);
+			PPU.BG[1].VOffset = (Byte<<8) | PPU.BGnxOFSbyte;
 			PPU.BGnxOFSbyte = Byte;
 			break;
 
@@ -672,7 +706,7 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 			break;
 
 		  case 0x2112:
-			PPU.BG[2].VOffset = (Byte<<8) | (PPU.BGnxOFSbyte&~7) | ((PPU.BG[2].VOffset>>8)&7);
+			PPU.BG[2].VOffset = (Byte<<8) | PPU.BGnxOFSbyte;
 			PPU.BGnxOFSbyte = Byte;
 			break;
 
@@ -682,7 +716,7 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 			break;
 
 		  case 0x2114:
-			PPU.BG[3].VOffset = (Byte<<8) | (PPU.BGnxOFSbyte&~7) | ((PPU.BG[3].VOffset>>8)&7);
+			PPU.BG[3].VOffset = (Byte<<8) | PPU.BGnxOFSbyte;
 			PPU.BGnxOFSbyte = Byte;
 			break;
 
@@ -1157,37 +1191,33 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 		  case 0x2174: case 0x2175: case 0x2176: case 0x2177:
 		  case 0x2178: case 0x2179: case 0x217a: case 0x217b:
 		  case 0x217c: case 0x217d: case 0x217e: case 0x217f:
-#ifdef SPCTOOL
-			_SPCInPB (Address & 3, Byte);
-#else	
-			//	CPU.Flags |= DEBUG_MODE_FLAG;
-			Memory.FillRAM [Address] = Byte;
-			IAPU.RAM [(Address & 3) + 0xf4] = Byte;
 #ifdef SPC700_SHUTDOWN
 			IAPU.APUExecuting = Settings.APUEnabled;
 			IAPU.WaitCounter++;
 #endif
-#endif // SPCTOOL
+			S9xAPUExecute();
+			Memory.FillRAM [Address] = Byte;
+			IAPU.RAM [(Address & 3) + 0xf4] = Byte;
 			break;
 		  case 0x2180:
-                        if(!CPU.InWRAM_DMA){
+                        if(!CPU.InWRAMDMAorHDMA){
                             REGISTER_2180(Byte);
                         }
 			break;
 		  case 0x2181:
-                        if(!CPU.InWRAM_DMA){
+                        if(!CPU.InWRAMDMAorHDMA){
                             PPU.WRAM &= 0x1FF00;
                             PPU.WRAM |= Byte;
                         }
 			break;
 		  case 0x2182:
-                        if(!CPU.InWRAM_DMA){
+                        if(!CPU.InWRAMDMAorHDMA){
                             PPU.WRAM &= 0x100FF;
                             PPU.WRAM |= Byte << 8;
                         }
 			break;
 		  case 0x2183:
-                        if(!CPU.InWRAM_DMA){
+                        if(!CPU.InWRAMDMAorHDMA){
                             PPU.WRAM &= 0x0FFFF;
                             PPU.WRAM |= Byte << 16;
                             PPU.WRAM &= 0x1FFFF;
@@ -1357,7 +1387,7 @@ uint8 S9xGetPPU (uint16 Address)
 		return OpenBus; //treat as unmapped memory returning last byte on the bus
 
     // Take care of DMA wrapping
-    if(CPU.InDMA && Address>0x21ff) Address=0x2100+(Address&0xff);
+    if(CPU.InDMAorHDMA && Address>0x21ff) Address=0x2100+(Address&0xff);
 
     if (Address <= 0x219F)
     {
@@ -1552,7 +1582,7 @@ uint8 S9xGetPPU (uint16 Address)
 			}
 			else
 				byte = Memory.VRAM[((PPU.VMA.Address << 1) - 2) & 0xffff];
-			
+
 			if (!PPU.VMA.High)
 			{
 				PPU.VMA.Address += PPU.VMA.Increment;
@@ -1618,7 +1648,7 @@ uint8 S9xGetPPU (uint16 Address)
 
 	    PPU.CGFLIPRead ^= 1;
 	    return (PPU.OpenBus2 = byte);
-	    
+
 	case 0x213C:
 	    // Horizontal counter value 0-339
 #ifdef DEBUGGER
@@ -1679,26 +1709,24 @@ uint8 S9xGetPPU (uint16 Address)
 	case 0x2174: case 0x2175: case 0x2176: case 0x2177:
 	case 0x2178: case 0x2179: case 0x217a: case 0x217b:
 	case 0x217c: case 0x217d: case 0x217e: case 0x217f:
-#ifdef SPCTOOL
-	    return ((uint8) _SPCOutP [Address & 3]);
-#else
-    //	CPU.Flags |= DEBUG_MODE_FLAG;
-#ifdef SPC700_SHUTDOWN	
+#ifdef SPC700_SHUTDOWN
 	    IAPU.APUExecuting = Settings.APUEnabled;
 	    IAPU.WaitCounter++;
 #endif
-	    if (Settings.APUEnabled)
+		S9xAPUExecute();
+		if (Settings.APUEnabled)
 	    {
 #ifdef CPU_SHUTDOWN
 //		CPU.WaitAddress = CPU.PCAtOpcodeStart;
-#endif	
+#endif
+#if 0
 		if (SNESGameFixes.APU_OutPorts_ReturnValueFix &&
 		    Address >= 0x2140 && Address <= 0x2143 && !CPU.V_Counter)
 		{
-                    return (uint8)((Address & 1) ? ((rand() & 0xff00) >> 8) : 
+                    return (uint8)((Address & 1) ? ((rand() & 0xff00) >> 8) :
 				   (rand() & 0xff));
 		}
-
+#endif
 		return (APU.OutPorts [Address & 3]);
 	    }
 
@@ -1732,14 +1760,13 @@ uint8 S9xGetPPU (uint16 Address)
 		    return ((r >> 3) & 0xff);
 	    }
 	    return (Memory.FillRAM[Address]);
-#endif // SPCTOOL
 
 	case 0x2180:
 	    // Read WRAM
 #ifdef DEBUGGER
 	    missing.wram_read = 1;
 #endif
-            if(!CPU.InWRAM_DMA){
+            if(!CPU.InWRAMDMAorHDMA){
                 byte = Memory.RAM [PPU.WRAM++];
                 PPU.WRAM &= 0x1FFFF;
             } else {
@@ -1754,7 +1781,7 @@ uint8 S9xGetPPU (uint16 Address)
 	case 0x2186:
 	case 0x2187:
 			return OpenBus;
-			
+
 	case 0x2188:
 	case 0x2189:
 	case 0x218a:
@@ -1813,7 +1840,7 @@ uint8 S9xGetPPU (uint16 Address)
 		if (Settings.SRTC)
 		    return (S9xGetSRTC (Address));
 		/*FALL*/
-			    
+
 	    default:
 #ifdef DEBUGGER
 	        missing.unknownppu_read = Address;
@@ -1826,7 +1853,7 @@ uint8 S9xGetPPU (uint16 Address)
 				return OpenBus;
 	    }
 	}
-	
+
 	if (!Settings.SuperFX)
 			return OpenBus;
 #ifdef ZSNES_FX
@@ -1838,7 +1865,7 @@ uint8 S9xGetPPU (uint16 Address)
 #ifdef CPU_SHUTDOWN
 	if (Address == 0x3030)
 	    CPU.WaitAddress = CPU.PBPCAtOpcodeStart;
-#endif	
+#endif
 	if (Address == 0x3031)
 	    CLEAR_IRQ_SOURCE (GSU_IRQ_SOURCE);
 #else
@@ -1904,7 +1931,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x4200:
 			// NMI, V & H IRQ and joypad reading enable flags
 			pV = PPU.VTimerEnabled;
-			
+
 			if (byte & 0x20)
 			{
 				PPU.VTimerEnabled = TRUE;
@@ -1926,16 +1953,17 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 			}
 			else
 				PPU.HTimerEnabled = FALSE;
-				
+
 			S9xUpdateHVTimerPosition();
-			// FIXME
-			if (pV != PPU.VTimerEnabled)
-				S9xCheckMissingVTimerPosition();
-			
+
+			// The case that IRQ will trigger in an instruction such as STA $4200
+			// FIXME: not true but good enough for Snes9x, I think.
+			S9xCheckMissingHTimerRange(CPU.PrevCycles, CPU.Cycles - CPU.PrevCycles);
+
 			if (!(byte & 0x30))
 				CLEAR_IRQ_SOURCE (PPU_V_BEAM_IRQ_SOURCE | PPU_H_BEAM_IRQ_SOURCE);
 
-			if ((byte & 0x80) && 
+			if ((byte & 0x80) &&
 				!(Memory.FillRAM [0x4200] & 0x80) &&
 				// NMI can trigger during VBlank as long as NMI_read ($4210) wasn't cleard.
 				// Panic Bomberman clears the NMI pending flag @ scanline 230 before enabling
@@ -2011,12 +2039,8 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 			missing.virq_pos = PPU.IRQVBeamPos;
 #endif
 			if (PPU.IRQVBeamPos != d)
-			{
 				S9xUpdateHVTimerPosition();
-				// FIXME
-				S9xCheckMissingVTimerPosition();
-			}
-			
+
 			break;
 
 		  case 0x420A:
@@ -2026,22 +2050,18 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 			missing.virq_pos = PPU.IRQVBeamPos;
 #endif
 			if (PPU.IRQVBeamPos != d)
-			{
 				S9xUpdateHVTimerPosition();
-				// FIXME
-				S9xCheckMissingVTimerPosition();
-			}
-				
+
 			break;
 
 		  case 0x420B:
-                        if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 #ifdef DEBUGGER
 			missing.dma_this_frame = byte;
 			missing.dma_channels = byte;
 #endif
 			// XXX: Not quite right...
-			if(byte) CPU.Cycles += 18;
+			if (byte) CPU.Cycles += Timings.DMACPUSync;
 			if ((byte & 0x01) != 0)
 				S9xDoDMA (0);
 			if ((byte & 0x02) != 0)
@@ -2060,10 +2080,10 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 				S9xDoDMA (7);
 			break;
 		  case 0x420C:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 #ifdef DEBUGGER
 			missing.hdma_this_frame |= byte;
-			missing.hdma_channels |= byte; 
+			missing.hdma_channels |= byte;
 #endif
 			if (Settings.DisableHDMA)
 				byte = 0;
@@ -2133,9 +2153,9 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x4350:
 		  case 0x4360:
 		  case 0x4370:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			d = (Address >> 4) & 0x7;
-			DMA[d].TransferDirection = (byte&0x80)?1:0;
+			DMA[d].ReverseTransfer = (byte&0x80)?1:0;
 			DMA[d].HDMAIndirectAddressing = (byte&0x40)?1:0;
 			DMA[d].UnusedBit43x0 = (byte&0x20)?1:0;
 			DMA[d].AAddressDecrement = (byte&0x10)?1:0;
@@ -2151,7 +2171,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x4351:
 		  case 0x4361:
 		  case 0x4371:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			DMA[((Address >> 4) & 0x7)].BAddress = byte;
 			return;
 
@@ -2163,7 +2183,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x4352:
 		  case 0x4362:
 		  case 0x4372:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			d = (Address >> 4) & 0x7;
 			DMA[d].AAddress &= 0xFF00;
 			DMA[d].AAddress |= byte;
@@ -2177,7 +2197,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x4353:
 		  case 0x4363:
 		  case 0x4373:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			d = (Address >> 4) & 0x7;
 			DMA[d].AAddress &= 0xFF;
 			DMA[d].AAddress |= byte << 8;
@@ -2191,7 +2211,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x4354:
 		  case 0x4364:
 		  case 0x4374:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			DMA[d=((Address >> 4) & 0x7)].ABank = byte;
 			HDMAMemPointers[d]=NULL;
 			return;
@@ -2204,7 +2224,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x4355:
 		  case 0x4365:
 		  case 0x4375:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			d = (Address >> 4) & 0x7;
 			DMA[d].DMACount_Or_HDMAIndirectAddress &= 0xff00;
 			DMA[d].DMACount_Or_HDMAIndirectAddress |= byte;
@@ -2219,7 +2239,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x4356:
 		  case 0x4366:
 		  case 0x4376:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			d = (Address >> 4) & 0x7;
 			DMA[d].DMACount_Or_HDMAIndirectAddress &= 0xff;
 			DMA[d].DMACount_Or_HDMAIndirectAddress |= byte << 8;
@@ -2234,7 +2254,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x4357:
 		  case 0x4367:
 		  case 0x4377:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			DMA[d = ((Address >> 4) & 0x7)].IndirectBank = byte;
 			HDMAMemPointers[d]=NULL;
 			return;
@@ -2247,7 +2267,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x4358:
 		  case 0x4368:
 		  case 0x4378:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			d = (Address >> 4) & 7;
 			DMA[d].Address &= 0xff00;
 			DMA[d].Address |= byte;
@@ -2262,7 +2282,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x4359:
 		  case 0x4369:
 		  case 0x4379:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			d = (Address >> 4) & 0x7;
 			DMA[d].Address &= 0xff;
 			DMA[d].Address |= byte << 8;
@@ -2277,7 +2297,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x435A:
 		  case 0x436A:
 		  case 0x437A:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			d = (Address >> 4) & 0x7;
 			if(byte&0x7f){
 				DMA[d].LineCount = byte & 0x7f;
@@ -2305,7 +2325,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 		  case 0x435F:
 		  case 0x436F:
 		  case 0x437F:
-			if(CPU.InDMA) return;
+			if(CPU.InDMAorHDMA) return;
 			DMA[((Address >> 4) & 0x7)].UnknownByte = byte;
 			return;
 
@@ -2402,6 +2422,12 @@ uint8 S9xGetCPU (uint16 Address)
 
     if (Address < 0x4200)
 	{
+#ifdef SNES_JOY_READ_CALLBACKS
+		extern bool8 pad_read;
+		if(Address==0x4016 || Address==0x4017)
+			S9xOnSNESPadRead(), pad_read = true;
+#endif
+
 		CPU.Cycles += ONE_CYCLE;
 		switch (Address)
 		{
@@ -2446,7 +2472,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x4210:
 #ifdef CPU_SHUTDOWN
 		CPU.WaitAddress = CPU.PBPCAtOpcodeStart;
-#endif	
+#endif
 		byte = Memory.FillRAM[0x4210];
 		Memory.FillRAM[0x4210] = Model->_5A22;
 		//SNEeSe returns 2 for 5A22 version.
@@ -2490,6 +2516,13 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x421d:
 	  case 0x421e:
 	  case 0x421f:
+#ifdef SNES_JOY_READ_CALLBACKS
+	{
+		extern bool8 pad_read;
+		if(Memory.FillRAM[0x4200] & 1)
+			S9xOnSNESPadRead(), pad_read = true;
+	}
+#endif
 		// Joypads 1-4 button and direction state.
 		return (Memory.FillRAM [Address]);
 
@@ -2501,9 +2534,9 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x4350:
 	  case 0x4360:
 	  case 0x4370:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 d = (Address >> 4) & 0x7;
-                return ((DMA[d].TransferDirection?0x80:0x00) |
+                return ((DMA[d].ReverseTransfer?0x80:0x00) |
                         (DMA[d].HDMAIndirectAddressing?0x40:0x00) |
                         (DMA[d].UnusedBit43x0?0x20:0x00) |
                         (DMA[d].AAddressDecrement?0x10:0x00) |
@@ -2518,7 +2551,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x4351:
 	  case 0x4361:
 	  case 0x4371:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 return DMA[((Address >> 4) & 0x7)].BAddress;
 
 	  case 0x4302:
@@ -2529,7 +2562,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x4352:
 	  case 0x4362:
 	  case 0x4372:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 return (DMA[((Address >> 4) & 0x7)].AAddress & 0xFF);
 
 	  case 0x4303:
@@ -2540,7 +2573,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x4353:
 	  case 0x4363:
 	  case 0x4373:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 return (DMA[((Address >> 4) & 0x7)].AAddress >> 8);
 
 	  case 0x4304:
@@ -2551,7 +2584,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x4354:
 	  case 0x4364:
 	  case 0x4374:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 return DMA[((Address >> 4) & 0x7)].ABank;
 
 	  case 0x4305:
@@ -2562,7 +2595,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x4355:
 	  case 0x4365:
 	  case 0x4375:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 return (DMA[((Address >> 4) & 0x7)].DMACount_Or_HDMAIndirectAddress & 0xff);
 
 	  case 0x4306:
@@ -2573,7 +2606,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x4356:
 	  case 0x4366:
 	  case 0x4376:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 return (DMA[((Address >> 4) & 0x7)].DMACount_Or_HDMAIndirectAddress >> 8);
 
 	  case 0x4307:
@@ -2584,7 +2617,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x4357:
 	  case 0x4367:
 	  case 0x4377:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 return DMA[((Address >> 4) & 0x7)].IndirectBank;
 
 	  case 0x4308:
@@ -2595,7 +2628,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x4358:
 	  case 0x4368:
 	  case 0x4378:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 return (DMA[((Address >> 4) & 0x7)].Address & 0xFF);
 
 	  case 0x4309:
@@ -2606,7 +2639,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x4359:
 	  case 0x4369:
 	  case 0x4379:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 return (DMA[((Address >> 4) & 0x7)].Address >> 8);
 
 	  case 0x430A:
@@ -2617,7 +2650,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x435A:
 	  case 0x436A:
 	  case 0x437A:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 d = (Address >> 4) & 0x7;
                 return (DMA[d].LineCount ^ (DMA[d].Repeat?0x00:0x80));
 
@@ -2637,7 +2670,7 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x435F:
 	  case 0x436F:
 	  case 0x437F:
-                if(CPU.InDMA) return OpenBus;
+                if(CPU.InDMAorHDMA) return OpenBus;
                 return DMA[((Address >> 4) & 0x7)].UnknownByte;
 
     default:
@@ -2648,7 +2681,7 @@ uint8 S9xGetCPU (uint16 Address)
 	    sprintf (String, "Unknown register read: $%04X\n", Address);
 	    S9xMessage (S9X_TRACE, S9X_PPU_TRACE, String);
 	}
-	    
+
 #endif
 
 		if(Address>= 0x4800&&Settings.SPC7110)
@@ -2668,6 +2701,9 @@ void S9xResetPPU ()
     S9xSoftResetPPU();
     S9xControlsReset();
     IPPU.PreviousLine = IPPU.CurrentLine = 0;
+	PPU.M7HOFS = 0;
+	PPU.M7VOFS = 0;
+	PPU.M7byte = 0;
 }
 
 void S9xSoftResetPPU ()
@@ -2740,8 +2776,8 @@ void S9xSoftResetPPU ()
 	PPU.OAMFlip = 0;
 	PPU.OAMTileAddress = 0;
 	PPU.OAMAddr = 0;
-	PPU.IRQVBeamPos = 0;
-	PPU.IRQHBeamPos = 0;
+	PPU.IRQVBeamPos = 0x1ff;
+	PPU.IRQHBeamPos = 0x1ff;
 	PPU.VBeamPosLatched = 0;
 	PPU.HBeamPosLatched = 0;
 
@@ -2758,7 +2794,6 @@ void S9xSoftResetPPU ()
 	PPU.SavedOAMAddr = 0;
 	PPU.ScreenHeight = SNES_HEIGHT;
 	PPU.WRAM = 0;
-	PPU.BG_Forced = 0;
 	PPU.ForcedBlanking = TRUE;
 	PPU.OBJThroughMain = FALSE;
 	PPU.OBJThroughSub = FALSE;

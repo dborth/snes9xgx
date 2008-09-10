@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -141,14 +158,16 @@
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
 
+
+
 /* S-DD1 decompressor
  *
  * Based on code and documentation by Andreas Naive, who deserves a great deal
  * of thanks and credit for figuring this out.
  *
  * Andreas says:
- * The author is greatly indebted with The Dumper, without whose help and 
- * patience providing him with real S-DD1 data the research had never been 
+ * The author is greatly indebted with The Dumper, without whose help and
+ * patience providing him with real S-DD1 data the research had never been
  * possible. He also wish to note that in the very beggining of his research,
  * Neviksti had done some steps in the right direction. By last, the author is
  * indirectly indebted to all the people that worked and contributed in the
@@ -274,7 +293,7 @@ static inline uint8 ProbGetBit(uint8 context){
 
 static inline uint8 GetBit(uint8 cur_bitplane){
     uint8 bit;
-    
+
     bit=ProbGetBit(((cur_bitplane&1)<<4)
                    | ((prev_bits[cur_bitplane]&high_context_bits)>>5)
                    | (prev_bits[cur_bitplane]&low_context_bits));
@@ -289,7 +308,7 @@ void SDD1_decompress(uint8 *out, uint8 *in, int len){
     uint8 byte1, byte2;
 
     if(len==0) len=0x10000;
-    
+
     bitplane_type=in[0]>>6;
 
     switch(in[0]&0x30){
@@ -412,7 +431,7 @@ void SDD1_init(uint8 *in){
 uint8 SDD1_get_byte(void){
     uint8 bit;
     uint8 byte=0;
-    
+
     switch(bitplane_type){
       case 0:
         num_bits+=16;

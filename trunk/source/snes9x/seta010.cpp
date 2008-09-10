@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 #include "seta.h"
 #include "memmap.h"
@@ -307,7 +326,7 @@ short ST010_Cos(short Theta)
 void ST010_OP01(short x0, short y0, short &x1, short &y1, short &Quadrant, short &Theta)
 {
  	if ((x0 < 0) && (y0 < 0))
-	{	
+	{
 		x1 = -x0;
 		y1 = -y0;
 		Quadrant = -0x8000;
@@ -327,7 +346,7 @@ void ST010_OP01(short x0, short y0, short &x1, short &y1, short &Quadrant, short
 	else
 	{
 		x1 = x0;
-		y1 = y0;	
+		y1 = y0;
 		Quadrant = 0x0000;
 	}
 
@@ -366,7 +385,7 @@ void SETA_Distance(short Y0, short X0, short &Distance)
 	Distance = ((X0 * 0x7af0) + 0x4000) >> 15;
 }
 
-void ST010_SortDrivers(uint16 Positions, uint16 Places[32], uint16 Drivers[32]) 
+void ST010_SortDrivers(uint16 Positions, uint16 Places[32], uint16 Drivers[32])
 {
 	bool Sorted;
 	uint16 Temp;
@@ -375,7 +394,7 @@ void ST010_SortDrivers(uint16 Positions, uint16 Places[32], uint16 Drivers[32])
 		do {
 			Sorted = true;
 			for (int i = 0; i < Positions - 1; i++)
-				if (Places[i] < Places[i + 1]) 
+				if (Places[i] < Places[i + 1])
 				{
 					Temp = Places[i + 1];
 					Places[i + 1] = Places[i];
@@ -425,7 +444,7 @@ void S9xSetST010(uint32 Address, uint8 Byte)
 		case 0x02:
 			{
 #ifdef FAST_LSB_WORD_ACCESS
-				ST010_SortDrivers(*(short*)&SRAM[0x0024], (uint16*) (SRAM + 0x0040), (uint16*) (SRAM + 0x0080));
+				ST010_SortDrivers(*(uint16*)(Memory.SRAM + 0x0024), (uint16*) (Memory.SRAM + 0x0040), (uint16*) (Memory.SRAM + 0x0080));
 #else
 				uint16 Places[32];
 				uint16 Positions = ST010_WORD(0x0024);
@@ -433,25 +452,25 @@ void S9xSetST010(uint32 Address, uint8 Byte)
 
 				Offset = 0;
 
-				for (Pos = 0; Pos < Positions; Pos++) 
+				for (Pos = 0; Pos < Positions; Pos++)
 				{
 					Places[Pos] = ST010_WORD(0x0040 + Offset);
 					Offset += 2;
 				}
 
-				ST010_SortDrivers(Positions, Places, (uint16*) (SRAM + 0x0080));
+				ST010_SortDrivers(Positions, Places, (uint16*) (Memory.SRAM + 0x0080));
 
 				Offset = 0;
 
 				for (Pos = 0; Pos < Positions; Pos++)
 				{
-					SRAM[0x0040 + Offset]=(uint8)(Places[Pos]);
-					SRAM[0x0041 + Offset]=(uint8)(Places[Pos] >> 8);
+					Memory.SRAM[0x0040 + Offset]=(uint8)(Places[Pos]);
+					Memory.SRAM[0x0041 + Offset]=(uint8)(Places[Pos] >> 8);
 					Offset += 2;
 				}
-#endif			
+#endif
 				break;
-				
+
 			}
 
 		// Two Dimensional Coordinate Scale
@@ -531,23 +550,23 @@ void S9xSetST010(uint32 Address, uint8 Byte)
 				{
 					// Calculate Mode 7 Matrix A/D data
 					data = ST010_M7Scale[line] * ST010_Cos(Theta) >> 15;
-				
+
 					Memory.SRAM[0x00f0 + offset]=(uint8)(data);
 					Memory.SRAM[0x00f1 + offset]=(uint8)(data >> 8);
 					Memory.SRAM[0x0510 + offset]=(uint8)(data);
-					Memory.SRAM[0x0511 + offset]=(uint8)(data >> 8); 
+					Memory.SRAM[0x0511 + offset]=(uint8)(data >> 8);
 
 					// Calculate Mode 7 Matrix B/C data
-					data = ST010_M7Scale[line] * ST010_Sin(Theta) >> 15;  
+					data = ST010_M7Scale[line] * ST010_Sin(Theta) >> 15;
 
 					Memory.SRAM[0x0250 + offset]=(uint8)(data);
 					Memory.SRAM[0x0251 + offset]=(uint8)(data >> 8);
-		
+
 					if (data) data = ~data;
-				 
+
 					Memory.SRAM[0x03b0 + offset]=(uint8)(data);
 					Memory.SRAM[0x03b1 + offset]=(uint8)(data >> 8);
-		
+
 					offset += 2;
 				}
 
@@ -655,9 +674,9 @@ void S9xSetST010(uint32 Address, uint8 Byte)
 				int16 xpos_max = ST010_WORD(0x00C2);
 
 				// current coordinates and direction
-				int32 ypos = SRAM[0xC4]|(SRAM[0xC5]<<8)|(SRAM[0xC6]<<16)|(SRAM[0xC7]<<24);
-				int32 xpos = SRAM[0xC8]|(SRAM[0xC9]<<8)|(SRAM[0xCA]<<16)|(SRAM[0xCB]<<24);
-				uint16 rot = SRAM[0xCC]|(SRAM[0xCD]<<8);
+				int32 ypos = Memory.SRAM[0xC4]|(Memory.SRAM[0xC5]<<8)|(Memory.SRAM[0xC6]<<16)|(Memory.SRAM[0xC7]<<24);
+				int32 xpos = Memory.SRAM[0xC8]|(Memory.SRAM[0xC9]<<8)|(Memory.SRAM[0xCA]<<16)|(Memory.SRAM[0xCB]<<24);
+				uint16 rot = Memory.SRAM[0xCC]|(Memory.SRAM[0xCD]<<8);
 
 				// physics
 				uint16 speed = ST010_WORD(0x00D4);
@@ -680,10 +699,10 @@ void S9xSetST010(uint32 Address, uint8 Byte)
 				dy = ypos_max-(ypos>>16);
 
 				// quirk: clear and move in9
-				SRAM[0xD2]=0xFF;
-				SRAM[0xD3]=0xFF;
-				SRAM[0xDA]=0;
-				SRAM[0xDB]=0;
+				Memory.SRAM[0xD2]=0xFF;
+				Memory.SRAM[0xD3]=0xFF;
+				Memory.SRAM[0xDA]=0;
+				Memory.SRAM[0xDB]=0;
 
 				// grab the target angle
 				ST010_OP01(dy,dx,a1,b1,c1,(int16 &)o1);
@@ -770,24 +789,24 @@ void S9xSetST010(uint32 Address, uint8 Byte)
 				xpos &= 0x1FFFFFFF;
 				ypos &= 0x1FFFFFFF;
 
-				SRAM[0x00C0]=(uint8)(ypos_max);
-				SRAM[0x00C1]=(uint8)(ypos_max >> 8);
-				SRAM[0x00C2]=(uint8)(xpos_max);
-				SRAM[0x00C3]=(uint8)(xpos_max >> 8);
-				SRAM[0x00C4]=(uint8)(ypos);
-				SRAM[0x00C5]=(uint8)(ypos >> 8);
-				SRAM[0x00C6]=(uint8)(ypos >> 16);
-				SRAM[0x00C7]=(uint8)(ypos >> 24);
-				SRAM[0x00C8]=(uint8)(xpos);
-				SRAM[0x00C9]=(uint8)(xpos >> 8);
-				SRAM[0x00CA]=(uint8)(xpos >> 16);
-				SRAM[0x00CB]=(uint8)(xpos >> 24);
-				SRAM[0x00CC]=(uint8)(rot);
-				SRAM[0x00CD]=(uint8)(rot >> 8);
-				SRAM[0x00D4]=(uint8)(speed);
-				SRAM[0x00D5]=(uint8)(speed >> 8);
-				SRAM[0x00DC]=(uint8)(flags);
-				SRAM[0x00DD]=(uint8)(flags >> 8);
+				Memory.SRAM[0x00C0]=(uint8)(ypos_max);
+				Memory.SRAM[0x00C1]=(uint8)(ypos_max >> 8);
+				Memory.SRAM[0x00C2]=(uint8)(xpos_max);
+				Memory.SRAM[0x00C3]=(uint8)(xpos_max >> 8);
+				Memory.SRAM[0x00C4]=(uint8)(ypos);
+				Memory.SRAM[0x00C5]=(uint8)(ypos >> 8);
+				Memory.SRAM[0x00C6]=(uint8)(ypos >> 16);
+				Memory.SRAM[0x00C7]=(uint8)(ypos >> 24);
+				Memory.SRAM[0x00C8]=(uint8)(xpos);
+				Memory.SRAM[0x00C9]=(uint8)(xpos >> 8);
+				Memory.SRAM[0x00CA]=(uint8)(xpos >> 16);
+				Memory.SRAM[0x00CB]=(uint8)(xpos >> 24);
+				Memory.SRAM[0x00CC]=(uint8)(rot);
+				Memory.SRAM[0x00CD]=(uint8)(rot >> 8);
+				Memory.SRAM[0x00D4]=(uint8)(speed);
+				Memory.SRAM[0x00D5]=(uint8)(speed >> 8);
+				Memory.SRAM[0x00DC]=(uint8)(flags);
+				Memory.SRAM[0x00DD]=(uint8)(flags >> 8);
 
 				break;
 			}

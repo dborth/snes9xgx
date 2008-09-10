@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 
 #include "snes9x.h"
@@ -163,10 +182,17 @@ extern struct FxInit_s SuperFX;
 
 void S9xMainLoop (void)
 {
+	if(ICPU.SavedAtOp)
+	{
+		ICPU.SavedAtOp = FALSE;
+		Registers.PCw = CPU.PBPCAtOpcodeStart;
+		if(CPU.PCBase)
+			CPU.Cycles -= CPU.MemSpeed;
+		goto doOp;
+	}
+
 	for (;;)
 	{
-		APU_EXECUTE();
-		
 		if (CPU.Flags)
 		{
 			if (CPU.Flags & NMI_FLAG)
@@ -180,11 +206,11 @@ void S9xMainLoop (void)
 						CPU.WaitingForInterrupt = FALSE;
 						Registers.PCw++;
 					}
-				
+
 					S9xOpcode_NMI();
 				}
 			}
-		
+
 #ifdef DEBUGGER
 			if ((CPU.Flags & BREAK_FLAG) && !(CPU.Flags & SINGLE_STEP_FLAG))
 			{
@@ -202,26 +228,33 @@ void S9xMainLoop (void)
 				}
 			}
 #endif
-			
+
 			CHECK_SOUND();
 
-			if (CPU.Flags & IRQ_PENDING_FLAG)
+			if (CPU.Flags & IRQ_FLAG)
 			{
-				if (CPU.WaitingForInterrupt)
-				{
-					CPU.WaitingForInterrupt = FALSE;
-					Registers.PCw++;
-				}
-
-				if (CPU.IRQActive && !Settings.DisableIRQ)
-				{
-					if (!CheckFlag(IRQ))
-						S9xOpcode_IRQ();
-				}
+				if (CPU.IRQPending)
+					// FIXME: In case of IRQ during WRAM refresh
+					CPU.IRQPending = 0;
 				else
-					CPU.Flags &= ~IRQ_PENDING_FLAG;
+				{
+					if (CPU.WaitingForInterrupt)
+					{
+						CPU.WaitingForInterrupt = FALSE;
+						Registers.PCw++;
+					}
+
+					if (CPU.IRQActive && !Settings.DisableIRQ)
+					{
+						if (!CheckFlag(IRQ))
+						// in IRQ handler $4211 is supposed to be read, so IRQ_FLAG should be cleared.
+							S9xOpcode_IRQ();
+					}
+					else
+						CPU.Flags &= ~IRQ_FLAG;
+				}
 			}
-			
+
 			if (CPU.Flags & SCAN_KEYS_FLAG)
 				break;
 
@@ -239,14 +272,16 @@ void S9xMainLoop (void)
 			}
 #endif
 		}
-		
+
 #ifdef CPU_SHUTDOWN
 		CPU.PBPCAtOpcodeStart = Registers.PBPC;
 #endif
-
+	doOp:
 		register uint8				Op;
 		register struct	SOpcodes	*Opcodes;
-		
+
+		CPU.PrevCycles = CPU.Cycles;
+
 		if (CPU.PCBase)
 		{
 			Op = CPU.PCBase[Registers.PCw];
@@ -259,7 +294,7 @@ void S9xMainLoop (void)
 			OpenBus = Op;
 			Opcodes = S9xOpcodesSlow;
 		}
-		
+
 		if ((Registers.PCw&MEMMAP_MASK) + ICPU.S9xOpLengths[Op] >= MEMMAP_BLOCK_SIZE)
 		{
 			uint8	*oldPCBase = CPU.PCBase;
@@ -268,23 +303,29 @@ void S9xMainLoop (void)
 			if (oldPCBase!=CPU.PCBase || (Registers.PCw&~MEMMAP_MASK) == (0xffff & ~MEMMAP_MASK))
 				Opcodes = S9xOpcodesSlow;
 		}
-		
+
 		Registers.PCw++;
 		(*Opcodes[Op].S9xOpcode)();
-				
-		S9xUpdateAPUTimer();
-		
+
+		if(ICPU.SavedAtOp)
+		{
+			ICPU.SavedAtOp = false;
+			continue;
+		}
+
+		S9xAPUExecute();
+
 		if (SA1.Executing)
 			S9xSA1MainLoop();
-		
-		if (CPU.Cycles >= CPU.NextEvent)
+
+		while (CPU.Cycles >= CPU.NextEvent)
 			S9xDoHEventProcessing();
     }
-	
+
     S9xPackStatus();
     APURegisters.PC = IAPU.PC - IAPU.RAM;
     S9xAPUPackStatus();
-	
+
     if (CPU.Flags & SCAN_KEYS_FLAG)
     {
 #ifdef DEBUGGER
@@ -298,11 +339,11 @@ void S9xMainLoop (void)
 void S9xSetIRQ (uint32 source)
 {
 	CPU.IRQActive |= source;
-	CPU.Flags |= IRQ_PENDING_FLAG;
-	
+	CPU.Flags |= IRQ_FLAG;
+
 	if (CPU.WaitingForInterrupt)
 	{
-		// Force IRQ to trigger immediately after WAI - 
+		// Force IRQ to trigger immediately after WAI -
 		// Final Fantasy Mystic Quest crashes without this.
 		CPU.WaitingForInterrupt = FALSE;
 		Registers.PCw++;
@@ -316,6 +357,10 @@ void S9xClearIRQ (uint32 source)
 
 void S9xDoHEventProcessing (void)
 {
+#ifdef DEBUGGER
+	char	mes[256];
+#endif
+
 #ifdef CPU_SHUTDOWN
 	CPU.WaitCounter++;
 #endif
@@ -323,17 +368,23 @@ void S9xDoHEventProcessing (void)
     {
 		case HC_HBLANK_START_EVENT:
 			S9xCheckMissingHTimerPosition(Timings.HBlankStart);
-			
+
 			break;
-			
+
 		case HC_HDMA_START_EVENT:
 			if (IPPU.HDMA && CPU.V_Counter <= PPU.ScreenHeight)
+			{
+			#ifdef DEBUGGER
+				sprintf(mes, "*** HDMA  HC:%04d, Channel:%02x", CPU.Cycles, IPPU.HDMA);
+				S9xTraceMessage(mes);
+			#endif
 				IPPU.HDMA = S9xDoHDMA(IPPU.HDMA);
-			
+			}
+
 			S9xCheckMissingHTimerPosition(Timings.HDMAStart);
-			
+
 			break;
-			
+
 		case HC_HCOUNTER_MAX_EVENT:
 		#ifndef ZSNES_FX
 			if (Settings.SuperFX)
@@ -352,14 +403,12 @@ void S9xDoHEventProcessing (void)
 		#endif
 
 			CPU.Cycles -= Timings.H_Max;
-			IAPU.NextAPUTimerPos -= (Timings.H_Max << SNES_APUTIMER_ACCURACY);
-			if (IAPU.APUExecuting)
-				APU.Cycles -= Timings.H_Max;
-			else
-				APU.Cycles = 0;
+			IAPU.NextAPUTimerPos -= (Timings.H_Max << SNES_APU_ACCURACY);
+			APU.Cycles -= (Timings.H_Max << SNES_APU_ACCURACY);
+
 			if ((Timings.NMITriggerPos != 0xffff) && (Timings.NMITriggerPos >= Timings.H_Max))
 				Timings.NMITriggerPos -= Timings.H_Max;
-			
+
 			ICPU.Scanline++;
 
 			CPU.V_Counter++;
@@ -367,9 +416,9 @@ void S9xDoHEventProcessing (void)
 			{
 				CPU.V_Counter = 0;
 				Timings.InterlaceField ^= 1;
-			
+
 				// From byuu:
-				// [NTSC]			
+				// [NTSC]
 				// interlace mode has 525 scanlines: 263 on the even frame, and 262 on the odd.
 				// non-interlace mode has 524 scanlines: 262 scanlines on both even and odd frames.
 				// [PAL] <PAL info is unverified on hardware>
@@ -379,15 +428,15 @@ void S9xDoHEventProcessing (void)
 					Timings.V_Max = Timings.V_Max_Master + 1;	// 263 (NTSC), 313?(PAL)
 				else
 					Timings.V_Max = Timings.V_Max_Master;		// 262 (NTSC), 312?(PAL)
-				
+
 				Memory.FillRAM[0x213F] ^= 0x80;
 				PPU.RangeTimeOver = 0;
-				
+
 				// FIXME: reading $4210 will wait 2 cycles, then perform reading, then wait 4 more cycles.
 				Memory.FillRAM[0x4210] = Model->_5A22;
 				CPU.Flags &= ~NMI_FLAG;
 				Timings.NMITriggerPos = 0xffff;
-				
+
 				ICPU.Frame++;
 				PPU.HVBeamCounterLatched = 0;
 				CPU.Flags |= SCAN_KEYS_FLAG;
@@ -403,7 +452,7 @@ void S9xDoHEventProcessing (void)
 				Timings.H_Max = Timings.H_Max_Master - ONE_DOT_CYCLE;	// HC=1360
 			else
 				Timings.H_Max = Timings.H_Max_Master;					// HC=1364
-			
+
 			if (Model->_5A22 == 2)
 			{
 				if (CPU.V_Counter != 240 || IPPU.Interlace || !Timings.InterlaceField)	// V=240
@@ -416,7 +465,7 @@ void S9xDoHEventProcessing (void)
 			}
 			else
 				Timings.WRAMRefreshPos = SNES_WRAM_REFRESH_HC_v1;
-			
+
 			S9xCheckMissingHTimerPosition(0);
 
 			if (CPU.V_Counter == PPU.ScreenHeight + FIRST_VISIBLE_LINE)	// VBlank starts from V=225(240).
@@ -435,7 +484,7 @@ void S9xDoHEventProcessing (void)
 					PPU.OAMAddr = PPU.SavedOAMAddr;
 
 					uint8	tmp = 0;
-					
+
 					if (PPU.OAMPriorityRotation)
 						tmp = (PPU.OAMAddr & 0xFE) >> 1;
 					if ((PPU.OAMFlip & 1) || PPU.FirstSprite!=tmp)
@@ -443,7 +492,7 @@ void S9xDoHEventProcessing (void)
 						PPU.FirstSprite = tmp;
 						IPPU.OBJChanged = TRUE;
 					}
-					
+
 					PPU.OAMFlip = 0;
 				}
 
@@ -458,44 +507,47 @@ void S9xDoHEventProcessing (void)
 				}
 
 			}
-			
+
 			if (CPU.V_Counter == PPU.ScreenHeight + 3)	// FIXME: not true
-				S9xDoAutoJoypad();
-			
+			{
+				if (Memory.FillRAM[0x4200] & 1)
+					S9xDoAutoJoypad();
+			}
+
 			if (CPU.V_Counter == FIRST_VISIBLE_LINE)	// V=1
 				S9xStartScreenRefresh();
-			
+
 			CPU.NextEvent = -1;
-					
+
 			break;
-			
+
 		case HC_HDMA_INIT_EVENT:
 			if (CPU.V_Counter == 0)
 				S9xStartHDMA();
-			
+
 			S9xCheckMissingHTimerPosition(Timings.HDMAInit);
-			
+
 			break;
-			
+
 		case HC_RENDER_EVENT:
 			if (CPU.V_Counter >= FIRST_VISIBLE_LINE && CPU.V_Counter <= PPU.ScreenHeight)
-				RenderLine(CPU.V_Counter - FIRST_VISIBLE_LINE);
-			
+				RenderLine((uint8)(CPU.V_Counter - FIRST_VISIBLE_LINE));
+
 			S9xCheckMissingHTimerPosition(Timings.RenderPos);
-			
+
 			break;
-			
+
 		case HC_WRAM_REFRESH_EVENT:
-			if (!CPU.InDMA)
-			{
-				S9xCheckMissingHTimerPositionRange(Timings.WRAMRefreshPos, SNES_WRAM_REFRESH_CYCLES);			
-				CPU.Cycles += SNES_WRAM_REFRESH_CYCLES;
-				S9xUpdateAPUTimer();
-				APU_EXECUTE();
-			}
-			else
-				S9xCheckMissingHTimerPosition(Timings.WRAMRefreshPos);
-			
+		#ifdef DEBUGGER
+			sprintf(mes, "*** WRAM Refresh  HC:%04d", CPU.Cycles);
+			S9xTraceMessage(mes);
+		#endif
+			S9xCheckMissingHTimerHalt(Timings.WRAMRefreshPos, SNES_WRAM_REFRESH_CYCLES);
+			CPU.Cycles += SNES_WRAM_REFRESH_CYCLES;
+			S9xAPUExecute();
+
+			S9xCheckMissingHTimerPosition(Timings.WRAMRefreshPos);
+
 			break;
 
 		case HC_IRQ_1_3_EVENT:
@@ -509,9 +561,9 @@ void S9xDoHEventProcessing (void)
 			else
 			if (PPU.VTimerEnabled && (CPU.V_Counter == PPU.VTimerPosition))
 				S9xSetIRQ(PPU_V_BEAM_IRQ_SOURCE);
-			
+
 			break;
     }
-	
+
     S9xReschedule();
 }

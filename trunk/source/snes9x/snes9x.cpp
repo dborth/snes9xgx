@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -141,6 +158,8 @@
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
 
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -160,7 +179,9 @@
 
 #ifndef NGC
 #include "netplay.h"
+#include "logger.h"
 #endif
+#include "gfx.h"
 
 #ifdef DEBUGGER
 extern FILE *trace;
@@ -182,11 +203,10 @@ void S9xUsage ()
     S9xMessage(S9X_INFO, S9X_USAGE, "-ratio or -ra <num>             Ratio of 65c816 to SPC700 instructions (ignored)");
 #endif
     S9xMessage(S9X_INFO, S9X_USAGE, "-soundquality, -sq, or -r <num> Set sound playback quality");
-#ifdef __sgi
-/* BS: changed the sample rate values to match the IRIX options */
+#ifndef __MSDOS__
     S9xMessage (S9X_INFO, S9X_USAGE, "\
                                   0 - off, 1 - 8192, 2 - 11025, 3 - 16000,\n\
-                                  4 - 22050 (default), 5 - 32000, 6 - 44100,\n\
+                                  4 - 22050, 5 - 32000 (default), 6 - 44100,\n\
                                   7 - 48000");
 #else
     S9xMessage (S9X_INFO, S9X_USAGE, "\
@@ -202,8 +222,7 @@ void S9xUsage ()
 #ifdef USE_THREADS
     S9xMessage(S9X_INFO, S9X_USAGE, "-threadsound or -ts             Use a separate thread to output sound");
 #endif
-    S9xMessage(S9X_INFO, S9X_USAGE, "-interpolatedsound or -is <0-3> Select sound interpolation method\n\
-                                  0=none, 1=linear, 2=cubic, 3=gaussian");
+    S9xMessage(S9X_INFO, S9X_USAGE, "-nois                           Turn off interpolated sound");
     S9xMessage(S9X_INFO, S9X_USAGE, "-echo or -e                     Enable DSP echo effects at startup");
     S9xMessage(S9X_INFO, S9X_USAGE, "-noecho or -ne                  Disable DSP echo effects at startup");
     S9xMessage(S9X_INFO, S9X_USAGE, "-envx or -ex                    Enable volume envelope height reading");
@@ -211,7 +230,7 @@ void S9xUsage ()
     S9xMessage(S9X_INFO, S9X_USAGE, "-nomastervolume or -nmv         Disable master volume setting");
     S9xMessage(S9X_INFO, S9X_USAGE, "-fix                            'Fix' sound frequencies");
     S9xMessage(S9X_INFO, S9X_USAGE, "");
-    
+
     /* FEATURE OPTIONS */
     S9xMessage(S9X_INFO, S9X_USAGE, "-conf <filename>                Use specified conf file (after standard files)");
     S9xMessage(S9X_INFO, S9X_USAGE, "-nostdconf                      Do not load the standard config files");
@@ -258,11 +277,17 @@ void S9xUsage ()
     S9xMessage(S9X_INFO, S9X_USAGE, "-nodsp1                         Force detection of no DSP-1 chip");
     S9xMessage(S9X_INFO, S9X_USAGE, "");
 
-#ifdef DEBUGGER
+    /* Multi ROMs OPTIONS */
+    S9xMessage(S9X_INFO, S9X_USAGE, "-multi                          Enable multi cartridge system");
+    S9xMessage(S9X_INFO, S9X_USAGE, "-carta <filename>               ROM in slot A. Use with -multi");
+    S9xMessage(S9X_INFO, S9X_USAGE, "-cartb <filename>               ROM in slot B. Use with -multi");
+
     /* OPTIONS FOR DEBUGGING USE */
-    S9xMessage(S9X_INFO, S9X_USAGE, "-cycles or -h <1-199>           Percentage of CPU cycles to execute per scanline");
+    S9xMessage(S9X_INFO, S9X_USAGE, "-hdmahacks or -h <1-199>        Changes HDMA transfer timing");
     S9xMessage(S9X_INFO, S9X_USAGE, "-speedhacks or -sh              Enable speed hacks");
     S9xMessage(S9X_INFO, S9X_USAGE, "-nospeedhacks or -nsh           Disable speed hacks");
+    S9xMessage(S9X_INFO, S9X_USAGE, "-invalidvramaccess              Allow invalid VRAM access");
+#ifdef DEBUGGER
     S9xMessage(S9X_INFO, S9X_USAGE, "-debug or -d                    Set the Debugger flag at startup");
     S9xMessage(S9X_INFO, S9X_USAGE, "-trace or -t                    Begin CPU instruction tracing at startup");
     S9xMessage(S9X_INFO, S9X_USAGE, "-noirq                          Disable processor IRQ (for debugging)");
@@ -296,7 +321,7 @@ void S9xUsage ()
     S9xMessage(S9X_INFO, S9X_USAGE, "                   one-justifier   ditto");
     S9xMessage(S9X_INFO, S9X_USAGE, "                   two-justifiers  Blue & Pink Justifiers");
     S9xMessage(S9X_INFO, S9X_USAGE, "                   mp5:####        MP5 with the 4 named pads (1-8 or n)");
-    
+
     S9xMessage(S9X_INFO, S9X_USAGE, "");
 
 #ifdef NETPLAY_SUPPORT
@@ -316,15 +341,24 @@ void S9xUsage ()
     S9xMessage(S9X_INFO, S9X_USAGE, "-ahiunit <num>                  Set AHI Unit to <num>");
     S9xMessage(S9X_INFO, S9X_USAGE, "");
 #endif
-
+    S9xMessage(S9X_INFO, S9X_USAGE, "   DeHackEd's commands:");
+    S9xMessage(S9X_INFO, S9X_USAGE, "-dumpstreams                    Save audio/video data to disk");
+    S9xMessage(S9X_INFO, S9X_USAGE, "-mute                           Don't output audio to sound card, use with above.");
+    S9xMessage(S9X_INFO, S9X_USAGE, "-upanddown                      Override protection from pressing");
+    S9xMessage(S9X_INFO, S9X_USAGE, "                                left+right or up+down together");
+    S9xMessage(S9X_INFO, S9X_USAGE, "-autodemo                       Start emulator playing a movie");
+    S9xMessage(S9X_INFO, S9X_USAGE, "-maxframes <num>                Stop emulator after playing specified");
+    S9xMessage(S9X_INFO, S9X_USAGE, "                                number of frames. Requires -dumpstreams");
+    S9xMessage(S9X_INFO, S9X_USAGE, "-oldturbo                       Turbo button renders all frames, but slower");
+    S9xMessage(S9X_INFO, S9X_USAGE, "");
 #ifndef NGC
-    S9xExtraUsage();
+   S9xExtraUsage();
 #endif
 
     S9xMessage (S9X_INFO, S9X_USAGE, "\
 \nROM image needs to be in Super MagiCom (*.smc), Super FamiCom (*.sfc),\n\
 *.fig, or split (*.1, *.2, or sf32527a, sf32527b, etc) format and can be\n\
-compressed with zip, gzip, or compress.\n");
+compressed with zip, gzip, JMA, or compress.\n");
 
     exit (1);
 }
@@ -422,13 +456,13 @@ char *S9xParseArgs (char **argv, int argc)
 		    S9xUsage ();
 	    }
 	    else if (strcasecmp (argv [i], "-h") == 0 ||
-		     strcasecmp (argv [i], "-cycles") == 0)
+		     strcasecmp (argv [i], "-hdmahacks") == 0)
 	    {
 		if (i + 1 < argc)
 		{
 		    int p = atoi (argv [++i]);
 		    if (p > 0 && p < 200)
-			Settings.CyclesPercentage = p;
+			Settings.HDMATimingHack = p;
 		}
 		else
 		    S9xUsage ();
@@ -452,6 +486,10 @@ char *S9xParseArgs (char **argv, int argc)
 		     strcasecmp (argv [i], "-speedhacks") == 0)
 	    {
 		Settings.ShutdownMaster = TRUE;
+	    }
+	    else if (strcasecmp (argv [i], "-invalidvramaccess") == 0)
+	    {
+		Settings.BlockInvalidVRAMAccess = FALSE;
 	    }
 	    else if (strcasecmp (argv [i], "-p") == 0 ||
 		     strcasecmp (argv [i], "-pal") == 0)
@@ -529,7 +567,7 @@ char *S9xParseArgs (char **argv, int argc)
 		Settings.ForceNoTransparency = TRUE;
 		Settings.ForceTransparency = FALSE;
 	    }
-	    else if (strcasecmp (argv [i], "-hi") == 0 ||   
+	    else if (strcasecmp (argv [i], "-hi") == 0 ||
 		     strcasecmp (argv [i], "-hires") == 0)
 	    {
 		Settings.SupportHiRes = TRUE;
@@ -543,6 +581,8 @@ char *S9xParseArgs (char **argv, int argc)
 	    {
 		Settings.DisplayFrameRate = TRUE;
 	    }
+	    else if (strcasecmp (argv [i], "-nomessagesinimage") == 0)
+		Settings.AutoDisplayMessages = FALSE;
 	    else if (strcasecmp (argv [i], "-i") == 0 ||
 		     strcasecmp (argv [i], "-interleaved") == 0)
 		Settings.ForceInterleaved = TRUE;
@@ -669,14 +709,8 @@ char *S9xParseArgs (char **argv, int argc)
 		    double ft;
 		    if (sscanf (argv [++i], "%lf", &ft) == 1)
 		    {
-#ifdef __WIN32__
-			Settings.FrameTimePAL = (int32) (ft * 1000);
-			Settings.FrameTimeNTSC = (int32) (ft * 1000);
-#else
-			Settings.FrameTimePAL = (int32) ft;
-			Settings.FrameTimeNTSC = (int32) ft;
-#endif
-
+				Settings.FrameTimePAL = (int32) ft;
+				Settings.FrameTimeNTSC = (int32) ft;
 		    }
 		}
 		else
@@ -739,10 +773,9 @@ char *S9xParseArgs (char **argv, int argc)
 		Settings.SoundEnvelopeHeightReading = TRUE;
 		Settings.InterpolatedSound = TRUE;
 	    }
-	    else if (strcasecmp (argv [i], "-interpolatedsound") == 0 ||
-		     strcasecmp (argv [i], "-is") == 0)
+	    else if (strcasecmp (argv [i], "-nois") == 0)
 	    {
-		Settings.InterpolatedSound = TRUE;
+		Settings.InterpolatedSound = FALSE;
 	    }
 #ifdef USE_THREADS
 	    else if (strcasecmp (argv [i], "-threadsound") == 0 ||
@@ -833,6 +866,26 @@ char *S9xParseArgs (char **argv, int argc)
              }
             }
 #endif
+            else if (strcasecmp (argv[i], "-dumpstreams") == 0)
+                dumpstreams = 1;
+            else if (strcasecmp (argv[i], "-maxframes") == 0)
+                maxframes = atoi(argv[++i]);
+            else if (strcasecmp (argv[i], "-mute") == 0)
+                Settings.Mute = 1;
+            else if (strcasecmp (argv[i], "-upanddown") == 0)
+                Settings.UpAndDown = 1;
+            else if (strcasecmp (argv[i], "-oldturbo") == 0)
+                Settings.OldTurbo = 1;
+            else if (strcasecmp(argv[i], "-autodemo") == 0) {
+		i++;
+		if (!argv[i])
+			abort();
+                strcpy(autodemo, argv[i]);
+            }
+            else if (strcasecmp(argv[i], "-keypress") == 0) // videologger output of controller 1
+                Settings.DisplayPressedKeys = 1;
+            else if (strcasecmp(argv[i], "-keypress2") == 0) // S9xDisplayMessages output of all controllers and peripherals
+                Settings.DisplayPressedKeys = 2;
 	    else if (strcasecmp (argv [i], "-conf") == 0)
 	    {
                 if (++i>=argc) S9xUsage();
@@ -842,6 +895,33 @@ char *S9xParseArgs (char **argv, int argc)
             {
                 // Do nothing, S9xLoadConfigFiles() handled it
             }
+	    else if (strcasecmp (argv [i], "-version") == 0)
+	    {
+              printf("Snes9X " VERSION "\n");
+              exit(0);
+	    }
+	    else if (strcasecmp (argv [i], "-help") == 0)
+	    {
+			S9xUsage();
+	    }
+	    else if (strcasecmp (argv [i], "-multi") == 0)
+		{
+			Settings.Multi = TRUE;
+		}
+	    else if (strcasecmp (argv [i], "-carta") == 0)
+	    {
+			if (i + 1 < argc)
+			{
+		    	strncpy (Settings.CartAName, argv [++i], _MAX_PATH);
+			}
+		}
+	    else if (strcasecmp (argv [i], "-cartb") == 0)
+	    {
+			if (i + 1 < argc)
+			{
+		    	strncpy (Settings.CartBName, argv [++i], _MAX_PATH);
+			}
+		}
 
 	    else
 		S9xParseArg (argv, i, argc);
@@ -855,7 +935,6 @@ char *S9xParseArgs (char **argv, int argc)
 #endif
 
     return (rom_filename);
-
 }
 
 #ifndef NGC
@@ -883,7 +962,7 @@ void S9xParseCheatsFile (const char *rom_filename)
     {
         while(fgets(buf, 80, f) != NULL)
         {
-	    if ((p = strrchr (buf, '\n')) != NULL) 
+	    if ((p = strrchr (buf, '\n')) != NULL)
 		*p = '\0';
 	    if (((error = S9xGameGenieToRaw (buf, address, byte)) == NULL) ||
 		((error = S9xProActionReplayToRaw (buf, address, byte)) == NULL))
@@ -954,7 +1033,7 @@ static void parse_crosshair_spec(enum crosscontrols ctl, const char *spec){
 static bool try_load(const char *fname, ConfigFile &conf){
     STREAM fp;
     if((fp=OPEN_STREAM(fname, "r"))!=NULL){
-        fprintf(stderr, "Reading config file %s\n", fname);
+        fprintf(stdout, "Reading config file %s\n", fname);
         conf.LoadFile(new fReader(fp));
         CLOSE_STREAM(fp);
         return true;
@@ -973,7 +1052,7 @@ void S9xLoadConfigFiles(char **argv, int argc){
         }
     }
 
-    ConfigFile conf;
+	static ConfigFile conf; // static because some of its functions return pointers that would otherwise become invalid after this function
     conf.Clear();
 
     if(!skip){
@@ -1009,10 +1088,11 @@ void S9xLoadConfigFiles(char **argv, int argc){
     /* Parse config file here */
     Settings.NextAPUEnabled=conf.GetBool("Sound::APUEnabled", Settings.APUEnabled);
     Settings.SoundSkipMethod=conf.GetInt("Sound::SoundSkip", 0);
-    i=conf.GetInt("CPU::Cycles", 100);
-    if(i>0 && i<200) Settings.CyclesPercentage = i;
+    i=conf.GetInt("CPU::HDMATimingHack", 100);
+    if(i>0 && i<200) Settings.HDMATimingHack = i;
     Settings.DisableHDMA=conf.GetBool("Settings::DisableHDMA", false);
-    Settings.ShutdownMaster=conf.GetBool("Settings::SpeedHacks", true);
+    Settings.ShutdownMaster=conf.GetBool("Settings::SpeedHacks", false);
+	Settings.BlockInvalidVRAMAccess=conf.GetBool("Settings::BlockInvalidVRAMAccess", true);
     Settings.ForcePAL=conf.GetBool("ROM::PAL", false);
     Settings.ForceNTSC=conf.GetBool("ROM::NTSC", false);
     if(!strcasecmp(conf.GetString("Settings::FrameSkip", "Auto"),"Auto")){
@@ -1023,6 +1103,7 @@ void S9xLoadConfigFiles(char **argv, int argc){
     Settings.TurboSkipFrames=conf.GetUInt("Settings::TurboFrameSkip", 15);
     Settings.TurboMode=conf.GetBool("Settings::TurboMode",false);
     Settings.StretchScreenshots=conf.GetInt("Settings::StretchScreenshots",1);
+    Settings.InitialInfoStringTimeout=conf.GetInt("Settings::MessageDisplayTime",120);
     Settings.AutoSaveDelay=conf.GetUInt("Settings::AutoSaveDelay", 30);
     Settings.ForceHiROM=conf.GetBool("ROM::HiROM", false);
     Settings.ForceLoROM=conf.GetBool("ROM::LoROM", false);
@@ -1045,6 +1126,11 @@ void S9xLoadConfigFiles(char **argv, int argc){
     }
     Settings.SupportHiRes=conf.GetBool("Display::HiRes", true);
     Settings.DisplayFrameRate=conf.GetBool("Display::FrameRate", false);
+    if(conf.Exists("Display::DisplayInput"))
+		Settings.DisplayPressedKeys=conf.GetBool("Display::DisplayInput", false)?1:0;
+//    GFX.FrameDisplay=conf.GetBool("Display::DisplayFrameCount", false);
+    GFX.FrameDisplay=TRUE;
+	Settings.AutoDisplayMessages=conf.GetBool("Display::MessagesInImage", true);
     if(conf.Exists("ROM::Interleaved")){
         Settings.ForceInterleaved=conf.GetBool("ROM::Interleaved", false);
         Settings.ForceNotInterleaved=!Settings.ForceInterleaved;
@@ -1068,14 +1154,8 @@ void S9xLoadConfigFiles(char **argv, int argc){
         double ft;
         if (sscanf(conf.GetString("Settings::FrameTime"), "%lf", &ft) == 1)
         {
-#ifdef __WIN32__
-            Settings.FrameTimePAL = (int32) (ft * 1000);
-            Settings.FrameTimeNTSC = (int32) (ft * 1000);
-#else
             Settings.FrameTimePAL = (int32) ft;
             Settings.FrameTimeNTSC = (int32) ft;
-#endif
-
         }
     }
     Settings.FrameTime = Settings.FrameTimeNTSC;
@@ -1094,7 +1174,7 @@ void S9xLoadConfigFiles(char **argv, int argc){
     Settings.SoundEnvelopeHeightReading=conf.GetBool("Sound::EnvelopeHeightReading");
     Settings.DisableSampleCaching=!conf.GetBool("Sound::SampleCaching");
     Settings.DisableMasterVolume=!conf.GetBool("Sound::MasterVolume");
-    Settings.InterpolatedSound=conf.GetBool("Sound::Interpolate", false);
+    Settings.InterpolatedSound=conf.GetBool("Sound::Interpolate", true);
     if(conf.Exists("Sound::Sync")){
         Settings.SoundSync=conf.GetInt("Sound::Sync", 1);
         if(Settings.SoundSync>2) Settings.SoundSync=1;
@@ -1147,7 +1227,7 @@ void S9xLoadConfigFiles(char **argv, int argc){
     Settings.Port = NP_DEFAULT_PORT;
     if(conf.Exists("Netplay::Port")){
         Settings.NetPlay = TRUE;
-        Settings.Port = -conf.GetUInt("Netplay::Port");
+        Settings.Port = -(int)conf.GetUInt("Netplay::Port");
     }
     Settings.ServerName[0]='\0';
     if(conf.Exists("Netplay::Server")){
@@ -1169,6 +1249,12 @@ void S9xLoadConfigFiles(char **argv, int argc){
     }
 #endif
     Settings.JoystickEnabled=conf.GetBool("Controls::Joystick", Settings.JoystickEnabled);
+    Settings.UpAndDown=conf.GetBool("Controls::AllowLeftRight", false);
+	Settings.SnapshotScreenshots=conf.GetBool("Settings::SnapshotScreenshots", true);
+    Settings.MovieTruncate=conf.GetBool("Settings::MovieTruncateAtEnd", false);
+	Settings.MovieNotifyIgnored=conf.GetBool("Settings::MovieNotifyIgnored", false);
+	Settings.DisplayWatchedAddresses=conf.GetBool("Settings::DisplayWatchedAddresses", false);
+	Settings.WrongMovieStateProtection=conf.GetBool("Settings::WrongMovieStateProtection", true);
     rom_filename=conf.GetStringDup("ROM::Filename", NULL);
 
     S9xParsePortConfig(conf, 1);

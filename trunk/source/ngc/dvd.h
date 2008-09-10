@@ -16,5 +16,6 @@ int LoadDVDFile (unsigned char *buffer);
 bool TestDVD();
 int dvd_read (void *dst, unsigned int len, u64 offset);
 bool SwitchDVDFolder(char dir[]);
+void SetDVDDriveType();
 
 #endif

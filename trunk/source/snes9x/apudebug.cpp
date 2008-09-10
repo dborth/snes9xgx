@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -142,15 +159,13 @@
 **********************************************************************************/
 
 
+
+
 #include "snes9x.h"
 #include "spc700.h"
 #include "apu.h"
 #include "soundux.h"
 #include "cpuexec.h"
-
-#ifdef SPCTOOL
-#include "spctool/spc700.h"
-#endif
 
 #ifdef DEBUGGER
 extern int32 env_counter_table[32];
@@ -158,69 +173,69 @@ extern int32 env_counter_table[32];
 FILE *apu_trace = NULL;
 
 static char *S9xMnemonics [256] = {
-    "NOP", "TCALL 0", "SET1 $%02X.0", "BBS $%02X.0,$%04X", 
-    "OR A,$%02X", "OR A,!$%04X", "OR A,(X)", "OR A,[$%02X+X]", 
-    "OR A,#$%02X", "OR $%02X,$%02X", "OR1 C,$%04X.%d", "ASL $%02X", 
-    "MOV !$%04X,Y", "PUSH PSW", "TSET1 !$%04X", "BRK", 
-    "BPL $%04X", "TCALL 1", "CLR1 $%02X.0", "BBC $%02X.0,$%04X", 
-    "OR A,$%02X+X", "OR A,!$%04X+X", "OR A,!$%04X+Y", "OR A,[$%02X]+Y", 
-    "OR $%02X,#$%02X", "OR (X),(Y)", "DECW $%02X", "ASL $%02X+X", 
-    "ASL A", "DEC X", "CMP X,!$%04X", "JMP [!$%04X+X]", 
-    "CLRP", "TCALL 2", "SET1 $%02X.1", "BBS $%02X.1,$%04X", 
-    "AND A,$%02X", "AND A,!$%04X", "AND A,(X)", "AND A,[$%02X+X]", 
-    "AND A,#$%02X", "AND $%02X,$%02X", "OR1 C,/$%04X.%d", "ROL $%02X", 
-    "ROL !$%04X", "PUSH A", "CBNE $%02X,$%04X", "BRA $%04X", 
-    "BMI $%04X", "TCALL 3", "CLR1 $%02X.1", "BBC $%02X.1,$%04X", 
-    "AND A,$%02X+X", "AND A,!$%04X+X", "AND A,!$%04X+Y", "AND A,[$%02X]+Y", 
-    "AND $%02X,#$%02X", "AND (X),(Y)", "INCW $%02X", "ROL $%02X+X", 
-    "ROL A", "INC X", "CMP X,$%02X", "CALL !$%04X", 
-    "SETP", "TCALL 4", "SET1 $%02X.2", "BBS $%02X.2,$%04X", 
-    "EOR A,$%02X", "EOR A,!$%04X", "EOR A,(X)", "EOR A,[$%02X+X]", 
-    "EOR A,#$%02X", "EOR $%02X,$%02X", "AND1 C,$%04X.%d", "LSR $%02X", 
-    "LSR !$%04X", "PUSH X", "TCLR1 !$%04X", "PCALL $%02X", 
-    "BVC $%04X", "TCALL 5", "CLR1 $%02X.2", "BBC $%02X.2,$%04X", 
-    "EOR A,$%02X+X", "EOR A,!$%04X+X", "EOR A,!$%04X+Y", "EOR A,[$%02X]+Y", 
-    "EOR $%02X,#$%02X", "EOR (X),(Y)", "CMPW YA,$%02X", "LSR $%02X+X", 
-    "LSR A", "MOV X,A", "CMP Y,!$%04X", "JMP !$%04X", 
-    "CLRC", "TCALL 6", "SET1 $%02X.3", "BBS $%02X.3,$%04X", 
-    "CMP A,$%02X", "CMP A,!$%04X", "CMP A,(X)", "CMP A,[$%02X+X]", 
-    "CMP A,#$%02X", "CMP $%02X,$%02X", "AND1 C,/$%04X.%d", "ROR $%02X", 
-    "ROR !$%04X", "PUSH Y", "DBNZ $%02X,$%04X", "RET", 
-    "BVS $%04X", "TCALL 7", "CLR1 $%02X.3", "BBC $%02X.3,$%04X", 
-    "CMP A,$%02X+X", "CMP A,!$%04X+X", "CMP A,!$%04X+Y", "CMP A,[$%02X]+Y", 
-    "CMP $%02X,#$%02X", "CMP (X),(Y)", "ADDW YA,$%02X", "ROR $%02X+X", 
-    "ROR A", "MOV A,X", "CMP Y,$%02X", "RET1", 
-    "SETC", "TCALL 8", "SET1 $%02X.4", "BBS $%02X.4,$%04X", 
-    "ADC A,$%02X", "ADC A,!$%04X", "ADC A,(X)", "ADC A,[$%02X+X]", 
-    "ADC A,#$%02X", "ADC $%02X,$%02X", "EOR1 C,$%04X.%d", "DEC $%02X", 
-    "DEC !$%04X", "MOV Y,#$%02X", "POP PSW", "MOV $%02X,#$%02X", 
-    "BCC $%04X", "TCALL 9", "CLR1 $%02X.4", "BBC $%02X.4,$%04X", 
-    "ADC A,$%02X+X", "ADC A,!$%04X+X", "ADC A,!$%04X+Y", "ADC A,[$%02X]+Y", 
-    "ADC $%02X,#$%02X", "ADC (X),(Y)", "SUBW YA,$%02X", "DEC $%02X+X", 
-    "DEC A", "MOV X,SP", "DIV YA,X", "XCN A", 
-    "EI", "TCALL 10", "SET1 $%02X.5", "BBS $%02X.5,$%04X", 
-    "SBC A,$%02X", "SBC A,!$%04X", "SBC A,(X)", "SBC A,[$%02X+X]", 
-    "SBC A,#$%02X", "SBC $%02X,$%02X", "MOV1 C,$%04X.%d", "INC $%02X", 
-    "INC !$%04X", "CMP Y,#$%02X", "POP A", "MOV (X)+,A", 
-    "BCS $%04X", "TCALL 11", "CLR1 $%02X.5", "BBC $%02X.5,$%04X", 
-    "SBC A,$%02X+X", "SBC A,!$%04X+X", "SBC A,!$%04X+Y", "SBC A,[$%02X]+Y", 
-    "SBC $%02X,#$%02X", "SBC (X),(Y)", "MOVW YA,$%02X", "INC $%02X+X", 
-    "INC A", "MOV SP,X", "DAS A", "MOV A,(X)+", 
-    "DI", "TCALL 12", "SET1 $%02X.6", "BBS $%02X.6,$%04X", 
-    "MOV $%02X,A", "MOV !$%04X,A", "MOV (X),A", "MOV [$%02X+X],A", 
-    "CMP X,#$%02X", "MOV !$%04X,X", "MOV1 $%04X.%d,C", "MOV $%02X,Y", 
-    "ASL !$%04X", "MOV X,#$%02X", "POP X", "MUL YA", 
-    "BNE $%04X", "TCALL 13", "CLR1 $%02X.6", "BBC $%02X.6,$%04X", 
-    "MOV $%02X+X,A", "MOV !$%04X+X,A", "MOV !$%04X+Y,A", "MOV [$%02X]+Y,A", 
-    "MOV $%02X,X", "MOV $%02X+Y,X", "MOVW $%02X,YA", "MOV $%02X+X,Y", 
-    "DEC Y", "MOV A,Y", "CBNE $%02X+X,$%04X", "DAA A", 
-    "CLRV", "TCALL 14", "SET1 $%02X.7", "BBS $%02X.7,$%04X", 
-    "MOV A,$%02X", "MOV A,!$%04X", "MOV A,(X)", "MOV A,[$%02X+X]", 
-    "MOV A,#$%02X", "MOV X,!$%04X", "NOT1 $%04X.%d", "MOV Y,$%02X", 
-    "MOV Y,!$%04X", "NOTC", "POP Y", "SLEEP", 
-    "BEQ $%04X", "TCALL 15", "CLR1 $%02X.7", "BBC $%02X.7,$%04X", 
-    "MOV A,$%02X+X", "MOV A,!$%04X+X", "MOV A,!$%04X+Y", "MOV A,[$%02X]+Y", 
-    "MOV X,$%02X", "MOV X,$%02X+Y", "MOV $%02X,$%02X", "MOV Y,$%02X+X", 
+    "NOP", "TCALL 0", "SET1 $%02X.0", "BBS $%02X.0,$%04X",
+    "OR A,$%02X", "OR A,!$%04X", "OR A,(X)", "OR A,[$%02X+X]",
+    "OR A,#$%02X", "OR $%02X,$%02X", "OR1 C,$%04X.%d", "ASL $%02X",
+    "MOV !$%04X,Y", "PUSH PSW", "TSET1 !$%04X", "BRK",
+    "BPL $%04X", "TCALL 1", "CLR1 $%02X.0", "BBC $%02X.0,$%04X",
+    "OR A,$%02X+X", "OR A,!$%04X+X", "OR A,!$%04X+Y", "OR A,[$%02X]+Y",
+    "OR $%02X,#$%02X", "OR (X),(Y)", "DECW $%02X", "ASL $%02X+X",
+    "ASL A", "DEC X", "CMP X,!$%04X", "JMP [!$%04X+X]",
+    "CLRP", "TCALL 2", "SET1 $%02X.1", "BBS $%02X.1,$%04X",
+    "AND A,$%02X", "AND A,!$%04X", "AND A,(X)", "AND A,[$%02X+X]",
+    "AND A,#$%02X", "AND $%02X,$%02X", "OR1 C,/$%04X.%d", "ROL $%02X",
+    "ROL !$%04X", "PUSH A", "CBNE $%02X,$%04X", "BRA $%04X",
+    "BMI $%04X", "TCALL 3", "CLR1 $%02X.1", "BBC $%02X.1,$%04X",
+    "AND A,$%02X+X", "AND A,!$%04X+X", "AND A,!$%04X+Y", "AND A,[$%02X]+Y",
+    "AND $%02X,#$%02X", "AND (X),(Y)", "INCW $%02X", "ROL $%02X+X",
+    "ROL A", "INC X", "CMP X,$%02X", "CALL !$%04X",
+    "SETP", "TCALL 4", "SET1 $%02X.2", "BBS $%02X.2,$%04X",
+    "EOR A,$%02X", "EOR A,!$%04X", "EOR A,(X)", "EOR A,[$%02X+X]",
+    "EOR A,#$%02X", "EOR $%02X,$%02X", "AND1 C,$%04X.%d", "LSR $%02X",
+    "LSR !$%04X", "PUSH X", "TCLR1 !$%04X", "PCALL $%02X",
+    "BVC $%04X", "TCALL 5", "CLR1 $%02X.2", "BBC $%02X.2,$%04X",
+    "EOR A,$%02X+X", "EOR A,!$%04X+X", "EOR A,!$%04X+Y", "EOR A,[$%02X]+Y",
+    "EOR $%02X,#$%02X", "EOR (X),(Y)", "CMPW YA,$%02X", "LSR $%02X+X",
+    "LSR A", "MOV X,A", "CMP Y,!$%04X", "JMP !$%04X",
+    "CLRC", "TCALL 6", "SET1 $%02X.3", "BBS $%02X.3,$%04X",
+    "CMP A,$%02X", "CMP A,!$%04X", "CMP A,(X)", "CMP A,[$%02X+X]",
+    "CMP A,#$%02X", "CMP $%02X,$%02X", "AND1 C,/$%04X.%d", "ROR $%02X",
+    "ROR !$%04X", "PUSH Y", "DBNZ $%02X,$%04X", "RET",
+    "BVS $%04X", "TCALL 7", "CLR1 $%02X.3", "BBC $%02X.3,$%04X",
+    "CMP A,$%02X+X", "CMP A,!$%04X+X", "CMP A,!$%04X+Y", "CMP A,[$%02X]+Y",
+    "CMP $%02X,#$%02X", "CMP (X),(Y)", "ADDW YA,$%02X", "ROR $%02X+X",
+    "ROR A", "MOV A,X", "CMP Y,$%02X", "RET1",
+    "SETC", "TCALL 8", "SET1 $%02X.4", "BBS $%02X.4,$%04X",
+    "ADC A,$%02X", "ADC A,!$%04X", "ADC A,(X)", "ADC A,[$%02X+X]",
+    "ADC A,#$%02X", "ADC $%02X,$%02X", "EOR1 C,$%04X.%d", "DEC $%02X",
+    "DEC !$%04X", "MOV Y,#$%02X", "POP PSW", "MOV $%02X,#$%02X",
+    "BCC $%04X", "TCALL 9", "CLR1 $%02X.4", "BBC $%02X.4,$%04X",
+    "ADC A,$%02X+X", "ADC A,!$%04X+X", "ADC A,!$%04X+Y", "ADC A,[$%02X]+Y",
+    "ADC $%02X,#$%02X", "ADC (X),(Y)", "SUBW YA,$%02X", "DEC $%02X+X",
+    "DEC A", "MOV X,SP", "DIV YA,X", "XCN A",
+    "EI", "TCALL 10", "SET1 $%02X.5", "BBS $%02X.5,$%04X",
+    "SBC A,$%02X", "SBC A,!$%04X", "SBC A,(X)", "SBC A,[$%02X+X]",
+    "SBC A,#$%02X", "SBC $%02X,$%02X", "MOV1 C,$%04X.%d", "INC $%02X",
+    "INC !$%04X", "CMP Y,#$%02X", "POP A", "MOV (X)+,A",
+    "BCS $%04X", "TCALL 11", "CLR1 $%02X.5", "BBC $%02X.5,$%04X",
+    "SBC A,$%02X+X", "SBC A,!$%04X+X", "SBC A,!$%04X+Y", "SBC A,[$%02X]+Y",
+    "SBC $%02X,#$%02X", "SBC (X),(Y)", "MOVW YA,$%02X", "INC $%02X+X",
+    "INC A", "MOV SP,X", "DAS A", "MOV A,(X)+",
+    "DI", "TCALL 12", "SET1 $%02X.6", "BBS $%02X.6,$%04X",
+    "MOV $%02X,A", "MOV !$%04X,A", "MOV (X),A", "MOV [$%02X+X],A",
+    "CMP X,#$%02X", "MOV !$%04X,X", "MOV1 $%04X.%d,C", "MOV $%02X,Y",
+    "ASL !$%04X", "MOV X,#$%02X", "POP X", "MUL YA",
+    "BNE $%04X", "TCALL 13", "CLR1 $%02X.6", "BBC $%02X.6,$%04X",
+    "MOV $%02X+X,A", "MOV !$%04X+X,A", "MOV !$%04X+Y,A", "MOV [$%02X]+Y,A",
+    "MOV $%02X,X", "MOV $%02X+Y,X", "MOVW $%02X,YA", "MOV $%02X+X,Y",
+    "DEC Y", "MOV A,Y", "CBNE $%02X+X,$%04X", "DAA A",
+    "CLRV", "TCALL 14", "SET1 $%02X.7", "BBS $%02X.7,$%04X",
+    "MOV A,$%02X", "MOV A,!$%04X", "MOV A,(X)", "MOV A,[$%02X+X]",
+    "MOV A,#$%02X", "MOV X,!$%04X", "NOT1 $%04X.%d", "MOV Y,$%02X",
+    "MOV Y,!$%04X", "NOTC", "POP Y", "SLEEP",
+    "BEQ $%04X", "TCALL 15", "CLR1 $%02X.7", "BBC $%02X.7,$%04X",
+    "MOV A,$%02X+X", "MOV A,!$%04X+X", "MOV A,!$%04X+Y", "MOV A,[$%02X]+Y",
+    "MOV X,$%02X", "MOV X,$%02X+Y", "MOV $%02X,$%02X", "MOV Y,$%02X+X",
     "INC Y", "MOV Y,A", "DBNZ Y,$%04X", "STOP"
 };
 
@@ -331,7 +346,7 @@ void S9xTraceSoundDSP (const char *s, int i1 = 0, int i2 = 0, int i3 = 0,
 int S9xTraceAPU ()
 {
     char buffer [200];
-    
+
     uint8 b = S9xAPUOPrint (buffer, IAPU.PC - IAPU.RAM);
     if (apu_trace == NULL)
 	apu_trace = fopen ("apu_trace.log", "wb");
@@ -346,7 +361,7 @@ int S9xAPUOPrint (char *buffer, uint16 Address)
     uint8 *p = IAPU.RAM + Address;
     int mode = Modes [*p];
     int bytes = ModesToBytes [mode];
-    
+
     switch (bytes)
     {
     case 1:
@@ -407,8 +422,8 @@ int S9xAPUOPrint (char *buffer, uint16 Address)
 	     APUCheckCarry () ? 'C' : 'c',
 	     CPU.V_Counter,
 	     CPU.Cycles,
-	     APU.Cycles);
-		
+	     APU.Cycles >> SNES_APU_ACCURACY);
+
     return (bytes);
 }
 
@@ -478,7 +493,7 @@ void S9xPrintAPUState ()
 	    printf ("left: %d, right: %d, ",
 		    ch->volume_left, ch->volume_right);
 
-	    static char* envelope [] = 
+	    static char* envelope [] =
 	    {
 		"silent", "attack", "decay", "sustain", "release", "gain",
 		"inc_lin", "inc_bent", "dec_lin", "dec_exp"

@@ -472,7 +472,7 @@ DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsiz
 	int n = 1;
 	int line_height;
 
-	ypos = 65;
+	ypos = 45;
 
 	if (screenheight == 480)
 		ypos += 52;
@@ -581,7 +581,7 @@ RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
 		wm_ay = WPAD_StickY (0,0);
 		wp = WPAD_ButtonsDown (0);
 #endif
-		
+
 
 		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
 

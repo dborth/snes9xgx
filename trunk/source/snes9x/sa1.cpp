@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 
 #include "snes9x.h"
@@ -437,7 +456,7 @@ void S9xSA1SetPCBase (uint32 address)
 #ifdef DEBUGGER
 	printf ("SBP %06x\n", address);
 #endif
-	
+
     default:
     case CMemory::MAP_NONE:
 	SA1.PCBase = NULL;
@@ -476,7 +495,7 @@ void S9xSetSA1MemMap (uint32 which1, uint8 map)
 	for (i = c; i < c + 16; i++)
 	    Memory.Map [start + i] = SA1.Map [start + i] = block;
     }
-    
+
     for (c = 0; c < 0x200; c += 16)
     {
 	uint8 *block = &Memory.ROM [(map & 7) * 0x100000 + (c << 11) - 0x8000];
@@ -493,7 +512,7 @@ uint8 S9xGetSA1 (uint32 address)
     switch (address)
     {
     case 0x2300:
-	return ((uint8) ((Memory.FillRAM [0x2209] & 0x5f) | 
+	return ((uint8) ((Memory.FillRAM [0x2209] & 0x5f) |
 		 (CPU.IRQActive & (SA1_IRQ_SOURCE | SA1_DMA_IRQ_SOURCE))));
     case 0x2301:
 	return ((Memory.FillRAM [0x2200] & 0xf) |
@@ -520,7 +539,7 @@ uint8 S9xGetSA1 (uint32 address)
 	}
 	return (byte);
     }
-    default:	
+    default:
 	printf ("R: %04x\n", address);
 	break;
     }
@@ -545,7 +564,7 @@ void S9xSetSA1 (uint8 byte, uint32 address)
 	    Memory.FillRAM [0x2301] |= 0x80;
 	    if (Memory.FillRAM [0x220a] & 0x80)
 	    {
-		SA1.Flags |= IRQ_PENDING_FLAG;
+		SA1.Flags |= IRQ_FLAG;
 		SA1.IRQActive |= SNES_IRQ_SOURCE;
 		SA1.Executing = !SA1.Waiting && SA1.S9xOpcodes;
 	    }
@@ -621,21 +640,21 @@ void S9xSetSA1 (uint8 byte, uint32 address)
 	if (((byte ^ Memory.FillRAM [0x220a]) & 0x80) &&
 	    (Memory.FillRAM [0x2301] & byte & 0x80))
 	{
-	    SA1.Flags |= IRQ_PENDING_FLAG;
+	    SA1.Flags |= IRQ_FLAG;
 	    SA1.IRQActive |= SNES_IRQ_SOURCE;
 //	    SA1.Executing = !SA1.Waiting;
 	}
 	if (((byte ^ Memory.FillRAM [0x220a]) & 0x40) &&
 	    (Memory.FillRAM [0x2301] & byte & 0x40))
 	{
-	    SA1.Flags |= IRQ_PENDING_FLAG;
+	    SA1.Flags |= IRQ_FLAG;
 	    SA1.IRQActive |= TIMER_IRQ_SOURCE;
 //	    SA1.Executing = !SA1.Waiting;
 	}
 	if (((byte ^ Memory.FillRAM [0x220a]) & 0x20) &&
 	    (Memory.FillRAM [0x2301] & byte & 0x20))
 	{
-	    SA1.Flags |= IRQ_PENDING_FLAG;
+	    SA1.Flags |= IRQ_FLAG;
 	    SA1.IRQActive |= DMA_IRQ_SOURCE;
 //	    SA1.Executing = !SA1.Waiting;
 	}
@@ -669,7 +688,7 @@ void S9xSetSA1 (uint8 byte, uint32 address)
 	    Memory.FillRAM [0x2301] &= ~0x10;
 	}
 	if (!SA1.IRQActive)
-	    SA1.Flags &= ~IRQ_PENDING_FLAG;
+	    SA1.Flags &= ~IRQ_FLAG;
 	break;
     case 0x220c:
 //	printf ("SNES NMI vector: %04x\n", byte | (Memory.FillRAM [0x220d] << 8));
@@ -693,19 +712,19 @@ void S9xSetSA1 (uint8 byte, uint32 address)
 #endif
 	break;
     case 0x2211:
-	printf ("Timer reset\n");
+//	printf ("Timer reset\n");
 	break;
     case 0x2212:
-	printf ("H-Timer %04x\n", byte | (Memory.FillRAM [0x2213] << 8));
+//	printf ("H-Timer %04x\n", byte | (Memory.FillRAM [0x2213] << 8));
 	break;
     case 0x2213:
-	printf ("H-Timer %04x\n", (byte << 8) | Memory.FillRAM [0x2212]);
+//	printf ("H-Timer %04x\n", (byte << 8) | Memory.FillRAM [0x2212]);
 	break;
     case 0x2214:
-	printf ("V-Timer %04x\n", byte | (Memory.FillRAM [0x2215] << 8));
+//	printf ("V-Timer %04x\n", byte | (Memory.FillRAM [0x2215] << 8));
 	break;
     case 0x2215:
-	printf ("V-Timer %04x\n", (byte << 8) | Memory.FillRAM [0x2214]);
+//	printf ("V-Timer %04x\n", (byte << 8) | Memory.FillRAM [0x2214]);
 	break;
     case 0x2220:
     case 0x2221:
@@ -763,7 +782,7 @@ void S9xSetSA1 (uint8 byte, uint32 address)
     case 0x2234:
 	Memory.FillRAM [address] = byte;
 #if 0
-	printf ("DMA source start %06x\n", 
+	printf ("DMA source start %06x\n",
 		Memory.FillRAM [0x2232] | (Memory.FillRAM [0x2233] << 8) |
 		(Memory.FillRAM [0x2234] << 16));
 #endif
@@ -795,7 +814,7 @@ void S9xSetSA1 (uint8 byte, uint32 address)
 	    S9xSA1DMA ();
 	}
 #if 0
-	printf ("DMA dest address %06x\n", 
+	printf ("DMA dest address %06x\n",
 		Memory.FillRAM [0x2235] | (Memory.FillRAM [0x2236] << 8) |
 		(Memory.FillRAM [0x2237] << 16));
 #endif
@@ -804,7 +823,7 @@ void S9xSetSA1 (uint8 byte, uint32 address)
     case 0x2239:
 	Memory.FillRAM [address] = byte;
 #if 0
-	printf ("DMA length %04x\n", 
+	printf ("DMA length %04x\n",
 		Memory.FillRAM [0x2238] | (Memory.FillRAM [0x2239] << 8));
 #endif
 	break;
@@ -846,7 +865,7 @@ void S9xSetSA1 (uint8 byte, uint32 address)
 	    SA1.sum = 0;
 	SA1.arithmetic_op = byte & 3;
 	break;
-    
+
     case 0x2251:
 	SA1.op1 = (SA1.op1 & 0xff00) | byte;
 	break;
@@ -987,10 +1006,10 @@ static void S9xSA1DMA ()
     }
     memmove (d, s, len);
     Memory.FillRAM [0x2301] |= 0x20;
-    
+
     if (Memory.FillRAM [0x220a] & 0x20)
     {
-	SA1.Flags |= IRQ_PENDING_FLAG;
+	SA1.Flags |= IRQ_FLAG;
 	SA1.IRQActive |= DMA_IRQ_SOURCE;
 //	SA1.Executing = !SA1.Waiting;
     }

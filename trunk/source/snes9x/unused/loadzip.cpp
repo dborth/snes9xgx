@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -142,6 +159,8 @@
 **********************************************************************************/
 
 
+
+
 #ifdef UNZIP_SUPPORT
 /**********************************************************************************************/
 /* Loadzip.CPP                                                                                */
@@ -161,7 +180,7 @@
 #include "snes9x.h"
 #include "memmap.h"
 
-#include "unzip.h"
+#include "unzip/unzip.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -172,7 +191,7 @@ bool8 LoadZip(const char* zipname,
 {
     *TotalFileSize = 0;
     *headers = 0;
-    
+
     unzFile file = unzOpen(zipname);
     if(file == NULL)
 	return (FALSE);
@@ -203,7 +222,7 @@ bool8 LoadZip(const char* zipname,
 	    port = unzGoToNextFile(file);
 	    continue;
 	}
-	
+
 	if ((int) info.uncompressed_size > filesize)
 	{
 	    strcpy(filename,name);
@@ -230,14 +249,14 @@ bool8 LoadZip(const char* zipname,
     char *ext = strrchr(filename,'.');
     if(ext) ext++;
     else ext = tmp;
-    
+
     uint8 *ptr = buffer;
     bool8 more = FALSE;
 
     printf("Using ROM %s in %s\n", filename, zipname);
     unzLocateFile(file,filename,1);
     unzGetCurrentFileInfo(file, &info, filename,128, NULL,0, NULL,0);
-    
+
     if( unzOpenCurrentFile(file) != UNZ_OK )
     {
 	unzClose(file);
@@ -248,17 +267,14 @@ bool8 LoadZip(const char* zipname,
     {
 	assert(info.uncompressed_size <= CMemory::MAX_ROM_SIZE + 512);
 	int FileSize = info.uncompressed_size;
-	
-	int calc_size = FileSize / 0x2000;
-	calc_size *= 0x2000;
-	
+
 	int l = unzReadCurrentFile(file,ptr,FileSize);
 	if(unzCloseCurrentFile(file) == UNZ_CRCERROR)
 	{
 	    unzClose(file);
 	    return (FALSE);
 	}
-	
+
 	if(l <= 0 || l != FileSize)
 	{
 	    unzClose(file);
@@ -280,13 +296,7 @@ bool8 LoadZip(const char* zipname,
 	    return (FALSE);
 	}
 
-	if ((FileSize - calc_size == 512 && !Settings.ForceNoHeader) ||
-	    Settings.ForceHeader)
-	{
-	    memmove (ptr, ptr + 512, calc_size);
-	    (*headers)++;
-	    FileSize -= 512;
-	}
+        FileSize = (int)Memory.HeaderRemove((uint32)FileSize, *headers, ptr);
 	ptr += FileSize;
 	(*TotalFileSize) += FileSize;
 
@@ -312,7 +322,7 @@ bool8 LoadZip(const char* zipname,
         }
         else
             more = FALSE;
-	
+
 	if(more)
 	{
 	    if( unzLocateFile(file,filename,1) != UNZ_OK ||
@@ -321,9 +331,9 @@ bool8 LoadZip(const char* zipname,
 		break;
             printf("  ... and %s in %s\n", filename, zipname);
 	}
-	
+
     } while(more);
-    
+
     unzClose(file);
     return (TRUE);
 }

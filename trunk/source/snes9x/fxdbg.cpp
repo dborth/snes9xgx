@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 
 #include "fxemu.h"
@@ -173,7 +192,7 @@ extern struct FxRegs_s GSU;
   in this debug function. (See the diffrence of how the values
   vPipe1 and vPipe2 are read, compared to the values vByte1 and
   vByte2)
-   
+
   */
 void FxPipeString(char * pvString)
 {
@@ -182,11 +201,11 @@ void FxPipeString(char * pvString)
     const char *m = fx_apvMnemonicTable[vOpcode];
     uint8 vPipe1,vPipe2,vByte1,vByte2;
     uint8 vPipeBank = GSU.vPipeAdr >> 16;
-	
+
     /* The next two bytes after the pipe's address */
     vPipe1 = GSU.apvRomBank[vPipeBank][USEX16(GSU.vPipeAdr+1)];
     vPipe2 = GSU.apvRomBank[vPipeBank][USEX16(GSU.vPipeAdr+2)];
-    
+
     /* The actual next two bytes to be read */
     vByte1 = PRGBANK(USEX16(R15));
     vByte2 = PRGBANK(USEX16(R15+1));
@@ -195,7 +214,7 @@ void FxPipeString(char * pvString)
     sprintf(pvString, "%02x:%04x %02x       ",
 	    USEX8(vPipeBank), USEX16(GSU.vPipeAdr), USEX8(PIPE));
     p = &pvString[strlen(pvString)];
- 
+
     /* Check if it's a branch instruction */
     if( PIPE >= 0x05 && PIPE <= 0x0f )
     {
@@ -244,7 +263,7 @@ const char *fx_apvMnemonicTable[] =
     "to r0",   "to r1",   "to r2",    "to r3",    "to r4",    "to r5",    "to r6",    "to r7",
     "to r8",   "to r9",   "to r10",   "to r11",   "to r12",   "to r13",   "to r14",   "to r15",
     /* 20 - 2f */
-    "with r0", "with r1", "with r2",  "with r3",  "with r4",  "with r5",  "with r6",  "with r7", 
+    "with r0", "with r1", "with r2",  "with r3",  "with r4",  "with r5",  "with r6",  "with r7",
     "with r8", "with r9", "with r10", "with r11", "with r12", "with r13", "with r14", "with r15",
     /* 30 - 3f */
     "stw (r0)","stw (r1)","stw (r2)", "stw (r3)", "stw (r4)", "stw (r5)", "stw (r6)", "stw (r7)",
@@ -301,7 +320,7 @@ const char *fx_apvMnemonicTable[] =
     "to r0",   "to r1",   "to r2",    "to r3",    "to r4",    "to r5",    "to r6",    "to r7",
     "to r8",   "to r9",   "to r10",   "to r11",   "to r12",   "to r13",   "to r14",   "to r15",
     /* 20 - 2f */
-    "with r0", "with r1", "with r2",  "with r3",  "with r4",  "with r5",  "with r6",  "with r7", 
+    "with r0", "with r1", "with r2",  "with r3",  "with r4",  "with r5",  "with r6",  "with r7",
     "with r8", "with r9", "with r10", "with r11", "with r12", "with r13", "with r14", "with r15",
     /* 30 - 3f */
     "stb (r0)","stb (r1)","stb (r2)", "stb (r3)", "stb (r4)", "stb (r5)", "stb (r6)", "stb (r7)",
@@ -358,7 +377,7 @@ const char *fx_apvMnemonicTable[] =
     "to r0",   "to r1",   "to r2",    "to r3",    "to r4",    "to r5",    "to r6",    "to r7",
     "to r8",   "to r9",   "to r10",   "to r11",   "to r12",   "to r13",   "to r14",   "to r15",
     /* 20 - 2f */
-    "with r0", "with r1", "with r2",  "with r3",  "with r4",  "with r5",  "with r6",  "with r7", 
+    "with r0", "with r1", "with r2",  "with r3",  "with r4",  "with r5",  "with r6",  "with r7",
     "with r8", "with r9", "with r10", "with r11", "with r12", "with r13", "with r14", "with r15",
     /* 30 - 3f */
     "stw (r0)","stw (r1)","stw (r2)", "stw (r3)", "stw (r4)", "stw (r5)", "stw (r6)", "stw (r7)",
@@ -415,7 +434,7 @@ const char *fx_apvMnemonicTable[] =
     "to r0",   "to r1",   "to r2",    "to r3",    "to r4",    "to r5",    "to r6",    "to r7",
     "to r8",   "to r9",   "to r10",   "to r11",   "to r12",   "to r13",   "to r14",   "to r15",
     /* 20 - 2f */
-    "with r0", "with r1", "with r2",  "with r3",  "with r4",  "with r5",  "with r6",  "with r7", 
+    "with r0", "with r1", "with r2",  "with r3",  "with r4",  "with r5",  "with r6",  "with r7",
     "with r8", "with r9", "with r10", "with r11", "with r12", "with r13", "with r14", "with r15",
     /* 30 - 3f */
     "stb (r0)","stb (r1)","stb (r2)", "stb (r3)", "stb (r4)", "stb (r5)", "stb (r6)", "stb (r7)",

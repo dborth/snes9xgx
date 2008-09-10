@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -141,6 +158,8 @@
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
 
+
+
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -148,16 +167,40 @@
 #include "cheats.h"
 #include "memmap.h"
 
+#ifndef INLINE
+#define INLINE inline
+#endif
+
 extern SCheatData Cheat;
+Watch watches [16];
+
+// read  a byte without altering CPU
+INLINE uint8 S9xGetByteFree (uint32 Address)
+{
+	uint32 Cycles = CPU.Cycles;
+	uint32 WaitAddress = CPU.WaitAddress;
+	uint8 rv = S9xGetByte (Address);
+	CPU.WaitAddress = WaitAddress;
+	CPU.Cycles = Cycles;
+	return rv;
+}
+INLINE void S9xSetByteFree (uint8 Byte, uint32 Address)
+{
+	uint32 Cycles = CPU.Cycles;
+	uint32 WaitAddress = CPU.WaitAddress;
+	S9xSetByte (Byte, Address);
+	CPU.WaitAddress = WaitAddress;
+	CPU.Cycles = Cycles;
+}
 
 void S9xInitCheatData ()
 {
     Cheat.RAM = Memory.RAM;
-    Cheat.SRAM = ::SRAM;
+    Cheat.SRAM = Memory.SRAM;
     Cheat.FillRAM = Memory.FillRAM;
 }
 
-void S9xAddCheat (bool8 enable, bool8 save_current_value, 
+void S9xAddCheat (bool8 enable, bool8 save_current_value,
 		  uint32 address, uint8 byte)
 {
     if (Cheat.num_cheats < sizeof (Cheat.c) / sizeof (Cheat. c [0]))
@@ -171,7 +214,7 @@ void S9xAddCheat (bool8 enable, bool8 save_current_value,
 #endif
 	if (save_current_value)
 	{
-	    Cheat.c [Cheat.num_cheats].saved_byte = S9xGetByte (address);
+	    Cheat.c [Cheat.num_cheats].saved_byte = S9xGetByteFree (address);
 	    Cheat.c [Cheat.num_cheats].saved = TRUE;
 	}
 	Cheat.num_cheats++;
@@ -223,7 +266,7 @@ void S9xRemoveCheat (uint32 which1)
 
 	int block = ((address&0xffffff) >> MEMMAP_SHIFT);
 	uint8 *ptr = Memory.Map [block];
-	    
+
 	if (ptr >= (uint8 *) CMemory::MAP_LAST)
 	    *(ptr + (address & 0xffff)) = Cheat.c [which1].saved_byte;
 	else
@@ -236,11 +279,11 @@ void S9xApplyCheat (uint32 which1)
     uint32 address = Cheat.c [which1].address;
 
     if (!Cheat.c [which1].saved)
-	Cheat.c [which1].saved_byte = S9xGetByte (address);
+	Cheat.c [which1].saved_byte = S9xGetByteFree (address);
 
     int block = ((address&0xffffff) >> MEMMAP_SHIFT);
     uint8 *ptr = Memory.Map [block];
-    
+
     if (ptr >= (uint8 *) CMemory::MAP_LAST)
 	*(ptr + (address & 0xffff)) = Cheat.c [which1].byte;
     else
@@ -273,7 +316,7 @@ bool8 S9xLoadCheatFile (const char *filename)
     uint8 data [28];
 
     if (!fs)
-		return (FALSE);
+	return (FALSE);
 
     while (fread ((void *) data, 1, 28, fs) == 28)
     {

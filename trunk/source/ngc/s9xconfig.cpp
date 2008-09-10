@@ -17,10 +17,7 @@
 #include "snes9xGX.h"
 #include "smbop.h"
 
-START_EXTERN_C
 struct SGCSettings GCSettings;
-bool8 isWii;
-END_EXTERN_C
 
 void
 DefaultSettings ()
@@ -63,25 +60,24 @@ DefaultSettings ()
 
 	/****************** SNES9x Settings ***********************/
 
-	/*** Default ALL to false ***/
+	// Default ALL to false
 	memset (&Settings, 0, sizeof (Settings));
 
-	/*** General ***/
-
+	// General
 
 	Settings.MouseMaster = false;
 	Settings.SuperScopeMaster = false;
 	Settings.MultiPlayer5Master = false;
 	Settings.JustifierMaster = false;
 	Settings.ShutdownMaster = false;
-	Settings.CyclesPercentage = 100; // snes9x 1.50 and earlier
+	//Settings.CyclesPercentage = 100; // snes9x 1.50 and earlier
 	Settings.ApplyCheats = true;
 
-	/* Eke-Eke: specific to snes9x 1.51 */
-	//  Settings.BlockInvalidVRAMAccess = true;
-	//  Settings.HDMATimingHack = 100;
+	// Specific to snes9x 1.51
+	Settings.BlockInvalidVRAMAccess = true;
+	Settings.HDMATimingHack = 100;
 
-	/*** Sound defaults. On GC this is 32Khz/16bit/Stereo/InterpolatedSound ***/
+	// Sound defaults. On GC this is 32Khz/16bit/Stereo/InterpolatedSound
 	Settings.APUEnabled = true;
 	Settings.NextAPUEnabled = true;
 	Settings.SoundPlaybackRate = 32000;
@@ -92,19 +88,19 @@ DefaultSettings ()
 	Settings.InterpolatedSound = true;
 	Settings.ReverseStereo = false;
 
-	/*** Graphics ***/
+	// Graphics
 	Settings.Transparency = true;
 	Settings.SupportHiRes = true;
 	Settings.SkipFrames = 10;
 	Settings.TurboSkipFrames = 19;
 	Settings.DisplayFrameRate = false;
-	//  Settings.AutoDisplayMessages = 1;    /*** eke-eke snes9x 1.51 ***/
+	Settings.AutoDisplayMessages = 1; // SNES9x 1.51
 
-	/* Eke-Eke: frame timings in 50hz and 60hz cpu mode */
+	// Frame timings in 50hz and 60hz cpu mode
 	Settings.FrameTimePAL = 20000;
 	Settings.FrameTimeNTSC = 16667;
 
-	/*** SDD1 - Star Ocean Returns -;) ***/
+	// SDD1 - Star Ocean Returns
 	Settings.SDD1Pack = true;
 
 	Settings.ForceNTSC = 0;

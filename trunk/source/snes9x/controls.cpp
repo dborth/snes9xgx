@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -162,7 +181,14 @@
 #include "cpuexec.h"
 #include "snapshot.h"
 #include "spc7110.h"
-#include "movie.h"
+//#include "movie.h"
+#ifdef NETPLAY_SUPPORT
+#include "netplay.h"
+#endif
+
+#ifdef __WIN32__
+#define snprintf _snprintf // needs ANSI compliant name
+#endif
 
 using namespace std;
 
@@ -190,16 +216,16 @@ static set<uint32> pollmap[NUMCTLS+1];
 static vector<s9xcommand_t *> multis;
 struct exemulti {
     int32 pos;
-    bool data1;
+    bool8 data1;
     s9xcommand_t *script;
 };
 static set<struct exemulti *> exemultis;
 
 static struct {
     int16 x, y;
-    int V_adj; bool V_var;
-    int H_adj; bool H_var;
-    bool mapped;
+    int16 V_adj; bool8 V_var;
+    int16 H_adj; bool8 H_var;
+    bool8 mapped;
 } pseudopointer[8];
 static uint8 pseudobuttons[256];
 
@@ -247,7 +273,7 @@ static struct {
 static struct {
     int16 x[2], y[2];
     uint8 buttons;
-    bool offscreen[2];
+    bool8 offscreen[2];
     uint32 ID[2];
     struct crosshair crosshair[2];
 } justifier;
@@ -257,100 +283,77 @@ static struct {
 
 uint8 read_idx[2 /* ports */][2 /* per port */];
 
+bool8 pad_read = 0, pad_read_last = 0;
+
 #define FLAG_IOBIT0   (Memory.FillRAM[0x4213]&0x40)
 #define FLAG_IOBIT1   (Memory.FillRAM[0x4213]&0x80)
 #define FLAG_IOBIT(n) ((n)?(FLAG_IOBIT1):(FLAG_IOBIT0))
-static bool FLAG_LATCH=false;
-static int curcontrollers[2]={ NONE, NONE };
-static int newcontrollers[2]={ JOYPAD0, NONE };
+static bool8 FLAG_LATCH=false;
+static int32 curcontrollers[2]={ NONE, NONE };
+static int32 newcontrollers[2]={ JOYPAD0, NONE };
 
 /*******************/
 
 // Note: these should be in asciibetical order!
-static const char *command_names[]={
-    "BGLayeringHack",
-    "BeginRecordingMovie",
-    "ClipWindows",
-    "Debugger",
-    "DecEmuTurbo",
-    "DecFrameRate",
-    "DecFrameTime",
-    "DecTurboSpeed",
-    "DumpSPC7110Log",
-    "EmuTurbo",
-    "EndRecordingMovie",
-    "ExitEmu",
-    "IncEmuTurbo",
-    "IncFrameRate",
-    "IncFrameTime",
-    "IncTurboSpeed",
-    "InterpolateSound",
-    "LoadFreezeFile",
-    "LoadMovie",
-    "LoadOopsFile",
-    "Mode7Interpolate",
-    "Pause",
-    "QuickLoad000", "QuickLoad001", "QuickLoad002", "QuickLoad003", "QuickLoad004", "QuickLoad005", "QuickLoad006", "QuickLoad007", "QuickLoad008", "QuickLoad009", "QuickLoad010",
-    "QuickSave000", "QuickSave001", "QuickSave002", "QuickSave003", "QuickSave004", "QuickSave005", "QuickSave006", "QuickSave007", "QuickSave008", "QuickSave009", "QuickSave010",
-    "Reset",
-    "SaveFreezeFile",
-    "SaveSPC",
-    "Screenshot",
-    "SoftReset",
-    "SoundChannel0", "SoundChannel1", "SoundChannel2", "SoundChannel3", "SoundChannel4", "SoundChannel5", "SoundChannel6", "SoundChannel7",
-    "SoundChannelsOn",
-    "SwapJoypads",
-    "SynchronizeSound",
-    "ToggleBG0", "ToggleBG1", "ToggleBG2", "ToggleBG3",
-    "ToggleEmuTurbo",
-    "ToggleHDMA",
-    "ToggleSprites",
-    "ToggleTransparency",
+#define THE_COMMANDS \
+    S(BGLayeringHack), \
+    S(BeginRecordingMovie), \
+    S(ClipWindows), \
+    S(Debugger), \
+    S(DecEmuTurbo), \
+    S(DecFrameRate), \
+    S(DecFrameTime), \
+    S(DecTurboSpeed), \
+    S(DumpSPC7110Log), \
+    S(EmuTurbo), \
+    S(EndRecordingMovie), \
+    S(ExitEmu), \
+    S(IncEmuTurbo), \
+    S(IncFrameRate), \
+    S(IncFrameTime), \
+    S(IncTurboSpeed), \
+    S(InterpolateSound), \
+    S(LoadFreezeFile), \
+    S(LoadMovie), \
+    S(LoadOopsFile), \
+/*    S(Mode7Interpolate),*/ \
+    S(Pause), \
+    S(QuickLoad000), S(QuickLoad001), S(QuickLoad002), S(QuickLoad003), S(QuickLoad004), S(QuickLoad005), S(QuickLoad006), S(QuickLoad007), S(QuickLoad008), S(QuickLoad009), S(QuickLoad010), \
+    S(QuickSave000), S(QuickSave001), S(QuickSave002), S(QuickSave003), S(QuickSave004), S(QuickSave005), S(QuickSave006), S(QuickSave007), S(QuickSave008), S(QuickSave009), S(QuickSave010), \
+    S(Reset), \
+    S(SaveFreezeFile), \
+    S(SaveSPC), \
+    S(Screenshot), \
+    S(SeekToFrame), \
+    S(SoftReset), \
+    S(SoundChannel0), S(SoundChannel1), S(SoundChannel2), S(SoundChannel3), S(SoundChannel4), S(SoundChannel5), S(SoundChannel6), S(SoundChannel7), \
+    S(SoundChannelsOn), \
+    S(SwapJoypads), \
+    S(SynchronizeSound), \
+    S(ToggleBG0), S(ToggleBG1), S(ToggleBG2), S(ToggleBG3), \
+    S(ToggleEmuTurbo), \
+    S(ToggleHDMA), \
+    S(ToggleSprites), \
+    S(ToggleTransparency), \
+	// end
+
+#define S(x) x
+
+enum command_numbers {
+	THE_COMMANDS
+    LAST_COMMAND  // must be last!
+};
+
+#undef S
+#define S(x) #x
+
+static const char *command_names[LAST_COMMAND+1]={
+	THE_COMMANDS
     NULL // This MUST be last!
 };
 
-enum command_numbers {
-    BGLayeringHack,
-    BeginRecordingMovie,
-    ClipWindows,
-    Debugger,
-    DecEmuTurbo,
-    DecFrameRate,
-    DecFrameTime,
-    DecTurboSpeed,
-    DumpSPC7110Log,
-    EmuTurbo,
-    EndRecordingMovie,
-    ExitEmu,
-    IncEmuTurbo,
-    IncFrameRate,
-    IncFrameTime,
-    IncTurboSpeed,
-    InterpolateSound,
-    LoadFreezeFile,
-    LoadMovie,
-    LoadOopsFile,
-    Mode7Interpolate,
-    Pause,
-    QuickLoad000, QuickLoad001, QuickLoad002, QuickLoad003, QuickLoad004, QuickLoad005, QuickLoad006, QuickLoad007, QuickLoad008, QuickLoad009, QuickLoad010,
-    QuickSave000, QuickSave001, QuickSave002, QuickSave003, QuickSave004, QuickSave005, QuickSave006, QuickSave007, QuickSave008, QuickSave009, QuickSave010,
-    Reset,
-    SaveFreezeFile,
-    SaveSPC,
-    Screenshot,
-    SoftReset,
-    SoundChannel0, SoundChannel1, SoundChannel2, SoundChannel3, SoundChannel4, SoundChannel5, SoundChannel6, SoundChannel7,
-    SoundChannelsOn,
-    SwapJoypads,
-    SynchronizeSound,
-    ToggleBG0, ToggleBG1, ToggleBG2, ToggleBG3,
-    ToggleEmuTurbo,
-    ToggleHDMA,
-    ToggleSprites,
-    ToggleTransparency,
-
-    LAST_COMMAND  // must be last!
-};
+#undef S
+#undef THE_COMMANDS
 
 static const char *color_names[32]={
     "Trans", "Black", "25Grey", "50Grey", "75Grey", "White", "Red", "Orange", "Yellow", "Green", "Cyan", "Sky", "Blue", "Violet", "MagicPink", "Purple",
@@ -451,7 +454,7 @@ void S9xControlsSoftReset(void){
 
 void S9xUnmapAllControls(void){
     int i;
-    
+
     S9xControlsReset();
     keymap.clear();
     for(i=0; i<(int)multis.size(); i++){
@@ -478,7 +481,7 @@ void S9xUnmapAllControls(void){
         mouse[i].cur_x=mouse[i].cur_y=0;
         mouse[i].buttons=1;
         mouse[i].ID=InvalidControlID;
-        if(!(mouse[i].crosshair.set&1)) mouse[i].crosshair.img=1;
+        if(!(mouse[i].crosshair.set&1)) mouse[i].crosshair.img=0; // no image for mouse because its only logical position is game-specific, not known by the emulator
         if(!(mouse[i].crosshair.set&2)) mouse[i].crosshair.fg=5;
         if(!(mouse[i].crosshair.set&4)) mouse[i].crosshair.bg=1;
         justifier.x[i]=justifier.y[i]=0;
@@ -650,9 +653,9 @@ bool S9xVerifyControllers(void){
 
 void S9xGetController(int port, enum controllers *controller, int8 *id1, int8 *id2, int8 *id3, int8 *id4){
     int i;
-    
+
     *controller=CTL_NONE;
-    *id1=*id2=*id3=*id4=0;
+    *id1=*id2=*id3=*id4=-1;
     if(port<0 || port>1) return;
     switch(i=newcontrollers[port]){
       case MP5:
@@ -676,6 +679,7 @@ void S9xGetController(int port, enum controllers *controller, int8 *id1, int8 *i
 
       case SUPERSCOPE:
         *controller=CTL_SUPERSCOPE;
+		*id1=1;
         return;
 
       case ONE_JUSTIFIER: case TWO_JUSTIFIERS:
@@ -687,64 +691,61 @@ void S9xGetController(int port, enum controllers *controller, int8 *id1, int8 *i
 
 void S9xReportControllers(void){
     int port, i;
-    char buf[79], *c;
-    
+    static char buf[128]; // static because S9xMessage keeps our pointer instead of copying
+	char *c=buf;
+
     S9xVerifyControllers();
     for(port=0; port<2; port++){
-        sprintf(buf, "Controller Port %d: ", port+1);
-        c=buf+19;
+        c+=sprintf(c, "Port %d: ", port+1);
         switch(newcontrollers[port]){
           case NONE:
-            strcat(c, "<none>");
+            c+=sprintf(c, "<none>. ");
             break;
 
           case MP5:
-            strcat(c, "MP5 with pads");
-            c+=13;
+            c+=sprintf(c, "MP5 with pads");
             for(i=0; i<4; i++){
                 if(mp5[port].pads[i]==NONE){
-                    strcat(c, " <none>");
-                    c+=7;
+                    c+=sprintf(c, " <none>. ");
                 } else {
-                    sprintf(c, " #%d", mp5[port].pads[i]+1-JOYPAD0);
-                    c+=3;
+                    c+=sprintf(c, " #%d. ", mp5[port].pads[i]+1-JOYPAD0);
                 }
             }
             break;
 
           case JOYPAD0: case JOYPAD1: case JOYPAD2: case JOYPAD3:
           case JOYPAD4: case JOYPAD5: case JOYPAD6: case JOYPAD7:
-            sprintf(c, "Pad %d", newcontrollers[port]-JOYPAD0+1);
+            c+=sprintf(c, "Pad #%d. ", (int)(newcontrollers[port]-JOYPAD0+1));
             break;
 
           case MOUSE0: case MOUSE1:
-            sprintf(c, "Mouse %d", newcontrollers[port]-MOUSE0+1);
+            c+=sprintf(c, "Mouse #%d. ", (int)(newcontrollers[port]-MOUSE0+1));
             break;
 
           case SUPERSCOPE:
-            if(port==0) strcat(c, "Superscope (cannot fire)");
-            else strcat(c, "Superscope");
+            if(port==0) c+=sprintf(c, "Superscope (cannot fire). ");
+            else c+=sprintf(c, "Superscope. ");
             break;
 
           case ONE_JUSTIFIER:
-            if(port==0) strcat(c, "Blue Justifier (cannot fire)");
-            else strcat(c, "Blue Justifier");
+            if(port==0) c+=sprintf(c, "Blue Justifier (cannot fire). ");
+            else c+=sprintf(c, "Blue Justifier. ");
             break;
 
           case TWO_JUSTIFIERS:
-            if(port==0) strcat(c, "Blue and Pink Justifiers (cannot fire)");
-            else strcat(c, "Blue and Pink Justifiers");
+            if(port==0) c+=sprintf(c, "Blue and Pink Justifiers (cannot fire). ");
+            else c+=sprintf(c, "Blue and Pink Justifiers. ");
             break;
         }
-        S9xMessage(S9X_INFO, S9X_CONFIG_INFO, buf);
     }
+    S9xMessage(S9X_INFO, S9X_CONFIG_INFO, buf);
 }
 
 
 char *S9xGetCommandName(s9xcommand_t command){
     string s;
     char c;
-    
+
     switch(command.type){
       case S9xButtonJoypad:
         if(command.button.joypad.buttons==0) return strdup("None");
@@ -878,7 +879,7 @@ char *S9xGetCommandName(s9xcommand_t command){
       case S9xAxisPort:
       case S9xPointerPort:
         return strdup("BUG: Port should have handled this instead of calling S9xGetCommandName()");
-        
+
       case S9xNoMapping:
         return strdup("None");
 
@@ -1182,7 +1183,7 @@ s9xcommand_t S9xGetCommandT(const char *name){
             i=j+1; n++;
         } while(name[i]!='\0');
         c[n].type=S9xNoMapping; c[n].multi_press=3;
-        
+
         multis.push_back(c);
         cmd.button.multi_idx=multis.size()-1;
         cmd.type=S9xButtonMulti;
@@ -1291,7 +1292,8 @@ void S9xReportButton(uint32 id, bool pressed){
         return;
     }
 
-    if(keymap[id].button_norpt==pressed) return;
+	if(keymap[id].type==S9xButtonCommand)        // skips the "already-pressed check" unless it's a command, as a hack to work around the following problem:
+    if(keymap[id].button_norpt==pressed) return; // FIXME: this makes the controls "stick" after loading a savestate while recording a movie and holding any button
     keymap[id].button_norpt=pressed;
     S9xApplyCommand(keymap[id], pressed, 0);
 }
@@ -1463,11 +1465,13 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                 x=t; t=st; st=x;
             }
             if(data1){
+				if(!Settings.UpAndDown) // if up+down isn't allowed AND we are NOT playing a movie,
+				{
                 if(cmd.button.joypad.buttons&(SNES_LEFT_MASK|SNES_RIGHT_MASK)){
                     // if we're pressing left or right, then unpress and unturbo
                     // them both first so we don't end up hittnig left AND right
                     // accidentally. Note though that the user can still do it on
-                    // purpose, bu specifying a single button that presses both.
+                    // purpose, if Settings.UpAndDown = true.
                     // This is a feature, look up glitches in tLoZ:aLttP to find
                     // out why.
                     joypad[cmd.button.joypad.idx].buttons &= ~(SNES_LEFT_MASK|SNES_RIGHT_MASK);
@@ -1478,6 +1482,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                     joypad[cmd.button.joypad.idx].buttons &= ~(SNES_UP_MASK|SNES_DOWN_MASK);
                     joypad[cmd.button.joypad.idx].turbos &= ~(SNES_UP_MASK|SNES_DOWN_MASK);
                 }
+                }//end up+down protection
                 joypad[cmd.button.joypad.idx].buttons |= r;
                 joypad[cmd.button.joypad.idx].turbos |= t;
                 joypad[cmd.button.joypad.idx].buttons ^= s;
@@ -1490,7 +1495,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
             }
         }
         return;
-        
+
       case S9xButtonMouse:
         i=0;
         if(cmd.button.mouse.left) i|=0x40;
@@ -1501,7 +1506,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
             mouse[cmd.button.mouse.idx].buttons &= ~i;
         }
         return;
-        
+
       case S9xButtonSuperscope:
         i=0;
         if(cmd.button.scope.fire) i|=SUPERSCOPE_FIRE;
@@ -1519,7 +1524,10 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                 }
             }
             superscope.next_buttons |= i&(SUPERSCOPE_FIRE|SUPERSCOPE_CURSOR|SUPERSCOPE_PAUSE);
-            if((superscope.next_buttons&(SUPERSCOPE_FIRE|SUPERSCOPE_CURSOR)) &&
+#ifndef NGC
+			if(!S9xMovieActive()) // PPU modification during non-recordable command screws up movie synchronization
+#endif
+			if((superscope.next_buttons&(SUPERSCOPE_FIRE|SUPERSCOPE_CURSOR)) &&
                curcontrollers[1]==SUPERSCOPE &&
                !(superscope.phys_buttons&SUPERSCOPE_OFFSCREEN)){
                 DoGunLatch(superscope.x, superscope.y);
@@ -1542,7 +1550,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
             justifier.buttons &= ~i;
         }
         return;
-        
+
       case S9xButtonCommand:
         if(((enum command_numbers)cmd.button.command)>=LAST_COMMAND){
             fprintf(stderr, "Unknown command %04x\n", cmd.button.command);
@@ -1563,7 +1571,12 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                 S9xReset();
                 break;
               case SoftReset:
-                S9xSoftReset();
+#ifndef NGC
+				S9xMovieUpdateOnReset ();
+				if(S9xMoviePlaying())
+					S9xMovieStop (TRUE);
+#endif
+				S9xSoftReset();
                 break;
               case EmuTurbo:
                 Settings.TurboMode = TRUE;
@@ -1700,14 +1713,17 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
 #endif		    
                 }
                 break;
-              case Mode7Interpolate:
+/*              case Mode7Interpolate:
                 Settings.Mode7Interpolate ^= TRUE;
                 S9xDisplayStateChange ("Mode 7 Interpolation",
                                        Settings.Mode7Interpolate);
-                break;
+                break;*/
               case Pause:
                 Settings.Paused ^= 1;
                 S9xDisplayStateChange ("Pause", Settings.Paused);
+#if defined(NETPLAY_SUPPORT) && !defined(__WIN32__)
+                S9xNPSendPause(Settings.Paused);
+#endif
                 break;
               case QuickLoad000: case QuickLoad001: case QuickLoad002: case QuickLoad003: case QuickLoad004: case QuickLoad005: case QuickLoad006: case QuickLoad007: case QuickLoad008: case QuickLoad009: case QuickLoad010:
                 {
@@ -1716,8 +1732,8 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                     char drive [_MAX_DRIVE];
                     char dir [_MAX_DIR];
                     char ext [_MAX_EXT];
-                    _splitpath (Memory.ROMFilename, drive, dir, def, ext);
 
+                    _splitpath (Memory.ROMFilename, drive, dir, def, ext);
                     sprintf (filename, "%s%s%s.%03d",
                              S9xGetDirectory (SNAPSHOT_DIR), SLASH_STR, def,
                              i - QuickLoad000);
@@ -1732,7 +1748,6 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                     {
                         static char *digits = "t123456789";
                         _splitpath (Memory.ROMFilename, drive, dir, def, ext);
-
                         sprintf (filename, "%s%s%s.zs%c",
                                  S9xGetDirectory (SNAPSHOT_DIR), SLASH_STR,
                                  def, digits [i - QuickLoad000]);
@@ -1777,6 +1792,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                     char drive [_MAX_DRIVE];
                     char dir [_MAX_DIR];
                     char ext [_MAX_EXT];
+
                     _splitpath (Memory.ROMFilename, drive, dir, def, ext);
                     strcpy (ext, "spc");
                     _makepath (filename, drive, S9xGetDirectory (SPC_DIR),
@@ -1810,24 +1826,24 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                                        Settings.SoundSync);
                 break;
               case ToggleBG0:
-                PPU.BG_Forced ^= 1;
-                S9xDisplayStateChange ("BG#0", !(PPU.BG_Forced & 1));
+                Settings.BG_Forced ^= 1;
+                S9xDisplayStateChange ("BG#0", !(Settings.BG_Forced & 1));
                 break;
               case ToggleBG1:
-                PPU.BG_Forced ^= 2;
-                S9xDisplayStateChange ("BG#1", !(PPU.BG_Forced & 2));
+                Settings.BG_Forced ^= 2;
+                S9xDisplayStateChange ("BG#1", !(Settings.BG_Forced & 2));
                 break;
               case ToggleBG2:
-                PPU.BG_Forced ^= 4;
-                S9xDisplayStateChange ("BG#2", !(PPU.BG_Forced & 4));
+                Settings.BG_Forced ^= 4;
+                S9xDisplayStateChange ("BG#2", !(Settings.BG_Forced & 4));
                 break;
               case ToggleBG3:
-                PPU.BG_Forced ^= 8;
-                S9xDisplayStateChange ("BG#3", !(PPU.BG_Forced & 8));
+                Settings.BG_Forced ^= 8;
+                S9xDisplayStateChange ("BG#3", !(Settings.BG_Forced & 8));
                 break;
               case ToggleSprites:
-                PPU.BG_Forced ^= 16;
-                S9xDisplayStateChange ("Sprites", !(PPU.BG_Forced & 16));
+                Settings.BG_Forced ^= 16;
+                S9xDisplayStateChange ("Sprites", !(Settings.BG_Forced & 16));
                 break;
               case ToggleHDMA:
                 Settings.DisableHDMA = !Settings.DisableHDMA;
@@ -1842,10 +1858,11 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
               case DumpSPC7110Log:
                 if(Settings.SPC7110) Do7110Logging();
                 break;
-              
+
               case BeginRecordingMovie:
 #ifndef NGC		
                 if(S9xMovieActive()) S9xMovieStop(FALSE);
+
                 S9xMovieCreate(S9xChooseMovieFilename(FALSE),
                                0xFF,
                                //MOVIE_OPT_FROM_SNAPSHOT
@@ -1853,7 +1870,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                                NULL, 0);
 #endif		
                 break;
-                
+
               case LoadMovie:
 #ifndef NGC		
                 if(S9xMovieActive()) S9xMovieStop(FALSE);
@@ -1899,12 +1916,37 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                 S9xSetInfoString(buf);
                 break;
 
+              case SeekToFrame: {
+#ifndef NGC
+				if (!S9xMovieActive())
+
+				{
+                	S9xSetInfoString("No movie in progress.");
+                	return;
+                }
+
+                char msg[128];
+                sprintf(msg, "Select frame number (current: %d)", S9xMovieGetFrameCounter());
+
+        	const char *frameno = S9xStringInput(msg);
+        	if (!frameno)
+        	  return;
+        	int frameDest = atoi(frameno);
+        	if (frameDest > 0 && frameDest > (int)S9xMovieGetFrameCounter())
+        	{
+        	  int distance = frameDest - S9xMovieGetFrameCounter();
+        	  Settings.HighSpeedSeek = distance;
+        	}
+#endif
+           } // braces for vlocalitylocality
+			  break;
+
               case LAST_COMMAND: break;
                 /* no default, so we get compiler warnings */
             }
         }
         return;
-        
+
       case S9xPointer:
         if(cmd.pointer.aim_mouse0){
             mouse[0].cur_x=data1;
@@ -1992,10 +2034,10 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
         } else {
             if(cmd.axis.pointer.invert) data1=-data1;
             if(cmd.axis.pointer.HV){
-                if(!pseudopointer[cmd.axis.pointer.idx].V_adj) pseudopointer[cmd.axis.pointer.idx].V_adj=(int32)data1*ptrspeeds[cmd.axis.pointer.speed_type]/32767;
+                if(!pseudopointer[cmd.axis.pointer.idx].V_adj) pseudopointer[cmd.axis.pointer.idx].V_adj=(int16)((int32)data1*ptrspeeds[cmd.axis.pointer.speed_type]/32767);
                 pseudopointer[cmd.axis.pointer.idx].V_var=(cmd.axis.pointer.speed_type==0);
             } else {
-                if(!pseudopointer[cmd.axis.pointer.idx].H_adj) pseudopointer[cmd.axis.pointer.idx].H_adj=(int32)data1*ptrspeeds[cmd.axis.pointer.speed_type]/32767;
+                if(!pseudopointer[cmd.axis.pointer.idx].H_adj) pseudopointer[cmd.axis.pointer.idx].H_adj=(int16)((int32)data1*ptrspeeds[cmd.axis.pointer.speed_type]/32767);
                 pseudopointer[cmd.axis.pointer.idx].H_var=(cmd.axis.pointer.speed_type==0);
             }
         }
@@ -2039,11 +2081,13 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
         if(i>=0){
             struct exemulti *e=new struct exemulti;
             e->pos=i;
-            e->data1=data1;
+            e->data1=data1!=0;
             e->script=multis[cmd.button.multi_idx];
             exemultis.insert(e);
         }
         return;
+
+
 
       default:
         fprintf(stderr, "WARNING: Unknown command type %d\n", cmd.type);
@@ -2056,7 +2100,10 @@ static void do_polling(int mp){
     set<uint32>::iterator itr;
 
     if(pollmap[mp].empty()) return;
-    for(itr=pollmap[mp].begin(); itr!=pollmap[mp].end(); itr++){
+#ifndef NGC
+	if(S9xMoviePlaying()) return;
+#endif
+	for(itr=pollmap[mp].begin(); itr!=pollmap[mp].end(); itr++){
         switch(maptype(keymap[*itr].type)){
           case MAP_BUTTON:
             bool pressed;
@@ -2072,10 +2119,42 @@ static void do_polling(int mp){
             int16 x, y;
             if(S9xPollPointer(*itr, &x, &y)) S9xReportPointer(*itr, x, y);
             break;
-            
+
           default:
             break;
         }
+    }
+}
+
+static void UpdatePolledMouse(int i) {
+	int16 j;
+    j=mouse[i-MOUSE0].cur_x-mouse[i-MOUSE0].old_x;
+    if(j<-127){
+        mouse[i-MOUSE0].delta_x=0xff;
+        mouse[i-MOUSE0].old_x-=127;
+    } else if(j<0){
+        mouse[i-MOUSE0].delta_x=0x80 | -j;
+        mouse[i-MOUSE0].old_x=mouse[i-MOUSE0].cur_x;
+    } else if(j>127){
+        mouse[i-MOUSE0].delta_x=0x7f;
+        mouse[i-MOUSE0].old_x+=127;
+    } else {
+        mouse[i-MOUSE0].delta_x=(uint8)j;
+        mouse[i-MOUSE0].old_x=mouse[i-MOUSE0].cur_x;
+    }
+    j=mouse[i-MOUSE0].cur_y-mouse[i-MOUSE0].old_y;
+    if(j<-127){
+        mouse[i-MOUSE0].delta_y=0xff;
+        mouse[i-MOUSE0].old_y-=127;
+    } else if(j<0){
+        mouse[i-MOUSE0].delta_y=0x80 | -j;
+        mouse[i-MOUSE0].old_y=mouse[i-MOUSE0].cur_y;
+    } else if(j>127){
+        mouse[i-MOUSE0].delta_y=0x7f;
+        mouse[i-MOUSE0].old_y+=127;
+    } else {
+        mouse[i-MOUSE0].delta_y=(uint8)j;
+        mouse[i-MOUSE0].old_y=mouse[i-MOUSE0].cur_y;
     }
 }
 
@@ -2103,37 +2182,13 @@ void S9xSetJoypadLatch(bool latch){
               case JOYPAD4: case JOYPAD5: case JOYPAD6: case JOYPAD7:
                 do_polling(i);
                 break;
-                
+
               case MOUSE0: case MOUSE1:
                 do_polling(i);
-                j=mouse[i-MOUSE0].cur_x-mouse[i-MOUSE0].old_x;
-                if(j<-127){
-                    mouse[i-MOUSE0].delta_x=0xff;
-                    mouse[i-MOUSE0].old_x-=127;
-                } else if(j<0){
-                    mouse[i-MOUSE0].delta_x=0x80 | -j;
-                    mouse[i-MOUSE0].old_x=mouse[i-MOUSE0].cur_x;
-                } else if(j>127){
-                    mouse[i-MOUSE0].delta_x=0x7f;
-                    mouse[i-MOUSE0].old_x+=127;
-                } else {
-                    mouse[i-MOUSE0].delta_x=j;
-                    mouse[i-MOUSE0].old_x=mouse[i-MOUSE0].cur_x;
-                }
-                j=mouse[i-MOUSE0].cur_y-mouse[i-MOUSE0].old_y;
-                if(j<-127){
-                    mouse[i-MOUSE0].delta_y=0xff;
-                    mouse[i-MOUSE0].old_y-=127;
-                } else if(j<0){
-                    mouse[i-MOUSE0].delta_y=0x80 | -j;
-                    mouse[i-MOUSE0].old_y=mouse[i-MOUSE0].cur_y;
-                } else if(j>127){
-                    mouse[i-MOUSE0].delta_y=0x7f;
-                    mouse[i-MOUSE0].old_y+=127;
-                } else {
-                    mouse[i-MOUSE0].delta_y=j;
-                    mouse[i-MOUSE0].old_y=mouse[i-MOUSE0].cur_y;
-                }
+#ifndef NGC
+				if(!S9xMoviePlaying())
+#endif
+					UpdatePolledMouse(i);
                 break;
               case SUPERSCOPE:
                 if(superscope.next_buttons&SUPERSCOPE_FIRE){
@@ -2165,7 +2220,7 @@ void S9xSetJoypadLatch(bool latch){
 }
 
 uint8 S9xReadJOYSERn(int n){
-    int i, j, r;
+	int i, j, r;
 
     if(n>1) n-=0x4016;
     assert(n==0 || n==1);
@@ -2226,7 +2281,7 @@ uint8 S9xReadJOYSERn(int n){
             } else {
                 read_idx[n][0]++;
                 return bits|1;
-            } 
+            }
           case SUPERSCOPE:
             if(read_idx[n][0]<8){
                 return bits|((superscope.read_buttons&(0x80>>read_idx[n][0]++))?1:0);
@@ -2264,10 +2319,12 @@ uint8 S9xReadJOYSERn(int n){
 
 void S9xDoAutoJoypad(void){
     int n, i, j;
-    
+
     S9xSetJoypadLatch(1);
     S9xSetJoypadLatch(0);
-
+#ifndef NGC
+	S9xMovieUpdate(false);
+#endif
     for(n=0; n<2; n++){
         switch(i=curcontrollers[n]){
           case MP5:
@@ -2428,7 +2485,8 @@ do_justifier:
 #ifndef NGC
     S9xMovieUpdate();
 #endif
-
+	pad_read_last = pad_read;
+	pad_read = false;
 }
 
 void S9xSetControllerCrosshair(enum crosscontrols ctl, int8 idx, const char *fg, const char *bg){
@@ -2516,11 +2574,83 @@ void MovieSetJoypad(int i, uint16 buttons){
     joypad[i].buttons=buttons;
 }
 
+// from movie.cpp, used for MovieGetX functions to avoid platform-dependent byte order in the file
+#ifndef NGC
+extern void Write16(uint16 v, uint8*& ptr);
+extern uint16 Read16(const uint8*& ptr);
+#endif
+#ifndef NGC
+bool MovieGetMouse(int i, uint8 out [5]){
+    if(i<0 || i>1 || (curcontrollers[i] != MOUSE0 && curcontrollers[i] != MOUSE1)) return false;
+	const int n = curcontrollers[i]-MOUSE0;
+	uint8* ptr = out;
+	Write16(mouse[n].cur_x, ptr);
+	Write16(mouse[n].cur_y, ptr);
+	*ptr++ = mouse[n].buttons;
+	return true;
+}
+
+void MovieSetMouse(int i, const uint8 in [5], bool inPolling){
+    if(i<0 || i>1 || (curcontrollers[i] != MOUSE0 && curcontrollers[i] != MOUSE1)) return;
+	const int n = curcontrollers[i]-MOUSE0;
+	const uint8* ptr = in;
+	mouse[n].cur_x = Read16(ptr);
+	mouse[n].cur_y = Read16(ptr);
+	mouse[n].buttons = *ptr++;
+	if(inPolling)
+		UpdatePolledMouse(curcontrollers[i]);
+}
+
+bool MovieGetScope(int i, uint8 out [6]){
+    if(i<0 || i>1 || (curcontrollers[i] != SUPERSCOPE)) return false;
+	uint8* ptr = out;
+	Write16(superscope.x, ptr);
+	Write16(superscope.y, ptr);
+	*ptr++ = superscope.phys_buttons;
+	*ptr++ = superscope.next_buttons;
+	return true;
+}
+
+void MovieSetScope(int i, const uint8 in [6]){
+    if(i<0 || i>1 || (curcontrollers[i] != SUPERSCOPE)) return;
+	const uint8* ptr = in;
+	superscope.x = Read16(ptr);
+	superscope.y = Read16(ptr);
+	superscope.phys_buttons = *ptr++;
+	superscope.next_buttons = *ptr++;
+}
+
+bool MovieGetJustifier(int i, uint8 out [11]){
+    if(i<0 || i>1 || (curcontrollers[i] != ONE_JUSTIFIER && curcontrollers[i] != TWO_JUSTIFIERS)) return false;
+	uint8* ptr = out;
+	Write16(justifier.x[0], ptr);
+	Write16(justifier.x[1], ptr);
+	Write16(justifier.y[0], ptr);
+	Write16(justifier.y[1], ptr);
+	*ptr++ = justifier.buttons;
+	*ptr++ = justifier.offscreen[0];
+	*ptr++ = justifier.offscreen[1];
+	return true;
+}
+
+void MovieSetJustifier(int i, const uint8 in [11]){
+    if(i<0 || i>1 || (curcontrollers[i] != ONE_JUSTIFIER && curcontrollers[i] != TWO_JUSTIFIERS)) return;
+	const uint8* ptr = in;
+	justifier.x[0] = Read16(ptr);
+	justifier.x[1] = Read16(ptr);
+	justifier.y[0] = Read16(ptr);
+	justifier.y[1] = Read16(ptr);
+	justifier.buttons = *ptr++;
+	justifier.offscreen[0] = *ptr++;
+	justifier.offscreen[1] = *ptr++;
+}
+#endif
+
 void S9xControlPreSave(struct SControlSnapshot *s){
-    int i;
+    int i, j;
 
     ZeroMemory(s, sizeof(*s));
-    s->ver=1;
+    s->ver=3;
     for(i=0; i<2; i++){
         s->port1_read_idx[i]=read_idx[0][i];
         s->port2_read_idx[i]=read_idx[1][i];
@@ -2529,10 +2659,40 @@ void S9xControlPreSave(struct SControlSnapshot *s){
         s->mouse_speed[i]=(mouse[i].buttons&0x30)>>4;
     }
     s->justifier_select=((justifier.buttons&JUSTIFIER_SELECT)?1:0);
+
+#define COPY(x) {memcpy((char*)s->internal+i, &(x), sizeof(x)); i+=sizeof(x);}
+	i=0;
+	for(j=0; j<8; j++)
+		COPY(joypad[j].buttons);
+	for(j=0; j<2; j++) {
+		COPY(mouse[j].delta_x);
+		COPY(mouse[j].delta_y);
+		COPY(mouse[j].old_x);
+		COPY(mouse[j].old_y);
+		COPY(mouse[j].cur_x);
+		COPY(mouse[j].cur_y);
+		COPY(mouse[j].buttons);
+	}
+	COPY(superscope.x);
+	COPY(superscope.y);
+	COPY(superscope.phys_buttons);
+	COPY(superscope.next_buttons);
+	COPY(superscope.read_buttons);
+	for(j=0; j<2; j++) COPY(justifier.x[j]);
+	for(j=0; j<2; j++) COPY(justifier.y[j]);
+	COPY(justifier.buttons);
+	for(j=0; j<2; j++) COPY(justifier.offscreen[j]);
+	for(j=0; j<2; j++)
+		for(int k=0; k<2; k++)
+			COPY(mp5[j].pads[k]);
+	assert(i==sizeof(s->internal));
+#undef COPY
+	s->pad_read=pad_read;
+	s->pad_read_last=pad_read_last;
 }
 
 void S9xControlPostLoad(struct SControlSnapshot *s){
-    int i;
+    int i, j;
 
     if(curcontrollers[0]==MP5 && s->ver<1){
         // Crap. Old snes9x didn't support this.
@@ -2553,4 +2713,40 @@ void S9xControlPostLoad(struct SControlSnapshot *s){
         justifier.buttons&=~JUSTIFIER_SELECT;
     }
     FLAG_LATCH=(Memory.FillRAM[0x4016]&1)==1;
+
+	if(s->ver>1)
+	{
+#define COPY(x) {memcpy(&(x), (char*)s->internal+i, sizeof(x)); i+=sizeof(x);}
+		i=0;
+		for(j=0; j<8; j++)
+			COPY(joypad[j].buttons);
+		for(j=0; j<2; j++) {
+			COPY(mouse[j].delta_x);
+			COPY(mouse[j].delta_y);
+			COPY(mouse[j].old_x);
+			COPY(mouse[j].old_y);
+			COPY(mouse[j].cur_x);
+			COPY(mouse[j].cur_y);
+			COPY(mouse[j].buttons);
+		}
+		COPY(superscope.x);
+		COPY(superscope.y);
+		COPY(superscope.phys_buttons);
+		COPY(superscope.next_buttons);
+		COPY(superscope.read_buttons);
+		for(j=0; j<2; j++) COPY(justifier.x[j]);
+		for(j=0; j<2; j++) COPY(justifier.y[j]);
+		COPY(justifier.buttons);
+		for(j=0; j<2; j++) COPY(justifier.offscreen[j]);
+		for(j=0; j<2; j++)
+			for(int k=0; k<2; k++)
+				COPY(mp5[j].pads[k]);
+		assert(i==sizeof(s->internal));
+#undef COPY
+	}
+	if(s->ver>2)
+	{
+		pad_read=s->pad_read;
+		pad_read_last=s->pad_read_last;
+	}
 }

@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 
 
@@ -167,7 +186,10 @@
 #include "ppu.h"
 #include "screenshot.h"
 
-bool8 S9xDoScreenshot(int width, int height){
+#define ShowFailure() S9xSetInfoString("Failed to take screenshot.")
+
+bool8 S9xDoScreenshot(int width, int height)
+{
 #ifdef HAVE_LIBPNG
     FILE *fp;
     png_structp png_ptr;
@@ -176,10 +198,11 @@ bool8 S9xDoScreenshot(int width, int height){
     int imgwidth;
     int imgheight;
     const char *fname=S9xGetFilenameInc(".png", SCREENSHOT_DIR);
-    
+
     Settings.TakeScreenshot=FALSE;
 
     if((fp=fopen(fname, "wb"))==NULL){
+		ShowFailure();
         perror("Screenshot failed");
         return FALSE;
     }
@@ -188,6 +211,7 @@ bool8 S9xDoScreenshot(int width, int height){
     if(!png_ptr){
         fclose(fp);
         unlink(fname);
+		ShowFailure();
         return FALSE;
     }
     info_ptr=png_create_info_struct(png_ptr);
@@ -195,6 +219,7 @@ bool8 S9xDoScreenshot(int width, int height){
         png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
         fclose(fp);
         unlink(fname);
+		ShowFailure();
         return FALSE;
     }
 
@@ -203,6 +228,7 @@ bool8 S9xDoScreenshot(int width, int height){
         png_destroy_write_struct(&png_ptr, &info_ptr);
         fclose(fp);
         unlink(fname);
+		ShowFailure();
         return FALSE;
     }
 
@@ -215,7 +241,7 @@ bool8 S9xDoScreenshot(int width, int height){
         if(width<=256) imgwidth=width<<1;
         if(height<=SNES_HEIGHT_EXTENDED) imgheight=height<<1;
     }
-    
+
     png_init_io(png_ptr, fp);
     png_set_IHDR(png_ptr, info_ptr, imgwidth, imgheight, 8, PNG_COLOR_TYPE_RGB,
                  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
@@ -229,7 +255,7 @@ bool8 S9xDoScreenshot(int width, int height){
     png_set_shift(png_ptr, &sig_bit);
 
     png_write_info(png_ptr, info_ptr);
-    
+
     png_set_packing(png_ptr);
 
     png_byte *row_pointer=new png_byte [png_get_rowbytes(png_ptr, info_ptr)];
@@ -254,12 +280,20 @@ bool8 S9xDoScreenshot(int width, int height){
     }
 
     delete [] row_pointer;
-        
+
     png_write_end(png_ptr, info_ptr);
     png_destroy_write_struct(&png_ptr, &info_ptr);
 
     fclose(fp);
     fprintf(stderr, "%s saved.\n", fname);
+
+	{
+		static char str [64];
+		sprintf(str, "Saved screenshot %s", fname + strlen(fname)-7);
+		str[strlen(str)-3] = '\0';
+		S9xSetInfoString(str);
+	}
+
     return TRUE;
 #else
     Settings.TakeScreenshot=FALSE;

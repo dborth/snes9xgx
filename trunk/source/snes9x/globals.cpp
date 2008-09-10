@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,11 +114,24 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
+
 
   Snes9x homepage: http://www.snes9x.com
 
@@ -141,7 +158,8 @@
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
 
-#define _GLOBALS_CPP
+
+
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -160,14 +178,12 @@
 
 #include "sa1.h"
 #include "bsx.h"
-
+#include "spc7110.h"
 #ifdef NETPLAY_SUPPORT
 #include "netplay.h"
 #endif
 
-#include "spc7110.h"
-
-//START_EXTERN_C
+START_EXTERN_C
 char String[513];
 
 struct Missing missing;
@@ -196,25 +212,28 @@ struct SSA1 SA1;
 
 struct SBSX BSX;
 
+struct SMulti Multi;
+
 SSoundData SoundData;
 
 SnesModel M1SNES={1,3,2};
 SnesModel M2SNES={2,4,3};
 SnesModel* Model=&M1SNES;
 
-
-uint8 *SRAM = NULL;
+#if defined(ZSNES_FX) || defined(ZSNES_C4)
 uint8 *ROM = NULL;
+uint8 *SRAM = NULL;
 uint8 *RegRAM = NULL;
+#endif
 
 CMemory Memory;
 
-SSNESGameFixes SNESGameFixes;
+struct SSNESGameFixes SNESGameFixes;
 
 unsigned char OpenBus = 0;
 
 
-//END_EXTERN_C
+END_EXTERN_C
 
 #ifndef ZSNES_FX
 struct FxInit_s SuperFX;

@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 #include "snes9x.h"
 #include "spc700.h"
@@ -180,24 +199,21 @@ END_EXTERN_C
 
 #ifdef SPC700_SHUTDOWN
 #define APUShutdown() \
-    if (Settings.Shutdown && (IAPU.PC == IAPU.WaitAddress1 || IAPU.PC == IAPU.WaitAddress2)) \
-    { \
+if (Settings.Shutdown && (IAPU.PC == IAPU.WaitAddress1 || IAPU.PC == IAPU.WaitAddress2)) \
+{ \
 	if (IAPU.WaitCounter == 0) \
 	{ \
-	    if (!ICPU.CPUExecuting) \
-	    { \
- 		APU.Cycles = CPU.Cycles = CPU.NextEvent; \
-		S9xUpdateAPUTimer(); \
-		} \
-	    else \
-		IAPU.APUExecuting = FALSE; \
+		if (!ICPU.CPUExecuting) \
+			S9xAPUExecute(); \
+		else \
+			IAPU.APUExecuting = FALSE; \
 	} \
 	else \
 	if (IAPU.WaitCounter >= 2) \
-	    IAPU.WaitCounter = 1; \
+		IAPU.WaitCounter = 1; \
 	else \
-	    IAPU.WaitCounter--; \
-    }
+		IAPU.WaitCounter--; \
+}
 #else
 #define APUShutdown()
 #endif
@@ -225,6 +241,7 @@ void STOP (char *s)
     WARN(s);
     APU.TimerEnabled[0] = APU.TimerEnabled[1] = APU.TimerEnabled[2] = FALSE;
     IAPU.APUExecuting = FALSE;
+	Settings.APUEnabled = FALSE; // re-enabled on next APU reset
 #ifdef DEBUGGER
     CPU.Flags |= DEBUG_MODE_FLAG;
 #else
@@ -302,7 +319,7 @@ APUSetZN8 ((uint8) Int16);
 #define PushW(w)\
     if(APURegisters.S==0){ \
         *(IAPU.RAM + 0x1ff) = (w);\
-        *(IAPU.RAM + 0x100) = (w >> 8);\
+        *(IAPU.RAM + 0x100) = ((w) >> 8);\
     } else { \
         *(uint16 *) (IAPU.RAM + 0xff + APURegisters.S) = (w);\
     } \
@@ -316,7 +333,7 @@ APUSetZN8 ((uint8) Int16);
     }
 #else
 #define PushW(w)\
-    *(IAPU.RAM + 0x100 + APURegisters.S--) = (w >> 8);\
+    *(IAPU.RAM + 0x100 + APURegisters.S--) = ((w) >> 8);\
     *(IAPU.RAM + 0x100 + APURegisters.S--) = (w);
 #define PopW(w)\
     APURegisters.S += 2;\
@@ -930,7 +947,7 @@ void Apu0E ()
     Absolute ();
     Work8 = S9xAPUGetByte (IAPU.Address);
     S9xAPUSetByte (Work8 | APURegisters.YA.B.A, IAPU.Address);
-    Work8 &= APURegisters.YA.B.A;
+    Work8 = APURegisters.YA.B.A - Work8;
     APUSetZN8 (Work8);
     IAPU.PC += 3;
 }
@@ -941,7 +958,7 @@ void Apu4E ()
     Absolute ();
     Work8 = S9xAPUGetByte (IAPU.Address);
     S9xAPUSetByte (Work8 & ~APURegisters.YA.B.A, IAPU.Address);
-    Work8 &= APURegisters.YA.B.A;
+    Work8 = APURegisters.YA.B.A - Work8;
     APUSetZN8 (Work8);
     IAPU.PC += 3;
 }
@@ -978,6 +995,7 @@ void ApuFF ()
     APU.Flags |= HALTED_FLAG;
     APU.TimerEnabled[0] = APU.TimerEnabled[1] = APU.TimerEnabled[2] = FALSE;
     IAPU.APUExecuting = FALSE;
+	Settings.APUEnabled = FALSE; // re-enabled on next APU reset
 }
 
 void Apu10 ()
@@ -1543,7 +1561,7 @@ void Apu2E ()
 // CBNE dp,rel
     Work8 = OP1;
     Relative2 ();
-    
+
     if (S9xAPUGetByteZ (Work8) != APURegisters.YA.B.A)
     {
 	IAPU.PC = IAPU.RAM + (uint16) Int16;

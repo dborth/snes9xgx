@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,11 +12,15 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
-                             funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com),
-                             Nach (n-a-c-h@users.sourceforge.net), and
+  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com)
+
+  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+                             Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2006 - 2007  nitsuja
+
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -110,17 +114,30 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x filter
+  HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+
+  Win32 GUI code
+  (c) Copyright 2003 - 2006  blip,
+                             funkyass,
+                             Matthew Kendora,
+                             Nach,
+                             nitsuja
+
+  Mac OS GUI code
+  (c) Copyright 1998 - 2001  John Stiles
+  (c) Copyright 2001 - 2007  zones
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
+
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without 
-  fee, providing that this license information and copyright notice appear 
+  and source form, for non-commercial purposes, is hereby granted without
+  fee, providing that this license information and copyright notice appear
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -140,6 +157,8 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
+
+
 
 
 #ifndef _GFX_H_
@@ -175,6 +194,9 @@ struct SGFX{
     uint32 FixedColour;
     const char *InfoString;
     uint32 InfoStringTimeout;
+	char   FrameDisplayString[256];
+	bool8  FrameDisplay;
+	bool8  Repainting; // True if the frame is being re-drawn
     uint8  DoInterlace;
     uint8  InterlaceFrame;
     uint32 StartY;
@@ -242,7 +264,7 @@ struct SBG {
     uint32 PaletteMask;
     uint8  EnableMath;
     uint8  InterlaceLine;
-    
+
     uint8 *Buffer, *BufferFlip;
     uint8 *Buffered, *BufferedFlip;
     bool8  DirectColourMode;
@@ -287,7 +309,7 @@ GFX.X2 [((((C1) & RGB_REMOVE_LOW_BITS_MASK) + \
 (GFX.X2 [((((C1) & RGB_REMOVE_LOW_BITS_MASK) + \
 	  ((C2) & RGB_REMOVE_LOW_BITS_MASK)) >> 1) + \
 	 ((C1) & (C2) & RGB_LOW_BITS_MASK)] | \
- (((C1) ^ (C2)) & RGB_LOW_BITS_MASK))	   
+ (((C1) ^ (C2)) & RGB_LOW_BITS_MASK))
 #endif
 
 #define COLOR_ADD1_2(C1, C2) \
@@ -314,7 +336,7 @@ inline uint16 COLOR_SUB(uint16 C1, uint16 C2)
 	mC1 = C1 & FIRST_COLOR_MASK;
 	mC2 = C2 & FIRST_COLOR_MASK;
 	if (mC1 > mC2) v += (mC1 - mC2);
-	
+
 	mC1 = C1 & SECOND_COLOR_MASK;
 	mC2 = C2 & SECOND_COLOR_MASK;
 	if (mC1 > mC2) v += (mC1 - mC2);
@@ -322,7 +344,7 @@ inline uint16 COLOR_SUB(uint16 C1, uint16 C2)
 	mC1 = C1 & THIRD_COLOR_MASK;
 	mC2 = C2 & THIRD_COLOR_MASK;
 	if (mC1 > mC2) v += (mC1 - mC2);
-	
+
 	return v;
 }
 #endif
@@ -340,16 +362,21 @@ void S9xUpdateScreen ();
 void RenderLine (uint8 line);
 void S9xBuildDirectColourMaps ();
 
-// External port interface which must be implemented or initialised for each
-// port.
+void S9xDisplayMessages (uint16 *screen, int ppl, int width, int height, int scale); // called automatically unless Settings.AutoDisplayMessages is false
+
 extern struct SGFX GFX;
 
+// External port interface which must be implemented or initialised for each
+// port.
 bool8 S9xGraphicsInit ();
 void S9xGraphicsDeinit();
 bool8 S9xInitUpdate (void);
 bool8 S9xDeinitUpdate (int Width, int Height);
+bool8 S9xContinueUpdate (int Width, int Height);
 void S9xSetPalette ();
 void S9xSyncSpeed ();
+
+extern void (*S9xCustomDisplayString) (const char *string, int linesFromBottom, int pixelsFromLeft, bool allowWrap); // called instead of S9xDisplayString if set to non-NULL
 
 #ifdef GFX_MULTI_FORMAT
 bool8 S9xSetRenderPixelFormat (int format);

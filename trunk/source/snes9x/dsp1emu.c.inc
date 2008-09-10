@@ -1213,3 +1213,182 @@ void DSPOp2F()
 {
 	Op2FSize=0x100;
 }
+
+
+
+// FIXME: many of these are unnecessary to save. But some of them are necessary, like Matrix* and maybe VPlane_*
+// TODO: move the necessary ones into a global structure so it's not as ugly to save
+#define SAVE_OR_LOAD_THE_VARIABLES() \
+S(Op00Multiplicand); \
+S(Op00Multiplier); \
+S(Op00Result); \
+S(Op20Multiplicand); \
+S(Op20Multiplier); \
+S(Op20Result); \
+S(Op10Coefficient); \
+S(Op10Exponent); \
+S(Op10CoefficientR); \
+S(Op10ExponentR); \
+S(Op04Angle); \
+S(Op04Radius); \
+S(Op04Sin); \
+S(Op04Cos); \
+S(Op0CA); \
+S(Op0CX1); \
+S(Op0CY1); \
+S(Op0CX2); \
+S(Op0CY2); \
+S(CentreX); \
+S(CentreY); \
+S(VOffset); \
+S(VPlane_C); \
+S(VPlane_E); \
+S(SinAas); \
+S(CosAas); \
+S(SinAzs); \
+S(CosAzs); \
+S(SinAZS); \
+S(CosAZS); \
+S(SecAZS_C1); \
+S(SecAZS_E1); \
+S(SecAZS_C2); \
+S(SecAZS_E2); \
+S(Nx); S(Ny); S(Nz); \
+S(Gx); S(Gy); S(Gz); \
+S(C_Les); S(E_Les); S(G_Les); \
+S(Op02FX); \
+S(Op02FY); \
+S(Op02FZ); \
+S(Op02LFE); \
+S(Op02LES); \
+S(Op02AAS); \
+S(Op02AZS); \
+S(Op02VOF); \
+S(Op02VVA); \
+S(Op02CX); \
+S(Op02CY); \
+S(Op0AVS); \
+S(Op0AA); \
+S(Op0AB); \
+S(Op0AC); \
+S(Op0AD); \
+S(Op06X); \
+S(Op06Y); \
+S(Op06Z); \
+S(Op06H); \
+S(Op06V); \
+S(Op06M); \
+S(matrixC); \
+S(matrixB); \
+S(matrixA); \
+S(Op01m); \
+S(Op01Zr); \
+S(Op01Xr); \
+S(Op01Yr); \
+S(Op11m); \
+S(Op11Zr); \
+S(Op11Xr); \
+S(Op11Yr); \
+S(Op21m); \
+S(Op21Zr); \
+S(Op21Xr); \
+S(Op21Yr); \
+S(Op0DX); \
+S(Op0DY); \
+S(Op0DZ); \
+S(Op0DF); \
+S(Op0DL); \
+S(Op0DU); \
+S(Op1DX); \
+S(Op1DY); \
+S(Op1DZ); \
+S(Op1DF); \
+S(Op1DL); \
+S(Op1DU); \
+S(Op2DX); \
+S(Op2DY); \
+S(Op2DZ); \
+S(Op2DF); \
+S(Op2DL); \
+S(Op2DU); \
+S(Op03F); \
+S(Op03L); \
+S(Op03U); \
+S(Op03X); \
+S(Op03Y); \
+S(Op03Z); \
+S(Op13F); \
+S(Op13L); \
+S(Op13U); \
+S(Op13X); \
+S(Op13Y); \
+S(Op13Z); \
+S(Op23F); \
+S(Op23L); \
+S(Op23U); \
+S(Op23X); \
+S(Op23Y); \
+S(Op23Z); \
+S(Op14Zr); \
+S(Op14Xr); \
+S(Op14Yr); \
+S(Op14U); \
+S(Op14F); \
+S(Op14L); \
+S(Op14Zrr); \
+S(Op14Xrr); \
+S(Op14Yrr); \
+S(Op0EH); \
+S(Op0EV); \
+S(Op0EX); \
+S(Op0EY); \
+S(Op0BX); \
+S(Op0BY); \
+S(Op0BZ); \
+S(Op0BS); \
+S(Op1BX); \
+S(Op1BY); \
+S(Op1BZ); \
+S(Op1BS); \
+S(Op2BX); \
+S(Op2BY); \
+S(Op2BZ); \
+S(Op2BS); \
+S(Op08X); S(Op08Y); S(Op08Z); S(Op08Ll); S(Op08Lh); \
+S(Op18X); S(Op18Y); S(Op18Z); S(Op18R); S(Op18D); \
+S(Op38X); S(Op38Y); S(Op38Z); S(Op38R); S(Op38D); \
+S(Op28X); \
+S(Op28Y); \
+S(Op28Z); \
+S(Op28R); \
+S(Op1CX); S(Op1CY); S(Op1CZ); \
+S(Op1CXBR); S(Op1CYBR); S(Op1CZBR); S(Op1CXAR); S(Op1CYAR); S(Op1CZAR); \
+S(Op1CX1); \
+S(Op1CY1); \
+S(Op1CZ1); \
+S(Op1CX2); \
+S(Op1CY2); \
+S(Op1CZ2); \
+S(Op0FRamsize); \
+S(Op0FPass); \
+S(Op2FUnknown); \
+S(Op2FSize); \
+// end
+
+void S9xPreSaveDSP1()
+{
+	int i = 0;
+#define S(x) {memcpy(DSP1.temp_save_data + i, &(x), sizeof(x)); i += sizeof(x);}
+	SAVE_OR_LOAD_THE_VARIABLES();
+#undef S
+	assert(i == sizeof(DSP1.temp_save_data));
+}
+
+void S9xPostLoadDSP1()
+{
+	int i = 0;
+#define S(x) {memcpy(&(x), DSP1.temp_save_data + i, sizeof(x)); i += sizeof(x);}
+	SAVE_OR_LOAD_THE_VARIABLES();
+#undef S
+	assert(i == sizeof(DSP1.temp_save_data));
+}
