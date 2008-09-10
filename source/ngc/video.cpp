@@ -20,6 +20,7 @@
 #include "memmap.h"
 #include "aram.h"
 #include "snes9xGX.h"
+#include "video.h"
 
 #include "gui.h"
 
@@ -87,8 +88,8 @@ static camera cam = { {0.0F, 0.0F, 0.0F},
 };
 
 
-/*** 
-*** Custom Video modes (used to emulate original console video modes) 
+/***
+*** Custom Video modes (used to emulate original console video modes)
 ***/
 
 /** Original SNES PAL Resolutions: **/
@@ -331,13 +332,13 @@ draw_init ()
 
 	GX_SetNumTexGens (1);
 	GX_SetNumChans (0);
-	
+
 	GX_SetTexCoordGen (GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
 	//GX_SetTevOp (GX_TEVSTAGE0, GX_DECAL);
 	//GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
 	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 	GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
-	
+
 	memset (&view, 0, sizeof (Mtx));
 	guLookAt(view, &cam.pos, &cam.up, &cam.view);
 	GX_LoadPosMtxImm (view, GX_PNMTX0);
@@ -388,8 +389,8 @@ StartGX ()
 	/*** Initialise GX ***/
 	GX_Init (&gp_fifo, DEFAULT_FIFO_SIZE);
 	GX_SetCopyClear (background, 0x00ffffff);
-	
-	
+
+
 	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
 	GX_SetDispCopyYScale ((f32) vmode->xfbHeight / (f32) vmode->efbHeight);
 	GX_SetScissor (0, 0, vmode->fbWidth, vmode->efbHeight);
@@ -399,21 +400,21 @@ StartGX ()
 	GX_SetCopyFilter (vmode->aa, vmode->sample_pattern, GX_TRUE, vmode->vfilter);
 
 	GX_SetFieldMode (vmode->field_rendering, ((vmode->viHeight == 2 * vmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
-	
+
 	GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
 	GX_SetCullMode (GX_CULL_NONE);
 	GX_SetDispCopyGamma (GX_GM_1_0);
 	GX_SetZMode (GX_TRUE, GX_LEQUAL, GX_TRUE);
 	GX_SetColorUpdate (GX_TRUE);
-	
+
 	gui_alphasetup ();
 
 //	guPerspective (p, 60, 1.33F, 10.0F, 1000.0F);
 //	GX_LoadProjectionMtx (p, GX_PERSPECTIVE);
 	guOrtho(p, vmode->efbHeight/2, -(vmode->efbHeight/2), -(vmode->fbWidth/2), vmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
-	
-	
+
+
 	GX_CopyDisp (xfb[whichfb], GX_TRUE); // reset xfb
 
 	vwidth = 100;
@@ -468,7 +469,7 @@ InitGCVideo ()
 	switch (vmode->viTVMode >> 2)
 	{
 		case VI_PAL:  /* 576 lines (PAL 50Hz) */
-			
+
 			// set video signal mode
 			TV_239p.viTVMode = VI_TVMODE_PAL_DS;
 			TV_478i.viTVMode = VI_TVMODE_PAL_INT;
@@ -480,7 +481,7 @@ InitGCVideo ()
 			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_PAL - 512)/2;
 			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 478/2)/2;
 			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 448/2)/2;
-			
+
 			vmode_60hz = 0;
 
 			/* display should be centered vertically (borders) */
@@ -492,7 +493,7 @@ InitGCVideo ()
 			break;
 
 		case VI_NTSC: /* 480 lines (NTSC 60hz) */
-		
+
 			// set video signal mode
 			TV_239p.viTVMode = VI_TVMODE_NTSC_DS;
 			TV_478i.viTVMode = VI_TVMODE_NTSC_INT;
@@ -504,12 +505,12 @@ InitGCVideo ()
 			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 512)/2;
 			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
 			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
-			
+
 			vmode_60hz = 1;
 			break;
 
 		default:  /* 480 lines (PAL 60Hz) */
-		
+
 			// set video signal mode
 			TV_239p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
 			TV_478i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
@@ -521,11 +522,11 @@ InitGCVideo ()
 			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 512)/2;
 			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
 			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
-			
+
 			vmode_60hz = 1;
 			break;
 	}
-	
+
 	// check for progressive scan
 	if (vmode->viTVMode == VI_TVMODE_NTSC_PROG) {
 		TV_239p.viTVMode = TV_478i.viTVMode = TV_224p.viTVMode = TV_448i.viTVMode = VI_TVMODE_NTSC_PROG;
@@ -535,7 +536,7 @@ InitGCVideo ()
     VIDEO_Configure (vmode);
 
     screenheight = vmode->xfbHeight;
-	
+
 
 	// Allocate the video buffers
     xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
@@ -552,7 +553,7 @@ InitGCVideo ()
 	// video callbacks
 	VIDEO_SetPostRetraceCallback ((VIRetraceCallback)UpdatePadsCB);
     VIDEO_SetPreRetraceCallback ((VIRetraceCallback)copy_to_xfb);
-	
+
     VIDEO_SetBlack (FALSE);
     VIDEO_Flush ();
     VIDEO_WaitVSync ();
@@ -561,7 +562,7 @@ InitGCVideo ()
 
     copynow = GX_FALSE;
     StartGX ();
-	
+
 	draw_init ();
 
     #ifdef VIDEO_THREADING
@@ -581,7 +582,7 @@ ResetVideo_Emu ()
 {
 	GXRModeObj *rmode;
 	Mtx p;
-	
+
 	if (!GCSettings.render)	// original render mode
 	{
 		int i;
@@ -593,27 +594,27 @@ ResetVideo_Emu ()
 			}
 		}
 		rmode = tvmodes[i];
-	} 
+	}
 	else
 		rmode = vmode;		// same mode as menu
 
-	
+
 	VIDEO_Configure (rmode);
 	VIDEO_ClearFrameBuffer (rmode, xfb[whichfb], COLOR_BLACK);
 	VIDEO_Flush();
 	VIDEO_WaitVSync();
 	if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
 	else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
-	
+
 
 	GX_SetViewport (0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
 	GX_SetDispCopyYScale ((f32) rmode->xfbHeight / (f32) rmode->efbHeight);
 	GX_SetScissor (0, 0, rmode->fbWidth, rmode->efbHeight);
-	
+
 	GX_SetDispCopySrc (0, 0, rmode->fbWidth, rmode->efbHeight);
 	GX_SetDispCopyDst (rmode->fbWidth, rmode->xfbHeight);
 	GX_SetCopyFilter (rmode->aa, rmode->sample_pattern, GCSettings.render ? GX_TRUE : GX_FALSE, rmode->vfilter);
-	
+
 	GX_SetFieldMode (rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
 	GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
 
@@ -621,10 +622,10 @@ ResetVideo_Emu ()
 //	GX_LoadProjectionMtx (p, GX_PERSPECTIVE);
 	guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
-	
+
 	// clear snes9x render screen
 	//memset (snes9xgfx, 0, 1024 * 512 * 2);
-	
+
 	/*
 			// DEBUG
 		char* msg = (char*) malloc(256*sizeof(char));
@@ -632,7 +633,7 @@ ResetVideo_Emu ()
 		S9xMessage (0, 0, msg);
 		free(msg);
 	*/
-	
+
 
 }
 
@@ -645,7 +646,7 @@ void
 ResetVideo_Menu ()
 {
 	Mtx p;
-	
+
 	VIDEO_Configure (vmode);
 	VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], COLOR_BLACK);
 	VIDEO_Flush();
@@ -656,11 +657,11 @@ ResetVideo_Menu ()
 	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
 	GX_SetDispCopyYScale ((f32) vmode->xfbHeight / (f32) vmode->efbHeight);
 	GX_SetScissor (0, 0, vmode->fbWidth, vmode->efbHeight);
-	
+
 	GX_SetDispCopySrc (0, 0, vmode->fbWidth, vmode->efbHeight);
 	GX_SetDispCopyDst (vmode->fbWidth, vmode->xfbHeight);
 	GX_SetCopyFilter (vmode->aa, vmode->sample_pattern, GX_TRUE, vmode->vfilter);
-	
+
 	GX_SetFieldMode (vmode->field_rendering, ((vmode->viHeight == 2 * vmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
 	GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
 
@@ -724,7 +725,7 @@ extern bool CheckVideo;
 void
 update_video (int width, int height)
 {
-	
+
 	vwidth = width;
 	vheight = height;
 
@@ -742,14 +743,14 @@ update_video (int width, int height)
 
 	if ( oldvheight != vheight || oldvwidth != vwidth )	// if rendered width/height changes, update scaling
 		CheckVideo = 1;
-	
+
 	if ( CheckVideo && (IPPU.RenderedFramesCount != prevRenderedFrameCount) )	// if we get back from the menu, and have rendered at least 1 frame
 	{
 		int xscale, yscale, xshift, yshift;
 		yshift = xshift = 0;
-		
+
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
-		
+
 		/** Update scaling **/
 		if (!GCSettings.render)
 		{
@@ -760,39 +761,41 @@ update_video (int width, int height)
 			xscale = 320;
 			yscale = (vmode_60hz) ? 240 : 287;	// ntsc, pal scaling
 		}
-		
+
 		// aspect ratio scaling (change width scale)
 		// yes its pretty cheap and ugly, but its easy!
-		if (GCSettings.widescreen && GCSettings.render)	// don't allow this on original render modes because its ugly. 
+		if (GCSettings.widescreen && GCSettings.render)	// don't allow this on original render modes because its ugly.
 			xscale -= (4.0*yscale)/9;
-		
+
 		square[6] = square[3]  =  xscale + xshift;
 		square[0] = square[9]  = -xscale + xshift;
 		square[4] = square[1]  =  yscale + yshift;
 		square[7] = square[10] = -yscale + yshift;
 
 		draw_init ();
-		
+
 		GX_InvVtxCache ();
 		GX_InvalidateTexAll ();
-		
+
 		GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-		
+
 		/* original video mode: force filtering OFF */
 	    if (!GCSettings.render)
 			GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
-		
-		
+
+
 		// DEBUG
 		char* msg = (char*) malloc(256*sizeof(char));
 		sprintf (msg, (char*)"xscale: %d, yscale: %d", xscale, yscale);
 		S9xMessage (0, 0, msg);
 		free(msg);
-		
-		
+
+
 		oldvwidth = vwidth;
 		oldvheight = vheight;
 		CheckVideo = 0;
+
+		clearscreen (); // this hack fixes my 'not updating scaling' problem
 	}
 
 	GX_InvalidateTexAll ();
