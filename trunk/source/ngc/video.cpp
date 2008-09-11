@@ -1,13 +1,14 @@
 /****************************************************************************
- * Snes9x 1.50
+ * Snes9x 1.51
  *
- * Nintendo Gamecube Video
- *
- * This is a modified renderer from the Genesis Plus Project.
- * Well - you didn't expect me to write another one did ya ? -;)
+ * Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * crunchy2 May 2007
+ *
+ * video.cpp
+ *
+ * Video routines
  ****************************************************************************/
 #include <gccore.h>
 #include <ogcsys.h>
@@ -20,7 +21,6 @@
 #include "memmap.h"
 #include "aram.h"
 #include "snes9xGX.h"
-#include "video.h"
 
 #include "gui.h"
 
@@ -462,29 +462,29 @@ InitGCVideo ()
         ARAMPut ((char *) romptr, (char *) AR_SNESROM, ARAM_ROMSIZE);
     }
 
-	
+
 	// get default video mode
 	vmode = VIDEO_GetPreferredMode(NULL);
 
 	switch (vmode->viTVMode >> 2)
 	{
-		case VI_PAL:  
+		case VI_PAL:
 			// 576 lines (PAL 50Hz)
 			// display should be centered vertically (borders)
 			vmode = &TVPal574IntDfScale;
 			vmode->xfbHeight = 480;
 			vmode->viYOrigin = (VI_MAX_HEIGHT_PAL - 480)/2;
 			vmode->viHeight = 480;
-			
+
 			vmode_60hz = 0;
 			break;
 
-		case VI_NTSC: 
+		case VI_NTSC:
 			// 480 lines (NTSC 60hz)
 			vmode_60hz = 1;
 			break;
 
-		default:  
+		default:
 			// 480 lines (PAL 60Hz)
 			vmode_60hz = 1;
 			break;
@@ -493,7 +493,7 @@ InitGCVideo ()
 	// check for progressive scan
 	if (vmode->viTVMode == VI_TVMODE_NTSC_PROG)
 		progressive = true;
-		
+
 
     VIDEO_Configure (vmode);
 
@@ -595,7 +595,7 @@ ResetVideo_Emu ()
 
 			break;
 	}
-		
+
 
 	if (GCSettings.render == 0)	// original render mode
 	{
@@ -612,7 +612,7 @@ ResetVideo_Emu ()
 	else if (GCSettings.render == 2)	// unfiltered
 	{
 		rmode = vmode;
-	} 
+	}
 	else	// filtered
 	{
 		rmode = vmode;		// same mode as menu
@@ -788,14 +788,14 @@ update_video (int width, int height)
 		square[0] = square[9]  = -xscale + xshift;
 		square[4] = square[1]  =  yscale + yshift;
 		square[7] = square[10] = -yscale + yshift;
-		
+
 		GX_InvVtxCache ();	// update vertex cache
 
 		GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);	// initialize the texture obj we are going to use
 
 	    if (GCSettings.render == 0 || GCSettings.render == 2)
 			GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1); // original/unfiltered video mode: force texture filtering OFF
-			
+
 		GX_LoadTexObj (&texobj, GX_TEXMAP0);	// load texture object so its ready to use
 
 		/*
@@ -809,10 +809,8 @@ update_video (int width, int height)
 		oldvwidth = vwidth;
 		oldvheight = vheight;
 		CheckVideo = 0;
-
-		//clearscreen (); // this hack fixes my 'not updating scaling' problem
 	}
-	
+
 	/*
 	// for zooming
 	memset (&view, 0, sizeof (Mtx));
