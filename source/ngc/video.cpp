@@ -52,6 +52,7 @@ int vwidth, vheight, oldvwidth, oldvheight;
 u32 FrameTimer = 0;
 
 u8 vmode_60hz = 0;
+bool progressive = 0;
 
 #define HASPECT 320
 #define VASPECT 240
@@ -461,80 +462,38 @@ InitGCVideo ()
         ARAMPut ((char *) romptr, (char *) AR_SNESROM, ARAM_ROMSIZE);
     }
 
-
+	
 	// get default video mode
-
 	vmode = VIDEO_GetPreferredMode(NULL);
 
 	switch (vmode->viTVMode >> 2)
 	{
-		case VI_PAL:  /* 576 lines (PAL 50Hz) */
-
-			// set video signal mode
-			TV_239p.viTVMode = VI_TVMODE_PAL_DS;
-			TV_478i.viTVMode = VI_TVMODE_PAL_INT;
-			TV_224p.viTVMode = VI_TVMODE_PAL_DS;
-			TV_448i.viTVMode = VI_TVMODE_PAL_INT;
-			// set VI sizing
-			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
-			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
-			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_PAL - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 478/2)/2;
-			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 448/2)/2;
-
-			vmode_60hz = 0;
-
-			/* display should be centered vertically (borders) */
+		case VI_PAL:  
+			// 576 lines (PAL 50Hz)
+			// display should be centered vertically (borders)
 			vmode = &TVPal574IntDfScale;
 			vmode->xfbHeight = 480;
 			vmode->viYOrigin = (VI_MAX_HEIGHT_PAL - 480)/2;
 			vmode->viHeight = 480;
-
+			
+			vmode_60hz = 0;
 			break;
 
-		case VI_NTSC: /* 480 lines (NTSC 60hz) */
-
-			// set video signal mode
-			TV_239p.viTVMode = VI_TVMODE_NTSC_DS;
-			TV_478i.viTVMode = VI_TVMODE_NTSC_INT;
-			TV_224p.viTVMode = VI_TVMODE_NTSC_DS;
-			TV_448i.viTVMode = VI_TVMODE_NTSC_INT;
-			// set VI sizing
-			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
-			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
-			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
-			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
-
+		case VI_NTSC: 
+			// 480 lines (NTSC 60hz)
 			vmode_60hz = 1;
 			break;
 
-		default:  /* 480 lines (PAL 60Hz) */
-
-			// set video signal mode
-			TV_239p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
-			TV_478i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
-			TV_224p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
-			TV_448i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
-			// set VI sizing
-			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
-			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
-			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
-			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
-
+		default:  
+			// 480 lines (PAL 60Hz)
 			vmode_60hz = 1;
 			break;
 	}
 
 	// check for progressive scan
-	if (vmode->viTVMode == VI_TVMODE_NTSC_PROG) {
-		TV_239p.viTVMode = TV_478i.viTVMode = TV_224p.viTVMode = TV_448i.viTVMode = VI_TVMODE_NTSC_PROG;
-		TV_239p.xfbMode = TV_478i.xfbMode = TV_224p.xfbMode = TV_448i.xfbMode = VI_XFBMODE_SF;
-		TV_239p.xfbHeight = TV_478i.xfbHeight = TV_224p.xfbHeight = TV_448i.xfbHeight = 480;
-		TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
-		TV_239p.viYOrigin = TV_478i.viYOrigin = TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 480/2)/2;
-	}
+	if (vmode->viTVMode == VI_TVMODE_NTSC_PROG)
+		progressive = true;
+		
 
     VIDEO_Configure (vmode);
 
@@ -586,20 +545,78 @@ ResetVideo_Emu ()
 	GXRModeObj *rmode;
 	Mtx p;
 
-	if (!GCSettings.render)	// original render mode
+	switch (vmode->viTVMode >> 2)
+	{
+		case VI_PAL:  /* 576 lines (PAL 50Hz) */
+
+			// set video signal mode
+			TV_239p.viTVMode = VI_TVMODE_PAL_DS;
+			TV_478i.viTVMode = VI_TVMODE_PAL_INT;
+			TV_224p.viTVMode = VI_TVMODE_PAL_DS;
+			TV_448i.viTVMode = VI_TVMODE_PAL_INT;
+			// set VI sizing
+			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
+			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
+			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_PAL - 640)/2;
+			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 478/2)/2;
+			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 448/2)/2;
+
+			break;
+
+		case VI_NTSC: /* 480 lines (NTSC 60hz) */
+
+			// set video signal mode
+			TV_239p.viTVMode = VI_TVMODE_NTSC_DS;
+			TV_478i.viTVMode = VI_TVMODE_NTSC_INT;
+			TV_224p.viTVMode = VI_TVMODE_NTSC_DS;
+			TV_448i.viTVMode = VI_TVMODE_NTSC_INT;
+			// set VI sizing
+			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
+			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
+			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
+			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
+			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
+
+			break;
+
+		default:  /* 480 lines (PAL 60Hz) */
+
+			// set video signal mode
+			TV_239p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
+			TV_478i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
+			TV_224p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
+			TV_448i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
+			// set VI sizing
+			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
+			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
+			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
+			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
+			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
+
+			break;
+	}
+		
+
+	if (GCSettings.render == 0)	// original render mode
 	{
 		int i;
 		for (i=0; i<4; i++) {
 			if (tvmodes[i]->efbHeight == vheight) {
-				// FIX: fix this fix ...
+				// FIX: ok?
 				tvmodes[i]->fbWidth = vwidth;	// update width - some games are 512x224 (super pang)
 				break;
 			}
 		}
 		rmode = tvmodes[i];
 	}
-	else
+	else if (GCSettings.render == 2)	// unfiltered
+	{
+		rmode = vmode;
+	} 
+	else	// filtered
+	{
 		rmode = vmode;		// same mode as menu
+	}
 
 
 	VIDEO_Configure (rmode);
@@ -616,7 +633,7 @@ ResetVideo_Emu ()
 
 	GX_SetDispCopySrc (0, 0, rmode->fbWidth, rmode->efbHeight);
 	GX_SetDispCopyDst (rmode->fbWidth, rmode->xfbHeight);
-	GX_SetCopyFilter (rmode->aa, rmode->sample_pattern, GCSettings.render ? GX_TRUE : GX_FALSE, rmode->vfilter);
+	GX_SetCopyFilter (rmode->aa, rmode->sample_pattern, (GCSettings.render == 1) ? GX_TRUE : GX_FALSE, rmode->vfilter);	// AA on only for filtered mode
 
 	GX_SetFieldMode (rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
 	GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
@@ -626,8 +643,6 @@ ResetVideo_Emu ()
 	guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
-	// clear snes9x render screen
-	//memset (snes9xgfx, 0, 1024 * 512 * 2);
 
 	/*
 		// DEBUG
@@ -733,7 +748,7 @@ update_video (int width, int height)
 	vheight = height;
 
 #ifdef VIDEO_THREADING
-	/* Ensure previous vb has complete */
+	// Ensure previous vb has complete
 	while ((LWP_ThreadIsSuspended (vbthread) == 0) || (copynow == GX_TRUE))
 #else
 	while (copynow == GX_TRUE)
@@ -755,19 +770,18 @@ update_video (int width, int height)
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
 
 		/** Update scaling **/
-		if (!GCSettings.render)
+		if (GCSettings.render == 0)	// original render mode
 		{
-			// original render modes
 			xscale = vwidth / 2;
 			yscale = vheight / 2;
-		} else {
-			xscale = 320;
-			yscale = (vmode_60hz) ? 240 : 287;	// ntsc, pal scaling
+		} else {	// unfiltered and filtered mode
+			xscale = vmode->fbWidth / 2;
+			yscale = vmode->efbHeight / 2;
 		}
 
 		// aspect ratio scaling (change width scale)
 		// yes its pretty cheap and ugly, but its easy!
-		if (GCSettings.widescreen && GCSettings.render)	// don't allow this on original render modes because its ugly.
+		if (GCSettings.widescreen)
 			xscale -= (4.0*yscale)/9;
 
 		square[6] = square[3]  =  xscale + xshift;
@@ -775,24 +789,22 @@ update_video (int width, int height)
 		square[4] = square[1]  =  yscale + yshift;
 		square[7] = square[10] = -yscale + yshift;
 		
-		GX_InvVtxCache ();
+		GX_InvVtxCache ();	// update vertex cache
 
-		//draw_init ();
+		GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);	// initialize the texture obj we are going to use
 
-		GX_InvalidateTexAll ();
-		GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	    if (GCSettings.render == 0 || GCSettings.render == 2)
+			GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1); // original/unfiltered video mode: force texture filtering OFF
+			
+		GX_LoadTexObj (&texobj, GX_TEXMAP0);	// load texture object so its ready to use
 
-		/* original video mode: force filtering OFF */
-	    if (!GCSettings.render)
-			GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
-
-
+		/*
 		// DEBUG
 		char* msg = (char*) malloc(256*sizeof(char));
 		sprintf (msg, (char*)"xscale: %d, yscale: %d", xscale, yscale);
 		S9xMessage (0, 0, msg);
 		free(msg);
-
+		*/
 
 		oldvwidth = vwidth;
 		oldvheight = vheight;
@@ -807,16 +819,13 @@ update_video (int width, int height)
 	guLookAt(view, &cam.pos, &cam.up, &cam.view);
 	GX_LoadPosMtxImm (view, GX_PNMTX0);
 	*/
-	
+
+	MakeTexture ((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);	// convert image to texture
+
+	DCFlushRange (texturemem, TEX_WIDTH * TEX_HEIGHT * 2);	// update the texture memory
 	GX_InvalidateTexAll ();
 
-	MakeTexture ((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
-
-	DCFlushRange (texturemem, TEX_WIDTH * TEX_HEIGHT * 2);
-
-	GX_LoadTexObj (&texobj, GX_TEXMAP0);
-
-	draw_square (view);
+	draw_square (view);		// draw the quad
 
 	GX_DrawDone ();
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
@@ -824,7 +833,7 @@ update_video (int width, int height)
 	copynow = GX_TRUE;
 
 #ifdef VIDEO_THREADING
-	/* Return to caller, don't waste time waiting for vb */
+	// Return to caller, don't waste time waiting for vb
 	LWP_ResumeThread (vbthread);
 #endif
 

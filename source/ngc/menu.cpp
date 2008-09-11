@@ -240,8 +240,12 @@ PreferencesMenu ()
 		sprintf (prefmenu[11], "C-Stick Zoom %s",
 			GCSettings.NGCZoom == true ? " ON" : "OFF");
 
-		sprintf (prefmenu[12], "Render Mode %s",
-			GCSettings.render == true ? "Filtered" : "Original");
+		if ( GCSettings.render == 0 )
+			sprintf (prefmenu[12], "Render Mode Original");
+		if ( GCSettings.render == 1 )
+			sprintf (prefmenu[12], "Render Mode Filtered");
+		if ( GCSettings.render == 2 )
+			sprintf (prefmenu[12], "Render Mode Unfiltered");
 
 		sprintf (prefmenu[13], "Widescreen %s",
 			GCSettings.widescreen == true ? "ON" : "OFF");
@@ -301,12 +305,16 @@ PreferencesMenu ()
 				break;
 
 			case 12:
-				GCSettings.render ^= 1;
+				GCSettings.render++;
+				if (GCSettings.render > 2 ) GCSettings.render = 0;
+				
+				extern bool progressive;
+				if (GCSettings.render==0 && progressive) GCSettings.render++;	// don't do original render mode if progressive video mode detected
 				break;
 
 			case 13:
 				GCSettings.widescreen ^= 1;
-				if (!GCSettings.render) GCSettings.widescreen = 0;	// don't allow on original render modes
+				//if (!GCSettings.render) GCSettings.widescreen = 0;	// don't allow on original render modes
 				break;
 
 			case 14:
