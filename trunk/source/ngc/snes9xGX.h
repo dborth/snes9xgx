@@ -51,7 +51,7 @@ struct SGCSettings{
 	char	smbshare[20];
     int		NGCZoom; // 0 - off, 1 - on
     int		VerifySaves;
-	int		render;		// 0 - original, 1 - filtered
+	int		render;		// 0 - original, 1 - filtered, 2 - unfiltered
 	int		Superscope;
 	int		Mouse;
 	int		Justifier;
