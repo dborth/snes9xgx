@@ -481,7 +481,7 @@ void S9xUnmapAllControls(void){
         mouse[i].cur_x=mouse[i].cur_y=0;
         mouse[i].buttons=1;
         mouse[i].ID=InvalidControlID;
-        if(!(mouse[i].crosshair.set&1)) mouse[i].crosshair.img=0; // no image for mouse because its only logical position is game-specific, not known by the emulator
+        if(!(mouse[i].crosshair.set&1)) mouse[i].crosshair.img=1; // no image for mouse because its only logical position is game-specific, not known by the emulator
         if(!(mouse[i].crosshair.set&2)) mouse[i].crosshair.fg=5;
         if(!(mouse[i].crosshair.set&4)) mouse[i].crosshair.bg=1;
         justifier.x[i]=justifier.y[i]=0;
@@ -1677,14 +1677,14 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                 S9xDisplayStateChange("Interpolated sound", Settings.InterpolatedSound);
                 break;
               case LoadFreezeFile:
-#ifndef NGC		
+#ifndef NGC
                 S9xUnfreezeGame(S9xChooseFilename(TRUE));
-#endif		
+#endif
                 break;
               case SaveFreezeFile:
-#ifndef NGC		
+#ifndef NGC
                 S9xFreezeGame(S9xChooseFilename(FALSE));
-#endif		
+#endif
                 break;
               case LoadOopsFile:
                 {
@@ -1699,7 +1699,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                              S9xGetDirectory(SNAPSHOT_DIR), SLASH_STR, def,
                              _MAX_EXT-1, "oops");
 
-#ifndef NGC		    
+#ifndef NGC
                     if (S9xLoadSnapshot (filename))
                     {
                         sprintf (buf, "%s.%.*s loaded", def, _MAX_EXT-1, "oops");
@@ -1710,7 +1710,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                         S9xMessage (S9X_ERROR, S9X_FREEZE_FILE_NOT_FOUND,
                                     "Oops file not found");
                     }
-#endif		    
+#endif
                 }
                 break;
 /*              case Mode7Interpolate:
@@ -1738,7 +1738,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                              S9xGetDirectory (SNAPSHOT_DIR), SLASH_STR, def,
                              i - QuickLoad000);
 
-#ifndef NGC		    
+#ifndef NGC
                     if (S9xLoadSnapshot (filename))
                     {
                         sprintf (buf, "%s.%03d loaded", def, i - QuickLoad000);
@@ -1762,7 +1762,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                             S9xMessage (S9X_ERROR, S9X_FREEZE_FILE_NOT_FOUND,
                                         "Freeze file not found");
                     }
-#endif		    
+#endif
                 }
                 break;
               case QuickSave000: case QuickSave001: case QuickSave002: case QuickSave003: case QuickSave004: case QuickSave005: case QuickSave006: case QuickSave007: case QuickSave008: case QuickSave009: case QuickSave010:
@@ -1779,7 +1779,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                              i - QuickSave000);
                     sprintf (buf, "%s.%03d saved", def, i - QuickSave000);
                     S9xSetInfoString (buf);
-#ifndef NGC		    
+#ifndef NGC
                     Snapshot(filename);
 #endif
 
@@ -1798,7 +1798,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                     _makepath (filename, drive, S9xGetDirectory (SPC_DIR),
                                def, ext);
 
-#ifndef NGC		    
+#ifndef NGC
                     if (S9xSPCDump (filename))
                         sprintf (buf, "%s.%s saved", def, ext);
                     else
@@ -1860,7 +1860,7 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                 break;
 
               case BeginRecordingMovie:
-#ifndef NGC		
+#ifndef NGC
                 if(S9xMovieActive()) S9xMovieStop(FALSE);
 
                 S9xMovieCreate(S9xChooseMovieFilename(FALSE),
@@ -1868,20 +1868,20 @@ void S9xApplyCommand(s9xcommand_t cmd, int16 data1, int16 data2){
                                //MOVIE_OPT_FROM_SNAPSHOT
                                MOVIE_OPT_FROM_RESET,
                                NULL, 0);
-#endif		
+#endif
                 break;
 
               case LoadMovie:
-#ifndef NGC		
+#ifndef NGC
                 if(S9xMovieActive()) S9xMovieStop(FALSE);
                 S9xMovieOpen(S9xChooseMovieFilename(TRUE), FALSE);
-#endif		
+#endif
                 break;
 
               case EndRecordingMovie:
-#ifndef NGC		
+#ifndef NGC
                 if(S9xMovieActive()) S9xMovieStop(FALSE);
-#endif		
+#endif
                 break;
 
               case SwapJoypads:
