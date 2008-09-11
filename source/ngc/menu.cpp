@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50
+ * Snes9x 1.51
  *
  * Nintendo Wii/Gamecube Port
  *
@@ -213,6 +213,10 @@ PreferencesMenu ()
 		prefmenu[1][0] = '\0';
 		prefmenu[3][0] = '\0';
 
+		// don't allow original render mode if progressive video mode detected
+		if (GCSettings.render==0 && progressive)
+			GCSettings.render++;
+
 		if (GCSettings.AutoLoad == 0) sprintf (prefmenu[4],"Auto Load OFF");
 		else if (GCSettings.AutoLoad == 1) sprintf (prefmenu[4],"Auto Load SRAM");
 		else if (GCSettings.AutoLoad == 2) sprintf (prefmenu[4],"Auto Load SNAPSHOT");
@@ -241,14 +245,14 @@ PreferencesMenu ()
 			GCSettings.NGCZoom == true ? " ON" : "OFF");
 
 		if ( GCSettings.render == 0 )
-			sprintf (prefmenu[12], "Render Mode Original");
+			sprintf (prefmenu[12], "Video Rendering Original");
 		if ( GCSettings.render == 1 )
-			sprintf (prefmenu[12], "Render Mode Filtered");
+			sprintf (prefmenu[12], "Video Rendering Filtered");
 		if ( GCSettings.render == 2 )
-			sprintf (prefmenu[12], "Render Mode Unfiltered");
+			sprintf (prefmenu[12], "Video Rendering Unfiltered");
 
-		sprintf (prefmenu[13], "Widescreen %s",
-			GCSettings.widescreen == true ? "ON" : "OFF");
+		sprintf (prefmenu[13], "Video Scaling %s",
+			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
 
 		ret = RunMenu (prefmenu, prefmenuCount, (char*)"Preferences", 16);
 
@@ -306,15 +310,12 @@ PreferencesMenu ()
 
 			case 12:
 				GCSettings.render++;
-				if (GCSettings.render > 2 ) GCSettings.render = 0;
-				
-				extern bool progressive;
-				if (GCSettings.render==0 && progressive) GCSettings.render++;	// don't do original render mode if progressive video mode detected
+				if (GCSettings.render > 2 )
+					GCSettings.render = 0;
 				break;
 
 			case 13:
 				GCSettings.widescreen ^= 1;
-				//if (!GCSettings.render) GCSettings.widescreen = 0;	// don't allow on original render modes
 				break;
 
 			case 14:
