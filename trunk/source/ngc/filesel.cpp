@@ -1,7 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50
- *
- * Nintendo Wii/Gamecube Port
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * svpe June 2007
@@ -11,7 +9,8 @@
  * filesel.cpp
  *
  * Generic file routines - reading, writing, browsing
- ****************************************************************************/
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,8 +59,9 @@ FILEENTRIES filelist[MAXFILES];
 unsigned char savebuffer[SAVEBUFFERSIZE] ATTRIBUTE_ALIGN (32);
 
 /****************************************************************************
+ * ClearSaveBuffer ()
  * Clear the savebuffer
- ****************************************************************************/
+ ***************************************************************************/
 void
 ClearSaveBuffer ()
 {
@@ -118,8 +118,9 @@ int autoSaveMethod()
 	}
 }
 
-/***************************************************************************
- * Update curent directory name
+/****************************************************************************
+ * UpdateDirName()
+ * Update curent directory name for file browser
  ***************************************************************************/
 int UpdateDirName(int method)
 {
@@ -176,7 +177,7 @@ int UpdateDirName(int method)
 	}
 }
 
-/***************************************************************************
+/****************************************************************************
  * FileSortCallback
  *
  * Quick sort callback to sort file entries with the following order:
@@ -207,7 +208,7 @@ int FileSortCallback(const void *f1, const void *f2)
  * StripExt
  *
  * Strips an extension from a filename
-****************************************************************************/
+ ***************************************************************************/
 
 void StripExt(char* returnstring, char * inputstring)
 {
@@ -223,7 +224,7 @@ void StripExt(char* returnstring, char * inputstring)
  * FileSelector
  *
  * Let user select a file from the listing
-****************************************************************************/
+ ***************************************************************************/
 int FileSelector (int method)
 {
     u32 p = 0;
@@ -455,7 +456,7 @@ int FileSelector (int method)
  * OpenDVD
  *
  * Function to load a DVD directory and display to user.
-****************************************************************************/
+ ***************************************************************************/
 int
 OpenDVD (int method)
 {
@@ -504,7 +505,7 @@ OpenDVD (int method)
  * OpenSMB
  *
  * Function to load from an SMB share
-****************************************************************************/
+ ***************************************************************************/
 int
 OpenSMB (int method)
 {
@@ -533,7 +534,7 @@ OpenSMB (int method)
  * OpenFAT
  *
  * Function to load from FAT
- ****************************************************************************/
+ ***************************************************************************/
 int
 OpenFAT (int method)
 {
@@ -562,7 +563,7 @@ OpenFAT (int method)
 /****************************************************************************
  * OpenROM
  * Opens device specified by method, displays a list of ROMS
- ****************************************************************************/
+ ***************************************************************************/
 
 int
 OpenROM (int method)

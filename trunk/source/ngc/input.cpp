@@ -1,3 +1,15 @@
+/****************************************************************************
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ *
+ * softdev July 2006
+ * crunchy2 May-June 2007
+ * Tantric September 2008
+ *
+ * input.cpp
+ *
+ * Wii/Gamecube controller management
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +37,7 @@ extern int ConfigRequested;
  * Controller Functions
  *
  * The following map the NGC Pads to the *NEW* controller system.
- ****************************************************************************/
+ ***************************************************************************/
 #define ASSIGN_BUTTON_TRUE( keycode, snescmd ) \
 	  S9xMapButton( keycode, cmd = S9xGetCommandT(snescmd), true)
 
@@ -83,6 +95,12 @@ unsigned int gcjustmap[] = { PAD_BUTTON_A, PAD_BUTTON_B, PAD_BUTTON_START };
 /*** Justifier : wiimote button mapping ***/
 unsigned int wmjustmap[] = { WPAD_BUTTON_A, WPAD_BUTTON_B, WPAD_BUTTON_PLUS };
 
+/****************************************************************************
+ * WPAD_StickX
+ *
+ * Get X value from Wii Joystick (classic, nunchuk) input
+ ***************************************************************************/
+
 s8 WPAD_StickX(u8 chan,u8 right)
 {
 	float mag = 0.0;
@@ -124,6 +142,12 @@ s8 WPAD_StickX(u8 chan,u8 right)
 
 	return (s8)(val * 128.0f);
 }
+
+/****************************************************************************
+ * WPAD_StickY
+ *
+ * Get Y value from Wii Joystick (classic, nunchuk) input
+ ***************************************************************************/
 
 s8 WPAD_StickY(u8 chan, u8 right)
 {
@@ -170,6 +194,12 @@ s8 WPAD_StickY(u8 chan, u8 right)
 // hold superscope/mouse/justifier cursor positions
 static int cursor_x[5] = {0,0,0,0,0};
 static int cursor_y[5] = {0,0,0,0,0};
+
+/****************************************************************************
+ * UpdateCursorPosition
+ *
+ * Updates X/Y coordinates for Superscope/mouse/justifier position
+ ***************************************************************************/
 
 void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
 {
@@ -233,8 +263,12 @@ void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
 }
 
 /****************************************************************************
- * This is the joypad algorithm submitted by Krullo.
+ * decodepad
+ *
+ * Reads the changes (buttons pressed, etc) from a controller and reports
+ * these changes to Snes9x
  ****************************************************************************/
+
 void decodepad (int pad)
 {
   int i, offset;
@@ -424,8 +458,10 @@ void decodepad (int pad)
 
 /****************************************************************************
  * NGCReportButtons
+ *
  * Called on each rendered frame
- ****************************************************************************/
+ * Our way of putting controller input into Snes9x
+ ***************************************************************************/
 void NGCReportButtons ()
 {
 	s8 gc_px = PAD_SubStickX (0);
@@ -521,10 +557,9 @@ void SetControllers ()
 	}
 }
 
-
 /****************************************************************************
  * Set the default mapping for NGC
- ****************************************************************************/
+ ***************************************************************************/
 void SetDefaultButtonMap ()
 {
   int maxcode = 0x10;

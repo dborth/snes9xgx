@@ -1,14 +1,12 @@
 /****************************************************************************
- * Snes9x 1.51
- *
- * Nintendo Wii/Gamecube Port
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * Tantric August 2008
  *
  * cheatmgr.cpp
  *
  * Cheat handling
- ****************************************************************************/
+ ***************************************************************************/
 
 #include "memmap.h"
 #include "cheats.h"
@@ -27,7 +25,7 @@ extern unsigned char savebuffer[];
  *
  * Loads cheat file from save buffer
  * Custom version of S9xLoadCheatFile()
- ****************************************************************************/
+ ***************************************************************************/
 
 bool8 NGCLoadCheatFile (int length)
 {
@@ -61,7 +59,7 @@ bool8 NGCLoadCheatFile (int length)
  *
  * Erases any prexisting cheats, loads cheats from a cheat file
  * Called when a ROM is first loaded
- ****************************************************************************/
+ ***************************************************************************/
 void
 SetupCheats()
 {

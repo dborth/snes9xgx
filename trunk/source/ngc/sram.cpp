@@ -1,7 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50
- *
- * Nintendo Wii/Gamecube Port
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * crunchy2 April 2007-July 2007
  * Tantric September 2008
@@ -9,7 +7,8 @@
  * sram.cpp
  *
  * SRAM save/load/import/export handling
- ****************************************************************************/
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <stdio.h>
 #include <string.h>
@@ -36,9 +35,9 @@ char sramcomment[2][32];
 /****************************************************************************
  * Prepare SRAM Save Data
  *
- * This sets up the save buffer for saving in a format compatible with
- * snes9x on other platforms. This is used when saving to SD / USB / SMB.
- ****************************************************************************/
+ * This sets up the savebuffer for saving in a format compatible with
+ * snes9x on other platforms.
+ ***************************************************************************/
 int
 preparesavedata (int method)
 {
@@ -91,7 +90,7 @@ preparesavedata (int method)
 
 /****************************************************************************
  * Decode Save Data
- ****************************************************************************/
+ ***************************************************************************/
 void
 decodesavedata (int method, int readsize)
 {
@@ -143,7 +142,7 @@ decodesavedata (int method, int readsize)
 
 /****************************************************************************
  * Load SRAM
- ****************************************************************************/
+ ***************************************************************************/
 int
 LoadSRAM (int method, bool silent)
 {
@@ -192,7 +191,7 @@ LoadSRAM (int method, bool silent)
 
 /****************************************************************************
  * Save SRAM
- ****************************************************************************/
+ ***************************************************************************/
 bool
 SaveSRAM (int method, bool silent)
 {

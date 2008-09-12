@@ -1,7 +1,5 @@
 /****************************************************************************
- * Snes9x 1.51
- *
- * Nintendo Wii/Gamecube Port
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * crunchy2 May 2007
@@ -9,7 +7,8 @@
  * video.cpp
  *
  * Video routines
- ****************************************************************************/
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <ogcsys.h>
 #include <stdio.h>
@@ -248,7 +247,7 @@ GXRModeObj *tvmodes[4] = {
 #ifdef VIDEO_THREADING
 /****************************************************************************
  * VideoThreading
- ****************************************************************************/
+ ***************************************************************************/
 #define TSTACK 16384
 lwpq_t videoblankqueue;
 lwp_t vbthread;
@@ -261,7 +260,7 @@ static unsigned char vbstack[TSTACK];
  * vertical blank.
  *
  * Putting LWP to good use :)
- ****************************************************************************/
+ ***************************************************************************/
 static void *
 vbgetback (void *arg)
 {
@@ -280,7 +279,7 @@ vbgetback (void *arg)
  *
  * libOGC provides a nice wrapper for LWP access.
  * This function sets up a new local queue and attaches the thread to it.
- ****************************************************************************/
+ ***************************************************************************/
 void
 InitVideoThread ()
 {
@@ -298,7 +297,7 @@ InitVideoThread ()
  *
  * Stock code to copy the GX buffer to the current display mode.
  * Also increments the frameticker, as it's called for each vb.
- ****************************************************************************/
+ ***************************************************************************/
 static void
 copy_to_xfb (u32 arg)
 {
@@ -316,7 +315,7 @@ copy_to_xfb (u32 arg)
 
 /****************************************************************************
  * Scaler Support Functions
- ****************************************************************************/
+ ***************************************************************************/
 static void
 draw_init ()
 {
@@ -376,7 +375,7 @@ draw_square (Mtx v)
  * StartGX
  *
  * This function initialises the GX.
- ****************************************************************************/
+ ***************************************************************************/
 static void
 StartGX ()
 {
@@ -426,7 +425,7 @@ StartGX ()
  * UpdatePadsCB
  *
  * called by postRetraceCallback in InitGCVideo - scans gcpad and wpad
- ****************************************************************************/
+ ***************************************************************************/
 void
 UpdatePadsCB ()
 {
@@ -441,7 +440,7 @@ UpdatePadsCB ()
  *
  * This function MUST be called at startup.
  * - also sets up menu video mode
- ****************************************************************************/
+ ***************************************************************************/
 void
 InitGCVideo ()
 {
@@ -535,9 +534,9 @@ InitGCVideo ()
 }
 
 /****************************************************************************
-*	ResetVideo_Emu
-*
-*	reset the video/rendering mode for the emulator rendering
+ * ResetVideo_Emu
+ *
+ * Reset the video/rendering mode for the emulator rendering
 ****************************************************************************/
 void
 ResetVideo_Emu ()
@@ -656,9 +655,9 @@ ResetVideo_Emu ()
 }
 
 /****************************************************************************
-*	ResetVideo_Menu
-*
-*	reset the video/rendering mode for the menu
+ * ResetVideo_Menu
+ *
+ * Reset the video/rendering mode for the menu
 ****************************************************************************/
 void
 ResetVideo_Menu ()
@@ -693,7 +692,7 @@ ResetVideo_Menu ()
  * MakeTexture
  *
  * Proper GNU Asm rendition of the above, converted by shagkur. - Thanks!
- ****************************************************************************/
+ ***************************************************************************/
 void
 MakeTexture (const void *src, void *dst, s32 width, s32 height)
 {
@@ -736,7 +735,7 @@ MakeTexture (const void *src, void *dst, s32 width, s32 height)
 
 /****************************************************************************
  * Update Video
- ****************************************************************************/
+ ***************************************************************************/
 uint32 prevRenderedFrameCount = 0;
 extern bool CheckVideo;
 
@@ -840,7 +839,7 @@ update_video (int width, int height)
 // FIX
 /****************************************************************************
  * Zoom Functions
- ****************************************************************************/
+ ***************************************************************************/
 void
 zoom (float speed)
 {
@@ -871,7 +870,7 @@ zoom_reset ()
 
 /****************************************************************************
  * Drawing screen
- ****************************************************************************/
+ ***************************************************************************/
 void
 clearscreen (int colour)
 {
@@ -899,12 +898,10 @@ showscreen ()
  * setGFX
  *
  * Setup the global GFX information for Snes9x
- ****************************************************************************/
+ ***************************************************************************/
 void
 setGFX ()
 {
 	GFX.Screen = (unsigned short *) snes9xgfx;
 	GFX.Pitch = 1024;
 }
-
-

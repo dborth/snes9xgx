@@ -1,7 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50
- *
- * Nintendo Wii/Gamecube Port
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * crunchy2 May 2007
@@ -9,8 +7,9 @@
  *
  * fileop.cpp
  *
- * File operations
- ****************************************************************************/
+ * FAT File operations
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <stdio.h>
 #include <string.h>
@@ -39,7 +38,7 @@ extern FILEENTRIES filelist[MAXFILES];
 /****************************************************************************
  * fat_is_mounted
  * to check whether FAT media are detected.
- ****************************************************************************/
+ ***************************************************************************/
 
 bool FatIsMounted(PARTITION_INTERFACE partition) {
     char prefix[] = "fatX:/";
@@ -56,7 +55,7 @@ bool FatIsMounted(PARTITION_INTERFACE partition) {
  * changeFATInterface
  * Checks if the device (method) specified is available, and
  * sets libfat to use the device
-****************************************************************************/
+ ***************************************************************************/
 bool ChangeFATInterface(int method, bool silent)
 {
 	bool devFound = false;
@@ -110,7 +109,7 @@ bool ChangeFATInterface(int method, bool silent)
 
 /***************************************************************************
  * Browse FAT subdirectories
- ***************************************************************************/
+ **************************************************************************/
 int
 ParseFATdirectory(int method)
 {
@@ -171,7 +170,7 @@ ParseFATdirectory(int method)
 
 /****************************************************************************
  * LoadFATFile
- ****************************************************************************/
+ ***************************************************************************/
 int
 LoadFATFile (char *filename, int length)
 {
@@ -225,7 +224,7 @@ LoadFATFile (char *filename, int length)
 
 /****************************************************************************
  * Load savebuffer from FAT file
- ****************************************************************************/
+ ***************************************************************************/
 int
 LoadBufferFromFAT (char *filepath, bool silent)
 {
@@ -261,7 +260,7 @@ LoadBufferFromFAT (char *filepath, bool silent)
 
 /****************************************************************************
  * Write savebuffer to FAT card file
- ****************************************************************************/
+ ***************************************************************************/
 int
 SaveBufferToFAT (char *filepath, int datasize, bool silent)
 {

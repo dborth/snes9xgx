@@ -1,12 +1,16 @@
 /****************************************************************************
- * Snes9x 1.50 
- *
- * Nintendo Gamecube Audio RAM
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
- ****************************************************************************/
+ *
+ * aram.cpp
+ *
+ * Gamecube Audio RAM storage
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <string.h>
+
 #include "aram.h"
 
 #define ARAM_READ				1
@@ -15,11 +19,11 @@
 #define TEMPSIZE 32768
 static char tempbuffer[TEMPSIZE] ATTRIBUTE_ALIGN (32);
 
-/**
+/****************************************************************************
  * ARAMPut
  *
  * Move data from MAIN memory to ARAM
- */
+ ***************************************************************************/
 void
 ARAMPut (char *src, char *dst, int len)
 {
@@ -28,11 +32,11 @@ ARAMPut (char *src, char *dst, int len)
   while (AR_GetDMAStatus());
 }
 
-/**
+/****************************************************************************
  * ARAMFetch
  *
  * This function will move data from ARAM to MAIN memory
- */
+ ***************************************************************************/
 void
 ARAMFetch (char *dst, char *src, int len)
 {
@@ -41,11 +45,11 @@ ARAMFetch (char *dst, char *src, int len)
   while (AR_GetDMAStatus ());
 }
 
-/**
+/****************************************************************************
  * ARAMFetchSlow
  *
  * Required as SNES memory may NOT be 32-byte aligned
- */
+ ***************************************************************************/
 void
 ARAMFetchSlow (char *dst, char *src, int len)
 {

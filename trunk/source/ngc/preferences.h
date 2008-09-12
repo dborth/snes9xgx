@@ -1,13 +1,12 @@
 /****************************************************************************
- * Snes9x 1.50
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
- * Nintendo Gamecube Port
- * crunchy2 April 2007
+ * Tantric September 2008
  *
- * preferences.cpp
+ * preferences.h
  *
- * Preferences save/load preferences utilities
- ****************************************************************************/
+ * Preferences save/load to XML file
+ ***************************************************************************/
 
 bool SavePrefs (int method, bool silent);
 bool LoadPrefs ();

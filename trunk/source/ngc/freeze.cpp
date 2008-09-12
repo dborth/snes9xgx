@@ -1,7 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50
- *
- * Nintendo Wii/Gamecube Port
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * crunchy2 May 2007-July 2007
@@ -11,12 +9,10 @@
  *
  * Snapshots Memory File System
  *
- * This is a single global memory file controller. Don't even think of opening two
- * at the same time !
- *
- * There's just enough here to do SnapShots - you should add anything else you
- * need.
- ****************************************************************************/
+ * This is a single global memory file controller.
+ * Don't even think of opening two at the same time!
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,11 +46,11 @@ static int bufoffset;
 char freezecomment[2][32];
 
 
-/**
+/****************************************************************************
  * GetMem
  *
  * Return x bytes from memory buffer
- */
+ ***************************************************************************/
 int
 GetMem (char *buffer, int len)
 {
@@ -64,11 +60,11 @@ GetMem (char *buffer, int len)
 	return len;
 }
 
-/**
+/****************************************************************************
  * PutMem
  *
  * Put some values in memory buffer
- */
+ ***************************************************************************/
 static void
 PutMem (char *buffer, int len)
 {
@@ -85,9 +81,11 @@ NGCFreezeBlock (char *name, uint8 * block, int size)
 	PutMem ((char *) block, size);
 }
 
-/**
+/****************************************************************************
  * NGCFreezeMembuffer
- */
+ *
+ * Copies a snapshot of Snes9x state into memory
+ ***************************************************************************/
 static int
 NGCFreezeMemBuffer ()
 {
@@ -109,7 +107,7 @@ NGCFreezeMemBuffer ()
 
     sprintf (buffer, "%s:%04d\n", SNAPSHOT_MAGIC, SNAPSHOT_VERSION);
     PutMem (buffer, strlen (buffer));
-    sprintf (buffer, "NAM:%06d:%s%c", (int) strlen (Memory.ROMFilename) + 1, 
+    sprintf (buffer, "NAM:%06d:%s%c", (int) strlen (Memory.ROMFilename) + 1,
     Memory.ROMFilename, 0);
 
     PutMem (buffer, strlen (buffer) + 1);
@@ -120,11 +118,11 @@ NGCFreezeMemBuffer ()
 }
 
 
-/**
+/****************************************************************************
  * NGCFreezeGame
  *
  * Do freeze game for Nintendo Gamecube
- */
+ ***************************************************************************/
 int
 NGCFreezeGame (int method, bool8 silent)
 {
@@ -209,9 +207,9 @@ NGCFreezeGame (int method, bool8 silent)
     return 0;
 }
 
-/**
+/****************************************************************************
  * NGCUnFreezeBlock
- */
+ ***************************************************************************/
 int
 NGCUnFreezeBlock (char *name, uint8 * block, int size)
 {
@@ -246,9 +244,9 @@ NGCUnFreezeBlock (char *name, uint8 * block, int size)
 	return SUCCESS;
 }
 
-/**
+/****************************************************************************
  * NGCUnfreezeGame
- */
+ ***************************************************************************/
 int
 NGCUnfreezeGame (int method, bool8 silent)
 {

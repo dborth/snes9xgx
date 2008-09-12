@@ -1,14 +1,15 @@
 /****************************************************************************
- * Snes9x 1.50
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
- * Nintendo Gamecube Port
  * softdev July 2006
  * crunchy2 May-June 2007
+ * Tantric September 2008
  *
  * memcardop.cpp
  *
- * Memory Card Routines.
- ****************************************************************************/
+ * Memory Card routines
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <ogcsys.h>
 #include <stdio.h>
@@ -52,7 +53,7 @@ card_stat CardStatus;
  *
  * Wrapper to search through the files on the card.
  * Returns TRUE if found.
- ****************************************************************************/
+ ***************************************************************************/
 int
 CardFileExists (char *filename, int slot)
 {
@@ -74,7 +75,7 @@ CardFileExists (char *filename, int slot)
  * TestCard
  *
  * Checks to see if a card is in the card slot specified
- ****************************************************************************/
+ ***************************************************************************/
 bool TestCard(int slot, bool silent)
 {
 	// Memory Cards do not work in Wii mode - disable
@@ -119,7 +120,7 @@ bool TestCard(int slot, bool silent)
  *
  * Mounts the memory card in the given slot.
  * Returns the result of the last attempted CARD_Mount command.
- ****************************************************************************/
+ ***************************************************************************/
 int MountCard(int cslot, bool silent)
 {
 	int ret = -1;
@@ -139,7 +140,7 @@ int MountCard(int cslot, bool silent)
 
 /****************************************************************************
  * Verify Memory Card file against buffer
- ****************************************************************************/
+ ***************************************************************************/
 int
 VerifyMCFile (unsigned char *buf, int slot, char *filename, int datasize)
 {
@@ -217,10 +218,9 @@ VerifyMCFile (unsigned char *buf, int slot, char *filename, int datasize)
 	return 0;
 }
 
-
 /****************************************************************************
  * Load savebuffer from Memory Card file
- ****************************************************************************/
+ ***************************************************************************/
 int
 LoadBufferFromMC (unsigned char *buf, int slot, char *filename, bool8 silent)
 {
@@ -285,7 +285,7 @@ LoadBufferFromMC (unsigned char *buf, int slot, char *filename, bool8 silent)
 
 /****************************************************************************
  * Write savebuffer to Memory Card file
- ****************************************************************************/
+ ***************************************************************************/
 int
 SaveBufferToMC (unsigned char *buf, int slot, char *filename, int datasize, bool8 silent)
 {
@@ -324,31 +324,6 @@ SaveBufferToMC (unsigned char *buf, int slot, char *filename, int datasize, bool
 					WaitPrompt((char*) "Unable to open card file!");
 					return 0;
 				}
-
-//                 if ( (s32)blocks < CardFile.len )  /*** new data is shorter ***/
-//                 {
-//                     CARD_Close (&CardFile);
-//
-//                     /*** Delete the existing longer file ***/
-//                     CardError = CARD_Delete(slot, filename);
-//                     if (CardError)
-//                     {
-//                         CARD_Unmount (slot);
-//                         WaitPrompt((char*) "Unable to delete existing file!");
-//                         return 0;
-//                     }
-//
-//                     /*** Create new, shorter file ***/
-//                     CardError = CARD_Create (slot, filename, blocks, &CardFile);
-//                     if (CardError)
-//                     {
-//                         CARD_Unmount (slot);
-//                         WaitPrompt((char*) "Unable to create updated card file!");
-//                         return 0;
-//                     }
-//
-// 				}
-// 				else
 
 				if ( (s32)blocks > CardFile.len )  /*** new data is longer ***/
 				{
@@ -457,5 +432,3 @@ SaveBufferToMC (unsigned char *buf, int slot, char *filename, int datasize, bool
 	return 0;
 
 }
-
-

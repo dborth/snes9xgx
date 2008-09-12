@@ -1,13 +1,13 @@
 /****************************************************************************
- * Snes9x 1.50
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
- * Nintendo Gamecube Port
- * crunchy2 April 2007-July 2007
+ * Tantric September 2008
  *
  * preferences.cpp
  *
- * Preferences save/load preferences utilities
- ****************************************************************************/
+ * Preferences save/load to XML file
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <stdio.h>
 #include <string.h>
@@ -43,7 +43,7 @@ char prefscomment[2][32];
  * Prepare Preferences Data
  *
  * This sets up the save buffer for saving.
- ****************************************************************************/
+ ***************************************************************************/
 mxml_node_t *xml;
 mxml_node_t *data;
 mxml_node_t *section;
@@ -191,8 +191,11 @@ preparePrefsData (int method)
 
 
 /****************************************************************************
- * Decode Preferences Data
- ****************************************************************************/
+ * loadXMLSetting
+ *
+ * Load XML elements into variables for an individual variable
+ ***************************************************************************/
+
 void loadXMLSetting(char * var, const char * name)
 {
 	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
@@ -212,6 +215,12 @@ void loadXMLSetting(bool8 * var, const char * name)
 		*var = atoi(mxmlElementGetAttr(item, "value"));
 }
 
+/****************************************************************************
+ * loadXMLController
+ *
+ * Load XML elements into variables for a controller mapping
+ ***************************************************************************/
+
 void loadXMLController(unsigned int controller[], const char * name)
 {
 	item = mxmlFindElement(xml, xml, "controller", "name", name, MXML_DESCEND);
@@ -227,6 +236,12 @@ void loadXMLController(unsigned int controller[], const char * name)
 		}
 	}
 }
+
+/****************************************************************************
+ * decodePrefsData
+ *
+ * Decodes preferences - parses XML and loads preferences into the variables
+ ***************************************************************************/
 
 bool
 decodePrefsData (int method)
@@ -297,7 +312,7 @@ decodePrefsData (int method)
 
 /****************************************************************************
  * Save Preferences
- ****************************************************************************/
+ ***************************************************************************/
 bool
 SavePrefs (int method, bool silent)
 {
@@ -346,7 +361,7 @@ SavePrefs (int method, bool silent)
 
 /****************************************************************************
  * Load Preferences from specified method
- ****************************************************************************/
+ ***************************************************************************/
 bool
 LoadPrefsFromMethod (int method)
 {
@@ -385,7 +400,7 @@ LoadPrefsFromMethod (int method)
 /****************************************************************************
  * Load Preferences
  * Checks sources consecutively until we find a preference file
- ****************************************************************************/
+ ***************************************************************************/
 bool LoadPrefs()
 {
 	ShowAction ((char*) "Loading preferences...");
