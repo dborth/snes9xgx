@@ -1,7 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50
- *
- * Nintendo Wii/Gamecube Port
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * crunchy2 June 2007
@@ -17,7 +15,8 @@
  * **WARNING***
  *
  * ONLY USE GUARANTEED PATENT FREE FONTS.
- ****************************************************************************/
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <ogcsys.h>
 #include <stdio.h>
@@ -65,7 +64,7 @@ u32 getrgb( u32 ycbr, u32 low );
 
 /****************************************************************************
  * Initialisation of libfreetype
- ****************************************************************************/
+ ***************************************************************************/
 int
 FT_Init ()
 {
@@ -94,7 +93,7 @@ FT_Init ()
  * setfontsize
  *
  * Set the screen font size in pixels
- ****************************************************************************/
+ ***************************************************************************/
 void
 setfontsize (int pixelsize)
 {
@@ -107,9 +106,9 @@ setfontsize (int pixelsize)
 }
 
 /****************************************************************************
-* DrawCharacter
-* Draws a single character on the screen
- ****************************************************************************/
+ * DrawCharacter
+ * Draws a single character on the screen
+ ***************************************************************************/
 static void
 DrawCharacter (FT_Bitmap * bmp, FT_Int x, FT_Int y)
 {
@@ -151,7 +150,7 @@ DrawCharacter (FT_Bitmap * bmp, FT_Int x, FT_Int y)
  * DrawText
  *
  * Place the font bitmap on the screen
- ****************************************************************************/
+ ***************************************************************************/
 void
 DrawText (int x, int y, char *text)
 {
@@ -207,7 +206,7 @@ DrawText (int x, int y, char *text)
  * setfontcolour
  *
  * Uses RGB triple values.
- ****************************************************************************/
+ ***************************************************************************/
 void
 setfontcolour (u8 r, u8 g, u8 b)
 {
@@ -222,7 +221,7 @@ setfontcolour (u8 r, u8 g, u8 b)
  * Display credits, legal copyright and licence
  *
  * THIS MUST NOT BE REMOVED IN ANY DERIVATIVE WORK.
- ****************************************************************************/
+ ***************************************************************************/
 void
 Credits ()
 {
@@ -280,7 +279,7 @@ Credits ()
  * Simply converts RGB to Y1CbY2Cr format
  *
  * I got this from a pastebin, so thanks to whoever originally wrote it!
- ****************************************************************************/
+ ***************************************************************************/
 
 unsigned int
 getcolour (u8 r1, u8 g1, u8 b1)
@@ -308,7 +307,9 @@ getcolour (u8 r1, u8 g1, u8 b1)
 
 /****************************************************************************
  * Unpackbackdrop
- ****************************************************************************/
+ *
+ * Decompress menu background and store it in ARAM or memory
+ ***************************************************************************/
 void
 unpackbackdrop ()
 {
@@ -346,7 +347,7 @@ unpackbackdrop ()
 
 /****************************************************************************
  * Wait for user to press A
- ****************************************************************************/
+ ***************************************************************************/
 void
 WaitButtonA ()
 {
@@ -361,7 +362,7 @@ WaitButtonA ()
 
 /****************************************************************************
  * Wait for user to press A or B. Returns 0 = B; 1 = A
- ****************************************************************************/
+ ***************************************************************************/
 
 int
 WaitButtonAB ()
@@ -400,7 +401,7 @@ WaitButtonAB ()
 
 /****************************************************************************
  * Show a prompt
- ****************************************************************************/
+ ***************************************************************************/
 void
 WaitPrompt (char *msg)
 {
@@ -422,7 +423,7 @@ WaitPrompt (char *msg)
 /****************************************************************************
  * Show a prompt with choice of two options. Returns 1 if A button was pressed
    and 0 if B button was pressed.
- ****************************************************************************/
+ ***************************************************************************/
 int
 WaitPromptChoice (char *msg, char *bmsg, char *amsg)
 {
@@ -445,7 +446,7 @@ WaitPromptChoice (char *msg, char *bmsg, char *amsg)
 
 /****************************************************************************
  * Show an action in progress
- ****************************************************************************/
+ ***************************************************************************/
 void
 ShowAction (char *msg)
 {
@@ -463,7 +464,7 @@ ShowAction (char *msg)
 
 /****************************************************************************
  * Generic Menu Routines
- ****************************************************************************/
+ ***************************************************************************/
 void
 DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsize, int x)
 {
@@ -530,7 +531,7 @@ DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsiz
  *
  * Help function to find the next visible menu item on the list
  * Supports menu wrap-around
- ****************************************************************************/
+ ***************************************************************************/
 
 int FindMenuItem(char items[][50], int maxitems, int currentItem, int direction)
 {
@@ -552,7 +553,7 @@ int FindMenuItem(char items[][50], int maxitems, int currentItem, int direction)
  *
  * Call this with the menu array defined in menu.cpp
  * It's here to keep all the font / interface stuff together.
- ****************************************************************************/
+ ***************************************************************************/
 int menu = 0;
 
 int
@@ -631,7 +632,7 @@ RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
  * Showfile screen
  *
  * Display the file selection to the user
-****************************************************************************/
+ ***************************************************************************/
 
 void
 ShowFiles (FILEENTRIES filelist[], int maxfiles, int offset, int selection)
@@ -693,7 +694,7 @@ ShowFiles (FILEENTRIES filelist[], int maxfiles, int offset, int selection)
  * Cheats screen
  *
  * Displays a scrollable list of cheats to the user
-****************************************************************************/
+ ***************************************************************************/
 
 void
 ShowCheats (char items[][50], char itemvalues[][50], int maxitems, int offset, int selection)
@@ -740,7 +741,7 @@ ShowCheats (char items[][50], char itemvalues[][50], int maxitems, int offset, i
 
 /****************************************************************************
  * ROM Information Screen
- ****************************************************************************/
+ ***************************************************************************/
 
 void RomInfo()
 {
@@ -827,7 +828,7 @@ void RomInfo()
  * DrawLine
  *
  * Quick'n'Dirty Bresenham line drawing routine.
- ****************************************************************************/
+ ***************************************************************************/
 #define SIGN(x) ((x<0)?-1:((x>0)?1:0))
 
 void
@@ -912,7 +913,7 @@ DrawLine (int x1, int y1, int x2, int y2, u8 r, u8 g, u8 b)
  * Progress Bar
  *
  * Show the user what's happening
- ****************************************************************************/
+ ***************************************************************************/
 void
 ShowProgress (char *msg, int done, int total)
 {
@@ -944,7 +945,7 @@ ShowProgress (char *msg, int done, int total)
 
 /****************************************************************************
  * DrawPolygon
- ****************************************************************************/
+ ***************************************************************************/
 void
 DrawPolygon (int vertices, int varray[], u8 r, u8 g, u8 b)
 {
@@ -960,12 +961,12 @@ DrawPolygon (int vertices, int varray[], u8 r, u8 g, u8 b)
 	    varray[(vertices << 1) - 1], r, g, b);
 }
 
-/*****************************************************************************
+/****************************************************************************
  * Draw Line Fast
  *
  * This routine requires that start and endx are 32bit aligned.
  * It tries to perform a semi-transparency over the existing image.
- *****************************************************************************/
+ ***************************************************************************/
 
 #define SRCWEIGHT 0.7f
 #define DSTWEIGHT (1.0f - SRCWEIGHT)
@@ -1017,10 +1018,10 @@ void DrawLineFast( int startx, int endx, int y, u8 r, u8 g, u8 b )
 	}
 }
 
-/*****************************************************************************
+/****************************************************************************
  * Ok, I'm useless with Y1CBY2CR colour.
  * So convert back to RGB so I can work with it -;)
- ****************************************************************************/
+ ***************************************************************************/
 u32 getrgb( u32 ycbr, u32 low )
 {
 	u8 r,g,b;

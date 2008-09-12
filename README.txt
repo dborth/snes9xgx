@@ -14,7 +14,7 @@
 `иХиииии ииииииииииииииии иииииииииииииии ииииииииииииииииииии иииииииииииии'
 
 SNES9x GX is a Super Nintendo emulator for the Wii based on the PC emulator 
-SNES9x 1.50 (http://snes9x.ipherswipsite.com/). SoftDev is responsible for 
+SNES9x 1.51 (http://snes9x.ipherswipsite.com/). SoftDev is responsible for 
 the original SNES9x 1.50 GameCube port, whose work was continued by crunchy2. 
 It was updated for the Wii by michniewski and is currently being maintained 
 by michniewski and Tantric.
@@ -25,6 +25,7 @@ michniewski
 - added: Superscope/mouse/justifier support, with Wii remote
 
 Tantric
+- added: now uses SNES 1.51 core (thanks to eke-eke for help with this)
 - added: cheats menu! Loads .CHT file from /snes9x/cheats folder, 
          .CHT file name must match file name of ROM
 - added: load/save preference selector. ROM, SRAM, Freeze, and preferences 

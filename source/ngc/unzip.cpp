@@ -1,10 +1,14 @@
 /****************************************************************************
- * Snes9x 1.50
- *
- * Nintendo Gamecube Unzip - borrowed from the GPP
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
- ****************************************************************************/
+ * Tantric September 2008
+ *
+ * unzip.cpp
+ *
+ * File unzip routines
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>

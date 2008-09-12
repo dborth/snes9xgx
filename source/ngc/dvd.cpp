@@ -1,11 +1,15 @@
 /****************************************************************************
- * Snes9x 1.50
- *
- * Nintendo Gamecube DVD
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * svpe & crunchy2 June 2007
- ****************************************************************************/
+ * Tantric September 2008
+ *
+ * dvd.cpp
+ *
+ * DVD I/O functions
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <ogcsys.h>
 #include <stdio.h>
@@ -43,12 +47,12 @@ unsigned char DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);
 unsigned char dvdbuffer[2048];
 
 
- /**
-  * dvd_read
-  *
-  * The only DVD function we need - you gotta luv gc-linux self-boots!
-  * returns: 1 - ok ; 0 - error
-  */
+/****************************************************************************
+ * dvd_read
+ *
+ * The only DVD function we need - you gotta luv gc-linux self-boots!
+ * returns: 1 - ok ; 0 - error
+ ***************************************************************************/
 int
 dvd_read (void *dst, unsigned int len, u64 offset)
 {
@@ -60,7 +64,8 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 
 	DCInvalidateRange ((void *) buffer, len);
 
-	if(offset < 0x57057C00 || (isWii && offset < 0x118244F00LL)) // don't read past the end of the DVD
+	// don't read past the end of the DVD (1.5 GB for GC DVD, 4.7 GB for DVD)
+	if(offset < 0x57057C00 || (isWii && offset < 0x118244F00LL))
 	{
 
 	#ifdef HW_DOL
@@ -106,12 +111,12 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 #define PVDROOT 0x9c
 static int IsJoliet = 0;
 
-/**
+/****************************************************************************
  * Primary Volume Descriptor
  *
  * The PVD should reside between sector 16 and 31.
  * This is for single session DVD only.
- */
+ ***************************************************************************/
 int
 getpvd ()
 {
@@ -174,7 +179,7 @@ getpvd ()
  * TestDVD()
  *
  * Tests if a ISO9660 DVD is inserted and available
- ****************************************************************************/
+ ***************************************************************************/
 bool TestDVD()
 {
 
@@ -193,12 +198,12 @@ bool TestDVD()
 	return true;
 }
 
-/**
+/****************************************************************************
  * getentry
  *
  * Support function to return the next file entry, if any
  * Declared static to avoid accidental external entry.
- */
+ ***************************************************************************/
 static int diroffset = 0;
 static int
 getentry (int entrycount)
@@ -304,7 +309,7 @@ getentry (int entrycount)
 	return 0;
 }
 
-/**
+/****************************************************************************
  * parseDVDdirectory
  *
  * This function will parse the directory tree.
@@ -312,7 +317,7 @@ getentry (int entrycount)
  * getpvd, a previous parse or a menu selection.
  *
  * The return value is number of files collected, or 0 on failure.
- */
+ ***************************************************************************/
 int
 ParseDVDdirectory ()
 {
@@ -356,12 +361,12 @@ ParseDVDdirectory ()
 	return filecount;
 }
 
-/**
-* DirectorySearch
-*
-* Searches for the directory name specified within the current directory
-* Returns the index of the directory, or -1 if not found
-*/
+/****************************************************************************
+ * DirectorySearch
+ *
+ * Searches for the directory name specified within the current directory
+ * Returns the index of the directory, or -1 if not found
+ ***************************************************************************/
 int DirectorySearch(char dir[512])
 {
 	for (int i = 0; i < maxfiles; i++ )
@@ -370,13 +375,13 @@ int DirectorySearch(char dir[512])
 	return -1;
 }
 
-/**
-* SwitchDVDFolder
-*
-* Recursively searches for any directory path 'dir' specified
-* Also loads the directory contents via ParseDVDdirectory()
-* It relies on dvddir, dvddirlength, and filelist being pre-populated
-*/
+/****************************************************************************
+ * SwitchDVDFolder
+ *
+ * Recursively searches for any directory path 'dir' specified
+ * Also loads the directory contents via ParseDVDdirectory()
+ * It relies on dvddir, dvddirlength, and filelist being pre-populated
+ ***************************************************************************/
 bool SwitchDVDFolder(char * dir, int maxDepth)
 {
 	if(maxDepth > 8) // only search to a max depth of 8 levels
@@ -434,7 +439,7 @@ bool SwitchDVDFolder(char origdir[])
  * dvddirlength.
  *
  * The buffer parameter should re-use the initial ROM buffer.
- ****************************************************************************/
+ ***************************************************************************/
 
 int
 LoadDVDFile (unsigned char *buffer)
@@ -485,7 +490,7 @@ LoadDVDFile (unsigned char *buffer)
  * memcard interface.
  *
  * libOGC tends to foul up if you don't, and sometimes does if you do!
- ****************************************************************************/
+ ***************************************************************************/
 #ifdef HW_DOL
 void uselessinquiry ()
 {
@@ -501,6 +506,10 @@ void uselessinquiry ()
 	while (dvd[7] & 1);
 }
 
+/****************************************************************************
+ * dvd_motor_off( )
+ * Turns off DVD drive motor so it doesn't make noise (Gamecube only)
+ ***************************************************************************/
 void dvd_motor_off( )
 {
 	dvd[0] = 0x2e;
@@ -518,11 +527,11 @@ void dvd_motor_off( )
 	dvd[1] = 0;
 }
 
-/**
-  * dvd_driveid
-  *
-  * Gets and returns the dvd driveid
-**/
+/****************************************************************************
+ * dvd_driveid
+ *
+ * Gets and returns the dvd driveid
+ ***************************************************************************/
 
 int dvd_driveid()
 {
@@ -546,6 +555,11 @@ int dvd_driveid()
 
 #endif
 
+/****************************************************************************
+ * SetDVDDriveType()
+ *
+ * Sets the DVD drive ID for use to determine disc size (1.5 GB or 4.7 GB)
+ ***************************************************************************/
 void SetDVDDriveType()
 {
 	#ifdef HW_RVL

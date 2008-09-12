@@ -1,17 +1,20 @@
 /****************************************************************************
- * Snes9x 1.50
- *
- * Nintendo Gamecube Audio
- *
- * Audio is fixed to 32Khz/16bit/Stereo
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
- ****************************************************************************/
+ *
+ * audio.cpp
+ *
+ * Audio driver
+ * Audio is fixed to 32Khz/16bit/Stereo
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <ogcsys.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "snes9x.h"
 #include "memmap.h"
 #include "debug.h"
@@ -40,65 +43,65 @@ lwpq_t audioqueue;
 lwp_t athread;
 static uint8 astack[AUDIOSTACK];
 
-/**
+/****************************************************************************
  * Audio Threading
- */
+ ***************************************************************************/
 static void *
 AudioThread (void *arg)
 {
-  LWP_InitQueue (&audioqueue);
+	LWP_InitQueue (&audioqueue);
 
-  while (1)
-    {
-      whichab ^= 1;
-      if (ConfigRequested)
-	memset (soundbuffer[whichab], 0, AUDIOBUFFER);
-      else
+	while (1)
 	{
-	  so.samples_mixed_so_far = so.play_position = 0;
-	  S9xMixSamples (soundbuffer[whichab], AUDIOBUFFER >> 1);
+		whichab ^= 1;
+		if (ConfigRequested)
+			memset (soundbuffer[whichab], 0, AUDIOBUFFER);
+		else
+		{
+			so.samples_mixed_so_far = so.play_position = 0;
+			S9xMixSamples (soundbuffer[whichab], AUDIOBUFFER >> 1);
+		}
+		LWP_ThreadSleep (audioqueue);
 	}
-      LWP_ThreadSleep (audioqueue);
-    }
 
-    return NULL;
+	return NULL;
 }
 
-/**
+/****************************************************************************
  * MixSamples
- *      This continually calls S9xMixSamples On each DMA Completion
- */
+ * This continually calls S9xMixSamples On each DMA Completion
+ ***************************************************************************/
 static void
 GCMixSamples ()
 {
-  AUDIO_StopDMA ();
+	AUDIO_StopDMA ();
 
-  DCFlushRange (soundbuffer[whichab], AUDIOBUFFER);
-  AUDIO_InitDMA ((u32) soundbuffer[whichab], AUDIOBUFFER);
-  AUDIO_StartDMA ();
+	DCFlushRange (soundbuffer[whichab], AUDIOBUFFER);
+	AUDIO_InitDMA ((u32) soundbuffer[whichab], AUDIOBUFFER);
+	AUDIO_StartDMA ();
 
-  LWP_ThreadSignal (audioqueue);
+	LWP_ThreadSignal (audioqueue);
 }
 
-/**
-  * InitGCAudio
-  */
+/****************************************************************************
+ * InitGCAudio
+ ***************************************************************************/
 void
 InitGCAudio ()
 {
-  AUDIO_SetDSPSampleRate (AI_SAMPLERATE_32KHZ);
-  AUDIO_RegisterDMACallback (GCMixSamples);
+	AUDIO_SetDSPSampleRate (AI_SAMPLERATE_32KHZ);
+	AUDIO_RegisterDMACallback (GCMixSamples);
 
-  LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 80);
+	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 80);
 }
 
-/**
+/****************************************************************************
  * AudioStart
  *
  * Called to kick off the Audio Queue
- */
+ ***************************************************************************/
 void
 AudioStart ()
 {
-  GCMixSamples ();
+	GCMixSamples ();
 }

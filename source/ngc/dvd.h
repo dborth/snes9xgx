@@ -1,11 +1,14 @@
 /****************************************************************************
- * Snes9x 1.50
- *
- * Nintendo Gamecube DVD
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * svpe & crunchy2 June 2007
- ****************************************************************************/
+ * Tantric September 2008
+ *
+ * dvd.h
+ *
+ * DVD I/O functions
+ ***************************************************************************/
 
 #ifndef _NGCDVD_
 #define _NGCDVD_

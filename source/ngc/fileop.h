@@ -1,7 +1,5 @@
 /****************************************************************************
- * Snes9x 1.50
- *
- * Nintendo Wii/Gamecube Port
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * crunchy2 May 2007
@@ -9,7 +7,7 @@
  *
  * fileop.h
  *
- * File operations
+ * FAT File operations
  ****************************************************************************/
 
 #ifndef _FATFILESC_

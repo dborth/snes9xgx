@@ -1,3 +1,14 @@
+/****************************************************************************
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ *
+ * softdev July 2006
+ * crunchy2 May-June 2007
+ * Tantric September 2008
+ *
+ * input.h
+ *
+ * Wii/Gamecube controller management
+ ***************************************************************************/
 
 #ifndef _INPUT_H_
 #define _INPUT_H_
@@ -18,8 +29,6 @@ extern unsigned int wmmousemap[];
 extern unsigned int gcjustmap[];
 extern unsigned int wmjustmap[];
 
-//START_EXTERN_C
-
 s8 WPAD_StickX(u8 chan,u8 right);
 s8 WPAD_StickY(u8 chan, u8 right);
 
@@ -28,7 +37,5 @@ void decodepad (int pad);
 void NGCReportButtons ();
 void SetControllers ();
 void SetDefaultButtonMap ();
-
-//END_EXTERN_C
 
 #endif

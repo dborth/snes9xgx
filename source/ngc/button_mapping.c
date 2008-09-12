@@ -1,29 +1,28 @@
 /****************************************************************************
- * Snes9x 1.50
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
- * Nintendo Wii/Gamecube Port
  * michniewski August 2008
  *
  * button_mapping.c
  *
  * Controller button mapping
- ****************************************************************************/
+ ***************************************************************************/
 
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <ogcsys.h>
 #include <unistd.h>
 #include <wiiuse/wpad.h>
+
 #include "button_mapping.h"
 
-/***
-* Controller Button Descriptions:
-* used for identifying which buttons have been pressed when configuring
-* and for displaying the name of said button
-***/
+/****************************************************************************
+ * Controller Button Descriptions:
+ * used for identifying which buttons have been pressed when configuring
+ * and for displaying the name of said button
+ ***************************************************************************/
 
 CtrlrMap ctrlr_def[4] = {
 // Nunchuk btn def

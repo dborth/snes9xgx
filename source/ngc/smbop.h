@@ -1,12 +1,11 @@
 /****************************************************************************
- * Snes9x 1.50
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
- * Nintendo Wii/Gamecube Port
  * softdev July 2006
  * crunchy2 May 2007
  * Tantric August 2008
  *
- * smbop.h
+ * smbload.h
  *
  * SMB support routines
  ****************************************************************************/

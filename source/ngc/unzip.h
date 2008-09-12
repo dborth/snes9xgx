@@ -1,9 +1,12 @@
 /****************************************************************************
- * Snes9x 1.50
- *
- * Nintendo Gamecube Unzip - borrowed from the GPP
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
+ * Tantric September 2008
+ *
+ * unzip.h
+ *
+ * File unzip routines
  ****************************************************************************/
 #ifndef _UNZIP_
 #define _UNZIP_

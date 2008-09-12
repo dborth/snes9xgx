@@ -1,14 +1,14 @@
 /****************************************************************************
- * Snes9x 1.50
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
- * Nintendo Gamecube Port
  * softdev July 2006
  * crunchy2 May 2007-July 2007
+ * Tantric September 2008
  *
  * snes9xGX.h
  *
  * This file controls overall program flow. Most things start and end here!
- ****************************************************************************/
+ ***************************************************************************/
 
 #ifndef _SNES9XGX_H_
 #define _SNES9XGX_H_

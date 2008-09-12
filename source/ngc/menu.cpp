@@ -1,7 +1,5 @@
 /****************************************************************************
- * Snes9x 1.51
- *
- * Nintendo Wii/Gamecube Port
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * crunchy2 May-June 2007
@@ -9,8 +7,9 @@
  *
  * menu.cpp
  *
- * Menu flow routines
- ****************************************************************************/
+ * Menu flow routines - handles all menu logic
+ ***************************************************************************/
+
 #include <gccore.h>
 #include <ogcsys.h>
 #include <stdio.h>
@@ -19,11 +18,9 @@
 #include <wiiuse/wpad.h>
 
 #ifdef WII_DVD
-#ifdef __cplusplus
 extern "C" {
 #include <di/di.h>
 }
-#endif
 #endif
 
 #include "snes9x.h"
@@ -69,7 +66,7 @@ extern unsigned long ARAM_ROMSIZE;
 
 /****************************************************************************
  * Reboot / Exit
- ****************************************************************************/
+ ***************************************************************************/
 
 #ifndef HW_RVL
 #define PSOSDLOADID 0x7c6000a6
@@ -89,7 +86,7 @@ void Reboot()
 
 /****************************************************************************
  * Load Manager
- ****************************************************************************/
+ ***************************************************************************/
 
 int
 LoadManager ()
@@ -115,7 +112,7 @@ LoadManager ()
 
 /****************************************************************************
  * Preferences Menu
- ****************************************************************************/
+ ***************************************************************************/
 static int prefmenuCount = 16;
 static char prefmenu[][50] = {
 
@@ -334,7 +331,7 @@ PreferencesMenu ()
 
 /****************************************************************************
  * Cheat Menu
- ****************************************************************************/
+ ***************************************************************************/
 static int cheatmenuCount = 0;
 static char cheatmenu[MAX_CHEATS][50];
 static char cheatmenuvalue[MAX_CHEATS][50];
@@ -512,7 +509,7 @@ void CheatMenu()
 
 /****************************************************************************
  * Game Options Menu
- ****************************************************************************/
+ ***************************************************************************/
 
 int
 GameMenu ()
@@ -610,10 +607,10 @@ GameMenu ()
 /****************************************************************************
  * Controller Configuration
  *
- * Snes9x 1.50 uses a cmd system to work out which button has been pressed.
- * Here, I simply move the designated value to the gcpadmaps array, which saves
- * on updating the cmd sequences.
- ****************************************************************************/
+ * Snes9x 1.51 uses a cmd system to work out which button has been pressed.
+ * Here, I simply move the designated value to the gcpadmaps array, which
+ * saves on updating the cmd sequences.
+ ***************************************************************************/
 u32
 GetInput (u16 ctrlr_type)
 {
@@ -936,7 +933,7 @@ ConfigureControllers ()
 
 /****************************************************************************
  * Main Menu
- ****************************************************************************/
+ ***************************************************************************/
 int menucount = 7;
 char menuitems[][50] = {
   "Choose Game", "Controller Configuration", "Preferences",
