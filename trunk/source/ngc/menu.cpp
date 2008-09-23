@@ -106,6 +106,9 @@ LoadManager ()
 
 		// setup cheats
 		SetupCheats();
+
+		// reset zoom
+		zoom_reset ();
 	}
 
 	return loadROM;
@@ -564,6 +567,7 @@ GameMenu ()
 				break;
 
 			case 1: // Reset Game
+				zoom_reset ();
 				S9xSoftReset ();
 				quit = retval = 1;
 				break;
@@ -578,6 +582,7 @@ GameMenu ()
 				break;
 
 			case 4: // Load SRAM
+				zoom_reset ();
 				quit = retval = LoadSRAM(GCSettings.SaveMethod, NOTSILENT);
 				break;
 
@@ -586,15 +591,17 @@ GameMenu ()
 				break;
 
 			case 6: // Load Freeze
+				zoom_reset ();
 				quit = retval = NGCUnfreezeGame (GCSettings.SaveMethod, NOTSILENT);
 				break;
 
 			case 7: // Save Freeze
 				NGCFreezeGame (GCSettings.SaveMethod, NOTSILENT);
 				break;
-				
+
 			case 8:	// Reset Zoom
 				zoom_reset ();
+				quit = retval = 1;
 				break;
 
 			case -1: // Button B
