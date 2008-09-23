@@ -129,7 +129,7 @@ static char prefmenu[][50] = {
 	"Interpolated Sound",
 	"Transparency",
 	"Display Frame Rate",
-	"C-Stick Zoom",
+	"Enable Zooming",
 	"Video Filtering",
 	"Widescreen",
 
@@ -238,7 +238,7 @@ PreferencesMenu ()
 		sprintf (prefmenu[10], "Display Frame Rate %s",
 			Settings.DisplayFrameRate == true ? " ON" : "OFF");
 
-		sprintf (prefmenu[11], "C-Stick Zoom %s",
+		sprintf (prefmenu[11], "Enable Zooming %s",
 			GCSettings.NGCZoom == true ? " ON" : "OFF");
 
 		if ( GCSettings.render == 0 )
@@ -514,7 +514,7 @@ void CheatMenu()
 int
 GameMenu ()
 {
-	int gamemenuCount = 9;
+	int gamemenuCount = 10;
 	char gamemenu[][50] = {
 	  "Return to Game",
 	  "Reset Game",
@@ -522,6 +522,7 @@ GameMenu ()
 	  "Cheats",
 	  "Load SRAM", "Save SRAM",
 	  "Load Game Snapshot", "Save Game Snapshot",
+	  "Reset Zoom",
 	  "Back to Main Menu"
 	};
 
@@ -590,9 +591,13 @@ GameMenu ()
 			case 7: // Save Freeze
 				NGCFreezeGame (GCSettings.SaveMethod, NOTSILENT);
 				break;
+				
+			case 8:	// Reset Zoom
+				zoom_reset ();
+				break;
 
 			case -1: // Button B
-			case 8: // Return to previous menu
+			case 9: // Return to previous menu
 				retval = 0;
 				quit = 1;
 				break;

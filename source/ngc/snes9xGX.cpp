@@ -61,6 +61,8 @@ extern "C" {
 
 unsigned long ARAM_ROMSIZE = 0;
 int ConfigRequested = 0;
+FILE* debughandle;
+
 extern int FrameTimer;
 
 extern long long prev;
@@ -164,9 +166,16 @@ emulate ()
 			//S9xReportControllers ();
 
 			ConfigRequested = 0;
+			
+			#ifdef _DEBUG_VIDEO
+			// log stuff
+			fprintf(debughandle, "\n\nPlaying ROM: %s", Memory.ROMFilename);
+			fprintf(debughandle, "\nrender: %u", GCSettings.render);
+			#endif
 
 			CheckVideo = 1;	// force video update
 			prevRenderedFrameCount = IPPU.RenderedFramesCount;
+
 
 		}//if ConfigRequested
 
@@ -249,6 +258,11 @@ main ()
 
 	// Initialize libFAT for SD and USB
 	fatInitDefault();
+	
+	#ifdef _DEBUG_VIDEO
+	// log stuff
+	debughandle = fopen ("log.txt", "wb");
+	#endif
 
 	// Initialize DVD subsystem (GameCube only)
 	#ifndef HW_RVL

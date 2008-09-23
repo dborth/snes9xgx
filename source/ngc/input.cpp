@@ -479,11 +479,11 @@ void NGCReportButtons ()
 	/*** Check for video zoom ***/
 	if (GCSettings.NGCZoom)
 	{
-		if (gc_py < -18 || gc_py > 18)
-			zoom ((float) gc_py / -18);
+		if (gc_py < -36 || gc_py > 36)
+			zoom ((float) gc_py / -36);
 #ifdef HW_RVL
-		if (wm_sy < -18 || wm_sy > 18)
-			zoom ((float) wm_sy / -18);
+		if (wm_sy < -36 || wm_sy > 36)
+			zoom ((float) wm_sy / -36);
 #endif
 	}
 

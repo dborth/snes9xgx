@@ -48,6 +48,10 @@ GXTexObj texobj;
 Mtx view;
 int vwidth, vheight, oldvwidth, oldvheight;
 
+float zoom_level = 1;
+int zoom_xshift = 0;
+int zoom_yshift = 0;
+
 u32 FrameTimer = 0;
 
 u8 vmode_60hz = 0;
@@ -334,8 +338,7 @@ draw_init ()
 	GX_SetNumChans (0);
 
 	GX_SetTexCoordGen (GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
-	//GX_SetTevOp (GX_TEVSTAGE0, GX_DECAL);
-	//GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+
 	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 	GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
 
@@ -409,8 +412,6 @@ StartGX ()
 
 	gui_alphasetup ();
 
-//	guPerspective (p, 60, 1.33F, 10.0F, 1000.0F);
-//	GX_LoadProjectionMtx (p, GX_PERSPECTIVE);
 	guOrtho(p, vmode->efbHeight/2, -(vmode->efbHeight/2), -(vmode->fbWidth/2), vmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
@@ -553,9 +554,7 @@ ResetVideo_Emu ()
 			TV_478i.viTVMode = VI_TVMODE_PAL_INT;
 			TV_224p.viTVMode = VI_TVMODE_PAL_DS;
 			TV_448i.viTVMode = VI_TVMODE_PAL_INT;
-			// set VI sizing
-			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
-			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
+			// set VI position
 			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_PAL - 640)/2;
 			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 478/2)/2;
 			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 448/2)/2;
@@ -569,9 +568,7 @@ ResetVideo_Emu ()
 			TV_478i.viTVMode = VI_TVMODE_NTSC_INT;
 			TV_224p.viTVMode = VI_TVMODE_NTSC_DS;
 			TV_448i.viTVMode = VI_TVMODE_NTSC_INT;
-			// set VI sizing
-			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
-			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
+			// set VI position
 			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
 			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
 			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
@@ -585,9 +582,7 @@ ResetVideo_Emu ()
 			TV_478i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
 			TV_224p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
 			TV_448i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
-			// set VI sizing
-			//TV_239p.viWidth = TV_478i.viWidth = TV_224p.viWidth = TV_448i.viWidth = 640;
-			//TV_239p.viHeight = TV_478i.viHeight = TV_224p.viHeight = TV_448i.viHeight = 480;
+			// set VI position
 			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
 			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
 			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
@@ -595,10 +590,9 @@ ResetVideo_Emu ()
 			break;
 	}
 
-
+	int i = -1;
 	if (GCSettings.render == 0)	// original render mode
 	{
-		int i;
 		for (i=0; i<4; i++) {
 			if (tvmodes[i]->efbHeight == vheight) {
 				// FIX: ok?
@@ -637,20 +631,14 @@ ResetVideo_Emu ()
 	GX_SetFieldMode (rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
 	GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
 
-//	guPerspective (p, 60, 1.33F, 10.0F, 1000.0F);
-//	GX_LoadProjectionMtx (p, GX_PERSPECTIVE);
 	guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
-
-	/*
-		// DEBUG
-		char* msg = (char*) malloc(256*sizeof(char));
-		sprintf (msg, (char*)"Interlaced: %i, vwidth: %d, vheight: %d, fb_W: %u, efb_H: %u", IPPU.Interlace, vwidth, vheight, rmode->fbWidth, rmode->efbHeight);
-		S9xMessage (0, 0, msg);
-		free(msg);
-	*/
-
+	#ifdef _DEBUG_VIDEO
+	// log stuff
+	fprintf(debughandle, "\n\nrmode = tvmodes[%d], field_rendering: %d", i, (rmode->viHeight == 2 * rmode->xfbHeight));
+	fprintf(debughandle, "\nInterlaced: %i,\t vwidth: %d, vheight: %d,\t fb_W: %u, efb_H: %u", IPPU.Interlace, vwidth, vheight, rmode->fbWidth, rmode->efbHeight);
+	#endif
 
 }
 
@@ -682,8 +670,6 @@ ResetVideo_Menu ()
 	GX_SetFieldMode (vmode->field_rendering, ((vmode->viHeight == 2 * vmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
 	GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
 
-//	guPerspective (p, 60, 1.33F, 10.0F, 1000.0F);
-//	GX_LoadProjectionMtx (p, GX_PERSPECTIVE);
 	guOrtho(p, vmode->efbHeight/2, -(vmode->efbHeight/2), -(vmode->fbWidth/2), vmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 }
@@ -782,6 +768,9 @@ update_video (int width, int height)
 		// yes its pretty cheap and ugly, but its easy!
 		if (GCSettings.widescreen)
 			xscale -= (4.0*yscale)/9;
+			
+		xscale *= zoom_level;
+		yscale *= zoom_level;
 
 		square[6] = square[3]  =  xscale + xshift;
 		square[0] = square[9]  = -xscale + xshift;
@@ -797,25 +786,15 @@ update_video (int width, int height)
 
 		GX_LoadTexObj (&texobj, GX_TEXMAP0);	// load texture object so its ready to use
 
-		/*
-		// DEBUG
-		char* msg = (char*) malloc(256*sizeof(char));
-		sprintf (msg, (char*)"xscale: %d, yscale: %d", xscale, yscale);
-		S9xMessage (0, 0, msg);
-		free(msg);
-		*/
+		#ifdef _DEBUG_VIDEO
+		// log stuff
+		fprintf(debughandle, "\nxscale: %d, yscale: %d", xscale, yscale);
+		#endif
 
 		oldvwidth = vwidth;
 		oldvheight = vheight;
 		CheckVideo = 0;
 	}
-
-	/*
-	// for zooming
-	memset (&view, 0, sizeof (Mtx));
-	guLookAt(view, &cam.pos, &cam.up, &cam.view);
-	GX_LoadPosMtxImm (view, GX_PNMTX0);
-	*/
 
 	MakeTexture ((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);	// convert image to texture
 
@@ -836,34 +815,27 @@ update_video (int width, int height)
 
 }
 
-// FIX
 /****************************************************************************
  * Zoom Functions
  ***************************************************************************/
 void
 zoom (float speed)
 {
-	Vector v;
-
-	v.x = cam.view.x - cam.pos.x;
-	v.y = cam.view.y - cam.pos.y;
-	v.z = cam.view.z - cam.pos.z;
-
-	cam.pos.x += v.x * speed;
-	cam.pos.z += v.z * speed;
-	cam.view.x += v.x * speed;
-	cam.view.z += v.z * speed;
-
+	if (zoom_level > 1)
+		zoom_level += (speed / -100.0);
+	else
+		zoom_level += (speed / -200.0);
+	
+	if (zoom_level < 0.5) zoom_level = 0.5;
+	else if (zoom_level > 10.0) zoom_level = 10.0;
+	
 	oldvheight = 0;	// update video
 }
 
 void
 zoom_reset ()
 {
-	// reset cam to defaults
-	cam.pos.x = cam.pos.y = cam.pos.z = cam.up.x = cam.up.z = 0.0F;
-	cam.up.y = 0.0F;
-	cam.view.z = -0.5F;
+	zoom_level = 1.0;
 
 	oldvheight = 0;	// update video
 }
