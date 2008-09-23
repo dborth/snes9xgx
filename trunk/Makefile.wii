@@ -34,8 +34,8 @@ CFLAGS	=	-g -O2 -Wall $(MACHDEP) $(INCLUDE) \
 			-DCPU_SHUTDOWN -DSPC700_SHUTDOWN \
 			-DSPC700_C -DSDD1_DECOMP \
 			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
-			$(CUSTOMFLAGS) \
-			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter # -pipe
+			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter \
+			#-D_DEBUG_VIDEO -pipe
 CXXFLAGS	=	-save-temps -Xassembler -aln=$@.lst $(CFLAGS)
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
