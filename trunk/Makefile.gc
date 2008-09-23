@@ -34,8 +34,8 @@ CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
 			-DCPU_SHUTDOWN -DSPC700_SHUTDOWN \
 			-DSPC700_C -DSDD1_DECOMP \
 			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
-			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter -pipe \
-			#-D_DEBUG_VIDEO
+			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter \
+			#-D_DEBUG_VIDEO -pipe
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--cref
@@ -118,11 +118,11 @@ clean:
 
 #---------------------------------------------------------------------------------
 run:
-	wiiload $(OUTPUT).dol
+	psoload $(OUTPUT).dol
 
 #---------------------------------------------------------------------------------
 reload:
-	wiiload -r $(OUTPUT).dol
+	psoload -r $(OUTPUT).dol
 
 
 #---------------------------------------------------------------------------------
