@@ -4,6 +4,7 @@
  * softdev July 2006
  * svpe June 2007
  * crunchy2 May-July 2007
+  * Michniewski 2008
  * Tantric August 2008
  *
  * filesel.cpp

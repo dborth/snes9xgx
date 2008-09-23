@@ -3,6 +3,7 @@
  *
  * softdev July 2006
  * crunchy2 May-June 2007
+ * Michniewski 2008
  * Tantric August 2008
  *
  * menu.h
