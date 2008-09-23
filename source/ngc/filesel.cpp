@@ -4,7 +4,7 @@
  * softdev July 2006
  * svpe June 2007
  * crunchy2 May-July 2007
-  * Michniewski 2008
+ * Michniewski 2008
  * Tantric August 2008
  *
  * filesel.cpp
@@ -20,11 +20,9 @@
 #include <sys/dir.h>
 
 #ifdef WII_DVD
-#ifdef __cplusplus
 extern "C" {
 #include <di/di.h>
 }
-#endif
 #endif
 
 #include "snes9x.h"
