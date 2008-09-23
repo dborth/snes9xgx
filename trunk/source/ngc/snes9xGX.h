@@ -3,6 +3,7 @@
  *
  * softdev July 2006
  * crunchy2 May 2007-July 2007
+ * Michniewski 2008
  * Tantric September 2008
  *
  * snes9xGX.h

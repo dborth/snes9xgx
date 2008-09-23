@@ -23,6 +23,10 @@ by michniewski and Tantric.
 
 michniewski
 - added: Superscope/mouse/justifier support, with Wii remote
+- added: 3 render modes - Original, Filtered, Unfiltered
+- added: widescreen compensation option
+- added: DVD support on the Wii
+- changed: zoom - limited range, added reset zoom option
 
 Tantric
 - added: now uses SNES 1.51 core (thanks to eke-eke for help with this)
@@ -244,7 +248,18 @@ HOME	    Emulator menu
  LT			 LT						  LT		 LT
  RT			 RT						  RT		 RT
 
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·           SUPERSCOPE / MOUSE / JUSTIFIER SUPPORT              ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 
+Make sure you enable the superscope, mouse, or justifier in the controller
+options menu BEFORE loading the rom. If you have already loaded the rom
+and changed the setting, reset the game for the settings to take effect.
+
+These controllers can be controlled by either the Gamecube controller analog
+sticks,the Classic controller analog sticks, or by aiming at the screen
+with the wiimote.
+(these configurations cannot be changed, yet)
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                             ZIP SUPPORT                       ·oø×O0|
