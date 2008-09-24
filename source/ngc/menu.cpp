@@ -161,12 +161,6 @@ PreferencesMenu ()
 			GCSettings.SaveMethod++;
 		#endif
 
-		// check if DVD access in Wii mode is disabled
-		#ifndef WII_DVD
-		if(GCSettings.LoadMethod == METHOD_DVD)
-			GCSettings.LoadMethod++;
-		#endif
-
 		// saving to DVD is impossible
 		if(GCSettings.SaveMethod == METHOD_DVD)
 			GCSettings.SaveMethod++;
