@@ -22,6 +22,8 @@ extern "C" {
 }
 #endif
 
+#include "memmap.h"
+
 #include "menudraw.h"
 #include "snes9xGX.h"
 #include "unzip.h"
@@ -436,13 +438,14 @@ bool SwitchDVDFolder(char origdir[])
  ***************************************************************************/
 
 int
-LoadDVDFile (unsigned char *buffer)
+LoadDVDFile ()
 {
 	int offset;
 	int blocks;
 	int i;
 	u64 discoffset;
 	char readbuffer[2048];
+	unsigned char *rbuffer = (unsigned char *) Memory.ROM;
 
 	// How many 2k blocks to read
 	blocks = dvddirlength / 2048;
@@ -456,7 +459,7 @@ LoadDVDFile (unsigned char *buffer)
 		for (i = 0; i < blocks; i++)
 		{
 			dvd_read (readbuffer, 2048, discoffset);
-			memcpy (buffer + offset, readbuffer, 2048);
+			memcpy (rbuffer + offset, readbuffer, 2048);
 			offset += 2048;
 			discoffset += 2048;
 		}
@@ -466,12 +469,12 @@ LoadDVDFile (unsigned char *buffer)
 		{
 			i = dvddirlength % 2048;
 			dvd_read (readbuffer, 2048, discoffset);
-			memcpy (buffer + offset, readbuffer, i);
+			memcpy (rbuffer + offset, readbuffer, i);
 		}
 	}
 	else
 	{
-		return UnZipFile (buffer, discoffset);	// unzip from dvd
+		return UnZipFile (rbuffer, discoffset);	// unzip from dvd
 	}
 	return dvddirlength;
 }

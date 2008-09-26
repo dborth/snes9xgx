@@ -216,7 +216,7 @@ ParseSMBdirectory ()
  * Load SMB file
  ****************************************************************************/
 int
-LoadSMBFile (char *filename, int length)
+LoadSMBFile ()
 {
 	char filepath[MAXPATHLEN];
 
@@ -236,7 +236,7 @@ LoadSMBFile (char *filename, int length)
  * Write savebuffer to SMB file
  ****************************************************************************/
 int
-SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
+SaveBufferToSMB (char *filepath, int datasize, bool silent)
 {
 	if(!ConnectShare (NOTSILENT))
 		return 0;
@@ -282,14 +282,14 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
 
 // no buffer is specified - so use savebuffer
 int
-LoadBufferFromSMB (char *filepath, bool8 silent)
+LoadBufferFromSMB (char *filepath, bool silent)
 {
 	ClearSaveBuffer ();
 	return LoadBufferFromSMB((char *)savebuffer, filepath, silent);
 }
 
 int
-LoadBufferFromSMB (char * sbuffer, char *filepath, bool8 silent)
+LoadBufferFromSMB (char * sbuffer, char *filepath, bool silent)
 {
 	if(!ConnectShare (NOTSILENT))
 		return 0;
