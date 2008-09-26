@@ -27,7 +27,6 @@
 #include "smbop.h"
 #include "filesel.h"
 
-extern unsigned char savebuffer[];
 extern int padcal;
 extern unsigned short gcpadmap[];
 

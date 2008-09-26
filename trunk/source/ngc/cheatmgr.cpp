@@ -18,7 +18,6 @@
 #include "menudraw.h"
 
 extern SCheatData Cheat;
-extern unsigned char savebuffer[];
 
 /****************************************************************************
  * NGCLoadCheatFile

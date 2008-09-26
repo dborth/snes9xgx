@@ -40,7 +40,6 @@
 extern void S9xSRTCPreSaveState ();
 extern void NGCFreezeStruct ();
 extern bool8 S9xUnfreezeGame (const char *filename);
-extern unsigned char savebuffer[];
 
 static int bufoffset;
 

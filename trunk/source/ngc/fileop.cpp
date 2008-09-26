@@ -29,13 +29,6 @@
 
 FILE * filehandle;
 
-extern unsigned char savebuffer[];
-extern char output[16384];
-extern int offset;
-extern int selection;
-extern char currentdir[MAXPATHLEN];
-extern FILEENTRIES filelist[MAXFILES];
-
 /****************************************************************************
  * fat_is_mounted
  * to check whether FAT media are detected.

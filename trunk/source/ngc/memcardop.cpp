@@ -17,18 +17,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "snes9x.h"
-#include "memmap.h"
-#include "debug.h"
-#include "cpuexec.h"
-#include "ppu.h"
-#include "apu.h"
-#include "display.h"
-#include "gfx.h"
-#include "soundux.h"
-#include "spc700.h"
-#include "spc7110.h"
-
 #include "snes9xGX.h"
 #include "video.h"
 #include "menudraw.h"
@@ -39,10 +27,10 @@
 #include "preferences.h"
 #include "memcardop.h"
 #include "fileop.h"
+#include "filesel.h"
 
 #define VERIFBUFFERSIZE 65536
 static u8 SysArea[CARD_WORKAREA] ATTRIBUTE_ALIGN (32);
-extern unsigned char savebuffer[];
 unsigned char verifbuffer[VERIFBUFFERSIZE] ATTRIBUTE_ALIGN (32);
 card_dir CardDir;
 card_file CardFile;

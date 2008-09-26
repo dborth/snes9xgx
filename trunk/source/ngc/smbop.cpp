@@ -35,14 +35,6 @@ unsigned int SMBTimer = 0;
 SMBCONN smbconn;
 #define ZIPCHUNK 16384
 
-extern unsigned char savebuffer[];
-extern char output[16384];
-extern int offset;
-extern int selection;
-extern char currentdir[MAXPATHLEN];
-extern FILEENTRIES filelist[MAXFILES];
-
-
 /****************************************************************************
  * InitializeNetwork
  * Initializes the Wii/GameCube network interface
@@ -281,7 +273,6 @@ SaveBufferToSMB (char *filepath, int datasize, bool8 silent)
 		WaitPrompt (msg);
 	}
 
-	ClearSaveBuffer ();
 	return boffset;
 }
 

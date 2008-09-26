@@ -18,6 +18,7 @@
 #include <string.h>
 #include <wiiuse/wpad.h>
 #include <sys/dir.h>
+#include <malloc.h>
 
 #ifdef WII_DVD
 extern "C" {
@@ -33,7 +34,6 @@ extern "C" {
 #include "menudraw.h"
 #include "video.h"
 #include "aram.h"
-#include "filesel.h"
 #include "smbop.h"
 #include "fileop.h"
 #include "memcardop.h"
@@ -55,16 +55,20 @@ int hasloaded = 0;
 // Global file entry table
 FILEENTRIES filelist[MAXFILES];
 
-unsigned char savebuffer[SAVEBUFFERSIZE] ATTRIBUTE_ALIGN (32);
+unsigned char *savebuffer = NULL;
 
 /****************************************************************************
  * ClearSaveBuffer ()
- * Clear the savebuffer
+ * Allocate and clear the savebuffer
  ***************************************************************************/
 void
 ClearSaveBuffer ()
 {
-    memset (savebuffer, 0, SAVEBUFFERSIZE);
+	if (savebuffer)
+		free(savebuffer);
+
+	savebuffer = (unsigned char *) memalign(32, SAVEBUFFERSIZE);
+	memset (savebuffer, 0, SAVEBUFFERSIZE);
 }
 
 /****************************************************************************
