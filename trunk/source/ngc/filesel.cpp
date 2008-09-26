@@ -322,20 +322,18 @@ int FileSelector (int method)
 				{
 					case METHOD_SD:
 					case METHOD_USB:
-					ARAM_ROMSIZE = LoadFATFile (filelist[selection].filename,
-					 filelist[selection].length);
+					ARAM_ROMSIZE = LoadFATFile ();
 					break;
 
 					case METHOD_DVD:
 					dvddir = filelist[selection].offset;
 					dvddirlength = filelist[selection].length;
-					ARAM_ROMSIZE = LoadDVDFile (Memory.ROM);
+					ARAM_ROMSIZE = LoadDVDFile ();
 					break;
 
 					case METHOD_SMB:
 					ARAM_ROMSIZE =
-					LoadSMBFile (filelist[selection].filename,
-					filelist[selection].length);
+					LoadSMBFile ();
 					break;
 				}
 

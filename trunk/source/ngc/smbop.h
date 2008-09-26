@@ -19,9 +19,9 @@ bool ConnectShare (bool silent);
 char * SMBPath(char * path);
 int UpdateSMBdirname();
 int ParseSMBdirectory ();
-int LoadSMBFile (char *filename, int length);
-int LoadBufferFromSMB (char *filepath, bool8 silent);
-int LoadBufferFromSMB (char * sbuffer, char *filepath, bool8 silent);
-int SaveBufferToSMB (char *filepath, int datasize, bool8 silent);
+int LoadSMBFile ();
+int LoadBufferFromSMB (char *filepath, bool silent);
+int LoadBufferFromSMB (char * sbuffer, char *filepath, bool silent);
+int SaveBufferToSMB (char *filepath, int datasize, bool silent);
 
 #endif
