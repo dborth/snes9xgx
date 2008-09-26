@@ -17,21 +17,15 @@
 #include <string.h>
 
 #ifdef WII_DVD
-#ifdef __cplusplus
 extern "C" {
 #include <di/di.h>
 }
-#endif
 #endif
 
 #include "menudraw.h"
 #include "snes9xGX.h"
 #include "unzip.h"
 
-extern int offset;
-extern int selection;
-extern FILEENTRIES filelist[MAXFILES];
-extern int maxfiles;
 u64 dvddir = 0;
 u64 dvdrootdir = 0;
 int dvddirlength = 0;
