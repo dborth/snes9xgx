@@ -284,8 +284,7 @@ SaveBufferToSMB (char *filepath, int datasize, bool silent)
 int
 LoadBufferFromSMB (char *filepath, bool silent)
 {
-	int result = LoadBufferFromSMB((char *)savebuffer, filepath, silent);
-	return result;
+	return LoadBufferFromSMB((char *)savebuffer, filepath, silent);
 }
 
 int
