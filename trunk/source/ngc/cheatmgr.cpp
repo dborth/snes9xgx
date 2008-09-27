@@ -26,7 +26,7 @@ extern SCheatData Cheat;
  * Custom version of S9xLoadCheatFile()
  ***************************************************************************/
 
-bool8 NGCLoadCheatFile (int length)
+bool NGCLoadCheatFile (int length)
 {
 	Cheat.num_cheats = 0;
 
@@ -50,7 +50,7 @@ bool8 NGCLoadCheatFile (int length)
 		}
 	}
 
-	return (TRUE);
+	return true;
 }
 
 /****************************************************************************
@@ -72,6 +72,8 @@ SetupCheats()
 
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod();
+
+	AllocSaveBuffer();
 
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
@@ -97,4 +99,6 @@ SetupCheats()
 				S9xDisableCheat(i);
 		}
 	}
+
+	FreeSaveBuffer ();
 }
