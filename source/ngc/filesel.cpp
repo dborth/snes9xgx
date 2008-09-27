@@ -58,17 +58,28 @@ FILEENTRIES filelist[MAXFILES];
 unsigned char *savebuffer = NULL;
 
 /****************************************************************************
- * ClearSaveBuffer ()
- * Allocate and clear the savebuffer
+ * AllocSaveBuffer ()
+ * Clear and allocate the savebuffer
  ***************************************************************************/
 void
-ClearSaveBuffer ()
+AllocSaveBuffer ()
 {
-	if (savebuffer)
+	if (savebuffer != NULL)
 		free(savebuffer);
 
 	savebuffer = (unsigned char *) memalign(32, SAVEBUFFERSIZE);
 	memset (savebuffer, 0, SAVEBUFFERSIZE);
+}
+
+/****************************************************************************
+ * FreeSaveBuffer ()
+ * Free the savebuffer memory
+ ***************************************************************************/
+void
+FreeSaveBuffer ()
+{
+	if (savebuffer != NULL)
+		free(savebuffer);
 }
 
 /****************************************************************************
@@ -128,7 +139,7 @@ int autoSaveMethod()
 int UpdateDirName(int method)
 {
 	int size=0;
-	char *test;
+	char * test;
 	char temp[1024];
 
 	// update DVD directory (does not utilize 'currentdir')
@@ -220,7 +231,7 @@ void StripExt(char* returnstring, char * inputstring)
 	strcpy (returnstring, inputstring);
 	loc_dot = strrchr(returnstring,'.');
 	if (loc_dot != NULL)
-		*loc_dot = '\0';	// strip file extension
+		loc_dot = 0; // strip file extension
 }
 
 /****************************************************************************

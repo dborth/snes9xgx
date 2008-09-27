@@ -37,7 +37,8 @@ extern int selection;
 extern char currentdir[MAXPATHLEN];
 extern int maxfiles;
 
-void ClearSaveBuffer ();
+void AllocSaveBuffer();
+void FreeSaveBuffer();
 int OpenROM (int method);
 int autoLoadMethod();
 int autoSaveMethod();

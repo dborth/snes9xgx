@@ -44,6 +44,7 @@ extern "C" {
 #include "controls.h"
 
 #include "snes9xGX.h"
+#include "aram.h"
 #include "dvd.h"
 #include "smbop.h"
 #include "video.h"
@@ -167,7 +168,7 @@ emulate ()
 			//S9xReportControllers ();
 
 			ConfigRequested = 0;
-			
+
 			#ifdef _DEBUG_VIDEO
 			// log stuff
 			fprintf(debughandle, "\n\nPlaying ROM: %s", Memory.ROMFilename);
@@ -213,6 +214,10 @@ main ()
 	unsigned int save_flags;
 	int selectedMenu = -1;
 
+	// Initialise video
+	InitGCVideo ();
+
+	// Controllers
 #ifdef HW_RVL
 	WPAD_Init();
 	// read wiimote accelerometer and IR data
@@ -220,8 +225,23 @@ main ()
 	WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
 #endif
 
-	// Initialise video
-	InitGCVideo ();
+	PAD_Init ();
+
+	// Audio
+	AUDIO_Init (NULL);
+
+	// GC Audio RAM (for ROM and backdrop storage)
+	AR_Init (NULL, 0);
+
+	// Before going any further, let's copy any injected ROM image
+	int *romptr = (int *) 0x81000000; // location of injected rom
+
+	if (memcmp ((char *) romptr, "SNESROM0", 8) == 0)
+	{
+		ARAM_ROMSIZE = romptr[2];
+		romptr = (int *) 0x81000020;
+		ARAMPut ((char *) romptr, (char *) AR_SNESROM, ARAM_ROMSIZE);
+	}
 
 	// Initialise freetype font system
 	if (FT_Init ())
@@ -259,7 +279,7 @@ main ()
 
 	// Initialize libFAT for SD and USB
 	fatInitDefault();
-	
+
 	#ifdef _DEBUG_VIDEO
 	// log stuff
 	debughandle = fopen ("log.txt", "wb");

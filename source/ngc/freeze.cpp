@@ -138,7 +138,7 @@ NGCFreezeGame (int method, bool8 silent)
 	S9xSetSoundMute (TRUE);
 	S9xPrepareSoundForSnapshotSave (FALSE);
 
-	ClearSaveBuffer ();
+	AllocSaveBuffer ();
 	NGCFreezeMemBuffer (); // copy freeze mem into savebuffer
 
 	S9xPrepareSoundForSnapshotSave (TRUE);
@@ -197,6 +197,8 @@ NGCFreezeGame (int method, bool8 silent)
 		else
 			offset = SaveBufferToMC ( savebuffer, CARD_SLOTB, filename, woffset, SILENT );
 	}
+
+	FreeSaveBuffer ();
 
 	if(offset > 0) // save successful!
 	{
@@ -260,6 +262,8 @@ NGCUnfreezeGame (int method, bool8 silent)
     if(method == METHOD_AUTO)
 		method = autoSaveMethod(); // we use 'Save' because snapshot needs R/W
 
+    AllocSaveBuffer ();
+
 	if (method == METHOD_SD || method == METHOD_USB) // SD & USB
 	{
 		if(ChangeFATInterface(method, NOTSILENT))
@@ -321,10 +325,12 @@ NGCUnfreezeGame (int method, bool8 silent)
 		}
     }
 
+	int result = 0;
+
 	if(offset > 0)
 	{
 		if (S9xUnfreezeGame ("AGAME") == SUCCESS)
-			return 1;
+			result = 1;
 		else
 			WaitPrompt((char*) "Error thawing");
 	}
@@ -333,5 +339,6 @@ NGCUnfreezeGame (int method, bool8 silent)
 		if(!silent)
 			WaitPrompt((char*) "Freeze file not found");
 	}
-	return 0; // if we reached here, nothing was done!
+	FreeSaveBuffer ();
+	return result;
 }

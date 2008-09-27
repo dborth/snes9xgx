@@ -223,7 +223,7 @@ LoadBufferFromFAT (char *filepath, bool silent)
     int boffset = 0;
     int read = 0;
 
-    ClearSaveBuffer ();
+    AllocSaveBuffer ();
 
     handle = fopen (filepath, "rb");
 
@@ -246,6 +246,8 @@ LoadBufferFromFAT (char *filepath, bool silent)
 
     fclose (handle);
 
+    FreeSaveBuffer ();
+
     return boffset;
 }
 
@@ -256,6 +258,8 @@ int
 SaveBufferToFAT (char *filepath, int datasize, bool silent)
 {
 	FILE *handle;
+
+	AllocSaveBuffer ();
 
     if (datasize)
     {
@@ -273,6 +277,6 @@ SaveBufferToFAT (char *filepath, int datasize, bool silent)
         fclose (handle);
     }
 
-    ClearSaveBuffer ();
+    FreeSaveBuffer ();
     return datasize;
 }

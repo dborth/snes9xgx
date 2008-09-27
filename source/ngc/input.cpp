@@ -45,8 +45,6 @@ extern int ConfigRequested;
 #define ASSIGN_BUTTON_FALSE( keycode, snescmd ) \
 	  S9xMapButton( keycode, cmd = S9xGetCommandT(snescmd), false)
 
-#define MAXJP 12
-
 /*** Gamecube controller Padmap ***/
 unsigned int gcpadmap[] = { PAD_BUTTON_A, PAD_BUTTON_B,
   PAD_BUTTON_X, PAD_BUTTON_Y,
