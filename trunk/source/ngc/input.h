@@ -18,6 +18,7 @@
 
 #define PI 				3.14159265f
 #define PADCAL			50
+#define MAXJP 			12 // # of mappable controller buttons
 
 extern unsigned int gcpadmap[];
 extern unsigned int wmpadmap[];

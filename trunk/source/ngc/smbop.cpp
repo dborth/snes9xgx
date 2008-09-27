@@ -246,6 +246,8 @@ SaveBufferToSMB (char *filepath, int datasize, bool silent)
 	int wrote = 0;
 	int boffset = 0;
 
+	AllocSaveBuffer();
+
 	smbfile =
 	SMB_OpenFile (SMBPath(filepath), SMB_OPEN_WRITING | SMB_DENY_NONE,
 	SMB_OF_CREATE | SMB_OF_TRUNCATE, smbconn);
@@ -273,6 +275,8 @@ SaveBufferToSMB (char *filepath, int datasize, bool silent)
 		WaitPrompt (msg);
 	}
 
+	FreeSaveBuffer();
+
 	return boffset;
 }
 
@@ -284,8 +288,10 @@ SaveBufferToSMB (char *filepath, int datasize, bool silent)
 int
 LoadBufferFromSMB (char *filepath, bool silent)
 {
-	ClearSaveBuffer ();
-	return LoadBufferFromSMB((char *)savebuffer, filepath, silent);
+	AllocSaveBuffer();
+	int result = LoadBufferFromSMB((char *)savebuffer, filepath, silent);
+	FreeSaveBuffer();
+	return result;
 }
 
 int

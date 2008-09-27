@@ -44,8 +44,6 @@ preparesavedata (int method)
 	int offset = 0;
 	int size;
 
-	ClearSaveBuffer ();
-
 	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
 	{
 		// Copy in save icon
@@ -154,6 +152,8 @@ LoadSRAM (int method, bool silent)
 	char filepath[1024];
 	int offset = 0;
 
+	AllocSaveBuffer ();
+
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
 		ChangeFATInterface(method, NOTSILENT);
@@ -179,14 +179,22 @@ LoadSRAM (int method, bool silent)
 	{
 		decodesavedata (method, offset);
 		S9xSoftReset();
-		return 1;
 	}
 
-	// if we reached here, nothing was done!
-	if(!silent)
-		WaitPrompt ((char*) "SRAM file not found");
+	FreeSaveBuffer ();
 
-	return 0;
+	if(offset > 0)
+	{
+		return 1;
+	}
+	else
+	{
+		// if we reached here, nothing was done!
+		if(!silent)
+			WaitPrompt ((char*) "SRAM file not found");
+
+		return 0;
+	}
 }
 
 /****************************************************************************
@@ -204,6 +212,8 @@ SaveSRAM (int method, bool silent)
 	char filepath[1024];
 	int datasize;
 	int offset = 0;
+
+	AllocSaveBuffer ();
 
 	datasize = preparesavedata (method);
 
@@ -244,5 +254,7 @@ SaveSRAM (int method, bool silent)
 		if(!silent)
 			WaitPrompt((char *)"No SRAM data to save!");
 	}
+
+	FreeSaveBuffer ();
 	return retval;
 }

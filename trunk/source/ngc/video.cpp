@@ -446,23 +446,8 @@ UpdatePadsCB ()
 void
 InitGCVideo ()
 {
-    int *romptr = (int *) 0x81000000;	// injected rom
-
 	// init video
     VIDEO_Init ();
-    PAD_Init ();
-
-    AUDIO_Init (NULL);
-    AR_Init (NULL, 0);
-
-    // Before going any further, let's copy any attached ROM image
-    if (memcmp ((char *) romptr, "SNESROM0", 8) == 0)
-    {
-        ARAM_ROMSIZE = romptr[2];
-        romptr = (int *) 0x81000020;
-        ARAMPut ((char *) romptr, (char *) AR_SNESROM, ARAM_ROMSIZE);
-    }
-
 
 	// get default video mode
 	vmode = VIDEO_GetPreferredMode(NULL);
@@ -769,7 +754,7 @@ update_video (int width, int height)
 		// yes its pretty cheap and ugly, but its easy!
 		if (GCSettings.widescreen)
 			xscale -= (4.0*yscale)/9;
-			
+
 		xscale *= zoom_level;
 		yscale *= zoom_level;
 
@@ -826,10 +811,10 @@ zoom (float speed)
 		zoom_level += (speed / -100.0);
 	else
 		zoom_level += (speed / -200.0);
-	
+
 	if (zoom_level < 0.5) zoom_level = 0.5;
 	else if (zoom_level > 10.0) zoom_level = 10.0;
-	
+
 	oldvheight = 0;	// update video
 }
 
