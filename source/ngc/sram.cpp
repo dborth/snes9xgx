@@ -152,7 +152,7 @@ LoadSRAM (int method, bool silent)
 	char filepath[1024];
 	int offset = 0;
 
-	AllocSaveBuffer ();
+	AllocSaveBuffer();
 
 	if(method == METHOD_SD || method == METHOD_USB)
 	{
