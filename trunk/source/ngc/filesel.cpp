@@ -233,7 +233,7 @@ void StripExt(char* returnstring, char * inputstring)
 	strcpy (returnstring, inputstring);
 	loc_dot = strrchr(returnstring,'.');
 	if (loc_dot != NULL)
-		loc_dot = 0; // strip file extension
+		*loc_dot = 0; // strip file extension
 }
 
 /****************************************************************************

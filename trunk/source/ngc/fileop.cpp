@@ -209,8 +209,6 @@ LoadFATFile ()
 		WaitPrompt((char*) "Error opening file");
 		return 0;
 	}
-
-	return 0;
 }
 
 /****************************************************************************
