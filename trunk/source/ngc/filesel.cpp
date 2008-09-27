@@ -80,6 +80,8 @@ FreeSaveBuffer ()
 {
 	if (savebuffer != NULL)
 		free(savebuffer);
+
+	savebuffer = NULL;
 }
 
 /****************************************************************************
