@@ -735,8 +735,7 @@ update_video (int width, int height)
 
 	if ( CheckVideo && (IPPU.RenderedFramesCount != prevRenderedFrameCount) )	// if we get back from the menu, and have rendered at least 1 frame
 	{
-		int xscale, yscale, xshift, yshift;
-		yshift = xshift = 0;
+		int xscale, yscale;
 
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
 
@@ -758,10 +757,10 @@ update_video (int width, int height)
 		xscale *= zoom_level;
 		yscale *= zoom_level;
 
-		square[6] = square[3]  =  xscale + xshift;
-		square[0] = square[9]  = -xscale + xshift;
-		square[4] = square[1]  =  yscale + yshift;
-		square[7] = square[10] = -yscale + yshift;
+		square[6] = square[3]  =  xscale + GCSettings.xshift;
+		square[0] = square[9]  = -xscale + GCSettings.xshift;
+		square[4] = square[1]  =  yscale + GCSettings.yshift;
+		square[7] = square[10] = -yscale + GCSettings.yshift;
 
 		GX_InvVtxCache ();	// update vertex cache
 

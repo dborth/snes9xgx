@@ -117,7 +117,7 @@ LoadManager ()
 /****************************************************************************
  * Preferences Menu
  ***************************************************************************/
-static int prefmenuCount = 16;
+static int prefmenuCount = 11;
 static char prefmenu[][50] = {
 
 	"Load Method",
@@ -131,11 +131,6 @@ static char prefmenu[][50] = {
 
 	"Reverse Stereo",
 	"Interpolated Sound",
-	"Transparency",
-	"Display Frame Rate",
-	"Enable Zooming",
-	"Video Filtering",
-	"Widescreen",
 
 	"Save Preferences",
 	"Back to Main Menu"
@@ -208,10 +203,6 @@ PreferencesMenu ()
 		prefmenu[1][0] = '\0';
 		prefmenu[3][0] = '\0';
 
-		// don't allow original render mode if progressive video mode detected
-		if (GCSettings.render==0 && progressive)
-			GCSettings.render++;
-
 		if (GCSettings.AutoLoad == 0) sprintf (prefmenu[4],"Auto Load OFF");
 		else if (GCSettings.AutoLoad == 1) sprintf (prefmenu[4],"Auto Load SRAM");
 		else if (GCSettings.AutoLoad == 2) sprintf (prefmenu[4],"Auto Load SNAPSHOT");
@@ -229,25 +220,6 @@ PreferencesMenu ()
 
 		sprintf (prefmenu[8], "Interpolated Sound %s",
 			Settings.InterpolatedSound == true ? " ON" : "OFF");
-
-		sprintf (prefmenu[9], "Transparency %s",
-			Settings.Transparency == true ? " ON" : "OFF");
-
-		sprintf (prefmenu[10], "Display Frame Rate %s",
-			Settings.DisplayFrameRate == true ? " ON" : "OFF");
-
-		sprintf (prefmenu[11], "Enable Zooming %s",
-			GCSettings.NGCZoom == true ? " ON" : "OFF");
-
-		if ( GCSettings.render == 0 )
-			sprintf (prefmenu[12], "Video Rendering Original");
-		if ( GCSettings.render == 1 )
-			sprintf (prefmenu[12], "Video Rendering Filtered");
-		if ( GCSettings.render == 2 )
-			sprintf (prefmenu[12], "Video Rendering Unfiltered");
-
-		sprintf (prefmenu[13], "Video Scaling %s",
-			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
 
 		ret = RunMenu (prefmenu, prefmenuCount, (char*)"Preferences", 16);
 
@@ -292,33 +264,143 @@ PreferencesMenu ()
 				break;
 
 			case 9:
-				Settings.Transparency ^= 1;
-				break;
-
-			case 10:
-				Settings.DisplayFrameRate ^= 1;
-				break;
-
-			case 11:
-				GCSettings.NGCZoom ^= 1;
-				break;
-
-			case 12:
-				GCSettings.render++;
-				if (GCSettings.render > 2 )
-					GCSettings.render = 0;
-				break;
-
-			case 13:
-				GCSettings.widescreen ^= 1;
-				break;
-
-			case 14:
 				SavePrefs(GCSettings.SaveMethod, NOTSILENT);
 				break;
 
 			case -1: /*** Button B ***/
-			case 15:
+			case 10:
+				quit = 1;
+				break;
+
+		}
+	}
+	menu = oldmenu;
+}
+
+/****************************************************************************
+ * Video Options
+ ***************************************************************************/
+static int videomenuCount = 14;
+static char videomenu[][50] = {
+
+	"Transparency",
+	"Display Frame Rate",
+	"Enable Zooming",
+	"Video Filtering",
+	"Widescreen",
+	
+	"X-shift ++",
+	"       --",
+	"Y-shift ++",
+	"       --",
+	"X-shift:       ",
+	"Y-shift:       ",
+	"Reset Video Shifts",
+
+	"Save Preferences",
+	"Back to Main Menu"
+};
+
+void
+VideoOptions ()
+{
+	int ret = 0;
+	int quit = 0;
+	int oldmenu = menu;
+	menu = 0;
+	while (quit == 0)
+	{
+
+		sprintf (prefmenu[0], "Transparency %s",
+			Settings.Transparency == true ? " ON" : "OFF");
+
+		sprintf (prefmenu[1], "Display Frame Rate %s",
+			Settings.DisplayFrameRate == true ? " ON" : "OFF");
+
+		sprintf (prefmenu[2], "Enable Zooming %s",
+			GCSettings.NGCZoom == true ? " ON" : "OFF");
+			
+		// don't allow original render mode if progressive video mode detected
+		if (GCSettings.render==0 && progressive)
+			GCSettings.render++;
+
+		if ( GCSettings.render == 0 )
+			sprintf (prefmenu[3], "Video Rendering Original");
+		if ( GCSettings.render == 1 )
+			sprintf (prefmenu[3], "Video Rendering Filtered");
+		if ( GCSettings.render == 2 )
+			sprintf (prefmenu[3], "Video Rendering Unfiltered");
+
+		sprintf (prefmenu[4], "Video Scaling %s",
+			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
+			
+		sprintf (prefmenu[9], "X-shift: %d", GCSettings.xshift);
+			
+		sprintf (prefmenu[10], "Y-shift: %d", GCSettings.yshift);
+
+		ret = RunMenu (videomenu, videomenuCount, (char*)"Video Options", 16);
+
+		switch (ret)
+		{
+			case 0:
+				Settings.Transparency ^= 1;
+				break;
+
+			case 1:
+				Settings.DisplayFrameRate ^= 1;
+				break;
+
+			case 2:
+				GCSettings.NGCZoom ^= 1;
+				break;
+
+			case 3:
+				GCSettings.render++;
+				if (GCSettings.render > 2 )
+					GCSettings.render = 0;
+				// reset zoom
+				zoom_reset ();
+				break;
+
+			case 4:
+				GCSettings.widescreen ^= 1;
+				break;
+				
+			case 5:
+				// xscale UP
+				GCSettings.xshift++;
+				break;
+				
+			case 6:
+				// xscale DOWN
+				GCSettings.xshift--;
+				break;
+				
+			case 7:
+				// yscale UP
+				GCSettings.yshift++;
+				break;
+				
+			case 8:
+				// yscale DOWN
+				GCSettings.yshift--;
+				break;
+			
+			case 9:
+			case 10:
+				break;
+				
+			case 11:
+				// reset video shifts
+				GCSettings.xshift = GCSettings.yshift = 0;
+				break;
+
+			case 12:
+				SavePrefs(GCSettings.SaveMethod, NOTSILENT);
+				break;
+
+			case -1: /*** Button B ***/
+			case 13:
 				quit = 1;
 				break;
 
@@ -941,11 +1023,16 @@ ConfigureControllers ()
 /****************************************************************************
  * Main Menu
  ***************************************************************************/
-int menucount = 7;
+int menucount = 8;
 char menuitems[][50] = {
-  "Choose Game", "Controller Configuration", "Preferences",
+  "Choose Game", 
+  "Controller Configuration", 
+  "Preferences",
   "Game Menu",
-  "Credits", "Reset System", "Return to Loader"
+  "Video Options",
+  "Credits", 
+  "Reset System", 
+  "Return to Loader"
 };
 
 void
@@ -995,19 +1082,24 @@ mainmenu (int selectedMenu)
 				// Game Options
 				quit = GameMenu ();
 				break;
-
+				
 			case 4:
+				// Video Options
+				VideoOptions ();
+				break;
+
+			case 5:
 				// Credits
 				Credits ();
 				WaitButtonA ();
                 break;
 
-			case 5:
+			case 6:
 				// Reset the Gamecube/Wii
 			    Reboot();
                 break;
 
-			case 6:
+			case 7:
 				// Exit to Loader
 				#ifdef HW_RVL
 					#ifdef WII_DVD
