@@ -507,7 +507,7 @@ void uselessinquiry ()
  * dvd_motor_off( )
  * Turns off DVD drive motor so it doesn't make noise (Gamecube only)
  ***************************************************************************/
-void dvd_motor_off( )
+void dvd_motor_off ()
 {
 	dvd[0] = 0x2e;
 	dvd[1] = 0;

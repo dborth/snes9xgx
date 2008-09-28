@@ -1023,7 +1023,7 @@ ConfigureControllers ()
 /****************************************************************************
  * Main Menu
  ***************************************************************************/
-int menucount = 8;
+int menucount = 9;
 char menuitems[][50] = {
   "Choose Game", 
   "Controller Configuration", 
@@ -1031,6 +1031,7 @@ char menuitems[][50] = {
   "Game Menu",
   "Video Options",
   "Credits", 
+  "DVD Motor Off",
   "Reset System", 
   "Return to Loader"
 };
@@ -1046,6 +1047,11 @@ mainmenu (int selectedMenu)
     	menuitems[3][0] = '\0';
 	else
 		sprintf (menuitems[3], "Game Menu");
+		
+	#ifndef HW_DOL
+	// don't show dvd motor off on the wii
+	menuitems[6][0] = '\0';
+	#endif
 
 	VIDEO_WaitVSync ();
 
@@ -1093,13 +1099,20 @@ mainmenu (int selectedMenu)
 				Credits ();
 				WaitButtonA ();
                 break;
-
+				
 			case 6:
+				// turn the dvd motor off (GC only)
+				#ifdef HW_DOL
+				dvd_motor_off ();
+				#endif
+				break;
+
+			case 7:
 				// Reset the Gamecube/Wii
 			    Reboot();
                 break;
 
-			case 7:
+			case 8:
 				// Exit to Loader
 				#ifdef HW_RVL
 					#ifdef WII_DVD
