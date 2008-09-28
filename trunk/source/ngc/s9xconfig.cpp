@@ -31,6 +31,8 @@ DefaultSettings ()
 	sprintf (GCSettings.CheatFolder,"snes9x/cheats"); // Path to cheat files
 	GCSettings.AutoLoad = 1;
 	GCSettings.AutoSave = 1;
+	
+	GCSettings.VerifySaves = 0;
 
 	// custom SMB settings
 	strncpy (GCSettings.smbip, "", 15); // IP Address of share server
@@ -49,15 +51,17 @@ DefaultSettings ()
 	GCSettings.smbsvid[0] = 0;
 	GCSettings.smbgcid[0] = 0;
 
-	GCSettings.NGCZoom = 0;
-	GCSettings.VerifySaves = 0;
-
-	GCSettings.render = 2; // Unfiltered
-	GCSettings.widescreen = 0; // no aspect ratio correction
-
 	GCSettings.Superscope = 0;
     GCSettings.Mouse = 0;
 	GCSettings.Justifier = 0;
+	
+	GCSettings.NGCZoom = 0;	// zooming default off
+
+	GCSettings.render = 2; // Unfiltered
+	GCSettings.widescreen = 0; // no aspect ratio correction
+	
+	GCSettings.xshift = 0;	// video shift
+	GCSettings.yshift = 0;
 
 	/****************** SNES9x Settings ***********************/
 

@@ -57,6 +57,8 @@ struct SGCSettings{
 	int		Mouse;
 	int		Justifier;
 	int		widescreen;	// 0 - 4:3 aspect, 1 - 16:9 aspect
+	int		xshift;		// video output shift
+	int		yshift;
 };
 
 extern struct SGCSettings GCSettings;
