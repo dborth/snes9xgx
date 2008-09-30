@@ -476,10 +476,17 @@ InitGCVideo ()
 			break;
 	}
 
+#ifdef HW_DOL
+/* we have component cables, but the preferred mode is interlaced
+ * why don't we switch into progressive?
+ * on the Wii, the user can do this themselves on their Wii Settings */
+	if(VIDEO_HaveComponentCable() && vmode == &TVNtsc480IntDf)
+		vmode = &TVNtsc480Prog;
+#endif
+
 	// check for progressive scan
 	if (vmode->viTVMode == VI_TVMODE_NTSC_PROG)
 		progressive = true;
-
 
     VIDEO_Configure (vmode);
 
