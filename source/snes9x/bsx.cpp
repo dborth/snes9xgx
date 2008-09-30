@@ -977,6 +977,7 @@ uint8 * S9xGetBasePointerBSX(uint32 address)
 
 static bool8 BSX_LoadBIOS(void)
 {
+	return FALSE; // We're not loading the BIOS!
 	FILE	*fp;
 	char	path[_MAX_PATH + 1], name[_MAX_PATH + 1];
 	bool8	r = FALSE;
