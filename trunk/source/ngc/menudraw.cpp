@@ -238,32 +238,32 @@ Credits ()
 	else
 		ypos += 32;
 
-	setfontsize (18);
+	setfontsize (20);
 	DrawText (-1, ypos += 30, (char*)"Technical");
 
-	setfontsize (14);
-	DrawText (-1, ypos += 22, (char*)"Snes9x v1.5.1 - Snes9x Team");
-	DrawText (-1, ypos += 18, (char*)"GameCube Port 2.0 WIP6 and earlier - SoftDev");
-	DrawText (-1, ypos += 18, (char*)"Additional improvements to 2.0 WIP6 - eke-eke");
-	DrawText (-1, ypos += 18, (char*)"GameCube 2.0.1bx enhancements - crunchy2");
-	DrawText (-1, ypos += 18, (char*)"v00x updates - michniewski & Tantric");
-	DrawText (-1, ypos += 18, (char*)"GX - http://www.gc-linux.org");
-	DrawText (-1, ypos += 18, (char*)"libogc - Shagkur & wintermute");
+	setfontsize (16);
 
-	setfontsize (18);
-	DrawText (-1, ypos += 30, (char*)"Testing");
+	DrawText (75, ypos += 30, (char*)"Snes9x GX 00x");
+	DrawText (350, ypos, (char*)"michniewski & Tantric");
+	DrawText (75, ypos += 20, (char*)"Snes9X GX 2.0.1 GameCube");
+	DrawText (350, ypos, (char*)"crunchy2, eke-eke, others");
+	DrawText (75, ypos += 20, (char*)"Snes9x GX GameCube Port");
+	DrawText (350, ypos, (char*)"SoftDev");
+	DrawText (75, ypos += 20, (char*)"Snes9x 1.5.1");
+	DrawText (350, ypos, (char*)"Snes9x Team");
+	DrawText (75, ypos += 20, (char*)"GX");
+	DrawText (350, ypos, (char*)"http://www.gc-linux.org");
+	DrawText (75, ypos += 20, (char*)"libogc");
+	DrawText (350, ypos, (char*)"Shagkur & wintermute");
 
-	setfontsize (14);
-	DrawText (-1, ypos += 22, (char*)"crunchy2 / tehskeen users / others");
+	setfontsize (20);
+	DrawText (-1, ypos += 40, (char*)"Testing");
 
-	setfontsize (18);
-	DrawText (-1, ypos += 30, (char*)"Documentation");
-
-	setfontsize (14);
-	DrawText (-1, ypos += 22, (char*)"brakken, crunchy2, michniewski");
+	setfontsize (16);
+	DrawText (-1, ypos += 30, (char*)"TehSkeen users");
 
 	setfontsize (12);
-	DrawText (-1, ypos += 50, (char*)"Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
+	DrawText (-1, ypos += 75, (char*)"Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
 	DrawText (-1, ypos += 15, (char*)"This software is open source and may be copied, distributed, or modified");
 	DrawText (-1, ypos += 15, (char*)"under the terms of the GNU General Public License (GPL) Version 2.");
 

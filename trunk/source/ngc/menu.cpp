@@ -550,10 +550,11 @@ static char videomenu[][50] = {
 	"Video Filtering",
 	"Widescreen",
 
-	"X-shift ++",
-	"        --",
-	"Y-shift ++",
-	"        --",
+	"Shift Video Up",
+	"Shift Video Down",
+	"Shift Video Left",
+	"Shift Video Right",
+
 	"Shift:       ",
 	"Reset Video Shift",
 
@@ -631,23 +632,20 @@ VideoOptions ()
 				break;
 
 			case 5:
-				// xscale UP
-				GCSettings.xshift++;
+				// Move up
+				GCSettings.yshift--;
 				break;
-
 			case 6:
-				// xscale DOWN
-				GCSettings.xshift--;
-				break;
-
-			case 7:
-				// yscale UP
+				// Move down
 				GCSettings.yshift++;
 				break;
-
+			case 7:
+				// Move left
+				GCSettings.xshift--;
+				break;
 			case 8:
-				// yscale DOWN
-				GCSettings.yshift--;
+				// Move right
+				GCSettings.xshift++;
 				break;
 
 			case 9:

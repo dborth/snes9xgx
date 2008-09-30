@@ -759,8 +759,8 @@ update_video (int width, int height)
 
 		square[6] = square[3]  =  xscale + GCSettings.xshift;
 		square[0] = square[9]  = -xscale + GCSettings.xshift;
-		square[4] = square[1]  =  yscale + GCSettings.yshift;
-		square[7] = square[10] = -yscale + GCSettings.yshift;
+		square[4] = square[1]  =  yscale - GCSettings.yshift;
+		square[7] = square[10] = -yscale - GCSettings.yshift;
 
 		GX_InvVtxCache ();	// update vertex cache
 
