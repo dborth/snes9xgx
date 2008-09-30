@@ -115,301 +115,6 @@ LoadManager ()
 }
 
 /****************************************************************************
- * Preferences Menu
- ***************************************************************************/
-static int prefmenuCount = 11;
-static char prefmenu[][50] = {
-
-	"Load Method",
-	"Load Folder",
-	"Save Method",
-	"Save Folder",
-
-	"Auto Load",
-	"Auto Save",
-	"Verify MC Saves",
-
-	"Reverse Stereo",
-	"Interpolated Sound",
-
-	"Save Preferences",
-	"Back to Main Menu"
-};
-
-void
-PreferencesMenu ()
-{
-	int ret = 0;
-	int quit = 0;
-	int oldmenu = menu;
-	menu = 0;
-	while (quit == 0)
-	{
-		// some load/save methods are not implemented - here's where we skip them
-		// they need to be skipped in the order they were enumerated in snes9xGX.h
-
-		// no USB ports on GameCube
-		#ifndef HW_RVL
-		if(GCSettings.LoadMethod == METHOD_USB)
-			GCSettings.LoadMethod++;
-		if(GCSettings.SaveMethod == METHOD_USB)
-			GCSettings.SaveMethod++;
-		#endif
-
-		// saving to DVD is impossible
-		if(GCSettings.SaveMethod == METHOD_DVD)
-			GCSettings.SaveMethod++;
-
-		// disable SMB in GC mode (stalls out)
-		#ifndef HW_RVL
-		if(GCSettings.LoadMethod == METHOD_SMB)
-			GCSettings.LoadMethod++;
-		if(GCSettings.SaveMethod == METHOD_SMB)
-			GCSettings.SaveMethod++;
-		#endif
-
-		// disable MC saving in Wii mode - does not work for some reason!
-		#ifdef HW_RVL
-		if(GCSettings.SaveMethod == METHOD_MC_SLOTA)
-			GCSettings.SaveMethod++;
-		if(GCSettings.SaveMethod == METHOD_MC_SLOTB)
-			GCSettings.SaveMethod++;
-		#endif
-
-		// correct load/save methods out of bounds
-		if(GCSettings.LoadMethod > 4)
-			GCSettings.LoadMethod = 0;
-		if(GCSettings.SaveMethod > 6)
-			GCSettings.SaveMethod = 0;
-
-		if (GCSettings.LoadMethod == METHOD_AUTO) sprintf (prefmenu[0],"Load Method AUTO");
-		else if (GCSettings.LoadMethod == METHOD_SD) sprintf (prefmenu[0],"Load Method SD");
-		else if (GCSettings.LoadMethod == METHOD_USB) sprintf (prefmenu[0],"Load Method USB");
-		else if (GCSettings.LoadMethod == METHOD_DVD) sprintf (prefmenu[0],"Load Method DVD");
-		else if (GCSettings.LoadMethod == METHOD_SMB) sprintf (prefmenu[0],"Load Method Network");
-
-		sprintf (prefmenu[1], "Load Folder %s",	GCSettings.LoadFolder);
-
-		if (GCSettings.SaveMethod == METHOD_AUTO) sprintf (prefmenu[2],"Save Method AUTO");
-		else if (GCSettings.SaveMethod == METHOD_SD) sprintf (prefmenu[2],"Save Method SD");
-		else if (GCSettings.SaveMethod == METHOD_USB) sprintf (prefmenu[2],"Save Method USB");
-		else if (GCSettings.SaveMethod == METHOD_SMB) sprintf (prefmenu[2],"Save Method Network");
-		else if (GCSettings.SaveMethod == METHOD_MC_SLOTA) sprintf (prefmenu[2],"Save Method MC Slot A");
-		else if (GCSettings.SaveMethod == METHOD_MC_SLOTB) sprintf (prefmenu[2],"Save Method MC Slot B");
-
-		sprintf (prefmenu[3], "Save Folder %s",	GCSettings.SaveFolder);
-
-		// disable changing load/save directories for now
-		prefmenu[1][0] = '\0';
-		prefmenu[3][0] = '\0';
-
-		if (GCSettings.AutoLoad == 0) sprintf (prefmenu[4],"Auto Load OFF");
-		else if (GCSettings.AutoLoad == 1) sprintf (prefmenu[4],"Auto Load SRAM");
-		else if (GCSettings.AutoLoad == 2) sprintf (prefmenu[4],"Auto Load SNAPSHOT");
-
-		if (GCSettings.AutoSave == 0) sprintf (prefmenu[5],"Auto Save OFF");
-		else if (GCSettings.AutoSave == 1) sprintf (prefmenu[5],"Auto Save SRAM");
-		else if (GCSettings.AutoSave == 2) sprintf (prefmenu[5],"Auto Save SNAPSHOT");
-		else if (GCSettings.AutoSave == 3) sprintf (prefmenu[5],"Auto Save BOTH");
-
-		sprintf (prefmenu[6], "Verify MC Saves %s",
-			GCSettings.VerifySaves == true ? " ON" : "OFF");
-
-		sprintf (prefmenu[7], "Reverse Stereo %s",
-			Settings.ReverseStereo == true ? " ON" : "OFF");
-
-		sprintf (prefmenu[8], "Interpolated Sound %s",
-			Settings.InterpolatedSound == true ? " ON" : "OFF");
-
-		ret = RunMenu (prefmenu, prefmenuCount, (char*)"Preferences", 16);
-
-		switch (ret)
-		{
-			case 0:
-				GCSettings.LoadMethod ++;
-				break;
-
-			case 1:
-				break;
-
-			case 2:
-				GCSettings.SaveMethod ++;
-				break;
-
-			case 3:
-				break;
-
-			case 4:
-				GCSettings.AutoLoad ++;
-				if (GCSettings.AutoLoad > 2)
-					GCSettings.AutoLoad = 0;
-				break;
-
-			case 5:
-				GCSettings.AutoSave ++;
-				if (GCSettings.AutoSave > 3)
-					GCSettings.AutoSave = 0;
-				break;
-
-			case 6:
-				GCSettings.VerifySaves ^= 1;
-				break;
-
-			case 7:
-				Settings.ReverseStereo ^= 1;
-				break;
-
-			case 8:
-				Settings.InterpolatedSound ^= 1;
-				break;
-
-			case 9:
-				SavePrefs(GCSettings.SaveMethod, NOTSILENT);
-				break;
-
-			case -1: /*** Button B ***/
-			case 10:
-				quit = 1;
-				break;
-
-		}
-	}
-	menu = oldmenu;
-}
-
-/****************************************************************************
- * Video Options
- ***************************************************************************/
-static int videomenuCount = 14;
-static char videomenu[][50] = {
-
-	"Transparency",
-	"Display Frame Rate",
-	"Enable Zooming",
-	"Video Filtering",
-	"Widescreen",
-	
-	"X-shift ++",
-	"       --",
-	"Y-shift ++",
-	"       --",
-	"X-shift:       ",
-	"Y-shift:       ",
-	"Reset Video Shifts",
-
-	"Save Preferences",
-	"Back to Main Menu"
-};
-
-void
-VideoOptions ()
-{
-	int ret = 0;
-	int quit = 0;
-	int oldmenu = menu;
-	menu = 0;
-	while (quit == 0)
-	{
-
-		sprintf (prefmenu[0], "Transparency %s",
-			Settings.Transparency == true ? " ON" : "OFF");
-
-		sprintf (prefmenu[1], "Display Frame Rate %s",
-			Settings.DisplayFrameRate == true ? " ON" : "OFF");
-
-		sprintf (prefmenu[2], "Enable Zooming %s",
-			GCSettings.NGCZoom == true ? " ON" : "OFF");
-			
-		// don't allow original render mode if progressive video mode detected
-		if (GCSettings.render==0 && progressive)
-			GCSettings.render++;
-
-		if ( GCSettings.render == 0 )
-			sprintf (prefmenu[3], "Video Rendering Original");
-		if ( GCSettings.render == 1 )
-			sprintf (prefmenu[3], "Video Rendering Filtered");
-		if ( GCSettings.render == 2 )
-			sprintf (prefmenu[3], "Video Rendering Unfiltered");
-
-		sprintf (prefmenu[4], "Video Scaling %s",
-			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
-			
-		sprintf (prefmenu[9], "X-shift: %d", GCSettings.xshift);
-			
-		sprintf (prefmenu[10], "Y-shift: %d", GCSettings.yshift);
-
-		ret = RunMenu (videomenu, videomenuCount, (char*)"Video Options", 16);
-
-		switch (ret)
-		{
-			case 0:
-				Settings.Transparency ^= 1;
-				break;
-
-			case 1:
-				Settings.DisplayFrameRate ^= 1;
-				break;
-
-			case 2:
-				GCSettings.NGCZoom ^= 1;
-				break;
-
-			case 3:
-				GCSettings.render++;
-				if (GCSettings.render > 2 )
-					GCSettings.render = 0;
-				// reset zoom
-				zoom_reset ();
-				break;
-
-			case 4:
-				GCSettings.widescreen ^= 1;
-				break;
-				
-			case 5:
-				// xscale UP
-				GCSettings.xshift++;
-				break;
-				
-			case 6:
-				// xscale DOWN
-				GCSettings.xshift--;
-				break;
-				
-			case 7:
-				// yscale UP
-				GCSettings.yshift++;
-				break;
-				
-			case 8:
-				// yscale DOWN
-				GCSettings.yshift--;
-				break;
-			
-			case 9:
-			case 10:
-				break;
-				
-			case 11:
-				// reset video shifts
-				GCSettings.xshift = GCSettings.yshift = 0;
-				break;
-
-			case 12:
-				SavePrefs(GCSettings.SaveMethod, NOTSILENT);
-				break;
-
-			case -1: /*** Button B ***/
-			case 13:
-				quit = 1;
-				break;
-
-		}
-	}
-	menu = oldmenu;
-}
-
-/****************************************************************************
  * Cheat Menu
  ***************************************************************************/
 static int cheatmenuCount = 0;
@@ -694,6 +399,286 @@ GameMenu ()
 }
 
 /****************************************************************************
+ * File Options Menu
+ ***************************************************************************/
+static int filemenuCount = 8;
+static char filemenu[][50] = {
+	"Load Method",
+	"Load Folder",
+	"Save Method",
+	"Save Folder",
+
+	"Auto Load",
+	"Auto Save",
+	"Verify MC Saves",
+
+	"Back to Preferences Menu"
+};
+
+void
+FileOptions ()
+{
+	int ret = 0;
+	int quit = 0;
+	int oldmenu = menu;
+	menu = 0;
+	while (quit == 0)
+	{
+		// some load/save methods are not implemented - here's where we skip them
+		// they need to be skipped in the order they were enumerated in snes9xGX.h
+
+		// no USB ports on GameCube
+		#ifndef HW_RVL
+		if(GCSettings.LoadMethod == METHOD_USB)
+			GCSettings.LoadMethod++;
+		if(GCSettings.SaveMethod == METHOD_USB)
+			GCSettings.SaveMethod++;
+		#endif
+
+		// saving to DVD is impossible
+		if(GCSettings.SaveMethod == METHOD_DVD)
+			GCSettings.SaveMethod++;
+
+		// disable SMB in GC mode (stalls out)
+		#ifndef HW_RVL
+		if(GCSettings.LoadMethod == METHOD_SMB)
+			GCSettings.LoadMethod++;
+		if(GCSettings.SaveMethod == METHOD_SMB)
+			GCSettings.SaveMethod++;
+		#endif
+
+		// disable MC saving in Wii mode - does not work for some reason!
+		#ifdef HW_RVL
+		if(GCSettings.SaveMethod == METHOD_MC_SLOTA)
+			GCSettings.SaveMethod++;
+		if(GCSettings.SaveMethod == METHOD_MC_SLOTB)
+			GCSettings.SaveMethod++;
+		#endif
+
+		// correct load/save methods out of bounds
+		if(GCSettings.LoadMethod > 4)
+			GCSettings.LoadMethod = 0;
+		if(GCSettings.SaveMethod > 6)
+			GCSettings.SaveMethod = 0;
+
+		if (GCSettings.LoadMethod == METHOD_AUTO) sprintf (filemenu[0],"Load Method AUTO");
+		else if (GCSettings.LoadMethod == METHOD_SD) sprintf (filemenu[0],"Load Method SD");
+		else if (GCSettings.LoadMethod == METHOD_USB) sprintf (filemenu[0],"Load Method USB");
+		else if (GCSettings.LoadMethod == METHOD_DVD) sprintf (filemenu[0],"Load Method DVD");
+		else if (GCSettings.LoadMethod == METHOD_SMB) sprintf (filemenu[0],"Load Method Network");
+
+		sprintf (filemenu[1], "Load Folder %s",	GCSettings.LoadFolder);
+
+		if (GCSettings.SaveMethod == METHOD_AUTO) sprintf (filemenu[2],"Save Method AUTO");
+		else if (GCSettings.SaveMethod == METHOD_SD) sprintf (filemenu[2],"Save Method SD");
+		else if (GCSettings.SaveMethod == METHOD_USB) sprintf (filemenu[2],"Save Method USB");
+		else if (GCSettings.SaveMethod == METHOD_SMB) sprintf (filemenu[2],"Save Method Network");
+		else if (GCSettings.SaveMethod == METHOD_MC_SLOTA) sprintf (filemenu[2],"Save Method MC Slot A");
+		else if (GCSettings.SaveMethod == METHOD_MC_SLOTB) sprintf (filemenu[2],"Save Method MC Slot B");
+
+		sprintf (filemenu[3], "Save Folder %s",	GCSettings.SaveFolder);
+
+		// disable changing load/save directories for now
+		filemenu[1][0] = '\0';
+		filemenu[3][0] = '\0';
+
+		if (GCSettings.AutoLoad == 0) sprintf (filemenu[4],"Auto Load OFF");
+		else if (GCSettings.AutoLoad == 1) sprintf (filemenu[4],"Auto Load SRAM");
+		else if (GCSettings.AutoLoad == 2) sprintf (filemenu[4],"Auto Load SNAPSHOT");
+
+		if (GCSettings.AutoSave == 0) sprintf (filemenu[5],"Auto Save OFF");
+		else if (GCSettings.AutoSave == 1) sprintf (filemenu[5],"Auto Save SRAM");
+		else if (GCSettings.AutoSave == 2) sprintf (filemenu[5],"Auto Save SNAPSHOT");
+		else if (GCSettings.AutoSave == 3) sprintf (filemenu[5],"Auto Save BOTH");
+
+		sprintf (filemenu[6], "Verify MC Saves %s",
+			GCSettings.VerifySaves == true ? " ON" : "OFF");
+
+		ret = RunMenu (filemenu, filemenuCount, (char*)"Save/Load Options", 16);
+
+		switch (ret)
+		{
+			case 0:
+				GCSettings.LoadMethod ++;
+				break;
+
+			case 1:
+				break;
+
+			case 2:
+				GCSettings.SaveMethod ++;
+				break;
+
+			case 3:
+				break;
+
+			case 4:
+				GCSettings.AutoLoad ++;
+				if (GCSettings.AutoLoad > 2)
+					GCSettings.AutoLoad = 0;
+				break;
+
+			case 5:
+				GCSettings.AutoSave ++;
+				if (GCSettings.AutoSave > 3)
+					GCSettings.AutoSave = 0;
+				break;
+
+			case 6:
+				GCSettings.VerifySaves ^= 1;
+				break;
+			case -1: /*** Button B ***/
+			case 7:
+				SavePrefs(GCSettings.SaveMethod, SILENT);
+				quit = 1;
+				break;
+
+		}
+	}
+	menu = oldmenu;
+}
+
+/****************************************************************************
+ * Video Options
+ ***************************************************************************/
+static int videomenuCount = 14;
+static char videomenu[][50] = {
+
+	"Transparency",
+	"Display Frame Rate",
+	"Enable Zooming",
+	"Video Filtering",
+	"Widescreen",
+
+	"X-shift ++",
+	"        --",
+	"Y-shift ++",
+	"        --",
+	"Shift:       ",
+	"Reset Video Shift",
+
+	"Reverse Stereo",
+	"Interpolated Sound",
+	"Back to Preferences Menu"
+};
+
+void
+VideoOptions ()
+{
+	int ret = 0;
+	int quit = 0;
+	int oldmenu = menu;
+	menu = 0;
+	while (quit == 0)
+	{
+		sprintf (videomenu[0], "Transparency %s",
+			Settings.Transparency == true ? " ON" : "OFF");
+
+		sprintf (videomenu[1], "Display Frame Rate %s",
+			Settings.DisplayFrameRate == true ? " ON" : "OFF");
+
+		sprintf (videomenu[2], "Enable Zooming %s",
+			GCSettings.NGCZoom == true ? " ON" : "OFF");
+
+		// don't allow original render mode if progressive video mode detected
+		if (GCSettings.render==0 && progressive)
+			GCSettings.render++;
+
+		if ( GCSettings.render == 0 )
+			sprintf (videomenu[3], "Video Rendering Original");
+		if ( GCSettings.render == 1 )
+			sprintf (videomenu[3], "Video Rendering Filtered");
+		if ( GCSettings.render == 2 )
+			sprintf (videomenu[3], "Video Rendering Unfiltered");
+
+		sprintf (videomenu[4], "Video Scaling %s",
+			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
+
+		sprintf (videomenu[9], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
+
+		sprintf (videomenu[11], "Reverse Stereo %s",
+			Settings.ReverseStereo == true ? " ON" : "OFF");
+
+		sprintf (videomenu[12], "Interpolated Sound %s",
+			Settings.InterpolatedSound == true ? " ON" : "OFF");
+
+		ret = RunMenu (videomenu, videomenuCount, (char*)"Video Options", 16);
+
+		switch (ret)
+		{
+			case 0:
+				Settings.Transparency ^= 1;
+				break;
+
+			case 1:
+				Settings.DisplayFrameRate ^= 1;
+				break;
+
+			case 2:
+				GCSettings.NGCZoom ^= 1;
+				break;
+
+			case 3:
+				GCSettings.render++;
+				if (GCSettings.render > 2 )
+					GCSettings.render = 0;
+				// reset zoom
+				zoom_reset ();
+				break;
+
+			case 4:
+				GCSettings.widescreen ^= 1;
+				break;
+
+			case 5:
+				// xscale UP
+				GCSettings.xshift++;
+				break;
+
+			case 6:
+				// xscale DOWN
+				GCSettings.xshift--;
+				break;
+
+			case 7:
+				// yscale UP
+				GCSettings.yshift++;
+				break;
+
+			case 8:
+				// yscale DOWN
+				GCSettings.yshift--;
+				break;
+
+			case 9:
+				break;
+
+			case 10:
+				// reset video shifts
+				GCSettings.xshift = GCSettings.yshift = 0;
+				WaitPrompt((char *)"Video Shift Reset");
+				break;
+
+			case 11:
+				Settings.ReverseStereo ^= 1;
+				break;
+
+			case 12:
+				Settings.InterpolatedSound ^= 1;
+				break;
+
+			case -1: // Button B
+			case 13:
+				SavePrefs(GCSettings.SaveMethod, SILENT);
+				quit = 1;
+				break;
+
+		}
+	}
+	menu = oldmenu;
+}
+
+/****************************************************************************
  * Controller Configuration
  *
  * Snes9x 1.51 uses a cmd system to work out which button has been pressed.
@@ -916,7 +901,7 @@ ConfigureButtons (u16 ctrlr_type)
 	menu = oldmenu;
 }	// end configurebuttons()
 
-int ctlrmenucount = 10;
+int ctlrmenucount = 9;
 char ctlrmenu[][50] = {
 	// toggle:
 	"MultiTap",
@@ -928,8 +913,7 @@ char ctlrmenu[][50] = {
 	"Classic Controller",
 	"Wiimote",
 	"Gamecube Pad",
-	"Save Preferences",
-	"Go Back"
+	"Back to Preferences Menu"
 };
 
 void
@@ -1004,13 +988,9 @@ ConfigureControllers ()
 				ConfigureButtons (CTRLR_GCPAD);
 				break;
 
-			case 8:
-				/*** Save Preferences Now ***/
-				SavePrefs(GCSettings.SaveMethod, NOTSILENT);
-				break;
-
 			case -1: /*** Button B ***/
-			case 9:
+			case 8:
+				SavePrefs(GCSettings.SaveMethod, SILENT);
 				/*** Return ***/
 				quit = 1;
 				break;
@@ -1021,36 +1001,86 @@ ConfigureControllers ()
 }
 
 /****************************************************************************
+ * Preferences Menu
+ ***************************************************************************/
+static int prefmenuCount = 5;
+static char prefmenu[][50] = {
+	"Controllers",
+	"Video / Sound",
+	"Saving / Loading",
+	"Reset Preferences",
+	"Back to Main Menu"
+};
+
+void
+PreferencesMenu ()
+{
+	int ret = 0;
+	int quit = 0;
+	int oldmenu = menu;
+	menu = 0;
+	while (quit == 0)
+	{
+		ret = RunMenu (prefmenu, prefmenuCount, (char*)"Preferences");
+
+		switch (ret)
+		{
+			case 0:
+				ConfigureControllers ();
+				break;
+
+			case 1:
+				VideoOptions ();
+				break;
+
+			case 2:
+				FileOptions ();
+				break;
+
+			case 3:
+				DefaultSettings ();
+				WaitPrompt((char *)"Preferences Reset");
+				break;
+
+			case -1: /*** Button B ***/
+			case 4:
+				quit = 1;
+				break;
+
+		}
+	}
+	menu = oldmenu;
+}
+
+/****************************************************************************
  * Main Menu
  ***************************************************************************/
-int menucount = 9;
+int menucount = 7;
 char menuitems[][50] = {
-  "Choose Game", 
-  "Controller Configuration", 
+  "Choose Game",
   "Preferences",
   "Game Menu",
-  "Video Options",
-  "Credits", 
+  "Credits",
   "DVD Motor Off",
-  "Reset System", 
+  "Reset System",
   "Return to Loader"
 };
 
 void
-mainmenu (int selectedMenu)
+MainMenu (int selectedMenu)
 {
 	int quit = 0;
 	int ret;
 
 	// disable game-specific menu items if a ROM isn't loaded
 	if ( ARAM_ROMSIZE == 0 )
-    	menuitems[3][0] = '\0';
+    	menuitems[2][0] = '\0';
 	else
-		sprintf (menuitems[3], "Game Menu");
-		
+		sprintf (menuitems[2], "Game Menu");
+
 	#ifndef HW_DOL
 	// don't show dvd motor off on the wii
-	menuitems[6][0] = '\0';
+	menuitems[4][0] = '\0';
 	#endif
 
 	VIDEO_WaitVSync ();
@@ -1075,44 +1105,34 @@ mainmenu (int selectedMenu)
 				break;
 
 			case 1:
-				// Configure Controllers
-				ConfigureControllers ();
-				break;
-
-			case 2:
 				// Preferences
 				PreferencesMenu ();
 				break;
 
-			case 3:
+			case 2:
 				// Game Options
 				quit = GameMenu ();
 				break;
-				
-			case 4:
-				// Video Options
-				VideoOptions ();
-				break;
 
-			case 5:
+			case 3:
 				// Credits
 				Credits ();
 				WaitButtonA ();
                 break;
-				
-			case 6:
+
+			case 4:
 				// turn the dvd motor off (GC only)
 				#ifdef HW_DOL
 				dvd_motor_off ();
 				#endif
 				break;
 
-			case 7:
+			case 5:
 				// Reset the Gamecube/Wii
 			    Reboot();
                 break;
 
-			case 8:
+			case 6:
 				// Exit to Loader
 				#ifdef HW_RVL
 					#ifdef WII_DVD

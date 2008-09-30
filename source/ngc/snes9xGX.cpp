@@ -156,7 +156,7 @@ emulate ()
 			//gui_savescreen ();
 			*/
 
-			mainmenu (3); // go to game menu
+			MainMenu (2); // go to game menu
 
 			FrameTimer = 0;
 			setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
@@ -297,7 +297,7 @@ main ()
 	if(!LoadPrefs())
 	{
 		WaitPrompt((char*) "Preferences reset - check settings!");
-		selectedMenu = 2; // change to preferences menu
+		selectedMenu = 1; // change to preferences menu
 	}
 
 	// No appended ROM, so get the user to load one
@@ -305,7 +305,7 @@ main ()
 	{
 		while (ARAM_ROMSIZE == 0)
 		{
-			mainmenu (selectedMenu);
+			MainMenu (selectedMenu);
 		}
 	}
 	else
