@@ -55,9 +55,7 @@ extern int whichfb;
 
 /*** Permanent backdrop ***/
 #ifdef HW_RVL
-u32 *backdrop;
-#else
-static u32 *backdrop;
+u32 *backdrop = NULL;
 #endif
 unsigned int getcolour (u8 r1, u8 g1, u8 b1);
 void DrawLineFast( int startx, int endx, int y, u8 r, u8 g, u8 b );
@@ -318,14 +316,14 @@ unpackbackdrop ()
 	unsigned int colour;
 	int offset;
 	int i;
+	int bgSize = (screenheight * 640 * 2);
 
-	//  backdrop = (unsigned int *) malloc (screenheight * 1280);
-	backdrop = (u32 *) malloc (screenheight * 1280);
+	u32 * bgtemp = (u32 *) malloc (bgSize);
 	colour = getcolour (0x00, 0x00, 0x00);
 
 	/*** Fill with black for now ***/
 	for (i = 0; i < (320 * screenheight); i++)
-	backdrop[i] = colour;
+		bgtemp[i] = colour;
 
 	/*** If it's PAL50, need to move down a few lines ***/
 	offset = ((screenheight - 480) >> 1) * 320;
@@ -333,15 +331,22 @@ unpackbackdrop ()
 	outbytes = BG_RAW;
 
 	res =
-	uncompress ((Bytef *) backdrop + offset, &outbytes, (Bytef *) bg,
+	uncompress ((Bytef *) bgtemp + offset, &outbytes, (Bytef *) bg,
 	inbytes);
 
-	#ifndef HW_RVL
-	/*** Now store the backdrop in ARAM ***/
-	ARAMPut ((char *) backdrop, (char *) AR_BACKDROP, 640 * screenheight * 2);
-	free (backdrop);
+	#ifdef HW_RVL
+	// On Wii - store backdrop in MEM2
+	unsigned int MEM2Storage = 0x91000000;
+	backdrop = (u32 *)MEM2Storage;
+	memcpy(backdrop, bgtemp, bgSize);
+	#else
+	// On GameCube - store the backdrop in ARAM
+	ARAMPut ((char *) bgtemp, (char *) AR_BACKDROP, bgSize);
 	#endif
-	// otherwise (on wii) backdrop is stored in memory
+
+	free (bgtemp);
+	bgtemp = NULL;
+
 	clearscreen ();
 	showscreen ();
 }

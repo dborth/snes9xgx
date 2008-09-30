@@ -59,7 +59,7 @@ unsigned char *savebuffer = NULL;
 
 /****************************************************************************
  * AllocSaveBuffer ()
- * Clear and allocate the savebuffer
+ * Allocate and clear the savebuffer
  ***************************************************************************/
 void
 AllocSaveBuffer ()
@@ -67,7 +67,7 @@ AllocSaveBuffer ()
 	if (savebuffer != NULL)
 		free(savebuffer);
 
-	savebuffer = (unsigned char *) memalign(32, SAVEBUFFERSIZE);
+	savebuffer = (unsigned char *) malloc(SAVEBUFFERSIZE);
 	memset (savebuffer, 0, SAVEBUFFERSIZE);
 }
 

@@ -161,17 +161,17 @@ NGCFreezeGame (int method, bool8 silent)
 	{
 		sprintf (filename, "%s.snz", Memory.ROMName);
 
-		/*** Copy in save icon ***/
+		// Copy in save icon
 		int woffset = sizeof (saveicon);
 		memcpy (savebuffer, saveicon, woffset);
 
-		/*** And the freezecomment ***/
+		// And the freezecomment
 		sprintf (freezecomment[0], "%s Freeze", VERSIONSTR);
 		sprintf (freezecomment[1], Memory.ROMName);
 		memcpy (savebuffer + woffset, freezecomment, 64);
 		woffset += 64;
 
-		/*** Zip and copy in the freeze ***/
+		// Zip and copy in the freeze
 		uLongf DestBuffSize = (uLongf) SAVEBUFFERSIZE;
 		int err= compress2((Bytef*)(savebuffer+woffset+8), (uLongf*)&DestBuffSize, (const Bytef*)savebuffer, (uLongf)bufoffset, Z_BEST_COMPRESSION);
 
@@ -290,7 +290,8 @@ NGCUnfreezeGame (int method, bool8 silent)
 
 		if (ret)
 		{
-			char zipbuffer[SAVEBUFFERSIZE];
+			char * zipbuffer = (char *)malloc(SAVEBUFFERSIZE);
+			memset (zipbuffer, 0, SAVEBUFFERSIZE);
 
 			// skip the saveicon and comment
 			offset = (sizeof(saveicon) + 64);
@@ -310,18 +311,21 @@ NGCUnfreezeGame (int method, bool8 silent)
 			{
 				sprintf (msg, "Unzip error %s ",zError(err));
 				WaitPrompt (msg);
-				return 0;
 			}
 			else if ( DestBuffSize != decompressedsize )
 			{
 				WaitPrompt((char*) "Unzipped size doesn't match expected size!");
-				return 0;
 			}
 			else
 			{
 				offset = SAVEBUFFERSIZE;
 				memcpy (savebuffer, zipbuffer, SAVEBUFFERSIZE);
 			}
+			free(zipbuffer);
+			zipbuffer = NULL;
+
+			if(offset == 0)
+				return 0;
 		}
     }
 

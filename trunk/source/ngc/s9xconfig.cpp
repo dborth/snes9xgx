@@ -31,7 +31,7 @@ DefaultSettings ()
 	sprintf (GCSettings.CheatFolder,"snes9x/cheats"); // Path to cheat files
 	GCSettings.AutoLoad = 1;
 	GCSettings.AutoSave = 1;
-	
+
 	GCSettings.VerifySaves = 0;
 
 	// custom SMB settings
@@ -54,12 +54,12 @@ DefaultSettings ()
 	GCSettings.Superscope = 0;
     GCSettings.Mouse = 0;
 	GCSettings.Justifier = 0;
-	
+
 	GCSettings.NGCZoom = 0;	// zooming default off
 
 	GCSettings.render = 2; // Unfiltered
 	GCSettings.widescreen = 0; // no aspect ratio correction
-	
+
 	GCSettings.xshift = 0;	// video shift
 	GCSettings.yshift = 0;
 
@@ -99,7 +99,7 @@ DefaultSettings ()
 	Settings.SkipFrames = 10;
 	Settings.TurboSkipFrames = 19;
 	Settings.DisplayFrameRate = false;
-	Settings.AutoDisplayMessages = 1; // SNES9x 1.51
+	Settings.AutoDisplayMessages = 0; // SNES9x 1.51
 	Settings.InitialInfoStringTimeout = 200; // # frames to display messages for
 
 	// Frame timings in 50hz and 60hz cpu mode
