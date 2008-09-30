@@ -158,6 +158,9 @@ preparePrefsData (int method)
 	createXMLSetting("DisplayFrameRate", "Display Frame Rate", toStr(Settings.DisplayFrameRate));
 	createXMLSetting("NGCZoom", "C-Stick Zoom", toStr(GCSettings.NGCZoom));
 	createXMLSetting("render", "Video Filtering", toStr(GCSettings.render));
+	createXMLSetting("widescreen", "Aspect Ratio Correction", toStr(GCSettings.widescreen));
+	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
+	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
 
 	createXMLSection("Controller", "Controller Settings");
 
@@ -171,7 +174,7 @@ preparePrefsData (int method)
 	createXMLController(ccpadmap, "ccpadmap", "Classic Controller");
 	createXMLController(ncpadmap, "ncpadmap", "Nunchuk");
 
-	int datasize = mxmlSaveString(xml, (char *)savebuffer, SAVEBUFFERSIZE, XMLSaveCallback);
+	int datasize = mxmlSaveString(xml, (char *)savebuffer+offset, (SAVEBUFFERSIZE-offset), XMLSaveCallback);
 
 	mxmlDelete(xml);
 
@@ -281,6 +284,9 @@ decodePrefsData (int method)
 	loadXMLSetting(&Settings.DisplayFrameRate, "DisplayFrameRate");
 	loadXMLSetting(&GCSettings.NGCZoom, "NGCZoom");
 	loadXMLSetting(&GCSettings.render, "render");
+	loadXMLSetting(&GCSettings.widescreen, "widescreen");
+	loadXMLSetting(&GCSettings.xshift, "xshift");
+	loadXMLSetting(&GCSettings.yshift, "yshift");
 
 	// Controller Settings
 
