@@ -311,7 +311,9 @@ decodePrefsData (int method)
 bool
 SavePrefs (int method, bool silent)
 {
-	if(method == METHOD_AUTO)
+	// there's no point in saving SMB settings TO SMB, because then we'll have no way to load them the next time!
+	// so instead we'll save using whatever other method is available (eg: SD)
+	if(method == METHOD_AUTO || method == METHOD_SMB)
 		method = autoSaveMethod();
 
 	char filepath[1024];

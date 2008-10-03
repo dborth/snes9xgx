@@ -529,7 +529,6 @@ FileOptions ()
 				break;
 			case -1: /*** Button B ***/
 			case 7:
-				SavePrefs(GCSettings.SaveMethod, SILENT);
 				quit = 1;
 				break;
 
@@ -667,7 +666,6 @@ VideoOptions ()
 
 			case -1: // Button B
 			case 13:
-				SavePrefs(GCSettings.SaveMethod, SILENT);
 				quit = 1;
 				break;
 
@@ -988,7 +986,6 @@ ConfigureControllers ()
 
 			case -1: /*** Button B ***/
 			case 8:
-				SavePrefs(GCSettings.SaveMethod, SILENT);
 				/*** Return ***/
 				quit = 1;
 				break;
@@ -1042,6 +1039,7 @@ PreferencesMenu ()
 
 			case -1: /*** Button B ***/
 			case 4:
+				SavePrefs(GCSettings.SaveMethod, SILENT);
 				quit = 1;
 				break;
 
