@@ -345,8 +345,7 @@ int FileSelector (int method)
 					break;
 
 					case METHOD_SMB:
-					ARAM_ROMSIZE =
-					LoadSMBFile ();
+					ARAM_ROMSIZE = LoadSMBFile ();
 					break;
 				}
 

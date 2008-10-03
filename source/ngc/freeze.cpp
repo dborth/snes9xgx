@@ -28,7 +28,7 @@
 #include "snapshot.h"
 #include "srtc.h"
 
-#include "Snes9xGX.h"
+#include "snes9xGX.h"
 #include "images/saveicon.h"
 #include "freeze.h"
 #include "filesel.h"
