@@ -25,7 +25,7 @@
 #include "video.h"
 #include "menudraw.h"
 #include "filesel.h"
-#include "Snes9xGX.h"
+#include "snes9xGX.h"
 
 bool networkInit = false;
 bool networkShareInit = false;
