@@ -278,7 +278,7 @@ main ()
 		while (1);
 
 	// Initialize libFAT for SD and USB
-	fatInitDefault();
+	fatInit (8, false);
 
 	#ifdef _DEBUG_VIDEO
 	// log stuff
