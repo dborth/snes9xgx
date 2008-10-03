@@ -299,13 +299,13 @@ void decodepad (int pad)
 	{
 		/*** we don't want division by zero ***/
 	    if (wm_ax > 0 && wm_ay == 0)
-			wp |= WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT;
+			wp |= WPAD_BUTTON_RIGHT;
 	    if (wm_ax < 0 && wm_ay == 0)
-			wp |= WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT;
+			wp |= WPAD_BUTTON_LEFT;
 	    if (wm_ax == 0 && wm_ay > 0)
-			wp |= WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP;
+			wp |= WPAD_BUTTON_UP;
 	    if (wm_ax == 0 && wm_ay < 0)
-			wp |= WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN;
+			wp |= WPAD_BUTTON_DOWN;
 
 	    if (wm_ax != 0 && wm_ay != 0)
 		{
@@ -314,9 +314,9 @@ void decodepad (int pad)
 			if (t >= -2.41421356237 && t < 2.41421356237)
 			{
 				if (wm_ax >= 0)
-					wp |= WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT;
+					wp |= WPAD_BUTTON_RIGHT;
 				else
-					wp |= WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT;
+					wp |= WPAD_BUTTON_LEFT;
 			}
 
 			/*** Recalc up / down ***/
@@ -324,9 +324,9 @@ void decodepad (int pad)
 			if (t >= -2.41421356237 && t < 2.41421356237)
 			{
 				if (wm_ay >= 0)
-					wp |= WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP;
+					wp |= WPAD_BUTTON_UP;
 				else
-					wp |= WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN;
+					wp |= WPAD_BUTTON_DOWN;
 			}
 		}
 	}
