@@ -585,7 +585,7 @@ RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
 		gc_ay = PAD_StickY (0);
         p = PAD_ButtonsDown (0);
 #ifdef HW_RVL
-		wm_ay = WPAD_StickY (0,0);
+		wm_ay = WPAD_Stick (0,0, 1);
 		wp = WPAD_ButtonsDown (0);
 #endif
 

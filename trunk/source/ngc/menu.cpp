@@ -183,8 +183,8 @@ void CheatMenu()
 			ph = PAD_ButtonsHeld (0);
 
 			#ifdef HW_RVL
-			wm_ay = WPAD_StickY (0, 0);
-			wm_sx = WPAD_StickX (0, 1);
+			wm_ay = WPAD_Stick (0, 0, 1);
+			wm_sx = WPAD_Stick (0, 1, 0);
 			wp = WPAD_ButtonsDown (0);
 			wh = WPAD_ButtonsHeld (0);
 			#endif
