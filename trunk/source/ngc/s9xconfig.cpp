@@ -75,10 +75,8 @@ DefaultSettings ()
 	Settings.MultiPlayer5Master = false;
 	Settings.JustifierMaster = false;
 	Settings.ShutdownMaster = false;
-	//Settings.CyclesPercentage = 100; // snes9x 1.50 and earlier
 	Settings.ApplyCheats = true;
 
-	// Specific to snes9x 1.51
 	Settings.BlockInvalidVRAMAccess = true;
 	Settings.HDMATimingHack = 100;
 
@@ -89,6 +87,8 @@ DefaultSettings ()
 	Settings.Stereo = true;
 	Settings.SixteenBitSound = true;
 	Settings.SoundEnvelopeHeightReading = true;
+	Settings.SoundSync = true;
+	Settings.FixFrequency = false;
 	Settings.DisableSampleCaching = true;
 	Settings.InterpolatedSound = true;
 	Settings.ReverseStereo = false;
@@ -99,7 +99,7 @@ DefaultSettings ()
 	Settings.SkipFrames = 10;
 	Settings.TurboSkipFrames = 19;
 	Settings.DisplayFrameRate = false;
-	Settings.AutoDisplayMessages = 0; // SNES9x 1.51
+	Settings.AutoDisplayMessages = 0;
 	Settings.InitialInfoStringTimeout = 200; // # frames to display messages for
 
 	// Frame timings in 50hz and 60hz cpu mode
