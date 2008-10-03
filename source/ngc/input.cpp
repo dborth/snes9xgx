@@ -46,7 +46,8 @@ extern int ConfigRequested;
 	  S9xMapButton( keycode, cmd = S9xGetCommandT(snescmd), false)
 
 /*** Gamecube controller Padmap ***/
-unsigned int gcpadmap[] = { PAD_BUTTON_A, PAD_BUTTON_B,
+unsigned int gcpadmap[] = {
+  PAD_BUTTON_A, PAD_BUTTON_B,
   PAD_BUTTON_X, PAD_BUTTON_Y,
   PAD_TRIGGER_L, PAD_TRIGGER_R,
   PAD_TRIGGER_Z, PAD_BUTTON_START,
@@ -54,7 +55,8 @@ unsigned int gcpadmap[] = { PAD_BUTTON_A, PAD_BUTTON_B,
   PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT
 };
 /*** Wiimote Padmap ***/
-unsigned int wmpadmap[] = { WPAD_BUTTON_B, WPAD_BUTTON_2,
+unsigned int wmpadmap[] = {
+  WPAD_BUTTON_B, WPAD_BUTTON_2,
   WPAD_BUTTON_1, WPAD_BUTTON_A,
   0x0000, 0x0000,
   WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
@@ -62,7 +64,8 @@ unsigned int wmpadmap[] = { WPAD_BUTTON_B, WPAD_BUTTON_2,
   WPAD_BUTTON_UP, WPAD_BUTTON_DOWN
 };
 /*** Classic Controller Padmap ***/
-unsigned int ccpadmap[] = { WPAD_CLASSIC_BUTTON_A, WPAD_CLASSIC_BUTTON_B,
+unsigned int ccpadmap[] = {
+  WPAD_CLASSIC_BUTTON_A, WPAD_CLASSIC_BUTTON_B,
   WPAD_CLASSIC_BUTTON_X, WPAD_CLASSIC_BUTTON_Y,
   WPAD_CLASSIC_BUTTON_FULL_L, WPAD_CLASSIC_BUTTON_FULL_R,
   WPAD_CLASSIC_BUTTON_MINUS, WPAD_CLASSIC_BUTTON_PLUS,
@@ -70,10 +73,11 @@ unsigned int ccpadmap[] = { WPAD_CLASSIC_BUTTON_A, WPAD_CLASSIC_BUTTON_B,
   WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT
 };
 /*** Nunchuk + wiimote Padmap ***/
-unsigned int ncpadmap[] = { WPAD_BUTTON_A, WPAD_BUTTON_B,
+unsigned int ncpadmap[] = {
+  WPAD_BUTTON_A, WPAD_BUTTON_B,
   WPAD_NUNCHUK_BUTTON_C, WPAD_NUNCHUK_BUTTON_Z,
-  WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
   WPAD_BUTTON_2, WPAD_BUTTON_1,
+  WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
   WPAD_BUTTON_UP, WPAD_BUTTON_DOWN,
   WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT
 };
@@ -95,12 +99,12 @@ unsigned int gcjustmap[] = { PAD_BUTTON_A, PAD_BUTTON_B, PAD_BUTTON_START };
 unsigned int wmjustmap[] = { WPAD_BUTTON_A, WPAD_BUTTON_B, WPAD_BUTTON_PLUS };
 
 /****************************************************************************
- * WPAD_StickX
+ * WPAD_Stick
  *
- * Get X value from Wii Joystick (classic, nunchuk) input
+ * Get X/Y value from Wii Joystick (classic, nunchuk) input
  ***************************************************************************/
 
-s8 WPAD_StickX(u8 chan,u8 right)
+s8 WPAD_Stick(u8 chan, u8 right, int axis)
 {
 	float mag = 0.0;
 	float ang = 0.0;
@@ -134,58 +138,15 @@ s8 WPAD_StickX(u8 chan,u8 right)
 			break;
 	}
 
-	/* calculate X value (angle need to be converted into radian) */
+	/* calculate x/y value (angle need to be converted into radian) */
 	if (mag > 1.0) mag = 1.0;
 	else if (mag < -1.0) mag = -1.0;
-	double val = mag * sin((PI * ang)/180.0f);
+	double val;
 
-	return (s8)(val * 128.0f);
-}
-
-/****************************************************************************
- * WPAD_StickY
- *
- * Get Y value from Wii Joystick (classic, nunchuk) input
- ***************************************************************************/
-
-s8 WPAD_StickY(u8 chan, u8 right)
-{
-	float mag = 0.0;
-	float ang = 0.0;
-	WPADData *data = WPAD_Data(chan);
-
-	switch (data->exp.type)
-	{
-		case WPAD_EXP_NUNCHUK:
-		case WPAD_EXP_GUITARHERO3:
-			if (right == 0)
-			{
-				mag = data->exp.nunchuk.js.mag;
-				ang = data->exp.nunchuk.js.ang;
-			}
-			break;
-
-			case WPAD_EXP_CLASSIC:
-			if (right == 0)
-			{
-				mag = data->exp.classic.ljs.mag;
-				ang = data->exp.classic.ljs.ang;
-			}
-			else
-			{
-				mag = data->exp.classic.rjs.mag;
-				ang = data->exp.classic.rjs.ang;
-			}
-			break;
-
-		default:
-			break;
-	}
-
-	/* calculate X value (angle need to be converted into radian) */
-	if (mag > 1.0) mag = 1.0;
-	else if (mag < -1.0) mag = -1.0;
-	double val = mag * cos((PI * ang)/180.0f);
+	if(axis == 0) // x-axis
+		val = mag * sin((PI * ang)/180.0f);
+	else // y-axis
+		val = mag * cos((PI * ang)/180.0f);
 
 	return (s8)(val * 128.0f);
 }
@@ -236,8 +197,8 @@ void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
 	}
 	else
 	{
-		signed char wm_ax = WPAD_StickX (pad, 0);
-		signed char wm_ay = WPAD_StickY (pad, 0);
+		signed char wm_ax = WPAD_Stick (pad, 0, 0);
+		signed char wm_ay = WPAD_Stick (pad, 0, 1);
 
 		if (wm_ax > SCOPEPADCAL){
 			pos_x += (wm_ax*1.0)/SCOPEPADCAL;
@@ -266,27 +227,28 @@ void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
  *
  * Reads the changes (buttons pressed, etc) from a controller and reports
  * these changes to Snes9x
- ****************************************************************************/
+ ***************************************************************************/
 
 void decodepad (int pad)
 {
-  int i, offset;
-  float t;
+	int i, offset;
+	float t;
 
-  signed char pad_x = PAD_StickX (pad);
-  signed char pad_y = PAD_StickY (pad);
-  u32 jp = PAD_ButtonsHeld (pad);
+	signed char pad_x = PAD_StickX (pad);
+	signed char pad_y = PAD_StickY (pad);
+	u32 jp = PAD_ButtonsHeld (pad);
 
 #ifdef HW_RVL
-  signed char wm_ax = 0;
-  signed char wm_ay = 0;
-  u32 wp = 0;
-  wm_ax = WPAD_StickX ((u8)pad, 0);
-  wm_ay = WPAD_StickY ((u8)pad, 0);
-  wp = WPAD_ButtonsHeld (pad);
+	signed char wm_ax = 0;
+	signed char wm_ay = 0;
+	u32 wp = 0;
+	wm_ax = WPAD_Stick ((u8)pad, 0, 0);
+	wm_ay = WPAD_Stick ((u8)pad, 0, 1);
+	wp = WPAD_ButtonsHeld (pad);
 
-  u32 exp_type;
-  if ( WPAD_Probe(pad, &exp_type) != 0 ) exp_type = WPAD_EXP_NONE;
+	u32 exp_type;
+	if ( WPAD_Probe(pad, &exp_type) != 0 )
+		exp_type = WPAD_EXP_NONE;
 #endif
 
 	/***
@@ -296,18 +258,17 @@ void decodepad (int pad)
 	if (pad_x * pad_x + pad_y * pad_y > PADCAL * PADCAL)
 	{
 		/*** we don't want division by zero ***/
-	    if (pad_x > 0 && pad_y == 0)
+		if (pad_x > 0 && pad_y == 0)
 			jp |= PAD_BUTTON_RIGHT;
-	    if (pad_x < 0 && pad_y == 0)
+		if (pad_x < 0 && pad_y == 0)
 			jp |= PAD_BUTTON_LEFT;
-	    if (pad_x == 0 && pad_y > 0)
+		if (pad_x == 0 && pad_y > 0)
 			jp |= PAD_BUTTON_UP;
-	    if (pad_x == 0 && pad_y < 0)
+		if (pad_x == 0 && pad_y < 0)
 			jp |= PAD_BUTTON_DOWN;
 
-	    if (pad_x != 0 && pad_y != 0)
+		if (pad_x != 0 && pad_y != 0)
 		{
-
 			/*** Recalc left / right ***/
 			t = (float) pad_y / pad_x;
 			if (t >= -2.41421356237 && t < 2.41421356237)
@@ -348,7 +309,6 @@ void decodepad (int pad)
 
 	    if (wm_ax != 0 && wm_ay != 0)
 		{
-
 			/*** Recalc left / right ***/
 			t = (float) wm_ay / wm_ax;
 			if (t >= -2.41421356237 && t < 2.41421356237)
@@ -391,67 +351,69 @@ void decodepad (int pad)
     }
 
 	/*** Superscope ***/
-	if (Settings.SuperScopeMaster && pad == GCSettings.Superscope-1)	// report only once
+	if (Settings.SuperScopeMaster && pad == GCSettings.Superscope - 1) // report only once
 	{
 		// buttons
 		offset = 0x50;
 		for (i = 0; i < 6; i++)
 		{
-		  if ( jp & gcscopemap[i]
+			if (jp & gcscopemap[i]
 #ifdef HW_RVL
-				|| wp & wmscopemap[i]
+			|| wp & wmscopemap[i]
 #endif
-		  )
-			S9xReportButton (offset + i, true);
-		  else
-			S9xReportButton (offset + i, false);
+			)
+				S9xReportButton(offset + i, true);
+			else
+				S9xReportButton(offset + i, false);
 		}
 		// pointer
 		offset = 0x80;
-		UpdateCursorPosition (pad, cursor_x[0], cursor_y[0]);
-		S9xReportPointer(offset, (u16)cursor_x[0], (u16)cursor_y[0]);
+		UpdateCursorPosition(pad, cursor_x[0], cursor_y[0]);
+		S9xReportPointer(offset, (u16) cursor_x[0], (u16) cursor_y[0]);
 	}
 	/*** Mouse ***/
 	else if (Settings.MouseMaster && pad < GCSettings.Mouse)
 	{
 		// buttons
-		offset = 0x60+(2*pad);
+		offset = 0x60 + (2 * pad);
 		for (i = 0; i < 2; i++)
 		{
-		  if ( jp & gcmousemap[i]
+			if (jp & gcmousemap[i]
 #ifdef HW_RVL
-				|| wp & wmmousemap[i]
+			|| wp & wmmousemap[i]
 #endif
-		  )
-			S9xReportButton (offset + i, true);
-		  else
-			S9xReportButton (offset + i, false);
+			)
+				S9xReportButton(offset + i, true);
+			else
+				S9xReportButton(offset + i, false);
 		}
 		// pointer
 		offset = 0x81;
-		UpdateCursorPosition (pad, cursor_x[1+pad], cursor_y[1+pad]);
-		S9xReportPointer(offset+pad, (u16)cursor_x[1+pad], (u16)cursor_y[1+pad]);
+		UpdateCursorPosition(pad, cursor_x[1 + pad], cursor_y[1 + pad]);
+		S9xReportPointer(offset + pad, (u16) cursor_x[1 + pad],
+				(u16) cursor_y[1 + pad]);
 	}
 	/*** Justifier ***/
 	else if (Settings.JustifierMaster && pad < GCSettings.Justifier)
 	{
 		// buttons
-		offset = 0x70+(3*pad);
+		offset = 0x70 + (3 * pad);
 		for (i = 0; i < 3; i++)
 		{
-		  if ( jp & gcjustmap[i]
+			if (jp & gcjustmap[i]
 #ifdef HW_RVL
-				|| wp & wmjustmap[i]
+			|| wp & wmjustmap[i]
 #endif
-		  )
-			S9xReportButton (offset + i, true);
-		  else
-			S9xReportButton (offset + i, false);
+			)
+				S9xReportButton(offset + i, true);
+			else
+				S9xReportButton(offset + i, false);
 		}
 		// pointer
 		offset = 0x83;
-		UpdateCursorPosition (pad, cursor_x[3+pad], cursor_y[3+pad]);
-		S9xReportPointer(offset+pad, (u16)cursor_x[3+pad], (u16)cursor_y[3+pad]);
+		UpdateCursorPosition(pad, cursor_x[3 + pad], cursor_y[3 + pad]);
+		S9xReportPointer(offset + pad, (u16) cursor_x[3 + pad],
+				(u16) cursor_y[3 + pad]);
 	}
 }
 
@@ -469,8 +431,8 @@ void NGCReportButtons ()
 	u16 gc_pb = PAD_ButtonsHeld (0);
 
 #ifdef HW_RVL
-	s8 wm_sx = WPAD_StickX (0,1);
-	s8 wm_sy = WPAD_StickY (0,1);
+	s8 wm_sx = WPAD_Stick (0,1,0);
+	s8 wm_sy = WPAD_Stick (0,1,1);
 	u32 wm_pb = WPAD_ButtonsHeld (0);	// wiimote / expansion button info
 #endif
 
