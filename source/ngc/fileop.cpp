@@ -63,6 +63,7 @@ bool ChangeFATInterface(int method, bool silent)
 		{
 			devFound = true;
 			fatSetDefaultInterface(PI_INTERNAL_SD);
+			fatEnableReadAhead (PI_INTERNAL_SD, 6, 64);
 		}
 		#endif
 
@@ -89,6 +90,7 @@ bool ChangeFATInterface(int method, bool silent)
 		{
 			devFound = true;
 			fatSetDefaultInterface(PI_USBSTORAGE);
+			fatEnableReadAhead (PI_USBSTORAGE, 6, 64);
 		}
 		else
 		{
@@ -218,8 +220,7 @@ int
 LoadBufferFromFAT (char *filepath, bool silent)
 {
 	FILE *handle;
-    int boffset = 0;
-    int read = 0;
+    int size = 0;
 
     handle = fopen (filepath, "rb");
 
@@ -238,12 +239,12 @@ LoadBufferFromFAT (char *filepath, bool silent)
 	fseek(handle, 0, SEEK_END); // go to end of file
 	size = ftell(handle); // get filesize
 	fseek(handle, 0, SEEK_SET); // go to start of file
-	fread (sbuffer, 1, size, handle);
+	fread (savebuffer, 1, size, handle);
 	fclose (handle);
 
     fclose (handle);
 
-    return boffset;
+    return size;
 }
 
 /****************************************************************************
