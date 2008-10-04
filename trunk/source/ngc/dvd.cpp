@@ -52,44 +52,38 @@ unsigned char dvdbuffer[2048];
 int
 dvd_read (void *dst, unsigned int len, u64 offset)
 {
-
-	unsigned char *buffer = (unsigned char *) (unsigned int) DVDreadbuffer;
-
 	if (len > 2048)
 		return 0;				/*** We only allow 2k reads **/
 
-	DCInvalidateRange ((void *) buffer, len);
-
 	// don't read past the end of the DVD (1.5 GB for GC DVD, 4.7 GB for DVD)
-	if(offset < 0x57057C00 || (isWii && offset < 0x118244F00LL))
+	if((offset < 0x57057C00) || (isWii && (offset < 0x118244F00LL)))
 	{
+		unsigned char *buffer = (unsigned char *) (unsigned int) DVDreadbuffer;
+		DCInvalidateRange ((void *) buffer, len);
 
-	#ifdef HW_DOL
+		#ifdef HW_DOL
+			dvd[0] = 0x2E;
+			dvd[1] = 0;
+			dvd[2] = 0xA8000000;
+			dvd[3] = (u32)(offset >> 2);
+			dvd[4] = len;
+			dvd[5] = (u32) buffer;
+			dvd[6] = len;
+			dvd[7] = 3;
 
-		dvd[0] = 0x2E;
-		dvd[1] = 0;
-		dvd[2] = 0xA8000000;
-		dvd[3] = (u32)(offset >> 2);
-		dvd[4] = len;
-		dvd[5] = (u32) buffer;
-		dvd[6] = len;
-		dvd[7] = 3;			/*** Enable reading with DMA ***/
-		while (dvd[7] & 1);
+			// Enable reading with DMA
+			while (dvd[7] & 1);
+
+			// Ensure it has completed
+			if (dvd[0] & 0x4)
+				return 0;
+		#else
+			if (DI_ReadDVD(buffer, len >> 11, (u32)(offset >> 11)))
+				return 0;
+		#endif
+
 		memcpy (dst, buffer, len);
-
-		if (dvd[0] & 0x4)		/* Ensure it has completed */
-			return 0;
-
 		return 1;
-
-	#elif WII_DVD
-		int ret = 1;
-		ret = DI_ReadDVD(dst, len >> 11, (u32)(offset >> 11));
-		if (ret==0)
-			return 1;
-		else
-			return 0;
-	#endif
 	}
 
 	return 0;
@@ -476,6 +470,7 @@ LoadDVDFile ()
 	{
 		return UnZipFile (rbuffer, discoffset);	// unzip from dvd
 	}
+
 	return dvddirlength;
 }
 
