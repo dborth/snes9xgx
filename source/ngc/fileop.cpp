@@ -63,7 +63,7 @@ bool ChangeFATInterface(int method, bool silent)
 		{
 			devFound = true;
 			fatSetDefaultInterface(PI_INTERNAL_SD);
-			fatEnableReadAhead (PI_INTERNAL_SD, 6, 64);
+			//fatEnableReadAhead (PI_INTERNAL_SD, 6, 64);
 		}
 		#endif
 
