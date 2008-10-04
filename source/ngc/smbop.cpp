@@ -235,8 +235,15 @@ LoadSMBFile ()
 /****************************************************************************
  * Write savebuffer to SMB file
  ****************************************************************************/
+// no buffer specified, use savebuffer
 int
 SaveBufferToSMB (char *filepath, int datasize, bool silent)
+{
+	return SaveBufferToSMB((char *)savebuffer, filepath, datasize, silent);
+}
+
+int
+SaveBufferToSMB (char * sbuffer, char *filepath, int datasize, bool silent)
 {
 	if(!ConnectShare (NOTSILENT))
 		return 0;
@@ -256,10 +263,10 @@ SaveBufferToSMB (char *filepath, int datasize, bool silent)
 		{
 			if (dsize > 1024)
 				wrote =
-					SMB_WriteFile ((char *) savebuffer + boffset, 1024, boffset, smbfile);
+					SMB_WriteFile ((char *) sbuffer + boffset, 1024, boffset, smbfile);
 			else
 				wrote =
-					SMB_WriteFile ((char *) savebuffer + boffset, dsize, boffset, smbfile);
+					SMB_WriteFile ((char *) sbuffer + boffset, dsize, boffset, smbfile);
 
 			boffset += wrote;
 			dsize -= wrote;
