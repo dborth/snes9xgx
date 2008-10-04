@@ -540,7 +540,7 @@ FileOptions ()
 /****************************************************************************
  * Video Options
  ***************************************************************************/
-static int videomenuCount = 14;
+static int videomenuCount = 12;
 static char videomenu[][50] = {
 
 	"Transparency",
@@ -557,8 +557,6 @@ static char videomenu[][50] = {
 	"Shift:       ",
 	"Reset Video Shift",
 
-	"Reverse Stereo",
-	"Interpolated Sound",
 	"Back to Preferences Menu"
 };
 
@@ -595,12 +593,6 @@ VideoOptions ()
 			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
 
 		sprintf (videomenu[9], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
-
-		sprintf (videomenu[11], "Reverse Stereo %s",
-			Settings.ReverseStereo == true ? " ON" : "OFF");
-
-		sprintf (videomenu[12], "Interpolated Sound %s",
-			Settings.InterpolatedSound == true ? " ON" : "OFF");
 
 		ret = RunMenu (videomenu, videomenuCount, (char*)"Video Options", 16);
 
@@ -656,16 +648,8 @@ VideoOptions ()
 				WaitPrompt((char *)"Video Shift Reset");
 				break;
 
-			case 11:
-				Settings.ReverseStereo ^= 1;
-				break;
-
-			case 12:
-				Settings.InterpolatedSound ^= 1;
-				break;
-
 			case -1: // Button B
-			case 13:
+			case 11:
 				quit = 1;
 				break;
 
@@ -1001,7 +985,7 @@ ConfigureControllers ()
 static int prefmenuCount = 5;
 static char prefmenu[][50] = {
 	"Controllers",
-	"Video / Sound",
+	"Video",
 	"Saving / Loading",
 	"Reset Preferences",
 	"Back to Main Menu"
@@ -1148,12 +1132,16 @@ MainMenu (int selectedMenu)
 		}
 	}
 
-	/*** Remove any still held buttons ***/
-	#ifdef HW_RVL
-		while( PAD_ButtonsHeld(0) || WPAD_ButtonsHeld(0) )
-		    VIDEO_WaitVSync();
-	#else
-		while( PAD_ButtonsHeld(0) )
-		    VIDEO_WaitVSync();
-	#endif
+	// Wait for buttons to be released
+	int count = 0; // how long we've been waiting for the user to release the button
+	while(count < 50 && (
+		PAD_ButtonsHeld(0)
+		#ifdef HW_RVL
+		|| WPAD_ButtonsHeld(0)
+		#endif
+	))
+	{
+		VIDEO_WaitVSync();
+		count++;
+	}
 }
