@@ -28,7 +28,7 @@ INCLUDES	:=	source/snes9x source/ngc
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	=	-g -O2 -Wall $(MACHDEP) $(INCLUDE) \
+CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
 			-DNGC -DWII_DVD \
 			-DNO_ASM -DRIGHTSHIFT_IS_SAR \
 			-DCPU_SHUTDOWN -DSPC700_SHUTDOWN \
