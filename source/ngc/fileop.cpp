@@ -168,12 +168,11 @@ ParseFATdirectory(int method)
  * LoadFATFile
  ***************************************************************************/
 int
-LoadFATFile ()
+LoadFATFile (char * rbuffer, int length)
 {
 	char zipbuffer[2048];
 	char filepath[MAXPATHLEN];
 	FILE *handle;
-	unsigned char *rbuffer = (unsigned char *) Memory.ROM;
 	u32 size;
 
 	/* Check filename length */
@@ -188,20 +187,28 @@ LoadFATFile ()
 	handle = fopen (filepath, "rb");
 	if (handle > 0)
 	{
-		fread (zipbuffer, 1, 2048, handle);
-
-		if (IsZipFile (zipbuffer))
+		if(length > 0) // do a partial read (eg: to check file header)
 		{
-			size = UnZipFile (rbuffer, handle);	// unzip from FAT
+			fread (rbuffer, 1, length, handle);
+			size = length;
 		}
-		else
+		else // load whole file
 		{
-			// Just load the file up
-			fseek(handle, 0, SEEK_END);
-			size = ftell(handle);				// get filesize
-			fseek(handle, 2048, SEEK_SET);		// seek back to point where we left off
-			memcpy (rbuffer, zipbuffer, 2048);	// copy what we already read
-			fread (rbuffer + 2048, 1, size - 2048, handle);
+			fread (zipbuffer, 1, 2048, handle);
+
+			if (IsZipFile (zipbuffer))
+			{
+				size = UnZipFile ((unsigned char *)rbuffer, handle);	// unzip from FAT
+			}
+			else
+			{
+				// Just load the file up
+				fseek(handle, 0, SEEK_END);
+				size = ftell(handle);				// get filesize
+				fseek(handle, 2048, SEEK_SET);		// seek back to point where we left off
+				memcpy (rbuffer, zipbuffer, 2048);	// copy what we already read
+				fread (rbuffer + 2048, 1, size - 2048, handle);
+			}
 		}
 		fclose (handle);
 		return size;
