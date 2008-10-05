@@ -26,7 +26,7 @@
 
 bool ChangeFATInterface(int method, bool silent);
 int ParseFATdirectory(int method);
-int LoadFATFile ();
+int LoadFATFile (char * fbuffer, int length);
 int SaveBufferToFAT (char *filepath, int datasize, bool silent);
 int LoadBufferFromFAT (char *filepath, bool silent);
 

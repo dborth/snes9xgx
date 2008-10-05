@@ -16,7 +16,10 @@
 #include <string.h>
 #include <zlib.h>
 
+#include "snes9xGX.h"
 #include "dvd.h"
+#include "smbop.h"
+#include "fileop.h"
 #include "video.h"
 #include "menudraw.h"
 #include "unzip.h"
@@ -227,4 +230,42 @@ UnZipFile (unsigned char *outbuffer, SMBFILE infile)
 {
 	smbfile = infile;
 	return UnZipBuffer(outbuffer, 2);
+}
+
+/****************************************************************************
+ * GetFirstZipFilename
+ *
+ * Returns the filename of the first file in the zipped archive
+ * The idea here is to do the least amount of work required
+ ***************************************************************************/
+
+char *
+GetFirstZipFilename (int method)
+{
+	char testbuffer[ZIPCHUNK];
+
+	// read start of ZIP
+	switch (method)
+	{
+		case METHOD_SD:	// SD Card
+		case METHOD_USB: // USB
+		LoadFATFile (testbuffer, ZIPCHUNK);
+		break;
+
+		case METHOD_DVD: // DVD
+		LoadDVDFile ((unsigned char *)testbuffer, ZIPCHUNK);
+		break;
+
+		case METHOD_SMB: // From SMB
+		LoadSMBFile (testbuffer, ZIPCHUNK);
+		break;
+	}
+
+	testbuffer[28] = 0; // truncate - filename length is 2 bytes long (bytes 26-27)
+	int namelength = testbuffer[26]; // filename length starts 26 bytes in
+
+	char * firstFilename = &testbuffer[30]; // first filename of a ZIP starts 31 bytes in
+	firstFilename[namelength] = 0; // truncate at filename length
+
+	return firstFilename;
 }

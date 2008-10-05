@@ -424,53 +424,59 @@ bool SwitchDVDFolder(char origdir[])
 
 /****************************************************************************
  * LoadDVDFile
- * This function will load a file from DVD, in BIN, SMD or ZIP format.
+ * This function will load a file from DVD
  * The values for offset and length are inherited from dvddir and
  * dvddirlength.
  *
- * The buffer parameter should re-use the initial ROM buffer.
+ * The buffer parameter should re-use the initial ROM buffer
  ***************************************************************************/
 
 int
-LoadDVDFile ()
+LoadDVDFile (unsigned char *buffer, int length)
 {
 	int offset;
 	int blocks;
 	int i;
 	u64 discoffset;
 	char readbuffer[2048];
-	unsigned char *rbuffer = (unsigned char *) Memory.ROM;
 
 	// How many 2k blocks to read
 	blocks = dvddirlength / 2048;
 	offset = 0;
 	discoffset = dvddir;
 	ShowAction ((char*) "Loading...");
-	dvd_read (readbuffer, 2048, discoffset);
 
-	if (!IsZipFile (readbuffer))
+	if(length > 0)
 	{
-		for (i = 0; i < blocks; i++)
-		{
-			dvd_read (readbuffer, 2048, discoffset);
-			memcpy (rbuffer + offset, readbuffer, 2048);
-			offset += 2048;
-			discoffset += 2048;
-		}
+		dvd_read (buffer, length, discoffset);
+	}
+	else // load whole file
+	{
+		dvd_read (readbuffer, 2048, discoffset);
 
-		/*** And final cleanup ***/
-		if (dvddirlength % 2048)
+		if (!IsZipFile (readbuffer))
 		{
-			i = dvddirlength % 2048;
-			dvd_read (readbuffer, 2048, discoffset);
-			memcpy (rbuffer + offset, readbuffer, i);
+			for (i = 0; i < blocks; i++)
+			{
+				dvd_read (readbuffer, 2048, discoffset);
+				memcpy (buffer + offset, readbuffer, 2048);
+				offset += 2048;
+				discoffset += 2048;
+			}
+
+			/*** And final cleanup ***/
+			if (dvddirlength % 2048)
+			{
+				i = dvddirlength % 2048;
+				dvd_read (readbuffer, 2048, discoffset);
+				memcpy (buffer + offset, readbuffer, i);
+			}
+		}
+		else
+		{
+			return UnZipFile (buffer, discoffset);	// unzip from dvd
 		}
 	}
-	else
-	{
-		return UnZipFile (rbuffer, discoffset);	// unzip from dvd
-	}
-
 	return dvddirlength;
 }
 

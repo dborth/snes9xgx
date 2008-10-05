@@ -38,6 +38,7 @@ extern "C" {
 #include "fileop.h"
 #include "memcardop.h"
 #include "input.h"
+#include "unzip.h"
 
 int offset;
 int selection;
@@ -221,6 +222,55 @@ int FileSortCallback(const void *f1, const void *f2)
 }
 
 /****************************************************************************
+ * IsValidROM
+ *
+ * Checks if the specified file is a valid ROM
+ * For now we will just check the file extension and file size
+ * If the file is a zip, we will check the file extension / file size of the
+ * first file inside
+ ***************************************************************************/
+
+bool IsValidROM(int method)
+{
+	// file size should be between 128K and 8MB
+	if(filelist[selection].length < (1024*128) ||
+		filelist[selection].length > (1024*1024*8))
+	{
+		WaitPrompt((char *)"Invalid file size!");
+		return false;
+	}
+
+	if (strlen(filelist[selection].filename) > 4)
+	{
+		char * p = strrchr(filelist[selection].filename, '.');
+
+		if (p != NULL)
+		{
+			if(stricmp(p, ".zip") == 0)
+			{
+				// we need to check the file extension of the first file in the archive
+				char * zippedFilename = GetFirstZipFilename (method);
+
+				if(strlen(zippedFilename) > 4)
+					p = strrchr(zippedFilename, '.');
+				else
+					p = NULL;
+			}
+
+			if(p != NULL)
+			{
+				if (stricmp(p, ".smc") == 0 || stricmp(p, ".fig") == 0)
+				{
+					return true;
+				}
+			}
+		}
+	}
+	WaitPrompt((char *)"Unknown file type!");
+	return false;
+}
+
+/****************************************************************************
  * StripExt
  *
  * Strips an extension from a filename
@@ -315,17 +365,21 @@ int FileSelector (int method)
 
 					if (!maxfiles)
 					{
-						WaitPrompt ((char*) "Error reading directory !");
-						haverom = 1; // quit menu
+						WaitPrompt ((char*) "Error reading directory!");
+						return 0; // quit menu
 					}
 				}
 				else if (status == -1)	// directory name too long
 				{
-					haverom = 1; // quit menu
+					return 0; // quit menu
 				}
 			}
 			else	// this is a file
 			{
+				// check that this is a valid ROM
+				if(!IsValidROM(method))
+					return 0;
+
 				// store the filename (w/o ext) - used for sram/freeze naming
 				StripExt(Memory.ROMFilename, filelist[selection].filename);
 
@@ -335,17 +389,17 @@ int FileSelector (int method)
 				{
 					case METHOD_SD:
 					case METHOD_USB:
-					ARAM_ROMSIZE = LoadFATFile ();
+					ARAM_ROMSIZE = LoadFATFile ((char *)Memory.ROM, 0);
 					break;
 
 					case METHOD_DVD:
 					dvddir = filelist[selection].offset;
 					dvddirlength = filelist[selection].length;
-					ARAM_ROMSIZE = LoadDVDFile ();
+					ARAM_ROMSIZE = LoadDVDFile (Memory.ROM, 0);
 					break;
 
 					case METHOD_SMB:
-					ARAM_ROMSIZE = LoadSMBFile ();
+					ARAM_ROMSIZE = LoadSMBFile ((char *)Memory.ROM, 0);
 					break;
 				}
 
@@ -380,7 +434,9 @@ int FileSelector (int method)
 			else if ( strcmp(filelist[1].filename,"..") == 0 )
 			{
                 selection = selectit = 1;
-			} else {
+			}
+			else
+			{
                 return 0;
 			}
         }	// End of B

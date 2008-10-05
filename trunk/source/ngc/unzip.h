@@ -15,7 +15,7 @@
 #include <smb.h>
 
 extern int IsZipFile (char *buffer);
-
+char * GetFirstZipFilename(int method);
 int UnZipFile (unsigned char *outbuffer, FILE* infile); // Reading from FAT
 int UnZipFile (unsigned char *outbuffer, u64 inoffset); // Reading from DVD
 int UnZipFile (unsigned char *outbuffer, SMBFILE infile); // Reading from SMB
