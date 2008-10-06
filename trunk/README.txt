@@ -19,7 +19,7 @@ the original SNES9x 1.50 GameCube port, whose work was continued by crunchy2.
 It was updated for the Wii by michniewski and is currently being maintained 
 by michniewski and Tantric.
 
-[What's New 005]
+[What's New 005 - September 23, 2008]
 
 michniewski
 - added: Superscope/mouse/justifier support, with Wii remote
@@ -54,7 +54,7 @@ Tantric
            preferences menu pops up - remove to save your preferences!
 - changed: SRAM load - game reloaded automatically after loading SRAM
 
-[What Was New 004]
+[What Was New 004 - August 5, 2008]
 
 - added: option to disable AA filtering 
          (snes graphics 'crisper', AA now default OFF)
@@ -66,7 +66,7 @@ Tantric
            new naming is provided for sram only.
 - changed: by default, autoload/save sram and freeze enabled
 
-[What Was New 003]
+[What Was New 003 - July 25, 2008]
 - added: alphabetical file sorting
 - added: background logo/backdrop + nicer menus
 - added: scrolling in ROM selector
@@ -83,7 +83,7 @@ Tantric
            anymore. It is saved in the background.
 - updated README
 
-[Whats Was New 002]
+[Whats Was New 002 - July 21, 2008]
 - added: classic and nunchuk support
 - added: all controllers can now be configured
 - added: GC version (untested)
@@ -93,7 +93,7 @@ Tantric
 - one makefile to make all versions. (thanks to snes9x143 SVN)
 
 
-[What Was New 001]
+[What Was New 001 - July 12, 2008]
 - compiles with latest devkitppc (r15)
 - now uses libfat (can use front sd slot on wii)
 - updated menu items a bit
@@ -107,7 +107,7 @@ Tantric
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                            FEATURES                           ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-- Based on Snes9x 1.5 - superior ROM compatibility
+- Based on Snes9x 1.51 - superior ROM compatibility
 - Wiimote, Nunchuk, Classic, and Gamecube controller support
 - SNES Superscope, Mouse, Justifier support
 - Cheat support
