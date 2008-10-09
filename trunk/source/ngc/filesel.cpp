@@ -45,7 +45,7 @@ int selection;
 char currentdir[MAXPATHLEN];
 int maxfiles;
 extern int screenheight;
-unsigned long ROMSize = 0;
+unsigned long SNESROMSize = 0;
 
 int havedir = -1;
 extern u64 dvddir;
@@ -387,21 +387,21 @@ int FileSelector (int method)
 				{
 					case METHOD_SD:
 					case METHOD_USB:
-					ROMSize = LoadFATFile ((char *)Memory.ROM, 0);
+					SNESROMSize = LoadFATFile ((char *)Memory.ROM, 0);
 					break;
 
 					case METHOD_DVD:
 					dvddir = filelist[selection].offset;
 					dvddirlength = filelist[selection].length;
-					ROMSize = LoadDVDFile (Memory.ROM, 0);
+					SNESROMSize = LoadDVDFile (Memory.ROM, 0);
 					break;
 
 					case METHOD_SMB:
-					ROMSize = LoadSMBFile ((char *)Memory.ROM, 0);
+					SNESROMSize = LoadSMBFile ((char *)Memory.ROM, 0);
 					break;
 				}
 
-				if (ROMSize > 0)
+				if (SNESROMSize > 0)
 				{
 					Memory.LoadROM ("BLANK.SMC");
 					Memory.LoadSRAM ("BLANK");

@@ -235,16 +235,16 @@ main ()
 
 	if (memcmp ((char *) romptr, "SNESROM0", 8) == 0)
 	{
-		ROMSize = romptr[2];
+		SNESROMSize = romptr[2];
 
-		if(ROMSize > (1024*128) && ROMSize < (1024*1024*8))
+		if(SNESROMSize > (1024*128) && SNESROMSize < (1024*1024*8))
 		{
 			romptr = (int *) 0x81000020;
-			ARAMPut ((char *) romptr, (char *) AR_SNESROM, ROMSize);
+			ARAMPut ((char *) romptr, (char *) AR_SNESROM, SNESROMSize);
 		}
 		else // not a valid ROM size
 		{
-			ROMSize = 0;
+			SNESROMSize = 0;
 		}
 	}
 	#endif
@@ -311,16 +311,16 @@ main ()
 	// from ARAM into main memory
 
 	#ifdef HW_DOL
-	if(ROMSize > 0)
+	if(SNESROMSize > 0)
 	{
-		ARAMFetchSlow( (char *)Memory.ROM, (char *)AR_SNESROM, ROMSize);
+		ARAMFetchSlow( (char *)Memory.ROM, (char *)AR_SNESROM, SNESROMSize);
 		Memory.LoadROM ("BLANK.SMC");
 		Memory.LoadSRAM ("BLANK");
 	}
 	#endif
 
 	// Get the user to load a ROM
-	while (ROMSize <= 0)
+	while (SNESROMSize <= 0)
 	{
 		MainMenu (selectedMenu);
 	}
