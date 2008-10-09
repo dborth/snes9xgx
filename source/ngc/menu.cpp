@@ -1051,7 +1051,7 @@ MainMenu (int selectedMenu)
 	int ret;
 
 	// disable game-specific menu items if a ROM isn't loaded
-	if (ROMSize == 0)
+	if (SNESROMSize == 0)
     	menuitems[2][0] = '\0';
 	else
 		sprintf (menuitems[2], "Game Menu");

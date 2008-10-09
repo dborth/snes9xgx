@@ -36,7 +36,7 @@ extern int offset;
 extern int selection;
 extern char currentdir[MAXPATHLEN];
 extern int maxfiles;
-extern unsigned long ROMSize;
+extern unsigned long SNESROMSize;
 
 void AllocSaveBuffer();
 void FreeSaveBuffer();
