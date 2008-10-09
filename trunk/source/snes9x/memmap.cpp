@@ -196,11 +196,8 @@
 #include "cheats.h"
 #else
 #include <gccore.h>
-#include "aram.h"			/*** Nintendo GameCube ARAM loader.
-													 FileLoader requires that the ROM is preloaded in ARAM first
-											 ***/
-extern unsigned long ARAM_ROMSIZE;
-extern int hasloaded;
+
+extern unsigned long ROMSize;
 #endif
 
 #include "controls.h"
@@ -1139,30 +1136,17 @@ uint32 CMemory::FileLoader (uint8 *buffer, const char *filename, int32 maxsize)
 		}
 
 #else
-//#include "ftfont.h"
-/*** Nintendo Gamecube ARAM ROM File Loader
-				 This is simply a modified version of FILE_DEFAULT, which uses
-				 the ARAM as temporary ROM storage.
-
-				 NB: Make sure ARAM_ROMSIZE is correct! All hell ensues if you don't
+		/*** Nintendo Wii/Gamecube ROM File Loader
+		 By now we've already loaded the ROM into main memory
+		 This is simply a modified version of FILE_DEFAULT
 		 ***/
 		HeaderCount = 0;
 		uint8 *ptr = buffer;
-
-		long unsigned int size = 0;
-     	uint32 ARAM_max = maxsize + 0x200 - (ptr - buffer);
-		size = ARAM_ROMSIZE;
-
-		if ( size > ARAM_max )
-			size = ARAM_max;
-
-		if ( hasloaded == 0 )
-			ARAMFetchSlow( (char *)ptr, (char *)AR_SNESROM, size );
+		uint32	size = ROMSize;
 
 		size = HeaderRemove(size, HeaderCount, ptr);
 		ptr += size;
 		totalSize += size;
-
 #endif
     if (HeaderCount == 0)
 		S9xMessage(S9X_INFO, S9X_HEADERS_INFO, "No ROM file header found.");

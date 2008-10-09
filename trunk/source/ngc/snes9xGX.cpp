@@ -61,7 +61,6 @@ extern "C" {
 
 #include "gui.h"
 
-unsigned long ARAM_ROMSIZE = 0;
 int ConfigRequested = 0;
 FILE* debughandle;
 
@@ -197,12 +196,6 @@ emulate ()
  *	7. Initialise Snes9x/GC Sound System
  *	8. Initialise Snes9x Graphics subsystem
  *	9. Let's Party!
- *
- * The SNES ROM is delivered from ARAM. (AR_SNESROM)
- * Any method of loading a ROM - RAM, DVD, SMB, SDCard, etc
- * MUST place the unpacked ROM at this location.
- * This provides a single consistent interface in memmap.cpp.
- * Refer to that file if you need to change it.
  ***************************************************************************/
 int
 main ()
@@ -233,15 +226,28 @@ main ()
 	// GC Audio RAM (for ROM and backdrop storage)
 	AR_Init (NULL, 0);
 
+	// GameCube only - Injected ROM
 	// Before going any further, let's copy any injected ROM image
+	// We'll put it in ARAM for safe storage
+
+	#ifdef HW_DOL
 	int *romptr = (int *) 0x81000000; // location of injected rom
 
 	if (memcmp ((char *) romptr, "SNESROM0", 8) == 0)
 	{
-		ARAM_ROMSIZE = romptr[2];
-		romptr = (int *) 0x81000020;
-		ARAMPut ((char *) romptr, (char *) AR_SNESROM, ARAM_ROMSIZE);
+		ROMSize = romptr[2];
+
+		if(ROMSize > (1024*128) && ROMSize < (1024*1024*8))
+		{
+			romptr = (int *) 0x81000020;
+			ARAMPut ((char *) romptr, (char *) AR_SNESROM, ROMSize);
+		}
+		else // not a valid ROM size
+		{
+			ROMSize = 0;
+		}
 	}
+	#endif
 
 	// Initialise freetype font system
 	if (FT_Init ())
@@ -300,22 +306,28 @@ main ()
 		selectedMenu = 1; // change to preferences menu
 	}
 
-	// No appended ROM, so get the user to load one
-	if (ARAM_ROMSIZE == 0)
+	// GameCube only - Injected ROM
+	// Everything's been initialized, we can copy our ROM back
+	// from ARAM into main memory
+
+	#ifdef HW_DOL
+	if(ROMSize > 0)
 	{
-		while (ARAM_ROMSIZE == 0)
-		{
-			MainMenu (selectedMenu);
-		}
+		ARAMFetchSlow( (char *)Memory.ROM, (char *)AR_SNESROM, ROMSize);
+		Memory.LoadROM ("BLANK.SMC");
+		Memory.LoadSRAM ("BLANK");
 	}
-	else
+	#endif
+
+	// Get the user to load a ROM
+	while (ROMSize <= 0)
 	{
-		// Load ROM
-		save_flags = CPU.Flags;
-		if (!Memory.LoadROM ("VIRTUAL.ROM"))
-			while (1);
-		CPU.Flags = save_flags;
+		MainMenu (selectedMenu);
 	}
+
+	// Load ROM
+	save_flags = CPU.Flags;
+	CPU.Flags = save_flags;
 
 	// Emulate
 	emulate ();

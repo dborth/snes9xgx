@@ -27,8 +27,6 @@
 /*** Snes9x GFX Buffer ***/
 static unsigned char snes9xgfx[1024 * 512 * 2];
 
-/*** Memory ROM Loading ***/
-extern unsigned long ARAM_ROMSIZE;
 extern unsigned int SMBTimer;
 
 /*** 2D Video ***/

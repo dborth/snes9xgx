@@ -36,6 +36,7 @@ extern int offset;
 extern int selection;
 extern char currentdir[MAXPATHLEN];
 extern int maxfiles;
+extern unsigned long ROMSize;
 
 void AllocSaveBuffer();
 void FreeSaveBuffer();
