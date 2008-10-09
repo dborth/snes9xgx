@@ -39,7 +39,6 @@ extern "C" {
 #include "cheats.h"
 
 #include "snes9xGX.h"
-#include "aram.h"
 #include "video.h"
 #include "filesel.h"
 #include "unzip.h"
@@ -61,7 +60,6 @@ extern void DrawMenu (char items[][50], char *title, int maxitems, int selected,
 extern SCheatData Cheat;
 
 extern int menu;
-extern unsigned long ARAM_ROMSIZE;
 
 #define SOFTRESET_ADR ((volatile u32*)0xCC003024)
 
@@ -1053,7 +1051,7 @@ MainMenu (int selectedMenu)
 	int ret;
 
 	// disable game-specific menu items if a ROM isn't loaded
-	if ( ARAM_ROMSIZE == 0 )
+	if (ROMSize == 0)
     	menuitems[2][0] = '\0';
 	else
 		sprintf (menuitems[2], "Game Menu");

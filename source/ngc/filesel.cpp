@@ -45,13 +45,11 @@ int selection;
 char currentdir[MAXPATHLEN];
 int maxfiles;
 extern int screenheight;
-extern unsigned long ARAM_ROMSIZE;
+unsigned long ROMSize = 0;
 
 int havedir = -1;
 extern u64 dvddir;
 extern int dvddirlength;
-
-int hasloaded = 0;
 
 // Global file entry table
 FILEENTRIES filelist[MAXFILES];
@@ -389,23 +387,22 @@ int FileSelector (int method)
 				{
 					case METHOD_SD:
 					case METHOD_USB:
-					ARAM_ROMSIZE = LoadFATFile ((char *)Memory.ROM, 0);
+					ROMSize = LoadFATFile ((char *)Memory.ROM, 0);
 					break;
 
 					case METHOD_DVD:
 					dvddir = filelist[selection].offset;
 					dvddirlength = filelist[selection].length;
-					ARAM_ROMSIZE = LoadDVDFile (Memory.ROM, 0);
+					ROMSize = LoadDVDFile (Memory.ROM, 0);
 					break;
 
 					case METHOD_SMB:
-					ARAM_ROMSIZE = LoadSMBFile ((char *)Memory.ROM, 0);
+					ROMSize = LoadSMBFile ((char *)Memory.ROM, 0);
 					break;
 				}
 
-				if (ARAM_ROMSIZE > 0)
+				if (ROMSize > 0)
 				{
-					hasloaded = 1; // indicator for memmap.cpp
 					Memory.LoadROM ("BLANK.SMC");
 					Memory.LoadSRAM ("BLANK");
 					haverom = 1;

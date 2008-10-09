@@ -259,7 +259,13 @@ and changed the setting, reset the game for the settings to take effect.
 These controllers can be controlled by either the Gamecube controller analog
 sticks,the Classic controller analog sticks, or by aiming at the screen
 with the wiimote.
-(these configurations cannot be changed, yet)
+
+Aim Offscreen - Wiimote Minus, GameCube Z button
+Fire - B button
+Cursor - A button
+Turbo Toggle - Wiimote D-Pad Down, GameCube Y button
+
+These configurations cannot be changed.
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                             ZIP SUPPORT                       ·oø×O0|
