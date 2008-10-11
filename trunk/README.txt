@@ -16,10 +16,29 @@
 SNES9x GX is a Super Nintendo emulator for the Wii based on the PC emulator 
 SNES9x 1.51 (http://snes9x.ipherswipsite.com/). SoftDev is responsible for 
 the original SNES9x 1.50 GameCube port, whose work was continued by crunchy2. 
-It was updated for the Wii by michniewski and is currently being maintained 
-by michniewski and Tantric.
+It was updated for the Wii by michniewski and SNES9x 1.51 was ported by 
+Tantric. The project is currently being maintained by michniewski and Tantric.
 
-[What's New 005 - September 23, 2008]
+[What's New 006]
+
+Tantric
+- added: 480p for GameCube
+- added: Sound sync
+- added: 7z support
+- changed: Faster SD/USB access (readahead cache enabled)
+- changed: Auto frameskip (previously was fixed frameskip)
+- fixed: Video offset issues
+- fixed: BS-X games work now
+- fixed: Wii DVD works now
+- fixed: DVD re-enabled for GameCube
+- fixed: Nunchuk analog stick issues
+- fixed: Many crashes, memory leaks, etc
+
+michniewski
+- added: Video shift options
+- changed: Turn DVD motor off option re-enabled for GameCube
+
+[What Was New 005 - September 23, 2008]
 
 michniewski
 - added: Superscope/mouse/justifier support, with Wii remote
