@@ -445,9 +445,12 @@ int FileSelector (int method)
 						WaitPrompt((char*) "Maximum filepath length reached!");
 						return -1;
 					}
-					maxfiles = SzParse(szpath, method);
-					if(maxfiles)
+					int szfiles = SzParse(szpath, method);
+					if(szfiles)
+					{
+						maxfiles = szfiles;
 						inSz = true;
+					}
 				}
 				else
 				{

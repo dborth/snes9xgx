@@ -244,66 +244,118 @@ SZ_RESULT SzDecode2(const CFileSize *packSizes, const CFolder *folder,
     // allocate memory for the temporary buffer
     Byte *tmpBuffer = (Byte *)allocMain->Alloc(_LZMA_TEMP_BUFFER_SIZE);
 
-    // decompress data in _LZMA_TEMP_BUFFER_SIZE byte steps and copy the wanted file to outBuffer
-	size_t bytesLeft = *fileSize; // total bytes remaining to be read
-	size_t bytesToRead = 0; // bytes to read on this pass
-	size_t bytesRead = 0; // total bytes read
-	size_t offset = 0; // buffer offset
-	do
-	{
-		if(bytesLeft > _LZMA_TEMP_BUFFER_SIZE)
-			bytesToRead = _LZMA_TEMP_BUFFER_SIZE;
-		else
-			bytesToRead = bytesLeft;
+    // variables containing the number of the first and the last bytes of the buffer
+        size_t bufferStart, bufferEnd;
+        bufferStart = bufferEnd = 0;
 
-		bytesLeft -= bytesToRead;
+        // integers contains the offset, the size and the already copied data which will be
+        // copied from the tmpBuffer to outBuffer
+        size_t copyOffset, copySize, copyDone;
+        copyOffset = copySize = copyDone = 0;
 
-		// decompress next bytes
-		result = LzmaDecode(&state,
-							#ifdef _LZMA_IN_CB
-							&lzmaCallback.InCallback,
-							#else
-							//inBuffer, (SizeT)inSize, &inProcessed, //TODO!
-							#endif
-							tmpBuffer, bytesToRead, &outSizeProcessedLoc
-							);
+        UInt32 i = 0;
+    	int bytesToCopy = 0;
 
-		// check result
-		if(result == LZMA_RESULT_DATA_ERROR)
-			return SZE_DATA_ERROR;
-		else if(result != LZMA_RESULT_OK)
-			return SZE_FAIL;
+        // decompress data in _LZMA_TEMP_BUFFER_SIZE byte steps and copy the wanted file to outBuffer
+        do
+        {
+    		if((*fileSize - copyDone) >= _LZMA_TEMP_BUFFER_SIZE)
+    			bytesToCopy = _LZMA_TEMP_BUFFER_SIZE;
+    		else
+    			bytesToCopy = (*fileSize - copyDone);
 
-		// normally this should never happen
-		if(outSizeProcessedLoc > _LZMA_TEMP_BUFFER_SIZE)
-		{
-			return SZE_FAIL;
-		}
+    		// decompress next bytes
+    		result = LzmaDecode(&state,
+           	                    #ifdef _LZMA_IN_CB
+           	                    &lzmaCallback.InCallback,
+                    	        #else
+           	                    //inBuffer, (SizeT)inSize, &inProcessed, //TODO!
+                    	        #endif
+                    	        tmpBuffer, bytesToCopy, &outSizeProcessedLoc
+                    	        );
 
-		memcpy(outBuffer + offset, tmpBuffer, outSizeProcessedLoc);
-		bytesRead += bytesToRead;
-		offset += outSizeProcessedLoc;
-	}
-	while(bytesLeft > 0);
+            // check result
+    		if(result == LZMA_RESULT_DATA_ERROR)
+    		{
+    			return SZE_DATA_ERROR;
+    		}
+    		if(result != LZMA_RESULT_OK)
+    		{
+    			return SZE_FAIL;
+    		}
 
-/*    result = LzmaDecode(&state,
-        #ifdef _LZMA_IN_CB
-        &lzmaCallback.InCallback,
-        #else
-        inBuffer, (SizeT)inSize, &inProcessed,
-        #endif
-        outBuffer, (SizeT)outSize, &outSizeProcessedLoc);*/
-    //*outSizeProcessed = (size_t)outSizeProcessedLoc;
-    *outSizeProcessed = offset;
-    allocMain->Free(tmpBuffer); // free the temporary buffer again
-    allocMain->Free(state.Probs);
-    allocMain->Free(state.Dictionary);
-/*    if (result == LZMA_RESULT_DATA_ERROR)
-      return SZE_DATA_ERROR;
-    if (result != LZMA_RESULT_OK)
-      return SZE_FAIL;*/
-    return SZ_OK;
-  }
-  return SZE_NOTIMPL;
-}
-#endif
+    		// normally this should never happen
+    		if(outSizeProcessedLoc > _LZMA_TEMP_BUFFER_SIZE)
+    		{
+    			return SZE_FAIL;
+    		}
+
+    		// update bufferStart and bufferEnd
+    		bufferStart = _LZMA_TEMP_BUFFER_SIZE * i;
+    		bufferEnd = bufferStart + outSizeProcessedLoc;
+    		i++;
+
+    		// calculate copy offset and size
+    		if(*fileOffset > bufferEnd)
+    		{
+    			// we haven't reached the start of the file yet
+    			continue;
+    		}
+
+    		// calculate offset
+    		if(*fileOffset < bufferStart)
+    		{
+    			// the file has already started before this decompression step
+    			copyOffset = 0;
+    		}
+    		else
+    		{
+    			// the file starts somewhere inside this buffer
+    			copyDone = 0;
+    			copyOffset = _LZMA_TEMP_BUFFER_SIZE - (bufferEnd - *fileOffset);
+    		}
+
+    		// calculate size
+    		if((*fileOffset + *fileSize) > bufferEnd)
+    		{
+    			// we'll need the whole buffer after copyOffset
+    			copySize = _LZMA_TEMP_BUFFER_SIZE - copyOffset;
+    		}
+    		else
+    		{
+    			// we'll stop somewhere inside the buffer
+    			copySize = (*fileOffset + *fileSize) - (bufferStart + copyOffset);
+    		}
+
+    		// copy bytes to the real output buffer
+    		if(copySize == 0)
+    		{
+    			continue;
+    		}
+    	//	printf("memcpy(outBuffer + %d, tmpBuffer + %d, %d)\n", copyDone, copyOffset, copySize);
+    		memcpy(outBuffer + copyDone, tmpBuffer + copyOffset, copySize);
+    		copyDone += copySize;
+    	}
+        while((*fileOffset + *fileSize) > bufferEnd);
+
+    /*    result = LzmaDecode(&state,
+            #ifdef _LZMA_IN_CB
+            &lzmaCallback.InCallback,
+            #else
+            inBuffer, (SizeT)inSize, &inProcessed,
+            #endif
+            outBuffer, (SizeT)outSize, &outSizeProcessedLoc);*/
+        //*outSizeProcessed = (size_t)outSizeProcessedLoc;
+        *outSizeProcessed = copyDone;
+        allocMain->Free(tmpBuffer); // free the temporary buffer again
+        allocMain->Free(state.Probs);
+        allocMain->Free(state.Dictionary);
+    /*    if (result == LZMA_RESULT_DATA_ERROR)
+          return SZE_DATA_ERROR;
+        if (result != LZMA_RESULT_OK)
+          return SZE_FAIL;*/
+        return SZ_OK;
+      }
+      return SZE_NOTIMPL;
+    }
+    #endif
