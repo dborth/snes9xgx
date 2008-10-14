@@ -204,7 +204,6 @@ main ()
 	DI_Init();	// first
 #endif
 
-	unsigned int save_flags;
 	int selectedMenu = -1;
 
 	// Initialise video
@@ -324,10 +323,6 @@ main ()
 	{
 		MainMenu (selectedMenu);
 	}
-
-	// Load ROM
-	save_flags = CPU.Flags;
-	CPU.Flags = save_flags;
 
 	// Emulate
 	emulate ();

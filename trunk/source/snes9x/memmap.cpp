@@ -197,7 +197,7 @@
 #else
 #include <gccore.h>
 
-extern unsigned long ROMSize;
+extern unsigned long SNESROMSize;
 #endif
 
 #include "controls.h"
@@ -1142,7 +1142,7 @@ uint32 CMemory::FileLoader (uint8 *buffer, const char *filename, int32 maxsize)
 		 ***/
 		HeaderCount = 0;
 		uint8 *ptr = buffer;
-		uint32	size = ROMSize;
+		uint32	size = SNESROMSize;
 
 		size = HeaderRemove(size, HeaderCount, ptr);
 		ptr += size;

@@ -43,6 +43,7 @@ extern "C" {
 int offset;
 int selection;
 char currentdir[MAXPATHLEN];
+char szpath[MAXPATHLEN];
 int maxfiles;
 extern int screenheight;
 unsigned long SNESROMSize = 0;
@@ -53,6 +54,7 @@ extern int dvddirlength;
 
 // Global file entry table
 FILEENTRIES filelist[MAXFILES];
+bool inSz = false;
 
 unsigned char *savebuffer = NULL;
 
@@ -192,6 +194,28 @@ int UpdateDirName(int method)
 	}
 }
 
+bool MakeROMPath(char filepath[], int method)
+{
+	char temppath[MAXPATHLEN];
+
+	// Check filename length
+	if ((strlen(currentdir)+1+strlen(filelist[selection].filename)) < MAXPATHLEN)
+	{
+		sprintf(temppath, "%s/%s",currentdir,filelist[selection].filename);
+
+		if(method == METHOD_SMB)
+			strcpy(filepath, SMBPath(temppath));
+		else
+			strcpy(filepath, temppath);
+		return true;
+	}
+	else
+	{
+		filepath[0] = 0;
+		return false;
+	}
+}
+
 /****************************************************************************
  * FileSortCallback
  *
@@ -244,12 +268,14 @@ bool IsValidROM(int method)
 
 		if (p != NULL)
 		{
-			if(stricmp(p, ".zip") == 0)
+			if(stricmp(p, ".zip") == 0 && !inSz)
 			{
 				// we need to check the file extension of the first file in the archive
 				char * zippedFilename = GetFirstZipFilename (method);
 
-				if(strlen(zippedFilename) > 4)
+				if(zippedFilename == NULL) // we don't want to run strlen on NULL
+					p = NULL;
+				else if(strlen(zippedFilename) > 4)
 					p = strrchr(zippedFilename, '.');
 				else
 					p = NULL;
@@ -265,6 +291,25 @@ bool IsValidROM(int method)
 		}
 	}
 	WaitPrompt((char *)"Unknown file type!");
+	return false;
+}
+
+/****************************************************************************
+ * IsSz
+ *
+ * Checks if the specified file is a 7z
+ ***************************************************************************/
+
+bool IsSz()
+{
+	if (strlen(filelist[selection].filename) > 4)
+	{
+		char * p = strrchr(filelist[selection].filename, '.');
+
+		if (p != NULL)
+			if(stricmp(p, ".7z") == 0)
+				return true;
+	}
 	return false;
 }
 
@@ -342,7 +387,24 @@ int FileSelector (int method)
 			if (filelist[selection].flags) // This is directory
 			{
 				/* update current directory and set new entry list if directory has changed */
-				int status = UpdateDirName(method);
+				int status;
+
+				if(inSz && selection == 0) // inside a 7z, requesting to leave
+				{
+					if(method == METHOD_DVD)
+					{
+						dvddir = filelist[0].offset;
+						dvddirlength = filelist[0].length;
+					}
+					inSz = false;
+					status = 1;
+					SzClose();
+				}
+				else
+				{
+					status = UpdateDirName(method);
+				}
+
 				if (status == 1) // ok, open directory
 				{
 					switch (method)
@@ -363,8 +425,8 @@ int FileSelector (int method)
 
 					if (!maxfiles)
 					{
-						WaitPrompt ((char*) "Error reading directory!");
-						return 0; // quit menu
+						WaitPrompt ((char*) "Error reading directory !");
+						haverom = 1; // quit menu
 					}
 				}
 				else if (status == -1)	// directory name too long
@@ -374,43 +436,69 @@ int FileSelector (int method)
 			}
 			else	// this is a file
 			{
-				// check that this is a valid ROM
-				if(!IsValidROM(method))
-					return 0;
-
-				// store the filename (w/o ext) - used for sram/freeze naming
-				StripExt(Memory.ROMFilename, filelist[selection].filename);
-
-				ShowAction ((char *)"Loading...");
-
-				switch (method)
+				// 7z file - let's open it up to select a file inside
+				if(IsSz())
 				{
-					case METHOD_SD:
-					case METHOD_USB:
-					SNESROMSize = LoadFATFile ((char *)Memory.ROM, 0);
-					break;
-
-					case METHOD_DVD:
-					dvddir = filelist[selection].offset;
-					dvddirlength = filelist[selection].length;
-					SNESROMSize = LoadDVDFile (Memory.ROM, 0);
-					break;
-
-					case METHOD_SMB:
-					SNESROMSize = LoadSMBFile ((char *)Memory.ROM, 0);
-					break;
-				}
-
-				if (SNESROMSize > 0)
-				{
-					Memory.LoadROM ("BLANK.SMC");
-					Memory.LoadSRAM ("BLANK");
-					haverom = 1;
-					return 1;
+					// we'll store the 7z filepath for extraction later
+					if(!MakeROMPath(szpath, method))
+					{
+						WaitPrompt((char*) "Maximum filepath length reached!");
+						return -1;
+					}
+					maxfiles = SzParse(szpath, method);
+					if(maxfiles)
+						inSz = true;
 				}
 				else
 				{
-					WaitPrompt((char*) "Error loading ROM!");
+					// check that this is a valid ROM
+					if(!IsValidROM(method))
+						return 0;
+
+					// store the filename (w/o ext) - used for sram/freeze naming
+					StripExt(Memory.ROMFilename, filelist[selection].filename);
+
+					ShowAction ((char *)"Loading...");
+
+					SNESROMSize = 0;
+
+					switch (method)
+					{
+						case METHOD_SD:
+						case METHOD_USB:
+							if(inSz)
+								SNESROMSize = LoadFATSzFile(szpath, (unsigned char *)Memory.ROM);
+							else
+								SNESROMSize = LoadFATFile ((char *)Memory.ROM, 0);
+						break;
+
+						case METHOD_DVD:
+							if(inSz)
+								SNESROMSize = SzExtractFile(filelist[selection].offset, (unsigned char *)Memory.ROM);
+							else
+								SNESROMSize = LoadDVDFile (Memory.ROM, 0);
+						break;
+
+						case METHOD_SMB:
+							if(inSz)
+								SNESROMSize = LoadSMBSzFile(szpath,  (unsigned char *)Memory.ROM);
+							else
+								SNESROMSize = LoadSMBFile ((char *)Memory.ROM, 0);
+						break;
+					}
+					inSz = false;
+
+					if (SNESROMSize > 0)
+					{
+						Memory.LoadROM ("BLANK.SMC");
+						Memory.LoadSRAM ("BLANK");
+						haverom = 1;
+						return 1;
+					}
+					else
+					{
+						WaitPrompt((char*) "Error loading ROM!");
+					}
 				}
 			}
 			redraw = 1;

@@ -3,7 +3,7 @@
  *
  * softdev July 2006
  * crunchy2 May 2007
-  * Michniewski 2008
+ * Michniewski 2008
  * Tantric August 2008
  *
  * fileop.cpp
@@ -27,7 +27,8 @@
 #include "preferences.h"
 #include "snes9xGX.h"
 
-FILE * filehandle;
+// FAT file pointer - the only one we should ever use!
+FILE * fatfile;
 
 /****************************************************************************
  * fat_is_mounted
@@ -172,45 +173,65 @@ LoadFATFile (char * rbuffer, int length)
 {
 	char zipbuffer[2048];
 	char filepath[MAXPATHLEN];
-	FILE *handle;
 	u32 size;
 
 	/* Check filename length */
-	if ((strlen(currentdir)+1+strlen(filelist[selection].filename)) < MAXPATHLEN)
-		sprintf(filepath, "%s/%s",currentdir,filelist[selection].filename);
-	else
+	if (!MakeROMPath(filepath, METHOD_SD))
 	{
 		WaitPrompt((char*) "Maximum filepath length reached!");
 		return -1;
 	}
 
-	handle = fopen (filepath, "rb");
-	if (handle > 0)
+	fatfile = fopen (filepath, "rb");
+	if (fatfile > 0)
 	{
 		if(length > 0) // do a partial read (eg: to check file header)
 		{
-			fread (rbuffer, 1, length, handle);
+			fread (rbuffer, 1, length, fatfile);
 			size = length;
 		}
 		else // load whole file
 		{
-			fread (zipbuffer, 1, 2048, handle);
+			fread (zipbuffer, 1, 2048, fatfile);
 
 			if (IsZipFile (zipbuffer))
 			{
-				size = UnZipFile ((unsigned char *)rbuffer, handle);	// unzip from FAT
+				size = UnZipBuffer ((unsigned char *)rbuffer, METHOD_SD);	// unzip from FAT
 			}
 			else
 			{
 				// Just load the file up
-				fseek(handle, 0, SEEK_END);
-				size = ftell(handle);				// get filesize
-				fseek(handle, 2048, SEEK_SET);		// seek back to point where we left off
+				fseek(fatfile, 0, SEEK_END);
+				size = ftell(fatfile);				// get filesize
+				fseek(fatfile, 2048, SEEK_SET);		// seek back to point where we left off
 				memcpy (rbuffer, zipbuffer, 2048);	// copy what we already read
-				fread (rbuffer + 2048, 1, size - 2048, handle);
+				fread (rbuffer + 2048, 1, size - 2048, fatfile);
 			}
 		}
-		fclose (handle);
+		fclose (fatfile);
+		return size;
+	}
+	else
+	{
+		WaitPrompt((char*) "Error opening file");
+		return 0;
+	}
+}
+
+/****************************************************************************
+ * LoadFATSzFile
+ * Loads the selected file # from the specified 7z into rbuffer
+ * Returns file size
+ ***************************************************************************/
+int
+LoadFATSzFile(char * filepath, unsigned char * rbuffer)
+{
+	u32 size;
+	fatfile = fopen (filepath, "rb");
+	if (fatfile > 0)
+	{
+		size = SzExtractFile(filelist[selection].offset, rbuffer);
+		fclose (fatfile);
 		return size;
 	}
 	else
@@ -226,12 +247,11 @@ LoadFATFile (char * rbuffer, int length)
 int
 LoadBufferFromFAT (char *filepath, bool silent)
 {
-	FILE *handle;
     int size = 0;
 
-    handle = fopen (filepath, "rb");
+    fatfile = fopen (filepath, "rb");
 
-    if (handle <= 0)
+    if (fatfile <= 0)
     {
         if ( !silent )
         {
@@ -243,13 +263,11 @@ LoadBufferFromFAT (char *filepath, bool silent)
     }
 
     // Just load the file up
-	fseek(handle, 0, SEEK_END); // go to end of file
-	size = ftell(handle); // get filesize
-	fseek(handle, 0, SEEK_SET); // go to start of file
-	fread (savebuffer, 1, size, handle);
-	fclose (handle);
-
-    fclose (handle);
+	fseek(fatfile, 0, SEEK_END); // go to end of file
+	size = ftell(fatfile); // get filesize
+	fseek(fatfile, 0, SEEK_SET); // go to start of file
+	fread (savebuffer, 1, size, fatfile);
+	fclose (fatfile);
 
     return size;
 }
@@ -260,13 +278,11 @@ LoadBufferFromFAT (char *filepath, bool silent)
 int
 SaveBufferToFAT (char *filepath, int datasize, bool silent)
 {
-	FILE *handle;
-
-    if (datasize)
+	if (datasize)
     {
-        handle = fopen (filepath, "wb");
+        fatfile = fopen (filepath, "wb");
 
-        if (handle <= 0)
+        if (fatfile <= 0)
         {
             char msg[100];
             sprintf(msg, "Couldn't save %s", filepath);
@@ -274,8 +290,8 @@ SaveBufferToFAT (char *filepath, int datasize, bool silent)
             return 0;
         }
 
-        fwrite (savebuffer, 1, datasize, handle);
-        fclose (handle);
+        fwrite (savebuffer, 1, datasize, fatfile);
+        fclose (fatfile);
     }
     return datasize;
 }
