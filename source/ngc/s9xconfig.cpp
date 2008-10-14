@@ -96,7 +96,7 @@ DefaultSettings ()
 	// Graphics
 	Settings.Transparency = true;
 	Settings.SupportHiRes = true;
-	Settings.SkipFrames = 10;
+	Settings.SkipFrames = AUTO_FRAMERATE;
 	Settings.TurboSkipFrames = 19;
 	Settings.DisplayFrameRate = false;
 	Settings.AutoDisplayMessages = 0;

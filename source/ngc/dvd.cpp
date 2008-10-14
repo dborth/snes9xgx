@@ -28,9 +28,9 @@ extern "C" {
 #include "snes9xGX.h"
 #include "unzip.h"
 
-u64 dvddir = 0;
-u64 dvdrootdir = 0;
-int dvddirlength = 0;
+u64 dvddir = 0; // offset of currently selected file or folder
+int dvddirlength = 0; // length of currently selected file or folder
+u64 dvdrootdir = 0; // offset of DVD root
 bool isWii = false;
 
 #ifdef HW_DOL
@@ -87,6 +87,135 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 	}
 
 	return 0;
+}
+
+/****************************************************************************
+ * dvd_buffered_read
+ *
+ * the GC's dvd drive only supports offsets and length which are a multiple
+ * of 32 bytes additionally the max length of a read is 2048 bytes
+ * this function removes these limitations
+ * additionally the 7zip SDK does often read data in 1 byte parts from the
+ * DVD even when it could read 32 bytes. the dvdsf_buffer has been added to
+ * avoid having to read the same sector over and over again
+ ***************************************************************************/
+
+#define DVD_LENGTH_MULTIPLY 32
+#define DVD_OFFSET_MULTIPLY 32
+#define DVD_MAX_READ_LENGTH 2048
+#define DVD_SECTOR_SIZE 2048
+
+unsigned char dvdsf_buffer[DVD_SECTOR_SIZE];
+u64 dvdsf_last_offset = 0;
+u64 dvdsf_last_length = 0;
+
+int dvd_buffered_read(void *dst, u32 len, u64 offset)
+{
+    int ret = 0;
+
+    // only read data if the data inside dvdsf_buffer cannot be used
+    if(offset != dvdsf_last_offset || len > dvdsf_last_length)
+    {
+        memset(&dvdsf_buffer, '\0', DVD_SECTOR_SIZE);
+        ret = dvd_read(&dvdsf_buffer, len, offset);
+        dvdsf_last_offset = offset;
+        dvdsf_last_length = len;
+    }
+
+    memcpy(dst, &dvdsf_buffer, len);
+    return ret;
+}
+
+int dvd_safe_read(void *dst_v, u32 len, u64 offset)
+{
+    unsigned char buffer[DVD_SECTOR_SIZE]; // buffer for one dvd sector
+
+    // if read size and length are a multiply of DVD_(OFFSET,LENGTH)_MULTIPLY and length < DVD_MAX_READ_LENGTH
+    // we don't need to fix anything
+    if(len % DVD_LENGTH_MULTIPLY == 0 && offset % DVD_OFFSET_MULTIPLY == 0 && len <= DVD_MAX_READ_LENGTH)
+    {
+        int ret = dvd_buffered_read(buffer, len, offset);
+        memcpy(dst_v, &buffer, len);
+        return ret;
+    }
+    else
+    {
+        // no errors yet -> ret = 0
+        // the return value of dvd_read will be OR'd with ret
+        // because dvd_read does return 1 on error and 0 on success and
+        // because 0 | 1 = 1 ret will also contain 1 if at least one error
+        // occured and 0 otherwise ;)
+        int ret = 0; // return value of dvd_read
+
+        // we might need to fix all 3 issues
+        unsigned char *dst = (unsigned char *)dst_v; // gcc will not allow to use var[num] on void* types
+        u64 bytesToRead; // the number of bytes we still need to read & copy to the output buffer
+        u64 currentOffset; // the current dvd offset
+        u64 bufferOffset; // the current buffer offset
+        u64 i, j, k; // temporary variables which might be used for different stuff
+        //	unsigned char buffer[DVD_SECTOR_SIZE]; // buffer for one dvd sector
+
+        currentOffset = offset;
+        bytesToRead = len;
+        bufferOffset = 0;
+
+        // fix first issue (offset is not a multiply of 32)
+        if(offset % DVD_OFFSET_MULTIPLY)
+        {
+            // calculate offset of the prior 32 byte position
+            i = currentOffset - (currentOffset % DVD_OFFSET_MULTIPLY);
+
+            // calculate the offset from which the data of the dvd buffer will be copied
+            j = currentOffset % DVD_OFFSET_MULTIPLY;
+
+            // calculate the number of bytes needed to reach the next DVD_OFFSET_MULTIPLY byte mark
+            k = DVD_OFFSET_MULTIPLY - j;
+
+            // maybe we'll only need to copy a few bytes and we therefore don't even reach the next sector
+            if(k > len)
+            {
+                k = len;
+            }
+
+            // read 32 bytes from the last 32 byte position
+            ret |= dvd_buffered_read(buffer, DVD_OFFSET_MULTIPLY, i);
+
+            // copy the bytes to the output buffer and update currentOffset, bufferOffset and bytesToRead
+            memcpy(&dst[bufferOffset], &buffer[j], k);
+            currentOffset += k;
+            bufferOffset += k;
+            bytesToRead -= k;
+        }
+
+        // fix second issue (more than 2048 bytes are needed)
+        if(bytesToRead > DVD_MAX_READ_LENGTH)
+        {
+            // calculate the number of 2048 bytes sector needed to get all data
+            i = (bytesToRead - (bytesToRead % DVD_MAX_READ_LENGTH)) / DVD_MAX_READ_LENGTH;
+
+            // read data in 2048 byte sector
+            for(j = 0; j < i; j++)
+            {
+                ret |= dvd_buffered_read(buffer, DVD_MAX_READ_LENGTH, currentOffset); // read sector
+                memcpy(&dst[bufferOffset], buffer, DVD_MAX_READ_LENGTH); // copy to output buffer
+
+                // update currentOffset, bufferOffset and bytesToRead
+                currentOffset += DVD_MAX_READ_LENGTH;
+                bufferOffset += DVD_MAX_READ_LENGTH;
+                bytesToRead -= DVD_MAX_READ_LENGTH;
+            }
+        }
+
+        // fix third issue (length is not a multiply of 32)
+        if(bytesToRead)
+        {
+            ret |= dvd_buffered_read(buffer, DVD_MAX_READ_LENGTH, currentOffset); // read 32 byte from the dvd
+            memcpy(&dst[bufferOffset], buffer, bytesToRead); // copy bytes to output buffer
+        }
+
+        //free(tmp);
+        return ret;
+    }
 }
 
 /** Minimal ISO Directory Definition **/
@@ -440,6 +569,9 @@ LoadDVDFile (unsigned char *buffer, int length)
 	u64 discoffset;
 	char readbuffer[2048];
 
+	dvddir = filelist[selection].offset;
+	dvddirlength = filelist[selection].length;
+
 	// How many 2k blocks to read
 	blocks = dvddirlength / 2048;
 	offset = 0;
@@ -474,7 +606,7 @@ LoadDVDFile (unsigned char *buffer, int length)
 		}
 		else
 		{
-			return UnZipFile (buffer, discoffset);	// unzip from dvd
+			return UnZipBuffer (buffer, METHOD_DVD); // unzip from dvd
 		}
 	}
 	return dvddirlength;
