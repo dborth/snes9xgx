@@ -393,6 +393,7 @@ int FileSelector (int method)
 				{
 					if(method == METHOD_DVD)
 					{
+						// go to directory the 7z was in
 						dvddir = filelist[0].offset;
 						dvddirlength = filelist[0].length;
 					}
