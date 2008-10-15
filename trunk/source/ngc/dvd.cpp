@@ -578,7 +578,7 @@ LoadDVDFile (unsigned char *buffer, int length)
 	discoffset = dvddir;
 	ShowAction ((char*) "Loading...");
 
-	if(length > 0)
+	if(length > 0 && length <= 2048)
 	{
 		dvd_read (buffer, length, discoffset);
 	}

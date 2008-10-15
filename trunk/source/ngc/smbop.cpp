@@ -352,7 +352,7 @@ LoadBufferFromSMB (char * sbuffer, char *filepath, int length, bool silent)
 		return 0;
 	}
 
-	if(length > 0) // do a partial read (eg: to check file header)
+	if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
 	{
 		boffset = SMB_ReadFile (sbuffer, length, 0, smbfile);
 	}
@@ -367,8 +367,11 @@ LoadBufferFromSMB (char * sbuffer, char *filepath, int length, bool silent)
 		else
 		{
 			// Just load the file up
-			while ((ret = SMB_ReadFile (sbuffer + boffset, 1024, boffset, smbfile)) > 0)
+			while ((ret = SMB_ReadFile (sbuffer + boffset, 2048, boffset, smbfile)) > 0)
+			{
 				boffset += ret;
+				ShowProgress ((char *)"Loading...", boffset, length);
+			}
 		}
 	}
 	SMB_CloseFile (smbfile);

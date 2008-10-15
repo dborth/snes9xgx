@@ -451,6 +451,8 @@ int FileSelector (int method)
 						maxfiles = szfiles;
 						inSz = true;
 					}
+					else
+						WaitPrompt((char*) "Error opening archive!");
 				}
 				else
 				{
@@ -472,21 +474,21 @@ int FileSelector (int method)
 							if(inSz)
 								SNESROMSize = LoadFATSzFile(szpath, (unsigned char *)Memory.ROM);
 							else
-								SNESROMSize = LoadFATFile ((char *)Memory.ROM, 0);
+								SNESROMSize = LoadFATFile ((char *)Memory.ROM, filelist[selection].length);
 						break;
 
 						case METHOD_DVD:
 							if(inSz)
 								SNESROMSize = SzExtractFile(filelist[selection].offset, (unsigned char *)Memory.ROM);
 							else
-								SNESROMSize = LoadDVDFile (Memory.ROM, 0);
+								SNESROMSize = LoadDVDFile (Memory.ROM, filelist[selection].length);
 						break;
 
 						case METHOD_SMB:
 							if(inSz)
 								SNESROMSize = LoadSMBSzFile(szpath,  (unsigned char *)Memory.ROM);
 							else
-								SNESROMSize = LoadSMBFile ((char *)Memory.ROM, 0);
+								SNESROMSize = LoadSMBFile ((char *)Memory.ROM, filelist[selection].length);
 						break;
 					}
 					inSz = false;
