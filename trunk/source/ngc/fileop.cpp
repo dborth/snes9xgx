@@ -206,6 +206,8 @@ LoadFATFile (char * rbuffer, int length)
 				fseek(fatfile, 2048, SEEK_SET);		// seek back to point where we left off
 				memcpy (rbuffer, zipbuffer, 2048);	// copy what we already read
 
+				ShowProgress ((char *)"Loading...", 2048, size);
+
 				u32 offset = 2048;
 				while(offset < size)
 				{
