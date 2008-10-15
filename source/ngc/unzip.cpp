@@ -445,18 +445,14 @@ int SzParse(char * filepath, int method)
 		{
 			// Parses the 7z into a full file listing
 
-			// store the current 7z data
-			unsigned int oldLength = filelist[selection].length;
-			u64 oldOffset = filelist[selection].offset;
-
 			// erase all previous entries
 			memset(&filelist, 0, sizeof(FILEENTRIES) * MAXFILES);
 
-			// add '..' folder
+			// add '..' folder in case the user wants exit the 7z
 			strncpy(filelist[0].displayname, "..", 2);
 			filelist[0].flags = 1;
-			filelist[0].length = oldLength;
-			filelist[0].offset = oldOffset; // in case the user wants exit 7z
+			filelist[0].offset = dvddir;
+			filelist[0].length = dvddirlength;
 
 			// get contents and parse them into file list structure
 			unsigned int SzI, SzJ;
