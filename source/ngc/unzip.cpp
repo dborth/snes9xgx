@@ -102,7 +102,6 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 	int readoffset = 0;
 	int have = 0;
 	char readbuffer[ZIPCHUNK];
-	char msg[128];
 	u64 discoffset = 0;
 
 	// Read Zip Header
@@ -129,9 +128,7 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 
 	pkzip.uncompressedSize = FLIP32 (pkzip.uncompressedSize);
 
-	sprintf (msg, "Unzipping %d bytes ... Wait",
-	pkzip.uncompressedSize);
-	ShowAction (msg);
+	ShowProgress ((char *)"Loading...", 0, pkzip.uncompressedSize);
 
 	/*** Prepare the zip stream ***/
 	memset (&zs, 0, sizeof (z_stream));
@@ -202,6 +199,7 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 				SMB_ReadFile(readbuffer, ZIPCHUNK, readoffset, smbfile);
 				break;
 		}
+		ShowProgress ((char *)"Loading...", bufferoffset, pkzip.uncompressedSize);
 	}
 	while (res != Z_STREAM_END);
 
@@ -324,24 +322,25 @@ void SzDisplayError(SZ_RESULT res)
 }
 
 // function used by the 7zip SDK to read data from SD/USB/DVD/SMB
+
 SZ_RESULT SzFileReadImp(void *object, void **buffer, size_t maxRequiredSize, size_t *processedSize)
 {
-   // the void* object is a SzFileInStream
-   SzFileInStream *s = (SzFileInStream *)object;
+	// the void* object is a SzFileInStream
+	SzFileInStream *s = (SzFileInStream *) object;
 
-   // calculate offset
-   u64 offset = (u64)(s->offset + s->pos);
+	// calculate offset
+	u64 offset = (u64) (s->offset + s->pos);
 
-	if(maxRequiredSize > 2048)
+	if (maxRequiredSize > 2048)
 		maxRequiredSize = 2048;
 
-   // read data
-	switch(szMethod)
+	// read data
+	switch (szMethod)
 	{
 		case METHOD_SD:
 		case METHOD_USB:
 			fseek(fatfile, offset, SEEK_SET);
-			fread (sz_buffer, 1, maxRequiredSize, fatfile);
+			fread(sz_buffer, 1, maxRequiredSize, fatfile);
 			break;
 		case METHOD_DVD:
 			dvd_safe_read(sz_buffer, maxRequiredSize, offset);
@@ -351,29 +350,33 @@ SZ_RESULT SzFileReadImp(void *object, void **buffer, size_t maxRequiredSize, siz
 			break;
 	}
 
-   *buffer = sz_buffer;
-   *processedSize = maxRequiredSize;
-   s->pos += *processedSize;
+	*buffer = sz_buffer;
+	*processedSize = maxRequiredSize;
+	s->pos += *processedSize;
 
-   return SZ_OK;
+	if(maxRequiredSize > 1024) // only show progress for large reads
+		// this isn't quite right, but oh well
+		ShowProgress ((char *)"Loading...", s->pos, filelist[selection].length);
+
+	return SZ_OK;
 }
 
 // function used by the 7zip SDK to change the filepointer
 SZ_RESULT SzFileSeekImp(void *object, CFileSize pos)
 {
-   // the void* object is a SzFileInStream
-   SzFileInStream *s = (SzFileInStream *)object;
+	// the void* object is a SzFileInStream
+	SzFileInStream *s = (SzFileInStream *) object;
 
-   // check if the 7z SDK wants to move the pointer to somewhere after the EOF
-   if(pos >= s->len)
-   {
-       WaitPrompt((char *)"7z Error: The 7z SDK wants to start reading somewhere behind the EOF...");
-       return SZE_FAIL;
-   }
+	// check if the 7z SDK wants to move the pointer to somewhere after the EOF
+	if (pos >= s->len)
+	{
+		WaitPrompt((char *) "7z: Error - attempt to read after EOF!");
+		return SZE_FAIL;
+	}
 
-   // save new position and return
-   s->pos = pos;
-   return SZ_OK;
+	// save new position and return
+	s->pos = pos;
+	return SZ_OK;
 }
 
 /****************************************************************************
@@ -525,37 +528,36 @@ void SzClose()
 
 int SzExtractFile(int i, unsigned char *buffer)
 {
-   // prepare some variables
-   SzBlockIndex = 0xFFFFFFFF;
-   SzOffset = 0;
+	// prepare some variables
+	SzBlockIndex = 0xFFFFFFFF;
+	SzOffset = 0;
 
-   // Unzip the file
-   ShowAction((char *)"Unzipping file. Please wait...");
+	// Unzip the file
 
-   SzRes = SzExtract2(
-           &SzArchiveStream.InStream,
-           &SzDb,
-           i,                      // index of file
-           &SzBlockIndex,          // index of solid block
-           &buffer,
-           &SzBufferSize,
-           &SzOffset,              // offset of stream for required file in *outBuffer
-           &SzOutSizeProcessed,    // size of file in *outBuffer
-           &SzAllocImp,
-           &SzAllocTempImp);
+	SzRes = SzExtract2(
+		   &SzArchiveStream.InStream,
+		   &SzDb,
+		   i,                      // index of file
+		   &SzBlockIndex,          // index of solid block
+		   &buffer,
+		   &SzBufferSize,
+		   &SzOffset,              // offset of stream for required file in *outBuffer
+		   &SzOutSizeProcessed,    // size of file in *outBuffer
+		   &SzAllocImp,
+		   &SzAllocTempImp);
 
-   // close 7Zip archive and free memory
+	// close 7Zip archive and free memory
 	SzClose();
 
-   // check for errors
-   if(SzRes != SZ_OK)
-   {
-   	// display error message
-   	SzDisplayError(SzRes);
-       return 0;
-   }
-   else
-   {
-   	return SzOutSizeProcessed;
-   }
+	// check for errors
+	if(SzRes != SZ_OK)
+	{
+		// display error message
+		SzDisplayError(SzRes);
+		return 0;
+	}
+	else
+	{
+		return SzOutSizeProcessed;
+	}
 }

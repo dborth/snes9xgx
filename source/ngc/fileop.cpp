@@ -185,7 +185,7 @@ LoadFATFile (char * rbuffer, int length)
 	fatfile = fopen (filepath, "rb");
 	if (fatfile > 0)
 	{
-		if(length > 0) // do a partial read (eg: to check file header)
+		if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
 		{
 			fread (rbuffer, 1, length, fatfile);
 			size = length;
@@ -205,7 +205,13 @@ LoadFATFile (char * rbuffer, int length)
 				size = ftell(fatfile);				// get filesize
 				fseek(fatfile, 2048, SEEK_SET);		// seek back to point where we left off
 				memcpy (rbuffer, zipbuffer, 2048);	// copy what we already read
-				fread (rbuffer + 2048, 1, size - 2048, fatfile);
+
+				u32 offset = 2048;
+				while(offset < size)
+				{
+					offset += fread (rbuffer + offset, 1, (1024*512), fatfile); // read in 512K chunks
+					ShowProgress ((char *)"Loading...", offset, size);
+				}
 			}
 		}
 		fclose (fatfile);
