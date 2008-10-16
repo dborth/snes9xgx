@@ -1,0 +1,4 @@
+inject.exe : inject.c
+	@gcc -O2 -arch i386 -arch ppc -Wall inject.c -o inject
+	@strip inject
+
