@@ -497,7 +497,7 @@ DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsiz
 	}
 
 	setfontsize (12);
-	DrawText (510, screenheight - 20, (char *)"Snes9x GX 005");
+	DrawText (510, screenheight - 20, (char *)VERSIONSTR);
 
 	// Draw menu items
 

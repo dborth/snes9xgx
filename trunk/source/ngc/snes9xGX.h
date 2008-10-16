@@ -17,8 +17,8 @@
 #include <gccore.h>
 #include "snes9x.h"
 
-#define VERSIONNUM "005"
-#define VERSIONSTR "Snes9x GX 005"
+#define VERSIONNUM "006"
+#define VERSIONSTR "Snes9x GX 006"
 
 #define NOTSILENT 0
 #define SILENT 1
