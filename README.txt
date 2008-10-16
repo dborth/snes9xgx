@@ -10,7 +10,9 @@
 ­———————————————————————————————————————————————————————————————————————•ßrK•
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                          SNES9X GX                            ·oø×O0|
+|0O×øo·                       SNES9X GX 006                           ·oø×O0|
+|                   http://code.google.com/p/snes9x-gx                      |
+|                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 
 SNES9x GX is a Super Nintendo emulator for the Wii based on the PC emulator 
@@ -19,14 +21,30 @@ the original SNES9x 1.50 GameCube port, whose work was continued by crunchy2.
 It was updated for the Wii by michniewski and SNES9x 1.51 was ported by 
 Tantric. The project is currently being maintained by michniewski and Tantric.
 
-[What's New 006]
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                            FEATURES                           ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+- Based on Snes9x 1.51 - superior ROM compatibility
+- Wiimote, Nunchuk, Classic, and Gamecube controller support
+- SNES Superscope, Mouse, Justifier support
+- Cheat support
+- Auto Load/Save Game Snapshots and SRAM
+- Custom controller configurations
+- SD, USB, DVD, SMB, GC Memory Card, Zip, and 7z support
+- Autodetect PAL/NTSC, 16:9 widescreen support
+- Open Source!
+
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                         UPDATE HISTORY                        ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+[What's New 006 - October 15, 2008]
 
 Tantric
 - added: 480p for GameCube
 - added: Sound sync
 - added: 7z support
 - changed: Faster SD/USB access (readahead cache enabled)
-- changed: Auto frameskip (previously was fixed frameskip)
 - fixed: Video offset issues
 - fixed: BS-X games work now
 - fixed: Wii DVD works now
@@ -121,20 +139,6 @@ Tantric
 - fixed: rom plays immediately after loading
 
 [older update history at the bottom]
-
-
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                            FEATURES                           ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-- Based on Snes9x 1.51 - superior ROM compatibility
-- Wiimote, Nunchuk, Classic, and Gamecube controller support
-- SNES Superscope, Mouse, Justifier support
-- Cheat support
-- Auto Load/Save Game Snapshots and SRAM
-- Custom controller configurations
-- SD, USB, DVD, SMB, GC Memory Card, and Zip support
-- Autodetect PAL/NTSC, 16:9 widescreen support
-- Open Source!
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                         SETUP & INSTALLATION                  ·oø×O0|
