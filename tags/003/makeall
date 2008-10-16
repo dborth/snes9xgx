@@ -1,0 +1,25 @@
+#!/bin/bash
+
+touch source/ngc/snes9xGX.h
+cp makefiles/Makefile-mcslota Makefile
+make
+
+touch source/ngc/snes9xGX.h
+cp makefiles/Makefile-sdslota Makefile
+make
+
+touch source/ngc/snes9xGX.h
+cp makefiles/Makefile-sdslotb Makefile
+make
+
+touch source/ngc/snes9xGX.h
+cp makefiles/Makefile-smb Makefile
+make
+
+touch source/ngc/snes9xGX.h
+cp makefiles/Makefile-noload Makefile
+make
+
+touch source/ngc/snes9xGX.h
+cp makefiles/Makefile-mcslotb Makefile
+make
