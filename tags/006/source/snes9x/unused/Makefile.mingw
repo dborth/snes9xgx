@@ -1,0 +1,193 @@
+ASM=nasm
+OBJFIX=win32/objfix.exe
+
+CFLAGSORIG=-Wall -I../zlib -I -I../FMOD/api/inc -DSPC700_SHUTDOWN -DNETPLAY_SUPPORT \
+	-DCPU_SHUTDOWN -DZLIB -DVAR_CYCLES -DEXECUTE_SUPERFX_PER_LINE -D__WIN32__ -DUSE_OPENGL \
+	-DUNZIP_SUPPORT -DHAVE_LIBPNG -DSDD1_DECOMP -DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
+	-DWIN32 -D_WINDOWS -DSPC700_C -DJMA_SUPPORT -DZSNES_FX -DZSNES_C4 -DHAVE_STDINT_H -D_WIN32_IE=0x0501
+#-DFMOD_SUPPORT -DUSE_GLIDE
+
+
+ifeq (${DEBUG},yes)
+CFLAGS= ${CFLAGSORIG} -ggdb3
+else
+CFLAGS= ${CFLAGSORIG} -O3 -DNDEBUG
+endif
+
+
+ifeq (${CROSS},yes)
+CC=i586-mingw32-gcc
+CPPC=i586-mingw32-g++
+WINDRES=i586-mingw32-windres
+DEL=rm -f
+SLASH=/
+else
+CC=gcc
+CPPC=g++
+WINDRES=windres
+DEL=del
+SLASH=\${blahblahblahblah}
+endif
+
+LINK=-lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lodbc32 -lodbccp32 -lz -lpng -lcomctl32 -lwinmm -lopengl32 -lglu32 -lwsock32 -lddraw -ldsound -ldxguid -lvfw32 -mwindows
+#-L..\..\FMOD\api\lib -lfmodvc -lglide2x -ldelayimp
+
+OBJS= 2xsai.obj apu.obj apudebug.obj bsx.obj c4.obj c4emu.obj cheats.obj cheats2.obj \
+	clip.obj conffile.obj controls.obj cpu.obj cpuexec.obj cpuops.obj crosshairs.obj data.obj \
+	debug.obj dma.obj dsp1.obj fxdbg.obj fxemu.obj fxinst.obj gfx.obj globals.obj loadzip.obj \
+	logger.obj memmap.obj movie.obj netplay.obj obc1.obj ppu.obj reader.obj sa1.obj sa1cpu.obj \
+	screenshot.obj sdd1.obj sdd1emu.obj server.obj seta.obj seta010.obj seta011.obj seta018.obj \
+	snaporig.obj snapshot.obj snes9x.obj sound.obj soundux.obj spc700.obj spc7110.obj srtc.obj \
+	tile.obj unzip/unreduce.obj i386/ZSNES.obj i386/fxemu2b.obj i386/fxtable.obj i386/fxemu2.obj \
+	i386/fxemu2c.obj i386/sfxproc.obj i386/SPC.obj i386/zsnesc4.obj i386/C4.obj i386/2XSAIMMX.obj \
+	i386/bilinear.obj jma/7zlzma.obj jma/crc32.obj jma/iiostrm.obj jma/inbyte.obj jma/jma.obj \
+	jma/lzma.obj jma/lzmadec.obj jma/s9x-jma.obj jma/winout.obj unzip/unshrink.obj unzip/unzip.obj \
+	unzip/explode.obj win32/auxmath.obj win32/AVIOutput.obj win32/directx.obj win32/InputCustom.obj \
+	win32/render.obj win32/win32.obj win32/wconfig.obj win32/wsnes9x.obj win32/snes9x.obj
+
+#adler32.obj compress.obj deflate.obj emucrc32.obj gzio.obj infback.obj \
+#inffast.obj inflate.obj inftrees.obj minigzip.obj trees.obj uncompr.obj zutil.obj
+#png.obj pngerror.obj pnggccrd.obj pngget.obj pngmem.obj \
+#pngpread.obj pngread.obj pngrio.obj pngrtran.obj pngrutil.obj pngset.obj pngtrans.obj \
+#pngvcrd.obj pngwio.obj pngwrite.obj pngwtran.obj pngwutil.obj
+
+.SUFFIXES: .c .cpp .asm .ASM
+
+%.obj: %.c
+	${CC} ${CFLAGS} -o $@ -c $<
+
+%.obj: %.cpp
+	${CPPC} ${CFLAGS} -o $@ -c $<
+
+%.obj: %.asm
+	${ASM} -d__DJGPP__=1 -dZSNES_FX -f win32 -i . -i i386 -o $@ $<
+	${OBJFIX} $@
+
+%.obj: %.ASM
+	${ASM} -d__DJGPP__=1 -dZSNES_FX -f win32 -i . -i i386 -o $@ $<
+	${OBJFIX} $@
+
+all: ${OBJFIX} ${OBJS}
+ifeq (${DEBUG},yes)
+	${CPPC} -ggdb3 -osnes9x-debug.exe ${OBJS} ${LINK}
+else
+	${CPPC} -s -osnes9x.exe ${OBJS} ${LINK}
+endif
+
+${OBJFIX}: win32/objfix.c
+	gcc -O3 -s -o $@ win32/objfix.c
+2xsai.obj: 2xsai.cpp
+apu.obj: apu.cpp
+apudebug.obj: apudebug.cpp
+bsx.obj: bsx.cpp
+c4.obj: c4.cpp
+c4emu.obj: c4emu.cpp
+cheats.obj: cheats.cpp
+cheats2.obj: cheats2.cpp
+clip.obj: clip.cpp
+conffile.obj: conffile.cpp
+controls.obj: controls.cpp
+cpu.obj: cpu.cpp
+cpuexec.obj: cpuexec.cpp
+cpuops.obj: cpuops.cpp
+crosshairs.obj: crosshairs.cpp
+data.obj: data.cpp
+debug.obj: debug.cpp
+dma.obj: dma.cpp
+dsp1.obj: dsp1.cpp
+fxdbg.obj: fxdbg.cpp
+fxemu.obj: fxemu.cpp
+fxinst.obj: fxinst.cpp
+gfx.obj: gfx.cpp
+globals.obj: globals.cpp
+loadzip.obj: loadzip.cpp
+logger.obj: logger.cpp
+memmap.obj: memmap.cpp
+movie.obj: movie.cpp
+netplay.obj: netplay.cpp
+obc1.obj: obc1.cpp
+ppu.obj: ppu.cpp
+reader.obj: reader.cpp
+sa1.obj: sa1.cpp
+sa1cpu.obj: sa1cpu.cpp
+screenshot.obj: screenshot.cpp
+sdd1.obj: sdd1.cpp
+sdd1emu.obj: sdd1emu.cpp
+server.obj: server.cpp
+seta.obj: seta.cpp
+seta010.obj: seta010.cpp
+seta011.obj: seta011.cpp
+seta018.obj: seta018.cpp
+snaporig.obj: snaporig.cpp
+snapshot.obj: snapshot.cpp
+snes9x.obj: snes9x.cpp
+sound.obj: sound.cpp
+soundux.obj: soundux.cpp
+spc700.obj: spc700.cpp
+spc7110.obj: spc7110.cpp
+srtc.obj: srtc.cpp
+tile.obj: tile.cpp
+unzip/unreduce.obj: unzip/unreduce.c
+unzip/unshrink.obj: unzip/unshrink.c
+unzip/unzip.obj: unzip/unzip.c
+unzip/explode.obj: unzip/explode.c
+jma/7zlzma.obj: jma/7zlzma.cpp
+jma/crc32.obj: jma/crc32.cpp
+jma/iiostrm.obj: jma/iiostrm.cpp
+jma/inbyte.obj: jma/inbyte.cpp
+jma/jma.obj: jma/jma.cpp
+jma/lzma.obj: jma/lzma.cpp
+jma/lzmadec.obj: jma/lzmadec.cpp
+jma/s9x-jma.obj: jma/s9x-jma.cpp
+jma/winout.obj: jma/winout.cpp
+win32/auxmath.obj: win32/auxmath.cpp
+win32/AVIOutput.obj: win32/AVIOutput.cpp
+win32/directx.obj: win32/directx.cpp
+win32/InputCustom.obj: win32/InputCustom.cpp
+win32/render.obj: win32/render.cpp
+win32/wconfig.obj: win32/wconfig.cpp
+win32/win32.obj: win32/win32.cpp
+win32/wsnes9x.obj: win32/wsnes9x.cpp
+win32/snes9x.obj: win32/rsrc/snes9x.rc
+	${WINDRES} --include-dir win32/rsrc --language=0x413 -D_WIN32_IE=0x0501 win32/rsrc/snes9x.rc -owin32/snes9x.obj
+#--language=0x809
+
+#adler32.obj: ../zlib/adler32.c
+#compress.obj: ../zlib/compress.c
+#deflate.obj: ../zlib/deflate.c
+#emucrc32.obj: ../zlib/emucrc32.c
+#gzio.obj: ../zlib/gzio.c
+#infback.obj: ../zlib/infback.c
+#inffast.obj: ../zlib/inffast.c
+#inflate.obj: ../zlib/inflate.c
+#inftrees.obj: ../zlib/inftrees.c
+#minigzip.obj: ../zlib/minigzip.c
+#trees.obj: ../zlib/trees.c
+#uncompr.obj: ../zlib/uncompr.c
+#zutil.obj: ../zlib/zutil.c
+
+#png.obj: ../libpng/src/png.c
+#pngerror.obj: ../libpng/src/pngerror.c
+#pnggccrd.obj: ../libpng/src/pnggccrd.c
+#pngget.obj: ../libpng/src/pngget.c
+#pngmem.obj: ../libpng/src/pngmem.c
+#pngpread.obj: ../libpng/src/pngpread.c
+#pngread.obj: ../libpng/src/pngread.c
+#pngrio.obj: ../libpng/src/pngrio.c
+#pngrtran.obj: ../libpng/src/pngrtran.c
+#pngrutil.obj: ../libpng/src/pngrutil.c
+#pngset.obj: ../libpng/src/pngset.c
+#pngtrans.obj: ../libpng/src/pngtrans.c
+#pngvcrd.obj: ../libpng/src/pngvcrd.c
+#pngwio.obj: ../libpng/src/pngwio.c
+#pngwrite.obj: ../libpng/src/pngwrite.c
+#pngwtran.obj: ../libpng/src/pngwtran.c
+#pngwutil.obj: ../libpng/src/pngwutil.c
+
+clean:
+	${DEL} *.obj
+	${DEL} snes9x.exe
+	${DEL} i386${SLASH}*.obj
+	${DEL} jma${SLASH}*.obj
+	${DEL} unzip${SLASH}*.obj
+	${DEL} win32${SLASH}*.obj
