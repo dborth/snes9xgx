@@ -1,14 +1,17 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * Snes9x 1.50
  *
- * crunchy2 April 2007-July 2007
- * Michniewski 2008
- * Tantric September 2008
+ * Nintendo Gamecube Port
+ * crunchy2 April 2007
  *
  * sram.cpp
  *
  * SRAM save/load/import/export handling
- ***************************************************************************/
+ ****************************************************************************/
 
-bool SaveSRAM (int method, bool silent);
-int LoadSRAM (int method, bool silent);
+int prepareMCsavedata ();
+int prepareEXPORTsavedata ();
+void decodesavedata (int readsize);
+
+void quickLoadSRAM (bool8 silent);
+void quickSaveSRAM (bool8 silent);

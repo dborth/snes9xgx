@@ -1,26 +1,15 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * Snes9x 1.50 
+ *
+ * Nintendo Gamecube Unzip - borrowed from the GPP
  *
  * softdev July 2006
- * Michniewski 2008
- * Tantric September 2008
- *
- * unzip.h
- *
- * File unzip routines
  ****************************************************************************/
 #ifndef _UNZIP_
 #define _UNZIP_
 
-#include <smb.h>
-
 extern int IsZipFile (char *buffer);
-char * GetFirstZipFilename(int method);
-int UnZipBuffer (unsigned char *outbuffer, int method);
-int SzParse(char * filepath, int method);
-int SzExtractFile(int i, unsigned char *buffer);
-void SzClose();
-
+int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, short where, FILE* filehandle);
 /*
  * Zip file header definition
  */

@@ -1,5 +1,3 @@
-VERSION := 006
-
 #---------------------------------------------------------------------------------
 # Clear the implicit built in rules
 #---------------------------------------------------------------------------------
@@ -11,32 +9,35 @@ endif
 
 include $(DEVKITPPC)/gamecube_rules
 
+LOADTYPE = "sd"
+VERSION = "version"
+
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	snes9xgx-$(VERSION)-gc
-TARGETDIR   :=  executables
+TARGET		:=	executables/snes9xgx-$(VERSION)-$(LOADTYPE)-gc
 BUILD		:=	build_gc
-SOURCES		:=	source/snes9x source/ngc source/sz
+SOURCES		:=	source/snes9x source/unzip source/ngc source/smb
 DATA		:=	data  
-INCLUDES	:=	source/snes9x source/ngc
+INCLUDES	:=	source/snes9x source/unzip source/ngc source/smb
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
-			-DNGC \
-			-DNO_ASM -DRIGHTSHIFT_IS_SAR \
-			-DCPU_SHUTDOWN -DSPC700_SHUTDOWN \
-			-DSPC700_C -DSDD1_DECOMP \
-			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
-			-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
-			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter \
-			#-D_DEBUG_VIDEO -pipe
+CUSTOMFLAGS = -DQUICK_SAVE_SLOT=1 -DSMB_SVID='"Crunchewy"' \
+			-DSMB_IP='"192.168.1.111"' -DGW_IP='"192.168.1.1"'
+
+CFLAGS	=	-g -O2 -Wall $(MACHDEP) $(INCLUDE) \
+			-DNGC -DNO_ASM -DCPU_SHUTDOWN -DSPC700C \
+			-DSPC700_SHUTDOWN -DNEW_COLOUR_BLENDING \
+			-DNO_INLINE_GET_SET -DSDD1_DECOMP -DCORRECT_VRAM_READS \
+			-DDETECT_NASTY_FX_INTERLEAVE -DNGC_ZOOM -DSDUSE_LFN \
+			-DFORCE_WII=0 $(CUSTOMFLAGS) \
+			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter -pipe
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--cref
@@ -44,13 +45,13 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--cref
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lpngu -lpng -lmxml -lbba -ltinysmb -lfat -lz -logc -lm -lfreetype
+LIBS	:=	 -lfat -lz -logc -lm -lfreetype -lbba
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(CURDIR)
+LIBDIRS	:=
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -59,7 +60,7 @@ LIBDIRS	:= $(CURDIR)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(TARGETDIR)/$(TARGET)
+export OUTPUT	:=	$(CURDIR)/$(TARGET)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
 					$(foreach dir,$(DATA),$(CURDIR)/$(dir))
@@ -102,15 +103,13 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
 					-L$(LIBOGC_LIB)
 
-export OUTPUT	:=	$(CURDIR)/$(TARGETDIR)/$(TARGET)
+export OUTPUT	:=	$(CURDIR)/$(TARGET)
 .PHONY: $(BUILD) clean
 
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@[ -d $(TARGETDIR) ] || mkdir -p $(TARGETDIR)
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile.gc
-	@rm -fr $(OUTPUT).elf
 
 #---------------------------------------------------------------------------------
 clean:
@@ -119,11 +118,11 @@ clean:
 
 #---------------------------------------------------------------------------------
 run:
-	psoload $(OUTPUT).dol
+	wiiload $(OUTPUT).dol
 
 #---------------------------------------------------------------------------------
 reload:
-	psoload -r $(OUTPUT).dol
+	wiiload -r $(OUTPUT).dol
 
 
 #---------------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,15 +12,11 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com)
-
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
-                             Nach (n-a-c-h@users.sourceforge.net),
+  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
+                             funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com),
+                             Nach (n-a-c-h@users.sourceforge.net), and
                              zones (kasumitokoduck@yahoo.com)
-
-  (c) Copyright 2006 - 2007  nitsuja
-
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -114,30 +110,17 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x, HQ3x, HQ4x filters
+  HQ2x filter
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
-
-  Win32 GUI code
-  (c) Copyright 2003 - 2006  blip,
-                             funkyass,
-                             Matthew Kendora,
-                             Nach,
-                             nitsuja
-
-  Mac OS GUI code
-  (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
-
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
-
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without
-  fee, providing that this license information and copyright notice appear
+  and source form, for non-commercial purposes, is hereby granted without 
+  fee, providing that this license information and copyright notice appear 
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -159,48 +142,44 @@
 **********************************************************************************/
 
 
-
-
 #ifdef NETPLAY_SUPPORT
-#ifdef _DEBUG
-	#define NP_DEBUG 1
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <memory.h>
 #include <sys/types.h>
 #ifdef HAVE_STRINGS_H
-	#include <strings.h>
+#include <strings.h>
+#endif
+
+#ifndef __WIN32__
+#include <unistd.h>
+#include <sys/time.h>
 #endif
 
 #ifdef __WIN32__
 
-	#include <winsock.h>
-	#include <process.h>
-	#include "win32/wsnes9x.h"
-	#define ioctl ioctlsocket
-	#define close closesocket
-	#define read(a,b,c) recv(a, b, c, 0)
-	#define write(a,b,c) send(a, b, c, 0)
-	#define gettimeofday(a,b) S9xGetTimeOfDay (a)
-	#define exit(a) _endthread()
-	void S9xGetTimeOfDay (struct timeval *n);
+#include <winsock.h>
+#include <process.h>
+#define ioctl ioctlsocket
+#define close closesocket
+#define read(a,b,c) recv(a, b, c, 0)
+#define write(a,b,c) send(a, b, c, 0)
+#define gettimeofday(a,b) S9xGetTimeOfDay (a)
+#define exit(a) _endthread()
+void S9xGetTimeOfDay (struct timeval *n);
 #else
-	#include <unistd.h>
-	#include <sys/time.h>
 
-	#include <netdb.h>
-	#include <sys/socket.h>
-	#include <sys/param.h>
-	#include <netinet/in.h>
-	#include <arpa/inet.h>
-	#include <signal.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <sys/param.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <signal.h>
 
-	#ifdef __SVR4
-		#include <sys/stropts.h>
-	#endif
+#ifdef __SVR4
+#include <sys/stropts.h>
+#endif
 
 #endif // !__WIN32__
 
@@ -209,11 +188,7 @@
 #include "memmap.h"
 #include "snapshot.h"
 
-#ifdef __WIN32__
 #define NP_ONE_CLIENT 1
-#else
-#define NP_ONE_CLIENT 0
-#endif
 
 struct SNPServer NPServer;
 
@@ -247,10 +222,10 @@ void S9xNPShutdownClient (int c, bool8 report_error = FALSE)
 #endif
         if (report_error)
         {
-            sprintf (NetPlay.ErrorMsg,
+            sprintf (NetPlay.ErrorMsg, 
                      "Player %d on '%s' has disconnected.", c + 1,
                      NPServer.Clients [c].HostName);
-            S9xNPSetWarning  (NetPlay.ErrorMsg);
+            S9xNPSetError (NetPlay.ErrorMsg);
         }
 
         if (NPServer.Clients [c].HostName)
@@ -336,7 +311,7 @@ static bool8 S9xNPSSendData (int fd, const uint8 *data, int length)
 
     if (chunk < 1024)
         chunk = 1024;
-
+    
     do
     {
         int num_bytes = len;
@@ -351,7 +326,7 @@ static bool8 S9xNPSSendData (int fd, const uint8 *data, int length)
 
 	if (sent < 0)
 	{
-	    if (errno == EINTR
+	    if (errno == EINTR 
 #ifdef EAGAIN
 		|| errno == EAGAIN
 #endif
@@ -401,18 +376,18 @@ void S9xNPSendHeartBeat ()
     if (n >= 0)
     {
         bool8 Paused = NPServer.Paused != 0;
-
+        
         NPServer.FrameCount++;
         *ptr++ = NP_SERV_MAGIC;
         *ptr++ = 0; // Individual client sequence number will get placed here
         *ptr++ = NP_SERV_JOYPAD | (n << 6) | ((Paused != 0) << 5);
-
+        
         WRITE_LONG (ptr, NPServer.FrameCount);
         len += 4;
         ptr += 4;
 
         int i;
-
+        
         for (i = 0; i <= n; i++)
         {
             WRITE_LONG (ptr, NPServer.Joypads [i]);
@@ -463,15 +438,15 @@ void S9xNPProcessClient (int c)
     {
 #ifdef NP_DEBUG
         printf ("SERVER: Messages lost from '%s', expected %d, got %d\n",
-                NPServer.Clients [c].HostName ?
-                NPServer.Clients [c].HostName : "Unknown",
+                NPServer.Clients [c].HostName ? 
+                NPServer.Clients [c].HostName : "Unknown", 
                 NPServer.Clients [c].ReceiveSequenceNum,
                 header [1]);
 #endif
-        sprintf (NetPlay.WarningMsg,
+        sprintf (NetPlay.WarningMsg, 
                  "SERVER: Messages lost from '%s', expected %d, got %d\n",
-                NPServer.Clients [c].HostName ?
-                NPServer.Clients [c].HostName : "Unknown",
+                NPServer.Clients [c].HostName ? 
+                NPServer.Clients [c].HostName : "Unknown", 
                 NPServer.Clients [c].ReceiveSequenceNum,
                 header [1]);
         NPServer.Clients [c].ReceiveSequenceNum = header [1] + 1;
@@ -524,7 +499,7 @@ void S9xNPProcessClient (int c)
             *ptr++ = NP_SERV_MAGIC;
             *ptr++ = NPServer.Clients [c].SendSequenceNum++;
 
-            if (NPServer.SendROMImageOnConnect &&
+            if (NPServer.SendROMImageOnConnect && 
                 NPServer.NumClients > NP_ONE_CLIENT)
                 *ptr++ = NP_SERV_HELLO | 0x80;
             else
@@ -570,7 +545,7 @@ void S9xNPProcessClient (int c)
                 S9xNPServerAddTask (NP_SERVER_RESET_ALL, 0);
             }
             else
-                S9xNPServerAddTask (NP_SERVER_SYNC_CLIENT, (void *) c);
+                S9xNPServerAddTask (NP_SERVER_SYNC_CLIENT, (void *) c); 
             break;
 
         case NP_CLNT_RECEIVED_ROM_IMAGE:
@@ -589,7 +564,7 @@ void S9xNPProcessClient (int c)
                 S9xNPServerAddTask (NP_SERVER_RESET_ALL, 0);
             }
             else
-                S9xNPServerAddTask (NP_SERVER_SYNC_CLIENT, (void *) c);
+                S9xNPServerAddTask (NP_SERVER_SYNC_CLIENT, (void *) c); 
 
             break;
 
@@ -612,7 +587,7 @@ void S9xNPProcessClient (int c)
             {
                 NPServer.Clients [c].Paused = FALSE;
                 NPServer.Clients [c].Ready = TRUE;
-
+                    
                 S9xNPRecomputePause ();
                 break;
             }
@@ -627,19 +602,14 @@ void S9xNPProcessClient (int c)
                 if (!NPServer.SendROMImageOnConnect)
                 {
                     S9xNPWaitForEmulationToComplete ();
-
+                    
                     if (NPServer.SyncByReset)
                     {
                         S9xNPServerAddTask (NP_SERVER_SEND_SRAM, (void *) c);
                         S9xNPServerAddTask (NP_SERVER_RESET_ALL, 0);
                     }
                     else
-#ifdef __WIN32__
                         S9xNPServerAddTask (NP_SERVER_SYNC_CLIENT, (void *) c);
-#else
-                        /* We need to resync all clients on new player connect as we don't have a 'reference game' */
-                        S9xNPServerAddTask (NP_SERVER_SYNC_ALL, (void *) c);
-#endif
                 }
             }
             else
@@ -673,14 +643,14 @@ void S9xNPAcceptClient (int Listen, bool8 block)
     struct hostent *host;
     int new_fd;
     int i;
-
+    
 #ifdef NP_DEBUG
     printf ("SERVER: attempting to accept new client connection @%ld\n", S9xGetMilliTime () - START);
 #endif
     S9xNPSetAction ("SERVER: Attempting to accept client connection...", TRUE);
     memset (&remote_address, 0, sizeof (remote_address));
     ACCEPT_SIZE_T len = sizeof (remote_address);
-
+    
     new_fd = accept (Listen, (struct sockaddr *)&remote_address, &len);
 
     S9xNPSetAction ("Setting socket options...", TRUE);
@@ -792,9 +762,9 @@ static bool8 S9xNPServerInit (int port)
 	S9xNPSetError ("NetPlay Server: Can't create listening socket.");
 	return (FALSE);
     }
-
+    
     val = 1;
-    setsockopt (NPServer.Socket, SOL_SOCKET, SO_REUSEADDR,
+    setsockopt (NPServer.Socket, SOL_SOCKET, SO_REUSEADDR, 
                 (char *)&val, sizeof (val));
 
     memset (&address, 0, sizeof (address));
@@ -826,31 +796,13 @@ static bool8 S9xNPServerInit (int port)
     return (TRUE);
 }
 
-void S9xNPSendServerPause (bool8 paused)
-{
-#ifdef NP_DEBUG
-    printf ("SERVER: Pause - %s @%ld\n", paused ? "YES" : "NO", S9xGetMilliTime () - START);
-#endif
-    uint8 pause [7];
-    uint8 *ptr = pause;
-    *ptr++ = NP_SERV_MAGIC;
-    *ptr++ = 0;
-    *ptr++ = NP_SERV_PAUSE | (paused ? 0x20 : 0);
-    WRITE_LONG (ptr, NPServer.FrameCount);
-    S9xNPSendToAllClients (pause, 7);
-}
-
 void S9xNPServerLoop (void *)
 {
 #ifdef __WIN32__
     BOOL success = FALSE;
 #else
     bool8 success = FALSE;
-    static struct timeval next1 = {0, 0};
-    struct timeval now;
 #endif
-
-	int pausedState = -1, newPausedState = -1;
 
     while (server_continue)
     {
@@ -860,27 +812,16 @@ void S9xNPServerLoop (void *)
         int i;
 
         int max_fd = NPServer.Socket;
-
+        
 #ifdef __WIN32__
         Sleep (0);
 #endif
 
-        if (success && !(Settings.Paused && !Settings.FrameAdvance) && !Settings.StopEmulation &&
+        if (success && !Settings.Paused && !Settings.StopEmulation &&
             !Settings.ForcedPause && !NPServer.Paused)
         {
             S9xNPSendHeartBeat ();
-			newPausedState = 0;
         }
-		else
-		{
-			newPausedState = 1;
-		}
-
-		if(pausedState != newPausedState)
-		{
-			pausedState = newPausedState;
-//			S9xNPSendServerPause(pausedState); // XXX: doesn't seem to work yet...
-		}
 
         do
         {
@@ -895,11 +836,11 @@ void S9xNPServerLoop (void *)
                         max_fd = NPServer.Clients [i].Socket;
                 }
             }
-
+        
             timeout.tv_sec = 0;
             timeout.tv_usec = 1000;
             res = select (max_fd + 1, &read_fds, NULL, NULL, &timeout);
-
+            
             if (res > 0)
             {
                 if (FD_ISSET (NPServer.Socket, &read_fds))
@@ -907,7 +848,7 @@ void S9xNPServerLoop (void *)
 
                 for (i = 0; i < NP_MAX_CLIENTS; i++)
                 {
-                    if (NPServer.Clients [i].Connected &&
+                    if (NPServer.Clients [i].Connected && 
                         FD_ISSET (NPServer.Clients [i].Socket, &read_fds))
                     {
                         S9xNPProcessClient (i);
@@ -918,35 +859,6 @@ void S9xNPServerLoop (void *)
 
 #ifdef __WIN32__
         success = WaitForSingleObject (GUI.ServerTimerSemaphore, 200) == WAIT_OBJECT_0;
-#else
-        while (gettimeofday (&now, NULL) < 0) ;
-
-        /* If there is no known "next" frame, initialize it now */
-        if (next1.tv_sec == 0) { next1 = now; ++next1.tv_usec; }
-
-	success=FALSE;
-
-	if (timercmp(&next1, &now, >))
-        {
-            /* If we're ahead of time, sleep a while */
-            unsigned timeleft =
-                (next1.tv_sec - now.tv_sec) * 1000000
-                + next1.tv_usec - now.tv_usec;
-	    usleep(timeleft<(200*1000)?timeleft:(200*1000));
-        }
-
-        if (!timercmp(&next1, &now, >))
-        {
-
-            /* Calculate the timestamp of the next frame. */
-            next1.tv_usec += Settings.FrameTime;
-            if (next1.tv_usec >= 1000000)
-            {
-                next1.tv_sec += next1.tv_usec / 1000000;
-                next1.tv_usec %= 1000000;
-            }
-            success=TRUE;
-         }
 #endif
 
         while (NPServer.TaskHead != NPServer.TaskTail)
@@ -996,7 +908,6 @@ void S9xNPServerLoop (void *)
                         WRITE_LONG (ptr, NPServer.FrameCount);
                         S9xNPSendToAllClients (reset, 7);
                     }
-                    S9xNPSetAction ("", TRUE);
                     break;
                 case NP_SERVER_SEND_SRAM:
                     NPServer.Clients [(pint) task_data].Ready = FALSE;
@@ -1035,9 +946,8 @@ bool8 S9xNPStartServer (int port)
     server_continue = TRUE;
     if (S9xNPServerInit (port))
 #ifdef __WIN32__
-        return (_beginthread (S9xNPServerLoop, 0, &p) != (uintptr_t)(~0));
+        return (_beginthread (S9xNPServerLoop, 0, &p) != ~0);
 #else
-    	S9xNPServerLoop(NULL);
 	return (TRUE);
 #endif
 
@@ -1055,7 +965,11 @@ void S9xNPStopServer ()
     for (int i = 0; i < NP_MAX_CLIENTS; i++)
     {
         if (NPServer.Clients [i].Connected)
-	    S9xNPShutdownClient(i, FALSE);
+        {
+            close (NPServer.Clients [i].Socket);
+            NPServer.Clients [i].Connected = FALSE;
+            NPServer.Clients [i].SaidHello = FALSE;
+        }
     }
 }
 
@@ -1063,7 +977,7 @@ void S9xNPStopServer ()
 void S9xGetTimeOfDay (struct timeval *n)
 {
     unsigned long t = S9xGetMilliTime ();
-
+    
     n->tv_sec = t / 1000;
     n->tv_usec = (t % 1000) * 1000;
 }
@@ -1101,7 +1015,7 @@ bool8 S9xNPSendROMImageToClient (int c)
 
     uint8 header [7 + 1 + 4];
     uint8 *ptr = header;
-    int len = sizeof (header) + Memory.CalculatedSize +
+    int len = sizeof (header) + Memory.CalculatedSize + 
               strlen (Memory.ROMFilename) + 1;
     *ptr++ = NP_SERV_MAGIC;
     *ptr++ = NPServer.Clients [c].SendSequenceNum++;
@@ -1133,7 +1047,6 @@ void S9xNPSyncClient (int client)
 {
 #ifdef HAVE_MKSTEMP
     char fname[] = "/tmp/snes9x_fztmpXXXXXX";
-    int fd=-1;
 #else
     char fname [L_tmpnam];
 #endif
@@ -1142,7 +1055,7 @@ void S9xNPSyncClient (int client)
 
     S9xNPSetAction ("SERVER: Freezing game...", TRUE);
 #ifdef HAVE_MKSTEMP
-    if ( ((fd=mkstemp(fname)) >= 0) && S9xFreezeGame(fname) )
+    if ( (mkstemp(fname) < 0) && S9xFreezeGame(fname) )
 #else
     if ( tmpnam(fname) && S9xFreezeGame(fname) )
 #endif
@@ -1177,10 +1090,6 @@ void S9xNPSyncClient (int client)
         }
         remove (fname);
     }
-#ifdef HAVE_MKSTEMP
-    if (fd != -1)
-        close(fd);
-#endif
 }
 
 bool8 S9xNPLoadFreezeFile (const char *fname, uint8 *&data, uint32 &len)
@@ -1225,7 +1134,6 @@ void S9xNPSendFreezeFile (int c, uint8 *data, uint32 len)
     {
        S9xNPShutdownClient (c, TRUE);
     }
-    S9xNPSetAction ("", TRUE);
 }
 
 void S9xNPRecomputePause ()
@@ -1314,7 +1222,7 @@ void S9xNPSendSRAMToClient (int c)
     if (SRAMSize > 0x10000)
         SRAMSize = 0x10000;
     int len = 7 + SRAMSize;
-
+    
     sprintf (NetPlay.ActionMsg, "SERVER: Sending S-RAM to player %d...", c + 1);
     S9xNPSetAction (NetPlay.ActionMsg, TRUE);
 
@@ -1323,11 +1231,11 @@ void S9xNPSendSRAMToClient (int c)
     *ptr++ = NPServer.Clients [c].SendSequenceNum++;
     *ptr++ = NP_SERV_SRAM_DATA;
     WRITE_LONG (ptr, len);
-    if (!S9xNPSSendData (NPServer.Clients [c].Socket,
+    if (!S9xNPSSendData (NPServer.Clients [c].Socket, 
                         sram, sizeof (sram)) ||
         (len > 7 &&
          !S9xNPSSendData (NPServer.Clients [c].Socket,
-                         Memory.SRAM, len - 7)))
+                         ::SRAM, len - 7)))
     {
         S9xNPShutdownClient (c, TRUE);
     }
@@ -1372,8 +1280,8 @@ void S9xNPWaitForEmulationToComplete ()
 #endif
 
     while (!NetPlay.PendingWait4Sync && NetPlay.Connected &&
-           !Settings.ForcedPause && !Settings.StopEmulation &&
-           !(Settings.Paused && !Settings.FrameAdvance))
+           !Settings.ForcedPause && !Settings.StopEmulation && 
+           !Settings.Paused)
     {
 #ifdef __WIN32__
         Sleep (40);
@@ -1386,7 +1294,7 @@ void S9xNPWaitForEmulationToComplete ()
 
 void S9xNPServerQueueSyncAll ()
 {
-    if (Settings.NetPlay && Settings.NetPlayServer &&
+    if (Settings.NetPlay && Settings.NetPlayServer && 
         NPServer.NumClients > NP_ONE_CLIENT)
     {
         S9xNPNoClientReady ();
@@ -1397,7 +1305,7 @@ void S9xNPServerQueueSyncAll ()
 
 void S9xNPServerQueueSendingROMImage ()
 {
-    if (Settings.NetPlay && Settings.NetPlayServer &&
+    if (Settings.NetPlay && Settings.NetPlayServer && 
         NPServer.NumClients > NP_ONE_CLIENT)
     {
         S9xNPNoClientReady ();
@@ -1408,19 +1316,19 @@ void S9xNPServerQueueSendingROMImage ()
 
 void S9xNPServerQueueSendingFreezeFile (const char *filename)
 {
-    if (Settings.NetPlay && Settings.NetPlayServer &&
+    if (Settings.NetPlay && Settings.NetPlayServer && 
         NPServer.NumClients > NP_ONE_CLIENT)
     {
         S9xNPNoClientReady ();
         S9xNPDiscardHeartbeats ();
-        S9xNPServerAddTask (NP_SERVER_SEND_FREEZE_FILE_ALL,
+        S9xNPServerAddTask (NP_SERVER_SEND_FREEZE_FILE_ALL, 
                             (void *) strdup (filename));
     }
 }
 
 void S9xNPServerQueueSendingLoadROMRequest (const char *filename)
 {
-    if (Settings.NetPlay && Settings.NetPlayServer &&
+    if (Settings.NetPlay && Settings.NetPlayServer && 
         NPServer.NumClients > NP_ONE_CLIENT)
     {
         S9xNPNoClientReady ();
