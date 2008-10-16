@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,15 +12,11 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com)
-
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
-                             Nach (n-a-c-h@users.sourceforge.net),
+  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
+                             funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com),
+                             Nach (n-a-c-h@users.sourceforge.net), and
                              zones (kasumitokoduck@yahoo.com)
-
-  (c) Copyright 2006 - 2007  nitsuja
-
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -114,30 +110,17 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x, HQ3x, HQ4x filters
+  HQ2x filter
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
-
-  Win32 GUI code
-  (c) Copyright 2003 - 2006  blip,
-                             funkyass,
-                             Matthew Kendora,
-                             Nach,
-                             nitsuja
-
-  Mac OS GUI code
-  (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
-
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
-
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without
-  fee, providing that this license information and copyright notice appear
+  and source form, for non-commercial purposes, is hereby granted without 
+  fee, providing that this license information and copyright notice appear 
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -157,8 +140,6 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
-
-
 
 
 #ifndef __cplusplus
@@ -1125,7 +1106,9 @@ void DSP3_OP1E_D( int16 move, int16 *lo, int16 *hi )
 
 void DSP3_OP1E_D1( int16 move, int16 *lo, int16 *hi )
 {
-	//uint32 dataOfs = ((move << 1) + 0x03b2) & 0x03ff;
+#ifndef NGC
+	uint32 dataOfs = ((move << 1) + 0x03b2) & 0x03ff;
+#endif
 	int16 Lo;
 	int16 Hi;
 
@@ -1249,7 +1232,7 @@ void DSP3_Command()
 
 void DSP3SetByte(uint8 byte, uint16 address)
 {
-	if (address < DSP1.boundary)
+	if ((address & 0xC000) == 0x8000)
     {
 		if (DSP3_SR & 0x04)
 		{
@@ -1260,20 +1243,20 @@ void DSP3SetByte(uint8 byte, uint16 address)
 		{
 			DSP3_SR ^= 0x10;
 
-			if (DSP3_SR & 0x10)
+			if (DSP3_SR & 0x10)	
 				DSP3_DR = (DSP3_DR & 0xff00) + byte;
 			else
 			{
 				DSP3_DR = (DSP3_DR & 0x00ff) + (byte << 8);
 				(*SetDSP3)();
-			}
+			}	
 		}
 	}
 }
 
 uint8 DSP3GetByte(uint16 address)
 {
-	if (address < DSP1.boundary)
+	if ((address & 0xC000) == 0x8000)
     {
 		uint8 byte;
 
@@ -1286,7 +1269,7 @@ uint8 DSP3GetByte(uint16 address)
 		{
 			DSP3_SR ^= 0x10;
 
-			if (DSP3_SR & 0x10)
+			if (DSP3_SR & 0x10)	
 				byte = (uint8) (DSP3_DR);
 			else
 			{

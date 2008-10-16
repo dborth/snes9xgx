@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,15 +12,11 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com)
-
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
-                             Nach (n-a-c-h@users.sourceforge.net),
+  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
+                             funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com),
+                             Nach (n-a-c-h@users.sourceforge.net), and
                              zones (kasumitokoduck@yahoo.com)
-
-  (c) Copyright 2006 - 2007  nitsuja
-
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -114,30 +110,17 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x, HQ3x, HQ4x filters
+  HQ2x filter
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
-
-  Win32 GUI code
-  (c) Copyright 2003 - 2006  blip,
-                             funkyass,
-                             Matthew Kendora,
-                             Nach,
-                             nitsuja
-
-  Mac OS GUI code
-  (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
-
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
-
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without
-  fee, providing that this license information and copyright notice appear
+  and source form, for non-commercial purposes, is hereby granted without 
+  fee, providing that this license information and copyright notice appear 
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -159,8 +142,6 @@
 **********************************************************************************/
 
 
-
-
 #include "snes9x.h"
 #include "memmap.h"
 #include "ppu.h"
@@ -174,14 +155,18 @@
 #include "gfx.h"
 #include "soundux.h"
 
+#ifndef NGC
 #include "cheats.h"
+#endif
 
 #include "sa1.h"
 #include "bsx.h"
-#include "spc7110.h"
+
 #ifdef NETPLAY_SUPPORT
 #include "netplay.h"
 #endif
+
+#include "spc7110.h"
 
 START_EXTERN_C
 char String[513];
@@ -212,19 +197,16 @@ struct SSA1 SA1;
 
 struct SBSX BSX;
 
-struct SMulti Multi;
-
 SSoundData SoundData;
 
 SnesModel M1SNES={1,3,2};
 SnesModel M2SNES={2,4,3};
 SnesModel* Model=&M1SNES;
 
-#if defined(ZSNES_FX) || defined(ZSNES_C4)
-uint8 *ROM = NULL;
+
 uint8 *SRAM = NULL;
+uint8 *ROM = NULL;
 uint8 *RegRAM = NULL;
-#endif
 
 CMemory Memory;
 
@@ -270,7 +252,7 @@ uint32 MAX_GREEN = MAX_GREEN_RGB565;
 uint32 MAX_BLUE = MAX_BLUE_RGB565;
 uint32 SPARE_RGB_BIT_MASK = SPARE_RGB_BIT_MASK_RGB565;
 uint32 GREEN_HI_BIT = (MAX_GREEN_RGB565 + 1) >> 1;
-uint32 RGB_LOW_BITS_MASK = (RED_LOW_BIT_MASK_RGB565 |
+uint32 RGB_LOW_BITS_MASK = (RED_LOW_BIT_MASK_RGB565 | 
 			    GREEN_LOW_BIT_MASK_RGB565 |
 			    BLUE_LOW_BIT_MASK_RGB565);
 uint32 RGB_HI_BITS_MASK = (RED_HI_BIT_MASK_RGB565 |
@@ -293,7 +275,9 @@ uint32 current_graphic_format = RGB565;
 
 uint8 GetBank = 0;
 
+#ifndef NGC
 struct SCheatData Cheat;
+#endif
 
 volatile SoundStatus so;
 
@@ -348,7 +332,7 @@ struct SNetPlay NetPlay;
 #endif
 
 // Raw SPC700 instruction cycle lengths
-int32 S9xAPUCycleLengths [256] =
+int32 S9xAPUCycleLengths [256] = 
 {
     /*        0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
     /* 00 */  2, 8, 4, 5, 3, 4, 3, 6, 2, 6, 5, 4, 5, 4, 6, 8,

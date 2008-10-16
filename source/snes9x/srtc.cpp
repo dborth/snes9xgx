@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,15 +12,11 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com)
-
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
-                             Nach (n-a-c-h@users.sourceforge.net),
+  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
+                             funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com),
+                             Nach (n-a-c-h@users.sourceforge.net), and
                              zones (kasumitokoduck@yahoo.com)
-
-  (c) Copyright 2006 - 2007  nitsuja
-
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -114,30 +110,17 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x, HQ3x, HQ4x filters
+  HQ2x filter
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
-
-  Win32 GUI code
-  (c) Copyright 2003 - 2006  blip,
-                             funkyass,
-                             Matthew Kendora,
-                             Nach,
-                             nitsuja
-
-  Mac OS GUI code
-  (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
-
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
-
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without
-  fee, providing that this license information and copyright notice appear
+  and source form, for non-commercial purposes, is hereby granted without 
+  fee, providing that this license information and copyright notice appear 
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -157,8 +140,6 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
-
-
 
 #include <string.h>
 #include "snes9x.h"
@@ -210,7 +191,7 @@ static int month_keys[12] = { 1, 4, 4, 0, 2, 5, 0, 3, 6, 1, 4, 6 };
  *
  *	restore the rtc data structure
  *      rtc.system_timestamp = time (NULL);
- *
+ *        
  *
  *********************************************************************************************/
 
@@ -328,7 +309,7 @@ void	S9xUpdateSrtcTime ()
 
         time_diff = (long) (cur_systime - rtc.system_timestamp);
 	rtc.system_timestamp = cur_systime;
-
+        
         if ( time_diff > 0 )
         {
 	   int		seconds;
@@ -597,23 +578,25 @@ void S9xSRTCPreSaveState ()
 	if (s > 0x20000)
 	    s = 0x20000;
 
-	Memory.SRAM [s + 0] = rtc.needs_init;
-	Memory.SRAM [s + 1] = rtc.count_enable;
-	memmove (&Memory.SRAM [s + 2], rtc.data, MAX_RTC_INDEX + 1);
-	Memory.SRAM [s + 3 + MAX_RTC_INDEX] = rtc.index;
-	Memory.SRAM [s + 4 + MAX_RTC_INDEX] = rtc.mode;
+	SRAM [s + 0] = rtc.needs_init;
+	SRAM [s + 1] = rtc.count_enable;
+	memmove (&SRAM [s + 2], rtc.data, MAX_RTC_INDEX + 1);
+	SRAM [s + 3 + MAX_RTC_INDEX] = rtc.index;
+	SRAM [s + 4 + MAX_RTC_INDEX] = rtc.mode;
 
 #ifdef LSB_FIRST
-	memmove (&Memory.SRAM [s + 5 + MAX_RTC_INDEX], &rtc.system_timestamp, 8);
+	memmove (&SRAM [s + 5 + MAX_RTC_INDEX], &rtc.system_timestamp, 8);
 #else
-	Memory.SRAM [s + 5  + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >>  0);
-	Memory.SRAM [s + 6  + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >>  8);
-	Memory.SRAM [s + 7  + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 16);
-	Memory.SRAM [s + 8  + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 24);
-	Memory.SRAM [s + 9  + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 32);
-	Memory.SRAM [s + 10 + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 40);
-	Memory.SRAM [s + 11 + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 48);
-	Memory.SRAM [s + 12 + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 56);
+#ifndef NGC
+	SRAM [s + 5  + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >>  0);
+	SRAM [s + 6  + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >>  8);
+	SRAM [s + 7  + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 16);
+	SRAM [s + 8  + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 24);
+	SRAM [s + 9  + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 32);
+	SRAM [s + 10 + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 40);
+	SRAM [s + 11 + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 48);
+	SRAM [s + 12 + MAX_RTC_INDEX] = (uint8) (rtc.system_timestamp >> 56);
+#endif
 #endif
     }
 }
@@ -627,23 +610,25 @@ void S9xSRTCPostLoadState ()
 	if (s > 0x20000)
 	    s = 0x20000;
 
-	rtc.needs_init = Memory.SRAM [s + 0];
-	rtc.count_enable = Memory.SRAM [s + 1];
-	memmove (rtc.data, &Memory.SRAM [s + 2], MAX_RTC_INDEX + 1);
-	rtc.index = Memory.SRAM [s + 3 + MAX_RTC_INDEX];
-	rtc.mode = Memory.SRAM [s + 4 + MAX_RTC_INDEX];
+	rtc.needs_init = SRAM [s + 0];
+	rtc.count_enable = SRAM [s + 1];
+	memmove (rtc.data, &SRAM [s + 2], MAX_RTC_INDEX + 1);
+	rtc.index = SRAM [s + 3 + MAX_RTC_INDEX];
+	rtc.mode = SRAM [s + 4 + MAX_RTC_INDEX];
 
 #ifdef LSB_FIRST
-	memmove (&rtc.system_timestamp, &Memory.SRAM [s + 5 + MAX_RTC_INDEX], 8);
+	memmove (&rtc.system_timestamp, &SRAM [s + 5 + MAX_RTC_INDEX], 8);
 #else
-	rtc.system_timestamp |= (Memory.SRAM [s +  5 + MAX_RTC_INDEX] <<  0);
-	rtc.system_timestamp |= (Memory.SRAM [s +  6 + MAX_RTC_INDEX] <<  8);
-	rtc.system_timestamp |= (Memory.SRAM [s +  7 + MAX_RTC_INDEX] << 16);
-	rtc.system_timestamp |= (Memory.SRAM [s +  8 + MAX_RTC_INDEX] << 24);
-	rtc.system_timestamp |= (Memory.SRAM [s +  9 + MAX_RTC_INDEX] << 32);
-	rtc.system_timestamp |= (Memory.SRAM [s + 10 + MAX_RTC_INDEX] << 40);
-	rtc.system_timestamp |= (Memory.SRAM [s + 11 + MAX_RTC_INDEX] << 48);
-	rtc.system_timestamp |= (Memory.SRAM [s + 12 + MAX_RTC_INDEX] << 56);
+#ifndef NGC	
+	rtc.system_timestamp |= (SRAM [s +  5 + MAX_RTC_INDEX] <<  0);
+	rtc.system_timestamp |= (SRAM [s +  6 + MAX_RTC_INDEX] <<  8);
+	rtc.system_timestamp |= (SRAM [s +  7 + MAX_RTC_INDEX] << 16);
+	rtc.system_timestamp |= (SRAM [s +  8 + MAX_RTC_INDEX] << 24);
+	rtc.system_timestamp |= (SRAM [s +  9 + MAX_RTC_INDEX] << 32);
+	rtc.system_timestamp |= (SRAM [s + 10 + MAX_RTC_INDEX] << 40);
+	rtc.system_timestamp |= (SRAM [s + 11 + MAX_RTC_INDEX] << 48);
+	rtc.system_timestamp |= (SRAM [s + 12 + MAX_RTC_INDEX] << 56);
+#endif
 #endif
 	S9xUpdateSrtcTime ();
     }
