@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,15 +12,11 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com)
-
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
-                             Nach (n-a-c-h@users.sourceforge.net),
+  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
+                             funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com),
+                             Nach (n-a-c-h@users.sourceforge.net), and
                              zones (kasumitokoduck@yahoo.com)
-
-  (c) Copyright 2006 - 2007  nitsuja
-
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -114,30 +110,17 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x, HQ3x, HQ4x filters
+  HQ2x filter
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
-
-  Win32 GUI code
-  (c) Copyright 2003 - 2006  blip,
-                             funkyass,
-                             Matthew Kendora,
-                             Nach,
-                             nitsuja
-
-  Mac OS GUI code
-  (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
-
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
-
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without
-  fee, providing that this license information and copyright notice appear
+  and source form, for non-commercial purposes, is hereby granted without 
+  fee, providing that this license information and copyright notice appear 
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -157,8 +140,6 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
-
-
 
 
 /*****************************************************************************/
@@ -181,7 +162,7 @@
 #include "dsp1.h"
 
 #ifdef SA1_OPCODES
-#define AddCycles(n) {}
+#define AddCycles(n)
 #else
 #define AddCycles(n) CPU.Cycles+=n
 #endif
@@ -830,10 +811,10 @@ static void OpA9M0 (void) {
 
 static void OpA9Slow (void) {
     if(CheckMemory()) {
-        Registers.AL = Immediate8Slow(READ);
+        Registers.AL = Immediate8(READ);
         SetZN(Registers.AL);
     } else {
-        Registers.A.W = Immediate16Slow(READ);
+        Registers.A.W = Immediate16(READ);
         SetZN(Registers.A.W);
     }
 }
@@ -1523,39 +1504,51 @@ mOPM (0CSlow, AbsoluteSlow, WRAP_BANK, TSB)
 #ifndef SA1_OPCODES
 inline void CPUShutdown()
 {
-	if (Settings.Shutdown && Registers.PBPC == CPU.WaitAddress)
+    if (Settings.Shutdown && Registers.PBPC == CPU.WaitAddress)
+    {
+	// Don't skip cycles with a pending NMI or IRQ - could cause delayed
+	// interrupt. Interrupts are delayed for a few cycles already, but
+	// the delay could allow the shutdown code to cycle skip again.
+	// Was causing screen flashing on Top Gear 3000.
+
+	if (CPU.WaitCounter == 0 &&
+	    !(CPU.Flags & (IRQ_PENDING_FLAG | NMI_FLAG)))
 	{
-		// Don't skip cycles with a pending NMI or IRQ - could cause delayed interrupt.
-		if (CPU.WaitCounter == 0 && !(CPU.Flags & (IRQ_FLAG | NMI_FLAG)))
+	    CPU.WaitAddress = 0xffffffff;
+	    if (Settings.SA1)
+		S9xSA1ExecuteDuringSleep ();
+	    CPU.Cycles = CPU.NextEvent;
+		S9xUpdateAPUTimer();
+	    if (IAPU.APUExecuting)
+	    {
+		ICPU.CPUExecuting = FALSE;
+		do
 		{
-			CPU.WaitAddress = 0xffffffff;
-			if (Settings.SA1)
-				S9xSA1ExecuteDuringSleep();
-			CPU.Cycles = CPU.NextEvent;
-			ICPU.CPUExecuting = FALSE;
-			S9xAPUExecute();
-			ICPU.CPUExecuting = TRUE;
-		}
-		else
-		if (CPU.WaitCounter >= 2)
-			CPU.WaitCounter = 1;
-		else
-			CPU.WaitCounter--;
+		    APU_EXECUTE1();
+		} while (APU.Cycles < CPU.NextEvent);
+		ICPU.CPUExecuting = TRUE;
+	    }
 	}
+	else
+	if (CPU.WaitCounter >= 2)
+	    CPU.WaitCounter = 1;
+	else
+	    CPU.WaitCounter--;
+    }
 }
 #else
 inline void CPUShutdown()
 {
-	if (Settings.Shutdown && Registers.PBPC == CPU.WaitAddress)
+    if (Settings.Shutdown && Registers.PBPC == CPU.WaitAddress)
+    {
+	if (CPU.WaitCounter >= 1)
 	{
-		if (CPU.WaitCounter >= 1)
-		{
-			SA1.Executing = FALSE;
-			SA1.CPUExecuting = FALSE;
-		}
-		else
-			CPU.WaitCounter++;
+	    SA1.Executing = FALSE;
+	    SA1.CPUExecuting = FALSE;
 	}
+	else
+	    CPU.WaitCounter++;
+    }
 }
 #endif
 #else
@@ -1563,57 +1556,53 @@ inline void CPUShutdown()
 #endif
 
 /* BCC */
-bOP(90E0,   Relative,     !CheckCarry(), 0, 0)
-bOP(90E1,   Relative,     !CheckCarry(), 0, 1)
-bOP(90Slow, RelativeSlow, !CheckCarry(), 0, CheckEmulation())
+bOP(90E0,   !CheckCarry(), 0, 0)
+bOP(90E1,   !CheckCarry(), 0, 1)
+bOP(90Slow, !CheckCarry(), 0, CheckEmulation())
 
 /* BCS */
-bOP(B0E0,   Relative,     CheckCarry(), 0, 0)
-bOP(B0E1,   Relative,     CheckCarry(), 0, 1)
-bOP(B0Slow, RelativeSlow, CheckCarry(), 0, CheckEmulation())
+bOP(B0E0,   CheckCarry(), 0, 0)
+bOP(B0E1,   CheckCarry(), 0, 1)
+bOP(B0Slow, CheckCarry(), 0, CheckEmulation())
 
 /* BEQ */
-bOP(F0E0,   Relative,     CheckZero(), 2, 0)
-bOP(F0E1,   Relative,     CheckZero(), 2, 1)
-bOP(F0Slow, RelativeSlow, CheckZero(), 2, CheckEmulation())
+bOP(F0E0,   CheckZero(), 2, 0)
+bOP(F0E1,   CheckZero(), 2, 1)
+bOP(F0Slow, CheckZero(), 2, CheckEmulation())
 
 /* BMI */
-bOP(30E0,   Relative,     CheckNegative(), 1, 0)
-bOP(30E1,   Relative,     CheckNegative(), 1, 1)
-bOP(30Slow, RelativeSlow, CheckNegative(), 1, CheckEmulation())
+bOP(30E0,   CheckNegative(), 1, 0)
+bOP(30E1,   CheckNegative(), 1, 1)
+bOP(30Slow, CheckNegative(), 1, CheckEmulation())
 
 /* BNE */
-bOP(D0E0,   Relative,     !CheckZero(), 1, 0)
-bOP(D0E1,   Relative,     !CheckZero(), 1, 1)
-bOP(D0Slow, RelativeSlow, !CheckZero(), 1, CheckEmulation())
+bOP(D0E0,   !CheckZero(), 1, 0)
+bOP(D0E1,   !CheckZero(), 1, 1)
+bOP(D0Slow, !CheckZero(), 1, CheckEmulation())
 
 /* BPL */
-bOP(10E0,   Relative,     !CheckNegative(), 1, 0)
-bOP(10E1,   Relative,     !CheckNegative(), 1, 1)
-bOP(10Slow, RelativeSlow, !CheckNegative(), 1, CheckEmulation())
+bOP(10E0,   !CheckNegative(), 1, 0)
+bOP(10E1,   !CheckNegative(), 1, 1)
+bOP(10Slow, !CheckNegative(), 1, CheckEmulation())
 
 /* BRA */
-bOP(80E0,   Relative,     1, X, 0)
-bOP(80E1,   Relative,     1, X, 1)
-bOP(80Slow, RelativeSlow, 1, X, CheckEmulation())
+bOP(80E0,   1, X, 0)
+bOP(80E1,   1, X, 1)
+bOP(80Slow, 1, X, CheckEmulation())
 
 /* BVC */
-bOP(50E0,   Relative,     !CheckOverflow(), 0, 0)
-bOP(50E1,   Relative,     !CheckOverflow(), 0, 1)
-bOP(50Slow, RelativeSlow, !CheckOverflow(), 0, CheckEmulation())
+bOP(50E0,   !CheckOverflow(), 0, 0)
+bOP(50E1,   !CheckOverflow(), 0, 1)
+bOP(50Slow, !CheckOverflow(), 0, CheckEmulation())
 
 /* BVS */
-bOP(70E0,   Relative,     CheckOverflow(), 0, 0)
-bOP(70E1,   Relative,     CheckOverflow(), 0, 1)
-bOP(70Slow, RelativeSlow, CheckOverflow(), 0, CheckEmulation())
+bOP(70E0,   CheckOverflow(), 0, 0)
+bOP(70E1,   CheckOverflow(), 0, 1)
+bOP(70Slow, CheckOverflow(), 0, CheckEmulation())
 
 /* BRL */
 static void Op82 (void) {
     S9xSetPCBase(ICPU.ShiftedPB + RelativeLong(JUMP));
-}
-
-static void Op82Slow (void) {
-    S9xSetPCBase(ICPU.ShiftedPB + RelativeLongSlow(JUMP));
 }
 
 /*****************************************************************************/
@@ -3045,9 +3034,9 @@ static void Op44X0 (void) {
 static void Op44Slow (void) {
     uint32 SrcBank;
 
-    OpenBus = Registers.DB = Immediate8Slow(NONE);
+    OpenBus = Registers.DB = Immediate8(NONE);
     ICPU.ShiftedDB = Registers.DB << 16;
-    OpenBus = SrcBank = Immediate8Slow(NONE);
+    OpenBus = SrcBank = Immediate8(NONE);
 
     S9xSetByte(OpenBus=S9xGetByte ((SrcBank << 16) + Registers.X.W),
                ICPU.ShiftedDB + Registers.Y.W);
@@ -3205,9 +3194,15 @@ static void OpCB (void) {
     // XXX: FIXME
     if(Settings.Shutdown){
         SA1.Cycles = SA1.NextEvent;
-		SA1.Executing = FALSE;
-		//S9xAPUExecute(); // FIXME
-		SA1.Executing = TRUE;
+        if (IAPU.APUExecuting)
+        {
+            SA1.Executing = FALSE;
+            do
+            {
+                APU_EXECUTE1 ();
+            } while (APU.Cycles < SA1.NextEvent);
+            SA1.Executing = TRUE;
+        }
     }
 #endif
 #else // SA1_OPCODES
@@ -3223,15 +3218,20 @@ static void OpCB (void) {
         if (Settings.Shutdown)
         {
             CPU.Cycles = CPU.NextEvent;
-			ICPU.CPUExecuting = FALSE;
-			S9xAPUExecute();
-			ICPU.CPUExecuting = TRUE;
-        }
-		else
+			S9xUpdateAPUTimer();
+            if (IAPU.APUExecuting)
+            {
+                ICPU.CPUExecuting = FALSE;
+                do
+                {
+                    APU_EXECUTE1 ();
+                } while (APU.Cycles < CPU.NextEvent);
+                ICPU.CPUExecuting = TRUE;
+            }
+        } else {
             AddCycles(TWO_CYCLES);
-#else
-		AddCycles(TWO_CYCLES);
 #endif
+        }
     }
 #endif // SA1_OPCODES
 }
@@ -3248,10 +3248,9 @@ extern FILE *trace;
 extern FILE *trace2;
 #endif
 static void Op42 (void) {
-#ifdef DEBUGGER
-    uint8 byte = (uint8)
+#ifndef NGC
+    uint8 byte = S9xGetWord(Registers.PBPC);
 #endif
-	                    S9xGetWord(Registers.PBPC);
     Registers.PCw++;
 #ifdef DEBUGGER
     // Hey, let's use this to trigger debug modes
@@ -3611,7 +3610,7 @@ struct SOpcodes S9xOpcodesSlow[256] = {
     {Op73Slow},    {Op74Slow},    {Op75Slow},    {Op76Slow},    {Op77Slow},
     {Op78},        {Op79Slow},    {Op7ASlow},    {Op7B},        {Op7CSlow},
     {Op7DSlow},    {Op7ESlow},    {Op7FSlow},    {Op80Slow},    {Op81Slow},
-    {Op82Slow},    {Op83Slow},    {Op84Slow},    {Op85Slow},    {Op86Slow},
+    {Op82},        {Op83Slow},    {Op84Slow},    {Op85Slow},    {Op86Slow},
     {Op87Slow},    {Op88Slow},    {Op89Slow},    {Op8ASlow},    {Op8BSlow},
     {Op8CSlow},    {Op8DSlow},    {Op8ESlow},    {Op8FSlow},    {Op90Slow},
     {Op91Slow},    {Op92Slow},    {Op93Slow},    {Op94Slow},    {Op95Slow},

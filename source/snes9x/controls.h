@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,15 +12,11 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com)
-
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
-                             Nach (n-a-c-h@users.sourceforge.net),
+  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
+                             funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com),
+                             Nach (n-a-c-h@users.sourceforge.net), and
                              zones (kasumitokoduck@yahoo.com)
-
-  (c) Copyright 2006 - 2007  nitsuja
-
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -114,30 +110,17 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x, HQ3x, HQ4x filters
+  HQ2x filter
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
-
-  Win32 GUI code
-  (c) Copyright 2003 - 2006  blip,
-                             funkyass,
-                             Matthew Kendora,
-                             Nach,
-                             nitsuja
-
-  Mac OS GUI code
-  (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
-
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
-
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without
-  fee, providing that this license information and copyright notice appear
+  and source form, for non-commercial purposes, is hereby granted without 
+  fee, providing that this license information and copyright notice appear 
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -157,8 +140,6 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
-
-
 
 #ifndef FOO_H
 #define FOO_H
@@ -202,7 +183,7 @@ typedef struct {
     uint8 type;
     uint8 multi_press:2;
     uint8 button_norpt:1;
-
+    
     union {
         union {
             struct {
@@ -258,7 +239,7 @@ typedef struct {
                 uint8 threshold;    // (threshold+1)/256% deflection is a
                                     // button press
             } joypad;
-
+            
             struct {
                 uint8 idx:3;        // Pseudo-pointer number 0-7
                 uint8 speed_type:2; // 0=variable, 1=slow, 2=med, 3=fast
@@ -329,7 +310,7 @@ const char **S9xGetAllSnes9xCommands(void);
 s9xcommand_t S9xGetMapping(uint32 id);
 void S9xUnmapID(uint32 id);
 
-/*
+/* 
  * Button mapping functions. If a button is mapped with poll=TRUE, then
  * S9xPollButton will be called whenever snes9x feels a need for that mapping.
  * Otherwise, snes9x will assume you will call S9xReportButton() whenever the
@@ -339,7 +320,7 @@ void S9xUnmapID(uint32 id);
 bool S9xMapButton(uint32 id, s9xcommand_t mapping, bool poll);
 void S9xReportButton(uint32 id, bool pressed);
 
-/*
+/* 
  * Pointer mapping functions. If a button is mapped with poll=TRUE, then
  * S9xPollPointer will be called whenever snes9x feels a need for that mapping.
  * Otherwise, snes9x will assume you will call S9xReportPointer() whenever the
@@ -354,7 +335,7 @@ void S9xReportButton(uint32 id, bool pressed);
 bool S9xMapPointer(uint32 id, s9xcommand_t mapping, bool poll);
 void S9xReportPointer(uint32 id, int16 x, int16 y);
 
-/*
+/* 
  * Axis mapping functions. If a button is mapped with poll=TRUE, then
  * S9xPollAxis will be called whenever snes9x feels a need for that mapping.
  * Otherwise, snes9x will assume you will call S9xReportAxis() whenever the
@@ -397,14 +378,6 @@ bool S9xPollAxis(uint32 id, int16 *value);
  */
 void S9xHandlePortCommand(s9xcommand_t cmd, int16 data1, int16 data2);
 
-/*
- * Called before already-read SNES joypad data is being used by the game
- * if your port defines SNES_JOY_READ_CALLBACKS
- */
-#ifdef SNES_JOY_READ_CALLBACKS
-void S9xOnSNESPadRead();
-#endif
-
 /* These are for your use */
 s9xcommand_t S9xGetPortCommandT(const char *name);
 char *S9xGetPortCommandName(s9xcommand_t command);
@@ -439,9 +412,7 @@ struct SControlSnapshot {
     uint8 dummy2[4];
     uint8 mouse_speed[2];
     uint8 justifier_select;
-    uint8 dummy3[8];
-	bool8 pad_read, pad_read_last;
-    uint8 internal[60]; // yes, we need to save this!
+    uint8 dummy3[10];
 };
 
 void S9xControlPreSave(struct SControlSnapshot *s);

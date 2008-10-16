@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,15 +12,11 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com)
-
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
-                             Nach (n-a-c-h@users.sourceforge.net),
+  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
+                             funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com),
+                             Nach (n-a-c-h@users.sourceforge.net), and
                              zones (kasumitokoduck@yahoo.com)
-
-  (c) Copyright 2006 - 2007  nitsuja
-
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -114,30 +110,17 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x, HQ3x, HQ4x filters
+  HQ2x filter
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
-
-  Win32 GUI code
-  (c) Copyright 2003 - 2006  blip,
-                             funkyass,
-                             Matthew Kendora,
-                             Nach,
-                             nitsuja
-
-  Mac OS GUI code
-  (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
-
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
-
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without
-  fee, providing that this license information and copyright notice appear
+  and source form, for non-commercial purposes, is hereby granted without 
+  fee, providing that this license information and copyright notice appear 
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -158,24 +141,22 @@
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
 
-
-
 #ifndef _SNES9X_H_
 #define _SNES9X_H_
 
-#define VERSION "1.51"
+#define VERSION "1.5"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #ifdef __WIN32__
-#include <windows.h>
+#include "..\wsnes9x.h"
 #ifdef ZLIB
-#include <zlib.h>
+#include "..\zlib\zlib.h"
 #endif
 #endif
 
-//#include "language.h" // files should include this as needed, no need to recompile practically everything when it changes
+#include "language.h"
 
 #include "port.h"
 #include "65c816.h"
@@ -189,8 +170,9 @@
 
 #ifdef ZLIB
 #ifndef __WIN32__
-#include <zlib.h>
+#include "zlib.h"
 #endif
+
 #define STREAM gzFile
 #define READ_STREAM(p,l,s) gzread (s,p,l)
 #define WRITE_STREAM(p,l,s) gzwrite (s,p,l)
@@ -218,10 +200,8 @@
 #define SNES_WIDTH					256
 #define SNES_HEIGHT					224
 #define SNES_HEIGHT_EXTENDED		239
-#define MAX_SNES_WIDTH				(SNES_WIDTH * 2)
-#define MAX_SNES_HEIGHT				(SNES_HEIGHT_EXTENDED * 2)
-#define IMAGE_WIDTH					(Settings.SupportHiRes ? MAX_SNES_WIDTH : SNES_WIDTH)
-#define IMAGE_HEIGHT				(Settings.SupportHiRes ? MAX_SNES_HEIGHT : SNES_HEIGHT_EXTENDED)
+#define IMAGE_WIDTH					(Settings.SupportHiRes ? SNES_WIDTH * 2 : SNES_WIDTH)
+#define IMAGE_HEIGHT				(Settings.SupportHiRes ? SNES_HEIGHT_EXTENDED * 2 : SNES_HEIGHT_EXTENDED)
 
 #define	NTSC_MASTER_CLOCK			21477272.0
 #define	PAL_MASTER_CLOCK			21281370.0
@@ -248,10 +228,8 @@
 #define	SNES_HDMA_INIT_HC			20						// FIXME: not true
 #define	SNES_RENDER_START_HC		(48 * ONE_DOT_CYCLE)	// FIXME: Snes9x renders a line at a time.
 
-#define	SNES_APU_CLOCK				1024000.0				// 1026900.0?
-#define SNES_APU_ACCURACY			10
-#define	SNES_APU_ONE_CYCLE_SCALED	((int32) (NTSC_MASTER_CLOCK / SNES_APU_CLOCK * (1 << SNES_APU_ACCURACY)))
-#define SNES_APUTIMER2_CYCLE_SCALED	((int32) (NTSC_MASTER_CLOCK / 64000.0 * (1 << SNES_APU_ACCURACY)))
+#define SNES_APUTIMER_ACCURACY		10
+#define SNES_APUTIMER2_CYCLE_SHIFT	((int32) ((SNES_CYCLES_PER_SCANLINE << SNES_APUTIMER_ACCURACY) * (1.0 / 64000.0) / SNES_SCANLINE_TIME + 0.5))
 
 
 #define AUTO_FRAMERATE	200
@@ -280,7 +258,7 @@
 #define PROCESS_SOUND_FLAG  (1 << 8)
 #define FRAME_ADVANCE_FLAG  (1 << 9)
 #define DELAYED_NMI_FLAG2   (1 << 10)
-#define IRQ_FLAG            (1 << 11)
+#define IRQ_PENDING_FLAG    (1 << 11)
 #define HALTED_FLAG         (1 << 12)
 
 struct SCPUState{
@@ -289,8 +267,8 @@ struct SCPUState{
 	bool8	NMIActive;
 	bool8	IRQActive;
 	bool8	WaitingForInterrupt;
-	bool8	InDMAorHDMA;
-	bool8	InWRAMDMAorHDMA;
+	bool8	InDMA;
+	bool8	InWRAM_DMA;
 	uint8	WhichEvent;
 	uint8	*PCBase;
 	uint32	PBPCAtOpcodeStart;
@@ -306,11 +284,6 @@ struct SCPUState{
 	bool8	SRAMModified;
 	bool8	BRKTriggered;
 	bool8	TriedInterleavedMode2;
-	int32	IRQPending;
-	bool8	InDMA;
-	bool8	InHDMA;
-	uint8	HDMARanInDMA;
-	int32	PrevCycles;
 };
 
 struct STimings {
@@ -326,7 +299,6 @@ struct STimings {
 	int32	WRAMRefreshPos;
 	int32	RenderPos;
 	bool8	InterlaceField;
-	int32	DMACPUSync;
 };
 
 enum {
@@ -349,7 +321,7 @@ struct SSettings{
     bool8  APUEnabled;
     bool8  Shutdown;
     uint8  SoundSkipMethod;
-    int32  HDMATimingHack;
+    int32  CyclesPercentage;
     bool8  DisableIRQ;
     bool8  Paused;
     bool8  ForcedPause;
@@ -396,7 +368,7 @@ struct SSettings{
     bool8  ForceSDD1;
     bool8  ForceNoSDD1;
     bool8  SRTC;
-
+    
     bool8  ShutdownMaster;
     bool8  MultiPlayer5Master;
     bool8  SuperScopeMaster;
@@ -423,22 +395,17 @@ struct SSettings{
     bool8  DisableSampleCaching;
     bool8  DisableMasterVolume;
     bool8  SoundSync;
-    bool8  FakeMuteFix;
     bool8  InterpolatedSound;
     bool8  ThreadSound;
     bool8  Mute;
     bool8  NextAPUEnabled;
     uint8  AltSampleDecode;
     bool8  FixFrequency;
-
+    
     /* Graphics options */
     bool8  Transparency;
     bool8  SupportHiRes;
-    bool8  Mode7Interpolate; // no longer used?
-	bool8  AutoDisplayMessages;
-    uint8  BG_Forced;
-    bool8  SnapshotScreenshots;
-    uint32 InitialInfoStringTimeout; // Messages normally display for this many frames
+    bool8  Mode7Interpolate;
 
     /* SNES graphics options */
     bool8  BGLayering;
@@ -448,12 +415,6 @@ struct SSettings{
     bool8  DisableHDMA;
     bool8  DisplayFrameRate;
     bool8  DisableRangeTimeOver; /* XXX: unused */
-	bool8  DisplayWatchedAddresses;
-
-    /* Multi ROMs */
-	bool8  Multi;
-	char   CartAName[_MAX_PATH + 1];
-	char   CartBName[_MAX_PATH + 1];
 
     /* Others */
     bool8  NetPlay;
@@ -465,16 +426,9 @@ struct SSettings{
     int32  AutoSaveDelay; /* Time in seconds before S-RAM auto-saved if modified. */
     bool8  ApplyCheats;
     bool8  TurboMode;
-    bool8  OldTurbo;
-    bool8  UpAndDown;
-    uint8  DisplayPressedKeys; // The value indicates how to do it.
-    uint32 HighSpeedSeek;
     uint32 TurboSkipFrames;
     uint32 AutoMaxSkipFrames;
-	bool8  MovieTruncate;
-	bool8  MovieNotifyIgnored;
-	bool8  WrongMovieStateProtection;
-
+    
 /* Fixes for individual games */
     bool8  WinterGold;
     bool8  BS;	/* Japanese Satellite System games. */
@@ -483,7 +437,6 @@ struct SSettings{
     uint8  APURAMInitialValue;
     bool8  SampleCatchup;
     int8   SETA;
-    bool8  BlockInvalidVRAMAccess;
     bool8  TakeScreenshot;
     int8   StretchScreenshots;
     uint16 DisplayColor;
