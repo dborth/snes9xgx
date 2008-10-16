@@ -1,12 +1,18 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * Snes9x 1.50
  *
- * Tantric September 2008
+ * Nintendo Gamecube Port
+ * crunchy2 April 2007
  *
- * preferences.h
+ * preferences.cpp
  *
- * Preferences save/load to XML file
- ***************************************************************************/
+ * Preferences save/load preferences utilities
+ ****************************************************************************/
 
-bool SavePrefs (int method, bool silent);
-bool LoadPrefs ();
+#define PREFS_FILE_NAME "snes9xGx.prf"
+
+int preparePrefsData ();
+void decodePrefsData ();
+
+void quickLoadPrefs (bool8 silent);
+void quickSavePrefs (bool8 silent);

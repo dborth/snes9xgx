@@ -10,219 +10,15 @@
 ­———————————————————————————————————————————————————————————————————————•ßrK•
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                       SNES9X GX 006                           ·oø×O0|
-|                   http://code.google.com/p/snes9x-gx                      |
-|                          (Under GPL License)                              |
+|0O×øo·                        SNES9XGX v2.0.1b8                      ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 
-SNES9x GX is a Super Nintendo emulator for the Wii based on the PC emulator 
-SNES9x 1.51 (http://snes9x.ipherswipsite.com/). SoftDev is responsible for 
-the original SNES9x 1.50 GameCube port, whose work was continued by crunchy2. 
-It was updated for the Wii by michniewski and SNES9x 1.51 was ported by 
-Tantric. The project is currently being maintained by michniewski and Tantric.
+*******************************************************************************
+PLEASE NOTE: THIS DOCUMENT IS A WORK IN PROGRESS - IT IS INCOMPLETE AND SOME OF
+THE INFORMATION IS OUT OF DATE
+*******************************************************************************
 
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                            FEATURES                           ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-- Based on Snes9x 1.51 - superior ROM compatibility
-- Wiimote, Nunchuk, Classic, and Gamecube controller support
-- SNES Superscope, Mouse, Justifier support
-- Cheat support
-- Auto Load/Save Game Snapshots and SRAM
-- Custom controller configurations
-- SD, USB, DVD, SMB, GC Memory Card, Zip, and 7z support
-- Autodetect PAL/NTSC, 16:9 widescreen support
-- Open Source!
-
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                         UPDATE HISTORY                        ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-
-[What's New 006 - October 15, 2008]
-
-Tantric
-- added: 480p for GameCube
-- added: Sound sync
-- added: 7z support
-- changed: Faster SD/USB access (readahead cache enabled)
-- fixed: Video offset issues
-- fixed: BS-X games work now
-- fixed: Wii DVD works now
-- fixed: DVD re-enabled for GameCube
-- fixed: Nunchuk analog stick issues
-- fixed: Many crashes, memory leaks, etc
-
-michniewski
-- added: Video shift options
-- changed: Turn DVD motor off option re-enabled for GameCube
-
-[What Was New 005 - September 23, 2008]
-
-michniewski
-- added: Superscope/mouse/justifier support, with Wii remote
-- added: 3 render modes - Original, Filtered, Unfiltered
-- added: widescreen compensation option
-- added: DVD support on the Wii
-- changed: zoom - limited range, added reset zoom option
-
-Tantric
-- added: now uses SNES 1.51 core (thanks to eke-eke for help with this)
-- added: cheats menu! Loads .CHT file from /snes9x/cheats folder, 
-         .CHT file name must match file name of ROM
-- added: load/save preference selector. ROM, SRAM, Freeze, and preferences 
-         are saved/loaded according to these
-- added: preliminary Windows file share loading/saving (SMB) support on Wii:
-		 You can input your network settings into snes9xGX.xml, or edit 
-		 s9xconfig.cpp from the source code and compile.
-- added: 'Auto' settings for save/load - attempts to automatically determine
-         your load/save device(s) - SD, USB, Memory Card, DVD, SMB
-- added: ROM Information page
-- added: Game Menu - all game-specific options are here now: 
-         SRAM save/load, Snapshot save/load, game reload, etc
-- added: Credits page
-- fixed: sd gecko works now
-- fixed: full USB support
-- changed: menu structure
-- changed: preferences are now loaded and saved in XML format. You can open
-		   snes9xGX.xml edit all settings, including some not available within
-		   the program
-- changed: if Home button is pressed when a game is running, Game Menu pops up
-- changed: if preferences can't be loaded at the start and/or are reset, 
-           preferences menu pops up - remove to save your preferences!
-- changed: SRAM load - game reloaded automatically after loading SRAM
-
-[What Was New 004 - August 5, 2008]
-
-- added: option to disable AA filtering 
-         (snes graphics 'crisper', AA now default OFF)
-- added: mapped zooming and turbo mode to classic controller
-- added: preliminary usb support (loading)
-- changed: sram and freezes now saved by filename, not internal romname. 
-           If you have multiple versions of the same game, you can now have 
-           srams and freezes for each version. A prompt to convert to the 
-           new naming is provided for sram only.
-- changed: by default, autoload/save sram and freeze enabled
-
-[What Was New 003 - July 25, 2008]
-- added: alphabetical file sorting
-- added: background logo/backdrop + nicer menus
-- added: scrolling in ROM selector
-- fixed: switching between pal/ntsc ROMS doesn't mess up timings
-- fixed: GC controller config works now
-- fixed: freeze autoloading on ROM load
-- fixed: zipped ROMS should now load in a reasonable time
-- fixed: precompiled dols for autosaving to various locations (see readme)
-- changed: GC default quickload slot (to sd) (thanks kerframil)
-- changed: default load/save dirs are now "/snes9x/roms" and 
-           "/snes9x/saves/"  (thanks kerframil)
-- changed: Classic X and Y defaults aren't switched
-- changed: if autosave is enabled, it doesn't ask to save SRAM 
-           anymore. It is saved in the background.
-- updated README
-
-[Whats Was New 002 - July 21, 2008]
-- added: classic and nunchuk support
-- added: all controllers can now be configured
-- added: GC version (untested)
-- changed: mappings are no longer stored in SRAM, but in config file. 
-           This means no per-game configurations, but one global 
-           config per controller.
-- one makefile to make all versions. (thanks to snes9x143 SVN)
-
-
-[What Was New 001 - July 12, 2008]
-- compiles with latest devkitppc (r15)
-- now uses libfat (can use front sd slot on wii)
-- updated menu items a bit
-- wiimote support
-- fixed: autoload sram/freeze
-- fixed: rom plays immediately after loading
-
-[older update history at the bottom]
-
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                         SETUP & INSTALLATION                  ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-
-Unzip the archive. You will find the following folders inside:
-
-apps			Contains Homebrew Channel ready files
-				(see Homebrew Channel instructions below)
-				
-executables		Contains Gamecube / Wii DOL files
-				(for loading from other methods)
-				
-snes9x			Contains the directory structure required for storing
-				roms, saves, and cheats (see below)
-
-----------------------------
-Directory Structure Setup
-----------------------------
-
-By default, roms are loaded from "snes9x/roms/", saves and preferences are 
-stored in "snes9x/saves/", and cheats are loaded from "/snes9x/cheats/".
-Therefore you should have the following folder structure at the root
-of your load device (SD/USB/SMB):
-
-  snes9x/
-       roms/
-       saves/
-       cheats/
-       
-----------------------------
-ROMS, Preferences, Saves, and Cheats:
-----------------------------
-Your SNES rom images must be in the Super Magicom (SMC) or FIG format. Generally,
-all images you find will be in this format, but if you run across one that isn't
-please download RTOOL which will allow you to convert the image into SMC format.
-Cheats must be placed in the cheats folder and named identically to the ROM name,
-except with a CHT extension.
-
-    Wii
-----------
-On the Wii, you can load roms from SD card (Front SD or SD Gecko), USB, DVD,
-or SMB share. Note that if you are using the Homebrew Channel, to load from 
-USB, DVD, or SMB you will first have to load Snes9xGx from SD, and then set 
-your load method preference. To load roms from a Windows network share (SMB) 
-you will have to edit snes9xGX.xml on your SD card with your network settings, 
-or edit s9xconfig.cpp from the source code and compile. If you edit and compile 
-the source, you can use wiiload and the Homebrew Channel to load and play 
-Snes9xGx completely over the network, without needing an SD card.
-
-
-  Gamecube
-------------
-You can load roms from DVD or SD card. If you create a bootable 
-DVD of Snes9xGx you can put roms on the same DVD. You may save preferences and
-game data to SD or Memory Card.
-
-------------------------------
-Loading / Running the Emulator:
-------------------------------
-
-Wii - Via Homebrew Channel:
---------------------
-The most popular method of running homebrew on the Wii is through the Homebrew
-Channel. If you already have the channel installed, just copy over the apps folder
-included in the archive into the root of your SD card.
-
-Remember to also create the snes9x directory structure required. See above.
-
-If you haven't installed the Homebrew Channel yet, read about how to here:
-http://hbc.hackmii.com/
-
-Gamecube:
----------
-You can load Snes9xGX via sdload and an SD card in slot A, or by streaming 
-it to your Gamecube, or by booting a bootable DVD with Snes9xGX on it. 
-This document doesn't cover how to do any of that. A good source for information 
-on these topics is the tehskeen forums: http://www.tehskeen.com/forums/
-
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                         ABOUT SNES9X                          ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-
-Welcome to the revolution in Wii/GameCube emulators! SNES9X is by far the most
+Welcome to the revolution in GameCube emulators! SNES9X is by far the most
 complete and accurate Super Nintendo Entertainment System emulator to date.
 Taking full power of the ATi-GX chipset and packed full of features that are
 to die for after playing your games you'll never want to come back to
@@ -230,129 +26,18 @@ reality.
 
 SNES9X is a very popular open source emulator mainly for the PC platform, but
 has seen many ports to other consoles such as the Nintendo DS, Microsoft XBOX
-,
-and, thanks to SoftDev, the Nintendo GameCube. SoftDev's 1.50 port is not based 
-on any previous SNES emulators that have existed for the GameCube. 
+and now thanks to SoftDev the Nintendo GameCube! This is a straight port and
+is not based on any previous SNES emulators that have existed for the
+GameCube. You can get more information on SNES9X here from the below URL.
+http://snes9x.ipherswipsite.com/
 
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                   DEFAULT CONTROLLER MAPPING                  ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-
-NOTE: You can change the controller configurations to your liking in the menu
-under the Config Controllers option.
-
-Below are the default button mappings for supported controllers. The wiimote
-configuration allows you to play with the wiimote held sideways.
-
-Wiimote		SNES					Nunchuk		SNES
----------------------				---------------------
-  1			  Y						  Z			  Y
-  2			  B						  B			  B
-  A			  A						  A			  A
-  B			  X						  C			  X
-  -			SELECT					  2			SELECT
-  +			START					  1			START
-HOME	    Emulator menu			HOME		Emulator menu
-			 LT						  -			 LT
-			 RT						  +			 RT
-
-
-
-
-Classic		SNES					GC PAD		SNES
----------------------				---------------------
-  X			  X						  Y			  Y
-  B			  B						  B			  B
-  A			  A						  A			  A
-  Y			  Y						  X			  X
-  -			SELECT					  Z			SELECT
-  +			START					 START		START
-HOME	    Emulator menu			
- LT			 LT						  LT		 LT
- RT			 RT						  RT		 RT
-
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·           SUPERSCOPE / MOUSE / JUSTIFIER SUPPORT              ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-
-Make sure you enable the superscope, mouse, or justifier in the controller
-options menu BEFORE loading the rom. If you have already loaded the rom
-and changed the setting, reset the game for the settings to take effect.
-
-These controllers can be controlled by either the Gamecube controller analog
-sticks,the Classic controller analog sticks, or by aiming at the screen
-with the wiimote.
-
-Aim Offscreen - Wiimote Minus, GameCube Z button
-Fire - B button
-Cursor - A button
-Turbo Toggle - Wiimote D-Pad Down, GameCube Y button
-
-These configurations cannot be changed.
-
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                             ZIP SUPPORT                       ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-
-The Zip support in the emulator is courtesy of the zlib library. Currently,
-it supports only the Inflate method.
-
-The good news is that this is by far the most common zip method!
-
-You should note also that this implementation assumes that the first file
-in each archive is the required rom in smc/fig format.
-
-In an attempt to save you time, we recommend using 7-Zip as the compressor,
-as it gives a gain of 5-25% better compression over standard zips. This being
-said, you can very well use WinZip or any other zip utility to create your zipped
-ROMs.
-
-To use 7-Zip compression on either linux or windows, use the following command:
-
-  7za a -tzip -mx=9 myrom.zip myrom.smc
-
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                              MAIN MENU                        ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-
-Once the DOL file is loaded you will be presented with main menu where you can
-load a ROM, set options for the emulator, set the joypad configuration, etc.
-After loading a game the game will start running immediately. If you have the
-auto-load SRAM option enabled it will automatically load SRAM (if it exists)
-before starting play. 
-
-You can return to the menu at any time by pressing the Home button 
-(Wiimote and Classic Controller) or on the c-stick (the yellow control stick) 
-to the left, or by pressing L+R+X+Y (GameCube Controller).
-Return to the game by selecting "Resume Game".
-
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                             TURBO MODE                        ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-
-TurboMode increases the playback speed of the game by about 2x. To use TurboMode
-simply press the c-stick (yellow control stick) to the right and hold it right
-as long as you want playback to be double-speed. Release the c-stick when you
-want normal playback speed to resume.
-
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                   IMPORTING AND EXPORTING SRAM                ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-
-Snes9xGx now includes the ability to load SRAM from Snes9x on other
-platforms (Mac/PC/Linux/Etc) and to save back to those platforms. 
-
-To load a SRAM file on the Wii or Gamecube from another platform, ensure the
-name of the SRM file matches the filename of the ROM (except with an SRM 
-extension).
-
-To use a Wii/GameCube SRAM file on another platform just do the opposite: 
-copy the saved SRAM file to the other platform. You may have to rename the 
-file to be what that version of snes9x expects it to be.
-
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                      UPDATE HISTORY (old)                     ·oø×O0|
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+[What's New 001]
+- compiles with latest devkitppc (r15)
+- now uses libfat (can use front sd slot on wii)
+- updated menu items a bit
+- wiimote support
+- fixed: autoload sram/freeze
+- fixed: rom plays immediately after loading
 
 [What Was New 2.0.1b8]
 * Added: SD slot B options for freezes, sram and loading of roms
@@ -471,6 +156,175 @@ changes to the emulator settings again and save them.
 * Analog Clip
 * XenoGC Support (GC-Linux Homebrew DVD Compatibility)
 
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                         SETUP & INSTALLATION                  ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+Unzip the archive into a folder. You'll find 6 variations of the dol, along
+with an "inject" tool for (optionally) injecting a rom into a dol. The six
+variants auto save and load preferences and sram to/from different locations
+as follows (you can also manually save and load SRAM to any location):
+
+  filename                      preferences/sram autoloading location
+  -------------------------     -------------------------------------
+  snes9xGx201b8-mcslota.dol     Memory card in slot A
+  snes9xGx201b8-mcslotb.dol     Memory card in slot B
+  snes9xGx201b8-sdslota.dol     SD card in SD adapter in slot A
+  snes9xGx201b8-sdslotb.dol     SD card in SD adapter in slot B
+  snes9xGx201b8-smb.dol         SMB share (see SMB section below)
+  snes9xGx201b8-noload.dol      none - doesn't load prefs nor autosave SRAM
+  
+
+Your SNES rom images must be in the Super Magicom (SMC) or FIG format. Generally,
+all images you find will be in this format, but if you run across one that isn't
+please download RTOOL which will allow you to convert the image into SMC format.
+
+You can load roms from DVD, SD card or SMB share. If you wish to use an SD card
+or SMB share, you must create an SNESROMS and an SNESSAVE folder at the top
+level (root) of the card or share. Put your roms in the SNESROMS folder. On DVD
+you can either place your roms at the top level, or optionally you may have an
+SNESROMS folder at the top level of the DVD, in which case the game selector
+will default to showing that folder when first entered. If you create a bootable
+DVD of Snes9xGx you can put roms on the same DVD.
+
+Now that you have that set up all you need to do is load the dol of your choice.
+You can load it via sdload and an SD card in slot A, or by streaming it to your
+cube, or by booting a bootable DVD with it on it. This document doesn't cover
+how to do any of that. A good source for information on these topics is the
+tehskeen forums:
+
+    http://www.tehskeen.com/forums/
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                   WIIMOTE CONTROLLER MAPPING                  ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+Wiimote		SNES
+---------------------
+  1		  Y
+  2		  B
+  A		  A
+  B		  X
+  -		SELECT
+  +		START
+HOME	    Emulator menu
+		 LT
+		 RT
+
+This configuration allows you to play with the wiimote held sideways.
+
+NOTE: snes Left Trigger and Right Trigger are not mapped.
+You can change the mapping in ngc/snes9xGX.cpp (search 'wmpadmap') and recompile.
+
+
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                        PARTIAL PKZIP SUPPORT                  ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+The Zip support in the emulator is courtesy of the zlib library. Currently,
+it supports only the Inflate method.
+
+The good news is that this is by far the most common zip method!
+
+You should note also that this implementation assumes that the first file
+in each archive is the required rom in smc/fig format.
+
+In an attempt to save you time, we recommend using 7-Zip as the compressor,
+as it gives a gain of 5-25% better compression over standard zips.
+
+To use 7-Zip compression on either linux or windows, use the following command:
+
+  7za a -tzip -mx=9 myrom.zip myrom.smc
+
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                              MAIN MENU                        ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+Once the DOL file is loaded you will be presented with main menu where you can
+load a rom from DVD, SD or SMB, set options for the emulator, set the joypad
+configuration (on a per-game basis), save or load freezes, manage SRAM, etc.
+After loading a game the game will start running immediately. If you have the
+auto-load SRAM option enabled it will automatically load SRAM (if it exists)
+before starting play. You can return to the main menu at any time by pressing
+the c-stick (the yellow control stick) to the left, or by pressing L+R+X+Y.
+Return to the game by selecting "Resume Game" or by pressing the B button until
+play resumes.
+
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                             TURBO MODE                        ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+TurboMode increases the playback speed of the game by about 2x. To use TurboMode
+simply press the c-stick (yellow control stick) to the right and hold it right
+as long as you want playback to be double-speed. Release the c-stick when you
+want normal playback speed to resume.
+
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                   IMPORTING AND EXPORTING SRAM                ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+Snes9xGx 2.0.1 now includes the ability to load SRAM from Snes9x on other
+platforms (Mac/PC/Linux/Etc) and to save back to those platforms. To use this
+feature simply save or load SRAM to/from SD card or an SMB share.
+
+The only thing to be aware of is that Snes9xGx requires that the SRM file have a
+name that is the rom name (not necessarily the same as the file name!) with .SRM
+at the end. For example, the game "Super Mario All-Stars + World" has a rom name
+of "ALL_STARS + WORLD", so the SRAM file should have the name "ALL_STARS +
+WORLD.srm". You can see the rom name for a game by loading the game - the rom
+name is shown in the information that is briefly shown at the bottom of the
+screen. A perhaps easier way to find the correct name is simply to load the game
+and then save SRAM to SD or SMB and look at the filename that Snes9xGx uses.
+That's the name you should use when importing an SRAM from another platform.
+
+To use an Snes9xGx SRAM on another platform just do the opposite: save SRAM to
+SD or SMB, and then copy that saved SRAM file to the other platform. You may
+have to rename the file to be what that version of snes9x expects it to be.
+
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                         INJECTING A ROM                       ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+Injecting a rom is not required to use snes9xGx, but if you primarily use
+snes9xGx by streaming it to your cube you may wish to inject a rom into the dol.
+In that case the game will start playing immediately once Snes9xGx loads. If you
+have the auto-load SRAM option enabled it will load SRAM before starting the
+game as well.
+
+To inject a rom you use the "inject.exe" tool on Windows or the "inject" tool on
+Mac OS X. This tool works at the command line and has syntax as follows:
+
+     inject original.dol gamerom.smc output.dol
+   
+On the Mac you will either need to copy the inject tool into a location that is
+in your "PATH" or just go into the directory that has the inject tool in it and
+proceed the command with "./" like this:
+
+   ./inject original.dol gamerom.smc output.dol
+   
+Once you run the tool on your dol, just stream the outputted dol to your cube,
+or otherwise load it and Snes9xGx will load and the game will start running.
+
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                  WAVEBIRD WIRELESS CONTROLLER                 ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+This note applies to all homebrew GC software. The Wavebird wireless controller
+CAN be used with homebrew, including Snes9xGx, but to enable it you must press a
+button on the controller when you power up the GC and see the Gamecube logo.
+This will initialize the controller and allow it to function in Snes9xGx and
+other homebrew software.
+
+You must do this each time you power up your Gamecube. Also, if you unplug the
+wireless receiver while Snes9xGx is running and plug it back in, it will not
+work - you will then have to plug in a wired controller to continue play. Until
+someone figures out how to properly handle the Wavebird, this will continue to
+be the case. My ears are open!
+
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                               SMB                             ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+TBD
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                               CREDITS                         ·oø×O0|
@@ -482,9 +336,10 @@ changes to the emulator settings again and save them.
                  GameCube Port 2.0 WIP6 and earlier - SoftDev
                  Additional improvements to 2.0 WIP6 - eke-eke
                    GameCube 2.0.1bx enhancements - crunchy2
-                         v00x updates - michniewski & Tantric
+                         v001 updates - michniewski
                         GX - http://www.gc-linux.org
-                        libogc - Shagkur & wintermute
+                             Font - Qoob Team
+                             libogc - Shagkur
 
 
                                  Testing
@@ -492,8 +347,9 @@ changes to the emulator settings again and save them.
 
 
                               Documentation
-                      brakken, crunchy2, michniewski, Tantric
+                 original by brakken/updated by crunchy2
+
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                                                               ·oø×O0|
+|0O×øo·                        SNES9XGX v2.0.1b8                      ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'

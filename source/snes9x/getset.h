@@ -1,7 +1,7 @@
 /**********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
-  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
+  (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com) and
                              Jerremy Koot (jkoot@snes9x.com)
 
   (c) Copyright 2002 - 2004  Matthew Kendora
@@ -12,15 +12,11 @@
 
   (c) Copyright 2001 - 2006  John Weidman (jweidman@slip.net)
 
-  (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
-                             Kris Bleakley (codeviolation@hotmail.com)
-
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
-                             Nach (n-a-c-h@users.sourceforge.net),
+  (c) Copyright 2002 - 2006  Brad Jorsch (anomie@users.sourceforge.net),
+                             funkyass (funkyass@spam.shaw.ca),
+                             Kris Bleakley (codeviolation@hotmail.com),
+                             Nach (n-a-c-h@users.sourceforge.net), and
                              zones (kasumitokoduck@yahoo.com)
-
-  (c) Copyright 2006 - 2007  nitsuja
-
 
   BS-X C emulator code
   (c) Copyright 2005 - 2006  Dreamer Nom,
@@ -114,30 +110,17 @@
   2xSaI filter
   (c) Copyright 1999 - 2001  Derek Liauw Kie Fa
 
-  HQ2x, HQ3x, HQ4x filters
+  HQ2x filter
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
-
-  Win32 GUI code
-  (c) Copyright 2003 - 2006  blip,
-                             funkyass,
-                             Matthew Kendora,
-                             Nach,
-                             nitsuja
-
-  Mac OS GUI code
-  (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
-
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
-
   Snes9x homepage: http://www.snes9x.com
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
-  and source form, for non-commercial purposes, is hereby granted without
-  fee, providing that this license information and copyright notice appear
+  and source form, for non-commercial purposes, is hereby granted without 
+  fee, providing that this license information and copyright notice appear 
   with all copies and any derived work.
 
   This software is provided 'as-is', without any express or implied
@@ -157,8 +140,6 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
-
-
 
 
 #ifndef _GETSET_H_
@@ -183,7 +164,7 @@ INLINE uint8 S9xGetByte (uint32 Address)
     int block;
     uint8 *GetAddress = Memory.Map [block = ((Address&0xffffff) >> MEMMAP_SHIFT)];
 
-    if(!CPU.InDMAorHDMA)
+    if(!CPU.InDMA)
         CPU.Cycles += Memory.MemorySpeed [block];
 
     if (GetAddress >= (uint8 *) CMemory::MAP_LAST)
@@ -194,11 +175,11 @@ INLINE uint8 S9xGetByte (uint32 Address)
 #endif
         return (*(GetAddress + (Address & 0xffff)));
     }
-
+	
     switch ((pint) GetAddress)
     {
       case CMemory::MAP_PPU:
-        if(CPU.InDMAorHDMA && (Address&0xff00)==0x2100) return OpenBus;
+        if(CPU.InDMA && (Address&0xff00)==0x2100) return OpenBus;
         return (S9xGetPPU (Address & 0xffff));
       case CMemory::MAP_CPU:
         return (S9xGetCPU (Address & 0xffff));
@@ -211,9 +192,6 @@ INLINE uint8 S9xGetByte (uint32 Address)
         //bank>>1 | offset = s-ram address, unbound
         //unbound & SRAMMask = Sram offset
         return (*(Memory.SRAM + ((((Address&0xFF0000)>>1) |(Address&0x7FFF)) &Memory.SRAMMask)));
-
-      case CMemory::MAP_LOROM_SRAM_B:
-        return (*(Multi.sramB + ((((Address&0xFF0000)>>1) |(Address&0x7FFF)) &Multi.sramMaskB)));
 
       case CMemory::MAP_RONLY_SRAM:
       case CMemory::MAP_HIROM_SRAM:
@@ -293,10 +271,10 @@ INLINE uint16 S9xGetWord (uint32 Address, enum s9xwrap_t w=WRAP_NONE)
     int block;
     uint8 *GetAddress = Memory.Map [block = ((Address&0xffffff) >> MEMMAP_SHIFT)];
 
-    if(!CPU.InDMAorHDMA)
+    if(!CPU.InDMA)
         CPU.Cycles += (Memory.MemorySpeed [block]<<1);
 
-
+ 
     if (GetAddress >= (uint8 *) CMemory::MAP_LAST)
     {
 #ifdef CPU_SHUTDOWN
@@ -309,7 +287,7 @@ INLINE uint16 S9xGetWord (uint32 Address, enum s9xwrap_t w=WRAP_NONE)
     switch ((pint) GetAddress)
     {
       case CMemory::MAP_PPU:
-        if(CPU.InDMAorHDMA){
+        if(CPU.InDMA){
             OpenBus=S9xGetByte (Address);
             return (OpenBus | (S9xGetByte (Address + 1) << 8));
         }
@@ -335,18 +313,9 @@ INLINE uint16 S9xGetWord (uint32 Address, enum s9xwrap_t w=WRAP_NONE)
         } else {
             /* no READ_WORD here, since if Memory.SRAMMask=0x7ff
              * then the high byte doesn't follow the low byte. */
-            return
+            return 
                 (*(Memory.SRAM + ((((Address&0xFF0000)>>1) |(Address&0x7FFF)) &Memory.SRAMMask)))|
                 ((*(Memory.SRAM + (((((Address+1)&0xFF0000)>>1) |((Address+1)&0x7FFF)) &Memory.SRAMMask)))<<8);
-        }
-
-      case CMemory::MAP_LOROM_SRAM_B:
-        if(Multi.sramMaskB>=MEMMAP_MASK){
-            return READ_WORD(Multi.sramB + ((((Address&0xFF0000)>>1) |(Address&0x7FFF)) &Multi.sramMaskB));
-        } else {
-            return
-                (*(Multi.sramB + ((((Address&0xFF0000)>>1) |(Address&0x7FFF)) &Multi.sramMaskB)))|
-                ((*(Multi.sramB + (((((Address+1)&0xFF0000)>>1) |((Address+1)&0x7FFF)) &Multi.sramMaskB)))<<8);
         }
 
       case CMemory::MAP_RONLY_SRAM:
@@ -378,7 +347,7 @@ INLINE uint16 S9xGetWord (uint32 Address, enum s9xwrap_t w=WRAP_NONE)
         printf("reading spc7110 ROM (word) at %06X\n", Address);
 #endif
         return (S9xGetSPC7110Byte(Address)|
-                (S9xGetSPC7110Byte (Address+1))<<8);
+                (S9xGetSPC7110Byte (Address+1))<<8);	
       case CMemory::MAP_SPC7110_DRAM:
 #ifdef SPC7110_DEBUG
         printf("reading Bank 50 (word)\n");
@@ -415,10 +384,10 @@ INLINE void S9xSetByte (uint8 Byte, uint32 Address)
     int block;
     uint8 *SetAddress = Memory.WriteMap [block = ((Address&0xffffff) >> MEMMAP_SHIFT)];
 
-    if (!CPU.InDMAorHDMA)
+    if (!CPU.InDMA)
         CPU.Cycles += Memory.MemorySpeed [block];
 
-
+	
     if (SetAddress >= (uint8 *) CMemory::MAP_LAST)
     {
 #ifdef CPU_SHUTDOWN
@@ -435,11 +404,11 @@ INLINE void S9xSetByte (uint8 Byte, uint32 Address)
 #endif
         return;
     }
-
+	
     switch ((pint) SetAddress)
     {
       case CMemory::MAP_PPU:
-        if(CPU.InDMAorHDMA && (Address&0xff00)==0x2100) return;
+        if(CPU.InDMA && (Address&0xff00)==0x2100) return;
         S9xSetPPU (Byte, Address & 0xffff);
         return;
 
@@ -462,15 +431,7 @@ INLINE void S9xSetByte (uint8 Byte, uint32 Address)
         }
         return;
 
-      case CMemory::MAP_LOROM_SRAM_B:
-        if (Multi.sramMaskB)
-        {
-            *(Multi.sramB + ((((Address&0xFF0000)>>1)|(Address&0x7FFF))& Multi.sramMaskB))=Byte;
-            CPU.SRAMModified = TRUE;
-        }
-        return;
-
-     case CMemory::MAP_HIROM_SRAM:
+      case CMemory::MAP_HIROM_SRAM:
         if (Memory.SRAMMask)
         {
             *(Memory.SRAM + (((Address & 0x7fff) - 0x6000 +
@@ -565,7 +526,7 @@ INLINE void S9xSetWord (uint16 Word, uint32 Address, enum s9xwrap_t w=WRAP_NONE,
     int block;
     uint8 *SetAddress = Memory.WriteMap [block = ((Address&0xffffff) >> MEMMAP_SHIFT)];
 
-    if (!CPU.InDMAorHDMA)
+    if (!CPU.InDMA)
         CPU.Cycles += Memory.MemorySpeed [block] << 1;
 
 
@@ -589,7 +550,7 @@ INLINE void S9xSetWord (uint16 Word, uint32 Address, enum s9xwrap_t w=WRAP_NONE,
     switch ((pint) SetAddress)
     {
       case CMemory::MAP_PPU:
-        if(CPU.InDMAorHDMA){
+        if(CPU.InDMA){
             if((Address&0xff00)!=0x2100) S9xSetPPU((uint8)Word, Address&0xffff);
             if(((Address+1)&0xff00)!=0x2100) S9xSetPPU(Word>>8, (Address+1)&0xffff);
             return;
@@ -641,32 +602,19 @@ INLINE void S9xSetWord (uint16 Word, uint32 Address, enum s9xwrap_t w=WRAP_NONE,
         }
         return;
 
-      case CMemory::MAP_LOROM_SRAM_B:
-        if (Multi.sramMaskB) {
-            if(Multi.sramMaskB>=MEMMAP_MASK){
-                WRITE_WORD(Multi.sramB + ((((Address&0xFF0000)>>1)|(Address&0x7FFF))&Multi.sramMaskB), Word);
-            } else {
-                *(Multi.sramB + ((((Address&0xFF0000)>>1)|(Address&0x7FFF))& Multi.sramMaskB)) = (uint8) Word;
-                *(Multi.sramB + (((((Address+1)&0xFF0000)>>1)|((Address+1)&0x7FFF))& Multi.sramMaskB)) = Word >> 8;
-            }
-
-            CPU.SRAMModified = TRUE;
-        }
-        return;
-
       case CMemory::MAP_HIROM_SRAM:
         if (Memory.SRAMMask) {
             if(Memory.SRAMMask>=MEMMAP_MASK){
-                WRITE_WORD(Memory.SRAM +
+                WRITE_WORD(Memory.SRAM + 
                            (((Address & 0x7fff) - 0x6000 +
                              ((Address & 0xf0000) >> 3) & Memory.SRAMMask)), Word);
             } else {
                 /* no WRITE_WORD here, since if Memory.SRAMMask=0x7ff
                  * then the high byte doesn't follow the low byte. */
-                *(Memory.SRAM +
+                *(Memory.SRAM + 
                   (((Address & 0x7fff) - 0x6000 +
                     ((Address & 0xf0000) >> 3) & Memory.SRAMMask))) = (uint8) Word;
-                *(Memory.SRAM +
+                *(Memory.SRAM + 
                   ((((Address + 1) & 0x7fff) - 0x6000 +
                     (((Address + 1) & 0xf0000) >> 3) & Memory.SRAMMask))) = (uint8) (Word >> 8);
             }
@@ -766,7 +714,7 @@ INLINE uint8 *GetBasePointer (uint32 Address)
 //        {
 //            return s7r.bank50;
 //        }
-
+        
       case CMemory::MAP_SPC7110_ROM:
 #ifdef SPC7110_DEBUG
         printf("Getting Base pointer to SPC7110ROM\n");
@@ -779,10 +727,6 @@ INLINE uint8 *GetBasePointer (uint32 Address)
       case CMemory::MAP_LOROM_SRAM:
         if((Memory.SRAMMask&MEMMAP_MASK)!=MEMMAP_MASK) return NULL;
         return (Memory.SRAM + ((((Address&0xFF0000)>>1)|(Address&0x7FFF)) & Memory.SRAMMask) - (Address&0xffff));
-
-      case CMemory::MAP_LOROM_SRAM_B:
-        if((Multi.sramMaskB&MEMMAP_MASK)!=MEMMAP_MASK) return NULL;
-        return (Multi.sramB + ((((Address&0xFF0000)>>1)|(Address&0x7FFF)) & Multi.sramMaskB) - (Address&0xffff));
 
       case CMemory::MAP_BWRAM:
         return (Memory.BWRAM - 0x6000 - (Address&0x8000));
@@ -822,7 +766,7 @@ INLINE uint8 *S9xGetMemPointer (uint32 Address)
 //        {
 //            return s7r.bank50 + (Address&0xffff);
 //        }
-
+        
       case CMemory::MAP_SPC7110_ROM:
 #ifdef SPC7110_DEBUG
         printf("Getting Mem pointer to SPC7110ROM\n");
@@ -835,10 +779,6 @@ INLINE uint8 *S9xGetMemPointer (uint32 Address)
       case CMemory::MAP_LOROM_SRAM:
         if((Memory.SRAMMask&MEMMAP_MASK)!=MEMMAP_MASK) return NULL;
         return (Memory.SRAM + ((((Address&0xFF0000)>>1)|(Address&0x7FFF)) & Memory.SRAMMask));
-
-      case CMemory::MAP_LOROM_SRAM_B:
-        if((Multi.sramMaskB&MEMMAP_MASK)!=MEMMAP_MASK) return NULL;
-        return (Multi.sramB + ((((Address&0xFF0000)>>1)|(Address&0x7FFF)) & Multi.sramMaskB));
 
       case CMemory::MAP_BWRAM:
         return (Memory.BWRAM - 0x6000 + (Address&0x7fff));
@@ -889,7 +829,7 @@ INLINE void S9xSetPCBase (uint32 Address)
 //            CPU.PCBase = s7r.bank50;
 //            return;
 //        }
-
+        
       case CMemory::MAP_SPC7110_ROM:
 #ifdef SPC7110_DEBUG
         printf("Getting Base pointer to SPC7110ROM\n");
@@ -906,14 +846,6 @@ INLINE void S9xSetPCBase (uint32 Address)
             CPU.PCBase = NULL;
         } else {
             CPU.PCBase = (Memory.SRAM + ((((Address&0xFF0000)>>1)|(Address&0x7FFF)) & Memory.SRAMMask)) - (Address&0xffff);
-        }
-        return;
-
-      case CMemory::MAP_LOROM_SRAM_B:
-        if((Multi.sramMaskB&MEMMAP_MASK)!=MEMMAP_MASK){
-            CPU.PCBase = NULL;
-        } else {
-            CPU.PCBase = (Multi.sramB + ((((Address&0xFF0000)>>1)|(Address&0x7FFF)) & Multi.sramMaskB)) - (Address&0xffff);
         }
         return;
 
@@ -936,9 +868,9 @@ INLINE void S9xSetPCBase (uint32 Address)
       case CMemory::MAP_OBC_RAM:
         CPU.PCBase = GetBasePointerOBC1(Address);
         return;
-
+		
       case CMemory::MAP_BSX:
-        CPU.PCBase = S9xGetBasePointerBSX(Address);
+        CPU.PCBase = S9xGetPasePointerBSX(Address);
         return;
 
       case CMemory::MAP_DEBUG:
