@@ -225,6 +225,7 @@ NGCUnFreezeBlock (char *name, uint8 * block, int size)
 	buffer[10] != ':' || (len = strtol (&buffer[4], &e, 10)) == 0 ||
 	e != buffer + 10)
 	{
+		bufoffset -= 11; // go back to where we started
 		return WRONG_FORMAT;
 	}
 
