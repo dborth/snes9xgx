@@ -283,7 +283,9 @@ bool IsValidROM(int method)
 
 			if(p != NULL)
 			{
-				if (stricmp(p, ".smc") == 0 || stricmp(p, ".fig") == 0)
+				if (stricmp(p, ".smc") == 0 ||
+					stricmp(p, ".fig") == 0 ||
+					stricmp(p, ".sfc") == 0)
 				{
 					return true;
 				}
