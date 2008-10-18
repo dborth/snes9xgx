@@ -297,35 +297,15 @@ void decodepad (int pad)
 	// Is XY inside the "zone"?
 	if (wm_ax * wm_ax + wm_ay * wm_ay > PADCAL * PADCAL)
 	{
-		/*** we don't want division by zero ***/
+
 	    if (wm_ax > 0 && wm_ay == 0)
-	    {
-			if(exp_type == WPAD_EXP_CLASSIC)
-				wp |= WPAD_CLASSIC_BUTTON_RIGHT;
-			else
-				wp |= WPAD_BUTTON_RIGHT;
-	    }
+			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_RIGHT : WPAD_BUTTON_RIGHT;
 	    if (wm_ax < 0 && wm_ay == 0)
-	    {
-	    	if(exp_type == WPAD_EXP_CLASSIC)
-				wp |= WPAD_CLASSIC_BUTTON_LEFT;
-			else
-				wp |= WPAD_BUTTON_LEFT;
-	    }
+			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_LEFT : WPAD_BUTTON_LEFT;
 	    if (wm_ax == 0 && wm_ay > 0)
-	    {
-	    	if(exp_type == WPAD_EXP_CLASSIC)
-				wp |= WPAD_CLASSIC_BUTTON_UP;
-			else
-				wp |= WPAD_BUTTON_UP;
-	    }
+			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_UP : WPAD_BUTTON_UP;
 	    if (wm_ax == 0 && wm_ay < 0)
-	    {
-	    	if(exp_type == WPAD_EXP_CLASSIC)
-				wp |= WPAD_CLASSIC_BUTTON_DOWN;
-			else
-				wp |= WPAD_BUTTON_DOWN;
-	    }
+			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_DOWN : WPAD_BUTTON_DOWN;
 
 	    if (wm_ax != 0 && wm_ay != 0)
 		{
@@ -335,17 +315,11 @@ void decodepad (int pad)
 			{
 				if (wm_ax >= 0)
 				{
-					if(exp_type == WPAD_EXP_CLASSIC)
-						wp |= WPAD_CLASSIC_BUTTON_RIGHT;
-					else
-						wp |= WPAD_BUTTON_RIGHT;
+					wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_RIGHT : WPAD_BUTTON_RIGHT;
 				}
 				else
 				{
-					if(exp_type == WPAD_EXP_CLASSIC)
-						wp |= WPAD_CLASSIC_BUTTON_LEFT;
-					else
-						wp |= WPAD_BUTTON_LEFT;
+					wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_LEFT : WPAD_BUTTON_LEFT;
 				}
 			}
 
@@ -355,17 +329,11 @@ void decodepad (int pad)
 			{
 				if (wm_ay >= 0)
 				{
-					if(exp_type == WPAD_EXP_CLASSIC)
-						wp |= WPAD_CLASSIC_BUTTON_UP;
-					else
-						wp |= WPAD_BUTTON_UP;
+					wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_UP : WPAD_BUTTON_UP;
 				}
 				else
 				{
-					if(exp_type == WPAD_EXP_CLASSIC)
-						wp |= WPAD_CLASSIC_BUTTON_DOWN;
-					else
-						wp |= WPAD_BUTTON_DOWN;
+					wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_DOWN : WPAD_BUTTON_DOWN;
 				}
 			}
 		}
