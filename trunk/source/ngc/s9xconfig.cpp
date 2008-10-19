@@ -91,7 +91,7 @@ DefaultSettings ()
 	Settings.FixFrequency = false;
 	Settings.DisableSampleCaching = true;
 	Settings.InterpolatedSound = true;
-	Settings.ReverseStereo = false;
+	Settings.ReverseStereo = true;
 
 	// Graphics
 	Settings.Transparency = true;

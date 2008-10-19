@@ -152,8 +152,6 @@ preparePrefsData (int method)
 
 	createXMLSection("Emulation", "Emulation Settings");
 
-	createXMLSetting("ReverseStereo", "Reverse Stereo", toStr(Settings.ReverseStereo));
-	createXMLSetting("InterpolatedSound", "Interpolated Sound", toStr(Settings.InterpolatedSound));
 	createXMLSetting("Transparency", "Transparency", toStr(Settings.Transparency));
 	createXMLSetting("DisplayFrameRate", "Display Frame Rate", toStr(Settings.DisplayFrameRate));
 	createXMLSetting("NGCZoom", "C-Stick Zoom", toStr(GCSettings.NGCZoom));
@@ -278,8 +276,6 @@ decodePrefsData (int method)
 
 	// Emulation Settings
 
-	loadXMLSetting(&Settings.ReverseStereo, "ReverseStereo");
-	loadXMLSetting(&Settings.InterpolatedSound, "InterpolatedSound");
 	loadXMLSetting(&Settings.Transparency, "Transparency");
 	loadXMLSetting(&Settings.DisplayFrameRate, "DisplayFrameRate");
 	loadXMLSetting(&GCSettings.NGCZoom, "NGCZoom");
