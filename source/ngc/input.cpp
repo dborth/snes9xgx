@@ -363,7 +363,7 @@ void decodepad (int pad)
 	{
 		// buttons
 		offset = 0x50;
-		for (i = 0; i < 6; i++)
+		for (i = 0; i < 5; i++)
 		{
 			if (jp & gcscopemap[i]
 #ifdef HW_RVL
