@@ -512,11 +512,11 @@ void SetControllers ()
 	}
 	else if (Settings.JustifierMaster == true)
 	{
-		S9xSetController(0, CTL_JUSTIFIER, 0, 0, 0, 0);
+		S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
 		if(GCSettings.Justifier == 2)
 			S9xSetController(1, CTL_JUSTIFIER, 1, 0, 0, 0);
 		else
-			S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+			S9xSetController(1, CTL_JUSTIFIER, 0, 0, 0, 0);
 	}
 	else
 	{
