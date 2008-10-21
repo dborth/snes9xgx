@@ -71,6 +71,29 @@ extern unsigned int timediffallowed;
 
 extern void fat_enable_readahead_all();
 
+/****************************************************************************
+ * ipl_set_config
+ * lowlevel Qoob Modchip disable
+ ***************************************************************************/
+
+void ipl_set_config(unsigned char c)
+{
+	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
+	unsigned long val,addr;
+	addr=0xc0000000;
+	val = c << 24;
+	exi[0] = ((((exi[0]) & 0x405) | 256) | 48);	//select IPL
+	//write addr of IPL
+	exi[0 * 5 + 4] = addr;
+	exi[0 * 5 + 3] = ((4 - 1) << 4) | (1 << 2) | 1;
+	while (exi[0 * 5 + 3] & 1);
+	//write the ipl we want to send
+	exi[0 * 5 + 4] = val;
+	exi[0 * 5 + 3] = ((4 - 1) << 4) | (1 << 2) | 1;
+	while (exi[0 * 5 + 3] & 1);
+
+	exi[0] &= 0x405;	//deselect IPL
+}
 
 /****************************************************************************
  * setFrameTimerMethod()
@@ -200,6 +223,10 @@ emulate ()
 int
 main ()
 {
+#ifdef HW_DOL
+	ipl_set_config(6); // disable Qoob modchip
+#endif
+
 #ifdef WII_DVD
 	DI_Init();	// first
 #endif
