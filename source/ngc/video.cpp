@@ -3,7 +3,8 @@
  *
  * softdev July 2006
  * crunchy2 May 2007
-  * Michniewski 2008
+ * Michniewski 2008
+ * Tantric October 2008
  *
  * video.cpp
  *
@@ -757,7 +758,7 @@ update_video (int width, int height)
 		// aspect ratio scaling (change width scale)
 		// yes its pretty cheap and ugly, but its easy!
 		if (GCSettings.widescreen)
-			xscale -= (4.0*yscale)/9;
+			xscale = (3*xscale)/4;
 
 		xscale *= zoom_level;
 		yscale *= zoom_level;
