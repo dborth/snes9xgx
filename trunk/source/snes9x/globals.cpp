@@ -173,9 +173,7 @@
 #include "fxemu.h"
 #include "gfx.h"
 #include "soundux.h"
-
 #include "cheats.h"
-
 #include "sa1.h"
 #include "bsx.h"
 #include "spc7110.h"
@@ -204,8 +202,6 @@ struct SAPURegisters APURegisters;
 
 struct SSettings Settings;
 
-struct SDSP1 DSP1;
-
 struct SSA1Registers SA1Registers;
 
 struct SSA1 SA1;
@@ -215,10 +211,6 @@ struct SBSX BSX;
 struct SMulti Multi;
 
 SSoundData SoundData;
-
-SnesModel M1SNES={1,3,2};
-SnesModel M2SNES={2,4,3};
-SnesModel* Model=&M1SNES;
 
 #if defined(ZSNES_FX) || defined(ZSNES_C4)
 uint8 *ROM = NULL;
@@ -234,6 +226,12 @@ unsigned char OpenBus = 0;
 
 
 END_EXTERN_C
+
+struct SDSP1 DSP1;
+
+SnesModel M1SNES={1,3,2};
+SnesModel M2SNES={2,4,3};
+SnesModel* Model=&M1SNES;
 
 #ifndef ZSNES_FX
 struct FxInit_s SuperFX;
@@ -292,7 +290,6 @@ uint32 current_graphic_format = RGB565;
 #endif
 
 uint8 GetBank = 0;
-
 struct SCheatData Cheat;
 
 volatile SoundStatus so;

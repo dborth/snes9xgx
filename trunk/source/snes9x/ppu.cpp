@@ -2088,10 +2088,10 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 			if (Settings.DisableHDMA)
 				byte = 0;
 			Memory.FillRAM[0x420c] = byte;
-			//printf("$%02x is written to $420c at HC:%d, V:%d, IPPU.HDMA:$%02x, IPPU.HDMAEnded:$%02x\n", byte, CPU.Cycles, CPU.V_Counter, IPPU.HDMA, IPPU.HDMAEnded);
+			//printf("$%02x is written to $420c at HC:%d, V:%d, PPU.HDMA:$%02x, PPU.HDMAEnded:$%02x\n", byte, CPU.Cycles, CPU.V_Counter, PPU.HDMA, PPU.HDMAEnded);
 			// FIXME
 			// Yoshi's Island / Genjyu Ryodan, Mortal Kombat, Tales of Phantasia
-			IPPU.HDMA = byte&~IPPU.HDMAEnded;
+			PPU.HDMA = byte&~PPU.HDMAEnded;
 			break;
 
 		  case 0x420d:
@@ -2306,7 +2306,7 @@ void S9xSetCPU (uint8 byte, uint16 Address)
 				DMA[d].LineCount = 128;
 				DMA[d].Repeat = !!(byte & 0x80);
 			}
-			//printf("$%02x is written to $43%da at HC:%d, V:%d, IPPU.HDMA:$%02x, IPPU.HDMAEnded:$%02x\n", byte, d, CPU.Cycles, CPU.V_Counter, IPPU.HDMA, IPPU.HDMAEnded);
+			//printf("$%02x is written to $43%da at HC:%d, V:%d, PPU.HDMA:$%02x, PPU.HDMAEnded:$%02x\n", byte, d, CPU.Cycles, CPU.V_Counter, PPU.HDMA, PPU.HDMAEnded);
 			return;
 
 		  case 0x430B:
@@ -2422,11 +2422,14 @@ uint8 S9xGetCPU (uint16 Address)
 
     if (Address < 0x4200)
 	{
-#ifdef SNES_JOY_READ_CALLBACKS
-		extern bool8 pad_read;
 		if(Address==0x4016 || Address==0x4017)
-			S9xOnSNESPadRead(), pad_read = true;
+		{
+			extern bool8 pad_read;
+#ifdef SNES_JOY_READ_CALLBACKS
+			S9xOnSNESPadRead();
 #endif
+			pad_read = true;
+		}
 
 		CPU.Cycles += ONE_CYCLE;
 		switch (Address)
@@ -2516,13 +2519,14 @@ uint8 S9xGetCPU (uint16 Address)
 	  case 0x421d:
 	  case 0x421e:
 	  case 0x421f:
-#ifdef SNES_JOY_READ_CALLBACKS
-	{
-		extern bool8 pad_read;
 		if(Memory.FillRAM[0x4200] & 1)
-			S9xOnSNESPadRead(), pad_read = true;
-	}
+		{
+			extern bool8 pad_read;
+#ifdef SNES_JOY_READ_CALLBACKS
+			S9xOnSNESPadRead();
 #endif
+			pad_read = true;
+		}
 		// Joypads 1-4 button and direction state.
 		return (Memory.FillRAM [Address]);
 
@@ -2824,8 +2828,8 @@ void S9xSoftResetPPU ()
 	PPU.Need16x8Mulitply = FALSE;
 
 	IPPU.ColorsChanged = TRUE;
-	IPPU.HDMA = 0;
-	IPPU.HDMAEnded = 0;
+	PPU.HDMA = 0;
+	PPU.HDMAEnded = 0;
 	IPPU.MaxBrightness = 0;
 	IPPU.LatchedBlanking = 0;
 	IPPU.OBJChanged = TRUE;
