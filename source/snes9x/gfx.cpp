@@ -382,7 +382,6 @@ void S9xStartScreenRefresh(){
         IPPU.RenderedFramesCount = 0;
         IPPU.FrameCount = 0;
     }
-	++IPPU.TotalEmulatedFrames;
 }
 
 void RenderLine(uint8 C) {
@@ -530,6 +529,7 @@ void S9xEndScreenRefresh() {
             }
         }
     }
+    ++IPPU.TotalEmulatedFrames;
 }
 
 

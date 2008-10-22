@@ -1996,25 +1996,6 @@ void CMemory::InitROM (void)
 	else
 		Settings.PAL = FALSE;
 
-
-	//// Initialize emulation
-
-	Timings.H_Max_Master = SNES_CYCLES_PER_SCANLINE;
-	Timings.H_Max        = Timings.H_Max_Master;
-	Timings.HBlankStart  = SNES_HBLANK_START_HC;
-	Timings.HBlankEnd    = SNES_HBLANK_END_HC;
-	Timings.HDMAInit     = SNES_HDMA_INIT_HC;
-	Timings.HDMAStart    = SNES_HDMA_START_HC;
-	Timings.RenderPos    = SNES_RENDER_START_HC;
-	Timings.V_Max_Master = Settings.PAL ? SNES_MAX_PAL_VCOUNTER : SNES_MAX_NTSC_VCOUNTER;
-	Timings.V_Max        = Timings.V_Max_Master;
-	/* From byuu: The total delay time for both the initial (H)DMA sync (to the DMA clock),
-	   and the end (H)DMA sync (back to the last CPU cycle's mcycle rate (6, 8, or 12)) always takes between 12-24 mcycles.
-	   Possible delays: { 12, 14, 16, 18, 20, 22, 24 }
-	   XXX: Snes9x can't emulate this timing :( so let's use the average value... */
-	Timings.DMACPUSync   = 18;
-
-
 	if (Settings.PAL)
 	{
 		Settings.FrameTime = Settings.FrameTimePAL;
@@ -2056,6 +2037,23 @@ void CMemory::InitROM (void)
 		Settings.DisplayColor = BUILD_PIXEL(0, 16, 31);
 		SET_UI_COLOR(0, 128, 255);
 	}
+
+	//// Initialize emulation
+
+	Timings.H_Max_Master = SNES_CYCLES_PER_SCANLINE;
+	Timings.H_Max        = Timings.H_Max_Master;
+	Timings.HBlankStart  = SNES_HBLANK_START_HC;
+	Timings.HBlankEnd    = SNES_HBLANK_END_HC;
+	Timings.HDMAInit     = SNES_HDMA_INIT_HC;
+	Timings.HDMAStart    = SNES_HDMA_START_HC;
+	Timings.RenderPos    = SNES_RENDER_START_HC;
+	Timings.V_Max_Master = Settings.PAL ? SNES_MAX_PAL_VCOUNTER : SNES_MAX_NTSC_VCOUNTER;
+	Timings.V_Max        = Timings.V_Max_Master;
+	/* From byuu: The total delay time for both the initial (H)DMA sync (to the DMA clock),
+	   and the end (H)DMA sync (back to the last CPU cycle's mcycle rate (6, 8, or 12)) always takes between 12-24 mcycles.
+	   Possible delays: { 12, 14, 16, 18, 20, 22, 24 }
+	   XXX: Snes9x can't emulate this timing :( so let's use the average value... */
+	Timings.DMACPUSync   = 18;
 
 	IAPU.OneCycle = SNES_APU_ONE_CYCLE_SCALED;
 

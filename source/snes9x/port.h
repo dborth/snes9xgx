@@ -261,8 +261,6 @@ typedef unsigned long long uint64;
 #   include <systypes.h>
 # else
 
-#define SNES_JOY_READ_CALLBACKS
-
 typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef signed char int8;
@@ -275,6 +273,16 @@ typedef long int32;
 #   define PLAT_SOUND_BUFFER SoundBuffer
 #   define RIGHTSHIFT_IS_SAR
 # endif
+
+# if defined(_MSC_VER) && (_MSC_VER == 1400) /* VC8.0 */
+/* temporary solution for fatal error C1063 (cl.exe 14.00.50727.762) */
+#   ifdef RIGHTSHIFT_IS_SAR
+#     undef RIGHTSHIFT_IS_SAR
+#   endif /* RIGHTSHIFT_IS_SAR */
+#   define RIGHTSHIFT_INT8_IS_SAR
+#   define RIGHTSHIFT_INT16_IS_SAR
+#   define RIGHTSHIFT_INT32_IS_SAR
+# endif /* VC8.0 */
 
 typedef unsigned int uint32;
 
@@ -335,9 +343,15 @@ void _splitpath (const char *path, char *drive, char *dir, char *fname,
 #else /* __WIN32__ */
 #define strcasecmp stricmp
 #define strncasecmp strnicmp
+
+#define SNES_JOY_READ_CALLBACKS
+
 #endif
 
 EXTERN_C void S9xGenerateSound ();
+#ifdef __WIN32__
+EXTERN_C void S9xGenerateFrameSound ();
+#endif
 
 #ifdef STORM
 EXTERN_C int soundsignal;

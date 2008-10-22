@@ -231,7 +231,7 @@ void S9xResetSaveTimer(bool8 dontsave){
     static time_t t=-1;
 
     if(!dontsave && t!=-1 && time(NULL)-t>300){{
-#ifndef NGC	 
+#ifndef NGC
 		char def [PATH_MAX];
         char filename [PATH_MAX];
         char drive [_MAX_DRIVE];
@@ -298,7 +298,7 @@ struct SnapshotMovieInfo
 #undef STRUCT
 #define STRUCT struct SnapshotMovieInfo
 
-#ifndef NGC	
+#ifndef NGC
 	static FreezeData SnapMovie [] = {
 	INT_ENTRY(1, MovieInputDataSize),
 };
@@ -499,6 +499,9 @@ static FreezeData SnapPPU [] = {
     INT_ENTRY(3, GunVLatch),
     INT_ENTRY(3, GunHLatch),
     INT_ENTRY(2, VTimerPosition),
+
+    INT_ENTRY(5, HDMA),
+    INT_ENTRY(5, HDMAEnded),
 };
 
 #undef STRUCT
@@ -545,6 +548,8 @@ static FreezeData SnapAPU [] = {
     ARRAY_ENTRY(1, TimerEnabled, 3, uint8_ARRAY_V),
     ARRAY_ENTRY(1, TimerValueWritten, 3, uint8_ARRAY_V),
     INT_ENTRY(4, Cycles),
+    INT_ENTRY(5, NextAPUTimerPos),
+    INT_ENTRY(5, APUTimerCounter),
 };
 
 #undef STRUCT
@@ -936,10 +941,6 @@ void UnfreezeStructFromCopy (void *base, FreezeData *fields, int num_fields, uin
 
 int UnfreezeBlockCopy (STREAM stream, char *name, uint8** block, int size);
 
-void S9xCloseSnapshotFile (FILE *stream)
-{
-	fclose(stream);
-}
 bool8 Snapshot (const char *filename)
 {
     return (S9xFreezeGame (filename));
@@ -956,8 +957,9 @@ bool8 S9xFreezeGame (const char *filename)
 		S9xPrepareSoundForSnapshotSave (FALSE);
 
 		S9xFreezeToStream (stream);
+#ifndef NGC
 		S9xCloseSnapshotFile (stream);
-
+#endif
 		S9xPrepareSoundForSnapshotSave (TRUE);
 
 		S9xResetSaveTimer (TRUE);
@@ -1043,7 +1045,9 @@ bool8 S9xUnfreezeGame (const char *filename)
 				S9xMessage (S9X_ERROR, S9X_ROM_NOT_FOUND, String);
 				break;
 			}
+#ifndef NGC
 			S9xCloseSnapshotFile (snapshot);
+#endif
 			return (FALSE);
 		}
 
@@ -1254,7 +1258,7 @@ int S9xUnfreezeFromStream (STREAM stream)
 
     int version;
     int len = strlen (SNAPSHOT_MAGIC) + 1 + 4 + 1;
-#ifdef NGC	
+#ifdef NGC
     GetMem(buffer, len);
 #else
     if (READ_STREAM (buffer, len, stream) != len)
@@ -1270,7 +1274,7 @@ int S9xUnfreezeFromStream (STREAM stream)
 
 	unfreezing_from_stream = true;
 
-#ifndef NGC	
+#ifndef NGC
 	if (strcasecmp (rom_filename, Memory.ROMFilename) != 0 &&
 		strcasecmp (S9xBasename (rom_filename), S9xBasename (Memory.ROMFilename)) != 0)
     {
@@ -1359,7 +1363,7 @@ int S9xUnfreezeFromStream (STREAM stream)
 			if (Settings.BS)
 				break;
 
-#ifndef NGC	
+#ifndef NGC
 		// movie
 		{
 			SnapshotMovieInfo mi;
@@ -1408,7 +1412,7 @@ int S9xUnfreezeFromStream (STREAM stream)
 		UnfreezeStructCopy (stream, "IPU", &local_dummy[0], SnapIPPU, COUNT(SnapIPPU), version); // obsolete
 		UnfreezeStructCopy (stream, "GFX", &local_dummy[1], SnapGFX, COUNT(SnapGFX), version); // obsolete
 
-#ifndef NGC	
+#ifndef NGC
 		UnfreezeStructCopy (stream, "SHO", &local_screenshot, SnapScreenshot, COUNT(SnapScreenshot), version);
 #endif
 		result=SUCCESS;
@@ -1512,7 +1516,7 @@ int S9xUnfreezeFromStream (STREAM stream)
 			GSU.pfRpix = fx_apfPlotTable[GSU.vMode + 5];
 		}
 #endif
-#ifndef NGC	
+#ifndef NGC
 		if(GFX.Screen)
 		if(local_screenshot)
 		{
@@ -1658,8 +1662,13 @@ int S9xUnfreezeFromStream (STREAM stream)
 		if (Settings.SDD1)
 			S9xSDD1PostLoadState ();
 
-		IAPU.NextAPUTimerPos = (CPU.Cycles << SNES_APU_ACCURACY);
-		IAPU.APUTimerCounter = 0;
+		if (version < 5)
+		{
+			// This is not correct, it causes desyncs frequently.
+			// So they have been stored in a snapshot since ver.5.
+			APU.NextAPUTimerPos = (CPU.Cycles << SNES_APU_ACCURACY);
+			APU.APUTimerCounter = 0;
+		}
 	}
 
 	if (local_cpu)           delete [] local_cpu;
@@ -1857,7 +1866,7 @@ void FreezeStruct (STREAM stream, char *name, void *base, FreezeData *fields,
         }
     }
     //fprintf(stderr, "%s: Wrote %d bytes\n", name, ptr-block);
-#ifndef NGC	
+#ifndef NGC
     FreezeBlock (stream, name, block, len);
 #else
     NGCFreezeBlock(name, block, len);
@@ -1891,18 +1900,18 @@ void FreezeBlock (STREAM stream, char *name, uint8 *block, int size)
 void NGCFreezeStruct()
 {
 	STREAM s = NULL;
-	
+
 	FreezeStruct (s,"CPU", &CPU, SnapCPU, COUNT (SnapCPU));
 	FreezeStruct (s,"REG", &Registers, SnapRegisters, COUNT (SnapRegisters));
 	FreezeStruct (s,"PPU", &PPU, SnapPPU, COUNT (SnapPPU));
 	FreezeStruct (s,"DMA", DMA, SnapDMA, COUNT (SnapDMA));
-	
+
 	// RAM and VRAM
 	NGCFreezeBlock ("VRA", Memory.VRAM, 0x10000);
 	NGCFreezeBlock ("RAM", Memory.RAM, 0x20000);
 	NGCFreezeBlock ("SRA", Memory.SRAM, 0x20000);
 	NGCFreezeBlock ("FIL", Memory.FillRAM, 0x8000);
-	
+
     if (Settings.APUEnabled)
     {
         // APU
@@ -1918,7 +1927,7 @@ void NGCFreezeStruct()
     struct SControlSnapshot ctl_snap;
     S9xControlPreSave(&ctl_snap);
     FreezeStruct (s,"CTL", &ctl_snap, SnapControls, COUNT (SnapControls));
-	
+
 	// Timings
 	FreezeStruct (s,"TIM", &Timings, SnapTimings, COUNT (SnapTimings));
 
@@ -1927,7 +1936,7 @@ void NGCFreezeStruct()
     {
         S9xSA1PackStatus ();
         FreezeStruct (s,"SA1", &SA1, SnapSA1, COUNT (SnapSA1));
-        FreezeStruct (s,"SAR", &SA1Registers, SnapSA1Registers, 
+        FreezeStruct (s,"SAR", &SA1Registers, SnapSA1Registers,
                       COUNT (SnapSA1Registers));
     }
 

@@ -331,7 +331,7 @@ inline uint16 COLOR_SUB(uint16, uint16);
 
 inline uint16 COLOR_SUB(uint16 C1, uint16 C2)
 {
-	uint16	mC1, mC2, v = 0;
+	uint16	mC1, mC2, v = ALPHA_BITS_MASK;
 
 	mC1 = C1 & FIRST_COLOR_MASK;
 	mC2 = C2 & FIRST_COLOR_MASK;

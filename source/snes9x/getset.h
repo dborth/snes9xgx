@@ -792,10 +792,10 @@ INLINE uint8 *GetBasePointer (uint32 Address)
         return (Memory.SRAM + (((Address & 0x7fff) - 0x6000 + ((Address & 0xf0000) >> 3)) & Memory.SRAMMask) - (Address&0xffff));
 
       case CMemory::MAP_C4:
-        return S9xGetBasePointerC4(Address);
+        return (S9xGetBasePointerC4(Address & 0xffff));
 
       case CMemory::MAP_OBC_RAM:
-        return GetBasePointerOBC1(Address);
+        return (S9xGetBasePointerOBC1(Address & 0xffff));
 
       case CMemory::MAP_DEBUG:
 #ifdef DEBUGGER
@@ -848,10 +848,10 @@ INLINE uint8 *S9xGetMemPointer (uint32 Address)
         return (Memory.SRAM + (((Address & 0x7fff) - 0x6000 + ((Address & 0xf0000) >> 3)) & Memory.SRAMMask));
 
       case CMemory::MAP_C4:
-        return S9xGetBasePointerC4(Address) + (Address&0xffff);
+        return (S9xGetMemPointerC4(Address & 0xffff));
 
       case CMemory::MAP_OBC_RAM:
-        return GetMemPointerOBC1(Address);
+        return (S9xGetMemPointerOBC1(Address & 0xffff));
 
       case CMemory::MAP_DEBUG:
 #ifdef DEBUGGER
@@ -930,11 +930,11 @@ INLINE void S9xSetPCBase (uint32 Address)
         return;
 
       case CMemory::MAP_C4:
-        CPU.PCBase = S9xGetBasePointerC4(Address);
+        CPU.PCBase = S9xGetBasePointerC4(Address & 0xffff);
         return;
 
       case CMemory::MAP_OBC_RAM:
-        CPU.PCBase = GetBasePointerOBC1(Address);
+        CPU.PCBase = S9xGetBasePointerOBC1(Address & 0xffff);
         return;
 
       case CMemory::MAP_BSX:
