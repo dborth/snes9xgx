@@ -446,7 +446,7 @@ void NGCReportButtons ()
 
 
 	/*** Check for video zoom ***/
-	if (GCSettings.NGCZoom)
+	if (GCSettings.Zoom)
 	{
 		if (gc_py < -36 || gc_py > 36)
 			zoom ((float) gc_py / -36);

@@ -47,6 +47,11 @@ const char * toStr(int i)
 	sprintf(temp, "%d", i);
 	return temp;
 }
+const char * FtoStr(float i)
+{
+	sprintf(temp, "%.2f", i);
+	return temp;
+}
 
 void createXMLSection(const char * name, const char * description)
 {
@@ -154,7 +159,8 @@ preparePrefsData (int method)
 
 	createXMLSetting("Transparency", "Transparency", toStr(Settings.Transparency));
 	createXMLSetting("DisplayFrameRate", "Display Frame Rate", toStr(Settings.DisplayFrameRate));
-	createXMLSetting("NGCZoom", "C-Stick Zoom", toStr(GCSettings.NGCZoom));
+	createXMLSetting("Zoom", "Zoom On/Off", toStr(GCSettings.Zoom));
+	createXMLSetting("ZoomLevel", "Zoom Level", FtoStr(GCSettings.ZoomLevel));
 	createXMLSetting("render", "Video Filtering", toStr(GCSettings.render));
 	createXMLSetting("widescreen", "Aspect Ratio Correction", toStr(GCSettings.widescreen));
 	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
@@ -197,6 +203,12 @@ void loadXMLSetting(int * var, const char * name)
 	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
 	if(item)
 		*var = atoi(mxmlElementGetAttr(item, "value"));
+}
+void loadXMLSetting(float * var, const char * name)
+{
+	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
+	if(item)
+		*var = atof(mxmlElementGetAttr(item, "value"));
 }
 void loadXMLSetting(bool8 * var, const char * name)
 {
@@ -278,7 +290,8 @@ decodePrefsData (int method)
 
 	loadXMLSetting(&Settings.Transparency, "Transparency");
 	loadXMLSetting(&Settings.DisplayFrameRate, "DisplayFrameRate");
-	loadXMLSetting(&GCSettings.NGCZoom, "NGCZoom");
+	loadXMLSetting(&GCSettings.Zoom, "Zoom");
+	loadXMLSetting(&GCSettings.ZoomLevel, "ZoomLevel");
 	loadXMLSetting(&GCSettings.render, "render");
 	loadXMLSetting(&GCSettings.widescreen, "widescreen");
 	loadXMLSetting(&GCSettings.xshift, "xshift");

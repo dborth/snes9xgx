@@ -83,6 +83,20 @@ void Reboot()
 #endif
 }
 
+void ExitToLoader()
+{
+	// Exit to Loader
+	#ifdef HW_RVL
+		#ifdef WII_DVD
+		DI_Close();
+		#endif
+		exit(0);
+	#else	// gamecube
+		if (psoid[0] == PSOSDLOADID)
+			PSOReload ();
+	#endif
+}
+
 /****************************************************************************
  * Load Manager
  ***************************************************************************/
@@ -104,9 +118,6 @@ LoadManager ()
 
 		// setup cheats
 		SetupCheats();
-
-		// reset zoom
-		zoom_reset ();
 	}
 
 	return loadROM;
@@ -346,7 +357,6 @@ GameMenu ()
 				break;
 
 			case 1: // Reset Game
-				zoom_reset ();
 				S9xSoftReset ();
 				quit = retval = 1;
 				break;
@@ -361,7 +371,6 @@ GameMenu ()
 				break;
 
 			case 4: // Load SRAM
-				zoom_reset ();
 				quit = retval = LoadSRAM(GCSettings.SaveMethod, NOTSILENT);
 				break;
 
@@ -370,7 +379,6 @@ GameMenu ()
 				break;
 
 			case 6: // Load Freeze
-				zoom_reset ();
 				quit = retval = NGCUnfreezeGame (GCSettings.SaveMethod, NOTSILENT);
 				break;
 
@@ -544,8 +552,8 @@ static char videomenu[][50] = {
 	"Transparency",
 	"Display Frame Rate",
 	"Enable Zooming",
-	"Video Filtering",
-	"Widescreen",
+	"Video Rendering",
+	"Video Scaling",
 
 	"Shift Video Up",
 	"Shift Video Down",
@@ -574,7 +582,7 @@ VideoOptions ()
 			Settings.DisplayFrameRate == true ? " ON" : "OFF");
 
 		sprintf (videomenu[2], "Enable Zooming %s",
-			GCSettings.NGCZoom == true ? " ON" : "OFF");
+			GCSettings.Zoom == true ? " ON" : "OFF");
 
 		// don't allow original render mode if progressive video mode detected
 		if (GCSettings.render==0 && progressive)
@@ -605,7 +613,7 @@ VideoOptions ()
 				break;
 
 			case 2:
-				GCSettings.NGCZoom ^= 1;
+				GCSettings.Zoom ^= 1;
 				break;
 
 			case 3:
@@ -1111,16 +1119,7 @@ MainMenu (int selectedMenu)
                 break;
 
 			case 6:
-				// Exit to Loader
-				#ifdef HW_RVL
-					#ifdef WII_DVD
-					DI_Close();
-					#endif
-					exit(0);
-				#else	// gamecube
-					if (psoid[0] == PSOSDLOADID)
-						PSOReload ();
-				#endif
+				ExitToLoader();
 				break;
 
 			case -1: // Button B

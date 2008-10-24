@@ -55,8 +55,8 @@ DefaultSettings ()
     GCSettings.Mouse = 0;
 	GCSettings.Justifier = 0;
 
-	GCSettings.NGCZoom = 0;	// zooming default off
-
+	GCSettings.Zoom = 0;	// zooming default off
+	GCSettings.ZoomLevel = 1.0; // zoom level
 	GCSettings.render = 2; // Unfiltered
 	GCSettings.widescreen = 0; // no aspect ratio correction
 
