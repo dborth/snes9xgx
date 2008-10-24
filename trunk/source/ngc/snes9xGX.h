@@ -50,7 +50,8 @@ struct SGCSettings{
 	char	smbgcid[20];
 	char	smbsvid[20];
 	char	smbshare[20];
-    int		NGCZoom; // 0 - off, 1 - on
+    int		Zoom; // 0 - off, 1 - on
+    float	ZoomLevel; // zoom amount
     int		VerifySaves;
 	int		render;		// 0 - original, 1 - filtered, 2 - unfiltered
 	int		Superscope;

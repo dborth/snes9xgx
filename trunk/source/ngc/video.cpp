@@ -48,7 +48,6 @@ GXTexObj texobj;
 Mtx view;
 int vwidth, vheight, oldvwidth, oldvheight;
 
-float zoom_level = 1;
 int zoom_xshift = 0;
 int zoom_yshift = 0;
 
@@ -82,7 +81,7 @@ s16 square[] ATTRIBUTE_ALIGN (32) =
   -HASPECT, VASPECT, 0,		// 0
     HASPECT, VASPECT, 0,	// 1
     HASPECT, -VASPECT, 0,	// 2
-    -HASPECT, -VASPECT, 0,	// 3
+    -HASPECT, -VASPECT, 0	// 3
 };
 
 
@@ -576,7 +575,7 @@ ResetVideo_Emu ()
 			TV_448i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
 			// set VI position
 			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
+			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 478/2)/2;
 			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
 
 			break;
@@ -760,8 +759,8 @@ update_video (int width, int height)
 		if (GCSettings.widescreen)
 			xscale = (3*xscale)/4;
 
-		xscale *= zoom_level;
-		yscale *= zoom_level;
+		xscale *= GCSettings.ZoomLevel;
+		yscale *= GCSettings.ZoomLevel;
 
 		square[6] = square[3]  =  xscale + GCSettings.xshift;
 		square[0] = square[9]  = -xscale + GCSettings.xshift;
@@ -812,13 +811,15 @@ update_video (int width, int height)
 void
 zoom (float speed)
 {
-	if (zoom_level > 1)
-		zoom_level += (speed / -100.0);
+	if (GCSettings.ZoomLevel > 1)
+		GCSettings.ZoomLevel += (speed / -100.0);
 	else
-		zoom_level += (speed / -200.0);
+		GCSettings.ZoomLevel += (speed / -200.0);
 
-	if (zoom_level < 0.5) zoom_level = 0.5;
-	else if (zoom_level > 10.0) zoom_level = 10.0;
+	if (GCSettings.ZoomLevel < 0.5)
+		GCSettings.ZoomLevel = 0.5;
+	else if (GCSettings.ZoomLevel > 10.0)
+		GCSettings.ZoomLevel = 10.0;
 
 	oldvheight = 0;	// update video
 }
@@ -826,8 +827,7 @@ zoom (float speed)
 void
 zoom_reset ()
 {
-	zoom_level = 1.0;
-
+	GCSettings.ZoomLevel = 1.0;
 	oldvheight = 0;	// update video
 }
 
