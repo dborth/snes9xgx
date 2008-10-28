@@ -54,23 +54,16 @@ extern "C" {
 #include "menudraw.h"
 #include "cheatmgr.h"
 #include "input.h"
-
-extern void DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsize);
-
-extern SCheatData Cheat;
-
-extern int menu;
-
-#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
+#include "patch.h"
 
 /****************************************************************************
  * Reboot / Exit
  ***************************************************************************/
 
-#ifndef HW_RVL
-#define PSOSDLOADID 0x7c6000a6
-int *psoid = (int *) 0x80001800;
-void (*PSOReload) () = (void (*)()) 0x80001800;
+#ifdef HW_DOL
+	#define PSOSDLOADID 0x7c6000a6
+	int *psoid = (int *) 0x80001800;
+	void (*PSOReload) () = (void (*)()) 0x80001800;
 #endif
 
 void Reboot()
@@ -78,8 +71,8 @@ void Reboot()
 #ifdef HW_RVL
     SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 #else
-#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
-    *SOFTRESET_ADR = 0x00000000;
+	#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
+	*SOFTRESET_ADR = 0x00000000;
 #endif
 }
 
@@ -106,11 +99,12 @@ LoadManager ()
 {
 	int loadROM = OpenROM(GCSettings.LoadMethod);
 
-	/***
-	* check for autoloadsram / freeze
-	***/
-	if ( loadROM == 1 ) // if ROM was loaded, load the SRAM & settings
+	if (loadROM)
 	{
+		// load UPS/IPS/PPF patch
+		LoadPatch(GCSettings.LoadMethod);
+
+		// load SRAM or snapshot
 		if ( GCSettings.AutoLoad == 1 )
 			LoadSRAM(GCSettings.SaveMethod, SILENT);
 		else if ( GCSettings.AutoLoad == 2 )

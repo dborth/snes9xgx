@@ -44,4 +44,6 @@ void ShowProgress (char *msg, int done, int total);
 void DrawPolygon (int vertices, int *varray, u8 r, u8 g, u8 b);
 void DrawLineFast( int startx, int endx, int y, u8 r, u8 g, u8 b );
 
+extern int menu;
+
 #endif
