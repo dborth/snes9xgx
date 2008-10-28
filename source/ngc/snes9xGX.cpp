@@ -180,6 +180,9 @@ emulate ()
 
 			MainMenu (2); // go to game menu
 
+			// save zoom level
+			SavePrefs(GCSettings.SaveMethod, SILENT);
+
 			FrameTimer = 0;
 			setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
 
