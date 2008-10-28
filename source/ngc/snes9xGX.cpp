@@ -69,8 +69,6 @@ extern int FrameTimer;
 extern long long prev;
 extern unsigned int timediffallowed;
 
-extern void fat_enable_readahead_all();
-
 /****************************************************************************
  * ipl_set_config
  * lowlevel Qoob Modchip disable

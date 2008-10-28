@@ -31,77 +31,84 @@
 FILE * fatfile;
 
 /****************************************************************************
- * fat_is_mounted
- * to check whether FAT media are detected.
+ * MountFAT
+ * Attempts to mount the FAT device specified
+ * Sets libfat to use the device by default
+ * Enables read-ahead cache for SD/USB
  ***************************************************************************/
+bool MountFAT(PARTITION_INTERFACE part)
+{
+	bool mounted = fatMountNormalInterface(part, 8);
 
-bool FatIsMounted(PARTITION_INTERFACE partition) {
-    char prefix[] = "fatX:/";
-    prefix[3] = partition + '0';
-    DIR_ITER *dir = diropen(prefix);
-    if (dir) {
-        dirclose(dir);
-        return true;
-    }
-    return false;
+	if(mounted)
+	{
+		fatSetDefaultInterface(part);
+		#ifdef HW_RVL
+		if(part == PI_INTERNAL_SD || part == PI_USBSTORAGE)
+			fatEnableReadAhead (part, 6, 64);
+		#endif
+	}
+	return mounted;
 }
 
 /****************************************************************************
- * changeFATInterface
- * Checks if the device (method) specified is available, and
- * sets libfat to use the device
+ * UnmountFAT
+ * Unmounts the FAT device specified
+ ***************************************************************************/
+void UnmountFAT(PARTITION_INTERFACE part)
+{
+	if(!fatUnmount(part))
+		fatUnsafeUnmount(part);
+}
+
+/****************************************************************************
+ * UnmountAllFAT
+ * Unmounts all FAT devices
+ ***************************************************************************/
+void UnmountAllFAT()
+{
+#ifdef HW_RVL
+	UnmountFAT(PI_INTERNAL_SD);
+	UnmountFAT(PI_USBSTORAGE);
+#endif
+	UnmountFAT(PI_SDGECKO_A);
+	UnmountFAT(PI_SDGECKO_B);
+}
+
+/****************************************************************************
+ * ChangeFATInterface
+ * Unmounts all devices and attempts to mount/configure the device specified
  ***************************************************************************/
 bool ChangeFATInterface(int method, bool silent)
 {
-	bool devFound = false;
+	bool mounted = false;
+
+	// unmount all FAT devices
+	UnmountAllFAT();
 
 	if(method == METHOD_SD)
 	{
-		// check which SD device is loaded
-
 		#ifdef HW_RVL
-		if (FatIsMounted(PI_INTERNAL_SD))
-		{
-			devFound = true;
-			fatSetDefaultInterface(PI_INTERNAL_SD);
-			fatEnableReadAhead (PI_INTERNAL_SD, 6, 64);
-		}
+		mounted = MountFAT(PI_INTERNAL_SD); // try Wii internal SD
 		#endif
 
-		if (!devFound && FatIsMounted(PI_SDGECKO_A))
-		{
-			devFound = true;
-			fatSetDefaultInterface(PI_SDGECKO_A);
-		}
-		if(!devFound && FatIsMounted(PI_SDGECKO_B))
-		{
-			devFound = true;
-			fatSetDefaultInterface(PI_SDGECKO_B);
-		}
-		if(!devFound)
-		{
-			if(!silent)
-				WaitPrompt ((char *)"SD card not found!");
-		}
+		if(!mounted) // internal SD not found
+			mounted = MountFAT(PI_SDGECKO_A); // try SD Gecko on slot A
+		if(!mounted) // internal SD and SD Gecko (on slot A) not found
+			mounted = MountFAT(PI_SDGECKO_B); // try SD Gecko on slot B
+		if(!mounted && !silent) // no SD device found
+			WaitPrompt ((char *)"SD card not found!");
 	}
 	else if(method == METHOD_USB)
 	{
 		#ifdef HW_RVL
-		if(FatIsMounted(PI_USBSTORAGE))
-		{
-			devFound = true;
-			fatSetDefaultInterface(PI_USBSTORAGE);
-			fatEnableReadAhead (PI_USBSTORAGE, 6, 64);
-		}
-		else
-		{
-			if(!silent)
-				WaitPrompt ((char *)"USB flash drive not found!");
-		}
+		mounted = MountFAT(PI_USBSTORAGE);
+		if(!mounted && !silent)
+			WaitPrompt ((char *)"USB drive not found!");
 		#endif
 	}
 
-	return devFound;
+	return mounted;
 }
 
 /***************************************************************************
