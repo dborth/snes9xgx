@@ -818,8 +818,8 @@ zoom (float speed)
 
 	if (GCSettings.ZoomLevel < 0.5)
 		GCSettings.ZoomLevel = 0.5;
-	else if (GCSettings.ZoomLevel > 10.0)
-		GCSettings.ZoomLevel = 10.0;
+	else if (GCSettings.ZoomLevel > 2.0)
+		GCSettings.ZoomLevel = 2.0;
 
 	oldvheight = 0;	// update video
 }

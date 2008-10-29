@@ -74,7 +74,7 @@ DefaultSettings ()
 	Settings.SuperScopeMaster = false;
 	Settings.MultiPlayer5Master = false;
 	Settings.JustifierMaster = false;
-	Settings.ShutdownMaster = false;
+	Settings.ShutdownMaster = true; // needs to be on for ActRaiser 2
 	Settings.ApplyCheats = true;
 
 	Settings.BlockInvalidVRAMAccess = true;
