@@ -494,7 +494,7 @@ FileOptions ()
 		sprintf (filemenu[6], "Verify MC Saves %s",
 			GCSettings.VerifySaves == true ? " ON" : "OFF");
 
-		ret = RunMenu (filemenu, filemenuCount, (char*)"Save/Load Options", 16);
+		ret = RunMenu (filemenu, filemenuCount, (char*)"Save/Load Options");
 
 		switch (ret)
 		{
@@ -540,11 +540,9 @@ FileOptions ()
 /****************************************************************************
  * Video Options
  ***************************************************************************/
-static int videomenuCount = 12;
+static int videomenuCount = 10;
 static char videomenu[][50] = {
 
-	"Transparency",
-	"Display Frame Rate",
 	"Enable Zooming",
 	"Video Rendering",
 	"Video Scaling",
@@ -554,7 +552,7 @@ static char videomenu[][50] = {
 	"Shift Video Left",
 	"Shift Video Right",
 
-	"Shift:       ",
+	"Video Shift:       ",
 	"Reset Video Shift",
 
 	"Back to Preferences Menu"
@@ -569,13 +567,7 @@ VideoOptions ()
 	menu = 0;
 	while (quit == 0)
 	{
-		sprintf (videomenu[0], "Transparency %s",
-			Settings.Transparency == true ? " ON" : "OFF");
-
-		sprintf (videomenu[1], "Display Frame Rate %s",
-			Settings.DisplayFrameRate == true ? " ON" : "OFF");
-
-		sprintf (videomenu[2], "Enable Zooming %s",
+		sprintf (videomenu[0], "Enable Zooming %s",
 			GCSettings.Zoom == true ? " ON" : "OFF");
 
 		// don't allow original render mode if progressive video mode detected
@@ -583,34 +575,26 @@ VideoOptions ()
 			GCSettings.render++;
 
 		if ( GCSettings.render == 0 )
-			sprintf (videomenu[3], "Video Rendering Original");
+			sprintf (videomenu[1], "Video Rendering Original");
 		if ( GCSettings.render == 1 )
-			sprintf (videomenu[3], "Video Rendering Filtered");
+			sprintf (videomenu[1], "Video Rendering Filtered");
 		if ( GCSettings.render == 2 )
-			sprintf (videomenu[3], "Video Rendering Unfiltered");
+			sprintf (videomenu[1], "Video Rendering Unfiltered");
 
-		sprintf (videomenu[4], "Video Scaling %s",
+		sprintf (videomenu[2], "Video Scaling %s",
 			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
 
-		sprintf (videomenu[9], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
+		sprintf (videomenu[7], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
 
-		ret = RunMenu (videomenu, videomenuCount, (char*)"Video Options", 16);
+		ret = RunMenu (videomenu, videomenuCount, (char*)"Video Options");
 
 		switch (ret)
 		{
 			case 0:
-				Settings.Transparency ^= 1;
-				break;
-
-			case 1:
-				Settings.DisplayFrameRate ^= 1;
-				break;
-
-			case 2:
 				GCSettings.Zoom ^= 1;
 				break;
 
-			case 3:
+			case 1:
 				GCSettings.render++;
 				if (GCSettings.render > 2 )
 					GCSettings.render = 0;
@@ -618,38 +602,38 @@ VideoOptions ()
 				zoom_reset ();
 				break;
 
-			case 4:
+			case 2:
 				GCSettings.widescreen ^= 1;
 				break;
 
-			case 5:
+			case 3:
 				// Move up
 				GCSettings.yshift--;
 				break;
-			case 6:
+			case 4:
 				// Move down
 				GCSettings.yshift++;
 				break;
-			case 7:
+			case 5:
 				// Move left
 				GCSettings.xshift--;
 				break;
-			case 8:
+			case 6:
 				// Move right
 				GCSettings.xshift++;
 				break;
 
-			case 9:
+			case 7:
 				break;
 
-			case 10:
+			case 8:
 				// reset video shifts
 				GCSettings.xshift = GCSettings.yshift = 0;
 				WaitPrompt((char *)"Video Shift Reset");
 				break;
 
 			case -1: // Button B
-			case 11:
+			case 9:
 				quit = 1;
 				break;
 

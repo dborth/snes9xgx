@@ -157,8 +157,6 @@ preparePrefsData (int method)
 
 	createXMLSection("Emulation", "Emulation Settings");
 
-	createXMLSetting("Transparency", "Transparency", toStr(Settings.Transparency));
-	createXMLSetting("DisplayFrameRate", "Display Frame Rate", toStr(Settings.DisplayFrameRate));
 	createXMLSetting("Zoom", "Zoom On/Off", toStr(GCSettings.Zoom));
 	createXMLSetting("ZoomLevel", "Zoom Level", FtoStr(GCSettings.ZoomLevel));
 	createXMLSetting("render", "Video Filtering", toStr(GCSettings.render));
@@ -288,8 +286,6 @@ decodePrefsData (int method)
 
 	// Emulation Settings
 
-	loadXMLSetting(&Settings.Transparency, "Transparency");
-	loadXMLSetting(&Settings.DisplayFrameRate, "DisplayFrameRate");
 	loadXMLSetting(&GCSettings.Zoom, "Zoom");
 	loadXMLSetting(&GCSettings.ZoomLevel, "ZoomLevel");
 	loadXMLSetting(&GCSettings.render, "render");
