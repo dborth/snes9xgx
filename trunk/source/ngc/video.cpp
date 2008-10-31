@@ -478,7 +478,7 @@ InitGCVideo ()
 /* we have component cables, but the preferred mode is interlaced
  * why don't we switch into progressive?
  * on the Wii, the user can do this themselves on their Wii Settings */
-	if(VIDEO_HaveComponentCable() && vmode == &TVNtsc480IntDf)
+	if(VIDEO_HaveComponentCable())
 		vmode = &TVNtsc480Prog;
 #endif
 
@@ -604,11 +604,11 @@ ResetVideo_Emu ()
 
 
 	VIDEO_Configure (rmode);
-	VIDEO_ClearFrameBuffer (rmode, xfb[whichfb], COLOR_BLACK);
+	//VIDEO_ClearFrameBuffer (rmode, xfb[whichfb], COLOR_BLACK);
 	VIDEO_Flush();
-	VIDEO_WaitVSync();
-	if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
-	else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
+	//VIDEO_WaitVSync();
+	//if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
+	//else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
 
 
 	GX_SetViewport (0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
