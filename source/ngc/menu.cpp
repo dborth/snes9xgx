@@ -104,6 +104,9 @@ LoadManager ()
 		// load UPS/IPS/PPF patch
 		LoadPatch(GCSettings.LoadMethod);
 
+		Memory.LoadROM ("BLANK.SMC");
+		Memory.LoadSRAM ("BLANK");
+
 		// load SRAM or snapshot
 		if ( GCSettings.AutoLoad == 1 )
 			LoadSRAM(GCSettings.SaveMethod, SILENT);

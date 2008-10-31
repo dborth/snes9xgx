@@ -503,16 +503,9 @@ int FileSelector (int method)
 					inSz = false;
 
 					if (SNESROMSize > 0)
-					{
-						Memory.LoadROM ("BLANK.SMC");
-						Memory.LoadSRAM ("BLANK");
-						haverom = 1;
 						return 1;
-					}
 					else
-					{
 						WaitPrompt((char*) "Error loading ROM!");
-					}
 				}
 			}
 			redraw = 1;
