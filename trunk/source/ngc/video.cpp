@@ -78,16 +78,17 @@ s16 square[] ATTRIBUTE_ALIGN (32) =
    * X,   Y,  Z
    * Values set are for roughly 4:3 aspect
    */
-  -HASPECT, VASPECT, 0,		// 0
-    HASPECT, VASPECT, 0,	// 1
+   -HASPECT,  VASPECT, 0,	// 0
+    HASPECT,  VASPECT, 0,	// 1
     HASPECT, -VASPECT, 0,	// 2
-    -HASPECT, -VASPECT, 0	// 3
+   -HASPECT, -VASPECT, 0	// 3
 };
 
 
-static camera cam = { {0.0F, 0.0F, 0.0F},
-{0.0F, 0.5F, 0.0F},
-{0.0F, 0.0F, -0.5F}
+static camera cam = {
+	{0.0F, 0.0F, 0.0F},
+	{0.0F, 0.5F, 0.0F},
+	{0.0F, 0.0F, -0.5F}
 };
 
 
@@ -101,11 +102,11 @@ static camera cam = { {0.0F, 0.0F, 0.0F},
 GXRModeObj TV_239p =
 {
 	VI_TVMODE_PAL_DS,       // viDisplayMode
-	256,             // fbWidth
+	640,             // fbWidth
 	239,             // efbHeight
 	239,             // xfbHeight
 	(VI_MAX_WIDTH_PAL - 640)/2,         // viXOrigin
-	(VI_MAX_HEIGHT_PAL/2 - 478/2)/2,        // viYOrigin
+	(VI_MAX_HEIGHT_PAL - 478)/2,        // viYOrigin
 	640,             // viWidth
 	478,             // viHeight
 	VI_XFBMODE_SF,   // xFBmode
@@ -136,11 +137,11 @@ GXRModeObj TV_239p =
 GXRModeObj TV_478i =
 {
     VI_TVMODE_PAL_INT,      // viDisplayMode
-    512,             // fbWidth
+    640,             // fbWidth
     478,             // efbHeight
     478,             // xfbHeight
     (VI_MAX_WIDTH_PAL - 640)/2,         // viXOrigin
-    (VI_MAX_HEIGHT_PAL/2 - 478/2)/2,        // viYOrigin
+    (VI_MAX_HEIGHT_PAL - 478)/2,        // viYOrigin
     640,             // viWidth
     478,             // viHeight
     VI_XFBMODE_DF,   // xFBmode
@@ -173,11 +174,11 @@ GXRModeObj TV_478i =
 GXRModeObj TV_224p =
 {
 	VI_TVMODE_EURGB60_DS,      // viDisplayMode
-	256,             // fbWidth
+	640,             // fbWidth
 	224,             // efbHeight
 	224,             // xfbHeight
 	(VI_MAX_WIDTH_NTSC - 640)/2,	// viXOrigin
-	(VI_MAX_HEIGHT_NTSC/2 - 448/2)/2,	// viYOrigin
+	(VI_MAX_HEIGHT_NTSC - 448)/2,	// viYOrigin
 	640,             // viWidth
 	448,             // viHeight
 	VI_XFBMODE_SF,   // xFBmode
@@ -208,11 +209,11 @@ GXRModeObj TV_224p =
 GXRModeObj TV_448i =
 {
     VI_TVMODE_EURGB60_INT,     // viDisplayMode
-    512,             // fbWidth
+    640,             // fbWidth
     448,             // efbHeight
     448,             // xfbHeight
     (VI_MAX_WIDTH_NTSC - 640)/2,        // viXOrigin
-    (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2,       // viYOrigin
+    (VI_MAX_HEIGHT_NTSC - 448)/2,       // viYOrigin
     640,             // viWidth
     448,             // viHeight
     VI_XFBMODE_DF,   // xFBmode
@@ -547,8 +548,8 @@ ResetVideo_Emu ()
 			TV_448i.viTVMode = VI_TVMODE_PAL_INT;
 			// set VI position
 			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_PAL - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 478/2)/2;
-			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 448/2)/2;
+			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL - 478)/2;
+			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL - 448)/2;
 
 			break;
 
@@ -561,8 +562,8 @@ ResetVideo_Emu ()
 			TV_448i.viTVMode = VI_TVMODE_NTSC_INT;
 			// set VI position
 			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
-			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
+			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 478)/2;
+			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 448)/2;
 
 			break;
 
@@ -575,8 +576,8 @@ ResetVideo_Emu ()
 			TV_448i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
 			// set VI position
 			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 478/2)/2;
-			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
+			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 478)/2;
+			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 448)/2;
 
 			break;
 	}
@@ -747,11 +748,11 @@ update_video (int width, int height)
 		/** Update scaling **/
 		if (GCSettings.render == 0)	// original render mode
 		{
-			xscale = vwidth / 2;
+			xscale = 640 / 2; // use GX scaler instead VI
 			yscale = vheight / 2;
 		} else {	// unfiltered and filtered mode
 			xscale = vmode->fbWidth / 2;
-			yscale = vmode->efbHeight / 2;
+			yscale = vheight;
 		}
 
 		// aspect ratio scaling (change width scale)
