@@ -78,17 +78,17 @@ s16 square[] ATTRIBUTE_ALIGN (32) =
    * X,   Y,  Z
    * Values set are for roughly 4:3 aspect
    */
-   -HASPECT,  VASPECT, 0,	// 0
-    HASPECT,  VASPECT, 0,	// 1
+  -HASPECT, VASPECT, 0,		// 0
+    HASPECT, VASPECT, 0,	// 1
     HASPECT, -VASPECT, 0,	// 2
-   -HASPECT, -VASPECT, 0	// 3
+    -HASPECT, -VASPECT, 0	// 3
 };
 
 
 static camera cam = {
 	{0.0F, 0.0F, 0.0F},
-	{0.0F, 0.5F, 0.0F},
-	{0.0F, 0.0F, -0.5F}
+{0.0F, 0.5F, 0.0F},
+{0.0F, 0.0F, -0.5F}
 };
 
 
@@ -102,11 +102,11 @@ static camera cam = {
 GXRModeObj TV_239p =
 {
 	VI_TVMODE_PAL_DS,       // viDisplayMode
-	640,             // fbWidth
+	512,             // fbWidth
 	239,             // efbHeight
 	239,             // xfbHeight
 	(VI_MAX_WIDTH_PAL - 640)/2,         // viXOrigin
-	(VI_MAX_HEIGHT_PAL - 478)/2,        // viYOrigin
+	(VI_MAX_HEIGHT_PAL/2 - 478/2)/2,        // viYOrigin
 	640,             // viWidth
 	478,             // viHeight
 	VI_XFBMODE_SF,   // xFBmode
@@ -137,7 +137,7 @@ GXRModeObj TV_239p =
 GXRModeObj TV_478i =
 {
     VI_TVMODE_PAL_INT,      // viDisplayMode
-    640,             // fbWidth
+    512,             // fbWidth
     478,             // efbHeight
     478,             // xfbHeight
     (VI_MAX_WIDTH_PAL - 640)/2,         // viXOrigin
@@ -174,11 +174,11 @@ GXRModeObj TV_478i =
 GXRModeObj TV_224p =
 {
 	VI_TVMODE_EURGB60_DS,      // viDisplayMode
-	640,             // fbWidth
+	512,             // fbWidth
 	224,             // efbHeight
 	224,             // xfbHeight
 	(VI_MAX_WIDTH_NTSC - 640)/2,	// viXOrigin
-	(VI_MAX_HEIGHT_NTSC - 448)/2,	// viYOrigin
+	(VI_MAX_HEIGHT_NTSC/2 - 448/2)/2,	// viYOrigin
 	640,             // viWidth
 	448,             // viHeight
 	VI_XFBMODE_SF,   // xFBmode
@@ -209,7 +209,7 @@ GXRModeObj TV_224p =
 GXRModeObj TV_448i =
 {
     VI_TVMODE_EURGB60_INT,     // viDisplayMode
-    640,             // fbWidth
+    512,             // fbWidth
     448,             // efbHeight
     448,             // xfbHeight
     (VI_MAX_WIDTH_NTSC - 640)/2,        // viXOrigin
@@ -345,6 +345,9 @@ draw_init ()
 	memset (&view, 0, sizeof (Mtx));
 	guLookAt(view, &cam.pos, &cam.up, &cam.view);
 	GX_LoadPosMtxImm (view, GX_PNMTX0);
+
+  GX_InvVtxCache ();	// update vertex cache
+
 }
 
 static void
@@ -460,18 +463,51 @@ InitGCVideo ()
 			vmode->xfbHeight = 480;
 			vmode->viYOrigin = (VI_MAX_HEIGHT_PAL - 480)/2;
 			vmode->viHeight = 480;
-
 			vmode_60hz = 0;
+
+			// Original Video modes (forced to PAL 50hz)
+      		// set video signal mode
+			TV_224p.viTVMode = VI_TVMODE_PAL_DS;
+			TV_448i.viTVMode = VI_TVMODE_PAL_INT;
+			// set VI position
+			TV_224p.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 448/2)/2;
+      		TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL - 448)/2;
+
 			break;
 
 		case VI_NTSC:
 			// 480 lines (NTSC 60hz)
 			vmode_60hz = 1;
+
+			// Original Video modes (forced to NTSC 60hz)
+			// set video signal mode
+			TV_239p.viTVMode = VI_TVMODE_NTSC_DS;
+			TV_478i.viTVMode = VI_TVMODE_NTSC_INT;
+			TV_224p.viTVMode = VI_TVMODE_NTSC_DS;
+			TV_448i.viTVMode = VI_TVMODE_NTSC_INT;
+			// set VI position
+			TV_239p.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
+      		TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 478)/2;
+			TV_224p.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
+      		TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 448)/2;
+			break;
 			break;
 
 		default:
 			// 480 lines (PAL 60Hz)
 			vmode_60hz = 1;
+
+			// Original Video modes (forced to PAL 60hz)
+			// set video signal mode
+			TV_239p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
+			TV_478i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
+			TV_224p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
+			TV_448i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
+			// set VI position
+			TV_239p.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
+      		TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 478)/2;
+			TV_224p.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
+      		TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 448)/2;
 			break;
 	}
 
@@ -537,79 +573,25 @@ ResetVideo_Emu ()
 	GXRModeObj *rmode;
 	Mtx p;
 
-	switch (vmode->viTVMode >> 2)
-	{
-		case VI_PAL:  /* 576 lines (PAL 50Hz) */
-
-			// set video signal mode
-			TV_239p.viTVMode = VI_TVMODE_PAL_DS;
-			TV_478i.viTVMode = VI_TVMODE_PAL_INT;
-			TV_224p.viTVMode = VI_TVMODE_PAL_DS;
-			TV_448i.viTVMode = VI_TVMODE_PAL_INT;
-			// set VI position
-			TV_239p.viXOrigin = TV_478i.viXOrigin = TV_224p.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_PAL - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL - 478)/2;
-			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL - 448)/2;
-
-			break;
-
-		case VI_NTSC: /* 480 lines (NTSC 60hz) */
-
-			// set video signal mode
-			TV_239p.viTVMode = VI_TVMODE_NTSC_DS;
-			TV_478i.viTVMode = VI_TVMODE_NTSC_INT;
-			TV_224p.viTVMode = VI_TVMODE_NTSC_DS;
-			TV_448i.viTVMode = VI_TVMODE_NTSC_INT;
-			// set VI position
-			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 478)/2;
-			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 448)/2;
-
-			break;
-
-		default:  /* 480 lines (PAL 60Hz) */
-
-			// set video signal mode
-			TV_239p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
-			TV_478i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
-			TV_224p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
-			TV_448i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
-			// set VI position
-			TV_239p.viXOrigin = TV_224p.viXOrigin = TV_478i.viXOrigin = TV_448i.viXOrigin = (VI_MAX_WIDTH_NTSC - 640)/2;
-			TV_239p.viYOrigin = TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 478)/2;
-			TV_224p.viYOrigin = TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 448)/2;
-
-			break;
-	}
-
 	int i = -1;
 	if (GCSettings.render == 0)	// original render mode
 	{
 		for (i=0; i<4; i++) {
-			if (tvmodes[i]->efbHeight == vheight) {
-				// FIX: ok?
-				tvmodes[i]->fbWidth = vwidth;	// update width - some games are 512x224 (super pang)
+			if (tvmodes[i]->efbHeight == vheight) 
 				break;
-			}
 		}
 		rmode = tvmodes[i];
 	}
-	else if (GCSettings.render == 2)	// unfiltered
-	{
-		rmode = vmode;
-	}
-	else	// filtered
+	else
 	{
 		rmode = vmode;		// same mode as menu
 	}
 
-
 	VIDEO_Configure (rmode);
-	//VIDEO_ClearFrameBuffer (rmode, xfb[whichfb], COLOR_BLACK);
 	VIDEO_Flush();
-	//VIDEO_WaitVSync();
-	//if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
-	//else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
+	VIDEO_WaitVSync();
+	if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
+	else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
 
 
 	GX_SetViewport (0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
@@ -618,12 +600,12 @@ ResetVideo_Emu ()
 
 	GX_SetDispCopySrc (0, 0, rmode->fbWidth, rmode->efbHeight);
 	GX_SetDispCopyDst (rmode->fbWidth, rmode->xfbHeight);
-	GX_SetCopyFilter (rmode->aa, rmode->sample_pattern, (GCSettings.render == 1) ? GX_TRUE : GX_FALSE, rmode->vfilter);	// AA on only for filtered mode
+	GX_SetCopyFilter (rmode->aa, rmode->sample_pattern, (GCSettings.render == 1) ? GX_TRUE : GX_FALSE, rmode->vfilter);	// deflicker ON only for filtered mode
 
 	GX_SetFieldMode (rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
 	GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
 
-	guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
+	guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 100, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
 	#ifdef _DEBUG_VIDEO
@@ -748,10 +730,10 @@ update_video (int width, int height)
 		/** Update scaling **/
 		if (GCSettings.render == 0)	// original render mode
 		{
-			xscale = 640 / 2; // use GX scaler instead VI
+			xscale = 256;
 			yscale = vheight / 2;
 		} else {	// unfiltered and filtered mode
-			xscale = vmode->fbWidth / 2;
+			xscale = 320;
 			yscale = vheight;
 		}
 
@@ -767,8 +749,7 @@ update_video (int width, int height)
 		square[0] = square[9]  = -xscale + GCSettings.xshift;
 		square[4] = square[1]  =  yscale - GCSettings.yshift;
 		square[7] = square[10] = -yscale - GCSettings.yshift;
-
-		GX_InvVtxCache ();	// update vertex cache
+    	draw_init ();
 
 		GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);	// initialize the texture obj we are going to use
 
