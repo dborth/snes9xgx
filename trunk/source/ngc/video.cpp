@@ -519,6 +519,10 @@ InitGCVideo ()
 	if (vmode->viTVMode == VI_TVMODE_NTSC_PROG)
 		progressive = true;
 
+	// widescreen fix
+	vmode->viWidth = 678;
+	vmode->viXOrigin = (VI_MAX_WIDTH_PAL - 678) / 2;
+
     VIDEO_Configure (vmode);
 
     screenheight = vmode->xfbHeight;
