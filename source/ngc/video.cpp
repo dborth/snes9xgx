@@ -247,8 +247,6 @@ GXRModeObj *tvmodes[4] = {
 	&TV_224p, &TV_448i,			/* Snes NTSC video modes */
 };
 
-
-#ifdef VIDEO_THREADING
 /****************************************************************************
  * VideoThreading
  ***************************************************************************/
@@ -293,8 +291,6 @@ InitVideoThread ()
 	/*** Create the thread on this queue ***/
 	LWP_CreateThread (&vbthread, vbgetback, NULL, vbstack, TSTACK, 80);
 }
-
-#endif
 
 /****************************************************************************
  * copy_to_xfb
@@ -560,9 +556,7 @@ InitGCVideo ()
 
 	draw_init ();
 
-    #ifdef VIDEO_THREADING
     InitVideoThread ();
-    #endif
 
     // Finally, the video is up and ready for use :)
 }
@@ -718,12 +712,8 @@ update_video (int width, int height)
 	vwidth = width;
 	vheight = height;
 
-#ifdef VIDEO_THREADING
 	// Ensure previous vb has complete
 	while ((LWP_ThreadIsSuspended (vbthread) == 0) || (copynow == GX_TRUE))
-#else
-	while (copynow == GX_TRUE)
-#endif
 	{
 		usleep (50);
 	}
@@ -795,11 +785,8 @@ update_video (int width, int height)
 	VIDEO_Flush ();
 	copynow = GX_TRUE;
 
-#ifdef VIDEO_THREADING
 	// Return to caller, don't waste time waiting for vb
 	LWP_ResumeThread (vbthread);
-#endif
-
 }
 
 /****************************************************************************
