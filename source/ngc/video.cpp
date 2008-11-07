@@ -753,7 +753,7 @@ update_video (int width, int height)
 		square[0] = square[9]  = -xscale + GCSettings.xshift;
 		square[4] = square[1]  =  yscale - GCSettings.yshift;
 		square[7] = square[10] = -yscale - GCSettings.yshift;
-		DCFlushRange (square, sizeof(square)); // update memory BEFORE the GPU accesses it!
+		DCFlushRange (square, 32); // update memory BEFORE the GPU accesses it!
     	draw_init ();
 
 		GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);	// initialize the texture obj we are going to use
