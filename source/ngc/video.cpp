@@ -738,7 +738,7 @@ update_video (int width, int height)
 		else // unfiltered and filtered mode
 		{
 			xscale = 320;
-			yscale = vheight;
+			yscale = (vheight > (vmode->efbHeight/2)) ? (vheight / 2) : vheight;
 		}
 
 		// aspect ratio scaling (change width scale)
