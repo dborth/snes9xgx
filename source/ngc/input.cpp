@@ -83,12 +83,15 @@ unsigned int ncpadmap[] = {
 };
 /*** Superscope : GC controller button mapping ***/
 unsigned int gcscopemap[] = { PAD_TRIGGER_Z, PAD_BUTTON_B,
-  PAD_BUTTON_A, PAD_BUTTON_Y, PAD_BUTTON_START
+  PAD_BUTTON_A, PAD_BUTTON_Y, PAD_BUTTON_X, PAD_BUTTON_START
 };
 /*** Superscope : wiimote button mapping ***/
 unsigned int wmscopemap[] = { WPAD_BUTTON_MINUS, WPAD_BUTTON_B,
-  WPAD_BUTTON_A, WPAD_BUTTON_DOWN, WPAD_BUTTON_PLUS
+  WPAD_BUTTON_A, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_PLUS
 };
+
+int scopeTurbo = 0; // tracks whether superscope turbo is on or off
+
 /*** Mouse : GC controller button mapping ***/
 unsigned int gcmousemap[] = { PAD_BUTTON_A, PAD_BUTTON_B };
 /*** Mouse : wiimote button mapping ***/
@@ -370,7 +373,23 @@ void decodepad (int pad)
 			|| wp & wmscopemap[i]
 #endif
 			)
-				S9xReportButton(offset + i, true);
+			{
+				if(i == 3 || i == 4) // turbo
+				{
+					if((i == 3 && scopeTurbo == 1) || // turbo ON already, don't change
+						(i == 4 && scopeTurbo == 0)) // turbo OFF already, don't change
+					{
+						S9xReportButton(offset + i, false);
+					}
+					else // turbo changed to ON or OFF
+					{
+						scopeTurbo = 4-i;
+						S9xReportButton(offset + i, true);
+					}
+				}
+				else
+					S9xReportButton(offset + i, true);
+			}
 			else
 				S9xReportButton(offset + i, false);
 		}
@@ -598,6 +617,7 @@ void SetDefaultButtonMap ()
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope AimOffscreen");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Fire");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Cursor");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Pause");
 
