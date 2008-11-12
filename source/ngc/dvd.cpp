@@ -291,8 +291,9 @@ getpvd ()
 				memcpy (&rootdir32, &dvdbuffer[PVDROOT + EXTENT], 4);
 				dvddir = (u64)rootdir32;
 				dvddir <<= 11;
-				dvdrootdir = dvddir;
 				memcpy (&dvddirlength, &dvdbuffer[PVDROOT + FILE_LENGTH], 4);
+				dvdrootdir = dvddir;
+				dvdrootlength = dvddirlength;
 				IsJoliet = 0;
 				break;
 			}
