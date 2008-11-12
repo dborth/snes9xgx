@@ -30,26 +30,6 @@
 // FAT file pointer - the only one we should ever use!
 FILE * fatfile;
 
-/****************************************************************************
- * MountFAT
- * Attempts to mount the FAT device specified
- * Sets libfat to use the device by default
- * Enables read-ahead cache for SD/USB
- ***************************************************************************/
-bool MountFAT(PARTITION_INTERFACE part)
-{
-	bool mounted = fatMountNormalInterface(part, 8);
-
-	if(mounted)
-	{
-		fatSetDefaultInterface(part);
-		#ifdef HW_RVL
-		if(part == PI_INTERNAL_SD || part == PI_USBSTORAGE)
-			fatEnableReadAhead (part, 6, 64);
-		#endif
-	}
-	return mounted;
-}
 
 /****************************************************************************
  * UnmountFAT
@@ -76,15 +56,37 @@ void UnmountAllFAT()
 }
 
 /****************************************************************************
+ * MountFAT
+ * Checks if the device needs to be (re)mounted
+ * If so, unmounts the device
+ * Attempts to mount the device specified
+ * Sets libfat to use the device by default
+ * Enables read-ahead cache for SD/USB
+ ***************************************************************************/
+bool MountFAT(PARTITION_INTERFACE part)
+{
+	UnmountFAT(part);
+
+	bool mounted = fatMountNormalInterface(part, 8);
+
+	if(mounted)
+	{
+		fatSetDefaultInterface(part);
+		#ifdef HW_RVL
+		if(part == PI_INTERNAL_SD || part == PI_USBSTORAGE)
+			fatEnableReadAhead (part, 6, 64);
+		#endif
+	}
+	return mounted;
+}
+
+/****************************************************************************
  * ChangeFATInterface
  * Unmounts all devices and attempts to mount/configure the device specified
  ***************************************************************************/
 bool ChangeFATInterface(int method, bool silent)
 {
 	bool mounted = false;
-
-	// unmount all FAT devices
-	UnmountAllFAT();
 
 	if(method == METHOD_SD)
 	{
@@ -103,6 +105,7 @@ bool ChangeFATInterface(int method, bool silent)
 	{
 		#ifdef HW_RVL
 		mounted = MountFAT(PI_USBSTORAGE);
+
 		if(!mounted && !silent)
 			WaitPrompt ((char *)"USB drive not found!");
 		#endif
@@ -173,67 +176,6 @@ ParseFATdirectory(int method)
 }
 
 /****************************************************************************
- * LoadFATFile
- ***************************************************************************/
-int
-LoadFATFile (char * rbuffer, int length)
-{
-	char zipbuffer[2048];
-	char filepath[MAXPATHLEN];
-	u32 size;
-
-	/* Check filename length */
-	if (!MakeROMPath(filepath, METHOD_SD))
-	{
-		WaitPrompt((char*) "Maximum filepath length reached!");
-		return -1;
-	}
-
-	fatfile = fopen (filepath, "rb");
-	if (fatfile > 0)
-	{
-		if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
-		{
-			fread (rbuffer, 1, length, fatfile);
-			size = length;
-		}
-		else // load whole file
-		{
-			fread (zipbuffer, 1, 2048, fatfile);
-
-			if (IsZipFile (zipbuffer))
-			{
-				size = UnZipBuffer ((unsigned char *)rbuffer, METHOD_SD);	// unzip from FAT
-			}
-			else
-			{
-				// Just load the file up
-				fseek(fatfile, 0, SEEK_END);
-				size = ftell(fatfile);				// get filesize
-				fseek(fatfile, 2048, SEEK_SET);		// seek back to point where we left off
-				memcpy (rbuffer, zipbuffer, 2048);	// copy what we already read
-
-				ShowProgress ((char *)"Loading...", 2048, size);
-
-				u32 offset = 2048;
-				while(offset < size)
-				{
-					offset += fread (rbuffer + offset, 1, (1024*512), fatfile); // read in 512K chunks
-					ShowProgress ((char *)"Loading...", offset, size);
-				}
-			}
-		}
-		fclose (fatfile);
-		return size;
-	}
-	else
-	{
-		WaitPrompt((char*) "Error opening file");
-		return 0;
-	}
-}
-
-/****************************************************************************
  * LoadFATSzFile
  * Loads the selected file # from the specified 7z into rbuffer
  * Returns file size
@@ -257,41 +199,71 @@ LoadFATSzFile(char * filepath, unsigned char * rbuffer)
 }
 
 /****************************************************************************
- * Load savebuffer from FAT file
+ * LoadFATFile
  ***************************************************************************/
 int
-LoadBufferFromFAT (char *filepath, bool silent)
+LoadFATFile (char * rbuffer, char *filepath, int length, bool silent)
 {
-    int size = 0;
+	char zipbuffer[2048];
+	int size = 0;
+	int readsize = 0;
 
-    fatfile = fopen (filepath, "rb");
+	fatfile = fopen (filepath, "rb");
 
-    if (fatfile <= 0)
-    {
-        if ( !silent )
-        {
-            char msg[100];
-            sprintf(msg, "Couldn't open %s", filepath);
-            WaitPrompt (msg);
-        }
-        return 0;
-    }
+	if (fatfile > 0)
+	{
+		if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
+		{
+			fread (rbuffer, 1, length, fatfile);
+			size = length;
+		}
+		else // load whole file
+		{
+			readsize = fread (zipbuffer, 1, 2048, fatfile);
 
-    // Just load the file up
-	fseek(fatfile, 0, SEEK_END); // go to end of file
-	size = ftell(fatfile); // get filesize
-	fseek(fatfile, 0, SEEK_SET); // go to start of file
-	fread (savebuffer, 1, size, fatfile);
-	fclose (fatfile);
+			if(readsize > 0)
+			{
+				if (IsZipFile (zipbuffer))
+				{
+					size = UnZipBuffer ((unsigned char *)rbuffer, METHOD_SD);	// unzip from FAT
+				}
+				else
+				{
+					// Just load the file up
+					fseek(fatfile, 0, SEEK_END);
+					size = ftell(fatfile);				// get filesize
+					fseek(fatfile, 2048, SEEK_SET);		// seek back to point where we left off
+					memcpy (rbuffer, zipbuffer, 2048);	// copy what we already read
 
-    return size;
+					ShowProgress ((char *)"Loading...", 2048, length);
+
+					int offset = 2048;
+					while(offset < size && readsize != 0)
+					{
+						readsize = fread (rbuffer + offset, 1, (1024*512), fatfile); // read in 512K chunks
+						offset += readsize;
+						ShowProgress ((char *)"Loading...", offset, length);
+					}
+				}
+			}
+		}
+		fclose (fatfile);
+		return size;
+	}
+	else
+	{
+		if(!silent)
+			WaitPrompt((char*) "Error opening file!");
+		return 0;
+	}
 }
 
 /****************************************************************************
- * Write savebuffer to FAT card file
+ * SaveFATFile
+ * Write buffer to FAT card file
  ***************************************************************************/
 int
-SaveBufferToFAT (char *filepath, int datasize, bool silent)
+SaveFATFile (char * buffer, char *filepath, int datasize, bool silent)
 {
 	if (datasize)
     {

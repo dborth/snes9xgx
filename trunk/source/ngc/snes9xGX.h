@@ -19,6 +19,7 @@
 
 #define VERSIONNUM "006"
 #define VERSIONSTR "Snes9x GX 006"
+#define PREF_FILE_NAME "SNES9xGX.xml"
 
 #define NOTSILENT 0
 #define SILENT 1
@@ -31,6 +32,14 @@ enum {
 	METHOD_SMB,
 	METHOD_MC_SLOTA,
 	METHOD_MC_SLOTB
+};
+
+enum {
+	FILE_ROM,
+	FILE_SRAM,
+	FILE_SNAPSHOT,
+	FILE_CHEAT,
+	FILE_PREF
 };
 
 struct SGCSettings{

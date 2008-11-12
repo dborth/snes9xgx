@@ -3,7 +3,7 @@
  *
  * softdev July 2006
  * crunchy2 May 2007-July 2007
-  * Michniewski 2008
+ * Michniewski 2008
  * Tantric August 2008
  *
  * freeze.h

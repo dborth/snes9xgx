@@ -25,8 +25,6 @@
 
 extern int currconfig[4];
 
-#define PREFS_FILE_NAME "SNES9xGX.xml"
-
 char prefscomment[2][32];
 
 /****************************************************************************
@@ -316,42 +314,25 @@ decodePrefsData (int method)
 bool
 SavePrefs (int method, bool silent)
 {
+	char filepath[1024];
+	int datasize;
+	int offset = 0;
+
 	// there's no point in saving SMB settings TO SMB, because then we'll have no way to load them the next time!
 	// so instead we'll save using whatever other method is available (eg: SD)
 	if(method == METHOD_AUTO || method == METHOD_SMB)
 		method = autoSaveMethod();
 
-	char filepath[1024];
-	int datasize;
-	int offset = 0;
-
-	AllocSaveBuffer ();
-	datasize = preparePrefsData (method);
+	if(!MakeFilePath(filepath, FILE_PREF, method))
+		return false;
 
 	if (!silent)
 		ShowAction ((char*) "Saving preferences...");
 
-	if(method == METHOD_SD || method == METHOD_USB)
-	{
-		if(ChangeFATInterface(method, NOTSILENT))
-		{
-			sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
-			offset = SaveBufferToFAT (filepath, datasize, silent);
-		}
-	}
-	else if(method == METHOD_SMB)
-	{
-		sprintf (filepath, "%s/%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
-		offset = SaveBufferToSMB (filepath, datasize, silent);
-	}
-	else if(method == METHOD_MC_SLOTA)
-	{
-		offset = SaveBufferToMC (savebuffer, CARD_SLOTA, (char *)PREFS_FILE_NAME, datasize, silent);
-	}
-	else if(method == METHOD_MC_SLOTB)
-	{
-		offset = SaveBufferToMC (savebuffer, CARD_SLOTB, (char *)PREFS_FILE_NAME, datasize, silent);
-	}
+	AllocSaveBuffer ();
+	datasize = preparePrefsData (method);
+
+	offset = SaveFile(filepath, datasize, method, silent);
 
 	FreeSaveBuffer ();
 
@@ -374,29 +355,12 @@ LoadPrefsFromMethod (int method)
 	char filepath[1024];
 	int offset = 0;
 
+	if(!MakeFilePath(filepath, FILE_PREF, method))
+		return false;
+
 	AllocSaveBuffer ();
 
-	if(method == METHOD_SD || method == METHOD_USB)
-	{
-		if(ChangeFATInterface(method, NOTSILENT))
-		{
-			sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
-			offset = LoadBufferFromFAT (filepath, SILENT);
-		}
-	}
-	else if(method == METHOD_SMB)
-	{
-		sprintf (filepath, "%s/%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
-		offset = LoadBufferFromSMB (filepath, SILENT);
-	}
-	else if(method == METHOD_MC_SLOTA)
-	{
-		offset = LoadBufferFromMC (savebuffer, CARD_SLOTA, (char *)PREFS_FILE_NAME, SILENT);
-	}
-	else if(method == METHOD_MC_SLOTB)
-	{
-		offset = LoadBufferFromMC (savebuffer, CARD_SLOTB, (char *)PREFS_FILE_NAME, SILENT);
-	}
+	offset = LoadFile(filepath, method, SILENT);
 
 	if (offset > 0)
 		retval = decodePrefsData (method);

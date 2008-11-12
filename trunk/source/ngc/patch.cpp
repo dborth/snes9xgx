@@ -14,9 +14,6 @@
 
 #include "snes9xGX.h"
 #include "menudraw.h"
-#include "fileop.h"
-#include "dvd.h"
-#include "smbop.h"
 #include "memfile.h"
 #include "filesel.h"
 
@@ -411,45 +408,24 @@ bool patchApplyPPF(MFILE *f, u8 **rom, int *size)
 void LoadPatch(int method)
 {
 	int patchsize = 0;
-	int patchtype = -1;
+	int patchtype;
+	char patchpath[3][512];
+
+	ShowAction((char *)"Loading patch...");
 
 	AllocSaveBuffer ();
 
-	char patchpath[3][512];
 	memset(patchpath, 0, sizeof(patchpath));
 	sprintf(patchpath[0], "%s/%s.ips", currentdir, Memory.ROMFilename);
 	sprintf(patchpath[1], "%s/%s.ups", currentdir, Memory.ROMFilename);
 	sprintf(patchpath[2], "%s/%s.ppf", currentdir, Memory.ROMFilename);
 
-	ShowAction((char *)"Loading patch...");
-
-	switch (method)
+	for(patchtype=0; patchtype<3; patchtype++)
 	{
-		case METHOD_SD:
-		case METHOD_USB:
-			for(int i=0; i<3; i++)
-			{
-				patchsize = LoadBufferFromFAT (patchpath[i], SILENT);
+		patchsize = LoadFile(patchpath[patchtype], method, SILENT);
 
-				if(patchsize)
-				{
-					patchtype = i;
-					break;
-				}
-			}
+		if(patchsize)
 			break;
-
-		case METHOD_SMB:
-			for(int i=0; i<3; i++)
-			{
-				patchsize = LoadBufferFromSMB (patchpath[i], SILENT);
-
-				if(patchsize)
-				{
-					patchtype = i;
-					break;
-				}
-			}
 	}
 
 	if(patchsize > 0)
