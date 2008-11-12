@@ -32,6 +32,7 @@ extern "C" {
 u64 dvddir = 0; // offset of currently selected file or folder
 int dvddirlength = 0; // length of currently selected file or folder
 u64 dvdrootdir = 0; // offset of DVD root
+int dvdrootlength = 0; // length of DVD root
 bool isWii = false;
 
 #ifdef HW_DOL
@@ -263,8 +264,9 @@ getpvd ()
 				memcpy(&rootdir32, &dvdbuffer[PVDROOT + EXTENT], 4);
 				dvddir = (u64)rootdir32;
 				dvddir <<= 11;
-				dvdrootdir = dvddir;
 				memcpy (&dvddirlength, &dvdbuffer[PVDROOT + FILE_LENGTH], 4);
+				dvdrootdir = dvddir;
+				dvdrootlength = dvddirlength;
 				IsJoliet = 1;
 				break;
 			}
@@ -309,7 +311,6 @@ getpvd ()
  ***************************************************************************/
 bool TestDVD()
 {
-
 	if (!getpvd())
 	{
 		#ifdef HW_DOL
@@ -557,6 +558,11 @@ bool SwitchDVDFolder(char origdir[])
 	if(dir[strlen(dir)-1] == '/')
 		dir[strlen(dir)-1] = 0;
 
+	// start searching at root of DVD
+	dvddir = dvdrootdir;
+	dvddirlength = dvdrootlength;
+	ParseDVDdirectory();
+
 	return SwitchDVDFolder(dirptr, 0);
 }
 
@@ -570,16 +576,13 @@ bool SwitchDVDFolder(char origdir[])
  ***************************************************************************/
 
 int
-LoadDVDFile (unsigned char *buffer, int length)
+LoadDVDFileOffset (unsigned char *buffer, int length)
 {
 	int offset;
 	int blocks;
 	int i;
 	u64 discoffset;
 	char readbuffer[2048];
-
-	dvddir = filelist[selection].offset;
-	dvddirlength = filelist[selection].length;
 
 	// How many 2k blocks to read
 	blocks = dvddirlength / 2048;
@@ -595,7 +598,11 @@ LoadDVDFile (unsigned char *buffer, int length)
 	{
 		dvd_read (readbuffer, 2048, discoffset);
 
-		if (!IsZipFile (readbuffer))
+		if (IsZipFile (readbuffer))
+		{
+			return UnZipBuffer (buffer, METHOD_DVD); // unzip from dvd
+		}
+		else
 		{
 			for (i = 0; i < blocks; i++)
 			{
@@ -603,6 +610,7 @@ LoadDVDFile (unsigned char *buffer, int length)
 				memcpy (buffer + offset, readbuffer, 2048);
 				offset += 2048;
 				discoffset += 2048;
+				ShowProgress ((char *)"Loading...", offset, length);
 			}
 
 			/*** And final cleanup ***/
@@ -613,12 +621,23 @@ LoadDVDFile (unsigned char *buffer, int length)
 				memcpy (buffer + offset, readbuffer, i);
 			}
 		}
-		else
-		{
-			return UnZipBuffer (buffer, METHOD_DVD); // unzip from dvd
-		}
 	}
 	return dvddirlength;
+}
+
+int
+LoadDVDFile(char * buffer, char *filepath, int datasize, bool silent)
+{
+	if(SwitchDVDFolder(filepath))
+	{
+		return LoadDVDFileOffset ((unsigned char *)buffer, datasize);
+	}
+	else
+	{
+		if(!silent)
+			WaitPrompt((char *)"Error loading file!");
+		return 0;
+	}
 }
 
 /****************************************************************************

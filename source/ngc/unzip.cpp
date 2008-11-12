@@ -228,23 +228,13 @@ GetFirstZipFilename (int method)
 {
 	char * firstFilename = NULL;
 	char tempbuffer[ZIPCHUNK];
+	char filepath[1024];
+
+	if(!MakeFilePath(filepath, FILE_ROM, method))
+		return NULL;
 
 	// read start of ZIP
-	switch (method)
-	{
-		case METHOD_SD:	// SD Card
-		case METHOD_USB: // USB
-			LoadFATFile (tempbuffer, ZIPCHUNK);
-			break;
-
-		case METHOD_DVD: // DVD
-			LoadDVDFile ((unsigned char *)tempbuffer, ZIPCHUNK);
-			break;
-
-		case METHOD_SMB: // From SMB
-			LoadSMBFile (tempbuffer, ZIPCHUNK);
-			break;
-	}
+	LoadFile (tempbuffer, filepath, ZIPCHUNK, method, NOTSILENT);
 
 	tempbuffer[28] = 0; // truncate - filename length is 2 bytes long (bytes 26-27)
 	int namelength = tempbuffer[26]; // filename length starts 26 bytes in

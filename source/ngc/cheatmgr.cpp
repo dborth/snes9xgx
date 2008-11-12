@@ -12,9 +12,7 @@
 #include "cheats.h"
 
 #include "snes9xGX.h"
-#include "fileop.h"
 #include "filesel.h"
-#include "smbop.h"
 #include "menudraw.h"
 
 extern SCheatData Cheat;
@@ -73,21 +71,12 @@ SetupCheats()
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod();
 
+	if(!MakeFilePath(filepath, FILE_CHEAT, method))
+		return;
+
 	AllocSaveBuffer();
 
-	if(method == METHOD_SD || method == METHOD_USB)
-	{
-		if(ChangeFATInterface(method, NOTSILENT))
-		{
-			sprintf (filepath, "%s/%s/%s.cht", ROOTFATDIR, GCSettings.CheatFolder, Memory.ROMFilename);
-			offset = LoadBufferFromFAT (filepath, SILENT);
-		}
-	}
-	else if(method == METHOD_SMB)
-	{
-		sprintf (filepath, "%s/%s.cht", GCSettings.CheatFolder, Memory.ROMFilename);
-		offset = LoadBufferFromSMB (filepath, SILENT);
-	}
+	offset = LoadFile(filepath, method, SILENT);
 
 	// load cheat file if present
 	if(offset > 0)

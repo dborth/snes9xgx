@@ -3,7 +3,7 @@
  *
  * softdev July 2006
  * crunchy2 May 2007-July 2007
-  * Michniewski 2008
+ * Michniewski 2008
  * Tantric August 2008
  *
  * freeze.cpp
@@ -33,9 +33,6 @@
 #include "freeze.h"
 #include "filesel.h"
 #include "menudraw.h"
-#include "smbop.h"
-#include "fileop.h"
-#include "memcardop.h"
 
 extern void S9xSRTCPreSaveState ();
 extern void NGCFreezeStruct ();
@@ -126,43 +123,33 @@ NGCFreezeMemBuffer ()
 int
 NGCFreezeGame (int method, bool8 silent)
 {
+	char filepath[1024];
+	int offset = 0; // bytes written (actual)
+	int woffset = 0; // bytes written (expected)
+	char msg[100];
+
 	ShowAction ((char*) "Saving...");
 
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod();
 
-	char filename[1024];
-	int offset = 0;
-	char msg[100];
+	if(!MakeFilePath(filepath, FILE_SNAPSHOT, method))
+		return 0;
 
 	S9xSetSoundMute (TRUE);
 	S9xPrepareSoundForSnapshotSave (FALSE);
 
 	AllocSaveBuffer ();
 	NGCFreezeMemBuffer (); // copy freeze mem into savebuffer
+	woffset = bufoffset;
 
 	S9xPrepareSoundForSnapshotSave (TRUE);
 	S9xSetSoundMute (FALSE);
 
-	if (method == METHOD_SD || method == METHOD_USB) // FAT devices
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC Slot A or B
 	{
-		if(ChangeFATInterface(method, NOTSILENT))
-		{
-			sprintf (filename, "%s/%s/%s.frz", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-			offset = SaveBufferToFAT (filename, bufoffset, silent);
-		}
-	}
-	else if (method == METHOD_SMB) // SMB
-	{
-		sprintf (filename, "%s/%s.frz", GCSettings.SaveFolder, Memory.ROMFilename);
-		offset = SaveBufferToSMB (filename, bufoffset, silent);
-	}
-	else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC Slot A or B
-	{
-		sprintf (filename, "%s.snz", Memory.ROMName);
-
 		// Copy in save icon
-		int woffset = sizeof (saveicon);
+		woffset = sizeof (saveicon);
 		memcpy (savebuffer, saveicon, woffset);
 
 		// And the freezecomment
@@ -191,12 +178,9 @@ NGCFreezeGame (int method, bool8 silent)
 		woffset += 4;
 
 		woffset += zippedsize;
-
-		if(method == METHOD_MC_SLOTA)
-			offset = SaveBufferToMC ( savebuffer, CARD_SLOTA, filename, woffset, SILENT );
-		else
-			offset = SaveBufferToMC ( savebuffer, CARD_SLOTB, filename, woffset, SILENT );
 	}
+
+	offset = SaveFile(filepath, woffset, method, silent);
 
 	FreeSaveBuffer ();
 
@@ -253,43 +237,28 @@ NGCUnFreezeBlock (char *name, uint8 * block, int size)
 int
 NGCUnfreezeGame (int method, bool8 silent)
 {
-	ShowAction ((char*) "Loading...");
-	char filename[1024];
+	char filepath[1024];
 	int offset = 0;
+	int result = 0;
 	char msg[80];
 
 	bufoffset = 0;
 
+	ShowAction ((char*) "Loading...");
+
     if(method == METHOD_AUTO)
 		method = autoSaveMethod(); // we use 'Save' because snapshot needs R/W
 
+    if(!MakeFilePath(filepath, FILE_SNAPSHOT, method))
+        return 0;
+
     AllocSaveBuffer ();
 
-	if (method == METHOD_SD || method == METHOD_USB) // SD & USB
-	{
-		if(ChangeFATInterface(method, NOTSILENT))
-		{
-			sprintf (filename, "%s/%s/%s.frz", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-			offset = LoadBufferFromFAT (filename, silent);
-		}
-	}
-	else if (method == METHOD_SMB) // Network (SMB)
-	{
-		sprintf (filename, "%s/%s.frz", GCSettings.SaveFolder, Memory.ROMFilename);
-		offset = LoadBufferFromSMB (filename, silent);
-	}
-    else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC in slot A or slot B
-	{
-    	sprintf (filename, "%s.snz", Memory.ROMName);
+    offset = LoadFile(filepath, method, silent);
 
-		int ret = 0;
-
-		if(method == METHOD_MC_SLOTA)
-			ret = LoadBufferFromMC ( savebuffer, CARD_SLOTA, filename, silent );
-		else
-			ret = LoadBufferFromMC ( savebuffer, CARD_SLOTB, filename, silent );
-
-		if (ret)
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC in slot A or slot B
+	{
+		if (offset)
 		{
 			char * zipbuffer = (char *)malloc(SAVEBUFFERSIZE);
 			memset (zipbuffer, 0, SAVEBUFFERSIZE);
@@ -323,14 +292,8 @@ NGCUnfreezeGame (int method, bool8 silent)
 				memcpy (savebuffer, zipbuffer, SAVEBUFFERSIZE);
 			}
 			free(zipbuffer);
-			zipbuffer = NULL;
-
-			if(offset == 0)
-				return 0;
 		}
     }
-
-	int result = 0;
 
 	if(offset > 0)
 	{

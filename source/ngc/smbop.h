@@ -22,12 +22,9 @@ char * SMBPath(char * path);
 int UpdateSMBdirname();
 int ParseSMBdirectory ();
 SMBFILE OpenSMBFile(char * filepath);
-int LoadSMBFile (char * fbuffer, int length);
 int LoadSMBSzFile(char * filepath, unsigned char * rbuffer);
-int LoadBufferFromSMB (char *filepath, bool silent);
-int LoadBufferFromSMB (char * sbuffer, char *filepath, int length, bool silent);
-int SaveBufferToSMB (char *filepath, int datasize, bool silent);
-int SaveBufferToSMB (char * sbuffer, char *filepath, int datasize, bool silent);
+int LoadSMBFile (char * sbuffer, char *filepath, int length, bool silent);
+int SaveSMBFile (char * sbuffer, char *filepath, int length, bool silent);
 
 extern SMBFILE smbfile;
 
