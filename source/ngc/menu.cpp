@@ -1045,9 +1045,12 @@ MainMenu (int selectedMenu)
 	else
 		sprintf (menuitems[2], "Game Menu");
 
-	#ifndef HW_DOL
+	#ifdef HW_RVL
 	// don't show dvd motor off on the wii
-	menuitems[4][0] = '\0';
+	menuitems[4][0] = 0;
+	// rename reset/exit items
+	sprintf (menuitems[5], "Return to Wii Menu");
+	sprintf (menuitems[6], "Return to Homebrew Channel");
 	#endif
 
 	VIDEO_WaitVSync ();
