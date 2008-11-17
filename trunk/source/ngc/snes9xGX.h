@@ -17,9 +17,9 @@
 #include <gccore.h>
 #include "snes9x.h"
 
-#define VERSIONNUM "006"
-#define VERSIONSTR "Snes9x GX 006"
-#define PREF_FILE_NAME "SNES9xGX.xml"
+#define VERSIONNUM "007"
+#define VERSIONSTR "Snes9x GX 007"
+#define PREF_FILE_NAME "settings.xml"
 
 #define NOTSILENT 0
 #define SILENT 1
@@ -77,5 +77,6 @@ void ShutdownWii();
 extern struct SGCSettings GCSettings;
 extern int ConfigRequested;
 extern int ShutdownRequested;
+extern char appPath[];
 
 #endif

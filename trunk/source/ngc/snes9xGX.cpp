@@ -64,6 +64,7 @@ extern "C" {
 int ConfigRequested = 0;
 int ShutdownRequested = 0;
 int ResetRequested = 0;
+char appPath[1024];
 FILE* debughandle;
 
 extern int FrameTimer;
@@ -273,6 +274,32 @@ emulate ()
 	}//while
 }
 
+void CreateAppPath(char origpath[])
+{
+#ifdef HW_DOL
+	sprintf(appPath, GCSettings.SaveFolder);
+#else
+	char path[1024];
+	strcpy(path, origpath); // make a copy so we don't mess up original
+
+	char * loc;
+	int pos = -1;
+
+	loc = strrchr(path,'/');
+	if (loc != NULL)
+		*loc = 0; // strip file name
+
+	loc = strchr(path,'/'); // looking for / from fat:/
+	if (loc != NULL)
+		pos = loc - path + 1;
+
+	if(pos >= 0 && pos < 1024)
+		sprintf(appPath, &(path[pos]));
+	else
+		sprintf(appPath, "/");
+#endif
+}
+
 /****************************************************************************
  * MAIN
  *
@@ -288,15 +315,15 @@ emulate ()
  *	9. Let's Party!
  ***************************************************************************/
 int
-main ()
+main(int argc, char *argv[])
 {
-#ifdef HW_DOL
+	#ifdef HW_DOL
 	ipl_set_config(6); // disable Qoob modchip
-#endif
+	#endif
 
-#ifdef WII_DVD
+	#ifdef WII_DVD
 	DI_Init();	// first
-#endif
+	#endif
 
 	int selectedMenu = -1;
 
@@ -304,21 +331,21 @@ main ()
 	InitGCVideo ();
 
 	// Controllers
-#ifdef HW_RVL
+	#ifdef HW_RVL
 	WPAD_Init();
 	// read wiimote accelerometer and IR data
 	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
 	WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
-#endif
+	#endif
 
 	PAD_Init ();
 
 	// Wii Power/Reset buttons
-#ifdef HW_RVL
+	#ifdef HW_RVL
 	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
 	SYS_SetPowerCallback(ShutdownCB);
 	SYS_SetResetCallback(ResetCB);
-#endif
+	#endif
 
 	// Audio
 	AUDIO_Init (NULL);
@@ -361,6 +388,9 @@ main ()
 	// Set defaults
 	DefaultSettings ();
 
+	// store path app was loaded from
+	CreateAppPath(argv[0]);
+
 	S9xUnmapAllControls ();
 	SetDefaultButtonMap ();
 
@@ -392,7 +422,7 @@ main ()
 	#endif
 
 	// Initialize DVD subsystem (GameCube only)
-	#ifndef HW_RVL
+	#ifdef HW_DOL
 	DVD_Init ();
 	#endif
 

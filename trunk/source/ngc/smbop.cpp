@@ -90,7 +90,7 @@ ConnectShare (bool silent)
 		strlen(GCSettings.smbip) == 0)
 	{
 		if(!silent)
-			WaitPrompt((char*) "Invalid network settings. Check SNES9xGX.xml.");
+			WaitPrompt((char*) "Invalid network settings. Check settings.xml.");
 		return false;
 	}
 
