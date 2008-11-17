@@ -57,40 +57,6 @@ extern "C" {
 #include "patch.h"
 
 /****************************************************************************
- * Reboot / Exit
- ***************************************************************************/
-
-#ifdef HW_DOL
-	#define PSOSDLOADID 0x7c6000a6
-	int *psoid = (int *) 0x80001800;
-	void (*PSOReload) () = (void (*)()) 0x80001800;
-#endif
-
-void Reboot()
-{
-#ifdef HW_RVL
-    SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
-#else
-	#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
-	*SOFTRESET_ADR = 0x00000000;
-#endif
-}
-
-void ExitToLoader()
-{
-	// Exit to Loader
-	#ifdef HW_RVL
-		#ifdef WII_DVD
-		DI_Close();
-		#endif
-		exit(0);
-	#else	// gamecube
-		if (psoid[0] == PSOSDLOADID)
-			PSOReload ();
-	#endif
-}
-
-/****************************************************************************
  * Load Manager
  ***************************************************************************/
 
