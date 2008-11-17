@@ -32,8 +32,6 @@
 #include "video.h"
 #include "input.h"
 
-extern int ConfigRequested;
-
 /****************************************************************************
  * Controller Functions
  *

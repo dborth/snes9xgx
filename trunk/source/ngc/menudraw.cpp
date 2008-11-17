@@ -9,13 +9,6 @@
  * menudraw.cpp
  *
  * Menu drawing routines
- *
- * Uses libfreetype 2.2.1 compiled for GC with TTF support only.
- * TTF only reduces the library by some 900k bytes!
- *
- * **WARNING***
- *
- * ONLY USE GUARANTEED PATENT FREE FONTS.
  ***************************************************************************/
 
 #include <gccore.h>
@@ -576,7 +569,12 @@ RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
 
     while (quit == 0)
     {
-        if (redraw)
+		#ifdef HW_RVL
+		if(ShutdownRequested)
+			ShutdownWii();
+		#endif
+
+    	if (redraw)
         {
             DrawMenu (&items[0], title, maxitems, menu, fontsize);
             redraw = 0;
