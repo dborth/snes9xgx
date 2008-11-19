@@ -16,6 +16,7 @@
 
 #include <gccore.h>
 #include "snes9x.h"
+#include "filter.h"
 
 #define VERSIONNUM "005"
 #define VERSIONSTR "Snes9x GX 005"
@@ -59,6 +60,8 @@ struct SGCSettings{
 	int		widescreen;	// 0 - 4:3 aspect, 1 - 16:9 aspect
 	int		xshift;		// video output shift
 	int		yshift;
+	int FilterMethod;		// convert to RenderFilter
+	int FilterMethodHiRes;
 };
 
 extern struct SGCSettings GCSettings;

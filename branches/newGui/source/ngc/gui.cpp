@@ -23,6 +23,7 @@
 #include "video.h"
 #include "snes9xGX.h"
 #include "gui.h"
+#include "MEM2.h"
 
 struct sGui Gui;
 
@@ -91,9 +92,16 @@ gui_alloc ()
 {
 	if (!mem_alloced)
 	{
+		#ifdef HW_RVL
+		texdata_bg = (u8 *) TEXCACHE1_LO;
+		texdata_menu = (u8 *) TEXCACHE2_LO;
+		Gui.texmem = (u8 *) GUICACHE_LO;
+		#else
+		// perhaps store in aram
 		texdata_bg = memalign (32, 640 * 480 * 4);
 		texdata_menu = memalign (32, 640 * 480 * 4);
 		Gui.texmem = memalign (32, 640 * 480 * 4);
+		#endif
 		
 		mem_alloced = 1;
 	}
@@ -104,9 +112,11 @@ gui_free ()
 {
 	if (mem_alloced)
 	{
+		#ifndef HW_RVL
 		free (texdata_bg);
 		free (texdata_menu);
 		free (Gui.texmem);
+		#endif
 		
 		mem_alloced = 0;
 	}
@@ -126,18 +136,8 @@ gui_makebg ()
 	
 	/** Load menu backdrop (either from file or buffer) **/
 	
-	ctx = PNGU_SelectImageFromDevice ("bg.png");
-	PNGU_GetImageProperties (ctx, &imgProp);
-	// can check image dimensions here
-	//texdata_bg = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 4);
-	GX_InitTexObj (&texobj_BG, &texdata_bg, 640, 480, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-	//PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, &texdata_bg, 255);
-	PNGU_DecodeToRGBA8 (ctx, 640, 480, Gui.texmem, 0, 7);
-	Make_Texture_RGBA8 (&texdata_bg, Gui.texmem, 640, 480);
-	PNGU_ReleaseImageContext (ctx);
-	DCFlushRange (&texdata_bg, imgProp.imgWidth * imgProp.imgHeight * 4);
-	
 	/*
+	// Load from BUFFER
 	texdata_bg = memalign (32, 640 * 480 * 4);
 	#ifdef HW_RVL
 	// on wii copy from memory
@@ -147,7 +147,24 @@ gui_makebg ()
 	ARAMFetch (texdata_bg, (char *) AR_BACKDROP, 640 * 480 * 2);
 	#endif
 	*/
+	
+	// Load from FILE
+	ctx = PNGU_SelectImageFromDevice ("bg.png");
+	PNGU_GetImageProperties (ctx, &imgProp);
+	// can check image dimensions here
+	//texdata_bg = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 4);
+	GX_InitTexObj (&texobj_BG, texdata_bg, 640, 480, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	//PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, &texdata_bg, 255);
+	PNGU_DecodeToRGBA8 (ctx, 640, 480, Gui.texmem, 0, 7);
+	Make_Texture_RGBA8 (texdata_bg, Gui.texmem, 640, 480);
+	PNGU_ReleaseImageContext (ctx);
+	DCFlushRange (texdata_bg, imgProp.imgWidth * imgProp.imgHeight * 4);
 
+	// load up textures
+	GX_LoadTexObj (&texobj, GX_TEXMAP0);	// load last rendered snes frame
+	GX_LoadTexObj (&texobj_BG, GX_TEXMAP0);	// menu backdrop
+	GX_InvalidateTexAll ();
+	
 	/** blend last rendered snes frame and menu backdrop **/
 	
 	// draw 640x480 quads
@@ -162,18 +179,14 @@ gui_makebg ()
 	
 	// draw 2 quads
 	
-	GX_InvalidateTexAll ();
-	
 	// behind (last snes frame)
 	square[2] = square[5] = square[8] = square[11] = 0;	// z value
 	GX_InvVtxCache ();
-	GX_LoadTexObj (&texobj, GX_TEXMAP0);	// load last rendered snes frame
 	draw_square (view);
 	
 	// in front (menu backdrop)
 	square[2] = square[5] = square[8] = square[11] = 1;	// z value
 	GX_InvVtxCache ();
-	GX_LoadTexObj (&texobj_BG, GX_TEXMAP0);
 	draw_square (view);
 
 	GX_DrawDone ();
@@ -191,13 +204,14 @@ gui_makebg ()
 	*/
 	
 	// load blended image from efb to a texture
-	GX_InitTexObj (&texobj_BG, &texdata_bg, 640, 480, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	GX_InitTexObj (&texobj_BG, texdata_bg, 640, 480, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
 	GX_SetTexCopySrc ( 0,0,640,480 );
 	GX_SetTexCopyDst ( 640, 480, GX_TF_RGBA8, 0 );
-	GX_CopyTex (&texdata_bg, 0);	// assuming that the efb is 640x480, which it should be
+	GX_CopyTex (texdata_bg, 0);	// assuming that the efb is 640x480, which it should be
 	GX_PixModeSync ();	// wait until copy has completed
-	DCFlushRange (&texdata_bg, 640 * 480 * 4);
-	
+	DCFlushRange (texdata_bg, 640 * 480 * 4);
+	GX_LoadTexObj (&texobj_BG, GX_TEXMAP0);
+	GX_InvalidateTexAll ();
 	
 	square[2] = square[5] = square[8] = square[11] = 0; 	// reset z value
 	GX_InvVtxCache ();
@@ -206,8 +220,8 @@ gui_makebg ()
 void
 gui_clearscreen ()
 {
-	whichfb ^= 1;
-	VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], COLOR_BLACK);
+	//whichfb ^= 1;
+	//VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], COLOR_BLACK);
 	memset ( Gui.texmem, 0, sizeof(Gui.texmem) );
 	Gui.fontcolour = 0;
 }
@@ -217,16 +231,16 @@ gui_draw ()
 {
 	gui_drawbox (0, 0, 640, 80, 255, 255, 255, 128);	// topbar
 	gui_drawbox (0, 370, 640, 480, 255, 255, 255, 128);	// bottombar
-	gui_setfontcolour (0,255,0,255);
+	//gui_setfontcolour (0,255,0,255);
 	// top bar text
-	setfontsize (32);	// 32/24 depending on whether selected or not
-	gui_DrawText (-1, 35, (char *)"Menu");
+	//setfontsize (32);	// 32/24 depending on whether selected or not
+	//gui_DrawText (-1, 35, (char *)"Menu");
 	// main text
-	setfontsize (24);	
-	gui_DrawText (75, 113, (char *)"Hello World");
+	//setfontsize (24);	
+	//gui_DrawText (75, 113, (char *)"Hello World");
 	// bottom bar text
-	setfontsize (24);	
-	gui_DrawText (75, 400, (char *)"Description");
+	//setfontsize (24);	
+	//gui_DrawText (75, 400, (char *)"Description");
 }
 
 void
@@ -244,12 +258,18 @@ void
 gui_showscreen ()
 {
 
+	whichfb ^= 1;
+	VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], COLOR_BLACK);
+
 	/** Screen to Texture **/
-	
+	memset ( texdata_menu, 0, sizeof(texdata_menu) ); //
 	GX_InitTexObj (&texobj_MENU, texdata_menu, 640, 480, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
 	Make_Texture_RGBA8 (texdata_menu, Gui.texmem, 640, 480);
-	DCFlushRange (&texdata_menu, 640 * 480 * 4);
+	DCFlushRange (texdata_menu, 640 * 480 * 4);
 	
+	// load up textures
+	GX_LoadTexObj (&texobj_BG, GX_TEXMAP0);
+	GX_LoadTexObj (&texobj_MENU, GX_TEXMAP0);
 	GX_InvalidateTexAll ();
 
 	/** thats nice, but will it blend? **/
@@ -269,13 +289,11 @@ gui_showscreen ()
 	// backdrop
 	square[2] = square[5] = square[8] = square[11] = 0;	// z value
 	GX_InvVtxCache ();
-	GX_LoadTexObj (&texobj_BG, GX_TEXMAP0);
 	draw_square (view);
 	
 	// menu overlay
 	square[2] = square[5] = square[8] = square[11] = 1;	// z value
 	GX_InvVtxCache ();
-	GX_LoadTexObj (&texobj_MENU, GX_TEXMAP0);
 	draw_square (view);
 	
 	GX_DrawDone ();
@@ -283,17 +301,17 @@ gui_showscreen ()
 	/** Display **/
 	
 	// show the output
+	whichfb ^= 1;
+	GX_CopyDisp (xfb[whichfb], GX_TRUE);
+	GX_Flush ();
+
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
 	VIDEO_Flush ();
-	copynow = GX_TRUE;
-	#ifdef VIDEO_THREADING
-	/* Return to caller, don't waste time waiting for vb */
-	LWP_ResumeThread (vbthread);
-	#endif
-	WaitButtonAB();
+	VIDEO_WaitVSync ();
 
 	square[2] = square[5] = square[8] = square[11] = 0;	// z value
 	GX_InvVtxCache ();
+	gui_clearscreen ();
 }
 
 /****************************************************************************

@@ -21,11 +21,19 @@
 #include "memmap.h"
 #include "aram.h"
 #include "snes9xGX.h"
+#include "filter.h"
+#include "MEM2.h"
 
+#include "menudraw.h"
 #include "gui.h"
 
 /*** Snes9x GFX Buffer ***/
-static unsigned char snes9xgfx[1024 * 512 * 2];
+#ifdef HW_RVL
+static char * snes9xgfx = SNESGFXCACHE_LO;	// store in mem2 on wii
+#else
+static char snes9xgfx[1024 * 512 * 2];
+#endif
+
 
 /*** Memory ROM Loading ***/
 extern unsigned long ARAM_ROMSIZE;
@@ -44,7 +52,7 @@ extern u32* backdrop;
 #define DEFAULT_FIFO_SIZE 256 * 1024
 unsigned int copynow = GX_FALSE;
 static unsigned char gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
-static unsigned char texturemem[TEX_WIDTH * (TEX_HEIGHT + 8)] ATTRIBUTE_ALIGN (32);
+unsigned char texturemem[TEX_WIDTH * (TEX_HEIGHT + 8)] ATTRIBUTE_ALIGN (32);
 GXTexObj texobj;
 Mtx view;
 int vwidth, vheight, oldvwidth, oldvheight;
@@ -519,6 +527,8 @@ InitGCVideo ()
     StartGX ();
 
 	draw_init ();
+	
+	void InitLUTs();	// init LUTs for hq2x
 
     #ifdef VIDEO_THREADING
     InitVideoThread ();
@@ -673,7 +683,7 @@ ResetVideo_Menu ()
  * Proper GNU Asm rendition of the above, converted by shagkur. - Thanks!
  ***************************************************************************/
 void
-MakeTexture (const void *src, void *dst, s32 width, s32 height)
+MakeTexture (void *src, void *dst, s32 width, s32 height)
 {
   register u32 tmp0 = 0, tmp1 = 0, tmp2 = 0, tmp3 = 0;
 
@@ -717,6 +727,7 @@ MakeTexture (const void *src, void *dst, s32 width, s32 height)
  ***************************************************************************/
 uint32 prevRenderedFrameCount = 0;
 extern bool CheckVideo;
+int fscale = 1;
 
 void
 update_video (int width, int height)
@@ -743,6 +754,8 @@ update_video (int width, int height)
 	if ( CheckVideo && (IPPU.RenderedFramesCount != prevRenderedFrameCount) )	// if we get back from the menu, and have rendered at least 1 frame
 	{
 		int xscale, yscale;
+		
+		fscale = GetFilterScale((RenderFilter)GCSettings.FilterMethod);
 
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
 
@@ -763,6 +776,9 @@ update_video (int width, int height)
 
 		xscale *= zoom_level;
 		yscale *= zoom_level;
+		
+		xscale *= fscale;
+		xscale *= fscale;
 
 		square[6] = square[3]  =  xscale + GCSettings.xshift;
 		square[0] = square[9]  = -xscale + GCSettings.xshift;
@@ -771,7 +787,7 @@ update_video (int width, int height)
 
 		GX_InvVtxCache ();	// update vertex cache
 
-		GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);	// initialize the texture obj we are going to use
+		GX_InitTexObj (&texobj, texturemem, vwidth * fscale*fscale, vheight * fscale*fscale, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);	// initialize the texture obj we are going to use
 
 	    if (GCSettings.render == 0 || GCSettings.render == 2)
 			GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1); // original/unfiltered video mode: force texture filtering OFF
@@ -787,8 +803,34 @@ update_video (int width, int height)
 		oldvheight = vheight;
 		CheckVideo = 0;
 	}
-
-	MakeTexture ((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);	// convert image to texture
+	
+	///*
+	FilterMethod ((uint8 *) GFX.Screen, (uint32)2*vwidth, (uint8 *) filtermem, (uint32)2*fscale*vwidth, vwidth, vheight);	// apply selected video filter
+	//FilterMethod ((uint8 *) GFX.Screen, (uint32)2, (uint8 *) filtermem, (uint32)2, vwidth, vheight);	// apply selected video filter
+	
+	MakeTexture ((char *) filtermem, (char *) texturemem, vwidth * fscale, vheight * fscale);	// convert image to texture
+	
+	//*/
+	
+	//MakeTexture ((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);        // convert image to texture
+	
+	u32 wp = WPAD_ButtonsDown (0);
+	if (wp & WPAD_BUTTON_A)
+	{
+	
+		FILE* handle;
+		handle = fopen ("out.txt", "wb");
+		fwrite (filtermem, 2, 256*fscale*240*fscale, handle);
+		fwrite ((char*)"\n----\n", 1, 6, handle);
+		fwrite (texturemem, 2, 256*fscale*240*fscale, handle);
+		fflush(handle);
+		fclose (handle);
+		char msg[100];
+		sprintf (msg, "dumped. fscale: %d vwidth: %d vheight: %d",fscale,vwidth,vheight);
+		WaitPrompt(msg);
+		exit(0);
+	
+	}
 
 	DCFlushRange (texturemem, TEX_WIDTH * TEX_HEIGHT * 2);	// update the texture memory
 	GX_InvalidateTexAll ();

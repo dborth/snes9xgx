@@ -32,6 +32,7 @@ void gui_DrawLine (int x1, int y1, int x2, int y2, int r, int g, int b, int a);
 void gui_clearscreen ();
 void gui_draw ();
 void gui_showscreen ();
+void gui_alloc ();
 
 void gui_savescreen ();
 

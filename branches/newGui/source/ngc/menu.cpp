@@ -55,6 +55,7 @@ extern "C" {
 #include "menudraw.h"
 #include "cheatmgr.h"
 #include "input.h"
+#include "filter.h"
 
 extern void DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsize);
 
@@ -63,26 +64,34 @@ extern SCheatData Cheat;
 extern int menu;
 extern unsigned long ARAM_ROMSIZE;
 
-#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
-
 /****************************************************************************
  * Reboot / Exit
  ***************************************************************************/
 
-#ifndef HW_RVL
-#define PSOSDLOADID 0x7c6000a6
-int *psoid = (int *) 0x80001800;
-void (*PSOReload) () = (void (*)()) 0x80001800;
-#endif
+void returnToLoader ()
+{
+	#ifdef HW_RVL
+		#ifdef WII_DVD
+		DI_Close();
+		#endif
+		exit(0);
+	#else	// gamecube
+		#define PSOSDLOADID 0x7c6000a6
+		int *psoid = (int *) 0x80001800;
+		void (*PSOReload) () = (void (*)()) 0x80001800;
+		if (psoid[0] == PSOSDLOADID)
+			PSOReload ();
+	#endif
+}
 
 void Reboot()
 {
-#ifdef HW_RVL
-    SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
-#else
-#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
-    *SOFTRESET_ADR = 0x00000000;
-#endif
+	#ifdef HW_RVL
+	    SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+	#else
+		#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
+	    *SOFTRESET_ADR = 0x00000000;
+	#endif
 }
 
 /****************************************************************************
@@ -539,16 +548,17 @@ FileOptions ()
 }
 
 /****************************************************************************
- * Video Options
+ * Video / Sound Options
  ***************************************************************************/
-static int videomenuCount = 14;
+static int videomenuCount = 15;
 static char videomenu[][50] = {
 
 	"Transparency",
 	"Display Frame Rate",
 	"Enable Zooming",
+	"Video Rendering",
+	"Video Scaling",
 	"Video Filtering",
-	"Widescreen",
 
 	"Shift Video Up",
 	"Shift Video Down",
@@ -588,19 +598,21 @@ VideoOptions ()
 		if ( GCSettings.render == 0 )
 			sprintf (videomenu[3], "Video Rendering Original");
 		if ( GCSettings.render == 1 )
-			sprintf (videomenu[3], "Video Rendering Filtered");
+			sprintf (videomenu[3], "Video Rendering Bilinear");
 		if ( GCSettings.render == 2 )
 			sprintf (videomenu[3], "Video Rendering Unfiltered");
 
 		sprintf (videomenu[4], "Video Scaling %s",
 			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
+			
+		sprintf (videomenu[5], "Video Filtering %s", GetFilterName((RenderFilter)GCSettings.FilterMethod));
 
-		sprintf (videomenu[9], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
+		sprintf (videomenu[10], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
 
-		sprintf (videomenu[11], "Reverse Stereo %s",
+		sprintf (videomenu[12], "Reverse Stereo %s",
 			Settings.ReverseStereo == true ? " ON" : "OFF");
 
-		sprintf (videomenu[12], "Interpolated Sound %s",
+		sprintf (videomenu[13], "Interpolated Sound %s",
 			Settings.InterpolatedSound == true ? " ON" : "OFF");
 
 		ret = RunMenu (videomenu, videomenuCount, (char*)"Video Options", 16);
@@ -630,43 +642,50 @@ VideoOptions ()
 			case 4:
 				GCSettings.widescreen ^= 1;
 				break;
-
+				
 			case 5:
+				// filter mode
+				GCSettings.FilterMethod++;
+				if (GCSettings.FilterMethod == NUM_FILTERS) GCSettings.FilterMethod = 0;
+				//SelectFilterMethod();
+				break;
+
+			case 6:
 				// Move up
 				GCSettings.yshift--;
 				break;
-			case 6:
+			case 7:
 				// Move down
 				GCSettings.yshift++;
 				break;
-			case 7:
+			case 8:
 				// Move left
 				GCSettings.xshift--;
 				break;
-			case 8:
+			case 9:
 				// Move right
 				GCSettings.xshift++;
 				break;
 
-			case 9:
+			case 10:
 				break;
 
-			case 10:
+			case 11:
 				// reset video shifts
 				GCSettings.xshift = GCSettings.yshift = 0;
 				WaitPrompt((char *)"Video Shift Reset");
 				break;
 
-			case 11:
+			case 12:
 				Settings.ReverseStereo ^= 1;
 				break;
 
-			case 12:
+			case 13:
 				Settings.InterpolatedSound ^= 1;
 				break;
 
 			case -1: // Button B
-			case 13:
+			case 14:
 				SavePrefs(GCSettings.SaveMethod, SILENT);
 				quit = 1;
 				break;
@@ -1132,15 +1151,7 @@ MainMenu (int selectedMenu)
 
 			case 6:
 				// Exit to Loader
-				#ifdef HW_RVL
-					#ifdef WII_DVD
-					DI_Close();
-					#endif
-					exit(0);
-				#else	// gamecube
-					if (psoid[0] == PSOSDLOADID)
-						PSOReload ();
-				#endif
+				returnToLoader();
 				break;
 
 			case -1: // Button B

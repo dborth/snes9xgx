@@ -1,0 +1,35 @@
+memory list:
+
+filesel.cpp: FILEENTRIES filelist[MAXFILES]
+		220,000 bytes = 220kb
+
+font.ttf
+		110kb
+
+memcardop.cpp: sysarea[cardworkarea]
+			40kb
+		veribuffer
+			65kb
+
+video.cpp
+		snes9xgfx[1024 * 512 * 2];
+			1MB
+		texturemem
+			262kb
+		gp_fifo
+			262kb
+		xfb[2]
+			2.63MB
+
+filter.cpp
+		RGBtoYUV
+			65kb
+		RGBtoBright
+			131kb
+
+---------------------------------------
+~ 5MB for the above
+
+3.3MB for executable
+
+= 8.3MB out of 16 MB/24 MB

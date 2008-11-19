@@ -17,6 +17,7 @@
 #include "snes9x.h"
 #include "snes9xGX.h"
 #include "smbop.h"
+#include "filter.h"
 
 struct SGCSettings GCSettings;
 
@@ -62,6 +63,9 @@ DefaultSettings ()
 
 	GCSettings.xshift = 0;	// video shift
 	GCSettings.yshift = 0;
+	
+	GCSettings.FilterMethod = FILTER_NONE;
+	GCSettings.FilterMethodHiRes = FILTER_NONE;
 
 	/****************** SNES9x Settings ***********************/
 

@@ -29,13 +29,13 @@ INCLUDES	:=	source/snes9x source/ngc
 #---------------------------------------------------------------------------------
 
 CFLAGS	=	-g -O2 -Wall $(MACHDEP) $(INCLUDE) \
-			-DNGC -DWII_DVD \
+			-DNGC \
 			-DNO_ASM -DRIGHTSHIFT_IS_SAR \
 			-DCPU_SHUTDOWN -DSPC700_SHUTDOWN \
 			-DSPC700_C -DSDD1_DECOMP \
 			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
 			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter \
-			#-D_DEBUG_VIDEO -pipe
+			#-D_DEBUG_VIDEO -pipe -DWII_DVD
 CXXFLAGS	=	-save-temps -Xassembler -aln=$@.lst $(CFLAGS)
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map

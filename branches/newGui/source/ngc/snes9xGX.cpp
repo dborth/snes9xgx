@@ -73,6 +73,14 @@ extern unsigned int timediffallowed;
 extern void fat_enable_readahead_all();
 
 
+static void power_cb () {
+	Reboot();
+}
+
+static void reset_cb () {
+	returnToLoader();
+}
+
 /****************************************************************************
  * setFrameTimerMethod()
  * change frametimer method depending on whether ROM is NTSC or PAL
@@ -130,7 +138,7 @@ emulate ()
 
 			if ( GCSettings.AutoSave == 1 )
 			{
-				SaveSRAM ( GCSettings.SaveMethod, SILENT );
+				SaveSRAM ( GCSettings.SaveMethod, NOTSILENT );
 			}
 			else if ( GCSettings.AutoSave == 2 )
 			{
@@ -146,17 +154,21 @@ emulate ()
 				}
 			}
 
+			
 			// GUI Stuff
-			/*
+			///*
 			gui_alloc();
 			gui_makebg ();
-			gui_clearscreen();
-			gui_draw ();
-			gui_showscreen ();
+			//gui_clearscreen();
+			//gui_draw();
+			//gui_showscreen();
+			extern void gui_RunMenu();
+			gui_RunMenu();
+			
 			//gui_savescreen ();
-			*/
+			//*/
 
-			MainMenu (2); // go to game menu
+			//MainMenu (2); // go to game menu
 
 			FrameTimer = 0;
 			setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
@@ -165,7 +177,14 @@ emulate ()
 			Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);
 			Settings.JustifierMaster = (GCSettings.Justifier > 0 ? true : false);
 			SetControllers ();
-			//S9xReportControllers ();
+			
+			SelectFilterMethod();
+			
+			// DEBUG
+			char msg[80] = "";
+			extern void* filtermem;
+			sprintf (msg, "filtermem: %p", filtermem);
+			WaitPrompt ((char*) &msg);
 
 			ConfigRequested = 0;
 
@@ -232,6 +251,11 @@ main ()
 
 	// GC Audio RAM (for ROM and backdrop storage)
 	AR_Init (NULL, 0);
+	
+	// Enable Power/Reset
+	__STM_Init();
+	SYS_SetPowerCallback (power_cb);
+	SYS_SetResetCallback (reset_cb);
 
 	// Before going any further, let's copy any injected ROM image
 	int *romptr = (int *) 0x81000000; // location of injected rom
@@ -316,6 +340,8 @@ main ()
 			while (1);
 		CPU.Flags = save_flags;
 	}
+	
+	SelectFilterMethod();
 
 	// Emulate
 	emulate ();
