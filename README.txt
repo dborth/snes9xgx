@@ -10,7 +10,7 @@
 ­———————————————————————————————————————————————————————————————————————•ßrK•
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                       SNES9X GX 006                           ·oø×O0|
+|0O×øo·                       SNES9X GX 007                           ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
@@ -41,13 +41,17 @@ Tantric. The project is currently being maintained by michniewski and Tantric.
 |0O×øo·                         UPDATE HISTORY                        ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 
-[What's New 007]
+[What's New 007 - November 19, 2008]
 
 * added: SDHC support
 * added: SD/USB hot-swapping
 * added: zoom saving
 * added: IPS/UPS/PPF patch support
 * added: Qoob modchip support (thanks emukidid!)
+* added: Added console/remote power button support (Wii only)
+* added: Added reset button support - resets game (Wii only)
+* changed: Settings file is now named settings.xml and is stored in the same
+           folder as the DOL - eg: apps/vbagx/settings.xml (Wii only)
 * fixed: swc, sfc file support
 * fixed: inverted sound channels
 * fixed: some game crashes
@@ -175,8 +179,7 @@ Unzip the archive. You will find the following folders inside:
 apps			Contains Homebrew Channel ready files
 				(see Homebrew Channel instructions below)
 				
-executables		Contains Gamecube / Wii DOL files
-				(for loading from other methods)
+gamecube		Contains GameCube DOL file (not required for Wii)
 				
 snes9x			Contains the directory structure required for storing
 				roms, saves, and cheats (see below)
