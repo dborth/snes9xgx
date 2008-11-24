@@ -422,6 +422,9 @@ FileOptions ()
 			GCSettings.SaveMethod++;
 		if(GCSettings.SaveMethod == METHOD_MC_SLOTB)
 			GCSettings.SaveMethod++;
+		filemenu[6][0] = 0;
+		#else
+		sprintf (filemenu[6], "Verify MC Saves %s", GCSettings.VerifySaves == true ? " ON" : "OFF");
 		#endif
 
 		// correct load/save methods out of bounds
@@ -459,9 +462,6 @@ FileOptions ()
 		else if (GCSettings.AutoSave == 1) sprintf (filemenu[5],"Auto Save SRAM");
 		else if (GCSettings.AutoSave == 2) sprintf (filemenu[5],"Auto Save SNAPSHOT");
 		else if (GCSettings.AutoSave == 3) sprintf (filemenu[5],"Auto Save BOTH");
-
-		sprintf (filemenu[6], "Verify MC Saves %s",
-			GCSettings.VerifySaves == true ? " ON" : "OFF");
 
 		ret = RunMenu (filemenu, filemenuCount, (char*)"Save/Load Options");
 
