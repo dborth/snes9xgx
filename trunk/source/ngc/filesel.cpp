@@ -354,8 +354,8 @@ int FileSortCallback(const void *f1, const void *f2)
 
 bool IsValidROM(int method)
 {
-	// file size should be between 128K and 8MB
-	if(filelist[selection].length < (1024*128) ||
+	// file size should be between 96K and 8MB
+	if(filelist[selection].length < (1024*96) ||
 		filelist[selection].length > (1024*1024*8))
 	{
 		WaitPrompt((char *)"Invalid file size!");
