@@ -20,7 +20,7 @@ bool InitializeNetwork(bool silent);
 bool ConnectShare (bool silent);
 char * SMBPath(char * path);
 int UpdateSMBdirname();
-int ParseSMBdirectory ();
+int ParseSMBdirectory (bool silent);
 SMBFILE OpenSMBFile(char * filepath);
 int LoadSMBSzFile(char * filepath, unsigned char * rbuffer);
 int LoadSMBFile (char * sbuffer, char *filepath, int length, bool silent);

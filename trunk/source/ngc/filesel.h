@@ -18,7 +18,7 @@
 
 #define SAVEBUFFERSIZE (512 * 1024)
 #define MAXJOLIET 255
-#define MAXDISPLAY 54
+#define MAXDISPLAY 50
 
 typedef struct
 {

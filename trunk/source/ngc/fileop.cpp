@@ -123,6 +123,7 @@ ParseFATdirectory(int method)
 	int nbfiles = 0;
 	DIR_ITER *fatdir;
 	char filename[MAXPATHLEN];
+	char tmpname[MAXPATHLEN];
 	struct stat filestat;
 	char msg[128];
 
@@ -159,7 +160,8 @@ ParseFATdirectory(int method)
 		{
 			memset(&filelist[nbfiles], 0, sizeof(FILEENTRIES));
 			strncpy(filelist[nbfiles].filename, filename, MAXPATHLEN);
-			strncpy(filelist[nbfiles].displayname, filename, MAXDISPLAY+1);	// crop name for display
+			StripExt(tmpname, filename); // hide file extension
+			strncpy(filelist[nbfiles].displayname, tmpname, MAXDISPLAY+1);	// crop name for display
 			filelist[nbfiles].length = filestat.st_size;
 			filelist[nbfiles].flags = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
 			nbfiles++;
