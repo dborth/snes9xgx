@@ -295,8 +295,6 @@ void CreateAppPath(char origpath[])
 
 	if(pos >= 0 && pos < 1024)
 		sprintf(appPath, &(path[pos]));
-	else
-		sprintf(appPath, "/");
 #endif
 }
 
@@ -389,7 +387,9 @@ main(int argc, char *argv[])
 	DefaultSettings ();
 
 	// store path app was loaded from
-	CreateAppPath(argv[0]);
+	sprintf(appPath, "snes9x");
+	if(argc > 0 && argv[0] != NULL)
+		CreateAppPath(argv[0]);
 
 	S9xUnmapAllControls ();
 	SetDefaultButtonMap ();

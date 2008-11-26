@@ -671,8 +671,7 @@ ShowFiles (FILEENTRIES filelist[], int maxfiles, int offset, int selection)
 		}
 		else
 		{
-			// hide file extension on listing (.7z, .fig, .smc)
-			StripExt(text, filelist[i].displayname);
+			sprintf(text, filelist[i].displayname);
 		}
 		if (j == (selection - offset))
 		{
