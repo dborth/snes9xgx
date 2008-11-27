@@ -20,6 +20,12 @@
 #define PADCAL			50
 #define MAXJP 			12 // # of mappable controller buttons
 
+// use with WPAD_Stick ();
+#define		STICK_LEFT		0
+#define		STICK_RIGHT		1
+#define		STICK_X_AXIS	0
+#define		STICK_Y_AXIS	1
+
 extern unsigned int gcpadmap[];
 extern unsigned int wmpadmap[];
 extern unsigned int ccpadmap[];
@@ -31,8 +37,7 @@ extern unsigned int wmmousemap[];
 extern unsigned int gcjustmap[];
 extern unsigned int wmjustmap[];
 
-s8 WPAD_StickX(u8 chan,u8 right);
-s8 WPAD_StickY(u8 chan, u8 right);
+s8 WPAD_Stick(u8 chan,u8 right, int axis);
 
 void UpdateCursorPosition (int pad, int &pos_x, int &pos_y);
 void decodepad (int pad);

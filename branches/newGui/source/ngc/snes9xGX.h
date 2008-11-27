@@ -16,10 +16,10 @@
 
 #include <gccore.h>
 #include "snes9x.h"
-#include "filter.h"
 
-#define VERSIONNUM "005"
-#define VERSIONSTR "Snes9x GX 005"
+#define VERSIONNUM "007"
+#define VERSIONSTR "Snes9x GX 007"
+#define PREF_FILE_NAME "settings.xml"
 
 #define NOTSILENT 0
 #define SILENT 1
@@ -32,6 +32,14 @@ enum {
 	METHOD_SMB,
 	METHOD_MC_SLOTA,
 	METHOD_MC_SLOTB
+};
+
+enum {
+	FILE_ROM,
+	FILE_SRAM,
+	FILE_SNAPSHOT,
+	FILE_CHEAT,
+	FILE_PREF
 };
 
 struct SGCSettings{
@@ -51,7 +59,8 @@ struct SGCSettings{
 	char	smbgcid[20];
 	char	smbsvid[20];
 	char	smbshare[20];
-    int		NGCZoom; // 0 - off, 1 - on
+    int		Zoom; // 0 - off, 1 - on
+    float	ZoomLevel; // zoom amount
     int		VerifySaves;
 	int		render;		// 0 - original, 1 - filtered, 2 - unfiltered
 	int		Superscope;
@@ -60,10 +69,16 @@ struct SGCSettings{
 	int		widescreen;	// 0 - 4:3 aspect, 1 - 16:9 aspect
 	int		xshift;		// video output shift
 	int		yshift;
-	int FilterMethod;		// convert to RenderFilter
-	int FilterMethodHiRes;
+	int		FilterMethod;		// convert to RenderFilter
+	int		FilterMethodHiRes;
 };
 
+void ExitToLoader();
+void Reboot();
+void ShutdownWii();
 extern struct SGCSettings GCSettings;
+extern int ConfigRequested;
+extern int ShutdownRequested;
+extern char appPath[];
 
 #endif

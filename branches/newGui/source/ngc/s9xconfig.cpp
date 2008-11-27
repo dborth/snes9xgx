@@ -56,8 +56,8 @@ DefaultSettings ()
     GCSettings.Mouse = 0;
 	GCSettings.Justifier = 0;
 
-	GCSettings.NGCZoom = 0;	// zooming default off
-
+	GCSettings.Zoom = 0;	// zooming default off
+	GCSettings.ZoomLevel = 1.0; // zoom level
 	GCSettings.render = 2; // Unfiltered
 	GCSettings.widescreen = 0; // no aspect ratio correction
 
@@ -78,11 +78,9 @@ DefaultSettings ()
 	Settings.SuperScopeMaster = false;
 	Settings.MultiPlayer5Master = false;
 	Settings.JustifierMaster = false;
-	Settings.ShutdownMaster = false;
-	//Settings.CyclesPercentage = 100; // snes9x 1.50 and earlier
+	Settings.ShutdownMaster = true; // needs to be on for ActRaiser 2
 	Settings.ApplyCheats = true;
 
-	// Specific to snes9x 1.51
 	Settings.BlockInvalidVRAMAccess = true;
 	Settings.HDMATimingHack = 100;
 
@@ -93,17 +91,19 @@ DefaultSettings ()
 	Settings.Stereo = true;
 	Settings.SixteenBitSound = true;
 	Settings.SoundEnvelopeHeightReading = true;
+	Settings.SoundSync = true;
+	Settings.FixFrequency = false;
 	Settings.DisableSampleCaching = true;
 	Settings.InterpolatedSound = true;
-	Settings.ReverseStereo = false;
+	Settings.ReverseStereo = true;
 
 	// Graphics
 	Settings.Transparency = true;
 	Settings.SupportHiRes = true;
-	Settings.SkipFrames = 10;
+	Settings.SkipFrames = AUTO_FRAMERATE;
 	Settings.TurboSkipFrames = 19;
 	Settings.DisplayFrameRate = false;
-	Settings.AutoDisplayMessages = 0; // SNES9x 1.51
+	Settings.AutoDisplayMessages = 0;
 	Settings.InitialInfoStringTimeout = 200; // # frames to display messages for
 
 	// Frame timings in 50hz and 60hz cpu mode

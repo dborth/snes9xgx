@@ -285,8 +285,8 @@ gui_RunMenu ()
 		gc_ax = PAD_StickX (0);
 		p = PAD_ButtonsDown (0);
 		#ifdef HW_RVL
-		wm_ay = WPAD_StickY (0,0);
-		wm_ax = WPAD_StickX (0,0);
+		wm_ay = WPAD_Stick (0, STICK_LEFT, STICK_Y_AXIS);
+		wm_ax = WPAD_Stick (0, STICK_LEFT, STICK_X_AXIS);
 		wp = WPAD_ButtonsDown (0);
 		#endif
 

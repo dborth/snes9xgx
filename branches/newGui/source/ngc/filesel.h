@@ -18,7 +18,7 @@
 
 #define SAVEBUFFERSIZE (512 * 1024)
 #define MAXJOLIET 255
-#define MAXDISPLAY 54
+#define MAXDISPLAY 50
 
 typedef struct
 {
@@ -36,9 +36,15 @@ extern int offset;
 extern int selection;
 extern char currentdir[MAXPATHLEN];
 extern int maxfiles;
+extern unsigned long SNESROMSize;
 
 void AllocSaveBuffer();
 void FreeSaveBuffer();
+bool MakeFilePath(char filepath[], int type, int method);
+int LoadFile(char * buffer, char filepath[], int length, int method, bool silent);
+int LoadFile(char filepath[], int method, bool silent);
+int SaveFile(char * buffer, char filepath[], int datasize, int method, bool silent);
+int SaveFile(char filepath[], int datasize, int method, bool silent);
 int OpenROM (int method);
 int autoLoadMethod();
 int autoSaveMethod();

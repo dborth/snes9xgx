@@ -21,7 +21,7 @@
 #include "filter.h"
 #include "video.h"
 #include "snes9xGX.h"
-#include "MEM2.h"
+//#include "MEM2.h"
 #include "memmap.h"
 
 #include "menudraw.h"
@@ -98,7 +98,7 @@ int GetFilterScale(RenderFilter filterID)
 void
 SelectFilterMethod ()
 {
-	WaitPrompt ((char*)"Select Filter Method.");	// debug
+	//WaitPrompt ((char*)"Select Filter Method.");	// debug
 
 	FilterMethod = FilterToMethod((RenderFilter)GCSettings.FilterMethod);
 	FilterMethodHiRes = FilterToMethod((RenderFilter)GCSettings.FilterMethodHiRes);
@@ -110,12 +110,13 @@ SelectFilterMethod ()
 	if (GCSettings.FilterMethod == FILTER_NONE) 	// no filter
 	{
 		// don't need memory, free it if there is any allocated
-		#ifdef HW_DOL
-		if (filtermem != NULL) {
+		//#ifdef HW_DOL
+		if (filtermem != NULL && filtermem != GFX.Screen) {
 			free (filtermem);	// only do this on gc?
 			filtermem = NULL;
+			WaitPrompt ((char*)"freeing filtermem.");	// debug
 		}
-		#endif
+		//#endif
 		
 		filtermem = (char*) GFX.Screen;	// point filtermem to the texturememory since we're not changing it
 		
@@ -123,14 +124,14 @@ SelectFilterMethod ()
 	else	// using some filter
 	{
 		// we need memory - allocate it
-		#ifdef HW_RVL
-		filtermem = FILTERCACHE_LO;	// on wii, put the filter memory in mem2
-		#else
+		//#ifdef HW_RVL
+		//filtermem = FILTERCACHE_LO;	// on wii, put the filter memory in mem2
+		//#else
 		// right size?
 		int fscale = GetFilterScale((RenderFilter)GCSettings.FilterMethod);
-		filtermem = memalign(32, 256*240*2*fscale);	// 256x240 x 2bytes/pixel x scale factor
-		memset (filtermem, 0, 256*240*2*fscale);	// set it to zero
-		#endif
+		filtermem = memalign(32, 256*256*2*fscale);	// 256x240 x 2bytes/pixel x scale factor
+		memset (filtermem, 0, 256*256*2*fscale);	// set it to zero
+		//#endif
 	}
 
 	
@@ -159,6 +160,14 @@ RenderPlain (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int
 	//memcpy (dstPtr, srcPtr, width*height*srcPitch);
 	return;
 }
+
+// delete me later:
+template<int GuiScale>
+void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
+{
+
+}
+/*****************************************************
 
 //
 // HQ2X Filter Code:
@@ -276,13 +285,13 @@ void InitLUTs(void)
 		b = (int)((c & 0x1F)) << 3;
 		g = (int)((c & 0x7E0)) >> 3;
 		r = (int)((c & 0xF800)) >> 8;
-/*
-#else
-		b = (int)((c & 0x1F)) << 3;
-		g = (int)((c & 0x3E0)) >> 2;
-		r = (int)((c & 0x7C00)) >> 7;
-#endif
-*/
+
+//#else
+//		b = (int)((c & 0x1F)) << 3;
+//		g = (int)((c & 0x3E0)) >> 2;
+//		r = (int)((c & 0x7C00)) >> 7;
+//#endif
+
 		RGBtoBright[c] = r+r+r + g+g+g + b+b;
 
 		y = (int)( 0.256788f*r + 0.504129f*g + 0.097906f*b + 0.5f) + 16;
@@ -583,3 +592,5 @@ void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 	}
 }
 
+
+******************************************/

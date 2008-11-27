@@ -2,7 +2,7 @@
  * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
-  * Michniewski 2008
+ * Michniewski 2008
  * Tantric September 2008
  *
  * unzip.h
@@ -15,10 +15,11 @@
 #include <smb.h>
 
 extern int IsZipFile (char *buffer);
-
-int UnZipFile (unsigned char *outbuffer, FILE* infile); // Reading from FAT
-int UnZipFile (unsigned char *outbuffer, u64 inoffset); // Reading from DVD
-int UnZipFile (unsigned char *outbuffer, SMBFILE infile); // Reading from SMB
+char * GetFirstZipFilename(int method);
+int UnZipBuffer (unsigned char *outbuffer, int method);
+int SzParse(char * filepath, int method);
+int SzExtractFile(int i, unsigned char *buffer);
+void SzClose();
 
 /*
  * Zip file header definition

@@ -9,13 +9,6 @@
  * menudraw.cpp
  *
  * Menu drawing routines
- *
- * Uses libfreetype 2.2.1 compiled for GC with TTF support only.
- * TTF only reduces the library by some 900k bytes!
- *
- * **WARNING***
- *
- * ONLY USE GUARANTEED PATENT FREE FONTS.
  ***************************************************************************/
 
 #include <gccore.h>
@@ -39,7 +32,6 @@
 #include "aram.h"
 #include "images/gfx_bg.h"
 #include "input.h"
-#include "MEM2.h"
 
 /*** Globals ***/
 FT_Library ftlibrary;
@@ -337,7 +329,8 @@ unpackbackdrop ()
 
 	#ifdef HW_RVL
 	// On Wii - store backdrop in MEM2
-	backdrop = (u32 *)BGCACHE_LO;
+	unsigned int MEM2Storage = 0x91000000;
+	backdrop = (u32 *)MEM2Storage;
 	memcpy(backdrop, bgtemp, bgSize);
 	#else
 	// On GameCube - store the backdrop in ARAM
@@ -497,7 +490,7 @@ DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsiz
 	}
 
 	setfontsize (12);
-	DrawText (510, screenheight - 20, (char *)"Snes9x GX 005");
+	DrawText (510, screenheight - 20, (char *)VERSIONSTR);
 
 	// Draw menu items
 
@@ -576,7 +569,12 @@ RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
 
     while (quit == 0)
     {
-        if (redraw)
+		#ifdef HW_RVL
+		if(ShutdownRequested)
+			ShutdownWii();
+		#endif
+
+    	if (redraw)
         {
             DrawMenu (&items[0], title, maxitems, menu, fontsize);
             redraw = 0;
@@ -585,7 +583,7 @@ RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
 		gc_ay = PAD_StickY (0);
         p = PAD_ButtonsDown (0);
 #ifdef HW_RVL
-		wm_ay = WPAD_StickY (0,0);
+		wm_ay = WPAD_Stick (0,0, 1);
 		wp = WPAD_ButtonsDown (0);
 #endif
 
@@ -673,8 +671,7 @@ ShowFiles (FILEENTRIES filelist[], int maxfiles, int offset, int selection)
 		}
 		else
 		{
-			// hide file extension on listing (.7z, .fig, .smc)
-			StripExt(text, filelist[i].displayname);
+			sprintf(text, filelist[i].displayname);
 		}
 		if (j == (selection - offset))
 		{
@@ -923,30 +920,42 @@ DrawLine (int x1, int y1, int x2, int y2, u8 r, u8 g, u8 b)
 void
 ShowProgress (char *msg, int done, int total)
 {
-  int ypos = (screenheight - 30) >> 1;
+	if(total <= 0) // division by 0 is bad!
+		return;
+	else if(done > total) // this shouldn't happen
+		done = total;
 
-  if (screenheight == 480)
-    ypos += 52;
-  else
-    ypos += 32;
+	int xpos, ypos;
+	int i;
 
-  int xpos;
-  int i;
+	if(done < 5000) // we just started!
+	{
+		ypos = (screenheight - 30) >> 1;
 
-  clearscreen ();
-  DrawText (-1, ypos, msg);
+		if (screenheight == 480)
+			ypos += 52;
+		else
+			ypos += 32;
 
-	/*** Draw a white outline box ***/
-  for (i = 380; i < 401; i++)
-    DrawLine (100, i, 540, i, 0xff, 0xff, 0xff);
+		clearscreen ();
+		setfontsize(20);
+		DrawText (-1, ypos, msg);
+
+		/*** Draw a white outline box ***/
+		for (i = 380; i < 401; i++)
+			DrawLine (100, i, 540, i, 0xff, 0xff, 0xff);
+	}
 
 	/*** Show progess ***/
-  xpos = (int) (((float) done / (float) total) * 438);
+	xpos = (int) (((float) done / (float) total) * 438);
 
-  for (i = 381; i < 400; i++)
-    DrawLine (101, i, 101 + xpos, i, 0x00, 0x00, 0x80);
+	for (i = 381; i < 400; i++)
+		DrawLine (101, i, 101 + xpos, i, 0x00, 0x00, 0x80);
 
-  showscreen ();
+	if(done < 5000) // we just started!
+	{
+		showscreen ();
+	}
 }
 
 /****************************************************************************

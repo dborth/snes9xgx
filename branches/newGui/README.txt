@@ -10,112 +10,165 @@
 ­———————————————————————————————————————————————————————————————————————•ßrK•
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                          SNES9X GX                            ·oø×O0|
+|0O×øo·                       SNES9X GX 007                           ·oø×O0|
+|                   http://code.google.com/p/snes9x-gx                      |
+|                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 
 SNES9x GX is a Super Nintendo emulator for the Wii based on the PC emulator 
 SNES9x 1.51 (http://snes9x.ipherswipsite.com/). SoftDev is responsible for 
 the original SNES9x 1.50 GameCube port, whose work was continued by crunchy2. 
-It was updated for the Wii by michniewski and is currently being maintained 
-by michniewski and Tantric.
-
-[What's New 005]
-
-michniewski
-- added: Superscope/mouse/justifier support, with Wii remote
-- added: 3 render modes - Original, Filtered, Unfiltered
-- added: widescreen compensation option
-- added: DVD support on the Wii
-- changed: zoom - limited range, added reset zoom option
-
-Tantric
-- added: now uses SNES 1.51 core (thanks to eke-eke for help with this)
-- added: cheats menu! Loads .CHT file from /snes9x/cheats folder, 
-         .CHT file name must match file name of ROM
-- added: load/save preference selector. ROM, SRAM, Freeze, and preferences 
-         are saved/loaded according to these
-- added: preliminary Windows file share loading/saving (SMB) support on Wii:
-		 You can input your network settings into snes9xGX.xml, or edit 
-		 s9xconfig.cpp from the source code and compile.
-- added: 'Auto' settings for save/load - attempts to automatically determine
-         your load/save device(s) - SD, USB, Memory Card, DVD, SMB
-- added: ROM Information page
-- added: Game Menu - all game-specific options are here now: 
-         SRAM save/load, Snapshot save/load, game reload, etc
-- added: Credits page
-- fixed: sd gecko works now
-- fixed: full USB support
-- changed: menu structure
-- changed: preferences are now loaded and saved in XML format. You can open
-		   snes9xGX.xml edit all settings, including some not available within
-		   the program
-- changed: if Home button is pressed when a game is running, Game Menu pops up
-- changed: if preferences can't be loaded at the start and/or are reset, 
-           preferences menu pops up - remove to save your preferences!
-- changed: SRAM load - game reloaded automatically after loading SRAM
-
-[What Was New 004]
-
-- added: option to disable AA filtering 
-         (snes graphics 'crisper', AA now default OFF)
-- added: mapped zooming and turbo mode to classic controller
-- added: preliminary usb support (loading)
-- changed: sram and freezes now saved by filename, not internal romname. 
-           If you have multiple versions of the same game, you can now have 
-           srams and freezes for each version. A prompt to convert to the 
-           new naming is provided for sram only.
-- changed: by default, autoload/save sram and freeze enabled
-
-[What Was New 003]
-- added: alphabetical file sorting
-- added: background logo/backdrop + nicer menus
-- added: scrolling in ROM selector
-- fixed: switching between pal/ntsc ROMS doesn't mess up timings
-- fixed: GC controller config works now
-- fixed: freeze autoloading on ROM load
-- fixed: zipped ROMS should now load in a reasonable time
-- fixed: precompiled dols for autosaving to various locations (see readme)
-- changed: GC default quickload slot (to sd) (thanks kerframil)
-- changed: default load/save dirs are now "/snes9x/roms" and 
-           "/snes9x/saves/"  (thanks kerframil)
-- changed: Classic X and Y defaults aren't switched
-- changed: if autosave is enabled, it doesn't ask to save SRAM 
-           anymore. It is saved in the background.
-- updated README
-
-[Whats Was New 002]
-- added: classic and nunchuk support
-- added: all controllers can now be configured
-- added: GC version (untested)
-- changed: mappings are no longer stored in SRAM, but in config file. 
-           This means no per-game configurations, but one global 
-           config per controller.
-- one makefile to make all versions. (thanks to snes9x143 SVN)
-
-
-[What Was New 001]
-- compiles with latest devkitppc (r15)
-- now uses libfat (can use front sd slot on wii)
-- updated menu items a bit
-- wiimote support
-- fixed: autoload sram/freeze
-- fixed: rom plays immediately after loading
-
-[older update history at the bottom]
-
+It was updated for the Wii by michniewski and SNES9x 1.51 was ported by 
+Tantric. The project is currently being maintained by michniewski and Tantric.
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                            FEATURES                           ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
-- Based on Snes9x 1.5 - superior ROM compatibility
-- Wiimote, Nunchuk, Classic, and Gamecube controller support
-- SNES Superscope, Mouse, Justifier support
-- Cheat support
-- Auto Load/Save Game Snapshots and SRAM
-- Custom controller configurations
-- SD, USB, DVD, SMB, GC Memory Card, and Zip support
-- Autodetect PAL/NTSC, 16:9 widescreen support
-- Open Source!
+* Based on Snes9x 1.51 - superior ROM compatibility
+* Wiimote, Nunchuk, Classic, and Gamecube controller support
+* SNES Superscope, Mouse, Justifier support
+* Cheat support
+* Auto Load/Save Game Snapshots and SRAM
+* Custom controller configurations
+* SD, USB, DVD (requires DVDx), SMB, GC Memory Card, Zip, and 7z support
+* Autodetect PAL/NTSC, 16:9 widescreen support
+* Original/filtered/unfiltered video modes
+* Turbo Mode - up to 2x the normal speed
+* Zoom option to zoom in/out
+* Open Source!
+
+×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+|0O×øo·                         UPDATE HISTORY                        ·oø×O0|
+`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+[What's New 007 - November 19, 2008]
+
+* added: SDHC support
+* added: SD/USB hot-swapping
+* added: zoom saving
+* added: IPS/UPS/PPF patch support
+* added: Qoob modchip support (thanks emukidid!)
+* added: Added console/remote power button support (Wii only)
+* added: Added reset button support - resets game (Wii only)
+* changed: Settings file is now named settings.xml and is stored in the same
+           folder as the DOL - eg: apps/vbagx/settings.xml (Wii only)
+* fixed: swc, sfc file support
+* fixed: inverted sound channels
+* fixed: some game crashes
+* fixed: snapshot saving for games with SPC7110, BS, DSP, or CX4
+* fixed: justifier support
+* fixed: superscope turbo button
+* fixed: widescreen support
+* fixed: ActRaiser 2 issues
+* fixed: Invalid memory accesses in C4 and OBC1. MMX3 Toxic Seahorse stage
+         now can be emulated with HDMA. (zones)
+* fixed: Updated snapshot to prevent desync. Added some variables related to
+         APU and HDMA. (gocha)
+* fixed: zoom issues (thanks eke-eke!)
+* fixed: original modes (thanks eke-eke!)
+* fixed: vertical scaling for filtered/unfiltered modes (thanks eke-eke!)
+
+[What's New 006 - October 15, 2008]
+
+Tantric
+* added: 480p for GameCube
+* added: Sound sync
+* added: 7z support
+* changed: Faster SD/USB access (readahead cache enabled)
+* fixed: Video offset issues
+* fixed: BS-X games work now
+* fixed: Wii DVD works now
+* fixed: DVD re-enabled for GameCube
+* fixed: Nunchuk analog stick issues
+* fixed: Many crashes, memory leaks, etc
+
+michniewski
+* added: Video shift options
+* changed: Turn DVD motor off option re-enabled for GameCube
+
+[What Was New 005 - September 23, 2008]
+
+michniewski
+* added: Superscope/mouse/justifier support, with Wii remote
+* added: 3 render modes - Original, Filtered, Unfiltered
+* added: widescreen compensation option
+* added: DVD support on the Wii
+* changed: zoom - limited range, added reset zoom option
+
+Tantric
+* added: now uses SNES 1.51 core (thanks to eke-eke for help with this)
+* added: cheats menu! Loads .CHT file from /snes9x/cheats folder, 
+         .CHT file name must match file name of ROM
+* added: load/save preference selector. ROM, SRAM, Freeze, and preferences 
+         are saved/loaded according to these
+* added: preliminary Windows file share loading/saving (SMB) support on Wii:
+		 You can input your network settings into snes9xGX.xml, or edit 
+		 s9xconfig.cpp from the source code and compile.
+* added: 'Auto' settings for save/load - attempts to automatically determine
+         your load/save device(s) - SD, USB, Memory Card, DVD, SMB
+* added: ROM Information page
+* added: Game Menu - all game-specific options are here now: 
+         SRAM save/load, Snapshot save/load, game reload, etc
+* added: Credits page
+* fixed: sd gecko works now
+* fixed: full USB support
+* changed: menu structure
+* changed: preferences are now loaded and saved in XML format. You can open
+		   snes9xGX.xml edit all settings, including some not available within
+		   the program
+* changed: if Home button is pressed when a game is running, Game Menu pops up
+* changed: if preferences can't be loaded at the start and/or are reset, 
+           preferences menu pops up - remove to save your preferences!
+* changed: SRAM load - game reloaded automatically after loading SRAM
+
+[What Was New 004 - August 5, 2008]
+
+* added: option to disable AA filtering 
+         (snes graphics 'crisper', AA now default OFF)
+* added: mapped zooming and turbo mode to classic controller
+* added: preliminary usb support (loading)
+* changed: sram and freezes now saved by filename, not internal romname. 
+           If you have multiple versions of the same game, you can now have 
+           srams and freezes for each version. A prompt to convert to the 
+           new naming is provided for sram only.
+* changed: by default, autoload/save sram and freeze enabled
+
+[What Was New 003 - July 25, 2008]
+* added: alphabetical file sorting
+* added: background logo/backdrop + nicer menus
+* added: scrolling in ROM selector
+* fixed: switching between pal/ntsc ROMS doesn't mess up timings
+* fixed: GC controller config works now
+* fixed: freeze autoloading on ROM load
+* fixed: zipped ROMS should now load in a reasonable time
+* fixed: precompiled dols for autosaving to various locations (see readme)
+* changed: GC default quickload slot (to sd) (thanks kerframil)
+* changed: default load/save dirs are now "/snes9x/roms" and 
+           "/snes9x/saves/"  (thanks kerframil)
+* changed: Classic X and Y defaults aren't switched
+* changed: if autosave is enabled, it doesn't ask to save SRAM 
+           anymore. It is saved in the background.
+* updated README
+
+[Whats Was New 002 - July 21, 2008]
+* added: classic and nunchuk support
+* added: all controllers can now be configured
+* added: GC version (untested)
+* changed: mappings are no longer stored in SRAM, but in config file. 
+           This means no per-game configurations, but one global 
+           config per controller.
+* one makefile to make all versions. (thanks to snes9x143 SVN)
+
+
+[What Was New 001 - July 12, 2008]
+* compiles with latest devkitppc (r15)
+* now uses libfat (can use front sd slot on wii)
+* updated menu items a bit
+* wiimote support
+* fixed: autoload sram/freeze
+* fixed: rom plays immediately after loading
+
+[older update history at the bottom]
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                         SETUP & INSTALLATION                  ·oø×O0|
@@ -126,8 +179,7 @@ Unzip the archive. You will find the following folders inside:
 apps			Contains Homebrew Channel ready files
 				(see Homebrew Channel instructions below)
 				
-executables		Contains Gamecube / Wii DOL files
-				(for loading from other methods)
+gamecube		Contains GameCube DOL file (not required for Wii)
 				
 snes9x			Contains the directory structure required for storing
 				roms, saves, and cheats (see below)
@@ -259,7 +311,13 @@ and changed the setting, reset the game for the settings to take effect.
 These controllers can be controlled by either the Gamecube controller analog
 sticks,the Classic controller analog sticks, or by aiming at the screen
 with the wiimote.
-(these configurations cannot be changed, yet)
+
+Aim Offscreen - Wiimote Minus, GameCube Z button
+Fire - B button
+Cursor - A button
+Turbo Toggle - Wiimote D-Pad Down, GameCube Y button
+
+These configurations cannot be changed.
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                             ZIP SUPPORT                       ·oø×O0|

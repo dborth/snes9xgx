@@ -255,8 +255,8 @@ void S9xResetAPU ()
     IAPU.WaitAddress2 = NULL;
     IAPU.WaitCounter = 0;
 #endif
-	IAPU.NextAPUTimerPos = 0;
-	IAPU.APUTimerCounter = 0;
+	APU.NextAPUTimerPos = 0;
+	APU.APUTimerCounter = 0;
     APU.ShowROM = TRUE;
     IAPU.RAM [0xf1] = 0x80;
 
@@ -283,6 +283,9 @@ void S9xResetAPU ()
 
     S9xResetSound (TRUE);
     S9xSetEchoEnable (0);
+
+	IAPU.OUTXNotifier = false;
+	IAPU.ENVXNotifier = false;
 }
 
 void S9xSetAPUDSP (uint8 byte)
@@ -479,9 +482,9 @@ void S9xSetAPUDSP (uint8 byte)
 			{
 				APURegisters.PC = IAPU.PC - IAPU.RAM;
 				S9xAPUPackStatus();
-#ifndef NGC				
+#ifndef NGC	
 				S9xSPCDump (S9xGetFilenameInc((".spc"), SPC_DIR));
-#endif				
+#endif	
 				spc_is_dumping = 0;
 			}
 		}
@@ -913,18 +916,18 @@ void S9xSetAPUTimer (uint16 Address, uint8 byte)
 
 void S9xAPUExecute (void)
 {
-	while ((CPU.Cycles << SNES_APU_ACCURACY) >= IAPU.NextAPUTimerPos)
+	while ((CPU.Cycles << SNES_APU_ACCURACY) >= APU.NextAPUTimerPos)
 	{
 		// catch up the APU timers
 		if (IAPU.APUExecuting)
 		{
-			while (APU.Cycles < IAPU.NextAPUTimerPos)
+			while (APU.Cycles < APU.NextAPUTimerPos)
 				APU_EXECUTE1();
 		}
 		else
-			APU.Cycles = IAPU.NextAPUTimerPos;
+			APU.Cycles = APU.NextAPUTimerPos;
 
-		IAPU.NextAPUTimerPos += SNES_APUTIMER2_CYCLE_SCALED;
+		APU.NextAPUTimerPos += SNES_APUTIMER2_CYCLE_SCALED;
 
 		if (APU.TimerEnabled [2])
 		{
@@ -940,9 +943,9 @@ void S9xAPUExecute (void)
 			}
 		}
 
-		if (++IAPU.APUTimerCounter == 8)
+		if (++APU.APUTimerCounter == 8)
 		{
-			IAPU.APUTimerCounter = 0;
+			APU.APUTimerCounter = 0;
 
 			if (APU.TimerEnabled [0])
 			{
@@ -992,8 +995,10 @@ uint8 S9xGetAPUDSP ()
 	switch (reg)
 	{
 		case APU_KON:
+			IAPU.KONNotifier = true;
 			break;
 		case APU_KOFF:
+			IAPU.KOFFNotifier = true;
 			break;
 
 		case APU_OUTX + 0x00:
@@ -1004,16 +1009,20 @@ uint8 S9xGetAPUDSP ()
 		case APU_OUTX + 0x50:
 		case APU_OUTX + 0x60:
 		case APU_OUTX + 0x70:
-		if(Settings.FakeMuteFix)
 		{
-			// hack that is off by default: fixes Terranigma desync
-			return (0);
-		}
-		else
-		{
-			if (SoundData.channels [reg >> 4].state == SOUND_SILENT)
+			IAPU.OUTXNotifier = true;
+
+			if(Settings.FakeMuteFix)
+			{
+				// hack that is off by default: fixes Terranigma desync
 				return (0);
-			return (int8) (SoundData.channels [reg >> 4].out_sample >> 8);
+			}
+			else
+			{
+				if (SoundData.channels [reg >> 4].state == SOUND_SILENT)
+					return (0);
+				return (int8) (SoundData.channels [reg >> 4].out_sample >> 8);
+			}
 		}
 
 		case APU_ENVX + 0x00:
@@ -1024,9 +1033,14 @@ uint8 S9xGetAPUDSP ()
 		case APU_ENVX + 0x50:
 		case APU_ENVX + 0x60:
 		case APU_ENVX + 0x70:
+		{
+			IAPU.ENVXNotifier = true;
+
 			return (S9xGetEnvelopeHeight (reg >> 4));
+		}
 
 		case APU_ENDX:
+			IAPU.ENDXNotifier = true;
 			// To fix speech in Magical Drop 2 6/11/00
 			//	APU.DSP [APU_ENDX] = 0;
 			break;

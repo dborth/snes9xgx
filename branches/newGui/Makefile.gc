@@ -1,4 +1,4 @@
-VERSION := 005
+VERSION := 006
 
 #---------------------------------------------------------------------------------
 # Clear the implicit built in rules
@@ -20,7 +20,7 @@ include $(DEVKITPPC)/gamecube_rules
 TARGET		:=	snes9xgx-$(VERSION)-gc
 TARGETDIR   :=  executables
 BUILD		:=	build_gc
-SOURCES		:=	source/snes9x source/ngc
+SOURCES		:=	source/snes9x source/ngc source/sz
 DATA		:=	data  
 INCLUDES	:=	source/snes9x source/ngc
 
@@ -34,6 +34,7 @@ CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
 			-DCPU_SHUTDOWN -DSPC700_SHUTDOWN \
 			-DSPC700_C -DSDD1_DECOMP \
 			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
+			-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
 			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter \
 			#-D_DEBUG_VIDEO -pipe
 CXXFLAGS	=	$(CFLAGS)
@@ -43,7 +44,7 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--cref
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lpng -lmxml -lbba -ltinysmb -lfat -lz -logc -lm -lfreetype
+LIBS	:= -lpngu -lpng -lmxml -lbba -ltinysmb -lfat -lz -logc -lm -lfreetype
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

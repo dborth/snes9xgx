@@ -50,6 +50,8 @@ extern FT_UInt glyph_index;
 
 extern int WaitButtonAB ();
 
+extern void draw_init ();
+
 
 // MAIN
 
@@ -97,11 +99,16 @@ gui_alloc ()
 		texdata_menu = (u8 *) TEXCACHE2_LO;
 		Gui.texmem = (u8 *) GUICACHE_LO;
 		#else
+		
 		// perhaps store in aram
-		texdata_bg = memalign (32, 640 * 480 * 4);
-		texdata_menu = memalign (32, 640 * 480 * 4);
-		Gui.texmem = memalign (32, 640 * 480 * 4);
+		texdata_bg = malloc(640 * 480 * 4);
+		texdata_menu = malloc(640 * 480 * 4);
+		Gui.texmem = malloc(640 * 480 * 4);
+		
 		#endif
+		
+		if ( texdata_bg == NULL || texdata_menu == NULL || Gui.texmem == NULL )
+			WaitButtonAB ();
 		
 		mem_alloced = 1;
 	}
@@ -153,16 +160,21 @@ gui_makebg ()
 	PNGU_GetImageProperties (ctx, &imgProp);
 	// can check image dimensions here
 	//texdata_bg = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 4);
+	
 	GX_InitTexObj (&texobj_BG, texdata_bg, 640, 480, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	
+	// load up textures
+	GX_LoadTexObj (&texobj, GX_TEXMAP0);	// load last rendered snes frame
+	GX_LoadTexObj (&texobj_BG, GX_TEXMAP0);	// menu backdrop
+	
 	//PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, &texdata_bg, 255);
 	PNGU_DecodeToRGBA8 (ctx, 640, 480, Gui.texmem, 0, 7);
 	Make_Texture_RGBA8 (texdata_bg, Gui.texmem, 640, 480);
 	PNGU_ReleaseImageContext (ctx);
+	
 	DCFlushRange (texdata_bg, imgProp.imgWidth * imgProp.imgHeight * 4);
 
-	// load up textures
-	GX_LoadTexObj (&texobj, GX_TEXMAP0);	// load last rendered snes frame
-	GX_LoadTexObj (&texobj_BG, GX_TEXMAP0);	// menu backdrop
+
 	GX_InvalidateTexAll ();
 	
 	/** blend last rendered snes frame and menu backdrop **/
@@ -181,12 +193,14 @@ gui_makebg ()
 	
 	// behind (last snes frame)
 	square[2] = square[5] = square[8] = square[11] = 0;	// z value
-	GX_InvVtxCache ();
+	DCFlushRange (square, 32);
+	draw_init ();
 	draw_square (view);
 	
 	// in front (menu backdrop)
 	square[2] = square[5] = square[8] = square[11] = 1;	// z value
-	GX_InvVtxCache ();
+	DCFlushRange (square, 32);
+	draw_init ();
 	draw_square (view);
 
 	GX_DrawDone ();
@@ -214,7 +228,8 @@ gui_makebg ()
 	GX_InvalidateTexAll ();
 	
 	square[2] = square[5] = square[8] = square[11] = 0; 	// reset z value
-	GX_InvVtxCache ();
+	DCFlushRange (square, 32);
+	draw_init ();
 }
 
 void
@@ -222,7 +237,7 @@ gui_clearscreen ()
 {
 	//whichfb ^= 1;
 	//VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], COLOR_BLACK);
-	memset ( Gui.texmem, 0, sizeof(Gui.texmem) );
+	memset ( Gui.texmem, 0, 640 * 480 * 4 );
 	Gui.fontcolour = 0;
 }
 

@@ -60,9 +60,12 @@ extern "C" {
 #include "input.h"
 
 #include "gui.h"
+#include "filter.h"
 
-unsigned long ARAM_ROMSIZE = 0;
 int ConfigRequested = 0;
+int ShutdownRequested = 0;
+int ResetRequested = 0;
+char appPath[1024];
 FILE* debughandle;
 
 extern int FrameTimer;
@@ -70,16 +73,84 @@ extern int FrameTimer;
 extern long long prev;
 extern unsigned int timediffallowed;
 
-extern void fat_enable_readahead_all();
+/****************************************************************************
+ * Shutdown / Reboot / Exit
+ ***************************************************************************/
 
+#ifdef HW_DOL
+	#define PSOSDLOADID 0x7c6000a6
+	int *psoid = (int *) 0x80001800;
+	void (*PSOReload) () = (void (*)()) 0x80001800;
+#endif
 
-static void power_cb () {
-	Reboot();
+void Reboot()
+{
+	UnmountAllFAT();
+#ifdef HW_RVL
+	DI_Close();
+    SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+#else
+	#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
+	*SOFTRESET_ADR = 0x00000000;
+#endif
 }
 
-static void reset_cb () {
-	returnToLoader();
+void ExitToLoader()
+{
+	UnmountAllFAT();
+	// Exit to Loader
+	#ifdef HW_RVL
+		DI_Close();
+		exit(0);
+	#else	// gamecube
+		if (psoid[0] == PSOSDLOADID)
+			PSOReload ();
+	#endif
 }
+
+#ifdef HW_RVL
+void ShutdownCB()
+{
+	ConfigRequested = 1;
+	ShutdownRequested = 1;
+}
+void ResetCB()
+{
+	ResetRequested = 1;
+}
+void ShutdownWii()
+{
+	UnmountAllFAT();
+	DI_Close();
+	SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+}
+#endif
+
+#ifdef HW_DOL
+/****************************************************************************
+ * ipl_set_config
+ * lowlevel Qoob Modchip disable
+ ***************************************************************************/
+
+void ipl_set_config(unsigned char c)
+{
+	volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
+	unsigned long val,addr;
+	addr=0xc0000000;
+	val = c << 24;
+	exi[0] = ((((exi[0]) & 0x405) | 256) | 48);	//select IPL
+	//write addr of IPL
+	exi[0 * 5 + 4] = addr;
+	exi[0 * 5 + 3] = ((4 - 1) << 4) | (1 << 2) | 1;
+	while (exi[0 * 5 + 3] & 1);
+	//write the ipl we want to send
+	exi[0 * 5 + 4] = val;
+	exi[0 * 5 + 3] = ((4 - 1) << 4) | (1 << 2) | 1;
+	while (exi[0 * 5 + 3] & 1);
+
+	exi[0] &= 0x405;	//deselect IPL
+}
+#endif
 
 /****************************************************************************
  * setFrameTimerMethod()
@@ -131,6 +202,12 @@ emulate ()
 		S9xMainLoop ();
 		NGCReportButtons ();
 
+		if(ResetRequested)
+		{
+			S9xSoftReset (); // reset game
+			ResetRequested = 0;
+		}
+
 		if (ConfigRequested)
 		{
 			// change to menu video mode
@@ -138,7 +215,7 @@ emulate ()
 
 			if ( GCSettings.AutoSave == 1 )
 			{
-				SaveSRAM ( GCSettings.SaveMethod, NOTSILENT );
+				SaveSRAM ( GCSettings.SaveMethod, SILENT );
 			}
 			else if ( GCSettings.AutoSave == 2 )
 			{
@@ -154,7 +231,11 @@ emulate ()
 				}
 			}
 
-			
+			#ifdef HW_RVL
+			if(ShutdownRequested)
+				ShutdownWii();
+			#endif
+
 			// GUI Stuff
 			///*
 			gui_alloc();
@@ -170,6 +251,9 @@ emulate ()
 
 			//MainMenu (2); // go to game menu
 
+			// save zoom level
+			SavePrefs(GCSettings.SaveMethod, SILENT);
+
 			FrameTimer = 0;
 			setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
 
@@ -177,14 +261,9 @@ emulate ()
 			Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);
 			Settings.JustifierMaster = (GCSettings.Justifier > 0 ? true : false);
 			SetControllers ();
+			//S9xReportControllers ();
 			
-			SelectFilterMethod();
-			
-			// DEBUG
-			char msg[80] = "";
-			extern void* filtermem;
-			sprintf (msg, "filtermem: %p", filtermem);
-			WaitPrompt ((char*) &msg);
+			//SelectFilterMethod();
 
 			ConfigRequested = 0;
 
@@ -196,11 +275,33 @@ emulate ()
 
 			CheckVideo = 1;	// force video update
 			prevRenderedFrameCount = IPPU.RenderedFramesCount;
-
-
 		}//if ConfigRequested
 
 	}//while
+}
+
+void CreateAppPath(char origpath[])
+{
+#ifdef HW_DOL
+	sprintf(appPath, GCSettings.SaveFolder);
+#else
+	char path[1024];
+	strcpy(path, origpath); // make a copy so we don't mess up original
+
+	char * loc;
+	int pos = -1;
+
+	loc = strrchr(path,'/');
+	if (loc != NULL)
+		*loc = 0; // strip file name
+
+	loc = strchr(path,'/'); // looking for / from fat:/
+	if (loc != NULL)
+		pos = loc - path + 1;
+
+	if(pos >= 0 && pos < 1024)
+		sprintf(appPath, &(path[pos]));
+#endif
 }
 
 /****************************************************************************
@@ -216,56 +317,68 @@ emulate ()
  *	7. Initialise Snes9x/GC Sound System
  *	8. Initialise Snes9x Graphics subsystem
  *	9. Let's Party!
- *
- * The SNES ROM is delivered from ARAM. (AR_SNESROM)
- * Any method of loading a ROM - RAM, DVD, SMB, SDCard, etc
- * MUST place the unpacked ROM at this location.
- * This provides a single consistent interface in memmap.cpp.
- * Refer to that file if you need to change it.
  ***************************************************************************/
 int
-main ()
+main(int argc, char *argv[])
 {
-#ifdef WII_DVD
-	DI_Init();	// first
-#endif
+	#ifdef HW_DOL
+	ipl_set_config(6); // disable Qoob modchip
+	#endif
 
-	unsigned int save_flags;
+	#ifdef WII_DVD
+	DI_Init();	// first
+	#endif
+
 	int selectedMenu = -1;
 
 	// Initialise video
 	InitGCVideo ();
 
 	// Controllers
-#ifdef HW_RVL
+	#ifdef HW_RVL
 	WPAD_Init();
 	// read wiimote accelerometer and IR data
 	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
 	WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
-#endif
+	#endif
 
 	PAD_Init ();
+
+	// Wii Power/Reset buttons
+	#ifdef HW_RVL
+	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
+	SYS_SetPowerCallback(ShutdownCB);
+	SYS_SetResetCallback(ResetCB);
+	#endif
 
 	// Audio
 	AUDIO_Init (NULL);
 
 	// GC Audio RAM (for ROM and backdrop storage)
 	AR_Init (NULL, 0);
-	
-	// Enable Power/Reset
-	__STM_Init();
-	SYS_SetPowerCallback (power_cb);
-	SYS_SetResetCallback (reset_cb);
 
+	// GameCube only - Injected ROM
 	// Before going any further, let's copy any injected ROM image
+	// We'll put it in ARAM for safe storage
+
+	#ifdef HW_DOL
 	int *romptr = (int *) 0x81000000; // location of injected rom
 
 	if (memcmp ((char *) romptr, "SNESROM0", 8) == 0)
 	{
-		ARAM_ROMSIZE = romptr[2];
-		romptr = (int *) 0x81000020;
-		ARAMPut ((char *) romptr, (char *) AR_SNESROM, ARAM_ROMSIZE);
+		SNESROMSize = romptr[2];
+
+		if(SNESROMSize > (1024*128) && SNESROMSize < (1024*1024*8))
+		{
+			romptr = (int *) 0x81000020;
+			ARAMPut ((char *) romptr, (char *) AR_SNESROM, SNESROMSize);
+		}
+		else // not a valid ROM size
+		{
+			SNESROMSize = 0;
+		}
 	}
+	#endif
 
 	// Initialise freetype font system
 	if (FT_Init ())
@@ -278,6 +391,11 @@ main ()
 
 	// Set defaults
 	DefaultSettings ();
+
+	// store path app was loaded from
+	sprintf(appPath, "snes9x");
+	if(argc > 0 && argv[0] != NULL)
+		CreateAppPath(argv[0]);
 
 	S9xUnmapAllControls ();
 	SetDefaultButtonMap ();
@@ -302,7 +420,7 @@ main ()
 		while (1);
 
 	// Initialize libFAT for SD and USB
-	fatInitDefault();
+	fatInit (8, false);
 
 	#ifdef _DEBUG_VIDEO
 	// log stuff
@@ -310,12 +428,15 @@ main ()
 	#endif
 
 	// Initialize DVD subsystem (GameCube only)
-	#ifndef HW_RVL
+	#ifdef HW_DOL
 	DVD_Init ();
 	#endif
 
 	// Check if DVD drive belongs to a Wii
 	SetDVDDriveType();
+	
+	// init LUTs for hq2x
+	//InitLUTs();
 
 	// Load preferences
 	if(!LoadPrefs())
@@ -324,24 +445,29 @@ main ()
 		selectedMenu = 1; // change to preferences menu
 	}
 
-	// No appended ROM, so get the user to load one
-	if (ARAM_ROMSIZE == 0)
+	// GameCube only - Injected ROM
+	// Everything's been initialized, we can copy our ROM back
+	// from ARAM into main memory
+
+	#ifdef HW_DOL
+	if(SNESROMSize > 0)
 	{
-		while (ARAM_ROMSIZE == 0)
-		{
-			MainMenu (selectedMenu);
-		}
+		ARAMFetchSlow( (char *)Memory.ROM, (char *)AR_SNESROM, SNESROMSize);
+		Memory.LoadROM ("BLANK.SMC");
+		Memory.LoadSRAM ("BLANK");
 	}
-	else
+	#endif
+	
+	// do this before we first get to the menu
+	//SelectFilterMethod();
+
+	// Get the user to load a ROM
+	while (SNESROMSize <= 0)
 	{
-		// Load ROM
-		save_flags = CPU.Flags;
-		if (!Memory.LoadROM ("VIRTUAL.ROM"))
-			while (1);
-		CPU.Flags = save_flags;
+		MainMenu (selectedMenu);
 	}
 	
-	SelectFilterMethod();
+	//SelectFilterMethod();	// and after
 
 	// Emulate
 	emulate ();

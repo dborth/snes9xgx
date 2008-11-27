@@ -16,7 +16,5 @@
 #define _NGCMENU_
 
 void MainMenu (int selectedMenu);
-void returnToLoader ();
-void Reboot();
 
 #endif

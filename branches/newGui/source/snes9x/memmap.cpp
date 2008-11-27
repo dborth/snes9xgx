@@ -196,11 +196,8 @@
 #include "cheats.h"
 #else
 #include <gccore.h>
-#include "aram.h"			/*** Nintendo GameCube ARAM loader.
-													 FileLoader requires that the ROM is preloaded in ARAM first
-											 ***/
-extern unsigned long ARAM_ROMSIZE;
-extern int hasloaded;
+
+extern unsigned long SNESROMSize;
 #endif
 
 #include "controls.h"
@@ -1139,30 +1136,17 @@ uint32 CMemory::FileLoader (uint8 *buffer, const char *filename, int32 maxsize)
 		}
 
 #else
-//#include "ftfont.h"
-/*** Nintendo Gamecube ARAM ROM File Loader
-				 This is simply a modified version of FILE_DEFAULT, which uses
-				 the ARAM as temporary ROM storage.
-
-				 NB: Make sure ARAM_ROMSIZE is correct! All hell ensues if you don't
+		/*** Nintendo Wii/Gamecube ROM File Loader
+		 By now we've already loaded the ROM into main memory
+		 This is simply a modified version of FILE_DEFAULT
 		 ***/
 		HeaderCount = 0;
 		uint8 *ptr = buffer;
-
-		long unsigned int size = 0;
-     	uint32 ARAM_max = maxsize + 0x200 - (ptr - buffer);
-		size = ARAM_ROMSIZE;
-
-		if ( size > ARAM_max )
-			size = ARAM_max;
-
-		if ( hasloaded == 0 )
-			ARAMFetchSlow( (char *)ptr, (char *)AR_SNESROM, size );
+		uint32	size = SNESROMSize;
 
 		size = HeaderRemove(size, HeaderCount, ptr);
 		ptr += size;
 		totalSize += size;
-
 #endif
     if (HeaderCount == 0)
 		S9xMessage(S9X_INFO, S9X_HEADERS_INFO, "No ROM file header found.");
@@ -2012,25 +1996,6 @@ void CMemory::InitROM (void)
 	else
 		Settings.PAL = FALSE;
 
-
-	//// Initialize emulation
-
-	Timings.H_Max_Master = SNES_CYCLES_PER_SCANLINE;
-	Timings.H_Max        = Timings.H_Max_Master;
-	Timings.HBlankStart  = SNES_HBLANK_START_HC;
-	Timings.HBlankEnd    = SNES_HBLANK_END_HC;
-	Timings.HDMAInit     = SNES_HDMA_INIT_HC;
-	Timings.HDMAStart    = SNES_HDMA_START_HC;
-	Timings.RenderPos    = SNES_RENDER_START_HC;
-	Timings.V_Max_Master = Settings.PAL ? SNES_MAX_PAL_VCOUNTER : SNES_MAX_NTSC_VCOUNTER;
-	Timings.V_Max        = Timings.V_Max_Master;
-	/* From byuu: The total delay time for both the initial (H)DMA sync (to the DMA clock),
-	   and the end (H)DMA sync (back to the last CPU cycle's mcycle rate (6, 8, or 12)) always takes between 12-24 mcycles.
-	   Possible delays: { 12, 14, 16, 18, 20, 22, 24 }
-	   XXX: Snes9x can't emulate this timing :( so let's use the average value... */
-	Timings.DMACPUSync   = 18;
-
-
 	if (Settings.PAL)
 	{
 		Settings.FrameTime = Settings.FrameTimePAL;
@@ -2072,6 +2037,23 @@ void CMemory::InitROM (void)
 		Settings.DisplayColor = BUILD_PIXEL(0, 16, 31);
 		SET_UI_COLOR(0, 128, 255);
 	}
+
+	//// Initialize emulation
+
+	Timings.H_Max_Master = SNES_CYCLES_PER_SCANLINE;
+	Timings.H_Max        = Timings.H_Max_Master;
+	Timings.HBlankStart  = SNES_HBLANK_START_HC;
+	Timings.HBlankEnd    = SNES_HBLANK_END_HC;
+	Timings.HDMAInit     = SNES_HDMA_INIT_HC;
+	Timings.HDMAStart    = SNES_HDMA_START_HC;
+	Timings.RenderPos    = SNES_RENDER_START_HC;
+	Timings.V_Max_Master = Settings.PAL ? SNES_MAX_PAL_VCOUNTER : SNES_MAX_NTSC_VCOUNTER;
+	Timings.V_Max        = Timings.V_Max_Master;
+	/* From byuu: The total delay time for both the initial (H)DMA sync (to the DMA clock),
+	   and the end (H)DMA sync (back to the last CPU cycle's mcycle rate (6, 8, or 12)) always takes between 12-24 mcycles.
+	   Possible delays: { 12, 14, 16, 18, 20, 22, 24 }
+	   XXX: Snes9x can't emulate this timing :( so let's use the average value... */
+	Timings.DMACPUSync   = 18;
 
 	IAPU.OneCycle = SNES_APU_ONE_CYCLE_SCALED;
 

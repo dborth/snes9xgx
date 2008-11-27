@@ -3,7 +3,7 @@
  *
  * softdev July 2006
  * crunchy2 May 2007
-  * Michniewski 2008
+ * Michniewski 2008
  * Tantric August 2008
  *
  * fileop.h
@@ -24,12 +24,14 @@
 
 #define ROOTFATDIR "fat:/"
 
+void UnmountAllFAT();
 bool ChangeFATInterface(int method, bool silent);
 int ParseFATdirectory(int method);
-int LoadFATFile ();
-int SaveBufferToFAT (char *filepath, int datasize, bool silent);
-int LoadBufferFromFAT (char *filepath, bool silent);
+int LoadFATSzFile(char * filepath, unsigned char * rbuffer);
+int SaveFATFile (char * sbuffer, char *filepath, int length, bool silent);
+int LoadFATFile (char * sbuffer, char *filepath, int length, bool silent);
 
 extern char currFATdir[MAXPATHLEN];
+extern FILE * fatfile;
 
 #endif

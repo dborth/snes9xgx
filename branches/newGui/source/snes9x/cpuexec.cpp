@@ -372,13 +372,13 @@ void S9xDoHEventProcessing (void)
 			break;
 
 		case HC_HDMA_START_EVENT:
-			if (IPPU.HDMA && CPU.V_Counter <= PPU.ScreenHeight)
+			if (PPU.HDMA && CPU.V_Counter <= PPU.ScreenHeight)
 			{
 			#ifdef DEBUGGER
-				sprintf(mes, "*** HDMA  HC:%04d, Channel:%02x", CPU.Cycles, IPPU.HDMA);
+				sprintf(mes, "*** HDMA  HC:%04d, Channel:%02x", CPU.Cycles, PPU.HDMA);
 				S9xTraceMessage(mes);
 			#endif
-				IPPU.HDMA = S9xDoHDMA(IPPU.HDMA);
+				PPU.HDMA = S9xDoHDMA(PPU.HDMA);
 			}
 
 			S9xCheckMissingHTimerPosition(Timings.HDMAStart);
@@ -403,7 +403,7 @@ void S9xDoHEventProcessing (void)
 		#endif
 
 			CPU.Cycles -= Timings.H_Max;
-			IAPU.NextAPUTimerPos -= (Timings.H_Max << SNES_APU_ACCURACY);
+			APU.NextAPUTimerPos -= (Timings.H_Max << SNES_APU_ACCURACY);
 			APU.Cycles -= (Timings.H_Max << SNES_APU_ACCURACY);
 
 			if ((Timings.NMITriggerPos != 0xffff) && (Timings.NMITriggerPos >= Timings.H_Max))
@@ -471,7 +471,7 @@ void S9xDoHEventProcessing (void)
 			if (CPU.V_Counter == PPU.ScreenHeight + FIRST_VISIBLE_LINE)	// VBlank starts from V=225(240).
 			{
 				S9xEndScreenRefresh();
-				IPPU.HDMA = 0;
+				PPU.HDMA = 0;
 				// Bits 7 and 6 of $4212 are computed when read in S9xGetPPU.
 			#ifdef DEBUGGER
 				missing.dma_this_frame = 0;

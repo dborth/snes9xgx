@@ -183,11 +183,14 @@ struct SIAPU
     uint8  _Zero;
     uint8  _Overflow;
     uint32 TimerErrorCounter;
-    int32  NextAPUTimerPos;
-    int32  APUTimerCounter;
     uint32 Scanline;
     int32  OneCycle;
     int32  TwoCycles;
+    bool8  KONNotifier;
+    bool8  KOFFNotifier;
+    bool8  OUTXNotifier;
+    bool8  ENVXNotifier;
+    bool8  ENDXNotifier;
 };
 
 struct SAPU
@@ -204,6 +207,8 @@ struct SAPU
     bool8  TimerEnabled [3];
     bool8  TimerValueWritten [3];
 	int32  Cycles;
+    int32  NextAPUTimerPos;
+    int32  APUTimerCounter;
 };
 
 EXTERN_C struct SAPU APU;

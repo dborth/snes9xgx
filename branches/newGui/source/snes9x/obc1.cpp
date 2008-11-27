@@ -252,20 +252,18 @@ void SetOBC1 (uint8 Byte, uint16 Address)
 	OBC1_RAM[Address & 0x1fff] = Byte;
 }
 
-uint8 *GetBasePointerOBC1(uint32 Address)
+uint8 * S9xGetBasePointerOBC1 (uint16 Address)
 {
-    Address=Address&0xffff;
-    if((Address&~MEMMAP_MASK)>=(0x7ff0&~MEMMAP_MASK) &&
-       (Address&~MEMMAP_MASK)<=(0x7ff6&~MEMMAP_MASK)) return NULL;
-    return OBC1_RAM + (Address & 0x1fff);
+	if (Address >= 0x7ff0 && Address <= 0x7ff6)
+		return (NULL);
+	return (OBC1_RAM - 0x6000);
 }
 
-uint8 *GetMemPointerOBC1(uint32 Address)
+uint8 * S9xGetMemPointerOBC1 (uint16 Address)
 {
-    Address=Address&0xffff;
-    if((Address&~MEMMAP_MASK)>=(0x7ff0&~MEMMAP_MASK) &&
-       (Address&~MEMMAP_MASK)<=(0x7ff6&~MEMMAP_MASK)) return NULL;
-    return OBC1_RAM + (Address & 0x1fff);
+	if (Address >= 0x7ff0 && Address <= 0x7ff6)
+		return (NULL);
+	return (OBC1_RAM - 0x6000 + (Address & 0xffff));
 }
 
 void ResetOBC1()

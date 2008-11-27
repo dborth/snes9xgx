@@ -39,7 +39,6 @@ extern "C" {
 #include "cheats.h"
 
 #include "snes9xGX.h"
-#include "aram.h"
 #include "video.h"
 #include "filesel.h"
 #include "unzip.h"
@@ -55,44 +54,9 @@ extern "C" {
 #include "menudraw.h"
 #include "cheatmgr.h"
 #include "input.h"
+#include "patch.h"
+
 #include "filter.h"
-
-extern void DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsize);
-
-extern SCheatData Cheat;
-
-extern int menu;
-extern unsigned long ARAM_ROMSIZE;
-
-/****************************************************************************
- * Reboot / Exit
- ***************************************************************************/
-
-void returnToLoader ()
-{
-	#ifdef HW_RVL
-		#ifdef WII_DVD
-		DI_Close();
-		#endif
-		exit(0);
-	#else	// gamecube
-		#define PSOSDLOADID 0x7c6000a6
-		int *psoid = (int *) 0x80001800;
-		void (*PSOReload) () = (void (*)()) 0x80001800;
-		if (psoid[0] == PSOSDLOADID)
-			PSOReload ();
-	#endif
-}
-
-void Reboot()
-{
-	#ifdef HW_RVL
-	    SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
-	#else
-		#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
-	    *SOFTRESET_ADR = 0x00000000;
-	#endif
-}
 
 /****************************************************************************
  * Load Manager
@@ -103,11 +67,15 @@ LoadManager ()
 {
 	int loadROM = OpenROM(GCSettings.LoadMethod);
 
-	/***
-	* check for autoloadsram / freeze
-	***/
-	if ( loadROM == 1 ) // if ROM was loaded, load the SRAM & settings
+	if (loadROM)
 	{
+		// load UPS/IPS/PPF patch
+		LoadPatch(GCSettings.LoadMethod);
+
+		Memory.LoadROM ("BLANK.SMC");
+		Memory.LoadSRAM ("BLANK");
+
+		// load SRAM or snapshot
 		if ( GCSettings.AutoLoad == 1 )
 			LoadSRAM(GCSettings.SaveMethod, SILENT);
 		else if ( GCSettings.AutoLoad == 2 )
@@ -115,9 +83,6 @@ LoadManager ()
 
 		// setup cheats
 		SetupCheats();
-
-		// reset zoom
-		zoom_reset ();
 	}
 
 	return loadROM;
@@ -192,8 +157,8 @@ void CheatMenu()
 			ph = PAD_ButtonsHeld (0);
 
 			#ifdef HW_RVL
-			wm_ay = WPAD_StickY (0, 0);
-			wm_sx = WPAD_StickX (0, 1);
+			wm_ay = WPAD_Stick (0, 0, 1);
+			wm_sx = WPAD_Stick (0, 1, 0);
 			wp = WPAD_ButtonsDown (0);
 			wh = WPAD_ButtonsHeld (0);
 			#endif
@@ -357,7 +322,6 @@ GameMenu ()
 				break;
 
 			case 1: // Reset Game
-				zoom_reset ();
 				S9xSoftReset ();
 				quit = retval = 1;
 				break;
@@ -372,7 +336,6 @@ GameMenu ()
 				break;
 
 			case 4: // Load SRAM
-				zoom_reset ();
 				quit = retval = LoadSRAM(GCSettings.SaveMethod, NOTSILENT);
 				break;
 
@@ -381,7 +344,6 @@ GameMenu ()
 				break;
 
 			case 6: // Load Freeze
-				zoom_reset ();
 				quit = retval = NGCUnfreezeGame (GCSettings.SaveMethod, NOTSILENT);
 				break;
 
@@ -462,6 +424,9 @@ FileOptions ()
 			GCSettings.SaveMethod++;
 		if(GCSettings.SaveMethod == METHOD_MC_SLOTB)
 			GCSettings.SaveMethod++;
+		filemenu[6][0] = 0;
+		#else
+		sprintf (filemenu[6], "Verify MC Saves %s", GCSettings.VerifySaves == true ? " ON" : "OFF");
 		#endif
 
 		// correct load/save methods out of bounds
@@ -500,10 +465,7 @@ FileOptions ()
 		else if (GCSettings.AutoSave == 2) sprintf (filemenu[5],"Auto Save SNAPSHOT");
 		else if (GCSettings.AutoSave == 3) sprintf (filemenu[5],"Auto Save BOTH");
 
-		sprintf (filemenu[6], "Verify MC Saves %s",
-			GCSettings.VerifySaves == true ? " ON" : "OFF");
-
-		ret = RunMenu (filemenu, filemenuCount, (char*)"Save/Load Options", 16);
+		ret = RunMenu (filemenu, filemenuCount, (char*)"Save/Load Options");
 
 		switch (ret)
 		{
@@ -538,7 +500,6 @@ FileOptions ()
 				break;
 			case -1: /*** Button B ***/
 			case 7:
-				SavePrefs(GCSettings.SaveMethod, SILENT);
 				quit = 1;
 				break;
 
@@ -548,13 +509,11 @@ FileOptions ()
 }
 
 /****************************************************************************
- * Video / Sound Options
+ * Video Options
  ***************************************************************************/
-static int videomenuCount = 15;
+static int videomenuCount = 11;
 static char videomenu[][50] = {
 
-	"Transparency",
-	"Display Frame Rate",
 	"Enable Zooming",
 	"Video Rendering",
 	"Video Scaling",
@@ -565,11 +524,9 @@ static char videomenu[][50] = {
 	"Shift Video Left",
 	"Shift Video Right",
 
-	"Shift:       ",
+	"Video Shift:       ",
 	"Reset Video Shift",
 
-	"Reverse Stereo",
-	"Interpolated Sound",
 	"Back to Preferences Menu"
 };
 
@@ -582,56 +539,36 @@ VideoOptions ()
 	menu = 0;
 	while (quit == 0)
 	{
-		sprintf (videomenu[0], "Transparency %s",
-			Settings.Transparency == true ? " ON" : "OFF");
-
-		sprintf (videomenu[1], "Display Frame Rate %s",
-			Settings.DisplayFrameRate == true ? " ON" : "OFF");
-
-		sprintf (videomenu[2], "Enable Zooming %s",
-			GCSettings.NGCZoom == true ? " ON" : "OFF");
+		sprintf (videomenu[0], "Enable Zooming %s",
+			GCSettings.Zoom == true ? " ON" : "OFF");
 
 		// don't allow original render mode if progressive video mode detected
 		if (GCSettings.render==0 && progressive)
 			GCSettings.render++;
 
 		if ( GCSettings.render == 0 )
-			sprintf (videomenu[3], "Video Rendering Original");
-		if ( GCSettings.render == 1 )
-			sprintf (videomenu[3], "Video Rendering Bilinear");
-		if ( GCSettings.render == 2 )
-			sprintf (videomenu[3], "Video Rendering Unfiltered");
+			sprintf (videomenu[1], "Video Rendering Original");
+		else if ( GCSettings.render == 1 )
+			sprintf (videomenu[1], "Video Rendering Filtered");
+		else if ( GCSettings.render == 2 )
+			sprintf (videomenu[1], "Video Rendering Unfiltered");
 
-		sprintf (videomenu[4], "Video Scaling %s",
+		sprintf (videomenu[2], "Video Scaling %s",
 			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
 			
-		sprintf (videomenu[5], "Video Filtering %s", GetFilterName((RenderFilter)GCSettings.FilterMethod));
+		sprintf (videomenu[3], "Video Filtering %s", GetFilterName((RenderFilter)GCSettings.FilterMethod));
 
-		sprintf (videomenu[10], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
+		sprintf (videomenu[8], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
 
-		sprintf (videomenu[12], "Reverse Stereo %s",
-			Settings.ReverseStereo == true ? " ON" : "OFF");
-
-		sprintf (videomenu[13], "Interpolated Sound %s",
-			Settings.InterpolatedSound == true ? " ON" : "OFF");
-
-		ret = RunMenu (videomenu, videomenuCount, (char*)"Video Options", 16);
+		ret = RunMenu (videomenu, videomenuCount, (char*)"Video Options");
 
 		switch (ret)
 		{
 			case 0:
-				Settings.Transparency ^= 1;
+				GCSettings.Zoom ^= 1;
 				break;
 
 			case 1:
-				Settings.DisplayFrameRate ^= 1;
-				break;
-
-			case 2:
-				GCSettings.NGCZoom ^= 1;
-				break;
-
-			case 3:
 				GCSettings.render++;
 				if (GCSettings.render > 2 )
 					GCSettings.render = 0;
@@ -639,54 +576,45 @@ VideoOptions ()
 				zoom_reset ();
 				break;
 
-			case 4:
+			case 2:
 				GCSettings.widescreen ^= 1;
 				break;
 				
-			case 5:
+			case 3:
 				// filter mode
 				GCSettings.FilterMethod++;
 				if (GCSettings.FilterMethod == NUM_FILTERS) GCSettings.FilterMethod = 0;
 				//SelectFilterMethod();
 				break;
-
-			case 6:
+				
+			case 4:
 				// Move up
 				GCSettings.yshift--;
 				break;
-			case 7:
+			case 5:
 				// Move down
 				GCSettings.yshift++;
 				break;
-			case 8:
+			case 6:
 				// Move left
 				GCSettings.xshift--;
 				break;
-			case 9:
+			case 7:
 				// Move right
 				GCSettings.xshift++;
 				break;
 
-			case 10:
+			case 8:
 				break;
 
-			case 11:
+			case 9:
 				// reset video shifts
 				GCSettings.xshift = GCSettings.yshift = 0;
 				WaitPrompt((char *)"Video Shift Reset");
 				break;
 
-			case 12:
-				Settings.ReverseStereo ^= 1;
-				break;
-
-			case 13:
-				Settings.InterpolatedSound ^= 1;
-				break;
-
 			case -1: // Button B
-			case 14:
-				SavePrefs(GCSettings.SaveMethod, SILENT);
+			case 10:
 				quit = 1;
 				break;
 
@@ -1007,7 +935,6 @@ ConfigureControllers ()
 
 			case -1: /*** Button B ***/
 			case 8:
-				SavePrefs(GCSettings.SaveMethod, SILENT);
 				/*** Return ***/
 				quit = 1;
 				break;
@@ -1023,7 +950,7 @@ ConfigureControllers ()
 static int prefmenuCount = 5;
 static char prefmenu[][50] = {
 	"Controllers",
-	"Video / Sound",
+	"Video",
 	"Saving / Loading",
 	"Reset Preferences",
 	"Back to Main Menu"
@@ -1061,6 +988,7 @@ PreferencesMenu ()
 
 			case -1: /*** Button B ***/
 			case 4:
+				SavePrefs(GCSettings.SaveMethod, SILENT);
 				quit = 1;
 				break;
 
@@ -1090,14 +1018,17 @@ MainMenu (int selectedMenu)
 	int ret;
 
 	// disable game-specific menu items if a ROM isn't loaded
-	if ( ARAM_ROMSIZE == 0 )
+	if (SNESROMSize == 0)
     	menuitems[2][0] = '\0';
 	else
 		sprintf (menuitems[2], "Game Menu");
 
-	#ifndef HW_DOL
+	#ifdef HW_RVL
 	// don't show dvd motor off on the wii
-	menuitems[4][0] = '\0';
+	menuitems[4][0] = 0;
+	// rename reset/exit items
+	sprintf (menuitems[5], "Return to Wii Menu");
+	sprintf (menuitems[6], "Return to Homebrew Channel");
 	#endif
 
 	VIDEO_WaitVSync ();
@@ -1150,8 +1081,7 @@ MainMenu (int selectedMenu)
                 break;
 
 			case 6:
-				// Exit to Loader
-				returnToLoader();
+				ExitToLoader();
 				break;
 
 			case -1: // Button B
@@ -1161,12 +1091,16 @@ MainMenu (int selectedMenu)
 		}
 	}
 
-	/*** Remove any still held buttons ***/
-	#ifdef HW_RVL
-		while( PAD_ButtonsHeld(0) || WPAD_ButtonsHeld(0) )
-		    VIDEO_WaitVSync();
-	#else
-		while( PAD_ButtonsHeld(0) )
-		    VIDEO_WaitVSync();
-	#endif
+	// Wait for buttons to be released
+	int count = 0; // how long we've been waiting for the user to release the button
+	while(count < 50 && (
+		PAD_ButtonsHeld(0)
+		#ifdef HW_RVL
+		|| WPAD_ButtonsHeld(0)
+		#endif
+	))
+	{
+		VIDEO_WaitVSync();
+		count++;
+	}
 }

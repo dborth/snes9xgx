@@ -196,8 +196,6 @@ struct ClipData {
 
 struct InternalPPU {
     bool8  ColorsChanged;
-    uint8  HDMA;
-    uint8  HDMAEnded;
     uint8  MaxBrightness;
     bool8  LatchedBlanking;
     bool8  OBJChanged;
@@ -344,6 +342,9 @@ struct SPPU {
     uint16 GunVLatch;
     uint16 GunHLatch;
     short  VTimerPosition;
+
+    uint8  HDMA;
+    uint8  HDMAEnded;
 };
 
 #define CLIP_OR 0
@@ -407,7 +408,8 @@ void S9xSetC4 (uint8 Byte, uint16 Address);
 uint8 S9xGetC4 (uint16 Address);
 void S9xSetC4RAM (uint8 Byte, uint16 Address);
 uint8 S9xGetC4RAM (uint16 Address);
-uint8 *S9xGetBasePointerC4 (uint16 Address);
+uint8 * S9xGetBasePointerC4 (uint16);
+uint8 * S9xGetMemPointerC4 (uint16);
 
 void S9xUpdateHVTimerPosition (void);
 void S9xCheckMissingHTimerPosition (int32);

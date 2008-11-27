@@ -1403,7 +1403,7 @@ static inline bool8 HDMAReadLineCount(int d){
         DMA[d].Repeat = FALSE;
         DMA[d].LineCount = 128;
         if(DMA[d].HDMAIndirectAddressing){
-            if(IPPU.HDMA&(0xfe<<d)){
+            if(PPU.HDMA&(0xfe<<d)){
                 DMA[d].Address++;
                 CPU.Cycles+=SLOW_ONE_CYCLE*2;
             } else {
@@ -1439,26 +1439,26 @@ static inline bool8 HDMAReadLineCount(int d){
 
 void S9xStartHDMA () {
     if (Settings.DisableHDMA)
-        IPPU.HDMA = 0;
+        PPU.HDMA = 0;
     else
-        missing.hdma_this_frame = IPPU.HDMA = Memory.FillRAM [0x420c];
+        missing.hdma_this_frame = PPU.HDMA = Memory.FillRAM [0x420c];
 
-	IPPU.HDMAEnded = 0;
+	PPU.HDMAEnded = 0;
 
     CPU.InHDMA = TRUE;
 	CPU.InDMAorHDMA = TRUE;
 
     // XXX: Not quite right...
-    if (IPPU.HDMA != 0) CPU.Cycles += Timings.DMACPUSync;
+    if (PPU.HDMA != 0) CPU.Cycles += Timings.DMACPUSync;
 
     for (uint8 i = 0; i < 8; i++)
     {
-        if (IPPU.HDMA & (1 << i))
+        if (PPU.HDMA & (1 << i))
         {
             DMA [i].Address = DMA[i].AAddress;
             if (!HDMAReadLineCount(i)) {
-                IPPU.HDMA &= ~(1<<i);
-				IPPU.HDMAEnded |= (1<<i);
+                PPU.HDMA &= ~(1<<i);
+				PPU.HDMAEnded |= (1<<i);
             }
         } else {
 			DMA[i].DoTransfer = FALSE;
@@ -1469,7 +1469,7 @@ void S9xStartHDMA () {
 
     CPU.InHDMA = FALSE;
 	CPU.InDMAorHDMA = CPU.InDMA;
-	CPU.HDMARanInDMA = CPU.InDMA ? IPPU.HDMA : 0;
+	CPU.HDMARanInDMA = CPU.InDMA ? PPU.HDMA : 0;
 }
 
 #ifdef DEBUGGER
@@ -1734,7 +1734,7 @@ uint8 S9xDoHDMA (uint8 byte)
             if (!--p->LineCount) {
                 if (!HDMAReadLineCount(d)) {
                     byte &= ~mask;
-                    IPPU.HDMAEnded |= mask;
+                    PPU.HDMAEnded |= mask;
                     p->DoTransfer = FALSE;
                     continue;
                 }

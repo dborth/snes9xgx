@@ -38,22 +38,23 @@ extern "C" {
 #include "fileop.h"
 #include "memcardop.h"
 #include "input.h"
+#include "unzip.h"
 
 int offset;
 int selection;
 char currentdir[MAXPATHLEN];
+char szpath[MAXPATHLEN];
 int maxfiles;
 extern int screenheight;
-extern unsigned long ARAM_ROMSIZE;
+unsigned long SNESROMSize = 0;
 
 int havedir = -1;
 extern u64 dvddir;
 extern int dvddirlength;
 
-int hasloaded = 0;
-
 // Global file entry table
 FILEENTRIES filelist[MAXFILES];
+bool inSz = false;
 
 unsigned char *savebuffer = NULL;
 
@@ -144,12 +145,11 @@ int UpdateDirName(int method)
 	char * test;
 	char temp[1024];
 
-	// update DVD directory (does not utilize 'currentdir')
+	// update DVD directory
 	if(method == METHOD_DVD)
 	{
 		dvddir = filelist[selection].offset;
 		dvddirlength = filelist[selection].length;
-		return 1;
 	}
 
 	/* current directory doesn't change */
@@ -187,10 +187,133 @@ int UpdateDirName(int method)
 		}
 		else
 		{
-			WaitPrompt((char*)"Directory name is too long !");
+			WaitPrompt((char*)"Directory name is too long!");
 			return -1;
 		}
 	}
+}
+
+bool MakeFilePath(char filepath[], int type, int method)
+{
+	char file[512];
+	char folder[1024];
+	char temppath[MAXPATHLEN];
+
+	if(type == FILE_ROM)
+	{
+		// Check path length
+		if ((strlen(currentdir)+1+strlen(filelist[selection].filename)) >= MAXPATHLEN)
+		{
+			WaitPrompt((char*)"Maximum filepath length reached!");
+			filepath[0] = 0;
+			return false;
+		}
+		else
+		{
+			sprintf(temppath, "%s/%s",currentdir,filelist[selection].filename);
+		}
+	}
+	else
+	{
+		switch(type)
+		{
+			case FILE_SRAM:
+				sprintf(folder, GCSettings.SaveFolder);
+				sprintf(file, "%s.srm", Memory.ROMFilename);
+				break;
+			case FILE_SNAPSHOT:
+				sprintf(folder, GCSettings.SaveFolder);
+				sprintf(file, "%s.frz", Memory.ROMFilename);
+				break;
+			case FILE_CHEAT:
+				sprintf(folder, GCSettings.CheatFolder);
+				sprintf(file, "%s.cht", Memory.ROMFilename);
+				break;
+			case FILE_PREF:
+				sprintf(folder, appPath);
+				sprintf(file, "%s", PREF_FILE_NAME);
+				break;
+		}
+		switch(method)
+		{
+			case METHOD_SD:
+			case METHOD_USB:
+				sprintf (temppath, "%s/%s/%s", ROOTFATDIR, folder, file);
+				break;
+			case METHOD_DVD:
+			case METHOD_SMB:
+				sprintf (temppath, "%s/%s", folder, file);
+				break;
+			case METHOD_MC_SLOTA:
+			case METHOD_MC_SLOTB:
+				sprintf (temppath, "%s", file);
+				temppath[31] = 0; // truncate filename
+				break;
+		}
+	}
+	strcpy(filepath, temppath);
+	return true;
+}
+
+int LoadFile(char * buffer, char filepath[], int length, int method, bool silent)
+{
+	int offset = 0;
+
+	switch(method)
+	{
+		case METHOD_SD:
+		case METHOD_USB:
+			if(ChangeFATInterface(method, NOTSILENT))
+				offset = LoadFATFile (buffer, filepath, length, silent);
+			break;
+		case METHOD_SMB:
+			offset = LoadSMBFile (buffer, filepath, length, silent);
+			break;
+		case METHOD_DVD:
+			offset = LoadDVDFile (buffer, filepath, length, silent);
+			break;
+		case METHOD_MC_SLOTA:
+			offset = LoadMCFile (buffer, CARD_SLOTA, filepath, silent);
+			break;
+		case METHOD_MC_SLOTB:
+			offset = LoadMCFile (buffer, CARD_SLOTB, filepath, silent);
+			break;
+	}
+	return offset;
+}
+
+int LoadFile(char filepath[], int method, bool silent)
+{
+	return LoadFile((char *)savebuffer, filepath, 0, method, silent);
+}
+
+int SaveFile(char * buffer, char filepath[], int datasize, int method, bool silent)
+{
+	int offset = 0;
+
+	switch(method)
+	{
+		case METHOD_SD:
+		case METHOD_USB:
+			if(ChangeFATInterface(method, NOTSILENT))
+				offset = SaveFATFile (buffer, filepath, datasize, silent);
+			break;
+		case METHOD_SMB:
+			offset = SaveSMBFile (buffer, filepath, datasize, silent);
+			break;
+		case METHOD_MC_SLOTA:
+			offset = SaveMCFile (buffer, CARD_SLOTA, filepath, datasize, silent);
+			break;
+		case METHOD_MC_SLOTB:
+			offset = SaveMCFile (buffer, CARD_SLOTB, filepath, datasize, silent);
+			break;
+	}
+	return offset;
+}
+
+int SaveFile(char filepath[], int datasize, int method, bool silent)
+{
+	return SaveFile((char *)savebuffer, filepath, datasize, method, silent);
 }
 
 /****************************************************************************
@@ -218,6 +341,79 @@ int FileSortCallback(const void *f1, const void *f2)
 	if(!(((FILEENTRIES *)f1)->flags) && ((FILEENTRIES *)f2)->flags) return 1;
 
 	return stricmp(((FILEENTRIES *)f1)->filename, ((FILEENTRIES *)f2)->filename);
+}
+
+/****************************************************************************
+ * IsValidROM
+ *
+ * Checks if the specified file is a valid ROM
+ * For now we will just check the file extension and file size
+ * If the file is a zip, we will check the file extension / file size of the
+ * first file inside
+ ***************************************************************************/
+
+bool IsValidROM(int method)
+{
+	// file size should be between 96K and 8MB
+	if(filelist[selection].length < (1024*96) ||
+		filelist[selection].length > (1024*1024*8))
+	{
+		WaitPrompt((char *)"Invalid file size!");
+		return false;
+	}
+
+	if (strlen(filelist[selection].filename) > 4)
+	{
+		char * p = strrchr(filelist[selection].filename, '.');
+
+		if (p != NULL)
+		{
+			if(stricmp(p, ".zip") == 0 && !inSz)
+			{
+				// we need to check the file extension of the first file in the archive
+				char * zippedFilename = GetFirstZipFilename (method);
+
+				if(zippedFilename == NULL) // we don't want to run strlen on NULL
+					p = NULL;
+				else if(strlen(zippedFilename) > 4)
+					p = strrchr(zippedFilename, '.');
+				else
+					p = NULL;
+			}
+
+			if(p != NULL)
+			{
+				if (stricmp(p, ".smc") == 0 ||
+					stricmp(p, ".fig") == 0 ||
+					stricmp(p, ".sfc") == 0 ||
+					stricmp(p, ".swc") == 0)
+				{
+					return true;
+				}
+			}
+		}
+	}
+	WaitPrompt((char *)"Unknown file type!");
+	return false;
+}
+
+/****************************************************************************
+ * IsSz
+ *
+ * Checks if the specified file is a 7z
+ ***************************************************************************/
+
+bool IsSz()
+{
+	if (strlen(filelist[selection].filename) > 4)
+	{
+		char * p = strrchr(filelist[selection].filename, '.');
+
+		if (p != NULL)
+			if(stricmp(p, ".7z") == 0)
+				return true;
+	}
+	return false;
 }
 
 /****************************************************************************
@@ -275,8 +471,8 @@ int FileSelector (int method)
         p = PAD_ButtonsDown (0);
 		ph = PAD_ButtonsHeld (0);
 #ifdef HW_RVL
-		wm_ay = WPAD_StickY (0, 0);
-		wm_sx = WPAD_StickX (0, 1);
+		wm_ay = WPAD_Stick (0, 0, 1);
+		wm_sx = WPAD_Stick (0, 1, 0);
 
 		wp = WPAD_ButtonsDown (0);
 		wh = WPAD_ButtonsHeld (0);
@@ -294,7 +490,25 @@ int FileSelector (int method)
 			if (filelist[selection].flags) // This is directory
 			{
 				/* update current directory and set new entry list if directory has changed */
-				int status = UpdateDirName(method);
+				int status;
+
+				if(inSz && selection == 0) // inside a 7z, requesting to leave
+				{
+					if(method == METHOD_DVD)
+					{
+						// go to directory the 7z was in
+						dvddir = filelist[0].offset;
+						dvddirlength = filelist[0].length;
+					}
+					inSz = false;
+					status = 1;
+					SzClose();
+				}
+				else
+				{
+					status = UpdateDirName(method);
+				}
+
 				if (status == 1) // ok, open directory
 				{
 					switch (method)
@@ -309,58 +523,88 @@ int FileSelector (int method)
 						break;
 
 						case METHOD_SMB:
-						maxfiles = ParseSMBdirectory();
+						maxfiles = ParseSMBdirectory(NOTSILENT);
 						break;
 					}
 
 					if (!maxfiles)
 					{
-						WaitPrompt ((char*) "Error reading directory !");
+						WaitPrompt ((char*) "Error reading directory!");
 						haverom = 1; // quit menu
 					}
 				}
 				else if (status == -1)	// directory name too long
 				{
-					haverom = 1; // quit menu
+					return 0; // quit menu
 				}
 			}
 			else	// this is a file
 			{
-				// store the filename (w/o ext) - used for sram/freeze naming
-				StripExt(Memory.ROMFilename, filelist[selection].filename);
+				// better do another unmount/remount, just in case
+				if(method == METHOD_SD || method == METHOD_USB)
+					if(!ChangeFATInterface(method, NOTSILENT))
+						return 0;
 
-				ShowAction ((char *)"Loading...");
-
-				switch (method)
+				// 7z file - let's open it up to select a file inside
+				if(IsSz())
 				{
-					case METHOD_SD:
-					case METHOD_USB:
-					ARAM_ROMSIZE = LoadFATFile ();
-					break;
+					// we'll store the 7z filepath for extraction later
+					if(!MakeFilePath(szpath, FILE_ROM, method))
+						return 0;
 
-					case METHOD_DVD:
-					dvddir = filelist[selection].offset;
-					dvddirlength = filelist[selection].length;
-					ARAM_ROMSIZE = LoadDVDFile ();
-					break;
-
-					case METHOD_SMB:
-					ARAM_ROMSIZE =
-					LoadSMBFile ();
-					break;
-				}
-
-				if (ARAM_ROMSIZE > 0)
-				{
-					hasloaded = 1; // indicator for memmap.cpp
-					Memory.LoadROM ("BLANK.SMC");
-					Memory.LoadSRAM ("BLANK");
-					haverom = 1;
-					return 1;
+					int szfiles = SzParse(szpath, method);
+					if(szfiles)
+					{
+						maxfiles = szfiles;
+						inSz = true;
+					}
+					else
+						WaitPrompt((char*) "Error opening archive!");
 				}
 				else
 				{
-					WaitPrompt((char*) "Error loading ROM!");
+					// check that this is a valid ROM
+					if(!IsValidROM(method))
+						return 0;
+
+					// store the filename (w/o ext) - used for sram/freeze naming
+					StripExt(Memory.ROMFilename, filelist[selection].filename);
+
+					ShowAction ((char *)"Loading...");
+
+					SNESROMSize = 0;
+
+					if(!inSz)
+					{
+						char filepath[1024];
+
+						if(!MakeFilePath(filepath, FILE_ROM, method))
+							return 0;
+
+						SNESROMSize = LoadFile ((char *)Memory.ROM, filepath, filelist[selection].length, method, NOTSILENT);
+					}
+					else
+					{
+						switch (method)
+						{
+							case METHOD_SD:
+							case METHOD_USB:
+								SNESROMSize = LoadFATSzFile(szpath, (unsigned char *)Memory.ROM);
+								break;
+							case METHOD_DVD:
+								SNESROMSize = SzExtractFile(filelist[selection].offset, (unsigned char *)Memory.ROM);
+								break;
+							case METHOD_SMB:
+								SNESROMSize = LoadSMBSzFile(szpath,  (unsigned char *)Memory.ROM);
+								break;
+						}
+					}
+					inSz = false;
+
+					if (SNESROMSize > 0)
+						return 1;
+					else
+						WaitPrompt((char*) "Error loading ROM!");
 				}
 			}
 			redraw = 1;
@@ -381,7 +625,9 @@ int FileSelector (int method)
 			else if ( strcmp(filelist[1].filename,"..") == 0 )
 			{
                 selection = selectit = 1;
-			} else {
+			}
+			else
+			{
                 return 0;
 			}
         }	// End of B
@@ -498,6 +744,7 @@ OpenDVD (int method)
 		}
 	}
 
+	currentdir[0] = 0;
 	maxfiles = ParseDVDdirectory(); // load root folder
 
 	// switch to rom folder
@@ -526,10 +773,10 @@ OpenSMB (int method)
 	// Connect to network share
 	if(ConnectShare (NOTSILENT))
 	{
-		// change current dir to root dir
+		// change current dir to load dir
 		sprintf(currentdir, "/%s", GCSettings.LoadFolder);
 
-		maxfiles = ParseSMBdirectory ();
+		maxfiles = ParseSMBdirectory (SILENT);
 		if (maxfiles > 0)
 		{
 			return FileSelector (method);

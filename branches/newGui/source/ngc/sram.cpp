@@ -22,9 +22,6 @@
 #include "snes9xGX.h"
 #include "images/saveicon.h"
 #include "menudraw.h"
-#include "memcardop.h"
-#include "fileop.h"
-#include "smbop.h"
 #include "filesel.h"
 
 extern int padcal;
@@ -144,53 +141,32 @@ decodesavedata (int method, int readsize)
 int
 LoadSRAM (int method, bool silent)
 {
-	ShowAction ((char*) "Loading...");
+	char filepath[1024];
+	int offset = 0;
 
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(); // we use 'Save' because SRAM needs R/W
 
-	char filepath[1024];
-	int offset = 0;
+	if(!MakeFilePath(filepath, FILE_SRAM, method))
+		return 0;
+
+	ShowAction ((char*) "Loading...");
 
 	AllocSaveBuffer();
 
-	if(method == METHOD_SD || method == METHOD_USB)
-	{
-		if(ChangeFATInterface(method, NOTSILENT))
-		{
-			sprintf (filepath, "%s/%s/%s.srm", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-			offset = LoadBufferFromFAT (filepath, silent);
-		}
-	}
-	else if(method == METHOD_SMB)
-	{
-		sprintf (filepath, "%s/%s.srm", GCSettings.SaveFolder, Memory.ROMFilename);
-		offset = LoadBufferFromSMB (filepath, silent);
-	}
-	else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
-	{
-		sprintf (filepath, "%s.srm", Memory.ROMName);
-
-		if(method == METHOD_MC_SLOTA)
-			offset = LoadBufferFromMC (savebuffer, CARD_SLOTA, filepath, silent);
-		else
-			offset = LoadBufferFromMC (savebuffer, CARD_SLOTB, filepath, silent);
-	}
+	offset = LoadFile(filepath, method, silent);
 
 	if (offset > 0)
 	{
 		decodesavedata (method, offset);
 		S9xSoftReset();
-	}
-
-	FreeSaveBuffer ();
-
-	if(offset > 0)
-	{
+		FreeSaveBuffer ();
 		return 1;
 	}
 	else
 	{
+		FreeSaveBuffer ();
+
 		// if we reached here, nothing was done!
 		if(!silent)
 			WaitPrompt ((char*) "SRAM file not found");
@@ -205,44 +181,26 @@ LoadSRAM (int method, bool silent)
 bool
 SaveSRAM (int method, bool silent)
 {
-	ShowAction ((char*) "Saving...");
-
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod();
-
 	bool retval = false;
 	char filepath[1024];
 	int datasize;
 	int offset = 0;
 
+	if(method == METHOD_AUTO)
+		method = autoSaveMethod();
+
+	if(!MakeFilePath(filepath, FILE_SRAM, method))
+		return false;
+
+	ShowAction ((char*) "Saving...");
+
 	AllocSaveBuffer ();
 
 	datasize = preparesavedata (method);
 
-	if ( datasize )
+	if (datasize)
 	{
-		if(method == METHOD_SD || method == METHOD_USB)
-		{
-			if(ChangeFATInterface(method, NOTSILENT))
-			{
-				sprintf (filepath, "%s/%s/%s.srm", ROOTFATDIR, GCSettings.SaveFolder, Memory.ROMFilename);
-				offset = SaveBufferToFAT (filepath, datasize, silent);
-			}
-		}
-		else if(method == METHOD_SMB)
-		{
-			sprintf (filepath, "%s/%s.srm", GCSettings.SaveFolder, Memory.ROMFilename);
-			offset = SaveBufferToSMB (filepath, datasize, silent);
-		}
-		else if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
-		{
-			sprintf (filepath, "%s.srm", Memory.ROMName);
-
-			if(method == METHOD_MC_SLOTA)
-				offset = SaveBufferToMC (savebuffer, CARD_SLOTA, filepath, datasize, silent);
-			else
-				offset = SaveBufferToMC (savebuffer, CARD_SLOTB, filepath, datasize, silent);
-		}
+		offset = SaveFile(filepath, datasize, method, silent);
 
 		if (offset > 0)
 		{

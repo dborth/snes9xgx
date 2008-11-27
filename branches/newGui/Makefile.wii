@@ -1,4 +1,4 @@
-VERSION := 005
+VERSION := 006
 
 #---------------------------------------------------------------------------------
 # Clear the implicit built in rules
@@ -20,22 +20,23 @@ include $(DEVKITPPC)/wii_rules
 TARGET		:=	snes9xgx-$(VERSION)-wii
 TARGETDIR   :=  executables
 BUILD		:=	build_wii
-SOURCES		:=	source/snes9x source/ngc
+SOURCES		:=	source/snes9x source/ngc source/sz
 DATA		:=	data  
-INCLUDES	:=	source/snes9x source/ngc 
+INCLUDES	:=	source/snes9x source/ngc
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	=	-g -O2 -Wall $(MACHDEP) $(INCLUDE) \
-			-DNGC \
+CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
+			-DNGC -DWII_DVD \
 			-DNO_ASM -DRIGHTSHIFT_IS_SAR \
 			-DCPU_SHUTDOWN -DSPC700_SHUTDOWN \
 			-DSPC700_C -DSDD1_DECOMP \
 			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
+			-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
 			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter \
-			#-D_DEBUG_VIDEO -pipe -DWII_DVD
+			#-D_DEBUG_VIDEO -pipe
 CXXFLAGS	=	-save-temps -Xassembler -aln=$@.lst $(CFLAGS)
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
@@ -43,7 +44,7 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-ldi -lpng -lmxml -lfat -lwiiuse -lz -lbte -logc -lm -lfreetype -ltinysmb
+LIBS	:=	-ldi -lpngu -lpng -lmxml -lfat -lwiiuse -lz -lbte -logc -lm -lfreetype -ltinysmb
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

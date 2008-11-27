@@ -25,8 +25,6 @@
 
 extern int currconfig[4];
 
-#define PREFS_FILE_NAME "SNES9xGX.xml"
-
 char prefscomment[2][32];
 
 /****************************************************************************
@@ -45,6 +43,11 @@ char temp[20];
 const char * toStr(int i)
 {
 	sprintf(temp, "%d", i);
+	return temp;
+}
+const char * FtoStr(float i)
+{
+	sprintf(temp, "%.2f", i);
 	return temp;
 }
 
@@ -152,11 +155,8 @@ preparePrefsData (int method)
 
 	createXMLSection("Emulation", "Emulation Settings");
 
-	createXMLSetting("ReverseStereo", "Reverse Stereo", toStr(Settings.ReverseStereo));
-	createXMLSetting("InterpolatedSound", "Interpolated Sound", toStr(Settings.InterpolatedSound));
-	createXMLSetting("Transparency", "Transparency", toStr(Settings.Transparency));
-	createXMLSetting("DisplayFrameRate", "Display Frame Rate", toStr(Settings.DisplayFrameRate));
-	createXMLSetting("NGCZoom", "C-Stick Zoom", toStr(GCSettings.NGCZoom));
+	createXMLSetting("Zoom", "Zoom On/Off", toStr(GCSettings.Zoom));
+	createXMLSetting("ZoomLevel", "Zoom Level", FtoStr(GCSettings.ZoomLevel));
 	createXMLSetting("render", "Video Filtering", toStr(GCSettings.render));
 	createXMLSetting("widescreen", "Aspect Ratio Correction", toStr(GCSettings.widescreen));
 	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
@@ -199,6 +199,12 @@ void loadXMLSetting(int * var, const char * name)
 	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
 	if(item)
 		*var = atoi(mxmlElementGetAttr(item, "value"));
+}
+void loadXMLSetting(float * var, const char * name)
+{
+	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
+	if(item)
+		*var = atof(mxmlElementGetAttr(item, "value"));
 }
 void loadXMLSetting(bool8 * var, const char * name)
 {
@@ -278,11 +284,8 @@ decodePrefsData (int method)
 
 	// Emulation Settings
 
-	loadXMLSetting(&Settings.ReverseStereo, "ReverseStereo");
-	loadXMLSetting(&Settings.InterpolatedSound, "InterpolatedSound");
-	loadXMLSetting(&Settings.Transparency, "Transparency");
-	loadXMLSetting(&Settings.DisplayFrameRate, "DisplayFrameRate");
-	loadXMLSetting(&GCSettings.NGCZoom, "NGCZoom");
+	loadXMLSetting(&GCSettings.Zoom, "Zoom");
+	loadXMLSetting(&GCSettings.ZoomLevel, "ZoomLevel");
 	loadXMLSetting(&GCSettings.render, "render");
 	loadXMLSetting(&GCSettings.widescreen, "widescreen");
 	loadXMLSetting(&GCSettings.xshift, "xshift");
@@ -311,40 +314,25 @@ decodePrefsData (int method)
 bool
 SavePrefs (int method, bool silent)
 {
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod();
-
 	char filepath[1024];
 	int datasize;
 	int offset = 0;
 
-	AllocSaveBuffer ();
-	datasize = preparePrefsData (method);
+	// there's no point in saving SMB settings TO SMB, because then we'll have no way to load them the next time!
+	// so instead we'll save using whatever other method is available (eg: SD)
+	if(method == METHOD_AUTO || method == METHOD_SMB)
+		method = autoSaveMethod();
+
+	if(!MakeFilePath(filepath, FILE_PREF, method))
+		return false;
 
 	if (!silent)
 		ShowAction ((char*) "Saving preferences...");
 
-	if(method == METHOD_SD || method == METHOD_USB)
-	{
-		if(ChangeFATInterface(method, NOTSILENT))
-		{
-			sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
-			offset = SaveBufferToFAT (filepath, datasize, silent);
-		}
-	}
-	else if(method == METHOD_SMB)
-	{
-		sprintf (filepath, "%s/%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
-		offset = SaveBufferToSMB (filepath, datasize, silent);
-	}
-	else if(method == METHOD_MC_SLOTA)
-	{
-		offset = SaveBufferToMC (savebuffer, CARD_SLOTA, (char *)PREFS_FILE_NAME, datasize, silent);
-	}
-	else if(method == METHOD_MC_SLOTB)
-	{
-		offset = SaveBufferToMC (savebuffer, CARD_SLOTB, (char *)PREFS_FILE_NAME, datasize, silent);
-	}
+	AllocSaveBuffer ();
+	datasize = preparePrefsData (method);
+
+	offset = SaveFile(filepath, datasize, method, silent);
 
 	FreeSaveBuffer ();
 
@@ -367,29 +355,12 @@ LoadPrefsFromMethod (int method)
 	char filepath[1024];
 	int offset = 0;
 
+	if(!MakeFilePath(filepath, FILE_PREF, method))
+		return false;
+
 	AllocSaveBuffer ();
 
-	if(method == METHOD_SD || method == METHOD_USB)
-	{
-		if(ChangeFATInterface(method, NOTSILENT))
-		{
-			sprintf (filepath, "%s/%s/%s", ROOTFATDIR, GCSettings.SaveFolder, PREFS_FILE_NAME);
-			offset = LoadBufferFromFAT (filepath, SILENT);
-		}
-	}
-	else if(method == METHOD_SMB)
-	{
-		sprintf (filepath, "%s/%s", GCSettings.SaveFolder, PREFS_FILE_NAME);
-		offset = LoadBufferFromSMB (filepath, SILENT);
-	}
-	else if(method == METHOD_MC_SLOTA)
-	{
-		offset = LoadBufferFromMC (savebuffer, CARD_SLOTA, (char *)PREFS_FILE_NAME, SILENT);
-	}
-	else if(method == METHOD_MC_SLOTB)
-	{
-		offset = LoadBufferFromMC (savebuffer, CARD_SLOTB, (char *)PREFS_FILE_NAME, SILENT);
-	}
+	offset = LoadFile(filepath, method, SILENT);
 
 	if (offset > 0)
 		retval = decodePrefsData (method);

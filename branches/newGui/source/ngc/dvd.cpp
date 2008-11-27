@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <malloc.h>
 
 #ifdef WII_DVD
 extern "C" {
@@ -28,9 +29,10 @@ extern "C" {
 #include "snes9xGX.h"
 #include "unzip.h"
 
-u64 dvddir = 0;
-u64 dvdrootdir = 0;
-int dvddirlength = 0;
+u64 dvddir = 0; // offset of currently selected file or folder
+int dvddirlength = 0; // length of currently selected file or folder
+u64 dvdrootdir = 0; // offset of DVD root
+int dvdrootlength = 0; // length of DVD root
 bool isWii = false;
 
 #ifdef HW_DOL
@@ -38,61 +40,188 @@ bool isWii = false;
 volatile unsigned long *dvd = (volatile unsigned long *) 0xCC006000;
 #endif
 
- /** Due to lack of memory, we'll use this little 2k keyhole for all DVD operations **/
-unsigned char DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);
-unsigned char dvdbuffer[2048];
-
-
 /****************************************************************************
  * dvd_read
  *
- * The only DVD function we need - you gotta luv gc-linux self-boots!
+ * Main DVD function, everything else uses this!
  * returns: 1 - ok ; 0 - error
  ***************************************************************************/
+#define ALIGN_FORWARD(x,align) 	((typeof(x))((((uint32_t)(x)) + (align) - 1) & (~(align-1))))
+#define ALIGN_BACKWARD(x,align)	((typeof(x))(((uint32_t)(x)) & (~(align-1))))
+
 int
 dvd_read (void *dst, unsigned int len, u64 offset)
 {
-
-	unsigned char *buffer = (unsigned char *) (unsigned int) DVDreadbuffer;
-
 	if (len > 2048)
 		return 0;				/*** We only allow 2k reads **/
 
-	DCInvalidateRange ((void *) buffer, len);
-
 	// don't read past the end of the DVD (1.5 GB for GC DVD, 4.7 GB for DVD)
-	if(offset < 0x57057C00 || (isWii && offset < 0x118244F00LL))
+	if((offset < 0x57057C00) || (isWii && (offset < 0x118244F00LL)))
 	{
+		u8 * buffer = (u8 *)memalign(32, 0x8000);
+		u32 off_size = 0;
 
-	#ifdef HW_DOL
+		DCInvalidateRange ((void *) buffer, len);
 
-		dvd[0] = 0x2E;
-		dvd[1] = 0;
-		dvd[2] = 0xA8000000;
-		dvd[3] = (u32)(offset >> 2);
-		dvd[4] = len;
-		dvd[5] = (u32) buffer;
-		dvd[6] = len;
-		dvd[7] = 3;			/*** Enable reading with DMA ***/
-		while (dvd[7] & 1);
-		memcpy (dst, buffer, len);
+		#ifdef HW_DOL
+			dvd[0] = 0x2E;
+			dvd[1] = 0;
+			dvd[2] = 0xA8000000;
+			dvd[3] = (u32)(offset >> 2);
+			dvd[4] = len;
+			dvd[5] = (u32) buffer;
+			dvd[6] = len;
+			dvd[7] = 3;
 
-		if (dvd[0] & 0x4)		/* Ensure it has completed */
-			return 0;
+			// Enable reading with DMA
+			while (dvd[7] & 1);
 
+			// Ensure it has completed
+			if (dvd[0] & 0x4)
+				return 0;
+		#else
+			off_size = offset - ALIGN_BACKWARD(offset,0x800);
+			if (DI_ReadDVD(
+				buffer,
+				(ALIGN_FORWARD(offset + len,0x800) - ALIGN_BACKWARD(offset,0x800)) >> 11,
+				(u32)(ALIGN_BACKWARD(offset, 0x800) >> 11)
+			))
+				return 0;
+		#endif
+
+		memcpy (dst, buffer+off_size, len);
+		free(buffer);
 		return 1;
-
-	#elif WII_DVD
-		int ret = 1;
-		ret = DI_ReadDVD(dst, len >> 11, (u32)(offset >> 11));
-		if (ret==0)
-			return 1;
-		else
-			return 0;
-	#endif
 	}
 
 	return 0;
+}
+
+/****************************************************************************
+ * dvd_buffered_read
+ *
+ * the GC's dvd drive only supports offsets and length which are a multiple
+ * of 32 bytes additionally the max length of a read is 2048 bytes
+ * this function removes these limitations
+ * additionally the 7zip SDK does often read data in 1 byte parts from the
+ * DVD even when it could read 32 bytes. the dvdsf_buffer has been added to
+ * avoid having to read the same sector over and over again
+ ***************************************************************************/
+
+#define DVD_LENGTH_MULTIPLY 32
+#define DVD_OFFSET_MULTIPLY 32
+#define DVD_MAX_READ_LENGTH 2048
+#define DVD_SECTOR_SIZE 2048
+
+unsigned char dvdsf_buffer[DVD_SECTOR_SIZE];
+u64 dvdsf_last_offset = 0;
+u64 dvdsf_last_length = 0;
+
+int dvd_buffered_read(void *dst, u32 len, u64 offset)
+{
+    int ret = 0;
+
+    // only read data if the data inside dvdsf_buffer cannot be used
+    if(offset != dvdsf_last_offset || len > dvdsf_last_length)
+    {
+        memset(&dvdsf_buffer, '\0', DVD_SECTOR_SIZE);
+        ret = dvd_read(&dvdsf_buffer, len, offset);
+        dvdsf_last_offset = offset;
+        dvdsf_last_length = len;
+    }
+
+    memcpy(dst, &dvdsf_buffer, len);
+    return ret;
+}
+
+int dvd_safe_read(void *dst_v, u32 len, u64 offset)
+{
+    unsigned char buffer[DVD_SECTOR_SIZE]; // buffer for one dvd sector
+
+    // if read size and length are a multiply of DVD_(OFFSET,LENGTH)_MULTIPLY and length < DVD_MAX_READ_LENGTH
+    // we don't need to fix anything
+    if(len % DVD_LENGTH_MULTIPLY == 0 && offset % DVD_OFFSET_MULTIPLY == 0 && len <= DVD_MAX_READ_LENGTH)
+    {
+        int ret = dvd_buffered_read(buffer, len, offset);
+        memcpy(dst_v, &buffer, len);
+        return ret;
+    }
+    else
+    {
+        // no errors yet -> ret = 0
+        // the return value of dvd_read will be OR'd with ret
+        // because dvd_read does return 1 on error and 0 on success and
+        // because 0 | 1 = 1 ret will also contain 1 if at least one error
+        // occured and 0 otherwise ;)
+        int ret = 0; // return value of dvd_read
+
+        // we might need to fix all 3 issues
+        unsigned char *dst = (unsigned char *)dst_v; // gcc will not allow to use var[num] on void* types
+        u64 bytesToRead; // the number of bytes we still need to read & copy to the output buffer
+        u64 currentOffset; // the current dvd offset
+        u64 bufferOffset; // the current buffer offset
+        u64 i, j, k; // temporary variables which might be used for different stuff
+        //	unsigned char buffer[DVD_SECTOR_SIZE]; // buffer for one dvd sector
+
+        currentOffset = offset;
+        bytesToRead = len;
+        bufferOffset = 0;
+
+        // fix first issue (offset is not a multiply of 32)
+        if(offset % DVD_OFFSET_MULTIPLY)
+        {
+            // calculate offset of the prior 32 byte position
+            i = currentOffset - (currentOffset % DVD_OFFSET_MULTIPLY);
+
+            // calculate the offset from which the data of the dvd buffer will be copied
+            j = currentOffset % DVD_OFFSET_MULTIPLY;
+
+            // calculate the number of bytes needed to reach the next DVD_OFFSET_MULTIPLY byte mark
+            k = DVD_OFFSET_MULTIPLY - j;
+
+            // maybe we'll only need to copy a few bytes and we therefore don't even reach the next sector
+            if(k > len)
+            {
+                k = len;
+            }
+
+            // read 32 bytes from the last 32 byte position
+            ret |= dvd_buffered_read(buffer, DVD_OFFSET_MULTIPLY, i);
+
+            // copy the bytes to the output buffer and update currentOffset, bufferOffset and bytesToRead
+            memcpy(&dst[bufferOffset], &buffer[j], k);
+            currentOffset += k;
+            bufferOffset += k;
+            bytesToRead -= k;
+        }
+
+        // fix second issue (more than 2048 bytes are needed)
+        if(bytesToRead > DVD_MAX_READ_LENGTH)
+        {
+            // calculate the number of 2048 bytes sector needed to get all data
+            i = (bytesToRead - (bytesToRead % DVD_MAX_READ_LENGTH)) / DVD_MAX_READ_LENGTH;
+
+            // read data in 2048 byte sector
+            for(j = 0; j < i; j++)
+            {
+                ret |= dvd_buffered_read(buffer, DVD_MAX_READ_LENGTH, currentOffset); // read sector
+                memcpy(&dst[bufferOffset], buffer, DVD_MAX_READ_LENGTH); // copy to output buffer
+
+                // update currentOffset, bufferOffset and bytesToRead
+                currentOffset += DVD_MAX_READ_LENGTH;
+                bufferOffset += DVD_MAX_READ_LENGTH;
+                bytesToRead -= DVD_MAX_READ_LENGTH;
+            }
+        }
+
+        // fix third issue (length is not a multiply of 32)
+        if(bytesToRead)
+        {
+            ret |= dvd_buffered_read(buffer, DVD_MAX_READ_LENGTH, currentOffset); // read 32 byte from the dvd
+            memcpy(&dst[bufferOffset], buffer, bytesToRead); // copy bytes to output buffer
+        }
+        return ret;
+    }
 }
 
 /** Minimal ISO Directory Definition **/
@@ -118,6 +247,7 @@ getpvd ()
 {
 	int sector = 16;
 	u32 rootdir32;
+	unsigned char dvdbuffer[2048];
 
 	dvddir = dvddirlength = 0;
 	IsJoliet = -1;
@@ -132,8 +262,9 @@ getpvd ()
 				memcpy(&rootdir32, &dvdbuffer[PVDROOT + EXTENT], 4);
 				dvddir = (u64)rootdir32;
 				dvddir <<= 11;
-				dvdrootdir = dvddir;
 				memcpy (&dvddirlength, &dvdbuffer[PVDROOT + FILE_LENGTH], 4);
+				dvdrootdir = dvddir;
+				dvdrootlength = dvddirlength;
 				IsJoliet = 1;
 				break;
 			}
@@ -158,8 +289,9 @@ getpvd ()
 				memcpy (&rootdir32, &dvdbuffer[PVDROOT + EXTENT], 4);
 				dvddir = (u64)rootdir32;
 				dvddir <<= 11;
-				dvdrootdir = dvddir;
 				memcpy (&dvddirlength, &dvdbuffer[PVDROOT + FILE_LENGTH], 4);
+				dvdrootdir = dvddir;
+				dvdrootlength = dvddirlength;
 				IsJoliet = 0;
 				break;
 			}
@@ -178,7 +310,6 @@ getpvd ()
  ***************************************************************************/
 bool TestDVD()
 {
-
 	if (!getpvd())
 	{
 		#ifdef HW_DOL
@@ -202,9 +333,10 @@ bool TestDVD()
  ***************************************************************************/
 static int diroffset = 0;
 static int
-getentry (int entrycount)
+getentry (int entrycount, unsigned char dvdbuffer[])
 {
 	char fname[512];		/* Huge, but experience has determined this */
+	char tmpname[512];
 	char *ptr;
 	char *filename;
 	char *filenamelength;
@@ -284,8 +416,9 @@ getentry (int entrycount)
 				*rr = 0;
 
 			strcpy (filelist[entrycount].filename, fname);
-			fname[MAXDISPLAY - 1] = 0;
-			strcpy (filelist[entrycount].displayname, fname);
+			StripExt(tmpname, fname); // hide file extension
+			tmpname[MAXDISPLAY - 1] = 0;
+			strcpy (filelist[entrycount].displayname, tmpname);
 
 			memcpy (&offset32, &dvdbuffer[diroffset + EXTENT], 4);
 
@@ -322,6 +455,7 @@ ParseDVDdirectory ()
 	u64 rdoffset;
 	int len = 0;
 	int filecount = 0;
+	unsigned char dvdbuffer[2048];
 
 	// initialize selection
 	selection = offset = 0;
@@ -341,7 +475,7 @@ ParseDVDdirectory ()
 
 		diroffset = 0;
 
-		while (getentry (filecount))
+		while (getentry (filecount, dvdbuffer))
 		{
 			if(strlen(filelist[filecount].filename) > 0 && filecount < MAXFILES)
 				filecount++;
@@ -400,7 +534,10 @@ bool SwitchDVDFolder(char * dir, int maxDepth)
 	{
 		dvddir = filelist[dirindex].offset;
 		dvddirlength = filelist[dirindex].length;
-		maxfiles = ParseDVDdirectory();
+		selection = dirindex;
+
+		if(filelist[dirindex].flags) // only parse directories
+			maxfiles = ParseDVDdirectory();
 
 		if(lastdir)
 			return true;
@@ -425,58 +562,86 @@ bool SwitchDVDFolder(char origdir[])
 	if(dir[strlen(dir)-1] == '/')
 		dir[strlen(dir)-1] = 0;
 
+	// start searching at root of DVD
+	dvddir = dvdrootdir;
+	dvddirlength = dvdrootlength;
+	ParseDVDdirectory();
+
 	return SwitchDVDFolder(dirptr, 0);
 }
 
 /****************************************************************************
  * LoadDVDFile
- * This function will load a file from DVD, in BIN, SMD or ZIP format.
+ * This function will load a file from DVD
  * The values for offset and length are inherited from dvddir and
  * dvddirlength.
  *
- * The buffer parameter should re-use the initial ROM buffer.
+ * The buffer parameter should re-use the initial ROM buffer
  ***************************************************************************/
 
 int
-LoadDVDFile ()
+LoadDVDFileOffset (unsigned char *buffer, int length)
 {
 	int offset;
 	int blocks;
 	int i;
 	u64 discoffset;
 	char readbuffer[2048];
-	unsigned char *rbuffer = (unsigned char *) Memory.ROM;
 
 	// How many 2k blocks to read
 	blocks = dvddirlength / 2048;
 	offset = 0;
 	discoffset = dvddir;
 	ShowAction ((char*) "Loading...");
-	dvd_read (readbuffer, 2048, discoffset);
 
-	if (!IsZipFile (readbuffer))
+	if(length > 0 && length <= 2048)
 	{
-		for (i = 0; i < blocks; i++)
-		{
-			dvd_read (readbuffer, 2048, discoffset);
-			memcpy (rbuffer + offset, readbuffer, 2048);
-			offset += 2048;
-			discoffset += 2048;
-		}
+		dvd_read (buffer, length, discoffset);
+	}
+	else // load whole file
+	{
+		dvd_read (readbuffer, 2048, discoffset);
 
-		/*** And final cleanup ***/
-		if (dvddirlength % 2048)
+		if (IsZipFile (readbuffer))
 		{
-			i = dvddirlength % 2048;
-			dvd_read (readbuffer, 2048, discoffset);
-			memcpy (rbuffer + offset, readbuffer, i);
+			return UnZipBuffer (buffer, METHOD_DVD); // unzip from dvd
 		}
+		else
+		{
+			for (i = 0; i < blocks; i++)
+			{
+				dvd_read (readbuffer, 2048, discoffset);
+				memcpy (buffer + offset, readbuffer, 2048);
+				offset += 2048;
+				discoffset += 2048;
+				ShowProgress ((char *)"Loading...", offset, length);
+			}
+
+			/*** And final cleanup ***/
+			if (dvddirlength % 2048)
+			{
+				i = dvddirlength % 2048;
+				dvd_read (readbuffer, 2048, discoffset);
+				memcpy (buffer + offset, readbuffer, i);
+			}
+		}
+	}
+	return dvddirlength;
+}
+
+int
+LoadDVDFile(char * buffer, char *filepath, int datasize, bool silent)
+{
+	if(SwitchDVDFolder(filepath))
+	{
+		return LoadDVDFileOffset ((unsigned char *)buffer, datasize);
 	}
 	else
 	{
-		return UnZipFile (rbuffer, discoffset);	// unzip from dvd
+		if(!silent)
+			WaitPrompt((char *)"Error loading file!");
+		return 0;
 	}
-	return dvddirlength;
 }
 
 /****************************************************************************

@@ -14,14 +14,18 @@
 
 #define _NGCSMB_
 
+#include <smb.h>
+
 bool InitializeNetwork(bool silent);
 bool ConnectShare (bool silent);
 char * SMBPath(char * path);
 int UpdateSMBdirname();
-int ParseSMBdirectory ();
-int LoadSMBFile ();
-int LoadBufferFromSMB (char *filepath, bool silent);
-int LoadBufferFromSMB (char * sbuffer, char *filepath, bool silent);
-int SaveBufferToSMB (char *filepath, int datasize, bool silent);
+int ParseSMBdirectory (bool silent);
+SMBFILE OpenSMBFile(char * filepath);
+int LoadSMBSzFile(char * filepath, unsigned char * rbuffer);
+int LoadSMBFile (char * sbuffer, char *filepath, int length, bool silent);
+int SaveSMBFile (char * sbuffer, char *filepath, int length, bool silent);
+
+extern SMBFILE smbfile;
 
 #endif

@@ -308,13 +308,18 @@ EXTERN_C void C4LoaDMem(char *C4RAM)
 }
 #endif
 
-uint8 *S9xGetBasePointerC4 (uint16 Address)
+uint8 * S9xGetBasePointerC4 (uint16 Address)
 {
-    if((Address&~MEMMAP_MASK)>=(0x7f40&~MEMMAP_MASK) &&
-       (Address&~MEMMAP_MASK)<=(0x7f5e&~MEMMAP_MASK)){
-        return NULL;
-    }
-    return Memory.C4RAM-0x6000;
+	if (Address >= 0x7f40 && Address <= 0x7f5e)
+		return (NULL);
+	return (Memory.C4RAM - 0x6000);
+}
+
+uint8 * S9xGetMemPointerC4 (uint16 Address)
+{
+	if (Address >= 0x7f40 && Address <= 0x7f5e)
+		return (NULL);
+	return (Memory.C4RAM - 0x6000 + (Address & 0xffff));
 }
 
 }//end extern C
