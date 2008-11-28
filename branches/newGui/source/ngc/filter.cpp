@@ -17,6 +17,7 @@
 #include <ogcsys.h>
 #include <unistd.h>
 #include <malloc.h>
+#include <system.h>
 
 #include "filter.h"
 #include "video.h"
@@ -129,7 +130,8 @@ SelectFilterMethod ()
 		//#else
 		// right size?
 		int fscale = GetFilterScale((RenderFilter)GCSettings.FilterMethod);
-		filtermem = memalign(32, 256*256*2*fscale);	// 256x240 x 2bytes/pixel x scale factor
+		//filtermem = memalign(32, 256*256*2*fscale);	// 256x240 x 2bytes/pixel x scale factor
+		filtermem = (u8 *) SYS_AllocArena2MemLo(256*256*2*fscale, 32);
 		memset (filtermem, 0, 256*256*2*fscale);	// set it to zero
 		//#endif
 	}

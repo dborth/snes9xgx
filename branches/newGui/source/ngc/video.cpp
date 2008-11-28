@@ -338,7 +338,7 @@ draw_init ()
 
 	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
 	GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
-
+	
 	memset (&view, 0, sizeof (Mtx));
 	guLookAt(view, &cam.pos, &cam.up, &cam.view);
 	GX_LoadPosMtxImm (view, GX_PNMTX0);
@@ -654,6 +654,8 @@ ResetVideo_Menu ()
 
 	guOrtho(p, vmode->efbHeight/2, -(vmode->efbHeight/2), -(vmode->fbWidth/2), vmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
+	
+	gui_alphasetup ();
 }
 
 /****************************************************************************
@@ -780,6 +782,14 @@ update_video (int width, int height)
 		oldvheight = vheight;
 		CheckVideo = 0;
 	}
+	
+	/*
+	char msg[50];
+	sprintf (msg, "Free MEM1: %d bytes\nFree MEM2: %d bytes\n",
+				(u32)SYS_GetArena1Hi() - (u32)SYS_GetArena1Lo(),
+				(u32)SYS_GetArena2Hi() - (u32)SYS_GetArena2Lo());
+	WaitPrompt(msg);
+	*/
 	
 	MakeTexture ((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);	// convert image to texture
 
