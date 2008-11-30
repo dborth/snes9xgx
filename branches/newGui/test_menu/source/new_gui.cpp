@@ -3,6 +3,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <ogcsys.h>
+#include <unistd.h>
 #include <gccore.h>
 #include <wiiuse/wpad.h>
 #include <fat.h>
@@ -19,50 +20,141 @@ FT_Face face;
 FT_GlyphSlot slot;
 FT_UInt glyph_index;
 
+extern unsigned int *xfb[2];
+extern int whichfb;
+extern GXRModeObj * vmode;
+extern unsigned int copynow;
+//extern struct camera;
+typedef struct tagcamera
+{
+	Vector pos;
+	Vector up;
+	Vector view;
+} camera;
+extern camera cam;
+
+extern s16 square[];
+
+extern lwp_t vbthread;
+
 extern char fontface[];		/*** From fontface.s ***/
 extern int fontsize;		/*** From fontface.s ***/
 
-/****************************************************************************
- * Initialisation of libfreetype
- ***************************************************************************/
-int
-FT_Init ()
+GXTexObj texObj1;
+GXTexObj texObj2;
+GXTexObj texObj3;
+GXTexObj texObj4;
+GXTexObj texObj5;
+GXTexObj texObj6;
+void *texture_data1 = NULL;
+void *texture_data2 = NULL;
+void *texture_data3 = NULL;
+void *texture_data4 = NULL;
+void *texture_data5 = NULL;
+void *texture_data6 = NULL;
+PNGUPROP imgProp;
+
+static void
+draw_vert (u8 pos, u8 c, f32 s, f32 t)
 {
-
-  int err;
-
-  err = FT_Init_FreeType (&ftlibrary);
-  if (err)
-    return 1;
-
-  err =
-    FT_New_Memory_Face (ftlibrary, (FT_Byte *) fontface, fontsize, 0, &face);
-  if (err)
-    return 1;
-
-  setfontsize (16);
-  //setfontcolour (0xff, 0xff, 0xff);
-
-  slot = face->glyph;
-
-  return 0;
-
+	GX_Position1x8 (pos);
+	GX_Color1x8 (c);
+	GX_TexCoord2f32 (s, t);
 }
 
-/****************************************************************************
- * setfontsize
- *
- * Set the screen font size in pixels
- ***************************************************************************/
-void
-setfontsize (int pixelsize)
+static void
+draw_square (Mtx v)
 {
-  int err;
+	Mtx m;			// model matrix.
+	Mtx mv;			// modelview matrix.
 
-  err = FT_Set_Pixel_Sizes (face, 0, pixelsize);
+	guMtxIdentity (m);
+	guMtxTransApply (m, m, 0, 0, -100);
+	guMtxConcat (v, m, mv);
 
-  if (err)
-    printf ("Error setting pixel sizes!");
+	GX_LoadPosMtxImm (mv, GX_PNMTX0);
+	GX_Begin (GX_QUADS, GX_VTXFMT0, 4);
+	draw_vert (0, 0, 0.0, 0.0);
+	draw_vert (1, 0, 1.0, 0.0);
+	draw_vert (2, 0, 1.0, 1.0);
+	draw_vert (3, 0, 0.0, 1.0);
+	GX_End ();
+}
+
+void
+gui_clearscreen ()
+{
+		whichfb ^= 1;
+		VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], COLOR_BLACK);	// necessary?
+		memset ( Gui.texmem, 0, 640*480*4 );
+}
+
+void
+gui_alloc ()
+{
+	// alloc gui draw memory
+	Gui.texmem = (u8 *) SYS_AllocArena2MemLo(640 * 480 * 4, 32);
+	memset ( Gui.texmem, 0, 640*480*4 );
+}
+
+void
+gui_showscreen ()
+{
+	Mtx v;
+	
+	// Ensure previous vb has completed
+	while ((LWP_ThreadIsSuspended (vbthread) == 0) || (copynow == GX_TRUE))
+	{
+		usleep (50);
+	}
+	
+	//whichfb ^= 1;
+	
+	// REUSE texOBJ6 and texture_data6
+	GX_InitTexObj (&texObj6, texture_data6, 640, 480, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+
+	// convert to texture
+	Make_Texture_RGBA8 (texture_data6, Gui.texmem, 640, 480);
+	
+	// update texture memory
+	DCFlushRange (texture_data6, 640 * 480 * 4);
+	
+	//------------------------------------//
+	
+	// DRAW
+	guLookAt(v, &cam.pos, &cam.up, &cam.view);	// need!
+	GX_SetViewport(0,0,vmode->fbWidth,vmode->efbHeight,0,1);	// need!
+	GX_InvVtxCache();
+	GX_InvalidateTexAll();
+	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);	// pxl = Asrc * SrcPixel + (1 - Asrc) * DstPixel
+	GX_SetTevOp(GX_TEVSTAGE0, GX_REPLACE);	// pass only texture info
+	GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+	GX_SetNumChans(0);
+	
+	square[2] = square[5] = square[8] = square[11] = 0;     // z value
+	DCFlushRange (square, 32);
+
+	GX_LoadTexObj(&texObj2, GX_TEXMAP0);	// backdrop
+	draw_square(v);
+	
+	square[2] = square[5] = square[8] = square[11] = 1;     // z value
+	DCFlushRange (square, 32);
+	
+	GX_LoadTexObj(&texObj6, GX_TEXMAP0);	// menu
+	draw_square(v);
+	
+	GX_DrawDone();
+
+	
+	//---------------------------//
+	//copynow = GX_TRUE;	// draw to screen and erase efb
+	VIDEO_SetNextFramebuffer (xfb[whichfb]);
+	VIDEO_Flush ();
+	copynow = GX_TRUE;
+	#ifdef VIDEO_THREADING
+	// Return to caller, don't waste time waiting for vb
+	LWP_ResumeThread (vbthread);
+	#endif
 }
 
 void
@@ -70,16 +162,93 @@ gui_draw ()
 {
 		gui_drawbox (0, 0, 640, 80, 255, 255, 255, 128);        // topbar
 		gui_drawbox (0, 370, 640, 480, 255, 255, 255, 128);     // bottombar
-		gui_setfontcolour (0,255,0,255);
+		//gui_setfontcolour (0,255,0,255);
 		// top bar text
-		setfontsize (32);       // 32/24 depending on whether selected or not
-		gui_DrawText (-1, 35, (char *)"Menu");
+		//setfontsize (32);       // 32/24 depending on whether selected or not
+		//gui_DrawText (-1, 35, (char *)"Menu");
 		// main text
-		setfontsize (24);      
-		gui_DrawText (75, 113, (char *)"Hello World");
+		//setfontsize (24);      
+		//gui_DrawText (75, 113, (char *)"Hello World");
 		// bottom bar text
-		setfontsize (24);      
-		gui_DrawText (75, 400, (char *)"Description");
+		//setfontsize (24);      
+		//gui_DrawText (75, 400, (char *)"Description");
+}
+
+void
+gui_makebg ()
+{
+	Mtx v;
+	IMGCTX ctx;
+
+	// Load textures using PNGU
+	
+	// RGB 565
+	ctx = PNGU_SelectImageFromDevice ("smw_bg.png");
+	PNGU_GetImageProperties (ctx, &imgProp);
+	texture_data1 = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 2);
+	GX_InitTexObj (&texObj1, texture_data1, imgProp.imgWidth, imgProp.imgHeight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	PNGU_DecodeTo4x4RGB565 (ctx, imgProp.imgWidth, imgProp.imgHeight, texture_data1);
+	PNGU_ReleaseImageContext (ctx);
+	DCFlushRange (texture_data1, imgProp.imgWidth * imgProp.imgHeight * 2);
+	
+	// RGBA8
+	ctx = PNGU_SelectImageFromDevice ("bg.png");
+	PNGU_GetImageProperties (ctx, &imgProp);
+	texture_data6 = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 4);
+	GX_InitTexObj (&texObj6, texture_data6, imgProp.imgWidth, imgProp.imgHeight, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, texture_data6, 255);
+	PNGU_ReleaseImageContext (ctx);
+	DCFlushRange (texture_data6, imgProp.imgWidth * imgProp.imgHeight * 4);
+
+	// DRAW
+	guLookAt(v, &cam.pos, &cam.up, &cam.view);	// need!
+	GX_SetViewport(0,0,vmode->fbWidth,vmode->efbHeight,0,1);	// need!
+	GX_InvVtxCache();
+	GX_InvalidateTexAll();
+	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);	// pxl = Asrc * SrcPixel + (1 - Asrc) * DstPixel
+	GX_SetTevOp(GX_TEVSTAGE0, GX_REPLACE);	// pass only texture info
+	GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+	GX_SetNumChans(0);
+	
+	//draw_init ();
+	
+	// draw 640x480 quads
+	int xscale, yscale, xshift, yshift;
+	xshift = yshift = 0;
+	xscale = 320;
+	yscale = 240;
+	square[6] = square[3]  =  xscale + xshift;
+	square[0] = square[9]  = -xscale + xshift;
+	square[4] = square[1]  =  yscale + yshift;
+	square[7] = square[10] = -yscale + yshift;
+	
+	square[2] = square[5] = square[8] = square[11] = 0;     // z value
+	DCFlushRange (square, 32);
+
+	GX_LoadTexObj(&texObj1, GX_TEXMAP0);	// snes bg
+	draw_square(v);
+	
+	square[2] = square[5] = square[8] = square[11] = 1;     // z value
+	DCFlushRange (square, 32);
+	
+	GX_LoadTexObj(&texObj6, GX_TEXMAP0);	// menu overlay
+	draw_square(v);
+
+	GX_DrawDone();
+	
+	//-----------------------------------//
+	
+	// want to copy blended image to texture for later use
+	
+	// load blended image from efb to a texture
+	texture_data2 = memalign (32, vmode->fbWidth * vmode->efbHeight * 4);
+	GX_InitTexObj (&texObj2, texture_data2, vmode->fbWidth, vmode->efbHeight, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	// copy efb to texture
+	GX_SetTexCopySrc ( 0, 0, vmode->fbWidth, vmode->efbHeight );
+	GX_SetTexCopyDst ( vmode->fbWidth, vmode->efbHeight, GX_TF_RGBA8, 0 );
+	GX_CopyTex (texture_data2, 0);
+	GX_PixModeSync ();      // wait until copy has completed
+	DCFlushRange (texture_data2, vmode->fbWidth * vmode->efbHeight * 4);
 }
 
 /****************************************************************************
@@ -166,6 +335,49 @@ gui_drawbox (int x1, int y1, int width, int height, int r, int g, int b, int a)
 			memory[(j*640) + i] = colour;
 		}
 	}
+}
+
+/****************************************************************************
+ * Initialisation of libfreetype
+ ***************************************************************************/
+int
+FT_Init ()
+{
+
+  int err;
+
+  err = FT_Init_FreeType (&ftlibrary);
+  if (err)
+    return 1;
+
+  err =
+    FT_New_Memory_Face (ftlibrary, (FT_Byte *) fontface, fontsize, 0, &face);
+  if (err)
+    return 1;
+
+  setfontsize (16);
+  //setfontcolour (0xff, 0xff, 0xff);
+
+  slot = face->glyph;
+
+  return 0;
+
+}
+
+/****************************************************************************
+ * setfontsize
+ *
+ * Set the screen font size in pixels
+ ***************************************************************************/
+void
+setfontsize (int pixelsize)
+{
+  int err;
+
+  err = FT_Set_Pixel_Sizes (face, 0, pixelsize);
+
+  if (err)
+    printf ("Error setting pixel sizes!");
 }
 
 /****************************************************************************

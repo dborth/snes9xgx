@@ -54,7 +54,7 @@ s16 square[] ATTRIBUTE_ALIGN (32) =
 };
 
 
-static camera cam = {
+camera cam = {
 	{0.0F, 0.0F, 0.0F},
 	{0.0F, 0.5F, 0.0F},
 	{0.0F, 0.0F, -0.5F}
@@ -161,33 +161,6 @@ draw_init ()
 
 	GX_InvVtxCache ();	// update vertex cache
 	//GX_InvalidateTexAll();
-}
-
-static void
-draw_vert (u8 pos, u8 c, f32 s, f32 t)
-{
-	GX_Position1x8 (pos);
-	GX_Color1x8 (c);
-	GX_TexCoord2f32 (s, t);
-}
-
-static void
-draw_square (Mtx v)
-{
-	Mtx m;			// model matrix.
-	Mtx mv;			// modelview matrix.
-
-	guMtxIdentity (m);
-	guMtxTransApply (m, m, 0, 0, -100);
-	guMtxConcat (v, m, mv);
-
-	GX_LoadPosMtxImm (mv, GX_PNMTX0);
-	GX_Begin (GX_QUADS, GX_VTXFMT0, 4);
-	draw_vert (0, 0, 0.0, 0.0);
-	draw_vert (1, 0, 1.0, 0.0);
-	draw_vert (2, 0, 1.0, 1.0);
-	draw_vert (3, 0, 0.0, 1.0);
-	GX_End ();
 }
 
 /****************************************************************************
@@ -304,25 +277,9 @@ InitGCVideo ()
     // Finally, the video is up and ready for use :)
 }
 
-GXTexObj texObj1;
-GXTexObj texObj2;
-GXTexObj texObj3;
-GXTexObj texObj4;
-GXTexObj texObj5;
-GXTexObj texObj6;
-void *texture_data1 = NULL;
-void *texture_data2 = NULL;
-void *texture_data3 = NULL;
-void *texture_data4 = NULL;
-void *texture_data5 = NULL;
-void *texture_data6 = NULL;
-PNGUPROP imgProp;
-
 
 int main() 
 {
-	Mtx v;
-	IMGCTX ctx;
 
 	InitGCVideo ();
 	
@@ -333,175 +290,13 @@ int main()
 	
 	FT_Init ();
 
-	// Load textures using PNGU
+	// allocate gui_memory
+	gui_alloc ();
 	
-	// RGB 565
-	ctx = PNGU_SelectImageFromDevice ("smw_bg.png");
-	PNGU_GetImageProperties (ctx, &imgProp);
-	texture_data1 = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 2);
-	GX_InitTexObj (&texObj1, texture_data1, imgProp.imgWidth, imgProp.imgHeight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-	PNGU_DecodeTo4x4RGB565 (ctx, imgProp.imgWidth, imgProp.imgHeight, texture_data1);
-	PNGU_ReleaseImageContext (ctx);
-	DCFlushRange (texture_data1, imgProp.imgWidth * imgProp.imgHeight * 2);
-	
-	// RGBA8
-	ctx = PNGU_SelectImageFromDevice ("bg.png");
-	PNGU_GetImageProperties (ctx, &imgProp);
-	texture_data6 = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 4);
-	GX_InitTexObj (&texObj6, texture_data6, imgProp.imgWidth, imgProp.imgHeight, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-	PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, texture_data6, 255);
-	PNGU_ReleaseImageContext (ctx);
-	DCFlushRange (texture_data6, imgProp.imgWidth * imgProp.imgHeight * 4);
+	gui_makebg ();
 
-/*
-	ctx = PNGU_SelectImageFromDevice ("textRGB.png");
-	PNGU_GetImageProperties (ctx, &imgProp);
-	texture_data2 = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 2);
-	GX_InitTexObj (&texObj2, texture_data2, imgProp.imgWidth, imgProp.imgHeight, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
-	PNGU_DecodeTo4x4RGB565 (ctx, imgProp.imgWidth, imgProp.imgHeight, texture_data2, 255);		// 565
-	PNGU_ReleaseImageContext (ctx);
-	DCFlushRange (texture_data2, imgProp.imgWidth * imgProp.imgHeight * 2);
+	gui_RunMenu();
 
-	ctx = PNGU_SelectImageFromDevice ("bg.png");
-	PNGU_GetImageProperties (ctx, &imgProp);
-	texture_data3 = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 4);
-	GX_InitTexObj (&texObj3, texture_data3, imgProp.imgWidth, imgProp.imgHeight, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-	PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, texture_data3, 255);
-	PNGU_ReleaseImageContext (ctx);
-	DCFlushRange (texture_data3, imgProp.imgWidth * imgProp.imgHeight * 4);
-
-	ctx = PNGU_SelectImageFromDevice ("textRGBA.png");
-	PNGU_GetImageProperties (ctx, &imgProp);
-	texture_data4 = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 2);
-	GX_InitTexObj (&texObj4, texture_data4, imgProp.imgWidth, imgProp.imgHeight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-	PNGU_DecodeTo4x4RGB565 (ctx, imgProp.imgWidth, imgProp.imgHeight, texture_data4);
-	PNGU_ReleaseImageContext (ctx);
-	DCFlushRange (texture_data4, imgProp.imgWidth * imgProp.imgHeight * 2);
-
-	ctx = PNGU_SelectImageFromDevice ("textRGBA.png");
-	PNGU_GetImageProperties (ctx, &imgProp);
-	texture_data5 = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 2);
-	GX_InitTexObj (&texObj5, texture_data5, imgProp.imgWidth, imgProp.imgHeight, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
-	PNGU_DecodeTo4x4RGB5A3 (ctx, imgProp.imgWidth, imgProp.imgHeight, texture_data5, 255);
-	PNGU_ReleaseImageContext (ctx);
-	DCFlushRange (texture_data5, imgProp.imgWidth * imgProp.imgHeight * 2);
-
-	ctx = PNGU_SelectImageFromDevice ("textRGBA.png");
-	PNGU_GetImageProperties (ctx, &imgProp);
-	texture_data6 = memalign (32, imgProp.imgWidth * imgProp.imgHeight * 4);
-	GX_InitTexObj (&texObj6, texture_data6, imgProp.imgWidth, imgProp.imgHeight, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-	PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, texture_data6, 255);
-	PNGU_ReleaseImageContext (ctx);
-	DCFlushRange (texture_data6, imgProp.imgWidth * imgProp.imgHeight * 4);
-*/
-
-	// DRAW
-	guLookAt(v, &cam.pos, &cam.up, &cam.view);	// need!
-	GX_SetViewport(0,0,vmode->fbWidth,vmode->efbHeight,0,1);	// need!
-	GX_InvVtxCache();
-	GX_InvalidateTexAll();
-	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);	// pxl = Asrc * SrcPixel + (1 - Asrc) * DstPixel
-	GX_SetTevOp(GX_TEVSTAGE0, GX_REPLACE);	// pass only texture info
-	GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-	GX_SetNumChans(0);
-	
-	//draw_init ();
-	
-	// draw 640x480 quads
-	int xscale, yscale, xshift, yshift;
-	xshift = yshift = 0;
-	xscale = 320;
-	yscale = 240;
-	square[6] = square[3]  =  xscale + xshift;
-	square[0] = square[9]  = -xscale + xshift;
-	square[4] = square[1]  =  yscale + yshift;
-	square[7] = square[10] = -yscale + yshift;
-	
-	square[2] = square[5] = square[8] = square[11] = 0;     // z value
-	DCFlushRange (square, 32);
-
-	GX_LoadTexObj(&texObj1, GX_TEXMAP0);	// snes bg
-	draw_square(v);
-	
-	square[2] = square[5] = square[8] = square[11] = 1;     // z value
-	DCFlushRange (square, 32);
-	
-	GX_LoadTexObj(&texObj6, GX_TEXMAP0);	// menu overlay
-	draw_square(v);
-/*
-	GX_LoadTexObj(&texObj3, GX_TEXMAP0);
-	draw_square(v);
-	GX_LoadTexObj(&texObj4, GX_TEXMAP0);
-	draw_square(v);
-	GX_LoadTexObj(&texObj5, GX_TEXMAP0);
-	draw_square(v);
-	GX_LoadTexObj(&texObj6, GX_TEXMAP0);
-	draw_square(v);
-*/
-	GX_DrawDone();
-	
-	//-----------------------------------//
-	
-	// want to copy blended image to texture for later use
-	
-	// load blended image from efb to a texture
-	texture_data2 = memalign (32, vmode->fbWidth * vmode->efbHeight * 4);
-	GX_InitTexObj (&texObj2, texture_data2, vmode->fbWidth, vmode->efbHeight, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-	// copy efb to texture
-	GX_SetTexCopySrc ( 0, 0, vmode->fbWidth, vmode->efbHeight );
-	GX_SetTexCopyDst ( vmode->fbWidth, vmode->efbHeight, GX_TF_RGBA8, 0 );
-	GX_CopyTex (texture_data2, 0);
-	GX_PixModeSync ();      // wait until copy has completed
-	DCFlushRange (texture_data2, vmode->fbWidth * vmode->efbHeight * 4);
-
-	//-------------------------------------//
-	
-	// alloc gui draw memory
-	Gui.texmem = (u8 *) SYS_AllocArena2MemLo(640 * 480 * 4, 32);
-	memset ( Gui.texmem, 0, 640*480*4 );
-	
-	// draw something on it
-	gui_draw ();
-	
-	// REUSE texOBJ6 and texture_data6
-	GX_InitTexObj (&texObj6, texture_data6, 640, 480, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-
-	// convert to texture
-	Make_Texture_RGBA8 (texture_data6, Gui.texmem, 640, 480);
-	
-	// update texture memory
-	DCFlushRange (texture_data6, 640 * 480 * 4);
-	
-	//------------------------------------//
-	
-	// DRAW
-	guLookAt(v, &cam.pos, &cam.up, &cam.view);	// need!
-	GX_SetViewport(0,0,vmode->fbWidth,vmode->efbHeight,0,1);	// need!
-	GX_InvVtxCache();
-	GX_InvalidateTexAll();
-	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);	// pxl = Asrc * SrcPixel + (1 - Asrc) * DstPixel
-	GX_SetTevOp(GX_TEVSTAGE0, GX_REPLACE);	// pass only texture info
-	GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-	GX_SetNumChans(0);
-	
-	square[2] = square[5] = square[8] = square[11] = 0;     // z value
-	DCFlushRange (square, 32);
-
-	GX_LoadTexObj(&texObj2, GX_TEXMAP0);	// backdrop
-	draw_square(v);
-	
-	square[2] = square[5] = square[8] = square[11] = 1;     // z value
-	DCFlushRange (square, 32);
-	
-	GX_LoadTexObj(&texObj6, GX_TEXMAP0);	// menu
-	draw_square(v);
-	
-	GX_DrawDone();
-
-	
-	//---------------------------//
-	copynow = GX_TRUE;	// draw to screen and erase efb
-	VIDEO_WaitVSync();
 	
 	while(1)
 	{

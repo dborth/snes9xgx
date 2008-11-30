@@ -15,8 +15,17 @@
 
 #include "new_gui.h"
 
-// prototypes
+// HEADER STUFF
+#define PI 				3.14159265f
+#define PADCAL			50
+#define		STICK_LEFT		0
+#define		STICK_RIGHT		1
+#define		STICK_X_AXIS	0
+#define		STICK_Y_AXIS	1
 s8 WPAD_Stick(u8 chan, u8 right, int axis);
+
+
+// FILE:
 
 typedef struct sItems {
 	char* name;		// item name
@@ -213,7 +222,7 @@ gui_DrawMenu()
 		for (i=0, line=0; i<numitems && line<LINES_PER_PAGE ;i++, line++)
 		{
 			if (i == item)
-			{	gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 255, 255, 150);	}
+			{	gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 0, 0, 150);	}
 				
 			gui_DrawText (75, ypos + line * line_height, Menu.section[section].item[i].name);
 		}
@@ -224,7 +233,7 @@ gui_DrawMenu()
 		for (i=item-1, line=0; i<numitems && line<LINES_PER_PAGE ;i++, line++)
 		{
 			if (i == item)
-			{	gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 255, 255, 150);	}
+			{	gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 0, 0, 150);	}
 				
 			gui_DrawText (75, ypos + line * line_height, Menu.section[section].item[i].name);
 			//cout << Menu.section[section].item[i].name << endl;
@@ -236,7 +245,7 @@ gui_DrawMenu()
 		for (i=((numitems>LINES_PER_PAGE) ? numitems-LINES_PER_PAGE : 0), line=0; i<numitems ;i++, line++)
 		{
 			if (i == item)
-			{	gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 255, 255, 150);	}
+			{	gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 0, 0, 150);	}
 				
 			gui_DrawText (75, ypos + line * line_height, Menu.section[section].item[i].name);
 			//cout << Menu.section[section].item[i].name << endl;
@@ -342,6 +351,11 @@ gui_RunMenu ()
         {
             quit = -1;
             ret = -1;
+        }
+		
+		else if (wp & (WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME))
+        {
+            exit(0);
         }
     }
 
