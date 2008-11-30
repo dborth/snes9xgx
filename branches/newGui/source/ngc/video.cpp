@@ -305,6 +305,9 @@ copy_to_xfb (u32 arg)
 {
 	if (copynow == GX_TRUE)
 	{
+		GX_SetAlphaUpdate(GX_ENABLE);
+		GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+		GX_SetColorUpdate(GX_TRUE);
 		GX_CopyDisp (xfb[whichfb], GX_TRUE);
 		GX_Flush ();
 		copynow = GX_FALSE;
@@ -317,7 +320,7 @@ copy_to_xfb (u32 arg)
 /****************************************************************************
  * Scaler Support Functions
  ***************************************************************************/
-void
+static void
 draw_init ()
 {
 	GX_ClearVtxDesc ();
@@ -655,7 +658,6 @@ ResetVideo_Menu ()
 	guOrtho(p, vmode->efbHeight/2, -(vmode->efbHeight/2), -(vmode->fbWidth/2), vmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 	
-	gui_alphasetup ();
 }
 
 /****************************************************************************
