@@ -222,7 +222,10 @@ gui_DrawMenu()
 		for (i=0, line=0; i<numitems && line<LINES_PER_PAGE ;i++, line++)
 		{
 			if (i == item)
-			{	gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 0, 0, 150);	}
+			{
+				gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 0, 0, 150);
+				gui_DrawText (60, ypos + line * line_height, (char*) ">");
+			}
 				
 			gui_DrawText (75, ypos + line * line_height, Menu.section[section].item[i].name);
 		}
@@ -233,7 +236,10 @@ gui_DrawMenu()
 		for (i=item-1, line=0; i<numitems && line<LINES_PER_PAGE ;i++, line++)
 		{
 			if (i == item)
-			{	gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 0, 0, 150);	}
+			{
+				gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 0, 0, 150);
+				gui_DrawText (60, ypos + line * line_height, (char*) ">");
+			}
 				
 			gui_DrawText (75, ypos + line * line_height, Menu.section[section].item[i].name);
 			//cout << Menu.section[section].item[i].name << endl;
@@ -245,7 +251,10 @@ gui_DrawMenu()
 		for (i=((numitems>LINES_PER_PAGE) ? numitems-LINES_PER_PAGE : 0), line=0; i<numitems ;i++, line++)
 		{
 			if (i == item)
-			{	gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 0, 0, 150);	}
+			{	
+				gui_drawbox (30, line * line_height + (ypos-line_height+6), 610, line_height, 255, 0, 0, 150);
+				gui_DrawText (60, ypos + line * line_height, (char*) ">");
+			}
 				
 			gui_DrawText (75, ypos + line * line_height, Menu.section[section].item[i].name);
 			//cout << Menu.section[section].item[i].name << endl;
@@ -259,7 +268,7 @@ gui_DrawMenu()
 	gui_setfontcolour (50,50,50,255);
 	ypos = 400;
 	setfontsize (24);	
-	gui_DrawText (75, ypos,  Menu.section[section].item[item].desc);
+	gui_DrawText (75, ypos, Menu.section[section].item[item].desc);
 	
 	// voila
 	gui_showscreen ();
@@ -272,10 +281,6 @@ gui_RunMenu ()
     int redraw = 1;
     int quit = 0;
     int ret = 0;
-	
-	int* section = &(Menu.selection);
-	int* item = &(Menu.section[*section].selection);
-	//int* numitems = &(Menu.section[*section].numitems);
 
     u32 p = 0;
 	u32 wp = 0;
@@ -309,7 +314,7 @@ gui_RunMenu ()
         {
             redraw = 1;
             //menu = FindMenuItem(&items[0], maxitems, menu, -1);
-			*item = findmenuitem(-1);
+			Menu.section[Menu.selection].selection = findmenuitem(-1);
         }
 
         /*** Look for down ***/
@@ -317,34 +322,34 @@ gui_RunMenu ()
         {
             redraw = 1;
             //menu = FindMenuItem(&items[0], maxitems, menu, +1);
-			*item = findmenuitem(+1);
+			Menu.section[Menu.selection].selection = findmenuitem(+1);
         }
 		
 		/*** Look for left ***/
         else if ( (p & PAD_BUTTON_LEFT) || (wp & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT)) || (gc_ax < -PADCAL) || (wm_ax < -PADCAL) )
         {
             redraw = 1;
-			if (*section > 0)
-				*section -= 1;
+			if (Menu.selection > 0)
+				Menu.selection -= 1;
 			else
-				*section = Menu.menuitems-1;
+				Menu.selection = (Menu.menuitems)-1;
         }
 		
 		/*** Look for right ***/
         else if ( (p & PAD_BUTTON_RIGHT) || (wp & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT)) || (gc_ax > PADCAL) || (wm_ax > PADCAL) )
         {
             redraw = 1;
-			if (*section < Menu.menuitems-1)
-				*section += 1;
+			if (Menu.selection < (Menu.menuitems)-1)
+				Menu.selection += 1;
 			else
-				*section = 0;
+				Menu.selection = 0;
         }
 
         else if ((p & PAD_BUTTON_A) || (wp & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)))
         {
             quit = 1;
             //ret = menu;
-			ret = *item;
+			ret = Menu.section[Menu.selection].selection;
         }
 
         else if ((p & PAD_BUTTON_B) || (wp & (WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)))
