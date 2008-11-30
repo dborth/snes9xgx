@@ -7,7 +7,7 @@
 #include <gccore.h>
 #include <wiiuse/wpad.h>
 #include <fat.h>
-#include "libpng/pngu/pngu.h"
+#include <pngu/pngu.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H

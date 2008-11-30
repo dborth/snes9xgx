@@ -6,7 +6,7 @@
 #include <gccore.h>
 #include <wiiuse/wpad.h>
 #include <fat.h>
-#include "libpng/pngu/pngu.h"
+#include <pngu/pngu.h>
 
 #include "new_gui.h"
 

@@ -46,7 +46,7 @@ typedef struct sTopMenu {
 }sTopMenu;
 
 sItems main_items[4] = {	// Main
-				{ (char*)"Credits", (char*)"Meet all the people it took to make you this emulator" },
+				{ (char*)"Credits", (char*)"Credits" },
 				{ (char*)"DVD Motor Off", (char*)"Turns off your drive if it is spinning" },
 				{ (char*)"Reset Wii", (char*)"Back to the System Menu" },
 				{ (char*)"Return to Loader", (char*)"Go back to the Homebrew Channel, or the loader you used" }
@@ -59,48 +59,48 @@ sItems video_items[11] = {	// Video
 				{ (char*)"Video Rendering", (char*)"Original SNES video mode, Filtered video, or Unfiltered video" },
 				{ (char*)"Widescreen", (char*)"Enable fullscreen stretch or disable for 16:9 compensation" },
 
-				{ (char*)"Shift Video Up", (char*)"" },
-				{ (char*)"Shift Video Down", (char*)"" },
-				{ (char*)"Shift Video Left", (char*)"" },
-				{ (char*)"Shift Video Right", (char*)"" },
+				{ (char*)"Shift Video Up", (char*)"Move the screen up" },
+				{ (char*)"Shift Video Down", (char*)"Move the screen down" },
+				{ (char*)"Shift Video Left", (char*)"Move the screen left" },
+				{ (char*)"Shift Video Right", (char*)"Move the screen right" },
 
 				{ (char*)"Shift:       ", (char*)"" },
 				{ (char*)"Reset Video Shift", (char*)"Reset Video Shifting to zero" }
 };
 
 sItems file_items[7] = {	// File Options
-				{ (char*)"Load Method", (char*)"" },
-				{ (char*)"Load Folder", (char*)"" },
-				{ (char*)"Save Method", (char*)"" },
-				{ (char*)"Save Folder", (char*)"" },
-				{ (char*)"Auto Load", (char*)"" },
-				{ (char*)"Auto Save", (char*)"" },
-				{ (char*)"Verify MC Saves", (char*)"" },
+				{ (char*)"Load Method", (char*)"Choose a device to load files from" },
+				{ (char*)"Load Folder", (char*)"Choose a folder on the device to load from" },
+				{ (char*)"Save Method", (char*)"Choose a device to save files to" },
+				{ (char*)"Save Folder", (char*)"Choose a folder to save to" },
+				{ (char*)"Auto Load", (char*)"Automatically load savestates and sram" },
+				{ (char*)"Auto Save", (char*)"automatically save sram and savestates" },
+				{ (char*)"Verify MC Saves", (char*)"ensure saves to memory card worked" }
 };
 
 sItems game_items[9] = {	// Game
-				{ (char*)"Return to Game", (char*)"" },
-				{ (char*)"Reset Game", (char*)"" },
-				{ (char*)"ROM Information", (char*)"" },
-				{ (char*)"Cheats", (char*)"" },
-				{ (char*)"Load SRAM", (char*)"" },
-				{ (char*)"Save SRAM", (char*)"" },
-				{ (char*)"Load Game Snapshot", (char*)"" },
-				{ (char*)"Save Game Snapshot", (char*)"" },
-				{ (char*)"Reset Zoom", (char*)"" },
+				{ (char*)"Return to Game", (char*)"Return to the game" },
+				{ (char*)"Reset Game", (char*)"Reset the SNES rom" },
+				{ (char*)"ROM Information", (char*)"View Rom information" },
+				{ (char*)"Cheats", (char*)"Enable / Disable cheats" },
+				{ (char*)"Load SRAM", (char*)"Load SRAM" },
+				{ (char*)"Save SRAM", (char*)"Save SRAM" },
+				{ (char*)"Load Game Snapshot", (char*)"Load game state" },
+				{ (char*)"Save Game Snapshot", (char*)"Save game state" },
+				{ (char*)"Reset Zoom", (char*)"Reset screen zooming" }
 };
 
 sItems controller_items[8] = {	// Controller Options 
 				// toggle:
-				{ (char*)"MultiTap", (char*)"" },
-				{ (char*)"SuperScope", (char*)"" },
-				{ (char*)"Snes Mice", (char*)"" },
-				{ (char*)"Justifiers", (char*)"" },
+				{ (char*)"MultiTap", (char*)"Allows for up to 4 players" },
+				{ (char*)"SuperScope", (char*)"Enable Superscope" },
+				{ (char*)"Snes Mice", (char*)"Enable snes mouse" },
+				{ (char*)"Justifiers", (char*)"Enable konami justifiers" },
 				// config:
-				{ (char*)"Nunchuk", (char*)"" },
-				{ (char*)"Classic Controller", (char*)"" },
-				{ (char*)"Wiimote", (char*)"" },
-				{ (char*)"Gamecube Pad", (char*)"" },
+				{ (char*)"Nunchuk", (char*)"Change Nunchuk configuration" },
+				{ (char*)"Classic Controller", (char*)"Change Classic Controller configuration" },
+				{ (char*)"Wiimote", (char*)"Change Wiimote configuration" },
+				{ (char*)"Gamecube Pad", (char*)"Change Gamecube Controller configuration" }
 };
 
 
