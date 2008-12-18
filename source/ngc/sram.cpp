@@ -22,7 +22,7 @@
 #include "snes9xGX.h"
 #include "images/saveicon.h"
 #include "menudraw.h"
-#include "filesel.h"
+#include "fileop.h"
 
 extern int padcal;
 extern unsigned short gcpadmap[];
@@ -131,7 +131,7 @@ decodesavedata (int method, int readsize)
 	}
 	else
 	{
-		WaitPrompt((char*)"Incompatible SRAM save!");
+		WaitPrompt("Incompatible SRAM save!");
 	}
 }
 
@@ -150,7 +150,7 @@ LoadSRAM (int method, bool silent)
 	if(!MakeFilePath(filepath, FILE_SRAM, method))
 		return 0;
 
-	ShowAction ((char*) "Loading...");
+	ShowAction ("Loading...");
 
 	AllocSaveBuffer();
 
@@ -169,7 +169,7 @@ LoadSRAM (int method, bool silent)
 
 		// if we reached here, nothing was done!
 		if(!silent)
-			WaitPrompt ((char*) "SRAM file not found");
+			WaitPrompt ("SRAM file not found");
 
 		return 0;
 	}
@@ -192,7 +192,7 @@ SaveSRAM (int method, bool silent)
 	if(!MakeFilePath(filepath, FILE_SRAM, method))
 		return false;
 
-	ShowAction ((char*) "Saving...");
+	ShowAction ("Saving...");
 
 	AllocSaveBuffer ();
 
@@ -205,14 +205,14 @@ SaveSRAM (int method, bool silent)
 		if (offset > 0)
 		{
 			if ( !silent )
-				WaitPrompt((char *)"Save successful");
+				WaitPrompt("Save successful");
 			retval = true;
 		}
 	}
 	else
 	{
 		if(!silent)
-			WaitPrompt((char *)"No SRAM data to save!");
+			WaitPrompt("No SRAM data to save!");
 	}
 
 	FreeSaveBuffer ();

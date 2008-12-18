@@ -8,30 +8,32 @@
  *
  * fileop.h
  *
- * FAT File operations
+ * File operations
  ****************************************************************************/
 
-#ifndef _FATFILESC_
-#define _FATFILESC_
+#ifndef _FILEOP_H_
+#define _FILEOP_H_
+
 #include <gccore.h>
 #include <stdio.h>
 #include <string.h>
 #include <ogcsys.h>
 #include <fat.h>
-#include <sys/dir.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
-#define ROOTFATDIR "fat:/"
-
+void InitDeviceThread();
+void MountAllFAT();
 void UnmountAllFAT();
-bool ChangeFATInterface(int method, bool silent);
-int ParseFATdirectory(int method);
-int LoadFATSzFile(char * filepath, unsigned char * rbuffer);
-int SaveFATFile (char * sbuffer, char *filepath, int length, bool silent);
-int LoadFATFile (char * sbuffer, char *filepath, int length, bool silent);
+bool ChangeInterface(int method, bool silent);
+int ParseDirectory();
+u32 LoadFile(char * rbuffer, char *filepath, u32 length, int method, bool silent);
+u32 LoadFile(char filepath[], int method, bool silent);
+u32 LoadSzFile(char * filepath, unsigned char * rbuffer);
+u32 SaveFile(char * buffer, char *filepath, u32 datasize, int method, bool silent);
+u32 SaveFile(char filepath[], u32 datasize, int method, bool silent);
 
 extern char currFATdir[MAXPATHLEN];
-extern FILE * fatfile;
+extern FILE * file;
+extern bool unmountRequired[];
 
 #endif

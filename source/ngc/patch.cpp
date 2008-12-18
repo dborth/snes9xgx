@@ -15,7 +15,7 @@
 #include "snes9xGX.h"
 #include "menudraw.h"
 #include "memfile.h"
-#include "filesel.h"
+#include "fileop.h"
 
 static int readInt2(MFILE *f) {
 	int res = 0;
@@ -411,7 +411,7 @@ void LoadPatch(int method)
 	int patchtype;
 	char patchpath[3][512];
 
-	ShowAction((char *)"Loading patch...");
+	ShowAction("Loading patch...");
 
 	AllocSaveBuffer ();
 

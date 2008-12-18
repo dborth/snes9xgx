@@ -259,7 +259,7 @@ void CheatMenu()
 	}
 	else
 	{
-		WaitPrompt((char*)"No cheats found!");
+		WaitPrompt("No cheats found!");
 	}
 	menu = oldmenu;
 }
@@ -311,7 +311,7 @@ GameMenu ()
 		if(Cheat.num_cheats == 0)
 			gamemenu[3][0] = '\0';
 
-		ret = RunMenu (gamemenu, gamemenuCount, (char*)"Game Menu");
+		ret = RunMenu (gamemenu, gamemenuCount, "Game Menu");
 
 		switch (ret)
 		{
@@ -463,7 +463,7 @@ FileOptions ()
 		else if (GCSettings.AutoSave == 2) sprintf (filemenu[5],"Auto Save SNAPSHOT");
 		else if (GCSettings.AutoSave == 3) sprintf (filemenu[5],"Auto Save BOTH");
 
-		ret = RunMenu (filemenu, filemenuCount, (char*)"Save/Load Options");
+		ret = RunMenu (filemenu, filemenuCount, "Save/Load Options");
 
 		switch (ret)
 		{
@@ -555,7 +555,7 @@ VideoOptions ()
 
 		sprintf (videomenu[7], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
 
-		ret = RunMenu (videomenu, videomenuCount, (char*)"Video Options");
+		ret = RunMenu (videomenu, videomenuCount, "Video Options");
 
 		switch (ret)
 		{
@@ -598,7 +598,7 @@ VideoOptions ()
 			case 8:
 				// reset video shifts
 				GCSettings.xshift = GCSettings.yshift = 0;
-				WaitPrompt((char *)"Video Shift Reset");
+				WaitPrompt("Video Shift Reset");
 				break;
 
 			case -1: // Button B
@@ -687,21 +687,21 @@ GetButtonMap(u16 ctrlr_type, char* btn_name)
 
 	switch (ctrlr_type) {
 		case CTRLR_NUNCHUK:
-			strncpy (cfg_text[3], (char*)"NUNCHUK", 7);
+			strncpy (cfg_text[3], "NUNCHUK", 7);
 			break;
 		case CTRLR_CLASSIC:
-			strncpy (cfg_text[3], (char*)"CLASSIC", 7);
+			strncpy (cfg_text[3], "CLASSIC", 7);
 			break;
 		case CTRLR_GCPAD:
-			strncpy (cfg_text[3], (char*)"GC PAD", 7);
+			strncpy (cfg_text[3], "GC PAD", 7);
 			break;
 		case CTRLR_WIIMOTE:
-			strncpy (cfg_text[3], (char*)"WIIMOTE", 7);
+			strncpy (cfg_text[3], "WIIMOTE", 7);
 			break;
 	};
 
 	/*** note which button we are remapping ***/
-	sprintf (temp, (char*)"Remapping ");
+	sprintf (temp, "Remapping ");
 	for (k=0; k<9-strlen(btn_name); k++) strcat(temp, " "); // add whitespace padding to align text
 	strncat (temp, btn_name, 9);		// snes button we are remapping
 	strncpy (cfg_text[0], temp, 19);	// copy this all back to the text we wish to display
@@ -757,19 +757,19 @@ ConfigureButtons (u16 ctrlr_type)
 	/*** Update Menu Title (based on controller we're configuring) ***/
 	switch (ctrlr_type) {
 		case CTRLR_NUNCHUK:
-			menu_title = (char*)"SNES     -  NUNCHUK";
+			sprintf(menu_title, "SNES     -  NUNCHUK");
 			currentpadmap = ncpadmap;
 			break;
 		case CTRLR_CLASSIC:
-			menu_title = (char*)"SNES     -  CLASSIC";
+			sprintf(menu_title, "SNES     -  CLASSIC");
 			currentpadmap = ccpadmap;
 			break;
 		case CTRLR_GCPAD:
-			menu_title = (char*)"SNES     -   GC PAD";
+			sprintf(menu_title, "SNES     -   GC PAD");
 			currentpadmap = gcpadmap;
 			break;
 		case CTRLR_WIIMOTE:
-			menu_title = (char*)"SNES     -  WIIMOTE";
+			sprintf(menu_title, "SNES     -  WIIMOTE");
 			currentpadmap = wmpadmap;
 			break;
 	};
@@ -793,7 +793,7 @@ ConfigureButtons (u16 ctrlr_type)
 				strncat (temp, ctrlr_def[ctrlr_type].map[j].name, 6);		// update button map display
 			}
 			else
-				strcat (temp, (char*)"---");								// otherwise, button is 'unmapped'
+				strcat (temp, "---");								// otherwise, button is 'unmapped'
 			strncpy (cfg_btns_menu[i], temp, 19);	// move back updated information
 
 		}
@@ -878,7 +878,7 @@ ConfigureControllers ()
 		else sprintf (ctlrmenu[3], "Justifiers: OFF");
 
 		/*** Controller Config Menu ***/
-        ret = RunMenu (ctlrmenu, ctlrmenucount, (char*)"Configure Controllers");
+        ret = RunMenu (ctlrmenu, ctlrmenucount, "Configure Controllers");
 
 		switch (ret)
 		{
@@ -953,7 +953,7 @@ PreferencesMenu ()
 	menu = 0;
 	while (quit == 0)
 	{
-		ret = RunMenu (prefmenu, prefmenuCount, (char*)"Preferences");
+		ret = RunMenu (prefmenu, prefmenuCount, "Preferences");
 
 		switch (ret)
 		{
@@ -971,7 +971,7 @@ PreferencesMenu ()
 
 			case 3:
 				DefaultSettings ();
-				WaitPrompt((char *)"Preferences Reset");
+				WaitPrompt("Preferences Reset");
 				break;
 
 			case -1: /*** Button B ***/
@@ -1030,7 +1030,7 @@ MainMenu (int selectedMenu)
 		}
 		else
 		{
-			ret = RunMenu (menuitems, menucount, (char*)"Main Menu");
+			ret = RunMenu (menuitems, menucount, "Main Menu");
 		}
 
 		switch (ret)
