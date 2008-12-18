@@ -976,7 +976,7 @@ PreferencesMenu ()
 
 			case -1: /*** Button B ***/
 			case 4:
-				SavePrefs(GCSettings.SaveMethod, SILENT);
+				SavePrefs(SILENT);
 				quit = 1;
 				break;
 

@@ -8,5 +8,5 @@
  * Preferences save/load to XML file
  ***************************************************************************/
 
-bool SavePrefs (int method, bool silent);
+bool SavePrefs (bool silent);
 bool LoadPrefs ();

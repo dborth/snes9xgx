@@ -213,6 +213,10 @@ emulate ()
 
 		if (ConfigRequested)
 		{
+			// go back to checking if devices were inserted/removed
+			// since we're entering the menu
+			LWP_ResumeThread (devicethread);
+
 			// change to menu video mode
 			ResetVideo_Menu ();
 
@@ -252,7 +256,7 @@ emulate ()
 			MainMenu (2); // go to game menu
 
 			// save zoom level
-			SavePrefs(GCSettings.SaveMethod, SILENT);
+			SavePrefs(SILENT);
 
 			FrameTimer = 0;
 			setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
@@ -273,6 +277,10 @@ emulate ()
 
 			CheckVideo = 1;	// force video update
 			prevRenderedFrameCount = IPPU.RenderedFramesCount;
+
+			// stop checking if devices were removed/inserted
+			// since we're starting emulation again
+			LWP_SuspendThread (devicethread);
 		}//if ConfigRequested
 
 	}//while

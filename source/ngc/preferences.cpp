@@ -312,16 +312,15 @@ decodePrefsData (int method)
  * Save Preferences
  ***************************************************************************/
 bool
-SavePrefs (int method, bool silent)
+SavePrefs (bool silent)
 {
 	char filepath[1024];
 	int datasize;
 	int offset = 0;
 
-	// there's no point in saving SMB settings TO SMB, because then we'll have no way to load them the next time!
-	// so instead we'll save using whatever other method is available (eg: SD)
-	if(method == METHOD_AUTO || method == METHOD_SMB)
-		method = autoSaveMethod();
+	// We'll save using the first available method (probably SD) since this
+	// is the method preferences will be loaded from by default
+	int method = autoSaveMethod();
 
 	if(!MakeFilePath(filepath, FILE_PREF, method))
 		return false;

@@ -1,5 +1,3 @@
-VERSION := 006
-
 #---------------------------------------------------------------------------------
 # Clear the implicit built in rules
 #---------------------------------------------------------------------------------
@@ -17,7 +15,7 @@ include $(DEVKITPPC)/gamecube_rules
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	snes9xgx-$(VERSION)-gc
+TARGET		:=	snes9xgx-gc
 TARGETDIR   :=  executables
 BUILD		:=	build_gc
 SOURCES		:=	source/snes9x source/ngc source/sz

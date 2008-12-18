@@ -176,9 +176,6 @@ bool MountFAT(int method)
 
 	sprintf(rootdir, "%s:/", name);
 
-	// isInserted doesn't work properly for USB - so we will force a shutdown
-	//unmountRequired[METHOD_USB] = true;
-
 	if(unmountRequired[method])
 	{
 		unmountRequired[method] = false;
@@ -329,19 +326,27 @@ ParseDirectory()
 u32
 LoadSzFile(char * filepath, unsigned char * rbuffer)
 {
-	u32 size;
+	u32 size = 0;
+
+	// stop checking if devices were removed/inserted
+	// since we're loading a file
+	LWP_SuspendThread (devicethread);
+
 	file = fopen (filepath, "rb");
 	if (file > 0)
 	{
 		size = SzExtractFile(filelist[selection].offset, rbuffer);
 		fclose (file);
-		return size;
 	}
 	else
 	{
 		WaitPrompt("Error opening file");
-		return 0;
 	}
+
+	// go back to checking if devices were inserted/removed
+	LWP_ResumeThread (devicethread);
+
+	return size;
 }
 
 /****************************************************************************
@@ -369,6 +374,10 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 			return LoadMCFile (rbuffer, CARD_SLOTB, filepath, silent);
 			break;
 	}
+
+	// stop checking if devices were removed/inserted
+	// since we're loading a file
+	LWP_SuspendThread (devicethread);
 
 	// add device to filepath
 	char fullpath[1024];
@@ -428,6 +437,9 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 		WaitPrompt("Error loading file!");
 	}
 
+	// go back to checking if devices were inserted/removed
+	LWP_ResumeThread (devicethread);
+
 	return size;
 }
 
@@ -460,6 +472,10 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 
 	if (datasize)
     {
+		// stop checking if devices were removed/inserted
+		// since we're saving a file
+		LWP_SuspendThread (devicethread);
+
 		// add device to filepath
 		char fullpath[1024];
 		sprintf(fullpath, "%s%s", rootdir, filepath);
@@ -478,6 +494,9 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 			unmountRequired[method] = true;
 			WaitPrompt ("Error saving file!");
 		}
+
+		// go back to checking if devices were inserted/removed
+		LWP_ResumeThread (devicethread);
     }
     return written;
 }
