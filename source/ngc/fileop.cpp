@@ -50,10 +50,7 @@ bool isMounted[9] = { false, false, false, false, false, false, false, false, fa
 /****************************************************************************
  * deviceThreading
  ***************************************************************************/
-#define TSTACK 16384
-lwpq_t devicequeue;
 lwp_t devicethread;
-static unsigned char devicestack[TSTACK];
 
 /****************************************************************************
  * devicecallback
@@ -119,11 +116,7 @@ devicecallback (void *arg)
 void
 InitDeviceThread()
 {
-	/*** Initialise a new queue ***/
-	LWP_InitQueue (&devicequeue);
-
-	/*** Create the thread on this queue ***/
-	LWP_CreateThread (&devicethread, devicecallback, NULL, devicestack, TSTACK, 80);
+	LWP_CreateThread (&devicethread, devicecallback, NULL, NULL, 0, 80);
 }
 
 /****************************************************************************
