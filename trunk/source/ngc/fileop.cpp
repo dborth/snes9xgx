@@ -13,32 +13,117 @@
 
 #include <gccore.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ogcsys.h>
+#include <sys/dir.h>
+#include <sys/stat.h>
 #include <zlib.h>
-#include "memmap.h"
+#include <sdcard/wiisd_io.h>
+#include <sdcard/gcsd.h>
+#include <ogc/usbstorage.h>
 
+#include "snes9xGX.h"
 #include "fileop.h"
+#include "smbop.h"
+#include "dvd.h"
+#include "memcardop.h"
 #include "unzip.h"
 #include "video.h"
 #include "menudraw.h"
 #include "filesel.h"
-#include "sram.h"
 #include "preferences.h"
-#include "snes9xGX.h"
 
-// FAT file pointer - the only one we should ever use!
-FILE * fatfile;
+// file pointer - the only one we should ever use!
+FILE * file;
+bool unmountRequired[9] = { false, false, false, false, false, false, false, false, false };
+bool isMounted[9] = { false, false, false, false, false, false, false, false, false };
 
+#ifdef HW_RVL
+	const DISC_INTERFACE* sd = &__io_wiisd;
+	const DISC_INTERFACE* usb = &__io_usbstorage;
+#else
+	const DISC_INTERFACE* carda = &__io_gcsda;
+	const DISC_INTERFACE* cardb = &__io_gcsdb;
+#endif
 
 /****************************************************************************
- * UnmountFAT
- * Unmounts the FAT device specified
+ * deviceThreading
  ***************************************************************************/
-void UnmountFAT(PARTITION_INTERFACE part)
+#define TSTACK 16384
+lwpq_t devicequeue;
+lwp_t devicethread;
+static unsigned char devicestack[TSTACK];
+
+/****************************************************************************
+ * devicecallback
+ *
+ * This checks our devices for changes (SD/USB removed) and
+ * initializes the network in the background
+ ***************************************************************************/
+static void *
+devicecallback (void *arg)
 {
-	if(!fatUnmount(part))
-		fatUnsafeUnmount(part);
+	while (1)
+	{
+#ifdef HW_RVL
+		if(isMounted[METHOD_SD])
+		{
+			if(!sd->isInserted()) // check if the device was removed
+			{
+				unmountRequired[METHOD_SD] = true;
+				isMounted[METHOD_SD] = false;
+			}
+		}
+
+		if(isMounted[METHOD_USB])
+		{
+			if(!usb->isInserted()) // check if the device was removed - doesn't work on USB!
+			{
+				unmountRequired[METHOD_USB] = true;
+				isMounted[METHOD_USB] = false;
+			}
+		}
+
+		InitializeNetwork(SILENT);
+#else
+		if(isMounted[METHOD_SD_SLOTA])
+		{
+			if(!carda->isInserted()) // check if the device was removed
+			{
+				unmountRequired[METHOD_SD_SLOTA] = true;
+				isMounted[METHOD_SD_SLOTA] = false;
+			}
+		}
+		if(isMounted[METHOD_SD_SLOTB])
+		{
+			if(!cardb->isInserted()) // check if the device was removed
+			{
+				unmountRequired[METHOD_SD_SLOTB] = true;
+				isMounted[METHOD_SD_SLOTB] = false;
+			}
+		}
+#endif
+		usleep(500000); // suspend thread for 1/2 sec
+	}
+
+	return NULL;
+}
+
+/****************************************************************************
+ * InitDeviceThread
+ *
+ * libOGC provides a nice wrapper for LWP access.
+ * This function sets up a new local queue and attaches the thread to it.
+ ***************************************************************************/
+void
+InitDeviceThread()
+{
+	/*** Initialise a new queue ***/
+	LWP_InitQueue (&devicequeue);
+
+	/*** Create the thread on this queue ***/
+	LWP_CreateThread (&devicethread, devicecallback, NULL, devicestack, TSTACK, 80);
 }
 
 /****************************************************************************
@@ -48,11 +133,12 @@ void UnmountFAT(PARTITION_INTERFACE part)
 void UnmountAllFAT()
 {
 #ifdef HW_RVL
-	UnmountFAT(PI_INTERNAL_SD);
-	UnmountFAT(PI_USBSTORAGE);
+	fatUnmount("sd");
+	fatUnmount("usb");
+#else
+	fatUnmount("carda");
+	fatUnmount("cardb");
 #endif
-	UnmountFAT(PI_SDGECKO_A);
-	UnmountFAT(PI_SDGECKO_B);
 }
 
 /****************************************************************************
@@ -61,67 +147,128 @@ void UnmountAllFAT()
  * If so, unmounts the device
  * Attempts to mount the device specified
  * Sets libfat to use the device by default
- * Enables read-ahead cache for SD/USB
  ***************************************************************************/
-bool MountFAT(PARTITION_INTERFACE part)
+
+bool MountFAT(int method)
 {
-	UnmountFAT(part);
+	bool mounted = true; // assume our disc is already mounted
+	char name[10];
+	const DISC_INTERFACE* disc = NULL;
 
-	bool mounted = fatMountNormalInterface(part, 8);
-
-	if(mounted)
+	switch(method)
 	{
-		fatSetDefaultInterface(part);
-		#ifdef HW_RVL
-		if(part == PI_INTERNAL_SD || part == PI_USBSTORAGE)
-			fatEnableReadAhead (part, 6, 64);
-		#endif
+#ifdef HW_RVL
+		case METHOD_SD:
+			sprintf(name, "sd");
+			disc = sd;
+			break;
+		case METHOD_USB:
+			sprintf(name, "usb");
+			disc = usb;
+			break;
+#else
+		case METHOD_SD_SLOTA:
+			sprintf(name, "carda");
+			disc = carda;
+			break;
+
+		case METHOD_SD_SLOTB:
+			sprintf(name, "cardb");
+			disc = cardb;
+			break;
+#endif
+		default:
+			return false; // unknown device
 	}
+
+	sprintf(rootdir, "%s:/", name);
+
+	// isInserted doesn't work properly for USB - so we will force a shutdown
+	//unmountRequired[METHOD_USB] = true;
+
+	if(unmountRequired[method])
+	{
+		unmountRequired[method] = false;
+		fatUnmount(name);
+		disc->shutdown();
+	}
+	if(!isMounted[method])
+	{
+		if(!disc->startup())
+			mounted = false;
+		else if(!fatMountSimple(name, disc))
+			mounted = false;
+		else
+			fatEnableReadAhead(name, 6, 64);
+	}
+
+	isMounted[method] = mounted;
 	return mounted;
 }
 
+void MountAllFAT()
+{
+#ifdef HW_RVL
+	MountFAT(METHOD_SD);
+	MountFAT(METHOD_USB);
+#else
+	MountFAT(METHOD_SD_SLOTA);
+	MountFAT(METHOD_SD_SLOTB);
+#endif
+}
+
 /****************************************************************************
- * ChangeFATInterface
- * Unmounts all devices and attempts to mount/configure the device specified
+ * ChangeInterface
+ * Attempts to mount/configure the device specified
  ***************************************************************************/
-bool ChangeFATInterface(int method, bool silent)
+bool ChangeInterface(int method, bool silent)
 {
 	bool mounted = false;
 
 	if(method == METHOD_SD)
 	{
 		#ifdef HW_RVL
-		mounted = MountFAT(PI_INTERNAL_SD); // try Wii internal SD
-		#endif
-
-		if(!mounted) // internal SD not found
-			mounted = MountFAT(PI_SDGECKO_A); // try SD Gecko on slot A
+		mounted = MountFAT(METHOD_SD); // try Wii internal SD
+		#else
+		mounted = MountFAT(METHOD_SD_SLOTA); // try SD Gecko on slot A
 		if(!mounted) // internal SD and SD Gecko (on slot A) not found
-			mounted = MountFAT(PI_SDGECKO_B); // try SD Gecko on slot B
+			mounted = MountFAT(METHOD_SD_SLOTB); // try SD Gecko on slot B
+		#endif
 		if(!mounted && !silent) // no SD device found
-			WaitPrompt ((char *)"SD card not found!");
+			WaitPrompt ("SD card not found!");
 	}
 	else if(method == METHOD_USB)
 	{
 		#ifdef HW_RVL
-		mounted = MountFAT(PI_USBSTORAGE);
+		mounted = MountFAT(method);
 
 		if(!mounted && !silent)
-			WaitPrompt ((char *)"USB drive not found!");
+			WaitPrompt ("USB drive not found!");
 		#endif
+	}
+	else if(method == METHOD_SMB)
+	{
+		sprintf(rootdir, "smb:/");
+		mounted = ConnectShare(NOTSILENT);
+	}
+	else if(method == METHOD_DVD)
+	{
+		sprintf(rootdir, "/");
+		mounted = MountDVD(NOTSILENT);
 	}
 
 	return mounted;
 }
 
 /***************************************************************************
- * Browse FAT subdirectories
+ * Browse subdirectories
  **************************************************************************/
 int
-ParseFATdirectory(int method)
+ParseDirectory()
 {
 	int nbfiles = 0;
-	DIR_ITER *fatdir;
+	DIR_ITER *dir;
+	char fulldir[MAXPATHLEN];
 	char filename[MAXPATHLEN];
 	char tmpname[MAXPATHLEN];
 	struct stat filestat;
@@ -133,28 +280,32 @@ ParseFATdirectory(int method)
 	// Clear any existing values
 	memset (&filelist, 0, sizeof (FILEENTRIES) * MAXFILES);
 
+	// add device to path
+	sprintf(fulldir, "%s%s", rootdir, currentdir);
+
 	// open the directory
-	fatdir = diropen(currentdir);
-	if (fatdir == NULL)
+	dir = diropen(fulldir);
+
+	if (dir == NULL)
 	{
-		sprintf(msg, "Couldn't open %s", currentdir);
+		sprintf(msg, "Error opening %s", fulldir);
 		WaitPrompt(msg);
 
 		// if we can't open the dir, open root dir
-		sprintf(currentdir,"%s",ROOTFATDIR);
+		sprintf(fulldir,"%s",rootdir);
 
-		fatdir = diropen(currentdir);
+		dir = diropen(currentdir);
 
-		if (fatdir == NULL)
+		if (dir == NULL)
 		{
-			sprintf(msg, "Error opening %s", currentdir);
+			sprintf(msg, "Error opening %s", fulldir);
 			WaitPrompt(msg);
 			return 0;
 		}
 	}
 
 	// index files/folders
-	while(dirnext(fatdir,filename,&filestat) == 0)
+	while(dirnext(dir,filename,&filestat) == 0)
 	{
 		if(strcmp(filename,".") != 0)
 		{
@@ -169,7 +320,7 @@ ParseFATdirectory(int method)
 	}
 
 	// close directory
-	dirclose(fatdir);
+	dirclose(dir);
 
 	// Sort the file list
 	qsort(filelist, nbfiles, sizeof(FILEENTRIES), FileSortCallback);
@@ -178,109 +329,168 @@ ParseFATdirectory(int method)
 }
 
 /****************************************************************************
- * LoadFATSzFile
+ * LoadSzFile
  * Loads the selected file # from the specified 7z into rbuffer
  * Returns file size
  ***************************************************************************/
-int
-LoadFATSzFile(char * filepath, unsigned char * rbuffer)
+u32
+LoadSzFile(char * filepath, unsigned char * rbuffer)
 {
 	u32 size;
-	fatfile = fopen (filepath, "rb");
-	if (fatfile > 0)
+	file = fopen (filepath, "rb");
+	if (file > 0)
 	{
 		size = SzExtractFile(filelist[selection].offset, rbuffer);
-		fclose (fatfile);
+		fclose (file);
 		return size;
 	}
 	else
 	{
-		WaitPrompt((char*) "Error opening file");
+		WaitPrompt("Error opening file");
 		return 0;
 	}
 }
 
 /****************************************************************************
- * LoadFATFile
+ * LoadFile
  ***************************************************************************/
-int
-LoadFATFile (char * rbuffer, char *filepath, int length, bool silent)
+u32
+LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 {
 	char zipbuffer[2048];
-	int size = 0;
-	int readsize = 0;
+	u32 size = 0;
+	u32 readsize = 0;
 
-	fatfile = fopen (filepath, "rb");
+	if(!ChangeInterface(method, NOTSILENT))
+		return 0;
 
-	if (fatfile > 0)
+	switch(method)
+	{
+		case METHOD_DVD:
+			return LoadDVDFile (rbuffer, filepath, length, silent);
+			break;
+		case METHOD_MC_SLOTA:
+			return LoadMCFile (rbuffer, CARD_SLOTA, filepath, silent);
+			break;
+		case METHOD_MC_SLOTB:
+			return LoadMCFile (rbuffer, CARD_SLOTB, filepath, silent);
+			break;
+	}
+
+	// add device to filepath
+	char fullpath[1024];
+	sprintf(fullpath, "%s%s", rootdir, filepath);
+
+	file = fopen (fullpath, "rb");
+
+	if (file > 0)
 	{
 		if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
 		{
-			fread (rbuffer, 1, length, fatfile);
-			size = length;
+			size = fread (rbuffer, 1, length, file);
 		}
 		else // load whole file
 		{
-			readsize = fread (zipbuffer, 1, 2048, fatfile);
+			readsize = fread (zipbuffer, 1, 2048, file);
 
 			if(readsize > 0)
 			{
 				if (IsZipFile (zipbuffer))
 				{
-					size = UnZipBuffer ((unsigned char *)rbuffer, METHOD_SD);	// unzip from FAT
+					size = UnZipBuffer ((unsigned char *)rbuffer, method); // unzip
 				}
 				else
 				{
-					// Just load the file up
-					fseek(fatfile, 0, SEEK_END);
-					size = ftell(fatfile);				// get filesize
-					fseek(fatfile, 2048, SEEK_SET);		// seek back to point where we left off
-					memcpy (rbuffer, zipbuffer, 2048);	// copy what we already read
+					struct stat fileinfo;
+					fstat(file->_file, &fileinfo);
+					size = fileinfo.st_size;
 
-					ShowProgress ((char *)"Loading...", 2048, length);
+					memcpy (rbuffer, zipbuffer, 2048); // copy what we already read
 
-					int offset = 2048;
-					while(offset < size && readsize != 0)
+					ShowProgress ("Loading...", 2048, length);
+
+					u32 offset = 2048;
+					while(offset < size)
 					{
-						readsize = fread (rbuffer + offset, 1, (1024*512), fatfile); // read in 512K chunks
-						offset += readsize;
-						ShowProgress ((char *)"Loading...", offset, length);
+						readsize = fread (rbuffer + offset, 1, (1024*512), file); // read in 512K chunks
+
+						if(readsize <= 0 || readsize > (1024*512))
+							break; // read failure
+
+						if(readsize > 0)
+							offset += readsize;
+						ShowProgress ("Loading...", offset, length);
 					}
+
+					if(offset != size) // # bytes read doesn't match # expected
+						size = 0;
 				}
 			}
 		}
-		fclose (fatfile);
-		return size;
+		fclose (file);
 	}
-	else
+	if(!size && !silent)
 	{
-		if(!silent)
-			WaitPrompt((char*) "Error opening file!");
-		return 0;
+		unmountRequired[method] = true;
+		WaitPrompt("Error loading file!");
 	}
+
+	return size;
+}
+
+u32 LoadFile(char filepath[], int method, bool silent)
+{
+	return LoadFile((char *)savebuffer, filepath, 0, method, silent);
 }
 
 /****************************************************************************
- * SaveFATFile
- * Write buffer to FAT card file
+ * SaveFile
+ * Write buffer to file
  ***************************************************************************/
-int
-SaveFATFile (char * buffer, char *filepath, int datasize, bool silent)
+u32
+SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 {
+	u32 written = 0;
+
+	if(!ChangeInterface(method, NOTSILENT))
+		return 0;
+
+	switch(method)
+	{
+		case METHOD_MC_SLOTA:
+			return SaveMCFile (buffer, CARD_SLOTA, filepath, datasize, silent);
+			break;
+		case METHOD_MC_SLOTB:
+			return SaveMCFile (buffer, CARD_SLOTB, filepath, datasize, silent);
+			break;
+	}
+
 	if (datasize)
     {
-        fatfile = fopen (filepath, "wb");
+		// add device to filepath
+		char fullpath[1024];
+		sprintf(fullpath, "%s%s", rootdir, filepath);
 
-        if (fatfile <= 0)
-        {
-            char msg[100];
-            sprintf(msg, "Couldn't save %s", filepath);
-            WaitPrompt (msg);
-            return 0;
-        }
+		// open file for writing
+		file = fopen (filepath, "wb");
 
-        fwrite (savebuffer, 1, datasize, fatfile);
-        fclose (fatfile);
+		if (file > 0)
+		{
+			written = fwrite (savebuffer, 1, datasize, file);
+			fclose (file);
+		}
+
+		if(!written && !silent)
+		{
+			unmountRequired[method] = true;
+			WaitPrompt ("Error saving file!");
+		}
     }
-    return datasize;
+    return written;
 }
+
+u32 SaveFile(char filepath[], u32 datasize, int method, bool silent)
+{
+	return SaveFile((char *)savebuffer, filepath, datasize, method, silent);
+}
+

@@ -10,14 +10,14 @@
  * DVD I/O functions
  ***************************************************************************/
 
-#ifndef _NGCDVD_H_
-#define _NGCDVD_H_
+#ifndef _NGCDVD_
+#define _NGCDVD_
 
 int getpvd ();
+bool MountDVD(bool silent);
 int ParseDVDdirectory ();
 int LoadDVDFileOffset(unsigned char *buffer, int length);
 int LoadDVDFile(char * buffer, char *filepath, int datasize, bool silent);
-bool TestDVD();
 int dvd_read (void *dst, unsigned int len, u64 offset);
 int dvd_safe_read (void *dst, unsigned int len, u64 offset);
 bool SwitchDVDFolder(char dir[]);

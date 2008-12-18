@@ -20,7 +20,6 @@
 #include <string.h>
 #include <fat.h>
 #include <zlib.h>
-#include <smb.h>
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -31,7 +30,7 @@
 #include "snes9xGX.h"
 #include "images/saveicon.h"
 #include "freeze.h"
-#include "filesel.h"
+#include "fileop.h"
 #include "menudraw.h"
 
 extern void S9xSRTCPreSaveState ();
@@ -128,7 +127,7 @@ NGCFreezeGame (int method, bool8 silent)
 	int woffset = 0; // bytes written (expected)
 	char msg[100];
 
-	ShowAction ((char*) "Saving...");
+	ShowAction ("Saving...");
 
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod();
@@ -187,7 +186,7 @@ NGCFreezeGame (int method, bool8 silent)
 	if(offset > 0) // save successful!
 	{
 		if(!silent)
-			WaitPrompt((char*) "Save successful");
+			WaitPrompt("Save successful");
 		return 1;
 	}
     return 0;
@@ -244,7 +243,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 
 	bufoffset = 0;
 
-	ShowAction ((char*) "Loading...");
+	ShowAction ("Loading...");
 
     if(method == METHOD_AUTO)
 		method = autoSaveMethod(); // we use 'Save' because snapshot needs R/W
@@ -284,7 +283,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 			}
 			else if ( DestBuffSize != decompressedsize )
 			{
-				WaitPrompt((char*) "Unzipped size doesn't match expected size!");
+				WaitPrompt("Unzipped size doesn't match expected size!");
 			}
 			else
 			{
@@ -300,12 +299,12 @@ NGCUnfreezeGame (int method, bool8 silent)
 		if (S9xUnfreezeGame ("AGAME") == SUCCESS)
 			result = 1;
 		else
-			WaitPrompt((char*) "Error thawing");
+			WaitPrompt("Error thawing");
 	}
 	else
 	{
 		if(!silent)
-			WaitPrompt((char*) "Freeze file not found");
+			WaitPrompt("Freeze file not found");
 	}
 	FreeSaveBuffer ();
 	return result;

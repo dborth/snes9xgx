@@ -144,7 +144,7 @@ DrawCharacter (FT_Bitmap * bmp, FT_Int x, FT_Int y)
  * Place the font bitmap on the screen
  ***************************************************************************/
 void
-DrawText (int x, int y, char *text)
+DrawText (int x, int y, const char *text)
 {
   int px, n;
   int i;
@@ -222,7 +222,7 @@ Credits ()
 	setfontcolour (0x00, 0x00, 0x00);
 
 	setfontsize (28);
-	DrawText (-1, 60, (char*)"Credits");
+	DrawText (-1, 60, "Credits");
 
 	int ypos = 25;
 
@@ -232,33 +232,33 @@ Credits ()
 		ypos += 32;
 
 	setfontsize (20);
-	DrawText (-1, ypos += 30, (char*)"Technical");
+	DrawText (-1, ypos += 30, "Technical");
 
 	setfontsize (16);
 
-	DrawText (75, ypos += 30, (char*)"Snes9x GX 00x");
-	DrawText (350, ypos, (char*)"michniewski & Tantric");
-	DrawText (75, ypos += 20, (char*)"Snes9X GX 2.0.1 GameCube");
-	DrawText (350, ypos, (char*)"crunchy2, eke-eke, others");
-	DrawText (75, ypos += 20, (char*)"Snes9x GX GameCube Port");
-	DrawText (350, ypos, (char*)"SoftDev");
-	DrawText (75, ypos += 20, (char*)"Snes9x 1.5.1");
-	DrawText (350, ypos, (char*)"Snes9x Team");
-	DrawText (75, ypos += 20, (char*)"GX");
-	DrawText (350, ypos, (char*)"http://www.gc-linux.org");
-	DrawText (75, ypos += 20, (char*)"libogc");
-	DrawText (350, ypos, (char*)"Shagkur & wintermute");
+	DrawText (75, ypos += 30, "Snes9x GX 00x");
+	DrawText (350, ypos, "michniewski & Tantric");
+	DrawText (75, ypos += 20, "Snes9X GX 2.0.1 GameCube");
+	DrawText (350, ypos, "crunchy2, eke-eke, others");
+	DrawText (75, ypos += 20, "Snes9x GX GameCube Port");
+	DrawText (350, ypos, "SoftDev");
+	DrawText (75, ypos += 20, "Snes9x 1.5.1");
+	DrawText (350, ypos, "Snes9x Team");
+	DrawText (75, ypos += 20, "GX");
+	DrawText (350, ypos, "http://www.gc-linux.org");
+	DrawText (75, ypos += 20, "libogc");
+	DrawText (350, ypos, "Shagkur & wintermute");
 
 	setfontsize (20);
-	DrawText (-1, ypos += 40, (char*)"Testing");
+	DrawText (-1, ypos += 40, "Testing");
 
 	setfontsize (16);
-	DrawText (-1, ypos += 30, (char*)"TehSkeen users");
+	DrawText (-1, ypos += 30, "TehSkeen users");
 
 	setfontsize (12);
-	DrawText (-1, ypos += 75, (char*)"Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
-	DrawText (-1, ypos += 15, (char*)"This software is open source and may be copied, distributed, or modified");
-	DrawText (-1, ypos += 15, (char*)"under the terms of the GNU General Public License (GPL) Version 2.");
+	DrawText (-1, ypos += 75, "Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
+	DrawText (-1, ypos += 15, "This software is open source and may be copied, distributed, or modified");
+	DrawText (-1, ypos += 15, "under the terms of the GNU General Public License (GPL) Version 2.");
 
 	showscreen ();
 }
@@ -402,7 +402,7 @@ WaitButtonAB ()
  * Show a prompt
  ***************************************************************************/
 void
-WaitPrompt (char *msg)
+WaitPrompt (const char *msg)
 {
 	int ypos = (screenheight - 64) >> 1;
 
@@ -414,7 +414,7 @@ WaitPrompt (char *msg)
 	clearscreen ();
 	DrawText (-1, ypos, msg);
 	ypos += 30;
-	DrawText (-1, ypos, (char*)"Press A to continue");
+	DrawText (-1, ypos, "Press A to continue");
 	showscreen ();
 	WaitButtonA ();
 }
@@ -424,7 +424,7 @@ WaitPrompt (char *msg)
    and 0 if B button was pressed.
  ***************************************************************************/
 int
-WaitPromptChoice (char *msg, char *bmsg, char *amsg)
+WaitPromptChoice (const char *msg, const char *bmsg, const char *amsg)
 {
 	int ypos = (screenheight - 64) >> 1;
 
@@ -447,7 +447,7 @@ WaitPromptChoice (char *msg, char *bmsg, char *amsg)
  * Show an action in progress
  ***************************************************************************/
 void
-ShowAction (char *msg)
+ShowAction (const char *msg)
 {
 	int ypos = (screenheight - 30) >> 1;
 
@@ -465,7 +465,7 @@ ShowAction (char *msg)
  * Generic Menu Routines
  ***************************************************************************/
 void
-DrawMenu (char items[][50], char *title, int maxitems, int selected, int fontsize, int x)
+DrawMenu (char items[][50], const char *title, int maxitems, int selected, int fontsize, int x)
 {
 	int i, w = 0;
 	int ypos = 0;
@@ -556,7 +556,7 @@ int FindMenuItem(char items[][50], int maxitems, int currentItem, int direction)
 int menu = 0;
 
 int
-RunMenu (char items[][50], int maxitems, char *title, int fontsize, int x)
+RunMenu (char items[][50], int maxitems, const char *title, int fontsize, int x)
 {
     int redraw = 1;
     int quit = 0;
@@ -649,7 +649,7 @@ ShowFiles (FILEENTRIES filelist[], int maxfiles, int offset, int selection)
 	clearscreen ();
 
 	setfontsize (28);
-	DrawText (-1, 60, (char*)"Choose Game");
+	DrawText (-1, 60, "Choose Game");
 
 	setfontsize(18);
 
@@ -709,7 +709,7 @@ ShowCheats (char items[][50], char itemvalues[][50], int maxitems, int offset, i
 	clearscreen ();
 
 	setfontsize (28);
-	DrawText (-1, 60, (char*)"Cheats");
+	DrawText (-1, 60, "Cheats");
 
 	setfontsize(18);
 
@@ -758,7 +758,7 @@ void RomInfo()
 		ypos += 32;
 
 	setfontsize (28);
-	DrawText (-1, 60, (char*)"Rom Information");
+	DrawText (-1, 60, "Rom Information");
 
 	setfontsize (16);
 	setfontcolour (0x00, 0x00, 0x00);
@@ -777,49 +777,49 @@ void RomInfo()
 	char fmtString[1024];
 
 	ypos += 20;
-	DrawText (150, ypos, (char *)MENU_INFO_ROM);
+	DrawText (150, ypos, MENU_INFO_ROM);
 	DrawText (300, ypos, Memory.ROMName);
 
 	ypos += 20;
-	DrawText (150, ypos, (char *)MENU_INFO_ROMID);
+	DrawText (150, ypos, MENU_INFO_ROMID);
 	DrawText (300, ypos, Memory.ROMId);
 
 	ypos += 20;
-	DrawText (150, ypos, (char *)MENU_INFO_COMPANY);
+	DrawText (150, ypos, MENU_INFO_COMPANY);
 	DrawText (300, ypos, Memory.CompanyId);
 
 	ypos += 20;
-	DrawText (150, ypos, (char *)MENU_INFO_SIZE);
+	DrawText (150, ypos, MENU_INFO_SIZE);
 	sprintf(fmtString, "%d", Memory.ROMSize);
 	DrawText (300, ypos, fmtString);
 
 	ypos += 20;
-	DrawText (150, ypos, (char *)MENU_INFO_SRAM);
+	DrawText (150, ypos, MENU_INFO_SRAM);
 	sprintf(fmtString, "%d", Memory.SRAMSize);
 	DrawText (300, ypos, fmtString);
 
 	ypos += 20;
-	DrawText (150, ypos, (char *)MENU_INFO_TYPE);
+	DrawText (150, ypos, MENU_INFO_TYPE);
 	sprintf(fmtString, "%d", Memory.ROMType);
 	DrawText (300, ypos, fmtString);
 
 	ypos += 20;
-	DrawText (150, ypos, (char *)MENU_INFO_CHECKSUM);
+	DrawText (150, ypos, MENU_INFO_CHECKSUM);
 	sprintf(fmtString, "%04x / %04x", Memory.ROMChecksum, Memory.ROMComplementChecksum);
 	DrawText (300, ypos, fmtString);
 
 	ypos += 20;
-	DrawText (150, ypos, (char *)MENU_INFO_TVTYPE);
+	DrawText (150, ypos, MENU_INFO_TVTYPE);
 	sprintf(fmtString, "%s", Settings.PAL ? "PAL" : "NTSC");
 	DrawText (300, ypos, fmtString);
 
 	ypos += 20;
-	DrawText (150, ypos, (char *)MENU_INFO_FRAMES);
+	DrawText (150, ypos, MENU_INFO_FRAMES);
 	sprintf(fmtString, "%d", Memory.ROMFramesPerSecond);
 	DrawText (300, ypos, fmtString);
 
 	ypos += 20;
-	DrawText (150, ypos, (char *)MENU_INFO_CRC32);
+	DrawText (150, ypos, MENU_INFO_CRC32);
 	sprintf(fmtString, "%08X", Memory.ROMCRC32);
 	DrawText (300, ypos, fmtString);
 
@@ -918,7 +918,7 @@ DrawLine (int x1, int y1, int x2, int y2, u8 r, u8 g, u8 b)
  * Show the user what's happening
  ***************************************************************************/
 void
-ShowProgress (char *msg, int done, int total)
+ShowProgress (const char *msg, int done, int total)
 {
 	if(total <= 0) // division by 0 is bad!
 		return;

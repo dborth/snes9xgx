@@ -12,40 +12,38 @@
 
 #include <gccore.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ogcsys.h>
 #include <network.h>
 #include <smb.h>
 #include <zlib.h>
 #include <errno.h>
-#include "memmap.h"
 
-#include "smbop.h"
+#include "snes9xGX.h"
+#include "fileop.h"
 #include "unzip.h"
 #include "video.h"
 #include "menudraw.h"
 #include "filesel.h"
-#include "snes9xGX.h"
 
 bool networkInit = false;
 bool networkShareInit = false;
-unsigned int SMBTimer = 0;
-#define SMBTIMEOUT ( 3600 ) // Some implementations timeout in 10 minutes
-
-// SMB connection/file handles - the only ones we should ever use!
-SMBCONN smbconn;
-SMBFILE smbfile;
-
-#define ZIPCHUNK 16384
+bool networkInitHalt = false;
 
 /****************************************************************************
  * InitializeNetwork
  * Initializes the Wii/GameCube network interface
  ****************************************************************************/
 
-bool InitializeNetwork(bool silent)
+void InitializeNetwork(bool silent)
 {
-	ShowAction ((char*) "Initializing network...");
+	if(networkInit || networkInitHalt)
+		return;
+
+	if(!silent)
+		ShowAction ("Initializing network...");
+
 	s32 result;
 
 	while ((result = net_init()) == -EAGAIN);
@@ -56,19 +54,28 @@ bool InitializeNetwork(bool silent)
 
 		if (if_config(myIP, NULL, NULL, true) < 0)
 		{
+			networkInitHalt = true; // do not attempt a reconnection again
+
 			if(!silent)
-				WaitPrompt((char*) "Error reading IP address.");
-			return false;
+				WaitPrompt("Error reading IP address.");
 		}
 		else
 		{
-			return true;
+			networkInit = true;
 		}
 	}
+	else
+	{
+		if(!silent)
+			WaitPrompt("Unable to initialize network.");
+	}
+}
 
-	if(!silent)
-		WaitPrompt((char*) "Unable to initialize network.");
-	return false;
+void CloseShare()
+{
+	if(networkShareInit)
+		smbClose();
+	networkShareInit = false;
 }
 
 /****************************************************************************
@@ -90,266 +97,33 @@ ConnectShare (bool silent)
 		strlen(GCSettings.smbip) == 0)
 	{
 		if(!silent)
-			WaitPrompt((char*) "Invalid network settings. Check settings.xml.");
+			WaitPrompt("Invalid network settings. Check settings.xml.");
 		return false;
 	}
 
 	if(!networkInit)
-		networkInit = InitializeNetwork(silent);
+		InitializeNetwork(silent);
 
 	if(networkInit)
 	{
-		// connection may have expired
-		if (networkShareInit && SMBTimer > SMBTIMEOUT)
-		{
-			networkShareInit = false;
-			SMBTimer = 0;
-			SMB_Close(smbconn);
-		}
+		if(unmountRequired[METHOD_SMB])
+			CloseShare();
 
 		if(!networkShareInit)
 		{
 			if(!silent)
-				ShowAction ((char*) "Connecting to network share...");
+				ShowAction ("Connecting to network share...");
 
-			if(SMB_Connect(&smbconn, GCSettings.smbuser, GCSettings.smbpwd,
-			GCSettings.smbgcid, GCSettings.smbsvid, GCSettings.smbshare, GCSettings.smbip) == SMB_SUCCESS)
+			if(smbInit(GCSettings.smbuser, GCSettings.smbpwd,
+					GCSettings.smbshare, GCSettings.smbip))
+			{
 				networkShareInit = true;
+			}
 		}
 
 		if(!networkShareInit && !silent)
-			WaitPrompt ((char*) "Failed to connect to network share.");
+			WaitPrompt ("Failed to connect to network share.");
 	}
 
 	return networkShareInit;
-}
-
-/****************************************************************************
- * SMBPath
- *
- * Returns a SMB-style path
- *****************************************************************************/
-
-char * SMBPath(char * path)
-{
-	// fix path - replace all '/' with '\'
-	for(uint i=0; i < strlen(path); i++)
-		if(path[i] == '/')
-			path[i] = '\\';
-
-	return path;
-}
-
-/****************************************************************************
- * parseSMBDirectory
- *
- * Load the directory and put in the filelist array
- *****************************************************************************/
-int
-ParseSMBdirectory (bool silent)
-{
-	if(!ConnectShare (NOTSILENT))
-		return 0;
-
-	int filecount = 0;
-	char searchpath[1024];
-	char tmpname[MAXJOLIET];
-	SMBDIRENTRY smbdir;
-
-	// initialize selection
-	selection = offset = 0;
-
-	// Clear any existing values
-	memset (&filelist, 0, sizeof (FILEENTRIES) * MAXFILES);
-
-	if(strlen(currentdir) <= 1) // root
-		sprintf(searchpath, "*");
-	else
-		sprintf(searchpath, "%s/*", currentdir);
-
-	if (SMB_FindFirst
-	(SMBPath(searchpath), SMB_SRCH_READONLY | SMB_SRCH_DIRECTORY, &smbdir, smbconn) != SMB_SUCCESS)
-	{
-		if(!silent)
-		{
-			char msg[200];
-			sprintf(msg, "Could not open %s", currentdir);
-			WaitPrompt (msg);
-		}
-
-		// if we can't open the dir, open root dir
-		sprintf(searchpath, "/");
-		sprintf(searchpath,"*");
-		sprintf(currentdir,"/");
-
-		if (SMB_FindFirst
-		(SMBPath(searchpath), SMB_SRCH_READONLY | SMB_SRCH_DIRECTORY, &smbdir, smbconn) != SMB_SUCCESS)
-			return 0;
-	}
-
-	// index files/folders
-	do
-	{
-		if(strcmp(smbdir.name,".") != 0 &&
-		!(strlen(currentdir) <= 1 && strcmp(smbdir.name,"..") == 0))
-		{
-			memset (&filelist[filecount], 0, sizeof (FILEENTRIES));
-			filelist[filecount].length = smbdir.size_low;
-			smbdir.name[MAXJOLIET] = 0;
-
-			if(smbdir.attributes == SMB_SRCH_DIRECTORY)
-				filelist[filecount].flags = 1; // flag this as a dir
-			else
-				filelist[filecount].flags = 0;
-
-			StripExt(tmpname, smbdir.name); // hide file extension
-			memcpy (&filelist[filecount].displayname, tmpname, MAXDISPLAY);
-			filelist[filecount].displayname[MAXDISPLAY] = 0;
-
-			strcpy (filelist[filecount].filename, smbdir.name);
-			filecount++;
-		}
-	} while (SMB_FindNext (&smbdir, smbconn) == SMB_SUCCESS);
-
-	// close directory
-	SMB_FindClose (smbconn);
-
-	// Sort the file list
-	qsort(filelist, filecount, sizeof(FILEENTRIES), FileSortCallback);
-
-	return filecount;
-}
-
-/****************************************************************************
- * Open SMB file
- ***************************************************************************/
-
-SMBFILE OpenSMBFile(char * filepath)
-{
-	return SMB_OpenFile (SMBPath(filepath), SMB_OPEN_READING, SMB_OF_OPEN, smbconn);
-}
-
-/****************************************************************************
- * LoadSMBSzFile
- * Loads the selected file # from the specified 7z into rbuffer
- * Returns file size
- ***************************************************************************/
-int
-LoadSMBSzFile(char * filepath, unsigned char * rbuffer)
-{
-	if(!ConnectShare (NOTSILENT))
-		return 0;
-
-	smbfile = OpenSMBFile(filepath);
-
-	if (smbfile)
-	{
-		u32 size = SzExtractFile(filelist[selection].offset, rbuffer);
-		SMB_CloseFile (smbfile);
-		return size;
-	}
-	else
-	{
-		WaitPrompt((char*) "Error opening file");
-		return 0;
-	}
-}
-
-/****************************************************************************
- * SaveSMBFile
- * Write buffer to SMB file
- ****************************************************************************/
-
-int
-SaveSMBFile (char * sbuffer, char *filepath, int datasize, bool silent)
-{
-	if(!ConnectShare (NOTSILENT))
-		return 0;
-
-	int dsize = datasize;
-	int wrote = 0;
-	int boffset = 0;
-
-	smbfile =
-	SMB_OpenFile (SMBPath(filepath), SMB_OPEN_WRITING | SMB_DENY_NONE,
-	SMB_OF_CREATE | SMB_OF_TRUNCATE, smbconn);
-
-	if (smbfile)
-	{
-		while (dsize > 0)
-		{
-			if (dsize > 1024)
-				wrote =
-					SMB_WriteFile ((char *) sbuffer + boffset, 1024, boffset, smbfile);
-			else
-				wrote =
-					SMB_WriteFile ((char *) sbuffer + boffset, dsize, boffset, smbfile);
-
-			boffset += wrote;
-			dsize -= wrote;
-		}
-		SMB_CloseFile (smbfile);
-	}
-	else
-	{
-		char msg[100];
-		sprintf(msg, "Couldn't save SMB: %s", SMBPath(filepath));
-		WaitPrompt (msg);
-	}
-
-	return boffset;
-}
-
-/****************************************************************************
- * LoadSMBFile
- * Load up a buffer from SMB file
- ****************************************************************************/
-
-int
-LoadSMBFile (char * sbuffer, char *filepath, int length, bool silent)
-{
-	if(!ConnectShare (NOTSILENT))
-		return 0;
-
-	int ret;
-	int boffset = 0;
-
-	smbfile = OpenSMBFile(filepath);
-
-	if (!smbfile)
-	{
-		if(!silent)
-		{
-			char msg[100];
-			sprintf(msg, "Couldn't open SMB: %s", SMBPath(filepath));
-			WaitPrompt (msg);
-		}
-		return 0;
-	}
-
-	if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
-	{
-		boffset = SMB_ReadFile (sbuffer, length, 0, smbfile);
-	}
-	else // load whole file
-	{
-		ret = SMB_ReadFile (sbuffer, 1024, boffset, smbfile);
-
-		if (IsZipFile (sbuffer))
-		{
-			boffset = UnZipBuffer ((unsigned char *)sbuffer, METHOD_SMB); // unzip from SMB
-		}
-		else
-		{
-			// Just load the file up
-			while ((ret = SMB_ReadFile (sbuffer + boffset, 2048, boffset, smbfile)) > 0)
-			{
-				boffset += ret;
-				ShowProgress ((char *)"Loading...", boffset, length);
-			}
-		}
-	}
-	SMB_CloseFile (smbfile);
-
-	return boffset;
 }

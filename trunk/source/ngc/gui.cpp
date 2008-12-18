@@ -94,7 +94,7 @@ gui_alloc ()
 		texdata_bg = memalign (32, 640 * 480 * 4);
 		texdata_menu = memalign (32, 640 * 480 * 4);
 		Gui.texmem = memalign (32, 640 * 480 * 4);
-		
+
 		mem_alloced = 1;
 	}
 }
@@ -107,7 +107,7 @@ gui_free ()
 		free (texdata_bg);
 		free (texdata_menu);
 		free (Gui.texmem);
-		
+
 		mem_alloced = 0;
 	}
 }
@@ -116,16 +116,16 @@ gui_free ()
 * make BG
 *
 * Blend the last rendered emulator screen and the menu backdrop.
-* Save this as a texture to be loaded later 
+* Save this as a texture to be loaded later
  ****************************************************************************/
 void
 gui_makebg ()
 {
 	IMGCTX ctx;
 	PNGUPROP imgProp;
-	
+
 	/** Load menu backdrop (either from file or buffer) **/
-	
+
 	ctx = PNGU_SelectImageFromDevice ("bg.png");
 	PNGU_GetImageProperties (ctx, &imgProp);
 	// can check image dimensions here
@@ -136,7 +136,7 @@ gui_makebg ()
 	Make_Texture_RGBA8 (&texdata_bg, Gui.texmem, 640, 480);
 	PNGU_ReleaseImageContext (ctx);
 	DCFlushRange (&texdata_bg, imgProp.imgWidth * imgProp.imgHeight * 4);
-	
+
 	/*
 	texdata_bg = memalign (32, 640 * 480 * 4);
 	#ifdef HW_RVL
@@ -149,7 +149,7 @@ gui_makebg ()
 	*/
 
 	/** blend last rendered snes frame and menu backdrop **/
-	
+
 	// draw 640x480 quads
 	int xscale, yscale, xshift, yshift;
 	xshift = yshift = 0;
@@ -159,17 +159,17 @@ gui_makebg ()
 	square[0] = square[9]  = -xscale + xshift;
 	square[4] = square[1]  =  yscale + yshift;
 	square[7] = square[10] = -yscale + yshift;
-	
+
 	// draw 2 quads
-	
+
 	GX_InvalidateTexAll ();
-	
+
 	// behind (last snes frame)
 	square[2] = square[5] = square[8] = square[11] = 0;	// z value
 	GX_InvVtxCache ();
 	GX_LoadTexObj (&texobj, GX_TEXMAP0);	// load last rendered snes frame
 	draw_square (view);
-	
+
 	// in front (menu backdrop)
 	square[2] = square[5] = square[8] = square[11] = 1;	// z value
 	GX_InvVtxCache ();
@@ -177,7 +177,7 @@ gui_makebg ()
 	draw_square (view);
 
 	GX_DrawDone ();
-	
+
 	/* DEBUG -----------
 	// show the output
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
@@ -189,7 +189,7 @@ gui_makebg ()
 	#endif
 	WaitButtonAB();
 	*/
-	
+
 	// load blended image from efb to a texture
 	GX_InitTexObj (&texobj_BG, &texdata_bg, 640, 480, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
 	GX_SetTexCopySrc ( 0,0,640,480 );
@@ -197,8 +197,8 @@ gui_makebg ()
 	GX_CopyTex (&texdata_bg, 0);	// assuming that the efb is 640x480, which it should be
 	GX_PixModeSync ();	// wait until copy has completed
 	DCFlushRange (&texdata_bg, 640 * 480 * 4);
-	
-	
+
+
 	square[2] = square[5] = square[8] = square[11] = 0; 	// reset z value
 	GX_InvVtxCache ();
 }
@@ -220,13 +220,13 @@ gui_draw ()
 	gui_setfontcolour (0,255,0,255);
 	// top bar text
 	setfontsize (32);	// 32/24 depending on whether selected or not
-	gui_DrawText (-1, 35, (char *)"Menu");
+	gui_DrawText (-1, 35, "Menu");
 	// main text
-	setfontsize (24);	
-	gui_DrawText (75, 113, (char *)"Hello World");
+	setfontsize (24);
+	gui_DrawText (75, 113, "Hello World");
 	// bottom bar text
-	setfontsize (24);	
-	gui_DrawText (75, 400, (char *)"Description");
+	setfontsize (24);
+	gui_DrawText (75, 400, "Description");
 }
 
 void
@@ -236,7 +236,7 @@ gui_savescreen ()
 	handle = fopen ("out.txt", "wb");
 	fwrite (Gui.texmem, 1, sizeof(Gui.texmem), handle);
 	fclose (handle);
-	
+
 	printf("\nsaved screen.");
 }
 
@@ -245,15 +245,15 @@ gui_showscreen ()
 {
 
 	/** Screen to Texture **/
-	
+
 	GX_InitTexObj (&texobj_MENU, texdata_menu, 640, 480, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
 	Make_Texture_RGBA8 (texdata_menu, Gui.texmem, 640, 480);
 	DCFlushRange (&texdata_menu, 640 * 480 * 4);
-	
+
 	GX_InvalidateTexAll ();
 
 	/** thats nice, but will it blend? **/
-	
+
 	// draw 640x480 quads
 	int xscale, yscale, xshift, yshift;
 	xshift = yshift = 0;
@@ -263,25 +263,25 @@ gui_showscreen ()
 	square[0] = square[9]  = -xscale + xshift;
 	square[4] = square[1]  =  yscale + yshift;
 	square[7] = square[10] = -yscale + yshift;
-	
+
 	// draw 2 quads
-	
+
 	// backdrop
 	square[2] = square[5] = square[8] = square[11] = 0;	// z value
 	GX_InvVtxCache ();
 	GX_LoadTexObj (&texobj_BG, GX_TEXMAP0);
 	draw_square (view);
-	
+
 	// menu overlay
 	square[2] = square[5] = square[8] = square[11] = 1;	// z value
 	GX_InvVtxCache ();
 	GX_LoadTexObj (&texobj_MENU, GX_TEXMAP0);
 	draw_square (view);
-	
+
 	GX_DrawDone ();
-	
+
 	/** Display **/
-	
+
 	// show the output
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
 	VIDEO_Flush ();
@@ -298,20 +298,20 @@ gui_showscreen ()
 
 /****************************************************************************
 * Make Texture RGBA8
-* 
+*
 * input: pointer to RGBA data
 * output: formatted texture data (GX_TF_RGBA8)
 * code modified from quake wii (thanks :)
 * todo: fix last few lines (?)
  ****************************************************************************/
-void 
+void
 Make_Texture_RGBA8 (void * dst_tex, void * src_data, int width, int height)
 {
 	if ( (width % 4) || (height % 4) ) {
 		printf ("Error: make_texture_rgba8 width/height not multiple of 4");
 		return;
 	}
-	
+
 	int i, x, y;
 	u8 *pos;
 
@@ -371,9 +371,9 @@ void
 gui_drawbox (int x1, int y1, int width, int height, int r, int g, int b, int a)
 {
 	u32 colour = ((u8)r << 24) | ((u8)g << 16) | ((u8)b << 8) | (u8)a;
-	
+
 	int i, j;
-	
+
 	u32* memory = (u32*) Gui.texmem;
 	for (j = y1; j<height; j++) {
 		for (i = x1; i<width; i++) {
@@ -417,7 +417,7 @@ gui_DrawCharacter (FT_Bitmap * bmp, FT_Int x, FT_Int y)
  * Place the font bitmap on the screen
  ****************************************************************************/
 void
-gui_DrawText (int x, int y, char *text)
+gui_DrawText (int x, int y, const char *text)
 {
 	int px, n;
 	int i;
@@ -488,7 +488,7 @@ gui_DrawLine (int x1, int y1, int x2, int y2, int r, int g, int b, int a)
 	u32 colour;
 	int i, dx, dy, sdx, sdy, dxabs, dyabs, x, y, px, py;
 	int sp;
-	
+
 	u32* memory = (u32*)Gui.texmem;
 
 	colour = ((u8)r << 24) | ((u8)g << 16) | ((u8)b << 8) | (u8)a;
@@ -506,7 +506,7 @@ gui_DrawLine (int x1, int y1, int x2, int y2, int r, int g, int b, int a)
 	py = y1;
 
 	sp = (py * 640) + px;
-	
+
 	/*** Plot this pixel ***/
 	memory[sp] = colour;
 
@@ -546,21 +546,21 @@ gui_DrawLine (int x1, int y1, int x2, int y2, int r, int g, int b, int a)
 
 /* */
 
-	/**  draw menu, etc **/ 
+	/**  draw menu, etc **/
 		// - draw topbar, bottombar
 		// - draw icons
 		// - draw bar text
-		
+
 		// draw main text
-	
+
 	/** make textures **/
 		// - load background texture
 		// - draw onto quad
 		// - make foreground texture
 		// - draw onto quad
-	
+
 	/** render image **/
-	
+
 	/** update framebuffer **/
 
 /* */

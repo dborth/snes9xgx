@@ -103,32 +103,30 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 	int have = 0;
 	char readbuffer[ZIPCHUNK];
 	u64 discoffset = 0;
+	int sizeread = 0;
 
 	// Read Zip Header
 	switch (method)
 	{
-		case METHOD_SD:
-		case METHOD_USB:
-			fseek(fatfile, 0, SEEK_SET);
-			fread (readbuffer, 1, ZIPCHUNK, fatfile);
-			break;
-
 		case METHOD_DVD:
 			discoffset = dvddir;
-			dvd_read (readbuffer, ZIPCHUNK, discoffset);
+			sizeread = dvd_safe_read (readbuffer, ZIPCHUNK, discoffset);
 			break;
-
-		case METHOD_SMB:
-			SMB_ReadFile(readbuffer, ZIPCHUNK, 0, smbfile);
+		default:
+			fseek(file, 0, SEEK_SET);
+			sizeread = fread (readbuffer, 1, ZIPCHUNK, file);
 			break;
 	}
+
+	if(sizeread <= 0)
+		return 0;
 
 	/*** Copy PKZip header to local, used as info ***/
 	memcpy (&pkzip, readbuffer, sizeof (PKZIPHEADER));
 
 	pkzip.uncompressedSize = FLIP32 (pkzip.uncompressedSize);
 
-	ShowProgress ((char *)"Loading...", 0, pkzip.uncompressedSize);
+	ShowProgress ("Loading...", 0, pkzip.uncompressedSize);
 
 	/*** Prepare the zip stream ***/
 	memset (&zs, 0, sizeof (z_stream));
@@ -184,22 +182,18 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 
 		switch (method)
 		{
-			case METHOD_SD:
-			case METHOD_USB:
-				fread (readbuffer, 1, ZIPCHUNK, fatfile);
-				break;
-
 			case METHOD_DVD:
 				readoffset += ZIPCHUNK;
-				dvd_read (readbuffer, ZIPCHUNK, discoffset+readoffset);
+				sizeread = dvd_safe_read (readbuffer, ZIPCHUNK, discoffset+readoffset);
 				break;
-
-			case METHOD_SMB:
-				readoffset += ZIPCHUNK;
-				SMB_ReadFile(readbuffer, ZIPCHUNK, readoffset, smbfile);
+			default:
+				sizeread = fread (readbuffer, 1, ZIPCHUNK, file);
 				break;
 		}
-		ShowProgress ((char *)"Loading...", bufferoffset, pkzip.uncompressedSize);
+		if(sizeread <= 0)
+			break; // read failure
+
+		ShowProgress ("Loading...", bufferoffset, pkzip.uncompressedSize);
 	}
 	while (res != Z_STREAM_END);
 
@@ -234,13 +228,21 @@ GetFirstZipFilename (int method)
 		return NULL;
 
 	// read start of ZIP
-	LoadFile (tempbuffer, filepath, ZIPCHUNK, method, NOTSILENT);
+	if(LoadFile (tempbuffer, filepath, ZIPCHUNK, method, NOTSILENT))
+	{
+		tempbuffer[28] = 0; // truncate - filename length is 2 bytes long (bytes 26-27)
+		int namelength = tempbuffer[26]; // filename length starts 26 bytes in
 
-	tempbuffer[28] = 0; // truncate - filename length is 2 bytes long (bytes 26-27)
-	int namelength = tempbuffer[26]; // filename length starts 26 bytes in
-
-	firstFilename = &tempbuffer[30]; // first filename of a ZIP starts 31 bytes in
-	firstFilename[namelength] = 0; // truncate at filename length
+		if(namelength > 0 && namelength < 200) // the filename is a reasonable length
+		{
+			firstFilename = &tempbuffer[30]; // first filename of a ZIP starts 31 bytes in
+			firstFilename[namelength] = 0; // truncate at filename length
+		}
+		else
+		{
+			WaitPrompt("Error - Invalid ZIP file!");
+		}
+	}
 
 	return firstFilename;
 }
@@ -264,6 +266,7 @@ char szerrormsg[][30] = {
    "7z: CRC Error",
    "7z: Not implemented",
    "7z: Fail",
+   "7z: Data read failure",
    "7z: Archive error",
    "7z: Dictionary too large",
 };
@@ -312,9 +315,11 @@ void SzDisplayError(SZ_RESULT res)
 }
 
 // function used by the 7zip SDK to read data from SD/USB/DVD/SMB
-
 SZ_RESULT SzFileReadImp(void *object, void **buffer, size_t maxRequiredSize, size_t *processedSize)
 {
+	int seekok = 0;
+	int sizeread = 0;
+
 	// the void* object is a SzFileInStream
 	SzFileInStream *s = (SzFileInStream *) object;
 
@@ -327,18 +332,17 @@ SZ_RESULT SzFileReadImp(void *object, void **buffer, size_t maxRequiredSize, siz
 	// read data
 	switch (szMethod)
 	{
-		case METHOD_SD:
-		case METHOD_USB:
-			fseek(fatfile, offset, SEEK_SET);
-			fread(sz_buffer, 1, maxRequiredSize, fatfile);
-			break;
 		case METHOD_DVD:
-			dvd_safe_read(sz_buffer, maxRequiredSize, offset);
+			sizeread = dvd_safe_read(sz_buffer, maxRequiredSize, offset);
 			break;
-		case METHOD_SMB:
-			SMB_ReadFile(sz_buffer, maxRequiredSize, offset, smbfile);
+		default:
+			seekok = fseek(file, offset, SEEK_SET);
+			sizeread = fread(sz_buffer, 1, maxRequiredSize, file);
 			break;
 	}
+
+	if(seekok != 0 || sizeread <= 0)
+		return SZE_FAILREAD;
 
 	*buffer = sz_buffer;
 	*processedSize = maxRequiredSize;
@@ -346,7 +350,7 @@ SZ_RESULT SzFileReadImp(void *object, void **buffer, size_t maxRequiredSize, siz
 
 	if(maxRequiredSize > 1024) // only show progress for large reads
 		// this isn't quite right, but oh well
-		ShowProgress ((char *)"Loading...", s->pos, filelist[selection].length);
+		ShowProgress ("Loading...", s->pos, filelist[selection].length);
 
 	return SZ_OK;
 }
@@ -359,10 +363,7 @@ SZ_RESULT SzFileSeekImp(void *object, CFileSize pos)
 
 	// check if the 7z SDK wants to move the pointer to somewhere after the EOF
 	if (pos >= s->len)
-	{
-		WaitPrompt((char *) "7z: Error - attempt to read after EOF!");
 		return SZE_FAIL;
-	}
 
 	// save new position and return
 	s->pos = pos;
@@ -391,13 +392,9 @@ int SzParse(char * filepath, int method)
 	{
 		case METHOD_SD:
 		case METHOD_USB:
-			fatfile = fopen (filepath, "rb");
-			if(!fatfile)
-				return 0;
-			break;
 		case METHOD_SMB:
-			smbfile = OpenSMBFile(filepath);
-			if(!smbfile)
+			file = fopen (filepath, "rb");
+			if(!file)
 				return 0;
 			break;
 	}
@@ -405,7 +402,7 @@ int SzParse(char * filepath, int method)
 	// set szMethod to current chosen load method
 	szMethod = method;
 
-	// set handler functions for reading data from FAT/SMB/DVD
+	// set handler functions for reading data from SD/USB/SMB/DVD
 	SzArchiveStream.InStream.Read = SzFileReadImp;
 	SzArchiveStream.InStream.Seek = SzFileSeekImp;
 
@@ -484,10 +481,8 @@ int SzParse(char * filepath, int method)
 	{
 		case METHOD_SD:
 		case METHOD_USB:
-			fclose(fatfile);
-			break;
 		case METHOD_SMB:
-			SMB_CloseFile (smbfile);
+			fclose(file);
 			break;
 	}
 	return nbfiles;
@@ -521,16 +516,16 @@ int SzExtractFile(int i, unsigned char *buffer)
 	// Unzip the file
 
 	SzRes = SzExtract2(
-		   &SzArchiveStream.InStream,
-		   &SzDb,
-		   i,                      // index of file
-		   &SzBlockIndex,          // index of solid block
-		   &buffer,
-		   &SzBufferSize,
-		   &SzOffset,              // offset of stream for required file in *outBuffer
-		   &SzOutSizeProcessed,    // size of file in *outBuffer
-		   &SzAllocImp,
-		   &SzAllocTempImp);
+		&SzArchiveStream.InStream,
+		&SzDb,
+		i,                      // index of file
+		&SzBlockIndex,          // index of solid block
+		&buffer,
+		&SzBufferSize,
+		&SzOffset,              // offset of stream for required file in *outBuffer
+		&SzOutSizeProcessed,    // size of file in *outBuffer
+		&SzAllocImp,
+		&SzAllocTempImp);
 
 	// close 7Zip archive and free memory
 	SzClose();

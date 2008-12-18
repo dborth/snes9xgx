@@ -45,12 +45,6 @@ DefaultSettings ()
 	GCSettings.smbpwd[19] = 0;
 	GCSettings.smbshare[19] = 0;
 
-	GCSettings.gcip[0] = 0;
-	GCSettings.gwip[0] = 0;
-	GCSettings.mask[0] = 0;
-	GCSettings.smbsvid[0] = 0;
-	GCSettings.smbgcid[0] = 0;
-
 	GCSettings.Superscope = 0;
     GCSettings.Mouse = 0;
 	GCSettings.Justifier = 0;

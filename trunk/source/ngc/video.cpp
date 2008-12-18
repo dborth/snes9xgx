@@ -28,8 +28,6 @@
 /*** Snes9x GFX Buffer ***/
 static unsigned char snes9xgfx[1024 * 512 * 2];
 
-extern unsigned int SMBTimer;
-
 /*** 2D Video ***/
 unsigned int *xfb[2] = { NULL, NULL }; // Double buffered
 int whichfb = 0; // Switch
@@ -309,7 +307,6 @@ copy_to_xfb (u32 arg)
 	}
 
 	FrameTimer++;
-	SMBTimer++;
 }
 
 /****************************************************************************

@@ -327,7 +327,7 @@ SavePrefs (int method, bool silent)
 		return false;
 
 	if (!silent)
-		ShowAction ((char*) "Saving preferences...");
+		ShowAction ("Saving preferences...");
 
 	AllocSaveBuffer ();
 	datasize = preparePrefsData (method);
@@ -339,7 +339,7 @@ SavePrefs (int method, bool silent)
 	if (offset > 0)
 	{
 		if (!silent)
-			WaitPrompt ((char *)"Preferences saved");
+			WaitPrompt ("Preferences saved");
 		return true;
 	}
 	return false;
@@ -376,17 +376,17 @@ LoadPrefsFromMethod (int method)
  ***************************************************************************/
 bool LoadPrefs()
 {
-	ShowAction ((char*) "Loading preferences...");
+	ShowAction ("Loading preferences...");
 	bool prefFound = false;
-	if(ChangeFATInterface(METHOD_SD, SILENT))
+	if(ChangeInterface(METHOD_SD, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_SD);
-	if(!prefFound && ChangeFATInterface(METHOD_USB, SILENT))
+	if(!prefFound && ChangeInterface(METHOD_USB, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_USB);
 	if(!prefFound && TestCard(CARD_SLOTA, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTA);
 	if(!prefFound && TestCard(CARD_SLOTB, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTB);
-	if(!prefFound && ConnectShare (SILENT))
+	if(!prefFound && ChangeInterface(METHOD_SMB, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_SMB);
 
 	return prefFound;

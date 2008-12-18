@@ -19,9 +19,6 @@
 #include <ogcsys.h>
 #include <unistd.h>
 #include <wiiuse/wpad.h>
-#include <sdcard/card_cmn.h>
-#include <sdcard/wiisd_io.h>
-#include <sdcard/card_io.h>
 #include <fat.h>
 
 #ifdef WII_DVD
@@ -76,6 +73,16 @@ extern unsigned int timediffallowed;
  * Shutdown / Reboot / Exit
  ***************************************************************************/
 
+void ExitCleanup()
+{
+	UnmountAllFAT();
+	CloseShare();
+
+#ifdef HW_RVL
+	DI_Close();
+#endif
+}
+
 #ifdef HW_DOL
 	#define PSOSDLOADID 0x7c6000a6
 	int *psoid = (int *) 0x80001800;
@@ -84,9 +91,8 @@ extern unsigned int timediffallowed;
 
 void Reboot()
 {
-	UnmountAllFAT();
+	ExitCleanup();
 #ifdef HW_RVL
-	DI_Close();
     SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 #else
 	#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
@@ -96,10 +102,9 @@ void Reboot()
 
 void ExitToLoader()
 {
-	UnmountAllFAT();
+	ExitCleanup();
 	// Exit to Loader
 	#ifdef HW_RVL
-		DI_Close();
 		exit(0);
 	#else	// gamecube
 		if (psoid[0] == PSOSDLOADID)
@@ -119,8 +124,7 @@ void ResetCB()
 }
 void ShutdownWii()
 {
-	UnmountAllFAT();
-	DI_Close();
+	ExitCleanup();
 	SYS_ResetSystem(SYS_POWEROFF, 0, 0);
 }
 #endif
@@ -218,12 +222,12 @@ emulate ()
 			}
 			else if ( GCSettings.AutoSave == 2 )
 			{
-				if ( WaitPromptChoice ((char*)"Save Freeze State?", (char*)"Don't Save", (char*)"Save") )
+				if ( WaitPromptChoice ("Save Freeze State?", "Don't Save", "Save") )
 					NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
 			}
 			else if ( GCSettings.AutoSave == 3 )
 			{
-				if ( WaitPromptChoice ((char*)"Save SRAM and Freeze State?", (char*)"Don't Save", (char*)"Save") )
+				if ( WaitPromptChoice ("Save SRAM and Freeze State?", "Don't Save", "Save") )
 				{
 					SaveSRAM(GCSettings.SaveMethod, SILENT );
 					NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
@@ -414,12 +418,8 @@ main(int argc, char *argv[])
 		while (1);
 
 	// Initialize libFAT for SD and USB
-	fatInit (8, false);
-
-	#ifdef _DEBUG_VIDEO
-	// log stuff
-	debughandle = fopen ("log.txt", "wb");
-	#endif
+	MountAllFAT();
+	InitDeviceThread();
 
 	// Initialize DVD subsystem (GameCube only)
 	#ifdef HW_DOL
@@ -432,7 +432,7 @@ main(int argc, char *argv[])
 	// Load preferences
 	if(!LoadPrefs())
 	{
-		WaitPrompt((char*) "Preferences reset - check settings!");
+		WaitPrompt("Preferences reset - check settings!");
 		selectedMenu = 1; // change to preferences menu
 	}
 
