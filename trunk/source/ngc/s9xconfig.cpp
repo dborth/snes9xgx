@@ -16,7 +16,7 @@
 #include <gccore.h>
 #include "snes9x.h"
 #include "snes9xGX.h"
-#include "smbop.h"
+#include "input.h"
 
 struct SGCSettings GCSettings;
 
@@ -24,6 +24,8 @@ void
 DefaultSettings ()
 {
 	/************** GameCube/Wii Settings *********************/
+	ResetControls(); // controller button mappings
+
 	GCSettings.LoadMethod = METHOD_AUTO; // Auto, SD, DVD, USB, Network (SMB)
 	GCSettings.SaveMethod = METHOD_AUTO; // Auto, SD, Memory Card Slot A, Memory Card Slot B, USB, Network (SMB)
 	sprintf (GCSettings.LoadFolder,"snes9x/roms"); // Path to game files

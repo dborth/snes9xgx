@@ -19,7 +19,6 @@
 #include "menudraw.h"
 #include "memcardop.h"
 #include "fileop.h"
-#include "smbop.h"
 #include "filesel.h"
 #include "input.h"
 

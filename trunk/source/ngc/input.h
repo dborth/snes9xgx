@@ -31,8 +31,8 @@ extern unsigned int wmmousemap[];
 extern unsigned int gcjustmap[];
 extern unsigned int wmjustmap[];
 
+void ResetControls();
 s8 WPAD_Stick(u8 chan,u8 right, int axis);
-
 void UpdateCursorPosition (int pad, int &pos_x, int &pos_y);
 void decodepad (int pad);
 void NGCReportButtons ();
