@@ -43,61 +43,121 @@
 #define ASSIGN_BUTTON_FALSE( keycode, snescmd ) \
 	  S9xMapButton( keycode, cmd = S9xGetCommandT(snescmd), false)
 
-/*** Gamecube controller Padmap ***/
-unsigned int gcpadmap[] = {
-  PAD_BUTTON_A, PAD_BUTTON_B,
-  PAD_BUTTON_X, PAD_BUTTON_Y,
-  PAD_TRIGGER_L, PAD_TRIGGER_R,
-  PAD_TRIGGER_Z, PAD_BUTTON_START,
-  PAD_BUTTON_UP, PAD_BUTTON_DOWN,
-  PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT
-};
-/*** Wiimote Padmap ***/
-unsigned int wmpadmap[] = {
-  WPAD_BUTTON_B, WPAD_BUTTON_2,
-  WPAD_BUTTON_1, WPAD_BUTTON_A,
-  0x0000, 0x0000,
-  WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
-  WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT,
-  WPAD_BUTTON_UP, WPAD_BUTTON_DOWN
-};
-/*** Classic Controller Padmap ***/
-unsigned int ccpadmap[] = {
-  WPAD_CLASSIC_BUTTON_A, WPAD_CLASSIC_BUTTON_B,
-  WPAD_CLASSIC_BUTTON_X, WPAD_CLASSIC_BUTTON_Y,
-  WPAD_CLASSIC_BUTTON_FULL_L, WPAD_CLASSIC_BUTTON_FULL_R,
-  WPAD_CLASSIC_BUTTON_MINUS, WPAD_CLASSIC_BUTTON_PLUS,
-  WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN,
-  WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT
-};
-/*** Nunchuk + wiimote Padmap ***/
-unsigned int ncpadmap[] = {
-  WPAD_BUTTON_A, WPAD_BUTTON_B,
-  WPAD_NUNCHUK_BUTTON_C, WPAD_NUNCHUK_BUTTON_Z,
-  WPAD_BUTTON_2, WPAD_BUTTON_1,
-  WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
-  WPAD_BUTTON_UP, WPAD_BUTTON_DOWN,
-  WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT
-};
-/*** Superscope : GC controller button mapping ***/
-unsigned int gcscopemap[] = { PAD_TRIGGER_Z, PAD_BUTTON_B,
-  PAD_BUTTON_A, PAD_BUTTON_Y, PAD_BUTTON_X, PAD_BUTTON_START
-};
-/*** Superscope : wiimote button mapping ***/
-unsigned int wmscopemap[] = { WPAD_BUTTON_MINUS, WPAD_BUTTON_B,
-  WPAD_BUTTON_A, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_PLUS
-};
-
 int scopeTurbo = 0; // tracks whether superscope turbo is on or off
+unsigned int gcpadmap[12]; // Gamecube controller Padmap
+unsigned int wmpadmap[12]; // Wiimote Padmap
+unsigned int ccpadmap[12]; // Classic Controller Padmap
+unsigned int ncpadmap[12]; // Nunchuk + wiimote Padmap
+unsigned int gcscopemap[6]; // Superscope : GC controller button mapping
+unsigned int wmscopemap[6]; // Superscope : wiimote button mapping
+unsigned int gcmousemap[2]; // Mouse : GC controller button mapping
+unsigned int wmmousemap[2]; // Mouse : wiimote button mapping
+unsigned int gcjustmap[3]; // Justifier : GC controller button mapping
+unsigned int wmjustmap[3]; // Justifier : wiimote button mapping
 
-/*** Mouse : GC controller button mapping ***/
-unsigned int gcmousemap[] = { PAD_BUTTON_A, PAD_BUTTON_B };
-/*** Mouse : wiimote button mapping ***/
-unsigned int wmmousemap[] = { WPAD_BUTTON_A, WPAD_BUTTON_B };
-/*** Justifier : GC controller button mapping ***/
-unsigned int gcjustmap[] = { PAD_BUTTON_A, PAD_BUTTON_B, PAD_BUTTON_START };
-/*** Justifier : wiimote button mapping ***/
-unsigned int wmjustmap[] = { WPAD_BUTTON_A, WPAD_BUTTON_B, WPAD_BUTTON_PLUS };
+void ResetControls()
+{
+	int i;
+	/*** Gamecube controller Padmap ***/
+	i=0;
+	gcpadmap[i++] = PAD_BUTTON_A;
+	gcpadmap[i++] = PAD_BUTTON_B;
+	gcpadmap[i++] = PAD_BUTTON_X;
+	gcpadmap[i++] = PAD_BUTTON_Y;
+	gcpadmap[i++] = PAD_TRIGGER_L;
+	gcpadmap[i++] = PAD_TRIGGER_R;
+	gcpadmap[i++] = PAD_TRIGGER_Z;
+	gcpadmap[i++] = PAD_BUTTON_START;
+	gcpadmap[i++] = PAD_BUTTON_UP;
+	gcpadmap[i++] = PAD_BUTTON_DOWN;
+	gcpadmap[i++] = PAD_BUTTON_LEFT;
+	gcpadmap[i++] = PAD_BUTTON_RIGHT;
+
+	/*** Wiimote Padmap ***/
+	i=0;
+	wmpadmap[i++] = WPAD_BUTTON_B;
+	wmpadmap[i++] = WPAD_BUTTON_2;
+	wmpadmap[i++] = WPAD_BUTTON_1;
+	wmpadmap[i++] = WPAD_BUTTON_A;
+	wmpadmap[i++] = 0x0000;
+	wmpadmap[i++] = 0x0000;
+	wmpadmap[i++] = WPAD_BUTTON_MINUS;
+	wmpadmap[i++] = WPAD_BUTTON_PLUS;
+	wmpadmap[i++] = WPAD_BUTTON_RIGHT;
+	wmpadmap[i++] = WPAD_BUTTON_LEFT;
+	wmpadmap[i++] = WPAD_BUTTON_UP;
+	wmpadmap[i++] = WPAD_BUTTON_DOWN;
+
+	/*** Classic Controller Padmap ***/
+	i=0;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_A;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_B;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_X;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_Y;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_FULL_L;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_FULL_R;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_MINUS;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_PLUS;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_UP;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_DOWN;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_LEFT;
+	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_RIGHT;
+
+	/*** Nunchuk + wiimote Padmap ***/
+	i=0;
+	ncpadmap[i++] = WPAD_BUTTON_A;
+	ncpadmap[i++] = WPAD_BUTTON_B;
+	ncpadmap[i++] = WPAD_NUNCHUK_BUTTON_C;
+	ncpadmap[i++] = WPAD_NUNCHUK_BUTTON_Z;
+	ncpadmap[i++] = WPAD_BUTTON_2;
+	ncpadmap[i++] = WPAD_BUTTON_1;
+	ncpadmap[i++] = WPAD_BUTTON_MINUS;
+	ncpadmap[i++] = WPAD_BUTTON_PLUS;
+	ncpadmap[i++] = WPAD_BUTTON_UP;
+	ncpadmap[i++] = WPAD_BUTTON_DOWN;
+	ncpadmap[i++] = WPAD_BUTTON_LEFT;
+	ncpadmap[i++] = WPAD_BUTTON_RIGHT;
+
+	/*** Superscope : GC controller button mapping ***/
+	i=0;
+	gcscopemap[i++] = PAD_TRIGGER_Z;
+	gcscopemap[i++] = PAD_BUTTON_B;
+	gcscopemap[i++] = PAD_BUTTON_A;
+	gcscopemap[i++] = PAD_BUTTON_Y;
+	gcscopemap[i++] = PAD_BUTTON_X;
+	gcscopemap[i++] = PAD_BUTTON_START;
+
+	/*** Superscope : wiimote button mapping ***/
+	i=0;
+	wmscopemap[i++] = WPAD_BUTTON_MINUS;
+	wmscopemap[i++] = WPAD_BUTTON_B;
+	wmscopemap[i++] = WPAD_BUTTON_A;
+	wmscopemap[i++] = WPAD_BUTTON_UP;
+	wmscopemap[i++] = WPAD_BUTTON_DOWN;
+	wmscopemap[i++] = WPAD_BUTTON_PLUS;
+
+	/*** Mouse : GC controller button mapping ***/
+	i=0;
+	gcmousemap[i++] = PAD_BUTTON_A;
+	gcmousemap[i++] = PAD_BUTTON_B;
+
+	/*** Mouse : wiimote button mapping ***/
+	i=0;
+	wmmousemap[i++] = WPAD_BUTTON_A;
+	wmmousemap[i++] = WPAD_BUTTON_B;
+
+	/*** Justifier : GC controller button mapping ***/
+	i=0;
+	gcjustmap[i++] = PAD_BUTTON_A;
+	gcjustmap[i++] = PAD_BUTTON_B;
+	gcjustmap[i++] = PAD_BUTTON_START;
+
+	/*** Justifier : wiimote button mapping ***/
+	i=0;
+	wmjustmap[i++] = WPAD_BUTTON_A;
+	wmjustmap[i++] = WPAD_BUTTON_B;
+	wmjustmap[i++] = WPAD_BUTTON_PLUS;
+}
 
 /****************************************************************************
  * WPAD_Stick

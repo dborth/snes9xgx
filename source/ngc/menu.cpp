@@ -746,7 +746,7 @@ ConfigureButtons (u16 ctrlr_type)
 	int ret = 0;
 	int oldmenu = menu;
 	menu = 0;
-	char* menu_title = NULL;
+	char menu_title[50];
 	u32 pressed;
 
 	unsigned int* currentpadmap = 0;
