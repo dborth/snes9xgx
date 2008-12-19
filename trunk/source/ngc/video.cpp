@@ -287,7 +287,7 @@ InitVideoThread ()
 	LWP_InitQueue (&videoblankqueue);
 
 	/*** Create the thread on this queue ***/
-	LWP_CreateThread (&vbthread, vbgetback, NULL, vbstack, TSTACK, 80);
+	LWP_CreateThread (&vbthread, vbgetback, NULL, vbstack, TSTACK, 150);
 }
 
 /****************************************************************************
