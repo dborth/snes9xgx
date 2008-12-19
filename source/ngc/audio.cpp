@@ -92,7 +92,7 @@ InitGCAudio ()
 	AUDIO_SetDSPSampleRate (AI_SAMPLERATE_32KHZ);
 	AUDIO_RegisterDMACallback (GCMixSamples);
 
-	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 80);
+	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 150);
 }
 
 /****************************************************************************
