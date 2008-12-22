@@ -28,8 +28,8 @@
 #include "filesel.h"
 
 bool networkInit = false;
+bool autoNetworkInit = true;
 bool networkShareInit = false;
-bool networkInitHalt = false;
 
 /****************************************************************************
  * InitializeNetwork
@@ -38,36 +38,32 @@ bool networkInitHalt = false;
 
 void InitializeNetwork(bool silent)
 {
-	if(networkInit || networkInitHalt)
+	// stop if we're already initialized, or if auto-init has failed before
+	// in which case, manual initialization is required
+	if(networkInit || !autoNetworkInit)
 		return;
 
 	if(!silent)
 		ShowAction ("Initializing network...");
 
-	s32 result;
+	char ip[16];
+	s32 initResult = if_config(ip, NULL, NULL, true);
 
-	while ((result = net_init()) == -EAGAIN);
-
-	if (result >= 0)
+	if(initResult == 0)
 	{
-		char myIP[16];
-
-		if (if_config(myIP, NULL, NULL, true) < 0)
-		{
-			networkInitHalt = true; // do not attempt a reconnection again
-
-			if(!silent)
-				WaitPrompt("Error reading IP address.");
-		}
-		else
-		{
-			networkInit = true;
-		}
+		networkInit = true;
 	}
 	else
 	{
+		// do not automatically attempt a reconnection
+		autoNetworkInit = false;
+
 		if(!silent)
-			WaitPrompt("Unable to initialize network.");
+		{
+			char msg[150];
+			sprintf(msg, "Unable to initialize network (Error #: %i)", initResult);
+			WaitPrompt(msg);
+		}
 	}
 }
 
@@ -90,14 +86,32 @@ ConnectShare (bool silent)
 	return false;
 	#endif
 
-	// check that all parameter have been set
-	if(strlen(GCSettings.smbuser) == 0 ||
-		strlen(GCSettings.smbpwd) == 0 ||
-		strlen(GCSettings.smbshare) == 0 ||
-		strlen(GCSettings.smbip) == 0)
+	int chkU = (strlen(GCSettings.smbuser) > 0) ? 0:1;
+	int chkP = (strlen(GCSettings.smbpwd) > 0) ? 0:1;
+	int chkS = (strlen(GCSettings.smbshare) > 0) ? 0:1;
+	int chkI = (strlen(GCSettings.smbip) > 0) ? 0:1;
+
+	// check that all parameters have been set
+	if(chkU + chkP + chkS + chkI > 0)
 	{
 		if(!silent)
-			WaitPrompt("Invalid network settings. Check settings.xml.");
+		{
+			char msg[50];
+			char msg2[100];
+			if(chkU + chkP + chkS + chkI > 1) // more than one thing is wrong
+				sprintf(msg, "Check settings.xml.");
+			else if(chkU)
+				sprintf(msg, "Username is blank.");
+			else if(chkP)
+				sprintf(msg, "Password is blank.");
+			else if(chkS)
+				sprintf(msg, "Share name is blank.");
+			else if(chkI)
+				sprintf(msg, "Share IP is blank.");
+
+			sprintf(msg2, "Invalid network settings - %s", msg);
+			WaitPrompt(msg2);
+		}
 		return false;
 	}
 

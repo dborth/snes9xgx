@@ -120,7 +120,7 @@ NGCFreezeMemBuffer ()
  * Do freeze game for Nintendo Gamecube
  ***************************************************************************/
 int
-NGCFreezeGame (int method, bool8 silent)
+NGCFreezeGame (int method, bool silent)
 {
 	char filepath[1024];
 	int offset = 0; // bytes written (actual)
@@ -130,7 +130,7 @@ NGCFreezeGame (int method, bool8 silent)
 	ShowAction ("Saving...");
 
 	if(method == METHOD_AUTO)
-		method = autoSaveMethod();
+		method = autoSaveMethod(silent);
 
 	if(!MakeFilePath(filepath, FILE_SNAPSHOT, method))
 		return 0;
@@ -152,6 +152,8 @@ NGCFreezeGame (int method, bool8 silent)
 		memcpy (savebuffer, saveicon, woffset);
 
 		// And the freezecomment
+		memset(freezecomment, 0, 64);
+
 		sprintf (freezecomment[0], "%s Freeze", VERSIONSTR);
 		sprintf (freezecomment[1], Memory.ROMName);
 		memcpy (savebuffer + woffset, freezecomment, 64);
@@ -234,7 +236,7 @@ NGCUnFreezeBlock (char *name, uint8 * block, int size)
  * NGCUnfreezeGame
  ***************************************************************************/
 int
-NGCUnfreezeGame (int method, bool8 silent)
+NGCUnfreezeGame (int method, bool silent)
 {
 	char filepath[1024];
 	int offset = 0;
@@ -246,7 +248,7 @@ NGCUnfreezeGame (int method, bool8 silent)
 	ShowAction ("Loading...");
 
     if(method == METHOD_AUTO)
-		method = autoSaveMethod(); // we use 'Save' because snapshot needs R/W
+		method = autoSaveMethod(silent); // we use 'Save' because snapshot needs R/W
 
     if(!MakeFilePath(filepath, FILE_SNAPSHOT, method))
         return 0;
