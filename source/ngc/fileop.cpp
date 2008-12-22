@@ -236,15 +236,15 @@ bool ChangeInterface(int method, bool silent)
 			WaitPrompt ("USB drive not found!");
 		#endif
 	}
-	else if(method == METHOD_SMB)
-	{
-		sprintf(rootdir, "smb:/");
-		mounted = ConnectShare(NOTSILENT);
-	}
 	else if(method == METHOD_DVD)
 	{
 		sprintf(rootdir, "/");
-		mounted = MountDVD(NOTSILENT);
+		mounted = MountDVD(silent);
+	}
+	else if(method == METHOD_SMB)
+	{
+		sprintf(rootdir, "smb:/");
+		mounted = ConnectShare(silent);
 	}
 
 	return mounted;

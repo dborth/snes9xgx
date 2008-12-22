@@ -95,19 +95,21 @@ int autoLoadMethod()
 {
 	ShowAction ("Attempting to determine load method...");
 
+	int method = 0;
+
 	if(ChangeInterface(METHOD_SD, SILENT))
-		return METHOD_SD;
+		method = METHOD_SD;
 	else if(ChangeInterface(METHOD_USB, SILENT))
-		return METHOD_USB;
+		method = METHOD_USB;
 	else if(ChangeInterface(METHOD_DVD, SILENT))
-		return METHOD_DVD;
+		method = METHOD_DVD;
 	else if(ChangeInterface(METHOD_SMB, SILENT))
-		return METHOD_SMB;
+		method = METHOD_SMB;
 	else
-	{
 		WaitPrompt("Unable to auto-determine load method!");
-		return 0; // no method found
-	}
+
+	GCSettings.LoadMethod = method; // save method found for later use
+	return method;
 }
 
 /****************************************************************************
@@ -115,25 +117,28 @@ int autoLoadMethod()
 * Auto-determines and sets the save method
 * Returns method set
 ****************************************************************************/
-int autoSaveMethod()
+int autoSaveMethod(bool silent)
 {
-	ShowAction ("Attempting to determine save method...");
+	if(!silent)
+		ShowAction ("Attempting to determine save method...");
+
+	int method = 0;
 
 	if(ChangeInterface(METHOD_SD, SILENT))
-		return METHOD_SD;
+		method = METHOD_SD;
 	else if(ChangeInterface(METHOD_USB, SILENT))
-		return METHOD_USB;
+		method = METHOD_USB;
 	else if(TestCard(CARD_SLOTA, SILENT))
-		return METHOD_MC_SLOTA;
+		method = METHOD_MC_SLOTA;
 	else if(TestCard(CARD_SLOTB, SILENT))
-		return METHOD_MC_SLOTB;
+		method = METHOD_MC_SLOTB;
 	else if(ChangeInterface(METHOD_SMB, SILENT))
-		return METHOD_SMB;
-	else
-	{
+		method = METHOD_SMB;
+	else if(!silent)
 		WaitPrompt("Unable to auto-determine save method!");
-		return 0; // no method found
-	}
+
+	GCSettings.SaveMethod = method; // save method found for later use
+	return method;
 }
 
 /****************************************************************************

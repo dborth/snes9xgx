@@ -49,6 +49,7 @@ preparesavedata (int method)
 	}
 
 	// Copy in the sramcomments
+	memset(sramcomment, 0, 64);
 	sprintf (sramcomment[0], "%s SRAM", VERSIONSTR);
 	sprintf (sramcomment[1], Memory.ROMName);
 	memcpy (savebuffer + offset, sramcomment, 64);
@@ -145,7 +146,7 @@ LoadSRAM (int method, bool silent)
 	int offset = 0;
 
 	if(method == METHOD_AUTO)
-		method = autoSaveMethod(); // we use 'Save' because SRAM needs R/W
+		method = autoSaveMethod(silent); // we use 'Save' because SRAM needs R/W
 
 	if(!MakeFilePath(filepath, FILE_SRAM, method))
 		return 0;
@@ -187,7 +188,7 @@ SaveSRAM (int method, bool silent)
 	int offset = 0;
 
 	if(method == METHOD_AUTO)
-		method = autoSaveMethod();
+		method = autoSaveMethod(silent);
 
 	if(!MakeFilePath(filepath, FILE_SRAM, method))
 		return false;

@@ -337,37 +337,34 @@ main(int argc, char *argv[])
 
 	int selectedMenu = -1;
 
+	InitDeviceThread();
+
 	// Initialise video
-	InitGCVideo ();
+	InitGCVideo();
 
 	// Controllers
+	PAD_Init ();
+
 	#ifdef HW_RVL
 	WPAD_Init();
 	// read wiimote accelerometer and IR data
 	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
 	WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
-	#endif
-
-	PAD_Init ();
 
 	// Wii Power/Reset buttons
-	#ifdef HW_RVL
 	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
 	SYS_SetPowerCallback(ShutdownCB);
 	SYS_SetResetCallback(ResetCB);
 	#endif
-
-	// Audio
-	AUDIO_Init (NULL);
-
-	// GC Audio RAM (for ROM and backdrop storage)
-	AR_Init (NULL, 0);
 
 	// GameCube only - Injected ROM
 	// Before going any further, let's copy any injected ROM image
 	// We'll put it in ARAM for safe storage
 
 	#ifdef HW_DOL
+	// GC Audio RAM (for ROM and backdrop storage)
+	AR_Init (NULL, 0);
+
 	int *romptr = (int *) 0x81000000; // location of injected rom
 
 	if (memcmp ((char *) romptr, "SNESROM0", 8) == 0)
@@ -386,6 +383,8 @@ main(int argc, char *argv[])
 	}
 	#endif
 
+	unpackbackdrop();
+
 	// Initialise freetype font system
 	if (FT_Init ())
 	{
@@ -393,7 +392,8 @@ main(int argc, char *argv[])
 		while (1);
 	}
 
-	unpackbackdrop ();
+	// Audio
+	AUDIO_Init (NULL);
 
 	// Set defaults
 	DefaultSettings ();
@@ -427,7 +427,6 @@ main(int argc, char *argv[])
 
 	// Initialize libFAT for SD and USB
 	MountAllFAT();
-	InitDeviceThread();
 
 	// Initialize DVD subsystem (GameCube only)
 	#ifdef HW_DOL

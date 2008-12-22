@@ -122,6 +122,7 @@ preparePrefsData (int method)
 		memcpy (savebuffer, saveicon, offset);
 
 		// And the comments
+		memset(prefscomment, 0, 64);
 		sprintf (prefscomment[0], "%s Prefs", VERSIONSTR);
 		sprintf (prefscomment[1], "Preferences");
 		memcpy (savebuffer + offset, prefscomment, 64);
@@ -319,7 +320,7 @@ SavePrefs (bool silent)
 
 	// We'll save using the first available method (probably SD) since this
 	// is the method preferences will be loaded from by default
-	int method = autoSaveMethod();
+	int method = autoSaveMethod(silent);
 
 	if(!MakeFilePath(filepath, FILE_PREF, method))
 		return false;
