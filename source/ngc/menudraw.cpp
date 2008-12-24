@@ -232,6 +232,9 @@ Credits ()
 	else
 		ypos += 32;
 
+	setfontsize(16);
+	DrawText (-1, ypos += 30, "Official Site: http://code.google.com/p/snes9x-gx/");
+	ypos += 20;
 	setfontsize (20);
 	DrawText (-1, ypos += 30, "Technical");
 
@@ -257,7 +260,7 @@ Credits ()
 	DrawText (-1, ypos += 30, "TehSkeen users");
 
 	setfontsize (12);
-	DrawText (-1, ypos += 75, "Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
+	DrawText (-1, ypos += 45, "Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
 	DrawText (-1, ypos += 15, "This software is open source and may be copied, distributed, or modified");
 	DrawText (-1, ypos += 15, "under the terms of the GNU General Public License (GPL) Version 2.");
 

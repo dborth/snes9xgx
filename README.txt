@@ -10,7 +10,7 @@
 ­———————————————————————————————————————————————————————————————————————•ßrK•
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                       SNES9X GX 007                           ·oø×O0|
+|0O×øo·                       SNES9X GX 008                           ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
@@ -40,6 +40,17 @@ Tantric. The project is currently being maintained by michniewski and Tantric.
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                         UPDATE HISTORY                        ·oø×O0|
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+
+[What's New 008 - December 24, 2008]
+* Fixed unstable SD card access
+* Proper SD/USB hotswap (Wii only)
+* Auto-update feature (Wii only)
+* Rewritten SMB access - speed boost, NTLM now supported (Wii only)
+* Improved file access code
+* Resetting preferences now resets controls
+* Fixed "invalid file size" error on smaller games (eg: Space Invaders)
+* Fixed hangup in Super Mario RPG
+* Minor bug fixes
 
 [What's New 007 - November 19, 2008]
 
