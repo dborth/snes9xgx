@@ -8,7 +8,7 @@
  *
  * fileop.cpp
  *
- * FAT File operations
+ * File operations
  ***************************************************************************/
 
 #include <gccore.h>
@@ -25,10 +25,10 @@
 
 #include "snes9xGX.h"
 #include "fileop.h"
-#include "smbop.h"
+#include "networkop.h"
 #include "dvd.h"
 #include "memcardop.h"
-#include "unzip.h"
+#include "gcunzip.h"
 #include "video.h"
 #include "menudraw.h"
 #include "filesel.h"
@@ -83,6 +83,7 @@ devicecallback (void *arg)
 		}
 
 		InitializeNetwork(SILENT);
+		UpdateCheck();
 #else
 		if(isMounted[METHOD_SD_SLOTA])
 		{
@@ -103,7 +104,6 @@ devicecallback (void *arg)
 #endif
 		usleep(500000); // suspend thread for 1/2 sec
 	}
-
 	return NULL;
 }
 
@@ -126,11 +126,11 @@ InitDeviceThread()
 void UnmountAllFAT()
 {
 #ifdef HW_RVL
-	fatUnmount("sd");
-	fatUnmount("usb");
+	fatUnmount("sd:/");
+	fatUnmount("usb:/");
 #else
-	fatUnmount("carda");
-	fatUnmount("cardb");
+	fatUnmount("carda:/");
+	fatUnmount("cardb:/");
 #endif
 }
 
@@ -179,7 +179,7 @@ bool MountFAT(int method)
 	if(unmountRequired[method])
 	{
 		unmountRequired[method] = false;
-		fatUnmount(name);
+		fatUnmount(rootdir);
 		disc->shutdown();
 	}
 	if(!isMounted[method])
@@ -505,4 +505,3 @@ u32 SaveFile(char filepath[], u32 datasize, int method, bool silent)
 {
 	return SaveFile((char *)savebuffer, filepath, datasize, method, silent);
 }
-

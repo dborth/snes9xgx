@@ -24,11 +24,11 @@ extern "C" {
 
 #include "snes9xGX.h"
 #include "dvd.h"
-#include "smbop.h"
+#include "networkop.h"
 #include "fileop.h"
 #include "video.h"
 #include "menudraw.h"
-#include "unzip.h"
+#include "gcunzip.h"
 
 /*
   * PKWare Zip Header - adopted into zip standard

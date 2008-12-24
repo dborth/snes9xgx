@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 #include "menudraw.h"
-#include "unzip.h"
+#include "gcunzip.h"
 #include "filesel.h"
 #include "snes9xGX.h"
 
