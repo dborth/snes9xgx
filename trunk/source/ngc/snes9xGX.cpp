@@ -43,7 +43,7 @@ extern "C" {
 #include "snes9xGX.h"
 #include "aram.h"
 #include "dvd.h"
-#include "smbop.h"
+#include "networkop.h"
 #include "video.h"
 #include "menudraw.h"
 #include "s9xconfig.h"
@@ -75,6 +75,7 @@ extern unsigned int timediffallowed;
 
 void ExitCleanup()
 {
+	LWP_SuspendThread (devicethread);
 	UnmountAllFAT();
 	CloseShare();
 

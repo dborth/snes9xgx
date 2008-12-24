@@ -32,6 +32,7 @@
 #include "aram.h"
 #include "images/gfx_bg.h"
 #include "input.h"
+#include "networkop.h"
 
 /*** Globals ***/
 FT_Library ftlibrary;
@@ -490,7 +491,9 @@ DrawMenu (char items[][50], const char *title, int maxitems, int selected, int f
 	}
 
 	setfontsize (12);
-	DrawText (510, screenheight - 20, (char *)VERSIONSTR);
+	char versionText[50];
+	sprintf(versionText, "%s %s", APPNAME, APPVERSION);
+	DrawText (510, screenheight - 20, versionText);
 
 	// Draw menu items
 
@@ -570,6 +573,14 @@ RunMenu (char items[][50], int maxitems, const char *title, int fontsize, int x)
     while (quit == 0)
     {
 		#ifdef HW_RVL
+		if(updateFound)
+		{
+			updateFound = WaitPromptChoice("An update is available!", "Update later", "Update now");
+			if(updateFound)
+				if(DownloadUpdate())
+					ExitToLoader();
+		}
+
 		if(ShutdownRequested)
 			ShutdownWii();
 		#endif
@@ -586,7 +597,6 @@ RunMenu (char items[][50], int maxitems, const char *title, int fontsize, int x)
 		wm_ay = WPAD_Stick (0,0, 1);
 		wp = WPAD_ButtonsDown (0);
 #endif
-
 
 		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
 

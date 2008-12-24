@@ -18,9 +18,8 @@ include $(DEVKITPPC)/gamecube_rules
 TARGET		:=	snes9xgx-gc
 TARGETDIR   :=  executables
 BUILD		:=	build_gc
-SOURCES		:=	source/snes9x source/ngc source/sz
-DATA		:=	data  
-INCLUDES	:=	source/snes9x source/ngc
+SOURCES		:=	source/snes9x source/ngc source/sz source/unzip
+INCLUDES	:=	source/snes9x source/ngc source/unzip
 
 #---------------------------------------------------------------------------------
 # options for code generation

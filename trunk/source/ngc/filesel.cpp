@@ -34,11 +34,11 @@ extern "C" {
 #include "menudraw.h"
 #include "video.h"
 #include "aram.h"
-#include "smbop.h"
+#include "networkop.h"
 #include "fileop.h"
 #include "memcardop.h"
 #include "input.h"
-#include "unzip.h"
+#include "gcunzip.h"
 
 int offset;
 int selection;
@@ -108,7 +108,8 @@ int autoLoadMethod()
 	else
 		WaitPrompt("Unable to auto-determine load method!");
 
-	GCSettings.LoadMethod = method; // save method found for later use
+	if(GCSettings.LoadMethod == METHOD_AUTO)
+		GCSettings.LoadMethod = method; // save method found for later use
 	return method;
 }
 
@@ -137,7 +138,8 @@ int autoSaveMethod(bool silent)
 	else if(!silent)
 		WaitPrompt("Unable to auto-determine save method!");
 
-	GCSettings.SaveMethod = method; // save method found for later use
+	if(GCSettings.SaveMethod == METHOD_AUTO)
+		GCSettings.SaveMethod = method; // save method found for later use
 	return method;
 }
 

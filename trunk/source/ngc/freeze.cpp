@@ -154,7 +154,7 @@ NGCFreezeGame (int method, bool silent)
 		// And the freezecomment
 		memset(freezecomment, 0, 64);
 
-		sprintf (freezecomment[0], "%s Freeze", VERSIONSTR);
+		sprintf (freezecomment[0], "%s Freeze", APPVERSION);
 		sprintf (freezecomment[1], Memory.ROMName);
 		memcpy (savebuffer + woffset, freezecomment, 64);
 		woffset += 64;

@@ -50,7 +50,7 @@ preparesavedata (int method)
 
 	// Copy in the sramcomments
 	memset(sramcomment, 0, 64);
-	sprintf (sramcomment[0], "%s SRAM", VERSIONSTR);
+	sprintf (sramcomment[0], "%s SRAM", APPNAME);
 	sprintf (sramcomment[1], Memory.ROMName);
 	memcpy (savebuffer + offset, sramcomment, 64);
 	offset += 64;

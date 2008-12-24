@@ -15,6 +15,7 @@
 #define _NGCFILESEL_
 
 #include <unistd.h>
+#include <gccore.h>
 
 #define SAVEBUFFERSIZE (512 * 1024)
 #define MAXJOLIET 255

@@ -3036,6 +3036,8 @@ void CMemory::ApplyROMFixes (void)
 		match_na("PRIMAL RAGE")     || // Primal Rage
 		match_na("CLAY FIGHTER")    || // Clay Fighter
 		match_na("ClayFighter 2")   || // Clay Fighter 2
+		match_id("ARWJ") 			|| // Super Mario RPG (J)
+		match_id("ARWE")			|| // Super Mario RPG (U)
 		match_na("WeaponLord")      || // Weapon Lord
 		match_nn("WAR 2410")        || // War 2410
 		match_id("ARF")             || // Star Ocean

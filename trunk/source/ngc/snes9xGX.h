@@ -14,12 +14,11 @@
 #ifndef _SNES9XGX_H_
 #define _SNES9XGX_H_
 
-#include <gccore.h>
 #include "snes9x.h"
 
-#define VERSIONNUM "007"
-#define VERSIONSTR "Snes9x GX 007"
-#define PREF_FILE_NAME "settings.xml"
+#define APPNAME 		"Snes9x GX"
+#define APPVERSION 		"008"
+#define PREF_FILE_NAME 	"settings.xml"
 
 #define NOTSILENT 0
 #define SILENT 1
@@ -73,6 +72,7 @@ struct SGCSettings{
 void ExitToLoader();
 void Reboot();
 void ShutdownWii();
+void ReloadApp();
 extern struct SGCSettings GCSettings;
 extern int ConfigRequested;
 extern int ShutdownRequested;

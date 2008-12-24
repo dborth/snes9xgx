@@ -5,14 +5,12 @@
  * Michniewski 2008
  * Tantric September 2008
  *
- * unzip.h
+ * gcunzip.h
  *
  * File unzip routines
  ****************************************************************************/
-#ifndef _UNZIP_
-#define _UNZIP_
-
-#include <smb.h>
+#ifndef _GCUNZIP_H_
+#define _GCUNZIP_H_
 
 extern int IsZipFile (char *buffer);
 char * GetFirstZipFilename(int method);

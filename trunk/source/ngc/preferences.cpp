@@ -123,7 +123,7 @@ preparePrefsData (int method)
 
 		// And the comments
 		memset(prefscomment, 0, 64);
-		sprintf (prefscomment[0], "%s Prefs", VERSIONSTR);
+		sprintf (prefscomment[0], "%s Prefs", APPNAME);
 		sprintf (prefscomment[1], "Preferences");
 		memcpy (savebuffer + offset, prefscomment, 64);
 		offset += 64;
@@ -133,7 +133,8 @@ preparePrefsData (int method)
 	mxmlSetWrapMargin(0); // disable line wrapping
 
 	data = mxmlNewElement(xml, "file");
-	mxmlElementSetAttr(data, "version",VERSIONSTR);
+	mxmlElementSetAttr(data, "app",APPNAME);
+	mxmlElementSetAttr(data, "version",APPVERSION);
 
 	createXMLSection("File", "File Settings");
 
@@ -188,11 +189,11 @@ preparePrefsData (int method)
  * Load XML elements into variables for an individual variable
  ***************************************************************************/
 
-void loadXMLSetting(char * var, const char * name)
+void loadXMLSetting(char * var, const char * name, int maxsize)
 {
 	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
 	if(item)
-		sprintf(var, "%s", mxmlElementGetAttr(item, "value"));
+		snprintf(var, maxsize, "%s", mxmlElementGetAttr(item, "value"));
 }
 void loadXMLSetting(int * var, const char * name)
 {
@@ -270,17 +271,17 @@ decodePrefsData (int method)
 	loadXMLSetting(&GCSettings.AutoSave, "AutoSave");
 	loadXMLSetting(&GCSettings.LoadMethod, "LoadMethod");
 	loadXMLSetting(&GCSettings.SaveMethod, "SaveMethod");
-	loadXMLSetting(GCSettings.LoadFolder, "LoadFolder");
-	loadXMLSetting(GCSettings.SaveFolder, "SaveFolder");
-	loadXMLSetting(GCSettings.CheatFolder, "CheatFolder");
+	loadXMLSetting(GCSettings.LoadFolder, "LoadFolder", sizeof(GCSettings.LoadFolder));
+	loadXMLSetting(GCSettings.SaveFolder, "SaveFolder", sizeof(GCSettings.SaveFolder));
+	loadXMLSetting(GCSettings.CheatFolder, "CheatFolder", sizeof(GCSettings.CheatFolder));
 	loadXMLSetting(&GCSettings.VerifySaves, "VerifySaves");
 
 	// Network Settings
 
-	loadXMLSetting(GCSettings.smbip, "smbip");
-	loadXMLSetting(GCSettings.smbshare, "smbshare");
-	loadXMLSetting(GCSettings.smbuser, "smbuser");
-	loadXMLSetting(GCSettings.smbpwd, "smbpwd");
+	loadXMLSetting(GCSettings.smbip, "smbip", sizeof(GCSettings.smbip));
+	loadXMLSetting(GCSettings.smbshare, "smbshare", sizeof(GCSettings.smbshare));
+	loadXMLSetting(GCSettings.smbuser, "smbuser", sizeof(GCSettings.smbuser));
+	loadXMLSetting(GCSettings.smbpwd, "smbpwd", sizeof(GCSettings.smbpwd));
 
 	// Emulation Settings
 
