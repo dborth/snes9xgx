@@ -411,8 +411,6 @@ void LoadPatch(int method)
 	int patchtype;
 	char patchpath[3][512];
 
-	ShowAction("Loading patch...");
-
 	AllocSaveBuffer ();
 
 	memset(patchpath, 0, sizeof(patchpath));
@@ -430,6 +428,7 @@ void LoadPatch(int method)
 
 	if(patchsize > 0)
 	{
+		ShowAction("Loading patch...");
 		// create memory file
 		MFILE * mf = memfopen((char *)savebuffer, patchsize);
 
