@@ -2930,7 +2930,7 @@ void S9xSuperFXExec ()
 	    memcpy(avReg,SuperFX.pvRegisters,0x40);
 
 	    /* Print the pipe string */
-	    printf(tmp);
+	    //printf(tmp);
 
 	    /* Execute the instruction in the pipe */
 	    vPipe = FxPipe();
@@ -2944,14 +2944,14 @@ void S9xSuperFXExec ()
 		uint32 r2 = (uint32)(SuperFX.pvRegisters[i*2]) | (((uint32)SuperFX.pvRegisters[(i*2)+1])<<8);
 		if(i==15)
 		    a = OPCODE_BYTES(vPipe);
-		if(((r1+a)&0xffff) != r2)
-		    printf(" r%d=$%04x",i,r2);
+		//if(((r1+a)&0xffff) != r2)
+		//    printf(" r%d=$%04x",i,r2);
 	    }
 	    {
 		/* Check SFR */
 		uint32 r1 = ((uint32)avReg[0x30]) | (((uint32)avReg[0x31])<<8);
 		uint32 r2 = (uint32)(SuperFX.pvRegisters[0x30]) | (((uint32)SuperFX.pvRegisters[0x31])<<8);
-		if((r1&(1<<1)) != (r2&(1<<1)))
+		/*if((r1&(1<<1)) != (r2&(1<<1)))
 		    printf(" Z=%d",(uint32)(!!(r2&(1<<1))));
 		if((r1&(1<<2)) != (r2&(1<<2)))
 		    printf(" CY=%d",(uint32)(!!(r2&(1<<2))));
@@ -2974,47 +2974,47 @@ void S9xSuperFXExec ()
 		if((r1&(1<<12)) != (r2&(1<<12)))
 		    printf(" B=%d",(uint32)(!!(r2&(1<<12))));
 		if((r1&(1<<15)) != (r2&(1<<15)))
-		    printf(" IRQ=%d",(uint32)(!!(r2&(1<<15))));
+		    printf(" IRQ=%d",(uint32)(!!(r2&(1<<15))));*/
 	    }
 	    {
 		/* Check PBR */
 		uint32 r1 = ((uint32)avReg[0x34]);
 		uint32 r2 = (uint32)(SuperFX.pvRegisters[0x34]);
-		if(r1 != r2)
-		    printf(" PBR=$%02x",r2);
+		//if(r1 != r2)
+		//    printf(" PBR=$%02x",r2);
 	    }
 	    {
 		/* Check ROMBR */
 		uint32 r1 = ((uint32)avReg[0x36]);
 		uint32 r2 = (uint32)(SuperFX.pvRegisters[0x36]);
-		if(r1 != r2)
-		    printf(" ROMBR=$%02x",r2);
+		//if(r1 != r2)
+		//    printf(" ROMBR=$%02x",r2);
 	    }
 	    {
 		/* Check RAMBR */
 		uint32 r1 = ((uint32)avReg[0x3c]);
 		uint32 r2 = (uint32)(SuperFX.pvRegisters[0x3c]);
-		if(r1 != r2)
-		    printf(" RAMBR=$%02x",r2);
+		//if(r1 != r2)
+		//    printf(" RAMBR=$%02x",r2);
 	    }
 	    {
 		/* Check CBR */
 		uint32 r1 = ((uint32)avReg[0x3e]) | (((uint32)avReg[0x3f])<<8);
 		uint32 r2 = (uint32)(SuperFX.pvRegisters[0x3e]) | (((uint32)SuperFX.pvRegisters[0x3f])<<8);
-		if(r1 != r2)
-		    printf(" CBR=$%04x",r2);
+		//if(r1 != r2)
+		//    printf(" CBR=$%04x",r2);
 	    }
 	    {
 		/* Check COLR */
-		if(vColr != FxGetColorRegister())
-		    printf(" COLR=$%02x",FxGetColorRegister());
+		//if(vColr != FxGetColorRegister())
+		//    printf(" COLR=$%02x",FxGetColorRegister());
 	    }
 	    {
 		/* Check POR */
-		if(vPor != FxGetPlotOptionRegister())
-		    printf(" POR=$%02x",FxGetPlotOptionRegister());
+		//if(vPor != FxGetPlotOptionRegister())
+		//   printf(" POR=$%02x",FxGetPlotOptionRegister());
 	    }
-	    printf ("\n");
+	    //printf ("\n");
 	}
 	S9xExit ();
     }
@@ -3024,7 +3024,7 @@ void S9xSuperFXExec ()
 		   (Memory.FillRAM [0x301f] << 8) +
 		   (Memory.FillRAM [0x301e] << 0);
 
-printf ("%06x: %d\n", t, FxEmulate (2000000));
+//printf ("%06x: %d\n", t, FxEmulate (2000000));
 //	FxEmulate (2000000);
     }
 #if 0

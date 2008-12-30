@@ -812,7 +812,7 @@ void S9xSetST010(uint32 Address, uint8 Byte)
 			}
 
 		default:
-			printf("Unknown Op\n");
+			//printf("Unknown Op\n");
 			break;
 		}
 

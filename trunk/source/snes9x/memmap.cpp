@@ -1655,9 +1655,9 @@ void CMemory::ParseSNESHeader (uint8 *RomHeader)
 
 	if (bs)
 	{
-		if (!(((RomHeader[0x29] & 0x20) && CalculatedSize <  0x100000) ||
+		/*if (!(((RomHeader[0x29] & 0x20) && CalculatedSize <  0x100000) ||
 			 (!(RomHeader[0x29] & 0x20) && CalculatedSize == 0x100000)))
-			printf("BS: Size mismatch\n");
+			printf("BS: Size mismatch\n");*/
 
 		// FIXME
 		int	p = 0;
@@ -2385,7 +2385,7 @@ void CMemory::Map_Initialize (void)
 
 void CMemory::Map_LoROMMap (void)
 {
-	printf("Map_LoROMMap\n");
+	//printf("Map_LoROMMap\n");
 	map_System();
 
 	map_lorom(0x00, 0x3f, 0x8000, 0xffff, CalculatedSize);
@@ -2413,7 +2413,7 @@ void CMemory::Map_LoROMMap (void)
 
 void CMemory::Map_NoMAD1LoROMMap (void)
 {
-	printf("Map_NoMAD1LoROMMap\n");
+	//printf("Map_NoMAD1LoROMMap\n");
 	map_System();
 
 	map_lorom(0x00, 0x3f, 0x8000, 0xffff, CalculatedSize);
@@ -2432,7 +2432,7 @@ void CMemory::Map_NoMAD1LoROMMap (void)
 void CMemory::Map_JumboLoROMMap (void)
 {
 	// XXX: Which game uses this?
-	printf("Map_JumboLoROMMap\n");
+	//printf("Map_JumboLoROMMap\n");
 	map_System();
 
 	map_lorom_offset(0x00, 0x3f, 0x8000, 0xffff, CalculatedSize - 0x400000, 0x400000);
@@ -2449,7 +2449,7 @@ void CMemory::Map_JumboLoROMMap (void)
 void CMemory::Map_ROM24MBSLoROMMap (void)
 {
 	// PCB: BSC-1A5M-01, BSC-1A7M-10
-	printf("Map_ROM24MBSLoROMMap\n");
+	//printf("Map_ROM24MBSLoROMMap\n");
 	map_System();
 
 	map_lorom_offset(0x00, 0x1f, 0x8000, 0xffff, 0x100000, 0);
@@ -2465,7 +2465,7 @@ void CMemory::Map_ROM24MBSLoROMMap (void)
 
 void CMemory::Map_SRAM512KLoROMMap (void)
 {
-	printf("Map_SRAM512KLoROMMap\n");
+	//printf("Map_SRAM512KLoROMMap\n");
 	map_System();
 
 	map_lorom(0x00, 0x3f, 0x8000, 0xffff, CalculatedSize);
@@ -2485,7 +2485,7 @@ void CMemory::Map_SRAM512KLoROMMap (void)
 
 void CMemory::Map_SufamiTurboLoROMMap (void)
 {
-	printf("Map_SufamiTurboLoROMMap\n");
+	//printf("Map_SufamiTurboLoROMMap\n");
 	map_System();
 
 	map_lorom_offset(0x00, 0x1f, 0x8000, 0xffff, 0x40000, 0);
@@ -2515,7 +2515,7 @@ void CMemory::Map_SufamiTurboLoROMMap (void)
 void CMemory::Map_SufamiTurboPseudoLoROMMap (void)
 {
 	// for combined images
-	printf("Map_SufamiTurboPseudoLoROMMap\n");
+	//printf("Map_SufamiTurboPseudoLoROMMap\n");
 	map_System();
 
 	map_lorom_offset(0x00, 0x1f, 0x8000, 0xffff, 0x40000, 0);
@@ -2538,7 +2538,7 @@ void CMemory::Map_SufamiTurboPseudoLoROMMap (void)
 
 void CMemory::Map_SuperFXLoROMMap (void)
 {
-	printf("Map_SuperFXLoROMMap\n");
+	//printf("Map_SuperFXLoROMMap\n");
 	map_System();
 
 	// Replicate the first 2Mb of the ROM at ROM + 2MB such that each 32K
@@ -2567,7 +2567,7 @@ void CMemory::Map_SuperFXLoROMMap (void)
 
 void CMemory::Map_SetaDSPLoROMMap (void)
 {
-	printf("Map_SetaDSPLoROMMap\n");
+	//printf("Map_SetaDSPLoROMMap\n");
 	map_System();
 
 	map_lorom(0x00, 0x3f, 0x8000, 0xffff, CalculatedSize);
@@ -2585,7 +2585,7 @@ void CMemory::Map_SetaDSPLoROMMap (void)
 
 void CMemory::Map_SDD1LoROMMap (void)
 {
-	printf("Map_SDD1LoROMMap\n");
+	//printf("Map_SDD1LoROMMap\n");
 	map_System();
 
 	map_lorom(0x00, 0x3f, 0x8000, 0xffff, CalculatedSize);
@@ -2603,7 +2603,7 @@ void CMemory::Map_SDD1LoROMMap (void)
 
 void CMemory::Map_SA1LoROMMap (void)
 {
-	printf("Map_SA1LoROMMap\n");
+	//printf("Map_SA1LoROMMap\n");
 	map_System();
 
 	map_lorom(0x00, 0x3f, 0x8000, 0xffff, CalculatedSize);
@@ -2645,7 +2645,7 @@ void CMemory::Map_SA1LoROMMap (void)
 
 void CMemory::Map_HiROMMap (void)
 {
-	printf("Map_HiROMMap\n");
+	//printf("Map_HiROMMap\n");
 	map_System();
 
 	map_hirom(0x00, 0x3f, 0x8000, 0xffff, CalculatedSize);
@@ -2664,7 +2664,7 @@ void CMemory::Map_HiROMMap (void)
 
 void CMemory::Map_ExtendedHiROMMap (void)
 {
-	printf("Map_ExtendedHiROMMap\n");
+	//printf("Map_ExtendedHiROMMap\n");
 	map_System();
 
 	map_hirom_offset(0x00, 0x3f, 0x8000, 0xffff, CalculatedSize - 0x400000, 0x400000);
@@ -2680,7 +2680,7 @@ void CMemory::Map_ExtendedHiROMMap (void)
 
 void CMemory::Map_SameGameHiROMMap (void)
 {
-	printf("Map_SameGameHiROMMap\n");
+	//printf("Map_SameGameHiROMMap\n");
 	map_System();
 
 	map_hirom_offset(0x00, 0x1f, 0x8000, 0xffff, Multi.cartSizeA, Multi.cartOffsetA);
@@ -2700,7 +2700,7 @@ void CMemory::Map_SameGameHiROMMap (void)
 
 void CMemory::Map_SPC7110HiROMMap (void)
 {
-	printf("Map_SPC7110HiROMMap\n");
+	//printf("Map_SPC7110HiROMMap\n");
 	map_System();
 
 	map_hirom(0x00, 0x3f, 0x8000, 0xffff, CalculatedSize);
@@ -2954,16 +2954,17 @@ void CMemory::ApplyROMFixes (void)
 	if (match_id("AVCJ"))                                      // Rendering Ranger R2
 	{
 		IAPU.OneCycle = (int32) (15.7 * (1 << SNES_APU_ACCURACY));
-		printf("APU OneCycle hack: %d\n", IAPU.OneCycle);
+		//printf("APU OneCycle hack: %d\n", IAPU.OneCycle);
 	}
 
 	// XXX: All Quintet games?
 	if (match_na("GAIA GENSOUKI 1 JPN")                     || // Gaia Gensouki
+		match_na("SOULBLAZER 1 GRM")						|| // Soulblazer (E)
 		match_id("JG  ")                                    || // Illusion of Gaia
 		match_id("CQ  "))                                      // Stunt Race FX
 	{
 		IAPU.OneCycle = (int32) (13.0 * (1 << SNES_APU_ACCURACY));
-		printf("APU OneCycle hack: %d\n", IAPU.OneCycle);
+		//printf("APU OneCycle hack: %d\n", IAPU.OneCycle);
 	}
 
 	if (match_na("SOULBLADER - 1")                          || // Soul Blader
@@ -2999,7 +3000,7 @@ void CMemory::ApplyROMFixes (void)
 		match_nn("SANKYO Fever! \xCC\xA8\xB0\xCA\xDE\xB0!"))   // SANKYO Fever! Fever!
 	{
 		IAPU.OneCycle = (int32) (15.0 * (1 << SNES_APU_ACCURACY));
-		printf("APU OneCycle hack: %d\n", IAPU.OneCycle);
+		//printf("APU OneCycle hack: %d\n", IAPU.OneCycle);
 	}
 
 	//// DMA/HDMA timing hacks :(
@@ -3016,7 +3017,7 @@ void CMemory::ApplyROMFixes (void)
 	{
 		Timings.HDMAStart   -= 10;
 		Timings.HBlankStart -= 10;
-		printf("HDMA timing hack: %d\n", Timings.HDMAStart);
+		//printf("HDMA timing hack: %d\n", Timings.HDMAStart);
 	}
 
 	// The delay to sync CPU and DMA which Snes9x cannot emulate.
@@ -3024,7 +3025,7 @@ void CMemory::ApplyROMFixes (void)
 	if (match_na("BATTLE GRANDPRIX")) // Battle Grandprix
 	{
 		Timings.DMACPUSync = 20;
-		printf("DMA sync: %d\n", Timings.DMACPUSync);
+		//printf("DMA sync: %d\n", Timings.DMACPUSync);
 	}
 
 	//// CPU speed-ups (CPU_Shutdown())
@@ -3045,8 +3046,8 @@ void CMemory::ApplyROMFixes (void)
 		match_nn("NHL")             ||
 		match_nc("MADDEN"))
 	{
-		if (Settings.Shutdown)
-			printf("Disabled CPU shutdown hack.\n");
+		//if (Settings.Shutdown)
+		//	printf("Disabled CPU shutdown hack.\n");
 		Settings.Shutdown = FALSE;
 	}
 
@@ -3297,7 +3298,7 @@ void CMemory::ApplyROMFixes (void)
 	if (match_nn("UNIRACERS")) // Uniracers
 	{
 		SNESGameFixes.Uniracers = TRUE;
-		printf("Applied Uniracers hack.\n");
+		//printf("Applied Uniracers hack.\n");
 	}
 
 	/*
