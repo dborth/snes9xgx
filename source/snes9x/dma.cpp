@@ -199,7 +199,7 @@ static inline bool8 addCyclesInDMA (uint8 dma_channel)
 	{
 		CPU.HDMARanInDMA = 0;
 	#if 1
-		printf("HDMA and DMA use the same channel %d!\n", dma_channel);
+		//printf("HDMA and DMA use the same channel %d!\n", dma_channel);
 	#endif
 		// If HDMA triggers in the middle of DMA transfer and it uses the same channel,
 		// it kills the DMA transfer immediately. $43x2 and $43x5 stop updating.

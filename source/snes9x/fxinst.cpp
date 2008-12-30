@@ -641,13 +641,13 @@ static void fx_rpix_8bit()
 /* 4o - plot - plot pixel with R1,R2 as x,y and the color register as the color */
 static void fx_plot_obj()
 {
-    printf ("ERROR fx_plot_obj called\n");
+    //printf ("ERROR fx_plot_obj called\n");
 }
 
 /* 4c(ALT1) - rpix - read color of the pixel with R1,R2 as x,y */
 static void fx_rpix_obj()
 {
-    printf ("ERROR fx_rpix_obj called\n");
+    //printf ("ERROR fx_rpix_obj called\n");
 }
 
 /* 4d - swap - swap upper and lower byte of a register */

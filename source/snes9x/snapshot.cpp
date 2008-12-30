@@ -1583,7 +1583,7 @@ int S9xUnfreezeFromStream (STREAM stream)
 			if (APU.OldCycles != -99999999)
 			{
 				// Must be <= v1.5 savestate
-				printf("Older APU Cycles found.\n");
+				//printf("Older APU Cycles found.\n");
 				APU.Cycles = (APU.OldCycles << SNES_APU_ACCURACY);
 				APU.OldCycles = -99999999;
 			}
