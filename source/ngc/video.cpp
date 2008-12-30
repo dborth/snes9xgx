@@ -46,9 +46,6 @@ GXTexObj texobj;
 Mtx view;
 static int vwidth, vheight, oldvwidth, oldvheight;
 
-static int zoom_xshift = 0;
-static int zoom_yshift = 0;
-
 u32 FrameTimer = 0;
 
 u8 vmode_60hz = 0;
@@ -97,7 +94,7 @@ static camera cam = {
 /** Original SNES PAL Resolutions: **/
 
 /* 239 lines progressive (PAL 50Hz) */
-GXRModeObj TV_239p =
+static GXRModeObj TV_239p =
 {
 	VI_TVMODE_PAL_DS,       // viDisplayMode
 	512,             // fbWidth
@@ -132,7 +129,7 @@ GXRModeObj TV_239p =
 };
 
 /* 478 lines interlaced (PAL 50Hz, Deflicker) */
-GXRModeObj TV_478i =
+static GXRModeObj TV_478i =
 {
 	VI_TVMODE_PAL_INT,      // viDisplayMode
 	512,             // fbWidth
@@ -169,7 +166,7 @@ GXRModeObj TV_478i =
 /** Original SNES NTSC Resolutions: **/
 
 /* 224 lines progressive (NTSC or PAL 60Hz) */
-GXRModeObj TV_224p =
+static GXRModeObj TV_224p =
 {
 	VI_TVMODE_EURGB60_DS,      // viDisplayMode
 	512,             // fbWidth
@@ -204,7 +201,7 @@ GXRModeObj TV_224p =
 };
 
 /* 448 lines interlaced (NTSC or PAL 60Hz, Deflicker) */
-GXRModeObj TV_448i =
+static GXRModeObj TV_448i =
 {
 	VI_TVMODE_EURGB60_INT,     // viDisplayMode
 	512,             // fbWidth
@@ -240,7 +237,7 @@ GXRModeObj TV_448i =
 };
 
 /* TV Modes table */
-GXRModeObj *tvmodes[4] = {
+static GXRModeObj *tvmodes[4] = {
 	&TV_239p, &TV_478i,			/* Snes PAL video modes */
 	&TV_224p, &TV_448i,			/* Snes NTSC video modes */
 };
@@ -376,7 +373,7 @@ draw_square (Mtx v)
 static void
 StartGX ()
 {
-	Mtx p;
+	Mtx44 p;
 
 	GXColor background = { 0, 0, 0, 0xff };
 
@@ -409,7 +406,6 @@ StartGX ()
 	guOrtho(p, vmode->efbHeight/2, -(vmode->efbHeight/2), -(vmode->fbWidth/2), vmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
-
 	GX_CopyDisp (xfb[whichfb], GX_TRUE); // reset xfb
 
 	vwidth = 100;
@@ -421,7 +417,7 @@ StartGX ()
  *
  * called by postRetraceCallback in InitGCVideo - scans gcpad and wpad
  ***************************************************************************/
-void
+static void
 UpdatePadsCB ()
 {
 #ifdef HW_RVL
@@ -567,7 +563,7 @@ void
 ResetVideo_Emu ()
 {
 	GXRModeObj *rmode;
-	Mtx p;
+	Mtx44 p;
 
 	int i = -1;
 	if (GCSettings.render == 0)	// original render mode
@@ -624,7 +620,7 @@ ResetVideo_Emu ()
 void
 ResetVideo_Menu ()
 {
-	Mtx p;
+	Mtx44 p;
 
 	VIDEO_Configure (vmode);
 	VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], COLOR_BLACK);
