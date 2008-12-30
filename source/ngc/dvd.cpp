@@ -17,7 +17,7 @@
 #include <string.h>
 #include <malloc.h>
 
-#ifdef WII_DVD
+#ifdef HW_RVL
 extern "C" {
 #include <di/di.h>
 }
@@ -28,11 +28,14 @@ extern "C" {
 #include "filesel.h"
 #include "snes9xGX.h"
 
-u64 dvddir = 0; // offset of currently selected file or folder
-int dvddirlength = 0; // length of currently selected file or folder
-u64 dvdrootdir = 0; // offset of DVD root
-int dvdrootlength = 0; // length of DVD root
-bool isWii = false;
+#define MAXDVDFILES 2000
+
+static int diroffset = 0;
+static u64 dvddir = 0; // offset of currently selected file or folder
+static int dvddirlength = 0; // length of currently selected file or folder
+static u64 dvdrootdir = 0; // offset of DVD root
+static int dvdrootlength = 0; // length of DVD root
+static bool isWii = false;
 
 #ifdef HW_DOL
 /** DVD I/O Address base **/
@@ -48,7 +51,7 @@ volatile unsigned long *dvd = (volatile unsigned long *) 0xCC006000;
 #define ALIGN_FORWARD(x,align) 	((typeof(x))((((uint32_t)(x)) + (align) - 1) & (~(align-1))))
 #define ALIGN_BACKWARD(x,align)	((typeof(x))(((uint32_t)(x)) & (~(align-1))))
 
-int
+static int
 dvd_read (void *dst, unsigned int len, u64 offset)
 {
 	if (len > 2048)
@@ -112,30 +115,40 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 #define DVD_MAX_READ_LENGTH 2048
 #define DVD_SECTOR_SIZE 2048
 
-unsigned char dvdsf_buffer[DVD_SECTOR_SIZE];
-u64 dvdsf_last_offset = 0;
-u64 dvdsf_last_length = 0;
+static unsigned char dvdsf_buffer[DVD_SECTOR_SIZE];
+static u64 dvdsf_last_offset = 0;
+static u64 dvdsf_last_length = 0;
 
-int dvd_buffered_read(void *dst, u32 len, u64 offset)
+static int dvd_buffered_read(void *dst, u32 len, u64 offset)
 {
-    int ret = 1;
+	int ret = 1;
 
-    // only read data if the data inside dvdsf_buffer cannot be used
-    if(offset != dvdsf_last_offset || len > dvdsf_last_length)
-    {
-        memset(&dvdsf_buffer, '\0', DVD_SECTOR_SIZE);
-        ret = dvd_read(&dvdsf_buffer, len, offset);
-        dvdsf_last_offset = offset;
+	// only read data if the data inside dvdsf_buffer cannot be used
+	if(offset != dvdsf_last_offset || len > dvdsf_last_length)
+	{
+		memset(&dvdsf_buffer, '\0', DVD_SECTOR_SIZE);
+		ret = dvd_read(&dvdsf_buffer, len, offset);
+		dvdsf_last_offset = offset;
         dvdsf_last_length = len;
-    }
+	}
 
-    memcpy(dst, &dvdsf_buffer, len);
-    return ret;
+	memcpy(dst, &dvdsf_buffer, len);
+	return ret;
 }
 
-int dvd_safe_read(void *dst_v, u32 len, u64 offset)
+/****************************************************************************
+ * dvd_safe_read
+ *
+ * A 'safer' DVD read function
+ * This function relies on dvddir (file offset) being prepopulated!
+ * returns: 1 - ok ; 0 - error
+ ***************************************************************************/
+
+int dvd_safe_read(void *dst_v, u32 len, u64 fileoffset)
 {
-    unsigned char buffer[DVD_SECTOR_SIZE]; // buffer for one dvd sector
+	u64 offset = dvddir + fileoffset;
+
+	unsigned char buffer[DVD_SECTOR_SIZE]; // buffer for one dvd sector
 
     // if read size and length are a multiply of DVD_(OFFSET,LENGTH)_MULTIPLY and length < DVD_MAX_READ_LENGTH
     // we don't need to fix anything
@@ -241,7 +254,7 @@ static int IsJoliet = 0;
  * The PVD should reside between sector 16 and 31.
  * This is for single session DVD only.
  ***************************************************************************/
-int
+static int
 getpvd ()
 {
 	int sector = 16;
@@ -315,7 +328,7 @@ bool MountDVD(bool silent)
 		ShowAction("Loading DVD...");
 		#ifdef HW_DOL
 		DVD_Mount(); // mount the DVD unit again
-		#elif WII_DVD
+		#elif HW_RVL
 		u32 val;
 		DI_GetCoverRegister(&val);
 		if(val & 0x1)	// True if no disc inside, use (val & 0x2) for true if disc inside.
@@ -344,7 +357,7 @@ bool MountDVD(bool silent)
  * Support function to return the next file entry, if any
  * Declared static to avoid accidental external entry.
  ***************************************************************************/
-static int diroffset = 0;
+
 static int
 getentry (int entrycount, unsigned char dvdbuffer[])
 {
@@ -358,7 +371,7 @@ getentry (int entrycount, unsigned char dvdbuffer[])
 	u32 offset32;
 
 	/* Basic checks */
-	if (entrycount >= MAXFILES)
+	if (entrycount >= MAXDVDFILES)
 		return 0;
 
 	if (diroffset >= 2048)
@@ -428,19 +441,26 @@ getentry (int entrycount, unsigned char dvdbuffer[])
 			if (rr != NULL)
 				*rr = 0;
 
-			strcpy (filelist[entrycount].filename, fname);
+			browserList = (BROWSERENTRY *)realloc(browserList, (entrycount+1) * sizeof(BROWSERENTRY));
+			if(!browserList) // failed to allocate required memory
+			{
+				WaitPrompt("Out of memory: too many files!");
+				return 0;
+			}
+			memset(&(browserList[entrycount]), 0, sizeof(BROWSERENTRY)); // clear the new entry
+
+			strcpy (browserList[entrycount].filename, fname);
 			StripExt(tmpname, fname); // hide file extension
-			tmpname[MAXDISPLAY - 1] = 0;
-			strcpy (filelist[entrycount].displayname, tmpname);
+			strcpy (browserList[entrycount].displayname, tmpname);
 
 			memcpy (&offset32, &dvdbuffer[diroffset + EXTENT], 4);
 
-			filelist[entrycount].offset = (u64)offset32;
-			memcpy (&filelist[entrycount].length, &dvdbuffer[diroffset + FILE_LENGTH], 4);
-			memcpy (&filelist[entrycount].flags, &dvdbuffer[diroffset + FILE_FLAGS], 1);
+			browserList[entrycount].offset = (u64)offset32;
+			memcpy (&(browserList[entrycount].length), &dvdbuffer[diroffset + FILE_LENGTH], 4);
+			memcpy (&(browserList[entrycount].isdir), &dvdbuffer[diroffset + FILE_FLAGS], 1);
 
-			filelist[entrycount].offset <<= 11;
-			filelist[entrycount].flags = filelist[entrycount].flags & 2;
+			browserList[entrycount].offset <<= 11;
+			browserList[entrycount].isdir = browserList[entrycount].isdir & 2;
 
 			/*** Prepare for next entry ***/
 
@@ -452,7 +472,7 @@ getentry (int entrycount, unsigned char dvdbuffer[])
 }
 
 /****************************************************************************
- * parseDVDdirectory
+ * ParseDVDdirectory
  *
  * This function will parse the directory tree.
  * It relies on dvddir and dvddirlength being pre-populated by a call to
@@ -470,15 +490,12 @@ ParseDVDdirectory ()
 	int filecount = 0;
 	unsigned char dvdbuffer[2048];
 
-	// initialize selection
-	selection = offset = 0;
+	// reset browser
+	ResetBrowser();
 
 	pdoffset = rdoffset = dvddir;
 	pdlength = dvddirlength;
 	filecount = 0;
-
-	// Clear any existing values
-	memset (&filelist, 0, sizeof (FILEENTRIES) * MAXFILES);
 
 	/*** Get as many files as possible ***/
 	while (len < pdlength)
@@ -490,7 +507,7 @@ ParseDVDdirectory ()
 
 		while (getentry (filecount, dvdbuffer))
 		{
-			if(strlen(filelist[filecount].filename) > 0 && filecount < MAXFILES)
+			if(strlen(browserList[filecount].filename) > 0 && filecount < MAXDVDFILES)
 				filecount++;
 		}
 
@@ -499,9 +516,20 @@ ParseDVDdirectory ()
 	}
 
 	// Sort the file list
-	qsort(filelist, filecount, sizeof(FILEENTRIES), FileSortCallback);
+	qsort(browserList, filecount, sizeof(BROWSERENTRY), FileSortCallback);
 
 	return filecount;
+}
+
+/****************************************************************************
+ * SetDVDdirectory
+ * Set the current DVD file offset
+ ***************************************************************************/
+
+void SetDVDdirectory(u64 dir, int length)
+{
+	dvddir = dir;
+	dvddirlength = length;
 }
 
 /****************************************************************************
@@ -510,23 +538,23 @@ ParseDVDdirectory ()
  * Searches for the directory name specified within the current directory
  * Returns the index of the directory, or -1 if not found
  ***************************************************************************/
-int DirectorySearch(char dir[512])
+static int DirectorySearch(char dir[512])
 {
-	for (int i = 0; i < maxfiles; i++ )
-		if (strcmp(filelist[i].filename, dir) == 0)
+	for (int i = 0; i < browser.numEntries; i++ )
+		if (strcmp(browserList[i].filename, dir) == 0)
 			return i;
 	return -1;
 }
 
 /****************************************************************************
- * SwitchDVDFolder
+ * SwitchDVDFolderR
  *
  * Recursively searches for any directory path 'dir' specified
  * Also can be used to find and set the offset for a file
  * Also loads the directory contents via ParseDVDdirectory()
  * It relies on dvddir, dvddirlength, and filelist being pre-populated
  ***************************************************************************/
-bool SwitchDVDFolder(char * dir, int maxDepth)
+static bool SwitchDVDFolderR(char * dir, int maxDepth)
 {
 	if(maxDepth > 8) // only search to a max depth of 8 levels
 		return false;
@@ -546,17 +574,17 @@ bool SwitchDVDFolder(char * dir, int maxDepth)
 
 	if(dirindex >= 0)
 	{
-		dvddir = filelist[dirindex].offset;
-		dvddirlength = filelist[dirindex].length;
-		selection = dirindex;
+		dvddir = browserList[dirindex].offset;
+		dvddirlength = browserList[dirindex].length;
+		browser.selIndex = dirindex;
 
-		if(filelist[dirindex].flags) // only parse directories
-			maxfiles = ParseDVDdirectory();
+		if(browserList[dirindex].isdir) // only parse directories
+			browser.numEntries = ParseDVDdirectory();
 
 		if(lastdir)
 			return true;
 		else
-			return SwitchDVDFolder(nextdir, maxDepth++);
+			return SwitchDVDFolderR(nextdir, maxDepth++);
 	}
 	return false;
 }
@@ -581,16 +609,13 @@ bool SwitchDVDFolder(char origdir[])
 	dvddirlength = dvdrootlength;
 	ParseDVDdirectory();
 
-	return SwitchDVDFolder(dirptr, 0);
+	return SwitchDVDFolderR(dirptr, 0);
 }
 
 /****************************************************************************
- * LoadDVDFile
+ * LoadDVDFileOffset
  * This function will load a file from DVD
- * The values for offset and length are inherited from dvddir and
- * dvddirlength.
- *
- * The buffer parameter should re-use the initial ROM buffer
+ * It assumes dvddir and dvddirlength are prepopulated
  ***************************************************************************/
 
 int
@@ -651,6 +676,13 @@ LoadDVDFileOffset (unsigned char *buffer, int length)
 	}
 	return dvddirlength;
 }
+
+/****************************************************************************
+ * LoadDVDFile
+ * This function will load a file from DVD, given a filepath
+ * It will attempt to find the offset of the file, and if successful it
+ * will populate dvddir and dvddirlength, and load the file
+ ***************************************************************************/
 
 int
 LoadDVDFile(char * buffer, char *filepath, int datasize, bool silent)

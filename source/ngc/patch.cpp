@@ -414,9 +414,9 @@ void LoadPatch(int method)
 	AllocSaveBuffer ();
 
 	memset(patchpath, 0, sizeof(patchpath));
-	sprintf(patchpath[0], "%s/%s.ips", currentdir, Memory.ROMFilename);
-	sprintf(patchpath[1], "%s/%s.ups", currentdir, Memory.ROMFilename);
-	sprintf(patchpath[2], "%s/%s.ppf", currentdir, Memory.ROMFilename);
+	sprintf(patchpath[0], "%s/%s.ips", browser.dir, Memory.ROMFilename);
+	sprintf(patchpath[1], "%s/%s.ups", browser.dir, Memory.ROMFilename);
+	sprintf(patchpath[2], "%s/%s.ppf", browser.dir, Memory.ROMFilename);
 
 	for(patchtype=0; patchtype<3; patchtype++)
 	{

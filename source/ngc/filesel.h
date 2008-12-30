@@ -17,36 +17,38 @@
 #include <unistd.h>
 #include <gccore.h>
 
-#define SAVEBUFFERSIZE (512 * 1024)
 #define MAXJOLIET 255
 #define MAXDISPLAY 50
 
 typedef struct
 {
-  u64 offset;
-  unsigned int length;
-  char flags;
-  char filename[MAXJOLIET + 1];
-  char displayname[MAXDISPLAY + 1];
-} FILEENTRIES;
+	char dir[MAXPATHLEN]; // directory path of browserList
+	int numEntries; // # of entries in browserList
+	int selIndex; // currently selected index of browserList
+	int pageIndex; // starting index of browserList page display
+} BROWSERINFO;
 
-#define MAXFILES 2000 // Restrict to 2000 files per dir
-extern FILEENTRIES filelist[MAXFILES];
-extern unsigned char *savebuffer;
-extern int offset;
-extern int selection;
+typedef struct
+{
+	u64 offset; // DVD offset
+	unsigned int length; // file length
+	char isdir; // 0 - file, 1 - directory
+	char filename[MAXJOLIET + 1]; // full filename
+	char displayname[MAXDISPLAY + 1]; // name for browser display
+} BROWSERENTRY;
+
+extern BROWSERINFO browser;
+extern BROWSERENTRY * browserList;
 extern char rootdir[10];
-extern char currentdir[MAXPATHLEN];
-extern int maxfiles;
+
 extern unsigned long SNESROMSize;
 
-void AllocSaveBuffer();
-void FreeSaveBuffer();
 bool MakeFilePath(char filepath[], int type, int method);
 int OpenROM (int method);
 int autoLoadMethod();
 int autoSaveMethod(bool silent);
 int FileSortCallback(const void *f1, const void *f2);
 void StripExt(char* returnstring, char * inputstring);
+void ResetBrowser();
 
 #endif

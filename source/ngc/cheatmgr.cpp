@@ -24,7 +24,7 @@ extern SCheatData Cheat;
  * Custom version of S9xLoadCheatFile()
  ***************************************************************************/
 
-bool NGCLoadCheatFile (int length)
+static bool NGCLoadCheatFile (int length)
 {
 	Cheat.num_cheats = 0;
 

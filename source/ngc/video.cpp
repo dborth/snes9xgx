@@ -44,10 +44,10 @@ static unsigned char gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 static unsigned char texturemem[TEX_WIDTH * (TEX_HEIGHT + 8)] ATTRIBUTE_ALIGN (32);
 GXTexObj texobj;
 Mtx view;
-int vwidth, vheight, oldvwidth, oldvheight;
+static int vwidth, vheight, oldvwidth, oldvheight;
 
-int zoom_xshift = 0;
-int zoom_yshift = 0;
+static int zoom_xshift = 0;
+static int zoom_yshift = 0;
 
 u32 FrameTimer = 0;
 
@@ -249,8 +249,8 @@ GXRModeObj *tvmodes[4] = {
  * VideoThreading
  ***************************************************************************/
 #define TSTACK 16384
-lwpq_t videoblankqueue;
-lwp_t vbthread;
+static lwpq_t videoblankqueue;
+static lwp_t vbthread;
 static unsigned char vbstack[TSTACK];
 
 /****************************************************************************
@@ -656,7 +656,7 @@ ResetVideo_Menu ()
  *
  * Proper GNU Asm rendition of the above, converted by shagkur. - Thanks!
  ***************************************************************************/
-void
+static void
 MakeTexture (const void *src, void *dst, s32 width, s32 height)
 {
   register u32 tmp0 = 0, tmp1 = 0, tmp2 = 0, tmp3 = 0;

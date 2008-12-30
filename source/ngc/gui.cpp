@@ -386,7 +386,7 @@ gui_drawbox (int x1, int y1, int width, int height, int r, int g, int b, int a)
 * DrawCharacter
 * Draws a single character on the screen
  ****************************************************************************/
-static void
+/*static void
 gui_DrawCharacter (FT_Bitmap * bmp, FT_Int x, FT_Int y)
 {
 	FT_Int i, j, p, q;
@@ -404,12 +404,12 @@ gui_DrawCharacter (FT_Bitmap * bmp, FT_Int x, FT_Int y)
 
 			c = bmp->buffer[q * bmp->width + p];
 
-			/*** Cool Anti-Aliasing doesn't work too well at hires on GC ***/
+			// Cool Anti-Aliasing doesn't work too well at hires on GC
 			if (c > 128)
 				memory[(j * 640) + i] = Gui.fontcolour;
 		}
 	}
-}
+}*/
 
 /****************************************************************************
  * DrawText
@@ -421,7 +421,7 @@ gui_DrawText (int x, int y, const char *text)
 {
 	int px, n;
 	int i;
-	int err;
+	int err = 0;
 	int value, count;
 
 	n = strlen (text);
@@ -445,7 +445,7 @@ gui_DrawText (int x, int y, const char *text)
 		/*** Draw the string ***/
 		for (i = 0; i < n; i++)
 		{
-			err = FT_Load_Char (face, text[i], FT_LOAD_RENDER);
+			//err = FT_Load_Char (face, text[i], FT_LOAD_RENDER);
 
 			if (err)
 			{
@@ -453,10 +453,10 @@ gui_DrawText (int x, int y, const char *text)
 				continue;				/*** Skip unprintable characters ***/
 			}
 
-			if (count)
-				gui_DrawCharacter (&slot->bitmap, px + slot->bitmap_left, y - slot->bitmap_top);
+			//if (count)
+			//	gui_DrawCharacter (&slot->bitmap, px + slot->bitmap_left, y - slot->bitmap_top);
 
-			px += slot->advance.x >> 6;
+//			px += slot->advance.x >> 6;
 		}
 
 		px = (640 - px) >> 1;

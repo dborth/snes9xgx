@@ -84,12 +84,6 @@ woven in by Terry Thorsen 1/2003.
 #define SIZECENTRALDIRITEM (0x2e)
 #define SIZEZIPLOCALHEADER (0x1e)
 
-
-
-
-const char unz_copyright[] =
-   " unzip 1.01 Copyright 1998-2004 Gilles Vollant - http://www.winimage.com/zLibDll";
-
 /* unz_file_info_interntal contain internal info about a file in zipfile*/
 typedef struct unz_file_info_internal_s
 {
@@ -411,9 +405,6 @@ extern unzFile ZEXPORT unzOpen2 (path, pzlib_filefunc_def)
                                    (same than number_entry on nospan) */
 
     int err=UNZ_OK;
-
-    if (unz_copyright[0]!=' ')
-        return NULL;
 
     if (pzlib_filefunc_def==NULL)
         fill_fopen_filefunc(&us.z_filefunc);

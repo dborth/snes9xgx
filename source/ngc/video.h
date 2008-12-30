@@ -29,9 +29,4 @@ void zoom_reset ();
 
 extern bool progressive;
 
-#ifdef _DEBUG_VIDEO
- // log stuff
-extern FILE * debughandle;
-#endif
-
 #endif

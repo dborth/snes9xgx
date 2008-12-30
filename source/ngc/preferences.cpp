@@ -22,42 +22,40 @@
 #include "filesel.h"
 #include "input.h"
 
-extern int currconfig[4];
-
-char prefscomment[2][32];
+static char prefscomment[2][32];
 
 /****************************************************************************
  * Prepare Preferences Data
  *
  * This sets up the save buffer for saving.
  ***************************************************************************/
-mxml_node_t *xml;
-mxml_node_t *data;
-mxml_node_t *section;
-mxml_node_t *item;
-mxml_node_t *elem;
+static mxml_node_t *xml;
+static mxml_node_t *data;
+static mxml_node_t *section;
+static mxml_node_t *item;
+static mxml_node_t *elem;
 
-char temp[20];
+static char temp[20];
 
-const char * toStr(int i)
+static const char * toStr(int i)
 {
 	sprintf(temp, "%d", i);
 	return temp;
 }
-const char * FtoStr(float i)
+static const char * FtoStr(float i)
 {
 	sprintf(temp, "%.2f", i);
 	return temp;
 }
 
-void createXMLSection(const char * name, const char * description)
+static void createXMLSection(const char * name, const char * description)
 {
 	section = mxmlNewElement(data, "section");
 	mxmlElementSetAttr(section, "name", name);
 	mxmlElementSetAttr(section, "description", description);
 }
 
-void createXMLSetting(const char * name, const char * description, const char * value)
+static void createXMLSetting(const char * name, const char * description, const char * value)
 {
 	item = mxmlNewElement(section, "setting");
 	mxmlElementSetAttr(item, "name", name);
@@ -65,7 +63,7 @@ void createXMLSetting(const char * name, const char * description, const char * 
 	mxmlElementSetAttr(item, "description", description);
 }
 
-void createXMLController(unsigned int controller[], const char * name, const char * description)
+static void createXMLController(unsigned int controller[], const char * name, const char * description)
 {
 	item = mxmlNewElement(section, "controller");
 	mxmlElementSetAttr(item, "name", name);
@@ -80,7 +78,7 @@ void createXMLController(unsigned int controller[], const char * name, const cha
 	}
 }
 
-const char * XMLSaveCallback(mxml_node_t *node, int where)
+static const char * XMLSaveCallback(mxml_node_t *node, int where)
 {
 	const char *name;
 
@@ -108,7 +106,7 @@ const char * XMLSaveCallback(mxml_node_t *node, int where)
 }
 
 
-int
+static int
 preparePrefsData (int method)
 {
 	int offset = 0;
@@ -189,25 +187,25 @@ preparePrefsData (int method)
  * Load XML elements into variables for an individual variable
  ***************************************************************************/
 
-void loadXMLSetting(char * var, const char * name, int maxsize)
+static void loadXMLSetting(char * var, const char * name, int maxsize)
 {
 	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
 	if(item)
 		snprintf(var, maxsize, "%s", mxmlElementGetAttr(item, "value"));
 }
-void loadXMLSetting(int * var, const char * name)
+static void loadXMLSetting(int * var, const char * name)
 {
 	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
 	if(item)
 		*var = atoi(mxmlElementGetAttr(item, "value"));
 }
-void loadXMLSetting(float * var, const char * name)
+static void loadXMLSetting(float * var, const char * name)
 {
 	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
 	if(item)
 		*var = atof(mxmlElementGetAttr(item, "value"));
 }
-void loadXMLSetting(bool8 * var, const char * name)
+static void loadXMLSetting(bool8 * var, const char * name)
 {
 	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
 	if(item)
@@ -220,7 +218,7 @@ void loadXMLSetting(bool8 * var, const char * name)
  * Load XML elements into variables for a controller mapping
  ***************************************************************************/
 
-void loadXMLController(unsigned int controller[], const char * name)
+static void loadXMLController(unsigned int controller[], const char * name)
 {
 	item = mxmlFindElement(xml, xml, "controller", "name", name, MXML_DESCEND);
 
@@ -242,7 +240,7 @@ void loadXMLController(unsigned int controller[], const char * name)
  * Decodes preferences - parses XML and loads preferences into the variables
  ***************************************************************************/
 
-bool
+static bool
 decodePrefsData (int method)
 {
 	int offset = 0;

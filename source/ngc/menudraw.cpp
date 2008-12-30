@@ -35,10 +35,9 @@
 #include "networkop.h"
 
 /*** Globals ***/
-FT_Library ftlibrary;
-FT_Face face;
-FT_GlyphSlot slot;
-FT_UInt glyph_index;
+static FT_Library ftlibrary;
+static FT_Face face;
+static FT_GlyphSlot slot;
 static unsigned int fonthi, fontlo;
 
 extern char fontface[];		/*** From fontface.s ***/
@@ -652,7 +651,7 @@ RunMenu (char items[][50], int maxitems, const char *title, int fontsize, int x)
  ***************************************************************************/
 
 void
-ShowFiles (FILEENTRIES filelist[], int maxfiles, int offset, int selection)
+ShowFiles (BROWSERENTRY * browserList, int maxfiles, int offset, int selection)
 {
 	int i, j;
 	char text[MAXPATHLEN];
@@ -676,15 +675,15 @@ ShowFiles (FILEENTRIES filelist[], int maxfiles, int offset, int selection)
 	j = 0;
 	for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
 	{
-		if (filelist[i].flags)	// if a dir
+		if (browserList[i].isdir)	// if a dir
 		{
 			strcpy (text, "[");
-			strcat (text, filelist[i].displayname);
+			strcat (text, browserList[i].displayname);
 			strcat (text, "]");
 		}
 		else
 		{
-			sprintf(text, filelist[i].displayname);
+			sprintf(text, browserList[i].displayname);
 		}
 		if (j == (selection - offset))
 		{
