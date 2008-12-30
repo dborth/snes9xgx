@@ -1,47 +1,19 @@
 #summary Instructions for loading and running the emulator.
 #labels Featured
 
-Unzip the archive into a folder.  The last part of the filename denotes the Wii and Gamecube version.  Select the one for your console.
+= Setup & Installation =
 
-= ROMS, Preferences, and Saves =
-
-Your SNES rom images must be in the Super Magicom (SMC) or FIG format. Generally,
-all images you find will be in this format, but if you run across one that isn't
-please download RTOOL which will allow you to convert the image into SMC format.
-
-By default, ROMs are loaded from "snes9x/roms/" and saves and preferences are 
-stored in "snes9x/saves/".  Therefore you should have the following folders:
-
-snes9x/roms/
-
-snes9x/saves/
+Download the latest version from the [http://code.google.com/p/snes9x-gx/downloads/list Downloads page].
 
 == Wii ==
 
-On the Wii, you can load roms from any SD card (Front SD, SD Gecko, etc) or from USB.
+The most popular method of running homebrew on the Wii is through the [http://hbc.hackmii.com/ Homebrew Channel]. If you already have the channel installed, just copy over the apps folder included in the archive into the root of your SD card.
 
-== Gamecube ==
+Remember to also create the snes9x directory structure required (a sample structure is included in the archive).
 
-You can load roms from DVD or SD card. If you create a bootable DVD of Snes9xGx you can put roms on the same DVD.
+For more detailed instructions, see [http://www.wiibrew.org/wiki/Snes9x_GX Wiibrew].
 
-= Loading / Running the Emulator =
+== GameCube == 
 
-== Via Homebrew Channel ==
-
-The most popular method of running homebrew on the wii is through the Homebrew
-Channel. If you already have the channel installed, just copy over the apps folder
-included in the archive into the root of your SD card (the version 
-for wii is included in the apps/Snes9xGX/ folder renamed to boot.dol).
-
-Remember to also create the snes9x/roms and snes9x/saves directories. See above.
-
-If you haven't installed the homebrew channel yet, read about how to here: http://hbc.hackmii.com/
-
-== Gamecube ==
-
-You can load it via sdload and an SD card in slot A, or by streaming it to your
-cube, or by booting a bootable DVD with it on it. This document doesn't cover
-how to do any of that. You can find out how to run homebrew on your gamecube here:
-http://www.gc-linux.org/wiki/SDload
-
-If this doesn't help you, check out the tehskeen forums: http://www.tehskeen.com/forums/
+You can load Snes9x GX via sdload and an SD card in slot A, or by streaming 
+it to your Gamecube, or by making a bootable DVD. A good source for information is the [http://www.tehskeen.com/forums/ TehSkeen Forums].
