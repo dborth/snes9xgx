@@ -31,16 +31,16 @@
 #include "video.h"
 #include "menudraw.h"
 
-/*** Double buffered audio ***/
-#define AUDIOBUFFER 2048
-static unsigned char soundbuffer[2][AUDIOBUFFER]
-  __attribute__ ((__aligned__ (32)));
-static int whichab = 0;	/*** Audio buffer flip switch ***/
 extern int ConfigRequested;
 
+/*** Double buffered audio ***/
+#define AUDIOBUFFER 2048
+static unsigned char soundbuffer[2][AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
+static int whichab = 0;	/*** Audio buffer flip switch ***/
+
 #define AUDIOSTACK 16384
-lwpq_t audioqueue;
-lwp_t athread;
+static lwpq_t audioqueue;
+static lwp_t athread;
 static uint8 astack[AUDIOSTACK];
 
 /****************************************************************************

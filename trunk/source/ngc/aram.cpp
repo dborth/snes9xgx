@@ -8,6 +8,8 @@
  * Gamecube Audio RAM storage
  ***************************************************************************/
 
+#ifdef HW_DOL
+
 #include <gccore.h>
 #include <string.h>
 
@@ -27,9 +29,9 @@ static char tempbuffer[TEMPSIZE] ATTRIBUTE_ALIGN (32);
 void
 ARAMPut (char *src, char *dst, int len)
 {
-  DCFlushRange (src, len);
-  AR_StartDMA (ARAM_WRITE, (u32) src, (u32) dst, len);
-  while (AR_GetDMAStatus());
+	DCFlushRange (src, len);
+	AR_StartDMA (ARAM_WRITE, (u32) src, (u32) dst, len);
+	while (AR_GetDMAStatus());
 }
 
 /****************************************************************************
@@ -40,9 +42,9 @@ ARAMPut (char *src, char *dst, int len)
 void
 ARAMFetch (char *dst, char *src, int len)
 {
-  DCInvalidateRange (dst, len);
-  AR_StartDMA (ARAM_READ, (u32) dst, (u32) src, len);
-  while (AR_GetDMAStatus ());
+	DCInvalidateRange (dst, len);
+	AR_StartDMA (ARAM_READ, (u32) dst, (u32) src, len);
+	while (AR_GetDMAStatus ());
 }
 
 /****************************************************************************
@@ -50,32 +52,32 @@ ARAMFetch (char *dst, char *src, int len)
  *
  * Required as SNES memory may NOT be 32-byte aligned
  ***************************************************************************/
-void
-ARAMFetchSlow (char *dst, char *src, int len)
+void ARAMFetchSlow(char *dst, char *src, int len)
 {
-  int t;
+	int t;
 
-  if (len > TEMPSIZE)
-    {
-      t = 0;
-      while (t < len)
+	if (len > TEMPSIZE)
 	{
-	  ARAMFetch (tempbuffer, src + t, TEMPSIZE);
+		t = 0;
+		while (t < len)
+		{
+			ARAMFetch(tempbuffer, src + t, TEMPSIZE);
 
-	  if (t + TEMPSIZE > len)
-	    {
-	      memcpy (dst + t, tempbuffer, len - t);
-	    }
-	  else
-	    memcpy (dst + t, tempbuffer, TEMPSIZE);
+			if (t + TEMPSIZE > len)
+			{
+				memcpy(dst + t, tempbuffer, len - t);
+			}
+			else
+				memcpy(dst + t, tempbuffer, TEMPSIZE);
 
-	  t += TEMPSIZE;
+			t += TEMPSIZE;
+		}
+
 	}
-
-    }
-  else
-    {
-      ARAMFetch (tempbuffer, src, len);
-      memcpy (dst, tempbuffer, len);
-    }
+	else
+	{
+		ARAMFetch(tempbuffer, src, len);
+		memcpy(dst, tempbuffer, len);
+	}
 }
+#endif

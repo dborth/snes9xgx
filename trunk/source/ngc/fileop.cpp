@@ -19,6 +19,7 @@
 #include <sys/dir.h>
 #include <sys/stat.h>
 #include <zlib.h>
+#include <malloc.h>
 #include <sdcard/wiisd_io.h>
 #include <sdcard/gcsd.h>
 #include <ogc/usbstorage.h>
@@ -34,8 +35,8 @@
 #include "filesel.h"
 #include "preferences.h"
 
-// file pointer - the only one we should ever use!
-FILE * file;
+unsigned char * savebuffer = NULL;
+FILE * file; // file pointer - the only one we should ever use!
 bool unmountRequired[9] = { false, false, false, false, false, false, false, false, false };
 bool isMounted[9] = { false, false, false, false, false, false, false, false, false };
 
@@ -256,7 +257,6 @@ bool ChangeInterface(int method, bool silent)
 int
 ParseDirectory()
 {
-	int nbfiles = 0;
 	DIR_ITER *dir;
 	char fulldir[MAXPATHLEN];
 	char filename[MAXPATHLEN];
@@ -264,14 +264,11 @@ ParseDirectory()
 	struct stat filestat;
 	char msg[128];
 
-	// initialize selection
-	selection = offset = 0;
-
-	// Clear any existing values
-	memset (&filelist, 0, sizeof (FILEENTRIES) * MAXFILES);
+	// reset browser
+	ResetBrowser();
 
 	// add device to path
-	sprintf(fulldir, "%s%s", rootdir, currentdir);
+	sprintf(fulldir, "%s%s", rootdir, browser.dir);
 
 	// open the directory
 	dir = diropen(fulldir);
@@ -284,7 +281,7 @@ ParseDirectory()
 		// if we can't open the dir, open root dir
 		sprintf(fulldir,"%s",rootdir);
 
-		dir = diropen(currentdir);
+		dir = diropen(browser.dir);
 
 		if (dir == NULL)
 		{
@@ -295,17 +292,29 @@ ParseDirectory()
 	}
 
 	// index files/folders
+	int entryNum = 0;
+
 	while(dirnext(dir,filename,&filestat) == 0)
 	{
 		if(strcmp(filename,".") != 0)
 		{
-			memset(&filelist[nbfiles], 0, sizeof(FILEENTRIES));
-			strncpy(filelist[nbfiles].filename, filename, MAXPATHLEN);
+			browserList = (BROWSERENTRY *)realloc(browserList, (entryNum+1) * sizeof(BROWSERENTRY));
+
+			if(!browserList) // failed to allocate required memory
+			{
+				WaitPrompt("Out of memory: too many files!");
+				entryNum = 0;
+				break;
+			}
+			memset(&(browserList[entryNum]), 0, sizeof(BROWSERENTRY)); // clear the new entry
+
+			strncpy(browserList[entryNum].filename, filename, MAXJOLIET);
 			StripExt(tmpname, filename); // hide file extension
-			strncpy(filelist[nbfiles].displayname, tmpname, MAXDISPLAY+1);	// crop name for display
-			filelist[nbfiles].length = filestat.st_size;
-			filelist[nbfiles].flags = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
-			nbfiles++;
+			strncpy(browserList[entryNum].displayname, tmpname, MAXDISPLAY);	// crop name for display
+			browserList[entryNum].length = filestat.st_size;
+			browserList[entryNum].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
+
+			entryNum++;
 		}
 	}
 
@@ -313,9 +322,36 @@ ParseDirectory()
 	dirclose(dir);
 
 	// Sort the file list
-	qsort(filelist, nbfiles, sizeof(FILEENTRIES), FileSortCallback);
+	qsort(browserList, entryNum, sizeof(BROWSERENTRY), FileSortCallback);
 
-	return nbfiles;
+	return entryNum;
+}
+
+/****************************************************************************
+ * AllocSaveBuffer ()
+ * Clear and allocate the savebuffer
+ ***************************************************************************/
+void
+AllocSaveBuffer ()
+{
+	if (savebuffer != NULL)
+		free(savebuffer);
+
+	savebuffer = (unsigned char *) memalign(32, SAVEBUFFERSIZE);
+	memset (savebuffer, 0, SAVEBUFFERSIZE);
+}
+
+/****************************************************************************
+ * FreeSaveBuffer ()
+ * Free the savebuffer memory
+ ***************************************************************************/
+void
+FreeSaveBuffer ()
+{
+	if (savebuffer != NULL)
+		free(savebuffer);
+
+	savebuffer = NULL;
 }
 
 /****************************************************************************
@@ -335,7 +371,7 @@ LoadSzFile(char * filepath, unsigned char * rbuffer)
 	file = fopen (filepath, "rb");
 	if (file > 0)
 	{
-		size = SzExtractFile(filelist[selection].offset, rbuffer);
+		size = SzExtractFile(browserList[browser.selIndex].offset, rbuffer);
 		fclose (file);
 	}
 	else

@@ -342,6 +342,7 @@ main(int argc, char *argv[])
 
 	// Initialise video
 	InitGCVideo();
+	ResetVideo_Menu (); // change to menu video mode
 
 	// Controllers
 	PAD_Init ();

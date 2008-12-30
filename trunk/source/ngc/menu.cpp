@@ -18,7 +18,7 @@
 #include <string.h>
 #include <wiiuse/wpad.h>
 
-#ifdef WII_DVD
+#ifdef HW_RVL
 extern "C" {
 #include <di/di.h>
 }
@@ -55,6 +55,8 @@ extern "C" {
 #include "cheatmgr.h"
 #include "input.h"
 #include "patch.h"
+
+extern int menu;
 
 /****************************************************************************
  * Load Manager
@@ -666,8 +668,8 @@ GetInput (u16 ctrlr_type)
 	return pressed;
 }	// end GetInput()
 
-int cfg_text_count = 7;
-char cfg_text[][50] = {
+static int cfg_text_count = 7;
+static char cfg_text[][50] = {
 "Remapping          ",
 "Press Any Button",
 "on the",
@@ -717,8 +719,8 @@ GetButtonMap(u16 ctrlr_type, char* btn_name)
 	return pressed;
 }	// end getButtonMap()
 
-int cfg_btns_count = 13;
-char cfg_btns_menu[][50] = {
+static int cfg_btns_count = 13;
+static char cfg_btns_menu[][50] = {
 	"A        -         ",
 	"B        -         ",
 	"X        -         ",
@@ -733,11 +735,6 @@ char cfg_btns_menu[][50] = {
 	"RIGHT    -         ",
 	"Return to previous"
 };
-
-extern unsigned int gcpadmap[];
-extern unsigned int wmpadmap[];
-extern unsigned int ccpadmap[];
-extern unsigned int ncpadmap[];
 
 void
 ConfigureButtons (u16 ctrlr_type)
@@ -988,8 +985,8 @@ PreferencesMenu ()
 /****************************************************************************
  * Main Menu
  ***************************************************************************/
-int menucount = 7;
-char menuitems[][50] = {
+static int menucount = 7;
+static char menuitems[][50] = {
   "Choose Game",
   "Preferences",
   "Game Menu",

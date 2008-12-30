@@ -38,9 +38,7 @@ extern void NGCFreezeStruct ();
 extern bool8 S9xUnfreezeGame (const char *filename);
 
 static int bufoffset;
-
-char freezecomment[2][32];
-
+static char freezecomment[2][32];
 
 /****************************************************************************
  * GetMem
