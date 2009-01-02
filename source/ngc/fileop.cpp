@@ -443,13 +443,12 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 					fstat(file->_file, &fileinfo);
 					size = fileinfo.st_size;
 
-					memcpy (rbuffer, zipbuffer, 2048); // copy what we already read
+					memcpy (rbuffer, zipbuffer, readsize); // copy what we already read
 
-					ShowProgress ("Loading...", 2048, length);
-
-					u32 offset = 2048;
+					u32 offset = readsize;
 					while(offset < size)
 					{
+						ShowProgress ("Loading...", offset, size);
 						readsize = fread (rbuffer + offset, 1, (1024*512), file); // read in 512K chunks
 
 						if(readsize <= 0 || readsize > (1024*512))
@@ -457,7 +456,6 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 
 						if(readsize > 0)
 							offset += readsize;
-						ShowProgress ("Loading...", offset, length);
 					}
 
 					if(offset != size) // # bytes read doesn't match # expected
