@@ -517,41 +517,40 @@ InitGCVideo ()
 	}
 #endif
 
-    VIDEO_Configure (vmode);
+	VIDEO_Configure (vmode);
 
-    screenheight = vmode->xfbHeight;
-
+	screenheight = vmode->xfbHeight;
 
 	// Allocate the video buffers
-    xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
-    xfb[1] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
+	xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
+	xfb[1] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
 
-    // A console is always useful while debugging.
-    console_init (xfb[0], 20, 64, vmode->fbWidth, vmode->xfbHeight, vmode->fbWidth * 2);
+	// A console is always useful while debugging
+	console_init (xfb[0], 20, 64, vmode->fbWidth, vmode->xfbHeight, vmode->fbWidth * 2);
 
-    // Clear framebuffers etc.
-    VIDEO_ClearFrameBuffer (vmode, xfb[0], COLOR_BLACK);
-    VIDEO_ClearFrameBuffer (vmode, xfb[1], COLOR_BLACK);
-    VIDEO_SetNextFramebuffer (xfb[0]);
+	// Clear framebuffers etc.
+	VIDEO_ClearFrameBuffer (vmode, xfb[0], COLOR_BLACK);
+	VIDEO_ClearFrameBuffer (vmode, xfb[1], COLOR_BLACK);
+	VIDEO_SetNextFramebuffer (xfb[0]);
 
 	// video callbacks
 	VIDEO_SetPostRetraceCallback ((VIRetraceCallback)UpdatePadsCB);
-    VIDEO_SetPreRetraceCallback ((VIRetraceCallback)copy_to_xfb);
+	VIDEO_SetPreRetraceCallback ((VIRetraceCallback)copy_to_xfb);
 
-    VIDEO_SetBlack (FALSE);
-    VIDEO_Flush ();
-    VIDEO_WaitVSync ();
-    if (vmode->viTVMode & VI_NON_INTERLACE)
+	VIDEO_SetBlack (FALSE);
+	VIDEO_Flush ();
+	VIDEO_WaitVSync ();
+	if (vmode->viTVMode & VI_NON_INTERLACE)
 		VIDEO_WaitVSync ();
 
-    copynow = GX_FALSE;
-    StartGX ();
+	copynow = GX_FALSE;
+	StartGX ();
 
 	draw_init ();
 
-    InitVideoThread ();
+	InitVideoThread ();
 
-    // Finally, the video is up and ready for use :)
+	// Finally, the video is up and ready for use :)
 }
 
 /****************************************************************************

@@ -936,6 +936,8 @@ ShowProgress (const char *msg, int done, int total)
 		return;
 	else if(done > total) // this shouldn't happen
 		done = total;
+	else if(total < (256*1024)) // don't bother showing progress for small files
+		return;
 
 	int xpos, ypos;
 	int i;

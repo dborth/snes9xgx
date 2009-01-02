@@ -62,7 +62,7 @@ Tantric. The project is currently being maintained by michniewski and Tantric.
 * added: Added console/remote power button support (Wii only)
 * added: Added reset button support - resets game (Wii only)
 * changed: Settings file is now named settings.xml and is stored in the same
-           folder as the DOL - eg: apps/vbagx/settings.xml (Wii only)
+           folder as the DOL - eg: apps/Snes9xGX/settings.xml (Wii only)
 * fixed: swc, sfc file support
 * fixed: inverted sound channels
 * fixed: some game crashes
