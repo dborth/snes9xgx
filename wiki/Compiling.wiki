@@ -9,7 +9,7 @@ Here's some basic instructions on compiling SNES9x GX. You don't need to be a pr
 
 = Instructions =
 
- # Download the source from SVN.
+ # Download the source from [http://code.google.com/p/snes9x-gx/source/checkout SVN].
  # Download and install [http://www.devkitpro.org devkitPro]. You only need to install devkitPPC.
  # Download the [http://code.google.com/p/snes9x-gx/downloads/list Snes9x devkitPro libraries] from the Downloads page, and overwrite the libraries in your devkitPro installation folder.
  # Run Programmer's Notepad (installed with devkitPro)
