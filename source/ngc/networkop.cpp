@@ -44,8 +44,9 @@ void UpdateCheck()
 
 		snprintf(url, 128, "http://snes9x-gx.googlecode.com/svn/trunk/update.xml");
 
-		AllocSaveBuffer ();
-		retval = http_request(url, NULL, (u8 *)savebuffer, SAVEBUFFERSIZE);
+		u8 * tmpbuffer = (u8 *)malloc(32768);
+		memset(tmpbuffer, 0, 32768);
+		retval = http_request(url, NULL, tmpbuffer, 32768);
 		memset(url, 0, 128);
 
 		if (retval)
@@ -53,30 +54,36 @@ void UpdateCheck()
 			mxml_node_t *xml;
 			mxml_node_t *item;
 
-			xml = mxmlLoadString(NULL, (char *)savebuffer, MXML_TEXT_CALLBACK);
+			xml = mxmlLoadString(NULL, (char *)tmpbuffer, MXML_TEXT_CALLBACK);
 
-			// check settings version
-			char * versionstr;
-			item = mxmlFindElement(xml, xml, "app", "version", NULL, MXML_DESCEND);
-			if(item) // a version entry exists
+			if(xml)
 			{
-				versionstr = (char *)mxmlElementGetAttr(item, "version");
-
-				int version = atoi(versionstr);
-				int currVersion = atoi(APPVERSION);
-
-				if(version > currVersion) // a new version is available
+				// check settings version
+				item = mxmlFindElement(xml, xml, "app", "version", NULL, MXML_DESCEND);
+				if(item) // a version entry exists
 				{
-					item = mxmlFindElement(xml, xml, "file", NULL, NULL, MXML_DESCEND);
-					if(item)
+					const char * versionstr = mxmlElementGetAttr(item, "version");
+
+					if(versionstr)
 					{
-						snprintf(updateURL, 128, "%s", mxmlElementGetAttr(item, "url"));
-						updateFound = true;
+						int version = atoi(versionstr);
+						int currVersion = atoi(APPVERSION);
+
+						if(version > currVersion) // a new version is available
+						{
+							item = mxmlFindElement(xml, xml, "file", NULL, NULL, MXML_DESCEND);
+							if(item)
+							{
+								snprintf(updateURL, 128, "%s", mxmlElementGetAttr(item, "url"));
+								updateFound = true;
+							}
+						}
 					}
 				}
+				mxmlDelete(xml);
 			}
 		}
-		FreeSaveBuffer();
+		free(tmpbuffer);
 	}
 }
 
@@ -119,7 +126,7 @@ bool DownloadUpdate()
 			retval = http_request(updateURL, hfile, NULL, (1024*1024*5));
 			fclose (hfile);
 		}
-		ShowAction("Unzipping...");
+		ShowAction("Installing...");
 		bool unzipResult = unzipArchive(updateFile, (char *)"sd:/");
 		remove(updateFile); // delete update file
 

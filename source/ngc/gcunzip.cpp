@@ -470,13 +470,18 @@ int SzParse(char * filepath, int method)
 				if (SzF->IsDirectory)
 					continue;
 
-				browserList = (BROWSERENTRY *)realloc(browserList, (SzJ+1) * sizeof(BROWSERENTRY));
+				BROWSERENTRY * newBrowserList = (BROWSERENTRY *)realloc(browserList, (SzJ+1) * sizeof(BROWSERENTRY));
 
-				if(!browserList) // failed to allocate required memory
+				if(!newBrowserList) // failed to allocate required memory
 				{
+					ResetBrowser();
 					WaitPrompt("Out of memory: too many files!");
 					nbfiles = 0;
 					break;
+				}
+				else
+				{
+					browserList = newBrowserList;
 				}
 				memset(&(browserList[SzJ]), 0, sizeof(BROWSERENTRY)); // clear the new entry
 
