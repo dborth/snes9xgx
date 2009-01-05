@@ -11,4 +11,4 @@
  ***************************************************************************/
 
 bool SaveSRAM (int method, bool silent);
-int LoadSRAM (int method, bool silent);
+bool LoadSRAM (int method, bool silent);

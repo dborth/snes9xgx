@@ -38,7 +38,6 @@ extern void NGCFreezeStruct ();
 extern bool8 S9xUnfreezeGame (const char *filename);
 
 static int bufoffset;
-static char freezecomment[2][32];
 
 /****************************************************************************
  * GetMem
@@ -150,6 +149,7 @@ NGCFreezeGame (int method, bool silent)
 		memcpy (savebuffer, saveicon, woffset);
 
 		// And the freezecomment
+		char freezecomment[2][32];
 		memset(freezecomment, 0, 64);
 
 		sprintf (freezecomment[0], "%s Freeze", APPVERSION);

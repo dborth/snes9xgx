@@ -279,13 +279,13 @@ ParseDirectory()
 		WaitPrompt(msg);
 
 		// if we can't open the dir, open root dir
-		sprintf(fulldir,"%s",rootdir);
+		sprintf(browser.dir,"/");
 
-		dir = diropen(browser.dir);
+		dir = diropen(rootdir);
 
 		if (dir == NULL)
 		{
-			sprintf(msg, "Error opening %s", fulldir);
+			sprintf(msg, "Error opening %s", rootdir);
 			WaitPrompt(msg);
 			return 0;
 		}
@@ -298,13 +298,18 @@ ParseDirectory()
 	{
 		if(strcmp(filename,".") != 0)
 		{
-			browserList = (BROWSERENTRY *)realloc(browserList, (entryNum+1) * sizeof(BROWSERENTRY));
+			BROWSERENTRY * newBrowserList = (BROWSERENTRY *)realloc(browserList, (entryNum+1) * sizeof(BROWSERENTRY));
 
-			if(!browserList) // failed to allocate required memory
+			if(!newBrowserList) // failed to allocate required memory
 			{
+				ResetBrowser();
 				WaitPrompt("Out of memory: too many files!");
 				entryNum = 0;
 				break;
+			}
+			else
+			{
+				browserList = newBrowserList;
 			}
 			memset(&(browserList[entryNum]), 0, sizeof(BROWSERENTRY)); // clear the new entry
 

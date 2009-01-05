@@ -23,11 +23,7 @@
 #include "images/saveicon.h"
 #include "menudraw.h"
 #include "fileop.h"
-
-extern int padcal;
-extern unsigned short gcpadmap[];
-
-char sramcomment[2][32];
+#include "input.h"
 
 /****************************************************************************
  * Prepare SRAM Save Data
@@ -35,7 +31,7 @@ char sramcomment[2][32];
  * This sets up the savebuffer for saving in a format compatible with
  * snes9x on other platforms.
  ***************************************************************************/
-int
+static int
 preparesavedata (int method)
 {
 	int offset = 0;
@@ -49,6 +45,7 @@ preparesavedata (int method)
 	}
 
 	// Copy in the sramcomments
+	char sramcomment[2][32];
 	memset(sramcomment, 0, 64);
 	sprintf (sramcomment[0], "%s SRAM", APPNAME);
 	sprintf (sramcomment[1], Memory.ROMName);
@@ -87,7 +84,7 @@ preparesavedata (int method)
 /****************************************************************************
  * Decode Save Data
  ***************************************************************************/
-void
+static void
 decodesavedata (int method, int readsize)
 {
 	int offset = 0;
@@ -139,7 +136,7 @@ decodesavedata (int method, int readsize)
 /****************************************************************************
  * Load SRAM
  ***************************************************************************/
-int
+bool
 LoadSRAM (int method, bool silent)
 {
 	char filepath[1024];
@@ -149,7 +146,7 @@ LoadSRAM (int method, bool silent)
 		method = autoSaveMethod(silent); // we use 'Save' because SRAM needs R/W
 
 	if(!MakeFilePath(filepath, FILE_SRAM, method))
-		return 0;
+		return false;
 
 	ShowAction ("Loading...");
 
@@ -162,7 +159,7 @@ LoadSRAM (int method, bool silent)
 		decodesavedata (method, offset);
 		S9xSoftReset();
 		FreeSaveBuffer ();
-		return 1;
+		return true;
 	}
 	else
 	{
@@ -172,7 +169,7 @@ LoadSRAM (int method, bool silent)
 		if(!silent)
 			WaitPrompt ("SRAM file not found");
 
-		return 0;
+		return false;
 	}
 }
 
