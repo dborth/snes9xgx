@@ -189,8 +189,8 @@ bool MountFAT(int method)
 			mounted = false;
 		else if(!fatMountSimple(name, disc))
 			mounted = false;
-		//else
-		//	fatEnableReadAhead(name, 6, 64);
+		else
+			fatSetReadAhead(rootdir, 6, 64);
 	}
 
 	isMounted[method] = mounted;
