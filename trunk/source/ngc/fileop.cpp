@@ -189,8 +189,10 @@ bool MountFAT(int method)
 			mounted = false;
 		else if(!fatMountSimple(name, disc))
 			mounted = false;
+#ifdef HW_RVL
 		else
 			fatSetReadAhead(rootdir, 6, 64);
+#endif
 	}
 
 	isMounted[method] = mounted;
