@@ -6,7 +6,6 @@
  * http.h
  *
  * HTTP operations
- * Copyright (C) 2008 bushing
  ***************************************************************************/
 
 #ifndef _HTTP_H_

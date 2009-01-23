@@ -6,7 +6,7 @@
  * http.cpp
  *
  * HTTP operations
- * Copyright (C) 2008 bushing
+ * Written by dhewg/bushing, modified by Tantric
  ***************************************************************************/
 
 #include <malloc.h>
