@@ -12,14 +12,19 @@
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
-# include <unistd.h>
-# include <utime.h>
+#include <unistd.h>
+#include <utime.h>
 
 #include "unzip.h"
+#include "menudraw.h"
 
 #define CASESENSITIVITY (0)
 #define WRITEBUFFERSIZE (1024*256)
 #define MAXFILENAME (256)
+
+// used to display unzip progress
+static uLong total_size;
+static uLong total_unzipped;
 
 static int mymkdir(const char* dirname)
 {
@@ -204,6 +209,9 @@ static int do_extract_currentfile(unzFile uf,const int* popt_extract_without_pat
                         err=UNZ_ERRNO;
                         break;
                     }
+                total_unzipped += size_buf;
+                // show progress
+                ShowProgress("Unzipping...", total_unzipped, total_size);
             }
             while (err>0);
             if (fout)
@@ -227,12 +235,52 @@ static int do_extract_currentfile(unzFile uf,const int* popt_extract_without_pat
     return err;
 }
 
+static uLong zipSize(unzFile uf)
+{
+    uLong i;
+    unz_global_info gi;
+    int err;
+
+    uLong total = 0;
+
+	unz_file_info file_info;
+	char filename_inzip[256];
+
+    err = unzGetGlobalInfo (uf,&gi);
+
+    for (i=0;i<gi.number_entry;i++)
+    {
+		err = unzGetCurrentFileInfo(uf,&file_info,filename_inzip,sizeof(filename_inzip),NULL,0,NULL,0);
+
+		if (err!=UNZ_OK)
+			return err;
+
+		total += file_info.uncompressed_size;
+
+        if ((i+1)<gi.number_entry)
+        {
+            err = unzGoToNextFile(uf);
+            if (err!=UNZ_OK)
+				return err;
+        }
+    }
+
+    err = unzGoToFirstFile(uf);
+	if (err!=UNZ_OK)
+		return err;
+
+    return total;
+}
 
 int extractZip(unzFile uf,int opt_extract_without_path,int opt_overwrite,const char* password)
 {
     uLong i;
     unz_global_info gi;
     int err;
+
+	total_size = zipSize(uf);
+	total_unzipped = 0;
+	ShowProgress("Unzipping...", total_unzipped, total_size);
 
     err = unzGetGlobalInfo (uf,&gi);
     //if (err!=UNZ_OK)

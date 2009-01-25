@@ -126,7 +126,7 @@ bool DownloadUpdate()
 			retval = http_request(updateURL, hfile, NULL, (1024*1024*5));
 			fclose (hfile);
 		}
-		ShowAction("Installing...");
+
 		bool unzipResult = unzipArchive(updateFile, (char *)"sd:/");
 		remove(updateFile); // delete update file
 
