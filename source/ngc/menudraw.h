@@ -20,6 +20,7 @@
 #ifndef _NGCMENUDRAW_
 #define _NGCMENUDRAW_
 
+#include <gccore.h>
 #include "filesel.h"
 
 #define PAGESIZE 17 // max item listing on a screen
