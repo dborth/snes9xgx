@@ -17,7 +17,7 @@
 #include "snes9x.h"
 
 #define APPNAME 		"Snes9x GX"
-#define APPVERSION 		"008"
+#define APPVERSION 		"009"
 #define PREF_FILE_NAME 	"settings.xml"
 
 #define NOTSILENT 0
