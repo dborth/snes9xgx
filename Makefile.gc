@@ -107,7 +107,6 @@ $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@[ -d $(TARGETDIR) ] || mkdir -p $(TARGETDIR)
 	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile.gc
-	@rm -fr $(OUTPUT).elf
 
 #---------------------------------------------------------------------------------
 clean:
