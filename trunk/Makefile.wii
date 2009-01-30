@@ -33,6 +33,7 @@ CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
 			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
 			-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
 			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter \
+			-DDEBUG_WII \
 			#-D_DEBUG_VIDEO -pipe
 CXXFLAGS	=	-save-temps -Xassembler -aln=$@.lst $(CFLAGS)
 
@@ -41,7 +42,7 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-ldi -lpngu -lpng -lmxml -lfat -lwiiuse -lz -lbte -logc -lm -lfreetype -ltinysmb
+LIBS	:=	-ldb -ldi -lpngu -lpng -lmxml -lfat -lwiiuse -lz -lbte -logc -lm -lfreetype -ltinysmb
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

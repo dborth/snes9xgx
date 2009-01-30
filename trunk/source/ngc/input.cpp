@@ -500,6 +500,14 @@ void decodepad (int pad)
 		S9xReportPointer(offset + pad, (u16) cursor_x[3 + pad],
 				(u16) cursor_y[3 + pad]);
 	}
+	
+#ifdef HW_RVL
+	// screenshot (temp)
+	if (wp & CLASSIC_CTRL_BUTTON_ZR)
+		S9xReportButton(0x90, true);
+	else
+		S9xReportButton(0x90, false);
+#endif
 }
 
 /****************************************************************************
@@ -700,6 +708,9 @@ void SetDefaultButtonMap ()
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Mouse2"), false);
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Justifier1"), false);
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Justifier2"), false);
+  
+  maxcode = 0x90;
+  ASSIGN_BUTTON_FALSE (maxcode++, "Screenshot");
 
   SetControllers ();
 

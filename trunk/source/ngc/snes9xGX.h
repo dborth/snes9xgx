@@ -40,7 +40,8 @@ enum {
 	FILE_SRAM,
 	FILE_SNAPSHOT,
 	FILE_CHEAT,
-	FILE_PREF
+	FILE_PREF,
+	FILE_SCREEN
 };
 
 struct SGCSettings{

@@ -489,10 +489,10 @@ void S9xEndScreenRefresh() {
                 PPU.CGDATA[0] = saved;
             }
 
-#ifndef NGC	   
+//#ifndef NGC	   
             if(Settings.TakeScreenshot)
                 S9xDoScreenshot(IPPU.RenderedScreenWidth, IPPU.RenderedScreenHeight);
-#endif	    
+//#endif	    
             S9xControlEOF();
 
 			if(Settings.AutoDisplayMessages || Settings.OpenGLEnable || Settings.GlideEnable)

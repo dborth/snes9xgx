@@ -166,7 +166,7 @@
 #include "cpuops.h"
 #include "ppu.h"
 #include "cpuexec.h"
-#include "debug.h"
+#include "s9xdebug.h"
 #include "snapshot.h"
 #include "gfx.h"
 #include "missing.h"
