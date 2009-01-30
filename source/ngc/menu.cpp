@@ -55,6 +55,7 @@ extern "C" {
 #include "cheatmgr.h"
 #include "input.h"
 #include "patch.h"
+#include "filter.h"
 
 extern int menu;
 
@@ -511,12 +512,13 @@ FileOptions ()
 /****************************************************************************
  * Video Options
  ***************************************************************************/
-static int videomenuCount = 10;
+static int videomenuCount = 11;
 static char videomenu[][50] = {
 
 	"Enable Zooming",
 	"Video Rendering",
 	"Video Scaling",
+	"Video Filtering",
 
 	"Shift Video Up",
 	"Shift Video Down",
@@ -554,8 +556,10 @@ VideoOptions ()
 
 		sprintf (videomenu[2], "Video Scaling %s",
 			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
+			
+		sprintf (videomenu[3], "Video Filtering %s", GetFilterName((RenderFilter)GCSettings.FilterMethod));
 
-		sprintf (videomenu[7], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
+		sprintf (videomenu[8], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
 
 		ret = RunMenu (videomenu, videomenuCount, "Video Options");
 
@@ -567,7 +571,7 @@ VideoOptions ()
 
 			case 1:
 				GCSettings.render++;
-				if (GCSettings.render > 2 )
+				if (GCSettings.render > 2 || GCSettings.FilterMethod != FILTER_NONE)
 					GCSettings.render = 0;
 				// reset zoom
 				zoom_reset ();
@@ -578,33 +582,40 @@ VideoOptions ()
 				break;
 
 			case 3:
+				GCSettings.FilterMethod++;
+				if (GCSettings.FilterMethod >= NUM_FILTERS)
+					GCSettings.FilterMethod = 0;
+				SelectFilterMethod();
+				break;
+				
+			case 4:
 				// Move up
 				GCSettings.yshift--;
 				break;
-			case 4:
+			case 5:
 				// Move down
 				GCSettings.yshift++;
 				break;
-			case 5:
+			case 6:
 				// Move left
 				GCSettings.xshift--;
 				break;
-			case 6:
+			case 7:
 				// Move right
 				GCSettings.xshift++;
 				break;
 
-			case 7:
+			case 8:
 				break;
 
-			case 8:
+			case 9:
 				// reset video shifts
 				GCSettings.xshift = GCSettings.yshift = 0;
 				WaitPrompt("Video Shift Reset");
 				break;
 
 			case -1: // Button B
-			case 9:
+			case 10:
 				quit = 1;
 				break;
 
@@ -1088,4 +1099,6 @@ MainMenu (int selectedMenu)
 		VIDEO_WaitVSync();
 		count++;
 	}
+	
+	SelectFilterMethod();
 }
