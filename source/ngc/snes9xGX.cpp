@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <wiiuse/wpad.h>
 #include <fat.h>
+#include <debug.h>
 
 #ifdef WII_DVD
 extern "C" {
@@ -29,7 +30,7 @@ extern "C" {
 
 #include "snes9x.h"
 #include "memmap.h"
-#include "debug.h"
+#include "s9xdebug.h"
 #include "cpuexec.h"
 #include "ppu.h"
 #include "apu.h"
@@ -337,7 +338,12 @@ main(int argc, char *argv[])
 	#endif
 
 	int selectedMenu = -1;
-
+	
+	#ifdef DEBUG_WII
+	DEBUG_Init(GDBSTUB_DEVICE_USB, 1);	// init debugging
+	_break();
+	#endif
+	
 	InitDeviceThread();
 
 	// Initialise video

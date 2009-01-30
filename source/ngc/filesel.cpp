@@ -220,6 +220,10 @@ bool MakeFilePath(char filepath[], int type, int method)
 				sprintf(folder, appPath);
 				sprintf(file, "%s", PREF_FILE_NAME);
 				break;
+			case FILE_SCREEN:
+				sprintf(folder, GCSettings.SaveFolder);	// screenshot dir?
+				sprintf(file, "%s.png", Memory.ROMFilename);
+				break;
 		}
 		switch(method)
 		{

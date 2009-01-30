@@ -166,7 +166,7 @@
 #include "ppu.h"
 #include "dsp1.h"
 #include "cpuexec.h"
-#include "debug.h"
+#include "s9xdebug.h"
 #include "apu.h"
 #include "dma.h"
 #include "sa1.h"

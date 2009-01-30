@@ -168,7 +168,7 @@
 
 #include "snes9x.h"
 #include "memmap.h"
-#include "debug.h"
+#include "s9xdebug.h"
 #include "missing.h"
 #ifdef DEBUGGER
 // for "Magic WDM" features

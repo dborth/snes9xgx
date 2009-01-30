@@ -21,7 +21,7 @@
 
 #include "snes9x.h"
 #include "memmap.h"
-#include "debug.h"
+#include "s9xdebug.h"
 #include "cpuexec.h"
 #include "ppu.h"
 #include "apu.h"

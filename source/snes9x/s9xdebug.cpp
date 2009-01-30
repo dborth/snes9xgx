@@ -176,7 +176,7 @@
 
 #include "ppu.h"
 #include "cpuexec.h"
-#include "debug.h"
+#include "s9xdebug.h"
 #include "missing.h"
 #include "display.h"
 #include "apu.h"
