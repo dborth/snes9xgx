@@ -24,10 +24,12 @@
 #include "aram.h"
 #include "snes9xGX.h"
 
+#include "filter.h"
 #include "gui.h"
 
 /*** Snes9x GFX Buffer ***/
-static unsigned char snes9xgfx[1024 * 512 * 2];
+static unsigned char snes9xgfx[EXT_PITCH * EXT_HEIGHT];	// changed.
+unsigned char filtermem[512 * MAX_SNES_HEIGHT * 4];	// only want ((512*2) X (239*2))
 
 /*** 2D Video ***/
 unsigned int *xfb[2] = { NULL, NULL }; // Double buffered
@@ -39,10 +41,10 @@ extern u32* backdrop;
 /*** GX ***/
 #define TEX_WIDTH 512
 #define TEX_HEIGHT 512
+static unsigned char texturemem[TEX_WIDTH * (TEX_HEIGHT + 8) * 2] ATTRIBUTE_ALIGN (32);
 #define DEFAULT_FIFO_SIZE 256 * 1024
 unsigned int copynow = GX_FALSE;
 static unsigned char gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
-static unsigned char texturemem[TEX_WIDTH * (TEX_HEIGHT + 8)] ATTRIBUTE_ALIGN (32);
 GXTexObj texobj;
 Mtx view;
 static int vwidth, vheight, oldvwidth, oldvheight;
@@ -237,6 +239,8 @@ static GXRModeObj TV_448i =
 	}
 };
 
+static GXRModeObj TV_Custom;
+
 /* TV Modes table */
 static GXRModeObj *tvmodes[4] = {
 	&TV_239p, &TV_478i,			/* Snes PAL video modes */
@@ -428,6 +432,51 @@ UpdatePadsCB ()
 }
 
 /****************************************************************************
+ * MakeTexture 
+ *
+ * - modified for a buffer with an offset (border)
+ ****************************************************************************/
+static void
+MakeTexture (const void *src, void *dst, s32 width, s32 height)
+{
+  register u32 tmp0 = 0, tmp1 = 0, tmp2 = 0, tmp3 = 0;
+
+  __asm__ __volatile__ ("       srwi            %6,%6,2\n"
+                        "       srwi            %7,%7,2\n"
+                        "       subi            %3,%4,4\n"
+                        "       mr              %4,%3\n"
+                        "       subi            %4,%4,4\n"
+                        "2:     mtctr           %6\n"
+                        "       mr                      %0,%5\n"
+                        // 
+                        "1:     lwz                     %1,0(%5)\n"		//1
+                        "       stwu            %1,8(%4)\n"
+                        "       lwz                     %2,4(%5)\n"		//1
+                        "       stwu            %2,8(%3)\n"
+                        "       lwz                     %1,1032(%5)\n"		//2
+                        "       stwu            %1,8(%4)\n"
+                        "       lwz                     %2,1036(%5)\n"		//2
+                        "       stwu            %2,8(%3)\n"
+                        "       lwz                     %1,2064(%5)\n"		//3
+                        "       stwu            %1,8(%4)\n"
+                        "       lwz                     %2,2068(%5)\n"		//3
+                        "       stwu            %2,8(%3)\n"
+                        "       lwz                     %1,3096(%5)\n"		//4
+                        "       stwu            %1,8(%4)\n"
+                        "       lwz                     %2,3100(%5)\n"		//4
+                        "       stwu            %2,8(%3)\n"
+                        "       addi            %5,%5,8\n"
+                        "       bdnz            1b\n"
+                        "       addi            %5,%0,4128\n"		//5
+                        "       subic.          %7,%7,1\n"
+                        "       bne                     2b"
+                        // regs 0-7
+                        :"=&r" (tmp0), "=&r" (tmp1), "=&r" (tmp2),
+                        "=&r" (tmp3), "+r" (dst):"r" (src), "r" (width),
+                        "r" (height));
+}
+
+/****************************************************************************
  * InitGCVideo
  *
  * This function MUST be called at startup.
@@ -548,6 +597,8 @@ InitGCVideo ()
 	StartGX ();
 
 	draw_init ();
+	
+	InitLUTs();	// init LUTs for hq2x
 
 	InitVideoThread ();
 
@@ -566,7 +617,7 @@ ResetVideo_Emu ()
 	Mtx44 p;
 
 	int i = -1;
-	if (GCSettings.render == 0)	// original render mode
+	if (GCSettings.render == 0 || GCSettings.FilterMethod != FILTER_NONE)	// original render mode or hq2x
 	{
 		for (i=0; i<4; i++)
 		{
@@ -574,6 +625,19 @@ ResetVideo_Emu ()
 				break;
 		}
 		rmode = tvmodes[i];
+		
+		// hack to fix video output for hq2x
+		if (GCSettings.FilterMethod != FILTER_NONE)
+		{
+			memcpy(&TV_Custom, tvmodes[i], sizeof(TV_Custom));
+			rmode = &TV_Custom;
+		
+			rmode->fbWidth = 512;
+			rmode->efbHeight *= 2;
+			rmode->xfbHeight *= 2;
+			rmode->xfbMode = VI_XFBMODE_DF;
+			rmode->viTVMode |= VI_INTERLACE;
+		}
 	}
 	else
 	{
@@ -652,6 +716,7 @@ ResetVideo_Menu ()
  ***************************************************************************/
 uint32 prevRenderedFrameCount = 0;
 extern bool CheckVideo;
+int fscale;
 
 void
 update_video (int width, int height)
@@ -674,11 +739,18 @@ update_video (int width, int height)
 	if ( CheckVideo && (IPPU.RenderedFramesCount != prevRenderedFrameCount) )	// if we get back from the menu, and have rendered at least 1 frame
 	{
 		int xscale, yscale;
+		
+		fscale = GetFilterScale((RenderFilter)GCSettings.FilterMethod);
 
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
 
 		/** Update scaling **/
-		if (GCSettings.render == 0)	// original render mode
+		if (GCSettings.FilterMethod != FILTER_NONE)	// hq2x filters
+		{
+			xscale = vwidth;
+			yscale = vheight;
+		}
+		else if (GCSettings.render == 0)	// original render mode
 		{
 			xscale = 256;
 			yscale = vheight / 2;
@@ -704,7 +776,8 @@ update_video (int width, int height)
 		DCFlushRange (square, 32); // update memory BEFORE the GPU accesses it!
     	draw_init ();
 
-		GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);	// initialize the texture obj we are going to use
+		// initialize the texture obj we are going to use
+		GX_InitTexObj (&texobj, texturemem, vwidth*fscale, vheight*fscale, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
 	    if (GCSettings.render == 0 || GCSettings.render == 2)
 			GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1); // original/unfiltered video mode: force texture filtering OFF
@@ -721,7 +794,14 @@ update_video (int width, int height)
 		CheckVideo = 0;
 	}
 
-	MakeTexture565((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);	// convert image to texture
+	// convert image to texture
+	if (GCSettings.FilterMethod != FILTER_NONE) 
+	{
+		FilterMethod ((uint8*) GFX.Screen, EXT_PITCH, (uint8*) filtermem, vwidth*fscale*2, vwidth, vheight);
+		MakeTexture565((char *) filtermem, (char *) texturemem, vwidth*fscale, vheight*fscale);
+	} else {
+		MakeTexture((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
+	}
 
 	DCFlushRange (texturemem, TEX_WIDTH * TEX_HEIGHT * 2);	// update the texture memory
 	GX_InvalidateTexAll ();
@@ -797,6 +877,8 @@ showscreen ()
 void
 setGFX ()
 {
-	GFX.Screen = (unsigned short *) snes9xgfx;
-	GFX.Pitch = 1024;
+	GFX.Pitch = EXT_PITCH;
+	GFX.Screen = (uint16*)(snes9xgfx + EXT_OFFSET);
+	
+	memset (snes9xgfx, 0, sizeof(snes9xgfx));
 }

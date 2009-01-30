@@ -17,6 +17,7 @@
 #include "snes9x.h"
 #include "snes9xGX.h"
 #include "input.h"
+#include "filter.h"
 
 struct SGCSettings GCSettings;
 
@@ -55,6 +56,7 @@ DefaultSettings ()
 	GCSettings.ZoomLevel = 1.0; // zoom level
 	GCSettings.render = 2; // Unfiltered
 	GCSettings.widescreen = 0; // no aspect ratio correction
+	GCSettings.FilterMethod = FILTER_NONE;	// no hq2x
 
 	GCSettings.xshift = 0;	// video shift
 	GCSettings.yshift = 0;

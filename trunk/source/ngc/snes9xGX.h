@@ -15,6 +15,7 @@
 #define _SNES9XGX_H_
 
 #include "snes9x.h"
+#include "filter.h"
 
 #define APPNAME 		"Snes9x GX"
 #define APPVERSION 		"009"
@@ -62,6 +63,7 @@ struct SGCSettings{
     float	ZoomLevel; // zoom amount
     int		VerifySaves;
 	int		render;		// 0 - original, 1 - filtered, 2 - unfiltered
+	int		FilterMethod;		// convert to RenderFilter
 	int		Superscope;
 	int		Mouse;
 	int		Justifier;
