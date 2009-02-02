@@ -569,8 +569,15 @@ RunMenu (char items[][50], int maxitems, const char *title, int fontsize, int x)
 
     u32 p = 0;
 	u32 wp = 0;
+	u32 ph = 0;
+	u32 wh = 0;
     signed char gc_ay = 0;
 	signed char wm_ay = 0;
+	
+	int scroll_delay = 0;
+	bool move_selection = 0;
+	#define SCROLL_INITIAL_DELAY	15
+	#define SCROLL_LOOP_DELAY		2
 
     while (quit == 0)
     {
@@ -595,25 +602,67 @@ RunMenu (char items[][50], int maxitems, const char *title, int fontsize, int x)
 
 		gc_ay = PAD_StickY (0);
         p = PAD_ButtonsDown (0);
+		ph = PAD_ButtonsHeld (0);
 #ifdef HW_RVL
 		wm_ay = WPAD_Stick (0,0, 1);
 		wp = WPAD_ButtonsDown (0);
+		wh = WPAD_ButtonsHeld (0);
 #endif
 
 		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
 
         /*** Look for up ***/
-        if ( (p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (gc_ay > PADCAL) || (wm_ay > PADCAL) )
+        if ( ((p | ph) & PAD_BUTTON_UP) || ((wp | wh) & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (gc_ay > PADCAL) || (wm_ay > PADCAL) )
         {
-            redraw = 1;
-            menu = FindMenuItem(&items[0], maxitems, menu, -1);
+			if ((p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP
+					| WPAD_CLASSIC_BUTTON_UP)))
+			{ /*** Button just pressed***/
+				scroll_delay = SCROLL_INITIAL_DELAY; // reset scroll delay.
+				move_selection = 1; //continue (move selection)
+			}
+			else if (scroll_delay == 0)
+			{ /*** Button is held ***/
+				scroll_delay = SCROLL_LOOP_DELAY;
+				move_selection = 1; //continue (move selection)
+			}
+			else
+			{
+				scroll_delay--; // wait
+			}
+
+			if (move_selection)
+			{
+				redraw = 1;
+				menu = FindMenuItem(&items[0], maxitems, menu, -1);
+				move_selection = 0;
+			}
         }
 
         /*** Look for down ***/
-        if ( (p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (gc_ay < -PADCAL) || (wm_ay < -PADCAL) )
+        if ( ((p | ph) & PAD_BUTTON_DOWN) || ((wp | wh) & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (gc_ay < -PADCAL) || (wm_ay < -PADCAL) )
         {
-            redraw = 1;
-            menu = FindMenuItem(&items[0], maxitems, menu, +1);
+			if ((p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN
+					| WPAD_CLASSIC_BUTTON_DOWN)))
+			{ /*** Button just pressed ***/
+				scroll_delay = SCROLL_INITIAL_DELAY; // reset scroll delay.
+				move_selection = 1; //continue (move selection)
+			}
+			else if (scroll_delay == 0)
+			{ /*** Button is held ***/
+				scroll_delay = SCROLL_LOOP_DELAY;
+				move_selection = 1; //continue (move selection)
+			}
+			else
+			{
+				scroll_delay--; // wait
+			}
+
+			if (move_selection)
+			{
+				redraw = 1;
+				move_selection = 0;
+				menu = FindMenuItem(&items[0], maxitems, menu, +1);
+			}
         }
 
         if ((p & PAD_BUTTON_A) || (wp & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)))
