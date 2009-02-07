@@ -160,6 +160,7 @@
 
 
 
+#include <malloc.h>
 #include <numeric>
 
 #include <string.h>
@@ -326,7 +327,7 @@ static void S9xDeinterleaveType1 (int size, uint8 *base)
 		blocks[i * 2 + 1] = i;
 	}
 
-	uint8	*tmp = (uint8 *) malloc(0x8000);
+	uint8	*tmp = (uint8 *) memalign(32, 0x8000);
 	if (tmp)
 	{
 		for (int i = 0; i < nblocks * 2; i++)
@@ -370,7 +371,7 @@ static void S9xDeinterleaveType2 (int size, uint8 *base)
 	for (int i = 0; i < nblocks * 2; i++)
 		blocks[i] = (i & ~0xf) | ((i & 3) << 2) | ((i & 12) >> 2);
 
-	uint8	*tmp = (uint8 *) malloc(0x10000);
+	uint8	*tmp = (uint8 *) memalign(32, 0x10000);
 	if (tmp)
 	{
 		for (int i = 0; i < nblocks * 2; i++)
@@ -406,7 +407,7 @@ static void S9xDeinterleaveGD24 (int size, uint8 *base)
 		SET_UI_COLOR(0, 255, 255);
 	}
 
-	uint8	*tmp = (uint8 *) malloc(0x80000);
+	uint8	*tmp = (uint8 *) memalign(32, 0x80000);
 	if (tmp)
 	{
 		memmove(tmp, &base[0x180000], 0x80000);
@@ -424,26 +425,26 @@ static void S9xDeinterleaveGD24 (int size, uint8 *base)
 
 bool8 CMemory::Init (void)
 {
-    RAM	 = (uint8 *) malloc(0x20000);
-    SRAM = (uint8 *) malloc(0x20000);
-    VRAM = (uint8 *) malloc(0x10000);
-    ROM  = (uint8 *) malloc(MAX_ROM_SIZE + 0x200 + 0x8000);
+    RAM	 = (uint8 *) memalign(32, 0x20000);
+    SRAM = (uint8 *) memalign(32, 0x20000);
+    VRAM = (uint8 *) memalign(32, 0x10000);
+    ROM  = (uint8 *) memalign(32, MAX_ROM_SIZE + 0x200 + 0x8000);
 
-	IPPU.TileCache[TILE_2BIT]       = (uint8 *) malloc(MAX_2BIT_TILES * 64);
-	IPPU.TileCache[TILE_4BIT]       = (uint8 *) malloc(MAX_4BIT_TILES * 64);
-	IPPU.TileCache[TILE_8BIT]       = (uint8 *) malloc(MAX_8BIT_TILES * 64);
-	IPPU.TileCache[TILE_2BIT_EVEN]  = (uint8 *) malloc(MAX_2BIT_TILES * 64);
-	IPPU.TileCache[TILE_2BIT_ODD]   = (uint8 *) malloc(MAX_2BIT_TILES * 64);
-	IPPU.TileCache[TILE_4BIT_EVEN]  = (uint8 *) malloc(MAX_4BIT_TILES * 64);
-	IPPU.TileCache[TILE_4BIT_ODD]   = (uint8 *) malloc(MAX_4BIT_TILES * 64);
+	IPPU.TileCache[TILE_2BIT]       = (uint8 *) memalign(32, MAX_2BIT_TILES * 64);
+	IPPU.TileCache[TILE_4BIT]       = (uint8 *) memalign(32, MAX_4BIT_TILES * 64);
+	IPPU.TileCache[TILE_8BIT]       = (uint8 *) memalign(32, MAX_8BIT_TILES * 64);
+	IPPU.TileCache[TILE_2BIT_EVEN]  = (uint8 *) memalign(32, MAX_2BIT_TILES * 64);
+	IPPU.TileCache[TILE_2BIT_ODD]   = (uint8 *) memalign(32, MAX_2BIT_TILES * 64);
+	IPPU.TileCache[TILE_4BIT_EVEN]  = (uint8 *) memalign(32, MAX_4BIT_TILES * 64);
+	IPPU.TileCache[TILE_4BIT_ODD]   = (uint8 *) memalign(32, MAX_4BIT_TILES * 64);
 
-	IPPU.TileCached[TILE_2BIT]      = (uint8 *) malloc(MAX_2BIT_TILES);
-	IPPU.TileCached[TILE_4BIT]      = (uint8 *) malloc(MAX_4BIT_TILES);
-	IPPU.TileCached[TILE_8BIT]      = (uint8 *) malloc(MAX_8BIT_TILES);
-	IPPU.TileCached[TILE_2BIT_EVEN] = (uint8 *) malloc(MAX_2BIT_TILES);
-	IPPU.TileCached[TILE_2BIT_ODD]  = (uint8 *) malloc(MAX_2BIT_TILES);
-	IPPU.TileCached[TILE_4BIT_EVEN] = (uint8 *) malloc(MAX_4BIT_TILES);
-	IPPU.TileCached[TILE_4BIT_ODD]  = (uint8 *) malloc(MAX_4BIT_TILES);
+	IPPU.TileCached[TILE_2BIT]      = (uint8 *) memalign(32, MAX_2BIT_TILES);
+	IPPU.TileCached[TILE_4BIT]      = (uint8 *) memalign(32, MAX_4BIT_TILES);
+	IPPU.TileCached[TILE_8BIT]      = (uint8 *) memalign(32, MAX_8BIT_TILES);
+	IPPU.TileCached[TILE_2BIT_EVEN] = (uint8 *) memalign(32, MAX_2BIT_TILES);
+	IPPU.TileCached[TILE_2BIT_ODD]  = (uint8 *) memalign(32, MAX_2BIT_TILES);
+	IPPU.TileCached[TILE_4BIT_EVEN] = (uint8 *) memalign(32, MAX_4BIT_TILES);
+	IPPU.TileCached[TILE_4BIT_ODD]  = (uint8 *) memalign(32, MAX_4BIT_TILES);
 
 	if (!RAM || !SRAM || !VRAM || !ROM ||
 		!IPPU.TileCache[TILE_2BIT]       ||
@@ -975,7 +976,7 @@ again:
 
 	if (tales)
 	{
-		uint8	*tmp = (uint8 *) malloc(CalculatedSize - 0x400000);
+		uint8	*tmp = (uint8 *) memalign(32, CalculatedSize - 0x400000);
 		if (tmp)
 		{
 			S9xMessage(S9X_INFO, S9X_ROM_INTERLEAVED_INFO, "Fixing swapped ExHiROM...");
@@ -1587,7 +1588,7 @@ char * CMemory::Safe (const char *s)
 			free(safe);
 
 		safe_len = len + 1;
-		safe = (char *) malloc(safe_len);
+		safe = (char *) memalign(32, safe_len);
 	}
 
 	for (int i = 0; i < len; i++)
@@ -1626,7 +1627,7 @@ char * CMemory::SafeANK (const char *s)
 			free(safe);
 
 		safe_len = len + 1;
-		safe = (char *) malloc(safe_len);
+		safe = (char *) memalign(32, safe_len);
 	}
 
 	for (int i = 0; i < len; i++)

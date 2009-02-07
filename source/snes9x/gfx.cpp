@@ -161,6 +161,7 @@
 
 
 
+#include <malloc.h>
 #include "snes9x.h"
 #include "cpuexec.h"
 #include "gfx.h"
@@ -216,16 +217,16 @@ bool8 S9xGraphicsInit(){
     S9xFixColourBrightness();
 
     GFX.X2=GFX.ZERO_OR_X2=GFX.ZERO=NULL;
-    if(!(GFX.X2=(uint16*)malloc(sizeof(uint16)*0x10000))) goto FAIL;
+    if(!(GFX.X2=(uint16*)memalign(32, sizeof(uint16)*0x10000))) goto FAIL;
 #if !defined(NEW_COLOUR_BLENDING)
-    if(!(GFX.ZERO_OR_X2=(uint16*)malloc(sizeof(uint16)*0x10000))) goto FAIL;
+    if(!(GFX.ZERO_OR_X2=(uint16*)memalign(32, sizeof(uint16)*0x10000))) goto FAIL;
 #endif
-    if(!(GFX.ZERO=(uint16*)malloc(sizeof(uint16)*0x10000))) goto FAIL;
+    if(!(GFX.ZERO=(uint16*)memalign(32, sizeof(uint16)*0x10000))) goto FAIL;
 
     GFX.ScreenSize=GFX.Pitch/2*SNES_HEIGHT_EXTENDED*(Settings.SupportHiRes?2:1);
-    if(!(GFX.SubScreen=(uint16*)malloc(GFX.ScreenSize*sizeof(uint16)))) goto FAIL;
-    if(!(GFX.ZBuffer=(uint8*)malloc(GFX.ScreenSize))) goto FAIL;
-    if(!(GFX.SubZBuffer=(uint8*)malloc(GFX.ScreenSize))) goto FAIL;
+    if(!(GFX.SubScreen=(uint16*)memalign(32, GFX.ScreenSize*sizeof(uint16)))) goto FAIL;
+    if(!(GFX.ZBuffer=(uint8*)memalign(32, GFX.ScreenSize))) goto FAIL;
+    if(!(GFX.SubZBuffer=(uint8*)memalign(32, GFX.ScreenSize))) goto FAIL;
 
     uint32 r, g, b;
     /* Lookup table for color addition */

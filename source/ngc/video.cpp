@@ -289,7 +289,7 @@ InitVideoThread ()
 	LWP_InitQueue (&videoblankqueue);
 
 	/*** Create the thread on this queue ***/
-	LWP_CreateThread (&vbthread, vbgetback, NULL, vbstack, TSTACK, 150);
+	LWP_CreateThread (&vbthread, vbgetback, NULL, vbstack, TSTACK, 80);
 }
 
 /****************************************************************************
@@ -432,7 +432,7 @@ UpdatePadsCB ()
 }
 
 /****************************************************************************
- * MakeTexture 
+ * MakeTexture
  *
  * - modified for a buffer with an offset (border)
  ****************************************************************************/
@@ -448,7 +448,7 @@ MakeTexture (const void *src, void *dst, s32 width, s32 height)
                         "       subi            %4,%4,4\n"
                         "2:     mtctr           %6\n"
                         "       mr                      %0,%5\n"
-                        // 
+                        //
                         "1:     lwz                     %1,0(%5)\n"		//1
                         "       stwu            %1,8(%4)\n"
                         "       lwz                     %2,4(%5)\n"		//1
@@ -583,6 +583,9 @@ InitGCVideo ()
 	VIDEO_ClearFrameBuffer (vmode, xfb[1], COLOR_BLACK);
 	VIDEO_SetNextFramebuffer (xfb[0]);
 
+	printf("\n\n\n\ttest A");
+	sleep(5);
+
 	// video callbacks
 	VIDEO_SetPostRetraceCallback ((VIRetraceCallback)UpdatePadsCB);
 	VIDEO_SetPreRetraceCallback ((VIRetraceCallback)copy_to_xfb);
@@ -597,10 +600,16 @@ InitGCVideo ()
 	StartGX ();
 
 	draw_init ();
-	
+
+	printf(" B");
+	sleep(2);
+
 	InitLUTs();	// init LUTs for hq2x
 
 	InitVideoThread ();
+
+	printf(" C");
+	sleep(2);
 
 	// Finally, the video is up and ready for use :)
 }
@@ -617,7 +626,7 @@ ResetVideo_Emu ()
 	Mtx44 p;
 
 	int i = -1;
-	if (GCSettings.render == 0 || GCSettings.FilterMethod != FILTER_NONE)	// original render mode or hq2x
+	if (GCSettings.render == 0)	// original render mode or hq2x
 	{
 		for (i=0; i<4; i++)
 		{
@@ -625,13 +634,13 @@ ResetVideo_Emu ()
 				break;
 		}
 		rmode = tvmodes[i];
-		
+
 		// hack to fix video output for hq2x
 		if (GCSettings.FilterMethod != FILTER_NONE)
 		{
 			memcpy(&TV_Custom, tvmodes[i], sizeof(TV_Custom));
 			rmode = &TV_Custom;
-		
+
 			rmode->fbWidth = 512;
 			rmode->efbHeight *= 2;
 			rmode->xfbHeight *= 2;
@@ -739,7 +748,7 @@ update_video (int width, int height)
 	if ( CheckVideo && (IPPU.RenderedFramesCount != prevRenderedFrameCount) )	// if we get back from the menu, and have rendered at least 1 frame
 	{
 		int xscale, yscale;
-		
+
 		fscale = GetFilterScale((RenderFilter)GCSettings.FilterMethod);
 
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
@@ -795,7 +804,7 @@ update_video (int width, int height)
 	}
 
 	// convert image to texture
-	if (GCSettings.FilterMethod != FILTER_NONE) 
+	if (GCSettings.FilterMethod != FILTER_NONE)
 	{
 		FilterMethod ((uint8*) GFX.Screen, EXT_PITCH, (uint8*) filtermem, vwidth*fscale*2, vwidth, vheight);
 		MakeTexture565((char *) filtermem, (char *) texturemem, vwidth*fscale, vheight*fscale);
@@ -879,6 +888,6 @@ setGFX ()
 {
 	GFX.Pitch = EXT_PITCH;
 	GFX.Screen = (uint16*)(snes9xgfx + EXT_OFFSET);
-	
+
 	memset (snes9xgfx, 0, sizeof(snes9xgfx));
 }

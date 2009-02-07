@@ -11,6 +11,7 @@
  * Menu drawing routines
  ***************************************************************************/
 
+#include <malloc.h>
 #include <gccore.h>
 #include <ogcsys.h>
 #include <stdio.h>
@@ -314,7 +315,7 @@ unpackbackdrop ()
 	int i;
 	int bgSize = (screenheight * 640 * 2);
 
-	u32 * bgtemp = (u32 *) malloc (bgSize);
+	u32 * bgtemp = (u32 *) memalign(32, bgSize);
 	colour = getcolour (0x00, 0x00, 0x00);
 
 	/*** Fill with black for now ***/
