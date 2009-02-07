@@ -9,6 +9,7 @@
  * This allows standard file calls to be replaced by memory based ones
  * With little modification required to the code
  ***************************************************************************/
+#include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -22,7 +23,7 @@
  ***************************************************************************/
 MFILE * memfopen(char * buffer, int size)
 {
-	MFILE *f = (MFILE *)malloc(sizeof(MFILE));
+	MFILE *f = (MFILE *)memalign(32, sizeof(MFILE));
 
 	f->buffer = buffer;
 	f->offset = 0;

@@ -65,7 +65,7 @@ devicecallback (void *arg)
 	while (1)
 	{
 #ifdef HW_RVL
-		if(isMounted[METHOD_SD])
+		/*if(isMounted[METHOD_SD])
 		{
 			if(!sd->isInserted()) // check if the device was removed
 			{
@@ -82,11 +82,11 @@ devicecallback (void *arg)
 				isMounted[METHOD_USB] = false;
 			}
 		}
-
+		*/
 		InitializeNetwork(SILENT);
 		UpdateCheck();
 #else
-		if(isMounted[METHOD_SD_SLOTA])
+		/*if(isMounted[METHOD_SD_SLOTA])
 		{
 			if(!carda->isInserted()) // check if the device was removed
 			{
@@ -101,7 +101,7 @@ devicecallback (void *arg)
 				unmountRequired[METHOD_SD_SLOTB] = true;
 				isMounted[METHOD_SD_SLOTB] = false;
 			}
-		}
+		}*/
 #endif
 		usleep(500000); // suspend thread for 1/2 sec
 	}
@@ -117,7 +117,7 @@ devicecallback (void *arg)
 void
 InitDeviceThread()
 {
-	LWP_CreateThread (&devicethread, devicecallback, NULL, NULL, 0, 80);
+	LWP_CreateThread (&devicethread, devicecallback, NULL, NULL, 0, 40);
 }
 
 /****************************************************************************
@@ -427,6 +427,9 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 	sprintf(fullpath, "%s%s", rootdir, filepath);
 
 	file = fopen (fullpath, "rb");
+
+	printf("loading %s", fullpath);
+	sleep(2);
 
 	if (file > 0)
 	{

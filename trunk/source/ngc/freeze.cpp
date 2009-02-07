@@ -14,6 +14,7 @@
  * Don't even think of opening two at the same time!
  ***************************************************************************/
 
+#include <malloc.h>
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -259,7 +260,7 @@ NGCUnfreezeGame (int method, bool silent)
 	{
 		if (offset)
 		{
-			char * zipbuffer = (char *)malloc(SAVEBUFFERSIZE);
+			char * zipbuffer = (char *)memalign(32, SAVEBUFFERSIZE);
 			memset (zipbuffer, 0, SAVEBUFFERSIZE);
 
 			// skip the saveicon and comment

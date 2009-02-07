@@ -161,6 +161,7 @@
 
 
 
+#include <malloc.h>
 #ifdef __DJGPP
 #include <allegro.h>
 #undef TRUE
@@ -191,7 +192,7 @@ void S9xTraceSoundDSP (const char *s, int i1 = 0, int i2 = 0, int i3 = 0,
 
 bool8 S9xInitAPU ()
 {
-    IAPU.RAM = (uint8 *) malloc (0x10000);
+    IAPU.RAM = (uint8 *) memalign(32, 0x10000);
 
     if (!IAPU.RAM)
     {
