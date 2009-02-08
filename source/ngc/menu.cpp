@@ -1082,7 +1082,8 @@ MainMenu (int selectedMenu)
 
 			case -1: // Button B
 				// Return to Game
-				quit = 1;
+				if(SNESROMSize > 0)
+					quit = 1;
 				break;
 		}
 	}

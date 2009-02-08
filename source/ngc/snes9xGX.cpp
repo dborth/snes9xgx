@@ -78,9 +78,9 @@ void ExitCleanup()
 {
 	LWP_SuspendThread (devicethread);
 	UnmountAllFAT();
-	CloseShare();
 
 #ifdef HW_RVL
+	CloseShare();
 	DI_Close();
 #endif
 }
@@ -192,100 +192,92 @@ void setFrameTimerMethod()
 extern void S9xInitSync();
 bool CheckVideo = 0; // for forcing video reset in video.cpp
 extern uint32 prevRenderedFrameCount;
+static int selectedMenu = -1;
 
 void
 emulate ()
 {
-	S9xSetSoundMute (TRUE);
-	AudioStart ();
-	S9xInitSync(); // Eke-Eke: initialize frame Sync
-
-	setFrameTimerMethod(); // set frametimer method every time a ROM is loaded
-
 	while (1)
 	{
-		S9xMainLoop ();
-		NGCReportButtons ();
+		// go back to checking if devices were inserted/removed
+		// since we're entering the menu
+		LWP_ResumeThread (devicethread);
 
-		if(ResetRequested)
+		ConfigRequested = 1;
+
+		if(SNESROMSize > 0 && selectedMenu != 2)
+			selectedMenu = 2;
+
+		MainMenu (selectedMenu); // go to menu
+
+		ConfigRequested = 0;
+
+		Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);
+		Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);
+		Settings.JustifierMaster = (GCSettings.Justifier > 0 ? true : false);
+		SetControllers ();
+
+		// stop checking if devices were removed/inserted
+		// since we're starting emulation again
+		LWP_SuspendThread (devicethread);
+
+		ResetVideo_Emu();
+
+		FrameTimer = 0;
+		setFrameTimerMethod(); // set frametimer method every time a ROM is loaded
+
+		CheckVideo = 1;	// force video update
+		prevRenderedFrameCount = IPPU.RenderedFramesCount;
+
+		while(1)
 		{
-			S9xSoftReset (); // reset game
-			ResetRequested = 0;
-		}
+			S9xMainLoop ();
+			NGCReportButtons ();
 
-		if (ConfigRequested)
-		{
-			// go back to checking if devices were inserted/removed
-			// since we're entering the menu
-			LWP_ResumeThread (devicethread);
-
-			// change to menu video mode
-			ResetVideo_Menu ();
-
-			if ( GCSettings.AutoSave == 1 )
+			if(ResetRequested)
 			{
-				SaveSRAM ( GCSettings.SaveMethod, SILENT );
+				S9xSoftReset (); // reset game
+				ResetRequested = 0;
 			}
-			else if ( GCSettings.AutoSave == 2 )
+
+			if (ConfigRequested)
 			{
-				if ( WaitPromptChoice ("Save Freeze State?", "Don't Save", "Save") )
-					NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
-			}
-			else if ( GCSettings.AutoSave == 3 )
-			{
-				if ( WaitPromptChoice ("Save SRAM and Freeze State?", "Don't Save", "Save") )
+				// go back to checking if devices were inserted/removed
+				// since we're entering the menu
+				LWP_ResumeThread (devicethread);
+
+				// change to menu video mode
+				ResetVideo_Menu ();
+
+				if ( GCSettings.AutoSave == 1 )
 				{
-					SaveSRAM(GCSettings.SaveMethod, SILENT );
-					NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
+					SaveSRAM ( GCSettings.SaveMethod, SILENT );
 				}
+				else if ( GCSettings.AutoSave == 2 )
+				{
+					if ( WaitPromptChoice ("Save Freeze State?", "Don't Save", "Save") )
+						NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
+				}
+				else if ( GCSettings.AutoSave == 3 )
+				{
+					if ( WaitPromptChoice ("Save SRAM and Freeze State?", "Don't Save", "Save") )
+					{
+						SaveSRAM(GCSettings.SaveMethod, SILENT );
+						NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
+					}
+				}
+
+				#ifdef HW_RVL
+				if(ShutdownRequested)
+					ShutdownWii();
+				#endif
+
+				// save zoom level
+				SavePrefs(SILENT);
+				break;
 			}
-
-			#ifdef HW_RVL
-			if(ShutdownRequested)
-				ShutdownWii();
-			#endif
-
-			// GUI Stuff
-			/*
-			gui_alloc();
-			gui_makebg ();
-			gui_clearscreen();
-			gui_draw ();
-			gui_showscreen ();
-			//gui_savescreen ();
-			*/
-
-			MainMenu (2); // go to game menu
-
-			// save zoom level
-			SavePrefs(SILENT);
-
-			FrameTimer = 0;
-			setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
-
-			Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);
-			Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);
-			Settings.JustifierMaster = (GCSettings.Justifier > 0 ? true : false);
-			SetControllers ();
-			//S9xReportControllers ();
-
-			ConfigRequested = 0;
-
-			#ifdef _DEBUG_VIDEO
-			// log stuff
-			fprintf(debughandle, "\n\nPlaying ROM: %s", Memory.ROMFilename);
-			fprintf(debughandle, "\nrender: %u", GCSettings.render);
-			#endif
-
-			CheckVideo = 1;	// force video update
-			prevRenderedFrameCount = IPPU.RenderedFramesCount;
-
-			// stop checking if devices were removed/inserted
-			// since we're starting emulation again
-			LWP_SuspendThread (devicethread);
-		}//if ConfigRequested
-
-	}//while
+		}
+	}
 }
 
 void CreateAppPath(char origpath[])
@@ -337,13 +329,11 @@ main(int argc, char *argv[])
 	DI_Init();	// first
 	#endif
 
-	int selectedMenu = -1;
-	
 	#ifdef DEBUG_WII
 	DEBUG_Init(GDBSTUB_DEVICE_USB, 1);	// init debugging
 	//_break();
 	#endif
-	
+
 	InitDeviceThread();
 
 	// Initialise video
@@ -464,16 +454,10 @@ main(int argc, char *argv[])
 	}
 	#endif
 
-	// Get the user to load a ROM
-	while (SNESROMSize <= 0)
-	{
-		MainMenu (selectedMenu);
-	}
+	S9xSetSoundMute (TRUE);
+	AudioStart ();
+	S9xInitSync(); // initialize frame sync
 
 	// Emulate
 	emulate ();
-
-	// NO! - We're never leaving here!
-	while (1);
-		return 0;
 }
