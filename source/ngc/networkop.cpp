@@ -20,6 +20,8 @@
 #include "fileop.h"
 #include "http.h"
 
+#ifdef HW_RVL
+
 static bool networkInit = false;
 static bool autoNetworkInit = true;
 static bool networkShareInit = false;
@@ -260,3 +262,5 @@ ConnectShare (bool silent)
 
 	return networkShareInit;
 }
+
+#endif

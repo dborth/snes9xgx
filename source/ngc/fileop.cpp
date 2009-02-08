@@ -51,7 +51,7 @@ bool isMounted[9] = { false, false, false, false, false, false, false, false, fa
 /****************************************************************************
  * deviceThreading
  ***************************************************************************/
-lwp_t devicethread;
+lwp_t devicethread = LWP_THREAD_NULL;
 
 /****************************************************************************
  * devicecallback
@@ -244,11 +244,13 @@ bool ChangeInterface(int method, bool silent)
 		sprintf(rootdir, "/");
 		mounted = MountDVD(silent);
 	}
+#ifdef HW_RVL
 	else if(method == METHOD_SMB)
 	{
 		sprintf(rootdir, "smb:/");
 		mounted = ConnectShare(silent);
 	}
+#endif
 
 	return mounted;
 }
