@@ -289,7 +289,7 @@ InitVideoThread ()
 	LWP_InitQueue (&videoblankqueue);
 
 	/*** Create the thread on this queue ***/
-	LWP_CreateThread (&vbthread, vbgetback, NULL, vbstack, TSTACK, 80);
+	LWP_CreateThread (&vbthread, vbgetback, NULL, vbstack, TSTACK, 150);
 }
 
 /****************************************************************************
@@ -583,9 +583,6 @@ InitGCVideo ()
 	VIDEO_ClearFrameBuffer (vmode, xfb[1], COLOR_BLACK);
 	VIDEO_SetNextFramebuffer (xfb[0]);
 
-	printf("\n\n\n\ttest A");
-	sleep(5);
-
 	// video callbacks
 	VIDEO_SetPostRetraceCallback ((VIRetraceCallback)UpdatePadsCB);
 	VIDEO_SetPreRetraceCallback ((VIRetraceCallback)copy_to_xfb);
@@ -601,15 +598,9 @@ InitGCVideo ()
 
 	draw_init ();
 
-	printf(" B");
-	sleep(2);
-
 	InitLUTs();	// init LUTs for hq2x
 
 	InitVideoThread ();
-
-	printf(" C");
-	sleep(2);
 
 	// Finally, the video is up and ready for use :)
 }
@@ -626,7 +617,7 @@ ResetVideo_Emu ()
 	Mtx44 p;
 
 	int i = -1;
-	if (GCSettings.render == 0)	// original render mode or hq2x
+	if (GCSettings.render == 0 || GCSettings.FilterMethod != FILTER_NONE)	// original render mode or hq2x
 	{
 		for (i=0; i<4; i++)
 		{
