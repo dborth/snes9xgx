@@ -11,7 +11,6 @@
  * Menu drawing routines
  ***************************************************************************/
 
-#include <malloc.h>
 #include <gccore.h>
 #include <ogcsys.h>
 #include <stdio.h>
@@ -21,7 +20,6 @@
 #include <wiiuse/wpad.h>
 #include <ft2build.h>
 #include <zlib.h>
-#include FT_FREETYPE_H
 
 #include "memmap.h"
 
@@ -31,14 +29,10 @@
 #include "filesel.h"
 #include "dvd.h"
 #include "aram.h"
-#include "images/gfx_bg.h"
 #include "input.h"
 #include "networkop.h"
 
 /*** Globals ***/
-static FT_Library ftlibrary;
-static FT_Face face;
-static FT_GlyphSlot slot;
 static unsigned int fonthi, fontlo;
 
 extern char fontface[];		/*** From fontface.s ***/
@@ -56,33 +50,6 @@ void DrawLineFast( int startx, int endx, int y, u8 r, u8 g, u8 b );
 u32 getrgb( u32 ycbr, u32 low );
 
 /****************************************************************************
- * Initialisation of libfreetype
- ***************************************************************************/
-int
-FT_Init ()
-{
-
-  int err;
-
-  err = FT_Init_FreeType (&ftlibrary);
-  if (err)
-    return 1;
-
-  err =
-    FT_New_Memory_Face (ftlibrary, (FT_Byte *) fontface, fontsize, 0, &face);
-  if (err)
-    return 1;
-
-  setfontsize (16);
-  setfontcolour (0xff, 0xff, 0xff);
-
-  slot = face->glyph;
-
-  return 0;
-
-}
-
-/****************************************************************************
  * setfontsize
  *
  * Set the screen font size in pixels
@@ -90,53 +57,7 @@ FT_Init ()
 void
 setfontsize (int pixelsize)
 {
-  int err;
 
-  err = FT_Set_Pixel_Sizes (face, 0, pixelsize);
-
-  if (err)
-    printf ("Error setting pixel sizes!");
-}
-
-/****************************************************************************
- * DrawCharacter
- * Draws a single character on the screen
- ***************************************************************************/
-static void
-DrawCharacter (FT_Bitmap * bmp, FT_Int x, FT_Int y)
-{
-  FT_Int i, j, p, q;
-  FT_Int x_max = x + bmp->width;
-  FT_Int y_max = y + bmp->rows;
-  int spos;
-  unsigned int pixel;
-  int c;
-
-  for (i = x, p = 0; i < x_max; i++, p++)
-    {
-      for (j = y, q = 0; j < y_max; j++, q++)
-	{
-	  if (i < 0 || j < 0 || i >= 640 || j >= screenheight)
-	    continue;
-
-			/*** Convert pixel position to GC int sizes ***/
-	  spos = (j * 320) + (i >> 1);
-
-	  pixel = xfb[whichfb][spos];
-	  c = bmp->buffer[q * bmp->width + p];
-
-	  /*** Cool Anti-Aliasing doesn't work too well at hires on GC ***/
-	  if (c > 128)
-	    {
-	      if (i & 1)
-		pixel = (pixel & 0xffff0000) | fontlo;
-	      else
-		pixel = ((pixel & 0xffff) | fonthi);
-
-	      xfb[whichfb][spos] = pixel;
-	    }
-	}
-    }
 }
 
 /****************************************************************************
@@ -147,52 +68,7 @@ DrawCharacter (FT_Bitmap * bmp, FT_Int x, FT_Int y)
 void
 DrawText (int x, int y, const char *text)
 {
-  int px, n;
-  int i;
-  int err;
-  int value, count;
 
-  n = strlen (text);
-  if (n == 0)
-    return;
-
-  setfontcolour (0x00, 0x00, 0x00);
-
-	/*** x == -1, auto centre ***/
-  if (x == -1)
-    {
-      value = 0;
-      px = 0;
-    }
-  else
-    {
-      value = 1;
-      px = x;
-    }
-
-  for (count = value; count < 2; count++)
-    {
-		/*** Draw the string ***/
-      for (i = 0; i < n; i++)
-	{
-	  err = FT_Load_Char (face, text[i], FT_LOAD_RENDER);
-
-	  if (err)
-	    {
-	      printf ("Error %c %d\n", text[i], err);
-	      continue;				/*** Skip unprintable characters ***/
-	    }
-
-	  if (count)
-	    DrawCharacter (&slot->bitmap, px + slot->bitmap_left,
-			   y - slot->bitmap_top);
-
-	  px += slot->advance.x >> 6;
-	}
-
-      px = (640 - px) >> 1;
-
-    }
 }
 
 /****************************************************************************
@@ -218,7 +94,7 @@ setfontcolour (u8 r, u8 g, u8 b)
 void
 Credits ()
 {
-	clearscreen ();
+	//clearscreen ();
 
 	setfontcolour (0x00, 0x00, 0x00);
 
@@ -264,7 +140,7 @@ Credits ()
 	DrawText (-1, ypos += 15, "This software is open source and may be copied, distributed, or modified");
 	DrawText (-1, ypos += 15, "under the terms of the GNU General Public License (GPL) Version 2.");
 
-	showscreen ();
+	//showscreen ();
 }
 
 
@@ -299,53 +175,6 @@ getcolour (u8 r1, u8 g1, u8 b1)
 	cr = (cr1 + cr2) >> 1;
 
 	return ((y1 << 24) | (cb << 16) | (y2 << 8) | cr);
-}
-
-/****************************************************************************
- * Unpackbackdrop
- *
- * Decompress menu background and store it in ARAM or memory
- ***************************************************************************/
-void
-unpackbackdrop ()
-{
-	unsigned long res, inbytes, outbytes;
-	unsigned int colour;
-	int offset;
-	int i;
-	int bgSize = (screenheight * 640 * 2);
-
-	u32 * bgtemp = (u32 *) memalign(32, bgSize);
-	colour = getcolour (0x00, 0x00, 0x00);
-
-	/*** Fill with black for now ***/
-	for (i = 0; i < (320 * screenheight); i++)
-		bgtemp[i] = colour;
-
-	/*** If it's PAL50, need to move down a few lines ***/
-	offset = ((screenheight - 480) >> 1) * 320;
-	inbytes = BG_COMPRESSED;
-	outbytes = BG_RAW;
-
-	res =
-	uncompress ((Bytef *) bgtemp + offset, &outbytes, (Bytef *) bg,
-	inbytes);
-
-	#ifdef HW_RVL
-	// On Wii - store backdrop in MEM2
-	unsigned int MEM2Storage = 0x91000000;
-	backdrop = (u32 *)MEM2Storage;
-	memcpy(backdrop, bgtemp, bgSize);
-	#else
-	// On GameCube - store the backdrop in ARAM
-	ARAMPut ((char *) bgtemp, (char *) AR_BACKDROP, bgSize);
-	#endif
-
-	free (bgtemp);
-	bgtemp = NULL;
-
-	clearscreen ();
-	showscreen ();
 }
 
 /****************************************************************************
@@ -408,7 +237,7 @@ WaitButtonAB ()
 void
 WaitPrompt (const char *msg)
 {
-	int ypos = (screenheight - 64) >> 1;
+	/*int ypos = (screenheight - 64) >> 1;
 
 	if (screenheight == 480)
 		ypos += 52;
@@ -420,7 +249,7 @@ WaitPrompt (const char *msg)
 	ypos += 30;
 	DrawText (-1, ypos, "Press A to continue");
 	showscreen ();
-	WaitButtonA ();
+	WaitButtonA ();*/
 }
 
 /****************************************************************************
@@ -437,13 +266,13 @@ WaitPromptChoice (const char *msg, const char *bmsg, const char *amsg)
 	else
 		ypos += 17;
 
-	clearscreen ();
+	//clearscreen ();
 	DrawText (-1, ypos, msg);
 	ypos += 60;
 	char txt[80];
 	sprintf (txt, "B = %s   :   A = %s", bmsg, amsg);
 	DrawText (-1, ypos, txt);
-	showscreen ();
+	//showscreen ();
 	return WaitButtonAB ();
 }
 
@@ -453,7 +282,7 @@ WaitPromptChoice (const char *msg, const char *bmsg, const char *amsg)
 void
 ShowAction (const char *msg)
 {
-	int ypos = (screenheight - 30) >> 1;
+	/*int ypos = (screenheight - 30) >> 1;
 
 	if (screenheight == 480)
 		ypos += 52;
@@ -462,7 +291,7 @@ ShowAction (const char *msg)
 
 	clearscreen ();
 	DrawText (-1, ypos, msg);
-	showscreen ();
+	showscreen ();*/
 }
 
 /****************************************************************************
@@ -483,7 +312,7 @@ DrawMenu (char items[][50], const char *title, int maxitems, int selected, int f
 	else
 		ypos += 32;
 
-	clearscreen ();
+	//clearscreen ();
 
 	setfontcolour (0, 0, 0);
 
@@ -527,7 +356,7 @@ DrawMenu (char items[][50], const char *title, int maxitems, int selected, int f
 		}
 	}
 
-	showscreen ();
+	//showscreen ();
 
 }
 
@@ -574,7 +403,7 @@ RunMenu (char items[][50], int maxitems, const char *title, int fontsize, int x)
 	u32 wh = 0;
     signed char gc_ay = 0;
 	signed char wm_ay = 0;
-	
+
 	int scroll_delay = 0;
 	bool move_selection = 0;
 	#define SCROLL_INITIAL_DELAY	15
@@ -708,7 +537,7 @@ ShowFiles (BROWSERENTRY * browserList, int maxfiles, int offset, int selection)
 	int ypos;
 	int w;
 
-	clearscreen ();
+	//clearscreen ();
 
 	setfontsize (28);
 	DrawText (-1, 60, "Choose Game");
@@ -752,7 +581,7 @@ ShowFiles (BROWSERENTRY * browserList, int maxfiles, int offset, int selection)
 		}
 		j++;
 	}
-	showscreen ();
+	//showscreen ();
 }
 
 /****************************************************************************
@@ -768,7 +597,7 @@ ShowCheats (char items[][50], char itemvalues[][50], int maxitems, int offset, i
 	int ypos;
 	int w;
 
-	clearscreen ();
+	//clearscreen ();
 
 	setfontsize (28);
 	DrawText (-1, 60, "Cheats");
@@ -801,7 +630,7 @@ ShowCheats (char items[][50], char itemvalues[][50], int maxitems, int offset, i
 		}
 		j++;
 	}
-	showscreen ();
+	//showscreen ();
 }
 
 /****************************************************************************
@@ -810,7 +639,7 @@ ShowCheats (char items[][50], char itemvalues[][50], int maxitems, int offset, i
 
 void RomInfo()
 {
-	clearscreen ();
+	//clearscreen ();
 
 	int ypos = 65;
 
@@ -885,7 +714,7 @@ void RomInfo()
 	sprintf(fmtString, "%08X", Memory.ROMCRC32);
 	DrawText (300, ypos, fmtString);
 
-	showscreen ();
+	//showscreen ();
 }
 
 
@@ -982,7 +811,7 @@ DrawLine (int x1, int y1, int x2, int y2, u8 r, u8 g, u8 b)
 void
 ShowProgress (const char *msg, int done, int total)
 {
-	if(total <= 0) // division by 0 is bad!
+/*	if(total <= 0) // division by 0 is bad!
 		return;
 	else if(done > total) // this shouldn't happen
 		done = total;
@@ -1005,12 +834,12 @@ ShowProgress (const char *msg, int done, int total)
 		setfontsize(20);
 		DrawText (-1, ypos, msg);
 
-		/*** Draw a white outline box ***/
+		// Draw a white outline box
 		for (i = 380; i < 401; i++)
 			DrawLine (100, i, 540, i, 0xff, 0xff, 0xff);
 	}
 
-	/*** Show progess ***/
+	// Show progess
 	xpos = (int) (((float) done / (float) total) * 438);
 
 	for (i = 381; i < 400; i++)
@@ -1019,7 +848,7 @@ ShowProgress (const char *msg, int done, int total)
 	if(done < 5000) // we just started!
 	{
 		showscreen ();
-	}
+	}*/
 }
 
 /****************************************************************************

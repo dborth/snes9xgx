@@ -18,15 +18,16 @@
 #include "snes9x.h"
 
 void InitGCVideo ();
+void StopGX();
 void ResetVideo_Emu ();
 void ResetVideo_Menu ();
 void setGFX ();
 void update_video (int width, int height);
-void clearscreen (int colour = COLOR_BLACK);
-void showscreen ();
 void zoom (float speed);
 void zoom_reset ();
 
+extern int screenheight;
+extern int screenwidth;
 extern bool progressive;
 
 #endif

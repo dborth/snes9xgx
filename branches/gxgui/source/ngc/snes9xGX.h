@@ -14,6 +14,7 @@
 #ifndef _SNES9XGX_H_
 #define _SNES9XGX_H_
 
+#include "FreeTypeGX.h"
 #include "snes9x.h"
 #include "filter.h"
 
@@ -80,5 +81,6 @@ extern struct SGCSettings GCSettings;
 extern int ConfigRequested;
 extern int ShutdownRequested;
 extern char appPath[];
+extern FreeTypeGX *fontSystem;
 
 #endif

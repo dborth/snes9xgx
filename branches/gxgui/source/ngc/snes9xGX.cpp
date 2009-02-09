@@ -22,11 +22,13 @@
 #include <fat.h>
 #include <debug.h>
 
-#ifdef WII_DVD
+#ifdef HW_RVL
 extern "C" {
 #include <di/di.h>
 }
 #endif
+
+#include "FreeTypeGX.h"
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -57,13 +59,11 @@ extern "C" {
 #include "fileop.h"
 #include "input.h"
 
-#include "gui.h"
-
 int ConfigRequested = 0;
 int ShutdownRequested = 0;
 int ResetRequested = 0;
 char appPath[1024];
-FILE* debughandle;
+FreeTypeGX *fontSystem;
 
 extern int FrameTimer;
 
@@ -77,9 +77,13 @@ extern unsigned int timediffallowed;
 void ExitCleanup()
 {
 	LWP_SuspendThread (devicethread);
+	LWP_SuspendThread (guithread);
 	UnmountAllFAT();
+	StopGX();
 
 #ifdef HW_RVL
+	ShutoffRumble();
+	WPAD_Shutdown();
 	CloseShare();
 	DI_Close();
 #endif
@@ -192,25 +196,43 @@ void setFrameTimerMethod()
 extern void S9xInitSync();
 bool CheckVideo = 0; // for forcing video reset in video.cpp
 extern uint32 prevRenderedFrameCount;
-static int selectedMenu = -1;
 
 void
 emulate ()
 {
-	while (1)
+	while (1) // main loop
 	{
 		// go back to checking if devices were inserted/removed
 		// since we're entering the menu
 		LWP_ResumeThread (devicethread);
 
 		ConfigRequested = 1;
+		SwitchAudioMode(1);
 
-		if(SNESROMSize > 0 && selectedMenu != 2)
-			selectedMenu = 2;
+		// Load preferences
+		/*if(!LoadPrefs())
+		{
+			WaitPrompt("Preferences reset - check settings!");
+			selectedMenu = 1; // change to preferences menu
+		}*/
 
-		MainMenu (selectedMenu); // go to menu
+		if(SNESROMSize == 0)
+			MainMenu(MENU_GAMESELECTION);
+		else
+			MainMenu(MENU_GAME);
+
+		SNESROMSize = LoadFile ((char *)Memory.ROM,
+				"/snes9x/roms/Adventure - Side Scrolling/Super Mario World (U) [!].zip",
+				0, METHOD_SD, SILENT);
+
+		if(SNESROMSize == 0)
+			ExitToLoader();
+
+		Memory.LoadROM ("BLANK.SMC");
+		Memory.LoadSRAM ("BLANK");
 
 		ConfigRequested = 0;
+		SwitchAudioMode(0);
 
 		Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);
 		Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);
@@ -222,14 +244,15 @@ emulate ()
 		LWP_SuspendThread (devicethread);
 
 		ResetVideo_Emu();
+		AudioStart ();
 
 		FrameTimer = 0;
-		setFrameTimerMethod(); // set frametimer method every time a ROM is loaded
+		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
 
 		CheckVideo = 1;	// force video update
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;
 
-		while(1)
+		while(1) // emulation loop
 		{
 			S9xMainLoop ();
 			NGCReportButtons ();
@@ -242,14 +265,9 @@ emulate ()
 
 			if (ConfigRequested)
 			{
-				// go back to checking if devices were inserted/removed
-				// since we're entering the menu
-				LWP_ResumeThread (devicethread);
-
-				// change to menu video mode
 				ResetVideo_Menu ();
 
-				if ( GCSettings.AutoSave == 1 )
+				/*if ( GCSettings.AutoSave == 1 )
 				{
 					SaveSRAM ( GCSettings.SaveMethod, SILENT );
 				}
@@ -266,18 +284,13 @@ emulate ()
 						NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
 					}
 				}
+				 */
 
-				#ifdef HW_RVL
-				if(ShutdownRequested)
-					ShutdownWii();
-				#endif
-
-				// save zoom level
-				SavePrefs(SILENT);
-				break;
+				ConfigRequested = 0;
+				break; // leave emulation loop
 			}
-		}
-	}
+		} // emulation loop
+	} // main loop
 }
 
 void CreateAppPath(char origpath[])
@@ -347,7 +360,7 @@ main(int argc, char *argv[])
 	WPAD_Init();
 	// read wiimote accelerometer and IR data
 	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
-	WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
+	WPAD_SetVRes(WPAD_CHAN_ALL,screenwidth, screenheight);
 
 	// Wii Power/Reset buttons
 	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
@@ -380,15 +393,6 @@ main(int argc, char *argv[])
 		}
 	}
 	#endif
-
-	unpackbackdrop();
-
-	// Initialise freetype font system
-	if (FT_Init ())
-	{
-		printf ("Cannot initialise font subsystem!\n");
-		while (1);
-	}
 
 	// Audio
 	AUDIO_Init (NULL);
@@ -431,15 +435,11 @@ main(int argc, char *argv[])
 	DVD_Init ();
 	#endif
 
+	// Initialize font system
+	fontSystem = new FreeTypeGX();
+
 	// Check if DVD drive belongs to a Wii
 	SetDVDDriveType();
-
-	// Load preferences
-	if(!LoadPrefs())
-	{
-		WaitPrompt("Preferences reset - check settings!");
-		selectedMenu = 1; // change to preferences menu
-	}
 
 	// GameCube only - Injected ROM
 	// Everything's been initialized, we can copy our ROM back
@@ -455,9 +455,7 @@ main(int argc, char *argv[])
 	#endif
 
 	S9xSetSoundMute (TRUE);
-	AudioStart ();
 	S9xInitSync(); // initialize frame sync
 
-	// Emulate
-	emulate ();
+	emulate(); // main loop
 }

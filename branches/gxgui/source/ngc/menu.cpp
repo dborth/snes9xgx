@@ -556,7 +556,7 @@ VideoOptions ()
 
 		sprintf (videomenu[2], "Video Scaling %s",
 			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
-			
+
 		sprintf (videomenu[3], "Video Filtering %s", GetFilterName((RenderFilter)GCSettings.FilterMethod));
 
 		sprintf (videomenu[8], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
@@ -587,7 +587,7 @@ VideoOptions ()
 					GCSettings.FilterMethod = 0;
 				SelectFilterMethod();
 				break;
-				
+
 			case 4:
 				// Move up
 				GCSettings.yshift--;
@@ -996,110 +996,418 @@ PreferencesMenu ()
 /****************************************************************************
  * Main Menu
  ***************************************************************************/
-static int menucount = 7;
-static char menuitems[][50] = {
-  "Choose Game",
-  "Preferences",
-  "Game Menu",
-  "Credits",
-  "DVD Motor Off",
-  "Reset System",
-  "Return to Loader"
-};
 
-void
-MainMenu (int selectedMenu)
+#include "filelist.h"
+#include "GRRLIB.h"
+#include "gui/gui.h"
+#include "menu.h"
+
+int rumbleCount[4] = {0,0,0,0};
+int ExitRequested = 0;
+static GuiTrigger userInput[4];
+static GuiImageData * pointer[4];
+static GuiWindow * mainWindow = NULL;
+
+void ShutoffRumble()
 {
-	int quit = 0;
-	int ret;
-
-	// disable game-specific menu items if a ROM isn't loaded
-	if (SNESROMSize == 0)
-    	menuitems[2][0] = '\0';
-	else
-		sprintf (menuitems[2], "Game Menu");
-
-	#ifdef HW_RVL
-	// don't show dvd motor off on the wii
-	menuitems[4][0] = 0;
-	// rename reset/exit items
-	sprintf (menuitems[5], "Return to Wii Menu");
-	sprintf (menuitems[6], "Return to Homebrew Channel");
-	#endif
-
-	VIDEO_WaitVSync ();
-
-	while (quit == 0)
+	for(int i=0;i<4;i++)
 	{
-		if(selectedMenu >= 0)
+		WPAD_Rumble(i, 0);
+		rumbleCount[i] = 0;
+	}
+}
+
+void UpdateMenu()
+{
+	mainWindow->Draw();
+
+	for(int i=3; i >= 0; i--) // so that player 1's cursor appears on top!
+	{
+		#ifdef HW_RVL
+		memcpy(&userInput[i].wpad, WPAD_Data(i), sizeof(WPADData));
+
+		if(userInput[i].wpad.ir.valid)
 		{
-			ret = selectedMenu;
-			selectedMenu = -1; // default back to main menu
+			GRRLIB_DrawImg(userInput[i].wpad.ir.x-48, userInput[i].wpad.ir.y-48, 96, 96, pointer[i]->GetImage(), userInput[i].wpad.ir.angle, 1, 1, 255);
+		}
+		#endif
+
+		userInput[i].chan = i;
+		userInput[i].pad.button = PAD_ButtonsDown(i);
+		userInput[i].pad.stickX = PAD_StickX(i);
+		userInput[i].pad.stickY = PAD_StickY(i);
+		userInput[i].pad.substickX = PAD_SubStickX(i);
+		userInput[i].pad.substickY = PAD_SubStickY(i);
+		userInput[i].pad.triggerL = PAD_TriggerL(i);
+		userInput[i].pad.triggerR = PAD_TriggerR(i);
+
+		mainWindow->Update(&userInput[i]);
+
+		#ifdef HW_RVL
+		if(rumbleCount[i] > 0)
+		{
+			WPAD_Rumble(i, 1); // rumble on
+			rumbleCount[i]--;
 		}
 		else
 		{
-			ret = RunMenu (menuitems, menucount, "Main Menu");
+			WPAD_Rumble(i, 0); // rumble off
 		}
-
-		switch (ret)
-		{
-			case 0:
-				// Load ROM Menu
-				quit = LoadManager ();
-				break;
-
-			case 1:
-				// Preferences
-				PreferencesMenu ();
-				break;
-
-			case 2:
-				// Game Options
-				quit = GameMenu ();
-				break;
-
-			case 3:
-				// Credits
-				Credits ();
-				WaitButtonA ();
-                break;
-
-			case 4:
-				// turn the dvd motor off (GC only)
-				#ifdef HW_DOL
-				dvd_motor_off ();
-				#endif
-				break;
-
-			case 5:
-				// Reset the Gamecube/Wii
-			    Reboot();
-                break;
-
-			case 6:
-				ExitToLoader();
-				break;
-
-			case -1: // Button B
-				// Return to Game
-				if(SNESROMSize > 0)
-					quit = 1;
-				break;
-		}
-	}
-
-	// Wait for buttons to be released
-	int count = 0; // how long we've been waiting for the user to release the button
-	while(count < 50 && (
-		PAD_ButtonsHeld(0)
-		#ifdef HW_RVL
-		|| WPAD_ButtonsHeld(0)
 		#endif
-	))
-	{
-		VIDEO_WaitVSync();
-		count++;
+
+		if(userInput[i].wpad.btns_d & WPAD_BUTTON_1)
+			ExitRequested = 1;
 	}
-	
-	SelectFilterMethod();
+
+	GRRLIB_Render();
+
+	#ifdef HW_RVL
+	if(updateFound)
+	{
+		updateFound = WaitPromptChoice("An update is available!", "Update later", "Update now");
+		if(updateFound)
+			if(DownloadUpdate())
+				ExitToLoader();
+	}
+
+	if(ShutdownRequested)
+		ShutdownWii();
+	if(ExitRequested)
+		ExitToLoader();
+	#endif
+}
+
+/****************************************************************************
+ * GUI Thread
+ ***************************************************************************/
+lwp_t guithread = LWP_THREAD_NULL;
+
+/****************************************************************************
+ * guicallback
+ ***************************************************************************/
+static bool guiReady = false;
+static void *
+guicallback (void *arg)
+{
+	while(1)
+	{
+		if(!guiReady)
+		{
+			usleep(500000); // just a test
+		}
+		else
+		{
+			//UpdateMenu();
+		}
+	}
+	return NULL;
+}
+
+/****************************************************************************
+ * InitGUIThread
+ ***************************************************************************/
+void
+InitGUIThread()
+{
+	LWP_CreateThread (&guithread, guicallback, NULL, NULL, 0, 70);
+	//LWP_SuspendThread (guithread);
+}
+
+int
+WaitPromptChoiceNew(const char *msg, const char *btn1Label, const char *btn2Label)
+{
+	int choice = 0;
+
+	GuiWindow promptWindow(500,300);
+	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+	GuiSound btnSoundOver(buttonover_mp3, buttonover_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(buttonover_png);
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText btn1Txt(btn1Label, 24, (GXColor){53, 53, 128, 0xff});
+	GuiImage btn1Img(&btnOutline);
+	GuiImage btn1ImgOver(&btnOutlineOver);
+	GuiButton btn1(btnOutline.GetWidth(), btnOutline.GetHeight());
+	btn1.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	btn1.SetPosition(25, -25);
+	btn1.SetLabel(&btn1Txt);
+	btn1.SetImage(&btn1Img);
+	btn1.SetImageOver(&btn1ImgOver);
+	btn1.SetSoundOver(&btnSoundOver);
+	btn1.SetTrigger(&trigA);
+
+	GuiText btn2Txt(btn2Label, 24, (GXColor){53, 53, 128, 0xff});
+	GuiImage btn2Img(&btnOutline);
+	GuiImage btn2ImgOver(&btnOutlineOver);
+	GuiButton btn2(btnOutline.GetWidth(), btnOutline.GetHeight());
+	btn2.SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
+	btn2.SetPosition(-25, -25);
+	btn2.SetLabel(&btn2Txt);
+	btn2.SetImage(&btn2Img);
+	btn2.SetImageOver(&btn2ImgOver);
+	btn2.SetSoundOver(&btnSoundOver);
+	btn2.SetTrigger(&trigA);
+
+	promptWindow.Append(&btn1);
+	promptWindow.Append(&btn2);
+
+	promptWindow.SetParent(mainWindow);
+
+	guiReady = false;
+	mainWindow->Append(&promptWindow);
+	guiReady = true;
+
+	while(choice == 0)
+	{
+		UpdateMenu();
+
+		if(btn1.GetState() == STATE_CLICKED)
+			choice = 1;
+		else if(btn2.GetState() == STATE_CLICKED)
+			choice = 2;
+	}
+	guiReady = false;
+	mainWindow->Remove(&promptWindow);
+	guiReady = true;
+	return choice;
+}
+
+int SettingsMenu()
+{
+	int menu = MENU_NONE;
+
+	u32 sysmem = (u32)SYS_GetArena1Hi() - (u32)SYS_GetArena1Lo();
+	char mem[150];
+	sprintf(mem, "%u", sysmem);
+	GuiText memTxt(mem, 24, (GXColor){53, 53, 128, 0xff});
+	memTxt.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	memTxt.SetPosition(-20, 20);
+	mainWindow->Append(&memTxt);
+
+	GuiSound btnSoundOver(buttonover_mp3, buttonover_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(buttonover_png);
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText mappingBtnTxt("Button Mapping", 24, (GXColor){53, 53, 128, 0xff});
+	GuiImage mappingBtnImg(&btnOutline);
+	GuiImage mappingBtnImgOver(&btnOutlineOver);
+	GuiButton mappingBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	mappingBtn.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	mappingBtn.SetPosition(50, 120);
+	mappingBtn.SetLabel(&mappingBtnTxt);
+	mappingBtn.SetImage(&mappingBtnImg);
+	mappingBtn.SetImageOver(&mappingBtnImgOver);
+	mappingBtn.SetSoundOver(&btnSoundOver);
+	mappingBtn.SetTrigger(&trigA);
+
+	GuiText videoBtnTxt("Video", 24, (GXColor){53, 53, 128, 0xff});
+	GuiImage videoBtnImg(&btnOutline);
+	GuiImage videoBtnImgOver(&btnOutlineOver);
+	GuiButton videoBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	videoBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	videoBtn.SetPosition(0, 120);
+	videoBtn.SetLabel(&videoBtnTxt);
+	videoBtn.SetImage(&videoBtnImg);
+	videoBtn.SetImageOver(&videoBtnImgOver);
+	videoBtn.SetSoundOver(&btnSoundOver);
+	videoBtn.SetTrigger(&trigA);
+
+	GuiText savingBtnTxt("Saving / Loading", 24, (GXColor){53, 53, 128, 0xff});
+	GuiImage savingBtnImg(&btnOutline);
+	GuiImage savingBtnImgOver(&btnOutlineOver);
+	GuiButton savingBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	savingBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	savingBtn.SetPosition(-50, 120);
+	savingBtn.SetLabel(&savingBtnTxt);
+	savingBtn.SetImage(&savingBtnImg);
+	savingBtn.SetImageOver(&savingBtnImgOver);
+	savingBtn.SetSoundOver(&btnSoundOver);
+	savingBtn.SetTrigger(&trigA);
+
+	GuiText menuBtnTxt("Menu", 24, (GXColor){53, 53, 128, 0xff});
+	GuiImage menuBtnImg(&btnOutline);
+	GuiImage menuBtnImgOver(&btnOutlineOver);
+	GuiButton menuBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	menuBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	menuBtn.SetPosition(-125, 200);
+	menuBtn.SetLabel(&menuBtnTxt);
+	menuBtn.SetImage(&menuBtnImg);
+	menuBtn.SetImageOver(&menuBtnImgOver);
+	menuBtn.SetSoundOver(&btnSoundOver);
+	menuBtn.SetTrigger(&trigA);
+
+	GuiText networkBtnTxt("Network", 24, (GXColor){53, 53, 128, 0xff});
+	GuiImage networkBtnImg(&btnOutline);
+	GuiImage networkBtnImgOver(&btnOutlineOver);
+	GuiButton networkBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	networkBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	networkBtn.SetPosition(125, 200);
+	networkBtn.SetLabel(&networkBtnTxt);
+	networkBtn.SetImage(&networkBtnImg);
+	networkBtn.SetImageOver(&networkBtnImgOver);
+	networkBtn.SetSoundOver(&btnSoundOver);
+	networkBtn.SetTrigger(&trigA);
+
+	GuiText backBtnTxt("Go Back", 24, (GXColor){53, 53, 128, 0xff});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(100, -100);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetTrigger(&trigA);
+
+	GuiText resetBtnTxt("Reset Settings", 24, (GXColor){53, 53, 128, 0xff});
+	GuiImage resetBtnImg(&btnOutline);
+	GuiImage resetBtnImgOver(&btnOutlineOver);
+	GuiButton resetBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	resetBtn.SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
+	resetBtn.SetPosition(-100, -100);
+	resetBtn.SetLabel(&resetBtnTxt);
+	resetBtn.SetImage(&resetBtnImg);
+	resetBtn.SetImageOver(&resetBtnImgOver);
+	resetBtn.SetSoundOver(&btnSoundOver);
+	resetBtn.SetTrigger(&trigA);
+
+	guiReady = false;
+	mainWindow->Append(&mappingBtn);
+	mainWindow->Append(&videoBtn);
+	mainWindow->Append(&savingBtn);
+	mainWindow->Append(&menuBtn);
+	mainWindow->Append(&networkBtn);
+
+	mainWindow->Append(&backBtn);
+	mainWindow->Append(&resetBtn);
+	guiReady = true;
+
+	while(menu == MENU_NONE)
+	{
+		UpdateMenu();
+
+		if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_GAMESELECTION;
+		}
+		else if(resetBtn.GetState() == STATE_CLICKED)
+		{
+			resetBtn.ResetState();
+			int c = WaitPromptChoiceNew(
+				"Are you sure that you want to reset your settings?",
+				"Yes",
+				"No");
+		}
+	}
+	guiReady = false;
+	mainWindow->RemoveAll();
+	return menu;
+}
+
+int GameSelectionMenu()
+{
+	int menu = MENU_NONE;
+
+	GuiSound btnSoundOver(buttonover_mp3, buttonover_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(buttonover_png);
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText settingsBtnTxt("Settings", 24, (GXColor){53, 53, 128, 0xff});
+	GuiImage settingsBtnImg(&btnOutline);
+	GuiImage settingsBtnImgOver(&btnOutlineOver);
+	GuiButton settingsBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	settingsBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	settingsBtn.SetPosition(100, -100);
+	settingsBtn.SetLabel(&settingsBtnTxt);
+	settingsBtn.SetImage(&settingsBtnImg);
+	settingsBtn.SetImageOver(&settingsBtnImgOver);
+	settingsBtn.SetSoundOver(&btnSoundOver);
+	settingsBtn.SetTrigger(&trigA);
+
+	GuiText exitBtnTxt("Exit", 24, (GXColor){53, 53, 128, 0xff});
+	GuiImage exitBtnImg(&btnOutline);
+	GuiImage exitBtnImgOver(&btnOutlineOver);
+	GuiButton exitBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	exitBtn.SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
+	exitBtn.SetPosition(-100, -100);
+	exitBtn.SetLabel(&exitBtnTxt);
+	exitBtn.SetImage(&exitBtnImg);
+	exitBtn.SetImageOver(&exitBtnImgOver);
+	exitBtn.SetSoundOver(&btnSoundOver);
+	exitBtn.SetTrigger(&trigA);
+
+	guiReady = false;
+	mainWindow->Append(&settingsBtn);
+	mainWindow->Append(&exitBtn);
+	guiReady = true;
+
+	while(menu == MENU_NONE)
+	{
+		UpdateMenu();
+
+		// here we need to close a window and open a new one
+		// or change activated windows
+		// or load a rom, change settings, etc
+		// all based on which buttons were clicked
+
+		if(settingsBtn.GetState() == STATE_CLICKED)
+			menu = MENU_SETTINGS;
+		else if(exitBtn.GetState() == STATE_CLICKED)
+		{
+			//ExitRequested = 1;
+			menu = MENU_EXIT;
+		}
+	}
+	guiReady = false;
+	mainWindow->RemoveAll();
+	return menu;
+}
+
+void
+MainMenu (int menu)
+{
+	pointer[0] = new GuiImageData(player1_point_png);
+	pointer[1] = new GuiImageData(player2_point_png);
+	pointer[2] = new GuiImageData(player3_point_png);
+	pointer[3] = new GuiImageData(player4_point_png);
+
+	mainWindow = new GuiWindow(screenwidth, screenheight);
+	LWP_ResumeThread (guithread);
+
+	while(menu != MENU_EXIT)
+	{
+		switch (menu)
+		{
+			case MENU_GAMESELECTION:
+			case MENU_GAME:
+				menu = GameSelectionMenu();
+				break;
+			case MENU_SETTINGS:
+				menu = SettingsMenu();
+				break;
+			default: // unrecognized menu
+				menu = MENU_EXIT;
+				break;
+		}
+	}
+
+	#ifdef HW_RVL
+	ShutoffRumble();
+	#endif
+
+	guiReady = false;
+	LWP_SuspendThread (guithread);
+	delete mainWindow;
+	delete pointer[0];
+	delete pointer[1];
+	delete pointer[2];
+	delete pointer[3];
+	mainWindow = NULL;
 }

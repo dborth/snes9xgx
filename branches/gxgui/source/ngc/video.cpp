@@ -19,13 +19,18 @@
 #include <unistd.h>
 #include <wiiuse/wpad.h>
 #include <ogc/texconv.h>
+#include <mp3player.h>
+#include <asndlib.h>
+
 #include "snes9x.h"
 #include "memmap.h"
+
 #include "aram.h"
 #include "snes9xGX.h"
-
+#include "menu.h"
 #include "filter.h"
-#include "gui.h"
+#include "filelist.h"
+#include "audio.h"
 
 /*** Snes9x GFX Buffer ***/
 static unsigned char snes9xgfx[EXT_PITCH * EXT_HEIGHT];	// changed.
@@ -36,6 +41,7 @@ unsigned int *xfb[2] = { NULL, NULL }; // Double buffered
 int whichfb = 0; // Switch
 GXRModeObj *vmode; // Menu video mode
 int screenheight;
+int screenwidth;
 extern u32* backdrop;
 
 /*** GX ***/
@@ -47,6 +53,7 @@ unsigned int copynow = GX_FALSE;
 static unsigned char gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 GXTexObj texobj;
 Mtx view;
+Mtx GXmodelView2D;
 static int vwidth, vheight, oldvwidth, oldvheight;
 
 u32 FrameTimer = 0;
@@ -252,7 +259,7 @@ static GXRModeObj *tvmodes[4] = {
  ***************************************************************************/
 #define TSTACK 16384
 static lwpq_t videoblankqueue;
-static lwp_t vbthread;
+static lwp_t vbthread = LWP_THREAD_NULL;
 static unsigned char vbstack[TSTACK];
 
 /****************************************************************************
@@ -378,8 +385,6 @@ draw_square (Mtx v)
 static void
 StartGX ()
 {
-	Mtx44 p;
-
 	GXColor background = { 0, 0, 0, 0xff };
 
 	/*** Clear out FIFO area ***/
@@ -389,7 +394,10 @@ StartGX ()
 	GX_Init (&gp_fifo, DEFAULT_FIFO_SIZE);
 	GX_SetCopyClear (background, 0x00ffffff);
 
+	GX_SetDispCopyGamma (GX_GM_1_0);
+	GX_SetCullMode (GX_CULL_NONE);
 
+/*
 	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
 	GX_SetDispCopyYScale ((f32) vmode->xfbHeight / (f32) vmode->efbHeight);
 	GX_SetScissor (0, 0, vmode->fbWidth, vmode->efbHeight);
@@ -406,15 +414,22 @@ StartGX ()
 	GX_SetZMode (GX_TRUE, GX_LEQUAL, GX_TRUE);
 	GX_SetColorUpdate (GX_TRUE);
 
-	gui_alphasetup ();
-
 	guOrtho(p, vmode->efbHeight/2, -(vmode->efbHeight/2), -(vmode->fbWidth/2), vmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
 	GX_CopyDisp (xfb[whichfb], GX_TRUE); // reset xfb
-
+*/
 	vwidth = 100;
 	vheight = 100;
+}
+
+void StopGX()
+{
+	free(MEM_K1_TO_K0(xfb[0])); xfb[0] = NULL;
+	free(MEM_K1_TO_K0(xfb[1])); xfb[1] = NULL;
+
+	GX_AbortFrame();
+	GX_Flush();
 }
 
 /****************************************************************************
@@ -560,16 +575,17 @@ InitGCVideo ()
 
 #ifdef HW_RVL
 	// widescreen fix
-	if(CONF_GetAspectRatio())
+	if(CONF_GetAspectRatio() == CONF_ASPECT_16_9)
 	{
-		vmode->viWidth = 678;
-		vmode->viXOrigin = (VI_MAX_WIDTH_PAL - 678) / 2;
+		vmode->viWidth = 688;
+		vmode->viXOrigin = (VI_MAX_WIDTH_PAL - 688) / 2;
 	}
 #endif
 
 	VIDEO_Configure (vmode);
 
 	screenheight = vmode->xfbHeight;
+	screenwidth = vmode->fbWidth;
 
 	// Allocate the video buffers
 	xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
@@ -596,7 +612,7 @@ InitGCVideo ()
 	copynow = GX_FALSE;
 	StartGX ();
 
-	draw_init ();
+	//draw_init ();
 
 	InitLUTs();	// init LUTs for hq2x
 
@@ -653,6 +669,8 @@ ResetVideo_Emu ()
 		while (VIDEO_GetNextField())
 			VIDEO_WaitVSync();
 
+	GXColor background = {0, 0, 0, 255};
+	GX_SetCopyClear (background, 0x00ffffff);
 
 	GX_SetViewport (0, 0, rmode->fbWidth, rmode->efbHeight, 0, 1);
 	GX_SetDispCopyYScale ((f32) rmode->xfbHeight / (f32) rmode->efbHeight);
@@ -665,15 +683,13 @@ ResetVideo_Emu ()
 	GX_SetFieldMode (rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
 	GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
 
+	GX_SetZMode (GX_TRUE, GX_LEQUAL, GX_TRUE);
+	GX_SetColorUpdate (GX_TRUE);
+
 	guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 100, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
-	#ifdef _DEBUG_VIDEO
-	// log stuff
-	fprintf(debughandle, "\n\nrmode = tvmodes[%d], field_rendering: %d", i, (rmode->viHeight == 2 * rmode->xfbHeight));
-	fprintf(debughandle, "\nInterlaced: %i,\t vwidth: %d, vheight: %d,\t fb_W: %u, efb_H: %u", IPPU.Interlace, vwidth, vheight, rmode->fbWidth, rmode->efbHeight);
-	#endif
-
+	draw_init ();
 }
 
 /****************************************************************************
@@ -685,9 +701,10 @@ void
 ResetVideo_Menu ()
 {
 	Mtx44 p;
+	f32 yscale;
+	u32 xfbHeight;
 
 	VIDEO_Configure (vmode);
-	VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], COLOR_BLACK);
 	VIDEO_Flush();
 	VIDEO_WaitVSync();
 	if (vmode->viTVMode & VI_NON_INTERLACE)
@@ -696,19 +713,54 @@ ResetVideo_Menu ()
 		while (VIDEO_GetNextField())
 			VIDEO_WaitVSync();
 
-	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
-	GX_SetDispCopyYScale ((f32) vmode->xfbHeight / (f32) vmode->efbHeight);
-	GX_SetScissor (0, 0, vmode->fbWidth, vmode->efbHeight);
+	// clears the bg to color and clears the z buffer
+	GXColor background = {200, 200, 200, 255};
+	GX_SetCopyClear (background, 0x00ffffff);
 
-	GX_SetDispCopySrc (0, 0, vmode->fbWidth, vmode->efbHeight);
-	GX_SetDispCopyDst (vmode->fbWidth, vmode->xfbHeight);
-	GX_SetCopyFilter (vmode->aa, vmode->sample_pattern, GX_TRUE, vmode->vfilter);
+	yscale = GX_GetYScaleFactor(vmode->efbHeight,vmode->xfbHeight);
+	xfbHeight = GX_SetDispCopyYScale(yscale);
+	GX_SetScissor(0,0,vmode->fbWidth,vmode->efbHeight);
+	GX_SetDispCopySrc(0,0,vmode->fbWidth,vmode->efbHeight);
+	GX_SetDispCopyDst(vmode->fbWidth,xfbHeight);
+	GX_SetCopyFilter(vmode->aa,vmode->sample_pattern,GX_TRUE,vmode->vfilter);
+	GX_SetFieldMode(vmode->field_rendering,((vmode->viHeight==2*vmode->xfbHeight)?GX_ENABLE:GX_DISABLE));
 
-	GX_SetFieldMode (vmode->field_rendering, ((vmode->viHeight == 2 * vmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
-	GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
+	if (vmode->aa)
+		GX_SetPixelFmt(GX_PF_RGB565_Z16, GX_ZC_LINEAR);
+	else
+		GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
 
-	guOrtho(p, vmode->efbHeight/2, -(vmode->efbHeight/2), -(vmode->fbWidth/2), vmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
-	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
+	// setup the vertex descriptor
+	// tells the flipper to expect direct data
+	GX_ClearVtxDesc();
+	GX_InvVtxCache ();
+	GX_InvalidateTexAll();
+
+	GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
+	GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
+	GX_SetVtxDesc (GX_VA_CLR0, GX_DIRECT);
+
+	GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+	GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+	GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+	GX_SetZMode (GX_FALSE, GX_LEQUAL, GX_TRUE);
+
+	GX_SetNumChans(1);
+	GX_SetNumTexGens(1);
+	GX_SetTevOp (GX_TEVSTAGE0, GX_PASSCLR);
+	GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+	GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+
+	guMtxIdentity(GXmodelView2D);
+	guMtxTransApply (GXmodelView2D, GXmodelView2D, 0.0F, 0.0F, -50.0F);
+	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
+
+	guOrtho(p,0,479,0,639,0,300);
+	GX_LoadProjectionMtx(p, GX_ORTHOGRAPHIC);
+
+	GX_SetViewport(0,0,vmode->fbWidth,vmode->efbHeight,0,1);
+	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+	GX_SetAlphaUpdate(GX_TRUE);
 }
 
 /****************************************************************************
@@ -841,32 +893,6 @@ zoom_reset ()
 {
 	GCSettings.ZoomLevel = 1.0;
 	oldvheight = 0;	// update video
-}
-
-/****************************************************************************
- * Drawing screen
- ***************************************************************************/
-void
-clearscreen (int colour)
-{
-	whichfb ^= 1;
-	VIDEO_ClearFrameBuffer (vmode, xfb[whichfb], colour);
-#ifdef HW_RVL
-	// on wii copy from memory
-	memcpy ((char *) xfb[whichfb], (char *) backdrop, 640 * screenheight * 2);
-#else
-	// on gc copy from aram
-	ARAMFetch ((char *) xfb[whichfb], (char *) AR_BACKDROP, 640 * screenheight * 2);
-#endif
-}
-
-void
-showscreen ()
-{
-	copynow = GX_FALSE;
-	VIDEO_SetNextFramebuffer (xfb[whichfb]);
-	VIDEO_Flush ();
-	VIDEO_WaitVSync ();
 }
 
 /****************************************************************************

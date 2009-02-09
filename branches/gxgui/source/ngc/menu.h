@@ -12,9 +12,21 @@
  ***************************************************************************/
 
 #ifndef _NGCMENU_
-
 #define _NGCMENU_
 
-void MainMenu (int selectedMenu);
+void InitGUIThread();
+void MainMenu (int menuitem);
+void ShutoffRumble();
+
+extern lwp_t guithread;
+
+enum
+{
+	MENU_EXIT = -1,
+	MENU_NONE,
+	MENU_SETTINGS,
+	MENU_GAMESELECTION,
+	MENU_GAME
+};
 
 #endif

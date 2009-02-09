@@ -11,3 +11,4 @@
 
 void InitGCAudio ();
 void AudioStart ();
+void SwitchAudioMode(int mode);
