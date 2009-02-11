@@ -20,7 +20,8 @@ GuiElement::GuiElement()
 	width = 0;
 	height = 0;
 	state = STATE_DEFAULT;
-	trigger = NULL;
+	trigger[0] = NULL;
+	trigger[1] = NULL;
 	parentElement = NULL;
 	selectable = false;
 	clickable = false;
@@ -187,17 +188,33 @@ void GuiElement::SetSelectable(bool s)
 
 bool GuiElement::IsSelectable()
 {
-	return selectable;
+	if(state == STATE_DISABLED || state == STATE_CLICKED)
+		return false;
+	else
+		return selectable;
 }
 
 bool GuiElement::IsClickable()
 {
-	return clickable;
+	if(state == STATE_DISABLED || state == STATE_CLICKED)
+		return false;
+	else
+		return clickable;
 }
 
 void GuiElement::SetTrigger(GuiTrigger * t)
 {
-	trigger = t;
+	if(!trigger[0])
+		trigger[0] = t;
+	else if(!trigger[1])
+		trigger[1] = t;
+	else // both were assigned, so we'll just overwrite the first one
+		trigger[0] = t;
+}
+
+void GuiElement::SetTrigger(u8 i, GuiTrigger * t)
+{
+	trigger[i] = t;
 }
 
 void GuiElement::Update(GuiTrigger * t)

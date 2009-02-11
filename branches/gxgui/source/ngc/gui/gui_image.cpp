@@ -19,6 +19,13 @@ GuiImage::GuiImage(GuiImageData * img)
 	height = img->GetHeight();
 }
 
+GuiImage::GuiImage(u8 * img, int w, int h)
+{
+	image = img;
+	width = w;
+	height = h;
+}
+
 /**
  * Destructor for the GuiImage class.
  */

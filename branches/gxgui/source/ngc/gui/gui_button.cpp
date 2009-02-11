@@ -112,7 +112,7 @@ void GuiButton::Update(GuiTrigger * t)
 			if(state == STATE_DEFAULT) // we weren't on the button before!
 			{
 				state = STATE_SELECTED;
-				rumbleCount[t->chan] = 4;
+				rumbleCount[t->chan] = 3;
 
 				if(soundOver)
 					soundOver->Play();
@@ -127,24 +127,36 @@ void GuiButton::Update(GuiTrigger * t)
 	// button triggers
 	if(this->IsClickable())
 	{
-		if(state == STATE_SELECTED && (trigger->chan == -1 || trigger->chan == t->chan))
+		for(int i=0; i<2; i++)
 		{
-			// higher 16 bits only (wiimote)
-			s32 wm_btns = t->wpad.btns_d << 16;
-			s32 wm_btns_trig = trigger->wpad.btns_d << 16;
-
-			// lower 16 bits only (classic controller)
-			s32 cc_btns = t->wpad.btns_d >> 16;
-			s32 cc_btns_trig = trigger->wpad.btns_d >> 16;
-
-			if(wm_btns == wm_btns_trig ||
-				(cc_btns == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC) ||
-				t->pad.button == trigger->pad.button)
+			if(trigger[i] && (trigger[i]->chan == -1 || trigger[i]->chan == t->chan))
 			{
-				state = STATE_CLICKED;
+				// higher 16 bits only (wiimote)
+				s32 wm_btns = t->wpad.btns_d << 16;
+				s32 wm_btns_trig = trigger[i]->wpad.btns_d << 16;
 
-				if(soundClick)
-					soundClick->Play();
+				// lower 16 bits only (classic controller)
+				s32 cc_btns = t->wpad.btns_d >> 16;
+				s32 cc_btns_trig = trigger[i]->wpad.btns_d >> 16;
+
+				if(
+					(t->wpad.btns_d > 0 &&
+					wm_btns == wm_btns_trig ||
+					(cc_btns == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC)) ||
+					(t->pad.button == trigger[i]->pad.button && t->pad.button > 0))
+				{
+					if(state == STATE_SELECTED)
+					{
+						state = STATE_CLICKED;
+
+						if(soundClick)
+							soundClick->Play();
+					}
+					else if(trigger[i]->type == TRIGGER_BUTTON_ONLY)
+					{
+						state = STATE_CLICKED;
+					}
+				}
 			}
 		}
 	}

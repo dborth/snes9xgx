@@ -59,6 +59,8 @@ extern "C" {
 #include "fileop.h"
 #include "input.h"
 
+#include "GRRLIB.h"
+
 int ConfigRequested = 0;
 int ShutdownRequested = 0;
 int ResetRequested = 0;
@@ -221,15 +223,18 @@ emulate ()
 		else
 			MainMenu(MENU_GAME);
 
-		SNESROMSize = LoadFile ((char *)Memory.ROM,
-				"/snes9x/roms/Adventure - Side Scrolling/Super Mario World (U) [!].zip",
-				0, METHOD_SD, SILENT);
+		if(SNESROMSize == 0)
+		{
+			SNESROMSize = LoadFile ((char *)Memory.ROM,
+					"/snes9x/roms/Adventure - Side Scrolling/Super Mario World (U) [!].zip",
+					0, METHOD_SD, SILENT);
+
+			Memory.LoadROM ("BLANK.SMC");
+			Memory.LoadSRAM ("BLANK");
+		}
 
 		if(SNESROMSize == 0)
 			ExitToLoader();
-
-		Memory.LoadROM ("BLANK.SMC");
-		Memory.LoadSRAM ("BLANK");
 
 		ConfigRequested = 0;
 		SwitchAudioMode(0);
@@ -265,6 +270,7 @@ emulate ()
 
 			if (ConfigRequested)
 			{
+				gameScreenTex = GRRLIB_Screen2Texture();
 				ResetVideo_Menu ();
 
 				/*if ( GCSettings.AutoSave == 1 )

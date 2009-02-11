@@ -77,11 +77,14 @@ void GuiWindow::Draw()
 	if(_elements.size() == 0 || !this->IsVisible())
 		return;
 
-	for (int i = _elements.size()-1; i >= 0; i--)
+	for (u8 i = 0; i < _elements.size(); i++)
 	{
 		try	{ _elements.at(i)->Draw(); }
 		catch (exception& e) { }
 	}
+
+	if(parentElement && state == STATE_DISABLED)
+		GRRLIB_Rectangle(0,0,screenwidth,screenheight,0x646464DD,1);
 }
 
 void GuiWindow::ResetState()
@@ -91,6 +94,18 @@ void GuiWindow::ResetState()
 	for (u8 i = 0; i < _elements.size(); i++)
 	{
 		try { _elements.at(i)->ResetState(); }
+		catch (exception& e) { }
+	}
+}
+
+void GuiWindow::SetState(int s)
+{
+	if(parentElement) // we don't want to change the state of our main window
+		state = s;
+
+	for (u8 i = 0; i < _elements.size(); i++)
+	{
+		try { _elements.at(i)->SetState(s); }
 		catch (exception& e) { }
 	}
 }
@@ -272,7 +287,7 @@ void GuiWindow::MoveSelectionVert(int dir)
 
 void GuiWindow::Update(GuiTrigger * t)
 {
-	if(_elements.size() == 0 || state == STATE_DISABLED)
+	if(_elements.size() == 0 ||	(state == STATE_DISABLED && parentElement))
 		return;
 
 	for (u8 i = 0; i < _elements.size(); i++)

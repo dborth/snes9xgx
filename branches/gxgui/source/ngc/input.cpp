@@ -500,7 +500,7 @@ void decodepad (int pad)
 		S9xReportPointer(offset + pad, (u16) cursor_x[3 + pad],
 				(u16) cursor_y[3 + pad]);
 	}
-	
+
 #ifdef HW_RVL
 	// screenshot (temp)
 	if (wp & CLASSIC_CTRL_BUTTON_ZR)
@@ -526,7 +526,7 @@ void NGCReportButtons ()
 #ifdef HW_RVL
 	s8 wm_sx = WPAD_Stick (0,1,0);
 	s8 wm_sy = WPAD_Stick (0,1,1);
-	u32 wm_pb = WPAD_ButtonsHeld (0);	// wiimote / expansion button info
+	u32 wm_pb = WPAD_ButtonsDown (0);	// wiimote / expansion button info
 #endif
 
 
@@ -708,7 +708,7 @@ void SetDefaultButtonMap ()
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Mouse2"), false);
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Justifier1"), false);
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Justifier2"), false);
-  
+
   maxcode = 0x90;
   ASSIGN_BUTTON_FALSE (maxcode++, "Screenshot");
 

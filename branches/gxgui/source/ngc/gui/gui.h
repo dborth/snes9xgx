@@ -22,6 +22,7 @@
 #include "pngu/pngu.h"
 #include "GRRLIB.h"
 #include "FreeTypeGX.h"
+#include "video.h"
 
 extern int rumbleCount[4];
 
@@ -43,6 +44,12 @@ enum
 	STATE_DISABLED
 };
 
+enum
+{
+	TRIGGER_SIMPLE,
+	TRIGGER_BUTTON_ONLY
+};
+
 class GuiSound
 {
 	public:
@@ -60,7 +67,9 @@ class GuiTrigger
 		GuiTrigger();
 		~GuiTrigger();
 		void SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
+		void SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
 
+		u8 type;
 		s32 chan;
 		WPADData wpad;
 		PADStatus pad;
@@ -85,10 +94,11 @@ class GuiElement
 		int GetState();
 		void SetVisible(bool v);
 		void SetTrigger(GuiTrigger * t);
-		void SetState(int s);
-		virtual void ResetState();
+		void SetTrigger(u8 i, GuiTrigger * t);
 		bool IsInside(int x, int y);
 		void SetPosition(int x, int y);
+		virtual void SetState(int s);
+		virtual void ResetState();
 		virtual int GetSelected();
 		virtual void SetAlignment(int hor, int vert);
 		virtual void Update(GuiTrigger * t);
@@ -104,7 +114,7 @@ class GuiElement
 		int state; // DEFAULT, SELECTED, CLICKED, DISABLED
 		bool selectable; // is SELECTED a valid state?
 		bool clickable; // is CLICKED a valid state?
-		GuiTrigger * trigger;
+		GuiTrigger * trigger[2];
 		GuiElement * parentElement;
 };
 
@@ -138,6 +148,7 @@ class GuiWindow : public GuiElement
 		//!\return The size of the current elementlist.
 		u32 GetSize();
 		void ResetState();
+		void SetState(int s);
 		int GetSelected();
 		void MoveSelectionHor(int d);
 		void MoveSelectionVert(int d);
@@ -168,6 +179,7 @@ class GuiImage : public GuiElement
 {
 	public:
 		GuiImage(GuiImageData * img);
+		GuiImage(u8 * img, int w, int h);
 		~GuiImage();
 		void Draw();
 		u8 * GetImage();

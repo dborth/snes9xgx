@@ -29,5 +29,6 @@ void zoom_reset ();
 extern int screenheight;
 extern int screenwidth;
 extern bool progressive;
+extern u8 * gameScreenTex;
 
 #endif

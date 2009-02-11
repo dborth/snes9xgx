@@ -42,7 +42,7 @@ int whichfb = 0; // Switch
 GXRModeObj *vmode; // Menu video mode
 int screenheight;
 int screenwidth;
-extern u32* backdrop;
+u8 * gameScreenTex = NULL; // a screen capture of the game
 
 /*** GX ***/
 #define TEX_WIDTH 512

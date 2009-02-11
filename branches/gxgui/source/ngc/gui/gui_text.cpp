@@ -33,10 +33,18 @@ GuiText::GuiText(const char * t, int s, GXColor c)
  */
 GuiText::~GuiText()
 {
+	if(text)
+	{
+		delete text;
+		text = NULL;
+	}
 }
 
 void GuiText::SetText(const char * t)
 {
+	if(text)
+		delete text;
+
 	text = fontSystem->charToWideChar((char *)t);
 }
 void GuiText::SetSize(int s)
