@@ -26,6 +26,7 @@ GuiElement::GuiElement()
 	selectable = false;
 	clickable = false;
 	visible = true;
+	focus = -1; // cannot be focused
 
 	// default alignment - align to top left
 	alignmentVert = ALIGN_TOP;
@@ -200,6 +201,16 @@ bool GuiElement::IsClickable()
 		return false;
 	else
 		return clickable;
+}
+
+void GuiElement::SetFocus(int f)
+{
+	focus = f;
+}
+
+int GuiElement::IsFocused()
+{
+	return focus;
 }
 
 void GuiElement::SetTrigger(GuiTrigger * t)

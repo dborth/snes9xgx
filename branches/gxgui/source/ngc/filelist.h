@@ -40,8 +40,17 @@ extern const u32	button_large_over_png_size;
 extern const u8		dialogue_box_png[];
 extern const u32	dialogue_box_png_size;
 
-extern const u8		throbber_png_png[];
+extern const u8		throbber_png[];
 extern const u32	throbber_png_size;
+
+extern const u8		bg_game_selection_png[];
+extern const u32	bg_game_selection_png_size;
+
+extern const u8		bg_game_selection_entry_png[];
+extern const u32	bg_game_selection_entry_png_size;
+
+extern const u8		scrollbar_png[];
+extern const u32	scrollbar_png_size;
 
 extern const u8		scrollbar_arrowup_png[];
 extern const u32	scrollbar_arrowup_png_size;
@@ -55,11 +64,11 @@ extern const u32	scrollbar_arrowdown_png_size;
 extern const u8		scrollbar_arrowdown_over_png[];
 extern const u32	scrollbar_arrowdown_over_png_size;
 
-extern const u8		scrollbar_scrollbar_box_png[];
-extern const u32	scrollbar_scrollbar_box_png_size;
+extern const u8		scrollbar_box_png[];
+extern const u32	scrollbar_box_png_size;
 
-extern const u8		scrollbar_scrollbar_box_over_png[];
-extern const u32	scrollbar_scrollbar_box_over_png_size;
+extern const u8		scrollbar_box_over_png[];
+extern const u32	scrollbar_box_over_png_size;
 
 extern const u8		player1_point_png[];
 extern const u32	player1_point_png_size;

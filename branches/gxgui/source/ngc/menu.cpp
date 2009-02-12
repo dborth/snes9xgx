@@ -66,6 +66,7 @@ extern int menu;
 static GuiImage * gameScreenImg = NULL;
 
 int rumbleCount[4] = {0,0,0,0};
+int rumbleRequest[4] = {0,0,0,0};
 int ExitRequested = 0;
 static GuiTrigger userInput[4];
 static GuiImageData * pointer[4];
@@ -1045,13 +1046,20 @@ void UpdateMenu()
 		mainWindow->Update(&userInput[i]);
 
 		#ifdef HW_RVL
-		if(rumbleCount[i] > 0)
+		if(rumbleRequest[i] && rumbleCount[i] < 3)
 		{
 			WPAD_Rumble(i, 1); // rumble on
-			rumbleCount[i]--;
+			rumbleCount[i]++;
+		}
+		else if(rumbleRequest[i])
+		{
+			rumbleCount[i] = 12;
+			rumbleRequest[i] = 0;
 		}
 		else
 		{
+			if(rumbleCount[i])
+				rumbleCount[i]--;
 			WPAD_Rumble(i, 0); // rumble off
 		}
 		#endif
@@ -1112,10 +1120,70 @@ InitGUIThread()
 	//LWP_SuspendThread (guithread);
 }
 
+void
+ProgressWindow(const char *title, const char *msg)
+{
+	int choice = -1;
+
+	GuiWindow promptWindow(448,256);
+	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiImageData dialogBox(dialogue_box_png);
+	GuiImage dialogBoxImg(&dialogBox);
+
+	GuiImageData throbber(throbber_png);
+	GuiImage throbberImg(&throbber);
+	throbberImg.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+	throbberImg.SetPosition(0, 40);
+
+	GuiText titleTxt(title, 22, (GXColor){255, 255, 255, 0xff});
+	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	titleTxt.SetPosition(0,10);
+	GuiText msgTxt(msg, 22, (GXColor){0, 0, 0, 0xff});
+	msgTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	msgTxt.SetPosition(0,80);
+
+	promptWindow.Append(&dialogBoxImg);
+	promptWindow.Append(&titleTxt);
+	promptWindow.Append(&msgTxt);
+	promptWindow.Append(&throbberImg);
+
+	guiReady = false;
+	mainWindow->SetState(STATE_DISABLED);
+	mainWindow->Append(&promptWindow);
+	guiReady = true;
+
+	float angle = 0;
+
+	while(choice < 1000) // simulates a delay - should actually check a flag
+	{
+		UpdateMenu();
+		choice++;
+
+		if(choice % 5 == 0)
+		{
+			angle+=45;
+			if(angle >= 360)
+				angle = 0;
+			throbberImg.SetAngle(angle);
+		}
+	}
+
+	guiReady = false;
+	mainWindow->Remove(&promptWindow);
+	mainWindow->ResetState();
+	guiReady = true;
+}
+
 int
 WaitPromptChoiceNew(const char *title, const char *msg, const char *btn1Label, const char *btn2Label)
 {
-	int choice = 0;
+	int choice = -1;
 
 	GuiWindow promptWindow(448,256);
 	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
@@ -1165,21 +1233,19 @@ WaitPromptChoiceNew(const char *title, const char *msg, const char *btn1Label, c
 	promptWindow.Append(&btn1);
 	promptWindow.Append(&btn2);
 
-	promptWindow.SetParent(mainWindow);
-
 	guiReady = false;
 	mainWindow->SetState(STATE_DISABLED);
 	mainWindow->Append(&promptWindow);
 	guiReady = true;
 
-	while(choice == 0)
+	while(choice == -1)
 	{
 		UpdateMenu();
 
 		if(btn1.GetState() == STATE_CLICKED)
 			choice = 1;
 		else if(btn2.GetState() == STATE_CLICKED)
-			choice = 2;
+			choice = 0;
 	}
 	guiReady = false;
 	mainWindow->Remove(&promptWindow);
@@ -1204,65 +1270,65 @@ int GameMenu()
 	GuiTrigger trigHome;
 	trigHome.SetButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, 0);
 
-	GuiText mappingBtnTxt("Save", 22, (GXColor){0, 0, 0, 0xff});
-	GuiImage mappingBtnImg(&btnLargeOutline);
-	GuiImage mappingBtnImgOver(&btnLargeOutlineOver);
-	GuiButton mappingBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
-	mappingBtn.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
-	mappingBtn.SetPosition(50, 120);
-	mappingBtn.SetLabel(&mappingBtnTxt);
-	mappingBtn.SetImage(&mappingBtnImg);
-	mappingBtn.SetImageOver(&mappingBtnImgOver);
-	mappingBtn.SetSoundOver(&btnSoundOver);
-	mappingBtn.SetTrigger(&trigA);
+	GuiText saveBtnTxt("Save", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage saveBtnImg(&btnLargeOutline);
+	GuiImage saveBtnImgOver(&btnLargeOutlineOver);
+	GuiButton saveBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	saveBtn.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	saveBtn.SetPosition(50, 120);
+	saveBtn.SetLabel(&saveBtnTxt);
+	saveBtn.SetImage(&saveBtnImg);
+	saveBtn.SetImageOver(&saveBtnImgOver);
+	saveBtn.SetSoundOver(&btnSoundOver);
+	saveBtn.SetTrigger(&trigA);
 
-	GuiText videoBtnTxt("Load", 22, (GXColor){0, 0, 0, 0xff});
-	GuiImage videoBtnImg(&btnLargeOutline);
-	GuiImage videoBtnImgOver(&btnLargeOutlineOver);
-	GuiButton videoBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
-	videoBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	videoBtn.SetPosition(0, 120);
-	videoBtn.SetLabel(&videoBtnTxt);
-	videoBtn.SetImage(&videoBtnImg);
-	videoBtn.SetImageOver(&videoBtnImgOver);
-	videoBtn.SetSoundOver(&btnSoundOver);
-	videoBtn.SetTrigger(&trigA);
+	GuiText loadBtnTxt("Load", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage loadBtnImg(&btnLargeOutline);
+	GuiImage loadBtnImgOver(&btnLargeOutlineOver);
+	GuiButton loadBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	loadBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	loadBtn.SetPosition(0, 120);
+	loadBtn.SetLabel(&loadBtnTxt);
+	loadBtn.SetImage(&loadBtnImg);
+	loadBtn.SetImageOver(&loadBtnImgOver);
+	loadBtn.SetSoundOver(&btnSoundOver);
+	loadBtn.SetTrigger(&trigA);
 
-	GuiText savingBtnTxt("Reset", 22, (GXColor){0, 0, 0, 0xff});
-	GuiImage savingBtnImg(&btnLargeOutline);
-	GuiImage savingBtnImgOver(&btnLargeOutlineOver);
-	GuiButton savingBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
-	savingBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	savingBtn.SetPosition(-50, 120);
-	savingBtn.SetLabel(&savingBtnTxt);
-	savingBtn.SetImage(&savingBtnImg);
-	savingBtn.SetImageOver(&savingBtnImgOver);
-	savingBtn.SetSoundOver(&btnSoundOver);
-	savingBtn.SetTrigger(&trigA);
+	GuiText resetBtnTxt("Reset", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage resetBtnImg(&btnLargeOutline);
+	GuiImage resetBtnImgOver(&btnLargeOutlineOver);
+	GuiButton resetBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	resetBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	resetBtn.SetPosition(-50, 120);
+	resetBtn.SetLabel(&resetBtnTxt);
+	resetBtn.SetImage(&resetBtnImg);
+	resetBtn.SetImageOver(&resetBtnImgOver);
+	resetBtn.SetSoundOver(&btnSoundOver);
+	resetBtn.SetTrigger(&trigA);
 
-	GuiText menuBtnTxt("Controller", 22, (GXColor){0, 0, 0, 0xff});
-	GuiImage menuBtnImg(&btnLargeOutline);
-	GuiImage menuBtnImgOver(&btnLargeOutlineOver);
-	GuiButton menuBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
-	menuBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	menuBtn.SetPosition(-125, 250);
-	menuBtn.SetLabel(&menuBtnTxt);
-	menuBtn.SetImage(&menuBtnImg);
-	menuBtn.SetImageOver(&menuBtnImgOver);
-	menuBtn.SetSoundOver(&btnSoundOver);
-	menuBtn.SetTrigger(&trigA);
+	GuiText controllerBtnTxt("Controller", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage controllerBtnImg(&btnLargeOutline);
+	GuiImage controllerBtnImgOver(&btnLargeOutlineOver);
+	GuiButton controllerBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	controllerBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	controllerBtn.SetPosition(-125, 250);
+	controllerBtn.SetLabel(&controllerBtnTxt);
+	controllerBtn.SetImage(&controllerBtnImg);
+	controllerBtn.SetImageOver(&controllerBtnImgOver);
+	controllerBtn.SetSoundOver(&btnSoundOver);
+	controllerBtn.SetTrigger(&trigA);
 
-	GuiText networkBtnTxt("Cheats", 22, (GXColor){0, 0, 0, 0xff});
-	GuiImage networkBtnImg(&btnLargeOutline);
-	GuiImage networkBtnImgOver(&btnLargeOutlineOver);
-	GuiButton networkBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
-	networkBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	networkBtn.SetPosition(125, 250);
-	networkBtn.SetLabel(&networkBtnTxt);
-	networkBtn.SetImage(&networkBtnImg);
-	networkBtn.SetImageOver(&networkBtnImgOver);
-	networkBtn.SetSoundOver(&btnSoundOver);
-	networkBtn.SetTrigger(&trigA);
+	GuiText cheatsBtnTxt("Cheats", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage cheatsBtnImg(&btnLargeOutline);
+	GuiImage cheatsBtnImgOver(&btnLargeOutlineOver);
+	GuiButton cheatsBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	cheatsBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	cheatsBtn.SetPosition(125, 250);
+	cheatsBtn.SetLabel(&cheatsBtnTxt);
+	cheatsBtn.SetImage(&cheatsBtnImg);
+	cheatsBtn.SetImageOver(&cheatsBtnImgOver);
+	cheatsBtn.SetSoundOver(&btnSoundOver);
+	cheatsBtn.SetTrigger(&trigA);
 
 	GuiText backBtnTxt("Main Menu", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage backBtnImg(&btnOutline);
@@ -1291,11 +1357,11 @@ int GameMenu()
 
 	guiReady = false;
 	GuiWindow w(screenwidth, screenheight);
-	w.Append(&mappingBtn);
-	w.Append(&videoBtn);
-	w.Append(&savingBtn);
-	w.Append(&menuBtn);
-	w.Append(&networkBtn);
+	w.Append(&saveBtn);
+	w.Append(&loadBtn);
+	w.Append(&resetBtn);
+	w.Append(&controllerBtn);
+	w.Append(&cheatsBtn);
 
 	w.Append(&backBtn);
 	w.Append(&closeBtn);
@@ -1323,6 +1389,11 @@ int GameMenu()
 		}
 		else if(closeBtn.GetState() == STATE_CLICKED)
 		{
+			menu = MENU_EXIT;
+		}
+		else if(resetBtn.GetState() == STATE_CLICKED)
+		{
+			S9xSoftReset ();
 			menu = MENU_EXIT;
 		}
 	}
@@ -1454,11 +1525,18 @@ int SettingsMenu()
 		else if(resetBtn.GetState() == STATE_CLICKED)
 		{
 			resetBtn.ResetState();
-			int c = WaitPromptChoiceNew(
+			int choice = WaitPromptChoiceNew(
 				"Reset Settings",
 				"Are you sure that you want to reset your settings?",
 				"Yes",
 				"No");
+
+			if(choice == 1)
+				DefaultSettings ();
+		}
+		else if(videoBtn.GetState() == STATE_CLICKED)
+		{
+			ProgressWindow("Please Wait","Loading...");
 		}
 	}
 	guiReady = false;
@@ -1507,30 +1585,103 @@ int GameSelectionMenu()
 	GuiImage loadBtnImg(&btnOutline);
 	GuiImage loadBtnImgOver(&btnOutlineOver);
 	GuiButton loadBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
-	loadBtn.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+	loadBtn.SetAlignment(ALIGN_RIGHT, ALIGN_MIDDLE);
 	loadBtn.SetLabel(&loadBtnTxt);
 	loadBtn.SetImage(&loadBtnImg);
 	loadBtn.SetImageOver(&loadBtnImgOver);
 	loadBtn.SetSoundOver(&btnSoundOver);
 	loadBtn.SetTrigger(&trigA);
 
-	guiReady = false;
+	GuiWindow buttonWindow(screenwidth, screenheight);
+	buttonWindow.Append(&settingsBtn);
+	buttonWindow.Append(&exitBtn);
+	buttonWindow.Append(&loadBtn);
 
-	GuiWindow w(screenwidth, screenheight);
-	w.Append(&settingsBtn);
-	w.Append(&exitBtn);
-	w.Append(&loadBtn);
-	mainWindow->Append(&w);
+	GuiWindow gameWindow(424, 256);
+	gameWindow.SetPosition(50, 103);
+
+	GuiImageData bgGameSelection(bg_game_selection_png);
+	GuiImage bgGameSelectionImg(&bgGameSelection);
+	bgGameSelectionImg.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+
+	GuiImageData bgGameSelectionEntry(bg_game_selection_entry_png);
+
+	GuiImageData scrollbar(scrollbar_png);
+	GuiImage scrollbarImg(&scrollbar);
+	scrollbarImg.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	scrollbarImg.SetPosition(0, 30);
+
+	GuiImageData arrowDown(scrollbar_arrowdown_png);
+	GuiImage arrowDownImg(&arrowDown);
+	GuiImageData arrowDownOver(scrollbar_arrowdown_over_png);
+	GuiImage arrowDownOverImg(&arrowDownOver);
+	GuiImageData arrowUp(scrollbar_arrowup_png);
+	GuiImage arrowUpImg(&arrowUp);
+	GuiImageData arrowUpOver(scrollbar_arrowup_over_png);
+	GuiImage arrowUpOverImg(&arrowUpOver);
+	GuiImageData scrollbarBox(scrollbar_box_png);
+	GuiImage scrollbarBoxImg(&scrollbarBox);
+	GuiImageData scrollbarBoxOver(scrollbar_box_over_png);
+	GuiImage scrollbarBoxOverImg(&scrollbarBoxOver);
+
+	GuiButton arrowUpBtn(arrowUpImg.GetWidth(), arrowUpImg.GetHeight());
+	arrowUpBtn.SetImage(&arrowUpImg);
+	arrowUpBtn.SetImageOver(&arrowUpOverImg);
+	arrowUpBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	arrowUpBtn.SetSelectable(false);
+
+	GuiButton arrowDownBtn(arrowDownImg.GetWidth(), arrowDownImg.GetHeight());
+	arrowDownBtn.SetImage(&arrowDownImg);
+	arrowDownBtn.SetImageOver(&arrowDownOverImg);
+	arrowDownBtn.SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
+	arrowDownBtn.SetSelectable(false);
+
+	GuiButton scrollbarBoxBtn(scrollbarBoxImg.GetWidth(), scrollbarBoxImg.GetHeight());
+	scrollbarBoxBtn.SetImage(&scrollbarBoxImg);
+	scrollbarBoxBtn.SetImageOver(&scrollbarBoxOverImg);
+	scrollbarBoxBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	scrollbarBoxBtn.SetPosition(0,100);
+	scrollbarBoxBtn.SetSelectable(false);
+
+	gameWindow.Append(&bgGameSelectionImg);
+
+	GuiText * gameListText[7];
+	GuiButton * gameList[7];
+	GuiImage * gameListBg[7];
+
+	for(int i=0; i<7; i++)
+	{
+		gameListText[i] = new GuiText("Game",22, (GXColor){0, 0, 0, 0xff});
+		gameListText[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+		gameListText[i]->SetPosition(5,0);
+
+		gameListBg[i] = new GuiImage(&bgGameSelectionEntry);
+
+		gameList[i] = new GuiButton(400,32);
+		gameList[i]->SetLabel(gameListText[i]);
+		gameList[i]->SetImageOver(gameListBg[i]);
+		gameList[i]->SetPosition(2,32*i+2);
+		gameWindow.Append(gameList[i]);
+	}
+
+	gameWindow.Append(&scrollbarImg);
+	gameWindow.Append(&arrowUpBtn);
+	gameWindow.Append(&arrowDownBtn);
+	gameWindow.Append(&scrollbarBoxBtn);
+
+	// populate initial directory listing
+
+	guiReady = false;
+	mainWindow->Append(&buttonWindow);
+	mainWindow->Append(&gameWindow);
 	guiReady = true;
 
 	while(menu == MENU_NONE)
 	{
 		UpdateMenu();
 
-		// here we need to close a window and open a new one
-		// or change activated windows
-		// or load a rom, change settings, etc
-		// all based on which buttons were clicked
+		// update gameWindow based on arrow buttons
+		// set MENU_EXIT if A button pressed on a game
 
 		if(settingsBtn.GetState() == STATE_CLICKED)
 			menu = MENU_SETTINGS;
@@ -1540,7 +1691,8 @@ int GameSelectionMenu()
 			menu = MENU_EXIT;
 	}
 	guiReady = false;
-	mainWindow->Remove(&w);
+	mainWindow->Remove(&buttonWindow);
+	mainWindow->Remove(&gameWindow);
 	return menu;
 }
 
@@ -1569,7 +1721,7 @@ MainMenu (int menu)
 	mainWindow->Append(&bgBottomImg);
 
 	// memory usage - for debugging
-	u32 sysmem = 0;
+	volatile u32 sysmem = 0;
 	char mem[150];
 	GuiText memTxt(mem, 22, (GXColor){255, 255, 255, 0xff});
 	memTxt.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);

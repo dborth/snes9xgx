@@ -24,7 +24,7 @@
 #include "FreeTypeGX.h"
 #include "video.h"
 
-extern int rumbleCount[4];
+extern int rumbleRequest[4];
 
 enum
 {
@@ -97,6 +97,8 @@ class GuiElement
 		void SetTrigger(u8 i, GuiTrigger * t);
 		bool IsInside(int x, int y);
 		void SetPosition(int x, int y);
+		int IsFocused();
+		virtual void SetFocus(int f);
 		virtual void SetState(int s);
 		virtual void ResetState();
 		virtual int GetSelected();
@@ -105,6 +107,7 @@ class GuiElement
 		virtual void Draw();
 	protected:
 		bool visible;
+		int focus; // -1 = cannot focus, 0 = not focused, 1 = focused
 		int width;
 		int height;
 		int xoffset;
@@ -150,6 +153,8 @@ class GuiWindow : public GuiElement
 		void ResetState();
 		void SetState(int s);
 		int GetSelected();
+		void SetFocus(int f);
+		void ChangeFocus(GuiTrigger * t);
 		void MoveSelectionHor(int d);
 		void MoveSelectionVert(int d);
 
@@ -181,10 +186,12 @@ class GuiImage : public GuiElement
 		GuiImage(GuiImageData * img);
 		GuiImage(u8 * img, int w, int h);
 		~GuiImage();
+		void SetAngle(float a);
 		void Draw();
 		u8 * GetImage();
 	protected:
 		u8 * image;
+		float imageangle;
 };
 
 class GuiText : public GuiElement

@@ -112,7 +112,7 @@ void GuiButton::Update(GuiTrigger * t)
 			if(state == STATE_DEFAULT) // we weren't on the button before!
 			{
 				state = STATE_SELECTED;
-				rumbleCount[t->chan] = 3;
+				rumbleRequest[t->chan] = 1;
 
 				if(soundOver)
 					soundOver->Play();
