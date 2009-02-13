@@ -23,6 +23,21 @@
 #include "GRRLIB.h"
 #include "FreeTypeGX.h"
 #include "video.h"
+#include "filelist.h"
+
+typedef struct _paddata {
+	u16 btns_d;
+	u16 btns_u;
+	u16 btns_h;
+	s8 stickX;
+	s8 stickY;
+	s8 substickX;
+	s8 substickY;
+	u8 triggerL;
+	u8 triggerR;
+} PADData;
+
+#define GAMELISTNUM 7
 
 extern int rumbleRequest[4];
 
@@ -72,7 +87,7 @@ class GuiTrigger
 		u8 type;
 		s32 chan;
 		WPADData wpad;
-		PADStatus pad;
+		PADData pad;
 };
 
 class GuiElement
@@ -236,6 +251,52 @@ class GuiButton : public GuiElement
 		GuiText * labelOver;
 		GuiSound * soundOver;
 		GuiSound * soundClick;
+};
+
+class GuiFileBrowser : public GuiElement
+{
+	public:
+		GuiFileBrowser(int w, int h);
+		~GuiFileBrowser();
+		void ResetState();
+		void SetState(int s);
+		void Draw();
+		void TriggerUpdate();
+		void Update(GuiTrigger * t);
+		GuiButton * gameList[GAMELISTNUM];
+	protected:
+		int selectedItem;
+		bool listChanged;
+
+		GuiText * gameListText[GAMELISTNUM];
+		GuiImage * gameListBg[GAMELISTNUM];
+		GuiImage * gameListFolder[GAMELISTNUM];
+
+		GuiButton * arrowUpBtn;
+		GuiButton * arrowDownBtn;
+		GuiButton * scrollbarBoxBtn;
+
+		GuiImage * bgGameSelectionImg;
+		GuiImage * scrollbarImg;
+		GuiImage * arrowDownImg;
+		GuiImage * arrowDownOverImg;
+		GuiImage * arrowUpImg;
+		GuiImage * arrowUpOverImg;
+		GuiImage * scrollbarBoxImg;
+		GuiImage * scrollbarBoxOverImg;
+
+		GuiImageData * bgGameSelection;
+		GuiImageData * bgGameSelectionEntry;
+		GuiImageData * gameFolder;
+		GuiImageData * scrollbar;
+		GuiImageData * arrowDown;
+		GuiImageData * arrowDownOver;
+		GuiImageData * arrowUp;
+		GuiImageData * arrowUpOver;
+		GuiImageData * scrollbarBox;
+		GuiImageData * scrollbarBoxOver;
+
+		GuiTrigger * trigA;
 };
 
 #endif

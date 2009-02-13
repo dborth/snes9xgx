@@ -45,7 +45,7 @@ extern "C" {
 #include "networkop.h"
 #include "memcardop.h"
 #include "fileop.h"
-#include "freeze.h"
+
 #include "dvd.h"
 #include "s9xconfig.h"
 #include "sram.h"
@@ -71,36 +71,6 @@ int ExitRequested = 0;
 static GuiTrigger userInput[4];
 static GuiImageData * pointer[4];
 static GuiWindow * mainWindow = NULL;
-
-/****************************************************************************
- * Load Manager
- ***************************************************************************/
-
-int
-LoadManager ()
-{
-	int loadROM = OpenROM(GCSettings.LoadMethod);
-
-	if (loadROM)
-	{
-		// load UPS/IPS/PPF patch
-		LoadPatch(GCSettings.LoadMethod);
-
-		Memory.LoadROM ("BLANK.SMC");
-		Memory.LoadSRAM ("BLANK");
-
-		// load SRAM or snapshot
-		if ( GCSettings.AutoLoad == 1 )
-			LoadSRAM(GCSettings.SaveMethod, SILENT);
-		else if ( GCSettings.AutoLoad == 2 )
-			NGCUnfreezeGame (GCSettings.SaveMethod, SILENT);
-
-		// setup cheats
-		SetupCheats();
-	}
-
-	return loadROM;
-}
 
 /****************************************************************************
  * Cheat Menu
@@ -1035,7 +1005,9 @@ void UpdateMenu()
 		#endif
 
 		userInput[i].chan = i;
-		userInput[i].pad.button = PAD_ButtonsDown(i);
+		userInput[i].pad.btns_d = PAD_ButtonsDown(i);
+		userInput[i].pad.btns_u = PAD_ButtonsUp(i);
+		userInput[i].pad.btns_h = PAD_ButtonsHeld(i);
 		userInput[i].pad.stickX = PAD_StickX(i);
 		userInput[i].pad.stickY = PAD_StickY(i);
 		userInput[i].pad.substickX = PAD_SubStickX(i);
@@ -1581,99 +1553,23 @@ int GameSelectionMenu()
 	exitBtn.SetTrigger(&trigA);
 	exitBtn.SetTrigger(&trigHome);
 
-	GuiText loadBtnTxt("Load", 22, (GXColor){0, 0, 0, 0xff});
-	GuiImage loadBtnImg(&btnOutline);
-	GuiImage loadBtnImgOver(&btnOutlineOver);
-	GuiButton loadBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
-	loadBtn.SetAlignment(ALIGN_RIGHT, ALIGN_MIDDLE);
-	loadBtn.SetLabel(&loadBtnTxt);
-	loadBtn.SetImage(&loadBtnImg);
-	loadBtn.SetImageOver(&loadBtnImgOver);
-	loadBtn.SetSoundOver(&btnSoundOver);
-	loadBtn.SetTrigger(&trigA);
-
 	GuiWindow buttonWindow(screenwidth, screenheight);
 	buttonWindow.Append(&settingsBtn);
 	buttonWindow.Append(&exitBtn);
-	buttonWindow.Append(&loadBtn);
+
+	// populate initial directory listing
+	int method = METHOD_SD;
+	OpenGameList(method);
+
+	GuiFileBrowser gameBrowser(424, 256);
 
 	GuiWindow gameWindow(424, 256);
 	gameWindow.SetPosition(50, 103);
-
-	GuiImageData bgGameSelection(bg_game_selection_png);
-	GuiImage bgGameSelectionImg(&bgGameSelection);
-	bgGameSelectionImg.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
-
-	GuiImageData bgGameSelectionEntry(bg_game_selection_entry_png);
-
-	GuiImageData scrollbar(scrollbar_png);
-	GuiImage scrollbarImg(&scrollbar);
-	scrollbarImg.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	scrollbarImg.SetPosition(0, 30);
-
-	GuiImageData arrowDown(scrollbar_arrowdown_png);
-	GuiImage arrowDownImg(&arrowDown);
-	GuiImageData arrowDownOver(scrollbar_arrowdown_over_png);
-	GuiImage arrowDownOverImg(&arrowDownOver);
-	GuiImageData arrowUp(scrollbar_arrowup_png);
-	GuiImage arrowUpImg(&arrowUp);
-	GuiImageData arrowUpOver(scrollbar_arrowup_over_png);
-	GuiImage arrowUpOverImg(&arrowUpOver);
-	GuiImageData scrollbarBox(scrollbar_box_png);
-	GuiImage scrollbarBoxImg(&scrollbarBox);
-	GuiImageData scrollbarBoxOver(scrollbar_box_over_png);
-	GuiImage scrollbarBoxOverImg(&scrollbarBoxOver);
-
-	GuiButton arrowUpBtn(arrowUpImg.GetWidth(), arrowUpImg.GetHeight());
-	arrowUpBtn.SetImage(&arrowUpImg);
-	arrowUpBtn.SetImageOver(&arrowUpOverImg);
-	arrowUpBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	arrowUpBtn.SetSelectable(false);
-
-	GuiButton arrowDownBtn(arrowDownImg.GetWidth(), arrowDownImg.GetHeight());
-	arrowDownBtn.SetImage(&arrowDownImg);
-	arrowDownBtn.SetImageOver(&arrowDownOverImg);
-	arrowDownBtn.SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
-	arrowDownBtn.SetSelectable(false);
-
-	GuiButton scrollbarBoxBtn(scrollbarBoxImg.GetWidth(), scrollbarBoxImg.GetHeight());
-	scrollbarBoxBtn.SetImage(&scrollbarBoxImg);
-	scrollbarBoxBtn.SetImageOver(&scrollbarBoxOverImg);
-	scrollbarBoxBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	scrollbarBoxBtn.SetPosition(0,100);
-	scrollbarBoxBtn.SetSelectable(false);
-
-	gameWindow.Append(&bgGameSelectionImg);
-
-	GuiText * gameListText[7];
-	GuiButton * gameList[7];
-	GuiImage * gameListBg[7];
-
-	for(int i=0; i<7; i++)
-	{
-		gameListText[i] = new GuiText("Game",22, (GXColor){0, 0, 0, 0xff});
-		gameListText[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
-		gameListText[i]->SetPosition(5,0);
-
-		gameListBg[i] = new GuiImage(&bgGameSelectionEntry);
-
-		gameList[i] = new GuiButton(400,32);
-		gameList[i]->SetLabel(gameListText[i]);
-		gameList[i]->SetImageOver(gameListBg[i]);
-		gameList[i]->SetPosition(2,32*i+2);
-		gameWindow.Append(gameList[i]);
-	}
-
-	gameWindow.Append(&scrollbarImg);
-	gameWindow.Append(&arrowUpBtn);
-	gameWindow.Append(&arrowDownBtn);
-	gameWindow.Append(&scrollbarBoxBtn);
-
-	// populate initial directory listing
+	gameWindow.Append(&gameBrowser);
 
 	guiReady = false;
-	mainWindow->Append(&buttonWindow);
 	mainWindow->Append(&gameWindow);
+	mainWindow->Append(&buttonWindow);
 	guiReady = true;
 
 	while(menu == MENU_NONE)
@@ -1682,13 +1578,33 @@ int GameSelectionMenu()
 
 		// update gameWindow based on arrow buttons
 		// set MENU_EXIT if A button pressed on a game
+		for(int i=0; i<GAMELISTNUM; i++)
+		{
+			if(gameBrowser.gameList[i]->GetState() == STATE_CLICKED)
+			{
+				gameBrowser.gameList[i]->ResetState();
+				// check corresponding browser entry
+				if(browserList[i].isdir)
+				{
+					BrowserChangeFolder(method);
+					gameBrowser.gameList[0]->SetState(STATE_SELECTED);
+					gameBrowser.TriggerUpdate();
+				}
+				else
+				{
+					#ifdef HW_RVL
+					ShutoffRumble();
+					#endif
+					if(BrowserLoadFile(method))
+						menu = MENU_EXIT;
+				}
+			}
+		}
 
 		if(settingsBtn.GetState() == STATE_CLICKED)
 			menu = MENU_SETTINGS;
 		else if(exitBtn.GetState() == STATE_CLICKED)
 			ExitRequested = 1;
-		else if(loadBtn.GetState() == STATE_CLICKED)
-			menu = MENU_EXIT;
 	}
 	guiReady = false;
 	mainWindow->Remove(&buttonWindow);

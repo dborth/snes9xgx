@@ -43,6 +43,9 @@ extern const u32	dialogue_box_png_size;
 extern const u8		throbber_png[];
 extern const u32	throbber_png_size;
 
+extern const u8		folder_png[];
+extern const u32	folder_png_size;
+
 extern const u8		bg_game_selection_png[];
 extern const u32	bg_game_selection_png_size;
 

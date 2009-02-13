@@ -12,6 +12,7 @@
 /**
  * Constructor for the GuiImage class.
  */
+
 GuiImage::GuiImage(GuiImageData * img)
 {
 	image = img->GetImage();

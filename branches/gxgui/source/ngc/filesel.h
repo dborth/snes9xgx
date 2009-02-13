@@ -18,7 +18,7 @@
 #include <gccore.h>
 
 #define MAXJOLIET 255
-#define MAXDISPLAY 50
+#define MAXDISPLAY 35
 
 typedef struct
 {
@@ -44,11 +44,13 @@ extern char rootdir[10];
 extern unsigned long SNESROMSize;
 
 bool MakeFilePath(char filepath[], int type, int method);
-int OpenROM (int method);
+int OpenGameList(int method);
 int autoLoadMethod();
 int autoSaveMethod(bool silent);
 int FileSortCallback(const void *f1, const void *f2);
 void StripExt(char* returnstring, char * inputstring);
 void ResetBrowser();
+int BrowserChangeFolder(int method);
+int BrowserLoadFile(int method);
 
 #endif

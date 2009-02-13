@@ -19,7 +19,16 @@ static int currentSize = 0;
  */
 GuiText::GuiText(const char * t, int s, GXColor c)
 {
-	text = fontSystem->charToWideChar((char *)t);
+	// this is temporary: removes - and _ and ' 
+	// because FreeType GX won't show them
+	char newt[200];
+	int i = -1;
+	strcpy(newt, t);
+	while(newt[++i] != 0)
+		if(newt[i] == '-' || newt[i] == '_' || newt[i] == '\'')
+			newt[i] = ' ';
+
+	text = fontSystem->charToWideChar((char *)newt);
 	size = s;
 	color = c;
 	style = FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE;
@@ -42,10 +51,19 @@ GuiText::~GuiText()
 
 void GuiText::SetText(const char * t)
 {
+	// this is temporary: removes - and _ and ' 
+	// because FreeType GX won't show them
+	char newt[200];
+	int i = -1;
+	strcpy(newt, t);
+	while(newt[++i] != 0)
+		if(newt[i] == '-' || newt[i] == '_' || newt[i] == '\'')
+			newt[i] = ' ';
+
 	if(text)
 		delete text;
 
-	text = fontSystem->charToWideChar((char *)t);
+	text = fontSystem->charToWideChar((char *)newt);
 }
 void GuiText::SetSize(int s)
 {

@@ -116,7 +116,7 @@ void GuiWindow::SetFocus(int f)
 	focus = f;
 
 	if(f == 1)
-		this->MoveSelectionHor(1);
+		this->MoveSelectionVert(1);
 	else
 		this->ResetState();
 }
@@ -162,7 +162,7 @@ void GuiWindow::ChangeFocus(GuiTrigger * t)
 	}
 	// change focus
 	else if(t->wpad.btns_d & (WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)
-		|| t->pad.button & PAD_BUTTON_B)
+		|| t->pad.btns_d & PAD_BUTTON_B)
 	{
 		for (i = found; i < _elements.size(); i++)
 		{
@@ -400,16 +400,16 @@ void GuiWindow::Update(GuiTrigger * t)
 	{
 		// pad/joystick navigation
 		if(t->wpad.btns_d & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT)
-			|| t->pad.button & PAD_BUTTON_RIGHT)
+			|| t->pad.btns_d & PAD_BUTTON_RIGHT)
 			this->MoveSelectionHor(1);
 		else if(t->wpad.btns_d & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT)
-			|| t->pad.button & PAD_BUTTON_LEFT)
+			|| t->pad.btns_d & PAD_BUTTON_LEFT)
 			this->MoveSelectionHor(-1);
 		else if(t->wpad.btns_d & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)
-			|| t->pad.button & PAD_BUTTON_DOWN)
+			|| t->pad.btns_d & PAD_BUTTON_DOWN)
 			this->MoveSelectionVert(1);
 		else if(t->wpad.btns_d & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)
-			|| t->pad.button & PAD_BUTTON_UP)
+			|| t->pad.btns_d & PAD_BUTTON_UP)
 			this->MoveSelectionVert(-1);
 	}
 }

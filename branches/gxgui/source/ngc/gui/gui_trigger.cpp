@@ -9,6 +9,7 @@
  ***************************************************************************/
 
 #include "gui.h"
+
 /**
  * Constructor for the GuiTrigger class.
  */
@@ -16,7 +17,7 @@ GuiTrigger::GuiTrigger()
 {
 	chan = -1;
 	memset(&wpad, 0, sizeof(WPADData));
-	memset(&pad, 0, sizeof(PADStatus));
+	memset(&pad, 0, sizeof(PADData));
 }
 
 /**
@@ -34,7 +35,7 @@ void GuiTrigger::SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 	type = TRIGGER_SIMPLE;
 	chan = ch;
 	wpad.btns_d = wiibtns;
-	pad.button = gcbtns;
+	pad.btns_d = gcbtns;
 }
 
 /**
@@ -45,5 +46,5 @@ void GuiTrigger::SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 	type = TRIGGER_BUTTON_ONLY;
 	chan = ch;
 	wpad.btns_d = wiibtns;
-	pad.button = gcbtns;
+	pad.btns_d = gcbtns;
 }

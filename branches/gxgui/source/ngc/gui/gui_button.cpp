@@ -12,6 +12,7 @@
 /**
  * Constructor for the GuiButton class.
  */
+
 GuiButton::GuiButton(int w, int h)
 {
 	width = w;
@@ -38,32 +39,44 @@ GuiButton::~GuiButton()
 void GuiButton::SetImage(GuiImage* img)
 {
 	image = img;
-	img->SetParent(this);
+
+	if(img)
+		img->SetParent(this);
 }
 void GuiButton::SetImageOver(GuiImage* img)
 {
 	imageOver = img;
-	img->SetParent(this);
+
+	if(img)
+		img->SetParent(this);
 }
 void GuiButton::SetIcon(GuiImage* img)
 {
 	icon = img;
-	img->SetParent(this);
+
+	if(img)
+		img->SetParent(this);
 }
 void GuiButton::SetIconOver(GuiImage* img)
 {
 	iconOver = img;
-	img->SetParent(this);
+
+	if(img)
+		img->SetParent(this);
 }
 void GuiButton::SetLabel(GuiText* txt)
 {
 	label = txt;
-	txt->SetParent(this);
+
+	if(txt)
+		txt->SetParent(this);
 }
 void GuiButton::SetLabelOver(GuiText* txt)
 {
 	labelOver = txt;
-	txt->SetParent(this);
+
+	if(txt)
+		txt->SetParent(this);
 }
 void GuiButton::SetSoundOver(GuiSound * snd)
 {
@@ -101,7 +114,7 @@ void GuiButton::Draw()
 
 void GuiButton::Update(GuiTrigger * t)
 {
-	if(state == STATE_CLICKED || state == STATE_DISABLED)
+	if(state == STATE_CLICKED || state == STATE_DISABLED || !t)
 		return;
 
 	// cursor
@@ -143,7 +156,7 @@ void GuiButton::Update(GuiTrigger * t)
 					(t->wpad.btns_d > 0 &&
 					wm_btns == wm_btns_trig ||
 					(cc_btns == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC)) ||
-					(t->pad.button == trigger[i]->pad.button && t->pad.button > 0))
+					(t->pad.btns_d == trigger[i]->pad.btns_d && t->pad.btns_d > 0))
 				{
 					if(state == STATE_SELECTED)
 					{
