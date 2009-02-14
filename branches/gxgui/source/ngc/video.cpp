@@ -397,28 +397,6 @@ StartGX ()
 	GX_SetDispCopyGamma (GX_GM_1_0);
 	GX_SetCullMode (GX_CULL_NONE);
 
-/*
-	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
-	GX_SetDispCopyYScale ((f32) vmode->xfbHeight / (f32) vmode->efbHeight);
-	GX_SetScissor (0, 0, vmode->fbWidth, vmode->efbHeight);
-
-	GX_SetDispCopySrc (0, 0, vmode->fbWidth, vmode->efbHeight);
-	GX_SetDispCopyDst (vmode->fbWidth, vmode->xfbHeight);
-	GX_SetCopyFilter (vmode->aa, vmode->sample_pattern, GX_TRUE, vmode->vfilter);
-
-	GX_SetFieldMode (vmode->field_rendering, ((vmode->viHeight == 2 * vmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
-
-	GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
-	GX_SetCullMode (GX_CULL_NONE);
-	GX_SetDispCopyGamma (GX_GM_1_0);
-	GX_SetZMode (GX_TRUE, GX_LEQUAL, GX_TRUE);
-	GX_SetColorUpdate (GX_TRUE);
-
-	guOrtho(p, vmode->efbHeight/2, -(vmode->efbHeight/2), -(vmode->fbWidth/2), vmode->fbWidth/2, 10, 1000);	// matrix, t, b, l, r, n, f
-	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
-
-	GX_CopyDisp (xfb[whichfb], GX_TRUE); // reset xfb
-*/
 	vwidth = 100;
 	vheight = 100;
 }
@@ -714,7 +692,7 @@ ResetVideo_Menu ()
 			VIDEO_WaitVSync();
 
 	// clears the bg to color and clears the z buffer
-	GXColor background = {200, 200, 200, 255};
+	GXColor background = {175, 200, 215, 255};
 	GX_SetCopyClear (background, 0x00ffffff);
 
 	yscale = GX_GetYScaleFactor(vmode->efbHeight,vmode->xfbHeight);

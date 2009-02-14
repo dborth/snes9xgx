@@ -22,7 +22,7 @@
 #include <sys/errno.h>
 #include <fcntl.h>
 
-#include "menudraw.h"
+#include "menu.h"
 #include "http.h"
 
 
@@ -417,6 +417,7 @@ bool http_request(const char *url, FILE * hfile, u8 * buffer,
 			ShowProgress("Downloading...", (content_length - bytesLeft),
 					content_length);
 		}
+		CancelAction();
 	}
 
 	if (!b || !res)

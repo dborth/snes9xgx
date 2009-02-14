@@ -31,7 +31,7 @@
 #include "memcardop.h"
 #include "gcunzip.h"
 #include "video.h"
-#include "menudraw.h"
+#include "menu.h"
 #include "filesel.h"
 #include "preferences.h"
 
@@ -228,7 +228,7 @@ bool ChangeInterface(int method, bool silent)
 			mounted = MountFAT(METHOD_SD_SLOTB); // try SD Gecko on slot B
 		#endif
 		if(!mounted && !silent) // no SD device found
-			WaitPrompt ("SD card not found!");
+			ErrorPrompt("SD card not found!");
 	}
 	else if(method == METHOD_USB)
 	{
@@ -236,7 +236,7 @@ bool ChangeInterface(int method, bool silent)
 		mounted = MountFAT(method);
 
 		if(!mounted && !silent)
-			WaitPrompt ("USB drive not found!");
+			ErrorPrompt("USB drive not found!");
 		#endif
 	}
 	else if(method == METHOD_DVD)
@@ -280,7 +280,7 @@ ParseDirectory()
 	if (dir == NULL)
 	{
 		sprintf(msg, "Error opening %s", fulldir);
-		WaitPrompt(msg);
+		ErrorPrompt(msg);
 
 		// if we can't open the dir, open root dir
 		sprintf(browser.dir,"/");
@@ -290,7 +290,7 @@ ParseDirectory()
 		if (dir == NULL)
 		{
 			sprintf(msg, "Error opening %s", rootdir);
-			WaitPrompt(msg);
+			ErrorPrompt(msg);
 			return 0;
 		}
 	}
@@ -307,7 +307,7 @@ ParseDirectory()
 			if(!newBrowserList) // failed to allocate required memory
 			{
 				ResetBrowser();
-				WaitPrompt("Out of memory: too many files!");
+				ErrorPrompt("Out of memory: too many files!");
 				entryNum = 0;
 				break;
 			}
@@ -385,7 +385,7 @@ LoadSzFile(char * filepath, unsigned char * rbuffer)
 	}
 	else
 	{
-		WaitPrompt("Error opening file");
+		ErrorPrompt("Error opening file");
 	}
 
 	// go back to checking if devices were inserted/removed
@@ -466,6 +466,7 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 						if(readsize > 0)
 							offset += readsize;
 					}
+					CancelAction();
 
 					if(offset != size) // # bytes read doesn't match # expected
 						size = 0;
@@ -477,12 +478,12 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 	if(!size && !silent)
 	{
 		unmountRequired[method] = true;
-		WaitPrompt("Error loading file!");
+		ErrorPrompt("Error loading file!");
 	}
 
 	// go back to checking if devices were inserted/removed
 	LWP_ResumeThread (devicethread);
-
+	CancelAction();
 	return size;
 }
 
@@ -535,7 +536,7 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 		if(!written && !silent)
 		{
 			unmountRequired[method] = true;
-			WaitPrompt ("Error saving file!");
+			ErrorPrompt("Error saving file!");
 		}
 
 		// go back to checking if devices were inserted/removed

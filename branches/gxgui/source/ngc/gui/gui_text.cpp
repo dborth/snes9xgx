@@ -19,22 +19,27 @@ static int currentSize = 0;
  */
 GuiText::GuiText(const char * t, int s, GXColor c)
 {
-	// this is temporary: removes - and _ and ' 
-	// because FreeType GX won't show them
-	char newt[200];
-	int i = -1;
-	strcpy(newt, t);
-	while(newt[++i] != 0)
-		if(newt[i] == '-' || newt[i] == '_' || newt[i] == '\'')
-			newt[i] = ' ';
-
-	text = fontSystem->charToWideChar((char *)newt);
+	text = NULL;
 	size = s;
 	color = c;
 	style = FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE;
 
 	alignmentHor = ALIGN_CENTRE;
 	alignmentVert = ALIGN_MIDDLE;
+
+	if(t)
+	{
+		// this is temporary: removes - and _ and '
+		// because FreeType GX won't show them
+		char newt[200];
+		int i = -1;
+		strcpy(newt, t);
+		while(newt[++i] != 0)
+			if(newt[i] == '-' || newt[i] == '_' || newt[i] == '\'')
+				newt[i] = ' ';
+
+		text = fontSystem->charToWideChar((char *)newt);
+	}
 }
 
 /**
@@ -51,19 +56,24 @@ GuiText::~GuiText()
 
 void GuiText::SetText(const char * t)
 {
-	// this is temporary: removes - and _ and ' 
-	// because FreeType GX won't show them
-	char newt[200];
-	int i = -1;
-	strcpy(newt, t);
-	while(newt[++i] != 0)
-		if(newt[i] == '-' || newt[i] == '_' || newt[i] == '\'')
-			newt[i] = ' ';
-
 	if(text)
 		delete text;
+		
+	text = NULL;
 
-	text = fontSystem->charToWideChar((char *)newt);
+	if(t)
+	{
+		// this is temporary: removes - and _ and '
+		// because FreeType GX won't show them
+		char newt[200];
+		int i = -1;
+		strcpy(newt, t);
+		while(newt[++i] != 0)
+			if(newt[i] == '-' || newt[i] == '_' || newt[i] == '\'')
+				newt[i] = ' ';
+
+		text = fontSystem->charToWideChar((char *)newt);
+	}
 }
 void GuiText::SetSize(int s)
 {

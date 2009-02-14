@@ -26,8 +26,9 @@ extern "C" {
 #include "dvd.h"
 #include "networkop.h"
 #include "fileop.h"
+#include "filesel.h"
 #include "video.h"
-#include "menudraw.h"
+#include "menu.h"
 #include "gcunzip.h"
 
 #define ZIPCHUNK 2048
@@ -148,7 +149,7 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 	res = inflateInit2 (&zs, -MAX_WBITS);
 
 	if (res != Z_OK)
-		return 0;
+		goto failed;
 
 	/*** Set ZipChunk for first pass ***/
 	zipoffset =
@@ -173,7 +174,7 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 			if (res == Z_MEM_ERROR)
 			{
 				inflateEnd (&zs);
-				return 0;
+				goto failed;
 			}
 
 			have = ZIPCHUNK - zs.avail_out;
@@ -208,6 +209,7 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 	while (res != Z_STREAM_END);
 
 	inflateEnd (&zs);
+	CancelAction();
 
 	if (res == Z_STREAM_END)
 	{
@@ -216,7 +218,8 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 		else
 			return pkzip.uncompressedSize;
 	}
-
+failed:
+	CancelAction();
 	return 0;
 }
 
@@ -250,7 +253,7 @@ GetFirstZipFilename (int method)
 		}
 		else
 		{
-			WaitPrompt("Error - Invalid ZIP file!");
+			ErrorPrompt("Error - Invalid ZIP file!");
 		}
 	}
 
@@ -320,7 +323,7 @@ Is7ZipFile (char *buffer)
 // display an error message
 static void SzDisplayError(SZ_RESULT res)
 {
-	WaitPrompt(szerrormsg[(res - 1)]);
+	ErrorPrompt(szerrormsg[(res - 1)]);
 }
 
 // function used by the 7zip SDK to read data from SD/USB/DVD/SMB
@@ -475,7 +478,7 @@ int SzParse(char * filepath, int method)
 				if(!newBrowserList) // failed to allocate required memory
 				{
 					ResetBrowser();
-					WaitPrompt("Out of memory: too many files!");
+					ErrorPrompt("Out of memory: too many files!");
 					nbfiles = 0;
 					break;
 				}
@@ -555,6 +558,8 @@ int SzExtractFile(int i, unsigned char *buffer)
 
 	// close 7Zip archive and free memory
 	SzClose();
+	
+	CancelAction();
 
 	// check for errors
 	if(SzRes != SZ_OK)

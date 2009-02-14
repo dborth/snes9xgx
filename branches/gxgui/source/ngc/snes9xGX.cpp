@@ -48,7 +48,6 @@ extern "C" {
 #include "dvd.h"
 #include "networkop.h"
 #include "video.h"
-#include "menudraw.h"
 #include "s9xconfig.h"
 #include "audio.h"
 #include "menu.h"
@@ -57,6 +56,7 @@ extern "C" {
 #include "preferences.h"
 #include "button_mapping.h"
 #include "fileop.h"
+#include "filesel.h"
 #include "input.h"
 
 #include "GRRLIB.h"
@@ -79,7 +79,6 @@ extern unsigned int timediffallowed;
 void ExitCleanup()
 {
 	LWP_SuspendThread (devicethread);
-	LWP_SuspendThread (guithread);
 	UnmountAllFAT();
 	StopGX();
 
@@ -214,7 +213,7 @@ emulate ()
 		// Load preferences
 		/*if(!LoadPrefs())
 		{
-			WaitPrompt("Preferences reset - check settings!");
+			ErrorPrompt("Preferences reset - check settings!");
 			selectedMenu = 1; // change to preferences menu
 		}*/
 
@@ -222,19 +221,6 @@ emulate ()
 			MainMenu(MENU_GAMESELECTION);
 		else
 			MainMenu(MENU_GAME);
-
-		if(SNESROMSize == 0)
-		{
-			SNESROMSize = LoadFile ((char *)Memory.ROM,
-					"/snes9x/roms/Adventure - Side Scrolling/Super Mario World (U) [!].zip",
-					0, METHOD_SD, SILENT);
-
-			Memory.LoadROM ("BLANK.SMC");
-			Memory.LoadSRAM ("BLANK");
-		}
-
-		if(SNESROMSize == 0)
-			ExitToLoader();
 
 		ConfigRequested = 0;
 		SwitchAudioMode(0);
@@ -446,6 +432,8 @@ main(int argc, char *argv[])
 
 	// Check if DVD drive belongs to a Wii
 	SetDVDDriveType();
+
+	InitGUIThreads();
 
 	// GameCube only - Injected ROM
 	// Everything's been initialized, we can copy our ROM back

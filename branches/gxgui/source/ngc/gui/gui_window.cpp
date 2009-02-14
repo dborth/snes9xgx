@@ -101,8 +101,7 @@ void GuiWindow::ResetState()
 
 void GuiWindow::SetState(int s)
 {
-	if(parentElement) // we don't want to change the state of our main window
-		state = s;
+	state = s;
 
 	for (u8 i = 0; i < _elements.size(); i++)
 	{
@@ -123,7 +122,7 @@ void GuiWindow::SetFocus(int f)
 
 void GuiWindow::ChangeFocus(GuiTrigger * t)
 {
-	if(parentElement)
+	if(parentElement || state == STATE_DISABLED)
 		return; // this is only intended for the main window
 
 	int found = -1;

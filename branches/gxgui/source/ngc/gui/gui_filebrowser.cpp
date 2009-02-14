@@ -21,6 +21,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	selectedItem = 0;
 	selectable = true;
 	listChanged = true; // trigger an initial list update
+	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
 	trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
@@ -75,7 +76,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	scrollbarBoxBtn->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	scrollbarBoxBtn->SetSelectable(false);
 
-	for(int i=0; i<GAMELISTNUM; i++)
+	for(int i=0; i<PAGESIZE; i++)
 	{
 		gameListText[i] = new GuiText("Game",22, (GXColor){0, 0, 0, 0xff});
 		gameListText[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
@@ -84,11 +85,11 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 		gameListBg[i] = new GuiImage(bgGameSelectionEntry);
 		gameListFolder[i] = new GuiImage(gameFolder);
 
-		gameList[i] = new GuiButton(400, 32);
+		gameList[i] = new GuiButton(400, 30);
 		gameList[i]->SetParent(this);
 		gameList[i]->SetLabel(gameListText[i]);
 		gameList[i]->SetImageOver(gameListBg[i]);
-		gameList[i]->SetPosition(2,32*i+2);
+		gameList[i]->SetPosition(2,30*i+3);
 		gameList[i]->SetTrigger(trigA);
 	}
 }
@@ -124,7 +125,7 @@ GuiFileBrowser::~GuiFileBrowser()
 
 	delete trigA;
 
-	for(int i=0; i<GAMELISTNUM; i++)
+	for(int i=0; i<PAGESIZE; i++)
 	{
 		delete gameListText[i];
 		delete gameList[i];
@@ -133,24 +134,22 @@ GuiFileBrowser::~GuiFileBrowser()
 	}
 }
 
-void GuiFileBrowser::SetState(int s)
+void GuiFileBrowser::SetFocus(int f)
 {
-	if(s == STATE_SELECTED)
-	{
-		state = s;
+	focus = f;
 
-		for(int i=0; i<GAMELISTNUM; i++)
-			gameList[i]->ResetState();
+	for(int i=0; i<PAGESIZE; i++)
+		gameList[i]->ResetState();
 
-		gameList[selectedItem]->SetState(s);
-	}
+	if(f == 1)
+		gameList[selectedItem]->SetState(STATE_SELECTED);
 }
 
 void GuiFileBrowser::ResetState()
 {
 	state = STATE_DEFAULT;
 
-	for(int i=0; i<GAMELISTNUM; i++)
+	for(int i=0; i<PAGESIZE; i++)
 	{
 		gameList[i]->ResetState();
 	}
@@ -171,7 +170,7 @@ void GuiFileBrowser::Draw()
 
 	bgGameSelectionImg->Draw();
 
-	for(int i=0; i<GAMELISTNUM; i++)
+	for(int i=0; i<PAGESIZE; i++)
 	{
 		gameList[i]->Draw();
 	}
@@ -193,7 +192,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	scrollbarBoxBtn->Update(t);
 
 	// pad/joystick navigation
-	if(!parentElement->IsFocused())
+	if(!focus)
 	{
 		goto endNavigation; // skip navigation
 		listChanged = false;
@@ -202,9 +201,9 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	if(t->wpad.btns_d & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT)
 		|| t->pad.btns_d & PAD_BUTTON_RIGHT || arrowDownBtn->GetState() == STATE_CLICKED)
 	{
-		if(browser.pageIndex + selectedItem + GAMELISTNUM < browser.numEntries)
+		if(browser.pageIndex + selectedItem + PAGESIZE < browser.numEntries)
 		{
-			browser.pageIndex += GAMELISTNUM;
+			browser.pageIndex += PAGESIZE;
 			listChanged = true;
 		}
 		arrowDownBtn->ResetState();
@@ -212,9 +211,9 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	else if(t->wpad.btns_d & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT)
 		|| t->pad.btns_d & PAD_BUTTON_LEFT || arrowUpBtn->GetState() == STATE_CLICKED)
 	{
-		if(browser.pageIndex + selectedItem - GAMELISTNUM > 0)
+		if(browser.pageIndex + selectedItem - PAGESIZE > 0)
 		{
-			browser.pageIndex -= GAMELISTNUM;
+			browser.pageIndex -= PAGESIZE;
 			listChanged = true;
 		}
 		arrowUpBtn->ResetState();
@@ -224,7 +223,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	{
 		if(browser.pageIndex + selectedItem + 1 < browser.numEntries)
 		{
-			if(selectedItem == GAMELISTNUM-1)
+			if(selectedItem == PAGESIZE-1)
 			{
 				// move list down by 1
 				browser.pageIndex++;
@@ -255,7 +254,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 
 	endNavigation:
 
-	for(int i=0; i<GAMELISTNUM; i++)
+	for(int i=0; i<PAGESIZE; i++)
 	{
 		if(listChanged)
 		{

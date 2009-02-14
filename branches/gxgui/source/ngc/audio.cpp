@@ -31,7 +31,6 @@
 #include "controls.h"
 
 #include "video.h"
-#include "menudraw.h"
 
 extern int ConfigRequested;
 

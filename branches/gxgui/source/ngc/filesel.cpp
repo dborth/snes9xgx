@@ -29,9 +29,10 @@ extern "C" {
 #include "snes9x.h"
 #include "memmap.h"
 
+#include "filesel.h"
 #include "snes9xGX.h"
 #include "dvd.h"
-#include "menudraw.h"
+#include "menu.h"
 #include "video.h"
 #include "aram.h"
 #include "networkop.h"
@@ -73,10 +74,11 @@ int autoLoadMethod()
 	else if(ChangeInterface(METHOD_SMB, SILENT))
 		method = METHOD_SMB;
 	else
-		WaitPrompt("Unable to auto-determine load method!");
+		ErrorPrompt("Unable to auto-determine load method!");
 
 	if(GCSettings.LoadMethod == METHOD_AUTO)
 		GCSettings.LoadMethod = method; // save method found for later use
+	CancelAction();
 	return method;
 }
 
@@ -103,10 +105,12 @@ int autoSaveMethod(bool silent)
 	else if(ChangeInterface(METHOD_SMB, SILENT))
 		method = METHOD_SMB;
 	else if(!silent)
-		WaitPrompt("Unable to auto-determine save method!");
+		ErrorPrompt("Unable to auto-determine save method!");
 
 	if(GCSettings.SaveMethod == METHOD_AUTO)
 		GCSettings.SaveMethod = method; // save method found for later use
+
+	CancelAction();
 	return method;
 }
 
@@ -178,7 +182,7 @@ int UpdateDirName(int method)
 		}
 		else
 		{
-			WaitPrompt("Directory name is too long!");
+			ErrorPrompt("Directory name is too long!");
 			return -1;
 		}
 	}
@@ -195,7 +199,7 @@ bool MakeFilePath(char filepath[], int type, int method)
 		// Check path length
 		if ((strlen(browser.dir)+1+strlen(browserList[browser.selIndex].filename)) >= MAXPATHLEN)
 		{
-			WaitPrompt("Maximum filepath length reached!");
+			ErrorPrompt("Maximum filepath length reached!");
 			filepath[0] = 0;
 			return false;
 		}
@@ -287,7 +291,7 @@ bool IsValidROM(int method)
 	if(browserList[browser.selIndex].length < (1024*96) ||
 		browserList[browser.selIndex].length > (1024*1024*8))
 	{
-		WaitPrompt("Invalid file size!");
+		ErrorPrompt("Invalid file size!");
 		return false;
 	}
 
@@ -322,7 +326,7 @@ bool IsValidROM(int method)
 			}
 		}
 	}
-	WaitPrompt("Unknown file type!");
+	ErrorPrompt("Unknown file type!");
 	return false;
 }
 
@@ -365,13 +369,15 @@ int BrowserLoadFile(int method)
 {
 	char filepath[1024];
 	int loaded = 0;
+	
+	ShowAction ("Loading...");
 
 	// 7z file - let's open it up to select a file inside
 	if(IsSz())
 	{
 		// we'll store the 7z filepath for extraction later
 		if(!MakeFilePath(szpath, FILE_ROM, method))
-			return 0;
+			goto done;
 
 		// add device to filepath
 		sprintf(filepath, "%s%s", rootdir, szpath);
@@ -385,25 +391,23 @@ int BrowserLoadFile(int method)
 			loaded = 1;
 		}
 		else
-			WaitPrompt("Error opening archive!");
+			ErrorPrompt("Error opening archive!");
 	}
 	else
 	{
 		// check that this is a valid ROM
 		if(!IsValidROM(method))
-			return 0;
+			goto done;
 
 		// store the filename (w/o ext) - used for sram/freeze naming
 		StripExt(Memory.ROMFilename, browserList[browser.selIndex].filename);
-
-		ShowAction ("Loading...");
 
 		SNESROMSize = 0;
 
 		if(!inSz)
 		{
 			if(!MakeFilePath(filepath, FILE_ROM, method))
-				return 0;
+				goto done;
 
 			SNESROMSize = LoadFile ((char *)Memory.ROM, filepath, browserList[browser.selIndex].length, method, NOTSILENT);
 		}
@@ -422,7 +426,7 @@ int BrowserLoadFile(int method)
 		inSz = false;
 
 		if (SNESROMSize <= 0)
-			WaitPrompt("Error loading ROM!");
+			ErrorPrompt("Error loading ROM!");
 		else
 		{
 			// load UPS/IPS/PPF patch
@@ -443,6 +447,8 @@ int BrowserLoadFile(int method)
 			loaded = 1;
 		}
 	}
+done:
+	CancelAction();
 	return loaded;
 }
 
@@ -477,7 +483,7 @@ int BrowserChangeFolder(int method)
 
 		if (!browser.numEntries)
 		{
-			WaitPrompt ("Error reading directory!");
+			ErrorPrompt("Error reading directory!");
 		}
 	}
 	return status;

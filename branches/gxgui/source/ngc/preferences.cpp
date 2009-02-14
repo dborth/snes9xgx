@@ -16,7 +16,7 @@
 
 #include "snes9xGX.h"
 #include "images/saveicon.h"
-#include "menudraw.h"
+#include "menu.h"
 #include "memcardop.h"
 #include "fileop.h"
 #include "filesel.h"
@@ -363,11 +363,13 @@ SavePrefs (bool silent)
 	offset = SaveFile(filepath, datasize, method, silent);
 
 	FreeSaveBuffer ();
+	
+	CancelAction();
 
 	if (offset > 0)
 	{
 		if (!silent)
-			WaitPrompt ("Preferences saved");
+			InfoPrompt("Preferences saved");
 		return true;
 	}
 	return false;
@@ -416,6 +418,6 @@ bool LoadPrefs()
 		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTB);
 	if(!prefFound && ChangeInterface(METHOD_SMB, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_SMB);
-
+	CancelAction();
 	return prefFound;
 }

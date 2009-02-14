@@ -21,8 +21,9 @@
 
 #include "snes9xGX.h"
 #include "images/saveicon.h"
-#include "menudraw.h"
+#include "menu.h"
 #include "fileop.h"
+#include "filesel.h"
 #include "input.h"
 
 /****************************************************************************
@@ -129,7 +130,7 @@ decodesavedata (int method, int readsize)
 	}
 	else
 	{
-		WaitPrompt("Incompatible SRAM save!");
+		ErrorPrompt("Incompatible SRAM save!");
 	}
 }
 
@@ -153,6 +154,8 @@ LoadSRAM (int method, bool silent)
 	AllocSaveBuffer();
 
 	offset = LoadFile(filepath, method, silent);
+	
+	CancelAction();
 
 	if (offset > 0)
 	{
@@ -167,7 +170,7 @@ LoadSRAM (int method, bool silent)
 
 		// if we reached here, nothing was done!
 		if(!silent)
-			WaitPrompt ("SRAM file not found");
+			ErrorPrompt("SRAM file not found");
 
 		return false;
 	}
@@ -203,16 +206,17 @@ SaveSRAM (int method, bool silent)
 		if (offset > 0)
 		{
 			if ( !silent )
-				WaitPrompt("Save successful");
+				InfoPrompt("Save successful");
 			retval = true;
 		}
 	}
 	else
 	{
 		if(!silent)
-			WaitPrompt("No SRAM data to save!");
+			ErrorPrompt("No SRAM data to save!");
 	}
 
 	FreeSaveBuffer ();
+	CancelAction();
 	return retval;
 }

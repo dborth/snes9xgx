@@ -24,7 +24,7 @@
 #include "snes9xGX.h"
 #include "memmap.h"
 
-#include "menudraw.h"
+#include "menu.h"
 
 #define NUMBITS (16)
 
@@ -96,7 +96,7 @@ int GetFilterScale(RenderFilter filterID)
 void
 SelectFilterMethod ()
 {
-	//WaitPrompt ((char*)"Select Filter Method.");	// debug
+	//InfoPrompt((char*)"Select Filter Method.");	// debug
 
 	FilterMethod = FilterToMethod((RenderFilter)GCSettings.FilterMethod);
 	//FilterMethodHiRes = FilterToMethod((RenderFilter)GCSettings.FilterMethodHiRes);
@@ -114,7 +114,7 @@ RenderPlain (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int
 {
 	if (dstPtr == NULL)
 	{
-		WaitPrompt((char*)"dstPtr is NULL. exiting!");
+		ErrorPrompt((char*)"dstPtr is NULL. exiting!");
 		exit(1);
 	}
 	//memcpy (dstPtr, srcPtr, width*height*srcPitch);

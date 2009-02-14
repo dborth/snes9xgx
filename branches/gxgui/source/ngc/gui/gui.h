@@ -37,7 +37,7 @@ typedef struct _paddata {
 	u8 triggerR;
 } PADData;
 
-#define GAMELISTNUM 7
+#define PAGESIZE 8
 
 extern int rumbleRequest[4];
 
@@ -259,18 +259,18 @@ class GuiFileBrowser : public GuiElement
 		GuiFileBrowser(int w, int h);
 		~GuiFileBrowser();
 		void ResetState();
-		void SetState(int s);
+		void SetFocus(int f);
 		void Draw();
 		void TriggerUpdate();
 		void Update(GuiTrigger * t);
-		GuiButton * gameList[GAMELISTNUM];
+		GuiButton * gameList[PAGESIZE];
 	protected:
 		int selectedItem;
 		bool listChanged;
 
-		GuiText * gameListText[GAMELISTNUM];
-		GuiImage * gameListBg[GAMELISTNUM];
-		GuiImage * gameListFolder[GAMELISTNUM];
+		GuiText * gameListText[PAGESIZE];
+		GuiImage * gameListBg[PAGESIZE];
+		GuiImage * gameListFolder[PAGESIZE];
 
 		GuiButton * arrowUpBtn;
 		GuiButton * arrowDownBtn;

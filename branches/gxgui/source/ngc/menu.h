@@ -14,8 +14,15 @@
 #ifndef _NGCMENU_
 #define _NGCMENU_
 
-void InitGUIThread();
+#include <ogcsys.h>
+
+void InitGUIThreads();
 void MainMenu (int menuitem);
+void ErrorPrompt(const char * msg);
+void InfoPrompt(const char * msg);
+void ShowAction (const char *msg);
+void CancelAction();
+void ShowProgress (const char *msg, int done, int total);
 void ShutoffRumble();
 
 extern lwp_t guithread;

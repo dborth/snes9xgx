@@ -32,7 +32,8 @@
 #include "images/saveicon.h"
 #include "freeze.h"
 #include "fileop.h"
-#include "menudraw.h"
+#include "filesel.h"
+#include "menu.h"
 
 extern void S9xSRTCPreSaveState ();
 extern void NGCFreezeStruct ();
@@ -131,8 +132,8 @@ NGCFreezeGame (int method, bool silent)
 		method = autoSaveMethod(silent);
 
 	if(!MakeFilePath(filepath, FILE_SNAPSHOT, method))
-		return 0;
-
+		goto done;
+	
 	S9xSetSoundMute (TRUE);
 	S9xPrepareSoundForSnapshotSave (FALSE);
 
@@ -165,8 +166,8 @@ NGCFreezeGame (int method, bool silent)
 		if(err!=Z_OK)
 		{
 			sprintf (msg, "zip error %s ",zError(err));
-			WaitPrompt (msg);
-			return 0;
+			ErrorPrompt(msg);
+			goto done;
 		}
 
 		int zippedsize = (int)DestBuffSize;
@@ -181,13 +182,16 @@ NGCFreezeGame (int method, bool silent)
 	}
 
 	offset = SaveFile(filepath, woffset, method, silent);
+	
+done:
 
 	FreeSaveBuffer ();
+	CancelAction();
 
 	if(offset > 0) // save successful!
 	{
 		if(!silent)
-			WaitPrompt("Save successful");
+			InfoPrompt("Save successful");
 		return 1;
 	}
     return 0;
@@ -250,7 +254,10 @@ NGCUnfreezeGame (int method, bool silent)
 		method = autoSaveMethod(silent); // we use 'Save' because snapshot needs R/W
 
     if(!MakeFilePath(filepath, FILE_SNAPSHOT, method))
-        return 0;
+	{
+		CancelAction();
+		return 0;
+	}
 
     AllocSaveBuffer ();
 
@@ -280,11 +287,11 @@ NGCUnfreezeGame (int method, bool silent)
 			if ( err!=Z_OK )
 			{
 				sprintf (msg, "Unzip error %s ",zError(err));
-				WaitPrompt (msg);
+				ErrorPrompt(msg);
 			}
 			else if ( DestBuffSize != decompressedsize )
 			{
-				WaitPrompt("Unzipped size doesn't match expected size!");
+				ErrorPrompt("Unzipped size doesn't match expected size!");
 			}
 			else
 			{
@@ -300,13 +307,14 @@ NGCUnfreezeGame (int method, bool silent)
 		if (S9xUnfreezeGame ("AGAME") == SUCCESS)
 			result = 1;
 		else
-			WaitPrompt("Error thawing");
+			ErrorPrompt("Error thawing");
 	}
 	else
 	{
 		if(!silent)
-			WaitPrompt("Freeze file not found");
+			ErrorPrompt("Freeze file not found");
 	}
 	FreeSaveBuffer ();
+	CancelAction();
 	return result;
 }

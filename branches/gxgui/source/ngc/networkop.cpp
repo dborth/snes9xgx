@@ -16,7 +16,7 @@
 #include "miniunz.h"
 
 #include "snes9xGX.h"
-#include "menudraw.h"
+#include "menu.h"
 #include "fileop.h"
 #include "http.h"
 
@@ -135,12 +135,12 @@ bool DownloadUpdate()
 		if(unzipResult)
 		{
 			result = true;
-			WaitPrompt("Update successful!");
+			InfoPrompt("Update successful!");
 		}
 		else
 		{
 			result = false;
-			WaitPrompt("Update failed!");
+			ErrorPrompt("Update failed!");
 		}
 
 		updateFound = false; // updating is finished (successful or not!)
@@ -182,9 +182,10 @@ void InitializeNetwork(bool silent)
 		{
 			char msg[150];
 			sprintf(msg, "Unable to initialize network (Error #: %i)", initResult);
-			WaitPrompt(msg);
+			ErrorPrompt(msg);
 		}
 	}
+	CancelAction();
 }
 
 void CloseShare()
@@ -231,7 +232,7 @@ ConnectShare (bool silent)
 				sprintf(msg, "Share IP is blank.");
 
 			sprintf(msg2, "Invalid network settings - %s", msg);
-			WaitPrompt(msg2);
+			ErrorPrompt(msg2);
 		}
 		return false;
 	}
@@ -254,10 +255,11 @@ ConnectShare (bool silent)
 			{
 				networkShareInit = true;
 			}
+			CancelAction();
 		}
 
 		if(!networkShareInit && !silent)
-			WaitPrompt ("Failed to connect to network share.");
+			ErrorPrompt("Failed to connect to network share.");
 	}
 
 	return networkShareInit;

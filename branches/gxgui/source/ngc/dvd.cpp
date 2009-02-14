@@ -23,7 +23,7 @@ extern "C" {
 }
 #endif
 
-#include "menudraw.h"
+#include "menu.h"
 #include "gcunzip.h"
 #include "filesel.h"
 #include "snes9xGX.h"
@@ -323,7 +323,13 @@ getpvd ()
 
 bool MountDVD(bool silent)
 {
-	if (!getpvd())
+	bool res = false;
+	
+	if (getpvd())
+	{
+		return true;
+	}
+	else
 	{
 		ShowAction("Loading DVD...");
 		#ifdef HW_DOL
@@ -334,21 +340,22 @@ bool MountDVD(bool silent)
 		if(val & 0x1)	// True if no disc inside, use (val & 0x2) for true if disc inside.
 		{
 			if(!silent)
-				WaitPrompt("No disc inserted!");
-			return false;
+				ErrorPrompt("No disc inserted!");
+			goto done;
 		}
+		
 		DI_Mount();
 		while(DI_GetStatus() & DVD_INIT);
 		#endif
 
-		if (!getpvd())
-		{
-			if(!silent)
-				WaitPrompt ("Invalid DVD.");
-			return false;
-		}
+		if (getpvd())
+			res = true;
+		else if(!silent)
+			ErrorPrompt("Invalid DVD.");
 	}
-	return true;
+done:
+	CancelAction();
+	return res;
 }
 
 /****************************************************************************
@@ -447,7 +454,7 @@ getentry (int entrycount, unsigned char dvdbuffer[])
 			if(!newBrowserList) // failed to allocate required memory
 			{
 				ResetBrowser();
-				WaitPrompt("Out of memory: too many files!");
+				ErrorPrompt("Out of memory: too many files!");
 				return 0;
 			}
 			else
@@ -628,6 +635,7 @@ bool SwitchDVDFolder(char origdir[])
 int
 LoadDVDFileOffset (unsigned char *buffer, int length)
 {
+	int result = 0;
 	int offset;
 	int blocks;
 	int i;
@@ -645,17 +653,19 @@ LoadDVDFileOffset (unsigned char *buffer, int length)
 	{
 		ret = dvd_read (buffer, length, discoffset);
 		if(ret <= 0) // read failure
-			return 0;
+			goto done;
+		else
+			result = length;
 	}
 	else // load whole file
 	{
 		ret = dvd_read (readbuffer, 2048, discoffset);
 		if(ret <= 0) // read failure
-			return 0;
+			goto done;
 
 		if (IsZipFile (readbuffer))
 		{
-			return UnZipBuffer (buffer, METHOD_DVD); // unzip from dvd
+			result = UnZipBuffer (buffer, METHOD_DVD); // unzip from dvd
 		}
 		else
 		{
@@ -663,7 +673,7 @@ LoadDVDFileOffset (unsigned char *buffer, int length)
 			{
 				ret = dvd_read (readbuffer, 2048, discoffset);
 				if(ret <= 0) // read failure
-					return 0;
+					goto done;
 				memcpy (buffer + offset, readbuffer, 2048);
 				offset += 2048;
 				discoffset += 2048;
@@ -676,12 +686,15 @@ LoadDVDFileOffset (unsigned char *buffer, int length)
 				i = dvddirlength % 2048;
 				ret = dvd_read (readbuffer, 2048, discoffset);
 				if(ret <= 0) // read failure
-					return 0;
+					goto done;
 				memcpy (buffer + offset, readbuffer, i);
 			}
+			result = dvddirlength;
 		}
 	}
-	return dvddirlength;
+done:
+	CancelAction();
+	return result;
 }
 
 /****************************************************************************
@@ -701,7 +714,7 @@ LoadDVDFile(char * buffer, char *filepath, int datasize, bool silent)
 	else
 	{
 		if(!silent)
-			WaitPrompt("Error loading file!");
+			ErrorPrompt("Error loading file!");
 		return 0;
 	}
 }

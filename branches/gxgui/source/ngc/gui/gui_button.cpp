@@ -116,6 +116,8 @@ void GuiButton::Update(GuiTrigger * t)
 {
 	if(state == STATE_CLICKED || state == STATE_DISABLED || !t)
 		return;
+	else if(parentElement && parentElement->GetState() == STATE_DISABLED)
+		return;
 
 	// cursor
 	if(t->wpad.ir.valid)
