@@ -472,7 +472,7 @@ int MenuGameSelection()
 	OpenGameList(method);
 
 	GuiFileBrowser gameBrowser(424, 248);
-	gameBrowser.SetPosition(50, 106);
+	gameBrowser.SetPosition(50, 108);
 
 	guiReady = false;
 	mainWindow->Append(&titleTxt);
@@ -916,7 +916,115 @@ int MenuSettingsMappings()
 
 int MenuSettingsVideo()
 {
-	return MENU_EXIT;
+	int menu = MENU_NONE;
+	int ret;
+	int i = 0;
+	OptionList options;
+
+	sprintf(options.name[i++], "Rendering");
+	sprintf(options.name[i++], "Scaling");
+	sprintf(options.name[i++], "Filtering");
+	sprintf(options.name[i++], "Zoom");
+	sprintf(options.name[i++], "Shift");
+	options.length = i;
+
+	GuiText titleTxt("Settings - Video", 22, (GXColor){255, 255, 255, 0xff});
+	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	titleTxt.SetPosition(50,50);
+
+	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(100, -35);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetTrigger(&trigA);
+
+	GuiOptionBrowser optionBrowser(552, 248, &options);
+	optionBrowser.SetPosition(0, 108);
+	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+
+	guiReady = false;
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&backBtn);
+	mainWindow->Append(&optionBrowser);
+	mainWindow->Append(&w);
+	mainWindow->Append(&titleTxt);
+	guiReady = true;
+
+	while(menu == MENU_NONE)
+	{
+		VIDEO_WaitVSync ();
+
+		// don't allow original render mode if progressive video mode detected
+		if (GCSettings.render==0 && progressive)
+			GCSettings.render++;
+
+		if (GCSettings.render == 0)
+			sprintf (options.value[0], "Original");
+		else if (GCSettings.render == 1)
+			sprintf (options.value[0], "Filtered");
+		else if (GCSettings.render == 2)
+			sprintf (options.value[0], "Unfiltered");
+
+		if(GCSettings.widescreen)
+			sprintf (options.value[1], "16:9 Correction");
+		else
+			sprintf (options.value[1], "Default");
+
+		sprintf (options.value[2], "%s", GetFilterName((RenderFilter)GCSettings.FilterMethod));
+
+		sprintf (options.value[4], "%d, %d", GCSettings.xshift, GCSettings.yshift);
+
+		ret = optionBrowser.GetClickedOption();
+
+		switch (ret)
+		{
+			case 0:
+				GCSettings.render++;
+				if (GCSettings.render > 2 || GCSettings.FilterMethod != FILTER_NONE)
+					GCSettings.render = 0;
+				break;
+
+			case 1:
+				GCSettings.widescreen ^= 1;
+				break;
+
+			case 2:
+				GCSettings.FilterMethod++;
+				if (GCSettings.FilterMethod >= NUM_FILTERS)
+					GCSettings.FilterMethod = 0;
+				SelectFilterMethod();
+				break;
+
+			case 3:
+				break;
+
+			case 4:
+				break;
+		}
+
+		if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS;
+		}
+	}
+	guiReady = false;
+	mainWindow->Remove(&optionBrowser);
+	mainWindow->Remove(&w);
+	mainWindow->Remove(&titleTxt);
+	return menu;
 }
 
 /****************************************************************************
@@ -925,7 +1033,169 @@ int MenuSettingsVideo()
 
 int MenuSettingsFile()
 {
-	return MENU_EXIT;
+	int menu = MENU_NONE;
+	int ret;
+	int i = 0;
+	OptionList options;
+	sprintf(options.name[i++], "Load Method");
+	sprintf(options.name[i++], "Load Folder");
+	sprintf(options.name[i++], "Save Method");
+	sprintf(options.name[i++], "Save Folder");
+	sprintf(options.name[i++], "Auto Load");
+	sprintf(options.name[i++], "Auto Save");
+	sprintf(options.name[i++], "Verify MC Saves");
+	options.length = i;
+
+	GuiText titleTxt("Settings - Saving/Loading", 22, (GXColor){255, 255, 255, 0xff});
+	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	titleTxt.SetPosition(50,50);
+
+	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(100, -35);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetTrigger(&trigA);
+
+	GuiOptionBrowser optionBrowser(552, 248, &options);
+	optionBrowser.SetPosition(0, 108);
+	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+
+	guiReady = false;
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&backBtn);
+	mainWindow->Append(&optionBrowser);
+	mainWindow->Append(&w);
+	mainWindow->Append(&titleTxt);
+	guiReady = true;
+
+	while(menu == MENU_NONE)
+	{
+		VIDEO_WaitVSync ();
+
+		// some load/save methods are not implemented - here's where we skip them
+		// they need to be skipped in the order they were enumerated in snes9xGX.h
+
+		// no USB ports on GameCube
+		#ifdef HW_DOL
+		if(GCSettings.LoadMethod == METHOD_USB)
+			GCSettings.LoadMethod++;
+		if(GCSettings.SaveMethod == METHOD_USB)
+			GCSettings.SaveMethod++;
+		#endif
+
+		// saving to DVD is impossible
+		if(GCSettings.SaveMethod == METHOD_DVD)
+			GCSettings.SaveMethod++;
+
+		// disable SMB in GC mode (stalls out)
+		#ifdef HW_DOL
+		if(GCSettings.LoadMethod == METHOD_SMB)
+			GCSettings.LoadMethod++;
+		if(GCSettings.SaveMethod == METHOD_SMB)
+			GCSettings.SaveMethod++;
+		#endif
+
+		// disable MC saving in Wii mode - does not work for some reason!
+		#ifdef HW_RVL
+		if(GCSettings.SaveMethod == METHOD_MC_SLOTA)
+			GCSettings.SaveMethod++;
+		if(GCSettings.SaveMethod == METHOD_MC_SLOTB)
+			GCSettings.SaveMethod++;
+		options.name[6][0] = 0;
+		#endif
+
+		// correct load/save methods out of bounds
+		if(GCSettings.LoadMethod > 4)
+			GCSettings.LoadMethod = 0;
+		if(GCSettings.SaveMethod > 6)
+			GCSettings.SaveMethod = 0;
+
+		if (GCSettings.LoadMethod == METHOD_AUTO) sprintf (options.value[0],"Auto");
+		else if (GCSettings.LoadMethod == METHOD_SD) sprintf (options.value[0],"SD");
+		else if (GCSettings.LoadMethod == METHOD_USB) sprintf (options.value[0],"USB");
+		else if (GCSettings.LoadMethod == METHOD_DVD) sprintf (options.value[0],"DVD");
+		else if (GCSettings.LoadMethod == METHOD_SMB) sprintf (options.value[0],"Network");
+
+		sprintf (options.value[1], "%s", GCSettings.LoadFolder);
+
+		if (GCSettings.SaveMethod == METHOD_AUTO) sprintf (options.value[2],"Auto");
+		else if (GCSettings.SaveMethod == METHOD_SD) sprintf (options.value[2],"SD");
+		else if (GCSettings.SaveMethod == METHOD_USB) sprintf (options.value[2],"USB");
+		else if (GCSettings.SaveMethod == METHOD_SMB) sprintf (options.value[2],"Network");
+		else if (GCSettings.SaveMethod == METHOD_MC_SLOTA) sprintf (options.value[2],"MC Slot A");
+		else if (GCSettings.SaveMethod == METHOD_MC_SLOTB) sprintf (options.value[2],"MC Slot B");
+
+		sprintf (options.value[3], "%s", GCSettings.SaveFolder);
+
+		if (GCSettings.AutoLoad == 0) sprintf (options.value[4],"Off");
+		else if (GCSettings.AutoLoad == 1) sprintf (options.value[4],"SRAM");
+		else if (GCSettings.AutoLoad == 2) sprintf (options.value[4],"Snapshot");
+
+		if (GCSettings.AutoSave == 0) sprintf (options.value[5],"Off");
+		else if (GCSettings.AutoSave == 1) sprintf (options.value[5],"SRAM");
+		else if (GCSettings.AutoSave == 2) sprintf (options.value[5],"Snapshot");
+		else if (GCSettings.AutoSave == 3) sprintf (options.value[5],"Both");
+
+		sprintf (options.value[6], "%s", GCSettings.VerifySaves == true ? "On" : "Off");
+
+		ret = optionBrowser.GetClickedOption();
+
+		switch (ret)
+		{
+			case 0:
+				GCSettings.LoadMethod ++;
+				break;
+
+			case 1:
+				break;
+
+			case 2:
+				GCSettings.SaveMethod ++;
+				break;
+
+			case 3:
+				break;
+
+			case 4:
+				GCSettings.AutoLoad ++;
+				if (GCSettings.AutoLoad > 2)
+					GCSettings.AutoLoad = 0;
+				break;
+
+			case 5:
+				GCSettings.AutoSave ++;
+				if (GCSettings.AutoSave > 3)
+					GCSettings.AutoSave = 0;
+				break;
+
+			case 6:
+				GCSettings.VerifySaves ^= 1;
+				break;
+		}
+
+		if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS;
+		}
+	}
+	guiReady = false;
+	mainWindow->Remove(&optionBrowser);
+	mainWindow->Remove(&w);
+	mainWindow->Remove(&titleTxt);
+	return menu;
 }
 
 /****************************************************************************
@@ -943,7 +1213,87 @@ int MenuSettingsMenu()
 
 int MenuSettingsNetwork()
 {
-	return MENU_EXIT;
+	int menu = MENU_NONE;
+	int ret;
+	int i = 0;
+	OptionList options;
+	sprintf(options.name[i++], "SMB Share IP");
+	sprintf(options.name[i++], "SMB Share Name");
+	sprintf(options.name[i++], "SMB Share Username");
+	sprintf(options.name[i++], "SMB Share Password");
+	options.length = i;
+
+	GuiText titleTxt("Settings - Network", 22, (GXColor){255, 255, 255, 0xff});
+	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	titleTxt.SetPosition(50,50);
+
+	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(100, -35);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetTrigger(&trigA);
+
+	GuiOptionBrowser optionBrowser(552, 248, &options);
+	optionBrowser.SetPosition(0, 108);
+	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+
+	guiReady = false;
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&backBtn);
+	mainWindow->Append(&optionBrowser);
+	mainWindow->Append(&w);
+	mainWindow->Append(&titleTxt);
+	guiReady = true;
+
+	while(menu == MENU_NONE)
+	{
+		VIDEO_WaitVSync ();
+
+		strncpy (options.value[0], GCSettings.smbip, 15);
+		strncpy (options.value[1], GCSettings.smbshare, 19);
+		strncpy (options.value[2], GCSettings.smbuser, 19);
+		strncpy (options.value[3], GCSettings.smbpwd, 19);
+
+		ret = optionBrowser.GetClickedOption();
+
+		switch (ret)
+		{
+			case 0:
+				break;
+
+			case 1:
+				break;
+
+			case 2:
+				break;
+
+			case 3:
+				break;
+		}
+
+		if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS;
+		}
+	}
+	guiReady = false;
+	mainWindow->Remove(&optionBrowser);
+	mainWindow->Remove(&w);
+	mainWindow->Remove(&titleTxt);
+	return menu;
 }
 
 /****************************************************************************
@@ -1340,257 +1690,6 @@ GameMenu ()
 	return retval;
 }
 */
-/****************************************************************************
- * File Options Menu
- ***************************************************************************/
-static int filemenuCount = 8;
-static char filemenu[][50] = {
-	"Load Method",
-	"Load Folder",
-	"Save Method",
-	"Save Folder",
-
-	"Auto Load",
-	"Auto Save",
-	"Verify MC Saves",
-
-	"Back to Preferences Menu"
-};
-
-void
-FileOptions ()
-{
-	int ret = 0;
-	int quit = 0;
-	int oldmenu = 0;
-	while (quit == 0)
-	{
-		// some load/save methods are not implemented - here's where we skip them
-		// they need to be skipped in the order they were enumerated in snes9xGX.h
-
-		// no USB ports on GameCube
-		#ifndef HW_RVL
-		if(GCSettings.LoadMethod == METHOD_USB)
-			GCSettings.LoadMethod++;
-		if(GCSettings.SaveMethod == METHOD_USB)
-			GCSettings.SaveMethod++;
-		#endif
-
-		// saving to DVD is impossible
-		if(GCSettings.SaveMethod == METHOD_DVD)
-			GCSettings.SaveMethod++;
-
-		// disable SMB in GC mode (stalls out)
-		#ifndef HW_RVL
-		if(GCSettings.LoadMethod == METHOD_SMB)
-			GCSettings.LoadMethod++;
-		if(GCSettings.SaveMethod == METHOD_SMB)
-			GCSettings.SaveMethod++;
-		#endif
-
-		// disable MC saving in Wii mode - does not work for some reason!
-		#ifdef HW_RVL
-		if(GCSettings.SaveMethod == METHOD_MC_SLOTA)
-			GCSettings.SaveMethod++;
-		if(GCSettings.SaveMethod == METHOD_MC_SLOTB)
-			GCSettings.SaveMethod++;
-		filemenu[6][0] = 0;
-		#else
-		sprintf (filemenu[6], "Verify MC Saves %s", GCSettings.VerifySaves == true ? " ON" : "OFF");
-		#endif
-
-		// correct load/save methods out of bounds
-		if(GCSettings.LoadMethod > 4)
-			GCSettings.LoadMethod = 0;
-		if(GCSettings.SaveMethod > 6)
-			GCSettings.SaveMethod = 0;
-
-		if (GCSettings.LoadMethod == METHOD_AUTO) sprintf (filemenu[0],"Load Method AUTO");
-		else if (GCSettings.LoadMethod == METHOD_SD) sprintf (filemenu[0],"Load Method SD");
-		else if (GCSettings.LoadMethod == METHOD_USB) sprintf (filemenu[0],"Load Method USB");
-		else if (GCSettings.LoadMethod == METHOD_DVD) sprintf (filemenu[0],"Load Method DVD");
-		else if (GCSettings.LoadMethod == METHOD_SMB) sprintf (filemenu[0],"Load Method Network");
-
-		sprintf (filemenu[1], "Load Folder %s",	GCSettings.LoadFolder);
-
-		if (GCSettings.SaveMethod == METHOD_AUTO) sprintf (filemenu[2],"Save Method AUTO");
-		else if (GCSettings.SaveMethod == METHOD_SD) sprintf (filemenu[2],"Save Method SD");
-		else if (GCSettings.SaveMethod == METHOD_USB) sprintf (filemenu[2],"Save Method USB");
-		else if (GCSettings.SaveMethod == METHOD_SMB) sprintf (filemenu[2],"Save Method Network");
-		else if (GCSettings.SaveMethod == METHOD_MC_SLOTA) sprintf (filemenu[2],"Save Method MC Slot A");
-		else if (GCSettings.SaveMethod == METHOD_MC_SLOTB) sprintf (filemenu[2],"Save Method MC Slot B");
-
-		sprintf (filemenu[3], "Save Folder %s",	GCSettings.SaveFolder);
-
-		// disable changing load/save directories for now
-		filemenu[1][0] = '\0';
-		filemenu[3][0] = '\0';
-
-		if (GCSettings.AutoLoad == 0) sprintf (filemenu[4],"Auto Load OFF");
-		else if (GCSettings.AutoLoad == 1) sprintf (filemenu[4],"Auto Load SRAM");
-		else if (GCSettings.AutoLoad == 2) sprintf (filemenu[4],"Auto Load SNAPSHOT");
-
-		if (GCSettings.AutoSave == 0) sprintf (filemenu[5],"Auto Save OFF");
-		else if (GCSettings.AutoSave == 1) sprintf (filemenu[5],"Auto Save SRAM");
-		else if (GCSettings.AutoSave == 2) sprintf (filemenu[5],"Auto Save SNAPSHOT");
-		else if (GCSettings.AutoSave == 3) sprintf (filemenu[5],"Auto Save BOTH");
-
-//		ret = RunMenu (filemenu, filemenuCount, "Save/Load Options");
-
-		switch (ret)
-		{
-			case 0:
-				GCSettings.LoadMethod ++;
-				break;
-
-			case 1:
-				break;
-
-			case 2:
-				GCSettings.SaveMethod ++;
-				break;
-
-			case 3:
-				break;
-
-			case 4:
-				GCSettings.AutoLoad ++;
-				if (GCSettings.AutoLoad > 2)
-					GCSettings.AutoLoad = 0;
-				break;
-
-			case 5:
-				GCSettings.AutoSave ++;
-				if (GCSettings.AutoSave > 3)
-					GCSettings.AutoSave = 0;
-				break;
-
-			case 6:
-				GCSettings.VerifySaves ^= 1;
-				break;
-			case -1: /*** Button B ***/
-			case 7:
-				quit = 1;
-				break;
-
-		}
-	}
-	menu = oldmenu;
-}
-
-/****************************************************************************
- * Video Options
- ***************************************************************************/
-static int videomenuCount = 11;
-static char videomenu[][50] = {
-
-	"Enable Zooming",
-	"Video Rendering",
-	"Video Scaling",
-	"Video Filtering",
-
-	"Shift Video Up",
-	"Shift Video Down",
-	"Shift Video Left",
-	"Shift Video Right",
-
-	"Video Shift:       ",
-	"Reset Video Shift",
-
-	"Back to Preferences Menu"
-};
-
-void
-VideoOptions ()
-{
-	int ret = 0;
-	int quit = 0;
-	int oldmenu = 0;
-	while (quit == 0)
-	{
-		sprintf (videomenu[0], "Enable Zooming %s",
-			GCSettings.Zoom == true ? " ON" : "OFF");
-
-		// don't allow original render mode if progressive video mode detected
-		if (GCSettings.render==0 && progressive)
-			GCSettings.render++;
-
-		if ( GCSettings.render == 0 )
-			sprintf (videomenu[1], "Video Rendering Original");
-		if ( GCSettings.render == 1 )
-			sprintf (videomenu[1], "Video Rendering Filtered");
-		if ( GCSettings.render == 2 )
-			sprintf (videomenu[1], "Video Rendering Unfiltered");
-
-		sprintf (videomenu[2], "Video Scaling %s",
-			GCSettings.widescreen == true ? "16:9 Correction" : "Default");
-
-		sprintf (videomenu[3], "Video Filtering %s", GetFilterName((RenderFilter)GCSettings.FilterMethod));
-
-		sprintf (videomenu[8], "Video Shift: %d, %d", GCSettings.xshift, GCSettings.yshift);
-
-//		ret = RunMenu (videomenu, videomenuCount, "Video Options");
-
-		switch (ret)
-		{
-			case 0:
-				GCSettings.Zoom ^= 1;
-				break;
-
-			case 1:
-				GCSettings.render++;
-				if (GCSettings.render > 2 || GCSettings.FilterMethod != FILTER_NONE)
-					GCSettings.render = 0;
-				// reset zoom
-				zoom_reset ();
-				break;
-
-			case 2:
-				GCSettings.widescreen ^= 1;
-				break;
-
-			case 3:
-				GCSettings.FilterMethod++;
-				if (GCSettings.FilterMethod >= NUM_FILTERS)
-					GCSettings.FilterMethod = 0;
-				SelectFilterMethod();
-				break;
-
-			case 4:
-				// Move up
-				GCSettings.yshift--;
-				break;
-			case 5:
-				// Move down
-				GCSettings.yshift++;
-				break;
-			case 6:
-				// Move left
-				GCSettings.xshift--;
-				break;
-			case 7:
-				// Move right
-				GCSettings.xshift++;
-				break;
-
-			case 8:
-				break;
-
-			case 9:
-				// reset video shifts
-				GCSettings.xshift = GCSettings.yshift = 0;
-				InfoPrompt("Video Shift Reset");
-				break;
-
-			case -1: // Button B
-			case 10:
-				quit = 1;
-				break;
-
-		}
-	}
-	menu = oldmenu;
-}
 
 /****************************************************************************
  * Controller Configuration

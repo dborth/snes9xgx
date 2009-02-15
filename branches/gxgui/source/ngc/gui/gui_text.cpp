@@ -58,7 +58,7 @@ void GuiText::SetText(const char * t)
 {
 	if(text)
 		delete text;
-		
+
 	text = NULL;
 
 	if(t)
@@ -126,6 +126,9 @@ void GuiText::SetAlignment(int hor, int vert)
  */
 void GuiText::Draw()
 {
+	if(!text)
+		return;
+
 	if(!this->IsVisible())
 		return;
 

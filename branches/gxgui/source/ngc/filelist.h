@@ -46,6 +46,12 @@ extern const u32	throbber_png_size;
 extern const u8		folder_png[];
 extern const u32	folder_png_size;
 
+extern const u8		bg_options_png[];
+extern const u32	bg_options_png_size;
+
+extern const u8		bg_options_entry_png[];
+extern const u32	bg_options_entry_png_size;
+
 extern const u8		bg_game_selection_png[];
 extern const u32	bg_game_selection_png_size;
 

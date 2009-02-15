@@ -51,6 +51,9 @@ void GuiImage::SetAngle(float a)
  */
 void GuiImage::Draw()
 {
+	if(!image)
+		return;
+
 	if(!this->IsVisible())
 		return;
 

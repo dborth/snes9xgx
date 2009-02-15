@@ -37,6 +37,12 @@ typedef struct _paddata {
 	u8 triggerR;
 } PADData;
 
+typedef struct _optionlist {
+	int length;
+	char name[20][30];
+	char value[20][30];
+} OptionList;
+
 #define PAGESIZE 8
 
 extern int rumbleRequest[4];
@@ -238,6 +244,8 @@ class GuiButton : public GuiElement
 		void SetIconOver(GuiImage* i);
 		void SetLabel(GuiText* t);
 		void SetLabelOver(GuiText* t);
+		void SetLabel2(GuiText* t);
+		void SetLabel2Over(GuiText* t);
 		void SetSoundOver(GuiSound * s);
 		void SetSoundClick(GuiSound * s);
 		void Draw();
@@ -249,6 +257,8 @@ class GuiButton : public GuiElement
 		GuiImage * iconOver;
 		GuiText * label;
 		GuiText * labelOver;
+		GuiText * label2;
+		GuiText * label2Over;
 		GuiSound * soundOver;
 		GuiSound * soundClick;
 };
@@ -288,6 +298,54 @@ class GuiFileBrowser : public GuiElement
 		GuiImageData * bgGameSelection;
 		GuiImageData * bgGameSelectionEntry;
 		GuiImageData * gameFolder;
+		GuiImageData * scrollbar;
+		GuiImageData * arrowDown;
+		GuiImageData * arrowDownOver;
+		GuiImageData * arrowUp;
+		GuiImageData * arrowUpOver;
+		GuiImageData * scrollbarBox;
+		GuiImageData * scrollbarBoxOver;
+
+		GuiTrigger * trigA;
+};
+
+class GuiOptionBrowser : public GuiElement
+{
+	public:
+		GuiOptionBrowser(int w, int h, OptionList * l);
+		~GuiOptionBrowser();
+		int FindMenuItem(int c, int d);
+		int GetClickedOption();
+		void ResetState();
+		void SetFocus(int f);
+		void Draw();
+		void Update(GuiTrigger * t);
+		GuiText * optionVal[PAGESIZE];
+	protected:
+		int selectedItem;
+		int listOffset;
+
+		OptionList * options;
+		int optionIndex[PAGESIZE];
+		GuiButton * optionBtn[PAGESIZE];
+		GuiText * optionTxt[PAGESIZE];
+		GuiImage * optionBg[PAGESIZE];
+
+		GuiButton * arrowUpBtn;
+		GuiButton * arrowDownBtn;
+		GuiButton * scrollbarBoxBtn;
+
+		GuiImage * bgOptionsImg;
+		GuiImage * scrollbarImg;
+		GuiImage * arrowDownImg;
+		GuiImage * arrowDownOverImg;
+		GuiImage * arrowUpImg;
+		GuiImage * arrowUpOverImg;
+		GuiImage * scrollbarBoxImg;
+		GuiImage * scrollbarBoxOverImg;
+
+		GuiImageData * bgOptions;
+		GuiImageData * bgOptionsEntry;
 		GuiImageData * scrollbar;
 		GuiImageData * arrowDown;
 		GuiImageData * arrowDownOver;

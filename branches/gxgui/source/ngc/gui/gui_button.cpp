@@ -23,6 +23,8 @@ GuiButton::GuiButton(int w, int h)
 	iconOver = NULL;
 	label = NULL;
 	labelOver = NULL;
+	label2 = NULL;
+	label2Over = NULL;
 	soundOver = NULL;
 	soundClick = NULL;
 	selectable = true;
@@ -78,6 +80,20 @@ void GuiButton::SetLabelOver(GuiText* txt)
 	if(txt)
 		txt->SetParent(this);
 }
+void GuiButton::SetLabel2(GuiText* txt)
+{
+	label2 = txt;
+
+	if(txt)
+		txt->SetParent(this);
+}
+void GuiButton::SetLabel2Over(GuiText* txt)
+{
+	label2Over = txt;
+
+	if(txt)
+		txt->SetParent(this);
+}
 void GuiButton::SetSoundOver(GuiSound * snd)
 {
 	soundOver = snd;
@@ -110,6 +126,11 @@ void GuiButton::Draw()
 		labelOver->Draw();
 	else if(label)
 		label->Draw();
+	// draw text (secondary)
+	if(state == STATE_SELECTED && label2Over)
+		label2Over->Draw();
+	else if(label2)
+		label2->Draw();
 }
 
 void GuiButton::Update(GuiTrigger * t)
