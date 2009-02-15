@@ -39,8 +39,8 @@ typedef struct _paddata {
 
 typedef struct _optionlist {
 	int length;
-	char name[20][30];
-	char value[20][30];
+	char name[150][50];
+	char value[150][50];
 } OptionList;
 
 #define PAGESIZE 8

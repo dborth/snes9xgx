@@ -13,7 +13,7 @@
 
 #include "snes9xGX.h"
 #include "fileop.h"
-#include "filesel.h"
+#include "filebrowser.h"
 
 extern SCheatData Cheat;
 

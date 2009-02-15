@@ -56,7 +56,7 @@ extern "C" {
 #include "preferences.h"
 #include "button_mapping.h"
 #include "fileop.h"
-#include "filesel.h"
+#include "filebrowser.h"
 #include "input.h"
 
 #include "GRRLIB.h"

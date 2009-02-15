@@ -32,7 +32,7 @@
 #include "images/saveicon.h"
 #include "freeze.h"
 #include "fileop.h"
-#include "filesel.h"
+#include "filebrowser.h"
 #include "menu.h"
 
 extern void S9xSRTCPreSaveState ();
@@ -126,14 +126,12 @@ NGCFreezeGame (int method, bool silent)
 	int woffset = 0; // bytes written (expected)
 	char msg[100];
 
-	ShowAction ("Saving...");
-
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent);
 
 	if(!MakeFilePath(filepath, FILE_SNAPSHOT, method))
 		goto done;
-	
+
 	S9xSetSoundMute (TRUE);
 	S9xPrepareSoundForSnapshotSave (FALSE);
 
@@ -182,11 +180,10 @@ NGCFreezeGame (int method, bool silent)
 	}
 
 	offset = SaveFile(filepath, woffset, method, silent);
-	
+
 done:
 
 	FreeSaveBuffer ();
-	CancelAction();
 
 	if(offset > 0) // save successful!
 	{
@@ -247,8 +244,6 @@ NGCUnfreezeGame (int method, bool silent)
 	char msg[80];
 
 	bufoffset = 0;
-
-	ShowAction ("Loading...");
 
     if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent); // we use 'Save' because snapshot needs R/W
@@ -315,6 +310,5 @@ NGCUnfreezeGame (int method, bool silent)
 			ErrorPrompt("Freeze file not found");
 	}
 	FreeSaveBuffer ();
-	CancelAction();
 	return result;
 }

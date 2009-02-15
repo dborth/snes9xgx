@@ -16,7 +16,7 @@
 #include "menu.h"
 #include "memfile.h"
 #include "fileop.h"
-#include "filesel.h"
+#include "filebrowser.h"
 
 static int readInt2(MFILE *f) {
 	int res = 0;
@@ -429,7 +429,6 @@ void LoadPatch(int method)
 
 	if(patchsize > 0)
 	{
-		ShowAction("Loading patch...");
 		// create memory file
 		MFILE * mf = memfopen((char *)savebuffer, patchsize);
 
@@ -445,7 +444,6 @@ void LoadPatch(int method)
 		SNESROMSize = tmpSize;
 
 		memfclose(mf); // close memory file
-		CancelAction();
 	}
 
 	FreeSaveBuffer ();

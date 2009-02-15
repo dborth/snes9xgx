@@ -25,7 +25,7 @@ extern "C" {
 
 #include "menu.h"
 #include "gcunzip.h"
-#include "filesel.h"
+#include "filebrowser.h"
 #include "snes9xGX.h"
 
 #define MAXDVDFILES 2000

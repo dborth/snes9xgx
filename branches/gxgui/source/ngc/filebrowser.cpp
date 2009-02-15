@@ -29,7 +29,7 @@ extern "C" {
 #include "snes9x.h"
 #include "memmap.h"
 
-#include "filesel.h"
+#include "filebrowser.h"
 #include "snes9xGX.h"
 #include "dvd.h"
 #include "menu.h"
@@ -369,8 +369,6 @@ int BrowserLoadFile(int method)
 {
 	char filepath[1024];
 	int loaded = 0;
-	
-	ShowAction ("Loading...");
 
 	// 7z file - let's open it up to select a file inside
 	if(IsSz())

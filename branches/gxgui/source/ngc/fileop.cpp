@@ -32,7 +32,7 @@
 #include "gcunzip.h"
 #include "video.h"
 #include "menu.h"
-#include "filesel.h"
+#include "filebrowser.h"
 #include "preferences.h"
 
 unsigned char * savebuffer = NULL;
@@ -504,6 +504,8 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 	if(!ChangeInterface(method, NOTSILENT))
 		return 0;
 
+	ShowAction("Saving...");
+
 	switch(method)
 	{
 		case METHOD_MC_SLOTA:
@@ -542,6 +544,7 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 		// go back to checking if devices were inserted/removed
 		LWP_ResumeThread (devicethread);
     }
+	CancelAction();
     return written;
 }
 

@@ -40,7 +40,7 @@ extern "C" {
 
 #include "snes9xGX.h"
 #include "video.h"
-#include "filesel.h"
+#include "filebrowser.h"
 #include "gcunzip.h"
 #include "networkop.h"
 #include "memcardop.h"
@@ -681,7 +681,10 @@ int MenuGame()
 		}
 		else if(cheatsBtn.GetState() == STATE_CLICKED)
 		{
-			menu = MENU_GAME_CHEATS;
+			if(Cheat.num_cheats > 0)
+				menu = MENU_GAME_CHEATS;
+			else
+				InfoPrompt("Cheats file not found!");
 		}
 		else if(backBtn.GetState() == STATE_CLICKED)
 		{
@@ -730,7 +733,75 @@ int MenuGameSave()
 
 int MenuGameCheats()
 {
-	return MENU_EXIT;
+	int menu = MENU_NONE;
+	int ret;
+	u16 i = 0;
+	OptionList options;
+
+	for(i=0; i < Cheat.num_cheats; i++)
+		sprintf (options.name[i], "%s", Cheat.c[i].name);
+
+	options.length = i;
+
+	GuiText titleTxt("Cheats", 22, (GXColor){255, 255, 255, 0xff});
+	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	titleTxt.SetPosition(50,50);
+
+	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(100, -35);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetTrigger(&trigA);
+
+	GuiOptionBrowser optionBrowser(552, 248, &options);
+	optionBrowser.SetPosition(0, 108);
+	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+
+	guiReady = false;
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&backBtn);
+	mainWindow->Append(&optionBrowser);
+	mainWindow->Append(&w);
+	mainWindow->Append(&titleTxt);
+	guiReady = true;
+
+	while(menu == MENU_NONE)
+	{
+		VIDEO_WaitVSync ();
+
+		for(i=0; i < Cheat.num_cheats; i++)
+			sprintf (options.value[i], "%s", Cheat.c[i].enabled == true ? "On" : "Off");
+
+		ret = optionBrowser.GetClickedOption();
+
+		if(Cheat.c[ret].enabled)
+			S9xDisableCheat(ret);
+		else
+			S9xEnableCheat(ret);
+
+		if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_GAME;
+		}
+	}
+	guiReady = false;
+	mainWindow->Remove(&optionBrowser);
+	mainWindow->Remove(&w);
+	mainWindow->Remove(&titleTxt);
+	return menu;
 }
 
 /****************************************************************************
@@ -1395,196 +1466,6 @@ MainMenu (int menu)
 		free(gameScreenTex);
 		gameScreenTex = NULL;
 	}
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/****************************************************************************
- * Cheat Menu
- ***************************************************************************/
-static int cheatmenuCount = 0;
-static char cheatmenu[MAX_CHEATS][50];
-static char cheatmenuvalue[MAX_CHEATS][50];
-
-void CheatMenu()
-{
-	int ret = -1;
-	int oldmenu = 0;
-
-	int selection = 0;
-	int offset = 0;
-	int redraw = 1;
-	int selectit = 0;
-
-    u32 p = 0;
-	u32 wp = 0;
-	u32 ph = 0;
-	u32 wh = 0;
-    signed char gc_ay = 0;
-	signed char gc_sx = 0;
-	signed char wm_ay = 0;
-	signed char wm_sx = 0;
-
-	int scroll_delay = 0;
-	bool move_selection = 0;
-	#define SCROLL_INITIAL_DELAY	15
-	#define SCROLL_LOOP_DELAY		2
-
-	if(Cheat.num_cheats > 0)
-	{
-		cheatmenuCount = Cheat.num_cheats + 1;
-
-		for(uint16 i=0; i < Cheat.num_cheats; i++)
-			sprintf (cheatmenu[i], "%s", Cheat.c[i].name);
-
-		sprintf (cheatmenu[cheatmenuCount-1], "Back to Game Menu");
-
-		while(ret != cheatmenuCount-1)
-		{
-			if(ret >= 0)
-			{
-				if(Cheat.c[ret].enabled)
-					S9xDisableCheat(ret);
-				else
-					S9xEnableCheat(ret);
-
-				ret = -1;
-			}
-
-			for(uint16 i=0; i < Cheat.num_cheats; i++)
-				sprintf (cheatmenuvalue[i], "%s", Cheat.c[i].enabled == true ? "ON" : "OFF");
-
-			//if (redraw)
-			//    ShowCheats (cheatmenu, cheatmenuvalue, cheatmenuCount, offset, selection);
-
-			redraw = 0;
-
-			VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
-
-			gc_ay = PAD_StickY (0);
-			gc_sx = PAD_SubStickX (0);
-	        p = PAD_ButtonsDown (0);
-			ph = PAD_ButtonsHeld (0);
-
-			#ifdef HW_RVL
-			wm_ay = WPAD_Stick (0, 0, 1);
-			wm_sx = WPAD_Stick (0, 1, 0);
-			wp = WPAD_ButtonsDown (0);
-			wh = WPAD_ButtonsHeld (0);
-			#endif
-
-			/*** Check for exit combo ***/
-			if ( (gc_sx < -70) || (wm_sx < -70) || (wp & WPAD_BUTTON_HOME) || (wp & WPAD_CLASSIC_BUTTON_HOME) )
-				break;
-
-			if ( (p & PAD_BUTTON_B) || (wp & (WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)) )
-				break;
-
-			/*** Check buttons, perform actions ***/
-			if ( (p & PAD_BUTTON_A) || selectit || (wp & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) )
-			{
-				if ( selectit )
-					selectit = 0;
-
-				redraw = 1;
-				ret = selection;
-			}	// End of A
-
-			if ( ((p | ph) & PAD_BUTTON_DOWN) || ((wp | wh) & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) || (gc_ay < -PADCAL) || (wm_ay < -PADCAL) )
-			{
-				if ( (p & PAD_BUTTON_DOWN) || (wp & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)) ) { /*** Button just pressed ***/
-					scroll_delay = SCROLL_INITIAL_DELAY;	// reset scroll delay.
-					move_selection = 1;	//continue (move selection)
-				}
-				else if (scroll_delay == 0) { 		/*** Button is held ***/
-					scroll_delay = SCROLL_LOOP_DELAY;
-					move_selection = 1;	//continue (move selection)
-				} else {
-					scroll_delay--;	// wait
-				}
-
-				if (move_selection)
-				{
-					selection++;
-					if (selection == cheatmenuCount)
-						selection = offset = 0;
-					if ((selection - offset) >= PAGESIZE)
-						offset += PAGESIZE;
-					redraw = 1;
-					move_selection = 0;
-				}
-			}	// End of down
-			if ( ((p | ph) & PAD_BUTTON_UP) || ((wp | wh) & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) || (gc_ay > PADCAL) || (wm_ay > PADCAL) )
-			{
-				if ( (p & PAD_BUTTON_UP) || (wp & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)) ) { /*** Button just pressed***/
-					scroll_delay = SCROLL_INITIAL_DELAY;	// reset scroll delay.
-					move_selection = 1;	//continue (move selection)
-				}
-				else if (scroll_delay == 0) { 		/*** Button is held ***/
-					scroll_delay = SCROLL_LOOP_DELAY;
-					move_selection = 1;	//continue (move selection)
-				} else {
-					scroll_delay--;	// wait
-				}
-
-				if (move_selection)
-				{
-					selection--;
-					if (selection < 0) {
-						selection = cheatmenuCount - 1;
-						offset = selection - PAGESIZE + 1;
-					}
-					if (selection < offset)
-						offset -= PAGESIZE;
-					if (offset < 0)
-						offset = 0;
-					redraw = 1;
-					move_selection = 0;
-				}
-			}	// End of Up
-			if ( (p & PAD_BUTTON_LEFT) || (wp & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT)) )
-			{
-				/*** Go back a page ***/
-				selection -= PAGESIZE;
-				if (selection < 0)
-				{
-					selection = cheatmenuCount - 1;
-					offset = selection - PAGESIZE + 1;
-				}
-				if (selection < offset)
-					offset -= PAGESIZE;
-				if (offset < 0)
-					offset = 0;
-				redraw = 1;
-			}
-			if ( (p & PAD_BUTTON_RIGHT) || (wp & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT)) )
-			{
-				/*** Go forward a page ***/
-				selection += PAGESIZE;
-				if (selection > cheatmenuCount - 1)
-					selection = offset = 0;
-				if ((selection - offset) >= PAGESIZE)
-					offset += PAGESIZE;
-				redraw = 1;
-			}
-		}
-	}
-	else
-	{
-		ErrorPrompt("No cheats found!");
-	}
-
 }
 
 /****************************************************************************

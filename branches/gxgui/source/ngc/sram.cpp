@@ -23,7 +23,7 @@
 #include "images/saveicon.h"
 #include "menu.h"
 #include "fileop.h"
-#include "filesel.h"
+#include "filebrowser.h"
 #include "input.h"
 
 /****************************************************************************
@@ -149,13 +149,9 @@ LoadSRAM (int method, bool silent)
 	if(!MakeFilePath(filepath, FILE_SRAM, method))
 		return false;
 
-	ShowAction ("Loading...");
-
 	AllocSaveBuffer();
 
 	offset = LoadFile(filepath, method, silent);
-	
-	CancelAction();
 
 	if (offset > 0)
 	{
@@ -193,8 +189,6 @@ SaveSRAM (int method, bool silent)
 	if(!MakeFilePath(filepath, FILE_SRAM, method))
 		return false;
 
-	ShowAction ("Saving...");
-
 	AllocSaveBuffer ();
 
 	datasize = preparesavedata (method);
@@ -205,7 +199,7 @@ SaveSRAM (int method, bool silent)
 
 		if (offset > 0)
 		{
-			if ( !silent )
+			if (!silent)
 				InfoPrompt("Save successful");
 			retval = true;
 		}
@@ -217,6 +211,5 @@ SaveSRAM (int method, bool silent)
 	}
 
 	FreeSaveBuffer ();
-	CancelAction();
 	return retval;
 }

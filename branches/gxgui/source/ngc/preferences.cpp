@@ -19,7 +19,7 @@
 #include "menu.h"
 #include "memcardop.h"
 #include "fileop.h"
-#include "filesel.h"
+#include "filebrowser.h"
 #include "input.h"
 
 /****************************************************************************
