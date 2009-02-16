@@ -22,6 +22,7 @@
 #include "pngu/pngu.h"
 #include "GRRLIB.h"
 #include "FreeTypeGX.h"
+#include "snes9xGX.h"
 #include "video.h"
 #include "filelist.h"
 
@@ -43,7 +44,15 @@ typedef struct _optionlist {
 	char value[150][50];
 } OptionList;
 
+typedef struct _savelist {
+	int length;
+	char filename[20][255];
+	char datetime[20][50];
+	int type[20];
+} SaveList;
+
 #define PAGESIZE 8
+#define SAVELISTSIZE 6
 
 extern int rumbleRequest[4];
 
@@ -346,6 +355,55 @@ class GuiOptionBrowser : public GuiElement
 
 		GuiImageData * bgOptions;
 		GuiImageData * bgOptionsEntry;
+		GuiImageData * scrollbar;
+		GuiImageData * arrowDown;
+		GuiImageData * arrowDownOver;
+		GuiImageData * arrowUp;
+		GuiImageData * arrowUpOver;
+		GuiImageData * scrollbarBox;
+		GuiImageData * scrollbarBoxOver;
+
+		GuiTrigger * trigA;
+};
+
+class GuiSaveBrowser : public GuiElement
+{
+	public:
+		GuiSaveBrowser(int w, int h, SaveList * l);
+		~GuiSaveBrowser();
+		int GetClickedSave();
+		void ResetState();
+		void SetFocus(int f);
+		void Draw();
+		void Update(GuiTrigger * t);
+	protected:
+		int selectedItem;
+		int listOffset;
+
+		SaveList * saves;
+		GuiButton * saveBtn[SAVELISTSIZE];
+		GuiText * saveDateTime[SAVELISTSIZE];
+		GuiText * saveType[SAVELISTSIZE];
+
+		GuiImage * saveBgImg[SAVELISTSIZE];
+		GuiImage * saveBgOverImg[SAVELISTSIZE];
+		GuiImage * savePreviewImg[SAVELISTSIZE];
+
+		GuiButton * arrowUpBtn;
+		GuiButton * arrowDownBtn;
+		GuiButton * scrollbarBoxBtn;
+
+		GuiImage * scrollbarImg;
+		GuiImage * arrowDownImg;
+		GuiImage * arrowDownOverImg;
+		GuiImage * arrowUpImg;
+		GuiImage * arrowUpOverImg;
+		GuiImage * scrollbarBoxImg;
+		GuiImage * scrollbarBoxOverImg;
+
+		GuiImageData * gameSave;
+		GuiImageData * gameSaveOver;
+		GuiImageData * gameSaveBlank;
 		GuiImageData * scrollbar;
 		GuiImageData * arrowDown;
 		GuiImageData * arrowDownOver;

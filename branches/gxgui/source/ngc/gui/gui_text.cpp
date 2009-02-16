@@ -29,13 +29,13 @@ GuiText::GuiText(const char * t, int s, GXColor c)
 
 	if(t)
 	{
-		// this is temporary: removes - and _ and '
+		// this is temporary: removes - and '
 		// because FreeType GX won't show them
 		char newt[200];
 		int i = -1;
 		strcpy(newt, t);
 		while(newt[++i] != 0)
-			if(newt[i] == '-' || newt[i] == '_' || newt[i] == '\'')
+			if(newt[i] == '-' || newt[i] == '\'')
 				newt[i] = ' ';
 
 		text = fontSystem->charToWideChar((char *)newt);
@@ -63,13 +63,13 @@ void GuiText::SetText(const char * t)
 
 	if(t)
 	{
-		// this is temporary: removes - and _ and '
+		// this is temporary: removes - and '
 		// because FreeType GX won't show them
 		char newt[200];
 		int i = -1;
 		strcpy(newt, t);
 		while(newt[++i] != 0)
-			if(newt[i] == '-' || newt[i] == '_' || newt[i] == '\'')
+			if(newt[i] == '-' || newt[i] == '\'')
 				newt[i] = ' ';
 
 		text = fontSystem->charToWideChar((char *)newt);

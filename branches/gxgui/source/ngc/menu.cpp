@@ -286,6 +286,10 @@ UpdateGUI (void *arg)
 static void
 ProgressWindow(char *title, char *msg)
 {
+	usleep(300000); // wait to see if progress flag changes soon
+	if(!showProgress)
+		return;
+
 	GuiWindow promptWindow(448,256);
 	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
@@ -424,6 +428,28 @@ void InfoPrompt(const char *msg)
 
 int MenuGameSelection()
 {
+	// populate initial directory listing
+	int method = GCSettings.LoadMethod;
+
+	if(method == METHOD_AUTO)
+		method = autoLoadMethod();
+
+	int num = OpenGameList(method);
+
+	if(num == 0)
+	{
+		int choice = WindowPrompt(
+		"Error",
+		"Game directory not found on selected load device.",
+		"Retry",
+		"Change Settings");
+
+		if(choice)
+			return MENU_GAMESELECTION;
+		else
+			return MENU_SETTINGS_FILE;
+	}
+
 	int menu = MENU_NONE;
 
 	GuiText titleTxt("Choose Game", 22, (GXColor){255, 255, 255, 0xff});
@@ -450,7 +476,7 @@ int MenuGameSelection()
 	settingsBtn.SetSoundOver(&btnSoundOver);
 	settingsBtn.SetTrigger(&trigA);
 
-	GuiText exitBtnTxt("Exit", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText exitBtnTxt("Exit", 24, (GXColor){0, 0, 0, 0xff});
 	GuiImage exitBtnImg(&btnOutline);
 	GuiImage exitBtnImgOver(&btnOutlineOver);
 	GuiButton exitBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -466,10 +492,6 @@ int MenuGameSelection()
 	GuiWindow buttonWindow(screenwidth, screenheight);
 	buttonWindow.Append(&settingsBtn);
 	buttonWindow.Append(&exitBtn);
-
-	// populate initial directory listing
-	int method = METHOD_SD;
-	OpenGameList(method);
 
 	GuiFileBrowser gameBrowser(424, 248);
 	gameBrowser.SetPosition(50, 108);
@@ -529,13 +551,15 @@ int MenuGame()
 {
 	int menu = MENU_NONE;
 
-	GuiText titleTxt(browserList[browser.selIndex].displayname, 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt((char *)browserList[browser.selIndex].displayname, 22, (GXColor){255, 255, 255, 0xff});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
 	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
+	GuiImageData btnCloseOutline(button_close_png);
+	GuiImageData btnCloseOutlineOver(button_close_over_png);
 	GuiImageData btnLargeOutline(button_large_png);
 	GuiImageData btnLargeOutlineOver(button_large_over_png);
 
@@ -618,9 +642,9 @@ int MenuGame()
 	backBtn.SetTrigger(&trigA);
 
 	GuiText closeBtnTxt("Close", 22, (GXColor){0, 0, 0, 0xff});
-	GuiImage closeBtnImg(&btnOutline);
-	GuiImage closeBtnImgOver(&btnOutlineOver);
-	GuiButton closeBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	GuiImage closeBtnImg(&btnCloseOutline);
+	GuiImage closeBtnImgOver(&btnCloseOutlineOver);
+	GuiButton closeBtn(btnCloseOutline.GetWidth(), btnCloseOutline.GetHeight());
 	closeBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	closeBtn.SetPosition(-30, 35);
 	closeBtn.SetLabel(&closeBtnTxt);
@@ -715,7 +739,107 @@ int MenuGame()
 
 int MenuGameLoad()
 {
-	return MENU_EXIT;
+	int menu = MENU_NONE;
+	int ret;
+	int i, len, len2;
+	int j = 0;
+	SaveList saves;
+
+	strncpy(browser.dir, GCSettings.SaveFolder, 200);
+
+	if(ParseDirectory() > 0)
+	{
+		for(i=0; i < browser.numEntries; i++)
+		{
+			len = strlen(Memory.ROMFilename);
+			len2 = strlen(browserList[i].filename);
+
+			// find matching files
+			if(strncmp(browserList[i].filename, Memory.ROMFilename, len) == 0)
+			{
+				if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
+					saves.type[j] = FILE_SRAM;
+				else if(strncmp(&browserList[i].filename[len2-4], ".frz", 4) == 0)
+					saves.type[j] = FILE_SNAPSHOT;
+				else
+					saves.type[j] = -1;
+
+				if(saves.type[j] != -1)
+				{
+					strncpy(saves.filename[j], browserList[i].filename, 255);
+					strncpy(saves.datetime[j], ctime(&browserList[j].mtime), 50);
+					j++;
+				}
+			}
+		}
+	}
+
+	saves.length = j;
+
+	GuiText titleTxt("Load Game", 22, (GXColor){255, 255, 255, 0xff});
+	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	titleTxt.SetPosition(50,50);
+
+	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(100, -35);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetTrigger(&trigA);
+
+	GuiSaveBrowser saveBrowser(552, 248, &saves);
+	saveBrowser.SetPosition(0, 108);
+	saveBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+
+	guiReady = false;
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&backBtn);
+	mainWindow->Append(&saveBrowser);
+	mainWindow->Append(&w);
+	mainWindow->Append(&titleTxt);
+	guiReady = true;
+
+	while(menu == MENU_NONE)
+	{
+		VIDEO_WaitVSync ();
+
+		ret = saveBrowser.GetClickedSave();
+
+		// load or save game
+		if(ret >= 0)
+		{
+			// saves.filename[i]
+
+			//LoadSRAM(GCSettings.SaveMethod, NOTSILENT);
+			//SaveSRAM(GCSettings.SaveMethod, NOTSILENT);
+			//NGCUnfreezeGame (GCSettings.SaveMethod, NOTSILENT);
+			//NGCFreezeGame (GCSettings.SaveMethod, NOTSILENT);
+
+			// menu = MENU_EXIT;
+		}
+
+		if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_GAME;
+		}
+	}
+	guiReady = false;
+	mainWindow->Remove(&saveBrowser);
+	mainWindow->Remove(&w);
+	mainWindow->Remove(&titleTxt);
+	return menu;
 }
 
 /****************************************************************************
@@ -1401,7 +1525,15 @@ MainMenu (int menu)
 	memTxt->SetPosition(-20, 40);
 	mainWindow->Append(memTxt);
 
+	guiReady = true;
 	LWP_ResumeThread (guithread);
+
+	// Load preferences
+	if(!LoadPrefs())
+	{
+		ErrorPrompt("Preferences reset - check your settings!");
+		menu = MENU_SETTINGS_FILE;
+	}
 
 	while(menu != MENU_EXIT || SNESROMSize <= 0)
 	{
@@ -1467,110 +1599,6 @@ MainMenu (int menu)
 		gameScreenTex = NULL;
 	}
 }
-
-/****************************************************************************
- * Game Options Menu
- ***************************************************************************/
-/*
-int
-GameMenu ()
-{
-	int gamemenuCount = 10;
-	char gamemenu[][50] = {
-	  "Return to Game",
-	  "Reset Game",
-	  "ROM Information",
-	  "Cheats",
-	  "Load SRAM", "Save SRAM",
-	  "Load Game Snapshot", "Save Game Snapshot",
-	  "Reset Zoom",
-	  "Back to Main Menu"
-	};
-
-	int ret, retval = 0;
-	int quit = 0;
-	int oldmenu = menu;
-	menu = 0;
-
-	while (quit == 0)
-	{
-		// disable SRAM/SNAPSHOT saving/loading if AUTO is on
-
-		if (GCSettings.AutoLoad == 1) // Auto Load SRAM
-			gamemenu[4][0] = '\0';
-		else if (GCSettings.AutoLoad == 2) // Auto Load SNAPSHOT
-			gamemenu[6][0] = '\0';
-
-		if (GCSettings.AutoSave == 1) // Auto Save SRAM
-			gamemenu[5][0] = '\0';
-		else if (GCSettings.AutoSave == 2) // Auto Save SNAPSHOT
-			gamemenu[7][0] = '\0';
-		else if (GCSettings.AutoSave == 3) // Auto Save BOTH
-		{
-			gamemenu[5][0] = '\0';
-			gamemenu[7][0] = '\0';
-		}
-
-		// hide cheats menu if cheats file not present
-		if(Cheat.num_cheats == 0)
-			gamemenu[3][0] = '\0';
-
-		ret = RunMenu (gamemenu, gamemenuCount, "Game Menu");
-
-		switch (ret)
-		{
-			case 0: // Return to Game
-				quit = retval = 1;
-				break;
-
-			case 1: // Reset Game
-				S9xSoftReset ();
-				quit = retval = 1;
-				break;
-
-			case 2: // ROM Information
-				RomInfo();
-				WaitButtonA ();
-				break;
-
-			case 3: // load cheats
-				CheatMenu();
-				break;
-
-			case 4: // Load SRAM
-				quit = retval = LoadSRAM(GCSettings.SaveMethod, NOTSILENT);
-				break;
-
-			case 5: // Save SRAM
-				SaveSRAM(GCSettings.SaveMethod, NOTSILENT);
-				break;
-
-			case 6: // Load Freeze
-				quit = retval = NGCUnfreezeGame (GCSettings.SaveMethod, NOTSILENT);
-				break;
-
-			case 7: // Save Freeze
-				NGCFreezeGame (GCSettings.SaveMethod, NOTSILENT);
-				break;
-
-			case 8:	// Reset Zoom
-				zoom_reset ();
-				quit = retval = 1;
-				break;
-
-			case -1: // Button B
-			case 9: // Return to previous menu
-				retval = 0;
-				quit = 1;
-				break;
-		}
-	}
-
-	menu = oldmenu;
-
-	return retval;
-}
-*/
 
 /****************************************************************************
  * Controller Configuration

@@ -558,7 +558,7 @@ int SzExtractFile(int i, unsigned char *buffer)
 
 	// close 7Zip archive and free memory
 	SzClose();
-	
+
 	CancelAction();
 
 	// check for errors

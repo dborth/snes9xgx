@@ -210,13 +210,6 @@ emulate ()
 		ConfigRequested = 1;
 		SwitchAudioMode(1);
 
-		// Load preferences
-		/*if(!LoadPrefs())
-		{
-			ErrorPrompt("Preferences reset - check settings!");
-			selectedMenu = 1; // change to preferences menu
-		}*/
-
 		if(SNESROMSize == 0)
 			MainMenu(MENU_GAMESELECTION);
 		else

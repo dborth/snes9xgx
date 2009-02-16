@@ -363,7 +363,7 @@ SavePrefs (bool silent)
 	offset = SaveFile(filepath, datasize, method, silent);
 
 	FreeSaveBuffer ();
-	
+
 	CancelAction();
 
 	if (offset > 0)
@@ -404,9 +404,13 @@ LoadPrefsFromMethod (int method)
  * Load Preferences
  * Checks sources consecutively until we find a preference file
  ***************************************************************************/
+static bool prefLoaded = false;
+
 bool LoadPrefs()
 {
-	ShowAction ("Loading preferences...");
+	if(prefLoaded) // already attempted loading
+		return true;
+
 	bool prefFound = false;
 	if(ChangeInterface(METHOD_SD, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_SD);
@@ -418,6 +422,8 @@ bool LoadPrefs()
 		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTB);
 	if(!prefFound && ChangeInterface(METHOD_SMB, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_SMB);
-	CancelAction();
+
+	prefLoaded = true; // attempted to load preferences
+
 	return prefFound;
 }

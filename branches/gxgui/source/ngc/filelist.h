@@ -31,11 +31,26 @@ extern const u32	button_png_size;
 extern const u8		button_over_png[];
 extern const u32	button_over_png_size;
 
+extern const u8		button_close_png[];
+extern const u32	button_close_png_size;
+
+extern const u8		button_close_over_png[];
+extern const u32	button_close_over_png_size;
+
 extern const u8		button_large_png[];
 extern const u32	button_large_png_size;
 
 extern const u8		button_large_over_png[];
 extern const u32	button_large_over_png_size;
+
+extern const u8		button_gamesave_png[];
+extern const u32	button_gamesave_png_size;
+
+extern const u8		button_gamesave_over_png[];
+extern const u32	button_gamesave_over_png_size;
+
+extern const u8		button_gamesave_blank_png[];
+extern const u32	button_gamesave_blank_png_size;
 
 extern const u8		dialogue_box_png[];
 extern const u32	dialogue_box_png_size;

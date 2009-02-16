@@ -128,7 +128,7 @@ GuiOptionBrowser::~GuiOptionBrowser()
 
 	delete trigA;
 
-	for(int i=0; i<options->length; i++)
+	for(int i=0; i<PAGESIZE; i++)
 	{
 		delete optionTxt[i];
 		delete optionVal[i];

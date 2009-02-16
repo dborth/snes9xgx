@@ -268,6 +268,8 @@ ParseDirectory()
 	struct stat filestat;
 	char msg[128];
 
+	ShowAction("Loading...");
+
 	// reset browser
 	ResetBrowser();
 
@@ -321,6 +323,7 @@ ParseDirectory()
 			StripExt(tmpname, filename); // hide file extension
 			strncpy(browserList[entryNum].displayname, tmpname, MAXDISPLAY);	// crop name for display
 			browserList[entryNum].length = filestat.st_size;
+			browserList[entryNum].mtime = filestat.st_mtime;
 			browserList[entryNum].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
 
 			entryNum++;
@@ -332,6 +335,8 @@ ParseDirectory()
 
 	// Sort the file list
 	qsort(browserList, entryNum, sizeof(BROWSERENTRY), FileSortCallback);
+
+	CancelAction();
 
 	return entryNum;
 }
