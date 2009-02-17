@@ -119,18 +119,14 @@ NGCFreezeMemBuffer ()
  * Do freeze game for Nintendo Gamecube
  ***************************************************************************/
 int
-NGCFreezeGame (int method, bool silent)
+NGCFreezeGame (char * filepath, int method, bool silent)
 {
-	char filepath[1024];
 	int offset = 0; // bytes written (actual)
 	int woffset = 0; // bytes written (expected)
 	char msg[100];
 
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent);
-
-	if(!MakeFilePath(filepath, FILE_SNAPSHOT, method))
-		goto done;
 
 	S9xSetSoundMute (TRUE);
 	S9xPrepareSoundForSnapshotSave (FALSE);
@@ -194,6 +190,14 @@ done:
     return 0;
 }
 
+int
+NGCFreezeGameAuto (int method, bool silent)
+{
+	char filepath[1024];
+	sprintf(filepath, "%s/%s Auto.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+	return NGCFreezeGame(filepath, method, silent);
+}
+
 /****************************************************************************
  * NGCUnFreezeBlock
  ***************************************************************************/
@@ -236,9 +240,8 @@ NGCUnFreezeBlock (char *name, uint8 * block, int size)
  * NGCUnfreezeGame
  ***************************************************************************/
 int
-NGCUnfreezeGame (int method, bool silent)
+NGCUnfreezeGame (char * filepath, int method, bool silent)
 {
-	char filepath[1024];
 	int offset = 0;
 	int result = 0;
 	char msg[80];
@@ -247,12 +250,6 @@ NGCUnfreezeGame (int method, bool silent)
 
     if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent); // we use 'Save' because snapshot needs R/W
-
-    if(!MakeFilePath(filepath, FILE_SNAPSHOT, method))
-	{
-		CancelAction();
-		return 0;
-	}
 
     AllocSaveBuffer ();
 
@@ -311,4 +308,12 @@ NGCUnfreezeGame (int method, bool silent)
 	}
 	FreeSaveBuffer ();
 	return result;
+}
+
+int
+NGCUnfreezeGameAuto (int method, bool silent)
+{
+	char filepath[1024];
+	sprintf(filepath, "%s/%s Auto.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+	return NGCUnfreezeGame(filepath, method, silent);
 }

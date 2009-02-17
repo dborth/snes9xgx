@@ -14,15 +14,22 @@
 /**
  * Constructor for the GuiSaveBrowser class.
  */
-GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s)
+GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 {
 	width = w;
 	height = h;
 	saves = s;
+	action = a;
 	selectable = true;
-	listOffset = 0;
+
+	if(action == 0) // save
+		listOffset = 0;
+	else
+		listOffset = -2;
+
 	selectedItem = 0;
 	focus = 0; // allow focus
+	memset(saves->files, 0, sizeof(saves->files));
 
 	trigA = new GuiTrigger;
 	trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
@@ -75,9 +82,12 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s)
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
-		saveDateTime[i] = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
-		saveDateTime[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
-		saveDateTime[i]->SetPosition(80,5);
+		saveDate[i] = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
+		saveDate[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+		saveDate[i]->SetPosition(80,5);
+		saveTime[i] = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
+		saveTime[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+		saveTime[i]->SetPosition(80,27);
 
 		saveType[i] = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
 		saveType[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
@@ -86,16 +96,29 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s)
 		saveBgImg[i] = new GuiImage(gameSave);
 		saveBgOverImg[i] = new GuiImage(gameSaveOver);
 		savePreviewImg[i] = new GuiImage(gameSaveBlank);
+		savePreviewImg[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+		savePreviewImg[i]->SetPosition(5,0);
 
 		saveBtn[i] = new GuiButton(saveBgImg[i]->GetWidth(),saveBgImg[i]->GetHeight());
 		saveBtn[i]->SetParent(this);
-		saveBtn[i]->SetLabel(saveDateTime[i]);
-		saveBtn[i]->SetLabel2(saveType[i]);
+		saveBtn[i]->SetLabel(saveDate[i], 0);
+		saveBtn[i]->SetLabel(saveTime[i], 1);
+		saveBtn[i]->SetLabel(saveType[i], 2);
 		saveBtn[i]->SetImage(saveBgImg[i]);
 		saveBtn[i]->SetImageOver(saveBgOverImg[i]);
+		saveBtn[i]->SetIcon(savePreviewImg[i]);
 		saveBtn[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 		saveBtn[i]->SetPosition(247*(i % 2),87*(i/2));
 		saveBtn[i]->SetTrigger(trigA);
+		saveBtn[i]->SetState(STATE_DISABLED);
+	}
+
+	if(action == 1) // save
+	{
+		saveTime[0]->SetText("New SRAM");
+		saveTime[1]->SetText("New Snapshot");
+		saveBtn[0]->SetState(STATE_DEFAULT);
+		saveBtn[1]->SetState(STATE_DEFAULT);
 	}
 }
 
@@ -132,7 +155,8 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
 		delete saveBtn[i];
-		delete saveDateTime[i];
+		delete saveDate[i];
+		delete saveTime[i];
 		delete saveType[i];
 		delete saveBgImg[i];
 		delete saveBgOverImg[i];
@@ -195,8 +219,10 @@ void GuiSaveBrowser::Draw()
 
 void GuiSaveBrowser::Update(GuiTrigger * t)
 {
+	int i, len;
+	char savetext[50];
 	// update the location of the scroll box based on the position in the option list
-	int position = 144*(listOffset) / saves->length;
+	int position = 144*(selectedItem) / saves->length;
 	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	arrowUpBtn->Update(t);
@@ -231,7 +257,9 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 	{
 		if(selectedItem == 0)
 		{
-			if(listOffset - 2 >= 0)
+			if((listOffset - 2 >= 0 && action == 0) ||
+				(listOffset - 2 >= -2 && action == 1))
+
 			{
 				// move list up by 1
 				listOffset -= 2;
@@ -273,7 +301,8 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 	{
 		if(selectedItem < 2)
 		{
-			if(listOffset - 2 >= 0)
+			if((listOffset - 2 >= 0 && action == 0) ||
+				(listOffset - 2 >= -2 && action == 1))
 			{
 				// move list up by 1
 				listOffset -= 2;
@@ -290,9 +319,13 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 
 endNavigation:
 
-	for(int i=0; i<SAVELISTSIZE; i++)
+	for(i=0; i<SAVELISTSIZE; i++)
 	{
-		if(listOffset+i < saves->length)
+		if(listOffset+i < 0)
+		{
+			// do nothing
+		}
+		else if(listOffset+i < saves->length)
 		{
 			if(saveBtn[i]->GetState() == STATE_DISABLED)
 			{
@@ -300,12 +333,25 @@ endNavigation:
 				saveBtn[i]->ResetState();
 			}
 
-			saveDateTime[i]->SetText(saves->datetime[listOffset+i]);
+			saveDate[i]->SetText(saves->date[listOffset+i]);
+			saveTime[i]->SetText(saves->time[listOffset+i]);
 
 			if(saves->type[listOffset+i] == FILE_SRAM)
-				saveType[i]->SetText("SRAM");
+				sprintf(savetext, "SRAM");
 			else
-				saveType[i]->SetText("Snapshot");
+				sprintf(savetext, "Snapshot");
+
+			len = strlen(saves->filename[listOffset+i]);
+			if(len > 10 &&
+				saves->filename[listOffset+i][len-8] == 'A' &&
+				saves->filename[listOffset+i][len-7] == 'u' &&
+				saves->filename[listOffset+i][len-6] == 't' &&
+				saves->filename[listOffset+i][len-5] == 'o'
+				)
+			{
+				strcat(savetext, " (Auto)");
+			}
+			saveType[i]->SetText(savetext);
 		}
 		else
 		{

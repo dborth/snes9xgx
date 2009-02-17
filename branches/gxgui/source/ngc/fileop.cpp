@@ -266,6 +266,7 @@ ParseDirectory()
 	char filename[MAXPATHLEN];
 	char tmpname[MAXPATHLEN];
 	struct stat filestat;
+	struct tm * timeinfo;
 	char msg[128];
 
 	ShowAction("Loading...");
@@ -323,7 +324,8 @@ ParseDirectory()
 			StripExt(tmpname, filename); // hide file extension
 			strncpy(browserList[entryNum].displayname, tmpname, MAXDISPLAY);	// crop name for display
 			browserList[entryNum].length = filestat.st_size;
-			browserList[entryNum].mtime = filestat.st_mtime;
+			timeinfo = localtime (&filestat.st_mtime);
+			memcpy(&browserList[entryNum].mtime, timeinfo, sizeof(tm));
 			browserList[entryNum].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
 
 			entryNum++;
@@ -492,7 +494,7 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 	return size;
 }
 
-u32 LoadFile(char filepath[], int method, bool silent)
+u32 LoadFile(char * filepath, int method, bool silent)
 {
 	return LoadFile((char *)savebuffer, filepath, 0, method, silent);
 }
@@ -553,7 +555,7 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
     return written;
 }
 
-u32 SaveFile(char filepath[], u32 datasize, int method, bool silent)
+u32 SaveFile(char * filepath, u32 datasize, int method, bool silent)
 {
 	return SaveFile((char *)savebuffer, filepath, datasize, method, silent);
 }

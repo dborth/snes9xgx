@@ -49,6 +49,7 @@ extern "C" {
 #include "dvd.h"
 #include "s9xconfig.h"
 #include "sram.h"
+#include "freeze.h"
 #include "preferences.h"
 #include "button_mapping.h"
 #include "cheatmgr.h"
@@ -166,6 +167,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	guiReady = false;
 	mainWindow->SetState(STATE_DISABLED);
 	mainWindow->Append(&promptWindow);
+	mainWindow->ChangeFocus(&promptWindow);
 	guiReady = true;
 
 	while(choice == -1)
@@ -199,14 +201,14 @@ UpdateGUI (void *arg)
 	{
 		if(!guiReady)
 		{
-			/*sysmem = (u32)SYS_GetArena1Hi() - (u32)SYS_GetArena1Lo();
-			sprintf(mem, "%u", sysmem);
-			memTxt->SetText(mem);*/
-
 			VIDEO_WaitVSync();
 		}
 		else
 		{
+			/*sysmem = (u32)SYS_GetArena1Hi() - (u32)SYS_GetArena1Lo();
+			sprintf(mem, "%u", sysmem);
+			memTxt->SetText(mem);*/
+
 			mainWindow->Draw();
 
 			for(int i=3; i >= 0; i--) // so that player 1's cursor appears on top!
@@ -321,6 +323,7 @@ ProgressWindow(char *title, char *msg)
 	guiReady = false;
 	mainWindow->SetState(STATE_DISABLED);
 	mainWindow->Append(&promptWindow);
+	mainWindow->ChangeFocus(&promptWindow);
 	guiReady = true;
 
 	float angle = 0;
@@ -420,6 +423,27 @@ void InfoPrompt(const char *msg)
 {
 	showProgress = false;
 	WindowPrompt("Information", msg, "OK", NULL);
+}
+
+void AutoSave()
+{
+	if (GCSettings.AutoSave == 1)
+	{
+		SaveSRAMAuto(GCSettings.SaveMethod, SILENT);
+	}
+	else if (GCSettings.AutoSave == 2)
+	{
+		if (WindowPrompt("Save", "Save Snapshot?", "Save", "Don't Save") )
+			NGCFreezeGameAuto(GCSettings.SaveMethod, SILENT);
+	}
+	else if (GCSettings.AutoSave == 3)
+	{
+		if (WindowPrompt("Save", "Save SRAM and Snapshot?", "Save", "Don't Save") )
+		{
+			SaveSRAMAuto(GCSettings.SaveMethod, SILENT);
+			NGCFreezeGameAuto(GCSettings.SaveMethod, SILENT);
+		}
+	}
 }
 
 /****************************************************************************
@@ -551,7 +575,7 @@ int MenuGame()
 {
 	int menu = MENU_NONE;
 
-	GuiText titleTxt((char *)browserList[browser.selIndex].displayname, 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt((char *)Memory.ROMFilename, 22, (GXColor){255, 255, 255, 0xff});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
@@ -681,6 +705,7 @@ int MenuGame()
 	mainWindow->Append(&w);
 
 	guiReady = true;
+	AutoSave();
 
 	while(menu == MENU_NONE)
 	{
@@ -734,16 +759,17 @@ int MenuGame()
 }
 
 /****************************************************************************
- * MenuGameLoad
+ * MenuGameSaves
  ***************************************************************************/
 
-int MenuGameLoad()
+int MenuGameSaves(int action)
 {
 	int menu = MENU_NONE;
 	int ret;
 	int i, len, len2;
 	int j = 0;
 	SaveList saves;
+	char filepath[1024];
 
 	strncpy(browser.dir, GCSettings.SaveFolder, 200);
 
@@ -755,7 +781,7 @@ int MenuGameLoad()
 			len2 = strlen(browserList[i].filename);
 
 			// find matching files
-			if(strncmp(browserList[i].filename, Memory.ROMFilename, len) == 0)
+			if(len2 > 5 && strncmp(browserList[i].filename, Memory.ROMFilename, len) == 0)
 			{
 				if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
 					saves.type[j] = FILE_SRAM;
@@ -766,8 +792,22 @@ int MenuGameLoad()
 
 				if(saves.type[j] != -1)
 				{
+					int n = -1;
+					char tmp[300];
+					strncpy(tmp, browserList[i].filename, 255);
+					tmp[len2-4] = 0;
+
+					if(len2 - len == 7)
+						n = atoi(&tmp[len2-5]);
+					else if(len2 - len == 6)
+						n = atoi(&tmp[len2-6]);
+
+					if(n > 0 && n < 100)
+						saves.files[saves.type[j]][n] = 1;
+
 					strncpy(saves.filename[j], browserList[i].filename, 255);
-					strncpy(saves.datetime[j], ctime(&browserList[j].mtime), 50);
+					strftime(saves.date[j], 20, "%a %b %d", &browserList[j].mtime);
+					strftime(saves.time[j], 10, "%I:%M %p", &browserList[j].mtime);
 					j++;
 				}
 			}
@@ -776,9 +816,14 @@ int MenuGameLoad()
 
 	saves.length = j;
 
-	GuiText titleTxt("Load Game", 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt(NULL, 22, (GXColor){255, 255, 255, 0xff});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
+
+	if(action == 0)
+		titleTxt.SetText("Load Game");
+	else
+		titleTxt.SetText("Save Game");
 
 	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
 	GuiImageData btnOutline(button_png);
@@ -799,7 +844,7 @@ int MenuGameLoad()
 	backBtn.SetSoundOver(&btnSoundOver);
 	backBtn.SetTrigger(&trigA);
 
-	GuiSaveBrowser saveBrowser(552, 248, &saves);
+	GuiSaveBrowser saveBrowser(552, 248, &saves, action);
 	saveBrowser.SetPosition(0, 108);
 	saveBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 
@@ -820,14 +865,68 @@ int MenuGameLoad()
 		// load or save game
 		if(ret >= 0)
 		{
-			// saves.filename[i]
+			int result = 0;
 
-			//LoadSRAM(GCSettings.SaveMethod, NOTSILENT);
-			//SaveSRAM(GCSettings.SaveMethod, NOTSILENT);
-			//NGCUnfreezeGame (GCSettings.SaveMethod, NOTSILENT);
-			//NGCFreezeGame (GCSettings.SaveMethod, NOTSILENT);
+			if(action == 0) // load
+			{
+				sprintf(filepath, "%s/%s", GCSettings.SaveFolder, saves.filename[ret]);
 
-			// menu = MENU_EXIT;
+				switch(saves.type[ret])
+				{
+					case FILE_SRAM:
+						result = LoadSRAM(filepath, GCSettings.SaveMethod, NOTSILENT);
+						break;
+					case FILE_SNAPSHOT:
+						result = NGCUnfreezeGame (filepath, GCSettings.SaveMethod, NOTSILENT);
+						break;
+				}
+				if(result)
+					menu = MENU_EXIT;
+			}
+			else // save
+			{
+				if(ret == 0) // new SRAM
+				{
+					for(i=1; i < 100; i++)
+						if(saves.files[FILE_SRAM][i] == 0)
+							break;
+
+					if(i < 100)
+					{
+						sprintf(filepath, "%s/%s %i.srm", GCSettings.SaveFolder, Memory.ROMFilename, i+1);
+						SaveSRAM(filepath, GCSettings.SaveMethod, NOTSILENT);
+						menu = MENU_GAME_SAVE;
+					}
+				}
+				else if(ret == 1) // new Snapshot
+				{
+					for(i=1; i < 100; i++)
+						if(saves.files[FILE_SNAPSHOT][i] == 0)
+							break;
+
+					if(i < 100)
+					{
+						sprintf(filepath, "%s/%s %i.frz", GCSettings.SaveFolder, Memory.ROMFilename, i+1);
+						NGCFreezeGame (filepath, GCSettings.SaveMethod, NOTSILENT);
+						menu = MENU_GAME_SAVE;
+					}
+				}
+				else // overwrite SRAM/Snapshot
+				{
+					sprintf(filepath, "%s/%s", GCSettings.SaveFolder, saves.filename[ret-2]);
+
+					switch(saves.type[ret-2])
+					{
+						case FILE_SRAM:
+							SaveSRAM(filepath, GCSettings.SaveMethod, NOTSILENT);
+							break;
+						case FILE_SNAPSHOT:
+							NGCFreezeGame (filepath, GCSettings.SaveMethod, NOTSILENT);
+							break;
+					}
+					menu = MENU_GAME_SAVE;
+				}
+			}
 		}
 
 		if(backBtn.GetState() == STATE_CLICKED)
@@ -840,15 +939,6 @@ int MenuGameLoad()
 	mainWindow->Remove(&w);
 	mainWindow->Remove(&titleTxt);
 	return menu;
-}
-
-/****************************************************************************
- * MenuGameSave
- ***************************************************************************/
-
-int MenuGameSave()
-{
-	return MENU_EXIT;
 }
 
 /****************************************************************************
@@ -1546,10 +1636,10 @@ MainMenu (int menu)
 				menu = MenuGame();
 				break;
 			case MENU_GAME_LOAD:
-				menu = MenuGameLoad();
+				menu = MenuGameSaves(0);
 				break;
 			case MENU_GAME_SAVE:
-				menu = MenuGameSave();
+				menu = MenuGameSaves(1);
 				break;
 			case MENU_GAME_CHEATS:
 				menu = MenuGameCheats();

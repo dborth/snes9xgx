@@ -21,34 +21,34 @@ GuiWindow::~GuiWindow()
 {
 }
 
-void GuiWindow::Append(GuiElement* layer)
+void GuiWindow::Append(GuiElement* e)
 {
-	if (layer == NULL)
+	if (e == NULL)
 		return;
 
-	Remove(layer);
-	_elements.push_back(layer);
-	layer->SetParent(this);
+	Remove(e);
+	_elements.push_back(e);
+	e->SetParent(this);
 }
 
-void GuiWindow::Insert(GuiElement* layer, u32 index)
+void GuiWindow::Insert(GuiElement* e, u32 index)
 {
-	if (layer == NULL || index > (_elements.size() - 1))
+	if (e == NULL || index > (_elements.size() - 1))
 		return;
 
-	Remove(layer);
-	_elements.insert(_elements.begin()+index, layer);
-	layer->SetParent(this);
+	Remove(e);
+	_elements.insert(_elements.begin()+index, e);
+	e->SetParent(this);
 }
 
-void GuiWindow::Remove(GuiElement* layer)
+void GuiWindow::Remove(GuiElement* e)
 {
-	if (layer == NULL)
+	if (e == NULL)
 		return;
 
 	for (u8 i = 0; i < _elements.size(); i++)
 	{
-		if(layer == _elements.at(i))
+		if(e == _elements.at(i))
 		{
 			_elements.erase(_elements.begin()+i);
 			break;
@@ -120,7 +120,21 @@ void GuiWindow::SetFocus(int f)
 		this->ResetState();
 }
 
-void GuiWindow::ChangeFocus(GuiTrigger * t)
+void GuiWindow::ChangeFocus(GuiElement* e)
+{
+	if(parentElement)
+		return; // this is only intended for the main window
+
+	for (u8 i = 0; i < _elements.size(); i++)
+	{
+		if(e == _elements.at(i))
+			_elements.at(i)->SetFocus(1);
+		else if(_elements.at(i)->IsFocused() == 1)
+			_elements.at(i)->SetFocus(0);
+	}
+}
+
+void GuiWindow::ToggleFocus(GuiTrigger * t)
 {
 	if(parentElement || state == STATE_DISABLED)
 		return; // this is only intended for the main window
@@ -384,7 +398,7 @@ void GuiWindow::MoveSelectionVert(int dir)
 
 void GuiWindow::Update(GuiTrigger * t)
 {
-	if(_elements.size() == 0 ||	(state == STATE_DISABLED && parentElement))
+	if(_elements.size() == 0 || (state == STATE_DISABLED && parentElement))
 		return;
 
 	for (u8 i = 0; i < _elements.size(); i++)
@@ -393,7 +407,7 @@ void GuiWindow::Update(GuiTrigger * t)
 		catch (exception& e) { }
 	}
 
-	this->ChangeFocus(t);
+	this->ToggleFocus(t);
 
 	if(focus) // only send actions to this window if it's in focus
 	{

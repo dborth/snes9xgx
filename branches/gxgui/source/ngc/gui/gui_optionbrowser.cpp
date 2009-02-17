@@ -90,8 +90,8 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 
 		optionBtn[i] = new GuiButton(552,30);
 		optionBtn[i]->SetParent(this);
-		optionBtn[i]->SetLabel(optionTxt[i]);
-		optionBtn[i]->SetLabel2(optionVal[i]);
+		optionBtn[i]->SetLabel(optionTxt[i], 0);
+		optionBtn[i]->SetLabel(optionVal[i], 1);
 		optionBtn[i]->SetImageOver(optionBg[i]);
 		optionBtn[i]->SetPosition(0,30*i+3);
 		optionBtn[i]->SetTrigger(trigA);

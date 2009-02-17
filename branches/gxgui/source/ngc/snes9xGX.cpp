@@ -252,25 +252,6 @@ emulate ()
 				gameScreenTex = GRRLIB_Screen2Texture();
 				ResetVideo_Menu ();
 
-				/*if ( GCSettings.AutoSave == 1 )
-				{
-					SaveSRAM ( GCSettings.SaveMethod, SILENT );
-				}
-				else if ( GCSettings.AutoSave == 2 )
-				{
-					if ( WaitPromptChoice ("Save Freeze State?", "Don't Save", "Save") )
-						NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
-				}
-				else if ( GCSettings.AutoSave == 3 )
-				{
-					if ( WaitPromptChoice ("Save SRAM and Freeze State?", "Don't Save", "Save") )
-					{
-						SaveSRAM(GCSettings.SaveMethod, SILENT );
-						NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
-					}
-				}
-				 */
-
 				ConfigRequested = 0;
 				break; // leave emulation loop
 			}
@@ -323,7 +304,8 @@ main(int argc, char *argv[])
 	ipl_set_config(6); // disable Qoob modchip
 	#endif
 
-	#ifdef WII_DVD
+	#ifdef HW_RVL
+	DI_Close();
 	DI_Init();	// first
 	#endif
 
@@ -422,6 +404,7 @@ main(int argc, char *argv[])
 
 	// Initialize font system
 	fontSystem = new FreeTypeGX();
+	fontSystem->setCompatibilityMode(FTGX_COMPATIBILITY_GRRLIB);
 
 	// Check if DVD drive belongs to a Wii
 	SetDVDDriveType();

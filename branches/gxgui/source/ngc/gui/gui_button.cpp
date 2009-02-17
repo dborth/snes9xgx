@@ -21,10 +21,13 @@ GuiButton::GuiButton(int w, int h)
 	imageOver = NULL;
 	icon = NULL;
 	iconOver = NULL;
-	label = NULL;
-	labelOver = NULL;
-	label2 = NULL;
-	label2Over = NULL;
+	
+	for(int i=0; i < 3; i++)
+	{
+		label[i] = NULL;
+		labelOver[i] = NULL;
+	}
+	
 	soundOver = NULL;
 	soundClick = NULL;
 	selectable = true;
@@ -68,28 +71,28 @@ void GuiButton::SetIconOver(GuiImage* img)
 }
 void GuiButton::SetLabel(GuiText* txt)
 {
-	label = txt;
+	label[0] = txt;
 
 	if(txt)
 		txt->SetParent(this);
 }
 void GuiButton::SetLabelOver(GuiText* txt)
 {
-	labelOver = txt;
+	labelOver[0] = txt;
 
 	if(txt)
 		txt->SetParent(this);
 }
-void GuiButton::SetLabel2(GuiText* txt)
+void GuiButton::SetLabel(GuiText* txt, int n)
 {
-	label2 = txt;
+	label[n] = txt;
 
 	if(txt)
 		txt->SetParent(this);
 }
-void GuiButton::SetLabel2Over(GuiText* txt)
+void GuiButton::SetLabelOver(GuiText* txt, int n)
 {
-	label2Over = txt;
+	labelOver[n] = txt;
 
 	if(txt)
 		txt->SetParent(this);
@@ -122,15 +125,13 @@ void GuiButton::Draw()
 	else if(icon)
 		icon->Draw();
 	// draw text
-	if(state == STATE_SELECTED && labelOver)
-		labelOver->Draw();
-	else if(label)
-		label->Draw();
-	// draw text (secondary)
-	if(state == STATE_SELECTED && label2Over)
-		label2Over->Draw();
-	else if(label2)
-		label2->Draw();
+	for(int i=0; i<3; i++)
+	{
+		if(state == STATE_SELECTED && labelOver[i])
+			labelOver[i]->Draw();
+		else if(label[i])
+			label[i]->Draw();
+	}
 }
 
 void GuiButton::Update(GuiTrigger * t)

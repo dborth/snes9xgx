@@ -138,16 +138,12 @@ decodesavedata (int method, int readsize)
  * Load SRAM
  ***************************************************************************/
 bool
-LoadSRAM (int method, bool silent)
+LoadSRAM (char * filepath, int method, bool silent)
 {
-	char filepath[1024];
 	int offset = 0;
 
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent); // we use 'Save' because SRAM needs R/W
-
-	if(!MakeFilePath(filepath, FILE_SRAM, method))
-		return false;
 
 	AllocSaveBuffer();
 
@@ -172,22 +168,26 @@ LoadSRAM (int method, bool silent)
 	}
 }
 
+bool
+LoadSRAMAuto (int method, bool silent)
+{
+	char filepath[1024];
+	sprintf(filepath, "%s/%s Auto.srm", GCSettings.SaveFolder, Memory.ROMFilename);
+	return LoadSRAM(filepath, method, silent);
+}
+
 /****************************************************************************
  * Save SRAM
  ***************************************************************************/
 bool
-SaveSRAM (int method, bool silent)
+SaveSRAM (char * filepath, int method, bool silent)
 {
 	bool retval = false;
-	char filepath[1024];
 	int datasize;
 	int offset = 0;
 
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent);
-
-	if(!MakeFilePath(filepath, FILE_SRAM, method))
-		return false;
 
 	AllocSaveBuffer ();
 
@@ -212,4 +212,12 @@ SaveSRAM (int method, bool silent)
 
 	FreeSaveBuffer ();
 	return retval;
+}
+
+bool
+SaveSRAMAuto (int method, bool silent)
+{
+	char filepath[1024];
+	sprintf(filepath, "%s/%s Auto.srm", GCSettings.SaveFolder, Memory.ROMFilename);
+	return SaveSRAM(filepath, method, silent);
 }

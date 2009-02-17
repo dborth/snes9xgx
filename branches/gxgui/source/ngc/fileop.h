@@ -31,10 +31,10 @@ int ParseDirectory();
 void AllocSaveBuffer();
 void FreeSaveBuffer();
 u32 LoadFile(char * rbuffer, char *filepath, u32 length, int method, bool silent);
-u32 LoadFile(char filepath[], int method, bool silent);
+u32 LoadFile(char * filepath, int method, bool silent);
 u32 LoadSzFile(char * filepath, unsigned char * rbuffer);
 u32 SaveFile(char * buffer, char *filepath, u32 datasize, int method, bool silent);
-u32 SaveFile(char filepath[], u32 datasize, int method, bool silent);
+u32 SaveFile(char * filepath, u32 datasize, int method, bool silent);
 
 extern unsigned char * savebuffer;
 extern FILE * file;

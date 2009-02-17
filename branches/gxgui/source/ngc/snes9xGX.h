@@ -38,9 +38,9 @@ enum {
 };
 
 enum {
-	FILE_ROM,
 	FILE_SRAM,
 	FILE_SNAPSHOT,
+	FILE_ROM,
 	FILE_CHEAT,
 	FILE_PREF,
 	FILE_SCREEN

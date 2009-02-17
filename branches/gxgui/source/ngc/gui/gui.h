@@ -47,8 +47,10 @@ typedef struct _optionlist {
 typedef struct _savelist {
 	int length;
 	char filename[20][255];
-	char datetime[20][50];
+	char date[20][50];
+	char time[10][50];
 	int type[20];
+	int files[2][100];
 } SaveList;
 
 #define PAGESIZE 8
@@ -184,7 +186,8 @@ class GuiWindow : public GuiElement
 		void SetState(int s);
 		int GetSelected();
 		void SetFocus(int f);
-		void ChangeFocus(GuiTrigger * t);
+		void ChangeFocus(GuiElement * e);
+		void ToggleFocus(GuiTrigger * t);
 		void MoveSelectionHor(int d);
 		void MoveSelectionVert(int d);
 
@@ -253,8 +256,8 @@ class GuiButton : public GuiElement
 		void SetIconOver(GuiImage* i);
 		void SetLabel(GuiText* t);
 		void SetLabelOver(GuiText* t);
-		void SetLabel2(GuiText* t);
-		void SetLabel2Over(GuiText* t);
+		void SetLabel(GuiText* t, int n);
+		void SetLabelOver(GuiText* t, int n);
 		void SetSoundOver(GuiSound * s);
 		void SetSoundClick(GuiSound * s);
 		void Draw();
@@ -264,10 +267,8 @@ class GuiButton : public GuiElement
 		GuiImage * imageOver;
 		GuiImage * icon;
 		GuiImage * iconOver;
-		GuiText * label;
-		GuiText * labelOver;
-		GuiText * label2;
-		GuiText * label2Over;
+		GuiText * label[3];
+		GuiText * labelOver[3];
 		GuiSound * soundOver;
 		GuiSound * soundClick;
 };
@@ -369,7 +370,7 @@ class GuiOptionBrowser : public GuiElement
 class GuiSaveBrowser : public GuiElement
 {
 	public:
-		GuiSaveBrowser(int w, int h, SaveList * l);
+		GuiSaveBrowser(int w, int h, SaveList * l, int a);
 		~GuiSaveBrowser();
 		int GetClickedSave();
 		void ResetState();
@@ -379,10 +380,12 @@ class GuiSaveBrowser : public GuiElement
 	protected:
 		int selectedItem;
 		int listOffset;
+		int action;
 
 		SaveList * saves;
 		GuiButton * saveBtn[SAVELISTSIZE];
-		GuiText * saveDateTime[SAVELISTSIZE];
+		GuiText * saveDate[SAVELISTSIZE];
+		GuiText * saveTime[SAVELISTSIZE];
 		GuiText * saveType[SAVELISTSIZE];
 
 		GuiImage * saveBgImg[SAVELISTSIZE];

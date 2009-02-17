@@ -435,9 +435,9 @@ int BrowserLoadFile(int method)
 
 			// load SRAM or snapshot
 			if ( GCSettings.AutoLoad == 1 )
-				LoadSRAM(GCSettings.SaveMethod, SILENT);
+				LoadSRAMAuto(GCSettings.SaveMethod, SILENT);
 			else if ( GCSettings.AutoLoad == 2 )
-				NGCUnfreezeGame (GCSettings.SaveMethod, SILENT);
+				NGCUnfreezeGameAuto(GCSettings.SaveMethod, SILENT);
 
 			// setup cheats
 			SetupCheats();
