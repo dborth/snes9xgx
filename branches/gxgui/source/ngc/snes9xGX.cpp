@@ -64,6 +64,7 @@ extern "C" {
 int ConfigRequested = 0;
 int ShutdownRequested = 0;
 int ResetRequested = 0;
+int ExitRequested = 0;
 char appPath[1024];
 FreeTypeGX *fontSystem;
 

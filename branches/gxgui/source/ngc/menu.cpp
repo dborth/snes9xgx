@@ -62,25 +62,24 @@ extern "C" {
 #include "gui/gui.h"
 #include "menu.h"
 
-extern int menu;
 static GuiImage * gameScreenImg = NULL;
 
 int rumbleCount[4] = {0,0,0,0};
 int rumbleRequest[4] = {0,0,0,0};
-int ExitRequested = 0;
 static GuiTrigger userInput[4];
 static GuiImageData * pointer[4];
 static GuiWindow * mainWindow = NULL;
 
-lwp_t guithread = LWP_THREAD_NULL;
+static lwp_t guithread = LWP_THREAD_NULL;
 static bool guiReady = false;
+static bool guiHalt = true;
 static lwp_t progressthread = LWP_THREAD_NULL;
+static bool showProgress = false;
 
-char progressTitle[100];
-char progressMsg[200];
-int progressDone = 0;
-int progressTotal = 0;
-bool showProgress = false;
+static char progressTitle[100];
+static char progressMsg[200];
+static int progressDone = 0;
+static int progressTotal = 0;
 
 /****************************************************************************
  * ShutoffRumble
@@ -199,7 +198,11 @@ UpdateGUI (void *arg)
 {
 	while(1)
 	{
-		if(!guiReady)
+		if(guiHalt)
+		{
+			LWP_SuspendThread(guithread);
+		}
+		else if(!guiReady)
 		{
 			VIDEO_WaitVSync();
 		}
@@ -279,6 +282,23 @@ UpdateGUI (void *arg)
 		}
 	}
 	return NULL;
+}
+
+void
+ResumeGui()
+{
+	guiHalt = false;
+	LWP_ResumeThread (guithread);
+}
+
+void
+HaltGui()
+{
+	guiHalt = true;
+
+	// wait for thread to finish
+	while(!LWP_ThreadIsSuspended(guithread))
+		usleep(50);
 }
 
 /****************************************************************************
@@ -1616,7 +1636,7 @@ MainMenu (int menu)
 	mainWindow->Append(memTxt);
 
 	guiReady = true;
-	LWP_ResumeThread (guithread);
+	ResumeGui();
 
 	// Load preferences
 	if(!LoadPrefs())
@@ -1672,8 +1692,9 @@ MainMenu (int menu)
 	ShutoffRumble();
 	#endif
 
-	guiReady = false;
-	LWP_SuspendThread (guithread);
+	CancelAction();
+	HaltGui();
+
 	delete mainWindow;
 	delete pointer[0];
 	delete pointer[1];
@@ -1697,6 +1718,8 @@ MainMenu (int menu)
  * Here, I simply move the designated value to the gcpadmaps array, which
  * saves on updating the cmd sequences.
  ***************************************************************************/
+
+/*
 u32
 GetInput (u16 ctrlr_type)
 {
@@ -1732,7 +1755,7 @@ GetInput (u16 ctrlr_type)
 		//	}
 		}
 #endif
-		/*** check for exit sequence (c-stick left OR home button) ***/
+		// check for exit sequence (c-stick left OR home button)
 		if ( (gc_px < -70) || (pressed & WPAD_BUTTON_HOME) || (pressed & WPAD_CLASSIC_BUTTON_HOME) )
 			return 0;
 	}	// end while
@@ -1779,7 +1802,7 @@ GetButtonMap(u16 ctrlr_type, char* btn_name)
 			break;
 	};
 
-	/*** note which button we are remapping ***/
+	// note which button we are remapping
 	sprintf (temp, "Remapping ");
 	for (k=0; k<9-strlen(btn_name); k++) strcat(temp, " "); // add whitespace padding to align text
 	strncat (temp, btn_name, 9);		// snes button we are remapping
@@ -1827,7 +1850,7 @@ ConfigureButtons (u16 ctrlr_type)
 	int i, j;
 	uint k;
 
-	/*** Update Menu Title (based on controller we're configuring) ***/
+	// Update Menu Title (based on controller we're configuring)
 	switch (ctrlr_type) {
 		case CTRLR_NUNCHUK:
 			sprintf(menu_title, "SNES     -  NUNCHUK");
@@ -1849,7 +1872,7 @@ ConfigureButtons (u16 ctrlr_type)
 
 	while (quit == 0)
 	{
-		/*** Update Menu with Current ButtonMap ***/
+		// Update Menu with Current ButtonMap
 		for (i=0; i<12; i++) // snes pad has 12 buttons to config (go thru them)
 		{
 			// get current padmap button name to display
@@ -1887,7 +1910,7 @@ ConfigureButtons (u16 ctrlr_type)
 			case 9:
 			case 10:
 			case 11:
-				/*** Change button map ***/
+				// Change button map
 				// wait for input
 				memset (temp, 0, sizeof(temp));
 				strncpy(temp, cfg_btns_menu[ret], 6);			// get the name of the snes button we're changing
@@ -1897,9 +1920,9 @@ ConfigureButtons (u16 ctrlr_type)
 					currentpadmap[ret] = pressed;	// update mapping
 				break;
 
-			case -1: /*** Button B ***/
+			case -1: // Button B
 			case 12:
-				/*** Return ***/
+				// Return
 				quit = 1;
 				break;
 		}
@@ -1949,7 +1972,7 @@ ConfigureControllers ()
 		if (GCSettings.Justifier > 0) sprintf (ctlrmenu[3], "Justifiers:   %d", GCSettings.Justifier);
 		else sprintf (ctlrmenu[3], "Justifiers: OFF");
 
-		/*** Controller Config Menu ***/
+		// Controller Config Menu
 //        ret = RunMenu (ctlrmenu, ctlrmenucount, "Configure Controllers");
 
 		switch (ret)
@@ -1974,28 +1997,28 @@ ConfigureControllers ()
 				break;
 
 			case 4:
-				/*** Configure Nunchuk ***/
+				// Configure Nunchuk
 				ConfigureButtons (CTRLR_NUNCHUK);
 				break;
 
 			case 5:
-				/*** Configure Classic ***/
+				// Configure Classic
 				ConfigureButtons (CTRLR_CLASSIC);
 				break;
 
 			case 6:
-				/*** Configure Wiimote ***/
+				// Configure Wiimote
 				ConfigureButtons (CTRLR_WIIMOTE);
 				break;
 
 			case 7:
-				/*** Configure GC Pad ***/
+				// Configure GC Pad
 				ConfigureButtons (CTRLR_GCPAD);
 				break;
 
-			case -1: /*** Button B ***/
+			case -1: // Button B
 			case 8:
-				/*** Return ***/
+				// Return
 				quit = 1;
 				break;
 		}
@@ -2003,3 +2026,4 @@ ConfigureControllers ()
 
 	menu = oldmenu;
 }
+*/

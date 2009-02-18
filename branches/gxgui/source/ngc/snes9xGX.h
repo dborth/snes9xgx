@@ -80,6 +80,7 @@ void ReloadApp();
 extern struct SGCSettings GCSettings;
 extern int ConfigRequested;
 extern int ShutdownRequested;
+extern int ExitRequested;
 extern char appPath[];
 extern FreeTypeGX *fontSystem;
 

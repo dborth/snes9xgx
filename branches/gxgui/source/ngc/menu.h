@@ -25,8 +25,6 @@ void CancelAction();
 void ShowProgress (const char *msg, int done, int total);
 void ShutoffRumble();
 
-extern lwp_t guithread;
-
 enum
 {
 	MENU_EXIT = -1,

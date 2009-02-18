@@ -112,14 +112,6 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 		saveBtn[i]->SetTrigger(trigA);
 		saveBtn[i]->SetState(STATE_DISABLED);
 	}
-
-	if(action == 1) // save
-	{
-		saveTime[0]->SetText("New SRAM");
-		saveTime[1]->SetText("New Snapshot");
-		saveBtn[0]->SetState(STATE_DEFAULT);
-		saveBtn[1]->SetState(STATE_DEFAULT);
-	}
 }
 
 /**
@@ -321,9 +313,16 @@ endNavigation:
 
 	for(i=0; i<SAVELISTSIZE; i++)
 	{
-		if(listOffset+i < 0)
+		if(listOffset+i < 0 && action == 1)
 		{
-			// do nothing
+			saveDate[0]->SetText(NULL);
+			saveDate[1]->SetText(NULL);
+			saveTime[0]->SetText("New SRAM");
+			saveTime[1]->SetText("New Snapshot");
+			saveType[0]->SetText(NULL);
+			saveType[1]->SetText(NULL);
+			saveBtn[0]->SetState(STATE_DEFAULT);
+			saveBtn[1]->SetState(STATE_DEFAULT);
 		}
 		else if(listOffset+i < saves->length)
 		{
