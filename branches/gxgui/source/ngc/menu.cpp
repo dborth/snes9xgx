@@ -62,12 +62,11 @@ extern "C" {
 #include "gui/gui.h"
 #include "menu.h"
 
-static GuiImage * gameScreenImg = NULL;
-
-int rumbleCount[4] = {0,0,0,0};
 int rumbleRequest[4] = {0,0,0,0};
+static int rumbleCount[4] = {0,0,0,0};
 static GuiTrigger userInput[4];
 static GuiImageData * pointer[4];
+static GuiImage * gameScreenImg = NULL;
 static GuiWindow * mainWindow = NULL;
 
 static lwp_t guithread = LWP_THREAD_NULL;
@@ -561,6 +560,7 @@ int MenuGameSelection()
 				if(browserList[i].isdir)
 				{
 					BrowserChangeFolder(method);
+					gameBrowser.ResetState();
 					gameBrowser.gameList[0]->SetState(STATE_SELECTED);
 					gameBrowser.TriggerUpdate();
 				}
@@ -750,6 +750,7 @@ int MenuGame()
 		}
 		else if(cheatsBtn.GetState() == STATE_CLICKED)
 		{
+			cheatsBtn.ResetState();
 			if(Cheat.num_cheats > 0)
 				menu = MENU_GAME_CHEATS;
 			else
@@ -790,6 +791,8 @@ int MenuGameSaves(int action)
 	int j = 0;
 	SaveList saves;
 	char filepath[1024];
+
+	memset(&saves, 0, sizeof(saves));
 
 	strncpy(browser.dir, GCSettings.SaveFolder, 200);
 
@@ -835,6 +838,12 @@ int MenuGameSaves(int action)
 	}
 
 	saves.length = j;
+
+	if(saves.length == 0 && action == 0)
+	{
+		InfoPrompt("No game saves found.");
+		return MENU_GAME;
+	}
 
 	GuiText titleTxt(NULL, 22, (GXColor){255, 255, 255, 0xff});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
@@ -913,7 +922,7 @@ int MenuGameSaves(int action)
 
 					if(i < 100)
 					{
-						sprintf(filepath, "%s/%s %i.srm", GCSettings.SaveFolder, Memory.ROMFilename, i+1);
+						sprintf(filepath, "%s/%s %i.srm", GCSettings.SaveFolder, Memory.ROMFilename, i);
 						SaveSRAM(filepath, GCSettings.SaveMethod, NOTSILENT);
 						menu = MENU_GAME_SAVE;
 					}
@@ -926,7 +935,7 @@ int MenuGameSaves(int action)
 
 					if(i < 100)
 					{
-						sprintf(filepath, "%s/%s %i.frz", GCSettings.SaveFolder, Memory.ROMFilename, i+1);
+						sprintf(filepath, "%s/%s %i.frz", GCSettings.SaveFolder, Memory.ROMFilename, i);
 						NGCFreezeGame (filepath, GCSettings.SaveMethod, NOTSILENT);
 						menu = MENU_GAME_SAVE;
 					}
@@ -1289,6 +1298,8 @@ int MenuSettingsVideo()
 			sprintf (options.value[1], "Default");
 
 		sprintf (options.value[2], "%s", GetFilterName((RenderFilter)GCSettings.FilterMethod));
+
+		sprintf (options.value[3], "%.2f%%", GCSettings.ZoomLevel*100);
 
 		sprintf (options.value[4], "%d, %d", GCSettings.xshift, GCSettings.yshift);
 

@@ -29,7 +29,6 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 
 	selectedItem = 0;
 	focus = 0; // allow focus
-	memset(saves->files, 0, sizeof(saves->files));
 
 	trigA = new GuiTrigger;
 	trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
@@ -234,7 +233,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			{
 				// move list down by 1 row
 				listOffset += 2;
-				selectedItem += 1;
+				selectedItem -= 1;
 			}
 		}
 		else if(saveBtn[selectedItem+1]->IsVisible())
@@ -251,17 +250,14 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		{
 			if((listOffset - 2 >= 0 && action == 0) ||
 				(listOffset - 2 >= -2 && action == 1))
-
 			{
 				// move list up by 1
 				listOffset -= 2;
-				selectedItem -= 1;
+				selectedItem = SAVELISTSIZE-1;
 			}
 		}
 		else
 		{
-			saveBtn[selectedItem]->ResetState();
-			saveBtn[selectedItem-1]->SetState(STATE_SELECTED);
 			selectedItem -= 1;
 		}
 	}
@@ -273,18 +269,17 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			if(listOffset + SAVELISTSIZE + 1 < saves->length)
 			{
 				listOffset += 2;
-				selectedItem += 2;
 			}
 			else if(listOffset + SAVELISTSIZE < saves->length)
 			{
 				listOffset += 2;
-				selectedItem += 1;
+
+				if(selectedItem == SAVELISTSIZE-1)
+					selectedItem -= 1;
 			}
 		}
 		else if(saveBtn[selectedItem+2]->IsVisible())
 		{
-			saveBtn[selectedItem]->ResetState();
-			saveBtn[selectedItem+2]->SetState(STATE_SELECTED);
 			selectedItem += 2;
 		}
 	}
@@ -298,13 +293,15 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			{
 				// move list up by 1
 				listOffset -= 2;
-				selectedItem -= 2;
+
+				if(selectedItem == 0)
+					selectedItem = SAVELISTSIZE-2;
+				else
+					selectedItem = SAVELISTSIZE-1;
 			}
 		}
 		else
 		{
-			saveBtn[selectedItem]->ResetState();
-			saveBtn[selectedItem-2]->SetState(STATE_SELECTED);
 			selectedItem -= 2;
 		}
 	}
@@ -321,8 +318,6 @@ endNavigation:
 			saveTime[1]->SetText("New Snapshot");
 			saveType[0]->SetText(NULL);
 			saveType[1]->SetText(NULL);
-			saveBtn[0]->SetState(STATE_DEFAULT);
-			saveBtn[1]->SetState(STATE_DEFAULT);
 		}
 		else if(listOffset+i < saves->length)
 		{
@@ -358,11 +353,14 @@ endNavigation:
 			saveBtn[i]->SetState(STATE_DISABLED);
 		}
 
+		if(i != selectedItem && saveBtn[i]->GetState() == STATE_SELECTED)
+			saveBtn[i]->ResetState();
+		else if(i == selectedItem && saveBtn[i]->GetState() == STATE_DEFAULT)
+			saveBtn[selectedItem]->SetState(STATE_SELECTED);
+
 		saveBtn[i]->Update(t);
 
 		if(saveBtn[i]->GetState() == STATE_SELECTED)
-		{
 			selectedItem = i;
-		}
 	}
 }

@@ -21,7 +21,7 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	options = l;
 	selectable = true;
 	listOffset = this->FindMenuItem(-1, 1);
-	selectedItem = listOffset;
+	selectedItem = 0;
 	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
@@ -208,17 +208,17 @@ void GuiOptionBrowser::Draw()
 	{
 		if(next >= 0)
 		{
-			optionBtn[next]->Draw();
+			optionBtn[i]->Draw();
 			next = this->FindMenuItem(next, 1);
 		}
 		else
 			break;
 	}
 
-	/*scrollbarImg->Draw();
+	scrollbarImg->Draw();
 	arrowUpBtn->Draw();
 	arrowDownBtn->Draw();
-	scrollbarBoxBtn->Draw();*/
+	scrollbarBoxBtn->Draw();
 }
 
 void GuiOptionBrowser::Update(GuiTrigger * t)
@@ -226,59 +226,12 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 	int next, prev;
 
 	// update the location of the scroll box based on the position in the option list
-	//int position = 144*(browser.pageIndex + selectedItem) / browser.numEntries;
-	//scrollbarBoxBtn->SetPosition(0,position+36);
+	int position = 144*(browser.pageIndex + selectedItem) / browser.numEntries;
+	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	arrowUpBtn->Update(t);
 	arrowDownBtn->Update(t);
 	scrollbarBoxBtn->Update(t);
-
-	// pad/joystick navigation
-	if(!focus)
-		goto endNavigation; // skip navigation
-
-	if(t->wpad.btns_d & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)
-		|| t->pad.btns_d & PAD_BUTTON_DOWN)
-	{
-		next = this->FindMenuItem(selectedItem, 1);
-
-		if(next >= 0)
-		{
-			if(selectedItem == PAGESIZE-1)
-			{
-				// move list down by 1
-				listOffset = this->FindMenuItem(listOffset, 1);
-			}
-			else if(optionBtn[selectedItem+1]->IsVisible())
-			{
-				optionBtn[selectedItem]->ResetState();
-				optionBtn[next]->SetState(STATE_SELECTED);
-				selectedItem++;
-			}
-		}
-	}
-	else if(t->wpad.btns_d & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)
-		|| t->pad.btns_d & PAD_BUTTON_UP)
-	{
-		prev = this->FindMenuItem(selectedItem, -1);
-
-		if(prev >= 0)
-		{
-			if(selectedItem == 0)
-			{
-				// move list up by 1
-				listOffset = prev;
-			}
-			else
-			{
-				optionBtn[selectedItem]->ResetState();
-				optionBtn[prev]->SetState(STATE_SELECTED);
-				selectedItem--;
-			}
-		}
-	}
-
-endNavigation:
 
 	next = listOffset;
 
@@ -309,5 +262,50 @@ endNavigation:
 			selectedItem = i;
 		}
 		next = this->FindMenuItem(next, 1);
+	}
+
+	// pad/joystick navigation
+	if(!focus)
+		return; // skip navigation
+
+	if(t->wpad.btns_d & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)
+		|| t->pad.btns_d & PAD_BUTTON_DOWN)
+	{
+		next = this->FindMenuItem(optionIndex[selectedItem], 1);
+
+		if(next >= 0)
+		{
+			if(selectedItem == PAGESIZE-1)
+			{
+				// move list down by 1
+				listOffset = this->FindMenuItem(listOffset, 1);
+			}
+			else if(optionBtn[selectedItem+1]->IsVisible())
+			{
+				optionBtn[selectedItem]->ResetState();
+				optionBtn[selectedItem+1]->SetState(STATE_SELECTED);
+				selectedItem++;
+			}
+		}
+	}
+	else if(t->wpad.btns_d & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)
+		|| t->pad.btns_d & PAD_BUTTON_UP)
+	{
+		prev = this->FindMenuItem(optionIndex[selectedItem], -1);
+
+		if(prev >= 0)
+		{
+			if(selectedItem == 0)
+			{
+				// move list up by 1
+				listOffset = prev;
+			}
+			else
+			{
+				optionBtn[selectedItem]->ResetState();
+				optionBtn[selectedItem-1]->SetState(STATE_SELECTED);
+				selectedItem--;
+			}
+		}
 	}
 }

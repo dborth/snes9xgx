@@ -519,27 +519,13 @@ void decodepad (int pad)
 void NGCReportButtons ()
 {
 	s8 gc_px = PAD_SubStickX (0);
-	s8 gc_py = PAD_SubStickY (0);
 
 	u16 gc_pb = PAD_ButtonsHeld (0);
 
 #ifdef HW_RVL
 	s8 wm_sx = WPAD_Stick (0,1,0);
-	s8 wm_sy = WPAD_Stick (0,1,1);
 	u32 wm_pb = WPAD_ButtonsDown (0);	// wiimote / expansion button info
 #endif
-
-
-	/*** Check for video zoom ***/
-	if (GCSettings.Zoom)
-	{
-		if (gc_py < -36 || gc_py > 36)
-			zoom ((float) gc_py / -36);
-#ifdef HW_RVL
-		if (wm_sy < -36 || wm_sy > 36)
-			zoom ((float) wm_sy / -36);
-#endif
-	}
 
     Settings.TurboMode = ( (gc_px > 70)
 #ifdef HW_RVL

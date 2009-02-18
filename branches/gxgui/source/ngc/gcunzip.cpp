@@ -149,7 +149,7 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 	res = inflateInit2 (&zs, -MAX_WBITS);
 
 	if (res != Z_OK)
-		goto failed;
+		goto done;
 
 	/*** Set ZipChunk for first pass ***/
 	zipoffset =
@@ -173,8 +173,7 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 
 			if (res == Z_MEM_ERROR)
 			{
-				inflateEnd (&zs);
-				goto failed;
+				goto done;
 			}
 
 			have = ZIPCHUNK - zs.avail_out;
@@ -202,25 +201,20 @@ UnZipBuffer (unsigned char *outbuffer, int method)
 				break;
 		}
 		if(sizeread <= 0)
-			break; // read failure
+			goto done; // read failure
 
 		ShowProgress ("Loading...", bufferoffset, pkzip.uncompressedSize);
 	}
 	while (res != Z_STREAM_END);
 
+done:
 	inflateEnd (&zs);
 	CancelAction();
 
 	if (res == Z_STREAM_END)
-	{
-		if (pkzip.uncompressedSize == (u32) bufferoffset)
-			return bufferoffset;
-		else
-			return pkzip.uncompressedSize;
-	}
-failed:
-	CancelAction();
-	return 0;
+		return pkzip.uncompressedSize;
+	else
+		return 0;
 }
 
 /****************************************************************************

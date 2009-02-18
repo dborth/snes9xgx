@@ -153,7 +153,6 @@ preparePrefsData (int method)
 
 	createXMLSection("Emulation", "Emulation Settings");
 
-	createXMLSetting("Zoom", "Zoom On/Off", toStr(GCSettings.Zoom));
 	createXMLSetting("ZoomLevel", "Zoom Level", FtoStr(GCSettings.ZoomLevel));
 	createXMLSetting("render", "Video Filtering", toStr(GCSettings.render));
 	createXMLSetting("widescreen", "Aspect Ratio Correction", toStr(GCSettings.widescreen));
@@ -312,7 +311,6 @@ decodePrefsData (int method)
 
 			// Emulation Settings
 
-			loadXMLSetting(&GCSettings.Zoom, "Zoom");
 			loadXMLSetting(&GCSettings.ZoomLevel, "ZoomLevel");
 			loadXMLSetting(&GCSettings.render, "render");
 			loadXMLSetting(&GCSettings.widescreen, "widescreen");

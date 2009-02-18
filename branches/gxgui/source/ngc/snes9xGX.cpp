@@ -405,7 +405,7 @@ main(int argc, char *argv[])
 
 	// Initialize font system
 	fontSystem = new FreeTypeGX();
-	fontSystem->setCompatibilityMode(FTGX_COMPATIBILITY_GRRLIB);
+	//fontSystem->setCompatibilityMode(FTGX_COMPATIBILITY_GRRLIB);
 
 	// Check if DVD drive belongs to a Wii
 	SetDVDDriveType();

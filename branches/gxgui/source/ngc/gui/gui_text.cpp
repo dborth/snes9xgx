@@ -137,5 +137,5 @@ void GuiText::Draw()
 		fontSystem->loadFont(font_ttf, font_ttf_size, size);
 		currentSize = size;
 	}
-	fontSystem->drawText(this->GetLeft(), this->GetTop(), text, color, style);
+	fontSystem->drawText((u16)this->GetLeft(), (u16)this->GetTop(), text, color, style);
 }
