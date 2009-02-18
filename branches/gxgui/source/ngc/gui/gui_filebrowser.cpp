@@ -261,10 +261,9 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 			if(browser.pageIndex+i < browser.numEntries)
 			{
 				if(gameList[i]->GetState() == STATE_DISABLED)
-				{
-					gameList[i]->SetVisible(true);
 					gameList[i]->ResetState();
-				}
+
+				gameList[i]->SetVisible(true);
 
 				gameListText[i]->SetText(browserList[browser.pageIndex+i].displayname);
 

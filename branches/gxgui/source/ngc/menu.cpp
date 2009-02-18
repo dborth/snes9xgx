@@ -188,7 +188,8 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
  * UpdateGUI
  ***************************************************************************/
 
-static u32 sysmem = 0;
+static u32 arena1mem = 0;
+static u32 arena2mem = 0;
 static char mem[150] = { 0 };
 static GuiText * memTxt;
 
@@ -207,9 +208,12 @@ UpdateGUI (void *arg)
 		}
 		else
 		{
-			/*sysmem = (u32)SYS_GetArena1Hi() - (u32)SYS_GetArena1Lo();
-			sprintf(mem, "%u", sysmem);
-			memTxt->SetText(mem);*/
+			arena1mem = (u32)SYS_GetArena1Hi() - (u32)SYS_GetArena1Lo();
+			#ifdef HW_RVL
+			arena2mem = (u32)SYS_GetArena2Hi() - (u32)SYS_GetArena2Lo();
+			#endif
+			sprintf(mem, "A1: %u / A2: %u", arena1mem, arena2mem);
+			memTxt->SetText(mem);
 
 			mainWindow->Draw();
 
@@ -519,7 +523,7 @@ int MenuGameSelection()
 	settingsBtn.SetSoundOver(&btnSoundOver);
 	settingsBtn.SetTrigger(&trigA);
 
-	GuiText exitBtnTxt("Exit", 24, (GXColor){0, 0, 0, 0xff});
+	GuiText exitBtnTxt("Exit", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage exitBtnImg(&btnOutline);
 	GuiImage exitBtnImgOver(&btnOutlineOver);
 	GuiButton exitBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -1641,7 +1645,7 @@ MainMenu (int menu)
 	mainWindow->Append(&bgBottomImg);
 
 	// memory usage - for debugging
-	memTxt = new GuiText(mem, 22, (GXColor){255, 255, 255, 0xff});
+	memTxt = new GuiText(NULL, 22, (GXColor){255, 255, 255, 0xff});
 	memTxt->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	memTxt->SetPosition(-20, 40);
 	mainWindow->Append(memTxt);
@@ -1706,6 +1710,7 @@ MainMenu (int menu)
 	CancelAction();
 	HaltGui();
 
+	delete memTxt;
 	delete mainWindow;
 	delete pointer[0];
 	delete pointer[1];
