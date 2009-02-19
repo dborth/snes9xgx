@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
-#include <cmath>
 #include <wiiuse/wpad.h>
 #include <mp3player.h>
 #include "pngu/pngu.h"
@@ -25,6 +24,13 @@
 #include "snes9xGX.h"
 #include "video.h"
 #include "filelist.h"
+
+#define PI 3.14159265f
+#define PADCAL 50
+#define SCROLL_INITIAL_DELAY 20
+#define SCROLL_LOOP_DELAY 3
+#define PAGESIZE 8
+#define SAVELISTSIZE 6
 
 typedef struct _paddata {
 	u16 btns_d;
@@ -52,9 +58,6 @@ typedef struct _savelist {
 	int type[20];
 	int files[2][100];
 } SaveList;
-
-#define PAGESIZE 8
-#define SAVELISTSIZE 6
 
 extern int rumbleRequest[4];
 
@@ -100,6 +103,11 @@ class GuiTrigger
 		~GuiTrigger();
 		void SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
 		void SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
+		s8 WPAD_Stick(u8 right, int axis);
+		bool Left();
+		bool Right();
+		bool Up();
+		bool Down();
 
 		u8 type;
 		s32 chan;

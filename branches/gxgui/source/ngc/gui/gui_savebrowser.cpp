@@ -224,8 +224,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 	if(!focus)
 		goto endNavigation; // skip navigation
 
-	if(t->wpad.btns_d & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT)
-			|| t->pad.btns_d & PAD_BUTTON_RIGHT)
+	if(t->Right())
 	{
 		if(selectedItem == SAVELISTSIZE-1)
 		{
@@ -243,8 +242,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			selectedItem += 1;
 		}
 	}
-	else if(t->wpad.btns_d & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT)
-		|| t->pad.btns_d & PAD_BUTTON_LEFT)
+	else if(t->Left())
 	{
 		if(selectedItem == 0)
 		{
@@ -261,8 +259,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			selectedItem -= 1;
 		}
 	}
-	else if(t->wpad.btns_d & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)
-		|| t->pad.btns_d & PAD_BUTTON_DOWN)
+	else if(t->Down())
 	{
 		if(selectedItem >= SAVELISTSIZE-2)
 		{
@@ -283,8 +280,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			selectedItem += 2;
 		}
 	}
-	else if(t->wpad.btns_d & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)
-		|| t->pad.btns_d & PAD_BUTTON_UP)
+	else if(t->Up())
 	{
 		if(selectedItem < 2)
 		{

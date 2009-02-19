@@ -198,8 +198,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		listChanged = false;
 	}
 
-	if(t->wpad.btns_d & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT)
-		|| t->pad.btns_d & PAD_BUTTON_RIGHT || arrowDownBtn->GetState() == STATE_CLICKED)
+	if(t->Right() || arrowDownBtn->GetState() == STATE_CLICKED)
 	{
 		if(browser.pageIndex + selectedItem + PAGESIZE < browser.numEntries)
 		{
@@ -208,8 +207,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		}
 		arrowDownBtn->ResetState();
 	}
-	else if(t->wpad.btns_d & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT)
-		|| t->pad.btns_d & PAD_BUTTON_LEFT || arrowUpBtn->GetState() == STATE_CLICKED)
+	else if(t->Left() || arrowUpBtn->GetState() == STATE_CLICKED)
 	{
 		if(browser.pageIndex + selectedItem - PAGESIZE > 0)
 		{
@@ -218,8 +216,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		}
 		arrowUpBtn->ResetState();
 	}
-	else if(t->wpad.btns_d & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)
-		|| t->pad.btns_d & PAD_BUTTON_DOWN)
+	else if(t->Down())
 	{
 		if(browser.pageIndex + selectedItem + 1 < browser.numEntries)
 		{
@@ -236,8 +233,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 			}
 		}
 	}
-	else if(t->wpad.btns_d & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)
-		|| t->pad.btns_d & PAD_BUTTON_UP)
+	else if(t->Up())
 	{
 		if(selectedItem == 0 &&	browser.pageIndex + selectedItem > 0)
 		{

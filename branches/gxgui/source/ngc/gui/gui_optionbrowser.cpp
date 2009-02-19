@@ -268,8 +268,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 	if(!focus)
 		return; // skip navigation
 
-	if(t->wpad.btns_d & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)
-		|| t->pad.btns_d & PAD_BUTTON_DOWN)
+	if(t->Down())
 	{
 		next = this->FindMenuItem(optionIndex[selectedItem], 1);
 
@@ -288,8 +287,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 			}
 		}
 	}
-	else if(t->wpad.btns_d & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)
-		|| t->pad.btns_d & PAD_BUTTON_UP)
+	else if(t->Up())
 	{
 		prev = this->FindMenuItem(optionIndex[selectedItem], -1);
 
