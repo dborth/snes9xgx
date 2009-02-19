@@ -174,7 +174,8 @@ void GuiElement::SetState(int s)
 
 void GuiElement::ResetState()
 {
-	state = STATE_DEFAULT;
+	if(state != STATE_DISABLED)
+		state = STATE_DEFAULT;
 }
 
 void GuiElement::SetClickable(bool c)

@@ -228,10 +228,12 @@ class GuiImage : public GuiElement
 		GuiImage(u8 * img, int w, int h);
 		~GuiImage();
 		void SetAngle(float a);
+		void SetAlpha(int a);
 		void Draw();
 		u8 * GetImage();
 	protected:
 		u8 * image;
+		int alpha;
 		float imageangle;
 };
 

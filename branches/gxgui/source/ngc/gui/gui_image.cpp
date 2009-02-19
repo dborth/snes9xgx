@@ -19,6 +19,7 @@ GuiImage::GuiImage(GuiImageData * img)
 	width = img->GetWidth();
 	height = img->GetHeight();
 	imageangle = 0;
+	alpha = 255;
 }
 
 GuiImage::GuiImage(u8 * img, int w, int h)
@@ -27,6 +28,7 @@ GuiImage::GuiImage(u8 * img, int w, int h)
 	width = w;
 	height = h;
 	imageangle = 0;
+	alpha = 255;
 }
 
 /**
@@ -46,6 +48,11 @@ void GuiImage::SetAngle(float a)
 	imageangle = a;
 }
 
+void GuiImage::SetAlpha(int a)
+{
+	alpha = a;
+}
+
 /**
  * Draw the button on screen
  */
@@ -57,5 +64,5 @@ void GuiImage::Draw()
 	if(!this->IsVisible())
 		return;
 
-	GRRLIB_DrawImg(this->GetLeft(), this->GetTop(), width, height, image, imageangle, 1, 1, 255);
+	GRRLIB_DrawImg(this->GetLeft(), this->GetTop(), width, height, image, imageangle, 1, 1, alpha);
 }

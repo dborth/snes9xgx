@@ -179,7 +179,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	}
 	guiReady = false;
 	mainWindow->Remove(&promptWindow);
-	mainWindow->ResetState();
+	mainWindow->SetState(STATE_DEFAULT);
 	guiReady = true;
 	return choice;
 }
@@ -369,7 +369,7 @@ ProgressWindow(char *title, char *msg)
 
 	guiReady = false;
 	mainWindow->Remove(&promptWindow);
-	mainWindow->ResetState();
+	mainWindow->SetState(STATE_DEFAULT);
 	guiReady = true;
 }
 
@@ -504,6 +504,8 @@ int MenuGameSelection()
 	titleTxt.SetPosition(50,50);
 
 	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiImageData iconHome(icon_home_png);
+	GuiImageData iconSettings(icon_settings_png);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 	GuiTrigger trigA;
@@ -512,24 +514,32 @@ int MenuGameSelection()
 	trigHome.SetButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, 0);
 
 	GuiText settingsBtnTxt("Settings", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage settingsBtnIcon(&iconSettings);
+	settingsBtnIcon.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+	settingsBtnIcon.SetPosition(20,0);
 	GuiImage settingsBtnImg(&btnOutline);
 	GuiImage settingsBtnImgOver(&btnOutlineOver);
 	GuiButton settingsBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
 	settingsBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
 	settingsBtn.SetPosition(100, -35);
 	settingsBtn.SetLabel(&settingsBtnTxt);
+	settingsBtn.SetIcon(&settingsBtnIcon);
 	settingsBtn.SetImage(&settingsBtnImg);
 	settingsBtn.SetImageOver(&settingsBtnImgOver);
 	settingsBtn.SetSoundOver(&btnSoundOver);
 	settingsBtn.SetTrigger(&trigA);
 
 	GuiText exitBtnTxt("Exit", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage exitBtnIcon(&iconHome);
+	exitBtnIcon.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+	exitBtnIcon.SetPosition(20,0);
 	GuiImage exitBtnImg(&btnOutline);
 	GuiImage exitBtnImgOver(&btnOutlineOver);
 	GuiButton exitBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
 	exitBtn.SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
 	exitBtn.SetPosition(-100, -35);
 	exitBtn.SetLabel(&exitBtnTxt);
+	exitBtn.SetIcon(&exitBtnIcon);
 	exitBtn.SetImage(&exitBtnImg);
 	exitBtn.SetImageOver(&exitBtnImgOver);
 	exitBtn.SetSoundOver(&btnSoundOver);
@@ -1633,6 +1643,7 @@ MainMenu (int menu)
 	if(gameScreenTex)
 	{
 		gameScreenImg = new GuiImage(gameScreenTex, screenwidth, screenheight);
+		gameScreenImg->SetAlpha(128);
 		mainWindow->Append(gameScreenImg);
 	}
 

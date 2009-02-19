@@ -184,7 +184,7 @@ void GuiFileBrowser::Draw()
 void GuiFileBrowser::Update(GuiTrigger * t)
 {
 	// update the location of the scroll box based on the position in the file list
-	int position = 144*(browser.pageIndex + selectedItem) / browser.numEntries;
+	int position = 136*(browser.pageIndex + selectedItem) / browser.numEntries;
 	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	arrowUpBtn->Update(t);
@@ -200,18 +200,22 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 
 	if(t->Right() || arrowDownBtn->GetState() == STATE_CLICKED)
 	{
-		if(browser.pageIndex + selectedItem + PAGESIZE < browser.numEntries)
+		if(browser.pageIndex < browser.numEntries)
 		{
 			browser.pageIndex += PAGESIZE;
+			if(browser.pageIndex+PAGESIZE >= browser.numEntries)
+				browser.pageIndex = browser.numEntries-PAGESIZE;
 			listChanged = true;
 		}
 		arrowDownBtn->ResetState();
 	}
 	else if(t->Left() || arrowUpBtn->GetState() == STATE_CLICKED)
 	{
-		if(browser.pageIndex + selectedItem - PAGESIZE > 0)
+		if(browser.pageIndex > 0)
 		{
 			browser.pageIndex -= PAGESIZE;
+			if(browser.pageIndex < 0)
+				browser.pageIndex = 0;
 			listChanged = true;
 		}
 		arrowUpBtn->ResetState();
@@ -257,7 +261,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 			if(browser.pageIndex+i < browser.numEntries)
 			{
 				if(gameList[i]->GetState() == STATE_DISABLED)
-					gameList[i]->ResetState();
+					gameList[i]->SetState(STATE_DEFAULT);
 
 				gameList[i]->SetVisible(true);
 

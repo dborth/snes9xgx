@@ -150,7 +150,8 @@ void GuiOptionBrowser::SetFocus(int f)
 
 void GuiOptionBrowser::ResetState()
 {
-	state = STATE_DEFAULT;
+	if(state != STATE_DISABLED)
+		state = STATE_DEFAULT;
 
 	for(int i=0; i<PAGESIZE; i++)
 	{
@@ -226,7 +227,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 	int next, prev;
 
 	// update the location of the scroll box based on the position in the option list
-	int position = 144*(browser.pageIndex + selectedItem) / browser.numEntries;
+	int position = 136*(browser.pageIndex + selectedItem) / browser.numEntries;
 	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	arrowUpBtn->Update(t);
@@ -242,7 +243,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 			if(optionBtn[i]->GetState() == STATE_DISABLED)
 			{
 				optionBtn[i]->SetVisible(true);
-				optionBtn[i]->ResetState();
+				optionBtn[i]->SetState(STATE_DEFAULT);
 			}
 
 			optionTxt[i]->SetText(options->name[next]);

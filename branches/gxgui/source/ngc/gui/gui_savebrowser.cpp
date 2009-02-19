@@ -168,7 +168,8 @@ void GuiSaveBrowser::SetFocus(int f)
 
 void GuiSaveBrowser::ResetState()
 {
-	state = STATE_DEFAULT;
+	if(state != STATE_DISABLED)
+		state = STATE_DEFAULT;
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
@@ -213,7 +214,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 	int i, len;
 	char savetext[50];
 	// update the location of the scroll box based on the position in the option list
-	int position = 144*(selectedItem) / saves->length;
+	int position = 136*(selectedItem) / saves->length;
 	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	arrowUpBtn->Update(t);
@@ -222,7 +223,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 
 	// pad/joystick navigation
 	if(!focus)
-		goto endNavigation; // skip navigation
+		return; // skip navigation
 
 	if(t->Right())
 	{
@@ -302,8 +303,6 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		}
 	}
 
-endNavigation:
-
 	for(i=0; i<SAVELISTSIZE; i++)
 	{
 		if(listOffset+i < 0 && action == 1)
@@ -314,13 +313,20 @@ endNavigation:
 			saveTime[1]->SetText("New Snapshot");
 			saveType[0]->SetText(NULL);
 			saveType[1]->SetText(NULL);
+			saveBtn[0]->SetVisible(true);
+			saveBtn[1]->SetVisible(true);
+
+			if(saveBtn[0]->GetState() == STATE_DISABLED)
+				saveBtn[0]->SetState(STATE_DEFAULT);
+			if(saveBtn[1]->GetState() == STATE_DISABLED)
+				saveBtn[1]->SetState(STATE_DEFAULT);
 		}
 		else if(listOffset+i < saves->length)
 		{
 			if(saveBtn[i]->GetState() == STATE_DISABLED)
 			{
 				saveBtn[i]->SetVisible(true);
-				saveBtn[i]->ResetState();
+				saveBtn[i]->SetState(STATE_DEFAULT);
 			}
 
 			saveDate[i]->SetText(saves->date[listOffset+i]);

@@ -22,6 +22,12 @@ extern const u32	bg_top_png_size;
 extern const u8		bg_bottom_png[];
 extern const u32	bg_bottom_png_size;
 
+extern const u8		icon_settings_png[];
+extern const u32	icon_settings_png_size;
+
+extern const u8		icon_home_png[];
+extern const u32	icon_home_png_size;
+
 extern const u8		button_over_mp3[];
 extern const u32	button_over_mp3_size;
 

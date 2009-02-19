@@ -90,7 +90,8 @@ void GuiWindow::Draw()
 
 void GuiWindow::ResetState()
 {
-	state = STATE_DEFAULT;
+	if(state != STATE_DISABLED)
+		state = STATE_DEFAULT;
 
 	for (u8 i = 0; i < _elements.size(); i++)
 	{
@@ -293,27 +294,6 @@ void GuiWindow::MoveSelectionHor(int dir)
 	if(found >= 0)
 		goto matchfound;
 
-	// match still not found, let's go to the first button in the first row
-	/*for (i = 0; i < _elements.size(); i++)
-	{
-		try
-		{
-			if(_elements.at(i)->IsSelectable())
-			{
-				if(_elements.at(i)->GetTop()*dir <= top*dir)
-				{
-					if(found == -1)
-						found = i;
-					else if(_elements.at(i)->GetTop()*dir < _elements.at(found)->GetTop()*dir)
-						found = i; // this is a better match
-					else if(_elements.at(i)->GetLeft()*dir < _elements.at(found)->GetLeft()*dir)
-						found = i; // this is a better match
-				}
-			}
-		}
-		catch (exception& e) { }
-	}*/
-
 	// match found
 	matchfound:
 	if(found >= 0)
@@ -364,27 +344,6 @@ void GuiWindow::MoveSelectionVert(int dir)
 	}
 	if(found >= 0)
 		goto matchfound;
-
-	// match still not found, let's go to the first/last row
-	/*for (i = 0; i < _elements.size(); i++)
-	{
-		try
-		{
-			if(_elements.at(i)->IsSelectable())
-			{
-				if(_elements.at(i)->GetTop()*dir <= top*dir)
-				{
-					if(found == -1)
-						found = i;
-					else if(_elements.at(i)->GetTop()*dir < _elements.at(found)->GetTop()*dir)
-						found = i; // this is a better match
-					else if(_elements.at(i)->GetLeft()*dir < _elements.at(found)->GetLeft()*dir)
-						found = i; // this is a better match
-				}
-			}
-		}
-		catch (exception& e) { }
-	}*/
 
 	// match found
 	matchfound:
