@@ -475,12 +475,10 @@ MakeTexture (const void *src, void *dst, s32 width, s32 height)
  * This function MUST be called at startup.
  * - also sets up menu video mode
  ***************************************************************************/
+
 void
 InitGCVideo ()
 {
-	// init video
-    VIDEO_Init ();
-
 	// get default video mode
 	vmode = VIDEO_GetPreferredMode(NULL);
 

@@ -22,6 +22,7 @@
 
 #ifdef HW_RVL
 
+static bool inNetworkInit = false;
 static bool networkInit = false;
 static bool autoNetworkInit = true;
 static bool networkShareInit = false;
@@ -166,6 +167,14 @@ void InitializeNetwork(bool silent)
 	if(!silent)
 		ShowAction ("Initializing network...");
 
+	while(inNetworkInit) // a network init is already in progress!
+		usleep(50);
+
+	if(networkInit) // check again if the network was inited
+		return;
+
+	inNetworkInit = true;
+
 	char ip[16];
 	s32 initResult = if_config(ip, NULL, NULL, true);
 
@@ -186,6 +195,7 @@ void InitializeNetwork(bool silent)
 		}
 	}
 	CancelAction();
+	inNetworkInit = false;
 }
 
 void CloseShare()

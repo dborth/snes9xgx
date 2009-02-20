@@ -315,18 +315,19 @@ main(int argc, char *argv[])
 	DEBUG_Init(GDBSTUB_DEVICE_USB, 1);	// init debugging
 	//_break();
 	#endif
-
+	
 	InitDeviceThread();
-
-	// Initialise video
-	InitGCVideo();
-	ResetVideo_Menu (); // change to menu video mode
-
-	// Controllers
+	VIDEO_Init();
 	PAD_Init ();
 
 	#ifdef HW_RVL
 	WPAD_Init();
+	#endif
+
+	InitGCVideo(); // Initialise video
+	ResetVideo_Menu (); // change to menu video mode
+
+	#ifdef HW_RVL
 	// read wiimote accelerometer and IR data
 	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
 	WPAD_SetVRes(WPAD_CHAN_ALL,screenwidth, screenheight);
