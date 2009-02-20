@@ -32,6 +32,8 @@
 #define PAGESIZE 8
 #define SAVELISTSIZE 6
 
+typedef void (*UpdateCallback)(void * e);
+
 typedef struct _paddata {
 	u16 btns_d;
 	u16 btns_u;
@@ -82,7 +84,8 @@ enum
 enum
 {
 	TRIGGER_SIMPLE,
-	TRIGGER_BUTTON_ONLY
+	TRIGGER_BUTTON_ONLY,
+	TRIGGER_BUTTON_ONLY_IN_FOCUS
 };
 
 class GuiSound
@@ -103,6 +106,7 @@ class GuiTrigger
 		~GuiTrigger();
 		void SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
 		void SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
+		void SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
 		s8 WPAD_Stick(u8 right, int axis);
 		bool Left();
 		bool Right();
@@ -137,6 +141,7 @@ class GuiElement
 		void SetTrigger(u8 i, GuiTrigger * t);
 		bool IsInside(int x, int y);
 		void SetPosition(int x, int y);
+		void SetUpdateCallback(UpdateCallback u);
 		int IsFocused();
 		virtual void SetFocus(int f);
 		virtual void SetState(int s);
@@ -159,6 +164,7 @@ class GuiElement
 		bool clickable; // is CLICKED a valid state?
 		GuiTrigger * trigger[2];
 		GuiElement * parentElement;
+		UpdateCallback updateCB;
 };
 
 //!Groups elements into one window in which they can be managed.

@@ -307,4 +307,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 			}
 		}
 	}
+
+	if(updateCB)
+		updateCB(this);
 }

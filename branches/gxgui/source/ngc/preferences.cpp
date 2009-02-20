@@ -162,10 +162,7 @@ preparePrefsData (int method)
 
 	createXMLSection("Controller", "Controller Settings");
 
-	createXMLSetting("MultiTap", "MultiTap", toStr(Settings.MultiPlayer5Master));
-	createXMLSetting("Superscope", "Superscope", toStr(GCSettings.Superscope));
-	createXMLSetting("Mice", "Mice", toStr(GCSettings.Mouse));
-	createXMLSetting("Justifiers", "Justifiers", toStr(GCSettings.Justifier));
+	createXMLSetting("Controller", "Controller", toStr(GCSettings.Controller));
 
 	createXMLController(gcpadmap, "gcpadmap", "GameCube Pad");
 	createXMLController(wmpadmap, "wmpadmap", "Wiimote");
@@ -214,16 +211,6 @@ static void loadXMLSetting(float * var, const char * name)
 		const char * tmp = mxmlElementGetAttr(item, "value");
 		if(tmp)
 			*var = atof(tmp);
-	}
-}
-static void loadXMLSetting(bool8 * var, const char * name)
-{
-	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
-	if(item)
-	{
-		const char * tmp = mxmlElementGetAttr(item, "value");
-		if(tmp)
-			*var = atoi(tmp);
 	}
 }
 
@@ -320,10 +307,7 @@ decodePrefsData (int method)
 
 			// Controller Settings
 
-			loadXMLSetting(&Settings.MultiPlayer5Master, "MultiTap");
-			loadXMLSetting(&GCSettings.Superscope, "Superscope");
-			loadXMLSetting(&GCSettings.Mouse, "Mice");
-			loadXMLSetting(&GCSettings.Justifier, "Justifiers");
+			loadXMLSetting(&GCSettings.Controller, "Controller");
 
 			loadXMLController(gcpadmap, "gcpadmap");
 			loadXMLController(wmpadmap, "wmpadmap");

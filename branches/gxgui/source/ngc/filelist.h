@@ -37,6 +37,33 @@ extern const u32	button_png_size;
 extern const u8		button_over_png[];
 extern const u32	button_over_png_size;
 
+extern const u8		button_arrow_left_png[];
+extern const u32	button_arrow_left_png_size;
+
+extern const u8		button_arrow_right_png[];
+extern const u32	button_arrow_right_png_size;
+
+extern const u8		button_arrow_up_png[];
+extern const u32	button_arrow_up_png_size;
+
+extern const u8		button_arrow_down_png[];
+extern const u32	button_arrow_down_png_size;
+
+extern const u8		button_arrow_left_over_png[];
+extern const u32	button_arrow_left_over_png_size;
+
+extern const u8		button_arrow_right_over_png[];
+extern const u32	button_arrow_right_over_png_size;
+
+extern const u8		button_arrow_up_over_png[];
+extern const u32	button_arrow_up_over_png_size;
+
+extern const u8		button_arrow_down_over_png[];
+extern const u32	button_arrow_down_over_png_size;
+
+extern const u8		screen_position_png[];
+extern const u32	screen_position_png_size;
+
 extern const u8		button_close_png[];
 extern const u32	button_close_png_size;
 

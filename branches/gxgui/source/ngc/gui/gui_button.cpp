@@ -21,13 +21,13 @@ GuiButton::GuiButton(int w, int h)
 	imageOver = NULL;
 	icon = NULL;
 	iconOver = NULL;
-	
+
 	for(int i=0; i < 3; i++)
 	{
 		label[i] = NULL;
 		labelOver[i] = NULL;
 	}
-	
+
 	soundOver = NULL;
 	soundClick = NULL;
 	selectable = true;
@@ -193,8 +193,16 @@ void GuiButton::Update(GuiTrigger * t)
 					{
 						state = STATE_CLICKED;
 					}
+					else if(trigger[i]->type == TRIGGER_BUTTON_ONLY_IN_FOCUS &&
+							parentElement->IsFocused())
+					{
+						state = STATE_CLICKED;
+					}
 				}
 			}
 		}
 	}
+
+	if(updateCB)
+		updateCB(this);
 }

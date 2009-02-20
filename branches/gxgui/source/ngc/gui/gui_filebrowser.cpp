@@ -294,4 +294,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		}
 	}
 	listChanged = false;
+
+	if(updateCB)
+		updateCB(this);
 }

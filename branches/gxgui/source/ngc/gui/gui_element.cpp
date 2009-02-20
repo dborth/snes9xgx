@@ -27,6 +27,7 @@ GuiElement::GuiElement()
 	clickable = false;
 	visible = true;
 	focus = -1; // cannot be focused
+	updateCB = NULL;
 
 	// default alignment - align to top left
 	alignmentVert = ALIGN_TOP;
@@ -231,7 +232,13 @@ void GuiElement::SetTrigger(u8 i, GuiTrigger * t)
 
 void GuiElement::Update(GuiTrigger * t)
 {
+	if(updateCB)
+		updateCB(this);
+}
 
+void GuiElement::SetUpdateCallback(UpdateCallback u)
+{
+	updateCB = u;
 }
 
 void GuiElement::SetPosition(int xoff, int yoff)

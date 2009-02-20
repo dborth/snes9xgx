@@ -137,7 +137,7 @@ void GuiWindow::ChangeFocus(GuiElement* e)
 
 void GuiWindow::ToggleFocus(GuiTrigger * t)
 {
-	if(parentElement || state == STATE_DISABLED)
+	if(parentElement)
 		return; // this is only intended for the main window
 
 	int found = -1;
@@ -165,7 +165,7 @@ void GuiWindow::ToggleFocus(GuiTrigger * t)
 		{
 			try
 			{
-				if(_elements.at(i)->IsFocused() == 0) // focus is possible (but not set)
+				if(_elements.at(i)->IsFocused() == 0 && _elements.at(i)->GetState() != STATE_DISABLED) // focus is possible (but not set)
 				{
 					_elements.at(i)->SetFocus(1); // give this element focus
 					break;
@@ -182,7 +182,7 @@ void GuiWindow::ToggleFocus(GuiTrigger * t)
 		{
 			try
 			{
-				if(_elements.at(i)->IsFocused() == 0) // focus is possible (but not set)
+				if(_elements.at(i)->IsFocused() == 0 && _elements.at(i)->GetState() != STATE_DISABLED) // focus is possible (but not set)
 				{
 					newfocus = i;
 					_elements.at(i)->SetFocus(1); // give this element focus
@@ -199,7 +199,7 @@ void GuiWindow::ToggleFocus(GuiTrigger * t)
 			{
 				try
 				{
-					if(_elements.at(i)->IsFocused() == 0) // focus is possible (but not set)
+					if(_elements.at(i)->IsFocused() == 0 && _elements.at(i)->GetState() != STATE_DISABLED) // focus is possible (but not set)
 					{
 						_elements.at(i)->SetFocus(1); // give this element focus
 						_elements.at(found)->SetFocus(0); // disable focus on other element
@@ -380,4 +380,7 @@ void GuiWindow::Update(GuiTrigger * t)
 		else if(t->Up())
 			this->MoveSelectionVert(-1);
 	}
+
+	if(updateCB)
+		updateCB(this);
 }

@@ -30,7 +30,9 @@ GuiTrigger::~GuiTrigger()
 }
 
 /**
- * Sets a simple trigger - eg: Button selected, A button pressed, on all channels
+ * Sets a simple trigger. Requires:
+ * - Element is selected
+ * - Trigger button is pressed
  */
 void GuiTrigger::SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 {
@@ -41,11 +43,25 @@ void GuiTrigger::SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 }
 
 /**
- * Sets a button trigger - eg: A button pressed and button NOT selected, on all channels
+ * Sets a button trigger. Requires:
+ * - Trigger button is pressed
  */
 void GuiTrigger::SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 {
 	type = TRIGGER_BUTTON_ONLY;
+	chan = ch;
+	wpad.btns_d = wiibtns;
+	pad.btns_d = gcbtns;
+}
+
+/**
+ * Sets a button trigger. Requires:
+ * - Trigger button is pressed
+ * - Parent window is in focus
+ */
+void GuiTrigger::SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
+{
+	type = TRIGGER_BUTTON_ONLY_IN_FOCUS;
 	chan = ch;
 	wpad.btns_d = wiibtns;
 	pad.btns_d = gcbtns;

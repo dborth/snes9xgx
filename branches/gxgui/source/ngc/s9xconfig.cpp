@@ -48,9 +48,7 @@ DefaultSettings ()
 	GCSettings.smbpwd[19] = 0;
 	GCSettings.smbshare[19] = 0;
 
-	GCSettings.Superscope = 0;
-    GCSettings.Mouse = 0;
-	GCSettings.Justifier = 0;
+	GCSettings.Controller = 0;
 
 	GCSettings.ZoomLevel = 1.0; // zoom level
 	GCSettings.render = 2; // Unfiltered

@@ -219,9 +219,10 @@ emulate ()
 		ConfigRequested = 0;
 		SwitchAudioMode(0);
 
-		Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);
-		Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);
-		Settings.JustifierMaster = (GCSettings.Justifier > 0 ? true : false);
+		Settings.MultiPlayer5Master = (GCSettings.Controller == CTRL_PAD4 ? true : false);
+		Settings.SuperScopeMaster = (GCSettings.Controller == CTRL_SUPERSCOPE ? true : false);
+		Settings.MouseMaster = (GCSettings.Controller == CTRL_MOUSE ? true : false);
+		Settings.JustifierMaster = (GCSettings.Controller == CTRL_JUSTIFIER ? true : false);
 		SetControllers ();
 
 		// stop checking if devices were removed/inserted

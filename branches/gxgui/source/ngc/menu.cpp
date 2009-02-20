@@ -68,6 +68,7 @@ static GuiTrigger userInput[4];
 static GuiImageData * pointer[4];
 static GuiImage * gameScreenImg = NULL;
 static GuiWindow * mainWindow = NULL;
+static GuiText * settingText = NULL;
 
 static lwp_t guithread = LWP_THREAD_NULL;
 static bool guiReady = false;
@@ -79,6 +80,23 @@ static char progressTitle[100];
 static char progressMsg[200];
 static int progressDone = 0;
 static int progressTotal = 0;
+
+void
+ResumeGui()
+{
+	guiHalt = false;
+	LWP_ResumeThread (guithread);
+}
+
+void
+HaltGui()
+{
+	guiHalt = true;
+
+	// wait for thread to finish
+	while(!LWP_ThreadIsSuspended(guithread))
+		usleep(50);
+}
 
 /****************************************************************************
  * ShutoffRumble
@@ -102,7 +120,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 {
 	int choice = -1;
 
-	GuiWindow promptWindow(448,256);
+	GuiWindow promptWindow(448,288);
 	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
 	GuiImageData btnOutline(button_png);
@@ -287,23 +305,6 @@ UpdateGUI (void *arg)
 	return NULL;
 }
 
-void
-ResumeGui()
-{
-	guiHalt = false;
-	LWP_ResumeThread (guithread);
-}
-
-void
-HaltGui()
-{
-	guiHalt = true;
-
-	// wait for thread to finish
-	while(!LWP_ThreadIsSuspended(guithread))
-		usleep(50);
-}
-
 /****************************************************************************
  * ProgressWindow
  ***************************************************************************/
@@ -315,7 +316,7 @@ ProgressWindow(char *title, char *msg)
 	if(!showProgress)
 		return;
 
-	GuiWindow promptWindow(448,256);
+	GuiWindow promptWindow(448,288);
 	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
 	GuiImageData btnOutline(button_png);
@@ -469,6 +470,81 @@ void AutoSave()
 	}
 }
 
+static int
+SettingWindow(const char * title, GuiWindow * w)
+{
+	int save = -1;
+
+	GuiWindow promptWindow(448,288);
+	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiImageData dialogBox(dialogue_box_png);
+	GuiImage dialogBoxImg(&dialogBox);
+
+	GuiText titleTxt(title, 22, (GXColor){255, 255, 255, 0xff});
+	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	titleTxt.SetPosition(0,10);
+
+	GuiText okBtnTxt("OK", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage okBtnImg(&btnOutline);
+	GuiImage okBtnImgOver(&btnOutlineOver);
+	GuiButton okBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+
+	okBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	okBtn.SetPosition(25, -25);
+
+	okBtn.SetLabel(&okBtnTxt);
+	okBtn.SetImage(&okBtnImg);
+	okBtn.SetImageOver(&okBtnImgOver);
+	okBtn.SetSoundOver(&btnSoundOver);
+	okBtn.SetTrigger(&trigA);
+
+	GuiText cancelBtnTxt("Cancel", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage cancelBtnImg(&btnOutline);
+	GuiImage cancelBtnImgOver(&btnOutlineOver);
+	GuiButton cancelBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	cancelBtn.SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
+	cancelBtn.SetPosition(-25, -25);
+	cancelBtn.SetLabel(&cancelBtnTxt);
+	cancelBtn.SetImage(&cancelBtnImg);
+	cancelBtn.SetImageOver(&cancelBtnImgOver);
+	cancelBtn.SetSoundOver(&btnSoundOver);
+	cancelBtn.SetTrigger(&trigA);
+
+	promptWindow.Append(&dialogBoxImg);
+	promptWindow.Append(&titleTxt);
+	promptWindow.Append(&okBtn);
+	promptWindow.Append(&cancelBtn);
+
+	guiReady = false;
+	mainWindow->SetState(STATE_DISABLED);
+	mainWindow->Append(&promptWindow);
+	mainWindow->Append(w);
+	mainWindow->ChangeFocus(w);
+	guiReady = true;
+
+	while(save == -1)
+	{
+		VIDEO_WaitVSync();
+
+		if(okBtn.GetState() == STATE_CLICKED)
+			save = 1;
+		else if(cancelBtn.GetState() == STATE_CLICKED)
+			save = 0;
+	}
+	guiReady = false;
+	mainWindow->Remove(&promptWindow);
+	mainWindow->Remove(w);
+	mainWindow->SetState(STATE_DEFAULT);
+	guiReady = true;
+	return save;
+}
+
 /****************************************************************************
  * MenuGameSelection
  ***************************************************************************/
@@ -599,6 +675,81 @@ int MenuGameSelection()
 	mainWindow->Remove(&buttonWindow);
 	mainWindow->Remove(&gameBrowser);
 	return menu;
+}
+
+void ControllerWindowUpdate(void * ptr, int dir)
+{
+	GuiButton * b = (GuiButton *)ptr;
+	if(b->GetState() == STATE_CLICKED)
+	{
+		GCSettings.Controller += dir;
+
+		if(GCSettings.Controller > CTRL_LENGTH-1)
+			GCSettings.Controller = 0;
+		else if(GCSettings.Controller < 0)
+			GCSettings.Controller = CTRL_LENGTH-1;
+
+		settingText->SetText(ctrlName[GCSettings.Controller]);
+		b->ResetState();
+	}
+}
+
+void ControllerWindowLeftClick(void * ptr) { ControllerWindowUpdate(ptr, -1); }
+void ControllerWindowRightClick(void * ptr) { ControllerWindowUpdate(ptr, +1); }
+
+void ControllerWindow()
+{
+	GuiWindow * w = new GuiWindow(250,250);
+	w->SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiTrigger trigLeft;
+	trigLeft.SetButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT, PAD_BUTTON_LEFT);
+
+	GuiTrigger trigRight;
+	trigRight.SetButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT, PAD_BUTTON_RIGHT);
+
+	GuiImageData arrowLeft(button_arrow_left_png);
+	GuiImage arrowLeftImg(&arrowLeft);
+	GuiImageData arrowLeftOver(button_arrow_left_over_png);
+	GuiImage arrowLeftOverImg(&arrowLeftOver);
+	GuiButton arrowLeftBtn(arrowLeft.GetWidth(), arrowLeft.GetHeight());
+	arrowLeftBtn.SetImage(&arrowLeftImg);
+	arrowLeftBtn.SetImageOver(&arrowLeftOverImg);
+	arrowLeftBtn.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+	arrowLeftBtn.SetTrigger(0, &trigA);
+	arrowLeftBtn.SetTrigger(1, &trigLeft);
+	arrowLeftBtn.SetSelectable(false);
+	arrowLeftBtn.SetUpdateCallback(ControllerWindowLeftClick);
+
+	GuiImageData arrowRight(button_arrow_right_png);
+	GuiImage arrowRightImg(&arrowRight);
+	GuiImageData arrowRightOver(button_arrow_right_over_png);
+	GuiImage arrowRightOverImg(&arrowRightOver);
+	GuiButton arrowRightBtn(arrowRight.GetWidth(), arrowRight.GetHeight());
+	arrowRightBtn.SetImage(&arrowRightImg);
+	arrowRightBtn.SetImageOver(&arrowRightOverImg);
+	arrowRightBtn.SetAlignment(ALIGN_RIGHT, ALIGN_MIDDLE);
+	arrowRightBtn.SetTrigger(0, &trigA);
+	arrowRightBtn.SetTrigger(1, &trigRight);
+	arrowRightBtn.SetSelectable(false);
+	arrowRightBtn.SetUpdateCallback(ControllerWindowRightClick);
+
+	settingText = new GuiText(ctrlName[GCSettings.Controller], 22, (GXColor){0, 0, 0, 0xff});
+
+	int currentController = GCSettings.Controller;
+
+	w->Append(&arrowLeftBtn);
+	w->Append(&arrowRightBtn);
+	w->Append(settingText);
+
+	if(!SettingWindow("Controller",w))
+		GCSettings.Controller = currentController; // undo changes
+
+	delete(w);
+	delete(settingText);
 }
 
 /****************************************************************************
@@ -760,7 +911,7 @@ int MenuGame()
 		}
 		else if(controllerBtn.GetState() == STATE_CLICKED)
 		{
-
+			ControllerWindow();
 		}
 		else if(cheatsBtn.GetState() == STATE_CLICKED)
 		{
@@ -1242,6 +1393,203 @@ int MenuSettingsMappings()
  * MenuSettingsVideo
  ***************************************************************************/
 
+void ScreenZoomWindowUpdate(void * ptr, float amount)
+{
+	GuiButton * b = (GuiButton *)ptr;
+	if(b->GetState() == STATE_CLICKED)
+	{
+		GCSettings.ZoomLevel += amount;
+
+		char zoom[10];
+		sprintf(zoom, "%.2f%%", GCSettings.ZoomLevel*100);
+		settingText->SetText(zoom);
+		b->ResetState();
+	}
+}
+
+void ScreenZoomWindowLeftClick(void * ptr) { ScreenZoomWindowUpdate(ptr, -0.01); }
+void ScreenZoomWindowRightClick(void * ptr) { ScreenZoomWindowUpdate(ptr, +0.01); }
+
+void ScreenZoomWindow()
+{
+	GuiWindow * w = new GuiWindow(250,250);
+	w->SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiTrigger trigLeft;
+	trigLeft.SetButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT, PAD_BUTTON_LEFT);
+
+	GuiTrigger trigRight;
+	trigRight.SetButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT, PAD_BUTTON_RIGHT);
+
+	GuiImageData arrowLeft(button_arrow_left_png);
+	GuiImage arrowLeftImg(&arrowLeft);
+	GuiImageData arrowLeftOver(button_arrow_left_over_png);
+	GuiImage arrowLeftOverImg(&arrowLeftOver);
+	GuiButton arrowLeftBtn(arrowLeft.GetWidth(), arrowLeft.GetHeight());
+	arrowLeftBtn.SetImage(&arrowLeftImg);
+	arrowLeftBtn.SetImageOver(&arrowLeftOverImg);
+	arrowLeftBtn.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+	arrowLeftBtn.SetTrigger(0, &trigA);
+	arrowLeftBtn.SetTrigger(1, &trigLeft);
+	arrowLeftBtn.SetSelectable(false);
+	arrowLeftBtn.SetUpdateCallback(ScreenZoomWindowLeftClick);
+
+	GuiImageData arrowRight(button_arrow_right_png);
+	GuiImage arrowRightImg(&arrowRight);
+	GuiImageData arrowRightOver(button_arrow_right_over_png);
+	GuiImage arrowRightOverImg(&arrowRightOver);
+	GuiButton arrowRightBtn(arrowRight.GetWidth(), arrowRight.GetHeight());
+	arrowRightBtn.SetImage(&arrowRightImg);
+	arrowRightBtn.SetImageOver(&arrowRightOverImg);
+	arrowRightBtn.SetAlignment(ALIGN_RIGHT, ALIGN_MIDDLE);
+	arrowRightBtn.SetTrigger(0, &trigA);
+	arrowRightBtn.SetTrigger(1, &trigRight);
+	arrowRightBtn.SetSelectable(false);
+	arrowRightBtn.SetUpdateCallback(ScreenZoomWindowRightClick);
+
+	settingText = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
+	char zoom[10];
+	sprintf(zoom, "%.2f%%", GCSettings.ZoomLevel*100);
+	settingText->SetText(zoom);
+
+	float currentZoom = GCSettings.ZoomLevel;
+
+	w->Append(&arrowLeftBtn);
+	w->Append(&arrowRightBtn);
+	w->Append(settingText);
+
+	if(!SettingWindow("Screen Zoom",w))
+		GCSettings.ZoomLevel = currentZoom; // undo changes
+
+	delete(w);
+	delete(settingText);
+}
+
+void ScreenPositionWindowUpdate(void * ptr, int x, int y)
+{
+	GuiButton * b = (GuiButton *)ptr;
+	if(b->GetState() == STATE_CLICKED)
+	{
+		GCSettings.xshift += x;
+		GCSettings.yshift += y;
+
+		char shift[10];
+		sprintf(shift, "%i, %i", GCSettings.xshift, GCSettings.yshift);
+		settingText->SetText(shift);
+		b->ResetState();
+	}
+}
+
+void ScreenPositionWindowLeftClick(void * ptr) { ScreenPositionWindowUpdate(ptr, -1, 0); }
+void ScreenPositionWindowRightClick(void * ptr) { ScreenPositionWindowUpdate(ptr, +1, 0); }
+void ScreenPositionWindowUpClick(void * ptr) { ScreenPositionWindowUpdate(ptr, 0, -1); }
+void ScreenPositionWindowDownClick(void * ptr) { ScreenPositionWindowUpdate(ptr, 0, +1); }
+
+void ScreenPositionWindow()
+{
+	GuiWindow * w = new GuiWindow(150,150);
+	w->SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+	w->SetPosition(0, -10);
+
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiTrigger trigLeft;
+	trigLeft.SetButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT, PAD_BUTTON_LEFT);
+
+	GuiTrigger trigRight;
+	trigRight.SetButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT, PAD_BUTTON_RIGHT);
+
+	GuiTrigger trigUp;
+	trigUp.SetButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP, PAD_BUTTON_UP);
+
+	GuiTrigger trigDown;
+	trigDown.SetButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN, PAD_BUTTON_DOWN);
+
+	GuiImageData arrowLeft(button_arrow_left_png);
+	GuiImage arrowLeftImg(&arrowLeft);
+	GuiImageData arrowLeftOver(button_arrow_left_over_png);
+	GuiImage arrowLeftOverImg(&arrowLeftOver);
+	GuiButton arrowLeftBtn(arrowLeft.GetWidth(), arrowLeft.GetHeight());
+	arrowLeftBtn.SetImage(&arrowLeftImg);
+	arrowLeftBtn.SetImageOver(&arrowLeftOverImg);
+	arrowLeftBtn.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+	arrowLeftBtn.SetTrigger(0, &trigA);
+	arrowLeftBtn.SetTrigger(1, &trigLeft);
+	arrowLeftBtn.SetSelectable(false);
+	arrowLeftBtn.SetUpdateCallback(ScreenPositionWindowLeftClick);
+
+	GuiImageData arrowRight(button_arrow_right_png);
+	GuiImage arrowRightImg(&arrowRight);
+	GuiImageData arrowRightOver(button_arrow_right_over_png);
+	GuiImage arrowRightOverImg(&arrowRightOver);
+	GuiButton arrowRightBtn(arrowRight.GetWidth(), arrowRight.GetHeight());
+	arrowRightBtn.SetImage(&arrowRightImg);
+	arrowRightBtn.SetImageOver(&arrowRightOverImg);
+	arrowRightBtn.SetAlignment(ALIGN_RIGHT, ALIGN_MIDDLE);
+	arrowRightBtn.SetTrigger(0, &trigA);
+	arrowRightBtn.SetTrigger(1, &trigRight);
+	arrowRightBtn.SetSelectable(false);
+	arrowRightBtn.SetUpdateCallback(ScreenPositionWindowRightClick);
+
+	GuiImageData arrowUp(button_arrow_up_png);
+	GuiImage arrowUpImg(&arrowUp);
+	GuiImageData arrowUpOver(button_arrow_up_over_png);
+	GuiImage arrowUpOverImg(&arrowUpOver);
+	GuiButton arrowUpBtn(arrowUp.GetWidth(), arrowUp.GetHeight());
+	arrowUpBtn.SetImage(&arrowUpImg);
+	arrowUpBtn.SetImageOver(&arrowUpOverImg);
+	arrowUpBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	arrowUpBtn.SetTrigger(0, &trigA);
+	arrowUpBtn.SetTrigger(1, &trigUp);
+	arrowUpBtn.SetSelectable(false);
+	arrowUpBtn.SetUpdateCallback(ScreenPositionWindowUpClick);
+
+	GuiImageData arrowDown(button_arrow_down_png);
+	GuiImage arrowDownImg(&arrowDown);
+	GuiImageData arrowDownOver(button_arrow_down_over_png);
+	GuiImage arrowDownOverImg(&arrowDownOver);
+	GuiButton arrowDownBtn(arrowDown.GetWidth(), arrowDown.GetHeight());
+	arrowDownBtn.SetImage(&arrowDownImg);
+	arrowDownBtn.SetImageOver(&arrowDownOverImg);
+	arrowDownBtn.SetAlignment(ALIGN_CENTRE, ALIGN_BOTTOM);
+	arrowDownBtn.SetTrigger(0, &trigA);
+	arrowDownBtn.SetTrigger(1, &trigDown);
+	arrowDownBtn.SetSelectable(false);
+	arrowDownBtn.SetUpdateCallback(ScreenPositionWindowDownClick);
+
+	GuiImageData screenPosition(screen_position_png);
+	GuiImage screenPositionImg(&screenPosition);
+	screenPositionImg.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+
+	settingText = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
+	char shift[10];
+	sprintf(shift, "%i, %i", GCSettings.xshift, GCSettings.yshift);
+	settingText->SetText(shift);
+
+	int currentX = GCSettings.xshift;
+	int currentY = GCSettings.yshift;
+
+	w->Append(&arrowLeftBtn);
+	w->Append(&arrowRightBtn);
+	w->Append(&arrowUpBtn);
+	w->Append(&arrowDownBtn);
+	w->Append(&screenPositionImg);
+	w->Append(settingText);
+
+	if(!SettingWindow("Screen Position",w))
+	{
+		GCSettings.xshift = currentX; // undo changes
+		GCSettings.yshift = currentY;
+	}
+
+	delete(w);
+	delete(settingText);
+}
+
 int MenuSettingsVideo()
 {
 	int menu = MENU_NONE;
@@ -1252,8 +1600,8 @@ int MenuSettingsVideo()
 	sprintf(options.name[i++], "Rendering");
 	sprintf(options.name[i++], "Scaling");
 	sprintf(options.name[i++], "Filtering");
-	sprintf(options.name[i++], "Zoom");
-	sprintf(options.name[i++], "Shift");
+	sprintf(options.name[i++], "Screen Zoom");
+	sprintf(options.name[i++], "Screen Position");
 	options.length = i;
 
 	GuiText titleTxt("Settings - Video", 22, (GXColor){255, 255, 255, 0xff});
@@ -1339,9 +1687,11 @@ int MenuSettingsVideo()
 				break;
 
 			case 3:
+				ScreenZoomWindow();
 				break;
 
 			case 4:
+				ScreenPositionWindow();
 				break;
 		}
 
@@ -1956,101 +2306,4 @@ ConfigureButtons (u16 ctrlr_type)
 	}
 	menu = oldmenu;
 }	// end configurebuttons()
-
-int ctlrmenucount = 9;
-char ctlrmenu[][50] = {
-	// toggle:
-	"MultiTap",
-	"SuperScope",
-	"Snes Mice",
-	"Justifiers",
-	// config:
-	"Nunchuk",
-	"Classic Controller",
-	"Wiimote",
-	"Gamecube Pad",
-	"Back to Preferences Menu"
-};
-
-void
-ConfigureControllers ()
-{
-	int quit = 0;
-	int ret = 0;
-	int oldmenu = 0;
-
-	// disable unavailable controller options if in GC mode
-	#ifndef HW_RVL
-		ctlrmenu[4][0] = '\0';
-		ctlrmenu[5][0] = '\0';
-		ctlrmenu[6][0] = '\0';
-	#endif
-
-	while (quit == 0)
-	{
-		sprintf (ctlrmenu[0], "MultiTap %s", Settings.MultiPlayer5Master == true ? " ON" : "OFF");
-
-		if (GCSettings.Superscope > 0) sprintf (ctlrmenu[1], "Superscope: Pad %d", GCSettings.Superscope);
-		else sprintf (ctlrmenu[1], "Superscope     OFF");
-
-		if (GCSettings.Mouse > 0) sprintf (ctlrmenu[2], "Mice:   %d", GCSettings.Mouse);
-		else sprintf (ctlrmenu[2], "Mice: OFF");
-
-		if (GCSettings.Justifier > 0) sprintf (ctlrmenu[3], "Justifiers:   %d", GCSettings.Justifier);
-		else sprintf (ctlrmenu[3], "Justifiers: OFF");
-
-		// Controller Config Menu
-//        ret = RunMenu (ctlrmenu, ctlrmenucount, "Configure Controllers");
-
-		switch (ret)
-		{
-			case 0:
-				Settings.MultiPlayer5Master ^= 1;
-				break;
-			case 1:
-				GCSettings.Superscope ++;
-				if (GCSettings.Superscope > 4)
-					GCSettings.Superscope = 0;
-				break;
-			case 2:
-				GCSettings.Mouse ++;
-				if (GCSettings.Mouse > 2)
-					GCSettings.Mouse = 0;
-				break;
-			case 3:
-				GCSettings.Justifier ++;
-				if (GCSettings.Justifier > 2)
-					GCSettings.Justifier = 0;
-				break;
-
-			case 4:
-				// Configure Nunchuk
-				ConfigureButtons (CTRLR_NUNCHUK);
-				break;
-
-			case 5:
-				// Configure Classic
-				ConfigureButtons (CTRLR_CLASSIC);
-				break;
-
-			case 6:
-				// Configure Wiimote
-				ConfigureButtons (CTRLR_WIIMOTE);
-				break;
-
-			case 7:
-				// Configure GC Pad
-				ConfigureButtons (CTRLR_GCPAD);
-				break;
-
-			case -1: // Button B
-			case 8:
-				// Return
-				quit = 1;
-				break;
-		}
-	}
-
-	menu = oldmenu;
-}
 */

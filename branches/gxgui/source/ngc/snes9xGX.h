@@ -46,6 +46,19 @@ enum {
 	FILE_SCREEN
 };
 
+enum
+{
+	CTRL_PAD2,
+	CTRL_PAD4,
+	CTRL_MOUSE,
+	CTRL_SUPERSCOPE,
+	CTRL_JUSTIFIER,
+	CTRL_LENGTH
+};
+
+const char ctrlName[5][20] =
+{ "SNES Pad (2)", "SNES Pad (4)", "SNES Mouse", "Superscope", "Justifier" };
+
 struct SGCSettings{
     int		AutoLoad;
     int		AutoSave;
@@ -64,9 +77,7 @@ struct SGCSettings{
     int		VerifySaves;
 	int		render;		// 0 - original, 1 - filtered, 2 - unfiltered
 	int		FilterMethod;		// convert to RenderFilter
-	int		Superscope;
-	int		Mouse;
-	int		Justifier;
+	int		Controller;
 	int		widescreen;	// 0 - 4:3 aspect, 1 - 16:9 aspect
 	int		xshift;		// video output shift
 	int		yshift;

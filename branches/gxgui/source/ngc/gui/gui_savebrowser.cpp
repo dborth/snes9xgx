@@ -365,4 +365,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		if(saveBtn[i]->GetState() == STATE_SELECTED)
 			selectedItem = i;
 	}
+
+	if(updateCB)
+		updateCB(this);
 }

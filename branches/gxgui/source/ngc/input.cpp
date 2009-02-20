@@ -420,7 +420,7 @@ void decodepad (int pad)
     }
 
 	/*** Superscope ***/
-	if (Settings.SuperScopeMaster && pad == GCSettings.Superscope - 1) // report only once
+	if (Settings.SuperScopeMaster && pad == 0) // report only once
 	{
 		// buttons
 		offset = 0x50;
@@ -457,7 +457,7 @@ void decodepad (int pad)
 		S9xReportPointer(offset, (u16) cursor_x[0], (u16) cursor_y[0]);
 	}
 	/*** Mouse ***/
-	else if (Settings.MouseMaster && pad < GCSettings.Mouse)
+	else if (Settings.MouseMaster && pad == 0)
 	{
 		// buttons
 		offset = 0x60 + (2 * pad);
@@ -479,7 +479,7 @@ void decodepad (int pad)
 				(u16) cursor_y[1 + pad]);
 	}
 	/*** Justifier ***/
-	else if (Settings.JustifierMaster && pad < GCSettings.Justifier)
+	else if (Settings.JustifierMaster && pad < 2)
 	{
 		// buttons
 		offset = 0x70 + (3 * pad);
@@ -575,18 +575,12 @@ void SetControllers ()
 	else if (Settings.MouseMaster == true)
 	{
 		S9xSetController (0, CTL_MOUSE, 0, 0, 0, 0);
-		if (GCSettings.Mouse == 2)
-			S9xSetController (1, CTL_MOUSE, 1, 0, 0, 0);
-		else
-			S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+		S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
 	}
 	else if (Settings.JustifierMaster == true)
 	{
 		S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
-		if(GCSettings.Justifier == 2)
-			S9xSetController(1, CTL_JUSTIFIER, 1, 0, 0, 0);
-		else
-			S9xSetController(1, CTL_JUSTIFIER, 0, 0, 0, 0);
+		S9xSetController(1, CTL_JUSTIFIER, 1, 0, 0, 0);
 	}
 	else
 	{
