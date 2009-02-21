@@ -127,6 +127,21 @@ extern const u32	scrollbar_box_png_size;
 extern const u8		scrollbar_box_over_png[];
 extern const u32	scrollbar_box_over_png_size;
 
+extern const u8		keyboard_textbox_png[];
+extern const u32	keyboard_textbox_png_size;
+
+extern const u8		keyboard_key_png[];
+extern const u32	keyboard_key_png_size;
+
+extern const u8		keyboard_key_over_png[];
+extern const u32	keyboard_key_over_png_size;
+
+extern const u8		keyboard_largekey_png[];
+extern const u32	keyboard_largekey_png_size;
+
+extern const u8		keyboard_largekey_over_png[];
+extern const u32	keyboard_largekey_over_png_size;
+
 extern const u8		player1_point_png[];
 extern const u32	player1_point_png_size;
 

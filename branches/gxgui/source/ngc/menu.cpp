@@ -81,14 +81,14 @@ static char progressMsg[200];
 static int progressDone = 0;
 static int progressTotal = 0;
 
-void
+static void
 ResumeGui()
 {
 	guiHalt = false;
 	LWP_ResumeThread (guithread);
 }
 
-void
+static void
 HaltGui()
 {
 	guiHalt = true;
@@ -470,6 +470,85 @@ void AutoSave()
 	}
 }
 
+static void OnScreenKeyboard(char * var)
+{
+	int save = -1;
+
+	GuiKeyboard keyboard(var);
+
+	GuiWindow keyboardWindow(560,400);
+	keyboardWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+	keyboardWindow.Append(&keyboard);
+
+	GuiWindow buttonWindow(500,200);
+	buttonWindow.SetAlignment(ALIGN_CENTRE, ALIGN_BOTTOM);
+	buttonWindow.SetPosition(0, -100);
+
+	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText okBtnTxt("OK", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage okBtnImg(&btnOutline);
+	GuiImage okBtnImgOver(&btnOutlineOver);
+	GuiButton okBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+
+	okBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	okBtn.SetPosition(25, -25);
+
+	okBtn.SetLabel(&okBtnTxt);
+	okBtn.SetImage(&okBtnImg);
+	okBtn.SetImageOver(&okBtnImgOver);
+	okBtn.SetSoundOver(&btnSoundOver);
+	okBtn.SetTrigger(&trigA);
+
+	GuiText cancelBtnTxt("Cancel", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage cancelBtnImg(&btnOutline);
+	GuiImage cancelBtnImgOver(&btnOutlineOver);
+	GuiButton cancelBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	cancelBtn.SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
+	cancelBtn.SetPosition(-25, -25);
+	cancelBtn.SetLabel(&cancelBtnTxt);
+	cancelBtn.SetImage(&cancelBtnImg);
+	cancelBtn.SetImageOver(&cancelBtnImgOver);
+	cancelBtn.SetSoundOver(&btnSoundOver);
+	cancelBtn.SetTrigger(&trigA);
+
+	buttonWindow.Append(&okBtn);
+	buttonWindow.Append(&cancelBtn);
+
+	guiReady = false;
+	mainWindow->SetState(STATE_DISABLED);
+	mainWindow->Append(&keyboardWindow);
+	mainWindow->Append(&buttonWindow);
+	mainWindow->ChangeFocus(&keyboardWindow);
+	guiReady = true;
+
+	while(save == -1)
+	{
+		VIDEO_WaitVSync();
+
+		if(okBtn.GetState() == STATE_CLICKED)
+			save = 1;
+		else if(cancelBtn.GetState() == STATE_CLICKED)
+			save = 0;
+	}
+
+	if(save)
+	{
+		strncpy(var, keyboard.kbtextstr, 100);
+		var[100] = 0;
+	}
+
+	guiReady = false;
+	mainWindow->Remove(&keyboardWindow);
+	mainWindow->Remove(&buttonWindow);
+	mainWindow->SetState(STATE_DEFAULT);
+	guiReady = true;
+}
+
 static int
 SettingWindow(const char * title, GuiWindow * w)
 {
@@ -549,7 +628,7 @@ SettingWindow(const char * title, GuiWindow * w)
  * MenuGameSelection
  ***************************************************************************/
 
-int MenuGameSelection()
+static int MenuGameSelection()
 {
 	// populate initial directory listing
 	int method = GCSettings.LoadMethod;
@@ -677,7 +756,7 @@ int MenuGameSelection()
 	return menu;
 }
 
-void ControllerWindowUpdate(void * ptr, int dir)
+static void ControllerWindowUpdate(void * ptr, int dir)
 {
 	GuiButton * b = (GuiButton *)ptr;
 	if(b->GetState() == STATE_CLICKED)
@@ -694,10 +773,10 @@ void ControllerWindowUpdate(void * ptr, int dir)
 	}
 }
 
-void ControllerWindowLeftClick(void * ptr) { ControllerWindowUpdate(ptr, -1); }
-void ControllerWindowRightClick(void * ptr) { ControllerWindowUpdate(ptr, +1); }
+static void ControllerWindowLeftClick(void * ptr) { ControllerWindowUpdate(ptr, -1); }
+static void ControllerWindowRightClick(void * ptr) { ControllerWindowUpdate(ptr, +1); }
 
-void ControllerWindow()
+static void ControllerWindow()
 {
 	GuiWindow * w = new GuiWindow(250,250);
 	w->SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
@@ -756,7 +835,7 @@ void ControllerWindow()
  * MenuGame
  ***************************************************************************/
 
-int MenuGame()
+static int MenuGame()
 {
 	int menu = MENU_NONE;
 
@@ -948,7 +1027,7 @@ int MenuGame()
  * MenuGameSaves
  ***************************************************************************/
 
-int MenuGameSaves(int action)
+static int MenuGameSaves(int action)
 {
 	int menu = MENU_NONE;
 	int ret;
@@ -1139,7 +1218,7 @@ int MenuGameSaves(int action)
  * MenuGameCheats
  ***************************************************************************/
 
-int MenuGameCheats()
+static int MenuGameCheats()
 {
 	int menu = MENU_NONE;
 	int ret;
@@ -1216,7 +1295,7 @@ int MenuGameCheats()
  * MenuSettings
  ***************************************************************************/
 
-int MenuSettings()
+static int MenuSettings()
 {
 	int menu = MENU_NONE;
 
@@ -1384,7 +1463,7 @@ int MenuSettings()
  * MenuSettingsMappings
  ***************************************************************************/
 
-int MenuSettingsMappings()
+static int MenuSettingsMappings()
 {
 	return MENU_EXIT;
 }
@@ -1393,7 +1472,7 @@ int MenuSettingsMappings()
  * MenuSettingsVideo
  ***************************************************************************/
 
-void ScreenZoomWindowUpdate(void * ptr, float amount)
+static void ScreenZoomWindowUpdate(void * ptr, float amount)
 {
 	GuiButton * b = (GuiButton *)ptr;
 	if(b->GetState() == STATE_CLICKED)
@@ -1407,10 +1486,10 @@ void ScreenZoomWindowUpdate(void * ptr, float amount)
 	}
 }
 
-void ScreenZoomWindowLeftClick(void * ptr) { ScreenZoomWindowUpdate(ptr, -0.01); }
-void ScreenZoomWindowRightClick(void * ptr) { ScreenZoomWindowUpdate(ptr, +0.01); }
+static void ScreenZoomWindowLeftClick(void * ptr) { ScreenZoomWindowUpdate(ptr, -0.01); }
+static void ScreenZoomWindowRightClick(void * ptr) { ScreenZoomWindowUpdate(ptr, +0.01); }
 
-void ScreenZoomWindow()
+static void ScreenZoomWindow()
 {
 	GuiWindow * w = new GuiWindow(250,250);
 	w->SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
@@ -1468,7 +1547,7 @@ void ScreenZoomWindow()
 	delete(settingText);
 }
 
-void ScreenPositionWindowUpdate(void * ptr, int x, int y)
+static void ScreenPositionWindowUpdate(void * ptr, int x, int y)
 {
 	GuiButton * b = (GuiButton *)ptr;
 	if(b->GetState() == STATE_CLICKED)
@@ -1483,12 +1562,12 @@ void ScreenPositionWindowUpdate(void * ptr, int x, int y)
 	}
 }
 
-void ScreenPositionWindowLeftClick(void * ptr) { ScreenPositionWindowUpdate(ptr, -1, 0); }
-void ScreenPositionWindowRightClick(void * ptr) { ScreenPositionWindowUpdate(ptr, +1, 0); }
-void ScreenPositionWindowUpClick(void * ptr) { ScreenPositionWindowUpdate(ptr, 0, -1); }
-void ScreenPositionWindowDownClick(void * ptr) { ScreenPositionWindowUpdate(ptr, 0, +1); }
+static void ScreenPositionWindowLeftClick(void * ptr) { ScreenPositionWindowUpdate(ptr, -1, 0); }
+static void ScreenPositionWindowRightClick(void * ptr) { ScreenPositionWindowUpdate(ptr, +1, 0); }
+static void ScreenPositionWindowUpClick(void * ptr) { ScreenPositionWindowUpdate(ptr, 0, -1); }
+static void ScreenPositionWindowDownClick(void * ptr) { ScreenPositionWindowUpdate(ptr, 0, +1); }
 
-void ScreenPositionWindow()
+static void ScreenPositionWindow()
 {
 	GuiWindow * w = new GuiWindow(150,150);
 	w->SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
@@ -1590,7 +1669,7 @@ void ScreenPositionWindow()
 	delete(settingText);
 }
 
-int MenuSettingsVideo()
+static int MenuSettingsVideo()
 {
 	int menu = MENU_NONE;
 	int ret;
@@ -1711,7 +1790,7 @@ int MenuSettingsVideo()
  * MenuSettingsFile
  ***************************************************************************/
 
-int MenuSettingsFile()
+static int MenuSettingsFile()
 {
 	int menu = MENU_NONE;
 	int ret;
@@ -1840,6 +1919,7 @@ int MenuSettingsFile()
 				break;
 
 			case 1:
+				OnScreenKeyboard(GCSettings.LoadFolder);
 				break;
 
 			case 2:
@@ -1847,6 +1927,7 @@ int MenuSettingsFile()
 				break;
 
 			case 3:
+				OnScreenKeyboard(GCSettings.SaveFolder);
 				break;
 
 			case 4:
@@ -1882,7 +1963,7 @@ int MenuSettingsFile()
  * MenuSettingsMenu
  ***************************************************************************/
 
-int MenuSettingsMenu()
+static int MenuSettingsMenu()
 {
 	return MENU_EXIT;
 }
@@ -1891,7 +1972,7 @@ int MenuSettingsMenu()
  * MenuSettingsNetwork
  ***************************************************************************/
 
-int MenuSettingsNetwork()
+static int MenuSettingsNetwork()
 {
 	int menu = MENU_NONE;
 	int ret;
@@ -1952,15 +2033,19 @@ int MenuSettingsNetwork()
 		switch (ret)
 		{
 			case 0:
+				OnScreenKeyboard(GCSettings.smbip);
 				break;
 
 			case 1:
+				OnScreenKeyboard(GCSettings.smbshare);
 				break;
 
 			case 2:
+				OnScreenKeyboard(GCSettings.smbuser);
 				break;
 
 			case 3:
+				OnScreenKeyboard(GCSettings.smbpwd);
 				break;
 		}
 

@@ -61,6 +61,10 @@ typedef struct _savelist {
 	int files[2][100];
 } SaveList;
 
+typedef struct _keytype {
+	char ch, chShift;
+} Key;
+
 extern int rumbleRequest[4];
 
 enum
@@ -431,6 +435,47 @@ class GuiSaveBrowser : public GuiElement
 		GuiImageData * scrollbarBox;
 		GuiImageData * scrollbarBoxOver;
 
+		GuiTrigger * trigA;
+};
+
+class GuiKeyboard : public GuiElement
+{
+	public:
+		GuiKeyboard(char * t);
+		~GuiKeyboard();
+		void ResetState();
+		void SetFocus(int f);
+		void Draw();
+		void Update(GuiTrigger * t);
+		char kbtextstr[100];
+	protected:
+		Key keys[4][10];
+		int shift;
+		int caps;
+		GuiText * kbText;
+		GuiImage * keyTextboxImg;
+		GuiText * keyCapsText;
+		GuiImage * keyCapsImg;
+		GuiImage * keyCapsOverImg;
+		GuiButton * keyCaps;
+		GuiText * keyShiftText;
+		GuiImage * keyShiftImg;
+		GuiImage * keyShiftOverImg;
+		GuiButton * keyShift;
+		GuiText * keyBackText;
+		GuiImage * keyBackImg;
+		GuiImage * keyBackOverImg;
+		GuiButton * keyBack;
+		GuiButton * keyBtn[4][10];
+		GuiImage * keyImg[4][10];
+		GuiImage * keyImgOver[4][10];
+		GuiText * keyTxt[4][10];
+		GuiImageData * keyTextbox;
+		GuiImageData * key;
+		GuiImageData * keyOver;
+		GuiImageData * keyLarge;
+		GuiImageData * keyLargeOver;
+		GuiSound * keySoundOver;
 		GuiTrigger * trigA;
 };
 
