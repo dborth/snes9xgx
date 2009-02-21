@@ -324,7 +324,7 @@ getpvd ()
 bool MountDVD(bool silent)
 {
 	bool res = false;
-	
+
 	if (getpvd())
 	{
 		return true;
@@ -341,9 +341,10 @@ bool MountDVD(bool silent)
 		{
 			if(!silent)
 				ErrorPrompt("No disc inserted!");
-			goto done;
+			CancelAction();
+			return false;
 		}
-		
+
 		DI_Mount();
 		while(DI_GetStatus() & DVD_INIT);
 		#endif
@@ -353,7 +354,6 @@ bool MountDVD(bool silent)
 		else if(!silent)
 			ErrorPrompt("Invalid DVD.");
 	}
-done:
 	CancelAction();
 	return res;
 }

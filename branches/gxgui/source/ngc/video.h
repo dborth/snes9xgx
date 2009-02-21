@@ -17,6 +17,8 @@
 
 #include "snes9x.h"
 
+void AllocGfxMem();
+void FreeGfxMem();
 void InitGCVideo ();
 void StopGX();
 void ResetVideo_Emu ();

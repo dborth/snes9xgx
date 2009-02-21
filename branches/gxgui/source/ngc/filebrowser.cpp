@@ -427,6 +427,8 @@ int BrowserLoadFile(int method)
 			ErrorPrompt("Error loading ROM!");
 		else
 		{
+			ResetBrowser();
+
 			// load UPS/IPS/PPF patch
 			LoadPatch(GCSettings.LoadMethod);
 

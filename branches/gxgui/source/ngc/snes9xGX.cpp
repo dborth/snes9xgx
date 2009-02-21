@@ -61,6 +61,7 @@ extern "C" {
 
 #include "GRRLIB.h"
 
+static lwp_t mainthread = LWP_THREAD_NULL;
 int ConfigRequested = 0;
 int ShutdownRequested = 0;
 int ResetRequested = 0;
@@ -211,10 +212,14 @@ emulate ()
 		ConfigRequested = 1;
 		SwitchAudioMode(1);
 
+		FreeGfxMem();
+
 		if(SNESROMSize == 0)
 			MainMenu(MENU_GAMESELECTION);
 		else
 			MainMenu(MENU_GAME);
+
+		AllocGfxMem();
 
 		ConfigRequested = 0;
 		SwitchAudioMode(0);
@@ -285,6 +290,51 @@ void CreateAppPath(char origpath[])
 #endif
 }
 
+static void * InitThread (void *arg)
+{
+	// Initialize libFAT for SD and USB
+	MountAllFAT();
+
+	// Set defaults
+	DefaultSettings ();
+
+	S9xUnmapAllControls ();
+	SetDefaultButtonMap ();
+
+	// Allocate SNES Memory
+	if (!Memory.Init ())
+		while (1);
+
+	// Allocate APU
+	if (!S9xInitAPU ())
+		while (1);
+
+	// Set Pixel Renderer to match 565
+	S9xSetRenderPixelFormat (RGB565);
+
+	// Initialise Snes Sound System
+	S9xInitSound (5, TRUE, 1024);
+
+	// Initialise Graphics
+	setGFX ();
+	if (!S9xGraphicsInit ())
+		while (1);
+
+	// Initialize DVD subsystem (GameCube only)
+	#ifdef HW_DOL
+	DVD_Init ();
+	#endif
+
+	// Check if DVD drive belongs to a Wii
+	SetDVDDriveType();
+
+	S9xSetSoundMute (TRUE);
+	S9xInitSync(); // initialize frame sync
+
+	LWP_JoinThread(mainthread,NULL);
+	return NULL;
+}
+
 /****************************************************************************
  * MAIN
  *
@@ -315,7 +365,7 @@ main(int argc, char *argv[])
 	DEBUG_Init(GDBSTUB_DEVICE_USB, 1);	// init debugging
 	//_break();
 	#endif
-	
+
 	InitDeviceThread();
 	VIDEO_Init();
 	PAD_Init ();
@@ -364,53 +414,23 @@ main(int argc, char *argv[])
 	}
 	#endif
 
-	// Audio
-	AUDIO_Init (NULL);
-
-	// Set defaults
-	DefaultSettings ();
-
 	// store path app was loaded from
 	sprintf(appPath, "snes9x");
 	if(argc > 0 && argv[0] != NULL)
 		CreateAppPath(argv[0]);
 
-	S9xUnmapAllControls ();
-	SetDefaultButtonMap ();
+	// Create a thread to do remaining initialization tasks
+	// This allows us to get to the menu faster
+	mainthread=LWP_GetSelf();
+	lwp_t initthread;
+	LWP_CreateThread(&initthread, InitThread, NULL, NULL, 0, 80);
 
-	// Allocate SNES Memory
-	if (!Memory.Init ())
-		while (1);
-
-	// Allocate APU
-	if (!S9xInitAPU ())
-		while (1);
-
-	// Set Pixel Renderer to match 565
-	S9xSetRenderPixelFormat (RGB565);
-
-	// Initialise Snes Sound System
-	S9xInitSound (5, TRUE, 1024);
-
-	// Initialise Graphics
-	setGFX ();
-	if (!S9xGraphicsInit ())
-		while (1);
-
-	// Initialize libFAT for SD and USB
-	MountAllFAT();
-
-	// Initialize DVD subsystem (GameCube only)
-	#ifdef HW_DOL
-	DVD_Init ();
-	#endif
+	// Audio
+	AUDIO_Init (NULL);
 
 	// Initialize font system
 	fontSystem = new FreeTypeGX();
 	//fontSystem->setCompatibilityMode(FTGX_COMPATIBILITY_GRRLIB);
-
-	// Check if DVD drive belongs to a Wii
-	SetDVDDriveType();
 
 	InitGUIThreads();
 
@@ -426,9 +446,6 @@ main(int argc, char *argv[])
 		Memory.LoadSRAM ("BLANK");
 	}
 	#endif
-
-	S9xSetSoundMute (TRUE);
-	S9xInitSync(); // initialize frame sync
 
 	emulate(); // main loop
 }

@@ -33,8 +33,11 @@
 #include "audio.h"
 
 /*** Snes9x GFX Buffer ***/
-static unsigned char snes9xgfx[EXT_PITCH * EXT_HEIGHT];	// changed.
-unsigned char filtermem[512 * MAX_SNES_HEIGHT * 4];	// only want ((512*2) X (239*2))
+#define SNES9XGFX_SIZE 		EXT_PITCH*EXT_HEIGHT
+#define FILTERMEM_SIZE 		512*MAX_SNES_HEIGHT*4
+
+static unsigned char * snes9xgfx = NULL;	// changed.
+unsigned char * filtermem = NULL;	// only want ((512*2) X (239*2))
 
 /*** 2D Video ***/
 unsigned int *xfb[2] = { NULL, NULL }; // Double buffered
@@ -47,12 +50,14 @@ u8 * gameScreenTex = NULL; // a screen capture of the game
 /*** GX ***/
 #define TEX_WIDTH 512
 #define TEX_HEIGHT 512
-static unsigned char texturemem[TEX_WIDTH * (TEX_HEIGHT + 8) * 2] ATTRIBUTE_ALIGN (32);
+#define TEXTUREMEM_SIZE 	TEX_WIDTH*(TEX_HEIGHT+8)*2
+static unsigned char texturemem[TEXTUREMEM_SIZE] ATTRIBUTE_ALIGN (32);
+
 #define DEFAULT_FIFO_SIZE 256 * 1024
-unsigned int copynow = GX_FALSE;
+static unsigned int copynow = GX_FALSE;
 static unsigned char gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
-GXTexObj texobj;
-Mtx view;
+static GXTexObj texobj;
+static Mtx view;
 Mtx GXmodelView2D;
 static int vwidth, vheight, oldvwidth, oldvheight;
 
@@ -831,7 +836,7 @@ update_video (int width, int height)
 		MakeTexture((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
 	}
 
-	DCFlushRange (texturemem, TEX_WIDTH * TEX_HEIGHT * 2);	// update the texture memory
+	DCFlushRange (texturemem, TEXTUREMEM_SIZE);	// update the texture memory
 	GX_InvalidateTexAll ();
 
 	draw_square (view);		// draw the quad
@@ -871,6 +876,31 @@ zoom_reset ()
 	oldvheight = 0;	// update video
 }
 
+void AllocGfxMem()
+{
+	snes9xgfx = (unsigned char *)memalign(32, SNES9XGFX_SIZE);
+	memset(snes9xgfx, 0, SNES9XGFX_SIZE);
+	filtermem = (unsigned char *)memalign(32, FILTERMEM_SIZE);
+	memset(filtermem, 0, FILTERMEM_SIZE);
+
+	GFX.Pitch = EXT_PITCH;
+	GFX.Screen = (uint16*)(snes9xgfx + EXT_OFFSET);
+}
+
+void FreeGfxMem()
+{
+	if(snes9xgfx)
+	{
+		free(snes9xgfx);
+		snes9xgfx = NULL;
+	}
+	if(filtermem)
+	{
+		free(filtermem);
+		filtermem = NULL;
+	}
+}
+
 /****************************************************************************
  * setGFX
  *
@@ -880,7 +910,4 @@ void
 setGFX ()
 {
 	GFX.Pitch = EXT_PITCH;
-	GFX.Screen = (uint16*)(snes9xgfx + EXT_OFFSET);
-
-	memset (snes9xgfx, 0, sizeof(snes9xgfx));
 }
