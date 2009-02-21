@@ -294,7 +294,7 @@ ParseDirectory()
 		{
 			sprintf(msg, "Error opening %s", rootdir);
 			ErrorPrompt(msg);
-			return 0;
+			return -1;
 		}
 	}
 
@@ -311,7 +311,7 @@ ParseDirectory()
 			{
 				ResetBrowser();
 				ErrorPrompt("Out of memory: too many files!");
-				entryNum = 0;
+				entryNum = -1;
 				break;
 			}
 			else

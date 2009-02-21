@@ -285,7 +285,7 @@ int FileSortCallback(const void *f1, const void *f2)
  * first file inside
  ***************************************************************************/
 
-bool IsValidROM(int method)
+static bool IsValidROM(int method)
 {
 	// file size should be between 96K and 8MB
 	if(browserList[browser.selIndex].length < (1024*96) ||
@@ -360,9 +360,38 @@ void StripExt(char* returnstring, char * inputstring)
 	char* loc_dot;
 
 	strncpy (returnstring, inputstring, 255);
+
+	if(inputstring == NULL || strlen(inputstring) < 4)
+		return;
+
 	loc_dot = strrchr(returnstring,'.');
 	if (loc_dot != NULL)
 		*loc_dot = 0; // strip file extension
+}
+
+// 7z file - let's open it up to select a file inside
+int BrowserLoadSz(int method)
+{
+	char filepath[1024];
+
+	// we'll store the 7z filepath for extraction later
+	if(!MakeFilePath(szpath, FILE_ROM, method))
+		return 0;
+
+	// add device to filepath
+	sprintf(filepath, "%s%s", rootdir, szpath);
+	strcpy(szpath, filepath);
+
+	int szfiles = SzParse(szpath, method);
+	if(szfiles)
+	{
+		browser.numEntries = szfiles;
+		inSz = true;
+	}
+	else
+		ErrorPrompt("Error opening archive!");
+
+	return szfiles;
 }
 
 int BrowserLoadFile(int method)
@@ -370,123 +399,96 @@ int BrowserLoadFile(int method)
 	char filepath[1024];
 	int loaded = 0;
 
-	// 7z file - let's open it up to select a file inside
-	if(IsSz())
+	// check that this is a valid ROM
+	if(!IsValidROM(method))
+		goto done;
+
+	// store the filename (w/o ext) - used for sram/freeze naming
+	StripExt(Memory.ROMFilename, browserList[browser.selIndex].filename);
+
+	SNESROMSize = 0;
+
+	if(!inSz)
 	{
-		// we'll store the 7z filepath for extraction later
-		if(!MakeFilePath(szpath, FILE_ROM, method))
+		if(!MakeFilePath(filepath, FILE_ROM, method))
 			goto done;
 
-		// add device to filepath
-		sprintf(filepath, "%s%s", rootdir, szpath);
-		strcpy(szpath, filepath);
-
-		int szfiles = SzParse(szpath, method);
-		if(szfiles)
-		{
-			browser.numEntries = szfiles;
-			inSz = true;
-			loaded = 1;
-		}
-		else
-			ErrorPrompt("Error opening archive!");
+		SNESROMSize = LoadFile ((char *)Memory.ROM, filepath, browserList[browser.selIndex].length, method, NOTSILENT);
 	}
 	else
 	{
-		// check that this is a valid ROM
-		if(!IsValidROM(method))
-			goto done;
-
-		// store the filename (w/o ext) - used for sram/freeze naming
-		StripExt(Memory.ROMFilename, browserList[browser.selIndex].filename);
-
-		SNESROMSize = 0;
-
-		if(!inSz)
+		switch (method)
 		{
-			if(!MakeFilePath(filepath, FILE_ROM, method))
-				goto done;
-
-			SNESROMSize = LoadFile ((char *)Memory.ROM, filepath, browserList[browser.selIndex].length, method, NOTSILENT);
+			case METHOD_DVD:
+				SNESROMSize = SzExtractFile(browserList[browser.selIndex].offset, (unsigned char *)Memory.ROM);
+				break;
+			default:
+				SNESROMSize = LoadSzFile(szpath, (unsigned char *)Memory.ROM);
+				break;
 		}
-		else
-		{
-			switch (method)
-			{
-				case METHOD_DVD:
-					SNESROMSize = SzExtractFile(browserList[browser.selIndex].offset, (unsigned char *)Memory.ROM);
-					break;
-				default:
-					SNESROMSize = LoadSzFile(szpath, (unsigned char *)Memory.ROM);
-					break;
-			}
-		}
-		inSz = false;
+	}
+	inSz = false;
 
-		if (SNESROMSize <= 0)
-			ErrorPrompt("Error loading ROM!");
-		else
-		{
-			ResetBrowser();
+	if (SNESROMSize <= 0)
+		ErrorPrompt("Error loading ROM!");
+	else
+	{
+		ResetBrowser();
 
-			// load UPS/IPS/PPF patch
-			LoadPatch(GCSettings.LoadMethod);
+		// load UPS/IPS/PPF patch
+		LoadPatch(GCSettings.LoadMethod);
 
-			Memory.LoadROM ("BLANK.SMC");
-			Memory.LoadSRAM ("BLANK");
+		Memory.LoadROM ("BLANK.SMC");
+		Memory.LoadSRAM ("BLANK");
 
-			// load SRAM or snapshot
-			if ( GCSettings.AutoLoad == 1 )
-				LoadSRAMAuto(GCSettings.SaveMethod, SILENT);
-			else if ( GCSettings.AutoLoad == 2 )
-				NGCUnfreezeGameAuto(GCSettings.SaveMethod, SILENT);
+		// load SRAM or snapshot
+		if ( GCSettings.AutoLoad == 1 )
+			LoadSRAMAuto(GCSettings.SaveMethod, SILENT);
+		else if ( GCSettings.AutoLoad == 2 )
+			NGCUnfreezeGameAuto(GCSettings.SaveMethod, SILENT);
 
-			// setup cheats
-			SetupCheats();
+		// setup cheats
+		SetupCheats();
 
-			loaded = 1;
-		}
+		loaded = 1;
 	}
 done:
 	CancelAction();
 	return loaded;
 }
 
+/* update current directory and set new entry list if directory has changed */
 int BrowserChangeFolder(int method)
 {
-	/* update current directory and set new entry list if directory has changed */
-	int status;
-
 	if(inSz && browser.selIndex == 0) // inside a 7z, requesting to leave
 	{
 		if(method == METHOD_DVD)
 			SetDVDdirectory(browserList[0].offset, browserList[0].length);
 
 		inSz = false;
-		status = 1;
 		SzClose();
 	}
-	else
+
+	if(!UpdateDirName(method))
+		return -1;
+
+	switch (method)
 	{
-		status = UpdateDirName(method);
+		case METHOD_DVD:
+			browser.numEntries = ParseDVDdirectory();
+			break;
 
-		switch (method)
-		{
-			case METHOD_DVD:
-				browser.numEntries = ParseDVDdirectory();
-				break;
-
-			default:
-				browser.numEntries = ParseDirectory();
-				break;
-		}
-
-		if (!browser.numEntries)
-		{
-			ErrorPrompt("Error reading directory!");
-		}
+		default:
+			browser.numEntries = ParseDirectory();
+			break;
 	}
-	return status;
+
+	if (!browser.numEntries)
+	{
+		ErrorPrompt("Error reading directory!");
+	}
+
+	return browser.numEntries;
 }
 
 /****************************************************************************
@@ -499,6 +501,8 @@ OpenGameList (int method)
 {
 	if(method == METHOD_AUTO)
 		method = autoLoadMethod();
+
+	ResetBrowser();
 
 	if(ChangeInterface(method, NOTSILENT))
 	{

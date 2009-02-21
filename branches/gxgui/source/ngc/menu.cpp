@@ -716,12 +716,26 @@ static int MenuGameSelection()
 			{
 				gameBrowser.gameList[i]->ResetState();
 				// check corresponding browser entry
-				if(browserList[i].isdir)
+				if(browserList[i].isdir || IsSz())
 				{
-					BrowserChangeFolder(method);
-					gameBrowser.ResetState();
-					gameBrowser.gameList[0]->SetState(STATE_SELECTED);
-					gameBrowser.TriggerUpdate();
+					bool res;
+
+					if(IsSz())
+						res = BrowserLoadSz(method);
+					else
+						res = BrowserChangeFolder(method);
+
+					if(res)
+					{
+						gameBrowser.ResetState();
+						gameBrowser.gameList[0]->SetState(STATE_SELECTED);
+						gameBrowser.TriggerUpdate();
+					}
+					else
+					{
+						menu = MENU_GAMESELECTION;
+						break;
+					}
 				}
 				else
 				{
@@ -1030,7 +1044,7 @@ static int MenuGameSaves(int action)
 
 	strncpy(browser.dir, GCSettings.SaveFolder, 200);
 
-	if(ParseDirectory() > 0)
+	if(ParseDirectory() >= 0)
 	{
 		for(i=0; i < browser.numEntries; i++)
 		{
@@ -1069,6 +1083,10 @@ static int MenuGameSaves(int action)
 				}
 			}
 		}
+	}
+	else
+	{
+		return MENU_GAME;
 	}
 
 	saves.length = j;

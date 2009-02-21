@@ -50,7 +50,9 @@ int autoLoadMethod();
 int autoSaveMethod(bool silent);
 int FileSortCallback(const void *f1, const void *f2);
 void StripExt(char* returnstring, char * inputstring);
+bool IsSz();
 void ResetBrowser();
+int BrowserLoadSz(int method);
 int BrowserChangeFolder(int method);
 int BrowserLoadFile(int method);
 
