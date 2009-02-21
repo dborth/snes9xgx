@@ -136,6 +136,12 @@ extern const u32	keyboard_key_png_size;
 extern const u8		keyboard_key_over_png[];
 extern const u32	keyboard_key_over_png_size;
 
+extern const u8		keyboard_mediumkey_png[];
+extern const u32	keyboard_mediumkey_png_size;
+
+extern const u8		keyboard_mediumkey_over_png[];
+extern const u32	keyboard_mediumkey_over_png_size;
+
 extern const u8		keyboard_largekey_png[];
 extern const u32	keyboard_largekey_png_size;
 

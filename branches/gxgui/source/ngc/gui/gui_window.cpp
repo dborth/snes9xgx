@@ -10,6 +10,13 @@
 
 #include "gui.h"
 
+GuiWindow::GuiWindow()
+{
+	width = 0;
+	height = 0;
+	focus = 0; // allow focus
+}
+
 GuiWindow::GuiWindow(int w, int h)
 {
 	width = w;

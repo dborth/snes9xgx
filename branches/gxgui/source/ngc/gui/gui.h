@@ -175,7 +175,8 @@ class GuiElement
 class GuiWindow : public GuiElement
 {
 	public:
-		//!Constructor.
+		//!Constructor
+		GuiWindow();
 		GuiWindow(int w, int h);
 		//!Destructor.
 		~GuiWindow();
@@ -213,7 +214,7 @@ class GuiWindow : public GuiElement
 		void Draw();
 		void Update(GuiTrigger * t);
 
-	private:
+	protected:
 		std::vector<GuiElement*> _elements;
 };
 
@@ -438,14 +439,11 @@ class GuiSaveBrowser : public GuiElement
 		GuiTrigger * trigA;
 };
 
-class GuiKeyboard : public GuiElement
+class GuiKeyboard : public GuiWindow
 {
 	public:
 		GuiKeyboard(char * t);
 		~GuiKeyboard();
-		void ResetState();
-		void SetFocus(int f);
-		void Draw();
 		void Update(GuiTrigger * t);
 		char kbtextstr[100];
 	protected:
@@ -466,6 +464,9 @@ class GuiKeyboard : public GuiElement
 		GuiImage * keyBackImg;
 		GuiImage * keyBackOverImg;
 		GuiButton * keyBack;
+		GuiImage * keySpaceImg;
+		GuiImage * keySpaceOverImg;
+		GuiButton * keySpace;
 		GuiButton * keyBtn[4][10];
 		GuiImage * keyImg[4][10];
 		GuiImage * keyImgOver[4][10];
@@ -473,6 +474,8 @@ class GuiKeyboard : public GuiElement
 		GuiImageData * keyTextbox;
 		GuiImageData * key;
 		GuiImageData * keyOver;
+		GuiImageData * keyMedium;
+		GuiImageData * keyMediumOver;
 		GuiImageData * keyLarge;
 		GuiImageData * keyLargeOver;
 		GuiSound * keySoundOver;

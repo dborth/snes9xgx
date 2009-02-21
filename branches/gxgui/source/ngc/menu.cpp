@@ -476,14 +476,6 @@ static void OnScreenKeyboard(char * var)
 
 	GuiKeyboard keyboard(var);
 
-	GuiWindow keyboardWindow(560,400);
-	keyboardWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
-	keyboardWindow.Append(&keyboard);
-
-	GuiWindow buttonWindow(500,200);
-	buttonWindow.SetAlignment(ALIGN_CENTRE, ALIGN_BOTTOM);
-	buttonWindow.SetPosition(0, -100);
-
 	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
@@ -516,14 +508,13 @@ static void OnScreenKeyboard(char * var)
 	cancelBtn.SetSoundOver(&btnSoundOver);
 	cancelBtn.SetTrigger(&trigA);
 
-	buttonWindow.Append(&okBtn);
-	buttonWindow.Append(&cancelBtn);
+	keyboard.Append(&okBtn);
+	keyboard.Append(&cancelBtn);
 
 	guiReady = false;
 	mainWindow->SetState(STATE_DISABLED);
-	mainWindow->Append(&keyboardWindow);
-	mainWindow->Append(&buttonWindow);
-	mainWindow->ChangeFocus(&keyboardWindow);
+	mainWindow->Append(&keyboard);
+	mainWindow->ChangeFocus(&keyboard);
 	guiReady = true;
 
 	while(save == -1)
@@ -543,8 +534,7 @@ static void OnScreenKeyboard(char * var)
 	}
 
 	guiReady = false;
-	mainWindow->Remove(&keyboardWindow);
-	mainWindow->Remove(&buttonWindow);
+	mainWindow->Remove(&keyboard);
 	mainWindow->SetState(STATE_DEFAULT);
 	guiReady = true;
 }
