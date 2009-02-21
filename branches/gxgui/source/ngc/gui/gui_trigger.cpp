@@ -175,7 +175,7 @@ bool GuiTrigger::Up()
 {
 	if((wpad.btns_d | wpad.btns_h) & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)
 			|| pad.btns_d & PAD_BUTTON_UP
-			|| pad.stickX > PADCAL
+			|| pad.stickY > PADCAL
 			|| WPAD_Stick(0,1) > PADCAL)
 	{
 		if(wpad.btns_d & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)
@@ -201,7 +201,7 @@ bool GuiTrigger::Down()
 {
 	if((wpad.btns_d | wpad.btns_h) & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_DOWN
-			|| pad.stickX < -PADCAL
+			|| pad.stickY < -PADCAL
 			|| WPAD_Stick(0,1) < -PADCAL)
 	{
 		if(wpad.btns_d & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)

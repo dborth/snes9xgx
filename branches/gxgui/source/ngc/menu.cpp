@@ -632,7 +632,7 @@ static int MenuGameSelection()
 	{
 		int choice = WindowPrompt(
 		"Error",
-		"Game directory not found on selected load device.",
+		"Game directory inaccessible on selected load device.",
 		"Retry",
 		"Change Settings");
 

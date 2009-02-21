@@ -120,7 +120,9 @@ int autoSaveMethod(bool silent)
  ***************************************************************************/
 void ResetBrowser()
 {
-	browser.selIndex = browser.pageIndex = 0;
+	browser.numEntries = 0;
+	browser.selIndex = 0;
+	browser.pageIndex = 0;
 
 	// Clear any existing values
 	if(browserList != NULL)
@@ -433,8 +435,6 @@ int BrowserLoadFile(int method)
 		ErrorPrompt("Error loading ROM!");
 	else
 	{
-		ResetBrowser();
-
 		// load UPS/IPS/PPF patch
 		LoadPatch(GCSettings.LoadMethod);
 
@@ -449,7 +449,7 @@ int BrowserLoadFile(int method)
 
 		// setup cheats
 		SetupCheats();
-
+		ResetBrowser();
 		loaded = 1;
 	}
 done:
