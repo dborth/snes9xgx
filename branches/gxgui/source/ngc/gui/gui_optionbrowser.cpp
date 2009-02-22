@@ -249,6 +249,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 			optionTxt[i]->SetText(options->name[next]);
 			optionVal[i]->SetText(options->value[next]);
 			optionIndex[i] = next;
+			next = this->FindMenuItem(next, 1);
 		}
 		else
 		{
@@ -262,7 +263,6 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 		{
 			selectedItem = i;
 		}
-		next = this->FindMenuItem(next, 1);
 	}
 
 	// pad/joystick navigation

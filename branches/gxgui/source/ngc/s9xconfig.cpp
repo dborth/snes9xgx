@@ -59,6 +59,7 @@ DefaultSettings ()
 	GCSettings.yshift = 0;
 
 	GCSettings.WiimoteOrientation = 0;
+	GCSettings.ExitAction = 0;
 
 	/****************** SNES9x Settings ***********************/
 

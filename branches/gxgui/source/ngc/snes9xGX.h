@@ -82,12 +82,11 @@ struct SGCSettings{
 	int		xshift;		// video output shift
 	int		yshift;
 	int		WiimoteOrientation;
+	int		ExitAction;
 };
 
-void ExitToLoader();
-void Reboot();
+void ExitApp();
 void ShutdownWii();
-void ReloadApp();
 extern struct SGCSettings GCSettings;
 extern int ConfigRequested;
 extern int ShutdownRequested;

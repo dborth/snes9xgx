@@ -98,27 +98,32 @@ void ExitCleanup()
 	void (*PSOReload) () = (void (*)()) 0x80001800;
 #endif
 
-void Reboot()
+void ExitApp()
 {
 	ExitCleanup();
-#ifdef HW_RVL
-    SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
-#else
-	#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
-	*SOFTRESET_ADR = 0x00000000;
-#endif
-}
 
-void ExitToLoader()
-{
-	ExitCleanup();
-	// Exit to Loader
-	#ifdef HW_RVL
-		exit(0);
-	#else	// gamecube
-		if (psoid[0] == PSOSDLOADID)
-			PSOReload ();
-	#endif
+	if(GCSettings.ExitAction == 0) // Exit to Loader
+	{
+		#ifdef HW_RVL
+			exit(0);
+		#else
+			if (psoid[0] == PSOSDLOADID)
+				PSOReload ();
+		#endif
+	}
+	else if(GCSettings.ExitAction == 1) // Exit to Menu
+	{
+		#ifdef HW_RVL
+			SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+		#else
+			#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
+			*SOFTRESET_ADR = 0x00000000;
+		#endif
+	}
+	else // Shutdown Wii
+	{
+		SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+	}
 }
 
 #ifdef HW_RVL

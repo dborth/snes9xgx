@@ -163,6 +163,7 @@ preparePrefsData (int method)
 	createXMLSection("Menu", "Menu Settings");
 
 	createXMLSetting("WiimoteOrientation", "Wiimote Orientation", toStr(GCSettings.WiimoteOrientation));
+	createXMLSetting("ExitAction", "Exit Action", toStr(GCSettings.ExitAction));
 
 	createXMLSection("Controller", "Controller Settings");
 
@@ -310,8 +311,9 @@ decodePrefsData (int method)
 			loadXMLSetting(&GCSettings.yshift, "yshift");
 
 			// Menu Settings
-			
+
 			loadXMLSetting(&GCSettings.WiimoteOrientation, "WiimoteOrientation");
+			loadXMLSetting(&GCSettings.ExitAction, "ExitAction");
 
 			// Controller Settings
 

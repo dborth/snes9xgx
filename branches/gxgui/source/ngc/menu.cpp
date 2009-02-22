@@ -282,7 +282,7 @@ UpdateGUI (void *arg)
 			GRRLIB_Render();
 
 			if(ExitRequested)
-				ExitToLoader();
+				ExitApp();
 
 			#ifdef HW_RVL
 			if(updateFound)
@@ -294,7 +294,7 @@ UpdateGUI (void *arg)
 					"Update later");
 				if(updateFound)
 					if(DownloadUpdate())
-						ExitToLoader();
+						ExitApp();
 			}
 
 			if(ShutdownRequested)
@@ -1979,6 +1979,7 @@ static int MenuSettingsMenu()
 	OptionList options;
 
 	sprintf(options.name[i++], "Wiimote Orientation");
+	sprintf(options.name[i++], "Exit Action");
 	options.length = i;
 
 	GuiText titleTxt("Settings - Menu", 22, (GXColor){255, 255, 255, 0xff});
@@ -2020,10 +2021,26 @@ static int MenuSettingsMenu()
 	{
 		VIDEO_WaitVSync ();
 
+		#ifdef HW_RVL
 		if (GCSettings.WiimoteOrientation == 0)
 			sprintf (options.value[0], "Vertical");
 		else if (GCSettings.WiimoteOrientation == 1)
 			sprintf (options.value[0], "Horizontal");
+
+		if (GCSettings.ExitAction == 0)
+			sprintf (options.value[1], "Return to Loader");
+		else if (GCSettings.ExitAction == 1)
+			sprintf (options.value[1], "Return to Wii Menu");
+		else if (GCSettings.ExitAction == 2)
+			sprintf (options.value[1], "Power off Wii");
+		#else
+		if(GCSettings.ExitAction > 1)
+			GCSettings.ExitAction = 0;
+		if (GCSettings.ExitAction == 0)
+			sprintf (options.value[1], "Return to Loader");
+		else if (GCSettings.ExitAction == 1)
+			sprintf (options.value[1], "Reboot");
+		#endif
 
 		ret = optionBrowser.GetClickedOption();
 
@@ -2031,6 +2048,11 @@ static int MenuSettingsMenu()
 		{
 			case 0:
 				GCSettings.WiimoteOrientation ^= 1;
+				break;
+			case 1:
+				GCSettings.ExitAction++;
+				if(GCSettings.ExitAction > 2)
+					GCSettings.ExitAction = 0;
 				break;
 		}
 
