@@ -345,6 +345,7 @@ class GuiOptionBrowser : public GuiElement
 	public:
 		GuiOptionBrowser(int w, int h, OptionList * l);
 		~GuiOptionBrowser();
+		void SetCol2Position(int x);
 		int FindMenuItem(int c, int d);
 		int GetClickedOption();
 		void ResetState();

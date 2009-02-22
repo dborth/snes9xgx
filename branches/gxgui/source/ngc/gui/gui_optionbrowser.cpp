@@ -25,7 +25,10 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
-	trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+	if(GCSettings.WiimoteOrientation)
+		trigA->SetSimpleTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+	else
+		trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
 	bgOptions = new GuiImageData(bg_options_png);
 	bgOptionsImg = new GuiImage(bgOptions);
@@ -84,7 +87,7 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 
 		optionVal[i] = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
 		optionVal[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
-		optionVal[i]->SetPosition(300,0);
+		optionVal[i]->SetPosition(250,0);
 
 		optionBg[i] = new GuiImage(bgOptionsEntry);
 
@@ -135,6 +138,12 @@ GuiOptionBrowser::~GuiOptionBrowser()
 		delete optionBg[i];
 		delete optionBtn[i];
 	}
+}
+
+void GuiOptionBrowser::SetCol2Position(int x)
+{
+	for(int i=0; i<PAGESIZE; i++)
+		optionVal[i]->SetPosition(x,0);
 }
 
 void GuiOptionBrowser::SetFocus(int f)

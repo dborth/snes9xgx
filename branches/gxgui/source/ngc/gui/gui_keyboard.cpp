@@ -84,7 +84,7 @@ GuiKeyboard::GuiKeyboard(char * t)
 	keyTextboxImg->SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	keyTextboxImg->SetPosition(0, 0);
 	this->Append(keyTextboxImg);
-	
+
 	kbText = new GuiText(kbtextstr, 22, (GXColor){0, 0, 0, 0xff});
 	kbText->SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	kbText->SetPosition(0, 10);
@@ -99,7 +99,11 @@ GuiKeyboard::GuiKeyboard(char * t)
 
 	keySoundOver = new GuiSound(button_over_mp3, button_over_mp3_size);
 	trigA = new GuiTrigger;
-	trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	if(GCSettings.WiimoteOrientation)
+		trigA->SetSimpleTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+	else
+		trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
 	keyBackImg = new GuiImage(keyMedium);
 	keyBackOverImg = new GuiImage(keyMediumOver);
