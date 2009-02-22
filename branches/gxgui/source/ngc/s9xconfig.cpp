@@ -58,6 +58,8 @@ DefaultSettings ()
 	GCSettings.xshift = 0;	// video shift
 	GCSettings.yshift = 0;
 
+	GCSettings.WiimoteOrientation = 0;
+
 	/****************** SNES9x Settings ***********************/
 
 	// Default ALL to false

@@ -1973,7 +1973,77 @@ static int MenuSettingsFile()
 
 static int MenuSettingsMenu()
 {
-	return MENU_EXIT;
+	int menu = MENU_NONE;
+	int ret;
+	int i = 0;
+	OptionList options;
+
+	sprintf(options.name[i++], "Wiimote Orientation");
+	options.length = i;
+
+	GuiText titleTxt("Settings - Menu", 22, (GXColor){255, 255, 255, 0xff});
+	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	titleTxt.SetPosition(50,50);
+
+	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+
+	GuiTrigger trigA;
+	trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(100, -35);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetTrigger(&trigA);
+
+	GuiOptionBrowser optionBrowser(552, 248, &options);
+	optionBrowser.SetPosition(0, 108);
+	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+
+	guiReady = false;
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&backBtn);
+	mainWindow->Append(&optionBrowser);
+	mainWindow->Append(&w);
+	mainWindow->Append(&titleTxt);
+	guiReady = true;
+
+	while(menu == MENU_NONE)
+	{
+		VIDEO_WaitVSync ();
+
+		if (GCSettings.WiimoteOrientation == 0)
+			sprintf (options.value[0], "Vertical");
+		else if (GCSettings.WiimoteOrientation == 1)
+			sprintf (options.value[0], "Horizontal");
+
+		ret = optionBrowser.GetClickedOption();
+
+		switch (ret)
+		{
+			case 0:
+				GCSettings.WiimoteOrientation ^= 1;
+				break;
+		}
+
+		if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS;
+		}
+	}
+	guiReady = false;
+	mainWindow->Remove(&optionBrowser);
+	mainWindow->Remove(&w);
+	mainWindow->Remove(&titleTxt);
+	return menu;
 }
 
 /****************************************************************************

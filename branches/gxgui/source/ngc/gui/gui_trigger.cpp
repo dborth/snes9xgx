@@ -121,12 +121,14 @@ s8 GuiTrigger::WPAD_Stick(u8 right, int axis)
 
 bool GuiTrigger::Left()
 {
-	if((wpad.btns_d | wpad.btns_h) & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT)
+	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_UP : WPAD_BUTTON_LEFT;
+
+	if((wpad.btns_d | wpad.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
 			|| pad.btns_d & PAD_BUTTON_LEFT
 			|| pad.stickX < -PADCAL
 			|| WPAD_Stick(0,0) < -PADCAL)
 	{
-		if(wpad.btns_d & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT)
+		if(wpad.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
 			|| pad.btns_d & PAD_BUTTON_LEFT)
 		{
 			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.
@@ -147,12 +149,14 @@ bool GuiTrigger::Left()
 
 bool GuiTrigger::Right()
 {
-	if((wpad.btns_d | wpad.btns_h) & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT)
+	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_DOWN : WPAD_BUTTON_RIGHT;
+
+	if((wpad.btns_d | wpad.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
 			|| pad.btns_d & PAD_BUTTON_RIGHT
 			|| pad.stickX > PADCAL
 			|| WPAD_Stick(0,0) > PADCAL)
 	{
-		if(wpad.btns_d & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT)
+		if(wpad.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
 			|| pad.btns_d & PAD_BUTTON_RIGHT)
 		{
 			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.
@@ -173,12 +177,14 @@ bool GuiTrigger::Right()
 
 bool GuiTrigger::Up()
 {
-	if((wpad.btns_d | wpad.btns_h) & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)
+	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_RIGHT : WPAD_BUTTON_UP;
+
+	if((wpad.btns_d | wpad.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
 			|| pad.btns_d & PAD_BUTTON_UP
 			|| pad.stickY > PADCAL
 			|| WPAD_Stick(0,1) > PADCAL)
 	{
-		if(wpad.btns_d & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP)
+		if(wpad.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
 			|| pad.btns_d & PAD_BUTTON_UP)
 		{
 			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.
@@ -199,12 +205,14 @@ bool GuiTrigger::Up()
 
 bool GuiTrigger::Down()
 {
-	if((wpad.btns_d | wpad.btns_h) & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)
+	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_LEFT : WPAD_BUTTON_DOWN;
+
+	if((wpad.btns_d | wpad.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_DOWN
 			|| pad.stickY < -PADCAL
 			|| WPAD_Stick(0,1) < -PADCAL)
 	{
-		if(wpad.btns_d & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN)
+		if(wpad.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
 			|| pad.btns_d & PAD_BUTTON_DOWN)
 		{
 			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.

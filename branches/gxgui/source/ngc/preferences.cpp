@@ -151,7 +151,7 @@ preparePrefsData (int method)
 	createXMLSetting("smbuser", "Share Username", GCSettings.smbuser);
 	createXMLSetting("smbpwd", "Share Password", GCSettings.smbpwd);
 
-	createXMLSection("Emulation", "Emulation Settings");
+	createXMLSection("Video", "Video Settings");
 
 	createXMLSetting("ZoomLevel", "Zoom Level", FtoStr(GCSettings.ZoomLevel));
 	createXMLSetting("render", "Video Filtering", toStr(GCSettings.render));
@@ -159,6 +159,10 @@ preparePrefsData (int method)
 	createXMLSetting("FilterMethod", "Filter Method", toStr(GCSettings.FilterMethod));
 	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
 	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
+
+	createXMLSection("Menu", "Menu Settings");
+
+	createXMLSetting("WiimoteOrientation", "Wiimote Orientation", toStr(GCSettings.WiimoteOrientation));
 
 	createXMLSection("Controller", "Controller Settings");
 
@@ -296,7 +300,7 @@ decodePrefsData (int method)
 			loadXMLSetting(GCSettings.smbuser, "smbuser", sizeof(GCSettings.smbuser));
 			loadXMLSetting(GCSettings.smbpwd, "smbpwd", sizeof(GCSettings.smbpwd));
 
-			// Emulation Settings
+			// Video Settings
 
 			loadXMLSetting(&GCSettings.ZoomLevel, "ZoomLevel");
 			loadXMLSetting(&GCSettings.render, "render");
@@ -304,6 +308,10 @@ decodePrefsData (int method)
 			loadXMLSetting(&GCSettings.FilterMethod, "FilterMethod");
 			loadXMLSetting(&GCSettings.xshift, "xshift");
 			loadXMLSetting(&GCSettings.yshift, "yshift");
+
+			// Menu Settings
+			
+			loadXMLSetting(&GCSettings.WiimoteOrientation, "WiimoteOrientation");
 
 			// Controller Settings
 
