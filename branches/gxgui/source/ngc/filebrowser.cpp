@@ -475,11 +475,11 @@ int BrowserChangeFolder(int method)
 	switch (method)
 	{
 		case METHOD_DVD:
-			browser.numEntries = ParseDVDdirectory();
+			ParseDVDdirectory();
 			break;
 
 		default:
-			browser.numEntries = ParseDirectory();
+			ParseDirectory();
 			break;
 	}
 
@@ -502,8 +502,6 @@ OpenGameList (int method)
 	if(method == METHOD_AUTO)
 		method = autoLoadMethod();
 
-	ResetBrowser();
-
 	if(ChangeInterface(method, NOTSILENT))
 	{
 		// change current dir to roms directory
@@ -511,12 +509,12 @@ OpenGameList (int method)
 		{
 			case METHOD_DVD:
 				browser.dir[0] = 0;
-				browser.numEntries = ParseDVDdirectory(); // Parse root directory
+				ParseDVDdirectory(); // Parse root directory
 				SwitchDVDFolder(GCSettings.LoadFolder); // switch to ROM folder
 				break;
 			default:
 				sprintf(browser.dir, "/%s", GCSettings.LoadFolder);
-				browser.numEntries = ParseDirectory(); // Parse root directory
+				ParseDirectory(); // Parse root directory
 				break;
 		}
 	}

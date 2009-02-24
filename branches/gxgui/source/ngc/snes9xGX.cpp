@@ -59,8 +59,6 @@ extern "C" {
 #include "filebrowser.h"
 #include "input.h"
 
-#include "GRRLIB.h"
-
 static lwp_t mainthread = LWP_THREAD_NULL;
 int ConfigRequested = 0;
 int ShutdownRequested = 0;
@@ -258,12 +256,10 @@ emulate ()
 				S9xSoftReset (); // reset game
 				ResetRequested = 0;
 			}
-
 			if (ConfigRequested)
 			{
-				gameScreenTex = GRRLIB_Screen2Texture();
+				TakeScreenshot();
 				ResetVideo_Menu ();
-
 				ConfigRequested = 0;
 				break; // leave emulation loop
 			}

@@ -24,6 +24,8 @@
 #include "snes9xGX.h"
 #include "video.h"
 #include "filelist.h"
+#include "fileop.h"
+#include "menu.h"
 
 #define PI 3.14159265f
 #define PADCAL 50
@@ -45,25 +47,6 @@ typedef struct _paddata {
 	u8 triggerL;
 	u8 triggerR;
 } PADData;
-
-typedef struct _optionlist {
-	int length;
-	char name[150][50];
-	char value[150][50];
-} OptionList;
-
-typedef struct _savelist {
-	int length;
-	char filename[20][255];
-	char date[20][50];
-	char time[10][50];
-	int type[20];
-	int files[2][100];
-} SaveList;
-
-typedef struct _keytype {
-	char ch, chShift;
-} Key;
 
 extern int rumbleRequest[4];
 
@@ -240,11 +223,16 @@ class GuiImage : public GuiElement
 		~GuiImage();
 		void SetAngle(float a);
 		void SetAlpha(int a);
+		void SetScale(float x, float y);
 		void Draw();
 		u8 * GetImage();
+		void SetImage(GuiImageData * img);
+		void SetImage(u8 * img, int w, int h);
 	protected:
 		u8 * image;
 		int alpha;
+		float scaleX;
+		float scaleY;
 		float imageangle;
 };
 
@@ -340,6 +328,12 @@ class GuiFileBrowser : public GuiElement
 		GuiTrigger * trigA;
 };
 
+typedef struct _optionlist {
+	int length;
+	char name[150][50];
+	char value[150][50];
+} OptionList;
+
 class GuiOptionBrowser : public GuiElement
 {
 	public:
@@ -388,6 +382,16 @@ class GuiOptionBrowser : public GuiElement
 
 		GuiTrigger * trigA;
 };
+
+typedef struct _savelist {
+	int length;
+	char filename[20][255];
+	GuiImageData * previewImg[20];
+	char date[20][50];
+	char time[10][50];
+	int type[20];
+	int files[2][100];
+} SaveList;
 
 class GuiSaveBrowser : public GuiElement
 {
@@ -439,6 +443,10 @@ class GuiSaveBrowser : public GuiElement
 
 		GuiTrigger * trigA;
 };
+
+typedef struct _keytype {
+	char ch, chShift;
+} Key;
 
 class GuiKeyboard : public GuiWindow
 {

@@ -32,6 +32,9 @@
 #include "filelist.h"
 #include "audio.h"
 
+
+#include "GRRLIB.h"
+
 /*** Snes9x GFX Buffer ***/
 #define SNES9XGFX_SIZE 		EXT_PITCH*EXT_HEIGHT
 #define FILTERMEM_SIZE 		512*MAX_SNES_HEIGHT*4
@@ -45,7 +48,8 @@ int whichfb = 0; // Switch
 GXRModeObj *vmode; // Menu video mode
 int screenheight;
 int screenwidth;
-u8 * gameScreenTex = NULL; // a screen capture of the game
+u8 * gameScreenTex = NULL; // a GX texture screen capture of the game
+u8 * gameScreen = NULL; // a xfb capture
 
 /*** GX ***/
 #define TEX_WIDTH 512
@@ -600,6 +604,13 @@ InitGCVideo ()
 	InitVideoThread ();
 
 	// Finally, the video is up and ready for use :)
+}
+
+void TakeScreenshot()
+{
+	gameScreenTex = GRRLIB_Screen2Texture();
+	gameScreen = (u8 *)memalign(32, vmode->fbWidth * vmode->efbHeight * 2);
+	memcpy(gameScreen, xfb[whichfb], vmode->fbWidth * vmode->efbHeight * 2);
 }
 
 /****************************************************************************

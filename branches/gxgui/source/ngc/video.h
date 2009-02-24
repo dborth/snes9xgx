@@ -21,6 +21,7 @@ void AllocGfxMem();
 void FreeGfxMem();
 void InitGCVideo ();
 void StopGX();
+void TakeScreenshot();
 void ResetVideo_Emu ();
 void ResetVideo_Menu ();
 void setGFX ();
@@ -32,5 +33,6 @@ extern int screenheight;
 extern int screenwidth;
 extern bool progressive;
 extern u8 * gameScreenTex;
+extern u8 * gameScreen;
 
 #endif

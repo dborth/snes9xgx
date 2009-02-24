@@ -1061,6 +1061,9 @@ static int MenuGameSaves(int action)
 	SaveList saves;
 	char filepath[1024];
 
+	if(!ChangeInterface(GCSettings.SaveMethod, NOTSILENT))
+		return MENU_GAME;
+
 	memset(&saves, 0, sizeof(saves));
 
 	strncpy(browser.dir, GCSettings.SaveFolder, 200);
@@ -1096,6 +1099,17 @@ static int MenuGameSaves(int action)
 
 					if(n > 0 && n < 100)
 						saves.files[saves.type[j]][n] = 1;
+
+					if(saves.type[j] == FILE_SNAPSHOT)
+					{
+						char scrfile[1024];
+						sprintf(scrfile, "%s/%s.png", GCSettings.SaveFolder, tmp);
+
+						AllocSaveBuffer();
+						if(LoadFile(scrfile, GCSettings.SaveMethod, SILENT))
+							saves.previewImg[j] = new GuiImageData(savebuffer);
+						FreeSaveBuffer();
+					}
 
 					strncpy(saves.filename[j], browserList[i].filename, 255);
 					strftime(saves.date[j], 20, "%a %b %d", &browserList[j].mtime);
@@ -1239,6 +1253,10 @@ static int MenuGameSaves(int action)
 			menu = MENU_GAME;
 		}
 	}
+
+	for(i=0; i < saves.length; i++)
+		delete saves.previewImg[i];
+
 	guiReady = false;
 	mainWindow->Remove(&saveBrowser);
 	mainWindow->Remove(&w);
@@ -2319,6 +2337,11 @@ MainMenu (int menu)
 		gameScreenImg = NULL;
 		free(gameScreenTex);
 		gameScreenTex = NULL;
+	}
+	if(gameScreen)
+	{
+		free(gameScreen);
+		gameScreen = NULL;
 	}
 }
 

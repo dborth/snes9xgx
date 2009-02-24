@@ -340,6 +340,7 @@ ParseDirectory()
 
 	CancelAction();
 
+	browser.numEntries = entryNum;
 	return entryNum;
 }
 
@@ -368,6 +369,39 @@ FreeSaveBuffer ()
 		free(savebuffer);
 
 	savebuffer = NULL;
+}
+
+/****************************************************************************
+ * FindBufferSize()
+ * Finds the position of the last bit written to the buffer
+ * This function isn't perfect, but it should get the job done
+ ***************************************************************************/
+int FindBufferSize(char * buffer, int maxsize)
+{
+	int datasize = maxsize; // we'll start at the max size
+
+	char check = buffer[datasize];
+	while(check == 0)
+	{
+		datasize -= 16384;
+		check = buffer[datasize];
+	}
+	datasize += 16384;
+	check = buffer[datasize];
+	while(check == 0)
+	{
+		datasize -= 1024;
+		check = buffer[datasize];
+	}
+	datasize += 1024;
+	check = buffer[datasize];
+	while(check == 0)
+	{
+		datasize -= 1;
+		check = buffer[datasize];
+	}
+	datasize += 2; // include last byte AND a null byte
+	return datasize;
 }
 
 /****************************************************************************

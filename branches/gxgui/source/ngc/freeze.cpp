@@ -22,6 +22,8 @@
 #include <fat.h>
 #include <zlib.h>
 
+#include "pngu/pngu.h"
+
 #include "snes9x.h"
 #include "memmap.h"
 #include "soundux.h"
@@ -34,6 +36,7 @@
 #include "fileop.h"
 #include "filebrowser.h"
 #include "menu.h"
+#include "video.h"
 
 extern void S9xSRTCPreSaveState ();
 extern void NGCFreezeStruct ();
@@ -180,6 +183,31 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 done:
 
 	FreeSaveBuffer ();
+
+	// save screenshot - I would prefer to do this from gameScreenTex
+	if(gameScreen != NULL && method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
+	{
+		AllocSaveBuffer ();
+
+		IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
+
+		if (pngContext != NULL)
+		{
+			PNGU_EncodeFromYCbYCr(pngContext, 640, 480, gameScreen, 0);
+			PNGU_ReleaseImageContext(pngContext);
+		}
+
+		int size = FindBufferSize((char *)savebuffer, 128*1024);
+		if(size > 0)
+		{
+			char screenpath[1024];
+			filepath[strlen(filepath)-4] = 0;
+			sprintf(screenpath, "%s.png", filepath);
+			SaveFile(screenpath, size, method, silent);
+		}
+
+		FreeSaveBuffer ();
+	}
 
 	if(offset > 0) // save successful!
 	{

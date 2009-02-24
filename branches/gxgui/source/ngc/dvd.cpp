@@ -492,7 +492,7 @@ getentry (int entrycount, unsigned char dvdbuffer[])
  * It relies on dvddir and dvddirlength being pre-populated by a call to
  * getpvd, a previous parse or a menu selection.
  *
- * The return value is number of files collected, or 0 on failure.
+ * The return value is number of files collected, or -1 on failure.
  ***************************************************************************/
 int
 ParseDVDdirectory ()
@@ -515,7 +515,7 @@ ParseDVDdirectory ()
 	while (len < pdlength)
 	{
 		if (dvd_read (&dvdbuffer, 2048, pdoffset) == 0)
-			return 0;
+			return -1;
 
 		diroffset = 0;
 
@@ -529,9 +529,12 @@ ParseDVDdirectory ()
 		pdoffset = rdoffset + len;
 	}
 
+	CancelAction();
+
 	// Sort the file list
 	qsort(browserList, filecount, sizeof(BROWSERENTRY), FileSortCallback);
 
+	browser.numEntries = filecount;
 	return filecount;
 }
 

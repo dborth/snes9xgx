@@ -317,6 +317,10 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			saveTime[1]->SetText("New Snapshot");
 			saveType[0]->SetText(NULL);
 			saveType[1]->SetText(NULL);
+			savePreviewImg[0]->SetImage(gameSaveBlank);
+			savePreviewImg[1]->SetImage(gameSaveBlank);
+			savePreviewImg[0]->SetScale(1,1);
+			savePreviewImg[1]->SetScale(1,1);
 			saveBtn[0]->SetVisible(true);
 			saveBtn[1]->SetVisible(true);
 
@@ -352,6 +356,18 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 				strcat(savetext, " (Auto)");
 			}
 			saveType[i]->SetText(savetext);
+
+			if(saves->previewImg[listOffset+i] != NULL)
+			{
+				savePreviewImg[i]->SetImage(saves->previewImg[listOffset+i]);
+				savePreviewImg[i]->SetScale(0.1,0.1);
+
+			}
+			else
+			{
+				savePreviewImg[i]->SetImage(gameSaveBlank);
+				savePreviewImg[i]->SetScale(1,1);
+			}
 		}
 		else
 		{
