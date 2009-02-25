@@ -34,8 +34,8 @@ void GRRLIB_NGone(Vector v[],GXColor c[],long n);
 void GRRLIB_NGoneFilled(Vector v[],GXColor c[],long n);
 
 u8 * GRRLIB_LoadTexture(const unsigned char my_png[]);
-void GRRLIB_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], float degrees, float scaleX, f32 scaleY, u8 alphaF );
-void GRRLIB_DrawTile(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], float degrees, float scaleX, f32 scaleY, u8 alpha, f32 frame,f32 maxframe );
+void GRRLIB_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], f32 degrees, f32 scaleX, f32 scaleY, u8 alphaF );
+void GRRLIB_DrawTile(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], f32 degrees, f32 scaleX, f32 scaleY, u8 alpha, f32 frame,f32 maxframe );
 
 GXColor GRRLIB_Splitu32(u32 color);
 
@@ -45,9 +45,9 @@ void GRRLIB_Render ();
 bool GRRLIB_ScrShot(const char*);
 u8 *GRRLIB_Screen2Texture();
 
-void GRRLIB_DrawImg_FadeInOut(u16 width, u16 height, u8 data[], float scaleX, f32 scaleY, u16 speed);
-void GRRLIB_DrawImg_FadeIn(u16 width, u16 height, u8 data[], float scaleX, f32 scaleY, u16 speed);
-void GRRLIB_DrawImg_FadeOut(u16 width, u16 height, u8 data[], float scaleX, f32 scaleY, u16 speed);
+void GRRLIB_DrawImg_FadeInOut(u16 width, u16 height, u8 data[], f32 scaleX, f32 scaleY, u16 speed);
+void GRRLIB_DrawImg_FadeIn(u16 width, u16 height, u8 data[], f32 scaleX, f32 scaleY, u16 speed);
+void GRRLIB_DrawImg_FadeOut(u16 width, u16 height, u8 data[], f32 scaleX, f32 scaleY, u16 speed);
 
 #ifdef __cplusplus
 }

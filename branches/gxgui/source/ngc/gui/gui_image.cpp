@@ -31,6 +31,8 @@ GuiImage::GuiImage(u8 * img, int w, int h)
 	height = h;
 	imageangle = 0;
 	alpha = 255;
+	scaleX = 1;
+	scaleY = 1;
 }
 
 /**

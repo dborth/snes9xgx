@@ -68,7 +68,7 @@ u8 * GRRLIB_LoadTexture(const unsigned char my_png[]) {
 	return my_texture;
 }
 
-void GRRLIB_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], float degrees, float scaleX, f32 scaleY, u8 alpha ){
+void GRRLIB_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], f32 degrees, f32 scaleX, f32 scaleY, u8 alpha ){
    if(data == NULL)
 	return;
 
@@ -119,7 +119,7 @@ void GRRLIB_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], float 
 
 }
 
-void GRRLIB_DrawTile(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], float degrees, float scaleX, f32 scaleY, u8 alpha, f32 frame,f32 maxframe ){
+void GRRLIB_DrawTile(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], f32 degrees, f32 scaleX, f32 scaleY, u8 alpha, f32 frame,f32 maxframe ){
 GXTexObj texObj;
 f32 s1= frame/maxframe;
 f32 s2= (frame+1)/maxframe;
@@ -246,7 +246,7 @@ u8 *GRRLIB_Screen2Texture() {
  * @param scaleY Texture Y scale.
  * @param speed  Fade speed (1 is the normal speed, 2 is two time the normal speed, etc).
  */
-void GRRLIB_DrawImg_FadeInOut(u16 width, u16 height, u8 data[], float scaleX, f32 scaleY, u16 speed)
+void GRRLIB_DrawImg_FadeInOut(u16 width, u16 height, u8 data[], f32 scaleX, f32 scaleY, u16 speed)
 {
 	GRRLIB_DrawImg_FadeIn(width, height, data, scaleX, scaleY, speed);
 	GRRLIB_DrawImg_FadeOut(width, height, data, scaleX, scaleY, speed);
@@ -261,7 +261,7 @@ void GRRLIB_DrawImg_FadeInOut(u16 width, u16 height, u8 data[], float scaleX, f3
  * @param scaleY Texture Y scale.
  * @param speed  Fade speed (1 is the normal speed, 2 is two time the normal speed, etc).
  */
-void GRRLIB_DrawImg_FadeIn(u16 width, u16 height, u8 data[], float scaleX, f32 scaleY, u16 speed)
+void GRRLIB_DrawImg_FadeIn(u16 width, u16 height, u8 data[], f32 scaleX, f32 scaleY, u16 speed)
 {
 	int alpha;
 	f32 xpos = (640 - width) / 2;
@@ -285,7 +285,7 @@ void GRRLIB_DrawImg_FadeIn(u16 width, u16 height, u8 data[], float scaleX, f32 s
  * @param scaleY Texture Y scale.
  * @param speed  Fade speed (1 is the normal speed, 2 is two time the normal speed, etc).
  */
-void GRRLIB_DrawImg_FadeOut(u16 width, u16 height, u8 data[], float scaleX, f32 scaleY, u16 speed)
+void GRRLIB_DrawImg_FadeOut(u16 width, u16 height, u8 data[], f32 scaleX, f32 scaleY, u16 speed)
 {
 	int alpha;
 	f32 xpos = (640 - width) / 2;

@@ -231,9 +231,9 @@ class GuiImage : public GuiElement
 	protected:
 		u8 * image;
 		int alpha;
-		float scaleX;
-		float scaleY;
-		float imageangle;
+		f32 scaleX;
+		f32 scaleY;
+		f32 imageangle;
 };
 
 class GuiText : public GuiElement
