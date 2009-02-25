@@ -90,9 +90,8 @@ void GuiWindow::Draw()
 		try	{ _elements.at(i)->Draw(); }
 		catch (exception& e) { }
 	}
-
 	if(parentElement && state == STATE_DISABLED)
-		GRRLIB_Rectangle(0,0,screenwidth,screenheight,0x646464DD,1);
+		Menu_DrawRectangle(0,0,screenwidth,screenheight,(GXColor){0xbe, 0xca, 0xd5, 0x70},1);
 }
 
 void GuiWindow::ResetState()

@@ -58,7 +58,6 @@ extern "C" {
 #include "filter.h"
 
 #include "filelist.h"
-#include "GRRLIB.h"
 #include "gui/gui.h"
 #include "menu.h"
 
@@ -245,7 +244,7 @@ UpdateGUI (void *arg)
 
 				if(userInput[i].wpad.ir.valid)
 				{
-					GRRLIB_DrawImg(userInput[i].wpad.ir.x-48, userInput[i].wpad.ir.y-48, 96, 96, pointer[i]->GetImage(), userInput[i].wpad.ir.angle, 1, 1, 255);
+					Menu_DrawImg(userInput[i].wpad.ir.x-48, userInput[i].wpad.ir.y-48, 96, 96, pointer[i]->GetImage(), userInput[i].wpad.ir.angle, 1, 1, 255);
 				}
 				#endif
 
@@ -282,7 +281,7 @@ UpdateGUI (void *arg)
 				#endif
 			}
 
-			GRRLIB_Render();
+			Menu_Render();
 
 			if(ExitRequested)
 				ExitApp();

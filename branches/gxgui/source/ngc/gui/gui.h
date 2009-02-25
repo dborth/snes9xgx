@@ -16,10 +16,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
+#include <math.h>
 #include <wiiuse/wpad.h>
 #include <mp3player.h>
 #include "pngu/pngu.h"
-#include "GRRLIB.h"
 #include "FreeTypeGX.h"
 #include "snes9xGX.h"
 #include "video.h"

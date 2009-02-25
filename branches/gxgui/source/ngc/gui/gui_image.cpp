@@ -98,7 +98,7 @@ void GuiImage::Draw()
 	if(tile > 0)
 	{
 		for(int i=0; i<tile; i++)
-			GRRLIB_DrawImg(this->GetLeft()+width*i, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
+			Menu_DrawImg(this->GetLeft()+width*i, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
 	}
 	else
 	{
@@ -106,8 +106,8 @@ void GuiImage::Draw()
 		int theleft = this->GetLeft() - width/2 + (width*scaleX)/2;
 
 		if(scaleX == 1)
-			GRRLIB_DrawImg(this->GetLeft(), this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
+			Menu_DrawImg(this->GetLeft(), this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
 		else
-			GRRLIB_DrawImg(theleft, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
+			Menu_DrawImg(theleft, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
 	}
 }
