@@ -224,6 +224,7 @@ class GuiImage : public GuiElement
 		void SetAngle(float a);
 		void SetAlpha(int a);
 		void SetScale(float x, float y);
+		void SetTile(int t);
 		void Draw();
 		u8 * GetImage();
 		void SetImage(GuiImageData * img);
@@ -234,6 +235,7 @@ class GuiImage : public GuiElement
 		f32 scaleX;
 		f32 scaleY;
 		f32 imageangle;
+		int tile;
 };
 
 class GuiText : public GuiElement

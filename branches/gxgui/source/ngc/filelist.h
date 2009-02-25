@@ -88,6 +88,15 @@ extern const u32	button_gamesave_blank_png_size;
 extern const u8		dialogue_box_png[];
 extern const u32	dialogue_box_png_size;
 
+extern const u8		progressbar_png[];
+extern const u32	progressbar_png_size;
+
+extern const u8		progressbar_empty_png[];
+extern const u32	progressbar_empty_png_size;
+
+extern const u8		progressbar_outline_png[];
+extern const u32	progressbar_outline_png_size;
+
 extern const u8		throbber_png[];
 extern const u32	throbber_png_size;
 

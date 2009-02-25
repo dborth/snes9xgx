@@ -22,6 +22,7 @@ GuiImage::GuiImage(GuiImageData * img)
 	alpha = 255;
 	scaleX = 1;
 	scaleY = 1;
+	tile = 0;
 }
 
 GuiImage::GuiImage(u8 * img, int w, int h)
@@ -33,6 +34,7 @@ GuiImage::GuiImage(u8 * img, int w, int h)
 	alpha = 255;
 	scaleX = 1;
 	scaleY = 1;
+	tile = 0;
 }
 
 /**
@@ -77,6 +79,11 @@ void GuiImage::SetScale(float x, float y)
 	scaleY = y;
 }
 
+void GuiImage::SetTile(int t)
+{
+	tile = t;
+}
+
 /**
  * Draw the button on screen
  */
@@ -88,11 +95,19 @@ void GuiImage::Draw()
 	if(!this->IsVisible())
 		return;
 
-	// temporary (kind of), used to correct offset for scaled images
-	int theleft = this->GetLeft() - width/2 + (width*scaleX)/2;
-
-	if(scaleX == 1)
-		GRRLIB_DrawImg(this->GetLeft(), this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
+	if(tile > 0)
+	{
+		for(int i=0; i<tile; i++)
+			GRRLIB_DrawImg(this->GetLeft()+width*i, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
+	}
 	else
-		GRRLIB_DrawImg(theleft, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
+	{
+		// temporary (kind of), used to correct offset for scaled images
+		int theleft = this->GetLeft() - width/2 + (width*scaleX)/2;
+
+		if(scaleX == 1)
+			GRRLIB_DrawImg(this->GetLeft(), this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
+		else
+			GRRLIB_DrawImg(theleft, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
+	}
 }

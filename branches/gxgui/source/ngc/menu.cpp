@@ -74,7 +74,7 @@ static lwp_t guithread = LWP_THREAD_NULL;
 static bool guiReady = false;
 static bool guiHalt = true;
 static lwp_t progressthread = LWP_THREAD_NULL;
-static bool showProgress = false;
+static int showProgress = 0;
 
 static char progressTitle[100];
 static char progressMsg[200];
@@ -315,10 +315,6 @@ UpdateGUI (void *arg)
 static void
 ProgressWindow(char *title, char *msg)
 {
-	usleep(300000); // wait to see if progress flag changes soon
-	if(!showProgress)
-		return;
-
 	GuiWindow promptWindow(448,288);
 	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
@@ -332,6 +328,22 @@ ProgressWindow(char *title, char *msg)
 
 	GuiImageData dialogBox(dialogue_box_png);
 	GuiImage dialogBoxImg(&dialogBox);
+
+	GuiImageData progressbarOutline(progressbar_outline_png);
+	GuiImage progressbarOutlineImg(&progressbarOutline);
+	progressbarOutlineImg.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+	progressbarOutlineImg.SetPosition(25, 40);
+
+	GuiImageData progressbarEmpty(progressbar_empty_png);
+	GuiImage progressbarEmptyImg(&progressbarEmpty);
+	progressbarEmptyImg.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+	progressbarEmptyImg.SetPosition(25, 40);
+	progressbarEmptyImg.SetTile(100);
+
+	GuiImageData progressbar(progressbar_png);
+	GuiImage progressbarImg(&progressbar);
+	progressbarImg.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+	progressbarImg.SetPosition(25, 40);
 
 	GuiImageData throbber(throbber_png);
 	GuiImage throbberImg(&throbber);
@@ -348,7 +360,21 @@ ProgressWindow(char *title, char *msg)
 	promptWindow.Append(&dialogBoxImg);
 	promptWindow.Append(&titleTxt);
 	promptWindow.Append(&msgTxt);
-	promptWindow.Append(&throbberImg);
+
+	if(showProgress == 1)
+	{
+		promptWindow.Append(&progressbarEmptyImg);
+		promptWindow.Append(&progressbarImg);
+		promptWindow.Append(&progressbarOutlineImg);
+	}
+	else
+	{
+		promptWindow.Append(&throbberImg);
+	}
+
+	usleep(400000); // wait to see if progress flag changes soon
+	if(!showProgress)
+		return;
 
 	guiReady = false;
 	mainWindow->SetState(STATE_DISABLED);
@@ -357,20 +383,26 @@ ProgressWindow(char *title, char *msg)
 	guiReady = true;
 
 	float angle = 0;
-
 	u32 count = 0;
 
 	while(showProgress)
 	{
 		VIDEO_WaitVSync();
-		count++;
 
-		if(count % 5 == 0)
+		if(showProgress == 1)
 		{
-			angle+=45;
-			if(angle >= 360)
-				angle = 0;
-			throbberImg.SetAngle(angle);
+			progressbarImg.SetTile(100*progressDone/progressTotal);
+		}
+		else if(showProgress == 2)
+		{
+			if(count % 5 == 0)
+			{
+				angle+=45;
+				if(angle >= 360)
+					angle = 0;
+				throbberImg.SetAngle(angle);
+			}
+			count++;
 		}
 	}
 
@@ -408,6 +440,17 @@ InitGUIThreads()
  *
  * Show the user what's happening
  ***************************************************************************/
+
+void
+CancelAction()
+{
+	showProgress = 0;
+
+	// wait for thread to finish
+	while(!LWP_ThreadIsSuspended(progressthread))
+		usleep(50);
+}
+
 void
 ShowProgress (const char *msg, int done, int total)
 {
@@ -416,42 +459,38 @@ ShowProgress (const char *msg, int done, int total)
 	else if(done > total) // this shouldn't happen
 		done = total;
 
+	if(showProgress != 1)
+		CancelAction(); // wait for previous progress window to finish
+
+	showProgress = 1;
 	progressTotal = total;
 	progressDone = done;
-	showProgress = true;
 	LWP_ResumeThread (progressthread);
 }
 
 void
 ShowAction (const char *msg)
 {
+	if(showProgress != 2)
+		CancelAction(); // wait for previous progress window to finish
+
 	strncpy(progressMsg, msg, 200);
 	sprintf(progressTitle, "Please Wait");
+	showProgress = 2;
 	progressDone = 0;
 	progressTotal = 0;
-	showProgress = true;
 	LWP_ResumeThread (progressthread);
-}
-
-void
-CancelAction()
-{
-	showProgress = false;
-
-	// wait for thread to finish
-	while(!LWP_ThreadIsSuspended(progressthread))
-		usleep(50);
 }
 
 void ErrorPrompt(const char *msg)
 {
-	showProgress = false;
+	CancelAction();
 	WindowPrompt("Error", msg, "OK", NULL);
 }
 
 void InfoPrompt(const char *msg)
 {
-	showProgress = false;
+	CancelAction();
 	WindowPrompt("Information", msg, "OK", NULL);
 }
 
