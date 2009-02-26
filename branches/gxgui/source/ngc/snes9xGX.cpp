@@ -293,9 +293,6 @@ void CreateAppPath(char origpath[])
 
 static void * InitThread (void *arg)
 {
-	// Initialize libFAT for SD and USB
-	MountAllFAT();
-
 	// Set defaults
 	DefaultSettings ();
 
@@ -420,11 +417,14 @@ main(int argc, char *argv[])
 	if(argc > 0 && argv[0] != NULL)
 		CreateAppPath(argv[0]);
 
+	// Initialize libFAT for SD and USB
+	MountAllFAT();
+
 	// Create a thread to do remaining initialization tasks
 	// This allows us to get to the menu faster
 	mainthread=LWP_GetSelf();
 	lwp_t initthread;
-	LWP_CreateThread(&initthread, InitThread, NULL, NULL, 0, 80);
+	LWP_CreateThread(&initthread, InitThread, NULL, NULL, 0, 75);
 
 	// Audio
 	AUDIO_Init (NULL);
