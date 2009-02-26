@@ -75,6 +75,22 @@ enum
 	TRIGGER_BUTTON_ONLY_IN_FOCUS
 };
 
+#define EFFECT_SLIDE_TOP			1
+#define EFFECT_SLIDE_BOTTOM			2
+#define EFFECT_SLIDE_RIGHT			4
+#define EFFECT_SLIDE_LEFT			8
+#define EFFECT_SLIDE_IN				16
+#define EFFECT_SLIDE_OUT			32
+#define EFFECT_FADE					64
+#define EFFECT_COLOR_TRANSITION		128
+#define EFFECT_SCALE				256
+
+enum
+{
+	ON_CLICK,
+	ON_OVER
+};
+
 class GuiSound
 {
 	public:
@@ -126,8 +142,11 @@ class GuiElement
 		void SetVisible(bool v);
 		void SetTrigger(GuiTrigger * t);
 		void SetTrigger(u8 i, GuiTrigger * t);
+		void SetEffect(int e);
+		int GetEffect();
 		bool IsInside(int x, int y);
 		void SetPosition(int x, int y);
+		void UpdateEffects();
 		void SetUpdateCallback(UpdateCallback u);
 		int IsFocused();
 		virtual void SetFocus(int f);
@@ -144,6 +163,9 @@ class GuiElement
 		int height;
 		int xoffset;
 		int yoffset;
+		int xoffsetDyn;
+		int yoffsetDyn;
+		int effects;
 		int alignmentHor; // LEFT, RIGHT, CENTRE
 		int alignmentVert; // TOP, BOTTOM, MIDDLE
 		int state; // DEFAULT, SELECTED, CLICKED, DISABLED

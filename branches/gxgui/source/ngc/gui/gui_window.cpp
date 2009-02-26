@@ -90,6 +90,9 @@ void GuiWindow::Draw()
 		try	{ _elements.at(i)->Draw(); }
 		catch (exception& e) { }
 	}
+
+	this->UpdateEffects();
+
 	if(parentElement && state == STATE_DISABLED)
 		Menu_DrawRectangle(0,0,screenwidth,screenheight,(GXColor){0xbe, 0xca, 0xd5, 0x70},1);
 }
@@ -297,8 +300,6 @@ void GuiWindow::MoveSelectionHor(int dir)
 		}
 		catch (exception& e) { }
 	}
-	if(found >= 0)
-		goto matchfound;
 
 	// match found
 	matchfound:

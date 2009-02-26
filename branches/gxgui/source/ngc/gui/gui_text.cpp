@@ -138,4 +138,6 @@ void GuiText::Draw()
 		currentSize = size;
 	}
 	fontSystem->drawText((u16)this->GetLeft(), (u16)this->GetTop(), text, color, style);
+
+	this->UpdateEffects();
 }

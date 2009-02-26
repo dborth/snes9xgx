@@ -132,6 +132,8 @@ void GuiButton::Draw()
 		else if(label[i])
 			label[i]->Draw();
 	}
+
+	this->UpdateEffects();
 }
 
 void GuiButton::Update(GuiTrigger * t)

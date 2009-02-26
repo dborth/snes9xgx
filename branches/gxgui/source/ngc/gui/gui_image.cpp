@@ -102,12 +102,12 @@ void GuiImage::Draw()
 	}
 	else
 	{
-		// temporary (kind of), used to correct offset for scaled images
-		int theleft = this->GetLeft() - width/2 + (width*scaleX)/2;
+		int left = this->GetLeft();
 
-		if(scaleX == 1)
-			Menu_DrawImg(this->GetLeft(), this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
-		else
-			Menu_DrawImg(theleft, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
+		// temporary (maybe), used to correct offset for scaled images
+		if(scaleX != 1)
+			left = left - width/2 + (width*scaleX)/2;
+
+		Menu_DrawImg(left, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
 	}
 }

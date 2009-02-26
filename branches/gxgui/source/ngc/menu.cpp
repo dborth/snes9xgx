@@ -121,6 +121,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 
 	GuiWindow promptWindow(448,288);
 	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+	promptWindow.SetPosition(0, -10);
 	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
@@ -161,6 +162,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	btn1.SetImageOver(&btn1ImgOver);
 	btn1.SetSoundOver(&btnSoundOver);
 	btn1.SetTrigger(&trigA);
+	btn1.SetState(STATE_SELECTED);
 
 	GuiText btn2Txt(btn2Label, 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage btn2Img(&btnOutline);
@@ -182,6 +184,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	if(btn2Label)
 		promptWindow.Append(&btn2);
 
+	promptWindow.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN);
 	guiReady = false;
 	mainWindow->SetState(STATE_DISABLED);
 	mainWindow->Append(&promptWindow);
@@ -197,6 +200,9 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 		else if(btn2.GetState() == STATE_CLICKED)
 			choice = 0;
 	}
+
+	promptWindow.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT);
+	while(promptWindow.GetEffect() > 0) usleep(50);
 	guiReady = false;
 	mainWindow->Remove(&promptWindow);
 	mainWindow->SetState(STATE_DEFAULT);
@@ -316,6 +322,7 @@ ProgressWindow(char *title, char *msg)
 {
 	GuiWindow promptWindow(448,288);
 	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+	promptWindow.SetPosition(0, -10);
 	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);

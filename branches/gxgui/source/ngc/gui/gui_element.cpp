@@ -28,6 +28,9 @@ GuiElement::GuiElement()
 	visible = true;
 	focus = -1; // cannot be focused
 	updateCB = NULL;
+	yoffsetDyn = 0;
+	xoffsetDyn = 0;
+	effects = 0;
 
 	// default alignment - align to top left
 	alignmentVert = ALIGN_TOP;
@@ -62,6 +65,9 @@ int GuiElement::GetLeft()
 		pLeft = parentElement->GetLeft();
 	}
 
+	if(effects & (EFFECT_SLIDE_IN | EFFECT_SLIDE_OUT))
+		pLeft += xoffsetDyn;
+
 	switch(alignmentHor)
 	{
 		case ALIGN_LEFT:
@@ -93,6 +99,9 @@ int GuiElement::GetTop()
 		pHeight = parentElement->GetHeight();
 		pTop = parentElement->GetTop();
 	}
+
+	if(effects & (EFFECT_SLIDE_IN | EFFECT_SLIDE_OUT))
+		pTop += yoffsetDyn;
 
 	switch(alignmentVert)
 	{
@@ -228,6 +237,111 @@ void GuiElement::SetTrigger(GuiTrigger * t)
 void GuiElement::SetTrigger(u8 i, GuiTrigger * t)
 {
 	trigger[i] = t;
+}
+
+int GuiElement::GetEffect()
+{
+	return effects;
+}
+
+void GuiElement::SetEffect(int eff)
+{
+	if(eff & EFFECT_SLIDE_IN)
+	{
+		// these calculations overcompensate a little
+		if(eff & EFFECT_SLIDE_TOP)
+			yoffsetDyn = -screenheight;
+		else if(eff & EFFECT_SLIDE_LEFT)
+			xoffsetDyn = -screenwidth;
+		else if(eff & EFFECT_SLIDE_BOTTOM)
+			yoffsetDyn = screenheight;
+		else if(eff & EFFECT_SLIDE_RIGHT)
+			xoffsetDyn = screenwidth;
+	}
+	effects |= eff;
+}
+
+
+
+void GuiElement::UpdateEffects()
+{
+	if(effects & (EFFECT_SLIDE_IN | EFFECT_SLIDE_OUT))
+	{
+		if(effects & EFFECT_SLIDE_IN)
+		{
+			if(effects & EFFECT_SLIDE_LEFT)
+			{
+				xoffsetDyn += 50;
+
+				if(xoffsetDyn >= 0)
+				{
+					xoffsetDyn = 0;
+					effects = 0;
+				}
+			}
+			else if(effects & EFFECT_SLIDE_RIGHT)
+			{
+				xoffsetDyn -= 50;
+
+				if(xoffsetDyn <= 0)
+				{
+					xoffsetDyn = 0;
+					effects = 0;
+				}
+			}
+			else if(effects & EFFECT_SLIDE_TOP)
+			{
+				yoffsetDyn += 50;
+
+				if(yoffsetDyn >= 0)
+				{
+					yoffsetDyn = 0;
+					effects = 0;
+				}
+			}
+			else if(effects & EFFECT_SLIDE_BOTTOM)
+			{
+				yoffsetDyn -= 50;
+
+				if(yoffsetDyn <= 0)
+				{
+					yoffsetDyn = 0;
+					effects = 0;
+				}
+			}
+		}
+		else
+		{
+			if(effects & EFFECT_SLIDE_LEFT)
+			{
+				xoffsetDyn -= 50;
+
+				if(xoffsetDyn < -screenwidth)
+					effects = 0; // shut off effect
+			}
+			else if(effects & EFFECT_SLIDE_RIGHT)
+			{
+				xoffsetDyn += 50;
+
+				if(xoffsetDyn > screenwidth)
+					effects = 0; // shut off effect
+			}
+			else if(effects & EFFECT_SLIDE_TOP)
+			{
+				yoffsetDyn -= 50;
+
+				if(yoffsetDyn < -screenheight)
+					effects = 0; // shut off effect
+			}
+			else if(effects & EFFECT_SLIDE_BOTTOM)
+			{
+				yoffsetDyn += 50;
+
+				if(yoffsetDyn > screenheight)
+					effects = 0; // shut off effect
+			}
+		}
+	}
 }
 
 void GuiElement::Update(GuiTrigger * t)
