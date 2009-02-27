@@ -66,8 +66,11 @@ static int rumbleCount[4] = {0,0,0,0};
 static GuiTrigger userInput[4];
 static GuiImageData * pointer[4];
 static GuiImage * gameScreenImg = NULL;
+static GuiImage * bgTopImg = NULL;
+static GuiImage * bgBottomImg = NULL;
 static GuiWindow * mainWindow = NULL;
 static GuiText * settingText = NULL;
+static int lastMenu = MENU_NONE;
 
 static lwp_t guithread = LWP_THREAD_NULL;
 static bool guiReady = false;
@@ -184,7 +187,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	if(btn2Label)
 		promptWindow.Append(&btn2);
 
-	promptWindow.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN);
+	promptWindow.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 50);
 	guiReady = false;
 	mainWindow->SetState(STATE_DISABLED);
 	mainWindow->Append(&promptWindow);
@@ -201,7 +204,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 			choice = 0;
 	}
 
-	promptWindow.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT);
+	promptWindow.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 50);
 	while(promptWindow.GetEffect() > 0) usleep(50);
 	guiReady = false;
 	mainWindow->Remove(&promptWindow);
@@ -776,7 +779,7 @@ static int MenuGameSelection()
 			{
 				gameBrowser.gameList[i]->ResetState();
 				// check corresponding browser entry
-				if(browserList[i].isdir || IsSz())
+				if(browserList[browser.selIndex].isdir || IsSz())
 				{
 					bool res;
 
@@ -987,17 +990,17 @@ static int MenuGame()
 	cheatsBtn.SetSoundOver(&btnSoundOver);
 	cheatsBtn.SetTrigger(&trigA);
 
-	GuiText backBtnTxt("Main Menu", 22, (GXColor){0, 0, 0, 0xff});
-	GuiImage backBtnImg(&btnOutline);
-	GuiImage backBtnImgOver(&btnOutlineOver);
-	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
-	backBtn.SetAlignment(ALIGN_CENTRE, ALIGN_BOTTOM);
-	backBtn.SetPosition(0, -35);
-	backBtn.SetLabel(&backBtnTxt);
-	backBtn.SetImage(&backBtnImg);
-	backBtn.SetImageOver(&backBtnImgOver);
-	backBtn.SetSoundOver(&btnSoundOver);
-	backBtn.SetTrigger(&trigA);
+	GuiText mainmenuBtnTxt("Main Menu", 22, (GXColor){0, 0, 0, 0xff});
+	GuiImage mainmenuBtnImg(&btnOutline);
+	GuiImage mainmenuBtnImgOver(&btnOutlineOver);
+	GuiButton mainmenuBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	mainmenuBtn.SetAlignment(ALIGN_CENTRE, ALIGN_BOTTOM);
+	mainmenuBtn.SetPosition(0, -35);
+	mainmenuBtn.SetLabel(&mainmenuBtnTxt);
+	mainmenuBtn.SetImage(&mainmenuBtnImg);
+	mainmenuBtn.SetImageOver(&mainmenuBtnImgOver);
+	mainmenuBtn.SetSoundOver(&btnSoundOver);
+	mainmenuBtn.SetTrigger(&trigA);
 
 	GuiText closeBtnTxt("Close", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage closeBtnImg(&btnCloseOutline);
@@ -1033,10 +1036,25 @@ static int MenuGame()
 	w.Append(&controllerBtn);
 	w.Append(&cheatsBtn);
 
-	w.Append(&backBtn);
+	w.Append(&mainmenuBtn);
 	w.Append(&closeBtn);
 
 	mainWindow->Append(&w);
+
+	if(lastMenu == MENU_NONE)
+	{
+		bgTopImg->SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 35);
+		closeBtn.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 35);
+		titleTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 35);
+		mainmenuBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
+		bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
+
+		saveBtn.SetEffect(EFFECT_FADE_IN, 35);
+		loadBtn.SetEffect(EFFECT_FADE_IN, 35);
+		resetBtn.SetEffect(EFFECT_FADE_IN, 35);
+		controllerBtn.SetEffect(EFFECT_FADE_IN, 35);
+		cheatsBtn.SetEffect(EFFECT_FADE_IN, 35);
+	}
 
 	guiReady = true;
 	AutoSave();
@@ -1070,7 +1088,7 @@ static int MenuGame()
 			else
 				InfoPrompt("Cheats file not found!");
 		}
-		else if(backBtn.GetState() == STATE_CLICKED)
+		else if(mainmenuBtn.GetState() == STATE_CLICKED)
 		{
 			if(gameScreenImg)
 			{
@@ -1086,8 +1104,23 @@ static int MenuGame()
 		else if(closeBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_EXIT;
+
+			bgTopImg->SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
+			closeBtn.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
+			titleTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
+			mainmenuBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+			bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+
+			saveBtn.SetEffect(EFFECT_FADE_OUT, 35);
+			loadBtn.SetEffect(EFFECT_FADE_OUT, 35);
+			resetBtn.SetEffect(EFFECT_FADE_OUT, 35);
+			controllerBtn.SetEffect(EFFECT_FADE_OUT, 35);
+			cheatsBtn.SetEffect(EFFECT_FADE_OUT, 35);
+
+			while(bgBottomImg->GetEffect() > 0) usleep(50);
 		}
 	}
+
 	guiReady = false;
 	mainWindow->Remove(&w);
 	return menu;
@@ -2280,6 +2313,9 @@ static int MenuSettingsNetwork()
 void
 MainMenu (int menu)
 {
+	int currentMenu = menu;
+	lastMenu = MENU_NONE;
+
 	pointer[0] = new GuiImageData(player1_point_png);
 	pointer[1] = new GuiImageData(player2_point_png);
 	pointer[2] = new GuiImageData(player3_point_png);
@@ -2295,12 +2331,12 @@ MainMenu (int menu)
 	}
 
 	GuiImageData bgTop(bg_top_png);
-	GuiImage bgTopImg(&bgTop);
+	bgTopImg = new GuiImage(&bgTop);
 	GuiImageData bgBottom(bg_bottom_png);
-	GuiImage bgBottomImg(&bgBottom);
-	bgBottomImg.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-	mainWindow->Append(&bgTopImg);
-	mainWindow->Append(&bgBottomImg);
+	bgBottomImg = new GuiImage(&bgBottom);
+	bgBottomImg->SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	mainWindow->Append(bgTopImg);
+	mainWindow->Append(bgBottomImg);
 
 	// memory usage - for debugging
 	memTxt = new GuiText(NULL, 22, (GXColor){255, 255, 255, 0xff});
@@ -2315,50 +2351,51 @@ MainMenu (int menu)
 	if(!LoadPrefs())
 	{
 		ErrorPrompt("Preferences reset - check your settings!");
-		menu = MENU_SETTINGS_FILE;
+		currentMenu = MENU_SETTINGS_FILE;
 	}
 
-	while(menu != MENU_EXIT || SNESROMSize <= 0)
+	while(currentMenu != MENU_EXIT || SNESROMSize <= 0)
 	{
-		switch (menu)
+		switch (currentMenu)
 		{
 			case MENU_GAMESELECTION:
-				menu = MenuGameSelection();
+				currentMenu = MenuGameSelection();
 				break;
 			case MENU_GAME:
-				menu = MenuGame();
+				currentMenu = MenuGame();
 				break;
 			case MENU_GAME_LOAD:
-				menu = MenuGameSaves(0);
+				currentMenu = MenuGameSaves(0);
 				break;
 			case MENU_GAME_SAVE:
-				menu = MenuGameSaves(1);
+				currentMenu = MenuGameSaves(1);
 				break;
 			case MENU_GAME_CHEATS:
-				menu = MenuGameCheats();
+				currentMenu = MenuGameCheats();
 				break;
 			case MENU_SETTINGS:
-				menu = MenuSettings();
+				currentMenu = MenuSettings();
 				break;
 			case MENU_SETTINGS_MAPPINGS:
-				menu = MenuSettingsMappings();
+				currentMenu = MenuSettingsMappings();
 				break;
 			case MENU_SETTINGS_VIDEO:
-				menu = MenuSettingsVideo();
+				currentMenu = MenuSettingsVideo();
 				break;
 			case MENU_SETTINGS_FILE:
-				menu = MenuSettingsFile();
+				currentMenu = MenuSettingsFile();
 				break;
 			case MENU_SETTINGS_MENU:
-				menu = MenuSettingsMenu();
+				currentMenu = MenuSettingsMenu();
 				break;
 			case MENU_SETTINGS_NETWORK:
-				menu = MenuSettingsNetwork();
+				currentMenu = MenuSettingsNetwork();
 				break;
 			default: // unrecognized menu
-				menu = MenuGameSelection();
+				currentMenu = MenuGameSelection();
 				break;
 		}
+		lastMenu = currentMenu;
 	}
 
 	#ifdef HW_RVL
@@ -2369,6 +2406,8 @@ MainMenu (int menu)
 	HaltGui();
 
 	delete memTxt;
+	delete bgTopImg;
+	delete bgBottomImg;
 	delete mainWindow;
 	delete pointer[0];
 	delete pointer[1];

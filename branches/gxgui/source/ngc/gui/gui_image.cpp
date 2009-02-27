@@ -110,4 +110,6 @@ void GuiImage::Draw()
 
 		Menu_DrawImg(left, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
 	}
+
+	this->UpdateEffects();
 }

@@ -81,9 +81,10 @@ enum
 #define EFFECT_SLIDE_LEFT			8
 #define EFFECT_SLIDE_IN				16
 #define EFFECT_SLIDE_OUT			32
-#define EFFECT_FADE					64
-#define EFFECT_COLOR_TRANSITION		128
-#define EFFECT_SCALE				256
+#define EFFECT_FADE_IN				64
+#define EFFECT_FADE_OUT				128
+#define EFFECT_COLOR_TRANSITION		256
+#define EFFECT_SCALE				512
 
 enum
 {
@@ -142,7 +143,7 @@ class GuiElement
 		void SetVisible(bool v);
 		void SetTrigger(GuiTrigger * t);
 		void SetTrigger(u8 i, GuiTrigger * t);
-		void SetEffect(int e);
+		void SetEffect(int e, int s);
 		int GetEffect();
 		bool IsInside(int x, int y);
 		void SetPosition(int x, int y);
@@ -166,6 +167,7 @@ class GuiElement
 		int xoffsetDyn;
 		int yoffsetDyn;
 		int effects;
+		int effectSpeed;
 		int alignmentHor; // LEFT, RIGHT, CENTRE
 		int alignmentVert; // TOP, BOTTOM, MIDDLE
 		int state; // DEFAULT, SELECTED, CLICKED, DISABLED

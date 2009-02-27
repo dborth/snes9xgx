@@ -31,6 +31,7 @@ GuiElement::GuiElement()
 	yoffsetDyn = 0;
 	xoffsetDyn = 0;
 	effects = 0;
+	effectSpeed = 0;
 
 	// default alignment - align to top left
 	alignmentVert = ALIGN_TOP;
@@ -244,7 +245,7 @@ int GuiElement::GetEffect()
 	return effects;
 }
 
-void GuiElement::SetEffect(int eff)
+void GuiElement::SetEffect(int eff, int speed)
 {
 	if(eff & EFFECT_SLIDE_IN)
 	{
@@ -259,8 +260,8 @@ void GuiElement::SetEffect(int eff)
 			xoffsetDyn = screenwidth;
 	}
 	effects |= eff;
+	effectSpeed = speed;
 }
-
 
 
 void GuiElement::UpdateEffects()
@@ -271,7 +272,7 @@ void GuiElement::UpdateEffects()
 		{
 			if(effects & EFFECT_SLIDE_LEFT)
 			{
-				xoffsetDyn += 50;
+				xoffsetDyn += effectSpeed;
 
 				if(xoffsetDyn >= 0)
 				{
@@ -281,7 +282,7 @@ void GuiElement::UpdateEffects()
 			}
 			else if(effects & EFFECT_SLIDE_RIGHT)
 			{
-				xoffsetDyn -= 50;
+				xoffsetDyn -= effectSpeed;
 
 				if(xoffsetDyn <= 0)
 				{
@@ -291,7 +292,7 @@ void GuiElement::UpdateEffects()
 			}
 			else if(effects & EFFECT_SLIDE_TOP)
 			{
-				yoffsetDyn += 50;
+				yoffsetDyn += effectSpeed;
 
 				if(yoffsetDyn >= 0)
 				{
@@ -301,7 +302,7 @@ void GuiElement::UpdateEffects()
 			}
 			else if(effects & EFFECT_SLIDE_BOTTOM)
 			{
-				yoffsetDyn -= 50;
+				yoffsetDyn -= effectSpeed;
 
 				if(yoffsetDyn <= 0)
 				{
@@ -314,28 +315,28 @@ void GuiElement::UpdateEffects()
 		{
 			if(effects & EFFECT_SLIDE_LEFT)
 			{
-				xoffsetDyn -= 50;
+				xoffsetDyn -= effectSpeed;
 
 				if(xoffsetDyn < -screenwidth)
 					effects = 0; // shut off effect
 			}
 			else if(effects & EFFECT_SLIDE_RIGHT)
 			{
-				xoffsetDyn += 50;
+				xoffsetDyn += effectSpeed;
 
 				if(xoffsetDyn > screenwidth)
 					effects = 0; // shut off effect
 			}
 			else if(effects & EFFECT_SLIDE_TOP)
 			{
-				yoffsetDyn -= 50;
+				yoffsetDyn -= effectSpeed;
 
 				if(yoffsetDyn < -screenheight)
 					effects = 0; // shut off effect
 			}
 			else if(effects & EFFECT_SLIDE_BOTTOM)
 			{
-				yoffsetDyn += 50;
+				yoffsetDyn += effectSpeed;
 
 				if(yoffsetDyn > screenheight)
 					effects = 0; // shut off effect
