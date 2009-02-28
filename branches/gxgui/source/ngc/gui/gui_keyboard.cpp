@@ -115,6 +115,7 @@ GuiKeyboard::GuiKeyboard(char * t)
 	keyBack->SetSoundOver(keySoundOver);
 	keyBack->SetTrigger(trigA);
 	keyBack->SetPosition(10*42+40, 0*42+80);
+	keyBack->SetEffectGrow();
 	this->Append(keyBack);
 
 	keyCapsImg = new GuiImage(keyMedium);
@@ -127,6 +128,7 @@ GuiKeyboard::GuiKeyboard(char * t)
 	keyCaps->SetSoundOver(keySoundOver);
 	keyCaps->SetTrigger(trigA);
 	keyCaps->SetPosition(0, 2*42+80);
+	keyCaps->SetEffectGrow();
 	this->Append(keyCaps);
 
 	keyShiftImg = new GuiImage(keyMedium);
@@ -139,6 +141,7 @@ GuiKeyboard::GuiKeyboard(char * t)
 	keyShift->SetSoundOver(keySoundOver);
 	keyShift->SetTrigger(trigA);
 	keyShift->SetPosition(21, 3*42+80);
+	keyShift->SetEffectGrow();
 	this->Append(keyShift);
 
 	keySpaceImg = new GuiImage(keyLarge);
@@ -150,6 +153,7 @@ GuiKeyboard::GuiKeyboard(char * t)
 	keySpace->SetTrigger(trigA);
 	keySpace->SetPosition(0, 4*42+80);
 	keySpace->SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	keySpace->SetEffectGrow();
 	this->Append(keySpace);
 
 	for(int i=0; i<4; i++)
@@ -166,6 +170,7 @@ GuiKeyboard::GuiKeyboard(char * t)
 			keyBtn[i][j]->SetTrigger(trigA);
 			keyBtn[i][j]->SetLabel(keyTxt[i][j]);
 			keyBtn[i][j]->SetPosition(j*42+21*i+40, i*42+80);
+			keyBtn[i][j]->SetEffectGrow();
 			this->Append(keyBtn[i][j]);
 		}
 	}

@@ -152,7 +152,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	if(btn2Label)
 	{
 		btn1.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-		btn1.SetPosition(25, -25);
+		btn1.SetPosition(20, -25);
 	}
 	else
 	{
@@ -166,18 +166,20 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	btn1.SetSoundOver(&btnSoundOver);
 	btn1.SetTrigger(&trigA);
 	btn1.SetState(STATE_SELECTED);
+	btn1.SetEffectGrow();
 
 	GuiText btn2Txt(btn2Label, 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage btn2Img(&btnOutline);
 	GuiImage btn2ImgOver(&btnOutlineOver);
 	GuiButton btn2(btnOutline.GetWidth(), btnOutline.GetHeight());
 	btn2.SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
-	btn2.SetPosition(-25, -25);
+	btn2.SetPosition(-20, -25);
 	btn2.SetLabel(&btn2Txt);
 	btn2.SetImage(&btn2Img);
 	btn2.SetImageOver(&btn2ImgOver);
 	btn2.SetSoundOver(&btnSoundOver);
 	btn2.SetTrigger(&trigA);
+	btn2.SetEffectGrow();
 
 	promptWindow.Append(&dialogBoxImg);
 	promptWindow.Append(&titleTxt);
@@ -468,6 +470,9 @@ ShowProgress (const char *msg, int done, int total)
 	else if(done > total) // this shouldn't happen
 		done = total;
 
+	if(done/total > 0.99)
+		done = total;
+
 	if(showProgress != 1)
 		CancelAction(); // wait for previous progress window to finish
 
@@ -552,6 +557,7 @@ static void OnScreenKeyboard(char * var)
 	okBtn.SetImageOver(&okBtnImgOver);
 	okBtn.SetSoundOver(&btnSoundOver);
 	okBtn.SetTrigger(&trigA);
+	okBtn.SetEffectGrow();
 
 	GuiText cancelBtnTxt("Cancel", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage cancelBtnImg(&btnOutline);
@@ -564,6 +570,7 @@ static void OnScreenKeyboard(char * var)
 	cancelBtn.SetImageOver(&cancelBtnImgOver);
 	cancelBtn.SetSoundOver(&btnSoundOver);
 	cancelBtn.SetTrigger(&trigA);
+	cancelBtn.SetEffectGrow();
 
 	keyboard.Append(&okBtn);
 	keyboard.Append(&cancelBtn);
@@ -625,25 +632,27 @@ SettingWindow(const char * title, GuiWindow * w)
 	GuiButton okBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
 
 	okBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-	okBtn.SetPosition(25, -25);
+	okBtn.SetPosition(20, -25);
 
 	okBtn.SetLabel(&okBtnTxt);
 	okBtn.SetImage(&okBtnImg);
 	okBtn.SetImageOver(&okBtnImgOver);
 	okBtn.SetSoundOver(&btnSoundOver);
 	okBtn.SetTrigger(&trigA);
+	okBtn.SetEffectGrow();
 
 	GuiText cancelBtnTxt("Cancel", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage cancelBtnImg(&btnOutline);
 	GuiImage cancelBtnImgOver(&btnOutlineOver);
 	GuiButton cancelBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
 	cancelBtn.SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
-	cancelBtn.SetPosition(-25, -25);
+	cancelBtn.SetPosition(-20, -25);
 	cancelBtn.SetLabel(&cancelBtnTxt);
 	cancelBtn.SetImage(&cancelBtnImg);
 	cancelBtn.SetImageOver(&cancelBtnImgOver);
 	cancelBtn.SetSoundOver(&btnSoundOver);
 	cancelBtn.SetTrigger(&trigA);
+	cancelBtn.SetEffectGrow();
 
 	promptWindow.Append(&dialogBoxImg);
 	promptWindow.Append(&titleTxt);
@@ -736,6 +745,7 @@ static int MenuGameSelection()
 	settingsBtn.SetImageOver(&settingsBtnImgOver);
 	settingsBtn.SetSoundOver(&btnSoundOver);
 	settingsBtn.SetTrigger(&trigA);
+	settingsBtn.SetEffectGrow();
 
 	GuiText exitBtnTxt("Exit", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage exitBtnIcon(&iconHome);
@@ -753,6 +763,7 @@ static int MenuGameSelection()
 	exitBtn.SetSoundOver(&btnSoundOver);
 	exitBtn.SetTrigger(&trigA);
 	exitBtn.SetTrigger(&trigHome);
+	exitBtn.SetEffectGrow();
 
 	GuiWindow buttonWindow(screenwidth, screenheight);
 	buttonWindow.Append(&settingsBtn);
@@ -941,6 +952,7 @@ static int MenuGame()
 	saveBtn.SetImageOver(&saveBtnImgOver);
 	saveBtn.SetSoundOver(&btnSoundOver);
 	saveBtn.SetTrigger(&trigA);
+	saveBtn.SetEffectGrow();
 
 	GuiText loadBtnTxt("Load", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage loadBtnImg(&btnLargeOutline);
@@ -953,6 +965,7 @@ static int MenuGame()
 	loadBtn.SetImageOver(&loadBtnImgOver);
 	loadBtn.SetSoundOver(&btnSoundOver);
 	loadBtn.SetTrigger(&trigA);
+	loadBtn.SetEffectGrow();
 
 	GuiText resetBtnTxt("Reset", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage resetBtnImg(&btnLargeOutline);
@@ -965,6 +978,7 @@ static int MenuGame()
 	resetBtn.SetImageOver(&resetBtnImgOver);
 	resetBtn.SetSoundOver(&btnSoundOver);
 	resetBtn.SetTrigger(&trigA);
+	resetBtn.SetEffectGrow();
 
 	GuiText controllerBtnTxt("Controller", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage controllerBtnImg(&btnLargeOutline);
@@ -977,6 +991,7 @@ static int MenuGame()
 	controllerBtn.SetImageOver(&controllerBtnImgOver);
 	controllerBtn.SetSoundOver(&btnSoundOver);
 	controllerBtn.SetTrigger(&trigA);
+	controllerBtn.SetEffectGrow();
 
 	GuiText cheatsBtnTxt("Cheats", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage cheatsBtnImg(&btnLargeOutline);
@@ -989,6 +1004,7 @@ static int MenuGame()
 	cheatsBtn.SetImageOver(&cheatsBtnImgOver);
 	cheatsBtn.SetSoundOver(&btnSoundOver);
 	cheatsBtn.SetTrigger(&trigA);
+	cheatsBtn.SetEffectGrow();
 
 	GuiText mainmenuBtnTxt("Main Menu", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage mainmenuBtnImg(&btnOutline);
@@ -1001,6 +1017,7 @@ static int MenuGame()
 	mainmenuBtn.SetImageOver(&mainmenuBtnImgOver);
 	mainmenuBtn.SetSoundOver(&btnSoundOver);
 	mainmenuBtn.SetTrigger(&trigA);
+	mainmenuBtn.SetEffectGrow();
 
 	GuiText closeBtnTxt("Close", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage closeBtnImg(&btnCloseOutline);
@@ -1014,6 +1031,7 @@ static int MenuGame()
 	closeBtn.SetSoundOver(&btnSoundOver);
 	closeBtn.SetTrigger(&trigA);
 	closeBtn.SetTrigger(&trigHome);
+	closeBtn.SetEffectGrow();
 
 	for(int i=0; i < 4; i++)
 	{
@@ -1049,11 +1067,11 @@ static int MenuGame()
 		mainmenuBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
 		bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
 
-		saveBtn.SetEffect(EFFECT_FADE_IN, 35);
-		loadBtn.SetEffect(EFFECT_FADE_IN, 35);
-		resetBtn.SetEffect(EFFECT_FADE_IN, 35);
-		controllerBtn.SetEffect(EFFECT_FADE_IN, 35);
-		cheatsBtn.SetEffect(EFFECT_FADE_IN, 35);
+		saveBtn.SetEffect(EFFECT_FADE, 15);
+		loadBtn.SetEffect(EFFECT_FADE, 15);
+		resetBtn.SetEffect(EFFECT_FADE, 15);
+		controllerBtn.SetEffect(EFFECT_FADE, 15);
+		cheatsBtn.SetEffect(EFFECT_FADE, 15);
 	}
 
 	guiReady = true;
@@ -1111,11 +1129,11 @@ static int MenuGame()
 			mainmenuBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 			bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 
-			saveBtn.SetEffect(EFFECT_FADE_OUT, 35);
-			loadBtn.SetEffect(EFFECT_FADE_OUT, 35);
-			resetBtn.SetEffect(EFFECT_FADE_OUT, 35);
-			controllerBtn.SetEffect(EFFECT_FADE_OUT, 35);
-			cheatsBtn.SetEffect(EFFECT_FADE_OUT, 35);
+			saveBtn.SetEffect(EFFECT_FADE, -15);
+			loadBtn.SetEffect(EFFECT_FADE, -15);
+			resetBtn.SetEffect(EFFECT_FADE, -15);
+			controllerBtn.SetEffect(EFFECT_FADE, -15);
+			cheatsBtn.SetEffect(EFFECT_FADE, -15);
 
 			while(bgBottomImg->GetEffect() > 0) usleep(50);
 		}
@@ -1240,6 +1258,7 @@ static int MenuGameSaves(int action)
 	backBtn.SetImageOver(&backBtnImgOver);
 	backBtn.SetSoundOver(&btnSoundOver);
 	backBtn.SetTrigger(&trigA);
+	backBtn.SetEffectGrow();
 
 	GuiSaveBrowser saveBrowser(552, 248, &saves, action);
 	saveBrowser.SetPosition(0, 108);
@@ -1383,6 +1402,7 @@ static int MenuGameCheats()
 	backBtn.SetImageOver(&backBtnImgOver);
 	backBtn.SetSoundOver(&btnSoundOver);
 	backBtn.SetTrigger(&trigA);
+	backBtn.SetEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
 	optionBrowser.SetPosition(0, 108);
@@ -1457,6 +1477,7 @@ static int MenuSettings()
 	mappingBtn.SetImageOver(&mappingBtnImgOver);
 	mappingBtn.SetSoundOver(&btnSoundOver);
 	mappingBtn.SetTrigger(&trigA);
+	mappingBtn.SetEffectGrow();
 
 	GuiText videoBtnTxt("Video", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage videoBtnImg(&btnLargeOutline);
@@ -1469,6 +1490,7 @@ static int MenuSettings()
 	videoBtn.SetImageOver(&videoBtnImgOver);
 	videoBtn.SetSoundOver(&btnSoundOver);
 	videoBtn.SetTrigger(&trigA);
+	videoBtn.SetEffectGrow();
 
 	GuiText savingBtnTxt("Saving / Loading", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage savingBtnImg(&btnLargeOutline);
@@ -1481,6 +1503,7 @@ static int MenuSettings()
 	savingBtn.SetImageOver(&savingBtnImgOver);
 	savingBtn.SetSoundOver(&btnSoundOver);
 	savingBtn.SetTrigger(&trigA);
+	savingBtn.SetEffectGrow();
 
 	GuiText menuBtnTxt("Menu", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage menuBtnImg(&btnLargeOutline);
@@ -1493,6 +1516,7 @@ static int MenuSettings()
 	menuBtn.SetImageOver(&menuBtnImgOver);
 	menuBtn.SetSoundOver(&btnSoundOver);
 	menuBtn.SetTrigger(&trigA);
+	menuBtn.SetEffectGrow();
 
 	GuiText networkBtnTxt("Network", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage networkBtnImg(&btnLargeOutline);
@@ -1505,6 +1529,7 @@ static int MenuSettings()
 	networkBtn.SetImageOver(&networkBtnImgOver);
 	networkBtn.SetSoundOver(&btnSoundOver);
 	networkBtn.SetTrigger(&trigA);
+	networkBtn.SetEffectGrow();
 
 	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage backBtnImg(&btnOutline);
@@ -1517,6 +1542,7 @@ static int MenuSettings()
 	backBtn.SetImageOver(&backBtnImgOver);
 	backBtn.SetSoundOver(&btnSoundOver);
 	backBtn.SetTrigger(&trigA);
+	backBtn.SetEffectGrow();
 
 	GuiText resetBtnTxt("Reset Settings", 22, (GXColor){0, 0, 0, 0xff});
 	GuiImage resetBtnImg(&btnOutline);
@@ -1529,6 +1555,7 @@ static int MenuSettings()
 	resetBtn.SetImageOver(&resetBtnImgOver);
 	resetBtn.SetSoundOver(&btnSoundOver);
 	resetBtn.SetTrigger(&trigA);
+	resetBtn.SetEffectGrow();
 
 	guiReady = false;
 	GuiWindow w(screenwidth, screenheight);
@@ -1848,6 +1875,7 @@ static int MenuSettingsVideo()
 	backBtn.SetImageOver(&backBtnImgOver);
 	backBtn.SetSoundOver(&btnSoundOver);
 	backBtn.SetTrigger(&trigA);
+	backBtn.SetEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
 	optionBrowser.SetPosition(0, 108);
@@ -1973,6 +2001,7 @@ static int MenuSettingsFile()
 	backBtn.SetImageOver(&backBtnImgOver);
 	backBtn.SetSoundOver(&btnSoundOver);
 	backBtn.SetTrigger(&trigA);
+	backBtn.SetEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
 	optionBrowser.SetPosition(0, 108);
@@ -2146,6 +2175,7 @@ static int MenuSettingsMenu()
 	backBtn.SetImageOver(&backBtnImgOver);
 	backBtn.SetSoundOver(&btnSoundOver);
 	backBtn.SetTrigger(&trigA);
+	backBtn.SetEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
 	optionBrowser.SetPosition(0, 108);
@@ -2251,6 +2281,7 @@ static int MenuSettingsNetwork()
 	backBtn.SetImageOver(&backBtnImgOver);
 	backBtn.SetSoundOver(&btnSoundOver);
 	backBtn.SetTrigger(&trigA);
+	backBtn.SetEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
 	optionBrowser.SetPosition(0, 108);

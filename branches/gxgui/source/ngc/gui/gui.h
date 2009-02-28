@@ -81,10 +81,9 @@ enum
 #define EFFECT_SLIDE_LEFT			8
 #define EFFECT_SLIDE_IN				16
 #define EFFECT_SLIDE_OUT			32
-#define EFFECT_FADE_IN				64
-#define EFFECT_FADE_OUT				128
+#define EFFECT_FADE					64
+#define EFFECT_SCALE				128
 #define EFFECT_COLOR_TRANSITION		256
-#define EFFECT_SCALE				512
 
 enum
 {
@@ -141,9 +140,15 @@ class GuiElement
 		void SetClickable(bool c);
 		int GetState();
 		void SetVisible(bool v);
+		void SetAlpha(int a);
+		int GetAlpha();
+		void SetScale(float s);
+		float GetScale();
 		void SetTrigger(GuiTrigger * t);
 		void SetTrigger(u8 i, GuiTrigger * t);
-		void SetEffect(int e, int s);
+		void SetEffect(int e, int a, int t=0);
+		void SetEffectOnOver(int e, int a, int t=0);
+		void SetEffectGrow();
 		int GetEffect();
 		bool IsInside(int x, int y);
 		void SetPosition(int x, int y);
@@ -166,8 +171,16 @@ class GuiElement
 		int yoffset;
 		int xoffsetDyn;
 		int yoffsetDyn;
+		int alpha;
+		f32 scale;
+		int alphaDyn;
+		f32 scaleDyn;
 		int effects;
-		int effectSpeed;
+		int effectAmount;
+		int effectTarget;
+		int effectsOver;
+		int effectAmountOver;
+		int effectTargetOver;
 		int alignmentHor; // LEFT, RIGHT, CENTRE
 		int alignmentVert; // TOP, BOTTOM, MIDDLE
 		int state; // DEFAULT, SELECTED, CLICKED, DISABLED
@@ -246,8 +259,6 @@ class GuiImage : public GuiElement
 		GuiImage(u8 * img, int w, int h);
 		~GuiImage();
 		void SetAngle(float a);
-		void SetAlpha(int a);
-		void SetScale(float x, float y);
 		void SetTile(int t);
 		void Draw();
 		u8 * GetImage();
@@ -255,9 +266,6 @@ class GuiImage : public GuiElement
 		void SetImage(u8 * img, int w, int h);
 	protected:
 		u8 * image;
-		int alpha;
-		f32 scaleX;
-		f32 scaleY;
 		f32 imageangle;
 		int tile;
 };

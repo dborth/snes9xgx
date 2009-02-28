@@ -19,6 +19,8 @@ GuiElement::GuiElement()
 	yoffset = 0;
 	width = 0;
 	height = 0;
+	alpha = 255;
+	scale = 1;
 	state = STATE_DEFAULT;
 	trigger[0] = NULL;
 	trigger[1] = NULL;
@@ -30,8 +32,14 @@ GuiElement::GuiElement()
 	updateCB = NULL;
 	yoffsetDyn = 0;
 	xoffsetDyn = 0;
+	alphaDyn = -1;
+	scaleDyn = 1;
 	effects = 0;
-	effectSpeed = 0;
+	effectAmount = 0;
+	effectTarget = 0;
+	effectsOver = 0;
+	effectAmountOver = 0;
+	effectTargetOver = 0;
 
 	// default alignment - align to top left
 	alignmentVert = ALIGN_TOP;
@@ -173,6 +181,41 @@ void GuiElement::SetVisible(bool v)
 	visible = v;
 }
 
+void GuiElement::SetAlpha(int a)
+{
+	alpha = a;
+}
+
+int GuiElement::GetAlpha()
+{
+	int a;
+
+	if(alphaDyn >= 0)
+		a = alphaDyn;
+	else
+		a = alpha;
+
+	if(parentElement)
+		a *= parentElement->GetAlpha()/255.0;
+
+	return a;
+}
+
+void GuiElement::SetScale(float s)
+{
+	scale = s;
+}
+
+float GuiElement::GetScale()
+{
+	float s = scale * scaleDyn;
+
+	if(parentElement)
+		s *= parentElement->GetScale();
+
+	return s;
+}
+
 int GuiElement::GetState()
 {
 	return state;
@@ -245,7 +288,7 @@ int GuiElement::GetEffect()
 	return effects;
 }
 
-void GuiElement::SetEffect(int eff, int speed)
+void GuiElement::SetEffect(int eff, int amount, int target)
 {
 	if(eff & EFFECT_SLIDE_IN)
 	{
@@ -259,10 +302,31 @@ void GuiElement::SetEffect(int eff, int speed)
 		else if(eff & EFFECT_SLIDE_RIGHT)
 			xoffsetDyn = screenwidth;
 	}
+	if(eff & EFFECT_FADE && amount > 0)
+	{
+		alphaDyn = 0;
+	}
+	else if(eff & EFFECT_FADE && amount < 0)
+	{
+		alphaDyn = alpha;
+	}
+
 	effects |= eff;
-	effectSpeed = speed;
+	effectAmount = amount;
+	effectTarget = target;
 }
 
+void GuiElement::SetEffectOnOver(int eff, int amount, int target)
+{
+	effectsOver |= eff;
+	effectAmountOver = amount;
+	effectTargetOver = target;
+}
+
+void GuiElement::SetEffectGrow()
+{
+	SetEffectOnOver(EFFECT_SCALE, 4, 110);
+}
 
 void GuiElement::UpdateEffects()
 {
@@ -272,7 +336,7 @@ void GuiElement::UpdateEffects()
 		{
 			if(effects & EFFECT_SLIDE_LEFT)
 			{
-				xoffsetDyn += effectSpeed;
+				xoffsetDyn += effectAmount;
 
 				if(xoffsetDyn >= 0)
 				{
@@ -282,7 +346,7 @@ void GuiElement::UpdateEffects()
 			}
 			else if(effects & EFFECT_SLIDE_RIGHT)
 			{
-				xoffsetDyn -= effectSpeed;
+				xoffsetDyn -= effectAmount;
 
 				if(xoffsetDyn <= 0)
 				{
@@ -292,7 +356,7 @@ void GuiElement::UpdateEffects()
 			}
 			else if(effects & EFFECT_SLIDE_TOP)
 			{
-				yoffsetDyn += effectSpeed;
+				yoffsetDyn += effectAmount;
 
 				if(yoffsetDyn >= 0)
 				{
@@ -302,7 +366,7 @@ void GuiElement::UpdateEffects()
 			}
 			else if(effects & EFFECT_SLIDE_BOTTOM)
 			{
-				yoffsetDyn -= effectSpeed;
+				yoffsetDyn -= effectAmount;
 
 				if(yoffsetDyn <= 0)
 				{
@@ -315,32 +379,58 @@ void GuiElement::UpdateEffects()
 		{
 			if(effects & EFFECT_SLIDE_LEFT)
 			{
-				xoffsetDyn -= effectSpeed;
+				xoffsetDyn -= effectAmount;
 
-				if(xoffsetDyn < -screenwidth)
+				if(xoffsetDyn <= -screenwidth)
 					effects = 0; // shut off effect
 			}
 			else if(effects & EFFECT_SLIDE_RIGHT)
 			{
-				xoffsetDyn += effectSpeed;
+				xoffsetDyn += effectAmount;
 
-				if(xoffsetDyn > screenwidth)
+				if(xoffsetDyn >= screenwidth)
 					effects = 0; // shut off effect
 			}
 			else if(effects & EFFECT_SLIDE_TOP)
 			{
-				yoffsetDyn -= effectSpeed;
+				yoffsetDyn -= effectAmount;
 
-				if(yoffsetDyn < -screenheight)
+				if(yoffsetDyn <= -screenheight)
 					effects = 0; // shut off effect
 			}
 			else if(effects & EFFECT_SLIDE_BOTTOM)
 			{
-				yoffsetDyn += effectSpeed;
+				yoffsetDyn += effectAmount;
 
-				if(yoffsetDyn > screenheight)
+				if(yoffsetDyn >= screenheight)
 					effects = 0; // shut off effect
 			}
+		}
+	}
+	if(effects & EFFECT_FADE)
+	{
+		alphaDyn += effectAmount;
+
+		if(effectAmount < 0 && alphaDyn <= 0)
+		{
+			alphaDyn = 0;
+			effects = 0; // shut off effect
+		}
+		else if(effectAmount > 0 && alphaDyn >= alpha)
+		{
+			alphaDyn = alpha;
+			effects = 0; // shut off effect
+		}
+	}
+	if(effects & EFFECT_SCALE)
+	{
+		scaleDyn += effectAmount/100.0;
+
+		if((effectAmount < 0 && scaleDyn <= effectTarget/100.0)
+			|| (effectAmount > 0 && scaleDyn >= effectTarget/100.0))
+		{
+			scaleDyn = effectTarget/100.0;
+			effects = 0; // shut off effect
 		}
 	}
 }

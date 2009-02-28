@@ -155,11 +155,27 @@ void GuiButton::Update(GuiTrigger * t)
 
 				if(soundOver)
 					soundOver->Play();
+
+				if(effectsOver)
+				{
+					// initiate effects
+					effects = effectsOver;
+					effectAmount = effectAmountOver;
+					effectTarget = effectTargetOver;
+				}
 			}
 		}
 		else if(state == STATE_SELECTED)
 		{
 			state = STATE_DEFAULT;
+
+			if(effectsOver)
+			{
+				// initiate effects (in reverse)
+				effects = effectsOver;
+				effectAmount = -effectAmountOver;
+				effectTarget = 100;
+			}
 		}
 	}
 

@@ -19,9 +19,6 @@ GuiImage::GuiImage(GuiImageData * img)
 	width = img->GetWidth();
 	height = img->GetHeight();
 	imageangle = 0;
-	alpha = 255;
-	scaleX = 1;
-	scaleY = 1;
 	tile = 0;
 }
 
@@ -31,9 +28,6 @@ GuiImage::GuiImage(u8 * img, int w, int h)
 	width = w;
 	height = h;
 	imageangle = 0;
-	alpha = 255;
-	scaleX = 1;
-	scaleY = 1;
 	tile = 0;
 }
 
@@ -68,17 +62,6 @@ void GuiImage::SetAngle(float a)
 	imageangle = a;
 }
 
-void GuiImage::SetAlpha(int a)
-{
-	alpha = a;
-}
-
-void GuiImage::SetScale(float x, float y)
-{
-	scaleX = x;
-	scaleY = y;
-}
-
 void GuiImage::SetTile(int t)
 {
 	tile = t;
@@ -95,20 +78,21 @@ void GuiImage::Draw()
 	if(!this->IsVisible())
 		return;
 
+	float currScale = this->GetScale();
+	int currLeft = this->GetLeft();
+
 	if(tile > 0)
 	{
 		for(int i=0; i<tile; i++)
-			Menu_DrawImg(this->GetLeft()+width*i, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
+			Menu_DrawImg(currLeft+width*i, this->GetTop(), width, height, image, imageangle, currScale, currScale, this->GetAlpha());
 	}
 	else
 	{
-		int left = this->GetLeft();
-
 		// temporary (maybe), used to correct offset for scaled images
-		if(scaleX != 1)
-			left = left - width/2 + (width*scaleX)/2;
+		if(scale != 1)
+			currLeft = currLeft - width/2 + (width*scale)/2;
 
-		Menu_DrawImg(left, this->GetTop(), width, height, image, imageangle, scaleX, scaleY, alpha);
+		Menu_DrawImg(currLeft, this->GetTop(), width, height, image, imageangle, currScale, currScale, this->GetAlpha());
 	}
 
 	this->UpdateEffects();
