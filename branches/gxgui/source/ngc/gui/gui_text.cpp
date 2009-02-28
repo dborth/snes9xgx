@@ -22,6 +22,7 @@ GuiText::GuiText(const char * t, int s, GXColor c)
 	text = NULL;
 	size = s;
 	color = c;
+	alpha = c.a;
 	style = FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE;
 
 	alignmentHor = ALIGN_CENTRE;
@@ -82,6 +83,7 @@ void GuiText::SetSize(int s)
 void GuiText::SetColor(GXColor c)
 {
 	color = c;
+	alpha = c.a;
 }
 void GuiText::SetStyle(u16 s)
 {
@@ -132,12 +134,15 @@ void GuiText::Draw()
 	if(!this->IsVisible())
 		return;
 
+	GXColor c = color;
+	c.a = this->GetAlpha();
+
 	if(size != currentSize)
 	{
 		fontSystem->loadFont(font_ttf, font_ttf_size, size);
 		currentSize = size;
 	}
-	fontSystem->drawText((u16)this->GetLeft(), (u16)this->GetTop(), text, color, style);
+	fontSystem->drawText((u16)this->GetLeft(), (u16)this->GetTop(), text, c, style);
 
 	this->UpdateEffects();
 }

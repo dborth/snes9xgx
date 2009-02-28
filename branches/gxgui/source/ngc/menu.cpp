@@ -137,14 +137,14 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	GuiImageData dialogBox(dialogue_box_png);
 	GuiImage dialogBoxImg(&dialogBox);
 
-	GuiText titleTxt(title, 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt(title, 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	titleTxt.SetPosition(0,10);
-	GuiText msgTxt(msg, 22, (GXColor){0, 0, 0, 0xff});
+	GuiText msgTxt(msg, 22, (GXColor){0, 0, 0, 255});
 	msgTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	msgTxt.SetPosition(0,80);
 
-	GuiText btn1Txt(btn1Label, 22, (GXColor){0, 0, 0, 0xff});
+	GuiText btn1Txt(btn1Label, 22, (GXColor){0, 0, 0, 255});
 	GuiImage btn1Img(&btnOutline);
 	GuiImage btn1ImgOver(&btnOutlineOver);
 	GuiButton btn1(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -168,7 +168,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	btn1.SetState(STATE_SELECTED);
 	btn1.SetEffectGrow();
 
-	GuiText btn2Txt(btn2Label, 22, (GXColor){0, 0, 0, 0xff});
+	GuiText btn2Txt(btn2Label, 22, (GXColor){0, 0, 0, 255});
 	GuiImage btn2Img(&btnOutline);
 	GuiImage btn2ImgOver(&btnOutlineOver);
 	GuiButton btn2(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -361,10 +361,10 @@ ProgressWindow(char *title, char *msg)
 	throbberImg.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	throbberImg.SetPosition(0, 40);
 
-	GuiText titleTxt(title, 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt(title, 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	titleTxt.SetPosition(0,10);
-	GuiText msgTxt(msg, 22, (GXColor){0, 0, 0, 0xff});
+	GuiText msgTxt(msg, 22, (GXColor){0, 0, 0, 255});
 	msgTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	msgTxt.SetPosition(0,80);
 
@@ -544,7 +544,7 @@ static void OnScreenKeyboard(char * var)
 	else
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
-	GuiText okBtnTxt("OK", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText okBtnTxt("OK", 22, (GXColor){0, 0, 0, 255});
 	GuiImage okBtnImg(&btnOutline);
 	GuiImage okBtnImgOver(&btnOutlineOver);
 	GuiButton okBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -559,7 +559,7 @@ static void OnScreenKeyboard(char * var)
 	okBtn.SetTrigger(&trigA);
 	okBtn.SetEffectGrow();
 
-	GuiText cancelBtnTxt("Cancel", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText cancelBtnTxt("Cancel", 22, (GXColor){0, 0, 0, 255});
 	GuiImage cancelBtnImg(&btnOutline);
 	GuiImage cancelBtnImgOver(&btnOutlineOver);
 	GuiButton cancelBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -622,11 +622,11 @@ SettingWindow(const char * title, GuiWindow * w)
 	GuiImageData dialogBox(dialogue_box_png);
 	GuiImage dialogBoxImg(&dialogBox);
 
-	GuiText titleTxt(title, 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt(title, 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	titleTxt.SetPosition(0,10);
 
-	GuiText okBtnTxt("OK", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText okBtnTxt("OK", 22, (GXColor){0, 0, 0, 255});
 	GuiImage okBtnImg(&btnOutline);
 	GuiImage okBtnImgOver(&btnOutlineOver);
 	GuiButton okBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -641,7 +641,7 @@ SettingWindow(const char * title, GuiWindow * w)
 	okBtn.SetTrigger(&trigA);
 	okBtn.SetEffectGrow();
 
-	GuiText cancelBtnTxt("Cancel", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText cancelBtnTxt("Cancel", 22, (GXColor){0, 0, 0, 255});
 	GuiImage cancelBtnImg(&btnOutline);
 	GuiImage cancelBtnImgOver(&btnOutlineOver);
 	GuiButton cancelBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -713,7 +713,7 @@ static int MenuGameSelection()
 
 	int menu = MENU_NONE;
 
-	GuiText titleTxt("Choose Game", 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt("Choose Game", 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
@@ -730,7 +730,7 @@ static int MenuGameSelection()
 	GuiTrigger trigHome;
 	trigHome.SetButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, 0);
 
-	GuiText settingsBtnTxt("Settings", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText settingsBtnTxt("Settings", 22, (GXColor){0, 0, 0, 255});
 	GuiImage settingsBtnIcon(&iconSettings);
 	settingsBtnIcon.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
 	settingsBtnIcon.SetPosition(20,0);
@@ -747,7 +747,7 @@ static int MenuGameSelection()
 	settingsBtn.SetTrigger(&trigA);
 	settingsBtn.SetEffectGrow();
 
-	GuiText exitBtnTxt("Exit", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText exitBtnTxt("Exit", 22, (GXColor){0, 0, 0, 255});
 	GuiImage exitBtnIcon(&iconHome);
 	exitBtnIcon.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
 	exitBtnIcon.SetPosition(20,0);
@@ -897,7 +897,7 @@ static void ControllerWindow()
 	arrowRightBtn.SetSelectable(false);
 	arrowRightBtn.SetUpdateCallback(ControllerWindowRightClick);
 
-	settingText = new GuiText(ctrlName[GCSettings.Controller], 22, (GXColor){0, 0, 0, 0xff});
+	settingText = new GuiText(ctrlName[GCSettings.Controller], 22, (GXColor){0, 0, 0, 255});
 
 	int currentController = GCSettings.Controller;
 
@@ -920,7 +920,7 @@ static int MenuGame()
 {
 	int menu = MENU_NONE;
 
-	GuiText titleTxt((char *)Memory.ROMFilename, 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt((char *)Memory.ROMFilename, 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
@@ -941,7 +941,7 @@ static int MenuGame()
 	GuiTrigger trigHome;
 	trigHome.SetButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, 0);
 
-	GuiText saveBtnTxt("Save", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText saveBtnTxt("Save", 22, (GXColor){0, 0, 0, 255});
 	GuiImage saveBtnImg(&btnLargeOutline);
 	GuiImage saveBtnImgOver(&btnLargeOutlineOver);
 	GuiButton saveBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
@@ -954,7 +954,7 @@ static int MenuGame()
 	saveBtn.SetTrigger(&trigA);
 	saveBtn.SetEffectGrow();
 
-	GuiText loadBtnTxt("Load", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText loadBtnTxt("Load", 22, (GXColor){0, 0, 0, 255});
 	GuiImage loadBtnImg(&btnLargeOutline);
 	GuiImage loadBtnImgOver(&btnLargeOutlineOver);
 	GuiButton loadBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
@@ -967,7 +967,7 @@ static int MenuGame()
 	loadBtn.SetTrigger(&trigA);
 	loadBtn.SetEffectGrow();
 
-	GuiText resetBtnTxt("Reset", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText resetBtnTxt("Reset", 22, (GXColor){0, 0, 0, 255});
 	GuiImage resetBtnImg(&btnLargeOutline);
 	GuiImage resetBtnImgOver(&btnLargeOutlineOver);
 	GuiButton resetBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
@@ -980,7 +980,7 @@ static int MenuGame()
 	resetBtn.SetTrigger(&trigA);
 	resetBtn.SetEffectGrow();
 
-	GuiText controllerBtnTxt("Controller", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText controllerBtnTxt("Controller", 22, (GXColor){0, 0, 0, 255});
 	GuiImage controllerBtnImg(&btnLargeOutline);
 	GuiImage controllerBtnImgOver(&btnLargeOutlineOver);
 	GuiButton controllerBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
@@ -993,7 +993,7 @@ static int MenuGame()
 	controllerBtn.SetTrigger(&trigA);
 	controllerBtn.SetEffectGrow();
 
-	GuiText cheatsBtnTxt("Cheats", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText cheatsBtnTxt("Cheats", 22, (GXColor){0, 0, 0, 255});
 	GuiImage cheatsBtnImg(&btnLargeOutline);
 	GuiImage cheatsBtnImgOver(&btnLargeOutlineOver);
 	GuiButton cheatsBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
@@ -1006,7 +1006,7 @@ static int MenuGame()
 	cheatsBtn.SetTrigger(&trigA);
 	cheatsBtn.SetEffectGrow();
 
-	GuiText mainmenuBtnTxt("Main Menu", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText mainmenuBtnTxt("Main Menu", 22, (GXColor){0, 0, 0, 255});
 	GuiImage mainmenuBtnImg(&btnOutline);
 	GuiImage mainmenuBtnImgOver(&btnOutlineOver);
 	GuiButton mainmenuBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -1019,7 +1019,7 @@ static int MenuGame()
 	mainmenuBtn.SetTrigger(&trigA);
 	mainmenuBtn.SetEffectGrow();
 
-	GuiText closeBtnTxt("Close", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText closeBtnTxt("Close", 22, (GXColor){0, 0, 0, 255});
 	GuiImage closeBtnImg(&btnCloseOutline);
 	GuiImage closeBtnImgOver(&btnCloseOutlineOver);
 	GuiButton closeBtn(btnCloseOutline.GetWidth(), btnCloseOutline.GetHeight());
@@ -1228,7 +1228,7 @@ static int MenuGameSaves(int action)
 		return MENU_GAME;
 	}
 
-	GuiText titleTxt(NULL, 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt(NULL, 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
@@ -1247,7 +1247,7 @@ static int MenuGameSaves(int action)
 	else
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
-	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -1377,7 +1377,7 @@ static int MenuGameCheats()
 
 	options.length = i;
 
-	GuiText titleTxt("Cheats", 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt("Cheats", 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
@@ -1391,7 +1391,7 @@ static int MenuGameCheats()
 	else
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
-	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -1450,7 +1450,7 @@ static int MenuSettings()
 {
 	int menu = MENU_NONE;
 
-	GuiText titleTxt("Settings", 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt("Settings", 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
@@ -1466,7 +1466,7 @@ static int MenuSettings()
 	else
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
-	GuiText mappingBtnTxt("Button Mapping", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText mappingBtnTxt("Button Mapping", 22, (GXColor){0, 0, 0, 255});
 	GuiImage mappingBtnImg(&btnLargeOutline);
 	GuiImage mappingBtnImgOver(&btnLargeOutlineOver);
 	GuiButton mappingBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
@@ -1479,7 +1479,7 @@ static int MenuSettings()
 	mappingBtn.SetTrigger(&trigA);
 	mappingBtn.SetEffectGrow();
 
-	GuiText videoBtnTxt("Video", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText videoBtnTxt("Video", 22, (GXColor){0, 0, 0, 255});
 	GuiImage videoBtnImg(&btnLargeOutline);
 	GuiImage videoBtnImgOver(&btnLargeOutlineOver);
 	GuiButton videoBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
@@ -1492,7 +1492,7 @@ static int MenuSettings()
 	videoBtn.SetTrigger(&trigA);
 	videoBtn.SetEffectGrow();
 
-	GuiText savingBtnTxt("Saving / Loading", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText savingBtnTxt("Saving / Loading", 22, (GXColor){0, 0, 0, 255});
 	GuiImage savingBtnImg(&btnLargeOutline);
 	GuiImage savingBtnImgOver(&btnLargeOutlineOver);
 	GuiButton savingBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
@@ -1505,7 +1505,7 @@ static int MenuSettings()
 	savingBtn.SetTrigger(&trigA);
 	savingBtn.SetEffectGrow();
 
-	GuiText menuBtnTxt("Menu", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText menuBtnTxt("Menu", 22, (GXColor){0, 0, 0, 255});
 	GuiImage menuBtnImg(&btnLargeOutline);
 	GuiImage menuBtnImgOver(&btnLargeOutlineOver);
 	GuiButton menuBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
@@ -1518,7 +1518,7 @@ static int MenuSettings()
 	menuBtn.SetTrigger(&trigA);
 	menuBtn.SetEffectGrow();
 
-	GuiText networkBtnTxt("Network", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText networkBtnTxt("Network", 22, (GXColor){0, 0, 0, 255});
 	GuiImage networkBtnImg(&btnLargeOutline);
 	GuiImage networkBtnImgOver(&btnLargeOutlineOver);
 	GuiButton networkBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
@@ -1531,7 +1531,7 @@ static int MenuSettings()
 	networkBtn.SetTrigger(&trigA);
 	networkBtn.SetEffectGrow();
 
-	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -1544,7 +1544,7 @@ static int MenuSettings()
 	backBtn.SetTrigger(&trigA);
 	backBtn.SetEffectGrow();
 
-	GuiText resetBtnTxt("Reset Settings", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText resetBtnTxt("Reset Settings", 22, (GXColor){0, 0, 0, 255});
 	GuiImage resetBtnImg(&btnOutline);
 	GuiImage resetBtnImgOver(&btnOutlineOver);
 	GuiButton resetBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -1693,7 +1693,7 @@ static void ScreenZoomWindow()
 	arrowRightBtn.SetSelectable(false);
 	arrowRightBtn.SetUpdateCallback(ScreenZoomWindowRightClick);
 
-	settingText = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
+	settingText = new GuiText(NULL, 22, (GXColor){0, 0, 0, 255});
 	char zoom[10];
 	sprintf(zoom, "%.2f%%", GCSettings.ZoomLevel*100);
 	settingText->SetText(zoom);
@@ -1811,7 +1811,7 @@ static void ScreenPositionWindow()
 	GuiImage screenPositionImg(&screenPosition);
 	screenPositionImg.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 
-	settingText = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
+	settingText = new GuiText(NULL, 22, (GXColor){0, 0, 0, 255});
 	char shift[10];
 	sprintf(shift, "%i, %i", GCSettings.xshift, GCSettings.yshift);
 	settingText->SetText(shift);
@@ -1850,7 +1850,7 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Screen Position");
 	options.length = i;
 
-	GuiText titleTxt("Settings - Video", 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt("Settings - Video", 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
@@ -1864,7 +1864,7 @@ static int MenuSettingsVideo()
 	else
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
-	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -1976,7 +1976,7 @@ static int MenuSettingsFile()
 	sprintf(options.name[i++], "Verify MC Saves");
 	options.length = i;
 
-	GuiText titleTxt("Settings - Saving/Loading", 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt("Settings - Saving/Loading", 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
@@ -1990,7 +1990,7 @@ static int MenuSettingsFile()
 	else
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
-	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -2150,7 +2150,7 @@ static int MenuSettingsMenu()
 	sprintf(options.name[i++], "Exit Action");
 	options.length = i;
 
-	GuiText titleTxt("Settings - Menu", 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt("Settings - Menu", 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
@@ -2164,7 +2164,7 @@ static int MenuSettingsMenu()
 	else
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
-	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -2256,7 +2256,7 @@ static int MenuSettingsNetwork()
 	sprintf(options.name[i++], "SMB Share Password");
 	options.length = i;
 
-	GuiText titleTxt("Settings - Network", 22, (GXColor){255, 255, 255, 0xff});
+	GuiText titleTxt("Settings - Network", 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
@@ -2270,7 +2270,7 @@ static int MenuSettingsNetwork()
 	else
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
-	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 0xff});
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
@@ -2370,7 +2370,7 @@ MainMenu (int menu)
 	mainWindow->Append(bgBottomImg);
 
 	// memory usage - for debugging
-	memTxt = new GuiText(NULL, 22, (GXColor){255, 255, 255, 0xff});
+	memTxt = new GuiText(NULL, 22, (GXColor){255, 255, 255, 255});
 	memTxt->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	memTxt->SetPosition(-20, 40);
 	mainWindow->Append(memTxt);
