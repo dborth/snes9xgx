@@ -2357,9 +2357,14 @@ MainMenu (int menu)
 	if(gameScreenTex)
 	{
 		gameScreenImg = new GuiImage(gameScreenTex, screenwidth, screenheight);
-		gameScreenImg->SetAlpha(128);
+		gameScreenImg->SetAlpha(192);
+		gameScreenImg->Stripe(30);
 		mainWindow->Append(gameScreenImg);
 	}
+
+	GuiImage bg(screenwidth, screenheight, (GXColor){175, 200, 215, 255});
+	bg.Stripe(10);
+	mainWindow->Append(&bg);
 
 	GuiImageData bgTop(bg_top_png);
 	bgTopImg = new GuiImage(&bgTop);

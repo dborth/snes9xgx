@@ -257,6 +257,7 @@ class GuiImage : public GuiElement
 	public:
 		GuiImage(GuiImageData * img);
 		GuiImage(u8 * img, int w, int h);
+		GuiImage(int w, int h, GXColor c);
 		~GuiImage();
 		void SetAngle(float a);
 		void SetTile(int t);
@@ -264,6 +265,9 @@ class GuiImage : public GuiElement
 		u8 * GetImage();
 		void SetImage(GuiImageData * img);
 		void SetImage(u8 * img, int w, int h);
+		GXColor GetPixel(int x, int y);
+		void SetPixel(int x, int y, GXColor color);
+		void Stripe(int s);
 	protected:
 		u8 * image;
 		f32 imageangle;

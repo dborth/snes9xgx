@@ -156,7 +156,7 @@ void GuiButton::Update(GuiTrigger * t)
 				if(soundOver)
 					soundOver->Play();
 
-				if(effectsOver)
+				if(effectsOver && !effects)
 				{
 					// initiate effects
 					effects = effectsOver;
@@ -169,7 +169,7 @@ void GuiButton::Update(GuiTrigger * t)
 		{
 			state = STATE_DEFAULT;
 
-			if(effectsOver)
+			if(effectsOver && !effects)
 			{
 				// initiate effects (in reverse)
 				effects = effectsOver;

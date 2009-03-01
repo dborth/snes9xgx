@@ -891,7 +891,7 @@ ResetVideo_Menu ()
 			VIDEO_WaitVSync();
 
 	// clears the bg to color and clears the z buffer
-	GXColor background = {175, 200, 215, 255};
+	GXColor background = {0, 0, 0, 255};
 	GX_SetCopyClear (background, 0x00ffffff);
 
 	yscale = GX_GetYScaleFactor(vmode->efbHeight,vmode->xfbHeight);
@@ -953,7 +953,7 @@ void Menu_Render()
 	VIDEO_WaitVSync();
 }
 
-void Menu_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], f32 degrees, f32 scaleX, f32 scaleY, u8 alpha )
+void Menu_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], f32 degrees, f32 scaleX, f32 scaleY, u8 alpha)
 {
 	if(data == NULL)
 		return;
