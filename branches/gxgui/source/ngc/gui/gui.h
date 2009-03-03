@@ -48,8 +48,6 @@ typedef struct _paddata {
 	u8 triggerR;
 } PADData;
 
-extern int rumbleRequest[4];
-
 enum
 {
 	ALIGN_LEFT,

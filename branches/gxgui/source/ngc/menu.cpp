@@ -61,8 +61,6 @@ extern "C" {
 #include "gui/gui.h"
 #include "menu.h"
 
-int rumbleRequest[4] = {0,0,0,0};
-static int rumbleCount[4] = {0,0,0,0};
 static GuiTrigger userInput[4];
 static GuiImageData * pointer[4];
 static GuiImage * gameScreenImg = NULL;
@@ -98,19 +96,6 @@ HaltGui()
 	// wait for thread to finish
 	while(!LWP_ThreadIsSuspended(guithread))
 		usleep(50);
-}
-
-/****************************************************************************
- * ShutoffRumble
- ***************************************************************************/
-
-void ShutoffRumble()
-{
-	for(int i=0;i<4;i++)
-	{
-		WPAD_Rumble(i, 0);
-		rumbleCount[i] = 0;
-	}
 }
 
 /****************************************************************************
@@ -273,22 +258,7 @@ UpdateGUI (void *arg)
 				mainWindow->Update(&userInput[i]);
 
 				#ifdef HW_RVL
-				if(rumbleRequest[i] && rumbleCount[i] < 3)
-				{
-					WPAD_Rumble(i, 1); // rumble on
-					rumbleCount[i]++;
-				}
-				else if(rumbleRequest[i])
-				{
-					rumbleCount[i] = 12;
-					rumbleRequest[i] = 0;
-				}
-				else
-				{
-					if(rumbleCount[i])
-						rumbleCount[i]--;
-					WPAD_Rumble(i, 0); // rumble off
-				}
+				DoRumble(i);
 				#endif
 			}
 
@@ -2354,6 +2324,10 @@ MainMenu (int menu)
 
 	mainWindow = new GuiWindow(screenwidth, screenheight);
 
+	GuiImage bg(screenwidth, screenheight, (GXColor){175, 200, 215, 255});
+	bg.Stripe(10);
+	mainWindow->Append(&bg);
+
 	if(gameScreenTex)
 	{
 		gameScreenImg = new GuiImage(gameScreenTex, screenwidth, screenheight);
@@ -2361,10 +2335,6 @@ MainMenu (int menu)
 		gameScreenImg->Stripe(30);
 		mainWindow->Append(gameScreenImg);
 	}
-
-	GuiImage bg(screenwidth, screenheight, (GXColor){175, 200, 215, 255});
-	bg.Stripe(10);
-	mainWindow->Append(&bg);
 
 	GuiImageData bgTop(bg_top_png);
 	bgTopImg = new GuiImage(&bgTop);

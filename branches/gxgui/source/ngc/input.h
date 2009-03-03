@@ -20,6 +20,7 @@
 #define PADCAL			50
 #define MAXJP 			12 // # of mappable controller buttons
 
+extern int rumbleRequest[4];
 extern unsigned int gcpadmap[];
 extern unsigned int wmpadmap[];
 extern unsigned int ccpadmap[];
@@ -32,7 +33,9 @@ extern unsigned int gcjustmap[];
 extern unsigned int wmjustmap[];
 
 void ResetControls();
-s8 WPAD_Stick(u8 chan,u8 right, int axis);
+void ShutoffRumble();
+void DoRumble(int i);
+s8 WPAD_Stick(u8 chan, u8 right, int axis);
 void UpdateCursorPosition (int pad, int &pos_x, int &pos_y);
 void decodepad (int pad);
 void NGCReportButtons ();

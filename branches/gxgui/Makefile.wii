@@ -27,13 +27,14 @@ INCLUDES	:=	source/snes9x source/ngc source/unzip
 #---------------------------------------------------------------------------------
 
 CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
-			-DNGC -DWII_DVD \
+			-DNGC \
 			-DNO_ASM -DRIGHTSHIFT_IS_SAR \
 			-DCPU_SHUTDOWN -DSPC700_SHUTDOWN \
 			-DSPC700_C -DSDD1_DECOMP \
 			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
 			-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
-			-fomit-frame-pointer -fno-exceptions -Wno-unused-parameter \
+			-fomit-frame-pointer -fno-exceptions \
+			-Wno-unused-parameter -Wno-strict-aliasing
 			#-D_DEBUG_VIDEO -pipe
 CXXFLAGS	=	-save-temps -Xassembler -aln=$@.lst $(CFLAGS)
 

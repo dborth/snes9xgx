@@ -32,10 +32,13 @@
 #include "video.h"
 #include "input.h"
 
+int rumbleRequest[4] = {0,0,0,0};
+static int rumbleCount[4] = {0,0,0,0};
+
 /****************************************************************************
  * Controller Functions
  *
- * The following map the NGC Pads to the *NEW* controller system.
+ * The following map the Wii controls to the Snes9x controller system
  ***************************************************************************/
 #define ASSIGN_BUTTON_TRUE( keycode, snescmd ) \
 	  S9xMapButton( keycode, cmd = S9xGetCommandT(snescmd), true)
@@ -157,6 +160,43 @@ void ResetControls()
 	wmjustmap[i++] = WPAD_BUTTON_A;
 	wmjustmap[i++] = WPAD_BUTTON_B;
 	wmjustmap[i++] = WPAD_BUTTON_PLUS;
+}
+
+/****************************************************************************
+ * ShutoffRumble
+ ***************************************************************************/
+
+void ShutoffRumble()
+{
+	for(int i=0;i<4;i++)
+	{
+		WPAD_Rumble(i, 0);
+		rumbleCount[i] = 0;
+	}
+}
+
+/****************************************************************************
+ * DoRumble
+ ***************************************************************************/
+
+void DoRumble(int i)
+{
+	if(rumbleRequest[i] && rumbleCount[i] < 3)
+	{
+		WPAD_Rumble(i, 1); // rumble on
+		rumbleCount[i]++;
+	}
+	else if(rumbleRequest[i])
+	{
+		rumbleCount[i] = 12;
+		rumbleRequest[i] = 0;
+	}
+	else
+	{
+		if(rumbleCount[i])
+			rumbleCount[i]--;
+		WPAD_Rumble(i, 0); // rumble off
+	}
 }
 
 /****************************************************************************
