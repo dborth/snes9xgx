@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mp3player.h>
 #include <asndlib.h>
 
 #include "snes9x.h"
@@ -100,20 +99,17 @@ SwitchAudioMode(int mode)
 {
 	if(mode == 0) // emulator
 	{
-		//MP3Player_Stop();
-		//SND_Pause(0);
-		//SND_StopVoice(0);
-		//ASND_End();
-		//DSP_Reset();
-		AUDIO_SetDSPSampleRate (AI_SAMPLERATE_32KHZ);
-		AUDIO_RegisterDMACallback (GCMixSamples);
+		ASND_Pause(1);
+		ASND_End();
+		AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
+		AUDIO_RegisterDMACallback(GCMixSamples);
 	}
 	else // menu
 	{
 		AUDIO_StopDMA();
 		AUDIO_RegisterDMACallback(NULL);
 		ASND_Init();
-		MP3Player_Init();
+		ASND_Pause(0);
 	}
 }
 

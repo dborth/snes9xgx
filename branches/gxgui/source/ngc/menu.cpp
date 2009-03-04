@@ -66,6 +66,7 @@ static GuiImageData * pointer[4];
 static GuiImage * gameScreenImg = NULL;
 static GuiImage * bgTopImg = NULL;
 static GuiImage * bgBottomImg = NULL;
+static GuiSound * bgMusic = NULL;
 static GuiWindow * mainWindow = NULL;
 static GuiText * settingText = NULL;
 static int lastMenu = MENU_NONE;
@@ -110,7 +111,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	GuiWindow promptWindow(448,288);
 	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	promptWindow.SetPosition(0, -10);
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 	GuiTrigger trigA;
@@ -298,7 +299,7 @@ ProgressWindow(char *title, char *msg)
 	GuiWindow promptWindow(448,288);
 	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	promptWindow.SetPosition(0, -10);
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 	GuiTrigger trigA;
@@ -505,7 +506,7 @@ static void OnScreenKeyboard(char * var)
 
 	GuiKeyboard keyboard(var);
 
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 	GuiTrigger trigA;
@@ -580,7 +581,7 @@ SettingWindow(const char * title, GuiWindow * w)
 
 	GuiWindow promptWindow(448,288);
 	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 	GuiTrigger trigA;
@@ -687,7 +688,7 @@ static int MenuGameSelection()
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData iconHome(icon_home_png);
 	GuiImageData iconSettings(icon_settings_png);
 	GuiImageData btnOutline(button_png);
@@ -894,7 +895,7 @@ static int MenuGame()
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 	GuiImageData btnCloseOutline(button_close_png);
@@ -1207,7 +1208,7 @@ static int MenuGameSaves(int action)
 	else
 		titleTxt.SetText("Save Game");
 
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 
@@ -1351,7 +1352,7 @@ static int MenuGameCheats()
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 
@@ -1424,7 +1425,7 @@ static int MenuSettings()
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 	GuiImageData btnLargeOutline(button_large_png);
@@ -1824,7 +1825,7 @@ static int MenuSettingsVideo()
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 
@@ -1950,7 +1951,7 @@ static int MenuSettingsFile()
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 
@@ -2124,7 +2125,7 @@ static int MenuSettingsMenu()
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 
@@ -2230,7 +2231,7 @@ static int MenuSettingsNetwork()
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
 
-	GuiSound btnSoundOver(button_over_mp3, button_over_mp3_size);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
 
@@ -2322,6 +2323,9 @@ MainMenu (int menu)
 	pointer[2] = new GuiImageData(player3_point_png);
 	pointer[3] = new GuiImageData(player4_point_png);
 
+	bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
+	bgMusic->Play();
+
 	mainWindow = new GuiWindow(screenwidth, screenheight);
 
 	GuiImage bg(screenwidth, screenheight, (GXColor){175, 200, 215, 255});
@@ -2410,6 +2414,9 @@ MainMenu (int menu)
 
 	CancelAction();
 	HaltGui();
+
+	bgMusic->Stop();
+	delete bgMusic;
 
 	delete memTxt;
 	delete bgTopImg;

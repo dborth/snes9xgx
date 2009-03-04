@@ -18,14 +18,16 @@
 #include <vector>
 #include <math.h>
 #include <wiiuse/wpad.h>
-#include <mp3player.h>
+#include <asndlib.h>
 #include "pngu/pngu.h"
 #include "FreeTypeGX.h"
 #include "snes9xGX.h"
 #include "video.h"
+#include "input.h"
 #include "filelist.h"
 #include "fileop.h"
 #include "menu.h"
+#include "oggplayer.h"
 
 #define PI 3.14159265f
 #define PADCAL 50
@@ -73,6 +75,12 @@ enum
 	TRIGGER_BUTTON_ONLY_IN_FOCUS
 };
 
+enum
+{
+	SOUND_PCM,
+	SOUND_OGG
+};
+
 #define EFFECT_SLIDE_TOP			1
 #define EFFECT_SLIDE_BOTTOM			2
 #define EFFECT_SLIDE_RIGHT			4
@@ -83,21 +91,21 @@ enum
 #define EFFECT_SCALE				128
 #define EFFECT_COLOR_TRANSITION		256
 
-enum
-{
-	ON_CLICK,
-	ON_OVER
-};
-
 class GuiSound
 {
 	public:
-		GuiSound(const u8 * s, int l);
+		GuiSound(const u8 * s, int l, int t);
 		~GuiSound();
 		void Play();
+		void Stop();
+		void Pause();
+		void Resume();
 	protected:
 		const u8 * sound;
+		int type;
 		s32 length;
+		s32 voice;
+		s32 volume;
 };
 
 class GuiTrigger

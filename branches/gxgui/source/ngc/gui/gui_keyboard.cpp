@@ -97,7 +97,7 @@ GuiKeyboard::GuiKeyboard(char * t)
 	keyLarge = new GuiImageData(keyboard_largekey_png);
 	keyLargeOver = new GuiImageData(keyboard_largekey_over_png);
 
-	keySoundOver = new GuiSound(button_over_mp3, button_over_mp3_size);
+	keySoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	trigA = new GuiTrigger;
 
 	if(GCSettings.WiimoteOrientation)

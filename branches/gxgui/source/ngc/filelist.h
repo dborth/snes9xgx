@@ -16,6 +16,12 @@
 extern const u8		font_ttf[];
 extern const u32	font_ttf_size;
 
+extern const u8		bg_music_ogg[];
+extern const u32	bg_music_ogg_size;
+
+extern const u8		button_over_pcm[];
+extern const u32	button_over_pcm_size;
+
 extern const u8		bg_top_png[];
 extern const u32	bg_top_png_size;
 
@@ -27,9 +33,6 @@ extern const u32	icon_settings_png_size;
 
 extern const u8		icon_home_png[];
 extern const u32	icon_home_png_size;
-
-extern const u8		button_over_mp3[];
-extern const u32	button_over_mp3_size;
 
 extern const u8		button_png[];
 extern const u32	button_png_size;
