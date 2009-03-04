@@ -1087,7 +1087,7 @@ static int MenuGame()
 				free(gameScreenTex);
 				gameScreenTex = NULL;
 			}
-
+			bgMusic->Play(); // startup music
 			menu = MENU_GAMESELECTION;
 		}
 		else if(closeBtn.GetState() == STATE_CLICKED)
@@ -2324,7 +2324,6 @@ MainMenu (int menu)
 	pointer[3] = new GuiImageData(player4_point_png);
 
 	bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
-	bgMusic->Play();
 
 	mainWindow = new GuiWindow(screenwidth, screenheight);
 
@@ -2338,6 +2337,10 @@ MainMenu (int menu)
 		gameScreenImg->SetAlpha(192);
 		gameScreenImg->Stripe(30);
 		mainWindow->Append(gameScreenImg);
+	}
+	else
+	{
+		bgMusic->Play(); // startup music
 	}
 
 	GuiImageData bgTop(bg_top_png);
