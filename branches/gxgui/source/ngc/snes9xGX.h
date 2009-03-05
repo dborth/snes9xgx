@@ -48,6 +48,7 @@ enum {
 
 enum
 {
+	CTRL_PAD,
 	CTRL_PAD2,
 	CTRL_PAD4,
 	CTRL_MOUSE,
@@ -56,8 +57,8 @@ enum
 	CTRL_LENGTH
 };
 
-const char ctrlName[5][20] =
-{ "SNES Pad (2)", "SNES Pad (4)", "SNES Mouse", "Superscope", "Justifier" };
+const char ctrlName[6][20] =
+{ "SNES Controller", "SNES Pad (2)", "SNES Pad (4)", "SNES Mouse", "Superscope", "Justifier" };
 
 struct SGCSettings{
     int		AutoLoad;
@@ -83,6 +84,8 @@ struct SGCSettings{
 	int		yshift;
 	int		WiimoteOrientation;
 	int		ExitAction;
+	int		MusicVolume;
+	int		SFXVolume;
 };
 
 void ExitApp();

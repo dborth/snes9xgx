@@ -60,6 +60,8 @@ DefaultSettings ()
 
 	GCSettings.WiimoteOrientation = 0;
 	GCSettings.ExitAction = 0;
+	GCSettings.MusicVolume = 40;
+	GCSettings.SFXVolume = 40;
 
 	/****************** SNES9x Settings ***********************/
 

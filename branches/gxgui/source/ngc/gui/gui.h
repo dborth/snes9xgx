@@ -100,6 +100,7 @@ class GuiSound
 		void Stop();
 		void Pause();
 		void Resume();
+		void SetVolume(int v);
 	protected:
 		const u8 * sound;
 		int type;

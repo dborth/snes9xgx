@@ -70,6 +70,8 @@ static GuiSound * bgMusic = NULL;
 static GuiWindow * mainWindow = NULL;
 static GuiText * settingText = NULL;
 static int lastMenu = MENU_NONE;
+static int mappingMenuController = 0;
+static int mappingMenuControllerSNES = 0;
 
 static lwp_t guithread = LWP_THREAD_NULL;
 static bool guiReady = false;
@@ -1597,7 +1599,380 @@ static int MenuSettings()
 
 static int MenuSettingsMappings()
 {
-	return MENU_EXIT;
+	int menu = MENU_NONE;
+
+	GuiText titleTxt("Settings - Button Mappings", 22, (GXColor){255, 255, 255, 255});
+	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	titleTxt.SetPosition(50,50);
+
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+	GuiImageData btnLargeOutline(button_large_png);
+	GuiImageData btnLargeOutlineOver(button_large_over_png);
+
+	GuiTrigger trigA;
+	if(GCSettings.WiimoteOrientation)
+		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+	else
+		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText snesBtnTxt("SNES Controller", 22, (GXColor){0, 0, 0, 255});
+	GuiImage snesBtnImg(&btnLargeOutline);
+	GuiImage snesBtnImgOver(&btnLargeOutlineOver);
+	GuiButton snesBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	snesBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	snesBtn.SetPosition(-125, 120);
+	snesBtn.SetLabel(&snesBtnTxt);
+	snesBtn.SetImage(&snesBtnImg);
+	snesBtn.SetImageOver(&snesBtnImgOver);
+	snesBtn.SetSoundOver(&btnSoundOver);
+	snesBtn.SetTrigger(&trigA);
+	snesBtn.SetEffectGrow();
+
+	GuiText superscopeBtnTxt("Super Scope", 22, (GXColor){0, 0, 0, 255});
+	GuiImage superscopeBtnImg(&btnLargeOutline);
+	GuiImage superscopeBtnImgOver(&btnLargeOutlineOver);
+	GuiButton superscopeBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	superscopeBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	superscopeBtn.SetPosition(125, 120);
+	superscopeBtn.SetLabel(&superscopeBtnTxt);
+	superscopeBtn.SetImage(&superscopeBtnImg);
+	superscopeBtn.SetImageOver(&superscopeBtnImgOver);
+	superscopeBtn.SetSoundOver(&btnSoundOver);
+	superscopeBtn.SetTrigger(&trigA);
+	superscopeBtn.SetEffectGrow();
+
+	GuiText mouseBtnTxt("SNES Mouse", 22, (GXColor){0, 0, 0, 255});
+	GuiImage mouseBtnImg(&btnLargeOutline);
+	GuiImage mouseBtnImgOver(&btnLargeOutlineOver);
+	GuiButton mouseBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	mouseBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	mouseBtn.SetPosition(-125, 250);
+	mouseBtn.SetLabel(&mouseBtnTxt);
+	mouseBtn.SetImage(&mouseBtnImg);
+	mouseBtn.SetImageOver(&mouseBtnImgOver);
+	mouseBtn.SetSoundOver(&btnSoundOver);
+	mouseBtn.SetTrigger(&trigA);
+	mouseBtn.SetEffectGrow();
+
+	GuiText justifierBtnTxt("Justifier", 22, (GXColor){0, 0, 0, 255});
+	GuiImage justifierBtnImg(&btnLargeOutline);
+	GuiImage justifierBtnImgOver(&btnLargeOutlineOver);
+	GuiButton justifierBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	justifierBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	justifierBtn.SetPosition(125, 250);
+	justifierBtn.SetLabel(&justifierBtnTxt);
+	justifierBtn.SetImage(&justifierBtnImg);
+	justifierBtn.SetImageOver(&justifierBtnImgOver);
+	justifierBtn.SetSoundOver(&btnSoundOver);
+	justifierBtn.SetTrigger(&trigA);
+	justifierBtn.SetEffectGrow();
+
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(100, -35);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetTrigger(&trigA);
+	backBtn.SetEffectGrow();
+
+	guiReady = false;
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&titleTxt);
+	w.Append(&snesBtn);
+	w.Append(&superscopeBtn);
+	w.Append(&mouseBtn);
+	w.Append(&justifierBtn);
+
+	w.Append(&backBtn);
+
+	mainWindow->Append(&w);
+
+	guiReady = true;
+
+	while(menu == MENU_NONE)
+	{
+		VIDEO_WaitVSync ();
+
+		if(snesBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS_MAPPINGS_CTRL;
+			mappingMenuControllerSNES = CTRL_PAD;
+		}
+		else if(superscopeBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS_MAPPINGS_CTRL;
+			mappingMenuControllerSNES = CTRL_SUPERSCOPE;
+		}
+		else if(mouseBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS_MAPPINGS_CTRL;
+			mappingMenuControllerSNES = CTRL_MOUSE;
+		}
+		else if(justifierBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS_MAPPINGS_CTRL;
+			mappingMenuControllerSNES = CTRL_JUSTIFIER;
+		}
+		else if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS;
+		}
+	}
+	guiReady = false;
+	mainWindow->Remove(&w);
+	return menu;
+}
+
+static int MenuSettingsMappingsController()
+{
+	int menu = MENU_NONE;
+	char menuTitle[100];
+
+	sprintf(menuTitle, "Settings - Button Mappings - %s", ctrlName[mappingMenuControllerSNES]);
+
+	GuiText titleTxt(menuTitle, 22, (GXColor){255, 255, 255, 255});
+	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	titleTxt.SetPosition(50,50);
+
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+	GuiImageData btnLargeOutline(button_large_png);
+	GuiImageData btnLargeOutlineOver(button_large_over_png);
+
+	GuiTrigger trigA;
+	if(GCSettings.WiimoteOrientation)
+		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+	else
+		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText wiimoteBtnTxt("Wiimote", 22, (GXColor){0, 0, 0, 255});
+	GuiImage wiimoteBtnImg(&btnLargeOutline);
+	GuiImage wiimoteBtnImgOver(&btnLargeOutlineOver);
+	GuiButton wiimoteBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	wiimoteBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	wiimoteBtn.SetPosition(-125, 120);
+	wiimoteBtn.SetLabel(&wiimoteBtnTxt);
+	wiimoteBtn.SetImage(&wiimoteBtnImg);
+	wiimoteBtn.SetImageOver(&wiimoteBtnImgOver);
+	wiimoteBtn.SetSoundOver(&btnSoundOver);
+	wiimoteBtn.SetTrigger(&trigA);
+	wiimoteBtn.SetEffectGrow();
+
+	GuiText nunchukBtnTxt("Wiimote Nunchuk", 22, (GXColor){0, 0, 0, 255});
+	GuiImage nunchukBtnImg(&btnLargeOutline);
+	GuiImage nunchukBtnImgOver(&btnLargeOutlineOver);
+	GuiButton nunchukBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	nunchukBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	nunchukBtn.SetPosition(125, 120);
+	nunchukBtn.SetLabel(&nunchukBtnTxt);
+	nunchukBtn.SetImage(&nunchukBtnImg);
+	nunchukBtn.SetImageOver(&nunchukBtnImgOver);
+	nunchukBtn.SetSoundOver(&btnSoundOver);
+	nunchukBtn.SetTrigger(&trigA);
+	nunchukBtn.SetEffectGrow();
+
+	GuiText classicBtnTxt("Classic Controller", 22, (GXColor){0, 0, 0, 255});
+	GuiImage classicBtnImg(&btnLargeOutline);
+	GuiImage classicBtnImgOver(&btnLargeOutlineOver);
+	GuiButton classicBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	classicBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	classicBtn.SetPosition(-125, 250);
+	classicBtn.SetLabel(&classicBtnTxt);
+	classicBtn.SetImage(&classicBtnImg);
+	classicBtn.SetImageOver(&classicBtnImgOver);
+	classicBtn.SetSoundOver(&btnSoundOver);
+	classicBtn.SetTrigger(&trigA);
+	classicBtn.SetEffectGrow();
+
+	GuiText gamecubeBtnTxt("GameCube Controller", 22, (GXColor){0, 0, 0, 255});
+	GuiImage gamecubeBtnImg(&btnLargeOutline);
+	GuiImage gamecubeBtnImgOver(&btnLargeOutlineOver);
+	GuiButton gamecubeBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	gamecubeBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	gamecubeBtn.SetPosition(125, 250);
+	gamecubeBtn.SetLabel(&gamecubeBtnTxt);
+	gamecubeBtn.SetImage(&gamecubeBtnImg);
+	gamecubeBtn.SetImageOver(&gamecubeBtnImgOver);
+	gamecubeBtn.SetSoundOver(&btnSoundOver);
+	gamecubeBtn.SetTrigger(&trigA);
+	gamecubeBtn.SetEffectGrow();
+
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(100, -35);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetTrigger(&trigA);
+	backBtn.SetEffectGrow();
+
+	guiReady = false;
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&titleTxt);
+	w.Append(&wiimoteBtn);
+	w.Append(&nunchukBtn);
+	w.Append(&classicBtn);
+	w.Append(&gamecubeBtn);
+
+	w.Append(&backBtn);
+
+	mainWindow->Append(&w);
+
+	guiReady = true;
+
+	while(menu == MENU_NONE)
+	{
+		VIDEO_WaitVSync ();
+
+		if(wiimoteBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS_MAPPINGS_MAP;
+			mappingMenuController = CTRLR_WIIMOTE;
+		}
+		else if(nunchukBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS_MAPPINGS_MAP;
+			mappingMenuController = CTRLR_NUNCHUK;
+		}
+		else if(classicBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS_MAPPINGS_MAP;
+			mappingMenuController = CTRLR_CLASSIC;
+		}
+		else if(gamecubeBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS_MAPPINGS_MAP;
+			mappingMenuController = CTRLR_GCPAD;
+		}
+		else if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS_MAPPINGS;
+		}
+	}
+	guiReady = false;
+	mainWindow->Remove(&w);
+	return menu;
+}
+
+static int MenuSettingsMappingsMap()
+{
+	int menu = MENU_NONE;
+	int ret;
+	int i = 0;
+	OptionList options;
+
+	char menuTitle[100];
+	sprintf(menuTitle, "Settings - Button Mappings - %s - %s",
+		ctrlName[mappingMenuControllerSNES], ctrlrName[mappingMenuController]);
+
+	GuiText titleTxt(menuTitle, 22, (GXColor){255, 255, 255, 255});
+	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	titleTxt.SetPosition(50,50);
+
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+
+	GuiTrigger trigA;
+	if(GCSettings.WiimoteOrientation)
+		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+	else
+		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(100, -35);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetTrigger(&trigA);
+	backBtn.SetEffectGrow();
+
+	switch(mappingMenuControllerSNES)
+	{
+		case CTRL_PAD:
+			sprintf(options.name[i++], "A");
+			sprintf(options.name[i++], "B");
+			sprintf(options.name[i++], "X");
+			sprintf(options.name[i++], "Y");
+			sprintf(options.name[i++], "L Trigger");
+			sprintf(options.name[i++], "R Trigger");
+			sprintf(options.name[i++], "Start");
+			sprintf(options.name[i++], "Select");
+			sprintf(options.name[i++], "Up");
+			sprintf(options.name[i++], "Down");
+			sprintf(options.name[i++], "Left");
+			sprintf(options.name[i++], "Right");
+			options.length = i;
+			break;
+		case CTRL_SUPERSCOPE:
+			sprintf(options.name[i++], "Fire");
+			sprintf(options.name[i++], "Aim Offscreen");
+			sprintf(options.name[i++], "Turbo On");
+			sprintf(options.name[i++], "Turbo Off");
+			sprintf(options.name[i++], "Pause");
+			options.length = i;
+			break;
+		case CTRL_MOUSE:
+			sprintf(options.name[i++], "Left Button");
+			sprintf(options.name[i++], "Right Button");
+			options.length = i;
+			break;
+		case CTRL_JUSTIFIER:
+			sprintf(options.name[i++], "Fire");
+			sprintf(options.name[i++], "Aim Offscreen");
+			sprintf(options.name[i++], "Start");
+			options.length = i;
+			break;
+	};
+
+	GuiOptionBrowser optionBrowser(552, 248, &options);
+	optionBrowser.SetPosition(0, 108);
+	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	optionBrowser.SetCol2Position(180);
+
+	guiReady = false;
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&backBtn);
+	mainWindow->Append(&optionBrowser);
+	mainWindow->Append(&w);
+	mainWindow->Append(&titleTxt);
+	guiReady = true;
+
+	while(menu == MENU_NONE)
+	{
+		VIDEO_WaitVSync ();
+
+		ret = optionBrowser.GetClickedOption();
+
+
+
+		if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_SETTINGS_MAPPINGS_CTRL;
+		}
+	}
+	guiReady = false;
+	mainWindow->Remove(&optionBrowser);
+	mainWindow->Remove(&w);
+	mainWindow->Remove(&titleTxt);
+	return menu;
 }
 
 /****************************************************************************
@@ -2119,6 +2494,8 @@ static int MenuSettingsMenu()
 
 	sprintf(options.name[i++], "Wiimote Orientation");
 	sprintf(options.name[i++], "Exit Action");
+	sprintf(options.name[i++], "Music Volume");
+	sprintf(options.name[i++], "Sound Effects Volume");
 	options.length = i;
 
 	GuiText titleTxt("Settings - Menu", 22, (GXColor){255, 255, 255, 255});
@@ -2185,6 +2562,16 @@ static int MenuSettingsMenu()
 			sprintf (options.value[1], "Reboot");
 		#endif
 
+		if(GCSettings.MusicVolume > 0)
+			sprintf(options.value[2], "%d%%", GCSettings.MusicVolume);
+		else
+			sprintf(options.value[2], "Mute");
+
+		if(GCSettings.SFXVolume > 0)
+			sprintf(options.value[3], "%d%%", GCSettings.SFXVolume);
+		else
+			sprintf(options.value[3], "Mute");
+
 		ret = optionBrowser.GetClickedOption();
 
 		switch (ret)
@@ -2196,6 +2583,17 @@ static int MenuSettingsMenu()
 				GCSettings.ExitAction++;
 				if(GCSettings.ExitAction > 2)
 					GCSettings.ExitAction = 0;
+				break;
+			case 2:
+				GCSettings.MusicVolume += 10;
+				if(GCSettings.MusicVolume > 100)
+					GCSettings.MusicVolume = 0;
+				bgMusic->SetVolume(GCSettings.MusicVolume);
+				break;
+			case 3:
+				GCSettings.SFXVolume += 10;
+				if(GCSettings.SFXVolume > 100)
+					GCSettings.SFXVolume = 0;
 				break;
 		}
 
@@ -2324,6 +2722,7 @@ MainMenu (int menu)
 	pointer[3] = new GuiImageData(player4_point_png);
 
 	bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
+	bgMusic->SetVolume(GCSettings.MusicVolume);
 
 	mainWindow = new GuiWindow(screenwidth, screenheight);
 
@@ -2391,6 +2790,12 @@ MainMenu (int menu)
 				break;
 			case MENU_SETTINGS_MAPPINGS:
 				currentMenu = MenuSettingsMappings();
+				break;
+			case MENU_SETTINGS_MAPPINGS_CTRL:
+				currentMenu = MenuSettingsMappingsController();
+				break;
+			case MENU_SETTINGS_MAPPINGS_MAP:
+				currentMenu = MenuSettingsMappingsMap();
 				break;
 			case MENU_SETTINGS_VIDEO:
 				currentMenu = MenuSettingsVideo();
@@ -2585,7 +2990,8 @@ ConfigureButtons (u16 ctrlr_type)
 	uint k;
 
 	// Update Menu Title (based on controller we're configuring)
-	switch (ctrlr_type) {
+	switch (ctrlr_type)
+	{
 		case CTRLR_NUNCHUK:
 			sprintf(menu_title, "SNES     -  NUNCHUK");
 			currentpadmap = ncpadmap;

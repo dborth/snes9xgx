@@ -13,12 +13,14 @@
 
 enum {
 	CTRLR_NONE = -1,
+	CTRLR_WIIMOTE,
 	CTRLR_NUNCHUK,
 	CTRLR_CLASSIC,
-	CTRLR_GCPAD,
-	CTRLR_WIIMOTE,
-	CTRLR_SNES = 7	// give some other value for the snes padmap
+	CTRLR_GCPAD
 };
+
+const char ctrlrName[4][20] =
+{ "Wiimote", "Nunchuk + Wiimote", "Classic Controller", "GameCube Controller" };
 
 typedef struct _btn_map {
 	u32 btn;					// button 'id'
