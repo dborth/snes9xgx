@@ -171,10 +171,10 @@ preparePrefsData (int method)
 
 	createXMLSetting("Controller", "Controller", toStr(GCSettings.Controller));
 
-	createXMLController(gcpadmap, "gcpadmap", "GameCube Pad");
+	/*createXMLController(gcpadmap, "gcpadmap", "GameCube Pad");
 	createXMLController(wmpadmap, "wmpadmap", "Wiimote");
 	createXMLController(ccpadmap, "ccpadmap", "Classic Controller");
-	createXMLController(ncpadmap, "ncpadmap", "Nunchuk");
+	createXMLController(ncpadmap, "ncpadmap", "Nunchuk");*/
 
 	int datasize = mxmlSaveString(xml, (char *)savebuffer+offset, (SAVEBUFFERSIZE-offset), XMLSaveCallback);
 
@@ -323,10 +323,10 @@ decodePrefsData (int method)
 
 			loadXMLSetting(&GCSettings.Controller, "Controller");
 
-			loadXMLController(gcpadmap, "gcpadmap");
+			/*loadXMLController(gcpadmap, "gcpadmap");
 			loadXMLController(wmpadmap, "wmpadmap");
 			loadXMLController(ccpadmap, "ccpadmap");
-			loadXMLController(ncpadmap, "ncpadmap");
+			loadXMLController(ncpadmap, "ncpadmap");*/
 		}
 		mxmlDelete(xml);
 	}

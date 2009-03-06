@@ -228,9 +228,9 @@ emulate ()
 		SwitchAudioMode(0);
 
 		Settings.MultiPlayer5Master = (GCSettings.Controller == CTRL_PAD4 ? true : false);
-		Settings.SuperScopeMaster = (GCSettings.Controller == CTRL_SUPERSCOPE ? true : false);
+		Settings.SuperScopeMaster = (GCSettings.Controller == CTRL_SCOPE ? true : false);
 		Settings.MouseMaster = (GCSettings.Controller == CTRL_MOUSE ? true : false);
-		Settings.JustifierMaster = (GCSettings.Controller == CTRL_JUSTIFIER ? true : false);
+		Settings.JustifierMaster = (GCSettings.Controller == CTRL_JUST ? true : false);
 		SetControllers ();
 
 		// stop checking if devices were removed/inserted

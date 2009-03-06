@@ -21,16 +21,7 @@
 #define MAXJP 			12 // # of mappable controller buttons
 
 extern int rumbleRequest[4];
-extern unsigned int gcpadmap[];
-extern unsigned int wmpadmap[];
-extern unsigned int ccpadmap[];
-extern unsigned int ncpadmap[];
-extern unsigned int gcscopemap[];
-extern unsigned int wmscopemap[];
-extern unsigned int gcmousemap[];
-extern unsigned int wmmousemap[];
-extern unsigned int gcjustmap[];
-extern unsigned int wmjustmap[];
+extern u32 btnmap[4][4][12];
 
 void ResetControls();
 void ShutoffRumble();

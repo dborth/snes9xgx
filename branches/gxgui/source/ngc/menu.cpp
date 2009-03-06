@@ -70,8 +70,8 @@ static GuiSound * bgMusic = NULL;
 static GuiWindow * mainWindow = NULL;
 static GuiText * settingText = NULL;
 static int lastMenu = MENU_NONE;
-static int mappingMenuController = 0;
-static int mappingMenuControllerSNES = 0;
+static int mapMenuCtrl = 0;
+static int mapMenuCtrlSNES = 0;
 
 static lwp_t guithread = LWP_THREAD_NULL;
 static bool guiReady = false;
@@ -1703,22 +1703,22 @@ static int MenuSettingsMappings()
 		if(snesBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_SETTINGS_MAPPINGS_CTRL;
-			mappingMenuControllerSNES = CTRL_PAD;
+			mapMenuCtrlSNES = CTRL_PAD;
 		}
 		else if(superscopeBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_SETTINGS_MAPPINGS_CTRL;
-			mappingMenuControllerSNES = CTRL_SUPERSCOPE;
+			mapMenuCtrlSNES = CTRL_SCOPE;
 		}
 		else if(mouseBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_SETTINGS_MAPPINGS_CTRL;
-			mappingMenuControllerSNES = CTRL_MOUSE;
+			mapMenuCtrlSNES = CTRL_MOUSE;
 		}
 		else if(justifierBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_SETTINGS_MAPPINGS_CTRL;
-			mappingMenuControllerSNES = CTRL_JUSTIFIER;
+			mapMenuCtrlSNES = CTRL_JUST;
 		}
 		else if(backBtn.GetState() == STATE_CLICKED)
 		{
@@ -1735,7 +1735,7 @@ static int MenuSettingsMappingsController()
 	int menu = MENU_NONE;
 	char menuTitle[100];
 
-	sprintf(menuTitle, "Settings - Button Mappings - %s", ctrlName[mappingMenuControllerSNES]);
+	sprintf(menuTitle, "Settings - Button Mappings - %s", ctrlName[mapMenuCtrlSNES]);
 
 	GuiText titleTxt(menuTitle, 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
@@ -1839,22 +1839,22 @@ static int MenuSettingsMappingsController()
 		if(wiimoteBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_SETTINGS_MAPPINGS_MAP;
-			mappingMenuController = CTRLR_WIIMOTE;
+			mapMenuCtrl = CTRLR_WIIMOTE;
 		}
 		else if(nunchukBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_SETTINGS_MAPPINGS_MAP;
-			mappingMenuController = CTRLR_NUNCHUK;
+			mapMenuCtrl = CTRLR_NUNCHUK;
 		}
 		else if(classicBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_SETTINGS_MAPPINGS_MAP;
-			mappingMenuController = CTRLR_CLASSIC;
+			mapMenuCtrl = CTRLR_CLASSIC;
 		}
 		else if(gamecubeBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_SETTINGS_MAPPINGS_MAP;
-			mappingMenuController = CTRLR_GCPAD;
+			mapMenuCtrl = CTRLR_GCPAD;
 		}
 		else if(backBtn.GetState() == STATE_CLICKED)
 		{
@@ -1866,16 +1866,129 @@ static int MenuSettingsMappingsController()
 	return menu;
 }
 
+/****************************************************************************
+ * ButtonMappingWindow
+ ***************************************************************************/
+
+static u32
+ButtonMappingWindow()
+{
+	GuiWindow promptWindow(448,288);
+	promptWindow.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+	promptWindow.SetPosition(0, -10);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+	GuiTrigger trigA;
+	if(GCSettings.WiimoteOrientation)
+		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+	else
+		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiImageData dialogBox(dialogue_box_png);
+	GuiImage dialogBoxImg(&dialogBox);
+
+	GuiText titleTxt("Button Mapping", 22, (GXColor){255, 255, 255, 255});
+	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	titleTxt.SetPosition(0,10);
+
+	char msg[100];
+
+	switch(mapMenuCtrl)
+	{
+		case CTRLR_GCPAD:
+			sprintf(msg, "Press any button on the GameCube Controller now. Press Start or Home to cancel.");
+			break;
+		case CTRLR_WIIMOTE:
+			sprintf(msg, "Press any button on the Wiimote now. Press Home to cancel.");
+			break;
+		case CTRLR_CLASSIC:
+			sprintf(msg, "Press any button on the Classic Controller now. Press Home to cancel.");
+			break;
+		case CTRLR_NUNCHUK:
+			sprintf(msg, "Press any button on the Wiimote or Nunchuk now. Press Home to cancel.");
+			break;
+	}
+
+	GuiText msgTxt(msg, 22, (GXColor){0, 0, 0, 255});
+	msgTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	msgTxt.SetPosition(0,80);
+
+	promptWindow.Append(&dialogBoxImg);
+	promptWindow.Append(&titleTxt);
+	promptWindow.Append(&msgTxt);
+
+	guiReady = false;
+	mainWindow->SetState(STATE_DISABLED);
+	mainWindow->Append(&promptWindow);
+	mainWindow->ChangeFocus(&promptWindow);
+	guiReady = true;
+
+	u32 pressed = 0;
+
+	while(pressed == 0)
+	{
+		VIDEO_WaitVSync();
+
+		if(mapMenuCtrl == CTRLR_GCPAD)
+		{
+			pressed = userInput[0].pad.btns_d;
+
+			if(userInput[0].wpad.btns_d == WPAD_BUTTON_HOME)
+				pressed = userInput[0].wpad.btns_d;
+		}
+		else
+		{
+			pressed = userInput[0].wpad.btns_d;
+
+			// always allow Home button to be pressed to cancel
+			if(pressed != WPAD_BUTTON_HOME)
+			{
+				switch(mapMenuCtrl)
+				{
+					case CTRLR_WIIMOTE:
+						if(pressed > 0x1000)
+							pressed = 0; // not a valid input
+						break;
+
+					case CTRLR_CLASSIC:
+						if(userInput[0].wpad.exp.type != WPAD_EXP_CLASSIC)
+							pressed = 0; // not a valid input
+						else if(pressed <= 0x1000)
+							pressed = 0; // not a valid input
+						break;
+
+					case CTRLR_NUNCHUK:
+						if(userInput[0].wpad.exp.type != WPAD_EXP_NUNCHUK)
+							pressed = 0; // not a valid input
+						break;
+				}
+			}
+		}
+	}
+
+	if(pressed == WPAD_BUTTON_HOME
+		|| pressed == WPAD_CLASSIC_BUTTON_HOME
+		|| pressed == PAD_BUTTON_START)
+		pressed = 0;
+
+	guiReady = false;
+	mainWindow->Remove(&promptWindow);
+	mainWindow->SetState(STATE_DEFAULT);
+	guiReady = true;
+
+	return pressed;
+}
+
 static int MenuSettingsMappingsMap()
 {
 	int menu = MENU_NONE;
-	int ret;
-	int i = 0;
+	int ret,i,j;
 	OptionList options;
 
 	char menuTitle[100];
 	sprintf(menuTitle, "Settings - Button Mappings - %s - %s",
-		ctrlName[mappingMenuControllerSNES], ctrlrName[mappingMenuController]);
+		ctrlName[mapMenuCtrlSNES], ctrlrName[mapMenuCtrl]);
 
 	GuiText titleTxt(menuTitle, 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
@@ -1904,7 +2017,9 @@ static int MenuSettingsMappingsMap()
 	backBtn.SetTrigger(&trigA);
 	backBtn.SetEffectGrow();
 
-	switch(mappingMenuControllerSNES)
+	i=0;
+
+	switch(mapMenuCtrlSNES)
 	{
 		case CTRL_PAD:
 			sprintf(options.name[i++], "A");
@@ -1921,7 +2036,7 @@ static int MenuSettingsMappingsMap()
 			sprintf(options.name[i++], "Right");
 			options.length = i;
 			break;
-		case CTRL_SUPERSCOPE:
+		case CTRL_SCOPE:
 			sprintf(options.name[i++], "Fire");
 			sprintf(options.name[i++], "Aim Offscreen");
 			sprintf(options.name[i++], "Turbo On");
@@ -1934,7 +2049,7 @@ static int MenuSettingsMappingsMap()
 			sprintf(options.name[i++], "Right Button");
 			options.length = i;
 			break;
-		case CTRL_JUSTIFIER:
+		case CTRL_JUST:
 			sprintf(options.name[i++], "Fire");
 			sprintf(options.name[i++], "Aim Offscreen");
 			sprintf(options.name[i++], "Start");
@@ -1959,9 +2074,30 @@ static int MenuSettingsMappingsMap()
 	{
 		VIDEO_WaitVSync ();
 
+		for(i=0; i < options.length; i++)
+		{
+			options.value[i][0] = 0;
+
+			for(j=0; j < ctrlr_def[mapMenuCtrl].num_btns; j++)
+			{
+				if(btnmap[mapMenuCtrlSNES][mapMenuCtrl][i] ==
+					ctrlr_def[mapMenuCtrl].map[j].btn)
+				{
+					sprintf(options.value[i], ctrlr_def[mapMenuCtrl].map[j].name);
+					break;
+				}
+			}
+		}
+
 		ret = optionBrowser.GetClickedOption();
 
+		if(ret >= 0)
+		{
+			u32 pressed = ButtonMappingWindow(); // get a button selection from user
 
+			if (pressed > 0)
+				btnmap[mapMenuCtrlSNES][mapMenuCtrl][ret] = pressed; // update mapping
+		}
 
 		if(backBtn.GetState() == STATE_CLICKED)
 		{
@@ -2849,224 +2985,3 @@ MainMenu (int menu)
 		gameScreen = NULL;
 	}
 }
-
-/****************************************************************************
- * Controller Configuration
- *
- * Snes9x 1.51 uses a cmd system to work out which button has been pressed.
- * Here, I simply move the designated value to the gcpadmaps array, which
- * saves on updating the cmd sequences.
- ***************************************************************************/
-
-/*
-u32
-GetInput (u16 ctrlr_type)
-{
-	//u32 exp_type;
-	u32 pressed;
-	pressed=0;
-	s8 gc_px = 0;
-
-	while( PAD_ButtonsHeld(0)
-#ifdef HW_RVL
-	| WPAD_ButtonsHeld(0)
-#endif
-	) VIDEO_WaitVSync();	// button 'debounce'
-
-	while (pressed == 0)
-	{
-		VIDEO_WaitVSync();
-		// get input based on controller type
-		if (ctrlr_type == CTRLR_GCPAD)
-		{
-			pressed = PAD_ButtonsHeld (0);
-			gc_px = PAD_SubStickX (0);
-		}
-#ifdef HW_RVL
-		else
-		{
-		//	if ( WPAD_Probe( 0, &exp_type) == 0)	// check wiimote and expansion status (first if wiimote is connected & no errors)
-		//	{
-				pressed = WPAD_ButtonsHeld (0);
-
-		//		if (ctrlr_type != CTRLR_WIIMOTE && exp_type != ctrlr_type+1)	// if we need input from an expansion, and its not connected...
-		//			pressed = 0;
-		//	}
-		}
-#endif
-		// check for exit sequence (c-stick left OR home button)
-		if ( (gc_px < -70) || (pressed & WPAD_BUTTON_HOME) || (pressed & WPAD_CLASSIC_BUTTON_HOME) )
-			return 0;
-	}	// end while
-	while( pressed == (PAD_ButtonsHeld(0)
-#ifdef HW_RVL
-						| WPAD_ButtonsHeld(0)
-#endif
-						) ) VIDEO_WaitVSync();
-
-	return pressed;
-}	// end GetInput()
-
-static int cfg_text_count = 7;
-static char cfg_text[][50] = {
-"Remapping          ",
-"Press Any Button",
-"on the",
-"       ",	// identify controller
-"                   ",
-"Press C-Left or",
-"Home to exit"
-};
-
-u32
-GetButtonMap(u16 ctrlr_type, char* btn_name)
-{
-	u32 pressed, previous;
-	char temp[50] = "";
-	uint k;
-	pressed = 0; previous = 1;
-
-	switch (ctrlr_type) {
-		case CTRLR_NUNCHUK:
-			strncpy (cfg_text[3], "NUNCHUK", 7);
-			break;
-		case CTRLR_CLASSIC:
-			strncpy (cfg_text[3], "CLASSIC", 7);
-			break;
-		case CTRLR_GCPAD:
-			strncpy (cfg_text[3], "GC PAD", 7);
-			break;
-		case CTRLR_WIIMOTE:
-			strncpy (cfg_text[3], "WIIMOTE", 7);
-			break;
-	};
-
-	// note which button we are remapping
-	sprintf (temp, "Remapping ");
-	for (k=0; k<9-strlen(btn_name); k++) strcat(temp, " "); // add whitespace padding to align text
-	strncat (temp, btn_name, 9);		// snes button we are remapping
-	strncpy (cfg_text[0], temp, 19);	// copy this all back to the text we wish to display
-
-//	DrawMenu(&cfg_text[0], NULL, cfg_text_count, 1);	// display text
-
-//	while (previous != pressed && pressed == 0);	// get two consecutive button presses (which are the same)
-//	{
-//		previous = pressed;
-//		VIDEO_WaitVSync();	// slow things down a bit so we don't overread the pads
-		pressed = GetInput(ctrlr_type);
-//	}
-	return pressed;
-}	// end getButtonMap()
-
-static int cfg_btns_count = 13;
-static char cfg_btns_menu[][50] = {
-	"A        -         ",
-	"B        -         ",
-	"X        -         ",
-	"Y        -         ",
-	"L TRIG   -         ",
-	"R TRIG   -         ",
-	"SELECT   -         ",
-	"START    -         ",
-	"UP       -         ",
-	"DOWN     -         ",
-	"LEFT     -         ",
-	"RIGHT    -         ",
-	"Return to previous"
-};
-
-void
-ConfigureButtons (u16 ctrlr_type)
-{
-	int quit = 0;
-	int ret = 0;
-	int oldmenu = 0;
-	char menu_title[50];
-	u32 pressed;
-
-	unsigned int* currentpadmap = 0;
-	char temp[50] = "";
-	int i, j;
-	uint k;
-
-	// Update Menu Title (based on controller we're configuring)
-	switch (ctrlr_type)
-	{
-		case CTRLR_NUNCHUK:
-			sprintf(menu_title, "SNES     -  NUNCHUK");
-			currentpadmap = ncpadmap;
-			break;
-		case CTRLR_CLASSIC:
-			sprintf(menu_title, "SNES     -  CLASSIC");
-			currentpadmap = ccpadmap;
-			break;
-		case CTRLR_GCPAD:
-			sprintf(menu_title, "SNES     -   GC PAD");
-			currentpadmap = gcpadmap;
-			break;
-		case CTRLR_WIIMOTE:
-			sprintf(menu_title, "SNES     -  WIIMOTE");
-			currentpadmap = wmpadmap;
-			break;
-	};
-
-	while (quit == 0)
-	{
-		// Update Menu with Current ButtonMap
-		for (i=0; i<12; i++) // snes pad has 12 buttons to config (go thru them)
-		{
-			// get current padmap button name to display
-			for ( j=0;
-					j < ctrlr_def[ctrlr_type].num_btns &&
-					currentpadmap[i] != ctrlr_def[ctrlr_type].map[j].btn	// match padmap button press with button names
-				; j++ );
-
-			memset (temp, 0, sizeof(temp));
-			strncpy (temp, cfg_btns_menu[i], 12);	// copy snes button information
-			if (currentpadmap[i] == ctrlr_def[ctrlr_type].map[j].btn)		// check if a match was made
-			{
-				for (k=0; k<7-strlen(ctrlr_def[ctrlr_type].map[j].name) ;k++) strcat(temp, " "); // add whitespace padding to align text
-				strncat (temp, ctrlr_def[ctrlr_type].map[j].name, 6);		// update button map display
-			}
-			else
-				strcat (temp, "---");								// otherwise, button is 'unmapped'
-			strncpy (cfg_btns_menu[i], temp, 19);	// move back updated information
-
-		}
-
-//		ret = RunMenu (cfg_btns_menu, cfg_btns_count, menu_title, 16);
-
-		switch (ret)
-		{
-			case 0:
-			case 1:
-			case 2:
-			case 3:
-			case 4:
-			case 5:
-			case 6:
-			case 7:
-			case 8:
-			case 9:
-			case 10:
-			case 11:
-				// Change button map
-				// wait for input
-				memset (temp, 0, sizeof(temp));
-				strncpy(temp, cfg_btns_menu[ret], 6);			// get the name of the snes button we're changing
-				pressed = GetButtonMap(ctrlr_type, temp);	// get a button selection from user
-				// FIX: check if input is valid for this controller
-				if (pressed != 0)	// check if a the button was configured, or if the user exited.
-					currentpadmap[ret] = pressed;	// update mapping
-				break;
-
-			case -1: // Button B
-			case 12:
-				// Return
-				quit = 1;
-				break;
-		}
-	}
-	menu = oldmenu;
-}	// end configurebuttons()
-*/

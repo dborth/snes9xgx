@@ -13,14 +13,14 @@
 
 enum {
 	CTRLR_NONE = -1,
+	CTRLR_GCPAD,
 	CTRLR_WIIMOTE,
 	CTRLR_NUNCHUK,
-	CTRLR_CLASSIC,
-	CTRLR_GCPAD
+	CTRLR_CLASSIC
 };
 
 const char ctrlrName[4][20] =
-{ "Wiimote", "Nunchuk + Wiimote", "Classic Controller", "GameCube Controller" };
+{ "GameCube Controller", "Wiimote", "Nunchuk + Wiimote", "Classic Controller" };
 
 typedef struct _btn_map {
 	u32 btn;					// button 'id'

@@ -49,16 +49,16 @@ enum {
 enum
 {
 	CTRL_PAD,
+	CTRL_MOUSE,
+	CTRL_SCOPE,
+	CTRL_JUST,
 	CTRL_PAD2,
 	CTRL_PAD4,
-	CTRL_MOUSE,
-	CTRL_SUPERSCOPE,
-	CTRL_JUSTIFIER,
 	CTRL_LENGTH
 };
 
 const char ctrlName[6][20] =
-{ "SNES Controller", "SNES Pad (2)", "SNES Pad (4)", "SNES Mouse", "Superscope", "Justifier" };
+{ "SNES Controller", "SNES Mouse", "Superscope", "Justifier", "SNES Pad (2)", "SNES Pad (4)" };
 
 struct SGCSettings{
     int		AutoLoad;
