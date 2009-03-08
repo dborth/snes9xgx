@@ -291,7 +291,7 @@ static bool IsValidROM(int method)
 {
 	// file size should be between 96K and 8MB
 	if(browserList[browser.selIndex].length < (1024*96) ||
-		browserList[browser.selIndex].length > (1024*1024*8))
+		browserList[browser.selIndex].length > Memory.MAX_ROM_SIZE)
 	{
 		ErrorPrompt("Invalid file size!");
 		return false;

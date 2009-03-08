@@ -8,6 +8,8 @@
  * Network and SMB support routines
  ****************************************************************************/
 
+#ifdef HW_RVL
+
 #include <network.h>
 #include <smb.h>
 #include <mxml.h>
@@ -19,8 +21,6 @@
 #include "menu.h"
 #include "fileop.h"
 #include "http.h"
-
-#ifdef HW_RVL
 
 static bool inNetworkInit = false;
 static bool networkInit = false;

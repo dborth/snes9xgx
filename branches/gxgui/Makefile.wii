@@ -35,7 +35,7 @@ CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
 			-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
 			-fomit-frame-pointer -fno-exceptions \
 			-Wno-unused-parameter -Wno-strict-aliasing
-			#-D_DEBUG_VIDEO -pipe
+
 CXXFLAGS	=	-save-temps -Xassembler -aln=$@.lst $(CFLAGS)
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
@@ -43,7 +43,8 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-ldb -ldi -lpngu -lpng -lmxml -lfreetypegx -lmetaphrasis -lfat -lwiiuse -lz -lbte -logc -lm -lmodplay -ltremor -lasnd -lfreetype -ltinysmb
+LIBS	:=	-ldb -ldi -lpngu -lpng -lmxml -lfreetypegx -lmetaphrasis \
+			-lfat -lwiiuse -lz -lbte -logc -lasnd -ltremor -lfreetype -ltinysmb
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib

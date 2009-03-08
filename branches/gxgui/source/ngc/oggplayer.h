@@ -26,9 +26,13 @@
 #ifndef __OGGPLAYER_H__
 #define __OGGPLAYER_H__
 
+#ifndef NO_MUSIC
+
 #include <asndlib.h>
 #include "tremor/ivorbiscodec.h"
 #include "tremor/ivorbisfile.h"
+
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -161,6 +165,10 @@ s32 GetTimeOgg();
 void SetTimeOgg(s32 time_pos);
 
 /*------------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+#ifdef NO_MUSIC
+int mem_open(char * ogg, int size);
+#endif
 
 #ifdef __cplusplus
 }

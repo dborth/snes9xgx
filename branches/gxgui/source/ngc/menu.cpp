@@ -662,6 +662,10 @@ SettingWindow(const char * title, GuiWindow * w)
 
 static int MenuGameSelection()
 {
+#ifdef HW_RVL
+	ShutoffRumble();
+#endif
+
 	// populate initial directory listing
 	int method = GCSettings.LoadMethod;
 
@@ -1089,7 +1093,9 @@ static int MenuGame()
 				free(gameScreenTex);
 				gameScreenTex = NULL;
 			}
+			#ifndef NO_MUSIC
 			bgMusic->Play(); // startup music
+			#endif
 			menu = MENU_GAMESELECTION;
 		}
 		else if(closeBtn.GetState() == STATE_CLICKED)
@@ -1537,7 +1543,10 @@ static int MenuSettings()
 	w.Append(&videoBtn);
 	w.Append(&savingBtn);
 	w.Append(&menuBtn);
+
+#ifdef HW_RVL
 	w.Append(&networkBtn);
+#endif
 
 	w.Append(&backBtn);
 	w.Append(&resetBtn);
@@ -1753,31 +1762,31 @@ static int MenuSettingsMappingsController()
 	else
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
+	GuiText gamecubeBtnTxt("GameCube Controller", 22, (GXColor){0, 0, 0, 255});
+	GuiImage gamecubeBtnImg(&btnLargeOutline);
+	GuiImage gamecubeBtnImgOver(&btnLargeOutlineOver);
+	GuiButton gamecubeBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	gamecubeBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	gamecubeBtn.SetPosition(-125, 120);
+	gamecubeBtn.SetLabel(&gamecubeBtnTxt);
+	gamecubeBtn.SetImage(&gamecubeBtnImg);
+	gamecubeBtn.SetImageOver(&gamecubeBtnImgOver);
+	gamecubeBtn.SetSoundOver(&btnSoundOver);
+	gamecubeBtn.SetTrigger(&trigA);
+	gamecubeBtn.SetEffectGrow();
+
 	GuiText wiimoteBtnTxt("Wiimote", 22, (GXColor){0, 0, 0, 255});
 	GuiImage wiimoteBtnImg(&btnLargeOutline);
 	GuiImage wiimoteBtnImgOver(&btnLargeOutlineOver);
 	GuiButton wiimoteBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	wiimoteBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	wiimoteBtn.SetPosition(-125, 120);
+	wiimoteBtn.SetPosition(125, 120);
 	wiimoteBtn.SetLabel(&wiimoteBtnTxt);
 	wiimoteBtn.SetImage(&wiimoteBtnImg);
 	wiimoteBtn.SetImageOver(&wiimoteBtnImgOver);
 	wiimoteBtn.SetSoundOver(&btnSoundOver);
 	wiimoteBtn.SetTrigger(&trigA);
 	wiimoteBtn.SetEffectGrow();
-
-	GuiText nunchukBtnTxt("Wiimote Nunchuk", 22, (GXColor){0, 0, 0, 255});
-	GuiImage nunchukBtnImg(&btnLargeOutline);
-	GuiImage nunchukBtnImgOver(&btnLargeOutlineOver);
-	GuiButton nunchukBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
-	nunchukBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	nunchukBtn.SetPosition(125, 120);
-	nunchukBtn.SetLabel(&nunchukBtnTxt);
-	nunchukBtn.SetImage(&nunchukBtnImg);
-	nunchukBtn.SetImageOver(&nunchukBtnImgOver);
-	nunchukBtn.SetSoundOver(&btnSoundOver);
-	nunchukBtn.SetTrigger(&trigA);
-	nunchukBtn.SetEffectGrow();
 
 	GuiText classicBtnTxt("Classic Controller", 22, (GXColor){0, 0, 0, 255});
 	GuiImage classicBtnImg(&btnLargeOutline);
@@ -1792,18 +1801,18 @@ static int MenuSettingsMappingsController()
 	classicBtn.SetTrigger(&trigA);
 	classicBtn.SetEffectGrow();
 
-	GuiText gamecubeBtnTxt("GameCube Controller", 22, (GXColor){0, 0, 0, 255});
-	GuiImage gamecubeBtnImg(&btnLargeOutline);
-	GuiImage gamecubeBtnImgOver(&btnLargeOutlineOver);
-	GuiButton gamecubeBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
-	gamecubeBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	gamecubeBtn.SetPosition(125, 250);
-	gamecubeBtn.SetLabel(&gamecubeBtnTxt);
-	gamecubeBtn.SetImage(&gamecubeBtnImg);
-	gamecubeBtn.SetImageOver(&gamecubeBtnImgOver);
-	gamecubeBtn.SetSoundOver(&btnSoundOver);
-	gamecubeBtn.SetTrigger(&trigA);
-	gamecubeBtn.SetEffectGrow();
+	GuiText nunchukBtnTxt("Wiimote Nunchuk", 22, (GXColor){0, 0, 0, 255});
+	GuiImage nunchukBtnImg(&btnLargeOutline);
+	GuiImage nunchukBtnImgOver(&btnLargeOutlineOver);
+	GuiButton nunchukBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	nunchukBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	nunchukBtn.SetPosition(125, 250);
+	nunchukBtn.SetLabel(&nunchukBtnTxt);
+	nunchukBtn.SetImage(&nunchukBtnImg);
+	nunchukBtn.SetImageOver(&nunchukBtnImgOver);
+	nunchukBtn.SetSoundOver(&btnSoundOver);
+	nunchukBtn.SetTrigger(&trigA);
+	nunchukBtn.SetEffectGrow();
 
 	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -1821,11 +1830,17 @@ static int MenuSettingsMappingsController()
 	guiReady = false;
 	GuiWindow w(screenwidth, screenheight);
 	w.Append(&titleTxt);
-	w.Append(&wiimoteBtn);
-	w.Append(&nunchukBtn);
-	w.Append(&classicBtn);
-	w.Append(&gamecubeBtn);
 
+	w.Append(&gamecubeBtn);
+#ifdef HW_RVL
+	w.Append(&wiimoteBtn);
+
+	if(mapMenuCtrlSNES == CTRL_PAD)
+	{
+		w.Append(&nunchukBtn);
+		w.Append(&classicBtn);
+	}
+#endif
 	w.Append(&backBtn);
 
 	mainWindow->Append(&w);
@@ -2026,8 +2041,8 @@ static int MenuSettingsMappingsMap()
 			sprintf(options.name[i++], "B");
 			sprintf(options.name[i++], "X");
 			sprintf(options.name[i++], "Y");
-			sprintf(options.name[i++], "L Trigger");
-			sprintf(options.name[i++], "R Trigger");
+			sprintf(options.name[i++], "L");
+			sprintf(options.name[i++], "R");
 			sprintf(options.name[i++], "Start");
 			sprintf(options.name[i++], "Select");
 			sprintf(options.name[i++], "Up");
@@ -2039,6 +2054,7 @@ static int MenuSettingsMappingsMap()
 		case CTRL_SCOPE:
 			sprintf(options.name[i++], "Fire");
 			sprintf(options.name[i++], "Aim Offscreen");
+			sprintf(options.name[i++], "Cursor");
 			sprintf(options.name[i++], "Turbo On");
 			sprintf(options.name[i++], "Turbo Off");
 			sprintf(options.name[i++], "Pause");
@@ -2689,7 +2705,10 @@ static int MenuSettingsMenu()
 			sprintf (options.value[1], "Return to Wii Menu");
 		else if (GCSettings.ExitAction == 2)
 			sprintf (options.value[1], "Power off Wii");
-		#else
+		#else // GameCube
+		options.name[0][0] = 0; // Wiimote
+		options.name[2][0] = 0; // Music
+
 		if(GCSettings.ExitAction > 1)
 			GCSettings.ExitAction = 0;
 		if (GCSettings.ExitAction == 0)
@@ -2752,6 +2771,7 @@ static int MenuSettingsMenu()
 static int MenuSettingsNetwork()
 {
 	int menu = MENU_NONE;
+#ifdef HW_RVL
 	int ret;
 	int i = 0;
 	OptionList options;
@@ -2839,6 +2859,7 @@ static int MenuSettingsNetwork()
 	mainWindow->Remove(&optionBrowser);
 	mainWindow->Remove(&w);
 	mainWindow->Remove(&titleTxt);
+#endif
 	return menu;
 }
 
@@ -2856,10 +2877,10 @@ MainMenu (int menu)
 	pointer[1] = new GuiImageData(player2_point_png);
 	pointer[2] = new GuiImageData(player3_point_png);
 	pointer[3] = new GuiImageData(player4_point_png);
-
+#ifndef NO_MUSIC
 	bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
 	bgMusic->SetVolume(GCSettings.MusicVolume);
-
+#endif
 	mainWindow = new GuiWindow(screenwidth, screenheight);
 
 	GuiImage bg(screenwidth, screenheight, (GXColor){175, 200, 215, 255});
@@ -2875,7 +2896,9 @@ MainMenu (int menu)
 	}
 	else
 	{
+		#ifndef NO_MUSIC
 		bgMusic->Play(); // startup music
+		#endif
 	}
 
 	GuiImageData bgTop(bg_top_png);
@@ -2958,10 +2981,10 @@ MainMenu (int menu)
 
 	CancelAction();
 	HaltGui();
-
+#ifndef NO_MUSIC
 	bgMusic->Stop();
 	delete bgMusic;
-
+#endif
 	delete memTxt;
 	delete bgTopImg;
 	delete bgBottomImg;

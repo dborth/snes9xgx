@@ -594,9 +594,10 @@ static bool SwitchDVDFolderR(char * dir, int maxDepth)
 		dvddir = browserList[dirindex].offset;
 		dvddirlength = browserList[dirindex].length;
 		browser.selIndex = dirindex;
+		UpdateDirName(METHOD_DVD);
 
 		if(browserList[dirindex].isdir) // only parse directories
-			browser.numEntries = ParseDVDdirectory();
+			ParseDVDdirectory();
 
 		if(lastdir)
 			return true;

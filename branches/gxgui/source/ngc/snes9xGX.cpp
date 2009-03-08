@@ -318,11 +318,6 @@ static void * InitThread (void *arg)
 	if (!S9xGraphicsInit ())
 		while (1);
 
-	// Initialize DVD subsystem (GameCube only)
-	#ifdef HW_DOL
-	DVD_Init ();
-	#endif
-
 	// Check if DVD drive belongs to a Wii
 	SetDVDDriveType();
 
@@ -391,7 +386,6 @@ main(int argc, char *argv[])
 	// We'll put it in ARAM for safe storage
 
 	#ifdef HW_DOL
-	// GC Audio RAM (for ROM and backdrop storage)
 	AR_Init (NULL, 0);
 
 	int *romptr = (int *) 0x81000000; // location of injected rom
@@ -410,6 +404,11 @@ main(int argc, char *argv[])
 			SNESROMSize = 0;
 		}
 	}
+	#endif
+
+	// Initialize DVD subsystem (GameCube only)
+	#ifdef HW_DOL
+	DVD_Init ();
 	#endif
 
 	// store path app was loaded from
