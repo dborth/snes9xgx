@@ -228,7 +228,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 
 	// pad/joystick navigation
 	if(!focus)
-		return; // skip navigation
+		goto endNavigation; // skip navigation
 
 	if(t->Right())
 	{
@@ -308,6 +308,8 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		}
 	}
 
+	endNavigation:
+
 	for(i=0; i<SAVELISTSIZE; i++)
 	{
 		if(listOffset+i < 0 && action == 1)
@@ -376,10 +378,13 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			saveBtn[i]->SetState(STATE_DISABLED);
 		}
 
-		if(i != selectedItem && saveBtn[i]->GetState() == STATE_SELECTED)
-			saveBtn[i]->ResetState();
-		else if(i == selectedItem && saveBtn[i]->GetState() == STATE_DEFAULT)
-			saveBtn[selectedItem]->SetState(STATE_SELECTED);
+		if(focus)
+		{
+			if(i != selectedItem && saveBtn[i]->GetState() == STATE_SELECTED)
+				saveBtn[i]->ResetState();
+			else if(i == selectedItem && saveBtn[i]->GetState() == STATE_DEFAULT)
+				saveBtn[selectedItem]->SetState(STATE_SELECTED);
+		}
 
 		saveBtn[i]->Update(t);
 

@@ -81,6 +81,13 @@ enum
 	SOUND_OGG
 };
 
+enum
+{
+	IMAGE_TEXTURE,
+	IMAGE_COLOR,
+	IMAGE_DATA
+};
+
 #define EFFECT_SLIDE_TOP			1
 #define EFFECT_SLIDE_BOTTOM			2
 #define EFFECT_SLIDE_RIGHT			4
@@ -274,11 +281,14 @@ class GuiImage : public GuiElement
 		void SetImage(u8 * img, int w, int h);
 		GXColor GetPixel(int x, int y);
 		void SetPixel(int x, int y, GXColor color);
-		void Stripe(int s);
+		void ColorStripe(int s);
+		void SetStripe(int s);
 	protected:
+		int imgType;
 		u8 * image;
 		f32 imageangle;
 		int tile;
+		int stripe;
 };
 
 class GuiText : public GuiElement

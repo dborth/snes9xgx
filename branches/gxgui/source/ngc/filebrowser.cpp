@@ -374,7 +374,8 @@ void StripExt(char* returnstring, char * inputstring)
 // 7z file - let's open it up to select a file inside
 int BrowserLoadSz(int method)
 {
-	char filepath[1024];
+	char filepath[MAXPATHLEN];
+	memset(filepath, 0, MAXPATHLEN);
 
 	// we'll store the 7z filepath for extraction later
 	if(!MakeFilePath(szpath, FILE_ROM, method))
@@ -382,7 +383,7 @@ int BrowserLoadSz(int method)
 
 	// add device to filepath
 	sprintf(filepath, "%s%s", rootdir, szpath);
-	strcpy(szpath, filepath);
+	memcpy(szpath, filepath, MAXPATHLEN);
 
 	int szfiles = SzParse(szpath, method);
 	if(szfiles)

@@ -177,7 +177,7 @@ struct CMemory
 #ifdef HW_RVL
 	{ MAX_ROM_SIZE = 0x800000 }; // Wii - lots of memory
 #else
-	{ MAX_ROM_SIZE = 0x600000 }; // GameCube - less memory to play with
+	{ MAX_ROM_SIZE = 0x500000 }; // GameCube - less memory to play with
 #endif
 	enum file_formats
 	{ FILE_ZIP, FILE_JMA, FILE_DEFAULT };

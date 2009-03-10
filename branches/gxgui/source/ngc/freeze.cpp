@@ -185,7 +185,7 @@ done:
 	FreeSaveBuffer ();
 
 	// save screenshot - I would prefer to do this from gameScreenTex
-	if(gameScreen != NULL && method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
+	if(gameScreenTex != NULL && method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
 	{
 		AllocSaveBuffer ();
 
@@ -193,7 +193,7 @@ done:
 
 		if (pngContext != NULL)
 		{
-			PNGU_EncodeFromYCbYCr(pngContext, 640, 480, gameScreen, 0);
+			PNGU_EncodeFromGXTexture(pngContext, 640, 480, gameScreenTex, 0);
 			PNGU_ReleaseImageContext(pngContext);
 		}
 

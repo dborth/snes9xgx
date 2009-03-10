@@ -61,8 +61,11 @@ extern "C" {
 #include "gui/gui.h"
 #include "menu.h"
 
-static GuiTrigger userInput[4];
+#ifdef HW_RVL
 static GuiImageData * pointer[4];
+#endif
+
+static GuiTrigger userInput[4];
 static GuiImage * gameScreenImg = NULL;
 static GuiImage * bgTopImg = NULL;
 static GuiImage * bgBottomImg = NULL;
@@ -242,9 +245,8 @@ UpdateGUI (void *arg)
 				memcpy(&userInput[i].wpad, WPAD_Data(i), sizeof(WPADData));
 
 				if(userInput[i].wpad.ir.valid)
-				{
-					Menu_DrawImg(userInput[i].wpad.ir.x-48, userInput[i].wpad.ir.y-48, 96, 96, pointer[i]->GetImage(), userInput[i].wpad.ir.angle, 1, 1, 255);
-				}
+					Menu_DrawImg(userInput[i].wpad.ir.x-48, userInput[i].wpad.ir.y-48,
+							96, 96, pointer[i]->GetImage(), userInput[i].wpad.ir.angle, 1, 1, 255);
 				#endif
 
 				userInput[i].chan = i;
@@ -267,9 +269,6 @@ UpdateGUI (void *arg)
 
 			Menu_Render();
 
-			if(ExitRequested)
-				ExitApp();
-
 			#ifdef HW_RVL
 			if(updateFound)
 			{
@@ -280,12 +279,26 @@ UpdateGUI (void *arg)
 					"Update later");
 				if(updateFound)
 					if(DownloadUpdate())
-						ExitApp();
+						ExitRequested = 1;
 			}
-
-			if(ShutdownRequested)
-				ShutdownWii();
 			#endif
+
+			if(ExitRequested || ShutdownRequested)
+			{
+				for(int a = 0; a < 255; a += 15)
+				{
+					mainWindow->Draw();
+					Menu_DrawRectangle(0,0,screenwidth,screenheight,(GXColor){0, 0, 0, a},1);
+					Menu_Render();
+				}
+
+				if(ExitRequested)
+					ExitApp();
+				#ifdef HW_RVL
+				else if(ShutdownRequested)
+					ShutdownWii();
+				#endif
+			}
 		}
 	}
 	return NULL;
@@ -449,6 +462,8 @@ ShowProgress (const char *msg, int done, int total)
 	if(showProgress != 1)
 		CancelAction(); // wait for previous progress window to finish
 
+	strncpy(progressMsg, msg, 200);
+	sprintf(progressTitle, "Please Wait");
 	showProgress = 1;
 	progressTotal = total;
 	progressDone = done;
@@ -662,9 +677,9 @@ SettingWindow(const char * title, GuiWindow * w)
 
 static int MenuGameSelection()
 {
-#ifdef HW_RVL
+	#ifdef HW_RVL
 	ShutoffRumble();
-#endif
+	#endif
 
 	// populate initial directory listing
 	int method = GCSettings.LoadMethod;
@@ -674,7 +689,7 @@ static int MenuGameSelection()
 
 	int num = OpenGameList(method);
 
-	if(num == 0)
+	if(num <= 0)
 	{
 		int choice = WindowPrompt(
 		"Error",
@@ -1010,6 +1025,7 @@ static int MenuGame()
 	closeBtn.SetTrigger(&trigHome);
 	closeBtn.SetEffectGrow();
 
+	#ifdef HW_RVL
 	for(int i=0; i < 4; i++)
 	{
 		if(userInput[i].wpad.err == WPAD_ERR_NONE) // controller connected
@@ -1021,6 +1037,7 @@ static int MenuGame()
 
 		}
 	}
+	#endif
 
 	guiReady = false;
 	GuiWindow w(screenwidth, screenheight);
@@ -1907,12 +1924,16 @@ ButtonMappingWindow()
 	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	titleTxt.SetPosition(0,10);
 
-	char msg[100];
+	char msg[200];
 
 	switch(mapMenuCtrl)
 	{
 		case CTRLR_GCPAD:
-			sprintf(msg, "Press any button on the GameCube Controller now. Press Start or Home to cancel.");
+			#ifdef HW_RVL
+			sprintf(msg, "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to cancel.");
+			#else
+			sprintf(msg, "Press any button on the GameCube Controller now. Press the C-Stick in any direction to cancel.");
+			#endif
 			break;
 		case CTRLR_WIIMOTE:
 			sprintf(msg, "Press any button on the Wiimote now. Press Home to cancel.");
@@ -1949,8 +1970,15 @@ ButtonMappingWindow()
 		{
 			pressed = userInput[0].pad.btns_d;
 
+
+			if(userInput[0].pad.substickX < -70 ||
+					userInput[0].pad.substickX > 70 ||
+					userInput[0].pad.substickY < -70 ||
+										userInput[0].pad.substickY > 70)
+				pressed = WPAD_BUTTON_HOME;
+
 			if(userInput[0].wpad.btns_d == WPAD_BUTTON_HOME)
-				pressed = userInput[0].wpad.btns_d;
+				pressed = WPAD_BUTTON_HOME;
 		}
 		else
 		{
@@ -1983,8 +2011,7 @@ ButtonMappingWindow()
 	}
 
 	if(pressed == WPAD_BUTTON_HOME
-		|| pressed == WPAD_CLASSIC_BUTTON_HOME
-		|| pressed == PAD_BUTTON_START)
+		|| pressed == WPAD_CLASSIC_BUTTON_HOME)
 		pressed = 0;
 
 	guiReady = false;
@@ -2873,25 +2900,29 @@ MainMenu (int menu)
 	int currentMenu = menu;
 	lastMenu = MENU_NONE;
 
+	#ifdef HW_RVL
 	pointer[0] = new GuiImageData(player1_point_png);
 	pointer[1] = new GuiImageData(player2_point_png);
 	pointer[2] = new GuiImageData(player3_point_png);
 	pointer[3] = new GuiImageData(player4_point_png);
-#ifndef NO_MUSIC
+	#endif
+
+	#ifndef NO_MUSIC
 	bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
 	bgMusic->SetVolume(GCSettings.MusicVolume);
-#endif
+	#endif
+
 	mainWindow = new GuiWindow(screenwidth, screenheight);
 
 	GuiImage bg(screenwidth, screenheight, (GXColor){175, 200, 215, 255});
-	bg.Stripe(10);
+	bg.ColorStripe(10);
 	mainWindow->Append(&bg);
 
 	if(gameScreenTex)
 	{
 		gameScreenImg = new GuiImage(gameScreenTex, screenwidth, screenheight);
 		gameScreenImg->SetAlpha(192);
-		gameScreenImg->Stripe(30);
+		gameScreenImg->SetStripe(100);
 		mainWindow->Append(gameScreenImg);
 	}
 	else
@@ -2980,6 +3011,7 @@ MainMenu (int menu)
 	#endif
 
 	CancelAction();
+
 	HaltGui();
 #ifndef NO_MUSIC
 	bgMusic->Stop();
@@ -2989,22 +3021,24 @@ MainMenu (int menu)
 	delete bgTopImg;
 	delete bgBottomImg;
 	delete mainWindow;
+
+	#ifdef HW_RVL
 	delete pointer[0];
 	delete pointer[1];
 	delete pointer[2];
 	delete pointer[3];
+	#endif
+
 	mainWindow = NULL;
 
 	if(gameScreenImg)
 	{
 		delete gameScreenImg;
 		gameScreenImg = NULL;
+	}
+	if(gameScreenTex)
+	{
 		free(gameScreenTex);
 		gameScreenTex = NULL;
-	}
-	if(gameScreen)
-	{
-		free(gameScreen);
-		gameScreen = NULL;
 	}
 }

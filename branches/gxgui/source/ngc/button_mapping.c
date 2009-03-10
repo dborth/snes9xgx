@@ -38,7 +38,7 @@ CtrlrMap ctrlr_def[4] = {
 		{PAD_BUTTON_B, "B"},
 		{PAD_BUTTON_X, "X"},
 		{PAD_BUTTON_Y, "Y"},
-		{PAD_BUTTON_MENU, "MENU"},
+		{PAD_BUTTON_MENU, "START"},
 		{PAD_BUTTON_START, "START"},
 		{PAD_TRIGGER_L, "L"},
 		{PAD_TRIGGER_R, "R"},

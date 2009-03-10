@@ -88,7 +88,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 		gameListBg[i] = new GuiImage(bgGameSelectionEntry);
 		gameListFolder[i] = new GuiImage(gameFolder);
 
-		gameList[i] = new GuiButton(400, 30);
+		gameList[i] = new GuiButton(380, 30);
 		gameList[i]->SetParent(this);
 		gameList[i]->SetLabel(gameListText[i]);
 		gameList[i]->SetImageOver(gameListBg[i]);
@@ -288,6 +288,14 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 			}
 		}
 
+		if(focus)
+		{
+			if(i != selectedItem && gameList[i]->GetState() == STATE_SELECTED)
+				gameList[i]->ResetState();
+			else if(i == selectedItem && gameList[i]->GetState() == STATE_DEFAULT)
+				gameList[selectedItem]->SetState(STATE_SELECTED);
+		}
+
 		gameList[i]->Update(t);
 
 		if(gameList[i]->GetState() == STATE_SELECTED)
@@ -296,6 +304,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 			browser.selIndex = browser.pageIndex + i;
 		}
 	}
+
 	listChanged = false;
 
 	if(updateCB)

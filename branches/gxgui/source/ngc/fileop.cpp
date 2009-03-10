@@ -127,11 +127,11 @@ InitDeviceThread()
 void UnmountAllFAT()
 {
 #ifdef HW_RVL
-	fatUnmount("sd:/");
-	fatUnmount("usb:/");
+	fatUnmount("sd:");
+	fatUnmount("usb:");
 #else
-	fatUnmount("carda:/");
-	fatUnmount("cardb:/");
+	fatUnmount("carda:");
+	fatUnmount("cardb:");
 #endif
 }
 
@@ -175,7 +175,7 @@ bool MountFAT(int method)
 			return false; // unknown device
 	}
 
-	sprintf(rootdir, "%s:/", name);
+	sprintf(rootdir, "%s:", name);
 
 	if(unmountRequired[method])
 	{
@@ -241,13 +241,13 @@ bool ChangeInterface(int method, bool silent)
 	}
 	else if(method == METHOD_DVD)
 	{
-		sprintf(rootdir, "/");
+		rootdir[0] = 0;
 		mounted = MountDVD(silent);
 	}
 #ifdef HW_RVL
 	else if(method == METHOD_SMB)
 	{
-		sprintf(rootdir, "smb:/");
+		sprintf(rootdir, "smb:");
 		mounted = ConnectShare(silent);
 	}
 #endif

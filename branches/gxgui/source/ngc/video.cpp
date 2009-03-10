@@ -415,6 +415,9 @@ void StopGX()
 
 	GX_AbortFrame();
 	GX_Flush();
+
+	VIDEO_SetBlack(TRUE);
+	VIDEO_Flush();
 }
 
 /****************************************************************************
@@ -556,14 +559,14 @@ InitGCVideo ()
 	if (vmode->viTVMode == VI_TVMODE_NTSC_PROG)
 		progressive = true;
 
-#ifdef HW_RVL
+	#ifdef HW_RVL
 	// widescreen fix
 	if(CONF_GetAspectRatio() == CONF_ASPECT_16_9)
 	{
 		vmode->viWidth = 688;
 		vmode->viXOrigin = (VI_MAX_WIDTH_PAL - 688) / 2;
 	}
-#endif
+	#endif
 
 	VIDEO_Configure (vmode);
 
@@ -593,14 +596,10 @@ InitGCVideo ()
 		VIDEO_WaitVSync ();
 
 	copynow = GX_FALSE;
+
 	StartGX ();
-
-	//draw_init ();
-
 	InitLUTs();	// init LUTs for hq2x
-
 	InitVideoThread ();
-
 	// Finally, the video is up and ready for use :)
 }
 
@@ -748,11 +747,6 @@ update_video (int width, int height)
 
 		GX_LoadTexObj (&texobj, GX_TEXMAP0);	// load texture object so its ready to use
 
-		#ifdef _DEBUG_VIDEO
-		// log stuff
-		fprintf(debughandle, "\nxscale: %d, yscale: %d", xscale, yscale);
-		#endif
-
 		oldvwidth = vwidth;
 		oldvheight = vheight;
 		CheckVideo = 0;
@@ -864,9 +858,6 @@ void TakeScreenshot()
 	GX_CopyTex(gameScreenTex, GX_FALSE);
 	GX_PixModeSync();
 	DCFlushRange(gameScreenTex, vmode->fbWidth * vmode->efbHeight * 4);
-
-	gameScreen = (u8 *)memalign(32, vmode->fbWidth * vmode->efbHeight * 2);
-	memcpy(gameScreen, xfb[whichfb], vmode->fbWidth * vmode->efbHeight * 2);
 }
 
 /****************************************************************************

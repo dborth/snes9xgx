@@ -75,6 +75,8 @@ void GuiTrigger::SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 
 s8 GuiTrigger::WPAD_Stick(u8 right, int axis)
 {
+	#ifdef HW_RVL
+
 	float mag = 0.0;
 	float ang = 0.0;
 
@@ -117,6 +119,10 @@ s8 GuiTrigger::WPAD_Stick(u8 right, int axis)
 		val = mag * cos((PI * ang)/180.0f);
 
 	return (s8)(val * 128.0f);
+
+	#else
+	return 0;
+	#endif
 }
 
 bool GuiTrigger::Left()
@@ -124,7 +130,7 @@ bool GuiTrigger::Left()
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_UP : WPAD_BUTTON_LEFT;
 
 	if((wpad.btns_d | wpad.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
-			|| pad.btns_d & PAD_BUTTON_LEFT
+			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_LEFT
 			|| pad.stickX < -PADCAL
 			|| WPAD_Stick(0,0) < -PADCAL)
 	{
@@ -152,7 +158,7 @@ bool GuiTrigger::Right()
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_DOWN : WPAD_BUTTON_RIGHT;
 
 	if((wpad.btns_d | wpad.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
-			|| pad.btns_d & PAD_BUTTON_RIGHT
+			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_RIGHT
 			|| pad.stickX > PADCAL
 			|| WPAD_Stick(0,0) > PADCAL)
 	{
@@ -180,7 +186,7 @@ bool GuiTrigger::Up()
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_RIGHT : WPAD_BUTTON_UP;
 
 	if((wpad.btns_d | wpad.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
-			|| pad.btns_d & PAD_BUTTON_UP
+			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_UP
 			|| pad.stickY > PADCAL
 			|| WPAD_Stick(0,1) > PADCAL)
 	{

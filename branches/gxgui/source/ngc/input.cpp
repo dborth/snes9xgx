@@ -33,7 +33,14 @@
 #include "input.h"
 
 int rumbleRequest[4] = {0,0,0,0};
+
+#ifdef HW_RVL
 static int rumbleCount[4] = {0,0,0,0};
+#endif
+
+// hold superscope/mouse/justifier cursor positions
+static int cursor_x[5] = {0,0,0,0,0};
+static int cursor_y[5] = {0,0,0,0,0};
 
 /****************************************************************************
  * Controller Functions
@@ -155,6 +162,8 @@ void ResetControls()
 	btnmap[CTRL_JUST][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_PLUS;
 }
 
+#ifdef HW_RVL
+
 /****************************************************************************
  * ShutoffRumble
  ***************************************************************************/
@@ -245,9 +254,7 @@ s8 WPAD_Stick(u8 chan, u8 right, int axis)
 	return (s8)(val * 128.0f);
 }
 
-// hold superscope/mouse/justifier cursor positions
-static int cursor_x[5] = {0,0,0,0,0};
-static int cursor_y[5] = {0,0,0,0,0};
+#endif
 
 /****************************************************************************
  * UpdateCursorPosition

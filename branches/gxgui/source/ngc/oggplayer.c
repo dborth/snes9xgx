@@ -352,9 +352,9 @@ void SetTimeOgg(s32 time_pos)
 }
 
 #else // Ogg stubs
-int PlayOgg(int fd, int time_pos, int mode) { }
+int PlayOgg(int fd, int time_pos, int mode) { return 0; }
 void StopOgg() { }
 void PauseOgg(int pause) { }
 void SetVolumeOgg(int volume) { }
-int mem_open(char * ogg, int size) { }
+int mem_open(char * ogg, int size) { return 0; }
 #endif

@@ -76,7 +76,7 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 			dvd[7] = 3;
 
 			// Enable reading with DMA
-			while (dvd[7] & 1);
+			while (dvd[7] & 1) usleep(50);
 
 			// Ensure it has completed
 			if (dvd[0] & 0x4)
@@ -334,7 +334,7 @@ bool MountDVD(bool silent)
 		ShowAction("Loading DVD...");
 		#ifdef HW_DOL
 		DVD_Mount(); // mount the DVD unit again
-		#elif HW_RVL
+		#else
 		u32 val;
 		DI_GetCoverRegister(&val);
 		if(val & 0x1)	// True if no disc inside, use (val & 0x2) for true if disc inside.
@@ -344,9 +344,8 @@ bool MountDVD(bool silent)
 			CancelAction();
 			return false;
 		}
-
 		DI_Mount();
-		while(DI_GetStatus() & DVD_INIT);
+		while(DI_GetStatus() & DVD_INIT) usleep(20000);
 		#endif
 
 		if (getpvd())
@@ -529,8 +528,6 @@ ParseDVDdirectory ()
 		pdoffset = rdoffset + len;
 	}
 
-	CancelAction();
-
 	// Sort the file list
 	qsort(browserList, filecount, sizeof(BROWSERENTRY), FileSortCallback);
 
@@ -610,8 +607,8 @@ static bool SwitchDVDFolderR(char * dir, int maxDepth)
 bool SwitchDVDFolder(char origdir[])
 {
 	// make a copy of origdir so we don't mess with original
-	char dir[200];
-	strcpy(dir, origdir);
+	char dir[1024];
+	strncpy(dir, origdir, 1024);
 
 	char * dirptr = dir;
 
@@ -625,6 +622,7 @@ bool SwitchDVDFolder(char origdir[])
 	// start searching at root of DVD
 	dvddir = dvdrootdir;
 	dvddirlength = dvdrootlength;
+	browser.dir[0] = 0;
 	ParseDVDdirectory();
 
 	return SwitchDVDFolderR(dirptr, 0);
@@ -744,7 +742,7 @@ void uselessinquiry ()
 	dvd[6] = 0x20;
 	dvd[7] = 1;
 
-	while (dvd[7] & 1);
+	while (dvd[7] & 1) usleep(50);
 }
 
 /****************************************************************************
@@ -761,7 +759,7 @@ void dvd_motor_off ()
 	dvd[5] = 0;
 	dvd[6] = 0;
 	dvd[7] = 1; // Do immediate
-	while (dvd[7] & 1);
+	while (dvd[7] & 1) usleep(50);
 
 	/*** PSO Stops blackscreen at reload ***/
 	dvd[0] = 0x14;
@@ -787,8 +785,8 @@ int dvd_driveid()
     dvd[6] = 0x20;
     dvd[7] = 3;
 
-    while( dvd[7] & 1 )
-        ;
+    while( dvd[7] & 1 ) usleep(50);
+
     DCFlushRange((void *)0x80000000, 32);
 
     return (int)inquiry[2];

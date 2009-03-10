@@ -78,9 +78,10 @@ extern unsigned int timediffallowed;
 
 void ExitCleanup()
 {
+	StopGX();
+
 	LWP_SuspendThread (devicethread);
 	UnmountAllFAT();
-	StopGX();
 
 #ifdef HW_RVL
 	ShutoffRumble();
@@ -215,8 +216,6 @@ emulate ()
 		ConfigRequested = 1;
 		SwitchAudioMode(1);
 
-		FreeGfxMem();
-
 		if(SNESROMSize == 0)
 			MainMenu(MENU_GAMESELECTION);
 		else
@@ -258,6 +257,7 @@ emulate ()
 			}
 			if (ConfigRequested)
 			{
+				FreeGfxMem();
 				TakeScreenshot();
 				ResetVideo_Menu ();
 				ConfigRequested = 0;

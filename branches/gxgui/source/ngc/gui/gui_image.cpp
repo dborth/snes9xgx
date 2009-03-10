@@ -20,6 +20,8 @@ GuiImage::GuiImage(GuiImageData * img)
 	height = img->GetHeight();
 	imageangle = 0;
 	tile = 0;
+	stripe = 0;
+	imgType = IMAGE_DATA;
 }
 
 GuiImage::GuiImage(u8 * img, int w, int h)
@@ -29,6 +31,8 @@ GuiImage::GuiImage(u8 * img, int w, int h)
 	height = h;
 	imageangle = 0;
 	tile = 0;
+	stripe = 0;
+	imgType = IMAGE_TEXTURE;
 }
 
 GuiImage::GuiImage(int w, int h, GXColor c)
@@ -38,6 +42,11 @@ GuiImage::GuiImage(int w, int h, GXColor c)
 	height = h;
 	imageangle = 0;
 	tile = 0;
+	stripe = 0;
+	imgType = IMAGE_COLOR;
+
+	if(!image)
+		return;
 
 	int x, y;
 
@@ -56,6 +65,8 @@ GuiImage::GuiImage(int w, int h, GXColor c)
  */
 GuiImage::~GuiImage()
 {
+	if(imgType == IMAGE_COLOR && image)
+		free(image);
 }
 
 u8 * GuiImage::GetImage()
@@ -68,6 +79,7 @@ void GuiImage::SetImage(GuiImageData * img)
 	image = img->GetImage();
 	width = img->GetWidth();
 	height = img->GetHeight();
+	imgType = IMAGE_DATA;
 }
 
 void GuiImage::SetImage(u8 * img, int w, int h)
@@ -75,6 +87,7 @@ void GuiImage::SetImage(u8 * img, int w, int h)
 	image = img;
 	width = w;
 	height = h;
+	imgType = IMAGE_TEXTURE;
 }
 
 void GuiImage::SetAngle(float a)
@@ -89,6 +102,9 @@ void GuiImage::SetTile(int t)
 
 GXColor GuiImage::GetPixel(int x, int y)
 {
+	if(!image || this->GetWidth() <= 0 || x < 0 || y < 0)
+		return (GXColor){0, 0, 0, 0};
+
 	u32 offset = (((y >> 2)<<4)*this->GetWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
 	GXColor color;
 	color.a = *(image+offset);
@@ -100,6 +116,9 @@ GXColor GuiImage::GetPixel(int x, int y)
 
 void GuiImage::SetPixel(int x, int y, GXColor color)
 {
+	if(!image || this->GetWidth() <= 0 || x < 0 || y < 0)
+		return;
+
 	u32 offset = (((y >> 2)<<4)*this->GetWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
 	*(image+offset) = color.a;
 	*(image+offset+1) = color.r;
@@ -107,7 +126,12 @@ void GuiImage::SetPixel(int x, int y, GXColor color)
 	*(image+offset+33) = color.b;
 }
 
-void GuiImage::Stripe(int shift)
+void GuiImage::SetStripe(int s)
+{
+	stripe = s;
+}
+
+void GuiImage::ColorStripe(int shift)
 {
 	int x, y;
 	GXColor color;
@@ -185,6 +209,10 @@ void GuiImage::Draw()
 
 		Menu_DrawImg(currLeft, this->GetTop(), width, height, image, imageangle, currScale, currScale, this->GetAlpha());
 	}
+
+	if(stripe > 0)
+		for(int y=0; y < this->GetHeight(); y+=6)
+			Menu_DrawRectangle(currLeft,this->GetTop()+y,this->GetWidth(),3,(GXColor){0, 0, 0, stripe},1);
 
 	this->UpdateEffects();
 }
