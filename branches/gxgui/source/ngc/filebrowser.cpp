@@ -5,7 +5,7 @@
  * svpe June 2007
  * crunchy2 May-July 2007
  * Michniewski 2008
- * Tantric August 2008
+ * Tantric 2008-2009
  *
  * filesel.cpp
  *
@@ -63,7 +63,7 @@ int autoLoadMethod()
 {
 	ShowAction ("Attempting to determine load method...");
 
-	int method = 0;
+	int method = METHOD_AUTO;
 
 	if(ChangeInterface(METHOD_SD, SILENT))
 		method = METHOD_SD;
@@ -92,15 +92,15 @@ int autoSaveMethod(bool silent)
 	if(!silent)
 		ShowAction ("Attempting to determine save method...");
 
-	int method = 0;
+	int method = METHOD_AUTO;
 
 	if(ChangeInterface(METHOD_SD, SILENT))
 		method = METHOD_SD;
 	else if(ChangeInterface(METHOD_USB, SILENT))
 		method = METHOD_USB;
-	else if(TestCard(CARD_SLOTA, SILENT))
+	else if(TestMC(CARD_SLOTA, SILENT))
 		method = METHOD_MC_SLOTA;
-	else if(TestCard(CARD_SLOTB, SILENT))
+	else if(TestMC(CARD_SLOTB, SILENT))
 		method = METHOD_MC_SLOTB;
 	else if(ChangeInterface(METHOD_SMB, SILENT))
 		method = METHOD_SMB;
@@ -494,12 +494,14 @@ int BrowserChangeFolder(int method)
 
 /****************************************************************************
  * OpenROM
- * Opens device specified by method, displays a list of ROMS
+ * Displays a list of ROMS on load device
  ***************************************************************************/
 
 int
-OpenGameList (int method)
+OpenGameList ()
 {
+	int method = GCSettings.LoadMethod;
+
 	if(method == METHOD_AUTO)
 		method = autoLoadMethod();
 
@@ -518,6 +520,10 @@ OpenGameList (int method)
 				ParseDirectory(); // Parse root directory
 				break;
 		}
+	}
+	else
+	{
+		ResetBrowser();
 	}
 	return browser.numEntries;
 }

@@ -360,6 +360,9 @@ SavePrefs (bool silent)
 	// is the method preferences will be loaded from by default
 	int method = autoSaveMethod(silent);
 
+	if(method == METHOD_AUTO)
+		return false;
+
 	if(!MakeFilePath(filepath, FILE_PREF, method))
 		return false;
 
@@ -425,9 +428,9 @@ bool LoadPrefs()
 		prefFound = LoadPrefsFromMethod(METHOD_SD);
 	if(!prefFound && ChangeInterface(METHOD_USB, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_USB);
-	if(!prefFound && TestCard(CARD_SLOTA, SILENT))
+	if(!prefFound && TestMC(CARD_SLOTA, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTA);
-	if(!prefFound && TestCard(CARD_SLOTB, SILENT))
+	if(!prefFound && TestMC(CARD_SLOTB, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTB);
 	if(!prefFound && ChangeInterface(METHOD_SMB, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_SMB);

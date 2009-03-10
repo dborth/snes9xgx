@@ -4,7 +4,7 @@
  * softdev July 2006
  * crunchy2 May 2007
  * Michniewski 2008
- * Tantric August 2008
+ * Tantric 2008-2009
  *
  * filesel.h
  *
@@ -46,7 +46,7 @@ extern unsigned long SNESROMSize;
 
 bool MakeFilePath(char filepath[], int type, int method);
 int UpdateDirName(int method);
-int OpenGameList(int method);
+int OpenGameList();
 int autoLoadMethod();
 int autoSaveMethod(bool silent);
 int FileSortCallback(const void *f1, const void *f2);

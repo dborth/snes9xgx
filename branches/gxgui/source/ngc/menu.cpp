@@ -682,14 +682,7 @@ static int MenuGameSelection()
 	#endif
 
 	// populate initial directory listing
-	int method = GCSettings.LoadMethod;
-
-	if(method == METHOD_AUTO)
-		method = autoLoadMethod();
-
-	int num = OpenGameList(method);
-
-	if(num <= 0)
+	if(OpenGameList() <= 0)
 	{
 		int choice = WindowPrompt(
 		"Error",
@@ -787,9 +780,9 @@ static int MenuGameSelection()
 					bool res;
 
 					if(IsSz())
-						res = BrowserLoadSz(method);
+						res = BrowserLoadSz(GCSettings.LoadMethod);
 					else
-						res = BrowserChangeFolder(method);
+						res = BrowserChangeFolder(GCSettings.LoadMethod);
 
 					if(res)
 					{
@@ -808,7 +801,7 @@ static int MenuGameSelection()
 					#ifdef HW_RVL
 					ShutoffRumble();
 					#endif
-					if(BrowserLoadFile(method))
+					if(BrowserLoadFile(GCSettings.LoadMethod))
 						menu = MENU_EXIT;
 				}
 			}
@@ -1152,46 +1145,67 @@ static int MenuGameSaves(int action)
 	int j = 0;
 	SaveList saves;
 	char filepath[1024];
+	int method = GCSettings.SaveMethod;
 
-	if(!ChangeInterface(GCSettings.SaveMethod, NOTSILENT))
+	if(method == METHOD_AUTO)
+		autoSaveMethod(NOTSILENT);
+
+	if(!ChangeInterface(method, NOTSILENT))
 		return MENU_GAME;
 
 	memset(&saves, 0, sizeof(saves));
 
-	strncpy(browser.dir, GCSettings.SaveFolder, 200);
-
-	if(ParseDirectory() >= 0)
+	if(method == METHOD_MC_SLOTA)
 	{
-		for(i=0; i < browser.numEntries; i++)
+		ParseMCDirectory(CARD_SLOTA);
+	}
+	else if(method == METHOD_MC_SLOTB)
+	{
+		ParseMCDirectory(CARD_SLOTB);
+	}
+	else
+	{
+		strncpy(browser.dir, GCSettings.SaveFolder, 200);
+		ParseDirectory();
+	}
+
+	if(browser.numEntries <= 0)
+		return MENU_GAME;
+
+	for(i=0; i < browser.numEntries; i++)
+	{
+		len = strlen(Memory.ROMFilename);
+		len2 = strlen(browserList[i].filename);
+
+		// find matching files
+		if(len2 > 5 && strncmp(browserList[i].filename, Memory.ROMFilename, len) == 0)
 		{
-			len = strlen(Memory.ROMFilename);
-			len2 = strlen(browserList[i].filename);
+			if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
+				saves.type[j] = FILE_SRAM;
+			else if(strncmp(&browserList[i].filename[len2-4], ".frz", 4) == 0)
+				saves.type[j] = FILE_SNAPSHOT;
+			else
+				saves.type[j] = -1;
 
-			// find matching files
-			if(len2 > 5 && strncmp(browserList[i].filename, Memory.ROMFilename, len) == 0)
+			if(saves.type[j] != -1)
 			{
-				if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
-					saves.type[j] = FILE_SRAM;
-				else if(strncmp(&browserList[i].filename[len2-4], ".frz", 4) == 0)
-					saves.type[j] = FILE_SNAPSHOT;
-				else
-					saves.type[j] = -1;
+				int n = -1;
+				char tmp[300];
+				strncpy(tmp, browserList[i].filename, 255);
+				tmp[len2-4] = 0;
 
-				if(saves.type[j] != -1)
+				if(len2 - len == 7)
+					n = atoi(&tmp[len2-5]);
+				else if(len2 - len == 6)
+					n = atoi(&tmp[len2-6]);
+
+				if(n > 0 && n < 100)
+					saves.files[saves.type[j]][n] = 1;
+
+				strncpy(saves.filename[j], browserList[i].filename, 255);
+
+				if(method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
 				{
-					int n = -1;
-					char tmp[300];
-					strncpy(tmp, browserList[i].filename, 255);
-					tmp[len2-4] = 0;
-
-					if(len2 - len == 7)
-						n = atoi(&tmp[len2-5]);
-					else if(len2 - len == 6)
-						n = atoi(&tmp[len2-6]);
-
-					if(n > 0 && n < 100)
-						saves.files[saves.type[j]][n] = 1;
-
 					if(saves.type[j] == FILE_SNAPSHOT)
 					{
 						char scrfile[1024];
@@ -1202,18 +1216,12 @@ static int MenuGameSaves(int action)
 							saves.previewImg[j] = new GuiImageData(savebuffer);
 						FreeSaveBuffer();
 					}
-
-					strncpy(saves.filename[j], browserList[i].filename, 255);
 					strftime(saves.date[j], 20, "%a %b %d", &browserList[j].mtime);
 					strftime(saves.time[j], 10, "%I:%M %p", &browserList[j].mtime);
-					j++;
 				}
+				j++;
 			}
 		}
-	}
-	else
-	{
-		return MENU_GAME;
 	}
 
 	saves.length = j;
@@ -1613,7 +1621,10 @@ static int MenuSettings()
 				DefaultSettings ();
 		}
 	}
-	SavePrefs(SILENT);
+
+	if(menu == MENU_GAMESELECTION)
+		SavePrefs(NOTSILENT);
+
 	guiReady = false;
 	mainWindow->Remove(&w);
 	return menu;

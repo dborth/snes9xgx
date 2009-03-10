@@ -3,7 +3,7 @@
  *
  * softdev July 2006
  * crunchy2 May-June 2007
- * Tantric September 2008
+ * Tantric 2008-2009
  *
  * memcardop.cpp
  *
@@ -13,8 +13,9 @@
 #ifndef _NGCMCSAVE_
 #define _NGCMCSAVE_
 
+int ParseMCDirectory (int slot);
 int LoadMCFile (char *buf, int slot, char *filename, bool silent);
 int SaveMCFile (char *buf, int slot, char *filename, int datasize, bool silent);
-bool TestCard(int slot, bool silent);
+bool TestMC(int slot, bool silent);
 
 #endif
