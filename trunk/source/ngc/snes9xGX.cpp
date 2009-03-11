@@ -336,10 +336,6 @@ main(int argc, char *argv[])
 
 	InitDeviceThread();
 
-	// Initialise video
-	InitGCVideo();
-	ResetVideo_Menu (); // change to menu video mode
-
 	// Controllers
 	PAD_Init ();
 
@@ -354,6 +350,10 @@ main(int argc, char *argv[])
 	SYS_SetPowerCallback(ShutdownCB);
 	SYS_SetResetCallback(ResetCB);
 	#endif
+
+	// Initialise video
+	InitGCVideo();
+	ResetVideo_Menu (); // change to menu video mode
 
 	// GameCube only - Injected ROM
 	// Before going any further, let's copy any injected ROM image
