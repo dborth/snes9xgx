@@ -24,13 +24,13 @@
 #include "snes9xGX.h"
 #include "memmap.h"
 
-#include "menudraw.h"
+#include "menu.h"
 
 #define NUMBITS (16)
 
 static int RGBtoYUV[1<<NUMBITS];
 static uint16 RGBtoBright[1<<NUMBITS];
- 
+
 TFilterMethod FilterMethod = RenderPlain;
 //TFilterMethod FilterMethodHiRes = RenderPlain;
 
@@ -96,11 +96,11 @@ int GetFilterScale(RenderFilter filterID)
 void
 SelectFilterMethod ()
 {
-	//WaitPrompt ((char*)"Select Filter Method.");	// debug
+	//InfoPrompt((char*)"Select Filter Method.");	// debug
 
 	FilterMethod = FilterToMethod((RenderFilter)GCSettings.FilterMethod);
 	//FilterMethodHiRes = FilterToMethod((RenderFilter)GCSettings.FilterMethodHiRes);
-	
+
 	// check whether or not we need filter memory (alloc or free it)
 }
 
@@ -114,7 +114,7 @@ RenderPlain (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int
 {
 	if (dstPtr == NULL)
 	{
-		WaitPrompt((char*)"dstPtr is NULL. exiting!");
+		ErrorPrompt((char*)"dstPtr is NULL. exiting!");
 		exit(1);
 	}
 	//memcpy (dstPtr, srcPtr, width*height*srcPitch);
@@ -427,7 +427,7 @@ void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 		//RenderSimple2X (Src, Dst, rect);
         return;
     }
-	
+
 	int	w1, w2, w3, w4, w5, w6, w7, w8, w9;
 
 	uint32	src1line = srcPitch >> 1;

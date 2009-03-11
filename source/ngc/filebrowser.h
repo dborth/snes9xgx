@@ -4,7 +4,7 @@
  * softdev July 2006
  * crunchy2 May 2007
  * Michniewski 2008
- * Tantric August 2008
+ * Tantric 2008-2009
  *
  * filesel.h
  *
@@ -18,7 +18,7 @@
 #include <gccore.h>
 
 #define MAXJOLIET 255
-#define MAXDISPLAY 50
+#define MAXDISPLAY 35
 
 typedef struct
 {
@@ -32,6 +32,7 @@ typedef struct
 {
 	u64 offset; // DVD offset
 	unsigned int length; // file length
+	tm mtime; // file modified time
 	char isdir; // 0 - file, 1 - directory
 	char filename[MAXJOLIET + 1]; // full filename
 	char displayname[MAXDISPLAY + 1]; // name for browser display
@@ -44,11 +45,16 @@ extern char rootdir[10];
 extern unsigned long SNESROMSize;
 
 bool MakeFilePath(char filepath[], int type, int method);
-int OpenROM (int method);
+int UpdateDirName(int method);
+int OpenGameList();
 int autoLoadMethod();
 int autoSaveMethod(bool silent);
 int FileSortCallback(const void *f1, const void *f2);
 void StripExt(char* returnstring, char * inputstring);
+bool IsSz();
 void ResetBrowser();
+int BrowserLoadSz(int method);
+int BrowserChangeFolder(int method);
+int BrowserLoadFile(int method);
 
 #endif

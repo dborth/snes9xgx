@@ -13,9 +13,10 @@
 #include "memmap.h"
 
 #include "snes9xGX.h"
-#include "menudraw.h"
+#include "menu.h"
 #include "memfile.h"
 #include "fileop.h"
+#include "filebrowser.h"
 
 static int readInt2(MFILE *f) {
 	int res = 0;
@@ -428,7 +429,6 @@ void LoadPatch(int method)
 
 	if(patchsize > 0)
 	{
-		ShowAction("Loading patch...");
 		// create memory file
 		MFILE * mf = memfopen((char *)savebuffer, patchsize);
 

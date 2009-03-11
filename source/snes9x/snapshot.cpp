@@ -204,7 +204,6 @@
 #ifdef NGC
 #include "freeze.h"
 #include "gccore.h"
-#include "menudraw.h"
 #endif
 
 //you would think everyone would have these

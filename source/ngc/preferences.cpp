@@ -16,11 +16,12 @@
 
 #include "snes9xGX.h"
 #include "images/saveicon.h"
-#include "menudraw.h"
+#include "menu.h"
 #include "memcardop.h"
 #include "fileop.h"
-#include "filesel.h"
+#include "filebrowser.h"
 #include "input.h"
+#include "button_mapping.h"
 
 /****************************************************************************
  * Prepare Preferences Data
@@ -151,9 +152,8 @@ preparePrefsData (int method)
 	createXMLSetting("smbuser", "Share Username", GCSettings.smbuser);
 	createXMLSetting("smbpwd", "Share Password", GCSettings.smbpwd);
 
-	createXMLSection("Emulation", "Emulation Settings");
+	createXMLSection("Video", "Video Settings");
 
-	createXMLSetting("Zoom", "Zoom On/Off", toStr(GCSettings.Zoom));
 	createXMLSetting("ZoomLevel", "Zoom Level", FtoStr(GCSettings.ZoomLevel));
 	createXMLSetting("render", "Video Filtering", toStr(GCSettings.render));
 	createXMLSetting("widescreen", "Aspect Ratio Correction", toStr(GCSettings.widescreen));
@@ -161,17 +161,27 @@ preparePrefsData (int method)
 	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
 	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
 
+	createXMLSection("Menu", "Menu Settings");
+
+	createXMLSetting("WiimoteOrientation", "Wiimote Orientation", toStr(GCSettings.WiimoteOrientation));
+	createXMLSetting("ExitAction", "Exit Action", toStr(GCSettings.ExitAction));
+	createXMLSetting("MusicVolume", "Music Volume", toStr(GCSettings.MusicVolume));
+	createXMLSetting("SFXVolume", "Sound Effects Volume", toStr(GCSettings.SFXVolume));
+
 	createXMLSection("Controller", "Controller Settings");
 
-	createXMLSetting("MultiTap", "MultiTap", toStr(Settings.MultiPlayer5Master));
-	createXMLSetting("Superscope", "Superscope", toStr(GCSettings.Superscope));
-	createXMLSetting("Mice", "Mice", toStr(GCSettings.Mouse));
-	createXMLSetting("Justifiers", "Justifiers", toStr(GCSettings.Justifier));
+	createXMLSetting("Controller", "Controller", toStr(GCSettings.Controller));
 
-	createXMLController(gcpadmap, "gcpadmap", "GameCube Pad");
-	createXMLController(wmpadmap, "wmpadmap", "Wiimote");
-	createXMLController(ccpadmap, "ccpadmap", "Classic Controller");
-	createXMLController(ncpadmap, "ncpadmap", "Nunchuk");
+	createXMLController(btnmap[CTRL_PAD][CTRLR_GCPAD], "btnmap_pad_gcpad", "SNES Pad - GameCube Controller");
+	createXMLController(btnmap[CTRL_PAD][CTRLR_WIIMOTE], "btnmap_pad_wiimote", "SNES Pad - Wiimote");
+	createXMLController(btnmap[CTRL_PAD][CTRLR_CLASSIC], "btnmap_pad_classic", "SNES Pad - Classic Controller");
+	createXMLController(btnmap[CTRL_PAD][CTRLR_NUNCHUK], "btnmap_pad_nunchuk", "SNES Pad - Nunchuk + Wiimote");
+	createXMLController(btnmap[CTRL_SCOPE][CTRLR_GCPAD], "btnmap_scope_gcpad", "Superscope - GameCube Controller");
+	createXMLController(btnmap[CTRL_SCOPE][CTRLR_WIIMOTE], "btnmap_scope_wiimote", "Superscope - Wiimote");
+	createXMLController(btnmap[CTRL_MOUSE][CTRLR_GCPAD], "btnmap_mouse_gcpad", "MMouse - GameCube Controller");
+	createXMLController(btnmap[CTRL_MOUSE][CTRLR_WIIMOTE], "btnmap_mouse_wiimote", "Mouse - Wiimote");
+	createXMLController(btnmap[CTRL_JUST][CTRLR_GCPAD], "btnmap_just_gcpad", "Justifier - GameCube Controller");
+	createXMLController(btnmap[CTRL_JUST][CTRLR_WIIMOTE], "btnmap_just_wiimote", "Justifier - Wiimote");
 
 	int datasize = mxmlSaveString(xml, (char *)savebuffer+offset, (SAVEBUFFERSIZE-offset), XMLSaveCallback);
 
@@ -215,16 +225,6 @@ static void loadXMLSetting(float * var, const char * name)
 		const char * tmp = mxmlElementGetAttr(item, "value");
 		if(tmp)
 			*var = atof(tmp);
-	}
-}
-static void loadXMLSetting(bool8 * var, const char * name)
-{
-	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
-	if(item)
-	{
-		const char * tmp = mxmlElementGetAttr(item, "value");
-		if(tmp)
-			*var = atoi(tmp);
 	}
 }
 
@@ -310,9 +310,8 @@ decodePrefsData (int method)
 			loadXMLSetting(GCSettings.smbuser, "smbuser", sizeof(GCSettings.smbuser));
 			loadXMLSetting(GCSettings.smbpwd, "smbpwd", sizeof(GCSettings.smbpwd));
 
-			// Emulation Settings
+			// Video Settings
 
-			loadXMLSetting(&GCSettings.Zoom, "Zoom");
 			loadXMLSetting(&GCSettings.ZoomLevel, "ZoomLevel");
 			loadXMLSetting(&GCSettings.render, "render");
 			loadXMLSetting(&GCSettings.widescreen, "widescreen");
@@ -320,17 +319,27 @@ decodePrefsData (int method)
 			loadXMLSetting(&GCSettings.xshift, "xshift");
 			loadXMLSetting(&GCSettings.yshift, "yshift");
 
+			// Menu Settings
+
+			loadXMLSetting(&GCSettings.WiimoteOrientation, "WiimoteOrientation");
+			loadXMLSetting(&GCSettings.ExitAction, "ExitAction");
+			loadXMLSetting(&GCSettings.MusicVolume, "MusicVolume");
+			loadXMLSetting(&GCSettings.SFXVolume, "SFXVolume");
+
 			// Controller Settings
 
-			loadXMLSetting(&Settings.MultiPlayer5Master, "MultiTap");
-			loadXMLSetting(&GCSettings.Superscope, "Superscope");
-			loadXMLSetting(&GCSettings.Mouse, "Mice");
-			loadXMLSetting(&GCSettings.Justifier, "Justifiers");
+			loadXMLSetting(&GCSettings.Controller, "Controller");
 
-			loadXMLController(gcpadmap, "gcpadmap");
-			loadXMLController(wmpadmap, "wmpadmap");
-			loadXMLController(ccpadmap, "ccpadmap");
-			loadXMLController(ncpadmap, "ncpadmap");
+			loadXMLController(btnmap[CTRL_PAD][CTRLR_GCPAD], "btnmap_pad_gcpad");
+			loadXMLController(btnmap[CTRL_PAD][CTRLR_WIIMOTE], "btnmap_pad_wiimote");
+			loadXMLController(btnmap[CTRL_PAD][CTRLR_CLASSIC], "btnmap_pad_classic");
+			loadXMLController(btnmap[CTRL_PAD][CTRLR_NUNCHUK], "btnmap_pad_nunchuk");
+			loadXMLController(btnmap[CTRL_SCOPE][CTRLR_GCPAD], "btnmap_scope_gcpad");
+			loadXMLController(btnmap[CTRL_SCOPE][CTRLR_WIIMOTE], "btnmap_scope_wiimote");
+			loadXMLController(btnmap[CTRL_MOUSE][CTRLR_GCPAD], "btnmap_mouse_gcpad");
+			loadXMLController(btnmap[CTRL_MOUSE][CTRLR_WIIMOTE], "btnmap_mouse_wiimote");
+			loadXMLController(btnmap[CTRL_JUST][CTRLR_GCPAD], "btnmap_just_gcpad");
+			loadXMLController(btnmap[CTRL_JUST][CTRLR_WIIMOTE], "btnmap_just_wiimote");
 		}
 		mxmlDelete(xml);
 	}
@@ -351,6 +360,9 @@ SavePrefs (bool silent)
 	// is the method preferences will be loaded from by default
 	int method = autoSaveMethod(silent);
 
+	if(method == METHOD_AUTO)
+		return false;
+
 	if(!MakeFilePath(filepath, FILE_PREF, method))
 		return false;
 
@@ -364,10 +376,12 @@ SavePrefs (bool silent)
 
 	FreeSaveBuffer ();
 
+	CancelAction();
+
 	if (offset > 0)
 	{
 		if (!silent)
-			WaitPrompt ("Preferences saved");
+			InfoPrompt("Preferences saved");
 		return true;
 	}
 	return false;
@@ -402,20 +416,26 @@ LoadPrefsFromMethod (int method)
  * Load Preferences
  * Checks sources consecutively until we find a preference file
  ***************************************************************************/
+static bool prefLoaded = false;
+
 bool LoadPrefs()
 {
-	ShowAction ("Loading preferences...");
+	if(prefLoaded) // already attempted loading
+		return true;
+
 	bool prefFound = false;
 	if(ChangeInterface(METHOD_SD, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_SD);
 	if(!prefFound && ChangeInterface(METHOD_USB, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_USB);
-	if(!prefFound && TestCard(CARD_SLOTA, SILENT))
+	if(!prefFound && TestMC(CARD_SLOTA, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTA);
-	if(!prefFound && TestCard(CARD_SLOTB, SILENT))
+	if(!prefFound && TestMC(CARD_SLOTB, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTB);
 	if(!prefFound && ChangeInterface(METHOD_SMB, SILENT))
 		prefFound = LoadPrefsFromMethod(METHOD_SMB);
+
+	prefLoaded = true; // attempted to load preferences
 
 	return prefFound;
 }

@@ -3,7 +3,7 @@
  *
  * crunchy2 April 2007-July 2007
  * Michniewski 2008
- * Tantric September 2008
+ * Tantric 2008-2009
  *
  * sram.cpp
  *
@@ -21,8 +21,9 @@
 
 #include "snes9xGX.h"
 #include "images/saveicon.h"
-#include "menudraw.h"
+#include "menu.h"
 #include "fileop.h"
+#include "filebrowser.h"
 #include "input.h"
 
 /****************************************************************************
@@ -129,7 +130,7 @@ decodesavedata (int method, int readsize)
 	}
 	else
 	{
-		WaitPrompt("Incompatible SRAM save!");
+		ErrorPrompt("Incompatible SRAM save!");
 	}
 }
 
@@ -137,18 +138,15 @@ decodesavedata (int method, int readsize)
  * Load SRAM
  ***************************************************************************/
 bool
-LoadSRAM (int method, bool silent)
+LoadSRAM (char * filepath, int method, bool silent)
 {
-	char filepath[1024];
 	int offset = 0;
 
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent); // we use 'Save' because SRAM needs R/W
 
-	if(!MakeFilePath(filepath, FILE_SRAM, method))
+	if(method == METHOD_AUTO)
 		return false;
-
-	ShowAction ("Loading...");
 
 	AllocSaveBuffer();
 
@@ -167,30 +165,39 @@ LoadSRAM (int method, bool silent)
 
 		// if we reached here, nothing was done!
 		if(!silent)
-			WaitPrompt ("SRAM file not found");
+			ErrorPrompt("SRAM file not found");
 
 		return false;
 	}
+}
+
+bool
+LoadSRAMAuto (int method, bool silent)
+{
+	char filepath[1024];
+
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+		sprintf(filepath, "%s Auto.srm", Memory.ROMFilename);
+	else
+		sprintf(filepath, "%s/%s Auto.srm", GCSettings.SaveFolder, Memory.ROMFilename);
+	return LoadSRAM(filepath, method, silent);
 }
 
 /****************************************************************************
  * Save SRAM
  ***************************************************************************/
 bool
-SaveSRAM (int method, bool silent)
+SaveSRAM (char * filepath, int method, bool silent)
 {
 	bool retval = false;
-	char filepath[1024];
 	int datasize;
 	int offset = 0;
 
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent);
 
-	if(!MakeFilePath(filepath, FILE_SRAM, method))
+	if(method == METHOD_AUTO)
 		return false;
-
-	ShowAction ("Saving...");
 
 	AllocSaveBuffer ();
 
@@ -202,17 +209,29 @@ SaveSRAM (int method, bool silent)
 
 		if (offset > 0)
 		{
-			if ( !silent )
-				WaitPrompt("Save successful");
+			if (!silent)
+				InfoPrompt("Save successful");
 			retval = true;
 		}
 	}
 	else
 	{
 		if(!silent)
-			WaitPrompt("No SRAM data to save!");
+			ErrorPrompt("No SRAM data to save!");
 	}
 
 	FreeSaveBuffer ();
 	return retval;
+}
+
+bool
+SaveSRAMAuto (int method, bool silent)
+{
+	char filepath[1024];
+
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+		sprintf(filepath, "%s Auto.srm", Memory.ROMFilename);
+	else
+		sprintf(filepath, "%s/%s Auto.srm", GCSettings.SaveFolder, Memory.ROMFilename);
+	return SaveSRAM(filepath, method, silent);
 }

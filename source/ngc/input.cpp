@@ -32,10 +32,20 @@
 #include "video.h"
 #include "input.h"
 
+int rumbleRequest[4] = {0,0,0,0};
+
+#ifdef HW_RVL
+static int rumbleCount[4] = {0,0,0,0};
+#endif
+
+// hold superscope/mouse/justifier cursor positions
+static int cursor_x[5] = {0,0,0,0,0};
+static int cursor_y[5] = {0,0,0,0,0};
+
 /****************************************************************************
  * Controller Functions
  *
- * The following map the NGC Pads to the *NEW* controller system.
+ * The following map the Wii controls to the Snes9x controller system
  ***************************************************************************/
 #define ASSIGN_BUTTON_TRUE( keycode, snescmd ) \
 	  S9xMapButton( keycode, cmd = S9xGetCommandT(snescmd), true)
@@ -44,119 +54,151 @@
 	  S9xMapButton( keycode, cmd = S9xGetCommandT(snescmd), false)
 
 int scopeTurbo = 0; // tracks whether superscope turbo is on or off
-unsigned int gcpadmap[12]; // Gamecube controller Padmap
-unsigned int wmpadmap[12]; // Wiimote Padmap
-unsigned int ccpadmap[12]; // Classic Controller Padmap
-unsigned int ncpadmap[12]; // Nunchuk + wiimote Padmap
-unsigned int gcscopemap[6]; // Superscope : GC controller button mapping
-unsigned int wmscopemap[6]; // Superscope : wiimote button mapping
-unsigned int gcmousemap[2]; // Mouse : GC controller button mapping
-unsigned int wmmousemap[2]; // Mouse : wiimote button mapping
-unsigned int gcjustmap[3]; // Justifier : GC controller button mapping
-unsigned int wmjustmap[3]; // Justifier : wiimote button mapping
+u32 btnmap[4][4][12]; // button mapping
 
 void ResetControls()
 {
+	memset(btnmap, 0, sizeof(btnmap));
+
 	int i;
 	/*** Gamecube controller Padmap ***/
 	i=0;
-	gcpadmap[i++] = PAD_BUTTON_A;
-	gcpadmap[i++] = PAD_BUTTON_B;
-	gcpadmap[i++] = PAD_BUTTON_X;
-	gcpadmap[i++] = PAD_BUTTON_Y;
-	gcpadmap[i++] = PAD_TRIGGER_L;
-	gcpadmap[i++] = PAD_TRIGGER_R;
-	gcpadmap[i++] = PAD_TRIGGER_Z;
-	gcpadmap[i++] = PAD_BUTTON_START;
-	gcpadmap[i++] = PAD_BUTTON_UP;
-	gcpadmap[i++] = PAD_BUTTON_DOWN;
-	gcpadmap[i++] = PAD_BUTTON_LEFT;
-	gcpadmap[i++] = PAD_BUTTON_RIGHT;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_BUTTON_A;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_BUTTON_B;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_BUTTON_X;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_BUTTON_Y;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_TRIGGER_L;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_TRIGGER_R;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_BUTTON_START;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_TRIGGER_Z;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_BUTTON_UP;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_BUTTON_DOWN;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_BUTTON_LEFT;
+	btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_BUTTON_RIGHT;
 
 	/*** Wiimote Padmap ***/
 	i=0;
-	wmpadmap[i++] = WPAD_BUTTON_B;
-	wmpadmap[i++] = WPAD_BUTTON_2;
-	wmpadmap[i++] = WPAD_BUTTON_1;
-	wmpadmap[i++] = WPAD_BUTTON_A;
-	wmpadmap[i++] = 0x0000;
-	wmpadmap[i++] = 0x0000;
-	wmpadmap[i++] = WPAD_BUTTON_MINUS;
-	wmpadmap[i++] = WPAD_BUTTON_PLUS;
-	wmpadmap[i++] = WPAD_BUTTON_RIGHT;
-	wmpadmap[i++] = WPAD_BUTTON_LEFT;
-	wmpadmap[i++] = WPAD_BUTTON_UP;
-	wmpadmap[i++] = WPAD_BUTTON_DOWN;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_2;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_1;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_A;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = 0x0000;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = 0x0000;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_PLUS;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_MINUS;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_RIGHT;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_LEFT;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_UP;
+	btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_DOWN;
 
 	/*** Classic Controller Padmap ***/
 	i=0;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_A;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_B;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_X;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_Y;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_FULL_L;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_FULL_R;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_MINUS;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_PLUS;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_UP;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_DOWN;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_LEFT;
-	ccpadmap[i++] = WPAD_CLASSIC_BUTTON_RIGHT;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_A;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_B;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_X;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_Y;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_FULL_L;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_FULL_R;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_PLUS;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_MINUS;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_UP;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_DOWN;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_LEFT;
+	btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_RIGHT;
 
 	/*** Nunchuk + wiimote Padmap ***/
 	i=0;
-	ncpadmap[i++] = WPAD_BUTTON_A;
-	ncpadmap[i++] = WPAD_BUTTON_B;
-	ncpadmap[i++] = WPAD_NUNCHUK_BUTTON_C;
-	ncpadmap[i++] = WPAD_NUNCHUK_BUTTON_Z;
-	ncpadmap[i++] = WPAD_BUTTON_2;
-	ncpadmap[i++] = WPAD_BUTTON_1;
-	ncpadmap[i++] = WPAD_BUTTON_MINUS;
-	ncpadmap[i++] = WPAD_BUTTON_PLUS;
-	ncpadmap[i++] = WPAD_BUTTON_UP;
-	ncpadmap[i++] = WPAD_BUTTON_DOWN;
-	ncpadmap[i++] = WPAD_BUTTON_LEFT;
-	ncpadmap[i++] = WPAD_BUTTON_RIGHT;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_BUTTON_A;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_BUTTON_B;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_NUNCHUK_BUTTON_C;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_NUNCHUK_BUTTON_Z;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_BUTTON_2;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_BUTTON_1;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_BUTTON_PLUS;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_BUTTON_MINUS;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_BUTTON_UP;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_BUTTON_DOWN;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_BUTTON_LEFT;
+	btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_BUTTON_RIGHT;
 
 	/*** Superscope : GC controller button mapping ***/
 	i=0;
-	gcscopemap[i++] = PAD_TRIGGER_Z;
-	gcscopemap[i++] = PAD_BUTTON_B;
-	gcscopemap[i++] = PAD_BUTTON_A;
-	gcscopemap[i++] = PAD_BUTTON_Y;
-	gcscopemap[i++] = PAD_BUTTON_X;
-	gcscopemap[i++] = PAD_BUTTON_START;
+	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_A;
+	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_B;
+	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_TRIGGER_Z;
+	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_Y;
+	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_X;
+	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_START;
 
 	/*** Superscope : wiimote button mapping ***/
 	i=0;
-	wmscopemap[i++] = WPAD_BUTTON_MINUS;
-	wmscopemap[i++] = WPAD_BUTTON_B;
-	wmscopemap[i++] = WPAD_BUTTON_A;
-	wmscopemap[i++] = WPAD_BUTTON_UP;
-	wmscopemap[i++] = WPAD_BUTTON_DOWN;
-	wmscopemap[i++] = WPAD_BUTTON_PLUS;
+	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;
+	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_A;
+	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_MINUS;
+	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_UP;
+	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_DOWN;
+	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_PLUS;
 
 	/*** Mouse : GC controller button mapping ***/
 	i=0;
-	gcmousemap[i++] = PAD_BUTTON_A;
-	gcmousemap[i++] = PAD_BUTTON_B;
+	btnmap[CTRL_MOUSE][CTRLR_GCPAD][i++] = PAD_BUTTON_A;
+	btnmap[CTRL_MOUSE][CTRLR_GCPAD][i++] = PAD_BUTTON_B;
 
 	/*** Mouse : wiimote button mapping ***/
 	i=0;
-	wmmousemap[i++] = WPAD_BUTTON_A;
-	wmmousemap[i++] = WPAD_BUTTON_B;
+	btnmap[CTRL_MOUSE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_A;
+	btnmap[CTRL_MOUSE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;
 
 	/*** Justifier : GC controller button mapping ***/
 	i=0;
-	gcjustmap[i++] = PAD_BUTTON_A;
-	gcjustmap[i++] = PAD_BUTTON_B;
-	gcjustmap[i++] = PAD_BUTTON_START;
+	btnmap[CTRL_JUST][CTRLR_GCPAD][i++] = PAD_BUTTON_B;
+	btnmap[CTRL_JUST][CTRLR_GCPAD][i++] = PAD_BUTTON_A;
+	btnmap[CTRL_JUST][CTRLR_GCPAD][i++] = PAD_BUTTON_START;
 
 	/*** Justifier : wiimote button mapping ***/
 	i=0;
-	wmjustmap[i++] = WPAD_BUTTON_A;
-	wmjustmap[i++] = WPAD_BUTTON_B;
-	wmjustmap[i++] = WPAD_BUTTON_PLUS;
+	btnmap[CTRL_JUST][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;
+	btnmap[CTRL_JUST][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_A;
+	btnmap[CTRL_JUST][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_PLUS;
+}
+
+#ifdef HW_RVL
+
+/****************************************************************************
+ * ShutoffRumble
+ ***************************************************************************/
+
+void ShutoffRumble()
+{
+	for(int i=0;i<4;i++)
+	{
+		WPAD_Rumble(i, 0);
+		rumbleCount[i] = 0;
+	}
+}
+
+/****************************************************************************
+ * DoRumble
+ ***************************************************************************/
+
+void DoRumble(int i)
+{
+	if(rumbleRequest[i] && rumbleCount[i] < 3)
+	{
+		WPAD_Rumble(i, 1); // rumble on
+		rumbleCount[i]++;
+	}
+	else if(rumbleRequest[i])
+	{
+		rumbleCount[i] = 12;
+		rumbleRequest[i] = 0;
+	}
+	else
+	{
+		if(rumbleCount[i])
+			rumbleCount[i]--;
+		WPAD_Rumble(i, 0); // rumble off
+	}
 }
 
 /****************************************************************************
@@ -212,9 +254,7 @@ s8 WPAD_Stick(u8 chan, u8 right, int axis)
 	return (s8)(val * 128.0f);
 }
 
-// hold superscope/mouse/justifier cursor positions
-static int cursor_x[5] = {0,0,0,0,0};
-static int cursor_y[5] = {0,0,0,0,0};
+#endif
 
 /****************************************************************************
  * UpdateCursorPosition
@@ -407,11 +447,11 @@ void decodepad (int pad)
 	/*** Report pressed buttons (gamepads) ***/
 	for (i = 0; i < MAXJP; i++)
     {
-		if ( (jp & gcpadmap[i])											// gamecube controller
+		if ( (jp & btnmap[CTRL_PAD][CTRLR_GCPAD][i])											// gamecube controller
 #ifdef HW_RVL
-		|| ( (exp_type == WPAD_EXP_NONE) && (wp & wmpadmap[i]) )	// wiimote
-		|| ( (exp_type == WPAD_EXP_CLASSIC) && (wp & ccpadmap[i]) )	// classic controller
-		|| ( (exp_type == WPAD_EXP_NUNCHUK) && (wp & ncpadmap[i]) )	// nunchuk + wiimote
+		|| ( (exp_type == WPAD_EXP_NONE) && (wp & btnmap[CTRL_PAD][CTRLR_WIIMOTE][i]) )	// wiimote
+		|| ( (exp_type == WPAD_EXP_CLASSIC) && (wp & btnmap[CTRL_PAD][CTRLR_CLASSIC][i]) )	// classic controller
+		|| ( (exp_type == WPAD_EXP_NUNCHUK) && (wp & btnmap[CTRL_PAD][CTRLR_NUNCHUK][i]) )	// nunchuk + wiimote
 #endif
 		)
 			S9xReportButton (offset + i, true);
@@ -420,15 +460,15 @@ void decodepad (int pad)
     }
 
 	/*** Superscope ***/
-	if (Settings.SuperScopeMaster && pad == GCSettings.Superscope - 1) // report only once
+	if (Settings.SuperScopeMaster && pad == 0) // report only once
 	{
 		// buttons
 		offset = 0x50;
 		for (i = 0; i < 5; i++)
 		{
-			if (jp & gcscopemap[i]
+			if (jp & btnmap[CTRL_SCOPE][CTRLR_GCPAD][i]
 #ifdef HW_RVL
-			|| wp & wmscopemap[i]
+			|| wp & btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i]
 #endif
 			)
 			{
@@ -457,15 +497,15 @@ void decodepad (int pad)
 		S9xReportPointer(offset, (u16) cursor_x[0], (u16) cursor_y[0]);
 	}
 	/*** Mouse ***/
-	else if (Settings.MouseMaster && pad < GCSettings.Mouse)
+	else if (Settings.MouseMaster && pad == 0)
 	{
 		// buttons
 		offset = 0x60 + (2 * pad);
 		for (i = 0; i < 2; i++)
 		{
-			if (jp & gcmousemap[i]
+			if (jp & btnmap[CTRL_MOUSE][CTRLR_GCPAD][i]
 #ifdef HW_RVL
-			|| wp & wmmousemap[i]
+			|| wp & btnmap[CTRL_MOUSE][CTRLR_WIIMOTE][i]
 #endif
 			)
 				S9xReportButton(offset + i, true);
@@ -479,15 +519,15 @@ void decodepad (int pad)
 				(u16) cursor_y[1 + pad]);
 	}
 	/*** Justifier ***/
-	else if (Settings.JustifierMaster && pad < GCSettings.Justifier)
+	else if (Settings.JustifierMaster && pad < 2)
 	{
 		// buttons
 		offset = 0x70 + (3 * pad);
 		for (i = 0; i < 3; i++)
 		{
-			if (jp & gcjustmap[i]
+			if (jp & btnmap[CTRL_JUST][CTRLR_GCPAD][i]
 #ifdef HW_RVL
-			|| wp & wmjustmap[i]
+			|| wp & btnmap[CTRL_JUST][CTRLR_WIIMOTE][i]
 #endif
 			)
 				S9xReportButton(offset + i, true);
@@ -500,7 +540,7 @@ void decodepad (int pad)
 		S9xReportPointer(offset + pad, (u16) cursor_x[3 + pad],
 				(u16) cursor_y[3 + pad]);
 	}
-	
+
 #ifdef HW_RVL
 	// screenshot (temp)
 	if (wp & CLASSIC_CTRL_BUTTON_ZR)
@@ -519,27 +559,13 @@ void decodepad (int pad)
 void NGCReportButtons ()
 {
 	s8 gc_px = PAD_SubStickX (0);
-	s8 gc_py = PAD_SubStickY (0);
 
 	u16 gc_pb = PAD_ButtonsHeld (0);
 
 #ifdef HW_RVL
 	s8 wm_sx = WPAD_Stick (0,1,0);
-	s8 wm_sy = WPAD_Stick (0,1,1);
-	u32 wm_pb = WPAD_ButtonsHeld (0);	// wiimote / expansion button info
+	u32 wm_pb = WPAD_ButtonsDown (0);	// wiimote / expansion button info
 #endif
-
-
-	/*** Check for video zoom ***/
-	if (GCSettings.Zoom)
-	{
-		if (gc_py < -36 || gc_py > 36)
-			zoom ((float) gc_py / -36);
-#ifdef HW_RVL
-		if (wm_sy < -36 || wm_sy > 36)
-			zoom ((float) wm_sy / -36);
-#endif
-	}
 
     Settings.TurboMode = ( (gc_px > 70)
 #ifdef HW_RVL
@@ -589,18 +615,12 @@ void SetControllers ()
 	else if (Settings.MouseMaster == true)
 	{
 		S9xSetController (0, CTL_MOUSE, 0, 0, 0, 0);
-		if (GCSettings.Mouse == 2)
-			S9xSetController (1, CTL_MOUSE, 1, 0, 0, 0);
-		else
-			S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
+		S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
 	}
 	else if (Settings.JustifierMaster == true)
 	{
 		S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
-		if(GCSettings.Justifier == 2)
-			S9xSetController(1, CTL_JUSTIFIER, 1, 0, 0, 0);
-		else
-			S9xSetController(1, CTL_JUSTIFIER, 0, 0, 0, 0);
+		S9xSetController(1, CTL_JUSTIFIER, 1, 0, 0, 0);
 	}
 	else
 	{
@@ -625,8 +645,8 @@ void SetDefaultButtonMap ()
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Y");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 L");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 R");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Select");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Start");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Select");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Up");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Down");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Left");
@@ -640,8 +660,8 @@ void SetDefaultButtonMap ()
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Y");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 L");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 R");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Select");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Start");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Select");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Up");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Down");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Left");
@@ -655,8 +675,8 @@ void SetDefaultButtonMap ()
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Y");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 L");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 R");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Select");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Start");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Select");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Up");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Down");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Left");
@@ -670,8 +690,8 @@ void SetDefaultButtonMap ()
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Y");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 L");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 R");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Select");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Start");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Select");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Up");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Down");
   ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Left");
@@ -679,8 +699,8 @@ void SetDefaultButtonMap ()
 
   maxcode = 0x50;
 	/*** Superscope ***/
-  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope AimOffscreen");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Fire");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope AimOffscreen");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Cursor");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
   ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
@@ -695,11 +715,11 @@ void SetDefaultButtonMap ()
 
   maxcode = 0x70;
 	/*** Justifier ***/
-  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 AimOffscreen");
   ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 Trigger");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 AimOffscreen");
   ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 Start");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 AimOffscreen");
   ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 Trigger");
+  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 AimOffscreen");
   ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 Start");
 
   maxcode = 0x80;
@@ -708,7 +728,7 @@ void SetDefaultButtonMap ()
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Mouse2"), false);
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Justifier1"), false);
   S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Justifier2"), false);
-  
+
   maxcode = 0x90;
   ASSIGN_BUTTON_FALSE (maxcode++, "Screenshot");
 

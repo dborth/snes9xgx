@@ -48,11 +48,8 @@ DefaultSettings ()
 	GCSettings.smbpwd[19] = 0;
 	GCSettings.smbshare[19] = 0;
 
-	GCSettings.Superscope = 0;
-    GCSettings.Mouse = 0;
-	GCSettings.Justifier = 0;
+	GCSettings.Controller = 0;
 
-	GCSettings.Zoom = 0;	// zooming default off
 	GCSettings.ZoomLevel = 1.0; // zoom level
 	GCSettings.render = 2; // Unfiltered
 	GCSettings.widescreen = 0; // no aspect ratio correction
@@ -60,6 +57,11 @@ DefaultSettings ()
 
 	GCSettings.xshift = 0;	// video shift
 	GCSettings.yshift = 0;
+
+	GCSettings.WiimoteOrientation = 0;
+	GCSettings.ExitAction = 0;
+	GCSettings.MusicVolume = 40;
+	GCSettings.SFXVolume = 40;
 
 	/****************** SNES9x Settings ***********************/
 

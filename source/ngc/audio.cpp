@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <asndlib.h>
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -29,7 +30,6 @@
 #include "controls.h"
 
 #include "video.h"
-#include "menudraw.h"
 
 extern int ConfigRequested;
 
@@ -74,13 +74,15 @@ AudioThread (void *arg)
 static void
 GCMixSamples ()
 {
-	AUDIO_StopDMA ();
+	if (!ConfigRequested)
+	{
+		AUDIO_StopDMA ();
+		DCFlushRange (soundbuffer[whichab], AUDIOBUFFER);
+		AUDIO_InitDMA ((u32) soundbuffer[whichab], AUDIOBUFFER);
+		AUDIO_StartDMA ();
 
-	DCFlushRange (soundbuffer[whichab], AUDIOBUFFER);
-	AUDIO_InitDMA ((u32) soundbuffer[whichab], AUDIOBUFFER);
-	AUDIO_StartDMA ();
-
-	LWP_ThreadSignal (audioqueue);
+		LWP_ThreadSignal (audioqueue);
+	}
 }
 
 /****************************************************************************
@@ -89,10 +91,30 @@ GCMixSamples ()
 void
 InitGCAudio ()
 {
-	AUDIO_SetDSPSampleRate (AI_SAMPLERATE_32KHZ);
-	AUDIO_RegisterDMACallback (GCMixSamples);
-
 	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 150);
+}
+
+void
+SwitchAudioMode(int mode)
+{
+	if(mode == 0) // emulator
+	{
+		#ifndef NO_SOUND
+		ASND_Pause(1);
+		ASND_End();
+		#endif
+		AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
+		AUDIO_RegisterDMACallback(GCMixSamples);
+	}
+	else // menu
+	{
+		AUDIO_StopDMA();
+		AUDIO_RegisterDMACallback(NULL);
+		#ifndef NO_SOUND
+		ASND_Init();
+		ASND_Pause(0);
+		#endif
+	}
 }
 
 /****************************************************************************
