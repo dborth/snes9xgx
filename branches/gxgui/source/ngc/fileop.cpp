@@ -4,7 +4,7 @@
  * softdev July 2006
  * crunchy2 May 2007
  * Michniewski 2008
- * Tantric August 2008
+ * Tantric 2008-2009
  *
  * fileop.cpp
  *
@@ -251,6 +251,16 @@ bool ChangeInterface(int method, bool silent)
 		mounted = ConnectShare(silent);
 	}
 #endif
+	else if(method == METHOD_MC_SLOTA)
+	{
+		rootdir[0] = 0;
+		mounted = TestMC(CARD_SLOTA, silent);
+	}
+	else if(method == METHOD_MC_SLOTB)
+	{
+		rootdir[0] = 0;
+		mounted = TestMC(CARD_SLOTB, silent);
+	}
 
 	return mounted;
 }
@@ -445,7 +455,7 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 	u32 size = 0;
 	u32 readsize = 0;
 
-	if(!ChangeInterface(method, NOTSILENT))
+	if(!ChangeInterface(method, silent))
 		return 0;
 
 	switch(method)
@@ -542,7 +552,7 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 {
 	u32 written = 0;
 
-	if(!ChangeInterface(method, NOTSILENT))
+	if(!ChangeInterface(method, silent))
 		return 0;
 
 	ShowAction("Saving...");

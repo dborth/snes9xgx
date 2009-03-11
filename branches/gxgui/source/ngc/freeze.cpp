@@ -4,7 +4,7 @@
  * softdev July 2006
  * crunchy2 May 2007-July 2007
  * Michniewski 2008
- * Tantric August 2008
+ * Tantric 2008-2009
  *
  * freeze.cpp
  *
@@ -131,6 +131,9 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent);
 
+	if(method == METHOD_AUTO)
+		return 0;
+
 	S9xSetSoundMute (TRUE);
 	S9xPrepareSoundForSnapshotSave (FALSE);
 
@@ -222,7 +225,11 @@ int
 NGCFreezeGameAuto (int method, bool silent)
 {
 	char filepath[1024];
-	sprintf(filepath, "%s/%s Auto.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+		sprintf(filepath, "%s Auto.frz", Memory.ROMFilename);
+	else
+		sprintf(filepath, "%s/%s Auto.frz", GCSettings.SaveFolder, Memory.ROMFilename);
 	return NGCFreezeGame(filepath, method, silent);
 }
 
@@ -278,6 +285,9 @@ NGCUnfreezeGame (char * filepath, int method, bool silent)
 
     if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent); // we use 'Save' because snapshot needs R/W
+
+    if(method == METHOD_AUTO)
+		return 0;
 
     AllocSaveBuffer ();
 
@@ -342,6 +352,11 @@ int
 NGCUnfreezeGameAuto (int method, bool silent)
 {
 	char filepath[1024];
-	sprintf(filepath, "%s/%s Auto.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+		sprintf(filepath, "%s Auto.frz", Memory.ROMFilename);
+	else
+		sprintf(filepath, "%s/%s Auto.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+
 	return NGCUnfreezeGame(filepath, method, silent);
 }

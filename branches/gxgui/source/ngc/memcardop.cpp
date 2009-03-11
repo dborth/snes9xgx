@@ -27,77 +27,37 @@
 
 static u8 * SysArea = NULL;
 
-static void InitCardSystem()
-{
-	CARD_Init ("SNES", "00");
-}
-
-/****************************************************************************
- * ParseMCDirectory
- *
- * Parses a list of all files on the specified memory card
- ***************************************************************************/
-int
-ParseMCDirectory (int slot)
-{
-	card_dir CardDir;
-	int CardError;
-	int entryNum = 0;
-
-	// reset browser
-	ResetBrowser();
-	browser.dir[0] = 0;
-
-	CardError = CARD_FindFirst (slot, &CardDir, TRUE);
-	while (CardError != CARD_ERROR_NOFILE)
-	{
-		BROWSERENTRY * newBrowserList = (BROWSERENTRY *)realloc(browserList, (entryNum+1) * sizeof(BROWSERENTRY));
-
-		if(!newBrowserList) // failed to allocate required memory
-		{
-			ResetBrowser();
-			ErrorPrompt("Out of memory: too many files!");
-			entryNum = -1;
-			break;
-		}
-		else
-		{
-			browserList = newBrowserList;
-		}
-		memset(&(browserList[entryNum]), 0, sizeof(BROWSERENTRY)); // clear the new entry
-
-		strncpy(browserList[entryNum].filename, (char *)CardDir.filename, MAXJOLIET);
-		browserList[entryNum].length = CardDir.filelen;
-
-		entryNum++;
-
-		CardError = CARD_FindNext (&CardDir);
-	}
-	return entryNum;
-}
-
 /****************************************************************************
  * MountMC
  *
  * Mounts the memory card in the given slot.
  * Returns the result of the last attempted CARD_Mount command.
  ***************************************************************************/
-static int MountMC(int cslot, bool silent)
+static int MountMC(int slot, bool silent)
 {
 	int ret = -1;
 	int tries = 0;
 
-	#ifdef HW_DOL
-	uselessinquiry ();
-	#endif
+	// Initialize Card System
+	SysArea = (u8 *)memalign(32, CARD_WORKAREA);
+	memset (SysArea, 0, CARD_WORKAREA);
+	CARD_Init ("SNES", "00");
 
 	// Mount the card
-	while ( tries < 10 && ret != 0)
+	while(tries < 10 && ret != 0)
 	{
-		EXI_ProbeReset ();
-		ret = CARD_Mount (cslot, SysArea, NULL);
-		VIDEO_WaitVSync ();
+		EXI_ProbeReset();
+		ret = CARD_Mount (slot, SysArea, NULL);
+		VIDEO_WaitVSync();
 		tries++;
+	}
+
+	if(ret != 0 && !silent)
+	{
+		if (slot == CARD_SLOTA)
+			ErrorPrompt("Unable to mount Slot A Memory Card!");
+		else
+			ErrorPrompt("Unable to mount Slot B Memory Card!");
 	}
 	return ret;
 }
@@ -114,41 +74,65 @@ bool TestMC(int slot, bool silent)
 	return false;
 	#endif
 
-	bool ret;
-
-	// Initialize Card System
-	SysArea = (u8 *)memalign(32, CARD_WORKAREA);
-	memset (SysArea, 0, CARD_WORKAREA);
-	InitCardSystem();
+	bool ret = false;
 
 	// Try to mount the card
 	if (MountMC(slot, silent) == 0)
 	{
 		// Mount successful!
-		if(!silent)
-		{
-			if (slot == CARD_SLOTA)
-				ErrorPrompt("Mounted Slot A Memory Card!");
-			else
-				ErrorPrompt("Mounted Slot B Memory Card!");
-		}
 		CARD_Unmount (slot);
 		ret = true;
 	}
-	else
-	{
-		if(!silent)
-		{
-			if (slot == CARD_SLOTA)
-				ErrorPrompt("Unable to Mount Slot A Memory Card!");
-			else
-				ErrorPrompt("Unable to Mount Slot B Memory Card!");
-		}
-
-		ret = false;
-	}
 	free(SysArea);
 	return ret;
+}
+
+/****************************************************************************
+ * ParseMCDirectory
+ *
+ * Parses a list of all files on the specified memory card
+ ***************************************************************************/
+int
+ParseMCDirectory (int slot)
+{
+	card_dir CardDir;
+	int CardError;
+	int entryNum = 0;
+
+	// Try to mount the card
+	CardError = MountMC(slot, NOTSILENT);
+
+	if (CardError == 0)
+	{
+		CardError = CARD_FindFirst (slot, &CardDir, TRUE);
+		while (CardError != CARD_ERROR_NOFILE)
+		{
+			BROWSERENTRY * newBrowserList = (BROWSERENTRY *)realloc(browserList, (entryNum+1) * sizeof(BROWSERENTRY));
+
+			if(!newBrowserList) // failed to allocate required memory
+			{
+				ResetBrowser();
+				ErrorPrompt("Out of memory: too many files!");
+				entryNum = -1;
+				break;
+			}
+			else
+			{
+				browserList = newBrowserList;
+			}
+			memset(&(browserList[entryNum]), 0, sizeof(BROWSERENTRY)); // clear the new entry
+
+			strncpy(browserList[entryNum].filename, (char *)CardDir.filename, MAXJOLIET);
+			browserList[entryNum].length = CardDir.filelen;
+
+			entryNum++;
+
+			CardError = CARD_FindNext (&CardDir);
+		}
+		CARD_Unmount(slot);
+	}
+
+	return entryNum;
 }
 
 /****************************************************************************
@@ -227,11 +211,6 @@ LoadMCFile (char *buf, int slot, char *filename, bool silent)
     int bytesleft = 0;
     int bytesread = 0;
 
-	// Initialize Card System
-    SysArea = (u8 *)memalign(32, CARD_WORKAREA);
-	memset (SysArea, 0, CARD_WORKAREA);
-	InitCardSystem();
-
 	// Try to mount the card
 	CardError = MountMC(slot, NOTSILENT);
 
@@ -279,13 +258,6 @@ LoadMCFile (char *buf, int slot, char *filename, bool silent)
 		}
 		CARD_Unmount(slot);
 	}
-	else
-	{
-		if (slot == CARD_SLOTA)
-			ErrorPrompt("Unable to Mount Slot A Memory Card!");
-		else
-			ErrorPrompt("Unable to Mount Slot B Memory Card!");
-	}
 
 	free(SysArea);
 	return bytesread;
@@ -309,11 +281,6 @@ SaveMCFile (char *buf, int slot, char *filename, int datasize, bool silent)
 	if(datasize <= 0)
 		return 0;
 
-	// Initialize Card System
-	SysArea = (u8 *)memalign(32, CARD_WORKAREA);
-	memset (SysArea, 0, CARD_WORKAREA);
-	InitCardSystem();
-
 	// Try to mount the card
 	CardError = MountMC(slot, NOTSILENT);
 
@@ -327,7 +294,7 @@ SaveMCFile (char *buf, int slot, char *filename, int datasize, bool silent)
 		if (datasize % SectorSize)
 			blocks += SectorSize;
 
-		// Does this file exist ?
+		// Delete existing file (if present)
 		memset(&CardStatus, 0, sizeof(card_stat));
 		CardError = CARD_Open (slot, filename, &CardFile);
 
@@ -394,13 +361,7 @@ SaveMCFile (char *buf, int slot, char *filename, int datasize, bool silent)
 done:
 		CARD_Unmount (slot);
 	}
-	else
-	{
-		if (slot == CARD_SLOTA)
-			ErrorPrompt("Unable to Mount Slot A Memory Card!");
-		else
-			ErrorPrompt("Unable to Mount Slot B Memory Card!");
-	}
+
 	free(SysArea);
 	return byteswritten;
 }

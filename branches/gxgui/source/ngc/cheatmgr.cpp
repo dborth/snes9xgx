@@ -1,7 +1,7 @@
 /****************************************************************************
  * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
- * Tantric August 2008
+ * Tantric 2008-2009
  *
  * cheatmgr.cpp
  *
@@ -70,6 +70,9 @@ SetupCheats()
 
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(SILENT);
+
+	if(method == METHOD_AUTO)
+		return;
 
 	if(!MakeFilePath(filepath, FILE_CHEAT, method))
 		return;

@@ -98,9 +98,9 @@ int autoSaveMethod(bool silent)
 		method = METHOD_SD;
 	else if(ChangeInterface(METHOD_USB, SILENT))
 		method = METHOD_USB;
-	else if(TestMC(CARD_SLOTA, SILENT))
+	else if(ChangeInterface(METHOD_MC_SLOTA, SILENT))
 		method = METHOD_MC_SLOTA;
-	else if(TestMC(CARD_SLOTB, SILENT))
+	else if(ChangeInterface(METHOD_MC_SLOTB, SILENT))
 		method = METHOD_MC_SLOTB;
 	else if(ChangeInterface(METHOD_SMB, SILENT))
 		method = METHOD_SMB;
@@ -433,7 +433,9 @@ int BrowserLoadFile(int method)
 	inSz = false;
 
 	if (SNESROMSize <= 0)
+	{
 		ErrorPrompt("Error loading ROM!");
+	}
 	else
 	{
 		// load UPS/IPS/PPF patch
@@ -443,13 +445,16 @@ int BrowserLoadFile(int method)
 		Memory.LoadSRAM ("BLANK");
 
 		// load SRAM or snapshot
-		if ( GCSettings.AutoLoad == 1 )
+		if (GCSettings.AutoLoad == 1)
 			LoadSRAMAuto(GCSettings.SaveMethod, SILENT);
-		else if ( GCSettings.AutoLoad == 2 )
+		else if (GCSettings.AutoLoad == 2)
 			NGCUnfreezeGameAuto(GCSettings.SaveMethod, SILENT);
 
 		// setup cheats
-		SetupCheats();
+		if(GCSettings.SaveMethod != METHOD_MC_SLOTA &&
+			GCSettings.SaveMethod != METHOD_MC_SLOTB)
+			SetupCheats();
+
 		ResetBrowser();
 		loaded = 1;
 	}

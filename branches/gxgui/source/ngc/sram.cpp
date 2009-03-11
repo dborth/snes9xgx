@@ -3,7 +3,7 @@
  *
  * crunchy2 April 2007-July 2007
  * Michniewski 2008
- * Tantric September 2008
+ * Tantric 2008-2009
  *
  * sram.cpp
  *
@@ -145,6 +145,9 @@ LoadSRAM (char * filepath, int method, bool silent)
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent); // we use 'Save' because SRAM needs R/W
 
+	if(method == METHOD_AUTO)
+		return false;
+
 	AllocSaveBuffer();
 
 	offset = LoadFile(filepath, method, silent);
@@ -172,7 +175,11 @@ bool
 LoadSRAMAuto (int method, bool silent)
 {
 	char filepath[1024];
-	sprintf(filepath, "%s/%s Auto.srm", GCSettings.SaveFolder, Memory.ROMFilename);
+
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+		sprintf(filepath, "%s Auto.srm", Memory.ROMFilename);
+	else
+		sprintf(filepath, "%s/%s Auto.srm", GCSettings.SaveFolder, Memory.ROMFilename);
 	return LoadSRAM(filepath, method, silent);
 }
 
@@ -188,6 +195,9 @@ SaveSRAM (char * filepath, int method, bool silent)
 
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent);
+
+	if(method == METHOD_AUTO)
+		return false;
 
 	AllocSaveBuffer ();
 
@@ -218,6 +228,10 @@ bool
 SaveSRAMAuto (int method, bool silent)
 {
 	char filepath[1024];
-	sprintf(filepath, "%s/%s Auto.srm", GCSettings.SaveFolder, Memory.ROMFilename);
+
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+		sprintf(filepath, "%s Auto.srm", Memory.ROMFilename);
+	else
+		sprintf(filepath, "%s/%s Auto.srm", GCSettings.SaveFolder, Memory.ROMFilename);
 	return SaveSRAM(filepath, method, silent);
 }
