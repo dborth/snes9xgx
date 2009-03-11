@@ -1154,7 +1154,7 @@ static int MenuGame()
 				free(gameScreenTex);
 				gameScreenTex = NULL;
 			}
-			#ifndef NO_MUSIC
+			#ifndef NO_SOUND
 			bgMusic->Play(); // startup music
 			#endif
 			menu = MENU_GAMESELECTION;
@@ -2880,6 +2880,7 @@ static int MenuSettingsMenu()
 		#else // GameCube
 		options.name[0][0] = 0; // Wiimote
 		options.name[2][0] = 0; // Music
+		options.name[3][0] = 0; // Sound Effects
 
 		if(GCSettings.ExitAction > 1)
 			GCSettings.ExitAction = 0;
@@ -3052,7 +3053,7 @@ MainMenu (int menu)
 	pointer[3] = new GuiImageData(player4_point_png);
 	#endif
 
-	#ifndef NO_MUSIC
+	#ifndef NO_SOUND
 	bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
 	bgMusic->SetVolume(GCSettings.MusicVolume);
 	#endif
@@ -3072,7 +3073,7 @@ MainMenu (int menu)
 	}
 	else
 	{
-		#ifndef NO_MUSIC
+		#ifndef NO_SOUND
 		bgMusic->Play(); // startup music
 		#endif
 	}
@@ -3158,10 +3159,12 @@ MainMenu (int menu)
 	CancelAction();
 
 	HaltGui();
-#ifndef NO_MUSIC
+
+	#ifndef NO_SOUND
 	bgMusic->Stop();
 	delete bgMusic;
-#endif
+	#endif
+
 	delete memTxt;
 	delete bgTopImg;
 	delete bgBottomImg;

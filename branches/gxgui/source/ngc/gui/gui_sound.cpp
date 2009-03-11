@@ -31,6 +31,7 @@ GuiSound::~GuiSound()
 
 void GuiSound::Play()
 {
+	#ifndef NO_SOUND
 	int vol;
 
 	switch(type)
@@ -49,10 +50,12 @@ void GuiSound::Play()
 		SetVolumeOgg(255*(volume/100.0));
 		break;
 	}
+	#endif
 }
 
 void GuiSound::Stop()
 {
+	#ifndef NO_SOUND
 	if(voice < 0)
 		return;
 
@@ -66,10 +69,12 @@ void GuiSound::Stop()
 		StopOgg();
 		break;
 	}
+	#endif
 }
 
 void GuiSound::Pause()
 {
+	#ifndef NO_SOUND
 	if(voice < 0)
 		return;
 
@@ -83,10 +88,12 @@ void GuiSound::Pause()
 		PauseOgg(1);
 		break;
 	}
+	#endif
 }
 
 void GuiSound::Resume()
 {
+	#ifndef NO_SOUND
 	if(voice < 0)
 		return;
 
@@ -100,10 +107,12 @@ void GuiSound::Resume()
 		PauseOgg(0);
 		break;
 	}
+	#endif
 }
 
 void GuiSound::SetVolume(int vol)
 {
+	#ifndef NO_SOUND
 	volume = vol;
 
 	if(voice < 0)
@@ -121,4 +130,5 @@ void GuiSound::SetVolume(int vol)
 		SetVolumeOgg(255*(volume/100.0));
 		break;
 	}
+	#endif
 }

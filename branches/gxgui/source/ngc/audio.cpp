@@ -99,8 +99,10 @@ SwitchAudioMode(int mode)
 {
 	if(mode == 0) // emulator
 	{
+		#ifndef NO_SOUND
 		ASND_Pause(1);
 		ASND_End();
+		#endif
 		AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
 		AUDIO_RegisterDMACallback(GCMixSamples);
 	}
@@ -108,8 +110,10 @@ SwitchAudioMode(int mode)
 	{
 		AUDIO_StopDMA();
 		AUDIO_RegisterDMACallback(NULL);
+		#ifndef NO_SOUND
 		ASND_Init();
 		ASND_Pause(0);
+		#endif
 	}
 }
 

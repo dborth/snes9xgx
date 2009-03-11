@@ -27,7 +27,7 @@ INCLUDES	:=	source/snes9x source/ngc
 #---------------------------------------------------------------------------------
 
 CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
-			-DNGC -DNO_MUSIC \
+			-DNGC -DNO_SOUND \
 			-DNO_ASM -DRIGHTSHIFT_IS_SAR \
 			-DCPU_SHUTDOWN -DSPC700_SHUTDOWN \
 			-DSPC700_C -DSDD1_DECOMP \
@@ -43,7 +43,7 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--cref
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lpngu -lpng -lmxml -lfreetypegx -lmetaphrasis -lfat -lz -logc -lasnd -lfreetype
+LIBS	:=	-lpngu -lpng -lmxml -lfreetypegx -lmetaphrasis -lfat -lz -logc -lfreetype
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -71,7 +71,6 @@ sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 TTFFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.ttf)))
 PNGFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.png)))
-#OGGFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.ogg)))
 PCMFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.pcm)))
 
 #---------------------------------------------------------------------------------
@@ -86,7 +85,7 @@ endif
 export OFILES	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
 					$(sFILES:.s=.o) $(SFILES:.S=.o) \
 					$(TTFFILES:.ttf=.ttf.o) $(PNGFILES:.png=.png.o) \
-					$(PCMFILES:.pcm=.pcm.o) # $(OGGFILES:.ogg=.ogg.o)
+					$(PCMFILES:.pcm=.pcm.o)
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
@@ -146,10 +145,6 @@ $(OUTPUT).elf: $(OFILES)
 %.png.o : %.png
 	@echo $(notdir $<)
 	$(bin2o)
-	
-#%.ogg.o : %.ogg
-#	@echo $(notdir $<)
-#	$(bin2o)
 	
 %.pcm.o : %.pcm
 	@echo $(notdir $<)

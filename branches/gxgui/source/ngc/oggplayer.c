@@ -24,7 +24,7 @@
  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef NO_MUSIC
+#ifndef NO_SOUND
 
 #include "oggplayer.h"
 #include <gccore.h>
@@ -350,11 +350,3 @@ void SetTimeOgg(s32 time_pos)
 	if (time_pos >= 0)
 		private_ogg.seek_time = time_pos;
 }
-
-#else // Ogg stubs
-int PlayOgg(int fd, int time_pos, int mode) { return 0; }
-void StopOgg() { }
-void PauseOgg(int pause) { }
-void SetVolumeOgg(int volume) { }
-int mem_open(char * ogg, int size) { return 0; }
-#endif
