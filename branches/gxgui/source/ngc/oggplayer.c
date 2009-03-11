@@ -350,3 +350,5 @@ void SetTimeOgg(s32 time_pos)
 	if (time_pos >= 0)
 		private_ogg.seek_time = time_pos;
 }
+
+#endif
