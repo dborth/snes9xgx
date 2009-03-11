@@ -145,7 +145,7 @@ void GuiButton::Update(GuiTrigger * t)
 
 	#ifdef HW_RVL
 	// cursor
-	if(t->wpad.ir.valid)
+	if(t->wpad.ir.valid && this->IsSelectable())
 	{
 		if(this->IsInside(t->wpad.ir.x, t->wpad.ir.y))
 		{
