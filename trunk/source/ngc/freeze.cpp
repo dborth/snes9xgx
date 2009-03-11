@@ -4,7 +4,7 @@
  * softdev July 2006
  * crunchy2 May 2007-July 2007
  * Michniewski 2008
- * Tantric August 2008
+ * Tantric 2008-2009
  *
  * freeze.cpp
  *
@@ -22,6 +22,8 @@
 #include <fat.h>
 #include <zlib.h>
 
+#include "pngu/pngu.h"
+
 #include "snes9x.h"
 #include "memmap.h"
 #include "soundux.h"
@@ -32,7 +34,9 @@
 #include "images/saveicon.h"
 #include "freeze.h"
 #include "fileop.h"
-#include "menudraw.h"
+#include "filebrowser.h"
+#include "menu.h"
+#include "video.h"
 
 extern void S9xSRTCPreSaveState ();
 extern void NGCFreezeStruct ();
@@ -118,19 +122,16 @@ NGCFreezeMemBuffer ()
  * Do freeze game for Nintendo Gamecube
  ***************************************************************************/
 int
-NGCFreezeGame (int method, bool silent)
+NGCFreezeGame (char * filepath, int method, bool silent)
 {
-	char filepath[1024];
 	int offset = 0; // bytes written (actual)
 	int woffset = 0; // bytes written (expected)
 	char msg[100];
 
-	ShowAction ("Saving...");
-
 	if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent);
 
-	if(!MakeFilePath(filepath, FILE_SNAPSHOT, method))
+	if(method == METHOD_AUTO)
 		return 0;
 
 	S9xSetSoundMute (TRUE);
@@ -165,8 +166,8 @@ NGCFreezeGame (int method, bool silent)
 		if(err!=Z_OK)
 		{
 			sprintf (msg, "zip error %s ",zError(err));
-			WaitPrompt (msg);
-			return 0;
+			ErrorPrompt(msg);
+			goto done;
 		}
 
 		int zippedsize = (int)DestBuffSize;
@@ -182,15 +183,54 @@ NGCFreezeGame (int method, bool silent)
 
 	offset = SaveFile(filepath, woffset, method, silent);
 
+done:
+
 	FreeSaveBuffer ();
+
+	// save screenshot - I would prefer to do this from gameScreenTex
+	if(gameScreenTex != NULL && method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
+	{
+		AllocSaveBuffer ();
+
+		IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
+
+		if (pngContext != NULL)
+		{
+			PNGU_EncodeFromGXTexture(pngContext, 640, 480, gameScreenTex, 0);
+			PNGU_ReleaseImageContext(pngContext);
+		}
+
+		int size = FindBufferSize((char *)savebuffer, 128*1024);
+		if(size > 0)
+		{
+			char screenpath[1024];
+			filepath[strlen(filepath)-4] = 0;
+			sprintf(screenpath, "%s.png", filepath);
+			SaveFile(screenpath, size, method, silent);
+		}
+
+		FreeSaveBuffer ();
+	}
 
 	if(offset > 0) // save successful!
 	{
 		if(!silent)
-			WaitPrompt("Save successful");
+			InfoPrompt("Save successful");
 		return 1;
 	}
     return 0;
+}
+
+int
+NGCFreezeGameAuto (int method, bool silent)
+{
+	char filepath[1024];
+
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+		sprintf(filepath, "%s Auto.frz", Memory.ROMFilename);
+	else
+		sprintf(filepath, "%s/%s Auto.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+	return NGCFreezeGame(filepath, method, silent);
 }
 
 /****************************************************************************
@@ -235,22 +275,19 @@ NGCUnFreezeBlock (char *name, uint8 * block, int size)
  * NGCUnfreezeGame
  ***************************************************************************/
 int
-NGCUnfreezeGame (int method, bool silent)
+NGCUnfreezeGame (char * filepath, int method, bool silent)
 {
-	char filepath[1024];
 	int offset = 0;
 	int result = 0;
 	char msg[80];
 
 	bufoffset = 0;
 
-	ShowAction ("Loading...");
-
     if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent); // we use 'Save' because snapshot needs R/W
 
-    if(!MakeFilePath(filepath, FILE_SNAPSHOT, method))
-        return 0;
+    if(method == METHOD_AUTO)
+		return 0;
 
     AllocSaveBuffer ();
 
@@ -280,11 +317,11 @@ NGCUnfreezeGame (int method, bool silent)
 			if ( err!=Z_OK )
 			{
 				sprintf (msg, "Unzip error %s ",zError(err));
-				WaitPrompt (msg);
+				ErrorPrompt(msg);
 			}
 			else if ( DestBuffSize != decompressedsize )
 			{
-				WaitPrompt("Unzipped size doesn't match expected size!");
+				ErrorPrompt("Unzipped size doesn't match expected size!");
 			}
 			else
 			{
@@ -300,13 +337,26 @@ NGCUnfreezeGame (int method, bool silent)
 		if (S9xUnfreezeGame ("AGAME") == SUCCESS)
 			result = 1;
 		else
-			WaitPrompt("Error thawing");
+			ErrorPrompt("Error thawing");
 	}
 	else
 	{
 		if(!silent)
-			WaitPrompt("Freeze file not found");
+			ErrorPrompt("Freeze file not found");
 	}
 	FreeSaveBuffer ();
 	return result;
+}
+
+int
+NGCUnfreezeGameAuto (int method, bool silent)
+{
+	char filepath[1024];
+
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+		sprintf(filepath, "%s Auto.frz", Memory.ROMFilename);
+	else
+		sprintf(filepath, "%s/%s Auto.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+
+	return NGCUnfreezeGame(filepath, method, silent);
 }

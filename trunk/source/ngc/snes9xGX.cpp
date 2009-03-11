@@ -22,11 +22,13 @@
 #include <fat.h>
 #include <debug.h>
 
-#ifdef WII_DVD
+#ifdef HW_RVL
 extern "C" {
 #include <di/di.h>
 }
 #endif
+
+#include "FreeTypeGX.h"
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -46,7 +48,6 @@ extern "C" {
 #include "dvd.h"
 #include "networkop.h"
 #include "video.h"
-#include "menudraw.h"
 #include "s9xconfig.h"
 #include "audio.h"
 #include "menu.h"
@@ -55,15 +56,16 @@ extern "C" {
 #include "preferences.h"
 #include "button_mapping.h"
 #include "fileop.h"
+#include "filebrowser.h"
 #include "input.h"
 
-#include "gui.h"
-
+static lwp_t mainthread = LWP_THREAD_NULL;
 int ConfigRequested = 0;
 int ShutdownRequested = 0;
 int ResetRequested = 0;
+int ExitRequested = 0;
 char appPath[1024];
-FILE* debughandle;
+FreeTypeGX *fontSystem;
 
 extern int FrameTimer;
 
@@ -76,10 +78,14 @@ extern unsigned int timediffallowed;
 
 void ExitCleanup()
 {
+	StopGX();
+
 	LWP_SuspendThread (devicethread);
 	UnmountAllFAT();
 
 #ifdef HW_RVL
+	ShutoffRumble();
+	WPAD_Shutdown();
 	CloseShare();
 	DI_Close();
 #endif
@@ -91,27 +97,32 @@ void ExitCleanup()
 	void (*PSOReload) () = (void (*)()) 0x80001800;
 #endif
 
-void Reboot()
+void ExitApp()
 {
 	ExitCleanup();
-#ifdef HW_RVL
-    SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
-#else
-	#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
-	*SOFTRESET_ADR = 0x00000000;
-#endif
-}
 
-void ExitToLoader()
-{
-	ExitCleanup();
-	// Exit to Loader
-	#ifdef HW_RVL
-		exit(0);
-	#else	// gamecube
-		if (psoid[0] == PSOSDLOADID)
-			PSOReload ();
-	#endif
+	if(GCSettings.ExitAction == 0) // Exit to Loader
+	{
+		#ifdef HW_RVL
+			exit(0);
+		#else
+			if (psoid[0] == PSOSDLOADID)
+				PSOReload ();
+		#endif
+	}
+	else if(GCSettings.ExitAction == 1) // Exit to Menu
+	{
+		#ifdef HW_RVL
+			SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+		#else
+			#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
+			*SOFTRESET_ADR = 0x00000000;
+		#endif
+	}
+	else // Shutdown Wii
+	{
+		SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+	}
 }
 
 #ifdef HW_RVL
@@ -192,29 +203,34 @@ void setFrameTimerMethod()
 extern void S9xInitSync();
 bool CheckVideo = 0; // for forcing video reset in video.cpp
 extern uint32 prevRenderedFrameCount;
-static int selectedMenu = -1;
 
 void
 emulate ()
 {
-	while (1)
+	while (1) // main loop
 	{
 		// go back to checking if devices were inserted/removed
 		// since we're entering the menu
 		LWP_ResumeThread (devicethread);
 
 		ConfigRequested = 1;
+		SwitchAudioMode(1);
 
-		if(SNESROMSize > 0 && selectedMenu != 2)
-			selectedMenu = 2;
+		if(SNESROMSize == 0)
+			MainMenu(MENU_GAMESELECTION);
+		else
+			MainMenu(MENU_GAME);
 
-		MainMenu (selectedMenu); // go to menu
+		AllocGfxMem();
+		SelectFilterMethod();
 
 		ConfigRequested = 0;
+		SwitchAudioMode(0);
 
-		Settings.SuperScopeMaster = (GCSettings.Superscope > 0 ? true : false);
-		Settings.MouseMaster = (GCSettings.Mouse > 0 ? true : false);
-		Settings.JustifierMaster = (GCSettings.Justifier > 0 ? true : false);
+		Settings.MultiPlayer5Master = (GCSettings.Controller == CTRL_PAD4 ? true : false);
+		Settings.SuperScopeMaster = (GCSettings.Controller == CTRL_SCOPE ? true : false);
+		Settings.MouseMaster = (GCSettings.Controller == CTRL_MOUSE ? true : false);
+		Settings.JustifierMaster = (GCSettings.Controller == CTRL_JUST ? true : false);
 		SetControllers ();
 
 		// stop checking if devices were removed/inserted
@@ -222,14 +238,15 @@ emulate ()
 		LWP_SuspendThread (devicethread);
 
 		ResetVideo_Emu();
+		AudioStart ();
 
 		FrameTimer = 0;
-		setFrameTimerMethod(); // set frametimer method every time a ROM is loaded
+		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
 
 		CheckVideo = 1;	// force video update
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;
 
-		while(1)
+		while(1) // emulation loop
 		{
 			S9xMainLoop ();
 			NGCReportButtons ();
@@ -239,45 +256,16 @@ emulate ()
 				S9xSoftReset (); // reset game
 				ResetRequested = 0;
 			}
-
 			if (ConfigRequested)
 			{
-				// go back to checking if devices were inserted/removed
-				// since we're entering the menu
-				LWP_ResumeThread (devicethread);
-
-				// change to menu video mode
+				FreeGfxMem();
+				TakeScreenshot();
 				ResetVideo_Menu ();
-
-				if ( GCSettings.AutoSave == 1 )
-				{
-					SaveSRAM ( GCSettings.SaveMethod, SILENT );
-				}
-				else if ( GCSettings.AutoSave == 2 )
-				{
-					if ( WaitPromptChoice ("Save Freeze State?", "Don't Save", "Save") )
-						NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
-				}
-				else if ( GCSettings.AutoSave == 3 )
-				{
-					if ( WaitPromptChoice ("Save SRAM and Freeze State?", "Don't Save", "Save") )
-					{
-						SaveSRAM(GCSettings.SaveMethod, SILENT );
-						NGCFreezeGame ( GCSettings.SaveMethod, SILENT );
-					}
-				}
-
-				#ifdef HW_RVL
-				if(ShutdownRequested)
-					ShutdownWii();
-				#endif
-
-				// save zoom level
-				SavePrefs(SILENT);
-				break;
+				ConfigRequested = 0;
+				break; // leave emulation loop
 			}
-		}
-	}
+		} // emulation loop
+	} // main loop
 }
 
 void CreateAppPath(char origpath[])
@@ -304,102 +292,10 @@ void CreateAppPath(char origpath[])
 #endif
 }
 
-/****************************************************************************
- * MAIN
- *
- * Steps to Snes9x Emulation :
- *	1. Initialise GC Video
- *	2. Initialise libfreetype (Nice to read something)
- *	3. Set S9xSettings to standard defaults (s9xconfig.h)
- *	4. Allocate Snes9x Memory
- *	5. Allocate APU Memory
- *	6. Set Pixel format to RGB565 for GL Rendering
- *	7. Initialise Snes9x/GC Sound System
- *	8. Initialise Snes9x Graphics subsystem
- *	9. Let's Party!
- ***************************************************************************/
-int
-main(int argc, char *argv[])
+static void * InitThread (void *arg)
 {
-	#ifdef HW_DOL
-	ipl_set_config(6); // disable Qoob modchip
-	#endif
-
-	#ifdef WII_DVD
-	DI_Init();	// first
-	#endif
-
-	#ifdef DEBUG_WII
-	DEBUG_Init(GDBSTUB_DEVICE_USB, 1);	// init debugging
-	//_break();
-	#endif
-
-	InitDeviceThread();
-
-	// Controllers
-	PAD_Init ();
-
-	#ifdef HW_RVL
-	WPAD_Init();
-	// read wiimote accelerometer and IR data
-	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
-	WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
-
-	// Wii Power/Reset buttons
-	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
-	SYS_SetPowerCallback(ShutdownCB);
-	SYS_SetResetCallback(ResetCB);
-	#endif
-
-	// Initialise video
-	InitGCVideo();
-	ResetVideo_Menu (); // change to menu video mode
-
-	// GameCube only - Injected ROM
-	// Before going any further, let's copy any injected ROM image
-	// We'll put it in ARAM for safe storage
-
-	#ifdef HW_DOL
-	// GC Audio RAM (for ROM and backdrop storage)
-	AR_Init (NULL, 0);
-
-	int *romptr = (int *) 0x81000000; // location of injected rom
-
-	if (memcmp ((char *) romptr, "SNESROM0", 8) == 0)
-	{
-		SNESROMSize = romptr[2];
-
-		if(SNESROMSize > (1024*128) && SNESROMSize < (1024*1024*8))
-		{
-			romptr = (int *) 0x81000020;
-			ARAMPut ((char *) romptr, (char *) AR_SNESROM, SNESROMSize);
-		}
-		else // not a valid ROM size
-		{
-			SNESROMSize = 0;
-		}
-	}
-	#endif
-
-	unpackbackdrop();
-
-	// Initialise freetype font system
-	if (FT_Init ())
-	{
-		printf ("Cannot initialise font subsystem!\n");
-		while (1);
-	}
-
-	// Audio
-	AUDIO_Init (NULL);
-
 	// Set defaults
 	DefaultSettings ();
-
-	// store path app was loaded from
-	sprintf(appPath, "snes9x");
-	if(argc > 0 && argv[0] != NULL)
-		CreateAppPath(argv[0]);
 
 	S9xUnmapAllControls ();
 	SetDefaultButtonMap ();
@@ -423,23 +319,121 @@ main(int argc, char *argv[])
 	if (!S9xGraphicsInit ())
 		while (1);
 
-	// Initialize libFAT for SD and USB
-	MountAllFAT();
+	// Check if DVD drive belongs to a Wii
+	SetDVDDriveType();
+
+	S9xSetSoundMute (TRUE);
+	S9xInitSync(); // initialize frame sync
+
+	LWP_JoinThread(mainthread,NULL);
+	return NULL;
+}
+
+/****************************************************************************
+ * MAIN
+ *
+ * Steps to Snes9x Emulation :
+ *	1. Initialise GC Video
+ *	2. Initialise libfreetype (Nice to read something)
+ *	3. Set S9xSettings to standard defaults (s9xconfig.h)
+ *	4. Allocate Snes9x Memory
+ *	5. Allocate APU Memory
+ *	6. Set Pixel format to RGB565 for GL Rendering
+ *	7. Initialise Snes9x/GC Sound System
+ *	8. Initialise Snes9x Graphics subsystem
+ *	9. Let's Party!
+ ***************************************************************************/
+int
+main(int argc, char *argv[])
+{
+	#ifdef HW_DOL
+	ipl_set_config(6); // disable Qoob modchip
+	#endif
+
+	#ifdef HW_RVL
+	DI_Close();
+	DI_Init();	// first
+	#endif
+
+	#ifdef DEBUG_WII
+	DEBUG_Init(GDBSTUB_DEVICE_USB, 1);	// init debugging
+	//_break();
+	#endif
+
+	InitDeviceThread();
+	VIDEO_Init();
+	PAD_Init ();
+
+	#ifdef HW_RVL
+	WPAD_Init();
+	#endif
+
+	InitGCVideo(); // Initialise video
+	ResetVideo_Menu (); // change to menu video mode
+
+	#ifdef HW_RVL
+	// read wiimote accelerometer and IR data
+	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
+	WPAD_SetVRes(WPAD_CHAN_ALL,screenwidth, screenheight);
+
+	// Wii Power/Reset buttons
+	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
+	SYS_SetPowerCallback(ShutdownCB);
+	SYS_SetResetCallback(ResetCB);
+	#endif
+
+	// GameCube only - Injected ROM
+	// Before going any further, let's copy any injected ROM image
+	// We'll put it in ARAM for safe storage
+
+	#ifdef HW_DOL
+	AR_Init (NULL, 0);
+
+	int *romptr = (int *) 0x81000000; // location of injected rom
+
+	if (memcmp ((char *) romptr, "SNESROM0", 8) == 0)
+	{
+		SNESROMSize = romptr[2];
+
+		if(SNESROMSize > (1024*128) && SNESROMSize < (1024*1024*8))
+		{
+			romptr = (int *) 0x81000020;
+			ARAMPut ((char *) romptr, (char *) AR_SNESROM, SNESROMSize);
+		}
+		else // not a valid ROM size
+		{
+			SNESROMSize = 0;
+		}
+	}
+	#endif
 
 	// Initialize DVD subsystem (GameCube only)
 	#ifdef HW_DOL
 	DVD_Init ();
 	#endif
 
-	// Check if DVD drive belongs to a Wii
-	SetDVDDriveType();
+	// store path app was loaded from
+	sprintf(appPath, "snes9x");
+	if(argc > 0 && argv[0] != NULL)
+		CreateAppPath(argv[0]);
 
-	// Load preferences
-	if(!LoadPrefs())
-	{
-		WaitPrompt("Preferences reset - check settings!");
-		selectedMenu = 1; // change to preferences menu
-	}
+	// Initialize libFAT for SD and USB
+	MountAllFAT();
+
+	// Create a thread to do remaining initialization tasks
+	// This allows us to get to the menu faster
+	mainthread=LWP_GetSelf();
+	lwp_t initthread;
+	LWP_CreateThread(&initthread, InitThread, NULL, NULL, 0, 75);
+
+	// Audio
+	AUDIO_Init (NULL);
+
+	// Initialize font system
+	fontSystem = new FreeTypeGX();
+	//fontSystem->setCompatibilityMode(FTGX_COMPATIBILITY_GRRLIB);
+
+	InitGUIThreads();
 
 	// GameCube only - Injected ROM
 	// Everything's been initialized, we can copy our ROM back
@@ -454,10 +448,5 @@ main(int argc, char *argv[])
 	}
 	#endif
 
-	S9xSetSoundMute (TRUE);
-	AudioStart ();
-	S9xInitSync(); // initialize frame sync
-
-	// Emulate
-	emulate ();
+	emulate(); // main loop
 }

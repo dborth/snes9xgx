@@ -16,7 +16,7 @@
 #include <utime.h>
 
 #include "unzip.h"
-#include "menudraw.h"
+#include "menu.h"
 
 #define CASESENSITIVITY (0)
 #define WRITEBUFFERSIZE (1024*256)
@@ -303,7 +303,7 @@ int extractZip(unzFile uf,int opt_extract_without_path,int opt_overwrite,const c
             }
         }
     }
-
+	CancelAction();
     return 0;
 }
 

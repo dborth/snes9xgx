@@ -43,7 +43,7 @@ typedef void (*TFilterMethod)(uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uin
 extern TFilterMethod FilterMethod;
 extern TFilterMethod FilterMethodHiRes;
 
-extern unsigned char filtermem[];
+extern unsigned char * filtermem;
 
 //
 // Prototypes

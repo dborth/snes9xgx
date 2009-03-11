@@ -14,6 +14,7 @@
 #ifndef _SNES9XGX_H_
 #define _SNES9XGX_H_
 
+#include "FreeTypeGX.h"
 #include "snes9x.h"
 #include "filter.h"
 
@@ -37,13 +38,27 @@ enum {
 };
 
 enum {
-	FILE_ROM,
 	FILE_SRAM,
 	FILE_SNAPSHOT,
+	FILE_ROM,
 	FILE_CHEAT,
 	FILE_PREF,
 	FILE_SCREEN
 };
+
+enum
+{
+	CTRL_PAD,
+	CTRL_MOUSE,
+	CTRL_SCOPE,
+	CTRL_JUST,
+	CTRL_PAD2,
+	CTRL_PAD4,
+	CTRL_LENGTH
+};
+
+const char ctrlName[6][20] =
+{ "SNES Controller", "SNES Mouse", "Superscope", "Justifier", "SNES Pad (2)", "SNES Pad (4)" };
 
 struct SGCSettings{
     int		AutoLoad;
@@ -59,26 +74,27 @@ struct SGCSettings{
 	char	smbpwd[20];
 	char	smbshare[20];
 
-    int		Zoom; // 0 - off, 1 - on
     float	ZoomLevel; // zoom amount
     int		VerifySaves;
 	int		render;		// 0 - original, 1 - filtered, 2 - unfiltered
 	int		FilterMethod;		// convert to RenderFilter
-	int		Superscope;
-	int		Mouse;
-	int		Justifier;
+	int		Controller;
 	int		widescreen;	// 0 - 4:3 aspect, 1 - 16:9 aspect
 	int		xshift;		// video output shift
 	int		yshift;
+	int		WiimoteOrientation;
+	int		ExitAction;
+	int		MusicVolume;
+	int		SFXVolume;
 };
 
-void ExitToLoader();
-void Reboot();
+void ExitApp();
 void ShutdownWii();
-void ReloadApp();
 extern struct SGCSettings GCSettings;
 extern int ConfigRequested;
 extern int ShutdownRequested;
+extern int ExitRequested;
 extern char appPath[];
+extern FreeTypeGX *fontSystem;
 
 #endif

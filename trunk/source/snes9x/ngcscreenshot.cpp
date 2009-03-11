@@ -179,7 +179,7 @@
 #include <png.h>
 #include "snes9xGX.h"
 #include "fileop.h"
-#include "filesel.h"
+#include "filebrowser.h"
 
 #include "snes9x.h"
 #include "memmap.h"

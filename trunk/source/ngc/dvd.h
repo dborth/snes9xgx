@@ -25,6 +25,7 @@ int dvd_safe_read (void *dst, unsigned int len, u64 offset);
 void SetDVDDriveType();
 #ifdef HW_DOL
 void dvd_motor_off ();
+void uselessinquiry ();
 #endif
 
 #endif
