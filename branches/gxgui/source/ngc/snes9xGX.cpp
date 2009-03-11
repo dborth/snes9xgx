@@ -222,6 +222,7 @@ emulate ()
 			MainMenu(MENU_GAME);
 
 		AllocGfxMem();
+		SelectFilterMethod();
 
 		ConfigRequested = 0;
 		SwitchAudioMode(0);

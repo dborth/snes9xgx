@@ -4,7 +4,7 @@
  * softdev July 2006
  * crunchy2 May 2007
  * Michniewski 2008
- * Tantric October 2008
+ * Tantric 2008-2009
  *
  * video.cpp
  *
@@ -615,7 +615,7 @@ ResetVideo_Emu ()
 	Mtx44 p;
 
 	int i = -1;
-	if (GCSettings.render == 0 || GCSettings.FilterMethod != FILTER_NONE)	// original render mode or hq2x
+	if (GCSettings.render == 0)	// original render mode
 	{
 		for (i=0; i<4; i++)
 		{
@@ -708,15 +708,18 @@ update_video (int width, int height)
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
 
 		/** Update scaling **/
-		if (GCSettings.FilterMethod != FILTER_NONE)	// hq2x filters
+		if (GCSettings.render == 0)	// original render mode
 		{
-			xscale = vwidth;
-			yscale = vheight;
-		}
-		else if (GCSettings.render == 0)	// original render mode
-		{
-			xscale = 256;
-			yscale = vheight / 2;
+			if (GCSettings.FilterMethod != FILTER_NONE)	// hq2x filters
+			{
+				xscale = vwidth;
+				yscale = vheight;
+			}
+			else
+			{
+				xscale = 256;
+				yscale = vheight / 2;
+			}
 		}
 		else // unfiltered and filtered mode
 		{
@@ -757,7 +760,9 @@ update_video (int width, int height)
 	{
 		FilterMethod ((uint8*) GFX.Screen, EXT_PITCH, (uint8*) filtermem, vwidth*fscale*2, vwidth, vheight);
 		MakeTexture565((char *) filtermem, (char *) texturemem, vwidth*fscale, vheight*fscale);
-	} else {
+	}
+	else
+	{
 		MakeTexture((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
 	}
 

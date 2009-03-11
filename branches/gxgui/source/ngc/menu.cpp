@@ -127,7 +127,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 
 	GuiText titleTxt(title, 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	titleTxt.SetPosition(0,10);
+	titleTxt.SetPosition(0,15);
 	GuiText msgTxt(msg, 22, (GXColor){0, 0, 0, 255});
 	msgTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	msgTxt.SetPosition(0,80);
@@ -346,7 +346,7 @@ ProgressWindow(char *title, char *msg)
 
 	GuiText titleTxt(title, 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	titleTxt.SetPosition(0,10);
+	titleTxt.SetPosition(0,15);
 	GuiText msgTxt(msg, 22, (GXColor){0, 0, 0, 255});
 	msgTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	msgTxt.SetPosition(0,80);
@@ -913,6 +913,8 @@ static int MenuGame()
 	GuiImageData btnCloseOutlineOver(button_close_over_png);
 	GuiImageData btnLargeOutline(button_large_png);
 	GuiImageData btnLargeOutlineOver(button_large_over_png);
+	GuiImageData battery(battery_png);
+	GuiImageData batteryBar(battery_bar_png);
 
 	GuiTrigger trigA;
 	if(GCSettings.WiimoteOrientation)
@@ -1016,17 +1018,42 @@ static int MenuGame()
 	closeBtn.SetEffectGrow();
 
 	#ifdef HW_RVL
-	for(int i=0; i < 4; i++)
+	int i = 0;
+	char txt[3];
+	GuiText * batteryTxt[4];
+	GuiImage * batteryImg[4];
+	GuiImage * batteryBarImg[4];
+	GuiButton * batteryBtn[4];
+
+	for(i=0; i < 4; i++)
 	{
-		if(userInput[i].wpad.err == WPAD_ERR_NONE) // controller connected
-		{
+		if(i == 0)
+			sprintf(txt, "P %d", i+1);
+		else
+			sprintf(txt, "P%d", i+1);
 
-		}
-		else // controller not connected
-		{
+		batteryTxt[i] = new GuiText(txt, 22, (GXColor){255, 255, 255, 255});
+		batteryTxt[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+		batteryImg[i] = new GuiImage(&battery);
+		batteryImg[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+		batteryImg[i]->SetPosition(30, 0);
+		batteryBarImg[i] = new GuiImage(&batteryBar);
+		batteryBarImg[i]->SetTile(4);
+		batteryBarImg[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+		batteryBarImg[i]->SetPosition(34, 0);
 
-		}
+		batteryBtn[i] = new GuiButton(70, 20);
+		batteryBtn[i]->SetLabel(batteryTxt[i]);
+		batteryBtn[i]->SetImage(batteryImg[i]);
+		batteryBtn[i]->SetIcon(batteryBarImg[i]);
+		batteryBtn[i]->SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+		batteryBtn[i]->SetState(STATE_DISABLED);
 	}
+
+	batteryBtn[0]->SetPosition(45, -65);
+	batteryBtn[1]->SetPosition(135, -65);
+	batteryBtn[2]->SetPosition(45, -40);
+	batteryBtn[3]->SetPosition(135, -40);
 	#endif
 
 	guiReady = false;
@@ -1037,6 +1064,13 @@ static int MenuGame()
 	w.Append(&resetBtn);
 	w.Append(&controllerBtn);
 	w.Append(&cheatsBtn);
+
+	#ifdef HW_RVL
+	w.Append(batteryBtn[0]);
+	w.Append(batteryBtn[1]);
+	w.Append(batteryBtn[2]);
+	w.Append(batteryBtn[3]);
+	#endif
 
 	w.Append(&mainmenuBtn);
 	w.Append(&closeBtn);
@@ -1050,6 +1084,12 @@ static int MenuGame()
 		titleTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 35);
 		mainmenuBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
 		bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
+		#ifdef HW_RVL
+		batteryBtn[0]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
+		batteryBtn[1]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
+		batteryBtn[2]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
+		batteryBtn[3]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
+		#endif
 
 		saveBtn.SetEffect(EFFECT_FADE, 15);
 		loadBtn.SetEffect(EFFECT_FADE, 15);
@@ -1064,6 +1104,20 @@ static int MenuGame()
 	while(menu == MENU_NONE)
 	{
 		VIDEO_WaitVSync();
+
+		#ifdef HW_RVL
+		for(i=0; i < 4; i++)
+		{
+			if(WPAD_Probe(i, NULL) == WPAD_ERR_NONE) // controller connected
+			{
+				batteryBtn[i]->SetAlpha(255);
+			}
+			else // controller not connected
+			{
+				batteryBtn[i]->SetAlpha(150);
+			}
+		}
+		#endif
 
 		if(saveBtn.GetState() == STATE_CLICKED)
 		{
@@ -1114,6 +1168,12 @@ static int MenuGame()
 			titleTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
 			mainmenuBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 			bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+			#ifdef HW_RVL
+			batteryBtn[0]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+			batteryBtn[1]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+			batteryBtn[2]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+			batteryBtn[3]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+			#endif
 
 			saveBtn.SetEffect(EFFECT_FADE, -15);
 			loadBtn.SetEffect(EFFECT_FADE, -15);
@@ -1124,6 +1184,16 @@ static int MenuGame()
 			while(bgBottomImg->GetEffect() > 0) usleep(50);
 		}
 	}
+
+	#ifdef HW_RVL
+	for(i=0; i < 4; i++)
+	{
+		delete batteryTxt[i];
+		delete batteryImg[i];
+		delete batteryBarImg[i];
+		delete batteryBtn[i];
+	}
+	#endif
 
 	guiReady = false;
 	mainWindow->Remove(&w);
@@ -1241,12 +1311,17 @@ static int MenuGameSaves(int action)
 	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
+	GuiImageData btnCloseOutline(button_close_png);
+	GuiImageData btnCloseOutlineOver(button_close_over_png);
 
 	GuiTrigger trigA;
 	if(GCSettings.WiimoteOrientation)
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 	else
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiTrigger trigHome;
+	trigHome.SetButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, 0);
 
 	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -1261,6 +1336,20 @@ static int MenuGameSaves(int action)
 	backBtn.SetTrigger(&trigA);
 	backBtn.SetEffectGrow();
 
+	GuiText closeBtnTxt("Close", 22, (GXColor){0, 0, 0, 255});
+	GuiImage closeBtnImg(&btnCloseOutline);
+	GuiImage closeBtnImgOver(&btnCloseOutlineOver);
+	GuiButton closeBtn(btnCloseOutline.GetWidth(), btnCloseOutline.GetHeight());
+	closeBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	closeBtn.SetPosition(-30, 35);
+	closeBtn.SetLabel(&closeBtnTxt);
+	closeBtn.SetImage(&closeBtnImg);
+	closeBtn.SetImageOver(&closeBtnImgOver);
+	closeBtn.SetSoundOver(&btnSoundOver);
+	closeBtn.SetTrigger(&trigA);
+	closeBtn.SetTrigger(&trigHome);
+	closeBtn.SetEffectGrow();
+
 	GuiSaveBrowser saveBrowser(552, 248, &saves, action);
 	saveBrowser.SetPosition(0, 108);
 	saveBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
@@ -1268,6 +1357,7 @@ static int MenuGameSaves(int action)
 	guiReady = false;
 	GuiWindow w(screenwidth, screenheight);
 	w.Append(&backBtn);
+	w.Append(&closeBtn);
 	mainWindow->Append(&saveBrowser);
 	mainWindow->Append(&w);
 	mainWindow->Append(&titleTxt);
@@ -1350,6 +1440,20 @@ static int MenuGameSaves(int action)
 		{
 			menu = MENU_GAME;
 		}
+		else if(closeBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_EXIT;
+
+			bgTopImg->SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
+			closeBtn.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
+			titleTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
+			backBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+			bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+
+			w.SetEffect(EFFECT_FADE, -15);
+
+			while(bgBottomImg->GetEffect() > 0) usleep(50);
+		}
 	}
 
 	for(i=0; i < saves.length; i++)
@@ -1385,12 +1489,17 @@ static int MenuGameCheats()
 	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
+	GuiImageData btnCloseOutline(button_close_png);
+	GuiImageData btnCloseOutlineOver(button_close_over_png);
 
 	GuiTrigger trigA;
 	if(GCSettings.WiimoteOrientation)
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 	else
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	GuiTrigger trigHome;
+	trigHome.SetButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, 0);
 
 	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -1405,6 +1514,20 @@ static int MenuGameCheats()
 	backBtn.SetTrigger(&trigA);
 	backBtn.SetEffectGrow();
 
+	GuiText closeBtnTxt("Close", 22, (GXColor){0, 0, 0, 255});
+	GuiImage closeBtnImg(&btnCloseOutline);
+	GuiImage closeBtnImgOver(&btnCloseOutlineOver);
+	GuiButton closeBtn(btnCloseOutline.GetWidth(), btnCloseOutline.GetHeight());
+	closeBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	closeBtn.SetPosition(-30, 35);
+	closeBtn.SetLabel(&closeBtnTxt);
+	closeBtn.SetImage(&closeBtnImg);
+	closeBtn.SetImageOver(&closeBtnImgOver);
+	closeBtn.SetSoundOver(&btnSoundOver);
+	closeBtn.SetTrigger(&trigA);
+	closeBtn.SetTrigger(&trigHome);
+	closeBtn.SetEffectGrow();
+
 	GuiOptionBrowser optionBrowser(552, 248, &options);
 	optionBrowser.SetPosition(0, 108);
 	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
@@ -1412,6 +1535,7 @@ static int MenuGameCheats()
 	guiReady = false;
 	GuiWindow w(screenwidth, screenheight);
 	w.Append(&backBtn);
+	w.Append(&closeBtn);
 	mainWindow->Append(&optionBrowser);
 	mainWindow->Append(&w);
 	mainWindow->Append(&titleTxt);
@@ -1434,6 +1558,20 @@ static int MenuGameCheats()
 		if(backBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_GAME;
+		}
+		else if(closeBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_EXIT;
+
+			bgTopImg->SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
+			closeBtn.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
+			titleTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
+			backBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+			bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+
+			w.SetEffect(EFFECT_FADE, -15);
+
+			while(bgBottomImg->GetEffect() > 0) usleep(50);
 		}
 	}
 	guiReady = false;
@@ -2454,7 +2592,7 @@ static int MenuSettingsVideo()
 		{
 			case 0:
 				GCSettings.render++;
-				if (GCSettings.render > 2 || GCSettings.FilterMethod != FILTER_NONE)
+				if (GCSettings.render > 2)
 					GCSettings.render = 0;
 				break;
 
@@ -2466,7 +2604,6 @@ static int MenuSettingsVideo()
 				GCSettings.FilterMethod++;
 				if (GCSettings.FilterMethod >= NUM_FILTERS)
 					GCSettings.FilterMethod = 0;
-				SelectFilterMethod();
 				break;
 
 			case 3:
@@ -2952,7 +3089,7 @@ MainMenu (int menu)
 	memTxt = new GuiText(NULL, 22, (GXColor){255, 255, 255, 255});
 	memTxt->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	memTxt->SetPosition(-20, 40);
-	mainWindow->Append(memTxt);
+	//mainWindow->Append(memTxt);
 
 	guiReady = true;
 	ResumeGui();

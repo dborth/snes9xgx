@@ -64,9 +64,6 @@ extern const u32	button_arrow_up_over_png_size;
 extern const u8		button_arrow_down_over_png[];
 extern const u32	button_arrow_down_over_png_size;
 
-extern const u8		screen_position_png[];
-extern const u32	screen_position_png_size;
-
 extern const u8		button_close_png[];
 extern const u32	button_close_png_size;
 
@@ -88,6 +85,9 @@ extern const u32	button_gamesave_over_png_size;
 extern const u8		button_gamesave_blank_png[];
 extern const u32	button_gamesave_blank_png_size;
 
+extern const u8		screen_position_png[];
+extern const u32	screen_position_png_size;
+
 extern const u8		dialogue_box_png[];
 extern const u32	dialogue_box_png_size;
 
@@ -105,6 +105,12 @@ extern const u32	throbber_png_size;
 
 extern const u8		folder_png[];
 extern const u32	folder_png_size;
+
+extern const u8		battery_png[];
+extern const u32	battery_png_size;
+
+extern const u8		battery_bar_png[];
+extern const u32	battery_bar_png_size;
 
 extern const u8		bg_options_png[];
 extern const u32	bg_options_png_size;
