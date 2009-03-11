@@ -3066,9 +3066,10 @@ MainMenu (int menu)
 
 	if(gameScreenTex)
 	{
-		gameScreenImg = new GuiImage(gameScreenTex, screenwidth, screenheight);
+		gameScreenImg = new GuiImage(gameScreenTex2, screenwidth, screenheight);
 		gameScreenImg->SetAlpha(192);
-		gameScreenImg->SetStripe(100);
+		//gameScreenImg->SetStripe(100);
+		gameScreenImg->ColorStripe(30);
 		mainWindow->Append(gameScreenImg);
 	}
 	else
@@ -3188,5 +3189,7 @@ MainMenu (int menu)
 	{
 		free(gameScreenTex);
 		gameScreenTex = NULL;
+		free(gameScreenTex2);
+		gameScreenTex2 = NULL;
 	}
 }
