@@ -224,7 +224,8 @@ LoadMCFile (char *buf, int slot, char *filename, bool silent)
 
 		if(CardError)
 		{
-			ErrorPrompt("Unable to open file!");
+			if(!silent)
+				ErrorPrompt("Unable to open file!");
 		}
 		else
 		{
