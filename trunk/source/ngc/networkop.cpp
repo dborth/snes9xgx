@@ -202,7 +202,7 @@ void InitializeNetwork(bool silent)
 void CloseShare()
 {
 	if(networkShareInit)
-		smbClose();
+		smbClose("smb");
 	networkShareInit = false;
 	networkInit = false; // trigger a network reinit
 }

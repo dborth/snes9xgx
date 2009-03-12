@@ -9,6 +9,7 @@
  * Audio is fixed to 32Khz/16bit/Stereo
  ***************************************************************************/
 
-void InitGCAudio ();
+void InitAudio ();
 void AudioStart ();
 void SwitchAudioMode(int mode);
+void ShutdownAudio();

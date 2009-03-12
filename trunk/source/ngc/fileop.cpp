@@ -361,8 +361,8 @@ ParseDirectory()
 void
 AllocSaveBuffer ()
 {
-	if (savebuffer != NULL)
-		free(savebuffer);
+	while(savebuffer != NULL) // save buffer is in use
+		usleep(50); // wait for it to be free
 
 	savebuffer = (unsigned char *) memalign(32, SAVEBUFFERSIZE);
 	memset (savebuffer, 0, SAVEBUFFERSIZE);

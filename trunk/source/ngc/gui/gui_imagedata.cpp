@@ -32,8 +32,9 @@ GuiImageData::GuiImageData(const u8 * img)
 		height = imgProp.imgHeight;
 		data = (u8 *)memalign (32, imgProp.imgWidth * imgProp.imgHeight * 4);
 		PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, data, 255);
+		int len = imgProp.imgWidth * imgProp.imgHeight * 4;
+		DCFlushRange(data, len+len%32);
 		PNGU_ReleaseImageContext (ctx);
-		DCFlushRange (data, imgProp.imgWidth * imgProp.imgHeight * 4);
 	}
 }
 

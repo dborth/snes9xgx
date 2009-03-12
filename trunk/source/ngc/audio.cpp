@@ -86,10 +86,10 @@ GCMixSamples ()
 }
 
 /****************************************************************************
- * InitGCAudio
+ * InitAudio
  ***************************************************************************/
 void
-InitGCAudio ()
+InitAudio ()
 {
 	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 150);
 }
@@ -115,6 +115,16 @@ SwitchAudioMode(int mode)
 		ASND_Pause(0);
 		#endif
 	}
+}
+
+void ShutdownAudio()
+{
+	#ifndef NO_SOUND
+	ASND_Pause(1);
+	ASND_End();
+	#endif
+	AUDIO_StopDMA();
+	AUDIO_RegisterDMACallback(NULL);
 }
 
 /****************************************************************************

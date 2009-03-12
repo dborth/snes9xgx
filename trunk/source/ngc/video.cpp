@@ -410,9 +410,6 @@ StartGX ()
 
 void StopGX()
 {
-	free(MEM_K1_TO_K0(xfb[0])); xfb[0] = NULL;
-	free(MEM_K1_TO_K0(xfb[1])); xfb[1] = NULL;
-
 	GX_AbortFrame();
 	GX_Flush();
 

@@ -126,6 +126,7 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 {
 	int offset = 0; // bytes written (actual)
 	int woffset = 0; // bytes written (expected)
+	int imgSize = 0; // image screenshot bytes written
 	char msg[100];
 
 	if(method == METHOD_AUTO)
@@ -196,17 +197,16 @@ done:
 
 		if (pngContext != NULL)
 		{
-			PNGU_EncodeFromGXTexture(pngContext, 640, 480, gameScreenTex, 0);
+			imgSize = PNGU_EncodeFromGXTexture(pngContext, 640, 480, gameScreenTex, 0);
 			PNGU_ReleaseImageContext(pngContext);
 		}
 
-		int size = FindBufferSize((char *)savebuffer, 128*1024);
-		if(size > 0)
+		if(imgSize > 0)
 		{
 			char screenpath[1024];
 			filepath[strlen(filepath)-4] = 0;
 			sprintf(screenpath, "%s.png", filepath);
-			SaveFile(screenpath, size, method, silent);
+			SaveFile(screenpath, imgSize, method, silent);
 		}
 
 		FreeSaveBuffer ();

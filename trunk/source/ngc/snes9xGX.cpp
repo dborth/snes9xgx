@@ -4,7 +4,7 @@
  * softdev July 2006
  * crunchy2 May 2007-July 2007
  * Michniewski 2008
- * Tantric September 2008
+ * Tantric 2008-2009
  *
  * snes9xGX.cpp
  *
@@ -78,15 +78,16 @@ extern unsigned int timediffallowed;
 
 void ExitCleanup()
 {
+#ifdef HW_RVL
+	ShutoffRumble();
+#endif
+	ShutdownAudio();
 	StopGX();
 
 	LWP_SuspendThread (devicethread);
 	UnmountAllFAT();
 
 #ifdef HW_RVL
-	ShutoffRumble();
-	WPAD_Shutdown();
-	CloseShare();
 	DI_Close();
 #endif
 }
@@ -431,7 +432,7 @@ main(int argc, char *argv[])
 
 	// Initialize font system
 	fontSystem = new FreeTypeGX();
-	//fontSystem->setCompatibilityMode(FTGX_COMPATIBILITY_GRRLIB);
+	fontSystem->setCompatibilityMode(FTGX_COMPATIBILITY_DEFAULT_TEVOP_GX_PASSCLR | FTGX_COMPATIBILITY_DEFAULT_VTXDESC_GX_NONE);
 
 	InitGUIThreads();
 

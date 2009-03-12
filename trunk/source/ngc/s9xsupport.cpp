@@ -135,7 +135,7 @@ S9xOpenSoundDevice (int mode, bool8 stereo, int buffer_size)
   so.sound_switch = 255;
   S9xSetPlaybackRate (so.playback_rate);
 
-  InitGCAudio ();
+  InitAudio ();
   return TRUE;
 }
 
