@@ -295,11 +295,6 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			{
 				// move list up by 1
 				listOffset -= 2;
-
-				if(selectedItem == 0)
-					selectedItem = SAVELISTSIZE-2;
-				else
-					selectedItem = SAVELISTSIZE-1;
 			}
 		}
 		else

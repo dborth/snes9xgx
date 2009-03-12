@@ -1220,85 +1220,6 @@ static int MenuGameSaves(int action)
 	if(!ChangeInterface(method, NOTSILENT))
 		return MENU_GAME;
 
-	memset(&saves, 0, sizeof(saves));
-
-	if(method == METHOD_MC_SLOTA)
-	{
-		ParseMCDirectory(CARD_SLOTA);
-	}
-	else if(method == METHOD_MC_SLOTB)
-	{
-		ParseMCDirectory(CARD_SLOTB);
-	}
-	else
-	{
-		strncpy(browser.dir, GCSettings.SaveFolder, 200);
-		ParseDirectory();
-	}
-
-	if(browser.numEntries <= 0)
-		return MENU_GAME;
-
-	for(i=0; i < browser.numEntries; i++)
-	{
-		len = strlen(Memory.ROMFilename);
-		len2 = strlen(browserList[i].filename);
-
-		// find matching files
-		if(len2 > 5 && strncmp(browserList[i].filename, Memory.ROMFilename, len) == 0)
-		{
-			if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
-				saves.type[j] = FILE_SRAM;
-			else if(strncmp(&browserList[i].filename[len2-4], ".frz", 4) == 0)
-				saves.type[j] = FILE_SNAPSHOT;
-			else
-				saves.type[j] = -1;
-
-			if(saves.type[j] != -1)
-			{
-				int n = -1;
-				char tmp[300];
-				strncpy(tmp, browserList[i].filename, 255);
-				tmp[len2-4] = 0;
-
-				if(len2 - len == 7)
-					n = atoi(&tmp[len2-5]);
-				else if(len2 - len == 6)
-					n = atoi(&tmp[len2-6]);
-
-				if(n > 0 && n < 100)
-					saves.files[saves.type[j]][n] = 1;
-
-				strncpy(saves.filename[j], browserList[i].filename, 255);
-
-				if(method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
-				{
-					if(saves.type[j] == FILE_SNAPSHOT)
-					{
-						char scrfile[1024];
-						sprintf(scrfile, "%s/%s.png", GCSettings.SaveFolder, tmp);
-
-						AllocSaveBuffer();
-						if(LoadFile(scrfile, GCSettings.SaveMethod, SILENT))
-							saves.previewImg[j] = new GuiImageData(savebuffer);
-						FreeSaveBuffer();
-					}
-					strftime(saves.date[j], 20, "%a %b %d", &browserList[j].mtime);
-					strftime(saves.time[j], 10, "%I:%M %p", &browserList[j].mtime);
-				}
-				j++;
-			}
-		}
-	}
-
-	saves.length = j;
-
-	if(saves.length == 0 && action == 0)
-	{
-		InfoPrompt("No game saves found.");
-		return MENU_GAME;
-	}
-
 	GuiText titleTxt(NULL, 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
@@ -1350,17 +1271,98 @@ static int MenuGameSaves(int action)
 	closeBtn.SetTrigger(&trigHome);
 	closeBtn.SetEffectGrow();
 
+	guiReady = false;
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&backBtn);
+	w.Append(&closeBtn);
+	mainWindow->Append(&w);
+	mainWindow->Append(&titleTxt);
+	guiReady = true;
+
+	memset(&saves, 0, sizeof(saves));
+
+	if(method == METHOD_MC_SLOTA)
+	{
+		ParseMCDirectory(CARD_SLOTA);
+	}
+	else if(method == METHOD_MC_SLOTB)
+	{
+		ParseMCDirectory(CARD_SLOTB);
+	}
+	else
+	{
+		strncpy(browser.dir, GCSettings.SaveFolder, 200);
+		ParseDirectory();
+	}
+
+	for(i=0; i < browser.numEntries; i++)
+	{
+		len = strlen(Memory.ROMFilename);
+		len2 = strlen(browserList[i].filename);
+
+		// find matching files
+		if(len2 > 5 && strncmp(browserList[i].filename, Memory.ROMFilename, len) == 0)
+		{
+			if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
+				saves.type[j] = FILE_SRAM;
+			else if(strncmp(&browserList[i].filename[len2-4], ".frz", 4) == 0)
+				saves.type[j] = FILE_SNAPSHOT;
+			else
+				saves.type[j] = -1;
+
+			if(saves.type[j] != -1)
+			{
+				int n = -1;
+				char tmp[300];
+				strncpy(tmp, browserList[i].filename, 255);
+				tmp[len2-4] = 0;
+
+				if(len2 - len == 7)
+					n = atoi(&tmp[len2-5]);
+				else if(len2 - len == 6)
+					n = atoi(&tmp[len2-6]);
+
+				if(n > 0 && n < 100)
+					saves.files[saves.type[j]][n] = 1;
+
+				strncpy(saves.filename[j], browserList[i].filename, 255);
+
+				if(method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
+				{
+					if(saves.type[j] == FILE_SNAPSHOT)
+					{
+						char scrfile[1024];
+						sprintf(scrfile, "%s/%s.png", GCSettings.SaveFolder, tmp);
+
+						AllocSaveBuffer();
+						if(LoadFile(scrfile, GCSettings.SaveMethod, SILENT))
+						{
+							saves.previewImg[j] = new GuiImageData(savebuffer);
+						}
+						FreeSaveBuffer();
+					}
+					strftime(saves.date[j], 20, "%a %b %d", &browserList[j].mtime);
+					strftime(saves.time[j], 10, "%I:%M %p", &browserList[j].mtime);
+				}
+				j++;
+			}
+		}
+	}
+
+	saves.length = j;
+
+	if(saves.length == 0 && action == 0)
+	{
+		InfoPrompt("No game saves found.");
+		menu = MENU_GAME;
+	}
+
 	GuiSaveBrowser saveBrowser(552, 248, &saves, action);
 	saveBrowser.SetPosition(0, 108);
 	saveBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 
 	guiReady = false;
-	GuiWindow w(screenwidth, screenheight);
-	w.Append(&backBtn);
-	w.Append(&closeBtn);
 	mainWindow->Append(&saveBrowser);
-	mainWindow->Append(&w);
-	mainWindow->Append(&titleTxt);
 	guiReady = true;
 
 	while(menu == MENU_NONE)
@@ -3091,7 +3093,7 @@ MainMenu (int menu)
 	memTxt = new GuiText(NULL, 22, (GXColor){255, 255, 255, 255});
 	memTxt->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	memTxt->SetPosition(-20, 40);
-	//mainWindow->Append(memTxt);
+	mainWindow->Append(memTxt);
 
 	guiReady = true;
 	ResumeGui();

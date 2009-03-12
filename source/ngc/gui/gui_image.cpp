@@ -57,7 +57,8 @@ GuiImage::GuiImage(int w, int h, GXColor c)
 			this->SetPixel(x, y, c);
 		}
 	}
-	DCFlushRange(image, w * h * 4);
+	int len = w*h*4;
+	DCFlushRange(image, len+len%32);
 }
 
 /**
