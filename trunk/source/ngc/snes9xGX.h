@@ -17,6 +17,7 @@
 #include "FreeTypeGX.h"
 #include "snes9x.h"
 #include "filter.h"
+#include "filelist.h"
 
 #define APPNAME 		"Snes9x GX"
 #define APPVERSION 		"009"

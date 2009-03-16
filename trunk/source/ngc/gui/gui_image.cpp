@@ -19,7 +19,7 @@ GuiImage::GuiImage(GuiImageData * img)
 	width = img->GetWidth();
 	height = img->GetHeight();
 	imageangle = 0;
-	tile = 0;
+	tile = -1;
 	stripe = 0;
 	imgType = IMAGE_DATA;
 }
@@ -30,7 +30,7 @@ GuiImage::GuiImage(u8 * img, int w, int h)
 	width = w;
 	height = h;
 	imageangle = 0;
-	tile = 0;
+	tile = -1;
 	stripe = 0;
 	imgType = IMAGE_TEXTURE;
 }
@@ -41,7 +41,7 @@ GuiImage::GuiImage(int w, int h, GXColor c)
 	width = w;
 	height = h;
 	imageangle = 0;
-	tile = 0;
+	tile = -1;
 	stripe = 0;
 	imgType = IMAGE_COLOR;
 
@@ -191,7 +191,7 @@ void GuiImage::ColorStripe(int shift)
  */
 void GuiImage::Draw()
 {
-	if(!image || !this->IsVisible())
+	if(!image || !this->IsVisible() || tile == 0)
 		return;
 
 	float currScale = this->GetScale();

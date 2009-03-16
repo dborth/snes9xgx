@@ -163,6 +163,8 @@ GuiKeyboard::GuiKeyboard(char * t)
 			keyImg[i][j] = new GuiImage(key);
 			keyImgOver[i][j] = new GuiImage(keyOver);
 			keyTxt[i][j] = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
+			keyTxt[i][j]->SetAlignment(ALIGN_CENTRE, ALIGN_BOTTOM);
+			keyTxt[i][j]->SetPosition(0, -10);
 			keyBtn[i][j] = new GuiButton(key->GetWidth(), key->GetHeight());
 			keyBtn[i][j]->SetImage(keyImg[i][j]);
 			keyBtn[i][j]->SetImageOver(keyImgOver[i][j]);

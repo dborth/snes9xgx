@@ -31,6 +31,7 @@
 #include "filter.h"
 #include "filelist.h"
 #include "audio.h"
+#include "input.h"
 
 /*** Snes9x GFX Buffer ***/
 #define SNES9XGFX_SIZE 		EXT_PITCH*EXT_HEIGHT
@@ -425,10 +426,28 @@ void StopGX()
 static void
 UpdatePadsCB ()
 {
-#ifdef HW_RVL
+	#ifdef HW_RVL
 	WPAD_ScanPads();
-#endif
+	#endif
 	PAD_ScanPads();
+
+	for(int i=3; i >= 0; i--)
+	{
+		#ifdef HW_RVL
+		memcpy(&userInput[i].wpad, WPAD_Data(i), sizeof(WPADData));
+		#endif
+
+		userInput[i].chan = i;
+		userInput[i].pad.btns_d = PAD_ButtonsDown(i);
+		userInput[i].pad.btns_u = PAD_ButtonsUp(i);
+		userInput[i].pad.btns_h = PAD_ButtonsHeld(i);
+		userInput[i].pad.stickX = PAD_StickX(i);
+		userInput[i].pad.stickY = PAD_StickY(i);
+		userInput[i].pad.substickX = PAD_SubStickX(i);
+		userInput[i].pad.substickY = PAD_SubStickY(i);
+		userInput[i].pad.triggerL = PAD_TriggerL(i);
+		userInput[i].pad.triggerR = PAD_TriggerR(i);
+	}
 }
 
 /****************************************************************************

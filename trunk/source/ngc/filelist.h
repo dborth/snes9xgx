@@ -22,6 +22,12 @@ extern const u32	bg_music_ogg_size;
 extern const u8		button_over_pcm[];
 extern const u32	button_over_pcm_size;
 
+extern const u8		logo_png[];
+extern const u32	logo_png_size;
+
+extern const u8		logo_over_png[];
+extern const u32	logo_over_png_size;
+
 extern const u8		bg_top_png[];
 extern const u32	bg_top_png_size;
 
@@ -91,6 +97,9 @@ extern const u32	screen_position_png_size;
 extern const u8		dialogue_box_png[];
 extern const u32	dialogue_box_png_size;
 
+extern const u8		credits_box_png[];
+extern const u32	credits_box_png_size;
+
 extern const u8		progressbar_png[];
 extern const u32	progressbar_png_size;
 
@@ -108,6 +117,9 @@ extern const u32	folder_png_size;
 
 extern const u8		battery_png[];
 extern const u32	battery_png_size;
+
+extern const u8		battery_red_png[];
+extern const u32	battery_red_png_size;
 
 extern const u8		battery_bar_png[];
 extern const u32	battery_bar_png_size;

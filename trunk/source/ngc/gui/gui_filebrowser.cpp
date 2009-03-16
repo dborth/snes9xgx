@@ -182,6 +182,8 @@ void GuiFileBrowser::Draw()
 	arrowUpBtn->Draw();
 	arrowDownBtn->Draw();
 	scrollbarBoxBtn->Draw();
+
+	this->UpdateEffects();
 }
 
 void GuiFileBrowser::Update(GuiTrigger * t)
