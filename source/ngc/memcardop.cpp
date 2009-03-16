@@ -335,8 +335,7 @@ SaveMCFile (char *buf, int slot, char *filename, int datasize, bool silent)
 		while (bytesleft > 0)
 		{
 			CardError =
-				CARD_Write (&CardFile, buf + byteswritten,
-							SectorSize, byteswritten);
+				CARD_Write (&CardFile, buf + byteswritten, SectorSize, byteswritten);
 
 			if(CardError)
 			{

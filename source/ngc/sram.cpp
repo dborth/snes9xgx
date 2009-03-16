@@ -174,6 +174,12 @@ LoadSRAM (char * filepath, int method, bool silent)
 bool
 LoadSRAMAuto (int method, bool silent)
 {
+	if(method == METHOD_AUTO)
+		method = autoSaveMethod(silent);
+
+	if(method == METHOD_AUTO)
+		return false;
+
 	char filepath[1024];
 
 	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
@@ -227,11 +233,16 @@ SaveSRAM (char * filepath, int method, bool silent)
 bool
 SaveSRAMAuto (int method, bool silent)
 {
+	if(method == METHOD_AUTO)
+		method = autoSaveMethod(silent);
+
+	if(method == METHOD_AUTO)
+		return false;
+
 	char filepath[1024];
 
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
-		sprintf(filepath, "%s Auto.srm", Memory.ROMFilename);
-	else
-		sprintf(filepath, "%s/%s Auto.srm", GCSettings.SaveFolder, Memory.ROMFilename);
+	if(!MakeFilePath(filepath, FILE_SRAM, method, Memory.ROMFilename, 0))
+		return false;
+
 	return SaveSRAM(filepath, method, silent);
 }

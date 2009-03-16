@@ -559,6 +559,9 @@ u32 LoadFile(char * filepath, int method, bool silent)
 u32
 SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 {
+	if(datasize == 0)
+		return 0;
+
 	u32 written = 0;
 
 	if(!ChangeInterface(method, silent))
@@ -566,17 +569,14 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 
 	ShowAction("Saving...");
 
-	switch(method)
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
 	{
-		case METHOD_MC_SLOTA:
-			return SaveMCFile (buffer, CARD_SLOTA, filepath, datasize, silent);
-			break;
-		case METHOD_MC_SLOTB:
-			return SaveMCFile (buffer, CARD_SLOTB, filepath, datasize, silent);
-			break;
+		if(method == METHOD_MC_SLOTA)
+			written = SaveMCFile (buffer, CARD_SLOTA, filepath, datasize, silent);
+		else
+			written = SaveMCFile (buffer, CARD_SLOTB, filepath, datasize, silent);
 	}
-
-	if (datasize)
+	else
     {
 		// stop checking if devices were removed/inserted
 		// since we're saving a file
@@ -595,15 +595,16 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 			fclose (file);
 		}
 
-		if(!written && !silent)
-		{
+		if(!written)
 			unmountRequired[method] = true;
-			ErrorPrompt("Error saving file!");
-		}
 
 		// go back to checking if devices were inserted/removed
 		LWP_ResumeThread (devicethread);
     }
+
+	if(!written && !silent)
+		ErrorPrompt("Error saving file!");
+
 	CancelAction();
     return written;
 }
