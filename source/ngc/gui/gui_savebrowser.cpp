@@ -212,6 +212,8 @@ void GuiSaveBrowser::Draw()
 	arrowUpBtn->Draw();
 	arrowDownBtn->Draw();
 	scrollbarBoxBtn->Draw();
+
+	this->UpdateEffects();
 }
 
 void GuiSaveBrowser::Update(GuiTrigger * t)

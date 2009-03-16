@@ -4,7 +4,7 @@
  * softdev July 2006
  * crunchy2 May-June 2007
  * Michniewski 2008
- * Tantric September 2008
+ * Tantric 2008-2009
  *
  * input.cpp
  *
@@ -31,8 +31,10 @@
 #include "menu.h"
 #include "video.h"
 #include "input.h"
+#include "gui/gui.h"
 
 int rumbleRequest[4] = {0,0,0,0};
+GuiTrigger userInput[4];
 
 #ifdef HW_RVL
 static int rumbleCount[4] = {0,0,0,0};

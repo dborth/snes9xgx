@@ -331,8 +331,17 @@ ParseDirectory()
 			memset(&(browserList[entryNum]), 0, sizeof(BROWSERENTRY)); // clear the new entry
 
 			strncpy(browserList[entryNum].filename, filename, MAXJOLIET);
-			StripExt(tmpname, filename); // hide file extension
-			strncpy(browserList[entryNum].displayname, tmpname, MAXDISPLAY);	// crop name for display
+
+			if(strcmp(filename,"..") == 0)
+			{
+				sprintf(browserList[entryNum].displayname, "Up One Level");
+			}
+			else
+			{
+				StripExt(tmpname, filename); // hide file extension
+				strncpy(browserList[entryNum].displayname, tmpname, MAXDISPLAY);	// crop name for display
+			}
+
 			browserList[entryNum].length = filestat.st_size;
 			timeinfo = localtime (&filestat.st_mtime);
 			memcpy(&browserList[entryNum].mtime, timeinfo, sizeof(tm));

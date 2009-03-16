@@ -145,14 +145,16 @@ void GuiButton::Update(GuiTrigger * t)
 
 	#ifdef HW_RVL
 	// cursor
-	if(t->wpad.ir.valid && this->IsSelectable())
+	if(t->wpad.ir.valid)
 	{
 		if(this->IsInside(t->wpad.ir.x, t->wpad.ir.y))
 		{
 			if(state == STATE_DEFAULT) // we weren't on the button before!
 			{
 				state = STATE_SELECTED;
-				rumbleRequest[t->chan] = 1;
+
+				if(this->Rumble())
+					rumbleRequest[t->chan] = 1;
 
 				if(soundOver)
 					soundOver->Play();

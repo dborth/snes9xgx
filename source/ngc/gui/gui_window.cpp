@@ -120,6 +120,17 @@ void GuiWindow::SetState(int s)
 	}
 }
 
+void GuiWindow::SetVisible(bool v)
+{
+	visible = v;
+
+	for (u8 i = 0; i < _elements.size(); i++)
+	{
+		try { _elements.at(i)->SetVisible(v); }
+		catch (exception& e) { }
+	}
+}
+
 void GuiWindow::SetFocus(int f)
 {
 	focus = f;

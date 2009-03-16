@@ -17,7 +17,6 @@
 #include <string.h>
 #include <vector>
 #include <math.h>
-#include <wiiuse/wpad.h>
 #include <asndlib.h>
 #include "pngu/pngu.h"
 #include "FreeTypeGX.h"
@@ -29,26 +28,12 @@
 #include "menu.h"
 #include "oggplayer.h"
 
-#define PI 3.14159265f
-#define PADCAL 50
 #define SCROLL_INITIAL_DELAY 20
 #define SCROLL_LOOP_DELAY 3
 #define PAGESIZE 8
 #define SAVELISTSIZE 6
 
 typedef void (*UpdateCallback)(void * e);
-
-typedef struct _paddata {
-	u16 btns_d;
-	u16 btns_u;
-	u16 btns_h;
-	s8 stickX;
-	s8 stickY;
-	s8 substickX;
-	s8 substickY;
-	u8 triggerL;
-	u8 triggerR;
-} PADData;
 
 enum
 {
@@ -66,13 +51,6 @@ enum
 	STATE_SELECTED,
 	STATE_CLICKED,
 	STATE_DISABLED
-};
-
-enum
-{
-	TRIGGER_SIMPLE,
-	TRIGGER_BUTTON_ONLY,
-	TRIGGER_BUTTON_ONLY_IN_FOCUS
 };
 
 enum
@@ -116,26 +94,6 @@ class GuiSound
 		s32 volume;
 };
 
-class GuiTrigger
-{
-	public:
-		GuiTrigger();
-		~GuiTrigger();
-		void SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
-		void SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
-		void SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
-		s8 WPAD_Stick(u8 right, int axis);
-		bool Left();
-		bool Right();
-		bool Up();
-		bool Down();
-
-		u8 type;
-		s32 chan;
-		WPADData wpad;
-		PADData pad;
-};
-
 class GuiElement
 {
 	public:
@@ -153,13 +111,14 @@ class GuiElement
 		void SetSelectable(bool s);
 		void SetClickable(bool c);
 		int GetState();
-		void SetVisible(bool v);
 		void SetAlpha(int a);
 		int GetAlpha();
 		void SetScale(float s);
 		float GetScale();
 		void SetTrigger(GuiTrigger * t);
 		void SetTrigger(u8 i, GuiTrigger * t);
+		bool Rumble();
+		void SetRumble(bool r);
 		void SetEffect(int e, int a, int t=0);
 		void SetEffectOnOver(int e, int a, int t=0);
 		void SetEffectGrow();
@@ -169,6 +128,7 @@ class GuiElement
 		void UpdateEffects();
 		void SetUpdateCallback(UpdateCallback u);
 		int IsFocused();
+		virtual void SetVisible(bool v);
 		virtual void SetFocus(int f);
 		virtual void SetState(int s);
 		virtual void ResetState();
@@ -189,6 +149,7 @@ class GuiElement
 		f32 scale;
 		int alphaDyn;
 		f32 scaleDyn;
+		bool rumble;
 		int effects;
 		int effectAmount;
 		int effectTarget;
@@ -235,6 +196,7 @@ class GuiWindow : public GuiElement
 		//!Returns the size of the list of elements.
 		//!\return The size of the current elementlist.
 		u32 GetSize();
+		void SetVisible(bool v);
 		void ResetState();
 		void SetState(int s);
 		int GetSelected();
@@ -295,9 +257,12 @@ class GuiText : public GuiElement
 {
 	public:
 		GuiText(const char * t, int s, GXColor c);
+		GuiText(const char * t);
 		~GuiText();
 		void SetText(const char * t);
-		void SetSize(int s);
+		void SetPresets(int sz, GXColor c, int w, u16 s, int h, int v);
+		void SetFontSize(int s);
+		void SetMaxWidth(int w);
 		void SetColor(GXColor c);
 		void SetStyle(u16 s);
 		void SetAlignment(int hor, int vert);
@@ -305,6 +270,7 @@ class GuiText : public GuiElement
 	protected:
 		wchar_t* text;
 		int size;
+		int maxWidth;
 		u16 style;
 		GXColor color;
 };

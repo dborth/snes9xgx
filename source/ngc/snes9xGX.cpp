@@ -432,6 +432,7 @@ main(int argc, char *argv[])
 
 	// Initialize font system
 	fontSystem = new FreeTypeGX();
+	fontSystem->loadFont(font_ttf, font_ttf_size, 0);
 	fontSystem->setCompatibilityMode(FTGX_COMPATIBILITY_DEFAULT_TEVOP_GX_PASSCLR | FTGX_COMPATIBILITY_DEFAULT_VTXDESC_GX_NONE);
 
 	InitGUIThreads();
