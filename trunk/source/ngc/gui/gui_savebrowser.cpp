@@ -111,7 +111,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 		saveBtn[i]->SetImageOver(saveBgOverImg[i]);
 		saveBtn[i]->SetIcon(savePreviewImg[i]);
 		saveBtn[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
-		saveBtn[i]->SetPosition(247*(i % 2),87*(i/2));
+		saveBtn[i]->SetPosition(257*(i % 2),87*(i/2));
 		saveBtn[i]->SetTrigger(trigA);
 		saveBtn[i]->SetState(STATE_DISABLED);
 		saveBtn[i]->SetEffectGrow();
@@ -347,10 +347,11 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 
 			len = strlen(saves->filename[listOffset+i]);
 			if(len > 10 &&
-				saves->filename[listOffset+i][len-8] == 'A' &&
+				((saves->filename[listOffset+i][len-8] == 'A' &&
 				saves->filename[listOffset+i][len-7] == 'u' &&
 				saves->filename[listOffset+i][len-6] == 't' &&
-				saves->filename[listOffset+i][len-5] == 'o'
+				saves->filename[listOffset+i][len-5] == 'o') ||
+				saves->filename[listOffset+i][len-5] == '0')
 				)
 			{
 				strcat(savetext, " (Auto)");

@@ -190,7 +190,7 @@ int UpdateDirName(int method)
 	}
 }
 
-bool MakeFilePath(char filepath[], int type, int method)
+bool MakeFilePath(char filepath[], int type, int method, char * filename, int filenum)
 {
 	char file[512];
 	char folder[1024];
@@ -216,11 +216,49 @@ bool MakeFilePath(char filepath[], int type, int method)
 		{
 			case FILE_SRAM:
 				sprintf(folder, GCSettings.SaveFolder);
-				sprintf(file, "%s.srm", Memory.ROMFilename);
+
+				if(filenum >= 0)
+				{
+					if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+					{
+						filename[26] = 0; // truncate filename
+						sprintf(file, "%s%i.srm", filename, filenum);
+					}
+					else
+					{
+						if(filenum == 0)
+							sprintf(file, "%s Auto.srm", filename);
+						else
+							sprintf(file, "%s %i.srm", filename, filenum);
+					}
+				}
+				else
+				{
+					sprintf(file, "%s.srm", filename);
+				}
 				break;
 			case FILE_SNAPSHOT:
 				sprintf(folder, GCSettings.SaveFolder);
-				sprintf(file, "%s.frz", Memory.ROMFilename);
+
+				if(filenum >= 0)
+				{
+					if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+					{
+						filename[26] = 0; // truncate filename
+						sprintf(file, "%s%i.frz", filename, filenum);
+					}
+					else
+					{
+						if(filenum == 0)
+							sprintf(file, "%s Auto.frz", filename);
+						else
+							sprintf(file, "%s %i.frz", filename, filenum);
+					}
+				}
+				else
+				{
+					sprintf(file, "%s.frz", filename);
+				}
 				break;
 			case FILE_CHEAT:
 				sprintf(folder, GCSettings.CheatFolder);
@@ -247,7 +285,7 @@ bool MakeFilePath(char filepath[], int type, int method)
 				break;
 		}
 	}
-	strcpy(filepath, temppath);
+	strncpy(filepath, temppath, MAXPATHLEN);
 	return true;
 }
 

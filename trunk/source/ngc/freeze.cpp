@@ -166,7 +166,7 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 
 		if(err!=Z_OK)
 		{
-			sprintf (msg, "zip error %s ",zError(err));
+			sprintf (msg, "Zip error %s",zError(err));
 			ErrorPrompt(msg);
 			goto done;
 		}
@@ -224,6 +224,12 @@ done:
 int
 NGCFreezeGameAuto (int method, bool silent)
 {
+	if(method == METHOD_AUTO)
+		method = autoSaveMethod(silent);
+
+	if(method == METHOD_AUTO)
+		return false;
+
 	char filepath[1024];
 
 	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
@@ -316,7 +322,7 @@ NGCUnfreezeGame (char * filepath, int method, bool silent)
 
 			if ( err!=Z_OK )
 			{
-				sprintf (msg, "Unzip error %s ",zError(err));
+				sprintf (msg, "Unzip error %s",zError(err));
 				ErrorPrompt(msg);
 			}
 			else if ( DestBuffSize != decompressedsize )
@@ -351,12 +357,16 @@ NGCUnfreezeGame (char * filepath, int method, bool silent)
 int
 NGCUnfreezeGameAuto (int method, bool silent)
 {
+	if(method == METHOD_AUTO)
+		method = autoSaveMethod(silent);
+
+	if(method == METHOD_AUTO)
+		return false;
+
 	char filepath[1024];
 
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
-		sprintf(filepath, "%s Auto.frz", Memory.ROMFilename);
-	else
-		sprintf(filepath, "%s/%s Auto.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+	if(!MakeFilePath(filepath, FILE_SNAPSHOT, method, Memory.ROMFilename, 0))
+		return false;
 
 	return NGCUnfreezeGame(filepath, method, silent);
 }

@@ -484,14 +484,14 @@ void AutoSave()
 	else if (GCSettings.AutoSave == 2)
 	{
 		if (WindowPrompt("Save", "Save Snapshot?", "Save", "Don't Save") )
-			NGCFreezeGameAuto(GCSettings.SaveMethod, SILENT);
+			NGCFreezeGameAuto(GCSettings.SaveMethod, NOTSILENT);
 	}
 	else if (GCSettings.AutoSave == 3)
 	{
 		if (WindowPrompt("Save", "Save SRAM and Snapshot?", "Save", "Don't Save") )
 		{
-			SaveSRAMAuto(GCSettings.SaveMethod, SILENT);
-			NGCFreezeGameAuto(GCSettings.SaveMethod, SILENT);
+			SaveSRAMAuto(GCSettings.SaveMethod, NOTSILENT);
+			NGCFreezeGameAuto(GCSettings.SaveMethod, NOTSILENT);
 		}
 	}
 }
@@ -1212,10 +1212,11 @@ static int MenuGame()
 		resetBtn.SetEffect(EFFECT_FADE, 15);
 		controllerBtn.SetEffect(EFFECT_FADE, 15);
 		cheatsBtn.SetEffect(EFFECT_FADE, 15);
+
+		AutoSave();
 	}
 
 	ResumeGui();
-	AutoSave();
 
 	while(menu == MENU_NONE)
 	{
@@ -1229,7 +1230,6 @@ static int MenuGame()
 			{
 				level = (userInput[i].wpad.battery_level / 100.0) * 4;
 					batteryBarImg[i]->SetTile(level);
-				batteryBtn[i]->SetAlpha(255);
 
 				if(level == 0)
 					batteryImg[i]->SetImage(&batteryRed);
@@ -1241,6 +1241,7 @@ static int MenuGame()
 			else // controller not connected
 			{
 				batteryBarImg[i]->SetTile(0);
+				batteryImg[i]->SetImage(&battery);
 				batteryBtn[i]->SetAlpha(150);
 			}
 		}
@@ -1296,12 +1297,12 @@ static int MenuGame()
 			titleTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
 			mainmenuBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 			bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+			btnLogo->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 			#ifdef HW_RVL
 			batteryBtn[0]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 			batteryBtn[1]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 			batteryBtn[2]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 			batteryBtn[3]->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
-			btnLogo->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 			#endif
 
 			saveBtn.SetEffect(EFFECT_FADE, -15);
@@ -1430,6 +1431,9 @@ static int MenuGameSaves(int action)
 		len = strlen(Memory.ROMFilename);
 		len2 = strlen(browserList[i].filename);
 
+		if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+			len = 26; // memory card filenames are a maximum of 32 chars
+
 		// find matching files
 		if(len2 > 5 && strncmp(browserList[i].filename, Memory.ROMFilename, len) == 0)
 		{
@@ -1508,8 +1512,7 @@ static int MenuGameSaves(int action)
 
 			if(action == 0) // load
 			{
-				sprintf(filepath, "%s/%s", GCSettings.SaveFolder, saves.filename[ret]);
-
+				MakeFilePath(filepath, saves.type[ret], method, saves.filename[ret]);
 				switch(saves.type[ret])
 				{
 					case FILE_SRAM:
@@ -1532,7 +1535,7 @@ static int MenuGameSaves(int action)
 
 					if(i < 100)
 					{
-						sprintf(filepath, "%s/%s %i.srm", GCSettings.SaveFolder, Memory.ROMFilename, i);
+						MakeFilePath(filepath, FILE_SRAM, method, Memory.ROMFilename, i);
 						SaveSRAM(filepath, GCSettings.SaveMethod, NOTSILENT);
 						menu = MENU_GAME_SAVE;
 					}
@@ -1545,15 +1548,14 @@ static int MenuGameSaves(int action)
 
 					if(i < 100)
 					{
-						sprintf(filepath, "%s/%s %i.frz", GCSettings.SaveFolder, Memory.ROMFilename, i);
+						MakeFilePath(filepath, FILE_SNAPSHOT, method, Memory.ROMFilename, i);
 						NGCFreezeGame (filepath, GCSettings.SaveMethod, NOTSILENT);
 						menu = MENU_GAME_SAVE;
 					}
 				}
 				else // overwrite SRAM/Snapshot
 				{
-					sprintf(filepath, "%s/%s", GCSettings.SaveFolder, saves.filename[ret-2]);
-
+					MakeFilePath(filepath, saves.type[ret-2], method, saves.filename[ret-2]);
 					switch(saves.type[ret-2])
 					{
 						case FILE_SRAM:
@@ -1581,6 +1583,7 @@ static int MenuGameSaves(int action)
 			titleTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
 			backBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 			bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+			btnLogo->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 
 			w.SetEffect(EFFECT_FADE, -15);
 
@@ -1700,6 +1703,7 @@ static int MenuGameCheats()
 			titleTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 35);
 			backBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 			bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
+			btnLogo->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 35);
 
 			w.SetEffect(EFFECT_FADE, -15);
 
