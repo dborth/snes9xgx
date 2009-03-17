@@ -238,7 +238,11 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 	int next, prev;
 
 	// update the location of the scroll box based on the position in the option list
-	int position = 136*(browser.pageIndex + selectedItem) / browser.numEntries;
+	int position = 136*(listOffset+selectedItem)/options->length;
+
+	if(position > 130)
+		position = 136;
+
 	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	arrowUpBtn->Update(t);
@@ -288,7 +292,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 	if(!focus)
 		return; // skip navigation
 
-	if(t->Down())
+	if(t->Down() || arrowDownBtn->GetState() == STATE_CLICKED)
 	{
 		next = this->FindMenuItem(optionIndex[selectedItem], 1);
 
@@ -306,8 +310,9 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 				selectedItem++;
 			}
 		}
+		arrowDownBtn->ResetState();
 	}
-	else if(t->Up())
+	else if(t->Up() || arrowUpBtn->GetState() == STATE_CLICKED)
 	{
 		prev = this->FindMenuItem(optionIndex[selectedItem], -1);
 
@@ -325,6 +330,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 				selectedItem--;
 			}
 		}
+		arrowUpBtn->ResetState();
 	}
 
 	if(updateCB)

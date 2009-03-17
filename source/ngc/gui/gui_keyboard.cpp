@@ -87,7 +87,7 @@ GuiKeyboard::GuiKeyboard(char * t)
 
 	kbText = new GuiText(kbtextstr, 22, (GXColor){0, 0, 0, 0xff});
 	kbText->SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	kbText->SetPosition(0, 10);
+	kbText->SetPosition(0, 13);
 	this->Append(kbText);
 
 	key = new GuiImageData(keyboard_key_png);

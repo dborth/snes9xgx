@@ -4,7 +4,7 @@
  * softdev July 2006
  * crunchy2 May 2007
  * Michniewski 2008
- * Tantric September 2008
+ * Tantric 2008-2009
  *
  * s9xconfig.h
  *
@@ -17,6 +17,7 @@
 
 #define _S9XCONFIG_
 
+void FixInvalidSettings();
 void DefaultSettings ();
 
 #endif

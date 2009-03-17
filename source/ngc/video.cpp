@@ -977,6 +977,7 @@ void Menu_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], f32 degr
 
 	GX_InitTexObj(&texObj, data, width,height, GX_TF_RGBA8,GX_CLAMP, GX_CLAMP,GX_FALSE);
 	GX_LoadTexObj(&texObj, GX_TEXMAP0);
+	GX_InvalidateTexAll();
 
 	GX_SetTevOp (GX_TEVSTAGE0, GX_MODULATE);
 	GX_SetVtxDesc (GX_VA_TEX0, GX_DIRECT);

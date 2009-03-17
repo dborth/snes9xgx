@@ -285,7 +285,7 @@ ParseDirectory()
 	ResetBrowser();
 
 	// add device to path
-	sprintf(fulldir, "%s%s", rootdir, browser.dir);
+	sprintf(fulldir, "%s/%s", rootdir, browser.dir);
 
 	// open the directory
 	dir = diropen(fulldir);

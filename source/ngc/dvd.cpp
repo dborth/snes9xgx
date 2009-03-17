@@ -76,7 +76,7 @@ dvd_read (void *dst, unsigned int len, u64 offset)
 			dvd[7] = 3;
 
 			// Enable reading with DMA
-			while (dvd[7] & 1) usleep(50);
+			while (dvd[7] & 1);
 
 			// Ensure it has completed
 			if (dvd[0] & 0x4)
@@ -432,7 +432,7 @@ getentry (int entrycount, unsigned char dvdbuffer[])
 					if(dvddir == dvdrootdir) // at root already, don't show ..
 						fname[0] = 0;
 					else
-						strcpy (fname, "..");
+						strcpy (fname, "Up One Level");
 				}
 				else
 				{
@@ -742,7 +742,7 @@ void uselessinquiry ()
 	dvd[6] = 0x20;
 	dvd[7] = 1;
 
-	while (dvd[7] & 1) usleep(50);
+	while (dvd[7] & 1);
 }
 
 /****************************************************************************
@@ -759,7 +759,7 @@ void dvd_motor_off ()
 	dvd[5] = 0;
 	dvd[6] = 0;
 	dvd[7] = 1; // Do immediate
-	while (dvd[7] & 1) usleep(50);
+	while (dvd[7] & 1);
 
 	/*** PSO Stops blackscreen at reload ***/
 	dvd[0] = 0x14;
@@ -785,7 +785,7 @@ int dvd_driveid()
     dvd[6] = 0x20;
     dvd[7] = 3;
 
-    while( dvd[7] & 1 ) usleep(50);
+    while( dvd[7] & 1 );
 
     DCFlushRange((void *)0x80000000, 32);
 

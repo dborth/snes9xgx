@@ -658,6 +658,7 @@ ftgxDataOffset FreeTypeGX::getOffset(wchar_t const *text) {
 void FreeTypeGX::copyTextureToFramebuffer(GXTexObj *texObj, f32 texWidth, f32 texHeight, int16_t screenX, int16_t screenY, GXColor color) {
 
 	GX_LoadTexObj(texObj, GX_TEXMAP0);
+	GX_InvalidateTexAll();
 
 	GX_SetTevOp (GX_TEVSTAGE0, GX_MODULATE);
 	GX_SetVtxDesc (GX_VA_TEX0, GX_DIRECT);

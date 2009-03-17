@@ -792,9 +792,9 @@ static int MenuGameSelection()
 	{
 		int choice = WindowPrompt(
 		"Error",
-		"Game directory inaccessible on selected load device.",
+		"Games directory is inaccessible on selected load device.",
 		"Retry",
-		"Change Settings");
+		"Check Settings");
 
 		if(choice)
 			return MENU_GAMESELECTION;
@@ -1311,7 +1311,7 @@ static int MenuGame()
 			controllerBtn.SetEffect(EFFECT_FADE, -15);
 			cheatsBtn.SetEffect(EFFECT_FADE, -15);
 
-			usleep(150000);
+			usleep(150000); // wait for effects to finish
 		}
 	}
 
@@ -1587,7 +1587,7 @@ static int MenuGameSaves(int action)
 
 			w.SetEffect(EFFECT_FADE, -15);
 
-			while(bgBottomImg->GetEffect() > 0) usleep(50);
+			usleep(150000); // wait for effects to finish
 		}
 	}
 
@@ -1707,7 +1707,7 @@ static int MenuGameCheats()
 
 			w.SetEffect(EFFECT_FADE, -15);
 
-			while(bgBottomImg->GetEffect() > 0) usleep(50);
+			usleep(150000); // wait for effects to finish
 		}
 	}
 	HaltGui();
@@ -2252,8 +2252,9 @@ ButtonMappingWindow()
 	}
 
 	GuiText msgTxt(msg, 26, (GXColor){0, 0, 0, 255});
-	msgTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	msgTxt.SetPosition(0,80);
+	msgTxt.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+	msgTxt.SetPosition(0,-20);
+	msgTxt.SetMaxWidth(430);
 
 	promptWindow.Append(&dialogBoxImg);
 	promptWindow.Append(&titleTxt);
@@ -2982,8 +2983,8 @@ static int MenuSettingsMenu()
 	int i = 0;
 	OptionList options;
 
-	sprintf(options.name[i++], "Wiimote Orientation");
 	sprintf(options.name[i++], "Exit Action");
+	sprintf(options.name[i++], "Wiimote Orientation");
 	sprintf(options.name[i++], "Music Volume");
 	sprintf(options.name[i++], "Sound Effects Volume");
 	options.length = i;
@@ -3032,28 +3033,28 @@ static int MenuSettingsMenu()
 		VIDEO_WaitVSync ();
 
 		#ifdef HW_RVL
-		if (GCSettings.WiimoteOrientation == 0)
-			sprintf (options.value[0], "Vertical");
-		else if (GCSettings.WiimoteOrientation == 1)
-			sprintf (options.value[0], "Horizontal");
-
-		if (GCSettings.ExitAction == 0)
-			sprintf (options.value[1], "Return to Loader");
-		else if (GCSettings.ExitAction == 1)
-			sprintf (options.value[1], "Return to Wii Menu");
+		if (GCSettings.ExitAction == 1)
+			sprintf (options.value[0], "Return to Wii Menu");
 		else if (GCSettings.ExitAction == 2)
-			sprintf (options.value[1], "Power off Wii");
-		#else // GameCube
-		options.name[0][0] = 0; // Wiimote
-		options.name[2][0] = 0; // Music
-		options.name[3][0] = 0; // Sound Effects
+			sprintf (options.value[0], "Power off Wii");
+		else
+			sprintf (options.value[0], "Return to Loader");
 
+		if (GCSettings.WiimoteOrientation == 0)
+			sprintf (options.value[1], "Vertical");
+		else if (GCSettings.WiimoteOrientation == 1)
+			sprintf (options.value[1], "Horizontal");
+		#else // GameCube
 		if(GCSettings.ExitAction > 1)
 			GCSettings.ExitAction = 0;
 		if (GCSettings.ExitAction == 0)
-			sprintf (options.value[1], "Return to Loader");
-		else if (GCSettings.ExitAction == 1)
-			sprintf (options.value[1], "Reboot");
+			sprintf (options.value[0], "Return to Loader");
+		else
+			sprintf (options.value[0], "Reboot");
+
+		options.name[1][0] = 0; // Wiimote
+		options.name[2][0] = 0; // Music
+		options.name[3][0] = 0; // Sound Effects
 		#endif
 
 		if(GCSettings.MusicVolume > 0)
@@ -3071,12 +3072,12 @@ static int MenuSettingsMenu()
 		switch (ret)
 		{
 			case 0:
-				GCSettings.WiimoteOrientation ^= 1;
-				break;
-			case 1:
 				GCSettings.ExitAction++;
 				if(GCSettings.ExitAction > 2)
 					GCSettings.ExitAction = 0;
+				break;
+			case 1:
+				GCSettings.WiimoteOrientation ^= 1;
 				break;
 			case 2:
 				GCSettings.MusicVolume += 10;
@@ -3281,11 +3282,7 @@ MainMenu (int menu)
 
 	// Load preferences
 	if(!LoadPrefs())
-	{
-		ResumeGui();
-		ErrorPrompt("Preferences reset - check your settings!");
-		currentMenu = MENU_SETTINGS_FILE;
-	}
+		SavePrefs(SILENT);
 
 	while(currentMenu != MENU_EXIT || SNESROMSize <= 0)
 	{

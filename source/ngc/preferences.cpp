@@ -1,7 +1,7 @@
 /****************************************************************************
  * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
- * Tantric September 2008
+ * Tantric 2008-2009
  *
  * preferences.cpp
  *
@@ -15,6 +15,7 @@
 #include <mxml.h>
 
 #include "snes9xGX.h"
+#include "s9xconfig.h"
 #include "images/saveicon.h"
 #include "menu.h"
 #include "memcardop.h"
@@ -369,6 +370,8 @@ SavePrefs (bool silent)
 	if (!silent)
 		ShowAction ("Saving preferences...");
 
+	FixInvalidSettings();
+
 	AllocSaveBuffer ();
 	datasize = preparePrefsData (method);
 
@@ -436,6 +439,9 @@ bool LoadPrefs()
 		prefFound = LoadPrefsFromMethod(METHOD_SMB);
 
 	prefLoaded = true; // attempted to load preferences
+
+	if(prefFound)
+		FixInvalidSettings();
 
 	return prefFound;
 }
