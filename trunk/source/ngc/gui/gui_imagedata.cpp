@@ -24,16 +24,35 @@ GuiImageData::GuiImageData(const u8 * img)
 	else
 	{
 		PNGUPROP imgProp;
-		IMGCTX ctx;
+		IMGCTX ctx = PNGU_SelectImageFromBuffer(img);
 
-		ctx = PNGU_SelectImageFromBuffer(img);
-		PNGU_GetImageProperties (ctx, &imgProp);
-		width = imgProp.imgWidth;
-		height = imgProp.imgHeight;
-		data = (u8 *)memalign (32, imgProp.imgWidth * imgProp.imgHeight * 4);
-		PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, data, 255);
-		int len = imgProp.imgWidth * imgProp.imgHeight * 4;
-		DCFlushRange(data, len+len%32);
+		if(!ctx)
+			return;
+
+		int res = PNGU_GetImageProperties(ctx, &imgProp);
+
+		if(res == PNGU_OK)
+		{
+			data = (u8 *)memalign (32, imgProp.imgWidth * imgProp.imgHeight * 4);
+
+			if(data)
+			{
+				res = PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, data, 255);
+
+				if(res == PNGU_OK)
+				{
+					width = imgProp.imgWidth;
+					height = imgProp.imgHeight;
+					int len = imgProp.imgWidth * imgProp.imgHeight * 4;
+					DCFlushRange(data, len+len%32);
+				}
+				else
+				{
+					free(data);
+					data = NULL;
+				}
+			}
+		}
 		PNGU_ReleaseImageContext (ctx);
 	}
 }

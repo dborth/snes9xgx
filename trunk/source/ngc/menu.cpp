@@ -3264,7 +3264,7 @@ MainMenu (int menu)
 	GuiImage logoImgOver(&logoOver);
 	btnLogo = new GuiButton(logoImg.GetWidth(), logoImg.GetHeight());
 	btnLogo->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	btnLogo->SetPosition(-50, 30);
+	btnLogo->SetPosition(-30, 30);
 	btnLogo->SetImage(&logoImg);
 	btnLogo->SetImageOver(&logoImgOver);
 	btnLogo->SetTrigger(&trigA);
