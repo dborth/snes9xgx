@@ -717,13 +717,13 @@ static void WindowCredits(void * ptr)
 	txt[i] = new GuiText("Snes9x Team");
 	txt[i]->SetPosition(320,y); i++; y+=24;
 
-	txt[i] = new GuiText("Armin Tamzarian");
-	txt[i]->SetPosition(50,y); i++;
-	txt[i] = new GuiText("FreeTypeGX");
-	txt[i]->SetPosition(320,y); i++; y+=24;
 	txt[i] = new GuiText("libogc / devkitPPC");
 	txt[i]->SetPosition(50,y); i++;
 	txt[i] = new GuiText("shagkur & wintermute");
+	txt[i]->SetPosition(320,y); i++; y+=24;
+	txt[i] = new GuiText("FreeTypeGX");
+	txt[i]->SetPosition(50,y); i++;
+	txt[i] = new GuiText("Armin Tamzarian");
 	txt[i]->SetPosition(320,y); i++; y+=48;
 
 	txt[i]->SetPresets(18, (GXColor){0, 0, 0, 255}, 0,
@@ -771,6 +771,13 @@ static void WindowCredits(void * ptr)
 			if(userInput[i].wpad.btns_d || userInput[i].pad.btns_d)
 				exit = true;
 		}
+	}
+
+	// clear buttons pressed
+	for(i=0; i < 4; i++)
+	{
+		userInput[i].wpad.btns_d = 0;
+		userInput[i].pad.btns_d = 0;
 	}
 
 	for(i=0; i < numEntries; i++)
@@ -3262,11 +3269,14 @@ MainMenu (int menu)
 	GuiImage logoImg(&logo);
 	GuiImageData logoOver(logo_over_png);
 	GuiImage logoImgOver(&logoOver);
+	GuiText logoTxt(APPVERSION, 18, (GXColor){255, 255, 255, 255});
+	logoTxt.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	btnLogo = new GuiButton(logoImg.GetWidth(), logoImg.GetHeight());
 	btnLogo->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	btnLogo->SetPosition(-30, 30);
 	btnLogo->SetImage(&logoImg);
 	btnLogo->SetImageOver(&logoImgOver);
+	btnLogo->SetLabel(&logoTxt);
 	btnLogo->SetTrigger(&trigA);
 	btnLogo->SetUpdateCallback(WindowCredits);
 
