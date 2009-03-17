@@ -4,7 +4,7 @@
  * softdev July 2006
  * crunchy2 May 2007
  * Michniewski 2008
- * Tantric September 2008
+ * Tantric 2008-2009
  *
  * s9xconfig.cpp
  *
@@ -20,6 +20,25 @@
 #include "filter.h"
 
 struct SGCSettings GCSettings;
+
+/****************************************************************************
+ * Attempts to correct at least some invalid settings - the ones that
+ * might cause crashes
+ ***************************************************************************/
+
+void FixInvalidSettings()
+{
+	if(!(GCSettings.ZoomLevel > 0.5 && GCSettings.ZoomLevel < 1.5))
+		GCSettings.ZoomLevel = 1.0;
+	if(!(GCSettings.xshift > -50 && GCSettings.xshift < 50))
+		GCSettings.xshift = 0;
+	if(!(GCSettings.yshift > -50 && GCSettings.yshift < 50))
+		GCSettings.yshift = 0;
+	if(!(GCSettings.MusicVolume >= 0 && GCSettings.MusicVolume <= 100))
+		GCSettings.MusicVolume = 40;
+	if(!(GCSettings.SFXVolume >= 0 && GCSettings.SFXVolume <= 100))
+		GCSettings.SFXVolume = 40;
+}
 
 void
 DefaultSettings ()

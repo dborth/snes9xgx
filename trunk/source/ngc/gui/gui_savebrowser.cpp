@@ -115,6 +115,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 		saveBtn[i]->SetTrigger(trigA);
 		saveBtn[i]->SetState(STATE_DISABLED);
 		saveBtn[i]->SetEffectGrow();
+		saveBtn[i]->SetVisible(false);
 	}
 }
 
@@ -221,7 +222,11 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 	int i, len;
 	char savetext[50];
 	// update the location of the scroll box based on the position in the option list
-	int position = 136*(selectedItem) / saves->length;
+	int position = 136*(listOffset+selectedItem)/saves->length;
+
+	if(position > 130)
+		position = 136;
+
 	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	arrowUpBtn->Update(t);
@@ -267,7 +272,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			selectedItem -= 1;
 		}
 	}
-	else if(t->Down())
+	else if(t->Down() || arrowDownBtn->GetState() == STATE_CLICKED)
 	{
 		if(selectedItem >= SAVELISTSIZE-2)
 		{
@@ -287,8 +292,9 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		{
 			selectedItem += 2;
 		}
+		arrowDownBtn->ResetState();
 	}
-	else if(t->Up())
+	else if(t->Up() || arrowUpBtn->GetState() == STATE_CLICKED)
 	{
 		if(selectedItem < 2)
 		{
@@ -303,6 +309,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		{
 			selectedItem -= 2;
 		}
+		arrowUpBtn->ResetState();
 	}
 
 	endNavigation:
