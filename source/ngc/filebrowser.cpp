@@ -234,7 +234,7 @@ bool MakeFilePath(char filepath[], int type, int method, char * filename, int fi
 				}
 				else
 				{
-					sprintf(file, "%s.srm", filename);
+					sprintf(file, "%s", filename);
 				}
 				break;
 			case FILE_SNAPSHOT:
@@ -257,7 +257,7 @@ bool MakeFilePath(char filepath[], int type, int method, char * filename, int fi
 				}
 				else
 				{
-					sprintf(file, "%s.frz", filename);
+					sprintf(file, "%s", filename);
 				}
 				break;
 			case FILE_CHEAT:
