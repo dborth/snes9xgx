@@ -1441,7 +1441,7 @@ static int MenuGameSaves(int action)
 		len = strlen(Memory.ROMFilename);
 		len2 = strlen(browserList[i].filename);
 
-		if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+		if(len > 26 && (method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB))
 			len = 26; // memory card filenames are a maximum of 32 chars
 
 		// find matching files

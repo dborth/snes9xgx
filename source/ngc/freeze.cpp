@@ -155,7 +155,7 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 		char freezecomment[2][32];
 		memset(freezecomment, 0, 64);
 
-		sprintf (freezecomment[0], "%s Freeze", APPVERSION);
+		sprintf (freezecomment[0], "%s Snapshot", APPNAME);
 		sprintf (freezecomment[1], Memory.ROMName);
 		memcpy (savebuffer + woffset, freezecomment, 64);
 		woffset += 64;
