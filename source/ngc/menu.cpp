@@ -1286,10 +1286,13 @@ static int MenuGame()
 				mainWindow->Remove(gameScreenImg);
 				delete gameScreenImg;
 				gameScreenImg = NULL;
+			}
+			if(gameScreenTex)
+			{
 				free(gameScreenTex);
 				gameScreenTex = NULL;
-				bgImg->SetVisible(true);
 			}
+			bgImg->SetVisible(true);
 			#ifndef NO_SOUND
 			bgMusic->Play(); // startup music
 			#endif
@@ -3240,7 +3243,7 @@ MainMenu (int menu)
 
 	if(gameScreenTex)
 	{
-		gameScreenImg = new GuiImage(gameScreenTex2, screenwidth, screenheight);
+		gameScreenImg = new GuiImage(gameScreenTex, screenwidth, screenheight);
 		gameScreenImg->SetAlpha(192);
 		//gameScreenImg->SetStripe(100);
 		gameScreenImg->ColorStripe(30);
@@ -3381,6 +3384,9 @@ MainMenu (int menu)
 	{
 		free(gameScreenTex);
 		gameScreenTex = NULL;
+	}
+	if(gameScreenTex2)
+	{
 		free(gameScreenTex2);
 		gameScreenTex2 = NULL;
 	}
