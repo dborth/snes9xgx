@@ -868,20 +868,22 @@ setGFX ()
  */
 void TakeScreenshot()
 {
-	if(gameScreenTex)
-		free(gameScreenTex);
-
+	if(gameScreenTex) free(gameScreenTex);
 	gameScreenTex = (u8 *)memalign(32, vmode->fbWidth * vmode->efbHeight * 4);
-	gameScreenTex2 = (u8 *)memalign(32, vmode->fbWidth * vmode->efbHeight * 4);
-	if(gameScreenTex == NULL || gameScreenTex2 == NULL)
-		return;
+	if(gameScreenTex == NULL) return;
 	GX_SetTexCopySrc(0, 0, vmode->fbWidth, vmode->efbHeight);
 	GX_SetTexCopyDst(vmode->fbWidth, vmode->efbHeight, GX_TF_RGBA8, GX_FALSE);
 	GX_CopyTex(gameScreenTex, GX_FALSE);
-	GX_CopyTex(gameScreenTex2, GX_FALSE);
 	GX_PixModeSync();
 	DCFlushRange(gameScreenTex, vmode->fbWidth * vmode->efbHeight * 4);
+
+	#ifdef HW_RVL
+	if(gameScreenTex2) free(gameScreenTex2);
+	gameScreenTex2 = (u8 *)memalign(32, vmode->fbWidth * vmode->efbHeight * 4);
+	if(gameScreenTex2 == NULL) return;
+	memcpy(gameScreenTex2, gameScreenTex, vmode->fbWidth * vmode->efbHeight * 4)
 	DCFlushRange(gameScreenTex2, vmode->fbWidth * vmode->efbHeight * 4);
+	#endif
 }
 
 /****************************************************************************

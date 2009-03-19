@@ -222,7 +222,11 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 	int i, len;
 	char savetext[50];
 	// update the location of the scroll box based on the position in the option list
-	int position = 136*(listOffset+selectedItem)/saves->length;
+	int position;
+	if(action == 0)
+		position = 136*(listOffset+selectedItem)/saves->length;
+	else
+		position = 136*(listOffset+selectedItem+2)/saves->length;
 
 	if(position > 130)
 		position = 136;
