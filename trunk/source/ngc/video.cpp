@@ -881,7 +881,7 @@ void TakeScreenshot()
 	if(gameScreenTex2) free(gameScreenTex2);
 	gameScreenTex2 = (u8 *)memalign(32, vmode->fbWidth * vmode->efbHeight * 4);
 	if(gameScreenTex2 == NULL) return;
-	memcpy(gameScreenTex2, gameScreenTex, vmode->fbWidth * vmode->efbHeight * 4)
+	memcpy(gameScreenTex2, gameScreenTex, vmode->fbWidth * vmode->efbHeight * 4);
 	DCFlushRange(gameScreenTex2, vmode->fbWidth * vmode->efbHeight * 4);
 	#endif
 }

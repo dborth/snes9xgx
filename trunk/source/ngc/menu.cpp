@@ -3230,11 +3230,6 @@ MainMenu (int menu)
 	pointer[3] = new GuiImageData(player4_point_png);
 	#endif
 
-	#ifndef NO_SOUND
-	bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
-	bgMusic->SetVolume(GCSettings.MusicVolume);
-	#endif
-
 	mainWindow = new GuiWindow(screenwidth, screenheight);
 
 	bgImg = new GuiImage(screenwidth, screenheight, (GXColor){175, 200, 215, 255});
@@ -3249,12 +3244,6 @@ MainMenu (int menu)
 		gameScreenImg->ColorStripe(30);
 		mainWindow->Append(gameScreenImg);
 		bgImg->SetVisible(false);
-	}
-	else
-	{
-		#ifndef NO_SOUND
-		bgMusic->Play(); // startup music
-		#endif
 	}
 
 	GuiTrigger trigA;
@@ -3287,15 +3276,27 @@ MainMenu (int menu)
 	mainWindow->Append(bgBottomImg);
 	mainWindow->Append(btnLogo);
 
+	if(currentMenu == MENU_GAMESELECTION)
+		ResumeGui();
+
+	// Load preferences
+	if(!LoadPrefs())
+		SavePrefs(SILENT);
+
+	#ifndef NO_SOUND
+	if(currentMenu == MENU_GAMESELECTION)
+	{
+		bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
+		bgMusic->SetVolume(GCSettings.MusicVolume);
+		bgMusic->Play(); // startup music
+	}
+	#endif
+
 	// memory usage - for debugging
 	/*memTxt = new GuiText(NULL, 18, (GXColor){255, 255, 255, 255});
 	memTxt->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	memTxt->SetPosition(-20, 40);
 	mainWindow->Append(memTxt);*/
-
-	// Load preferences
-	if(!LoadPrefs())
-		SavePrefs(SILENT);
 
 	while(currentMenu != MENU_EXIT || SNESROMSize <= 0)
 	{
