@@ -98,6 +98,7 @@ ParseMCDirectory (int slot)
 	card_dir CardDir;
 	int CardError;
 	int entryNum = 0;
+	char tmpname[MAXPATHLEN];
 
 	// Try to mount the card
 	CardError = MountMC(slot, NOTSILENT);
@@ -123,6 +124,8 @@ ParseMCDirectory (int slot)
 			memset(&(browserList[entryNum]), 0, sizeof(BROWSERENTRY)); // clear the new entry
 
 			strncpy(browserList[entryNum].filename, (char *)CardDir.filename, MAXJOLIET);
+			StripExt(tmpname, (char *)CardDir.filename); // hide file extension
+			strncpy(browserList[entryNum].displayname, tmpname, MAXDISPLAY); // crop name for display
 			browserList[entryNum].length = CardDir.filelen;
 
 			entryNum++;
@@ -132,6 +135,12 @@ ParseMCDirectory (int slot)
 		CARD_Unmount(slot);
 	}
 
+	// Sort the file list
+	qsort(browserList, entryNum, sizeof(BROWSERENTRY), FileSortCallback);
+
+	CancelAction();
+
+	browser.numEntries = entryNum;
 	return entryNum;
 }
 
@@ -148,7 +157,6 @@ VerifyMCFile (char *buf, int slot, char *filename, int datasize)
 	unsigned int SectorSize;
     int bytesleft = 0;
     int bytesread = 0;
-    int ret = 0;
 
     memset (verifybuffer, 0, 65536);
 
@@ -179,22 +187,22 @@ VerifyMCFile (char *buf, int slot, char *filename, int datasize)
 		bytesread = 0;
 		while (bytesleft > 0)
 		{
-			CARD_Read (&CardFile, verifybuffer, SectorSize, bytesread);
-			if ( memcmp (buf + bytesread, verifybuffer, (unsigned int)bytesleft < SectorSize ? bytesleft : SectorSize) )
+			CardError = CARD_Read (&CardFile, verifybuffer, SectorSize, bytesread);
+			if (CardError || memcmp (buf + bytesread, verifybuffer, (unsigned int)bytesleft < SectorSize ? bytesleft : SectorSize) )
 			{
+				bytesread = 0;
 				ErrorPrompt("File integrity could not be verified!");
 				break;
 			}
 
 			bytesleft -= SectorSize;
 			bytesread += SectorSize;
-
 			ShowProgress ("Verifying...", bytesread, blocks);
 		}
 		CARD_Close (&CardFile);
 		CancelAction();
 	}
-	return ret;
+	return bytesread;
 }
 
 /****************************************************************************
