@@ -211,7 +211,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 /*static u32 arena1mem = 0;
 static u32 arena2mem = 0;
 static char mem[150] = { 0 };
-static GuiText * memTxt;*/
+static GuiText * memTxt = NULL;*/
 
 static void *
 UpdateGUI (void *arg)
@@ -229,7 +229,7 @@ UpdateGUI (void *arg)
 			arena2mem = (u32)SYS_GetArena2Hi() - (u32)SYS_GetArena2Lo();
 			#endif
 			sprintf(mem, "A1: %u / A2: %u", arena1mem, arena2mem);
-			memTxt->SetText(mem);*/
+			if(memTxt) memTxt->SetText(mem);*/
 
 			mainWindow->Draw();
 
@@ -3276,6 +3276,12 @@ MainMenu (int menu)
 	mainWindow->Append(bgBottomImg);
 	mainWindow->Append(btnLogo);
 
+	/*// memory usage - for debugging
+	memTxt = new GuiText(NULL, 18, (GXColor){255, 255, 255, 255});
+	memTxt->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	memTxt->SetPosition(20, 20);
+	mainWindow->Append(memTxt);*/
+
 	if(currentMenu == MENU_GAMESELECTION)
 		ResumeGui();
 
@@ -3284,19 +3290,10 @@ MainMenu (int menu)
 		SavePrefs(SILENT);
 
 	#ifndef NO_SOUND
-	if(currentMenu == MENU_GAMESELECTION)
-	{
-		bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
-		bgMusic->SetVolume(GCSettings.MusicVolume);
-		bgMusic->Play(); // startup music
-	}
+	bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
+	bgMusic->SetVolume(GCSettings.MusicVolume);
+	if(currentMenu == MENU_GAMESELECTION) bgMusic->Play(); // startup music
 	#endif
-
-	// memory usage - for debugging
-	/*memTxt = new GuiText(NULL, 18, (GXColor){255, 255, 255, 255});
-	memTxt->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	memTxt->SetPosition(-20, 40);
-	mainWindow->Append(memTxt);*/
 
 	while(currentMenu != MENU_EXIT || SNESROMSize <= 0)
 	{

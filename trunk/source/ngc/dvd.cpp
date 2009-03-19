@@ -432,7 +432,7 @@ getentry (int entrycount, unsigned char dvdbuffer[])
 					if(dvddir == dvdrootdir) // at root already, don't show ..
 						fname[0] = 0;
 					else
-						strcpy (fname, "Up One Level");
+						strcpy (fname, "..");
 				}
 				else
 				{
@@ -463,8 +463,16 @@ getentry (int entrycount, unsigned char dvdbuffer[])
 			memset(&(browserList[entrycount]), 0, sizeof(BROWSERENTRY)); // clear the new entry
 
 			strncpy (browserList[entrycount].filename, fname, MAXJOLIET);
-			StripExt(tmpname, fname); // hide file extension
-			strncpy (browserList[entrycount].displayname, tmpname, MAXDISPLAY);
+
+			if(strcmp(fname,"..") == 0)
+			{
+				sprintf(browserList[entrycount].displayname, "Up One Level");
+			}
+			else
+			{
+				StripExt(tmpname, fname); // hide file extension
+				strncpy (browserList[entrycount].displayname, tmpname, MAXDISPLAY);
+			}
 
 			memcpy (&offset32, &dvdbuffer[diroffset + EXTENT], 4);
 
@@ -588,13 +596,18 @@ static bool SwitchDVDFolderR(char * dir, int maxDepth)
 
 	if(dirindex >= 0)
 	{
-		dvddir = browserList[dirindex].offset;
-		dvddirlength = browserList[dirindex].length;
 		browser.selIndex = dirindex;
-		UpdateDirName(METHOD_DVD);
 
 		if(browserList[dirindex].isdir) // only parse directories
+		{
+			UpdateDirName(METHOD_DVD);
 			ParseDVDdirectory();
+		}
+		else
+		{
+			dvddir = browserList[dirindex].offset;
+			dvddirlength = browserList[dirindex].length;
+		}
 
 		if(lastdir)
 			return true;
@@ -709,16 +722,27 @@ done:
 int
 LoadDVDFile(char * buffer, char *filepath, int datasize, bool silent)
 {
+	int ret = 0;
+
+	// retain original browser information
+	char origDir[MAXPATHLEN];
+	memset(origDir, 0, MAXPATHLEN);
+	strncpy(origDir, browser.dir, MAXPATHLEN);
+	int origSelIndex = browser.selIndex;
+	int origPageIndex = browser.selIndex;
+
 	if(SwitchDVDFolder(filepath))
-	{
-		return LoadDVDFileOffset ((unsigned char *)buffer, datasize);
-	}
-	else
-	{
-		if(!silent)
-			ErrorPrompt("Error loading file!");
-		return 0;
-	}
+		ret = LoadDVDFileOffset ((unsigned char *)buffer, datasize);
+	else if(!silent)
+		ErrorPrompt("Error loading file!");
+
+	// restore browser information
+	memset(browser.dir, 0, MAXPATHLEN);
+	strncpy(browser.dir, origDir, MAXPATHLEN);
+	browser.selIndex = origSelIndex;
+	browser.pageIndex = origPageIndex;
+
+	return ret;
 }
 
 /****************************************************************************
