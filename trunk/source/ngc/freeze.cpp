@@ -31,7 +31,6 @@
 #include "srtc.h"
 
 #include "snes9xGX.h"
-#include "images/saveicon.h"
 #include "freeze.h"
 #include "fileop.h"
 #include "filebrowser.h"
@@ -139,7 +138,8 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 	S9xPrepareSoundForSnapshotSave (FALSE);
 
 	AllocSaveBuffer ();
-	NGCFreezeMemBuffer (); // copy freeze mem into savebuffer
+	// copy freeze mem into savebuffer - bufoffset contains # bytes written
+	NGCFreezeMemBuffer ();
 	woffset = bufoffset;
 
 	S9xPrepareSoundForSnapshotSave (TRUE);
@@ -147,22 +147,16 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 
 	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC Slot A or B
 	{
-		// Copy in save icon
-		woffset = sizeof (saveicon);
-		memcpy (savebuffer, saveicon, woffset);
-
-		// And the freezecomment
+		// set freezecomment
 		char freezecomment[2][32];
 		memset(freezecomment, 0, 64);
-
 		sprintf (freezecomment[0], "%s Snapshot", APPNAME);
 		sprintf (freezecomment[1], Memory.ROMName);
-		memcpy (savebuffer + woffset, freezecomment, 64);
-		woffset += 64;
+		SetMCSaveComment(freezecomment);
 
 		// Zip and copy in the freeze
 		uLongf DestBuffSize = (uLongf) SAVEBUFFERSIZE;
-		int err= compress2((Bytef*)(savebuffer+woffset+8), (uLongf*)&DestBuffSize, (const Bytef*)savebuffer, (uLongf)bufoffset, Z_BEST_COMPRESSION);
+		int err= compress2((Bytef*)(savebuffer+8), (uLongf*)&DestBuffSize, (const Bytef*)savebuffer, (uLongf)bufoffset, Z_BEST_COMPRESSION);
 
 		if(err!=Z_OK)
 		{
@@ -172,14 +166,11 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 		}
 
 		int zippedsize = (int)DestBuffSize;
-		memcpy (savebuffer + woffset, &zippedsize, 4);
-		woffset += 4;
-
 		int decompressedsize = (int)bufoffset;
-		memcpy (savebuffer + woffset, &decompressedsize, 4);
-		woffset += 4;
+		memcpy (savebuffer, &zippedsize, 4);
+		memcpy (savebuffer+4, &decompressedsize, 4);
 
-		woffset += zippedsize;
+		woffset = zippedsize + 8;
 	}
 
 	offset = SaveFile(filepath, woffset, method, silent);
@@ -304,20 +295,13 @@ NGCUnfreezeGame (char * filepath, int method, bool silent)
 		{
 			char * zipbuffer = (char *)memalign(32, SAVEBUFFERSIZE);
 			memset (zipbuffer, 0, SAVEBUFFERSIZE);
-
-			// skip the saveicon and comment
-			offset = (sizeof(saveicon) + 64);
 			uLongf zipsize = 0;
 			uLongf decompressedsize = 0;
-
-			memcpy (&zipsize, savebuffer+offset, 4);
-			offset += 4;
-
-			memcpy (&decompressedsize, savebuffer+offset, 4);
-			offset += 4;
-
 			uLongf DestBuffSize = SAVEBUFFERSIZE;
-			int err= uncompress((Bytef*)zipbuffer, (uLongf*)&DestBuffSize, (const Bytef*)(savebuffer + offset), zipsize);
+			memcpy (&zipsize, savebuffer, 4);
+			memcpy (&decompressedsize, savebuffer+4, 4);
+
+			int err= uncompress((Bytef*)zipbuffer, (uLongf*)&DestBuffSize, (const Bytef*)(savebuffer+8), zipsize);
 
 			if ( err!=Z_OK )
 			{

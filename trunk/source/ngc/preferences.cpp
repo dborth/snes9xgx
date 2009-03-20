@@ -16,7 +16,6 @@
 
 #include "snes9xGX.h"
 #include "s9xconfig.h"
-#include "images/saveicon.h"
 #include "menu.h"
 #include "memcardop.h"
 #include "fileop.h"
@@ -109,31 +108,12 @@ static const char * XMLSaveCallback(mxml_node_t *node, int where)
 static int
 preparePrefsData (int method)
 {
-	int offset = 0;
-
-	// add save icon and comments for Memory Card saves
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
-	{
-		offset = sizeof (saveicon);
-
-		// Copy in save icon
-		memcpy (savebuffer, saveicon, offset);
-
-		// And the comments
-		char prefscomment[2][32];
-		memset(prefscomment, 0, 64);
-		sprintf (prefscomment[0], "%s Prefs", APPNAME);
-		sprintf (prefscomment[1], "Preferences");
-		memcpy (savebuffer + offset, prefscomment, 64);
-		offset += 64;
-	}
-
 	xml = mxmlNewXML("1.0");
 	mxmlSetWrapMargin(0); // disable line wrapping
 
 	data = mxmlNewElement(xml, "file");
-	mxmlElementSetAttr(data, "app",APPNAME);
-	mxmlElementSetAttr(data, "version",APPVERSION);
+	mxmlElementSetAttr(data, "app", APPNAME);
+	mxmlElementSetAttr(data, "version", APPVERSION);
 
 	createXMLSection("File", "File Settings");
 
@@ -184,11 +164,11 @@ preparePrefsData (int method)
 	createXMLController(btnmap[CTRL_JUST][CTRLR_GCPAD], "btnmap_just_gcpad", "Justifier - GameCube Controller");
 	createXMLController(btnmap[CTRL_JUST][CTRLR_WIIMOTE], "btnmap_just_wiimote", "Justifier - Wiimote");
 
-	int datasize = mxmlSaveString(xml, (char *)savebuffer+offset, (SAVEBUFFERSIZE-offset), XMLSaveCallback);
+	int datasize = mxmlSaveString(xml, (char *)savebuffer, SAVEBUFFERSIZE, XMLSaveCallback);
 
 	mxmlDelete(xml);
 
-	return datasize+offset;
+	return datasize;
 }
 
 /****************************************************************************
@@ -264,16 +244,8 @@ static bool
 decodePrefsData (int method)
 {
 	bool result = false;
-	int offset = 0;
 
-	// skip save icon and comments for Memory Card saves
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
-	{
-		offset = sizeof (saveicon);
-		offset += 64; // sizeof comment
-	}
-
-	xml = mxmlLoadString(NULL, (char *)savebuffer+offset, MXML_TEXT_CALLBACK);
+	xml = mxmlLoadString(NULL, (char *)savebuffer, MXML_TEXT_CALLBACK);
 
 	if(xml)
 	{
@@ -373,6 +345,16 @@ SavePrefs (bool silent)
 
 	AllocSaveBuffer ();
 	datasize = preparePrefsData (method);
+
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+	{
+		// Set the comments
+		char prefscomment[2][32];
+		memset(prefscomment, 0, 64);
+		sprintf (prefscomment[0], "%s Prefs", APPNAME);
+		sprintf (prefscomment[1], "Preferences");
+		SetMCSaveComments(prefscomment);
+	}
 
 	offset = SaveFile(filepath, datasize, method, silent);
 
