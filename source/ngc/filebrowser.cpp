@@ -227,14 +227,14 @@ bool MakeFilePath(char filepath[], int type, int method, char * filename, int fi
 					if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
 					{
 						filename[26] = 0; // truncate filename
-						sprintf(file, "%s%i.%", filename, filenum, ext);
+						sprintf(file, "%s%i.%s", filename, filenum, ext);
 					}
 					else
 					{
 						if(filenum == 0)
-							sprintf(file, "%s Auto.%", filename, ext);
+							sprintf(file, "%s Auto.%s", filename, ext);
 						else
-							sprintf(file, "%s %i.%", filename, filenum, ext);
+							sprintf(file, "%s %i.%s", filename, filenum, ext);
 					}
 				}
 				else

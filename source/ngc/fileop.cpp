@@ -453,7 +453,7 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 
 	// add device to filepath
 	char fullpath[1024];
-	sprintf(fullpath, "%s%s", rootdir, filepath);
+	sprintf(fullpath, "%s/%s", rootdir, filepath);
 
 	file = fopen (fullpath, "rb");
 
@@ -551,7 +551,7 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 
 		// add device to filepath
 		char fullpath[1024];
-		sprintf(fullpath, "%s%s", rootdir, filepath);
+		sprintf(fullpath, "%s/%s", rootdir, filepath);
 
 		// open file for writing
 		file = fopen (fullpath, "wb");

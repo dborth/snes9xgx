@@ -916,8 +916,10 @@ static int MenuGameSelection()
 					#ifdef HW_RVL
 					ShutoffRumble();
 					#endif
+					mainWindow->SetState(STATE_DISABLED);
 					if(BrowserLoadFile(GCSettings.LoadMethod))
 						menu = MENU_EXIT;
+					mainWindow->SetState(STATE_DEFAULT);
 				}
 			}
 		}
