@@ -232,10 +232,9 @@ NGCFreezeGameAuto (int method, bool silent)
 
 	char filepath[1024];
 
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
-		sprintf(filepath, "%s Auto.frz", Memory.ROMFilename);
-	else
-		sprintf(filepath, "%s/%s Auto.frz", GCSettings.SaveFolder, Memory.ROMFilename);
+	if(!MakeFilePath(filepath, FILE_SNAPSHOT, method, Memory.ROMFilename, 0))
+		return false;
+
 	return NGCFreezeGame(filepath, method, silent);
 }
 
@@ -289,13 +288,13 @@ NGCUnfreezeGame (char * filepath, int method, bool silent)
 
 	bufoffset = 0;
 
-    if(method == METHOD_AUTO)
+	if(method == METHOD_AUTO)
 		method = autoSaveMethod(silent); // we use 'Save' because snapshot needs R/W
 
-    if(method == METHOD_AUTO)
+	if(method == METHOD_AUTO)
 		return 0;
 
-    AllocSaveBuffer ();
+	AllocSaveBuffer();
 
     offset = LoadFile(filepath, method, silent);
 
@@ -322,17 +321,20 @@ NGCUnfreezeGame (char * filepath, int method, bool silent)
 
 			if ( err!=Z_OK )
 			{
+				offset = 0;
 				sprintf (msg, "Unzip error %s",zError(err));
 				ErrorPrompt(msg);
 			}
 			else if ( DestBuffSize != decompressedsize )
 			{
+				offset = 0;
 				ErrorPrompt("Unzipped size doesn't match expected size!");
 			}
 			else
 			{
-				offset = SAVEBUFFERSIZE;
-				memcpy (savebuffer, zipbuffer, SAVEBUFFERSIZE);
+				offset = decompressedsize;
+				memset(savebuffer, 0, SAVEBUFFERSIZE);
+				memcpy (savebuffer, zipbuffer, decompressedsize);
 			}
 			free(zipbuffer);
 		}
@@ -350,7 +352,7 @@ NGCUnfreezeGame (char * filepath, int method, bool silent)
 		if(!silent)
 			ErrorPrompt("Freeze file not found");
 	}
-	FreeSaveBuffer ();
+	FreeSaveBuffer();
 	return result;
 }
 

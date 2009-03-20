@@ -155,10 +155,10 @@ VerifyMCFile (char *buf, int slot, char *filename, int datasize)
 	int CardError;
 	unsigned int blocks;
 	unsigned int SectorSize;
-    int bytesleft = 0;
-    int bytesread = 0;
+	int bytesleft = 0;
+	int bytesread = 0;
 
-    memset (verifybuffer, 0, 65536);
+	memset (verifybuffer, 0, 65536);
 
 	// Get Sector Size
 	CARD_GetSectorSize (slot, &SectorSize);
@@ -216,8 +216,8 @@ LoadMCFile (char *buf, int slot, char *filename, bool silent)
 	int CardError;
 	unsigned int blocks;
 	unsigned int SectorSize;
-    int bytesleft = 0;
-    int bytesread = 0;
+	int bytesleft = 0;
+	int bytesread = 0;
 
 	// Try to mount the card
 	CardError = MountMC(slot, NOTSILENT);
