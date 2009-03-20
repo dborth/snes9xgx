@@ -103,8 +103,8 @@ decodesavedata (int method, int readsize)
 	// Check for sram comment
 	memcpy (sramsavecomment, savebuffer+offset, 32);
 
-	// version 0xx found!
-	if ( (strncmp (sramsavecomment, "Snes9x GX 0", 11) == 0) )
+	// Snes9x GX save found!
+	if ( (strncmp (sramsavecomment, "Snes9x GX", 9) == 0) )
 	{
 		// adjust offset
 		if(method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
@@ -116,13 +116,13 @@ decodesavedata (int method, int readsize)
 		memcpy (Memory.SRAM, savebuffer + offset, size);
 	}
 	// check for SRAM from other version/platform of snes9x
-	else if ( readsize == size || readsize == size + SRTC_SRAM_PAD)
+	else if (readsize == size || readsize == size + SRTC_SRAM_PAD)
 	{
 		// SRAM data should be at the start of the file, just import it and
 		// ignore anything after the SRAM
 		memcpy (Memory.SRAM, savebuffer, size);
 	}
-	else if ( readsize == size + 512 )
+	else if (readsize == size + 512)
 	{
 		// SRAM has a 512 byte header - remove it, then import the SRAM,
 		// ignoring anything after the SRAM
@@ -182,10 +182,9 @@ LoadSRAMAuto (int method, bool silent)
 
 	char filepath[1024];
 
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
-		sprintf(filepath, "%s Auto.srm", Memory.ROMFilename);
-	else
-		sprintf(filepath, "%s/%s Auto.srm", GCSettings.SaveFolder, Memory.ROMFilename);
+	if(!MakeFilePath(filepath, FILE_SRAM, method, Memory.ROMFilename, 0))
+		return false;
+
 	return LoadSRAM(filepath, method, silent);
 }
 
