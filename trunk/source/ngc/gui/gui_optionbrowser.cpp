@@ -235,6 +235,9 @@ void GuiOptionBrowser::Draw()
 
 void GuiOptionBrowser::Update(GuiTrigger * t)
 {
+	if(state == STATE_DISABLED || !t)
+		return;
+
 	int next, prev;
 
 	// update the location of the scroll box based on the position in the option list

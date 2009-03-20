@@ -151,6 +151,7 @@ void GuiFileBrowser::SetFocus(int f)
 void GuiFileBrowser::ResetState()
 {
 	state = STATE_DEFAULT;
+	selectedItem = 0;
 
 	for(int i=0; i<PAGESIZE; i++)
 	{
@@ -188,6 +189,9 @@ void GuiFileBrowser::Draw()
 
 void GuiFileBrowser::Update(GuiTrigger * t)
 {
+	if(state == STATE_DISABLED || !t)
+		return;
+
 	// update the location of the scroll box based on the position in the file list
 	int position = 136*(browser.pageIndex + selectedItem) / browser.numEntries;
 	scrollbarBoxBtn->SetPosition(0,position+36);
@@ -205,7 +209,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 
 	if(t->Right() || arrowDownBtn->GetState() == STATE_CLICKED)
 	{
-		if(browser.pageIndex < browser.numEntries)
+		if(browser.pageIndex < browser.numEntries && browser.numEntries > PAGESIZE)
 		{
 			browser.pageIndex += PAGESIZE;
 			if(browser.pageIndex+PAGESIZE >= browser.numEntries)

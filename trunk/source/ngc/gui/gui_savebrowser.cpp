@@ -219,6 +219,9 @@ void GuiSaveBrowser::Draw()
 
 void GuiSaveBrowser::Update(GuiTrigger * t)
 {
+	if(state == STATE_DISABLED || !t)
+		return;
+
 	int i, len;
 	char savetext[50];
 	// update the location of the scroll box based on the position in the option list
