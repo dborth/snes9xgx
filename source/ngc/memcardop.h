@@ -17,5 +17,6 @@ int ParseMCDirectory (int slot);
 int LoadMCFile (char *buf, int slot, char *filename, bool silent);
 int SaveMCFile (char *buf, int slot, char *filename, int datasize, bool silent);
 bool TestMC(int slot, bool silent);
+void SetMCSaveComments(char * comments);
 
 #endif

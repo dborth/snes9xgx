@@ -20,119 +20,10 @@
 #include "srtc.h"
 
 #include "snes9xGX.h"
-#include "images/saveicon.h"
 #include "menu.h"
 #include "fileop.h"
 #include "filebrowser.h"
 #include "input.h"
-
-/****************************************************************************
- * Prepare SRAM Save Data
- *
- * This sets up the savebuffer for saving in a format compatible with
- * snes9x on other platforms.
- ***************************************************************************/
-static int
-preparesavedata (int method)
-{
-	int offset = 0;
-	int size;
-
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
-	{
-		// Copy in save icon
-		memcpy (savebuffer, saveicon, sizeof(saveicon));
-		offset += sizeof (saveicon);
-	}
-
-	// Copy in the sramcomments
-	char sramcomment[2][32];
-	memset(sramcomment, 0, 64);
-	sprintf (sramcomment[0], "%s SRAM", APPNAME);
-	sprintf (sramcomment[1], Memory.ROMName);
-	memcpy (savebuffer + offset, sramcomment, 64);
-	offset += 64;
-
-	if(method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
-	{
-		// make it a 512 byte header so it is compatible with other platforms
-		if (offset <= 512)
-			offset = 512;
-		// header was longer than 512 bytes - hopefully this never happens!
-		else
-			return 0;
-	}
-
-	// Copy in the SRAM
-	size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
-
-	if (size > 0x20000)
-		size = 0x20000;
-
-	if (size != 0)
-	{
-		memcpy (savebuffer + offset, Memory.SRAM, size);
-		offset += size;
-	}
-	else
-	{
-		offset = 0;
-	}
-
-	return offset;
-}
-
-/****************************************************************************
- * Decode Save Data
- ***************************************************************************/
-static void
-decodesavedata (int method, int readsize)
-{
-	int offset = 0;
-	char sramsavecomment[32];
-
-	int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
-
-	if (size > 0x20000)
-		size = 0x20000;
-
-	// memory card save
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
-		offset = sizeof (saveicon); // skip save icon
-
-	// Check for sram comment
-	memcpy (sramsavecomment, savebuffer+offset, 32);
-
-	// Snes9x GX save found!
-	if ( (strncmp (sramsavecomment, "Snes9x GX", 9) == 0) )
-	{
-		// adjust offset
-		if(method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
-			offset = 512; // skip entire 512 byte header
-		else
-			offset += 64; // skip savecomments
-
-		// import the SRAM
-		memcpy (Memory.SRAM, savebuffer + offset, size);
-	}
-	// check for SRAM from other version/platform of snes9x
-	else if (readsize == size || readsize == size + SRTC_SRAM_PAD)
-	{
-		// SRAM data should be at the start of the file, just import it and
-		// ignore anything after the SRAM
-		memcpy (Memory.SRAM, savebuffer, size);
-	}
-	else if (readsize == size + 512)
-	{
-		// SRAM has a 512 byte header - remove it, then import the SRAM,
-		// ignoring anything after the SRAM
-		memcpy(Memory.SRAM, savebuffer+512, size);
-	}
-	else
-	{
-		ErrorPrompt("Incompatible SRAM save!");
-	}
-}
 
 /****************************************************************************
  * Load SRAM
@@ -154,7 +45,28 @@ LoadSRAM (char * filepath, int method, bool silent)
 
 	if (offset > 0)
 	{
-		decodesavedata (method, offset);
+		int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
+
+		if (size > 0x20000)
+			size = 0x20000;
+
+		if (readsize == size + 512 || readsize == size + 512 + SRTC_SRAM_PAD)
+		{
+			// SRAM has a 512 byte header - remove it, then import the SRAM,
+			// ignoring anything after the SRAM
+			memcpy(Memory.SRAM, savebuffer+512, size);
+		}
+		else if (readsize == size || readsize == size + SRTC_SRAM_PAD)
+		{
+			// SRAM data should be at the start of the file, just import it and
+			// ignore anything after the SRAM
+			memcpy (Memory.SRAM, savebuffer, size);
+		}
+		else
+		{
+			ErrorPrompt("Incompatible SRAM save!");
+		}
+
 		S9xSoftReset();
 		FreeSaveBuffer ();
 		return true;
@@ -195,7 +107,6 @@ bool
 SaveSRAM (char * filepath, int method, bool silent)
 {
 	bool retval = false;
-	int datasize;
 	int offset = 0;
 
 	if(method == METHOD_AUTO)
@@ -204,13 +115,29 @@ SaveSRAM (char * filepath, int method, bool silent)
 	if(method == METHOD_AUTO)
 		return false;
 
-	AllocSaveBuffer ();
+	// determine SRAM size
+	int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
 
-	datasize = preparesavedata (method);
+	if (size > 0x20000)
+		size = 0x20000;
 
-	if (datasize)
+	if (size > 0)
 	{
-		offset = SaveFile(filepath, datasize, method, silent);
+		if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+		{
+			// Set the sramcomments
+			char sramcomment[2][32];
+			memset(sramcomment, 0, 64);
+			sprintf (sramcomment[0], "%s SRAM", APPNAME);
+			sprintf (sramcomment[1], Memory.ROMName);
+			SetMCSaveComments(sramcomment);
+		}
+
+		AllocSaveBuffer ();
+		// copy in the SRAM, leaving a 512 byte header (for compatibility with other platforms)
+		memcpy(savebuffer+512, Memory.SRAM, size);
+		offset = SaveFile(filepath, size+512, method, silent);
+		FreeSaveBuffer ();
 
 		if (offset > 0)
 		{
@@ -224,8 +151,6 @@ SaveSRAM (char * filepath, int method, bool silent)
 		if(!silent)
 			ErrorPrompt("No SRAM data to save!");
 	}
-
-	FreeSaveBuffer ();
 	return retval;
 }
 

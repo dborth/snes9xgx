@@ -24,8 +24,10 @@
 #include "filebrowser.h"
 #include "fileop.h"
 #include "dvd.h"
+#include "images/saveicon.h"
 
 static u8 * SysArea = NULL;
+static char savecomments[2][32];
 
 /****************************************************************************
  * MountMC
@@ -268,6 +270,10 @@ LoadMCFile (char *buf, int slot, char *filename, bool silent)
 		CARD_Unmount(slot);
 	}
 
+	// discard save icon and comments
+	memmove(buf, buf+sizeof(saveicon)+64, bytesread);
+	bytesread -= (sizeof(saveicon)+64);
+
 	free(SysArea);
 	return bytesread;
 }
@@ -289,6 +295,12 @@ SaveMCFile (char *buf, int slot, char *filename, int datasize, bool silent)
 
 	if(datasize <= 0)
 		return 0;
+
+	// add save icon and comments
+	memmove(buf+sizeof(saveicon)+64, buf, datasize);
+	memcpy(buf, saveicon, sizeof(saveicon));
+	memcpy(buf+sizeof(saveicon), savecomments, 64);
+	datasize += (sizeof(saveicon)+64);
 
 	// Try to mount the card
 	CardError = MountMC(slot, NOTSILENT);
@@ -372,4 +384,9 @@ done:
 
 	free(SysArea);
 	return byteswritten;
+}
+
+void SetMCSaveComments(char * comments)
+{
+	memcpy(savecomments, comments, 64);
 }
