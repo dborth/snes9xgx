@@ -58,7 +58,8 @@ GuiImage::GuiImage(int w, int h, GXColor c)
 		}
 	}
 	int len = w*h*4;
-	DCFlushRange(image, len+len%32);
+	if(len%32) len += (32-len%32);
+	DCFlushRange(image, len);
 }
 
 /**
