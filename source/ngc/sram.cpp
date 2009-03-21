@@ -20,6 +20,7 @@
 #include "srtc.h"
 
 #include "snes9xGX.h"
+#include "memcardop.h"
 #include "menu.h"
 #include "fileop.h"
 #include "filebrowser.h"
@@ -50,13 +51,14 @@ LoadSRAM (char * filepath, int method, bool silent)
 		if (size > 0x20000)
 			size = 0x20000;
 
-		if (readsize == size + 512 || readsize == size + 512 + SRTC_SRAM_PAD)
+		if (method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB ||
+			offset == size + 512 || offset == size + 512 + SRTC_SRAM_PAD)
 		{
 			// SRAM has a 512 byte header - remove it, then import the SRAM,
 			// ignoring anything after the SRAM
 			memcpy(Memory.SRAM, savebuffer+512, size);
 		}
-		else if (readsize == size || readsize == size + SRTC_SRAM_PAD)
+		else if (offset == size || offset == size + SRTC_SRAM_PAD)
 		{
 			// SRAM data should be at the start of the file, just import it and
 			// ignore anything after the SRAM

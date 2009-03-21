@@ -31,6 +31,7 @@
 #include "srtc.h"
 
 #include "snes9xGX.h"
+#include "memcardop.h"
 #include "freeze.h"
 #include "fileop.h"
 #include "filebrowser.h"
@@ -152,11 +153,13 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 		memset(freezecomment, 0, 64);
 		sprintf (freezecomment[0], "%s Snapshot", APPNAME);
 		sprintf (freezecomment[1], Memory.ROMName);
-		SetMCSaveComment(freezecomment);
+		SetMCSaveComments(freezecomment);
+
+		char * zipbuffer = (char *)memalign(32, SAVEBUFFERSIZE);
 
 		// Zip and copy in the freeze
 		uLongf DestBuffSize = (uLongf) SAVEBUFFERSIZE;
-		int err= compress2((Bytef*)(savebuffer+8), (uLongf*)&DestBuffSize, (const Bytef*)savebuffer, (uLongf)bufoffset, Z_BEST_COMPRESSION);
+		int err = compress2((Bytef*)(zipbuffer), (uLongf*)&DestBuffSize, (const Bytef*)savebuffer, (uLongf)bufoffset, Z_BEST_COMPRESSION);
 
 		if(err!=Z_OK)
 		{
@@ -167,8 +170,11 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 
 		int zippedsize = (int)DestBuffSize;
 		int decompressedsize = (int)bufoffset;
-		memcpy (savebuffer, &zippedsize, 4);
-		memcpy (savebuffer+4, &decompressedsize, 4);
+		memset(savebuffer, 0, SAVEBUFFERSIZE);
+		memcpy(savebuffer, &zippedsize, 4);
+		memcpy(savebuffer+4, &decompressedsize, 4);
+		memcpy(savebuffer+8, zipbuffer, DestBuffSize);
+		free(zipbuffer);
 
 		woffset = zippedsize + 8;
 	}

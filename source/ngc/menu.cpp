@@ -1159,7 +1159,7 @@ static int MenuGame()
 		batteryImg[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
 		batteryImg[i]->SetPosition(30, 0);
 		batteryBarImg[i] = new GuiImage(&batteryBar);
-		batteryBarImg[i]->SetTile(4);
+		batteryBarImg[i]->SetTile(0);
 		batteryBarImg[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
 		batteryBarImg[i]->SetPosition(34, 0);
 
@@ -1603,10 +1603,12 @@ static int MenuGameSaves(int action)
 		}
 	}
 
-	for(i=0; i < saves.length; i++)
-		delete saves.previewImg[i];
-
 	HaltGui();
+
+	for(i=0; i < saves.length; i++)
+		if(saves.previewImg[i])
+			delete saves.previewImg[i];
+
 	mainWindow->Remove(&saveBrowser);
 	mainWindow->Remove(&w);
 	mainWindow->Remove(&titleTxt);

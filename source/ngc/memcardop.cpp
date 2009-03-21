@@ -386,7 +386,7 @@ done:
 	return byteswritten;
 }
 
-void SetMCSaveComments(char * comments)
+void SetMCSaveComments(char comments[2][32])
 {
 	memcpy(savecomments, comments, 64);
 }

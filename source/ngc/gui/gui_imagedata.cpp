@@ -15,13 +15,11 @@
  */
 GuiImageData::GuiImageData(const u8 * img)
 {
-	if(img == NULL)
-	{
-		data = NULL;
-		width = 0;
-		height = 0;
-	}
-	else
+	data = NULL;
+	width = 0;
+	height = 0;
+
+	if(img)
 	{
 		PNGUPROP imgProp;
 		IMGCTX ctx = PNGU_SelectImageFromBuffer(img);
