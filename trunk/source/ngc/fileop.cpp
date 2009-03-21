@@ -482,10 +482,13 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 					memcpy (rbuffer, zipbuffer, readsize); // copy what we already read
 
 					u32 offset = readsize;
+					u32 nextread = 0;
 					while(offset < size)
 					{
+						if(size - offset > 1024*512) nextread = 1024*512;
+						else nextread = size-offset;
 						ShowProgress ("Loading...", offset, size);
-						readsize = fread (rbuffer + offset, 1, (1024*512), file); // read in 512K chunks
+						readsize = fread (rbuffer + offset, 1, nextread, file); // read in 512K chunks
 
 						if(readsize <= 0 || readsize > (1024*512))
 							break; // read failure
