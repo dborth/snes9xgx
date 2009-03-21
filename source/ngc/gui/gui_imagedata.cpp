@@ -31,7 +31,9 @@ GuiImageData::GuiImageData(const u8 * img)
 
 		if(res == PNGU_OK)
 		{
-			data = (u8 *)memalign (32, imgProp.imgWidth * imgProp.imgHeight * 4);
+			int len = imgProp.imgWidth * imgProp.imgHeight * 4;
+			if(len%32) len += (32-len%32);
+			data = (u8 *)memalign (32, len);
 
 			if(data)
 			{
@@ -41,8 +43,7 @@ GuiImageData::GuiImageData(const u8 * img)
 				{
 					width = imgProp.imgWidth;
 					height = imgProp.imgHeight;
-					int len = imgProp.imgWidth * imgProp.imgHeight * 4;
-					DCFlushRange(data, len+len%32);
+					DCFlushRange(data, len);
 				}
 				else
 				{
