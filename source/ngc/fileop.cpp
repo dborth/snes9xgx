@@ -127,11 +127,11 @@ InitDeviceThread()
 void UnmountAllFAT()
 {
 #ifdef HW_RVL
-	fatUnmount("sd:");
-	fatUnmount("usb:");
+	fatUnmount("sd:/");
+	fatUnmount("usb:/");
 #else
-	fatUnmount("carda:");
-	fatUnmount("cardb:");
+	fatUnmount("carda:/");
+	fatUnmount("cardb:/");
 #endif
 }
 
@@ -175,7 +175,7 @@ bool MountFAT(int method)
 			return false; // unknown device
 	}
 
-	sprintf(rootdir, "%s:", name);
+	sprintf(rootdir, "%s:/", name);
 
 	if(unmountRequired[method])
 	{
@@ -247,7 +247,7 @@ bool ChangeInterface(int method, bool silent)
 #ifdef HW_RVL
 	else if(method == METHOD_SMB)
 	{
-		sprintf(rootdir, "smb:");
+		sprintf(rootdir, "smb:/");
 		mounted = ConnectShare(silent);
 	}
 #endif
@@ -453,7 +453,7 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 
 	// add device to filepath
 	char fullpath[1024];
-	sprintf(fullpath, "%s/%s", rootdir, filepath);
+	sprintf(fullpath, "%s%s", rootdir, filepath);
 
 	file = fopen (fullpath, "rb");
 
@@ -554,7 +554,7 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 
 		// add device to filepath
 		char fullpath[1024];
-		sprintf(fullpath, "%s/%s", rootdir, filepath);
+		sprintf(fullpath, "%s%s", rootdir, filepath);
 
 		// open file for writing
 		file = fopen (fullpath, "wb");
