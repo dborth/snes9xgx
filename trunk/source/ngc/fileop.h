@@ -27,7 +27,7 @@ void InitDeviceThread();
 void MountAllFAT();
 void UnmountAllFAT();
 bool ChangeInterface(int method, bool silent);
-int ParseDirectory();
+int ParseDirectory(int method);
 void AllocSaveBuffer();
 void FreeSaveBuffer();
 u32 LoadFile(char * rbuffer, char *filepath, u32 length, int method, bool silent);

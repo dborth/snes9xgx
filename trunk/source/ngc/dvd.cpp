@@ -23,10 +23,11 @@ extern "C" {
 }
 #endif
 
+#include "snes9xGX.h"
 #include "menu.h"
 #include "gcunzip.h"
 #include "filebrowser.h"
-#include "snes9xGX.h"
+#include "fileop.h"
 
 #define MAXDVDFILES 2000
 
@@ -502,7 +503,7 @@ getentry (int entrycount, unsigned char dvdbuffer[])
  * The return value is number of files collected, or -1 on failure.
  ***************************************************************************/
 int
-ParseDVDdirectory ()
+ParseDVDdirectory (bool change)
 {
 	int pdlength;
 	u64 pdoffset;
@@ -513,6 +514,9 @@ ParseDVDdirectory ()
 
 	// reset browser
 	ResetBrowser();
+	
+	if(change && !ChangeInterface(METHOD_DVD, NOTSILENT))
+		return 0;
 
 	pdoffset = rdoffset = dvddir;
 	pdlength = dvddirlength;
@@ -601,7 +605,7 @@ static bool SwitchDVDFolderR(char * dir, int maxDepth)
 		if(browserList[dirindex].isdir) // only parse directories
 		{
 			UpdateDirName(METHOD_DVD);
-			ParseDVDdirectory();
+			ParseDVDdirectory(false);
 		}
 		else
 		{
@@ -636,7 +640,7 @@ bool SwitchDVDFolder(char origdir[])
 	dvddir = dvdrootdir;
 	dvddirlength = dvdrootlength;
 	browser.dir[0] = 0;
-	ParseDVDdirectory();
+	ParseDVDdirectory(true);
 
 	return SwitchDVDFolderR(dirptr, 0);
 }

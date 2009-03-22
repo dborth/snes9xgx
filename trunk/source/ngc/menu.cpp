@@ -179,6 +179,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 		promptWindow.Append(&btn2);
 
 	promptWindow.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 50);
+	CancelAction();
 	HaltGui();
 	mainWindow->SetState(STATE_DISABLED);
 	mainWindow->Append(&promptWindow);
@@ -465,13 +466,16 @@ ShowAction (const char *msg)
 
 void ErrorPrompt(const char *msg)
 {
-	CancelAction();
 	WindowPrompt("Error", msg, "OK", NULL);
+}
+
+int ErrorPromptRetry(const char *msg)
+{
+	return WindowPrompt("Error", msg, "Retry", "Cancel");
 }
 
 void InfoPrompt(const char *msg)
 {
-	CancelAction();
 	WindowPrompt("Information", msg, "OK", NULL);
 }
 
@@ -1435,7 +1439,7 @@ static int MenuGameSaves(int action)
 	else
 	{
 		strncpy(browser.dir, GCSettings.SaveFolder, 200);
-		ParseDirectory();
+		ParseDirectory(GCSettings.SaveMethod);
 	}
 
 	for(i=0; i < browser.numEntries; i++)
@@ -1485,6 +1489,17 @@ static int MenuGameSaves(int action)
 						{
 							saves.previewImg[j] = new GuiImageData(savebuffer);
 						}
+						/*char scrfile2[1024];
+						sprintf(scrfile, "%s/%s.png", GCSettings.SaveFolder, tmp);
+						sprintf(scrfile2, "%s/resave/%s.png", GCSettings.SaveFolder, tmp);
+
+						AllocSaveBuffer();
+						int scrsize = LoadFile(scrfile, GCSettings.SaveMethod, SILENT);
+						if(scrsize > 0)
+						{
+							//saves.previewImg[j] = new GuiImageData(savebuffer);
+							SaveFile(scrfile2, scrsize, GCSettings.SaveMethod, SILENT);
+						}*/
 						FreeSaveBuffer();
 					}
 					strftime(saves.date[j], 20, "%a %b %d", &browserList[j].mtime);
