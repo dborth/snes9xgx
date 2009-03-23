@@ -503,7 +503,7 @@ getentry (int entrycount, unsigned char dvdbuffer[])
  * The return value is number of files collected, or -1 on failure.
  ***************************************************************************/
 int
-ParseDVDdirectory (bool change)
+ParseDVDdirectory ()
 {
 	int pdlength;
 	u64 pdoffset;
@@ -514,9 +514,6 @@ ParseDVDdirectory (bool change)
 
 	// reset browser
 	ResetBrowser();
-	
-	if(change && !ChangeInterface(METHOD_DVD, NOTSILENT))
-		return 0;
 
 	pdoffset = rdoffset = dvddir;
 	pdlength = dvddirlength;
@@ -605,7 +602,7 @@ static bool SwitchDVDFolderR(char * dir, int maxDepth)
 		if(browserList[dirindex].isdir) // only parse directories
 		{
 			UpdateDirName(METHOD_DVD);
-			ParseDVDdirectory(false);
+			ParseDVDdirectory();
 		}
 		else
 		{
@@ -640,7 +637,7 @@ bool SwitchDVDFolder(char origdir[])
 	dvddir = dvdrootdir;
 	dvddirlength = dvdrootlength;
 	browser.dir[0] = 0;
-	ParseDVDdirectory(true);
+	ParseDVDdirectory();
 
 	return SwitchDVDFolderR(dirptr, 0);
 }

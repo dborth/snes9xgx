@@ -14,7 +14,7 @@
 #define _NGCDVD_
 
 bool MountDVD(bool silent);
-int ParseDVDdirectory(bool change);
+int ParseDVDdirectory();
 void SetDVDdirectory(u64 dir, int length);
 bool SwitchDVDFolder(char dir[]);
 

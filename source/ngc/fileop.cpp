@@ -280,6 +280,7 @@ ParseDirectory(int method)
 	struct tm * timeinfo;
 	char msg[128];
 	int retry = 1;
+	bool mounted = false;
 
 	// reset browser
 	ResetBrowser();
@@ -289,16 +290,14 @@ ParseDirectory(int method)
 	// open the directory
 	while(dir == NULL && retry == 1)
 	{
-		if(ChangeInterface(method, NOTSILENT))
+		mounted = ChangeInterface(method, NOTSILENT);
+		sprintf(fulldir, "%s%s", rootdir, browser.dir); // add device to path
+		if(mounted) dir = diropen(fulldir);
+		if(dir == NULL)
 		{
-			sprintf(fulldir, "%s%s", rootdir, browser.dir); // add device to path
-			dir = diropen(fulldir);
-			if(dir == NULL)
-			{
-				unmountRequired[method] = true;
-				sprintf(msg, "Error opening %s", fulldir);
-				retry = ErrorPromptRetry(msg);
-			}
+			unmountRequired[method] = true;
+			sprintf(msg, "Error opening %s", fulldir);
+			retry = ErrorPromptRetry(msg);
 		}
 	}
 

@@ -501,7 +501,7 @@ int BrowserChangeFolder(int method)
 	switch (method)
 	{
 		case METHOD_DVD:
-			ParseDVDdirectory(true);
+			ParseDVDdirectory();
 			break;
 
 		default:
@@ -535,8 +535,9 @@ OpenGameList ()
 	{
 		case METHOD_DVD:
 			browser.dir[0] = 0;
-			if(ParseDVDdirectory(true)) // Parse root directory
-				SwitchDVDFolder(GCSettings.LoadFolder); // switch to ROM folder
+			if(MountDVD(NOTSILENT))
+				if(ParseDVDdirectory()) // Parse root directory
+					SwitchDVDFolder(GCSettings.LoadFolder); // switch to ROM folder
 			break;
 		default:
 			sprintf(browser.dir, "/%s", GCSettings.LoadFolder);
