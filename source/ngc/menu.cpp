@@ -1463,7 +1463,7 @@ static int MenuGameSaves(int action)
 			if(saves.type[j] != -1)
 			{
 				int n = -1;
-				char tmp[300];
+				char tmp[256];
 				strncpy(tmp, browserList[i].filename, 255);
 				tmp[len2-4] = 0;
 
@@ -1472,7 +1472,7 @@ static int MenuGameSaves(int action)
 				else if(len2 - len == 6)
 					n = atoi(&tmp[len2-6]);
 
-				if(n > 0 && n < 100)
+				if(n > 0 && n < MAX_SAVES)
 					saves.files[saves.type[j]][n] = 1;
 
 				strncpy(saves.filename[j], browserList[i].filename, 255);
@@ -1486,20 +1486,7 @@ static int MenuGameSaves(int action)
 
 						AllocSaveBuffer();
 						if(LoadFile(scrfile, GCSettings.SaveMethod, SILENT))
-						{
 							saves.previewImg[j] = new GuiImageData(savebuffer);
-						}
-						/*char scrfile2[1024];
-						sprintf(scrfile, "%s/%s.png", GCSettings.SaveFolder, tmp);
-						sprintf(scrfile2, "%s/resave/%s.png", GCSettings.SaveFolder, tmp);
-
-						AllocSaveBuffer();
-						int scrsize = LoadFile(scrfile, GCSettings.SaveMethod, SILENT);
-						if(scrsize > 0)
-						{
-							//saves.previewImg[j] = new GuiImageData(savebuffer);
-							SaveFile(scrfile2, scrsize, GCSettings.SaveMethod, SILENT);
-						}*/
 						FreeSaveBuffer();
 					}
 					strftime(saves.date[j], 20, "%a %b %d", &browserList[j].mtime);

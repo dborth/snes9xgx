@@ -168,11 +168,12 @@ void GuiButton::Update(GuiTrigger * t)
 				}
 			}
 		}
-		else if(state == STATE_SELECTED)
+		else
 		{
-			state = STATE_DEFAULT;
+			if(state == STATE_SELECTED)
+				state = STATE_DEFAULT;
 
-			if(effectsOver && !effects)
+			if(effectTarget == effectTargetOver && effectAmount == effectAmountOver)
 			{
 				// initiate effects (in reverse)
 				effects = effectsOver;

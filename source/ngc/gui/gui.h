@@ -32,6 +32,8 @@
 #define SCROLL_LOOP_DELAY 3
 #define PAGESIZE 8
 #define SAVELISTSIZE 6
+#define MAX_SAVES 20
+#define MAX_OPTIONS 30
 
 typedef void (*UpdateCallback)(void * e);
 
@@ -351,8 +353,8 @@ class GuiFileBrowser : public GuiElement
 
 typedef struct _optionlist {
 	int length;
-	char name[150][50];
-	char value[150][50];
+	char name[MAX_OPTIONS][150];
+	char value[MAX_OPTIONS][150];
 } OptionList;
 
 class GuiOptionBrowser : public GuiElement
@@ -406,11 +408,11 @@ class GuiOptionBrowser : public GuiElement
 
 typedef struct _savelist {
 	int length;
-	char filename[20][255];
-	GuiImageData * previewImg[20];
-	char date[20][50];
-	char time[10][50];
-	int type[20];
+	char filename[MAX_SAVES][256];
+	GuiImageData * previewImg[MAX_SAVES];
+	char date[MAX_SAVES][20];
+	char time[MAX_SAVES][10];
+	int type[MAX_SAVES];
 	int files[2][100];
 } SaveList;
 
