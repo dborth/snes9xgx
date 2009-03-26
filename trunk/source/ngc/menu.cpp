@@ -1489,8 +1489,9 @@ static int MenuGameSaves(int action)
 							saves.previewImg[j] = new GuiImageData(savebuffer);
 						FreeSaveBuffer();
 					}
-					strftime(saves.date[j], 20, "%a %b %d", &browserList[j].mtime);
-					strftime(saves.time[j], 10, "%I:%M %p", &browserList[j].mtime);
+					struct tm * timeinfo = localtime(&browserList[j].mtime);
+					strftime(saves.date[j], 20, "%a %b %d", timeinfo);
+					strftime(saves.time[j], 10, "%I:%M %p", timeinfo);
 				}
 				j++;
 			}

@@ -277,7 +277,6 @@ ParseDirectory(int method)
 	char filename[MAXPATHLEN];
 	char tmpname[MAXPATHLEN];
 	struct stat filestat;
-	struct tm * timeinfo;
 	char msg[128];
 	int retry = 1;
 	bool mounted = false;
@@ -352,8 +351,7 @@ ParseDirectory(int method)
 			}
 
 			browserList[entryNum].length = filestat.st_size;
-			timeinfo = localtime (&filestat.st_mtime);
-			memcpy(&browserList[entryNum].mtime, timeinfo, sizeof(tm));
+			browserList[entryNum].mtime = filestat.st_mtime;
 			browserList[entryNum].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
 
 			entryNum++;
