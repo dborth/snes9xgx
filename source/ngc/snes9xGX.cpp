@@ -352,7 +352,6 @@ main(int argc, char *argv[])
 	#endif
 
 	#ifdef HW_RVL
-	DI_Close();
 	DI_Init();	// first
 	#endif
 
