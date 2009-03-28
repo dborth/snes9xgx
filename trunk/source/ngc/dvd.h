@@ -3,7 +3,7 @@
  *
  * softdev July 2006
  * svpe & crunchy2 June 2007
- * Tantric September 2008
+ * Tantric 2008-2009
  *
  * dvd.h
  *
@@ -25,7 +25,6 @@ int dvd_safe_read (void *dst, unsigned int len, u64 offset);
 void SetDVDDriveType();
 #ifdef HW_DOL
 void dvd_motor_off ();
-void uselessinquiry ();
 #endif
 
 #endif

@@ -256,9 +256,28 @@ decodePrefsData (int method)
 		{
 			const char * version = mxmlElementGetAttr(item, "version");
 
-			if(version)
+			if(version && strlen(version) == 5)
 			{
-				result = true; // assume version is valid
+				// this code assumes version in format X.X.X
+				// XX.X.X, X.XX.X, or X.X.XX will NOT work
+				int verMajor = version[0] - '0';
+				int verMinor = version[2] - '0';
+				int verPoint = version[4] - '0';
+				int curMajor = APPVERSION[0] - '0';
+				int curMinor = APPVERSION[2] - '0';
+				int curPoint = APPVERSION[4] - '0';
+
+				// first we'll check that the versioning is valid
+				if(!(verMajor >= 0 && verMajor <= 9 &&
+					verMinor >= 0 && verMinor <= 9 &&
+					verPoint >= 0 && verPoint <= 9))
+					result = false;
+				else if(verPoint < 8 && verMajor == 1) // less than version 1.0.8
+					result = false; // reset settings (sorry, should update settings instead)
+				else if(verMajor > curMajor || verMinor > curMinor || verPoint > curPoint) // some future version
+					result = false; // reset settings
+				else
+					result = true;
 			}
 		}
 

@@ -388,7 +388,7 @@ draw_square (Mtx v)
 /****************************************************************************
  * StartGX
  *
- * This function initialises the GX.
+ * Initialises GX and sets it up for use
  ***************************************************************************/
 static void
 StartGX ()
@@ -409,6 +409,11 @@ StartGX ()
 	vheight = 100;
 }
 
+/****************************************************************************
+ * StopGX
+ *
+ * Stops GX (when exiting)
+ ***************************************************************************/
 void StopGX()
 {
 	GX_AbortFrame();
@@ -859,13 +864,10 @@ setGFX ()
 }
 
 /****************************************************************************
- * GX Menu drawing routines
+ * TakeScreenshot
+ *
+ * Copies the current screen into a GX texture
  ***************************************************************************/
-
-/**
- * Make a snapshot of the screen in a texture.
- * @return A pointer to a texture representing the screen or NULL if an error occurs.
- */
 void TakeScreenshot()
 {
 	int texSize = vmode->fbWidth * vmode->efbHeight * 4;
@@ -960,6 +962,11 @@ ResetVideo_Menu ()
 	GX_SetAlphaUpdate(GX_TRUE);
 }
 
+/****************************************************************************
+ * Menu_Render
+ *
+ * Renders everything current sent to GX, and flushes video
+ ***************************************************************************/
 void Menu_Render()
 {
 	GX_DrawDone ();
@@ -973,7 +980,13 @@ void Menu_Render()
 	VIDEO_WaitVSync();
 }
 
-void Menu_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], f32 degrees, f32 scaleX, f32 scaleY, u8 alpha)
+/****************************************************************************
+ * Menu_DrawImg
+ *
+ * Draws the specified image on screen using GX
+ ***************************************************************************/
+void Menu_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[],
+	f32 degrees, f32 scaleX, f32 scaleY, u8 alpha)
 {
 	if(data == NULL)
 		return;
@@ -1023,6 +1036,11 @@ void Menu_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], f32 degr
 	GX_SetVtxDesc (GX_VA_TEX0, GX_NONE);
 }
 
+/****************************************************************************
+ * Menu_DrawRectangle
+ *
+ * Draws a rectangle at the specified coordinates using GX
+ ***************************************************************************/
 void Menu_DrawRectangle(f32 x, f32 y, f32 width, f32 height, GXColor color, u8 filled)
 {
 	u8 fmt;
