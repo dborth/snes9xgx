@@ -11,7 +11,7 @@
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                      Snes9x GX 4.0.0                          ·oø×O0|
-|                   http://code.google.com/p/Snes9x-gx                      |
+|                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 
@@ -30,6 +30,7 @@ guides on how to install and get homebrew working on your Nintendo Wii.
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                                FEATURES  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
 * Based on Snes9x 1.51 - superior ROM compatibility
 * Wiimote, Nunchuk, Classic, and Gamecube controller support
 * SNES Superscope, Mouse, Justifier support
@@ -47,7 +48,8 @@ guides on how to install and get homebrew working on your Nintendo Wii.
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-[What's New 4.0.0 - March 28, 2009]
+[4.0.0]
+
 * New GX-based menu, with a completely redesigned layout. Has Wiimote IR 
   support, sounds, graphics, animation effects, and more
 * Onscreen keyboard for changing save/load folders and network settings
@@ -58,14 +60,16 @@ guides on how to install and get homebrew working on your Nintendo Wii.
   screenshots for Snapshot saves, and save dates/times
 * Experimental hq2x filter
 
-[What's New 009 - January 27, 2009]
+[009 - January 27, 2009]
+
 * Faster SD/USB - new read-ahead cache
 * Removed trigger of back to menu for Classic Controller right joystick
 * Fixed a bug with reading files < 2048 bytes
 * Fixed some memory leaks, buffer overflows, etc
 * Code cleanup, other general bugfixes
 
-[What's New 008 - December 24, 2008]
+[008 - December 24, 2008]
+
 * Fixed unstable SD card access
 * Proper SD/USB hotswap (Wii only)
 * Auto-update feature (Wii only)
@@ -76,7 +80,7 @@ guides on how to install and get homebrew working on your Nintendo Wii.
 * Fixed hangup in Super Mario RPG
 * Minor bug fixes
 
-[What's New 007 - November 19, 2008]
+[007 - November 19, 2008]
 
 * added: SDHC support
 * added: SD/USB hot-swapping
@@ -103,7 +107,7 @@ guides on how to install and get homebrew working on your Nintendo Wii.
 * fixed: original modes (thanks eke-eke!)
 * fixed: vertical scaling for filtered/unfiltered modes (thanks eke-eke!)
 
-[What's New 006 - October 15, 2008]
+[006 - October 15, 2008]
 
 Tantric
 * added: 480p for GameCube
@@ -121,7 +125,7 @@ michniewski
 * added: Video shift options
 * changed: Turn DVD motor off option re-enabled for GameCube
 
-[What Was New 005 - September 23, 2008]
+[005 - September 23, 2008]
 
 michniewski
 * added: Superscope/mouse/justifier support, with Wii remote
@@ -156,7 +160,7 @@ Tantric
            preferences menu pops up - remove to save your preferences!
 * changed: SRAM load - game reloaded automatically after loading SRAM
 
-[What Was New 004 - August 5, 2008]
+[004 - August 5, 2008]
 
 * added: option to disable AA filtering 
          (snes graphics 'crisper', AA now default OFF)
@@ -168,7 +172,7 @@ Tantric
            new naming is provided for sram only.
 * changed: by default, autoload/save sram and freeze enabled
 
-[What Was New 003 - July 25, 2008]
+[003 - July 25, 2008]
 * added: alphabetical file sorting
 * added: background logo/backdrop + nicer menus
 * added: scrolling in ROM selector
@@ -185,7 +189,7 @@ Tantric
            anymore. It is saved in the background.
 * updated README
 
-[Whats Was New 002 - July 21, 2008]
+[002 - July 21, 2008]
 * added: classic and nunchuk support
 * added: all controllers can now be configured
 * added: GC version (untested)
@@ -195,7 +199,7 @@ Tantric
 * one makefile to make all versions. (thanks to snes9x143 SVN)
 
 
-[What Was New 001 - July 12, 2008]
+[001 - July 12, 2008]
 * compiles with latest devkitppc (r15)
 * now uses libfat (can use front sd slot on wii)
 * updated menu items a bit
@@ -493,7 +497,7 @@ file to be what that version of snes9x expects it to be.
 |                                                    UPDATE HISTORY (OLD)  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-[What Was New 2.0.1b8]
+[2.0.1b8]
 * Added: SD slot B options for freezes, sram and loading of roms
 * Changed: SMB options no longer displayed in menus when run on a Wii
 * Changed: Game auto resumes running after resetting when choosing the "Reset
@@ -501,7 +505,7 @@ file to be what that version of snes9x expects it to be.
 * Fixed (maybe): Reading of DVDs past the 1.36 GB barrier (Wii only) please
     test! - svpe
 
-[What Was New 2.0.1b7]
+[2.0.1b7]
 * Fixed: Zip compressed freezes to memory card could become corrupted as the
     file size changed - fixed this by deleting the existing file before writing
     a new one if the file size increased. If the file got smaller or stayed the
@@ -533,10 +537,10 @@ NOTE: due to changes in the settings, this version will reset your emulator
 options settings, so if you had saved preferences you will need to make your
 changes to the emulator settings again and save them.
 
-[What Was New 2.0.1b6a]
+[2.0.1b6a]
 * Fixed: Going up a directory when selecting a rom on a DVD wasn't working
     
-[What Was New 2.0.1b6]
+[2.0.1b6]
 * PAL Wii support - no separate version necessary! - eke-eke
 * PAL roms now play at correct speed via internal timer, ntsc roms still use
     more accurate VSYNC timing - eke-eke
@@ -552,7 +556,7 @@ changes to the emulator settings again and save them.
 * Fixed: loading of joypad configuration in SRAM works again - no longer gets
     messed up
 
-[ What Was New in 2.0.1b5]
+[2.0.1b5]
 * B button implemented in all menus (returns to previous menu)
 * Fixed bug when freezing state to SD card - would crash if SD support was not
     previously initialized
@@ -563,7 +567,7 @@ changes to the emulator settings again and save them.
 * Fixed version number in SRAM and preferences
 * Minor other code revisions
 
-[ What Was New 2.0.1b1 through 2.0.1b4]
+[2.0.1b1 through 2.0.1b4]
 * SRAM saving and loading from snes9x on other platforms via SD card or SMB
 * Games now autostart once loaded
 * After manually loading SRAM the emulator is automatically reset
@@ -577,7 +581,7 @@ changes to the emulator settings again and save them.
 * ROM injector works again
 * A number of small improvements and bug fixes
   
-[ What Was New in 2.0 WIP6 ]
+[2.0 WIP6]
 * Port of SNES9X 1.50
 * SMB support
 * SD support
