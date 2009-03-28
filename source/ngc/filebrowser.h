@@ -6,13 +6,13 @@
  * Michniewski 2008
  * Tantric 2008-2009
  *
- * filesel.h
+ * filebrowser.h
  *
  * Generic file routines - reading, writing, browsing
  ****************************************************************************/
 
-#ifndef _NGCFILESEL_
-#define _NGCFILESEL_
+#ifndef _FILEBROWSER_H_
+#define _FILEBROWSER_H_
 
 #include <unistd.h>
 #include <gccore.h>

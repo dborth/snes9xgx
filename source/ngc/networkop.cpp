@@ -65,20 +65,51 @@ void UpdateCheck()
 				item = mxmlFindElement(xml, xml, "app", "version", NULL, MXML_DESCEND);
 				if(item) // a version entry exists
 				{
-					const char * versionstr = mxmlElementGetAttr(item, "version");
+					const char * version = mxmlElementGetAttr(item, "version");
 
-					if(versionstr)
+					if(version && strlen(version) == 5)
 					{
-						int version = atoi(versionstr);
-						int currVersion = atoi(APPVERSION);
+						int verMajor = version[0] - '0';
+						int verMinor = version[2] - '0';
+						int verPoint = version[4] - '0';
+						int curMajor = APPVERSION[0] - '0';
+						int curMinor = APPVERSION[2] - '0';
+						int curPoint = APPVERSION[4] - '0';
 
-						if(version > currVersion) // a new version is available
+						// check that the versioning is valid and is a newer version
+						if((verMajor >= 0 && verMajor <= 9 &&
+							verMinor >= 0 && verMinor <= 9 &&
+							verPoint >= 0 && verPoint <= 9) &&
+							(verMajor > curMajor ||
+							verMinor > curMinor ||
+							verPoint > curPoint))
 						{
 							item = mxmlFindElement(xml, xml, "file", NULL, NULL, MXML_DESCEND);
 							if(item)
 							{
-								snprintf(updateURL, 128, "%s", mxmlElementGetAttr(item, "url"));
-								updateFound = true;
+								const char * tmp = mxmlElementGetAttr(item, "url");
+								if(tmp)
+								{
+									snprintf(updateURL, 128, "%s", tmp);
+									updateFound = true;
+								}
+							}
+						}
+					}
+					else // temporary, for compatibility
+					{
+						int versionnum = atoi(version);
+						if(versionnum > 10) // 010
+						{
+							item = mxmlFindElement(xml, xml, "file", NULL, NULL, MXML_DESCEND);
+							if(item)
+							{
+								const char * tmp = mxmlElementGetAttr(item, "url");
+								if(tmp)
+								{
+									snprintf(updateURL, 128, "%s", tmp);
+									updateFound = true;
+								}
 							}
 						}
 					}

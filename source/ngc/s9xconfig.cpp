@@ -22,10 +22,11 @@
 struct SGCSettings GCSettings;
 
 /****************************************************************************
+ * FixInvalidSettings
+ *
  * Attempts to correct at least some invalid settings - the ones that
  * might cause crashes
  ***************************************************************************/
-
 void FixInvalidSettings()
 {
 	if(!(GCSettings.ZoomLevel > 0.5 && GCSettings.ZoomLevel < 1.5))
@@ -38,8 +39,15 @@ void FixInvalidSettings()
 		GCSettings.MusicVolume = 40;
 	if(!(GCSettings.SFXVolume >= 0 && GCSettings.SFXVolume <= 100))
 		GCSettings.SFXVolume = 40;
+	if(GCSettings.Controller > CTRL_PAD4 || GCSettings.Controller < CTRL_MOUSE)
+		GCSettings.Controller = CTRL_PAD2;
 }
 
+/****************************************************************************
+ * DefaultSettings
+ *
+ * Sets all the defaults!
+ ***************************************************************************/
 void
 DefaultSettings ()
 {
@@ -67,15 +75,15 @@ DefaultSettings ()
 	GCSettings.smbpwd[19] = 0;
 	GCSettings.smbshare[19] = 0;
 
-	GCSettings.Controller = 0;
+	GCSettings.Controller = CTRL_PAD2;
 
 	GCSettings.ZoomLevel = 1.0; // zoom level
 	GCSettings.render = 2; // Unfiltered
 	GCSettings.widescreen = 0; // no aspect ratio correction
 	GCSettings.FilterMethod = FILTER_NONE;	// no hq2x
 
-	GCSettings.xshift = 0;	// video shift
-	GCSettings.yshift = 0;
+	GCSettings.xshift = 0; // horizontal video shift
+	GCSettings.yshift = 0; // vertical video shift
 
 	GCSettings.WiimoteOrientation = 0;
 	GCSettings.ExitAction = 0;
@@ -144,4 +152,3 @@ DefaultSettings ()
 	Settings.ForceDSP1 = 0;
 	Settings.ForceNoDSP1 = 0;
 }
-

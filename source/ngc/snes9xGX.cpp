@@ -303,11 +303,11 @@ static void * InitThread (void *arg)
 
 	// Allocate SNES Memory
 	if (!Memory.Init ())
-		while (1);
+		ExitApp();
 
 	// Allocate APU
 	if (!S9xInitAPU ())
-		while (1);
+		ExitApp();
 
 	// Set Pixel Renderer to match 565
 	S9xSetRenderPixelFormat (RGB565);
@@ -318,7 +318,7 @@ static void * InitThread (void *arg)
 	// Initialise Graphics
 	setGFX ();
 	if (!S9xGraphicsInit ())
-		while (1);
+		ExitApp();
 
 	// Check if DVD drive belongs to a Wii
 	SetDVDDriveType();
@@ -374,7 +374,7 @@ main(int argc, char *argv[])
 	#ifdef HW_RVL
 	// read wiimote accelerometer and IR data
 	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
-	WPAD_SetVRes(WPAD_CHAN_ALL,screenwidth, screenheight);
+	WPAD_SetVRes(WPAD_CHAN_ALL, screenwidth, screenheight);
 
 	// Wii Power/Reset buttons
 	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);

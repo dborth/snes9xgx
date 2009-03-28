@@ -9,8 +9,6 @@
  ***************************************************************************/
 
 #include "gui.h"
-#include "snes9xGX.h"
-#include "filelist.h"
 
 static int currentSize = 0;
 static int presetSize = 0;

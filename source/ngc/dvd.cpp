@@ -3,7 +3,7 @@
  *
  * softdev July 2006
  * svpe & crunchy2 June 2007
- * Tantric September 2008
+ * Tantric 2008-2009
  *
  * dvd.cpp
  *
@@ -144,7 +144,6 @@ static int dvd_buffered_read(void *dst, u32 len, u64 offset)
  * This function relies on dvddir (file offset) being prepopulated!
  * returns: 1 - ok ; 0 - error
  ***************************************************************************/
-
 int dvd_safe_read(void *dst_v, u32 len, u64 fileoffset)
 {
 	u64 offset = dvddir + fileoffset;
@@ -321,7 +320,6 @@ getpvd ()
  *
  * Tests if a ISO9660 DVD is inserted and available, and mounts it
  ***************************************************************************/
-
 bool MountDVD(bool silent)
 {
 	bool res = false;
@@ -364,7 +362,6 @@ bool MountDVD(bool silent)
  * Support function to return the next file entry, if any
  * Declared static to avoid accidental external entry.
  ***************************************************************************/
-
 static int
 getentry (int entrycount, unsigned char dvdbuffer[])
 {
@@ -548,7 +545,6 @@ ParseDVDdirectory ()
  * SetDVDdirectory
  * Set the current DVD file offset
  ***************************************************************************/
-
 void SetDVDdirectory(u64 dir, int length)
 {
 	dvddir = dir;
@@ -647,7 +643,6 @@ bool SwitchDVDFolder(char origdir[])
  * This function will load a file from DVD
  * It assumes dvddir and dvddirlength are prepopulated
  ***************************************************************************/
-
 int
 LoadDVDFileOffset (unsigned char *buffer, int length)
 {
@@ -719,7 +714,6 @@ done:
  * It will attempt to find the offset of the file, and if successful it
  * will populate dvddir and dvddirlength, and load the file
  ***************************************************************************/
-
 int
 LoadDVDFile(char * buffer, char *filepath, int datasize, bool silent)
 {

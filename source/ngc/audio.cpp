@@ -94,6 +94,11 @@ InitAudio ()
 	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 150);
 }
 
+/****************************************************************************
+ * SwitchAudioMode
+ *
+ * Switches between menu sound and emulator sound
+ ***************************************************************************/
 void
 SwitchAudioMode(int mode)
 {
@@ -117,6 +122,12 @@ SwitchAudioMode(int mode)
 	}
 }
 
+/****************************************************************************
+ * ShutdownAudio
+ *
+ * Shuts down audio subsystem. Useful to avoid unpleasant sounds if a
+ * crash occurs during shutdown.
+ ***************************************************************************/
 void ShutdownAudio()
 {
 	#ifndef NO_SOUND

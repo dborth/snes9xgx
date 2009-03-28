@@ -602,7 +602,7 @@ void NGCReportButtons ()
     }
 }
 
-void SetControllers ()
+void SetControllers()
 {
 	if (Settings.MultiPlayer5Master == true)
 	{
@@ -637,104 +637,102 @@ void SetControllers ()
  ***************************************************************************/
 void SetDefaultButtonMap ()
 {
-  int maxcode = 0x10;
-  s9xcommand_t cmd;
+	int maxcode = 0x10;
+	s9xcommand_t cmd;
 
 	/*** Joypad 1 ***/
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 A");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 B");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 X");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Y");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 L");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 R");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Start");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Select");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Up");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Down");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Left");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Right");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 A");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 B");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 X");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Y");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 L");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 R");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Start");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Select");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Up");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Down");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Left");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad1 Right");
 
-  maxcode = 0x20;
+	maxcode = 0x20;
 	/*** Joypad 2 ***/
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 A");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 B");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 X");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Y");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 L");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 R");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Start");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Select");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Up");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Down");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Left");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Right");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 A");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 B");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 X");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Y");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 L");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 R");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Start");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Select");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Up");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Down");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Left");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Right");
 
-  maxcode = 0x30;
+	maxcode = 0x30;
 	/*** Joypad 3 ***/
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 A");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 B");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 X");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Y");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 L");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 R");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Start");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Select");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Up");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Down");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Left");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Right");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 A");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 B");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 X");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Y");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 L");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 R");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Start");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Select");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Up");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Down");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Left");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad3 Right");
 
-  maxcode = 0x40;
+	maxcode = 0x40;
 	/*** Joypad 4 ***/
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 A");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 B");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 X");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Y");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 L");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 R");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Start");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Select");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Up");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Down");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Left");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Right");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 A");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 B");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 X");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Y");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 L");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 R");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Start");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Select");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Up");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Down");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Left");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad4 Right");
 
-  maxcode = 0x50;
+	maxcode = 0x50;
 	/*** Superscope ***/
-  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Fire");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope AimOffscreen");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Cursor");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Pause");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Fire");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope AimOffscreen");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Cursor");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Pause");
 
-  maxcode = 0x60;
+	maxcode = 0x60;
 	/*** Mouse ***/
-  ASSIGN_BUTTON_FALSE (maxcode++, "Mouse1 L");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Mouse1 R");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Mouse2 L");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Mouse2 R");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Mouse1 L");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Mouse1 R");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Mouse2 L");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Mouse2 R");
 
-  maxcode = 0x70;
+	maxcode = 0x70;
 	/*** Justifier ***/
-  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 Trigger");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 AimOffscreen");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 Start");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 Trigger");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 AimOffscreen");
-  ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 Start");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 Trigger");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 AimOffscreen");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Justifier1 Start");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 Trigger");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 AimOffscreen");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Justifier2 Start");
 
-  maxcode = 0x80;
-  S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Superscope"), false);
-  S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Mouse1"), false);
-  S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Mouse2"), false);
-  S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Justifier1"), false);
-  S9xMapPointer( maxcode++, S9xGetCommandT("Pointer Justifier2"), false);
+	maxcode = 0x80;
+	S9xMapPointer(maxcode++, S9xGetCommandT("Pointer Superscope"), false);
+	S9xMapPointer(maxcode++, S9xGetCommandT("Pointer Mouse1"), false);
+	S9xMapPointer(maxcode++, S9xGetCommandT("Pointer Mouse2"), false);
+	S9xMapPointer(maxcode++, S9xGetCommandT("Pointer Justifier1"), false);
+	S9xMapPointer(maxcode++, S9xGetCommandT("Pointer Justifier2"), false);
 
-  maxcode = 0x90;
-  ASSIGN_BUTTON_FALSE (maxcode++, "Screenshot");
+	maxcode = 0x90;
+	ASSIGN_BUTTON_FALSE (maxcode++, "Screenshot");
 
-  SetControllers ();
-
+	SetControllers();
 }
-

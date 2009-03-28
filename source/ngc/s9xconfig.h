@@ -14,10 +14,9 @@
  ***************************************************************************/
 
 #ifndef _S9XCONFIG_
-
 #define _S9XCONFIG_
 
 void FixInvalidSettings();
-void DefaultSettings ();
+void DefaultSettings();
 
 #endif

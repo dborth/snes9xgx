@@ -42,7 +42,6 @@ extern "C" {
 #include "networkop.h"
 #include "memcardop.h"
 #include "fileop.h"
-
 #include "dvd.h"
 #include "s9xconfig.h"
 #include "sram.h"
@@ -53,7 +52,6 @@ extern "C" {
 #include "input.h"
 #include "patch.h"
 #include "filter.h"
-
 #include "filelist.h"
 #include "gui/gui.h"
 #include "menu.h"
@@ -947,10 +945,10 @@ static void ControllerWindowUpdate(void * ptr, int dir)
 	{
 		GCSettings.Controller += dir;
 
-		if(GCSettings.Controller > CTRL_LENGTH-1)
-			GCSettings.Controller = 0;
-		else if(GCSettings.Controller < 0)
-			GCSettings.Controller = CTRL_LENGTH-1;
+		if(GCSettings.Controller > CTRL_PAD4)
+			GCSettings.Controller = CTRL_MOUSE;
+		if(GCSettings.Controller < CTRL_MOUSE)
+			GCSettings.Controller = CTRL_PAD4;
 
 		settingText->SetText(ctrlName[GCSettings.Controller]);
 		b->ResetState();
@@ -962,7 +960,7 @@ static void ControllerWindowRightClick(void * ptr) { ControllerWindowUpdate(ptr,
 
 static void ControllerWindow()
 {
-	GuiWindow * w = new GuiWindow(250,250);
+	GuiWindow * w = new GuiWindow(300,250);
 	w->SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 
 	GuiTrigger trigA;

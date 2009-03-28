@@ -7,7 +7,7 @@
  * Michniewski 2008
  * Tantric 2008-2009
  *
- * filesel.cpp
+ * filebrowser.cpp
  *
  * Generic file routines - reading, writing, browsing
  ***************************************************************************/
@@ -306,7 +306,6 @@ int FileSortCallback(const void *f1, const void *f2)
  * If the file is a zip, we will check the file extension / file size of the
  * first file inside
  ***************************************************************************/
-
 static bool IsValidROM(int method)
 {
 	// file size should be between 96K and 8MB
@@ -357,7 +356,6 @@ static bool IsValidROM(int method)
  *
  * Checks if the specified file is a 7z
  ***************************************************************************/
-
 bool IsSz()
 {
 	if (strlen(browserList[browser.selIndex].filename) > 4)
@@ -376,7 +374,6 @@ bool IsSz()
  *
  * Strips an extension from a filename
  ***************************************************************************/
-
 void StripExt(char* returnstring, char * inputstring)
 {
 	char* loc_dot;
@@ -391,7 +388,11 @@ void StripExt(char* returnstring, char * inputstring)
 		*loc_dot = 0; // strip file extension
 }
 
-// 7z file - let's open it up to select a file inside
+/****************************************************************************
+ * BrowserLoadSz
+ *
+ * Opens the selected 7z file, and parses a listing of the files within
+ ***************************************************************************/
 int BrowserLoadSz(int method)
 {
 	char filepath[MAXPATHLEN];
@@ -417,6 +418,11 @@ int BrowserLoadSz(int method)
 	return szfiles;
 }
 
+/****************************************************************************
+ * BrowserLoadFile
+ *
+ * Loads the selected ROM
+ ***************************************************************************/
 int BrowserLoadFile(int method)
 {
 	char filepath[1024];
@@ -483,7 +489,11 @@ done:
 	return loaded;
 }
 
-/* update current directory and set new entry list if directory has changed */
+/****************************************************************************
+ * BrowserChangeFolder
+ *
+ * Update current directory and set new entry list if directory has changed
+ ***************************************************************************/
 int BrowserChangeFolder(int method)
 {
 	if(inSz && browser.selIndex == 0) // inside a 7z, requesting to leave
@@ -521,7 +531,6 @@ int BrowserChangeFolder(int method)
  * OpenROM
  * Displays a list of ROMS on load device
  ***************************************************************************/
-
 int
 OpenGameList ()
 {

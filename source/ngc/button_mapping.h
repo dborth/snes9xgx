@@ -2,6 +2,7 @@
  * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * michniewski August 2008
+ * Tantric 2008-2009
  *
  * button_mapping.h
  *

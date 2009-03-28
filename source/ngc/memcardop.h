@@ -10,8 +10,8 @@
  * Memory Card routines
  ***************************************************************************/
 
-#ifndef _NGCMCSAVE_
-#define _NGCMCSAVE_
+#ifndef _MEMCARDOP_
+#define _MEMCARDOP_
 
 int ParseMCDirectory (int slot);
 int LoadMCFile (char *buf, int slot, char *filename, bool silent);
