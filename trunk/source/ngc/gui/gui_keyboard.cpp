@@ -13,7 +13,7 @@
  * Constructor for the GuiKeyboard class.
  */
 
-GuiKeyboard::GuiKeyboard(char * t)
+GuiKeyboard::GuiKeyboard(char * t, u16 max)
 {
 	width = 540;
 	height = 400;
@@ -25,6 +25,7 @@ GuiKeyboard::GuiKeyboard(char * t)
 	alignmentVert = ALIGN_MIDDLE;
 	strncpy(kbtextstr, t, 100);
 	kbtextstr[100] = 0;
+	kbtextmaxlen = max;
 
 	Key thekeys[4][10] = {
 	{
@@ -235,8 +236,11 @@ void GuiKeyboard::Update(GuiTrigger * t)
 
 	if(keySpace->GetState() == STATE_CLICKED)
 	{
-		kbtextstr[strlen(kbtextstr)] = ' ';
-		kbText->SetText(kbtextstr);
+		if(strlen(kbtextstr) < kbtextmaxlen)
+		{
+			kbtextstr[strlen(kbtextstr)] = ' ';
+			kbText->SetText(kbtextstr);
+		}
 		keySpace->SetState(STATE_SELECTED);
 	}
 	else if(keyBack->GetState() == STATE_CLICKED)
@@ -271,14 +275,18 @@ void GuiKeyboard::Update(GuiTrigger * t)
 
 			if(keyBtn[i][j]->GetState() == STATE_CLICKED)
 			{
-				if(shift || caps)
+				if(strlen(kbtextstr) < kbtextmaxlen)
 				{
-					kbtextstr[strlen(kbtextstr)] = keys[i][j].chShift;
-					if(shift) shift ^= 1;
+					if(shift || caps)
+					{
+						kbtextstr[strlen(kbtextstr)] = keys[i][j].chShift;
+						if(shift) shift ^= 1;
+					}
+					else
+					{
+						kbtextstr[strlen(kbtextstr)] = keys[i][j].ch;
+					}
 				}
-				else
-					kbtextstr[strlen(kbtextstr)] = keys[i][j].ch;
-
 				kbText->SetText(kbtextstr);
 				keyBtn[i][j]->SetState(STATE_SELECTED);
 			}
