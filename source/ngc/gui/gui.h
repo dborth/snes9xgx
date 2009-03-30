@@ -474,11 +474,12 @@ typedef struct _keytype {
 class GuiKeyboard : public GuiWindow
 {
 	public:
-		GuiKeyboard(char * t);
+		GuiKeyboard(char * t, u16 m);
 		~GuiKeyboard();
 		void Update(GuiTrigger * t);
 		char kbtextstr[100];
 	protected:
+		u16 kbtextmaxlen;
 		Key keys[4][10];
 		int shift;
 		int caps;

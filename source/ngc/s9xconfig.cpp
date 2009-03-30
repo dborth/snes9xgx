@@ -41,6 +41,8 @@ void FixInvalidSettings()
 		GCSettings.SFXVolume = 40;
 	if(GCSettings.Controller > CTRL_PAD4 || GCSettings.Controller < CTRL_MOUSE)
 		GCSettings.Controller = CTRL_PAD2;
+	if(!(GCSettings.render >= 0 && GCSettings.render < 3))
+		GCSettings.render = 2;
 }
 
 /****************************************************************************

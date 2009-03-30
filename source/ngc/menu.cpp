@@ -498,11 +498,11 @@ void AutoSave()
 	}
 }
 
-static void OnScreenKeyboard(char * var)
+static void OnScreenKeyboard(char * var, u16 maxlen)
 {
 	int save = -1;
 
-	GuiKeyboard keyboard(var);
+	GuiKeyboard keyboard(var, maxlen);
 
 	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
@@ -562,8 +562,7 @@ static void OnScreenKeyboard(char * var)
 
 	if(save)
 	{
-		strncpy(var, keyboard.kbtextstr, 100);
-		var[100] = 0;
+		snprintf(var, maxlen, "%s", keyboard.kbtextstr);
 	}
 
 	HaltGui();
@@ -2819,10 +2818,11 @@ static int MenuSettingsFile()
 	int ret;
 	int i = 0;
 	OptionList options;
-	sprintf(options.name[i++], "Load Method");
+	sprintf(options.name[i++], "Load Device");
+	sprintf(options.name[i++], "Save Device");
 	sprintf(options.name[i++], "Load Folder");
-	sprintf(options.name[i++], "Save Method");
 	sprintf(options.name[i++], "Save Folder");
+	sprintf(options.name[i++], "Cheats Folder");
 	sprintf(options.name[i++], "Auto Load");
 	sprintf(options.name[i++], "Auto Save");
 	sprintf(options.name[i++], "Verify MC Saves");
@@ -2858,7 +2858,7 @@ static int MenuSettingsFile()
 	GuiOptionBrowser optionBrowser(552, 248, &options);
 	optionBrowser.SetPosition(0, 108);
 	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	optionBrowser.SetCol2Position(180);
+	optionBrowser.SetCol2Position(185);
 
 	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
@@ -2901,7 +2901,7 @@ static int MenuSettingsFile()
 			GCSettings.SaveMethod++;
 		if(GCSettings.SaveMethod == METHOD_MC_SLOTB)
 			GCSettings.SaveMethod++;
-		options.name[6][0] = 0;
+		options.name[7][0] = 0;
 		#endif
 
 		// correct load/save methods out of bounds
@@ -2910,67 +2910,71 @@ static int MenuSettingsFile()
 		if(GCSettings.SaveMethod > 6)
 			GCSettings.SaveMethod = 0;
 
-		if (GCSettings.LoadMethod == METHOD_AUTO) sprintf (options.value[0],"Auto");
+		if (GCSettings.LoadMethod == METHOD_AUTO) sprintf (options.value[0],"Auto Detect");
 		else if (GCSettings.LoadMethod == METHOD_SD) sprintf (options.value[0],"SD");
 		else if (GCSettings.LoadMethod == METHOD_USB) sprintf (options.value[0],"USB");
 		else if (GCSettings.LoadMethod == METHOD_DVD) sprintf (options.value[0],"DVD");
 		else if (GCSettings.LoadMethod == METHOD_SMB) sprintf (options.value[0],"Network");
 
-		sprintf (options.value[1], "%s", GCSettings.LoadFolder);
+		if (GCSettings.SaveMethod == METHOD_AUTO) sprintf (options.value[1],"Auto Detect");
+		else if (GCSettings.SaveMethod == METHOD_SD) sprintf (options.value[1],"SD");
+		else if (GCSettings.SaveMethod == METHOD_USB) sprintf (options.value[1],"USB");
+		else if (GCSettings.SaveMethod == METHOD_SMB) sprintf (options.value[1],"Network");
+		else if (GCSettings.SaveMethod == METHOD_MC_SLOTA) sprintf (options.value[1],"MC Slot A");
+		else if (GCSettings.SaveMethod == METHOD_MC_SLOTB) sprintf (options.value[1],"MC Slot B");
 
-		if (GCSettings.SaveMethod == METHOD_AUTO) sprintf (options.value[2],"Auto");
-		else if (GCSettings.SaveMethod == METHOD_SD) sprintf (options.value[2],"SD");
-		else if (GCSettings.SaveMethod == METHOD_USB) sprintf (options.value[2],"USB");
-		else if (GCSettings.SaveMethod == METHOD_SMB) sprintf (options.value[2],"Network");
-		else if (GCSettings.SaveMethod == METHOD_MC_SLOTA) sprintf (options.value[2],"MC Slot A");
-		else if (GCSettings.SaveMethod == METHOD_MC_SLOTB) sprintf (options.value[2],"MC Slot B");
+		snprintf (options.value[2], 256, "%s", GCSettings.LoadFolder);
+		snprintf (options.value[3], 256, "%s", GCSettings.SaveFolder);
+		snprintf (options.value[4], 256, "%s", GCSettings.CheatFolder);
 
-		sprintf (options.value[3], "%s", GCSettings.SaveFolder);
-
-		if (GCSettings.AutoLoad == 0) sprintf (options.value[4],"Off");
-		else if (GCSettings.AutoLoad == 1) sprintf (options.value[4],"SRAM");
-		else if (GCSettings.AutoLoad == 2) sprintf (options.value[4],"Snapshot");
+		if (GCSettings.AutoLoad == 0) sprintf (options.value[5],"Off");
+		else if (GCSettings.AutoLoad == 1) sprintf (options.value[5],"SRAM");
+		else if (GCSettings.AutoLoad == 2) sprintf (options.value[5],"Snapshot");
 
 		if (GCSettings.AutoSave == 0) sprintf (options.value[5],"Off");
-		else if (GCSettings.AutoSave == 1) sprintf (options.value[5],"SRAM");
-		else if (GCSettings.AutoSave == 2) sprintf (options.value[5],"Snapshot");
-		else if (GCSettings.AutoSave == 3) sprintf (options.value[5],"Both");
+		else if (GCSettings.AutoSave == 1) sprintf (options.value[6],"SRAM");
+		else if (GCSettings.AutoSave == 2) sprintf (options.value[6],"Snapshot");
+		else if (GCSettings.AutoSave == 3) sprintf (options.value[6],"Both");
 
-		sprintf (options.value[6], "%s", GCSettings.VerifySaves == true ? "On" : "Off");
+		sprintf (options.value[7], "%s", GCSettings.VerifySaves == true ? "On" : "Off");
 
 		ret = optionBrowser.GetClickedOption();
 
 		switch (ret)
 		{
 			case 0:
-				GCSettings.LoadMethod ++;
+				GCSettings.LoadMethod++;
 				break;
 
 			case 1:
-				OnScreenKeyboard(GCSettings.LoadFolder);
+				GCSettings.SaveMethod++;
 				break;
 
 			case 2:
-				GCSettings.SaveMethod ++;
+				OnScreenKeyboard(GCSettings.LoadFolder, 256);
 				break;
 
 			case 3:
-				OnScreenKeyboard(GCSettings.SaveFolder);
+				OnScreenKeyboard(GCSettings.SaveFolder, 256);
 				break;
 
 			case 4:
-				GCSettings.AutoLoad ++;
+				OnScreenKeyboard(GCSettings.CheatFolder, 256);
+				break;
+
+			case 5:
+				GCSettings.AutoLoad++;
 				if (GCSettings.AutoLoad > 2)
 					GCSettings.AutoLoad = 0;
 				break;
 
-			case 5:
-				GCSettings.AutoSave ++;
+			case 6:
+				GCSettings.AutoSave++;
 				if (GCSettings.AutoSave > 3)
 					GCSettings.AutoSave = 0;
 				break;
 
-			case 6:
+			case 7:
 				GCSettings.VerifySaves ^= 1;
 				break;
 		}
@@ -3189,19 +3193,19 @@ static int MenuSettingsNetwork()
 		switch (ret)
 		{
 			case 0:
-				OnScreenKeyboard(GCSettings.smbip);
+				OnScreenKeyboard(GCSettings.smbip, 16);
 				break;
 
 			case 1:
-				OnScreenKeyboard(GCSettings.smbshare);
+				OnScreenKeyboard(GCSettings.smbshare, 20);
 				break;
 
 			case 2:
-				OnScreenKeyboard(GCSettings.smbuser);
+				OnScreenKeyboard(GCSettings.smbuser, 20);
 				break;
 
 			case 3:
-				OnScreenKeyboard(GCSettings.smbpwd);
+				OnScreenKeyboard(GCSettings.smbpwd, 20);
 				break;
 		}
 
