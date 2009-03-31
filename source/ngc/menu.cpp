@@ -123,7 +123,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	GuiImageData dialogBox(dialogue_box_png);
 	GuiImage dialogBoxImg(&dialogBox);
 
-	GuiText titleTxt(title, 26, (GXColor){255, 255, 255, 255});
+	GuiText titleTxt(title, 26, (GXColor){70, 70, 10, 255});
 	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	titleTxt.SetPosition(0,14);
 	GuiText msgTxt(msg, 26, (GXColor){0, 0, 0, 255});
@@ -325,7 +325,7 @@ ProgressWindow(char *title, char *msg)
 	throbberImg.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	throbberImg.SetPosition(0, 40);
 
-	GuiText titleTxt(title, 26, (GXColor){255, 255, 255, 255});
+	GuiText titleTxt(title, 26, (GXColor){70, 70, 10, 255});
 	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	titleTxt.SetPosition(0,14);
 	GuiText msgTxt(msg, 26, (GXColor){0, 0, 0, 255});
@@ -590,7 +590,7 @@ SettingWindow(const char * title, GuiWindow * w)
 	GuiImageData dialogBox(dialogue_box_png);
 	GuiImage dialogBoxImg(&dialogBox);
 
-	GuiText titleTxt(title, 26, (GXColor){255, 255, 255, 255});
+	GuiText titleTxt(title, 26, (GXColor){70, 70, 10, 255});
 	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	titleTxt.SetPosition(0,14);
 
@@ -873,7 +873,7 @@ static int MenuGameSelection()
 
 	HaltGui();
 	btnLogo->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	btnLogo->SetPosition(-30, 30);
+	btnLogo->SetPosition(-30, 24);
 	mainWindow->Append(&titleTxt);
 	mainWindow->Append(&gameBrowser);
 	mainWindow->Append(&buttonWindow);
@@ -1030,10 +1030,16 @@ static int MenuGame()
 	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
-	GuiImageData btnCloseOutline(button_close_png);
-	GuiImageData btnCloseOutlineOver(button_close_over_png);
+	GuiImageData btnCloseOutline(button_small_png);
+	GuiImageData btnCloseOutlineOver(button_small_over_png);
 	GuiImageData btnLargeOutline(button_large_png);
 	GuiImageData btnLargeOutlineOver(button_large_over_png);
+	GuiImageData iconCheats(icon_game_cheats_png);
+	GuiImageData iconController(icon_game_controllers_png);
+	GuiImageData iconLoad(icon_game_load_png);
+	GuiImageData iconSave(icon_game_save_png);
+	GuiImageData iconReset(icon_game_reset_png);
+
 	GuiImageData battery(battery_png);
 	GuiImageData batteryRed(battery_red_png);
 	GuiImageData batteryBar(battery_bar_png);
@@ -1050,12 +1056,14 @@ static int MenuGame()
 	GuiText saveBtnTxt("Save", 24, (GXColor){0, 0, 0, 255});
 	GuiImage saveBtnImg(&btnLargeOutline);
 	GuiImage saveBtnImgOver(&btnLargeOutlineOver);
+	GuiImage saveBtnIcon(&iconSave);
 	GuiButton saveBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	saveBtn.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	saveBtn.SetPosition(50, 120);
 	saveBtn.SetLabel(&saveBtnTxt);
 	saveBtn.SetImage(&saveBtnImg);
 	saveBtn.SetImageOver(&saveBtnImgOver);
+	saveBtn.SetIcon(&saveBtnIcon);
 	saveBtn.SetSoundOver(&btnSoundOver);
 	saveBtn.SetTrigger(&trigA);
 	saveBtn.SetEffectGrow();
@@ -1063,12 +1071,14 @@ static int MenuGame()
 	GuiText loadBtnTxt("Load", 24, (GXColor){0, 0, 0, 255});
 	GuiImage loadBtnImg(&btnLargeOutline);
 	GuiImage loadBtnImgOver(&btnLargeOutlineOver);
+	GuiImage loadBtnIcon(&iconLoad);
 	GuiButton loadBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	loadBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	loadBtn.SetPosition(0, 120);
 	loadBtn.SetLabel(&loadBtnTxt);
 	loadBtn.SetImage(&loadBtnImg);
 	loadBtn.SetImageOver(&loadBtnImgOver);
+	loadBtn.SetIcon(&loadBtnIcon);
 	loadBtn.SetSoundOver(&btnSoundOver);
 	loadBtn.SetTrigger(&trigA);
 	loadBtn.SetEffectGrow();
@@ -1076,12 +1086,14 @@ static int MenuGame()
 	GuiText resetBtnTxt("Reset", 24, (GXColor){0, 0, 0, 255});
 	GuiImage resetBtnImg(&btnLargeOutline);
 	GuiImage resetBtnImgOver(&btnLargeOutlineOver);
+	GuiImage resetBtnIcon(&iconReset);
 	GuiButton resetBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	resetBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	resetBtn.SetPosition(-50, 120);
 	resetBtn.SetLabel(&resetBtnTxt);
 	resetBtn.SetImage(&resetBtnImg);
 	resetBtn.SetImageOver(&resetBtnImgOver);
+	resetBtn.SetIcon(&resetBtnIcon);
 	resetBtn.SetSoundOver(&btnSoundOver);
 	resetBtn.SetTrigger(&trigA);
 	resetBtn.SetEffectGrow();
@@ -1089,12 +1101,14 @@ static int MenuGame()
 	GuiText controllerBtnTxt("Controller", 24, (GXColor){0, 0, 0, 255});
 	GuiImage controllerBtnImg(&btnLargeOutline);
 	GuiImage controllerBtnImgOver(&btnLargeOutlineOver);
+	GuiImage controllerBtnIcon(&iconController);
 	GuiButton controllerBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	controllerBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	controllerBtn.SetPosition(-125, 250);
 	controllerBtn.SetLabel(&controllerBtnTxt);
 	controllerBtn.SetImage(&controllerBtnImg);
 	controllerBtn.SetImageOver(&controllerBtnImgOver);
+	controllerBtn.SetIcon(&controllerBtnIcon);
 	controllerBtn.SetSoundOver(&btnSoundOver);
 	controllerBtn.SetTrigger(&trigA);
 	controllerBtn.SetEffectGrow();
@@ -1102,12 +1116,14 @@ static int MenuGame()
 	GuiText cheatsBtnTxt("Cheats", 24, (GXColor){0, 0, 0, 255});
 	GuiImage cheatsBtnImg(&btnLargeOutline);
 	GuiImage cheatsBtnImgOver(&btnLargeOutlineOver);
+	GuiImage cheatsBtnIcon(&iconCheats);
 	GuiButton cheatsBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	cheatsBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	cheatsBtn.SetPosition(125, 250);
 	cheatsBtn.SetLabel(&cheatsBtnTxt);
 	cheatsBtn.SetImage(&cheatsBtnImg);
 	cheatsBtn.SetImageOver(&cheatsBtnImgOver);
+	cheatsBtn.SetIcon(&cheatsBtnIcon);
 	cheatsBtn.SetSoundOver(&btnSoundOver);
 	cheatsBtn.SetTrigger(&trigA);
 	cheatsBtn.SetEffectGrow();
@@ -1376,8 +1392,8 @@ static int MenuGameSaves(int action)
 	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
-	GuiImageData btnCloseOutline(button_close_png);
-	GuiImageData btnCloseOutlineOver(button_close_over_png);
+	GuiImageData btnCloseOutline(button_small_png);
+	GuiImageData btnCloseOutlineOver(button_small_over_png);
 
 	GuiTrigger trigA;
 	if(GCSettings.WiimoteOrientation)
@@ -1638,8 +1654,8 @@ static int MenuGameCheats()
 	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
-	GuiImageData btnCloseOutline(button_close_png);
-	GuiImageData btnCloseOutlineOver(button_close_over_png);
+	GuiImageData btnCloseOutline(button_small_png);
+	GuiImageData btnCloseOutlineOver(button_small_over_png);
 
 	GuiTrigger trigA;
 	if(GCSettings.WiimoteOrientation)
@@ -1748,6 +1764,11 @@ static int MenuSettings()
 	GuiImageData btnOutlineOver(button_over_png);
 	GuiImageData btnLargeOutline(button_large_png);
 	GuiImageData btnLargeOutlineOver(button_large_over_png);
+	GuiImageData iconFile(icon_settings_file_png);
+	GuiImageData iconMappings(icon_settings_mappings_png);
+	GuiImageData iconMenu(icon_settings_menu_png);
+	GuiImageData iconNetwork(icon_settings_network_png);
+	GuiImageData iconVideo(icon_settings_video_png);
 
 	GuiTrigger trigA;
 	if(GCSettings.WiimoteOrientation)
@@ -1759,12 +1780,14 @@ static int MenuSettings()
 	mappingBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
 	GuiImage mappingBtnImg(&btnLargeOutline);
 	GuiImage mappingBtnImgOver(&btnLargeOutlineOver);
+	GuiImage mappingBtnIcon(&iconMappings);
 	GuiButton mappingBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	mappingBtn.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	mappingBtn.SetPosition(50, 120);
 	mappingBtn.SetLabel(&mappingBtnTxt);
 	mappingBtn.SetImage(&mappingBtnImg);
 	mappingBtn.SetImageOver(&mappingBtnImgOver);
+	mappingBtn.SetIcon(&mappingBtnIcon);
 	mappingBtn.SetSoundOver(&btnSoundOver);
 	mappingBtn.SetTrigger(&trigA);
 	mappingBtn.SetEffectGrow();
@@ -1773,12 +1796,14 @@ static int MenuSettings()
 	videoBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
 	GuiImage videoBtnImg(&btnLargeOutline);
 	GuiImage videoBtnImgOver(&btnLargeOutlineOver);
+	GuiImage videoBtnIcon(&iconVideo);
 	GuiButton videoBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	videoBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	videoBtn.SetPosition(0, 120);
 	videoBtn.SetLabel(&videoBtnTxt);
 	videoBtn.SetImage(&videoBtnImg);
 	videoBtn.SetImageOver(&videoBtnImgOver);
+	videoBtn.SetIcon(&videoBtnIcon);
 	videoBtn.SetSoundOver(&btnSoundOver);
 	videoBtn.SetTrigger(&trigA);
 	videoBtn.SetEffectGrow();
@@ -1790,6 +1815,7 @@ static int MenuSettings()
 	savingBtnTxt3.SetPosition(0, +20);
 	GuiImage savingBtnImg(&btnLargeOutline);
 	GuiImage savingBtnImgOver(&btnLargeOutlineOver);
+	GuiImage fileBtnIcon(&iconFile);
 	GuiButton savingBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	savingBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	savingBtn.SetPosition(-50, 120);
@@ -1798,6 +1824,7 @@ static int MenuSettings()
 	savingBtn.SetLabel(&savingBtnTxt3, 2);
 	savingBtn.SetImage(&savingBtnImg);
 	savingBtn.SetImageOver(&savingBtnImgOver);
+	savingBtn.SetIcon(&fileBtnIcon);
 	savingBtn.SetSoundOver(&btnSoundOver);
 	savingBtn.SetTrigger(&trigA);
 	savingBtn.SetEffectGrow();
@@ -1806,12 +1833,14 @@ static int MenuSettings()
 	menuBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
 	GuiImage menuBtnImg(&btnLargeOutline);
 	GuiImage menuBtnImgOver(&btnLargeOutlineOver);
+	GuiImage menuBtnIcon(&iconMenu);
 	GuiButton menuBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	menuBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	menuBtn.SetPosition(-125, 250);
 	menuBtn.SetLabel(&menuBtnTxt);
 	menuBtn.SetImage(&menuBtnImg);
 	menuBtn.SetImageOver(&menuBtnImgOver);
+	menuBtn.SetIcon(&menuBtnIcon);
 	menuBtn.SetSoundOver(&btnSoundOver);
 	menuBtn.SetTrigger(&trigA);
 	menuBtn.SetEffectGrow();
@@ -1820,12 +1849,14 @@ static int MenuSettings()
 	networkBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
 	GuiImage networkBtnImg(&btnLargeOutline);
 	GuiImage networkBtnImgOver(&btnLargeOutlineOver);
+	GuiImage networkBtnIcon(&iconNetwork);
 	GuiButton networkBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	networkBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	networkBtn.SetPosition(125, 250);
 	networkBtn.SetLabel(&networkBtnTxt);
 	networkBtn.SetImage(&networkBtnImg);
 	networkBtn.SetImageOver(&networkBtnImgOver);
+	networkBtn.SetIcon(&networkBtnIcon);
 	networkBtn.SetSoundOver(&btnSoundOver);
 	networkBtn.SetTrigger(&trigA);
 	networkBtn.SetEffectGrow();
@@ -1943,6 +1974,10 @@ static int MenuSettingsMappings()
 	GuiImageData btnOutlineOver(button_over_png);
 	GuiImageData btnLargeOutline(button_large_png);
 	GuiImageData btnLargeOutlineOver(button_large_over_png);
+	GuiImageData iconSNESController(icon_settings_snescontroller_png);
+	GuiImageData iconSuperscope(icon_settings_superscope_png);
+	GuiImageData iconJustifier(icon_settings_justifier_png);
+	GuiImageData iconMouse(icon_settings_mouse_png);
 
 	GuiTrigger trigA;
 	if(GCSettings.WiimoteOrientation)
@@ -1954,12 +1989,14 @@ static int MenuSettingsMappings()
 	snesBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
 	GuiImage snesBtnImg(&btnLargeOutline);
 	GuiImage snesBtnImgOver(&btnLargeOutlineOver);
+	GuiImage snesBtnIcon(&iconSNESController);
 	GuiButton snesBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	snesBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	snesBtn.SetPosition(-125, 120);
 	snesBtn.SetLabel(&snesBtnTxt);
 	snesBtn.SetImage(&snesBtnImg);
 	snesBtn.SetImageOver(&snesBtnImgOver);
+	snesBtn.SetIcon(&snesBtnIcon);
 	snesBtn.SetSoundOver(&btnSoundOver);
 	snesBtn.SetTrigger(&trigA);
 	snesBtn.SetEffectGrow();
@@ -1968,12 +2005,14 @@ static int MenuSettingsMappings()
 	superscopeBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
 	GuiImage superscopeBtnImg(&btnLargeOutline);
 	GuiImage superscopeBtnImgOver(&btnLargeOutlineOver);
+	GuiImage superscopeBtnIcon(&iconSuperscope);
 	GuiButton superscopeBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	superscopeBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	superscopeBtn.SetPosition(125, 120);
 	superscopeBtn.SetLabel(&superscopeBtnTxt);
 	superscopeBtn.SetImage(&superscopeBtnImg);
 	superscopeBtn.SetImageOver(&superscopeBtnImgOver);
+	superscopeBtn.SetIcon(&superscopeBtnIcon);
 	superscopeBtn.SetSoundOver(&btnSoundOver);
 	superscopeBtn.SetTrigger(&trigA);
 	superscopeBtn.SetEffectGrow();
@@ -1982,12 +2021,14 @@ static int MenuSettingsMappings()
 	mouseBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
 	GuiImage mouseBtnImg(&btnLargeOutline);
 	GuiImage mouseBtnImgOver(&btnLargeOutlineOver);
+	GuiImage mouseBtnIcon(&iconMouse);
 	GuiButton mouseBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	mouseBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	mouseBtn.SetPosition(-125, 250);
 	mouseBtn.SetLabel(&mouseBtnTxt);
 	mouseBtn.SetImage(&mouseBtnImg);
 	mouseBtn.SetImageOver(&mouseBtnImgOver);
+	mouseBtn.SetIcon(&mouseBtnIcon);
 	mouseBtn.SetSoundOver(&btnSoundOver);
 	mouseBtn.SetTrigger(&trigA);
 	mouseBtn.SetEffectGrow();
@@ -1995,12 +2036,14 @@ static int MenuSettingsMappings()
 	GuiText justifierBtnTxt("Justifier", 24, (GXColor){0, 0, 0, 255});
 	GuiImage justifierBtnImg(&btnLargeOutline);
 	GuiImage justifierBtnImgOver(&btnLargeOutlineOver);
+	GuiImage justifierBtnIcon(&iconJustifier);
 	GuiButton justifierBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	justifierBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	justifierBtn.SetPosition(125, 250);
 	justifierBtn.SetLabel(&justifierBtnTxt);
 	justifierBtn.SetImage(&justifierBtnImg);
 	justifierBtn.SetImageOver(&justifierBtnImgOver);
+	justifierBtn.SetIcon(&justifierBtnIcon);
 	justifierBtn.SetSoundOver(&btnSoundOver);
 	justifierBtn.SetTrigger(&trigA);
 	justifierBtn.SetEffectGrow();
@@ -2087,6 +2130,10 @@ static int MenuSettingsMappingsController()
 	GuiImageData btnOutlineOver(button_over_png);
 	GuiImageData btnLargeOutline(button_large_png);
 	GuiImageData btnLargeOutlineOver(button_large_over_png);
+	GuiImageData iconWiimote(icon_settings_wiimote_png);
+	GuiImageData iconClassic(icon_settings_classic_png);
+	GuiImageData iconGamecube(icon_settings_gamecube_png);
+	GuiImageData iconNunchuk(icon_settings_nunchuk_png);
 
 	GuiTrigger trigA;
 	if(GCSettings.WiimoteOrientation)
@@ -2098,12 +2145,14 @@ static int MenuSettingsMappingsController()
 	gamecubeBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
 	GuiImage gamecubeBtnImg(&btnLargeOutline);
 	GuiImage gamecubeBtnImgOver(&btnLargeOutlineOver);
+	GuiImage gamecubeBtnIcon(&iconGamecube);
 	GuiButton gamecubeBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	gamecubeBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	gamecubeBtn.SetPosition(-125, 120);
 	gamecubeBtn.SetLabel(&gamecubeBtnTxt);
 	gamecubeBtn.SetImage(&gamecubeBtnImg);
 	gamecubeBtn.SetImageOver(&gamecubeBtnImgOver);
+	gamecubeBtn.SetIcon(&gamecubeBtnIcon);
 	gamecubeBtn.SetSoundOver(&btnSoundOver);
 	gamecubeBtn.SetTrigger(&trigA);
 	gamecubeBtn.SetEffectGrow();
@@ -2111,12 +2160,14 @@ static int MenuSettingsMappingsController()
 	GuiText wiimoteBtnTxt("Wiimote", 24, (GXColor){0, 0, 0, 255});
 	GuiImage wiimoteBtnImg(&btnLargeOutline);
 	GuiImage wiimoteBtnImgOver(&btnLargeOutlineOver);
+	GuiImage wiimoteBtnIcon(&iconWiimote);
 	GuiButton wiimoteBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	wiimoteBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	wiimoteBtn.SetPosition(125, 120);
 	wiimoteBtn.SetLabel(&wiimoteBtnTxt);
 	wiimoteBtn.SetImage(&wiimoteBtnImg);
 	wiimoteBtn.SetImageOver(&wiimoteBtnImgOver);
+	wiimoteBtn.SetIcon(&wiimoteBtnIcon);
 	wiimoteBtn.SetSoundOver(&btnSoundOver);
 	wiimoteBtn.SetTrigger(&trigA);
 	wiimoteBtn.SetEffectGrow();
@@ -2125,26 +2176,35 @@ static int MenuSettingsMappingsController()
 	classicBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
 	GuiImage classicBtnImg(&btnLargeOutline);
 	GuiImage classicBtnImgOver(&btnLargeOutlineOver);
+	GuiImage classicBtnIcon(&iconClassic);
 	GuiButton classicBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	classicBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	classicBtn.SetPosition(-125, 250);
 	classicBtn.SetLabel(&classicBtnTxt);
 	classicBtn.SetImage(&classicBtnImg);
 	classicBtn.SetImageOver(&classicBtnImgOver);
+	classicBtn.SetIcon(&classicBtnIcon);
 	classicBtn.SetSoundOver(&btnSoundOver);
 	classicBtn.SetTrigger(&trigA);
 	classicBtn.SetEffectGrow();
 
-	GuiText nunchukBtnTxt("Wiimote Nunchuk", 24, (GXColor){0, 0, 0, 255});
-	nunchukBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
+	GuiText nunchukBtnTxt1("Wiimote", 24, (GXColor){0, 0, 0, 255});
+	GuiText nunchukBtnTxt2("&", 18, (GXColor){0, 0, 0, 255});
+	GuiText nunchukBtnTxt3("Nunchuk", 24, (GXColor){0, 0, 0, 255});
+	nunchukBtnTxt1.SetPosition(0, -20);
+	nunchukBtnTxt3.SetPosition(0, +20);
 	GuiImage nunchukBtnImg(&btnLargeOutline);
 	GuiImage nunchukBtnImgOver(&btnLargeOutlineOver);
+	GuiImage nunchukBtnIcon(&iconNunchuk);
 	GuiButton nunchukBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	nunchukBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	nunchukBtn.SetPosition(125, 250);
-	nunchukBtn.SetLabel(&nunchukBtnTxt);
+	nunchukBtn.SetLabel(&nunchukBtnTxt1, 0);
+	nunchukBtn.SetLabel(&nunchukBtnTxt2, 1);
+	nunchukBtn.SetLabel(&nunchukBtnTxt3, 2);
 	nunchukBtn.SetImage(&nunchukBtnImg);
 	nunchukBtn.SetImageOver(&nunchukBtnImgOver);
+	nunchukBtn.SetIcon(&nunchukBtnIcon);
 	nunchukBtn.SetSoundOver(&btnSoundOver);
 	nunchukBtn.SetTrigger(&trigA);
 	nunchukBtn.SetEffectGrow();
@@ -2239,7 +2299,7 @@ ButtonMappingWindow()
 	GuiImageData dialogBox(dialogue_box_png);
 	GuiImage dialogBoxImg(&dialogBox);
 
-	GuiText titleTxt("Button Mapping", 26, (GXColor){255, 255, 255, 255});
+	GuiText titleTxt("Button Mapping", 26, (GXColor){70, 70, 10, 255});
 	titleTxt.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 	titleTxt.SetPosition(0,14);
 
@@ -3272,9 +3332,10 @@ MainMenu (int menu)
 	GuiImage logoImgOver(&logoOver);
 	GuiText logoTxt(APPVERSION, 18, (GXColor){255, 255, 255, 255});
 	logoTxt.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	logoTxt.SetPosition(0, 4);
 	btnLogo = new GuiButton(logoImg.GetWidth(), logoImg.GetHeight());
 	btnLogo->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	btnLogo->SetPosition(-30, 30);
+	btnLogo->SetPosition(-30, 24);
 	btnLogo->SetImage(&logoImg);
 	btnLogo->SetImageOver(&logoImgOver);
 	btnLogo->SetLabel(&logoTxt);

@@ -40,11 +40,63 @@ extern const u32	icon_settings_png_size;
 extern const u8		icon_home_png[];
 extern const u32	icon_home_png_size;
 
+extern const u8		icon_game_cheats_png[];
+extern const u32	icon_game_cheats_png_size;
+extern const u8		icon_game_controllers_png[];
+extern const u32	icon_game_controllers_png_size;
+extern const u8		icon_game_load_png[];
+extern const u32	icon_game_load_png_size;
+extern const u8		icon_game_save_png[];
+extern const u32	icon_game_save_png_size;
+extern const u8		icon_game_reset_png[];
+extern const u32	icon_game_reset_png_size;
+
+extern const u8		icon_settings_wiimote_png[];
+extern const u32	icon_settings_wiimote_png_size;
+extern const u8		icon_settings_classic_png[];
+extern const u32	icon_settings_classic_png_size;
+extern const u8		icon_settings_gamecube_png[];
+extern const u32	icon_settings_gamecube_png_size;
+extern const u8		icon_settings_nunchuk_png[];
+extern const u32	icon_settings_nunchuk_png_size;
+
+extern const u8		icon_settings_snescontroller_png[];
+extern const u32	icon_settings_snescontroller_png_size;
+extern const u8		icon_settings_superscope_png[];
+extern const u32	icon_settings_superscope_png_size;
+extern const u8		icon_settings_justifier_png[];
+extern const u32	icon_settings_justifier_png_size;
+extern const u8		icon_settings_mouse_png[];
+extern const u32	icon_settings_mouse_png_size;
+
+extern const u8		icon_settings_file_png[];
+extern const u32	icon_settings_file_png_size;
+extern const u8		icon_settings_mappings_png[];
+extern const u32	icon_settings_mappings_png_size;
+extern const u8		icon_settings_menu_png[];
+extern const u32	icon_settings_menu_png_size;
+extern const u8		icon_settings_network_png[];
+extern const u32	icon_settings_network_png_size;
+extern const u8		icon_settings_video_png[];
+extern const u32	icon_settings_video_png_size;
+
 extern const u8		button_png[];
 extern const u32	button_png_size;
 
 extern const u8		button_over_png[];
 extern const u32	button_over_png_size;
+
+extern const u8		button_small_png[];
+extern const u32	button_small_png_size;
+
+extern const u8		button_small_over_png[];
+extern const u32	button_small_over_png_size;
+
+extern const u8		button_large_png[];
+extern const u32	button_large_png_size;
+
+extern const u8		button_large_over_png[];
+extern const u32	button_large_over_png_size;
 
 extern const u8		button_arrow_left_png[];
 extern const u32	button_arrow_left_png_size;
@@ -69,18 +121,6 @@ extern const u32	button_arrow_up_over_png_size;
 
 extern const u8		button_arrow_down_over_png[];
 extern const u32	button_arrow_down_over_png_size;
-
-extern const u8		button_close_png[];
-extern const u32	button_close_png_size;
-
-extern const u8		button_close_over_png[];
-extern const u32	button_close_over_png_size;
-
-extern const u8		button_large_png[];
-extern const u32	button_large_png_size;
-
-extern const u8		button_large_over_png[];
-extern const u32	button_large_over_png_size;
 
 extern const u8		button_gamesave_png[];
 extern const u32	button_gamesave_png_size;

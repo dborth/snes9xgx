@@ -356,7 +356,7 @@ main(int argc, char *argv[])
 	#endif
 
 	#ifdef DEBUG_WII
-	DEBUG_Init(GDBSTUB_DEVICE_USB, 1);	// init debugging
+	//DEBUG_Init(GDBSTUB_DEVICE_USB, 1);	// init debugging
 	//_break();
 	#endif
 
