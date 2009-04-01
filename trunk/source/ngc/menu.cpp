@@ -73,8 +73,11 @@ static int mapMenuCtrl = 0;
 static int mapMenuCtrlSNES = 0;
 
 static lwp_t guithread = LWP_THREAD_NULL;
-static bool guiHalt = true;
 static lwp_t progressthread = LWP_THREAD_NULL;
+#ifdef HW_RVL
+static lwp_t updatethread = LWP_THREAD_NULL;
+#endif
+static bool guiHalt = true;
 static int showProgress = 0;
 
 static char progressTitle[100];
@@ -82,6 +85,13 @@ static char progressMsg[200];
 static int progressDone = 0;
 static int progressTotal = 0;
 
+/****************************************************************************
+ * ResumeGui
+ *
+ * Signals the GUI thread to start, and resumes the thread. This is called
+ * after finishing the removal/insertion of new elements, and after initial
+ * GUI setup.
+ ***************************************************************************/
 static void
 ResumeGui()
 {
@@ -89,6 +99,14 @@ ResumeGui()
 	LWP_ResumeThread (guithread);
 }
 
+/****************************************************************************
+ * HaltGui
+ *
+ * Signals the GUI thread to stop, and waits for GUI thread to stop
+ * This is necessary whenever removing/inserting new elements into the GUI.
+ * This eliminates the possibility that the GUI is in the middle of accessing
+ * an element that is being changed.
+ ***************************************************************************/
 static void
 HaltGui()
 {
@@ -101,8 +119,10 @@ HaltGui()
 
 /****************************************************************************
  * WindowPrompt
+ *
+ * Displays a prompt window to user, with information, an error message, or
+ * presenting a user with a choice
  ***************************************************************************/
-
 int
 WindowPrompt(const char *title, const char *msg, const char *btn1Label, const char *btn2Label)
 {
@@ -203,8 +223,32 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	return choice;
 }
 
+#ifdef HW_RVL
+/****************************************************************************
+ * EmulatorUpdate
+ *
+ * Prompts for confirmation, and downloads/installs updates
+ ***************************************************************************/
+static void *
+EmulatorUpdate (void *arg)
+{
+	sleep(5);
+	bool installUpdate = WindowPrompt(
+		"Update Available",
+		"An update is available!",
+		"Update now",
+		"Update later");
+	if(installUpdate)
+		if(DownloadUpdate())
+			ExitRequested = 1;
+	return NULL;
+}
+#endif
+
 /****************************************************************************
  * UpdateGUI
+ *
+ * Primary thread to allow GUI to respond to state changes, and draws GUI
  ***************************************************************************/
 
 /*static u32 arena1mem = 0;
@@ -250,14 +294,8 @@ UpdateGUI (void *arg)
 			#ifdef HW_RVL
 			if(updateFound)
 			{
-				updateFound = WindowPrompt(
-					"Update Available",
-					"An update is available!",
-					"Update now",
-					"Update later");
-				if(updateFound)
-					if(DownloadUpdate())
-						ExitRequested = 1;
+				updateFound = false;
+				LWP_CreateThread (&updatethread, EmulatorUpdate, NULL, NULL, 0, 70);
 			}
 			#endif
 
@@ -284,8 +322,11 @@ UpdateGUI (void *arg)
 
 /****************************************************************************
  * ProgressWindow
+ *
+ * Opens a window, which displays progress to the user. Can either display a
+ * progress bar showing % completion, or a throbber that only shows that an
+ * action is in progress.
  ***************************************************************************/
-
 static void
 ProgressWindow(char *title, char *msg)
 {
@@ -401,8 +442,9 @@ static void * ProgressThread (void *arg)
 
 /****************************************************************************
  * InitGUIThread
+ *
+ * Startup GUI threads
  ***************************************************************************/
-
 void
 InitGUIThreads()
 {
@@ -411,11 +453,12 @@ InitGUIThreads()
 }
 
 /****************************************************************************
- * Progress Bar
+ * CancelAction
  *
- * Show the user what's happening
+ * Signals the GUI progress window thread to halt, and waits for it to
+ * finish. Prevents multiple progress window events from interfering /
+ * overriding each other.
  ***************************************************************************/
-
 void
 CancelAction()
 {
@@ -426,6 +469,12 @@ CancelAction()
 		usleep(50);
 }
 
+/****************************************************************************
+ * ShowProgress
+ *
+ * Updates the variables used by the progress window for drawing a progress
+ * bar. Also resumes the progress window thread if it is suspended.
+ ***************************************************************************/
 void
 ShowProgress (const char *msg, int done, int total)
 {
@@ -448,6 +497,12 @@ ShowProgress (const char *msg, int done, int total)
 	LWP_ResumeThread (progressthread);
 }
 
+/****************************************************************************
+ * ShowAction
+ *
+ * Shows that an action is underway. Also resumes the progress window thread
+ * if it is suspended.
+ ***************************************************************************/
 void
 ShowAction (const char *msg)
 {
@@ -477,6 +532,11 @@ void InfoPrompt(const char *msg)
 	WindowPrompt("Information", msg, "OK", NULL);
 }
 
+/****************************************************************************
+ * AutoSave
+ *
+ * Automatically saves SRAM/snapshot when returning from in-game to the menu
+ ***************************************************************************/
 void AutoSave()
 {
 	if (GCSettings.AutoSave == 1)
@@ -498,6 +558,12 @@ void AutoSave()
 	}
 }
 
+/****************************************************************************
+ * OnScreenKeyboard
+ *
+ * Opens an on-screen keyboard window, with the data entered being stored
+ * into the specified variable.
+ ***************************************************************************/
 static void OnScreenKeyboard(char * var, u16 maxlen)
 {
 	int save = -1;
@@ -571,6 +637,12 @@ static void OnScreenKeyboard(char * var, u16 maxlen)
 	ResumeGui();
 }
 
+/****************************************************************************
+ * SettingWindow
+ *
+ * Opens a new window, with the specified window element appended. Allows
+ * for a customizable prompted setting.
+ ***************************************************************************/
 static int
 SettingWindow(const char * title, GuiWindow * w)
 {
@@ -657,7 +729,6 @@ SettingWindow(const char * title, GuiWindow * w)
  *
  * THIS MUST NOT BE REMOVED OR DISABLED IN ANY DERIVATIVE WORK
  ***************************************************************************/
-
 static void WindowCredits(void * ptr)
 {
 	if(btnLogo->GetState() != STATE_CLICKED)
@@ -787,8 +858,10 @@ static void WindowCredits(void * ptr)
 
 /****************************************************************************
  * MenuGameSelection
+ *
+ * Displays a list of games on the specified load device, and allows the user
+ * to browse and select from this list.
  ***************************************************************************/
-
 static int MenuGameSelection()
 {
 	#ifdef HW_RVL
@@ -937,6 +1010,11 @@ static int MenuGameSelection()
 	return menu;
 }
 
+/****************************************************************************
+ * ControllerWindowUpdate
+ *
+ * Callback for controller window. Responds to clicks on window elements.
+ ***************************************************************************/
 static void ControllerWindowUpdate(void * ptr, int dir)
 {
 	GuiButton * b = (GuiButton *)ptr;
@@ -954,9 +1032,19 @@ static void ControllerWindowUpdate(void * ptr, int dir)
 	}
 }
 
+/****************************************************************************
+ * ControllerWindowLeftClick / ControllerWindowRightsClick
+ *
+ * Callbacks for controller window arrows. Responds arrow clicks.
+ ***************************************************************************/
 static void ControllerWindowLeftClick(void * ptr) { ControllerWindowUpdate(ptr, -1); }
 static void ControllerWindowRightClick(void * ptr) { ControllerWindowUpdate(ptr, +1); }
 
+/****************************************************************************
+ * ControllerWindow
+ *
+ * Opens a window to allow the user to select the controller to be used.
+ ***************************************************************************/
 static void ControllerWindow()
 {
 	GuiWindow * w = new GuiWindow(300,250);
@@ -1017,8 +1105,9 @@ static void ControllerWindow()
 
 /****************************************************************************
  * MenuGame
+ *
+ * Menu displayed when returning to the menu from in-game.
  ***************************************************************************/
-
 static int MenuGame()
 {
 	int menu = MENU_NONE;
@@ -1362,8 +1451,9 @@ static int MenuGame()
 
 /****************************************************************************
  * MenuGameSaves
+ *
+ * Allows the user to load or save progress.
  ***************************************************************************/
-
 static int MenuGameSaves(int action)
 {
 	int menu = MENU_NONE;
@@ -1633,8 +1723,10 @@ static int MenuGameSaves(int action)
 
 /****************************************************************************
  * MenuGameCheats
+ *
+ * Displays a list of cheats available, and allows the user to enable/disable
+ * them.
  ***************************************************************************/
-
 static int MenuGameCheats()
 {
 	int menu = MENU_NONE;
@@ -1750,7 +1842,6 @@ static int MenuGameCheats()
 /****************************************************************************
  * MenuSettings
  ***************************************************************************/
-
 static int MenuSettings()
 {
 	int menu = MENU_NONE;
@@ -1960,7 +2051,6 @@ static int MenuSettings()
 /****************************************************************************
  * MenuSettingsMappings
  ***************************************************************************/
-
 static int MenuSettingsMappings()
 {
 	int menu = MENU_NONE;

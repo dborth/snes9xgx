@@ -16,7 +16,6 @@
 
 #include "unzip.h"
 #include "miniunz.h"
-
 #include "snes9xGX.h"
 #include "menu.h"
 #include "fileop.h"
@@ -81,8 +80,8 @@ void UpdateCheck()
 							verMinor >= 0 && verMinor <= 9 &&
 							verPoint >= 0 && verPoint <= 9) &&
 							(verMajor > curMajor ||
-							verMinor > curMinor ||
-							verPoint > curPoint))
+							(verMajor == curMajor && verMinor > curMinor) ||
+							(verMajor == curMajor && verMinor == curMinor && verPoint > curPoint)))
 						{
 							item = mxmlFindElement(xml, xml, "file", NULL, NULL, MXML_DESCEND);
 							if(item)
