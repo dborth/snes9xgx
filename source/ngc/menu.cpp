@@ -1458,10 +1458,14 @@ static int MenuGameSaves(int action)
 {
 	int menu = MENU_NONE;
 	int ret;
-	int i, len, len2;
+	int i, n, len, len2;
 	int j = 0;
 	SaveList saves;
 	char filepath[1024];
+	char scrfile[1024];
+	char tmp[256];
+	struct stat filestat;
+	struct tm * timeinfo;
 	int method = GCSettings.SaveMethod;
 
 	if(method == METHOD_AUTO)
@@ -1565,8 +1569,6 @@ static int MenuGameSaves(int action)
 
 			if(saves.type[j] != -1)
 			{
-				int n = -1;
-				char tmp[256];
 				strncpy(tmp, browserList[i].filename, 255);
 				tmp[len2-4] = 0;
 
@@ -1574,6 +1576,8 @@ static int MenuGameSaves(int action)
 					n = atoi(&tmp[len2-5]);
 				else if(len2 - len == 6)
 					n = atoi(&tmp[len2-6]);
+				else
+					n = -1;
 
 				if(n > 0 && n < MAX_SAVES)
 					saves.files[saves.type[j]][n] = 1;
@@ -1584,7 +1588,6 @@ static int MenuGameSaves(int action)
 				{
 					if(saves.type[j] == FILE_SNAPSHOT)
 					{
-						char scrfile[1024];
 						sprintf(scrfile, "%s/%s.png", GCSettings.SaveFolder, tmp);
 
 						AllocSaveBuffer();
@@ -1592,9 +1595,13 @@ static int MenuGameSaves(int action)
 							saves.previewImg[j] = new GuiImageData(savebuffer);
 						FreeSaveBuffer();
 					}
-					struct tm * timeinfo = localtime(&browserList[j].mtime);
-					strftime(saves.date[j], 20, "%a %b %d", timeinfo);
-					strftime(saves.time[j], 10, "%I:%M %p", timeinfo);
+					snprintf(filepath, 1024, "%s%s/%s", rootdir, GCSettings.SaveFolder, saves.filename[j]);
+					if (stat(filepath, &filestat) == 0)
+					{
+						timeinfo = localtime(&filestat.st_mtime);
+						strftime(saves.date[j], 20, "%a %b %d", timeinfo);
+						strftime(saves.time[j], 10, "%I:%M %p", timeinfo);
+					}
 				}
 				j++;
 			}
