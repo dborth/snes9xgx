@@ -91,7 +91,7 @@ GCMixSamples ()
 void
 InitAudio ()
 {
-	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 150);
+	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 100);
 }
 
 /****************************************************************************
