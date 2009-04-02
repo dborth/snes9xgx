@@ -635,7 +635,7 @@ ResetVideo_Emu ()
 	int i = -1;
 
 	// original render mode or hq2x
-	if (GCSettings.render == 0 || GCSettings.FilterMethod != FILTER_NONE)
+	if (GCSettings.render == 0)
 	{
 		for (int j=0; j<4; j++)
 		{
