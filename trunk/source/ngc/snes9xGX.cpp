@@ -204,6 +204,8 @@ void setFrameTimerMethod()
 extern void S9xInitSync();
 bool CheckVideo = 0; // for forcing video reset in video.cpp
 extern uint32 prevRenderedFrameCount;
+static int videoReset;
+static int currentMode;
 
 void
 emulate ()
@@ -238,7 +240,6 @@ emulate ()
 		// since we're starting emulation again
 		LWP_SuspendThread (devicethread);
 
-		ResetVideo_Emu();
 		AudioStart ();
 
 		FrameTimer = 0;
@@ -246,6 +247,9 @@ emulate ()
 
 		CheckVideo = 1;	// force video update
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;
+
+		videoReset = -1;
+		currentMode = GCSettings.render;
 
 		while(1) // emulation loop
 		{
@@ -259,11 +263,22 @@ emulate ()
 			}
 			if (ConfigRequested)
 			{
-				FreeGfxMem();
-				TakeScreenshot();
-				ResetVideo_Menu ();
-				ConfigRequested = 0;
-				break; // leave emulation loop
+				if((GCSettings.render != 0 && videoReset == -1) || videoReset == 0)
+				{
+					FreeGfxMem();
+					TakeScreenshot();
+					ResetVideo_Menu();
+					ConfigRequested = 0;
+					GCSettings.render = currentMode;
+					break; // leave emulation loop
+				}
+				else if(videoReset == -1)
+				{
+					GCSettings.render = 2;
+					CheckVideo = 1;
+					videoReset = 2;
+				}
+				videoReset--;
 			}
 		} // emulation loop
 	} // main loop

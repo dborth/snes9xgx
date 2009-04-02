@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wiiuse/wpad.h>
+#include <sys/stat.h>
 
 #ifdef HW_RVL
 extern "C" {
