@@ -19,8 +19,6 @@
 #include <unistd.h>
 #include <wiiuse/wpad.h>
 #include <ogc/texconv.h>
-#include <mp3player.h>
-#include <asndlib.h>
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -632,17 +630,25 @@ InitGCVideo ()
 void
 ResetVideo_Emu ()
 {
-	GXRModeObj *rmode;
+	GXRModeObj *rmode = vmode;
 	Mtx44 p;
-
 	int i = -1;
-	if (GCSettings.render == 0)	// original render mode
+
+	// original render mode or hq2x
+	if (GCSettings.render == 0 || GCSettings.FilterMethod != FILTER_NONE)
 	{
-		for (i=0; i<4; i++)
+		for (int j=0; j<4; j++)
 		{
-			if (tvmodes[i]->efbHeight == vheight)
+			if (tvmodes[j]->efbHeight == vheight)
+			{
+				i = j;
 				break;
+			}
 		}
+	}
+
+	if(i >= 0) // we found a matching original mode
+	{
 		rmode = tvmodes[i];
 
 		// hack to fix video output for hq2x
@@ -660,7 +666,7 @@ ResetVideo_Emu ()
 	}
 	else
 	{
-		rmode = vmode;		// same mode as menu
+		rmode = vmode; // same mode as menu
 	}
 
 	VIDEO_Configure (rmode);
