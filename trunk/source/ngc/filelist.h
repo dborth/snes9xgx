@@ -3,9 +3,10 @@
  *
  * Tantric January 2009
  *
- * imagelist.h
+ * filelist.h
  *
- * Contains a list of all of the images in the images/ folder
+ * Contains a list of all of the files stored in the images/, fonts/, and
+ * sounds/ folders
  ***************************************************************************/
 
 #ifndef _FILELIST_H_
@@ -19,8 +20,17 @@ extern const u32	font_ttf_size;
 extern const u8		bg_music_ogg[];
 extern const u32	bg_music_ogg_size;
 
+extern const u8		enter_ogg[];
+extern const u32	enter_ogg_size;
+
+extern const u8		exit_ogg[];
+extern const u32	exit_ogg_size;
+
 extern const u8		button_over_pcm[];
 extern const u32	button_over_pcm_size;
+
+extern const u8		button_click_pcm[];
+extern const u32	button_click_pcm_size;
 
 extern const u8		logo_png[];
 extern const u32	logo_png_size;

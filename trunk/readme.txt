@@ -48,17 +48,20 @@ guides on how to install and get homebrew working on your Nintendo Wii.
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-[4.0.0]
+[4.0.0 - April 4, 2009]
 
 * New GX-based menu, with a completely redesigned layout. Has Wiimote IR 
   support, sounds, graphics, animation effects, and more
+* Thanks to the3seashells for designing some top-notch artwork, to 
+  Peter de Man for composing the music, and a special thanks to shagkur for 
+  fixing libogc bugs that would have otherwise prevented the release
 * Onscreen keyboard for changing save/load folders and network settings
 * Menu configuration options (configurable exit button, wiimote orientation,
   volumes)
 * Configurable button mapping for superscope, mouse and justifier
 * New save manager, allowing multiple saves and save browsing. Shows
   screenshots for Snapshot saves, and save dates/times
-* Experimental hq2x filter
+* Experimental hq2x filter, contributed by michniewski
 
 [009 - January 27, 2009]
 
