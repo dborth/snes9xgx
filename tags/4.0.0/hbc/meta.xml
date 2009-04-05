@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+  <name>Snes9X GX</name>
+  <coder>Tantric, michniewski</coder>
+  <version>009</version>
+  <release_date>20090127</release_date>
+  <short_description>Super Nintendo Emulator</short_description> 
+  <long_description>
+  
+  A Super Nintendo Emulator for Wii
+
+  Based on Snes9x 1.51
+  </long_description> 
+</app>
+
+
