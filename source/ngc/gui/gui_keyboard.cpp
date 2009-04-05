@@ -99,6 +99,7 @@ GuiKeyboard::GuiKeyboard(char * t, u16 max)
 	keyLargeOver = new GuiImageData(keyboard_largekey_over_png);
 
 	keySoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND_PCM);
+	keySoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND_PCM);
 	trigA = new GuiTrigger;
 
 	if(GCSettings.WiimoteOrientation)
@@ -114,6 +115,7 @@ GuiKeyboard::GuiKeyboard(char * t, u16 max)
 	keyBack->SetImageOver(keyBackOverImg);
 	keyBack->SetLabel(keyBackText);
 	keyBack->SetSoundOver(keySoundOver);
+	keyBack->SetSoundClick(keySoundClick);
 	keyBack->SetTrigger(trigA);
 	keyBack->SetPosition(10*42+40, 0*42+80);
 	keyBack->SetEffectGrow();
@@ -127,6 +129,7 @@ GuiKeyboard::GuiKeyboard(char * t, u16 max)
 	keyCaps->SetImageOver(keyCapsOverImg);
 	keyCaps->SetLabel(keyCapsText);
 	keyCaps->SetSoundOver(keySoundOver);
+	keyCaps->SetSoundClick(keySoundClick);
 	keyCaps->SetTrigger(trigA);
 	keyCaps->SetPosition(0, 2*42+80);
 	keyCaps->SetEffectGrow();
@@ -140,6 +143,7 @@ GuiKeyboard::GuiKeyboard(char * t, u16 max)
 	keyShift->SetImageOver(keyShiftOverImg);
 	keyShift->SetLabel(keyShiftText);
 	keyShift->SetSoundOver(keySoundOver);
+	keyShift->SetSoundClick(keySoundClick);
 	keyShift->SetTrigger(trigA);
 	keyShift->SetPosition(21, 3*42+80);
 	keyShift->SetEffectGrow();
@@ -151,6 +155,7 @@ GuiKeyboard::GuiKeyboard(char * t, u16 max)
 	keySpace->SetImage(keySpaceImg);
 	keySpace->SetImageOver(keySpaceOverImg);
 	keySpace->SetSoundOver(keySoundOver);
+	keySpace->SetSoundClick(keySoundClick);
 	keySpace->SetTrigger(trigA);
 	keySpace->SetPosition(0, 4*42+80);
 	keySpace->SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
@@ -170,6 +175,7 @@ GuiKeyboard::GuiKeyboard(char * t, u16 max)
 			keyBtn[i][j]->SetImage(keyImg[i][j]);
 			keyBtn[i][j]->SetImageOver(keyImgOver[i][j]);
 			keyBtn[i][j]->SetSoundOver(keySoundOver);
+			keyBtn[i][j]->SetSoundClick(keySoundClick);
 			keyBtn[i][j]->SetTrigger(trigA);
 			keyBtn[i][j]->SetLabel(keyTxt[i][j]);
 			keyBtn[i][j]->SetPosition(j*42+21*i+40, i*42+80);
@@ -209,6 +215,7 @@ GuiKeyboard::~GuiKeyboard()
 	delete keyLarge;
 	delete keyLargeOver;
 	delete keySoundOver;
+	delete keySoundClick;
 	delete trigA;
 
 	for(int i=0; i<4; i++)
