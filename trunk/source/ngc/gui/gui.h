@@ -748,13 +748,13 @@ typedef struct _keytype {
 class GuiKeyboard : public GuiWindow
 {
 	public:
-		GuiKeyboard(char * t, u16 m);
+		GuiKeyboard(char * t, u32 m);
 		~GuiKeyboard();
 		void Update(GuiTrigger * t);
-		char kbtextstr[100];
+		char kbtextstr[256];
 	protected:
-		u16 kbtextmaxlen;
-		Key keys[4][10];
+		u32 kbtextmaxlen;
+		Key keys[4][11];
 		int shift;
 		int caps;
 		GuiText * kbText;
@@ -774,10 +774,10 @@ class GuiKeyboard : public GuiWindow
 		GuiImage * keySpaceImg;
 		GuiImage * keySpaceOverImg;
 		GuiButton * keySpace;
-		GuiButton * keyBtn[4][10];
-		GuiImage * keyImg[4][10];
-		GuiImage * keyImgOver[4][10];
-		GuiText * keyTxt[4][10];
+		GuiButton * keyBtn[4][11];
+		GuiImage * keyImg[4][11];
+		GuiImage * keyImgOver[4][11];
+		GuiText * keyTxt[4][11];
 		GuiImageData * keyTextbox;
 		GuiImageData * key;
 		GuiImageData * keyOver;

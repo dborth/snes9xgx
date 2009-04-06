@@ -571,7 +571,7 @@ void AutoSave()
  * Opens an on-screen keyboard window, with the data entered being stored
  * into the specified variable.
  ***************************************************************************/
-static void OnScreenKeyboard(char * var, u16 maxlen)
+static void OnScreenKeyboard(char * var, u32 maxlen)
 {
 	int save = -1;
 
@@ -3149,7 +3149,7 @@ static int MenuSettingsFile()
 		else if (GCSettings.AutoLoad == 1) sprintf (options.value[5],"SRAM");
 		else if (GCSettings.AutoLoad == 2) sprintf (options.value[5],"Snapshot");
 
-		if (GCSettings.AutoSave == 0) sprintf (options.value[5],"Off");
+		if (GCSettings.AutoSave == 0) sprintf (options.value[6],"Off");
 		else if (GCSettings.AutoSave == 1) sprintf (options.value[6],"SRAM");
 		else if (GCSettings.AutoSave == 2) sprintf (options.value[6],"Snapshot");
 		else if (GCSettings.AutoSave == 3) sprintf (options.value[6],"Both");
@@ -3169,15 +3169,15 @@ static int MenuSettingsFile()
 				break;
 
 			case 2:
-				OnScreenKeyboard(GCSettings.LoadFolder, 256);
+				OnScreenKeyboard(GCSettings.LoadFolder, 30);
 				break;
 
 			case 3:
-				OnScreenKeyboard(GCSettings.SaveFolder, 256);
+				OnScreenKeyboard(GCSettings.SaveFolder, 30);
 				break;
 
 			case 4:
-				OnScreenKeyboard(GCSettings.CheatFolder, 256);
+				OnScreenKeyboard(GCSettings.CheatFolder, 30);
 				break;
 
 			case 5:
