@@ -403,8 +403,11 @@ int BrowserLoadSz(int method)
 		return 0;
 
 	// add device to filepath
-	sprintf(filepath, "%s%s", rootdir, szpath);
-	memcpy(szpath, filepath, MAXPATHLEN);
+	if(method != METHOD_DVD)
+	{
+		sprintf(filepath, "%s%s", rootdir, szpath);
+		memcpy(szpath, filepath, MAXPATHLEN);
+	}
 
 	int szfiles = SzParse(szpath, method);
 	if(szfiles)
