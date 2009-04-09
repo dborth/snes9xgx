@@ -229,7 +229,7 @@ done you can proceed to run the emulator via the Homebrew Channel.
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
 If you are upgrading from a previous version you will need to remove the 
-"settings.xml" file from "\apps\Snes9x GX" directory on your SD Card. If you 
+"settings.xml" file from "\apps\Snes9xGX" directory on your SD Card. If you 
 are not upgrading then don't worry about it.
 
 The first time you run Snes9x GX it will create a new "settings.xml" file on

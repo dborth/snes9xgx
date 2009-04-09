@@ -44,7 +44,7 @@ extern char rootdir[10];
 
 extern unsigned long SNESROMSize;
 
-bool MakeFilePath(char filepath[], int type, int method, char * filename = NULL, int filenum = -1);
+bool MakeFilePath(char filepath[], int type, int method, char * filename = NULL, int filenum = -2);
 int UpdateDirName(int method);
 int OpenGameList();
 int autoLoadMethod();
