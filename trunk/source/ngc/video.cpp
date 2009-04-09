@@ -589,7 +589,7 @@ InitGCVideo ()
 
 	VIDEO_Configure (vmode);
 
-	screenheight = vmode->xfbHeight;
+	screenheight = 480;
 	screenwidth = vmode->fbWidth;
 
 	// Allocate the video buffers

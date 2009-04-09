@@ -94,12 +94,31 @@ LoadSRAMAuto (int method, bool silent)
 	if(method == METHOD_AUTO)
 		return false;
 
-	char filepath[1024];
+	char filepath[MAXPATHLEN];
+	char fullpath[MAXPATHLEN];
+	char filepath2[MAXPATHLEN];
+	char fullpath2[MAXPATHLEN];
 
+	// look for Auto save file
 	if(!MakeFilePath(filepath, FILE_SRAM, method, Memory.ROMFilename, 0))
 		return false;
 
-	return LoadSRAM(filepath, method, silent);
+	if (LoadSRAM(filepath, method, silent))
+		return true;
+
+	// look for file with no number or Auto appended
+	if(!MakeFilePath(filepath2, FILE_SRAM, method, Memory.ROMFilename, -1))
+		return false;
+
+	if(LoadSRAM(filepath2, method, silent))
+	{
+		// rename this file - append Auto
+		sprintf(fullpath, "%s%s", rootdir, filepath); // add device to path
+		sprintf(fullpath2, "%s%s", rootdir, filepath2); // add device to path
+		rename(fullpath2, fullpath); // rename file (to avoid duplicates)
+		return true;
+	}
+	return false;
 }
 
 /****************************************************************************
