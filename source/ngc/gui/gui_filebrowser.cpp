@@ -1,7 +1,7 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * libwiigui
  *
- * Tantric February 2009
+ * Tantric 2009
  *
  * gui_filebrowser.cpp
  *
@@ -28,6 +28,12 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 		trigA->SetSimpleTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 	else
 		trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+
+	trigHeldA = new GuiTrigger;
+	if(GCSettings.WiimoteOrientation)
+		trigHeldA->SetHeldTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+	else
+		trigHeldA->SetHeldTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
 	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND_PCM);
@@ -84,7 +90,12 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	scrollbarBoxBtn->SetImage(scrollbarBoxImg);
 	scrollbarBoxBtn->SetImageOver(scrollbarBoxOverImg);
 	scrollbarBoxBtn->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	scrollbarBoxBtn->SetMinY(0);
+	scrollbarBoxBtn->SetMaxY(304);
 	scrollbarBoxBtn->SetSelectable(false);
+	scrollbarBoxBtn->SetClickable(false);
+	scrollbarBoxBtn->SetDraggable(true);
+	scrollbarBoxBtn->SetTrigger(trigHeldA);
 
 	for(int i=0; i<PAGESIZE; i++)
 	{
@@ -202,13 +213,44 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	if(state == STATE_DISABLED || !t)
 		return;
 
+	int position;
+
 	// update the location of the scroll box based on the position in the file list
-	int position = 136*(browser.pageIndex + selectedItem) / browser.numEntries;
+	position = 136*(browser.pageIndex + selectedItem) / browser.numEntries;
 	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	arrowUpBtn->Update(t);
 	arrowDownBtn->Update(t);
 	scrollbarBoxBtn->Update(t);
+
+	if(scrollbarBoxBtn->GetState() == STATE_HELD)
+	{
+		// move the file listing to respond to wiimote cursor movement
+		if(t->wpad.ir.valid)
+		{
+			scrollbarBoxBtn->SetPosition(0,0);
+			position = t->wpad.ir.y - 60 - scrollbarBoxBtn->GetTop();
+
+			if(position > scrollbarBoxBtn->GetMinY() &&
+				position < scrollbarBoxBtn->GetMaxY())
+			{
+				scrollbarBoxBtn->SetPosition(0, position);
+				browser.pageIndex = (position * browser.numEntries)/136.0 - selectedItem;
+
+				if(browser.pageIndex <= 0)
+				{
+					browser.pageIndex = 0;
+					selectedItem = 0;
+				}
+				else if(browser.pageIndex+PAGESIZE >= browser.numEntries)
+				{
+					browser.pageIndex = browser.numEntries-PAGESIZE;
+					selectedItem = PAGESIZE-1;
+				}
+				listChanged = true;
+			}
+		}
+	}
 
 	// pad/joystick navigation
 	if(!focus)

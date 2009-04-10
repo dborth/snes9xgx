@@ -1,7 +1,7 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * libwiigui
  *
- * Tantric February 2009
+ * Tantric 2009
  *
  * gui_element.cpp
  *
@@ -17,17 +17,23 @@ GuiElement::GuiElement()
 {
 	xoffset = 0;
 	yoffset = 0;
+	xmin = 0;
+	xmax = 0;
+	ymin = 0;
+	ymax = 0;
 	width = 0;
 	height = 0;
 	alpha = 255;
 	scale = 1;
 	state = STATE_DEFAULT;
+	stateChan = -1;
 	trigger[0] = NULL;
 	trigger[1] = NULL;
 	parentElement = NULL;
 	rumble = true;
 	selectable = false;
 	clickable = false;
+	draggable = false;
 	visible = true;
 	focus = -1; // cannot be focused
 	updateCB = NULL;
@@ -126,6 +132,46 @@ int GuiElement::GetTop()
 			break;
 	}
 	return y + yoffset;
+}
+
+void GuiElement::SetMinX(int x)
+{
+	xmin = x;
+}
+
+int GuiElement::GetMinX()
+{
+	return xmin;
+}
+
+void GuiElement::SetMaxX(int x)
+{
+	xmax = x;
+}
+
+int GuiElement::GetMaxX()
+{
+	return xmax;
+}
+
+void GuiElement::SetMinY(int y)
+{
+	ymin = y;
+}
+
+int GuiElement::GetMinY()
+{
+	return ymin;
+}
+
+void GuiElement::SetMaxY(int y)
+{
+	ymax = y;
+}
+
+int GuiElement::GetMaxY()
+{
+	return ymax;
 }
 
 /**
@@ -243,6 +289,11 @@ void GuiElement::SetSelectable(bool s)
 	selectable = s;
 }
 
+void GuiElement::SetDraggable(bool d)
+{
+	draggable = d;
+}
+
 bool GuiElement::IsSelectable()
 {
 	if(state == STATE_DISABLED || state == STATE_CLICKED)
@@ -253,10 +304,20 @@ bool GuiElement::IsSelectable()
 
 bool GuiElement::IsClickable()
 {
-	if(state == STATE_DISABLED || state == STATE_CLICKED)
+	if(state == STATE_DISABLED ||
+		state == STATE_CLICKED ||
+		state == STATE_HELD)
 		return false;
 	else
 		return clickable;
+}
+
+bool GuiElement::IsDraggable()
+{
+	if(state == STATE_DISABLED)
+		return false;
+	else
+		return draggable;
 }
 
 void GuiElement::SetFocus(int f)

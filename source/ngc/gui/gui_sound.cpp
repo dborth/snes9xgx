@@ -1,7 +1,7 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * libwiigui
  *
- * Tantric February 2009
+ * Tantric 2009
  *
  * gui_sound.cpp
  *

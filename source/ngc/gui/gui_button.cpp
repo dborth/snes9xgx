@@ -1,7 +1,7 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * libwiigui
  *
- * Tantric February 2009
+ * Tantric 2009
  *
  * gui_button.cpp
  *
@@ -115,19 +115,19 @@ void GuiButton::Draw()
 		return;
 
 	// draw image
-	if(state == STATE_SELECTED && imageOver)
+	if((state == STATE_SELECTED || state == STATE_HELD) && imageOver)
 		imageOver->Draw();
 	else if(image)
 		image->Draw();
 	// draw icon
-	if(state == STATE_SELECTED && iconOver)
+	if((state == STATE_SELECTED || state == STATE_HELD) && iconOver)
 		iconOver->Draw();
 	else if(icon)
 		icon->Draw();
 	// draw text
 	for(int i=0; i<3; i++)
 	{
-		if(state == STATE_SELECTED && labelOver[i])
+		if((state == STATE_SELECTED || state == STATE_HELD) && labelOver[i])
 			labelOver[i]->Draw();
 		else if(label[i])
 			label[i]->Draw();
@@ -221,6 +221,45 @@ void GuiButton::Update(GuiTrigger * t)
 					{
 						state = STATE_CLICKED;
 					}
+				}
+			}
+		}
+	}
+
+	if(this->IsDraggable())
+	{
+		bool held = false;
+
+		for(int i=0; i<2; i++)
+		{
+			if(trigger[i] && (trigger[i]->chan == -1 || trigger[i]->chan == t->chan))
+			{
+				// higher 16 bits only (wiimote)
+				s32 wm_btns = t->wpad.btns_h << 16;
+				s32 wm_btns_trig = trigger[i]->wpad.btns_h << 16;
+
+				// lower 16 bits only (classic controller)
+				s32 cc_btns = t->wpad.btns_h >> 16;
+				s32 cc_btns_trig = trigger[i]->wpad.btns_h >> 16;
+
+				if(
+					(t->wpad.btns_h > 0 &&
+					wm_btns == wm_btns_trig ||
+					(cc_btns == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC)) ||
+					(t->pad.btns_h == trigger[i]->pad.btns_h && t->pad.btns_h > 0))
+				{
+					if(trigger[i]->type == TRIGGER_HELD)
+						held = true;
+				}
+
+				if(!held && state == STATE_HELD && stateChan == t->chan)
+				{
+					state = STATE_DEFAULT;
+				}
+				else if(held && state == STATE_SELECTED)
+				{
+					state = STATE_HELD;
+					stateChan = t->chan; // record which controller is holding the button
 				}
 			}
 		}
