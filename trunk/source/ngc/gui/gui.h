@@ -72,6 +72,7 @@ enum
 	STATE_DEFAULT,
 	STATE_SELECTED,
 	STATE_CLICKED,
+	STATE_HELD,
 	STATE_DISABLED
 };
 
@@ -154,6 +155,30 @@ class GuiElement
 		//!Considers vertical alignment, y offset, height, and parent element's GetTop() / GetHeight() values
 		//!\return top coordinate
 		int GetTop();
+		//!Sets the minimum y offset of the element
+		//!\param y Y offset
+		void SetMinY(int y);
+		//!Gets the minimum y offset of the element
+		//!\return Minimum Y offset
+		int GetMinY();
+		//!Sets the maximum y offset of the element
+		//!\param y Y offset
+		void SetMaxY(int y);
+		//!Gets the maximum y offset of the element
+		//!\return Maximum Y offset
+		int GetMaxY();
+		//!Sets the minimum x offset of the element
+		//!\param x X offset
+		void SetMinX(int x);
+		//!Gets the minimum x offset of the element
+		//!\return Minimum X offset
+		int GetMinX();
+		//!Sets the maximum x offset of the element
+		//!\param x X offset
+		void SetMaxX(int x);
+		//!Gets the maximum x offset of the element
+		//!\return Maximum X offset
+		int GetMaxX();
 		//!Gets the current width of the element. Does not currently consider the scale
 		//!\return width
 		int GetWidth();
@@ -173,12 +198,18 @@ class GuiElement
 		//!Checks whether or not the element is clickable
 		//!\return true if clickable, false otherwise
 		bool IsClickable();
+		//!Checks whether or not the element is draggable
+		//!\return true if draggable, false otherwise
+		bool IsDraggable();
 		//!Sets whether or not the element is selectable
 		//!\param s Selectable
 		void SetSelectable(bool s);
 		//!Sets whether or not the element is clickable
 		//!\param c Clickable
 		void SetClickable(bool c);
+		//!Sets whether or not the element is draggable
+		//!\param c Draggable
+		void SetDraggable(bool d);
 		//!Gets the element's current state
 		//!\return state
 		int GetState();
@@ -271,6 +302,10 @@ class GuiElement
 		int height; //!< Element height
 		int xoffset; //!< Element X offset
 		int yoffset; //!< Element Y offset
+		int ymin; //!< Element's min Y offset allowed
+		int ymax; //!< Element's max Y offset allowed
+		int xmin; //!< Element's min X offset allowed
+		int xmax; //!< Element's max X offset allowed
 		int xoffsetDyn; //!< Element X offset, dynamic (added to xoffset value for animation effects)
 		int yoffsetDyn; //!< Element Y offset, dynamic (added to yoffset value for animation effects)
 		int alpha; //!< Element alpha value (0-255)
@@ -287,8 +322,10 @@ class GuiElement
 		int alignmentHor; //!< Horizontal element alignment, respective to parent element (LEFT, RIGHT, CENTRE)
 		int alignmentVert; //!< Horizontal element alignment, respective to parent element (TOP, BOTTOM, MIDDLE)
 		int state; //!< Element state (DEFAULT, SELECTED, CLICKED, DISABLED)
+		int stateChan; //!< Which controller channel is responsible for the last change in state
 		bool selectable; //!< Whether or not this element selectable (can change to SELECTED state)
 		bool clickable; //!< Whether or not this element is clickable (can change to CLICKED state)
+		bool draggable; //!< Whether or not this element is draggable (can change to HELD state)
 		GuiTrigger * trigger[2]; //!< GuiTriggers (input actions) that this element responds to
 		GuiElement * parentElement; //!< Parent element
 		UpdateCallback updateCB; //!< Callback function to call when this element is updated
@@ -616,6 +653,7 @@ class GuiFileBrowser : public GuiElement
 		GuiSound * btnSoundOver;
 		GuiSound * btnSoundClick;
 		GuiTrigger * trigA;
+		GuiTrigger * trigHeldA;
 };
 
 typedef struct _optionlist {

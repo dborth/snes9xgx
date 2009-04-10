@@ -24,6 +24,7 @@
 enum
 {
 	TRIGGER_SIMPLE,
+	TRIGGER_HELD,
 	TRIGGER_BUTTON_ONLY,
 	TRIGGER_BUTTON_ONLY_IN_FOCUS
 };
@@ -46,6 +47,7 @@ class GuiTrigger
 		GuiTrigger();
 		~GuiTrigger();
 		void SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
+		void SetHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
 		void SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
 		void SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
 		s8 WPAD_Stick(u8 right, int axis);
