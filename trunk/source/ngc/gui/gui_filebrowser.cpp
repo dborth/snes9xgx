@@ -71,7 +71,9 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	arrowUpBtn->SetImageOver(arrowUpOverImg);
 	arrowUpBtn->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	arrowUpBtn->SetSelectable(false);
-	arrowUpBtn->SetTrigger(trigA);
+	arrowUpBtn->SetClickable(false);
+	arrowUpBtn->SetHoldable(true);
+	arrowUpBtn->SetTrigger(trigHeldA);
 	arrowUpBtn->SetSoundOver(btnSoundOver);
 	arrowUpBtn->SetSoundClick(btnSoundClick);
 
@@ -81,7 +83,9 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	arrowDownBtn->SetImageOver(arrowDownOverImg);
 	arrowDownBtn->SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
 	arrowDownBtn->SetSelectable(false);
-	arrowDownBtn->SetTrigger(trigA);
+	arrowDownBtn->SetClickable(false);
+	arrowDownBtn->SetHoldable(true);
+	arrowDownBtn->SetTrigger(trigHeldA);
 	arrowDownBtn->SetSoundOver(btnSoundOver);
 	arrowDownBtn->SetSoundClick(btnSoundClick);
 
@@ -94,7 +98,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	scrollbarBoxBtn->SetMaxY(304);
 	scrollbarBoxBtn->SetSelectable(false);
 	scrollbarBoxBtn->SetClickable(false);
-	scrollbarBoxBtn->SetDraggable(true);
+	scrollbarBoxBtn->SetHoldable(true);
 	scrollbarBoxBtn->SetTrigger(trigHeldA);
 
 	for(int i=0; i<PAGESIZE; i++)
@@ -172,6 +176,7 @@ void GuiFileBrowser::SetFocus(int f)
 void GuiFileBrowser::ResetState()
 {
 	state = STATE_DEFAULT;
+	stateChan = -1;
 	selectedItem = 0;
 
 	for(int i=0; i<PAGESIZE; i++)
@@ -215,41 +220,38 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 
 	int position;
 
-	// update the location of the scroll box based on the position in the file list
-	position = 136*(browser.pageIndex + selectedItem) / browser.numEntries;
-	scrollbarBoxBtn->SetPosition(0,position+36);
-
 	arrowUpBtn->Update(t);
 	arrowDownBtn->Update(t);
 	scrollbarBoxBtn->Update(t);
 
-	if(scrollbarBoxBtn->GetState() == STATE_HELD)
+	// move the file listing to respond to wiimote cursor movement
+	if(scrollbarBoxBtn->GetState() == STATE_HELD &&
+		scrollbarBoxBtn->GetStateChan() == t->chan &&
+		t->wpad.ir.valid &&
+		browser.numEntries > PAGESIZE
+		)
 	{
-		// move the file listing to respond to wiimote cursor movement
-		if(t->wpad.ir.valid)
+		scrollbarBoxBtn->SetPosition(0,0);
+		position = t->wpad.ir.y - 60 - scrollbarBoxBtn->GetTop();
+
+		if(position < scrollbarBoxBtn->GetMinY())
+			position = scrollbarBoxBtn->GetMinY();
+		else if(position > scrollbarBoxBtn->GetMaxY())
+			position = scrollbarBoxBtn->GetMaxY();
+
+		browser.pageIndex = (position * browser.numEntries)/136.0 - selectedItem;
+
+		if(browser.pageIndex <= 0)
 		{
-			scrollbarBoxBtn->SetPosition(0,0);
-			position = t->wpad.ir.y - 60 - scrollbarBoxBtn->GetTop();
-
-			if(position > scrollbarBoxBtn->GetMinY() &&
-				position < scrollbarBoxBtn->GetMaxY())
-			{
-				scrollbarBoxBtn->SetPosition(0, position);
-				browser.pageIndex = (position * browser.numEntries)/136.0 - selectedItem;
-
-				if(browser.pageIndex <= 0)
-				{
-					browser.pageIndex = 0;
-					selectedItem = 0;
-				}
-				else if(browser.pageIndex+PAGESIZE >= browser.numEntries)
-				{
-					browser.pageIndex = browser.numEntries-PAGESIZE;
-					selectedItem = PAGESIZE-1;
-				}
-				listChanged = true;
-			}
+			browser.pageIndex = 0;
+			selectedItem = 0;
 		}
+		else if(browser.pageIndex+PAGESIZE >= browser.numEntries)
+		{
+			browser.pageIndex = browser.numEntries-PAGESIZE;
+			selectedItem = PAGESIZE-1;
+		}
+		listChanged = true;
 	}
 
 	// pad/joystick navigation
@@ -259,7 +261,16 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		listChanged = false;
 	}
 
-	if(t->Right() || arrowDownBtn->GetState() == STATE_CLICKED)
+	if(arrowDownBtn->GetState() == STATE_CLICKED && arrowDownBtn->GetStateChan() == t->chan)
+		t->wpad.btns_d |= WPAD_BUTTON_DOWN;
+	else if(arrowUpBtn->GetState() == STATE_CLICKED && arrowUpBtn->GetStateChan() == t->chan)
+		t->wpad.btns_d |= WPAD_BUTTON_UP;
+	else if(arrowDownBtn->GetState() == STATE_HELD && arrowDownBtn->GetStateChan() == t->chan)
+		t->wpad.btns_h |= WPAD_BUTTON_DOWN;
+	else if(arrowUpBtn->GetState() == STATE_HELD && arrowUpBtn->GetStateChan() == t->chan)
+		t->wpad.btns_h |= WPAD_BUTTON_UP;
+
+	if(t->Right())
 	{
 		if(browser.pageIndex < browser.numEntries && browser.numEntries > PAGESIZE)
 		{
@@ -268,9 +279,8 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 				browser.pageIndex = browser.numEntries-PAGESIZE;
 			listChanged = true;
 		}
-		arrowDownBtn->ResetState();
 	}
-	else if(t->Left() || arrowUpBtn->GetState() == STATE_CLICKED)
+	else if(t->Left())
 	{
 		if(browser.pageIndex > 0)
 		{
@@ -279,7 +289,6 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 				browser.pageIndex = 0;
 			listChanged = true;
 		}
-		arrowUpBtn->ResetState();
 	}
 	else if(t->Down())
 	{
@@ -294,7 +303,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 			else if(gameList[selectedItem+1]->IsVisible())
 			{
 				gameList[selectedItem]->ResetState();
-				gameList[++selectedItem]->SetState(STATE_SELECTED);
+				gameList[++selectedItem]->SetState(STATE_SELECTED, t->chan);
 			}
 		}
 	}
@@ -309,7 +318,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		else if(selectedItem > 0)
 		{
 			gameList[selectedItem]->ResetState();
-			gameList[--selectedItem]->SetState(STATE_SELECTED);
+			gameList[--selectedItem]->SetState(STATE_SELECTED, t->chan);
 		}
 	}
 
@@ -351,7 +360,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 			if(i != selectedItem && gameList[i]->GetState() == STATE_SELECTED)
 				gameList[i]->ResetState();
 			else if(i == selectedItem && gameList[i]->GetState() == STATE_DEFAULT)
-				gameList[selectedItem]->SetState(STATE_SELECTED);
+				gameList[selectedItem]->SetState(STATE_SELECTED, t->chan);
 		}
 
 		gameList[i]->Update(t);
@@ -361,6 +370,13 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 			selectedItem = i;
 			browser.selIndex = browser.pageIndex + i;
 		}
+	}
+
+	// update the location of the scroll box based on the position in the file list
+	if(listChanged)
+	{
+		position = 136*(browser.pageIndex + selectedItem) / browser.numEntries;
+		scrollbarBoxBtn->SetPosition(0,position+36);
 	}
 
 	listChanged = false;

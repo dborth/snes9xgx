@@ -294,7 +294,7 @@ UpdateGUI (void *arg)
 
 			Menu_Render();
 
-			for(int i=0; i < 4; i++)
+			for(int i=3; i >= 0; i--)
 				mainWindow->Update(&userInput[i]);
 
 			#ifdef HW_RVL
@@ -1369,7 +1369,8 @@ static int MenuGame()
 			if(WPAD_Probe(i, NULL) == WPAD_ERR_NONE) // controller connected
 			{
 				level = (userInput[i].wpad.battery_level / 100.0) * 4;
-					batteryBarImg[i]->SetTile(level);
+				if(level > 4) level = 4;
+				batteryBarImg[i]->SetTile(level);
 
 				if(level == 0)
 					batteryImg[i]->SetImage(&batteryRed);

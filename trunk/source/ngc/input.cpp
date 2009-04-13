@@ -560,46 +560,36 @@ void decodepad (int pad)
  ***************************************************************************/
 void NGCReportButtons ()
 {
-	s8 gc_px = PAD_SubStickX (0);
+	int i, j;
 
-	u16 gc_pb = PAD_ButtonsHeld (0);
+	Settings.TurboMode = (
+		(userInput[0].pad.substickX > 70) ||
+		(userInput[0].WPAD_Stick(1,0) > 70)
+	);	// RIGHT on c-stick and on classic controller right joystick
 
-#ifdef HW_RVL
-	s8 wm_sx = WPAD_Stick (0,1,0);
-	u32 wm_pb = WPAD_ButtonsDown (0);	// wiimote / expansion button info
-#endif
+	/* Check for menu:
+	 * CStick left
+	 * OR "L+R+X+Y" (eg. Hombrew/Adapted SNES controllers)
+	 * OR "Home" on the wiimote or classic controller
+	 * OR LEFT on classic right analog stick
+	 */
+	for(i=0; i<4; i++)
+	{
+		if (
+			(userInput[i].pad.substickX < -70) ||
+			(userInput[i].pad.btns_h & (PAD_TRIGGER_L | PAD_TRIGGER_R | PAD_BUTTON_X | PAD_BUTTON_Y)) ||
+			(userInput[i].wpad.btns_d & WPAD_BUTTON_HOME) ||
+			(userInput[i].wpad.btns_d & WPAD_CLASSIC_BUTTON_HOME)
+		)
+		{
+			ConfigRequested = 1; // go to the menu
+		}
+	}
 
-    Settings.TurboMode = ( (gc_px > 70)
-#ifdef HW_RVL
-							|| (wm_sx > 70)
-#endif
-							);	// RIGHT on c-stick and on classic ctrlr right joystick
+	j = (Settings.MultiPlayer5Master == true ? 4 : 2);
 
-	/*** Check for menu:
-	       CStick left
-	       OR "L+R+X+Y" (eg. Hombrew/Adapted SNES controllers)
-	       OR "Home" on the wiimote or classic controller
-	       OR LEFT on classic right analog stick***/
-
-    if ((gc_px < -70) ||
-        ((gc_pb & PAD_TRIGGER_L) &&
-         (gc_pb & PAD_TRIGGER_R ) &&
-         (gc_pb & PAD_BUTTON_X) &&
-         (gc_pb & PAD_BUTTON_Y ))
-#ifdef HW_RVL
-		 || (wm_pb & WPAD_BUTTON_HOME)
-		 || (wm_pb & WPAD_CLASSIC_BUTTON_HOME)
-#endif
-       )
-    {
-        ConfigRequested = 1;	// go to the menu
-    }
-    else
-    {
-        int j = (Settings.MultiPlayer5Master == true ? 4 : 2);
-        for (int i = 0; i < j; i++)
-            decodepad (i);
-    }
+	for (i = 0; i < j; i++)
+		decodepad (i);
 }
 
 void SetControllers()

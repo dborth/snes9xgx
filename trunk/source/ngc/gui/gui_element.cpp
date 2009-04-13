@@ -33,7 +33,7 @@ GuiElement::GuiElement()
 	rumble = true;
 	selectable = false;
 	clickable = false;
-	draggable = false;
+	holdable = false;
 	visible = true;
 	focus = -1; // cannot be focused
 	updateCB = NULL;
@@ -268,15 +268,24 @@ int GuiElement::GetState()
 	return state;
 }
 
-void GuiElement::SetState(int s)
+int GuiElement::GetStateChan()
+{
+	return stateChan;
+}
+
+void GuiElement::SetState(int s, int c)
 {
 	state = s;
+	stateChan = c;
 }
 
 void GuiElement::ResetState()
 {
 	if(state != STATE_DISABLED)
+	{
 		state = STATE_DEFAULT;
+		stateChan = -1;
+	}
 }
 
 void GuiElement::SetClickable(bool c)
@@ -289,9 +298,9 @@ void GuiElement::SetSelectable(bool s)
 	selectable = s;
 }
 
-void GuiElement::SetDraggable(bool d)
+void GuiElement::SetHoldable(bool d)
 {
-	draggable = d;
+	holdable = d;
 }
 
 bool GuiElement::IsSelectable()
@@ -312,12 +321,12 @@ bool GuiElement::IsClickable()
 		return clickable;
 }
 
-bool GuiElement::IsDraggable()
+bool GuiElement::IsHoldable()
 {
 	if(state == STATE_DISABLED)
 		return false;
 	else
-		return draggable;
+		return holdable;
 }
 
 void GuiElement::SetFocus(int f)
