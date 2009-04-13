@@ -10,7 +10,7 @@
 ­———————————————————————————————————————————————————————————————————————•ßrK•
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                      Snes9x GX 4.0.0                          ·oø×O0|
+|0O×øo·                      Snes9x GX 4.0.1                          ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
@@ -47,6 +47,16 @@ guides on how to install and get homebrew working on your Nintendo Wii.
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.0.1 - April 13, 2009]
+* Fixed turning off autosave in menu
+* Keyboard fixed, more keys added
+* Fixed 7z loading from DVD
+* Enable auto loading and renaming of SRAM save without "Auto" in the name
+* PAL resolution fixed - no more letterboxing
+* File browser scrollbar box now draggable, arrow buttons now scroll list
+* Better handling of multiple on-screen wiimotes
+* Menu restructured - new "Game Settings" menu
 
 [4.0.0 - April 4, 2009]
 

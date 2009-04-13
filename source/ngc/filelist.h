@@ -50,6 +50,8 @@ extern const u32	icon_settings_png_size;
 extern const u8		icon_home_png[];
 extern const u32	icon_home_png_size;
 
+extern const u8		icon_game_settings_png[];
+extern const u32	icon_game_settings_png_size;
 extern const u8		icon_game_cheats_png[];
 extern const u32	icon_game_cheats_png_size;
 extern const u8		icon_game_controllers_png[];
