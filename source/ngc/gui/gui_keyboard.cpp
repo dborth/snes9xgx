@@ -248,7 +248,7 @@ void GuiKeyboard::Update(GuiTrigger * t)
 	for (u8 i = 0; i < _elements.size(); i++)
 	{
 		try	{ _elements.at(i)->Update(t); }
-		catch (exception& e) { }
+		catch (const std::exception& e) { }
 	}
 
 	if(keySpace->GetState() == STATE_CLICKED)
@@ -258,23 +258,23 @@ void GuiKeyboard::Update(GuiTrigger * t)
 			kbtextstr[strlen(kbtextstr)] = ' ';
 			kbText->SetText(kbtextstr);
 		}
-		keySpace->SetState(STATE_SELECTED);
+		keySpace->SetState(STATE_SELECTED, t->chan);
 	}
 	else if(keyBack->GetState() == STATE_CLICKED)
 	{
 		kbtextstr[strlen(kbtextstr)-1] = 0;
 		kbText->SetText(kbtextstr);
-		keyBack->SetState(STATE_SELECTED);
+		keyBack->SetState(STATE_SELECTED, t->chan);
 	}
 	else if(keyShift->GetState() == STATE_CLICKED)
 	{
 		shift ^= 1;
-		keyShift->SetState(STATE_SELECTED);
+		keyShift->SetState(STATE_SELECTED, t->chan);
 	}
 	else if(keyCaps->GetState() == STATE_CLICKED)
 	{
 		caps ^= 1;
-		keyCaps->SetState(STATE_SELECTED);
+		keyCaps->SetState(STATE_SELECTED, t->chan);
 	}
 
 	char txt[2] = { 0, 0 };
@@ -307,7 +307,7 @@ void GuiKeyboard::Update(GuiTrigger * t)
 						}
 					}
 					kbText->SetText(kbtextstr);
-					keyBtn[i][j]->SetState(STATE_SELECTED);
+					keyBtn[i][j]->SetState(STATE_SELECTED, t->chan);
 				}
 			}
 		}

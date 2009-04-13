@@ -160,7 +160,8 @@ bool GuiTrigger::Left()
 		}
 		else
 		{
-			scrollDelay--;
+			if(scrollDelay > 0)
+				scrollDelay--;
 		}
 	}
 	return false;
@@ -188,7 +189,8 @@ bool GuiTrigger::Right()
 		}
 		else
 		{
-			scrollDelay--;
+			if(scrollDelay > 0)
+				scrollDelay--;
 		}
 	}
 	return false;
@@ -216,7 +218,8 @@ bool GuiTrigger::Up()
 		}
 		else
 		{
-			scrollDelay--;
+			if(scrollDelay > 0)
+				scrollDelay--;
 		}
 	}
 	return false;
@@ -244,7 +247,8 @@ bool GuiTrigger::Down()
 		}
 		else
 		{
-			scrollDelay--;
+			if(scrollDelay > 0)
+				scrollDelay--;
 		}
 	}
 	return false;

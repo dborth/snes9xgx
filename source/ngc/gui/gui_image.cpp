@@ -12,6 +12,16 @@
 /**
  * Constructor for the GuiImage class.
  */
+GuiImage::GuiImage()
+{
+	image = NULL;
+	width = 0;
+	height = 0;
+	imageangle = 0;
+	tile = -1;
+	stripe = 0;
+	imgType = IMAGE_DATA;
+}
 
 GuiImage::GuiImage(GuiImageData * img)
 {

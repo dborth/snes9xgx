@@ -186,7 +186,10 @@ void GuiSaveBrowser::SetFocus(int f)
 void GuiSaveBrowser::ResetState()
 {
 	if(state != STATE_DISABLED)
+	{
 		state = STATE_DEFAULT;
+		stateChan = -1;
+	}
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
@@ -269,7 +272,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		else if(saveBtn[selectedItem+1]->IsVisible())
 		{
 			saveBtn[selectedItem]->ResetState();
-			saveBtn[selectedItem+1]->SetState(STATE_SELECTED);
+			saveBtn[selectedItem+1]->SetState(STATE_SELECTED, t->chan);
 			selectedItem += 1;
 		}
 	}
@@ -406,7 +409,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			if(i != selectedItem && saveBtn[i]->GetState() == STATE_SELECTED)
 				saveBtn[i]->ResetState();
 			else if(i == selectedItem && saveBtn[i]->GetState() == STATE_DEFAULT)
-				saveBtn[selectedItem]->SetState(STATE_SELECTED);
+				saveBtn[selectedItem]->SetState(STATE_SELECTED, t->chan);
 		}
 
 		saveBtn[i]->Update(t);

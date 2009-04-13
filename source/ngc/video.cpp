@@ -29,6 +29,7 @@
 #include "filter.h"
 #include "filelist.h"
 #include "audio.h"
+#include "gui/gui.h"
 #include "input.h"
 
 /*** Snes9x GFX Buffer ***/
