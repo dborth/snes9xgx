@@ -577,7 +577,11 @@ void NGCReportButtons ()
 	{
 		if (
 			(userInput[i].pad.substickX < -70) ||
-			(userInput[i].pad.btns_h & (PAD_TRIGGER_L | PAD_TRIGGER_R | PAD_BUTTON_X | PAD_BUTTON_Y)) ||
+			(userInput[i].pad.btns_h & PAD_TRIGGER_L &&
+			userInput[i].pad.btns_h & PAD_TRIGGER_R &&
+			userInput[i].pad.btns_h & PAD_BUTTON_X &&
+			userInput[i].pad.btns_h & PAD_BUTTON_Y
+			) ||
 			(userInput[i].wpad.btns_d & WPAD_BUTTON_HOME) ||
 			(userInput[i].wpad.btns_d & WPAD_CLASSIC_BUTTON_HOME)
 		)
