@@ -563,8 +563,8 @@ void NGCReportButtons ()
 	int i, j;
 
 	Settings.TurboMode = (
-		(userInput[0].pad.substickX > 70) ||
-		(userInput[0].WPAD_Stick(1,0) > 70)
+		userInput[0].pad.substickX > 70 ||
+		userInput[0].WPAD_Stick(1,0) > 70
 	);	// RIGHT on c-stick and on classic controller right joystick
 
 	/* Check for menu:
