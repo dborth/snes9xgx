@@ -22,10 +22,10 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	action = a;
 	selectable = true;
 
-	if(action == 0) // save
+	if(action == 0) // load
 		listOffset = 0;
 	else
-		listOffset = -2;
+		listOffset = -2; // save - reserve -2 & -1 for new slots
 
 	selectedItem = 0;
 	focus = 0; // allow focus
@@ -199,13 +199,13 @@ void GuiSaveBrowser::ResetState()
 
 int GuiSaveBrowser::GetClickedSave()
 {
-	int found = -1;
+	int found = -3;
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
 		if(saveBtn[i]->GetState() == STATE_CLICKED)
 		{
 			saveBtn[i]->SetState(STATE_SELECTED);
-			found = i;
+			found = listOffset+i;
 			break;
 		}
 	}

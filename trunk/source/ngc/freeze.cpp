@@ -135,6 +135,31 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 	if(method == METHOD_AUTO)
 		return 0;
 
+	// save screenshot - I would prefer to do this from gameScreenTex
+	if(gameScreenTex2 != NULL && method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
+	{
+		AllocSaveBuffer ();
+
+		IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
+
+		if (pngContext != NULL)
+		{
+			imgSize = PNGU_EncodeFromGXTexture(pngContext, screenwidth, screenheight, gameScreenTex2, 0);
+			PNGU_ReleaseImageContext(pngContext);
+		}
+
+		if(imgSize > 0)
+		{
+			char screenpath[1024];
+			strncpy(screenpath, filepath, 1024);
+			screenpath[strlen(screenpath)-4] = 0;
+			sprintf(screenpath, "%s.png", screenpath);
+			SaveFile(screenpath, imgSize, method, silent);
+		}
+
+		FreeSaveBuffer ();
+	}
+
 	S9xSetSoundMute (TRUE);
 	S9xPrepareSoundForSnapshotSave (FALSE);
 
@@ -184,30 +209,6 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 done:
 
 	FreeSaveBuffer ();
-
-	// save screenshot - I would prefer to do this from gameScreenTex
-	if(gameScreenTex2 != NULL && method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
-	{
-		AllocSaveBuffer ();
-
-		IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
-
-		if (pngContext != NULL)
-		{
-			imgSize = PNGU_EncodeFromGXTexture(pngContext, 640, 480, gameScreenTex2, 0);
-			PNGU_ReleaseImageContext(pngContext);
-		}
-
-		if(imgSize > 0)
-		{
-			char screenpath[1024];
-			filepath[strlen(filepath)-4] = 0;
-			sprintf(screenpath, "%s.png", filepath);
-			SaveFile(screenpath, imgSize, method, silent);
-		}
-
-		FreeSaveBuffer ();
-	}
 
 	if(offset > 0) // save successful!
 	{
