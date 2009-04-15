@@ -149,6 +149,7 @@ GuiFileBrowser::~GuiFileBrowser()
 	delete btnSoundOver;
 	delete btnSoundClick;
 	delete trigA;
+	delete trigHeldA;
 
 	for(int i=0; i<PAGESIZE; i++)
 	{
