@@ -251,21 +251,25 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		listChanged = true;
 	}
 
+	if(arrowDownBtn->GetState() == STATE_HELD && arrowDownBtn->GetStateChan() == t->chan)
+	{
+		t->wpad.btns_h |= WPAD_BUTTON_DOWN;
+		if(!this->IsFocused())
+			((GuiWindow *)this->GetParent())->ChangeFocus(this);
+	}
+	else if(arrowUpBtn->GetState() == STATE_HELD && arrowUpBtn->GetStateChan() == t->chan)
+	{
+		t->wpad.btns_h |= WPAD_BUTTON_UP;
+		if(!this->IsFocused())
+			((GuiWindow *)this->GetParent())->ChangeFocus(this);
+	}
+
 	// pad/joystick navigation
 	if(!focus)
 	{
 		goto endNavigation; // skip navigation
 		listChanged = false;
 	}
-
-	if(arrowDownBtn->GetState() == STATE_CLICKED && arrowDownBtn->GetStateChan() == t->chan)
-		t->wpad.btns_d |= WPAD_BUTTON_DOWN;
-	else if(arrowUpBtn->GetState() == STATE_CLICKED && arrowUpBtn->GetStateChan() == t->chan)
-		t->wpad.btns_d |= WPAD_BUTTON_UP;
-	else if(arrowDownBtn->GetState() == STATE_HELD && arrowDownBtn->GetStateChan() == t->chan)
-		t->wpad.btns_h |= WPAD_BUTTON_DOWN;
-	else if(arrowUpBtn->GetState() == STATE_HELD && arrowUpBtn->GetStateChan() == t->chan)
-		t->wpad.btns_h |= WPAD_BUTTON_UP;
 
 	if(t->Right())
 	{

@@ -224,6 +224,9 @@ class GuiElement
 		//!Set the element's parent
 		//!\param e Pointer to parent element
 		void SetParent(GuiElement * e);
+		//!Gets the element's parent
+		//!\return Pointer to parent element
+		GuiElement * GetParent();
 		//!Gets the current leftmost coordinate of the element
 		//!Considers horizontal alignment, x offset, width, and parent element's GetLeft() / GetWidth() values
 		//!\return left coordinate
