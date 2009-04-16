@@ -466,7 +466,7 @@ void decodepad (int pad)
 	{
 		// buttons
 		offset = 0x50;
-		for (i = 0; i < 5; i++)
+		for (i = 0; i < 6; i++)
 		{
 			if (jp & btnmap[CTRL_SCOPE][CTRLR_GCPAD][i]
 #ifdef HW_RVL

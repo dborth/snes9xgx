@@ -33,21 +33,21 @@ static bool NGCLoadCheatFile (int length)
 
 	while (offset < length)
 	{
-		if(Cheat.num_cheats < MAX_CHEATS)
-		{
-			memcpy (data, savebuffer+offset, 28);
-			offset += 28;
+		if(Cheat.num_cheats >= MAX_CHEATS || (length - offset) < 28)
+			break;
 
-			Cheat.c [Cheat.num_cheats].enabled = (data [0] & 4) == 0;
-			Cheat.c [Cheat.num_cheats].byte = data [1];
-			Cheat.c [Cheat.num_cheats].address = data [2] | (data [3] << 8) |  (data [4] << 16);
-			Cheat.c [Cheat.num_cheats].saved_byte = data [5];
-			Cheat.c [Cheat.num_cheats].saved = (data [0] & 8) != 0;
-			memmove (Cheat.c [Cheat.num_cheats].name, &data [8], 20);
-			Cheat.c [Cheat.num_cheats++].name [20] = 0;
-		}
+		memcpy (data, savebuffer+offset, 28);
+		offset += 28;
+
+		Cheat.c [Cheat.num_cheats].enabled = (data [0] & 4) == 0;
+		Cheat.c [Cheat.num_cheats].byte = data [1];
+		Cheat.c [Cheat.num_cheats].address = data [2] | (data [3] << 8) | (data [4] << 16);
+		Cheat.c [Cheat.num_cheats].saved_byte = data [5];
+		Cheat.c [Cheat.num_cheats].saved = (data [0] & 8) != 0;
+		memcpy (Cheat.c [Cheat.num_cheats].name, &data[8], 20);
+		Cheat.c [Cheat.num_cheats].name[20] = 0;
+		Cheat.num_cheats++;
 	}
-
 	return true;
 }
 
