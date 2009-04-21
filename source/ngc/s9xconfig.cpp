@@ -106,7 +106,7 @@ DefaultSettings ()
 	Settings.ShutdownMaster = true; // needs to be on for ActRaiser 2
 	Settings.ApplyCheats = true;
 
-	Settings.BlockInvalidVRAMAccess = true;
+	Settings.BlockInvalidVRAMAccess = false;
 	Settings.HDMATimingHack = 100;
 
 	// Sound defaults. On GC this is 32Khz/16bit/Stereo/InterpolatedSound

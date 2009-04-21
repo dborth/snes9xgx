@@ -400,6 +400,7 @@ ProgressWindow(char *title, char *msg)
 		return;
 
 	HaltGui();
+	int oldState = mainWindow->GetState();
 	mainWindow->SetState(STATE_DISABLED);
 	mainWindow->Append(&promptWindow);
 	mainWindow->ChangeFocus(&promptWindow);
@@ -431,7 +432,7 @@ ProgressWindow(char *title, char *msg)
 
 	HaltGui();
 	mainWindow->Remove(&promptWindow);
-	mainWindow->SetState(STATE_DEFAULT);
+	mainWindow->SetState(oldState);
 	ResumeGui();
 }
 
@@ -1009,7 +1010,8 @@ static int MenuGameSelection()
 					mainWindow->SetState(STATE_DISABLED);
 					if(BrowserLoadFile(GCSettings.LoadMethod))
 						menu = MENU_EXIT;
-					mainWindow->SetState(STATE_DEFAULT);
+					else
+						mainWindow->SetState(STATE_DEFAULT);
 				}
 			}
 		}
