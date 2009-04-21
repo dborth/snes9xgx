@@ -516,14 +516,9 @@ InitGCVideo ()
 	{
 		case VI_PAL:
 			// 576 lines (PAL 50Hz)
-			// display should be centered vertically (borders)
-			vmode = &TVPal574IntDfScale;
-			vmode->xfbHeight = 480;
-			vmode->viYOrigin = (VI_MAX_HEIGHT_PAL - 480)/2;
-			vmode->viHeight = 480;
 			vmode_60hz = 0;
 
-			// Original Video modes (forced to PAL 50hz)
+			// Original Video modes (forced to PAL 50Hz)
       		// set video signal mode
 			TV_224p.viTVMode = VI_TVMODE_PAL_DS;
 			TV_448i.viTVMode = VI_TVMODE_PAL_INT;
@@ -533,7 +528,7 @@ InitGCVideo ()
 			break;
 
 		case VI_NTSC:
-			// 480 lines (NTSC 60hz)
+			// 480 lines (NTSC 60Hz)
 			vmode_60hz = 1;
 
 			// Original Video modes (forced to NTSC 60hz)
@@ -591,7 +586,7 @@ InitGCVideo ()
 	VIDEO_Configure (vmode);
 
 	screenheight = 480;
-	screenwidth = vmode->fbWidth;
+	screenwidth = 640;
 
 	// Allocate the video buffers
 	xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (vmode));
@@ -696,7 +691,7 @@ ResetVideo_Emu ()
 	GX_SetZMode (GX_TRUE, GX_LEQUAL, GX_TRUE);
 	GX_SetColorUpdate (GX_TRUE);
 
-	guOrtho(p, 480/2, -(480/2), -(640/2), 640/2, 100, 1000);	// matrix, t, b, l, r, n, f
+	guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 100, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
 	draw_init ();
