@@ -963,7 +963,7 @@ static int MenuGameSelection()
 
 	HaltGui();
 	btnLogo->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	btnLogo->SetPosition(-30, 24);
+	btnLogo->SetPosition(-50, 24);
 	mainWindow->Append(&titleTxt);
 	mainWindow->Append(&gameBrowser);
 	mainWindow->Append(&buttonWindow);
@@ -1244,7 +1244,7 @@ static int MenuGame()
 	GuiImage closeBtnImgOver(&btnCloseOutlineOver);
 	GuiButton closeBtn(btnCloseOutline.GetWidth(), btnCloseOutline.GetHeight());
 	closeBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	closeBtn.SetPosition(-30, 35);
+	closeBtn.SetPosition(-50, 35);
 	closeBtn.SetLabel(&closeBtnTxt);
 	closeBtn.SetImage(&closeBtnImg);
 	closeBtn.SetImageOver(&closeBtnImgOver);
@@ -1313,7 +1313,7 @@ static int MenuGame()
 	w.Append(&closeBtn);
 
 	btnLogo->SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
-	btnLogo->SetPosition(-30, -40);
+	btnLogo->SetPosition(-50, -40);
 	mainWindow->Append(&w);
 
 	if(lastMenu == MENU_NONE)
@@ -1512,7 +1512,7 @@ static int MenuGameSaves(int action)
 	GuiImage closeBtnImgOver(&btnCloseOutlineOver);
 	GuiButton closeBtn(btnCloseOutline.GetWidth(), btnCloseOutline.GetHeight());
 	closeBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	closeBtn.SetPosition(-30, 35);
+	closeBtn.SetPosition(-50, 35);
 	closeBtn.SetLabel(&closeBtnTxt);
 	closeBtn.SetImage(&closeBtnImg);
 	closeBtn.SetImageOver(&closeBtnImgOver);
@@ -1830,7 +1830,7 @@ static int MenuGameSettings()
 	GuiImage closeBtnImgOver(&btnCloseOutlineOver);
 	GuiButton closeBtn(btnCloseOutline.GetWidth(), btnCloseOutline.GetHeight());
 	closeBtn.SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	closeBtn.SetPosition(-30, 35);
+	closeBtn.SetPosition(-50, 35);
 	closeBtn.SetLabel(&closeBtnTxt);
 	closeBtn.SetImage(&closeBtnImg);
 	closeBtn.SetImageOver(&closeBtnImgOver);
@@ -2823,6 +2823,7 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Filtering");
 	sprintf(options.name[i++], "Screen Zoom");
 	sprintf(options.name[i++], "Screen Position");
+	sprintf(options.name[i++], "Video Mode");
 	options.length = i;
 
 	GuiText titleTxt("Game Settings - Video", 28, (GXColor){255, 255, 255, 255});
@@ -2856,6 +2857,7 @@ static int MenuSettingsVideo()
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
 	optionBrowser.SetPosition(0, 108);
+	optionBrowser.SetCol2Position(200);
 	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
 
 	HaltGui();
@@ -2892,6 +2894,20 @@ static int MenuSettingsVideo()
 
 		sprintf (options.value[4], "%d, %d", GCSettings.xshift, GCSettings.yshift);
 
+		switch(GCSettings.videomode)
+		{
+			case 0:
+				sprintf (options.value[5], "Automatic (Recommended)"); break;
+			case 1:
+				sprintf (options.value[5], "NTSC (480i)"); break;
+			case 2:
+				sprintf (options.value[5], "Progressive (480p)"); break;
+			case 3:
+				sprintf (options.value[5], "PAL (50Hz)"); break;
+			case 4:
+				sprintf (options.value[5], "PAL (60Hz)"); break;
+		}
+
 		ret = optionBrowser.GetClickedOption();
 
 		switch (ret)
@@ -2918,6 +2934,11 @@ static int MenuSettingsVideo()
 
 			case 4:
 				ScreenPositionWindow();
+				break;
+			case 5:
+				GCSettings.videomode++;
+				if(GCSettings.videomode > 4)
+					GCSettings.videomode = 0;
 				break;
 		}
 
@@ -3551,7 +3572,6 @@ MainMenu (int menu)
 	{
 		gameScreenImg = new GuiImage(gameScreenTex, screenwidth, screenheight);
 		gameScreenImg->SetAlpha(192);
-		//gameScreenImg->SetStripe(100);
 		gameScreenImg->ColorStripe(30);
 		mainWindow->Append(gameScreenImg);
 		bgImg->SetVisible(false);
@@ -3579,7 +3599,7 @@ MainMenu (int menu)
 	logoTxt.SetPosition(0, 4);
 	btnLogo = new GuiButton(logoImg.GetWidth(), logoImg.GetHeight());
 	btnLogo->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	btnLogo->SetPosition(-30, 24);
+	btnLogo->SetPosition(-50, 24);
 	btnLogo->SetImage(&logoImg);
 	btnLogo->SetImageOver(&logoImgOver);
 	btnLogo->SetLabel(&logoTxt);
@@ -3592,17 +3612,11 @@ MainMenu (int menu)
 	mainWindow->Append(bgBottomImg);
 	mainWindow->Append(btnLogo);
 
-	/*// memory usage - for debugging
-	memTxt = new GuiText(NULL, 18, (GXColor){255, 255, 255, 255});
-	memTxt->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
-	memTxt->SetPosition(20, 20);
-	mainWindow->Append(memTxt);*/
-
 	if(currentMenu == MENU_GAMESELECTION)
 		ResumeGui();
 
 	// Load preferences
-	if(!LoadPrefs())		//TODO: notify that preferences reset
+	if(!LoadPrefs())
 		SavePrefs(SILENT);
 
 	#ifndef NO_SOUND
@@ -3682,7 +3696,6 @@ MainMenu (int menu)
 	delete exitSound;
 	#endif
 
-	//delete memTxt;
 	delete btnLogo;
 	delete bgImg;
 	delete bgTopImg;

@@ -36,8 +36,8 @@
 #define SNES9XGFX_SIZE 		EXT_PITCH*EXT_HEIGHT
 #define FILTERMEM_SIZE 		512*MAX_SNES_HEIGHT*4
 
-static unsigned char * snes9xgfx = NULL;	// changed.
-unsigned char * filtermem = NULL;	// only want ((512*2) X (239*2))
+static unsigned char * snes9xgfx = NULL;
+unsigned char * filtermem = NULL; // only want ((512*2) X (239*2))
 
 /*** 2D Video ***/
 static unsigned int *xfb[2] = { NULL, NULL }; // Double buffered
@@ -45,6 +45,7 @@ static int whichfb = 0; // Switch
 static GXRModeObj *vmode; // Menu video mode
 int screenheight;
 int screenwidth;
+static int currentVideoMode = -1; // -1 - not set, 0 - automatic, 1 - NTSC (480i), 2 - Progressive (480p), 3 - PAL (50Hz), 4 - PAL (60Hz)
 
 /*** GX ***/
 #define TEX_WIDTH 512
@@ -500,18 +501,49 @@ MakeTexture (const void *src, void *dst, s32 width, s32 height)
 }
 
 /****************************************************************************
- * InitGCVideo
+ * SetupVideoMode
  *
- * This function MUST be called at startup.
- * - also sets up menu video mode
+ * Finds the optimal video mode, or uses the user-specified one
+ * Also configures original video modes
  ***************************************************************************/
-
-void
-InitGCVideo ()
+static void SetupVideoMode()
 {
-	// get default video mode
-	vmode = VIDEO_GetPreferredMode(NULL);
+	if(currentVideoMode == GCSettings.videomode)
+		return; // no need to do anything
 
+	// choose the desired video mode
+	switch(GCSettings.videomode)
+	{
+		case 1: // NTSC (480i)
+			vmode = &TVNtsc480IntDf;
+			break;
+		case 2: // Progressive (480p)
+			vmode = &TVNtsc480Prog;
+			break;
+		case 3: // PAL (50Hz)
+			vmode = &TVPal574IntDfScale;
+			break;
+		case 4: // PAL (60Hz)
+			vmode = &TVEurgb60Hz480IntDf;
+			break;
+		default:
+			vmode = VIDEO_GetPreferredMode(NULL);
+
+			#ifdef HW_DOL
+			/* we have component cables, but the preferred mode is interlaced
+			 * why don't we switch into progressive?
+			 * on the Wii, the user can do this themselves on their Wii Settings */
+			if(VIDEO_HaveComponentCable())
+				vmode = &TVNtsc480Prog;
+			#endif
+
+			// use hardware vertical scaling to fill screen
+			if(vmode->viTVMode >> 2 == VI_PAL)
+				vmode = &TVPal574IntDfScale;
+			break;
+	}
+
+	// configure original modes
 	switch (vmode->viTVMode >> 2)
 	{
 		case VI_PAL:
@@ -519,12 +551,12 @@ InitGCVideo ()
 			vmode_60hz = 0;
 
 			// Original Video modes (forced to PAL 50Hz)
-      		// set video signal mode
+			// set video signal mode
 			TV_224p.viTVMode = VI_TVMODE_PAL_DS;
 			TV_448i.viTVMode = VI_TVMODE_PAL_INT;
 			// set VI position
 			TV_224p.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 448/2)/2;
-      		TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL - 448)/2;
+			TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL - 448)/2;
 			break;
 
 		case VI_NTSC:
@@ -539,9 +571,9 @@ InitGCVideo ()
 			TV_448i.viTVMode = VI_TVMODE_NTSC_INT;
 			// set VI position
 			TV_239p.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
-      		TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 478)/2;
+			TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 478)/2;
 			TV_224p.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
-      		TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 448)/2;
+			TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 448)/2;
 			break;
 
 		default:
@@ -556,23 +588,17 @@ InitGCVideo ()
 			TV_448i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
 			// set VI position
 			TV_239p.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
-      		TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 478)/2;
+			TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 478)/2;
 			TV_224p.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 448/2)/2;
-      		TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 448)/2;
+			TV_448i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 448)/2;
 			break;
 	}
-
-	#ifdef HW_DOL
-	/* we have component cables, but the preferred mode is interlaced
-	 * why don't we switch into progressive?
-	 * on the Wii, the user can do this themselves on their Wii Settings */
-	if(VIDEO_HaveComponentCable())
-		vmode = &TVNtsc480Prog;
-	#endif
 
 	// check for progressive scan
 	if (vmode->viTVMode == VI_TVMODE_NTSC_PROG)
 		progressive = true;
+	else
+		progressive = false;
 
 	#ifdef HW_RVL
 	// widescreen fix
@@ -583,6 +609,20 @@ InitGCVideo ()
 	}
 	#endif
 
+	currentVideoMode = GCSettings.videomode;
+}
+
+/****************************************************************************
+ * InitGCVideo
+ *
+ * This function MUST be called at startup.
+ * - also sets up menu video mode
+ ***************************************************************************/
+
+void
+InitGCVideo ()
+{
+	SetupVideoMode();
 	VIDEO_Configure (vmode);
 
 	screenheight = 480;
@@ -626,7 +666,8 @@ InitGCVideo ()
 void
 ResetVideo_Emu ()
 {
-	GXRModeObj *rmode = vmode;
+	SetupVideoMode();
+	GXRModeObj *rmode = vmode; // same mode as menu
 	Mtx44 p;
 	int i = -1;
 
@@ -659,10 +700,6 @@ ResetVideo_Emu ()
 			rmode->xfbMode = VI_XFBMODE_DF;
 			rmode->viTVMode |= VI_INTERLACE;
 		}
-	}
-	else
-	{
-		rmode = vmode; // same mode as menu
 	}
 
 	VIDEO_Configure (rmode);
@@ -906,6 +943,7 @@ ResetVideo_Menu ()
 	f32 yscale;
 	u32 xfbHeight;
 
+	SetupVideoMode();
 	VIDEO_Configure (vmode);
 	VIDEO_Flush();
 	VIDEO_WaitVSync();

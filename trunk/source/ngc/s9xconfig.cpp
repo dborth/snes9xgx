@@ -43,6 +43,8 @@ void FixInvalidSettings()
 		GCSettings.Controller = CTRL_PAD2;
 	if(!(GCSettings.render >= 0 && GCSettings.render < 3))
 		GCSettings.render = 2;
+	if(!(GCSettings.videomode >= 0 && GCSettings.videomode < 5))
+		GCSettings.videomode = 0;
 }
 
 /****************************************************************************
@@ -79,6 +81,7 @@ DefaultSettings ()
 
 	GCSettings.Controller = CTRL_PAD2;
 
+	GCSettings.videomode = 0; // automatic video mode detection
 	GCSettings.ZoomLevel = 1.0; // zoom level
 	GCSettings.render = 2; // Unfiltered
 	GCSettings.widescreen = 0; // no aspect ratio correction

@@ -129,7 +129,6 @@ void ResetControls()
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_B;
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_TRIGGER_Z;
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_Y;
-	//btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_X;
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_START;
 
 	/*** Superscope : wiimote button mapping ***/
@@ -137,7 +136,6 @@ void ResetControls()
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_A;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_MINUS;
-	//btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_UP;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_DOWN;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_PLUS;
 
@@ -691,7 +689,6 @@ void SetDefaultButtonMap ()
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope AimOffscreen");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Cursor");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
-	//ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Pause");
 
 	maxcode = 0x60;
