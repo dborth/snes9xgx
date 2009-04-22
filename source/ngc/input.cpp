@@ -129,7 +129,7 @@ void ResetControls()
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_B;
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_TRIGGER_Z;
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_Y;
-	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_X;
+	//btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_X;
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_START;
 
 	/*** Superscope : wiimote button mapping ***/
@@ -137,7 +137,7 @@ void ResetControls()
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_A;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_MINUS;
-	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_UP;
+	//btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_UP;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_DOWN;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_PLUS;
 
@@ -466,7 +466,7 @@ void decodepad (int pad)
 	{
 		// buttons
 		offset = 0x50;
-		for (i = 0; i < 6; i++)
+		for (i = 0; i < 5; i++)
 		{
 			if (jp & btnmap[CTRL_SCOPE][CTRLR_GCPAD][i]
 #ifdef HW_RVL
@@ -474,22 +474,14 @@ void decodepad (int pad)
 #endif
 			)
 			{
-				if(i == 3 || i == 4) // turbo
-				{
-					if((i == 3 && scopeTurbo == 1) || // turbo ON already, don't change
-						(i == 4 && scopeTurbo == 0)) // turbo OFF already, don't change
-					{
-						S9xReportButton(offset + i, false);
-					}
-					else // turbo changed to ON or OFF
-					{
-						scopeTurbo = 4-i;
-						S9xReportButton(offset + i, true);
-					}
-				}
+				if(i == 3)	// if turbo button pressed, turn turbo on
+					Settings.TurboMode |= 1;
 				else
 					S9xReportButton(offset + i, true);
+
 			}
+			else if (i == 3)
+				Settings.TurboMode |= 0;
 			else
 				S9xReportButton(offset + i, false);
 		}
@@ -699,7 +691,7 @@ void SetDefaultButtonMap ()
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope AimOffscreen");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Cursor");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
-	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
+	//ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Pause");
 
 	maxcode = 0x60;
