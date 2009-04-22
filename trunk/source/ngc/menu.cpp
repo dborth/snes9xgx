@@ -2531,8 +2531,7 @@ static int MenuSettingsMappingsMap()
 			sprintf(options.name[i++], "Fire");
 			sprintf(options.name[i++], "Aim Offscreen");
 			sprintf(options.name[i++], "Cursor");
-			sprintf(options.name[i++], "Turbo On");
-			sprintf(options.name[i++], "Turbo Off");
+			sprintf(options.name[i++], "Turbo");
 			sprintf(options.name[i++], "Pause");
 			options.length = i;
 			break;
@@ -3603,7 +3602,7 @@ MainMenu (int menu)
 		ResumeGui();
 
 	// Load preferences
-	if(!LoadPrefs())
+	if(!LoadPrefs())		//TODO: notify that preferences reset
 		SavePrefs(SILENT);
 
 	#ifndef NO_SOUND

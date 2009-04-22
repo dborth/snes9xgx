@@ -647,8 +647,8 @@ ResetVideo_Emu ()
 	{
 		rmode = tvmodes[i];
 
-		// hack to fix video output for hq2x
-		if (GCSettings.FilterMethod != FILTER_NONE)
+		// hack to fix video output for hq2x (only when actually filtering; h<=239, w<=256)
+		if (GCSettings.FilterMethod != FILTER_NONE && vheight <= 239 && vwidth <= 256)
 		{
 			memcpy(&TV_Custom, tvmodes[i], sizeof(TV_Custom));
 			rmode = &TV_Custom;
@@ -733,13 +733,14 @@ update_video (int width, int height)
 		/** Update scaling **/
 		if (GCSettings.render == 0)	// original render mode
 		{
-			if (GCSettings.FilterMethod != FILTER_NONE)	// hq2x filters
-			{
+			if (GCSettings.FilterMethod != FILTER_NONE && vheight <= 239 && vwidth <= 256)
+			{	// filters; normal operation
 				xscale = vwidth;
 				yscale = vheight;
 			}
 			else
-			{
+			{	// no filtering
+				fscale = 1;
 				xscale = 256;
 				yscale = vheight / 2;
 			}
@@ -779,7 +780,7 @@ update_video (int width, int height)
 	}
 
 	// convert image to texture
-	if (GCSettings.FilterMethod != FILTER_NONE)
+	if (GCSettings.FilterMethod != FILTER_NONE && vheight <= 239 && vwidth <= 256)	// don't do filtering on game textures > 256 x 239
 	{
 		FilterMethod ((uint8*) GFX.Screen, EXT_PITCH, (uint8*) filtermem, vwidth*fscale*2, vwidth, vheight);
 		MakeTexture565((char *) filtermem, (char *) texturemem, vwidth*fscale, vheight*fscale);
