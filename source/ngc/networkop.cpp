@@ -98,7 +98,7 @@ void UpdateCheck()
 					else // temporary, for compatibility
 					{
 						int versionnum = atoi(version);
-						if(versionnum > 12) // 012 (4.0.2)
+						if(versionnum > 13) // 013 (4.0.3)
 						{
 							item = mxmlFindElement(xml, xml, "file", NULL, NULL, MXML_DESCEND);
 							if(item)
