@@ -54,10 +54,6 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	arrowUpImg = new GuiImage(arrowUp);
 	arrowUpOver = new GuiImageData(scrollbar_arrowup_over_png);
 	arrowUpOverImg = new GuiImage(arrowUpOver);
-	scrollbarBox = new GuiImageData(scrollbar_box_png);
-	scrollbarBoxImg = new GuiImage(scrollbarBox);
-	scrollbarBoxOver = new GuiImageData(scrollbar_box_over_png);
-	scrollbarBoxOverImg = new GuiImage(scrollbarBoxOver);
 
 	arrowUpBtn = new GuiButton(arrowUpImg->GetWidth(), arrowUpImg->GetHeight());
 	arrowUpBtn->SetParent(this);
@@ -78,13 +74,6 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	arrowDownBtn->SetTrigger(trigA);
 	arrowDownBtn->SetSoundOver(btnSoundOver);
 	arrowDownBtn->SetSoundClick(btnSoundClick);
-
-	scrollbarBoxBtn = new GuiButton(scrollbarBoxImg->GetWidth(), scrollbarBoxImg->GetHeight());
-	scrollbarBoxBtn->SetParent(this);
-	scrollbarBoxBtn->SetImage(scrollbarBoxImg);
-	scrollbarBoxBtn->SetImageOver(scrollbarBoxOverImg);
-	scrollbarBoxBtn->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	scrollbarBoxBtn->SetSelectable(false);
 
 	for(int i=0; i<PAGESIZE; i++)
 	{
@@ -116,7 +105,6 @@ GuiOptionBrowser::~GuiOptionBrowser()
 {
 	delete arrowUpBtn;
 	delete arrowDownBtn;
-	delete scrollbarBoxBtn;
 
 	delete bgOptionsImg;
 	delete scrollbarImg;
@@ -124,8 +112,6 @@ GuiOptionBrowser::~GuiOptionBrowser()
 	delete arrowDownOverImg;
 	delete arrowUpImg;
 	delete arrowUpOverImg;
-	delete scrollbarBoxImg;
-	delete scrollbarBoxOverImg;
 
 	delete bgOptions;
 	delete bgOptionsEntry;
@@ -134,8 +120,6 @@ GuiOptionBrowser::~GuiOptionBrowser()
 	delete arrowDownOver;
 	delete arrowUp;
 	delete arrowUpOver;
-	delete scrollbarBox;
-	delete scrollbarBoxOver;
 
 	delete trigA;
 	delete btnSoundOver;
@@ -241,7 +225,6 @@ void GuiOptionBrowser::Draw()
 	scrollbarImg->Draw();
 	arrowUpBtn->Draw();
 	arrowDownBtn->Draw();
-	scrollbarBoxBtn->Draw();
 
 	this->UpdateEffects();
 }
@@ -253,17 +236,8 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 
 	int next, prev;
 
-	// update the location of the scroll box based on the position in the option list
-	int position = 136*(listOffset+selectedItem)/options->length;
-
-	if(position > 130)
-		position = 136;
-
-	scrollbarBoxBtn->SetPosition(0,position+36);
-
 	arrowUpBtn->Update(t);
 	arrowDownBtn->Update(t);
-	scrollbarBoxBtn->Update(t);
 
 	next = listOffset;
 

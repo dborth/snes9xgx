@@ -92,7 +92,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	scrollbarBoxBtn->SetImageOver(scrollbarBoxOverImg);
 	scrollbarBoxBtn->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	scrollbarBoxBtn->SetMinY(0);
-	scrollbarBoxBtn->SetMaxY(304);
+	scrollbarBoxBtn->SetMaxY(136);
 	scrollbarBoxBtn->SetSelectable(false);
 	scrollbarBoxBtn->SetClickable(false);
 	scrollbarBoxBtn->SetHoldable(true);
@@ -148,8 +148,8 @@ GuiFileBrowser::~GuiFileBrowser()
 
 	delete btnSoundOver;
 	delete btnSoundClick;
-	delete trigA;
 	delete trigHeldA;
+	delete trigA;
 
 	for(int i=0; i<PAGESIZE; i++)
 	{
@@ -216,7 +216,8 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	if(state == STATE_DISABLED || !t)
 		return;
 
-	int position;
+	int position = 0;
+	int positionWiimote = 0;
 
 	arrowUpBtn->Update(t);
 	arrowDownBtn->Update(t);
@@ -230,14 +231,14 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		)
 	{
 		scrollbarBoxBtn->SetPosition(0,0);
-		position = t->wpad.ir.y - 60 - scrollbarBoxBtn->GetTop();
+		positionWiimote = t->wpad.ir.y - 60 - scrollbarBoxBtn->GetTop();
 
-		if(position < scrollbarBoxBtn->GetMinY())
-			position = scrollbarBoxBtn->GetMinY();
-		else if(position > scrollbarBoxBtn->GetMaxY())
-			position = scrollbarBoxBtn->GetMaxY();
+		if(positionWiimote < scrollbarBoxBtn->GetMinY())
+			positionWiimote = scrollbarBoxBtn->GetMinY();
+		else if(positionWiimote > scrollbarBoxBtn->GetMaxY())
+			positionWiimote = scrollbarBoxBtn->GetMaxY();
 
-		browser.pageIndex = (position * browser.numEntries)/136.0 - selectedItem;
+		browser.pageIndex = (positionWiimote * browser.numEntries)/136.0 - selectedItem;
 
 		if(browser.pageIndex <= 0)
 		{
@@ -250,6 +251,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 			selectedItem = PAGESIZE-1;
 		}
 		listChanged = true;
+		focus = false;
 	}
 
 	if(arrowDownBtn->GetState() == STATE_HELD && arrowDownBtn->GetStateChan() == t->chan)
@@ -375,11 +377,12 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	}
 
 	// update the location of the scroll box based on the position in the file list
-	if(listChanged)
-	{
+	if(positionWiimote > 0)
+		position = positionWiimote; // follow wiimote cursor
+	else
 		position = 136*(browser.pageIndex + selectedItem) / browser.numEntries;
-		scrollbarBoxBtn->SetPosition(0,position+36);
-	}
+
+	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	listChanged = false;
 
