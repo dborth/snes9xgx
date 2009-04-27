@@ -135,6 +135,7 @@ preparePrefsData (int method)
 
 	createXMLSection("Video", "Video Settings");
 
+	createXMLSetting("videomode", "Video Mode", toStr(GCSettings.videomode));
 	createXMLSetting("ZoomLevel", "Zoom Level", FtoStr(GCSettings.ZoomLevel));
 	createXMLSetting("render", "Video Filtering", toStr(GCSettings.render));
 	createXMLSetting("widescreen", "Aspect Ratio Correction", toStr(GCSettings.widescreen));
@@ -305,6 +306,7 @@ decodePrefsData (int method)
 
 			// Video Settings
 
+			loadXMLSetting(&GCSettings.videomode, "videomode");
 			loadXMLSetting(&GCSettings.ZoomLevel, "ZoomLevel");
 			loadXMLSetting(&GCSettings.render, "render");
 			loadXMLSetting(&GCSettings.widescreen, "widescreen");
