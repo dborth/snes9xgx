@@ -1378,8 +1378,11 @@ static int MenuGame()
 		}
 		else if(resetBtn.GetState() == STATE_CLICKED)
 		{
-			S9xSoftReset ();
-			menu = MENU_EXIT;
+			if (WindowPrompt("Reset Game", "Are you sure that you want to reset this game? Any unsaved progress will be lost.", "OK", "Cancel"))
+			{
+				S9xSoftReset ();
+				menu = MENU_EXIT;
+			}
 		}
 		else if(gameSettingsBtn.GetState() == STATE_CLICKED)
 		{
@@ -1387,22 +1390,25 @@ static int MenuGame()
 		}
 		else if(mainmenuBtn.GetState() == STATE_CLICKED)
 		{
-			if(gameScreenImg)
+			if (WindowPrompt("Quit Game", "Quit this game? Any unsaved progress will be lost.", "OK", "Cancel"))
 			{
-				mainWindow->Remove(gameScreenImg);
-				delete gameScreenImg;
-				gameScreenImg = NULL;
+				if(gameScreenImg)
+				{
+					mainWindow->Remove(gameScreenImg);
+					delete gameScreenImg;
+					gameScreenImg = NULL;
+				}
+				if(gameScreenTex)
+				{
+					free(gameScreenTex);
+					gameScreenTex = NULL;
+				}
+				bgImg->SetVisible(true);
+				#ifndef NO_SOUND
+				bgMusic->Play(); // startup music
+				#endif
+				menu = MENU_GAMESELECTION;
 			}
-			if(gameScreenTex)
-			{
-				free(gameScreenTex);
-				gameScreenTex = NULL;
-			}
-			bgImg->SetVisible(true);
-			#ifndef NO_SOUND
-			bgMusic->Play(); // startup music
-			#endif
-			menu = MENU_GAMESELECTION;
 		}
 		else if(closeBtn.GetState() == STATE_CLICKED)
 		{
@@ -1895,6 +1901,7 @@ static int MenuGameSettings()
 		else if(closeBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_EXIT;
+			SavePrefs(NOTSILENT);
 
 			exitSound->Play();
 			bgTopImg->SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);

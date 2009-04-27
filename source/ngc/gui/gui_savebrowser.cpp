@@ -58,10 +58,6 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	arrowUpImg = new GuiImage(arrowUp);
 	arrowUpOver = new GuiImageData(scrollbar_arrowup_over_png);
 	arrowUpOverImg = new GuiImage(arrowUpOver);
-	scrollbarBox = new GuiImageData(scrollbar_box_png);
-	scrollbarBoxImg = new GuiImage(scrollbarBox);
-	scrollbarBoxOver = new GuiImageData(scrollbar_box_over_png);
-	scrollbarBoxOverImg = new GuiImage(scrollbarBoxOver);
 
 	arrowUpBtn = new GuiButton(arrowUpImg->GetWidth(), arrowUpImg->GetHeight());
 	arrowUpBtn->SetParent(this);
@@ -82,13 +78,6 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	arrowDownBtn->SetTrigger(trigA);
 	arrowDownBtn->SetSoundOver(btnSoundOver);
 	arrowDownBtn->SetSoundClick(btnSoundClick);
-
-	scrollbarBoxBtn = new GuiButton(scrollbarBoxImg->GetWidth(), scrollbarBoxImg->GetHeight());
-	scrollbarBoxBtn->SetParent(this);
-	scrollbarBoxBtn->SetImage(scrollbarBoxImg);
-	scrollbarBoxBtn->SetImageOver(scrollbarBoxOverImg);
-	scrollbarBoxBtn->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	scrollbarBoxBtn->SetSelectable(false);
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
@@ -135,15 +124,12 @@ GuiSaveBrowser::~GuiSaveBrowser()
 {
 	delete arrowUpBtn;
 	delete arrowDownBtn;
-	delete scrollbarBoxBtn;
 
 	delete scrollbarImg;
 	delete arrowDownImg;
 	delete arrowDownOverImg;
 	delete arrowUpImg;
 	delete arrowUpOverImg;
-	delete scrollbarBoxImg;
-	delete scrollbarBoxOverImg;
 
 	delete gameSave;
 	delete gameSaveOver;
@@ -153,8 +139,6 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	delete arrowDownOver;
 	delete arrowUp;
 	delete arrowUpOver;
-	delete scrollbarBox;
-	delete scrollbarBoxOver;
 
 	delete btnSoundOver;
 	delete btnSoundClick;
@@ -226,7 +210,6 @@ void GuiSaveBrowser::Draw()
 	scrollbarImg->Draw();
 	arrowUpBtn->Draw();
 	arrowDownBtn->Draw();
-	scrollbarBoxBtn->Draw();
 
 	this->UpdateEffects();
 }
@@ -238,21 +221,9 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 
 	int i, len;
 	char savetext[50];
-	// update the location of the scroll box based on the position in the option list
-	int position;
-	if(action == 0)
-		position = 136*(listOffset+selectedItem)/saves->length;
-	else
-		position = 136*(listOffset+selectedItem+2)/saves->length;
-
-	if(position > 130)
-		position = 136;
-
-	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	arrowUpBtn->Update(t);
 	arrowDownBtn->Update(t);
-	scrollbarBoxBtn->Update(t);
 
 	// pad/joystick navigation
 	if(!focus)
