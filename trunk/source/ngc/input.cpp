@@ -129,6 +129,7 @@ void ResetControls()
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_B;
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_TRIGGER_Z;
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_Y;
+	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_X;
 	btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_START;
 
 	/*** Superscope : wiimote button mapping ***/
@@ -136,6 +137,7 @@ void ResetControls()
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_A;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_MINUS;
+	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_UP;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_DOWN;
 	btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_PLUS;
 
@@ -167,7 +169,6 @@ void ResetControls()
 /****************************************************************************
  * ShutoffRumble
  ***************************************************************************/
-
 void ShutoffRumble()
 {
 	for(int i=0;i<4;i++)
@@ -180,7 +181,6 @@ void ShutoffRumble()
 /****************************************************************************
  * DoRumble
  ***************************************************************************/
-
 void DoRumble(int i)
 {
 	if(rumbleRequest[i] && rumbleCount[i] < 3)
@@ -206,7 +206,6 @@ void DoRumble(int i)
  *
  * Get X/Y value from Wii Joystick (classic, nunchuk) input
  ***************************************************************************/
-
 s8 WPAD_Stick(u8 chan, u8 right, int axis)
 {
 	float mag = 0.0;
@@ -261,7 +260,6 @@ s8 WPAD_Stick(u8 chan, u8 right, int axis)
  *
  * Updates X/Y coordinates for Superscope/mouse/justifier position
  ***************************************************************************/
-
 void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
 {
 	#define SCOPEPADCAL 20
@@ -329,7 +327,6 @@ void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
  * Reads the changes (buttons pressed, etc) from a controller and reports
  * these changes to Snes9x
  ***************************************************************************/
-
 void decodepad (int pad)
 {
 	int i, offset;
@@ -464,7 +461,7 @@ void decodepad (int pad)
 	{
 		// buttons
 		offset = 0x50;
-		for (i = 0; i < 5; i++)
+		for (i = 0; i < 6; i++)
 		{
 			if (jp & btnmap[CTRL_SCOPE][CTRLR_GCPAD][i]
 #ifdef HW_RVL
@@ -472,14 +469,22 @@ void decodepad (int pad)
 #endif
 			)
 			{
-				if(i == 3)	// if turbo button pressed, turn turbo on
-					Settings.TurboMode |= 1;
+				if(i == 3 || i == 4) // turbo
+				{
+					if((i == 3 && scopeTurbo == 1) || // turbo ON already, don't change
+						(i == 4 && scopeTurbo == 0)) // turbo OFF already, don't change
+					{
+						S9xReportButton(offset + i, false);
+					}
+					else // turbo changed to ON or OFF
+					{
+						scopeTurbo = 4-i;
+						S9xReportButton(offset + i, true);
+					}
+				}
 				else
 					S9xReportButton(offset + i, true);
-
 			}
-			else if (i == 3)
-				Settings.TurboMode |= 0;
 			else
 				S9xReportButton(offset + i, false);
 		}
@@ -688,6 +693,7 @@ void SetDefaultButtonMap ()
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Fire");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope AimOffscreen");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Cursor");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope ToggleTurbo");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Superscope Pause");
 
