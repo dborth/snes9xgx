@@ -62,6 +62,7 @@ lwp_t devicethread = LWP_THREAD_NULL;
 static void *
 devicecallback (void *arg)
 {
+	sleep(1);
 	while (1)
 	{
 #ifdef HW_RVL
@@ -76,7 +77,7 @@ devicecallback (void *arg)
 
 		if(isMounted[METHOD_USB])
 		{
-			if(!usb->isInserted()) // check if the device was removed - doesn't work on USB!
+			if(!usb->isInserted()) // check if the device was removed
 			{
 				unmountRequired[METHOD_USB] = true;
 				isMounted[METHOD_USB] = false;
@@ -103,7 +104,7 @@ devicecallback (void *arg)
 			}
 		}
 #endif
-		usleep(500000); // suspend thread for 1/2 sec
+		sleep(1); // suspend thread for 1 sec
 	}
 	return NULL;
 }
@@ -572,8 +573,17 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 
 			if (file > 0)
 			{
-				written = fwrite (savebuffer, 1, datasize, file);
-				if(written < datasize) written = 0;
+				u32 writesize, nextwrite;
+				while(written < datasize)
+				{
+					if(datasize - written > 16*1024) nextwrite=16*1024;
+					else nextwrite = datasize-written;
+					writesize = fwrite (buffer+written, 1, nextwrite, file);
+					if(writesize != nextwrite) break; // write failure
+					written += writesize;
+				}
+
+				if(written != datasize) written = 0;
 				fclose (file);
 			}
 		}
