@@ -313,7 +313,7 @@ InitVideoThread ()
  * Stock code to copy the GX buffer to the current display mode.
  * Also increments the frameticker, as it's called for each vb.
  ***************************************************************************/
-static void
+static inline void
 copy_to_xfb (u32 arg)
 {
 	if (copynow == GX_TRUE)
@@ -329,7 +329,7 @@ copy_to_xfb (u32 arg)
 /****************************************************************************
  * Scaler Support Functions
  ***************************************************************************/
-static void
+static inline void
 draw_init ()
 {
 	GX_ClearVtxDesc ();
@@ -358,7 +358,7 @@ draw_init ()
 	GX_InvVtxCache ();	// update vertex cache
 }
 
-static void
+static inline void
 draw_vert (u8 pos, u8 c, f32 s, f32 t)
 {
 	GX_Position1x8 (pos);
@@ -366,7 +366,7 @@ draw_vert (u8 pos, u8 c, f32 s, f32 t)
 	GX_TexCoord2f32 (s, t);
 }
 
-static void
+static inline void
 draw_square (Mtx v)
 {
 	Mtx m;			// model matrix.
@@ -460,7 +460,7 @@ UpdatePadsCB ()
  *
  * - modified for a buffer with an offset (border)
  ****************************************************************************/
-static void
+static inline void
 MakeTexture (const void *src, void *dst, s32 width, s32 height)
 {
   register u32 tmp0 = 0, tmp1 = 0, tmp2 = 0, tmp3 = 0;

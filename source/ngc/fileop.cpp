@@ -481,30 +481,32 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 						else
 						{
 							struct stat fileinfo;
-							fstat(file->_file, &fileinfo);
-							size = fileinfo.st_size;
-
-							memcpy (rbuffer, zipbuffer, readsize); // copy what we already read
-
-							u32 offset = readsize;
-							u32 nextread = 0;
-							while(offset < size)
+							if(fstat(file->_file, &fileinfo) == 0)
 							{
-								if(size - offset > 1024*512) nextread = 1024*512;
-								else nextread = size-offset;
-								ShowProgress ("Loading...", offset, size);
-								readsize = fread (rbuffer + offset, 1, nextread, file); // read in next chunk
+								size = fileinfo.st_size;
 
-								if(readsize <= 0 || readsize > nextread)
-									break; // read failure
+								memcpy (rbuffer, zipbuffer, readsize); // copy what we already read
 
-								if(readsize > 0)
-									offset += readsize;
+								u32 offset = readsize;
+								u32 nextread = 0;
+								while(offset < size)
+								{
+									if(size - offset > 1024*512) nextread = 1024*512;
+									else nextread = size-offset;
+									ShowProgress ("Loading...", offset, size);
+									readsize = fread (rbuffer + offset, 1, nextread, file); // read in next chunk
+
+									if(readsize <= 0 || readsize > nextread)
+										break; // read failure
+
+									if(readsize > 0)
+										offset += readsize;
+								}
+								CancelAction();
+
+								if(offset != size) // # bytes read doesn't match # expected
+									size = 0;
 							}
-							CancelAction();
-
-							if(offset != size) // # bytes read doesn't match # expected
-								size = 0;
 						}
 					}
 				}
