@@ -24,6 +24,8 @@
 #define SAVEBUFFERSIZE (1024 * 512)
 
 void InitDeviceThread();
+void ResumeDeviceThread();
+void HaltDeviceThread();
 void MountAllFAT();
 void UnmountAllFAT();
 bool ChangeInterface(int method, bool silent);
@@ -40,6 +42,5 @@ extern unsigned char * savebuffer;
 extern FILE * file;
 extern bool unmountRequired[];
 extern bool isMounted[];
-extern lwp_t devicethread;
 
 #endif
