@@ -146,7 +146,7 @@ bool DownloadUpdate()
 	{
 		// stop checking if devices were removed/inserted
 		// since we're saving a file
-		LWP_SuspendThread (devicethread);
+		HaltDeviceThread();
 
 		FILE * hfile;
 		char updateFile[50];
@@ -177,7 +177,7 @@ bool DownloadUpdate()
 		updateFound = false; // updating is finished (successful or not!)
 
 		// go back to checking if devices were inserted/removed
-		LWP_ResumeThread (devicethread);
+		ResumeDeviceThread();
 	}
 	return result;
 }
