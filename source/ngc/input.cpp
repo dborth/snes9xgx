@@ -183,6 +183,7 @@ void ShutoffRumble()
  ***************************************************************************/
 void DoRumble(int i)
 {
+	if(!GCSettings.Rumble) return;
 	if(rumbleRequest[i] && rumbleCount[i] < 3)
 	{
 		WPAD_Rumble(i, 1); // rumble on
