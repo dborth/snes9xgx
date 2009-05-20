@@ -88,6 +88,7 @@ struct SGCSettings{
 	int		ExitAction;
 	int		MusicVolume;
 	int		SFXVolume;
+	int		Rumble;
 };
 
 void ExitApp();

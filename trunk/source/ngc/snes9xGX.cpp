@@ -23,9 +23,7 @@
 #include <debug.h>
 
 #ifdef HW_RVL
-extern "C" {
 #include <di/di.h>
-}
 #endif
 
 #include "FreeTypeGX.h"
@@ -102,16 +100,26 @@ void ExitApp()
 {
 	ExitCleanup();
 
-	if(GCSettings.ExitAction == 0) // Exit to Loader
+	#ifdef HW_RVL
+	if(GCSettings.ExitAction == 0) // Auto
 	{
-		#ifdef HW_RVL
-			exit(0);
-		#else
-			if (psoid[0] == PSOSDLOADID)
-				PSOReload ();
-		#endif
+		char * sig = (char *)0x80001804;
+		if(
+			sig[0] == 'S' &&
+			sig[1] == 'T' &&
+			sig[2] == 'U' &&
+			sig[3] == 'B' &&
+			sig[4] == 'H' &&
+			sig[5] == 'A' &&
+			sig[6] == 'X' &&
+			sig[7] == 'X')
+			GCSettings.ExitAction = 3; // Exit to HBC
+		else
+			GCSettings.ExitAction = 1; // HBC not found
 	}
-	else if(GCSettings.ExitAction == 1) // Exit to Menu
+	#endif
+
+	if(GCSettings.ExitAction == 1) // Exit to Menu
 	{
 		#ifdef HW_RVL
 			SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
@@ -120,9 +128,18 @@ void ExitApp()
 			*SOFTRESET_ADR = 0x00000000;
 		#endif
 	}
-	else // Shutdown Wii
+	else if(GCSettings.ExitAction == 2) // Shutdown Wii
 	{
 		SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+	}
+	else // Exit to Loader
+	{
+		#ifdef HW_RVL
+			exit(0);
+		#else
+			if (psoid[0] == PSOSDLOADID)
+				PSOReload();
+		#endif
 	}
 }
 
