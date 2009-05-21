@@ -33,7 +33,7 @@ CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
 			-DSPC700_C -DSDD1_DECOMP \
 			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
 			-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
-			-fomit-frame-pointer -fno-exceptions \
+			-fomit-frame-pointer \
 			-Wno-unused-parameter -Wno-strict-aliasing
 
 CXXFLAGS	=	-save-temps -Xassembler -aln=$@.lst $(CFLAGS)

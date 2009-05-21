@@ -37,6 +37,7 @@
 #include <string.h>
 #include <vector>
 #include <exception>
+#include <wchar.h>
 #include <math.h>
 #include <asndlib.h>
 #include <wiiuse/wpad.h>
