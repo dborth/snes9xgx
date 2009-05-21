@@ -218,8 +218,8 @@ void GuiButton::Update(GuiTrigger * t)
 
 				if(
 					(t->wpad.btns_d > 0 &&
-					wm_btns == wm_btns_trig ||
-					(cc_btns == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC)) ||
+					(wm_btns == wm_btns_trig ||
+					(cc_btns == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC))) ||
 					(t->pad.btns_d == trigger[i]->pad.btns_d && t->pad.btns_d > 0))
 				{
 					if(t->chan == stateChan || stateChan == -1)
@@ -267,8 +267,8 @@ void GuiButton::Update(GuiTrigger * t)
 
 				if(
 					(t->wpad.btns_d > 0 &&
-					wm_btns == wm_btns_trig ||
-					(cc_btns == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC)) ||
+					(wm_btns == wm_btns_trig ||
+					(cc_btns == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC))) ||
 					(t->pad.btns_d == trigger[i]->pad.btns_h && t->pad.btns_d > 0))
 				{
 					if(trigger[i]->type == TRIGGER_HELD && state == STATE_SELECTED &&
@@ -278,8 +278,8 @@ void GuiButton::Update(GuiTrigger * t)
 
 				if(
 					(t->wpad.btns_h > 0 &&
-					wm_btns_h == wm_btns_trig ||
-					(cc_btns_h == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC)) ||
+					(wm_btns_h == wm_btns_trig ||
+					(cc_btns_h == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC))) ||
 					(t->pad.btns_h == trigger[i]->pad.btns_h && t->pad.btns_h > 0))
 				{
 					if(trigger[i]->type == TRIGGER_HELD)

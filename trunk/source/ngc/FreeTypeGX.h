@@ -159,6 +159,7 @@
 
 #include <malloc.h>
 #include <string.h>
+#include <wchar.h>
 #include <map>
 
 /*! \struct ftgxCharData_
