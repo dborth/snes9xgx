@@ -7,7 +7,7 @@
 ::::::::::::::::/   /::--/_______\::.________/::::/   /:­::\   _  \::::::×:::
 :::::::°:::::::/___\:::::::::::::::::::::::::::::/   /::::/__/   \--::­::::::
 °:::::::::::::::::×:::::::::::::::°::::×:::::::::\--/::::::::::::::::::×:::::
-­———————————————————————————————————————————————————————————————————————•ßrK•
+­————————————————————————————————————————————————————————————————————————————
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                      Snes9x GX 4.0.4                          ·oø×O0|
@@ -23,9 +23,7 @@ currently being maintained by Tantric and michniewski.
 
 Snes9x GX is a "homebrew application" which means you will need a way to run
 unsigned code on your Nintendo Wii. The best website for getting started with
-Wii homebrew is WiiBrew (www.wiibrew.org). Also check out TehSkeen
-(www.tehskeen.com) for its support forums. Each site has information and 
-guides on how to install and get homebrew working on your Nintendo Wii.
+Wii homebrew is WiiBrew (www.wiibrew.org).
 
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                                FEATURES  |
@@ -649,7 +647,6 @@ changes to the emulator settings again and save them.
                       Snes9x 1.51				Snes9x Team
                       libogc/devkitPPC			shagkur & wintermute
                       FreeTypeGX				Armin Tamzarian
-                      Documentation             brakken
 
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                                   LINKS  |
@@ -660,9 +657,6 @@ changes to the emulator settings again and save them.
 							           
 											       Wii Homebrew Community
 											              www.wiibrew.org
-											             											
-											       SNES9X GX Support Site
-											             www.tehskeen.com
 
 											    Free (Public Domain) ROMs
 											                www.pdroms.de

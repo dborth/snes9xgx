@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ogc/lwp_watchdog.h>
 
 #include "snes9x.h"
 #include "memmap.h"
@@ -40,13 +41,6 @@ extern u32 FrameTimer;
 
 long long prev;
 long long now;
-
-extern "C" {
-
-long long gettime();
-u32 diff_usec(long long start,long long end);
-
-}
 
 /*** Miscellaneous Functions ***/
 void
