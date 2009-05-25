@@ -38,5 +38,8 @@ extern int screenwidth;
 extern bool progressive;
 extern u8 * gameScreenTex;
 extern u8 * gameScreenTex2;
+extern u32 FrameTimer;
+extern u8 vmode_60hz;
+extern int timerstyle;
 
 #endif

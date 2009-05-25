@@ -582,7 +582,7 @@ void NGCReportButtons ()
 			(userInput[i].wpad.btns_h & WPAD_CLASSIC_BUTTON_HOME)
 		)
 		{
-			ConfigRequested = 1; // go to the menu
+			ScreenshotRequested = 1; // go to the menu
 		}
 	}
 
