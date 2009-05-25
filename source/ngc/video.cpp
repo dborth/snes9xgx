@@ -67,6 +67,7 @@ u8 * gameScreenTex2 = NULL; // a GX texture screen capture of the game (copy)
 u32 FrameTimer = 0;
 
 u8 vmode_60hz = 0;
+int timerstyle = 0;
 bool progressive = 0;
 
 #define HASPECT 320
@@ -318,6 +319,13 @@ copy_to_xfb (u32 arg)
 {
 	if (copynow == GX_TRUE)
 	{
+		if(ScreenshotRequested)
+		{
+			TakeScreenshot();
+			ScreenshotRequested = 0;
+			ConfigRequested = 1;
+		}
+
 		GX_CopyDisp (xfb[whichfb], GX_TRUE);
 		GX_Flush ();
 		copynow = GX_FALSE;

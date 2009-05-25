@@ -58,17 +58,13 @@
 #include "input.h"
 
 static lwp_t mainthread = LWP_THREAD_NULL;
+int ScreenshotRequested = 0;
 int ConfigRequested = 0;
 int ShutdownRequested = 0;
 int ResetRequested = 0;
 int ExitRequested = 0;
 char appPath[1024];
 FreeTypeGX *fontSystem;
-
-extern int FrameTimer;
-
-extern long long prev;
-extern unsigned int timediffallowed;
 
 /****************************************************************************
  * Shutdown / Reboot / Exit
@@ -190,8 +186,6 @@ void ipl_set_config(unsigned char c)
  * setFrameTimerMethod()
  * change frametimer method depending on whether ROM is NTSC or PAL
  ***************************************************************************/
-extern u8 vmode_60hz;
-int timerstyle;
 
 void setFrameTimerMethod()
 {
@@ -283,7 +277,6 @@ emulate ()
 				if((GCSettings.render != 0 && videoReset == -1) || videoReset == 0)
 				{
 					FreeGfxMem();
-					TakeScreenshot();
 					ResetVideo_Menu();
 					ConfigRequested = 0;
 					GCSettings.render = currentMode;

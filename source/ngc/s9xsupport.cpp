@@ -37,10 +37,8 @@
 #include "video.h"
 #include "audio.h"
 
-extern u32 FrameTimer;
-
-long long prev;
-long long now;
+static long long prev;
+static long long now;
 
 /*** Miscellaneous Functions ***/
 void
