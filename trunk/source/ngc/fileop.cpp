@@ -87,10 +87,19 @@ HaltDeviceThread()
  * This checks our devices for changes (SD/USB removed) and
  * initializes the network in the background
  ***************************************************************************/
+static int devsleep = 3*1000*1000;
+
 static void *
 devicecallback (void *arg)
 {
-	sleep(1);
+	while(devsleep > 0)
+	{
+		if(deviceHalt)
+			LWP_SuspendThread(devicethread);
+		usleep(100);
+		devsleep -= 100;
+	}
+
 	while (1)
 	{
 #ifdef HW_RVL
@@ -132,10 +141,15 @@ devicecallback (void *arg)
 			}
 		}
 #endif
-		if(deviceHalt)
-			LWP_SuspendThread(devicethread);
-		else
-			sleep(1); // suspend thread for 1 sec
+		devsleep = 1000*1000; // 1 sec
+
+		while(devsleep > 0)
+		{
+			if(deviceHalt)
+				LWP_SuspendThread(devicethread);
+			usleep(100);
+			devsleep -= 100;
+		}
 	}
 	return NULL;
 }
