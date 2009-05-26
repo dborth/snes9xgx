@@ -3437,6 +3437,7 @@ static int MenuSettingsMenu()
 				GCSettings.SFXVolume += 10;
 				if(GCSettings.SFXVolume > 100)
 					GCSettings.SFXVolume = 0;
+				break;
 			case 4:
 				GCSettings.Rumble ^= 1;
 				break;
