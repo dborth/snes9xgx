@@ -243,12 +243,10 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		if(browser.pageIndex <= 0)
 		{
 			browser.pageIndex = 0;
-			selectedItem = 0;
 		}
 		else if(browser.pageIndex+PAGESIZE >= browser.numEntries)
 		{
 			browser.pageIndex = browser.numEntries-PAGESIZE;
-			selectedItem = PAGESIZE-1;
 		}
 		listChanged = true;
 		focus = false;
@@ -378,9 +376,18 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 
 	// update the location of the scroll box based on the position in the file list
 	if(positionWiimote > 0)
+	{
 		position = positionWiimote; // follow wiimote cursor
+	}
 	else
-		position = 136*(browser.pageIndex + selectedItem) / browser.numEntries;
+	{
+		position = 136*(browser.pageIndex + PAGESIZE/2.0) / (browser.numEntries*1.0);
+
+		if(browser.pageIndex/(PAGESIZE/2.0) < 1)
+			position = 0;
+		else if((browser.pageIndex+PAGESIZE)/(PAGESIZE*1.0) >= (browser.numEntries)/(PAGESIZE*1.0))
+			position = 136;
+	}
 
 	scrollbarBoxBtn->SetPosition(0,position+36);
 
