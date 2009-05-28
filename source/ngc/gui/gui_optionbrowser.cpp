@@ -9,7 +9,6 @@
  ***************************************************************************/
 
 #include "gui.h"
-#include "filebrowser.h"
 
 /**
  * Constructor for the GuiOptionBrowser class.
