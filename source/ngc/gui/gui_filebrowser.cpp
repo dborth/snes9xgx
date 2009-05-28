@@ -357,13 +357,10 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 			}
 		}
 
-		if(focus)
-		{
-			if(i != selectedItem && gameList[i]->GetState() == STATE_SELECTED)
-				gameList[i]->ResetState();
-			else if(i == selectedItem && gameList[i]->GetState() == STATE_DEFAULT)
-				gameList[selectedItem]->SetState(STATE_SELECTED, t->chan);
-		}
+		if(i != selectedItem && gameList[i]->GetState() == STATE_SELECTED)
+			gameList[i]->ResetState();
+		else if(focus && i == selectedItem && gameList[i]->GetState() == STATE_DEFAULT)
+			gameList[selectedItem]->SetState(STATE_SELECTED, t->chan);
 
 		int currChan = t->chan;
 

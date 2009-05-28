@@ -261,13 +261,10 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 			optionBtn[i]->SetState(STATE_DISABLED);
 		}
 
-		if(focus)
-		{
-			if(i != selectedItem && optionBtn[i]->GetState() == STATE_SELECTED)
-				optionBtn[i]->ResetState();
-			else if(i == selectedItem && optionBtn[i]->GetState() == STATE_DEFAULT)
-				optionBtn[selectedItem]->SetState(STATE_SELECTED, t->chan);
-		}
+		if(i != selectedItem && optionBtn[i]->GetState() == STATE_SELECTED)
+			optionBtn[i]->ResetState();
+		else if(focus && i == selectedItem && optionBtn[i]->GetState() == STATE_DEFAULT)
+			optionBtn[selectedItem]->SetState(STATE_SELECTED, t->chan);
 
 		int currChan = t->chan;
 
