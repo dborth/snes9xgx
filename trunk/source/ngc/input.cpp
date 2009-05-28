@@ -548,6 +548,27 @@ void decodepad (int pad)
 #endif
 }
 
+bool MenuRequested()
+{
+	for(int i=0; i<4; i++)
+	{
+		if (
+			(userInput[i].pad.substickX < -70) ||
+			(userInput[i].pad.btns_h & PAD_TRIGGER_L &&
+			userInput[i].pad.btns_h & PAD_TRIGGER_R &&
+			userInput[i].pad.btns_h & PAD_BUTTON_X &&
+			userInput[i].pad.btns_h & PAD_BUTTON_Y
+			) ||
+			(userInput[i].wpad.btns_h & WPAD_BUTTON_HOME) ||
+			(userInput[i].wpad.btns_h & WPAD_CLASSIC_BUTTON_HOME)
+		)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 /****************************************************************************
  * NGCReportButtons
  *
@@ -569,22 +590,8 @@ void NGCReportButtons ()
 	 * OR "Home" on the wiimote or classic controller
 	 * OR LEFT on classic right analog stick
 	 */
-	for(i=0; i<4; i++)
-	{
-		if (
-			(userInput[i].pad.substickX < -70) ||
-			(userInput[i].pad.btns_h & PAD_TRIGGER_L &&
-			userInput[i].pad.btns_h & PAD_TRIGGER_R &&
-			userInput[i].pad.btns_h & PAD_BUTTON_X &&
-			userInput[i].pad.btns_h & PAD_BUTTON_Y
-			) ||
-			(userInput[i].wpad.btns_h & WPAD_BUTTON_HOME) ||
-			(userInput[i].wpad.btns_h & WPAD_CLASSIC_BUTTON_HOME)
-		)
-		{
-			ScreenshotRequested = 1; // go to the menu
-		}
-	}
+	if(MenuRequested())
+		ScreenshotRequested = 1; // go to the menu
 
 	j = (Settings.MultiPlayer5Master == true ? 4 : 2);
 
