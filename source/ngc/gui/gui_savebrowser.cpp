@@ -284,7 +284,6 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		{
 			selectedItem += 2;
 		}
-		arrowDownBtn->ResetState();
 	}
 	else if(t->Up() || arrowUpBtn->GetState() == STATE_CLICKED)
 	{
@@ -301,10 +300,15 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		{
 			selectedItem -= 2;
 		}
-		arrowUpBtn->ResetState();
 	}
 
 	endNavigation:
+
+	if(arrowDownBtn->GetState() == STATE_CLICKED)
+		arrowDownBtn->ResetState();
+
+	if(arrowUpBtn->GetState() == STATE_CLICKED)
+		arrowUpBtn->ResetState();
 
 	for(i=0; i<SAVELISTSIZE; i++)
 	{
