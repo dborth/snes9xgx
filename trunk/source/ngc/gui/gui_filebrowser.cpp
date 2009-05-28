@@ -365,7 +365,13 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 				gameList[selectedItem]->SetState(STATE_SELECTED, t->chan);
 		}
 
+		int currChan = t->chan;
+
+		if(t->wpad.ir.valid && !gameList[i]->IsInside(t->wpad.ir.x, t->wpad.ir.y))
+			t->chan = -1;
+
 		gameList[i]->Update(t);
+		t->chan = currChan;
 
 		if(gameList[i]->GetState() == STATE_SELECTED)
 		{

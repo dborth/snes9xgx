@@ -161,7 +161,7 @@ void GuiButton::Update(GuiTrigger * t)
 
 	#ifdef HW_RVL
 	// cursor
-	if(t->wpad.ir.valid)
+	if(t->wpad.ir.valid && t->chan >= 0)
 	{
 		if(this->IsInside(t->wpad.ir.x, t->wpad.ir.y))
 		{

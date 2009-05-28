@@ -270,12 +270,16 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 				optionBtn[selectedItem]->SetState(STATE_SELECTED, t->chan);
 		}
 
+		int currChan = t->chan;
+
+		if(t->wpad.ir.valid && !optionBtn[i]->IsInside(t->wpad.ir.x, t->wpad.ir.y))
+			t->chan = -1;
+
 		optionBtn[i]->Update(t);
+		t->chan = currChan;
 
 		if(optionBtn[i]->GetState() == STATE_SELECTED)
-		{
 			selectedItem = i;
-		}
 	}
 
 	// pad/joystick navigation
