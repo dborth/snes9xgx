@@ -33,5 +33,6 @@ void decodepad (int pad);
 void NGCReportButtons ();
 void SetControllers ();
 void SetDefaultButtonMap ();
+bool MenuRequested();
 
 #endif
