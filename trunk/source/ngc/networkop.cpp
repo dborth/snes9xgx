@@ -98,7 +98,7 @@ void UpdateCheck()
 					else // temporary, for compatibility
 					{
 						int versionnum = atoi(version);
-						if(versionnum > 15) // 015 (4.0.5)
+						if(versionnum > 16) // 016 (4.0.6)
 						{
 							item = mxmlFindElement(xml, xml, "file", NULL, NULL, MXML_DESCEND);
 							if(item)
@@ -200,31 +200,33 @@ void InitializeNetwork(bool silent)
 	while(inNetworkInit) // a network init is already in progress!
 		usleep(50);
 
-	if(networkInit) // check again if the network was inited
-		return;
-
-	inNetworkInit = true;
-
-	char ip[16];
-	s32 initResult = if_config(ip, NULL, NULL, true);
-
-	if(initResult == 0)
+	if(!networkInit) // check again if the network was inited
 	{
-		networkInit = true;
-	}
-	else
-	{
-		// do not automatically attempt a reconnection
-		autoNetworkInit = false;
+		inNetworkInit = true;
 
-		if(!silent)
+		char ip[16];
+		s32 initResult = if_config(ip, NULL, NULL, true);
+
+		if(initResult == 0)
 		{
-			char msg[150];
-			sprintf(msg, "Unable to initialize network (Error #: %i)", initResult);
-			ErrorPrompt(msg);
+			networkInit = true;
 		}
+		else
+		{
+			// do not automatically attempt a reconnection
+			autoNetworkInit = false;
+
+			if(!silent)
+			{
+				char msg[150];
+				sprintf(msg, "Unable to initialize network (Error #: %i)", initResult);
+				ErrorPrompt(msg);
+			}
+		}
+		inNetworkInit = false;
 	}
-	inNetworkInit = false;
+	if(!silent)
+		CancelAction();
 }
 
 void CloseShare()
@@ -294,6 +296,9 @@ ConnectShare (bool silent)
 			{
 				networkShareInit = true;
 			}
+
+			if(!silent)
+				CancelAction();
 		}
 
 		if(!networkShareInit && !silent)

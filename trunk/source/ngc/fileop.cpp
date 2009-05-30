@@ -87,7 +87,7 @@ HaltDeviceThread()
  * This checks our devices for changes (SD/USB removed) and
  * initializes the network in the background
  ***************************************************************************/
-static int devsleep = 3*1000*1000;
+static int devsleep = 1*1000*1000;
 
 static void *
 devicecallback (void *arg)

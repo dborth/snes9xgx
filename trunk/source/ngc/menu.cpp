@@ -113,6 +113,11 @@ ResumeGui()
 static void
 HaltGui()
 {
+	#ifdef HW_RVL
+	if(updatethread != LWP_THREAD_NULL)
+		LWP_JoinThread(updatethread, NULL);
+	#endif
+
 	guiHalt = true;
 
 	// wait for thread to finish
@@ -238,7 +243,6 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 static void *
 EmulatorUpdate (void *arg)
 {
-	sleep(3);
 	bool installUpdate = WindowPrompt(
 		"Update Available",
 		"An update is available!",
