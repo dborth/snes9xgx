@@ -57,7 +57,6 @@
 #include "filebrowser.h"
 #include "input.h"
 
-static lwp_t mainthread = LWP_THREAD_NULL;
 int ScreenshotRequested = 0;
 int ConfigRequested = 0;
 int ShutdownRequested = 0;
@@ -318,43 +317,6 @@ void CreateAppPath(char origpath[])
 #endif
 }
 
-static void * InitThread (void *arg)
-{
-	// Set defaults
-	DefaultSettings ();
-
-	S9xUnmapAllControls ();
-	SetDefaultButtonMap ();
-
-	// Allocate SNES Memory
-	if (!Memory.Init ())
-		ExitApp();
-
-	// Allocate APU
-	if (!S9xInitAPU ())
-		ExitApp();
-
-	// Set Pixel Renderer to match 565
-	S9xSetRenderPixelFormat (RGB565);
-
-	// Initialise Snes Sound System
-	S9xInitSound (5, TRUE, 1024);
-
-	// Initialise Graphics
-	setGFX ();
-	if (!S9xGraphicsInit ())
-		ExitApp();
-
-	// Check if DVD drive belongs to a Wii
-	SetDVDDriveType();
-
-	S9xSetSoundMute (TRUE);
-	S9xInitSync(); // initialize frame sync
-
-	LWP_JoinThread(mainthread,NULL);
-	return NULL;
-}
-
 /****************************************************************************
  * MAIN
  *
@@ -445,11 +407,36 @@ main(int argc, char *argv[])
 	// Initialize libFAT for SD and USB
 	MountAllFAT();
 
-	// Create a thread to do remaining initialization tasks
-	// This allows us to get to the menu faster
-	mainthread=LWP_GetSelf();
-	lwp_t initthread;
-	LWP_CreateThread(&initthread, InitThread, NULL, NULL, 0, 75);
+	// Set defaults
+	DefaultSettings ();
+
+	S9xUnmapAllControls ();
+	SetDefaultButtonMap ();
+
+	// Allocate SNES Memory
+	if (!Memory.Init ())
+		ExitApp();
+
+	// Allocate APU
+	if (!S9xInitAPU ())
+		ExitApp();
+
+	// Set Pixel Renderer to match 565
+	S9xSetRenderPixelFormat (RGB565);
+
+	// Initialise Snes Sound System
+	S9xInitSound (5, TRUE, 1024);
+
+	// Initialise Graphics
+	setGFX ();
+	if (!S9xGraphicsInit ())
+		ExitApp();
+
+	// Check if DVD drive belongs to a Wii
+	SetDVDDriveType();
+
+	S9xSetSoundMute (TRUE);
+	S9xInitSync(); // initialize frame sync
 
 	// Audio
 	AUDIO_Init (NULL);
