@@ -536,7 +536,7 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 								u32 nextread = 0;
 								while(offset < size)
 								{
-									if(size - offset > 1024*512) nextread = 1024*512;
+									if(size - offset > 4*1024) nextread = 4*1024;
 									else nextread = size-offset;
 									ShowProgress ("Loading...", offset, size);
 									readsize = fread (rbuffer + offset, 1, nextread, file); // read in next chunk
@@ -623,7 +623,7 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 				u32 writesize, nextwrite;
 				while(written < datasize)
 				{
-					if(datasize - written > 16*1024) nextwrite=16*1024;
+					if(datasize - written > 4*1024) nextwrite=4*1024;
 					else nextwrite = datasize-written;
 					writesize = fwrite (buffer+written, 1, nextwrite, file);
 					if(writesize != nextwrite) break; // write failure
