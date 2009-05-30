@@ -149,6 +149,7 @@ preparePrefsData (int method)
 	createXMLSetting("ExitAction", "Exit Action", toStr(GCSettings.ExitAction));
 	createXMLSetting("MusicVolume", "Music Volume", toStr(GCSettings.MusicVolume));
 	createXMLSetting("SFXVolume", "Sound Effects Volume", toStr(GCSettings.SFXVolume));
+	createXMLSetting("Rumble", "Rumble", toStr(GCSettings.Rumble));
 
 	createXMLSection("Controller", "Controller Settings");
 
@@ -320,6 +321,7 @@ decodePrefsData (int method)
 			loadXMLSetting(&GCSettings.ExitAction, "ExitAction");
 			loadXMLSetting(&GCSettings.MusicVolume, "MusicVolume");
 			loadXMLSetting(&GCSettings.SFXVolume, "SFXVolume");
+			loadXMLSetting(&GCSettings.Rumble, "Rumble");
 
 			// Controller Settings
 

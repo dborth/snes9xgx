@@ -163,7 +163,7 @@ void GuiSaveBrowser::SetFocus(int f)
 	for(int i=0; i<SAVELISTSIZE; i++)
 		saveBtn[i]->ResetState();
 
-	if(f == 1)
+	if(f == 1 && selectedItem >= 0)
 		saveBtn[selectedItem]->SetState(STATE_SELECTED);
 }
 
@@ -334,7 +334,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		}
 		else if(listOffset+i < saves->length)
 		{
-			if(saveBtn[i]->GetState() == STATE_DISABLED)
+			if(saveBtn[i]->GetState() == STATE_DISABLED || !saveBtn[i]->IsVisible())
 			{
 				saveBtn[i]->SetVisible(true);
 				saveBtn[i]->SetState(STATE_DEFAULT);
@@ -379,12 +379,17 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			saveBtn[i]->SetState(STATE_DISABLED);
 		}
 
-		if(focus)
+		if(i != selectedItem && saveBtn[i]->GetState() == STATE_SELECTED)
+			saveBtn[i]->ResetState();
+		else if(focus && i == selectedItem && saveBtn[i]->GetState() == STATE_DEFAULT)
+			saveBtn[selectedItem]->SetState(STATE_SELECTED, t->chan);
+
+		if(t->wpad.ir.valid && !saveBtn[i]->IsInside(t->wpad.ir.x, t->wpad.ir.y)
+				&& saveBtn[i]->GetState() == STATE_SELECTED)
 		{
-			if(i != selectedItem && saveBtn[i]->GetState() == STATE_SELECTED)
-				saveBtn[i]->ResetState();
-			else if(i == selectedItem && saveBtn[i]->GetState() == STATE_DEFAULT)
-				saveBtn[selectedItem]->SetState(STATE_SELECTED, t->chan);
+			saveBtn[i]->ResetState();
+			if(selectedItem == i)
+				selectedItem = -1;
 		}
 
 		saveBtn[i]->Update(t);

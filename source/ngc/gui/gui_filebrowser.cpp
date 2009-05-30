@@ -100,7 +100,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 
 	for(int i=0; i<PAGESIZE; i++)
 	{
-		gameListText[i] = new GuiText("Game",22, (GXColor){0, 0, 0, 0xff});
+		gameListText[i] = new GuiText(NULL,22, (GXColor){0, 0, 0, 0xff});
 		gameListText[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
 		gameListText[i]->SetPosition(5,0);
 

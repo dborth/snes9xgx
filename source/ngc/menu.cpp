@@ -238,7 +238,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 static void *
 EmulatorUpdate (void *arg)
 {
-	sleep(5);
+	sleep(3);
 	bool installUpdate = WindowPrompt(
 		"Update Available",
 		"An update is available!",
@@ -504,7 +504,7 @@ ShowProgress (const char *msg, int done, int total)
 void
 ShowAction (const char *msg)
 {
-	if(showProgress != 2)
+	if(showProgress != 0)
 		CancelAction(); // wait for previous progress window to finish
 
 	strncpy(progressMsg, msg, 200);
@@ -869,25 +869,6 @@ static void WindowCredits(void * ptr)
  ***************************************************************************/
 static int MenuGameSelection()
 {
-	#ifdef HW_RVL
-	ShutoffRumble();
-	#endif
-
-	// populate initial directory listing
-	if(OpenGameList() <= 0)
-	{
-		int choice = WindowPrompt(
-		"Error",
-		"Games directory is inaccessible on selected load device.",
-		"Retry",
-		"Check Settings");
-
-		if(choice)
-			return MENU_GAMESELECTION;
-		else
-			return MENU_SETTINGS_FILE;
-	}
-
 	int menu = MENU_NONE;
 
 	GuiText titleTxt("Choose Game", 28, (GXColor){255, 255, 255, 255});
@@ -951,6 +932,7 @@ static int MenuGameSelection()
 
 	GuiFileBrowser gameBrowser(424, 248);
 	gameBrowser.SetPosition(50, 108);
+	ResetBrowser();
 
 	HaltGui();
 	btnLogo->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
@@ -960,57 +942,82 @@ static int MenuGameSelection()
 	mainWindow->Append(&buttonWindow);
 	ResumeGui();
 
-	while(menu == MENU_NONE)
+	#ifdef HW_RVL
+	ShutoffRumble();
+	#endif
+
+	// populate initial directory listing
+	if(OpenGameList() <= 0)
 	{
-		usleep(THREAD_SLEEP);
+		int choice = WindowPrompt(
+		"Error",
+		"Games directory is inaccessible on selected load device.",
+		"Retry",
+		"Check Settings");
 
-		// update gameWindow based on arrow buttons
-		// set MENU_EXIT if A button pressed on a game
-		for(int i=0; i<PAGESIZE; i++)
+		if(choice)
+			menu = MENU_GAMESELECTION;
+		else
+			menu = MENU_SETTINGS_FILE;
+	}
+	else
+	{
+		gameBrowser.ResetState();
+		gameBrowser.gameList[0]->SetState(STATE_SELECTED);
+		gameBrowser.TriggerUpdate();
+
+		while(menu == MENU_NONE)
 		{
-			if(gameBrowser.gameList[i]->GetState() == STATE_CLICKED)
+			usleep(THREAD_SLEEP);
+
+			// update gameWindow based on arrow buttons
+			// set MENU_EXIT if A button pressed on a game
+			for(int i=0; i<PAGESIZE; i++)
 			{
-				gameBrowser.gameList[i]->ResetState();
-				// check corresponding browser entry
-				if(browserList[browser.selIndex].isdir || IsSz())
+				if(gameBrowser.gameList[i]->GetState() == STATE_CLICKED)
 				{
-					bool res;
-
-					if(IsSz())
-						res = BrowserLoadSz(GCSettings.LoadMethod);
-					else
-						res = BrowserChangeFolder(GCSettings.LoadMethod);
-
-					if(res)
+					gameBrowser.gameList[i]->ResetState();
+					// check corresponding browser entry
+					if(browserList[browser.selIndex].isdir || IsSz())
 					{
-						gameBrowser.ResetState();
-						gameBrowser.gameList[0]->SetState(STATE_SELECTED);
-						gameBrowser.TriggerUpdate();
+						bool res;
+
+						if(IsSz())
+							res = BrowserLoadSz(GCSettings.LoadMethod);
+						else
+							res = BrowserChangeFolder(GCSettings.LoadMethod);
+
+						if(res)
+						{
+							gameBrowser.ResetState();
+							gameBrowser.gameList[0]->SetState(STATE_SELECTED);
+							gameBrowser.TriggerUpdate();
+						}
+						else
+						{
+							menu = MENU_GAMESELECTION;
+							break;
+						}
 					}
 					else
 					{
-						menu = MENU_GAMESELECTION;
-						break;
+						#ifdef HW_RVL
+						ShutoffRumble();
+						#endif
+						mainWindow->SetState(STATE_DISABLED);
+						if(BrowserLoadFile(GCSettings.LoadMethod))
+							menu = MENU_EXIT;
+						else
+							mainWindow->SetState(STATE_DEFAULT);
 					}
-				}
-				else
-				{
-					#ifdef HW_RVL
-					ShutoffRumble();
-					#endif
-					mainWindow->SetState(STATE_DISABLED);
-					if(BrowserLoadFile(GCSettings.LoadMethod))
-						menu = MENU_EXIT;
-					else
-						mainWindow->SetState(STATE_DEFAULT);
 				}
 			}
-		}
 
-		if(settingsBtn.GetState() == STATE_CLICKED)
-			menu = MENU_SETTINGS;
-		else if(exitBtn.GetState() == STATE_CLICKED)
-			ExitRequested = 1;
+			if(settingsBtn.GetState() == STATE_CLICKED)
+				menu = MENU_SETTINGS;
+			else if(exitBtn.GetState() == STATE_CLICKED)
+				ExitRequested = 1;
+		}
 	}
 	HaltGui();
 	mainWindow->Remove(&titleTxt);
