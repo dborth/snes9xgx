@@ -227,7 +227,6 @@ emulate ()
 		// since we're entering the menu
 		ResumeDeviceThread();
 
-		ConfigRequested = 1;
 		SwitchAudioMode(1);
 
 		if(SNESROMSize == 0)
@@ -239,6 +238,7 @@ emulate ()
 		SelectFilterMethod();
 
 		ConfigRequested = 0;
+		ScreenshotRequested = 0;
 		SwitchAudioMode(0);
 
 		Settings.MultiPlayer5Master = (GCSettings.Controller == CTRL_PAD4 ? true : false);
