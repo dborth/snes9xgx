@@ -35,7 +35,8 @@
 #include "filebrowser.h"
 #include "preferences.h"
 
-unsigned char * savebuffer = NULL;
+unsigned char savebuffer[SAVEBUFFERSIZE] ATTRIBUTE_ALIGN(32);
+static mutex_t bufferLock = LWP_MUTEX_NULL;
 FILE * file; // file pointer - the only one we should ever use!
 bool unmountRequired[9] = { false, false, false, false, false, false, false, false, false };
 bool isMounted[9] = { false, false, false, false, false, false, false, false, false };
@@ -419,10 +420,11 @@ ParseDirectory(int method)
 void
 AllocSaveBuffer ()
 {
-	while(savebuffer != NULL) // save buffer is in use
-		usleep(50); // wait for it to be free
+	if(bufferLock == LWP_MUTEX_NULL)
+		LWP_MutexInit(&bufferLock, false);
 
-	savebuffer = (unsigned char *) memalign(32, SAVEBUFFERSIZE);
+	if(bufferLock != LWP_MUTEX_NULL)
+		LWP_MutexLock(bufferLock);
 	memset (savebuffer, 0, SAVEBUFFERSIZE);
 }
 
@@ -433,10 +435,8 @@ AllocSaveBuffer ()
 void
 FreeSaveBuffer ()
 {
-	if (savebuffer != NULL)
-		free(savebuffer);
-
-	savebuffer = NULL;
+	if(bufferLock != LWP_MUTEX_NULL)
+		LWP_MutexUnlock(bufferLock);
 }
 
 /****************************************************************************
