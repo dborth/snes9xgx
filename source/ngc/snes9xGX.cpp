@@ -407,6 +407,9 @@ main(int argc, char *argv[])
 	// Initialize libFAT for SD and USB
 	MountAllFAT();
 
+	// Audio
+	AUDIO_Init (NULL);
+
 	// Set defaults
 	DefaultSettings ();
 
@@ -437,9 +440,6 @@ main(int argc, char *argv[])
 
 	S9xSetSoundMute (TRUE);
 	S9xInitSync(); // initialize frame sync
-
-	// Audio
-	AUDIO_Init (NULL);
 
 	// Initialize font system
 	fontSystem = new FreeTypeGX();
