@@ -888,14 +888,14 @@ class GuiFileBrowser : public GuiElement
 		void Draw();
 		void TriggerUpdate();
 		void Update(GuiTrigger * t);
-		GuiButton * gameList[PAGESIZE];
+		GuiButton * fileList[PAGESIZE];
 	protected:
 		int selectedItem;
 		bool listChanged;
 
-		GuiText * gameListText[PAGESIZE];
-		GuiImage * gameListBg[PAGESIZE];
-		GuiImage * gameListFolder[PAGESIZE];
+		GuiText * fileListText[PAGESIZE];
+		GuiImage * fileListBg[PAGESIZE];
+		GuiImage * fileListFolder[PAGESIZE];
 
 		GuiButton * arrowUpBtn;
 		GuiButton * arrowDownBtn;
