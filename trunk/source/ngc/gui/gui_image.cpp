@@ -25,9 +25,15 @@ GuiImage::GuiImage()
 
 GuiImage::GuiImage(GuiImageData * img)
 {
-	image = img->GetImage();
-	width = img->GetWidth();
-	height = img->GetHeight();
+	image = NULL;
+	width = 0;
+	height = 0;
+	if(img)
+	{
+		image = img->GetImage();
+		width = img->GetWidth();
+		height = img->GetHeight();
+	}
 	imageangle = 0;
 	tile = -1;
 	stripe = 0;
@@ -88,9 +94,15 @@ u8 * GuiImage::GetImage()
 
 void GuiImage::SetImage(GuiImageData * img)
 {
-	image = img->GetImage();
-	width = img->GetWidth();
-	height = img->GetHeight();
+	image = NULL;
+	width = 0;
+	height = 0;
+	if(img)
+	{
+		image = img->GetImage();
+		width = img->GetWidth();
+		height = img->GetHeight();
+	}
 	imgType = IMAGE_DATA;
 }
 

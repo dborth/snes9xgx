@@ -100,20 +100,20 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 
 	for(int i=0; i<PAGESIZE; i++)
 	{
-		gameListText[i] = new GuiText(NULL,22, (GXColor){0, 0, 0, 0xff});
-		gameListText[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
-		gameListText[i]->SetPosition(5,0);
+		fileListText[i] = new GuiText(NULL,22, (GXColor){0, 0, 0, 0xff});
+		fileListText[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+		fileListText[i]->SetPosition(5,0);
 
-		gameListBg[i] = new GuiImage(bgGameSelectionEntry);
-		gameListFolder[i] = new GuiImage(gameFolder);
+		fileListBg[i] = new GuiImage(bgGameSelectionEntry);
+		fileListFolder[i] = new GuiImage(gameFolder);
 
-		gameList[i] = new GuiButton(380, 30);
-		gameList[i]->SetParent(this);
-		gameList[i]->SetLabel(gameListText[i]);
-		gameList[i]->SetImageOver(gameListBg[i]);
-		gameList[i]->SetPosition(2,30*i+3);
-		gameList[i]->SetTrigger(trigA);
-		gameList[i]->SetSoundClick(btnSoundClick);
+		fileList[i] = new GuiButton(380, 30);
+		fileList[i]->SetParent(this);
+		fileList[i]->SetLabel(fileListText[i]);
+		fileList[i]->SetImageOver(fileListBg[i]);
+		fileList[i]->SetPosition(2,30*i+3);
+		fileList[i]->SetTrigger(trigA);
+		fileList[i]->SetSoundClick(btnSoundClick);
 	}
 }
 
@@ -153,10 +153,10 @@ GuiFileBrowser::~GuiFileBrowser()
 
 	for(int i=0; i<PAGESIZE; i++)
 	{
-		delete gameListText[i];
-		delete gameList[i];
-		delete gameListBg[i];
-		delete gameListFolder[i];
+		delete fileListText[i];
+		delete fileList[i];
+		delete fileListBg[i];
+		delete fileListFolder[i];
 	}
 }
 
@@ -165,10 +165,10 @@ void GuiFileBrowser::SetFocus(int f)
 	focus = f;
 
 	for(int i=0; i<PAGESIZE; i++)
-		gameList[i]->ResetState();
+		fileList[i]->ResetState();
 
 	if(f == 1)
-		gameList[selectedItem]->SetState(STATE_SELECTED);
+		fileList[selectedItem]->SetState(STATE_SELECTED);
 }
 
 void GuiFileBrowser::ResetState()
@@ -179,7 +179,7 @@ void GuiFileBrowser::ResetState()
 
 	for(int i=0; i<PAGESIZE; i++)
 	{
-		gameList[i]->ResetState();
+		fileList[i]->ResetState();
 	}
 }
 
@@ -200,7 +200,7 @@ void GuiFileBrowser::Draw()
 
 	for(int i=0; i<PAGESIZE; i++)
 	{
-		gameList[i]->Draw();
+		fileList[i]->Draw();
 	}
 
 	scrollbarImg->Draw();
@@ -302,10 +302,10 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 				browser.pageIndex++;
 				listChanged = true;
 			}
-			else if(gameList[selectedItem+1]->IsVisible())
+			else if(fileList[selectedItem+1]->IsVisible())
 			{
-				gameList[selectedItem]->ResetState();
-				gameList[++selectedItem]->SetState(STATE_SELECTED, t->chan);
+				fileList[selectedItem]->ResetState();
+				fileList[++selectedItem]->SetState(STATE_SELECTED, t->chan);
 			}
 		}
 	}
@@ -319,8 +319,8 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		}
 		else if(selectedItem > 0)
 		{
-			gameList[selectedItem]->ResetState();
-			gameList[--selectedItem]->SetState(STATE_SELECTED, t->chan);
+			fileList[selectedItem]->ResetState();
+			fileList[--selectedItem]->SetState(STATE_SELECTED, t->chan);
 		}
 	}
 
@@ -332,45 +332,45 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		{
 			if(browser.pageIndex+i < browser.numEntries)
 			{
-				if(gameList[i]->GetState() == STATE_DISABLED)
-					gameList[i]->SetState(STATE_DEFAULT);
+				if(fileList[i]->GetState() == STATE_DISABLED)
+					fileList[i]->SetState(STATE_DEFAULT);
 
-				gameList[i]->SetVisible(true);
+				fileList[i]->SetVisible(true);
 
-				gameListText[i]->SetText(browserList[browser.pageIndex+i].displayname);
+				fileListText[i]->SetText(browserList[browser.pageIndex+i].displayname);
 
 				if(browserList[browser.pageIndex+i].isdir) // directory
 				{
-					gameList[i]->SetIcon(gameListFolder[i]);
-					gameListText[i]->SetPosition(30,0);
+					fileList[i]->SetIcon(fileListFolder[i]);
+					fileListText[i]->SetPosition(30,0);
 				}
 				else
 				{
-					gameList[i]->SetIcon(NULL);
-					gameListText[i]->SetPosition(10,0);
+					fileList[i]->SetIcon(NULL);
+					fileListText[i]->SetPosition(10,0);
 				}
 			}
 			else
 			{
-				gameList[i]->SetVisible(false);
-				gameList[i]->SetState(STATE_DISABLED);
+				fileList[i]->SetVisible(false);
+				fileList[i]->SetState(STATE_DISABLED);
 			}
 		}
 
-		if(i != selectedItem && gameList[i]->GetState() == STATE_SELECTED)
-			gameList[i]->ResetState();
-		else if(focus && i == selectedItem && gameList[i]->GetState() == STATE_DEFAULT)
-			gameList[selectedItem]->SetState(STATE_SELECTED, t->chan);
+		if(i != selectedItem && fileList[i]->GetState() == STATE_SELECTED)
+			fileList[i]->ResetState();
+		else if(focus && i == selectedItem && fileList[i]->GetState() == STATE_DEFAULT)
+			fileList[selectedItem]->SetState(STATE_SELECTED, t->chan);
 
 		int currChan = t->chan;
 
-		if(t->wpad.ir.valid && !gameList[i]->IsInside(t->wpad.ir.x, t->wpad.ir.y))
+		if(t->wpad.ir.valid && !fileList[i]->IsInside(t->wpad.ir.x, t->wpad.ir.y))
 			t->chan = -1;
 
-		gameList[i]->Update(t);
+		fileList[i]->Update(t);
 		t->chan = currChan;
 
-		if(gameList[i]->GetState() == STATE_SELECTED)
+		if(fileList[i]->GetState() == STATE_SELECTED)
 		{
 			selectedItem = i;
 			browser.selIndex = browser.pageIndex + i;
