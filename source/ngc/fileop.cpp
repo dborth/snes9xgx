@@ -174,11 +174,11 @@ InitDeviceThread()
 void UnmountAllFAT()
 {
 #ifdef HW_RVL
-	fatUnmount("sd:/");
-	fatUnmount("usb:/");
+	fatUnmount("sd:");
+	fatUnmount("usb:");
 #else
-	fatUnmount("carda:/");
-	fatUnmount("cardb:/");
+	fatUnmount("carda:");
+	fatUnmount("cardb:");
 #endif
 }
 
@@ -222,7 +222,7 @@ bool MountFAT(int method)
 			return false; // unknown device
 	}
 
-	sprintf(rootdir, "%s:/", name);
+	sprintf(rootdir, "%s:", name);
 
 	if(unmountRequired[method])
 	{
@@ -285,25 +285,27 @@ bool ChangeInterface(int method, bool silent)
 	}
 	else if(method == METHOD_DVD)
 	{
-		rootdir[0] = 0;
 		mounted = MountDVD(silent);
 	}
 #ifdef HW_RVL
 	else if(method == METHOD_SMB)
 	{
-		sprintf(rootdir, "smb:/");
 		mounted = ConnectShare(silent);
 	}
 #endif
 	else if(method == METHOD_MC_SLOTA)
 	{
-		rootdir[0] = 0;
 		mounted = TestMC(CARD_SLOTA, silent);
 	}
 	else if(method == METHOD_MC_SLOTB)
 	{
-		rootdir[0] = 0;
 		mounted = TestMC(CARD_SLOTB, silent);
+	}
+
+	if(!mounted)
+	{
+		sprintf(browser.dir,"/");
+		rootdir[0] = 0;
 	}
 
 	return mounted;
@@ -349,7 +351,8 @@ ParseDirectory(int method)
 		if(ChangeInterface(method, SILENT))
 		{
 			sprintf(browser.dir,"/");
-			dir = diropen(rootdir);
+			sprintf(fulldir, "%s%s", rootdir, browser.dir);
+			dir = diropen(fulldir);
 			if (dir == NULL)
 			{
 				sprintf(msg, "Error opening %s", rootdir);
@@ -648,7 +651,7 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 	ResumeDeviceThread();
 
 	CancelAction();
-    return written;
+	return written;
 }
 
 u32 SaveFile(char * filepath, u32 datasize, int method, bool silent)
