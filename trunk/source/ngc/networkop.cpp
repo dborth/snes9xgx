@@ -20,6 +20,7 @@
 #include "menu.h"
 #include "fileop.h"
 #include "http.h"
+#include "filebrowser.h"
 
 static bool inNetworkInit = false;
 static bool networkInit = false;
@@ -295,6 +296,7 @@ ConnectShare (bool silent)
 					GCSettings.smbshare, GCSettings.smbip))
 			{
 				networkShareInit = true;
+				sprintf(rootdir, "smb:");
 			}
 
 			if(!silent)
