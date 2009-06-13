@@ -114,7 +114,10 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 		saveBtn[i]->SetVisible(false);
 		saveBtn[i]->SetSoundOver(btnSoundOver);
 		saveBtn[i]->SetSoundClick(btnSoundClick);
+		saveBtnLastOver[i] = false;
 	}
+	saveBtn[0]->SetState(STATE_SELECTED, -1);
+	saveBtn[0]->SetVisible(true);
 }
 
 /**
@@ -228,6 +231,8 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 	// pad/joystick navigation
 	if(!focus)
 		goto endNavigation; // skip navigation
+
+	if(selectedItem < 0) selectedItem = 0;
 
 	if(t->Right())
 	{
@@ -384,12 +389,11 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		else if(focus && i == selectedItem && saveBtn[i]->GetState() == STATE_DEFAULT)
 			saveBtn[selectedItem]->SetState(STATE_SELECTED, t->chan);
 
-		if(t->wpad.ir.valid && !saveBtn[i]->IsInside(t->wpad.ir.x, t->wpad.ir.y)
-				&& saveBtn[i]->GetState() == STATE_SELECTED)
+		if(t->wpad.ir.valid)
 		{
-			saveBtn[i]->ResetState();
-			if(selectedItem == i)
-				selectedItem = -1;
+			if(!saveBtnLastOver[i] && saveBtn[i]->IsInside(t->wpad.ir.x, t->wpad.ir.y))
+				saveBtn[i]->ResetState();
+			saveBtnLastOver[i] = saveBtn[i]->IsInside(t->wpad.ir.x, t->wpad.ir.y);
 		}
 
 		saveBtn[i]->Update(t);
