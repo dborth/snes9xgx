@@ -407,9 +407,6 @@ main(int argc, char *argv[])
 	// Initialize libFAT for SD and USB
 	MountAllFAT();
 
-	// Audio
-	AUDIO_Init (NULL);
-
 	// Set defaults
 	DefaultSettings ();
 
