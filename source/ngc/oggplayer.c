@@ -2,6 +2,8 @@
  Copyright (c) 2008 Francisco Muñoz 'Hermes' <www.elotrolado.net>
  All rights reserved.
 
+ Threading modifications/corrections by Tantric, 2009
+
  Redistribution and use in source and binary forms, with or without modification, are
  permitted provided that the following conditions are met:
 
@@ -61,8 +63,8 @@ static private_data_ogg private_ogg;
 #define STACKSIZE		8192
 
 static u8 oggplayer_stack[STACKSIZE];
-static lwpq_t oggplayer_queue;
-static lwp_t h_oggplayer;
+static lwpq_t oggplayer_queue = LWP_TQUEUE_NULL;
+static lwp_t h_oggplayer = LWP_THREAD_NULL;
 static int ogg_thread_running = 0;
 
 static void ogg_add_callback(int voice)
@@ -154,7 +156,6 @@ static void * ogg_player_thread(private_data_ogg * priv)
 						ov_time_seek(&priv[0].vf, 0); // repeat
 					else
 						priv[0].eof = 1; // stops
-					//
 				}
 				else if (ret < 0)
 				{
@@ -205,12 +206,8 @@ static void * ogg_player_thread(private_data_ogg * priv)
 					priv[0].flag = 0;
 				}
 			}
-			else
-			{
-				// if(priv[0].pcm_indx==0) priv[0].flag=0; // all samples sended
-			}
-
 		}
+		usleep(100);
 	}
 	ov_clear(&priv[0].vf);
 	priv[0].fd = -1;
@@ -222,11 +219,19 @@ static void * ogg_player_thread(private_data_ogg * priv)
 void StopOgg()
 {
 	ASND_StopVoice(0);
-	if (ogg_thread_running > 0)
+	ogg_thread_running = 0;
+
+	if(h_oggplayer != LWP_THREAD_NULL)
 	{
-		ogg_thread_running = 0;
-		LWP_ThreadSignal(oggplayer_queue);
+		if(oggplayer_queue != LWP_TQUEUE_NULL)
+			LWP_ThreadSignal(oggplayer_queue);
 		LWP_JoinThread(h_oggplayer, NULL);
+		h_oggplayer = LWP_THREAD_NULL;
+	}
+	if(oggplayer_queue != LWP_TQUEUE_NULL)
+	{
+		LWP_CloseQueue(oggplayer_queue);
+		oggplayer_queue = LWP_TQUEUE_NULL;
 	}
 }
 
@@ -285,7 +290,6 @@ void PauseOgg(int pause)
 				LWP_ThreadSignal(oggplayer_queue);
 			}
 		}
-
 	}
 }
 

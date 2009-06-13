@@ -91,6 +91,11 @@ GCMixSamples ()
 void
 InitAudio ()
 {
+	#ifdef NO_SOUND
+	AUDIO_Init (NULL);
+	#else
+	ASND_Init();
+	#endif
 	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 100);
 }
 
@@ -106,17 +111,16 @@ SwitchAudioMode(int mode)
 	{
 		#ifndef NO_SOUND
 		ASND_Pause(1);
-		ASND_End();
 		#endif
+		AUDIO_StopDMA();
 		AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
 		AUDIO_RegisterDMACallback(GCMixSamples);
 	}
 	else // menu
 	{
 		AUDIO_StopDMA();
-		AUDIO_RegisterDMACallback(NULL);
 		#ifndef NO_SOUND
-		ASND_Init();
+		ASND_SetDMACallback();
 		ASND_Pause(0);
 		#endif
 	}
