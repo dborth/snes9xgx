@@ -118,15 +118,12 @@ static void * ogg_player_thread(private_data_ogg * priv)
 
 	ogg_thread_running = 1;
 
-	while (!priv[0].eof)
+	while (!priv[0].eof && ogg_thread_running)
 	{
-		if (!ogg_thread_running)
-			break;
-
 		if (priv[0].flag)
 			LWP_ThreadSleep(oggplayer_queue); // wait only when i have samples to send
 
-		if (priv[0].flag == 0) // wait to all samples are sended
+		if (priv[0].flag == 0) // wait to all samples are sent
 		{
 			if (ASND_TestPointer(0, priv[0].pcmout[priv[0].pcmout_pos])
 					&& ASND_StatusVoice(0) != SND_UNUSED)
@@ -214,7 +211,6 @@ static void * ogg_player_thread(private_data_ogg * priv)
 			}
 
 		}
-
 	}
 	ov_clear(&priv[0].vf);
 	priv[0].fd = -1;
@@ -225,13 +221,13 @@ static void * ogg_player_thread(private_data_ogg * priv)
 
 void StopOgg()
 {
+	ASND_StopVoice(0);
 	if (ogg_thread_running > 0)
 	{
 		ogg_thread_running = 0;
 		LWP_ThreadSignal(oggplayer_queue);
 		LWP_JoinThread(h_oggplayer, NULL);
 	}
-	ASND_StopVoice(0);
 }
 
 int PlayOgg(int fd, int time_pos, int mode)
