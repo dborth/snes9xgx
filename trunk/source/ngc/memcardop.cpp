@@ -28,6 +28,7 @@
 
 static u8 * SysArea = NULL;
 static char savecomments[2][32];
+static u8 * verifybuffer = NULL;
 
 /****************************************************************************
  * MountMC
@@ -153,14 +154,14 @@ static int
 VerifyMCFile (char *buf, int slot, char *filename, int datasize)
 {
 	card_file CardFile;
-	unsigned char verifybuffer[65536] ATTRIBUTE_ALIGN (32);
 	int CardError;
 	unsigned int blocks;
 	unsigned int SectorSize;
 	int bytesleft = 0;
 	int bytesread = 0;
 
-	memset (verifybuffer, 0, 65536);
+	verifybuffer = (u8 *)memalign(32, 262144);
+	memset (verifybuffer, 0, 262144);
 
 	// Get Sector Size
 	CARD_GetSectorSize (slot, &SectorSize);
@@ -204,6 +205,7 @@ VerifyMCFile (char *buf, int slot, char *filename, int datasize)
 		CARD_Close (&CardFile);
 		CancelAction();
 	}
+	free(verifybuffer);
 	return bytesread;
 }
 
