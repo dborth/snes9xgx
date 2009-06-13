@@ -843,6 +843,7 @@ class GuiSaveBrowser : public GuiElement
 		int selectedItem;
 		int listOffset;
 		int action;
+		bool saveBtnLastOver[SAVELISTSIZE];
 
 		SaveList * saves;
 		GuiButton * saveBtn[SAVELISTSIZE];
