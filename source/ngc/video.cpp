@@ -46,6 +46,8 @@ static GXRModeObj *vmode; // Menu video mode
 int screenheight;
 int screenwidth;
 static int currentVideoMode = -1; // -1 - not set, 0 - automatic, 1 - NTSC (480i), 2 - Progressive (480p), 3 - PAL (50Hz), 4 - PAL (60Hz)
+static int oldRenderMode = -1; // set to GCSettings.render when changing (temporarily) to another mode
+int CheckVideo = 0; // for forcing video reset
 
 /*** GX ***/
 #define TEX_WIDTH 512
@@ -311,18 +313,10 @@ copy_to_xfb (u32 arg)
 {
 	if (copynow == GX_TRUE)
 	{
-		if(ScreenshotRequested)
-		{
-			ScreenshotRequested = 0;
-			TakeScreenshot();
-			ConfigRequested = 1;
-		}
-
 		GX_CopyDisp (xfb[whichfb], GX_TRUE);
 		GX_Flush ();
 		copynow = GX_FALSE;
 	}
-
 	FrameTimer++;
 }
 
@@ -739,7 +733,6 @@ MakeTexture (const void *src, void *dst, s32 width, s32 height)
  * Update Video
  ***************************************************************************/
 uint32 prevRenderedFrameCount = 0;
-extern bool CheckVideo;
 int fscale;
 
 void
@@ -834,6 +827,28 @@ update_video (int width, int height)
 	draw_square (view);		// draw the quad
 
 	GX_DrawDone ();
+
+	if(ScreenshotRequested)
+	{
+		if(GCSettings.render == 0) // we can't take a screenshot in Original mode
+		{
+			oldRenderMode = 0;
+			GCSettings.render = 2; // switch to unfiltered mode
+			CheckVideo = 1; // request the switch
+		}
+		else
+		{
+			ScreenshotRequested = 0;
+			TakeScreenshot();
+			if(oldRenderMode != -1)
+			{
+				GCSettings.render = oldRenderMode;
+				oldRenderMode = -1;
+			}
+			ConfigRequested = 1;
+		}
+	}
+
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
 	VIDEO_Flush ();
 	copynow = GX_TRUE;
