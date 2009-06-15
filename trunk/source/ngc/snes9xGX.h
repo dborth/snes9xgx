@@ -100,6 +100,5 @@ extern int ShutdownRequested;
 extern int ExitRequested;
 extern char appPath[];
 extern FreeTypeGX *fontSystem;
-extern int timerstyle;
 
 #endif

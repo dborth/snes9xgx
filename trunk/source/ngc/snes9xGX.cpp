@@ -197,13 +197,11 @@ void setFrameTimerMethod()
 			timerstyle = 1;
 		else
 			timerstyle = 0;
-		//timediffallowed = Settings.FrameTimePAL;
 	} else {
 		if(vmode_60hz == 1)
 			timerstyle = 0;
 		else
 			timerstyle = 1;
-		//timediffallowed = Settings.FrameTimeNTSC;
 	}
 	return;
 }
@@ -212,7 +210,6 @@ void setFrameTimerMethod()
  * Emulation loop
  ***************************************************************************/
 extern void S9xInitSync();
-bool CheckVideo = 0; // for forcing video reset in video.cpp
 extern uint32 prevRenderedFrameCount;
 static int videoReset;
 static int currentMode;
@@ -273,21 +270,10 @@ emulate ()
 			}
 			if (ConfigRequested)
 			{
-				if((GCSettings.render != 0 && videoReset == -1) || videoReset == 0)
-				{
-					FreeGfxMem();
-					ResetVideo_Menu();
-					ConfigRequested = 0;
-					GCSettings.render = currentMode;
-					break; // leave emulation loop
-				}
-				else if(videoReset == -1)
-				{
-					GCSettings.render = 2;
-					CheckVideo = 1;
-					videoReset = 2;
-				}
-				videoReset--;
+				ConfigRequested = 0;
+				FreeGfxMem();
+				ResetVideo_Menu();
+				break;
 			}
 		} // emulation loop
 	} // main loop
