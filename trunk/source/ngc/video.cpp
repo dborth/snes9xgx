@@ -553,8 +553,7 @@ static void SetupVideoMode()
 	// widescreen fix
 	if(CONF_GetAspectRatio() == CONF_ASPECT_16_9)
 	{
-		vmode->viWidth = VI_MAX_WIDTH_PAL-12;
-		vmode->viXOrigin = ((VI_MAX_WIDTH_PAL - vmode->viWidth) / 2) + 2;
+		vmode->viWidth = VI_MAX_WIDTH_PAL;
 	}
 	#endif
 
