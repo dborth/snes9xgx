@@ -352,10 +352,12 @@ SavePrefs (bool silent)
 	char filepath[1024];
 	int datasize;
 	int offset = 0;
+	int method = appLoadMethod;
 
 	// We'll save using the first available method (probably SD) since this
 	// is the method preferences will be loaded from by default
-	int method = autoSaveMethod(silent);
+	if(method == METHOD_AUTO)
+		autoSaveMethod(silent);
 
 	if(method == METHOD_AUTO)
 		return false;
@@ -433,16 +435,30 @@ bool LoadPrefs()
 		return true;
 
 	bool prefFound = false;
-	if(ChangeInterface(METHOD_SD, SILENT))
-		prefFound = LoadPrefsFromMethod(METHOD_SD);
-	if(!prefFound && ChangeInterface(METHOD_USB, SILENT))
-		prefFound = LoadPrefsFromMethod(METHOD_USB);
-	if(!prefFound && TestMC(CARD_SLOTA, SILENT))
-		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTA);
-	if(!prefFound && TestMC(CARD_SLOTB, SILENT))
-		prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTB);
-	if(!prefFound && ChangeInterface(METHOD_SMB, SILENT))
-		prefFound = LoadPrefsFromMethod(METHOD_SMB);
+
+	if(appLoadMethod == METHOD_SD)
+	{
+		if(ChangeInterface(METHOD_SD, SILENT))
+			prefFound = LoadPrefsFromMethod(METHOD_SD);
+	}
+	else if(appLoadMethod == METHOD_USB)
+	{
+		if(ChangeInterface(METHOD_USB, SILENT))
+			prefFound = LoadPrefsFromMethod(METHOD_USB);
+	}
+	else
+	{
+		if(ChangeInterface(METHOD_SD, SILENT))
+			prefFound = LoadPrefsFromMethod(METHOD_SD);
+		if(!prefFound && ChangeInterface(METHOD_USB, SILENT))
+			prefFound = LoadPrefsFromMethod(METHOD_USB);
+		if(!prefFound && TestMC(CARD_SLOTA, SILENT))
+			prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTA);
+		if(!prefFound && TestMC(CARD_SLOTB, SILENT))
+			prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTB);
+		if(!prefFound && ChangeInterface(METHOD_SMB, SILENT))
+			prefFound = LoadPrefsFromMethod(METHOD_SMB);
+	}
 
 	prefLoaded = true; // attempted to load preferences
 
