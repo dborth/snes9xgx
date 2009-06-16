@@ -2,7 +2,7 @@
 <app version="1">
   <name>Snes9X GX</name>
   <coder>Tantric, michniewski</coder>
-  <version>4.0.6</version>
+  <version>4.0.7</version>
   <release_date>20090530</release_date>
   <short_description>Super Nintendo Emulator</short_description> 
   <long_description>
