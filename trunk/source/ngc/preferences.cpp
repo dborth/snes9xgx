@@ -357,7 +357,7 @@ SavePrefs (bool silent)
 	// We'll save using the first available method (probably SD) since this
 	// is the method preferences will be loaded from by default
 	if(method == METHOD_AUTO)
-		autoSaveMethod(silent);
+		method = autoSaveMethod(silent);
 
 	if(method == METHOD_AUTO)
 		return false;

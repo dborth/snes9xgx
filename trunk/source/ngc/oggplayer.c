@@ -30,6 +30,7 @@
 
 #include "oggplayer.h"
 #include <gccore.h>
+#include <unistd.h>
 
 /* OGG control */
 
