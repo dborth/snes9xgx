@@ -267,15 +267,15 @@ typedef struct _SzFileInStream
 } SzFileInStream;
 
 // 7zip error list
-static char szerrormsg[][30] = {
-   "7z: Data error",
-   "7z: Out of memory",
-   "7z: CRC Error",
-   "7z: Not implemented",
-   "7z: Fail",
-   "7z: Data read failure",
-   "7z: Archive error",
-   "7z: Dictionary too large",
+static char szerrormsg[][50] = {
+   "File is corrupt.", // 7z: Data error
+   "Archive contains too many files.", // 7z: Out of memory
+   "File is corrupt (CRC mismatch).", // 7z: CRC Error
+   "File uses unsupported compression settings.", // 7z: Not implemented
+   "File is corrupt.", // 7z: Fail
+   "Failed to read file data.", // 7z: Data read failure
+   "File is corrupt.", // 7z: Archive error
+   "File uses too high of compression settings.", // 7z: Dictionary too large
 };
 
 static SZ_RESULT SzRes;
@@ -317,7 +317,9 @@ Is7ZipFile (char *buffer)
 // display an error message
 static void SzDisplayError(SZ_RESULT res)
 {
-	ErrorPrompt(szerrormsg[(res - 1)]);
+	char msg[1024];
+	sprintf(msg, "7z decompression failed: %s", szerrormsg[(res - 1)]);
+	ErrorPrompt(msg);
 }
 
 // function used by the 7zip SDK to read data from SD/USB/DVD/SMB
