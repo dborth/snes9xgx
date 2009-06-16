@@ -10,7 +10,7 @@
 ­————————————————————————————————————————————————————————————————————————————
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                      Snes9x GX 4.0.6                          ·oø×O0|
+|0O×øo·                      Snes9x GX 4.0.7                          ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
@@ -45,6 +45,14 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.0.7]
+
+* Settings are now loaded from USB when loading the app from USB on HBC
+* Fixed menu crashes caused by ogg player bugs
+* Fixed memory card saving verification bug
+* Fixed game savebrowser bugs
+* Miscellaneous code cleanup/corrections
 
 [4.0.6 - May 30, 2009]
 
