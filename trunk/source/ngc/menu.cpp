@@ -980,7 +980,7 @@ static int MenuGameSelection()
 
 			// update gameWindow based on arrow buttons
 			// set MENU_EXIT if A button pressed on a game
-			for(i=0; i<PAGESIZE; i++)
+			for(i=0; i < FILE_PAGESIZE; i++)
 			{
 				if(gameBrowser.fileList[i]->GetState() == STATE_CLICKED)
 				{
