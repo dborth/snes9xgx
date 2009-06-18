@@ -92,26 +92,26 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	scrollbarBoxBtn->SetImageOver(scrollbarBoxOverImg);
 	scrollbarBoxBtn->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	scrollbarBoxBtn->SetMinY(0);
-	scrollbarBoxBtn->SetMaxY(136);
+	scrollbarBoxBtn->SetMaxY(156);
 	scrollbarBoxBtn->SetSelectable(false);
 	scrollbarBoxBtn->SetClickable(false);
 	scrollbarBoxBtn->SetHoldable(true);
 	scrollbarBoxBtn->SetTrigger(trigHeldA);
 
-	for(int i=0; i<PAGESIZE; i++)
+	for(int i=0; i<FILE_PAGESIZE; i++)
 	{
-		fileListText[i] = new GuiText(NULL,22, (GXColor){0, 0, 0, 0xff});
+		fileListText[i] = new GuiText(NULL, 20, (GXColor){0, 0, 0, 0xff});
 		fileListText[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
 		fileListText[i]->SetPosition(5,0);
 
 		fileListBg[i] = new GuiImage(bgGameSelectionEntry);
 		fileListFolder[i] = new GuiImage(gameFolder);
 
-		fileList[i] = new GuiButton(380, 30);
+		fileList[i] = new GuiButton(380, 26);
 		fileList[i]->SetParent(this);
 		fileList[i]->SetLabel(fileListText[i]);
 		fileList[i]->SetImageOver(fileListBg[i]);
-		fileList[i]->SetPosition(2,30*i+3);
+		fileList[i]->SetPosition(2,26*i+3);
 		fileList[i]->SetTrigger(trigA);
 		fileList[i]->SetSoundClick(btnSoundClick);
 	}
@@ -151,7 +151,7 @@ GuiFileBrowser::~GuiFileBrowser()
 	delete trigHeldA;
 	delete trigA;
 
-	for(int i=0; i<PAGESIZE; i++)
+	for(int i=0; i<FILE_PAGESIZE; i++)
 	{
 		delete fileListText[i];
 		delete fileList[i];
@@ -164,7 +164,7 @@ void GuiFileBrowser::SetFocus(int f)
 {
 	focus = f;
 
-	for(int i=0; i<PAGESIZE; i++)
+	for(int i=0; i<FILE_PAGESIZE; i++)
 		fileList[i]->ResetState();
 
 	if(f == 1)
@@ -177,7 +177,7 @@ void GuiFileBrowser::ResetState()
 	stateChan = -1;
 	selectedItem = 0;
 
-	for(int i=0; i<PAGESIZE; i++)
+	for(int i=0; i<FILE_PAGESIZE; i++)
 	{
 		fileList[i]->ResetState();
 	}
@@ -198,7 +198,7 @@ void GuiFileBrowser::Draw()
 
 	bgGameSelectionImg->Draw();
 
-	for(int i=0; i<PAGESIZE; i++)
+	for(int i=0; i<FILE_PAGESIZE; i++)
 	{
 		fileList[i]->Draw();
 	}
@@ -227,7 +227,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	if(scrollbarBoxBtn->GetState() == STATE_HELD &&
 		scrollbarBoxBtn->GetStateChan() == t->chan &&
 		t->wpad.ir.valid &&
-		browser.numEntries > PAGESIZE
+		browser.numEntries > FILE_PAGESIZE
 		)
 	{
 		scrollbarBoxBtn->SetPosition(0,0);
@@ -238,15 +238,15 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 		else if(positionWiimote > scrollbarBoxBtn->GetMaxY())
 			positionWiimote = scrollbarBoxBtn->GetMaxY();
 
-		browser.pageIndex = (positionWiimote * browser.numEntries)/136.0 - selectedItem;
+		browser.pageIndex = (positionWiimote * browser.numEntries)/156.0 - selectedItem;
 
 		if(browser.pageIndex <= 0)
 		{
 			browser.pageIndex = 0;
 		}
-		else if(browser.pageIndex+PAGESIZE >= browser.numEntries)
+		else if(browser.pageIndex+FILE_PAGESIZE >= browser.numEntries)
 		{
-			browser.pageIndex = browser.numEntries-PAGESIZE;
+			browser.pageIndex = browser.numEntries-FILE_PAGESIZE;
 		}
 		listChanged = true;
 		focus = false;
@@ -274,11 +274,11 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 
 	if(t->Right())
 	{
-		if(browser.pageIndex < browser.numEntries && browser.numEntries > PAGESIZE)
+		if(browser.pageIndex < browser.numEntries && browser.numEntries > FILE_PAGESIZE)
 		{
-			browser.pageIndex += PAGESIZE;
-			if(browser.pageIndex+PAGESIZE >= browser.numEntries)
-				browser.pageIndex = browser.numEntries-PAGESIZE;
+			browser.pageIndex += FILE_PAGESIZE;
+			if(browser.pageIndex+FILE_PAGESIZE >= browser.numEntries)
+				browser.pageIndex = browser.numEntries-FILE_PAGESIZE;
 			listChanged = true;
 		}
 	}
@@ -286,7 +286,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	{
 		if(browser.pageIndex > 0)
 		{
-			browser.pageIndex -= PAGESIZE;
+			browser.pageIndex -= FILE_PAGESIZE;
 			if(browser.pageIndex < 0)
 				browser.pageIndex = 0;
 			listChanged = true;
@@ -296,7 +296,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	{
 		if(browser.pageIndex + selectedItem + 1 < browser.numEntries)
 		{
-			if(selectedItem == PAGESIZE-1)
+			if(selectedItem == FILE_PAGESIZE-1)
 			{
 				// move list down by 1
 				browser.pageIndex++;
@@ -326,7 +326,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 
 	endNavigation:
 
-	for(int i=0; i<PAGESIZE; i++)
+	for(int i=0; i<FILE_PAGESIZE; i++)
 	{
 		if(listChanged)
 		{
@@ -384,12 +384,12 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	}
 	else
 	{
-		position = 136*(browser.pageIndex + PAGESIZE/2.0) / (browser.numEntries*1.0);
+		position = 156*(browser.pageIndex + FILE_PAGESIZE/2.0) / (browser.numEntries*1.0);
 
-		if(browser.pageIndex/(PAGESIZE/2.0) < 1)
+		if(browser.pageIndex/(FILE_PAGESIZE/2.0) < 1)
 			position = 0;
-		else if((browser.pageIndex+PAGESIZE)/(PAGESIZE*1.0) >= (browser.numEntries)/(PAGESIZE*1.0))
-			position = 136;
+		else if((browser.pageIndex+FILE_PAGESIZE)/(FILE_PAGESIZE*1.0) >= (browser.numEntries)/(FILE_PAGESIZE*1.0))
+			position = 156;
 	}
 
 	scrollbarBoxBtn->SetPosition(0,position+36);

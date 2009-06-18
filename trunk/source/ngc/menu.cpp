@@ -938,8 +938,8 @@ static int MenuGameSelection()
 	buttonWindow.Append(&settingsBtn);
 	buttonWindow.Append(&exitBtn);
 
-	GuiFileBrowser gameBrowser(424, 248);
-	gameBrowser.SetPosition(50, 108);
+	GuiFileBrowser gameBrowser(424, 268);
+	gameBrowser.SetPosition(50, 98);
 	ResetBrowser();
 
 	HaltGui();

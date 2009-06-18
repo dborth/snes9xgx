@@ -52,12 +52,13 @@
 
 extern FreeTypeGX *fontSystem;
 
-#define SCROLL_INITIAL_DELAY 20
-#define SCROLL_LOOP_DELAY 3
-#define PAGESIZE 8
-#define SAVELISTSIZE 6
-#define MAX_SAVES 20
-#define MAX_OPTIONS 30
+#define SCROLL_INITIAL_DELAY 	20
+#define SCROLL_LOOP_DELAY		3
+#define FILE_PAGESIZE 			10
+#define PAGESIZE 				8
+#define SAVELISTSIZE 			6
+#define MAX_SAVES 				20
+#define MAX_OPTIONS 			30
 
 typedef void (*UpdateCallback)(void * e);
 
@@ -889,14 +890,14 @@ class GuiFileBrowser : public GuiElement
 		void Draw();
 		void TriggerUpdate();
 		void Update(GuiTrigger * t);
-		GuiButton * fileList[PAGESIZE];
+		GuiButton * fileList[FILE_PAGESIZE];
 	protected:
 		int selectedItem;
 		bool listChanged;
 
-		GuiText * fileListText[PAGESIZE];
-		GuiImage * fileListBg[PAGESIZE];
-		GuiImage * fileListFolder[PAGESIZE];
+		GuiText * fileListText[FILE_PAGESIZE];
+		GuiImage * fileListBg[FILE_PAGESIZE];
+		GuiImage * fileListFolder[FILE_PAGESIZE];
 
 		GuiButton * arrowUpBtn;
 		GuiButton * arrowDownBtn;
