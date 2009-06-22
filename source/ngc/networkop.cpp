@@ -22,7 +22,7 @@
 #include "http.h"
 #include "filebrowser.h"
 
-static bool inNetworkInit = false;
+bool inNetworkInit = false;
 static bool networkInit = false;
 static bool autoNetworkInit = true;
 static bool networkShareInit = false;
