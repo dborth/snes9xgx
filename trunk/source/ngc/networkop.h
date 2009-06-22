@@ -18,5 +18,6 @@ bool ConnectShare (bool silent);
 void CloseShare();
 
 extern bool updateFound;
+extern bool inNetworkInit;
 
 #endif
