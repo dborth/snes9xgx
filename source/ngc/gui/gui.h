@@ -102,6 +102,12 @@ enum
 	TRIGGER_BUTTON_ONLY_IN_FOCUS
 };
 
+enum
+{
+	SCROLL_NONE,
+	SCROLL_HORIZONTAL
+};
+
 typedef struct _paddata {
 	u16 btns_d;
 	u16 btns_u;
@@ -613,7 +619,9 @@ class GuiText : public GuiElement
 		//!Sets the maximum width of the drawn texture image
 		//!If the text exceeds this, it is wrapped to the next line
 		//!\param w Maximum width
-		void SetMaxWidth(int w);
+		void SetMaxWidth(int width);
+		void SetScroll(int s);
+		void SetWrap(bool w, int width = 0);
 		//!Sets the font color
 		//!\param c Font color
 		void SetColor(GXColor c);
@@ -627,9 +635,16 @@ class GuiText : public GuiElement
 		//!Constantly called to draw the text
 		void Draw();
 	protected:
+		char * origText;
 		wchar_t* text; //!< Unicode text value
 		int size; //!< Font size
 		int maxWidth; //!< Maximum width of the generated text object (for text wrapping)
+		bool wrap;
+		wchar_t* textDyn;
+		int textScroll;
+		int textScrollPos;
+		int textScrollInitialDelay;
+		int textScrollDelay;
 		u16 style; //!< FreeTypeGX style attributes
 		GXColor color; //!< Font color
 };

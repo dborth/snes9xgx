@@ -413,7 +413,7 @@ void StripExt(char* returnstring, char * inputstring)
 {
 	char* loc_dot;
 
-	strncpy (returnstring, inputstring, 255);
+	strncpy (returnstring, inputstring, MAXJOLIET);
 
 	if(inputstring == NULL || strlen(inputstring) < 4)
 		return;

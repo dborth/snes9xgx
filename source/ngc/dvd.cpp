@@ -467,7 +467,7 @@ getentry (int entrycount, unsigned char dvdbuffer[])
 			else
 			{
 				StripExt(tmpname, fname); // hide file extension
-				strncpy (browserList[entrycount].displayname, tmpname, MAXDISPLAY);
+				strncpy (browserList[entrycount].displayname, tmpname, MAXJOLIET);
 			}
 
 			memcpy (&offset32, &dvdbuffer[diroffset + EXTENT], 4);

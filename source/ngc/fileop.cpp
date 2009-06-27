@@ -325,7 +325,6 @@ ParseDirectory(int method)
 	DIR_ITER *dir = NULL;
 	char fulldir[MAXPATHLEN];
 	char filename[MAXPATHLEN];
-	char tmpname[MAXPATHLEN];
 	struct stat filestat;
 	char msg[128];
 	int retry = 1;
@@ -397,8 +396,7 @@ ParseDirectory(int method)
 			}
 			else
 			{
-				StripExt(tmpname, filename); // hide file extension
-				strncpy(browserList[entryNum].displayname, tmpname, MAXDISPLAY);	// crop name for display
+				StripExt(browserList[entryNum].displayname, browserList[entryNum].filename); // hide file extension
 			}
 
 			browserList[entryNum].length = filestat.st_size;

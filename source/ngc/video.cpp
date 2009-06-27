@@ -1025,8 +1025,6 @@ ResetVideo_Menu ()
  ***************************************************************************/
 void Menu_Render()
 {
-	GX_DrawDone ();
-
 	whichfb ^= 1; // flip framebuffer
 	GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
 	GX_SetColorUpdate(GX_TRUE);
@@ -1086,6 +1084,7 @@ void Menu_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[],
 	GX_Color4u8(0xFF,0xFF,0xFF,alpha);
 	GX_TexCoord2f32(0, 1);
 	GX_End();
+	GX_DrawDone();
 	GX_LoadPosMtxImm (GXmodelView2D, GX_PNMTX0);
 
 	GX_SetTevOp (GX_TEVSTAGE0, GX_PASSCLR);
@@ -1124,4 +1123,5 @@ void Menu_DrawRectangle(f32 x, f32 y, f32 width, f32 height, GXColor color, u8 f
 		GX_Color4u8(color.r, color.g, color.b, color.a);
 	}
 	GX_End();
+	GX_DrawDone();
 }
