@@ -49,6 +49,8 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 [4.0.7]
 
 * Increase file browser listing to 10 entries, decrease font size
+* Added text scrolling on file browser
+* Added reset button for controller mappings
 * Settings are now loaded from USB when loading the app from USB on HBC
 * Fixed menu crashes caused by ogg player bugs
 * Fixed memory card saving verification bug
