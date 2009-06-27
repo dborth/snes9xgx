@@ -192,6 +192,37 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 	}
 }
 
+/****************************************************************************
+ * UpdatePads
+ *
+ * called by postRetraceCallback in InitGCVideo - scans pad and wpad
+ ***************************************************************************/
+void UpdatePads()
+{
+	#ifdef HW_RVL
+	WPAD_ScanPads();
+	#endif
+	PAD_ScanPads();
+
+	for(int i=3; i >= 0; i--)
+	{
+		#ifdef HW_RVL
+		memcpy(&userInput[i].wpad, WPAD_Data(i), sizeof(WPADData));
+		#endif
+
+		userInput[i].chan = i;
+		userInput[i].pad.btns_d = PAD_ButtonsDown(i);
+		userInput[i].pad.btns_u = PAD_ButtonsUp(i);
+		userInput[i].pad.btns_h = PAD_ButtonsHeld(i);
+		userInput[i].pad.stickX = PAD_StickX(i);
+		userInput[i].pad.stickY = PAD_StickY(i);
+		userInput[i].pad.substickX = PAD_SubStickX(i);
+		userInput[i].pad.substickY = PAD_SubStickY(i);
+		userInput[i].pad.triggerL = PAD_TriggerL(i);
+		userInput[i].pad.triggerR = PAD_TriggerR(i);
+	}
+}
+
 #ifdef HW_RVL
 
 /****************************************************************************
@@ -607,6 +638,8 @@ void NGCReportButtons ()
 {
 	int i, j;
 
+	UpdatePads();
+
 	Settings.TurboMode = (
 		userInput[0].pad.substickX > 70 ||
 		userInput[0].WPAD_Stick(1,0) > 70
@@ -614,9 +647,9 @@ void NGCReportButtons ()
 
 	/* Check for menu:
 	 * CStick left
-	 * OR "L+R+X+Y" (eg. Hombrew/Adapted SNES controllers)
+	 * OR "L+R+X+Y" (eg. Homebrew/Adapted SNES controllers)
 	 * OR "Home" on the wiimote or classic controller
-	 * OR LEFT on classic right analog stick
+	 * OR Left on classic right analog stick
 	 */
 	if(MenuRequested())
 		ScreenshotRequested = 1; // go to the menu

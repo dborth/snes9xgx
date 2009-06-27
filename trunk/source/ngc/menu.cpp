@@ -1525,7 +1525,7 @@ static int MenuGameSaves(int action)
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
 	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-	backBtn.SetPosition(100, -35);
+	backBtn.SetPosition(50, -35);
 	backBtn.SetLabel(&backBtnTxt);
 	backBtn.SetImage(&backBtnImg);
 	backBtn.SetImageOver(&backBtnImgOver);
@@ -1873,7 +1873,7 @@ static int MenuGameSettings()
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
 	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-	backBtn.SetPosition(100, -35);
+	backBtn.SetPosition(50, -35);
 	backBtn.SetLabel(&backBtnTxt);
 	backBtn.SetImage(&backBtnImg);
 	backBtn.SetImageOver(&backBtnImgOver);
@@ -1992,7 +1992,7 @@ static int MenuGameCheats()
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
 	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-	backBtn.SetPosition(100, -35);
+	backBtn.SetPosition(50, -35);
 	backBtn.SetLabel(&backBtnTxt);
 	backBtn.SetImage(&backBtnImg);
 	backBtn.SetImageOver(&backBtnImgOver);
@@ -2139,7 +2139,7 @@ static int MenuSettingsMappings()
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
 	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-	backBtn.SetPosition(100, -35);
+	backBtn.SetPosition(50, -35);
 	backBtn.SetLabel(&backBtnTxt);
 	backBtn.SetImage(&backBtnImg);
 	backBtn.SetImageOver(&backBtnImgOver);
@@ -2306,7 +2306,7 @@ static int MenuSettingsMappingsController()
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
 	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-	backBtn.SetPosition(100, -35);
+	backBtn.SetPosition(50, -35);
 	backBtn.SetLabel(&backBtnTxt);
 	backBtn.SetImage(&backBtnImg);
 	backBtn.SetImageOver(&backBtnImgOver);
@@ -2533,7 +2533,7 @@ static int MenuSettingsMappingsMap()
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
 	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-	backBtn.SetPosition(100, -35);
+	backBtn.SetPosition(50, -35);
 	backBtn.SetLabel(&backBtnTxt);
 	backBtn.SetImage(&backBtnImg);
 	backBtn.SetImageOver(&backBtnImgOver);
@@ -2916,7 +2916,7 @@ static int MenuSettingsVideo()
 	GuiImage backBtnImgOver(&btnOutlineOver);
 	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
 	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-	backBtn.SetPosition(100, -35);
+	backBtn.SetPosition(50, -35);
 	backBtn.SetLabel(&backBtnTxt);
 	backBtn.SetImage(&backBtnImg);
 	backBtn.SetImageOver(&backBtnImgOver);
