@@ -103,6 +103,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 		fileListText[i] = new GuiText(NULL, 20, (GXColor){0, 0, 0, 0xff});
 		fileListText[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
 		fileListText[i]->SetPosition(5,0);
+		fileListText[i]->SetMaxWidth(380);
 
 		fileListBg[i] = new GuiImage(bgGameSelectionEntry);
 		fileListFolder[i] = new GuiImage(gameFolder);
@@ -375,6 +376,11 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 			selectedItem = i;
 			browser.selIndex = browser.pageIndex + i;
 		}
+
+		if(selectedItem == i)
+			fileListText[i]->SetScroll(SCROLL_HORIZONTAL);
+		else
+			fileListText[i]->SetScroll(SCROLL_NONE);
 	}
 
 	// update the location of the scroll box based on the position in the file list

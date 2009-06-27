@@ -158,7 +158,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	GuiText msgTxt(msg, 26, (GXColor){0, 0, 0, 255});
 	msgTxt.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	msgTxt.SetPosition(0,-20);
-	msgTxt.SetMaxWidth(430);
+	msgTxt.SetWrap(true, 430);
 
 	GuiText btn1Txt(btn1Label, 24, (GXColor){0, 0, 0, 255});
 	GuiImage btn1Img(&btnOutline);
@@ -1213,7 +1213,7 @@ static int MenuGame()
 	resetBtn.SetEffectGrow();
 
 	GuiText gameSettingsBtnTxt("Game Settings", 24, (GXColor){0, 0, 0, 255});
-	gameSettingsBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
+	gameSettingsBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
 	GuiImage gameSettingsBtnImg(&btnLargeOutline);
 	GuiImage gameSettingsBtnImgOver(&btnLargeOutlineOver);
 	GuiImage gameSettingsBtnIcon(&iconGameSettings);
@@ -1788,7 +1788,7 @@ static int MenuGameSettings()
 	trigHome.SetButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, 0);
 
 	GuiText mappingBtnTxt("Button Mappings", 24, (GXColor){0, 0, 0, 255});
-	mappingBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
+	mappingBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
 	GuiImage mappingBtnImg(&btnLargeOutline);
 	GuiImage mappingBtnImgOver(&btnLargeOutlineOver);
 	GuiImage mappingBtnIcon(&iconMappings);
@@ -1805,7 +1805,7 @@ static int MenuGameSettings()
 	mappingBtn.SetEffectGrow();
 
 	GuiText videoBtnTxt("Video", 24, (GXColor){0, 0, 0, 255});
-	videoBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
+	videoBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
 	GuiImage videoBtnImg(&btnLargeOutline);
 	GuiImage videoBtnImgOver(&btnLargeOutlineOver);
 	GuiImage videoBtnIcon(&iconVideo);
@@ -1969,6 +1969,9 @@ static int MenuGameCheats()
 
 	options.length = i;
 
+	for(i=0; i < options.length; i++)
+		options.value[i][0] = 0;
+
 	GuiText titleTxt("Game Settings - Cheats", 28, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
@@ -2065,7 +2068,7 @@ static int MenuSettingsMappings()
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
 	GuiText snesBtnTxt("SNES Controller", 24, (GXColor){0, 0, 0, 255});
-	snesBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
+	snesBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
 	GuiImage snesBtnImg(&btnLargeOutline);
 	GuiImage snesBtnImgOver(&btnLargeOutlineOver);
 	GuiImage snesBtnIcon(&iconSNESController);
@@ -2082,7 +2085,7 @@ static int MenuSettingsMappings()
 	snesBtn.SetEffectGrow();
 
 	GuiText superscopeBtnTxt("Super Scope", 24, (GXColor){0, 0, 0, 255});
-	superscopeBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
+	superscopeBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
 	GuiImage superscopeBtnImg(&btnLargeOutline);
 	GuiImage superscopeBtnImgOver(&btnLargeOutlineOver);
 	GuiImage superscopeBtnIcon(&iconSuperscope);
@@ -2099,7 +2102,7 @@ static int MenuSettingsMappings()
 	superscopeBtn.SetEffectGrow();
 
 	GuiText mouseBtnTxt("SNES Mouse", 24, (GXColor){0, 0, 0, 255});
-	mouseBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
+	mouseBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
 	GuiImage mouseBtnImg(&btnLargeOutline);
 	GuiImage mouseBtnImgOver(&btnLargeOutlineOver);
 	GuiImage mouseBtnIcon(&iconMouse);
@@ -2227,7 +2230,7 @@ static int MenuSettingsMappingsController()
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
 	GuiText gamecubeBtnTxt("GameCube Controller", 24, (GXColor){0, 0, 0, 255});
-	gamecubeBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
+	gamecubeBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
 	GuiImage gamecubeBtnImg(&btnLargeOutline);
 	GuiImage gamecubeBtnImgOver(&btnLargeOutlineOver);
 	GuiImage gamecubeBtnIcon(&iconGamecube);
@@ -2260,7 +2263,7 @@ static int MenuSettingsMappingsController()
 	wiimoteBtn.SetEffectGrow();
 
 	GuiText classicBtnTxt("Classic Controller", 24, (GXColor){0, 0, 0, 255});
-	classicBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
+	classicBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
 	GuiImage classicBtnImg(&btnLargeOutline);
 	GuiImage classicBtnImgOver(&btnLargeOutlineOver);
 	GuiImage classicBtnIcon(&iconClassic);
@@ -2419,7 +2422,7 @@ ButtonMappingWindow()
 	GuiText msgTxt(msg, 26, (GXColor){0, 0, 0, 255});
 	msgTxt.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	msgTxt.SetPosition(0,-20);
-	msgTxt.SetMaxWidth(430);
+	msgTxt.SetWrap(true, 430);
 
 	promptWindow.Append(&dialogBoxImg);
 	promptWindow.Append(&titleTxt);
@@ -2516,6 +2519,8 @@ static int MenuSettingsMappingsMap()
 	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
+	GuiImageData btnShortOutline(button_short_png);
+	GuiImageData btnShortOutlineOver(button_short_over_png);
 
 	GuiTrigger trigA;
 	if(GCSettings.WiimoteOrientation)
@@ -2536,6 +2541,20 @@ static int MenuSettingsMappingsMap()
 	backBtn.SetSoundClick(&btnSoundClick);
 	backBtn.SetTrigger(&trigA);
 	backBtn.SetEffectGrow();
+
+	GuiText resetBtnTxt("Reset", 24, (GXColor){0, 0, 0, 255});
+	GuiImage resetBtnImg(&btnShortOutline);
+	GuiImage resetBtnImgOver(&btnShortOutlineOver);
+	GuiButton resetBtn(btnShortOutline.GetWidth(), btnShortOutline.GetHeight());
+	resetBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	resetBtn.SetPosition(260, -35);
+	resetBtn.SetLabel(&resetBtnTxt);
+	resetBtn.SetImage(&resetBtnImg);
+	resetBtn.SetImageOver(&resetBtnImgOver);
+	resetBtn.SetSoundOver(&btnSoundOver);
+	resetBtn.SetSoundClick(&btnSoundClick);
+	resetBtn.SetTrigger(&trigA);
+	resetBtn.SetEffectGrow();
 
 	i=0;
 
@@ -2578,6 +2597,9 @@ static int MenuSettingsMappingsMap()
 			break;
 	};
 
+	for(i=0; i < options.length; i++)
+		options.value[i][0] = 0;
+
 	GuiOptionBrowser optionBrowser(552, 248, &options);
 	optionBrowser.SetPosition(0, 108);
 	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
@@ -2586,6 +2608,7 @@ static int MenuSettingsMappingsMap()
 	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.Append(&backBtn);
+	w.Append(&resetBtn);
 	mainWindow->Append(&optionBrowser);
 	mainWindow->Append(&w);
 	mainWindow->Append(&titleTxt);
@@ -2598,14 +2621,17 @@ static int MenuSettingsMappingsMap()
 
 		for(i=0; i < options.length; i++)
 		{
-			options.value[i][0] = 0;
-
 			for(j=0; j < ctrlr_def[mapMenuCtrl].num_btns; j++)
 			{
-				if(btnmap[mapMenuCtrlSNES][mapMenuCtrl][i] ==
+				if(btnmap[mapMenuCtrlSNES][mapMenuCtrl][i] == 0)
+				{
+					options.value[i][0] = 0;
+				}
+				else if(btnmap[mapMenuCtrlSNES][mapMenuCtrl][i] ==
 					ctrlr_def[mapMenuCtrl].map[j].btn)
 				{
-					sprintf(options.value[i], ctrlr_def[mapMenuCtrl].map[j].name);
+					if(strcmp(options.value[i], ctrlr_def[mapMenuCtrl].map[j].name) != 0)
+						sprintf(options.value[i], ctrlr_def[mapMenuCtrl].map[j].name);
 					break;
 				}
 			}
@@ -2615,12 +2641,26 @@ static int MenuSettingsMappingsMap()
 
 		if(ret >= 0)
 		{
-			btnmap[mapMenuCtrlSNES][mapMenuCtrl][ret] = ButtonMappingWindow(); // get a button selection from user
+			// get a button selection from user
+			btnmap[mapMenuCtrlSNES][mapMenuCtrl][ret] = ButtonMappingWindow();
 		}
 
 		if(backBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_GAMESETTINGS_MAPPINGS_CTRL;
+		}
+		else if(resetBtn.GetState() == STATE_CLICKED)
+		{
+			resetBtn.ResetState();
+
+			int choice = WindowPrompt(
+				"Reset Mappings",
+				"Are you sure that you want to reset your mappings?",
+				"Yes",
+				"No");
+
+			if(choice == 1)
+				ResetControls(mapMenuCtrlSNES, mapMenuCtrl);
 		}
 	}
 	HaltGui();
@@ -2853,6 +2893,9 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Video Mode");
 	options.length = i;
 
+	for(i=0; i < options.length; i++)
+		options.value[i][0] = 0;
+
 	GuiText titleTxt("Game Settings - Video", 28, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
@@ -3031,7 +3074,7 @@ static int MenuSettings()
 	savingBtn.SetEffectGrow();
 
 	GuiText menuBtnTxt("Menu", 24, (GXColor){0, 0, 0, 255});
-	menuBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
+	menuBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
 	GuiImage menuBtnImg(&btnLargeOutline);
 	GuiImage menuBtnImgOver(&btnLargeOutlineOver);
 	GuiImage menuBtnIcon(&iconMenu);
@@ -3048,7 +3091,7 @@ static int MenuSettings()
 	menuBtn.SetEffectGrow();
 
 	GuiText networkBtnTxt("Network", 24, (GXColor){0, 0, 0, 255});
-	networkBtnTxt.SetMaxWidth(btnLargeOutline.GetWidth()-30);
+	networkBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
 	GuiImage networkBtnImg(&btnLargeOutline);
 	GuiImage networkBtnImgOver(&btnLargeOutlineOver);
 	GuiImage networkBtnIcon(&iconNetwork);
@@ -3171,6 +3214,9 @@ static int MenuSettingsFile()
 	sprintf(options.name[i++], "Auto Save");
 	sprintf(options.name[i++], "Verify MC Saves");
 	options.length = i;
+
+	for(i=0; i < options.length; i++)
+		options.value[i][0] = 0;
 
 	GuiText titleTxt("Settings - Saving & Loading", 28, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
@@ -3355,6 +3401,9 @@ static int MenuSettingsMenu()
 	sprintf(options.name[i++], "Rumble");
 	options.length = i;
 
+	for(i=0; i < options.length; i++)
+		options.value[i][0] = 0;
+
 	GuiText titleTxt("Settings - Menu", 28, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
@@ -3499,6 +3548,9 @@ static int MenuSettingsNetwork()
 	sprintf(options.name[i++], "SMB Share Username");
 	sprintf(options.name[i++], "SMB Share Password");
 	options.length = i;
+
+	for(i=0; i < options.length; i++)
+		options.value[i][0] = 0;
 
 	GuiText titleTxt("Settings - Network", 28, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
