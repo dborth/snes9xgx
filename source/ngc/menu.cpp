@@ -1471,6 +1471,47 @@ static int MenuGame()
 }
 
 /****************************************************************************
+ * FindGameSaveNum
+ *
+ * Determines the save file number of the given file name
+ * Returns -1 if none is found
+ ***************************************************************************/
+static int FindGameSaveNum(char * savefile, int method)
+{
+	int n = -1;
+	int romlen = strlen(Memory.ROMFilename);
+	int savelen = strlen(savefile);
+
+	if(romlen > 26 && (method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB))
+		romlen = 26; // memory card filenames are a maximum of 32 chars
+
+	int diff = savelen-romlen;
+
+	if(strncmp(savefile, Memory.ROMFilename, romlen) != 0)
+		return -1;
+
+	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+	{
+		if(diff == 2)
+			n = atoi(&savefile[savelen-2]);
+		else if(diff == 1)
+			n = atoi(&savefile[savelen-1]);
+	}
+	else if(savefile[romlen] == ' ')
+	{
+		if(diff == 5 && strncmp((const char *)savefile[romlen+1], "Auto", 4) == 0)
+			n = 0; // found Auto save
+		else if(diff == 2 || diff == 3)
+			n = atoi(&savefile[romlen+1]);
+	}
+
+	if(n >= 0 && n < MAX_SAVES)
+		return n;
+	else
+		return -1;
+}
+
+/****************************************************************************
  * MenuGameSaves
  *
  * Allows the user to load or save progress.
@@ -1479,12 +1520,12 @@ static int MenuGameSaves(int action)
 {
 	int menu = MENU_NONE;
 	int ret;
-	int i, n, len, len2;
+	int i, n, type, len, len2;
 	int j = 0;
 	SaveList saves;
 	char filepath[1024];
 	char scrfile[1024];
-	char tmp[256];
+	char tmp[MAXJOLIET];
 	struct stat filestat;
 	struct tm * timeinfo;
 	int method = GCSettings.SaveMethod;
@@ -1573,62 +1614,53 @@ static int MenuGameSaves(int action)
 		ParseDirectory(GCSettings.SaveMethod);
 	}
 
+	len = strlen(Memory.ROMFilename);
+
+	// find matching files
 	for(i=0; i < browser.numEntries; i++)
 	{
-		len = strlen(Memory.ROMFilename);
 		len2 = strlen(browserList[i].filename);
 
-		if(len > 26 && (method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB))
-			len = 26; // memory card filenames are a maximum of 32 chars
+		if(len2 < 6 || len2-len < 5)
+			continue;
 
-		// find matching files
-		if(len2 > 5 && strncmp(browserList[i].filename, Memory.ROMFilename, len) == 0)
+		if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
+			type = FILE_SRAM;
+		else if(strncmp(&browserList[i].filename[len2-4], ".frz", 4) == 0)
+			type = FILE_SNAPSHOT;
+		else
+			continue;
+
+		strncpy(tmp, browserList[i].filename, MAXJOLIET);
+		tmp[len2-4] = 0;
+		n = FindGameSaveNum(tmp, method);
+
+		if(n >= 0)
 		{
-			if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
-				saves.type[j] = FILE_SRAM;
-			else if(strncmp(&browserList[i].filename[len2-4], ".frz", 4) == 0)
-				saves.type[j] = FILE_SNAPSHOT;
-			else
-				saves.type[j] = -1;
+			saves.type[j] = type;
+			saves.files[saves.type[j]][n] = 1;
+			strncpy(saves.filename[j], browserList[i].filename, MAXJOLIET);
 
-			if(saves.type[j] != -1)
+			if(method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
 			{
-				strncpy(tmp, browserList[i].filename, 255);
-				tmp[len2-4] = 0;
-
-				if(len2 - len == 7)
-					n = atoi(&tmp[len2-5]);
-				else if(len2 - len == 6)
-					n = atoi(&tmp[len2-6]);
-				else
-					n = -1;
-
-				if(n > 0 && n < MAX_SAVES)
-					saves.files[saves.type[j]][n] = 1;
-
-				strncpy(saves.filename[j], browserList[i].filename, 255);
-
-				if(method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
+				if(saves.type[j] == FILE_SNAPSHOT)
 				{
-					if(saves.type[j] == FILE_SNAPSHOT)
-					{
-						sprintf(scrfile, "%s/%s.png", GCSettings.SaveFolder, tmp);
+					sprintf(scrfile, "%s/%s.png", GCSettings.SaveFolder, tmp);
 
-						AllocSaveBuffer();
-						if(LoadFile(scrfile, GCSettings.SaveMethod, SILENT))
-							saves.previewImg[j] = new GuiImageData(savebuffer);
-						FreeSaveBuffer();
-					}
-					snprintf(filepath, 1024, "%s%s/%s", rootdir, GCSettings.SaveFolder, saves.filename[j]);
-					if (stat(filepath, &filestat) == 0)
-					{
-						timeinfo = localtime(&filestat.st_mtime);
-						strftime(saves.date[j], 20, "%a %b %d", timeinfo);
-						strftime(saves.time[j], 10, "%I:%M %p", timeinfo);
-					}
+					AllocSaveBuffer();
+					if(LoadFile(scrfile, GCSettings.SaveMethod, SILENT))
+						saves.previewImg[j] = new GuiImageData(savebuffer);
+					FreeSaveBuffer();
 				}
-				j++;
+				snprintf(filepath, 1024, "%s%s/%s", rootdir, GCSettings.SaveFolder, saves.filename[j]);
+				if (stat(filepath, &filestat) == 0)
+				{
+					timeinfo = localtime(&filestat.st_mtime);
+					strftime(saves.date[j], 20, "%a %b %d", timeinfo);
+					strftime(saves.time[j], 10, "%I:%M %p", timeinfo);
+				}
 			}
+			j++;
 		}
 	}
 
