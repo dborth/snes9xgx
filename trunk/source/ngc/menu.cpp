@@ -1499,7 +1499,7 @@ static int FindGameSaveNum(char * savefile, int method)
 	}
 	else if(savefile[romlen] == ' ')
 	{
-		if(diff == 5 && strncmp((const char *)savefile[romlen+1], "Auto", 4) == 0)
+		if(diff == 5 && strncmp(&savefile[romlen+1], "Auto", 4) == 0)
 			n = 0; // found Auto save
 		else if(diff == 2 || diff == 3)
 			n = atoi(&savefile[romlen+1]);
@@ -2134,7 +2134,7 @@ static int MenuSettingsMappings()
 	superscopeBtn.SetEffectGrow();
 
 	GuiText mouseBtnTxt("SNES Mouse", 24, (GXColor){0, 0, 0, 255});
-	mouseBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
+	mouseBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-40);
 	GuiImage mouseBtnImg(&btnLargeOutline);
 	GuiImage mouseBtnImgOver(&btnLargeOutlineOver);
 	GuiImage mouseBtnIcon(&iconMouse);
