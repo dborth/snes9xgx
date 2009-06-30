@@ -48,6 +48,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 [4.0.7 - June 30, 2009]
 
+* Fixed auto-update
 * Increased file browser listing to 10 entries, decreased font size
 * Added text scrolling on file browser
 * Added reset button for controller mappings
