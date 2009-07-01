@@ -170,7 +170,7 @@ static char * tcp_readln(const s32 s, const u16 max_length, const u64 start_time
 	return ret;
 }
 
-static bool tcp_read(const s32 s, u8 **buffer, const u32 length)
+static int tcp_read(const s32 s, u8 **buffer, const u32 length)
 {
 	u8 *p;
 	u32 step, left, block, received;
@@ -223,7 +223,7 @@ static bool tcp_read(const s32 s, u8 **buffer, const u32 length)
 	return left == 0;
 }
 
-static bool tcp_write(const s32 s, const u8 *buffer, const u32 length)
+static int tcp_write(const s32 s, const u8 *buffer, const u32 length)
 {
 	const u8 *p;
 	u32 step, left, block, sent;
@@ -303,6 +303,7 @@ static bool http_split_url(char **host, char **path, const char *url)
 bool http_request(const char *url, FILE * hfile, u8 * buffer,
 		const u32 max_size)
 {
+	int res = 0;
 	char *http_host;
 	u16 http_port;
 	char *http_path;
@@ -335,10 +336,9 @@ bool http_request(const char *url, FILE * hfile, u8 * buffer,
 	r += sprintf(r, "Host: %s\r\n", http_host);
 	r += sprintf(r, "Cache-Control: no-cache\r\n\r\n");
 
-	bool b = tcp_write(s, (u8 *) request, strlen(request));
+	res = tcp_write(s, (u8 *) request, strlen(request));
 
 	free(request);
-	linecount = 0;
 
 	for (linecount = 0; linecount < 32; linecount++)
 	{
@@ -381,11 +381,9 @@ bool http_request(const char *url, FILE * hfile, u8 * buffer,
 		return false;
 	}
 
-	int res = 1;
-
 	if (buffer != NULL)
 	{
-		b = tcp_read(s, &buffer, content_length);
+		res = tcp_read(s, &buffer, content_length);
 	}
 	else
 	{
@@ -394,37 +392,41 @@ bool http_request(const char *url, FILE * hfile, u8 * buffer,
 		u32 bytesLeft = content_length;
 		u32 readSize;
 
-		u8 * fbuffer = (u8 *) malloc(bufSize);
 		ShowProgress("Downloading...", 0, content_length);
-		while (bytesLeft > 0)
+		u8 * fbuffer = (u8 *) malloc(bufSize);
+		if(fbuffer)
 		{
-			if (bytesLeft < bufSize)
-				readSize = bytesLeft;
-			else
-				readSize = bufSize;
+			while (bytesLeft > 0)
+			{
+				if (bytesLeft < bufSize)
+					readSize = bytesLeft;
+				else
+					readSize = bufSize;
 
-			b = tcp_read(s, &fbuffer, readSize);
-			if (!b)
-				break;
-			res = fwrite(fbuffer, 1, readSize, hfile);
-			if (!res)
-				break;
+				res = tcp_read(s, &fbuffer, readSize);
+				if (!res)
+					break;
+				res = fwrite(fbuffer, 1, readSize, hfile);
+				if (!res)
+					break;
 
-			bytesLeft -= readSize;
-			ShowProgress("Downloading...", (content_length - bytesLeft),
-					content_length);
+				bytesLeft -= readSize;
+				ShowProgress("Downloading...", (content_length - bytesLeft),
+						content_length);
+			}
+			free(fbuffer);
 		}
 		CancelAction();
 	}
 
-	if (!b || !res)
+	net_close(s);
+
+	if (!res)
 	{
 		result = HTTPR_ERR_RECEIVE;
-		net_close(s);
 		return false;
 	}
 
 	result = HTTPR_OK;
-	net_close(s);
 	return true;
 }
