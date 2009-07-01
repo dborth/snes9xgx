@@ -62,7 +62,7 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 {
 	int i;
 	/*** Gamecube controller Padmap ***/
-	if(consoleCtrl == 0 || (consoleCtrl == CTRL_PAD && wiiCtrl == CTRLR_GCPAD))
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == CTRLR_GCPAD))
 	{
 		i=0;
 		btnmap[CTRL_PAD][CTRLR_GCPAD][i++] = PAD_BUTTON_A;
@@ -80,7 +80,7 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 	}
 
 	/*** Wiimote Padmap ***/
-	if(consoleCtrl == 0 || (consoleCtrl == CTRL_PAD && wiiCtrl == CTRLR_WIIMOTE))
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == CTRLR_WIIMOTE))
 	{
 		i=0;
 		btnmap[CTRL_PAD][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;
@@ -98,7 +98,7 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 	}
 
 	/*** Classic Controller Padmap ***/
-	if(consoleCtrl == 0 || (consoleCtrl == CTRL_PAD && wiiCtrl == CTRLR_CLASSIC))
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == CTRLR_CLASSIC))
 	{
 		i=0;
 		btnmap[CTRL_PAD][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_A;
@@ -116,7 +116,7 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 	}
 
 	/*** Nunchuk + wiimote Padmap ***/
-	if(consoleCtrl == 0 || (consoleCtrl == CTRL_PAD && wiiCtrl == CTRLR_NUNCHUK))
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == CTRLR_NUNCHUK))
 	{
 		i=0;
 		btnmap[CTRL_PAD][CTRLR_NUNCHUK][i++] = WPAD_BUTTON_A;
@@ -134,7 +134,7 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 	}
 
 	/*** Superscope : GC controller button mapping ***/
-	if(consoleCtrl == 0 || (consoleCtrl == CTRL_SCOPE && wiiCtrl == CTRLR_GCPAD))
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_SCOPE && wiiCtrl == CTRLR_GCPAD))
 	{
 		i=0;
 		btnmap[CTRL_SCOPE][CTRLR_GCPAD][i++] = PAD_BUTTON_A;
@@ -146,7 +146,7 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 	}
 
 	/*** Superscope : wiimote button mapping ***/
-	if(consoleCtrl == 0 || (consoleCtrl == CTRL_SCOPE && wiiCtrl == CTRLR_WIIMOTE))
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_SCOPE && wiiCtrl == CTRLR_WIIMOTE))
 	{
 		i=0;
 		btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;
@@ -158,7 +158,7 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 	}
 
 	/*** Mouse : GC controller button mapping ***/
-	if(consoleCtrl == 0 || (consoleCtrl == CTRL_MOUSE && wiiCtrl == CTRLR_GCPAD))
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_MOUSE && wiiCtrl == CTRLR_GCPAD))
 	{
 		i=0;
 		btnmap[CTRL_MOUSE][CTRLR_GCPAD][i++] = PAD_BUTTON_A;
@@ -166,7 +166,7 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 	}
 
 	/*** Mouse : wiimote button mapping ***/
-	if(consoleCtrl == 0 || (consoleCtrl == CTRL_MOUSE && wiiCtrl == CTRLR_WIIMOTE))
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_MOUSE && wiiCtrl == CTRLR_WIIMOTE))
 	{
 		i=0;
 		btnmap[CTRL_MOUSE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_A;
@@ -174,7 +174,7 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 	}
 
 	/*** Justifier : GC controller button mapping ***/
-	if(consoleCtrl == 0 || (consoleCtrl == CTRL_JUST && wiiCtrl == CTRLR_GCPAD))
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_JUST && wiiCtrl == CTRLR_GCPAD))
 	{
 		i=0;
 		btnmap[CTRL_JUST][CTRLR_GCPAD][i++] = PAD_BUTTON_B;
@@ -183,7 +183,7 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 	}
 
 	/*** Justifier : wiimote button mapping ***/
-	if(consoleCtrl == 0 || (consoleCtrl == CTRL_JUST && wiiCtrl == CTRLR_WIIMOTE))
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_JUST && wiiCtrl == CTRLR_WIIMOTE))
 	{
 		i=0;
 		btnmap[CTRL_JUST][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;

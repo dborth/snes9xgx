@@ -24,7 +24,7 @@
 extern u32 btnmap[4][4][12];
 extern int rumbleRequest[4];
 
-void ResetControls(int cc = 0, int wc = 0);
+void ResetControls(int cc = -1, int wc = -1);
 void ShutoffRumble();
 void DoRumble(int i);
 s8 WPAD_Stick(u8 chan, u8 right, int axis);
