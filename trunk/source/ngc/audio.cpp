@@ -93,6 +93,8 @@ InitAudio ()
 {
 	#ifdef NO_SOUND
 	AUDIO_Init (NULL);
+	AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
+	AUDIO_RegisterDMACallback(GCMixSamples);
 	#else
 	ASND_Init();
 	#endif
