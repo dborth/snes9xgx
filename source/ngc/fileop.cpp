@@ -386,23 +386,25 @@ ParseDirectory(int method)
 			{
 				browserList = newBrowserList;
 			}
+
 			memset(&(browserList[entryNum]), 0, sizeof(BROWSERENTRY)); // clear the new entry
 
 			strncpy(browserList[entryNum].filename, filename, MAXJOLIET);
+			browserList[entryNum].length = filestat.st_size;
+			browserList[entryNum].mtime = filestat.st_mtime;
+			browserList[entryNum].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
 
-			if(strcmp(filename,"..") == 0)
+			if(browserList[entryNum].isdir)
 			{
-				sprintf(browserList[entryNum].displayname, "Up One Level");
+				if(strcmp(filename, "..") == 0)
+					sprintf(browserList[entryNum].displayname, "Up One Level");
+				else
+					strncpy(browserList[entryNum].displayname, browserList[entryNum].filename, MAXJOLIET);
 			}
 			else
 			{
 				StripExt(browserList[entryNum].displayname, browserList[entryNum].filename); // hide file extension
 			}
-
-			browserList[entryNum].length = filestat.st_size;
-			browserList[entryNum].mtime = filestat.st_mtime;
-			browserList[entryNum].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
-
 			entryNum++;
 		}
 	}
