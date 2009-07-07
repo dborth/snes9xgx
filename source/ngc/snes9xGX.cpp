@@ -94,7 +94,15 @@ void ExitCleanup()
 
 void ExitApp()
 {
+	SavePrefs(SILENT);
+
+	if (SNESROMSize > 0 && !ConfigRequested && GCSettings.AutoSave == 1)
+		SaveSRAMAuto(GCSettings.SaveMethod, SILENT);
+
 	ExitCleanup();
+
+	if(ShutdownRequested)
+		SYS_ResetSystem(SYS_POWEROFF, 0, 0);
 
 	#ifdef HW_RVL
 	if(GCSettings.ExitAction == 0) // Auto
@@ -142,17 +150,11 @@ void ExitApp()
 #ifdef HW_RVL
 void ShutdownCB()
 {
-	ConfigRequested = 1;
 	ShutdownRequested = 1;
 }
 void ResetCB()
 {
 	ResetRequested = 1;
-}
-void ShutdownWii()
-{
-	ExitCleanup();
-	SYS_ResetSystem(SYS_POWEROFF, 0, 0);
 }
 #endif
 
@@ -276,6 +278,10 @@ emulate ()
 				ResetVideo_Menu();
 				break;
 			}
+			#ifdef HW_RVL
+			if(ShutdownRequested)
+				ExitApp();
+			#endif
 		} // emulation loop
 	} // main loop
 }
