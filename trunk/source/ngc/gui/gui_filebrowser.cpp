@@ -18,6 +18,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 {
 	width = w;
 	height = h;
+	numEntries = 0;
 	selectedItem = 0;
 	selectable = true;
 	listChanged = true; // trigger an initial list update
@@ -329,7 +330,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 
 	for(int i=0; i<FILE_PAGESIZE; i++)
 	{
-		if(listChanged)
+		if(listChanged || numEntries != browser.numEntries)
 		{
 			if(browser.pageIndex+i < browser.numEntries)
 			{
