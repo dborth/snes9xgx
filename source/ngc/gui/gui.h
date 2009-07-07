@@ -908,6 +908,7 @@ class GuiFileBrowser : public GuiElement
 		GuiButton * fileList[FILE_PAGESIZE];
 	protected:
 		int selectedItem;
+		int numEntries;
 		bool listChanged;
 
 		GuiText * fileListText[FILE_PAGESIZE];
