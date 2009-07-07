@@ -547,6 +547,7 @@ int BrowserChangeFolder(int method)
 		return -1;
 
 	CleanupPath(browser.dir);
+	strcpy(GCSettings.LoadFolder, browser.dir);
 
 	switch (method)
 	{
