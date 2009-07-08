@@ -3335,9 +3335,9 @@ static int MenuSettingsFile()
 		else if (GCSettings.SaveMethod == METHOD_MC_SLOTA) sprintf (options.value[1],"MC Slot A");
 		else if (GCSettings.SaveMethod == METHOD_MC_SLOTB) sprintf (options.value[1],"MC Slot B");
 
-		snprintf (options.value[2], 256, "%s", GCSettings.LoadFolder);
-		snprintf (options.value[3], 256, "%s", GCSettings.SaveFolder);
-		snprintf (options.value[4], 256, "%s", GCSettings.CheatFolder);
+		snprintf (options.value[2], 30, "%s", GCSettings.LoadFolder);
+		snprintf (options.value[3], 30, "%s", GCSettings.SaveFolder);
+		snprintf (options.value[4], 30, "%s", GCSettings.CheatFolder);
 
 		if (GCSettings.AutoLoad == 0) sprintf (options.value[5],"Off");
 		else if (GCSettings.AutoLoad == 1) sprintf (options.value[5],"SRAM");
@@ -3363,15 +3363,15 @@ static int MenuSettingsFile()
 				break;
 
 			case 2:
-				OnScreenKeyboard(GCSettings.LoadFolder, 30);
+				OnScreenKeyboard(GCSettings.LoadFolder, MAXPATHLEN);
 				break;
 
 			case 3:
-				OnScreenKeyboard(GCSettings.SaveFolder, 30);
+				OnScreenKeyboard(GCSettings.SaveFolder, MAXPATHLEN);
 				break;
 
 			case 4:
-				OnScreenKeyboard(GCSettings.CheatFolder, 30);
+				OnScreenKeyboard(GCSettings.CheatFolder, MAXPATHLEN);
 				break;
 
 			case 5:
