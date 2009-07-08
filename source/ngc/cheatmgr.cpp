@@ -62,9 +62,7 @@ SetupCheats()
 {
 	char filepath[1024];
 	int offset = 0;
-
-	S9xInitCheatData ();
-	S9xDeleteCheats ();
+	uint16 i;
 
 	int method = GCSettings.SaveMethod;
 
@@ -87,7 +85,7 @@ SetupCheats()
 		if(NGCLoadCheatFile (offset))
 		{
 			// disable all cheats loaded from the file
-			for (uint16 i = 0; i < Cheat.num_cheats; i++)
+			for (i = 0; i < Cheat.num_cheats; i++)
 				S9xDisableCheat(i);
 		}
 	}
