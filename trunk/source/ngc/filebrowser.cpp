@@ -474,6 +474,7 @@ int BrowserLoadFile(int method)
 	StripExt(Memory.ROMFilename, browserList[browser.selIndex].filename);
 
 	SNESROMSize = 0;
+	S9xDeleteCheats();
 
 	if(!inSz)
 	{

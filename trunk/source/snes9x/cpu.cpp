@@ -170,11 +170,7 @@
 #include "apu.h"
 #include "dma.h"
 #include "sa1.h"
-
-#ifndef NGC
 #include "cheats.h"
-#endif
-
 #include "srtc.h"
 #include "sdd1.h"
 #include "spc7110.h"
@@ -313,9 +309,9 @@ void S9xReset (void)
     S9xSA1Init ();
     if (Settings.C4)
         S9xInitC4 ();
-#ifndef NGC    
+
     S9xInitCheatData ();
-#endif
+
 	if (Settings.OBC1)
 		ResetOBC1();
     if (Settings.SuperFX)
@@ -359,9 +355,7 @@ void S9xSoftReset (void)
     if (Settings.C4)
         S9xInitC4 ();
 
-#ifndef NGC
     S9xInitCheatData ();
-#endif
 
 //    Settings.Paused = FALSE;
 }

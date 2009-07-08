@@ -190,11 +190,10 @@
 #include "seta.h"
 #include "srtc.h"
 #include "bsx.h"
-
+#include "cheats.h"
 
 #ifndef NGC
 #include "reader.h"
-#include "cheats.h"
 #else
 #include <gccore.h>
 
@@ -1006,8 +1005,8 @@ again:
 
 	InitROM();
 
-#ifndef NGC
 	S9xInitCheatData();
+#ifndef NGC
 	S9xApplyCheats();
 #endif
 
@@ -1231,8 +1230,8 @@ bool8 CMemory::LoadMultiCart (const char *cartA, const char *cartB)
 
 	InitROM();
 
-#ifndef NGC
 	S9xInitCheatData();
+#ifndef NGC
 	S9xApplyCheats();
 #endif
 
