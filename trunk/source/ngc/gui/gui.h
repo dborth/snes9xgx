@@ -50,7 +50,7 @@
 #include "input.h"
 #include "oggplayer.h"
 
-extern FreeTypeGX *fontSystem;
+extern FreeTypeGX *fontSystem[];
 
 #define SCROLL_INITIAL_DELAY 	20
 #define SCROLL_LOOP_DELAY		3

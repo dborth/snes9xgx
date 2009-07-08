@@ -220,6 +220,11 @@ typedef struct ftgxDataOffset_ {
 
 const GXColor ftgxWhite = (GXColor){0xff, 0xff, 0xff, 0xff}; /**< Constant color value used only to sanitize Doxygen documentation. */
 
+void InitFreeType(uint8_t* fontBuffer, FT_Long bufferSize);
+void ChangeFontSize(FT_UInt pixelSize);
+wchar_t* charToWideChar(const char* p);
+void ClearFontData();
+
 /*! \class FreeTypeGX
  * \brief Wrapper class for the libFreeType library with GX rendering.
  * \author Armin Tamzarian
@@ -232,9 +237,6 @@ const GXColor ftgxWhite = (GXColor){0xff, 0xff, 0xff, 0xff}; /**< Constant color
 class FreeTypeGX {
 
 	private:
-		FT_Library ftLibrary;	/**< FreeType FT_Library instance. */
-		FT_Face ftFace;			/**< FreeType reusable FT_Face typographic object. */
-		FT_GlyphSlot ftSlot;	/**< FreeType reusable FT_GlyphSlot glyph container object. */
 		FT_UInt ftPointSize;	/**< Requested size of the rendered font. */
 		bool ftKerningEnabled;	/**< Flag indicating the availability of font kerning data. */
 
@@ -261,17 +263,11 @@ class FreeTypeGX {
 		void copyFeatureToFramebuffer(f32 featureWidth, f32 featureHeight, int16_t screenX, int16_t screenY,  GXColor color);
 
 	public:
-		FreeTypeGX(uint8_t textureFormat = GX_TF_RGBA8, uint8_t vertexIndex = GX_VTXFMT1);
+		FreeTypeGX(FT_UInt pixelSize, uint8_t textureFormat = GX_TF_RGBA8, uint8_t vertexIndex = GX_VTXFMT1);
 		~FreeTypeGX();
 
-		static wchar_t* charToWideChar(char* p);
-		static wchar_t* charToWideChar(const char* p);
 		void setVertexFormat(uint8_t vertexIndex);
 		void setCompatibilityMode(uint32_t compatibilityMode);
-
-		uint16_t loadFont(uint8_t* fontBuffer, FT_Long bufferSize, FT_UInt pointSize, bool cacheAll = false);
-		uint16_t loadFont(const uint8_t* fontBuffer, FT_Long bufferSize, FT_UInt pointSize, bool cacheAll = false);
-		void changeSize(FT_UInt pointSize);
 
 		uint16_t drawText(int16_t x, int16_t y, wchar_t *text, GXColor color = ftgxWhite, uint16_t textStyling = FTGX_NULL);
 		uint16_t drawText(int16_t x, int16_t y, wchar_t const *text, GXColor color = ftgxWhite, uint16_t textStyling = FTGX_NULL);

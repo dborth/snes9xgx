@@ -46,7 +46,7 @@ GuiText::GuiText(const char * t, int s, GXColor c)
 	if(t)
 	{
 		origText = strdup(t);
-		text = fontSystem->charToWideChar((char *)t);
+		text = charToWideChar(t);
 	}
 }
 
@@ -75,7 +75,7 @@ GuiText::GuiText(const char * t)
 	if(t)
 	{
 		origText = strdup(t);
-		text = fontSystem->charToWideChar((char *)t);
+		text = charToWideChar(t);
 	}
 }
 
@@ -110,7 +110,7 @@ void GuiText::SetText(const char * t)
 	if(t)
 	{
 		origText = strdup(t);
-		text = fontSystem->charToWideChar((char *)t);
+		text = charToWideChar(t);
 	}
 }
 
@@ -218,7 +218,9 @@ void GuiText::Draw()
 
 	if(newSize != currentSize)
 	{
-		fontSystem->changeSize(newSize);
+		ChangeFontSize(newSize);
+		if(!fontSystem[newSize])
+			fontSystem[newSize] = new FreeTypeGX(newSize);
 		currentSize = newSize;
 	}
 
@@ -236,7 +238,7 @@ void GuiText::Draw()
 		{
 			if(strlen(tmpText) > maxChar)
 				tmpText[maxChar] = 0;
-			textDyn = fontSystem->charToWideChar(tmpText);
+			textDyn = charToWideChar(tmpText);
 		}
 
 		if(textScroll == SCROLL_HORIZONTAL)
@@ -270,11 +272,11 @@ void GuiText::Draw()
 						strncat(&tmpText[dynlen+2], origText, maxChar - dynlen - 2);
 					}
 					if(textDyn) delete textDyn;
-					textDyn = fontSystem->charToWideChar(tmpText);
+					textDyn = charToWideChar(tmpText);
 				}
 			}
 			if(textDyn)
-				fontSystem->drawText(this->GetLeft(), this->GetTop()+voffset, textDyn, c, style);
+				fontSystem[currentSize]->drawText(this->GetLeft(), this->GetTop()+voffset, textDyn, c, style);
 		}
 		else if(wrap)
 		{
@@ -328,19 +330,19 @@ void GuiText::Draw()
 
 			for(i=0; i < linenum; i++)
 			{
-				fontSystem->drawText(this->GetLeft(), this->GetTop()+voffset+i*lineheight, textrow[i], c, style);
+				fontSystem[currentSize]->drawText(this->GetLeft(), this->GetTop()+voffset+i*lineheight, textrow[i], c, style);
 				delete textrow[i];
 			}
 		}
 		else
 		{
-			fontSystem->drawText(this->GetLeft(), this->GetTop()+voffset, textDyn, c, style);
+			fontSystem[currentSize]->drawText(this->GetLeft(), this->GetTop()+voffset, textDyn, c, style);
 		}
 		free(tmpText);
 	}
 	else
 	{
-		fontSystem->drawText(this->GetLeft(), this->GetTop()+voffset, text, c, style);
+		fontSystem[currentSize]->drawText(this->GetLeft(), this->GetTop()+voffset, text, c, style);
 	}
 	this->UpdateEffects();
 }
