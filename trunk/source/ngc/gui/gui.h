@@ -59,6 +59,7 @@ extern FreeTypeGX *fontSystem;
 #define SAVELISTSIZE 			6
 #define MAX_SAVES 				20
 #define MAX_OPTIONS 			30
+#define MAX_KEYBOARD_DISPLAY	32
 
 typedef void (*UpdateCallback)(void * e);
 
