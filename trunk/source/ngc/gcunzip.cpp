@@ -267,7 +267,7 @@ typedef struct _SzFileInStream
 } SzFileInStream;
 
 // 7zip error list
-static char szerrormsg[][50] = {
+static char szerrormsg[][100] = {
    "File is corrupt.", // 7z: Data error
    "Archive contains too many files.", // 7z: Out of memory
    "File is corrupt (CRC mismatch).", // 7z: CRC Error
@@ -275,7 +275,7 @@ static char szerrormsg[][50] = {
    "File is corrupt.", // 7z: Fail
    "Failed to read file data.", // 7z: Data read failure
    "File is corrupt.", // 7z: Archive error
-   "File uses too high of compression settings.", // 7z: Dictionary too large
+   "File uses too high of compression settings (dictionary size is too large).", // 7z: Dictionary too large
 };
 
 static SZ_RESULT SzRes;
@@ -453,7 +453,7 @@ int SzParse(char * filepath, int method)
 			ResetBrowser();
 
 			// add '..' folder in case the user wants exit the 7z
-			strncpy(browserList[0].displayname, "..", 2);
+			sprintf(browserList[0].displayname, "Up One Level");
 			browserList[0].isdir = 1;
 			browserList[0].offset = fileoff;
 			browserList[0].length = filelen;
@@ -500,6 +500,8 @@ int SzParse(char * filepath, int method)
 			SzArDbExFree(&SzDb, SzAllocImp.Free);
 		}
 	}
+
+	CancelAction();
 
 	// close file
 	switch (method)

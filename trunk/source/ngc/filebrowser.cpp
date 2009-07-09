@@ -494,8 +494,12 @@ int BrowserLoadFile(int method)
 				SNESROMSize = LoadSzFile(szpath, (unsigned char *)Memory.ROM);
 				break;
 		}
+		if(SNESROMSize <= 0)
+		{
+			browser.selIndex = 0;
+			BrowserChangeFolder(method);
+		}
 	}
-	inSz = false;
 
 	if (SNESROMSize <= 0)
 	{
