@@ -317,6 +317,8 @@ UpdateGUI (void *arg)
  * progress bar showing % completion, or a throbber that only shows that an
  * action is in progress.
  ***************************************************************************/
+static int progsleep = 0;
+
 static void
 ProgressWindow(char *title, char *msg)
 {
@@ -379,7 +381,17 @@ ProgressWindow(char *title, char *msg)
 		promptWindow.Append(&throbberImg);
 	}
 
-	usleep(400000); // wait to see if progress flag changes soon
+	// wait to see if progress flag changes soon
+	progsleep = 400000;
+
+	while(progsleep > 0)
+	{
+		if(!showProgress)
+			break;
+		usleep(THREAD_SLEEP);
+		progsleep -= THREAD_SLEEP;
+	}
+
 	if(!showProgress)
 		return;
 
@@ -395,7 +407,15 @@ ProgressWindow(char *title, char *msg)
 
 	while(showProgress)
 	{
-		usleep(20000);
+		progsleep = 20000;
+
+		while(progsleep > 0)
+		{
+			if(!showProgress)
+				break;
+			usleep(THREAD_SLEEP);
+			progsleep -= THREAD_SLEEP;
+		}
 
 		if(showProgress == 1)
 		{
@@ -471,7 +491,7 @@ CancelAction()
 void
 ShowProgress (const char *msg, int done, int total)
 {
-	if(!mainWindow)
+	if(!mainWindow || ExitRequested || ShutdownRequested)
 		return;
 
 	if(total < (256*1024))
@@ -502,7 +522,7 @@ ShowProgress (const char *msg, int done, int total)
 void
 ShowAction (const char *msg)
 {
-	if(!mainWindow)
+	if(!mainWindow || ExitRequested || ShutdownRequested)
 		return;
 
 	if(showProgress != 0)
