@@ -58,7 +58,7 @@ extern FreeTypeGX *fontSystem[];
 #define PAGESIZE 				8
 #define SAVELISTSIZE 			6
 #define MAX_SAVES 				20
-#define MAX_OPTIONS 			30
+#define MAX_OPTIONS 			150
 #define MAX_KEYBOARD_DISPLAY	32
 
 typedef void (*UpdateCallback)(void * e);
@@ -784,8 +784,8 @@ class GuiKeyboard : public GuiWindow
 
 typedef struct _optionlist {
 	int length;
-	char name[MAX_OPTIONS][150];
-	char value[MAX_OPTIONS][150];
+	char name[MAX_OPTIONS][50];
+	char value[MAX_OPTIONS][50];
 } OptionList;
 
 //!Display a list of menu options
