@@ -10,7 +10,7 @@
 ­————————————————————————————————————————————————————————————————————————————
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                      Snes9x GX 4.0.7                          ·oø×O0|
+|0O×øo·                      Snes9x GX 4.0.8                          ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
@@ -45,6 +45,20 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.0.8 - July 9, 2009]
+
+* Faster SMB/USB browsing
+* Last browsed folder is now remembered
+* Fixed controller mapping reset button
+* Fixed no sound on GameCube version
+* Directory names are no longer altered
+* Preferences now only saved on exit
+* Fixed on-screen keyboard glitches
+* SRAM auto-saved on power-off from within a game
+* Prevent 7z lockups, better 7z error messages
+* Increase cheats limit from 30 to 150
+* Cheats no longer effect next game loaded - they are cleared properly
 
 [4.0.7 - June 30, 2009]
 
