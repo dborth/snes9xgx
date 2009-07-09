@@ -236,7 +236,7 @@ SZ_RESULT SzDecode2(const CFileSize *packSizes, const CFolder *folder,
       if (state.Dictionary == 0)
       {
         allocMain->Free(state.Probs);
-        return SZE_OUTOFMEMORY;
+        return SZE_OUTOFMEMORYDIC;
       }
     }
     LzmaDecoderInit(&state);
