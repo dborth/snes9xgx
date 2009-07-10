@@ -402,6 +402,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	listChanged = false;
+	numEntries = browser.numEntries;
 
 	if(updateCB)
 		updateCB(this);
