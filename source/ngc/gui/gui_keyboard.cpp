@@ -304,6 +304,8 @@ void GuiKeyboard::Update(GuiTrigger * t)
 
 	char txt[2] = { 0, 0 };
 
+	startloop:
+
 	for(int i=0; i<4; i++)
 	{
 		for(int j=0; j<11; j++)
@@ -327,7 +329,6 @@ void GuiKeyboard::Update(GuiTrigger * t)
 						if(shift || caps)
 						{
 							kbtextstr[strlen(kbtextstr)] = keys[i][j].chShift;
-							if(shift) shift ^= 1;
 						}
 						else
 						{
@@ -336,6 +337,13 @@ void GuiKeyboard::Update(GuiTrigger * t)
 					}
 					kbText->SetText(GetDisplayText(kbtextstr));
 					keyBtn[i][j]->SetState(STATE_SELECTED, t->chan);
+
+					if(shift)
+					{
+						shift ^= 1;
+						update = true;
+						goto startloop;
+					}
 				}
 			}
 		}

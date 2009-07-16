@@ -46,6 +46,12 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.0.9]
+
+* Fixed "No game saves found." message when there are actually saves.
+* Fixed shift key on keyboard
+* Text scrolling works again
+
 [4.0.8 - July 9, 2009]
 
 * Faster SMB/USB browsing
