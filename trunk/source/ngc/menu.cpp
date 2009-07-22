@@ -209,6 +209,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	mainWindow->Append(&promptWindow);
 	mainWindow->ChangeFocus(&promptWindow);
 	ResumeGui();
+	if(btn2Label) promptWindow.MoveSelectionHor(1); // change selection to btn2
 
 	while(choice == -1)
 	{
