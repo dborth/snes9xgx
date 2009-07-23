@@ -208,8 +208,9 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	mainWindow->SetState(STATE_DISABLED);
 	mainWindow->Append(&promptWindow);
 	mainWindow->ChangeFocus(&promptWindow);
+	btn1.ResetState();
+	btn2.SetState(STATE_SELECTED);
 	ResumeGui();
-	if(btn2Label) promptWindow.MoveSelectionHor(1); // change selection to btn2
 
 	while(choice == -1)
 	{
