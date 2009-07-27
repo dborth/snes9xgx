@@ -208,8 +208,11 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	mainWindow->SetState(STATE_DISABLED);
 	mainWindow->Append(&promptWindow);
 	mainWindow->ChangeFocus(&promptWindow);
-	btn1.ResetState();
-	btn2.SetState(STATE_SELECTED);
+	if(btn2Label)
+	{
+		btn1.ResetState();
+		btn2.SetState(STATE_SELECTED);
+	}
 	ResumeGui();
 
 	while(choice == -1)
