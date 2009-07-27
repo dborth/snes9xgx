@@ -800,11 +800,13 @@ class GuiOptionBrowser : public GuiElement
 		void ResetState();
 		void SetFocus(int f);
 		void Draw();
+		void TriggerUpdate();
 		void Update(GuiTrigger * t);
 		GuiText * optionVal[PAGESIZE];
 	protected:
 		int selectedItem;
 		int listOffset;
+		bool listChanged;
 
 		OptionList * options;
 		int optionIndex[PAGESIZE];
