@@ -27,8 +27,6 @@
 #include "filebrowser.h"
 #include "fileop.h"
 
-#define MAXDVDFILES 2000
-
 static int diroffset = 0;
 static u64 dvddir = 0; // offset of currently selected file or folder
 static int dvddirlength = 0; // length of currently selected file or folder
@@ -372,10 +370,6 @@ getentry (int entrycount, unsigned char dvdbuffer[])
 	int j;
 	u32 offset32;
 
-	/* Basic checks */
-	if (entrycount >= MAXDVDFILES)
-		return 0;
-
 	if (diroffset >= 2048 || diroffset < 0)
 		return 0;
 
@@ -524,7 +518,7 @@ ParseDVDdirectory ()
 
 		while (getentry (filecount, dvdbuffer))
 		{
-			if(strlen(browserList[filecount].filename) > 0 && filecount < MAXDVDFILES)
+			if(strlen(browserList[filecount].filename) > 0)
 				filecount++;
 		}
 
