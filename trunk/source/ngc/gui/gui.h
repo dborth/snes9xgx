@@ -922,7 +922,7 @@ class GuiFileBrowser : public GuiElement
 		GuiButton * arrowDownBtn;
 		GuiButton * scrollbarBoxBtn;
 
-		GuiImage * bgGameSelectionImg;
+		GuiImage * bgFileSelectionImg;
 		GuiImage * scrollbarImg;
 		GuiImage * arrowDownImg;
 		GuiImage * arrowDownOverImg;
@@ -931,8 +931,8 @@ class GuiFileBrowser : public GuiElement
 		GuiImage * scrollbarBoxImg;
 		GuiImage * scrollbarBoxOverImg;
 
-		GuiImageData * bgGameSelection;
-		GuiImageData * bgGameSelectionEntry;
+		GuiImageData * bgFileSelection;
+		GuiImageData * bgFileSelectionEntry;
 		GuiImageData * gameFolder;
 		GuiImageData * scrollbar;
 		GuiImageData * arrowDown;

@@ -36,12 +36,12 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND_PCM);
 
-	bgGameSelection = new GuiImageData(bg_game_selection_png);
-	bgGameSelectionImg = new GuiImage(bgGameSelection);
-	bgGameSelectionImg->SetParent(this);
-	bgGameSelectionImg->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+	bgFileSelection = new GuiImageData(bg_game_selection_png);
+	bgFileSelectionImg = new GuiImage(bgFileSelection);
+	bgFileSelectionImg->SetParent(this);
+	bgFileSelectionImg->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
 
-	bgGameSelectionEntry = new GuiImageData(bg_game_selection_entry_png);
+	bgFileSelectionEntry = new GuiImageData(bg_game_selection_entry_png);
 	gameFolder = new GuiImageData(folder_png);
 
 	scrollbar = new GuiImageData(scrollbar_png);
@@ -106,7 +106,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 		fileListText[i]->SetPosition(5,0);
 		fileListText[i]->SetMaxWidth(380);
 
-		fileListBg[i] = new GuiImage(bgGameSelectionEntry);
+		fileListBg[i] = new GuiImage(bgFileSelectionEntry);
 		fileListFolder[i] = new GuiImage(gameFolder);
 
 		fileList[i] = new GuiButton(380, 26);
@@ -128,7 +128,7 @@ GuiFileBrowser::~GuiFileBrowser()
 	delete arrowDownBtn;
 	delete scrollbarBoxBtn;
 
-	delete bgGameSelectionImg;
+	delete bgFileSelectionImg;
 	delete scrollbarImg;
 	delete arrowDownImg;
 	delete arrowDownOverImg;
@@ -137,8 +137,8 @@ GuiFileBrowser::~GuiFileBrowser()
 	delete scrollbarBoxImg;
 	delete scrollbarBoxOverImg;
 
-	delete bgGameSelection;
-	delete bgGameSelectionEntry;
+	delete bgFileSelection;
+	delete bgFileSelectionEntry;
 	delete gameFolder;
 	delete scrollbar;
 	delete arrowDown;
@@ -198,7 +198,7 @@ void GuiFileBrowser::Draw()
 	if(!this->IsVisible())
 		return;
 
-	bgGameSelectionImg->Draw();
+	bgFileSelectionImg->Draw();
 
 	for(int i=0; i<FILE_PAGESIZE; i++)
 	{
