@@ -618,10 +618,14 @@ class GuiText : public GuiElement
 		//!\param s Font size
 		void SetFontSize(int s);
 		//!Sets the maximum width of the drawn texture image
-		//!If the text exceeds this, it is wrapped to the next line
 		//!\param w Maximum width
 		void SetMaxWidth(int width);
+		//!Enables/disables text scrolling
+		//!\param s Scrolling on/off
 		void SetScroll(int s);
+		//!Enables/disables text wrapping
+		//!\param w Wrapping on/off
+		//!\param width Maximum width (0 to disable)
 		void SetWrap(bool w, int width = 0);
 		//!Sets the font color
 		//!\param c Font color
@@ -636,16 +640,16 @@ class GuiText : public GuiElement
 		//!Constantly called to draw the text
 		void Draw();
 	protected:
-		char * origText;
+		char * origText; //!< Original text data
 		wchar_t* text; //!< Unicode text value
 		int size; //!< Font size
 		int maxWidth; //!< Maximum width of the generated text object (for text wrapping)
-		bool wrap;
-		wchar_t* textDyn;
-		int textScroll;
-		int textScrollPos;
-		int textScrollInitialDelay;
-		int textScrollDelay;
+		bool wrap; //!< Wrapping toggle
+		wchar_t* textDyn; //!< Wrapped text value
+		int textScroll; //!< Scrolling toggle
+		int textScrollPos; //!< Current starting index of text string for scrolling
+		int textScrollInitialDelay; //!< Delay to wait before starting to scroll
+		int textScrollDelay; //!< Scrolling speed
 		u16 style; //!< FreeTypeGX style attributes
 		GXColor color; //!< Font color
 };

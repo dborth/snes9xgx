@@ -162,6 +162,8 @@
 #include <wchar.h>
 #include <map>
 
+#define MAX_FONT_SIZE 100
+
 /*! \struct ftgxCharData_
  *
  * Font face character glyph relevant data structure.

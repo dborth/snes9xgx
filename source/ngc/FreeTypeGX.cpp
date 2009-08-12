@@ -26,7 +26,7 @@ static FT_Library ftLibrary;	/**< FreeType FT_Library instance. */
 static FT_Face ftFace;			/**< FreeType reusable FT_Face typographic object. */
 static FT_GlyphSlot ftSlot;	/**< FreeType reusable FT_GlyphSlot glyph container object. */
 
-FreeTypeGX *fontSystem[50];
+FreeTypeGX *fontSystem[MAX_FONT_SIZE+1];
 
 void InitFreeType(uint8_t* fontBuffer, FT_Long bufferSize)
 {

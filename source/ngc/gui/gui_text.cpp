@@ -216,6 +216,9 @@ void GuiText::Draw()
 
 	int newSize = size*this->GetScale();
 
+	if(newSize > MAX_FONT_SIZE)
+		newSize = MAX_FONT_SIZE;
+
 	if(newSize != currentSize)
 	{
 		ChangeFontSize(newSize);
