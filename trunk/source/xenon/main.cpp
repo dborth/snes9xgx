@@ -44,6 +44,8 @@ extern "C" {
 
 #include <input/input.h>
 
+	int fat_file_size;
+
 };
 
 void
@@ -263,14 +265,14 @@ int main(void)
 		else
 		{
 			printf(" * fat open okay, loading file...\n");
-			int r = fat_read(Memory.ROM, 4*1024*1024);
+			int r = fat_read(Memory.ROM, fat_file_size);
 			goto ok;
 		}
 		printf("fat read failed.\n");
 		while (1);
 	}
 ok:
-	SNESROMSize = 1024*1024*4;
+	SNESROMSize = fat_file_size;
 //	memcpy(Memory.ROM, smc, SNESROMSize = sizeof(smc));
 
 	Memory.LoadROM ("BLANK.SMC");
