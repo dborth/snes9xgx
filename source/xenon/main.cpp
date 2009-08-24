@@ -127,6 +127,11 @@ void SetDefaultButtonMap ()
 	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 L");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 R");
 	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Start");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Select");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Up");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Down");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Left");
+	ASSIGN_BUTTON_FALSE (maxcode++, "Joypad2 Right");
 
 	maxcode = 0x30;
 	/*** Joypad 3 ***/
