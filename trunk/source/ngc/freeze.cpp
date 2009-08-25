@@ -22,7 +22,7 @@
 #include <fat.h>
 #include <zlib.h>
 
-#include "pngu/pngu.h"
+#include "pngu.h"
 
 #include "snes9x.h"
 #include "memmap.h"
