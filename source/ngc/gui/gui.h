@@ -41,7 +41,7 @@
 #include <math.h>
 #include <asndlib.h>
 #include <wiiuse/wpad.h>
-#include "pngu/pngu.h"
+#include "pngu.h"
 #include "FreeTypeGX.h"
 #include "snes9xGX.h"
 #include "video.h"
