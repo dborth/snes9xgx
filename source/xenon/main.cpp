@@ -20,6 +20,8 @@
 #include <diskio/diskio.h>
 #include <fat/fat.h>
 #include <xenos/xenos.h>
+#include <xenon_sound/sound.h>
+#include <xenon_soc/xenon_power.h>
 
 //#include "smc.h"
 
@@ -47,6 +49,11 @@ extern "C" {
 	int fat_file_size;
 
 };
+
+static inline uint32_t bswap_32(uint32_t t)
+{
+	return ((t & 0xFF) << 24) | ((t & 0xFF00) << 8) | ((t & 0xFF0000) >> 8) | ((t & 0xFF000000) >> 24);
+}
 
 void
 emulate ()
@@ -90,6 +97,40 @@ emulate ()
 			ConfigRequested = 0;
 			break;
 		}
+
+
+					/* this all isn't that great... */
+		int sample_rate = 48000 * 2;
+		int samples_per_frame = Settings.PAL ? sample_rate / 50 : sample_rate / 60;
+		
+		int samples_guard = 16384;
+		
+		if (xenon_sound_get_unplayed() < samples_guard)
+		{
+			so.samples_mixed_so_far = so.play_position = 0;
+			
+			unsigned char buffer[2048];
+			unsigned char out[2048];
+
+#if 0	
+			int req_samples = xenon_sound_get_unplayed();
+			if ((req_samples + samples_per_frame) < samples_guard)
+				req_samples = samples_guard + samples_per_frame;
+			else
+				req_samples = samples_per_frame;
+#endif
+			int req_samples = samples_per_frame;
+
+			S9xMixSamples(buffer, req_samples);
+
+			int i;
+			for (i = 0; i < req_samples * 2; i += 4)
+				*(int*)(buffer + i) = bswap_32(*(int*)(buffer + i));
+			xenon_sound_submit(buffer, req_samples * 2);
+
+		}
+           
+
 	} // main loop
 }
  
@@ -210,6 +251,15 @@ int main(void)
 	extern void xenos_init();
 	xenos_init();
 	console_init();
+
+	xenon_thread_startup();
+	xenon_make_it_faster(XENON_SPEED_FULL);
+	xenon_sleep_thread(1);
+	xenon_sleep_thread(2);
+	xenon_sleep_thread(3);
+	xenon_sleep_thread(4);
+	xenon_sleep_thread(5);
+	
 	printf("SNES9x GX\n");
 
 	kmem_init();
