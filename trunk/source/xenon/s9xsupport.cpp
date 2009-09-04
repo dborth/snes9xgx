@@ -16,6 +16,7 @@
 
 #include <time/time.h>
 #include <ppc/timebase.h>
+#include <xenon_sound/sound.h>
 
 int FrameTimer, timerstyle = 1;
 unsigned long long prev, now;
@@ -105,7 +106,7 @@ void S9xToggleSoundChannel(int c)
 bool8 S9xOpenSoundDevice(int mode, bool8 stereo, int buffer_size)
 {
 	so.stereo = TRUE;
-	so.playback_rate = 32000;
+	so.playback_rate = 48000;
 	so.sixteen_bit = TRUE;
 	so.encoded = 0;
 	so.buffer_size = 4096;
@@ -113,6 +114,9 @@ bool8 S9xOpenSoundDevice(int mode, bool8 stereo, int buffer_size)
 	S9xSetPlaybackRate(so.playback_rate);
 
 // init audio
+
+	xenon_sound_init();
+
 	return TRUE;
 }
 
