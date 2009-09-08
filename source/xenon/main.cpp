@@ -18,7 +18,6 @@
 
 #include <console/console.h>
 #include <diskio/diskio.h>
-#include <fat/fat.h>
 #include <xenos/xenos.h>
 #include <xenon_sound/sound.h>
 #include <xenon_soc/xenon_power.h>
@@ -45,10 +44,11 @@ extern "C" {
 	void usb_init(void);
 
 #include <input/input.h>
-
-	int fat_file_size;
-
 };
+
+#include <stdint.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 static inline uint32_t bswap_32(uint32_t t)
 {
@@ -67,8 +67,9 @@ emulate ()
 			int offset = 0x10;
 //			printf("a=%d, b=%d, x=%d, y=%d, lb=%d, rb=%d, start=%d, select=%d, up=%d, down=%d, left=%d, right=%d\n", 
 //				c.a, c.b, c.x, c.y, c.lb, c.rb, c.start, c.select, c.up, c.down, c.left, c.right);
-			S9xReportButton (offset + 0, c.a);
-			S9xReportButton (offset + 1, c.b);
+
+			S9xReportButton (offset + 0, c.b);
+			S9xReportButton (offset + 1, c.a);
 			S9xReportButton (offset + 2, c.x);
 			S9xReportButton (offset + 3, c.y);
 
@@ -110,7 +111,6 @@ emulate ()
 			so.samples_mixed_so_far = so.play_position = 0;
 			
 			unsigned char buffer[2048];
-			unsigned char out[2048];
 
 #if 0	
 			int req_samples = xenon_sound_get_unplayed();
@@ -303,31 +303,24 @@ int main(void)
 	printf("Waiting for USB storage...\n");
 	
 	extern void xenos_init();
-	struct bdev *f;
+	int fd;
+
 	do {
 		usb_do_poll();
-		f = bdev_open("uda");
-		if (f)
-			break;
-	} while (1);
+		
+		fd = open("uda:/SNES9X.SMC", O_RDONLY);
+	} while (fd < 0);
 
-	if (f)
+	struct stat stat;
+	fstat(fd, &stat);
+
+	SNESROMSize = stat.st_size;
+	if (read(fd, Memory.ROM, SNESROMSize) != SNESROMSize)
 	{
-		if (fat_init(f))
-			printf(" * FAT init failed\n");
-		else if (fat_open("/SNES9X.SMC"))
-			printf("fat open of /SNES9X.SMC failed\n");
-		else
-		{
-			printf(" * fat open okay, loading file...\n");
-			int r = fat_read(Memory.ROM, fat_file_size);
-			goto ok;
-		}
-		printf("fat read failed.\n");
+		printf("Failed to read rom\n");
 		while (1);
 	}
-ok:
-	SNESROMSize = fat_file_size;
+	
 //	memcpy(Memory.ROM, smc, SNESROMSize = sizeof(smc));
 
 	Memory.LoadROM ("BLANK.SMC");
@@ -343,9 +336,9 @@ ok:
 
 extern "C" {	
 
-const char *getcwd(void)
+char* getcwd(char*, size_t)
 {
-	return "/";
+	return 0;
 }
 
 int chdir(const char *f)
@@ -354,26 +347,26 @@ int chdir(const char *f)
 }
 
 
-int getuid(void)
+uid_t getuid(void)
 {
 	return 0;
 }
 
-int getgid(void)
+gid_t getgid(void)
 {
 	return 0;
 }
 
-void chown()
+int chown(const char*, uid_t, gid_t)
 {
 }
 
-int stat()
+int stat(const char*, struct stat*)
 {
 	return -1;
 }
 
-int unlink()
+int unlink(const char*)
 {
 	return -1;
 }
