@@ -60,29 +60,33 @@ emulate ()
 {
 	while(1) // emulation loop
 	{
-		struct controller_data_s c;
-		if (get_controller_data(&c, 0))
+		int ctrl;
+		for (ctrl = 0; ctrl < 4; ++ctrl)
 		{
-//			printf("got controller data!\n");
-			int offset = 0x10;
-//			printf("a=%d, b=%d, x=%d, y=%d, lb=%d, rb=%d, start=%d, select=%d, up=%d, down=%d, left=%d, right=%d\n", 
-//				c.a, c.b, c.x, c.y, c.lb, c.rb, c.start, c.select, c.up, c.down, c.left, c.right);
+			struct controller_data_s c;
+			if (get_controller_data(&c, ctrl))
+			{
+	//			printf("got controller data!\n");
+				int offset = 0x10 + ctrl * 0x10;
+	//			printf("a=%d, b=%d, x=%d, y=%d, lb=%d, rb=%d, start=%d, select=%d, up=%d, down=%d, left=%d, right=%d\n", 
+	//				c.a, c.b, c.x, c.y, c.lb, c.rb, c.start, c.select, c.up, c.down, c.left, c.right);
 
-			S9xReportButton (offset + 0, c.b);
-			S9xReportButton (offset + 1, c.a);
-			S9xReportButton (offset + 2, c.x);
-			S9xReportButton (offset + 3, c.y);
+				S9xReportButton (offset + 0, c.b);
+				S9xReportButton (offset + 1, c.a);
+				S9xReportButton (offset + 2, c.x);
+				S9xReportButton (offset + 3, c.y);
 
-			S9xReportButton (offset + 4, c.lb);
-			S9xReportButton (offset + 5, c.rb);
+				S9xReportButton (offset + 4, c.lb);
+				S9xReportButton (offset + 5, c.rb);
 
-			S9xReportButton (offset + 6, c.start);
-			S9xReportButton (offset + 7, c.select);
+				S9xReportButton (offset + 6, c.start);
+				S9xReportButton (offset + 7, c.select);
 
-			S9xReportButton (offset + 8, c.up);
-			S9xReportButton (offset + 9, c.down);
-			S9xReportButton (offset + 10, c.left);
-			S9xReportButton (offset + 11, c.right);
+				S9xReportButton (offset + 8, c.up);
+				S9xReportButton (offset + 9, c.down);
+				S9xReportButton (offset + 10, c.left);
+				S9xReportButton (offset + 11, c.right);
+			}
 		}
 		S9xMainLoop ();
 
