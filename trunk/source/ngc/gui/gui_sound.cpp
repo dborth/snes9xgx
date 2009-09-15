@@ -52,9 +52,9 @@ void GuiSound::Play()
 		case SOUND_OGG:
 		voice = 0;
 		if(loop)
-			PlayOgg(mem_open((char *)sound, length), 0, OGG_INFINITE_TIME);
+			PlayOgg((char *)sound, length, 0, OGG_INFINITE_TIME);
 		else
-			PlayOgg(mem_open((char *)sound, length), 0, OGG_ONE_TIME);
+			PlayOgg((char *)sound, length, 0, OGG_ONE_TIME);
 		SetVolumeOgg(255*(volume/100.0));
 		break;
 	}
