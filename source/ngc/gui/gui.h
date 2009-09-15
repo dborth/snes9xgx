@@ -57,7 +57,7 @@ extern FreeTypeGX *fontSystem[];
 #define FILE_PAGESIZE 			10
 #define PAGESIZE 				8
 #define SAVELISTSIZE 			6
-#define MAX_SAVES 				20
+#define MAX_SAVES 				100
 #define MAX_OPTIONS 			150
 #define MAX_KEYBOARD_DISPLAY	32
 
@@ -843,12 +843,12 @@ class GuiOptionBrowser : public GuiElement
 
 typedef struct _savelist {
 	int length;
-	char filename[MAX_SAVES][256];
-	GuiImageData * previewImg[MAX_SAVES];
-	char date[MAX_SAVES][20];
-	char time[MAX_SAVES][10];
-	int type[MAX_SAVES];
-	int files[2][100];
+	char filename[MAX_SAVES+1][256];
+	GuiImageData * previewImg[MAX_SAVES+1];
+	char date[MAX_SAVES+1][20];
+	char time[MAX_SAVES+1][10];
+	int type[MAX_SAVES+1];
+	int files[2][MAX_SAVES+1];
 } SaveList;
 
 //!Display a list of game save files, with screenshots and file information
