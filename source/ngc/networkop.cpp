@@ -96,23 +96,6 @@ void UpdateCheck()
 							}
 						}
 					}
-					else // temporary, for compatibility
-					{
-						int versionnum = atoi(version);
-						if(versionnum > 19) // 019 (4.0.9)
-						{
-							item = mxmlFindElement(xml, xml, "file", NULL, NULL, MXML_DESCEND);
-							if(item)
-							{
-								const char * tmp = mxmlElementGetAttr(item, "url");
-								if(tmp)
-								{
-									snprintf(updateURL, 128, "%s", tmp);
-									updateFound = true;
-								}
-							}
-						}
-					}
 				}
 				mxmlDelete(xml);
 			}
