@@ -496,10 +496,10 @@ static GXRModeObj * FindVideoMode()
 
 			// Original Video modes (forced to PAL 60hz)
 			// set video signal mode
-			TV_239p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
-			TV_478i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
-			TV_224p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
-			TV_448i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
+			TV_239p.viTVMode = VI_TVMODE(mode->viTVMode >> 2, VI_NON_INTERLACE);
+			TV_478i.viTVMode = VI_TVMODE(mode->viTVMode >> 2, VI_INTERLACE);
+			TV_224p.viTVMode = VI_TVMODE(mode->viTVMode >> 2, VI_NON_INTERLACE);
+			TV_448i.viTVMode = VI_TVMODE(mode->viTVMode >> 2, VI_INTERLACE);
 			// set VI position
 			TV_239p.viYOrigin = (VI_MAX_HEIGHT_NTSC/2 - 478/2)/2;
 			TV_478i.viYOrigin = (VI_MAX_HEIGHT_NTSC - 478)/2;
