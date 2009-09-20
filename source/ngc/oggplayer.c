@@ -87,8 +87,10 @@ static int f_read(void * punt, int bytes, int blocks, int *f)
 	return c / bytes;
 }
 
-static int f_seek(int *f, long offset, int mode)
+static int f_seek(int *f, ogg_int64_t offset, int mode)
 {
+	if(f==NULL) return(-1);
+
 	int k, d;
 	mode &= 3;
 	if (*f >= 0x666 && *f <= 0x669)
