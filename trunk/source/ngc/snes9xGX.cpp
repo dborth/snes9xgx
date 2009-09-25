@@ -363,7 +363,7 @@ const devoptab_t gecko_out = {
 	NULL		// device statvfs_r
 };
 
-static void USBGeckoOutput()
+void USBGeckoOutput()
 {
 	LWP_MutexInit(&gecko_mutex, false);
 	gecko = usb_isgeckoalive(1);
