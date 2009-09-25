@@ -21,6 +21,7 @@
 #include <wiiuse/wpad.h>
 #include <fat.h>
 #include <debug.h>
+#include <sys/iosupport.h>
 
 #ifdef HW_RVL
 #include <di/di.h>
