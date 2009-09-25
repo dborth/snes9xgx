@@ -87,9 +87,9 @@ GuiText::~GuiText()
 	if(origText)
 		free(origText);
 	if(text)
-		delete text;
+		delete[] text;
 	if(textDyn)
-		delete textDyn;
+		delete[] textDyn;
 }
 
 void GuiText::SetText(const char * t)
@@ -97,9 +97,9 @@ void GuiText::SetText(const char * t)
 	if(origText)
 		free(origText);
 	if(text)
-		delete text;
+		delete[] text;
 	if(textDyn)
-		delete textDyn;
+		delete[] textDyn;
 
 	origText = NULL;
 	text = NULL;
@@ -147,7 +147,7 @@ void GuiText::SetScroll(int s)
 
 	if(textDyn)
 	{
-		delete(textDyn);
+		delete[] textDyn;
 		textDyn = NULL;
 	}
 	textScroll = s;
@@ -269,7 +269,7 @@ void GuiText::Draw()
 						tmpText[dynlen+1] = ' ';
 						strncat(&tmpText[dynlen+2], origText, maxChar - dynlen - 2);
 					}
-					if(textDyn) delete textDyn;
+					if(textDyn) delete[] textDyn;
 					textDyn = charToWideChar(tmpText);
 				}
 			}
@@ -331,7 +331,7 @@ void GuiText::Draw()
 			for(i=0; i < linenum; i++)
 			{
 				fontSystem[currentSize]->drawText(this->GetLeft(), this->GetTop()+voffset+i*lineheight, textrow[i], c, style);
-				delete textrow[i];
+				delete[] textrow[i];
 			}
 		}
 		else
