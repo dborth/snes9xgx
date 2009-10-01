@@ -21,30 +21,32 @@
 
 #define APPNAME 		"Snes9x GX"
 #define APPVERSION 		"4.1.1"
+#define APPFOLDER 		"snes9x"
 #define PREF_FILE_NAME 	"settings.xml"
 
 #define NOTSILENT 0
 #define SILENT 1
 
+const char pathPrefix[9][8] =
+{ "", "sd:/", "usb:/", "dvd:/", "smb:/", "mca:/", "mcb:/", "carda:/", "cardb:/" };
+
 enum {
-	METHOD_AUTO,
-	METHOD_SD,
-	METHOD_USB,
-	METHOD_DVD,
-	METHOD_SMB,
-	METHOD_MC_SLOTA,
-	METHOD_MC_SLOTB,
-	METHOD_SD_SLOTA,
-	METHOD_SD_SLOTB
+	DEVICE_AUTO,
+	DEVICE_SD,
+	DEVICE_USB,
+	DEVICE_DVD,
+	DEVICE_SMB,
+	DEVICE_MC_SLOTA,
+	DEVICE_MC_SLOTB,
+	DEVICE_SD_SLOTA,
+	DEVICE_SD_SLOTB
 };
 
 enum {
 	FILE_SRAM,
 	FILE_SNAPSHOT,
 	FILE_ROM,
-	FILE_CHEAT,
-	FILE_PREF,
-	FILE_SCREEN
+	FILE_CHEAT
 };
 
 enum
@@ -99,7 +101,6 @@ extern int ConfigRequested;
 extern int ShutdownRequested;
 extern int ExitRequested;
 extern char appPath[];
-extern int appLoadMethod;
 extern FreeTypeGX *fontSystem[];
 
 #endif

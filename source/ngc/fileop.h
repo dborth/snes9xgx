@@ -26,17 +26,22 @@
 void InitDeviceThread();
 void ResumeDeviceThread();
 void HaltDeviceThread();
+void HaltParseThread();
 void MountAllFAT();
 void UnmountAllFAT();
-bool ChangeInterface(int method, bool silent);
-int ParseDirectory(int method, bool waitParse = false);
+bool FindDevice(char * filepath, int * device);
+char * StripDevice(char * path);
+bool ChangeInterface(int device, bool silent);
+bool ChangeInterface(char * filepath, bool silent);
+void CreateAppPath(char * origpath);
+int ParseDirectory(bool waitParse = false);
 void AllocSaveBuffer();
 void FreeSaveBuffer();
-u32 LoadFile(char * rbuffer, char *filepath, u32 length, int method, bool silent);
-u32 LoadFile(char * filepath, int method, bool silent);
+u32 LoadFile(char * rbuffer, char *filepath, u32 length, bool silent);
+u32 LoadFile(char * filepath, bool silent);
 u32 LoadSzFile(char * filepath, unsigned char * rbuffer);
-u32 SaveFile(char * buffer, char *filepath, u32 datasize, int method, bool silent);
-u32 SaveFile(char * filepath, u32 datasize, int method, bool silent);
+u32 SaveFile(char * buffer, char *filepath, u32 datasize, bool silent);
+u32 SaveFile(char * filepath, u32 datasize, bool silent);
 
 extern unsigned char savebuffer[SAVEBUFFERSIZE];
 extern FILE * file;

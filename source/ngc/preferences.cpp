@@ -34,13 +34,14 @@ static mxml_node_t *section = NULL;
 static mxml_node_t *item = NULL;
 static mxml_node_t *elem = NULL;
 
-static char temp[20];
+static char temp[200];
 
 static const char * toStr(int i)
 {
 	sprintf(temp, "%d", i);
 	return temp;
 }
+
 static const char * FtoStr(float i)
 {
 	sprintf(temp, "%.2f", i);
@@ -104,9 +105,8 @@ static const char * XMLSaveCallback(mxml_node_t *node, int where)
 	return (NULL);
 }
 
-
 static int
-preparePrefsData (int method)
+preparePrefsData ()
 {
 	xml = mxmlNewXML("1.0");
 	mxmlSetWrapMargin(0); // disable line wrapping
@@ -243,7 +243,7 @@ static void loadXMLController(unsigned int controller[], const char * name)
  ***************************************************************************/
 
 static bool
-decodePrefsData (int method)
+decodePrefsData ()
 {
 	bool result = false;
 
@@ -252,7 +252,6 @@ decodePrefsData (int method)
 	if(xml)
 	{
 		// check settings version
-		// we don't do anything with the version #, but we'll store it anyway
 		item = mxmlFindElement(xml, xml, "file", "version", NULL, MXML_DESCEND);
 		if(item) // a version entry exists
 		{
@@ -346,23 +345,40 @@ decodePrefsData (int method)
 /****************************************************************************
  * Save Preferences
  ***************************************************************************/
+static char prefpath[MAXPATHLEN] = { 0 };
+
 bool
 SavePrefs (bool silent)
 {
-	char filepath[1024];
+	char filepath[MAXPATHLEN];
 	int datasize;
 	int offset = 0;
-	int method = appLoadMethod;
-
-	// We'll save using the first available method (probably SD) since this
-	// is the method preferences will be loaded from by default
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod(silent);
-
-	if(method == METHOD_AUTO)
-		return false;
-
-	if(!MakeFilePath(filepath, FILE_PREF, method))
+	int device = 0;
+	
+	if(prefpath[0] != 0)
+	{
+		strcpy(filepath, prefpath);
+		FindDevice(filepath, &device);
+	}
+	else if(appPath[0] != 0)
+	{
+		sprintf(filepath, "%s%s", appPath, PREF_FILE_NAME);
+		FindDevice(filepath, &device);
+	}
+	else
+	{
+		device = autoLoadMethod();
+		
+		if(device == 0)
+			return false;
+		
+		if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB)
+			sprintf(filepath, "%s%s", pathPrefix[device], PREF_FILE_NAME);
+		else
+			sprintf(filepath, "%ssnes9x/%s", pathPrefix[device], PREF_FILE_NAME);
+	}
+	
+	if(device == 0)
 		return false;
 
 	if (!silent)
@@ -371,9 +387,9 @@ SavePrefs (bool silent)
 	FixInvalidSettings();
 
 	AllocSaveBuffer ();
-	datasize = preparePrefsData (method);
+	datasize = preparePrefsData ();
 
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+	if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB)
 	{
 		// Set the comments
 		char prefscomment[2][32];
@@ -383,7 +399,7 @@ SavePrefs (bool silent)
 		SetMCSaveComments(prefscomment);
 	}
 
-	offset = SaveFile(filepath, datasize, method, silent);
+	offset = SaveFile(filepath, datasize, silent);
 
 	FreeSaveBuffer ();
 
@@ -399,26 +415,27 @@ SavePrefs (bool silent)
 }
 
 /****************************************************************************
- * Load Preferences from specified method
+ * Load Preferences from specified filepath
  ***************************************************************************/
 bool
-LoadPrefsFromMethod (int method)
+LoadPrefsFromMethod (char * filepath)
 {
 	bool retval = false;
-	char filepath[1024];
 	int offset = 0;
-
-	if(!MakeFilePath(filepath, FILE_PREF, method))
-		return false;
 
 	AllocSaveBuffer ();
 
-	offset = LoadFile(filepath, method, SILENT);
+	offset = LoadFile(filepath, SILENT);
 
 	if (offset > 0)
-		retval = decodePrefsData (method);
+		retval = decodePrefsData ();
 
 	FreeSaveBuffer ();
+	
+	if(retval)
+	{
+		strcpy(prefpath, filepath);
+	}
 
 	return retval;
 }
@@ -435,29 +452,28 @@ bool LoadPrefs()
 		return true;
 
 	bool prefFound = false;
+	char filepath[4][MAXPATHLEN];
+	int numDevices;
+	
+#ifdef HW_RVL
+	numDevices = 3;
+	sprintf(filepath[0], "%s/%s", appPath, PREF_FILE_NAME);
+	sprintf(filepath[1], "sd:/%s/%s", APPFOLDER, PREF_FILE_NAME);
+	sprintf(filepath[2], "usb:/%s/%s", APPFOLDER, PREF_FILE_NAME);
+#else
+	numDevices = 4;
+	sprintf(filepath[0], "carda:/%s/%s", APPFOLDER, PREF_FILE_NAME);
+	sprintf(filepath[1], "cardb:/%s/%s", APPFOLDER, PREF_FILE_NAME);
+	sprintf(filepath[2], "mca:/%s", PREF_FILE_NAME);
+	sprintf(filepath[3], "mcb:/%s", PREF_FILE_NAME);
+#endif
 
-	if(appLoadMethod == METHOD_SD)
+	for(int i=0; i<numDevices; i++)
 	{
-		if(ChangeInterface(METHOD_SD, SILENT))
-			prefFound = LoadPrefsFromMethod(METHOD_SD);
-	}
-	else if(appLoadMethod == METHOD_USB)
-	{
-		if(ChangeInterface(METHOD_USB, SILENT))
-			prefFound = LoadPrefsFromMethod(METHOD_USB);
-	}
-	else
-	{
-		if(ChangeInterface(METHOD_SD, SILENT))
-			prefFound = LoadPrefsFromMethod(METHOD_SD);
-		if(!prefFound && ChangeInterface(METHOD_USB, SILENT))
-			prefFound = LoadPrefsFromMethod(METHOD_USB);
-		if(!prefFound && TestMC(CARD_SLOTA, SILENT))
-			prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTA);
-		if(!prefFound && TestMC(CARD_SLOTB, SILENT))
-			prefFound = LoadPrefsFromMethod(METHOD_MC_SLOTB);
-		if(!prefFound && ChangeInterface(METHOD_SMB, SILENT))
-			prefFound = LoadPrefsFromMethod(METHOD_SMB);
+		prefFound = LoadPrefsFromMethod(filepath[i]);
+		
+		if(prefFound)
+			break;
 	}
 
 	prefLoaded = true; // attempted to load preferences

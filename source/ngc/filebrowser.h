@@ -25,6 +25,7 @@ typedef struct
 	int numEntries; // # of entries in browserList
 	int selIndex; // currently selected index of browserList
 	int pageIndex; // starting index of browserList page display
+	int size; // # of entries browerList has space allocated to store
 } BROWSERINFO;
 
 typedef struct
@@ -35,16 +36,26 @@ typedef struct
 	char isdir; // 0 - file, 1 - directory
 	char filename[MAXJOLIET + 1]; // full filename
 	char displayname[MAXJOLIET + 1]; // name for browser display
+	int icon; // icon to display
 } BROWSERENTRY;
 
 extern BROWSERINFO browser;
 extern BROWSERENTRY * browserList;
-extern char rootdir[10];
+
+enum
+{
+	ICON_NONE,
+	ICON_FOLDER,
+	ICON_SD,
+	ICON_USB,
+	ICON_DVD,
+	ICON_SMB
+};
 
 extern unsigned long SNESROMSize;
 
-bool MakeFilePath(char filepath[], int type, int method, char * filename = NULL, int filenum = -2);
-int UpdateDirName(int method);
+bool MakeFilePath(char filepath[], int type, char * filename = NULL, int filenum = -2);
+int UpdateDirName();
 int OpenGameList();
 int autoLoadMethod();
 int autoSaveMethod(bool silent);
@@ -52,8 +63,10 @@ int FileSortCallback(const void *f1, const void *f2);
 void StripExt(char* returnstring, char * inputstring);
 bool IsSz();
 void ResetBrowser();
-int BrowserLoadSz(int method);
-int BrowserChangeFolder(int method);
-int BrowserLoadFile(int method);
+bool AddBrowserEntry();
+bool IsDeviceRoot(char * path);
+int BrowserLoadSz();
+int BrowserChangeFolder();
+int BrowserLoadFile();
 
 #endif

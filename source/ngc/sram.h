@@ -10,7 +10,7 @@
  * SRAM save/load/import/export handling
  ***************************************************************************/
 
-bool SaveSRAM (char * filepath, int method, bool silent);
-bool SaveSRAMAuto (int method, bool silent);
-bool LoadSRAM (char * filepath, int method, bool silent);
-bool LoadSRAMAuto (int method, bool silent);
+bool SaveSRAM (char * filepath, bool silent);
+bool SaveSRAMAuto (bool silent);
+bool LoadSRAM (char * filepath, bool silent);
+bool LoadSRAMAuto (bool silent);

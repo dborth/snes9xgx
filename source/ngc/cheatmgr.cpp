@@ -64,20 +64,12 @@ SetupCheats()
 	int offset = 0;
 	uint16 i;
 
-	int method = GCSettings.SaveMethod;
-
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod(SILENT);
-
-	if(method == METHOD_AUTO)
-		return;
-
-	if(!MakeFilePath(filepath, FILE_CHEAT, method))
+	if(!MakeFilePath(filepath, FILE_CHEAT))
 		return;
 
 	AllocSaveBuffer();
 
-	offset = LoadFile(filepath, method, SILENT);
+	offset = LoadFile(filepath, SILENT);
 
 	// load cheat file if present
 	if(offset > 0)

@@ -28,9 +28,9 @@ typedef struct
 }
 MEMFILE;
 
-int NGCFreezeGame (char * filepath, int method, bool silent);
-int NGCFreezeGameAuto (int method, bool silent);
-int NGCUnfreezeGame (char * filepath, int method, bool silent);
-int NGCUnfreezeGameAuto (int method, bool silent);
+int NGCFreezeGame (char * filepath, bool silent);
+int NGCFreezeGameAuto (bool silent);
+int NGCUnfreezeGame (char * filepath, bool silent);
+int NGCUnfreezeGameAuto (bool silent);
 
 #endif
