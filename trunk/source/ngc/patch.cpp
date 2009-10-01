@@ -406,7 +406,7 @@ bool patchApplyPPF(MFILE *f, u8 **rom, int *size)
 	return res;
 }
 
-void LoadPatch(int method)
+void LoadPatch()
 {
 	int patchsize = 0;
 	int patchtype;
@@ -421,7 +421,7 @@ void LoadPatch(int method)
 
 	for(patchtype=0; patchtype<3; patchtype++)
 	{
-		patchsize = LoadFile(patchpath[patchtype], method, SILENT);
+		patchsize = LoadFile(patchpath[patchtype], SILENT);
 
 		if(patchsize)
 			break;

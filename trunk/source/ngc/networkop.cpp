@@ -38,7 +38,7 @@ bool updateFound = false; // true if an app update was found
 void UpdateCheck()
 {
 	// we can only check for the update if we have internet + SD
-	if(!updateChecked && networkInit && isMounted[METHOD_SD])
+	if(!updateChecked && networkInit && isMounted[DEVICE_SD])
 	{
 		static char url[128];
 		int retval;
@@ -262,7 +262,7 @@ ConnectShare (bool silent)
 		return false;
 	}
 
-	if(unmountRequired[METHOD_SMB])
+	if(unmountRequired[DEVICE_SMB])
 		CloseShare();
 
 	if(!networkInit)
@@ -288,9 +288,6 @@ ConnectShare (bool silent)
 		if(!networkShareInit && !silent)
 			ErrorPrompt("Failed to connect to network share.");
 	}
-
-	if(networkShareInit)
-		sprintf(rootdir, "smb:");
 
 	return networkShareInit;
 }

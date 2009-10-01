@@ -122,21 +122,19 @@ NGCFreezeMemBuffer ()
  * Do freeze game for Nintendo Gamecube
  ***************************************************************************/
 int
-NGCFreezeGame (char * filepath, int method, bool silent)
+NGCFreezeGame (char * filepath, bool silent)
 {
 	int offset = 0; // bytes written (actual)
 	int woffset = 0; // bytes written (expected)
 	int imgSize = 0; // image screenshot bytes written
 	char msg[100];
-
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod(silent);
-
-	if(method == METHOD_AUTO)
+	int device;
+				
+	if(!FindDevice(filepath, &device))
 		return 0;
 
 	// save screenshot - I would prefer to do this from gameScreenTex
-	if(gameScreenTex2 != NULL && method != METHOD_MC_SLOTA && method != METHOD_MC_SLOTB)
+	if(gameScreenTex2 != NULL && device != DEVICE_MC_SLOTA && device != DEVICE_MC_SLOTB)
 	{
 		AllocSaveBuffer ();
 
@@ -154,7 +152,7 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 			strncpy(screenpath, filepath, 1024);
 			screenpath[strlen(screenpath)-4] = 0;
 			sprintf(screenpath, "%s.png", screenpath);
-			SaveFile(screenpath, imgSize, method, silent);
+			SaveFile(screenpath, imgSize, silent);
 		}
 
 		FreeSaveBuffer ();
@@ -171,7 +169,7 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 	S9xPrepareSoundForSnapshotSave (TRUE);
 	S9xSetSoundMute (FALSE);
 
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC Slot A or B
+	if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB) // MC Slot A or B
 	{
 		// set freezecomment
 		char freezecomment[2][32];
@@ -204,7 +202,7 @@ NGCFreezeGame (char * filepath, int method, bool silent)
 		woffset = zippedsize + 8;
 	}
 
-	offset = SaveFile(filepath, woffset, method, silent);
+	offset = SaveFile(filepath, woffset, silent);
 
 done:
 
@@ -220,20 +218,14 @@ done:
 }
 
 int
-NGCFreezeGameAuto (int method, bool silent)
+NGCFreezeGameAuto (bool silent)
 {
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod(silent);
-
-	if(method == METHOD_AUTO)
-		return false;
-
 	char filepath[1024];
 
-	if(!MakeFilePath(filepath, FILE_SNAPSHOT, method, Memory.ROMFilename, 0))
+	if(!MakeFilePath(filepath, FILE_SNAPSHOT, Memory.ROMFilename, 0))
 		return false;
 
-	return NGCFreezeGame(filepath, method, silent);
+	return NGCFreezeGame(filepath, silent);
 }
 
 /****************************************************************************
@@ -278,25 +270,22 @@ NGCUnFreezeBlock (char *name, uint8 * block, int size)
  * NGCUnfreezeGame
  ***************************************************************************/
 int
-NGCUnfreezeGame (char * filepath, int method, bool silent)
+NGCUnfreezeGame (char * filepath, bool silent)
 {
 	int offset = 0;
 	int result = 0;
 	char msg[80];
-
 	bufoffset = 0;
-
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod(silent); // we use 'Save' because snapshot needs R/W
-
-	if(method == METHOD_AUTO)
+	int device;
+				
+	if(!FindDevice(filepath, &device))
 		return 0;
-
+	
 	AllocSaveBuffer();
 
-    offset = LoadFile(filepath, method, silent);
+    offset = LoadFile(filepath, silent);
 
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB) // MC in slot A or slot B
+	if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB) // MC in slot A or slot B
 	{
 		if (offset)
 		{
@@ -348,18 +337,12 @@ NGCUnfreezeGame (char * filepath, int method, bool silent)
 }
 
 int
-NGCUnfreezeGameAuto (int method, bool silent)
+NGCUnfreezeGameAuto (bool silent)
 {
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod(silent);
-
-	if(method == METHOD_AUTO)
-		return false;
-
 	char filepath[1024];
 
-	if(!MakeFilePath(filepath, FILE_SNAPSHOT, method, Memory.ROMFilename, 0))
+	if(!MakeFilePath(filepath, FILE_SNAPSHOT, Memory.ROMFilename, 0))
 		return false;
 
-	return NGCUnfreezeGame(filepath, method, silent);
+	return NGCUnfreezeGame(filepath, silent);
 }

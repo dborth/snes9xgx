@@ -13,6 +13,6 @@
 
 #include "memfile.h"
 
-void LoadPatch(int method);
+void LoadPatch();
 
 #endif

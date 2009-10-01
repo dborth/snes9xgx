@@ -170,8 +170,20 @@ extern const u32	progressbar_outline_png_size;
 extern const u8		throbber_png[];
 extern const u32	throbber_png_size;
 
-extern const u8		folder_png[];
-extern const u32	folder_png_size;
+extern const u8		icon_folder_png[];
+extern const u32	icon_folder_png_size;
+
+extern const u8		icon_sd_png[];
+extern const u32	icon_sd_png_size;
+
+extern const u8		icon_usb_png[];
+extern const u32	icon_usb_png_size;
+
+extern const u8		icon_dvd_png[];
+extern const u32	icon_dvd_png_size;
+
+extern const u8		icon_smb_png[];
+extern const u32	icon_smb_png_size;
 
 extern const u8		battery_png[];
 extern const u32	battery_png_size;

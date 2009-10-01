@@ -63,8 +63,7 @@ int ConfigRequested = 0;
 int ShutdownRequested = 0;
 int ResetRequested = 0;
 int ExitRequested = 0;
-char appPath[1024];
-int appLoadMethod = METHOD_AUTO;
+char appPath[1024] = { 0 };
 
 extern "C" {
 extern void __exception_setreload(int t);
@@ -101,7 +100,7 @@ void ExitApp()
 	SavePrefs(SILENT);
 
 	if (SNESROMSize > 0 && !ConfigRequested && GCSettings.AutoSave == 1)
-		SaveSRAMAuto(GCSettings.SaveMethod, SILENT);
+		SaveSRAMAuto(SILENT);
 
 	ExitCleanup();
 
@@ -290,35 +289,6 @@ emulate ()
 	} // main loop
 }
 
-static void CreateAppPath(char origpath[])
-{
-#ifdef HW_DOL
-	sprintf(appPath, GCSettings.SaveFolder);
-#else
-	char path[1024];
-	strncpy(path, origpath, 1024); // make a copy so we don't mess up original
-
-	char * loc;
-	int pos = -1;
-
-	if(strncmp(path, "sd:/", 5) == 0 || strncmp(path, "fat:/", 5) == 0)
-		appLoadMethod = METHOD_SD;
-	else if(strncmp(path, "usb:/", 5) == 0)
-		appLoadMethod = METHOD_USB;
-
-	loc = strrchr(path,'/');
-	if (loc != NULL)
-		*loc = 0; // strip file name
-
-	loc = strchr(path,'/'); // looking for first / (after sd: or usb:)
-	if (loc != NULL)
-		pos = loc - path + 1;
-
-	if(pos >= 0 && pos < 1024)
-		sprintf(appPath, &(path[pos]));
-#endif
-}
-
 /****************************************************************************
  * USB Gecko Debugging
  ***************************************************************************/
@@ -390,7 +360,7 @@ void USBGeckoOutput()
 int
 main(int argc, char *argv[])
 {
-	//USBGeckoOutput(); // uncomment to enable USB gecko output
+	USBGeckoOutput(); // uncomment to enable USB gecko output
 	__exception_setreload(8);
 
 	#ifdef HW_DOL
@@ -460,9 +430,10 @@ main(int argc, char *argv[])
 	#endif
 
 	// store path app was loaded from
-	sprintf(appPath, "snes9x");
+#ifdef HW_RVL
 	if(argc > 0 && argv[0] != NULL)
 		CreateAppPath(argv[0]);
+#endif
 
 	// Initialize libFAT for SD and USB
 	MountAllFAT();

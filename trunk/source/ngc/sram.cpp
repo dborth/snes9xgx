@@ -30,19 +30,17 @@
  * Load SRAM
  ***************************************************************************/
 bool
-LoadSRAM (char * filepath, int method, bool silent)
+LoadSRAM (char * filepath, bool silent)
 {
 	int offset = 0;
-
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod(silent); // we use 'Save' because SRAM needs R/W
-
-	if(method == METHOD_AUTO)
-		return false;
+	int device;
+			
+	if(!FindDevice(filepath, &device))
+		return 0;
 
 	AllocSaveBuffer();
 
-	offset = LoadFile(filepath, method, silent);
+	offset = LoadFile(filepath, silent);
 
 	if (offset > 0)
 	{
@@ -51,7 +49,7 @@ LoadSRAM (char * filepath, int method, bool silent)
 		if (size > 0x20000)
 			size = 0x20000;
 
-		if (method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB ||
+		if (device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB ||
 			offset == size + 512 || offset == size + 512 + SRTC_SRAM_PAD)
 		{
 			// SRAM has a 512 byte header - remove it, then import the SRAM,
@@ -86,36 +84,26 @@ LoadSRAM (char * filepath, int method, bool silent)
 }
 
 bool
-LoadSRAMAuto (int method, bool silent)
+LoadSRAMAuto (bool silent)
 {
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod(silent);
-
-	if(method == METHOD_AUTO)
-		return false;
-
 	char filepath[MAXPATHLEN];
-	char fullpath[MAXPATHLEN];
 	char filepath2[MAXPATHLEN];
-	char fullpath2[MAXPATHLEN];
 
 	// look for Auto save file
-	if(!MakeFilePath(filepath, FILE_SRAM, method, Memory.ROMFilename, 0))
+	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, 0))
 		return false;
 
-	if (LoadSRAM(filepath, method, silent))
+	if (LoadSRAM(filepath, silent))
 		return true;
 
 	// look for file with no number or Auto appended
-	if(!MakeFilePath(filepath2, FILE_SRAM, method, Memory.ROMFilename, -1))
+	if(!MakeFilePath(filepath2, FILE_SRAM, Memory.ROMFilename, -1))
 		return false;
 
-	if(LoadSRAM(filepath2, method, silent))
+	if(LoadSRAM(filepath2, silent))
 	{
 		// rename this file - append Auto
-		sprintf(fullpath, "%s%s", rootdir, filepath); // add device to path
-		sprintf(fullpath2, "%s%s", rootdir, filepath2); // add device to path
-		rename(fullpath2, fullpath); // rename file (to avoid duplicates)
+		rename(filepath2, filepath); // rename file (to avoid duplicates)
 		return true;
 	}
 	return false;
@@ -125,16 +113,14 @@ LoadSRAMAuto (int method, bool silent)
  * Save SRAM
  ***************************************************************************/
 bool
-SaveSRAM (char * filepath, int method, bool silent)
+SaveSRAM (char * filepath, bool silent)
 {
 	bool retval = false;
 	int offset = 0;
+	int device;
 
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod(silent);
-
-	if(method == METHOD_AUTO)
-		return false;
+	if(!FindDevice(filepath, &device))
+		return 0;
 
 	// determine SRAM size
 	int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
@@ -144,7 +130,7 @@ SaveSRAM (char * filepath, int method, bool silent)
 
 	if (size > 0)
 	{
-		if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+		if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB)
 		{
 			// Set the sramcomments
 			char sramcomment[2][32];
@@ -157,7 +143,7 @@ SaveSRAM (char * filepath, int method, bool silent)
 		AllocSaveBuffer ();
 		// copy in the SRAM, leaving a 512 byte header (for compatibility with other platforms)
 		memcpy(savebuffer+512, Memory.SRAM, size);
-		offset = SaveFile(filepath, size+512, method, silent);
+		offset = SaveFile(filepath, size+512, silent);
 		FreeSaveBuffer ();
 
 		if (offset > 0)
@@ -176,18 +162,12 @@ SaveSRAM (char * filepath, int method, bool silent)
 }
 
 bool
-SaveSRAMAuto (int method, bool silent)
+SaveSRAMAuto (bool silent)
 {
-	if(method == METHOD_AUTO)
-		method = autoSaveMethod(silent);
-
-	if(method == METHOD_AUTO)
-		return false;
-
 	char filepath[1024];
 
-	if(!MakeFilePath(filepath, FILE_SRAM, method, Memory.ROMFilename, 0))
+	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, 0))
 		return false;
 
-	return SaveSRAM(filepath, method, silent);
+	return SaveSRAM(filepath, silent);
 }

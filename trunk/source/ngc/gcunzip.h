@@ -13,9 +13,9 @@
 #define _GCUNZIP_H_
 
 int IsZipFile (char *buffer);
-char * GetFirstZipFilename(int method);
-int UnZipBuffer (unsigned char *outbuffer, int method);
-int SzParse(char * filepath, int method);
+char * GetFirstZipFilename();
+int UnZipBuffer (unsigned char *outbuffer, int device);
+int SzParse(char * filepath);
 int SzExtractFile(int i, unsigned char *buffer);
 void SzClose();
 

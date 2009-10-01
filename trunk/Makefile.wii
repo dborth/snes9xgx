@@ -34,7 +34,8 @@ CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
 			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
 			-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
 			-fomit-frame-pointer \
-			-Wno-unused-parameter -Wno-strict-aliasing
+			-Wno-unused-parameter -Wno-strict-aliasing \
+			-Wno-write-strings -Wno-parentheses
 
 CXXFLAGS	=	-save-temps -Xassembler -aln=$@.lst $(CFLAGS)
 

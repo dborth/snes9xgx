@@ -94,6 +94,20 @@ HaltDeviceThread()
 }
 
 /****************************************************************************
+ * HaltParseThread
+ *
+ * Signals the parse thread to stop.
+ ***************************************************************************/
+void
+HaltParseThread()
+{
+	parseHalt = true;
+
+	while(!LWP_ThreadIsSuspended(parsethread))
+		usleep(THREAD_SLEEP);
+}
+
+/****************************************************************************
  * devicecallback
  *
  * This checks our devices for changes (SD/USB removed) and
@@ -115,41 +129,41 @@ devicecallback (void *arg)
 	while (1)
 	{
 #ifdef HW_RVL
-		if(isMounted[METHOD_SD])
+		if(isMounted[DEVICE_SD])
 		{
 			if(!sd->isInserted()) // check if the device was removed
 			{
-				unmountRequired[METHOD_SD] = true;
-				isMounted[METHOD_SD] = false;
+				unmountRequired[DEVICE_SD] = true;
+				isMounted[DEVICE_SD] = false;
 			}
 		}
 
-		if(isMounted[METHOD_USB])
+		if(isMounted[DEVICE_USB])
 		{
 			if(!usb->isInserted()) // check if the device was removed
 			{
-				unmountRequired[METHOD_USB] = true;
-				isMounted[METHOD_USB] = false;
+				unmountRequired[DEVICE_USB] = true;
+				isMounted[DEVICE_USB] = false;
 			}
 		}
 
 		UpdateCheck();
 		InitializeNetwork(SILENT);
 #else
-		if(isMounted[METHOD_SD_SLOTA])
+		if(isMounted[DEVICE_SD_SLOTA])
 		{
 			if(!carda->isInserted()) // check if the device was removed
 			{
-				unmountRequired[METHOD_SD_SLOTA] = true;
-				isMounted[METHOD_SD_SLOTA] = false;
+				unmountRequired[DEVICE_SD_SLOTA] = true;
+				isMounted[DEVICE_SD_SLOTA] = false;
 			}
 		}
-		if(isMounted[METHOD_SD_SLOTB])
+		if(isMounted[DEVICE_SD_SLOTB])
 		{
 			if(!cardb->isInserted()) // check if the device was removed
 			{
-				unmountRequired[METHOD_SD_SLOTB] = true;
-				isMounted[METHOD_SD_SLOTB] = false;
+				unmountRequired[DEVICE_SD_SLOTB] = true;
+				isMounted[DEVICE_SD_SLOTB] = false;
 			}
 		}
 #endif
@@ -214,31 +228,35 @@ void UnmountAllFAT()
  * Sets libfat to use the device by default
  ***************************************************************************/
 
-bool MountFAT(int method)
+static bool MountFAT(int device, int silent)
 {
 	bool mounted = true; // assume our disc is already mounted
-	char name[10];
+	char name[10], name2[10];
 	const DISC_INTERFACE* disc = NULL;
 
-	switch(method)
+	switch(device)
 	{
 #ifdef HW_RVL
-		case METHOD_SD:
+		case DEVICE_SD:
 			sprintf(name, "sd");
+			sprintf(name2, "sd:");
 			disc = sd;
 			break;
-		case METHOD_USB:
+		case DEVICE_USB:
 			sprintf(name, "usb");
+			sprintf(name2, "usb:");
 			disc = usb;
 			break;
 #else
-		case METHOD_SD_SLOTA:
+		case DEVICE_SD_SLOTA:
 			sprintf(name, "carda");
+			sprintf(name2, "carda:");
 			disc = carda;
 			break;
 
-		case METHOD_SD_SLOTB:
+		case DEVICE_SD_SLOTB:
 			sprintf(name, "cardb");
+			sprintf(name2, "cardb:");
 			disc = cardb;
 			break;
 #endif
@@ -246,93 +264,172 @@ bool MountFAT(int method)
 			return false; // unknown device
 	}
 
-	sprintf(rootdir, "%s:", name);
-
-	if(unmountRequired[method])
+	if(unmountRequired[device])
 	{
-		unmountRequired[method] = false;
-		fatUnmount(rootdir);
+		unmountRequired[device] = false;
+		fatUnmount(name2);
 		disc->shutdown();
-		isMounted[method] = false;
+		isMounted[device] = false;
 	}
-	if(!isMounted[method])
+	if(!isMounted[device])
 	{
 		if(!disc->startup())
 			mounted = false;
 		else if(!fatMountSimple(name, disc))
 			mounted = false;
 	}
+	
+	if(!mounted && !silent)
+	{
+		if(device == DEVICE_SD)
+			ErrorPrompt("SD card not found!");
+		else
+			ErrorPrompt("USB drive not found!");
+	}
 
-	isMounted[method] = mounted;
+	isMounted[device] = mounted;
 	return mounted;
 }
 
 void MountAllFAT()
 {
 #ifdef HW_RVL
-	MountFAT(METHOD_SD);
-	MountFAT(METHOD_USB);
+	MountFAT(DEVICE_SD, SILENT);
+	MountFAT(DEVICE_USB, SILENT);
 #else
-	MountFAT(METHOD_SD_SLOTA);
-	MountFAT(METHOD_SD_SLOTB);
+	MountFAT(DEVICE_SD_SLOTA, SILENT);
+	MountFAT(DEVICE_SD_SLOTB, SILENT);
 #endif
+}
+
+bool FindDevice(char * filepath, int * device)
+{
+	if(!filepath || filepath[0] == 0)
+		return false;
+	
+	if(strncmp(filepath, "sd:", 3) == 0)
+	{
+		*device = DEVICE_SD;
+		return true;
+	}
+	else if(strncmp(filepath, "usb:", 4) == 0)
+	{
+		*device = DEVICE_USB;
+		return true;
+	}
+	else if(strncmp(filepath, "dvd:", 4) == 0)
+	{
+		*device = DEVICE_DVD;
+		return true;
+	}
+	else if(strncmp(filepath, "smb:", 4) == 0)
+	{
+		*device = DEVICE_SMB;
+		return true;
+	}
+	else if(strncmp(filepath, "carda:", 5) == 0)
+	{
+		*device = DEVICE_SD_SLOTA;
+		return true;
+	}
+	else if(strncmp(filepath, "cardb:", 5) == 0)
+	{
+		*device = DEVICE_SD_SLOTB;
+		return true;
+	}
+	else if(strncmp(filepath, "mca:", 4) == 0)
+	{
+		*device = DEVICE_MC_SLOTA;
+		return true;
+	}
+	else if(strncmp(filepath, "mcb:", 4) == 0)
+	{
+		*device = DEVICE_MC_SLOTB;
+		return true;
+	}
+	return false;
+}
+
+char * StripDevice(char * path)
+{
+	if(path == NULL)
+		return NULL;
+	
+	char * newpath = strchr(path,'/');
+	
+	if(newpath != NULL)
+		newpath++;
+	
+	return newpath;
 }
 
 /****************************************************************************
  * ChangeInterface
  * Attempts to mount/configure the device specified
  ***************************************************************************/
-bool ChangeInterface(int method, bool silent)
+bool ChangeInterface(int device, bool silent)
 {
 	bool mounted = false;
-
-	if(method == METHOD_SD)
+	
+	switch(device)
 	{
-		#ifdef HW_RVL
-		mounted = MountFAT(METHOD_SD); // try Wii internal SD
-		#else
-		mounted = MountFAT(METHOD_SD_SLOTA); // try SD Gecko on slot A
-		if(!mounted) // internal SD and SD Gecko (on slot A) not found
-			mounted = MountFAT(METHOD_SD_SLOTB); // try SD Gecko on slot B
-		#endif
-		if(!mounted && !silent) // no SD device found
-			ErrorPrompt("SD card not found!");
-	}
-	else if(method == METHOD_USB)
-	{
-		#ifdef HW_RVL
-		mounted = MountFAT(method);
-
-		if(!mounted && !silent)
-			ErrorPrompt("USB drive not found!");
-		#endif
-	}
-	else if(method == METHOD_DVD)
-	{
-		mounted = MountDVD(silent);
-	}
+		case DEVICE_SD:
+		case DEVICE_USB:
+			mounted = MountFAT(device, silent);
+			break;
+		case DEVICE_DVD:
+			mounted = MountDVD(silent);
+			break;
 #ifdef HW_RVL
-	else if(method == METHOD_SMB)
-	{
-		mounted = ConnectShare(silent);
-	}
+		case DEVICE_SMB:
+			mounted = ConnectShare(silent);
+			break;
 #endif
-	else if(method == METHOD_MC_SLOTA)
-	{
-		mounted = TestMC(CARD_SLOTA, silent);
-	}
-	else if(method == METHOD_MC_SLOTB)
-	{
-		mounted = TestMC(CARD_SLOTB, silent);
-	}
-
-	if(!mounted)
-	{
-		sprintf(browser.dir,"/");
-		rootdir[0] = 0;
+		case DEVICE_MC_SLOTA:
+			mounted = TestMC(CARD_SLOTA, silent);
+			break;
+		case DEVICE_MC_SLOTB:
+			mounted = TestMC(CARD_SLOTB, silent);
+			break;
 	}
 
 	return mounted;
+}
+
+bool ChangeInterface(char * filepath, bool silent)
+{
+	int device = -1;
+
+	if(!FindDevice(filepath, &device))
+		return false;
+
+	return ChangeInterface(device, silent);
+}
+
+void CreateAppPath(char * origpath)
+{
+	char * path = strdup(origpath); // make a copy so we don't mess up original
+
+	if(!path)
+		return;
+	
+	char * loc = strrchr(path,'/');
+	if (loc != NULL)
+		*loc = 0; // strip file name
+
+	int pos = 0;
+
+	// replace fat:/ with sd:/
+	if(strncmp(path, "fat:/", 5) == 0)
+	{
+		pos++;
+		path[1] = 's';
+		path[2] = 'd';
+	}
+	if(ChangeInterface(&path[pos], SILENT))
+		strncpy(appPath, &path[pos], MAXPATHLEN);
+	appPath[MAXPATHLEN-1] = 0;
+	free(path);
 }
 
 bool ParseDirEntries()
@@ -357,37 +454,26 @@ bool ParseDirEntries()
 			i--;
 			continue;
 		}
-
-		BROWSERENTRY * newBrowserList = (BROWSERENTRY *)realloc(browserList, (browser.numEntries+i+1) * sizeof(BROWSERENTRY));
-
-		if(!newBrowserList) // failed to allocate required memory
+		
+		if(AddBrowserEntry())
 		{
-			ResetBrowser();
-			ErrorPrompt("Out of memory: too many files!");
-			break;
-		}
-		else
-		{
-			browserList = newBrowserList;
-		}
-
-		memset(&(browserList[browser.numEntries+i]), 0, sizeof(BROWSERENTRY)); // clear the new entry
-
-		strncpy(browserList[browser.numEntries+i].filename, filename, MAXJOLIET);
-		browserList[browser.numEntries+i].length = filestat.st_size;
-		browserList[browser.numEntries+i].mtime = filestat.st_mtime;
-		browserList[browser.numEntries+i].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
-
-		if(browserList[browser.numEntries+i].isdir)
-		{
-			if(strcmp(filename, "..") == 0)
-				sprintf(browserList[browser.numEntries+i].displayname, "Up One Level");
+			strncpy(browserList[browser.numEntries+i].filename, filename, MAXJOLIET);
+			browserList[browser.numEntries+i].length = filestat.st_size;
+			browserList[browser.numEntries+i].mtime = filestat.st_mtime;
+			browserList[browser.numEntries+i].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
+	
+			if(browserList[browser.numEntries+i].isdir)
+			{
+				if(strcmp(filename, "..") == 0)
+					sprintf(browserList[browser.numEntries+i].displayname, "Up One Level");
+				else
+					strncpy(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename, MAXJOLIET);
+				browserList[browser.numEntries+i].icon = ICON_FOLDER;
+			}
 			else
-				strncpy(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename, MAXJOLIET);
-		}
-		else
-		{
-			StripExt(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename); // hide file extension
+			{
+				StripExt(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename); // hide file extension
+			}
 		}
 	}
 
@@ -411,52 +497,54 @@ bool ParseDirEntries()
  * Browse subdirectories
  **************************************************************************/
 int
-ParseDirectory(int method, bool waitParse)
+ParseDirectory(bool waitParse)
 {
-	char fulldir[MAXPATHLEN];
 	char msg[128];
 	int retry = 1;
 	bool mounted = false;
-
-	// halt parsing
-	parseHalt = true;
-
-	while(!LWP_ThreadIsSuspended(parsethread))
-		usleep(THREAD_SLEEP);
-
-	// reset browser
-	dirIter = NULL;
-	ResetBrowser();
-
+	
+	ResetBrowser(); // reset browser
+	
 	// open the directory
 	while(dirIter == NULL && retry == 1)
 	{
-		mounted = ChangeInterface(method, NOTSILENT);
-		sprintf(fulldir, "%s%s", rootdir, browser.dir); // add device to path
-		if(mounted) dirIter = diropen(fulldir);
+		mounted = ChangeInterface(browser.dir, NOTSILENT);
+		if(mounted)
+			dirIter = diropen(browser.dir);
+		else
+			return -1;
+
 		if(dirIter == NULL)
 		{
-			unmountRequired[method] = true;
-			sprintf(msg, "Error opening %s", fulldir);
+			sprintf(msg, "Error opening %s", browser.dir);
 			retry = ErrorPromptRetry(msg);
 		}
 	}
 
-	// if we can't open the dir, try opening the root dir
+	// if we can't open the dir, try higher levels
 	if (dirIter == NULL)
 	{
-		if(ChangeInterface(method, SILENT))
+		while(!IsDeviceRoot(browser.dir))
 		{
-			sprintf(browser.dir,"/");
-			sprintf(fulldir, "%s%s", rootdir, browser.dir);
-			dirIter = diropen(fulldir);
-			if (dirIter == NULL)
-			{
-				sprintf(msg, "Error opening %s", rootdir);
-				ErrorPrompt(msg);
-				return -1;
-			}
+			char * devEnd = strrchr(browser.dir, '/');
+			devEnd[0] = 0; // strip remaining file listing
+			dirIter = diropen(browser.dir);
+			if (dirIter)
+				break;
 		}
+	}
+	
+	if(dirIter == NULL)
+		return -1;
+
+	if(IsDeviceRoot(browser.dir))
+	{
+		browser.numEntries = 1;
+		sprintf(browserList[0].filename, "..");
+		sprintf(browserList[0].displayname, "Up One Level");
+		browserList[0].length = 0;
+		browserList[0].mtime = 0;
+		browserList[0].isdir = 1; // flag this as a dir
 	}
 
 	parseHalt = false;
@@ -540,24 +628,27 @@ LoadSzFile(char * filepath, unsigned char * rbuffer)
  * LoadFile
  ***************************************************************************/
 u32
-LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
+LoadFile (char * rbuffer, char *filepath, u32 length, bool silent)
 {
 	char zipbuffer[2048];
 	u32 size = 0;
 	u32 readsize = 0;
-	char fullpath[MAXPATHLEN];
 	int retry = 1;
+	int device;
+	
+	if(!FindDevice(filepath, &device))
+		return 0;
 
-	switch(method)
+	switch(device)
 	{
-		case METHOD_DVD:
-			return LoadDVDFile (rbuffer, filepath, length, silent);
+		case DEVICE_DVD:
+			return LoadDVDFile (rbuffer, StripDevice(filepath), length, silent);
 			break;
-		case METHOD_MC_SLOTA:
-			return LoadMCFile (rbuffer, CARD_SLOTA, filepath, silent);
+		case DEVICE_MC_SLOTA:
+			return LoadMCFile (rbuffer, CARD_SLOTA, StripDevice(filepath), silent);
 			break;
-		case METHOD_MC_SLOTB:
-			return LoadMCFile (rbuffer, CARD_SLOTB, filepath, silent);
+		case DEVICE_MC_SLOTB:
+			return LoadMCFile (rbuffer, CARD_SLOTB, StripDevice(filepath), silent);
 			break;
 	}
 
@@ -571,10 +662,9 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 	// open the file
 	while(!size && retry == 1)
 	{
-		if(ChangeInterface(method, silent))
+		if(ChangeInterface(device, silent))
 		{
-			sprintf(fullpath, "%s%s", rootdir, filepath); // add device to filepath
-			file = fopen (fullpath, "rb");
+			file = fopen (filepath, "rb");
 
 			if(file > 0)
 			{
@@ -590,7 +680,7 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 					{
 						if (IsZipFile (zipbuffer))
 						{
-							size = UnZipBuffer ((unsigned char *)rbuffer, method); // unzip
+							size = UnZipBuffer ((unsigned char *)rbuffer, device); // unzip
 						}
 						else
 						{
@@ -631,7 +721,7 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 		{
 			if(!silent)
 			{
-				unmountRequired[method] = true;
+				unmountRequired[device] = true;
 				retry = ErrorPromptRetry("Error loading file!");
 			}
 			else
@@ -647,9 +737,9 @@ LoadFile (char * rbuffer, char *filepath, u32 length, int method, bool silent)
 	return size;
 }
 
-u32 LoadFile(char * filepath, int method, bool silent)
+u32 LoadFile(char * filepath, bool silent)
 {
-	return LoadFile((char *)savebuffer, filepath, 0, method, silent);
+	return LoadFile((char *)savebuffer, filepath, 0, silent);
 }
 
 /****************************************************************************
@@ -657,23 +747,26 @@ u32 LoadFile(char * filepath, int method, bool silent)
  * Write buffer to file
  ***************************************************************************/
 u32
-SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
+SaveFile (char * buffer, char *filepath, u32 datasize, bool silent)
 {
-	char fullpath[MAXPATHLEN];
 	u32 written = 0;
 	int retry = 1;
+	int device;
+		
+	if(!FindDevice(filepath, &device))
+		return 0;
 
 	if(datasize == 0)
 		return 0;
 
 	ShowAction("Saving...");
 
-	if(method == METHOD_MC_SLOTA || method == METHOD_MC_SLOTB)
+	if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB)
 	{
-		if(method == METHOD_MC_SLOTA)
-			return SaveMCFile (buffer, CARD_SLOTA, filepath, datasize, silent);
+		if(device == DEVICE_MC_SLOTA)
+			return SaveMCFile (buffer, CARD_SLOTA, StripDevice(filepath), datasize, silent);
 		else
-			return SaveMCFile (buffer, CARD_SLOTB, filepath, datasize, silent);
+			return SaveMCFile (buffer, CARD_SLOTB, StripDevice(filepath), datasize, silent);
 	}
 
 	// stop checking if devices were removed/inserted
@@ -682,10 +775,9 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 
 	while(!written && retry == 1)
 	{
-		if(ChangeInterface(method, silent))
+		if(ChangeInterface(device, silent))
 		{
-			sprintf(fullpath, "%s%s", rootdir, filepath); // add device to filepath
-			file = fopen (fullpath, "wb");
+			file = fopen (filepath, "wb");
 
 			if (file > 0)
 			{
@@ -705,7 +797,7 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 		}
 		if(!written)
 		{
-			unmountRequired[method] = true;
+			unmountRequired[device] = true;
 			if(!silent)
 				retry = ErrorPromptRetry("Error saving file!");
 			else
@@ -720,7 +812,7 @@ SaveFile (char * buffer, char *filepath, u32 datasize, int method, bool silent)
 	return written;
 }
 
-u32 SaveFile(char * filepath, u32 datasize, int method, bool silent)
+u32 SaveFile(char * filepath, u32 datasize, bool silent)
 {
-	return SaveFile((char *)savebuffer, filepath, datasize, method, silent);
+	return SaveFile((char *)savebuffer, filepath, datasize, silent);
 }

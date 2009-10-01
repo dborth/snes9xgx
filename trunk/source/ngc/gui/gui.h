@@ -920,7 +920,7 @@ class GuiFileBrowser : public GuiElement
 
 		GuiText * fileListText[FILE_PAGESIZE];
 		GuiImage * fileListBg[FILE_PAGESIZE];
-		GuiImage * fileListFolder[FILE_PAGESIZE];
+		GuiImage * fileListIcon[FILE_PAGESIZE];
 
 		GuiButton * arrowUpBtn;
 		GuiButton * arrowDownBtn;
@@ -937,7 +937,11 @@ class GuiFileBrowser : public GuiElement
 
 		GuiImageData * bgFileSelection;
 		GuiImageData * bgFileSelectionEntry;
-		GuiImageData * fileFolder;
+		GuiImageData * iconFolder;
+		GuiImageData * iconSD;
+		GuiImageData * iconUSB;
+		GuiImageData * iconDVD;
+		GuiImageData * iconSMB;
 		GuiImageData * scrollbar;
 		GuiImageData * arrowDown;
 		GuiImageData * arrowDownOver;
