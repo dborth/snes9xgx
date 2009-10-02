@@ -8,7 +8,15 @@
  * Network and SMB support routines
  ****************************************************************************/
 
-#ifdef HW_RVL
+#ifdef HW_DOL
+
+bool
+ConnectShare (bool silent)
+{
+	return false;
+}
+
+#else
 
 #include <network.h>
 #include <smb.h>

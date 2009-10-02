@@ -356,7 +356,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 				{
 					delete fileListIcon[i];
 					fileListIcon[i] = NULL;
-					fileListText[i]->SetPosition(10,0);
+					fileListText[i]->SetPosition(5,0);
 				}
 
 				switch(browserList[browser.pageIndex+i].icon)
