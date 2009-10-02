@@ -380,11 +380,9 @@ bool ChangeInterface(int device, bool silent)
 		case DEVICE_DVD:
 			mounted = MountDVD(silent);
 			break;
-#ifdef HW_RVL
 		case DEVICE_SMB:
 			mounted = ConnectShare(silent);
 			break;
-#endif
 		case DEVICE_MC_SLOTA:
 			mounted = TestMC(CARD_SLOTA, silent);
 			break;
@@ -527,6 +525,10 @@ ParseDirectory(bool waitParse)
 		while(!IsDeviceRoot(browser.dir))
 		{
 			char * devEnd = strrchr(browser.dir, '/');
+
+			if(devEnd == NULL)
+				break;
+
 			devEnd[0] = 0; // strip remaining file listing
 			dirIter = diropen(browser.dir);
 			if (dirIter)

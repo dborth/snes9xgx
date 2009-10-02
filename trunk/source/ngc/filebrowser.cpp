@@ -281,6 +281,12 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 	}
 	else
 	{
+		if(GCSettings.SaveMethod == DEVICE_AUTO)
+			GCSettings.SaveMethod = autoSaveMethod(SILENT);
+		
+		if(GCSettings.SaveMethod == DEVICE_AUTO)
+			return false;
+		
 		switch(type)
 		{
 			case FILE_SRAM:
@@ -686,7 +692,7 @@ OpenGameList ()
 
 	// change current dir to roms directory
 	if(device > 0)
-		sprintf(browser.dir, "%s%s", pathPrefix[device], GCSettings.LoadFolder);
+		sprintf(browser.dir, "%s%s/", pathPrefix[device], GCSettings.LoadFolder);
 	else
 		browser.dir[0] = 0;
 	
