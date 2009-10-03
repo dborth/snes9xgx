@@ -665,7 +665,7 @@ LoadSzFile(char * filepath, unsigned char * rbuffer)
 	file = fopen (filepath, "rb");
 	if (file > 0)
 	{
-		size = SzExtractFile(atoi(browserList[browser.selIndex].filename), rbuffer);
+		size = SzExtractFile(browserList[browser.selIndex].filenum, rbuffer);
 		fclose (file);
 	}
 	else

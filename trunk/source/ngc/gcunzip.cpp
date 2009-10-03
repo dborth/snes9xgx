@@ -23,10 +23,8 @@ extern "C" {
 }
 
 #include "snes9xGX.h"
-#include "networkop.h"
 #include "fileop.h"
 #include "filebrowser.h"
-#include "video.h"
 #include "menu.h"
 #include "gcunzip.h"
 
@@ -101,19 +99,19 @@ IsZipFile (char *buffer)
 * UnZipBuffer
 ******************************************************************************/
 
-int
+size_t
 UnZipBuffer (unsigned char *outbuffer)
 {
 	PKZIPHEADER pkzip;
-	int zipoffset = 0;
-	int zipchunk = 0;
+	size_t zipoffset = 0;
+	size_t zipchunk = 0;
 	char out[ZIPCHUNK];
 	z_stream zs;
 	int res;
-	int bufferoffset = 0;
-	int have = 0;
+	size_t bufferoffset = 0;
+	size_t have = 0;
 	char readbuffer[ZIPCHUNK];
-	int sizeread = 0;
+	size_t sizeread = 0;
 
 	// Read Zip Header
 	fseek(file, 0, SEEK_SET);
@@ -352,6 +350,18 @@ static SZ_RESULT SzFileSeekImp(void *object, CFileSize pos)
 }
 
 /****************************************************************************
+* SzClose
+*
+* Closes a 7z file
+***************************************************************************/
+
+void SzClose()
+{
+	if(SzDb.Database.NumFiles > 0)
+		SzArDbExFree(&SzDb, SzAllocImp.Free);
+}
+
+/****************************************************************************
 * SzParse
 *
 * Opens a 7z file, and parses it
@@ -420,9 +430,12 @@ int SzParse(char * filepath)
 			ResetBrowser();
 
 			// add '..' folder in case the user wants exit the 7z
+			AddBrowserEntry();
+
 			sprintf(browserList[0].displayname, "Up One Level");
 			browserList[0].isdir = 1;
 			browserList[0].length = filelen;
+			browserList[0].icon = ICON_FOLDER;
 
 			// get contents and parse them into file list structure
 			unsigned int SzI, SzJ;
@@ -435,34 +448,28 @@ int SzParse(char * filepath)
 				if (SzF->IsDirectory)
 					continue;
 
-				BROWSERENTRY * newBrowserList = (BROWSERENTRY *)realloc(browserList, (SzJ+1) * sizeof(BROWSERENTRY));
-
-				if(!newBrowserList) // failed to allocate required memory
+				if(!AddBrowserEntry())
 				{
 					ResetBrowser();
 					ErrorPrompt("Out of memory: too many files!");
-					nbfiles = 0;
+					SzClose();
+					SzJ = 0;
 					break;
 				}
-				else
-				{
-					browserList = newBrowserList;
-				}
-				memset(&(browserList[SzJ]), 0, sizeof(BROWSERENTRY)); // clear the new entry
 
 				// parse information about this file to the file list structure
-				sprintf(browserList[SzJ].filename, "%d", SzI); // the extraction function identifies the file with this number
-				StripExt(browserList[SzJ].displayname, SzF->Name);
+				strncpy(browserList[SzJ].filename, SzF->Name, MAXJOLIET);
+				StripExt(browserList[SzJ].displayname, browserList[SzJ].filename);
 				browserList[SzJ].length = SzF->Size; // filesize
 				browserList[SzJ].isdir = 0; // only files will be displayed (-> no flags)
+				browserList[SzJ].filenum = SzI; // the extraction function identifies the file with this number
 				SzJ++;
 			}
-
 			nbfiles = SzJ;
 		}
 		else
 		{
-			SzArDbExFree(&SzDb, SzAllocImp.Free);
+			SzClose();
 		}
 	}
 
@@ -474,25 +481,13 @@ int SzParse(char * filepath)
 }
 
 /****************************************************************************
-* SzClose
-*
-* Closes a 7z file
-***************************************************************************/
-
-void SzClose()
-{
-	if(SzDb.Database.NumFiles > 0)
-		SzArDbExFree(&SzDb, SzAllocImp.Free);
-}
-
-/****************************************************************************
 * SzExtractFile
 *
 * Extracts the given file # into the buffer specified
 * Must parse the 7z BEFORE running this function
 ***************************************************************************/
 
-int SzExtractFile(int i, unsigned char *buffer)
+size_t SzExtractFile(int i, unsigned char *buffer)
 {
 	// prepare some variables
 	SzBlockIndex = 0xFFFFFFFF;
