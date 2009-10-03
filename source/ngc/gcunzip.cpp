@@ -23,7 +23,6 @@ extern "C" {
 }
 
 #include "snes9xGX.h"
-#include "dvd.h"
 #include "networkop.h"
 #include "fileop.h"
 #include "filebrowser.h"
@@ -103,7 +102,7 @@ IsZipFile (char *buffer)
 ******************************************************************************/
 
 int
-UnZipBuffer (unsigned char *outbuffer, int device)
+UnZipBuffer (unsigned char *outbuffer)
 {
 	PKZIPHEADER pkzip;
 	int zipoffset = 0;
@@ -112,22 +111,13 @@ UnZipBuffer (unsigned char *outbuffer, int device)
 	z_stream zs;
 	int res;
 	int bufferoffset = 0;
-	int readoffset = 0;
 	int have = 0;
 	char readbuffer[ZIPCHUNK];
 	int sizeread = 0;
 
 	// Read Zip Header
-	switch (device)
-	{
-		case DEVICE_DVD:
-			sizeread = dvd_safe_read (readbuffer, ZIPCHUNK, 0);
-			break;
-		default:
-			fseek(file, 0, SEEK_SET);
-			sizeread = fread (readbuffer, 1, ZIPCHUNK, file);
-			break;
-	}
+	fseek(file, 0, SEEK_SET);
+	sizeread = fread (readbuffer, 1, ZIPCHUNK, file);
 
 	if(sizeread <= 0)
 		return 0;
@@ -190,16 +180,7 @@ UnZipBuffer (unsigned char *outbuffer, int device)
 		zipoffset = 0;
 		zipchunk = ZIPCHUNK;
 
-		switch (device)
-		{
-			case DEVICE_DVD:
-				readoffset += ZIPCHUNK;
-				sizeread = dvd_safe_read (readbuffer, ZIPCHUNK, readoffset);
-				break;
-			default:
-				sizeread = fread (readbuffer, 1, ZIPCHUNK, file);
-				break;
-		}
+		sizeread = fread (readbuffer, 1, ZIPCHUNK, file);
 		if(sizeread <= 0)
 			goto done; // read failure
 
@@ -338,16 +319,8 @@ static SZ_RESULT SzFileReadImp(void *object, void **buffer, size_t maxRequiredSi
 		maxRequiredSize = 2048;
 
 	// read data
-	switch (szMethod)
-	{
-		case DEVICE_DVD:
-			sizeread = dvd_safe_read(sz_buffer, maxRequiredSize, offset);
-			break;
-		default:
-			seekok = fseek(file, offset, SEEK_SET);
-			sizeread = fread(sz_buffer, 1, maxRequiredSize, file);
-			break;
-	}
+	seekok = fseek(file, offset, SEEK_SET);
+	sizeread = fread(sz_buffer, 1, maxRequiredSize, file);
 
 	if(seekok != 0 || sizeread <= 0)
 		return SZE_FAILREAD;
@@ -407,19 +380,9 @@ int SzParse(char * filepath)
 	SzArchiveStream.pos = 0;
 
 	// open file
-	switch (device)
-	{
-		case DEVICE_SD:
-		case DEVICE_USB:
-		case DEVICE_SMB:
-			file = fopen (filepath, "rb");
-			if(!file)
-				return 0;
-			break;
-		case DEVICE_DVD:
-			SwitchDVDFolder(filepath);
-			break;
-	}
+	file = fopen (filepath, "rb");
+	if(!file)
+		return 0;
 
 	// set szMethod to current chosen load device
 	szMethod = device;
@@ -509,14 +472,7 @@ int SzParse(char * filepath)
 	CancelAction();
 
 	// close file
-	switch (device)
-	{
-		case DEVICE_SD:
-		case DEVICE_USB:
-		case DEVICE_SMB:
-			fclose(file);
-			break;
-	}
+	fclose(file);
 	return nbfiles;
 }
 
