@@ -599,6 +599,7 @@ ParseDirectory(bool waitParse)
 		browserList[0].length = 0;
 		browserList[0].mtime = 0;
 		browserList[0].isdir = 1; // flag this as a dir
+		browserList[0].icon = ICON_FOLDER;
 	}
 
 	parseHalt = false;
@@ -664,7 +665,7 @@ LoadSzFile(char * filepath, unsigned char * rbuffer)
 	file = fopen (filepath, "rb");
 	if (file > 0)
 	{
-		size = SzExtractFile(browserList[browser.selIndex].offset, rbuffer);
+		size = SzExtractFile(atoi(browserList[browser.selIndex].filename), rbuffer);
 		fclose (file);
 	}
 	else

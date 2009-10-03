@@ -372,7 +372,6 @@ int SzParse(char * filepath)
 
 	// save the length/offset of this file
 	unsigned int filelen = browserList[browser.selIndex].length;
-	u64 fileoff = browserList[browser.selIndex].offset;
 
 	// setup archive stream
 	SzArchiveStream.offset = 0;
@@ -423,7 +422,6 @@ int SzParse(char * filepath)
 			// add '..' folder in case the user wants exit the 7z
 			sprintf(browserList[0].displayname, "Up One Level");
 			browserList[0].isdir = 1;
-			browserList[0].offset = fileoff;
 			browserList[0].length = filelen;
 
 			// get contents and parse them into file list structure
@@ -453,10 +451,9 @@ int SzParse(char * filepath)
 				memset(&(browserList[SzJ]), 0, sizeof(BROWSERENTRY)); // clear the new entry
 
 				// parse information about this file to the file list structure
-				strncpy(browserList[SzJ].filename, SzF->Name, MAXJOLIET);
-				StripExt(browserList[SzJ].displayname, browserList[SzJ].filename);
+				sprintf(browserList[SzJ].filename, "%d", SzI); // the extraction function identifies the file with this number
+				StripExt(browserList[SzJ].displayname, SzF->Name);
 				browserList[SzJ].length = SzF->Size; // filesize
-				browserList[SzJ].offset = SzI; // the extraction function identifies the file with this number
 				browserList[SzJ].isdir = 0; // only files will be displayed (-> no flags)
 				SzJ++;
 			}
