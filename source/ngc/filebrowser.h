@@ -30,10 +30,9 @@ typedef struct
 
 typedef struct
 {
-	u64 offset; // DVD offset
-	unsigned int length; // file length
+	size_t length; // file length
 	time_t mtime; // file modified time
-	char isdir; // 0 - file, 1 - directory
+	int isdir; // 0 - file, 1 - directory
 	char filename[MAXJOLIET + 1]; // full filename
 	char displayname[MAXJOLIET + 1]; // name for browser display
 	int icon; // icon to display
