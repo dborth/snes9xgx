@@ -44,7 +44,6 @@
 
 #include "snes9xGX.h"
 #include "aram.h"
-#include "dvd.h"
 #include "networkop.h"
 #include "video.h"
 #include "s9xconfig.h"
@@ -462,9 +461,6 @@ main(int argc, char *argv[])
 	setGFX ();
 	if (!S9xGraphicsInit ())
 		ExitApp();
-
-	// Check if DVD drive belongs to a Wii
-	SetDVDDriveType();
 
 	S9xSetSoundMute (TRUE);
 	S9xInitSync(); // initialize frame sync

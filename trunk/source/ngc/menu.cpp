@@ -41,7 +41,6 @@
 #include "networkop.h"
 #include "memcardop.h"
 #include "fileop.h"
-#include "dvd.h"
 #include "s9xconfig.h"
 #include "sram.h"
 #include "freeze.h"
