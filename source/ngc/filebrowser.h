@@ -35,6 +35,7 @@ typedef struct
 	int isdir; // 0 - file, 1 - directory
 	char filename[MAXJOLIET + 1]; // full filename
 	char displayname[MAXJOLIET + 1]; // name for browser display
+	int filenum; // file # (for 7z support)
 	int icon; // icon to display
 } BROWSERENTRY;
 
