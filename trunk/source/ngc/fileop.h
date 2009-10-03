@@ -37,11 +37,11 @@ void CreateAppPath(char * origpath);
 int ParseDirectory(bool waitParse = false);
 void AllocSaveBuffer();
 void FreeSaveBuffer();
-u32 LoadFile(char * rbuffer, char *filepath, u32 length, bool silent);
-u32 LoadFile(char * filepath, bool silent);
-u32 LoadSzFile(char * filepath, unsigned char * rbuffer);
-u32 SaveFile(char * buffer, char *filepath, u32 datasize, bool silent);
-u32 SaveFile(char * filepath, u32 datasize, bool silent);
+size_t LoadFile(char * rbuffer, char *filepath, size_t length, bool silent);
+size_t LoadFile(char * filepath, bool silent);
+size_t LoadSzFile(char * filepath, unsigned char * rbuffer);
+size_t SaveFile(char * buffer, char *filepath, size_t datasize, bool silent);
+size_t SaveFile(char * filepath, size_t datasize, bool silent);
 
 extern unsigned char savebuffer[SAVEBUFFERSIZE];
 extern FILE * file;
