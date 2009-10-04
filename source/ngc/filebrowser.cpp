@@ -278,10 +278,10 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 	{
 		if(GCSettings.SaveMethod == DEVICE_AUTO)
 			GCSettings.SaveMethod = autoSaveMethod(SILENT);
-		
+
 		if(GCSettings.SaveMethod == DEVICE_AUTO)
 			return false;
-		
+
 		switch(type)
 		{
 			case FILE_SRAM:
