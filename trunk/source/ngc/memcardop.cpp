@@ -101,6 +101,8 @@ ParseMCDirectory (int slot)
 	int CardError;
 	int entryNum = 0;
 
+	HaltDeviceThread();
+
 	// Try to mount the card
 	CardError = MountMC(slot, NOTSILENT);
 
@@ -109,20 +111,11 @@ ParseMCDirectory (int slot)
 		CardError = CARD_FindFirst (slot, &CardDir, TRUE);
 		while (CardError != CARD_ERROR_NOFILE)
 		{
-			BROWSERENTRY * newBrowserList = (BROWSERENTRY *)realloc(browserList, (entryNum+1) * sizeof(BROWSERENTRY));
-
-			if(!newBrowserList) // failed to allocate required memory
+			if(!AddBrowserEntry())
 			{
-				ResetBrowser();
-				ErrorPrompt("Out of memory: too many files!");
-				entryNum = -1;
+				entryNum = 0;
 				break;
 			}
-			else
-			{
-				browserList = newBrowserList;
-			}
-			memset(&(browserList[entryNum]), 0, sizeof(BROWSERENTRY)); // clear the new entry
 
 			strncpy(browserList[entryNum].filename, (char *)CardDir.filename, MAXJOLIET);
 			StripExt(browserList[entryNum].displayname, browserList[entryNum].filename); // hide file extension
@@ -134,6 +127,8 @@ ParseMCDirectory (int slot)
 		}
 		CARD_Unmount(slot);
 	}
+
+	ResumeDeviceThread();
 
 	// Sort the file list
 	qsort(browserList, entryNum, sizeof(BROWSERENTRY), FileSortCallback);

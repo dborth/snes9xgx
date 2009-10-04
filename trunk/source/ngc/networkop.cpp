@@ -241,24 +241,18 @@ ConnectShare (bool silent)
 	return false;
 	#endif
 
-	int chkU = (strlen(GCSettings.smbuser) > 0) ? 0:1;
-	int chkP = (strlen(GCSettings.smbpwd) > 0) ? 0:1;
 	int chkS = (strlen(GCSettings.smbshare) > 0) ? 0:1;
 	int chkI = (strlen(GCSettings.smbip) > 0) ? 0:1;
 
 	// check that all parameters have been set
-	if(chkU + chkP + chkS + chkI > 0)
+	if(chkS + chkI > 0)
 	{
 		if(!silent)
 		{
 			char msg[50];
 			char msg2[100];
-			if(chkU + chkP + chkS + chkI > 1) // more than one thing is wrong
+			if(chkS + chkI > 1) // more than one thing is wrong
 				sprintf(msg, "Check settings.xml.");
-			else if(chkU)
-				sprintf(msg, "Username is blank.");
-			else if(chkP)
-				sprintf(msg, "Password is blank.");
 			else if(chkS)
 				sprintf(msg, "Share name is blank.");
 			else if(chkI)
