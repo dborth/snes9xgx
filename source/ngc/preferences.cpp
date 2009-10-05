@@ -362,7 +362,7 @@ SavePrefs (bool silent)
 	}
 	else if(appPath[0] != 0)
 	{
-		sprintf(filepath, "%s%s", appPath, PREF_FILE_NAME);
+		sprintf(filepath, "%s/%s", appPath, PREF_FILE_NAME);
 		FindDevice(filepath, &device);
 	}
 	else
