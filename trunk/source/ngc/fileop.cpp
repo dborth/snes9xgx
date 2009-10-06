@@ -858,6 +858,7 @@ SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 				if(writesize != nextwrite) break; // write failure
 				written += writesize;
 			}
+			fclose (file);
 
 			if(written != datasize) written = 0;
 
