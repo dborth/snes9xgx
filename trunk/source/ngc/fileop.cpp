@@ -816,7 +816,7 @@ SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 		return 0;
 
 	// stop checking if devices were removed/inserted
-	// since we're loading a file
+	// since we're saving a file
 	HaltDeviceThread();
 
 	// halt parsing
