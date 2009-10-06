@@ -268,46 +268,42 @@ UpdateGUI (void *arg)
 	while(1)
 	{
 		if(guiHalt)
-		{
 			LWP_SuspendThread(guithread);
-		}
-		else
+
+		mainWindow->Draw();
+
+		#ifdef HW_RVL
+		for(i=3; i >= 0; i--) // so that player 1's cursor appears on top!
 		{
-			mainWindow->Draw();
+			if(userInput[i].wpad.ir.valid)
+				Menu_DrawImg(userInput[i].wpad.ir.x-48, userInput[i].wpad.ir.y-48,
+					96, 96, pointer[i]->GetImage(), userInput[i].wpad.ir.angle, 1, 1, 255);
+			DoRumble(i);
+		}
+		#endif
 
-			#ifdef HW_RVL
-			for(i=3; i >= 0; i--) // so that player 1's cursor appears on top!
+		Menu_Render();
+
+		for(i=3; i >= 0; i--)
+			mainWindow->Update(&userInput[i]);
+
+		#ifdef HW_RVL
+		if(updateFound)
+		{
+			updateFound = false;
+			LWP_CreateThread (&updatethread, EmulatorUpdate, NULL, NULL, 0, 70);
+		}
+		#endif
+
+		if(ExitRequested || ShutdownRequested)
+		{
+			for(i = 0; i < 255; i += 15)
 			{
-				if(userInput[i].wpad.ir.valid)
-					Menu_DrawImg(userInput[i].wpad.ir.x-48, userInput[i].wpad.ir.y-48,
-						96, 96, pointer[i]->GetImage(), userInput[i].wpad.ir.angle, 1, 1, 255);
-				DoRumble(i);
+				mainWindow->Draw();
+				Menu_DrawRectangle(0,0,screenwidth,screenheight,(GXColor){0, 0, 0, i},1);
+				Menu_Render();
 			}
-			#endif
-
-			Menu_Render();
-
-			for(i=3; i >= 0; i--)
-				mainWindow->Update(&userInput[i]);
-
-			#ifdef HW_RVL
-			if(updateFound)
-			{
-				updateFound = false;
-				LWP_CreateThread (&updatethread, EmulatorUpdate, NULL, NULL, 0, 70);
-			}
-			#endif
-
-			if(ExitRequested || ShutdownRequested)
-			{
-				for(i = 0; i < 255; i += 15)
-				{
-					mainWindow->Draw();
-					Menu_DrawRectangle(0,0,screenwidth,screenheight,(GXColor){0, 0, 0, i},1);
-					Menu_Render();
-				}
-				ExitApp();
-			}
+			ExitApp();
 		}
 		usleep(THREAD_SLEEP);
 	}
