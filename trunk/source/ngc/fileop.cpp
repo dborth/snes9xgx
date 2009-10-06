@@ -836,32 +836,35 @@ SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 	{
 		while(!written && retry == 1)
 		{
-			if(ChangeInterface(device, silent))
+			if(!ChangeInterface(device, silent))
+				break;
+
+			file = fopen (filepath, "wb");
+
+			if(!file)
 			{
-				file = fopen (filepath, "wb");
+				if(silent)
+					break;
 
-				if (file)
-				{
-					while(written < datasize)
-					{
-						if(datasize - written > 4096) nextwrite=4096;
-						else nextwrite = datasize-written;
-						writesize = fwrite (buffer+written, 1, nextwrite, file);
-						if(writesize != nextwrite) break; // write failure
-						written += writesize;
-					}
-
-					if(written != datasize) written = 0;
-					fclose (file);
-				}
+				retry = ErrorPromptRetry("Error creating file!");
+				continue;
 			}
+
+			while(written < datasize)
+			{
+				if(datasize - written > 4096) nextwrite=4096;
+				else nextwrite = datasize-written;
+				writesize = fwrite (buffer+written, 1, nextwrite, file);
+				if(writesize != nextwrite) break; // write failure
+				written += writesize;
+			}
+
+			if(written != datasize) written = 0;
+
 			if(!written)
 			{
 				unmountRequired[device] = true;
-				if(!silent)
-					retry = ErrorPromptRetry("Error saving file!");
-				else
-					retry = 0;
+				retry = ErrorPromptRetry("Error saving file!");
 			}
 		}
 	}
