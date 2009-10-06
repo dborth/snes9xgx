@@ -367,7 +367,7 @@ SavePrefs (bool silent)
 	}
 	else
 	{
-		device = autoLoadMethod();
+		device = autoSaveMethod(silent);
 		
 		if(device == 0)
 			return false;
@@ -375,7 +375,7 @@ SavePrefs (bool silent)
 		if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB)
 			sprintf(filepath, "%s%s", pathPrefix[device], PREF_FILE_NAME);
 		else
-			sprintf(filepath, "%ssnes9x/%s", pathPrefix[device], PREF_FILE_NAME);
+			sprintf(filepath, "%s%s/%s", pathPrefix[device], APPFOLDER, PREF_FILE_NAME);
 	}
 	
 	if(device == 0)
