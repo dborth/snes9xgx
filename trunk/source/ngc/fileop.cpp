@@ -242,7 +242,8 @@ void UnmountAllFAT()
 
 static bool MountFAT(int device, int silent)
 {
-	bool mounted = true; // assume our disc is already mounted
+	bool mounted = false;
+	int retry = 1;
 	char name[10], name2[10];
 	const DISC_INTERFACE* disc = NULL;
 
@@ -283,20 +284,19 @@ static bool MountFAT(int device, int silent)
 		disc->shutdown();
 		isMounted[device] = false;
 	}
-	if(!isMounted[device])
+
+	while(retry)
 	{
-		if(!disc->startup())
-			mounted = false;
-		else if(!fatMountSimple(name, disc))
-			mounted = false;
-	}
-	
-	if(!mounted && !silent)
-	{
+		if(disc->startup() && fatMountSimple(name, disc))
+			mounted = true;
+
+		if(mounted || silent)
+			break;
+
 		if(device == DEVICE_SD)
-			ErrorPrompt("SD card not found!");
+			retry = ErrorPromptRetry("SD card not found!");
 		else
-			ErrorPrompt("USB drive not found!");
+			retry = ErrorPromptRetry("USB drive not found!");
 	}
 
 	isMounted[device] = mounted;
@@ -321,12 +321,8 @@ void MountAllFAT()
  ***************************************************************************/
 bool MountDVD(bool silent)
 {
-	if(isMounted[DEVICE_DVD])
-		return true;
-	
-	ShowAction("Loading DVD...");
-
 	bool mounted = false;
+	int retry = 1;
 
 	if(unmountRequired[DEVICE_DVD])
 	{
@@ -334,19 +330,29 @@ bool MountDVD(bool silent)
 		ISO9660_Unmount();
 	}
 
-	mounted = dvd->isInserted();
-
-	if(!mounted)
+	while(retry)
 	{
-		if(!silent)
-			ErrorPrompt("No disc inserted!");
-	}
-	else
-	{
-		mounted = ISO9660_Mount();
+		ShowAction("Loading DVD...");
 
-		if(!mounted && !silent)
-			ErrorPrompt("Invalid DVD.");
+		if(!dvd->isInserted())
+		{
+			if(silent)
+				break;
+
+			retry = ErrorPromptRetry("No disc inserted!");
+		}
+		else if(!ISO9660_Mount())
+		{
+			if(silent)
+				break;
+			
+			retry = ErrorPromptRetry("Invalid DVD.");
+		}
+		else
+		{
+			mounted = true;
+			break;
+		}
 	}
 	CancelAction();
 	isMounted[DEVICE_DVD] = mounted;
@@ -420,8 +426,11 @@ char * StripDevice(char * path)
  ***************************************************************************/
 bool ChangeInterface(int device, bool silent)
 {
+	if(isMounted[device])
+		return true;
+
 	bool mounted = false;
-	
+
 	switch(device)
 	{
 		case DEVICE_SD:
@@ -503,26 +512,30 @@ bool ParseDirEntries()
 			i--;
 			continue;
 		}
-		
-		if(AddBrowserEntry())
+
+		if(!AddBrowserEntry())
 		{
-			strncpy(browserList[browser.numEntries+i].filename, filename, MAXJOLIET);
-			browserList[browser.numEntries+i].length = filestat.st_size;
-			browserList[browser.numEntries+i].mtime = filestat.st_mtime;
-			browserList[browser.numEntries+i].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
-	
-			if(browserList[browser.numEntries+i].isdir)
-			{
-				if(strcmp(filename, "..") == 0)
-					sprintf(browserList[browser.numEntries+i].displayname, "Up One Level");
-				else
-					strncpy(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename, MAXJOLIET);
-				browserList[browser.numEntries+i].icon = ICON_FOLDER;
-			}
+			i=0;
+			parseHalt = true;
+			break;
+		}
+
+		strncpy(browserList[browser.numEntries+i].filename, filename, MAXJOLIET);
+		browserList[browser.numEntries+i].length = filestat.st_size;
+		browserList[browser.numEntries+i].mtime = filestat.st_mtime;
+		browserList[browser.numEntries+i].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
+
+		if(browserList[browser.numEntries+i].isdir)
+		{
+			if(strcmp(filename, "..") == 0)
+				sprintf(browserList[browser.numEntries+i].displayname, "Up One Level");
 			else
-			{
-				StripExt(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename); // hide file extension
-			}
+				strncpy(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename, MAXJOLIET);
+			browserList[browser.numEntries+i].icon = ICON_FOLDER;
+		}
+		else
+		{
+			StripExt(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename); // hide file extension
 		}
 	}
 
@@ -553,7 +566,7 @@ ParseDirectory(bool waitParse)
 	bool mounted = false;
 	
 	ResetBrowser(); // reset browser
-	
+
 	// open the directory
 	while(dirIter == NULL && retry == 1)
 	{
@@ -574,14 +587,17 @@ ParseDirectory(bool waitParse)
 	// if we can't open the dir, try higher levels
 	if (dirIter == NULL)
 	{
+		char * devEnd = strrchr(browser.dir, '/');
+
 		while(!IsDeviceRoot(browser.dir))
 		{
-			char * devEnd = strrchr(browser.dir, '/');
+			devEnd[0] = 0; // strip slash
+			devEnd = strrchr(browser.dir, '/');
 
 			if(devEnd == NULL)
 				break;
 
-			devEnd[0] = 0; // strip remaining file listing
+			devEnd[1] = 0; // strip remaining file listing
 			dirIter = diropen(browser.dir);
 			if (dirIter)
 				break;
@@ -660,7 +676,7 @@ LoadSzFile(char * filepath, unsigned char * rbuffer)
 	HaltDeviceThread();
 
 	// halt parsing
-	parseHalt = true;
+	HaltParseThread();
 
 	file = fopen (filepath, "rb");
 	if (file > 0)
@@ -686,94 +702,85 @@ size_t
 LoadFile (char * rbuffer, char *filepath, size_t length, bool silent)
 {
 	char zipbuffer[2048];
-	size_t size = 0;
-	size_t readsize = 0;
+	size_t size = 0, offset = 0, readsize = 0;
 	int retry = 1;
 	int device;
-	
+
 	if(!FindDevice(filepath, &device))
 		return 0;
-
-	if(device == DEVICE_MC_SLOTA)
-		return LoadMCFile (rbuffer, CARD_SLOTA, StripDevice(filepath), silent);
-	else if(device == DEVICE_MC_SLOTB)
-		return LoadMCFile (rbuffer, CARD_SLOTB, StripDevice(filepath), silent);
 
 	// stop checking if devices were removed/inserted
 	// since we're loading a file
 	HaltDeviceThread();
 
 	// halt parsing
-	parseHalt = true;
+	HaltParseThread();
 
-	// open the file
-	while(!size && retry == 1)
+	if(device == DEVICE_MC_SLOTA)
 	{
-		if(ChangeInterface(device, silent))
+		size = LoadMCFile (rbuffer, CARD_SLOTA, StripDevice(filepath), silent);
+	}
+	else if(device == DEVICE_MC_SLOTB)
+	{
+		size = LoadMCFile (rbuffer, CARD_SLOTB, StripDevice(filepath), silent);
+	}
+	else
+	{
+		// open the file
+		while(!size && retry)
 		{
+			if(!ChangeInterface(device, silent))
+				break;
+
 			file = fopen (filepath, "rb");
 
-			if(file > 0)
+			if(!file)
 			{
-				if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
-				{
-					size = fread (rbuffer, 1, length, file);
-				}
-				else // load whole file
-				{
-					readsize = fread (zipbuffer, 1, 2048, file);
+				if(silent)
+					break;
 
-					if(readsize > 0)
+				retry = ErrorPromptRetry("Error opening file!");
+				continue;
+			}
+
+			if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
+			{
+				size = fread (rbuffer, 1, length, file);
+			}
+			else // load whole file
+			{
+				readsize = fread (zipbuffer, 1, 32, file);
+
+				if(!readsize)
+				{
+					unmountRequired[device] = true;
+					retry = ErrorPromptRetry("Error reading file!");
+					continue;
+				}
+
+				if (IsZipFile (zipbuffer))
+				{
+					size = UnZipBuffer ((unsigned char *)rbuffer); // unzip
+				}
+				else
+				{
+					fseeko(file,0,SEEK_END);
+					size = ftello(file);
+					fseeko(file,0,SEEK_SET);
+
+					while(!feof(file))
 					{
-						if (IsZipFile (zipbuffer))
-						{
-							size = UnZipBuffer ((unsigned char *)rbuffer); // unzip
-						}
-						else
-						{
-							struct stat fileinfo;
-							if(fstat(file->_file, &fileinfo) == 0)
-							{
-								size = fileinfo.st_size;
+						ShowProgress ("Loading...", offset, size);
+						readsize = fread (rbuffer + offset, 1, 4096, file); // read in next chunk
 
-								memcpy (rbuffer, zipbuffer, readsize); // copy what we already read
+						if(readsize <= 0)
+							break; // reading finished (or failed)
 
-								size_t offset = readsize;
-								size_t nextread = 0;
-								while(offset < size)
-								{
-									if(size - offset > 4*1024) nextread = 4*1024;
-									else nextread = size-offset;
-									ShowProgress ("Loading...", offset, size);
-									readsize = fread (rbuffer + offset, 1, nextread, file); // read in next chunk
-
-									if(readsize <= 0 || readsize > nextread)
-										break; // read failure
-
-									if(readsize > 0)
-										offset += readsize;
-								}
-								CancelAction();
-
-								if(offset != size) // # bytes read doesn't match # expected
-									size = 0;
-							}
-						}
+						offset += readsize;
 					}
+					size = offset;
+					CancelAction();
 				}
-				fclose (file);
-			}
-		}
-		if(!size)
-		{
-			if(!silent)
-			{
-				unmountRequired[device] = true;
-				retry = ErrorPromptRetry("Error loading file!");
-			}
-			else
-			{
-				retry = 0;
 			}
 		}
 	}
@@ -797,6 +804,7 @@ size_t
 SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 {
 	size_t written = 0;
+	size_t writesize, nextwrite;
 	int retry = 1;
 	int device;
 		
@@ -806,46 +814,54 @@ SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 	if(datasize == 0)
 		return 0;
 
+	// stop checking if devices were removed/inserted
+	// since we're loading a file
+	HaltDeviceThread();
+
+	// halt parsing
+	HaltParseThread();
+
 	ShowAction("Saving...");
 
 	if(device == DEVICE_MC_SLOTA)
-		return SaveMCFile (buffer, CARD_SLOTA, StripDevice(filepath), datasize, silent);
-	else if(device == DEVICE_MC_SLOTB)
-		return SaveMCFile (buffer, CARD_SLOTB, StripDevice(filepath), datasize, silent);
-
-	// stop checking if devices were removed/inserted
-	// since we're saving a file
-	HaltDeviceThread();
-
-	while(!written && retry == 1)
 	{
-		if(ChangeInterface(device, silent))
+		written = SaveMCFile (buffer, CARD_SLOTA, StripDevice(filepath), datasize, silent);
+	}
+	else if(device == DEVICE_MC_SLOTB)
+	{
+		written = SaveMCFile (buffer, CARD_SLOTB, StripDevice(filepath), datasize, silent);
+	}
+	else
+	{
+		while(!written && retry == 1)
 		{
-			file = fopen (filepath, "wb");
-
-			if (file > 0)
+			if(ChangeInterface(device, silent))
 			{
-				size_t writesize, nextwrite;
-				while(written < datasize)
-				{
-					if(datasize - written > 4*1024) nextwrite=4*1024;
-					else nextwrite = datasize-written;
-					writesize = fwrite (buffer+written, 1, nextwrite, file);
-					if(writesize != nextwrite) break; // write failure
-					written += writesize;
-				}
+				file = fopen (filepath, "wb");
 
-				if(written != datasize) written = 0;
-				fclose (file);
+				if (file)
+				{
+					while(written < datasize)
+					{
+						if(datasize - written > 4096) nextwrite=4096;
+						else nextwrite = datasize-written;
+						writesize = fwrite (buffer+written, 1, nextwrite, file);
+						if(writesize != nextwrite) break; // write failure
+						written += writesize;
+					}
+
+					if(written != datasize) written = 0;
+					fclose (file);
+				}
 			}
-		}
-		if(!written)
-		{
-			unmountRequired[device] = true;
-			if(!silent)
-				retry = ErrorPromptRetry("Error saving file!");
-			else
-				retry = 0;
+			if(!written)
+			{
+				unmountRequired[device] = true;
+				if(!silent)
+					retry = ErrorPromptRetry("Error saving file!");
+				else
+					retry = 0;
+			}
 		}
 	}
 
