@@ -277,7 +277,8 @@ decodePrefsData ()
 					result = false; // reset settings
 				else if(verMajor == 4 && verMinor == 0 && verPoint < 2)	// anything less than 4.0.2
 					result = false; // reset settings
-				else if(verMajor > curMajor || verMinor > curMinor || verPoint > curPoint) // some future version
+				else if((verMajor*100 + verMinor*10 + verPoint) > 
+						(curMajor*100 + curMinor*10 + curPoint)) // some future version
 					result = false; // reset settings
 				else
 					result = true;
