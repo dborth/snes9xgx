@@ -20,7 +20,7 @@
 #include "filelist.h"
 
 #define APPNAME 		"Snes9x GX"
-#define APPVERSION 		"4.1.1"
+#define APPVERSION 		"4.1.2"
 #define APPFOLDER 		"snes9x"
 #define PREF_FILE_NAME 	"settings.xml"
 

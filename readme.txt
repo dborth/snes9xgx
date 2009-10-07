@@ -10,7 +10,7 @@
 ­————————————————————————————————————————————————————————————————————————————
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                      Snes9x GX 4.1.1                          ·oø×O0|
+|0O×øo·                      Snes9x GX 4.1.2                          ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
@@ -29,7 +29,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                                FEATURES  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-* Based on Snes9x 1.51 - superior ROM compatibility
+* Based on Snes9x 1.51
 * Wiimote, Nunchuk, Classic, and Gamecube controller support
 * SNES Superscope, Mouse, Justifier support
 * Cheat support
@@ -45,6 +45,11 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.1.2 - October 7, 2009]
+
+* Revamped filebrowser and file I/O
+* Many, many other bug fixes
 
 [4.1.1 - September 19, 2009]
 
