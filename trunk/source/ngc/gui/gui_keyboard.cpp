@@ -82,7 +82,7 @@ GuiKeyboard::GuiKeyboard(char * t, u32 max)
 		{'j','J'},
 		{'k','K'},
 		{'l','L'},
-		{':',';'},
+		{';',':'},
 		{'\'','"'}
 	},
 
