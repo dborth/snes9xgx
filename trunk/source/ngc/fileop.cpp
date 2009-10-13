@@ -466,6 +466,9 @@ bool ChangeInterface(char * filepath, bool silent)
 
 void CreateAppPath(char * origpath)
 {
+	if(!origpath || origpath[0] == 0)
+		return;
+
 	char * path = strdup(origpath); // make a copy so we don't mess up original
 
 	if(!path)
