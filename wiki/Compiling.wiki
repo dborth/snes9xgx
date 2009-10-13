@@ -9,7 +9,8 @@ Here's some basic instructions on compiling SNES9x GX. You don't need to be a pr
 
 = Instructions =
 
- # Download and install [http://www.devkitpro.org devkitPPC r18], and be sure to install all of the optional libraries (FreeType, Mini-XML, libpng, tremor).
+ # Ensure that you have [http://www.devkitpro.org devkitPPC r18 and libogc 1.8.0] or higher installed. If you have an older version, completely uninstall it first.
+ # Download and copy the [http://sourceforge.net/projects/devkitpro/files/portlibs ported libraries] to your portlibs folder (on Windows this is c:\devkitPro\portlibs)
  # Download the source from [http://code.google.com/p/snes9x-gx/source/checkout SVN].
  # Run Programmer's Notepad (installed with devkitPro)
  # Find the Makefile from the source you downloaded. Click Tools > Make.
