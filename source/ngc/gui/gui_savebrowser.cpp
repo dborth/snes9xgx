@@ -389,11 +389,11 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		else if(focus && i == selectedItem && saveBtn[i]->GetState() == STATE_DEFAULT)
 			saveBtn[selectedItem]->SetState(STATE_SELECTED, t->chan);
 
-		if(t->wpad.ir.valid)
+		if(t->wpad->ir.valid)
 		{
-			if(!saveBtnLastOver[i] && saveBtn[i]->IsInside(t->wpad.ir.x, t->wpad.ir.y))
+			if(!saveBtnLastOver[i] && saveBtn[i]->IsInside(t->wpad->ir.x, t->wpad->ir.y))
 				saveBtn[i]->ResetState();
-			saveBtnLastOver[i] = saveBtn[i]->IsInside(t->wpad.ir.x, t->wpad.ir.y);
+			saveBtnLastOver[i] = saveBtn[i]->IsInside(t->wpad->ir.x, t->wpad->ir.y);
 		}
 
 		saveBtn[i]->Update(t);
