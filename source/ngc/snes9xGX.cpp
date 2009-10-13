@@ -378,11 +378,9 @@ main(int argc, char *argv[])
 	#endif
 
 	InitDeviceThread();
-	VIDEO_Init();
-	SetupPads();
-
 	InitGCVideo(); // Initialise video
 	ResetVideo_Menu (); // change to menu video mode
+	SetupPads();
 
 	#ifdef HW_RVL
 	// Wii Power/Reset buttons

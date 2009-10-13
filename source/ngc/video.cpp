@@ -290,15 +290,6 @@ vbgetback (void *arg)
 }
 
 /****************************************************************************
- * InitVideoThread
- ***************************************************************************/
-void
-InitVideoThread ()
-{
-	LWP_CreateThread (&vbthread, vbgetback, NULL, vbstack, TSTACK, 100);
-}
-
-/****************************************************************************
  * copy_to_xfb
  *
  * Stock code to copy the GX buffer to the current display mode.
@@ -572,11 +563,12 @@ static void SetupVideoMode(GXRModeObj * mode)
 void
 InitGCVideo ()
 {
+	VIDEO_Init();
 	GXRModeObj *rmode = FindVideoMode();
 	SetupVideoMode(rmode);
 	StartGX ();
 	InitLUTs();	// init LUTs for hq2x
-	InitVideoThread ();
+	LWP_CreateThread (&vbthread, vbgetback, NULL, vbstack, TSTACK, 68);
 }
 
 /****************************************************************************
