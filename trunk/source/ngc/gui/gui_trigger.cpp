@@ -18,8 +18,9 @@ static int scrollDelay = 0;
 GuiTrigger::GuiTrigger()
 {
 	chan = -1;
-	memset(&wpad, 0, sizeof(WPADData));
+	memset(&wpaddata, 0, sizeof(WPADData));
 	memset(&pad, 0, sizeof(PADData));
+	wpad = &wpaddata;
 }
 
 /**
@@ -38,7 +39,7 @@ void GuiTrigger::SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 {
 	type = TRIGGER_SIMPLE;
 	chan = ch;
-	wpad.btns_d = wiibtns;
+	wpaddata.btns_d = wiibtns;
 	pad.btns_d = gcbtns;
 }
 
@@ -51,7 +52,7 @@ void GuiTrigger::SetHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 {
 	type = TRIGGER_HELD;
 	chan = ch;
-	wpad.btns_h = wiibtns;
+	wpaddata.btns_h = wiibtns;
 	pad.btns_h = gcbtns;
 }
 
@@ -63,7 +64,7 @@ void GuiTrigger::SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 {
 	type = TRIGGER_BUTTON_ONLY;
 	chan = ch;
-	wpad.btns_d = wiibtns;
+	wpaddata.btns_d = wiibtns;
 	pad.btns_d = gcbtns;
 }
 
@@ -76,7 +77,7 @@ void GuiTrigger::SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 {
 	type = TRIGGER_BUTTON_ONLY_IN_FOCUS;
 	chan = ch;
-	wpad.btns_d = wiibtns;
+	wpaddata.btns_d = wiibtns;
 	pad.btns_d = gcbtns;
 }
 
@@ -93,27 +94,27 @@ s8 GuiTrigger::WPAD_Stick(u8 right, int axis)
 	float mag = 0.0;
 	float ang = 0.0;
 
-	switch (wpad.exp.type)
+	switch (wpad->exp.type)
 	{
 		case WPAD_EXP_NUNCHUK:
 		case WPAD_EXP_GUITARHERO3:
 			if (right == 0)
 			{
-				mag = wpad.exp.nunchuk.js.mag;
-				ang = wpad.exp.nunchuk.js.ang;
+				mag = wpad->exp.nunchuk.js.mag;
+				ang = wpad->exp.nunchuk.js.ang;
 			}
 			break;
 
 		case WPAD_EXP_CLASSIC:
 			if (right == 0)
 			{
-				mag = wpad.exp.classic.ljs.mag;
-				ang = wpad.exp.classic.ljs.ang;
+				mag = wpad->exp.classic.ljs.mag;
+				ang = wpad->exp.classic.ljs.ang;
 			}
 			else
 			{
-				mag = wpad.exp.classic.rjs.mag;
-				ang = wpad.exp.classic.rjs.ang;
+				mag = wpad->exp.classic.rjs.mag;
+				ang = wpad->exp.classic.rjs.ang;
 			}
 			break;
 
@@ -142,12 +143,12 @@ bool GuiTrigger::Left()
 {
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_UP : WPAD_BUTTON_LEFT;
 
-	if((wpad.btns_d | wpad.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
+	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_LEFT
 			|| pad.stickX < -PADCAL
 			|| WPAD_Stick(0,0) < -PADCAL)
 	{
-		if(wpad.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
+		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
 			|| pad.btns_d & PAD_BUTTON_LEFT)
 		{
 			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.
@@ -171,12 +172,12 @@ bool GuiTrigger::Right()
 {
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_DOWN : WPAD_BUTTON_RIGHT;
 
-	if((wpad.btns_d | wpad.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
+	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_RIGHT
 			|| pad.stickX > PADCAL
 			|| WPAD_Stick(0,0) > PADCAL)
 	{
-		if(wpad.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
+		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
 			|| pad.btns_d & PAD_BUTTON_RIGHT)
 		{
 			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.
@@ -200,12 +201,12 @@ bool GuiTrigger::Up()
 {
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_RIGHT : WPAD_BUTTON_UP;
 
-	if((wpad.btns_d | wpad.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
+	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_UP
 			|| pad.stickY > PADCAL
 			|| WPAD_Stick(0,1) > PADCAL)
 	{
-		if(wpad.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
+		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
 			|| pad.btns_d & PAD_BUTTON_UP)
 		{
 			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.
@@ -229,12 +230,12 @@ bool GuiTrigger::Down()
 {
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_LEFT : WPAD_BUTTON_DOWN;
 
-	if((wpad.btns_d | wpad.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
+	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_DOWN
 			|| pad.stickY < -PADCAL
 			|| WPAD_Stick(0,1) < -PADCAL)
 	{
-		if(wpad.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
+		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
 			|| pad.btns_d & PAD_BUTTON_DOWN)
 		{
 			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.

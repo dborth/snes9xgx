@@ -276,9 +276,9 @@ UpdateGUI (void *arg)
 		#ifdef HW_RVL
 		for(i=3; i >= 0; i--) // so that player 1's cursor appears on top!
 		{
-			if(userInput[i].wpad.ir.valid)
-				Menu_DrawImg(userInput[i].wpad.ir.x-48, userInput[i].wpad.ir.y-48,
-					96, 96, pointer[i]->GetImage(), userInput[i].wpad.ir.angle, 1, 1, 255);
+			if(userInput[i].wpad->ir.valid)
+				Menu_DrawImg(userInput[i].wpad->ir.x-48, userInput[i].wpad->ir.y-48,
+					96, 96, pointer[i]->GetImage(), userInput[i].wpad->ir.angle, 1, 1, 255);
 			DoRumble(i);
 		}
 		#endif
@@ -857,9 +857,9 @@ static void WindowCredits(void * ptr)
 		for(i=3; i >= 0; i--)
 		{
 			#ifdef HW_RVL
-			if(userInput[i].wpad.ir.valid)
-				Menu_DrawImg(userInput[i].wpad.ir.x-48, userInput[i].wpad.ir.y-48,
-					96, 96, pointer[i]->GetImage(), userInput[i].wpad.ir.angle, 1, 1, 255);
+			if(userInput[i].wpad->ir.valid)
+				Menu_DrawImg(userInput[i].wpad->ir.x-48, userInput[i].wpad->ir.y-48,
+					96, 96, pointer[i]->GetImage(), userInput[i].wpad->ir.angle, 1, 1, 255);
 			DoRumble(i);
 			#endif
 		}
@@ -868,7 +868,7 @@ static void WindowCredits(void * ptr)
 
 		for(i=0; i < 4; i++)
 		{
-			if(userInput[i].wpad.btns_d || userInput[i].pad.btns_d)
+			if(userInput[i].wpad->btns_d || userInput[i].pad.btns_d)
 				exit = true;
 		}
 		usleep(THREAD_SLEEP);
@@ -877,7 +877,7 @@ static void WindowCredits(void * ptr)
 	// clear buttons pressed
 	for(i=0; i < 4; i++)
 	{
-		userInput[i].wpad.btns_d = 0;
+		userInput[i].wpad->btns_d = 0;
 		userInput[i].pad.btns_d = 0;
 	}
 
@@ -1363,7 +1363,7 @@ static int MenuGame()
 			if(WPAD_Probe(i, NULL) == WPAD_ERR_NONE)
 			{
 				newStatus = true;
-				newLevel = (userInput[i].wpad.battery_level / 100.0) * 4;
+				newLevel = (userInput[i].wpad->battery_level / 100.0) * 4;
 				if(newLevel > 4) newLevel = 4;
 			}
 			else
@@ -2488,12 +2488,12 @@ ButtonMappingWindow()
 										userInput[0].pad.substickY > 70)
 				pressed = WPAD_BUTTON_HOME;
 
-			if(userInput[0].wpad.btns_d == WPAD_BUTTON_HOME)
+			if(userInput[0].wpad->btns_d == WPAD_BUTTON_HOME)
 				pressed = WPAD_BUTTON_HOME;
 		}
 		else
 		{
-			pressed = userInput[0].wpad.btns_d;
+			pressed = userInput[0].wpad->btns_d;
 
 			// always allow Home button to be pressed to clear the existing mapping
 			if(pressed != WPAD_BUTTON_HOME)
@@ -2506,14 +2506,14 @@ ButtonMappingWindow()
 						break;
 
 					case CTRLR_CLASSIC:
-						if(userInput[0].wpad.exp.type != WPAD_EXP_CLASSIC)
+						if(userInput[0].wpad->exp.type != WPAD_EXP_CLASSIC)
 							pressed = 0; // not a valid input
 						else if(pressed <= 0x1000)
 							pressed = 0; // not a valid input
 						break;
 
 					case CTRLR_NUNCHUK:
-						if(userInput[0].wpad.exp.type != WPAD_EXP_NUNCHUK)
+						if(userInput[0].wpad->exp.type != WPAD_EXP_NUNCHUK)
 							pressed = 0; // not a valid input
 						break;
 				}

@@ -195,9 +195,10 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 /****************************************************************************
  * UpdatePads
  *
- * called by postRetraceCallback in InitGCVideo - scans pad and wpad
+ * Scans pad and wpad
  ***************************************************************************/
-void UpdatePads()
+void
+UpdatePads()
 {
 	#ifdef HW_RVL
 	WPAD_ScanPads();
@@ -206,11 +207,6 @@ void UpdatePads()
 
 	for(int i=3; i >= 0; i--)
 	{
-		#ifdef HW_RVL
-		memcpy(&userInput[i].wpad, WPAD_Data(i), sizeof(WPADData));
-		#endif
-
-		userInput[i].chan = i;
 		userInput[i].pad.btns_d = PAD_ButtonsDown(i);
 		userInput[i].pad.btns_u = PAD_ButtonsUp(i);
 		userInput[i].pad.btns_h = PAD_ButtonsHeld(i);
@@ -220,6 +216,33 @@ void UpdatePads()
 		userInput[i].pad.substickY = PAD_SubStickY(i);
 		userInput[i].pad.triggerL = PAD_TriggerL(i);
 		userInput[i].pad.triggerR = PAD_TriggerR(i);
+	}
+}
+
+/****************************************************************************
+ * SetupPads
+ *
+ * Sets up userInput triggers for use
+ ***************************************************************************/
+void
+SetupPads()
+{
+	PAD_Init();
+
+	#ifdef HW_RVL
+	WPAD_Init();
+	
+	// read wiimote accelerometer and IR data
+	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
+	WPAD_SetVRes(WPAD_CHAN_ALL, screenwidth, screenheight);
+	#endif
+
+	for(int i=0; i < 4; i++)
+	{
+		userInput[i].chan = i;
+		#ifdef HW_RVL
+		userInput[i].wpad = WPAD_Data(i);
+		#endif
 	}
 }
 
@@ -618,8 +641,8 @@ bool MenuRequested()
 			userInput[i].pad.btns_h & PAD_BUTTON_X &&
 			userInput[i].pad.btns_h & PAD_BUTTON_Y
 			) ||
-			(userInput[i].wpad.btns_h & WPAD_BUTTON_HOME) ||
-			(userInput[i].wpad.btns_h & WPAD_CLASSIC_BUTTON_HOME)
+			(userInput[i].wpad->btns_h & WPAD_BUTTON_HOME) ||
+			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME)
 		)
 		{
 			return true;

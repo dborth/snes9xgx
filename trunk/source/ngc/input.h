@@ -34,6 +34,7 @@ void NGCReportButtons ();
 void SetControllers ();
 void SetDefaultButtonMap ();
 bool MenuRequested();
+void SetupPads();
 void UpdatePads();
 
 #endif

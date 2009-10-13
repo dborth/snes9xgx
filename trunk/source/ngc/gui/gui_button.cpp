@@ -161,9 +161,9 @@ void GuiButton::Update(GuiTrigger * t)
 
 	#ifdef HW_RVL
 	// cursor
-	if(t->wpad.ir.valid && t->chan >= 0)
+	if(t->wpad->ir.valid && t->chan >= 0)
 	{
-		if(this->IsInside(t->wpad.ir.x, t->wpad.ir.y))
+		if(this->IsInside(t->wpad->ir.x, t->wpad->ir.y))
 		{
 			if(state == STATE_DEFAULT) // we weren't on the button before!
 			{
@@ -209,24 +209,24 @@ void GuiButton::Update(GuiTrigger * t)
 			if(trigger[i] && (trigger[i]->chan == -1 || trigger[i]->chan == t->chan))
 			{
 				// higher 16 bits only (wiimote)
-				wm_btns = t->wpad.btns_d << 16;
-				wm_btns_trig = trigger[i]->wpad.btns_d << 16;
+				wm_btns = t->wpad->btns_d << 16;
+				wm_btns_trig = trigger[i]->wpad->btns_d << 16;
 
 				// lower 16 bits only (classic controller)
-				cc_btns = t->wpad.btns_d >> 16;
-				cc_btns_trig = trigger[i]->wpad.btns_d >> 16;
+				cc_btns = t->wpad->btns_d >> 16;
+				cc_btns_trig = trigger[i]->wpad->btns_d >> 16;
 
 				if(
-					(t->wpad.btns_d > 0 &&
+					(t->wpad->btns_d > 0 &&
 					(wm_btns == wm_btns_trig ||
-					(cc_btns == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC))) ||
+					(cc_btns == cc_btns_trig && t->wpad->exp.type == EXP_CLASSIC))) ||
 					(t->pad.btns_d == trigger[i]->pad.btns_d && t->pad.btns_d > 0))
 				{
 					if(t->chan == stateChan || stateChan == -1)
 					{
 						if(state == STATE_SELECTED)
 						{
-							if(!t->wpad.ir.valid ||	this->IsInside(t->wpad.ir.x, t->wpad.ir.y))
+							if(!t->wpad->ir.valid ||	this->IsInside(t->wpad->ir.x, t->wpad->ir.y))
 							{
 								this->SetState(STATE_CLICKED, t->chan);
 
@@ -259,19 +259,19 @@ void GuiButton::Update(GuiTrigger * t)
 			if(trigger[i] && (trigger[i]->chan == -1 || trigger[i]->chan == t->chan))
 			{
 				// higher 16 bits only (wiimote)
-				wm_btns = t->wpad.btns_d << 16;
-				wm_btns_h = t->wpad.btns_h << 16;
-				wm_btns_trig = trigger[i]->wpad.btns_h << 16;
+				wm_btns = t->wpad->btns_d << 16;
+				wm_btns_h = t->wpad->btns_h << 16;
+				wm_btns_trig = trigger[i]->wpad->btns_h << 16;
 
 				// lower 16 bits only (classic controller)
-				cc_btns = t->wpad.btns_d >> 16;
-				cc_btns_h = t->wpad.btns_h >> 16;
-				cc_btns_trig = trigger[i]->wpad.btns_h >> 16;
+				cc_btns = t->wpad->btns_d >> 16;
+				cc_btns_h = t->wpad->btns_h >> 16;
+				cc_btns_trig = trigger[i]->wpad->btns_h >> 16;
 
 				if(
-					(t->wpad.btns_d > 0 &&
+					(t->wpad->btns_d > 0 &&
 					(wm_btns == wm_btns_trig ||
-					(cc_btns == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC))) ||
+					(cc_btns == cc_btns_trig && t->wpad->exp.type == EXP_CLASSIC))) ||
 					(t->pad.btns_d == trigger[i]->pad.btns_h && t->pad.btns_d > 0))
 				{
 					if(trigger[i]->type == TRIGGER_HELD && state == STATE_SELECTED &&
@@ -280,9 +280,9 @@ void GuiButton::Update(GuiTrigger * t)
 				}
 
 				if(
-					(t->wpad.btns_h > 0 &&
+					(t->wpad->btns_h > 0 &&
 					(wm_btns_h == wm_btns_trig ||
-					(cc_btns_h == cc_btns_trig && t->wpad.exp.type == EXP_CLASSIC))) ||
+					(cc_btns_h == cc_btns_trig && t->wpad->exp.type == EXP_CLASSIC))) ||
 					(t->pad.btns_h == trigger[i]->pad.btns_h && t->pad.btns_h > 0))
 				{
 					if(trigger[i]->type == TRIGGER_HELD)

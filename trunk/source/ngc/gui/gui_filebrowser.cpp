@@ -239,12 +239,12 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	// move the file listing to respond to wiimote cursor movement
 	if(scrollbarBoxBtn->GetState() == STATE_HELD &&
 		scrollbarBoxBtn->GetStateChan() == t->chan &&
-		t->wpad.ir.valid &&
+		t->wpad->ir.valid &&
 		browser.numEntries > FILE_PAGESIZE
 		)
 	{
 		scrollbarBoxBtn->SetPosition(0,0);
-		positionWiimote = t->wpad.ir.y - 60 - scrollbarBoxBtn->GetTop();
+		positionWiimote = t->wpad->ir.y - 60 - scrollbarBoxBtn->GetTop();
 
 		if(positionWiimote < scrollbarBoxBtn->GetMinY())
 			positionWiimote = scrollbarBoxBtn->GetMinY();
@@ -267,13 +267,13 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 
 	if(arrowDownBtn->GetState() == STATE_HELD && arrowDownBtn->GetStateChan() == t->chan)
 	{
-		t->wpad.btns_h |= WPAD_BUTTON_DOWN;
+		t->wpad->btns_h |= WPAD_BUTTON_DOWN;
 		if(!this->IsFocused())
 			((GuiWindow *)this->GetParent())->ChangeFocus(this);
 	}
 	else if(arrowUpBtn->GetState() == STATE_HELD && arrowUpBtn->GetStateChan() == t->chan)
 	{
-		t->wpad.btns_h |= WPAD_BUTTON_UP;
+		t->wpad->btns_h |= WPAD_BUTTON_UP;
 		if(!this->IsFocused())
 			((GuiWindow *)this->GetParent())->ChangeFocus(this);
 	}
@@ -395,7 +395,7 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 
 		int currChan = t->chan;
 
-		if(t->wpad.ir.valid && !fileList[i]->IsInside(t->wpad.ir.x, t->wpad.ir.y))
+		if(t->wpad->ir.valid && !fileList[i]->IsInside(t->wpad->ir.x, t->wpad->ir.y))
 			t->chan = -1;
 
 		fileList[i]->Update(t);
