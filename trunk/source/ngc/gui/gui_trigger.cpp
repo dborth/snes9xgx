@@ -87,7 +87,7 @@ void GuiTrigger::SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
  * Get X/Y value from Wii Joystick (classic, nunchuk) input
  ***************************************************************************/
 
-s8 GuiTrigger::WPAD_Stick(u8 right, int axis)
+s8 GuiTrigger::WPAD_Stick(u8 stick, int axis)
 {
 	#ifdef HW_RVL
 
@@ -98,7 +98,7 @@ s8 GuiTrigger::WPAD_Stick(u8 right, int axis)
 	{
 		case WPAD_EXP_NUNCHUK:
 		case WPAD_EXP_GUITARHERO3:
-			if (right == 0)
+			if (stick == 0)
 			{
 				mag = wpad->exp.nunchuk.js.mag;
 				ang = wpad->exp.nunchuk.js.ang;
@@ -106,7 +106,7 @@ s8 GuiTrigger::WPAD_Stick(u8 right, int axis)
 			break;
 
 		case WPAD_EXP_CLASSIC:
-			if (right == 0)
+			if (stick == 0)
 			{
 				mag = wpad->exp.classic.ljs.mag;
 				ang = wpad->exp.classic.ljs.ang;
@@ -137,6 +137,16 @@ s8 GuiTrigger::WPAD_Stick(u8 right, int axis)
 	#else
 	return 0;
 	#endif
+}
+
+s8 GuiTrigger::WPAD_StickX(u8 stick)
+{
+	return WPAD_Stick(stick, 0);
+}
+
+s8 GuiTrigger::WPAD_StickY(u8 stick)
+{
+	return WPAD_Stick(stick, 1);
 }
 
 bool GuiTrigger::Left()

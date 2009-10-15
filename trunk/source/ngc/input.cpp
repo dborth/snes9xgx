@@ -55,7 +55,7 @@ static int cursor_y[5] = {0,0,0,0,0};
 #define ASSIGN_BUTTON_FALSE( keycode, snescmd ) \
 	  S9xMapButton( keycode, cmd = S9xGetCommandT(snescmd), false)
 
-int scopeTurbo = 0; // tracks whether superscope turbo is on or off
+static int scopeTurbo = 0; // tracks whether superscope turbo is on or off
 u32 btnmap[4][4][12]; // button mapping
 
 void ResetControls(int consoleCtrl, int wiiCtrl)
@@ -289,26 +289,30 @@ void DoRumble(int i)
  *
  * Updates X/Y coordinates for Superscope/mouse/justifier position
  ***************************************************************************/
-void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
+static void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
 {
 	#define SCOPEPADCAL 20
 
 	// gc left joystick
 
-	if (userInput[chan].pad.stickX > SCOPEPADCAL){
+	if (userInput[chan].pad.stickX > SCOPEPADCAL)
+	{
 		pos_x += (userInput[chan].pad.stickX*1.0)/SCOPEPADCAL;
 		if (pos_x > 256) pos_x = 256;
 	}
-	if (userInput[chan].pad.stickX < -SCOPEPADCAL){
+	if (userInput[chan].pad.stickX < -SCOPEPADCAL)
+	{
 		pos_x -= (userInput[chan].pad.stickX*-1.0)/SCOPEPADCAL;
 		if (pos_x < 0) pos_x = 0;
 	}
 
-	if (userInput[chan].pad.stickY < -SCOPEPADCAL){
+	if (userInput[chan].pad.stickY < -SCOPEPADCAL)
+	{
 		pos_y += (userInput[chan].pad.stickY*-1.0)/SCOPEPADCAL;
 		if (pos_y > 224) pos_y = 224;
 	}
-	if (userInput[chan].pad.stickY > SCOPEPADCAL){
+	if (userInput[chan].pad.stickY > SCOPEPADCAL)
+	{
 		pos_y -= (userInput[chan].pad.stickY*1.0)/SCOPEPADCAL;
 		if (pos_y < 0) pos_y = 0;
 	}
@@ -321,23 +325,27 @@ void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
 	}
 	else
 	{
-		signed char wm_ax = userInput[chan].WPAD_Stick(0,0);
-		signed char wm_ay = userInput[chan].WPAD_Stick(0,1);
+		s8 wm_ax = userInput[chan].WPAD_StickX(0);
+		s8 wm_ay = userInput[chan].WPAD_StickY(0);
 
-		if (wm_ax > SCOPEPADCAL){
+		if (wm_ax > SCOPEPADCAL)
+		{
 			pos_x += (wm_ax*1.0)/SCOPEPADCAL;
 			if (pos_x > 256) pos_x = 256;
 		}
-		if (wm_ax < -SCOPEPADCAL){
+		if (wm_ax < -SCOPEPADCAL)
+		{
 			pos_x -= (wm_ax*-1.0)/SCOPEPADCAL;
 			if (pos_x < 0) pos_x = 0;
 		}
 
-		if (wm_ay < -SCOPEPADCAL){
+		if (wm_ay < -SCOPEPADCAL)
+		{
 			pos_y += (wm_ay*-1.0)/SCOPEPADCAL;
 			if (pos_y > 224) pos_y = 224;
 		}
-		if (wm_ay > SCOPEPADCAL){
+		if (wm_ay > SCOPEPADCAL)
+		{
 			pos_y -= (wm_ay*1.0)/SCOPEPADCAL;
 			if (pos_y < 0) pos_y = 0;
 		}
@@ -352,7 +360,7 @@ void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
  * Reads the changes (buttons pressed, etc) from a controller and reports
  * these changes to Snes9x
  ***************************************************************************/
-void decodepad (int chan)
+static void decodepad (int chan)
 {
 	int i, offset;
 	float t;
@@ -362,12 +370,9 @@ void decodepad (int chan)
 	u32 jp = userInput[chan].pad.btns_h;
 
 #ifdef HW_RVL
-	s8 wm_ax = 0;
-	s8 wm_ay = 0;
-	u32 wp = 0;
-	wm_ax = userInput[chan].WPAD_Stick(0,0);
-	wm_ay = userInput[chan].WPAD_Stick(0,1);
-	wp = userInput[chan].wpad->btns_h;
+	s8 wm_ax = userInput[chan].WPAD_StickX(0);
+	s8 wm_ay = userInput[chan].WPAD_StickY(0);
+	u32 wp = userInput[chan].wpad->btns_h;
 
 	u32 exp_type;
 	if ( WPAD_Probe(chan, &exp_type) != 0 )
@@ -607,7 +612,7 @@ void NGCReportButtons ()
 
 	Settings.TurboMode = (
 		userInput[0].pad.substickX > 70 ||
-		userInput[0].WPAD_Stick(1,0) > 70
+		userInput[0].WPAD_StickX(1) > 70
 	);	// RIGHT on c-stick and on classic controller right joystick
 
 	/* Check for menu:
