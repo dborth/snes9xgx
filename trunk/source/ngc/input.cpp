@@ -247,7 +247,6 @@ SetupPads()
 }
 
 #ifdef HW_RVL
-
 /****************************************************************************
  * ShutoffRumble
  ***************************************************************************/
@@ -283,59 +282,6 @@ void DoRumble(int i)
 		WPAD_Rumble(i, 0); // rumble off
 	}
 }
-
-/****************************************************************************
- * WPAD_Stick
- *
- * Get X/Y value from Wii Joystick (classic, nunchuk) input
- ***************************************************************************/
-s8 WPAD_Stick(u8 chan, u8 right, int axis)
-{
-	float mag = 0.0;
-	float ang = 0.0;
-	WPADData *data = WPAD_Data(chan);
-
-	switch (data->exp.type)
-	{
-		case WPAD_EXP_NUNCHUK:
-		case WPAD_EXP_GUITARHERO3:
-			if (right == 0)
-			{
-				mag = data->exp.nunchuk.js.mag;
-				ang = data->exp.nunchuk.js.ang;
-			}
-			break;
-
-		case WPAD_EXP_CLASSIC:
-			if (right == 0)
-			{
-				mag = data->exp.classic.ljs.mag;
-				ang = data->exp.classic.ljs.ang;
-			}
-			else
-			{
-				mag = data->exp.classic.rjs.mag;
-				ang = data->exp.classic.rjs.ang;
-			}
-			break;
-
-		default:
-			break;
-	}
-
-	/* calculate x/y value (angle need to be converted into radian) */
-	if (mag > 1.0) mag = 1.0;
-	else if (mag < -1.0) mag = -1.0;
-	double val;
-
-	if(axis == 0) // x-axis
-		val = mag * sin((PI * ang)/180.0f);
-	else // y-axis
-		val = mag * cos((PI * ang)/180.0f);
-
-	return (s8)(val * 128.0f);
-}
-
 #endif
 
 /****************************************************************************
@@ -343,44 +289,40 @@ s8 WPAD_Stick(u8 chan, u8 right, int axis)
  *
  * Updates X/Y coordinates for Superscope/mouse/justifier position
  ***************************************************************************/
-void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
+void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
 {
 	#define SCOPEPADCAL 20
 
 	// gc left joystick
-	signed char pad_x = PAD_StickX (pad);
-	signed char pad_y = PAD_StickY (pad);
 
-	if (pad_x > SCOPEPADCAL){
-		pos_x += (pad_x*1.0)/SCOPEPADCAL;
+	if (userInput[chan].pad.stickX > SCOPEPADCAL){
+		pos_x += (userInput[chan].pad.stickX*1.0)/SCOPEPADCAL;
 		if (pos_x > 256) pos_x = 256;
 	}
-	if (pad_x < -SCOPEPADCAL){
-		pos_x -= (pad_x*-1.0)/SCOPEPADCAL;
+	if (userInput[chan].pad.stickX < -SCOPEPADCAL){
+		pos_x -= (userInput[chan].pad.stickX*-1.0)/SCOPEPADCAL;
 		if (pos_x < 0) pos_x = 0;
 	}
 
-	if (pad_y < -SCOPEPADCAL){
-		pos_y += (pad_y*-1.0)/SCOPEPADCAL;
+	if (userInput[chan].pad.stickY < -SCOPEPADCAL){
+		pos_y += (userInput[chan].pad.stickY*-1.0)/SCOPEPADCAL;
 		if (pos_y > 224) pos_y = 224;
 	}
-	if (pad_y > SCOPEPADCAL){
-		pos_y -= (pad_y*1.0)/SCOPEPADCAL;
+	if (userInput[chan].pad.stickY > SCOPEPADCAL){
+		pos_y -= (userInput[chan].pad.stickY*1.0)/SCOPEPADCAL;
 		if (pos_y < 0) pos_y = 0;
 	}
 
 #ifdef HW_RVL
-	struct ir_t ir;		// wiimote ir
-	WPAD_IR(pad, &ir);
-	if (ir.valid)
+	if (userInput[chan].wpad->ir.valid)
 	{
-		pos_x = (ir.x * 256) / 640;
-		pos_y = (ir.y * 224) / 480;
+		pos_x = (userInput[chan].wpad->ir.x * 256) / 640;
+		pos_y = (userInput[chan].wpad->ir.y * 224) / 480;
 	}
 	else
 	{
-		signed char wm_ax = WPAD_Stick (pad, 0, 0);
-		signed char wm_ay = WPAD_Stick (pad, 0, 1);
+		signed char wm_ax = userInput[chan].WPAD_Stick(0,0);
+		signed char wm_ay = userInput[chan].WPAD_Stick(0,1);
 
 		if (wm_ax > SCOPEPADCAL){
 			pos_x += (wm_ax*1.0)/SCOPEPADCAL;
@@ -410,25 +352,25 @@ void UpdateCursorPosition (int pad, int &pos_x, int &pos_y)
  * Reads the changes (buttons pressed, etc) from a controller and reports
  * these changes to Snes9x
  ***************************************************************************/
-void decodepad (int pad)
+void decodepad (int chan)
 {
 	int i, offset;
 	float t;
 
-	signed char pad_x = PAD_StickX (pad);
-	signed char pad_y = PAD_StickY (pad);
-	u32 jp = PAD_ButtonsHeld (pad);
+	s8 pad_x = userInput[chan].pad.stickX;
+	s8 pad_y = userInput[chan].pad.stickY;
+	u32 jp = userInput[chan].pad.btns_h;
 
 #ifdef HW_RVL
-	signed char wm_ax = 0;
-	signed char wm_ay = 0;
+	s8 wm_ax = 0;
+	s8 wm_ay = 0;
 	u32 wp = 0;
-	wm_ax = WPAD_Stick ((u8)pad, 0, 0);
-	wm_ay = WPAD_Stick ((u8)pad, 0, 1);
-	wp = WPAD_ButtonsHeld (pad);
+	wm_ax = userInput[chan].WPAD_Stick(0,0);
+	wm_ay = userInput[chan].WPAD_Stick(0,1);
+	wp = userInput[chan].wpad->btns_h;
 
 	u32 exp_type;
-	if ( WPAD_Probe(pad, &exp_type) != 0 )
+	if ( WPAD_Probe(chan, &exp_type) != 0 )
 		exp_type = WPAD_EXP_NONE;
 #endif
 
@@ -522,7 +464,7 @@ void decodepad (int pad)
 #endif
 
 	/*** Fix offset to pad ***/
-	offset = ((pad + 1) << 4);
+	offset = ((chan + 1) << 4);
 
 	/*** Report pressed buttons (gamepads) ***/
 	for (i = 0; i < MAXJP; i++)
@@ -540,7 +482,7 @@ void decodepad (int pad)
     }
 
 	/*** Superscope ***/
-	if (Settings.SuperScopeMaster && pad == 0) // report only once
+	if (Settings.SuperScopeMaster && chan == 0) // report only once
 	{
 		// buttons
 		offset = 0x50;
@@ -573,14 +515,14 @@ void decodepad (int pad)
 		}
 		// pointer
 		offset = 0x80;
-		UpdateCursorPosition(pad, cursor_x[0], cursor_y[0]);
+		UpdateCursorPosition(chan, cursor_x[0], cursor_y[0]);
 		S9xReportPointer(offset, (u16) cursor_x[0], (u16) cursor_y[0]);
 	}
 	/*** Mouse ***/
-	else if (Settings.MouseMaster && pad == 0)
+	else if (Settings.MouseMaster && chan == 0)
 	{
 		// buttons
-		offset = 0x60 + (2 * pad);
+		offset = 0x60 + (2 * chan);
 		for (i = 0; i < 2; i++)
 		{
 			if (jp & btnmap[CTRL_MOUSE][CTRLR_GCPAD][i]
@@ -594,15 +536,15 @@ void decodepad (int pad)
 		}
 		// pointer
 		offset = 0x81;
-		UpdateCursorPosition(pad, cursor_x[1 + pad], cursor_y[1 + pad]);
-		S9xReportPointer(offset + pad, (u16) cursor_x[1 + pad],
-				(u16) cursor_y[1 + pad]);
+		UpdateCursorPosition(chan, cursor_x[1 + chan], cursor_y[1 + chan]);
+		S9xReportPointer(offset + chan, (u16) cursor_x[1 + chan],
+				(u16) cursor_y[1 + chan]);
 	}
 	/*** Justifier ***/
-	else if (Settings.JustifierMaster && pad < 2)
+	else if (Settings.JustifierMaster && chan < 2)
 	{
 		// buttons
-		offset = 0x70 + (3 * pad);
+		offset = 0x70 + (3 * chan);
 		for (i = 0; i < 3; i++)
 		{
 			if (jp & btnmap[CTRL_JUST][CTRLR_GCPAD][i]
@@ -616,9 +558,9 @@ void decodepad (int pad)
 		}
 		// pointer
 		offset = 0x83;
-		UpdateCursorPosition(pad, cursor_x[3 + pad], cursor_y[3 + pad]);
-		S9xReportPointer(offset + pad, (u16) cursor_x[3 + pad],
-				(u16) cursor_y[3 + pad]);
+		UpdateCursorPosition(chan, cursor_x[3 + chan], cursor_y[3 + chan]);
+		S9xReportPointer(offset + chan, (u16) cursor_x[3 + chan],
+				(u16) cursor_y[3 + chan]);
 	}
 
 #ifdef HW_RVL
