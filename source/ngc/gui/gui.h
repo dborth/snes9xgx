@@ -196,11 +196,19 @@ class GuiTrigger
 		//!\param wiibtns Wii controller trigger button(s) - classic controller buttons are considered separately
 		//!\param gcbtns GameCube controller trigger button(s)
 		void SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns);
-		//!Get X/Y value from Wii Joystick (classic, nunchuk) input
-		//!\param right Controller stick (left = 0, right = 1)
+		//!Get X or Y value from Wii Joystick (classic, nunchuk) input
+		//!\param stick Controller stick (left = 0, right = 1)
 		//!\param axis Controller stick axis (x-axis = 0, y-axis = 1)
 		//!\return Stick value
-		s8 WPAD_Stick(u8 right, int axis);
+		s8 WPAD_Stick(u8 stick, int axis);
+		//!Get X value from Wii Joystick (classic, nunchuk) input
+		//!\param stick Controller stick (left = 0, right = 1)
+		//!\return Stick value
+		s8 WPAD_StickX(u8 stick);
+		//!Get Y value from Wii Joystick (classic, nunchuk) input
+		//!\param stick Controller stick (left = 0, right = 1)
+		//!\return Stick value
+		s8 WPAD_StickY(u8 stick);
 		//!Move menu selection left (via pad/joystick). Allows scroll delay and button overriding
 		//!\return true if selection should be moved left, false otherwise
 		bool Left();
