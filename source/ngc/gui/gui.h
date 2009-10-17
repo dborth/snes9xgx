@@ -139,7 +139,7 @@ class GuiSound
 		//!\param s Pointer to the sound data
 		//!\param l Length of sound data
 		//!\param t Sound format type (SOUND_PCM or SOUND_OGG)
-		GuiSound(const u8 * s, int l, int t);
+		GuiSound(const u8 * s, s32 l, int t);
 		//!Destructor
 		~GuiSound();
 		//!Start sound playback
@@ -306,8 +306,8 @@ class GuiElement
 		//!\param c Clickable
 		void SetClickable(bool c);
 		//!Sets whether or not the element is holdable
-		//!\param c Holdable
-		void SetHoldable(bool d);
+		//!\param h Holdable
+		void SetHoldable(bool h);
 		//!Gets the element's current state
 		//!\return state
 		int GetState();
@@ -606,7 +606,7 @@ class GuiText : public GuiElement
 		//!\param c Font color
 		GuiText(const char * t, int s, GXColor c);
 		//!\overload
-		//!\Assumes SetPresets() has been called to setup preferred text attributes
+		//!Assumes SetPresets() has been called to setup preferred text attributes
 		//!\param t Text
 		GuiText(const char * t);
 		//!Destructor
@@ -628,7 +628,7 @@ class GuiText : public GuiElement
 		void SetFontSize(int s);
 		//!Sets the maximum width of the drawn texture image
 		//!\param w Maximum width
-		void SetMaxWidth(int width);
+		void SetMaxWidth(int w);
 		//!Enables/disables text scrolling
 		//!\param s Scrolling on/off
 		void SetScroll(int s);
