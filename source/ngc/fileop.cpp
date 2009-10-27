@@ -173,7 +173,6 @@ devicecallback (void *arg)
 		{
 			if(!dvd->isInserted()) // check if the device was removed
 			{
-				printf("dvd removed!\n");
 				unmountRequired[DEVICE_DVD] = true;
 				isMounted[DEVICE_DVD] = false;
 			}
