@@ -9,8 +9,12 @@
  ***************************************************************************/
 
 #include "gui.h"
+#include <ogc/lwp_watchdog.h>
+#include <gctypes.h>
 
-static int scrollDelay = 0;
+static u64 prev[4];
+static u64 now[4];
+static u32 delay[4];
 
 /**
  * Constructor for the GuiTrigger class.
@@ -156,23 +160,27 @@ bool GuiTrigger::Left()
 	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_LEFT
 			|| pad.stickX < -PADCAL
-			|| WPAD_Stick(0,0) < -PADCAL)
+			|| WPAD_StickX(0) < -PADCAL)
 	{
 		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
 			|| pad.btns_d & PAD_BUTTON_LEFT)
 		{
-			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.
+			prev[chan] = gettime();
+			delay[chan] = SCROLLL_DELAY_INITIAL; // reset scroll delay
 			return true;
 		}
-		else if(scrollDelay == 0)
+
+		now[chan] = gettime();
+
+		if(diff_usec(prev[chan], now[chan]) > delay[chan])
 		{
-			scrollDelay = SCROLL_LOOP_DELAY;
+			prev[chan] = now[chan];
+			
+			if(delay[chan] == SCROLLL_DELAY_INITIAL)
+				delay[chan] = SCROLL_DELAY_LOOP;
+			else if(delay[chan] > SCROLL_DELAY_DECREASE)
+				delay[chan] -= SCROLL_DELAY_DECREASE;
 			return true;
-		}
-		else
-		{
-			if(scrollDelay > 0)
-				scrollDelay--;
 		}
 	}
 	return false;
@@ -185,23 +193,27 @@ bool GuiTrigger::Right()
 	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_RIGHT
 			|| pad.stickX > PADCAL
-			|| WPAD_Stick(0,0) > PADCAL)
+			|| WPAD_StickX(0) > PADCAL)
 	{
 		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
 			|| pad.btns_d & PAD_BUTTON_RIGHT)
 		{
-			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.
+			prev[chan] = gettime();
+			delay[chan] = SCROLLL_DELAY_INITIAL; // reset scroll delay
 			return true;
 		}
-		else if(scrollDelay == 0)
+
+		now[chan] = gettime();
+
+		if(diff_usec(prev[chan], now[chan]) > delay[chan])
 		{
-			scrollDelay = SCROLL_LOOP_DELAY;
+			prev[chan] = now[chan];
+			
+			if(delay[chan] == SCROLLL_DELAY_INITIAL)
+				delay[chan] = SCROLL_DELAY_LOOP;
+			else if(delay[chan] > SCROLL_DELAY_DECREASE)
+				delay[chan] -= SCROLL_DELAY_DECREASE;
 			return true;
-		}
-		else
-		{
-			if(scrollDelay > 0)
-				scrollDelay--;
 		}
 	}
 	return false;
@@ -214,23 +226,27 @@ bool GuiTrigger::Up()
 	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_UP
 			|| pad.stickY > PADCAL
-			|| WPAD_Stick(0,1) > PADCAL)
+			|| WPAD_StickY(0) > PADCAL)
 	{
 		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
 			|| pad.btns_d & PAD_BUTTON_UP)
 		{
-			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.
+			prev[chan] = gettime();
+			delay[chan] = SCROLLL_DELAY_INITIAL; // reset scroll delay
 			return true;
 		}
-		else if(scrollDelay == 0)
+
+		now[chan] = gettime();
+
+		if(diff_usec(prev[chan], now[chan]) > delay[chan])
 		{
-			scrollDelay = SCROLL_LOOP_DELAY;
+			prev[chan] = now[chan];
+			
+			if(delay[chan] == SCROLL_DELAY_INITIAL)
+				delay[chan] = SCROLL_DELAY_LOOP;
+			else if(delay[chan] > SCROLL_DELAY_DECREASE)
+				delay[chan] -= SCROLL_DELAY_DECREASE;
 			return true;
-		}
-		else
-		{
-			if(scrollDelay > 0)
-				scrollDelay--;
 		}
 	}
 	return false;
@@ -243,23 +259,27 @@ bool GuiTrigger::Down()
 	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_DOWN
 			|| pad.stickY < -PADCAL
-			|| WPAD_Stick(0,1) < -PADCAL)
+			|| WPAD_StickY(0) < -PADCAL)
 	{
 		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
 			|| pad.btns_d & PAD_BUTTON_DOWN)
 		{
-			scrollDelay = SCROLL_INITIAL_DELAY; // reset scroll delay.
+			prev[chan] = gettime();
+			delay[chan] = SCROLLL_DELAY_INITIAL; // reset scroll delay
 			return true;
 		}
-		else if(scrollDelay == 0)
+
+		now[chan] = gettime();
+
+		if(diff_usec(prev[chan], now[chan]) > delay[chan])
 		{
-			scrollDelay = SCROLL_LOOP_DELAY;
+			prev[chan] = now[chan];
+			
+			if(delay[chan] == SCROLLL_DELAY_INITIAL)
+				delay[chan] = SCROLL_DELAY_LOOP;
+			else if(delay[chan] > SCROLL_DELAY_DECREASE)
+				delay[chan] -= SCROLL_DELAY_DECREASE;
 			return true;
-		}
-		else
-		{
-			if(scrollDelay > 0)
-				scrollDelay--;
 		}
 	}
 	return false;
