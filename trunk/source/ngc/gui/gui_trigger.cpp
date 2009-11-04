@@ -166,7 +166,7 @@ bool GuiTrigger::Left()
 			|| pad.btns_d & PAD_BUTTON_LEFT)
 		{
 			prev[chan] = gettime();
-			delay[chan] = SCROLLL_DELAY_INITIAL; // reset scroll delay
+			delay[chan] = SCROLL_DELAY_INITIAL; // reset scroll delay
 			return true;
 		}
 
@@ -176,7 +176,7 @@ bool GuiTrigger::Left()
 		{
 			prev[chan] = now[chan];
 			
-			if(delay[chan] == SCROLLL_DELAY_INITIAL)
+			if(delay[chan] == SCROLL_DELAY_INITIAL)
 				delay[chan] = SCROLL_DELAY_LOOP;
 			else if(delay[chan] > SCROLL_DELAY_DECREASE)
 				delay[chan] -= SCROLL_DELAY_DECREASE;
@@ -199,7 +199,7 @@ bool GuiTrigger::Right()
 			|| pad.btns_d & PAD_BUTTON_RIGHT)
 		{
 			prev[chan] = gettime();
-			delay[chan] = SCROLLL_DELAY_INITIAL; // reset scroll delay
+			delay[chan] = SCROLL_DELAY_INITIAL; // reset scroll delay
 			return true;
 		}
 
@@ -209,7 +209,7 @@ bool GuiTrigger::Right()
 		{
 			prev[chan] = now[chan];
 			
-			if(delay[chan] == SCROLLL_DELAY_INITIAL)
+			if(delay[chan] == SCROLL_DELAY_INITIAL)
 				delay[chan] = SCROLL_DELAY_LOOP;
 			else if(delay[chan] > SCROLL_DELAY_DECREASE)
 				delay[chan] -= SCROLL_DELAY_DECREASE;
@@ -232,7 +232,7 @@ bool GuiTrigger::Up()
 			|| pad.btns_d & PAD_BUTTON_UP)
 		{
 			prev[chan] = gettime();
-			delay[chan] = SCROLLL_DELAY_INITIAL; // reset scroll delay
+			delay[chan] = SCROLL_DELAY_INITIAL; // reset scroll delay
 			return true;
 		}
 
@@ -265,7 +265,7 @@ bool GuiTrigger::Down()
 			|| pad.btns_d & PAD_BUTTON_DOWN)
 		{
 			prev[chan] = gettime();
-			delay[chan] = SCROLLL_DELAY_INITIAL; // reset scroll delay
+			delay[chan] = SCROLL_DELAY_INITIAL; // reset scroll delay
 			return true;
 		}
 
@@ -275,7 +275,7 @@ bool GuiTrigger::Down()
 		{
 			prev[chan] = now[chan];
 			
-			if(delay[chan] == SCROLLL_DELAY_INITIAL)
+			if(delay[chan] == SCROLL_DELAY_INITIAL)
 				delay[chan] = SCROLL_DELAY_LOOP;
 			else if(delay[chan] > SCROLL_DELAY_DECREASE)
 				delay[chan] -= SCROLL_DELAY_DECREASE;
