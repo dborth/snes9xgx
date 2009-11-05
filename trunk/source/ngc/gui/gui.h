@@ -52,8 +52,9 @@
 
 extern FreeTypeGX *fontSystem[];
 
-#define SCROLL_INITIAL_DELAY 	200000
-#define SCROLL_LOOP_DELAY		30000
+#define SCROLL_DELAY_INITIAL	200000
+#define SCROLL_DELAY_LOOP		30000
+#define SCROLL_DELAY_DECREASE	300
 #define FILE_PAGESIZE 			10
 #define PAGESIZE 				8
 #define SAVELISTSIZE 			6
