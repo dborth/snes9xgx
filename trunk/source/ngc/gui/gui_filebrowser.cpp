@@ -414,21 +414,23 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 	}
 
 	// update the location of the scroll box based on the position in the file list
-	if(positionWiimote > 0)
+	if(positionWiimote > 0 || listChanged || numEntries != browser.numEntries)
 	{
-		position = positionWiimote; // follow wiimote cursor
+		if(positionWiimote > 0)
+		{
+			position = positionWiimote; // follow wiimote cursor
+		}
+		else
+		{
+			position = 156*(browser.pageIndex + FILE_PAGESIZE/2.0) / (browser.numEntries*1.0);
+	
+			if(browser.pageIndex/(FILE_PAGESIZE/2.0) < 1)
+				position = 0;
+			else if((browser.pageIndex+FILE_PAGESIZE)/(FILE_PAGESIZE*1.0) >= (browser.numEntries)/(FILE_PAGESIZE*1.0))
+				position = 156;
+		}
+		scrollbarBoxBtn->SetPosition(0,position+36);
 	}
-	else
-	{
-		position = 156*(browser.pageIndex + FILE_PAGESIZE/2.0) / (browser.numEntries*1.0);
-
-		if(browser.pageIndex/(FILE_PAGESIZE/2.0) < 1)
-			position = 0;
-		else if((browser.pageIndex+FILE_PAGESIZE)/(FILE_PAGESIZE*1.0) >= (browser.numEntries)/(FILE_PAGESIZE*1.0))
-			position = 156;
-	}
-
-	scrollbarBoxBtn->SetPosition(0,position+36);
 
 	listChanged = false;
 	numEntries = browser.numEntries;
