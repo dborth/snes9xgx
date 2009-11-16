@@ -20,7 +20,7 @@
 #include "filelist.h"
 
 #define APPNAME 		"Snes9x GX"
-#define APPVERSION 		"4.1.2"
+#define APPVERSION 		"4.1.3"
 #define APPFOLDER 		"snes9x"
 #define PREF_FILE_NAME 	"settings.xml"
 
@@ -77,9 +77,10 @@ struct SGCSettings{
 	char	smbpwd[20];
 	char	smbshare[20];
 
-    float	ZoomLevel; // zoom amount
-    int		VerifySaves;
-    int		videomode; // 0 - automatic, 1 - NTSC (480i), 2 - Progressive (480p), 3 - PAL (50Hz), 4 - PAL (60Hz)
+	float	zoomHor; // horizontal zoom amount
+	float	zoomVert; // vertical zoom amount
+	int		VerifySaves;
+	int		videomode; // 0 - automatic, 1 - NTSC (480i), 2 - Progressive (480p), 3 - PAL (50Hz), 4 - PAL (60Hz)
 	int		render;		// 0 - original, 1 - filtered, 2 - unfiltered
 	int		FilterMethod; // convert to RenderFilter
 	int		Controller;

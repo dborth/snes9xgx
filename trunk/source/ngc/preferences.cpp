@@ -136,7 +136,8 @@ preparePrefsData ()
 	createXMLSection("Video", "Video Settings");
 
 	createXMLSetting("videomode", "Video Mode", toStr(GCSettings.videomode));
-	createXMLSetting("ZoomLevel", "Zoom Level", FtoStr(GCSettings.ZoomLevel));
+	createXMLSetting("zoomHor", "Horizontal Zoom Level", FtoStr(GCSettings.zoomHor));
+	createXMLSetting("zoomVert", "Vertical Zoom Level", FtoStr(GCSettings.zoomVert));
 	createXMLSetting("render", "Video Filtering", toStr(GCSettings.render));
 	createXMLSetting("widescreen", "Aspect Ratio Correction", toStr(GCSettings.widescreen));
 	createXMLSetting("FilterMethod", "Filter Method", toStr(GCSettings.FilterMethod));
@@ -308,7 +309,8 @@ decodePrefsData ()
 			// Video Settings
 
 			loadXMLSetting(&GCSettings.videomode, "videomode");
-			loadXMLSetting(&GCSettings.ZoomLevel, "ZoomLevel");
+			loadXMLSetting(&GCSettings.zoomHor, "zoomHor");
+			loadXMLSetting(&GCSettings.zoomVert, "zoomVert");
 			loadXMLSetting(&GCSettings.render, "render");
 			loadXMLSetting(&GCSettings.widescreen, "widescreen");
 			loadXMLSetting(&GCSettings.FilterMethod, "FilterMethod");

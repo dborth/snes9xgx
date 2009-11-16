@@ -24,9 +24,6 @@ void StopGX();
 void ResetVideo_Emu();
 void setGFX();
 void update_video (int width, int height);
-void zoom (float speed);
-void zoom_reset ();
-
 void ResetVideo_Menu();
 void TakeScreenshot();
 void Menu_Render();
