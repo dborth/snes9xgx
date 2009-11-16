@@ -736,8 +736,8 @@ update_video (int width, int height)
 		if (GCSettings.widescreen)
 			xscale = (3*xscale)/4;
 
-		xscale *= GCSettings.ZoomLevel;
-		yscale *= GCSettings.ZoomLevel;
+		xscale *= GCSettings.zoomHor;
+		yscale *= GCSettings.zoomVert;
 
 		square[6] = square[3]  =  xscale + GCSettings.xshift;
 		square[0] = square[9]  = -xscale + GCSettings.xshift;
@@ -804,32 +804,6 @@ update_video (int width, int height)
 
 	// Return to caller, don't waste time waiting for vb
 	LWP_ResumeThread (vbthread);
-}
-
-/****************************************************************************
- * Zoom Functions
- ***************************************************************************/
-void
-zoom (float speed)
-{
-	if (GCSettings.ZoomLevel > 1)
-		GCSettings.ZoomLevel += (speed / -100.0);
-	else
-		GCSettings.ZoomLevel += (speed / -200.0);
-
-	if (GCSettings.ZoomLevel < 0.5)
-		GCSettings.ZoomLevel = 0.5;
-	else if (GCSettings.ZoomLevel > 2.0)
-		GCSettings.ZoomLevel = 2.0;
-
-	oldvheight = 0;	// update video
-}
-
-void
-zoom_reset ()
-{
-	GCSettings.ZoomLevel = 1.0;
-	oldvheight = 0;	// update video
 }
 
 void AllocGfxMem()

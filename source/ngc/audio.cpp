@@ -98,7 +98,7 @@ InitAudio ()
 	#else
 	ASND_Init();
 	#endif
-	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 100);
+	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 70);
 }
 
 /****************************************************************************

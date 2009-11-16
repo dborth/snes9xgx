@@ -29,8 +29,10 @@ struct SGCSettings GCSettings;
  ***************************************************************************/
 void FixInvalidSettings()
 {
-	if(!(GCSettings.ZoomLevel > 0.5 && GCSettings.ZoomLevel < 1.5))
-		GCSettings.ZoomLevel = 1.0;
+	if(!(GCSettings.zoomHor > 0.5 && GCSettings.zoomHor < 1.5))
+		GCSettings.zoomHor = 1.0;
+	if(!(GCSettings.zoomVert > 0.5 && GCSettings.zoomVert < 1.5))
+		GCSettings.zoomVert = 1.0;
 	if(!(GCSettings.xshift > -50 && GCSettings.xshift < 50))
 		GCSettings.xshift = 0;
 	if(!(GCSettings.yshift > -50 && GCSettings.yshift < 50))
@@ -82,11 +84,12 @@ DefaultSettings ()
 	GCSettings.Controller = CTRL_PAD2;
 
 	GCSettings.videomode = 0; // automatic video mode detection
-	GCSettings.ZoomLevel = 1.0; // zoom level
 	GCSettings.render = 2; // Unfiltered
-	GCSettings.widescreen = 0; // no aspect ratio correction
 	GCSettings.FilterMethod = FILTER_NONE;	// no hq2x
 
+	GCSettings.widescreen = 0; // no aspect ratio correction
+	GCSettings.zoomHor = 1.0; // horizontal zoom level
+	GCSettings.zoomVert = 1.0; // vertical zoom level
 	GCSettings.xshift = 0; // horizontal video shift
 	GCSettings.yshift = 0; // vertical video shift
 
