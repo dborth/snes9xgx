@@ -159,12 +159,11 @@
 **********************************************************************************/
 
 
-
 #ifndef _TILE_H_
 #define _TILE_H_
 
-void S9xInitTileRenderer(void);
-void S9xSelectTileRenderers(int BGMode, bool8 sub, bool8 obj);
-void S9xSelectTileConverter(int depth, bool8 hires, bool8 sub, bool8 mosaic);
+void S9xInitTileRenderer (void);
+void S9xSelectTileRenderers (int, bool8, bool8);
+void S9xSelectTileConverter (int, bool8, bool8, bool8);
 
 #endif

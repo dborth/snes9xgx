@@ -158,8 +158,6 @@
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
 
-
-
 /* S-DD1 decompressor
  *
  * Based on code and documentation by Andreas Naive, who deserves a great deal
@@ -174,7 +172,7 @@
  * S-DD1 issue in the past.
  */
 
-#include <string.h>
+
 #include "port.h"
 #include "sdd1emu.h"
 
@@ -390,6 +388,7 @@ void SDD1_decompress(uint8 *out, uint8 *in, int len){
     }
 }
 
+#if 0
 static uint8 cur_plane;
 static uint8 num_bits;
 static uint8 next_byte;
@@ -485,4 +484,4 @@ uint8 SDD1_get_byte(void){
         return 0;
     }
 }
-
+#endif

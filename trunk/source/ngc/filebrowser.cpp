@@ -26,6 +26,7 @@
 
 #include "snes9x.h"
 #include "memmap.h"
+#include "cheats.h"
 
 #include "filebrowser.h"
 #include "snes9xGX.h"
@@ -37,8 +38,6 @@
 #include "memcardop.h"
 #include "input.h"
 #include "gcunzip.h"
-#include "cheatmgr.h"
-#include "patch.h"
 #include "freeze.h"
 #include "sram.h"
 
@@ -490,6 +489,39 @@ int BrowserLoadSz()
 	return szfiles;
 }
 
+int WiiFileLoader()
+{
+	int size;
+	char filepath[1024];
+	
+	memset(Memory.NSRTHeader, 0, sizeof(Memory.NSRTHeader));
+	Memory.HeaderCount = 0;
+	
+	if(!inSz)
+	{
+		if(!MakeFilePath(filepath, FILE_ROM))
+			return 0;
+
+		size = LoadFile ((char *)Memory.ROM, filepath, browserList[browser.selIndex].length, NOTSILENT);
+	}
+	else
+	{
+		size = LoadSzFile(szpath, (unsigned char *)Memory.ROM);
+
+		if(size <= 0)
+		{
+			browser.selIndex = 0;
+			BrowserChangeFolder();
+		}
+	}
+
+	if(size <= 0)
+		return 0;
+
+	SNESROMSize = Memory.HeaderRemove(size, Memory.HeaderCount, Memory.ROM);
+	return SNESROMSize;
+}
+
 /****************************************************************************
  * BrowserLoadFile
  *
@@ -497,11 +529,9 @@ int BrowserLoadSz()
  ***************************************************************************/
 int BrowserLoadFile()
 {
-	char filepath[1024];
 	int loaded = 0;
-	
 	int device;
-			
+
 	if(!FindDevice(browser.dir, &device))
 		return 0;
 
@@ -514,24 +544,7 @@ int BrowserLoadFile()
 
 	SNESROMSize = 0;
 	S9xDeleteCheats();
-
-	if(!inSz)
-	{
-		if(!MakeFilePath(filepath, FILE_ROM))
-			goto done;
-
-		SNESROMSize = LoadFile ((char *)Memory.ROM, filepath, browserList[browser.selIndex].length, NOTSILENT);
-	}
-	else
-	{
-		SNESROMSize = LoadSzFile(szpath, (unsigned char *)Memory.ROM);
-
-		if(SNESROMSize <= 0)
-		{
-			browser.selIndex = 0;
-			BrowserChangeFolder();
-		}
-	}
+	Memory.LoadROM("ROM");
 
 	if (SNESROMSize <= 0)
 	{
@@ -539,22 +552,11 @@ int BrowserLoadFile()
 	}
 	else
 	{
-		// load UPS/IPS/PPF patch
-		LoadPatch();
-
-		Memory.LoadROM ("BLANK.SMC");
-		Memory.LoadSRAM ("BLANK");
-
 		// load SRAM or snapshot
 		if (GCSettings.AutoLoad == 1)
 			LoadSRAMAuto(SILENT);
 		else if (GCSettings.AutoLoad == 2)
-			NGCUnfreezeGameAuto(SILENT);
-
-		// setup cheats
-		if(GCSettings.SaveMethod != DEVICE_MC_SLOTA &&
-			GCSettings.SaveMethod != DEVICE_MC_SLOTB)
-			SetupCheats();
+			LoadSnapshotAuto(SILENT);
 
 		ResetBrowser();
 		loaded = 1;

@@ -159,16 +159,13 @@
 **********************************************************************************/
 
 
+#include "snes9x.h"
+#include "memmap.h"
 
+static void (*SetDSP3) (void);
 
-#ifndef __cplusplus
-//C++ in C
-typedef unsigned char bool;
-#define true 1
-#define false 0
-#endif
-
-uint16 DSP3_DataROM[1024] = {
+static const uint16	DSP3_DataROM[1024] =
+{
 	0x8000, 0x4000, 0x2000, 0x1000, 0x0800, 0x0400, 0x0200, 0x0100,
 	0x0080, 0x0040, 0x0020, 0x0010, 0x0008, 0x0004, 0x0002, 0x0001,
 	0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080, 0x0100,
@@ -299,1004 +296,957 @@ uint16 DSP3_DataROM[1024] = {
 	0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
 };
 
-void (*SetDSP3)();
-void DSP3_Command();
+static bool8 DSP3_GetBits (uint8);
+//static void DSP3_MemorySize (void);
+static void DSP3_TestMemory (void);
+static void DSP3_DumpDataROM (void);
+static void DSP3_MemoryDump (void);
+static void DSP3_Coordinate (void);
+static void DSP3_Command (void);
+static void DSP3_Decode_Data (void);
+static void DSP3_Decode_Tree (void);
+static void DSP3_Decode_Symbols (void);
+static void DSP3_Decode (void);
+static void DSP3_Decode_A (void);
+static void DSP3_Convert (void);
+static void DSP3_Convert_A (void);
+static void DSP3_OP03 (void);
+static void DSP3_OP06 (void);
+static void DSP3_OP07 (void);
+static void DSP3_OP07_A (void);
+static void DSP3_OP07_B (void);
+static void DSP3_OP0C (void);
+//static void DSP3_OP0C_A (void);
+static void DSP3_OP10 (void);
+static void DSP3_OP1C (void);
+static void DSP3_OP1C_A (void);
+static void DSP3_OP1C_B (void);
+static void DSP3_OP1C_C (void);
+static void DSP3_OP1E (void);
+static void DSP3_OP1E_A (void);
+static void DSP3_OP1E_A1 (void);
+static void DSP3_OP1E_A2 (void);
+static void DSP3_OP1E_A3 (void);
+static void DSP3_OP1E_B (void);
+static void DSP3_OP1E_B1 (void);
+static void DSP3_OP1E_B2 (void);
+static void DSP3_OP1E_C (void);
+static void DSP3_OP1E_C1 (void);
+static void DSP3_OP1E_C2 (void);
+static void DSP3_OP1E_D (int16, int16 *, int16 *);
+static void DSP3_OP1E_D1 (int16, int16 *, int16 *);
+static void DSP3_OP3E (void);
 
-uint16 DSP3_DR;
-uint16 DSP3_SR;
-uint16 DSP3_MemoryIndex;
 
-void DSP3_Reset()
+void DSP3_Reset (void)
 {
-  DSP3_DR = 0x0080;
-  DSP3_SR = 0x0084;
-  SetDSP3 = &DSP3_Command;
+	DSP3.DR = 0x0080;
+	DSP3.SR = 0x0084;
+	SetDSP3 = &DSP3_Command;
 }
 
-void DSP3_MemorySize()
+/*
+static void DSP3_MemorySize (void)
 {
-	DSP3_DR = 0x0300;
+	DSP3.DR = 0x0300;
+	SetDSP3 = &DSP3_Reset;
+}
+*/
+
+static void DSP3_TestMemory (void)
+{
+	DSP3.DR = 0x0000;
 	SetDSP3 = &DSP3_Reset;
 }
 
-void DSP3_TestMemory()
+static void DSP3_DumpDataROM (void)
 {
-	DSP3_DR = 0x0000;
-	SetDSP3 = &DSP3_Reset;
-}
-
-void DSP3_DumpDataROM()
-{
-	DSP3_DR = DSP3_DataROM[DSP3_MemoryIndex++];
-	if (DSP3_MemoryIndex == 1024)
+	DSP3.DR = DSP3_DataROM[DSP3.MemoryIndex++];
+	if (DSP3.MemoryIndex == 1024)
 		SetDSP3 = &DSP3_Reset;
 }
 
-void DSP3_MemoryDump()
+static void DSP3_MemoryDump (void)
 {
-	DSP3_MemoryIndex = 0;
+	DSP3.MemoryIndex = 0;
 	SetDSP3 = &DSP3_DumpDataROM;
 	DSP3_DumpDataROM();
 }
 
-int16 DSP3_WinLo;
-int16 DSP3_WinHi;
-
-void DSP3_OP06()
+static void DSP3_OP06 (void)
 {
-	DSP3_WinLo = (uint8)(DSP3_DR);
-	DSP3_WinHi = (uint8)(DSP3_DR >> 8);
+	DSP3.WinLo = (uint8) (DSP3.DR);
+	DSP3.WinHi = (uint8) (DSP3.DR >> 8);
 	DSP3_Reset();
 }
 
-void DSP3_OP03()
+static void DSP3_OP03 (void)
 {
-	int16 Lo = (uint8)(DSP3_DR);
-	int16 Hi = (uint8)(DSP3_DR >> 8);
-	int16 Ofs = (DSP3_WinLo * Hi << 1) + (Lo << 1);
-	DSP3_DR = Ofs >> 1;
+	int16	Lo  = (uint8) (DSP3.DR);
+	int16	Hi  = (uint8) (DSP3.DR >> 8);
+	int16	Ofs = (DSP3.WinLo * Hi << 1) + (Lo << 1);
+
+	DSP3.DR = Ofs >> 1;
 	SetDSP3 = &DSP3_Reset;
 }
 
-int16 DSP3_AddLo;
-int16 DSP3_AddHi;
-
-void DSP3_OP07_B()
+static void DSP3_OP07_B (void)
 {
-	int16 Ofs = (DSP3_WinLo * DSP3_AddHi << 1) + (DSP3_AddLo << 1);
-	DSP3_DR = Ofs >> 1;
+	int16	Ofs = (DSP3.WinLo * DSP3.AddHi << 1) + (DSP3.AddLo << 1);
+
+	DSP3.DR = Ofs >> 1;
 	SetDSP3 = &DSP3_Reset;
 }
 
-void DSP3_OP07_A()
+static void DSP3_OP07_A (void)
 {
-	int16 Lo = (uint8)(DSP3_DR);
-	int16 Hi = (uint8)(DSP3_DR >> 8);
+	int16	Lo = (uint8) (DSP3.DR);
+	int16	Hi = (uint8) (DSP3.DR >> 8);
 
-	if (Lo & 1)	Hi += (DSP3_AddLo & 1);
+	if (Lo & 1)
+		Hi += (DSP3.AddLo & 1);
 
-	DSP3_AddLo += Lo;
-	DSP3_AddHi += Hi;
+	DSP3.AddLo += Lo;
+	DSP3.AddHi += Hi;
 
-	if (DSP3_AddLo < 0)
-		DSP3_AddLo += DSP3_WinLo;
+	if (DSP3.AddLo < 0)
+		DSP3.AddLo += DSP3.WinLo;
 	else
-		if (DSP3_AddLo >= DSP3_WinLo)
-			DSP3_AddLo -= DSP3_WinLo;
+	if (DSP3.AddLo >= DSP3.WinLo)
+		DSP3.AddLo -= DSP3.WinLo;
 
-	if (DSP3_AddHi < 0)
-		DSP3_AddHi += DSP3_WinHi;
+	if (DSP3.AddHi < 0)
+		DSP3.AddHi += DSP3.WinHi;
 	else
-		if (DSP3_AddHi >= DSP3_WinHi)
-			DSP3_AddHi -= DSP3_WinHi;
+	if (DSP3.AddHi >= DSP3.WinHi)
+		DSP3.AddHi -= DSP3.WinHi;
 
-	DSP3_DR = DSP3_AddLo | (DSP3_AddHi << 8) | ((DSP3_AddHi >> 8) & 0xff);
+	DSP3.DR = DSP3.AddLo | (DSP3.AddHi << 8) | ((DSP3.AddHi >> 8) & 0xff);
 	SetDSP3 = &DSP3_OP07_B;
 }
 
-void DSP3_OP07()
+static void DSP3_OP07 (void)
 {
-	uint32 dataOfs = ((DSP3_DR << 1) + 0x03b2) & 0x03ff;
+	uint32	dataOfs = ((DSP3.DR << 1) + 0x03b2) & 0x03ff;
 
-	DSP3_AddHi = DSP3_DataROM[dataOfs];
-	DSP3_AddLo = DSP3_DataROM[dataOfs + 1];
+	DSP3.AddHi = DSP3_DataROM[dataOfs];
+	DSP3.AddLo = DSP3_DataROM[dataOfs + 1];
 
 	SetDSP3 = &DSP3_OP07_A;
-	DSP3_SR = 0x0080;
+	DSP3.SR = 0x0080;
 }
 
-uint16 DSP3_Codewords;
-uint16 DSP3_Outwords;
-uint16 DSP3_Symbol;
-uint16 DSP3_BitCount;
-uint16 DSP3_Index;
-uint16 DSP3_Codes[512];
-uint16 DSP3_BitsLeft;
-uint16 DSP3_ReqBits;
-uint16 DSP3_ReqData;
-uint16 DSP3_BitCommand;
-uint8  DSP3_BaseLength;
-uint16 DSP3_BaseCodes;
-uint16 DSP3_BaseCode;
-uint8  DSP3_CodeLengths[8];
-uint16 DSP3_CodeOffsets[8];
-uint16 DSP3_LZCode;
-uint8  DSP3_LZLength;
-
-uint16 DSP3_X;
-uint16 DSP3_Y;
-
-void DSP3_Coordinate()
+static void DSP3_Coordinate (void)
 {
-	DSP3_Index++;
+	DSP3.Index++;
 
-	switch (DSP3_Index)
+	switch (DSP3.Index)
 	{
-	case 3:
-		{
-			if (DSP3_DR == 0xffff)
+		case 3:
+			if (DSP3.DR == 0xffff)
 				DSP3_Reset();
 			break;
-		}
-	case 4:
-		{
-			DSP3_X = DSP3_DR;
+
+		case 4:
+			DSP3.X = DSP3.DR;
 			break;
-		}
-	case 5:
-		{
-			DSP3_Y = DSP3_DR;
-			DSP3_DR = 1;
+
+		case 5:
+			DSP3.Y = DSP3.DR;
+			DSP3.DR = 1;
 			break;
-		}
-	case 6:
-		{
-			DSP3_DR = DSP3_X;
+
+		case 6:
+			DSP3.DR = DSP3.X;
 			break;
-		}
-	case 7:
-		{
-			DSP3_DR = DSP3_Y;
-			DSP3_Index = 0;
+
+		case 7:
+			DSP3.DR = DSP3.Y;
+			DSP3.Index = 0;
 			break;
-		}
 	}
 }
 
-uint8  DSP3_Bitmap[8];
-uint8  DSP3_Bitplane[8];
-uint16 DSP3_BMIndex;
-uint16 DSP3_BPIndex;
-uint16 DSP3_Count;
-
-void DSP3_Convert_A()
+static void DSP3_Convert_A (void)
 {
-	if (DSP3_BMIndex < 8)
+	if (DSP3.BMIndex < 8)
 	{
-		DSP3_Bitmap[DSP3_BMIndex++] = (uint8) (DSP3_DR);
-		DSP3_Bitmap[DSP3_BMIndex++] = (uint8) (DSP3_DR >> 8);
+		DSP3.Bitmap[DSP3.BMIndex++] = (uint8) (DSP3.DR);
+		DSP3.Bitmap[DSP3.BMIndex++] = (uint8) (DSP3.DR >> 8);
 
-		if (DSP3_BMIndex == 8)
+		if (DSP3.BMIndex == 8)
 		{
-      short i, j;
-			for (i=0; i < 8; i++)
-				for (j=0; j < 8; j++)
+			for (int i = 0; i < 8; i++)
+			{
+				for (int j = 0; j < 8; j++)
 				{
-					DSP3_Bitplane[j] <<= 1;
-					DSP3_Bitplane[j] |= (DSP3_Bitmap[i] >> j) & 1;
+					DSP3.Bitplane[j] <<= 1;
+					DSP3.Bitplane[j] |= (DSP3.Bitmap[i] >> j) & 1;
 				}
+			}
 
-			DSP3_BPIndex = 0;
-			DSP3_Count--;
+			DSP3.BPIndex = 0;
+			DSP3.Count--;
 		}
 	}
 
-	if (DSP3_BMIndex == 8)
+	if (DSP3.BMIndex == 8)
 	{
-		if (DSP3_BPIndex == 8)
+		if (DSP3.BPIndex == 8)
 		{
-			if (!DSP3_Count) DSP3_Reset();
-			DSP3_BMIndex = 0;
+			if (!DSP3.Count)
+				DSP3_Reset();
+
+			DSP3.BMIndex = 0;
 		}
 		else
 		{
-			DSP3_DR = DSP3_Bitplane[DSP3_BPIndex++];
-			DSP3_DR |= DSP3_Bitplane[DSP3_BPIndex++] << 8;
+			DSP3.DR  = DSP3.Bitplane[DSP3.BPIndex++];
+			DSP3.DR |= DSP3.Bitplane[DSP3.BPIndex++] << 8;
 		}
 	}
 }
 
-void DSP3_Convert()
+static void DSP3_Convert (void)
 {
-	DSP3_Count = DSP3_DR;
-	DSP3_BMIndex = 0;
+	DSP3.Count = DSP3.DR;
+	DSP3.BMIndex = 0;
 	SetDSP3 = &DSP3_Convert_A;
 }
 
-bool DSP3_GetBits(uint8 Count)
+static bool8 DSP3_GetBits (uint8 Count)
 {
-	if (!DSP3_BitsLeft)
+	if (!DSP3.BitsLeft)
 	{
-		DSP3_BitsLeft = Count;
-		DSP3_ReqBits = 0;
+		DSP3.BitsLeft = Count;
+		DSP3.ReqBits = 0;
 	}
 
-	do {
-		if (!DSP3_BitCount)
+	do
+	{
+		if (!DSP3.BitCount)
 		{
-			DSP3_SR = 0xC0;
-			return false;
+			DSP3.SR = 0xC0;
+			return (FALSE);
 		}
 
-		DSP3_ReqBits <<= 1;
-		if (DSP3_ReqData & 0x8000) DSP3_ReqBits++;
-		DSP3_ReqData <<= 1;
+		DSP3.ReqBits <<= 1;
+		if (DSP3.ReqData & 0x8000)
+			DSP3.ReqBits++;
+		DSP3.ReqData <<= 1;
 
-		DSP3_BitCount--;
-		DSP3_BitsLeft--;
+		DSP3.BitCount--;
+		DSP3.BitsLeft--;
 
-	} while (DSP3_BitsLeft);
+	}
+	while (DSP3.BitsLeft);
 
-	return true;
+	return (TRUE);
 }
 
-void DSP3_Decode_Data()
+static void DSP3_Decode_Data (void)
 {
-	if (!DSP3_BitCount)
+	if (!DSP3.BitCount)
 	{
-		if (DSP3_SR & 0x40)
+		if (DSP3.SR & 0x40)
 		{
-			DSP3_ReqData = DSP3_DR;
-			DSP3_BitCount += 16;
+			DSP3.ReqData = DSP3.DR;
+			DSP3.BitCount += 16;
 		}
 		else
 		{
-			DSP3_SR = 0xC0;
+			DSP3.SR = 0xC0;
 			return;
 		}
 	}
 
-	if (DSP3_LZCode == 1)
+	if (DSP3.LZCode == 1)
 	{
 		if (!DSP3_GetBits(1))
 			return;
 
-		if (DSP3_ReqBits)
-			DSP3_LZLength = 12;
+		if (DSP3.ReqBits)
+			DSP3.LZLength = 12;
 		else
-			DSP3_LZLength = 8;
+			DSP3.LZLength = 8;
 
-		DSP3_LZCode++;
+		DSP3.LZCode++;
 	}
 
-	if (DSP3_LZCode == 2)
+	if (DSP3.LZCode == 2)
 	{
-		if (!DSP3_GetBits(DSP3_LZLength))
+		if (!DSP3_GetBits(DSP3.LZLength))
 			return;
 
-		DSP3_LZCode = 0;
-		DSP3_Outwords--;
-		if (!DSP3_Outwords) SetDSP3 = &DSP3_Reset;
+		DSP3.LZCode = 0;
+		DSP3.Outwords--;
+		if (!DSP3.Outwords)
+			SetDSP3 = &DSP3_Reset;
 
-		DSP3_SR = 0x80;
-		DSP3_DR = DSP3_ReqBits;
+		DSP3.SR = 0x80;
+		DSP3.DR = DSP3.ReqBits;
 		return;
 	}
 
-	if (DSP3_BaseCode == 0xffff)
+	if (DSP3.BaseCode == 0xffff)
 	{
-		if (!DSP3_GetBits(DSP3_BaseLength))
+		if (!DSP3_GetBits(DSP3.BaseLength))
 			return;
 
-		DSP3_BaseCode = DSP3_ReqBits;
+		DSP3.BaseCode = DSP3.ReqBits;
 	}
 
-	if (!DSP3_GetBits(DSP3_CodeLengths[DSP3_BaseCode]))
+	if (!DSP3_GetBits(DSP3.CodeLengths[DSP3.BaseCode]))
 		return;
 
-	DSP3_Symbol = DSP3_Codes[DSP3_CodeOffsets[DSP3_BaseCode] + DSP3_ReqBits];
-	DSP3_BaseCode = 0xffff;
+	DSP3.Symbol = DSP3.Codes[DSP3.CodeOffsets[DSP3.BaseCode] + DSP3.ReqBits];
+	DSP3.BaseCode = 0xffff;
 
-	if (DSP3_Symbol & 0xff00)
+	if (DSP3.Symbol & 0xff00)
 	{
-		DSP3_Symbol += 0x7f02;
-		DSP3_LZCode++;
+		DSP3.Symbol += 0x7f02;
+		DSP3.LZCode++;
 	}
 	else
 	{
-		DSP3_Outwords--;
-		if (!DSP3_Outwords)
+		DSP3.Outwords--;
+		if (!DSP3.Outwords)
 			SetDSP3 = &DSP3_Reset;
 	}
 
-	DSP3_SR = 0x80;
-	DSP3_DR = DSP3_Symbol;
+	DSP3.SR = 0x80;
+	DSP3.DR = DSP3.Symbol;
 }
 
-void DSP3_Decode_Tree()
+static void DSP3_Decode_Tree (void)
 {
-	if (!DSP3_BitCount)
+	if (!DSP3.BitCount)
 	{
-		DSP3_ReqData = DSP3_DR;
-		DSP3_BitCount += 16;
+		DSP3.ReqData = DSP3.DR;
+		DSP3.BitCount += 16;
 	}
 
-	if (!DSP3_BaseCodes)
+	if (!DSP3.BaseCodes)
 	{
 		DSP3_GetBits(1);
-		if (DSP3_ReqBits)
+
+		if (DSP3.ReqBits)
 		{
-			DSP3_BaseLength = 3;
-			DSP3_BaseCodes = 8;
+			DSP3.BaseLength = 3;
+			DSP3.BaseCodes = 8;
 		}
 		else
 		{
-			DSP3_BaseLength = 2;
-			DSP3_BaseCodes = 4;
+			DSP3.BaseLength = 2;
+			DSP3.BaseCodes = 4;
 		}
 	}
 
-	while (DSP3_BaseCodes)
+	while (DSP3.BaseCodes)
 	{
 		if (!DSP3_GetBits(3))
 			return;
 
-		DSP3_ReqBits++;
+		DSP3.ReqBits++;
 
-		DSP3_CodeLengths[DSP3_Index] = (uint8) DSP3_ReqBits;
-		DSP3_CodeOffsets[DSP3_Index] = DSP3_Symbol;
-		DSP3_Index++;
+		DSP3.CodeLengths[DSP3.Index] = (uint8) DSP3.ReqBits;
+		DSP3.CodeOffsets[DSP3.Index] = DSP3.Symbol;
+		DSP3.Index++;
 
-		DSP3_Symbol += 1 << DSP3_ReqBits;
-		DSP3_BaseCodes--;
+		DSP3.Symbol += 1 << DSP3.ReqBits;
+		DSP3.BaseCodes--;
 	}
 
-	DSP3_BaseCode = 0xffff;
-	DSP3_LZCode = 0;
+	DSP3.BaseCode = 0xffff;
+	DSP3.LZCode = 0;
 
 	SetDSP3 = &DSP3_Decode_Data;
-	if (DSP3_BitCount) DSP3_Decode_Data();
+	if (DSP3.BitCount)
+		DSP3_Decode_Data();
 }
 
-void DSP3_Decode_Symbols()
+static void DSP3_Decode_Symbols (void)
 {
-	DSP3_ReqData = DSP3_DR;
-	DSP3_BitCount += 16;
+	DSP3.ReqData = DSP3.DR;
+	DSP3.BitCount += 16;
 
-	do {
-
-		if (DSP3_BitCommand == 0xffff)
+	do
+	{
+		if (DSP3.BitCommand == 0xffff)
 		{
-			if (!DSP3_GetBits(2)) return;
-			DSP3_BitCommand = DSP3_ReqBits;
+			if (!DSP3_GetBits(2))
+				return;
+
+			DSP3.BitCommand = DSP3.ReqBits;
 		}
 
-		switch (DSP3_BitCommand)
+		switch (DSP3.BitCommand)
 		{
-		case 0:
-			{
-				if (!DSP3_GetBits(9)) return;
-				DSP3_Symbol = DSP3_ReqBits;
+			case 0:
+				if (!DSP3_GetBits(9))
+					return;
+				DSP3.Symbol = DSP3.ReqBits;
 				break;
-			}
-		case 1:
-			{
-				DSP3_Symbol++;
+
+			case 1:
+				DSP3.Symbol++;
 				break;
-			}
-		case 2:
-			{
-				if (!DSP3_GetBits(1)) return;
-				DSP3_Symbol += 2 + DSP3_ReqBits;
+
+			case 2:
+				if (!DSP3_GetBits(1))
+					return;
+				DSP3.Symbol += 2 + DSP3.ReqBits;
 				break;
-			}
-		case 3:
-			{
-				if (!DSP3_GetBits(4)) return;
-				DSP3_Symbol += 4 + DSP3_ReqBits;
+
+			case 3:
+				if (!DSP3_GetBits(4))
+					return;
+				DSP3.Symbol += 4 + DSP3.ReqBits;
 				break;
-			}
 		}
 
-		DSP3_BitCommand = 0xffff;
+		DSP3.BitCommand = 0xffff;
 
-		DSP3_Codes[DSP3_Index++] = DSP3_Symbol;
-		DSP3_Codewords--;
+		DSP3.Codes[DSP3.Index++] = DSP3.Symbol;
+		DSP3.Codewords--;
 
-	} while (DSP3_Codewords);
+	}
+	while (DSP3.Codewords);
 
-	DSP3_Index = 0;
-	DSP3_Symbol = 0;
-	DSP3_BaseCodes = 0;
+	DSP3.Index = 0;
+	DSP3.Symbol = 0;
+	DSP3.BaseCodes = 0;
 
 	SetDSP3 = &DSP3_Decode_Tree;
-	if (DSP3_BitCount) DSP3_Decode_Tree();
+	if (DSP3.BitCount)
+		DSP3_Decode_Tree();
 }
 
-void DSP3_Decode_A()
+static void DSP3_Decode_A (void)
 {
-	DSP3_Outwords = DSP3_DR;
+	DSP3.Outwords = DSP3.DR;
 	SetDSP3 = &DSP3_Decode_Symbols;
-	DSP3_BitCount = 0;
-	DSP3_BitsLeft = 0;
-	DSP3_Symbol = 0;
-	DSP3_Index = 0;
-	DSP3_BitCommand = 0xffff;
-	DSP3_SR = 0xC0;
+	DSP3.BitCount = 0;
+	DSP3.BitsLeft = 0;
+	DSP3.Symbol = 0;
+	DSP3.Index = 0;
+	DSP3.BitCommand = 0xffff;
+	DSP3.SR = 0xC0;
 }
 
-void DSP3_Decode()
+static void DSP3_Decode (void)
 {
-	DSP3_Codewords = DSP3_DR;
+	DSP3.Codewords = DSP3.DR;
 	SetDSP3 = &DSP3_Decode_A;
 }
-
 
 // Opcodes 1E/3E bit-perfect to 'dsp3-intro' log
 // src: adapted from SD Gundam X/G-Next
 
-int16 op3e_x;
-int16 op3e_y;
-
-int16 op1e_terrain[0x2000];
-int16 op1e_cost[0x2000];
-int16 op1e_weight[0x2000];
-
-int16 op1e_cell;
-int16 op1e_turn;
-int16 op1e_search;
-
-int16 op1e_x;
-int16 op1e_y;
-
-int16 op1e_min_radius;
-int16 op1e_max_radius;
-
-int16 op1e_max_search_radius;
-int16 op1e_max_path_radius;
-
-int16 op1e_lcv_radius;
-int16 op1e_lcv_steps;
-int16 op1e_lcv_turns;
-
-void DSP3_OP3E()
+static void DSP3_OP3E (void)
 {
-	op3e_x = (uint8)(DSP3_DR & 0x00ff);
-	op3e_y = (uint8)((DSP3_DR & 0xff00)>>8);
+	DSP3. op3e_x = (uint8)  (DSP3.DR & 0x00ff);
+	DSP3. op3e_y = (uint8) ((DSP3.DR & 0xff00) >> 8);
 
 	DSP3_OP03();
 
-	op1e_terrain[ DSP3_DR ] = 0x00;
-	op1e_cost[ DSP3_DR ] = 0xff;
-	op1e_weight[ DSP3_DR ] = 0;
+	DSP3.op1e_terrain[DSP3.DR] = 0x00;
+	DSP3.op1e_cost[DSP3.DR]    = 0xff;
+	DSP3.op1e_weight[DSP3.DR]  = 0;
 
-	op1e_max_search_radius = 0;
-	op1e_max_path_radius = 0;
+	DSP3.op1e_max_search_radius = 0;
+	DSP3.op1e_max_path_radius   = 0;
 }
 
-void DSP3_OP1E_A();
-void DSP3_OP1E_A1();
-void DSP3_OP1E_A2();
-void DSP3_OP1E_A3();
-
-void DSP3_OP1E_B();
-void DSP3_OP1E_B1();
-void DSP3_OP1E_B2();
-
-void DSP3_OP1E_C();
-void DSP3_OP1E_C1();
-void DSP3_OP1E_C2();
-
-void DSP3_OP1E_D( int16, int16 *, int16 * );
-void DSP3_OP1E_D1( int16 move, int16 *lo, int16 *hi );
-
-void DSP3_OP1E()
+static void DSP3_OP1E (void)
 {
-	int lcv;
+	DSP3.op1e_min_radius = (uint8)  (DSP3.DR & 0x00ff);
+	DSP3.op1e_max_radius = (uint8) ((DSP3.DR & 0xff00) >> 8);
 
-	op1e_min_radius = (uint8)(DSP3_DR & 0x00ff);
-	op1e_max_radius = (uint8)((DSP3_DR & 0xff00)>>8);
+	if (DSP3.op1e_min_radius == 0)
+		DSP3.op1e_min_radius++;
 
-	if( op1e_min_radius == 0 )
-		op1e_min_radius++;
+	if (DSP3.op1e_max_search_radius >= DSP3.op1e_min_radius)
+		DSP3.op1e_min_radius = DSP3.op1e_max_search_radius + 1;
 
-	if( op1e_max_search_radius >= op1e_min_radius )
-		op1e_min_radius = op1e_max_search_radius+1;
+	if (DSP3.op1e_max_radius > DSP3.op1e_max_search_radius)
+		DSP3.op1e_max_search_radius = DSP3.op1e_max_radius;
 
-	if( op1e_max_radius > op1e_max_search_radius )
-		op1e_max_search_radius = op1e_max_radius;
+	DSP3.op1e_lcv_radius = DSP3.op1e_min_radius;
+	DSP3.op1e_lcv_steps = DSP3.op1e_min_radius;
 
-	op1e_lcv_radius = op1e_min_radius;
-	op1e_lcv_steps = op1e_min_radius;
+	DSP3.op1e_lcv_turns = 6;
+	DSP3.op1e_turn = 0;
 
-	op1e_lcv_turns = 6;
-	op1e_turn = 0;
+	DSP3.op1e_x = DSP3. op3e_x;
+	DSP3.op1e_y = DSP3. op3e_y;
 
-	op1e_x = op3e_x;
-	op1e_y = op3e_y;
-
-	for( lcv = 0; lcv < op1e_min_radius; lcv++ )
-		DSP3_OP1E_D( op1e_turn, &op1e_x, &op1e_y );
+	for (int lcv = 0; lcv < DSP3.op1e_min_radius; lcv++)
+		DSP3_OP1E_D(DSP3.op1e_turn, &DSP3.op1e_x, &DSP3.op1e_y);
 
 	DSP3_OP1E_A();
 }
 
-void DSP3_OP1E_A()
+static void DSP3_OP1E_A (void)
 {
-	int lcv;
+	if (DSP3.op1e_lcv_steps == 0)
+	{
+		DSP3.op1e_lcv_radius++;
 
-	if( op1e_lcv_steps == 0 ) {
-		op1e_lcv_radius++;
+		DSP3.op1e_lcv_steps = DSP3.op1e_lcv_radius;
 
-		op1e_lcv_steps = op1e_lcv_radius;
+		DSP3.op1e_x = DSP3. op3e_x;
+		DSP3.op1e_y = DSP3. op3e_y;
 
-		op1e_x = op3e_x;
-		op1e_y = op3e_y;
-
-		for( lcv = 0; lcv < op1e_lcv_radius; lcv++ )
-			DSP3_OP1E_D( op1e_turn, &op1e_x, &op1e_y );
+		for (int lcv = 0; lcv < DSP3.op1e_lcv_radius; lcv++)
+			DSP3_OP1E_D(DSP3.op1e_turn, &DSP3.op1e_x, &DSP3.op1e_y);
 	}
 
-	if( op1e_lcv_radius > op1e_max_radius ) {
-		op1e_turn++;
-		op1e_lcv_turns--;
+	if (DSP3.op1e_lcv_radius > DSP3.op1e_max_radius)
+	{
+		DSP3.op1e_turn++;
+		DSP3.op1e_lcv_turns--;
 
-		op1e_lcv_radius = op1e_min_radius;
-		op1e_lcv_steps = op1e_min_radius;
+		DSP3.op1e_lcv_radius = DSP3.op1e_min_radius;
+		DSP3.op1e_lcv_steps = DSP3.op1e_min_radius;
 
-		op1e_x = op3e_x;
-		op1e_y = op3e_y;
+		DSP3.op1e_x = DSP3. op3e_x;
+		DSP3.op1e_y = DSP3. op3e_y;
 
-		for( lcv = 0; lcv < op1e_min_radius; lcv++ )
-			DSP3_OP1E_D( op1e_turn, &op1e_x, &op1e_y );
+		for (int lcv = 0; lcv < DSP3.op1e_min_radius; lcv++)
+			DSP3_OP1E_D(DSP3.op1e_turn, &DSP3.op1e_x, &DSP3.op1e_y);
 	}
 
-	if( op1e_lcv_turns == 0 ) {
-		DSP3_DR = 0xffff;
-		DSP3_SR = 0x0080;
+	if (DSP3.op1e_lcv_turns == 0)
+	{
+		DSP3.DR = 0xffff;
+		DSP3.SR = 0x0080;
 		SetDSP3 = &DSP3_OP1E_B;
 		return;
 	}
 
-	DSP3_DR = (uint8)(op1e_x) | ((uint8)(op1e_y)<<8);
+	DSP3.DR = (uint8) (DSP3.op1e_x) | ((uint8) (DSP3.op1e_y) << 8);
 	DSP3_OP03();
 
-	op1e_cell = DSP3_DR;
+	DSP3.op1e_cell = DSP3.DR;
 
-	DSP3_SR = 0x0080;
+	DSP3.SR = 0x0080;
 	SetDSP3 = &DSP3_OP1E_A1;
 }
 
-void DSP3_OP1E_A1()
+static void DSP3_OP1E_A1 (void)
 {
-	DSP3_SR = 0x0084;
+	DSP3.SR = 0x0084;
 	SetDSP3 = &DSP3_OP1E_A2;
 }
 
-void DSP3_OP1E_A2()
+static void DSP3_OP1E_A2 (void)
 {
-	op1e_terrain[ op1e_cell ] = (uint8)(DSP3_DR & 0x00ff);
+	DSP3.op1e_terrain[DSP3.op1e_cell] = (uint8) (DSP3.DR & 0x00ff);
 
-	DSP3_SR = 0x0084;
+	DSP3.SR = 0x0084;
 	SetDSP3 = &DSP3_OP1E_A3;
 }
 
-void DSP3_OP1E_A3()
+static void DSP3_OP1E_A3 (void)
 {
-	op1e_cost[ op1e_cell ] = (uint8)(DSP3_DR & 0x00ff);
+	DSP3.op1e_cost[DSP3.op1e_cell] = (uint8) (DSP3.DR & 0x00ff);
 
-	if( op1e_lcv_radius == 1 ) {
-		if( op1e_terrain[ op1e_cell ] & 1 ) {
-			op1e_weight[ op1e_cell ] = 0xff;
-		} else {
-			op1e_weight[ op1e_cell ] = op1e_cost[ op1e_cell ];
-		}
+	if (DSP3.op1e_lcv_radius == 1)
+	{
+		if (DSP3.op1e_terrain[DSP3.op1e_cell] & 1)
+			DSP3.op1e_weight[DSP3.op1e_cell] = 0xff;
+		else
+			DSP3.op1e_weight[DSP3.op1e_cell] = DSP3.op1e_cost[DSP3.op1e_cell];
 	}
-	else {
-		op1e_weight[ op1e_cell ] = 0xff;
-	}
+	else
+		DSP3.op1e_weight[DSP3.op1e_cell] = 0xff;
 
-	DSP3_OP1E_D( (int16)(op1e_turn+2), &op1e_x, &op1e_y );
-	op1e_lcv_steps--;
+	DSP3_OP1E_D((int16) (DSP3.op1e_turn + 2), &DSP3.op1e_x, &DSP3.op1e_y);
+	DSP3.op1e_lcv_steps--;
 
-	DSP3_SR = 0x0080;
+	DSP3.SR = 0x0080;
 	DSP3_OP1E_A();
 }
 
-
-void DSP3_OP1E_B()
+static void DSP3_OP1E_B (void)
 {
-	op1e_x = op3e_x;
-	op1e_y = op3e_y;
-	op1e_lcv_radius = 1;
+	DSP3.op1e_x = DSP3. op3e_x;
+	DSP3.op1e_y = DSP3. op3e_y;
+	DSP3.op1e_lcv_radius = 1;
 
-	op1e_search = 0;
+	DSP3.op1e_search = 0;
 
 	DSP3_OP1E_B1();
 
 	SetDSP3 = &DSP3_OP1E_C;
 }
 
-
-void DSP3_OP1E_B1()
+static void DSP3_OP1E_B1 (void)
 {
-	while( op1e_lcv_radius < op1e_max_radius ) {
-		op1e_y--;
+	while (DSP3.op1e_lcv_radius < DSP3.op1e_max_radius)
+	{
+		DSP3.op1e_y--;
 
-		op1e_lcv_turns = 6;
-		op1e_turn = 5;
+		DSP3.op1e_lcv_turns = 6;
+		DSP3.op1e_turn = 5;
 
-		while( op1e_lcv_turns ) {
-			op1e_lcv_steps = op1e_lcv_radius;
+		while (DSP3.op1e_lcv_turns)
+		{
+			DSP3.op1e_lcv_steps = DSP3.op1e_lcv_radius;
 
-			while( op1e_lcv_steps ) {
-				DSP3_OP1E_D1( op1e_turn, &op1e_x, &op1e_y );
+			while (DSP3.op1e_lcv_steps)
+			{
+				DSP3_OP1E_D1(DSP3.op1e_turn, &DSP3.op1e_x, &DSP3.op1e_y);
 
-				if( 0 <= op1e_y && op1e_y < DSP3_WinHi &&
-						0 <= op1e_x && op1e_x < DSP3_WinLo ) {
-					DSP3_DR = (uint8)(op1e_x) | ((uint8)(op1e_y)<<8);
+				if (0 <= DSP3.op1e_y && DSP3.op1e_y < DSP3.WinHi && 0 <= DSP3.op1e_x && DSP3.op1e_x < DSP3.WinLo)
+				{
+					DSP3.DR = (uint8) (DSP3.op1e_x) | ((uint8) (DSP3.op1e_y) << 8);
 					DSP3_OP03();
 
-					op1e_cell = DSP3_DR;
-					if( op1e_cost[ op1e_cell ] < 0x80 &&
-							op1e_terrain[ op1e_cell ] < 0x40 ) {
-						DSP3_OP1E_B2();
-					} // end cell perimeter
+					DSP3.op1e_cell = DSP3.DR;
+					if (DSP3.op1e_cost[DSP3.op1e_cell] < 0x80 && DSP3.op1e_terrain[DSP3.op1e_cell] < 0x40)
+						DSP3_OP1E_B2(); // end cell perimeter
 				}
 
-				op1e_lcv_steps--;
+				DSP3.op1e_lcv_steps--;
 			} // end search line
 
-			op1e_turn--;
-			if( op1e_turn == 0 ) op1e_turn = 6;
+			DSP3.op1e_turn--;
+			if (DSP3.op1e_turn == 0)
+				DSP3.op1e_turn = 6;
 
-			op1e_lcv_turns--;
+			DSP3.op1e_lcv_turns--;
 		} // end circle search
 
-		op1e_lcv_radius++;
+		DSP3.op1e_lcv_radius++;
 	} // end radius search
 }
 
-
-void DSP3_OP1E_B2()
+static void DSP3_OP1E_B2 (void)
 {
-	int16 cell;
-	int16 path;
-	int16 x,y;
-	int16 lcv_turns;
+	int16	cell;
+	int16	path;
+	int16	x, y;
+	int16	lcv_turns;
 
 	path = 0xff;
 	lcv_turns = 6;
 
-	while( lcv_turns ) {
-		x = op1e_x;
-		y = op1e_y;
+	while (lcv_turns)
+	{
+		x = DSP3.op1e_x;
+		y = DSP3.op1e_y;
 
-		DSP3_OP1E_D1( lcv_turns, &x, &y );
+		DSP3_OP1E_D1(lcv_turns, &x, &y);
 
-		DSP3_DR = (uint8)(x) | ((uint8)(y)<<8);
+		DSP3.DR = (uint8) (x) | ((uint8) (y) << 8);
 		DSP3_OP03();
 
-		cell = DSP3_DR;
+		cell = DSP3.DR;
 
-		if( 0 <= y && y < DSP3_WinHi &&
-				0 <= x && x < DSP3_WinLo  ) {
-
-			if( op1e_terrain[ cell ] < 0x80 || op1e_weight[ cell ] == 0 ) {
-				if( op1e_weight[ cell ] < path ) {
-					path = op1e_weight[ cell ];
-				}
+		if (0 <= y && y < DSP3.WinHi && 0 <= x && x < DSP3.WinLo)
+		{
+			if (DSP3.op1e_terrain[cell] < 0x80 || DSP3.op1e_weight[cell] == 0)
+			{
+				if (DSP3.op1e_weight[cell] < path)
+					path = DSP3.op1e_weight[cell];
 			}
 		} // end step travel
 
 		lcv_turns--;
 	} // end while turns
 
-	if( path != 0xff ) {
-		op1e_weight[ op1e_cell ] = path + op1e_cost[ op1e_cell ];
-	}
+	if (path != 0xff)
+		DSP3.op1e_weight[DSP3.op1e_cell] = path + DSP3.op1e_cost[DSP3.op1e_cell];
 }
 
-
-void DSP3_OP1E_C()
+static void DSP3_OP1E_C (void)
 {
-	int lcv;
+	DSP3.op1e_min_radius = (uint8)  (DSP3.DR & 0x00ff);
+	DSP3.op1e_max_radius = (uint8) ((DSP3.DR & 0xff00) >> 8);
 
-	op1e_min_radius = (uint8)(DSP3_DR & 0x00ff);
-	op1e_max_radius = (uint8)((DSP3_DR & 0xff00)>>8);
+	if (DSP3.op1e_min_radius == 0)
+		DSP3.op1e_min_radius++;
 
-	if( op1e_min_radius == 0 )
-		op1e_min_radius++;
+	if (DSP3.op1e_max_path_radius >= DSP3.op1e_min_radius)
+		DSP3.op1e_min_radius = DSP3.op1e_max_path_radius + 1;
 
-	if( op1e_max_path_radius >= op1e_min_radius )
-		op1e_min_radius = op1e_max_path_radius+1;
+	if (DSP3.op1e_max_radius > DSP3.op1e_max_path_radius)
+		DSP3.op1e_max_path_radius = DSP3.op1e_max_radius;
 
-	if( op1e_max_radius > op1e_max_path_radius )
-		op1e_max_path_radius = op1e_max_radius;
+	DSP3.op1e_lcv_radius = DSP3.op1e_min_radius;
+	DSP3.op1e_lcv_steps = DSP3.op1e_min_radius;
 
-	op1e_lcv_radius = op1e_min_radius;
-	op1e_lcv_steps = op1e_min_radius;
+	DSP3.op1e_lcv_turns = 6;
+	DSP3.op1e_turn = 0;
 
-	op1e_lcv_turns = 6;
-	op1e_turn = 0;
+	DSP3.op1e_x = DSP3. op3e_x;
+	DSP3.op1e_y = DSP3. op3e_y;
 
-	op1e_x = op3e_x;
-	op1e_y = op3e_y;
-
-	for( lcv = 0; lcv < op1e_min_radius; lcv++ )
-		DSP3_OP1E_D( op1e_turn, &op1e_x, &op1e_y );
+	for (int lcv = 0; lcv < DSP3.op1e_min_radius; lcv++)
+		DSP3_OP1E_D(DSP3.op1e_turn, &DSP3.op1e_x, &DSP3.op1e_y);
 
 	DSP3_OP1E_C1();
 }
 
-
-void DSP3_OP1E_C1()
+static void DSP3_OP1E_C1 (void)
 {
-	int lcv;
+	if (DSP3.op1e_lcv_steps == 0)
+	{
+		DSP3.op1e_lcv_radius++;
 
-	if( op1e_lcv_steps == 0 ) {
-		op1e_lcv_radius++;
+		DSP3.op1e_lcv_steps = DSP3.op1e_lcv_radius;
 
-		op1e_lcv_steps = op1e_lcv_radius;
+		DSP3.op1e_x = DSP3. op3e_x;
+		DSP3.op1e_y = DSP3. op3e_y;
 
-		op1e_x = op3e_x;
-		op1e_y = op3e_y;
-
-		for( lcv = 0; lcv < op1e_lcv_radius; lcv++ )
-			DSP3_OP1E_D( op1e_turn, &op1e_x, &op1e_y );
+		for (int lcv = 0; lcv < DSP3.op1e_lcv_radius; lcv++)
+			DSP3_OP1E_D(DSP3.op1e_turn, &DSP3.op1e_x, &DSP3.op1e_y);
 	}
 
-	if( op1e_lcv_radius > op1e_max_radius ) {
-		op1e_turn++;
-		op1e_lcv_turns--;
+	if (DSP3.op1e_lcv_radius > DSP3.op1e_max_radius)
+	{
+		DSP3.op1e_turn++;
+		DSP3.op1e_lcv_turns--;
 
-		op1e_lcv_radius = op1e_min_radius;
-		op1e_lcv_steps = op1e_min_radius;
+		DSP3.op1e_lcv_radius = DSP3.op1e_min_radius;
+		DSP3.op1e_lcv_steps = DSP3.op1e_min_radius;
 
-		op1e_x = op3e_x;
-		op1e_y = op3e_y;
+		DSP3.op1e_x = DSP3. op3e_x;
+		DSP3.op1e_y = DSP3. op3e_y;
 
-		for( lcv = 0; lcv < op1e_min_radius; lcv++ )
-			DSP3_OP1E_D( op1e_turn, &op1e_x, &op1e_y );
+		for (int lcv = 0; lcv < DSP3.op1e_min_radius; lcv++)
+			DSP3_OP1E_D(DSP3.op1e_turn, &DSP3.op1e_x, &DSP3.op1e_y);
 	}
 
-	if( op1e_lcv_turns == 0 ) {
-		DSP3_DR = 0xffff;
-		DSP3_SR = 0x0080;
+	if (DSP3.op1e_lcv_turns == 0)
+	{
+		DSP3.DR = 0xffff;
+		DSP3.SR = 0x0080;
 		SetDSP3 = &DSP3_Reset;
 		return;
 	}
 
-	DSP3_DR = (uint8)(op1e_x) | ((uint8)(op1e_y)<<8);
+	DSP3.DR = (uint8) (DSP3.op1e_x) | ((uint8) (DSP3.op1e_y) << 8);
 	DSP3_OP03();
 
-	op1e_cell = DSP3_DR;
+	DSP3.op1e_cell = DSP3.DR;
 
-	DSP3_SR = 0x0080;
+	DSP3.SR = 0x0080;
 	SetDSP3 = &DSP3_OP1E_C2;
 }
 
-
-void DSP3_OP1E_C2()
+static void DSP3_OP1E_C2 (void)
 {
-	DSP3_DR = op1e_weight[ op1e_cell ];
+	DSP3.DR = DSP3.op1e_weight[DSP3.op1e_cell];
 
-	DSP3_OP1E_D( (int16)(op1e_turn+2), &op1e_x, &op1e_y );
-	op1e_lcv_steps--;
+	DSP3_OP1E_D((int16) (DSP3.op1e_turn + 2), &DSP3.op1e_x, &DSP3.op1e_y);
+	DSP3.op1e_lcv_steps--;
 
-	DSP3_SR = 0x0084;
+	DSP3.SR = 0x0084;
 	SetDSP3 = &DSP3_OP1E_C1;
 }
 
-
-void DSP3_OP1E_D( int16 move, int16 *lo, int16 *hi )
+static void DSP3_OP1E_D (int16 move, int16 *lo, int16 *hi)
 {
-	uint32 dataOfs = ((move << 1) + 0x03b2) & 0x03ff;
-	int16 Lo;
-	int16 Hi;
+	uint32	dataOfs = ((move << 1) + 0x03b2) & 0x03ff;
+	int16	Lo;
+	int16	Hi;
 
-	DSP3_AddHi = DSP3_DataROM[dataOfs];
-	DSP3_AddLo = DSP3_DataROM[dataOfs + 1];
+	DSP3.AddHi = DSP3_DataROM[dataOfs];
+	DSP3.AddLo = DSP3_DataROM[dataOfs + 1];
 
-	Lo = (uint8)(*lo);
-	Hi = (uint8)(*hi);
+	Lo = (uint8) (*lo);
+	Hi = (uint8) (*hi);
 
-	if (Lo & 1)	Hi += (DSP3_AddLo & 1);
+	if (Lo & 1)
+		Hi += (DSP3.AddLo & 1);
 
-	DSP3_AddLo += Lo;
-	DSP3_AddHi += Hi;
+	DSP3.AddLo += Lo;
+	DSP3.AddHi += Hi;
 
-	if (DSP3_AddLo < 0)
-		DSP3_AddLo += DSP3_WinLo;
+	if (DSP3.AddLo < 0)
+		DSP3.AddLo += DSP3.WinLo;
 	else
-		if (DSP3_AddLo >= DSP3_WinLo)
-			DSP3_AddLo -= DSP3_WinLo;
+	if (DSP3.AddLo >= DSP3.WinLo)
+		DSP3.AddLo -= DSP3.WinLo;
 
-	if (DSP3_AddHi < 0)
-		DSP3_AddHi += DSP3_WinHi;
+	if (DSP3.AddHi < 0)
+		DSP3.AddHi += DSP3.WinHi;
 	else
-		if (DSP3_AddHi >= DSP3_WinHi)
-			DSP3_AddHi -= DSP3_WinHi;
+	if (DSP3.AddHi >= DSP3.WinHi)
+		DSP3.AddHi -= DSP3.WinHi;
 
-	*lo = DSP3_AddLo;
-	*hi = DSP3_AddHi;
+	*lo = DSP3.AddLo;
+	*hi = DSP3.AddHi;
 }
 
-
-void DSP3_OP1E_D1( int16 move, int16 *lo, int16 *hi )
+static void DSP3_OP1E_D1 (int16 move, int16 *lo, int16 *hi)
 {
-	//uint32 dataOfs = ((move << 1) + 0x03b2) & 0x03ff;
-	int16 Lo;
-	int16 Hi;
-
-	const unsigned short HiAdd[] = {
-		0x00, 0xFF, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00,
-		0x00, 0xFF, 0xFF, 0x00, 0x01, 0x00, 0xFF, 0x00
+	const uint16	HiAdd[] =
+	{
+		0x00, 0xFF, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x01, 0x00, 0xFF, 0x00
 	};
-	const unsigned short LoAdd[] = {
+
+	const uint16	LoAdd[] =
+	{
 		0x00, 0x00, 0x01, 0x01, 0x00, 0xFF, 0xFF, 0x00
 	};
 
-	if( (*lo) & 1 )
-		DSP3_AddHi = HiAdd[ move + 8 ];
+	int16	Lo;
+	int16	Hi;
+
+	if ((*lo) & 1)
+		DSP3.AddHi = HiAdd[move + 8];
 	else
-		DSP3_AddHi = HiAdd[ move + 0 ];
-	DSP3_AddLo = LoAdd[ move ];
+		DSP3.AddHi = HiAdd[move + 0];
 
-	Lo = (uint8)(*lo);
-	Hi = (uint8)(*hi);
+	DSP3.AddLo = LoAdd[move];
 
-	if (Lo & 1)	Hi += (DSP3_AddLo & 1);
+	Lo = (uint8) (*lo);
+	Hi = (uint8) (*hi);
 
-	DSP3_AddLo += Lo;
-	DSP3_AddHi += Hi;
+	if (Lo & 1)
+		Hi += (DSP3.AddLo & 1);
 
-	*lo = DSP3_AddLo;
-	*hi = DSP3_AddHi;
+	DSP3.AddLo += Lo;
+	DSP3.AddHi += Hi;
+
+	*lo = DSP3.AddLo;
+	*hi = DSP3.AddHi;
 }
 
-
-void DSP3_OP10()
+static void DSP3_OP10 (void)
 {
-	if( DSP3_DR == 0xffff ) {
+	if (DSP3.DR == 0xffff)
 		DSP3_Reset();
-	} else {
+	else
 		// absorb 2 bytes
-		DSP3_DR = DSP3_DR;
-	}
+		DSP3.DR = DSP3.DR;
 }
 
-
-void DSP3_OP0C_A()
+/*
+static void DSP3_OP0C_A (void)
 {
 	// absorb 2 bytes
-
-	DSP3_DR = 0;
+	DSP3.DR = 0;
 	SetDSP3 = &DSP3_Reset;
 }
+*/
 
-
-void DSP3_OP0C()
+static void DSP3_OP0C (void)
 {
 	// absorb 2 bytes
-
-	DSP3_DR = 0;
+	DSP3.DR = 0;
 	//SetDSP3 = &DSP3_OP0C_A;
 	SetDSP3 = &DSP3_Reset;
 }
 
-
-void DSP3_OP1C_C()
+static void DSP3_OP1C_C (void)
 {
 	// return 2 bytes
-	DSP3_DR = 0;
+	DSP3.DR = 0;
 	SetDSP3 = &DSP3_Reset;
 }
 
-
-void DSP3_OP1C_B()
+static void DSP3_OP1C_B (void)
 {
-	// absorb 2 bytes
-
 	// return 2 bytes
-	DSP3_DR = 0;
+	DSP3.DR = 0;
 	SetDSP3 = &DSP3_OP1C_C;
 }
 
-
-void DSP3_OP1C_A()
+static void DSP3_OP1C_A (void)
 {
 	// absorb 2 bytes
-
 	SetDSP3 = &DSP3_OP1C_B;
 }
 
-
-void DSP3_OP1C()
+static void DSP3_OP1C (void)
 {
 	// absorb 2 bytes
-
 	SetDSP3 = &DSP3_OP1C_A;
 }
 
-
-void DSP3_Command()
+static void DSP3_Command (void)
 {
-	if (DSP3_DR < 0x40)
+	if (DSP3.DR < 0x40)
 	{
-		switch (DSP3_DR)
+		switch (DSP3.DR)
 		{
-    case 0x02: SetDSP3 = &DSP3_Coordinate; break;
-    case 0x03: SetDSP3 = &DSP3_OP03; break;
-    case 0x06: SetDSP3 = &DSP3_OP06; break;
-    case 0x07: SetDSP3 = &DSP3_OP07; return;
-    case 0x0c: SetDSP3 = &DSP3_OP0C; break;
-    case 0x0f: SetDSP3 = &DSP3_TestMemory; break;
-    case 0x10: SetDSP3 = &DSP3_OP10; break;
-    case 0x18: SetDSP3 = &DSP3_Convert; break;
-    case 0x1c: SetDSP3 = &DSP3_OP1C; break;
-    case 0x1e: SetDSP3 = &DSP3_OP1E; break;
-    case 0x1f: SetDSP3 = &DSP3_MemoryDump; break;
-    case 0x38: SetDSP3 = &DSP3_Decode; break;
-    case 0x3e: SetDSP3 = &DSP3_OP3E; break;
-    default:
-     return;
+			case 0x02: SetDSP3 = &DSP3_Coordinate; break;
+			case 0x03: SetDSP3 = &DSP3_OP03;       break;
+			case 0x06: SetDSP3 = &DSP3_OP06;       break;
+			case 0x07: SetDSP3 = &DSP3_OP07;       return;
+			case 0x0c: SetDSP3 = &DSP3_OP0C;       break;
+			case 0x0f: SetDSP3 = &DSP3_TestMemory; break;
+			case 0x10: SetDSP3 = &DSP3_OP10;       break;
+			case 0x18: SetDSP3 = &DSP3_Convert;    break;
+			case 0x1c: SetDSP3 = &DSP3_OP1C;       break;
+			case 0x1e: SetDSP3 = &DSP3_OP1E;       break;
+			case 0x1f: SetDSP3 = &DSP3_MemoryDump; break;
+			case 0x38: SetDSP3 = &DSP3_Decode;     break;
+			case 0x3e: SetDSP3 = &DSP3_OP3E;       break;
+			default:
+				return;
 		}
-		DSP3_SR = 0x0080;
-		DSP3_Index = 0;
+
+		DSP3.SR = 0x0080;
+		DSP3.Index = 0;
 	}
 }
 
-void DSP3SetByte(uint8 byte, uint16 address)
+void DSP3SetByte (uint8 byte, uint16 address)
 {
-	if (address < DSP1.boundary)
-    {
-		if (DSP3_SR & 0x04)
+	if (address < DSP0.boundary)
+	{
+		if (DSP3.SR & 0x04)
 		{
-			DSP3_DR = (DSP3_DR & 0xff00) + byte;
+			DSP3.DR = (DSP3.DR & 0xff00) + byte;
 			(*SetDSP3)();
 		}
 		else
 		{
-			DSP3_SR ^= 0x10;
+			DSP3.SR ^= 0x10;
 
-			if (DSP3_SR & 0x10)
-				DSP3_DR = (DSP3_DR & 0xff00) + byte;
+			if (DSP3.SR & 0x10)
+				DSP3.DR = (DSP3.DR & 0xff00) + byte;
 			else
 			{
-				DSP3_DR = (DSP3_DR & 0x00ff) + (byte << 8);
+				DSP3.DR = (DSP3.DR & 0x00ff) + (byte << 8);
 				(*SetDSP3)();
 			}
 		}
 	}
 }
 
-uint8 DSP3GetByte(uint16 address)
+uint8 DSP3GetByte (uint16 address)
 {
-	if (address < DSP1.boundary)
-    {
-		uint8 byte;
+	if (address < DSP0.boundary)
+	{
+		uint8	byte;
 
-		if (DSP3_SR & 0x04)
+		if (DSP3.SR & 0x04)
 		{
-			byte = (uint8) DSP3_DR;
+			byte = (uint8) DSP3.DR;
 			(*SetDSP3)();
 		}
 		else
 		{
-			DSP3_SR ^= 0x10;
+			DSP3.SR ^= 0x10;
 
-			if (DSP3_SR & 0x10)
-				byte = (uint8) (DSP3_DR);
+			if (DSP3.SR & 0x10)
+				byte = (uint8) (DSP3.DR);
 			else
 			{
-				byte = (uint8) (DSP3_DR >> 8);
+				byte = (uint8) (DSP3.DR >> 8);
 				(*SetDSP3)();
 			}
 		}
 
-		return byte;
+		return (byte);
 	}
 
-	return (uint8) DSP3_SR;
+	return (uint8) DSP3.SR;
 }

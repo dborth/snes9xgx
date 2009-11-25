@@ -8,7 +8,7 @@
  * Cheat handling
  ***************************************************************************/
 
-#include "memmap.h"
+#include "port.h"
 #include "cheats.h"
 
 #include "snes9xGX.h"
@@ -58,7 +58,7 @@ static bool NGCLoadCheatFile (int length)
  * Called when a ROM is first loaded
  ***************************************************************************/
 void
-SetupCheats()
+WiiSetupCheats()
 {
 	char filepath[1024];
 	int offset = 0;

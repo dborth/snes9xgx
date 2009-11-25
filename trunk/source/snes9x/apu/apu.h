@@ -159,75 +159,43 @@
 **********************************************************************************/
 
 
+#ifndef _APU_H_
+#define _APU_H_
 
-/*
- * Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
- *
- * (c) Copyright 1996 - 2001 Gary Henderson (gary.henderson@ntlworld.com) and
- *                           Jerremy Koot (jkoot@snes9x.com)
- *
- * Super FX C emulator code
- * (c) Copyright 1997 - 1999 Ivar (ivar@snes9x.com) and
- *                           Gary Henderson.
- * Super FX assembler emulator code (c) Copyright 1998 zsKnight and _Demo_.
- *
- * DSP1 emulator code (c) Copyright 1998 Ivar, _Demo_ and Gary Henderson.
- * C4 asm and some C emulation code (c) Copyright 2000 zsKnight and _Demo_.
- * C4 C code (c) Copyright 2001 Gary Henderson (gary.henderson@ntlworld.com).
- *
- * DOS port code contains the works of other authors. See headers in
- * individual files.
- *
- * Snes9x homepage: http://www.snes9x.com
- *
- * Permission to use, copy, modify and distribute Snes9x in both binary and
- * source form, for non-commercial purposes, is hereby granted without fee,
- * providing that this license information and copyright notice appear with
- * all copies and any derived work.
- *
- * This software is provided 'as-is', without any express or implied
- * warranty. In no event shall the authors be held liable for any damages
- * arising from the use of this software.
- *
- * Snes9x is freeware for PERSONAL USE only. Commercial users should
- * seek permission of the copyright holders first. Commercial use includes
- * charging money for Snes9x or software derived from Snes9x.
- *
- * The copyright holders request that bug fixes and improvements to the code
- * should be forwarded to them so everyone can benefit from the modifications
- * in future versions.
- *
- * Super NES and Super Nintendo Entertainment System are trademarks of
- * Nintendo Co., Limited and its subsidiary companies.
- */
-/*
- * Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
- *
- * (c) Copyright 1996, 1997, 1998, 1999 Gary Henderson (gary@daniver.demon.co.uk) and
- *                                      Jerremy Koot (jkoot@snes9x.com)
- *
- * Super FX C emulator code (c) Copyright 1997, 1998 Ivar and
- *                                                   Gary Henderson.
- * Super FX assembler emulator code (c) Copyright 1998 zsKnight and _Demo_.
- *
- * Permission to use, copy, modify and distribute Snes9x in both binary and
- * source form, for non-commercial purposes, is hereby granted without fee,
- * providing that this license information and copyright notice appear with
- * all copies and any derived work.
- *
- * This software is provided 'as-is', without any express or implied
- * warranty. In no event shall the authors be held liable for any damages
- * arising from the use of this software.
- *
- * Snes9x is freeware for PERSONAL USE only. Commercial users should
- * seek permission of the copyright holders first. Commercial use includes
- * charging money for Snes9x or software derived from Snes9x.
- *
- * The copyright holders request that bug fixes and improvements to the code
- * should be forwarded to them so everyone can benefit from the modifications
- * in future versions.
- *
- * Super NES and Super Nintendo Entertainment System are trademarks of
- * Nintendo Co., Limited and its subsidiary companies.
- */
+#include "snes9x.h"
+#include "SNES_SPC.h"
 
+typedef void (*apu_callback) (void *);
+
+#define SPC_SAVE_STATE_BLOCK_SIZE	(SNES_SPC::state_size + 8)
+
+bool8 S9xInitAPU (void);
+void S9xDeinitAPU (void);
+void S9xResetAPU (void);
+void S9xSoftResetAPU (void);
+uint8 S9xAPUReadPort (int);
+void S9xAPUWritePort (int, uint8);
+void S9xAPUExecute (void);
+void S9xAPUEndScanline (void);
+void S9xAPUSetReferenceTime (int32);
+void S9xAPUTimingSetSpeedup (int);
+void S9xAPULoadState (uint8 *);
+void S9xAPUSaveState (uint8 *);
+void S9xDumpSPCSnapshot (void);
+
+bool8 S9xInitSound (int, int);
+bool8 S9xOpenSoundDevice (int);
+
+bool8 S9xSyncSound (void);
+int S9xGetSampleCount (void);
+void S9xSetSoundControl (uint8);
+void S9xSetSoundMute (bool8);
+void S9xLandSamples (void);
+void S9xFinalizeSamples (void);
+void S9xClearSamples (void);
+bool8 S9xMixSamples (uint8 *, int);
+void S9xSetSamplesAvailableCallback (apu_callback, void *);
+
+extern SNES_SPC	*spc_core;
+
+#endif

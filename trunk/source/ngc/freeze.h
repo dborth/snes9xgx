@@ -7,30 +7,14 @@
  * Tantric August 2008
  *
  * freeze.h
- *
- * Snapshots Memory File System
- *
- * This is a single global memory file controller.
- * Don't even think of opening two at the same time!
  ***************************************************************************/
 
-#ifndef _NGCMEMFILE_
-#define _NGCMEMFILE_
+#ifndef _FREEZE_H_
+#define _FREEZE_H_
 
-typedef struct
-{
-  char filename[512];		/*** Way over size - but who cares -;) ***/
-  int filehandle;
-  int currpos;
-  int length;
-  int mode;
-  char *buffer;			/*** Memspace for read / write ***/
-}
-MEMFILE;
-
-int NGCFreezeGame (char * filepath, bool silent);
-int NGCFreezeGameAuto (bool silent);
-int NGCUnfreezeGame (char * filepath, bool silent);
-int NGCUnfreezeGameAuto (bool silent);
+int SaveSnapshot (char * filepath, bool silent);
+int SaveSnapshotAuto (bool silent);
+int LoadSnapshot (char * filepath, bool silent);
+int LoadSnapshotAuto (bool silent);
 
 #endif

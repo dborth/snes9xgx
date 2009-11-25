@@ -7,127 +7,42 @@
  * Tantric 2008-2009
  *
  * freeze.cpp
- *
- * Snapshots Memory File System
- *
- * This is a single global memory file controller.
- * Don't even think of opening two at the same time!
  ***************************************************************************/
 
 #include <malloc.h>
 #include <gccore.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fat.h>
-#include <zlib.h>
-
-#include "pngu.h"
 
 #include "snes9x.h"
+#include "port.h"
 #include "memmap.h"
-#include "soundux.h"
 #include "snapshot.h"
-#include "srtc.h"
 
 #include "snes9xGX.h"
-#include "memcardop.h"
-#include "freeze.h"
 #include "fileop.h"
 #include "filebrowser.h"
 #include "menu.h"
 #include "video.h"
+#include "pngu.h"
 
-extern void S9xSRTCPreSaveState ();
-extern void NGCFreezeStruct ();
-extern bool8 S9xUnfreezeGame (const char *filename);
+bool8 S9xOpenSnapshotFile(const char *filepath, bool8 readonly, STREAM *file)
+{
+	return FALSE;
+}
 
-static int bufoffset;
+void S9xCloseSnapshotFile(STREAM s)
+{
+
+}
 
 /****************************************************************************
- * GetMem
- *
- * Return x bytes from memory buffer
+ * SaveSnapshot
  ***************************************************************************/
+
 int
-GetMem (char *buffer, int len)
+SaveSnapshot (char * filepath, bool silent)
 {
-	memcpy (buffer, savebuffer + bufoffset, len);
-	bufoffset += len;
-
-	return len;
-}
-
-/****************************************************************************
- * PutMem
- *
- * Put some values in memory buffer
- ***************************************************************************/
-static void
-PutMem (char *buffer, int len)
-{
-	memcpy (savebuffer + bufoffset, buffer, len);
-	bufoffset += len;
-}
-
-void
-NGCFreezeBlock (char *name, uint8 * block, int size)
-{
-	char buffer[512];
-	sprintf (buffer, "%s:%06d:", name, size);
-	PutMem (buffer, strlen (buffer));
-	PutMem ((char *) block, size);
-}
-
-/****************************************************************************
- * NGCFreezeMembuffer
- *
- * Copies a snapshot of Snes9x state into memory
- ***************************************************************************/
-static int
-NGCFreezeMemBuffer ()
-{
-    int i;
-    char buffer[1024];
-
-    bufoffset = 0;
-
-    S9xUpdateRTC ();
-    S9xSRTCPreSaveState ();
-
-    for (i = 0; i < 8; i++)
-    {
-        SoundData.channels[i].previous16[0] =
-        (int16) SoundData.channels[i].previous[0];
-        SoundData.channels[i].previous16[1] =
-        (int16) SoundData.channels[i].previous[1];
-    }
-
-    sprintf (buffer, "%s:%04d\n", SNAPSHOT_MAGIC, SNAPSHOT_VERSION);
-    PutMem (buffer, strlen (buffer));
-    sprintf (buffer, "NAM:%06d:%s%c", (int) strlen (Memory.ROMFilename) + 1,
-    Memory.ROMFilename, 0);
-
-    PutMem (buffer, strlen (buffer) + 1);
-
-    NGCFreezeStruct ();
-
-    return 0;
-}
-
-
-/****************************************************************************
- * NGCFreezeGame
- *
- * Do freeze game for Nintendo Gamecube
- ***************************************************************************/
-int
-NGCFreezeGame (char * filepath, bool silent)
-{
-	int offset = 0; // bytes written (actual)
-	int woffset = 0; // bytes written (expected)
 	int imgSize = 0; // image screenshot bytes written
-	char msg[100];
 	int device;
 				
 	if(!FindDevice(filepath, &device))
@@ -158,191 +73,85 @@ NGCFreezeGame (char * filepath, bool silent)
 		FreeSaveBuffer ();
 	}
 
-	S9xSetSoundMute (TRUE);
-	S9xPrepareSoundForSnapshotSave (FALSE);
-
-	AllocSaveBuffer ();
-	// copy freeze mem into savebuffer - bufoffset contains # bytes written
-	NGCFreezeMemBuffer ();
-	woffset = bufoffset;
-
-	S9xPrepareSoundForSnapshotSave (TRUE);
-	S9xSetSoundMute (FALSE);
-
-	if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB) // MC Slot A or B
-	{
-		// set freezecomment
-		char freezecomment[2][32];
-		memset(freezecomment, 0, 64);
-		sprintf (freezecomment[0], "%s Snapshot", APPNAME);
-		sprintf (freezecomment[1], Memory.ROMName);
-		SetMCSaveComments(freezecomment);
-
-		char * zipbuffer = (char *)memalign(32, SAVEBUFFERSIZE);
-
-		// Zip and copy in the freeze
-		uLongf DestBuffSize = (uLongf) SAVEBUFFERSIZE;
-		int err = compress2((Bytef*)(zipbuffer), (uLongf*)&DestBuffSize, (const Bytef*)savebuffer, (uLongf)bufoffset, Z_BEST_COMPRESSION);
-
-		if(err!=Z_OK)
-		{
-			sprintf (msg, "Zip error %s",zError(err));
-			ErrorPrompt(msg);
-			goto done;
-		}
-
-		int zippedsize = (int)DestBuffSize;
-		int decompressedsize = (int)bufoffset;
-		memset(savebuffer, 0, SAVEBUFFERSIZE);
-		memcpy(savebuffer, &zippedsize, 4);
-		memcpy(savebuffer+4, &decompressedsize, 4);
-		memcpy(savebuffer+8, zipbuffer, DestBuffSize);
-		free(zipbuffer);
-
-		woffset = zippedsize + 8;
-	}
-
-	offset = SaveFile(filepath, woffset, silent);
-
-done:
-
-	FreeSaveBuffer ();
-
-	if(offset > 0) // save successful!
+	STREAM fp = OPEN_STREAM(filepath, "wb");
+	
+	if(!fp)
 	{
 		if(!silent)
-			InfoPrompt("Save successful");
-		return 1;
+			ErrorPrompt("Save failed!");
+		return 0;
 	}
-    return 0;
+
+	S9xFreezeToStream(fp);
+	CLOSE_STREAM(fp);
+
+	if(!silent)
+		InfoPrompt("Save successful");
+	return 1;
 }
 
 int
-NGCFreezeGameAuto (bool silent)
+SaveSnapshotAuto (bool silent)
 {
 	char filepath[1024];
 
 	if(!MakeFilePath(filepath, FILE_SNAPSHOT, Memory.ROMFilename, 0))
 		return false;
 
-	return NGCFreezeGame(filepath, silent);
+	return SaveSnapshot(filepath, silent);
 }
 
 /****************************************************************************
- * NGCUnFreezeBlock
+ * LoadSnapshot
  ***************************************************************************/
 int
-NGCUnFreezeBlock (char *name, uint8 * block, int size)
+LoadSnapshot (char * filepath, bool silent)
 {
-	char buffer[20], *e;
-	int len = 0;
-	int rem = 0;
-
-	GetMem (buffer, 11);
-
-	if (strncmp (buffer, name, 3) != 0 || buffer[3] != ':' ||
-	buffer[10] != ':' || (len = strtol (&buffer[4], &e, 10)) == 0 ||
-	e != buffer + 10)
-	{
-		bufoffset -= 11; // go back to where we started
-		return WRONG_FORMAT;
-	}
-
-	if (len > size)
-	{
-		rem = len - size;
-		len = size;
-	}
-
-	ZeroMemory (block, size);
-
-	GetMem ((char *) block, len);
-
-	if (rem)
-	{
-		bufoffset += rem;
-	}
-
-	return SUCCESS;
-}
-
-/****************************************************************************
- * NGCUnfreezeGame
- ***************************************************************************/
-int
-NGCUnfreezeGame (char * filepath, bool silent)
-{
-	int offset = 0;
-	int result = 0;
-	char msg[80];
-	bufoffset = 0;
 	int device;
 				
 	if(!FindDevice(filepath, &device))
 		return 0;
-	
-	AllocSaveBuffer();
 
-    offset = LoadFile(filepath, silent);
+	STREAM fp = OPEN_STREAM(filepath, "rb");
 
-	if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB) // MC in slot A or slot B
-	{
-		if (offset)
-		{
-			char * zipbuffer = (char *)memalign(32, SAVEBUFFERSIZE);
-			memset (zipbuffer, 0, SAVEBUFFERSIZE);
-			uLongf zipsize = 0;
-			uLongf decompressedsize = 0;
-			uLongf DestBuffSize = SAVEBUFFERSIZE;
-			memcpy (&zipsize, savebuffer, 4);
-			memcpy (&decompressedsize, savebuffer+4, 4);
-
-			int err= uncompress((Bytef*)zipbuffer, (uLongf*)&DestBuffSize, (const Bytef*)(savebuffer+8), zipsize);
-
-			if ( err!=Z_OK )
-			{
-				offset = 0;
-				sprintf (msg, "Unzip error %s",zError(err));
-				ErrorPrompt(msg);
-			}
-			else if ( DestBuffSize != decompressedsize )
-			{
-				offset = 0;
-				ErrorPrompt("Unzipped size doesn't match expected size!");
-			}
-			else
-			{
-				offset = decompressedsize;
-				memset(savebuffer, 0, SAVEBUFFERSIZE);
-				memcpy (savebuffer, zipbuffer, decompressedsize);
-			}
-			free(zipbuffer);
-		}
-    }
-
-	if(offset > 0)
-	{
-		if (S9xUnfreezeGame ("AGAME") == SUCCESS)
-			result = 1;
-		else
-			ErrorPrompt("Error thawing");
-	}
-	else
+	if(!fp)
 	{
 		if(!silent)
-			ErrorPrompt("Freeze file not found");
+			ErrorPrompt("Unable to open snapshot!");
+		return 0;
 	}
-	FreeSaveBuffer();
-	return result;
+
+	int	result = S9xUnfreezeFromStream(fp);
+	CLOSE_STREAM(fp);
+
+	if (result == SUCCESS)
+		return 1;
+/*
+	switch (result)
+	{
+		case WRONG_FORMAT:
+			S9xMessage(S9X_ERROR, S9X_WRONG_FORMAT, SAVE_ERR_WRONG_FORMAT);
+			break;
+
+		case WRONG_VERSION:
+			S9xMessage(S9X_ERROR, S9X_WRONG_VERSION, SAVE_ERR_WRONG_VERSION);
+			break;
+
+		case SNAPSHOT_INCONSISTENT:
+			S9xMessage(S9X_ERROR, S9X_SNAPSHOT_INCONSISTENT, MOVIE_ERR_SNAPSHOT_INCONSISTENT);
+			break;
+	}
+*/
+	return 0;
 }
 
 int
-NGCUnfreezeGameAuto (bool silent)
+LoadSnapshotAuto (bool silent)
 {
 	char filepath[1024];
 
 	if(!MakeFilePath(filepath, FILE_SNAPSHOT, Memory.ROMFilename, 0))
 		return false;
 
-	return NGCUnfreezeGame(filepath, silent);
+	return LoadSnapshot(filepath, silent);
 }
