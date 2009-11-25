@@ -22,16 +22,6 @@
 
 #include "snes9x.h"
 #include "memmap.h"
-#include "s9xdebug.h"
-#include "cpuexec.h"
-#include "ppu.h"
-#include "apu.h"
-#include "display.h"
-#include "gfx.h"
-#include "soundux.h"
-#include "spc700.h"
-#include "spc7110.h"
-#include "controls.h"
 #include "cheats.h"
 
 #include "snes9xGX.h"
@@ -46,9 +36,7 @@
 #include "freeze.h"
 #include "preferences.h"
 #include "button_mapping.h"
-#include "cheatmgr.h"
 #include "input.h"
-#include "patch.h"
 #include "filter.h"
 #include "filelist.h"
 #include "gui/gui.h"
@@ -567,14 +555,14 @@ void AutoSave()
 	else if (GCSettings.AutoSave == 2)
 	{
 		if (WindowPrompt("Save", "Save Snapshot?", "Save", "Don't Save") )
-			NGCFreezeGameAuto(NOTSILENT);
+			SaveSnapshotAuto(NOTSILENT);
 	}
 	else if (GCSettings.AutoSave == 3)
 	{
 		if (WindowPrompt("Save", "Save SRAM and Snapshot?", "Save", "Don't Save") )
 		{
 			SaveSRAMAuto(NOTSILENT);
-			NGCFreezeGameAuto(NOTSILENT);
+			SaveSnapshotAuto(NOTSILENT);
 		}
 	}
 }
@@ -1712,7 +1700,7 @@ static int MenuGameSaves(int action)
 						result = LoadSRAM(filepath, NOTSILENT);
 						break;
 					case FILE_SNAPSHOT:
-						result = NGCUnfreezeGame (filepath, NOTSILENT);
+						result = LoadSnapshot (filepath, NOTSILENT);
 						break;
 				}
 				if(result)
@@ -1742,7 +1730,7 @@ static int MenuGameSaves(int action)
 					if(i < 100)
 					{
 						MakeFilePath(filepath, FILE_SNAPSHOT, Memory.ROMFilename, i);
-						NGCFreezeGame (filepath, NOTSILENT);
+						SaveSnapshot (filepath, NOTSILENT);
 						menu = MENU_GAME_SAVE;
 					}
 				}
@@ -1755,7 +1743,7 @@ static int MenuGameSaves(int action)
 							SaveSRAM(filepath, NOTSILENT);
 							break;
 						case FILE_SNAPSHOT:
-							NGCFreezeGame (filepath, NOTSILENT);
+							SaveSnapshot (filepath, NOTSILENT);
 							break;
 					}
 					menu = MENU_GAME_SAVE;

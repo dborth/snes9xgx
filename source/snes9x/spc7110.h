@@ -159,111 +159,101 @@
 **********************************************************************************/
 
 
+#ifndef _SPC7110_H_
+#define _SPC7110_H_
 
-#ifndef _spc7110_h
-#define _spc7110_h
-#include "port.h"
+#define SPC7110_DECOMP_BUFFER_SIZE	64
 
-#define DECOMP_BUFFER_SIZE	0x10000
-
-extern void (*LoadUp7110)(char*);
-extern void (*CleanUp7110)(void);
-extern void (*Copy7110)(void);
-
-extern uint16 cacheMegs;
-
-void Del7110Gfx(void);
-void Close7110Gfx(void);
-void Drop7110Gfx(void);
-extern "C"{
-uint8 S9xGetSPC7110(uint16 Address);
-uint8 S9xGetSPC7110Byte(uint32 Address);
-uint8* Get7110BasePtr(uint32);
-}
-void S9xSetSPC7110 (uint8 data, uint16 Address);
-void S9xSpc7110Init();
-uint8* Get7110BasePtr(uint32);
-void S9xSpc7110Reset();
-void S9xUpdateRTC ();
-void Do7110Logging();
-int	S9xRTCDaysInMonth( int month, int year );
-
-//These are platform-dependant functions, but should work on
-//most systems that use GNU compilers, and on Win32.
-void SPC7110Load(char*);
-void SPC7110Open(char*);
-void SPC7110Grab(char*);
-
-typedef struct SPC7110RTC
+// for snapshot only
+struct SSPC7110Snapshot
 {
-	unsigned char reg[16];
-	short index;
-	uint8 control;
-	bool init;
-	time_t last_used;
-} S7RTC;
+	uint8	r4801;
+	uint8	r4802;
+	uint8	r4803;
+	uint8	r4804;
+	uint8	r4805;
+	uint8	r4806;
+	uint8	r4807;
+	uint8	r4808;
+	uint8	r4809;
+	uint8	r480a;
+	uint8	r480b;
+	uint8	r480c;
 
-typedef struct SPC7110EmuVars
-{
-	unsigned char reg4800;
-	unsigned char reg4801;
-	unsigned char reg4802;
-	unsigned char reg4803;
-	unsigned char reg4804;
-	unsigned char reg4805;
-	unsigned char reg4806;
-	unsigned char reg4807;
-	unsigned char reg4808;
-	unsigned char reg4809;
-	unsigned char reg480A;
-	unsigned char reg480B;
-	unsigned char reg480C;
-	unsigned char reg4811;
-	unsigned char reg4812;
-	unsigned char reg4813;
-	unsigned char reg4814;
-	unsigned char reg4815;
-	unsigned char reg4816;
-	unsigned char reg4817;
-	unsigned char reg4818;
-	unsigned char reg4820;
-	unsigned char reg4821;
-	unsigned char reg4822;
-	unsigned char reg4823;
-	unsigned char reg4824;
-	unsigned char reg4825;
-	unsigned char reg4826;
-	unsigned char reg4827;
-	unsigned char reg4828;
-	unsigned char reg4829;
-	unsigned char reg482A;
-	unsigned char reg482B;
-	unsigned char reg482C;
-	unsigned char reg482D;
-	unsigned char reg482E;
-	unsigned char reg482F;
-	unsigned char reg4830;
-	unsigned char reg4831;
-	unsigned char reg4832;
-	unsigned char reg4833;
-	unsigned char reg4834;
-	unsigned char reg4840;
-	unsigned char reg4841;
-	unsigned char reg4842;
-	uint8 AlignBy;
-	uint8 written;
-	uint8 offset_add;
-	uint32 DataRomOffset;
-	uint32 DataRomSize;
-	uint32 bank50Internal;
-	uint8 bank50[DECOMP_BUFFER_SIZE];
+	uint8	r4811;
+	uint8	r4812;
+	uint8	r4813;
+	uint8	r4814;
+	uint8	r4815;
+	uint8	r4816;
+	uint8	r4817;
+	uint8	r4818;
 
-} SPC7110Regs;
-extern SPC7110Regs s7r;
-extern S7RTC rtc_f9;
-// These are defined in spc7110.cpp
-bool8 S9xSaveSPC7110RTC (S7RTC *rtc_f9);
-bool8 S9xLoadSPC7110RTC (S7RTC *rtc_f9);
+	uint8	r481x;
+
+	bool8	r4814_latch;			// bool
+	bool8	r4815_latch;			// bool
+
+	uint8	r4820;
+	uint8	r4821;
+	uint8	r4822;
+	uint8	r4823;
+	uint8	r4824;
+	uint8	r4825;
+	uint8	r4826;
+	uint8	r4827;
+	uint8	r4828;
+	uint8	r4829;
+	uint8	r482a;
+	uint8	r482b;
+	uint8	r482c;
+	uint8	r482d;
+	uint8	r482e;
+	uint8	r482f;
+
+	uint8	r4830;
+	uint8	r4831;
+	uint8	r4832;
+	uint8	r4833;
+	uint8	r4834;
+
+	uint32	dx_offset;				// unsigned
+	uint32	ex_offset;				// unsigned
+	uint32	fx_offset;				// unsigned
+
+	uint8	r4840;
+	uint8	r4841;
+	uint8	r4842;
+
+	int32	rtc_state;				// enum RTC_State
+	int32	rtc_mode;				// enum RTC_Mode
+	uint32	rtc_index;				// unsigned
+
+	uint32	decomp_mode;			// unsigned
+	uint32	decomp_offset;			// unsigned
+
+	uint8	decomp_buffer[SPC7110_DECOMP_BUFFER_SIZE];
+
+	uint32	decomp_buffer_rdoffset;	// unsigned
+	uint32	decomp_buffer_wroffset;	// unsigned
+	uint32	decomp_buffer_length;	// unsigned
+
+	struct ContextState
+	{
+		uint8	index;
+		uint8	invert;
+	}	context[32];
+};
+
+extern struct SSPC7110Snapshot	s7snap;
+
+void S9xInitSPC7110 (void);
+void S9xResetSPC7110 (void);
+void S9xSPC7110PreSaveState (void);
+void S9xSPC7110PostLoadState (int);
+void S9xSetSPC7110 (uint8, uint16);
+uint8 S9xGetSPC7110 (uint16);
+uint8 S9xGetSPC7110Byte (uint32);
+uint8 * S9xGetBasePointerSPC7110 (uint32);
 
 #endif
-

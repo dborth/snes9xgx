@@ -159,126 +159,102 @@
 **********************************************************************************/
 
 
-
-
 #ifndef _CPUEXEC_H_
 #define _CPUEXEC_H_
 
-#include "snes9x.h"
+#include "ppu.h"
 
-struct SOpcodes {
-#ifdef __WIN32__
-	void (__cdecl *S9xOpcode)( void);
-#else
-	void (*S9xOpcode)( void);
-#endif
+struct SOpcodes
+{
+	void (*S9xOpcode) (void);
 };
 
 struct SICPU
 {
-    uint8  *Speed; // unused
-    struct SOpcodes *S9xOpcodes;
-    uint8  *S9xOpLengths;
-    uint8  _Carry;
-    uint8  _Zero;
-    uint8  _Negative;
-    uint8  _Overflow;
-    bool8  CPUExecuting;
-    uint32 ShiftedPB;
-    uint32 ShiftedDB;
-    uint32 Frame;
-    uint32 Scanline;
-    uint32 FrameAdvanceCount;
-	bool8 SavedAtOp;
+	struct SOpcodes	*S9xOpcodes;
+	uint8	*S9xOpLengths;
+	uint8	_Carry;
+	uint8	_Zero;
+	uint8	_Negative;
+	uint8	_Overflow;
+	bool8	CPUExecuting;
+	uint32	ShiftedPB;
+	uint32	ShiftedDB;
+	uint32	Frame;
+	uint32	FrameAdvanceCount;
 };
 
-START_EXTERN_C
-extern struct SICPU ICPU;
-END_EXTERN_C
+extern struct SICPU		ICPU;
 
-#include "ppu.h"
-#include "memmap.h"
-#include "65c816.h"
+extern struct SOpcodes	S9xOpcodesE1[256];
+extern struct SOpcodes	S9xOpcodesM1X1[256];
+extern struct SOpcodes	S9xOpcodesM1X0[256];
+extern struct SOpcodes	S9xOpcodesM0X1[256];
+extern struct SOpcodes	S9xOpcodesM0X0[256];
+extern struct SOpcodes	S9xOpcodesSlow[256];
+extern uint8			S9xOpLengthsM1X1[256];
+extern uint8			S9xOpLengthsM1X0[256];
+extern uint8			S9xOpLengthsM0X1[256];
+extern uint8			S9xOpLengthsM0X0[256];
 
-START_EXTERN_C
 void S9xMainLoop (void);
 void S9xReset (void);
 void S9xSoftReset (void);
-void S9xDoHEventProcessing ();
+void S9xDoHEventProcessing (void);
 void S9xClearIRQ (uint32);
 void S9xSetIRQ (uint32);
 
-extern struct SOpcodes S9xOpcodesE1 [256];
-extern struct SOpcodes S9xOpcodesM1X1 [256];
-extern struct SOpcodes S9xOpcodesM1X0 [256];
-extern struct SOpcodes S9xOpcodesM0X1 [256];
-extern struct SOpcodes S9xOpcodesM0X0 [256];
-extern struct SOpcodes S9xOpcodesSlow [256];
-extern uint8 S9xOpLengthsM1X1 [256];
-extern uint8 S9xOpLengthsM1X0 [256];
-extern uint8 S9xOpLengthsM0X1 [256];
-extern uint8 S9xOpLengthsM0X0 [256];
-END_EXTERN_C
-
-STATIC inline void S9xUnpackStatus()
+static inline void S9xUnpackStatus (void)
 {
-    ICPU._Zero = (Registers.PL & Zero) == 0;
-    ICPU._Negative = (Registers.PL & Negative);
-    ICPU._Carry = (Registers.PL & Carry);
-    ICPU._Overflow = (Registers.PL & Overflow) >> 6;
+	ICPU._Zero = (Registers.PL & Zero) == 0;
+	ICPU._Negative = (Registers.PL & Negative);
+	ICPU._Carry = (Registers.PL & Carry);
+	ICPU._Overflow = (Registers.PL & Overflow) >> 6;
 }
 
-STATIC inline void S9xPackStatus()
+static inline void S9xPackStatus (void)
 {
-    Registers.PL &= ~(Zero | Negative | Carry | Overflow);
-    Registers.PL |= ICPU._Carry | ((ICPU._Zero == 0) << 1) |
-		    (ICPU._Negative & 0x80) | (ICPU._Overflow << 6);
+	Registers.PL &= ~(Zero | Negative | Carry | Overflow);
+	Registers.PL |= ICPU._Carry | ((ICPU._Zero == 0) << 1) | (ICPU._Negative & 0x80) | (ICPU._Overflow << 6);
 }
 
-STATIC inline void CLEAR_IRQ_SOURCE (uint32 M)
+static inline void S9xFixCycles (void)
 {
-    CPU.IRQActive &= ~M;
-    if (!CPU.IRQActive)
-	CPU.Flags &= ~IRQ_FLAG;
-}
-
-STATIC inline void S9xFixCycles ()
-{
-    if (CheckEmulation ())
-    {
-	ICPU.S9xOpcodes = S9xOpcodesE1;
-        ICPU.S9xOpLengths = S9xOpLengthsM1X1;
-    }
-    else
-    if (CheckMemory ())
-    {
-	if (CheckIndex ())
+	if (CheckEmulation())
 	{
-	    ICPU.S9xOpcodes = S9xOpcodesM1X1;
-            ICPU.S9xOpLengths = S9xOpLengthsM1X1;
+		ICPU.S9xOpcodes = S9xOpcodesE1;
+		ICPU.S9xOpLengths = S9xOpLengthsM1X1;
+	}
+	else
+	if (CheckMemory())
+	{
+		if (CheckIndex())
+		{
+			ICPU.S9xOpcodes = S9xOpcodesM1X1;
+			ICPU.S9xOpLengths = S9xOpLengthsM1X1;
+		}
+		else
+		{
+			ICPU.S9xOpcodes = S9xOpcodesM1X0;
+			ICPU.S9xOpLengths = S9xOpLengthsM1X0;
+		}
 	}
 	else
 	{
-	    ICPU.S9xOpcodes = S9xOpcodesM1X0;
-            ICPU.S9xOpLengths = S9xOpLengthsM1X0;
+		if (CheckIndex())
+		{
+			ICPU.S9xOpcodes = S9xOpcodesM0X1;
+			ICPU.S9xOpLengths = S9xOpLengthsM0X1;
+		}
+		else
+		{
+			ICPU.S9xOpcodes = S9xOpcodesM0X0;
+			ICPU.S9xOpLengths = S9xOpLengthsM0X0;
+		}
 	}
-    }
-    else
-    {
-	if (CheckIndex ())
-	{
-	    ICPU.S9xOpcodes = S9xOpcodesM0X1;
-            ICPU.S9xOpLengths = S9xOpLengthsM0X1;
-	}
-	else
-	{
-	    ICPU.S9xOpcodes = S9xOpcodesM0X0;
-            ICPU.S9xOpLengths = S9xOpLengthsM0X0;
-	}
-    }
 }
 
-STATIC inline void S9xReschedule (void)
+static inline void S9xReschedule (void)
 {
 	uint8	next = 0;
 	int32	hpos = 0;

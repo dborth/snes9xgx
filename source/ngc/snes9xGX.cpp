@@ -31,15 +31,7 @@
 
 #include "snes9x.h"
 #include "memmap.h"
-#include "s9xdebug.h"
-#include "cpuexec.h"
-#include "ppu.h"
-#include "apu.h"
-#include "display.h"
-#include "gfx.h"
-#include "soundux.h"
-#include "spc700.h"
-#include "spc7110.h"
+#include "apu/apu.h"
 #include "controls.h"
 
 #include "snes9xGX.h"
@@ -343,24 +335,10 @@ void USBGeckoOutput()
 	devoptab_list[STD_ERR] = &gecko_out;
 }
 
-/****************************************************************************
- * MAIN
- *
- * Steps to Snes9x Emulation :
- *	1. Initialise GC Video
- *	2. Initialise libfreetype (Nice to read something)
- *	3. Set S9xSettings to standard defaults (s9xconfig.h)
- *	4. Allocate Snes9x Memory
- *	5. Allocate APU Memory
- *	6. Set Pixel format to RGB565 for GL Rendering
- *	7. Initialise Snes9x/GC Sound System
- *	8. Initialise Snes9x Graphics subsystem
- *	9. Let's Party!
- ***************************************************************************/
 int
 main(int argc, char *argv[])
 {
-	//USBGeckoOutput(); // uncomment to enable USB gecko output
+	USBGeckoOutput(); // uncomment to enable USB gecko output
 	__exception_setreload(8);
 
 	#ifdef HW_DOL
@@ -432,6 +410,7 @@ main(int argc, char *argv[])
 
 	S9xUnmapAllControls ();
 	SetDefaultButtonMap ();
+	S9xReportControllers();
 
 	// Allocate SNES Memory
 	if (!Memory.Init ())
@@ -444,15 +423,14 @@ main(int argc, char *argv[])
 	// Set Pixel Renderer to match 565
 	S9xSetRenderPixelFormat (RGB565);
 
-	// Initialise Snes Sound System
-	S9xInitSound (5, TRUE, 1024);
+	// Initialise Sound System
+	S9xInitSound (512, 0);
 
 	// Initialise Graphics
 	setGFX ();
 	if (!S9xGraphicsInit ())
 		ExitApp();
 
-	S9xSetSoundMute (TRUE);
 	S9xInitSync(); // initialize frame sync
 
 	// Initialize font system

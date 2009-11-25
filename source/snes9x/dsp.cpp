@@ -159,29 +159,55 @@
 **********************************************************************************/
 
 
-
-
-#ifndef _DEBUG_H_
-#define _DEBUG_H_
-
-START_EXTERN_C
-void S9xDoDebug ();
-void S9xTrace ();
-void S9xSA1Trace ();
-void S9xTraceMessage (const char *);
-
-// Structures
-struct SBreakPoint{
-	bool8   Enabled;
-	uint8  Bank;
-	uint16 Address;
-};
-
-uint8 S9xOPrint( char *Line, uint8 Bank, uint16 Address);
-uint8 S9xSA1OPrint( char *Line, uint8 Bank, uint16 Address);
-
-extern struct SBreakPoint S9xBreakpoint[ 6];
-extern char *S9xMnemonics[256];
-END_EXTERN_C
+#include "snes9x.h"
+#include "memmap.h"
+#ifdef DEBUGGER
+#include "missing.h"
 #endif
 
+uint8	(*GetDSP) (uint16)        = NULL;
+void	(*SetDSP) (uint8, uint16) = NULL;
+
+
+void S9xResetDSP (void)
+{
+	memset(&DSP1, 0, sizeof(DSP1));
+	DSP1.waiting4command = TRUE;
+	DSP1.first_parameter = TRUE;
+
+	memset(&DSP2, 0, sizeof(DSP2));
+	DSP2.waiting4command = TRUE;
+
+	memset(&DSP3, 0, sizeof(DSP3));
+	DSP3_Reset();
+
+	memset(&DSP4, 0, sizeof(DSP4));
+	DSP4.waiting4command = TRUE;
+}
+
+uint8 S9xGetDSP (uint16 address)
+{
+#ifdef DEBUGGER
+	if (Settings.TraceDSP)
+	{
+		sprintf(String, "DSP read: 0x%04X", address);
+		S9xMessage(S9X_TRACE, S9X_TRACE_DSP1, String);
+	}
+#endif
+
+	return ((*GetDSP)(address));
+}
+
+void S9xSetDSP (uint8 byte, uint16 address)
+{
+#ifdef DEBUGGER
+	missing.unknowndsp_write = address;
+	if (Settings.TraceDSP)
+	{
+		sprintf(String, "DSP write: 0x%04X=0x%02X", address, byte);
+		S9xMessage(S9X_TRACE, S9X_TRACE_DSP1, String);
+	}
+#endif
+
+	(*SetDSP)(byte, address);
+}

@@ -10,6 +10,7 @@
 
 #include <zlib.h>
 
+#include "snes9x.h"
 #include "memmap.h"
 
 #include "snes9xGX.h"
@@ -406,7 +407,7 @@ bool patchApplyPPF(MFILE *f, u8 **rom, int *size)
 	return res;
 }
 
-void LoadPatch()
+void WiiLoadPatch()
 {
 	int patchsize = 0;
 	int patchtype;

@@ -8,8 +8,7 @@
  *
  * s9xsupport.cpp
  *
- * This file contains the supporting functions defined in porting.html, with
- * others taken from unix/x11.cpp and unix/unix.cpp
+ * Snes9x support functions
  ***************************************************************************/
 
 #include <gccore.h>
@@ -22,15 +21,8 @@
 
 #include "snes9x.h"
 #include "memmap.h"
-#include "s9xdebug.h"
-#include "cpuexec.h"
-#include "ppu.h"
-#include "apu.h"
 #include "display.h"
-#include "gfx.h"
-#include "soundux.h"
-#include "spc700.h"
-#include "spc7110.h"
+#include "apu/apu.h"
 #include "controls.h"
 
 #include "snes9xGX.h"
@@ -41,6 +33,11 @@ static long long prev;
 static long long now;
 
 /*** Miscellaneous Functions ***/
+void S9xExit()
+{
+	ExitApp();
+}
+
 void S9xMessage(int /*type */, int /*number */, const char *message)
 {
 #define MAX_MESSAGE_LEN (36 * 3)
@@ -51,43 +48,6 @@ void S9xMessage(int /*type */, int /*number */, const char *message)
 	S9xSetInfoString(buffer);
 }
 
-void S9xExit()
-{
-	ExitApp();
-}
-
-/*** File based functions ***/
-const char *
-S9xChooseFilename(bool8 read_only)
-{
-	return NULL;
-}
-
-const char *
-S9xChooseMovieFilename(bool8 read_only)
-{
-	return NULL;
-}
-
-const char *
-S9xGetDirectory(enum s9x_getdirtype dirtype)
-{
-	return NULL;
-}
-
-const char *
-S9xGetFilename(const char *ex, enum s9x_getdirtype dirtype)
-{
-	return NULL;
-}
-
-const char *
-S9xGetFilenameInc(const char *e, enum s9x_getdirtype dirtype)
-{
-	return NULL;
-}
-
-/*** Memory based functions ***/
 void S9xAutoSaveSRAM()
 {
 
@@ -96,35 +56,25 @@ void S9xAutoSaveSRAM()
 /*** Sound based functions ***/
 void S9xToggleSoundChannel(int c)
 {
-	if (c == 8)
-		so.sound_switch = 255;
-	else
-		so.sound_switch ^= 1 << c;
-	S9xSetSoundControl(so.sound_switch);
+    static int sound_switch = 255;
+
+    if (c == 8)
+        sound_switch = 255;
+    else
+        sound_switch ^= 1 << c;
+
+    S9xSetSoundControl (sound_switch);
 }
 
 /****************************************************************************
  * OpenSoundDevice
  *
- * Main initialisation for NGC sound system
+ * Main initialisation for Wii sound system
  ***************************************************************************/
-bool8 S9xOpenSoundDevice(int mode, bool8 stereo, int buffer_size)
+bool8 S9xOpenSoundDevice(int buffer_size)
 {
-	so.stereo = TRUE;
-	so.playback_rate = 32000;
-	so.sixteen_bit = TRUE;
-	so.encoded = 0;
-	so.buffer_size = 4096;
-	so.sound_switch = 255;
-	S9xSetPlaybackRate(so.playback_rate);
-
 	InitAudio();
 	return TRUE;
-}
-
-/*** Deprecated function. NGC uses threaded sound ***/
-void S9xGenerateSound()
-{
 }
 
 /* eke-eke */
@@ -246,41 +196,72 @@ bool S9xPollPointer(uint32 id, int16 * x, int16 * y)
 	return 0;
 }
 
-void S9xLoadSDD1Data()
-{
-	Memory.FreeSDD1Data();
-
-	Settings.SDD1Pack = FALSE;
-
-	if (strncmp(Memory.ROMName, "Star Ocean", 10) == 0)
-		Settings.SDD1Pack = TRUE;
-
-	if (strncmp(Memory.ROMName, "STREET FIGHTER ALPHA2", 21) == 0)
-		Settings.SDD1Pack = TRUE;
-
-	return;
-}
-
 /****************************************************************************
  * Note that these are DUMMY functions, and only allow Snes9x to
  * compile. Where possible, they will return an error signal.
  ***************************************************************************/
 
-/*** splitpath function ***/
-void _splitpath(char const *buffer, char *drive, char *dir, char *fname,
-		char *ext)
+const char *S9xChooseFilename(bool8 read_only)
 {
-	return; // Do nothing - NGC code should NEVER call a function which relies on it
+	ExitApp();
+	return NULL;
+}
+
+const char * S9xChooseMovieFilename(bool8 read_only)
+{
+	ExitApp();
+	return NULL;
+}
+
+const char * S9xGetDirectory(enum s9x_getdirtype dirtype)
+{
+	ExitApp();
+	return NULL;
+}
+
+const char * S9xGetFilename(const char *ex, enum s9x_getdirtype dirtype)
+{
+	ExitApp();
+	return NULL;
+}
+
+const char * S9xGetFilenameInc(const char *e, enum s9x_getdirtype dirtype)
+{
+	ExitApp();
+	return NULL;
+}
+
+const char * S9xBasename(const char *name)
+{
+	ExitApp();
+	return name;
+}
+
+const char * S9xStringInput (const char * s)
+{
+	ExitApp();
+	return s;
+}
+
+void _splitpath(char const *buf, char *drive, char *dir, char *fname, char *ext)
+{
+	ExitApp();
 }
 
 void _makepath(char *filename, const char *drive, const char *dir,
 		const char *fname, const char *ext)
 {
-	return; // Do nothing - NGC code should NEVER call a function which relies on it
+	ExitApp();
 }
 
-char *
-S9xBasename(char *name)
+int dup(int fildes)
 {
-	return name;
+	ExitApp();
+	return 1;
+}
+
+int access(const char *pathname, int mode)
+{
+	ExitApp();
+	return 1;
 }

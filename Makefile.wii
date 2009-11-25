@@ -19,7 +19,8 @@ TARGET		:=	snes9xgx-wii
 TARGETDIR   :=  executables
 BUILD		:=	build_wii
 SOURCES		:=	source/ngc/images source/ngc/sounds source/ngc/fonts \
-				source/ngc/gui source/ngc source/snes9x source/sz source/unzip
+				source/ngc/gui source/ngc source/snes9x source/snes9x/apu \
+				source/sz source/unzip
 INCLUDES	:=	source/snes9x source/ngc source/unzip
 
 #---------------------------------------------------------------------------------
@@ -27,11 +28,7 @@ INCLUDES	:=	source/snes9x source/ngc source/unzip
 #---------------------------------------------------------------------------------
 
 CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
-			-DNGC \
-			-DNO_ASM -DRIGHTSHIFT_IS_SAR \
-			-DCPU_SHUTDOWN -DSPC700_SHUTDOWN \
-			-DSPC700_C -DSDD1_DECOMP \
-			-DCORRECT_VRAM_READS -DNEW_COLOUR_BLENDING \
+			-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
 			-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
 			-fomit-frame-pointer \
 			-Wno-unused-parameter -Wno-strict-aliasing \

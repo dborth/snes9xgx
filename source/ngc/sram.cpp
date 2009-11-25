@@ -32,55 +32,47 @@
 bool
 LoadSRAM (char * filepath, bool silent)
 {
-	int offset = 0;
+	int len = 0;
 	int device;
-			
+	bool result = false;
+	
 	if(!FindDevice(filepath, &device))
 		return 0;
 
-	AllocSaveBuffer();
+	Memory.ClearSRAM();
 
-	offset = LoadFile(filepath, silent);
+	int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
 
-	if (offset > 0)
+	if (size > 0x20000)
+		size = 0x20000;
+
+	if (size)
 	{
-		int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
+		len = LoadFile((char *)Memory.SRAM, filepath, size, silent);
 
-		if (size > 0x20000)
-			size = 0x20000;
-
-		if (device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB ||
-			offset == size + 512 || offset == size + 512 + SRTC_SRAM_PAD)
+		if (len > 0)
 		{
-			// SRAM has a 512 byte header - remove it, then import the SRAM,
-			// ignoring anything after the SRAM
-			memcpy(Memory.SRAM, savebuffer+512, size);
-		}
-		else if (offset == size || offset == size + SRTC_SRAM_PAD)
-		{
-			// SRAM data should be at the start of the file, just import it and
-			// ignore anything after the SRAM
-			memcpy (Memory.SRAM, savebuffer, size);
-		}
-		else
-		{
-			ErrorPrompt("Incompatible SRAM save!");
-		}
+			if (len - size == 512)
+				memmove(Memory.SRAM, Memory.SRAM + 512, size);
 
-		S9xSoftReset();
-		FreeSaveBuffer ();
-		return true;
-	}
-	else
-	{
-		FreeSaveBuffer ();
-
-		// if we reached here, nothing was done!
-		if(!silent)
+			if (Settings.SRTC || Settings.SPC7110RTC)
+			{
+				int pathlen = strlen(filepath);
+				filepath[pathlen-3] = 'r';
+				filepath[pathlen-2] = 't';
+				filepath[pathlen-1] = 'c';
+				LoadFile((char *)RTCData.reg, filepath, 20, silent);
+			}
+			result = true;
+		}
+		else if(!silent)
+		{
+			// if we reached here, nothing was done!
 			ErrorPrompt("SRAM file not found");
-
-		return false;
+		}
+		S9xSoftReset();
 	}
+	return result;
 }
 
 bool
@@ -122,6 +114,12 @@ SaveSRAM (char * filepath, bool silent)
 	if(!FindDevice(filepath, &device))
 		return 0;
 
+	if (Settings.SuperFX && Memory.ROMType < 0x15) // doesn't have SRAM
+		return true;
+
+	if (Settings.SA1 && Memory.ROMType == 0x34)    // doesn't have SRAM
+		return true;
+
 	// determine SRAM size
 	int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
 
@@ -130,21 +128,16 @@ SaveSRAM (char * filepath, bool silent)
 
 	if (size > 0)
 	{
-		if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB)
+		offset = SaveFile((char *)Memory.SRAM, filepath, size, silent);
+		
+		if (Settings.SRTC || Settings.SPC7110RTC)
 		{
-			// Set the sramcomments
-			char sramcomment[2][32];
-			memset(sramcomment, 0, 64);
-			sprintf (sramcomment[0], "%s SRAM", APPNAME);
-			sprintf (sramcomment[1], Memory.ROMName);
-			SetMCSaveComments(sramcomment);
+			int pathlen = strlen(filepath);
+			filepath[pathlen-3] = 'r';
+			filepath[pathlen-2] = 't';
+			filepath[pathlen-1] = 'c';
+			SaveFile((char *)RTCData.reg, filepath, 20, silent);
 		}
-
-		AllocSaveBuffer ();
-		// copy in the SRAM, leaving a 512 byte header (for compatibility with other platforms)
-		memcpy(savebuffer+512, Memory.SRAM, size);
-		offset = SaveFile(filepath, size+512, silent);
-		FreeSaveBuffer ();
 
 		if (offset > 0)
 		{
