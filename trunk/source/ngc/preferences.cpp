@@ -17,7 +17,6 @@
 #include "snes9xGX.h"
 #include "s9xconfig.h"
 #include "menu.h"
-#include "memcardop.h"
 #include "fileop.h"
 #include "filebrowser.h"
 #include "input.h"
@@ -124,7 +123,6 @@ preparePrefsData ()
 	createXMLSetting("LoadFolder", "Load Folder", GCSettings.LoadFolder);
 	createXMLSetting("SaveFolder", "Save Folder", GCSettings.SaveFolder);
 	createXMLSetting("CheatFolder", "Cheats Folder", GCSettings.CheatFolder);
-	createXMLSetting("VerifySaves", "Verify Memory Card Saves", toStr(GCSettings.VerifySaves));
 
 	createXMLSection("Network", "Network Settings");
 
@@ -297,7 +295,6 @@ decodePrefsData ()
 			loadXMLSetting(GCSettings.LoadFolder, "LoadFolder", sizeof(GCSettings.LoadFolder));
 			loadXMLSetting(GCSettings.SaveFolder, "SaveFolder", sizeof(GCSettings.SaveFolder));
 			loadXMLSetting(GCSettings.CheatFolder, "CheatFolder", sizeof(GCSettings.CheatFolder));
-			loadXMLSetting(&GCSettings.VerifySaves, "VerifySaves");
 
 			// Network Settings
 
@@ -375,10 +372,7 @@ SavePrefs (bool silent)
 		if(device == 0)
 			return false;
 		
-		if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB)
-			sprintf(filepath, "%s%s", pathPrefix[device], PREF_FILE_NAME);
-		else
-			sprintf(filepath, "%s%s/%s", pathPrefix[device], APPFOLDER, PREF_FILE_NAME);
+		sprintf(filepath, "%s%s/%s", pathPrefix[device], APPFOLDER, PREF_FILE_NAME);
 	}
 	
 	if(device == 0)
@@ -391,16 +385,6 @@ SavePrefs (bool silent)
 
 	AllocSaveBuffer ();
 	datasize = preparePrefsData ();
-
-	if(device == DEVICE_MC_SLOTA || device == DEVICE_MC_SLOTB)
-	{
-		// Set the comments
-		char prefscomment[2][32];
-		memset(prefscomment, 0, 64);
-		sprintf (prefscomment[0], "%s Prefs", APPNAME);
-		sprintf (prefscomment[1], "Preferences");
-		SetMCSaveComments(prefscomment);
-	}
 
 	offset = SaveFile(filepath, datasize, silent);
 
@@ -464,11 +448,9 @@ bool LoadPrefs()
 	sprintf(filepath[1], "sd:/%s/%s", APPFOLDER, PREF_FILE_NAME);
 	sprintf(filepath[2], "usb:/%s/%s", APPFOLDER, PREF_FILE_NAME);
 #else
-	numDevices = 4;
+	numDevices = 2;
 	sprintf(filepath[0], "carda:/%s/%s", APPFOLDER, PREF_FILE_NAME);
 	sprintf(filepath[1], "cardb:/%s/%s", APPFOLDER, PREF_FILE_NAME);
-	sprintf(filepath[2], "mca:/%s", PREF_FILE_NAME);
-	sprintf(filepath[3], "mcb:/%s", PREF_FILE_NAME);
 #endif
 
 	for(int i=0; i<numDevices; i++)

@@ -32,10 +32,8 @@
 #include "snes9xGX.h"
 #include "menu.h"
 #include "video.h"
-#include "aram.h"
 #include "networkop.h"
 #include "fileop.h"
-#include "memcardop.h"
 #include "input.h"
 #include "gcunzip.h"
 #include "freeze.h"
@@ -93,10 +91,6 @@ int autoSaveMethod(bool silent)
 		device = DEVICE_SD;
 	else if(ChangeInterface(DEVICE_USB, SILENT))
 		device = DEVICE_USB;
-	else if(ChangeInterface(DEVICE_MC_SLOTA, SILENT))
-		device = DEVICE_MC_SLOTA;
-	else if(ChangeInterface(DEVICE_MC_SLOTB, SILENT))
-		device = DEVICE_MC_SLOTB;
 	else if(ChangeInterface(DEVICE_SMB, SILENT))
 		device = DEVICE_SMB;
 	else if(!silent)
@@ -292,32 +286,12 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 
 				if(filenum >= -1)
 				{
-					if(GCSettings.SaveMethod == DEVICE_MC_SLOTA || GCSettings.SaveMethod == DEVICE_MC_SLOTB)
-					{
-						if(filenum > 9)
-						{
-							return false;
-						}
-						else if(filenum == -1)
-						{
-							filename[27] = 0; // truncate filename
-							sprintf(file, "%s.%s", filename, ext);
-						}
-						else
-						{
-							filename[26] = 0; // truncate filename
-							sprintf(file, "%s%i.%s", filename, filenum, ext);
-						}
-					}
+					if(filenum == -1)
+						sprintf(file, "%s.%s", filename, ext);
+					else if(filenum == 0)
+						sprintf(file, "%s Auto.%s", filename, ext);
 					else
-					{
-						if(filenum == -1)
-							sprintf(file, "%s.%s", filename, ext);
-						else if(filenum == 0)
-							sprintf(file, "%s Auto.%s", filename, ext);
-						else
-							sprintf(file, "%s %i.%s", filename, filenum, ext);
-					}
+						sprintf(file, "%s %i.%s", filename, filenum, ext);
 				}
 				else
 				{
@@ -329,17 +303,7 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 				sprintf(file, "%s.cht", Memory.ROMFilename);
 				break;
 		}
-		switch(GCSettings.SaveMethod)
-		{
-			case DEVICE_MC_SLOTA:
-			case DEVICE_MC_SLOTB:
-				sprintf (temppath, "%s%s", pathPrefix[GCSettings.SaveMethod], file);
-				temppath[31] = 0; // truncate filename
-				break;
-			default:
-				sprintf (temppath, "%s%s/%s", pathPrefix[GCSettings.SaveMethod], folder, file);
-				break;
-		}
+		sprintf (temppath, "%s%s/%s", pathPrefix[GCSettings.SaveMethod], folder, file);
 	}
 	CleanupPath(temppath); // cleanup path
 	strncpy(filepath, temppath, MAXPATHLEN);

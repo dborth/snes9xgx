@@ -35,7 +35,6 @@
 #include "controls.h"
 
 #include "snes9xGX.h"
-#include "aram.h"
 #include "networkop.h"
 #include "video.h"
 #include "s9xconfig.h"
@@ -349,58 +348,26 @@ main(int argc, char *argv[])
 	DI_Init();	// first
 	#endif
 
-	#ifdef DEBUG_WII
-	//DEBUG_Init(GDBSTUB_DEVICE_USB, 1);	// init debugging
-	//_break();
-	#endif
-
 	InitDeviceThread();
 	InitGCVideo(); // Initialise video
 	ResetVideo_Menu (); // change to menu video mode
 	SetupPads();
-
-	#ifdef HW_RVL
-	// Wii Power/Reset buttons
-	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
-	SYS_SetPowerCallback(ShutdownCB);
-	SYS_SetResetCallback(ResetCB);
-	#endif
-
-	// GameCube only - Injected ROM
-	// Before going any further, let's copy any injected ROM image
-	// We'll put it in ARAM for safe storage
-
-	#ifdef HW_DOL
-	AR_Init (NULL, 0);
-
-	int *romptr = (int *) 0x81000000; // location of injected rom
-
-	if (memcmp ((char *) romptr, "SNESROM0", 8) == 0)
-	{
-		SNESROMSize = romptr[2];
-
-		if(SNESROMSize > (1024*128) && SNESROMSize < (1024*1024*8))
-		{
-			romptr = (int *) 0x81000020;
-			ARAMPut ((char *) romptr, (char *) AR_SNESROM, SNESROMSize);
-		}
-		else // not a valid ROM size
-		{
-			SNESROMSize = 0;
-		}
-	}
-	#endif
 
 	// Initialize DVD subsystem (GameCube only)
 	#ifdef HW_DOL
 	DVD_Init ();
 	#endif
 
+	#ifdef HW_RVL
+	// Wii Power/Reset buttons
+	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
+	SYS_SetPowerCallback(ShutdownCB);
+	SYS_SetResetCallback(ResetCB);
+
 	// store path app was loaded from
-#ifdef HW_RVL
 	if(argc > 0 && argv[0] != NULL)
 		CreateAppPath(argv[0]);
-#endif
+	#endif
 
 	// Initialize libFAT for SD and USB
 	MountAllFAT();
@@ -437,19 +404,6 @@ main(int argc, char *argv[])
 	InitFreeType((u8*)font_ttf, font_ttf_size);
 
 	InitGUIThreads();
-
-	// GameCube only - Injected ROM
-	// Everything's been initialized, we can copy our ROM back
-	// from ARAM into main memory
-
-	#ifdef HW_DOL
-	if(SNESROMSize > 0)
-	{
-		ARAMFetchSlow( (char *)Memory.ROM, (char *)AR_SNESROM, SNESROMSize);
-		Memory.LoadROM ("BLANK.SMC");
-		Memory.LoadSRAM ("BLANK");
-	}
-	#endif
 
 	emulate(); // main loop
 }

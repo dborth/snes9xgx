@@ -20,7 +20,6 @@
 #include "srtc.h"
 
 #include "snes9xGX.h"
-#include "memcardop.h"
 #include "menu.h"
 #include "fileop.h"
 #include "filebrowser.h"

@@ -68,8 +68,6 @@ DefaultSettings ()
 	GCSettings.AutoLoad = 1;
 	GCSettings.AutoSave = 1;
 
-	GCSettings.VerifySaves = 0;
-
 	// custom SMB settings
 	strncpy (GCSettings.smbip, "", 15); // IP Address of share server
 	strncpy (GCSettings.smbuser, "", 19); // Your share user
