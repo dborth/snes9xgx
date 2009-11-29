@@ -30,7 +30,6 @@
 #include "snes9xGX.h"
 #include "fileop.h"
 #include "networkop.h"
-#include "memcardop.h"
 #include "gcunzip.h"
 #include "menu.h"
 #include "filebrowser.h"
@@ -393,16 +392,6 @@ bool FindDevice(char * filepath, int * device)
 		*device = DEVICE_SD_SLOTB;
 		return true;
 	}
-	else if(strncmp(filepath, "mca:", 4) == 0)
-	{
-		*device = DEVICE_MC_SLOTA;
-		return true;
-	}
-	else if(strncmp(filepath, "mcb:", 4) == 0)
-	{
-		*device = DEVICE_MC_SLOTB;
-		return true;
-	}
 	return false;
 }
 
@@ -441,12 +430,6 @@ bool ChangeInterface(int device, bool silent)
 			break;
 		case DEVICE_SMB:
 			mounted = ConnectShare(silent);
-			break;
-		case DEVICE_MC_SLOTA:
-			mounted = TestMC(CARD_SLOTA, silent);
-			break;
-		case DEVICE_MC_SLOTB:
-			mounted = TestMC(CARD_SLOTB, silent);
 			break;
 	}
 
@@ -718,74 +701,63 @@ LoadFile (char * rbuffer, char *filepath, size_t length, bool silent)
 	// halt parsing
 	HaltParseThread();
 
-	if(device == DEVICE_MC_SLOTA)
+	// open the file
+	while(!size && retry)
 	{
-		size = LoadMCFile (rbuffer, CARD_SLOTA, StripDevice(filepath), silent);
-	}
-	else if(device == DEVICE_MC_SLOTB)
-	{
-		size = LoadMCFile (rbuffer, CARD_SLOTB, StripDevice(filepath), silent);
-	}
-	else
-	{
-		// open the file
-		while(!size && retry)
+		if(!ChangeInterface(device, silent))
+			break;
+
+		file = fopen (filepath, "rb");
+
+		if(!file)
 		{
-			if(!ChangeInterface(device, silent))
+			if(silent)
 				break;
 
-			file = fopen (filepath, "rb");
+			retry = ErrorPromptRetry("Error opening file!");
+			continue;
+		}
 
-			if(!file)
+		if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
+		{
+			size = fread (rbuffer, 1, length, file);
+		}
+		else // load whole file
+		{
+			readsize = fread (zipbuffer, 1, 32, file);
+
+			if(!readsize)
 			{
-				if(silent)
-					break;
-
-				retry = ErrorPromptRetry("Error opening file!");
+				unmountRequired[device] = true;
+				retry = ErrorPromptRetry("Error reading file!");
 				continue;
 			}
 
-			if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
+			if (IsZipFile (zipbuffer))
 			{
-				size = fread (rbuffer, 1, length, file);
+				size = UnZipBuffer ((unsigned char *)rbuffer); // unzip
 			}
-			else // load whole file
+			else
 			{
-				readsize = fread (zipbuffer, 1, 32, file);
+				fseeko(file,0,SEEK_END);
+				size = ftello(file);
+				fseeko(file,0,SEEK_SET);
 
-				if(!readsize)
+				while(!feof(file))
 				{
-					unmountRequired[device] = true;
-					retry = ErrorPromptRetry("Error reading file!");
-					continue;
+					ShowProgress ("Loading...", offset, size);
+					readsize = fread (rbuffer + offset, 1, 4096, file); // read in next chunk
+
+					if(readsize <= 0)
+						break; // reading finished (or failed)
+
+					offset += readsize;
 				}
-
-				if (IsZipFile (zipbuffer))
-				{
-					size = UnZipBuffer ((unsigned char *)rbuffer); // unzip
-				}
-				else
-				{
-					fseeko(file,0,SEEK_END);
-					size = ftello(file);
-					fseeko(file,0,SEEK_SET);
-
-					while(!feof(file))
-					{
-						ShowProgress ("Loading...", offset, size);
-						readsize = fread (rbuffer + offset, 1, 4096, file); // read in next chunk
-
-						if(readsize <= 0)
-							break; // reading finished (or failed)
-
-						offset += readsize;
-					}
-					size = offset;
-					CancelAction();
-				}
+				size = offset;
+				CancelAction();
 			}
-			fclose (file);
 		}
+		fclose (file);
 	}
 
 	// go back to checking if devices were inserted/removed
@@ -826,49 +798,38 @@ SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 
 	ShowAction("Saving...");
 
-	if(device == DEVICE_MC_SLOTA)
+	while(!written && retry == 1)
 	{
-		written = SaveMCFile (buffer, CARD_SLOTA, StripDevice(filepath), datasize, silent);
-	}
-	else if(device == DEVICE_MC_SLOTB)
-	{
-		written = SaveMCFile (buffer, CARD_SLOTB, StripDevice(filepath), datasize, silent);
-	}
-	else
-	{
-		while(!written && retry == 1)
+		if(!ChangeInterface(device, silent))
+			break;
+
+		file = fopen (filepath, "wb");
+
+		if(!file)
 		{
-			if(!ChangeInterface(device, silent))
+			if(silent)
 				break;
 
-			file = fopen (filepath, "wb");
+			retry = ErrorPromptRetry("Error creating file!");
+			continue;
+		}
 
-			if(!file)
-			{
-				if(silent)
-					break;
+		while(written < datasize)
+		{
+			if(datasize - written > 4096) nextwrite=4096;
+			else nextwrite = datasize-written;
+			writesize = fwrite (buffer+written, 1, nextwrite, file);
+			if(writesize != nextwrite) break; // write failure
+			written += writesize;
+		}
+		fclose (file);
 
-				retry = ErrorPromptRetry("Error creating file!");
-				continue;
-			}
+		if(written != datasize) written = 0;
 
-			while(written < datasize)
-			{
-				if(datasize - written > 4096) nextwrite=4096;
-				else nextwrite = datasize-written;
-				writesize = fwrite (buffer+written, 1, nextwrite, file);
-				if(writesize != nextwrite) break; // write failure
-				written += writesize;
-			}
-			fclose (file);
-
-			if(written != datasize) written = 0;
-
-			if(!written)
-			{
-				unmountRequired[device] = true;
-				retry = ErrorPromptRetry("Error saving file!");
-			}
+		if(!written)
+		{
+			unmountRequired[device] = true;
+			retry = ErrorPromptRetry("Error saving file!");
 		}
 	}
 

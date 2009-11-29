@@ -22,7 +22,6 @@
 #include "snes9x.h"
 #include "memmap.h"
 
-#include "aram.h"
 #include "snes9xGX.h"
 #include "menu.h"
 #include "filter.h"

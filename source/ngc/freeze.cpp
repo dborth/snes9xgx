@@ -49,7 +49,7 @@ SaveSnapshot (char * filepath, bool silent)
 		return 0;
 
 	// save screenshot - I would prefer to do this from gameScreenTex
-	if(gameScreenTex2 != NULL && device != DEVICE_MC_SLOTA && device != DEVICE_MC_SLOTB)
+	if(gameScreenTex2 != NULL)
 	{
 		AllocSaveBuffer ();
 
