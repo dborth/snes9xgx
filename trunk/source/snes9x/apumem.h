@@ -159,141 +159,152 @@
 **********************************************************************************/
 
 
-#ifdef HAVE_LIBPNG
-#include <png.h>
-#endif
-#include "snes9x.h"
-#include "memmap.h"
-#include "display.h"
-#include "screenshot.h"
 
+#ifndef _apumemory_h_
+#define _apumemory_h_
 
-bool8 S9xDoScreenshot (int width, int height)
+START_EXTERN_C
+extern uint8 APUROM[64];
+END_EXTERN_C
+
+static INLINE uint8 apu_get_reg (uint8 Address)
 {
-	Settings.TakeScreenshot = FALSE;
-
-#ifdef HAVE_LIBPNG
-	FILE		*fp;
-	png_structp	png_ptr;
-	png_infop	info_ptr;
-	png_color_8	sig_bit;
-	int			imgwidth, imgheight;
-	const char	*fname;
-
-	fname = S9xGetFilenameInc(".png", SCREENSHOT_DIR);
-
-	fp = fopen(fname, "wb");
-	if (!fp)
+	switch (Address)
 	{
-		S9xMessage(S9X_ERROR, 0, "Failed to take screenshot.");
-		return (FALSE);
+		case 0xf0:	// -w TEST
+			return 0;
+
+		case 0xf1:	// -w CONTROL
+			return 0;
+
+		case 0xf2:	// rw DSPADDR
+			return (IAPU.RAM[Address]);
+
+		case 0xf3:	// rw DSPDATA
+			return (S9xGetAPUDSP());
+
+		case 0xf4:	// r- CPUI0
+		case 0xf5:	// r- CPUI1
+		case 0xf6:	// r- CPUI2
+		case 0xf7:	// r- CPUI3
+		#ifdef SPC700_SHUTDOWN
+			IAPU.WaitAddress2 = IAPU.WaitAddress1;
+			IAPU.WaitAddress1 = IAPU.PC;
+		#endif
+			return (IAPU.RAM[Address]);
+
+		case 0xf8:	// rw - Normal RAM
+		case 0xf9:	// rw - Normal RAM
+			return (IAPU.RAM[Address]);
+
+		case 0xfa:	// -w T0TARGET
+		case 0xfb:	// -w T1TARGET
+		case 0xfc:	// -w T2TARGET
+			return 0;
+
+		case 0xfd:	// r- T0OUT
+		case 0xfe:	// r- T1OUT
+		case 0xff:	// r- T2OUT
+		#ifdef SPC700_SHUTDOWN
+			IAPU.WaitAddress2 = IAPU.WaitAddress1;
+			IAPU.WaitAddress1 = IAPU.PC;
+		#endif
+			uint8 t = IAPU.RAM[Address] & 0xF;
+			IAPU.RAM[Address] = 0;
+			return (t);
 	}
 
-	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if (!png_ptr)
-	{
-		fclose(fp);
-		unlink(fname);
-		S9xMessage(S9X_ERROR, 0, "Failed to take screenshot.");
-		return (FALSE);
-	}
-
-	info_ptr = png_create_info_struct(png_ptr);
-	if (!info_ptr)
-	{
-		png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
-		fclose(fp);
-		unlink(fname);
-		S9xMessage(S9X_ERROR, 0, "Failed to take screenshot.");
-		return (FALSE);
-	}
-
-	if (setjmp(png_jmpbuf(png_ptr)))
-	{
-		png_destroy_write_struct(&png_ptr, &info_ptr);
-		fclose(fp);
-		unlink(fname);
-		S9xMessage(S9X_ERROR, 0, "Failed to take screenshot.");
-		return (FALSE);
-	}
-
-	imgwidth  = width;
-	imgheight = height;
-
-	if (Settings.StretchScreenshots == 1)
-	{
-		if (width > SNES_WIDTH && height <= SNES_HEIGHT_EXTENDED)
-			imgheight = height << 1;
-	}
-	else
-	if (Settings.StretchScreenshots == 2)
-	{
-		if (width  <= SNES_WIDTH)
-			imgwidth  = width  << 1;
-		if (height <= SNES_HEIGHT_EXTENDED)
-			imgheight = height << 1;
-	}
-
-	png_init_io(png_ptr, fp);
-
-	png_set_IHDR(png_ptr, info_ptr, imgwidth, imgheight, 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-
-	sig_bit.red   = 5;
-	sig_bit.green = 5;
-	sig_bit.blue  = 5;
-	png_set_sBIT(png_ptr, info_ptr, &sig_bit);
-	png_set_shift(png_ptr, &sig_bit);
-
-	png_write_info(png_ptr, info_ptr);
-
-	png_set_packing(png_ptr);
-
-	png_byte	*row_pointer = new png_byte[png_get_rowbytes(png_ptr, info_ptr)];
-	uint16		*screen = GFX.Screen;
-
-	for (int y = 0; y < height; y++, screen += GFX.RealPPL)
-	{
-		png_byte	*rowpix = row_pointer;
-
-		for (int x = 0; x < width; x++)
-		{
-			uint32	r, g, b;
-
-			DECOMPOSE_PIXEL(screen[x], r, g, b);
-
-			*(rowpix++) = r;
-			*(rowpix++) = g;
-			*(rowpix++) = b;
-
-			if (imgwidth != width)
-			{
-				*(rowpix++) = r;
-				*(rowpix++) = g;
-				*(rowpix++) = b;
-			}
-		}
-
-		png_write_row(png_ptr, row_pointer);
-		if (imgheight != height)
-			png_write_row(png_ptr, row_pointer);
-	}
-
-	delete [] row_pointer;
-
-	png_write_end(png_ptr, info_ptr);
-	png_destroy_write_struct(&png_ptr, &info_ptr);
-
-	fclose(fp);
-
-	fprintf(stderr, "%s saved.\n", fname);
-
-	const char	*base = S9xBasename(fname);
-	sprintf(String, "Saved screenshot %s", base);
-	S9xMessage(S9X_INFO, 0, String);
-
-	return (TRUE);
-#else
-	fprintf(stderr, "Screenshot support not available (libpng was not found at build time).\n");
-	return (FALSE);
-#endif
+	return 0;
 }
+
+static INLINE void apu_set_reg (uint8 byte, uint8 Address)
+{
+	switch (Address)
+	{
+		case 0xf0:	// -w TEST
+			//printf("Write %02X to APU 0xF0!\n", byte);
+			return;
+
+		case 0xf1:	// -w CONTROL
+			S9xSetAPUControl(byte);
+			return;
+
+		case 0xf2:	// rw DSPADDR
+			IAPU.RAM[Address] = byte;
+			return;
+
+		case 0xf3:	// rw DSPDATA
+			S9xSetAPUDSP(byte);
+			return;
+
+		case 0xf4:	// -w CPUO0
+		case 0xf5:	// -w CPUO1
+		case 0xf6:	// -w CPUO2
+		case 0xf7:	// -w CPUO3
+			APU.OutPorts[Address - 0xf4] = byte;
+			return;
+
+		case 0xf8:	// rw - Normal RAM
+		case 0xf9:	// rw - Normal RAM
+			IAPU.RAM[Address] = byte;
+			return;
+
+		case 0xfa:	// -w T0TARGET
+		case 0xfb:	// -w T1TARGET
+		case 0xfc:	// -w T2TARGET
+			IAPU.RAM[Address] = byte;
+			if (byte == 0)
+				APU.TimerTarget[Address - 0xfa] = 0x100;
+			else
+				APU.TimerTarget[Address - 0xfa] = byte;
+			return;
+
+		case 0xfd:	// r- T0OUT
+		case 0xfe:	// r- T1OUT
+		case 0xff:	// r- T2OUT
+			return;
+	}
+}
+
+INLINE uint8 S9xAPUGetByteZ (uint8 Address)
+{
+	if (Address >= 0xf0 && IAPU.DirectPage == IAPU.RAM)
+		return (apu_get_reg(Address));
+	else
+		return (IAPU.DirectPage[Address]);
+}
+
+INLINE void S9xAPUSetByteZ (uint8 byte, uint8 Address)
+{
+    if (Address >= 0xf0 && IAPU.DirectPage == IAPU.RAM)
+		apu_set_reg(byte, Address);
+    else
+		IAPU.DirectPage[Address] = byte;
+}
+
+INLINE uint8 S9xAPUGetByte (uint32 Address)
+{
+    Address &= 0xffff;
+    if (Address <= 0xff && Address >= 0xf0)
+		return (apu_get_reg(Address & 0xff));
+    else
+		return (IAPU.RAM[Address]);
+}
+
+INLINE void S9xAPUSetByte (uint8 byte, uint32 Address)
+{
+    Address &= 0xffff;
+    if (Address <= 0xff && Address >= 0xf0)
+		apu_set_reg(byte, Address & 0xff);
+	else
+	if (Address < 0xffc0)
+	    IAPU.RAM[Address] = byte;
+	else
+	{
+	    APU.ExtraRAM[Address - 0xffc0] = byte;
+	    if (!APU.ShowROM)
+		IAPU.RAM[Address] = byte;
+	}
+}
+
+#endif // _apumemory_h_

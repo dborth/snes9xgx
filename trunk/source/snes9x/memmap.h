@@ -159,19 +159,26 @@
 **********************************************************************************/
 
 
-#ifndef _MEMMAP_H_
-#define _MEMMAP_H_
 
-#define MEMMAP_BLOCK_SIZE	(0x1000)
-#define MEMMAP_NUM_BLOCKS	(0x1000000 / MEMMAP_BLOCK_SIZE)
-#define MEMMAP_SHIFT		(12)
-#define MEMMAP_MASK			(MEMMAP_BLOCK_SIZE - 1)
+#ifndef _memmap_h_
+#define _memmap_h_
+
+#include "snes9x.h"
+
+#define MEMMAP_BLOCK_SIZE				(0x1000)
+#define MEMMAP_NUM_BLOCKS				(0x1000000 / MEMMAP_BLOCK_SIZE)
+#define MEMMAP_SHIFT					(12)
+#define MEMMAP_MASK						(MEMMAP_BLOCK_SIZE - 1)
+#define MEMMAP_MAX_SDD1_LOGGED_ENTRIES	(0x10000 / 8)
 
 struct CMemory
 {
 	enum
-	{ MAX_ROM_SIZE = 0x800000 };
-
+#ifdef HW_RVL
+	{ MAX_ROM_SIZE = 0x800000 }; // Wii - lots of memory
+#else
+	{ MAX_ROM_SIZE = 0x500000 }; // GameCube - less memory to play with
+#endif
 	enum file_formats
 	{ FILE_ZIP, FILE_JMA, FILE_DEFAULT };
 
@@ -183,25 +190,26 @@ struct CMemory
 
 	enum
 	{
-		MAP_CPU,
 		MAP_PPU,
+		MAP_CPU,
 		MAP_LOROM_SRAM,
 		MAP_LOROM_SRAM_B,
 		MAP_HIROM_SRAM,
 		MAP_DSP,
-		MAP_SA1RAM,
+		MAP_C4,
 		MAP_BWRAM,
 		MAP_BWRAM_BITMAP,
 		MAP_BWRAM_BITMAP2,
+		MAP_SA1RAM,
 		MAP_SPC7110_ROM,
 		MAP_SPC7110_DRAM,
 		MAP_RONLY_SRAM,
-		MAP_C4,
 		MAP_OBC_RAM,
 		MAP_SETA_DSP,
 		MAP_SETA_RISC,
 		MAP_BSX,
 		MAP_NONE,
+		MAP_DEBUG,
 		MAP_LAST
 	};
 
@@ -215,7 +223,6 @@ struct CMemory
 	uint8	*FillRAM;
 	uint8	*BWRAM;
 	uint8	*C4RAM;
-	uint8	*OBC1RAM;
 	uint8	*BSRAM;
 	uint8	*BIOSROM;
 
@@ -226,11 +233,11 @@ struct CMemory
 	uint8	MemorySpeed[MEMMAP_NUM_BLOCKS];
 	uint8	ExtendedFormat;
 
-	char	ROMFilename[PATH_MAX + 1];
+	char	ROMFilename[_MAX_PATH + 1];
 	char	ROMName[ROM_NAME_LEN];
 	char	RawROMName[ROM_NAME_LEN];
 	char	ROMId[5];
-	int32	CompanyId;
+	char	CompanyId[3];
 	uint8	ROMRegion;
 	uint8	ROMSpeed;
 	uint8	ROMType;
@@ -247,11 +254,19 @@ struct CMemory
 	uint32	CalculatedSize;
 	uint32	CalculatedChecksum;
 
+	uint8	*SDD1Index;
+	uint8	*SDD1Data;
+	uint32	SDD1Entries;
+	uint32	SDD1LoggedDataCountPrev;
+	uint32	SDD1LoggedDataCount;
+	uint8	SDD1LoggedData[MEMMAP_MAX_SDD1_LOGGED_ENTRIES];
+
 	// ports can assign this to perform some custom action upon loading a ROM (such as adjusting controls)
-	void	(*PostRomInitFunc) (void);
+	void	(*PostRomInitFunc) ();
 
 	bool8	Init (void);
 	void	Deinit (void);
+	void	FreeSDD1Data (void);
 
 	int		ScoreHiROM (bool8, int32 romoff = 0);
 	int		ScoreLoROM (bool8, int32 romoff = 0);
@@ -261,11 +276,10 @@ struct CMemory
 	bool8	LoadMultiCart (const char *, const char *);
 	bool8	LoadSufamiTurbo (const char *, const char *);
 	bool8	LoadSameGame (const char *, const char *);
+	bool8	LoadLastROM (void);
 	bool8	LoadSRAM (const char *);
 	bool8	SaveSRAM (const char *);
 	void	ClearSRAM (bool8 onlyNonSavedSRAM = 0);
-	bool8	LoadSRTC (void);
-	bool8	SaveSRTC (void);
 
 	char *	Safe (const char *);
 	char *	SafeANK (const char *);
@@ -319,15 +333,13 @@ struct CMemory
 	void	ApplyROMFixes (void);
 	void	CheckForIPSPatch (const char *, bool8, int32 &);
 
-	void	MakeRomInfoText (char *);
-
+	const char *	TVStandard (void);
 	const char *	MapType (void);
+	const char *	MapMode (void);
 	const char *	StaticRAMSize (void);
 	const char *	Size (void);
 	const char *	Revision (void);
 	const char *	KartContents (void);
-	const char *	Country (void);
-	const char *	PublishingCompany (void);
 };
 
 struct SMulti
@@ -338,20 +350,21 @@ struct SMulti
 	uint32	sramMaskA, sramMaskB;
 	uint32	cartOffsetA, cartOffsetB;
 	uint8	*sramA, *sramB;
-	char	fileNameA[PATH_MAX + 1], fileNameB[PATH_MAX + 1];
+	char	fileNameA[_MAX_PATH + 1], fileNameB[_MAX_PATH + 1];
 };
 
+START_EXTERN_C
 extern CMemory	Memory;
 extern SMulti	Multi;
-
 #if defined(ZSNES_FX) || defined(ZSNES_C4)
 extern uint8	*ROM;
 extern uint8	*SRAM;
 extern uint8	*RegRAM;
 #endif
+bool8 LoadZip(const char *, int32 *, int32 *, uint8 *);
+END_EXTERN_C
 
 void S9xAutoSaveSRAM (void);
-bool8 LoadZip(const char *, int32 *, int32 *, uint8 *);
 
 enum s9xwrap_t
 {
@@ -366,6 +379,25 @@ enum s9xwriteorder_t
 	WRITE_10
 };
 
+#ifdef NO_INLINE_SET_GET
+
+uint8	S9xGetByte (uint32);
+uint16	S9xGetWord (uint32, enum s9xwrap_t w = WRAP_NONE);
+void	S9xSetByte (uint8, uint32);
+void	S9xSetWord (uint16, uint32, enum s9xwrap_t w = WRAP_NONE, enum s9xwriteorder_t o = WRITE_01);
+void	S9xSetPCBase (uint32);
+uint8 *	S9xGetMemPointer (uint32);
+uint8 *	GetBasePointer (uint32);
+
+START_EXTERN_C
+extern uint8	OpenBus;
+END_EXTERN_C
+
+#else
+
+#define INLINE inline
 #include "getset.h"
 
-#endif
+#endif // NO_INLINE_SET_GET
+
+#endif // _memmap_h_

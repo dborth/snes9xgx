@@ -158,84 +158,68 @@
   Nintendo Co., Limited and its subsidiary companies.
 **********************************************************************************/
 
-//  Input recording/playback code
-//  (c) Copyright 2004 blip
 
 
-#ifndef _MOVIE_H_
-#define _MOVIE_H_
 
-#define MOVIE_OPT_FROM_SNAPSHOT		0
-#define MOVIE_OPT_FROM_RESET		(1 << 0)
-#define MOVIE_OPT_PAL				(1 << 1)
-#define MOVIE_OPT_NOSAVEDATA		(1 << 2)
-#define MOVIE_SYNC_DATA_EXISTS		0x01
-#define MOVIE_SYNC_OBSOLETE			0x02
-#define MOVIE_SYNC_LEFTRIGHT		0x04
-#define MOVIE_SYNC_VOLUMEENVX		0x08
-#define MOVIE_SYNC_FAKEMUTE			0x10
-#define MOVIE_SYNC_SYNCSOUND		0x20
-#define MOVIE_SYNC_HASROMINFO		0x40
-#define MOVIE_SYNC_NOCPUSHUTDOWN	0x80
-#define MOVIE_MAX_METADATA			512
+#ifndef _3D_H_
+#define _3D_H_
 
-#define CONTROLLER_DATA_SIZE		2
-#define MOUSE_DATA_SIZE				5
-#define SCOPE_DATA_SIZE				6
-#define JUSTIFIER_DATA_SIZE			11
+#if defined(USE_OPENGL)
+#include <GL/gl.h>
+#include <GL/glu.h>
 
-struct MovieInfo
+#ifdef __linux__
+#include <GL/glx.h>
+#endif
+
+typedef struct
 {
-	time_t	TimeCreated;
-	uint32	Version;
-	uint32	LengthFrames;
-	uint32	LengthSamples;
-	uint32	RerecordCount;
-	uint8	Opts;
-	uint8	ControllersMask;
-	uint8	SyncFlags;
-	bool8	ReadOnly;
-	uint8	PortType[2];
-	wchar_t	Metadata[MOVIE_MAX_METADATA];
-	uint32	ROMCRC32;
-	char	ROMName[23];
-};
+    bool8       packed_pixels_extension_present;
+    bool8       draw_cube;
+    uint32      version;
+    // Texture format
+    GLint       internal_format;
+    GLint       format;
+    GLint       type;
 
-// methods used by the user-interface code
-int S9xMovieOpen (const char *, bool8);
-int S9xMovieCreate (const char *, uint8, uint8, const wchar_t *, int);
-int S9xMovieGetInfo (const char *, struct MovieInfo *);
-void S9xMovieStop (bool8);
-void S9xMovieToggleRecState (void);
-void S9xMovieToggleFrameDisplay (void);
-const char * S9xChooseMovieFilename (bool8);
+    GLint       max_texture_size;// 256 or 512
+    GLint       texture_size;
+    uint32      num_textures;    // 1 if max_texture_size == 256, 2 otherwise
+    GLuint      textures [2];
+	bool8		initialized;
+} OpenGLData;
 
-// methods used by the emulation
-void S9xMovieInit (void);
-void S9xMovieShutdown (void);
-void S9xMovieUpdate (bool a = true);
-void S9xMovieUpdateOnReset (void);
-void S9xUpdateFrameCounter (int o = 0);
-void S9xMovieFreeze (uint8 **, uint32 *);
-int S9xMovieUnfreeze (uint8 *, uint32);
+extern OpenGLData OpenGL;
 
-// accessor functions
-bool8 S9xMovieActive (void);
-bool8 S9xMoviePlaying (void);
-bool8 S9xMovieRecording (void);
-bool8 S9xMovieReadOnly (void);
-uint8 S9xMovieControllers (void);
-uint32 S9xMovieGetId (void);
-uint32 S9xMovieGetLength (void);
-uint32 S9xMovieGetFrameCounter (void);
-
-uint16 MovieGetJoypad (int);
-void MovieSetJoypad (int, uint16);
-bool MovieGetMouse (int, uint8 d[MOUSE_DATA_SIZE]);
-void MovieSetMouse (int, uint8 d[MOUSE_DATA_SIZE], bool);
-bool MovieGetScope (int, uint8 d[SCOPE_DATA_SIZE]);
-void MovieSetScope (int, uint8 d[SCOPE_DATA_SIZE]);
-bool MovieGetJustifier (int, uint8 d[JUSTIFIER_DATA_SIZE]);
-void MovieSetJustifier (int, uint8 d[JUSTIFIER_DATA_SIZE]);
+bool8 S9xOpenGLInit ();
+bool8 S9xOpenGLInit2 ();
+void S9xOpenGLPutImage (int width, int height);
+void S9xOpenGLDeinit ();
 
 #endif
+
+#ifdef USE_GLIDE
+#include <glide.h>
+
+typedef struct
+{
+    bool8	voodoo_present;
+    GrVertex	sq[4];
+    GrTexInfo	texture;
+    int32	texture_mem_size;
+    int32	texture_mem_start;
+    float	x_offset, y_offset;
+    float	x_scale, y_scale;
+    float	voodoo_width;
+    float	voodoo_height;
+} GlideData;
+
+extern GlideData Glide;
+bool8 S9xGlideEnable (bool8 enable);
+void S9xGlideDeinit ();
+bool8 S9xGlideInit ();
+bool8 S9xVoodooInitialise ();
+#endif
+
+#endif
+

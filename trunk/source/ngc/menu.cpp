@@ -41,6 +41,8 @@
 #include "gui/gui.h"
 #include "menu.h"
 
+extern SCheatData Cheat;
+
 #define THREAD_SLEEP 100
 
 #ifdef HW_RVL

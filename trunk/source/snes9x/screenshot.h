@@ -159,9 +159,12 @@
 **********************************************************************************/
 
 
-#ifndef _SCREENSHOT_H_
-#define _SCREENSHOT_H_
 
-bool8 S9xDoScreenshot (int, int);
+
+#ifndef SCREENSHOT_H
+#define SCREENSHOT_H
+
+bool8 S9xDoScreenshot(int width, int height);
 
 #endif
+

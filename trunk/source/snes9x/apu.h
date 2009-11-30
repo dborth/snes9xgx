@@ -159,89 +159,139 @@
 **********************************************************************************/
 
 
-#include "snes9x.h"
-#include "movie.h"
-#include "logger.h"
-
-static int	resetno = 0;
-static int	framecounter = 0;
-static FILE	*video = NULL;
-static FILE	*audio = NULL;
 
 
-void S9xResetLogger (void)
+#ifndef _apu_h_
+#define _apu_h_
+
+#include "spc700.h"
+
+struct SIAPU
 {
-	if (!Settings.DumpStreams)
-		return;
+    uint8  *PC;
+    uint8  *RAM;
+    uint8  *DirectPage;
+    bool8  APUExecuting;
+    uint8  Bit;
+    uint32 Address;
+    uint8  *WaitAddress1;
+    uint8  *WaitAddress2;
+    uint32 WaitCounter;
+    uint8  *ShadowRAM; // unused
+    uint8  *CachedSamples; // unused
+    uint8  _Carry;
+    uint8  _Zero;
+    uint8  _Overflow;
+    uint32 TimerErrorCounter;
+    uint32 Scanline;
+    int32  OneCycle;
+    int32  TwoCycles;
+    bool8  KONNotifier;
+    bool8  KOFFNotifier;
+    bool8  OUTXNotifier;
+    bool8  ENVXNotifier;
+    bool8  ENDXNotifier;
+};
 
-	char	buffer[128];
+struct SAPU
+{
+    int32  OldCycles; // unused
+    bool8  ShowROM;
+    uint32 Flags;
+    uint8  KeyedChannels;
+    uint8  OutPorts [4];
+    uint8  DSP [0x80];
+    uint8  ExtraRAM [64];
+    uint16 Timer [3];
+    uint16 TimerTarget [3];
+    bool8  TimerEnabled [3];
+    bool8  TimerValueWritten [3];
+	int32  Cycles;
+    int32  NextAPUTimerPos;
+    int32  APUTimerCounter;
+};
 
-	S9xCloseLogger();
-	framecounter = 0;
-
-	sprintf(buffer, "videostream%d.dat", resetno);
-	video = fopen(buffer, "wb");
-	if (!video)
-	{
-		printf("Opening %s failed. Logging cancelled.\n", buffer);
-		return;
-	}
-
-	sprintf(buffer, "audiostream%d.dat", resetno);
-	audio = fopen(buffer, "wb");
-	if (!audio)
-	{
-		printf("Opening %s failed. Logging cancelled.\n", buffer);
-		fclose(video);
-		return;
-	}
-
-	resetno++;
+EXTERN_C struct SAPU APU;
+EXTERN_C struct SIAPU IAPU;
+extern int spc_is_dumping;
+extern int spc_is_dumping_temp;
+extern uint8 spc_dump_dsp[0x100];
+STATIC inline void S9xAPUUnpackStatus()
+{
+    IAPU._Zero = ((APURegisters.P & Zero) == 0) | (APURegisters.P & Negative);
+    IAPU._Carry = (APURegisters.P & Carry);
+    IAPU._Overflow = (APURegisters.P & Overflow) >> 6;
 }
 
-void S9xCloseLogger (void)
+STATIC inline void S9xAPUPackStatus()
 {
-	if (video)
-	{
-		fclose(video);
-		video = NULL;
-	}
-
-	if (audio)
-	{
-		fclose(audio);
-		audio = NULL;
-	}
-}	
-
-void S9xVideoLogger (void *pixels, int width, int height, int depth, int bytes_per_line)
-{
-	int	fc = S9xMovieGetFrameCounter();
-	if (fc > 0)
-		framecounter = fc;
-	else
-		framecounter++;
-
-	if (video)
-	{
-		char	*data = (char *) pixels;
-
-		for (int i = 0; i < height; i++)
-			fwrite(data + i * bytes_per_line, depth, width, video);
-		fflush(video);
-		fflush(audio);
-
-		if (Settings.DumpStreamsMaxFrames > 0 && framecounter >= Settings.DumpStreamsMaxFrames)
-		{
-			printf("Logging ended.\n");
-			S9xCloseLogger();
-		}
-
-	}
+    APURegisters.P &= ~(Zero | Negative | Carry | Overflow);
+    APURegisters.P |= IAPU._Carry | ((IAPU._Zero == 0) << 1) |
+		      (IAPU._Zero & 0x80) | (IAPU._Overflow << 6);
 }
 
-void S9xAudioLogger (void *samples, int length)
-{
-	if (audio)
-		fwrite(samples, 1, length, audio);
-}
+START_EXTERN_C
+void S9xResetAPU (void);
+bool8 S9xInitAPU ();
+void S9xDeinitAPU ();
+void S9xDecacheSamples ();
+int S9xTraceAPU ();
+int S9xAPUOPrint (char *buffer, uint16 Address);
+void S9xSetAPUControl (uint8 byte);
+void S9xSetAPUDSP (uint8 byte);
+uint8 S9xGetAPUDSP ();
+void S9xSetAPUTimer (uint16 Address, uint8 byte);
+void S9xAPUExecute (void);
+bool8 S9xInitSound (int quality, bool8 stereo, int buffer_size);
+void S9xOpenCloseSoundTracingFile (bool8);
+void S9xPrintAPUState ();
+extern int32 S9xAPUCycles [256];	// Scaled cycle lengths
+extern int32 S9xAPUCycleLengths [256];	// Raw data.
+extern void (*S9xApuOpcodes [256]) (void);
+END_EXTERN_C
+
+
+#define APU_VOL_LEFT 0x00
+#define APU_VOL_RIGHT 0x01
+#define APU_P_LOW 0x02
+#define APU_P_HIGH 0x03
+#define APU_SRCN 0x04
+#define APU_ADSR1 0x05
+#define APU_ADSR2 0x06
+#define APU_GAIN 0x07
+#define APU_ENVX 0x08
+#define APU_OUTX 0x09
+
+#define APU_MVOL_LEFT 0x0c
+#define APU_MVOL_RIGHT 0x1c
+#define APU_EVOL_LEFT 0x2c
+#define APU_EVOL_RIGHT 0x3c
+#define APU_KON 0x4c
+#define APU_KOFF 0x5c
+#define APU_FLG 0x6c
+#define APU_ENDX 0x7c
+
+#define APU_EFB 0x0d
+#define APU_PMON 0x2d
+#define APU_NON 0x3d
+#define APU_EON 0x4d
+#define APU_DIR 0x5d
+#define APU_ESA 0x6d
+#define APU_EDL 0x7d
+
+#define APU_C0 0x0f
+#define APU_C1 0x1f
+#define APU_C2 0x2f
+#define APU_C3 0x3f
+#define APU_C4 0x4f
+#define APU_C5 0x5f
+#define APU_C6 0x6f
+#define APU_C7 0x7f
+
+#define APU_SOFT_RESET 0x80
+#define APU_MUTE 0x40
+#define APU_ECHO_DISABLED 0x20
+
+#define FREQUENCY_MASK 0x3fff
+#endif
+

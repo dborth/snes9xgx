@@ -159,142 +159,243 @@
 **********************************************************************************/
 
 
+
+
 #ifndef _PORT_H_
 #define _PORT_H_
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <limits.h>
-#ifndef GEKKO
-#include <memory.h>
-#endif
-#include <time.h>
+
+#ifndef STORM
+//#include <memory.h>
 #include <string.h>
-#ifdef HAVE_STRINGS_H
+#else
 #include <strings.h>
+#include <clib/powerpc_protos.h>
 #endif
+
+#ifndef ACCEPT_SIZE_T
+#ifdef __WIN32__
+#define ACCEPT_SIZE_T int
+#else
+#define ACCEPT_SIZE_T unsigned int
+#endif
+#endif
+
 #include <sys/types.h>
 
-#ifdef __WIN32__
-#include <windows.h>
-#endif
-
-#define CHECK_SOUND()
+/* #define PIXEL_FORMAT RGB565 */
 #define GFX_MULTI_FORMAT
 
-#ifdef __WIN32__
-#define RIGHTSHIFT_IS_SAR
-#define SNES_JOY_READ_CALLBACKS
+#ifndef NOASM
+//#define USE_X86_ASM
 #endif
 
 #ifdef __MACOSX__
-#undef GFX_MULTI_FORMAT
-#define PIXEL_FORMAT RGB555
-#endif
+
+	#ifdef _C
+	#undef _C
+	#endif
+
+	#ifdef _D
+	#undef _D
+	#endif
+
+	#define CHECK_SOUND()
+	#define PIXEL_FORMAT RGB555
+	#undef GFX_MULTI_FORMAT
+	#undef USE_X86_ASM
+	#undef _MAX_PATH
+
+	#define SET_UI_COLOR(r,g,b)	SetInfoDlgColor(r,g,b)
+	void SetInfoDlgColor(unsigned char, unsigned char, unsigned char);
+
+#endif /* __MACOSX__ */
 
 #ifndef snes9x_types_defined
 #define snes9x_types_defined
-typedef unsigned char		bool8;
+
+typedef unsigned char bool8;
+
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
-typedef intptr_t			pint;
-typedef int8_t				int8;
-typedef uint8_t				uint8;
-typedef int16_t				int16;
-typedef uint16_t			uint16;
-typedef int32_t				int32;
-typedef uint32_t			uint32;
-typedef int64_t				int64;
-typedef uint64_t			uint64;
-#else	// HAVE_STDINT_H
+
+typedef int8_t int8;
+typedef uint8_t uint8;
+typedef int16_t int16;
+typedef uint16_t uint16;
+typedef int32_t int32;
+typedef uint32_t uint32;
+typedef int64_t int64;
+typedef uint64_t uint64;
+typedef intptr_t pint;
+
+#else /* Don't have stdint.h */
+
 #ifdef PTR_NOT_INT
-typedef long				pint;
-#else
-typedef int					pint;
-#endif
-#ifdef __WIN32__
-#ifdef __BORLANDC__
-#include <systypes.h>
-#else
-typedef signed char			int8;
-typedef unsigned char		uint8;
-typedef signed short		int16;
-typedef unsigned short		uint16;
-#ifndef WSAAP
-// winsock2.h typedefs int32 as well
-typedef signed int			int32;
-#endif
-typedef unsigned int		uint32;
-#endif
-typedef signed __int64		int64;
-typedef unsigned __int64	uint64;
-#else	// __WIN32__
-typedef signed char			int8;
-typedef unsigned char		uint8;
-typedef signed short		int16;
-typedef unsigned short		uint16;
-typedef signed int			int32;
-typedef unsigned int		uint32;
-#ifdef __GNUC__
-// long long is not part of ISO C++ 
+typedef long pint;
+#else /* pointer is int */
+typedef int pint;
+#endif /* PTR_NOT_INT */
+
+/* FIXME: Refactor this by moving out the BORLAND part and unifying typedefs */
+#ifndef __WIN32__
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef signed char int8;
+typedef short int16;
+typedef int int32;
+typedef unsigned int uint32;
+# ifdef __GNUC__  /* long long is not part of ISO C++ */
 __extension__
+# endif
+typedef long long int64;
+typedef unsigned long long uint64;
+#else /* __WIN32__ */
+
+#ifndef PATH_MAX
+#define PATH_MAX _MAX_PATH
 #endif
-typedef long long			int64;
-typedef unsigned long long	uint64;
-#endif	//  __WIN32__
-#endif	// HAVE_STDINT_H
-#endif	// snes9x_types_defined
+
+# ifdef __BORLANDC__
+#   include <systypes.h>
+# else
+
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef signed char int8;
+typedef short int16;
+
+# ifndef WSAAPI
+/* winsock2.h typedefs int32 as well. */
+typedef long int32;
+
+#   define PLAT_SOUND_BUFFER SoundBuffer
+#   define RIGHTSHIFT_IS_SAR
+# endif
+
+# if defined(_MSC_VER) && (_MSC_VER == 1400) /* VC8.0 */
+/* temporary solution for fatal error C1063 (cl.exe 14.00.50727.762) */
+#   ifdef RIGHTSHIFT_IS_SAR
+#     undef RIGHTSHIFT_IS_SAR
+#   endif /* RIGHTSHIFT_IS_SAR */
+#   define RIGHTSHIFT_INT8_IS_SAR
+#   define RIGHTSHIFT_INT16_IS_SAR
+#   define RIGHTSHIFT_INT32_IS_SAR
+# endif /* VC8.0 */
+
+typedef unsigned int uint32;
+
+# endif /* __BORLANDC__ */
+
+typedef __int64 int64;
+typedef unsigned __int64 uint64;
+
+#endif /* __WIN32__ */
+#endif /* HAVE_STDINT_H */
+#endif /* snes9x_types_defined */
+
+
+#include "pixform.h"
 
 #ifndef TRUE
-#define TRUE	1
+#define TRUE 1
 #endif
+
 #ifndef FALSE
-#define FALSE	0
+#define FALSE 0
 #endif
 
-#define START_EXTERN_C	extern "C" {
-#define END_EXTERN_C	}
-
-#ifndef __WIN32__
-#ifndef PATH_MAX
-#define PATH_MAX	1024
-#endif
-#define _MAX_DRIVE	1
-#define _MAX_DIR	PATH_MAX
-#define _MAX_FNAME	PATH_MAX
-#define _MAX_EXT	PATH_MAX
-#define _MAX_PATH	PATH_MAX
+#ifdef STORM
+#define EXTERN_C
+#define START_EXTERN_C
+#define END_EXTERN_C
 #else
-#ifndef PATH_MAX
-#define PATH_MAX	_MAX_PATH
+#if defined(__cplusplus) || defined(c_plusplus)
+#define EXTERN_C extern "C"
+#define START_EXTERN_C extern "C" {
+#define END_EXTERN_C }
+#else
+#define EXTERN_C extern
+#define START_EXTERN_C
+#define END_EXTERN_C
 #endif
 #endif
 
 #ifndef __WIN32__
-#define ZeroMemory(a, b)	memset((a), 0, (b))
-void _splitpath (const char *, char *, char *, char *, char *);
-void _makepath (char *, const char *, const char *, const char *, const char *);
-#define S9xDisplayString	DisplayStringFromBottom
+
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
+#define _MAX_DIR PATH_MAX
+#define _MAX_DRIVE 1
+#define _MAX_FNAME PATH_MAX
+#define _MAX_EXT PATH_MAX
+#define _MAX_PATH PATH_MAX
+
+#define ZeroMemory(a,b) memset((a),0,(b))
+
+void _makepath (char *path, const char *drive, const char *dir,
+		const char *fname, const char *ext);
+void _splitpath (const char *path, char *drive, char *dir, char *fname,
+		 char *ext);
+#else /* __WIN32__ */
+#define strcasecmp stricmp
+#define strncasecmp strnicmp
+
+#define SNES_JOY_READ_CALLBACKS
+
+#endif
+
+EXTERN_C void S9xGenerateSound ();
+#ifdef __WIN32__
+EXTERN_C void S9xGenerateFrameSound ();
+#endif
+
+#ifdef STORM
+EXTERN_C int soundsignal;
+EXTERN_C void MixSound(void);
+/* Yes, CHECK_SOUND is getting defined correctly! */
+#define CHECK_SOUND if (Settings.APUEnabled) if(SetSignalPPC(0L, soundsignal) & soundsignal) MixSound
 #else
-#define strcasecmp	stricmp
-#define strncasecmp	strnicmp
-#define S9xDisplayString	S9xCustomDisplayString
+#define CHECK_SOUND()
 #endif
 
 #ifdef __DJGPP
-#define SLASH_STR	"\\"
-#define SLASH_CHAR	'\\'
+#define SLASH_STR "\\"
+#define SLASH_CHAR '\\'
 #else
-#define SLASH_STR	"/"
-#define SLASH_CHAR	'/'
+#define SLASH_STR "/"
+#define SLASH_CHAR '/'
 #endif
 
+/* Taken care of in signal.h on Linux.
+ * #ifdef __linux
+ * typedef void (*SignalHandler)(int);
+ * #define SIG_PF SignalHandler
+ * #endif
+ */
+
+/* If including signal.h, do it before snes9.h and port.h to avoid clashes. */
 #ifndef SIG_PF
-#define SIG_PF	void (*) (int)
+#define SIG_PF void(*)(int)
+#endif
+
+#if defined(__i386__) || defined(__i486__) || defined(__i586__) || \
+    defined(__x86_64__) || defined(__WIN32__) || defined(__alpha__)
+#define LSB_FIRST
+#define FAST_LSB_WORD_ACCESS
+#else
+#define MSB_FIRST
+#endif
+
+#ifdef __sun
+#define TITLE "Snes9X: Solaris"
 #endif
 
 #ifdef __linux
-#define TITLE "Snes9x: Linux"
+#define TITLE "Snes9X: Linux"
 #define SYS_CONFIG_FILE "/etc/snes9x/snes9x.conf"
 #endif
 
@@ -302,32 +403,41 @@ void _makepath (char *, const char *, const char *, const char *, const char *);
 #define TITLE "Snes9x"
 #endif
 
-#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__) || defined(__x86_64__) || defined(__alpha__) || defined(__MIPSEL__)
-#define LSB_FIRST
-#define FAST_LSB_WORD_ACCESS
+#ifdef STORM
+#define STATIC
+#define strncasecmp strnicmp
 #else
-#define MSB_FIRST
+#define STATIC static
 #endif
 
 #ifdef FAST_LSB_WORD_ACCESS
-#define READ_WORD(s)		(*(uint16 *) (s))
-#define READ_3WORD(s)		(*(uint32 *) (s) & 0x00ffffff)
-#define READ_DWORD(s)		(*(uint32 *) (s))
-#define WRITE_WORD(s, d)	*(uint16 *) (s) = (d)
-#define WRITE_3WORD(s, d)	*(uint16 *) (s) = (uint16) (d), *((uint8 *) (s) + 2) = (uint8) ((d) >> 16)
-#define WRITE_DWORD(s, d)	*(uint32 *) (s) = (d)
+#define READ_WORD(s) (*(uint16 *) (s))
+#define READ_3WORD(s) (0x00ffffff & *(uint32 *) (s))
+#define READ_DWORD(s) (*(uint32 *) (s))
+#define WRITE_WORD(s, d) (*(uint16 *) (s)) = (d)
+#define WRITE_3WORD(s, d) *(uint16 *) (s) = (uint16)(d),\
+                          *((uint8 *) (s) + 2) = (uint8) ((d) >> 16)
+#define WRITE_DWORD(s, d) (*(uint32 *) (s)) = (d)
 #else
-#define READ_WORD(s)		(*(uint8 *) (s) | (*((uint8 *) (s) + 1) << 8))
-#define READ_3WORD(s)		(*(uint8 *) (s) | (*((uint8 *) (s) + 1) << 8) | (*((uint8 *) (s) + 2) << 16))
-#define READ_DWORD(s)		(*(uint8 *) (s) | (*((uint8 *) (s) + 1) << 8) | (*((uint8 *) (s) + 2) << 16) | (*((uint8 *) (s) + 3) << 24))
-#define WRITE_WORD(s, d)	*(uint8 *) (s) = (uint8) (d), *((uint8 *) (s) + 1) = (uint8) ((d) >> 8)
-#define WRITE_3WORD(s, d)	*(uint8 *) (s) = (uint8) (d), *((uint8 *) (s) + 1) = (uint8) ((d) >> 8), *((uint8 *) (s) + 2) = (uint8) ((d) >> 16)
-#define WRITE_DWORD(s, d)	*(uint8 *) (s) = (uint8) (d), *((uint8 *) (s) + 1) = (uint8) ((d) >> 8), *((uint8 *) (s) + 2) = (uint8) ((d) >> 16), *((uint8 *) (s) + 3) = (uint8) ((d) >> 24)
+#define READ_WORD(s) ( *(uint8 *) (s) |\
+		      (*((uint8 *) (s) + 1) << 8))
+#define READ_3WORD(s) ( *(uint8 *) (s) |\
+                       (*((uint8 *) (s) + 1) << 8) |\
+                       (*((uint8 *) (s) + 2) << 16))
+#define READ_DWORD(s) ( *(uint8 *) (s) |\
+		       (*((uint8 *) (s) + 1) << 8) |\
+		       (*((uint8 *) (s) + 2) << 16) |\
+		       (*((uint8 *) (s) + 3) << 24))
+#define WRITE_WORD(s, d) *(uint8 *) (s) = (d), \
+                         *((uint8 *) (s) + 1) = (d) >> 8
+#define WRITE_3WORD(s, d) *(uint8 *) (s) = (uint8) (d), \
+                          *((uint8 *) (s) + 1) = (uint8) ((d) >> 8),\
+                          *((uint8 *) (s) + 2) = (uint8) ((d) >> 16)
+#define WRITE_DWORD(s, d) *(uint8 *) (s) = (uint8) (d), \
+                          *((uint8 *) (s) + 1) = (uint8) ((d) >> 8),\
+                          *((uint8 *) (s) + 2) = (uint8) ((d) >> 16),\
+                          *((uint8 *) (s) + 3) = (uint8) ((d) >> 24)
 #endif
 
-#define SWAP_WORD(s)		(s) = (((s) & 0xff) <<  8) | (((s) & 0xff00) >> 8)
-#define SWAP_DWORD(s)		(s) = (((s) & 0xff) << 24) | (((s) & 0xff00) << 8) | (((s) & 0xff0000) >> 8) | (((s) & 0xff000000) >> 24)
-
-#include "pixform.h"
-
 #endif
+
