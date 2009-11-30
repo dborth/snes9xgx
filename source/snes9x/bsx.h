@@ -159,6 +159,8 @@
 **********************************************************************************/
 
 
+
+
 #ifndef _BSX_H_
 #define _BSX_H_
 
@@ -181,15 +183,17 @@ struct SBSX
 	uint8	test2192[32];
 };
 
+START_EXTERN_C
 extern struct SBSX	BSX;
 
-uint8 S9xGetBSX (uint32);
-void S9xSetBSX (uint8, uint32);
-uint8 S9xGetBSXPPU (uint16);
-void S9xSetBSXPPU (uint8, uint16);
-uint8 * S9xGetBasePointerBSX (uint32);
-void S9xInitBSX (void);
-void S9xResetBSX (void);
-void S9xBSXPostLoadState (void);
+uint8 S9xGetBSX(uint32);
+void S9xSetBSX(uint8, uint32);
+uint8 S9xGetBSXPPU(uint16);
+void S9xSetBSXPPU(uint8, uint16);
+uint8 * S9xGetBasePointerBSX(uint32);
+void S9xInitBSX(void);
+void S9xResetBSX(void);
+void S9xFixBSXAfterSnapshotLoad(void);
+END_EXTERN_C
 
 #endif

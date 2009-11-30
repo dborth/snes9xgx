@@ -159,25 +159,34 @@
 **********************************************************************************/
 
 
+
 #ifndef _SNAPSHOT_H_
 #define _SNAPSHOT_H_
 
-#define SNAPSHOT_MAGIC			"#!s9xsnp"
-#define SNAPSHOT_VERSION		6
+#include <stdio.h>
+#include "snes9x.h"
 
-#define SUCCESS					1
-#define WRONG_FORMAT			(-1)
-#define WRONG_VERSION			(-2)
-#define FILE_NOT_FOUND			(-3)
-#define WRONG_MOVIE_SNAPSHOT	(-4)
-#define NOT_A_MOVIE_SNAPSHOT	(-5)
-#define SNAPSHOT_INCONSISTENT	(-6)
+#define SNAPSHOT_MAGIC "#!snes9x"
+#define SNAPSHOT_VERSION 5
 
-void S9xResetSaveTimer (bool8);
-bool8 S9xFreezeGame (const char *);
-bool8 S9xUnfreezeGame (const char *);
+#define SUCCESS 1
+#define WRONG_FORMAT (-1)
+#define WRONG_VERSION (-2)
+#define FILE_NOT_FOUND (-3)
+#define WRONG_MOVIE_SNAPSHOT (-4)
+#define NOT_A_MOVIE_SNAPSHOT (-5)
+#define SNAPSHOT_INCONSISTENT (-6)
+
+START_EXTERN_C
+void S9xResetSaveTimer(bool8 dontsave);
+bool8 S9xFreezeGame (const char *filename);
+bool8 S9xUnfreezeGame (const char *filename);
+bool8 Snapshot (const char *filename);
+bool8 S9xLoadSnapshot (const char *filename);
+bool8 S9xSPCDump (const char *filename);
 void S9xFreezeToStream (STREAM);
-int	 S9xUnfreezeFromStream (STREAM);
-bool8 S9xSPCDump (const char *);
+int S9xUnfreezeFromStream (STREAM);
+END_EXTERN_C
 
 #endif
+

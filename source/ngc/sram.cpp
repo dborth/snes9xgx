@@ -54,14 +54,6 @@ LoadSRAM (char * filepath, bool silent)
 			if (len - size == 512)
 				memmove(Memory.SRAM, Memory.SRAM + 512, size);
 
-			if (Settings.SRTC || Settings.SPC7110RTC)
-			{
-				int pathlen = strlen(filepath);
-				filepath[pathlen-3] = 'r';
-				filepath[pathlen-2] = 't';
-				filepath[pathlen-1] = 'c';
-				LoadFile((char *)RTCData.reg, filepath, 20, silent);
-			}
 			result = true;
 		}
 		else if(!silent)
@@ -128,15 +120,6 @@ SaveSRAM (char * filepath, bool silent)
 	if (size > 0)
 	{
 		offset = SaveFile((char *)Memory.SRAM, filepath, size, silent);
-		
-		if (Settings.SRTC || Settings.SPC7110RTC)
-		{
-			int pathlen = strlen(filepath);
-			filepath[pathlen-3] = 'r';
-			filepath[pathlen-2] = 't';
-			filepath[pathlen-1] = 'c';
-			SaveFile((char *)RTCData.reg, filepath, 20, silent);
-		}
 
 		if (offset > 0)
 		{

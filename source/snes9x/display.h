@@ -159,63 +159,65 @@
 **********************************************************************************/
 
 
+
+
 #ifndef _DISPLAY_H_
 #define _DISPLAY_H_
 
-enum s9x_getdirtype
-{
-	DEFAULT_DIR = 0,
-	HOME_DIR,
-	ROMFILENAME_DIR,
-	ROM_DIR,
-	SRAM_DIR,
-	SNAPSHOT_DIR,
-	SCREENSHOT_DIR,
-	SPC_DIR,
+START_EXTERN_C
+// Routines the port specific code has to implement
+void S9xSetPalette ();
+void S9xTextMode ();
+void S9xGraphicsMode ();
+void S9xParseArg (char **argv, int &index, int argc);
+void S9xExtraUsage ();
+
+void S9xLoadConfigFiles(char **argv, int argc);
+char *S9xParseArgs (char **argv, int argc);
+void S9xUsage ();
+void S9xInitDisplay (int argc, char **argv);
+void S9xDeinitDisplay ();
+void S9xInitInputDevices ();
+void S9xSetTitle (const char *title);
+void S9xProcessEvents (bool8 block);
+void S9xPutImage (int width, int height);
+void S9xParseDisplayArg (char **argv, int &index, int argc);
+void S9xExtraDisplayUsage ();
+void S9xToggleSoundChannel (int channel);
+void S9xSetInfoString (const char *string);
+int S9xMinCommandLineArgs ();
+void S9xNextController ();
+bool8 S9xLoadROMImage (const char *string);
+const char *S9xSelectFilename (const char *def, const char *dir,
+			       const char *ext, const char *title);
+const char *S9xStringInput(const char *message);
+const char *S9xChooseFilename (bool8 read_only);
+bool8 S9xOpenSnapshotFile (const char *base, bool8 read_only, STREAM *file);
+void S9xCloseSnapshotFile (STREAM file);
+
+const char *S9xBasename (const char *filename);
+
+int S9xFStrcmp (FILE *, const char *);
+
+enum s9x_getdirtype {
+    DEFAULT_DIR,
+    HOME_DIR,
+    ROM_DIR,
+    ROMFILENAME_DIR,
+    SNAPSHOT_DIR,
+    SRAM_DIR,
+    SCREENSHOT_DIR,
+    SPC_DIR,
+    PATCH_DIR,
 	CHEAT_DIR,
-	IPS_DIR,
+	PACK_DIR,
 	BIOS_DIR,
-	LOG_DIR,
-	LAST_DIR
+	LOG_DIR
 };
-
-void S9xUsage (void);
-char * S9xParseArgs (char **, int);
-void S9xLoadConfigFiles (char **, int);
-void S9xSetInfoString (const char *);
-
-// Routines the port has to implement even if it doesn't use them
-
-void S9xTextMode (void);
-void S9xGraphicsMode (void);
-void S9xSetPalette (void);
-void S9xToggleSoundChannel (int);
-bool8 S9xOpenSnapshotFile (const char *, bool8, STREAM *);
-void S9xCloseSnapshotFile (STREAM);
-const char * S9xStringInput (const char *);
-const char * S9xGetDirectory (enum s9x_getdirtype);
-const char * S9xGetFilename (const char *, enum s9x_getdirtype);
-const char * S9xGetFilenameInc (const char *, enum s9x_getdirtype);
-const char * S9xChooseFilename (bool8);
-const char * S9xBasename (const char *);
-
-// Routines the port has to implement if it uses command-line
-
-void S9xExtraUsage (void);
-void S9xParseArg (char **, int &, int);
-
-// Routines the port may implement as needed
-
-void S9xExtraDisplayUsage (void);
-void S9xParseDisplayArg (char **, int &, int);
-int S9xMinCommandLineArgs (void);
-void S9xSetTitle (const char *);
-void S9xInitDisplay (int, char **);
-void S9xDeinitDisplay (void);
-void S9xPutImage (int, int);
-void S9xInitInputDevices (void);
-void S9xProcessEvents (bool8);
-bool8 S9xLoadROMImage (const char *);
-const char * S9xSelectFilename (const char *, const char *, const char *, const char *);
+const char *S9xGetDirectory (enum s9x_getdirtype dirtype);
+const char *S9xGetFilename (const char *extension, enum s9x_getdirtype dirtype);
+const char *S9xGetFilenameInc (const char *, enum s9x_getdirtype);
+END_EXTERN_C
 
 #endif
+

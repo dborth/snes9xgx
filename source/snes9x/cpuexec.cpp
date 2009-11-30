@@ -159,21 +159,38 @@
 **********************************************************************************/
 
 
+
+
 #include "snes9x.h"
 #include "memmap.h"
 #include "cpuops.h"
-#include "dma.h"
-#include "apu/apu.h"
-#include "fxemu.h"
+#include "ppu.h"
+#include "cpuexec.h"
+#include "s9xdebug.h"
 #include "snapshot.h"
-#ifdef DEBUGGER
-#include "debug.h"
+#include "gfx.h"
 #include "missing.h"
-#endif
+#include "apu.h"
+#include "dma.h"
+#include "sa1.h"
+#include "spc7110.h"
 
+#ifndef ZSNES_FX
+#include "fxemu.h"
+extern struct FxInit_s SuperFX;
+#endif
 
 void S9xMainLoop (void)
 {
+	if(ICPU.SavedAtOp)
+	{
+		ICPU.SavedAtOp = FALSE;
+		Registers.PCw = CPU.PBPCAtOpcodeStart;
+		if(CPU.PCBase)
+			CPU.Cycles -= CPU.MemSpeed;
+		goto doOp;
+	}
+
 	for (;;)
 	{
 		if (CPU.Flags)
@@ -194,7 +211,7 @@ void S9xMainLoop (void)
 				}
 			}
 
-		#ifdef DEBUGGER
+#ifdef DEBUGGER
 			if ((CPU.Flags & BREAK_FLAG) && !(CPU.Flags & SINGLE_STEP_FLAG))
 			{
 				for (int Break = 0; Break != 6; Break++)
@@ -210,7 +227,7 @@ void S9xMainLoop (void)
 					}
 				}
 			}
-		#endif
+#endif
 
 			CHECK_SOUND();
 
@@ -218,7 +235,7 @@ void S9xMainLoop (void)
 			{
 				if (CPU.IRQPending)
 					// FIXME: In case of IRQ during WRAM refresh
-					CPU.IRQPending--;
+					CPU.IRQPending = 0;
 				else
 				{
 					if (CPU.WaitingForInterrupt)
@@ -241,7 +258,7 @@ void S9xMainLoop (void)
 			if (CPU.Flags & SCAN_KEYS_FLAG)
 				break;
 
-		#ifdef DEBUGGER
+#ifdef DEBUGGER
 			if (CPU.Flags & DEBUG_MODE_FLAG)
 				break;
 
@@ -253,13 +270,13 @@ void S9xMainLoop (void)
 				CPU.Flags &= ~SINGLE_STEP_FLAG;
 				CPU.Flags |= DEBUG_MODE_FLAG;
 			}
-		#endif
+#endif
 		}
 
-	#ifdef CPU_SHUTDOWN
+#ifdef CPU_SHUTDOWN
 		CPU.PBPCAtOpcodeStart = Registers.PBPC;
-	#endif
-
+#endif
+	doOp:
 		register uint8				Op;
 		register struct	SOpcodes	*Opcodes;
 
@@ -278,41 +295,50 @@ void S9xMainLoop (void)
 			Opcodes = S9xOpcodesSlow;
 		}
 
-		if ((Registers.PCw & MEMMAP_MASK) + ICPU.S9xOpLengths[Op] >= MEMMAP_BLOCK_SIZE)
+		if ((Registers.PCw&MEMMAP_MASK) + ICPU.S9xOpLengths[Op] >= MEMMAP_BLOCK_SIZE)
 		{
 			uint8	*oldPCBase = CPU.PCBase;
 
-			CPU.PCBase = S9xGetBasePointer(ICPU.ShiftedPB + ((uint16) (Registers.PCw + 4)));
-			if (oldPCBase != CPU.PCBase || (Registers.PCw & ~MEMMAP_MASK) == (0xffff & ~MEMMAP_MASK))
+			CPU.PCBase = GetBasePointer(ICPU.ShiftedPB + ((uint16) (Registers.PCw + 4)));
+			if (oldPCBase!=CPU.PCBase || (Registers.PCw&~MEMMAP_MASK) == (0xffff & ~MEMMAP_MASK))
 				Opcodes = S9xOpcodesSlow;
 		}
 
 		Registers.PCw++;
 		(*Opcodes[Op].S9xOpcode)();
 
+		if(ICPU.SavedAtOp)
+		{
+			ICPU.SavedAtOp = false;
+			continue;
+		}
+
+		S9xAPUExecute();
+
 		if (SA1.Executing)
 			S9xSA1MainLoop();
 
 		while (CPU.Cycles >= CPU.NextEvent)
 			S9xDoHEventProcessing();
-	}
+    }
 
-	S9xPackStatus();
+    S9xPackStatus();
+    APURegisters.PC = IAPU.PC - IAPU.RAM;
+    S9xAPUPackStatus();
 
-	if (CPU.Flags & SCAN_KEYS_FLAG)
-	{
-	#ifdef DEBUGGER
+    if (CPU.Flags & SCAN_KEYS_FLAG)
+    {
+#ifdef DEBUGGER
 		if (!(CPU.Flags & FRAME_ADVANCE_FLAG))
-	#endif
+#endif
 		S9xSyncSpeed();
 		CPU.Flags &= ~SCAN_KEYS_FLAG;
-	}
+    }
 }
 
 void S9xSetIRQ (uint32 source)
 {
 	CPU.IRQActive |= source;
-	CPU.IRQPending = Timings.IRQPendCount;
 	CPU.Flags |= IRQ_FLAG;
 
 	if (CPU.WaitingForInterrupt)
@@ -322,35 +348,22 @@ void S9xSetIRQ (uint32 source)
 		CPU.WaitingForInterrupt = FALSE;
 		Registers.PCw++;
 	}
-	
-#ifdef DEBUGGER
-	S9xTraceMessage("--- /IRQ low");
-#endif
 }
 
 void S9xClearIRQ (uint32 source)
 {
-	CPU.IRQActive &= ~source;
-	if (!CPU.IRQActive)
-		CPU.Flags &= ~IRQ_FLAG;
-
-#ifdef DEBUGGER
-	S9xTraceMessage("--- /IRQ high");
-#endif
+	CLEAR_IRQ_SOURCE(source);
 }
 
 void S9xDoHEventProcessing (void)
 {
 #ifdef DEBUGGER
-	if (Settings.TraceHCEvent)
-		S9xTraceFormattedMessage("--- HC event processing  (%02d)  expected HC:%04d  executed HC:%04d",
-			CPU.WhichEvent, CPU.NextEvent, CPU.Cycles);
+	char	mes[256];
 #endif
 
 #ifdef CPU_SHUTDOWN
 	CPU.WaitCounter++;
 #endif
-
 	switch (CPU.WhichEvent)
     {
 		case HC_HBLANK_START_EVENT:
@@ -362,7 +375,8 @@ void S9xDoHEventProcessing (void)
 			if (PPU.HDMA && CPU.V_Counter <= PPU.ScreenHeight)
 			{
 			#ifdef DEBUGGER
-				S9xTraceFormattedMessage("*** HDMA  HC:%04d, Channel:%02x", CPU.Cycles, PPU.HDMA);
+				sprintf(mes, "*** HDMA  HC:%04d, Channel:%02x", CPU.Cycles, PPU.HDMA);
+				S9xTraceMessage(mes);
 			#endif
 				PPU.HDMA = S9xDoHDMA(PPU.HDMA);
 			}
@@ -383,12 +397,19 @@ void S9xDoHEventProcessing (void)
 			S9xSuperFXExec();
 		#endif
 
-			S9xAPUEndScanline();
+		#ifndef STORM
+			if (Settings.SoundSync)
+				S9xGenerateSound();
+		#endif
+
 			CPU.Cycles -= Timings.H_Max;
-			S9xAPUSetReferenceTime(CPU.Cycles);
+			APU.NextAPUTimerPos -= (Timings.H_Max << SNES_APU_ACCURACY);
+			APU.Cycles -= (Timings.H_Max << SNES_APU_ACCURACY);
 
 			if ((Timings.NMITriggerPos != 0xffff) && (Timings.NMITriggerPos >= Timings.H_Max))
 				Timings.NMITriggerPos -= Timings.H_Max;
+
+			ICPU.Scanline++;
 
 			CPU.V_Counter++;
 			if (CPU.V_Counter >= Timings.V_Max)	// V ranges from 0 to Timings.V_Max - 1
@@ -466,7 +487,7 @@ void S9xDoHEventProcessing (void)
 
 					if (PPU.OAMPriorityRotation)
 						tmp = (PPU.OAMAddr & 0xFE) >> 1;
-					if ((PPU.OAMFlip & 1) || PPU.FirstSprite != tmp)
+					if ((PPU.OAMFlip & 1) || PPU.FirstSprite!=tmp)
 					{
 						PPU.FirstSprite = tmp;
 						IPPU.OBJChanged = TRUE;
@@ -510,7 +531,7 @@ void S9xDoHEventProcessing (void)
 
 		case HC_RENDER_EVENT:
 			if (CPU.V_Counter >= FIRST_VISIBLE_LINE && CPU.V_Counter <= PPU.ScreenHeight)
-				RenderLine((uint8) (CPU.V_Counter - FIRST_VISIBLE_LINE));
+				RenderLine((uint8)(CPU.V_Counter - FIRST_VISIBLE_LINE));
 
 			S9xCheckMissingHTimerPosition(Timings.RenderPos);
 
@@ -518,10 +539,12 @@ void S9xDoHEventProcessing (void)
 
 		case HC_WRAM_REFRESH_EVENT:
 		#ifdef DEBUGGER
-			S9xTraceFormattedMessage("*** WRAM Refresh  HC:%04d", CPU.Cycles);
+			sprintf(mes, "*** WRAM Refresh  HC:%04d", CPU.Cycles);
+			S9xTraceMessage(mes);
 		#endif
 			S9xCheckMissingHTimerHalt(Timings.WRAMRefreshPos, SNES_WRAM_REFRESH_CYCLES);
 			CPU.Cycles += SNES_WRAM_REFRESH_CYCLES;
+			S9xAPUExecute();
 
 			S9xCheckMissingHTimerPosition(Timings.WRAMRefreshPos);
 
@@ -534,18 +557,13 @@ void S9xDoHEventProcessing (void)
 		case HC_IRQ_9_A_EVENT:
 		case HC_IRQ_A_1_EVENT:
 			if (PPU.HTimerEnabled && (!PPU.VTimerEnabled || (CPU.V_Counter == PPU.VTimerPosition)))
-				S9xSetIRQ(PPU_IRQ_SOURCE);
+				S9xSetIRQ(PPU_H_BEAM_IRQ_SOURCE);
 			else
 			if (PPU.VTimerEnabled && (CPU.V_Counter == PPU.VTimerPosition))
-				S9xSetIRQ(PPU_IRQ_SOURCE);
+				S9xSetIRQ(PPU_V_BEAM_IRQ_SOURCE);
 
 			break;
     }
 
     S9xReschedule();
-
-#ifdef DEBUGGER
-	if (Settings.TraceHCEvent)
-		S9xTraceFormattedMessage("--- HC event rescheduled (%02d)  expected HC:%04d", CPU.WhichEvent, CPU.NextEvent);
-#endif
 }
