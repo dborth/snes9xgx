@@ -10,7 +10,7 @@
 ­————————————————————————————————————————————————————————————————————————————
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                      Snes9x GX 4.1.2                          ·oø×O0|
+|0O×øo·                      Snes9x GX 4.1.3                          ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
@@ -35,7 +35,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 * Cheat support
 * Auto Load/Save Game Snapshots and SRAM
 * Custom controller configurations
-* SD, USB, DVD (requires DVDx), SMB, GC Memory Card, Zip, and 7z support
+* SD, USB, DVD (requires DVDx), SMB, Zip, and 7z support
 * Autodetect PAL/NTSC, 16:9 widescreen support
 * Original/filtered/unfiltered video modes
 * Turbo Mode - up to 2x the normal speed
@@ -45,6 +45,15 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.1.3 - November 30, 2009]
+
+* Fixed SMB
+* Added separate horizontal/vertical zoom options
+* Improved scrolling timing - the more you scroll, the fast it goes
+* Fixed reset button on Wii console - now you can reset multiple times
+* Minor code optimizations
+* Reduce memory fragmentation - fixes out of memory crashes
 
 [4.1.2 - October 7, 2009]
 
