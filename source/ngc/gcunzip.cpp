@@ -304,30 +304,28 @@ static void SzDisplayError(SZ_RESULT res)
 // function used by the 7zip SDK to read data from SD/USB/DVD/SMB
 static SZ_RESULT SzFileReadImp(void *object, void **buffer, size_t maxRequiredSize, size_t *processedSize)
 {
-	u32 seekok = 0;
-	u32 sizeread = 0;
+	size_t sizeread = 0;
+
+	if(maxRequiredSize == 0)
+		return SZ_OK;
 
 	// the void* object is a SzFileInStream
 	SzFileInStream *s = (SzFileInStream *) object;
-
-	// calculate offset
-	u64 offset = (u64) (s->offset + s->pos);
 
 	if (maxRequiredSize > 2048)
 		maxRequiredSize = 2048;
 
 	// read data
-	seekok = fseek(file, offset, SEEK_SET);
 	sizeread = fread(sz_buffer, 1, maxRequiredSize, file);
 
-	if(seekok != 0 || sizeread <= 0)
+	if(sizeread <= 0)
 		return SZE_FAILREAD;
 
 	*buffer = sz_buffer;
-	*processedSize = maxRequiredSize;
-	s->pos += *processedSize;
+	*processedSize = sizeread;
+	s->pos += sizeread;
 
-	if(maxRequiredSize > 1024) // only show progress for large reads
+	if(sizeread > 1024) // only show progress for large reads
 		// this isn't quite right, but oh well
 		ShowProgress ("Loading...", s->pos, browserList[browser.selIndex].length);
 
@@ -345,6 +343,9 @@ static SZ_RESULT SzFileSeekImp(void *object, CFileSize pos)
 		return SZE_FAIL;
 
 	// save new position and return
+	if(fseek(file, (long)pos, SEEK_SET) != 0)
+		return SZE_FAIL;
+
 	s->pos = pos;
 	return SZ_OK;
 }

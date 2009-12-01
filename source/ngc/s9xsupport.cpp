@@ -235,47 +235,39 @@ void S9xLoadSDD1Data()
 
 const char *S9xChooseFilename(bool8 read_only)
 {
-	ExitApp();
 	return NULL;
 }
 
 const char * S9xChooseMovieFilename(bool8 read_only)
 {
-	ExitApp();
 	return NULL;
 }
 
 const char * S9xGetDirectory(enum s9x_getdirtype dirtype)
 {
-	ExitApp();
 	return NULL;
 }
 
 const char * S9xGetFilename(const char *ex, enum s9x_getdirtype dirtype)
 {
-	ExitApp();
 	return NULL;
 }
 
 const char * S9xGetFilenameInc(const char *e, enum s9x_getdirtype dirtype)
 {
-	ExitApp();
 	return NULL;
 }
 
 char * S9xBasename(char *name)
 {
-	ExitApp();
 	return name;
 }
 
 void _splitpath(char const *buf, char *drive, char *dir, char *fname, char *ext)
 {
-	ExitApp();
 }
 
 void _makepath(char *filename, const char *drive, const char *dir,
 		const char *fname, const char *ext)
 {
-	ExitApp();
 }
