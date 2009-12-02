@@ -28,7 +28,7 @@
 #define SILENT 1
 
 const char pathPrefix[9][8] =
-{ "", "sd:/", "usb:/", "dvd:/", "smb:/", "mca:/", "mcb:/", "carda:/", "cardb:/" };
+{ "", "sd:/", "usb:/", "dvd:/", "smb:/", "carda:/", "cardb:/" };
 
 enum {
 	DEVICE_AUTO,
@@ -36,8 +36,6 @@ enum {
 	DEVICE_USB,
 	DEVICE_DVD,
 	DEVICE_SMB,
-	DEVICE_MC_SLOTA,
-	DEVICE_MC_SLOTB,
 	DEVICE_SD_SLOTA,
 	DEVICE_SD_SLOTB
 };
@@ -67,7 +65,7 @@ struct SGCSettings{
     int		AutoLoad;
     int		AutoSave;
     int		LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
-	int		SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, Memory Card Slot A, Memory Card Slot B, USB, SMB
+	int		SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, USB, SMB
 	char	LoadFolder[MAXPATHLEN]; // Path to game files
 	char	SaveFolder[MAXPATHLEN]; // Path to save files
 	char	CheatFolder[MAXPATHLEN]; // Path to cheat files
@@ -79,7 +77,6 @@ struct SGCSettings{
 
 	float	zoomHor; // horizontal zoom amount
 	float	zoomVert; // vertical zoom amount
-	int		VerifySaves;
 	int		videomode; // 0 - automatic, 1 - NTSC (480i), 2 - Progressive (480p), 3 - PAL (50Hz), 4 - PAL (60Hz)
 	int		render;		// 0 - original, 1 - filtered, 2 - unfiltered
 	int		FilterMethod; // convert to RenderFilter

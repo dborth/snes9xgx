@@ -3412,7 +3412,7 @@ static int MenuSettingsFile()
 			// correct load/save devices out of bounds
 			if(GCSettings.LoadMethod > 4)
 				GCSettings.LoadMethod = 0;
-			if(GCSettings.SaveMethod > 5)
+			if(GCSettings.SaveMethod > 4)
 				GCSettings.SaveMethod = 0;
 
 			if (GCSettings.LoadMethod == DEVICE_AUTO) sprintf (options.value[0],"Auto Detect");
