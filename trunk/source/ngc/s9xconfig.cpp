@@ -29,6 +29,10 @@ struct SGCSettings GCSettings;
  ***************************************************************************/
 void FixInvalidSettings()
 {
+	if(GCSettings.LoadMethod > 4)
+		GCSettings.LoadMethod = DEVICE_AUTO;
+	if(GCSettings.SaveMethod > 4)
+		GCSettings.SaveMethod = DEVICE_AUTO;	
 	if(!(GCSettings.zoomHor > 0.5 && GCSettings.zoomHor < 1.5))
 		GCSettings.zoomHor = 1.0;
 	if(!(GCSettings.zoomVert > 0.5 && GCSettings.zoomVert < 1.5))
