@@ -267,13 +267,13 @@ void GuiFileBrowser::Update(GuiTrigger * t)
 
 	if(arrowDownBtn->GetState() == STATE_HELD && arrowDownBtn->GetStateChan() == t->chan)
 	{
-		t->wpad->btns_h |= WPAD_BUTTON_DOWN;
+		t->wpad->btns_d |= WPAD_BUTTON_DOWN;
 		if(!this->IsFocused())
 			((GuiWindow *)this->GetParent())->ChangeFocus(this);
 	}
 	else if(arrowUpBtn->GetState() == STATE_HELD && arrowUpBtn->GetStateChan() == t->chan)
 	{
-		t->wpad->btns_h |= WPAD_BUTTON_UP;
+		t->wpad->btns_d |= WPAD_BUTTON_UP;
 		if(!this->IsFocused())
 			((GuiWindow *)this->GetParent())->ChangeFocus(this);
 	}
