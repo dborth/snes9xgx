@@ -54,9 +54,9 @@ uint32_t* Metaphrasis::convertBufferToI4(uint32_t* rgbaBuffer, uint16_t bufferWi
 	uint32_t *src = (uint32_t *)rgbaBuffer;
 	uint8_t *dst = (uint8_t *)dataBufferI4;
 
-	for(uint16_t y = 0; y < bufferHeight; y += 8) {
-		for(uint16_t x = 0; x < bufferWidth; x += 8) {
-			for(uint16_t rows = 0; rows < 8; rows++) {
+	for(uint32_t y = 0; y < bufferHeight; y += 8) {
+		for(uint32_t x = 0; x < bufferWidth; x += 8) {
+			for(uint32_t rows = 0; rows < 8; rows++) {
 				*dst++ = (src[((y + rows) * bufferWidth) + (x + 0)] & 0xf0) | ((src[((y + rows) * bufferWidth) + (x + 1)] & 0xf0) >> 4);
 				*dst++ = (src[((y + rows) * bufferWidth) + (x + 2)] & 0xf0) | ((src[((y + rows) * bufferWidth) + (x + 3)] & 0xf0) >> 4);
 				*dst++ = (src[((y + rows) * bufferWidth) + (x + 4)] & 0xf0) | ((src[((y + rows) * bufferWidth) + (x + 5)] & 0xf0) >> 4);
@@ -88,17 +88,19 @@ uint32_t* Metaphrasis::convertBufferToI8(uint32_t* rgbaBuffer, uint16_t bufferWi
 	uint32_t *src = (uint32_t *)rgbaBuffer;
 	uint8_t *dst = (uint8_t *)dataBufferI8;
 
-	for(uint16_t y = 0; y < bufferHeight; y += 4) {
-		for(uint16_t x = 0; x < bufferWidth; x += 8) {
-			for(uint16_t rows = 0; rows < 4; rows++) {
-				*dst++ = src[((y + rows) * bufferWidth) + (x + 0)] & 0xff;
-				*dst++ = src[((y + rows) * bufferWidth) + (x + 1)] & 0xff;
-				*dst++ = src[((y + rows) * bufferWidth) + (x + 2)] & 0xff;
-				*dst++ = src[((y + rows) * bufferWidth) + (x + 3)] & 0xff;
-				*dst++ = src[((y + rows) * bufferWidth) + (x + 4)] & 0xff;
-				*dst++ = src[((y + rows) * bufferWidth) + (x + 5)] & 0xff;
-				*dst++ = src[((y + rows) * bufferWidth) + (x + 6)] & 0xff;
-				*dst++ = src[((y + rows) * bufferWidth) + (x + 7)] & 0xff;
+	for(uint32_t rows = 0; rows < 4; rows++) {
+		for(uint32_t y = 0; y < bufferHeight; y += 4) {
+			uint32_t bufWid = ((y + rows) * bufferWidth);
+			for(uint32_t x = 0; x < bufferWidth; x += 8) {
+			
+				*dst++ = src[bufWid + (x + 0)] & 0xff;
+				*dst++ = src[bufWid + (x + 1)] & 0xff;
+				*dst++ = src[bufWid + (x + 2)] & 0xff;
+				*dst++ = src[bufWid + (x + 3)] & 0xff;
+				*dst++ = src[bufWid + (x + 4)] & 0xff;
+				*dst++ = src[bufWid + (x + 5)] & 0xff;
+				*dst++ = src[bufWid + (x + 6)] & 0xff;
+				*dst++ = src[bufWid + (x + 7)] & 0xff;
 			}
 		}
 	}
@@ -117,11 +119,8 @@ uint32_t* Metaphrasis::convertBufferToI8(uint32_t* rgbaBuffer, uint16_t bufferWi
  */
 
 uint8_t Metaphrasis::convertRGBAToIA4(uint32_t rgba) {
-	uint8_t i, a;
-	
-	i = (rgba >> 8) & 0xf0;
-	a = (rgba     ) & 0xff;
-
+	uint8_t i = (rgba >> 8) & 0xf0;
+	uint8_t a = (rgba     ) & 0xff;
 	return i | (a >> 4);
 }
 
@@ -144,9 +143,9 @@ uint32_t* Metaphrasis::convertBufferToIA4(uint32_t* rgbaBuffer, uint16_t bufferW
 	uint32_t *src = (uint32_t *)rgbaBuffer;
 	uint8_t *dst = (uint8_t *)dataBufferIA4;
 
-	for(uint16_t y = 0; y < bufferHeight; y += 4) {
-		for(uint16_t x = 0; x < bufferWidth; x += 8) {
-			for(uint16_t rows = 0; rows < 4; rows++) {
+	for(uint32_t y = 0; y < bufferHeight; y += 4) {
+		for(uint32_t x = 0; x < bufferWidth; x += 8) {
+			for(uint32_t rows = 0; rows < 4; rows++) {
 				*dst++ = Metaphrasis::convertRGBAToIA4(src[((y + rows) * bufferWidth) + (x + 0)]);
 				*dst++ = Metaphrasis::convertRGBAToIA4(src[((y + rows) * bufferWidth) + (x + 1)]);
 				*dst++ = Metaphrasis::convertRGBAToIA4(src[((y + rows) * bufferWidth) + (x + 2)]);
@@ -173,12 +172,7 @@ uint32_t* Metaphrasis::convertBufferToIA4(uint32_t* rgbaBuffer, uint16_t bufferW
  */
 
 uint16_t Metaphrasis::convertRGBAToIA8(uint32_t rgba) {
-	uint8_t i, a;
-	
-	i = (rgba >> 8) & 0xff;
-	a = (rgba     ) & 0xff;
-
-	return (i << 8) | a;
+	return (((rgba >> 8) & 0xff) << 8) | ((rgba     ) & 0xff);
 }
 
 /**
@@ -200,13 +194,15 @@ uint32_t* Metaphrasis::convertBufferToIA8(uint32_t* rgbaBuffer, uint16_t bufferW
 	uint32_t *src = (uint32_t *)rgbaBuffer;
 	uint16_t *dst = (uint16_t *)dataBufferIA8;
 
-	for(uint16_t y = 0; y < bufferHeight; y += 4) {
-		for(uint16_t x = 0; x < bufferWidth; x += 4) {
-			for(uint16_t rows = 0; rows < 4; rows++) {
-				*dst++ = Metaphrasis::convertRGBAToIA8(src[((y + rows) * bufferWidth) + (x + 0)]);
-				*dst++ = Metaphrasis::convertRGBAToIA8(src[((y + rows) * bufferWidth) + (x + 1)]);
-				*dst++ = Metaphrasis::convertRGBAToIA8(src[((y + rows) * bufferWidth) + (x + 2)]);
-				*dst++ = Metaphrasis::convertRGBAToIA8(src[((y + rows) * bufferWidth) + (x + 3)]);
+	for(uint32_t rows = 0; rows < 4; ++rows) {
+		for(uint32_t y = 0; y < bufferHeight; y += 4) {
+			uint32_t bufWid = ((y + rows) * bufferWidth);
+			for(uint32_t x = 0; x < bufferWidth; x += 4) {
+
+				*dst++ = Metaphrasis::convertRGBAToIA8(src[bufWid + (x + 0)]);
+				*dst++ = Metaphrasis::convertRGBAToIA8(src[bufWid + (x + 1)]);
+				*dst++ = Metaphrasis::convertRGBAToIA8(src[bufWid + (x + 2)]);
+				*dst++ = Metaphrasis::convertRGBAToIA8(src[bufWid + (x + 3)]);
 			}
 		}
 	}
@@ -234,19 +230,31 @@ uint32_t* Metaphrasis::convertBufferToRGBA8(uint32_t* rgbaBuffer, uint16_t buffe
 	uint8_t *src = (uint8_t *)rgbaBuffer;
 	uint8_t *dst = (uint8_t *)dataBufferRGBA8;
 
-	for(uint16_t block = 0; block < bufferHeight; block += 4) {
-		for(uint16_t i = 0; i < bufferWidth; i += 4) {
-			for (uint16_t c = 0; c < 4; c++) {
-				for (uint16_t ar = 0; ar < 4; ar++) {
-					*dst++ = src[(((i + ar) + ((block + c) * bufferWidth)) * 4) + 3];
-					*dst++ = src[((i + ar) + ((block + c) * bufferWidth)) * 4];
-				}
+	for(uint32_t block = 0; block < bufferHeight; block += 4) {
+		for(uint32_t i = 0; i < bufferWidth; i += 4) {
+			for (uint32_t c = 0; c < 4; c++) {
+				uint32_t blockWid = (((block + c) * bufferWidth)+i)<<2 ;
+
+				*dst++ = src[blockWid+ 3];  // ar = 0
+				*dst++ = src[blockWid+ 0];
+				*dst++ = src[blockWid+ 7];  // ar = 1
+				*dst++ = src[blockWid+ 4];
+				*dst++ = src[blockWid+ 11]; // ar = 2
+				*dst++ = src[blockWid+ 8];
+				*dst++ = src[blockWid+ 15]; // ar = 3
+				*dst++ = src[blockWid+ 12];
 			}
-			for (uint16_t c = 0; c < 4; c++) {
-				for (uint16_t gb = 0; gb < 4; gb++) {
-					*dst++ = src[(((i + gb) + ((block + c) * bufferWidth)) * 4) + 1];
-					*dst++ = src[(((i + gb) + ((block + c) * bufferWidth)) * 4) + 2];
-				}
+			for (uint32_t c = 0; c < 4; c++) {
+				uint32_t blockWid = (((block + c) * bufferWidth)+i)<<2 ;
+
+				*dst++ = src[blockWid+ 1];  // gb = 0
+				*dst++ = src[blockWid+ 2];
+				*dst++ = src[blockWid+ 5];  // gb = 1
+				*dst++ = src[blockWid+ 6];
+				*dst++ = src[blockWid+ 9];  // gb = 2
+				*dst++ = src[blockWid+ 10];
+				*dst++ = src[blockWid+ 13]; // gb = 3
+				*dst++ = src[blockWid+ 14];
 			}
 		}
 	}
@@ -266,12 +274,9 @@ uint32_t* Metaphrasis::convertBufferToRGBA8(uint32_t* rgbaBuffer, uint16_t buffe
  */
 
 uint16_t Metaphrasis::convertRGBAToRGB565(uint32_t rgba) {
-	uint8_t r, g, b;
-	
-	r = (((rgba >> 24) & 0xff) * 31) / 255;
-	g = (((rgba >> 16) & 0xff) * 63) / 255;
-	b = (((rgba >>  8) & 0xff) * 31) / 255;
-
+	uint8_t r = (((rgba >> 24) & 0xff) * 31) / 255;
+	uint8_t g = (((rgba >> 16) & 0xff) * 63) / 255;
+	uint8_t b = (((rgba >>  8) & 0xff) * 31) / 255;
 	return (((r << 6) | g ) << 5 ) | b;
 }
 
@@ -294,13 +299,14 @@ uint32_t* Metaphrasis::convertBufferToRGB565(uint32_t* rgbaBuffer, uint16_t buff
 	uint32_t *src = (uint32_t *)rgbaBuffer;
 	uint16_t *dst = (uint16_t *)dataBufferRGB565;
 
-	for(uint16_t y = 0; y < bufferHeight; y += 4) {
-		for(uint16_t x = 0; x < bufferWidth; x += 4) {
-			for(uint16_t rows = 0; rows < 4; rows++) {
-				*dst++ = Metaphrasis::convertRGBAToRGB565(src[((y + rows) * bufferWidth) + (x + 0)]);
-				*dst++ = Metaphrasis::convertRGBAToRGB565(src[((y + rows) * bufferWidth) + (x + 1)]);
-				*dst++ = Metaphrasis::convertRGBAToRGB565(src[((y + rows) * bufferWidth) + (x + 2)]);
-				*dst++ = Metaphrasis::convertRGBAToRGB565(src[((y + rows) * bufferWidth) + (x + 3)]);
+	for(uint32_t rows = 0; rows < 4; rows++) {
+		for(uint32_t y = 0; y < bufferHeight; y += 4) {
+			uint32_t bufWid = ((y + rows) * bufferWidth);
+			for(uint32_t x = 0; x < bufferWidth; x += 4) {
+				*dst++ = Metaphrasis::convertRGBAToRGB565(src[bufWid + (x + 0)]);
+				*dst++ = Metaphrasis::convertRGBAToRGB565(src[bufWid + (x + 1)]);
+				*dst++ = Metaphrasis::convertRGBAToRGB565(src[bufWid + (x + 2)]);
+				*dst++ = Metaphrasis::convertRGBAToRGB565(src[bufWid + (x + 3)]);
 			}
 		}
 	}
@@ -320,31 +326,28 @@ uint32_t* Metaphrasis::convertBufferToRGB565(uint32_t* rgbaBuffer, uint16_t buff
  */
 
 uint16_t Metaphrasis::convertRGBAToRGB5A3(uint32_t rgba) {
-	uint32_t r, g, b, a;
+	uint32_t r = (rgba >> 24) & 0xff;
+	uint32_t g = (rgba >> 16) & 0xff;
+	uint32_t b = (rgba >>  8) & 0xff;
+	uint32_t a = (rgba      ) & 0xff;
 	uint16_t color;
 
-	r = (rgba >> 24) & 0xff;
-	g = (rgba >> 16) & 0xff;
-	b = (rgba >>  8) & 0xff;
-	a = (rgba      ) & 0xff;
-
+	// No predictive misses, faster shifting
 	if (a > 0xe0) {
-		r = r >> 3;
-		g = g >> 3;
-		b = b >> 3;
-	
+		r >>= 3;
+		g >>= 3;
+		b >>= 3;
+
 		color = (r << 10) | (g << 5) | b;
 		color |= 0x8000;
+		return color;
 	}
-	else {
-		r = r >> 4;
-		g = g >> 4;
-		b = b >> 4;
-		a = a >> 5;
 	
-		color = (a << 12) | (r << 8) | (g << 4) | b;
-	}
-
+	r >>= 4;
+	g >>= 4;
+	b >>= 4;
+	a >>= 5;
+	color = (a << 12) | (r << 8) | (g << 4) | b;
 	return color;
 }
 	
@@ -367,13 +370,14 @@ uint32_t* Metaphrasis::convertBufferToRGB5A3(uint32_t* rgbaBuffer, uint16_t buff
 	uint32_t *src = (uint32_t *)rgbaBuffer;
 	uint16_t *dst = (uint16_t *)dataBufferRGB5A3;
 
-	for(uint16_t y = 0; y < bufferHeight; y += 4) {
-		for(uint16_t x = 0; x < bufferWidth; x += 4) {
-			for(uint16_t rows = 0; rows < 4; rows++) {
-				*dst++ = Metaphrasis::convertRGBAToRGB5A3(src[((y + rows) * bufferWidth) + (x + 0)]);
-				*dst++ = Metaphrasis::convertRGBAToRGB5A3(src[((y + rows) * bufferWidth) + (x + 1)]);
-				*dst++ = Metaphrasis::convertRGBAToRGB5A3(src[((y + rows) * bufferWidth) + (x + 2)]);
-				*dst++ = Metaphrasis::convertRGBAToRGB5A3(src[((y + rows) * bufferWidth) + (x + 3)]);
+	for(uint32_t rows = 0; rows < 4; rows++) {
+		for(uint32_t y = 0; y < bufferHeight; y += 4) {
+			uint32_t bufWid = ((y + rows) * bufferWidth);
+			for(uint32_t x = 0; x < bufferWidth; x += 4) {
+				*dst++ = Metaphrasis::convertRGBAToRGB5A3(src[bufWid + (x + 0)]);
+				*dst++ = Metaphrasis::convertRGBAToRGB5A3(src[bufWid + (x + 1)]);
+				*dst++ = Metaphrasis::convertRGBAToRGB5A3(src[bufWid + (x + 2)]);
+				*dst++ = Metaphrasis::convertRGBAToRGB5A3(src[bufWid + (x + 3)]);
 			}
 		}
 	}
