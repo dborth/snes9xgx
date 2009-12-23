@@ -3690,7 +3690,7 @@ static int MenuSettingsNetwork()
 		switch (ret)
 		{
 			case 0:
-				OnScreenKeyboard(GCSettings.smbip, 16);
+				OnScreenKeyboard(GCSettings.smbip, 80);
 				break;
 
 			case 1:
@@ -3709,7 +3709,8 @@ static int MenuSettingsNetwork()
 		if(ret >= 0 || firstRun)
 		{
 			firstRun = false;
-			strncpy (options.value[0], GCSettings.smbip, 15);
+			strncpy (options.value[0], GCSettings.smbip, 25);
+			options.value[0][25] = 0;
 			strncpy (options.value[1], GCSettings.smbshare, 19);
 			strncpy (options.value[2], GCSettings.smbuser, 19);
 			strncpy (options.value[3], GCSettings.smbpwd, 19);

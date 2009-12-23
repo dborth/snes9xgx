@@ -20,7 +20,7 @@
 #include "filelist.h"
 
 #define APPNAME 		"Snes9x GX"
-#define APPVERSION 		"4.1.4"
+#define APPVERSION 		"4.1.5"
 #define APPFOLDER 		"snes9xgx"
 #define PREF_FILE_NAME 	"settings.xml"
 
@@ -70,7 +70,7 @@ struct SGCSettings{
 	char	SaveFolder[MAXPATHLEN]; // Path to save files
 	char	CheatFolder[MAXPATHLEN]; // Path to cheat files
 
-	char	smbip[16];
+	char	smbip[80];
 	char	smbuser[20];
 	char	smbpwd[20];
 	char	smbshare[20];
