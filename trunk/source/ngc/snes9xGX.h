@@ -99,6 +99,7 @@ extern int ConfigRequested;
 extern int ShutdownRequested;
 extern int ExitRequested;
 extern char appPath[];
+extern char loadedFile[];
 extern FreeTypeGX *fontSystem[];
 
 void WiiSetupCheats();

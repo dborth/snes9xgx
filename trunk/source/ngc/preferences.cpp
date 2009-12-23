@@ -11,6 +11,7 @@
 #include <gccore.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/dir.h>
 #include <ogcsys.h>
 #include <mxml.h>
 
@@ -357,12 +358,13 @@ SavePrefs (bool silent)
 	
 	if(prefpath[0] != 0)
 	{
-		strcpy(filepath, prefpath);
+		sprintf(filepath, "%s/%s", prefpath, PREF_FILE_NAME);
 		FindDevice(filepath, &device);
 	}
 	else if(appPath[0] != 0)
 	{
 		sprintf(filepath, "%s/%s", appPath, PREF_FILE_NAME);
+		strcpy(prefpath, appPath);
 		FindDevice(filepath, &device);
 	}
 	else
@@ -372,7 +374,18 @@ SavePrefs (bool silent)
 		if(device == 0)
 			return false;
 		
+		sprintf(filepath, "%s%s", pathPrefix[device], APPFOLDER);
+				
+		if (!diropen(filepath))
+		{
+			mkdir(filepath, 0777);
+			sprintf(filepath, "%s%s/roms", pathPrefix[device], APPFOLDER);
+			mkdir(filepath, 0777);
+			sprintf(filepath, "%s%s/saves", pathPrefix[device], APPFOLDER);
+			mkdir(filepath, 0777);
+		}
 		sprintf(filepath, "%s%s/%s", pathPrefix[device], APPFOLDER, PREF_FILE_NAME);
+		sprintf(prefpath, "%s%s", pathPrefix[device], APPFOLDER);
 	}
 	
 	if(device == 0)
@@ -405,10 +418,12 @@ SavePrefs (bool silent)
  * Load Preferences from specified filepath
  ***************************************************************************/
 bool
-LoadPrefsFromMethod (char * filepath)
+LoadPrefsFromMethod (char * path)
 {
 	bool retval = false;
 	int offset = 0;
+	char filepath[MAXPATHLEN];
+	sprintf(filepath, "%s/%s", path, PREF_FILE_NAME);
 
 	AllocSaveBuffer ();
 
@@ -420,9 +435,7 @@ LoadPrefsFromMethod (char * filepath)
 	FreeSaveBuffer ();
 	
 	if(retval)
-	{
-		strcpy(prefpath, filepath);
-	}
+		strcpy(prefpath, path);
 
 	return retval;
 }
@@ -444,13 +457,13 @@ bool LoadPrefs()
 	
 #ifdef HW_RVL
 	numDevices = 3;
-	sprintf(filepath[0], "%s/%s", appPath, PREF_FILE_NAME);
-	sprintf(filepath[1], "sd:/%s/%s", APPFOLDER, PREF_FILE_NAME);
-	sprintf(filepath[2], "usb:/%s/%s", APPFOLDER, PREF_FILE_NAME);
+	sprintf(filepath[0], "%s", appPath);
+	sprintf(filepath[1], "sd:/%s", APPFOLDER);
+	sprintf(filepath[2], "usb:/%s", APPFOLDER);
 #else
 	numDevices = 2;
-	sprintf(filepath[0], "carda:/%s/%s", APPFOLDER, PREF_FILE_NAME);
-	sprintf(filepath[1], "cardb:/%s/%s", APPFOLDER, PREF_FILE_NAME);
+	sprintf(filepath[0], "carda:/%s", APPFOLDER);
+	sprintf(filepath[1], "cardb:/%s", APPFOLDER);
 #endif
 
 	for(int i=0; i<numDevices; i++)

@@ -47,5 +47,6 @@ extern unsigned char savebuffer[SAVEBUFFERSIZE];
 extern FILE * file;
 extern bool unmountRequired[];
 extern bool isMounted[];
+extern int selectLoadedFile;
 
 #endif

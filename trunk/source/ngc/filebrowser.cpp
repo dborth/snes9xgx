@@ -472,6 +472,8 @@ int BrowserLoadFile()
 	if(!IsValidROM())
 		goto done;
 
+	strcpy(loadedFile, browserList[browser.selIndex].filename);
+
 	// store the filename (w/o ext) - used for sram/freeze naming
 	StripExt(Memory.ROMFilename, browserList[browser.selIndex].filename);
 
