@@ -62,6 +62,7 @@ int ShutdownRequested = 0;
 int ResetRequested = 0;
 int ExitRequested = 0;
 char appPath[1024] = { 0 };
+char loadedFile[1024] = { 0 };
 
 extern "C" {
 extern void __exception_setreload(int t);

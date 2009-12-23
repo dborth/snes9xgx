@@ -47,7 +47,7 @@ bool updateFound = false; // true if an app update was found
 void UpdateCheck()
 {
 	// we can only check for the update if we have internet + SD
-	if(!updateChecked && networkInit && isMounted[DEVICE_SD])
+	if(!updateChecked && networkInit && (isMounted[DEVICE_SD] || isMounted[DEVICE_USB]))
 	{
 		static char url[128];
 		int retval;
@@ -135,43 +135,45 @@ static bool unzipArchive(char * zipfilepath, char * unzipfolderpath)
 bool DownloadUpdate()
 {
 	bool result = false;
-	if(strlen(updateURL) > 0)
+
+	if(strlen(updateURL) == 0 || strlen(appPath) == 0)
+		goto done;
+
+	if(!ChangeInterface(appPath, NOTSILENT))
+		goto done;
+
+	// stop checking if devices were removed/inserted
+	// since we're saving a file
+	HaltDeviceThread();
+
+	int device;
+	FindDevice(appPath, &device);
+
+	FILE * hfile;
+	char updateFile[50];
+	sprintf(updateFile, "%s%s Update.zip", pathPrefix[device], APPNAME);
+	hfile = fopen (updateFile, "wb");
+
+	if (hfile > 0)
 	{
-		// stop checking if devices were removed/inserted
-		// since we're saving a file
-		HaltDeviceThread();
-
-		FILE * hfile;
-		char updateFile[50];
-		sprintf(updateFile, "sd:/%s Update.zip", APPNAME);
-		hfile = fopen (updateFile, "wb");
-
-		if (hfile > 0)
-		{
-			int retval;
-			retval = http_request(updateURL, hfile, NULL, (1024*1024*5));
-			fclose (hfile);
-		}
-
-		bool unzipResult = unzipArchive(updateFile, (char *)"sd:/");
-		remove(updateFile); // delete update file
-
-		if(unzipResult)
-		{
-			result = true;
-			InfoPrompt("Update successful!");
-		}
-		else
-		{
-			result = false;
-			ErrorPrompt("Update failed!");
-		}
-
-		updateFound = false; // updating is finished (successful or not!)
-
-		// go back to checking if devices were inserted/removed
-		ResumeDeviceThread();
+		int retval;
+		retval = http_request(updateURL, hfile, NULL, (1024*1024*5));
+		fclose (hfile);
 	}
+
+	result = unzipArchive(updateFile, (char *)pathPrefix[device]);
+	remove(updateFile); // delete update file
+
+	// go back to checking if devices were inserted/removed
+	ResumeDeviceThread();
+	
+done:	
+	if(result)
+		InfoPrompt("Update successful!");
+	else
+		ErrorPrompt("Update failed!");
+
+	updateFound = false; // updating is finished (successful or not!)
 	return result;
 }
 
