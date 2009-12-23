@@ -10,16 +10,13 @@
 ­————————————————————————————————————————————————————————————————————————————
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                      Snes9x GX 4.1.4                          ·oø×O0|
+|0O×øo·                      Snes9x GX 4.1.5                          ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
 
 Snes9x GX is a Super Nintendo™ / Super Famicom emulator for the Nintendo Wii.
-Snes9x GX is a port of Snes9x 1.51 (http://snes9x.ipherswipsite.com). It was
-originally ported by SoftDev for the GameCube, and has been worked on by 
-various authors. Development has since moved to the Wii, and the project is 
-currently being maintained by Tantric and michniewski.
+Snes9x GX is a port of Snes9x (http://www.snes9x.com).
 
 Snes9x GX is a "homebrew application" which means you will need a way to run
 unsigned code on your Nintendo Wii. The best website for getting started with
@@ -45,6 +42,15 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.1.5 - December 23, 2009]
+
+* Changed default folders to snes9xgx/roms and snes9xgx/saves. Old folders
+  will be automatically moved to the new location
+* File browser now scrolls down to the last game when returning to browser
+* Auto update for those using USB now works
+* Fixed scrollbar up/down buttons
+* Minor optimizations
 
 [4.1.4 - December 2, 2009]
 
@@ -332,28 +338,24 @@ Tantric
 |                                                            INSTALLATION  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-To install Snes9x GX you will need to copy over the "apps" and "snes9x" 
+To install Snes9x GX you will need to copy over the "apps" and "snes9xgx" 
 folders (directories) from this archive to your SD Card. It comes 
 pre-packaged in the Homebrew Channel format (which you will use to launch 
 the emulator). Once you've copied the directories to your SD Card you will 
-need to place your ROM image(s) into "\snes9x\roms" directory and place any
-cheat code files (optional) in the "\snes9x\cheats" directory. Once this is
+need to place your ROM image(s) into "\snes9xgx\roms" directory and place any
+cheat code files (optional) in the "\snes9xgx\cheats" directory. Once this is
 done you can proceed to run the emulator via the Homebrew Channel.
 
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                           INITIAL SETUP  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-If you are upgrading from a previous version you will need to remove the 
-"settings.xml" file from "\apps\Snes9xGX" directory on your SD Card. If you 
-are not upgrading then don't worry about it.
-
 The first time you run Snes9x GX it will create a new "settings.xml" file on
 the SD Card which stores the configuration of the emulator. So when you run
 Snes9x GX it will automatically detect your storage medium and will bring you
 to the ROM selection screen. If you want to run a game with the default 
 settings then just highlight the game and press "A" on it and it will load. 
-However, you can configure SNES9X to your liking.
+However, you can configure Snes9x GX to your liking.
 
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                           CONFIGURATION  |
@@ -552,12 +554,12 @@ your SMB share then set the SMB Share Password to "0".
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
 The File Browser will automatically load when you start the emulator and it
-will automatically list the contents of the "\snes9x\roms\" directory on your
-SD card. Like mentioned above in the Configuration -> Saving & Loading you 
-can specifically a different directory to load from. To launch a game (the 
-game can either be uncompressed or inside a ZIP archive) simply click on it 
-and it will load. You may also change the directory you're in by clicking 
-on "Up One Level".
+will automatically list the contents of the "\snes9xgx\roms\" directory on
+your SD card. Like mentioned above in the Configuration -> Saving & Loading
+you can specifically a different directory to load from. To launch a game 
+(the game can either be uncompressed or inside a ZIP archive) simply click 
+on it and it will load. You may also change the directory you're in by 
+clicking on "Up One Level".
 
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                                GAMEPLAY  |
@@ -581,7 +583,7 @@ to toggle your cheat codes (see below).
 |                                                                  CHEATS  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-Cheats are loaded from the "\snes9x\cheats" directory and must be in the
+Cheats are loaded from the "\snes9xgx\cheats" directory and must be in the
 SNES9X .CHT file format. They also must be named the same name as the game
 you're playing with the .cht extentsion. An example would be if you have a 
 ROM called "Super Mario World.smc" you would need to name your .cht file to
@@ -716,7 +718,7 @@ changes to the emulator settings again and save them.
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
                       Coding & menu design		Tantric
-                      Coding					michniewski
+                      Additional coding			michniewski
                       Menu artwork				the3seashells
                       Menu sound				Peter de Man
                       
@@ -724,7 +726,7 @@ changes to the emulator settings again and save them.
                       Snes9x GX GameCube		SoftDev, crunchy2, 
                       							eke-eke, others
 
-                      Snes9x 1.51				Snes9x Team
+                      Snes9x					Snes9x Team
                       libogc/devkitPPC			shagkur & wintermute
                       FreeTypeGX				Armin Tamzarian
 
