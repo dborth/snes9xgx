@@ -21,7 +21,7 @@
 
 #define APPNAME 		"Snes9x GX"
 #define APPVERSION 		"4.1.4"
-#define APPFOLDER 		"snes9x"
+#define APPFOLDER 		"snes9xgx"
 #define PREF_FILE_NAME 	"settings.xml"
 
 #define NOTSILENT 0

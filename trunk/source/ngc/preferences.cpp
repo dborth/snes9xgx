@@ -435,7 +435,12 @@ LoadPrefsFromMethod (char * path)
 	FreeSaveBuffer ();
 	
 	if(retval)
+	{
 		strcpy(prefpath, path);
+
+		if(appPath[0] == 0)
+			strcpy(appPath, prefpath);
+	}
 
 	return retval;
 }
@@ -452,14 +457,16 @@ bool LoadPrefs()
 		return true;
 
 	bool prefFound = false;
-	char filepath[4][MAXPATHLEN];
+	char filepath[5][MAXPATHLEN];
 	int numDevices;
 	
 #ifdef HW_RVL
-	numDevices = 3;
+	numDevices = 5;
 	sprintf(filepath[0], "%s", appPath);
-	sprintf(filepath[1], "sd:/%s", APPFOLDER);
-	sprintf(filepath[2], "usb:/%s", APPFOLDER);
+	sprintf(filepath[1], "sd:/apps/%s", APPFOLDER);
+	sprintf(filepath[2], "usb:/apps/%s", APPFOLDER);
+	sprintf(filepath[3], "sd:/%s", APPFOLDER);
+	sprintf(filepath[4], "usb:/%s", APPFOLDER);
 #else
 	numDevices = 2;
 	sprintf(filepath[0], "carda:/%s", APPFOLDER);
@@ -478,6 +485,33 @@ bool LoadPrefs()
 
 	if(prefFound)
 		FixInvalidSettings();
+	
+	// rename snes9x to snes9xgx
+	if(GCSettings.LoadMethod == DEVICE_SD)
+	{
+		if(ChangeInterface(DEVICE_SD, NOTSILENT) && diropen("sd:/snes9x"))
+			rename("sd:/snes9x", "sd:/snes9xgx");
+	}
+	else if(GCSettings.LoadMethod == DEVICE_USB)
+	{
+		if(ChangeInterface(DEVICE_USB, NOTSILENT) && diropen("usb:/snes9x"))
+			rename("usb:/snes9x", "usb:/snes9xgx");
+	}
+	else if(GCSettings.LoadMethod == DEVICE_SMB)
+	{
+		if(ChangeInterface(DEVICE_SMB, NOTSILENT) && diropen("smb:/snes9x"))
+			rename("smb:/snes9x", "smb:/snes9xgx");
+	}
+
+	// update folder locations
+	if(strcmp(GCSettings.LoadFolder, "snes9x/roms") == 0)
+		sprintf(GCSettings.LoadFolder, "snes9xgx/roms");
+	
+	if(strcmp(GCSettings.SaveFolder, "snes9x/saves") == 0)
+		sprintf(GCSettings.SaveFolder, "snes9xgx/saves");
+	
+	if(strcmp(GCSettings.CheatFolder, "snes9x/cheats") == 0)
+		sprintf(GCSettings.CheatFolder, "snes9xgx/cheats");
 
 	return prefFound;
 }

@@ -61,27 +61,17 @@ void FixInvalidSettings()
 void
 DefaultSettings ()
 {
-	/************** GameCube/Wii Settings *********************/
+	memset (&GCSettings, 0, sizeof (GCSettings));
+
 	ResetControls(); // controller button mappings
 
 	GCSettings.LoadMethod = DEVICE_AUTO; // Auto, SD, DVD, USB, Network (SMB)
-	GCSettings.SaveMethod = DEVICE_AUTO; // Auto, SD, Memory Card Slot A, Memory Card Slot B, USB, Network (SMB)
-	sprintf (GCSettings.LoadFolder,"snes9x/roms"); // Path to game files
-	sprintf (GCSettings.SaveFolder,"snes9x/saves"); // Path to save files
-	sprintf (GCSettings.CheatFolder,"snes9x/cheats"); // Path to cheat files
+	GCSettings.SaveMethod = DEVICE_AUTO; // Auto, SD, USB, Network (SMB)
+	sprintf (GCSettings.LoadFolder, "%s/roms", APPFOLDER); // Path to game files
+	sprintf (GCSettings.SaveFolder, "%s/saves", APPFOLDER); // Path to save files
+	sprintf (GCSettings.CheatFolder, "%s/cheats", APPFOLDER); // Path to cheat files
 	GCSettings.AutoLoad = 1;
 	GCSettings.AutoSave = 1;
-
-	// custom SMB settings
-	strncpy (GCSettings.smbip, "", 15); // IP Address of share server
-	strncpy (GCSettings.smbuser, "", 19); // Your share user
-	strncpy (GCSettings.smbpwd, "", 19); // Your share user password
-	strncpy (GCSettings.smbshare, "", 19); // Share name on server
-
-	GCSettings.smbip[15] = 0;
-	GCSettings.smbuser[19] = 0;
-	GCSettings.smbpwd[19] = 0;
-	GCSettings.smbshare[19] = 0;
 
 	GCSettings.Controller = CTRL_PAD2;
 
