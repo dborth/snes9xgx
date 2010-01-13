@@ -14,11 +14,9 @@ Modified by Tantric, 2009
 #include "pngu.h"
 #include "png.h"
 
-
 // Constants
 #define PNGU_SOURCE_BUFFER			1
 #define PNGU_SOURCE_DEVICE			2
-
 
 // Prototypes of helper functions
 int pngu_info (IMGCTX ctx);
@@ -28,7 +26,6 @@ void pngu_read_data_from_buffer (png_structp png_ptr, png_bytep data, png_size_t
 void pngu_write_data_to_buffer (png_structp png_ptr, png_bytep data, png_size_t length);
 void pngu_flush_data_to_buffer (png_structp png_ptr);
 int pngu_clamp (int value, int min, int max);
-
 
 // PNGU Image context struct
 struct _IMGCTX
@@ -49,7 +46,6 @@ struct _IMGCTX
 	png_bytep *row_pointers;
 	png_bytep img_data;
 };
-
 
 // PNGU Implementation //
 
@@ -73,7 +69,6 @@ IMGCTX PNGU_SelectImageFromBuffer (const void *buffer)
 
 	return ctx;
 }
-
 
 IMGCTX PNGU_SelectImageFromDevice (const char *filename)
 {
@@ -104,7 +99,6 @@ IMGCTX PNGU_SelectImageFromDevice (const char *filename)
 	return ctx;
 }
 
-
 void PNGU_ReleaseImageContext (IMGCTX ctx)
 {
 	if (!ctx)
@@ -117,10 +111,8 @@ void PNGU_ReleaseImageContext (IMGCTX ctx)
 		free (ctx->prop.trans);
 
 	pngu_free_info (ctx);
-
 	free (ctx);
 }
-
 
 int PNGU_GetImageProperties (IMGCTX ctx, PNGUPROP *imgprop)
 {
@@ -134,10 +126,8 @@ int PNGU_GetImageProperties (IMGCTX ctx, PNGUPROP *imgprop)
 	}
 
 	*imgprop = ctx->prop;
-
 	return PNGU_OK;
 }
-
 
 int PNGU_DecodeToYCbYCr (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffer, PNGU_u32 stride)
 {
@@ -157,12 +147,18 @@ int PNGU_DecodeToYCbYCr (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buff
 		return result;
 
 	// Copy image to the output buffer
-	buffWidth = (width + stride) / 2;
+	buffWidth = (width + stride) >> 1;
+	PNGU_u32 wid2 = width >>1;
 	for (y = 0; y < height; y++)
-		for (x = 0; x < (width / 2); x++)
-			((PNGU_u32 *)buffer)[y*buffWidth+x] = PNGU_RGB8_TO_YCbYCr (*(ctx->row_pointers[y]+x*6), *(ctx->row_pointers[y]+x*6+1), *(ctx->row_pointers[y]+x*6+2),
-															*(ctx->row_pointers[y]+x*6+3), *(ctx->row_pointers[y]+x*6+4), *(ctx->row_pointers[y]+x*6+5));
-	
+	{
+		for (x = 0; x < wid2; x++)
+		{
+			PNGU_u32 x6 = x*6;
+			((PNGU_u32 *)buffer)[y*buffWidth+x] = PNGU_RGB8_TO_YCbYCr (*(ctx->row_pointers[y]+x6), *(ctx->row_pointers[y]+x6+1), *(ctx->row_pointers[y]+x6+2),
+															*(ctx->row_pointers[y]+x6+3), *(ctx->row_pointers[y]+x6+4), *(ctx->row_pointers[y]+x6+5));
+		}
+	}
+
 	// Free resources
 	free (ctx->img_data);
 	free (ctx->row_pointers);
@@ -170,7 +166,6 @@ int PNGU_DecodeToYCbYCr (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buff
 	// Success
 	return PNGU_OK;
 }
-
 
 int PNGU_DecodeToRGB565 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffer, PNGU_u32 stride)
 {
@@ -199,7 +194,6 @@ int PNGU_DecodeToRGB565 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buff
 	return PNGU_OK;
 }
 
-
 int PNGU_DecodeToRGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffer, PNGU_u32 stride, PNGU_u8 default_alpha)
 {
 	int result;
@@ -216,7 +210,7 @@ int PNGU_DecodeToRGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffe
 	{
 		// Alpha channel present, copy image to the output buffer
 		for (y = 0; y < height; y++)
-			memcpy (buffer + (y * buffWidth * 4), ctx->row_pointers[y], width * 4);
+			memcpy (buffer + (y * buffWidth << 2), ctx->row_pointers[y], width<<2);
 	}
 	else
 	{
@@ -238,55 +232,55 @@ int PNGU_DecodeToRGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffe
 	return PNGU_OK;
 }
 
-
 int PNGU_DecodeTo4x4RGB565 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffer)
 {
-	int result;
-	PNGU_u32 x, y, qwidth, qheight;
+	PNGU_u32 x, y;
 
 	// width and height need to be divisible by four
 	if ((width % 4) || (height % 4))
 		return PNGU_INVALID_WIDTH_OR_HEIGHT;
 
-	result = pngu_decode (ctx, width, height, 1);
+	int result = pngu_decode (ctx, width, height, 1);
 	if (result != PNGU_OK)
 		return result;
 
 	// Copy image to the output buffer
-	qwidth = width / 4;
-	qheight = height / 4;
+	PNGU_u32 qwidth = width >> 2;
+	PNGU_u32 qheight = height >> 2;
 
 	for (y = 0; y < qheight; y++)
 		for (x = 0; x < qwidth; x++)
 		{
-			int blockbase = (y * qwidth + x) * 4;
+			PNGU_u32 y4 = y << 2;
+			PNGU_u32 x12 = x * 12;
+			int blockbase = (y * qwidth + x) << 2;
 
-			PNGU_u64 field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4]+x*12));
-			PNGU_u64 field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4]+x*12+8));
+			PNGU_u64 field64 = *((PNGU_u64 *)(ctx->row_pointers[y4]+x12));
+			PNGU_u64 field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4]+x12+8));
 			((PNGU_u64 *) buffer)[blockbase] = 
 				(((field64 & 0xF800000000000000ULL) | ((field64 & 0xFC000000000000ULL) << 3) | ((field64 & 0xF80000000000ULL) << 5)) | 
 				(((field64 & 0xF800000000ULL) << 8) | ((field64 & 0xFC000000ULL) << 11) | ((field64 & 0xF80000ULL) << 13)) | 
 				(((field64 & 0xF800ULL) << 16) | ((field64 & 0xFCULL) << 19) | ((field32 & 0xF8000000ULL) >> 11)) |
 				(((field32 & 0xF80000ULL) >> 8) | ((field32 & 0xFC00ULL) >> 5) | ((field32 & 0xF8ULL) >> 3)));
 
-			field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+1]+x*12));
-			field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+1]+x*12+8));
+			field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+1]+x12));
+			field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+1]+x12+8));
 			((PNGU_u64 *) buffer)[blockbase+1] = 
 				(((field64 & 0xF800000000000000ULL) | ((field64 & 0xFC000000000000ULL) << 3) | ((field64 & 0xF80000000000ULL) << 5)) | 
 				(((field64 & 0xF800000000ULL) << 8) | ((field64 & 0xFC000000ULL) << 11) | ((field64 & 0xF80000ULL) << 13)) | 
 				(((field64 & 0xF800ULL) << 16) | ((field64 & 0xFCULL) << 19) | ((field32 & 0xF8000000ULL) >> 11)) |
 				(((field32 & 0xF80000ULL) >> 8) | ((field32 & 0xFC00ULL) >> 5) | ((field32 & 0xF8ULL) >> 3)));
 
-			field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+2]+x*12));
-			field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+2]+x*12+8));
+			field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+2]+x12));
+			field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+2]+x12+8));
 			((PNGU_u64 *) buffer)[blockbase+2] = 
 				(((field64 & 0xF800000000000000ULL) | ((field64 & 0xFC000000000000ULL) << 3) | ((field64 & 0xF80000000000ULL) << 5)) | 
 				(((field64 & 0xF800000000ULL) << 8) | ((field64 & 0xFC000000ULL) << 11) | ((field64 & 0xF80000ULL) << 13)) | 
 				(((field64 & 0xF800ULL) << 16) | ((field64 & 0xFCULL) << 19) | ((field32 & 0xF8000000ULL) >> 11)) |
 				(((field32 & 0xF80000ULL) >> 8) | ((field32 & 0xFC00ULL) >> 5) | ((field32 & 0xF8ULL) >> 3)));
 
-			field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+3]+x*12));
-			field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+3]+x*12+8));
+			field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+3]+x12));
+			field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+3]+x12+8));
 			((PNGU_u64 *) buffer)[blockbase+3] = 
 				(((field64 & 0xF800000000000000ULL) | ((field64 & 0xFC000000000000ULL) << 3) | ((field64 & 0xF80000000000ULL) << 5)) | 
 				(((field64 & 0xF800000000ULL) << 8) | ((field64 & 0xFC000000ULL) << 11) | ((field64 & 0xF80000ULL) << 13)) | 
@@ -301,7 +295,6 @@ int PNGU_DecodeTo4x4RGB565 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 	// Success
 	return PNGU_OK;
 }
-
 
 int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffer, PNGU_u8 default_alpha)
 {
@@ -318,8 +311,8 @@ int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 		return result;
 
 	// Init some vars
-	qwidth = width / 4;
-	qheight = height / 4;
+	qwidth = width >> 2;
+	qheight = height >> 2;
 
 	// Check is source image has an alpha channel
 	if ( (ctx->prop.imgColorType == PNGU_COLOR_TYPE_GRAY_ALPHA) || (ctx->prop.imgColorType == PNGU_COLOR_TYPE_RGB_ALPHA) )
@@ -328,11 +321,16 @@ int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 		for (y = 0; y < qheight; y++)
 			for (x = 0; x < qwidth; x++)
 			{
-				int blockbase = (y * qwidth + x) * 4;
+				int blockbase = (y * qwidth + x) << 2;
+
+				PNGU_u32 y4 = y << 2;
+				PNGU_u32 x16 = x << 4;
+
 				PNGU_u64 tmp;
 
-				PNGU_u64 fieldA = *((PNGU_u64 *)(ctx->row_pointers[y*4]+x*16));
-				PNGU_u64 fieldB = *((PNGU_u64 *)(ctx->row_pointers[y*4]+x*16+8));
+				PNGU_u64 fieldA = *((PNGU_u64 *)(ctx->row_pointers[y4]+x16));
+				PNGU_u64 fieldB = *((PNGU_u64 *)(ctx->row_pointers[y4]+x16+8));
+
 				// If first pixel is opaque set MSB to 1 and encode colors in RGB555, else set MSB to 0 and encode colors in ARGB3444
 				if ((fieldA & 0xE000000000ULL) == 0xE000000000ULL)			
 					tmp = 0x8000000000000000ULL | ((fieldA & 0xF800000000000000ULL) >> 1) | ((fieldA & 0xF8000000000000ULL) << 2) | ((fieldA & 0xF80000000000ULL) << 5);
@@ -341,15 +339,15 @@ int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 
 				// If second pixel is opaque set MSB to 1 and encode colors in RGB555, else set MSB to 0 and encode colors in ARGB3444
 				if ((fieldA & 0xE0ULL) == 0xE0ULL)
-					tmp = tmp | 0x800000000000ULL | ((fieldA & 0xF8000000ULL) << 15) | ((fieldA & 0xF80000ULL) << 18) | ((fieldA & 0xF800ULL) << 21);
+					tmp |= 0x800000000000ULL | ((fieldA & 0xF8000000ULL) << 15) | ((fieldA & 0xF80000ULL) << 18) | ((fieldA & 0xF800ULL) << 21);
 				else
-					tmp = tmp | ((fieldA & 0xE0ULL) << 39) | ((fieldA & 0xF0000000ULL) << 12) | ((fieldA & 0xF00000ULL) << 16) | ((fieldA & 0xF000ULL) << 20);
+					tmp |= ((fieldA & 0xE0ULL) << 39) | ((fieldA & 0xF0000000ULL) << 12) | ((fieldA & 0xF00000ULL) << 16) | ((fieldA & 0xF000ULL) << 20);
 
 				// If third pixel is opaque set MSB to 1 and encode colors in RGB555, else set MSB to 0 and encode colors in ARGB3444
 				if ((fieldB & 0xE000000000ULL) == 0xE000000000ULL)
-					tmp = tmp | 0x80000000ULL | ((fieldB & 0xF800000000000000ULL) >> 33) | ((fieldB & 0xF8000000000000ULL) >> 30) | ((fieldB & 0xF80000000000ULL) >> 27);
+					tmp |= 0x80000000ULL | ((fieldB & 0xF800000000000000ULL) >> 33) | ((fieldB & 0xF8000000000000ULL) >> 30) | ((fieldB & 0xF80000000000ULL) >> 27);
 				else
-					tmp = tmp | ((fieldB & 0xE000000000ULL) >> 9) | ((fieldB & 0xF000000000000000ULL) >> 36) | ((fieldB & 0xF0000000000000ULL) >> 32) | ((fieldB & 0xF00000000000ULL) >> 28);
+					tmp |= ((fieldB & 0xE000000000ULL) >> 9) | ((fieldB & 0xF000000000000000ULL) >> 36) | ((fieldB & 0xF0000000000000ULL) >> 32) | ((fieldB & 0xF00000000000ULL) >> 28);
 
 				// If fourth pixel is opaque set MSB to 1 and encode colors in RGB555, else set MSB to 0 and encode colors in ARGB3444
 				if ((fieldB & 0xE0ULL) == 0xE0ULL)
@@ -358,8 +356,8 @@ int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 					tmp = tmp | ((fieldB & 0xE0ULL) << 7) | ((fieldB & 0xF0000000ULL) >> 20) | ((fieldB & 0xF00000ULL) >> 16) | ((fieldB & 0xF000ULL) >> 12);
 				((PNGU_u64 *) buffer)[blockbase] = tmp;
 
-				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y*4+1]+x*16));
-				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y*4+1]+x*16+8));
+				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y4+1]+x16));
+				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y4+1]+x16+8));
 				if ((fieldA & 0xE000000000ULL) == 0xE000000000ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
 					tmp = 0x8000000000000000ULL | ((fieldA & 0xF800000000000000ULL) >> 1) | ((fieldA & 0xF8000000000000ULL) << 2) | ((fieldA & 0xF80000000000ULL) << 5);
@@ -369,28 +367,28 @@ int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 
 				if ((fieldA & 0xE0ULL) == 0xE0ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
-					tmp = tmp | 0x800000000000ULL | ((fieldA & 0xF8000000ULL) << 15) | ((fieldA & 0xF80000ULL) << 18) | ((fieldA & 0xF800ULL) << 21);
+					tmp |= 0x800000000000ULL | ((fieldA & 0xF8000000ULL) << 15) | ((fieldA & 0xF80000ULL) << 18) | ((fieldA & 0xF800ULL) << 21);
 				else
 					// Tranlucid pixel, so set MSB to 0 and encode colors in ARGB3444
-					tmp = tmp | ((fieldA & 0xE0ULL) << 39) | ((fieldA & 0xF0000000ULL) << 12) | ((fieldA & 0xF00000ULL) << 16) | ((fieldA & 0xF000ULL) << 20);
+					tmp |= ((fieldA & 0xE0ULL) << 39) | ((fieldA & 0xF0000000ULL) << 12) | ((fieldA & 0xF00000ULL) << 16) | ((fieldA & 0xF000ULL) << 20);
 
 				if ((fieldB & 0xE000000000ULL) == 0xE000000000ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
-					tmp = tmp | 0x80000000ULL | ((fieldB & 0xF800000000000000ULL) >> 33) | ((fieldB & 0xF8000000000000ULL) >> 30) | ((fieldB & 0xF80000000000ULL) >> 27);
+					tmp |= 0x80000000ULL | ((fieldB & 0xF800000000000000ULL) >> 33) | ((fieldB & 0xF8000000000000ULL) >> 30) | ((fieldB & 0xF80000000000ULL) >> 27);
 				else
 					// Tranlucid pixel, so set MSB to 0 and encode colors in ARGB3444
-					tmp = tmp | ((fieldB & 0xE000000000ULL) >> 9) | ((fieldB & 0xF000000000000000ULL) >> 36) | ((fieldB & 0xF0000000000000ULL) >> 32) | ((fieldB & 0xF00000000000ULL) >> 28);
+					tmp |= ((fieldB & 0xE000000000ULL) >> 9) | ((fieldB & 0xF000000000000000ULL) >> 36) | ((fieldB & 0xF0000000000000ULL) >> 32) | ((fieldB & 0xF00000000000ULL) >> 28);
 
 				if ((fieldB & 0xE0ULL) == 0xE0ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
-					tmp = tmp | 0x8000ULL | ((fieldB & 0xF8000000ULL) >> 17) | ((fieldB & 0xF80000ULL) >> 14) | ((fieldB & 0xF800ULL) >> 11);
+					tmp |= 0x8000ULL | ((fieldB & 0xF8000000ULL) >> 17) | ((fieldB & 0xF80000ULL) >> 14) | ((fieldB & 0xF800ULL) >> 11);
 				else
 					// Tranlucid pixel, so set MSB to 0 and encode colors in ARGB3444
-					tmp = tmp | ((fieldB & 0xE0ULL) << 7) | ((fieldB & 0xF0000000ULL) >> 20) | ((fieldB & 0xF00000ULL) >> 16) | ((fieldB & 0xF000ULL) >> 12);
+					tmp |= ((fieldB & 0xE0ULL) << 7) | ((fieldB & 0xF0000000ULL) >> 20) | ((fieldB & 0xF00000ULL) >> 16) | ((fieldB & 0xF000ULL) >> 12);
 				((PNGU_u64 *) buffer)[blockbase+1] = tmp;
 
-				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y*4+2]+x*16));
-				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y*4+2]+x*16+8));
+				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y4+2]+x16));
+				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y4+2]+x16+8));
 				if ((fieldA & 0xE000000000ULL) == 0xE000000000ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
 					tmp = 0x8000000000000000ULL | ((fieldA & 0xF800000000000000ULL) >> 1) | ((fieldA & 0xF8000000000000ULL) << 2) | ((fieldA & 0xF80000000000ULL) << 5);
@@ -400,28 +398,28 @@ int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 
 				if ((fieldA & 0xE0ULL) == 0xE0ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
-					tmp = tmp | 0x800000000000ULL | ((fieldA & 0xF8000000ULL) << 15) | ((fieldA & 0xF80000ULL) << 18) | ((fieldA & 0xF800ULL) << 21);
+					tmp |= 0x800000000000ULL | ((fieldA & 0xF8000000ULL) << 15) | ((fieldA & 0xF80000ULL) << 18) | ((fieldA & 0xF800ULL) << 21);
 				else
 					// Tranlucid pixel, so set MSB to 0 and encode colors in ARGB3444
-					tmp = tmp | ((fieldA & 0xE0ULL) << 39) | ((fieldA & 0xF0000000ULL) << 12) | ((fieldA & 0xF00000ULL) << 16) | ((fieldA & 0xF000ULL) << 20);
+					tmp |= ((fieldA & 0xE0ULL) << 39) | ((fieldA & 0xF0000000ULL) << 12) | ((fieldA & 0xF00000ULL) << 16) | ((fieldA & 0xF000ULL) << 20);
 
 				if ((fieldB & 0xE000000000ULL) == 0xE000000000ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
-					tmp = tmp | 0x80000000ULL | ((fieldB & 0xF800000000000000ULL) >> 33) | ((fieldB & 0xF8000000000000ULL) >> 30) | ((fieldB & 0xF80000000000ULL) >> 27);
+					tmp |= 0x80000000ULL | ((fieldB & 0xF800000000000000ULL) >> 33) | ((fieldB & 0xF8000000000000ULL) >> 30) | ((fieldB & 0xF80000000000ULL) >> 27);
 				else
 					// Tranlucid pixel, so set MSB to 0 and encode colors in ARGB3444
-					tmp = tmp | ((fieldB & 0xE000000000ULL) >> 9) | ((fieldB & 0xF000000000000000ULL) >> 36) | ((fieldB & 0xF0000000000000ULL) >> 32) | ((fieldB & 0xF00000000000ULL) >> 28);
+					tmp |= ((fieldB & 0xE000000000ULL) >> 9) | ((fieldB & 0xF000000000000000ULL) >> 36) | ((fieldB & 0xF0000000000000ULL) >> 32) | ((fieldB & 0xF00000000000ULL) >> 28);
 
 				if ((fieldB & 0xE0ULL) == 0xE0ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
-					tmp = tmp | 0x8000ULL | ((fieldB & 0xF8000000ULL) >> 17) | ((fieldB & 0xF80000ULL) >> 14) | ((fieldB & 0xF800ULL) >> 11);
+					tmp |= 0x8000ULL | ((fieldB & 0xF8000000ULL) >> 17) | ((fieldB & 0xF80000ULL) >> 14) | ((fieldB & 0xF800ULL) >> 11);
 				else
 					// Tranlucid pixel, so set MSB to 0 and encode colors in ARGB3444
-					tmp = tmp | ((fieldB & 0xE0ULL) << 7) | ((fieldB & 0xF0000000ULL) >> 20) | ((fieldB & 0xF00000ULL) >> 16) | ((fieldB & 0xF000ULL) >> 12);
+					tmp |= ((fieldB & 0xE0ULL) << 7) | ((fieldB & 0xF0000000ULL) >> 20) | ((fieldB & 0xF00000ULL) >> 16) | ((fieldB & 0xF000ULL) >> 12);
 				((PNGU_u64 *) buffer)[blockbase+2] = tmp;
 
-				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y*4+3]+x*16));
-				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y*4+3]+x*16+8));
+				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y4+3]+x16));
+				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y4+3]+x16+8));
 				if ((fieldA & 0xE000000000ULL) == 0xE000000000ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
 					tmp = 0x8000000000000000ULL | ((fieldA & 0xF800000000000000ULL) >> 1) | ((fieldA & 0xF8000000000000ULL) << 2) | ((fieldA & 0xF80000000000ULL) << 5);
@@ -431,24 +429,25 @@ int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 
 				if ((fieldA & 0xE0ULL) == 0xE0ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
-					tmp = tmp | 0x800000000000ULL | ((fieldA & 0xF8000000ULL) << 15) | ((fieldA & 0xF80000ULL) << 18) | ((fieldA & 0xF800ULL) << 21);
+					tmp |= 0x800000000000ULL | ((fieldA & 0xF8000000ULL) << 15) | ((fieldA & 0xF80000ULL) << 18) | ((fieldA & 0xF800ULL) << 21);
 				else
 					// Tranlucid pixel, so set MSB to 0 and encode colors in ARGB3444
-					tmp = tmp | ((fieldA & 0xE0ULL) << 39) | ((fieldA & 0xF0000000ULL) << 12) | ((fieldA & 0xF00000ULL) << 16) | ((fieldA & 0xF000ULL) << 20);
+					tmp |= ((fieldA & 0xE0ULL) << 39) | ((fieldA & 0xF0000000ULL) << 12) | ((fieldA & 0xF00000ULL) << 16) | ((fieldA & 0xF000ULL) << 20);
 
 				if ((fieldB & 0xE000000000ULL) == 0xE000000000ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
-					tmp = tmp | 0x80000000ULL | ((fieldB & 0xF800000000000000ULL) >> 33) | ((fieldB & 0xF8000000000000ULL) >> 30) | ((fieldB & 0xF80000000000ULL) >> 27);
+					tmp |= 0x80000000ULL | ((fieldB & 0xF800000000000000ULL) >> 33) | ((fieldB & 0xF8000000000000ULL) >> 30) | ((fieldB & 0xF80000000000ULL) >> 27);
 				else
 					// Tranlucid pixel, so set MSB to 0 and encode colors in ARGB3444
-					tmp = tmp | ((fieldB & 0xE000000000ULL) >> 9) | ((fieldB & 0xF000000000000000ULL) >> 36) | ((fieldB & 0xF0000000000000ULL) >> 32) | ((fieldB & 0xF00000000000ULL) >> 28);
+					tmp |= ((fieldB & 0xE000000000ULL) >> 9) | ((fieldB & 0xF000000000000000ULL) >> 36) | ((fieldB & 0xF0000000000000ULL) >> 32) | ((fieldB & 0xF00000000000ULL) >> 28);
 
 				if ((fieldB & 0xE0ULL) == 0xE0ULL)
 					// Opaque pixel, so set MSB to 1 and encode colors in RGB555
-					tmp = tmp | 0x8000ULL | ((fieldB & 0xF8000000ULL) >> 17) | ((fieldB & 0xF80000ULL) >> 14) | ((fieldB & 0xF800ULL) >> 11);
+					tmp |= 0x8000ULL | ((fieldB & 0xF8000000ULL) >> 17) | ((fieldB & 0xF80000ULL) >> 14) | ((fieldB & 0xF800ULL) >> 11);
 				else
 					// Tranlucid pixel, so set MSB to 0 and encode colors in ARGB3444
-					tmp = tmp | ((fieldB & 0xE0ULL) << 7) | ((fieldB & 0xF0000000ULL) >> 20) | ((fieldB & 0xF00000ULL) >> 16) | ((fieldB & 0xF000ULL) >> 12);
+					tmp |= ((fieldB & 0xE0ULL) << 7) | ((fieldB & 0xF0000000ULL) >> 20) | ((fieldB & 0xF00000ULL) >> 16) | ((fieldB & 0xF000ULL) >> 12);
+
 				((PNGU_u64 *) buffer)[blockbase+3] = tmp;
 			}
 	}
@@ -464,34 +463,37 @@ int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 			for (y = 0; y < qheight; y++)
 				for (x = 0; x < qwidth; x++)
 				{
-					int blockbase = (y * qwidth + x) * 4;
+					int blockbase = (y * qwidth + x) << 2;
 
-					PNGU_u64 field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4]+x*12));
-					PNGU_u64 field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4]+x*12+8));
+					PNGU_u32 y4 = y << 2;
+					PNGU_u32 x12 = x * 12;
+
+					PNGU_u64 field64 = *((PNGU_u64 *)(ctx->row_pointers[y4]+x12));
+					PNGU_u64 field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4]+x12+8));
 					((PNGU_u64 *) buffer)[blockbase] = 
 						 alphaMask | ((field64 & 0xF800000000000000ULL) >> 1) | ((field64 & 0xF8000000000000ULL) << 2) |
 						((field64 & 0xF80000000000ULL) << 5) | ((field64 & 0xF800000000ULL) << 7) | ((field64 & 0xF8000000ULL) << 10) |
 						((field64 & 0xF80000ULL) << 13) | ((field64 & 0xF800ULL) << 15) | ((field64 & 0xF8ULL) << 18) | 
 						((field32 & 0xF8000000ULL) >> 11) |	((field32 & 0xF80000ULL) >> 9) | ((field32 & 0xF800ULL) >> 6) | ((field32 & 0xF8ULL) >> 3);
 
-					field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+1]+x*12));
-					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+1]+x*12+8));
+					field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+1]+x12));
+					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+1]+x12+8));
 					((PNGU_u64 *) buffer)[blockbase+1] = 
 						alphaMask | ((field64 & 0xF800000000000000ULL) >> 1) | ((field64 & 0xF8000000000000ULL) << 2) |
 						((field64 & 0xF80000000000ULL) << 5) | ((field64 & 0xF800000000ULL) << 7) | ((field64 & 0xF8000000ULL) << 10) |
 						((field64 & 0xF80000ULL) << 13) | ((field64 & 0xF800ULL) << 15) | ((field64 & 0xF8ULL) << 18) | 
 						((field32 & 0xF8000000ULL) >> 11) |	((field32 & 0xF80000ULL) >> 9) | ((field32 & 0xF800ULL) >> 6) | ((field32 & 0xF8ULL) >> 3);
 
-					field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+2]+x*12));
-					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+2]+x*12+8));
+					field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+2]+x12));
+					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+2]+x12+8));
 					((PNGU_u64 *) buffer)[blockbase+2] = 
 						alphaMask | ((field64 & 0xF800000000000000ULL) >> 1) | ((field64 & 0xF8000000000000ULL) << 2) |
 						((field64 & 0xF80000000000ULL) << 5) | ((field64 & 0xF800000000ULL) << 7) | ((field64 & 0xF8000000ULL) << 10) |
 						((field64 & 0xF80000ULL) << 13) | ((field64 & 0xF800ULL) << 15) | ((field64 & 0xF8ULL) << 18) | 
 						((field32 & 0xF8000000ULL) >> 11) |	((field32 & 0xF80000ULL) >> 9) | ((field32 & 0xF800ULL) >> 6) | ((field32 & 0xF8ULL) >> 3);
 
-					field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+3]+x*12));
-					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+3]+x*12+8));
+					field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+3]+x12));
+					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+3]+x12+8));
 					((PNGU_u64 *) buffer)[blockbase+3] = 
 						alphaMask | ((field64 & 0xF800000000000000ULL) >> 1) | ((field64 & 0xF8000000000000ULL) << 2) |
 						((field64 & 0xF80000000000ULL) << 5) | ((field64 & 0xF800000000ULL) << 7) | ((field64 & 0xF8000000ULL) << 10) |
@@ -509,34 +511,37 @@ int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 			for (y = 0; y < qheight; y++)
 				for (x = 0; x < qwidth; x++)
 				{
-					int blockbase = (y * qwidth + x) * 4;
+					int blockbase = (y * qwidth + x) << 2;
 
-					PNGU_u64 field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4]+x*12));
-					PNGU_u64 field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4]+x*12+8));
+					PNGU_u32 y4 = y << 2;
+					PNGU_u32 x12 = x * 12;
+
+					PNGU_u64 field64 = *((PNGU_u64 *)(ctx->row_pointers[y4]+x12));
+					PNGU_u64 field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4]+x12+8));
 					((PNGU_u64 *) buffer)[blockbase] = 
 						alphaMask | ((field64 & 0xF000000000000000ULL) >> 4) | (field64 & 0xF0000000000000ULL) | ((field64 & 0xF00000000000ULL) << 4) | 
 						((field64 & 0xF000000000ULL) << 4) | ((field64 & 0xF0000000ULL) << 8) | ((field64 & 0xF00000ULL) << 12) | 
 						((field64 & 0xF000ULL) << 12) | ((field64 & 0xF0ULL) << 16) | ((field32 & 0xF0000000ULL) >> 12) |	
 						((field32 & 0xF00000ULL) >> 12) | ((field32 & 0xF000ULL) >> 8) | ((field32 & 0xF0ULL) >> 4);
 
-					field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+1]+x*12));
-					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+1]+x*12+8));
+					field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+1]+x12));
+					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+1]+x12+8));
 					((PNGU_u64 *) buffer)[blockbase+1] = 
 						alphaMask | ((field64 & 0xF000000000000000ULL) >> 4) | (field64 & 0xF0000000000000ULL) | ((field64 & 0xF00000000000ULL) << 4) | 
 						((field64 & 0xF000000000ULL) << 4) | ((field64 & 0xF0000000ULL) << 8) | ((field64 & 0xF00000ULL) << 12) | 
 						((field64 & 0xF000ULL) << 12) | ((field64 & 0xF0ULL) << 16) | ((field32 & 0xF0000000ULL) >> 12) |	
 						((field32 & 0xF00000ULL) >> 12) | ((field32 & 0xF000ULL) >> 8) | ((field32 & 0xF0ULL) >> 4);
 
-					field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+2]+x*12));
-					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+2]+x*12+8));
+					field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+2]+x12));
+					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+2]+x12+8));
 					((PNGU_u64 *) buffer)[blockbase+2] = 
 						alphaMask | ((field64 & 0xF000000000000000ULL) >> 4) | (field64 & 0xF0000000000000ULL) | ((field64 & 0xF00000000000ULL) << 4) | 
 						((field64 & 0xF000000000ULL) << 4) | ((field64 & 0xF0000000ULL) << 8) | ((field64 & 0xF00000ULL) << 12) | 
 						((field64 & 0xF000ULL) << 12) | ((field64 & 0xF0ULL) << 16) | ((field32 & 0xF0000000ULL) >> 12) |	
 						((field32 & 0xF00000ULL) >> 12) | ((field32 & 0xF000ULL) >> 8) | ((field32 & 0xF0ULL) >> 4);
 
-					field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+3]+x*12));
-					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+3]+x*12+8));
+					field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+3]+x12));
+					field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+3]+x12+8));
 					((PNGU_u64 *) buffer)[blockbase+3] = 
 						alphaMask | ((field64 & 0xF000000000000000ULL) >> 4) | (field64 & 0xF0000000000000ULL) | ((field64 & 0xF00000000000ULL) << 4) | 
 						((field64 & 0xF000000000ULL) << 4) | ((field64 & 0xF0000000ULL) << 8) | ((field64 & 0xF00000ULL) << 12) | 
@@ -554,7 +559,6 @@ int PNGU_DecodeTo4x4RGB5A3 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *b
 	return PNGU_OK;
 }
 
-
 int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffer, PNGU_u8 default_alpha)
 {
 	int result;
@@ -570,8 +574,8 @@ int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 		return result;
 
 	// Init some variables
-	qwidth = width / 4;
-	qheight = height / 4;
+	qwidth = width >> 2;
+	qheight = height >> 2;
 
 	// Check is source image has an alpha channel
 	if ( (ctx->prop.imgColorType == PNGU_COLOR_TYPE_GRAY_ALPHA) || (ctx->prop.imgColorType == PNGU_COLOR_TYPE_RGB_ALPHA) )
@@ -580,10 +584,13 @@ int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 		for (y = 0; y < qheight; y++)
 			for (x = 0; x < qwidth; x++)
 			{
-				int blockbase = (y * qwidth + x) * 8;
+				int blockbase = (y * qwidth + x) << 3;
 
-				PNGU_u64 fieldA = *((PNGU_u64 *)(ctx->row_pointers[y*4]+x*16));
-				PNGU_u64 fieldB = *((PNGU_u64 *)(ctx->row_pointers[y*4]+x*16+8));
+				PNGU_u32 y4 = y << 2;
+				PNGU_u32 x16 = x << 4;
+
+				PNGU_u64 fieldA = *((PNGU_u64 *)(ctx->row_pointers[y4]+x16));
+				PNGU_u64 fieldB = *((PNGU_u64 *)(ctx->row_pointers[y4]+x16+8));
 				((PNGU_u64 *) buffer)[blockbase] = 
 					((fieldA & 0xFF00000000ULL) << 24) | ((fieldA & 0xFF00000000000000ULL) >> 8) | 
 					((fieldA & 0xFFULL) << 40) | ((fieldA & 0xFF000000ULL) << 8) | 
@@ -593,8 +600,8 @@ int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 					((fieldA & 0xFFFF0000000000ULL) << 8) | ((fieldA & 0xFFFF00ULL) << 24) |
 					((fieldB & 0xFFFF0000000000ULL) >> 24) | ((fieldB & 0xFFFF00ULL) >> 8);
 
-				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y*4+1]+x*16));
-				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y*4+1]+x*16+8));
+				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y4+1]+x16));
+				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y4+1]+x16+8));
 				((PNGU_u64 *) buffer)[blockbase+1] = 
 					((fieldA & 0xFF00000000ULL) << 24) | ((fieldA & 0xFF00000000000000ULL) >> 8) | 
 					((fieldA & 0xFFULL) << 40) | ((fieldA & 0xFF000000ULL) << 8) | 
@@ -604,8 +611,8 @@ int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 					((fieldA & 0xFFFF0000000000ULL) << 8) | ((fieldA & 0xFFFF00ULL) << 24) |
 					((fieldB & 0xFFFF0000000000ULL) >> 24) | ((fieldB & 0xFFFF00ULL) >> 8);
 
-				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y*4+2]+x*16));
-				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y*4+2]+x*16+8));
+				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y4+2]+x16));
+				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y4+2]+x16+8));
 				((PNGU_u64 *) buffer)[blockbase+2] = 
 					((fieldA & 0xFF00000000ULL) << 24) | ((fieldA & 0xFF00000000000000ULL) >> 8) | 
 					((fieldA & 0xFFULL) << 40) | ((fieldA & 0xFF000000ULL) << 8) | 
@@ -615,8 +622,8 @@ int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 					((fieldA & 0xFFFF0000000000ULL) << 8) | ((fieldA & 0xFFFF00ULL) << 24) |
 					((fieldB & 0xFFFF0000000000ULL) >> 24) | ((fieldB & 0xFFFF00ULL) >> 8);
 
-				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y*4+3]+x*16));
-				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y*4+3]+x*16+8));
+				fieldA = *((PNGU_u64 *)(ctx->row_pointers[y4+3]+x16));
+				fieldB = *((PNGU_u64 *)(ctx->row_pointers[y4+3]+x16+8));
 				((PNGU_u64 *) buffer)[blockbase+3] = 
 					((fieldA & 0xFF00000000ULL) << 24) | ((fieldA & 0xFF00000000000000ULL) >> 8) | 
 					((fieldA & 0xFFULL) << 40) | ((fieldA & 0xFF000000ULL) << 8) | 
@@ -636,10 +643,13 @@ int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 		for (y = 0; y < qheight; y++)
 			for (x = 0; x < qwidth; x++)
 			{
-				int blockbase = (y * qwidth + x) * 8;
+				int blockbase = (y * qwidth + x) << 3;
 
-				PNGU_u64 field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4]+x*12));
-				PNGU_u64 field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4]+x*12+8));
+				PNGU_u32 y4 = y << 2;
+				PNGU_u32 x12 = x * 12;
+
+				PNGU_u64 field64 = *((PNGU_u64 *)(ctx->row_pointers[y4]+x12));
+				PNGU_u64 field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4]+x12+8));
 				((PNGU_u64 *) buffer)[blockbase] = 
 					(((field64 & 0xFF00000000000000ULL) >> 8) | (field64 & 0xFF00000000ULL) | 
 					((field64 & 0xFF00ULL) << 8) | ((field32 & 0xFF0000ULL) >> 16) | alphaMask);
@@ -647,8 +657,8 @@ int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 					(((field64 & 0xFFFF0000000000ULL) << 8) | ((field64 & 0xFFFF0000ULL) << 16) |
 					((field64 & 0xFFULL) << 24) | ((field32 & 0xFF000000ULL) >> 8) | (field32 & 0xFFFFULL));
 
-				field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+1]+x*12));
-				field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+1]+x*12+8));
+				field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+1]+x12));
+				field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+1]+x12+8));
 				((PNGU_u64 *) buffer)[blockbase+1] = 
 					(((field64 & 0xFF00000000000000ULL) >> 8) | (field64 & 0xFF00000000ULL) | 
 					((field64 & 0xFF00ULL) << 8) | ((field32 & 0xFF0000ULL) >> 16) | alphaMask);
@@ -656,8 +666,8 @@ int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 					(((field64 & 0xFFFF0000000000ULL) << 8) | ((field64 & 0xFFFF0000ULL) << 16) |
 					((field64 & 0xFFULL) << 24) | ((field32 & 0xFF000000ULL) >> 8) | (field32 & 0xFFFFULL));
 
-				field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+2]+x*12));
-				field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+2]+x*12+8));
+				field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+2]+x12));
+				field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+2]+x12+8));
 				((PNGU_u64 *) buffer)[blockbase+2] = 
 					(((field64 & 0xFF00000000000000ULL) >> 8) | (field64 & 0xFF00000000ULL) | 
 					((field64 & 0xFF00ULL) << 8) | ((field32 & 0xFF0000ULL) >> 16) | alphaMask);
@@ -665,8 +675,8 @@ int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 					(((field64 & 0xFFFF0000000000ULL) << 8) | ((field64 & 0xFFFF0000ULL) << 16) |
 					((field64 & 0xFFULL) << 24) | ((field32 & 0xFF000000ULL) >> 8) | (field32 & 0xFFFFULL));
 
-				field64 = *((PNGU_u64 *)(ctx->row_pointers[y*4+3]+x*12));
-				field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y*4+3]+x*12+8));
+				field64 = *((PNGU_u64 *)(ctx->row_pointers[y4+3]+x12));
+				field32 = (PNGU_u64) *((PNGU_u32 *)(ctx->row_pointers[y4+3]+x12+8));
 				((PNGU_u64 *) buffer)[blockbase+3] = 
 					(((field64 & 0xFF00000000000000ULL) >> 8) | (field64 & 0xFF00000000ULL) | 
 					((field64 & 0xFF00ULL) << 8) | ((field32 & 0xFF0000ULL) >> 16) | alphaMask);
@@ -683,7 +693,6 @@ int PNGU_DecodeTo4x4RGBA8 (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 	// Success
 	return PNGU_OK;
 }
-
 
 int PNGU_EncodeFromYCbYCr (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffer, PNGU_u32 stride)
 {
@@ -744,7 +753,7 @@ int PNGU_EncodeFromYCbYCr (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 	// Allocate memory to store the image in RGB format
 	rowbytes = width * 3;
 	if (rowbytes % 4)
-		rowbytes = ((rowbytes / 4) + 1) * 4; // Add extra padding so each row starts in a 4 byte boundary
+		rowbytes = ((rowbytes >> 2) + 1) << 2;
 
 	ctx->img_data = malloc (rowbytes * height);
 	if (!ctx->img_data)
@@ -765,16 +774,20 @@ int PNGU_EncodeFromYCbYCr (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *bu
 	}
 
 	// Encode YCbYCr image into RGB8 format
-	buffWidth = (width + stride) / 2;
+	buffWidth = (width + stride) >> 1;
+	PNGU_u32 wid2 = width >> 1;
 	for (y = 0; y < height; y++)
 	{
 		ctx->row_pointers[y] = ctx->img_data + (y * rowbytes);
 
-		for (x = 0; x < (width / 2); x++)
+		for (x = 0; x < wid2; ++x)
+		{
+			PNGU_u32 x6 = x*6;
 			PNGU_YCbYCr_TO_RGB8 ( ((PNGU_u32 *)buffer)[y*buffWidth+x], 
-				((PNGU_u8 *) ctx->row_pointers[y]+x*6), ((PNGU_u8 *) ctx->row_pointers[y]+x*6+1),
-				((PNGU_u8 *) ctx->row_pointers[y]+x*6+2), ((PNGU_u8 *) ctx->row_pointers[y]+x*6+3),
-				((PNGU_u8 *) ctx->row_pointers[y]+x*6+4), ((PNGU_u8 *) ctx->row_pointers[y]+x*6+5) );
+				((PNGU_u8 *) ctx->row_pointers[y]+x6), ((PNGU_u8 *) ctx->row_pointers[y]+x6+1),
+				((PNGU_u8 *) ctx->row_pointers[y]+x6+2), ((PNGU_u8 *) ctx->row_pointers[y]+x6+3),
+				((PNGU_u8 *) ctx->row_pointers[y]+x6+4), ((PNGU_u8 *) ctx->row_pointers[y]+x6+5) );
+		}
 	}
 
 	// Tell libpng where is our image data
@@ -856,7 +869,7 @@ int PNGU_EncodeFromRGB (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffe
 	// Allocate memory to store the image in RGB format
 	rowbytes = width * 3;
 	if (rowbytes % 4)
-		rowbytes = ((rowbytes / 4) + 1) * 4; // Add extra padding so each row starts in a 4 byte boundary
+		rowbytes = ((rowbytes >>2) + 1) <<2; // Add extra padding so each row starts in a 4 byte boundary
 		
 	ctx->img_data = malloc(rowbytes * height);
 	memset(ctx->img_data, 0, rowbytes * height);
@@ -880,7 +893,7 @@ int PNGU_EncodeFromRGB (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffe
 		return PNGU_LIB_ERROR;
 	}
 
-	for (y = 0; y < height; y++)
+	for (y = 0; y < height; ++y)
 	{
 		ctx->row_pointers[y] = buffer + (y * rowbytes);
 	}
@@ -907,7 +920,9 @@ int PNGU_EncodeFromRGB (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffe
 
 int PNGU_EncodeFromGXTexture (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void *buffer, PNGU_u32 stride)
 {
-	int x,y,res;
+	int res;
+	PNGU_u32 x,y, tmpy1, tmpy2, tmpyWid, tmpxy;
+
 	unsigned char * ptr = (unsigned char*)buffer;
 	unsigned char * tmpbuffer = (unsigned char *)malloc(width*height*3);
 	memset(tmpbuffer, 0, width*height*3);
@@ -915,13 +930,18 @@ int PNGU_EncodeFromGXTexture (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void 
 	
 	for(y=0; y < height; y++)
 	{
+		tmpy1 = y * 640*3;
+		tmpy2 = y%4 << 2;
+		tmpyWid = (((y >> 2)<<4)*width);
+
 		for(x=0; x < width; x++)
 		{
-			offset = (((y >> 2)<<4)*width) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
+			offset = tmpyWid + ((x >> 2)<<6) + ((tmpy2+ x%4 ) << 1);
+			tmpxy = x * 3 + tmpy1;
 
-			tmpbuffer[y*640*3+x*3] = ptr[offset+1]; // R
-			tmpbuffer[y*640*3+x*3+1] = ptr[offset+32]; // G
-			tmpbuffer[y*640*3+x*3+2] = ptr[offset+33]; // B
+			tmpbuffer[tmpxy  ] = ptr[offset+1]; // R
+			tmpbuffer[tmpxy+1] = ptr[offset+32]; // G
+			tmpbuffer[tmpxy+2] = ptr[offset+33]; // B
 		}
 	}
 	
@@ -933,31 +953,32 @@ int PNGU_EncodeFromGXTexture (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, void 
 // This function is taken from a libogc example
 PNGU_u32 PNGU_RGB8_TO_YCbYCr (PNGU_u8 r1, PNGU_u8 g1, PNGU_u8 b1, PNGU_u8 r2, PNGU_u8 g2, PNGU_u8 b2)
 {
-  int y1, cb1, cr1, y2, cb2, cr2, cb, cr;
-
-  y1 = (299 * r1 + 587 * g1 + 114 * b1) / 1000;
-  cb1 = (-16874 * r1 - 33126 * g1 + 50000 * b1 + 12800000) / 100000;
-  cr1 = (50000 * r1 - 41869 * g1 - 8131 * b1 + 12800000) / 100000;
- 
-  y2 = (299 * r2 + 587 * g2 + 114 * b2) / 1000;
-  cb2 = (-16874 * r2 - 33126 * g2 + 50000 * b2 + 12800000) / 100000;
-  cr2 = (50000 * r2 - 41869 * g2 - 8131 * b2 + 12800000) / 100000;
- 
-  cb = (cb1 + cb2) >> 1;
-  cr = (cr1 + cr2) >> 1;
- 
-  return (PNGU_u32) ((y1 << 24) | (cb << 16) | (y2 << 8) | cr);
+	PNGU_u32 y1, cb1, cr1, y2, cb2, cr2, cb, cr;
+	
+	y1 = (299 * r1 + 587 * g1 + 114 * b1) / 1000;
+	cb1 = (-16874 * r1 - 33126 * g1 + 50000 * b1 + 12800000) / 100000;
+	cr1 = (50000 * r1 - 41869 * g1 - 8131 * b1 + 12800000) / 100000;
+	
+	y2 = (299 * r2 + 587 * g2 + 114 * b2) / 1000;
+	cb2 = (-16874 * r2 - 33126 * g2 + 50000 * b2 + 12800000) / 100000;
+	cr2 = (50000 * r2 - 41869 * g2 - 8131 * b2 + 12800000) / 100000;
+	
+	cb = (cb1 + cb2) >> 1;
+	cr = (cr1 + cr2) >> 1;
+	
+	return (PNGU_u32) ((y1 << 24) | (cb << 16) | (y2 << 8) | cr);
 }
-
 
 void PNGU_YCbYCr_TO_RGB8 (PNGU_u32 ycbycr, PNGU_u8 *r1, PNGU_u8 *g1, PNGU_u8 *b1, PNGU_u8 *r2, PNGU_u8 *g2, PNGU_u8 *b2)
 {
 	PNGU_u8 *val = (PNGU_u8 *) &ycbycr;
-	int r, g, b;
 
-	r = 1.371f * (val[3] - 128);
-	g = - 0.698f * (val[3] - 128) - 0.336f * (val[1] - 128);
-	b = 1.732f * (val[1] - 128);
+	float val1 = (float)((int)(val[1]) - 128);
+	float val3 = (float)((int)(val[3]) - 128);
+	
+	int r = (int)(1.371f * val3);
+	int g = (int)(- 0.698f * val3 - 0.336f * val1);
+	int b = (int)(1.732f * val1);
 
 	*r1 = pngu_clamp (val[0] + r, 0, 255);
 	*g1 = pngu_clamp (val[0] + g, 0, 255);
@@ -1044,6 +1065,8 @@ int pngu_info (IMGCTX ctx)
 	// Query image properties if they have not been queried before
 	if (!ctx->propRead)
 	{
+		int ctxNumTrans;
+
 		png_get_IHDR(ctx->png_ptr, ctx->info_ptr, &width, &height,
 					(int *) &(ctx->prop.imgBitDepth), 
 					(int *) &(ctx->prop.imgColorType),
@@ -1074,60 +1097,88 @@ int pngu_info (IMGCTX ctx)
 		}
 
 		// Constant used to scale 16 bit values to 8 bit values
-		scale = 1;
+		scale = 0;
 		if (ctx->prop.imgBitDepth == 16)
-			scale = 256;
+			scale = 8;
 
 		// Query background color, if any.
 		ctx->prop.validBckgrnd = 0;
-		if (((ctx->prop.imgColorType == PNGU_COLOR_TYPE_RGB) || (ctx->prop.imgColorType == PNGU_COLOR_TYPE_RGB_ALPHA)) &&
-			(png_get_bKGD (ctx->png_ptr, ctx->info_ptr, &background)))
-		{
-			ctx->prop.validBckgrnd = 1;
-			ctx->prop.bckgrnd.r = background->red / scale;
-			ctx->prop.bckgrnd.g = background->green / scale;
-			ctx->prop.bckgrnd.b = background->blue / scale;
-		}
-		else if (((ctx->prop.imgColorType == PNGU_COLOR_TYPE_GRAY) || (ctx->prop.imgColorType == PNGU_COLOR_TYPE_GRAY_ALPHA)) &&
-			(png_get_bKGD (ctx->png_ptr, ctx->info_ptr, &background)))
-		{
-			ctx->prop.validBckgrnd = 1;
-			ctx->prop.bckgrnd.r = ctx->prop.bckgrnd.g = ctx->prop.bckgrnd.b = background->gray / scale;
-		}
 
-		// Query list of transparent colors, if any.
-		ctx->prop.numTrans = 0;
-		ctx->prop.trans = NULL;
-		if (((ctx->prop.imgColorType == PNGU_COLOR_TYPE_RGB) || (ctx->prop.imgColorType == PNGU_COLOR_TYPE_RGB_ALPHA)) &&
-			(png_get_tRNS (ctx->png_ptr, ctx->info_ptr, &trans, (int *) &(ctx->prop.numTrans), &trans_values)))
+		switch(ctx->prop.imgColorType)
 		{
-			if (ctx->prop.numTrans)
+			case PNGU_COLOR_TYPE_RGB:
+			case PNGU_COLOR_TYPE_RGB_ALPHA:
 			{
-				ctx->prop.trans = malloc (sizeof (PNGUCOLOR) * ctx->prop.numTrans);
-				if (ctx->prop.trans)
-					for (i = 0; i < ctx->prop.numTrans; i++)
-					{
-						ctx->prop.trans[i].r = trans_values[i].red / scale;
-						ctx->prop.trans[i].g = trans_values[i].green / scale;
-						ctx->prop.trans[i].b = trans_values[i].blue / scale;
+				if(png_get_bKGD (ctx->png_ptr, ctx->info_ptr, &background)){
+					ctx->prop.validBckgrnd = 1;
+					ctx->prop.bckgrnd.r = background->red >> scale;
+					ctx->prop.bckgrnd.g = background->green >> scale;
+					ctx->prop.bckgrnd.b = background->blue >> scale;
+				}
+				
+				// Query list of transparent colors, if any.
+				ctx->prop.numTrans = 0;
+				ctx->prop.trans = NULL;
+				
+				if(png_get_tRNS (ctx->png_ptr, ctx->info_ptr, &trans, (int *) &(ctx->prop.numTrans), &trans_values)){
+					ctxNumTrans = ctx->prop.numTrans;
+					if(ctxNumTrans){
+						ctx->prop.trans = malloc (sizeof (PNGUCOLOR) * ctxNumTrans);
+						if (ctx->prop.trans)
+							for (i = 0; i < ctxNumTrans; i++)
+							{
+								ctx->prop.trans[i].r = trans_values[i].red >> scale;
+								ctx->prop.trans[i].g = trans_values[i].green >> scale;
+								ctx->prop.trans[i].b = trans_values[i].blue >> scale;
+							}
+						else
+							ctx->prop.numTrans = 0;
 					}
-				else
-					ctx->prop.numTrans = 0;
+				}
+				
 			}
-		}
-		else if (((ctx->prop.imgColorType == PNGU_COLOR_TYPE_GRAY) || (ctx->prop.imgColorType == PNGU_COLOR_TYPE_GRAY_ALPHA)) &&
-			(png_get_tRNS (ctx->png_ptr, ctx->info_ptr, &trans, (int *) &(ctx->prop.numTrans), &trans_values)))
-		{
-			if (ctx->prop.numTrans)
+			break;
+			
+			case PNGU_COLOR_TYPE_GRAY:
+			case PNGU_COLOR_TYPE_GRAY_ALPHA:
 			{
-				ctx->prop.trans = malloc (sizeof (PNGUCOLOR) * ctx->prop.numTrans);
-				if (ctx->prop.trans)
-					for (i = 0; i < ctx->prop.numTrans; i++)
-						ctx->prop.trans[i].r = ctx->prop.trans[i].g = ctx->prop.trans[i].b = 
-						trans_values[i].gray / scale;
-				else
-					ctx->prop.numTrans = 0;
+				if(png_get_bKGD (ctx->png_ptr, ctx->info_ptr, &background)){
+					ctx->prop.validBckgrnd = 1;
+					ctx->prop.bckgrnd.r = 
+					ctx->prop.bckgrnd.g = 
+					ctx->prop.bckgrnd.b = background->gray >> scale;
+				}
+				
+				// Query list of transparent colors, if any.
+				ctx->prop.numTrans = 0;
+				ctx->prop.trans = NULL;
+				
+				if(png_get_tRNS (ctx->png_ptr, ctx->info_ptr, &trans, (int *) &(ctx->prop.numTrans), &trans_values)){
+					ctxNumTrans = ctx->prop.numTrans;
+					if(ctxNumTrans){
+						ctx->prop.trans = malloc (sizeof (PNGUCOLOR) * ctxNumTrans);
+						if (ctx->prop.trans)
+							for (i = 0; i < ctxNumTrans; i++)
+								ctx->prop.trans[i].r = 
+								ctx->prop.trans[i].g = 
+								ctx->prop.trans[i].b = trans_values[i].gray >> scale;
+						else
+							ctx->prop.numTrans = 0;
+					}
+				}
+				
 			}
+			break;
+			
+			default:
+			
+			// It was none of those things, 
+			{
+				// Query list of transparent colors, if any.
+				ctx->prop.numTrans = 0;
+				ctx->prop.trans = NULL;
+			}
+			break;
 		}
 
 		ctx->propRead = 1;
@@ -1139,18 +1190,17 @@ int pngu_info (IMGCTX ctx)
 	return PNGU_OK;
 }
 
-
 int pngu_decode (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, PNGU_u32 stripAlpha)
 {
 	png_uint_32 rowbytes;
-	int i;
+	png_uint_32 i, propImgHeight;
 
 	// Read info if it hasn't been read before
 	if (!ctx->infoRead)
 	{
-		i = pngu_info (ctx);
-		if (i != PNGU_OK)
-			return i;
+		int c = pngu_info (ctx);
+		if (c != PNGU_OK)
+			return c;
 	}
 
 	// Check if the user has specified the real width and height of the image
@@ -1182,8 +1232,9 @@ int pngu_decode (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, PNGU_u32 stripAlph
 
 	// Allocate memory to store the image
 	rowbytes = png_get_rowbytes (ctx->png_ptr, ctx->info_ptr);
-	if (rowbytes % 4)
-		rowbytes = ((rowbytes / 4) + 1) * 4; // Add extra padding so each row starts in a 4 byte boundary
+
+	if (rowbytes & 3)
+		rowbytes = ((rowbytes >> 2) + 1) << 2; // Add extra padding so each row starts in a 4 byte boundary
 
 	ctx->img_data = malloc (rowbytes * ctx->prop.imgHeight);
 	if (!ctx->img_data)
@@ -1200,7 +1251,8 @@ int pngu_decode (IMGCTX ctx, PNGU_u32 width, PNGU_u32 height, PNGU_u32 stripAlph
 		return PNGU_LIB_ERROR;
 	}
 
-	for (i = 0; i < ctx->prop.imgHeight; i++)
+	propImgHeight = ctx->prop.imgHeight;
+	for (i = 0; i < propImgHeight; ++i)
 		ctx->row_pointers[i] = ctx->img_data + (i * rowbytes);
 
 	// Transform the image and copy it to our allocated memory
@@ -1263,4 +1315,3 @@ int pngu_clamp (int value, int min, int max)
 
 	return value;
 }
-

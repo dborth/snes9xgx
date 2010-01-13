@@ -54,7 +54,7 @@ void ClearFontData()
 }
 
 /**
- * Convert a short char sctring to a wide char string.
+ * Convert a short char string to a wide char string.
  *
  * This routine converts a supplied shot character string into a wide character string.
  * Note that it is the user's responsibility to clear the returned buffer once it is no longer needed.
@@ -190,7 +190,7 @@ void FreeTypeGX::unloadFont()
 {
 	if(this->fontData.size() == 0)
 		return;
-	for(std::map<wchar_t, ftgxCharData>::iterator i = this->fontData.begin(); i != this->fontData.end(); i++)
+	for(std::map<wchar_t, ftgxCharData>::iterator i = this->fontData.begin(), iEnd = this->fontData.end(); i != iEnd; ++i)
 		free(i->second.glyphDataTexture);
 	this->fontData.clear();
 }
@@ -310,16 +310,16 @@ ftgxCharData *FreeTypeGX::cacheGlyphData(wchar_t charCode)
  */
 uint16_t FreeTypeGX::cacheGlyphDataComplete()
 {
-	uint16_t i = 0;
+	uint32_t i = 0;
 	FT_UInt gIndex;
 	FT_ULong charCode = FT_Get_First_Char( ftFace, &gIndex );
 	while ( gIndex != 0 )
 	{
 		if(this->cacheGlyphData(charCode) != NULL)
-			i++;
+			++i;
 		charCode = FT_Get_Next_Char( ftFace, charCode, &gIndex );
 	}
-	return i;
+	return (uint16_t)(i);
 }
 
 /**
@@ -336,11 +336,13 @@ void FreeTypeGX::loadGlyphData(FT_Bitmap *bmp, ftgxCharData *charData)
 	uint32_t *glyphData = (uint32_t *)memalign(32, charData->textureWidth * charData->textureHeight * 4);
 	memset(glyphData, 0x00, charData->textureWidth * charData->textureHeight * 4);
 
-	for (uint16_t imagePosY = 0; imagePosY < bmp->rows; imagePosY++)
+	uint32_t bmprows = bmp->rows;
+	uint32_t bmpwid = bmp->width;
+	for (uint32_t imagePosY = 0; imagePosY < bmprows; imagePosY++)
 	{
-		for (uint16_t imagePosX = 0; imagePosX < bmp->width; imagePosX++)
+		for (uint32_t imagePosX = 0; imagePosX < bmpwid; imagePosX++)
 		{
-			uint32_t pixel = (uint32_t) bmp->buffer[imagePosY * bmp->width + imagePosX];
+			uint32_t pixel = (uint32_t) bmp->buffer[imagePosY * bmpwid + imagePosX];
 			glyphData[imagePosY * charData->textureWidth + imagePosX] = 0x00000000 | (pixel << 24) | (pixel << 16) | (pixel << 8) | pixel;
 		}
 	}
@@ -444,7 +446,7 @@ int16_t FreeTypeGX::getStyleOffsetHeight(ftgxDataOffset *offset, uint16_t format
  */
 uint16_t FreeTypeGX::drawText(int16_t x, int16_t y, wchar_t *text, GXColor color, uint16_t textStyle)
 {
-	uint16_t strLength = wcslen(text);
+	uint32_t strLength = wcslen(text);
 	uint16_t x_pos = x, printed = 0;
 	uint16_t x_offset = 0, y_offset = 0;
 	GXTexObj glyphTexture;
@@ -461,10 +463,12 @@ uint16_t FreeTypeGX::drawText(int16_t x, int16_t y, wchar_t *text, GXColor color
 		y_offset = this->getStyleOffsetHeight(&offset, textStyle);
 	}
 
-	for (uint16_t i = 0; i < strLength; i++)
+	std::map<wchar_t, ftgxCharData>::iterator thisEnd =this->fontData.end();
+
+	for (uint32_t i = 0; i < strLength; ++i)
 	{
 		ftgxCharData* glyphData = NULL;
-		if( this->fontData.find(text[i]) != this->fontData.end() )
+		if( this->fontData.find(text[i]) !=  thisEnd)
 		{
 			glyphData = &this->fontData[text[i]];
 		}
@@ -485,7 +489,7 @@ uint16_t FreeTypeGX::drawText(int16_t x, int16_t y, wchar_t *text, GXColor color
 			this->copyTextureToFramebuffer(&glyphTexture, glyphData->textureWidth, glyphData->textureHeight, x_pos + glyphData->renderOffsetX + x_offset, y - glyphData->renderOffsetY + y_offset, color);
 
 			x_pos += glyphData->glyphAdvanceX;
-			printed++;
+			++printed;
 		}
 	}
 
@@ -528,15 +532,16 @@ void FreeTypeGX::drawTextFeature(int16_t x, int16_t y, uint16_t width, ftgxDataO
  */
 uint16_t FreeTypeGX::getWidth(wchar_t *text)
 {
-	uint16_t strLength = wcslen(text);
-	uint16_t strWidth = 0;
 	FT_Vector pairDelta;
+	uint32_t strLength = wcslen(text);
+	uint16_t strWidth = 0;
 
-	for (uint16_t i = 0; i < strLength; i++)
-	{
+	std::map<wchar_t, ftgxCharData>::iterator thisEnd =this->fontData.end();
 
+	for (uint32_t i = 0; i < strLength; ++i){
+	
 		ftgxCharData* glyphData = NULL;
-		if( this->fontData.find(text[i]) != this->fontData.end() )
+		if( this->fontData.find(text[i]) !=  thisEnd)
 		{
 			glyphData = &this->fontData[text[i]];
 		}
@@ -604,14 +609,15 @@ uint16_t FreeTypeGX::getHeight(wchar_t const *text)
  */
 void FreeTypeGX::getOffset(wchar_t *text, ftgxDataOffset* offset)
 {
-	uint16_t strLength = wcslen(text);
+	uint32_t strLength = wcslen(text);
 	int16_t strMax = 0, strMin = 9999;
+	
+	std::map<wchar_t, ftgxCharData>::iterator thisEnd =this->fontData.end();
 
-	for (uint16_t i = 0; i < strLength; i++)
+	for (uint32_t i = 0; i < strLength; ++i)
 	{
-
 		ftgxCharData* glyphData = NULL;
-		if( this->fontData.find(text[i]) != this->fontData.end() )
+		if( this->fontData.find(text[i]) !=  thisEnd)
 		{
 			glyphData = &this->fontData[text[i]];
 		}
