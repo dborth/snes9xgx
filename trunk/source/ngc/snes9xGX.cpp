@@ -346,7 +346,7 @@ void USBGeckoOutput()
 int
 main(int argc, char *argv[])
 {
-	//USBGeckoOutput(); // uncomment to enable USB gecko output
+	USBGeckoOutput(); // uncomment to enable USB gecko output
 	__exception_setreload(8);
 
 	#ifdef HW_DOL

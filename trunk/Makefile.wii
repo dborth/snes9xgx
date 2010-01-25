@@ -18,7 +18,7 @@ include $(DEVKITPPC)/wii_rules
 TARGET		:=	snes9xgx-wii
 TARGETDIR   :=  executables
 BUILD		:=	build_wii
-SOURCES		:=	source/ngc/images source/ngc/sounds source/ngc/fonts \
+SOURCES		:=	source/ngc/images source/ngc/sounds source/ngc/fonts source/ngc/lang \
 				source/ngc/gui source/ngc source/snes9x source/sz source/unzip
 INCLUDES	:=	source/snes9x source/ngc source/unzip
 
@@ -71,6 +71,7 @@ CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 TTFFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.ttf)))
+LANGFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.lang)))
 PNGFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.png)))
 OGGFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.ogg)))
 PCMFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.pcm)))
@@ -86,7 +87,8 @@ endif
 
 export OFILES	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
 					$(sFILES:.s=.o) $(SFILES:.S=.o) \
-					$(TTFFILES:.ttf=.ttf.o) $(PNGFILES:.png=.png.o) \
+					$(TTFFILES:.ttf=.ttf.o) $(LANGFILES:.lang=.lang.o) \
+					$(PNGFILES:.png=.png.o) \
 					$(OGGFILES:.ogg=.ogg.o) $(PCMFILES:.pcm=.pcm.o)
 
 #---------------------------------------------------------------------------------
@@ -138,9 +140,13 @@ $(OUTPUT).dol: $(OUTPUT).elf
 $(OUTPUT).elf: $(OFILES)
 
 #---------------------------------------------------------------------------------
-# This rule links in binary data with .ttf, .png, and .mp3 extensions
+# This rule links in binary data with these extensions: ttf lang png ogg pcm
 #---------------------------------------------------------------------------------
 %.ttf.o : %.ttf
+	@echo $(notdir $<)
+	$(bin2o)
+	
+%.lang.o : %.lang
 	@echo $(notdir $<)
 	$(bin2o)
 

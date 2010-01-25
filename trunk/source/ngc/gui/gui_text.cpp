@@ -9,6 +9,7 @@
  ***************************************************************************/
 
 #include "gui.h"
+#include "../gettext.h"
 
 static GXColor presetColor = (GXColor){255, 255, 255, 255};
 static int currentSize = 0;
@@ -46,7 +47,7 @@ GuiText::GuiText(const char * t, int s, GXColor c)
 	if(t)
 	{
 		origText = strdup(t);
-		text = charToWideChar(t);
+		text = charToWideChar(gettext(t));
 	}
 }
 
@@ -75,7 +76,7 @@ GuiText::GuiText(const char * t)
 	if(t)
 	{
 		origText = strdup(t);
-		text = charToWideChar(t);
+		text = charToWideChar(gettext(t));
 	}
 }
 
@@ -110,7 +111,7 @@ void GuiText::SetText(const char * t)
 	if(t)
 	{
 		origText = strdup(t);
-		text = charToWideChar(t);
+		text = charToWideChar(gettext(t));
 	}
 }
 
@@ -198,6 +199,16 @@ void GuiText::SetAlignment(int hor, int vert)
 
 	alignmentHor = hor;
 	alignmentVert = vert;
+}
+
+void GuiText::ResetText()
+{
+	if(!origText)
+		return;
+	if(text)
+		delete[] text;
+
+	text = charToWideChar(gettext(origText));
 }
 
 /**

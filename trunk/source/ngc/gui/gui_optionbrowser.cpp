@@ -134,6 +134,12 @@ GuiOptionBrowser::~GuiOptionBrowser()
 	}
 }
 
+void GuiOptionBrowser::SetCol1Position(int x)
+{
+	for(int i=0; i<PAGESIZE; i++)
+		optionTxt[i]->SetPosition(x,0);
+}
+
 void GuiOptionBrowser::SetCol2Position(int x)
 {
 	for(int i=0; i<PAGESIZE; i++)
@@ -232,6 +238,22 @@ void GuiOptionBrowser::Draw()
 void GuiOptionBrowser::TriggerUpdate()
 {
 	listChanged = true;
+}
+
+void GuiOptionBrowser::ResetText()
+{
+	int next = listOffset;
+
+	for(int i=0; i<PAGESIZE; i++)
+	{
+		if(next >= 0)
+		{
+			optionBtn[i]->ResetText();
+			next = this->FindMenuItem(next, 1);
+		}
+		else
+			break;
+	}
 }
 
 void GuiOptionBrowser::Update(GuiTrigger * t)
