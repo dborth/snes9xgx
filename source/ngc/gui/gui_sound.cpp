@@ -42,7 +42,7 @@ void GuiSound::Play()
 	switch(type)
 	{
 		case SOUND_PCM:
-		vol = 255*(volume/100.0)*(GCSettings.SFXVolume/100.0);
+		vol = 2.55f*(volume*GCSettings.SFXVolume);
 		voice = ASND_GetFirstUnusedVoice();
 		if(voice >= 0)
 			ASND_SetVoice(voice, VOICE_STEREO_16BIT, 48000, 0,
@@ -55,7 +55,7 @@ void GuiSound::Play()
 			PlayOgg((char *)sound, length, 0, OGG_INFINITE_TIME);
 		else
 			PlayOgg((char *)sound, length, 0, OGG_ONE_TIME);
-		SetVolumeOgg(255*(volume/100.0));
+		SetVolumeOgg(2.55f*(volume));
 		break;
 	}
 	#endif
@@ -134,7 +134,7 @@ void GuiSound::SetVolume(int vol)
 	if(voice < 0)
 		return;
 
-	int newvol = 255*(volume/100.0)*(GCSettings.SFXVolume/100.0);
+	int newvol = 2.55f*(volume*GCSettings.SFXVolume);
 
 	switch(type)
 	{
@@ -143,7 +143,7 @@ void GuiSound::SetVolume(int vol)
 		break;
 
 		case SOUND_OGG:
-		SetVolumeOgg(255*(volume/100.0));
+		SetVolumeOgg(2.55f*(volume));
 		break;
 	}
 	#endif

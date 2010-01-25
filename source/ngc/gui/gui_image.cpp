@@ -53,7 +53,7 @@ GuiImage::GuiImage(u8 * img, int w, int h)
 
 GuiImage::GuiImage(int w, int h, GXColor c)
 {
-	image = (u8 *)memalign (32, w * h * 4);
+	image = (u8 *)memalign (32, w * h << 2);
 	width = w;
 	height = h;
 	imageangle = 0;
@@ -66,14 +66,14 @@ GuiImage::GuiImage(int w, int h, GXColor c)
 
 	int x, y;
 
-	for(y=0; y < h; y++)
+	for(y=0; y < h; ++y)
 	{
-		for(x=0; x < w; x++)
+		for(x=0; x < w; ++x)
 		{
 			this->SetPixel(x, y, c);
 		}
 	}
-	int len = w*h*4;
+	int len = w * h << 2;
 	if(len%32) len += (32-len%32);
 	DCFlushRange(image, len);
 }
@@ -157,21 +157,24 @@ void GuiImage::SetStripe(int s)
 
 void GuiImage::ColorStripe(int shift)
 {
-	int x, y;
 	GXColor color;
+	int x, y=0;
 	int alt = 0;
+	
+	int thisHeight =  this->GetHeight();
+	int thisWidth =  this->GetWidth();
 
-	for(y=0; y < this->GetHeight(); y++)
+	for(; y < thisHeight; ++y)
 	{
 		if(y % 3 == 0)
 			alt ^= 1;
 
-		for(x=0; x < this->GetWidth(); x++)
+		if(alt)
 		{
-			color = GetPixel(x, y);
-
-			if(alt)
+			for(x=0; x < thisWidth; ++x)
 			{
+				color = GetPixel(x, y);
+
 				if(color.r < 255-shift)
 					color.r += shift;
 				else
@@ -186,9 +189,15 @@ void GuiImage::ColorStripe(int shift)
 					color.b = 255;
 
 				color.a = 255;
+				SetPixel(x, y, color);
 			}
-			else
+		}
+		else
+		{
+			for(x=0; x < thisWidth; ++x)
 			{
+				color = GetPixel(x, y);
+
 				if(color.r > shift)
 					color.r -= shift;
 				else
@@ -203,8 +212,8 @@ void GuiImage::ColorStripe(int shift)
 					color.b = 0;
 
 				color.a = 255;
+				SetPixel(x, y, color);
 			}
-			SetPixel(x, y, color);
 		}
 	}
 }
@@ -219,24 +228,31 @@ void GuiImage::Draw()
 
 	float currScale = this->GetScale();
 	int currLeft = this->GetLeft();
+	int thisTop = this->GetTop();
 
 	if(tile > 0)
 	{
-		for(int i=0; i<tile; i++)
-			Menu_DrawImg(currLeft+width*i, this->GetTop(), width, height, image, imageangle, currScale, currScale, this->GetAlpha());
+		int alpha = this->GetAlpha();
+		for(int i=0; i<tile; ++i)
+		{
+			Menu_DrawImg(currLeft+width*i, thisTop, width, height, image, imageangle, currScale, currScale, alpha);
+		}
 	}
 	else
 	{
 		// temporary (maybe), used to correct offset for scaled images
 		if(scale != 1)
-			currLeft = currLeft - width/2 + (width*scale)/2;
+			currLeft += (width*(scale - 1))/2;
 
-		Menu_DrawImg(currLeft, this->GetTop(), width, height, image, imageangle, currScale, currScale, this->GetAlpha());
+		Menu_DrawImg(currLeft, thisTop, width, height, image, imageangle, currScale, currScale, this->GetAlpha());
 	}
 
 	if(stripe > 0)
-		for(int y=0; y < this->GetHeight(); y+=6)
-			Menu_DrawRectangle(currLeft,this->GetTop()+y,this->GetWidth(),3,(GXColor){0, 0, 0, stripe},1);
-
+	{
+		int thisHeight = this->GetHeight();
+		int thisWidth = this->GetWidth();
+		for(int y=0; y < thisHeight; y+=6)
+			Menu_DrawRectangle(currLeft,thisTop+y,thisWidth,3,(GXColor){0, 0, 0, stripe},1);
+	}
 	this->UpdateEffects();
 }

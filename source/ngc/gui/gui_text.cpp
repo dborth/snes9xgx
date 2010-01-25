@@ -10,13 +10,13 @@
 
 #include "gui.h"
 
+static GXColor presetColor = (GXColor){255, 255, 255, 255};
 static int currentSize = 0;
 static int presetSize = 0;
 static int presetMaxWidth = 0;
 static int presetAlignmentHor = 0;
 static int presetAlignmentVert = 0;
 static u16 presetStyle = 0;
-static GXColor presetColor = (GXColor){255, 255, 255, 255};
 
 #define TEXT_SCROLL_DELAY			8
 #define	TEXT_SCROLL_INITIAL_DELAY	6
@@ -230,7 +230,7 @@ void GuiText::Draw()
 	if(maxWidth > 0)
 	{
 		char * tmpText = strdup(origText);
-		u8 maxChar = (maxWidth*2.0) / newSize;
+		u8 maxChar = int((float((maxWidth<<1))) / (float(newSize)));
 
 		if(!textDyn)
 		{
@@ -247,11 +247,11 @@ void GuiText::Draw()
 			{
 				if(textScrollInitialDelay)
 				{
-					textScrollInitialDelay--;
+					--textScrollInitialDelay;
 				}
 				else
 				{
-					textScrollPos++;
+					++textScrollPos;
 					if(textScrollPos > textlen-1)
 					{
 						textScrollPos = 0;
@@ -306,12 +306,12 @@ void GuiText::Draw()
 							lastSpace = -1; // we have used this space
 							lastSpaceIndex = -1;
 						}
-						linenum++;
+						++linenum;
 						i = -1;
 					}
 					else if(ch == txtlen-1)
 					{
-						linenum++;
+						++linenum;
 					}
 				}
 				if(text[ch] == ' ' && i >= 0)
@@ -319,18 +319,21 @@ void GuiText::Draw()
 					lastSpace = ch;
 					lastSpaceIndex = i;
 				}
-				ch++;
-				i++;
+				++ch;
+				++i;
 			}
 
 			int voffset = 0;
 
 			if(alignmentVert == ALIGN_MIDDLE)
-				voffset = -(lineheight*linenum)/2 + lineheight/2;
+				voffset = (lineheight >> 1) * (1-linenum);
 
-			for(i=0; i < linenum; i++)
+			int left = this->GetLeft();
+			int top  = this->GetTop() + voffset;
+
+			for(i=0; i < linenum; ++i)
 			{
-				fontSystem[currentSize]->drawText(this->GetLeft(), this->GetTop()+voffset+i*lineheight, textrow[i], c, style);
+				fontSystem[currentSize]->drawText(left, top+i*lineheight, textrow[i], c, style);
 				delete[] textrow[i];
 			}
 		}

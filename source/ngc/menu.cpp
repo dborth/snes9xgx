@@ -264,19 +264,23 @@ UpdateGUI (void *arg)
 		mainWindow->Draw();
 
 		#ifdef HW_RVL
-		for(i=3; i >= 0; i--) // so that player 1's cursor appears on top!
+		i = 3;
+		do
 		{
 			if(userInput[i].wpad->ir.valid)
 				Menu_DrawImg(userInput[i].wpad->ir.x-48, userInput[i].wpad->ir.y-48,
 					96, 96, pointer[i]->GetImage(), userInput[i].wpad->ir.angle, 1, 1, 255);
 			DoRumble(i);
-		}
+			--i;
+		} while(i>=0);
 		#endif
 
 		Menu_Render();
 
-		for(i=3; i >= 0; i--)
-			mainWindow->Update(&userInput[i]);
+		mainWindow->Update(&userInput[3]);
+		mainWindow->Update(&userInput[2]);
+		mainWindow->Update(&userInput[1]);
+		mainWindow->Update(&userInput[0]);
 
 		#ifdef HW_RVL
 		if(updateFound)
@@ -416,12 +420,12 @@ ProgressWindow(char *title, char *msg)
 		{
 			if(count % 5 == 0)
 			{
-				angle+=45;
-				if(angle >= 360)
+				angle+=45.0f;
+				if(angle >= 360.0f)
 					angle = 0;
 				throbberImg.SetAngle(angle);
 			}
-			count++;
+			++count;
 		}
 	}
 
@@ -844,22 +848,25 @@ static void WindowCredits(void * ptr)
 		bgTopImg->Draw();
 		creditsWindow.Draw();
 
-		for(i=3; i >= 0; i--)
-		{
-			#ifdef HW_RVL
-			if(userInput[i].wpad->ir.valid)
-				Menu_DrawImg(userInput[i].wpad->ir.x-48, userInput[i].wpad->ir.y-48,
-					96, 96, pointer[i]->GetImage(), userInput[i].wpad->ir.angle, 1, 1, 255);
+		#ifdef HW_RVL
+		i = 3;
+		do {	
+		if(userInput[i].wpad->ir.valid)
+			Menu_DrawImg(userInput[i].wpad->ir.x-48, userInput[i].wpad->ir.y-48,
+				96, 96, pointer[i]->GetImage(), userInput[i].wpad->ir.angle, 1, 1, 255);
 			DoRumble(i);
-			#endif
-		}
+			--i;
+		} while(i >= 0);
+		#endif
 
 		Menu_Render();
 
-		for(i=0; i < 4; i++)
+		if((userInput[0].wpad->btns_d || userInput[0].pad.btns_d) ||
+		   (userInput[1].wpad->btns_d || userInput[1].pad.btns_d) ||
+		   (userInput[2].wpad->btns_d || userInput[2].pad.btns_d) ||
+		   (userInput[3].wpad->btns_d || userInput[3].pad.btns_d))
 		{
-			if(userInput[i].wpad->btns_d || userInput[i].pad.btns_d)
-				exit = true;
+			exit = true;
 		}
 		usleep(THREAD_SLEEP);
 	}
@@ -1362,7 +1369,7 @@ static int MenuGame()
 			if(WPAD_Probe(i, NULL) == WPAD_ERR_NONE)
 			{
 				newStatus = true;
-				newLevel = (userInput[i].wpad->battery_level / 100.0) * 4;
+				newLevel = int(userInput[i].wpad->battery_level / 100.0) << 2;
 				if(newLevel > 4) newLevel = 4;
 			}
 			else

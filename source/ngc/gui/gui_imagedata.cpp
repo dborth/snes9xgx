@@ -31,7 +31,7 @@ GuiImageData::GuiImageData(const u8 * i)
 
 		if(res == PNGU_OK)
 		{
-			int len = imgProp.imgWidth * imgProp.imgHeight * 4;
+			int len = (imgProp.imgWidth * imgProp.imgHeight) <<2;
 			if(len%32) len += (32-len%32);
 			data = (u8 *)memalign (32, len);
 

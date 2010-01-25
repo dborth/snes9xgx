@@ -107,7 +107,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 		saveBtn[i]->SetImageOver(saveBgOverImg[i]);
 		saveBtn[i]->SetIcon(savePreviewImg[i]);
 		saveBtn[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
-		saveBtn[i]->SetPosition(257*(i % 2),87*(i/2));
+		saveBtn[i]->SetPosition(257*(i % 2),87*(i>>1));
 		saveBtn[i]->SetTrigger(trigA);
 		saveBtn[i]->SetState(STATE_DISABLED);
 		saveBtn[i]->SetEffectGrow();
@@ -257,7 +257,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		if(selectedItem == 0)
 		{
 			if((listOffset - 2 >= 0 && action == 0) ||
-				(listOffset - 2 >= -2 && action == 1))
+				(listOffset >= 0 && action == 1))
 			{
 				// move list up by 1
 				listOffset -= 2;
@@ -295,7 +295,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		if(selectedItem < 2)
 		{
 			if((listOffset - 2 >= 0 && action == 0) ||
-				(listOffset - 2 >= -2 && action == 1))
+				(listOffset >= 0 && action == 1))
 			{
 				// move list up by 1
 				listOffset -= 2;

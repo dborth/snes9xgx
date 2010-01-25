@@ -130,23 +130,48 @@ void GuiButton::Draw()
 	if(!this->IsVisible())
 		return;
 
-	// draw image
-	if((state == STATE_SELECTED || state == STATE_HELD) && imageOver)
-		imageOver->Draw();
-	else if(image)
-		image->Draw();
-	// draw icon
-	if((state == STATE_SELECTED || state == STATE_HELD) && iconOver)
-		iconOver->Draw();
-	else if(icon)
-		icon->Draw();
-	// draw text
-	for(int i=0; i<3; i++)
+	if(state == STATE_SELECTED || state == STATE_HELD)
 	{
-		if((state == STATE_SELECTED || state == STATE_HELD) && labelOver[i])
-			labelOver[i]->Draw();
-		else if(label[i])
-			label[i]->Draw();
+		if(imageOver)
+			imageOver->Draw();
+		else if(image) // draw image
+			image->Draw();
+
+		if(iconOver)
+			iconOver->Draw();
+		else if(icon) // draw icon
+			icon->Draw();
+
+		// draw text
+		if(labelOver[0])
+			labelOver[0]->Draw();
+		else if(label[0])
+			label[0]->Draw();
+			
+		if(labelOver[1])
+			labelOver[1]->Draw();	
+		else if(label[1])
+			label[1]->Draw();
+			
+		if(labelOver[2])
+			labelOver[2]->Draw();
+		else if(label[2])
+			label[2]->Draw();
+	}
+	else
+	{
+		if(image) // draw image
+			image->Draw();
+		if(icon) // draw icon
+			icon->Draw();
+
+		// draw text
+		if(label[0])
+			label[0]->Draw();
+		if(label[1])
+			label[1]->Draw();
+		if(label[2])
+			label[2]->Draw();
 	}
 
 	this->UpdateEffects();

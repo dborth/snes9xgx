@@ -53,7 +53,8 @@ void GuiWindow::Remove(GuiElement* e)
 	if (e == NULL)
 		return;
 
-	for (u8 i = 0; i < _elements.size(); i++)
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; ++i)
 	{
 		if(e == _elements.at(i))
 		{
@@ -85,7 +86,8 @@ void GuiWindow::Draw()
 	if(_elements.size() == 0 || !this->IsVisible())
 		return;
 
-	for (u8 i = 0; i < _elements.size(); i++)
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; ++i)
 	{
 		try	{ _elements.at(i)->Draw(); }
 		catch (const std::exception& e) { }
@@ -102,7 +104,8 @@ void GuiWindow::ResetState()
 	if(state != STATE_DISABLED)
 		state = STATE_DEFAULT;
 
-	for (u8 i = 0; i < _elements.size(); i++)
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; ++i)
 	{
 		try { _elements.at(i)->ResetState(); }
 		catch (const std::exception& e) { }
@@ -113,7 +116,8 @@ void GuiWindow::SetState(int s)
 {
 	state = s;
 
-	for (u8 i = 0; i < _elements.size(); i++)
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; ++i)
 	{
 		try { _elements.at(i)->SetState(s); }
 		catch (const std::exception& e) { }
@@ -124,7 +128,8 @@ void GuiWindow::SetVisible(bool v)
 {
 	visible = v;
 
-	for (u8 i = 0; i < _elements.size(); i++)
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; ++i)
 	{
 		try { _elements.at(i)->SetVisible(v); }
 		catch (const std::exception& e) { }
@@ -146,7 +151,8 @@ void GuiWindow::ChangeFocus(GuiElement* e)
 	if(parentElement)
 		return; // this is only intended for the main window
 
-	for (u8 i = 0; i < _elements.size(); i++)
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; ++i)
 	{
 		if(e == _elements.at(i))
 			_elements.at(i)->SetFocus(1);
@@ -162,10 +168,12 @@ void GuiWindow::ToggleFocus(GuiTrigger * t)
 
 	int found = -1;
 	int newfocus = -1;
-	u8 i;
+	int i;
+
+	int elemSize = _elements.size();
 
 	// look for currently in focus element
-	for (i = 0; i < _elements.size(); i++)
+	for (i = 0; i < elemSize; ++i)
 	{
 		try
 		{
@@ -181,7 +189,7 @@ void GuiWindow::ToggleFocus(GuiTrigger * t)
 	// element with focus not found, try to give focus
 	if(found == -1)
 	{
-		for (i = 0; i < _elements.size(); i++)
+		for (i = 0; i < elemSize; ++i)
 		{
 			try
 			{
@@ -198,7 +206,7 @@ void GuiWindow::ToggleFocus(GuiTrigger * t)
 	else if(t->wpad->btns_d & (WPAD_BUTTON_1 | WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)
 		|| t->pad.btns_d & PAD_BUTTON_B)
 	{
-		for (i = found; i < _elements.size(); i++)
+		for (i = found; i < elemSize; ++i)
 		{
 			try
 			{
@@ -215,7 +223,7 @@ void GuiWindow::ToggleFocus(GuiTrigger * t)
 
 		if(newfocus == -1)
 		{
-			for (i = 0; i < found; i++)
+			for (i = 0; i < found; ++i)
 			{
 				try
 				{
@@ -236,13 +244,14 @@ int GuiWindow::GetSelected()
 {
 	// find selected element
 	int found = -1;
-	for (u8 i = 0; i < _elements.size(); i++)
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; ++i)
 	{
 		try
 		{
 			if(_elements.at(i)->GetState() == STATE_SELECTED)
 			{
-				found = i;
+				found = int(i);
 				break;
 			}
 		}
@@ -258,7 +267,8 @@ void GuiWindow::MoveSelectionHor(int dir)
 	int found = -1;
 	u16 left = 0;
 	u16 top = 0;
-	u8 i = 0;
+	u32 i;
+	u32 elemSize = _elements.size();
 
 	int selected = this->GetSelected();
 
@@ -268,8 +278,9 @@ void GuiWindow::MoveSelectionHor(int dir)
 		top = _elements.at(selected)->GetTop();
 	}
 
+	
 	// look for a button on the same row, to the left/right
-	for (i = 0; i < _elements.size(); i++)
+	for (i = 0; i < elemSize; ++i)
 	{
 		try
 		{
@@ -278,9 +289,9 @@ void GuiWindow::MoveSelectionHor(int dir)
 				if(_elements.at(i)->GetLeft()*dir > left*dir && _elements.at(i)->GetTop() == top)
 				{
 					if(found == -1)
-						found = i;
+						found = int(i);
 					else if(_elements.at(i)->GetLeft()*dir < _elements.at(found)->GetLeft()*dir)
-						found = i; // this is a better match
+						found = int(i); // this is a better match
 				}
 			}
 		}
@@ -290,7 +301,7 @@ void GuiWindow::MoveSelectionHor(int dir)
 		goto matchfound;
 
 	// match still not found, let's try the first button in the next row
-	for (i = 0; i < _elements.size(); i++)
+	for (i = 0; i < elemSize; ++i)
 	{
 		try
 		{
@@ -327,7 +338,6 @@ void GuiWindow::MoveSelectionVert(int dir)
 	int found = -1;
 	u16 left = 0;
 	u16 top = 0;
-	u8 i = 0;
 
 	int selected = this->GetSelected();
 
@@ -338,7 +348,8 @@ void GuiWindow::MoveSelectionVert(int dir)
 	}
 
 	// look for a button above/below, with the least horizontal difference
-	for (i = 0; i < _elements.size(); i++)
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; ++i)
 	{
 		try
 		{
@@ -378,7 +389,8 @@ void GuiWindow::Update(GuiTrigger * t)
 	if(_elements.size() == 0 || (state == STATE_DISABLED && parentElement))
 		return;
 
-	for (u8 i = 0; i < _elements.size(); i++)
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; ++i)
 	{
 		try	{ _elements.at(i)->Update(t); }
 		catch (const std::exception& e) { }
