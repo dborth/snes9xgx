@@ -84,8 +84,11 @@ LoadSRAMAuto (bool silent)
 		return false;
 
 	if(LoadSRAM(filepath2, silent))
+	{
+		// rename this file - append Auto
+		rename(filepath2, filepath); // rename file (to avoid duplicates)
 		return true;
-
+	}
 	return false;
 }
 
@@ -138,21 +141,9 @@ SaveSRAMAuto (bool silent)
 {
 	char filepath[1024];
 
-	// look for file with no number or Auto appended
-	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, -1))
+	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, 0))
 		return false;
-
-	FILE * fp = fopen (filepath, "rb");
-
-	if(fp) // file found
-	{
-		fclose (fp);
-	}	
-	else
-	{
-		if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, 0))
-			return false;
-	}
 
 	return SaveSRAM(filepath, silent);
 }
+
