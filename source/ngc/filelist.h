@@ -14,8 +14,31 @@
 
 #include <gccore.h>
 
+// Fonts
 extern const u8		font_ttf[];
 extern const u32	font_ttf_size;
+
+// Languages
+extern const u8		jp_lang[];
+extern const u32	jp_lang_size;
+extern const u8		en_lang[];
+extern const u32	en_lang_size;
+extern const u8		de_lang[];
+extern const u32	de_lang_size;
+extern const u8		fr_lang[];
+extern const u32	fr_lang_size;
+extern const u8		es_lang[];
+extern const u32	es_lang_size;
+extern const u8		it_lang[];
+extern const u32	it_lang_size;
+extern const u8		nl_lang[];
+extern const u32	nl_lang_size;
+extern const u8		zh_lang[];
+extern const u32	zh_lang_size;
+extern const u8		ko_lang[];
+extern const u32	ko_lang_size;
+
+// Sounds
 
 extern const u8		bg_music_ogg[];
 extern const u32	bg_music_ogg_size;
@@ -31,6 +54,8 @@ extern const u32	button_over_pcm_size;
 
 extern const u8		button_click_pcm[];
 extern const u32	button_click_pcm_size;
+
+// Graphics
 
 extern const u8		logo_png[];
 extern const u32	logo_png_size;
