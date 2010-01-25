@@ -51,14 +51,13 @@ static struct
 static int f_read(void * punt, int bytes, int blocks, int *f)
 {
 	int b;
-	int c;
+	int c = 0;
 	int d;
 
 	if (bytes * blocks <= 0)
 		return 0;
 
-	blocks = bytes * blocks;
-	c = 0;
+	blocks *= bytes;
 
 	while (blocks > 0)
 	{
@@ -66,9 +65,9 @@ static int f_read(void * punt, int bytes, int blocks, int *f)
 		if (b > 4096)
 			b = 4096;
 
-		if (*f >= 0x666 && *f <= 0x669)
+		d = (*f) - 0x666;
+		if((unsigned)(d) <= (0x669 - 0x666))
 		{
-			d = (*f) - 0x666;
 			if (file[d].size == 0)
 				return -1;
 			if ((file[d].pos + b) > file[d].size)
@@ -96,11 +95,12 @@ static int f_seek(int *f, ogg_int64_t offset, int mode)
 {
 	if(f==NULL) return(-1);
 
-	int k, d;
+	int k;
 	mode &= 3;
-	if (*f >= 0x666 && *f <= 0x669)
+
+	int d = (*f) - 0x666;
+	if((unsigned)(d) <= (0x669 - 0x666))
 	{
-		d = (*f) - 0x666;
 		k = 0;
 
 		if (file[d].size == 0)
@@ -121,7 +121,7 @@ static int f_seek(int *f, ogg_int64_t offset, int mode)
 			else
 				file[d].pos = offset;
 		}
-		if (mode == 1)
+		else if (mode == 1)
 		{
 			if ((file[d].pos + offset) >= file[d].size)
 			{
@@ -136,7 +136,7 @@ static int f_seek(int *f, ogg_int64_t offset, int mode)
 			else
 				file[d].pos += offset;
 		}
-		if (mode == 2)
+		else if (mode == 2)
 		{
 
 			if ((file[d].size + offset) >= file[d].size)
@@ -166,10 +166,9 @@ static int f_seek(int *f, ogg_int64_t offset, int mode)
 
 static int f_close(int *f)
 {
-	int d;
-	if (*f >= 0x666 && *f <= 0x669)
+	int d = (*f) - 0x666;
+	if((unsigned)(d) <= (0x669 - 0x666))
 	{
-		d = (*f) - 0x666;
 		file[d].size = 0;
 		file[d].pos = 0;
 		if (file[d].mem)
@@ -185,11 +184,11 @@ static int f_close(int *f)
 
 static long f_tell(int *f)
 {
-	int k, d;
+	int k;
 
-	if (*f >= 0x666 && *f <= 0x669)
+	int d = (*f) - 0x666;
+	if((unsigned)(d) <= (0x669 - 0x666))
 	{
-		d = (*f) - 0x666;
 		k = file[d].pos;
 	}
 	else
@@ -205,8 +204,15 @@ static int mem_open(char * ogg, int size)
 	if (one)
 	{
 		one = 0;
-		for (n = 0; n < 4; n++)
-			file[n].size = 0;
+
+		file[0].size = 0;
+		file[1].size = 0;
+		file[2].size = 0;
+		file[3].size = 0;
+		file[0].mem = ogg;
+		file[0].size = size;
+		file[0].pos = 0;
+		return (0x666);
 	}
 
 	for (n = 0; n < 4; n++)
@@ -224,7 +230,7 @@ static int mem_open(char * ogg, int size)
 
 static int mem_close(int fd)
 {
-	if (fd >= 0x666 && fd <= 0x669) // it is a memory file descriptor?
+	if((unsigned)((fd) - 0x666) <= (0x669 - 0x666)) // it is a memory file descriptor?
 	{
 		fd -= 0x666;
 		file[fd].size = 0;
@@ -353,8 +359,7 @@ static void * ogg_player_thread(private_data_ogg * priv)
 					priv[0].seek_time = -1;
 				}
 
-				ret
-						= ov_read(
+				ret	= ov_read(
 								&priv[0].vf,
 								(void *) &priv[0].pcmout[priv[0].pcmout_pos][priv[0].pcm_indx],
 								MAX_PCMOUT,/*0,2,1,*/&priv[0].current_section);
@@ -513,8 +518,7 @@ int StatusOgg()
 		return 255; // EOF
 	else if (private_ogg.flag & 128)
 		return 2; // paused
-	else
-		return 1; // running
+	return 1; // running
 }
 
 void SetVolumeOgg(int volume)
