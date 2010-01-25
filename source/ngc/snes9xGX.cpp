@@ -45,7 +45,6 @@
 #include "snes9xGX.h"
 #include "networkop.h"
 #include "video.h"
-#include "s9xconfig.h"
 #include "audio.h"
 #include "menu.h"
 #include "sram.h"
