@@ -211,7 +211,7 @@ void GuiOptionBrowser::Draw()
 
 	int next = listOffset;
 
-	for(int i=0; i<PAGESIZE; i++)
+	for(int i=0; i<PAGESIZE; ++i)
 	{
 		if(next >= 0)
 		{
@@ -249,7 +249,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 	if(listChanged)
 	{
 		listChanged = false;
-		for(int i=0; i<PAGESIZE; i++)
+		for(int i=0; i<PAGESIZE; ++i)
 		{
 			if(next >= 0)
 			{
@@ -272,7 +272,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 		}
 	}
 
-	for(int i=0; i<PAGESIZE; i++)
+	for(int i=0; i<PAGESIZE; ++i)
 	{
 		if(i != selectedItem && optionBtn[i]->GetState() == STATE_SELECTED)
 			optionBtn[i]->ResetState();
@@ -311,7 +311,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 			{
 				optionBtn[selectedItem]->ResetState();
 				optionBtn[selectedItem+1]->SetState(STATE_SELECTED, t->chan);
-				selectedItem++;
+				++selectedItem;
 			}
 		}
 		arrowDownBtn->ResetState();
@@ -332,7 +332,7 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 			{
 				optionBtn[selectedItem]->ResetState();
 				optionBtn[selectedItem-1]->SetState(STATE_SELECTED, t->chan);
-				selectedItem--;
+				--selectedItem;
 			}
 		}
 		arrowUpBtn->ResetState();

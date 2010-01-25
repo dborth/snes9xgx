@@ -91,7 +91,7 @@ int GuiElement::GetLeft()
 			x = pLeft;
 			break;
 		case ALIGN_CENTRE:
-			x = pLeft + (pWidth/2) - (width/2);
+			x = pLeft + (pWidth>>1) - (width>>1);
 			break;
 		case ALIGN_RIGHT:
 			x = pLeft + pWidth - width;
@@ -121,7 +121,7 @@ int GuiElement::GetTop()
 			y = pTop;
 			break;
 		case ALIGN_MIDDLE:
-			y = pTop + (pHeight/2) - (height/2);
+			y = pTop + (pHeight>>1) - (height>>1);
 			break;
 		case ALIGN_BOTTOM:
 			y = pTop + pHeight - height;
@@ -204,15 +204,13 @@ void GuiElement::SetAlpha(int a)
 
 int GuiElement::GetAlpha()
 {
-	int a;
+	int a = alpha;
 
 	if(alphaDyn >= 0)
 		a = alphaDyn;
-	else
-		a = alpha;
 
 	if(parentElement)
-		a *= parentElement->GetAlpha()/255.0;
+		a *= float(parentElement->GetAlpha())/255.0f;
 
 	return a;
 }
@@ -352,13 +350,12 @@ void GuiElement::SetEffect(int eff, int amount, int target)
 		else if(eff & EFFECT_SLIDE_RIGHT)
 			xoffsetDyn = screenwidth;
 	}
-	if(eff & EFFECT_FADE && amount > 0)
+	if(eff & EFFECT_FADE)
 	{
-		alphaDyn = 0;
-	}
-	else if(eff & EFFECT_FADE && amount < 0)
-	{
-		alphaDyn = alpha;
+		if(amount > 0)
+			alphaDyn = 0;
+		else if(amount < 0)
+			alphaDyn = alpha;
 	}
 
 	effects |= eff;
@@ -474,12 +471,13 @@ void GuiElement::UpdateEffects()
 	}
 	if(effects & EFFECT_SCALE)
 	{
-		scaleDyn += effectAmount/100.0;
+		scaleDyn += f32(effectAmount)*0.01f;
+		f32 effTar100 = f32(effectTarget)*0.01f;
 
-		if((effectAmount < 0 && scaleDyn <= effectTarget/100.0)
-			|| (effectAmount > 0 && scaleDyn >= effectTarget/100.0))
+		if((effectAmount < 0 && scaleDyn <= effTar100)
+			|| (effectAmount > 0 && scaleDyn >= effTar100))
 		{
-			scaleDyn = effectTarget/100.0;
+			scaleDyn = effTar100;
 			effects = 0; // shut off effect
 		}
 	}
@@ -522,8 +520,8 @@ void GuiElement::Draw()
 
 bool GuiElement::IsInside(int x, int y)
 {
-	if(x > this->GetLeft() && x < (this->GetLeft()+width)
-	&& y > this->GetTop() && y < (this->GetTop()+height))
+	if(unsigned(x - this->GetLeft())  < unsigned(width)
+	&& unsigned(y - this->GetTop())  < unsigned(height))
 		return true;
 	return false;
 }
