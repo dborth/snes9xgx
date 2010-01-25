@@ -34,7 +34,7 @@ LoadSRAM (char * filepath, bool silent)
 	int len = 0;
 	int device;
 	bool result = false;
-	
+
 	if(!FindDevice(filepath, &device))
 		return 0;
 
@@ -70,7 +70,6 @@ bool
 LoadSRAMAuto (bool silent)
 {
 	char filepath[MAXPATHLEN];
-	char filepath2[MAXPATHLEN];
 
 	// look for Auto save file
 	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, 0))
@@ -80,15 +79,12 @@ LoadSRAMAuto (bool silent)
 		return true;
 
 	// look for file with no number or Auto appended
-	if(!MakeFilePath(filepath2, FILE_SRAM, Memory.ROMFilename, -1))
+	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, -1))
 		return false;
 
-	if(LoadSRAM(filepath2, silent))
-	{
-		// rename this file - append Auto
-		rename(filepath2, filepath); // rename file (to avoid duplicates)
+	if(LoadSRAM(filepath, silent))
 		return true;
-	}
+
 	return false;
 }
 
@@ -141,8 +137,21 @@ SaveSRAMAuto (bool silent)
 {
 	char filepath[1024];
 
-	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, 0))
+	// look for file with no number or Auto appended
+	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, -1))
 		return false;
+
+	FILE * fp = fopen (filepath, "rb");
+
+	if(fp) // file found
+	{
+		fclose (fp);
+	}	
+	else
+	{
+		if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, 0))
+			return false;
+	}
 
 	return SaveSRAM(filepath, silent);
 }
