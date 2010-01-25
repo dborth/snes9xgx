@@ -27,7 +27,6 @@
 
 #include "snes9xGX.h"
 #include "button_mapping.h"
-#include "s9xconfig.h"
 #include "menu.h"
 #include "video.h"
 #include "input.h"
