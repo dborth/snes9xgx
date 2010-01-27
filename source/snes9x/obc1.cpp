@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,127 +172,105 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
+ ***********************************************************************************/
 
 
-
-#include <string.h>
+#include "snes9x.h"
 #include "memmap.h"
-#include "obc1.h"
 
-static uint8 *OBC1_RAM = NULL;
 
-int OBC1_Address;
-int OBC1_BasePtr;
-int OBC1_Shift;
-
-extern "C"
+uint8 S9xGetOBC1 (uint16 Address)
 {
-uint8 GetOBC1 (uint16 Address)
-{
-	switch(Address) {
+	switch (Address)
+	{
 		case 0x7ff0:
-			return OBC1_RAM[OBC1_BasePtr + (OBC1_Address << 2)];
+			return (Memory.OBC1RAM[OBC1.basePtr + (OBC1.address << 2)]);
 
 		case 0x7ff1:
-			return OBC1_RAM[OBC1_BasePtr + (OBC1_Address << 2) + 1];
+			return (Memory.OBC1RAM[OBC1.basePtr + (OBC1.address << 2) + 1]);
 
 		case 0x7ff2:
-			return OBC1_RAM[OBC1_BasePtr + (OBC1_Address << 2) + 2];
+			return (Memory.OBC1RAM[OBC1.basePtr + (OBC1.address << 2) + 2]);
 
 		case 0x7ff3:
-			return OBC1_RAM[OBC1_BasePtr + (OBC1_Address << 2) + 3];
+			return (Memory.OBC1RAM[OBC1.basePtr + (OBC1.address << 2) + 3]);
 
 		case 0x7ff4:
-			return OBC1_RAM[OBC1_BasePtr + (OBC1_Address >> 2) + 0x200];
+			return (Memory.OBC1RAM[OBC1.basePtr + (OBC1.address >> 2) + 0x200]);
 	}
 
-	return OBC1_RAM[Address & 0x1fff];
+	return (Memory.OBC1RAM[Address - 0x6000]);
 }
 
-void SetOBC1 (uint8 Byte, uint16 Address)
+void S9xSetOBC1 (uint8 Byte, uint16 Address)
 {
-	switch(Address) {
+	switch (Address)
+	{
 		case 0x7ff0:
-		{
-			OBC1_RAM[OBC1_BasePtr + (OBC1_Address << 2)] = Byte;
+			Memory.OBC1RAM[OBC1.basePtr + (OBC1.address << 2)] = Byte;
 			break;
-		}
 
 		case 0x7ff1:
-		{
-			OBC1_RAM[OBC1_BasePtr + (OBC1_Address << 2) + 1] = Byte;
+			Memory.OBC1RAM[OBC1.basePtr + (OBC1.address << 2) + 1] = Byte;
 			break;
-		}
 
 		case 0x7ff2:
-		{
-			OBC1_RAM[OBC1_BasePtr + (OBC1_Address << 2) + 2] = Byte;
+			Memory.OBC1RAM[OBC1.basePtr + (OBC1.address << 2) + 2] = Byte;
 			break;
-		}
 
 		case 0x7ff3:
-		{
-			OBC1_RAM[OBC1_BasePtr + (OBC1_Address << 2) + 3] = Byte;
+			Memory.OBC1RAM[OBC1.basePtr + (OBC1.address << 2) + 3] = Byte;
 			break;
-		}
 
 		case 0x7ff4:
 		{
-			unsigned char Temp;
-
-			Temp = OBC1_RAM[OBC1_BasePtr + (OBC1_Address >> 2) + 0x200];
-			Temp = (Temp & ~(3 << OBC1_Shift)) | ((Byte & 3) << OBC1_Shift);
-			OBC1_RAM[OBC1_BasePtr + (OBC1_Address >> 2) + 0x200] = Temp;
+			uint8 Temp;
+			Temp = Memory.OBC1RAM[OBC1.basePtr + (OBC1.address >> 2) + 0x200];
+			Temp = (Temp & ~(3 << OBC1.shift)) | ((Byte & 3) << OBC1.shift);
+			Memory.OBC1RAM[OBC1.basePtr + (OBC1.address >> 2) + 0x200] = Temp;
 			break;
 		}
 
 		case 0x7ff5:
-		{
 			if (Byte & 1)
-				OBC1_BasePtr = 0x1800;
+				OBC1.basePtr = 0x1800;
 			else
-				OBC1_BasePtr = 0x1c00;
-
+				OBC1.basePtr = 0x1c00;
 			break;
-		}
 
 		case 0x7ff6:
-		{
-			OBC1_Address = Byte & 0x7f;
-			OBC1_Shift = (Byte & 3) << 1;
+			OBC1.address = Byte & 0x7f;
+			OBC1.shift = (Byte & 3) << 1;
 			break;
-		}
 	}
 
-	OBC1_RAM[Address & 0x1fff] = Byte;
+	Memory.OBC1RAM[Address - 0x6000] = Byte;
+}
+
+void S9xResetOBC1 (void)
+{
+	for (int i = 0; i <= 0x1fff; i++)
+		Memory.OBC1RAM[i] = 0xff;
+
+	if (Memory.OBC1RAM[0x1ff5] & 1)
+		OBC1.basePtr = 0x1800;
+	else
+		OBC1.basePtr = 0x1c00;
+
+	OBC1.address = Memory.OBC1RAM[0x1ff6] & 0x7f;
+	OBC1.shift = (Memory.OBC1RAM[0x1ff6] & 3) << 1;
 }
 
 uint8 * S9xGetBasePointerOBC1 (uint16 Address)
 {
 	if (Address >= 0x7ff0 && Address <= 0x7ff6)
 		return (NULL);
-	return (OBC1_RAM - 0x6000);
+	return (Memory.OBC1RAM - 0x6000);
 }
 
 uint8 * S9xGetMemPointerOBC1 (uint16 Address)
 {
 	if (Address >= 0x7ff0 && Address <= 0x7ff6)
 		return (NULL);
-	return (OBC1_RAM - 0x6000 + (Address & 0xffff));
-}
-
-void ResetOBC1()
-{
-	OBC1_RAM = &Memory.FillRAM[0x6000];
-
-	if (OBC1_RAM[0x1ff5] & 1)
-		OBC1_BasePtr = 0x1800;
-	else
-		OBC1_BasePtr = 0x1c00;
-
-	OBC1_Address = OBC1_RAM[0x1ff6] & 0x7f;
-	OBC1_Shift = (OBC1_RAM[0x1ff6] & 3) << 1;
-}
-
+	return (Memory.OBC1RAM + Address - 0x6000);
 }

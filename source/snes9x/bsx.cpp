@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,51 +172,49 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
+ ***********************************************************************************/
 
-
-
-
-// Anonymous wrote:
+// Dreamer Nom wrote:
 // Large thanks to John Weidman for all his initial research
 // Thanks to Seph3 for his modem notes
 
-#include <time.h>
 
+#include "snes9x.h"
 #include "memmap.h"
 #include "display.h"
-#include "bsx.h"
 
-//#define	BSX_DEBUG
+//#define BSX_DEBUG
 
-#define	BIOS_SIZE	0x100000
-#define	FLASH_SIZE	0x200000
-#define	PSRAM_SIZE	0x80000
+#define BIOS_SIZE	0x100000
+#define FLASH_SIZE	0x200000
+#define PSRAM_SIZE	0x80000
 
-#define	Map			Memory.Map
-#define	BlockIsRAM	Memory.BlockIsRAM
-#define	BlockIsROM	Memory.BlockIsROM
-#define	RAM			Memory.RAM
-#define	SRAM		Memory.SRAM
-#define	PSRAM		Memory.BSRAM
-#define	BIOSROM		Memory.BIOSROM
-#define	MAP_BSX		Memory.MAP_BSX
-#define	MAP_CPU		Memory.MAP_CPU
-#define	MAP_PPU		Memory.MAP_PPU
-#define	MAP_NONE	Memory.MAP_NONE
+#define Map			Memory.Map
+#define BlockIsRAM	Memory.BlockIsRAM
+#define BlockIsROM	Memory.BlockIsROM
+#define RAM			Memory.RAM
+#define SRAM		Memory.SRAM
+#define PSRAM		Memory.BSRAM
+#define BIOSROM		Memory.BIOSROM
+#define MAP_BSX		Memory.MAP_BSX
+#define MAP_CPU		Memory.MAP_CPU
+#define MAP_PPU		Memory.MAP_PPU
+#define MAP_NONE	Memory.MAP_NONE
+
+#define BSXPPUBASE	0x2180
 
 struct SBSX_RTC
 {
-	int		hours;
-	int		minutes;
-	int		seconds;
-	int		ticks;
+	int	hours;
+	int	minutes;
+	int	seconds;
+	int	ticks;
 };
 
-struct SBSX_RTC	BSX_RTC;
+static struct SBSX_RTC	BSX_RTC;
 
 // flash card vendor information
-const uint8	flashcard[20] =
+static const uint8	flashcard[20] =
 {
 	0x4D, 0x00, 0x50, 0x00,	// vendor id
 	0x00, 0x00,				// ?
@@ -209,7 +223,7 @@ const uint8	flashcard[20] =
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-const uint8	init2192[32] =	// FIXME
+static const uint8	init2192[32] =	// FIXME
 {
 	00, 00, 00, 00, 00,		// unknown
 	01, 01, 00, 00, 00,
@@ -221,29 +235,29 @@ const uint8	init2192[32] =	// FIXME
 	00, 00, 00, 00, 00, 00, 00, 00, 00
 };
 
-bool8	FlashMode;
-uint32	FlashSize;
-uint8	*MapROM, *FlashROM;
+static bool8	FlashMode;
+static uint32	FlashSize;
+static uint8	*MapROM, *FlashROM;
 
-static void BSX_Map_SNES(void);
-static void BSX_Map_LoROM(void);
-static void BSX_Map_HiROM(void);
-static void BSX_Map_MMC(void);
-static void BSX_Map_FlashIO(void);
-static void BSX_Map_SRAM(void);
-static void BSX_Map_PSRAM(void);
-static void BSX_Map_BIOS(void);
-static void BSX_Map_RAM(void);
-static void BSX_Map_Dirty(void);
-static void BSX_Map(void);
-static void BSX_Set_Bypass_FlashIO(uint16, uint8);
-static uint8 BSX_Get_Bypass_FlashIO(uint16);
-static bool8 BSX_LoadBIOS(void);
-static void map_psram_mirror_sub(uint32);
-static int is_bsx(unsigned char *);
+static void BSX_Map_SNES (void);
+static void BSX_Map_LoROM (void);
+static void BSX_Map_HiROM (void);
+static void BSX_Map_MMC (void);
+static void BSX_Map_FlashIO (void);
+static void BSX_Map_SRAM (void);
+static void BSX_Map_PSRAM (void);
+static void BSX_Map_BIOS (void);
+static void BSX_Map_RAM (void);
+static void BSX_Map_Dirty (void);
+static void BSX_Map (void);
+static void BSX_Set_Bypass_FlashIO (uint16, uint8);
+static uint8 BSX_Get_Bypass_FlashIO (uint16);
+static bool8 BSX_LoadBIOS (void);
+static void map_psram_mirror_sub (uint32);
+static int is_bsx (unsigned char *);
 
 
-static void BSX_Map_SNES(void)
+static void BSX_Map_SNES (void)
 {
 	// These maps will be partially overwritten
 
@@ -266,7 +280,7 @@ static void BSX_Map_SNES(void)
 	}
 }
 
-static void BSX_Map_LoROM(void)
+static void BSX_Map_LoROM (void)
 {
 	// These maps will be partially overwritten
 
@@ -300,7 +314,7 @@ static void BSX_Map_LoROM(void)
 	}
 }
 
-static void BSX_Map_HiROM(void)
+static void BSX_Map_HiROM (void)
 {
 	// These maps will be partially overwritten
 
@@ -329,7 +343,7 @@ static void BSX_Map_HiROM(void)
 	}
 }
 
-static void BSX_Map_MMC(void)
+static void BSX_Map_MMC (void)
 {
 	int	c;
 
@@ -341,7 +355,7 @@ static void BSX_Map_MMC(void)
 	}
 }
 
-static void BSX_Map_FlashIO(void)
+static void BSX_Map_FlashIO (void)
 {
 	int	c;
 
@@ -357,7 +371,7 @@ static void BSX_Map_FlashIO(void)
 	}
 }
 
-static void BSX_Map_SRAM(void)
+static void BSX_Map_SRAM (void)
 {
 	int	c;
 
@@ -370,7 +384,7 @@ static void BSX_Map_SRAM(void)
 	}
 }
 
-static void map_psram_mirror_sub(uint32 bank)
+static void map_psram_mirror_sub (uint32 bank)
 {
 	int	i, c;
 
@@ -407,7 +421,7 @@ static void map_psram_mirror_sub(uint32 bank)
 	}
 }
 
-static void BSX_Map_PSRAM(void)
+static void BSX_Map_PSRAM (void)
 {
 	int	c;
 
@@ -445,7 +459,7 @@ static void BSX_Map_PSRAM(void)
 		map_psram_mirror_sub(0x60);
 }
 
-static void BSX_Map_BIOS(void)
+static void BSX_Map_BIOS (void)
 {
 	int	i,c;
 
@@ -478,7 +492,7 @@ static void BSX_Map_BIOS(void)
 	}
 }
 
-static void BSX_Map_RAM(void)
+static void BSX_Map_RAM (void)
 {
 	int	c;
 
@@ -494,7 +508,7 @@ static void BSX_Map_RAM(void)
 	}
 }
 
-static void BSX_Map_Dirty(void)
+static void BSX_Map_Dirty (void)
 {
 	// for the quick bank change
 
@@ -527,7 +541,7 @@ static void BSX_Map_Dirty(void)
 	}
 }
 
-static void BSX_Map(void)
+static void BSX_Map (void)
 {
 #ifdef BSX_DEBUG
 	printf("BS: Remapping\n");
@@ -582,20 +596,20 @@ static void BSX_Map(void)
 	Memory.map_WriteProtectROM();
 }
 
-static uint8 BSX_Get_Bypass_FlashIO(uint16 offset)
+static uint8 BSX_Get_Bypass_FlashIO (uint16 offset)
 {
 	if (BSX.MMC[0x02])
-		return MapROM[offset];
+		return (MapROM[offset]);
 	else
 	{
 		if (offset < 0x8000)
-			return MapROM[offset];
+			return (MapROM[offset]);
 		else
-			return MapROM[offset - 0x8000];
+			return (MapROM[offset - 0x8000]);
 	}
 }
 
-static void BSX_Set_Bypass_FlashIO(uint16 offset, uint8 byte)
+static void BSX_Set_Bypass_FlashIO (uint16 offset, uint8 byte)
 {
 	if (BSX.MMC[0x02])
 		MapROM[offset] = byte;
@@ -608,7 +622,7 @@ static void BSX_Set_Bypass_FlashIO(uint16 offset, uint8 byte)
 	}
 }
 
-uint8 S9xGetBSX(uint32 address)
+uint8 S9xGetBSX (uint32 address)
 {
 	uint8	bank = (address >> 16) & 0xFF;
 	uint16	offset = address & 0xFFFF;
@@ -616,7 +630,7 @@ uint8 S9xGetBSX(uint32 address)
 
 	// MMC
 	if ((bank >= 0x01 && bank <= 0x0E) && (offset == 0x5000))
-		return BSX.MMC[bank];
+		return (BSX.MMC[bank]);
 
 	// Flash IO
 	if (bank == 0xC0)
@@ -654,10 +668,10 @@ uint8 S9xGetBSX(uint32 address)
 		}
 	}
 
-	return t;
+	return (t);
 }
 
-void S9xSetBSX(uint8 byte, uint32 address)
+void S9xSetBSX (uint8 byte, uint32 address)
 {
 	uint8	bank = (address >> 16) & 0xFF;
 	uint16	offset = address & 0xFFFF;
@@ -776,210 +790,207 @@ void S9xSetBSX(uint8 byte, uint32 address)
 	}
 }
 
-uint8 S9xGetBSXPPU(uint16 address)
+uint8 S9xGetBSXPPU (uint16 address)
 {
-	uint8	t = 0;
+	uint8	t;
 
-	if (address >= 0x2188 && address <= 0x219F)
+	// known read registers
+	switch (address)
 	{
-		// known read registers
-		switch(address)
-		{
-			// Test register low? (r/w)
-			case 0x2188:
-				t = BSX.PPU[0x2188];
-				break;
+		// Test register low? (r/w)
+		case 0x2188:
+			t = BSX.PPU[0x2188 - BSXPPUBASE];
+			break;
 
-			// Test register high? (r/w)
-			case 0x2189:
-				t = BSX.PPU[0x2189];
-				break;
+		// Test register high? (r/w)
+		case 0x2189:
+			t = BSX.PPU[0x2189 - BSXPPUBASE];
+			break;
 
-			case 0x218A:
-				t = BSX.PPU[0x218A];
-				break;
+		case 0x218A:
+			t = BSX.PPU[0x218A - BSXPPUBASE];
+			break;
 
-			case 0x218C:
-				t = BSX.PPU[0x218C];
-				break;
+		case 0x218C:
+			t = BSX.PPU[0x218C - BSXPPUBASE];
+			break;
 
-			// Transmission number low? (r/w)
-			case 0x218E:
-				t = BSX.PPU[0x218E];
-				break;
+		// Transmission number low? (r/w)
+		case 0x218E:
+			t = BSX.PPU[0x218E - BSXPPUBASE];
+			break;
 
-			// Transmission number high? (r/w)
-			case 0x218F:
-				t = BSX.PPU[0x218F];
-				break;
+		// Transmission number high? (r/w)
+		case 0x218F:
+			t = BSX.PPU[0x218F - BSXPPUBASE];
+			break;
 
-			// Status register? (r)
-			case 0x2190:
-				t = BSX.PPU[0x2190];
-				break;
+		// Status register? (r)
+		case 0x2190:
+			t = BSX.PPU[0x2190 - BSXPPUBASE];
+			break;
 
-			// Data register? (r/w)
-			case 0x2192:
-				t = BSX.PPU[0x2192];
+		// Data register? (r/w)
+		case 0x2192:
+			t = BSX.PPU[0x2192 - BSXPPUBASE];
 
-				// test
-				t = BSX.test2192[BSX.out_index++];
-				if (BSX.out_index == 32)
-					BSX.out_index = 0;
-
-				BSX_RTC.ticks++;
-				if (BSX_RTC.ticks >= 1000)
-				{
-					BSX_RTC.ticks = 0;
-					BSX_RTC.seconds++;
-				}
-				if (BSX_RTC.seconds >= 60)
-				{
-					BSX_RTC.seconds = 0;
-					BSX_RTC.minutes++;
-				}
-				if (BSX_RTC.minutes >= 60)
-				{
-					BSX_RTC.minutes = 0;
-					BSX_RTC.hours++;
-				}
-				if (BSX_RTC.hours >= 24)
-					BSX_RTC.hours = 0;
-
-				BSX.test2192[10] = BSX_RTC.seconds;
-				BSX.test2192[11] = BSX_RTC.minutes;
-				BSX.test2192[12] = BSX_RTC.hours;
-
-				break;
-
-			// Transmission status? (r/w)
-			case 0x2193:
-				// Data ready when bits 2/3 clear?
-				t = BSX.PPU[0x2193] & ~0x0C;
-				break;
-
-			// Reset? (r/w)
-			case 0x2194:
-				t = BSX.PPU[0x2194];
-				break;
-
-			// Unknown (r)
-			case 0x2196:
-				t = BSX.PPU[0x2196];
-				break;
-
-			// Unknown (r/w)
-			case 0x2197:
-				t = BSX.PPU[0x2197];
-				break;
-
-			// Modem protocol? (r/w)
-			case 0x2199:
-				t = BSX.PPU[0x2199];
-				break;
-
-			default:
-				t = OpenBus;
-				break;
-		}
-	}
-
-	return t;
-}
-
-void S9xSetBSXPPU(uint8 byte, uint16 address)
-{
-	if (address >= 0x2188 && address <= 0x219F)
-	{
-		// known write registers
-		switch(address)
-		{
-			// Test register low? (r/w)
-			case 0x2188:
-				BSX.PPU[0x2188] = byte;
-				break;
-
-			// Test register high? (r/w)
-			case 0x2189:
-				BSX.PPU[0x2189] = byte;
-				break;
-
-			case 0x218A:
-				BSX.PPU[0x218A] = byte;
-				break;
-
-			case 0x218B:
-				BSX.PPU[0x218B] = byte;
-				break;
-
-			case 0x218C:
-				BSX.PPU[0x218C] = byte;
-				break;
-
-			// Transmission number low? (r/w)
-			case 0x218E:
-				BSX.PPU[0x218E] = byte;
-				break;
-
-			// Transmission number high? (r/w)
-			case 0x218F:
-				BSX.PPU[0x218F] = byte;
-
-				// ?
-				BSX.PPU[0x218E] >>= 1;
-				BSX.PPU[0x218E] = BSX.PPU[0x218F] - BSX.PPU[0x218E];
-				BSX.PPU[0x218F] >>= 1;
-
-				BSX.PPU[0x2190] = 0x80; // ?
-				break;
-
-			// Strobe assert? (w)
-			case 0x2191:
-				BSX.PPU[0x2191] = byte;
+			// test
+			t = BSX.test2192[BSX.out_index++];
+			if (BSX.out_index == 32)
 				BSX.out_index = 0;
-				break;
 
-			// Data register? (r/w)
-			case 0x2192:
-				BSX.PPU[0x2192] = 0x01; // ?
-				BSX.PPU[0x2190] = 0x80; // ?
-				break;
+			BSX_RTC.ticks++;
+			if (BSX_RTC.ticks >= 1000)
+			{
+				BSX_RTC.ticks = 0;
+				BSX_RTC.seconds++;
+			}
+			if (BSX_RTC.seconds >= 60)
+			{
+				BSX_RTC.seconds = 0;
+				BSX_RTC.minutes++;
+			}
+			if (BSX_RTC.minutes >= 60)
+			{
+				BSX_RTC.minutes = 0;
+				BSX_RTC.hours++;
+			}
+			if (BSX_RTC.hours >= 24)
+				BSX_RTC.hours = 0;
 
-			// Transmission status? (r/w)
-			case 0x2193:
-				BSX.PPU[0x2193] = byte;
-				break;
+			BSX.test2192[10] = BSX_RTC.seconds;
+			BSX.test2192[11] = BSX_RTC.minutes;
+			BSX.test2192[12] = BSX_RTC.hours;
 
-			// Reset? (r/w)
-			case 0x2194:
-				BSX.PPU[0x2194] = byte;
-				break;
+			break;
 
-			// Unknown (r/w)
-			case 0x2197:
-				BSX.PPU[0x2197] = byte;
-				break;
+		// Transmission status? (r/w)
+		case 0x2193:
+			// Data ready when bits 2/3 clear?
+			t = BSX.PPU[0x2193 - BSXPPUBASE] & ~0x0C;
+			break;
 
-			// Modem protocol? (r/w)
-			case 0x2199:
-				// Lots of modem strings written here when
-				// connection is lost or no uplink established
-				BSX.PPU[0x2199] = byte;
-				break;
-		}
+		// Reset? (r/w)
+		case 0x2194:
+			t = BSX.PPU[0x2194 - BSXPPUBASE];
+			break;
+
+		// Unknown (r)
+		case 0x2196:
+			t = BSX.PPU[0x2196 - BSXPPUBASE];
+			break;
+
+		// Unknown (r/w)
+		case 0x2197:
+			t = BSX.PPU[0x2197 - BSXPPUBASE];
+			break;
+
+		// Modem protocol? (r/w)
+		case 0x2199:
+			t = BSX.PPU[0x2199 - BSXPPUBASE];
+			break;
+
+		default:
+			t = OpenBus;
+			break;
+	}
+
+	return (t);
+}
+
+void S9xSetBSXPPU (uint8 byte, uint16 address)
+{
+	// known write registers
+	switch (address)
+	{
+		// Test register low? (r/w)
+		case 0x2188:
+			BSX.PPU[0x2188 - BSXPPUBASE] = byte;
+			break;
+
+		// Test register high? (r/w)
+		case 0x2189:
+			BSX.PPU[0x2189 - BSXPPUBASE] = byte;
+			break;
+
+		case 0x218A:
+			BSX.PPU[0x218A - BSXPPUBASE] = byte;
+			break;
+
+		case 0x218B:
+			BSX.PPU[0x218B - BSXPPUBASE] = byte;
+			break;
+
+		case 0x218C:
+			BSX.PPU[0x218C - BSXPPUBASE] = byte;
+			break;
+
+		// Transmission number low? (r/w)
+		case 0x218E:
+			BSX.PPU[0x218E - BSXPPUBASE] = byte;
+			break;
+
+		// Transmission number high? (r/w)
+		case 0x218F:
+			BSX.PPU[0x218F - BSXPPUBASE] = byte;
+
+			// ?
+			BSX.PPU[0x218E - BSXPPUBASE] >>= 1;
+			BSX.PPU[0x218E - BSXPPUBASE] = BSX.PPU[0x218F - BSXPPUBASE] - BSX.PPU[0x218E - BSXPPUBASE];
+			BSX.PPU[0x218F - BSXPPUBASE] >>= 1;
+
+			BSX.PPU[0x2190 - BSXPPUBASE] = 0x80; // ?
+			break;
+
+		// Strobe assert? (w)
+		case 0x2191:
+			BSX.PPU[0x2191 - BSXPPUBASE] = byte;
+			BSX.out_index = 0;
+			break;
+
+		// Data register? (r/w)
+		case 0x2192:
+			BSX.PPU[0x2192 - BSXPPUBASE] = 0x01; // ?
+			BSX.PPU[0x2190 - BSXPPUBASE] = 0x80; // ?
+			break;
+
+		// Transmission status? (r/w)
+		case 0x2193:
+			BSX.PPU[0x2193 - BSXPPUBASE] = byte;
+			break;
+
+		// Reset? (r/w)
+		case 0x2194:
+			BSX.PPU[0x2194 - BSXPPUBASE] = byte;
+			break;
+
+		// Unknown (r/w)
+		case 0x2197:
+			BSX.PPU[0x2197 - BSXPPUBASE] = byte;
+			break;
+
+		// Modem protocol? (r/w)
+		case 0x2199:
+			// Lots of modem strings written here when
+			// connection is lost or no uplink established
+			BSX.PPU[0x2199 - BSXPPUBASE] = byte;
+			break;
 	}
 }
 
-uint8 * S9xGetBasePointerBSX(uint32 address)
+uint8 * S9xGetBasePointerBSX (uint32 address)
 {
-	return MapROM;
+	return (MapROM);
 }
 
-static bool8 BSX_LoadBIOS(void)
+static bool8 BSX_LoadBIOS (void)
 {
+#ifdef GEKKO
 	return FALSE; // We're not loading the BIOS!
+#endif
+
 	FILE	*fp;
-	char	path[_MAX_PATH + 1], name[_MAX_PATH + 1];
+	char	path[PATH_MAX + 1], name[PATH_MAX + 1];
 	bool8	r = FALSE;
 
 	strcpy(path, S9xGetDirectory(BIOS_DIR));
@@ -1012,10 +1023,10 @@ static bool8 BSX_LoadBIOS(void)
 		printf("BS: BIOS not found!\n");
 #endif
 
-	return r;
+	return (r);
 }
 
-void S9xInitBSX(void)
+void S9xInitBSX (void)
 {
 	Settings.BS = FALSE;
 
@@ -1097,7 +1108,7 @@ void S9xInitBSX(void)
 	}
 }
 
-void S9xResetBSX(void)
+void S9xResetBSX (void)
 {
 	if (Settings.BSXItself)
 		memset(Memory.ROM, 0, FLASH_SIZE);
@@ -1149,7 +1160,7 @@ void S9xResetBSX(void)
 	BSX_Map();
 }
 
-void S9xFixBSXAfterSnapshotLoad(void)
+void S9xBSXPostLoadState (void)
 {
 	uint8	temp[16];
 	bool8	pd1, pd2;
@@ -1166,34 +1177,30 @@ void S9xFixBSXAfterSnapshotLoad(void)
 	BSX.dirty2 = pd2;
 }
 
-static bool valid_normal_bank(unsigned char bankbyte)
+static bool valid_normal_bank (unsigned char bankbyte)
 {
-  switch (bankbyte)
-  {
-    case 32: case 33: case 48: case 49:
-    return(true);
-    break;
-  }
-  return(false);
+	switch (bankbyte)
+	{
+		case 32: case 33: case 48: case 49:
+			return (true);
+			break;
+	}
+
+	return (false);
 }
 
-static int is_bsx(unsigned char *p)
+static int is_bsx (unsigned char *p)
 {
-  if ((p[26] == 0x33 || p[26] == 0xFF) &&
-      (!p[21] || (p[21] & 131) == 128) &&
-      valid_normal_bank(p[24]))
-  {
-    unsigned char m = p[22];
-    if (!m && !p[23])
-    {
-      return(2);
-    }
-    if ((m == 0xFF && p[23] == 0xFF) ||
-        (!(m & 0xF) && ((m >> 4) - 1 < 12)))
-    {
-      return(1);
-    }
-  }
-  return(0);
-}
+	if ((p[26] == 0x33 || p[26] == 0xFF) && (!p[21] || (p[21] & 131) == 128) && valid_normal_bank(p[24]))
+	{
+		unsigned char	m = p[22];
 
+		if (!m && !p[23])
+			return (2);
+
+		if ((m == 0xFF && p[23] == 0xFF) || (!(m & 0xF) && ((m >> 4) - 1 < 12)))
+			return (1);
+	}
+
+	return (0);
+}

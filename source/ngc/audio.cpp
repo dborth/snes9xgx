@@ -18,14 +18,11 @@
 
 #include "snes9x.h"
 #include "memmap.h"
-#include "s9xdebug.h"
 #include "cpuexec.h"
 #include "ppu.h"
-#include "apu.h"
+#include "apu/apu.h"
 #include "display.h"
 #include "gfx.h"
-#include "soundux.h"
-#include "spc700.h"
 #include "spc7110.h"
 #include "controls.h"
 
@@ -42,6 +39,7 @@ static int whichab = 0;	/*** Audio buffer flip switch ***/
 static lwpq_t audioqueue;
 static lwp_t athread;
 static uint8 astack[AUDIOSTACK];
+static mutex_t audiomutex = LWP_MUTEX_NULL;
 
 /****************************************************************************
  * Audio Threading
@@ -58,8 +56,9 @@ AudioThread (void *arg)
 			memset (soundbuffer[whichab], 0, AUDIOBUFFER);
 		else
 		{
-			so.samples_mixed_so_far = so.play_position = 0;
+			LWP_MutexLock(audiomutex);
 			S9xMixSamples (soundbuffer[whichab], AUDIOBUFFER >> 1);
+			LWP_MutexUnlock(audiomutex);
 		}
 		LWP_ThreadSleep (audioqueue);
 	}
@@ -85,6 +84,13 @@ GCMixSamples ()
 	}
 }
 
+static void FinalizeSamplesCallback (void *data)
+{ 
+	LWP_MutexLock(audiomutex);
+	S9xFinalizeSamples(); 
+	LWP_MutexUnlock(audiomutex);
+}
+
 /****************************************************************************
  * InitAudio
  ***************************************************************************/
@@ -98,6 +104,7 @@ InitAudio ()
 	#else
 	ASND_Init();
 	#endif
+	LWP_MutexInit(&audiomutex, false);
 	LWP_CreateThread (&athread, AudioThread, NULL, astack, AUDIOSTACK, 70);
 }
 
@@ -117,9 +124,11 @@ SwitchAudioMode(int mode)
 		AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
 		AUDIO_RegisterDMACallback(GCMixSamples);
 		#endif
+		S9xSetSamplesAvailableCallback(FinalizeSamplesCallback, NULL);
 	}
 	else // menu
 	{
+		S9xSetSamplesAvailableCallback(NULL, NULL);
 		#ifndef NO_SOUND
 		ASND_Init();
 		ASND_Pause(0);

@@ -31,15 +31,7 @@
 
 #include "snes9x.h"
 #include "memmap.h"
-#include "s9xdebug.h"
-#include "cpuexec.h"
-#include "ppu.h"
-#include "apu.h"
-#include "display.h"
-#include "gfx.h"
-#include "soundux.h"
-#include "spc700.h"
-#include "spc7110.h"
+#include "apu/apu.h"
 #include "controls.h"
 
 #include "snes9xGX.h"
@@ -397,15 +389,14 @@ main(int argc, char *argv[])
 	// Set Pixel Renderer to match 565
 	S9xSetRenderPixelFormat (RGB565);
 
-	// Initialise Snes Sound System
-	S9xInitSound (5, TRUE, 1024);
+	// Initialise Sound System
+	S9xInitSound (64, 0);
 
 	// Initialise Graphics
 	setGFX ();
 	if (!S9xGraphicsInit ())
 		ExitApp();
 
-	S9xSetSoundMute (TRUE);
 	S9xInitSync(); // initialize frame sync
 
 	// Initialize font system

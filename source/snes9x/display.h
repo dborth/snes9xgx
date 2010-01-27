@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,68 +172,64 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
-
-
+ ***********************************************************************************/
 
 
 #ifndef _DISPLAY_H_
 #define _DISPLAY_H_
 
-START_EXTERN_C
-// Routines the port specific code has to implement
-void S9xSetPalette ();
-void S9xTextMode ();
-void S9xGraphicsMode ();
-void S9xParseArg (char **argv, int &index, int argc);
-void S9xExtraUsage ();
-
-void S9xLoadConfigFiles(char **argv, int argc);
-char *S9xParseArgs (char **argv, int argc);
-void S9xUsage ();
-void S9xInitDisplay (int argc, char **argv);
-void S9xDeinitDisplay ();
-void S9xInitInputDevices ();
-void S9xSetTitle (const char *title);
-void S9xProcessEvents (bool8 block);
-void S9xPutImage (int width, int height);
-void S9xParseDisplayArg (char **argv, int &index, int argc);
-void S9xExtraDisplayUsage ();
-void S9xToggleSoundChannel (int channel);
-void S9xSetInfoString (const char *string);
-int S9xMinCommandLineArgs ();
-void S9xNextController ();
-bool8 S9xLoadROMImage (const char *string);
-const char *S9xSelectFilename (const char *def, const char *dir,
-			       const char *ext, const char *title);
-const char *S9xStringInput(const char *message);
-const char *S9xChooseFilename (bool8 read_only);
-bool8 S9xOpenSnapshotFile (const char *base, bool8 read_only, STREAM *file);
-void S9xCloseSnapshotFile (STREAM file);
-
-const char *S9xBasename (const char *filename);
-
-int S9xFStrcmp (FILE *, const char *);
-
-enum s9x_getdirtype {
-    DEFAULT_DIR,
-    HOME_DIR,
-    ROM_DIR,
-    ROMFILENAME_DIR,
-    SNAPSHOT_DIR,
-    SRAM_DIR,
-    SCREENSHOT_DIR,
-    SPC_DIR,
-    PATCH_DIR,
+enum s9x_getdirtype
+{
+	DEFAULT_DIR = 0,
+	HOME_DIR,
+	ROMFILENAME_DIR,
+	ROM_DIR,
+	SRAM_DIR,
+	SNAPSHOT_DIR,
+	SCREENSHOT_DIR,
+	SPC_DIR,
 	CHEAT_DIR,
-	PACK_DIR,
+	IPS_DIR,
 	BIOS_DIR,
-	LOG_DIR
+	LOG_DIR,
+	LAST_DIR
 };
-const char *S9xGetDirectory (enum s9x_getdirtype dirtype);
-const char *S9xGetFilename (const char *extension, enum s9x_getdirtype dirtype);
-const char *S9xGetFilenameInc (const char *, enum s9x_getdirtype);
-END_EXTERN_C
+
+void S9xUsage (void);
+char * S9xParseArgs (char **, int);
+void S9xLoadConfigFiles (char **, int);
+void S9xSetInfoString (const char *);
+
+// Routines the port has to implement even if it doesn't use them
+
+void S9xPutImage (int, int);
+void S9xInitDisplay (int, char **);
+void S9xDeinitDisplay (void);
+void S9xTextMode (void);
+void S9xGraphicsMode (void);
+void S9xSetPalette (void);
+void S9xToggleSoundChannel (int);
+bool8 S9xOpenSnapshotFile (const char *, bool8, STREAM *);
+void S9xCloseSnapshotFile (STREAM);
+const char * S9xStringInput (const char *);
+const char * S9xGetDirectory (enum s9x_getdirtype);
+const char * S9xGetFilename (const char *, enum s9x_getdirtype);
+const char * S9xGetFilenameInc (const char *, enum s9x_getdirtype);
+const char * S9xChooseFilename (bool8);
+const char * S9xBasename (const char *);
+
+// Routines the port has to implement if it uses command-line
+
+void S9xExtraUsage (void);
+void S9xParseArg (char **, int &, int);
+
+// Routines the port may implement as needed
+
+void S9xExtraDisplayUsage (void);
+void S9xParseDisplayArg (char **, int &, int);
+void S9xSetTitle (const char *);
+void S9xInitInputDevices (void);
+void S9xProcessEvents (bool8);
+const char * S9xSelectFilename (const char *, const char *, const char *, const char *);
 
 #endif
-
