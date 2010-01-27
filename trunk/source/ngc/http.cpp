@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * Snes9x Nintendo Wii/Gamecube Port
  *
  * Tantric December 2008
  *

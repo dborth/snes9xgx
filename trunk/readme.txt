@@ -26,7 +26,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                                FEATURES  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-* Based on Snes9x 1.51
+* Based on Snes9x 1.52
 * Wiimote, Nunchuk, Classic, and Gamecube controller support
 * SNES Superscope, Mouse, Justifier support
 * Cheat support

@@ -1,11 +1,11 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * Snes9x Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * svpe June 2007
  * crunchy2 May-July 2007
  * Michniewski 2008
- * Tantric 2008-2009
+ * Tantric 2008-2010
  *
  * filebrowser.cpp
  *

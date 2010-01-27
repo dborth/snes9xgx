@@ -1,7 +1,7 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * Snes9x Nintendo Wii/Gamecube Port
  *
- * Tantric 2009
+ * Tantric 2008-2010
  *
  * menu.cpp
  *
@@ -815,7 +815,7 @@ static void WindowCredits(void * ptr)
 	txt[i]->SetPosition(320,y); i++; y+=24;
 	txt[i] = new GuiText("eke-eke, others");
 	txt[i]->SetPosition(320,y); i++; y+=24;
-	txt[i] = new GuiText("Snes9x 1.5.1");
+	txt[i] = new GuiText("Snes9x");
 	txt[i]->SetPosition(50,y); i++;
 	txt[i] = new GuiText("Snes9x Team");
 	txt[i]->SetPosition(320,y); i++; y+=24;

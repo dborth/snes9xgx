@@ -1,8 +1,8 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * Snes9x Nintendo Wii/Gamecube Port
  *
  * michniewski August 2008
- * Tantric 2008-2009
+ * Tantric 2008-2010
  *
  * button_mapping.c
  *

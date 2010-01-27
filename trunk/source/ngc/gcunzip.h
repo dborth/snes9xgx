@@ -1,9 +1,9 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * Snes9x Nintendo Wii/Gamecube Port
  *
  * softdev July 2006
  * Michniewski 2008
- * Tantric September 2008
+ * Tantric 2008-2010
  *
  * gcunzip.h
  *
