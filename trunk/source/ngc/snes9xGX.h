@@ -116,7 +116,4 @@ extern char appPath[];
 extern char loadedFile[];
 extern FreeTypeGX *fontSystem[];
 
-void WiiSetupCheats();
-void WiiLoadPatch();
-
 #endif

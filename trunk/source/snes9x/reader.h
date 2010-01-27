@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,70 +172,57 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
+ ***********************************************************************************/
 
 
+#ifndef _READER_H_
+#define _READER_H_
 
-
-#ifndef _3D_H_
-#define _3D_H_
-
-#if defined(USE_OPENGL)
-#include <GL/gl.h>
-#include <GL/glu.h>
-
-#ifdef __linux__
-#include <GL/glx.h>
-#endif
-
-typedef struct
+class Reader
 {
-    bool8       packed_pixels_extension_present;
-    bool8       draw_cube;
-    uint32      version;
-    // Texture format
-    GLint       internal_format;
-    GLint       format;
-    GLint       type;
+	public:
+		Reader (void);
+		virtual ~Reader (void);
+		virtual int get_char (void) = 0;
+		virtual char * gets (char *, size_t) = 0;
+		virtual char * getline (void);	// free() when done
+		virtual std::string getline (bool &);
+		virtual size_t read (char *, size_t) = 0;
+};
 
-    GLint       max_texture_size;// 256 or 512
-    GLint       texture_size;
-    uint32      num_textures;    // 1 if max_texture_size == 256, 2 otherwise
-    GLuint      textures [2];
-	bool8		initialized;
-} OpenGLData;
-
-extern OpenGLData OpenGL;
-
-bool8 S9xOpenGLInit ();
-bool8 S9xOpenGLInit2 ();
-void S9xOpenGLPutImage (int width, int height);
-void S9xOpenGLDeinit ();
-
-#endif
-
-#ifdef USE_GLIDE
-#include <glide.h>
-
-typedef struct
+class fReader : public Reader
 {
-    bool8	voodoo_present;
-    GrVertex	sq[4];
-    GrTexInfo	texture;
-    int32	texture_mem_size;
-    int32	texture_mem_start;
-    float	x_offset, y_offset;
-    float	x_scale, y_scale;
-    float	voodoo_width;
-    float	voodoo_height;
-} GlideData;
+	public:
+		fReader (STREAM);
+		virtual ~fReader (void);
+		virtual int get_char (void);
+		virtual char * gets (char *, size_t);
+		virtual size_t read (char *, size_t);
 
-extern GlideData Glide;
-bool8 S9xGlideEnable (bool8 enable);
-void S9xGlideDeinit ();
-bool8 S9xGlideInit ();
-bool8 S9xVoodooInitialise ();
+	private:
+		STREAM	fp;
+};
+
+#ifdef UNZIP_SUPPORT
+
+#define unz_BUFFSIZ	1024
+
+class unzReader : public Reader
+{
+	public:
+		unzReader (unzFile &);
+		virtual ~unzReader (void);
+		virtual int get_char (void);
+		virtual char * gets (char *, size_t);
+		virtual size_t read (char *, size_t);
+
+	private:
+		unzFile	file;
+		char	buffer[unz_BUFFSIZ];
+		char	*head;
+		size_t	numbytes;
+};
+
 #endif
 
 #endif
-

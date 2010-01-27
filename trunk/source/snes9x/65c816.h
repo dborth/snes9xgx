@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,107 +172,105 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
+ ***********************************************************************************/
 
 
+#ifndef _65C816_H_
+#define _65C816_H_
 
+#define Carry		1
+#define Zero		2
+#define IRQ			4
+#define Decimal		8
+#define IndexFlag	16
+#define MemoryFlag	32
+#define Overflow	64
+#define Negative	128
+#define Emulation	256
 
-#ifndef _65c816_h_
-#define _65c816_h_
+#define SetCarry()			(ICPU._Carry = 1)
+#define ClearCarry()		(ICPU._Carry = 0)
+#define SetZero()			(ICPU._Zero = 0)
+#define ClearZero()			(ICPU._Zero = 1)
+#define SetIRQ()			(Registers.PL |= IRQ)
+#define ClearIRQ()			(Registers.PL &= ~IRQ)
+#define SetDecimal()		(Registers.PL |= Decimal)
+#define ClearDecimal()		(Registers.PL &= ~Decimal)
+#define SetIndex()			(Registers.PL |= IndexFlag)
+#define ClearIndex()		(Registers.PL &= ~IndexFlag)
+#define SetMemory()			(Registers.PL |= MemoryFlag)
+#define ClearMemory()		(Registers.PL &= ~MemoryFlag)
+#define SetOverflow()		(ICPU._Overflow = 1)
+#define ClearOverflow()		(ICPU._Overflow = 0)
+#define SetNegative()		(ICPU._Negative = 0x80)
+#define ClearNegative()		(ICPU._Negative = 0)
 
-#define AL A.B.l
-#define AH A.B.h
-#define XL X.B.l
-#define XH X.B.h
-#define YL Y.B.l
-#define YH Y.B.h
-#define SL S.B.l
-#define SH S.B.h
-#define DL D.B.l
-#define DH D.B.h
-#define PL P.B.l
-#define PH P.B.h
+#define CheckCarry()		(ICPU._Carry)
+#define CheckZero()			(ICPU._Zero == 0)
+#define CheckIRQ()			(Registers.PL & IRQ)
+#define CheckDecimal()		(Registers.PL & Decimal)
+#define CheckIndex()		(Registers.PL & IndexFlag)
+#define CheckMemory()		(Registers.PL & MemoryFlag)
+#define CheckOverflow()		(ICPU._Overflow)
+#define CheckNegative()		(ICPU._Negative & 0x80)
+#define CheckEmulation()	(Registers.P.W & Emulation)
 
-#define Carry       1
-#define Zero        2
-#define IRQ         4
-#define Decimal     8
-#define IndexFlag  16
-#define MemoryFlag 32
-#define Overflow   64
-#define Negative  128
-#define Emulation 256
-
-#define ClearCarry() (ICPU._Carry = 0)
-#define SetCarry() (ICPU._Carry = 1)
-#define SetZero() (ICPU._Zero = 0)
-#define ClearZero() (ICPU._Zero = 1)
-#define SetIRQ() (Registers.PL |= IRQ)
-#define ClearIRQ() (Registers.PL &= ~IRQ)
-#define SetDecimal() (Registers.PL |= Decimal)
-#define ClearDecimal() (Registers.PL &= ~Decimal)
-#define SetIndex() (Registers.PL |= IndexFlag)
-#define ClearIndex() (Registers.PL &= ~IndexFlag)
-#define SetMemory() (Registers.PL |= MemoryFlag)
-#define ClearMemory() (Registers.PL &= ~MemoryFlag)
-#define SetOverflow() (ICPU._Overflow = 1)
-#define ClearOverflow() (ICPU._Overflow = 0)
-#define SetNegative() (ICPU._Negative = 0x80)
-#define ClearNegative() (ICPU._Negative = 0)
-
-#define CheckZero() (ICPU._Zero == 0)
-#define CheckCarry() (ICPU._Carry)
-#define CheckIRQ() (Registers.PL & IRQ)
-#define CheckDecimal() (Registers.PL & Decimal)
-#define CheckIndex() (Registers.PL & IndexFlag)
-#define CheckMemory() (Registers.PL & MemoryFlag)
-#define CheckOverflow() (ICPU._Overflow)
-#define CheckNegative() (ICPU._Negative & 0x80)
-#define CheckEmulation() (Registers.P.W & Emulation)
-
-#define ClearFlags(f) (Registers.P.W &= ~(f))
-#define SetFlags(f)   (Registers.P.W |=  (f))
-#define CheckFlag(f)  (Registers.PL & (f))
+#define SetFlags(f)			(Registers.P.W |= (f))
+#define ClearFlags(f)		(Registers.P.W &= ~(f))
+#define CheckFlag(f)		(Registers.PL & (f))
 
 typedef union
 {
 #ifdef LSB_FIRST
-    struct { uint8 l,h; } B;
+	struct { uint8	l, h; } B;
 #else
-    struct { uint8 h,l; } B;
+	struct { uint8	h, l; } B;
 #endif
-    uint16 W;
-} pair;
+	uint16	W;
+}	pair;
 
-typedef union {
+typedef union
+{
 #ifdef LSB_FIRST
-    struct { uint8 xPCl, xPCh, xPB, z; } B;
-    struct { uint16 xPC, d; } W;
+	struct { uint8	xPCl, xPCh, xPB, z; } B;
+	struct { uint16	xPC, d; } W;
 #else
-    struct { uint8 z, xPB, xPCh, xPCl; } B;
-    struct { uint16 d, xPC; } W;
+	struct { uint8	z, xPB, xPCh, xPCl; } B;
+	struct { uint16	d, xPC; } W;
 #endif
-    uint32 xPBPC;
-} PC_t;
+    uint32	xPBPC;
+}	PC_t;
 
-struct SRegisters{
-    uint8  DB;
-    pair   P;
-    pair   A;
-    pair   D;
-    pair   S;
-    pair   X;
-    pair   Y;
-    PC_t   PC;
+struct SRegisters
+{
+	uint8	DB;
+	pair	P;
+	pair	A;
+	pair	D;
+	pair	S;
+	pair	X;
+	pair	Y;
+	PC_t	PC;
 };
 
-#define PBPC PC.xPBPC
-#define PCw PC.W.xPC
-#define PCh PC.B.xPCh
-#define PCl PC.B.xPCl
-#define PB PC.B.xPB
+#define AL		A.B.l
+#define AH		A.B.h
+#define XL		X.B.l
+#define XH		X.B.h
+#define YL		Y.B.l
+#define YH		Y.B.h
+#define SL		S.B.l
+#define SH		S.B.h
+#define DL		D.B.l
+#define DH		D.B.h
+#define PL		P.B.l
+#define PH		P.B.h
+#define PBPC	PC.xPBPC
+#define PCw		PC.W.xPC
+#define PCh		PC.B.xPCh
+#define PCl		PC.B.xPCl
+#define PB		PC.B.xPB
 
-EXTERN_C struct SRegisters Registers;
+extern struct SRegisters	Registers;
 
 #endif
-

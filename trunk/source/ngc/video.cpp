@@ -31,8 +31,8 @@
 #include "input.h"
 
 /*** Snes9x GFX Buffer ***/
-#define SNES9XGFX_SIZE 		EXT_PITCH*EXT_HEIGHT
-#define FILTERMEM_SIZE 		512*MAX_SNES_HEIGHT*4
+#define SNES9XGFX_SIZE 		(EXT_PITCH*EXT_HEIGHT)
+#define FILTERMEM_SIZE 		(512*MAX_SNES_HEIGHT*4)
 
 static unsigned char * snes9xgfx = NULL;
 unsigned char * filtermem = NULL; // only want ((512*2) X (239*2))

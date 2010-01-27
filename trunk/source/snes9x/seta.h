@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,75 +172,67 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
+ ***********************************************************************************/
 
 
+#ifndef _SETA_H_
+#define _SETA_H_
 
+#define ST_010	0x01
+#define ST_011	0x02
+#define ST_018	0x03
 
-#ifndef NO_SETA
-#ifndef _seta_h
-#define _seta_h
-
-#include "port.h"
-
-#define ST_010 0x01
-#define ST_011 0x02
-#define ST_018 0x03
-
-
-extern "C"
+struct SST010
 {
-uint8 S9xGetSetaDSP(uint32 Address);
-void S9xSetSetaDSP(uint8 byte,uint32 Address);
-uint8 S9xGetST018(uint32 Address);
-void S9xSetST018(uint8 Byte, uint32 Address);
+	uint8	input_params[16];
+	uint8	output_params[16];
+	uint8	op_reg;
+	uint8	execute;
+	bool8	control_enable;
+};
 
-uint8 S9xGetST010(uint32 Address);
-void S9xSetST010(uint32 Address, uint8 Byte);
-uint8 S9xGetST011(uint32 Address);
-void S9xSetST011(uint32 Address, uint8 Byte);
-}
-
-extern void (*SetSETA)(uint32, uint8);
-extern uint8 (*GetSETA)(uint32);
-
-typedef struct SETA_ST010_STRUCT
+struct SST011
 {
-	uint8 input_params[16];
-	uint8 output_params[16];
-	uint8 op_reg;
-	uint8 execute;
-	bool8 control_enable;
-} ST010_Regs;
+	bool8	waiting4command;
+	uint8	status;
+	uint8	command;
+	uint32	in_count;
+	uint32	in_index;
+	uint32	out_count;
+	uint32	out_index;
+	uint8	parameters[512];
+	uint8	output[512];
+};
 
-typedef struct SETA_ST011_STRUCT
+struct SST018
 {
-	bool8 waiting4command;
-	uint8 status;
-	uint8 command;
-	uint32 in_count;
-	uint32 in_index;
-	uint32 out_count;
-	uint32 out_index;
-	uint8 parameters [512];
-	uint8 output [512];
-} ST011_Regs;
+	bool8	waiting4command;
+	uint8	status;
+	uint8	part_command;
+	uint8	pass;
+	uint32	command;
+	uint32	in_count;
+	uint32	in_index;
+	uint32	out_count;
+	uint32	out_index;
+	uint8	parameters[512];
+	uint8	output[512];
+};
 
-typedef struct SETA_ST018_STRUCT
-{
-	bool8 waiting4command;
-	uint8 status;
-	uint8 part_command;
-	uint8 pass;
-	uint32 command;
-	uint32 in_count;
-	uint32 in_index;
-	uint32 out_count;
-	uint32 out_index;
-	uint8 parameters [512];
-	uint8 output [512];
-} ST018_Regs;
+extern struct SST010	ST010;
+extern struct SST011	ST011;
+extern struct SST018	ST018;
+
+uint8 S9xGetST010 (uint32);
+void S9xSetST010 (uint32, uint8);
+uint8 S9xGetST011 (uint32);
+void S9xSetST011 (uint32, uint8);
+uint8 S9xGetST018 (uint32);
+void S9xSetST018 (uint8, uint32);
+uint8 S9xGetSetaDSP (uint32);
+void S9xSetSetaDSP (uint8, uint32);
+
+extern uint8 (*GetSETA) (uint32);
+extern void (*SetSETA) (uint32, uint8);
 
 #endif
-#endif
-

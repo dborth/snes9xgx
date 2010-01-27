@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,7 +172,7 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
+ ***********************************************************************************/
 
 
 #include <math.h>
@@ -169,10 +185,10 @@
 #define APU_DEFAULT_INPUT_RATE		32000
 #define APU_MINIMUM_SAMPLE_COUNT	512
 #define APU_MINIMUM_SAMPLE_BLOCK	128
-#define APU_NUMERATOR_NTSC		5632
+#define APU_NUMERATOR_NTSC			5632
 #define APU_DENOMINATOR_NTSC		118125
-#define APU_NUMERATOR_PAL		102400
-#define APU_DENOMINATOR_PAL		2128137
+#define APU_NUMERATOR_PAL			102400
+#define APU_DENOMINATOR_PAL			2128137
 
 SNES_SPC	*spc_core = NULL;
 
@@ -191,14 +207,14 @@ static uint8 APUROM[64] =
 namespace spc
 {
 	static apu_callback	sa_callback     = NULL;
-        static void		*extra_data     = NULL;
+	static void			*extra_data     = NULL;
 
 	static bool8		sound_in_sync   = TRUE;
 	static bool8		sound_enabled   = FALSE;
 
-        static int              buffer_size;
-        static int		lag_master      = 0;
-        static int		lag             = 0;
+	static int			buffer_size;
+	static int			lag_master      = 0;
+	static int			lag             = 0;
 
 	static uint8		*landing_buffer = NULL;
 	static uint8		*shrink_buffer  = NULL;
@@ -328,7 +344,7 @@ bool8 S9xMixSamples (uint8 *buffer, int sample_count)
 
 int S9xGetSampleCount (void)
 {
-	return (spc::resampler->avail());
+	return (spc::resampler->avail() >> (Settings.Stereo ? 0 : 1));
 }
 
 void S9xFinalizeSamples (void)
@@ -395,10 +411,13 @@ static void UpdatePlaybackRate (void)
 	spc::resampler->time_ratio(time_ratio);
 }
 
-bool8 S9xInitSound (int sample_count, int lag_sample_count)
+bool8 S9xInitSound (int buffer_ms, int lag_ms)
 {
-	// sample_count    : buffer size given in samples in one channel
-	// lag_sample_count: allowable time-lag given in samples in one channel
+	// buffer_ms : buffer size given in millisecond
+	// lag_ms    : allowable time-lag given in millisecond
+
+	int	sample_count     = buffer_ms * 32000 / 1000;
+	int	lag_sample_count = lag_ms    * 32000 / 1000;
 
 	spc::lag_master = lag_sample_count;
 	if (Settings.Stereo)
@@ -413,6 +432,8 @@ bool8 S9xInitSound (int sample_count, int lag_sample_count)
 		spc::buffer_size <<= 1;
 	if (Settings.SixteenBitSound)
 		spc::buffer_size <<= 1;
+
+	printf("Sound buffer size: %d (%d samples)\n", spc::buffer_size, sample_count);
 
 	if (spc::landing_buffer)
 		delete[] spc::landing_buffer;
@@ -438,7 +459,7 @@ bool8 S9xInitSound (int sample_count, int lag_sample_count)
 
 	UpdatePlaybackRate();
 
-	spc::sound_enabled = S9xOpenSoundDevice(spc::buffer_size);
+	spc::sound_enabled = S9xOpenSoundDevice();
 
 	return (spc::sound_enabled);
 }
@@ -514,8 +535,8 @@ void S9xDeinitAPU (void)
 static inline int S9xAPUGetClock (int32 cpucycles)
 {
 	if (Settings.PAL)
-		return floor((double) APU_NUMERATOR_PAL   * spc::timing_hack_numerator * (cpucycles - spc::reference_time) + spc::remainder) /
-							 (APU_DENOMINATOR_PAL * spc::timing_hack_denominator);
+		return ((int) floor(((double) APU_NUMERATOR_PAL   * spc::timing_hack_numerator * (cpucycles - spc::reference_time) + spc::remainder) /
+							((double) APU_DENOMINATOR_PAL * spc::timing_hack_denominator)));
 	else
 		return (APU_NUMERATOR_NTSC   * spc::timing_hack_numerator * (cpucycles - spc::reference_time) + spc::remainder) /
 			   (APU_DENOMINATOR_NTSC * spc::timing_hack_denominator);
@@ -524,8 +545,8 @@ static inline int S9xAPUGetClock (int32 cpucycles)
 static inline int S9xAPUGetClockRemainder (int32 cpucycles)
 {
 	if (Settings.PAL)
-		return fmod ((double) APU_NUMERATOR_PAL   * spc::timing_hack_numerator * (cpucycles - spc::reference_time) + spc::remainder,
-							  APU_DENOMINATOR_PAL * spc::timing_hack_denominator);
+		return ((int) fmod (((double) APU_NUMERATOR_PAL   * spc::timing_hack_numerator * (cpucycles - spc::reference_time) + spc::remainder),
+							((double) APU_DENOMINATOR_PAL * spc::timing_hack_denominator)));
 	else
 		return (APU_NUMERATOR_NTSC   * spc::timing_hack_numerator * (cpucycles - spc::reference_time) + spc::remainder) %
 			   (APU_DENOMINATOR_NTSC * spc::timing_hack_denominator);

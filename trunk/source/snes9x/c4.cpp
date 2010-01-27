@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,157 +172,148 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
-
+ ***********************************************************************************/
 
 
 #include <math.h>
-#include <stdlib.h>
-#include "c4.h"
+#include "snes9x.h"
 #include "memmap.h"
-extern "C" {
 
-short C4WFXVal;
-short C4WFYVal;
-short C4WFZVal;
-short C4WFX2Val;
-short C4WFY2Val;
-short C4WFDist;
-short C4WFScale;
+#define	C4_PI	3.14159265
 
-static double tanval;
-static double c4x, c4y, c4z;
-static double c4x2, c4y2, c4z2;
+int16	C4WFXVal;
+int16	C4WFYVal;
+int16	C4WFZVal;
+int16	C4WFX2Val;
+int16	C4WFY2Val;
+int16	C4WFDist;
+int16	C4WFScale;
+int16	C41FXVal;
+int16	C41FYVal;
+int16	C41FAngleRes;
+int16	C41FDist;
+int16	C41FDistVal;
 
-void C4TransfWireFrame ()
+static double	tanval;
+static double	c4x, c4y, c4z;
+static double	c4x2, c4y2, c4z2;
+
+
+void C4TransfWireFrame (void)
 {
-    c4x = (double) C4WFXVal;
-    c4y = (double) C4WFYVal;
-    c4z = (double) C4WFZVal - 0x95;
+	c4x = (double) C4WFXVal;
+	c4y = (double) C4WFYVal;
+	c4z = (double) C4WFZVal - 0x95;
 
-    // Rotate X
-    tanval = -(double) C4WFX2Val * 3.14159265 * 2 / 128;
-    c4y2 = c4y * cos (tanval) - c4z * sin (tanval);
-    c4z2 = c4y * sin (tanval) + c4z * cos (tanval);
+	// Rotate X
+	tanval = -(double) C4WFX2Val * C4_PI * 2 / 128;
+	c4y2 = c4y  *  cos(tanval) - c4z  * sin(tanval);
+	c4z2 = c4y  *  sin(tanval) + c4z  * cos(tanval);
 
-    // Rotate Y
-    tanval = -(double)C4WFY2Val*3.14159265*2/128;
-    c4x2 = c4x * cos (tanval) + c4z2 * sin (tanval);
-    c4z = c4x * - sin (tanval) + c4z2 * cos (tanval);
+	// Rotate Y
+	tanval = -(double) C4WFY2Val * C4_PI * 2 / 128;
+	c4x2 = c4x  *  cos(tanval) + c4z2 * sin(tanval);
+	c4z  = c4x  * -sin(tanval) + c4z2 * cos(tanval);
 
-    // Rotate Z
-    tanval = -(double) C4WFDist * 3.14159265*2 / 128;
-    c4x = c4x2 * cos (tanval) - c4y2 * sin (tanval);
-    c4y = c4x2 * sin (tanval) + c4y2 * cos (tanval);
+	// Rotate Z
+	tanval = -(double) C4WFDist  * C4_PI * 2 / 128;
+	c4x  = c4x2 *  cos(tanval) - c4y2 * sin(tanval);
+	c4y  = c4x2 *  sin(tanval) + c4y2 * cos(tanval);
 
-    // Scale
-    C4WFXVal = (short) (c4x*(double)C4WFScale/(0x90*(c4z+0x95))*0x95);
-    C4WFYVal = (short) (c4y*(double)C4WFScale/(0x90*(c4z+0x95))*0x95);
+	// Scale
+	C4WFXVal = (int16) (c4x * (double) C4WFScale / (0x90 * (c4z + 0x95)) * 0x95);
+	C4WFYVal = (int16) (c4y * (double) C4WFScale / (0x90 * (c4z + 0x95)) * 0x95);
 }
 
-void C4TransfWireFrame2 ()
+void C4TransfWireFrame2 (void)
 {
-    c4x = (double)C4WFXVal;
-    c4y = (double)C4WFYVal;
-    c4z = (double)C4WFZVal;
+	c4x = (double) C4WFXVal;
+	c4y = (double) C4WFYVal;
+	c4z = (double) C4WFZVal;
 
-    // Rotate X
-    tanval = -(double) C4WFX2Val * 3.14159265 * 2 / 128;
-    c4y2 = c4y * cos (tanval) - c4z * sin (tanval);
-    c4z2 = c4y * sin (tanval) + c4z * cos (tanval);
+	// Rotate X
+	tanval = -(double) C4WFX2Val * C4_PI * 2 / 128;
+	c4y2 = c4y  *  cos(tanval) - c4z  * sin(tanval);
+	c4z2 = c4y  *  sin(tanval) + c4z  * cos(tanval);
 
-    // Rotate Y
-    tanval = -(double) C4WFY2Val * 3.14159265 * 2 / 128;
-    c4x2 = c4x * cos (tanval) + c4z2 * sin (tanval);
-    c4z = c4x * -sin (tanval) + c4z2 * cos (tanval);
+	// Rotate Y
+	tanval = -(double) C4WFY2Val * C4_PI * 2 / 128;
+	c4x2 = c4x  *  cos(tanval) + c4z2 * sin(tanval);
+	c4z  = c4x  * -sin(tanval) + c4z2 * cos(tanval);
 
-    // Rotate Z
-    tanval = -(double)C4WFDist * 3.14159265 * 2 / 128;
-    c4x = c4x2 * cos (tanval) - c4y2 * sin (tanval);
-    c4y = c4x2 * sin (tanval) + c4y2 * cos (tanval);
+	// Rotate Z
+	tanval = -(double) C4WFDist  * C4_PI * 2 / 128;
+	c4x  = c4x2 *  cos(tanval) - c4y2 * sin(tanval);
+	c4y  = c4x2 *  sin(tanval) + c4y2 * cos(tanval);
 
-    // Scale
-    C4WFXVal =(short)(c4x * (double)C4WFScale / 0x100);
-    C4WFYVal =(short)(c4y * (double)C4WFScale / 0x100);
+	// Scale
+	C4WFXVal = (int16) (c4x * (double) C4WFScale / 0x100);
+	C4WFYVal = (int16) (c4y * (double) C4WFScale / 0x100);
 }
 
-void C4CalcWireFrame ()
+void C4CalcWireFrame (void)
 {
-    C4WFXVal = C4WFX2Val - C4WFXVal;
-    C4WFYVal = C4WFY2Val - C4WFYVal;
-    if (abs (C4WFXVal) > abs (C4WFYVal))
-    {
-        C4WFDist = abs (C4WFXVal) + 1;
-        C4WFYVal = (short) (256 * (double) C4WFYVal / abs (C4WFXVal));
-        if (C4WFXVal < 0)
-            C4WFXVal = -256;
-        else
-            C4WFXVal = 256;
-    }
-    else
-    {
-        if (C4WFYVal != 0)
-        {
-            C4WFDist = abs(C4WFYVal)+1;
-            C4WFXVal = (short) (256 * (double)C4WFXVal / abs (C4WFYVal));
-            if (C4WFYVal < 0)
-                C4WFYVal = -256;
-            else
-                C4WFYVal = 256;
-        }
-        else
-            C4WFDist = 0;
-    }
+	C4WFXVal = C4WFX2Val - C4WFXVal;
+	C4WFYVal = C4WFY2Val - C4WFYVal;
+
+	if (abs(C4WFXVal) > abs(C4WFYVal))
+	{
+		C4WFDist = abs(C4WFXVal) + 1;
+		C4WFYVal = (int16) (256 * (double) C4WFYVal / abs(C4WFXVal));
+		if (C4WFXVal < 0)
+			C4WFXVal = -256;
+		else
+			C4WFXVal =  256;
+	}
+	else
+	{
+		if (C4WFYVal != 0)
+		{
+			C4WFDist = abs(C4WFYVal) + 1;
+			C4WFXVal = (int16) (256 * (double) C4WFXVal / abs(C4WFYVal));
+			if (C4WFYVal < 0)
+				C4WFYVal = -256;
+			else
+				C4WFYVal =  256;
+		}
+		else
+			C4WFDist = 0;
+	}
 }
 
-short C41FXVal;
-short C41FYVal;
-short C41FAngleRes;
-short C41FDist;
-short C41FDistVal;
-
-void C4Op1F ()
+void C4Op1F (void)
 {
-    if (C41FXVal == 0)
-    {
-        if (C41FYVal > 0)
-            C41FAngleRes = 0x80;
-        else
-            C41FAngleRes = 0x180;
-    }
-    else
-    {
-        tanval = (double) C41FYVal / C41FXVal;
-        C41FAngleRes = (short) (atan (tanval) / (3.141592675 * 2) * 512);
-        C41FAngleRes = C41FAngleRes;
-        if (C41FXVal< 0)
-            C41FAngleRes += 0x100;
-        C41FAngleRes &= 0x1FF;
-    }
+	if (C41FXVal == 0)
+	{
+		if (C41FYVal > 0)
+			C41FAngleRes = 0x80;
+		else
+			C41FAngleRes = 0x180;
+	}
+	else
+	{
+		tanval = (double) C41FYVal / C41FXVal;
+		C41FAngleRes = (int16) (atan(tanval) / (C4_PI * 2) * 512);
+		C41FAngleRes = C41FAngleRes;
+		if (C41FXVal< 0)
+			C41FAngleRes += 0x100;
+		C41FAngleRes &= 0x1FF;
+	}
 }
 
-void C4Op15()
+void C4Op15 (void)
 {
-    tanval = sqrt ((double) C41FYVal * C41FYVal + (double) C41FXVal * C41FXVal);
-    C41FDist = (short) tanval;
+	tanval = sqrt((double) C41FYVal * C41FYVal + (double) C41FXVal * C41FXVal);
+	C41FDist = (int16) tanval;
 }
 
-void C4Op0D()
+void C4Op0D (void)
 {
-    tanval = sqrt ((double) C41FYVal * C41FYVal + (double) C41FXVal * C41FXVal);
-    tanval = C41FDistVal / tanval;
-    C41FYVal = (short) (C41FYVal * tanval * 0.99);
-    C41FXVal = (short) (C41FXVal * tanval * 0.98);
+	tanval = sqrt((double) C41FYVal * C41FYVal + (double) C41FXVal * C41FXVal);
+	tanval = C41FDistVal / tanval;
+	C41FYVal = (int16) (C41FYVal * tanval * 0.99);
+	C41FXVal = (int16) (C41FXVal * tanval * 0.98);
 }
-
-#ifdef ZSNES_C4
-EXTERN_C void C4LoaDMem(char *C4RAM)
-{
-  memmove(C4RAM+(READ_WORD(C4RAM+0x1f45)&0x1fff),
-          C4GetMemPointer(READ_3WORD(C4RAM+0x1f40)),
-          READ_WORD(C4RAM+0x1f43));
-}
-#endif
 
 uint8 * S9xGetBasePointerC4 (uint16 Address)
 {
@@ -322,4 +329,13 @@ uint8 * S9xGetMemPointerC4 (uint16 Address)
 	return (Memory.C4RAM - 0x6000 + (Address & 0xffff));
 }
 
-}//end extern C
+#ifdef ZSNES_C4
+START_EXTERN_C
+
+void C4LoaDMem (char *C4RAM)
+{
+	memmove(C4RAM + (READ_WORD(C4RAM + 0x1f45) & 0x1fff), C4GetMemPointer(READ_3WORD(C4RAM + 0x1f40)), READ_WORD(C4RAM + 0x1f43));
+}
+
+END_EXTERN_C
+#endif

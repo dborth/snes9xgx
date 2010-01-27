@@ -760,7 +760,7 @@ void SetDefaultButtonMap ()
 	S9xMapPointer(maxcode++, S9xGetCommandT("Pointer Justifier2"), false);
 
 	maxcode = 0x90;
-	ASSIGN_BUTTON_FALSE (maxcode++, "Screenshot");
+	//ASSIGN_BUTTON_FALSE (maxcode++, "Screenshot");
 
 	SetControllers();
 }

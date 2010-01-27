@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,286 +172,168 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
-
-
+ ***********************************************************************************/
 
 
 #include "snes9x.h"
 #include "memmap.h"
-#include "ppu.h"
-#include "dsp1.h"
-#include "cpuexec.h"
-#include "s9xdebug.h"
-#include "apu.h"
 #include "dma.h"
-#include "sa1.h"
-#include "cheats.h"
-#include "srtc.h"
-#include "sdd1.h"
-#include "spc7110.h"
-#include "obc1.h"
-#include "bsx.h"
-#include "snapshot.h"
-#ifndef NGC
-#include "logger.h"
-#endif
-
-
-#ifndef ZSNES_FX
+#include "apu/apu.h"
 #include "fxemu.h"
-
-extern struct FxInit_s SuperFX;
-
-void S9xResetSuperFX ()
-{
-    SuperFX.vFlags = 0; //FX_FLAG_ROM_BUFFER;// | FX_FLAG_ADDRESS_CHECKING;
-	// FIXME: Snes9x can't execute CPU and SuperFX at a time. Don't ask me what is 0.417 :P
-	SuperFX.speedPerLine = (uint32) (0.417 * 10.5e6 * ((1.0 / (float) Memory.ROMFramesPerSecond) / ((float) (Timings.V_Max))));
-	//printf("SFX:%d\n", SuperFX.speedPerLine);
-	SuperFX.oneLineDone = FALSE;
-	FxReset (&SuperFX);
-}
+#include "sdd1.h"
+#include "srtc.h"
+#include "snapshot.h"
+#include "cheats.h"
+#include "logger.h"
+#ifdef DEBUGGER
+#include "debug.h"
 #endif
 
-void S9xSoftResetCPU ()
+static void S9xResetCPU (void);
+static void S9xSoftResetCPU (void);
+
+
+static void S9xResetCPU (void)
 {
-    Registers.PBPC = 0;
-    Registers.PB = 0;
-    Registers.PCw = S9xGetWord (0xFFFC);
-    OpenBus = Registers.PCh;
-    Registers.D.W = 0;
-    Registers.DB = 0;
-    Registers.SH = 1;
-    Registers.SL -= 3;
-    Registers.XH = 0;
-    Registers.YH = 0;
+	S9xSoftResetCPU();
+	Registers.SL = 0xff;
+	Registers.P.W = 0;
+	Registers.A.W = 0;
+	Registers.X.W = 0;
+	Registers.Y.W = 0;
+	SetFlags(MemoryFlag | IndexFlag | IRQ | Emulation);
+	ClearFlags(Decimal);
+}
 
-    ICPU.ShiftedPB = 0;
-    ICPU.ShiftedDB = 0;
-    SetFlags (MemoryFlag | IndexFlag | IRQ | Emulation);
-    ClearFlags (Decimal);
+static void S9xSoftResetCPU (void)
+{
+	Registers.PBPC = 0;
+	Registers.PB = 0;
+	Registers.PCw = S9xGetWord(0xfffc);
+	OpenBus = Registers.PCh;
+	Registers.D.W = 0;
+	Registers.DB = 0;
+	Registers.SH = 1;
+	Registers.SL -= 3;
+	Registers.XH = 0;
+	Registers.YH = 0;
 
-    CPU.Flags = CPU.Flags & (DEBUG_MODE_FLAG | TRACE_FLAG);
-    CPU.BranchSkip = FALSE;
-    CPU.NMIActive = FALSE;
-    CPU.IRQActive = FALSE;
-    CPU.WaitingForInterrupt = FALSE;
+	ICPU.ShiftedPB = 0;
+	ICPU.ShiftedDB = 0;
+	SetFlags(MemoryFlag | IndexFlag | IRQ | Emulation);
+	ClearFlags(Decimal);
+
+	CPU.Cycles = 182; // Or 188. This is the cycle count just after the jump to the Reset Vector.
+	CPU.PrevCycles = -1;
+	CPU.V_Counter = 0;
+	CPU.Flags = CPU.Flags & (DEBUG_MODE_FLAG | TRACE_FLAG);
+	CPU.PCBase = NULL;
+	CPU.IRQActive = FALSE;
+	CPU.IRQPending = 0;
+	CPU.MemSpeed = SLOW_ONE_CYCLE;
+	CPU.MemSpeedx2 = SLOW_ONE_CYCLE * 2;
+	CPU.FastROMSpeed = SLOW_ONE_CYCLE;
 	CPU.InDMA = FALSE;
 	CPU.InHDMA = FALSE;
-    CPU.InDMAorHDMA = FALSE;
+	CPU.InDMAorHDMA = FALSE;
 	CPU.InWRAMDMAorHDMA = FALSE;
 	CPU.HDMARanInDMA = 0;
-    CPU.PCBase = NULL;
-    CPU.PBPCAtOpcodeStart = 0xffffffff;
-    CPU.WaitAddress = 0xffffffff;
-    CPU.WaitCounter = 0;
-    CPU.Cycles = 182; // Or 188. This is the cycle count just after the jump to the Reset Vector.
-	CPU.PrevCycles = -1;
-    CPU.V_Counter = 0;
-    CPU.MemSpeed = SLOW_ONE_CYCLE;
-    CPU.MemSpeedx2 = SLOW_ONE_CYCLE * 2;
-    CPU.FastROMSpeed = SLOW_ONE_CYCLE;
-    CPU.AutoSaveTimer = 0;
-    CPU.SRAMModified = FALSE;
-    CPU.BRKTriggered = FALSE;
-	CPU.IRQPending = 0;
+	CPU.CurrentDMAorHDMAChannel = -1;
+	CPU.WhichEvent = HC_RENDER_EVENT;
+	CPU.NextEvent  = Timings.RenderPos;
+	CPU.WaitingForInterrupt = FALSE;
+	CPU.WaitAddress = 0xffffffff;
+	CPU.WaitCounter = 0;
+	CPU.PBPCAtOpcodeStart = 0xffffffff;
+	CPU.AutoSaveTimer = 0;
+	CPU.SRAMModified = FALSE;
 
 	Timings.InterlaceField = FALSE;
 	Timings.H_Max = Timings.H_Max_Master;
 	Timings.V_Max = Timings.V_Max_Master;
-    Timings.NMITriggerPos = 0xffff;
+	Timings.NMITriggerPos = 0xffff;
 	if (Model->_5A22 == 2)
 		Timings.WRAMRefreshPos = SNES_WRAM_REFRESH_HC_v2;
 	else
 		Timings.WRAMRefreshPos = SNES_WRAM_REFRESH_HC_v1;
 
-    CPU.WhichEvent = HC_RENDER_EVENT;
-    CPU.NextEvent  = Timings.RenderPos;
+	S9xSetPCBase(Registers.PBPC);
 
-    S9xSetPCBase (Registers.PBPC);
+	ICPU.S9xOpcodes = S9xOpcodesE1;
+	ICPU.S9xOpLengths = S9xOpLengthsM1X1;
+	ICPU.CPUExecuting = TRUE;
 
-    ICPU.S9xOpcodes = S9xOpcodesE1;
-    ICPU.S9xOpLengths = S9xOpLengthsM1X1;
-    ICPU.CPUExecuting = TRUE;
-
-    S9xUnpackStatus();
+	S9xUnpackStatus();
 }
-
-void S9xResetCPU ()
-{
-    S9xSoftResetCPU ();
-    Registers.SL = 0xFF;
-    Registers.P.W = 0;
-    Registers.A.W = 0;
-    Registers.X.W = 0;
-    Registers.Y.W = 0;
-	SetFlags (MemoryFlag | IndexFlag | IRQ | Emulation);
-    ClearFlags (Decimal);
-}
-
-#ifdef ZSNES_FX
-START_EXTERN_C
-void S9xResetSuperFX ();
-bool8 WinterGold = 0;
-extern uint8 *C4Ram;
-END_EXTERN_C
-#endif
 
 void S9xReset (void)
 {
-#ifndef NGC
-    ResetLogger();
-    S9xResetSaveTimer (FALSE);
-#endif
+	S9xResetSaveTimer(FALSE);
+	S9xResetLogger();
 
-    ZeroMemory (Memory.FillRAM, 0x8000);
-    memset (Memory.VRAM, 0x00, 0x10000);
-    memset (Memory.RAM, 0x55, 0x20000);
+	memset(Memory.RAM, 0x55, 0x20000);
+	memset(Memory.VRAM, 0x00, 0x10000);
+	ZeroMemory(Memory.FillRAM, 0x8000);
 
 	if (Settings.BS)
 		S9xResetBSX();
-	if(Settings.SPC7110)
-		S9xSpc7110Reset();
-    S9xResetCPU ();
-    S9xResetPPU ();
-    S9xResetSRTC ();
-    if (Settings.SDD1)
-        S9xResetSDD1 ();
 
-    S9xResetDMA ();
-    S9xResetAPU ();
-    S9xResetDSP1 ();
-    S9xSA1Init ();
-    if (Settings.C4)
-        S9xInitC4 ();
+	S9xResetCPU();
+	S9xResetPPU();
+	S9xResetDMA();
+	S9xResetAPU();
 
-    S9xInitCheatData ();
-
+	if (Settings.DSP)
+		S9xResetDSP();
+	if (Settings.SuperFX)
+		S9xResetSuperFX();
+	if (Settings.SA1)
+		S9xSA1Init();
+	if (Settings.SDD1)
+		S9xResetSDD1();
+	if (Settings.SPC7110)
+		S9xResetSPC7110();
+	if (Settings.C4)
+		S9xInitC4();
 	if (Settings.OBC1)
-		ResetOBC1();
-    if (Settings.SuperFX)
-        S9xResetSuperFX ();
-#ifdef ZSNES_FX
-    WinterGold = Settings.WinterGold;
-#endif
-//    Settings.Paused = FALSE;
+		S9xResetOBC1();
+	if (Settings.SRTC)
+		S9xResetSRTC();
+
+	S9xInitCheatData();
 }
 
 void S9xSoftReset (void)
 {
-#ifndef NGC
-    S9xResetSaveTimer (FALSE);
-#endif
+	S9xResetSaveTimer(FALSE);
+
+	memset(Memory.VRAM, 0x00, 0x10000);
+	ZeroMemory(Memory.FillRAM, 0x8000);
+
 	if (Settings.BS)
 		S9xResetBSX();
-    if (Settings.SuperFX)
-        S9xResetSuperFX ();
-#ifdef ZSNES_FX
-    WinterGold = Settings.WinterGold;
-#endif
-    ZeroMemory (Memory.FillRAM, 0x8000);
-    memset (Memory.VRAM, 0x00, 0x10000);
- //   memset (Memory.RAM, 0x55, 0x20000);
 
-	if(Settings.SPC7110)
-		S9xSpc7110Reset();
-    S9xSoftResetCPU ();
-    S9xSoftResetPPU ();
-    S9xResetSRTC ();
-    if (Settings.SDD1)
-        S9xResetSDD1 ();
+	S9xSoftResetCPU();
+	S9xSoftResetPPU();
+	S9xResetDMA();
+	S9xSoftResetAPU();
 
-    S9xResetDMA ();
-    S9xResetAPU ();
-    S9xResetDSP1 ();
-	if(Settings.OBC1)
-		ResetOBC1();
-    S9xSA1Init ();
-    if (Settings.C4)
-        S9xInitC4 ();
+	if (Settings.DSP)
+		S9xResetDSP();
+	if (Settings.SuperFX)
+		S9xResetSuperFX();
+	if (Settings.SA1)
+		S9xSA1Init();
+	if (Settings.SDD1)
+		S9xResetSDD1();
+	if (Settings.SPC7110)
+		S9xResetSPC7110();
+	if (Settings.C4)
+		S9xInitC4();
+	if (Settings.OBC1)
+		S9xResetOBC1();
+	if (Settings.SRTC)
+		S9xResetSRTC();
 
-    S9xInitCheatData ();
-
-//    Settings.Paused = FALSE;
+	S9xInitCheatData();
 }
-
-uint8 S9xOpLengthsM0X0[256] = {
-//  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 0
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 1
-    3, 2, 4, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 2
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 3
-    1, 2, 2, 2, 3, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 4
-    2, 2, 2, 2, 3, 2, 2, 2, 1, 3, 1, 1, 4, 3, 3, 4, // 5
-    1, 2, 3, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 6
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 7
-    2, 2, 3, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 8
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 9
-    3, 2, 3, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // A
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // B
-    3, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // C
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // D
-    3, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // E
-    2, 2, 2, 2, 3, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4  // F
-};
-
-uint8 S9xOpLengthsM0X1[256] = {
-//  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 0
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 1
-    3, 2, 4, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 2
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 3
-    1, 2, 2, 2, 3, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 4
-    2, 2, 2, 2, 3, 2, 2, 2, 1, 3, 1, 1, 4, 3, 3, 4, // 5
-    1, 2, 3, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 6
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 7
-    2, 2, 3, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 8
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 9
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // A
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // B
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // C
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // D
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // E
-    2, 2, 2, 2, 3, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4  // F
-};
-
-uint8 S9xOpLengthsM1X0[256] = {
-//  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // 0
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 1
-    3, 2, 4, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // 2
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 3
-    1, 2, 2, 2, 3, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // 4
-    2, 2, 2, 2, 3, 2, 2, 2, 1, 3, 1, 1, 4, 3, 3, 4, // 5
-    1, 2, 3, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // 6
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 7
-    2, 2, 3, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // 8
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 9
-    3, 2, 3, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // A
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // B
-    3, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // C
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // D
-    3, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // E
-    2, 2, 2, 2, 3, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4  // F
-};
-
-uint8 S9xOpLengthsM1X1[256] = {
-//  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // 0
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 1
-    3, 2, 4, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // 2
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 3
-    1, 2, 2, 2, 3, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // 4
-    2, 2, 2, 2, 3, 2, 2, 2, 1, 3, 1, 1, 4, 3, 3, 4, // 5
-    1, 2, 3, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // 6
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 7
-    2, 2, 3, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // 8
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // 9
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // A
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // B
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // C
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4, // D
-    2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 4, // E
-    2, 2, 2, 2, 3, 2, 2, 2, 1, 3, 1, 1, 3, 3, 3, 4  // F
-};

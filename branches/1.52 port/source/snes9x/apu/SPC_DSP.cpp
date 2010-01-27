@@ -1051,7 +1051,7 @@ void SPC_DSP::set_stereo_switch( int value )
 	stereo_switch = value;
 }
 
-uint8_t SPC_DSP::reg_value( int ch, int addr )
+SPC_DSP::uint8_t SPC_DSP::reg_value( int ch, int addr )
 {
 	return m.voices[ch].regs[addr];
 }

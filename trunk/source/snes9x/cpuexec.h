@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,129 +172,105 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
-
-
+ ***********************************************************************************/
 
 
 #ifndef _CPUEXEC_H_
 #define _CPUEXEC_H_
 
-#include "snes9x.h"
+#include "ppu.h"
 
-struct SOpcodes {
-#ifdef __WIN32__
-	void (__cdecl *S9xOpcode)( void);
-#else
-	void (*S9xOpcode)( void);
-#endif
+struct SOpcodes
+{
+	void (*S9xOpcode) (void);
 };
 
 struct SICPU
 {
-    uint8  *Speed; // unused
-    struct SOpcodes *S9xOpcodes;
-    uint8  *S9xOpLengths;
-    uint8  _Carry;
-    uint8  _Zero;
-    uint8  _Negative;
-    uint8  _Overflow;
-    bool8  CPUExecuting;
-    uint32 ShiftedPB;
-    uint32 ShiftedDB;
-    uint32 Frame;
-    uint32 Scanline;
-    uint32 FrameAdvanceCount;
-	bool8 SavedAtOp;
+	struct SOpcodes	*S9xOpcodes;
+	uint8	*S9xOpLengths;
+	uint8	_Carry;
+	uint8	_Zero;
+	uint8	_Negative;
+	uint8	_Overflow;
+	bool8	CPUExecuting;
+	uint32	ShiftedPB;
+	uint32	ShiftedDB;
+	uint32	Frame;
+	uint32	FrameAdvanceCount;
 };
 
-START_EXTERN_C
-extern struct SICPU ICPU;
-END_EXTERN_C
+extern struct SICPU		ICPU;
 
-#include "ppu.h"
-#include "memmap.h"
-#include "65c816.h"
+extern struct SOpcodes	S9xOpcodesE1[256];
+extern struct SOpcodes	S9xOpcodesM1X1[256];
+extern struct SOpcodes	S9xOpcodesM1X0[256];
+extern struct SOpcodes	S9xOpcodesM0X1[256];
+extern struct SOpcodes	S9xOpcodesM0X0[256];
+extern struct SOpcodes	S9xOpcodesSlow[256];
+extern uint8			S9xOpLengthsM1X1[256];
+extern uint8			S9xOpLengthsM1X0[256];
+extern uint8			S9xOpLengthsM0X1[256];
+extern uint8			S9xOpLengthsM0X0[256];
 
-START_EXTERN_C
 void S9xMainLoop (void);
 void S9xReset (void);
 void S9xSoftReset (void);
-void S9xDoHEventProcessing ();
+void S9xDoHEventProcessing (void);
 void S9xClearIRQ (uint32);
 void S9xSetIRQ (uint32);
 
-extern struct SOpcodes S9xOpcodesE1 [256];
-extern struct SOpcodes S9xOpcodesM1X1 [256];
-extern struct SOpcodes S9xOpcodesM1X0 [256];
-extern struct SOpcodes S9xOpcodesM0X1 [256];
-extern struct SOpcodes S9xOpcodesM0X0 [256];
-extern struct SOpcodes S9xOpcodesSlow [256];
-extern uint8 S9xOpLengthsM1X1 [256];
-extern uint8 S9xOpLengthsM1X0 [256];
-extern uint8 S9xOpLengthsM0X1 [256];
-extern uint8 S9xOpLengthsM0X0 [256];
-END_EXTERN_C
-
-STATIC inline void S9xUnpackStatus()
+static inline void S9xUnpackStatus (void)
 {
-    ICPU._Zero = (Registers.PL & Zero) == 0;
-    ICPU._Negative = (Registers.PL & Negative);
-    ICPU._Carry = (Registers.PL & Carry);
-    ICPU._Overflow = (Registers.PL & Overflow) >> 6;
+	ICPU._Zero = (Registers.PL & Zero) == 0;
+	ICPU._Negative = (Registers.PL & Negative);
+	ICPU._Carry = (Registers.PL & Carry);
+	ICPU._Overflow = (Registers.PL & Overflow) >> 6;
 }
 
-STATIC inline void S9xPackStatus()
+static inline void S9xPackStatus (void)
 {
-    Registers.PL &= ~(Zero | Negative | Carry | Overflow);
-    Registers.PL |= ICPU._Carry | ((ICPU._Zero == 0) << 1) |
-		    (ICPU._Negative & 0x80) | (ICPU._Overflow << 6);
+	Registers.PL &= ~(Zero | Negative | Carry | Overflow);
+	Registers.PL |= ICPU._Carry | ((ICPU._Zero == 0) << 1) | (ICPU._Negative & 0x80) | (ICPU._Overflow << 6);
 }
 
-STATIC inline void CLEAR_IRQ_SOURCE (uint32 M)
+static inline void S9xFixCycles (void)
 {
-    CPU.IRQActive &= ~M;
-    if (!CPU.IRQActive)
-	CPU.Flags &= ~IRQ_FLAG;
-}
-
-STATIC inline void S9xFixCycles ()
-{
-    if (CheckEmulation ())
-    {
-	ICPU.S9xOpcodes = S9xOpcodesE1;
-        ICPU.S9xOpLengths = S9xOpLengthsM1X1;
-    }
-    else
-    if (CheckMemory ())
-    {
-	if (CheckIndex ())
+	if (CheckEmulation())
 	{
-	    ICPU.S9xOpcodes = S9xOpcodesM1X1;
-            ICPU.S9xOpLengths = S9xOpLengthsM1X1;
+		ICPU.S9xOpcodes = S9xOpcodesE1;
+		ICPU.S9xOpLengths = S9xOpLengthsM1X1;
+	}
+	else
+	if (CheckMemory())
+	{
+		if (CheckIndex())
+		{
+			ICPU.S9xOpcodes = S9xOpcodesM1X1;
+			ICPU.S9xOpLengths = S9xOpLengthsM1X1;
+		}
+		else
+		{
+			ICPU.S9xOpcodes = S9xOpcodesM1X0;
+			ICPU.S9xOpLengths = S9xOpLengthsM1X0;
+		}
 	}
 	else
 	{
-	    ICPU.S9xOpcodes = S9xOpcodesM1X0;
-            ICPU.S9xOpLengths = S9xOpLengthsM1X0;
+		if (CheckIndex())
+		{
+			ICPU.S9xOpcodes = S9xOpcodesM0X1;
+			ICPU.S9xOpLengths = S9xOpLengthsM0X1;
+		}
+		else
+		{
+			ICPU.S9xOpcodes = S9xOpcodesM0X0;
+			ICPU.S9xOpLengths = S9xOpLengthsM0X0;
+		}
 	}
-    }
-    else
-    {
-	if (CheckIndex ())
-	{
-	    ICPU.S9xOpcodes = S9xOpcodesM0X1;
-            ICPU.S9xOpLengths = S9xOpLengthsM0X1;
-	}
-	else
-	{
-	    ICPU.S9xOpcodes = S9xOpcodesM0X0;
-            ICPU.S9xOpLengths = S9xOpLengthsM0X0;
-	}
-    }
 }
 
-STATIC inline void S9xReschedule (void)
+static inline void S9xReschedule (void)
 {
 	uint8	next = 0;
 	int32	hpos = 0;

@@ -125,7 +125,7 @@ void SNES_SPC::timers_loaded()
 void SNES_SPC::load_regs( uint8_t const in [reg_count] )
 {
 	memcpy( REGS, in, reg_count );
-	//memcpy( REGS_IN, REGS, reg_count );
+	memcpy( REGS_IN, REGS, reg_count );
 	
 	// These always read back as 0
 	REGS_IN [r_test    ] = 0;
@@ -203,7 +203,13 @@ void SNES_SPC::soft_reset()
 
 void SNES_SPC::reset()
 {
-	memset( RAM, 0xFF, 0x10000 );
+	m.cpu_regs.pc  = 0xFFC0;
+	m.cpu_regs.a   = 0x00;
+	m.cpu_regs.x   = 0x00;
+	m.cpu_regs.y   = 0x00;
+	m.cpu_regs.psw = 0x02;
+	m.cpu_regs.sp  = 0xEF;
+	memset( RAM, 0x00, 0x10000 );
 	ram_loaded();
 	reset_common( 0x0F );
 	dsp.reset();
@@ -396,7 +402,7 @@ void SNES_SPC::dsp_set_stereo_switch( int value )
 	dsp.set_stereo_switch( value );
 }
 
-uint8_t SNES_SPC::dsp_reg_value( int ch, int addr )
+SNES_SPC::uint8_t SNES_SPC::dsp_reg_value( int ch, int addr )
 {
 	return dsp.reg_value( ch, addr );
 }

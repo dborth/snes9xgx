@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,32 +172,96 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
+ ***********************************************************************************/
 
 
+#include "snes9x.h"
+#include "movie.h"
+#include "logger.h"
+
+static int	resetno = 0;
+static int	framecounter = 0;
+static FILE	*video = NULL;
+static FILE	*audio = NULL;
 
 
-#ifndef _DEBUG_H_
-#define _DEBUG_H_
+void S9xResetLogger (void)
+{
+	if (!Settings.DumpStreams)
+		return;
 
-START_EXTERN_C
-void S9xDoDebug ();
-void S9xTrace ();
-void S9xSA1Trace ();
-void S9xTraceMessage (const char *);
+	char	buffer[128];
 
-// Structures
-struct SBreakPoint{
-	bool8   Enabled;
-	uint8  Bank;
-	uint16 Address;
-};
+	S9xCloseLogger();
+	framecounter = 0;
 
-uint8 S9xOPrint( char *Line, uint8 Bank, uint16 Address);
-uint8 S9xSA1OPrint( char *Line, uint8 Bank, uint16 Address);
+	sprintf(buffer, "videostream%d.dat", resetno);
+	video = fopen(buffer, "wb");
+	if (!video)
+	{
+		printf("Opening %s failed. Logging cancelled.\n", buffer);
+		return;
+	}
 
-extern struct SBreakPoint S9xBreakpoint[ 6];
-extern char *S9xMnemonics[256];
-END_EXTERN_C
-#endif
+	sprintf(buffer, "audiostream%d.dat", resetno);
+	audio = fopen(buffer, "wb");
+	if (!audio)
+	{
+		printf("Opening %s failed. Logging cancelled.\n", buffer);
+		fclose(video);
+		return;
+	}
 
+	resetno++;
+}
+
+void S9xCloseLogger (void)
+{
+	if (video)
+	{
+		fclose(video);
+		video = NULL;
+	}
+
+	if (audio)
+	{
+		fclose(audio);
+		audio = NULL;
+	}
+}	
+
+void S9xVideoLogger (void *pixels, int width, int height, int depth, int bytes_per_line)
+{
+	int	fc = S9xMovieGetFrameCounter();
+	if (fc > 0)
+		framecounter = fc;
+	else
+		framecounter++;
+
+	if (video)
+	{
+		char	*data = (char *) pixels;
+		size_t	ignore;
+
+		for (int i = 0; i < height; i++)
+			ignore = fwrite(data + i * bytes_per_line, depth, width, video);
+		fflush(video);
+		fflush(audio);
+
+		if (Settings.DumpStreamsMaxFrames > 0 && framecounter >= Settings.DumpStreamsMaxFrames)
+		{
+			printf("Logging ended.\n");
+			S9xCloseLogger();
+		}
+
+	}
+}
+
+void S9xAudioLogger (void *samples, int length)
+{
+	if (audio)
+	{
+		size_t	ignore;
+		ignore = fwrite(samples, 1, length, audio);
+	}
+}

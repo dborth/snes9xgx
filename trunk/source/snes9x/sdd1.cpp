@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,100 +172,40 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
-
-
+ ***********************************************************************************/
 
 
 #include "snes9x.h"
 #include "memmap.h"
-#include "ppu.h"
 #include "sdd1.h"
 #include "display.h"
 
-#ifdef __linux
-#include <unistd.h>
-#endif
 
 void S9xSetSDD1MemoryMap (uint32 bank, uint32 value)
 {
-    bank = 0xc00 + bank * 0x100;
-    value = value * 1024 * 1024;
+	bank = 0xc00 + bank * 0x100;
+	value = value * 1024 * 1024;
 
-    int c;
-
-    for (c = 0; c < 0x100; c += 16)
-    {
-	uint8 *block = &Memory.ROM [value + (c << 12)];
-	int i;
-
-	for (i = c; i < c + 16; i++)
-	    Memory.Map [i + bank] = block;
-    }
-}
-
-void S9xResetSDD1 ()
-{
-    memset (&Memory.FillRAM [0x4800], 0, 4);
-    for (int i = 0; i < 4; i++)
-    {
-	Memory.FillRAM [0x4804 + i] = i;
-	S9xSetSDD1MemoryMap (i, i);
-    }
-}
-
-void S9xSDD1PostLoadState ()
-{
-    for (int i = 0; i < 4; i++)
-	S9xSetSDD1MemoryMap (i, Memory.FillRAM [0x4804 + i]);
-}
-
-static int S9xCompareSDD1LoggedDataEntries (const void *p1, const void *p2)
-{
-    uint8 *b1 = (uint8 *) p1;
-    uint8 *b2 = (uint8 *) p2;
-    uint32 a1 = (*b1 << 16) + (*(b1 + 1) << 8) + *(b1 + 2);
-    uint32 a2 = (*b2 << 16) + (*(b2 + 1) << 8) + *(b2 + 2);
-
-    return (a1 - a2);
-}
-
-void S9xSDD1SaveLoggedData ()
-{
-    if (Memory.SDD1LoggedDataCount != Memory.SDD1LoggedDataCountPrev)
-    {
-	qsort (Memory.SDD1LoggedData, Memory.SDD1LoggedDataCount, 8,
-	       S9xCompareSDD1LoggedDataEntries);
-
-	FILE *fs = fopen (S9xGetFilename (".dat", PATCH_DIR), "wb");
-
-	if (fs)
+	for (int c = 0; c < 0x100; c += 16)
 	{
-	    fwrite (Memory.SDD1LoggedData, 8,
-		    Memory.SDD1LoggedDataCount, fs);
-	    fclose (fs);
-#if defined(__linux)
-	    chown (S9xGetFilename (".dat", PATCH_DIR), getuid (), getgid ());
-#endif
+		uint8	*block = &Memory.ROM[value + (c << 12)];
+		for (int i = c; i < c + 16; i++)
+			Memory.Map[i + bank] = block;
 	}
-	Memory.SDD1LoggedDataCountPrev = Memory.SDD1LoggedDataCount;
-    }
 }
 
-void S9xSDD1LoadLoggedData ()
+void S9xResetSDD1 (void)
 {
-    FILE *fs = fopen (S9xGetFilename (".dat", PATCH_DIR), "rb");
-
-    Memory.SDD1LoggedDataCount = Memory.SDD1LoggedDataCountPrev = 0;
-
-    if (fs)
-    {
-	int c = fread (Memory.SDD1LoggedData, 8,
-		       MEMMAP_MAX_SDD1_LOGGED_ENTRIES, fs);
-
-	if (c != EOF)
-	    Memory.SDD1LoggedDataCount = Memory.SDD1LoggedDataCountPrev = c;
-	fclose (fs);
-    }
+	memset(&Memory.FillRAM[0x4800], 0, 4);
+	for (int i = 0; i < 4; i++)
+	{
+		Memory.FillRAM[0x4804 + i] = i;
+		S9xSetSDD1MemoryMap(i, i);
+	}
 }
 
+void S9xSDD1PostLoadState (void)
+{
+	for (int i = 0; i < 4; i++)
+		S9xSetSDD1MemoryMap(i, Memory.FillRAM[0x4804 + i]);
+}

@@ -83,8 +83,9 @@ class Resampler : public ring_buffer
             {
                 int s_left = internal_buffer[i_position];
                 int s_right = internal_buffer[i_position + 1];
+                const double margin_of_error = 1.0e-10;
 
-                if (r_step == 1.0)
+                if (fabs(r_step - 1.0) < margin_of_error)
                 {
                     data[o_position] = (short) s_left;
                     data[o_position + 1] = (short) s_right;

@@ -1,4 +1,4 @@
-/**********************************************************************************
+/***********************************************************************************
   Snes9x - Portable Super Nintendo Entertainment System (TM) emulator.
 
   (c) Copyright 1996 - 2002  Gary Henderson (gary.henderson@ntlworld.com),
@@ -15,11 +15,14 @@
   (c) Copyright 2002 - 2006  funkyass (funkyass@spam.shaw.ca),
                              Kris Bleakley (codeviolation@hotmail.com)
 
-  (c) Copyright 2002 - 2007  Brad Jorsch (anomie@users.sourceforge.net),
+  (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
                              zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
+
+  (c) Copyright 2009 - 2010  BearOso,
+                             OV2
 
 
   BS-X C emulator code
@@ -37,7 +40,7 @@
 
   DSP-1 emulator code
   (c) Copyright 1998 - 2006  _Demo_,
-                             Andreas Naive (andreasnaive@gmail.com)
+                             Andreas Naive (andreasnaive@gmail.com),
                              Gary Henderson,
                              Ivar (ivar@snes9x.com),
                              John Weidman,
@@ -52,7 +55,6 @@
                              Lord Nightmare (lord_nightmare@users.sourceforge.net),
                              Matthew Kendora,
                              neviksti
-
 
   DSP-3 emulator code
   (c) Copyright 2003 - 2006  John Weidman,
@@ -70,14 +72,18 @@
   OBC1 emulator code
   (c) Copyright 2001 - 2004  zsKnight,
                              pagefault (pagefault@zsnes.com),
-                             Kris Bleakley,
+                             Kris Bleakley
                              Ported from x86 assembler to C by sanmaiwashi
 
-  SPC7110 and RTC C++ emulator code
+  SPC7110 and RTC C++ emulator code used in 1.39-1.51
   (c) Copyright 2002         Matthew Kendora with research by
                              zsKnight,
                              John Weidman,
                              Dark Force
+
+  SPC7110 and RTC C++ emulator code used in 1.52+
+  (c) Copyright 2009         byuu,
+                             neviksti
 
   S-DD1 C emulator code
   (c) Copyright 2003         Brad Jorsch with research by
@@ -85,7 +91,7 @@
                              John Weidman
 
   S-RTC C emulator code
-  (c) Copyright 2001-2006    byuu,
+  (c) Copyright 2001 - 2006  byuu,
                              John Weidman
 
   ST010 C++ emulator code
@@ -97,16 +103,19 @@
   Super FX x86 assembler emulator code
   (c) Copyright 1998 - 2003  _Demo_,
                              pagefault,
-                             zsKnight,
+                             zsKnight
 
   Super FX C emulator code
   (c) Copyright 1997 - 1999  Ivar,
                              Gary Henderson,
                              John Weidman
 
-  Sound DSP emulator code is derived from SNEeSe and OpenSPC:
+  Sound emulator code used in 1.5-1.51
   (c) Copyright 1998 - 2003  Brad Martin
   (c) Copyright 1998 - 2006  Charles Bilyue'
+
+  Sound emulator code used in 1.52+
+  (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
@@ -117,23 +126,30 @@
   HQ2x, HQ3x, HQ4x filters
   (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
 
+  NTSC filter
+  (c) Copyright 2006 - 2007  Shay Green
+
+  GTK+ GUI code
+  (c) Copyright 2004 - 2010  BearOso
+
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
                              funkyass,
                              Matthew Kendora,
                              Nach,
                              nitsuja
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2007  zones
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
   individual files.
 
 
-  Snes9x homepage: http://www.snes9x.com
+  Snes9x homepage: http://www.snes9x.com/
 
   Permission to use, copy, modify and/or distribute Snes9x in both binary
   and source form, for non-commercial purposes, is hereby granted without
@@ -156,226 +172,235 @@
 
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
-**********************************************************************************/
+ ***********************************************************************************/
 
 
-
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
 #include "snes9x.h"
-#include "cheats.h"
 #include "memmap.h"
+#include "cheats.h"
 
-#ifndef INLINE
-#define INLINE inline
-#endif
+static uint8 S9xGetByteFree (uint32);
+static void S9xSetByteFree (uint8, uint32);
 
-extern SCheatData Cheat;
-Watch watches [16];
 
-// read  a byte without altering CPU
-INLINE uint8 S9xGetByteFree (uint32 Address)
+static uint8 S9xGetByteFree (uint32 address)
 {
-	uint32 Cycles = CPU.Cycles;
-	uint32 WaitAddress = CPU.WaitAddress;
-	uint8 rv = S9xGetByte (Address);
+	uint32	Cycles = CPU.Cycles;
+	uint32	WaitAddress = CPU.WaitAddress;
+	uint8	byte;
+
+	byte = S9xGetByte(address);
+
 	CPU.WaitAddress = WaitAddress;
 	CPU.Cycles = Cycles;
-	return rv;
+
+	return (byte);
 }
-INLINE void S9xSetByteFree (uint8 Byte, uint32 Address)
+
+static void S9xSetByteFree (uint8 byte, uint32 address)
 {
-	uint32 Cycles = CPU.Cycles;
-	uint32 WaitAddress = CPU.WaitAddress;
-	S9xSetByte (Byte, Address);
+	uint32	Cycles = CPU.Cycles;
+	uint32	WaitAddress = CPU.WaitAddress;
+
+	S9xSetByte(byte, address);
+
 	CPU.WaitAddress = WaitAddress;
 	CPU.Cycles = Cycles;
 }
 
-void S9xInitCheatData ()
+void S9xInitWatchedAddress (void)
 {
-    Cheat.RAM = Memory.RAM;
-    Cheat.SRAM = Memory.SRAM;
-    Cheat.FillRAM = Memory.FillRAM;
+	for (unsigned int i = 0; i < sizeof(watches) / sizeof(watches[0]); i++)
+		watches[i].on = false;
+
 }
 
-void S9xAddCheat (bool8 enable, bool8 save_current_value,
-		  uint32 address, uint8 byte)
+void S9xInitCheatData (void)
 {
-    if (Cheat.num_cheats < sizeof (Cheat.c) / sizeof (Cheat. c [0]))
-    {
-	Cheat.c [Cheat.num_cheats].address = address;
-	Cheat.c [Cheat.num_cheats].byte = byte;
-#ifdef __MACOSX__
-	Cheat.c [Cheat.num_cheats].enabled = enable;
-#else
-	Cheat.c [Cheat.num_cheats].enabled = TRUE;
-#endif
-	if (save_current_value)
+	Cheat.RAM = Memory.RAM;
+	Cheat.SRAM = Memory.SRAM;
+	Cheat.FillRAM = Memory.FillRAM;
+}
+
+void S9xAddCheat (bool8 enable, bool8 save_current_value, uint32 address, uint8 byte)
+{
+	if (Cheat.num_cheats < sizeof(Cheat.c) / sizeof(Cheat.c[0]))
 	{
-	    Cheat.c [Cheat.num_cheats].saved_byte = S9xGetByteFree (address);
-	    Cheat.c [Cheat.num_cheats].saved = TRUE;
+		Cheat.c[Cheat.num_cheats].address = address;
+		Cheat.c[Cheat.num_cheats].byte = byte;
+		Cheat.c[Cheat.num_cheats].enabled = enable;
+
+		if (save_current_value)
+		{
+			Cheat.c[Cheat.num_cheats].saved_byte = S9xGetByteFree(address);
+			Cheat.c[Cheat.num_cheats].saved = TRUE;
+		}
+
+		Cheat.num_cheats++;
 	}
-	Cheat.num_cheats++;
-    }
 }
 
 void S9xDeleteCheat (uint32 which1)
 {
-    if (which1 < Cheat.num_cheats)
-    {
-	if (Cheat.c [which1].enabled)
-	    S9xRemoveCheat (which1);
+	if (which1 < Cheat.num_cheats)
+	{
+		if (Cheat.c[which1].enabled)
+			S9xRemoveCheat(which1);
 
-	memmove (&Cheat.c [which1], &Cheat.c [which1 + 1],
-		 sizeof (Cheat.c [0]) * (Cheat.num_cheats - which1 - 1));
-	Cheat.num_cheats--; //MK: This used to set it to 0??
-    }
+		memmove(&Cheat.c[which1], &Cheat.c[which1 + 1], sizeof(Cheat.c[0]) * (Cheat.num_cheats - which1 - 1));
+
+		Cheat.num_cheats--;
+	}
 }
 
-void S9xDeleteCheats ()
+void S9xDeleteCheats (void)
 {
-    S9xRemoveCheats ();
-    Cheat.num_cheats = 0;
-}
-
-void S9xEnableCheat (uint32 which1)
-{
-    if (which1 < Cheat.num_cheats && !Cheat.c [which1].enabled)
-    {
-	Cheat.c [which1].enabled = TRUE;
-	S9xApplyCheat (which1);
-    }
-}
-
-void S9xDisableCheat (uint32 which1)
-{
-    if (which1 < Cheat.num_cheats && Cheat.c [which1].enabled)
-    {
-	S9xRemoveCheat (which1);
-	Cheat.c [which1].enabled = FALSE;
-    }
+	S9xRemoveCheats();
+	Cheat.num_cheats = 0;
 }
 
 void S9xRemoveCheat (uint32 which1)
 {
-    if (Cheat.c [which1].saved)
-    {
-	uint32 address = Cheat.c [which1].address;
+	if (Cheat.c[which1].saved)
+	{
+		uint32	address = Cheat.c[which1].address;
 
-	int block = ((address&0xffffff) >> MEMMAP_SHIFT);
-	uint8 *ptr = Memory.Map [block];
+		int		block = (address & 0xffffff) >> MEMMAP_SHIFT;
+		uint8	*ptr = Memory.Map[block];
 
-	if (ptr >= (uint8 *) CMemory::MAP_LAST)
-	    *(ptr + (address & 0xffff)) = Cheat.c [which1].saved_byte;
-	else
-	    S9xSetByte (Cheat.c [which1].saved_byte, address);
-    }
+		if (ptr >= (uint8 *) CMemory::MAP_LAST)
+			*(ptr + (address & 0xffff)) = Cheat.c[which1].saved_byte;
+		else
+			S9xSetByteFree(Cheat.c[which1].saved_byte, address);
+	}
+}
+
+void S9xRemoveCheats (void)
+{
+	for (uint32 i = 0; i < Cheat.num_cheats; i++)
+		if (Cheat.c[i].enabled)
+			S9xRemoveCheat(i);
+}
+
+void S9xEnableCheat (uint32 which1)
+{
+	if (which1 < Cheat.num_cheats && !Cheat.c[which1].enabled)
+	{
+		Cheat.c[which1].enabled = TRUE;
+		S9xApplyCheat(which1);
+	}
+}
+
+void S9xDisableCheat (uint32 which1)
+{
+	if (which1 < Cheat.num_cheats && Cheat.c[which1].enabled)
+	{
+		S9xRemoveCheat(which1);
+		Cheat.c[which1].enabled = FALSE;
+	}
 }
 
 void S9xApplyCheat (uint32 which1)
 {
-    uint32 address = Cheat.c [which1].address;
+	uint32	address = Cheat.c[which1].address;
 
-    if (!Cheat.c [which1].saved)
-	Cheat.c [which1].saved_byte = S9xGetByteFree (address);
+	if (!Cheat.c[which1].saved)
+	{
+		Cheat.c[which1].saved_byte = S9xGetByteFree(address);
+		Cheat.c[which1].saved = TRUE;
+	}
 
-    int block = ((address&0xffffff) >> MEMMAP_SHIFT);
-    uint8 *ptr = Memory.Map [block];
+	int		block = (address & 0xffffff) >> MEMMAP_SHIFT;
+	uint8	*ptr = Memory.Map[block];
 
-    if (ptr >= (uint8 *) CMemory::MAP_LAST)
-	*(ptr + (address & 0xffff)) = Cheat.c [which1].byte;
-    else
-	S9xSetByte (Cheat.c [which1].byte, address);
-    Cheat.c [which1].saved = TRUE;
+	if (ptr >= (uint8 *) CMemory::MAP_LAST)
+		*(ptr + (address & 0xffff)) = Cheat.c[which1].byte;
+	else
+		S9xSetByteFree(Cheat.c[which1].byte, address);
 }
 
-void S9xApplyCheats ()
+void S9xApplyCheats (void)
 {
-    if (Settings.ApplyCheats)
-    {
-        for (uint32 i = 0; i < Cheat.num_cheats; i++)
-            if (Cheat.c [i].enabled)
-                S9xApplyCheat (i);
-    }
-}
-
-void S9xRemoveCheats ()
-{
-    for (uint32 i = 0; i < Cheat.num_cheats; i++)
-	if (Cheat.c [i].enabled)
-	    S9xRemoveCheat (i);
+	if (Settings.ApplyCheats)
+	{
+		for (uint32 i = 0; i < Cheat.num_cheats; i++)
+			if (Cheat.c[i].enabled)
+				S9xApplyCheat(i);
+	}
 }
 
 bool8 S9xLoadCheatFile (const char *filename)
 {
-    Cheat.num_cheats = 0;
+	FILE	*fs;
+	uint8	data[28];
 
-    FILE *fs = fopen (filename, "rb");
-    uint8 data [28];
+	Cheat.num_cheats = 0;
 
-    if (!fs)
-	return (FALSE);
+	fs = fopen(filename, "rb");
+	if (!fs)
+		return (FALSE);
 
-    while (fread ((void *) data, 1, 28, fs) == 28)
-    {
-	Cheat.c [Cheat.num_cheats].enabled = (data [0] & 4) == 0;
-	Cheat.c [Cheat.num_cheats].byte = data [1];
-	Cheat.c [Cheat.num_cheats].address = data [2] | (data [3] << 8) |  (data [4] << 16);
-	Cheat.c [Cheat.num_cheats].saved_byte = data [5];
-	Cheat.c [Cheat.num_cheats].saved = (data [0] & 8) != 0;
-	memmove (Cheat.c [Cheat.num_cheats].name, &data [8], 20);
-	Cheat.c [Cheat.num_cheats++].name [20] = 0;
-    }
-    fclose (fs);
+	while (fread((void *) data, 1, 28, fs) == 28)
+	{
+		Cheat.c[Cheat.num_cheats].enabled = (data[0] & 4) == 0;
+		Cheat.c[Cheat.num_cheats].byte = data[1];
+		Cheat.c[Cheat.num_cheats].address = data[2] | (data[3] << 8) |  (data[4] << 16);
+		Cheat.c[Cheat.num_cheats].saved_byte = data[5];
+		Cheat.c[Cheat.num_cheats].saved = (data[0] & 8) != 0;
+		memmove(Cheat.c[Cheat.num_cheats].name, &data[8], 20);
+		Cheat.c[Cheat.num_cheats++].name[20] = 0;
+	}
 
-    return (TRUE);
+	fclose(fs);
+
+	return (TRUE);
 }
 
 bool8 S9xSaveCheatFile (const char *filename)
 {
-    if (Cheat.num_cheats == 0)
-    {
-	(void) remove (filename);
-	return (TRUE);
-    }
-
-    FILE *fs = fopen (filename, "wb");
-    uint8 data [28];
-
-    if (!fs)
-	return (FALSE);
-
-    uint32 i;
-    for (i = 0; i < Cheat.num_cheats; i++)
-    {
-	memset (data, 0, 28);
-	if (i == 0)
+	if (Cheat.num_cheats == 0)
 	{
-	    data [6] = 254;
-	    data [7] = 252;
+		remove(filename);
+		return (TRUE);
 	}
-	if (!Cheat.c [i].enabled)
-	    data [0] |= 4;
 
-	if (Cheat.c [i].saved)
-	    data [0] |= 8;
+	FILE	*fs;
+	uint8	data[28];
 
-	data [1] = Cheat.c [i].byte;
-	data [2] = (uint8) Cheat.c [i].address;
-	data [3] = (uint8) (Cheat.c [i].address >> 8);
-	data [4] = (uint8) (Cheat.c [i].address >> 16);
-	data [5] = Cheat.c [i].saved_byte;
+	fs = fopen(filename, "wb");
+	if (!fs)
+		return (FALSE);
 
-	memmove (&data [8], Cheat.c [i].name, 19);
-	if (fwrite (data, 28, 1, fs) != 1)
+	for (uint32 i = 0; i < Cheat.num_cheats; i++)
 	{
-	    fclose (fs);
-	    return (FALSE);
+		ZeroMemory(data, 28);
+
+		if (i == 0)
+		{
+			data[6] = 254;
+			data[7] = 252;
+		}
+
+		if (!Cheat.c[i].enabled)
+			data[0] |= 4;
+
+		if (Cheat.c[i].saved)
+			data[0] |= 8;
+
+		data[1] = Cheat.c[i].byte;
+		data[2] = (uint8) (Cheat.c[i].address >> 0);
+		data[3] = (uint8) (Cheat.c[i].address >> 8);
+		data[4] = (uint8) (Cheat.c[i].address >> 16);
+		data[5] = Cheat.c[i].saved_byte;
+
+		memmove(&data[8], Cheat.c[i].name, 19);
+
+		if (fwrite(data, 28, 1, fs) != 1)
+		{
+			fclose(fs);
+			return (FALSE);
+		}
 	}
-    }
-    return (fclose (fs) == 0);
+
+	return (fclose(fs) == 0);
 }
-
-
