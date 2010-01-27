@@ -1,7 +1,7 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * Snes9x Nintendo Wii/Gamecube Port
  *
- * Tantric 2008-2009
+ * Tantric 2008-2010
  *
  * preferences.h
  *

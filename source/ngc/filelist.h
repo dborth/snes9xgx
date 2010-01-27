@@ -1,7 +1,7 @@
 /****************************************************************************
- * Snes9x 1.51 Nintendo Wii/Gamecube Port
+ * Snes9x Nintendo Wii/Gamecube Port
  *
- * Tantric January 2009
+ * Tantric 2009-2010
  *
  * filelist.h
  *
