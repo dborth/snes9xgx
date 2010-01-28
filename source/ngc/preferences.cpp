@@ -434,6 +434,7 @@ DefaultSettings ()
 	Settings.SuperScopeMaster = true;
 	Settings.JustifierMaster = true;
 	Settings.MultiPlayer5Master = true;
+	Settings.DontSaveOopsSnapshot = true;
 
 	Settings.BlockInvalidVRAMAccess = false;
 	Settings.HDMATimingHack = 100;
