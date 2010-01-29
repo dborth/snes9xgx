@@ -629,5 +629,6 @@ bool LoadPrefs()
 	if(strcmp(GCSettings.CheatFolder, "snes9x/cheats") == 0)
 		sprintf(GCSettings.CheatFolder, "snes9xgx/cheats");
 
+	ResetText();
 	return prefFound;
 }
