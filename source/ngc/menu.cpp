@@ -1380,7 +1380,7 @@ static int MenuGame()
 			if(WPAD_Probe(i, NULL) == WPAD_ERR_NONE)
 			{
 				newStatus = true;
-				newLevel = int(userInput[i].wpad->battery_level / 100.0) << 2;
+				newLevel = (userInput[i].wpad->battery_level / 100.0) * 4;
 				if(newLevel > 4) newLevel = 4;
 			}
 			else
