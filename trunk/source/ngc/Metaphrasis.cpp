@@ -274,9 +274,14 @@ uint32_t* Metaphrasis::convertBufferToRGBA8(uint32_t* rgbaBuffer, uint16_t buffe
  */
 
 uint16_t Metaphrasis::convertRGBAToRGB565(uint32_t rgba) {
-	uint8_t r = (((rgba >> 24) & 0xff) * 31) / 255;
-	uint8_t g = (((rgba >> 16) & 0xff) * 63) / 255;
-	uint8_t b = (((rgba >>  8) & 0xff) * 31) / 255;
+	uint32_t rA = ((rgba >> 24) & 0xff);
+	uint32_t gA = ((rgba >> 16) & 0xff);
+	uint32_t bA = ((rgba >> 8) & 0xff);
+
+	uint32_t r = ((rA<<5) - rA) / 255;
+	uint32_t g = ((gA<<6) - gA) / 255;
+	uint32_t b = ((bA<<5) - bA) / 255;
+
 	return (((r << 6) | g ) << 5 ) | b;
 }
 
