@@ -19,7 +19,8 @@ TARGET		:=	snes9xgx-wii
 TARGETDIR   :=  executables
 BUILD		:=	build_wii
 SOURCES		:=	source/ngc/images source/ngc/sounds source/ngc/fonts source/ngc/lang \
-				source/ngc/gui source/ngc source/snes9x source/snes9x/apu \
+				source/ngc/gui source/ngc source/ngc/utils \
+				source/snes9x source/snes9x/apu \
 				source/sz source/unzip
 INCLUDES	:=	source/snes9x source/ngc source/unzip
 
@@ -41,7 +42,7 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-ldb -ldi -liso9660 -lpng -lmxml \
+LIBS	:=	-ldi -liso9660 -lpng -lmxml \
 			-lfat -lwiiuse -lz -lbte -lasnd -logc -lvorbisidec -lfreetype -ltinysmb
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -86,7 +87,8 @@ export OFILES	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
 					$(sFILES:.s=.o) $(SFILES:.S=.o) \
 					$(TTFFILES:.ttf=.ttf.o) $(LANGFILES:.lang=.lang.o) \
 					$(PNGFILES:.png=.png.o) \
-					$(OGGFILES:.ogg=.ogg.o) $(PCMFILES:.pcm=.pcm.o)
+					$(OGGFILES:.ogg=.ogg.o) $(PCMFILES:.pcm=.pcm.o) \
+					$(CURDIR)/source/ngc/utils/ehcmodule.elf.o
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
