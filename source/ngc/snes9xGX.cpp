@@ -393,12 +393,15 @@ main(int argc, char *argv[])
 	if(IOS_GetVersion() != 202 && FindIOS(202))
 		IOS_ReloadIOS(202);
 
-	DI_LoadDVDX(false);
-	DI_Init();
-
-	// load usb2 driver
-	if(mload_init() >= 0 && load_ehci_module())
-		USB2Enable(true);
+	if(IOS_GetVersion() == 202)
+	{
+		DI_LoadDVDX(false);
+		DI_Init();
+		
+		// load usb2 driver
+		if(mload_init() >= 0 && load_ehci_module())
+			USB2Enable(true);
+	}
 	#endif
 
 	InitDeviceThread();
