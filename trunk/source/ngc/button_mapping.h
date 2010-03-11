@@ -34,8 +34,6 @@ typedef struct _ctrlr_map {
 	BtnMap map[15];		// controller button map
 } CtrlrMap;
 
-// externs:
-
 extern CtrlrMap ctrlr_def[4];
 
 #endif
