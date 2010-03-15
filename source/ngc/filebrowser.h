@@ -53,6 +53,7 @@ enum
 };
 
 extern unsigned long SNESROMSize;
+extern bool loadingFile;
 
 bool MakeFilePath(char filepath[], int type, char * filename = NULL, int filenum = -2);
 int UpdateDirName();

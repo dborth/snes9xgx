@@ -46,6 +46,7 @@ static char szpath[MAXPATHLEN];
 static bool inSz = false;
 
 unsigned long SNESROMSize = 0;
+bool loadingFile = false;
 
 /****************************************************************************
 * autoLoadMethod()
@@ -457,10 +458,11 @@ int WiiFileLoader()
 {
 	int size;
 	char filepath[1024];
-	
+
 	memset(Memory.NSRTHeader, 0, sizeof(Memory.NSRTHeader));
 	Memory.HeaderCount = 0;
-	
+	loadingFile = true;
+
 	if(!inSz)
 	{
 		if(!MakeFilePath(filepath, FILE_ROM))
@@ -478,6 +480,7 @@ int WiiFileLoader()
 			BrowserChangeFolder();
 		}
 	}
+	loadingFile = false;
 
 	if(size <= 0)
 		return 0;

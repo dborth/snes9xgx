@@ -297,7 +297,9 @@ UpdateGUI (void *arg)
 		if(updateFound)
 		{
 			updateFound = false;
-			LWP_CreateThread (&updatethread, EmulatorUpdate, NULL, NULL, 0, 70);
+
+			if(!loadingFile)
+				LWP_CreateThread (&updatethread, EmulatorUpdate, NULL, NULL, 0, 70);
 		}
 		#endif
 
@@ -2996,6 +2998,7 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Filtering");
 	sprintf(options.name[i++], "Screen Zoom");
 	sprintf(options.name[i++], "Screen Position");
+	sprintf(options.name[i++], "Crosshair");
 	sprintf(options.name[i++], "Video Mode");
 	options.length = i;
 
@@ -3075,7 +3078,12 @@ static int MenuSettingsVideo()
 			case 4:
 				ScreenPositionWindow();
 				break;
+
 			case 5:
+				GCSettings.crosshair ^= 1;
+				break;
+
+			case 6:
 				GCSettings.videomode++;
 				if(GCSettings.videomode > 4)
 					GCSettings.videomode = 0;
@@ -3105,19 +3113,20 @@ static int MenuSettingsVideo()
 			sprintf (options.value[2], "%s", GetFilterName((RenderFilter)GCSettings.FilterMethod));
 			sprintf (options.value[3], "%.2f%%, %.2f%%", GCSettings.zoomHor*100, GCSettings.zoomVert*100);
 			sprintf (options.value[4], "%d, %d", GCSettings.xshift, GCSettings.yshift);
+			sprintf (options.value[5], "%s", GCSettings.crosshair == 1 ? "On" : "Off");
 
 			switch(GCSettings.videomode)
 			{
 				case 0:
-					sprintf (options.value[5], "Automatic (Recommended)"); break;
+					sprintf (options.value[6], "Automatic (Recommended)"); break;
 				case 1:
-					sprintf (options.value[5], "NTSC (480i)"); break;
+					sprintf (options.value[6], "NTSC (480i)"); break;
 				case 2:
-					sprintf (options.value[5], "Progressive (480p)"); break;
+					sprintf (options.value[6], "Progressive (480p)"); break;
 				case 3:
-					sprintf (options.value[5], "PAL (50Hz)"); break;
+					sprintf (options.value[6], "PAL (50Hz)"); break;
 				case 4:
-					sprintf (options.value[5], "PAL (60Hz)"); break;
+					sprintf (options.value[6], "PAL (60Hz)"); break;
 			}
 			optionBrowser.TriggerUpdate();
 		}
