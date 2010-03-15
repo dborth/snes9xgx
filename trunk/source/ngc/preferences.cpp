@@ -140,6 +140,7 @@ preparePrefsData ()
 	createXMLSetting("zoomVert", "Vertical Zoom Level", FtoStr(GCSettings.zoomVert));
 	createXMLSetting("render", "Video Filtering", toStr(GCSettings.render));
 	createXMLSetting("widescreen", "Aspect Ratio Correction", toStr(GCSettings.widescreen));
+	createXMLSetting("crosshair", "Crosshair", toStr(GCSettings.crosshair));
 	createXMLSetting("FilterMethod", "Filter Method", toStr(GCSettings.FilterMethod));
 	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
 	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
@@ -313,6 +314,7 @@ decodePrefsData ()
 			loadXMLSetting(&GCSettings.zoomVert, "zoomVert");
 			loadXMLSetting(&GCSettings.render, "render");
 			loadXMLSetting(&GCSettings.widescreen, "widescreen");
+			loadXMLSetting(&GCSettings.crosshair, "crosshair");
 			loadXMLSetting(&GCSettings.FilterMethod, "FilterMethod");
 			loadXMLSetting(&GCSettings.xshift, "xshift");
 			loadXMLSetting(&GCSettings.yshift, "yshift");
@@ -411,6 +413,7 @@ DefaultSettings ()
 	GCSettings.zoomVert = 1.0; // vertical zoom level
 	GCSettings.xshift = 0; // horizontal video shift
 	GCSettings.yshift = 0; // vertical video shift
+	GCSettings.crosshair = 1;
 
 	GCSettings.WiimoteOrientation = 0;
 	GCSettings.ExitAction = 0;
