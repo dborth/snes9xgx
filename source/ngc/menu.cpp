@@ -3587,15 +3587,10 @@ static int MenuSettingsMenu()
 			case 5:
 				GCSettings.language++;
 
-				if(GCSettings.language == LANG_JAPANESE || 
-					GCSettings.language == LANG_ITALIAN || 
-					GCSettings.language == LANG_SIMP_CHINESE || 
-					GCSettings.language == LANG_TRAD_CHINESE || 
-					GCSettings.language == LANG_KOREAN)
+				if(GCSettings.language == LANG_ITALIAN)
 					GCSettings.language++;
-
-				if(GCSettings.language > LANG_KOREAN)
-					GCSettings.language = 0;
+				else if(GCSettings.language > LANG_DUTCH)
+					GCSettings.language = LANG_ENGLISH;
 				break;
 		}
 
