@@ -199,6 +199,8 @@ void GuiButton::ResetText()
 		if(labelOver[i])
 			labelOver[i]->ResetText();
 	}
+	if(tooltip)
+		tooltip->ResetText();
 }
 
 void GuiButton::Update(GuiTrigger * t)

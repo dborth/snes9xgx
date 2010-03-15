@@ -81,14 +81,14 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
-		saveDate[i] = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
+		saveDate[i] = new GuiText(NULL, 18, (GXColor){0, 0, 0, 0xff});
 		saveDate[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 		saveDate[i]->SetPosition(80,5);
-		saveTime[i] = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
+		saveTime[i] = new GuiText(NULL, 18, (GXColor){0, 0, 0, 0xff});
 		saveTime[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 		saveTime[i]->SetPosition(80,27);
 
-		saveType[i] = new GuiText(NULL, 22, (GXColor){0, 0, 0, 0xff});
+		saveType[i] = new GuiText(NULL, 18, (GXColor){0, 0, 0, 0xff});
 		saveType[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 		saveType[i]->SetPosition(80,50);
 
@@ -321,10 +321,10 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		{
 			saveDate[0]->SetText(NULL);
 			saveDate[1]->SetText(NULL);
-			saveTime[0]->SetText("New SRAM");
-			saveTime[1]->SetText("New Snapshot");
-			saveType[0]->SetText(NULL);
-			saveType[1]->SetText(NULL);
+			saveTime[0]->SetText("New");
+			saveTime[1]->SetText("New");
+			saveType[0]->SetText("SRAM");
+			saveType[1]->SetText("Snapshot");
 			savePreviewImg[0]->SetImage(gameSaveBlank);
 			savePreviewImg[1]->SetImage(gameSaveBlank);
 			savePreviewImg[0]->SetScale(1);

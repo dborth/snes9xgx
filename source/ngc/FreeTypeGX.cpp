@@ -65,12 +65,18 @@ void ClearFontData()
 
 wchar_t* charToWideChar(const char* strChar)
 {
-	wchar_t *strWChar;
-	strWChar = new wchar_t[strlen(strChar) + 1];
+	wchar_t *strWChar = new(std::nothrow) wchar_t[strlen(strChar) + 1];
+	if(!strWChar)
+		return NULL;
 
-	char *tempSrc = (char *)strChar;
+	int bt = mbstowcs(strWChar, strChar, strlen(strChar));
+	if (bt > 0)
+	{
+		strWChar[bt] = (wchar_t)'\0';
+		return strWChar;
+	}
 	wchar_t *tempDest = strWChar;
-	while((*tempDest++ = *tempSrc++));
+	while ((*tempDest++ = *strChar++));
 
 	return strWChar;
 }
