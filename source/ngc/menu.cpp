@@ -3586,6 +3586,14 @@ static int MenuSettingsMenu()
 				break;
 			case 5:
 				GCSettings.language++;
+
+				if(GCSettings.language == LANG_JAPANESE || 
+					GCSettings.language == LANG_ITALIAN || 
+					GCSettings.language == LANG_SIMP_CHINESE || 
+					GCSettings.language == LANG_TRAD_CHINESE || 
+					GCSettings.language == LANG_KOREAN)
+					GCSettings.language++;
+
 				if(GCSettings.language > LANG_KOREAN)
 					GCSettings.language = 0;
 				break;
