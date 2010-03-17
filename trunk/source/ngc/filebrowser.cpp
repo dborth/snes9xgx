@@ -515,7 +515,7 @@ int BrowserLoadFile()
 
 	if (SNESROMSize <= 0)
 	{
-		ErrorPrompt("Error loading ROM!");
+		ErrorPrompt("Error loading game!");
 	}
 	else
 	{
