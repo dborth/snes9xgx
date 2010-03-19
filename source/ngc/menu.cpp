@@ -2103,7 +2103,7 @@ static int MenuSettingsMappings()
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
 
 	GuiText snesBtnTxt("SNES Controller", 22, (GXColor){0, 0, 0, 255});
-	snesBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-50);
+	snesBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-40);
 	GuiImage snesBtnImg(&btnLargeOutline);
 	GuiImage snesBtnImgOver(&btnLargeOutlineOver);
 	GuiImage snesBtnIcon(&iconSNESController);
@@ -2137,7 +2137,7 @@ static int MenuSettingsMappings()
 	superscopeBtn.SetEffectGrow();
 
 	GuiText mouseBtnTxt("SNES Mouse", 22, (GXColor){0, 0, 0, 255});
-	mouseBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-70);
+	mouseBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-55);
 	GuiImage mouseBtnImg(&btnLargeOutline);
 	GuiImage mouseBtnImgOver(&btnLargeOutlineOver);
 	GuiImage mouseBtnIcon(&iconMouse);
@@ -2546,7 +2546,7 @@ static int MenuSettingsMappingsMap()
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,30);
 
-	sprintf(menuSubtitle, "%s - %s", ctrlName[mapMenuCtrlSNES], ctrlrName[mapMenuCtrl]);
+	sprintf(menuSubtitle, "%s - %s", gettext(ctrlName[mapMenuCtrlSNES]), gettext(ctrlrName[mapMenuCtrl]));
 	GuiText subtitleTxt(menuSubtitle, 20, (GXColor){255, 255, 255, 255});
 	subtitleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	subtitleTxt.SetPosition(50,60);
