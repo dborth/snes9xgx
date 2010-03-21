@@ -19,16 +19,16 @@
 #include <unistd.h>
 #include <ogc/texconv.h>
 
-#include "snes9x.h"
-#include "memmap.h"
-
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "menu.h"
 #include "filter.h"
 #include "filelist.h"
 #include "audio.h"
 #include "gui/gui.h"
 #include "input.h"
+
+#include "snes9x/snes9x.h"
+#include "snes9x/memmap.h"
 
 /*** Snes9x GFX Buffer ***/
 #define SNES9XGFX_SIZE 		(EXT_PITCH*EXT_HEIGHT)

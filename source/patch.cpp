@@ -10,14 +10,13 @@
 
 #include <zlib.h>
 
-#include "snes9x.h"
-#include "memmap.h"
-
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "menu.h"
 #include "memfile.h"
 #include "fileop.h"
 #include "filebrowser.h"
+#include "snes9x/snes9x.h"
+#include "snes9x/memmap.h"
 
 static int readInt2(MFILE *f) {
 	int res = 0;

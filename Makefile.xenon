@@ -18,9 +18,8 @@ include $(DEVKITXENON)/rules
 TARGET		:=	snes9xgx-xenon
 TARGETDIR   :=  executables
 BUILD		:=	build_xenon
-SOURCES		:=	source/xenon source/snes9x source/sz
-# source/unzip
-INCLUDES	:=	source/snes9x source/xenon source/unzip
+SOURCES		:=	source/xenon source/snes9x source/utils/sz
+INCLUDES	:=	source/snes9x source/xenon
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -43,8 +42,6 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-#LIBS	:=	-ldb -ldi -lpngu -lpng -lmxml -lmetaphrasis \
-#			-lfat -lwiiuse -lz -lbte -logc -lasnd -ltremor -lfreetype -ltinysmb
 LIBS = -lm -lxenon
 
 #---------------------------------------------------------------------------------

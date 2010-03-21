@@ -21,16 +21,16 @@
 #include <unistd.h>
 #include <wiiuse/wpad.h>
 
-#include "snes9x.h"
-#include "memmap.h"
-#include "controls.h"
-
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "button_mapping.h"
 #include "menu.h"
 #include "video.h"
 #include "input.h"
 #include "gui/gui.h"
+
+#include "snes9x/snes9x.h"
+#include "snes9x/memmap.h"
+#include "snes9x/controls.h"
 
 int rumbleRequest[4] = {0,0,0,0};
 GuiTrigger userInput[4];

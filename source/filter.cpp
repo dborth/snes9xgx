@@ -21,10 +21,10 @@
 
 #include "filter.h"
 #include "video.h"
-#include "snes9xGX.h"
-#include "memmap.h"
-
+#include "snes9xgx.h"
 #include "menu.h"
+
+#include "snes9x/memmap.h"
 
 #define NUMBITS (16)
 

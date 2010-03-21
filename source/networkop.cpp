@@ -23,13 +23,13 @@ ConnectShare (bool silent)
 #include <mxml.h>
 #include <malloc.h>
 
-#include "unzip.h"
-#include "miniunz.h"
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "menu.h"
 #include "fileop.h"
-#include "http.h"
 #include "filebrowser.h"
+#include "utils/http.h"
+#include "utils/unzip/unzip.h"
+#include "utils/unzip/miniunz.h"
 
 bool inNetworkInit = false;
 static bool networkInit = false;

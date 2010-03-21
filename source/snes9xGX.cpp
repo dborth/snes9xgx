@@ -6,7 +6,7 @@
  * Michniewski 2008
  * Tantric 2008-2010
  *
- * snes9xGX.cpp
+ * snes9xgx.cpp
  *
  * This file controls overall program flow. Most things start and end here!
  ***************************************************************************/
@@ -27,16 +27,7 @@
 #include <di/di.h>
 #endif
 
-#include "FreeTypeGX.h"
-
-#include "snes9x.h"
-#include "memmap.h"
-#include "apu/apu.h"
-#include "controls.h"
-
-#include "utils/usb2storage.h"
-#include "utils/mload.h"
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "networkop.h"
 #include "video.h"
 #include "audio.h"
@@ -48,6 +39,14 @@
 #include "fileop.h"
 #include "filebrowser.h"
 #include "input.h"
+#include "utils/usb2storage.h"
+#include "utils/mload.h"
+#include "utils/FreeTypeGX.h"
+
+#include "snes9x/snes9x.h"
+#include "snes9x/memmap.h"
+#include "snes9x/apu/apu.h"
+#include "snes9x/controls.h"
 
 int ScreenshotRequested = 0;
 int ConfigRequested = 0;
