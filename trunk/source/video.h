@@ -15,7 +15,7 @@
 
 #include <ogcsys.h>
 
-#include "snes9x.h"
+#include "snes9x/snes9x.h"
 
 void AllocGfxMem();
 void FreeGfxMem();

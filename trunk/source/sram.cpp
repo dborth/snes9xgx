@@ -15,15 +15,14 @@
 #include <string.h>
 #include <ogcsys.h>
 
-#include "snes9x.h"
-#include "memmap.h"
-#include "srtc.h"
-
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "menu.h"
 #include "fileop.h"
 #include "filebrowser.h"
 #include "input.h"
+#include "snes9x/snes9x.h"
+#include "snes9x/memmap.h"
+#include "snes9x/srtc.h"
 
 /****************************************************************************
  * Load SRAM

@@ -17,17 +17,17 @@
 #include <string.h>
 #include <asndlib.h>
 
-#include "snes9x.h"
-#include "memmap.h"
-#include "cpuexec.h"
-#include "ppu.h"
-#include "apu/apu.h"
-#include "display.h"
-#include "gfx.h"
-#include "spc7110.h"
-#include "controls.h"
-
 #include "video.h"
+
+#include "snes9x/snes9x.h"
+#include "snes9x/memmap.h"
+#include "snes9x/cpuexec.h"
+#include "snes9x/ppu.h"
+#include "snes9x/apu/apu.h"
+#include "snes9x/display.h"
+#include "snes9x/gfx.h"
+#include "snes9x/spc7110.h"
+#include "snes9x/controls.h"
 
 extern int ConfigRequested;
 

@@ -19,15 +19,14 @@
 #include <unistd.h>
 #include <ogc/lwp_watchdog.h>
 
-#include "snes9x.h"
-#include "memmap.h"
-#include "display.h"
-#include "apu/apu.h"
-#include "controls.h"
-
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "video.h"
 #include "audio.h"
+#include "snes9x/snes9x.h"
+#include "snes9x/memmap.h"
+#include "snes9x/display.h"
+#include "snes9x/apu/apu.h"
+#include "snes9x/controls.h"
 
 #define MAX_MESSAGE_LEN (36 * 3)
 

@@ -14,7 +14,7 @@
 #ifndef _SNES9XGX_H_
 #define _SNES9XGX_H_
 
-#include "FreeTypeGX.h"
+#include "utils/FreeTypeGX.h"
 #include "snes9x.h"
 #include "filter.h"
 #include "filelist.h"

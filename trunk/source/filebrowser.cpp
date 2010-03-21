@@ -24,12 +24,8 @@
 #include <di/di.h>
 #endif
 
-#include "snes9x.h"
-#include "memmap.h"
-#include "cheats.h"
-
+#include "snes9xgx.h"
 #include "filebrowser.h"
-#include "snes9xGX.h"
 #include "menu.h"
 #include "video.h"
 #include "networkop.h"
@@ -38,6 +34,10 @@
 #include "gcunzip.h"
 #include "freeze.h"
 #include "sram.h"
+
+#include "snes9x/snes9x.h"
+#include "snes9x/memmap.h"
+#include "snes9x/cheats.h"
 
 BROWSERINFO browser;
 BROWSERENTRY * browserList = NULL; // list of files/folders in browser

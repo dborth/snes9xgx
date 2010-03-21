@@ -15,7 +15,7 @@
 #include <ogcsys.h>
 #include <mxml.h>
 
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "menu.h"
 #include "fileop.h"
 #include "filebrowser.h"

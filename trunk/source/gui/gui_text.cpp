@@ -9,7 +9,7 @@
  ***************************************************************************/
 
 #include "gui.h"
-#include "../gettext.h"
+#include "../utils/gettext.h"
 
 static GXColor presetColor = (GXColor){255, 255, 255, 255};
 static int currentSize = 0;

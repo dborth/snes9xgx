@@ -20,11 +20,7 @@
 #include <di/di.h>
 #endif
 
-#include "snes9x.h"
-#include "memmap.h"
-#include "cheats.h"
-
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "video.h"
 #include "filebrowser.h"
 #include "gcunzip.h"
@@ -34,12 +30,16 @@
 #include "freeze.h"
 #include "preferences.h"
 #include "button_mapping.h"
-#include "gettext.h"
 #include "input.h"
 #include "filter.h"
 #include "filelist.h"
 #include "gui/gui.h"
 #include "menu.h"
+#include "utils/gettext.h"
+
+#include "snes9x/snes9x.h"
+#include "snes9x/memmap.h"
+#include "snes9x/cheats.h"
 
 extern SCheatData Cheat;
 
@@ -3422,7 +3422,7 @@ static int MenuSettingsFile()
 			firstRun = false;
 
 			// some load/save devices are not implemented - here's where we skip them
-			// they need to be skipped in the order they were enumerated in snes9xGX.h
+			// they need to be skipped in the order they were enumerated in snes9xgx.h
 
 			// no USB ports on GameCube
 			#ifdef HW_DOL

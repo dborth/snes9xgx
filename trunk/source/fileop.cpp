@@ -27,7 +27,7 @@
 #include <ogc/dvd.h>
 #include <iso9660.h>
 
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "fileop.h"
 #include "networkop.h"
 #include "gcunzip.h"

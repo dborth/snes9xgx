@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "snes9x.h"
+#include "snes9x/snes9x.h"
  
 enum RenderFilter{
 	FILTER_NONE = 0,

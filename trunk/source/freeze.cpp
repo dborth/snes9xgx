@@ -13,18 +13,18 @@
 #include <gccore.h>
 #include <stdio.h>
 
-#include "snes9x.h"
-#include "port.h"
-#include "memmap.h"
-#include "snapshot.h"
-#include "language.h"
-
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "fileop.h"
 #include "filebrowser.h"
 #include "menu.h"
 #include "video.h"
-#include "pngu.h"
+#include "utils/pngu.h"
+
+#include "snes9x/snes9x.h"
+#include "snes9x/port.h"
+#include "snes9x/memmap.h"
+#include "snes9x/snapshot.h"
+#include "snes9x/language.h"
 
 bool8 S9xOpenSnapshotFile(const char *filepath, bool8 readonly, STREAM *file)
 {

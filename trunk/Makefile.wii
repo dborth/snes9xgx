@@ -18,11 +18,10 @@ include $(DEVKITPPC)/wii_rules
 TARGET		:=	snes9xgx-wii
 TARGETDIR   :=  executables
 BUILD		:=	build_wii
-SOURCES		:=	source/ngc/images source/ngc/sounds source/ngc/fonts source/ngc/lang \
-				source/ngc/gui source/ngc source/ngc/utils \
-				source/snes9x source/snes9x/apu \
-				source/sz source/unzip
-INCLUDES	:=	source/snes9x source/ngc source/unzip
+SOURCES		:=	source source/images source/sounds source/fonts source/lang \
+				source/gui source/utils source/utils/sz source/utils/unzip \
+				source/snes9x source/snes9x/apu
+INCLUDES	:=	source source/snes9x
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -88,7 +87,7 @@ export OFILES	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
 					$(TTFFILES:.ttf=.ttf.o) $(LANGFILES:.lang=.lang.o) \
 					$(PNGFILES:.png=.png.o) \
 					$(OGGFILES:.ogg=.ogg.o) $(PCMFILES:.pcm=.pcm.o) \
-					$(CURDIR)/source/ngc/utils/ehcmodule.elf.o
+					$(CURDIR)/source/utils/ehcmodule.elf.o
 
 #---------------------------------------------------------------------------------
 # build a list of include paths

@@ -11,7 +11,7 @@
 #include "port.h"
 #include "cheats.h"
 
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "fileop.h"
 #include "filebrowser.h"
 
