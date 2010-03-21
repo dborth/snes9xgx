@@ -20,40 +20,7 @@ GuiImageData::GuiImageData(const u8 * i)
 	height = 0;
 
 	if(i)
-	{
-		PNGUPROP imgProp;
-		IMGCTX ctx = PNGU_SelectImageFromBuffer(i);
-
-		if(!ctx)
-			return;
-
-		int res = PNGU_GetImageProperties(ctx, &imgProp);
-
-		if(res == PNGU_OK)
-		{
-			int len = (imgProp.imgWidth * imgProp.imgHeight) <<2;
-			if(len%32) len += (32-len%32);
-			data = (u8 *)memalign (32, len);
-
-			if(data)
-			{
-				res = PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, data, 255);
-
-				if(res == PNGU_OK)
-				{
-					width = imgProp.imgWidth;
-					height = imgProp.imgHeight;
-					DCFlushRange(data, len);
-				}
-				else
-				{
-					free(data);
-					data = NULL;
-				}
-			}
-		}
-		PNGU_ReleaseImageContext (ctx);
-	}
+		data = DecodePNG(i, &width, &height);
 }
 
 /**
