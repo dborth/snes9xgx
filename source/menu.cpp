@@ -782,7 +782,7 @@ static void WindowCredits(void * ptr)
 	creditsBoxImg.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	creditsWindowBox.Append(&creditsBoxImg);
 
-	int numEntries = 23;
+	int numEntries = 24;
 	GuiText * txt[numEntries];
 
 	txt[i] = new GuiText("Credits", 30, (GXColor){0, 0, 0, 255});
@@ -842,6 +842,16 @@ static void WindowCredits(void * ptr)
 	txt[i]->SetPosition(0,y); i++; y+=20;
 	txt[i] = new GuiText("GNU General Public License (GPL) Version 2.");
 	txt[i]->SetPosition(0,y); i++; y+=20;
+
+	char iosVersion[20];
+
+#ifdef HW_RVL
+	sprintf(iosVersion, "IOS: %d", IOS_GetVersion());
+#endif
+
+	txt[i] = new GuiText(iosVersion, 18, (GXColor){0, 0, 0, 255});
+	txt[i]->SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	txt[i]->SetPosition(20,-20);
 
 	for(i=0; i < numEntries; i++)
 		creditsWindowBox.Append(txt[i]);
