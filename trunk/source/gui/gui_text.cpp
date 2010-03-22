@@ -35,7 +35,7 @@ GuiText::GuiText(const char * t, int s, GXColor c)
 	style = FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE;
 	maxWidth = 0;
 	wrap = false;
-	textDyn = NULL;
+	textDynNum = 0;
 	textScroll = SCROLL_NONE;
 	textScrollPos = 0;
 	textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
@@ -64,7 +64,7 @@ GuiText::GuiText(const char * t)
 	style = presetStyle;
 	maxWidth = presetMaxWidth;
 	wrap = false;
-	textDyn = NULL;
+	textDynNum = 0;
 	textScroll = SCROLL_NONE;
 	textScrollPos = 0;
 	textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
@@ -89,8 +89,12 @@ GuiText::~GuiText()
 		free(origText);
 	if(text)
 		delete[] text;
-	if(textDyn)
-		delete[] textDyn;
+
+	if(textDynNum > 0)
+	{
+		for(int i=0; i < textDynNum; i++)
+			delete[] textDyn[i];
+	}
 }
 
 void GuiText::SetText(const char * t)
@@ -99,12 +103,16 @@ void GuiText::SetText(const char * t)
 		free(origText);
 	if(text)
 		delete[] text;
-	if(textDyn)
-		delete[] textDyn;
+
+	if(textDynNum > 0)
+	{
+		for(int i=0; i < textDynNum; i++)
+			delete[] textDyn[i];
+	}
 
 	origText = NULL;
 	text = NULL;
-	textDyn = NULL;
+	textDynNum = 0;
 	textScrollPos = 0;
 	textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
 
@@ -133,12 +141,26 @@ void GuiText::SetFontSize(int s)
 void GuiText::SetMaxWidth(int width)
 {
 	maxWidth = width;
+
+	if(textDynNum > 0)
+	{
+		for(int i=0; i < textDynNum; i++)
+			delete[] textDyn[i];
+	}
+	textDynNum = 0;
 }
 
 void GuiText::SetWrap(bool w, int width)
 {
 	wrap = w;
 	maxWidth = width;
+
+	if(textDynNum > 0)
+	{
+		for(int i=0; i < textDynNum; i++)
+			delete[] textDyn[i];
+	}
+	textDynNum = 0;
 }
 
 void GuiText::SetScroll(int s)
@@ -146,11 +168,13 @@ void GuiText::SetScroll(int s)
 	if(textScroll == s)
 		return;
 
-	if(textDyn)
+	if(textDynNum > 0)
 	{
-		delete[] textDyn;
-		textDyn = NULL;
+		for(int i=0; i < textDynNum; i++)
+			delete[] textDyn[i];
 	}
+	textDynNum = 0;
+
 	textScroll = s;
 	textScrollPos = 0;
 	textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
@@ -209,6 +233,13 @@ void GuiText::ResetText()
 		delete[] text;
 
 	text = charToWideChar(gettext(origText));
+
+	if(textDynNum > 0)
+	{
+		for(int i=0; i < textDynNum; i++)
+			delete[] textDyn[i];
+	}
+	textDynNum = 0;
 }
 
 /**
@@ -237,130 +268,119 @@ void GuiText::Draw()
 			fontSystem[newSize] = new FreeTypeGX(newSize);
 		currentSize = newSize;
 	}
-	
-	u8 maxChar;
 
 	if(maxWidth == 0)
 	{
 		fontSystem[currentSize]->drawText(this->GetLeft(), this->GetTop(), text, c, style);
-		goto done;
+		this->UpdateEffects();
+		return;
 	}
 
-	maxChar = int((float((maxWidth<<1))) / (float(newSize))); // approximate
+	u32 maxChar = maxWidth*2.5 / (float)newSize; // approximate
+	u32 textlen = wcslen(text);
 
 	if(wrap)
 	{
-		int lineheight = newSize + 6;
-		int txtlen = wcslen(text);
-		int i = 0;
-		int ch = 0;
-		int linenum = 0;
-		int lastSpace = -1;
-		int lastSpaceIndex = -1;
-		wchar_t * textrow[20];
-
-		while(ch < txtlen)
+		if(textDynNum == 0)
 		{
-			if(i == 0)
-				textrow[linenum] = new wchar_t[txtlen + 1];
+			u32 n = 0, ch = 0;
+			int linenum = 0;
+			int lastSpace = -1;
+			int lastSpaceIndex = -1;
 
-			textrow[linenum][i] = text[ch];
-			textrow[linenum][i+1] = 0;
-
-			if(text[ch] == ' ' || ch == txtlen-1)
+			while(ch < textlen && linenum < 20)
 			{
-				if(wcslen(textrow[linenum]) >= maxChar)
+				if(n == 0)
+					textDyn[linenum] = new wchar_t[textlen + 1];
+
+				textDyn[linenum][n] = text[ch];
+				textDyn[linenum][n+1] = 0;
+
+				if(text[ch] == ' ' || ch == textlen-1)
 				{
-					if(lastSpace >= 0)
+					if(wcslen(textDyn[linenum]) >= maxChar)
 					{
-						textrow[linenum][lastSpaceIndex] = 0; // discard space, and everything after
-						ch = lastSpace; // go backwards to the last space
-						lastSpace = -1; // we have used this space
-						lastSpaceIndex = -1;
+						if(lastSpace >= 0)
+						{
+							textDyn[linenum][lastSpaceIndex] = 0; // discard space, and everything after
+							ch = lastSpace; // go backwards to the last space
+							lastSpace = -1; // we have used this space
+							lastSpaceIndex = -1;
+						}
+						++linenum;
+						n = -1;
 					}
-					++linenum;
-					i = -1;
+					else if(ch == textlen-1)
+					{
+						++linenum;
+					}
 				}
-				else if(ch == txtlen-1)
+				if(text[ch] == ' ' && n >= 0)
 				{
-					++linenum;
+					lastSpace = ch;
+					lastSpaceIndex = n;
 				}
+				++ch;
+				++n;
 			}
-			if(text[ch] == ' ' && i >= 0)
-			{
-				lastSpace = ch;
-				lastSpaceIndex = i;
-			}
-			++ch;
-			++i;
+			textDynNum = linenum;
 		}
 
+		int lineheight = newSize + 6;
 		int voffset = 0;
 
 		if(alignmentVert == ALIGN_MIDDLE)
-			voffset = (lineheight >> 1) * (1-linenum);
+			voffset = (lineheight >> 1) * (1-textDynNum);
 
 		int left = this->GetLeft();
 		int top  = this->GetTop() + voffset;
 
-		for(i=0; i < linenum; ++i)
-		{
-			fontSystem[currentSize]->drawText(left, top+i*lineheight, textrow[i], c, style);
-			delete[] textrow[i];
-		}
-		goto done;
+		for(int i=0; i < textDynNum; ++i)
+			fontSystem[currentSize]->drawText(left, top+i*lineheight, textDyn[i], c, style);
 	}
-
-	if(textScroll == SCROLL_HORIZONTAL)
+	else
 	{
-		char *tmpText = strdup(gettext(origText));
-		char *tmpText2 = strdup(tmpText);
-		int textlen = strlen(tmpText);
-
-		if(textlen > maxChar && (FrameTimer % textScrollDelay == 0))
+		if(textDynNum == 0)
 		{
-			if(textScrollInitialDelay)
+			textDynNum = 1;
+			textDyn[0] = wcsdup(text);
+
+			if(textlen > maxChar)
+				textDyn[0][maxChar] = 0;
+		}
+
+		if(textScroll == SCROLL_HORIZONTAL)
+		{
+			if(textlen > maxChar && (FrameTimer % textScrollDelay == 0))
 			{
-				--textScrollInitialDelay;
-			}
-			else
-			{
-				++textScrollPos;
-				if(textScrollPos > textlen-1)
+				if(textScrollInitialDelay)
 				{
-					textScrollPos = 0;
-					textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
+					--textScrollInitialDelay;
 				}
-
-				strncpy(tmpText, &tmpText2[textScrollPos], maxChar-1);
-				tmpText[maxChar-1] = 0;
-
-				int dynlen = strlen(tmpText);
-
-				if(dynlen+2 < maxChar)
+				else
 				{
-					tmpText[dynlen] = ' ';
-					tmpText[dynlen+1] = ' ';
-					strncat(&tmpText[dynlen+2], tmpText2, maxChar - dynlen - 2);
+					++textScrollPos;
+					if((u32)textScrollPos > textlen-1)
+					{
+						textScrollPos = 0;
+						textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
+					}
+
+					wcsncpy(textDyn[0], &text[textScrollPos], maxChar-1);
+					textDyn[maxChar-1] = 0;
+
+					u32 dynlen = wcslen(textDyn[0]);
+
+					if(dynlen+2 < maxChar)
+					{
+						textDyn[0][dynlen] = ' ';
+						textDyn[0][dynlen+1] = ' ';
+						wcsncat(&textDyn[0][dynlen+2], text, maxChar - dynlen - 2);
+					}
 				}
-				if(textDyn) delete[] textDyn;
-				textDyn = charToWideChar(tmpText);
 			}
 		}
-		free(tmpText);
-		free(tmpText2);
+		fontSystem[currentSize]->drawText(this->GetLeft(), this->GetTop(), textDyn[0], c, style);
 	}
-
-	if(!textDyn)
-	{
-		char *tmpText = strdup(gettext(origText));
-		if(strlen(tmpText) > maxChar)
-			tmpText[maxChar] = 0;
-		textDyn = charToWideChar(tmpText);
-		free(tmpText);
-	}
-
-	fontSystem[currentSize]->drawText(this->GetLeft(), this->GetTop(), textDyn, c, style);
-done:
 	this->UpdateEffects();
 }
