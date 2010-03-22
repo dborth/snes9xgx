@@ -662,9 +662,10 @@ class GuiText : public GuiElement
 		void Draw();
 	protected:
 		GXColor color; //!< Font color
-		wchar_t* text; //!< Unicode text value
-		wchar_t* textDyn; //!< Wrapped text value
-		char * origText; //!< Original text data
+		wchar_t* text; //!< Translated Unicode text value
+		wchar_t *textDyn[20]; //!< Text value, if max width, scrolling, or wrapping enabled
+		int textDynNum; //!< Number of text lines
+		char * origText; //!< Original text data (English)
 		int size; //!< Font size
 		int maxWidth; //!< Maximum width of the generated text object (for text wrapping)
 		int textScroll; //!< Scrolling toggle

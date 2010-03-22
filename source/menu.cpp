@@ -1825,7 +1825,7 @@ static int MenuGameSettings()
 	trigHome.SetButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, 0);
 
 	GuiText mappingBtnTxt("Button Mappings", 22, (GXColor){0, 0, 0, 255});
-	mappingBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-20);
+	mappingBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
 	GuiImage mappingBtnImg(&btnLargeOutline);
 	GuiImage mappingBtnImgOver(&btnLargeOutlineOver);
 	GuiImage mappingBtnIcon(&iconMappings);
