@@ -30,6 +30,8 @@ distribution.
 
  -------------------------------------------------------------*/
 
+#ifdef HW_RVL
+
 #include <gccore.h>
 
 #include <ogc/lwp_heap.h>
@@ -41,6 +43,7 @@ distribution.
 #include <string.h>
 #include <unistd.h> 
 #include <ogc/machine/processor.h>
+#include <ogc/ipc.h>
 
 //#define DEBUG_USB2
 
@@ -449,3 +452,4 @@ const DISC_INTERFACE __io_usb2storage = {
 	(FN_MEDIUM_CLEARSTATUS) & __usb2storage_ClearStatus,
 	(FN_MEDIUM_SHUTDOWN) & __usb2storage_Shutdown
 };
+#endif

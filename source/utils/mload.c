@@ -15,11 +15,14 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifdef HW_RVL
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ogcsys.h>
 #include <gccore.h>
+#include <ogc/ipc.h>
 #include "unistd.h"
 #include "ehcmodule_elf.h"
 
@@ -274,3 +277,5 @@ bool load_ehci_module()
 	}
 	return true;
 }
+
+#endif
