@@ -1,0 +1,392 @@
+msgid "&"
+msgstr "&"
+
+msgid "16:9 Correction"
+msgstr 16:9 Correctie"
+
+msgid "An update is available!"
+msgstr "Een update is beschikbaar!"
+
+msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
+msgstr "Weet je zeker dat je het spel wilt herstarten? Niet opgeslagen gegevens zullen verloren gaan."
+
+msgid "Are you sure that you want to reset your mappings?"
+msgstr "Weet je zeker dat je de controller instellingen wilt wissen?"
+
+msgid "Are you sure that you want to reset your settings?"
+msgstr "Weet je zeker dat je de instellingen wilt wissen?"
+
+msgid "Auto"
+msgstr "Auto"
+
+msgid "Auto Detect"
+msgstr "Detecteer Automatisch"
+
+msgid "Auto Load"
+msgstr "Auto Openen"
+
+msgid "Auto Save"
+msgstr "Auto Opslaan"
+
+msgid "Automatic (Recommended)"
+msgstr "Automatisch (Aanbevolen)"
+
+msgid "Back"
+msgstr "Terug"
+
+msgid "Both"
+msgstr "Beide"
+
+msgid "Button Mapping"
+msgstr "Controller"
+
+msgid "Button Mappings"
+msgstr "Controller Instellingen"
+
+msgid "Cancel"
+msgstr "Annuleren"
+
+msgid "Caps"
+msgstr "Caps"
+
+msgid "Cheats"
+msgstr "Cheats"
+
+msgid "Cheats file not found!"
+msgstr "Cheats bestand niet gevonden!"
+
+msgid "Cheats Folder"
+msgstr "Cheats Map"
+
+msgid "Choose Game"
+msgstr "Kies Spel"
+
+msgid "Classic Controller"
+msgstr "Traditionele Controller"
+
+msgid "Close"
+msgstr "Sluiten"
+
+msgid "Coding"
+msgstr "Programmeren"
+
+msgid "Coding & menu design"
+msgstr "Programmeren & menu ontwerp"
+
+msgid "Controller"
+msgstr "Controller"
+
+msgid "Cover View"
+msgstr "Hoes Weergave"
+
+msgid "Covers Folder"
+msgstr "Hoezen map"
+
+msgid "Credits"
+msgstr "Credits"
+
+msgid "Default"
+msgstr "Standaard"
+
+msgid "Disabled"
+msgstr "Uitgeschakeld"
+
+msgid "distributed, or modified under the terms of the"
+msgstr "uitgegeven, of bewerkt onder regels van de"
+
+msgid "Don't Save"
+msgstr "Niet Opslaan"
+
+msgid "Enabled"
+msgstr "Ingeschakeld"
+
+msgid "Error"
+msgstr "Fout"
+
+msgid "Exit"
+msgstr "Afsluiten"
+
+msgid "Exit Action"
+msgstr "Afsluitactie"
+
+msgid "Filtered"
+msgstr "Gesorteerd"
+
+msgid "Filtering"
+msgstr "Sortering"
+
+msgid "Game Settings"
+msgstr "Spelinstellingen"
+
+msgid "Game Settings - Button Mappings"
+msgstr "Spelinstellingen - Controller Configuratie"
+
+msgid "Game Settings - Cheats"
+msgstr "Spelinstellingen - Cheats"
+
+msgid "Game Settings - Video"
+msgstr "Spelinstellingen - Video"
+
+msgid "GameCube Controller"
+msgstr "GameCube Controller"
+
+msgid "GNU General Public License (GPL) Version 2."
+msgstr ""
+
+msgid "Go Back"
+msgstr "Ga Terug"
+
+msgid "Horizontal"
+msgstr "Horizontaal"
+
+msgid "Information"
+msgstr "Informatie"
+
+msgid "Justifier"
+msgstr ""
+
+msgid "Language"
+msgstr "Taal"
+
+msgid "Languages Folder"
+msgstr "Talenmap"
+
+msgid "Load"
+msgstr "Openen"
+
+msgid "Load Device"
+msgstr "Open Apparaat"
+
+msgid "Load Folder"
+msgstr "Open Map"
+
+msgid "Load Game"
+msgstr "Spel starten"
+
+msgid "Loading"
+msgstr "Laden"
+
+msgid "Main Menu"
+msgstr "Hoofdmenu"
+
+msgid "Menu"
+msgstr "Menu"
+
+msgid "Menu artwork"
+msgstr "Menu artwork"
+
+msgid "Menu sound"
+msgstr "Menu geluid"
+
+msgid "Music Volume"
+msgstr "Muziek volume"
+
+msgid "Mute"
+msgstr "Stil"
+
+msgid "Network"
+msgstr "Netwerk"
+
+msgid "No"
+msgstr "Nee"
+
+msgid "No game saves found."
+msgstr "Geen opgeslagen spellen gevonden."
+
+msgid "NTSC (480i)"
+msgstr ""
+
+msgid "Nunchuk"
+msgstr ""
+
+msgid "Off"
+msgstr "Uit"
+
+msgid "Official Site: http://code.google.com/p/snes9x-gx/"
+msgstr "Officiële site: http://code.google.com/p/snes9x-gx/"
+
+msgid "OK"
+msgstr ""
+
+msgid "On"
+msgstr "Aan"
+
+msgid "Original"
+msgstr "Origineel"
+
+msgid "PAL (50Hz)"
+msgstr ""
+
+msgid "PAL (60Hz)"
+msgstr ""
+
+msgid "Please Wait"
+msgstr "Even geduld"
+
+msgid "Power off Wii"
+msgstr "Wii uitschakelen"
+
+msgid "Press any button on the Classic Controller now. Press Home to clear the existing mapping."
+msgstr "Druk op een knop op de Tradionele Controller. Druk op Home om de instelling te wissen."
+
+msgid "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping."
+msgstr "Druk op een knop op de GameCube Controller. Druk op Home of beweeg de C-stick om de instelling te wissen."
+
+msgid "Press any button on the GameCube Controller now. Press the C-Stick in any direction to clear the existing mapping."
+msgstr "Druk op een knop op de GameCube Controller. Beweeg de C-stick om de instelling te wissen."
+
+msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
+msgstr "Druk op een knop op de Wiimote. Druk op Home om de instelling te wissen."
+
+msgid "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping."
+msgstr "Druk op een knop op de Wiimote of Nunchuck. Druk op Home om de instelling te wissen."
+
+msgid "Progressive (480p)"
+msgstr "Progressief (480p)"
+
+msgid "Quit Game"
+msgstr "Spel Afsluiten"
+
+msgid "Quit this game? Any unsaved progress will be lost."
+msgstr "Sluit dit spel af? Niet opgeslagen gegevens zullen verloren gaan."
+
+msgid "Reboot"
+msgstr "Herstart"
+
+msgid "Rendering"
+msgstr "Rendering"
+
+msgid "Reset"
+msgstr "Reset"
+
+msgid "Reset Game"
+msgstr "Herstart Spel"
+
+msgid "Reset Mappings"
+msgstr "Reset Controllers"
+
+msgid "Reset Settings"
+msgstr "Reset Instellingen"
+
+msgid "Retry"
+msgstr "Opnieuw"
+
+msgid "Return to Loader"
+msgstr "Terug naar de Lader"
+
+msgid "Return to Wii Menu"
+msgstr "Terug naar het Wii Menu"
+
+msgid "Rumble"
+msgstr "Tril"
+
+msgid "Save"
+msgstr "Opslaan"
+
+msgid "Save Device"
+msgstr "Opslaan Apparaat"
+
+msgid "Save Folder"
+msgstr "Opslaan Map"
+
+msgid "Save Game"
+msgstr "Spel Opslaan"
+
+msgid "Save Snapshot?"
+msgstr "Snapshot Opslaan?"
+
+msgid "Save SRAM and Snapshot?"
+msgstr "SRAM en Snapshot opslaan?"
+
+msgid "Saving"
+msgstr "Opslaan"
+
+msgid "Scaling"
+msgstr "Schaal"
+
+msgid "Screen Position"
+msgstr "Schermpositie"
+
+msgid "Screen Zoom"
+msgstr "Zomen"
+
+msgid "Settings"
+msgstr "Instellingen"
+
+msgid "Settings - Menu"
+msgstr "Instellingen - Menu"
+
+msgid "Settings - Network"
+msgstr "Instellingen - Netwerk"
+
+msgid "Settings - Saving & Loading"
+msgstr "Instellingen - Laden & Opslaan"
+
+msgid "Shift"
+msgstr "Shift"
+
+msgid "SMB Share IP"
+msgstr "IP SMB Share"
+
+msgid "SMB Share Name"
+msgstr "SMB Share Naam"
+
+msgid "SMB Share Password"
+msgstr "SMB Share Wachtwoord"
+
+msgid "SMB Share Username"
+msgstr "SMB Share Gebruiker"
+
+msgid "Snapshot"
+msgstr "Snapshot"
+
+msgid "SNES Controller"
+msgstr "SNES Controller"
+
+msgid "SNES Mouse"
+msgstr "SNES Muis"
+
+msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
+msgstr ""
+
+msgid "Sound Effects Volume"
+msgstr "Volume Geluidseffecten"
+
+msgid "Super Scope"
+msgstr ""
+
+msgid "This software is open source and may be copied,"
+msgstr "Deze software is open source en mag gekopiëerd worden,"
+
+msgid "Unfiltered"
+msgstr "Ongefilterd"
+
+msgid "Up One Level"
+msgstr "Omhoog"
+
+msgid "Update Available"
+msgstr "Update Beschikbaar"
+
+msgid "Update later"
+msgstr "Later Bijwerken"
+
+msgid "Update now"
+msgstr "Nieuw Bijwerken"
+
+msgid "Vertical"
+msgstr "Verticaal"
+
+msgid "Video"
+msgstr "Video"
+
+msgid "Video Mode"
+msgstr "Video Modus"
+
+msgid "Wiimote"
+msgstr ""
+
+msgid "Wiimote Orientation"
+msgstr "Wiimote Orientatie"
+
+msgid "Yes"
+msgstr "Ja"

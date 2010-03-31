@@ -1,0 +1,470 @@
+msgid "&"
+msgstr ""
+
+msgid "16:9 Correction"
+msgstr "16:9"
+
+msgid "Aim Offscreen"
+msgstr "Neben Bildsch. zielen"
+
+msgid "An update is available!"
+msgstr "Ein Update ist verfügbar!"
+
+msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
+msgstr "Bist du sicher das du das Spiel zurücksetzen willst? Ungespeicherter Fortschritt geht verloren."
+
+msgid "Are you sure that you want to reset your mappings?"
+msgstr "Bist du sicher das du deine Tastenbelegung zurücksetzten willst?"
+
+msgid "Are you sure that you want to reset your settings?"
+msgstr "Bist du sicher das du die Einstellungen zurücksetzten willst?"
+
+msgid "Auto"
+msgstr ""
+
+msgid "Auto Detect"
+msgstr "Auto. feststellen"
+
+msgid "Auto Load"
+msgstr "Auto. laden"
+
+msgid "Auto Save"
+msgstr "Auto. speichern"
+
+msgid "Automatic (Recommended)"
+msgstr "Automatisch (Empfohlen)"
+
+msgid "Back"
+msgstr "Zurück"
+
+msgid "Both"
+msgstr "Beide"
+
+msgid "Button Mapping"
+msgstr "Tastenbelegung"
+
+msgid "Button Mappings"
+msgstr "Tasten Belegung"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Caps"
+msgstr ""
+
+msgid "Cheats"
+msgstr ""
+
+msgid "Cheats file not found!"
+msgstr "Cheatdatei nicht gefunden!"
+
+msgid "Cheats Folder"
+msgstr "Ordner f. Cheats"
+
+msgid "Choose Game"
+msgstr "Spiel auswählen"
+
+msgid "Classic Controller"
+msgstr ""
+
+msgid "Close"
+msgstr "Schließen"
+
+msgid "Coding"
+msgstr "Programmierung"
+
+msgid "Coding & menu design"
+msgstr "Programmierung & Menüdesign"
+
+msgid "Controller"
+msgstr ""
+
+msgid "Cover View"
+msgstr "Cover anzeigen"
+
+msgid "Covers Folder"
+msgstr "Ordner f. Cover"
+
+msgid "Credits"
+msgstr ""
+
+msgid "Cursor"
+msgstr "Eingabezeiger"
+
+msgid "Default"
+msgstr "Standard"
+
+msgid "Disabled"
+msgstr "Deaktiviert"
+
+msgid "distributed, or modified under the terms of the"
+msgstr "veröffentlich, oder verändert unter den Bedingungen der"
+
+msgid "Don't Save"
+msgstr "Nicht speichern"
+
+msgid "Down"
+msgstr "Unten"
+
+msgid "DOWN"
+msgstr "UNTEN"
+
+msgid "Enabled"
+msgstr "Aktiviert"
+
+msgid "Error"
+msgstr "Fehler"
+
+msgid "Exit"
+msgstr "Beenden"
+
+msgid "Exit Action"
+msgstr "Aktion beim Beenden"
+
+msgid "Filtered"
+msgstr "Gefiltert"
+
+msgid "Filtering"
+msgstr "Filter"
+
+msgid "Fire"
+msgstr "Schießen"
+
+msgid "Game Settings"
+msgstr "Spiel Einstellungen"
+
+msgid "Game Settings - Button Mappings"
+msgstr "Spieleinstellungen - Tastenbelegung"
+
+msgid "Game Settings - Cheats"
+msgstr "Spieleinstellungen - Cheats"
+
+msgid "Game Settings - Video"
+msgstr "Spieleinstellungen - Video"
+
+msgid "GameCube Controller"
+msgstr ""
+
+msgid "GNU General Public License (GPL) Version 2."
+msgstr ""
+
+msgid "Go Back"
+msgstr "Zurück"
+
+msgid "Horizontal"
+msgstr ""
+
+msgid "Information"
+msgstr ""
+
+msgid "Justifier"
+msgstr ""
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "Languages Folder"
+msgstr "Ordner f. Sprachen"
+
+msgid "Left"
+msgstr "Links"
+
+msgid "LEFT"
+msgstr "LINKS"
+
+msgid "Left Button"
+msgstr "Linke Taste"
+
+msgid "Load"
+msgstr "Laden"
+
+msgid "Load Device"
+msgstr "Startgerät"
+
+msgid "Load Folder"
+msgstr "Ordner f. ROMs"
+
+msgid "Load Game"
+msgstr "Spiel laden"
+
+msgid "Loading"
+msgstr "Laden"
+
+msgid "Main Menu"
+msgstr "Hauptmenü"
+
+msgid "Menu"
+msgstr "Menü"
+
+msgid "Menu artwork"
+msgstr "Menü Artwork"
+
+msgid "Menu sound"
+msgstr "Menü Sound"
+
+msgid "MINUS"
+msgstr ""
+
+msgid "Music Volume"
+msgstr "Musik Lautstärke"
+
+msgid "Mute"
+msgstr "Stumm"
+
+msgid "Network"
+msgstr "Netzwerk"
+
+msgid "New"
+msgstr "Neuer"
+
+msgid "No"
+msgstr "Nein"
+
+msgid "None"
+msgstr "Nichts"
+
+msgid "No game saves found."
+msgstr "Kein Spielstand gefunden."
+
+msgid "NTSC (480i)"
+msgstr ""
+
+msgid "Nunchuk"
+msgstr ""
+
+msgid "Off"
+msgstr "Aus"
+
+msgid "Official Site: http://code.google.com/p/snes9x-gx/"
+msgstr "Offizielle Seite: http://code.google.com/p/snes9x-gx/"
+
+msgid "OK"
+msgstr ""
+
+msgid "On"
+msgstr "An"
+
+msgid "Original"
+msgstr ""
+
+msgid "PAL (50Hz)"
+msgstr ""
+
+msgid "PAL (60Hz)"
+msgstr ""
+
+msgid "Pause"
+msgstr ""
+
+msgid "Please Wait"
+msgstr "Bitte Warten"
+
+msgid "PLUS"
+msgstr ""
+
+msgid "Power off Wii"
+msgstr "Wii ausschalten"
+
+msgid "Press any button on the Classic Controller now. Press Home to clear the existing mapping."
+msgstr "Drücke jetzt eine Taste auf dem Classic Controller. Drücke HOME um die vorhandene Belegung zu löschen."
+
+msgid "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping."
+msgstr "Drücke jetzt eine Taste auf dem GameCube Controller. Drücke HOME oder den C-Stick in eine beliebige Richtung um die vorhandene Belegung zu löschen."
+
+msgid "Press any button on the GameCube Controller now. Press the C-Stick in any direction to clear the existing mapping."
+msgstr "Drücke jetzt eine Taste auf dem GameCube Controller. Drücke den C-Stick in eine beliebige Richtung um die vorhandene Belegung zu löschen."
+
+msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
+msgstr "Drücke jetzt eine Taste auf der Wii-FB. Drücke HOME um die vorhandene Belegung zu löschen."
+
+msgid "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping."
+msgstr "Drücke jetzt eine Taste auf der Wii-FB oder dem Nunchuk. Drücke HOME um die vorhandene Belegung zu löschen."
+
+msgid "Progressive (480p)"
+msgstr ""
+
+msgid "Quit Game"
+msgstr "Spiel beenden"
+
+msgid "Quit this game? Any unsaved progress will be lost."
+msgstr "Dieses Spiel beenden? Ungespeicherter Fortschritt geht verloren."
+
+msgid "Reboot"
+msgstr "Neustart"
+
+msgid "Rendering"
+msgstr "Darstellung"
+
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+msgid "Reset Game"
+msgstr "Spiel zurücksetzen"
+
+msgid "Reset Mappings"
+msgstr "Belegung zurücksetzen"
+
+msgid "Reset Settings"
+msgstr "Zurücksetzen"
+
+msgid "Retry"
+msgstr "Wiederholen"
+
+msgid "Return to Loader"
+msgstr "Zum Loader zurückkehren"
+
+msgid "Return to Wii Menu"
+msgstr "Zum Wii Menü zurückkehren"
+
+msgid "Right"
+msgstr "Rechts"
+
+msgid "RIGHT"
+msgstr "RECHTS"
+
+msgid "Right Button"
+msgstr "Rechte Taste"
+
+msgid "Rumble"
+msgstr ""
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Save Device"
+msgstr "Speichergerät"
+
+msgid "Save Folder"
+msgstr "Ordner f. Spielstände"
+
+msgid "Save Game"
+msgstr "Spiel speichern"
+
+msgid "Save Snapshot?"
+msgstr "Schnappschuss speichern?"
+
+msgid "Save SRAM and Snapshot?"
+msgstr "SRAM und Schnappschuss speichern?"
+
+msgid "Save successful"
+msgstr "Erfolgreich gespeichert"
+
+msgid "Saving"
+msgstr "Speichern"
+
+msgid "Scaling"
+msgstr "Auflösung"
+
+msgid "Screen Position"
+msgstr "Bildschirm Position"
+
+msgid "Screen Zoom"
+msgstr "Bildschirm Zoom"
+
+msgid "Select"
+msgstr ""
+
+msgid "Settings"
+msgstr "Einstellungen"
+
+msgid "Settings - Menu"
+msgstr "Einstellungen - Menü"
+
+msgid "Settings - Network"
+msgstr "Einstellungen - Netzwerk"
+
+msgid "Settings - Saving & Loading"
+msgstr "Einstellungen - Speichern & Laden"
+
+msgid "Shift"
+msgstr ""
+
+msgid "SMB Share IP"
+msgstr ""
+
+msgid "SMB Share Name"
+msgstr ""
+
+msgid "SMB Share Password"
+msgstr "SMB Share Passwort"
+
+msgid "SMB Share Username"
+msgstr "SMB Share Benutzername"
+
+msgid "Snapshot"
+msgstr "Schnappschuss"
+
+msgid "SNES Controller"
+msgstr ""
+
+msgid "SNES Controllers (2)"
+msgstr ""
+
+msgid "SNES Controllers (4)"
+msgstr ""
+
+msgid "SNES Mouse"
+msgstr "SNES Maus"
+
+msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
+msgstr ""
+
+msgid "Sound Effects Volume"
+msgstr "SFX Lautstärke"
+
+msgid "Start"
+msgstr ""
+
+msgid "START"
+msgstr ""
+
+msgid "Super Scope"
+msgstr ""
+
+msgid "This software is open source and may be copied,"
+msgstr "Diese Software ist Open Source und evtl. kopiert,"
+
+msgid "Turbo On"
+msgstr "Turbo an"
+
+msgid "Turbo Off"
+msgstr "Turbo aus"
+
+msgid "Unfiltered"
+msgstr "Ungefiltert"
+
+msgid "Up"
+msgstr "Oben"
+
+msgid "UP"
+msgstr "OBEN"
+
+msgid "Up One Level"
+msgstr "Eine Ebene nach oben"
+
+msgid "Update Available"
+msgstr "Update verfügbar"
+
+msgid "Update later"
+msgstr "Später updaten"
+
+msgid "Update now"
+msgstr "Jetzt updaten"
+
+msgid "Vertical"
+msgstr "Vertikal"
+
+msgid "Video"
+msgstr "Bild"
+
+msgid "Video Mode"
+msgstr "Videomodus"
+
+msgid "Wiimote"
+msgstr "Wii-FB"
+
+msgid "Wiimote Orientation"
+msgstr "Wii-FB Ausrichtung"
+
+msgid "Yes"
+msgstr "Ja"
