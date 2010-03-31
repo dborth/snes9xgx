@@ -482,7 +482,8 @@ static GXRModeObj * FindVideoMode()
 	// widescreen fix
 	if(CONF_GetAspectRatio() == CONF_ASPECT_16_9)
 	{
-		mode->viWidth = VI_MAX_WIDTH_PAL;
+		mode->viWidth = 678;
+		mode->viXOrigin = (VI_MAX_WIDTH_NTSC - 678) / 2;
 	}
 	#endif
 	return mode;
@@ -551,6 +552,9 @@ InitGCVideo ()
 	GX_SetCopyClear (background, 0x00ffffff);
 	GX_SetDispCopyGamma (GX_GM_1_0);
 	GX_SetCullMode (GX_CULL_NONE);
+	GX_SetDrawDoneCallback(VIDEO_Flush);
+	GX_CopyDisp (xfb[whichfb], GX_TRUE); // reset xfb
+	GX_Flush();
 
 	vwidth = 100;
 	vheight = 100;
@@ -689,12 +693,12 @@ update_video (int width, int height)
 {
 	vwidth = width;
 	vheight = height;
+	
+	GX_WaitDrawDone();
 
 	// Ensure previous vb has complete
 	while ((LWP_ThreadIsSuspended (vbthread) == 0) || (copynow == GX_TRUE))
-	{
 		usleep (50);
-	}
 
 	whichfb ^= 1;
 
@@ -774,7 +778,7 @@ update_video (int width, int height)
 
 	draw_square (view);		// draw the quad
 
-	GX_DrawDone ();
+	GX_SetDrawDone();
 
 	if(ScreenshotRequested)
 	{
@@ -798,7 +802,6 @@ update_video (int width, int height)
 	}
 
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
-	VIDEO_Flush ();
 	copynow = GX_TRUE;
 
 	// Return to caller, don't waste time waiting for vb
@@ -939,16 +942,20 @@ ResetVideo_Menu ()
  *
  * Renders everything current sent to GX, and flushes video
  ***************************************************************************/
+static bool firstFrame = true;
+
 void Menu_Render()
 {
+	if(!firstFrame)
+		GX_WaitDrawDone();
 	whichfb ^= 1; // flip framebuffer
 	GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
 	GX_SetColorUpdate(GX_TRUE);
 	GX_CopyDisp(xfb[whichfb],GX_TRUE);
-	GX_DrawDone();
+	GX_SetDrawDone();
 	VIDEO_SetNextFramebuffer(xfb[whichfb]);
-	VIDEO_Flush();
 	VIDEO_WaitVSync();
+	firstFrame = false;
 }
 
 /****************************************************************************

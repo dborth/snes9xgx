@@ -25,6 +25,9 @@ msgstr "La décompression 7z a échoué : le fichier utilise des paramètres de 
 msgid "A (Rapid)"
 msgstr "A (Rapide)"
 
+msgid "Additional coding"
+msgstr "Programmation additionnelle"
+
 msgid "Aim Offscreen"
 msgstr "Visée hors champ"
 
@@ -107,7 +110,7 @@ msgid "Coding"
 msgstr "Programmation"
 
 msgid "Coding & menu design"
-msgstr "Prog. & design du menu"
+msgstr "Programmation & design du menu"
 
 msgid "Compressed GBA files are not supported!"
 msgstr "Les fichiers GBA compressés ne sont pas supportés !"
@@ -287,7 +290,7 @@ msgid "Insert Coin"
 msgstr "Insérer une pièce"
 
 msgid "Insert Coin / Switch Disk"
-msgstr "Insér. une pièce/Chang. disq."
+msgstr "Insér. une pièce/Chang. disqtte"
 
 msgid "Invalid file size!"
 msgstr "Taille du fichier invalide"
@@ -752,7 +755,7 @@ msgid "State file not found"
 msgstr "Pas de sauvegarde d'état trouvée"
 
 msgid "Stretch to Fit"
-msgstr "Plein écran"
+msgstr "Étirer au ratio de l'écran"
 
 msgid "Superscope"
 msgstr "Super Scope"

@@ -10,7 +10,7 @@
 ­————————————————————————————————————————————————————————————————————————————
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                      Snes9x GX 4.1.5                          ·oø×O0|
+|0O×øo·                      Snes9x GX 4.1.6                          ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
@@ -32,7 +32,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 * Cheat support
 * Auto Load/Save Game Snapshots and SRAM
 * Custom controller configurations
-* SD, USB, DVD (requires DVDx), SMB, Zip, and 7z support
+* SD, USB, DVD, SMB, Zip, and 7z support
 * Autodetect PAL/NTSC, 16:9 widescreen support
 * Original/filtered/unfiltered video modes
 * Turbo Mode - up to 2x the normal speed
@@ -42,6 +42,18 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.1.6 - March 30, 2010]
+
+* New core! Updated to Snes9x 1.52. Old save states will not work!
+* DVD / USB 2.0 support via IOS 202. DVDx support has been dropped. It is
+  highly recommended to install IOS 202 via the included installer
+* Multi-language support (only French translation is fully complete)
+* Thank you to everyone who submitted translations
+* SMB improvements/bug fixes
+* Minor video & input performance optimizations
+* Now uses .srm files without "Auto" appended, if found
+* Added option to disable crosshair
 
 [4.1.5 - December 23, 2009]
 

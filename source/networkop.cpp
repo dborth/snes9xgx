@@ -157,7 +157,7 @@ bool DownloadUpdate()
 	if (hfile > 0)
 	{
 		int retval;
-		retval = http_request(updateURL, hfile, NULL, (1024*1024*5));
+		retval = http_request(updateURL, hfile, NULL, (1024*1024*10));
 		fclose (hfile);
 	}
 

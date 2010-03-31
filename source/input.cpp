@@ -20,6 +20,7 @@
 #include <ogcsys.h>
 #include <unistd.h>
 #include <wiiuse/wpad.h>
+#include <ogc/lwp_watchdog.h>
 
 #include "snes9xgx.h"
 #include "button_mapping.h"
@@ -196,13 +197,27 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
  *
  * Scans pad and wpad
  ***************************************************************************/
+static int padsConnected = 0;
+static u64 prev, now;
+
 void
 UpdatePads()
 {
 	#ifdef HW_RVL
 	WPAD_ScanPads();
 	#endif
-	PAD_ScanPads();
+
+	now = gettime();
+
+	if(!padsConnected && diff_usec(prev, now) < 2000000)
+		return;
+
+	prev = now;
+
+	padsConnected = PAD_ScanPads();
+
+	if(!padsConnected)
+		return;
 
 	for(int i=3; i >= 0; i--)
 	{
