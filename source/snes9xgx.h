@@ -6,7 +6,7 @@
  * Michniewski 2008
  * Tantric 2008-2010
  *
- * snes9xGX.h
+ * snes9xgx.h
  *
  * This file controls overall program flow. Most things start and end here!
  ***************************************************************************/
@@ -20,7 +20,7 @@
 #include "filelist.h"
 
 #define APPNAME 		"Snes9x GX"
-#define APPVERSION 		"4.1.5"
+#define APPVERSION 		"4.1.6"
 #define APPFOLDER 		"snes9xgx"
 #define PREF_FILE_NAME 	"settings.xml"
 
