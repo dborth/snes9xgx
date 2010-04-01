@@ -136,7 +136,7 @@ SZ_RESULT SzExtract2(
   if (folderIndex == (UInt32)-1)
   {
     *blockIndex = folderIndex;
-    #ifndef NGC
+    #ifndef GEKKO
     allocMain->Free(*outBuffer);
     *outBuffer = 0;
     #endif
@@ -154,7 +154,7 @@ SZ_RESULT SzExtract2(
     size_t processedSize;
     #endif
     *blockIndex = folderIndex;
-    #ifndef NGC
+    #ifndef GEKKO
     allocMain->Free(*outBuffer);
     *outBuffer = 0;
     #endif
@@ -184,7 +184,7 @@ SZ_RESULT SzExtract2(
       *outBufferSize = (size_t)fileItem->Size;
       if (unPackSize != 0)
       {
-		#ifndef NGC
+		#ifndef GEKKO
         *outBuffer = (Byte *)allocMain->Alloc((size_t)fileItem->Size);
         if (*outBuffer == 0)
           res = SZE_OUTOFMEMORY;
