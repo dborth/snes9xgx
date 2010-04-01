@@ -259,7 +259,7 @@ emulate ()
 		while(1) // emulation loop
 		{
 			S9xMainLoop ();
-			NGCReportButtons ();
+			ReportButtons ();
 
 			if(ResetRequested)
 			{

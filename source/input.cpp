@@ -614,12 +614,12 @@ bool MenuRequested()
 }
 
 /****************************************************************************
- * NGCReportButtons
+ * ReportButtons
  *
  * Called on each rendered frame
  * Our way of putting controller input into Snes9x
  ***************************************************************************/
-void NGCReportButtons ()
+void ReportButtons ()
 {
 	int i, j;
 
@@ -676,7 +676,7 @@ void SetControllers()
 }
 
 /****************************************************************************
- * Set the default mapping for NGC
+ * Set the default mapping
  ***************************************************************************/
 void SetDefaultButtonMap ()
 {

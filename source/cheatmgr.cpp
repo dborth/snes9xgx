@@ -18,13 +18,13 @@
 extern SCheatData Cheat;
 
 /****************************************************************************
- * NGCLoadCheatFile
+ * LoadCheatFile
  *
  * Loads cheat file from save buffer
  * Custom version of S9xLoadCheatFile()
  ***************************************************************************/
 
-static bool NGCLoadCheatFile (int length)
+static bool LoadCheatFile (int length)
 {
 	Cheat.num_cheats = 0;
 
@@ -74,7 +74,7 @@ WiiSetupCheats()
 	// load cheat file if present
 	if(offset > 0)
 	{
-		if(NGCLoadCheatFile (offset))
+		if(LoadCheatFile (offset))
 		{
 			// disable all cheats loaded from the file
 			for (i = 0; i < Cheat.num_cheats; i++)

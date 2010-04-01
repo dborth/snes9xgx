@@ -95,7 +95,7 @@ void S9xSyncSpeed ()
 	if (Settings.TurboMode)
 		skipFrms = Settings.TurboSkipFrames;
 
-	if (timerstyle == 0) /* use NGC vertical sync (VSYNC) with NTSC roms */
+	if (timerstyle == 0) /* use Wii vertical sync (VSYNC) with NTSC roms */
 	{
 		while (FrameTimer == 0)
 		{

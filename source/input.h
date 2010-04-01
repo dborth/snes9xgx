@@ -27,7 +27,7 @@ extern int rumbleRequest[4];
 void ResetControls(int cc = -1, int wc = -1);
 void ShutoffRumble();
 void DoRumble(int i);
-void NGCReportButtons ();
+void ReportButtons ();
 void SetControllers ();
 void SetDefaultButtonMap ();
 bool MenuRequested();
