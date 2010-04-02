@@ -186,8 +186,11 @@
 struct CMemory
 {
 	enum
+#ifdef HW_DOL
+	{ MAX_ROM_SIZE = 0x600000 };
+#else
 	{ MAX_ROM_SIZE = 0x800000 };
-
+#endif
 	enum file_formats
 	{ FILE_ZIP, FILE_JMA, FILE_DEFAULT };
 
