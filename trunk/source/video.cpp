@@ -552,9 +552,6 @@ InitGCVideo ()
 	GX_SetCopyClear (background, 0x00ffffff);
 	GX_SetDispCopyGamma (GX_GM_1_0);
 	GX_SetCullMode (GX_CULL_NONE);
-	GX_SetDrawDoneCallback(VIDEO_Flush);
-	GX_CopyDisp (xfb[whichfb], GX_TRUE); // reset xfb
-	GX_Flush();
 
 	vwidth = 100;
 	vheight = 100;
@@ -693,8 +690,6 @@ update_video (int width, int height)
 {
 	vwidth = width;
 	vheight = height;
-	
-	GX_WaitDrawDone();
 
 	// Ensure previous vb has complete
 	while ((LWP_ThreadIsSuspended (vbthread) == 0) || (copynow == GX_TRUE))
@@ -778,7 +773,7 @@ update_video (int width, int height)
 
 	draw_square (view);		// draw the quad
 
-	GX_SetDrawDone();
+	GX_DrawDone ();
 
 	if(ScreenshotRequested)
 	{
@@ -802,6 +797,7 @@ update_video (int width, int height)
 	}
 
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
+	VIDEO_Flush ();
 	copynow = GX_TRUE;
 
 	// Return to caller, don't waste time waiting for vb
@@ -942,20 +938,16 @@ ResetVideo_Menu ()
  *
  * Renders everything current sent to GX, and flushes video
  ***************************************************************************/
-static bool firstFrame = true;
-
 void Menu_Render()
 {
-	if(!firstFrame)
-		GX_WaitDrawDone();
 	whichfb ^= 1; // flip framebuffer
 	GX_SetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
 	GX_SetColorUpdate(GX_TRUE);
 	GX_CopyDisp(xfb[whichfb],GX_TRUE);
-	GX_SetDrawDone();
+	GX_DrawDone();
 	VIDEO_SetNextFramebuffer(xfb[whichfb]);
+	VIDEO_Flush();
 	VIDEO_WaitVSync();
-	firstFrame = false;
 }
 
 /****************************************************************************
@@ -1042,3 +1034,4 @@ void Menu_DrawRectangle(f32 x, f32 y, f32 width, f32 height, GXColor color, u8 f
 	}
 	GX_End();
 }
+
