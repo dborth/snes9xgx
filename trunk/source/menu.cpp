@@ -3471,9 +3471,9 @@ static int MenuSettingsFile()
 			else if (GCSettings.SaveMethod == DEVICE_USB) sprintf (options.value[1],"USB");
 			else if (GCSettings.SaveMethod == DEVICE_SMB) sprintf (options.value[1],"Network");
 
-			snprintf (options.value[2], 30, "%s", GCSettings.LoadFolder);
-			snprintf (options.value[3], 30, "%s", GCSettings.SaveFolder);
-			snprintf (options.value[4], 30, "%s", GCSettings.CheatFolder);
+			snprintf (options.value[2], 35, "%s", GCSettings.LoadFolder);
+			snprintf (options.value[3], 35, "%s", GCSettings.SaveFolder);
+			snprintf (options.value[4], 35, "%s", GCSettings.CheatFolder);
 
 			if (GCSettings.AutoLoad == 0) sprintf (options.value[5],"Off");
 			else if (GCSettings.AutoLoad == 1) sprintf (options.value[5],"SRAM");
