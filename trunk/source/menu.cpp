@@ -305,7 +305,7 @@ UpdateGUI (void *arg)
 
 		if(ExitRequested || ShutdownRequested)
 		{
-			for(i = 0; i < 255; i += 15)
+			for(i = 0; i <= 255; i += 15)
 			{
 				mainWindow->Draw();
 				Menu_DrawRectangle(0,0,screenwidth,screenheight,(GXColor){0, 0, 0, i},1);
