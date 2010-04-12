@@ -8,6 +8,7 @@
  * Cheat handling
  ***************************************************************************/
 
+
 #include "port.h"
 #include "cheats.h"
 
@@ -26,8 +27,6 @@ extern SCheatData Cheat;
 
 static bool LoadCheatFile (int length)
 {
-	Cheat.num_cheats = 0;
-
 	uint8 data [28];
 	int offset = 0;
 
@@ -39,7 +38,7 @@ static bool LoadCheatFile (int length)
 		memcpy (data, savebuffer+offset, 28);
 		offset += 28;
 
-		Cheat.c [Cheat.num_cheats].enabled = (data [0] & 4) == 0;
+		Cheat.c [Cheat.num_cheats].enabled = 0; // cheats always off
 		Cheat.c [Cheat.num_cheats].byte = data [1];
 		Cheat.c [Cheat.num_cheats].address = data [2] | (data [3] << 8) | (data [4] << 16);
 		Cheat.c [Cheat.num_cheats].saved_byte = data [5];
@@ -60,9 +59,11 @@ static bool LoadCheatFile (int length)
 void
 WiiSetupCheats()
 {
+	memset(Cheat.c, 0, sizeof(Cheat.c));
+	Cheat.num_cheats = 0;
+
 	char filepath[1024];
 	int offset = 0;
-	uint16 i;
 
 	if(!MakeFilePath(filepath, FILE_CHEAT))
 		return;
@@ -73,14 +74,7 @@ WiiSetupCheats()
 
 	// load cheat file if present
 	if(offset > 0)
-	{
-		if(LoadCheatFile (offset))
-		{
-			// disable all cheats loaded from the file
-			for (i = 0; i < Cheat.num_cheats; i++)
-				S9xDisableCheat(i);
-		}
-	}
+		LoadCheatFile (offset);
 
 	FreeSaveBuffer ();
 }
