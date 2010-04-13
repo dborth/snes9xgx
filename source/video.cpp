@@ -690,6 +690,9 @@ update_video (int width, int height)
 {
 	vwidth = width;
 	vheight = height;
+	
+	if(IPPU.RenderedFramesCount == prevRenderedFrameCount)
+		return; // we haven't rendered any frames yet, so we can't draw anything!
 
 	// Ensure previous vb has complete
 	while ((LWP_ThreadIsSuspended (vbthread) == 0) || (copynow == GX_TRUE))
@@ -697,10 +700,10 @@ update_video (int width, int height)
 
 	whichfb ^= 1;
 
-	if ( oldvheight != vheight || oldvwidth != vwidth )	// if rendered width/height changes, update scaling
+	if (oldvheight != vheight || oldvwidth != vwidth)	// if rendered width/height changes, update scaling
 		CheckVideo = 1;
 
-	if ( CheckVideo && (IPPU.RenderedFramesCount != prevRenderedFrameCount) )	// if we get back from the menu, and have rendered at least 1 frame
+	if (CheckVideo)	// if we get back from the menu, and have rendered at least 1 frame
 	{
 		int xscale, yscale;
 
