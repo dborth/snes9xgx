@@ -25,10 +25,9 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
-	if(GCSettings.WiimoteOrientation)
-		trigA->SetSimpleTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
-	else
-		trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+	trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+	trig2 = new GuiTrigger;
+	trig2->SetSimpleTrigger(-1, WPAD_BUTTON_2, 0);
 
 	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND_PCM);
@@ -94,6 +93,7 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 		optionBtn[i]->SetImageOver(optionBg[i]);
 		optionBtn[i]->SetPosition(0,30*i+3);
 		optionBtn[i]->SetTrigger(trigA);
+		optionBtn[i]->SetTrigger(trig2);
 		optionBtn[i]->SetSoundClick(btnSoundClick);
 	}
 }
@@ -122,6 +122,7 @@ GuiOptionBrowser::~GuiOptionBrowser()
 	delete arrowUpOver;
 
 	delete trigA;
+	delete trig2;
 	delete btnSoundOver;
 	delete btnSoundClick;
 
