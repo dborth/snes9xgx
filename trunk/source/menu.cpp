@@ -1377,10 +1377,12 @@ static int MenuGame()
 		#endif
 
 		w.SetEffect(EFFECT_FADE, 15);
-		AutoSave();
 	}
 
 	ResumeGui();
+
+	if(lastMenu == MENU_NONE)
+		AutoSave();
 
 	while(menu == MENU_NONE)
 	{
@@ -3825,7 +3827,7 @@ MainMenu (int menu)
 		mainWindow->Append(gameScreenImg);
 		bgImg->SetVisible(false);
 	}
-
+	
 	GuiTrigger trigA;
 	if(GCSettings.WiimoteOrientation)
 		trigA.SetSimpleTrigger(-1, WPAD_BUTTON_2 | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
@@ -3937,10 +3939,6 @@ MainMenu (int menu)
 	ShutoffRumble();
 	#endif
 
-	// wait for keys to be depressed
-	while(MenuRequested())
-		usleep(THREAD_SLEEP);
-
 	CancelAction();
 	HaltGui();
 
@@ -3984,5 +3982,12 @@ MainMenu (int menu)
 	{
 		free(gameScreenTex2);
 		gameScreenTex2 = NULL;
+	}
+
+	// wait for keys to be depressed
+	while(MenuRequested())
+	{
+		UpdatePads();
+		usleep(THREAD_SLEEP);
 	}
 }
