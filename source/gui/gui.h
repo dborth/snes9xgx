@@ -404,7 +404,7 @@ class GuiElement
 		//!Called constantly to redraw the element's tooltip
 		virtual void DrawTooltip();
 	protected:
-		GuiTrigger * trigger[2]; //!< GuiTriggers (input actions) that this element responds to
+		GuiTrigger * trigger[3]; //!< GuiTriggers (input actions) that this element responds to
 		UpdateCallback updateCB; //!< Callback function to call when this element is updated
 		GuiElement * parentElement; //!< Parent element
 		int focus; //!< Element focus (-1 = focus disabled, 0 = not focused, 1 = focused)
@@ -839,6 +839,7 @@ class GuiKeyboard : public GuiWindow
 		GuiSound * keySoundOver;
 		GuiSound * keySoundClick;
 		GuiTrigger * trigA;
+		GuiTrigger * trig2;
 		Key keys[4][11]; // two chars = less space than one pointer
 };
 
@@ -896,6 +897,7 @@ class GuiOptionBrowser : public GuiElement
 		GuiSound * btnSoundOver;
 		GuiSound * btnSoundClick;
 		GuiTrigger * trigA;
+		GuiTrigger * trig2;
 
 		bool listChanged;
 };
@@ -956,6 +958,7 @@ class GuiSaveBrowser : public GuiElement
 		GuiSound * btnSoundOver;
 		GuiSound * btnSoundClick;
 		GuiTrigger * trigA;
+		GuiTrigger * trig2;
 
 		bool saveBtnLastOver[SAVELISTSIZE];
 };
@@ -1009,6 +1012,7 @@ class GuiFileBrowser : public GuiElement
 		GuiSound * btnSoundOver;
 		GuiSound * btnSoundClick;
 		GuiTrigger * trigA;
+		GuiTrigger * trig2;
 		GuiTrigger * trigHeldA;
 
 		int selectedItem;

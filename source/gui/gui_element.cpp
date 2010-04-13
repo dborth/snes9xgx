@@ -29,6 +29,7 @@ GuiElement::GuiElement()
 	stateChan = -1;
 	trigger[0] = NULL;
 	trigger[1] = NULL;
+	trigger[2] = NULL;
 	parentElement = NULL;
 	rumble = true;
 	selectable = false;
@@ -312,7 +313,9 @@ void GuiElement::SetTrigger(GuiTrigger * t)
 		trigger[0] = t;
 	else if(!trigger[1])
 		trigger[1] = t;
-	else // both were assigned, so we'll just overwrite the first one
+	else if(!trigger[2])
+		trigger[2] = t;
+	else // all were assigned, so we'll just overwrite the first one
 		trigger[0] = t;
 }
 
