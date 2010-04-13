@@ -323,12 +323,28 @@ class GuiElement
 		//!Considers alpha, alphaDyn, and the parent element's GetAlpha() value
 		//!\return alpha
 		int GetAlpha();
-		//!Sets the element's scale
+		//!Sets the element's x and y scale
 		//!\param s scale (1 is 100%)
 		void SetScale(float s);
+		//!Sets the element's x scale
+		//!\param s scale (1 is 100%)
+		void SetScaleX(float s);
+		//!Sets the element's y scale
+		//!\param s scale (1 is 100%)
+		void SetScaleY(float s);
+		//!Sets the element's x and y scale, using the provided max width/height
+		//!\param w Maximum width
+		//!\param h Maximum height
+		void SetScale(int w, int h);
 		//!Gets the element's current scale
 		//!Considers scale, scaleDyn, and the parent element's GetScale() value
 		float GetScale();
+		//!Gets the element's current x scale
+		//!Considers scale, scaleDyn, and the parent element's GetScale() value
+		float GetScaleX();
+		//!Gets the element's current y scale
+		//!Considers scale, scaleDyn, and the parent element's GetScale() value
+		float GetScaleY();
 		//!Set a new GuiTrigger for the element
 		//!\param t Pointer to GuiTrigger
 		void SetTrigger(GuiTrigger * t);
@@ -420,7 +436,8 @@ class GuiElement
 		int yoffsetDyn; //!< Element Y offset, dynamic (added to yoffset value for animation effects)
 		int alpha; //!< Element alpha value (0-255)
 		int alphaDyn; //!< Element alpha, dynamic (multiplied by alpha value for blending/fading effects)
-		f32 scale; //!< Element scale (1 = 100%)
+		f32 xscale; //!< Element X scale (1 = 100%)
+		f32 yscale; //!< Element Y scale (1 = 100%)
 		f32 scaleDyn; //!< Element scale, dynamic (multiplied by alpha value for blending/fading effects)
 		int effects; //!< Currently enabled effect(s). 0 when no effects are enabled
 		int effectAmount; //!< Effect amount. Used by different effects for different purposes

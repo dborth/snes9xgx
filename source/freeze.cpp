@@ -58,7 +58,7 @@ SaveSnapshot (char * filepath, bool silent)
 
 		if (pngContext != NULL)
 		{
-			imgSize = PNGU_EncodeFromGXTexture(pngContext, screenwidth, screenheight, gameScreenTex2, 0);
+			imgSize = PNGU_EncodeFromGXTexture(pngContext, vmode->fbWidth, vmode->efbHeight, gameScreenTex2, 0);
 			PNGU_ReleaseImageContext(pngContext);
 		}
 
