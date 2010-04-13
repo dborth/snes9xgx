@@ -40,7 +40,7 @@ unsigned char * filtermem = NULL; // only want ((512*2) X (239*2))
 /*** 2D Video ***/
 static unsigned int *xfb[2] = { NULL, NULL }; // Double buffered
 static int whichfb = 0; // Switch
-static GXRModeObj *vmode = NULL; // Current video mode
+GXRModeObj *vmode = NULL; // Current video mode
 int screenheight = 480;
 int screenwidth = 640;
 static int oldRenderMode = -1; // set to GCSettings.render when changing (temporarily) to another mode
@@ -399,7 +399,7 @@ static GXRModeObj * FindVideoMode()
 			mode = &TVNtsc480Prog;
 			break;
 		case 3: // PAL (50Hz)
-			mode = &TVPal574IntDfScale;
+			mode = &TVPal528IntDf;
 			break;
 		case 4: // PAL (60Hz)
 			mode = &TVEurgb60Hz480IntDf;
@@ -415,9 +415,6 @@ static GXRModeObj * FindVideoMode()
 				mode = &TVNtsc480Prog;
 			#endif
 
-			// use hardware vertical scaling to fill screen
-			if(mode->viTVMode >> 2 == VI_PAL)
-				mode = &TVPal574IntDfScale;
 			break;
 	}
 
@@ -479,11 +476,45 @@ static GXRModeObj * FindVideoMode()
 		progressive = false;
 
 	#ifdef HW_RVL
-	// widescreen fix
-	if(CONF_GetAspectRatio() == CONF_ASPECT_16_9)
+	bool pal = false;
+
+	if (mode == &TVPal528IntDf)
+		pal = true;
+
+	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
 	{
-		mode->viWidth = 678;
-		mode->viXOrigin = (VI_MAX_WIDTH_NTSC - 678) / 2;
+		mode->fbWidth = 640;
+		mode->efbHeight = 456;
+		mode->viWidth = 686;
+
+		if (pal)
+		{
+			mode->xfbHeight = 542;
+			mode->viHeight = 542;
+		}
+		else
+		{
+			mode->xfbHeight = 456;
+			mode->viHeight = 456;
+		}
+	}
+	else
+	{
+		if (pal)
+			mode = &TVPal574IntDfScale;
+
+		mode->viWidth = 672;
+	}
+
+	if (pal)
+	{
+		mode->viXOrigin = (VI_MAX_WIDTH_PAL - mode->viWidth) / 2;
+		mode->viYOrigin = (VI_MAX_HEIGHT_PAL - mode->viHeight) / 2;
+	}
+	else
+	{
+		mode->viXOrigin = (VI_MAX_WIDTH_NTSC - mode->viWidth) / 2;
+		mode->viYOrigin = (VI_MAX_HEIGHT_NTSC - mode->viHeight) / 2;
 	}
 	#endif
 	return mode;

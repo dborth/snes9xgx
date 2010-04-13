@@ -52,7 +52,6 @@ AudioThread (void *arg)
 
 	while (1)
 	{
-		whichab ^= 1;
 		if (ConfigRequested)
 			memset (soundbuffer[whichab], 0, AUDIOBUFFER);
 		else
@@ -61,6 +60,7 @@ AudioThread (void *arg)
 			S9xMixSamples (soundbuffer[whichab], AUDIOBUFFER >> 1);
 			LWP_MutexUnlock(audiomutex);
 		}
+		DCFlushRange (soundbuffer[whichab], AUDIOBUFFER);
 		LWP_ThreadSleep (audioqueue);
 	}
 
@@ -76,11 +76,8 @@ GCMixSamples ()
 {
 	if (!ConfigRequested)
 	{
-		AUDIO_StopDMA ();
-		DCFlushRange (soundbuffer[whichab], AUDIOBUFFER);
+		whichab ^= 1;
 		AUDIO_InitDMA ((u32) soundbuffer[whichab], AUDIOBUFFER);
-		AUDIO_StartDMA ();
-
 		LWP_ThreadSignal (audioqueue);
 	}
 }
@@ -88,7 +85,7 @@ GCMixSamples ()
 static void FinalizeSamplesCallback (void *data)
 { 
 	LWP_MutexLock(audiomutex);
-	S9xFinalizeSamples(); 
+	S9xFinalizeSamples();
 	LWP_MutexUnlock(audiomutex);
 }
 
@@ -124,6 +121,13 @@ SwitchAudioMode(int mode)
 		AUDIO_StopDMA();
 		AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
 		AUDIO_RegisterDMACallback(GCMixSamples);
+		
+		memset(soundbuffer[0],0,AUDIOBUFFER);
+		memset(soundbuffer[1],0,AUDIOBUFFER);
+		DCFlushRange(soundbuffer[0],AUDIOBUFFER);
+		DCFlushRange(soundbuffer[1],AUDIOBUFFER);
+		AUDIO_InitDMA((u32)soundbuffer[whichab],AUDIOBUFFER);
+		AUDIO_StartDMA();
 		#endif
 		S9xSetSamplesAvailableCallback(FinalizeSamplesCallback, NULL);
 	}
@@ -134,7 +138,7 @@ SwitchAudioMode(int mode)
 		ASND_Init();
 		ASND_Pause(0);
 		#else
-		AUDIO_StopDMA();
+		//AUDIO_StopDMA();
 		#endif
 	}
 }
