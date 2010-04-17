@@ -367,7 +367,6 @@ void GuiText::Draw()
 					}
 
 					wcsncpy(textDyn[0], &text[textScrollPos], maxChar-1);
-					textDyn[maxChar-1] = 0;
 
 					u32 dynlen = wcslen(textDyn[0]);
 
