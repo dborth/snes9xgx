@@ -266,6 +266,9 @@ SetupPads()
  ***************************************************************************/
 void ShutoffRumble()
 {
+	if(CONF_GetPadMotorMode() == 0)
+		return;
+
 	for(int i=0;i<4;i++)
 	{
 		WPAD_Rumble(i, 0);
@@ -279,7 +282,8 @@ void ShutoffRumble()
  ***************************************************************************/
 void DoRumble(int i)
 {
-	if(!GCSettings.Rumble) return;
+	if(CONF_GetPadMotorMode() == 0 || !GCSettings.Rumble) return;
+
 	if(rumbleRequest[i] && rumbleCount[i] < 3)
 	{
 		WPAD_Rumble(i, 1); // rumble on

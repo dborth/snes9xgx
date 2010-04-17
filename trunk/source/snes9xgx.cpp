@@ -145,11 +145,13 @@ void ExitApp()
 #ifdef HW_RVL
 void ShutdownCB()
 {
-	ShutdownRequested = 1;
+	if(!inNetworkInit)
+		ShutdownRequested = 1;
 }
 void ResetCB()
 {
-	ResetRequested = 1;
+	if(!inNetworkInit)
+		ResetRequested = 1;
 }
 #endif
 
