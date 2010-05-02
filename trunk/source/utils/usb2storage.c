@@ -27,6 +27,8 @@
  * 
  ***************************************************************************/
 
+#ifdef HW_RVL
+
 #include <gccore.h>
 
 #include <ogc/lwp_heap.h>
@@ -387,3 +389,4 @@ const DISC_INTERFACE __io_usb2storage = {
 	(FN_MEDIUM_CLEARSTATUS) & __usb2storage_ClearStatus,
 	(FN_MEDIUM_SHUTDOWN) & __usb2storage_Shutdown
 };
+#endif
