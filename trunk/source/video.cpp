@@ -763,10 +763,9 @@ update_video (int width, int height)
 			yscale = (vheight > (vmode->efbHeight/2)) ? (vheight / 2) : vheight;
 		}
 
-		// aspect ratio scaling (change width scale)
-		// yes its pretty cheap and ugly, but its easy!
+		// match the original console's width for "widescreen" to prevent flickering
 		if (GCSettings.widescreen)
-			xscale = (3*xscale)/4;
+			xscale = 256;
 
 		xscale *= GCSettings.zoomHor;
 		yscale *= GCSettings.zoomVert;

@@ -38,6 +38,13 @@ void InitFreeType(uint8_t* fontBuffer, FT_Long bufferSize)
 		fontSystem[i] = NULL;
 }
 
+void DeinitFreeType()
+{
+	ClearFontData();
+	FT_Done_FreeType(ftLibrary);
+	ftLibrary = NULL;
+}
+
 void ChangeFontSize(FT_UInt pixelSize)
 {
 	FT_Set_Pixel_Sizes(ftFace, 0, pixelSize);
@@ -544,10 +551,10 @@ uint16_t FreeTypeGX::getWidth(wchar_t *text)
 
 	std::map<wchar_t, ftgxCharData>::iterator thisEnd =this->fontData.end();
 
-	for (uint32_t i = 0; i < strLength; ++i){
-	
+	for (uint32_t i = 0; i < strLength; ++i)
+	{
 		ftgxCharData* glyphData = NULL;
-		if( this->fontData.find(text[i]) !=  thisEnd)
+		if(this->fontData.find(text[i]) != thisEnd)
 		{
 			glyphData = &this->fontData[text[i]];
 		}
@@ -560,7 +567,7 @@ uint16_t FreeTypeGX::getWidth(wchar_t *text)
 		{
 			if(this->ftKerningEnabled && (i > 0))
 			{
-				FT_Get_Kerning( ftFace, this->fontData[text[i - 1]].glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta );
+				FT_Get_Kerning(ftFace, this->fontData[text[i - 1]].glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
 				strWidth += pairDelta.x >> 6;
 			}
 			strWidth += glyphData->glyphAdvanceX;

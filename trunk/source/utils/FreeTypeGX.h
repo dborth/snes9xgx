@@ -155,12 +155,13 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_BITMAP_H
-#include "Metaphrasis.h"
 
 #include <malloc.h>
 #include <string.h>
 #include <wchar.h>
 #include <map>
+
+#include "Metaphrasis.h"
 
 #define MAX_FONT_SIZE 100
 
@@ -236,6 +237,7 @@ typedef struct ftgxDataOffset_ ftgxDataOffset;
 const GXColor ftgxWhite = (GXColor){0xff, 0xff, 0xff, 0xff}; /**< Constant color value used only to sanitize Doxygen documentation. */
 
 void InitFreeType(uint8_t* fontBuffer, FT_Long bufferSize);
+void DeinitFreeType();
 void ChangeFontSize(FT_UInt pixelSize);
 wchar_t* charToWideChar(const char* p);
 void ClearFontData();
