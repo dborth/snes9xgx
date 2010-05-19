@@ -10,7 +10,7 @@
 ­————————————————————————————————————————————————————————————————————————————
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                      Snes9x GX 4.1.8                          ·oø×O0|
+|0O×øo·                      Snes9x GX 4.1.9                          ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
@@ -42,6 +42,15 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.1.9 - May 19, 2010]
+
+* DVD support fixed
+* Fixed some cheats issues
+* Fixed some potential hangs when returning to menu
+* Video/audio code changes
+* Fixed scrolling text bug
+* Other minor changes
 
 [4.1.8 - April 9, 2010]
 
