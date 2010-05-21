@@ -369,13 +369,6 @@ static bool __usb2storage_Shutdown(void)
 	if (currentMode == 1)
 		return __io_usb1storage.shutdown();
 
-	if(usb2_mutex == LWP_MUTEX_NULL)
-		return false;
-
-	LWP_MutexLock(usb2_mutex);
-	USB2Storage_Close();
-	debug_printf("__usb2storage_Shutdown\n");
-	LWP_MutexUnlock(usb2_mutex);
 	return true;
 }
 
@@ -389,4 +382,5 @@ const DISC_INTERFACE __io_usb2storage = {
 	(FN_MEDIUM_CLEARSTATUS) & __usb2storage_ClearStatus,
 	(FN_MEDIUM_SHUTDOWN) & __usb2storage_Shutdown
 };
+
 #endif
