@@ -121,14 +121,14 @@ SwitchAudioMode(int mode)
 		AUDIO_StopDMA();
 		AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
 		AUDIO_RegisterDMACallback(GCMixSamples);
-		
+		#endif
 		memset(soundbuffer[0],0,AUDIOBUFFER);
 		memset(soundbuffer[1],0,AUDIOBUFFER);
 		DCFlushRange(soundbuffer[0],AUDIOBUFFER);
 		DCFlushRange(soundbuffer[1],AUDIOBUFFER);
 		AUDIO_InitDMA((u32)soundbuffer[whichab],AUDIOBUFFER);
 		AUDIO_StartDMA();
-		#endif
+
 		S9xSetSamplesAvailableCallback(FinalizeSamplesCallback, NULL);
 	}
 	else // menu
@@ -138,7 +138,7 @@ SwitchAudioMode(int mode)
 		ASND_Init();
 		ASND_Pause(0);
 		#else
-		//AUDIO_StopDMA();
+		AUDIO_StopDMA();
 		#endif
 	}
 }
