@@ -721,8 +721,8 @@ update_video (int width, int height)
 {
 	vwidth = width;
 	vheight = height;
-	
-	if(IPPU.RenderedFramesCount == prevRenderedFrameCount)
+
+	if(CheckVideo == 2 && IPPU.RenderedFramesCount == prevRenderedFrameCount)
 		return; // we haven't rendered any frames yet, so we can't draw anything!
 
 	// Ensure previous vb has complete
