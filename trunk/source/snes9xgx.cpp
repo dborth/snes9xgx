@@ -211,7 +211,6 @@ void setFrameTimerMethod()
  ***************************************************************************/
 extern void S9xInitSync();
 extern uint32 prevRenderedFrameCount;
-static int videoReset;
 static int currentMode;
 
 void
@@ -252,10 +251,8 @@ emulate ()
 		FrameTimer = 0;
 		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
 
-		CheckVideo = 1;	// force video update
+		CheckVideo = 2;	// force video update
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;
-
-		videoReset = -1;
 		currentMode = GCSettings.render;
 
 		while(1) // emulation loop
