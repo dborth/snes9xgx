@@ -760,7 +760,7 @@ update_video (int width, int height)
 		else // unfiltered and filtered mode
 		{
 			xscale = 320;
-			yscale = (vheight > (vmode->efbHeight/2)) ? (vheight / 2) : vheight;
+			yscale = vmode->efbHeight/2;
 		}
 
 		// match the original console's width for "widescreen" to prevent flickering
