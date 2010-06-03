@@ -13,14 +13,14 @@
 /**
  * Constructor for the GuiImageData class.
  */
-GuiImageData::GuiImageData(const u8 * i)
+GuiImageData::GuiImageData(const u8 * i, int maxw, int maxh)
 {
 	data = NULL;
 	width = 0;
 	height = 0;
 
 	if(i)
-		data = DecodePNG(i, &width, &height);
+		data = DecodePNG(i, &width, &height, maxw, maxh);
 }
 
 /**

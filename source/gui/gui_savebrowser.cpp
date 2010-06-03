@@ -327,8 +327,6 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			saveType[1]->SetText("Snapshot");
 			savePreviewImg[0]->SetImage(gameSaveBlank);
 			savePreviewImg[1]->SetImage(gameSaveBlank);
-			savePreviewImg[0]->SetScale(1);
-			savePreviewImg[1]->SetScale(1);
 			saveBtn[0]->SetVisible(true);
 			saveBtn[1]->SetVisible(true);
 
@@ -367,16 +365,9 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			saveType[i]->SetText(savetext);
 
 			if(saves->previewImg[listOffset+i] != NULL)
-			{
 				savePreviewImg[i]->SetImage(saves->previewImg[listOffset+i]);
-				savePreviewImg[i]->SetScale(0.1);
-
-			}
 			else
-			{
 				savePreviewImg[i]->SetImage(gameSaveBlank);
-				savePreviewImg[i]->SetScale(1);
-			}
 		}
 		else
 		{

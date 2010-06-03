@@ -1444,6 +1444,7 @@ static int MenuGame()
 				{
 					free(gameScreenTex);
 					gameScreenTex = NULL;
+					gameScreenPngSize = 0;
 				}
 				bgImg->SetVisible(true);
 				#ifndef NO_SOUND
@@ -1645,7 +1646,7 @@ static int MenuGameSaves(int action)
 
 				memset(savebuffer, 0, SAVEBUFFERSIZE);
 				if(LoadFile(scrfile, SILENT))
-					saves.previewImg[j] = new GuiImageData(savebuffer);
+					saves.previewImg[j] = new GuiImageData(savebuffer, 64, 48);
 			}
 			snprintf(filepath, 1024, "%s%s/%s", pathPrefix[GCSettings.SaveMethod], GCSettings.SaveFolder, saves.filename[j]);
 			if (stat(filepath, &filestat) == 0)
@@ -3769,6 +3770,15 @@ MainMenu (int menu)
 
 	if(gameScreenTex)
 	{
+		IMGCTX pngContext = PNGU_SelectImageFromBuffer(gameScreenPng);
+
+		if (pngContext != NULL)
+		{
+			gameScreenPngSize = PNGU_EncodeFromGXTexture(pngContext, vmode->fbWidth, vmode->efbHeight, gameScreenTex, 0);
+			PNGU_ReleaseImageContext(pngContext);
+			DCFlushRange(gameScreenPng, 50*1024);
+		}
+
 		gameScreenImg = new GuiImage(gameScreenTex, vmode->fbWidth, vmode->efbHeight);
 		gameScreenImg->SetAlpha(192);
 		gameScreenImg->ColorStripe(30);
@@ -3915,11 +3925,7 @@ MainMenu (int menu)
 	{
 		free(gameScreenTex);
 		gameScreenTex = NULL;
-	}
-	if(gameScreenTex2)
-	{
-		free(gameScreenTex2);
-		gameScreenTex2 = NULL;
+		gameScreenPngSize = 0;
 	}
 
 	// wait for keys to be depressed
