@@ -538,7 +538,9 @@ class GuiImageData
 		//!Constructor
 		//!Converts the image data to RGBA8 - expects PNG format
 		//!\param i Image data
-		GuiImageData(const u8 * i);
+		//!\param w Max image width (0 = not set)
+		//!\param h Max image height (0 = not set)
+		GuiImageData(const u8 * i, int w=0, int h=0);
 		//!Destructor
 		~GuiImageData();
 		//!Gets a pointer to the image data

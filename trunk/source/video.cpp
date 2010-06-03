@@ -61,7 +61,8 @@ static Mtx GXmodelView2D;
 static int vwidth, vheight, oldvwidth, oldvheight;
 
 u8 * gameScreenTex = NULL; // a GX texture screen capture of the game
-u8 * gameScreenTex2 = NULL; // a GX texture screen capture of the game (copy)
+u8 * gameScreenPng = NULL;
+int gameScreenPngSize = 0;
 
 u32 FrameTimer = 0;
 
@@ -890,15 +891,6 @@ void TakeScreenshot()
 	GX_CopyTex(gameScreenTex, GX_FALSE);
 	GX_PixModeSync();
 	DCFlushRange(gameScreenTex, texSize);
-
-	#ifdef HW_RVL
-	if(gameScreenTex2) free(gameScreenTex2);
-	gameScreenTex2 = (u8 *)memalign(32, texSize);
-	if(gameScreenTex2 == NULL) return;
-	GX_CopyTex(gameScreenTex2, GX_FALSE);
-	GX_PixModeSync();
-	DCFlushRange(gameScreenTex2, texSize);
-	#endif
 }
 
 /****************************************************************************

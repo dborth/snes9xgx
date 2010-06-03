@@ -43,35 +43,19 @@ void S9xCloseSnapshotFile(STREAM s)
 int
 SaveSnapshot (char * filepath, bool silent)
 {
-	int imgSize = 0; // image screenshot bytes written
 	int device;
-				
+
 	if(!FindDevice(filepath, &device))
 		return 0;
 
-	// save screenshot - I would prefer to do this from gameScreenTex
-	if(gameScreenTex2 != NULL)
+	// save screenshot
+	if(gameScreenPngSize > 0)
 	{
-		AllocSaveBuffer ();
-
-		IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
-
-		if (pngContext != NULL)
-		{
-			imgSize = PNGU_EncodeFromGXTexture(pngContext, vmode->fbWidth, vmode->efbHeight, gameScreenTex2, 0);
-			PNGU_ReleaseImageContext(pngContext);
-		}
-
-		if(imgSize > 0)
-		{
-			char screenpath[1024];
-			strncpy(screenpath, filepath, 1024);
-			screenpath[strlen(screenpath)-4] = 0;
-			sprintf(screenpath, "%s.png", screenpath);
-			SaveFile(screenpath, imgSize, silent);
-		}
-
-		FreeSaveBuffer ();
+		char screenpath[1024];
+		strncpy(screenpath, filepath, 1024);
+		screenpath[strlen(screenpath)-4] = 0;
+		sprintf(screenpath, "%s.png", screenpath);
+		SaveFile((char *)gameScreenPng, screenpath, gameScreenPngSize, silent);
 	}
 
 	STREAM fp = OPEN_STREAM(filepath, "wb");
