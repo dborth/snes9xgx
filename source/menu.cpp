@@ -3382,11 +3382,15 @@ static int MenuSettingsFile()
 		{
 			firstRun = false;
 
-			// some load/save devices are not implemented - here's where we skip them
-			// they need to be skipped in the order they were enumerated in snes9xgx.h
+			// some load/save methods are not implemented - here's where we skip them
+			// they need to be skipped in the order they were enumerated
 
-			// no USB ports on GameCube
+			// no SD/USB ports on GameCube
 			#ifdef HW_DOL
+			if(GCSettings.LoadMethod == DEVICE_SD)
+				GCSettings.LoadMethod++;
+			if(GCSettings.SaveMethod == DEVICE_SD)
+				GCSettings.SaveMethod++;
 			if(GCSettings.LoadMethod == DEVICE_USB)
 				GCSettings.LoadMethod++;
 			if(GCSettings.SaveMethod == DEVICE_USB)
@@ -3405,10 +3409,22 @@ static int MenuSettingsFile()
 				GCSettings.SaveMethod++;
 			#endif
 
-			// correct load/save devices out of bounds
-			if(GCSettings.LoadMethod > 4)
+			// don't allow SD Gecko on Wii
+			#ifdef HW_RVL
+			if(GCSettings.LoadMethod == DEVICE_SD_SLOTA)
+				GCSettings.LoadMethod++;
+			if(GCSettings.SaveMethod == DEVICE_SD_SLOTA)
+				GCSettings.SaveMethod++;
+			if(GCSettings.LoadMethod == DEVICE_SD_SLOTB)
+				GCSettings.LoadMethod++;
+			if(GCSettings.SaveMethod == DEVICE_SD_SLOTB)
+				GCSettings.SaveMethod++;
+			#endif
+
+			// correct load/save methods out of bounds
+			if(GCSettings.LoadMethod > 6)
 				GCSettings.LoadMethod = 0;
-			if(GCSettings.SaveMethod > 4)
+			if(GCSettings.SaveMethod > 6)
 				GCSettings.SaveMethod = 0;
 
 			if (GCSettings.LoadMethod == DEVICE_AUTO) sprintf (options.value[0],"Auto Detect");
@@ -3416,11 +3432,15 @@ static int MenuSettingsFile()
 			else if (GCSettings.LoadMethod == DEVICE_USB) sprintf (options.value[0],"USB");
 			else if (GCSettings.LoadMethod == DEVICE_DVD) sprintf (options.value[0],"DVD");
 			else if (GCSettings.LoadMethod == DEVICE_SMB) sprintf (options.value[0],"Network");
+			else if (GCSettings.LoadMethod == DEVICE_SD_SLOTA) sprintf (options.value[0],"SD Gecko Slot A");
+			else if (GCSettings.LoadMethod == DEVICE_SD_SLOTB) sprintf (options.value[0],"SD Gecko Slot B");
 
 			if (GCSettings.SaveMethod == DEVICE_AUTO) sprintf (options.value[1],"Auto Detect");
 			else if (GCSettings.SaveMethod == DEVICE_SD) sprintf (options.value[1],"SD");
 			else if (GCSettings.SaveMethod == DEVICE_USB) sprintf (options.value[1],"USB");
 			else if (GCSettings.SaveMethod == DEVICE_SMB) sprintf (options.value[1],"Network");
+			else if (GCSettings.SaveMethod == DEVICE_SD_SLOTA) sprintf (options.value[1],"SD Gecko Slot A");
+			else if (GCSettings.SaveMethod == DEVICE_SD_SLOTB) sprintf (options.value[1],"SD Gecko Slot B");
 
 			snprintf (options.value[2], 35, "%s", GCSettings.LoadFolder);
 			snprintf (options.value[3], 35, "%s", GCSettings.SaveFolder);
