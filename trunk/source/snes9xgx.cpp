@@ -388,8 +388,10 @@ main(int argc, char *argv[])
 
 	#ifdef HW_RVL
 	// try to load IOS 202
-	if(IOS_GetVersion() != 202 && FindIOS(202))
+	if(FindIOS(202))
 		IOS_ReloadIOS(202);
+	else if(IOS_GetVersion() < 61 && FindIOS(61))
+		IOS_ReloadIOS(61);
 
 	if(IOS_GetVersion() == 202)
 	{
