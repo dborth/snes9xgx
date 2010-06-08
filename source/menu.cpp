@@ -3796,7 +3796,7 @@ MainMenu (int menu)
 		{
 			gameScreenPngSize = PNGU_EncodeFromGXTexture(pngContext, vmode->fbWidth, vmode->efbHeight, gameScreenTex, 0);
 			PNGU_ReleaseImageContext(pngContext);
-			DCFlushRange(gameScreenPng, 50*1024);
+			DCFlushRange(gameScreenPng, 512*1024);
 		}
 
 		gameScreenImg = new GuiImage(gameScreenTex, vmode->fbWidth, vmode->efbHeight);

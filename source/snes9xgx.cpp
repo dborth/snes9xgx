@@ -458,7 +458,7 @@ main(int argc, char *argv[])
 	// Initialize font system
 	InitFreeType((u8*)font_ttf, font_ttf_size);
 	
-	gameScreenPng = (u8 *)malloc(50*1024);
+	gameScreenPng = (u8 *)malloc(512*1024);
 
 	InitGUIThreads();
 
