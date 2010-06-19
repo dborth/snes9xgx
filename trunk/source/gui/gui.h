@@ -480,6 +480,10 @@ class GuiWindow : public GuiElement
 		void Remove(GuiElement* e);
 		//!Removes all GuiElements
 		void RemoveAll();
+		//!Looks for the specified GuiElement
+		//!\param e The GuiElement to find
+		//!\return true if found, false otherwise
+		bool Find(GuiElement* e);
 		//!Returns the GuiElement at the specified index
 		//!\param index The index of the element
 		//!\return A pointer to the element at the index, NULL on error (eg: out of bounds)

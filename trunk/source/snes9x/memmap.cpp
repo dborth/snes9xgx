@@ -205,7 +205,7 @@
 
 #ifdef GEKKO
 extern int WiiFileLoader();
-extern void WiiLoadPatch();
+extern void WiiLoadPatch(bool header);
 extern void WiiSetupCheats();
 #endif
 
@@ -1542,9 +1542,9 @@ again:
 
 	if (!Settings.NoPatch)
 #ifdef GEKKO
-		WiiLoadPatch();
+		WiiLoadPatch(HeaderCount != 0);
 #else
-		CheckForIPSPatch(filename, HeaderCount != 0, totalFileSize);
+		CheckForAnyPatch(filename, HeaderCount != 0, totalFileSize);
 #endif
 
 	int	hi_score, lo_score;

@@ -69,6 +69,18 @@ void GuiWindow::RemoveAll()
 	_elements.clear();
 }
 
+bool GuiWindow::Find(GuiElement* e)
+{
+	if (e == NULL)
+		return false;
+
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; ++i)
+		if(e == _elements.at(i))
+			return true;
+	return false;
+}
+
 GuiElement* GuiWindow::GetGuiElementAt(u32 index) const
 {
 	if (index >= _elements.size())
@@ -104,7 +116,8 @@ void GuiWindow::DrawTooltip()
 	if(_elements.size() == 0 || !this->IsVisible())
 		return;
 
-	for (u8 i = 0; i < _elements.size(); i++)
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; i++)
 	{
 		try	{ _elements.at(i)->DrawTooltip(); }
 		catch (const std::exception& e) { }
@@ -398,7 +411,8 @@ void GuiWindow::MoveSelectionVert(int dir)
 
 void GuiWindow::ResetText()
 {
-	for (u8 i = 0; i < _elements.size(); i++)
+	u32 elemSize = _elements.size();
+	for (u32 i = 0; i < elemSize; i++)
 	{
 		try { _elements.at(i)->ResetText(); }
 		catch (const std::exception& e) { }
