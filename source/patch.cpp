@@ -61,21 +61,6 @@ static s64 readInt4(MFILE *f) {
 	return res;
 }
 
-static s64 readInt8(MFILE *f) {
-	s64 tmp, res = 0;
-	int c;
-
-	for (int i = 0; i < 8; i++) {
-		c = memfgetc(f);
-		if (c == MEOF)
-			return -1;
-		tmp = c;
-		res = res + (tmp << (i * 8));
-	}
-
-	return res;
-}
-
 static s64 readVarPtr(MFILE *f) {
 	s64 offset = 0, shift = 1;
 	for (;;) {
@@ -109,7 +94,7 @@ static uLong computePatchCRC(MFILE *f, unsigned int size) {
 	return crc;
 }
 
-bool patchApplyIPS(MFILE * f, u8 **r, int *s) {
+bool patchApplyIPS(MFILE * f, bool header, u8 **r, int *s) {
 	// from the IPS spec at http://zerosoft.zophar.net/ips.htm
 
 	bool result = false;
@@ -130,6 +115,10 @@ bool patchApplyIPS(MFILE * f, u8 **r, int *s) {
 			// if offset == MEOF, end of patch
 			if (offset == 0x454f46 || offset == -1)
 				break;
+
+			if(header)
+				offset -= 512;
+
 			// read length
 			len = readInt2(f);
 			if (!len) {
@@ -168,7 +157,7 @@ bool patchApplyIPS(MFILE * f, u8 **r, int *s) {
 	return result;
 }
 
-bool patchApplyUPS(MFILE * f, u8 **rom, int *size) {
+bool patchApplyUPS(MFILE * f, bool header, u8 **rom, int *size) {
 
 	s64 srcCRC, dstCRC, patchCRC;
 
@@ -220,6 +209,10 @@ bool patchApplyUPS(MFILE * f, u8 **rom, int *size) {
 	}
 
 	s64 relative = 0;
+
+	if(header)
+		relative -= 512;
+
 	u8 *mem;
 	while (memftell(f) < patchSize - 12) {
 		relative += readVarPtr(f);
@@ -239,187 +232,19 @@ bool patchApplyUPS(MFILE * f, u8 **rom, int *size) {
 	return true;
 }
 
-static int ppfVersion(MFILE *f) {
-	memfseek(f, 0, MSEEK_SET);
-	if (memfgetc(f) != 'P' || memfgetc(f) != 'P' || memfgetc(f) != 'F')
-		return 0;
-	switch (memfgetc(f)) {
-	case '1':
-		return 1;
-	case '2':
-		return 2;
-	case '3':
-		return 3;
-	default:
-		return 0;
-	}
-}
-
-int ppfFileIdLen(MFILE *f, int version) {
-	if (version == 2) {
-		memfseek(f, -8, MSEEK_END);
-	} else {
-		memfseek(f, -6, MSEEK_END);
-	}
-
-	if (memfgetc(f) != '.' || memfgetc(f) != 'D' || memfgetc(f) != 'I'
-			|| memfgetc(f) != 'Z')
-		return 0;
-
-	return (version == 2) ? readInt4(f) : readInt2(f);
-}
-
-static bool patchApplyPPF1(MFILE *f, u8 **rom, int *size) {
-	memfseek(f, 0, MSEEK_END);
-	int count = memftell(f);
-	if (count < 56)
-		return false;
-	count -= 56;
-
-	memfseek(f, 56, MSEEK_SET);
-
-	u8 *mem = *rom;
-
-	while (count > 0) {
-		int offset = readInt4(f);
-		if (offset == -1)
-			break;
-		int len = memfgetc(f);
-		if (len == MEOF)
-			break;
-		if (offset + len > *size)
-			break;
-		if (memfread(&mem[offset], 1, len, f) != (size_t) len)
-			break;
-		count -= 4 + 1 + len;
-	}
-
-	return (count == 0);
-}
-
-static bool patchApplyPPF2(MFILE *f, u8 **rom, int *size) {
-	memfseek(f, 0, MSEEK_END);
-	int count = memftell(f);
-	if (count < 56 + 4 + 1024)
-		return false;
-	count -= 56 + 4 + 1024;
-
-	memfseek(f, 56, MSEEK_SET);
-
-	int datalen = readInt4(f);
-	if (datalen != *size)
-		return false;
-
-	u8 *mem = *rom;
-
-	u8 block[1024];
-	memfread(&block, 1, 1024, f);
-	if (memcmp(&mem[0x9320], &block, 1024) != 0)
-		return false;
-
-	int idlen = ppfFileIdLen(f, 2);
-	if (idlen > 0)
-		count -= 16 + 16 + idlen;
-
-	memfseek(f, 56 + 4 + 1024, MSEEK_SET);
-
-	while (count > 0) {
-		int offset = readInt4(f);
-		if (offset == -1)
-			break;
-		int len = memfgetc(f);
-		if (len == MEOF)
-			break;
-		if (offset + len > *size)
-			break;
-		if (memfread(&mem[offset], 1, len, f) != (size_t) len)
-			break;
-		count -= 4 + 1 + len;
-	}
-
-	return (count == 0);
-}
-
-static bool patchApplyPPF3(MFILE *f, u8 **rom, int *size) {
-	memfseek(f, 0, MSEEK_END);
-	int count = memftell(f);
-	if (count < 56 + 4 + 1024)
-		return false;
-	count -= 56 + 4;
-
-	memfseek(f, 56, MSEEK_SET);
-
-	int imagetype = memfgetc(f);
-	int blockcheck = memfgetc(f);
-	int undo = memfgetc(f);
-	memfgetc(f);
-
-	u8 *mem = *rom;
-
-	if (blockcheck) {
-		u8 block[1024];
-		memfread(&block, 1, 1024, f);
-		if (memcmp(&mem[(imagetype == 0) ? 0x9320 : 0x80A0], &block, 1024) != 0)
-			return false;
-		count -= 1024;
-	}
-
-	int idlen = ppfFileIdLen(f, 2);
-	if (idlen > 0)
-		count -= 16 + 16 + idlen;
-
-	memfseek(f, 56 + 4 + (blockcheck ? 1024 : 0), MSEEK_SET);
-
-	while (count > 0) {
-		s64 offset = readInt8(f);
-		if (offset == -1)
-			break;
-		int len = memfgetc(f);
-		if (len == MEOF)
-			break;
-		if (offset + len > *size)
-			break;
-		if (memfread(&mem[offset], 1, len, f) != (size_t) len)
-			break;
-		if (undo)
-			memfseek(f, len, MSEEK_CUR);
-		count -= 8 + 1 + len;
-		if (undo)
-			count -= len;
-	}
-
-	return (count == 0);
-}
-
-bool patchApplyPPF(MFILE *f, u8 **rom, int *size)
-{
-	bool res = false;
-
-	int version = ppfVersion(f);
-	switch (version)
-	{
-		case 1: res = patchApplyPPF1(f, rom, size); break;
-		case 2: res = patchApplyPPF2(f, rom, size); break;
-		case 3: res = patchApplyPPF3(f, rom, size); break;
-	}
-
-	return res;
-}
-
-void WiiLoadPatch()
+void WiiLoadPatch(bool header)
 {
 	int patchsize = 0;
 	int patchtype;
-	char patchpath[3][512];
+	char patchpath[2][512];
 
 	AllocSaveBuffer ();
 
 	memset(patchpath, 0, sizeof(patchpath));
 	sprintf(patchpath[0], "%s%s.ips", browser.dir, Memory.ROMFilename);
 	sprintf(patchpath[1], "%s%s.ups", browser.dir, Memory.ROMFilename);
-	sprintf(patchpath[2], "%s%s.ppf", browser.dir, Memory.ROMFilename);
 
-	for(patchtype=0; patchtype<3; patchtype++)
+	for(patchtype=0; patchtype<2; patchtype++)
 	{
 		patchsize = LoadFile(patchpath[patchtype], SILENT);
 
@@ -435,11 +260,9 @@ void WiiLoadPatch()
 		int tmpSize = SNESROMSize;
 
 		if(patchtype == 0)
-			patchApplyIPS(mf, &Memory.ROM, &tmpSize);
-		else if(patchtype == 1)
-			patchApplyUPS(mf, &Memory.ROM, &tmpSize);
+			patchApplyIPS(mf, header, &Memory.ROM, &tmpSize);
 		else
-			patchApplyPPF(mf, &Memory.ROM, &tmpSize);
+			patchApplyUPS(mf, header, &Memory.ROM, &tmpSize);
 
 		SNESROMSize = tmpSize;
 

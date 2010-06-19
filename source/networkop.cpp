@@ -247,6 +247,9 @@ ConnectShare (bool silent)
 	return false;
 	#endif
 
+	if(networkShareInit)
+		return true;
+
 	int retry = 1;
 	int chkS = (strlen(GCSettings.smbshare) > 0) ? 0:1;
 	int chkI = (strlen(GCSettings.smbip) > 0) ? 0:1;
