@@ -536,12 +536,6 @@ static void SetupVideoMode(GXRModeObj * mode)
 	VIDEO_Configure (mode);
 	VIDEO_Flush();
 
-	// Allocate the video buffers
-	if(xfb[0]) free(MEM_K1_TO_K0(xfb[0]));
-	if(xfb[1]) free(MEM_K1_TO_K0(xfb[1]));
-	xfb[0] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (mode));
-	xfb[1] = (u32 *) MEM_K0_TO_K1 (SYS_AllocateFramebuffer (mode));
-
 	// Clear framebuffers etc.
 	VIDEO_ClearFrameBuffer (mode, xfb[0], COLOR_BLACK);
 	VIDEO_ClearFrameBuffer (mode, xfb[1], COLOR_BLACK);
@@ -572,6 +566,11 @@ void
 InitGCVideo ()
 {
 	VIDEO_Init();
+
+	// Allocate the video buffers
+	xfb[0] = (u32 *) MEM_K0_TO_K1 (memalign(32, 640*574*2));
+	xfb[1] = (u32 *) MEM_K0_TO_K1 (memalign(32, 640*574*2));
+
 	GXRModeObj *rmode = FindVideoMode();
 	SetupVideoMode(rmode);
 	InitLUTs();	// init LUTs for hq2x
