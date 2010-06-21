@@ -408,6 +408,7 @@ main(int argc, char *argv[])
 	InitGCVideo(); // Initialise video
 	ResetVideo_Menu (); // change to menu video mode
 	SetupPads();
+	MountAllFAT(); // Initialize libFAT for SD and USB
 
 	// Initialize DVD subsystem (GameCube only)
 	#ifdef HW_DOL
@@ -424,9 +425,6 @@ main(int argc, char *argv[])
 	if(argc > 0 && argv[0] != NULL)
 		CreateAppPath(argv[0]);
 	#endif
-
-	// Initialize libFAT for SD and USB
-	MountAllFAT();
 
 	// Set defaults
 	DefaultSettings ();
