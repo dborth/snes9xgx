@@ -10,7 +10,7 @@
 ­————————————————————————————————————————————————————————————————————————————
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                      Snes9x GX 4.1.9                          ·oø×O0|
+|0O×øo·                      Snes9x GX 4.2.0                          ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
@@ -42,6 +42,15 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.2.0 - June 20, 2010]
+
+* Fixed incorrect aspect ratio issue
+* Fixed choppy framerate issue
+* Fixed IPS/UPS patching
+* USB improvements
+* GameCube improvements - audio, SD Gecko, show thumbnails for saves
+* Other minor changes
 
 [4.1.9 - May 19, 2010]
 
