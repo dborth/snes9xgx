@@ -88,15 +88,54 @@ wchar_t* charToWideChar(const char* strChar)
 	return strWChar;
 }
 
+static uint32_t* convertBufferToRGBA8(uint32_t* rgbaBuffer, uint16_t bufferWidth, uint16_t bufferHeight) {
+	uint32_t bufferSize = (bufferWidth * bufferHeight) << 2;
+	uint32_t* dataBufferRGBA8 = (uint32_t *)memalign(32, bufferSize);
+	memset(dataBufferRGBA8, 0x00, bufferSize);
+
+	uint8_t *src = (uint8_t *)rgbaBuffer;
+	uint8_t *dst = (uint8_t *)dataBufferRGBA8;
+
+	for(uint32_t block = 0; block < bufferHeight; block += 4) {
+		for(uint32_t i = 0; i < bufferWidth; i += 4) {
+			for (uint32_t c = 0; c < 4; c++) {
+				uint32_t blockWid = (((block + c) * bufferWidth)+i)<<2 ;
+
+				*dst++ = src[blockWid+ 3];  // ar = 0
+				*dst++ = src[blockWid+ 0];
+				*dst++ = src[blockWid+ 7];  // ar = 1
+				*dst++ = src[blockWid+ 4];
+				*dst++ = src[blockWid+ 11]; // ar = 2
+				*dst++ = src[blockWid+ 8];
+				*dst++ = src[blockWid+ 15]; // ar = 3
+				*dst++ = src[blockWid+ 12];
+			}
+			for (uint32_t c = 0; c < 4; c++) {
+				uint32_t blockWid = (((block + c) * bufferWidth)+i)<<2 ;
+
+				*dst++ = src[blockWid+ 1];  // gb = 0
+				*dst++ = src[blockWid+ 2];
+				*dst++ = src[blockWid+ 5];  // gb = 1
+				*dst++ = src[blockWid+ 6];
+				*dst++ = src[blockWid+ 9];  // gb = 2
+				*dst++ = src[blockWid+ 10];
+				*dst++ = src[blockWid+ 13]; // gb = 3
+				*dst++ = src[blockWid+ 14];
+			}
+		}
+	}
+	DCFlushRange(dataBufferRGBA8, bufferSize);
+
+	return dataBufferRGBA8;
+}
+
 /**
  * Default constructor for the FreeTypeGX class.
  *
- * @param textureFormat	Optional format (GX_TF_*) of the texture as defined by the libogc gx.h header file. If not specified default value is GX_TF_RGBA8.
  * @param vertexIndex	Optional vertex format index (GX_VTXFMT*) of the glyph textures as defined by the libogc gx.h header file. If not specified default value is GX_VTXFMT1.
  */
-FreeTypeGX::FreeTypeGX(FT_UInt pixelSize, uint8_t textureFormat, uint8_t vertexIndex)
+FreeTypeGX::FreeTypeGX(FT_UInt pixelSize, uint8_t vertexIndex)
 {
-	this->textureFormat = textureFormat;
 	this->setVertexFormat(vertexIndex);
 	this->setCompatibilityMode(FTGX_COMPATIBILITY_DEFAULT_TEVOP_GX_PASSCLR | FTGX_COMPATIBILITY_DEFAULT_VTXDESC_GX_NONE);
 	this->ftPointSize = pixelSize;
@@ -208,67 +247,15 @@ void FreeTypeGX::unloadFont()
 	this->fontData.clear();
 }
 
-/**
- * Adjusts the texture data buffer to necessary width for a given texture format.
- *
- * This routine determines adjusts the given texture width into the required width to hold the necessary texture data for proper alignment.
- *
- * @param textureWidth	The initial guess for the texture width.
- * @param textureFormat	The texture format to which the data is to be converted.
- * @return The correctly adjusted texture width.
- */
-uint16_t FreeTypeGX::adjustTextureWidth(uint16_t textureWidth, uint8_t textureFormat)
+uint16_t FreeTypeGX::adjustTextureWidth(uint16_t textureWidth)
 {
-	uint16_t alignment;
-
-	switch(textureFormat)
-	{
-		case GX_TF_I4:		/* 8x8 Tiles - 4-bit Intensity */
-		case GX_TF_I8:		/* 8x4 Tiles - 8-bit Intensity */
-		case GX_TF_IA4:		/* 8x4 Tiles - 4-bit Intensity, , 4-bit Alpha */
-			alignment = 8;
-			break;
-
-		case GX_TF_IA8:		/* 4x4 Tiles - 8-bit Intensity, 8-bit Alpha */
-		case GX_TF_RGB565:	/* 4x4 Tiles - RGB565 Format */
-		case GX_TF_RGB5A3:	/* 4x4 Tiles - RGB5A3 Format */
-		case GX_TF_RGBA8:	/* 4x4 Tiles - RGBA8 Dual Cache Line Format */
-		default:
-			alignment = 4;
-			break;
-	}
+	uint16_t alignment = 4;
 	return textureWidth % alignment == 0 ? textureWidth : alignment + textureWidth - (textureWidth % alignment);
 }
 
-/**
- * Adjusts the texture data buffer to necessary height for a given texture format.
- *
- * This routine determines adjusts the given texture height into the required height to hold the necessary texture data for proper alignment.
- *
- * @param textureHeight	The initial guess for the texture height.
- * @param textureFormat	The texture format to which the data is to be converted.
- * @return The correctly adjusted texture height.
- */
-uint16_t FreeTypeGX::adjustTextureHeight(uint16_t textureHeight, uint8_t textureFormat)
+uint16_t FreeTypeGX::adjustTextureHeight(uint16_t textureHeight)
 {
-	uint16_t alignment;
-
-	switch(textureFormat)
-	{
-		case GX_TF_I4:		/* 8x8 Tiles - 4-bit Intensity */
-			alignment = 8;
-			break;
-
-		case GX_TF_I8:		/* 8x4 Tiles - 8-bit Intensity */
-		case GX_TF_IA4:		/* 8x4 Tiles - 4-bit Intensity, , 4-bit Alpha */
-		case GX_TF_IA8:		/* 4x4 Tiles - 8-bit Intensity, 8-bit Alpha */
-		case GX_TF_RGB565:	/* 4x4 Tiles - RGB565 Format */
-		case GX_TF_RGB5A3:	/* 4x4 Tiles - RGB5A3 Format */
-		case GX_TF_RGBA8:	/* 4x4 Tiles - RGBA8 Dual Cache Line Format */
-		default:
-			alignment = 4;
-			break;
-	}
+	uint16_t alignment = 4;
 	return textureHeight % alignment == 0 ? textureHeight : alignment + textureHeight - (textureHeight % alignment);
 }
 
@@ -293,8 +280,8 @@ ftgxCharData *FreeTypeGX::cacheGlyphData(wchar_t charCode)
 		if(ftSlot->format == FT_GLYPH_FORMAT_BITMAP) {
 			FT_Bitmap *glyphBitmap = &ftSlot->bitmap;
 
-			textureWidth = adjustTextureWidth(glyphBitmap->width, this->textureFormat);
-			textureHeight = adjustTextureHeight(glyphBitmap->rows, this->textureFormat);
+			textureWidth = adjustTextureWidth(glyphBitmap->width);
+			textureHeight = adjustTextureHeight(glyphBitmap->rows);
 
 			this->fontData[charCode] = (ftgxCharData){
 				ftSlot->bitmap_left,
@@ -359,32 +346,7 @@ void FreeTypeGX::loadGlyphData(FT_Bitmap *bmp, ftgxCharData *charData)
 			glyphData[imagePosY * charData->textureWidth + imagePosX] = 0x00000000 | (pixel << 24) | (pixel << 16) | (pixel << 8) | pixel;
 		}
 	}
-
-	switch(this->textureFormat)
-	{
-		case GX_TF_I4:
-			charData->glyphDataTexture = Metaphrasis::convertBufferToI4(glyphData, charData->textureWidth, charData->textureHeight);
-			break;
-		case GX_TF_I8:
-			charData->glyphDataTexture = Metaphrasis::convertBufferToI8(glyphData, charData->textureWidth, charData->textureHeight);
-			break;
-		case GX_TF_IA4:
-			charData->glyphDataTexture = Metaphrasis::convertBufferToIA4(glyphData, charData->textureWidth, charData->textureHeight);
-			break;
-		case GX_TF_IA8:
-			charData->glyphDataTexture = Metaphrasis::convertBufferToIA8(glyphData, charData->textureWidth, charData->textureHeight);
-			break;
-		case GX_TF_RGB565:
-			charData->glyphDataTexture = Metaphrasis::convertBufferToRGB565(glyphData, charData->textureWidth, charData->textureHeight);
-			break;
-		case GX_TF_RGB5A3:
-			charData->glyphDataTexture = Metaphrasis::convertBufferToRGB5A3(glyphData, charData->textureWidth, charData->textureHeight);
-			break;
-		case GX_TF_RGBA8:
-		default:
-			charData->glyphDataTexture = Metaphrasis::convertBufferToRGBA8(glyphData, charData->textureWidth, charData->textureHeight);
-			break;
-	}
+	charData->glyphDataTexture = convertBufferToRGBA8(glyphData, charData->textureWidth, charData->textureHeight);
 	free(glyphData);
 }
 
@@ -498,7 +460,7 @@ uint16_t FreeTypeGX::drawText(int16_t x, int16_t y, wchar_t *text, GXColor color
 				x_pos += pairDelta.x >> 6;
 			}
 
-			GX_InitTexObj(&glyphTexture, glyphData->glyphDataTexture, glyphData->textureWidth, glyphData->textureHeight, this->textureFormat, GX_CLAMP, GX_CLAMP, GX_FALSE);
+			GX_InitTexObj(&glyphTexture, glyphData->glyphDataTexture, glyphData->textureWidth, glyphData->textureHeight, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
 			this->copyTextureToFramebuffer(&glyphTexture, glyphData->textureWidth, glyphData->textureHeight, x_pos + glyphData->renderOffsetX + x_offset, y - glyphData->renderOffsetY + y_offset, color);
 
 			x_pos += glyphData->glyphAdvanceX;
