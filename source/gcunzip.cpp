@@ -214,23 +214,21 @@ GetFirstZipFilename ()
 		return NULL;
 
 	// read start of ZIP
-	if(LoadFile (tempbuffer, filepath, ZIPCHUNK, NOTSILENT))
+	if(LoadFile (tempbuffer, filepath, ZIPCHUNK, NOTSILENT) < 35)
+		return NULL;
+
+	tempbuffer[28] = 0; // truncate - filename length is 2 bytes long (bytes 26-27)
+	int namelength = tempbuffer[26]; // filename length starts 26 bytes in
+
+	if(namelength < 0 || namelength > 200) // filename is not a reasonable length
 	{
-		tempbuffer[28] = 0; // truncate - filename length is 2 bytes long (bytes 26-27)
-		int namelength = tempbuffer[26]; // filename length starts 26 bytes in
-
-		if(namelength > 0 && namelength < 200) // the filename is a reasonable length
-		{
-			firstFilename = &tempbuffer[30]; // first filename of a ZIP starts 31 bytes in
-			firstFilename[namelength] = 0; // truncate at filename length
-		}
-		else
-		{
-			ErrorPrompt("Error - Invalid ZIP file!");
-		}
+		ErrorPrompt("Error - Invalid ZIP file!");
+		return NULL;
 	}
-
-	return firstFilename;
+	
+	firstFilename = &tempbuffer[30]; // first filename of a ZIP starts 31 bytes in
+	firstFilename[namelength] = 0; // truncate at filename length
+	return strdup(firstFilename);
 }
 
 /****************************************************************************

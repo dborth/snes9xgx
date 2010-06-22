@@ -763,9 +763,13 @@ update_video (int width, int height)
 			yscale = vmode->efbHeight/2;
 		}
 
-		// match the original console's width for "widescreen" to prevent flickering
 		if (GCSettings.widescreen)
-			xscale = 256;
+		{
+			if(GCSettings.render == 0)
+				xscale = (3*xscale)/4;
+			else
+				xscale = 256; // match the original console's width for "widescreen" to prevent flickering
+		}
 
 		xscale *= GCSettings.zoomHor;
 		yscale *= GCSettings.zoomVert;
