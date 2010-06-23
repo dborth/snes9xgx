@@ -1440,12 +1440,7 @@ static int MenuGame()
 					delete gameScreenImg;
 					gameScreenImg = NULL;
 				}
-				if(gameScreenTex)
-				{
-					free(gameScreenTex);
-					gameScreenTex = NULL;
-					gameScreenPngSize = 0;
-				}
+
 				bgImg->SetVisible(true);
 				#ifndef NO_SOUND
 				bgMusic->Play(); // startup music
@@ -2973,6 +2968,10 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Crosshair");
 	sprintf(options.name[i++], "Video Mode");
 	options.length = i;
+	
+#ifdef HW_DOL
+	options.name[2][0] = 0; // disable hq2x on GameCube
+#endif
 
 	for(i=0; i < options.length; i++)
 		options.value[i][0] = 0;
@@ -3076,8 +3075,9 @@ static int MenuSettingsVideo()
 				sprintf (options.value[1], "16:9 Correction");
 			else
 				sprintf (options.value[1], "Default");
-
+#ifdef HW_RVL
 			sprintf (options.value[2], "%s", GetFilterName((RenderFilter)GCSettings.FilterMethod));
+#endif
 			sprintf (options.value[3], "%.2f%%, %.2f%%", GCSettings.zoomHor*100, GCSettings.zoomVert*100);
 			sprintf (options.value[4], "%d, %d", GCSettings.xshift, GCSettings.yshift);
 			sprintf (options.value[5], "%s", GCSettings.crosshair == 1 ? "On" : "Off");
@@ -3788,7 +3788,7 @@ MainMenu (int menu)
 	bgImg->ColorStripe(10);
 	mainWindow->Append(bgImg);
 
-	if(gameScreenTex)
+	if(menu == MENU_GAME)
 	{
 		IMGCTX pngContext = PNGU_SelectImageFromBuffer(gameScreenPng);
 
@@ -3796,7 +3796,7 @@ MainMenu (int menu)
 		{
 			gameScreenPngSize = PNGU_EncodeFromGXTexture(pngContext, vmode->fbWidth, vmode->efbHeight, gameScreenTex, 0);
 			PNGU_ReleaseImageContext(pngContext);
-			DCFlushRange(gameScreenPng, 512*1024);
+			DCFlushRange(gameScreenPng, gameScreenPngSize);
 		}
 
 		gameScreenImg = new GuiImage(gameScreenTex, vmode->fbWidth, vmode->efbHeight);
@@ -3940,12 +3940,6 @@ MainMenu (int menu)
 	{
 		delete gameScreenImg;
 		gameScreenImg = NULL;
-	}
-	if(gameScreenTex)
-	{
-		free(gameScreenTex);
-		gameScreenTex = NULL;
-		gameScreenPngSize = 0;
 	}
 
 	// wait for keys to be depressed

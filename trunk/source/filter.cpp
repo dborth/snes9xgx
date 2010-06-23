@@ -11,6 +11,9 @@
  * Adapted from Snes9x Win32/MacOSX ports
  * Video Filter Code (hq2x)
  ****************************************************************************/
+
+#ifdef HW_RVL
+
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -539,3 +542,4 @@ void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 		sp +=  (src1line - width);
 	}
 }
+#endif

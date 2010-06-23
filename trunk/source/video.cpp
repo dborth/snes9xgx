@@ -571,9 +571,13 @@ InitGCVideo ()
 	xfb[0] = (u32 *) MEM_K0_TO_K1 (memalign(32, 640*574*2));
 	xfb[1] = (u32 *) MEM_K0_TO_K1 (memalign(32, 640*574*2));
 
+	gameScreenTex = (u8 *)memalign(32, 640*574*4);
+
 	GXRModeObj *rmode = FindVideoMode();
 	SetupVideoMode(rmode);
+#ifdef HW_RVL
 	InitLUTs();	// init LUTs for hq2x
+#endif
 	LWP_CreateThread (&vbthread, vbgetback, NULL, vbstack, TSTACK, 68);
 	
 	// Initialize GX
@@ -714,7 +718,7 @@ MakeTexture (const void *src, void *dst, s32 width, s32 height)
  * Update Video
  ***************************************************************************/
 uint32 prevRenderedFrameCount = 0;
-int fscale;
+int fscale = 1;
 
 void
 update_video (int width, int height)
@@ -737,9 +741,9 @@ update_video (int width, int height)
 	if (CheckVideo)	// if we get back from the menu, and have rendered at least 1 frame
 	{
 		int xscale, yscale;
-
+#ifdef HW_RVL
 		fscale = GetFilterScale((RenderFilter)GCSettings.FilterMethod);
-
+#endif
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
 
 		/** Update scaling **/
@@ -793,7 +797,7 @@ update_video (int width, int height)
 		oldvheight = vheight;
 		CheckVideo = 0;
 	}
-
+#ifdef HW_RVL
 	// convert image to texture
 	if (GCSettings.FilterMethod != FILTER_NONE && vheight <= 239 && vwidth <= 256)	// don't do filtering on game textures > 256 x 239
 	{
@@ -801,6 +805,7 @@ update_video (int width, int height)
 		MakeTexture565((char *) filtermem, (char *) texturemem, vwidth*fscale, vheight*fscale);
 	}
 	else
+#endif
 	{
 		MakeTexture((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
 	}
@@ -845,25 +850,14 @@ void AllocGfxMem()
 {
 	snes9xgfx = (unsigned char *)memalign(32, SNES9XGFX_SIZE);
 	memset(snes9xgfx, 0, SNES9XGFX_SIZE);
+
+#ifdef HW_RVL
 	filtermem = (unsigned char *)memalign(32, FILTERMEM_SIZE);
 	memset(filtermem, 0, FILTERMEM_SIZE);
+#endif
 
 	GFX.Pitch = EXT_PITCH;
 	GFX.Screen = (uint16*)(snes9xgfx + EXT_OFFSET);
-}
-
-void FreeGfxMem()
-{
-	if(snes9xgfx)
-	{
-		free(snes9xgfx);
-		snes9xgfx = NULL;
-	}
-	if(filtermem)
-	{
-		free(filtermem);
-		filtermem = NULL;
-	}
 }
 
 /****************************************************************************
@@ -884,16 +878,11 @@ setGFX ()
  ***************************************************************************/
 void TakeScreenshot()
 {
-	int texSize = vmode->fbWidth * vmode->efbHeight * 4;
-
-	if(gameScreenTex) free(gameScreenTex);
-	gameScreenTex = (u8 *)memalign(32, texSize);
-	if(gameScreenTex == NULL) return;
 	GX_SetTexCopySrc(0, 0, vmode->fbWidth, vmode->efbHeight);
 	GX_SetTexCopyDst(vmode->fbWidth, vmode->efbHeight, GX_TF_RGBA8, GX_FALSE);
 	GX_CopyTex(gameScreenTex, GX_FALSE);
 	GX_PixModeSync();
-	DCFlushRange(gameScreenTex, texSize);
+	DCFlushRange(gameScreenTex, vmode->fbWidth * vmode->efbHeight * 4);
 }
 
 /****************************************************************************

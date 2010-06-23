@@ -121,33 +121,17 @@ void ResetBrowser()
 	browser.numEntries = 0;
 	browser.selIndex = 0;
 	browser.pageIndex = 0;
-
-	// Clear any existing values
-	if(browserList != NULL)
-	{
-		free(browserList);
-		browserList = NULL;
-	}
-	// set aside space for 1 entry
-	browserList = (BROWSERENTRY *)malloc(sizeof(BROWSERENTRY));
-	memset(browserList, 0, sizeof(BROWSERENTRY));
-	browser.size = 1;
+	browser.size = 0;
 }
 
 bool AddBrowserEntry()
 {
-	BROWSERENTRY * newBrowserList = (BROWSERENTRY *)realloc(browserList, (browser.size+1) * sizeof(BROWSERENTRY));
-
-	if(!newBrowserList) // failed to allocate required memory
+	if(browser.size >= MAX_BROWSER_SIZE)
 	{
-		ResetBrowser();
 		ErrorPrompt("Out of memory: too many files!");
-		return false;
+		return false; // out of space
 	}
-	else
-	{
-		browserList = newBrowserList;
-	}
+
 	memset(&(browserList[browser.size]), 0, sizeof(BROWSERENTRY)); // clear the new entry
 	browser.size++;
 	return true;
