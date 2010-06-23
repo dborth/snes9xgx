@@ -378,7 +378,7 @@ main(int argc, char *argv[])
 
 	S9xInitSync(); // initialize frame sync
 	InitFreeType((u8*)font_ttf, font_ttf_size); // Initialize font system
-	gameScreenPng = (u8 *)malloc(128*1024);
+	gameScreenPng = (u8 *)malloc(512*1024);
 	browserList = (BROWSERENTRY *)malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
 	AllocGfxMem();
 	InitGUIThreads();
