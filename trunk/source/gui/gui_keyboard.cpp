@@ -122,7 +122,6 @@ GuiKeyboard::GuiKeyboard(char * t, u32 max)
 
 	keySoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	keySoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND_PCM);
-	trigA = new GuiTrigger;
 
 	trigA = new GuiTrigger;
 	trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
