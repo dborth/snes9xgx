@@ -55,10 +55,14 @@ int ResetRequested = 0;
 int ExitRequested = 0;
 char appPath[1024] = { 0 };
 char loadedFile[1024] = { 0 };
+static int currentMode;
 
 extern "C" {
 extern void __exception_setreload(int t);
 }
+
+extern void S9xInitSync();
+extern uint32 prevRenderedFrameCount;
 
 /****************************************************************************
  * Shutdown / Reboot / Exit
@@ -207,80 +211,6 @@ void setFrameTimerMethod()
 }
 
 /****************************************************************************
- * Emulation loop
- ***************************************************************************/
-extern void S9xInitSync();
-extern uint32 prevRenderedFrameCount;
-static int currentMode;
-
-void
-emulate ()
-{
-	while (1) // main loop
-	{
-		// go back to checking if devices were inserted/removed
-		// since we're entering the menu
-		ResumeDeviceThread();
-
-		SwitchAudioMode(1);
-
-		if(SNESROMSize == 0)
-			MainMenu(MENU_GAMESELECTION);
-		else
-			MainMenu(MENU_GAME);
-
-		AllocGfxMem();
-		SelectFilterMethod();
-
-		ConfigRequested = 0;
-		ScreenshotRequested = 0;
-		SwitchAudioMode(0);
-
-		Settings.MultiPlayer5Master = (GCSettings.Controller == CTRL_PAD4 ? true : false);
-		Settings.SuperScopeMaster = (GCSettings.Controller == CTRL_SCOPE ? true : false);
-		Settings.MouseMaster = (GCSettings.Controller == CTRL_MOUSE ? true : false);
-		Settings.JustifierMaster = (GCSettings.Controller == CTRL_JUST ? true : false);
-		SetControllers ();
-
-		// stop checking if devices were removed/inserted
-		// since we're starting emulation again
-		HaltDeviceThread();
-
-		AudioStart ();
-
-		FrameTimer = 0;
-		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
-
-		CheckVideo = 2;	// force video update
-		prevRenderedFrameCount = IPPU.RenderedFramesCount;
-		currentMode = GCSettings.render;
-
-		while(1) // emulation loop
-		{
-			S9xMainLoop ();
-			ReportButtons ();
-
-			if(ResetRequested)
-			{
-				S9xSoftReset (); // reset game
-				ResetRequested = 0;
-			}
-			if (ConfigRequested)
-			{
-				ConfigRequested = 0;
-				FreeGfxMem();
-				ResetVideo_Menu();
-				break;
-			}
-			#ifdef HW_RVL
-			if(ShutdownRequested)
-				ExitApp();
-			#endif
-		} // emulation loop
-	} // main loop
-}
-
-/****************************************************************************
  * IOS 202
  ***************************************************************************/
 #ifdef HW_RVL
@@ -426,9 +356,7 @@ main(int argc, char *argv[])
 		CreateAppPath(argv[0]);
 	#endif
 
-	// Set defaults
-	DefaultSettings ();
-
+	DefaultSettings (); // Set defaults
 	S9xUnmapAllControls ();
 	SetDefaultButtonMap ();
 
@@ -440,11 +368,8 @@ main(int argc, char *argv[])
 	if (!S9xInitAPU ())
 		ExitApp();
 
-	// Set Pixel Renderer to match 565
-	S9xSetRenderPixelFormat (RGB565);
-
-	// Initialise Sound System
-	S9xInitSound (64, 0);
+	S9xSetRenderPixelFormat (RGB565); // Set Pixel Renderer to match 565
+	S9xInitSound (64, 0); // Initialise Sound System
 
 	// Initialise Graphics
 	setGFX ();
@@ -452,13 +377,70 @@ main(int argc, char *argv[])
 		ExitApp();
 
 	S9xInitSync(); // initialize frame sync
-
-	// Initialize font system
-	InitFreeType((u8*)font_ttf, font_ttf_size);
-	
-	gameScreenPng = (u8 *)malloc(512*1024);
-
+	InitFreeType((u8*)font_ttf, font_ttf_size); // Initialize font system
+	gameScreenPng = (u8 *)malloc(128*1024);
+	browserList = (BROWSERENTRY *)malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
+	AllocGfxMem();
 	InitGUIThreads();
 
-	emulate(); // main loop
+	while (1) // main loop
+	{
+		// go back to checking if devices were inserted/removed
+		// since we're entering the menu
+		ResumeDeviceThread();
+
+		SwitchAudioMode(1);
+
+		if(SNESROMSize == 0)
+			MainMenu(MENU_GAMESELECTION);
+		else
+			MainMenu(MENU_GAME);
+#ifdef HW_RVL
+		SelectFilterMethod();
+#endif
+		ConfigRequested = 0;
+		ScreenshotRequested = 0;
+		SwitchAudioMode(0);
+
+		Settings.MultiPlayer5Master = (GCSettings.Controller == CTRL_PAD4 ? true : false);
+		Settings.SuperScopeMaster = (GCSettings.Controller == CTRL_SCOPE ? true : false);
+		Settings.MouseMaster = (GCSettings.Controller == CTRL_MOUSE ? true : false);
+		Settings.JustifierMaster = (GCSettings.Controller == CTRL_JUST ? true : false);
+		SetControllers ();
+
+		// stop checking if devices were removed/inserted
+		// since we're starting emulation again
+		HaltDeviceThread();
+
+		AudioStart ();
+
+		FrameTimer = 0;
+		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
+
+		CheckVideo = 2;	// force video update
+		prevRenderedFrameCount = IPPU.RenderedFramesCount;
+		currentMode = GCSettings.render;
+
+		while(1) // emulation loop
+		{
+			S9xMainLoop ();
+			ReportButtons ();
+
+			if(ResetRequested)
+			{
+				S9xSoftReset (); // reset game
+				ResetRequested = 0;
+			}
+			if (ConfigRequested)
+			{
+				ConfigRequested = 0;
+				ResetVideo_Menu();
+				break;
+			}
+			#ifdef HW_RVL
+			if(ShutdownRequested)
+				ExitApp();
+			#endif
+		} // emulation loop
+	} // main loop
 }

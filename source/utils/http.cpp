@@ -25,29 +25,33 @@
 #include "menu.h"
 #include "http.h"
 
+#define TCP_CONNECT_TIMEOUT 	4000  // 4 secs to make a connection
+#define TCP_SEND_SIZE 			(32 * 1024)
+#define TCP_RECV_SIZE 			(32 * 1024)
+#define TCP_BLOCK_RECV_TIMEOUT 	4000 // 4 secs to receive
+#define TCP_BLOCK_SEND_TIMEOUT 	4000 // 4 secs to send
+#define TCP_BLOCK_SIZE 			1024
+#define HTTP_TIMEOUT 			10000 // 10 secs to get an http response
+#define IOS_O_NONBLOCK			0x04
+
 static s32 tcp_socket(void)
 {
 	s32 s, res;
 
 	s = net_socket(PF_INET, SOCK_STREAM, 0);
 	if (s < 0)
-	{
-
 		return s;
-	}
 
 	res = net_fcntl(s, F_GETFL, 0);
 	if (res < 0)
 	{
-
 		net_close(s);
 		return res;
 	}
 
-	res = net_fcntl(s, F_SETFL, res | 4);
+	res = net_fcntl(s, F_SETFL, res | IOS_O_NONBLOCK);
 	if (res < 0)
 	{
-
 		net_close(s);
 		return res;
 	}
@@ -59,60 +63,44 @@ static s32 tcp_connect(char *host, const u16 port)
 {
 	struct hostent *hp;
 	struct sockaddr_in sa;
+	struct in_addr val;
+	fd_set myset;
+	struct timeval tv;
 	s32 s, res;
-	s64 t;
-
-	hp = net_gethostbyname(host);
-	if (!hp || !(hp->h_addrtype == PF_INET))
-	{
-
-		return errno;
-	}
 
 	s = tcp_socket();
 	if (s < 0)
 		return s;
 
 	memset(&sa, 0, sizeof(struct sockaddr_in));
-	sa.sin_family = PF_INET;
+	sa.sin_family= PF_INET;
 	sa.sin_len = sizeof(struct sockaddr_in);
-	sa.sin_port = htons(port);
-	memcpy((char *) &sa.sin_addr, hp->h_addr_list[0], hp->h_length);
+	sa.sin_port= htons(port);
 
-	t = gettime();
-	while (true)
+	if(strlen(host) < 16 && inet_aton(host, &val))
 	{
-		if (ticks_to_millisecs(diff_ticks(t, gettime())) > TCP_CONNECT_TIMEOUT)
-		{
+		sa.sin_addr.s_addr = val.s_addr;
+	}
+	else
+	{
+		hp = net_gethostbyname (host);
+		if (!hp || !(hp->h_addrtype == PF_INET))
+			return errno;
 
-			net_close(s);
-
-			return -ETIMEDOUT;
-		}
-
-		res = net_connect(s, (struct sockaddr *) &sa,
-				sizeof(struct sockaddr_in));
-
-		if (res < 0)
-		{
-			if (res == -EISCONN)
-				break;
-
-			if (res == -EINPROGRESS || res == -EALREADY)
-			{
-				usleep(20 * 1000);
-
-				continue;
-			}
-
-			net_close(s);
-
-			return res;
-		}
-
-		break;
+		memcpy((char *) &sa.sin_addr, hp->h_addr_list[0], hp->h_length);
 	}
 
+	res = net_connect (s, (struct sockaddr *) &sa, sizeof (sa));
+
+	if (res == EINPROGRESS)
+	{
+		tv.tv_sec = TCP_CONNECT_TIMEOUT;
+		tv.tv_usec = 0;
+		FD_ZERO(&myset);
+		FD_SET(s, &myset);
+		if (net_select(s+1, NULL, &myset, NULL, &tv) <= 0)
+			return -1;
+	}
 	return s;
 }
 
@@ -138,22 +126,17 @@ static char * tcp_readln(const s32 s, const u16 max_length, const u64 start_time
 		if ((res == 0) || (res == -EAGAIN))
 		{
 			usleep(20 * 1000);
-
 			continue;
 		}
 
 		if (res < 0)
-		{
-
 			break;
-		}
 
 		if ((c > 0) && (buf[c - 1] == '\r') && (buf[c] == '\n'))
 		{
 			if (c == 1)
 			{
 				ret = strdup("");
-
 				break;
 			}
 
@@ -166,21 +149,22 @@ static char * tcp_readln(const s32 s, const u16 max_length, const u64 start_time
 
 		if (c == max_length)
 			break;
+
+		usleep(300);
 	}
 
 	free(buf);
 	return ret;
 }
 
-static int tcp_read(const s32 s, u8 **buffer, const u32 length)
+static int tcp_read(const s32 s, u8 *buffer, const u32 length)
 {
-	u8 *p;
-	u32 step, left, block, received;
+	char *p;
+	u32 left, block, received, step=0;
 	s64 t;
 	s32 res;
 
-	step = 0;
-	p = *buffer;
+	p = (char *)buffer;
 	left = length;
 	received = 0;
 
@@ -194,45 +178,40 @@ static int tcp_read(const s32 s, u8 **buffer, const u32 length)
 		}
 
 		block = left;
-		if (block > 2048)
-			block = 2048;
+		if (block > TCP_RECV_SIZE)
+			block = TCP_RECV_SIZE;
 
 		res = net_read(s, p, block);
 
-		if ((res == 0) || (res == -EAGAIN))
+		if(res>0)
 		{
-			usleep(20 * 1000);
-
-			continue;
+			received += res;
+			left -= res;
+			p += res;
 		}
-
-		if (res < 0)
+		else if (res < 0 && res != -EAGAIN)
 		{
 			break;
 		}
 
-		received += res;
-		left -= res;
-		p += res;
+		usleep(1000);
 
 		if ((received / TCP_BLOCK_SIZE) > step)
 		{
-			t = gettime();
+			t = gettime ();
 			step++;
 		}
 	}
-
-	return left == 0;
+	return received;
 }
 
 static int tcp_write(const s32 s, const u8 *buffer, const u32 length)
 {
 	const u8 *p;
-	u32 step, left, block, sent;
+	u32 left, block, sent, step=0;
 	s64 t;
 	s32 res;
 
-	step = 0;
 	p = buffer;
 	left = length;
 	sent = 0;
@@ -243,13 +222,12 @@ static int tcp_write(const s32 s, const u8 *buffer, const u32 length)
 		if (ticks_to_millisecs(diff_ticks(t, gettime()))
 				> TCP_BLOCK_SEND_TIMEOUT)
 		{
-
 			break;
 		}
 
 		block = left;
-		if (block > 2048)
-			block = 2048;
+		if (block > TCP_SEND_SIZE)
+			block = TCP_SEND_SIZE;
 
 		res = net_write(s, p, block);
 
@@ -260,18 +238,16 @@ static int tcp_write(const s32 s, const u8 *buffer, const u32 length)
 		}
 
 		if (res < 0)
-		{
-
 			break;
-		}
 
 		sent += res;
 		left -= res;
 		p += res;
+		usleep(100);
 
 		if ((sent / TCP_BLOCK_SIZE) > step)
 		{
-			t = gettime();
+			t = gettime ();
 			step++;
 		}
 	}
@@ -289,7 +265,7 @@ static bool http_split_url(char **host, char **path, const char *url)
 	p = url + 7;
 	c = strchr(p, '/');
 
-	if (c[0] == 0)
+	if (c == NULL || c[0] == 0)
 		return false;
 
 	*host = strndup(p, c - p);
@@ -298,12 +274,13 @@ static bool http_split_url(char **host, char **path, const char *url)
 	return true;
 }
 
+#define MAX_SIZE (1024*1024*15)
+
 /****************************************************************************
  * http_request
  * Retrieves the specified URL, and stores it in the specified file or buffer
  ***************************************************************************/
-bool http_request(const char *url, FILE * hfile, u8 * buffer,
-		const u32 max_size)
+int http_request(const char *url, FILE * hfile, u8 * buffer, u32 maxsize, bool silent)
 {
 	int res = 0;
 	char *http_host;
@@ -312,14 +289,18 @@ bool http_request(const char *url, FILE * hfile, u8 * buffer,
 
 	http_res result;
 	u32 http_status;
-	u32 content_length = 0;
+	u32 sizeread = 0, content_length = 0;
 
 	int linecount;
-	if (!http_split_url(&http_host, &http_path, url))
-		return false;
 
-	if (hfile == NULL && buffer == NULL)
-		return false;
+	if(maxsize > MAX_SIZE)
+		return 0;
+
+	if (url == NULL || (hfile == NULL && buffer == NULL))
+		return 0;
+
+	if (!http_split_url(&http_host, &http_path, url))
+		return 0;
 
 	http_port = 80;
 	http_status = 404;
@@ -329,11 +310,12 @@ bool http_request(const char *url, FILE * hfile, u8 * buffer,
 	if (s < 0)
 	{
 		result = HTTPR_ERR_CONNECT;
-		return false;
+		return 0;
 	}
 
 	char *request = (char *) malloc(1024);
 	char *r = request;
+
 	r += sprintf(r, "GET %s HTTP/1.1\r\n", http_path);
 	r += sprintf(r, "Host: %s\r\n", http_host);
 	r += sprintf(r, "Cache-Control: no-cache\r\n\r\n");
@@ -368,24 +350,34 @@ bool http_request(const char *url, FILE * hfile, u8 * buffer,
 
 	}
 
-	if (linecount == 32 || !content_length)
-		http_status = 404;
 	if (http_status != 200)
 	{
 		result = HTTPR_ERR_STATUS;
 		net_close(s);
-		return false;
+		return 0;
 	}
-	if (content_length > max_size)
+
+	// length unknown - just read as much as we can
+	if(content_length == 0)
+	{
+		content_length = maxsize;
+	}
+	else if (content_length > maxsize)
 	{
 		result = HTTPR_ERR_TOOBIG;
 		net_close(s);
-		return false;
+		return 0;
 	}
 
 	if (buffer != NULL)
 	{
-		res = tcp_read(s, &buffer, content_length);
+		if(!silent)
+			ShowAction("Downloading...");
+
+		sizeread = tcp_read(s, buffer, content_length);
+
+		if(!silent)
+			CancelAction();
 	}
 	else
 	{
@@ -394,7 +386,8 @@ bool http_request(const char *url, FILE * hfile, u8 * buffer,
 		u32 bytesLeft = content_length;
 		u32 readSize;
 
-		ShowProgress("Downloading...", 0, content_length);
+		if(!silent)
+			ShowProgress("Downloading...", 0, content_length);
 		u8 * fbuffer = (u8 *) malloc(bufSize);
 		if(fbuffer)
 		{
@@ -405,31 +398,35 @@ bool http_request(const char *url, FILE * hfile, u8 * buffer,
 				else
 					readSize = bufSize;
 
-				res = tcp_read(s, &fbuffer, readSize);
-				if (!res)
-					break;
-				res = fwrite(fbuffer, 1, readSize, hfile);
+				res = tcp_read(s, fbuffer, readSize);
 				if (!res)
 					break;
 
-				bytesLeft -= readSize;
-				ShowProgress("Downloading...", (content_length - bytesLeft),
-						content_length);
+				sizeread += res;
+				bytesLeft -= res;
+
+				res = fwrite(fbuffer, 1, res, hfile);
+				if (!res)
+					break;
+
+				if(!silent)
+					ShowProgress("Downloading...", (content_length - bytesLeft), content_length);
 			}
 			free(fbuffer);
 		}
-		CancelAction();
+		if(!silent)
+			CancelAction();
 	}
 
 	net_close(s);
 
-	if (!res)
+	if (content_length < maxsize && sizeread != content_length)
 	{
 		result = HTTPR_ERR_RECEIVE;
-		return false;
+		return 0;
 	}
 
 	result = HTTPR_OK;
-	return true;
+	return sizeread;
 }
 #endif
