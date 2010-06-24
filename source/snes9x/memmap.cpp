@@ -204,8 +204,8 @@
 #include "display.h"
 
 #ifdef GEKKO
+#include "../filebrowser.h"
 extern int WiiFileLoader();
-extern void WiiLoadPatch(bool header);
 extern void WiiSetupCheats();
 #endif
 
@@ -1541,11 +1541,7 @@ again:
 		return (FALSE);
 
 	if (!Settings.NoPatch)
-#ifdef GEKKO
-		WiiLoadPatch(HeaderCount != 0);
-#else
 		CheckForAnyPatch(filename, HeaderCount != 0, totalFileSize);
-#endif
 
 	int	hi_score, lo_score;
 
@@ -4143,6 +4139,28 @@ void CMemory::CheckForAnyPatch (const char *rom_filename, bool8 header, int32 &r
 	if (Settings.NoPatch)
 		return;
 
+#ifdef GEKKO
+	int patchtype;
+	char patchpath[2][512];
+	STREAM patchfile = NULL;
+	long offset = header ? 512 : 0;
+
+	sprintf(patchpath[0], "%s%s.ips", browser.dir, Memory.ROMFilename);
+	sprintf(patchpath[1], "%s%s.ups", browser.dir, Memory.ROMFilename);
+
+	for(patchtype=0; patchtype<2; patchtype++)
+	{
+		if ((patchfile = OPEN_STREAM(patchpath[patchtype], "rb")) != NULL)
+		{
+			if(patchtype == 0)
+				ReadIPSPatch(new fReader(patchfile), offset, rom_size);
+			else
+				ReadUPSPatch(new fReader(patchfile), 0, rom_size);
+			CLOSE_STREAM(patchfile);
+			break;
+		}
+	}
+#else
 	STREAM		patch_file  = NULL;
 	uint32		i;
 	long		offset = header ? 512 : 0;
@@ -4590,4 +4608,5 @@ void CMemory::CheckForAnyPatch (const char *rom_filename, bool8 header, int32 &r
 		if (flag)
 			return;
 	}
+#endif
 }

@@ -634,13 +634,14 @@ ParseDirectory(bool waitParse)
 
 	if(IsDeviceRoot(browser.dir))
 	{
-		browser.numEntries = 1;
+		AddBrowserEntry();
 		sprintf(browserList[0].filename, "..");
 		sprintf(browserList[0].displayname, "Up One Level");
 		browserList[0].length = 0;
 		browserList[0].mtime = 0;
 		browserList[0].isdir = 1; // flag this as a dir
 		browserList[0].icon = ICON_FOLDER;
+		browser.numEntries++;
 	}
 
 	parseHalt = false;
