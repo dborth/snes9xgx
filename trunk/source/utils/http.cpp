@@ -38,9 +38,13 @@ static s32 tcp_socket(void)
 {
 	s32 s, res;
 
-	s = net_socket(PF_INET, SOCK_STREAM, 0);
+	s = net_socket(PF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (s < 0)
 		return s;
+
+	// Switch off Nagle with TCP_NODELAY
+	u32 nodelay = 1;
+	net_setsockopt(s,IPPROTO_TCP,TCP_NODELAY,&nodelay,sizeof(nodelay));
 
 	res = net_fcntl(s, F_GETFL, 0);
 	if (res < 0)
