@@ -20,7 +20,7 @@ GuiImageData::GuiImageData(const u8 * i, int maxw, int maxh)
 	height = 0;
 
 	if(i)
-		data = DecodePNG(i, &width, &height, maxw, maxh);
+		data = DecodePNG(i, &width, &height, data, maxw, maxh);
 }
 
 /**
