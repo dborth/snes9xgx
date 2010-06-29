@@ -60,7 +60,6 @@ static Mtx view;
 static Mtx GXmodelView2D;
 static int vwidth, vheight, oldvwidth, oldvheight;
 
-u8 * gameScreenTex = NULL; // a GX texture screen capture of the game
 u8 * gameScreenPng = NULL;
 int gameScreenPngSize = 0;
 
@@ -571,8 +570,6 @@ InitGCVideo ()
 	xfb[0] = (u32 *) MEM_K0_TO_K1 (memalign(32, 640*574*2));
 	xfb[1] = (u32 *) MEM_K0_TO_K1 (memalign(32, 640*574*2));
 
-	gameScreenTex = (u8 *)memalign(32, 640*574*4);
-
 	GXRModeObj *rmode = FindVideoMode();
 	SetupVideoMode(rmode);
 #ifdef HW_RVL
@@ -878,11 +875,15 @@ setGFX ()
  ***************************************************************************/
 void TakeScreenshot()
 {
-	GX_SetTexCopySrc(0, 0, vmode->fbWidth, vmode->efbHeight);
-	GX_SetTexCopyDst(vmode->fbWidth, vmode->efbHeight, GX_TF_RGBA8, GX_FALSE);
-	GX_CopyTex(gameScreenTex, GX_FALSE);
-	GX_PixModeSync();
-	DCFlushRange(gameScreenTex, vmode->fbWidth * vmode->efbHeight * 4);
+	IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
+
+	if (pngContext != NULL)
+	{
+		gameScreenPngSize = PNGU_EncodeFromEFB(pngContext, vmode->fbWidth, vmode->efbHeight);
+		PNGU_ReleaseImageContext(pngContext);
+		gameScreenPng = (u8 *)malloc(gameScreenPngSize);
+		memcpy(gameScreenPng, savebuffer, gameScreenPngSize);
+	}
 }
 
 /****************************************************************************

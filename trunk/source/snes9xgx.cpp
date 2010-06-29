@@ -39,6 +39,7 @@
 #include "fileop.h"
 #include "filebrowser.h"
 #include "input.h"
+#include "mem2.h"
 #include "utils/usb2storage.h"
 #include "utils/mload.h"
 #include "utils/FreeTypeGX.h"
@@ -339,6 +340,9 @@ main(int argc, char *argv[])
 	ResetVideo_Menu (); // change to menu video mode
 	SetupPads();
 	MountAllFAT(); // Initialize libFAT for SD and USB
+#ifdef HW_RVL
+	InitMem2Manager();
+#endif
 
 	// Initialize DVD subsystem (GameCube only)
 	#ifdef HW_DOL
@@ -378,8 +382,13 @@ main(int argc, char *argv[])
 
 	S9xInitSync(); // initialize frame sync
 	InitFreeType((u8*)font_ttf, font_ttf_size); // Initialize font system
-	gameScreenPng = (u8 *)malloc(512*1024);
+#ifdef HW_RVL
+	savebuffer = (unsigned char *)mem2_malloc(SAVEBUFFERSIZE);
+	browserList = (BROWSERENTRY *)mem2_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
+#else
+	savebuffer = (unsigned char *)malloc(SAVEBUFFERSIZE);
 	browserList = (BROWSERENTRY *)malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
+#endif
 	AllocGfxMem();
 	InitGUIThreads();
 

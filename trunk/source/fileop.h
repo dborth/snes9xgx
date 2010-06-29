@@ -43,7 +43,7 @@ size_t LoadSzFile(char * filepath, unsigned char * rbuffer);
 size_t SaveFile(char * buffer, char *filepath, size_t datasize, bool silent);
 size_t SaveFile(char * filepath, size_t datasize, bool silent);
 
-extern unsigned char savebuffer[SAVEBUFFERSIZE];
+extern unsigned char *savebuffer;
 extern FILE * file;
 extern bool unmountRequired[];
 extern bool isMounted[];

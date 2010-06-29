@@ -33,7 +33,6 @@ extern GXRModeObj *vmode;
 extern int screenheight;
 extern int screenwidth;
 extern bool progressive;
-extern u8 * gameScreenTex;
 extern u8 * gameScreenPng;
 extern int gameScreenPngSize;
 extern u32 FrameTimer;
