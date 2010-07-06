@@ -15,6 +15,13 @@
 #endif
 
 void USB2Enable(bool e);
+void USB2Storage_Close();
+int GetUSB2LanPort();
+void SetUSB2Mode(int mode); 
+//mode 0: port0 disabled & port1 disabled
+//mode 1: port0 enabled & port1 disabled
+//mode 2: port0 disabled & port1 enabled
+//mode 3: port0 enabled & port1 enabled
 
 #ifdef __cplusplus
 	}
