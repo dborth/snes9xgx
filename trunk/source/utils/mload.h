@@ -18,16 +18,15 @@
 #ifndef __MLOAD_H__
 #define __MLOAD_H__
 
-#ifdef __cplusplus
 extern "C" {
-#endif
+
+extern int mloadVersion;
+extern int iosBase;
 
 int mload_init();
 bool load_ehci_module();
 int mload_close();
 
-#ifdef __cplusplus
 }
-#endif
 
 #endif

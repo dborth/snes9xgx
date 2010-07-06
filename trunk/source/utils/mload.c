@@ -14,7 +14,7 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-
+ 
 #ifdef HW_RVL
 
 #include <stdio.h>
@@ -22,24 +22,14 @@
 #include <string.h>
 #include <ogcsys.h>
 #include <gccore.h>
-#include <ogc/ipc.h>
 #include "unistd.h"
 #include "ehcmodule_elf.h"
 
-#define MLOAD_MLOAD_THREAD_ID	0x4D4C4400
-#define MLOAD_LOAD_MODULE		0x4D4C4480
-#define MLOAD_RUN_MODULE		0x4D4C4481
+#define MLOAD_GET_IOS_BASE	    0x4D4C4401
+#define MLOAD_GET_MLOAD_VERSION 0x4D4C4402
 #define MLOAD_RUN_THREAD        0x4D4C4482
-
-#define MLOAD_STOP_THREAD		0x4D4C4484
-#define MLOAD_CONTINUE_THREAD   0x4D4C4485
-
 #define MLOAD_GET_LOAD_BASE     0x4D4C4490
 #define MLOAD_MEMSET			0x4D4C4491
-
-#define MLOAD_GET_EHCI_DATA		0x4D4C44A0
-
-#define MLOAD_SET_ES_IOCTLV		0x4D4C44B0
 
 #define getbe32(x) ((adr[x]<<24) | (adr[x+1]<<16) | (adr[x+2]<<8) | (adr[x+3]))
 
@@ -84,17 +74,53 @@ typedef struct
 } data_elf;
 
 static const char mload_fs[] ATTRIBUTE_ALIGN(32) = "/dev/mload";
+
 static s32 mload_fd = -1;
+static s32 hid = -1;
+
+int mloadVersion = -1;
+int iosBase = -1;
+
+// to close the device (remember call it when rebooting the IOS!)
+int mload_close()
+{
+	int ret;
+
+	if (hid >= 0)
+	{
+		iosDestroyHeap(hid);
+		hid = -1;
+	}
+
+	if (mload_fd < 0)
+		return -1;
+
+	ret = IOS_Close(mload_fd);
+	mload_fd = -1;
+	return ret;
+}
 
 // to init/test if the device is running
 int mload_init()
 {
 	int n;
 
+	if (hid < 0)
+		hid = iosCreateHeap(0x800);
+
+	if (hid < 0)
+	{
+		if (mload_fd >= 0)
+			IOS_Close(mload_fd);
+
+		mload_fd = -1;
+		return hid;
+	}
+
 	if (mload_fd >= 0)
 		return 0;
 
-	for (n = 0; n < 10; n++) // try 2.5 seconds
+	for (n = 0; n < 20; n++) // try 5 seconds
 	{
 		mload_fd = IOS_Open(mload_fs, 0);
 
@@ -104,22 +130,16 @@ int mload_init()
 		usleep(250 * 1000);
 	}
 
-	return mload_fd;
-}
-
-// to close the device (remember call it when rebooting the IOS!)
-int mload_close()
-{
-	int ret;
-
 	if (mload_fd < 0)
-		return -1;
+		return mload_close();
 
-	ret = IOS_Close(mload_fd);
+	mloadVersion = IOS_IoctlvFormat(hid, mload_fd, MLOAD_GET_MLOAD_VERSION, ":"); 
+	iosBase = IOS_IoctlvFormat(hid, mload_fd, MLOAD_GET_IOS_BASE, ":");
 
-	mload_fd = -1;
+	if(mloadVersion < 82) // unsupported IOS202
+		return mload_close();
 
-	return ret;
+	return mload_fd;
 }
 
 // fix starlet address to read/write (uses SEEK_SET, etc as mode)
@@ -127,6 +147,7 @@ static int mload_seek(int offset, int mode)
 {
 	if (mload_init() < 0)
 		return -1;
+
 	return IOS_Seek(mload_fd, offset, mode);
 }
 
@@ -135,29 +156,17 @@ static int mload_write(const void * buf, u32 size)
 {
 	if (mload_init() < 0)
 		return -1;
+
 	return IOS_Write(mload_fd, buf, size);
 }
 
 // fill a block (similar to memset)
 static int mload_memset(void *starlet_addr, int set, int len)
 {
-	int ret;
-	s32 hid = -1;
-
 	if (mload_init() < 0)
 		return -1;
 
-	hid = iosCreateHeap(0x800);
-
-	if (hid < 0)
-		return hid;
-
-	ret = IOS_IoctlvFormat(hid, mload_fd, MLOAD_MEMSET, "iii:", starlet_addr,
-			set, len);
-
-	iosDestroyHeap(hid);
-
-	return ret;
+	return IOS_IoctlvFormat(hid, mload_fd, MLOAD_MEMSET, "iii:", starlet_addr, set, len);
 }
 
 // load a module from the PPC
@@ -202,25 +211,23 @@ static int mload_elf(void *my_elf, data_elf *data_elf)
 			{
 				switch (getbe32(m))
 				{
-				case 0x9:
-					data_elf->start = (void *) getbe32(m+4);
-					break;
-				case 0x7D:
-					data_elf->prio = getbe32(m+4);
-					break;
-				case 0x7E:
-					data_elf->size_stack = getbe32(m+4);
-					break;
-				case 0x7F:
-					data_elf->stack = (void *) (getbe32(m+4));
-					break;
-
+					case 0x9:
+						data_elf->start = (void *) getbe32(m+4);
+						break;
+					case 0x7D:
+						data_elf->prio = getbe32(m+4);
+						break;
+					case 0x7E:
+						data_elf->size_stack = getbe32(m+4);
+						break;
+					case 0x7F:
+						data_elf->stack = (void *) (getbe32(m+4));
+						break;
 				}
 			}
 		}
 		else if (entries->type == 1 && entries->memsz != 0 && entries->vaddr != 0)
 		{
-
 			if (mload_memset((void *) entries->vaddr, 0, entries->memsz) < 0)
 				return -1;
 			if (mload_seek(entries->vaddr, SEEK_SET) < 0)
@@ -229,52 +236,44 @@ static int mload_elf(void *my_elf, data_elf *data_elf)
 				return -1;
 		}
 	}
-
 	return 0;
 }
 
 // run one thread (you can use to load modules or binary files)
-static int mload_run_thread(void *starlet_addr, void *starlet_top_stack,
-		int stack_size, int priority)
+static int mload_run_thread(void *starlet_addr, void *starlet_top_stack, int stack_size, int priority)
 {
-	int ret;
-	s32 hid = -1;
-
 	if (mload_init() < 0)
 		return -1;
 
-	hid = iosCreateHeap(0x800);
+	return IOS_IoctlvFormat(hid, mload_fd, MLOAD_RUN_THREAD, "iiii:", starlet_addr, starlet_top_stack, stack_size, priority);
+}
 
-	if (hid < 0)
-		return hid;
+// get the base and the size of the memory readable/writable to load modules
+static int mload_get_load_base(u32 *starlet_base, int *size)
+{
+	if (mload_init() < 0)
+		return -1;
 
-	ret = IOS_IoctlvFormat(hid, mload_fd, MLOAD_RUN_THREAD, "iiii:",
-			starlet_addr, starlet_top_stack, stack_size, priority);
-
-	iosDestroyHeap(hid);
-
-	return ret;
+	return IOS_IoctlvFormat(hid, mload_fd, MLOAD_GET_LOAD_BASE, ":ii", starlet_base, size);
 }
 
 bool load_ehci_module()
 {
-	data_elf my_data_elf;
-	my_data_elf.start = NULL;
-	my_data_elf.prio = 0;
-	my_data_elf.stack = NULL;
-	my_data_elf.size_stack = 0;
+	data_elf elf;
+	memset(&elf, 0, sizeof(data_elf));
 
-	if(mload_elf((void *) ehcmodule_elf, &my_data_elf) != 0)
+	u32 addr;
+	int len;
+
+	mload_get_load_base(&addr, &len);
+
+	if(mload_elf((void *) ehcmodule_elf, &elf) != 0)
 		return false;
 
-	if (mload_run_thread(my_data_elf.start, my_data_elf.stack,
-			my_data_elf.size_stack, my_data_elf.prio) < 0)
-	{
-		usleep(1000);
-		if (mload_run_thread(my_data_elf.start, my_data_elf.stack,
-				my_data_elf.size_stack, 0x47) < 0)
-			return false;
-	}
+	if(mload_run_thread(elf.start, elf.stack, elf.size_stack, 0x47) < 0)
+		return false;
+	
+	usleep(5000);
 	return true;
 }
 

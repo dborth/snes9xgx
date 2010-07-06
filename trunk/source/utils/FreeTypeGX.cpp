@@ -22,8 +22,6 @@
 
 #include "FreeTypeGX.h"
 
-#define EXPLODE_UINT8_TO_UINT32(x) (x << 24) | (x << 16) | (x << 8) | x
-
 static FT_Library ftLibrary;	/**< FreeType FT_Library instance. */
 static FT_Face ftFace;			/**< FreeType reusable FT_Face typographic object. */
 static FT_GlyphSlot ftSlot;		/**< FreeType reusable FT_GlyphSlot glyph container object. */
@@ -89,47 +87,6 @@ wchar_t* charToWideChar(const char* strChar)
 	while((*tempDest++ = *strChar++));
 
 	return strWChar;
-}
-
-static uint32_t* convertBufferToRGBA8(uint32_t* rgbaBuffer, uint16_t bufferWidth, uint16_t bufferHeight) {
-	uint32_t bufferSize = (bufferWidth * bufferHeight) << 2;
-	uint32_t* dataBufferRGBA8 = (uint32_t *)memalign(32, bufferSize);
-	memset(dataBufferRGBA8, 0x00, bufferSize);
-
-	uint8_t *src = (uint8_t *)rgbaBuffer;
-	uint8_t *dst = (uint8_t *)dataBufferRGBA8;
-
-	for(uint32_t block = 0; block < bufferHeight; block += 4) {
-		for(uint32_t i = 0; i < bufferWidth; i += 4) {
-			for (uint32_t c = 0; c < 4; c++) {
-				uint32_t blockWid = (((block + c) * bufferWidth)+i)<<2 ;
-
-				*dst++ = src[blockWid+ 3];  // ar = 0
-				*dst++ = src[blockWid+ 0];
-				*dst++ = src[blockWid+ 7];  // ar = 1
-				*dst++ = src[blockWid+ 4];
-				*dst++ = src[blockWid+ 11]; // ar = 2
-				*dst++ = src[blockWid+ 8];
-				*dst++ = src[blockWid+ 15]; // ar = 3
-				*dst++ = src[blockWid+ 12];
-			}
-			for (uint32_t c = 0; c < 4; c++) {
-				uint32_t blockWid = (((block + c) * bufferWidth)+i)<<2 ;
-
-				*dst++ = src[blockWid+ 1];  // gb = 0
-				*dst++ = src[blockWid+ 2];
-				*dst++ = src[blockWid+ 5];  // gb = 1
-				*dst++ = src[blockWid+ 6];
-				*dst++ = src[blockWid+ 9];  // gb = 2
-				*dst++ = src[blockWid+ 10];
-				*dst++ = src[blockWid+ 13]; // gb = 3
-				*dst++ = src[blockWid+ 14];
-			}
-		}
-	}
-	DCFlushRange(dataBufferRGBA8, bufferSize);
-
-	return dataBufferRGBA8;
 }
 
 /**
@@ -333,26 +290,36 @@ uint16_t FreeTypeGX::cacheGlyphDataComplete()
  *
  * @param bmp	A pointer to the most recently rendered glyph's bitmap.
  * @param charData	A pointer to an allocated ftgxCharData structure whose data represent that of the last rendered glyph.
+ *
+ * Optimized for RGBA8 use by Dimok.
  */
 void FreeTypeGX::loadGlyphData(FT_Bitmap *bmp, ftgxCharData *charData)
 {
-	uint32_t *glyphData = (uint32_t *)memalign(32, charData->textureWidth * charData->textureHeight * 4);
-	memset(glyphData, 0x00, charData->textureWidth * charData->textureHeight * 4);
+    int length = charData->textureWidth * charData->textureHeight * 4;
+
+	uint8_t * glyphData = (uint8_t *) memalign(32, length);
+	if(!glyphData)
+        return;
+
+	memset(glyphData, 0x00, length);
 
 	uint8_t *src = (uint8_t *)bmp->buffer;
-	uint32_t *dest = glyphData, *ptr = dest;
+	uint32_t offset;
 
-	for (int imagePosY = 0; imagePosY < bmp->rows; imagePosY++)
+	for (int imagePosY = 0; imagePosY < bmp->rows; ++imagePosY)
 	{
-		for (int imagePosX = 0; imagePosX < bmp->width; imagePosX++)
+		for (int imagePosX = 0; imagePosX < bmp->width; ++imagePosX)
 		{
-			*ptr++ = EXPLODE_UINT8_TO_UINT32(*src);
-			src++;
+		    offset = ((((imagePosY >> 2) * (charData->textureWidth >> 2) + (imagePosX >> 2)) << 5) + ((imagePosY & 3) << 2) + (imagePosX & 3)) << 1;
+			glyphData[offset] = *src;
+			glyphData[offset+1] = *src;
+			glyphData[offset+32] = *src;
+			glyphData[offset+33] = *src;
+			++src;
 		}
-		ptr = dest += charData->textureWidth;
 	}
-	charData->glyphDataTexture = convertBufferToRGBA8(glyphData, charData->textureWidth, charData->textureHeight);
-	free(glyphData);
+	DCFlushRange(glyphData, length);
+	charData->glyphDataTexture = (uint32_t *) glyphData;
 }
 
 /**

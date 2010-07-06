@@ -50,22 +50,24 @@
 #define debug_printf(fmt, args...)
 #endif // DEBUG_USB2
 
-#define UMS_BASE (('U'<<24)|('M'<<16)|('S'<<8))
-#define USB_IOCTL_UMS_INIT						(UMS_BASE+0x1)
-#define USB_IOCTL_UMS_GET_CAPACITY				(UMS_BASE+0x2)
-#define USB_IOCTL_UMS_READ_SECTORS				(UMS_BASE+0x3)
+#define UMS_BASE 						(('U'<<24)|('M'<<16)|('S'<<8))
+#define USB_IOCTL_UMS_INIT				(UMS_BASE+0x1)
+#define USB_IOCTL_UMS_GET_CAPACITY		(UMS_BASE+0x2)
+#define USB_IOCTL_UMS_READ_SECTORS		(UMS_BASE+0x3)
 #define USB_IOCTL_UMS_WRITE_SECTORS		(UMS_BASE+0x4)
 #define USB_IOCTL_UMS_READ_STRESS		(UMS_BASE+0x5)
 #define USB_IOCTL_UMS_SET_VERBOSE		(UMS_BASE+0x6)
 #define USB_IOCTL_UMS_IS_INSERTED		(UMS_BASE+0x7)
+#define USB_IOCTL_UMS_USB_MODE			(UMS_BASE+0x8)
+#define USB_IOCTL_UMS_GET_USBLAN_PORT	(UMS_BASE+0x9)
 
 #define USB_IOCTL_UMS_UMOUNT			(UMS_BASE+0x10)
-#define USB_IOCTL_UMS_START			(UMS_BASE+0x11)
-#define USB_IOCTL_UMS_STOP			(UMS_BASE+0x12)
-#define USB_IOCTL_UMS_EXIT			(UMS_BASE+0x16)
+#define USB_IOCTL_UMS_START				(UMS_BASE+0x11)
+#define USB_IOCTL_UMS_STOP				(UMS_BASE+0x12)
+#define USB_IOCTL_UMS_EXIT				(UMS_BASE+0x16)
 
 #define UMS_HEAPSIZE					2*1024
-#define UMS_MAXPATH 16
+#define UMS_MAXPATH 					16
 
 static s32 hId = -1;
 static s32 __usb2fd = -1;
@@ -81,7 +83,6 @@ static u8 __usb2_heap_created = 0;
 static DISC_INTERFACE __io_usb1storage;
 static int usb1disc_inited = 0;
 extern const DISC_INTERFACE __io_usb2storage;
-static int currentMode = 2; // 1 = use USB1 interface, 2 = use USB2 interface
 
 static s32 USB2CreateHeap()
 {
@@ -108,10 +109,10 @@ static s32 USB2CreateHeap()
 
 static s32 USB2Storage_Initialize()
 {	
-	static bool inited = false;
-
-	if(inited)
+	if(__usb2fd > 0)
 		return 0;
+
+	char *devicepath = NULL;
 
 	if (usb2_mutex == LWP_MUTEX_NULL)
 		LWP_MutexInit(&usb2_mutex, false);
@@ -134,26 +135,9 @@ static s32 USB2Storage_Initialize()
 	if (fixed_buffer == NULL)
 		fixed_buffer = __lwp_heap_allocate(&usb2_heap, USB2_BUFFER);
 
-	inited = true;
-	return 0;
-}
-
-static s32 USB2Storage_Open(int verbose)
-{
-	char *devicepath = NULL;
-	s32 ret = USB_OK;
-	u32 size = 0;
-
-	if(__usb2fd > 0)
-		return 0;
-
-	if(USB2Storage_Initialize() < 0)
-		return -1;
-
-	LWP_MutexLock(usb2_mutex);
-
 	if (__usb2fd <= 0)
 	{
+		LWP_MutexLock(usb2_mutex);
 		devicepath = iosAlloc(hId, UMS_MAXPATH);
 		if (devicepath == NULL)
 		{
@@ -164,16 +148,26 @@ static s32 USB2Storage_Open(int verbose)
 		snprintf(devicepath, USB_MAXPATH, "/dev/usb2");
 		__usb2fd = IOS_Open(devicepath, 0);
 		iosFree(hId, devicepath);
+		LWP_MutexUnlock(usb2_mutex);
 	}
 
 	if(__usb2fd <= 0)
 		return -1;
 
-	if (verbose)
-		ret = IOS_IoctlvFormat(hId, __usb2fd, USB_IOCTL_UMS_SET_VERBOSE, ":");
+	return 0;
+}
+
+static s32 USB2Storage_Open()
+{	
+	s32 ret = USB_OK;
+	u32 size = 0;
+
+	if(USB2Storage_Initialize() < 0)
+		return -1;
+
 	ret = IOS_IoctlvFormat(hId, __usb2fd, USB_IOCTL_UMS_INIT, ":");
 	debug_printf("usb2 init value: %i\n", ret);
-
+	
 	if (ret < 0)
 		debug_printf("usb2 error init\n");
 	else
@@ -189,7 +183,7 @@ static s32 USB2Storage_Open(int verbose)
 	return ret;
 }
 
-static void USB2Storage_Close()
+void USB2Storage_Close()
 {
 	if(__usb2fd <= 0)
 		return;
@@ -225,28 +219,18 @@ void USB2Enable(bool enable)
 
 static bool __usb2storage_Startup(void)
 {
-	if(__usb2fd > 0)
-		return true;
-
-	USB2Storage_Open(0);
+	if(USB2Storage_Open() < 0)
+		return false;
 
 	if(__usb2fd > 0)
-	{
-		currentMode = 2;
 		return true;
-	}
 
-	if(__io_usb1storage.startup())
-	{
-		currentMode = 1;
-		return true;
-	}
 	return false;
 }
 
 static bool __usb2storage_IsInserted(void)
 {
-	if (!__usb2storage_Startup())
+	if (USB2Storage_Open() < 0)
 		return false;
 
 	if(usb2_mutex == LWP_MUTEX_NULL)
@@ -257,16 +241,10 @@ static bool __usb2storage_IsInserted(void)
 		LWP_MutexLock(usb2_mutex);
 		int retval = IOS_IoctlvFormat(hId, __usb2fd, USB_IOCTL_UMS_IS_INSERTED, ":");
 		LWP_MutexUnlock(usb2_mutex);
-		debug_printf("isinserted usb2 retval: %d  ret: %d\n",retval,ret);
+		debug_printf("isinserted usb2 retval: %d \n",retval);
 
 		if (retval > 0)
 			return true;
-	}
-
-	if (__io_usb1storage.isInserted() > 0)
-	{
-		debug_printf("isinserted usb1 retval: %d\n",retval);
-		return true;
 	}
 	return false;
 }
@@ -276,9 +254,6 @@ static bool __usb2storage_ReadSectors(u32 sector, u32 numSectors, void *buffer)
 	s32 ret = 1;
 	u32 sectors = 0;
 	uint8_t *dest = buffer;
-
-	if (currentMode == 1)
-		return __io_usb1storage.readSectors(sector, numSectors, buffer);
 
 	if (__usb2fd < 1 || usb2_mutex == LWP_MUTEX_NULL)
 		return false;
@@ -320,9 +295,6 @@ static bool __usb2storage_WriteSectors(u32 sector, u32 numSectors, const void *b
 	u32 sectors = 0;
 	uint8_t *dest = (uint8_t *) buffer;
 
-	if (currentMode == 1)
-		return __io_usb1storage.writeSectors(sector, numSectors, buffer);
-
 	if (__usb2fd < 1 || usb2_mutex == LWP_MUTEX_NULL)
 		return false;
 
@@ -358,18 +330,24 @@ static bool __usb2storage_WriteSectors(u32 sector, u32 numSectors, const void *b
 
 static bool __usb2storage_ClearStatus(void)
 {
-	if (currentMode == 1)
-		return __io_usb1storage.clearStatus();
-
 	return true;
 }
 
 static bool __usb2storage_Shutdown(void)
 {
-	if (currentMode == 1)
-		return __io_usb1storage.shutdown();
-
 	return true;
+}
+
+void SetUSB2Mode(int mode)
+{
+	USB2Storage_Initialize();
+	IOS_IoctlvFormat(hId, __usb2fd, USB_IOCTL_UMS_USB_MODE, "b:",(u8)mode); 
+}
+
+int GetUSB2LanPort()
+{
+	USB2Storage_Initialize();
+	return IOS_IoctlvFormat(hId, __usb2fd, USB_IOCTL_UMS_GET_USBLAN_PORT, ":");
 }
 
 const DISC_INTERFACE __io_usb2storage = { 
