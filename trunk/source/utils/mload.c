@@ -15,6 +15,8 @@
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#ifdef HW_RVL
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -259,3 +261,5 @@ bool load_ehci_module()
 	usleep(5000);
 	return true;
 }
+
+#endif
