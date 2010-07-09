@@ -14,8 +14,6 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
- 
-#ifdef HW_RVL
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +26,6 @@
 #define MLOAD_GET_IOS_BASE	    0x4D4C4401
 #define MLOAD_GET_MLOAD_VERSION 0x4D4C4402
 #define MLOAD_RUN_THREAD        0x4D4C4482
-#define MLOAD_GET_LOAD_BASE     0x4D4C4490
 #define MLOAD_MEMSET			0x4D4C4491
 
 #define getbe32(x) ((adr[x]<<24) | (adr[x+1]<<16) | (adr[x+2]<<8) | (adr[x+3]))
@@ -136,7 +133,7 @@ int mload_init()
 	mloadVersion = IOS_IoctlvFormat(hid, mload_fd, MLOAD_GET_MLOAD_VERSION, ":"); 
 	iosBase = IOS_IoctlvFormat(hid, mload_fd, MLOAD_GET_IOS_BASE, ":");
 
-	if(mloadVersion < 82) // unsupported IOS202
+	if(mloadVersion < 0x52) // unsupported IOS202
 		return mload_close();
 
 	return mload_fd;
@@ -248,33 +245,17 @@ static int mload_run_thread(void *starlet_addr, void *starlet_top_stack, int sta
 	return IOS_IoctlvFormat(hid, mload_fd, MLOAD_RUN_THREAD, "iiii:", starlet_addr, starlet_top_stack, stack_size, priority);
 }
 
-// get the base and the size of the memory readable/writable to load modules
-static int mload_get_load_base(u32 *starlet_base, int *size)
-{
-	if (mload_init() < 0)
-		return -1;
-
-	return IOS_IoctlvFormat(hid, mload_fd, MLOAD_GET_LOAD_BASE, ":ii", starlet_base, size);
-}
-
 bool load_ehci_module()
 {
 	data_elf elf;
 	memset(&elf, 0, sizeof(data_elf));
 
-	u32 addr;
-	int len;
-
-	mload_get_load_base(&addr, &len);
-
 	if(mload_elf((void *) ehcmodule_elf, &elf) != 0)
 		return false;
 
-	if(mload_run_thread(elf.start, elf.stack, elf.size_stack, 0x47) < 0)
+	if(mload_run_thread(elf.start, elf.stack, elf.size_stack, elf.prio) < 0)
 		return false;
 	
 	usleep(5000);
 	return true;
 }
-
-#endif
