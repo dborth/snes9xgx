@@ -42,7 +42,7 @@ void GuiSound::Play()
 	switch(type)
 	{
 		case SOUND_PCM:
-		vol = 2.55f*(volume*GCSettings.SFXVolume);
+		vol = 0.0255f*(volume*GCSettings.SFXVolume);
 		voice = ASND_GetFirstUnusedVoice();
 		if(voice >= 0)
 			ASND_SetVoice(voice, VOICE_STEREO_16BIT, 48000, 0,
@@ -134,7 +134,7 @@ void GuiSound::SetVolume(int vol)
 	if(voice < 0)
 		return;
 
-	int newvol = 2.55f*(volume*GCSettings.SFXVolume);
+	int newvol = 0.0255f*(volume*GCSettings.SFXVolume);
 
 	switch(type)
 	{
