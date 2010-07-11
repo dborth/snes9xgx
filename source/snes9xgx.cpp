@@ -428,7 +428,8 @@ main(int argc, char *argv[])
 	setGFX ();
 	if (!S9xGraphicsInit ())
 		ExitApp();
-
+	
+	AllocGfxMem();
 	S9xInitSync(); // initialize frame sync
 	InitFreeType((u8*)font_ttf, font_ttf_size); // Initialize font system
 #ifdef HW_RVL
@@ -438,7 +439,6 @@ main(int argc, char *argv[])
 	savebuffer = (unsigned char *)malloc(SAVEBUFFERSIZE);
 	browserList = (BROWSERENTRY *)malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
 #endif
-	AllocGfxMem();
 	InitGUIThreads();
 
 	while (1) // main loop
