@@ -485,32 +485,60 @@ void CreateAppPath(char * origpath)
 	free(path);
 }
 
+static char *GetExt(char *file)
+{
+	if(!file)
+		return NULL;
+
+	char *ext = strrchr(file,'.');
+	if(ext != NULL)
+	{
+		ext++;
+		int extlen = strlen(ext);
+		if(extlen > 5)
+			return NULL;
+	}
+	return ext;
+}
+
 bool ParseDirEntries()
 {
 	if(!dirIter)
 		return false;
 
 	char filename[MAXPATHLEN];
+	char *ext;
 	struct stat filestat;
 
-	int i, res;
+	int i = 0;
+	int res;
 
-	for(i=0; i < 20; i++)
+	while(i < 20)
 	{
 		res = dirnext(dirIter,filename,&filestat);
 
 		if(res != 0)
 			break;
 
-		if(strcmp(filename,".") == 0)
-		{
-			i--;
+		if(filename[0] == '.' && filename[1] != '.')
 			continue;
+
+		ext = GetExt(filename);
+
+		// don't show the file if it's not a valid ROM
+		if((filestat.st_mode & _IFDIR) == 0)
+		{
+			if(ext == NULL)
+				continue;
+
+			if(	stricmp(ext, "smc") != 0 && stricmp(ext, "fig") != 0 &&
+				stricmp(ext, "sfc") != 0 && stricmp(ext, "swc") != 0 &&
+				stricmp(ext, "zip") != 0 && stricmp(ext, "7z") != 0)
+				continue;
 		}
 
 		if(!AddBrowserEntry())
 		{
-			i=0;
 			parseHalt = true;
 			break;
 		}
@@ -532,6 +560,7 @@ bool ParseDirEntries()
 		{
 			StripExt(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename); // hide file extension
 		}
+		i++;
 	}
 
 	// Sort the file list
