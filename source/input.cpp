@@ -209,7 +209,7 @@ UpdatePads()
 
 	now = gettime();
 
-	if(!padsConnected && diff_usec(prev, now) < 2000000)
+	if(!padsConnected && diff_sec(prev, now) < 2)
 		return;
 
 	prev = now;
