@@ -57,6 +57,7 @@ bool isMounted[7] = { false, false, false, false, false, false, false };
 static lwp_t parsethread = LWP_THREAD_NULL;
 static DIR_ITER * dirIter = NULL;
 static bool parseHalt = true;
+static bool parseFilter = true;
 bool ParseDirEntries();
 int selectLoadedFile = 0;
 
@@ -526,7 +527,7 @@ bool ParseDirEntries()
 		ext = GetExt(filename);
 
 		// don't show the file if it's not a valid ROM
-		if((filestat.st_mode & _IFDIR) == 0)
+		if(parseFilter && (filestat.st_mode & _IFDIR) == 0)
 		{
 			if(ext == NULL)
 				continue;
@@ -615,10 +616,11 @@ bool ParseDirEntries()
  * Browse subdirectories
  **************************************************************************/
 int
-ParseDirectory(bool waitParse)
+ParseDirectory(bool waitParse, bool filter)
 {
 	int retry = 1;
 	bool mounted = false;
+	parseFilter = filter;
 	
 	ResetBrowser(); // reset browser
 
@@ -680,7 +682,8 @@ ParseDirectory(bool waitParse)
 
 	if(waitParse) // wait for complete parsing
 	{
-    ShowAction("Loading...");
+		ShowAction("Loading...");
+
 		while(!LWP_ThreadIsSuspended(parsethread))
 			usleep(THREAD_SLEEP);
 
