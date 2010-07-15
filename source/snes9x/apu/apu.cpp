@@ -237,7 +237,7 @@ namespace spc
 static void EightBitize (uint8 *, int);
 static void DeStereo (uint8 *, int);
 static void ReverseStereo (uint8 *, int);
-static void UpdatePlaybackRate (void);
+void UpdatePlaybackRate (void);
 static void from_apu_to_state (uint8 **, void *, size_t);
 static void to_apu_from_state (uint8 **, void *, size_t);
 static void SPCSnapshotCallback (void);
@@ -408,7 +408,7 @@ void S9xSetSamplesAvailableCallback (apu_callback callback, void *data)
 	spc::extra_data  = data;
 }
 
-static void UpdatePlaybackRate (void)
+void UpdatePlaybackRate (void)
 {
 	if (Settings.SoundInputRate == 0)
 		Settings.SoundInputRate = APU_DEFAULT_INPUT_RATE;
