@@ -34,7 +34,7 @@ char * StripDevice(char * path);
 bool ChangeInterface(int device, bool silent);
 bool ChangeInterface(char * filepath, bool silent);
 void CreateAppPath(char * origpath);
-int ParseDirectory(bool waitParse = false);
+int ParseDirectory(bool waitParse = false, bool filter = true);
 void AllocSaveBuffer();
 void FreeSaveBuffer();
 size_t LoadFile(char * rbuffer, char *filepath, size_t length, bool silent);
