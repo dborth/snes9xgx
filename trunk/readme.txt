@@ -10,7 +10,7 @@
 ­————————————————————————————————————————————————————————————————————————————
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
-|0O×øo·                      Snes9x GX 4.2.0                          ·oø×O0|
+|0O×øo·                      Snes9x GX 4.2.1                          ·oø×O0|
 |                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
 `¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
@@ -42,6 +42,16 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.2.1 - July 14, 2010]
+
+* Improved audio timing
+* Fixed 16:9 correction in Original mode
+* Ability to use both USB ports (requires updated IOS 202 - WARNING: older 
+  versions of IOS 202 are NO LONGER supported)
+* Fixed issue with IPS patch files
+* Hide non-ROM files
+* Other minor improvements
 
 [4.2.0 - June 20, 2010]
 

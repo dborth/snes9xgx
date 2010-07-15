@@ -30,6 +30,8 @@
 #include "snes9x/snes9x.h"
 #include "snes9x/memmap.h"
 
+extern void UpdatePlaybackRate(void);
+
 /*** Snes9x GFX Buffer ***/
 #define SNES9XGFX_SIZE 		(EXT_PITCH*EXT_HEIGHT)
 #define FILTERMEM_SIZE 		(512*MAX_SNES_HEIGHT*4)
@@ -630,10 +632,14 @@ ResetVideo_Emu ()
 			rmode->xfbMode = VI_XFBMODE_DF;
 			rmode->viTVMode |= VI_INTERLACE;
 		}
+		Settings.SoundInputRate = 31894;
+		UpdatePlaybackRate();
 	}
 	else
 	{
 		rmode = FindVideoMode();
+		Settings.SoundInputRate = 31953;
+		UpdatePlaybackRate();
 	}
 
 	SetupVideoMode(rmode); // reconfigure VI
