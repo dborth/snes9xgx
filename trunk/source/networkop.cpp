@@ -152,8 +152,14 @@ bool DownloadUpdate()
 	if (hfile)
 	{
 		if(http_request(updateURL, hfile, NULL, (1024*1024*10), NOTSILENT) > 0)
+		{
+			fclose (hfile);
 			result = unzipArchive(updateFile, (char *)pathPrefix[device]);
-		fclose (hfile);
+		}
+		else
+		{
+			fclose (hfile);
+		}
 		remove(updateFile); // delete update file
 	}
 
