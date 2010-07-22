@@ -50,12 +50,9 @@ void UpdateCheck()
 	if(!updateChecked && networkInit && (isMounted[DEVICE_SD] || isMounted[DEVICE_USB]))
 	{
 		updateChecked = true;
-		static char url[128];
-		snprintf(url, 128, "http://snes9x-gx.googlecode.com/svn/trunk/update.xml");
-		u8 * tmpbuffer = (u8 *)memalign(32,32768);
-		memset(tmpbuffer, 0, 32768);
+		u8 tmpbuffer[256];
 
-		if (http_request(url, NULL, tmpbuffer, 32768, SILENT) > 0)
+		if (http_request("http://snes9x-gx.googlecode.com/svn/trunk/update.xml", NULL, tmpbuffer, 256, SILENT) > 0)
 		{
 			mxml_node_t *xml;
 			mxml_node_t *item;
@@ -103,7 +100,6 @@ void UpdateCheck()
 				mxmlDelete(xml);
 			}
 		}
-		free(tmpbuffer);
 	}
 }
 
