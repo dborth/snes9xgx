@@ -46,61 +46,64 @@ bool updateFound = false; // true if an app update was found
 
 void UpdateCheck()
 {
-	// we can only check for the update if we have internet + SD
-	if(!updateChecked && networkInit && (isMounted[DEVICE_SD] || isMounted[DEVICE_USB]))
+	// we only check for an update if we have internet + SD/USB
+	if(updateChecked || !networkInit)
+		return;
+
+	if(!isMounted[DEVICE_SD] && !isMounted[DEVICE_USB])
+		return;
+
+	updateChecked = true;
+	u8 tmpbuffer[256];
+
+	if (http_request("http://snes9x-gx.googlecode.com/svn/trunk/update.xml", NULL, tmpbuffer, 256, SILENT) <= 0)
+		return;
+
+	mxml_node_t *xml;
+	mxml_node_t *item;
+
+	xml = mxmlLoadString(NULL, (char *)tmpbuffer, MXML_TEXT_CALLBACK);
+
+	if(!xml)
+		return;
+
+	// check settings version
+	item = mxmlFindElement(xml, xml, "app", "version", NULL, MXML_DESCEND);
+	if(item) // a version entry exists
 	{
-		updateChecked = true;
-		u8 tmpbuffer[256];
+		const char * version = mxmlElementGetAttr(item, "version");
 
-		if (http_request("http://snes9x-gx.googlecode.com/svn/trunk/update.xml", NULL, tmpbuffer, 256, SILENT) > 0)
+		if(version && strlen(version) == 5)
 		{
-			mxml_node_t *xml;
-			mxml_node_t *item;
+			int verMajor = version[0] - '0';
+			int verMinor = version[2] - '0';
+			int verPoint = version[4] - '0';
+			int curMajor = APPVERSION[0] - '0';
+			int curMinor = APPVERSION[2] - '0';
+			int curPoint = APPVERSION[4] - '0';
 
-			xml = mxmlLoadString(NULL, (char *)tmpbuffer, MXML_TEXT_CALLBACK);
-
-			if(xml)
+			// check that the versioning is valid and is a newer version
+			if((verMajor >= 0 && verMajor <= 9 &&
+				verMinor >= 0 && verMinor <= 9 &&
+				verPoint >= 0 && verPoint <= 9) &&
+				(verMajor > curMajor ||
+				(verMajor == curMajor && verMinor > curMinor) ||
+				(verMajor == curMajor && verMinor == curMinor && verPoint > curPoint)))
 			{
-				// check settings version
-				item = mxmlFindElement(xml, xml, "app", "version", NULL, MXML_DESCEND);
-				if(item) // a version entry exists
+				item = mxmlFindElement(xml, xml, "file", NULL, NULL, MXML_DESCEND);
+				if(item)
 				{
-					const char * version = mxmlElementGetAttr(item, "version");
-
-					if(version && strlen(version) == 5)
+					const char * tmp = mxmlElementGetAttr(item, "url");
+					if(tmp)
 					{
-						int verMajor = version[0] - '0';
-						int verMinor = version[2] - '0';
-						int verPoint = version[4] - '0';
-						int curMajor = APPVERSION[0] - '0';
-						int curMinor = APPVERSION[2] - '0';
-						int curPoint = APPVERSION[4] - '0';
-
-						// check that the versioning is valid and is a newer version
-						if((verMajor >= 0 && verMajor <= 9 &&
-							verMinor >= 0 && verMinor <= 9 &&
-							verPoint >= 0 && verPoint <= 9) &&
-							(verMajor > curMajor ||
-							(verMajor == curMajor && verMinor > curMinor) ||
-							(verMajor == curMajor && verMinor == curMinor && verPoint > curPoint)))
-						{
-							item = mxmlFindElement(xml, xml, "file", NULL, NULL, MXML_DESCEND);
-							if(item)
-							{
-								const char * tmp = mxmlElementGetAttr(item, "url");
-								if(tmp)
-								{
-									snprintf(updateURL, 128, "%s", tmp);
-									updateFound = true;
-								}
-							}
-						}
+						snprintf(updateURL, 128, "%s", tmp);
+						updateFound = true;
 					}
 				}
-				mxmlDelete(xml);
 			}
 		}
 	}
+	mxmlDelete(xml);
 }
 
 static bool unzipArchive(char * zipfilepath, char * unzipfolderpath)

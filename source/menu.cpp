@@ -129,6 +129,9 @@ void ResetText()
 int
 WindowPrompt(const char *title, const char *msg, const char *btn1Label, const char *btn2Label)
 {
+	if(!mainWindow || ExitRequested || ShutdownRequested)
+		return 0;
+
 	int choice = -1;
 
 	GuiWindow promptWindow(448,288);
