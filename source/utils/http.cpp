@@ -108,57 +108,39 @@ static s32 tcp_connect(char *host, const u16 port)
 	return s;
 }
 
-static char * tcp_readln(const s32 s, const u16 max_length, const u64 start_time,
-		const u16 timeout)
+static int tcp_readln(const s32 s, char *buf, const u16 max_length)
 {
-	char *buf;
-	u16 c;
-	s32 res;
-	char *ret;
+	s32 res = -1;
+	s32 ret;
+	u64 start_time = gettime();
+	u16 c = 0;
 
-	buf = (char *) malloc(max_length);
-
-	c = 0;
-	ret = NULL;
-	while (true)
+	while (c < max_length)
 	{
-		if (ticks_to_millisecs(diff_ticks(start_time, gettime())) > timeout)
+		if (ticks_to_millisecs(diff_ticks(start_time, gettime())) > HTTP_TIMEOUT)
 			break;
 
-		res = net_read(s, &buf[c], 1);
+		ret = net_read(s, &buf[c], 1);
 
-		if ((res == 0) || (res == -EAGAIN))
+		if (ret == 0 || ret == -EAGAIN)
 		{
 			usleep(20 * 1000);
 			continue;
 		}
 
-		if (res < 0)
+		if (ret < 0)
 			break;
 
-		if ((c > 0) && (buf[c - 1] == '\r') && (buf[c] == '\n'))
+		if (c > 0 && buf[c - 1] == '\r' && buf[c] == '\n')
 		{
-			if (c == 1)
-			{
-				ret = strdup("");
-				break;
-			}
-
-			ret = strndup(buf, c - 1);
-
+			res = 0;
+			buf[c-1] = 0;
 			break;
 		}
-
 		c++;
-
-		if (c == max_length)
-			break;
-
-		usleep(300);
+		usleep(100);
 	}
-
-	free(buf);
-	return ret;
+	return res;
 }
 
 static int tcp_read(const s32 s, u8 *buffer, const u32 length)
@@ -258,7 +240,8 @@ static int tcp_write(const s32 s, const u8 *buffer, const u32 length)
 
 	return left == 0;
 }
-static bool http_split_url(char **host, char **path, const char *url)
+
+static bool http_split_url(char *host, char *path, const char *url)
 {
 	const char *p;
 	char *c;
@@ -272,9 +255,8 @@ static bool http_split_url(char **host, char **path, const char *url)
 	if (c == NULL || c[0] == 0)
 		return false;
 
-	*host = strndup(p, c - p);
-	*path = strdup(c);
-
+	snprintf(host, c-p, "%s", p);
+	strcpy(path, c);
 	return true;
 }
 
@@ -284,12 +266,12 @@ static bool http_split_url(char **host, char **path, const char *url)
  * http_request
  * Retrieves the specified URL, and stores it in the specified file or buffer
  ***************************************************************************/
-int http_request(const char *url, FILE * hfile, u8 * buffer, u32 maxsize, bool silent)
+int http_request(const char *url, FILE *hfile, u8 *buffer, u32 maxsize, bool silent)
 {
 	int res = 0;
-	char *http_host;
+	char http_host[1024];
+	char http_path[1024];
 	u16 http_port;
-	char *http_path;
 
 	http_res result;
 	u32 http_status;
@@ -302,8 +284,8 @@ int http_request(const char *url, FILE * hfile, u8 * buffer, u32 maxsize, bool s
 
 	if (url == NULL || (hfile == NULL && buffer == NULL))
 		return 0;
-
-	if (!http_split_url(&http_host, &http_path, url))
+		
+	if (!http_split_url(http_host, http_path, url))
 		return 0;
 
 	http_port = 80;
@@ -317,7 +299,7 @@ int http_request(const char *url, FILE * hfile, u8 * buffer, u32 maxsize, bool s
 		return 0;
 	}
 
-	char *request = (char *) malloc(1024);
+	char request[1024];
 	char *r = request;
 
 	r += sprintf(r, "GET %s HTTP/1.1\r\n", http_path);
@@ -326,13 +308,11 @@ int http_request(const char *url, FILE * hfile, u8 * buffer, u32 maxsize, bool s
 
 	res = tcp_write(s, (u8 *) request, strlen(request));
 
-	free(request);
+	char line[256];
 
 	for (linecount = 0; linecount < 32; linecount++)
 	{
-		char *line = tcp_readln(s, 0xff, gettime(), (const u16) HTTP_TIMEOUT);
-
-		if (!line)
+		if (tcp_readln(s, line, 255) != 0)
 		{
 			http_status = 404;
 			result = HTTPR_ERR_REQUEST;
@@ -340,18 +320,10 @@ int http_request(const char *url, FILE * hfile, u8 * buffer, u32 maxsize, bool s
 		}
 
 		if (strlen(line) < 1)
-		{
-			free(line);
-			line = NULL;
 			break;
-		}
 
 		sscanf(line, "HTTP/1.%*u %u", &http_status);
 		sscanf(line, "Content-Length: %u", &content_length);
-
-		free(line);
-		line = NULL;
-
 	}
 
 	if (http_status != 200)
@@ -386,7 +358,7 @@ int http_request(const char *url, FILE * hfile, u8 * buffer, u32 maxsize, bool s
 	else
 	{
 		// read into file
-		u32 bufSize = (1026 * 256);
+		u32 bufSize = (1024 * 32);
 		u32 bytesLeft = content_length;
 		u32 readSize;
 
