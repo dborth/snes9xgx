@@ -108,6 +108,7 @@ struct SGCSettings{
 
 void ExitApp();
 void ShutdownWii();
+bool SaneIOS();
 extern struct SGCSettings GCSettings;
 extern int ScreenshotRequested;
 extern int ConfigRequested;

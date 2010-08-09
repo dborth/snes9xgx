@@ -315,14 +315,6 @@ void MountAllFAT()
  ***************************************************************************/
 bool MountDVD(bool silent)
 {
-	#ifdef HW_RVL
-	if(IOS_GetVersion() != 202)
-	{
-		ErrorPrompt("Please install IOS 202 for DVD support.");
-		return false;
-	}
-	#endif
-
 	bool mounted = false;
 	int retry = 1;
 
