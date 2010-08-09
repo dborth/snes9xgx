@@ -258,7 +258,10 @@ bool SaneIOS()
 	u32 num_titles=0;
 	u32 tmd_size;
 	u32 ios = IOS_GetVersion();
-	u8 tmdbuffer[MAX_SIGNED_TMD_SIZE] ATTRIBUTE_ALIGN(32); 
+	u32 tmdbuffer[MAX_SIGNED_TMD_SIZE] ATTRIBUTE_ALIGN(32); 
+
+	if(ios > 200)
+		return false;
 
 	if (ES_GetNumTitles(&num_titles) < 0)
 		return false;
@@ -373,8 +376,6 @@ main(int argc, char *argv[])
 		else if((version < 61 || version >= 200) && FindIOS(61))
 			IOS_ReloadIOS(61);
 	}
-
-	DI_LoadDVDX(false);
 	DI_Init();
 	#endif
 
