@@ -1,0 +1,392 @@
+msgid "&"
+msgstr ""
+
+msgid "16:9 Correction"
+msgstr "16:9アスペクト"
+
+msgid "An update is available!"
+msgstr "アップグレードバージョンがありますよ!"
+
+msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
+msgstr "現在のゲームを本当にリセットしたいんですか? セーブしていないデータは無くなってしまいますよ."
+
+msgid "Are you sure that you want to reset your mappings?"
+msgstr "コントローラーボタンコンフィグをリセットしたいんですか?"
+
+msgid "Are you sure that you want to reset your settings?"
+msgstr "エミュレーターコンフィグをリセットしたいんですか?"
+
+msgid "Auto"
+msgstr "オート"
+
+msgid "Auto Detect"
+msgstr "オートディテクト"
+
+msgid "Auto Load"
+msgstr "オートーロード"
+
+msgid "Auto Save"
+msgstr "オートセーブ"
+
+msgid "Automatic (Recommended)"
+msgstr "オートマチック (推奨)"
+
+msgid "Back"
+msgstr "バック"
+
+msgid "Both"
+msgstr "両方"
+
+msgid "Button Mapping"
+msgstr "コントローラーボタン"
+
+msgid "Button Mappings"
+msgstr "ボタンを決める"
+
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgid "Caps"
+msgstr "キャップス"
+
+msgid "Cheats"
+msgstr "チートコード"
+
+msgid "Cheats file not found!"
+msgstr "チートファイルがない!"
+
+msgid "Cheats Folder"
+msgstr "チートフォルダー"
+
+msgid "Choose Game"
+msgstr "ゲームを選ぶ"
+
+msgid "Classic Controller"
+msgstr "クラシックコントローラー"
+
+msgid "Close"
+msgstr "閉じる"
+
+msgid "Coding"
+msgstr "コーディング"
+
+msgid "Coding & menu design"
+msgstr "コーディングとプログラムデザイン"
+
+msgid "Controller"
+msgstr "コントローラー"
+
+msgid "Cover View"
+msgstr "カバービュー"
+
+msgid "Covers Folder"
+msgstr "カバーフォルダー"
+
+msgid "Credits"
+msgstr "クレジット"
+
+msgid "Default"
+msgstr "ディフォルト"
+
+msgid "Disabled"
+msgstr "使用禁止"
+
+msgid "distributed, or modified under the terms of the"
+msgstr "条件によって分散しているか、変更している"
+
+msgid "Don't Save"
+msgstr "セーブしない"
+
+msgid "Enabled"
+msgstr "使用中"
+
+msgid "Error"
+msgstr "エラー"
+
+msgid "Exit"
+msgstr "終了"
+
+msgid "Exit Action"
+msgstr "行動中止""
+
+msgid "Filtered"
+msgstr "フィルターされた”
+
+msgid "Filtering"
+msgstr "フィルターリング"
+
+msgid "Game Settings"
+msgstr "ゲームコンフィグ"
+
+msgid "Game Settings - Button Mappings"
+msgstr "ゲームコンフィグ - ボタンコンフィグ"
+
+msgid "Game Settings - Cheats"
+msgstr "ゲームコンフィグ - チートコード"
+
+msgid "Game Settings - Video"
+msgstr "ゲームコンフィグ - ビデオ"
+
+msgid "GameCube Controller"
+msgstr "ゲームキューブ　コントローラー"
+
+msgid "GNU General Public License (GPL) Version 2."
+msgstr "GNU/GPLバージョン２の免許"
+
+msgid "Go Back"
+msgstr "戻る"
+
+msgid "Horizontal"
+msgstr "水平方向"
+
+msgid "Information"
+msgstr "インフォメーション"
+
+msgid "Justifier"
+msgstr "ジャスティファイアー"
+
+msgid "Language"
+msgstr "システム言語"
+
+msgid "Languages Folder"
+msgstr "言語フォルダー"
+
+msgid "Load"
+msgstr "ロード"
+
+msgid "Load Device"
+msgstr "デバイスをロードする"
+
+msgid "Load Folder"
+msgstr "フォルダーをロードする"
+
+msgid "Load Game"
+msgstr "ゲーム読み込み"
+
+msgid "Loading"
+msgstr "ゲームロード中"
+
+msgid "Main Menu"
+msgstr "メインメニュー"
+
+msgid "Menu"
+msgstr "メニュー"
+
+msgid "Menu artwork"
+msgstr "メニューアートワーク "
+
+msgid "Menu sound"
+msgstr "メニュー音"
+
+msgid "Music Volume"
+msgstr "音楽の音量 "
+
+msgid "Mute"
+msgstr "ミュート"
+
+msgid "Network"
+msgstr "ネットワーク"
+
+msgid "No"
+msgstr "いいえ"
+
+msgid "No game saves found."
+msgstr "セーブしたデータはなかった."
+
+msgid "NTSC (480i)"
+msgstr ""
+
+msgid "Nunchuk"
+msgstr "ナンチャク"
+
+msgid "Off"
+msgstr "オフ"
+
+msgid "Official Site: http://code.google.com/p/snes9x-gx/"
+msgstr "ホームページ： http://code.google.com/p/snes9x-gx/"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "On"
+msgstr "オン"
+
+msgid "Original"
+msgstr "オリジナル"
+
+msgid "PAL (50Hz)"
+msgstr ""
+
+msgid "PAL (60Hz)"
+msgstr ""
+
+msgid "Please Wait"
+msgstr "しばらく、そのままでお待ち下さい"
+
+msgid "Power off Wii"
+msgstr "Wii電源を消す"
+
+msgid "Press any button on the Classic Controller now. Press Home to clear the existing mapping."
+msgstr "今、クラシックコントローラーのいずれかのボタンを押して下さい。現在のコンフィグを消すために、ホームボタンを押して下さい。"
+
+msgid "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping."
+msgstr "今、ゲームキューブコントローラーのいずれかのボタンを押して下さい。現在のコンフィグを消すために、ホームかC-スティックのボタンを押して下さい。"
+
+msgid "Press any button on the GameCube Controller now. Press the C-Stick in any direction to clear the existing mapping."
+msgstr "今、ゲームキューブコントローラーのいずれかのボタンを押して下さい。現在のコンフィグを消すために、C-スティックのボタンを押して下さい。"
+
+msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
+msgstr "今、Wiiリモコンのいすれかのボタンを押して下さい。 現在のコンフィグを消すために、ホームボタンを押して下さい。"
+
+msgid "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping."
+msgstr "今、Wiiリモコンかナンチャクのいずれかのボタンを押してください。現在のコンフィグを消すために、ホームボタンを押して下さい。"
+
+msgid "Progressive (480p)"
+msgstr "プログレッシブ (480p)"
+
+msgid "Quit Game"
+msgstr "ゲーム終了"
+
+msgid "Quit this game? Any unsaved progress will be lost."
+msgstr "このゲームを終了したいの? セーブしなっかたデータはなくかるよ！."
+
+msgid "Reboot"
+msgstr "リブート"
+
+msgid "Rendering"
+msgstr "レンダリング"
+
+msgid "Reset"
+msgstr "リセット"
+
+msgid "Reset Game"
+msgstr "ゲームをリセットする"
+
+msgid "Reset Mappings"
+msgstr "コントローラーボタンをリセットする"
+
+msgid "Reset Settings"
+msgstr "セッティングをリセットする"
+
+msgid "Retry"
+msgstr "もう一回再試行"
+
+msgid "Return to Loader"
+msgstr "ローダーへ戻る"
+
+msgid "Return to Wii Menu"
+msgstr "Wiiメニューに戻る"
+
+msgid "Rumble"
+msgstr "震動"
+
+msgid "Save"
+msgstr "セーブ"
+
+msgid "Save Device"
+msgstr "セーブデバイス"
+
+msgid "Save Folder"
+msgstr "セーブフォルダー"
+
+msgid "Save Game"
+msgstr "ゲームをセーブする"
+
+msgid "Save Snapshot?"
+msgstr "セーブステートをセーブするの?"
+
+msgid "Save SRAM and Snapshot?"
+msgstr "ゲームのSRAMとセーブステートをセーブする?"
+
+msgid "Saving"
+msgstr "セーブ中"
+
+msgid "Scaling"
+msgstr "スケーリング "
+
+msgid "Screen Position"
+msgstr "画面位置"
+
+msgid "Screen Zoom"
+msgstr "画面ズーム"
+
+msgid "Settings"
+msgstr "セッティング"
+
+msgid "Settings - Menu"
+msgstr "セッティング - メニュー"
+
+msgid "Settings - Network"
+msgstr "セッティング - ネットワーク"
+
+msgid "Settings - Saving & Loading"
+msgstr "セッティング - セーブとロード"
+
+msgid "Shift"
+msgstr "変わる"
+
+msgid "SMB Share IP"
+msgstr "SMBの共有IPアドレス"
+
+msgid "SMB Share Name"
+msgstr "SMBの共有名前"
+
+msgid "SMB Share Password"
+msgstr "SMBの共有パスワード"
+
+msgid "SMB Share Username"
+msgstr "SMBの共有ユーザネーム"
+
+msgid "Snapshot"
+msgstr "スナップ"
+
+msgid "SNES Controller"
+msgstr "SFCコントローラー"
+
+msgid "SNES Mouse"
+msgstr "SFCマウス"
+
+msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
+msgstr "Snes9xーSnes9xティームの著作権１９９６年から２００６年"
+
+msgid "Sound Effects Volume"
+msgstr "音の音量"
+
+msgid "Super Scope"
+msgstr "スーパースコープ"
+
+msgid "This software is open source and may be copied,"
+msgstr "このソフトはオープンソースなので、配布することができます。"
+
+msgid "Unfiltered"
+msgstr "フィルター無し"
+
+msgid "Up One Level"
+msgstr "上に"
+
+msgid "Update Available"
+msgstr "アップデートがあります"
+
+msgid "Update later"
+msgstr "後でアップデートする"
+
+msgid "Update now"
+msgstr "今アップデートする"
+
+msgid "Vertical"
+msgstr "垂直"
+
+msgid "Video"
+msgstr "ビデオ"
+
+msgid "Video Mode"
+msgstr "ビデオモード"
+
+msgid "Wiimote"
+msgstr "Wiiリモコン"
+
+msgid "Wiimote Orientation"
+msgstr "Wiiリモコンの向き"
+
+msgid "Yes"
+msgstr "はい"
