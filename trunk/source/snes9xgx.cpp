@@ -214,51 +214,12 @@ void setFrameTimerMethod()
  * IOS Check
  ***************************************************************************/
 #ifdef HW_RVL
-static bool FindIOS(u32 ios)
-{
-	s32 ret;
-	u32 n;
-
-	u64 *titles = NULL;
-	u32 num_titles=0;
-
-	ret = ES_GetNumTitles(&num_titles);
-	if (ret < 0)
-		return false;
-
-	if(num_titles < 1) 
-		return false;
-
-	titles = (u64 *)memalign(32, num_titles * sizeof(u64) + 32);
-	if (!titles)
-		return false;
-
-	ret = ES_GetTitles(titles, num_titles);
-	if (ret < 0)
-	{
-		free(titles);
-		return false;
-	}
-		
-	for(n=0; n < num_titles; n++)
-	{
-		if((titles[n] & 0xFFFFFFFF)==ios) 
-		{
-			free(titles); 
-			return true;
-		}
-	}
-    free(titles); 
-	return false;
-}
-
 bool SaneIOS()
 {
 	bool res = false;
 	u32 num_titles=0;
 	u32 tmd_size;
 	u32 ios = IOS_GetVersion();
-	u32 tmdbuffer[MAX_SIGNED_TMD_SIZE] ATTRIBUTE_ALIGN(32); 
 
 	if(ios > 200)
 		return false;
@@ -270,8 +231,19 @@ bool SaneIOS()
 		return false;
 
 	u64 *titles = (u64 *)memalign(32, num_titles * sizeof(u64) + 32);
+	
+	if(!titles)
+		return false;
 
 	if (ES_GetTitles(titles, num_titles) < 0)
+	{
+		free(titles);
+		return false;
+	}
+	
+	u32 *tmdbuffer = (u32 *)memalign(32, MAX_SIGNED_TMD_SIZE);
+
+	if(!tmdbuffer)
 	{
 		free(titles);
 		return false;
@@ -297,6 +269,7 @@ bool SaneIOS()
 			break;
 		}
 	}
+	free(tmdbuffer);
     free(titles);
 	return res;
 }
@@ -368,14 +341,11 @@ main(int argc, char *argv[])
 	#ifdef HW_RVL
 	// only reload IOS if AHBPROT is not enabled
 	u32 version = IOS_GetVersion();
+	s32 preferred = IOS_GetPreferredVersion();
 
-	if(version != 58 && __di_check_ahbprot() != 1)
-	{
-		if(FindIOS(58))
-			IOS_ReloadIOS(58);
-		else if((version < 61 || version >= 200) && FindIOS(61))
-			IOS_ReloadIOS(61);
-	}
+	if(version != 58 && preferred > 0 && version != (u32)preferred && __di_check_ahbprot() != 1)
+		IOS_ReloadIOS(preferred);
+
 	DI_Init();
 	#endif
 

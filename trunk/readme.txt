@@ -43,6 +43,12 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.2.4 - August 14, 2010]
+
+* IOS 202 support removed
+* USB 2.0 support via IOS 58 added - requires that IOS58 be pre-installed
+* DVD support via AHBPROT - requires latest HBC
+
 [4.2.3 - July 22, 2010]
 
 * Fixed broken auto-update

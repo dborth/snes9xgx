@@ -503,14 +503,21 @@ SavePrefs (bool silent)
 			return false;
 		
 		sprintf(filepath, "%s%s", pathPrefix[device], APPFOLDER);
-				
-		if (!diropen(filepath))
+		DIR_ITER *dir = diropen(filepath);
+		if (!dir)
 		{
-			mkdir(filepath, 0777);
+			if(mkdir(filepath, 0777) != 0)
+				return false;
 			sprintf(filepath, "%s%s/roms", pathPrefix[device], APPFOLDER);
-			mkdir(filepath, 0777);
+			if(mkdir(filepath, 0777) != 0)
+				return false;
 			sprintf(filepath, "%s%s/saves", pathPrefix[device], APPFOLDER);
-			mkdir(filepath, 0777);
+			if(mkdir(filepath, 0777) != 0)
+				return false;
+		}
+		else
+		{
+			dirclose(dir);
 		}
 		sprintf(filepath, "%s%s/%s", pathPrefix[device], APPFOLDER, PREF_FILE_NAME);
 		sprintf(prefpath, "%s%s", pathPrefix[device], APPFOLDER);
