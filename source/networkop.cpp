@@ -19,9 +19,10 @@ ConnectShare (bool silent)
 #else
 
 #include <network.h>
+#include <malloc.h>
+#include <ogc/lwp_watchdog.h>
 #include <smb.h>
 #include <mxml.h>
-#include <malloc.h>
 
 #include "snes9xgx.h"
 #include "menu.h"
@@ -31,10 +32,10 @@ ConnectShare (bool silent)
 #include "utils/unzip/unzip.h"
 #include "utils/unzip/miniunz.h"
 
-bool inNetworkInit = false;
+static int netHalt = 0;
 static bool networkInit = false;
-static bool autoNetworkInit = true;
 static bool networkShareInit = false;
+char wiiIP[16] = { 0 };
 static bool updateChecked = false; // true if checked for app update
 static char updateURL[128]; // URL of app update
 bool updateFound = false; // true if an app update was found
@@ -179,49 +180,124 @@ bool DownloadUpdate()
  * Initializes the Wii/GameCube network interface
  ***************************************************************************/
 
-void InitializeNetwork(bool silent)
+static lwp_t networkthread = LWP_THREAD_NULL;
+static u8 netstack[8192] ATTRIBUTE_ALIGN (32);
+
+static void * netcb (void *arg)
 {
-	// stop if we're already initialized, or if auto-init has failed before
-	// in which case, manual initialization is required
-	if(networkInit || (silent && !autoNetworkInit))
-		return;
+	s32 res = 0;
+	int retry;
 
-	int retry = 1;
-	char ip[16];
-	s32 initResult;
-
-	if(!silent)
-		ShowAction ("Initializing network...");
-
-	while(inNetworkInit) // a network init is already in progress!
-		usleep(50);
-
-	if(!networkInit) // check again if the network was inited
+	while(netHalt != 2)
 	{
-		inNetworkInit = true;
+		retry = 30;
 
-		while(retry)
+		while (retry)
 		{
-			if(!silent)
-				ShowAction ("Initializing network...");
+			if (net_init_async(NULL, NULL) != 0)
+				break; // failed
 
-			initResult = if_config(ip, NULL, NULL, true);
+			res = net_get_status();
+			while (res == -EBUSY)
+			{
+				usleep(20000);
+				res = net_get_status();
+			}
 
-			if(initResult == 0)
-				networkInit = true;
-
-			if(networkInit || silent)
+			if (res != -EAGAIN && res != -ETIMEDOUT)
 				break;
 
-			retry = ErrorPromptRetry("Unable to initialize network!");
+			retry--;
+			usleep(2000);
+			continue;
 		}
 
-		// do not automatically attempt a reconnection
-		autoNetworkInit = false;
-		inNetworkInit = false;
+		if (res >= 0)
+		{
+			networkInit = true;
+
+			struct in_addr hostip;
+			hostip.s_addr = net_gethostip();
+			if (hostip.s_addr)
+				strcpy(wiiIP, inet_ntoa(hostip));
+		}
+
+		LWP_SuspendThread(networkthread);
 	}
-	if(!silent)
+	return NULL;
+}
+
+/****************************************************************************
+ * StartNetworkThread
+ *
+ * Signals the network thread to resume, or creates a new thread
+ ***************************************************************************/
+void StartNetworkThread()
+{
+	netHalt = 0;
+
+	if(networkthread == LWP_THREAD_NULL)
+		LWP_CreateThread(&networkthread, netcb, NULL, netstack, 8192, 40);
+	else
+		LWP_ResumeThread(networkthread);
+}
+
+/****************************************************************************
+ * StopNetworkThread
+ *
+ * Signals the network thread to stop
+ ***************************************************************************/
+void StopNetworkThread()
+{
+	if(networkthread == LWP_THREAD_NULL)
+		return;
+
+	netHalt = 2;
+
+	if(LWP_ThreadIsSuspended(networkthread))
+		LWP_ResumeThread(networkthread);
+
+	// wait for thread to finish
+	LWP_JoinThread(networkthread, NULL);
+	networkthread = LWP_THREAD_NULL;
+}
+
+bool InitializeNetwork(bool silent)
+{
+	if(networkInit)
+	{
+		StopNetworkThread();
+		return true;
+	}
+
+	if(silent)
+		return false;
+
+	int retry = 1;
+
+	while(retry)
+	{
+		u64 start = gettime();
+
+		ShowAction("Initializing network...");
+		StartNetworkThread();
+
+		while (!LWP_ThreadIsSuspended(networkthread))
+		{
+			usleep(50 * 1000);
+
+			if(diff_sec(start, gettime()) > 10) // wait for 10 seconds max for net init
+				break;
+		}
+
 		CancelAction();
+
+		if(networkInit)
+			break;
+
+		retry = ErrorPromptRetry("Unable to initialize network!");
+	}
+	return networkInit;
 }
 
 void CloseShare()
@@ -243,6 +319,9 @@ ConnectShare (bool silent)
 	#ifndef HW_RVL
 	return false;
 	#endif
+
+	if(!InitializeNetwork(silent))
+		return false;
 
 	if(networkShareInit)
 		return true;
@@ -270,12 +349,6 @@ ConnectShare (bool silent)
 		}
 		return false;
 	}
-
-	if(!networkInit)
-		InitializeNetwork(silent);
-
-	if(!networkInit)
-		return false;
 
 	while(retry)
 	{

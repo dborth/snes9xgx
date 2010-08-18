@@ -13,11 +13,11 @@
 
 void UpdateCheck();
 bool DownloadUpdate();
-void InitializeNetwork(bool silent);
+void StartNetworkThread();
+bool InitializeNetwork(bool silent);
 bool ConnectShare (bool silent);
 void CloseShare();
 
 extern bool updateFound;
-extern bool inNetworkInit;
 
 #endif
