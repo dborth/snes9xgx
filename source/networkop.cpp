@@ -225,7 +225,10 @@ static void * netcb (void *arg)
 			struct in_addr hostip;
 			hostip.s_addr = net_gethostip();
 			if (hostip.s_addr)
+			{
 				strcpy(wiiIP, inet_ntoa(hostip));
+				networkInit = true;
+			}
 		}
 		LWP_SuspendThread(networkthread);
 	}
