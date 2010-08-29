@@ -3565,9 +3565,7 @@ static int MenuSettingsMenu()
 			case 5:
 				GCSettings.language++;
 
-				if(GCSettings.language == LANG_ITALIAN)
-					GCSettings.language = LANG_DUTCH;
-				else if(GCSettings.language == LANG_SIMP_CHINESE)
+				if(GCSettings.language == LANG_SIMP_CHINESE)
 					GCSettings.language = LANG_PORTUGUESE;
 				else if(GCSettings.language == LANG_JAPANESE)
 					GCSettings.language = LANG_ENGLISH;
@@ -3634,6 +3632,7 @@ static int MenuSettingsMenu()
 				case LANG_TRAD_CHINESE:	sprintf(options.value[5], "Chinese (Traditional)"); break;
 				case LANG_KOREAN:		sprintf(options.value[5], "Korean"); break;
 				case LANG_PORTUGUESE:	sprintf(options.value[5], "Portuguese"); break;
+				case LANG_BRAZILIAN_PORTUGUESE: sprintf(options.value[5], "Brazilian Portuguese"); break;
 			}
 			
 			optionBrowser.TriggerUpdate();
