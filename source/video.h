@@ -36,7 +36,7 @@ extern bool progressive;
 extern u8 * gameScreenPng;
 extern int gameScreenPngSize;
 extern u32 FrameTimer;
-extern u8 vmode_60hz;
+extern bool vmode_60hz;
 extern int timerstyle;
 extern int CheckVideo;
 

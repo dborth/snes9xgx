@@ -195,12 +195,12 @@ void setFrameTimerMethod()
 	(timerstyle: 0=NTSC vblank, 1=PAL int timer)
 	*/
 	if ( Settings.PAL ) {
-		if(vmode_60hz == 1)
+		if(vmode_60hz)
 			timerstyle = 1;
 		else
 			timerstyle = 0;
 	} else {
-		if(vmode_60hz == 1)
+		if(vmode_60hz)
 			timerstyle = 0;
 		else
 			timerstyle = 1;

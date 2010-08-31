@@ -67,7 +67,7 @@ int gameScreenPngSize = 0;
 
 u32 FrameTimer = 0;
 
-u8 vmode_60hz = 0;
+bool vmode_60hz = true;
 int timerstyle = 0;
 bool progressive = 0;
 
@@ -390,7 +390,7 @@ void StopGX()
 static GXRModeObj * FindVideoMode()
 {
 	GXRModeObj * mode;
-	
+
 	// choose the desired video mode
 	switch(GCSettings.videomode)
 	{
@@ -401,13 +401,16 @@ static GXRModeObj * FindVideoMode()
 			mode = &TVNtsc480Prog;
 			break;
 		case 3: // PAL (50Hz)
-			mode = &TVPal528IntDf;
+			mode = &TVPal574IntDfScale;
 			break;
 		case 4: // PAL (60Hz)
 			mode = &TVEurgb60Hz480IntDf;
 			break;
 		default:
 			mode = VIDEO_GetPreferredMode(NULL);
+
+			if(mode == &TVPal528IntDf)
+				mode = &TVPal574IntDfScale;
 
 			#ifdef HW_DOL
 			/* we have component cables, but the preferred mode is interlaced
@@ -425,7 +428,7 @@ static GXRModeObj * FindVideoMode()
 	{
 		case VI_PAL:
 			// 576 lines (PAL 50Hz)
-			vmode_60hz = 0;
+			vmode_60hz = false;
 
 			// Original Video modes (forced to PAL 50Hz)
 			// set video signal mode
@@ -438,7 +441,7 @@ static GXRModeObj * FindVideoMode()
 
 		case VI_NTSC:
 			// 480 lines (NTSC 60Hz)
-			vmode_60hz = 1;
+			vmode_60hz = true;
 
 			// Original Video modes (forced to NTSC 60hz)
 			// set video signal mode
@@ -455,7 +458,7 @@ static GXRModeObj * FindVideoMode()
 
 		default:
 			// 480 lines (PAL 60Hz)
-			vmode_60hz = 1;
+			vmode_60hz = true;
 
 			// Original Video modes (forced to PAL 60hz)
 			// set video signal mode
@@ -478,45 +481,20 @@ static GXRModeObj * FindVideoMode()
 		progressive = false;
 
 	#ifdef HW_RVL
-	bool pal = false;
-
-	if (mode == &TVPal528IntDf)
-		pal = true;
-
 	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
-	{
-		mode->fbWidth = 640;
-		mode->efbHeight = 456;
-		mode->viWidth = 686;
-
-		if (pal)
-		{
-			mode->xfbHeight = 542;
-			mode->viHeight = 542;
-		}
-		else
-		{
-			mode->xfbHeight = 456;
-			mode->viHeight = 456;
-		}
-	}
+		mode->viWidth = 678;
 	else
-	{
-		if (pal)
-			mode = &TVPal574IntDfScale;
-
 		mode->viWidth = 672;
-	}
 
-	if (pal)
-	{
-		mode->viXOrigin = (VI_MAX_WIDTH_PAL - mode->viWidth) / 2;
-		mode->viYOrigin = (VI_MAX_HEIGHT_PAL - mode->viHeight) / 2;
-	}
-	else
+	if (vmode_60hz)
 	{
 		mode->viXOrigin = (VI_MAX_WIDTH_NTSC - mode->viWidth) / 2;
 		mode->viYOrigin = (VI_MAX_HEIGHT_NTSC - mode->viHeight) / 2;
+	}
+	else
+	{
+		mode->viXOrigin = (VI_MAX_WIDTH_PAL - mode->viWidth) / 2;
+		mode->viYOrigin = (VI_MAX_HEIGHT_PAL - mode->viHeight) / 2;
 	}
 	#endif
 	return mode;
@@ -767,7 +745,10 @@ update_video (int width, int height)
 		else // unfiltered and filtered mode
 		{
 			xscale = 320;
-			yscale = vmode->efbHeight/2;
+			if(vheight == 224 || vheight == 448)
+				yscale = 224;
+			else
+				yscale = 239;
 		}
 
 		if (GCSettings.widescreen)
