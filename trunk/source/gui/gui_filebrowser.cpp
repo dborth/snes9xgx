@@ -199,6 +199,14 @@ void GuiFileBrowser::ResetState()
 
 void GuiFileBrowser::TriggerUpdate()
 {
+	int newIndex = browser.selIndex-browser.pageIndex;
+	
+	if(newIndex >= FILE_PAGESIZE)
+		newIndex = FILE_PAGESIZE-1;
+	else if(newIndex < 0)
+		newIndex = 0;
+
+	selectedItem = newIndex;
 	listChanged = true;
 }
 
