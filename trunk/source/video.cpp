@@ -723,7 +723,10 @@ update_video (int width, int height)
 	{
 		int xscale, yscale;
 #ifdef HW_RVL
-		fscale = GetFilterScale((RenderFilter)GCSettings.FilterMethod);
+		if(vwidth <= 256)
+			fscale = GetFilterScale((RenderFilter)GCSettings.FilterMethod);
+		else
+			fscale = 1;
 #endif
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
 
