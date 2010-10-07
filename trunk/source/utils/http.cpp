@@ -255,7 +255,7 @@ static bool http_split_url(char *host, char *path, const char *url)
 	if (c == NULL || c[0] == 0)
 		return false;
 
-	snprintf(host, c-p, "%s", p);
+	snprintf(host, c-p+1, "%s", p);
 	strcpy(path, c);
 	return true;
 }
