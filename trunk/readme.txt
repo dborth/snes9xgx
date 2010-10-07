@@ -43,6 +43,14 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.2.5 - October 7, 2010]
+
+* Sync with upstream SVN - fixes a few specific game issues
+* Fixed "blank listing" issue for SMB
+* Improved USB compatibility and speed
+* Added Portuguese and Brazilian Portuguese translations
+* Other minor changes
+
 [4.2.4 - August 14, 2010]
 
 * IOS 202 support removed
