@@ -5,28 +5,28 @@ msgid "16:9 Correction"
 msgstr "16:9補正"
 
 msgid "7z decompression failed: Archive contains too many files"
-msgstr "7Zの解凍に失敗しました:書庫内のファイルが多すぎです"
+msgstr "書庫内のファイルが多すぎです"
 
 msgid "7z decompression failed: Failed to read file data"
-msgstr "7Zの解凍に失敗しました:データの読み込みに失敗しました"
+msgstr "読み込みに失敗しました"
 
 msgid "7z decompression failed: File is corrupt"
-msgstr "7Zの解凍に失敗しました:ファイルが破損しています"
+msgstr "ファイルが破損しています"
 
 msgid "7z decompression failed: File is corrupt (CRC mismatch)"
-msgstr "7Zの解凍に失敗しました:ファイルが破損しています(CRCが一致しません)"
+msgstr "ファイルが破損しています(CRC不一致)"
 
 msgid "7z decompression failed: File uses too high of compression settings (dictionary size is too large)"
-msgstr "7Zの解凍に失敗しました:ファイルに高度な圧縮設定が使用されています(書庫のサイズが多きすぎです)"
+msgstr "書庫のサイズが多きすぎです"
 
 msgid "7z decompression failed: File uses unsupported compression settings"
-msgstr "7Zの解凍に失敗しました:ファイルに未対応の圧縮設定が使用されています"
+msgstr "未対応の圧縮設定が使用されています"
 
 msgid "A (Rapid)"
 msgstr "A (連打)"
 
 msgid "Additional coding"
-msgstr "コーディング追加"
+msgstr "追加コーディング"
 
 msgid "Aim Offscreen"
 msgstr "照準を非表示"
@@ -35,22 +35,22 @@ msgid "An update is available!"
 msgstr "更新があります"
 
 msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
-msgstr "リセットするとデータは失われます"
+msgstr "未保存のデータは失われます"
 
 msgid "Are you sure that you want to reset your mappings?"
-msgstr "ボタン設定をリセットしますか?"
+msgstr "設定を初期化しますか?"
 
 msgid "Are you sure that you want to reset your settings?"
-msgstr "設定をリセットしますか?"
+msgstr "設定を初期化しますか?"
 
 msgid "Maintain Aspect Ratio"
 msgstr "アスペクト比を維持"
 
 msgid "Attempting to determine load device..."
-msgstr "読み込むデバイスを決定しています…"
+msgstr "デバイスを試しています…"
 
 msgid "Attempting to determine save device..."
-msgstr "セーブするデバイスを決定しています…"
+msgstr "デバイスを試しています…"
 
 msgid "Auto"
 msgstr "自動"
@@ -74,7 +74,7 @@ msgid "Back"
 msgstr ""
 
 msgid "Both"
-msgstr "どちらも"
+msgstr "両方"
 
 msgid "Controles"
 msgstr "操作"
@@ -119,7 +119,7 @@ msgid "Compressed GBA files are not supported!"
 msgstr "圧縮されたGBAファイルは未対応です"
 
 msgid "Connecting to network share..."
-msgstr "ネットワーク共有のため接続しています"
+msgstr "接続しています"
 
 msgid "Controller"
 msgstr "コントローラ"
@@ -176,7 +176,7 @@ msgid "Dutch"
 msgstr "ドイツ語"
 
 msgid "Empty or invalid ZIP file!"
-msgstr "不正なzipファイルです"
+msgstr "不正なZIPファイルです"
 
 msgid "Enabled"
 msgstr "有効"
@@ -191,28 +191,28 @@ msgid "Error"
 msgstr "エラー"
 
 msgid "Error - Invalid ZIP file!"
-msgstr "エラー:不正なzipです"
+msgstr "不正なZIPです"
 
 msgid "Error creating file!"
-msgstr "ファイルの作成中にエラーが起こりました"
+msgstr "作成中にエラーが発生しました"
 
 msgid "Error loading game!"
-msgstr "ゲームの読み込み中にエラーが起こりました"
+msgstr "読み込み中にエラーが発生しました"
 
 msgid "Error opening archive!"
-msgstr "書庫の解凍中にエラーが起こりました!"
+msgstr "解凍中にエラーが発生しました"
 
 msgid "Error opening directory!"
-msgstr "フォルダを開く途中にエラーが起こりました"
+msgstr "開く途中にエラーが発生しました"
 
 msgid "Error opening file!"
-msgstr "ファイルを開いている途中にエラーが起こりました"
+msgstr "開いている途中にエラーが発生しました"
 
 msgid "Error reading file!"
-msgstr "ファイルの読み込み中にエラーが起こりました"
+msgstr "読み込み中にエラーが発生しました"
 
 msgid "Error saving file!"
-msgstr "ファイルのセーブ中にエラーが起こりました"
+msgstr "セーブ中にエラーが発生しました"
 
 msgid "Exit"
 msgstr "終了"
@@ -221,7 +221,7 @@ msgid "Exit Action"
 msgstr "終了動作"
 
 msgid "Failed to connect to network share."
-msgstr "ネットワーク共有の接続に失敗しました"
+msgstr "接続に失敗しました"
 
 msgid "FDS BIOS file is invalid!"
 msgstr "disksys.romが不正です"
@@ -260,7 +260,7 @@ msgid "Game Settings - Video"
 msgstr "ゲーム設定 - 映像"
 
 msgid "Game Timing"
-msgstr "ゲームタイミング"
+msgstr "ゲームの速度"
 
 msgid "Game Genie DISABLED"
 msgstr "Game Genie無効"
@@ -275,13 +275,13 @@ msgid "German"
 msgstr "ドイツ語"
 
 msgid "GNU General Public License (GPL) Version 2."
-msgstr "GNU 一般公衆利用許諾契約書（GPL）バージョン2"
+msgstr "GNU 一般公衆利用許諾契約書バージョン2"
 
 msgid "Go Back"
 msgstr "戻る"
 
 msgid "Horizontal"
-msgstr "横持ち"
+msgstr "横方向"
 
 msgid "Information"
 msgstr "情報"
@@ -296,19 +296,19 @@ msgid "Insert Coin / Switch Disk"
 msgstr "コイン/ディスクをいれる"
 
 msgid "Invalid file size!"
-msgstr "不正なファイルサイズです"
+msgstr "不正なサイズです"
 
 msgid "Invalid game file!"
-msgstr "不正なゲームサイズです"
+msgstr "不正なサイズです"
 
 msgid "Invalid network settings - Check settings.xml."
-msgstr "不正な設定です - settings.xmlを確認してください"
+msgstr "エラー:settings.xmlを確認してください"
 
 msgid "Invalid network settings - Share IP is blank."
-msgstr "不正な設定です - 共有IPが空白です"
+msgstr "共有IPが空白です"
 
 msgid "Invalid network settings - Share name is blank."
-msgstr "不正な設定です - 共有名が空白です"
+msgstr "共有名が空白です"
 
 msgid "Invalid save file"
 msgstr "不正なセーブデータです"
@@ -323,13 +323,13 @@ msgid "Japanese"
 msgstr "日本語"
 
 msgid "Justifier"
-msgstr ""
+msgstr "MODEL510"
 
 msgid "Justifier - GameCube Controller"
-msgstr "Justifier - GCコントローラ"
+msgstr "MODEL510 - GCコントローラ"
 
 msgid "Justifier - Wiimote"
-msgstr "Justifier - Wiiリモコン"
+msgstr "MODEL510 - Wiiリモコン"
 
 msgid "Korean"
 msgstr "韓国語"
@@ -452,7 +452,7 @@ msgid "None"
 msgstr "無し"
 
 msgid "NTSC (480i)"
-msgstr "NTSC (480i)"
+msgstr "NTSC(480i)"
 
 msgid "Nunchuk"
 msgstr "ヌンチャク"
@@ -497,10 +497,10 @@ msgid "P4"
 msgstr ""
 
 msgid "PAL (50Hz)"
-msgstr "PAL (50Hz)"
+msgstr "PAL(50Hz)"
 
 msgid "PAL (60Hz)"
-msgstr "PAL (60Hz)"
+msgstr "PAL(60Hz)"
 
 msgid "Palette saved"
 msgstr "パレットをセーブしました"
@@ -510,9 +510,6 @@ msgstr "部分的に伸縮"
 
 msgid "Pause"
 msgstr "一時中断"
-
-msgid "Please install IOS 202 for DVD support."
-msgstr "DVDに対応するためcIOS222をインストールしてください"
 
 msgid "Please Wait"
 msgstr "お待ちください"
@@ -530,34 +527,34 @@ msgid "Preferences saved"
 msgstr "設定をセーブしました"
 
 msgid "Press any button on the Classic Controller now. Press Home to clear the existing mapping."
-msgstr "クラコンのボタンを押してください(HOME=無し)"
+msgstr "ボタンを押してください(HOME=無し)"
 
 msgid "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping."
-msgstr "GCコンのボタンを押してください(HOME=無し)"
+msgstr "ボタンを押してください(HOME･C=無し)"
 
 msgid "Press any button on the GameCube Controller now. Press the C-Stick in any direction to clear the existing mapping."
-msgstr "GCコンのボタンを押してください(HOME=無し)"
+msgstr "ボタンを押してください(HOME･C=無し)"
 
 msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
-msgstr "Wiiリモコンのボタンを押してください(HOME=無し)"
+msgstr "ボタンを押してください(HOME=無し)"
 
 msgid "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping."
-msgstr "Wiiリモコンかヌンチャクのボタンを押してください"
+msgstr "ボタンを押してください(HOME=無し)"
 
 msgid "Progressive (480p)"
-msgstr "プログレッシブ (480p)"
+msgstr "プログレッシブ(480p)"
 
 msgid "Quit Game"
 msgstr "ゲームを終了"
 
 msgid "Quit this game? Any unsaved progress will be lost."
-msgstr "終了するとデータは失われます"
+msgstr "未保存のデータは失われます"
 
 msgid "R TRIG"
 msgstr "Rトリガー"
 
 msgid "RAM saving is not available for FDS games!"
-msgstr "ディスクシステムのゲームにはRAMセーブはありません"
+msgstr "ディスクシステムにはRAMセーブはありません"
 
 msgid "Reboot"
 msgstr "再起動"
@@ -572,7 +569,7 @@ msgid "Reset Game"
 msgstr "ゲームをリセット"
 
 msgid "Reset this game? Any unsaved progress will be lost."
-msgstr "リセットするとデータは失われます"
+msgstr "未保存のデータは失われます"
 
 msgid "Reset Mappings"
 msgstr "ボタン設定を初期化"
@@ -761,7 +758,7 @@ msgid "Stretch to Fit"
 msgstr "適するよう伸縮"
 
 msgid "Super Scope"
-msgstr "スーパースコープ"
+msgstr "ｽｰﾊﾟｰｽｺｰﾌﾟ"
 
 msgid "Superscope"
 msgstr "スーパースコープ"
@@ -773,7 +770,7 @@ msgid "Superscope - Wiimote"
 msgstr "スーパースコープ - Wiiリモコン"
 
 msgid "This software is open source and may be copied,"
-msgstr "このソフトはオープンソースでコピーされました"
+msgstr "これはオープンソースでコピーされました"
 
 msgid "Trad_chinese"
 msgstr "繁体字中国語"
@@ -782,10 +779,10 @@ msgid "Unable to initialize network!"
 msgstr "接続できませんでした"
 
 msgid "Unable to locate a load device!"
-msgstr "読み込むデバイスを見つけられませんでした"
+msgstr "デバイスを見つけられませんでした"
 
 msgid "Unable to locate a save device!"
-msgstr "セーブするデバイスを見つけられませんでした"
+msgstr "デバイスを見つけられませんでした"
 
 msgid "Unable to open snapshot!"
 msgstr "中断データを開けませんでした"
@@ -818,7 +815,7 @@ msgid "Update failed!"
 msgstr "更新に失敗しました"
 
 msgid "Update later"
-msgstr "後で更新する"
+msgstr "更新しない"
 
 msgid "Update now"
 msgstr "更新する"
@@ -830,10 +827,10 @@ msgid "USB drive not found!"
 msgstr "USBドライブが見つかりません"
 
 msgid "USB Mass Storage"
-msgstr "USB"
+msgstr "USBデバイス"
 
 msgid "Vertical"
-msgstr "縦持ち"
+msgstr "縦方向"
 
 msgid "Video"
 msgstr "映像"
@@ -842,13 +839,13 @@ msgid "Video Mode"
 msgstr "映像モード"
 
 msgid "VM8: Unknown page type!"
-msgstr "VM8 : 不明なページ形式です"
+msgstr "VM8:不明なページ形式です"
 
 msgid "VM16: Unknown page type!"
-msgstr "VM16 : 不明なページ形式です"
+msgstr "VM16:不明なページ形式です"
 
 msgid "VM32: Unknown page type!"
-msgstr "VM32 : 不明なページ形式です"
+msgstr "VM32:不明なページ形式です"
 
 msgid "Wiimote"
 msgstr "Wiiリモコン"
@@ -863,7 +860,7 @@ msgid "Zapper"
 msgstr "ザッパー"
 
 msgid "Zapper Crosshair"
-msgstr "ザッパーの十字"
+msgstr "ｻﾞｯﾊﾟｰの十字ｶｰｿﾙ"
 
 msgid "Logo"
 msgstr "ロゴ"
@@ -881,7 +878,7 @@ msgid "Palette"
 msgstr "使用パレット"
 
 msgid "AspiringSquire's Real palette"
-msgstr "AspiringSquireのパレット"
+msgstr "AspiringSquireのリアルパレット"
 
 msgid "Loopy's palette"
 msgstr "Loopyのパレット"
@@ -905,16 +902,16 @@ msgid "MESS palette"
 msgstr "MESSのパレット"
 
 msgid "Zaphod's VS Castlevania palette"
-msgstr "VS キャッスルバニアのパレット改"
+msgstr "VSキャッスルバニアのパレット改"
 
 msgid "Zaphod's VS SMB palette"
-msgstr "VS スーマリブラザーズのパレット改"
+msgstr "VSｽｰﾊﾟｰﾏﾘｵﾌﾞﾗｻﾞｰｽﾞのパレット改"
 
 msgid "VS Dr. Mario palette"
-msgstr "VS Dr.マリオのパレット"
+msgstr "VSDr.マリオのパレット"
 
 msgid "VS Castlevania palette"
-msgstr "VS キャッスルバニアのパレット"
+msgstr "VSキャッスルバニアのパレット"
 
 msgid "VS SMB/VS Ice Climber palette"
-msgstr "VS スーマリ/アイスクライマーのパレット"
+msgstr "VSｽｰﾏﾘ/ｱｲｽｸﾗｲﾏｰのパレット"
