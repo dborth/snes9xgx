@@ -29,7 +29,7 @@ msgid "Additional coding"
 msgstr "Programação adicional"
 
 msgid "Aim Offscreen"
-msgstr "Mirar fora do ecrã"
+msgstr "Mira fora do ecrã"
 
 msgid "An update is available!"
 msgstr "Actualização disponível!"
@@ -38,7 +38,7 @@ msgid "Are you sure that you want to reset this game? Any unsaved progress will 
 msgstr "Quer mesmo reiniciar este jogo? Qualquer progresso não guardado será perdido."
 
 msgid "Are you sure that you want to reset your mappings?"
-msgstr "Quer mesmo reiniciar os controles?"
+msgstr "Quer mesmo reiniciar os controlos mapeados?"
 
 msgid "Are you sure that you want to reset your settings?"
 msgstr "Quer mesmo reiniciar as configurações?"
@@ -53,7 +53,7 @@ msgid "Attempting to determine save device..."
 msgstr "A determinar dispositivo de guardar..."
 
 msgid "Auto"
-msgstr "Auto"
+msgstr "Automático"
 
 msgid "Auto Detect"
 msgstr "Auto detectar"
@@ -63,6 +63,9 @@ msgstr "Auto carregar"
 
 msgid "Auto Save"
 msgstr "Auto guardar"
+
+msgid "Automatic"
+msgstr "Automático"
 
 msgid "Automatic (Recommended)"
 msgstr "Automático (Recomendado)"
@@ -92,7 +95,7 @@ msgid "Cheats"
 msgstr "Cheats"
 
 msgid "Cheats file not found!"
-msgstr "Ficheiro de Cheats não encontrado!"
+msgstr "Ficheiro de cheats não encontrado!"
 
 msgid "Cheats Folder"
 msgstr "Pasta de Cheats"
@@ -113,7 +116,7 @@ msgid "Coding & menu design"
 msgstr "Programação & desing do menu"
 
 msgid "Compressed GBA files are not supported!"
-msgstr "Ficheiros comprimidos do GBA não são suportados!"
+msgstr "Ficheiros GBA comprimidos não são suportados!"
 
 msgid "Connecting to network share..."
 msgstr "A ligar à partilha de rede..."
@@ -184,7 +187,7 @@ msgstr "ACTIVADO"
 msgid "English"
 msgstr "Inglês"
 
-msgid "Erro"
+msgid "Error"
 msgstr "Erro"
 
 msgid "Error - Invalid ZIP file!"
@@ -353,7 +356,7 @@ msgid "Load"
 msgstr "Carregar"
 
 msgid "Load Device"
-msgstr "Carregar Dispositivo"
+msgstr "Carregar do Dispositivo"
 
 msgid "Load Folder"
 msgstr "Pasta de Jogos"
@@ -377,10 +380,10 @@ msgid "Main Menu"
 msgstr "Menu Principal"
 
 msgid "Match GC Controls"
-msgstr "Coincidir Controlos de GC"
+msgstr "Coincidir Controlos GC"
 
 msgid "Match Wii Controls"
-msgstr "Coincidir Controlos de Wii"
+msgstr "Coincidir Controlos Wii"
 
 msgid "Maximum filepath length reached!"
 msgid "Tamanho máximo do caminho do ficheiro alcançado!"
@@ -435,13 +438,13 @@ msgstr "Não"
 
 
 msgid "No data to save!"
-msgstr "Nenhum dado para guardar!"
+msgstr "Não há dados para guardar!"
 
 msgid "No disc inserted!"
 msgstr "Nenhum disco inserido!"
 
 msgid "No SRAM data to save!"
-msgstr "Nenhum dado de SRAM para guardar!"
+msgstr "Não há dados de SRAM para guardar!"
 
 
 msgid "No game saves found."
@@ -485,16 +488,16 @@ msgid "Out of memory: too many files!"
 msgstr "Memória insuficiente: demasiados ficheiros!"
 
 msgid "P 1"
-msgstr "J1"
+msgstr "J 1"
 
 msgid "P2"
-msgstr "J2"
+msgstr "J 2"
 
 msgid "P3"
-msgstr "J3"
+msgstr "J 3"
 
 msgid "P4"
-msgstr "J4"
+msgstr "J 4"
 
 msgid "PAL (50Hz)"
 msgstr "PAL (50Hz)"
@@ -519,6 +522,9 @@ msgstr "MAIS"
 
 msgid "Portuguese"
 msgstr "Português"
+
+msgid "Brazilian Portuguese"
+msgstr "Português (BR)"
 
 msgid "Power off Wii"
 msgstr "Desligar Wii"
@@ -563,10 +569,10 @@ msgid "Rendering"
 msgstr "Rendering"
 
 msgid "Reset"
-msgstr "reiniciar"
+msgstr "Reiniciar"
 
 msgid "Reset Game"
-msgstr "reiniciar Jogo"
+msgstr "Reiniciar Jogo"
 
 msgid "Reset this game? Any unsaved progress will be lost."
 msgstr "Reiniciar Jogo? Qualquer progresso não guardado será perdido."
@@ -590,7 +596,7 @@ msgid "Right"
 msgstr "Direita"
 
 msgid "RIGHT"
-msgstr "Direita"
+msgstr "DIREITA"
 
 msgid "Right Button"
 msgstr "Botão direito"
@@ -602,7 +608,7 @@ msgid "Save"
 msgstr "Guardar"
 
 msgid "Save Device"
-msgstr "Dispositivo de guardar"
+msgstr "Guardar no dispositivo"
 
 msgid "Save failed!"
 msgstr "Falha ao guardar!"
