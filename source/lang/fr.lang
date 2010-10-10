@@ -793,6 +793,9 @@ msgstr "Format du DVD inconnu."
 msgid "Unrecognized file extension!"
 msgstr "L'extension du fichier est inconnu !"
 
+msgid "Unzipping..."
+msgstr "Extraction de l'archive en cours..."
+
 msgid "Up"
 msgstr "Haut"
 
@@ -803,16 +806,16 @@ msgid "Up One Level"
 msgstr "Dossier Parent"
 
 msgid "Update Available"
-msgstr "Mise à jour disponible"
+msgstr "Une mise à jour est disponible"
 
 msgid "Update failed!"
 msgstr "La mise à jour a échouée !"
 
 msgid "Update later"
-msgstr "Mise à jour plus tard"
+msgstr "Mettre à jour plus tard"
 
 msgid "Update now"
-msgstr "Mise à jour maintenant"
+msgstr "Mettre à jour maintenant"
 
 msgid "Update successful!"
 msgstr "La mise à jour a réussie !"
