@@ -290,8 +290,11 @@ void GuiKeyboard::Update(GuiTrigger * t)
 	}
 	else if(keyBack->GetState() == STATE_CLICKED)
 	{
-		kbtextstr[strlen(kbtextstr)-1] = 0;
-		kbText->SetText(GetDisplayText(kbtextstr));
+		if(strlen(kbtextstr) > 0)
+		{
+			kbtextstr[strlen(kbtextstr)-1] = 0;
+			kbText->SetText(GetDisplayText(kbtextstr));
+		}
 		keyBack->SetState(STATE_SELECTED, t->chan);
 	}
 	else if(keyShift->GetState() == STATE_CLICKED)
