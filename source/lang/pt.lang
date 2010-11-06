@@ -170,7 +170,7 @@ msgid "DOWN"
 msgstr "BAIXO"
 
 msgid "Downloading..."
-msgstr "Downloading..."
+msgstr "A transferir..."
 
 msgid "Dutch"
 msgstr "Holandês"
@@ -218,7 +218,7 @@ msgid "Exit"
 msgstr "Sair"
 
 msgid "Exit Action"
-msgstr "Acção de Saída"
+msgstr "Acção ao Sair"
 
 msgid "Failed to connect to network share."
 msgstr "Falha ao ligar-se à partilha de rede."
@@ -248,16 +248,16 @@ msgid "Game Genie ROM not found!"
 msgstr "Não foi encontrada a ROM do Game Genie!"
 
 msgid "Game Settings"
-msgstr "Configuração"
+msgstr "Configurações"
 
 msgid "Game Settings - Button Mappings"
-msgstr "Configuração - Redefinir Botões"
+msgstr "Configurações - Redefinir Botões"
 
 msgid "Game Settings - Cheats"
-msgstr "Configuração - Cheats"
+msgstr "Configurações - Cheats"
 
 msgid "Game Settings - Video"
-msgstr "Configuração - Vídeo"
+msgstr "Configurações - Vídeo"
 
 msgid "Game Timing"
 msgstr "Tempo de jogo"
@@ -302,13 +302,13 @@ msgid "Invalid game file!"
 msgstr "Ficheiro de jogo inválido!"
 
 msgid "Invalid network settings - Check settings.xml."
-msgstr "Configuração de rede inválida - Verifique o ficheiro settings.xml."
+msgstr "Configurações de rede inválida - Verifique o ficheiro settings.xml."
 
 msgid "Invalid network settings - Share IP is blank."
-msgstr "Configuração de rede inválida - IP vazio."
+msgstr "Configurações de rede inválida - IP vazio."
 
 msgid "Invalid network settings - Share name is blank."
-msgstr "Configuração de rede inválida - Nome vazio."
+msgstr "Configurações de rede inválida - Nome vazio."
 
 msgid "Invalid save file"
 msgstr "Ficheiro guardado inválido"
@@ -487,7 +487,7 @@ msgstr "Memória insuficiente!"
 msgid "Out of memory: too many files!"
 msgstr "Memória insuficiente: demasiados ficheiros!"
 
-msgid "P 1"
+msgid "P1"
 msgstr "J 1"
 
 msgid "P2"
@@ -566,7 +566,7 @@ msgid "Reboot"
 msgstr "Reiniciar"
 
 msgid "Rendering"
-msgstr "Rendering"
+msgstr "Renderização"
 
 msgid "Reset"
 msgstr "Reiniciar"
@@ -614,7 +614,7 @@ msgid "Save failed!"
 msgstr "Falha ao guardar!"
 
 msgid "Save file not found"
-msgstr "Ficheiro de guardar não encontrado"
+msgstr "Ficheiro guardar não encontrado"
 
 msgid "Save Folder"
 msgstr "Pasta de guardar"
@@ -662,16 +662,16 @@ msgid "Seek error!"
 msgstr "Erro de posicionamento!"
 
 msgid "Settings"
-msgstr "Configuração"
+msgstr "Configurações"
 
 msgid "Settings - Menu"
-msgstr "Configuração - Menu"
+msgstr "Configurações - Menu"
 
 msgid "Settings - Network"
-msgstr "Configuração - Rede"
+msgstr "Configurações - Rede"
 
 msgid "Settings - Saving & Loading"
-msgstr "Configuração - Guardar & Carregar"
+msgstr "Configurações - Guardar & Carregar"
 
 msgid "SD Card"
 msgstr "Cartão SD"
