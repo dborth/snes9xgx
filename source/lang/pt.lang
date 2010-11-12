@@ -35,13 +35,13 @@ msgid "An update is available!"
 msgstr "Actualização disponível!"
 
 msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
-msgstr "Quer mesmo reiniciar este jogo? Qualquer progresso não guardado será perdido."
+msgstr "Quer mesmo reiniciar este jogo? Qualquer progresso não gravado será perdido."
 
 msgid "Are you sure that you want to reset your mappings?"
-msgstr "Quer mesmo reiniciar os controlos mapeados?"
+msgstr "Quer mesmo repor os controlos mapeados?"
 
 msgid "Are you sure that you want to reset your settings?"
-msgstr "Quer mesmo reiniciar as configurações?"
+msgstr "Quer mesmo repor as configurações?"
 
 msgid "Maintain Aspect Ratio"
 msgstr "Manter Proporções"
@@ -50,7 +50,7 @@ msgid "Attempting to determine load device..."
 msgstr "A determinar dispositivo de carregamento..."
 
 msgid "Attempting to determine save device..."
-msgstr "A determinar dispositivo de guardar..."
+msgstr "A determinar dispositivo de guardadar..."
 
 msgid "Auto"
 msgstr "Automático"
@@ -62,7 +62,7 @@ msgid "Auto Load"
 msgstr "Auto carregar"
 
 msgid "Auto Save"
-msgstr "Auto guardar"
+msgstr "Auto gravar"
 
 msgid "Automatic"
 msgstr "Automático"
@@ -83,7 +83,7 @@ msgid "Controles"
 msgstr "Controlos"
 
 msgid "Button Mappings"
-msgstr "Redefinir Botões"
+msgstr "Mapear Botões"
 
 msgid "Cancel"
 msgstr "Cancelar"
@@ -92,13 +92,13 @@ msgid "Caps"
 msgstr "Maiúsc."
 
 msgid "Cheats"
-msgstr "Cheats"
+msgstr "Truques"
 
 msgid "Cheats file not found!"
-msgstr "Ficheiro de cheats não encontrado!"
+msgstr "Ficheiro de truques não encontrado!"
 
 msgid "Cheats Folder"
-msgstr "Pasta de Cheats"
+msgstr "Pasta de Truques"
 
 msgid "Choose Game"
 msgstr "Escolher Jogo"
@@ -113,7 +113,7 @@ msgid "Coding"
 msgstr "Programação"
 
 msgid "Coding & menu design"
-msgstr "Programação & desing do menu"
+msgstr "Programação & desenho do menu"
 
 msgid "Compressed GBA files are not supported!"
 msgstr "Ficheiros GBA comprimidos não são suportados!"
@@ -161,7 +161,7 @@ msgid "distributed, or modified under the terms of the"
 msgstr "distribuído, ou modificado sob os termos de"
 
 msgid "Don't Save"
-msgstr "Não guardar"
+msgstr "Não gravar"
 
 msgid "Down"
 msgstr "Baixo"
@@ -200,7 +200,7 @@ msgid "Error loading game!"
 msgstr "Erro ao carregar jogo!"
 
 msgid "Error opening archive!"
-msgstr "Erro ao abrir ficheiro!"
+msgstr "Erro ao abrir arquivo!"
 
 msgid "Error opening directory!"
 msgstr "Erro ao abrir diretoria!"
@@ -212,7 +212,7 @@ msgid "Error reading file!"
 msgstr "Erro ao ler ficheiro!"
 
 msgid "Error saving file!"
-msgstr "Erro ao guardar ficheiro!"
+msgstr "Erro ao gravar ficheiro!"
 
 msgid "Exit"
 msgstr "Sair"
@@ -242,7 +242,7 @@ msgid "French"
 msgstr "Francês"
 
 msgid "GBA Screen Zoom"
-msgstr "Zoom do ecrã do GBA"
+msgstr "Zoom do ecrã GBA"
 
 msgid "Game Genie ROM not found!"
 msgstr "Não foi encontrada a ROM do Game Genie!"
@@ -251,10 +251,10 @@ msgid "Game Settings"
 msgstr "Configurações"
 
 msgid "Game Settings - Button Mappings"
-msgstr "Configurações - Redefinir Botões"
+msgstr "Configurações - Mapear Botões"
 
 msgid "Game Settings - Cheats"
-msgstr "Configurações - Cheats"
+msgstr "Configurações - Truques"
 
 msgid "Game Settings - Video"
 msgstr "Configurações - Vídeo"
@@ -275,7 +275,7 @@ msgid "German"
 msgstr "Alemão"
 
 msgid "GNU General Public License (GPL) Version 2."
-msgstr "GNU General Public License (GPL) Versão 2."
+msgstr "GNU Licença Pública Geral (GPL) Versão 2."
 
 msgid "Go Back"
 msgstr "Voltar"
@@ -287,7 +287,7 @@ msgid "Information"
 msgstr "Informação"
 
 msgid "Initializing network..."
-msgstr "A iniciar ligação..."
+msgstr "A iniciar ligação de rede..."
 
 msgid "Insert Coin"
 msgstr "Inserir Moeda"
@@ -302,16 +302,16 @@ msgid "Invalid game file!"
 msgstr "Ficheiro de jogo inválido!"
 
 msgid "Invalid network settings - Check settings.xml."
-msgstr "Configurações de rede inválida - Verifique o ficheiro settings.xml."
+msgstr "Configuração de rede inválida - Verifique o ficheiro settings.xml."
 
 msgid "Invalid network settings - Share IP is blank."
-msgstr "Configurações de rede inválida - IP vazio."
+msgstr "Configuração de rede inválida - IP vazio."
 
 msgid "Invalid network settings - Share name is blank."
-msgstr "Configurações de rede inválida - Nome vazio."
+msgstr "Configuração de rede inválida - Nome vazio."
 
 msgid "Invalid save file"
-msgstr "Ficheiro guardado inválido"
+msgstr "Ficheiro gravado inválido"
 
 msgid "Invalid state file"
 msgstr "Ficheiro de estado inválido"
@@ -329,7 +329,7 @@ msgid "Justifier - GameCube Controller"
 msgstr "Justifier - Comando GameCube"
 
 msgid "Justifier - Wiimote"
-msgstr "Justifier - Wiimote"
+msgstr "Justifier - Wii Remote"
 
 msgid "Korean"
 msgstr "Coreano"
@@ -392,7 +392,7 @@ msgid "Menu"
 msgstr "Menu"
 
 msgid "Menu artwork"
-msgstr "Desenho do Menu"
+msgstr "Arte do Menu"
 
 msgid "Menu sound"
 msgstr "Som do Menu"
@@ -404,7 +404,7 @@ msgid "Music Volume"
 msgstr "Volume da Música"
 
 msgid "Mute"
-msgstr "Silenciar"
+msgstr "Mudo"
 
 msgid "NES Controller"
 msgstr "Comando NES"
@@ -436,22 +436,19 @@ msgstr "Nova SRAM"
 msgid "No"
 msgstr "Não"
 
-
 msgid "No data to save!"
-msgstr "Não há dados para guardar!"
+msgstr "Não há dados para gravar!"
 
 msgid "No disc inserted!"
 msgstr "Nenhum disco inserido!"
 
 msgid "No SRAM data to save!"
-msgstr "Não há dados de SRAM para guardar!"
-
+msgstr "Não há dados de SRAM para gravar!"
 
 msgid "No game saves found."
-msgstr "Nenhum jogo guardado encontrado."
+msgstr "Nenhum jogo gravado encontrado."
 
 msgid "None"
-
 msgstr "Nenhum"
 
 msgid "NTSC (480i)"
@@ -488,16 +485,16 @@ msgid "Out of memory: too many files!"
 msgstr "Memória insuficiente: demasiados ficheiros!"
 
 msgid "P1"
-msgstr "J 1"
+msgstr "J1"
 
 msgid "P2"
-msgstr "J 2"
+msgstr "J2"
 
 msgid "P3"
-msgstr "J 3"
+msgstr "J3"
 
 msgid "P4"
-msgstr "J 4"
+msgstr "J4"
 
 msgid "PAL (50Hz)"
 msgstr "PAL (50Hz)"
@@ -506,7 +503,7 @@ msgid "PAL (60Hz)"
 msgstr "PAL (60Hz)"
 
 msgid "Palette saved"
-msgstr "Paleta guardada"
+msgstr "Paleta gravada"
 
 msgid "Partial Stretch"
 msgstr "Esticar Parcial"
@@ -530,7 +527,7 @@ msgid "Power off Wii"
 msgstr "Desligar Wii"
 
 msgid "Preferences saved"
-msgstr "Preferências guardadas"
+msgstr "Preferências gravadas"
 
 msgid "Press any button on the Classic Controller now. Press Home to clear the existing mapping."
 msgstr "Pressione um botão no Comando Clássico. Pressione HOME para eliminar a configuração actual."
@@ -542,10 +539,10 @@ msgid "Press any button on the GameCube Controller now. Press the C-Stick in any
 msgstr "Pressione um botão no Comando GameCube. Mova o Stick-C para eliminar a configuração actual."
 
 msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
-msgstr "Pressione um botão no Wiimote. Pressione HOME para eliminar a configuração actual."
+msgstr "Pressione um botão no Wii Remote. Pressione HOME para eliminar a configuração actual."
 
 msgid "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping."
-msgstr "Pressione um botão no Wiimote ou no Nunchuk. Pressione HOME para eliminar a configuração actual."
+msgstr "Pressione um botão no Wii Remote ou no Nunchuk. Pressione HOME para eliminar a configuração actual."
 
 msgid "Progressive (480p)"
 msgstr "Progressivo (480p)"
@@ -554,13 +551,13 @@ msgid "Quit Game"
 msgstr "Sair do Jogo"
 
 msgid "Quit this game? Any unsaved progress will be lost."
-msgstr "Sair do Jogo? Qualquer progresso não guardado será perdido."
+msgstr "Sair do Jogo? Qualquer progresso não gravado será perdido."
 
 msgid "R TRIG"
 msgstr "R"
 
 msgid "RAM saving is not available for FDS games!"
-msgstr "Guardar RAM não está disponível para jogos do FDS (Famicom Disk System)!"
+msgstr "Gravar RAM não está disponível para jogos do FDS (Famicom Disk System)!"
 
 msgid "Reboot"
 msgstr "Reiniciar"
@@ -575,16 +572,16 @@ msgid "Reset Game"
 msgstr "Reiniciar Jogo"
 
 msgid "Reset this game? Any unsaved progress will be lost."
-msgstr "Reiniciar Jogo? Qualquer progresso não guardado será perdido."
+msgstr "Reiniciar Jogo? Qualquer progresso não gravado será perdido."
 
 msgid "Reset Mappings"
-msgstr "Reiniciar mapeamentos"
+msgstr "Repor mapeamentos"
 
 msgid "Reset Settings"
-msgstr "Reiniciar configurações"
+msgstr "Repor configurações"
 
 msgid "Retry"
-msgstr "Tentar de novo"
+msgstr "Repetir"
 
 msgid "Return to Loader"
 msgstr "Voltar ao Loader"
@@ -605,46 +602,46 @@ msgid "Rumble"
 msgstr "Vibração"
 
 msgid "Save"
-msgstr "Guardar"
+msgstr "Gravar"
 
 msgid "Save Device"
-msgstr "Guardar no dispositivo"
+msgstr "Gravar no dispositivo"
 
 msgid "Save failed!"
-msgstr "Falha ao guardar!"
+msgstr "Falha ao gravar!"
 
 msgid "Save file not found"
-msgstr "Ficheiro guardar não encontrado"
+msgstr "Ficheiro gravado não encontrado"
 
 msgid "Save Folder"
-msgstr "Pasta de guardar"
+msgstr "Pasta de gravar"
 
 msgid "Save Game"
-msgstr "Guardar Jogo"
+msgstr "Gravar Jogo"
 
 msgid "Save RAM and State?"
-msgstr "Guardar RAM e o estado?"
+msgstr "Gravar RAM e o estado?"
 
 msgid "Save Snapshot?"
-msgstr "Guardar Snapshot?"
+msgstr "Gravar Snapshot?"
 
 msgid "Save SRAM and Snapshot?"
-msgstr "Guardar SRAM e Snapshot?"
+msgstr "Gravar SRAM e Snapshot?"
 
 msgid "Save State?"
-msgstr "Guardar estado?"
+msgstr "Gravar estado?"
 
 msgid "Save successful"
-msgstr "Guardado com sucesso"
+msgstr "Gravado com sucesso"
 
 msgid "Saving"
-msgstr "A guardar"
+msgstr "A gravar"
 
 msgid "Saving preferences..."
-msgstr "A guardar preferências..."
+msgstr "A gravar preferências..."
 
 msgid "Saving..."
-msgstr "A guardar..."
+msgstr "A gravar..."
 
 msgid "Scaling"
 msgstr "Escala"
@@ -671,7 +668,7 @@ msgid "Settings - Network"
 msgstr "Configurações - Rede"
 
 msgid "Settings - Saving & Loading"
-msgstr "Configurações - Guardar & Carregar"
+msgstr "Configurações - Gravar & Carregar"
 
 msgid "SD Card"
 msgstr "Cartão SD"
@@ -692,7 +689,7 @@ msgid "SMB Share Name"
 msgstr "Nome do SMB"
 
 msgid "SMB Share Password"
-msgstr "Senha do SMB"
+msgstr "Palavra-passe do SMB"
 
 msgid "SMB Share Username"
 msgstr "Nome de utilizador do SMB"
@@ -719,10 +716,10 @@ msgid "SNES Controller - GameCube Controller"
 msgstr "Comando SNES - Comando GameCube"
 
 msgid "SNES Controller - Nunchuk + Wiimote"
-msgstr "Comando SNES - Nunchuk + Wiimote"
+msgstr "Comando SNES - Nunchuk + Wii Remote"
 
 msgid "SNES Controller - Wiimote"
-msgstr "Comando SNES - Wiimote"
+msgstr "Comando SNES - Wii Remote"
 
 msgid "SNES Mouse"
 msgstr "Rato SNES"
@@ -731,10 +728,10 @@ msgid "SNES Mouse - GameCube Controller"
 msgstr "Rato SNES - Comando GameCube"
 
 msgid "SNES Mouse - Wiimote"
-msgstr "Rato SNES - Wiimote"
+msgstr "Rato SNES - Wii Remote"
 
 msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
-msgstr "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
+msgstr "Snes9x - Direitos de autor (c) Equipa Snes9x 1996 - 2006"
 
 msgid "Sound Effects Volume"
 msgstr "Volume de Efeitos Sonoros"
@@ -767,7 +764,7 @@ msgid "Superscope - GameCube Controller"
 msgstr "SuperScope - Comando GameCube"
 
 msgid "Superscope - Wiimote"
-msgstr "SuperScope - Wiimote"
+msgstr "SuperScope - Wii Remote"
 
 msgid "This software is open source and may be copied,"
 msgstr "Este software é de código aberto e pode ser copiado,"
@@ -782,7 +779,7 @@ msgid "Unable to locate a load device!"
 msgstr "Dispositivo de carregamento não encontrado!"
 
 msgid "Unable to locate a save device!"
-msgstr "Dispositivo de guardar não encontrado!"
+msgstr "Dispositivo de gravar não encontrado!"
 
 msgid "Unable to open snapshot!"
 msgstr "Não foi possível abrir snapshot!"
@@ -812,7 +809,7 @@ msgid "Update Available"
 msgstr "Actualização Disponível"
 
 msgid "Update failed!"
-msgstr "Actualização falhou!"
+msgstr "A actualização falhou!"
 
 msgid "Update later"
 msgstr "Actualizar depois"
@@ -848,10 +845,10 @@ msgid "VM32: Unknown page type!"
 msgstr "VM32: Tipo de página desconhecida!"
 
 msgid "Wiimote"
-msgstr "Wiimote"
+msgstr "Wii Remote"
 
 msgid "Wiimote Orientation"
-msgstr "Orientação do Wiimote"
+msgstr "Orientação do Wii Remote"
 
 msgid "Yes"
 msgstr "Sim"
