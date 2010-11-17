@@ -547,8 +547,12 @@ InitGCVideo ()
 	VIDEO_Init();
 
 	// Allocate the video buffers
-	xfb[0] = (u32 *) MEM_K0_TO_K1 (memalign(32, 640*574*2));
-	xfb[1] = (u32 *) MEM_K0_TO_K1 (memalign(32, 640*574*2));
+	xfb[0] = (u32 *) memalign(32, 640*574*2);
+	xfb[1] = (u32 *) memalign(32, 640*574*2);
+	DCInvalidateRange(xfb[0], 640*574*2);
+	DCInvalidateRange(xfb[1], 640*574*2);
+	xfb[0] = (u32 *) MEM_K0_TO_K1 (xfb[0]);
+	xfb[1] = (u32 *) MEM_K0_TO_K1 (xfb[1]);
 
 	GXRModeObj *rmode = FindVideoMode();
 	SetupVideoMode(rmode);
