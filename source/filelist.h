@@ -41,6 +41,8 @@ extern const u8		pt_lang[];
 extern const u32	pt_lang_size;
 extern const u8		pt_br_lang[];
 extern const u32	pt_br_lang_size;
+extern const u8		ca_lang[];
+extern const u32	ca_lang_size;
 
 // Sounds
 

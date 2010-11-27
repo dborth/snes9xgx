@@ -168,7 +168,7 @@ static MSG *setMSG(const char *msgid, const char *msgstr)
 		{
 			if (msg->msgstr)
 				free(msg->msgstr);
-			//msg->msgstr = strdup(msgstr);
+
 			msg->msgstr = expand_escape(msgstr);
 		}
 		return msg;
@@ -223,6 +223,7 @@ bool LoadLanguage()
 		case LANG_KOREAN: file = (char *)ko_lang; eof = file + ko_lang_size; break;
 		case LANG_PORTUGUESE: file = (char *)pt_lang; eof = file + pt_lang_size; break;
 		case LANG_BRAZILIAN_PORTUGUESE: file = (char *)pt_br_lang; eof = file + pt_br_lang_size; break;
+		case LANG_CATALAN: file = (char *)ca_lang; eof = file + ca_lang_size; break;
 		default: return false;
 	}
 
