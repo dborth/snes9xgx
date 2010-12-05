@@ -425,8 +425,8 @@ int SzParse(char * filepath)
 		{
 			// Parses the 7z into a full file listing
 
-			// reset browser
-			ResetBrowser();
+			HaltParseThread(); // halt parsing
+			ResetBrowser(); // reset browser
 
 			// add '..' folder in case the user wants exit the 7z
 			AddBrowserEntry();
