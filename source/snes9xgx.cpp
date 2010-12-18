@@ -213,13 +213,22 @@ void setFrameTimerMethod()
 #ifdef HW_RVL
 bool SaneIOS()
 {
-	bool res = false;
-	u32 num_titles=0;
-	u32 tmd_size;
-	u32 ios = IOS_GetVersion();
+	bool SupportedIOS(u32 ios)
+	{
+		if(ios == 58 || ios == 61)
+			return true;
 
-	if(ios > 200)
 		return false;
+	}
+
+	bool SaneIOS(u32 ios)
+	{
+		bool res = false;
+		u32 num_titles=0;
+		u32 tmd_size;
+
+		if(ios > 200)
+			return false;
 
 	if (ES_GetNumTitles(&num_titles) < 0)
 		return false;
@@ -328,6 +337,16 @@ void USBGeckoOutput()
 int
 main(int argc, char *argv[])
 {
+	u32 ios = IOS_GetVersion();
+
+	if(!SupportedIOS(ios))
+	{
+		s32 preferred = IOS_GetPreferredVersion();
+
+		if(SupportedIOS(preferred))
+			IOS_ReloadIOS(preferred);
+	}
+	
 	//USBGeckoOutput(); // uncomment to enable USB gecko output
 	__exception_setreload(8);
 
