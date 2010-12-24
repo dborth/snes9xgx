@@ -858,3 +858,12 @@ msgstr "Zapper"
 
 msgid "Zapper Crosshair"
 msgstr "Mira do Zapper"
+
+msgid "Catalan"
+msgstr "Catalão"
+
+msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
+msgstr "O IOS actual foi alterado (fake-signed). A funcionalidade e/ou estabilidade podem ser adversamente afectadas."
+
+msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
+msgstr "O IOS actual não é suportado. A funcionalidade e/ou estabilidade podem ser adversamente afectadas."
