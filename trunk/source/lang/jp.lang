@@ -64,6 +64,9 @@ msgstr "自動ロード"
 msgid "Auto Save"
 msgstr "自動セーブ"
 
+msgid "Automatic"
+msgstr "自動"
+
 msgid "Automatic (Recommended)"
 msgstr "自動(おすすめ)"
 
@@ -520,6 +523,9 @@ msgstr "プラス"
 msgid "Portuguese"
 msgstr "ポルトガル語"
 
+msgid "Brazilian Portuguese"
+msgstr "ブラジルポルトガル語"
+
 msgid "Power off Wii"
 msgstr "Wiiの電源を切る"
 
@@ -878,40 +884,49 @@ msgid "Palette"
 msgstr "使用パレット"
 
 msgid "AspiringSquire's Real palette"
-msgstr "AspiringSquireのリアルパレット"
+msgstr "AspiringSquire"
 
 msgid "Loopy's palette"
-msgstr "Loopyのパレット"
+msgstr "Loopy"
 
 msgid "Quor's palette"
-msgstr "Quorのパレット"
+msgstr "Quor"
 
 msgid "Chris Covell's palette"
-msgstr "Chris Covellのパレット"
+msgstr "Chris Covell"
 
 msgid "Matthew Conte's palette"
-msgstr "Matthew Conteのパレット"
+msgstr "Matthew Conte"
 
 msgid "PasoFami/99 palette"
-msgstr "パソファミ/99のパレット"
+msgstr "パソファミ/99"
 
 msgid "CrashMan's palette"
-msgstr "CrashManのパレット"
+msgstr "CrashMan"
 
 msgid "MESS palette"
-msgstr "MESSのパレット"
+msgstr "MESS"
 
 msgid "Zaphod's VS Castlevania palette"
-msgstr "VSキャッスルバニアのパレット改"
+msgstr "VSキャッスルバニア"
 
 msgid "Zaphod's VS SMB palette"
-msgstr "VSｽｰﾊﾟｰﾏﾘｵﾌﾞﾗｻﾞｰｽﾞのパレット改"
+msgstr "VSｽｰﾊﾟｰﾏﾘｵﾌﾞﾗｻﾞｰｽﾞ"
 
 msgid "VS Dr. Mario palette"
-msgstr "VSDr.マリオのパレット"
+msgstr "VSDr.マリオ"
 
 msgid "VS Castlevania palette"
-msgstr "VSキャッスルバニアのパレット"
+msgstr "VSキャッスルバニア"
 
 msgid "VS SMB/VS Ice Climber palette"
-msgstr "VSｽｰﾏﾘ/ｱｲｽｸﾗｲﾏｰのパレット"
+msgstr "VSｽｰﾏﾘ/ｱｲｽｸﾗｲﾏｰ"
+
+msgid "Catalan"
+msgstr "カタロニア語"
+
+msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
+msgstr "このIOSでは不安定になる可能性があります"
+
+msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
+msgstr "このIOSには対応していないので不安定になる可能性があります"

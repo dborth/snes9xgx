@@ -88,6 +88,9 @@ msgstr "Annuler"
 msgid "Caps"
 msgstr "Verr.Maj"
 
+msgid "Catalan"
+msgstr "Catalan"
+
 msgid "Cheats"
 msgstr "Cheats"
 
@@ -433,7 +436,6 @@ msgstr "Nouvelle sauvegarde SRAM"
 msgid "No"
 msgstr "Non"
 
-
 msgid "No data to save!"
 msgstr "Pas de données (RAM) à sauvegarder !"
 
@@ -443,12 +445,10 @@ msgstr "Aucun disque inséré !"
 msgid "No SRAM data to save!"
 msgstr "Pas de données SRAM à sauvegarder !"
 
-
 msgid "No game saves found."
 msgstr "Aucune sauvegarde trouvée."
 
 msgid "None"
-
 msgstr "Aucun"
 
 msgid "NTSC (480i)"
@@ -762,6 +762,12 @@ msgstr "Super Scope - Manette GameCube"
 
 msgid "Superscope - Wiimote"
 msgstr "Super Scope - Wiimote"
+
+msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
+msgstr "L'IOS utilisé est altéré (fausse signature, Bug Trucha). Les fonctionnalités et/ou la stabilité peuvent en être affectées."
+
+msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
+msgstr "L'IOS utilisé n'est pas supporté. Les fonctionnalités et/ou la stabilité peuvent en être affectées."
 
 msgid "This software is open source and may be copied,"
 msgstr "Cette application est libre et peut être copiée,"
