@@ -211,24 +211,22 @@ void setFrameTimerMethod()
  * IOS Check
  ***************************************************************************/
 #ifdef HW_RVL
-bool SaneIOS()
+bool SupportedIOS(u32 ios)
 {
-	bool SupportedIOS(u32 ios)
-	{
-		if(ios == 58 || ios == 61)
-			return true;
+	if(ios == 58 || ios == 61)
+		return true;
 
+	return false;
+}
+
+bool SaneIOS(u32 ios)
+{
+	bool res = false;
+	u32 num_titles=0;
+	u32 tmd_size;
+
+	if(ios > 200)
 		return false;
-	}
-
-	bool SaneIOS(u32 ios)
-	{
-		bool res = false;
-		u32 num_titles=0;
-		u32 tmd_size;
-
-		if(ios > 200)
-			return false;
 
 	if (ES_GetNumTitles(&num_titles) < 0)
 		return false;
