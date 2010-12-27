@@ -1255,6 +1255,7 @@ bool8 S9xUnfreezeGame (const char *filename)
 void S9xFreezeToStream (STREAM stream)
 {
 	char	buffer[1024];
+	uint8 *soundsnapshot = new uint8[SPC_SAVE_STATE_BLOCK_SIZE];
 
 	S9xSetSoundMute(TRUE);
 
@@ -1288,7 +1289,6 @@ void S9xFreezeToStream (STREAM stream)
 
 	FreezeBlock (stream, "FIL", Memory.FillRAM, 0x8000);
 
-	uint8	soundsnapshot[SPC_SAVE_STATE_BLOCK_SIZE];
 	S9xAPUSaveState(soundsnapshot);
 	FreezeBlock (stream, "SND", soundsnapshot, SPC_SAVE_STATE_BLOCK_SIZE);
 
@@ -1411,6 +1411,8 @@ void S9xFreezeToStream (STREAM stream)
 #endif
 
 	S9xSetSoundMute(FALSE);
+
+	delete [] soundsnapshot;
 }
 
 int S9xUnfreezeFromStream (STREAM stream)
@@ -1881,7 +1883,7 @@ static void FreezeStruct (STREAM stream, const char *name, void *base, FreezeDat
 	uint8	*addr;
 	uint16	word;
 	uint32	dword;
-	int64	qword;
+	int64	qaword;
 	int		relativeAddr;
 
 	for (i = 0; i < num_fields; i++)
@@ -1930,15 +1932,15 @@ static void FreezeStruct (STREAM stream, const char *name, void *base, FreezeDat
 						break;
 
 					case 8:
-						qword = *((int64 *) (addr));
-						*ptr++ = (uint8) (qword >> 56);
-						*ptr++ = (uint8) (qword >> 48);
-						*ptr++ = (uint8) (qword >> 40);
-						*ptr++ = (uint8) (qword >> 32);
-						*ptr++ = (uint8) (qword >> 24);
-						*ptr++ = (uint8) (qword >> 16);
-						*ptr++ = (uint8) (qword >> 8);
-						*ptr++ = (uint8) qword;
+						qaword = *((int64 *) (addr));
+						*ptr++ = (uint8) (qaword >> 56);
+						*ptr++ = (uint8) (qaword >> 48);
+						*ptr++ = (uint8) (qaword >> 40);
+						*ptr++ = (uint8) (qaword >> 32);
+						*ptr++ = (uint8) (qaword >> 24);
+						*ptr++ = (uint8) (qaword >> 16);
+						*ptr++ = (uint8) (qaword >> 8);
+						*ptr++ = (uint8) qaword;
 						break;
 				}
 
@@ -2117,7 +2119,7 @@ static void UnfreezeStructFromCopy (void *sbase, FreezeData *fields, int num_fie
 	uint8	*ptr = block;
 	uint16	word;
 	uint32	dword;
-	int64	qword;
+	int64	qaword;
 	uint8	*addr;
 	void	*base;
 	int		relativeAddr;
@@ -2143,7 +2145,7 @@ static void UnfreezeStructFromCopy (void *sbase, FreezeData *fields, int num_fie
 					case 1:
 						if (fields[i].offset < 0)
 						{
-							ptr++; 
+							ptr++;
 							break;
 						}
 
@@ -2183,15 +2185,15 @@ static void UnfreezeStructFromCopy (void *sbase, FreezeData *fields, int num_fie
 							break;
 						}
 
-						qword  = (int64) *ptr++ << 56;
-						qword |= (int64) *ptr++ << 48;
-						qword |= (int64) *ptr++ << 40;
-						qword |= (int64) *ptr++ << 32;
-						qword |= (int64) *ptr++ << 24;
-						qword |= (int64) *ptr++ << 16;
-						qword |= (int64) *ptr++ << 8;
-						qword |= (int64) *ptr++;
-						*((int64 *) (addr)) = qword;
+						qaword  = (int64) *ptr++ << 56;
+						qaword |= (int64) *ptr++ << 48;
+						qaword |= (int64) *ptr++ << 40;
+						qaword |= (int64) *ptr++ << 32;
+						qaword |= (int64) *ptr++ << 24;
+						qaword |= (int64) *ptr++ << 16;
+						qaword |= (int64) *ptr++ << 8;
+						qaword |= (int64) *ptr++;
+						*((int64 *) (addr)) = qaword;
 						break;
 
 					default:
@@ -2278,3 +2280,4 @@ bool8 S9xSPCDump (const char *filename)
 
 	return (TRUE);
 }
+
