@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ogcsys.h>
-#include <sys/dir.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <zlib.h>
 #include <malloc.h>
@@ -55,7 +55,7 @@ bool isMounted[7] = { false, false, false, false, false, false, false };
 
 // folder parsing thread
 static lwp_t parsethread = LWP_THREAD_NULL;
-static DIR_ITER * dirIter = NULL;
+static DIR *dir = NULL;
 static bool parseHalt = true;
 static bool parseFilter = true;
 bool ParseDirEntries();
@@ -480,27 +480,27 @@ static char *GetExt(char *file)
 
 bool ParseDirEntries()
 {
-	if(!dirIter)
+	if(!dir)
 		return false;
 
-	char filename[MAXPATHLEN];
 	char *ext;
+	struct dirent *entry;
 	struct stat filestat;
 
 	int i = 0;
-	int res;
 
 	while(i < 20)
 	{
-		res = dirnext(dirIter,filename,&filestat);
+		entry = readdir(dir);
 
-		if(res != 0)
+		if(entry == NULL)
 			break;
 
-		if(filename[0] == '.' && filename[1] != '.')
+		if(entry->d_name[0] == '.' && entry->d_name[1] != '.')
 			continue;
 
-		ext = GetExt(filename);
+		ext = GetExt(entry->d_name);
+		stat(entry->d_name,&filestat);
 
 		// don't show the file if it's not a valid ROM
 		if(parseFilter && (filestat.st_mode & _IFDIR) == 0)
@@ -520,14 +520,14 @@ bool ParseDirEntries()
 			break;
 		}
 
-		strncpy(browserList[browser.numEntries+i].filename, filename, MAXJOLIET);
+		strncpy(browserList[browser.numEntries+i].filename, entry->d_name, MAXJOLIET);
 		browserList[browser.numEntries+i].length = filestat.st_size;
 		browserList[browser.numEntries+i].mtime = filestat.st_mtime;
 		browserList[browser.numEntries+i].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
 
 		if(browserList[browser.numEntries+i].isdir)
 		{
-			if(strcmp(filename, "..") == 0)
+			if(strcmp(entry->d_name, "..") == 0)
 				sprintf(browserList[browser.numEntries+i].displayname, "Up One Level");
 			else
 				strncpy(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename, MAXJOLIET);
@@ -546,10 +546,10 @@ bool ParseDirEntries()
 
 	browser.numEntries += i;
 
-	if(res != 0 || parseHalt)
+	if(entry == NULL || parseHalt)
 	{
-		dirclose(dirIter); // close directory
-		dirIter = NULL;
+		closedir(dir); // close directory
+		dir = NULL;
 
 		// try to find and select the last loaded file
 		if(selectLoadedFile == 1 && parseHalt == 0 && loadedFile[0] != 0 && browser.dir[0] != 0)
@@ -603,23 +603,23 @@ ParseDirectory(bool waitParse, bool filter)
 	ResetBrowser(); // reset browser
 
 	// open the directory
-	while(dirIter == NULL && retry == 1)
+	while(dir == NULL && retry == 1)
 	{
 		mounted = ChangeInterface(browser.dir, NOTSILENT);
 
 		if(mounted)
-			dirIter = diropen(browser.dir);
+			dir = opendir(browser.dir);
 		else
 			return -1;
 
-		if(dirIter == NULL)
+		if(dir == NULL)
 		{
 			retry = ErrorPromptRetry("Error opening directory!");
 		}
 	}
 
 	// if we can't open the dir, try higher levels
-	if (dirIter == NULL)
+	if (dir == NULL)
 	{
 		char * devEnd = strrchr(browser.dir, '/');
 
@@ -632,13 +632,13 @@ ParseDirectory(bool waitParse, bool filter)
 				break;
 
 			devEnd[1] = 0; // strip remaining file listing
-			dirIter = diropen(browser.dir);
-			if (dirIter)
+			dir = opendir(browser.dir);
+			if (dir)
 				break;
 		}
 	}
 	
-	if(dirIter == NULL)
+	if(dir == NULL)
 		return -1;
 
 	if(IsDeviceRoot(browser.dir))

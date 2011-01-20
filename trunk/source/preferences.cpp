@@ -11,7 +11,7 @@
 #include <gccore.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/dir.h>
+#include <dirent.h>
 #include <ogcsys.h>
 #include <mxml.h>
 
@@ -502,7 +502,7 @@ SavePrefs (bool silent)
 			return false;
 		
 		sprintf(filepath, "%s%s", pathPrefix[device], APPFOLDER);
-		DIR_ITER *dir = diropen(filepath);
+		DIR *dir = opendir(filepath);
 		if (!dir)
 		{
 			if(mkdir(filepath, 0777) != 0)
@@ -516,7 +516,7 @@ SavePrefs (bool silent)
 		}
 		else
 		{
-			dirclose(dir);
+			closedir(dir);
 		}
 		sprintf(filepath, "%s%s/%s", pathPrefix[device], APPFOLDER, PREF_FILE_NAME);
 		sprintf(prefpath, "%s%s", pathPrefix[device], APPFOLDER);
@@ -623,17 +623,17 @@ bool LoadPrefs()
 	// rename snes9x to snes9xgx
 	if(GCSettings.LoadMethod == DEVICE_SD)
 	{
-		if(ChangeInterface(DEVICE_SD, NOTSILENT) && diropen("sd:/snes9x"))
+		if(ChangeInterface(DEVICE_SD, NOTSILENT) && opendir("sd:/snes9x"))
 			rename("sd:/snes9x", "sd:/snes9xgx");
 	}
 	else if(GCSettings.LoadMethod == DEVICE_USB)
 	{
-		if(ChangeInterface(DEVICE_USB, NOTSILENT) && diropen("usb:/snes9x"))
+		if(ChangeInterface(DEVICE_USB, NOTSILENT) && opendir("usb:/snes9x"))
 			rename("usb:/snes9x", "usb:/snes9xgx");
 	}
 	else if(GCSettings.LoadMethod == DEVICE_SMB)
 	{
-		if(ChangeInterface(DEVICE_SMB, NOTSILENT) && diropen("smb:/snes9x"))
+		if(ChangeInterface(DEVICE_SMB, NOTSILENT) && opendir("smb:/snes9x"))
 			rename("smb:/snes9x", "smb:/snes9xgx");
 	}
 
