@@ -484,6 +484,7 @@ bool ParseDirEntries()
 		return false;
 
 	char *ext;
+	char path[MAXPATHLEN+1];
 	struct dirent *entry;
 	struct stat filestat;
 
@@ -499,19 +500,29 @@ bool ParseDirEntries()
 		if(entry->d_name[0] == '.' && entry->d_name[1] != '.')
 			continue;
 
-		ext = GetExt(entry->d_name);
-		stat(entry->d_name,&filestat);
-
-		// don't show the file if it's not a valid ROM
-		if(parseFilter && (filestat.st_mode & _IFDIR) == 0)
+		if(strcmp(entry->d_name, "..") == 0)
 		{
-			if(ext == NULL)
+			filestat.st_mode = _IFDIR;
+		}
+		else
+		{
+			ext = GetExt(entry->d_name);
+			snprintf(path, MAXPATHLEN, "%s%s", browser.dir, entry->d_name);
+
+			if(stat(path, &filestat) < 0)
 				continue;
 
-			if(	stricmp(ext, "smc") != 0 && stricmp(ext, "fig") != 0 &&
-				stricmp(ext, "sfc") != 0 && stricmp(ext, "swc") != 0 &&
-				stricmp(ext, "zip") != 0 && stricmp(ext, "7z") != 0)
-				continue;
+			// don't show the file if it's not a valid ROM
+			if(parseFilter && (filestat.st_mode & _IFDIR) == 0)
+			{
+				if(ext == NULL)
+					continue;
+
+				if(	stricmp(ext, "smc") != 0 && stricmp(ext, "fig") != 0 &&
+					stricmp(ext, "sfc") != 0 && stricmp(ext, "swc") != 0 &&
+					stricmp(ext, "zip") != 0 && stricmp(ext, "7z") != 0)
+					continue;
+			}
 		}
 
 		if(!AddBrowserEntry())
