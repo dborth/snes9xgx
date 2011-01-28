@@ -27,16 +27,14 @@ INCLUDES	:=	source source/snes9x
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) -DNO_SOUND \
-			-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
-			-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
-			-fomit-frame-pointer \
-			-Wno-unused-parameter -Wno-strict-aliasing \
-			-Wno-write-strings -Wno-parentheses
-
+CFLAGS		=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) -DNO_SOUND \
+				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
+				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
+				-fomit-frame-pointer \
+				-Wno-unused-parameter -Wno-strict-aliasing \
+				-Wno-write-strings -Wno-parentheses
 CXXFLAGS	=	$(CFLAGS)
-
-LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--cref
+LDFLAGS		=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
