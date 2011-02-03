@@ -8,16 +8,6 @@
  * Network and SMB support routines
  ****************************************************************************/
 
-#ifdef HW_DOL
-
-bool
-ConnectShare (bool silent)
-{
-	return false;
-}
-
-#else
-
 #include <network.h>
 #include <malloc.h>
 #include <ogc/lwp_watchdog.h>
@@ -39,6 +29,8 @@ char wiiIP[16] = { 0 };
 static bool updateChecked = false; // true if checked for app update
 static char updateURL[128]; // URL of app update
 bool updateFound = false; // true if an app update was found
+
+#ifdef HW_RVL
 
 /****************************************************************************
  * UpdateCheck
@@ -270,11 +262,15 @@ void StopNetworkThread()
 	networkthread = LWP_THREAD_NULL;
 }
 
+#endif
+
 bool InitializeNetwork(bool silent)
 {
 	if(networkInit)
 	{
+#ifdef HW_RVL
 		StopNetworkThread();
+#endif
 		return true;
 	}
 
@@ -288,6 +284,8 @@ bool InitializeNetwork(bool silent)
 		u64 start = gettime();
 
 		ShowAction("Initializing network...");
+
+#ifdef HW_RVL
 		StartNetworkThread();
 
 		while (!LWP_ThreadIsSuspended(networkthread))
@@ -297,6 +295,9 @@ bool InitializeNetwork(bool silent)
 			if(diff_sec(start, gettime()) > 10) // wait for 10 seconds max for net init
 				break;
 		}
+#else
+		networkInit = !(if_config(wiiIP, NULL, NULL, true) < 0);
+#endif
 
 		CancelAction();
 
@@ -323,11 +324,6 @@ void CloseShare()
 bool
 ConnectShare (bool silent)
 {
-	// Crashes or stalls system in GameCube mode - so disable
-	#ifndef HW_RVL
-	return false;
-	#endif
-
 	if(!InitializeNetwork(silent))
 		return false;
 
@@ -377,5 +373,3 @@ ConnectShare (bool silent)
 
 	return networkShareInit;
 }
-
-#endif
