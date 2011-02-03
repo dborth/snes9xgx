@@ -266,16 +266,17 @@ void StopNetworkThread()
 
 bool InitializeNetwork(bool silent)
 {
-	if(networkInit)
-	{
 #ifdef HW_RVL
-		StopNetworkThread();
-#endif
-		return true;
-	}
+	StopNetworkThread();
 
-	if(silent)
-		return false;
+	if(networkInit && net_gethostip() > 0)
+		return true;
+
+	networkInit = false;
+#else
+	if(networkInit)
+		return true;
+#endif
 
 	int retry = 1;
 
@@ -301,7 +302,7 @@ bool InitializeNetwork(bool silent)
 
 		CancelAction();
 
-		if(networkInit)
+		if(networkInit || silent)
 			break;
 
 		retry = ErrorPromptRetry("Unable to initialize network!");
