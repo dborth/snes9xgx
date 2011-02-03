@@ -579,15 +579,6 @@ int BrowserChangeFolder()
 		browserList[i].isdir = 1;
 		browserList[i].icon = ICON_USB;
 		i++;
-
-		AddBrowserEntry();
-		sprintf(browserList[i].filename, "smb:/");
-		sprintf(browserList[i].displayname, "Network Share");
-		browserList[i].length = 0;
-		browserList[i].mtime = 0;
-		browserList[i].isdir = 1;
-		browserList[i].icon = ICON_SMB;
-		i++;
 #else
 		AddBrowserEntry();
 		sprintf(browserList[i].filename, "carda:/");
@@ -607,6 +598,15 @@ int BrowserChangeFolder()
 		browserList[i].icon = ICON_SD;
 		i++;
 #endif
+		AddBrowserEntry();
+		sprintf(browserList[i].filename, "smb:/");
+		sprintf(browserList[i].displayname, "Network Share");
+		browserList[i].length = 0;
+		browserList[i].mtime = 0;
+		browserList[i].isdir = 1;
+		browserList[i].icon = ICON_SMB;
+		i++;
+		
 		AddBrowserEntry();
 		sprintf(browserList[i].filename, "dvd:/");
 		sprintf(browserList[i].displayname, "Data DVD");
