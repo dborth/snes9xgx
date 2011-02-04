@@ -177,52 +177,74 @@ static u8 netstack[8192] ATTRIBUTE_ALIGN (32);
 
 static void * netcb (void *arg)
 {
-	s32 res;
+	s32 res=-1;
 	int retry;
 	int wait;
+	static bool first=true;
 
 	while(netHalt != 2)
 	{
-		retry = 30;
-
-		while (retry)
+		retry = 5;
+		
+		while (retry>0 && (netHalt != 2))
 		{
+			if(!first) 
+			{
+				bool reset=false;
+				int i;
+				for(i=0;i<500 && (netHalt != 2);i++) // 10 seconds to try to reset
+				{
+					res = net_get_status();
+					if(res != -EBUSY) // trying to init net so we can't kill the net
+					{
+						net_wc24cleanup(); //kill the net 
+						reset=true;
+						break;					
+					}
+					usleep(20000);
+				}
+				if(!reset) 
+				{
+					retry--;
+					continue;
+				}
+			}
+			first=false;
 			net_deinit();
 			res = net_init_async(NULL, NULL);
 
 			if(res != 0)
-				break; // failed
+			{
+				sleep(1);
+				retry--;
+				continue;
+			}
 
 			res = net_get_status();
-			wait = 500; // only wait 10 sec
-			while (res == -EBUSY && wait > 0)
+			wait = 400; // only wait 10 sec
+			while (res == -EBUSY && wait > 0  && (netHalt != 2))
 			{
 				usleep(20000);
 				res = net_get_status();
 				wait--;
 			}
 
-			if (res != -EAGAIN && res != -ETIMEDOUT)
-				break;
-
+			if(res==0) break;
+			
 			retry--;
 			usleep(2000);
-			continue;
 		}
-
 		if (res == 0)
 		{
-			networkInit = true;
-
 			struct in_addr hostip;
 			hostip.s_addr = net_gethostip();
 			if (hostip.s_addr)
 			{
 				strcpy(wiiIP, inet_ntoa(hostip));
-				networkInit = true;
+				networkInit = true;				
 			}
 		}
-		LWP_SuspendThread(networkthread);
+		if(netHalt != 2) LWP_SuspendThread(networkthread);
 	}
 	return NULL;
 }
@@ -305,6 +327,9 @@ bool InitializeNetwork(bool silent)
 			break;
 
 		retry = ErrorPromptRetry("Unable to initialize network!");
+		
+		if(networkInit && net_gethostip() > 0)
+			return true;
 	}
 	return networkInit;
 }
