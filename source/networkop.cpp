@@ -327,7 +327,7 @@ bool InitializeNetwork(bool silent)
 
 		retry = ErrorPromptRetry("Unable to initialize network!");
 		
- #ifdef HW_RVL  	
+#ifdef HW_RVL  	
 		if(networkInit && net_gethostip() > 0)
 #else
 		if(networkInit)
