@@ -444,6 +444,7 @@ DefaultSettings ()
 	Settings.JustifierMaster = true;
 	Settings.MultiPlayer5Master = true;
 	Settings.DontSaveOopsSnapshot = true;
+	Settings.ApplyCheats = true;
 
 	Settings.BlockInvalidVRAMAccess = false;
 	Settings.HDMATimingHack = 100;
