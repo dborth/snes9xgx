@@ -180,7 +180,7 @@ static void * netcb (void *arg)
 	s32 res=-1;
 	int retry;
 	int wait;
-	static bool first=true;
+	static bool prevInit = false;
 
 	while(netHalt != 2)
 	{
@@ -188,11 +188,11 @@ static void * netcb (void *arg)
 		
 		while (retry>0 && (netHalt != 2))
 		{			
-			if(!first) 
+			if(prevInit) 
 			{
 				bool reset=false;
 				int i;
-				for(i=0;i<500 && (netHalt != 2);i++) // 10 seconds to try to reset
+				for(i=0; i < 500 && (netHalt != 2); i++) // 10 seconds to try to reset
 				{
 					res = net_get_status();
 					if(res != -EBUSY) // trying to init net so we can't kill the net
@@ -210,8 +210,8 @@ static void * netcb (void *arg)
 					continue;
 				}
 			}
-			first=false;
-			net_deinit();
+
+			net_deinit();			
 			usleep(2000);
 			res = net_init_async(NULL, NULL);
 
@@ -242,7 +242,8 @@ static void * netcb (void *arg)
 			if (hostip.s_addr)
 			{
 				strcpy(wiiIP, inet_ntoa(hostip));
-				networkInit = true;				
+				networkInit = true;	
+				prevInit = true;
 			}
 		}
 		if(netHalt != 2) LWP_SuspendThread(networkthread);
