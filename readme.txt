@@ -43,6 +43,15 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.2.6 - March 19, 2011]
+
+* Improved game compatibility (updated core to latest Snes9x)
+* Fixed issue with cheats not persisting
+* Improved USB and controller compatibility (recompiled with latest libogc)
+* Enabled SMB on GameCube (thanks Extrems!)
+* Added Catalan translation
+* Translation updates
+
 [4.2.5 - October 7, 2010]
 
 * Sync with upstream SVN - fixes a few specific game issues
