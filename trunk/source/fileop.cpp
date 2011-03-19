@@ -610,6 +610,10 @@ ParseDirectory(bool waitParse, bool filter)
 	parseFilter = filter;
 	
 	ResetBrowser(); // reset browser
+	
+	// add trailing slash
+	if(browser.dir[strlen(browser.dir)-1] != '/')
+		strcat(browser.dir, "/");
 
 	// open the directory
 	while(dir == NULL && retry == 1)
