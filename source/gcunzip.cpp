@@ -457,7 +457,7 @@ int SzParse(char * filepath)
 				}
 
 				// parse information about this file to the file list structure
-				strncpy(browserList[SzJ].filename, SzF->Name, MAXJOLIET);
+				snprintf(browserList[SzJ].filename, MAXJOLIET, "%s", SzF->Name);
 				StripExt(browserList[SzJ].displayname, browserList[SzJ].filename);
 				browserList[SzJ].length = SzF->Size; // filesize
 				browserList[SzJ].isdir = 0; // only files will be displayed (-> no flags)

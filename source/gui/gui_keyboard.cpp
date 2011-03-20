@@ -22,8 +22,7 @@ static char * GetDisplayText(char * t)
 	if(len < MAX_KEYBOARD_DISPLAY)
 		return t;
 
-	strncpy(tmptxt, &t[len-MAX_KEYBOARD_DISPLAY], MAX_KEYBOARD_DISPLAY);
-	tmptxt[MAX_KEYBOARD_DISPLAY-1] = 0;
+	snprintf(tmptxt, MAX_KEYBOARD_DISPLAY, "%s", &t[len-MAX_KEYBOARD_DISPLAY]);
 	return &tmptxt[0];
 }
 
@@ -41,8 +40,7 @@ GuiKeyboard::GuiKeyboard(char * t, u32 max)
 	focus = 0; // allow focus
 	alignmentHor = ALIGN_CENTRE;
 	alignmentVert = ALIGN_MIDDLE;
-	strncpy(kbtextstr, t, max);
-	kbtextstr[max] = 0;
+	snprintf(kbtextstr, 255, "%s", t);
 	kbtextmaxlen = max;
 
 	Key thekeys[4][11] = {
