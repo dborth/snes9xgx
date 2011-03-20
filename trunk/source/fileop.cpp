@@ -455,8 +455,8 @@ void CreateAppPath(char * origpath)
 		path[2] = 'd';
 	}
 	if(ChangeInterface(&path[pos], SILENT))
-		strncpy(appPath, &path[pos], MAXPATHLEN);
-	appPath[MAXPATHLEN-1] = 0;
+		snprintf(appPath, MAXPATHLEN-1, "%s", &path[pos]);
+
 	free(path);
 }
 
@@ -483,12 +483,12 @@ bool ParseDirEntries()
 
 	char *ext;
 	char path[MAXPATHLEN+1];
-	struct dirent *entry;
+	struct dirent *entry = NULL;
 	struct stat filestat;
 
 	int i = 0;
 
-	while(i < 20)
+	while(i < 20 && !parseHalt)
 	{
 		entry = readdir(dir);
 
@@ -529,7 +529,7 @@ bool ParseDirEntries()
 			break;
 		}
 
-		strncpy(browserList[browser.numEntries+i].filename, entry->d_name, MAXJOLIET);
+		snprintf(browserList[browser.numEntries+i].filename, MAXJOLIET, "%s", entry->d_name);
 		browserList[browser.numEntries+i].length = filestat.st_size;
 		browserList[browser.numEntries+i].mtime = filestat.st_mtime;
 		browserList[browser.numEntries+i].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
@@ -539,7 +539,7 @@ bool ParseDirEntries()
 			if(strcmp(entry->d_name, "..") == 0)
 				sprintf(browserList[browser.numEntries+i].displayname, "Up One Level");
 			else
-				strncpy(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename, MAXJOLIET);
+				snprintf(browserList[browser.numEntries+i].displayname, MAXJOLIET, "%s", browserList[browser.numEntries+i].filename);
 			browserList[browser.numEntries+i].icon = ICON_FOLDER;
 		}
 		else
@@ -549,11 +549,14 @@ bool ParseDirEntries()
 		i++;
 	}
 
-	// Sort the file list
-	if(i >= 0)
-		qsort(browserList, browser.numEntries+i, sizeof(BROWSERENTRY), FileSortCallback);
-
-	browser.numEntries += i;
+	if(!parseHalt)
+	{
+		// Sort the file list
+		if(i >= 0)
+			qsort(browserList, browser.numEntries+i, sizeof(BROWSERENTRY), FileSortCallback);
+	
+		browser.numEntries += i;
+	}
 
 	if(entry == NULL || parseHalt)
 	{
@@ -561,7 +564,7 @@ bool ParseDirEntries()
 		dir = NULL;
 
 		// try to find and select the last loaded file
-		if(selectLoadedFile == 1 && parseHalt == 0 && loadedFile[0] != 0 && browser.dir[0] != 0)
+		if(selectLoadedFile == 1 && !parseHalt && loadedFile[0] != 0 && browser.dir[0] != 0)
 		{
 			int indexFound = -1;
 			
@@ -593,7 +596,6 @@ bool ParseDirEntries()
 			}
 			selectLoadedFile = 2; // selecting done
 		}
-		
 		return false; // no more entries
 	}
 	return true; // more entries

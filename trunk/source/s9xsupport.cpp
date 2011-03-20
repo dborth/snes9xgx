@@ -42,8 +42,7 @@ void S9xExit()
 void S9xMessage(int /*type */, int /*number */, const char *message)
 {
 	static char buffer[MAX_MESSAGE_LEN + 1];
-	strncpy(buffer, message, MAX_MESSAGE_LEN);
-	buffer[MAX_MESSAGE_LEN] = 0;
+	snprintf(buffer, MAX_MESSAGE_LEN, "%s", message);
 	S9xSetInfoString(buffer);
 }
 

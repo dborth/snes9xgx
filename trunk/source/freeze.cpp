@@ -52,7 +52,7 @@ SaveSnapshot (char * filepath, bool silent)
 	if(gameScreenPngSize > 0)
 	{
 		char screenpath[1024];
-		strncpy(screenpath, filepath, 1024);
+		strcpy(screenpath, filepath);
 		screenpath[strlen(screenpath)-4] = 0;
 		sprintf(screenpath, "%s.png", screenpath);
 		SaveFile((char *)gameScreenPng, screenpath, gameScreenPngSize, silent);
