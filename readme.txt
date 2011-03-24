@@ -43,6 +43,11 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.2.7 - March 23, 2011]
+
+* Fixed browser regressions with stability and speed
+* Reverted zones' changes to IRQ and SA-1 - these caused a performance hit
+
 [4.2.6 - March 19, 2011]
 
 * Improved game compatibility (updated core to latest Snes9x)
