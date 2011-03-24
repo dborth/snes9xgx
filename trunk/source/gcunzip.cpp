@@ -374,7 +374,7 @@ int SzParse(char * filepath)
 	
 	int device;
 	
-	if(!FindDevice(browser.dir, &device))
+	if(!FindDevice(browser.dir, &device) || !GetFileSize(browser.selIndex))
 		return 0;
 
 	int nbfiles = 0;

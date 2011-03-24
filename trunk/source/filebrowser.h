@@ -36,7 +36,6 @@ typedef struct
 typedef struct
 {
 	size_t length; // file length
-	time_t mtime; // file modified time
 	int isdir; // 0 - file, 1 - directory
 	char filename[MAXJOLIET + 1]; // full filename
 	char displayname[MAXJOLIET + 1]; // name for browser display

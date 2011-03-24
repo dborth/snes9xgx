@@ -58,7 +58,7 @@ static lwp_t parsethread = LWP_THREAD_NULL;
 static DIR *dir = NULL;
 static bool parseHalt = true;
 static bool parseFilter = true;
-bool ParseDirEntries();
+static bool ParseDirEntries();
 int selectLoadedFile = 0;
 
 // device thread
@@ -476,15 +476,30 @@ static char *GetExt(char *file)
 	return ext;
 }
 
-bool ParseDirEntries()
+bool GetFileSize(int i)
+{
+	if(browserList[i].length > 0)
+		return true;
+
+	struct stat filestat;
+	char path[MAXPATHLEN+1];
+	snprintf(path, MAXPATHLEN, "%s%s", browser.dir, browserList[i].filename);
+
+	if(stat(path, &filestat) < 0)
+		return false;
+
+	browserList[i].length = filestat.st_size;
+	return true;
+}
+
+static bool ParseDirEntries()
 {
 	if(!dir)
 		return false;
 
 	char *ext;
-	char path[MAXPATHLEN+1];
 	struct dirent *entry = NULL;
-	struct stat filestat;
+	int isdir;
 
 	int i = 0;
 
@@ -500,19 +515,20 @@ bool ParseDirEntries()
 
 		if(strcmp(entry->d_name, "..") == 0)
 		{
-			filestat.st_mode = _IFDIR;
+			isdir = 1;
 		}
 		else
 		{
-			ext = GetExt(entry->d_name);
-			snprintf(path, MAXPATHLEN, "%s%s", browser.dir, entry->d_name);
-
-			if(stat(path, &filestat) < 0)
-				continue;
-
+			if(entry->d_type==DT_DIR)
+				isdir = 1;
+			else
+				isdir = 0;
+			
 			// don't show the file if it's not a valid ROM
-			if(parseFilter && (filestat.st_mode & _IFDIR) == 0)
+			if(parseFilter && !isdir)
 			{
+				ext = GetExt(entry->d_name);
+				
 				if(ext == NULL)
 					continue;
 
@@ -530,11 +546,9 @@ bool ParseDirEntries()
 		}
 
 		snprintf(browserList[browser.numEntries+i].filename, MAXJOLIET, "%s", entry->d_name);
-		browserList[browser.numEntries+i].length = filestat.st_size;
-		browserList[browser.numEntries+i].mtime = filestat.st_mtime;
-		browserList[browser.numEntries+i].isdir = (filestat.st_mode & _IFDIR) == 0 ? 0 : 1; // flag this as a dir
+		browserList[browser.numEntries+i].isdir = isdir; // flag this as a dir
 
-		if(browserList[browser.numEntries+i].isdir)
+		if(isdir)
 		{
 			if(strcmp(entry->d_name, "..") == 0)
 				sprintf(browserList[browser.numEntries+i].displayname, "Up One Level");
@@ -662,7 +676,6 @@ ParseDirectory(bool waitParse, bool filter)
 		sprintf(browserList[0].filename, "..");
 		sprintf(browserList[0].displayname, "Up One Level");
 		browserList[0].length = 0;
-		browserList[0].mtime = 0;
 		browserList[0].isdir = 1; // flag this as a dir
 		browserList[0].icon = ICON_FOLDER;
 		browser.numEntries++;
