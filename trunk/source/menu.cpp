@@ -1289,10 +1289,7 @@ static int MenuGame()
 
 	for(i=0; i < 4; i++)
 	{
-		if(i == 0)
-			sprintf(txt, "P %d", i+1);
-		else
-			sprintf(txt, "P%d", i+1);
+		sprintf(txt, "P%d", i+1);
 
 		batteryTxt[i] = new GuiText(txt, 20, (GXColor){255, 255, 255, 255});
 		batteryTxt[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
