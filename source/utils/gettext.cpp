@@ -224,6 +224,7 @@ bool LoadLanguage()
 		case LANG_PORTUGUESE: file = (char *)pt_lang; eof = file + pt_lang_size; break;
 		case LANG_BRAZILIAN_PORTUGUESE: file = (char *)pt_br_lang; eof = file + pt_br_lang_size; break;
 		case LANG_CATALAN: file = (char *)ca_lang; eof = file + ca_lang_size; break;
+		case LANG_TURKISH: file = (char *)tr_lang; eof = file + tr_lang_size; break;
 		default: return false;
 	}
 

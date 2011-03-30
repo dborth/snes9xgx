@@ -3623,6 +3623,7 @@ static int MenuSettingsMenu()
 				case LANG_PORTUGUESE:	sprintf(options.value[5], "Portuguese"); break;
 				case LANG_BRAZILIAN_PORTUGUESE: sprintf(options.value[5], "Brazilian Portuguese"); break;
 				case LANG_CATALAN:		sprintf(options.value[5], "Catalan"); break;
+				case LANG_TURKISH:		sprintf(options.value[5], "Turkish"); break;
 			}
 			
 			optionBrowser.TriggerUpdate();
