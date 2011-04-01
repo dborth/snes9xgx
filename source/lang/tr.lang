@@ -47,16 +47,16 @@ msgid "Maintain Aspect Ratio"
 msgstr "En-Boy Oranını Koru"
 
 msgid "Attempting to determine load device..."
-msgstr "Yükleme cihazı belirlenmeye çalışılıyor..."
+msgstr "Yükleme aygıtı belirlenmeye çalışılıyor..."
 
 msgid "Attempting to determine save device..."
-msgstr "Kaydetme cihazı belirlenmeye çalışılıyor..."
+msgstr "Kayıt aygıtı belirlenmeye çalışılıyor..."
 
 msgid "Auto"
 msgstr "Otomatik"
 
 msgid "Auto Detect"
-msgstr "Otomatik Algılama"
+msgstr "Otomatik Algıla"
 
 msgid "Auto Load"
 msgstr "Otomatik Yükleme"
@@ -74,10 +74,10 @@ msgid "B (Rapid)"
 msgstr "B (Seri)"
 
 msgid "Back"
-msgstr "Geri"
+msgstr "Sil"
 
 msgid "Both"
-msgstr "İkisi"
+msgstr "Her İkisi"
 
 msgid "Controles"
 msgstr "Oyun Kumandaları"
@@ -92,7 +92,7 @@ msgid "Cancel"
 msgstr "İptal"
 
 msgid "Caps"
-msgstr ""
+msgstr "Caps"
 
 msgid "Cheats"
 msgstr "Hile"
@@ -101,10 +101,10 @@ msgid "Cheats file not found!"
 msgstr "Hile dosyası bulunamadı!"
 
 msgid "Cheats Folder"
-msgstr "Hile Klasörü"
+msgstr "Hile Dizini"
 
 msgid "Choose Game"
-msgstr "Oyunu Seç"
+msgstr "Oyun Seç"
 
 msgid "Classic Controller"
 msgstr "Klasik Oyun Kumandası"
@@ -116,7 +116,7 @@ msgid "Coding"
 msgstr "Kod"
 
 msgid "Coding & menu design"
-msgstr "Kod & menü tasarımı"
+msgstr "Kod & Menü Tasarımı"
 
 msgid "Compressed GBA files are not supported!"
 msgstr "Sıkıştırılmış GBA dosyaları desteklenmiyor!"
@@ -161,7 +161,7 @@ msgid "DISABLED"
 msgstr "KAPALI"
 
 msgid "distributed, or modified under the terms of the"
-msgstr "şu şartlar altında dağıtılır veya değiştirilir"
+msgstr "GNU Genel Kamu Lisansı (GPL) Sürüm 2'nin koşulları altında"
 
 msgid "Don't Save"
 msgstr "Kaydetme"
@@ -221,7 +221,7 @@ msgid "Exit"
 msgstr "Çıkış"
 
 msgid "Exit Action"
-msgstr "Eylemi Durdur"
+msgstr "Çıkış Eylemi"
 
 msgid "Failed to connect to network share."
 msgstr "Ağ paylaşımına bağlanılamadı."
@@ -233,7 +233,7 @@ msgid "FDS BIOS file not found!"
 msgstr "FDS BIOS dosyası bulunamadı!"
 
 msgid "Filtered"
-msgstr "Filtreli"
+msgstr "Filtre Var"
 
 msgid "Filtering"
 msgstr "Filtreleme"
@@ -278,7 +278,7 @@ msgid "German"
 msgstr "Almanca"
 
 msgid "GNU General Public License (GPL) Version 2."
-msgstr "GNU Genel Lisansı (GPL) Version 2."
+msgstr "kopyalanabilir, dağıtılabilir ve değiştirilebilir."
 
 msgid "Go Back"
 msgstr "Geri Dön"
@@ -332,7 +332,7 @@ msgid "Justifier - GameCube Controller"
 msgstr "Justifier Tabanca - GameCube Oyun Kumandası"
 
 msgid "Justifier - Wiimote"
-msgstr "Justifier Tabanca - Wii Uzaktan Kumanda"
+msgstr "Justifier Tabanca - Wii Kumanda"
 
 msgid "Korean"
 msgstr "Korece"
@@ -344,7 +344,7 @@ msgid "Language"
 msgstr "Dil"
 
 msgid "Languages Folder"
-msgstr "Diller dizini"
+msgstr "Dil Dizini"
 
 msgid "Left"
 msgstr "Sol"
@@ -365,10 +365,10 @@ msgid "Load Folder"
 msgstr "Yükleme Dizini"
 
 msgid "Load Game"
-msgstr "Oyunu Yükle"
+msgstr "Oyun Yükle"
 
 msgid "Loading"
-msgstr "Yükleniyor"
+msgstr "Yükleme"
 
 msgid "Loading DVD..."
 msgstr "DVD yükleniyor..."
@@ -395,16 +395,16 @@ msgid "Menu"
 msgstr "Menü"
 
 msgid "Menu artwork"
-msgstr "Menü tasarımı"
+msgstr "Menü Görselleri"
 
 msgid "Menu sound"
-msgstr "Menü sesleri"
+msgstr "Menü Sesleri"
 
 msgid "MINUS"
 msgstr "EKSİ"
 
 msgid "Music Volume"
-msgstr "Müzik Ayarı"
+msgstr "Müzik Sesleri"
 
 msgid "Mute"
 msgstr "Sessiz"
@@ -413,10 +413,10 @@ msgid "NES Controller"
 msgstr "NES Oyun Kumandası"
 
 msgid "NES Controllers (2)"
-msgstr "NES Oyun Kumandaları (2)"
+msgstr "NES Oyun Kumandası (2)"
 
 msgid "NES Controllers (4)"
-msgstr "NES Oyun Kumandaları (4)"
+msgstr "NES Oyun Kumandası (4)"
 
 msgid "NES Zapper"
 msgstr "NES Zapper Tabanca"
@@ -452,7 +452,7 @@ msgid "No game saves found."
 msgstr "Hiç bir oyun kaydı bulunamadı."
 
 msgid "None"
-msgstr "Hiçbiri"
+msgstr "Yok"
 
 msgid "NTSC (480i)"
 msgstr "NTSC (480i)"
@@ -473,13 +473,13 @@ msgid "Official Site: http://code.google.com/p/vba-wii/"
 msgstr "Resmi Site: http://code.google.com/p/vba-wii/"
 
 msgid "OK"
-msgstr "OK"
+msgstr "Tamam"
 
 msgid "On"
 msgstr "Açık"
 
 msgid "Original"
-msgstr "Asıl"
+msgstr "Orijinal"
 
 msgid "Out of memory!"
 msgstr "Bellek yetersiz!"
@@ -551,10 +551,10 @@ msgid "Progressive (480p)"
 msgstr "Progresif (480p)"
 
 msgid "Quit Game"
-msgstr "Oyunu Bitir"
+msgstr "Oyundan Çık"
 
 msgid "Quit this game? Any unsaved progress will be lost."
-msgstr "Oyun bitirilsin mi? Kaydedilmemiş tüm veriler kaybolacak."
+msgstr "Oyundan çıkılsın mı? Kaydedilmemiş tüm veriler kaybolacak."
 
 msgid "R TRIG"
 msgstr "R Mandalı"
@@ -563,16 +563,16 @@ msgid "RAM saving is not available for FDS games!"
 msgstr "RAM kaydetme FDS oyunları için mevcut değil!"
 
 msgid "Reboot"
-msgstr "Yeniden başlat"
+msgstr "Yeniden Başlat"
 
 msgid "Rendering"
 msgstr "Rendering"
 
 msgid "Reset"
-msgstr "Sıfırla"
+msgstr "Tekrar Başlat"
 
 msgid "Reset Game"
-msgstr "Oyunu Sıfırla"
+msgstr "Oyunu Tekrar Başlat"
 
 msgid "Reset this game? Any unsaved progress will be lost."
 msgstr "Oyun sıfırlansın mı? Kaydedilmemiş tüm veriler kaybolacak."
@@ -605,7 +605,7 @@ msgid "Rumble"
 msgstr "Titreşim"
 
 msgid "Save"
-msgstr "Kayıt"
+msgstr "Kaydet"
 
 msgid "Save Device"
 msgstr "Kayıt Aygıtı"
@@ -638,7 +638,7 @@ msgid "Save successful"
 msgstr "Kayıt başarılı"
 
 msgid "Saving"
-msgstr "Kaydediliyor"
+msgstr "Kayıt"
 
 msgid "Saving preferences..."
 msgstr "Ayarlar kaydediliyor..."
@@ -671,10 +671,10 @@ msgid "Settings - Network"
 msgstr "Ayarlar - Ağ"
 
 msgid "Settings - Saving & Loading"
-msgstr "Ayarlar - Kaydetme & Yükleme"
+msgstr "Ayarlar - Kayıt & Yükleme"
 
 msgid "SD Card"
-msgstr "SD kartı"
+msgstr "SD Kartı"
 
 msgid "SD card not found!"
 msgstr "SD kartı bulunamadı!"
@@ -707,10 +707,10 @@ msgid "SNES Controller"
 msgstr "SNES Oyun Kumandası"
 
 msgid "SNES Controllers (2)"
-msgstr "SNES Oyun Kumandaları (2)"
+msgstr "SNES Oyun Kumandası (2)"
 
 msgid "SNES Controllers (4)"
-msgstr "SNES Oyun Kumandaları (4)"
+msgstr "SNES Oyun Kumandası (4)"
 
 msgid "SNES Controller - Classic Controller"
 msgstr "SNES Oyun Kumandası - Klasik Oyun Kumandası"
@@ -719,10 +719,10 @@ msgid "SNES Controller - GameCube Controller"
 msgstr "SNES Oyun Kumandası - GameCube Oyun Kumandası"
 
 msgid "SNES Controller - Nunchuk + Wiimote"
-msgstr "SNES Oyun Kumandası - Nunchuck + Wii Uzaktan Kumanda"
+msgstr "SNES Oyun Kumandası - Nunchuck + Wii Kumanda"
 
 msgid "SNES Controller - Wiimote"
-msgstr "SNES Oyun Kumandası - Wii Uzaktan Kumanda"
+msgstr "SNES Oyun Kumandası - Wii Kumanda"
 
 msgid "SNES Mouse"
 msgstr "SNES Faresi"
@@ -731,13 +731,13 @@ msgid "SNES Mouse - GameCube Controller"
 msgstr "SNES Faresi - GameCube Oyun Kumandası"
 
 msgid "SNES Mouse - Wiimote"
-msgstr "SNES Faresi - Wii Uzaktan Kumanda"
+msgstr "SNES Faresi - Wii Kumanda"
 
 msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
 msgstr "Snes9x - Telif Hakkı (c) Snes9x Team 1996-2006"
 
 msgid "Sound Effects Volume"
-msgstr "Ses Efektleri Ayarı"
+msgstr "Efekt Sesleri"
 
 msgid "Spanish"
 msgstr "İspanyolca"
@@ -749,7 +749,7 @@ msgid "SRAM file not found"
 msgstr "SRAM dosyası bulunamadı"
 
 msgid "Start"
-msgstr "Başlat"
+msgstr "Start"
 
 msgid "State"
 msgstr "Durum"
@@ -773,10 +773,10 @@ msgid "Superscope - GameCube Controller"
 msgstr "Superscope - GameCube Oyun Kumandası"
 
 msgid "Superscope - Wiimote"
-msgstr "Superscope - Wii Uzaktan Kumanda"
+msgstr "Superscope - Wii Kumanda"
 
 msgid "This software is open source and may be copied,"
-msgstr "Bu yazılım açık kaynak kodlu ve kopyalanabilir,"
+msgstr "Bu yazılım açık kaynak kodlu olup,"
 
 msgid "Trad_chinese"
 msgstr "Geleneksel Çince"
@@ -785,19 +785,19 @@ msgid "Unable to initialize network!"
 msgstr "Ağ başlatılamıyor!"
 
 msgid "Unable to locate a load device!"
-msgstr "Yükleme aygıtı bulunamıyor."
+msgstr "Yükleme aygıtı bulunamıyor!"
 
 msgid "Unable to locate a save device!"
-msgstr "Kayıt aygıtı bulunamıyor."
+msgstr "Kayıt aygıtı bulunamıyor!"
 
 msgid "Unable to open snapshot!"
 msgstr "Enstantane açılamıyor!"
 
 msgid "Unfiltered"
-msgstr "Filtresiz"
+msgstr "Filtre Yok"
 
 msgid "Unknown file type!"
-msgstr "Bilinmeyen dosya türü!"
+msgstr "Tanınmayan dosya türü!"
 
 msgid "Unrecognized DVD format."
 msgstr "Desteklenmeyen DVD formatı."
@@ -812,7 +812,7 @@ msgid "UP"
 msgstr "YUKARI"
 
 msgid "Up One Level"
-msgstr "Üst dizin"
+msgstr "Üst Dizin"
 
 msgid "Update Available"
 msgstr "Güncelleme Mevcut"
@@ -830,34 +830,34 @@ msgid "Update successful!"
 msgstr "Güncelleme başarılı!"
 
 msgid "USB drive not found!"
-msgstr "USB sürücüsü bulunamadı!"
+msgstr "USB aygıtı bulunamadı!"
 
 msgid "USB Mass Storage"
-msgstr "USB Yığın Depolama"
+msgstr "USB Yığın Depolama Aygıtı"
 
 msgid "Vertical"
 msgstr "Dikey"
 
 msgid "Video"
-msgstr "Video"
+msgstr "Ekran"
 
 msgid "Video Mode"
-msgstr "Video Modu"
+msgstr "Ekran Modu"
 
 msgid "VM8: Unknown page type!"
-msgstr "VM8: Bilinmeyen sayfa türü!"
+msgstr "VM8: Tanınmayan sayfa türü!"
 
 msgid "VM16: Unknown page type!"
-msgstr "VM16: Bilinmeyen sayfa türü!"
+msgstr "VM16: Tanınmayan sayfa türü!"
 
 msgid "VM32: Unknown page type!"
-msgstr "VM32: Bilinmeyen sayfa türü!"
+msgstr "VM32: Tanınmayan sayfa türü!"
 
 msgid "Wiimote"
-msgstr "Wii Uzaktan Kumanda"
+msgstr "Wii Kumanda"
 
 msgid "Wiimote Orientation"
-msgstr "Wii Yön Belirleme"
+msgstr "Wii Kumanda Yönelimi"
 
 msgid "Yes"
 msgstr "Evet"
@@ -930,3 +930,6 @@ msgstr "Geçerli IOS değiştirilmiş (sahte-imzalı). Işlevsellik ve/veya stab
 
 msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
 msgstr "Geçerli IOS desteklenmiyor. Işlevsellik ve/veya stabilite olumsuz etkilenebilir."
+
+msgid "Turkish"
+msgstr "Türkçe"
