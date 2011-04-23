@@ -488,7 +488,7 @@ msgid "Out of memory: too many files!"
 msgstr "ファイルが多すぎてメモリが足りません"
 
 msgid "P1"
-msgstr "P1"
+msgstr ""
 
 msgid "P2"
 msgstr ""
@@ -930,3 +930,6 @@ msgstr "このIOSでは不安定になる可能性があります"
 
 msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
 msgstr "このIOSには対応していないので不安定になる可能性があります"
+
+msgid "Turkish"
+msgstr "トルコ語"
