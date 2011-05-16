@@ -43,6 +43,13 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.2.8 - May 15, 2011]
+
+* Ported a few upstream game fixes for: Mutant Chronicles - Doom Troopers, 
+  Porky Pig's Haunted Holiday, Big Sky Trooper, and Mechwarrior 3050 / Battle 
+  Tech 3050
+* Added Turkish translation
+
 [4.2.7 - March 23, 2011]
 
 * Fixed browser regressions with stability and speed
