@@ -68,9 +68,8 @@ static s32 tcp_connect(char *host, const u16 port)
 	struct hostent *hp;
 	struct sockaddr_in sa;
 	struct in_addr val;
-	fd_set myset;
-	struct timeval tv;
 	s32 s, res;
+	u64 t1;
 
 	s = tcp_socket();
 	if (s < 0)
@@ -94,17 +93,20 @@ static s32 tcp_connect(char *host, const u16 port)
 		memcpy((char *) &sa.sin_addr, hp->h_addr_list[0], hp->h_length);
 	}
 
-	res = net_connect (s, (struct sockaddr *) &sa, sizeof (sa));
-
-	if (res == EINPROGRESS)
+	t1=ticks_to_secs(gettime());
+	do 
 	{
-		tv.tv_sec = TCP_CONNECT_TIMEOUT;
-		tv.tv_usec = 0;
-		FD_ZERO(&myset);
-		FD_SET(s, &myset);
-		if (net_select(s+1, NULL, &myset, NULL, &tv) <= 0)
-			return -1;
+		res = net_connect(s,(struct sockaddr*) &sa, sizeof (sa));
+		if(ticks_to_secs(gettime())-t1 > TCP_CONNECT_TIMEOUT*1000) break; 
+		usleep(500);
+	}while(res != -EISCONN);
+	if(res != -EISCONN)
+	{		
+		net_close(s);
+		return -1;
 	}
+
+	
 	return s;
 }
 
@@ -122,13 +124,13 @@ static int tcp_readln(const s32 s, char *buf, const u16 max_length)
 
 		ret = net_read(s, &buf[c], 1);
 
-		if (ret == 0 || ret == -EAGAIN)
+		if (ret == -EAGAIN)
 		{
 			usleep(20 * 1000);
 			continue;
 		}
 
-		if (ret < 0)
+		if (ret <= 0)
 			break;
 
 		if (c > 0 && buf[c - 1] == '\r' && buf[c] == '\n')
@@ -138,16 +140,17 @@ static int tcp_readln(const s32 s, char *buf, const u16 max_length)
 			break;
 		}
 		c++;
+		start_time = gettime();
 		usleep(100);
 	}
 	return res;
 }
 
-static int tcp_read(const s32 s, u8 *buffer, const u32 length)
+static u32 tcp_read(const s32 s, u8 *buffer, const u32 length)
 {
 	char *p;
 	u32 left, block, received, step=0;
-	s64 t;
+	u64 t;
 	s32 res;
 
 	p = (char *)buffer;
@@ -169,17 +172,17 @@ static int tcp_read(const s32 s, u8 *buffer, const u32 length)
 
 		res = net_read(s, p, block);
 
-		if(res>0)
+		if (res == -EAGAIN)
 		{
-			received += res;
-			left -= res;
-			p += res;
-		}
-		else if (res < 0 && res != -EAGAIN)
-		{
-			break;
+			usleep(20 * 1000);
+			continue;
 		}
 
+		if(res<=0) break; 
+
+		received += res;
+		left -= res;
+		p += res;
 		usleep(1000);
 
 		if ((received / TCP_BLOCK_SIZE) > step)
@@ -191,7 +194,7 @@ static int tcp_read(const s32 s, u8 *buffer, const u32 length)
 	return received;
 }
 
-static int tcp_write(const s32 s, const u8 *buffer, const u32 length)
+static u32 tcp_write(const s32 s, const u8 *buffer, const u32 length)
 {
 	const u8 *p;
 	u32 left, block, sent, step=0;
