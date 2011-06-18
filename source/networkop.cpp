@@ -190,28 +190,23 @@ static void * netcb (void *arg)
 		{			
 			if(prevInit) 
 			{
-				bool reset=false;
 				int i;
-				for(i=0; i < 500 && (netHalt != 2); i++) // 10 seconds to try to reset
+				net_deinit();
+				for(i=0; i < 400 && (netHalt != 2); i++) // 10 seconds to try to reset
 				{
 					res = net_get_status();
 					if(res != -EBUSY) // trying to init net so we can't kill the net
 					{
 						usleep(2000);
 						net_wc24cleanup(); //kill the net 
-						reset=true;
+						prevInit=false; // net_wc24cleanup is called only once
+						usleep(20000);
 						break;					
 					}
 					usleep(20000);
 				}
-				if(!reset) 
-				{
-					retry--;
-					continue;
-				}
 			}
 
-			net_deinit();			
 			usleep(2000);
 			res = net_init_async(NULL, NULL);
 
