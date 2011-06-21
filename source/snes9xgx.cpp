@@ -336,6 +336,8 @@ int
 main(int argc, char *argv[])
 {
 #ifdef HW_RVL
+	L2Enhance();
+	
 	u32 ios = IOS_GetVersion();
 
 	if(!SupportedIOS(ios))
