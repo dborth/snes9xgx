@@ -85,9 +85,7 @@ FLIP16 (u16 b)
 int
 IsZipFile (char *buffer)
 {
-	unsigned int *check;
-
-	check = (unsigned int *) buffer;
+	unsigned int *check = (unsigned int *) buffer;
 
 	if (check[0] == 0x504b0304)
 		return 1;
@@ -277,9 +275,6 @@ static int szMethod = 0;
 int
 Is7ZipFile (char *buffer)
 {
-	unsigned int *check;
-	check = (unsigned int *) buffer;
-
 	// 7z signature
 	static Byte Signature[6] = {'7', 'z', 0xBC, 0xAF, 0x27, 0x1C};
 
