@@ -620,6 +620,14 @@ ResetVideo_Emu ()
 	else
 	{
 		rmode = FindVideoMode();
+		
+		if (!GCSettings.widescreen)
+		{
+			memcpy(&TV_Custom, rmode, sizeof(TV_Custom));
+			rmode = &TV_Custom;
+			rmode->fbWidth = 512;
+		}
+
 		Settings.SoundInputRate = 31953;
 		UpdatePlaybackRate();
 	}
@@ -635,7 +643,7 @@ ResetVideo_Emu ()
 
 	GX_SetDispCopySrc (0, 0, rmode->fbWidth, rmode->efbHeight);
 	GX_SetDispCopyDst (rmode->fbWidth, rmode->xfbHeight);
-	GX_SetCopyFilter (rmode->aa, rmode->sample_pattern, (GCSettings.render == 1) ? GX_TRUE : GX_FALSE, rmode->vfilter);	// deflicker ON only for filtered mode
+	GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, (rmode->xfbMode == VI_XFBMODE_SF) ? GX_FALSE : GX_TRUE, rmode->vfilter);
 
 	GX_SetFieldMode (rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
 
@@ -751,7 +759,8 @@ update_video (int width, int height)
 		}
 		else // unfiltered and filtered mode
 		{
-			xscale = 320;
+			xscale = 256;
+
 			if(vheight == 224 || vheight == 448)
 				yscale = 224;
 			else
