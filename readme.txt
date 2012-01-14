@@ -43,6 +43,11 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.2.9 - January 14, 2012]
+
+* More accurate pixel scaling (thanks eke-eke!)
+* Other minor changes
+
 [4.2.8 - May 15, 2011]
 
 * Ported a few upstream game fixes for: Mutant Chronicles - Doom Troopers, 
