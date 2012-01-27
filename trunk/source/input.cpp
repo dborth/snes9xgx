@@ -382,7 +382,8 @@ static void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
 static void decodepad (int chan)
 {
 	int i, offset;
-	float t;
+	double angle;
+	static const double THRES = 1.0 / sqrt(2.0);
 
 	s8 pad_x = userInput[chan].pad.stickX;
 	s8 pad_y = userInput[chan].pad.stickY;
@@ -404,38 +405,16 @@ static void decodepad (int chan)
 	// Is XY inside the "zone"?
 	if (pad_x * pad_x + pad_y * pad_y > PADCAL * PADCAL)
 	{
-		/*** we don't want division by zero ***/
-		if (pad_x > 0 && pad_y == 0)
+		angle = atan2(pad_y, pad_x);
+ 
+		if(cos(angle) > THRES)
 			jp |= PAD_BUTTON_RIGHT;
-		if (pad_x < 0 && pad_y == 0)
+		else if(cos(angle) < -THRES)
 			jp |= PAD_BUTTON_LEFT;
-		if (pad_x == 0 && pad_y > 0)
+		if(sin(angle) > THRES)
 			jp |= PAD_BUTTON_UP;
-		if (pad_x == 0 && pad_y < 0)
+		else if(sin(angle) < -THRES)
 			jp |= PAD_BUTTON_DOWN;
-
-		if (pad_x != 0 && pad_y != 0)
-		{
-			/*** Recalc left / right ***/
-			t = (float) pad_y / pad_x;
-			if (t >= -2.41421356237 && t < 2.41421356237)
-			{
-				if (pad_x >= 0)
-					jp |= PAD_BUTTON_RIGHT;
-				else
-					jp |= PAD_BUTTON_LEFT;
-			}
-
-			/*** Recalc up / down ***/
-			t = (float) pad_x / pad_y;
-			if (t >= -2.41421356237 && t < 2.41421356237)
-			{
-				if (pad_y >= 0)
-					jp |= PAD_BUTTON_UP;
-				else
-					jp |= PAD_BUTTON_DOWN;
-			}
-		}
 	}
 #ifdef HW_RVL
 	/***
@@ -444,46 +423,16 @@ static void decodepad (int chan)
 	// Is XY inside the "zone"?
 	if (wm_ax * wm_ax + wm_ay * wm_ay > PADCAL * PADCAL)
 	{
-
-	    if (wm_ax > 0 && wm_ay == 0)
+		angle = atan2(wm_ay, wm_ax);
+ 
+		if(cos(angle) > THRES)
 			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_RIGHT : WPAD_BUTTON_RIGHT;
-	    if (wm_ax < 0 && wm_ay == 0)
+		else if(cos(angle) < -THRES)
 			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_LEFT : WPAD_BUTTON_LEFT;
-	    if (wm_ax == 0 && wm_ay > 0)
+		if(sin(angle) > THRES)
 			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_UP : WPAD_BUTTON_UP;
-	    if (wm_ax == 0 && wm_ay < 0)
+		else if(sin(angle) < -THRES)
 			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_DOWN : WPAD_BUTTON_DOWN;
-
-	    if (wm_ax != 0 && wm_ay != 0)
-		{
-			/*** Recalc left / right ***/
-			t = (float) wm_ay / wm_ax;
-			if (t >= -2.41421356237 && t < 2.41421356237)
-			{
-				if (wm_ax >= 0)
-				{
-					wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_RIGHT : WPAD_BUTTON_RIGHT;
-				}
-				else
-				{
-					wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_LEFT : WPAD_BUTTON_LEFT;
-				}
-			}
-
-			/*** Recalc up / down ***/
-			t = (float) wm_ax / wm_ay;
-			if (t >= -2.41421356237 && t < 2.41421356237)
-			{
-				if (wm_ay >= 0)
-				{
-					wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_UP : WPAD_BUTTON_UP;
-				}
-				else
-				{
-					wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_DOWN : WPAD_BUTTON_DOWN;
-				}
-			}
-		}
 	}
 #endif
 
