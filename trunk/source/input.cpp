@@ -416,6 +416,13 @@ static void decodepad (int chan)
 		else if(sin(angle) < -THRES)
 			jp |= PAD_BUTTON_DOWN;
 	}
+
+	// Count as pressed if down far enough (~50% down)
+	if (userInput[chan].pad.triggerL > 0x80)
+		jp |= PAD_TRIGGER_L;
+	if (userInput[chan].pad.triggerR > 0x80)
+		jp |= PAD_TRIGGER_R;
+
 #ifdef HW_RVL
 	/***
 	Wii Joystick (classic, nunchuk) input

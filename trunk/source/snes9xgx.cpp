@@ -183,31 +183,6 @@ void ipl_set_config(unsigned char c)
 #endif
 
 /****************************************************************************
- * setFrameTimerMethod()
- * change frametimer method depending on whether ROM is NTSC or PAL
- ***************************************************************************/
-
-void setFrameTimerMethod()
-{
-	/*
-	Set frametimer method
-	(timerstyle: 0=NTSC vblank, 1=PAL int timer)
-	*/
-	if ( Settings.PAL ) {
-		if(vmode_60hz)
-			timerstyle = 1;
-		else
-			timerstyle = 0;
-	} else {
-		if(vmode_60hz)
-			timerstyle = 0;
-		else
-			timerstyle = 1;
-	}
-	return;
-}
-
-/****************************************************************************
  * IOS Check
  ***************************************************************************/
 #ifdef HW_RVL
@@ -448,9 +423,6 @@ main(int argc, char *argv[])
 		HaltDeviceThread();
 
 		AudioStart ();
-
-		FrameTimer = 0;
-		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
 
 		CheckVideo = 2;	// force video update
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;

@@ -18,7 +18,7 @@
 #include <ppc/timebase.h>
 #include <xenon_sound/sound.h>
 
-int FrameTimer, timerstyle = 1;
+int FrameTimer = 0;
 unsigned long long prev, now;
 
 unsigned long long gettime(void)
@@ -128,7 +128,6 @@ void S9xGenerateSound()
 /* eke-eke */
 void S9xInitSync()
 {
-	FrameTimer = 0;
 	prev = gettime();
 }
 
@@ -140,18 +139,15 @@ void S9xSyncSpeed ()
 
 	if (Settings.TurboMode)
 		skipFrms = Settings.TurboSkipFrames;
-
-	if (timerstyle == 0) /* use NGC vertical sync (VSYNC) with NTSC roms */
+	
+	unsigned int timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
+	now = gettime();
+	
+	if (diff_usec(prev, now) > timediffallowed)
 	{
-		while (FrameTimer == 0)
-		{
-			udelay(50);
-		}
-
-		if (FrameTimer > skipFrms)
-			FrameTimer = skipFrms;
-
-		if ((FrameTimer > 1) && (IPPU.SkippedFrames < skipFrms))
+		printf("L\n");
+		/* Timer has already expired */
+		if (IPPU.SkippedFrames < skipFrms)
 		{
 			IPPU.SkippedFrames++;
 			IPPU.RenderThisFrame = FALSE;
@@ -162,43 +158,20 @@ void S9xSyncSpeed ()
 			IPPU.RenderThisFrame = TRUE;
 		}
 	}
-	else /* use internal timer for PAL roms */
+	else
 	{
-		unsigned int timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
-		now = gettime();
-		
-		if (diff_usec(prev, now) > timediffallowed)
+		/*** Ahead - so hold up ***/
+		while (diff_usec(prev, now) < timediffallowed)
 		{
-			printf("L\n");
-			/* Timer has already expired */
-			if (IPPU.SkippedFrames < skipFrms)
-			{
-				IPPU.SkippedFrames++;
-				IPPU.RenderThisFrame = FALSE;
-			}
-			else
-			{
-				IPPU.SkippedFrames = 0;
-				IPPU.RenderThisFrame = TRUE;
-			}
+			now = gettime();
+			udelay(50);
 		}
-		else
-		{
-			/*** Ahead - so hold up ***/
-			while (diff_usec(prev, now) < timediffallowed)
-			{
-				now = gettime();
-				udelay(50);
-			}
-			IPPU.RenderThisFrame = TRUE;
-			IPPU.SkippedFrames = 0;
-		}
-
-		prev = now;
+		IPPU.RenderThisFrame = TRUE;
+		IPPU.SkippedFrames = 0;
 	}
 
-	if (!Settings.TurboMode)
-		FrameTimer--;
+	prev = now;
+
 	return;
 }
 

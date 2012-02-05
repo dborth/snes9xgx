@@ -67,8 +67,7 @@ int gameScreenPngSize = 0;
 
 u32 FrameTimer = 0;
 
-bool vmode_60hz = true;
-int timerstyle = 0;
+static bool vmode_60hz = true;
 bool progressive = 0;
 
 #define HASPECT 320
