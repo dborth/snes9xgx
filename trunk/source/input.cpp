@@ -383,7 +383,7 @@ static void decodepad (int chan)
 {
 	int i, offset;
 	double angle;
-	static const double THRES = 1.0 / sqrt(2.0);
+	static const double THRES = cos(67.5);
 
 	s8 pad_x = userInput[chan].pad.stickX;
 	s8 pad_y = userInput[chan].pad.stickY;
