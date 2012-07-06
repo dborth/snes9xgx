@@ -43,6 +43,15 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.3.0 - July 6, 2012]
+
+* Support for newer Wiimotes
+* Fixed screen flicker when going back to menu
+* Improved L/R buttons for GameCube - trigger button press when 50%+ depressed
+* Improved controller behavior - allow two directions to be pressed simultaneously
+* Timing changes
+* Compiled with devkitPPC r26 and libogc 1.8.11
+
 [4.2.9 - January 14, 2012]
 
 * More accurate pixel scaling (thanks eke-eke!)
