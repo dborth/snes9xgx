@@ -43,6 +43,10 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.3.1 - July 7, 2012]
+
+* Fixed PAL support
+
 [4.3.0 - July 6, 2012]
 
 * Support for newer Wiimotes
