@@ -244,8 +244,6 @@ SetupPads()
 	PAD_Init();
 
 	#ifdef HW_RVL
-	WPAD_Init();
-	
 	// read wiimote accelerometer and IR data
 	WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
 	WPAD_SetVRes(WPAD_CHAN_ALL, screenwidth, screenheight);
