@@ -43,6 +43,10 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.3.2 - November 9, 2012]
+
+* Fixed lag with GameCube controllers
+
 [4.3.1 - July 7, 2012]
 
 * Fixed PAL support
