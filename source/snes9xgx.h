@@ -85,9 +85,11 @@ struct SGCSettings{
     int		LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
 	int		SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, USB, SMB
 	char	LoadFolder[MAXPATHLEN]; // Path to game files
+	char	LastFileLoaded[MAXPATHLEN]; //Last file loaded filename
 	char	SaveFolder[MAXPATHLEN]; // Path to save files
 	char	CheatFolder[MAXPATHLEN]; // Path to cheat files
-
+	char	ScreenshotsFolder[MAXPATHLEN]; //Path to screenshots files
+	
 	char	smbip[80];
 	char	smbuser[20];
 	char	smbpwd[20];
@@ -121,7 +123,6 @@ extern int ConfigRequested;
 extern int ShutdownRequested;
 extern int ExitRequested;
 extern char appPath[];
-extern char loadedFile[];
 extern FreeTypeGX *fontSystem[];
 
 #endif

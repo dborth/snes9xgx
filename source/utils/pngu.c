@@ -311,7 +311,7 @@ static int pngu_decode (IMGCTX ctx, u32 width, u32 height, u32 stripAlpha)
 		return PNGU_INVALID_WIDTH_OR_HEIGHT;
 
 	// Check if color type is supported by PNGU
-	if ( (ctx->prop.imgColorType == PNGU_COLOR_TYPE_PALETTE) || (ctx->prop.imgColorType == PNGU_COLOR_TYPE_UNKNOWN) )
+	if (ctx->prop.imgColorType == PNGU_COLOR_TYPE_UNKNOWN)
 		return PNGU_UNSUPPORTED_COLOR_TYPE;
 
 	// Scale 16 bit samples to 8 bit
@@ -329,6 +329,10 @@ static int pngu_decode (IMGCTX ctx, u32 width, u32 height, u32 stripAlpha)
 	// Transform grayscale images to RGB
 	if ( (ctx->prop.imgColorType == PNGU_COLOR_TYPE_GRAY) || (ctx->prop.imgColorType == PNGU_COLOR_TYPE_GRAY_ALPHA) )
 		png_set_gray_to_rgb (ctx->png_ptr);
+		
+	// Transform palette images to RGB
+	if (ctx->prop.imgColorType == PNGU_COLOR_TYPE_PALETTE)
+		png_set_palette_to_rgb(ctx->png_ptr);
 
 	// Flush transformations
 	png_read_update_info (ctx->png_ptr, ctx->info_ptr);

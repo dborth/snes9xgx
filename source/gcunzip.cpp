@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
+#include <sys/stat.h>
 
 #include "snes9xgx.h"
 #include "fileop.h"
@@ -355,6 +356,7 @@ void SzClose()
 		SzArDbExFree(&SzDb, SzAllocImp.Free);
 }
 
+
 /****************************************************************************
 * SzParse
 *
@@ -369,14 +371,15 @@ int SzParse(char * filepath)
 	
 	int device;
 	
-	if(!FindDevice(browser.dir, &device) || !GetFileSize(browser.selIndex))
+	struct stat filestat;
+	if(stat(filepath, &filestat) < 0)
+		return 0;
+	unsigned int filelen = filestat.st_size;
+	
+	if(!FindDevice(filepath, &device) || !filelen)
 		return 0;
 
 	int nbfiles = 0;
-
-	// save the length/offset of this file
-	unsigned int filelen = browserList[browser.selIndex].length;
-
 	// setup archive stream
 	SzArchiveStream.offset = 0;
 	SzArchiveStream.len = filelen;
@@ -425,7 +428,7 @@ int SzParse(char * filepath)
 
 			// add '..' folder in case the user wants exit the 7z
 			AddBrowserEntry();
-
+			sprintf(browserList[0].filename, "..");
 			sprintf(browserList[0].displayname, "Up One Level");
 			browserList[0].isdir = 1;
 			browserList[0].length = filelen;
@@ -454,6 +457,12 @@ int SzParse(char * filepath)
 				// parse information about this file to the file list structure
 				snprintf(browserList[SzJ].filename, MAXJOLIET, "%s", SzF->Name);
 				StripExt(browserList[SzJ].displayname, browserList[SzJ].filename);
+				char* strPos = strstr(browserList[SzJ].displayname, szname);
+				if(strPos)
+				{
+					snprintf(browserList[SzJ].displayname, MAXJOLIET, "%s", strPos + strlen(szname));
+				}
+				
 				browserList[SzJ].length = SzF->Size; // filesize
 				browserList[SzJ].isdir = 0; // only files will be displayed (-> no flags)
 				browserList[SzJ].filenum = SzI; // the extraction function identifies the file with this number

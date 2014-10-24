@@ -35,6 +35,7 @@ bool ChangeInterface(int device, bool silent);
 bool ChangeInterface(char * filepath, bool silent);
 void CreateAppPath(char * origpath);
 bool GetFileSize(int i);
+void FindAndSelectLastLoadedFile();
 int ParseDirectory(bool waitParse = false, bool filter = true);
 void AllocSaveBuffer();
 void FreeSaveBuffer();
