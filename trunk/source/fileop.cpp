@@ -492,6 +492,40 @@ bool GetFileSize(int i)
 	return true;
 }
 
+void FindAndSelectLastLoadedFile () 
+{
+	int indexFound = -1;
+	
+	for(int j=1; j < browser.numEntries; j++)
+	{
+		if(strcmp(browserList[j].filename, GCSettings.LastFileLoaded) == 0)
+		{
+			indexFound = j;
+			break;
+		}
+	}
+
+	// move to this file
+	if(indexFound > 0)
+	{
+		if(indexFound >= FILE_PAGESIZE)
+		{			
+			int newIndex = (floor(indexFound/(float)FILE_PAGESIZE)) * FILE_PAGESIZE;
+
+			if(newIndex + FILE_PAGESIZE > browser.numEntries)
+				newIndex = browser.numEntries - FILE_PAGESIZE;
+
+			if(newIndex < 0)
+				newIndex = 0;
+
+			browser.pageIndex = newIndex;
+		}
+		browser.selIndex = indexFound;
+	}
+	
+	selectLoadedFile = 2; // selecting done
+}
+
 static bool ParseDirEntries()
 {
 	if(!dir)
@@ -576,40 +610,7 @@ static bool ParseDirEntries()
 	{
 		closedir(dir); // close directory
 		dir = NULL;
-
-		// try to find and select the last loaded file
-		if(selectLoadedFile == 1 && !parseHalt && loadedFile[0] != 0 && browser.dir[0] != 0)
-		{
-			int indexFound = -1;
-			
-			for(int j=1; j < browser.numEntries; j++)
-			{
-				if(strcmp(browserList[j].filename, loadedFile) == 0)
-				{
-					indexFound = j;
-					break;
-				}
-			}
-
-			// move to this file
-			if(indexFound > 0)
-			{
-				if(indexFound >= FILE_PAGESIZE)
-				{			
-					int newIndex = (floor(indexFound/(float)FILE_PAGESIZE)) * FILE_PAGESIZE;
-
-					if(newIndex + FILE_PAGESIZE > browser.numEntries)
-						newIndex = browser.numEntries - FILE_PAGESIZE;
-
-					if(newIndex < 0)
-						newIndex = 0;
-
-					browser.pageIndex = newIndex;
-				}
-				browser.selIndex = indexFound;
-			}
-			selectLoadedFile = 2; // selecting done
-		}
+		
 		return false; // no more entries
 	}
 	return true; // more entries

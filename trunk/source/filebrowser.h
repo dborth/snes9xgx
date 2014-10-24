@@ -58,6 +58,8 @@ enum
 
 extern unsigned long SNESROMSize;
 extern bool loadingFile;
+extern char szname[MAXPATHLEN];
+extern bool inSz;
 
 bool MakeFilePath(char filepath[], int type, char * filename = NULL, int filenum = -2);
 int UpdateDirName();
