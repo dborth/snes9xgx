@@ -228,8 +228,8 @@ void GuiWindow::ToggleFocus(GuiTrigger * t)
 		}
 	}
 	// change focus
-	else if(t->wpad->btns_d & (WPAD_BUTTON_1 | WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)
-		|| t->pad.btns_d & PAD_BUTTON_B)
+	else if((t->wpad->btns_d & (WPAD_BUTTON_1 | WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B))
+		|| (t->pad.btns_d & PAD_BUTTON_B) || (t->wupcdata.btns_d & WPAD_CLASSIC_BUTTON_B))
 	{
 		for (i = found; i < elemSize; ++i)
 		{

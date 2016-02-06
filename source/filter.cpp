@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * Michniewski 2008
  *
@@ -11,9 +11,6 @@
  * Adapted from Snes9x Win32/MacOSX ports
  * Video Filter Code (hq2x)
  ****************************************************************************/
-
-#ifdef HW_RVL
-
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,10 +21,10 @@
 
 #include "filter.h"
 #include "video.h"
-#include "snes9xgx.h"
-#include "menu.h"
+#include "snes9xGX.h"
+#include "memmap.h"
 
-#include "snes9x/memmap.h"
+#include "menu.h"
 
 #define NUMBITS (16)
 
@@ -64,6 +61,7 @@ GetFilterName (RenderFilter filterID)
 		case FILTER_HQ2X: return "hq2x";
 		case FILTER_HQ2XS: return "hq2x Soft";
 		case FILTER_HQ2XBOLD: return "hq2x Bold";
+		case FILTER_SCANLINES: return "Scanlines";
 	}
 }
 
@@ -78,6 +76,7 @@ FilterToMethod (RenderFilter filterID)
         case FILTER_HQ2X:       return RenderHQ2X<FILTER_HQ2X>;
         case FILTER_HQ2XS:      return RenderHQ2X<FILTER_HQ2XS>;
         case FILTER_HQ2XBOLD:   return RenderHQ2X<FILTER_HQ2XBOLD>;
+		case FILTER_SCANLINES:  return Scanlines<FILTER_SCANLINES>;
 	}
 }
 
@@ -92,6 +91,7 @@ int GetFilterScale(RenderFilter filterID)
         case FILTER_HQ2X:
         case FILTER_HQ2XS:
         case FILTER_HQ2XBOLD:
+		case FILTER_SCANLINES:
 			return 2;
 	}
 }
@@ -542,4 +542,20 @@ void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 		sp +=  (src1line - width);
 	}
 }
-#endif
+
+template<int GuiScale>
+void Scanlines (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
+{
+	while (height--) {
+		uint16 *dp = (uint16 *) dstPtr;
+		for (int i = 0; i < width; ++i, dp += 2) {
+			uint16 sp = *((uint16 *)srcPtr + i);
+			*(dp) = sp;
+			*(dp + 1) = sp;
+			*(dp + dstPitch) = 0;
+			*(dp + dstPitch + 1) = 0;
+		}
+		dstPtr += dstPitch<<1;
+		srcPtr += srcPitch;
+	}
+}
