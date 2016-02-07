@@ -518,7 +518,11 @@ int main(int argc, char *argv[])
 //			MainMenu(MENU_GAME);
 		if(!autoboot)
 		{
-			MainMenu(MENU_GAME);
+			if(SNESROMSize == 0)
+				MainMenu(MENU_GAMESELECTION);
+			else
+				MainMenu(MENU_GAME);
+
 			ConfigRequested = 0;
 			ScreenshotRequested = 0;
 		}
