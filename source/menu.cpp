@@ -3110,6 +3110,7 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Screen Position");
 	sprintf(options.name[i++], "Crosshair");
 	sprintf(options.name[i++], "Video Mode");
+	sprintf(options.name[i++], "Show Framerate");
 	options.length = i;
 	
 #ifdef HW_DOL
@@ -3197,6 +3198,10 @@ static int MenuSettingsVideo()
 				if(GCSettings.videomode > 4)
 					GCSettings.videomode = 0;
 				break;
+			case 7:
+				Settings.AutoDisplayMessages ^= 1;
+				Settings.DisplayFrameRate ^= 1;
+				break;
 		}
 
 		if(ret >= 0 || firstRun)
@@ -3238,6 +3243,7 @@ static int MenuSettingsVideo()
 				case 4:
 					sprintf (options.value[6], "PAL (60Hz)"); break;
 			}
+			sprintf (options.value[7], "%s", Settings.DisplayFrameRate ? "On" : "Off");
 			optionBrowser.TriggerUpdate();
 		}
 

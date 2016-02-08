@@ -20,7 +20,7 @@
 #include "filelist.h"
 
 #define APPNAME 		"Snes9x GX"
-#define APPVERSION 		"4.3.4"
+#define APPVERSION 		"4.3.6"
 #define APPFOLDER 		"snes9xgx"
 #define PREF_FILE_NAME 	"settings.xml"
 
@@ -80,9 +80,9 @@ enum {
 };
 
 struct SGCSettings{
-    int		AutoLoad;
-    int		AutoSave;
-    int		LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
+	int		AutoLoad;
+	int		AutoSave;
+	int		LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
 	int		SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, USB, SMB
 	char	LoadFolder[MAXPATHLEN]; // Path to game files
 	char	LastFileLoaded[MAXPATHLEN]; //Last file loaded filename
