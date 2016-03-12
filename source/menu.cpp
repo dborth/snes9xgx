@@ -39,6 +39,7 @@
 #include "utils/gettext.h"
 
 #include "snes9x/snes9x.h"
+#include "snes9x/fxemu.h"
 #include "snes9x/memmap.h"
 #include "snes9x/cheats.h"
 
@@ -3101,6 +3102,7 @@ static int MenuSettingsVideo()
 	int ret;
 	int i = 0;
 	bool firstRun = true;
+	bool reset_sfx = false;
 	OptionList options;
 
 	sprintf(options.name[i++], "Rendering");
@@ -3111,6 +3113,7 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Crosshair");
 	sprintf(options.name[i++], "Video Mode");
 	sprintf(options.name[i++], "Show Framerate");
+	sprintf(options.name[i++], "SuperFX Overclock");
 	options.length = i;
 	
 #ifdef HW_DOL
@@ -3202,6 +3205,18 @@ static int MenuSettingsVideo()
 				Settings.AutoDisplayMessages ^= 1;
 				Settings.DisplayFrameRate ^= 1;
 				break;
+			case 8:
+				GCSettings.sfxOverclock++;
+				if (GCSettings.sfxOverclock > 2)
+					GCSettings.sfxOverclock = 0;
+				switch(GCSettings.sfxOverclock)
+				{
+					case 0: Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6; reset_sfx = true; break;
+					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; reset_sfx = true; break;
+					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; reset_sfx = true; break;
+				}
+				if (reset_sfx) S9xResetSuperFX(); S9xReset();
+			break;
 		}
 
 		if(ret >= 0 || firstRun)
@@ -3244,6 +3259,15 @@ static int MenuSettingsVideo()
 					sprintf (options.value[6], "PAL (60Hz)"); break;
 			}
 			sprintf (options.value[7], "%s", Settings.DisplayFrameRate ? "On" : "Off");
+			switch(GCSettings.sfxOverclock)
+			{
+				case 0:
+					sprintf (options.value[8], "Default"); break;
+				case 1:
+					sprintf (options.value[8], "40 Mhz"); break;
+				case 2:
+					sprintf (options.value[8], "60 Mhz"); break;
+			}
 			optionBrowser.TriggerUpdate();
 		}
 

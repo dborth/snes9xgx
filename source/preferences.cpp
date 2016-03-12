@@ -146,6 +146,7 @@ preparePrefsData ()
 	createXMLSetting("FilterMethod", "Filter Method", toStr(GCSettings.FilterMethod));
 	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
 	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
+	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(GCSettings.sfxOverclock));
 
 	createXMLSection("Menu", "Menu Settings");
 
@@ -323,6 +324,10 @@ decodePrefsData ()
 			loadXMLSetting(&GCSettings.xshift, "xshift");
 			loadXMLSetting(&GCSettings.yshift, "yshift");
 
+			//Emulation Settings
+
+			loadXMLSetting(&GCSettings.sfxOverclock, "sfxOverclock");
+
 			// Menu Settings
 
 			loadXMLSetting(&GCSettings.WiimoteOrientation, "WiimoteOrientation");
@@ -346,6 +351,7 @@ decodePrefsData ()
 			loadXMLController(btnmap[CTRL_MOUSE][CTRLR_WIIMOTE], "btnmap_mouse_wiimote");
 			loadXMLController(btnmap[CTRL_JUST][CTRLR_GCPAD], "btnmap_just_gcpad");
 			loadXMLController(btnmap[CTRL_JUST][CTRLR_WIIMOTE], "btnmap_just_wiimote");
+
 		}
 		mxmlDelete(xml);
 	}
@@ -474,6 +480,11 @@ DefaultSettings ()
 	// Frame timings in 50hz and 60hz cpu mode
 	Settings.FrameTimePAL = 20000;
 	Settings.FrameTimeNTSC = 16667;
+
+	GCSettings.sfxOverclock = 0;
+	/* Initialize SuperFX CPU to normal speed by default */
+	Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6;
+
 }
 
 /****************************************************************************

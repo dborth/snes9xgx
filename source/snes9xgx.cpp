@@ -44,6 +44,7 @@
 #include "utils/FreeTypeGX.h"
 
 #include "snes9x/snes9x.h"
+#include "snes9x/fxemu.h"
 #include "snes9x/memmap.h"
 #include "snes9x/apu/apu.h"
 #include "snes9x/controls.h"
@@ -504,6 +505,14 @@ int main(int argc, char *argv[])
 		BrowserLoadFile();
 	}
 
+	switch (GCSettings.sfxOverclock)
+	{
+		case 0: Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6; break;
+		case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
+		case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
+		S9xResetSuperFX();
+	}
+
 	while (1) // main loop
 	{
 		// go back to checking if devices were inserted/removed
@@ -512,10 +521,6 @@ int main(int argc, char *argv[])
 
 		SwitchAudioMode(1);
 
-//		if(SNESROMSize == 0)
-//			MainMenu(MENU_GAMESELECTION);
-//		else
-//			MainMenu(MENU_GAME);
 		if(!autoboot)
 		{
 			if(SNESROMSize == 0)
@@ -549,11 +554,11 @@ int main(int argc, char *argv[])
 		HaltDeviceThread();
 
 		AudioStart ();
-		
-		FrameTimer = 0;
-        setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
 
-		CheckVideo = 2;	// force video update
+		FrameTimer = 0;
+		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
+
+		CheckVideo = 2;		// force video update
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;
 		currentMode = GCSettings.render;
 

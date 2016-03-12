@@ -19,9 +19,9 @@
 #include "filter.h"
 #include "filelist.h"
 
-#define APPNAME 		"Snes9x GX"
-#define APPVERSION 		"4.3.6"
-#define APPFOLDER 		"snes9xgx"
+#define APPNAME 			"Snes9x GX"
+#define APPVERSION 			"4.3.6"
+#define APPFOLDER 			"snes9xgx"
 #define PREF_FILE_NAME 	"settings.xml"
 
 #define NOTSILENT 0
@@ -114,7 +114,9 @@ struct SGCSettings{
 	int		MusicVolume;
 	int		SFXVolume;
 	int		Rumble;
-	int 	language;
+	int		language;
+
+	int		sfxOverclock;
 };
 
 void ExitApp();
