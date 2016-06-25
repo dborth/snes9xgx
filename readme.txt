@@ -1,6 +1,6 @@
 _____________________________________________________________________________
 |0O×øo·                         Snes9x GX                             ·oø×O0|
-|                   http://code.google.com/p/snes9x-gx                      |
+|                   https://github.com/dborth/snes9xgx                      |
 |                          (Under GPL License)                              |
 |___________________________________________________________________________|
 
@@ -872,7 +872,7 @@ changes to the emulator settings again and save them.
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
                       SNES9X GX Project Page
-                      http://code.google.com/p/snes9x-gx
+                      https://github.com/dborth/snes9xgx
 
                       Wii Homebrew Community
                       www.wiibrew.org
