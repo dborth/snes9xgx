@@ -16,5 +16,5 @@ int SaveSnapshot (char * filepath, bool silent);
 int SaveSnapshotAuto (bool silent);
 int LoadSnapshot (char * filepath, bool silent);
 int LoadSnapshotAuto (bool silent);
-
+int SavePreviewImg (char * filepath, bool silent);
 #endif

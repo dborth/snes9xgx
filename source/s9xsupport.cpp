@@ -78,6 +78,7 @@ bool8 S9xOpenSoundDevice(void)
 /* eke-eke */
 void S9xInitSync()
 {
+	FrameTimer = 0;
 	prev = gettime();
 }
 
@@ -85,8 +86,6 @@ void S9xInitSync()
 
 void S9xSyncSpeed ()
 {
-	unsigned int timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
-
 	while (!S9xSyncSound())
 		usleep(10);
 
@@ -95,12 +94,17 @@ void S9xSyncSpeed ()
 	if (Settings.TurboMode)
 		skipFrms = Settings.TurboSkipFrames;
 
-	now = gettime();
-
-	if (diff_usec(prev, now) > timediffallowed)
+	if (timerstyle == 0) /* use Wii vertical sync (VSYNC) with NTSC roms */
 	{
-		/* Timer has already expired */
-		if (IPPU.SkippedFrames < skipFrms)
+		while (FrameTimer == 0)
+		{
+			usleep(50);
+		}
+
+		if (FrameTimer > skipFrms)
+			FrameTimer = skipFrms;
+
+		if ((FrameTimer > 1) && (IPPU.SkippedFrames < skipFrms))
 		{
 			IPPU.SkippedFrames++;
 			IPPU.RenderThisFrame = FALSE;
@@ -111,20 +115,42 @@ void S9xSyncSpeed ()
 			IPPU.RenderThisFrame = TRUE;
 		}
 	}
-	else
+	else /* use internal timer for PAL roms */
 	{
-		/*** Ahead - so hold up ***/
-		while (diff_usec(prev, now) < timediffallowed)
+		unsigned int timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
+		now = gettime();
+
+		if (diff_usec(prev, now) > timediffallowed)
 		{
-			now = gettime();
-			usleep(50);
+			/* Timer has already expired */
+			if (IPPU.SkippedFrames < skipFrms)
+			{
+				IPPU.SkippedFrames++;
+				IPPU.RenderThisFrame = FALSE;
+			}
+			else
+			{
+				IPPU.SkippedFrames = 0;
+				IPPU.RenderThisFrame = TRUE;
+			}
 		}
-		IPPU.RenderThisFrame = TRUE;
-		IPPU.SkippedFrames = 0;
+		else
+		{
+			/*** Ahead - so hold up ***/
+			while (diff_usec(prev, now) < timediffallowed)
+			{
+				now = gettime();
+				usleep(50);
+			}
+			IPPU.RenderThisFrame = TRUE;
+			IPPU.SkippedFrames = 0;
+		}
+
+		prev = now;
 	}
 
-	prev = now;
-
+	if (!Settings.TurboMode)
+		FrameTimer--;
 	return;
 }
 

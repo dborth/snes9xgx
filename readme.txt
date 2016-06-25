@@ -1,19 +1,8 @@
-­———————————————————————————————————————————————————————————————————————————­
-:::::::::::::::×::::::::::::   .______   :::::::::::::::::::   _   ::::::::::
-|        _________            /   ___°/           -------.    (_)'\ /     `°|
-×       /______ °   ---__---./   /___ _________  /  ---  /    __| / \      °²
-×      _______\ \ /  ___  //  /____//\_____ °  /---/   / ___    ---         ×
-|     °________/ /  / /  //  /__    _______\ \    /   /  \  \  / /        .||
-::::::::::::::::/   /::--/_______\::.________/::::/   /:­::\   _  \::::::×:::
-:::::::°:::::::/___\:::::::::::::::::::::::::::::/   /::::/__/   \--::­::::::
-°:::::::::::::::::×:::::::::::::::°::::×:::::::::\--/::::::::::::::::::×:::::
-­————————————————————————————————————————————————————————————————————————————
-
-×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
+_____________________________________________________________________________
 |0O×øo·                         Snes9x GX                             ·oø×O0|
-|                   https://github.com/dborth/snes9xgx                      |
+|                   http://code.google.com/p/snes9x-gx                      |
 |                          (Under GPL License)                              |
-`¨•¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨ ¨¨¨¨¨¨¨¨¨¨¨¨¨'
+|___________________________________________________________________________|
 
 Snes9x GX is a Super Nintendo™ / Super Famicom emulator for the Nintendo Wii.
 Snes9x GX is a port of Snes9x (http://www.snes9x.com).
@@ -42,6 +31,32 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+[4.3.5 - February 06, 2016]
+
+* Added Fix94 wiiflow plugin mode
+* Removed sound from GUI and now gets better perfomance/FPS on games like 
+  Yoshi's Island and Kirby Dream Land 3.
+
+[4.3.4 - February 2, 2016]
+
+* Fixed screenshot image dimensions
+* Fixed screenshot option, it no longer creates an additional "dummy" file
+* Fixed performance issues, reverted to previous vsync method
+* Removed automatic download of newer versions by Burnt Lasagna.
+* Compiled with devkitPPC r26
+  Note: If compiled with devkitPPC r27 some games, like Final Fantasy III
+	and Chrono Trigger would crash on a battle
+
+[4.3.3 - September 3, 2015 - July 7, 2015]
+
+* Added Cebolleto's preview image support
+* Added WiiUPro controller support
+* Added a Scanline filter option
+* Increase preview image size and reduce game list width
+* Added a background to the preview image
+* Added a Screenshot button
+* Added a "WiiuPro" button on the button mapping menu
+* Fixed the inverted color button selection that was in some option windows
 
 [4.3.2 - November 9, 2012]
 
@@ -837,34 +852,36 @@ changes to the emulator settings again and save them.
 |                                                                 CREDITS  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-                      Coding & menu design		Tantric
-                      Additional coding			michniewski
-                      Menu artwork				the3seashells
-                      Menu sound				Peter de Man
-                      
-                      ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
-                      Snes9x GX GameCube		SoftDev, crunchy2, 
-                      							eke-eke, others
+                      Coding & menu design                            Tantric
+                      Additional coding                           michniewski
+                      Menu artwork                              the3seashells
+                      Menu sound                                 Peter de Man
+                      Extra coding                      Zopenko,Burnt Lasagna
+                                                        Askot
 
-                      Snes9x					Snes9x Team
-                      libogc/devkitPPC			shagkur & wintermute
-                      FreeTypeGX				Armin Tamzarian
+                      ¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
+                      Snes9x GX GameCube                    SoftDev, crunchy2,
+                                                            eke-eke, others
+
+                      Snes9x                                      Snes9x Team
+                      libogc/devkitPPC                   shagkur & wintermute
+                      FreeTypeGX                              Armin Tamzarian
 
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                                   LINKS  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-											       SNES9X GX Project Page
-							           https://github.com/dborth/snes9xgx
-							           
-											       Wii Homebrew Community
-											              www.wiibrew.org
+                      SNES9X GX Project Page
+                      http://code.google.com/p/snes9x-gx
 
-											    Free (Public Domain) ROMs
-											                www.pdroms.de
-													       
-											                  Cheat Codes
-											           www.cheatzilla.com
+                      Wii Homebrew Community
+                      www.wiibrew.org
+
+                      Free (Public Domain) ROMs
+                      www.pdroms.de
+
+                      Cheat Codes
+                      www.cheatzilla.com
 
 ×—–­—–­—–­—–­ –­—–­—–­—–­—–­—–­—–­—–­—–­—–­— ­—–­—–­—–­—–­—–­—–­—–­—-­—–­-–•¬
 |0O×øo·                                                               ·oø×O0|

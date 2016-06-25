@@ -1,5 +1,5 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x 1.51 Nintendo Wii/Gamecube Port
  *
  * Michniewski 2008
  *
@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "snes9x/snes9x.h"
+#include "snes9x.h"
  
 enum RenderFilter{
 	FILTER_NONE = 0,
@@ -26,6 +26,7 @@ enum RenderFilter{
 	FILTER_HQ2X,
 	FILTER_HQ2XS,
 	FILTER_HQ2XBOLD,
+	FILTER_SCANLINES,
 
 	NUM_FILTERS
 };
@@ -56,6 +57,7 @@ const char* GetFilterName (RenderFilter filterID);
 bool GetFilterHiResSupport (RenderFilter filterID);
 int GetFilterScale(RenderFilter filterID);
 template<int GuiScale> void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
+template<int GuiScale> void Scanlines (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
 void InitLUTs();
 
 #endif

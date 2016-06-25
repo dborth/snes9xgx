@@ -446,6 +446,7 @@ struct SSettings
 	bool8	UpAndDown;
 
 	bool8	OpenGLEnable;
+	float	SuperFXSpeedPerLine;
 };
 
 struct SSNESGameFixes

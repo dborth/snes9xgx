@@ -15,10 +15,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <string>
 #include <ogcsys.h>
 #include <unistd.h>
 #include <wiiuse/wpad.h>
+#include <wupc/wupc.h>
 #include <fat.h>
 #include <debug.h>
 #include <sys/iosupport.h>
@@ -43,6 +44,7 @@
 #include "utils/FreeTypeGX.h"
 
 #include "snes9x/snes9x.h"
+#include "snes9x/fxemu.h"
 #include "snes9x/memmap.h"
 #include "snes9x/apu/apu.h"
 #include "snes9x/controls.h"
@@ -84,6 +86,26 @@ void ExitCleanup()
 	int *psoid = (int *) 0x80001800;
 	void (*PSOReload) () = (void (*)()) 0x80001800;
 #endif
+
+void ExitToWiiflow()
+{
+	ShutoffRumble();
+	SavePrefs(SILENT);
+	if (SNESROMSize > 0 && !ConfigRequested && GCSettings.AutoSave == 1)
+		SaveSRAMAuto(SILENT);
+	ExitCleanup();
+
+	if( !!*(u32*)0x80001800 ) 
+	{
+		// Were we launched via HBC? (or via wiiflows stub replacement? :P)
+		exit(1);
+	}
+	else
+	{
+		// Wii channel support
+		SYS_ResetSystem( SYS_RETURNTOMENU, 0, 0 );
+	}
+}
 
 void ExitApp()
 {
@@ -180,6 +202,31 @@ void ipl_set_config(unsigned char c)
 	exi[0] &= 0x405;	//deselect IPL
 }
 #endif
+
+/****************************************************************************
+ * setFrameTimerMethod()
+ * change frametimer method depending on whether ROM is NTSC or PAL
+ ***************************************************************************/
+
+void setFrameTimerMethod()
+{
+	/*
+	Set frametimer method
+	(timerstyle: 0=NTSC vblank, 1=PAL int timer)
+	*/
+	if ( Settings.PAL ) {
+		if(vmode_60hz)
+			timerstyle = 1;
+		else
+			timerstyle = 0;
+	} else {
+		if(vmode_60hz)
+			timerstyle = 0;
+		else
+			timerstyle = 1;
+	}
+	return;
+}
 
 /****************************************************************************
  * IOS Check
@@ -346,6 +393,7 @@ int main(int argc, char *argv[])
 	SYS_SetPowerCallback(ShutdownCB);
 	SYS_SetResetCallback(ResetCB);
 	
+	WUPC_Init();
 	WPAD_Init();
 	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
 	DI_Init();
@@ -399,6 +447,72 @@ int main(int argc, char *argv[])
 #endif
 	InitGUIThreads();
 
+	bool autoboot = false;
+	if(argc > 3 && argv[1] != NULL && argv[2] != NULL && argv[3] != NULL)
+	{
+		autoboot = true;
+		ResetBrowser();
+		LoadPrefs();
+		if(strcasestr(argv[1], "sd:/") != NULL)
+		{
+			GCSettings.SaveMethod = DEVICE_SD;
+			GCSettings.LoadMethod = DEVICE_SD;
+		}
+		else
+		{
+			GCSettings.SaveMethod = DEVICE_USB;
+			GCSettings.LoadMethod = DEVICE_USB;
+		}
+		SavePrefs(SILENT);
+		selectLoadedFile = 1;
+		std::string dir(argv[1]);
+		dir.assign(&dir[dir.find_last_of(":") + 2]);
+		char arg_filename[1024];
+		strncpy(arg_filename, argv[2], sizeof(arg_filename));
+		strncpy(GCSettings.LoadFolder, dir.c_str(), sizeof(GCSettings.LoadFolder));
+		OpenGameList();
+		strncpy(GCSettings.Exit_Dol_File, argv[3], sizeof(GCSettings.Exit_Dol_File));
+		if(argc > 5 && argv[4] != NULL && argv[5] != NULL)
+		{
+			sscanf(argv[4], "%08x", &GCSettings.Exit_Channel[0]);
+			sscanf(argv[5], "%08x", &GCSettings.Exit_Channel[1]);
+		}
+		else
+		{
+			GCSettings.Exit_Channel[0] = 0x00010008;
+			GCSettings.Exit_Channel[1] = 0x57494948;
+		}
+		if(argc > 6 && argv[6] != NULL)
+			strncpy(GCSettings.LoaderName, argv[6], sizeof(GCSettings.LoaderName));
+		else
+			snprintf(GCSettings.LoaderName, sizeof(GCSettings.LoaderName), "WiiFlow");
+		for(int i = 0; i < browser.numEntries; i++)
+		{
+			// Skip it
+			if (strcmp(browserList[i].filename, ".") == 0 || strcmp(browserList[i].filename, "..") == 0)
+				continue;
+			if(strcasestr(browserList[i].filename, arg_filename) != NULL)
+			{
+				browser.selIndex = i;
+				if(IsSz())
+				{
+					BrowserLoadSz();
+					browser.selIndex = 1;
+				}
+				break;
+			}
+		}
+		BrowserLoadFile();
+	}
+
+	switch (GCSettings.sfxOverclock)
+	{
+		case 0: Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6; break;
+		case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
+		case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
+		S9xResetSuperFX();
+	}
+
 	while (1) // main loop
 	{
 		// go back to checking if devices were inserted/removed
@@ -407,10 +521,21 @@ int main(int argc, char *argv[])
 
 		SwitchAudioMode(1);
 
-		if(SNESROMSize == 0)
-			MainMenu(MENU_GAMESELECTION);
+		if(!autoboot)
+		{
+			if(SNESROMSize == 0)
+				MainMenu(MENU_GAMESELECTION);
+			else
+				MainMenu(MENU_GAME);
+
+			ConfigRequested = 0;
+			ScreenshotRequested = 0;
+		}
+		else if(SNESROMSize != 0 && autoboot)
+			autoboot = false;
 		else
-			MainMenu(MENU_GAME);
+			ExitApp();
+
 #ifdef HW_RVL
 		SelectFilterMethod();
 #endif
@@ -430,7 +555,10 @@ int main(int argc, char *argv[])
 
 		AudioStart ();
 
-		CheckVideo = 2;	// force video update
+		FrameTimer = 0;
+		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
+
+		CheckVideo = 2;		// force video update
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;
 		currentMode = GCSettings.render;
 

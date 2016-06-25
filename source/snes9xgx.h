@@ -19,9 +19,9 @@
 #include "filter.h"
 #include "filelist.h"
 
-#define APPNAME 		"Snes9x GX"
-#define APPVERSION 		"4.3.2"
-#define APPFOLDER 		"snes9xgx"
+#define APPNAME 			"Snes9x GX"
+#define APPVERSION 			"4.3.6"
+#define APPFOLDER 			"snes9xgx"
 #define PREF_FILE_NAME 	"settings.xml"
 
 #define NOTSILENT 0
@@ -80,16 +80,20 @@ enum {
 };
 
 struct SGCSettings{
-    int		AutoLoad;
-    int		AutoSave;
-    int		LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
+	int		AutoLoad;
+	int		AutoSave;
+	int		LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
 	int		SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, USB, SMB
 	char	LoadFolder[MAXPATHLEN]; // Path to game files
 	char	LastFileLoaded[MAXPATHLEN]; //Last file loaded filename
 	char	SaveFolder[MAXPATHLEN]; // Path to save files
 	char	CheatFolder[MAXPATHLEN]; // Path to cheat files
 	char	ScreenshotsFolder[MAXPATHLEN]; //Path to screenshots files
-	
+
+	char	Exit_Dol_File[MAXPATHLEN]; // Exit Path
+	char	LoaderName[20]; // Menu Loader Name
+	u32		Exit_Channel[2]; // Exit Channel
+
 	char	smbip[80];
 	char	smbuser[20];
 	char	smbpwd[20];
@@ -110,7 +114,9 @@ struct SGCSettings{
 	int		MusicVolume;
 	int		SFXVolume;
 	int		Rumble;
-	int 	language;
+	int		language;
+
+	int		sfxOverclock;
 };
 
 void ExitApp();
