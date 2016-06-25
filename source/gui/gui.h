@@ -123,6 +123,16 @@ typedef struct _paddata {
 	u8 triggerR;
 } PADData;
 
+typedef struct _wupcfulldata {
+	u32 btns_d;
+	u32 btns_u;
+	u32 btns_h;
+	s16 stickX;
+	s16 stickY;
+	s16 substickX;
+	s16 substickY;
+} WUPCFullData;
+
 #define EFFECT_SLIDE_TOP			1
 #define EFFECT_SLIDE_BOTTOM			2
 #define EFFECT_SLIDE_RIGHT			4
@@ -226,6 +236,7 @@ class GuiTrigger
 
 		WPADData wpaddata; //!< Wii controller trigger data
 		PADData pad; //!< GameCube controller trigger data
+		WUPCFullData wupcdata; //!< WiiU Pro controller trigger data
 		WPADData * wpad; //!< Wii controller trigger
 		s32 chan; //!< Trigger controller channel (0-3, -1 for all)
 		u8 type; //!< trigger type (TRIGGER_SIMPLE,	TRIGGER_HELD, TRIGGER_BUTTON_ONLY, TRIGGER_BUTTON_ONLY_IN_FOCUS)

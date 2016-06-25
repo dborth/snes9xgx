@@ -139,3 +139,26 @@ LoadSnapshotAuto (bool silent)
 
 	return LoadSnapshot(filepath, silent);
 }
+
+/****************************************************************************
+ * SavePreview
+ ***************************************************************************/
+
+int SavePreviewImg (char * filepath, bool silent)
+{
+	int device;
+
+	if(!FindDevice(filepath, &device))
+		return 0;
+
+	// save screenshot
+	if(gameScreenPngSize > 0)
+	{
+		char screenpath[1024];
+		strcpy(screenpath, filepath);
+		screenpath[strlen(screenpath)] = 0;
+		sprintf(screenpath, "%s.png", screenpath);
+		SaveFile((char *)gameScreenPng, screenpath, gameScreenPngSize, silent);
+	}
+	return 1;
+}

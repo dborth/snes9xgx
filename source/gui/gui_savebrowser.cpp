@@ -24,6 +24,8 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 
 	if(action == 0) // load
 		listOffset = 0;
+	else if(action == 2) // delete SRAM / Snapshot
+		listOffset = 0;
 	else
 		listOffset = -2; // save - reserve -2 & -1 for new slots
 
@@ -257,7 +259,8 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		if(selectedItem == 0)
 		{
 			if((listOffset - 2 >= 0 && action == 0) ||
-				(listOffset >= 0 && action == 1))
+				(listOffset >= 0 && action == 1) ||
+				(listOffset - 2 >= 0 && action == 2))
 			{
 				// move list up by 1
 				listOffset -= 2;
@@ -295,7 +298,8 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		if(selectedItem < 2)
 		{
 			if((listOffset - 2 >= 0 && action == 0) ||
-				(listOffset >= 0 && action == 1))
+				(listOffset >= 0 && action == 1) ||
+				(listOffset - 2 >= 0 && action == 2))
 			{
 				// move list up by 1
 				listOffset -= 2;
