@@ -1230,6 +1230,7 @@ static int MenuGame()
 	GuiImageData iconGameSettings(icon_game_settings_png);
 	GuiImageData iconLoad(icon_game_load_png);
 	GuiImageData iconSave(icon_game_save_png);
+	GuiImageData iconDelete(icon_game_delete_png);
 	GuiImageData iconReset(icon_game_reset_png);
 
 	GuiImageData battery(battery_png);
@@ -1245,7 +1246,7 @@ static int MenuGame()
 	GuiImage saveBtnIcon(&iconSave);
 	GuiButton saveBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	saveBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	saveBtn.SetPosition(-125, 120);
+	saveBtn.SetPosition(-200, 120);
 	saveBtn.SetLabel(&saveBtnTxt);
 	saveBtn.SetImage(&saveBtnImg);
 	saveBtn.SetImageOver(&saveBtnImgOver);
@@ -1262,7 +1263,7 @@ static int MenuGame()
 	GuiImage loadBtnIcon(&iconLoad);
 	GuiButton loadBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	loadBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	loadBtn.SetPosition(125, 120);
+	loadBtn.SetPosition(0, 120);
 	loadBtn.SetLabel(&loadBtnTxt);
 	loadBtn.SetImage(&loadBtnImg);
 	loadBtn.SetImageOver(&loadBtnImgOver);
@@ -1272,6 +1273,56 @@ static int MenuGame()
 	loadBtn.SetTrigger(trigA);
 	loadBtn.SetTrigger(trig2);
 	loadBtn.SetEffectGrow();
+
+	GuiText deleteBtnTxt("Delete", 22, (GXColor){0, 0, 0, 255});
+	GuiImage deleteBtnImg(&btnLargeOutline);
+	GuiImage deleteBtnImgOver(&btnLargeOutlineOver);
+	GuiImage deleteBtnIcon(&iconDelete);
+	GuiButton deleteBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	deleteBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	deleteBtn.SetPosition(200, 120);
+	deleteBtn.SetLabel(&deleteBtnTxt);
+	deleteBtn.SetImage(&deleteBtnImg);
+	deleteBtn.SetImageOver(&deleteBtnImgOver);
+	deleteBtn.SetIcon(&deleteBtnIcon);
+	deleteBtn.SetSoundOver(&btnSoundOver);
+	deleteBtn.SetSoundClick(&btnSoundClick);
+	deleteBtn.SetTrigger(trigA);
+	deleteBtn.SetTrigger(trig2);
+	deleteBtn.SetEffectGrow();
+	
+	// Boktai adds an extra button for setting the sun.
+	GuiText *sunBtnTxt = NULL;
+	GuiImage *sunBtnImg = NULL;
+	GuiImage *sunBtnImgOver = NULL;
+	GuiButton *sunBtn = NULL;
+	if (isBoktai) {
+		struct tm *newtime;
+		time_t long_time;
+
+		// regardless of the weather, there should be no sun at night time!
+		time(&long_time); // Get time as long integer.
+		newtime = localtime(&long_time); // Convert to local time.
+		if (newtime->tm_hour > 21 || newtime->tm_hour < 5)
+		{
+			sprintf(s, "Weather: Night Time");
+		} else sprintf(s, "Weather: %d%% sun", SunBars*10);
+		sunBtnTxt = new GuiText(s, 22, (GXColor){0, 0, 0, 255});
+		sunBtnTxt->SetWrap(true, btnLargeOutline.GetWidth()-30);
+		sunBtnImg = new GuiImage(&btnLargeOutline);
+		sunBtnImgOver = new GuiImage(&btnLargeOutlineOver);
+		sunBtn = new GuiButton(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+		sunBtn->SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+		sunBtn->SetPosition(0, 250);
+		sunBtn->SetLabel(sunBtnTxt);
+		sunBtn->SetImage(sunBtnImg);
+		sunBtn->SetImageOver(sunBtnImgOver);
+		sunBtn->SetSoundOver(&btnSoundOver);
+		sunBtn->SetSoundClick(&btnSoundClick);
+		sunBtn->SetTrigger(trigA);
+		sunBtn->SetTrigger(trig2);
+		sunBtn->SetEffectGrow();
+	}
 
 	GuiText resetBtnTxt("Reset", 22, (GXColor){0, 0, 0, 255});
 	GuiImage resetBtnImg(&btnLargeOutline);
@@ -1386,6 +1437,7 @@ static int MenuGame()
 	w.Append(&titleTxt);
 	w.Append(&saveBtn);
 	w.Append(&loadBtn);
+	w.Append(&deleteBtn);
 	w.Append(&resetBtn);
 	w.Append(&gameSettingsBtn);
 
@@ -1486,6 +1538,10 @@ static int MenuGame()
 		else if(loadBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_GAME_LOAD;
+		}
+		else if(deleteBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_GAME_DELETE;
 		}
 		else if(resetBtn.GetState() == STATE_CLICKED)
 		{
@@ -1603,6 +1659,7 @@ static int MenuGameSaves(int action)
 	int j = 0;
 	SaveList saves;
 	char filepath[1024];
+	char deletepath[1024];
 	char scrfile[1024];
 	char tmp[MAXJOLIET+1];
 	struct stat filestat;
@@ -1621,6 +1678,8 @@ static int MenuGameSaves(int action)
 
 	if(action == 0)
 		titleTxt.SetText("Load Game");
+	else if (action == 2)
+		titleTxt.SetText("Delete Saves");
 	else
 		titleTxt.SetText("Save Game");
 
@@ -1729,7 +1788,7 @@ static int MenuGameSaves(int action)
 	FreeSaveBuffer();
 	saves.length = j;
 
-	if(saves.length == 0 && action == 0)
+	if((saves.length == 0 && action == 0) || (saves.length == 0 && action == 2)) 
 	{
 		InfoPrompt("No game saves found.");
 		menu = MENU_GAME;
@@ -1750,7 +1809,7 @@ static int MenuGameSaves(int action)
 
 		ret = saveBrowser.GetClickedSave();
 
-		// load or save game
+		// load, save and delete save games
 		if(ret > -3)
 		{
 			int result = 0;
@@ -1769,6 +1828,35 @@ static int MenuGameSaves(int action)
 				}
 				if(result)
 					menu = MENU_EXIT;
+			}
+			else if(action == 2) // delete SRAM/Snapshot
+			{
+				if (WindowPrompt("Delete File", "Delete this save file? Deleted files can not be restored.", "OK", "Cancel"))
+				{
+					MakeFilePath(filepath, saves.type[ret], saves.filename[ret]);
+					switch(saves.type[ret])
+					{
+						case FILE_SRAM:
+							strncpy(deletepath, filepath, 1024);
+							deletepath[strlen(deletepath)-4] = 0;
+							sprintf(deletepath, "%s.sav", deletepath);
+							remove(deletepath); // Delete the *.srm file (Battery save file)
+						break;
+						case FILE_SNAPSHOT:
+							strncpy(deletepath, filepath, 1024);
+							deletepath[strlen(deletepath)-4] = 0;
+							sprintf(deletepath, "%s.png", deletepath);
+							remove(deletepath); // Delete the *.png file (Screenshot file)
+							strncpy(deletepath, filepath, 1024);
+							deletepath[strlen(deletepath)-4] = 0;
+							sprintf(deletepath, "%s.sgm", deletepath);
+							remove(deletepath); // Delete the *.frz file (Save State file)
+						break;
+					}							
+				}
+				menu = MENU_GAME_DELETE;
+			
+			
 			}
 			else // save
 			{
@@ -4053,6 +4141,9 @@ MainMenu (int menu)
 			case MENU_GAME_SAVE:
 				currentMenu = MenuGameSaves(1);
 				break;
+			case MENU_GAME_DELETE:
+				currentMenu = MenuGameSaves(2);
+				break;	
 			case MENU_GAMESETTINGS:
 				currentMenu = MenuGameSettings();
 				break;
