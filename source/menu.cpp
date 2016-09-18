@@ -1290,39 +1290,6 @@ static int MenuGame()
 	deleteBtn.SetTrigger(trigA);
 	deleteBtn.SetTrigger(trig2);
 	deleteBtn.SetEffectGrow();
-	
-	// Boktai adds an extra button for setting the sun.
-	GuiText *sunBtnTxt = NULL;
-	GuiImage *sunBtnImg = NULL;
-	GuiImage *sunBtnImgOver = NULL;
-	GuiButton *sunBtn = NULL;
-	if (isBoktai) {
-		struct tm *newtime;
-		time_t long_time;
-
-		// regardless of the weather, there should be no sun at night time!
-		time(&long_time); // Get time as long integer.
-		newtime = localtime(&long_time); // Convert to local time.
-		if (newtime->tm_hour > 21 || newtime->tm_hour < 5)
-		{
-			sprintf(s, "Weather: Night Time");
-		} else sprintf(s, "Weather: %d%% sun", SunBars*10);
-		sunBtnTxt = new GuiText(s, 22, (GXColor){0, 0, 0, 255});
-		sunBtnTxt->SetWrap(true, btnLargeOutline.GetWidth()-30);
-		sunBtnImg = new GuiImage(&btnLargeOutline);
-		sunBtnImgOver = new GuiImage(&btnLargeOutlineOver);
-		sunBtn = new GuiButton(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
-		sunBtn->SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-		sunBtn->SetPosition(0, 250);
-		sunBtn->SetLabel(sunBtnTxt);
-		sunBtn->SetImage(sunBtnImg);
-		sunBtn->SetImageOver(sunBtnImgOver);
-		sunBtn->SetSoundOver(&btnSoundOver);
-		sunBtn->SetSoundClick(&btnSoundClick);
-		sunBtn->SetTrigger(trigA);
-		sunBtn->SetTrigger(trig2);
-		sunBtn->SetEffectGrow();
-	}
 
 	GuiText resetBtnTxt("Reset", 22, (GXColor){0, 0, 0, 255});
 	GuiImage resetBtnImg(&btnLargeOutline);
@@ -1839,7 +1806,7 @@ static int MenuGameSaves(int action)
 						case FILE_SRAM:
 							strncpy(deletepath, filepath, 1024);
 							deletepath[strlen(deletepath)-4] = 0;
-							sprintf(deletepath, "%s.sav", deletepath);
+							sprintf(deletepath, "%s.srm", deletepath);
 							remove(deletepath); // Delete the *.srm file (Battery save file)
 						break;
 						case FILE_SNAPSHOT:
@@ -1849,7 +1816,7 @@ static int MenuGameSaves(int action)
 							remove(deletepath); // Delete the *.png file (Screenshot file)
 							strncpy(deletepath, filepath, 1024);
 							deletepath[strlen(deletepath)-4] = 0;
-							sprintf(deletepath, "%s.sgm", deletepath);
+							sprintf(deletepath, "%s.frz", deletepath);
 							remove(deletepath); // Delete the *.frz file (Save State file)
 						break;
 					}							
