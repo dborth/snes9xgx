@@ -93,6 +93,8 @@ extern const u8		icon_game_load_png[];
 extern const u32	icon_game_load_png_size;
 extern const u8		icon_game_save_png[];
 extern const u32	icon_game_save_png_size;
+extern const u8		icon_game_delete_png[];
+extern const u32	icon_game_delete_png_size;
 extern const u8		icon_game_reset_png[];
 extern const u32	icon_game_reset_png_size;
 
