@@ -245,6 +245,7 @@ struct CMemory
 	uint8	ExtendedFormat;
 
 	char	ROMFilename[PATH_MAX + 1];
+	char	ROMFilePath[PATH_MAX + 1];
 	char	ROMName[ROM_NAME_LEN];
 	char	RawROMName[ROM_NAME_LEN];
 	char	ROMId[5];

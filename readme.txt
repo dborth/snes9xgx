@@ -31,6 +31,28 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.4.0 - January 4, 2018]
+
+* Add BPS soft-patching support (thanks qwertymodo!)
+* Add MSU1 support (thanks qwertymodo!)
+* Revert commit 4.3.2 Fixed lag with GameCube controllers, because it broke the GameCube build.
+
+[4.3.7 - December 9, 2016]
+
+* Hide saving dialog that pops up briefly when returning from a game
+
+[4.3.6 - September 12, 2016]
+
+* Added the delete save file (SRAM / Snapshot) option
+* Changed the box colors for the SRAM and Snapshots files to match the color scheme of the emu GUI
+* Change the "Power off Wii" exit option to completely turn off the wii, ignoring the WC24 settings
+* Updated emulator credits
+* Added an option to switch between screenshots, covers, or artworks images,
+  with their respectively named folders inside /snes9xgx at the device's root.
+  You can set which one to show, by going to Settings > Menu > Preview Image.
+  The .PNG image file needs to have the same name as the ROM (e.g.: Contra III.png)
+
 [4.3.5 - February 06, 2016]
 
 * Added Fix94 wiiflow plugin mode

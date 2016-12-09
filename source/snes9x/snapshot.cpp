@@ -144,6 +144,9 @@
   (c) Copyright 1998 - 2001  John Stiles
   (c) Copyright 2001 - 2010  zones
 
+  MSU-1 code
+  (c) Copyright 2016         qwertymodo
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
@@ -1106,6 +1109,23 @@ static FreezeData	SnapBSX[] =
 };
 
 #undef STRUCT
+#define STRUCT	struct SMSU1
+
+static FreezeData	SnapMSU1[] =
+{
+	INT_ENTRY(7, MSU1_STATUS),
+	INT_ENTRY(7, MSU1_DATA_SEEK),
+	INT_ENTRY(7, MSU1_DATA_POS),
+	INT_ENTRY(7, MSU1_TRACK_SEEK),
+	INT_ENTRY(7, MSU1_CURRENT_TRACK),
+	INT_ENTRY(7, MSU1_RESUME_TRACK),
+	INT_ENTRY(7, MSU1_VOLUME),
+	INT_ENTRY(7, MSU1_CONTROL),
+	INT_ENTRY(7, MSU1_AUDIO_POS),
+	INT_ENTRY(7, MSU1_RESUME_POS)
+};
+
+#undef STRUCT
 #define STRUCT	struct SnapshotScreenshotInfo
 
 static FreezeData	SnapScreenshot[] =
@@ -1341,6 +1361,9 @@ void S9xFreezeToStream (STREAM stream)
 	if (Settings.BS)
 		FreezeStruct(stream, "BSX", &BSX, SnapBSX, COUNT(SnapBSX));
 
+	if (Settings.MSU1)
+		FreezeStruct(stream, "MSU", &MSU1, SnapMSU1, COUNT(SnapMSU1));
+
 	if (Settings.SnapshotScreenshots)
 	{
 		SnapshotScreenshotInfo	*ssi = new SnapshotScreenshotInfo;
@@ -1441,6 +1464,7 @@ int S9xUnfreezeFromStream (STREAM stream)
 	uint8	*local_srtc          = NULL;
 	uint8	*local_rtc_data      = NULL;
 	uint8	*local_bsx_data      = NULL;
+	uint8	*local_msu1_data     = NULL;
 	uint8	*local_screenshot    = NULL;
 	uint8	*local_movie_data    = NULL;
 
@@ -1544,6 +1568,10 @@ int S9xUnfreezeFromStream (STREAM stream)
 
 		result = UnfreezeStructCopy(stream, "BSX", &local_bsx_data, SnapBSX, COUNT(SnapBSX), version);
 		if (result != SUCCESS && Settings.BS)
+			break;
+
+		result = UnfreezeStructCopy(stream, "MSU", &local_msu1_data, SnapMSU1, COUNT(SnapMSU1), version);
+		if (result != SUCCESS && Settings.MSU1)
 			break;
 
 		result = UnfreezeStructCopy(stream, "SHO", &local_screenshot, SnapScreenshot, COUNT(SnapScreenshot), version);
@@ -1660,6 +1688,9 @@ int S9xUnfreezeFromStream (STREAM stream)
 		if (local_bsx_data)
 			UnfreezeStructFromCopy(&BSX, SnapBSX, COUNT(SnapBSX), local_bsx_data, version);
 
+		if (local_msu1_data)
+			UnfreezeStructFromCopy(&MSU1, SnapMSU1, COUNT(SnapMSU1), local_msu1_data, version);
+
 		CPU.Flags |= old_flags & (DEBUG_MODE_FLAG | TRACE_FLAG | SINGLE_STEP_FLAG | FRAME_ADVANCE_FLAG);
 		ICPU.ShiftedPB = Registers.PB << 16;
 		ICPU.ShiftedDB = Registers.DB << 16;
@@ -1706,6 +1737,9 @@ int S9xUnfreezeFromStream (STREAM stream)
 
 		if (local_bsx_data)
 			S9xBSXPostLoadState();
+
+		if (local_msu1_data)
+			S9xMSU1PostLoadState();
 
 		if (local_movie_data)
 		{

@@ -198,6 +198,8 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
  *
  * Scans pad and wpad
  ***************************************************************************/
+static int padsConnected = 0;
+static u64 prev, now;
 
 void
 UpdatePads()
@@ -207,7 +209,17 @@ UpdatePads()
 	WPAD_ScanPads();
 	#endif
 
-	PAD_ScanPads();
+	now = gettime();
+
+	if(!padsConnected && diff_sec(prev, now) < 2)
+		return;
+
+	prev = now;
+
+	padsConnected = PAD_ScanPads();
+
+	if(!padsConnected)
+		return;
 
 	for(int i=3; i >= 0; i--)
 	{
@@ -633,13 +645,13 @@ void ReportButtons ()
 	int i, j;
 
 	UpdatePads();
-/*
+
 	Settings.TurboMode = (
 		userInput[0].pad.substickX > 70 ||
 		userInput[0].WPAD_StickX(1) > 70 ||
 		userInput[0].wupcdata.substickX > 560
 	);	// RIGHT on c-stick and on classic controller right joystick
-*/
+
 	/* Check for menu:
 	 * CStick left
 	 * OR "L+R+X+Y" (eg. Homebrew/Adapted SNES controllers)

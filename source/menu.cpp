@@ -787,13 +787,13 @@ static void WindowCredits(void * ptr)
 	creditsBoxImg.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	creditsWindowBox.Append(&creditsBoxImg);
 
-	int numEntries = 24;
+	int numEntries = 23;
 	GuiText * txt[numEntries];
 
 	txt[i] = new GuiText("Credits", 30, (GXColor){0, 0, 0, 255});
 	txt[i]->SetAlignment(ALIGN_CENTRE, ALIGN_TOP); txt[i]->SetPosition(0,y); i++; y+=32;
 
-	txt[i] = new GuiText("Official Site: http://code.google.com/p/snes9x-gx/", 20, (GXColor){0, 0, 0, 255});
+	txt[i] = new GuiText("Official Site: https://github.com/dborth/snes9xgx", 20, (GXColor){0, 0, 0, 255});
 	txt[i]->SetAlignment(ALIGN_CENTRE, ALIGN_TOP); txt[i]->SetPosition(0,y); i++; y+=40;
 
 	txt[i]->SetPresets(20, (GXColor){0, 0, 0, 255}, 0,
@@ -803,9 +803,9 @@ static void WindowCredits(void * ptr)
 	txt[i]->SetPosition(60,y); i++;
 	txt[i] = new GuiText("Tantric");
 	txt[i]->SetPosition(350,y); i++; y+=24;
-	txt[i] = new GuiText("Coding");
+	txt[i] = new GuiText("Additional improvements");
 	txt[i]->SetPosition(60,y); i++;
-	txt[i] = new GuiText("michniewski");
+	txt[i] = new GuiText("Zopenko, michniewski");
 	txt[i]->SetPosition(350,y); i++; y+=24;
 	txt[i] = new GuiText("Menu artwork");
 	txt[i]->SetPosition(60,y); i++;
@@ -841,11 +841,9 @@ static void WindowCredits(void * ptr)
 
 	txt[i] = new GuiText("Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
 	txt[i]->SetPosition(0,y); i++; y+=20;
-	txt[i] = new GuiText("This software is open source and may be copied,");
+	txt[i] = new GuiText("This software is open source and may be copied, distributed, or modified ");
 	txt[i]->SetPosition(0,y); i++; y+=20;
-	txt[i] = new GuiText("distributed, or modified under the terms of the");
-	txt[i]->SetPosition(0,y); i++; y+=20;
-	txt[i] = new GuiText("GNU General Public License (GPL) Version 2.");
+	txt[i] = new GuiText("under the terms of the GNU General Public License (GPL) Version 2.");
 	txt[i]->SetPosition(0,y); i++; y+=20;
 
 	char iosVersion[20];
@@ -989,8 +987,8 @@ static int MenuGameSelection()
 	preview.SetPosition(174, -8);
 	u8* imgBuffer = MEM_ALLOC(512 * 512 * 4);
 	int  previousBrowserIndex = -1;
-	char screenshotPath[MAXJOLIET + 1];
-		
+	char imagePath[MAXJOLIET + 1];
+	
 	HaltGui();
 	btnLogo->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
 	btnLogo->SetPosition(-50, 24);
@@ -1013,11 +1011,11 @@ static int MenuGameSelection()
 	gameBrowser.fileList[0]->SetState(STATE_SELECTED);
 	gameBrowser.TriggerUpdate();
 	titleTxt.SetText(inSz ? szname : "Choose Game");
-
+			
 	while(menu == MENU_NONE)
 	{
 		usleep(THREAD_SLEEP);
-
+		
 		if(selectLoadedFile == 2)
 		{
 			selectLoadedFile = 0;
@@ -1050,8 +1048,7 @@ static int MenuGameSelection()
 						menu = MENU_GAMESELECTION;
 						break;
 					}
-					
-					
+										
 					titleTxt.SetText(inSz ? szname : "Choose Game");
 					
 					ResumeGui();
@@ -1071,20 +1068,19 @@ static int MenuGameSelection()
 			}
 		}
 		
-		//update game screenshot
+		//update gamelist image
 		if(previousBrowserIndex != browser.selIndex)
 		{			
 			previousBrowserIndex = browser.selIndex;
-			snprintf(screenshotPath, MAXJOLIET, "%s%s/%s.png", pathPrefix[GCSettings.LoadMethod], GCSettings.ScreenshotsFolder, browserList[browser.selIndex].displayname);
+			snprintf(imagePath, MAXJOLIET, "%s%s/%s.png", pathPrefix[GCSettings.LoadMethod], GCSettings.ImageFolder, browserList[browser.selIndex].displayname);
 			
 			AllocSaveBuffer();
 			int width, height;
-			if(LoadFile(screenshotPath, SILENT))
+			if(LoadFile(imagePath, SILENT))
 			{
 				if(DecodePNG(savebuffer, &width, &height, imgBuffer, 512, 512))
 				{
 					preview.SetImage(imgBuffer, width, height);
-					//preview.SetScale(225.0f / width);
 					preview.SetScale( MIN(225.0f / width, 235.0f / height) );
 				}
 				else
@@ -1290,7 +1286,7 @@ static int MenuGame()
 	deleteBtn.SetTrigger(trigA);
 	deleteBtn.SetTrigger(trig2);
 	deleteBtn.SetEffectGrow();
-
+	
 	GuiText resetBtnTxt("Reset", 22, (GXColor){0, 0, 0, 255});
 	GuiImage resetBtnImg(&btnLargeOutline);
 	GuiImage resetBtnImgOver(&btnLargeOutlineOver);
@@ -1776,7 +1772,7 @@ static int MenuGameSaves(int action)
 
 		ret = saveBrowser.GetClickedSave();
 
-		// load, save and delete save games
+		//load, save and delete save games
 		if(ret > -3)
 		{
 			int result = 0;
@@ -1796,7 +1792,7 @@ static int MenuGameSaves(int action)
 				if(result)
 					menu = MENU_EXIT;
 			}
-			else if(action == 2) // delete SRAM/Snapshot
+			else if(action == 2) // delete RAM/State
 			{
 				if (WindowPrompt("Delete File", "Delete this save file? Deleted files can not be restored.", "OK", "Cancel"))
 				{
@@ -1822,8 +1818,6 @@ static int MenuGameSaves(int action)
 					}							
 				}
 				menu = MENU_GAME_DELETE;
-			
-			
 			}
 			else // save
 			{
@@ -1869,7 +1863,6 @@ static int MenuGameSaves(int action)
 				}
 			}
 		}
-
 		if(backBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_GAME;
@@ -3518,6 +3511,8 @@ static int MenuSettingsFile()
 	sprintf(options.name[i++], "Save Folder");
 	sprintf(options.name[i++], "Cheats Folder");
 	sprintf(options.name[i++], "Screenshots Folder");
+	sprintf(options.name[i++], "Covers Folder");
+	sprintf(options.name[i++], "Artworks Folder");
 	sprintf(options.name[i++], "Auto Load");
 	sprintf(options.name[i++], "Auto Save");
 	options.length = i;
@@ -3593,14 +3588,22 @@ static int MenuSettingsFile()
 			case 5:
 				OnScreenKeyboard(GCSettings.ScreenshotsFolder, MAXPATHLEN);
 				break;
-
+				
 			case 6:
+				OnScreenKeyboard(GCSettings.CoverFolder, MAXPATHLEN);
+				break;
+
+			case 7:
+				OnScreenKeyboard(GCSettings.ArtworkFolder, MAXPATHLEN);
+				break;
+				
+			case 8:
 				GCSettings.AutoLoad++;
 				if (GCSettings.AutoLoad > 2)
 					GCSettings.AutoLoad = 0;
 				break;
 
-			case 7:
+			case 9:
 				GCSettings.AutoSave++;
 				if (GCSettings.AutoSave > 3)
 					GCSettings.AutoSave = 0;
@@ -3667,15 +3670,17 @@ static int MenuSettingsFile()
 			snprintf (options.value[3], 35, "%s", GCSettings.SaveFolder);
 			snprintf (options.value[4], 35, "%s", GCSettings.CheatFolder);
 			snprintf (options.value[5], 35, "%s", GCSettings.ScreenshotsFolder);
+			snprintf (options.value[6], 35, "%s", GCSettings.CoverFolder);
+			snprintf (options.value[7], 35, "%s", GCSettings.ArtworkFolder);
 
-			if (GCSettings.AutoLoad == 0) sprintf (options.value[6],"Off");
-			else if (GCSettings.AutoLoad == 1) sprintf (options.value[6],"SRAM");
-			else if (GCSettings.AutoLoad == 2) sprintf (options.value[6],"Snapshot");
+			if (GCSettings.AutoLoad == 0) sprintf (options.value[8],"Off");
+			else if (GCSettings.AutoLoad == 1) sprintf (options.value[8],"SRAM");
+			else if (GCSettings.AutoLoad == 2) sprintf (options.value[8],"Snapshot");
 
-			if (GCSettings.AutoSave == 0) sprintf (options.value[7],"Off");
-			else if (GCSettings.AutoSave == 1) sprintf (options.value[7],"SRAM");
-			else if (GCSettings.AutoSave == 2) sprintf (options.value[7],"Snapshot");
-			else if (GCSettings.AutoSave == 3) sprintf (options.value[7],"Both");
+			if (GCSettings.AutoSave == 0) sprintf (options.value[9],"Off");
+			else if (GCSettings.AutoSave == 1) sprintf (options.value[9],"SRAM");
+			else if (GCSettings.AutoSave == 2) sprintf (options.value[9],"Snapshot");
+			else if (GCSettings.AutoSave == 3) sprintf (options.value[9],"Both");
 
 			optionBrowser.TriggerUpdate();
 		}
@@ -3710,6 +3715,7 @@ static int MenuSettingsMenu()
 	sprintf(options.name[i++], "Sound Effects Volume");
 	sprintf(options.name[i++], "Rumble");
 	sprintf(options.name[i++], "Language");
+	sprintf(options.name[i++], "Preview Image");
 	options.length = i;
 
 	for(i=0; i < options.length; i++)
@@ -3794,6 +3800,12 @@ static int MenuSettingsMenu()
 					GCSettings.language = LANG_ENGLISH;
 	
 				break;
+				
+			case 6:
+				GCSettings.PreviewImage++;
+				if(GCSettings.PreviewImage > 2)
+					GCSettings.PreviewImage = 0;
+				break;
 		}
 
 		if(ret >= 0 || firstRun)
@@ -3859,6 +3871,22 @@ static int MenuSettingsMenu()
 				case LANG_BRAZILIAN_PORTUGUESE: sprintf(options.value[5], "Brazilian Portuguese"); break;
 				case LANG_CATALAN:		sprintf(options.value[5], "Catalan"); break;
 				case LANG_TURKISH:		sprintf(options.value[5], "Turkish"); break;
+			}
+			
+			switch(GCSettings.PreviewImage)
+			{
+				case 0:	
+					sprintf(options.value[6], "Screenshots"); 
+					snprintf(GCSettings.ImageFolder, MAXJOLIET, "%s", GCSettings.ScreenshotsFolder);
+					break; 
+				case 1:	
+					sprintf(options.value[6], "Covers");	  
+					snprintf(GCSettings.ImageFolder, MAXJOLIET, "%s", GCSettings.CoverFolder);
+					break; 
+				case 2:	
+					sprintf(options.value[6], "Artworks");
+					snprintf(GCSettings.ImageFolder, MAXJOLIET, "%s", GCSettings.ArtworkFolder);
+					break; 
 			}
 			
 			optionBrowser.TriggerUpdate();

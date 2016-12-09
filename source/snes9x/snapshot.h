@@ -144,6 +144,9 @@
   (c) Copyright 1998 - 2001  John Stiles
   (c) Copyright 2001 - 2010  zones
 
+  MSU-1 code
+  (c) Copyright 2016         qwertymodo
+
 
   Specific ports contains the works of other authors. See headers in
   individual files.
@@ -179,7 +182,7 @@
 #define _SNAPSHOT_H_
 
 #define SNAPSHOT_MAGIC			"#!s9xsnp"
-#define SNAPSHOT_VERSION		6
+#define SNAPSHOT_VERSION		7
 
 #define SUCCESS					1
 #define WRONG_FORMAT			(-1)

@@ -108,7 +108,7 @@ export OUTPUT	:=	$(CURDIR)/$(TARGETDIR)/$(TARGET)
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
 	@[ -d $(TARGETDIR) ] || mkdir -p $(TARGETDIR)
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile.xenon
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile.xenon
 
 #---------------------------------------------------------------------------------
 clean:
