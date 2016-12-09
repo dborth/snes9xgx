@@ -32,6 +32,10 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.3.7 - December 9, 2016]
+
+* Hide saving dialog that pops up briefly when returning from a game
+
 [4.3.6 - September 12, 2016]
 
 * Added the delete save file (SRAM / Snapshot) option
