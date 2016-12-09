@@ -633,13 +633,13 @@ void ReportButtons ()
 	int i, j;
 
 	UpdatePads();
-/*
+
 	Settings.TurboMode = (
 		userInput[0].pad.substickX > 70 ||
 		userInput[0].WPAD_StickX(1) > 70 ||
 		userInput[0].wupcdata.substickX > 560
 	);	// RIGHT on c-stick and on classic controller right joystick
-*/
+
 	/* Check for menu:
 	 * CStick left
 	 * OR "L+R+X+Y" (eg. Homebrew/Adapted SNES controllers)

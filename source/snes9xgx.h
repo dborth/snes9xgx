@@ -22,7 +22,7 @@
 #define APPNAME 			"Snes9x GX"
 #define APPVERSION 			"4.3.6"
 #define APPFOLDER 			"snes9xgx"
-#define PREF_FILE_NAME 	"settings.xml"
+#define PREF_FILE_NAME		"settings.xml"
 
 #define NOTSILENT 0
 #define SILENT 1
@@ -84,12 +84,15 @@ struct SGCSettings{
 	int		AutoSave;
 	int		LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
 	int		SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, USB, SMB
-	char	LoadFolder[MAXPATHLEN]; // Path to game files
+	char	LoadFolder[MAXPATHLEN]; 	// Path to game files
 	char	LastFileLoaded[MAXPATHLEN]; //Last file loaded filename
-	char	SaveFolder[MAXPATHLEN]; // Path to save files
-	char	CheatFolder[MAXPATHLEN]; // Path to cheat files
+	char	SaveFolder[MAXPATHLEN]; 	// Path to save files
+	char	CheatFolder[MAXPATHLEN]; 	// Path to cheat files
 	char	ScreenshotsFolder[MAXPATHLEN]; //Path to screenshots files
-
+	char	CoverFolder[MAXPATHLEN]; 	//Path to cover files
+	char	ArtworkFolder[MAXPATHLEN]; 	//Path to artwork files
+	char 	ImageFolder[MAXPATHLEN]; 	//Saved image folder path 
+	
 	char	Exit_Dol_File[MAXPATHLEN]; // Exit Path
 	char	LoaderName[20]; // Menu Loader Name
 	u32		Exit_Channel[2]; // Exit Channel
@@ -115,6 +118,7 @@ struct SGCSettings{
 	int		SFXVolume;
 	int		Rumble;
 	int		language;
+	int		PreviewImage;
 
 	int		sfxOverclock;
 };

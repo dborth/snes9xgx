@@ -144,8 +144,7 @@ LoadSnapshotAuto (bool silent)
  * SavePreview
  ***************************************************************************/
 
-int
-SavePreviewImg (char * filepath, bool silent)
+int SavePreviewImg (char * filepath, bool silent)
 {
 	int device;
 
@@ -161,8 +160,5 @@ SavePreviewImg (char * filepath, bool silent)
 		sprintf(screenpath, "%s.png", screenpath);
 		SaveFile((char *)gameScreenPng, screenpath, gameScreenPngSize, silent);
 	}
-
-	if(!silent)
-		InfoPrompt("Save successful");
 	return 1;
 }
