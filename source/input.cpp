@@ -198,6 +198,8 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
  *
  * Scans pad and wpad
  ***************************************************************************/
+static int padsConnected = 0;
+static u64 prev, now;
 
 void
 UpdatePads()
@@ -207,7 +209,17 @@ UpdatePads()
 	WPAD_ScanPads();
 	#endif
 
-	PAD_ScanPads();
+	now = gettime();
+
+	if(!padsConnected && diff_sec(prev, now) < 2)
+		return;
+
+	prev = now;
+
+	padsConnected = PAD_ScanPads();
+
+	if(!padsConnected)
+		return;
 
 	for(int i=3; i >= 0; i--)
 	{
