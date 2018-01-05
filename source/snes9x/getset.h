@@ -186,6 +186,7 @@
 #include "obc1.h"
 #include "seta.h"
 #include "bsx.h"
+#include "msu1.h"
 
 #if (S9X_ACCURACY_LEVEL >= 2)
 

@@ -956,7 +956,7 @@ static bool8 ReadUPSPatch (Reader *, long, int32 &);
 static long ReadInt (Reader *, unsigned);
 static bool8 ReadIPSPatch (Reader *, long, int32 &);
 #ifdef UNZIP_SUPPORT
-static int unzFindExtension (unzFile &, const char *, bool restart = TRUE, bool print = TRUE);
+static int unzFindExtension (unzFile &, const char *, bool restart = TRUE, bool print = TRUE, bool allowExact = FALSE);
 #endif
 
 // deinterleave
@@ -1395,7 +1395,7 @@ uint32 CMemory::FileLoader (uint8 *buffer, const char *filename, int32 maxsize)
 	_makepath(fname, drive, dir, name, exts);
 
 	int	nFormat = FILE_DEFAULT;
-	if (strcasecmp(ext, "zip") == 0)
+	if (strcasecmp(ext, "zip") == 0 || strcasecmp(ext, "msu1") == 0)
 		nFormat = FILE_ZIP;
 	else
 	if (strcasecmp(ext, "jma") == 0)
@@ -2270,6 +2270,7 @@ void CMemory::InitROM (void)
 	Settings.SETA = 0;
 	Settings.SRTC = FALSE;
 	Settings.BS = FALSE;
+	Settings.MSU1 = FALSE;
 
 	SuperFX.nRomBanks = CalculatedSize >> 15;
 
@@ -2445,6 +2446,9 @@ void CMemory::InitROM (void)
 			Settings.C4 = TRUE;
 			break;
 	}
+
+	// MSU1
+	Settings.MSU1 = S9xMSU1ROMExists();
 
 	//// Map memory and calculate checksum
 
@@ -3348,7 +3352,7 @@ const char * CMemory::KartContents (void)
 	static char			str[64];
 	static const char	*contents[3] = { "ROM", "ROM+RAM", "ROM+RAM+BAT" };
 
-	char	chip[16];
+	char	chip[20];
 
 	if (ROMType == 0 && !Settings.BS)
 		return ("ROM");
@@ -3393,6 +3397,9 @@ const char * CMemory::KartContents (void)
 		sprintf(chip, "+DSP-%d", Settings.DSP);
 	else
 		strcpy(chip, "");
+
+	if (Settings.MSU1)
+		sprintf(chip + strlen(chip), "+MSU-1");
 
 	sprintf(str, "%s%s", contents[(ROMType & 0xf) % 3], chip);
 
@@ -3904,9 +3911,10 @@ void CMemory::ApplyROMFixes (void)
 	}
 }
 
-// UPS % IPS
+// BPS % UPS % IPS
 
-static uint32 ReadUPSPointer (const uint8 *data, unsigned &addr, unsigned size)
+// number decoding used for both BPS and UPS
+static uint32 XPSdecode (const uint8 *data, unsigned &addr, unsigned size)
 {
 	uint32 offset = 0, shift = 1;
 	while(addr < size) {
@@ -3961,8 +3969,8 @@ static bool8 ReadUPSPatch (Reader *r, long, int32 &rom_size)
 	if(patch_crc32 != pp_crc32) { delete[] data; return false; }  //patch is corrupted
 	if((rom_crc32 != px_crc32) && (rom_crc32 != py_crc32)) { delete[] data; return false; }  //patch is for a different ROM
 
-	uint32 px_size = ReadUPSPointer(data, addr, size);
-	uint32 py_size = ReadUPSPointer(data, addr, size);
+	uint32 px_size = XPSdecode(data, addr, size);
+	uint32 py_size = XPSdecode(data, addr, size);
 	uint32 out_size = ((uint32) rom_size == px_size) ? py_size : px_size;
 	if(out_size > CMemory::MAX_ROM_SIZE) { delete[] data; return false; }  //applying this patch will overflow Memory.ROM buffer
 
@@ -3974,7 +3982,7 @@ static bool8 ReadUPSPatch (Reader *r, long, int32 &rom_size)
 
 	uint32 relative = 0;
 	while(addr < size - 12) {
-		relative += ReadUPSPointer(data, addr, size);
+		relative += XPSdecode(data, addr, size);
 		while(addr < size - 12) {
 			uint8 x = data[addr++];
 			Memory.ROM[relative++] ^= x;
@@ -4003,6 +4011,101 @@ static bool8 ReadUPSPatch (Reader *r, long, int32 &rom_size)
 		//already caught above.
 		fprintf(stderr, "WARNING: UPS patching appears to have failed.\nGame may not be playable.\n");
 		return true;
+	}
+}
+
+// header notes for UPS patches also apply to BPS
+//
+// logic taken from http://byuu.org/programming/bps and the accompanying source
+//
+static bool8 ReadBPSPatch (Reader *r, long, int32 &rom_size)
+{
+	uint8 *data = new uint8[8 * 1024 * 1024];  //allocate a lot of memory, better safe than sorry ...
+	uint32 size = 0;
+	while(true) {
+		int value = r->get_char();
+		if(value == EOF) break;
+		data[size++] = value;
+		if(size >= 8 * 1024 * 1024) {
+			//prevent buffer overflow: SNES-made BPS patches should never be this big anyway ...
+			delete[] data;
+			return false;
+		}
+	}
+
+	/* 4-byte header + 1-byte input size + 1-byte output size + 1-byte metadata size
+	   + 4-byte unpatched CRC32 + 4-byte patched CRC32 + 4-byte patch CRC32 */
+	if(size < 19) { delete[] data; return false; }  //patch is too small
+
+	uint32 addr = 0;
+	if(data[addr++] != 'B') { delete[] data; return false; }  //patch has an invalid header
+	if(data[addr++] != 'P') { delete[] data; return false; }  //...
+	if(data[addr++] != 'S') { delete[] data; return false; }  //...
+	if(data[addr++] != '1') { delete[] data; return false; }  //...
+
+	uint32 patch_crc32 = caCRC32(data, size - 4);  //don't include patch CRC32 itself in CRC32 calculation
+	uint32 rom_crc32 = caCRC32(Memory.ROM, rom_size);
+	uint32 source_crc32 = (data[size - 12] << 0) + (data[size - 11] << 8) + (data[size - 10] << 16) + (data[size -  9] << 24);
+	uint32 target_crc32 = (data[size -  8] << 0) + (data[size -  7] << 8) + (data[size -  6] << 16) + (data[size -  5] << 24);
+	uint32 pp_crc32 = (data[size -  4] << 0) + (data[size -  3] << 8) + (data[size -  2] << 16) + (data[size -  1] << 24);
+	if(patch_crc32 != pp_crc32) { delete[] data; return false; }  //patch is corrupted
+	if(rom_crc32 != source_crc32) { delete[] data; return false; }  //patch is for a different ROM
+
+	uint32 source_size = XPSdecode(data, addr, size);
+	uint32 target_size = XPSdecode(data, addr, size);
+	uint32 metadata_size = XPSdecode(data, addr, size);
+	addr += metadata_size;
+
+	if(target_size > CMemory::MAX_ROM_SIZE) { delete[] data; return false; }  //applying this patch will overflow Memory.ROM buffer
+
+	enum { SourceRead, TargetRead, SourceCopy, TargetCopy };
+	uint32 outputOffset = 0, sourceRelativeOffset = 0, targetRelativeOffset = 0;
+
+	uint8 *patched_rom = new uint8[target_size];
+	memset(patched_rom,0,target_size);
+
+	while(addr < size - 12) {
+		uint32 length = XPSdecode(data, addr, size);
+		uint32 mode = length & 3;
+		length = (length >> 2) + 1;
+
+		switch((int)mode) {
+			case SourceRead:
+				while(length--) patched_rom[outputOffset++] = Memory.ROM[outputOffset];
+				break;
+			case TargetRead:
+				while(length--) patched_rom[outputOffset++] = data[addr++];
+				break;
+			case SourceCopy:
+			case TargetCopy:
+				int32 offset = XPSdecode(data, addr, size);
+				bool negative = offset & 1;
+				offset >>= 1;
+				if(negative) offset = -offset;
+
+				if(mode == SourceCopy) {
+					sourceRelativeOffset += offset;
+					while(length--) patched_rom[outputOffset++] = Memory.ROM[sourceRelativeOffset++];
+				} else {
+					targetRelativeOffset += offset;
+					while(length--) patched_rom[outputOffset++] = patched_rom[targetRelativeOffset++];
+				}
+				break;
+		}
+	}
+
+	delete[] data;
+
+	uint32 out_crc32 = caCRC32(patched_rom, target_size);
+	if(out_crc32 == target_crc32) {
+		memcpy(Memory.ROM, patched_rom, target_size);
+		rom_size = target_size;
+		delete[] patched_rom;
+		return true;
+	} else {
+		delete[] patched_rom;
+		fprintf(stderr, "WARNING: BPS patching failed.\nROM has not been altered.\n");
+		return false;
 	}
 }
 
@@ -4102,10 +4205,10 @@ static bool8 ReadIPSPatch (Reader *r, long offset, int32 &rom_size)
 }
 
 #ifdef UNZIP_SUPPORT
-static int unzFindExtension (unzFile &file, const char *ext, bool restart, bool print)
+static int unzFindExtension (unzFile &file, const char *ext, bool restart, bool print, bool allowExact)
 {
 	unz_file_info	info;
-	int				port, l = strlen(ext);
+	int				port, l = strlen(ext), e = allowExact ? 0 : 1;
 
 	if (restart)
 		port = unzGoToFirstFile(file);
@@ -4120,10 +4223,10 @@ static int unzFindExtension (unzFile &file, const char *ext, bool restart, bool 
 		unzGetCurrentFileInfo(file, &info, name, 128, NULL, 0, NULL, 0);
 		len = strlen(name);
 
-		if (len >= l + 1 && name[len - l - 1] == '.' && strcasecmp(name + len - l, ext) == 0 && unzOpenCurrentFile(file) == UNZ_OK)
+		if (len >= l + e && name[len - l - 1] == '.' && strcasecmp(name + len - l, ext) == 0 && unzOpenCurrentFile(file) == UNZ_OK)
 		{
 			if (print)
-				printf("Using IPS or UPS patch %s", name);
+				printf("Using patch %s", name);
 
 			return (port);
 		}
@@ -4142,21 +4245,31 @@ void CMemory::CheckForAnyPatch (const char *rom_filename, bool8 header, int32 &r
 
 #ifdef GEKKO
 	int patchtype;
-	char patchpath[2][512];
+	char patchpath[3][512];
 	STREAM patchfile = NULL;
 	long offset = header ? 512 : 0;
 
-	sprintf(patchpath[0], "%s%s.ips", browser.dir, Memory.ROMFilename);
-	sprintf(patchpath[1], "%s%s.ups", browser.dir, Memory.ROMFilename);
+	sprintf(patchpath[0], "%s%s.bps", browser.dir, Memory.ROMFilename);
+	sprintf(patchpath[1], "%s%s.ips", browser.dir, Memory.ROMFilename);
+	sprintf(patchpath[2], "%s%s.ups", browser.dir, Memory.ROMFilename);
 
-	for(patchtype=0; patchtype<2; patchtype++)
+	for(patchtype=0; patchtype<3; patchtype++)
 	{
 		if ((patchfile = OPEN_STREAM(patchpath[patchtype], "rb")) != NULL)
 		{
-			if(patchtype == 0)
-				ReadIPSPatch(new fReader(patchfile), offset, rom_size);
-			else
-				ReadUPSPatch(new fReader(patchfile), 0, rom_size);
+			switch(patchtype) {
+				case 0:
+					ReadBPSPatch(new fReader(patchfile), offset, rom_size);
+					break;
+				case 1:
+					ReadIPSPatch(new fReader(patchfile), offset, rom_size);
+					break;
+				case 2:
+					ReadUPSPatch(new fReader(patchfile), 0, rom_size);
+					break;
+				default:
+					break;
+			}
 			CLOSE_STREAM(patchfile);
 			break;
 		}
@@ -4170,9 +4283,76 @@ void CMemory::CheckForAnyPatch (const char *rom_filename, bool8 header, int32 &r
 	char		dir[_MAX_DIR + 1], drive[_MAX_DRIVE + 1], name[_MAX_FNAME + 1], ext[_MAX_EXT + 1], ips[_MAX_EXT + 3], fname[PATH_MAX + 1];
 	const char	*n;
 
+	_splitpath(rom_filename, drive, dir, name, ext);
+
+	// BPS
+	_makepath(fname, drive, dir, name, "bps");
+
+	if ((patch_file = OPEN_FSTREAM(fname, "rb")) != NULL)
+	{
+		printf("Using BPS patch %s", fname);
+
+		ret = ReadBPSPatch(new fReader(patch_file), 0, rom_size);
+		CLOSE_STREAM(patch_file);
+
+		if (ret)
+		{
+			printf("!\n");
+			return;
+		}
+		else
+			printf(" failed!\n");
+	}
+
+#ifdef UNZIP_SUPPORT
+	if (!strcasecmp(ext, "zip") || !strcasecmp(ext, ".zip"))
+	{
+		unzFile	file = unzOpen(rom_filename);
+		if (file)
+		{
+			int	port = unzFindExtension(file, "bps");
+			if (port == UNZ_OK)
+			{
+				printf(" in %s", rom_filename);
+
+				ret = ReadBPSPatch(new unzReader(file), offset, rom_size);
+				unzCloseCurrentFile(file);
+
+				if (ret)
+					printf("!\n");
+				else
+					printf(" failed!\n");
+			}
+		}
+	}
+
+	// Mercurial Magic (MSU-1 distribution pack)
+	if (strcasecmp(ext, "msu1") && strcasecmp(ext, ".msu1"))
+	{
+		_makepath(fname, drive, dir, name, "msu1");
+		unzFile msu1file = unzOpen(fname);
+
+		if (msu1file)
+		{
+			int	port = unzFindExtension(msu1file, "bps");
+			if (port == UNZ_OK)
+			{
+				printf(" in %s", fname);
+
+				ret = ReadBPSPatch(new unzReader(file), offset, rom_size);
+				unzCloseCurrentFile(file);
+
+				if (ret)
+					printf("!\n");
+				else
+					printf(" failed!\n");
+			}
+		}
+	}
+#endif
+
 	// UPS
 
-	_splitpath(rom_filename, drive, dir, name, ext);
 	_makepath(fname, drive, dir, name, "ups");
 
 	if ((patch_file = OPEN_STREAM(fname, "rb")) != NULL)
@@ -4234,7 +4414,6 @@ void CMemory::CheckForAnyPatch (const char *rom_filename, bool8 header, int32 &r
 
 	// IPS
 
-	_splitpath(rom_filename, drive, dir, name, ext);
 	_makepath(fname, drive, dir, name, "ips");
 
 	if ((patch_file = OPEN_STREAM(fname, "rb")) != NULL)

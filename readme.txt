@@ -32,6 +32,12 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.4.0 - January 4, 2018]
+
+* Add BPS soft-patching support (thanks qwertymodo!)
+* Add MSU1 support (thanks qwertymodo!)
+* Revert commit 4.3.2 Fixed lag with GameCube controllers, because it broke the GameCube build.
+
 [4.3.7 - December 9, 2016]
 
 * Hide saving dialog that pops up briefly when returning from a game
