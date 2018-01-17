@@ -472,8 +472,8 @@ DefaultSettings ()
 	Settings.SixteenBitSound = true;
 	Settings.Stereo = true;
 	Settings.ReverseStereo = true;
-	Settings.SoundPlaybackRate = 32000;
-	Settings.SoundInputRate = 31953;
+	Settings.SoundPlaybackRate = 32040;
+	Settings.SoundInputRate = 32040;
 
 	// Graphics
 	Settings.Transparency = true;
