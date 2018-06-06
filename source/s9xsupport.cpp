@@ -255,12 +255,6 @@ void _makepath(char *filename, const char *drive, const char *dir,
 	ExitApp();
 }
 
-int dup(int fildes)
-{
-	ExitApp();
-	return 1;
-}
-
 int access(const char *pathname, int mode)
 {
 	ExitApp();

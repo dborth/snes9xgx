@@ -16,6 +16,7 @@
 
 #include <unistd.h>
 #include <gccore.h>
+#include <snes9xgx.h>
 
 #define MAXJOLIET 255
 #ifdef HW_DOL

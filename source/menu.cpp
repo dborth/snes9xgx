@@ -13,12 +13,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <wiiuse/wpad.h>
-#include <wupc/wupc.h>
 #include <sys/stat.h>
 
 #ifdef HW_RVL
 #include <di/di.h>
+#include <wiiuse/wpad.h>
+#include <wupc/wupc.h>
 #endif
 
 #include "snes9xgx.h"
@@ -3263,7 +3263,8 @@ static int MenuSettingsVideo()
 					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; reset_sfx = true; break;
 					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; reset_sfx = true; break;
 				}
-				if (reset_sfx) S9xResetSuperFX(); S9xReset();
+				if (reset_sfx) S9xResetSuperFX(); 
+				S9xReset();
 			break;
 		}
 

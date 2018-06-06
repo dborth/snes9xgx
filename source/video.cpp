@@ -40,7 +40,7 @@ static unsigned char * snes9xgfx = NULL;
 unsigned char * filtermem = NULL; // only want ((512*2) X (239*2))
 
 /*** 2D Video ***/
-static unsigned int *xfb[2] = { NULL, NULL }; // Double buffered
+static u32 *xfb[2] = { NULL, NULL }; // Double buffered
 static int whichfb = 0; // Switch
 GXRModeObj *vmode = NULL; // Current video mode
 int screenheight = 480;
