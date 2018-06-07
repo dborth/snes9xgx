@@ -19,8 +19,10 @@
 
 #include <ogcsys.h>
 #include <unistd.h>
+#ifdef HW_RVL
 #include <wiiuse/wpad.h>
 #include <wupc/wupc.h>
+#endif
 #include <ogc/lwp_watchdog.h>
 
 #include "snes9xgx.h"

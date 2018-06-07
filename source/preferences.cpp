@@ -64,7 +64,7 @@ static void createXMLSetting(const char * name, const char * description, const 
 	mxmlElementSetAttr(item, "description", description);
 }
 
-static void createXMLController(unsigned int controller[], const char * name, const char * description)
+static void createXMLController(u32 controller[], const char * name, const char * description)
 {
 	item = mxmlNewElement(section, "controller");
 	mxmlElementSetAttr(item, "name", name);
@@ -153,7 +153,9 @@ preparePrefsData ()
 
 	createXMLSection("Menu", "Menu Settings");
 
+#ifdef HW_RVL
 	createXMLSetting("WiimoteOrientation", "Wiimote Orientation", toStr(GCSettings.WiimoteOrientation));
+#endif
 	createXMLSetting("ExitAction", "Exit Action", toStr(GCSettings.ExitAction));
 	createXMLSetting("MusicVolume", "Music Volume", toStr(GCSettings.MusicVolume));
 	createXMLSetting("SFXVolume", "Sound Effects Volume", toStr(GCSettings.SFXVolume));
@@ -166,16 +168,23 @@ preparePrefsData ()
 	createXMLSetting("Controller", "Controller", toStr(GCSettings.Controller));
 
 	createXMLController(btnmap[CTRL_PAD][CTRLR_GCPAD], "btnmap_pad_gcpad", "SNES Pad - GameCube Controller");
+#ifdef HW_RVL
 	createXMLController(btnmap[CTRL_PAD][CTRLR_WIIMOTE], "btnmap_pad_wiimote", "SNES Pad - Wiimote");
 	createXMLController(btnmap[CTRL_PAD][CTRLR_CLASSIC], "btnmap_pad_classic", "SNES Pad - Classic Controller");
 	createXMLController(btnmap[CTRL_PAD][CTRLR_NUNCHUK], "btnmap_pad_nunchuk", "SNES Pad - Nunchuk + Wiimote");
+#endif
 	createXMLController(btnmap[CTRL_SCOPE][CTRLR_GCPAD], "btnmap_scope_gcpad", "Superscope - GameCube Controller");
+#ifdef HW_RVL
 	createXMLController(btnmap[CTRL_SCOPE][CTRLR_WIIMOTE], "btnmap_scope_wiimote", "Superscope - Wiimote");
+#endif
 	createXMLController(btnmap[CTRL_MOUSE][CTRLR_GCPAD], "btnmap_mouse_gcpad", "Mouse - GameCube Controller");
+#ifdef HW_RVL
 	createXMLController(btnmap[CTRL_MOUSE][CTRLR_WIIMOTE], "btnmap_mouse_wiimote", "Mouse - Wiimote");
+#endif
 	createXMLController(btnmap[CTRL_JUST][CTRLR_GCPAD], "btnmap_just_gcpad", "Justifier - GameCube Controller");
+#ifdef HW_RVL
 	createXMLController(btnmap[CTRL_JUST][CTRLR_WIIMOTE], "btnmap_just_wiimote", "Justifier - Wiimote");
-
+#endif
 	int datasize = mxmlSaveString(xml, (char *)savebuffer, SAVEBUFFERSIZE, XMLSaveCallback);
 
 	mxmlDelete(xml);
@@ -226,7 +235,7 @@ static void loadXMLSetting(float * var, const char * name)
  * Load XML elements into variables for a controller mapping
  ***************************************************************************/
 
-static void loadXMLController(unsigned int controller[], const char * name)
+static void loadXMLController(u32 controller[], const char * name)
 {
 	item = mxmlFindElement(xml, xml, "controller", "name", name, MXML_DESCEND);
 

@@ -14,6 +14,7 @@
 #ifndef _SNES9XGX_H_
 #define _SNES9XGX_H_
 
+#define MAXPATHLEN 1024
 #include "utils/FreeTypeGX.h"
 #include "snes9x.h"
 #include "filter.h"
