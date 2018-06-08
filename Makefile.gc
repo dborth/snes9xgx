@@ -20,22 +20,22 @@ TARGETDIR   :=  executables
 BUILD		:=	build_gc
 SOURCES		:=	source source/images source/sounds source/fonts source/lang \
 				source/gui source/utils source/utils/sz \
-				source/snes9x source/snes9x/apu
+				source/snes9x source/snes9x/apu source/utils/vm
 INCLUDES	:=	source source/snes9x
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-
-CFLAGS		=	-g -O3 -LTO -Wall $(MACHDEP) $(INCLUDE) -DNO_SOUND \
+LTO			=	-flto
+CFLAGS		=	-g -O3 $(LTO) -Wall $(MACHDEP) $(INCLUDE) -DNO_SOUND \
 				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
 				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
-				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
+				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ -DUSE_VM \
 				-fomit-frame-pointer \
 				-Wno-unused-parameter -Wno-strict-aliasing \
 				-Wno-write-strings -Wno-parentheses
 CXXFLAGS	=	$(CFLAGS)
-LDFLAGS		=	-g $(MACHDEP) -LTO -Wl,-Map,$(notdir $@).map
+LDFLAGS		=	-g $(MACHDEP) $(LTO) -Wl,-Map,$(notdir $@).map
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
