@@ -57,8 +57,14 @@ static GuiImageData * pointer[4];
 	#define MEM_ALLOC(A) (u8*)mem2_malloc(A)
 	#define MEM_DEALLOC(A) mem2_free(A)
 #else
+#ifdef USE_VM
+	#include "vmalloc.h"
+	#define MEM_ALLOC(A) (u8*)vm_malloc(A)
+	#define MEM_DEALLOC(A) vm_free(A)
+ #else
 	#define MEM_ALLOC(A) (u8*)memalign(32, A)
 	#define MEM_DEALLOC(A) free(A)
+#endif
 #endif
 
 static GuiTrigger * trigA = NULL;
@@ -1213,7 +1219,27 @@ static int MenuGame()
 	
 	GuiText titleTxt((char *)Memory.ROMFilename, 22, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
-	titleTxt.SetPosition(50,50);
+	titleTxt.SetPosition(50,40);
+	
+	char memInfo[128];
+	memset(&memInfo[0], 0, 128);
+#ifdef USE_VM
+	sprintf(&memInfo[0], "Memory Free: RAM %.2fMB VM %.2fMB"
+						,((float)((u32)SYS_GetArena1Hi()-(u32)SYS_GetArena1Lo())/1024/1024)
+						,((float)(vm_size_free())/1024/1024));
+#else
+#ifdef HW_RVL
+	sprintf(&memInfo[0], "Memory Free: MEM1 %.2fMB MEM2 %.2fMB"
+						,((float)((u32)SYS_GetArena1Hi()-(u32)SYS_GetArena1Lo())/1024/1024)
+						,((float)((u32)SYS_GetArena2Hi()-(u32)SYS_GetArena2Lo())/1024/1024));
+#else
+	sprintf(&memInfo[0], "Memory Free: RAM %.2fMB"
+						,((float)((u32)SYS_GetArena1Hi()-(u32)SYS_GetArena1Lo())/1024/1024));
+#endif
+#endif
+	GuiText memTxt(memInfo, 18, (GXColor){255, 255, 255, 255});
+	memTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	memTxt.SetPosition(50,70);
 
 	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND_PCM);
@@ -1398,6 +1424,7 @@ static int MenuGame()
 	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.Append(&titleTxt);
+	w.Append(&memTxt);
 	w.Append(&saveBtn);
 	w.Append(&loadBtn);
 	w.Append(&deleteBtn);
@@ -1424,6 +1451,7 @@ static int MenuGame()
 		bgTopImg->SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 35);
 		closeBtn.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 35);
 		titleTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 35);
+		memTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 35);
 		mainmenuBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
 		bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
 		btnLogo->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
@@ -1547,6 +1575,7 @@ static int MenuGame()
 			bgTopImg->SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
 			closeBtn.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
 			titleTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
+			memTxt.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
 			mainmenuBtn.SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
 			bgBottomImg->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
 			btnLogo->SetEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);

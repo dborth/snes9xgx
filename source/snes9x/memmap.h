@@ -187,7 +187,11 @@ struct CMemory
 {
 	enum
 #ifdef HW_DOL
+#ifdef USE_VM
+	{ MAX_ROM_SIZE = 0x800000 };
+#else
 	{ MAX_ROM_SIZE = 0x600000 };
+#endif
 #else
 	{ MAX_ROM_SIZE = 0x800000 };
 #endif

@@ -208,6 +208,9 @@
 extern int WiiFileLoader();
 extern void WiiSetupCheats();
 #endif
+#ifdef USE_VM
+	#include "vmalloc.h"
+#endif
 
 #ifndef SET_UI_COLOR
 #define SET_UI_COLOR(r, g, b) ;
@@ -1070,7 +1073,11 @@ bool8 CMemory::Init (void)
     RAM	 = (uint8 *) memalign(32,0x20000);
     SRAM = (uint8 *) memalign(32,0x20000);
     VRAM = (uint8 *) memalign(32,0x10000);
+#ifdef USE_VM
+	ROM  = (uint8 *) vm_malloc(MAX_ROM_SIZE + 0x200 + 0x8000);
+#else
     ROM  = (uint8 *) memalign(32,MAX_ROM_SIZE + 0x200 + 0x8000);
+#endif
 
 	IPPU.TileCache[TILE_2BIT]       = (uint8 *) memalign(32,MAX_2BIT_TILES * 64);
 	IPPU.TileCache[TILE_4BIT]       = (uint8 *) memalign(32,MAX_4BIT_TILES * 64);
@@ -1178,7 +1185,11 @@ void CMemory::Deinit (void)
 	if (ROM)
 	{
 		ROM -= 0x8000;
+		#ifdef USE_VM
+		vm_free(ROM);
+		#else
 		free(ROM);
+		#endif
 		ROM = NULL;
 	}
 
