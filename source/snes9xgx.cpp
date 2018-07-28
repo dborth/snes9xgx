@@ -464,7 +464,7 @@ int main(int argc, char *argv[])
 	InitGUIThreads();
 
 	bool autoboot = false;
-	if(argc > 3 && argv[1] != NULL && argv[2] != NULL && argv[3] != NULL)
+	if(argc > 2 && argv[1] != NULL && argv[2] != NULL)
 	{
 		autoboot = true;
 		ResetBrowser();
@@ -487,7 +487,7 @@ int main(int argc, char *argv[])
 		strncpy(arg_filename, argv[2], sizeof(arg_filename));
 		strncpy(GCSettings.LoadFolder, dir.c_str(), sizeof(GCSettings.LoadFolder));
 		OpenGameList();
-		strncpy(GCSettings.Exit_Dol_File, argv[3], sizeof(GCSettings.Exit_Dol_File));
+		strncpy(GCSettings.Exit_Dol_File, argv[3] != NULL ? argv[3] : "", sizeof(GCSettings.Exit_Dol_File));
 		if(argc > 5 && argv[4] != NULL && argv[5] != NULL)
 		{
 			sscanf(argv[4], "%08x", &GCSettings.Exit_Channel[0]);
