@@ -510,7 +510,7 @@ bool8 S9xInitSound (int buffer_ms, int lag_ms)
 		return (FALSE);
 	if (msu::landing_buffer)
 		delete[] msu::landing_buffer;
-	msu::landing_buffer = new uint8[msu::buffer_size * 2];
+	msu::landing_buffer = (uint8*) new uint32[msu::buffer_size / 2]; // Ensure 4-byte alignment
 	if (!msu::landing_buffer)
 		return (FALSE);
 
@@ -635,6 +635,8 @@ void S9xDeinitAPU (void)
 		delete[] msu::resample_buffer;
 		msu::resample_buffer = NULL;
 	}
+	
+	S9xMSU1DeInit();
 }
 
 static inline int S9xAPUGetClock (int32 cpucycles)

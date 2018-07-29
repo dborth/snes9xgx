@@ -4082,7 +4082,10 @@ static bool8 ReadBPSPatch (Reader *r, long, int32 &rom_size)
 
 		switch((int)mode) {
 			case SourceRead:
-				while(length--) patched_rom[outputOffset++] = Memory.ROM[outputOffset];
+				while(length--) {
+					patched_rom[outputOffset] = Memory.ROM[outputOffset];
+					outputOffset++;
+				}
 				break;
 			case TargetRead:
 				while(length--) patched_rom[outputOffset++] = data[addr++];
@@ -4337,7 +4340,7 @@ void CMemory::CheckForAnyPatch (const char *rom_filename, bool8 header, int32 &r
 		}
 	}
 
-	// Mercurial Magic (MSU-1 distribution pack)
+    // Mercurial Magic (MSU-1 distribution pack)
 	if (strcasecmp(ext, "msu1") && strcasecmp(ext, ".msu1"))
 	{
 		_makepath(fname, drive, dir, name, "msu1");
@@ -4350,8 +4353,9 @@ void CMemory::CheckForAnyPatch (const char *rom_filename, bool8 header, int32 &r
 			{
 				printf(" in %s", fname);
 
-				ret = ReadBPSPatch(new unzReader(file), offset, rom_size);
-				unzCloseCurrentFile(file);
+				Stream *s = new unzStream(msu1file);
+				ret = ReadBPSPatch(s, offset, rom_size);
+				s->closeStream();
 
 				if (ret)
 					printf("!\n");
