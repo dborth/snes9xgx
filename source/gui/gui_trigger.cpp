@@ -22,7 +22,6 @@ static u32 delay[4];
 GuiTrigger::GuiTrigger()
 {
 	chan = -1;
-	memset(&wupcdata, 0, sizeof(WUPCFullData));
 	memset(&wpaddata, 0, sizeof(WPADData));
 	memset(&pad, 0, sizeof(PADData));
 	wpad = &wpaddata;
@@ -44,7 +43,6 @@ void GuiTrigger::SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 {
 	type = TRIGGER_SIMPLE;
 	chan = ch;
-	wupcdata.btns_d = wiibtns;
 	wpaddata.btns_d = wiibtns;
 	pad.btns_d = gcbtns;
 }
@@ -58,7 +56,6 @@ void GuiTrigger::SetHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 {
 	type = TRIGGER_HELD;
 	chan = ch;
-	wupcdata.btns_h = wiibtns;
 	wpaddata.btns_h = wiibtns;
 	pad.btns_h = gcbtns;
 }
@@ -71,7 +68,6 @@ void GuiTrigger::SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 {
 	type = TRIGGER_BUTTON_ONLY;
 	chan = ch;
-	wupcdata.btns_d = wiibtns;
 	wpaddata.btns_d = wiibtns;
 	pad.btns_d = gcbtns;
 }
@@ -85,7 +81,6 @@ void GuiTrigger::SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 {
 	type = TRIGGER_BUTTON_ONLY_IN_FOCUS;
 	chan = ch;
-	wupcdata.btns_d = wiibtns;
 	wpaddata.btns_d = wiibtns;
 	pad.btns_d = gcbtns;
 }
@@ -163,14 +158,11 @@ bool GuiTrigger::Left()
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_UP : WPAD_BUTTON_LEFT;
 
 	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
-			|| (wupcdata.btns_d | wupcdata.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_LEFT
 			|| pad.stickX < -PADCAL
-			|| WPAD_StickX(0) < -PADCAL
-			|| wupcdata.stickX < -WUPCCAL)
+			|| WPAD_StickX(0) < -PADCAL)
 	{
-		if((wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT))
-			|| (wupcdata.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT))
+		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
 			|| pad.btns_d & PAD_BUTTON_LEFT)
 		{
 			prev[chan] = gettime();
@@ -199,14 +191,11 @@ bool GuiTrigger::Right()
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_DOWN : WPAD_BUTTON_RIGHT;
 
 	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
-			|| ((wupcdata.btns_d | wupcdata.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT))
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_RIGHT
 			|| pad.stickX > PADCAL
-			|| WPAD_StickX(0) > PADCAL
-			|| wupcdata.stickX > WUPCCAL)
+			|| WPAD_StickX(0) > PADCAL)
 	{
-		if((wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT))
-			|| (wupcdata.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT))
+		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
 			|| pad.btns_d & PAD_BUTTON_RIGHT)
 		{
 			prev[chan] = gettime();
@@ -234,15 +223,12 @@ bool GuiTrigger::Up()
 {
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_RIGHT : WPAD_BUTTON_UP;
 
-	if(((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_UP))
-			|| ((wupcdata.btns_d | wupcdata.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_UP))
+	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_UP
 			|| pad.stickY > PADCAL
-			|| WPAD_StickY(0) > PADCAL
-			|| wupcdata.stickY > WUPCCAL)
+			|| WPAD_StickY(0) > PADCAL)
 	{
-		if((wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_UP))
-			|| (wupcdata.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_UP))
+		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
 			|| pad.btns_d & PAD_BUTTON_UP)
 		{
 			prev[chan] = gettime();
@@ -270,15 +256,12 @@ bool GuiTrigger::Down()
 {
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_LEFT : WPAD_BUTTON_DOWN;
 
-	if(((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN))
-			|| ((wupcdata.btns_d | wupcdata.btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN))
+	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_DOWN
 			|| pad.stickY < -PADCAL
-			|| WPAD_StickY(0) < -PADCAL
-			|| wupcdata.stickY < -WUPCCAL)
+			|| WPAD_StickY(0) < -PADCAL)
 	{
-	if((wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN))
-			|| wupcdata.btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
+		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
 			|| pad.btns_d & PAD_BUTTON_DOWN)
 		{
 			prev[chan] = gettime();
@@ -288,7 +271,7 @@ bool GuiTrigger::Down()
 
 		now[chan] = gettime();
 
-	if(diff_usec(prev[chan], now[chan]) > delay[chan])
+		if(diff_usec(prev[chan], now[chan]) > delay[chan])
 		{
 			prev[chan] = now[chan];
 			

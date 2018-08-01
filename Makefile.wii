@@ -19,7 +19,7 @@ TARGET		:=	snes9xgx-wii
 TARGETDIR   :=  executables
 BUILD		:=	build_wii
 SOURCES		:=	source source/images source/sounds source/fonts source/lang \
-				source/gui source/utils source/utils/sz source/utils/unzip \
+				source/gui source/utils source/utils/sz \
 				source/snes9x source/snes9x/apu
 INCLUDES	:=	source source/snes9x
 
@@ -27,20 +27,23 @@ INCLUDES	:=	source source/snes9x
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) -DNO_SOUND \
+CFLAGS		=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
+				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
 				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
 				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
 				-fomit-frame-pointer \
-				-Wno-unused-parameter -Wno-strict-aliasing \
-				-Wno-write-strings -Wno-parentheses
+				-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wno-strict-aliasing \
+				-Wno-format -Wno-format-overflow -Wno-stringop-truncation -Wno-stringop-overflow -Wno-format-truncation -Wno-narrowing -Wno-sign-compare \
+				-Wno-unused-function -Wno-write-strings -Wno-parentheses
+
 CXXFLAGS	=	$(CFLAGS)
-LDFLAGS		=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map,-wrap,wiiuse_register
+LDFLAGS		=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
 LIBS	:=	-ldi -liso9660 -lpng -lmxml \
-			-lfat -lwiiuse -lwupc -lz -lbte -lasnd -logc -lvorbisidec -lfreetype -ltinysmb
+			-lfat -lwiiuse -lz -lbte -lasnd -logc -lvorbisidec -lfreetype -ltinysmb
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib

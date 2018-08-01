@@ -158,7 +158,6 @@ devicecallback (void *arg)
 			usleep(THREAD_SLEEP);
 			devsleep -= THREAD_SLEEP;
 		}
-		UpdateCheck();
 	}
 	return NULL;
 }

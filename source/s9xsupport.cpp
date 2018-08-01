@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <ogc/lwp_watchdog.h>
 
+#include "snes9x/port.h"
 #include "snes9xgx.h"
 #include "video.h"
 #include "audio.h"

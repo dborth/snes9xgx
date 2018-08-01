@@ -177,6 +177,32 @@
 //  Input recording/playback code
 //  (c) Copyright 2004 blip
 
+#ifdef GEKKO
+#include "snes9x.h"
+int S9xMovieOpen (const char *filename, bool8 read_only) { return 1; }
+int S9xMovieCreate (const char *filename, uint8 controllers_mask, uint8 opts, const wchar_t *metadata, int metadata_length) { return 1; }
+int S9xMovieGetInfo (const char *filename, struct MovieInfo *info) { return 1; }
+void S9xMovieStop (bool8 suppress_message) { }
+void S9xMovieToggleRecState (void) { }
+void S9xMovieToggleFrameDisplay (void) { }
+void S9xMovieInit (void) { }
+void S9xMovieShutdown (void) { }
+void S9xMovieUpdate (bool a) { }
+void S9xMovieUpdateOnReset (void) { }
+void S9xUpdateFrameCounter (int o) { }
+void S9xMovieFreeze (uint8 **buf, uint32 *size) { }
+int S9xMovieUnfreeze (uint8 *buf, uint32 size) { return 1; }
+bool8 S9xMovieActive (void) { return FALSE; }
+bool8 S9xMoviePlaying (void) { return FALSE; }
+bool8 S9xMovieRecording (void) { return FALSE; }
+bool8 S9xMovieReadOnly (void) { return FALSE; }
+uint8 S9xMovieControllers (void) { return 0; }
+uint32 S9xMovieGetId (void) { return 0; }
+uint32 S9xMovieGetLength (void) { return 0; }
+uint32 S9xMovieGetFrameCounter (void) { return 0; }
+
+#else
+
 #ifndef __WIN32__
 #include <unistd.h>
 #endif
@@ -1199,3 +1225,5 @@ void S9xUpdateFrameCounter (int offset)
 			max(0, (int) (NetPlay.FrameCount + offset)));
 #endif
 }
+
+#endif

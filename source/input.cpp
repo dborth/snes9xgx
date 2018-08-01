@@ -21,10 +21,10 @@
 #include <unistd.h>
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
-#include <wupc/wupc.h>
 #endif
 #include <ogc/lwp_watchdog.h>
 
+#include "snes9x/port.h"
 #include "snes9xgx.h"
 #include "button_mapping.h"
 #include "menu.h"
@@ -205,7 +205,6 @@ void
 UpdatePads()
 {
 	#ifdef HW_RVL
-	WUPC_UpdateButtonStats();
 	WPAD_ScanPads();
 	#endif
 
@@ -222,15 +221,6 @@ UpdatePads()
 		userInput[i].pad.substickY = PAD_SubStickY(i);
 		userInput[i].pad.triggerL = PAD_TriggerL(i);
 		userInput[i].pad.triggerR = PAD_TriggerR(i);
-		#ifdef HW_RVL
-		userInput[i].wupcdata.btns_d = WUPC_ButtonsDown(i);
-		userInput[i].wupcdata.btns_u = WUPC_ButtonsUp(i);
-		userInput[i].wupcdata.btns_h = WUPC_ButtonsHeld(i);
-		userInput[i].wupcdata.stickX = WUPC_lStickX(i);
-		userInput[i].wupcdata.stickY = WUPC_lStickY(i);
-		userInput[i].wupcdata.substickX = WUPC_rStickX(i);
-		userInput[i].wupcdata.substickY = WUPC_rStickY(i);
-		#endif
 	}
 }
 
@@ -311,7 +301,6 @@ static void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
 {
 	#define SCOPEPADCAL 20
 
-	#define WUPCSCOPEPADCAL 160
 	// gc left joystick
 
 	if (userInput[chan].pad.stickX > SCOPEPADCAL)
@@ -368,32 +357,6 @@ static void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
 			pos_y -= (wm_ay*1.0)/SCOPEPADCAL;
 			if (pos_y < 0) pos_y = 0;
 		}
-	
-		/* WiiU Pro Controller */
-		s8 wupc_ax = userInput[chan].wupcdata.stickX;
-		s8 wupc_ay = userInput[chan].wupcdata.stickX;
-
-		if (wupc_ax > WUPCSCOPEPADCAL)
-		{
-			pos_x += (wupc_ax*1.0)/WUPCSCOPEPADCAL;
-			if (pos_x > 256) pos_x = 256;
-		}
-		if (wupc_ax < -WUPCSCOPEPADCAL)
-		{
-			pos_x -= (wupc_ax*-1.0)/WUPCSCOPEPADCAL;
-			if (pos_x < 0) pos_x = 0;
-		}
-
-		if (wupc_ay < -WUPCSCOPEPADCAL)
-		{
-			pos_y += (wupc_ay*-1.0)/WUPCSCOPEPADCAL;
-			if (pos_y > 224) pos_y = 224;
-		}
-		if (wupc_ay > WUPCSCOPEPADCAL)
-		{
-			pos_y -= (wupc_ay*1.0)/WUPCSCOPEPADCAL;
-			if (pos_y < 0) pos_y = 0;
-		}	
 	}
 #endif
 
@@ -423,10 +386,6 @@ static void decodepad (int chan)
 	u32 exp_type;
 	if ( WPAD_Probe(chan, &exp_type) != 0 )
 		exp_type = WPAD_EXP_NONE;
-
-	s16 wupc_ax = userInput[chan].wupcdata.stickX;
-	s16 wupc_ay = userInput[chan].wupcdata.stickY;
-	u32 wupcp = userInput[chan].wupcdata.btns_h;
 #endif
 
 	/***
@@ -471,20 +430,6 @@ static void decodepad (int chan)
 		else if(sin(angle) < -THRES)
 			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_DOWN : WPAD_BUTTON_DOWN;
 	}
-
-	/* Pro Controller */
-	if (wupc_ax * wupc_ax + wupc_ay * wupc_ay > WUPCCAL * WUPCCAL)
-	{
-		angle = atan2(wupc_ay, wupc_ax);
-		if(cos(angle) > THRES)
-			wupcp |= WPAD_CLASSIC_BUTTON_RIGHT;
-		else if(cos(angle) < -THRES)
-			wupcp |= WPAD_CLASSIC_BUTTON_LEFT;
-		if(sin(angle) > THRES)
-			wupcp |= WPAD_CLASSIC_BUTTON_UP;
-		else if(sin(angle) < -THRES)
-			wupcp |= WPAD_CLASSIC_BUTTON_DOWN;
-	}
 #endif
 
 	/*** Fix offset to pad ***/
@@ -498,7 +443,6 @@ static void decodepad (int chan)
 		|| ( (exp_type == WPAD_EXP_NONE) && (wp & btnmap[CTRL_PAD][CTRLR_WIIMOTE][i]) )	// wiimote
 		|| ( (exp_type == WPAD_EXP_CLASSIC) && (wp & btnmap[CTRL_PAD][CTRLR_CLASSIC][i]) )	// classic controller
 		|| ( (exp_type == WPAD_EXP_NUNCHUK) && (wp & btnmap[CTRL_PAD][CTRLR_NUNCHUK][i]) )	// nunchuk + wiimote
-		|| ( (wupcp & btnmap[CTRL_PAD][CTRLR_CLASSIC][i]) ) // WiiU Pro Controller
 #endif
 		)
 			S9xReportButton (offset + i, true);
@@ -516,7 +460,6 @@ static void decodepad (int chan)
 			if (jp & btnmap[CTRL_SCOPE][CTRLR_GCPAD][i]
 #ifdef HW_RVL
 			|| wp & btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i]
-			|| wupcp & btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i]
 #endif
 			)
 			{
@@ -554,7 +497,6 @@ static void decodepad (int chan)
 			if (jp & btnmap[CTRL_MOUSE][CTRLR_GCPAD][i]
 #ifdef HW_RVL
 			|| wp & btnmap[CTRL_MOUSE][CTRLR_WIIMOTE][i]
-			|| wupcp & btnmap[CTRL_MOUSE][CTRLR_WIIMOTE][i]
 #endif
 			)
 				S9xReportButton(offset + i, true);
@@ -577,7 +519,6 @@ static void decodepad (int chan)
 			if (jp & btnmap[CTRL_JUST][CTRLR_GCPAD][i]
 #ifdef HW_RVL
 			|| wp & btnmap[CTRL_JUST][CTRLR_WIIMOTE][i]
-			|| wupcp & btnmap[CTRL_JUST][CTRLR_WIIMOTE][i]
 #endif
 			)
 				S9xReportButton(offset + i, true);
@@ -613,8 +554,7 @@ bool MenuRequested()
 			)
 			#ifdef HW_RVL
 			|| (userInput[i].wpad->btns_h & WPAD_BUTTON_HOME) ||
-			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME) ||
-			(userInput[i].wupcdata.btns_h & WPAD_CLASSIC_BUTTON_HOME)
+			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME)
 			#endif
 		)
 		{
@@ -638,8 +578,7 @@ void ReportButtons ()
 
 	Settings.TurboMode = (
 		userInput[0].pad.substickX > 70 ||
-		userInput[0].WPAD_StickX(1) > 70 ||
-		userInput[0].wupcdata.substickX > 560
+		userInput[0].WPAD_StickX(1) > 70
 	);	// RIGHT on c-stick and on classic controller right joystick
 
 	/* Check for menu:

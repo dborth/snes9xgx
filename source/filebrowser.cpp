@@ -24,6 +24,7 @@
 #include <di/di.h>
 #endif
 
+#include "snes9x/port.h"
 #include "snes9xgx.h"
 #include "filebrowser.h"
 #include "menu.h"
@@ -454,7 +455,7 @@ int BrowserLoadSz()
 
 int WiiFileLoader()
 {
-	u32 size;
+	size_t size;
 	char filepath[1024];
 
 	memset(Memory.NSRTHeader, 0, sizeof(Memory.NSRTHeader));
