@@ -651,8 +651,9 @@ bool LoadPrefs()
 
 	prefLoaded = true; // attempted to load preferences
 
-	if(prefFound)
+	if(prefFound) {
 		FixInvalidSettings();
+	}
 	
 	// rename snes9x to snes9xgx
 	if(GCSettings.LoadMethod == DEVICE_SD)
@@ -690,6 +691,17 @@ bool LoadPrefs()
 	if(strcmp(GCSettings.ArtworkFolder, "snes9x/artworks") == 0)
 		sprintf(GCSettings.ArtworkFolder, "snes9xgx/artworks");
 	
+	// attempt to create directories if they don't exist
+	if(GCSettings.LoadMethod != DEVICE_AUTO) {
+		char dirPath[MAXPATHLEN];
+		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.ScreenshotsFolder);
+		CreateDirectory(dirPath);
+		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.CoverFolder);
+		CreateDirectory(dirPath);
+		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.ArtworkFolder);
+		CreateDirectory(dirPath);
+	}
+
 	ResetText();
 	return prefFound;
 }

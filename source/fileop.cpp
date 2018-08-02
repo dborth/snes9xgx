@@ -699,6 +699,20 @@ ParseDirectory(bool waitParse, bool filter)
 	return browser.numEntries;
 }
 
+bool CreateDirectory(char * path)
+{
+	DIR *dir = opendir(path);
+	if (!dir) {
+		if(mkdir(path, 0777) != 0) {
+			return false;
+		}
+	}
+	else {
+		closedir(dir);
+	}
+	return true;
+}
+
 /****************************************************************************
  * AllocSaveBuffer ()
  * Clear and allocate the savebuffer

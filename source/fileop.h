@@ -37,6 +37,7 @@ void CreateAppPath(char * origpath);
 bool GetFileSize(int i);
 void FindAndSelectLastLoadedFile();
 int ParseDirectory(bool waitParse = false, bool filter = true);
+bool CreateDirectory(char * path);
 void AllocSaveBuffer();
 void FreeSaveBuffer();
 size_t LoadFile(char * rbuffer, char *filepath, size_t length, bool silent);
