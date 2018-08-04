@@ -32,6 +32,15 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.3.8]
+
+* Add MSU1 support (thanks qwertymodo!)
+* Add BPS soft-patching support (thanks qwertymodo!)
+* Allow loader to pass two arguments instead of three (libertyernie)
+* backport some MSU1 fixes from snes9x
+* Fix a few potential crashes caused by the GUI
+* Compiled with latest libOGC/devkitPPC
+
 [4.3.7 - December 9, 2016]
 
 * Hide saving dialog that pops up briefly when returning from a game
