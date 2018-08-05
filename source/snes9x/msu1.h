@@ -194,7 +194,7 @@
 #define _MSU1_H_
 #include "snes9x.h"
 #include <stdint.h>
-#include <sys\stat.h>
+#include <sys/stat.h>
 
 #define MSU1_REVISION 0x02
 
