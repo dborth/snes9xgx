@@ -21,7 +21,7 @@
 
 #include "filter.h"
 #include "video.h"
-#include "snes9xGX.h"
+#include "snes9xgx.h"
 #include "memmap.h"
 
 #include "menu.h"
