@@ -25,9 +25,6 @@
  ***************************************************************************/
 void FixInvalidSettings()
 {
-
-/*	if(!(GCSettings.ZoomLevel > 0.5 && GCSettings.ZoomLevel < 1.5))
-		GCSettings.ZoomLevel = 1.0;
 	if(!(GCSettings.xshift > -50 && GCSettings.xshift < 50))
 		GCSettings.xshift = 0;
 	if(!(GCSettings.yshift > -50 && GCSettings.yshift < 50))
@@ -36,12 +33,12 @@ void FixInvalidSettings()
 		GCSettings.MusicVolume = 40;
 	if(!(GCSettings.SFXVolume >= 0 && GCSettings.SFXVolume <= 100))
 		GCSettings.SFXVolume = 40;
-	if(GCSettings.Controller > CTRL_PAD4 || GCSettings.Controller < CTRL_MOUSE)
+	if(GCSettings.Controller > CTRL_PAD4 || GCSettings.Controller < CTRL_PAD)
 		GCSettings.Controller = CTRL_PAD2;
 	if(!(GCSettings.render >= 0 && GCSettings.render < 3))
 		GCSettings.render = 2;
 	if(!(GCSettings.videomode >= 0 && GCSettings.videomode < 5))
-		GCSettings.videomode = 0; */
+		GCSettings.videomode = 0;
 }
 
 /****************************************************************************
