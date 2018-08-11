@@ -32,7 +32,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-[4.3.8 - August 5, 2018]
+[4.3.8]
 
 * Add MSU1 support (thanks qwertymodo!)
 * Add BPS soft-patching support (thanks qwertymodo!)

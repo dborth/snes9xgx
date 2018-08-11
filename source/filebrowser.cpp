@@ -484,7 +484,7 @@ int WiiFileLoader()
 	if(size <= 0)
 		return 0;
 
-	SNESROMSize = Memory.HeaderRemove(size, Memory.HeaderCount, Memory.ROM);
+	SNESROMSize = Memory.HeaderRemove(size, Memory.ROM);
 	return SNESROMSize;
 }
 

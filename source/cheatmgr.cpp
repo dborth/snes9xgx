@@ -16,6 +16,8 @@
 #include "fileop.h"
 #include "filebrowser.h"
 
+#define MAX_CHEATS      100
+
 extern SCheatData Cheat;
 
 /****************************************************************************
@@ -32,20 +34,23 @@ static bool LoadCheatFile (int length)
 
 	while (offset < length)
 	{
-		if(Cheat.num_cheats >= MAX_CHEATS || (length - offset) < 28)
+		if(Cheat.g.size() >= MAX_CHEATS || (length - offset) < 28)
 			break;
 
 		memcpy (data, savebuffer+offset, 28);
 		offset += 28;
 
-		Cheat.c [Cheat.num_cheats].enabled = 0; // cheats always off
-		Cheat.c [Cheat.num_cheats].byte = data [1];
-		Cheat.c [Cheat.num_cheats].address = data [2] | (data [3] << 8) | (data [4] << 16);
-		Cheat.c [Cheat.num_cheats].saved_byte = data [5];
-		Cheat.c [Cheat.num_cheats].saved = (data [0] & 8) != 0;
-		memcpy (Cheat.c [Cheat.num_cheats].name, &data[8], 20);
-		Cheat.c [Cheat.num_cheats].name[20] = 0;
-		Cheat.num_cheats++;
+		SCheat c;
+		char name[21];
+		char cheat[10];
+		c.enabled = (data[0] & 4) == 0;
+		c.byte = data[1];
+		c.address = data[2] | (data[3] << 8) |  (data[4] << 16);
+		memcpy (name, &data[8], 20);
+		name[20] = 0;
+
+		snprintf (cheat, 10, "%x=%x", c.address, c.byte);
+		S9xAddCheatGroup (name, cheat);
 	}
 	return true;
 }
@@ -59,8 +64,7 @@ static bool LoadCheatFile (int length)
 void
 WiiSetupCheats()
 {
-	memset(Cheat.c, 0, sizeof(Cheat.c));
-	Cheat.num_cheats = 0;
+	S9xDeleteCheats();
 
 	char filepath[1024];
 	int offset = 0;

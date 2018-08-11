@@ -150,7 +150,7 @@ preparePrefsData ()
 	createXMLSetting("FilterMethod", "Filter Method", toStr(GCSettings.FilterMethod));
 	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
 	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
-	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(GCSettings.sfxOverclock));
+	createXMLSetting("superFxSpeed", "SuperFX Speed", toStr(GCSettings.superFxSpeed));
 
 	createXMLSection("Menu", "Menu Settings");
 
@@ -285,17 +285,15 @@ decodePrefsData ()
 				int verMinor = version[2] - '0';
 				int verPoint = version[4] - '0';
 
-				// first we'll check that the versioning is valid
-				if(!(verMajor >= 0 && verMajor <= 9 &&
+				// check that the versioning is valid
+				if(!(verMajor >= 4 && verMajor <= 9 &&
 					verMinor >= 0 && verMinor <= 9 &&
-					verPoint >= 0 && verPoint <= 9))
+					verPoint >= 0 && verPoint <= 9)) {
 					result = false;
-				else if(verMajor < 4) // less than version 4.0.0
-					result = false; // reset settings
-				else if(verMajor == 4 && verMinor == 0 && verPoint < 2)	// anything less than 4.0.2
-					result = false; // reset settings
-				else
+				}
+				else {
 					result = true;
+				}
 			}
 		}
 
@@ -337,7 +335,7 @@ decodePrefsData ()
 
 			//Emulation Settings
 
-			loadXMLSetting(&GCSettings.sfxOverclock, "sfxOverclock");
+			loadXMLSetting(&GCSettings.superFxSpeed, "superFxSpeed");
 
 			// Menu Settings
 
@@ -391,7 +389,7 @@ void FixInvalidSettings()
 	if(!(GCSettings.yshift > -50 && GCSettings.yshift < 50))
 		GCSettings.yshift = 0;
 	if(!(GCSettings.MusicVolume >= 0 && GCSettings.MusicVolume <= 100))
-		GCSettings.MusicVolume = 40;
+		GCSettings.MusicVolume = 20;
 	if(!(GCSettings.SFXVolume >= 0 && GCSettings.SFXVolume <= 100))
 		GCSettings.SFXVolume = 40;
 	if(GCSettings.language < 0 || GCSettings.language >= LANG_LENGTH)
@@ -443,7 +441,7 @@ DefaultSettings ()
 
 	GCSettings.WiimoteOrientation = 0;
 	GCSettings.ExitAction = 0;
-	GCSettings.MusicVolume = 40;
+	GCSettings.MusicVolume = 20;
 	GCSettings.SFXVolume = 40;
 	GCSettings.Rumble = 1;
 	GCSettings.PreviewImage = 0;
@@ -459,6 +457,8 @@ DefaultSettings ()
 #else
 	GCSettings.language = LANG_ENGLISH;
 #endif
+
+	GCSettings.superFxSpeed = 100;
 
 	/****************** SNES9x Settings ***********************/
 
@@ -488,6 +488,7 @@ DefaultSettings ()
 	// Graphics
 	Settings.Transparency = true;
 	Settings.SupportHiRes = true;
+	Settings.MaxSpriteTilesPerLine = 34;
 	Settings.SkipFrames = AUTO_FRAMERATE;
 	Settings.TurboSkipFrames = 19;
 	Settings.DisplayFrameRate = false;
@@ -498,10 +499,7 @@ DefaultSettings ()
 	Settings.FrameTimePAL = 20000;
 	Settings.FrameTimeNTSC = 16667;
 
-	GCSettings.sfxOverclock = 0;
-	/* Initialize SuperFX CPU to normal speed by default */
-	Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6;
-
+	Settings.SuperFXClockMultiplier = 100;
 }
 
 /****************************************************************************
@@ -699,6 +697,8 @@ bool LoadPrefs()
 		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.CoverFolder);
 		CreateDirectory(dirPath);
 		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.ArtworkFolder);
+		CreateDirectory(dirPath);
+		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.CheatFolder);
 		CreateDirectory(dirPath);
 	}
 
