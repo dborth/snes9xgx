@@ -366,6 +366,29 @@ extern "C" {
 	s32 __STM_Init();
 }
 
+void InitializeSnes9x() {
+	S9xUnmapAllControls ();
+	SetDefaultButtonMap ();
+
+	// Allocate SNES Memory
+	if (!Memory.Init ())
+		ExitApp();
+
+	// Allocate APU
+	if (!S9xInitAPU ())
+		ExitApp();
+
+	S9xSetRenderPixelFormat (RGB565); // Set Pixel Renderer to match 565
+	S9xInitSound (64, 0); // Initialise Sound System
+
+	// Initialise Graphics
+	setGFX ();
+	if (!S9xGraphicsInit ())
+		ExitApp();
+
+	AllocGfxMem();
+}
+
 int main(int argc, char *argv[])
 {
 	#ifdef USE_VM
@@ -391,7 +414,9 @@ int main(int argc, char *argv[])
 	USBGeckoOutput();
 	__exception_setreload(8);
 
+	DefaultSettings (); // Set defaults
 	InitGCVideo(); // Initialise video
+	InitializeSnes9x();
 	ResetVideo_Menu (); // change to menu video mode
 	
 	#ifdef HW_RVL
@@ -423,27 +448,6 @@ int main(int argc, char *argv[])
 	InitMem2Manager();
 	#endif
 
-	DefaultSettings (); // Set defaults
-	S9xUnmapAllControls ();
-	SetDefaultButtonMap ();
-
-	// Allocate SNES Memory
-	if (!Memory.Init ())
-		ExitApp();
-
-	// Allocate APU
-	if (!S9xInitAPU ())
-		ExitApp();
-
-	S9xSetRenderPixelFormat (RGB565); // Set Pixel Renderer to match 565
-	S9xInitSound (64, 0); // Initialise Sound System
-
-	// Initialise Graphics
-	setGFX ();
-	if (!S9xGraphicsInit ())
-		ExitApp();
-	
-	AllocGfxMem();
 	S9xInitSync(); // initialize frame sync
 	InitFreeType((u8*)font_ttf, font_ttf_size); // Initialize font system
 #ifdef HW_RVL
