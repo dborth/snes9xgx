@@ -32,8 +32,7 @@ static bool LoadCheatFile (int length)
 	uint8 data [28];
 	int offset = 0;
 
-	while (offset < length)
-	{
+	while (offset < length) {
 		if(Cheat.g.size() >= MAX_CHEATS || (length - offset) < 28)
 			break;
 
@@ -43,7 +42,6 @@ static bool LoadCheatFile (int length)
 		SCheat c;
 		char name[21];
 		char cheat[10];
-		c.enabled = (data[0] & 4) == 0;
 		c.byte = data[1];
 		c.address = data[2] | (data[3] << 8) |  (data[4] << 16);
 		memcpy (name, &data[8], 20);
@@ -55,6 +53,23 @@ static bool LoadCheatFile (int length)
 	return true;
 }
 
+void ToggleCheat(uint32 num) {
+	if(Cheat.g[num].enabled) {
+		S9xDisableCheatGroup(num);
+	}
+	else {
+		S9xEnableCheatGroup(num);
+	}
+
+	for(int i=0; i < Cheat.g.size(); i++) {
+		if(Cheat.g[i].enabled) {
+			Cheat.enabled = TRUE;
+			return;
+		}
+	}
+	Cheat.enabled = FALSE;
+}
+
 /****************************************************************************
  * SetupCheats
  *
@@ -64,8 +79,6 @@ static bool LoadCheatFile (int length)
 void
 WiiSetupCheats()
 {
-	S9xDeleteCheats();
-
 	char filepath[1024];
 	int offset = 0;
 

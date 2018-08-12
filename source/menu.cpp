@@ -44,6 +44,7 @@
 #include "snes9x/cheats.h"
 
 extern SCheatData Cheat;
+extern void ToggleCheat(uint32);
 
 #define THREAD_SLEEP 100
 
@@ -2148,10 +2149,7 @@ static int MenuGameCheats()
 
 		if(ret >= 0)
 		{
-			if(Cheat.g[ret].enabled)
-				S9xDisableCheatGroup(ret);
-			else
-				S9xEnableCheatGroup(ret);
+			ToggleCheat(ret);
 			sprintf (options.value[ret], "%s", Cheat.g[ret].enabled == true ? "On" : "Off");
 			optionBrowser.TriggerUpdate();
 		}
