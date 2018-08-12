@@ -15,7 +15,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                                FEATURES  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-* Based on Snes9x 1.52
+* Based on Snes9x 1.56 (with faster Blargg S-SMP module)
 * Wiimote, Nunchuk, Classic, and Gamecube controller support
 * SNES Superscope, Mouse, Justifier support
 * Cheat support
@@ -34,6 +34,9 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 [4.3.8]
 
+* Updated core to 1.56 (with less accurate but faster Blargg audio core)
+* Memory optimizations to free up more MEM1 for Snes9x
+* Disable multi pixel format support for a speed boost
 * Add MSU1 support (thanks qwertymodo!)
 * Add BPS soft-patching support (thanks qwertymodo!)
 * Allow loader to pass two arguments instead of three (libertyernie)
