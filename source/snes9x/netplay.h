@@ -190,197 +190,201 @@
  ***********************************************************************************/
 
 
-#ifndef _PORT_H_
-#define _PORT_H_
+#ifndef _NETPLAY_H_
+#define _NETPLAY_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#ifndef GEKKO
-#include <memory.h>
-#endif
-#include <time.h>
-#include <string.h>
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#include <sys/types.h>
+/*
+ * Client to server joypad update
+ *
+ * magic        1
+ * sequence_no  1
+ * opcode       1
+ * joypad data  4
+ *
+ * Server to client joypad update
+ * magic        1
+ * sequence_no  1
+ * opcode       1 + num joypads (top 3 bits)
+ * joypad data  4 * n
+ */
 
+//#define NP_DEBUG 1
+
+#define NP_VERSION 10
+#define NP_JOYPAD_HIST_SIZE 120
+#define NP_DEFAULT_PORT 6096
+
+#define NP_MAX_CLIENTS 8
+
+#define NP_SERV_MAGIC 'S'
+#define NP_CLNT_MAGIC 'C'
+
+#define NP_CLNT_HELLO 0
+#define NP_CLNT_JOYPAD 1
+#define NP_CLNT_RESET 2
+#define NP_CLNT_PAUSE 3
+#define NP_CLNT_LOAD_ROM 4
+#define NP_CLNT_ROM_IMAGE 5
+#define NP_CLNT_FREEZE_FILE 6
+#define NP_CLNT_SRAM_DATA 7
+#define NP_CLNT_READY 8
+#define NP_CLNT_LOADED_ROM 9
+#define NP_CLNT_RECEIVED_ROM_IMAGE 10
+#define NP_CLNT_WAITING_FOR_ROM_IMAGE 11
+
+#define NP_SERV_HELLO 0
+#define NP_SERV_JOYPAD 1
+#define NP_SERV_RESET 2
+#define NP_SERV_PAUSE 3
+#define NP_SERV_LOAD_ROM 4
+#define NP_SERV_ROM_IMAGE 5
+#define NP_SERV_FREEZE_FILE 6
+#define NP_SERV_SRAM_DATA 7
+#define NP_SERV_READY 8
+
+struct SNPClient
+{
+    volatile uint8 SendSequenceNum;
+    volatile uint8 ReceiveSequenceNum;
+    volatile bool8 Connected;
+    volatile bool8 SaidHello;
+    volatile bool8 Paused;
+    volatile bool8 Ready;
+    int Socket;
+    char *ROMName;
+    char *HostName;
+    char *Who;
+};
+
+enum {
+    NP_SERVER_SEND_ROM_IMAGE,
+    NP_SERVER_SYNC_ALL,
+    NP_SERVER_SYNC_CLIENT,
+    NP_SERVER_SEND_FREEZE_FILE_ALL,
+    NP_SERVER_SEND_ROM_LOAD_REQUEST_ALL,
+    NP_SERVER_RESET_ALL,
+    NP_SERVER_SEND_SRAM_ALL,
+    NP_SERVER_SEND_SRAM
+};
+
+#define NP_MAX_TASKS 20
+
+struct NPServerTask
+{
+    uint32 Task;
+    void  *Data;
+};
+
+struct SNPServer
+{
+    struct SNPClient Clients [NP_MAX_CLIENTS];
+    int    NumClients;
+    volatile struct NPServerTask TaskQueue [NP_MAX_TASKS];
+    volatile uint32 TaskHead;
+    volatile uint32 TaskTail;
+    int    Socket;
+    uint32 FrameTime;
+    uint32 FrameCount;
+    char   ROMName [30];
+    uint32 Joypads [NP_MAX_CLIENTS];
+    bool8  ClientPaused;
+    uint32 Paused;
+    bool8  SendROMImageOnConnect;
+    bool8  SyncByReset;
+};
+
+#define NP_MAX_ACTION_LEN 200
+
+struct SNetPlay
+{
+    volatile uint8  MySequenceNum;
+    volatile uint8  ServerSequenceNum;
+    volatile bool8  Connected;
+    volatile bool8  Abort;
+    volatile uint8  Player;
+    volatile bool8  ClientsReady [NP_MAX_CLIENTS];
+    volatile bool8  ClientsPaused [NP_MAX_CLIENTS];
+    volatile bool8  Paused;
+    volatile bool8  PendingWait4Sync;
+    volatile uint8  PercentageComplete;
+    volatile bool8  Waiting4EmulationThread;
+    volatile bool8  Answer;
 #ifdef __WIN32__
-#define NOMINMAX
-#include <windows.h>
+    HANDLE          ReplyEvent;
 #endif
+    volatile int    Socket;
+    char *ServerHostName;
+    char *ROMName;
+    int Port;
+    volatile uint32 JoypadWriteInd;
+    volatile uint32 JoypadReadInd;
+    uint32 Joypads [NP_JOYPAD_HIST_SIZE][NP_MAX_CLIENTS];
+    uint32 Frame [NP_JOYPAD_HIST_SIZE];
+    uint32 FrameCount;
+    uint32 MaxFrameSkip;
+    uint32 MaxBehindFrameCount;
+    bool8 JoypadsReady [NP_JOYPAD_HIST_SIZE][NP_MAX_CLIENTS];
+    char   ActionMsg [NP_MAX_ACTION_LEN];
+    char   ErrorMsg [NP_MAX_ACTION_LEN];
+    char   WarningMsg [NP_MAX_ACTION_LEN];
+};
 
+extern "C" struct SNetPlay NetPlay;
+
+//
+// NETPLAY_CLIENT_HELLO message format:
+// header
+// frame_time (4)
+// ROMName (variable)
+
+#define WRITE_LONG(p, v) { \
+*((p) + 0) = (uint8) ((v) >> 24); \
+*((p) + 1) = (uint8) ((v) >> 16); \
+*((p) + 2) = (uint8) ((v) >> 8); \
+*((p) + 3) = (uint8) ((v) >> 0); \
+}
+
+#define READ_LONG(p) \
+((((uint8) *((p) + 0)) << 24) | \
+ (((uint8) *((p) + 1)) << 16) | \
+ (((uint8) *((p) + 2)) <<  8) | \
+ (((uint8) *((p) + 3)) <<  0))
+
+bool8 S9xNPConnectToServer (const char *server_name, int port,
+                            const char *rom_name);
+bool8 S9xNPWaitForHeartBeat ();
+bool8 S9xNPWaitForHeartBeatDelay (uint32 time_msec = 0);
+bool8 S9xNPCheckForHeartBeat (uint32 time_msec = 0);
+uint32 S9xNPGetJoypad (int which1);
+bool8 S9xNPSendJoypadUpdate (uint32 joypad);
+void S9xNPDisconnect ();
+bool8 S9xNPInitialise ();
+bool8 S9xNPSendData (int fd, const uint8 *data, int len);
+bool8 S9xNPGetData (int fd, uint8 *data, int len);
+
+void S9xNPSyncClients ();
+void S9xNPStepJoypadHistory ();
+
+void S9xNPResetJoypadReadPos ();
+bool8 S9xNPSendReady (uint8 op = NP_CLNT_READY);
+bool8 S9xNPSendPause (bool8 pause);
+void S9xNPReset ();
+void S9xNPSetAction (const char *action, bool8 force = FALSE);
+void S9xNPSetError (const char *error);
+void S9xNPSetWarning (const char *warning);
+void S9xNPDiscardHeartbeats ();
+void S9xNPServerQueueSendingFreezeFile (const char *filename);
+void S9xNPServerQueueSyncAll ();
+void S9xNPServerQueueSendingROMImage ();
+void S9xNPServerQueueSendingLoadROMRequest (const char *filename);
+
+void S9xNPServerAddTask (uint32 task, void *data);
+
+bool8 S9xNPStartServer (int port);
+void S9xNPStopServer ();
 #ifdef __WIN32__
-//#define RIGHTSHIFT_IS_SAR
-#define RIGHTSHIFT_int8_IS_SAR
-#define RIGHTSHIFT_int16_IS_SAR
-#define RIGHTSHIFT_int32_IS_SAR
-#ifndef GEKKO
-#define SNES_JOY_READ_CALLBACKS
-#define GFX_MULTI_FORMAT
-#endif //GEKKO
-#endif
-
-#ifdef GEKKO
-#define GFX_MULTI_FORMAT
-#endif
-
-#ifdef __MACOSX__
-#undef GFX_MULTI_FORMAT
-#define PIXEL_FORMAT RGB555
-#endif
-
-#ifndef PIXEL_FORMAT
-#define PIXEL_FORMAT RGB565
-#endif
-
-#ifndef snes9x_types_defined
-#define snes9x_types_defined
-typedef unsigned char		bool8;
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-typedef intptr_t			pint;
-typedef int8_t				int8;
-typedef uint8_t				uint8;
-typedef int16_t				int16;
-typedef uint16_t			uint16;
-typedef int32_t				int32;
-typedef uint32_t			uint32;
-typedef int64_t				int64;
-typedef uint64_t			uint64;
-#else	// HAVE_STDINT_H
-#ifdef __WIN32__
-typedef intptr_t			pint;
-typedef signed char			int8;
-typedef unsigned char		uint8;
-typedef signed short		int16;
-typedef unsigned short		uint16;
-typedef signed int     		int32;
-typedef unsigned int		uint32;
-typedef signed __int64		int64;
-typedef unsigned __int64	uint64;
-typedef int8                int8_t;
-typedef uint8       		uint8_t;
-typedef int16       		int16_t;
-typedef uint16      		uint16_t;
-typedef int32		    	int32_t;
-typedef uint32      		uint32_t;
-typedef int64               int64_t;
-typedef uint64              uint64_t;
-typedef int					socklen_t;
-#else	// __WIN32__
-typedef signed char			int8;
-typedef unsigned char		uint8;
-typedef signed short		int16;
-typedef unsigned short		uint16;
-typedef signed int			int32;
-typedef unsigned int		uint32;
-#ifdef __GNUC__
-// long long is not part of ISO C++ 
-__extension__
-#endif
-typedef long long			int64;
-typedef unsigned long long	uint64;
-#ifdef PTR_NOT_INT
-typedef size_t				pint;
-#else   // __PTR_NOT_INT
-typedef size_t					pint;
-#endif  // __PTR_NOT_INT
-#endif	//  __WIN32__
-#endif	// HAVE_STDINT_H
-#endif	// snes9x_types_defined
-
-#ifndef TRUE
-#define TRUE	1
-#endif
-#ifndef FALSE
-#define FALSE	0
-#endif
-
-#define START_EXTERN_C	extern "C" {
-#define END_EXTERN_C	}
-
-#ifndef __WIN32__
-#ifndef PATH_MAX
-#define PATH_MAX	1024
-#endif
-#define _MAX_DRIVE	1
-#define _MAX_DIR	PATH_MAX
-#define _MAX_FNAME	PATH_MAX
-#define _MAX_EXT	PATH_MAX
-#define _MAX_PATH	PATH_MAX
+#define S9xGetMilliTime timeGetTime
 #else
-#ifndef PATH_MAX
-#define PATH_MAX	_MAX_PATH
+uint32 S9xGetMilliTime ();
 #endif
-#endif
-
-#ifndef __WIN32__
-void _splitpath (const char *, char *, char *, char *, char *);
-void _makepath (char *, const char *, const char *, const char *, const char *);
-#define S9xDisplayString	DisplayStringFromBottom
-#else   // __WIN32__
-#define snprintf _snprintf
-#define strcasecmp	stricmp
-#define strncasecmp	strnicmp
-#ifndef GEKKO
-void WinDisplayStringFromBottom(const char *string, int linesFromBottom, int pixelsFromLeft, bool allowWrap);
-#define S9xDisplayString	WinDisplayStringFromBottom
-void SetInfoDlgColor(unsigned char, unsigned char, unsigned char);
-#define SET_UI_COLOR(r,g,b) SetInfoDlgColor(r,g,b)
-#else   // GEKKO
-#define S9xDisplayString	DisplayStringFromBottom
-#endif  // GEKKO
-#endif  // __WIN32__
-
-#if defined(__DJGPP) || defined(__WIN32__)
-#define SLASH_STR	"\\"
-#define SLASH_CHAR	'\\'
-#else
-#define SLASH_STR	"/"
-#define SLASH_CHAR	'/'
-#endif
-
-#ifndef SIG_PF
-#define SIG_PF	void (*) (int)
-#endif
-
-#ifdef __linux
-#define TITLE "Snes9x: Linux"
-#define SYS_CONFIG_FILE "/etc/snes9x/snes9x.conf"
-#endif
-
-#ifndef TITLE
-#define TITLE "Snes9x"
-#endif
-
-#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__) || defined(__x86_64__) || defined(__alpha__) || defined(__MIPSEL__) || defined(_M_IX86) || defined(_M_X64) || defined(_XBOX1) || defined(__arm__) || defined(ANDROID) || (defined(__BYTE_ORDER__) && __BYTE_ORDER == __ORDER_LITTLE_ENDIAN__)
-#define LSB_FIRST
-#define FAST_LSB_WORD_ACCESS
-#else
-#define MSB_FIRST
-#endif
-
-#ifdef FAST_LSB_WORD_ACCESS
-#define READ_WORD(s)		(*(uint16 *) (s))
-#define READ_3WORD(s)		(*(uint32 *) (s) & 0x00ffffff)
-#define READ_DWORD(s)		(*(uint32 *) (s))
-#define WRITE_WORD(s, d)	*(uint16 *) (s) = (d)
-#define WRITE_3WORD(s, d)	*(uint16 *) (s) = (uint16) (d), *((uint8 *) (s) + 2) = (uint8) ((d) >> 16)
-#define WRITE_DWORD(s, d)	*(uint32 *) (s) = (d)
-#else
-#define READ_WORD(s)		(*(uint8 *) (s) | (*((uint8 *) (s) + 1) << 8))
-#define READ_3WORD(s)		(*(uint8 *) (s) | (*((uint8 *) (s) + 1) << 8) | (*((uint8 *) (s) + 2) << 16))
-#define READ_DWORD(s)		(*(uint8 *) (s) | (*((uint8 *) (s) + 1) << 8) | (*((uint8 *) (s) + 2) << 16) | (*((uint8 *) (s) + 3) << 24))
-#define WRITE_WORD(s, d)	*(uint8 *) (s) = (uint8) (d), *((uint8 *) (s) + 1) = (uint8) ((d) >> 8)
-#define WRITE_3WORD(s, d)	*(uint8 *) (s) = (uint8) (d), *((uint8 *) (s) + 1) = (uint8) ((d) >> 8), *((uint8 *) (s) + 2) = (uint8) ((d) >> 16)
-#define WRITE_DWORD(s, d)	*(uint8 *) (s) = (uint8) (d), *((uint8 *) (s) + 1) = (uint8) ((d) >> 8), *((uint8 *) (s) + 2) = (uint8) ((d) >> 16), *((uint8 *) (s) + 3) = (uint8) ((d) >> 24)
-#endif
-
-#define SWAP_WORD(s)		(s) = (((s) & 0xff) <<  8) | (((s) & 0xff00) >> 8)
-#define SWAP_DWORD(s)		(s) = (((s) & 0xff) << 24) | (((s) & 0xff00) << 8) | (((s) & 0xff0000) >> 8) | (((s) & 0xff000000) >> 24)
-
-#include "pixform.h"
-
 #endif

@@ -194,14 +194,12 @@
 #define _SNES9X_H_
 
 #ifndef VERSION
-#define VERSION	"1.53"
+#define VERSION	"1.56.2"
 #endif
 
 #include "port.h"
 #include "65c816.h"
 #include "messages.h"
-
-#define S9X_ACCURACY_LEVEL		3
 
 #ifdef ZLIB
 #include <zlib.h>
@@ -425,6 +423,9 @@ struct SSettings
 	bool8	Stereo;
 	bool8	ReverseStereo;
 	bool8	Mute;
+	bool8	DynamicRateControl;
+	int32	DynamicRateLimit; /* Multiplied by 1000 */
+	int32	InterpolationMethod;
 
 	bool8	SupportHiRes;
 	bool8	Transparency;
@@ -486,7 +487,7 @@ struct SSettings
 	bool8	UpAndDown;
 
 	bool8	OpenGLEnable;
-	
+
 	uint32	SuperFXClockMultiplier;
 	int	OneClockCycle;
 	int	OneSlowClockCycle;
