@@ -118,7 +118,10 @@ SwitchAudioMode(int mode)
 	{
 		#ifndef NO_SOUND
 		ASND_Pause(1);
+		ASND_End();
 		AUDIO_StopDMA();
+		AUDIO_RegisterDMACallback(NULL);
+		DSP_Halt();
 		AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
 		AUDIO_RegisterDMACallback(GCMixSamples);
 		#endif
@@ -135,6 +138,7 @@ SwitchAudioMode(int mode)
 	{
 		S9xSetSamplesAvailableCallback(NULL, NULL);
 		#ifndef NO_SOUND
+		DSP_Unhalt();
 		ASND_Init();
 		ASND_Pause(0);
 		#else
