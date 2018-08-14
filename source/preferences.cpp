@@ -478,12 +478,13 @@ DefaultSettings ()
 	Settings.HDMATimingHack = 100;
 
 	// Sound defaults. On Wii this is 32Khz/16bit/Stereo
-	//Settings.SoundSync = true;
+	Settings.SoundSync = true;
 	Settings.SixteenBitSound = true;
 	Settings.Stereo = true;
 	Settings.ReverseStereo = true;
 	Settings.SoundPlaybackRate = 32040;
-	Settings.SoundInputRate = 32040;
+	Settings.SoundInputRate = 32000;
+	Settings.DynamicRateControl = true;
 
 	// Graphics
 	Settings.Transparency = true;

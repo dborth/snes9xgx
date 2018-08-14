@@ -423,6 +423,7 @@ struct SSettings
 	bool8	Stereo;
 	bool8	ReverseStereo;
 	bool8	Mute;
+	bool8	DynamicRateControl;
 
 	bool8	SupportHiRes;
 	bool8	Transparency;
