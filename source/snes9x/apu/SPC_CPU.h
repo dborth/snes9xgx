@@ -66,62 +66,37 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #define READ_DP(  time, addr )              READ ( time, DP_ADDR( addr ) )
 #define WRITE_DP( time, addr, data )        WRITE( time, DP_ADDR( addr ), data )
 
-#define READ_PROG16( addr )                 GET_LE16( ram + (addr) )
+#define READ_PROG16( addr )                 (RAM [addr & 0xffff] | (RAM [(addr + 1) & 0xffff] << 8))
 
-#define SET_PC( n )     (pc = ram + (n))
-#define GET_PC()        (pc - ram)
-#define READ_PC( pc )   (*(pc))
-#define READ_PC16( pc ) GET_LE16( pc )
+#define SET_PC( n )     (pc = n)
+#define GET_PC()        (pc)
+#define READ_PC( pc )   (ram [pc])
+#define READ_PC16( pc ) READ_PROG16( pc )
 
-// TODO: remove non-wrapping versions?
-#define SPC_NO_SP_WRAPAROUND 0
+#define SET_SP( v )     (sp = v)
+#define GET_SP()        ((uint8_t) (sp))
 
-#define SET_SP( v )     (sp = ram + 0x101 + (v))
-#define GET_SP()        (sp - 0x101 - ram)
-
-#if SPC_NO_SP_WRAPAROUND
-#define PUSH16( v )     (sp -= 2, SET_LE16( sp, v ))
-#define PUSH( v )       (void) (*--sp = (uint8_t) (v))
-#define POP( out )      (void) ((out) = *sp++)
-
-#else
 #define PUSH16( data )\
 {\
-	int addr = (sp -= 2) - ram;\
-	if ( addr > 0x100 )\
-	{\
-		SET_LE16( sp, data );\
-	}\
-	else\
-	{\
-		ram [(uint8_t) addr + 0x100] = (uint8_t) data;\
-		sp [1] = (uint8_t) (data >> 8);\
-		sp += 0x100;\
-	}\
+	PUSH( (data & 0xff00) >> 8 );\
+	PUSH( data & 0xff );\
 }
 
 #define PUSH( data )\
 {\
-	*--sp = (uint8_t) (data);\
-	if ( sp - ram == 0x100 )\
-		sp += 0x100;\
+	ram [0x100 + sp] = (uint8_t) (data);\
+	--sp;\
 }
 
 #define POP( out )\
 {\
-	out = *sp++;\
-	if ( sp - ram == 0x201 )\
-	{\
-		out = sp [-0x101];\
-		sp -= 0x100;\
-	}\
+	++sp;\
+	out = ram [0x100 + sp];\
 }
-
-#endif
 
 #define MEM_BIT( rel ) CPU_mem_bit( pc, rel_time + rel )
 
-unsigned SNES_SPC::CPU_mem_bit( uint8_t const* pc, rel_time_t rel_time )
+unsigned SNES_SPC::CPU_mem_bit( uint16_t pc, rel_time_t rel_time )
 {
 	unsigned addr = READ_PC16( pc );
 	unsigned t = READ( 0, addr & 0x1FFF ) >> (addr >> 13);
@@ -163,11 +138,11 @@ int const nz_neg_mask = 0x880; // either bit set indicates N flag set
 SPC_CPU_RUN_FUNC
 {
 	uint8_t* const ram = RAM;
-	int a = m.cpu_regs.a;
-	int x = m.cpu_regs.x;
-	int y = m.cpu_regs.y;
-	uint8_t const* pc;
-	uint8_t* sp;
+	uint8_t a = m.cpu_regs.a;
+	uint8_t x = m.cpu_regs.x;
+	uint8_t y = m.cpu_regs.y;
+	uint16_t pc;
+	uint8_t sp;
 	int psw;
 	int c;
 	int nz;
@@ -183,7 +158,7 @@ SPC_CPU_RUN_FUNC
 	// Main loop
 	
 cbranch_taken_loop:
-	pc += *(BOOST::int8_t const*) pc;
+	pc += (int8_t) ram [pc];
 inc_pc_loop:
 	pc++;
 loop:
@@ -195,7 +170,7 @@ loop:
 	check( (unsigned) x < 0x100 );
 	check( (unsigned) y < 0x100 );
 	
-	opcode = *pc;
+	opcode = ram [pc];
 	if (allow_time_overflow && rel_time >= 0 )
 		goto stop;
 	if ( (rel_time += m.cycle_table [opcode]) > 0 && !allow_time_overflow)
@@ -219,14 +194,9 @@ loop:
 	PROFILE_TIMER_LOOP( 0xE4, pc [1], 2 );
 	*/
 
-#ifdef DEBUGGER
-	if (debug_trace)
-		debug_do_trace(a, x, y, pc, sp, psw, c, nz, dp);
-#endif
-
-
 	// TODO: if PC is at end of memory, this will get wrong operand (very obscure)
-	data = *++pc;
+	pc++;
+	data = ram [pc];
 	switch ( opcode )
 	{
 	
@@ -257,23 +227,12 @@ loop:
 	}
 	
 	case 0x6F:// RET
-		#if SPC_NO_SP_WRAPAROUND
 		{
-			SET_PC( GET_LE16( sp ) );
-			sp += 2;
+			uint8_t l, h;
+			POP( l );
+			POP( h );
+			SET_PC( l | (h << 8) );
 		}
-		#else
-		{
-			int addr = sp - ram;
-			SET_PC( GET_LE16( sp ) );
-			sp += 2;
-			if ( addr < 0x1FF )
-				goto loop;
-			
-			SET_PC( sp [-0x101] * 0x100 + ram [(uint8_t) addr + 0x100] );
-			sp -= 0x100;
-		}
-		#endif
 		goto loop;
 	
 	case 0xE4: // MOV a,dp
@@ -493,7 +452,7 @@ loop:
 	
 	case 0xAF: // MOV (X)+,A
 		WRITE_DP( 0, x, a + no_read_before_write  );
-		x++;
+		x = (uint8_t) (x + 1);
 		goto loop;
 	
 // 5. 8-BIT LOGIC OPERATION COMMANDS
@@ -512,7 +471,7 @@ loop:
 	case op + 0x01: /* dp,dp */\
 		data = READ_DP( -3, data );\
 	case op + 0x10:{/*dp,imm*/\
-		uint8_t const* addr2 = pc + 1;\
+		uint16_t addr2 = pc + 1;\
 		pc += 2;\
 		addr = READ_PC( addr2 ) + dp;\
 	}\
@@ -816,7 +775,7 @@ loop:
 		unsigned temp = y * a;
 		a = (uint8_t) temp;
 		nz = ((temp >> 1) | temp) & 0x7F;
-		y = temp >> 8;
+		y = (uint8_t) (temp >> 8);
 		nz |= y;
 		goto loop;
 	}
@@ -846,6 +805,7 @@ loop:
 		
 		nz = (uint8_t) a;
 		a = (uint8_t) a;
+		y = (uint8_t) y;
 		
 		goto loop;
 	}
@@ -1009,10 +969,12 @@ loop:
 
 	{
 		int temp;
+		uint8_t l, h;
 	case 0x7F: // RET1
-		temp = *sp;
-		SET_PC( GET_LE16( sp + 1 ) );
-		sp += 3;
+		POP (temp);
+		POP (l);
+		POP (h);
+		SET_PC( l | (h << 8) );
 		goto set_psw;
 	case 0x8E: // POP PSW
 		POP( temp );
@@ -1204,9 +1166,9 @@ loop:
 		m.cpu_error = "SPC emulation error";
 		goto stop;
 	} // switch
-}   
+}
 out_of_time:
-	rel_time -= m.cycle_table [*pc]; // undo partial execution of opcode
+	rel_time -= m.cycle_table [ ram [pc] ]; // undo partial execution of opcode
 stop:
 	
 	// Uncache registers

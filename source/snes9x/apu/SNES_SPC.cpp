@@ -282,7 +282,7 @@ static unsigned char const glitch_probs [3] [256] =
 // If write isn't preceded by read, data has this added to it
 int const no_read_before_write = 0x2000;
 
-void SNES_SPC::cpu_write_smp_reg_( int data, rel_time_t time, int addr )
+void SNES_SPC::cpu_write_smp_reg_( int data, rel_time_t time, uint16_t addr )
 {
 	switch ( addr )
 	{
@@ -383,7 +383,7 @@ void SNES_SPC::cpu_write_smp_reg_( int data, rel_time_t time, int addr )
 	}
 }
 
-void SNES_SPC::cpu_write_smp_reg( int data, rel_time_t time, int addr )
+void SNES_SPC::cpu_write_smp_reg( int data, rel_time_t time, uint16_t addr )
 {
 	if ( addr == r_dspdata ) // 99%
 		dsp_write( data, time );
@@ -393,23 +393,15 @@ void SNES_SPC::cpu_write_smp_reg( int data, rel_time_t time, int addr )
 
 void SNES_SPC::cpu_write_high( int data, int i, rel_time_t time )
 {
-	if ( i < rom_size )
-	{
-		m.hi_ram [i] = (uint8_t) data;
-		if ( m.rom_enabled )
-			RAM [i + rom_addr] = m.rom [i]; // restore overwritten ROM
-	}
-	else
-	{
-		//assert( *(&(RAM [0]) + i + rom_addr) == (uint8_t) data );
-		*(&(RAM [0]) + i + rom_addr) = cpu_pad_fill; // restore overwritten padding
-		cpu_write( data, i + rom_addr - 0x10000, time );
-	}
+	m.hi_ram [i] = (uint8_t) data;
+
+	if ( m.rom_enabled )
+		RAM [i + rom_addr] = m.rom [i]; // restore overwritten ROM
 }
 
 int const bits_in_int = CHAR_BIT * sizeof (int);
 
-void SNES_SPC::cpu_write( int data, int addr, rel_time_t time )
+void SNES_SPC::cpu_write( int data, uint16_t addr, rel_time_t time )
 {
 	MEM_ACCESS( time, addr )
 	
@@ -463,7 +455,7 @@ inline int SNES_SPC::cpu_read_smp_reg( int reg, rel_time_t time )
 	return result;
 }
 
-int SNES_SPC::cpu_read( int addr, rel_time_t time )
+int SNES_SPC::cpu_read( uint16_t addr, rel_time_t time )
 {
 	MEM_ACCESS( time, addr )
 	

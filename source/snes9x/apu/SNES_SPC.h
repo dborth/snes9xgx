@@ -4,6 +4,8 @@
 #ifndef SNES_SPC_H
 #define SNES_SPC_H
 
+#include <stdint.h>
+
 #include "SPC_DSP.h"
 #include "blargg_endian.h"
 
@@ -171,12 +173,12 @@ private:
 		
 		struct
 		{
-			int pc;
-			int a;
-			int x;
-			int y;
-			int psw;
-			int sp;
+			uint16_t pc;
+			uint8_t a;
+			uint8_t x;
+			uint8_t y;
+			uint8_t psw;
+			uint8_t sp;
 		} cpu_regs;
 		
 		rel_time_t  dsp_time;
@@ -202,13 +204,11 @@ private:
 		
 		struct
 		{
-			// padding to neutralize address overflow
-			union {
-				uint8_t padding1 [0x100];
-				uint16_t align; // makes compiler align data for 16-bit access
-			} padding1 [1];
-			uint8_t ram      [0x10000];
-			uint8_t padding2 [0x100];
+			// padding to neutralize address overflow -- but this is
+			// still undefined behavior! TODO: remove and instead properly
+			// guard usage of emulated memory
+			uint8_t padding1 [0x100];
+			alignas(uint16_t) uint8_t ram      [0x10000 + 0x100];
 		} ram;
 	};
 	state_t m;
@@ -244,13 +244,13 @@ private:
 	Timer* run_timer       ( Timer* t, rel_time_t );
 	int dsp_read           ( rel_time_t );
 	void dsp_write         ( int data, rel_time_t );
-	void cpu_write_smp_reg_( int data, rel_time_t, int addr );
-	void cpu_write_smp_reg ( int data, rel_time_t, int addr );
+	void cpu_write_smp_reg_( int data, rel_time_t, uint16_t addr );
+	void cpu_write_smp_reg ( int data, rel_time_t, uint16_t addr );
 	void cpu_write_high    ( int data, int i, rel_time_t );
-	void cpu_write         ( int data, int addr, rel_time_t );
+	void cpu_write         ( int data, uint16_t addr, rel_time_t );
 	int cpu_read_smp_reg   ( int i, rel_time_t );
-	int cpu_read           ( int addr, rel_time_t );
-	unsigned CPU_mem_bit   ( uint8_t const* pc, rel_time_t );
+	int cpu_read           ( uint16_t addr, rel_time_t );
+	unsigned CPU_mem_bit   ( uint16_t pc, rel_time_t );
 	
 	bool check_echo_access ( int addr );
 	uint8_t* run_until_( time_t end_time );
