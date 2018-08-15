@@ -286,19 +286,15 @@ private:
 #endif
 };
 
-#include <assert.h>
-
 inline int SNES_SPC::sample_count() const { return (m.extra_clocks >> 5) * 2; }
 
 inline int SNES_SPC::read_port( time_t t, int port )
 {
-	assert( (unsigned) port < port_count );
 	return run_until_( t ) [port];
 }
 
 inline void SNES_SPC::write_port( time_t t, int port, int data )
 {
-	assert( (unsigned) port < port_count );
 	run_until_( t ) [0x10 + port] = data;
 	m.ram.ram [0xF4 + port] = data;
 }

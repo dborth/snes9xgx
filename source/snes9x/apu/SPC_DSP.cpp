@@ -74,7 +74,6 @@ static BOOST::uint8_t const initial_regs [SPC_DSP::register_count] =
 
 void SPC_DSP::set_output( sample_t* out, int size )
 {
-	require( (size & 1) == 0 ); // must be even
 	if ( !out )
 	{
 		out  = m.extra;
@@ -518,7 +517,6 @@ VOICE_CLOCK( V4 )
 		if ( (v->brr_offset += 2) >= brr_block_size )
 		{
 			// Start decoding next BRR block
-			assert( v->brr_offset == brr_block_size );
 			v->brr_addr = (v->brr_addr + brr_block_size) & 0xFFFF;
 			if ( m.t_brr_header & 1 )
 			{
@@ -804,8 +802,6 @@ PHASE(31)  V(V4,0)       V(V1,2)\
 
 void SPC_DSP::run( int clocks_remain )
 {
-	require( clocks_remain > 0 );
-	
 	int const phase = m.phase;
 	m.phase = (phase + clocks_remain) & 31;
 	switch ( phase )

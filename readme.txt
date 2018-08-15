@@ -36,7 +36,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 [4.3.8]
 
 * Updated core to 1.56 (with less accurate but faster Blargg audio core)
-* Improved audio synchronization - reduced crackling
+* Improved audio synchronization with dynamic rate control - fixes audio crackles
 * Added BS-X BIOS loading
 * Memory optimizations to free up more MEM1 for Snes9x
 * Disable multi pixel format support for a speed boost

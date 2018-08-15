@@ -493,8 +493,8 @@ int SNES_SPC::cpu_read( int addr, rel_time_t time )
 			}
 			else // 1%
 			{
-				//assert( reg + (r_t0out + 0xF0 - 0x10000) < 0x100 );
-				result = cpu_read( reg + (r_t0out + 0xF0 - 0x10000), time );
+				if( reg + (r_t0out + 0xF0 - 0x10000) < 0x100 )
+					result = cpu_read( reg + (r_t0out + 0xF0 - 0x10000), time );
 			}
 		}
 	}

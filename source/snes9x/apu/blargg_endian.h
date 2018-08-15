@@ -57,10 +57,8 @@ inline void blargg_verify_byte_order()
 	#ifndef NDEBUG
 		#if BLARGG_BIG_ENDIAN
 			volatile int i = 1;
-			assert( *(volatile char*) &i == 0 );
 		#elif BLARGG_LITTLE_ENDIAN
 			volatile int i = 1;
-			assert( *(volatile char*) &i != 0 );
 		#endif
 	#endif
 }

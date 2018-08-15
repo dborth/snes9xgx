@@ -292,8 +292,6 @@ void SNES_SPC::reset_buf()
 
 void SNES_SPC::set_output( sample_t* out, int size )
 {
-	require( (size & 1) == 0 ); // size must be even
-	
 	m.extra_clocks &= clocks_per_sample - 1;
 	if ( out )
 	{
@@ -352,7 +350,6 @@ void SNES_SPC::save_extra()
 
 blargg_err_t SNES_SPC::play( int count, sample_t* out )
 {
-	require( (count & 1) == 0 ); // must be even
 	if ( count )
 	{
 		set_output( out, count );

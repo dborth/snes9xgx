@@ -352,8 +352,6 @@ bool8 S9xMixSamples (uint8 *buffer, int sample_count)
                     for (int32 i = 0; i < sample_count; ++i)
                         *((int16*)(dest+(i * 2))) += *((int16*)(msu::resample_buffer+(i * 2)));
 				}
-				else // should never occur
-					assert(0);
 			}
 		}
 		else
@@ -394,8 +392,8 @@ int S9xGetSampleCount (void)
 #ifdef GEKKO
 void S9xIncreaseDynamicRateMultiplier ()
 {
-	if(spc::dynamic_rate_multiplier != 1.001) {
-		spc::dynamic_rate_multiplier = 1.001;
+	if(spc::dynamic_rate_multiplier != 1.005) {
+		spc::dynamic_rate_multiplier = 1.005;
 		UpdatePlaybackRate();
 	}
 }
@@ -415,13 +413,16 @@ void S9xFinalizeSamples (void)
 
 	if (!Settings.Mute)
 	{
+		if(!spc::sound_in_sync) {
+			S9xIncreaseDynamicRateMultiplier();
+		}
+
 		drop_current_msu1_samples = FALSE;
 
 		if (!spc::resampler->push((short *) spc::landing_buffer, spc_core->sample_count()))
 		{
 			/* We weren't able to process the entire buffer. Potential overrun. */
 			spc::sound_in_sync = FALSE;
-			S9xIncreaseDynamicRateMultiplier();
 			
 			if (Settings.SoundSync && !Settings.TurboMode)
 				return;
@@ -442,7 +443,6 @@ void S9xFinalizeSamples (void)
 		if (!drop_current_msu1_samples && !msu::resampler->push((short *)msu::landing_buffer, S9xMSU1Samples()))
 		{
 			// should not occur, msu buffer is larger and we drop msu samples if spc buffer overruns
-			assert(0);
 		}
 	}
 
@@ -451,10 +451,8 @@ void S9xFinalizeSamples (void)
 	else
 	if (spc::resampler->space_empty() >= spc::resampler->space_filled())
 		spc::sound_in_sync = TRUE;
-	else {
-		S9xIncreaseDynamicRateMultiplier ();
+	else
 		spc::sound_in_sync = FALSE;
-	}
 
 	if(spc::sound_in_sync) {
 		S9xResetDynamicRateMultiplier ();
