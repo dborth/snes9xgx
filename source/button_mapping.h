@@ -17,11 +17,12 @@ enum {
 	CTRLR_GCPAD,
 	CTRLR_WIIMOTE,
 	CTRLR_NUNCHUK,
-	CTRLR_CLASSIC
+	CTRLR_CLASSIC,
+	CTRLR_WUPC
 };
 
-const char ctrlrName[4][20] =
-{ "GameCube Controller", "Wiimote", "Nunchuk + Wiimote", "Classic Controller" };
+const char ctrlrName[5][32] =
+{ "GameCube Controller", "Wiimote", "Nunchuk + Wiimote", "Classic Controller", "Wii U Pro Controller" };
 
 typedef struct _btn_map {
 	u32 btn;					// button 'id'
@@ -34,6 +35,6 @@ typedef struct _ctrlr_map {
 	BtnMap map[15];		// controller button map
 } CtrlrMap;
 
-extern CtrlrMap ctrlr_def[4];
+extern CtrlrMap ctrlr_def[5];
 
 #endif

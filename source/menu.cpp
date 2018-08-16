@@ -2347,6 +2347,7 @@ static int MenuSettingsMappingsController()
 	GuiImageData iconClassic(icon_settings_classic_png);
 	GuiImageData iconGamecube(icon_settings_gamecube_png);
 	GuiImageData iconNunchuk(icon_settings_nunchuk_png);
+	GuiImageData iconWiiupro(icon_settings_wiiupro_png);
 	
 	GuiText gamecubeBtnTxt("GameCube Controller", 22, (GXColor){0, 0, 0, 255});
 	gamecubeBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-20);
@@ -2365,6 +2366,24 @@ static int MenuSettingsMappingsController()
 	gamecubeBtn.SetTrigger(trigA);
 	gamecubeBtn.SetTrigger(trig2);
 	gamecubeBtn.SetEffectGrow();
+
+	GuiText wiiuproBtnTxt("Wii U Pro Controller", 22, (GXColor){0, 0, 0, 255});
+	wiiuproBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-20);
+	GuiImage wiiuproBtnImg(&btnLargeOutline);
+	GuiImage wiiuproBtnImgOver(&btnLargeOutlineOver);
+	GuiImage wiiuproBtnIcon(&iconWiiupro);
+	GuiButton wiiuproBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	wiiuproBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	wiiuproBtn.SetPosition(0, 250);
+	wiiuproBtn.SetLabel(&wiiuproBtnTxt);
+	wiiuproBtn.SetImage(&wiiuproBtnImg);
+	wiiuproBtn.SetImageOver(&wiiuproBtnImgOver);
+	wiiuproBtn.SetIcon(&wiiuproBtnIcon);
+	wiiuproBtn.SetSoundOver(&btnSoundOver);
+	wiiuproBtn.SetSoundClick(&btnSoundClick);
+	wiiuproBtn.SetTrigger(trigA);
+	wiiuproBtn.SetTrigger(trig2);
+	wiiuproBtn.SetEffectGrow();
 
 	GuiText wiimoteBtnTxt("Wiimote", 22, (GXColor){0, 0, 0, 255});
 	GuiImage wiimoteBtnImg(&btnLargeOutline);
@@ -2452,6 +2471,7 @@ static int MenuSettingsMappingsController()
 	{
 		w.Append(&nunchukBtn);
 		w.Append(&classicBtn);
+		w.Append(&wiiuproBtn);
 	}
 #endif
 	w.Append(&backBtn);
@@ -2478,6 +2498,11 @@ static int MenuSettingsMappingsController()
 		{
 			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
 			mapMenuCtrl = CTRLR_CLASSIC;
+		}
+		else if(wiiuproBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
+			mapMenuCtrl = CTRLR_WUPC;
 		}
 		else if(gamecubeBtn.GetState() == STATE_CLICKED)
 		{
@@ -2533,6 +2558,9 @@ ButtonMappingWindow()
 		case CTRLR_CLASSIC:
 			sprintf(msg, "Press any button on the Classic Controller now. Press Home to clear the existing mapping.");
 			break;
+		case CTRLR_WUPC:
+			sprintf(msg, "Press any button on the Wii U Pro Controller now. Press Home to clear the existing mapping.");
+			break;
 		case CTRLR_NUNCHUK:
 			sprintf(msg, "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping.");
 			break;
@@ -2587,10 +2615,16 @@ ButtonMappingWindow()
 						break;
 
 					case CTRLR_CLASSIC:
-						if(userInput[0].wpad->exp.type != WPAD_EXP_CLASSIC)
+						if(userInput[0].wpad->exp.type != WPAD_EXP_CLASSIC && userInput[0].wpad->exp.classic.type < 2)
 							pressed = 0; // not a valid input
 						else if(pressed <= 0x1000)
+							pressed = 0;
+						break;
+					case CTRLR_WUPC:
+						if(userInput[0].wpad->exp.type != WPAD_EXP_CLASSIC && userInput[0].wpad->exp.classic.type == 2)
 							pressed = 0; // not a valid input
+						else if(pressed <= 0x1000)
+							pressed = 0;
 						break;
 
 					case CTRLR_NUNCHUK:

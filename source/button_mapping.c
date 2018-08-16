@@ -25,7 +25,7 @@
  * and for displaying the name of said button
  ***************************************************************************/
 
-CtrlrMap ctrlr_def[4] = {
+CtrlrMap ctrlr_def[5] = {
 // Gamecube controller btn def
 {
 	CTRLR_GCPAD,
@@ -95,6 +95,28 @@ CtrlrMap ctrlr_def[4] = {
 // Classic btn def
 {
 	CTRLR_CLASSIC,
+	15,
+	{
+		{WPAD_CLASSIC_BUTTON_DOWN, "DOWN"},
+		{WPAD_CLASSIC_BUTTON_UP, "UP"},
+		{WPAD_CLASSIC_BUTTON_LEFT, "LEFT"},
+		{WPAD_CLASSIC_BUTTON_RIGHT, "RIGHT"},
+		{WPAD_CLASSIC_BUTTON_A, "A"},
+		{WPAD_CLASSIC_BUTTON_B, "B"},
+		{WPAD_CLASSIC_BUTTON_X, "X"},
+		{WPAD_CLASSIC_BUTTON_Y, "Y"},
+		{WPAD_CLASSIC_BUTTON_PLUS, "PLUS"},
+		{WPAD_CLASSIC_BUTTON_MINUS, "MINUS"},
+		{WPAD_CLASSIC_BUTTON_HOME, "HOME"},
+		{WPAD_CLASSIC_BUTTON_FULL_L, "L"},
+		{WPAD_CLASSIC_BUTTON_FULL_R, "R"},
+		{WPAD_CLASSIC_BUTTON_ZL, "ZL"},
+		{WPAD_CLASSIC_BUTTON_ZR, "ZR"}
+	}
+},
+// Wii U pro controller
+{
+	CTRLR_WUPC,
 	15,
 	{
 		{WPAD_CLASSIC_BUTTON_DOWN, "DOWN"},
