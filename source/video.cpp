@@ -653,7 +653,13 @@ ResetVideo_Emu ()
 
 	GX_SetDispCopySrc (0, 0, rmode->fbWidth, rmode->efbHeight);
 	GX_SetDispCopyDst (rmode->fbWidth, rmode->xfbHeight);
-	GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, (rmode->xfbMode == VI_XFBMODE_SF) ? GX_FALSE : GX_TRUE, rmode->vfilter);
+	u8 sharp[7] = {0,0,21,22,21,0,0};
+	u8 soft[7] = {8,8,10,12,10,8,8};
+	u8* vfilter =
+		GCSettings.render == 3 ? sharp
+		: GCSettings.render == 4 ? soft
+		: rmode->vfilter;
+	GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, (rmode->xfbMode == VI_XFBMODE_SF) ? GX_FALSE : GX_TRUE, vfilter);
 
 	GX_SetFieldMode (rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
 

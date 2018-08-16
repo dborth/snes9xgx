@@ -398,8 +398,8 @@ void FixInvalidSettings()
 		GCSettings.language = LANG_ENGLISH;
 	if(GCSettings.Controller > CTRL_PAD4 || GCSettings.Controller < CTRL_MOUSE)
 		GCSettings.Controller = CTRL_PAD2;
-	if(!(GCSettings.render >= 0 && GCSettings.render < 3))
-		GCSettings.render = 2;
+	if(!(GCSettings.render >= 0 && GCSettings.render < 5))
+		GCSettings.render = 4;
 	if(!(GCSettings.videomode >= 0 && GCSettings.videomode < 5))
 		GCSettings.videomode = 0;
 }
