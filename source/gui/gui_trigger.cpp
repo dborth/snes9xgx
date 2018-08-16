@@ -94,53 +94,54 @@ void GuiTrigger::SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
 s8 GuiTrigger::WPAD_Stick(u8 stick, int axis)
 {
 	#ifdef HW_RVL
+	struct joystick_t* js = NULL;
 
-	float mag = 0.0;
-	float ang = 0.0;
-
-	switch (wpad->exp.type)
-	{
+	switch (wpad->exp.type) {
 		case WPAD_EXP_NUNCHUK:
-		case WPAD_EXP_GUITARHERO3:
-			if (stick == 0)
-			{
-				mag = wpad->exp.nunchuk.js.mag;
-				ang = wpad->exp.nunchuk.js.ang;
-			}
+			js = stick ? NULL : &wpad->exp.nunchuk.js;
 			break;
 
 		case WPAD_EXP_CLASSIC:
-			if (stick == 0)
-			{
-				mag = wpad->exp.classic.ljs.mag;
-				ang = wpad->exp.classic.ljs.ang;
-			}
-			else
-			{
-				mag = wpad->exp.classic.rjs.mag;
-				ang = wpad->exp.classic.rjs.ang;
-			}
+			js = stick ? &wpad->exp.classic.rjs : &wpad->exp.classic.ljs;
 			break;
 
 		default:
 			break;
 	}
 
-	/* calculate x/y value (angle need to be converted into radian) */
-	if (mag > 1.0) mag = 1.0;
-	else if (mag < -1.0) mag = -1.0;
-	double val;
+	if (js) {
+		int pos;
+		int min;
+		int max;
+		int center;
 
-	if(axis == 0) // x-axis
-		val = mag * sin((PI * ang)/180.0f);
-	else // y-axis
-		val = mag * cos((PI * ang)/180.0f);
+		if(axis == 1) {
+			pos = js->pos.y;
+			min = js->min.y;
+			max = js->max.y;
+			center = js->center.y;
+		}
+		else {
+			pos = js->pos.x;
+			min = js->min.x;
+			max = js->max.x;
+			center = js->center.x;
+		}
 
-	return (s8)(val * 128.0f);
+		if (pos > max) return 127;
+		if (pos < min) return -128;
 
-	#else
-	return 0;
+		pos -= center;
+
+		if (pos > 0) {
+			return (s8)(127.0 * ((float)pos / (float)(max - center)));
+		}
+		else {
+			return (s8)(128.0 * ((float)pos / (float)(center - min)));
+		}
+	}
 	#endif
+	return 0;
 }
 
 s8 GuiTrigger::WPAD_StickX(u8 stick)
