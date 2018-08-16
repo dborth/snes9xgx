@@ -17,19 +17,12 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-
-  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
+                             zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2018  BearOso,
+  (c) Copyright 2009 - 2010  BearOso,
                              OV2
-
-  (c) Copyright 2017         qwertymodo
-
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -124,9 +117,6 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
-  S-SMP emulator code used in 1.54+
-  (c) Copyright 2016         byuu
-
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -140,7 +130,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2018  BearOso
+  (c) Copyright 2004 - 2010  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -148,16 +138,11 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2018  OV2
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2011  zones
-
-  Libretro port
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
@@ -200,7 +185,7 @@
 #include "missing.h"
 #endif
 
-#define ADD_CYCLES(n)	{ CPU.Cycles += (n); }
+#define ADD_CYCLES(n)	CPU.Cycles += (n)
 
 extern uint8	*HDMAMemPointers[8];
 extern int		HDMA_ModeByteCounts[8];
@@ -613,7 +598,7 @@ bool8 S9xDoDMA (uint8 Channel)
 							S9xSetPPU(Work, 0x2100 + d->BAddress);
 							UPDATE_COUNTERS;
 							count--;
-						// Fall through
+
 						case 1:
 							Work = S9xGetByte((d->ABank << 16) + p);
 							S9xSetPPU(Work, 0x2101 + d->BAddress);
@@ -648,7 +633,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 1;
 								break;
 							}
-						// Fall through
+
 						case 1:
 							Work = S9xGetByte((d->ABank << 16) + p);
 							S9xSetPPU(Work, 0x2100 + d->BAddress);
@@ -658,7 +643,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 2;
 								break;
 							}
-						// Fall through
+
 						case 2:
 							Work = S9xGetByte((d->ABank << 16) + p);
 							S9xSetPPU(Work, 0x2101 + d->BAddress);
@@ -668,7 +653,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 3;
 								break;
 							}
-						// Fall through
+
 						case 3:
 							Work = S9xGetByte((d->ABank << 16) + p);
 							S9xSetPPU(Work, 0x2101 + d->BAddress);
@@ -697,7 +682,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 1;
 								break;
 							}
-						// Fall through
+
 						case 1:
 							Work = S9xGetByte((d->ABank << 16) + p);
 							S9xSetPPU(Work, 0x2101 + d->BAddress);
@@ -707,7 +692,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 2;
 								break;
 							}
-						// Fall through
+
 						case 2:
 							Work = S9xGetByte((d->ABank << 16) + p);
 							S9xSetPPU(Work, 0x2102 + d->BAddress);
@@ -717,7 +702,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 3;
 								break;
 							}
-						// Fall through
+
 						case 3:
 							Work = S9xGetByte((d->ABank << 16) + p);
 							S9xSetPPU(Work, 0x2103 + d->BAddress);
@@ -756,6 +741,9 @@ bool8 S9xDoDMA (uint8 Channel)
 							break;
 
 						case 0x18: // VMDATAL
+						#ifndef CORRECT_VRAM_READS
+							IPPU.FirstVRAMRead = TRUE;
+						#endif
 							if (!PPU.VMA.FullGraphicCount)
 							{
 								do
@@ -778,6 +766,9 @@ bool8 S9xDoDMA (uint8 Channel)
 							break;
 
 						case 0x19: // VMDATAH
+						#ifndef CORRECT_VRAM_READS
+							IPPU.FirstVRAMRead = TRUE;
+						#endif
 							if (!PPU.VMA.FullGraphicCount)
 							{
 								do
@@ -846,6 +837,9 @@ bool8 S9xDoDMA (uint8 Channel)
 					if (d->BAddress == 0x18)
 					{
 						// VMDATAL
+					#ifndef CORRECT_VRAM_READS
+						IPPU.FirstVRAMRead = TRUE;
+					#endif
 						if (!PPU.VMA.FullGraphicCount)
 						{
 							switch (b)
@@ -857,10 +851,10 @@ bool8 S9xDoDMA (uint8 Channel)
 									REGISTER_2118_linear(Work);
 									UPDATE_COUNTERS;
 									count--;
-								// Fall through
+
 								case 1:
-									OpenBus = *(base + p);
-									REGISTER_2119_linear(OpenBus);
+									Work = *(base + p);
+									REGISTER_2119_linear(Work);
 									UPDATE_COUNTERS;
 									count--;
 								}
@@ -887,7 +881,7 @@ bool8 S9xDoDMA (uint8 Channel)
 									REGISTER_2118_tile(Work);
 									UPDATE_COUNTERS;
 									count--;
-								// Fall through
+
 								case 1:
 									Work = *(base + p);
 									REGISTER_2119_tile(Work);
@@ -919,7 +913,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								S9xSetPPU(Work, 0x2100 + d->BAddress);
 								UPDATE_COUNTERS;
 								count--;
-							// Fall through
+
 							case 1:
 								Work = *(base + p);
 								S9xSetPPU(Work, 0x2101 + d->BAddress);
@@ -955,7 +949,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 1;
 								break;
 							}
-						// Fall through
+
 						case 1:
 							Work = *(base + p);
 							S9xSetPPU(Work, 0x2100 + d->BAddress);
@@ -965,7 +959,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 2;
 								break;
 							}
-						// Fall through
+
 						case 2:
 							Work = *(base + p);
 							S9xSetPPU(Work, 0x2101 + d->BAddress);
@@ -975,7 +969,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 3;
 								break;
 							}
-						// Fall through
+
 						case 3:
 							Work = *(base + p);
 							S9xSetPPU(Work, 0x2101 + d->BAddress);
@@ -1004,7 +998,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 1;
 								break;
 							}
-						// Fall through
+
 						case 1:
 							Work = *(base + p);
 							S9xSetPPU(Work, 0x2101 + d->BAddress);
@@ -1014,7 +1008,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 2;
 								break;
 							}
-						// Fall through
+
 						case 2:
 							Work = *(base + p);
 							S9xSetPPU(Work, 0x2102 + d->BAddress);
@@ -1024,7 +1018,7 @@ bool8 S9xDoDMA (uint8 Channel)
 								b = 3;
 								break;
 							}
-						// Fall through
+
 						case 3:
 							Work = *(base + p);
 							S9xSetPPU(Work, 0x2103 + d->BAddress);
@@ -1288,9 +1282,11 @@ bool8 S9xDoDMA (uint8 Channel)
 		}
 	}
 
-	if (CPU.NMIPending && (Timings.NMITriggerPos != 0xffff))
+	if ((CPU.Flags & NMI_FLAG) && (Timings.NMITriggerPos != 0xffff))
 	{
 		Timings.NMITriggerPos = CPU.Cycles + Timings.NMIDMADelay;
+		if (Timings.NMITriggerPos >= Timings.H_Max)
+			Timings.NMITriggerPos -= Timings.H_Max;
 	}
 
 	// Release the memory used in SPC7110 DMA
@@ -1377,7 +1373,10 @@ static inline bool8 HDMAReadLineCount (int d)
 
 void S9xStartHDMA (void)
 {
-	PPU.HDMA = Memory.FillRAM[0x420c];
+	if (Settings.DisableHDMA)
+		PPU.HDMA = 0;
+	else
+		PPU.HDMA = Memory.FillRAM[0x420c];
 
 #ifdef DEBUGGER
 	missing.hdma_this_frame = PPU.HDMA;
@@ -1421,14 +1420,13 @@ void S9xStartHDMA (void)
 
 uint8 S9xDoHDMA (uint8 byte)
 {
-	struct SDMA *p;
+	struct SDMA	*p = &DMA[0];
 
 	uint32	ShiftedIBank;
 	uint16	IAddr;
 	bool8	temp;
 	int32	tmpch;
-	int	d;
-	uint8	mask;
+	int		d = 0;
 
 	CPU.InHDMA = TRUE;
 	CPU.InDMAorHDMA = TRUE;
@@ -1439,7 +1437,7 @@ uint8 S9xDoHDMA (uint8 byte)
 	// XXX: Not quite right...
 	ADD_CYCLES(Timings.DMACPUSync);
 
-	for (mask = 1, p = &DMA[0], d = 0; mask; mask <<= 1, p++, d++)
+	for (uint8 mask = 1; mask; mask <<= 1, p++, d++)
 	{
 		if (byte & mask)
 		{
@@ -1641,10 +1639,7 @@ uint8 S9xDoHDMA (uint8 byte)
 								case 1:
 									S9xSetPPU(*(HDMAMemPointers[d] + 0), 0x2100 + p->BAddress);
 									ADD_CYCLES(SLOW_ONE_CYCLE);
-									// XXX: All HDMA should read to MDR first. This one just
-									// happens to fix Speedy Gonzales.
-									OpenBus = *(HDMAMemPointers[d] + 1);
-									S9xSetPPU(OpenBus, 0x2101 + p->BAddress);
+									S9xSetPPU(*(HDMAMemPointers[d] + 1), 0x2101 + p->BAddress);
 									ADD_CYCLES(SLOW_ONE_CYCLE);
 									HDMAMemPointers[d] += 2;
 									break;
@@ -1757,16 +1752,7 @@ uint8 S9xDoHDMA (uint8 byte)
 
 					#undef DOBYTE
 				}
-			}
-		}
-	}
 
-	for (mask = 1, p = &DMA[0], d = 0; mask; mask <<= 1, p++, d++)
-	{
-		if (byte & mask)
-		{
-			if (p->DoTransfer)
-			{
 				if (p->HDMAIndirectAddressing)
 					p->IndirectAddress += HDMA_ModeByteCounts[p->TransferMode];
 				else
@@ -1782,6 +1768,7 @@ uint8 S9xDoHDMA (uint8 byte)
 					byte &= ~mask;
 					PPU.HDMAEnded |= mask;
 					p->DoTransfer = FALSE;
+					continue;
 				}
 			}
 			else

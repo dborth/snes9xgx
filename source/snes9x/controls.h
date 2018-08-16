@@ -17,19 +17,12 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-
-  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
+                             zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2018  BearOso,
+  (c) Copyright 2009 - 2010  BearOso,
                              OV2
-
-  (c) Copyright 2017         qwertymodo
-
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -124,9 +117,6 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
-  S-SMP emulator code used in 1.54+
-  (c) Copyright 2016         byuu
-
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -140,7 +130,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2018  BearOso
+  (c) Copyright 2004 - 2010  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -148,16 +138,11 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2018  OV2
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2011  zones
-
-  Libretro port
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
@@ -188,7 +173,7 @@
   Super NES and Super Nintendo Entertainment System are trademarks of
   Nintendo Co., Limited and its subsidiary companies.
  ***********************************************************************************/
-
+#include "port.h"
 
 #ifndef _CONTROLS_H_
 #define _CONTROLS_H_
@@ -200,9 +185,8 @@
 #define S9xButtonJustifier		4
 #define S9xButtonCommand		5
 #define S9xButtonMulti			6
-#define S9xButtonMacsRifle		7
-#define S9xAxisJoypad			8
-#define S9xPointer				9
+#define S9xAxisJoypad			7
+#define S9xPointer				8
 
 #define S9xButtonPseudopointer	254
 #define S9xAxisPseudopointer	253
@@ -275,11 +259,6 @@ typedef struct
 				uint8	aim_offscreen:1;	// Pretend we're pointing the gun offscreen (ignore the pointer)
 			}	justifier;
 
-			struct
-			{
-				uint8	trigger:1;
-			}	macsrifle;
-
 			int32	multi_idx;
 			uint16	command;
 		}	button;
@@ -317,7 +296,6 @@ typedef struct
 			uint16	aim_scope:1;
 			uint16	aim_justifier0:1;
 			uint16	aim_justifier1:1;
-			uint16	aim_macsrifle:1;
 		}	pointer;
 
 		uint8	port[4];
@@ -337,8 +315,7 @@ enum controllers
 	CTL_MOUSE,		// use id1 to specify 0-1
 	CTL_SUPERSCOPE,
 	CTL_JUSTIFIER,	// use id1: 0=one justifier, 1=two justifiers
-	CTL_MP5,			// use id1-id4 to specify pad 0-7 (or -1)
-	CTL_MACSRIFLE
+	CTL_MP5			// use id1-id4 to specify pad 0-7 (or -1)
 };
 
 void S9xSetController (int port, enum controllers controller, int8 id1, int8 id2, int8 id3, int8 id4); // port=0-1
@@ -468,7 +445,6 @@ struct SControlSnapshot
 	uint8	dummy3[8];
 	bool8	pad_read, pad_read_last;
 	uint8	internal[60];				// yes, we need to save this!
-	uint8   internal_macs[5];
 };
 
 void S9xControlPreSaveState (struct SControlSnapshot *s);

@@ -17,19 +17,12 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-
-  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
+                             zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2018  BearOso,
+  (c) Copyright 2009 - 2010  BearOso,
                              OV2
-
-  (c) Copyright 2017         qwertymodo
-
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -124,9 +117,6 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
-  S-SMP emulator code used in 1.54+
-  (c) Copyright 2016         byuu
-
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -140,7 +130,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2018  BearOso
+  (c) Copyright 2004 - 2010  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -148,16 +138,11 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2018  OV2
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2011  zones
-
-  Libretro port
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
@@ -213,33 +198,32 @@ struct SSA1
 	uint8	_Zero;
 	uint8	_Negative;
 	uint8	_Overflow;
+	bool8	CPUExecuting;
 	uint32	ShiftedPB;
 	uint32	ShiftedDB;
 
 	uint32	Flags;
-	int32	Cycles;
-	int32	PrevCycles;
 	uint8	*PCBase;
+	bool8	IRQActive;
+	bool8	Waiting;
 	bool8	WaitingForInterrupt;
+	uint32	WaitAddress;
+	uint32	WaitCounter;
+	uint32	PBPCAtOpcodeStart;
+	uint8	*WaitByteAddress1;
+	uint8	*WaitByteAddress2;
 
 	uint8	*Map[MEMMAP_NUM_BLOCKS];
 	uint8	*WriteMap[MEMMAP_NUM_BLOCKS];
 	uint8	*BWRAM;
 
-	bool8	in_char_dma;
-	bool8	TimerIRQLastState;
-	uint16	HTimerIRQPos;
-	uint16	VTimerIRQPos;
-	int16	HCounter;
-	int16	VCounter;
-	int16	PrevHCounter;
-	int32	MemSpeed;
-	int32	MemSpeedx2;
-	int32	arithmetic_op;
-	uint16	op1;
-	uint16	op2;
-	uint64	sum;
+	bool8	Executing;
 	bool8	overflow;
+	bool8	in_char_dma;
+	int16	op1;
+	int16	op2;
+	int32	arithmetic_op;
+	int64	sum;
 	uint8	VirtualBitmapFormat;
 	uint8	variable_bit_pos;
 };
@@ -279,7 +263,12 @@ uint8 S9xGetSA1 (uint32);
 void S9xSetSA1 (uint8, uint32);
 void S9xSA1Init (void);
 void S9xSA1MainLoop (void);
+void S9xSA1ExecuteDuringSleep (void);
 void S9xSA1PostLoadState (void);
+
+#define SNES_IRQ_SOURCE		(1 << 7)
+#define TIMER_IRQ_SOURCE	(1 << 6)
+#define DMA_IRQ_SOURCE		(1 << 5)
 
 static inline void S9xSA1UnpackStatus (void)
 {

@@ -17,19 +17,12 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-
-  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
+                             zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2018  BearOso,
+  (c) Copyright 2009 - 2010  BearOso,
                              OV2
-
-  (c) Copyright 2017         qwertymodo
-
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -124,9 +117,6 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
-  S-SMP emulator code used in 1.54+
-  (c) Copyright 2016         byuu
-
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -140,7 +130,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2018  BearOso
+  (c) Copyright 2004 - 2010  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -148,16 +138,11 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2018  OV2
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2011  zones
-
-  Libretro port
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
@@ -214,10 +199,10 @@ void S9xInitSuperFX (void)
 void S9xResetSuperFX (void)
 {
 	// FIXME: Snes9x can't execute CPU and SuperFX at a time. Don't ask me what is 0.417 :P
-	SuperFX.speedPerLine = (uint32) (0.417 * 10.5e6 * ((1.0 / (float) Memory.ROMFramesPerSecond) / ((float) (Timings.V_Max))));
+	//SuperFX.speedPerLine = (uint32) (0.417 * 10.5e6 * ((1.0 / (float) Memory.ROMFramesPerSecond) / ((float) (Timings.V_Max))));
+	SuperFX.speedPerLine = (uint32) (Settings.SuperFXSpeedPerLine * ((1.0f / Memory.ROMFramesPerSecond) / ((float) (Timings.V_Max))));
 	SuperFX.oneLineDone = FALSE;
 	SuperFX.vFlags = 0;
-	CPU.IRQExternal = FALSE;
 	FxReset(&SuperFX);
 }
 
@@ -315,10 +300,13 @@ uint8 S9xGetSuperFX (uint16 address)
 	uint8	byte;
 
 	byte = Memory.FillRAM[address];
-
+#ifdef CPU_SHUTDOWN
+	if (address == 0x3030)
+		CPU.WaitAddress = CPU.PBPCAtOpcodeStart;
+#endif
 	if (address == 0x3031)
 	{
-		CPU.IRQExternal = FALSE;
+		S9xClearIRQ(GSU_IRQ_SOURCE);
 		Memory.FillRAM[0x3031] = byte & 0x7f;
 	}
 
@@ -329,11 +317,11 @@ void S9xSuperFXExec (void)
 {
 	if ((Memory.FillRAM[0x3000 + GSU_SFR] & FLG_G) && (Memory.FillRAM[0x3000 + GSU_SCMR] & 0x18) == 0x18)
 	{
-		FxEmulate(((Memory.FillRAM[0x3000 + GSU_CLSR] & 1) ? SuperFX.speedPerLine * 2 : SuperFX.speedPerLine) * Settings.SuperFXClockMultiplier / 100);
+		FxEmulate((Memory.FillRAM[0x3000 + GSU_CLSR] & 1) ? SuperFX.speedPerLine * 2 : SuperFX.speedPerLine);
 
 		uint16 GSUStatus = Memory.FillRAM[0x3000 + GSU_SFR] | (Memory.FillRAM[0x3000 + GSU_SFR + 1] << 8);
 		if ((GSUStatus & (FLG_G | FLG_IRQ)) == FLG_IRQ)
-			CPU.IRQExternal = TRUE;
+			S9xSetIRQ(GSU_IRQ_SOURCE);
 	}
 }
 

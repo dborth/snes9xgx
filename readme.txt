@@ -15,11 +15,11 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                                FEATURES  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-* Based on Snes9x 1.56 (with faster Blargg S-SMP module)
+* Based on hybrid Snes9x 1.51 and 1.56 (with faster Blargg S-SMP module)
 * Wiimote, Nunchuk, Classic, and Gamecube controller support
 * SNES Superscope, Mouse, Justifier support
 * Cheat support
-* BS-X support
+* Satellaview (BS-X) support
 * Auto Load/Save Game Snapshots and SRAM
 * Custom controller configurations
 * SD, USB, DVD, SMB, Zip, and 7z support
@@ -35,9 +35,8 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 [4.3.8]
 
-* Updated core to 1.56 (with less accurate but faster Blargg audio core)
+* Partially update core to 1.56 (with less accurate but faster Blargg audio core)
 * Improved audio synchronization with dynamic rate control - fixes audio crackles
-* Added BS-X BIOS loading
 * Memory optimizations to free up more MEM1 for Snes9x
 * Disable multi pixel format support for a speed boost
 * Add MSU1 support (thanks qwertymodo!)
@@ -515,14 +514,6 @@ the emulator). Once you've copied the directories to your SD Card you will
 need to place your ROM image(s) into "\snes9xgx\roms" directory and place any
 cheat code files (optional) in the "\snes9xgx\cheats" directory. Once this is
 done you can proceed to run the emulator via the Homebrew Channel.
-
--=[ Satellaview (BS-X) ]=-
-
-Snes9x GX supports loading BS games. The BSX BIOS is required.
-Download the English + No DRM BS-X ROM here: 
-https://project.satellaview.org/downloads.htm 
-
-Put it in your snes9xgx folder, renamed to BS-X.bin.
 
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                           INITIAL SETUP  |

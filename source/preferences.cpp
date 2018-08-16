@@ -150,7 +150,7 @@ preparePrefsData ()
 	createXMLSetting("FilterMethod", "Filter Method", toStr(GCSettings.FilterMethod));
 	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
 	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
-	createXMLSetting("superFxSpeed", "SuperFX Speed", toStr(GCSettings.superFxSpeed));
+	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(GCSettings.sfxOverclock));
 
 	createXMLSection("Menu", "Menu Settings");
 
@@ -335,7 +335,7 @@ decodePrefsData ()
 
 			//Emulation Settings
 
-			loadXMLSetting(&GCSettings.superFxSpeed, "superFxSpeed");
+			loadXMLSetting(&GCSettings.sfxOverclock, "sfxOverclock");
 
 			// Menu Settings
 
@@ -458,8 +458,6 @@ DefaultSettings ()
 	GCSettings.language = LANG_ENGLISH;
 #endif
 
-	GCSettings.superFxSpeed = 100;
-
 	/****************** SNES9x Settings ***********************/
 
 	// Default ALL to false
@@ -500,7 +498,10 @@ DefaultSettings ()
 	Settings.FrameTimePAL = 20000;
 	Settings.FrameTimeNTSC = 16667;
 
-	Settings.SuperFXClockMultiplier = 100;
+	GCSettings.sfxOverclock = 0;
+	/* Initialize SuperFX CPU to normal speed by default */
+	Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6;
+
 }
 
 /****************************************************************************

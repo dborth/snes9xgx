@@ -453,7 +453,7 @@ void S9xEndScreenRefresh (void)
 	else
 		S9xControlEOF();
 
-	S9xUpdateCheatsInMemory ();
+	S9xApplyCheats();
 
 #ifdef DEBUGGER
 	if (CPU.Flags & FRAME_ADVANCE_FLAG)
@@ -2156,22 +2156,6 @@ static void DisplayPressedKeys (void)
 					}
 				}
 
-				break;
-			}
-
-			case CTL_MACSRIFLE:
-			{
-				/*
-				uint8 buf[6], *p = buf;
-				MovieGetScope(port, buf);
-				int16 x = READ_WORD(p);
-				int16 y = READ_WORD(p + 2);
-				uint8 buttons = buf[4];
-				sprintf(string, "#%d %d: (%03d,%03d) %c%c%c%c", port, ids[0], x, y,
-						(buttons & 0x80) ? 'F' : ' ', (buttons & 0x40) ? 'C' : ' ',
-						(buttons & 0x20) ? 'T' : ' ', (buttons & 0x10) ? 'P' : ' ');
-				S9xDisplayString(string, line++, 1, false);
-				*/
 				break;
 			}
 

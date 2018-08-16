@@ -17,19 +17,12 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-
-  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
+                             zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2018  BearOso,
+  (c) Copyright 2009 - 2010  BearOso,
                              OV2
-
-  (c) Copyright 2017         qwertymodo
-
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -124,9 +117,6 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
-  S-SMP emulator code used in 1.54+
-  (c) Copyright 2016         byuu
-
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -140,7 +130,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2018  BearOso
+  (c) Copyright 2004 - 2010  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -148,16 +138,11 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2018  OV2
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2011  zones
-
-  Libretro port
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
@@ -193,31 +178,22 @@
 #ifndef _CHEATS_H_
 #define _CHEATS_H_
 
-#include "port.h"
-#include <vector>
+#define MAX_CHEATS	150
 
 struct SCheat
 {
 	uint32	address;
 	uint8	byte;
 	uint8	saved_byte;
-	bool8	conditional;
-	bool8	cond_true;
-	uint8	cond_byte;
 	bool8	enabled;
-};
-
-struct SCheatGroup
-{
-	char *name;
-	bool8 enabled;
-	std::vector<struct SCheat> c;
+	bool8	saved;
+	char	name[22];
 };
 
 struct SCheatData
 {
-	std::vector<struct SCheatGroup> g;
-	bool8	enabled;
+	struct SCheat c[MAX_CHEATS];
+	uint32	num_cheats;
 	uint8	CWRAM[0x20000];
 	uint8	CSRAM[0x10000];
 	uint8	CIRAM[0x2000];
@@ -259,23 +235,20 @@ typedef enum
 extern SCheatData	Cheat;
 extern Watch		watches[16];
 
-int S9xAddCheatGroup (const char *name, const char *cheat);
-int S9xModifyCheatGroup (uint32 index, const char *name, const char *cheat);
-void S9xEnableCheatGroup (uint32 index);
-void S9xDisableCheatGroup (uint32 index);
+void S9xApplyCheat (uint32);
+void S9xApplyCheats (void);
+void S9xRemoveCheat (uint32);
+void S9xRemoveCheats (void);
+void S9xDeleteCheat (uint32);
 void S9xDeleteCheats (void);
-char *S9xCheatGroupToText (uint32 index);
-void S9xDeleteCheatGroup (uint32 index);
-bool8 S9xLoadCheatFile (const char *filename);
-bool8 S9xSaveCheatFile (const char *filename);
-void S9xUpdateCheatsInMemory (void);
-int S9xImportCheatsFromDatabase(const char *filename);
-void S9xCheatsDisable (void);
-void S9xCheatsEnable (void);
-char *S9xCheatValidate (char *cheat);
-
+void S9xEnableCheat (uint32);
+void S9xDisableCheat (uint32);
+void S9xAddCheat (bool8, bool8, uint32, uint8);
 void S9xInitCheatData (void);
 void S9xInitWatchedAddress (void);
+bool8 S9xLoadCheatFile (const char *);
+bool8 S9xSaveCheatFile (const char *);
+
 void S9xStartCheatSearch (SCheatData *);
 void S9xSearchForChange (SCheatData *, S9xCheatComparisonType, S9xCheatDataSize, bool8, bool8);
 void S9xSearchForValue (SCheatData *, S9xCheatComparisonType, S9xCheatDataSize, uint32, bool8, bool8);
