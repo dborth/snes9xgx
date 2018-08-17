@@ -33,7 +33,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-[4.3.8]
+[4.3.8 - August 16, 2018]
 
 * Partially update core to 1.56 (with less accurate but faster Blargg audio core)
 * Improved audio synchronization with dynamic rate control - fixes audio crackles
