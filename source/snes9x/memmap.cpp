@@ -183,14 +183,6 @@
 #include <numeric>
 #include <assert.h>
 
-#ifdef UNZIP_SUPPORT
-#include "unzip/unzip.h"
-#endif
-
-#ifdef JMA_SUPPORT
-#include "jma/s9x-jma.h"
-#endif
-
 #include "snes9x.h"
 #include "memmap.h"
 #include "apu/apu.h"

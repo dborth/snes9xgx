@@ -10,9 +10,9 @@
 #include "blargg_endian.h"
 
 #ifdef DEBUGGER
-#include "snes9x.h"
-#include "display.h"
-#include "debug.h"
+#include "../snes9x.h"
+#include "../display.h"
+#include "../debug.h"
 #endif
 
 struct SNES_SPC {

@@ -9,7 +9,7 @@
  ***************************************************************************/
 
 #include "gui.h"
-#include "filebrowser.h"
+#include "../filebrowser.h"
 
 /**
  * Constructor for the GuiSaveBrowser class.

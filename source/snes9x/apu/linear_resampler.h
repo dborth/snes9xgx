@@ -4,7 +4,7 @@
 #define __LINEAR_RESAMPLER_H
 
 #include "resampler.h"
-#include "snes9x.h"
+#include "../snes9x.h"
 
 static const int    f_prec = 15;
 static const uint32 f__one = (1 << f_prec);

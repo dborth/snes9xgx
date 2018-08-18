@@ -9,8 +9,8 @@
  ***************************************************************************/
 
 
-#include "port.h"
-#include "cheats.h"
+#include "snes9x/port.h"
+#include "snes9x/cheats.h"
 
 #include "snes9xgx.h"
 #include "fileop.h"
