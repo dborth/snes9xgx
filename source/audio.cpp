@@ -97,7 +97,7 @@ InitAudio ()
 {
 	#ifdef NO_SOUND
 	AUDIO_Init (NULL);
-	AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
+	AUDIO_SetDSPSampleRate(AI_SAMPLERATE_48KHZ);
 	AUDIO_RegisterDMACallback(GCMixSamples);
 	#else
 	ASND_Init();
@@ -122,7 +122,6 @@ SwitchAudioMode(int mode)
 		AUDIO_StopDMA();
 		AUDIO_RegisterDMACallback(NULL);
 		DSP_Halt();
-		AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
 		AUDIO_RegisterDMACallback(GCMixSamples);
 		#endif
 		memset(soundbuffer[0],0,AUDIOBUFFER);

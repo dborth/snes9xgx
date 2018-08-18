@@ -378,7 +378,7 @@ void InitializeSnes9x() {
 	if (!S9xInitAPU ())
 		ExitApp();
 
-	S9xInitSound (64, 0); // Initialise Sound System
+	S9xInitSound (32, 0); // Initialise Sound System
 
 	// Initialise Graphics
 	setGFX ();
