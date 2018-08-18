@@ -5,8 +5,8 @@
 #include <unistd.h>
 
 #include "gettext.h"
-#include "filelist.h"
-#include "snes9xgx.h"
+#include "../filelist.h"
+#include "../snes9xgx.h"
 
 typedef struct _MSG
 {
