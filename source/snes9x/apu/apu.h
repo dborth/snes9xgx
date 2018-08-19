@@ -211,6 +211,7 @@ void S9xSetSoundControl (uint8);
 void S9xSetSoundMute (bool8);
 void S9xLandSamples (void);
 void S9xFinalizeSamples (void);
+void UpdatePlaybackRateWithDynamicRate();
 void S9xClearSamples (void);
 bool8 S9xMixSamples (uint8 *, int);
 void S9xSetSamplesAvailableCallback (apu_callback, void *);

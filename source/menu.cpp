@@ -3100,7 +3100,6 @@ static int MenuSettingsVideo()
 	int ret;
 	int i = 0;
 	bool firstRun = true;
-	bool reset_sfx = false;
 	OptionList options;
 
 	sprintf(options.name[i++], "Rendering");
@@ -3205,17 +3204,18 @@ static int MenuSettingsVideo()
 				break;
 			case 8:
 				GCSettings.sfxOverclock++;
-				if (GCSettings.sfxOverclock > 2)
+				if (GCSettings.sfxOverclock > 2) {
 					GCSettings.sfxOverclock = 0;
+				}
 				switch(GCSettings.sfxOverclock)
 				{
-					case 0: Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6; reset_sfx = true; break;
-					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; reset_sfx = true; break;
-					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; reset_sfx = true; break;
+					case 0: Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6; break;
+					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
+					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
 				}
-				if (reset_sfx) S9xResetSuperFX();
+				S9xResetSuperFX();
 				S9xReset();
-			break;
+				break;
 		}
 
 		if(ret >= 0 || firstRun)
