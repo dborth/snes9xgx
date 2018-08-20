@@ -27,11 +27,11 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #endif
 
 // TODO: add to blargg_endian.h
-#define GET_LE16SA( addr )      ((BOOST::int16_t) GET_LE16( addr ))
+#define GET_LE16SA( addr )      ((int16_t) GET_LE16( addr ))
 #define GET_LE16A( addr )       GET_LE16( addr )
 #define SET_LE16A( addr, data ) SET_LE16( addr, data )
 
-static BOOST::uint8_t const initial_regs [SPC_DSP::register_count] =
+static uint8_t const initial_regs [SPC_DSP::register_count] =
 {
 	0x45,0x8B,0x5A,0x9A,0xE4,0x82,0x1B,0x78,0x00,0x00,0xAA,0x96,0x89,0x0E,0xE0,0x80,
 	0x2A,0x49,0x3D,0xBA,0x14,0xA0,0xAC,0xC5,0x00,0x00,0x51,0xBB,0x9C,0x4E,0x7B,0xFF,
@@ -906,7 +906,7 @@ void SPC_State_Copier::copy( void* state, size_t size )
 
 int SPC_State_Copier::copy_int( int state, int size )
 {
-	BOOST::uint8_t s [2];
+	uint8_t s [2];
 	SET_LE16( s, state );
 	func( buf, &s, size );
 	return GET_LE16( s );
@@ -1057,7 +1057,7 @@ void SPC_DSP::set_stereo_switch( int value )
 	stereo_switch = value;
 }
 
-SPC_DSP::uint8_t SPC_DSP::reg_value( int ch, int addr )
+uint8_t SPC_DSP::reg_value( int ch, int addr )
 {
 	return m.voices[ch].regs[addr];
 }

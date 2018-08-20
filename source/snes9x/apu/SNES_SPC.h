@@ -17,8 +17,6 @@
 
 struct SNES_SPC {
 public:
-	typedef BOOST::uint8_t uint8_t;
-	
 	// Must be called once before using
 	blargg_err_t init();
 	
@@ -66,10 +64,6 @@ public:
 	// Reduces emulation accuracy.
 	enum { voice_count = 8 };
 	void mute_voices( int mask );
-	
-	// If true, prevents channels and global volumes from being phase-negated.
-	// Only supported by fast DSP.
-	void disable_surround( bool disable = true );
 	
 	// Sets tempo, where tempo_unit = normal, tempo_unit / 2 = half speed, etc.
 	enum { tempo_unit = 0x100 };
@@ -134,8 +128,6 @@ public:
 
 public:
 	BLARGG_DISABLE_NOTHROW
-	
-	typedef BOOST::uint16_t uint16_t;
 	
 	// Time relative to m_spc_time. Speeds up code a bit by eliminating need to
 	// constantly add m_spc_time to time from CPU. CPU uses time that ends at
@@ -246,7 +238,7 @@ private:
 	void dsp_write         ( int data, rel_time_t );
 	void cpu_write_smp_reg_( int data, rel_time_t, uint16_t addr );
 	void cpu_write_smp_reg ( int data, rel_time_t, uint16_t addr );
-	void cpu_write_high    ( int data, int i, rel_time_t );
+	void cpu_write_high    ( int data, uint8_t i );
 	void cpu_write         ( int data, uint16_t addr, rel_time_t );
 	int cpu_read_smp_reg   ( int i, rel_time_t );
 	int cpu_read           ( uint16_t addr, rel_time_t );
@@ -300,8 +292,6 @@ inline void SNES_SPC::write_port( time_t t, int port, int data )
 }
 
 inline void SNES_SPC::mute_voices( int mask ) { dsp.mute_voices( mask ); }
-	
-inline void SNES_SPC::disable_surround( bool disable ) { dsp.disable_surround( disable ); }
 
 #if !SPC_NO_COPY_STATE_FUNCS
 inline bool SNES_SPC::check_kon() { return dsp.check_kon(); }

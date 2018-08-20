@@ -10,8 +10,6 @@ extern "C" { typedef void (*dsp_copy_func_t)( unsigned char** io, void* state, s
 
 class SPC_DSP {
 public:
-	typedef BOOST::uint8_t uint8_t;
-	
 // Setup
 
 	// Initializes DSP and has it use the 64K RAM provided
@@ -110,9 +108,6 @@ public:
 	void disable_surround( bool ) { } // not supported
 public:
 	BLARGG_DISABLE_NOTHROW
-	
-	typedef BOOST::int8_t   int8_t;
-	typedef BOOST::int16_t int16_t;
 	
 	enum { echo_hist_size = 8 };
 	
@@ -310,8 +305,8 @@ public:
 
 #define SPC_COPY( type, state )\
 {\
-	state = (BOOST::type) copier.copy_int( state, sizeof (BOOST::type) );\
-	assert( (BOOST::type) state == state );\
+	state = (type) copier.copy_int( state, sizeof (type) );\
+	assert( (type) state == state );\
 }
 
 #endif

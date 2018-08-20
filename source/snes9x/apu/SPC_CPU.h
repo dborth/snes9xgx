@@ -66,7 +66,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #define READ_DP(  time, addr )              READ ( time, DP_ADDR( addr ) )
 #define WRITE_DP( time, addr, data )        WRITE( time, DP_ADDR( addr ), data )
 
-#define READ_PROG16( addr )                 (RAM [addr & 0xffff] | (RAM [(addr + 1) & 0xffff] << 8))
+#define READ_PROG16( addr )                 (RAM [(addr) & 0xffff] | (RAM [((addr) + 1) & 0xffff] << 8))
 
 #define SET_PC( n )     (pc = n)
 #define GET_PC()        (pc)
@@ -205,10 +205,10 @@ loop:
 #define BRANCH( cond )\
 {\
 	pc++;\
-	pc += (BOOST::int8_t) data;\
+	pc += (int8_t) data;\
 	if ( cond )\
 		goto loop;\
-	pc -= (BOOST::int8_t) data;\
+	pc -= (int8_t) data;\
 	rel_time -= 2;\
 	goto loop;\
 }
@@ -261,8 +261,7 @@ loop:
 				REGS [i] = (uint8_t) data;
 				
 				// Registers other than $F2 and $F4-$F7
-				//if ( i != 2 && i != 4 && i != 5 && i != 6 && i != 7 )
-				if ( ((~0x2F00 << (bits_in_int - 16)) << i) < 0 ) // 12%
+				if ( i != 2 && (i < 4 || i > 7)) // 12%
 					cpu_write_smp_reg( data, rel_time, i );
 			}
 		}
@@ -845,7 +844,7 @@ loop:
 // 12. BRANCHING COMMANDS
 
 	case 0x2F: // BRA rel
-		pc += (BOOST::int8_t) data;
+		pc += (int8_t) data;
 		goto inc_pc_loop;
 	
 	case 0x30: // BMI
@@ -1149,11 +1148,8 @@ loop:
 	
 	case 0xFF:{// STOP
 		// handle PC wrap-around
-		unsigned addr = GET_PC() - 1;
-		if ( addr >= 0x10000 )
+		if ( pc == 0x0000 )
 		{
-			addr &= 0xFFFF;
-			SET_PC( addr );
 			dprintf( "SPC: PC wrapped around\n" );
 			goto loop;
 		}
@@ -1172,8 +1168,6 @@ out_of_time:
 stop:
 	
 	// Uncache registers
-	if ( GET_PC() >= 0x10000 )
-		dprintf( "SPC: PC wrapped around\n" );
 	m.cpu_regs.pc = (uint16_t) GET_PC();
 	m.cpu_regs.sp = ( uint8_t) GET_SP();
 	m.cpu_regs.a  = ( uint8_t) a;
