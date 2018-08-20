@@ -373,7 +373,7 @@ bool8 S9xSaveCheatFile (const char *filename)
 
 	for (uint32 i = 0; i < Cheat.num_cheats; i++)
 	{
-		memset(data, 0, 28);
+		ZeroMemory(data, 28);
 
 		if (i == 0)
 		{

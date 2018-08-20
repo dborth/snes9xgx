@@ -17,19 +17,12 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-
-  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
+                             zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2018  BearOso,
+  (c) Copyright 2009 - 2010  BearOso,
                              OV2
-
-  (c) Copyright 2017         qwertymodo
-
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -124,9 +117,6 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
-  S-SMP emulator code used in 1.54+
-  (c) Copyright 2016         byuu
-
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -140,7 +130,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2018  BearOso
+  (c) Copyright 2004 - 2010  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -148,16 +138,11 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2018  OV2
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2011  zones
-
-  Libretro port
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
@@ -452,14 +437,14 @@ static void reset_controllers (void)
 		MovieSetJoypad(i, 0);
 
 	uint8 clearedMouse[MOUSE_DATA_SIZE];
-	memset(clearedMouse, 0, MOUSE_DATA_SIZE);
+	ZeroMemory(clearedMouse, MOUSE_DATA_SIZE);
 	clearedMouse[4] = 1;
 
 	uint8 clearedScope[SCOPE_DATA_SIZE];
-	memset(clearedScope, 0, SCOPE_DATA_SIZE);
+	ZeroMemory(clearedScope, SCOPE_DATA_SIZE);
 
 	uint8 clearedJustifier[JUSTIFIER_DATA_SIZE];
-	memset(clearedJustifier, 0, JUSTIFIER_DATA_SIZE);
+	ZeroMemory(clearedJustifier, JUSTIFIER_DATA_SIZE);
 
 	for (int p = 0; p < 2; p++)
 	{
@@ -654,7 +639,7 @@ static void write_movie_header (FILE *fd, SMovie *movie)
 {
 	uint8	buf[SMV_HEADER_SIZE], *ptr = buf;
 
-	memset(buf, 0, sizeof(buf));
+	ZeroMemory(buf, sizeof(buf));
 
 	Write32(SMV_MAGIC, ptr);
 	Write32(SMV_VERSION, ptr);
@@ -786,8 +771,7 @@ int S9xMovieUnfreeze (uint8 *buf, uint32 size)
 	}
 	else
 	{
-      uint32   space_processed = (Movie.BytesPerSample * (current_sample + 1));
-      if (current_frame > Movie.MaxFrame || current_sample > Movie.MaxSample || memcmp(Movie.InputBuffer, ptr, space_processed))
+		if (current_frame > Movie.MaxFrame || current_sample > Movie.MaxSample || memcmp(Movie.InputBuffer, ptr, space_needed))
 			return (SNAPSHOT_INCONSISTENT);
 
 		change_state(MOVIE_STATE_PLAY);
@@ -828,16 +812,14 @@ int S9xMovieOpen (const char *filename, bool8 read_only)
 
 	read_movie_extrarominfo(fd, &Movie);
 
-	fflush(fd);
-	fn = fileno(fd);
+	fn = dup(fileno(fd));
+	fclose(fd);
 
 	store_previous_settings();
 	restore_movie_settings();
 
 	lseek(fn, Movie.SaveStateOffset, SEEK_SET);
-
-    // reopen stream to access as gzipped data
-    stream = REOPEN_STREAM(fn, "rb");
+	stream = REOPEN_STREAM(fn, "rb");
 	if (!stream)
 		return (FILE_NOT_FOUND);
 
@@ -850,11 +832,7 @@ int S9xMovieOpen (const char *filename, bool8 read_only)
 	else
 		result = S9xUnfreezeFromStream(stream);
 
-    // do not close stream but close FILE *
-    // (msvcrt will try to close all open FILE *handles on exit - if we do CLOSE_STREAM here
-    //  the underlying file will be closed by zlib, causing problems when msvcrt tries to do it)
-    delete stream;
-    fclose(fd);
+	CLOSE_STREAM(stream);
 
 	if (result != SUCCESS)
 		return (result);
@@ -868,10 +846,7 @@ int S9xMovieOpen (const char *filename, bool8 read_only)
 	}
 
 	if (fseek(fd, Movie.ControllerDataOffset, SEEK_SET))
-	{
-		fclose(fd);
 		return (WRONG_FORMAT);
-	}
 
 	Movie.File           = fd;
 	Movie.BytesPerSample = bytes_per_sample();
@@ -904,6 +879,7 @@ int S9xMovieCreate (const char *filename, uint8 controllers_mask, uint8 opts, co
 {
 	FILE	*fd;
 	STREAM	stream;
+	int		fn;
 
 	if (controllers_mask == 0)
 		return (WRONG_FORMAT);
@@ -952,9 +928,10 @@ int S9xMovieCreate (const char *filename, uint8 controllers_mask, uint8 opts, co
 
 	write_movie_extrarominfo(fd, &Movie);
 
+	fn = dup(fileno(fd));
 	fclose(fd);
 
-	stream = OPEN_STREAM(filename, "ab");
+	stream = REOPEN_STREAM(fn, "ab");
 	if (!stream)
 		return (FILE_NOT_FOUND);
 
@@ -1012,17 +989,14 @@ int S9xMovieGetInfo (const char *filename, struct MovieInfo *info)
 
 	flush_movie();
 
-	memset(info, 0, sizeof(*info));
+	ZeroMemory(info, sizeof(*info));
 
 	if (!(fd = fopen(filename, "rb")))
 		return (FILE_NOT_FOUND);
 
 	result = read_movie_header(fd, &local_movie);
 	if (result != SUCCESS)
-	{
-		fclose(fd);
 		return (result);
-	}
 
 	info->TimeCreated     = (time_t) local_movie.MovieId;
 	info->Version         = local_movie.Version;
@@ -1061,10 +1035,9 @@ int S9xMovieGetInfo (const char *filename, struct MovieInfo *info)
 	strncpy(info->ROMName, local_movie.ROMName, 23);
 
 	fclose(fd);
-	if ((fd = fopen(filename, "r+")) == NULL)
+
+	if (access(filename, W_OK))
 		info->ReadOnly = true;
-	else
-		fclose(fd);
 
 	return (SUCCESS);
 }
@@ -1144,7 +1117,7 @@ void S9xMovieUpdateOnReset (void)
 
 void S9xMovieInit (void)
 {
-	memset(&Movie, 0, sizeof(Movie));
+	ZeroMemory(&Movie, sizeof(Movie));
 	Movie.State = MOVIE_STATE_NONE;
 }
 

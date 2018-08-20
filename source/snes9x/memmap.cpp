@@ -183,6 +183,14 @@
 #include <numeric>
 #include <assert.h>
 
+#ifdef UNZIP_SUPPORT
+#include "unzip/unzip.h"
+#endif
+
+#ifdef JMA_SUPPORT
+#include "jma/s9x-jma.h"
+#endif
+
 #include "snes9x.h"
 #include "memmap.h"
 #include "apu/apu.h"
@@ -1107,26 +1115,26 @@ bool8 CMemory::Init (void)
 		return (FALSE);
     }
 
-	memset(RAM, 0,  0x20000);
-	memset(SRAM, 0, 0x20000);
-	memset(VRAM, 0, 0x10000);
-	memset(ROM, 0,  MAX_ROM_SIZE + 0x200 + 0x8000);
+	ZeroMemory(RAM,  0x20000);
+	ZeroMemory(SRAM, 0x20000);
+	ZeroMemory(VRAM, 0x10000);
+	ZeroMemory(ROM,  MAX_ROM_SIZE + 0x200 + 0x8000);
 
-	memset(IPPU.TileCache[TILE_2BIT], 0,       MAX_2BIT_TILES * 64);
-	memset(IPPU.TileCache[TILE_4BIT], 0,       MAX_4BIT_TILES * 64);
-	memset(IPPU.TileCache[TILE_8BIT], 0,       MAX_8BIT_TILES * 64);
-	memset(IPPU.TileCache[TILE_2BIT_EVEN], 0,  MAX_2BIT_TILES * 64);
-	memset(IPPU.TileCache[TILE_2BIT_ODD], 0,   MAX_2BIT_TILES * 64);
-	memset(IPPU.TileCache[TILE_4BIT_EVEN], 0,  MAX_4BIT_TILES * 64);
-	memset(IPPU.TileCache[TILE_4BIT_ODD], 0,   MAX_4BIT_TILES * 64);
+	ZeroMemory(IPPU.TileCache[TILE_2BIT],       MAX_2BIT_TILES * 64);
+	ZeroMemory(IPPU.TileCache[TILE_4BIT],       MAX_4BIT_TILES * 64);
+	ZeroMemory(IPPU.TileCache[TILE_8BIT],       MAX_8BIT_TILES * 64);
+	ZeroMemory(IPPU.TileCache[TILE_2BIT_EVEN],  MAX_2BIT_TILES * 64);
+	ZeroMemory(IPPU.TileCache[TILE_2BIT_ODD],   MAX_2BIT_TILES * 64);
+	ZeroMemory(IPPU.TileCache[TILE_4BIT_EVEN],  MAX_4BIT_TILES * 64);
+	ZeroMemory(IPPU.TileCache[TILE_4BIT_ODD],   MAX_4BIT_TILES * 64);
 
-	memset(IPPU.TileCached[TILE_2BIT], 0,      MAX_2BIT_TILES);
-	memset(IPPU.TileCached[TILE_4BIT], 0,      MAX_4BIT_TILES);
-	memset(IPPU.TileCached[TILE_8BIT], 0,      MAX_8BIT_TILES);
-	memset(IPPU.TileCached[TILE_2BIT_EVEN], 0, MAX_2BIT_TILES);
-	memset(IPPU.TileCached[TILE_2BIT_ODD], 0,  MAX_2BIT_TILES);
-	memset(IPPU.TileCached[TILE_4BIT_EVEN], 0, MAX_4BIT_TILES);
-	memset(IPPU.TileCached[TILE_4BIT_ODD], 0,  MAX_4BIT_TILES);
+	ZeroMemory(IPPU.TileCached[TILE_2BIT],      MAX_2BIT_TILES);
+	ZeroMemory(IPPU.TileCached[TILE_4BIT],      MAX_4BIT_TILES);
+	ZeroMemory(IPPU.TileCached[TILE_8BIT],      MAX_8BIT_TILES);
+	ZeroMemory(IPPU.TileCached[TILE_2BIT_EVEN], MAX_2BIT_TILES);
+	ZeroMemory(IPPU.TileCached[TILE_2BIT_ODD],  MAX_2BIT_TILES);
+	ZeroMemory(IPPU.TileCached[TILE_4BIT_EVEN], MAX_4BIT_TILES);
+	ZeroMemory(IPPU.TileCached[TILE_4BIT_ODD],  MAX_4BIT_TILES);
 
 	// FillRAM uses first 32K of ROM image area, otherwise space just
 	// wasted. Might be read by the SuperFX code.
@@ -1512,8 +1520,8 @@ bool8 CMemory::LoadROM (const char *filename)
 	if (!filename || !*filename)
 		return (FALSE);
 
-	memset(ROM,0, MAX_ROM_SIZE);
-	memset(&Multi, 0,sizeof(Multi));
+	ZeroMemory(ROM, MAX_ROM_SIZE);
+	ZeroMemory(&Multi, sizeof(Multi));
  
 again:
 	Settings.DisplayColor = BUILD_PIXEL(31, 31, 31);
@@ -1729,7 +1737,7 @@ again:
 		LastRomFilename[PATH_MAX] = 0;
 	}
 
-	memset(&SNESGameFixes, 0, sizeof(SNESGameFixes));
+	ZeroMemory(&SNESGameFixes, sizeof(SNESGameFixes));
 	SNESGameFixes.SRAMInitialValue = 0x60;
 #ifdef GEKKO
 	WiiSetupCheats();
@@ -1750,8 +1758,8 @@ bool8 CMemory::LoadMultiCart (const char *cartA, const char *cartB)
 {
 	bool8	r = TRUE;
 
-    memset(ROM, 0, MAX_ROM_SIZE);
-	memset(&Multi, 0, sizeof(Multi));
+	ZeroMemory(ROM, MAX_ROM_SIZE);
+	ZeroMemory(&Multi, sizeof(Multi));
 
 	Settings.DisplayColor = BUILD_PIXEL(31, 31, 31);
 	SET_UI_COLOR(255, 255, 255);
@@ -1801,11 +1809,11 @@ bool8 CMemory::LoadMultiCart (const char *cartA, const char *cartB)
 
 	if (!r)
 	{
-		memset(&Multi, 0, sizeof(Multi));
+		ZeroMemory(&Multi, sizeof(Multi));
 		return (FALSE);
 	}
 
-	memset(&SNESGameFixes, 0, sizeof(SNESGameFixes));
+	ZeroMemory(&SNESGameFixes, sizeof(SNESGameFixes));
 	SNESGameFixes.SRAMInitialValue = 0x60;
 
 	S9xLoadCheatFile(S9xGetFilename(".cht", CHEAT_DIR));
@@ -2808,18 +2816,8 @@ void CMemory::map_WRAM (void)
 
 void CMemory::map_LoROMSRAM (void)
 {
-        uint32 hi;
-
-        if (SRAMSize == 0)
-            return;
-
-        if (ROMSize > 11 || SRAMSize > 5)
-            hi = 0x7fff;
-        else
-            hi = 0xffff;
-
-	map_index(0x70, 0x7d, 0x0000, hi, MAP_LOROM_SRAM, MAP_TYPE_RAM);
-	map_index(0xf0, 0xff, 0x0000, hi, MAP_LOROM_SRAM, MAP_TYPE_RAM);
+	map_index(0x70, 0x7f, 0x0000, 0x7fff, MAP_LOROM_SRAM, MAP_TYPE_RAM);
+	map_index(0xf0, 0xff, 0x0000, 0x7fff, MAP_LOROM_SRAM, MAP_TYPE_RAM);
 }
 
 void CMemory::map_HiROMSRAM (void)
@@ -2971,7 +2969,7 @@ void CMemory::Map_JumboLoROMMap (void)
 	map_System();
 
 	map_lorom_offset(0x00, 0x3f, 0x8000, 0xffff, CalculatedSize - 0x400000, 0x400000);
-	map_lorom_offset(0x40, 0x7f, 0x0000, 0xffff, CalculatedSize - 0x600000, 0x600000);
+	map_lorom_offset(0x40, 0x7f, 0x0000, 0xffff, CalculatedSize - 0x400000, 0x400000);
 	map_lorom_offset(0x80, 0xbf, 0x8000, 0xffff, 0x400000, 0);
 	map_lorom_offset(0xc0, 0xff, 0x0000, 0xffff, 0x400000, 0x200000);
 

@@ -17,19 +17,12 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-
-  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
+                             zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2018  BearOso,
+  (c) Copyright 2009 - 2010  BearOso,
                              OV2
-
-  (c) Copyright 2017         qwertymodo
-
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -124,9 +117,6 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
-  S-SMP emulator code used in 1.54+
-  (c) Copyright 2016         byuu
-
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -140,7 +130,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2018  BearOso
+  (c) Copyright 2004 - 2010  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -148,16 +138,11 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2018  OV2
+  (c) Copyright 2009 - 2010  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2011  zones
-
-  Libretro port
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
-                             Daniel De Matteis
-                             (Under no circumstances will commercial rights be given)
+  (c) Copyright 2001 - 2010  zones
 
 
   Specific ports contains the works of other authors. See headers in
@@ -196,7 +181,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#ifndef __LIBRETRO__
+#ifndef GEKKO
 #include <memory.h>
 #endif
 #include <time.h>
@@ -216,14 +201,7 @@
 #define RIGHTSHIFT_int8_IS_SAR
 #define RIGHTSHIFT_int16_IS_SAR
 #define RIGHTSHIFT_int32_IS_SAR
-#ifndef __LIBRETRO__
 #define SNES_JOY_READ_CALLBACKS
-#define GFX_MULTI_FORMAT
-#endif //__LIBRETRO__
-#endif
-
-#ifdef __LIBRETRO__
-#define GFX_MULTI_FORMAT
 #endif
 
 #ifdef __MACOSX__
@@ -252,22 +230,30 @@ typedef uint64_t			uint64;
 #else	// HAVE_STDINT_H
 #ifdef __WIN32__
 typedef intptr_t			pint;
+#else	// __WIN32__
+#ifdef PTR_NOT_INT
+typedef long				pint;
+#else
+typedef int					pint;
+#endif
+#endif	// __WIN32__
+#ifdef __WIN32__
+#ifdef __BORLANDC__
+#include <systypes.h>
+#else
 typedef signed char			int8;
 typedef unsigned char		uint8;
 typedef signed short		int16;
 typedef unsigned short		uint16;
-typedef signed int     		int32;
+#ifndef WSAAP
+// winsock2.h typedefs int32 as well
+typedef signed int			int32;
+#endif
 typedef unsigned int		uint32;
+#endif
+typedef unsigned char		uint8_t;
 typedef signed __int64		int64;
 typedef unsigned __int64	uint64;
-typedef int8                int8_t;
-typedef uint8       		uint8_t;
-typedef int16       		int16_t;
-typedef uint16      		uint16_t;
-typedef int32		    	int32_t;
-typedef uint32      		uint32_t;
-typedef int64               int64_t;
-typedef uint64              uint64_t;
 typedef int					socklen_t;
 #else	// __WIN32__
 typedef signed char			int8;
@@ -282,11 +268,6 @@ __extension__
 #endif
 typedef long long			int64;
 typedef unsigned long long	uint64;
-#ifdef PTR_NOT_INT
-typedef size_t				pint;
-#else   // __PTR_NOT_INT
-typedef size_t					pint;
-#endif  // __PTR_NOT_INT
 #endif	//  __WIN32__
 #endif	// HAVE_STDINT_H
 #endif	// snes9x_types_defined
@@ -317,24 +298,21 @@ typedef size_t					pint;
 #endif
 
 #ifndef __WIN32__
+#define ZeroMemory(a, b)	memset((a), 0, (b))
 void _splitpath (const char *, char *, char *, char *, char *);
 void _makepath (char *, const char *, const char *, const char *, const char *);
 #define S9xDisplayString	DisplayStringFromBottom
-#else   // __WIN32__
+#else
 #define snprintf _snprintf
 #define strcasecmp	stricmp
 #define strncasecmp	strnicmp
-#ifndef __LIBRETRO__
 void WinDisplayStringFromBottom(const char *string, int linesFromBottom, int pixelsFromLeft, bool allowWrap);
 #define S9xDisplayString	WinDisplayStringFromBottom
 void SetInfoDlgColor(unsigned char, unsigned char, unsigned char);
 #define SET_UI_COLOR(r,g,b) SetInfoDlgColor(r,g,b)
-#else   // __LIBRETRO__
-#define S9xDisplayString	DisplayStringFromBottom
-#endif  // __LIBRETRO__
-#endif  // __WIN32__
+#endif
 
-#if defined(__DJGPP) || defined(__WIN32__)
+#ifdef __DJGPP
 #define SLASH_STR	"\\"
 #define SLASH_CHAR	'\\'
 #else
@@ -355,7 +333,7 @@ void SetInfoDlgColor(unsigned char, unsigned char, unsigned char);
 #define TITLE "Snes9x"
 #endif
 
-#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__) || defined(__x86_64__) || defined(__alpha__) || defined(__MIPSEL__) || defined(_M_IX86) || defined(_M_X64) || defined(_XBOX1) || defined(ARM) || defined(ANDROID)
+#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__) || defined(__x86_64__) || defined(__alpha__) || defined(__MIPSEL__) || defined(_M_IX86) || defined(_M_X64)
 #define LSB_FIRST
 #define FAST_LSB_WORD_ACCESS
 #else

@@ -627,7 +627,7 @@ void S9xUnmapAllControls (void)
 	if (!(superscope.crosshair.set & 4))
 		superscope.crosshair.bg  = 1;
 
-	memset(pseudobuttons, 0, sizeof(pseudobuttons));
+	ZeroMemory(pseudobuttons, sizeof(pseudobuttons));
 
 	turbo_time = 1;
 }
@@ -1244,7 +1244,7 @@ s9xcommand_t S9xGetCommandT (const char *name)
 	int				i, j;
 	const char		*s;
 
-	memset(&cmd, 0, sizeof(cmd));
+	ZeroMemory(&cmd, sizeof(cmd));
 	cmd.type         = S9xBadMapping;
 	cmd.multi_press  = 0;
 	cmd.button_norpt = 0;
@@ -3467,7 +3467,7 @@ void S9xGetControllerCrosshair (enum crosscontrols ctl, int8 *idx, const char **
 
 void S9xControlPreSaveState (struct SControlSnapshot *s)
 {
-	memset(s, 0, sizeof(*s));
+	ZeroMemory(s, sizeof(*s));
 	s->ver = 3;
 
 	for (int j = 0; j < 2; j++)

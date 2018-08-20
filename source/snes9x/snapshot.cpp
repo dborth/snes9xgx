@@ -1705,7 +1705,6 @@ int S9xUnfreezeFromStream (STREAM stream)
 		CPU.HDMARanInDMA = 0;
 
 		S9xFixColourBrightness();
-		S9xBuildDirectColourMaps();
 		IPPU.ColorsChanged = TRUE;
 		IPPU.OBJChanged = TRUE;
 		IPPU.RenderThisFrame = TRUE;
@@ -2044,7 +2043,7 @@ static int UnfreezeBlock (STREAM stream, const char *name, uint8 *block, int siz
 		len = size;
 	}
 
-	memset(block, 0, size);
+	ZeroMemory(block, size);
 
 	if (READ_STREAM(block, len, stream) != len)
 	{

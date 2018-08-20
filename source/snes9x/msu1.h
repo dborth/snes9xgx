@@ -22,12 +22,10 @@
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2018  BearOso,
+  (c) Copyright 2009 - 2016  BearOso,
                              OV2
 
-  (c) Copyright 2017         qwertymodo
-
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+  (c) Copyright 2011 - 2016  Hans-Kristian Arntzen,
                              Daniel De Matteis
                              (Under no circumstances will commercial rights be given)
 
@@ -140,7 +138,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2018  BearOso
+  (c) Copyright 2004 - 2016  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -148,14 +146,14 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2018  OV2
+  (c) Copyright 2009 - 2016  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
   (c) Copyright 2001 - 2011  zones
 
   Libretro port
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+  (c) Copyright 2011 - 2016  Hans-Kristian Arntzen,
                              Daniel De Matteis
                              (Under no circumstances will commercial rights be given)
 
@@ -195,6 +193,8 @@
 #ifndef _MSU1_H_
 #define _MSU1_H_
 #include "snes9x.h"
+#include <stdint.h>
+#include <sys/stat.h>
 
 #define MSU1_REVISION 0x02
 
@@ -215,8 +215,8 @@ struct SMSU1
 enum SMSU1_FLAG {
 	Revision		= 0x07,	// bitmask, not the actual version number
 	AudioError		= 0x08,
-	AudioPlaying		= 0x10,
-	AudioRepeating		= 0x20,
+	AudioPlaying	= 0x10,
+	AudioRepeating	= 0x20,
 	AudioBusy		= 0x40,
 	DataBusy		= 0x80
 };

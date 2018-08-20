@@ -449,7 +449,6 @@ struct SSettings
 
 	bool8	OpenGLEnable;
 	float	SuperFXSpeedPerLine;
-	int	MaxSpriteTilesPerLine;
 };
 
 struct SSNESGameFixes

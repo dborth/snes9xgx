@@ -22,12 +22,10 @@
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2018  BearOso,
+  (c) Copyright 2009 - 2016  BearOso,
                              OV2
 
-  (c) Copyright 2017         qwertymodo
-
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+  (c) Copyright 2011 - 2016  Hans-Kristian Arntzen,
                              Daniel De Matteis
                              (Under no circumstances will commercial rights be given)
 
@@ -140,7 +138,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2018  BearOso
+  (c) Copyright 2004 - 2016  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -148,14 +146,14 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2018  OV2
+  (c) Copyright 2009 - 2016  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
   (c) Copyright 2001 - 2011  zones
 
   Libretro port
-  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+  (c) Copyright 2011 - 2016  Hans-Kristian Arntzen,
                              Daniel De Matteis
                              (Under no circumstances will commercial rights be given)
 
@@ -192,13 +190,12 @@
   Nintendo Co., Limited and its subsidiary companies.
  ***********************************************************************************/
 
-#include "snes9x.h"
-#include "memmap.h"
-#include "display.h"
 #include "msu1.h"
+#include "display.h"
+#include "filebrowser.h"
+#include "memmap.h"
+#include "snes9xgx.h"
 #include "apu/blargg_endian.h"
-#include <fstream>
-#include <sys/stat.h>
 
 STREAM dataStream = NULL;
 STREAM audioStream = NULL;
@@ -244,7 +241,7 @@ static int unzFindExtension(unzFile &file, const char *ext, bool restart = TRUE,
 
 STREAM S9xMSU1OpenFile(const char *msu_ext, bool skip_unpacked)
 {
-    char filename[1024];
+    char filename[MAXPATHLEN];
 	sprintf(filename, "%s%s%s", Memory.ROMFilePath, Memory.ROMFilename, msu_ext);
     
 	STREAM file = 0;
@@ -260,14 +257,9 @@ STREAM S9xMSU1OpenFile(const char *msu_ext, bool skip_unpacked)
     // look for msu1 pack file in the rom or patch dir if msu data file not found in rom dir
     if (!file)
     {
-        const char *zip_filename = S9xGetFilename(".msu1", ROMFILENAME_DIR);
+        char zip_filename[MAXPATHLEN];
+        sprintf(zip_filename, "%s%s.msu1", Memory.ROMFilePath, Memory.ROMFilename);
 		unzFile	unzFile = unzOpen(zip_filename);
-
-		if (!unzFile)
-		{
-			zip_filename = S9xGetFilename(".msu1", PATCH_DIR);
-			unzFile = unzOpen(zip_filename);
-		}
 
         if (unzFile)
         {
@@ -320,8 +312,8 @@ static bool AudioOpen()
 		audioLoopPos = GET_LE32(&audioLoopPos);
 		audioLoopPos <<= 2;
 		audioLoopPos += 8;
-
-        MSU1.MSU1_AUDIO_POS = 8;
+		
+		MSU1.MSU1_AUDIO_POS = 8;
 
 		MSU1.MSU1_STATUS &= ~AudioError;
 		return true;
@@ -389,6 +381,7 @@ void S9xMSU1DeInit(void)
 	AudioClose();
 }
 
+
 bool S9xMSU1ROMExists(void)
 {
     STREAM s = S9xMSU1OpenFile(".msu");
@@ -398,15 +391,9 @@ bool S9xMSU1ROMExists(void)
 		return true;
 	}
 #ifdef UNZIP_SUPPORT
-	char drive[_MAX_DRIVE + 1], dir[_MAX_DIR + 1], def[_MAX_FNAME + 1], ext[_MAX_EXT + 1];
-	_splitpath(Memory.ROMFilename, drive, dir, def, ext);
-	if (!strcasecmp(ext, ".msu1"))
-		return true;
-
-	unzFile unzFile = unzOpen(S9xGetFilename(".msu1", ROMFILENAME_DIR));
-
-	if(!unzFile)
-		unzFile = unzOpen(S9xGetFilename(".msu1", PATCH_DIR));
+    char fname[MAXPATHLEN];
+	sprintf(fname, "%s%s.msu1", Memory.ROMFilePath, Memory.ROMFilename);
+	unzFile unzFile = unzOpen(fname);
 
 	if (unzFile)
 	{
@@ -429,15 +416,14 @@ void S9xMSU1Generate(size_t sample_count)
 			int16* left = (int16*)&sample;
 			int16* right = left + 1;
 
-			int bytes_read = READ_STREAM((char *)&sample, 4, audioStream);
+            int bytes_read = READ_STREAM((char *)&sample, 4, audioStream);
 			if (bytes_read == 4)
 			{
 				*left = ((int32)(int16)GET_LE16(left) * MSU1.MSU1_VOLUME / 255);
 				*right = ((int32)(int16)GET_LE16(right) * MSU1.MSU1_VOLUME / 255);
 
-
 				*(bufPos++) = *left;
-				*(bufPos++) = *right;
+                *(bufPos++) = *right;
 				MSU1.MSU1_AUDIO_POS += 4;
 				partial_frames -= 3204;
 			}
@@ -447,12 +433,12 @@ void S9xMSU1Generate(size_t sample_count)
 				if (MSU1.MSU1_STATUS & AudioRepeating)
 				{
 					MSU1.MSU1_AUDIO_POS = audioLoopPos;
-					REVERT_STREAM(audioStream, MSU1.MSU1_AUDIO_POS, 0);
+                    REVERT_STREAM(audioStream, MSU1.MSU1_AUDIO_POS, 0);
 				}
 				else
 				{
 					MSU1.MSU1_STATUS &= ~(AudioPlaying | AudioRepeating);
-					REVERT_STREAM(audioStream, 8, 0);
+                    REVERT_STREAM(audioStream, 8, 0);
 				}
 			}
 			else

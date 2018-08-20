@@ -178,6 +178,9 @@
 // Abstract the details of reading from zip files versus FILE *'s.
 
 #include <string>
+#ifdef UNZIP_SUPPORT
+#include "unzip.h"
+#endif
 #include "snes9x.h"
 #include "reader.h"
 
