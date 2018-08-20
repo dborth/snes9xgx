@@ -44,6 +44,7 @@
 #include "snes9x/cheats.h"
 
 extern SCheatData Cheat;
+extern void ToggleCheat(uint32);
 
 #define THREAD_SLEEP 100
 
@@ -2040,10 +2041,13 @@ static int MenuGameSettings()
 		else if(cheatsBtn.GetState() == STATE_CLICKED)
 		{
 			cheatsBtn.ResetState();
-			if(Cheat.num_cheats > 0)
+
+			if(Cheat.g.size() > 0) {
 				menu = MENU_GAMESETTINGS_CHEATS;
-			else
+			}
+			else {
 				InfoPrompt("Cheats file not found!");
+			}
 		}
 		else if(screenshotBtn.GetState() == STATE_CLICKED)
 		{
@@ -2093,10 +2097,10 @@ static int MenuGameCheats()
 	u16 i = 0;
 	OptionList options;
 
-	for(i=0; i < Cheat.num_cheats; i++)
+	for(i=0; i < Cheat.g.size(); i++)
 	{
-		sprintf (options.name[i], "%s", Cheat.c[i].name);
-		sprintf (options.value[i], "%s", Cheat.c[i].enabled == true ? "On" : "Off");
+		sprintf (options.name[i], "%s", Cheat.g[i].name);
+		sprintf (options.value[i], "%s", Cheat.g[i].enabled == true ? "On" : "Off");
 	}
 
 	options.length = i;
@@ -2145,11 +2149,8 @@ static int MenuGameCheats()
 
 		if(ret >= 0)
 		{
-			if(Cheat.c[ret].enabled)
-				S9xDisableCheat(ret);
-			else
-				S9xEnableCheat(ret);
-			sprintf (options.value[ret], "%s", Cheat.c[ret].enabled == true ? "On" : "Off");
+			ToggleCheat(ret);
+			sprintf (options.value[ret], "%s", Cheat.g[ret].enabled == true ? "On" : "Off");
 			optionBrowser.TriggerUpdate();
 		}
 
@@ -3100,6 +3101,7 @@ static int MenuSettingsVideo()
 	int ret;
 	int i = 0;
 	bool firstRun = true;
+	bool reset_sfx = false;
 	OptionList options;
 
 	sprintf(options.name[i++], "Rendering");
@@ -3203,19 +3205,12 @@ static int MenuSettingsVideo()
 				Settings.DisplayFrameRate ^= 1;
 				break;
 			case 8:
-				GCSettings.sfxOverclock++;
-				if (GCSettings.sfxOverclock > 2) {
-					GCSettings.sfxOverclock = 0;
+				GCSettings.superFxSpeed += 10;
+
+				if(GCSettings.superFxSpeed > 200) {
+					GCSettings.superFxSpeed = 100;
 				}
-				switch(GCSettings.sfxOverclock)
-				{
-					case 0: Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6; break;
-					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
-					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
-				}
-				S9xResetSuperFX();
-				S9xReset();
-				break;
+			break;
 		}
 
 		if(ret >= 0 || firstRun)
@@ -3262,15 +3257,7 @@ static int MenuSettingsVideo()
 					sprintf (options.value[6], "PAL (60Hz)"); break;
 			}
 			sprintf (options.value[7], "%s", Settings.DisplayFrameRate ? "On" : "Off");
-			switch(GCSettings.sfxOverclock)
-			{
-				case 0:
-					sprintf (options.value[8], "Default"); break;
-				case 1:
-					sprintf (options.value[8], "40 Mhz"); break;
-				case 2:
-					sprintf (options.value[8], "60 Mhz"); break;
-			}
+			sprintf (options.value[8], "%d%", GCSettings.superFxSpeed);
 			optionBrowser.TriggerUpdate();
 		}
 

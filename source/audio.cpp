@@ -85,7 +85,6 @@ GCMixSamples ()
 static void FinalizeSamplesCallback (void *data)
 { 
 	LWP_MutexLock(audiomutex);
-	UpdatePlaybackRateWithDynamicRate();
 	S9xFinalizeSamples();
 	LWP_MutexUnlock(audiomutex);
 }
