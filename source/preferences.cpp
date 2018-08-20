@@ -483,7 +483,7 @@ DefaultSettings ()
 	Settings.Stereo = true;
 	Settings.ReverseStereo = true;
 	Settings.SoundPlaybackRate = 48000;
-	Settings.SoundInputRate = 31970;
+	Settings.SoundInputRate = 31950;
 	Settings.DynamicRateControl = true;
 
 	// Graphics
