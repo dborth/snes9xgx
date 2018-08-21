@@ -477,7 +477,7 @@ DefaultSettings ()
 	Settings.HDMATimingHack = 100;
 	Settings.BlockInvalidVRAMAccessMaster = true;
 
-	// Sound defaults. On Wii this is 32Khz/16bit/Stereo
+	// Sound
 	Settings.SoundSync = true;
 	Settings.SixteenBitSound = true;
 	Settings.Stereo = true;

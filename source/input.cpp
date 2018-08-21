@@ -247,9 +247,12 @@ UpdatePads()
  *
  * Sets up userInput triggers for use
  ***************************************************************************/
+static bool soundSync = false;
+
 void
 SetupPads()
 {
+	soundSync = Settings.SoundSync;
 	PAD_Init();
 
 	#ifdef HW_RVL
@@ -591,10 +594,17 @@ void ReportButtons ()
 
 	UpdatePads();
 
-	Settings.TurboMode = Settings.Mute = (
+	Settings.TurboMode = (
 		userInput[0].pad.substickX > 70 ||
 		userInput[0].WPAD_StickX(1) > 70
 	);	// RIGHT on c-stick and on classic controller right joystick
+
+	if(Settings.TurboMode) {
+		Settings.SoundSync = false;
+	}
+	else {
+		Settings.SoundSync = soundSync;
+	}
 
 	/* Check for menu:
 	 * CStick left
