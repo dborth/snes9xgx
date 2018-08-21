@@ -17,12 +17,19 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-                             zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2010  BearOso,
+  (c) Copyright 2009 - 2018  BearOso,
                              OV2
+
+  (c) Copyright 2017         qwertymodo
+
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -117,6 +124,9 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
+  S-SMP emulator code used in 1.54+
+  (c) Copyright 2016         byuu
+
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -130,7 +140,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2010  BearOso
+  (c) Copyright 2004 - 2018  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -138,11 +148,16 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2010  OV2
+  (c) Copyright 2009 - 2018  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2010  zones
+  (c) Copyright 2001 - 2011  zones
+
+  Libretro port
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   Specific ports contains the works of other authors. See headers in
@@ -208,12 +223,14 @@ static void S9xResetCPU (void)
 static void S9xSoftResetCPU (void)
 {
 	CPU.Cycles = 182; // Or 188. This is the cycle count just after the jump to the Reset Vector.
-	CPU.PrevCycles = -1;
+	CPU.PrevCycles = CPU.Cycles;
 	CPU.V_Counter = 0;
 	CPU.Flags = CPU.Flags & (DEBUG_MODE_FLAG | TRACE_FLAG);
 	CPU.PCBase = NULL;
-	CPU.IRQActive = FALSE;
-	CPU.IRQPending = 0;
+	CPU.NMIPending = FALSE;
+	CPU.IRQLine = FALSE;
+	CPU.IRQTransition = FALSE;
+	CPU.IRQExternal = FALSE;
 	CPU.MemSpeed = SLOW_ONE_CYCLE;
 	CPU.MemSpeedx2 = SLOW_ONE_CYCLE * 2;
 	CPU.FastROMSpeed = SLOW_ONE_CYCLE;
@@ -226,9 +243,6 @@ static void S9xSoftResetCPU (void)
 	CPU.WhichEvent = HC_RENDER_EVENT;
 	CPU.NextEvent  = Timings.RenderPos;
 	CPU.WaitingForInterrupt = FALSE;
-	CPU.WaitAddress = 0xffffffff;
-	CPU.WaitCounter = 0;
-	CPU.PBPCAtOpcodeStart = 0xffffffff;
 	CPU.AutoSaveTimer = 0;
 	CPU.SRAMModified = FALSE;
 
@@ -252,6 +266,9 @@ static void S9xSoftResetCPU (void)
 	Timings.H_Max = Timings.H_Max_Master;
 	Timings.V_Max = Timings.V_Max_Master;
 	Timings.NMITriggerPos = 0xffff;
+	Timings.NextIRQTimer = 0x0fffffff;
+	Timings.IRQFlagChanging = IRQ_NONE;
+
 	if (Model->_5A22 == 2)
 		Timings.WRAMRefreshPos = SNES_WRAM_REFRESH_HC_v2;
 	else
@@ -261,7 +278,6 @@ static void S9xSoftResetCPU (void)
 
 	ICPU.S9xOpcodes = S9xOpcodesE1;
 	ICPU.S9xOpLengths = S9xOpLengthsM1X1;
-	ICPU.CPUExecuting = TRUE;
 
 	S9xUnpackStatus();
 }
@@ -273,16 +289,14 @@ void S9xReset (void)
 
 	memset(Memory.RAM, 0x55, 0x20000);
 	memset(Memory.VRAM, 0x00, 0x10000);
-	ZeroMemory(Memory.FillRAM, 0x8000);
+	memset(Memory.FillRAM, 0, 0x8000);
 
-	if (Settings.BS)
-		S9xResetBSX();
-
+	S9xResetBSX();
 	S9xResetCPU();
 	S9xResetPPU();
 	S9xResetDMA();
 	S9xResetAPU();
-	S9xResetMSU();
+    S9xResetMSU();
 
 	if (Settings.DSP)
 		S9xResetDSP();
@@ -310,7 +324,7 @@ void S9xSoftReset (void)
 {
 	S9xResetSaveTimer(FALSE);
 
-	ZeroMemory(Memory.FillRAM, 0x8000);
+	memset(Memory.FillRAM, 0, 0x8000);
 
 	if (Settings.BS)
 		S9xResetBSX();
@@ -319,7 +333,7 @@ void S9xSoftReset (void)
 	S9xSoftResetPPU();
 	S9xResetDMA();
 	S9xSoftResetAPU();
-	S9xResetMSU();
+    S9xResetMSU();
 
 	if (Settings.DSP)
 		S9xResetDSP();

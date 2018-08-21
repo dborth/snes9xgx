@@ -17,12 +17,19 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-                             zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2010  BearOso,
+  (c) Copyright 2009 - 2018  BearOso,
                              OV2
+
+  (c) Copyright 2017         qwertymodo
+
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -117,6 +124,9 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
+  S-SMP emulator code used in 1.54+
+  (c) Copyright 2016         byuu
+
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -130,7 +140,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2010  BearOso
+  (c) Copyright 2004 - 2018  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -138,11 +148,16 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2010  OV2
+  (c) Copyright 2009 - 2018  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2010  zones
+  (c) Copyright 2001 - 2011  zones
+
+  Libretro port
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   Specific ports contains the works of other authors. See headers in
@@ -179,6 +194,9 @@
 #define _CPUEXEC_H_
 
 #include "ppu.h"
+#ifdef DEBUGGER
+#include "debug.h"
+#endif
 
 struct SOpcodes
 {
@@ -193,7 +211,6 @@ struct SICPU
 	uint8	_Zero;
 	uint8	_Negative;
 	uint8	_Overflow;
-	bool8	CPUExecuting;
 	uint32	ShiftedPB;
 	uint32	ShiftedDB;
 	uint32	Frame;
@@ -217,8 +234,6 @@ void S9xMainLoop (void);
 void S9xReset (void);
 void S9xSoftReset (void);
 void S9xDoHEventProcessing (void);
-void S9xClearIRQ (uint32);
-void S9xSetIRQ (uint32);
 
 static inline void S9xUnpackStatus (void)
 {
@@ -268,86 +283,6 @@ static inline void S9xFixCycles (void)
 			ICPU.S9xOpLengths = S9xOpLengthsM0X0;
 		}
 	}
-}
-
-static inline void S9xReschedule (void)
-{
-	uint8	next = 0;
-	int32	hpos = 0;
-
-	switch (CPU.WhichEvent)
-	{
-		case HC_HBLANK_START_EVENT:
-		case HC_IRQ_1_3_EVENT:
-			next = HC_HDMA_START_EVENT;
-			hpos = Timings.HDMAStart;
-			break;
-
-		case HC_HDMA_START_EVENT:
-		case HC_IRQ_3_5_EVENT:
-			next = HC_HCOUNTER_MAX_EVENT;
-			hpos = Timings.H_Max;
-			break;
-
-		case HC_HCOUNTER_MAX_EVENT:
-		case HC_IRQ_5_7_EVENT:
-			next = HC_HDMA_INIT_EVENT;
-			hpos = Timings.HDMAInit;
-			break;
-
-		case HC_HDMA_INIT_EVENT:
-		case HC_IRQ_7_9_EVENT:
-			next = HC_RENDER_EVENT;
-			hpos = Timings.RenderPos;
-			break;
-
-		case HC_RENDER_EVENT:
-		case HC_IRQ_9_A_EVENT:
-			next = HC_WRAM_REFRESH_EVENT;
-			hpos = Timings.WRAMRefreshPos;
-			break;
-
-		case HC_WRAM_REFRESH_EVENT:
-		case HC_IRQ_A_1_EVENT:
-			next = HC_HBLANK_START_EVENT;
-			hpos = Timings.HBlankStart;
-			break;
-	}
-
-	if (((int32) PPU.HTimerPosition > CPU.NextEvent) && ((int32) PPU.HTimerPosition < hpos))
-	{
-		hpos = (int32) PPU.HTimerPosition;
-
-		switch (next)
-		{
-			case HC_HDMA_START_EVENT:
-				next = HC_IRQ_1_3_EVENT;
-				break;
-
-			case HC_HCOUNTER_MAX_EVENT:
-				next = HC_IRQ_3_5_EVENT;
-				break;
-
-			case HC_HDMA_INIT_EVENT:
-				next = HC_IRQ_5_7_EVENT;
-				break;
-
-			case HC_RENDER_EVENT:
-				next = HC_IRQ_7_9_EVENT;
-				break;
-
-			case HC_WRAM_REFRESH_EVENT:
-				next = HC_IRQ_9_A_EVENT;
-				break;
-
-			case HC_HBLANK_START_EVENT:
-				next = HC_IRQ_A_1_EVENT;
-				break;
-		}
-	}
-
-	CPU.NextEvent  = hpos;
-	CPU.WhichEvent = next;
 }
 
 #endif

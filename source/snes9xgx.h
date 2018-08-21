@@ -121,7 +121,7 @@ struct SGCSettings{
 	int		language;
 	int		PreviewImage;
 
-	int		sfxOverclock;
+	int		superFxSpeed;
 };
 
 void ExitApp();
