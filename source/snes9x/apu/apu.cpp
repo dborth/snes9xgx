@@ -465,12 +465,12 @@ void S9xSetSamplesAvailableCallback (apu_callback callback, void *data)
 	spc::extra_data  = data;
 }
 
-void S9xUpdateDynamicRate (int avail, int buffer_size)
+void S9xUpdateDynamicRate (double rate)
 {
-	spc::dynamic_rate_multiplier = 1.0 + (Settings.DynamicRateLimit * (buffer_size - 2 * avail)) /
-					(double)(1000 * buffer_size);
-
-	UpdatePlaybackRate();
+	if(spc::dynamic_rate_multiplier != rate) {
+		spc::dynamic_rate_multiplier = rate;
+		UpdatePlaybackRate();
+	}
 }
 
 void UpdatePlaybackRate (void)

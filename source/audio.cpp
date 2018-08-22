@@ -39,43 +39,51 @@ extern int ConfigRequested;
 static u8 soundbuffer[BUFFERCOUNT][AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
 static int playab = 0;
 static int nextab = 0;
-int available = 0;
+static int unplayed = 0;
 
-static inline void updateAvailable(int diff) {
-	available += diff;
+static inline void updateUnplayed(int diff) {
+	unplayed += diff;
 
-	if(available < 0) {
-		available = 0;
+	if(unplayed < 0) {
+		unplayed = 0;
 	}
-	else if(available > BUFFERCOUNT-1) {
-		available = BUFFERCOUNT-1;
+	else if(unplayed > BUFFERCOUNT-1) {
+		unplayed = BUFFERCOUNT-1;
 	}
 }
 
 static void DMACallback () {
 	if (!ScreenshotRequested && !ConfigRequested) {
+		updateUnplayed(-1);
 		AUDIO_InitDMA ((u32) soundbuffer[playab], AUDIOBUFFER);
-		updateAvailable(-1);
 		playab = (playab + 1) % BUFFERCOUNT;
 	}
 }
 
 static void S9xAudioCallback (void *data) {
-	//S9xUpdateDynamicRate(); // TODO: what arguments should be passed here?
+	double rate = 1.0;
+
+	if(unplayed > 8) {
+		rate = 1.005;
+	}
+	else if(unplayed < 4) {
+		rate = 0.995;
+	}
+
+	S9xUpdateDynamicRate(rate);
 	S9xFinalizeSamples();
-	int availableSamples = S9xGetSampleCount();
 
 	if (ScreenshotRequested || ConfigRequested) {
 		AUDIO_StopDMA();
 	}
-	else if(availableSamples >= SAMPLES_TO_PROCESS) {
-		nextab = (nextab + 1) % BUFFERCOUNT;
-		updateAvailable(1);
+	else if(S9xGetSampleCount() >= SAMPLES_TO_PROCESS) {
 		S9xMixSamples (soundbuffer[nextab], SAMPLES_TO_PROCESS);
 		DCFlushRange (soundbuffer[nextab], AUDIOBUFFER);
-
+		updateUnplayed(1);
+		nextab = (nextab + 1) % BUFFERCOUNT;
+		
 		if(playab == -1) {
-			if(available > 2) {
+			if(unplayed > 2) {
 				playab = 0;
 				AUDIO_StartDMA();
 			}
@@ -150,7 +158,7 @@ void ShutdownAudio()
 void
 AudioStart ()
 {
-	available = 0;
+	unplayed = 0;
 	nextab = 0;
 	playab = -1;
 }
