@@ -185,7 +185,6 @@
 #include "../msu1.h"
 #include "../snapshot.h"
 #include "../display.h"
-#include "linear_resampler.h"
 #include "hermite_resampler.h"
 
 #define APU_DEFAULT_INPUT_RATE		32040
@@ -195,7 +194,6 @@
 #define APU_DENOMINATOR_NTSC		328125
 #define APU_NUMERATOR_PAL			34176
 #define APU_DENOMINATOR_PAL			709379
-#define APU_DEFAULT_RESAMPLER		HermiteResampler
 
 SNES_SPC	*spc_core = NULL;
 
@@ -557,7 +555,7 @@ bool8 S9xInitSound (int buffer_ms, int lag_ms)
 	   arguments. Use 2x in the resampler for buffer leveling with SoundSync */
 	if (!spc::resampler)
 	{
-		spc::resampler = new APU_DEFAULT_RESAMPLER(spc::buffer_size >> (Settings.SoundSync ? 0 : 1));
+		spc::resampler = new HermiteResampler(spc::buffer_size >> (Settings.SoundSync ? 0 : 1));
 		if (!spc::resampler)
 		{
 			delete[] spc::landing_buffer;
@@ -570,7 +568,7 @@ bool8 S9xInitSound (int buffer_ms, int lag_ms)
 
 	if (!msu::resampler)
 	{
-		msu::resampler = new APU_DEFAULT_RESAMPLER(msu::buffer_size >> (Settings.SoundSync ? 0 : 1));
+		msu::resampler = new HermiteResampler(msu::buffer_size >> (Settings.SoundSync ? 0 : 1));
 		if (!msu::resampler)
 		{
 			delete[] msu::landing_buffer;
