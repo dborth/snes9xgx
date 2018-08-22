@@ -134,8 +134,52 @@ public:
 	typedef unsigned blargg_ulong;
 #endif
 
+// BOOST::int8_t etc.
+
 // HAVE_STDINT_H: If defined, use <stdint.h> for int8_t etc.
-#include <stdint.h>
+#if defined (HAVE_STDINT_H)
+	#include <stdint.h>
+	#define BOOST
+
+// HAVE_INTTYPES_H: If defined, use <stdint.h> for int8_t etc.
+#elif defined (HAVE_INTTYPES_H)
+	#include <inttypes.h>
+	#define BOOST
+
+#else
+	struct BOOST
+	{
+		#if UCHAR_MAX == 0xFF && SCHAR_MAX == 0x7F
+			typedef signed char     int8_t;
+			typedef unsigned char   uint8_t;
+		#else
+			// No suitable 8-bit type available
+			typedef struct see_blargg_common_h int8_t;
+			typedef struct see_blargg_common_h uint8_t;
+		#endif
+		
+		#if USHRT_MAX == 0xFFFF
+			typedef short           int16_t;
+			typedef unsigned short  uint16_t;
+		#else
+			// No suitable 16-bit type available
+			typedef struct see_blargg_common_h int16_t;
+			typedef struct see_blargg_common_h uint16_t;
+		#endif
+		
+		#if ULONG_MAX == 0xFFFFFFFF
+			typedef long            int32_t;
+			typedef unsigned long   uint32_t;
+		#elif UINT_MAX == 0xFFFFFFFF
+			typedef int             int32_t;
+			typedef unsigned int    uint32_t;
+		#else
+			// No suitable 32-bit type available
+			typedef struct see_blargg_common_h int32_t;
+			typedef struct see_blargg_common_h uint32_t;
+		#endif
+	};
+#endif
 
 #endif
 #endif

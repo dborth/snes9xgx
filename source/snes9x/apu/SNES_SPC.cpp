@@ -391,12 +391,15 @@ void SNES_SPC::cpu_write_smp_reg( int data, rel_time_t time, uint16_t addr )
 		cpu_write_smp_reg_( data, time, addr );
 }
 
-void SNES_SPC::cpu_write_high( int data, uint8_t i )
+void SNES_SPC::cpu_write_high( int data, int i, rel_time_t time )
 {
 	m.hi_ram [i] = (uint8_t) data;
+
 	if ( m.rom_enabled )
 		RAM [i + rom_addr] = m.rom [i]; // restore overwritten ROM
 }
+
+int const bits_in_int = CHAR_BIT * sizeof (int);
 
 void SNES_SPC::cpu_write( int data, uint16_t addr, rel_time_t time )
 {
@@ -404,9 +407,9 @@ void SNES_SPC::cpu_write( int data, uint16_t addr, rel_time_t time )
 	
 	// RAM
 	RAM [addr] = (uint8_t) data;
-	if ( addr >= 0xF0 ) // 64%
+	int reg = addr - 0xF0;
+	if ( reg >= 0 ) // 64%
 	{
-		const uint16_t reg = addr - 0xF0;
 		// $F0-$FF
 		if ( reg < reg_count ) // 87%
 		{
@@ -420,12 +423,18 @@ void SNES_SPC::cpu_write( int data, uint16_t addr, rel_time_t time )
 			#endif
 			
 			// Registers other than $F2 and $F4-$F7
-			if ( reg != 2 && (reg < 4 || reg > 7) ) // 36%
+			//if ( reg != 2 && reg != 4 && reg != 5 && reg != 6 && reg != 7 )
+			// TODO: this is a bit on the fragile side
+			if ( ((~0x2F00 << (bits_in_int - 16)) << reg) < 0 ) // 36%
 				cpu_write_smp_reg( data, time, reg );
 		}
 		// High mem/address wrap-around
-		else if ( addr >= rom_addr ) // 1% in IPL ROM area or address wrapped around
-			cpu_write_high( data, addr - rom_addr );
+		else
+		{
+			reg -= rom_addr - 0xF0;
+			if ( reg >= 0 ) // 1% in IPL ROM area or address wrapped around
+				cpu_write_high( data, reg, time );
+		}
 	}
 }
 
@@ -490,7 +499,7 @@ int SNES_SPC::cpu_read( uint16_t addr, rel_time_t time )
 
 // Prefix and suffix for CPU emulator function
 #define SPC_CPU_RUN_FUNC \
-uint8_t* SNES_SPC::run_until_( time_t end_time )\
+BOOST::uint8_t* SNES_SPC::run_until_( time_t end_time )\
 {\
 	rel_time_t rel_time = m.spc_time - end_time;\
 	/*assert( rel_time <= 0 );*/\
