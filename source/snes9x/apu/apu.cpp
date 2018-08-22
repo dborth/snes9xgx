@@ -387,27 +387,6 @@ int S9xGetSampleCount (void)
 	return (spc::resampler->avail() >> (Settings.Stereo ? 0 : 1));
 }
 
-#ifdef GEKKO
-static double new_dynamic_rate_multiplier = 1.0;
-
-void UpdatePlaybackRateWithDynamicRate() {
-	if(spc::dynamic_rate_multiplier != new_dynamic_rate_multiplier) {
-		spc::dynamic_rate_multiplier = new_dynamic_rate_multiplier;
-		UpdatePlaybackRate();
-	}
-}
-
-static inline void IncreaseDynamicRateMultiplier ()
-{
-	new_dynamic_rate_multiplier = 1.01;
-}
-
-static inline void ResetDynamicRateMultiplier ()
-{
-	new_dynamic_rate_multiplier = 1.0;
-}
-#endif
-
 void S9xFinalizeSamples (void)
 {
 	bool drop_current_msu1_samples = TRUE;
@@ -420,7 +399,6 @@ void S9xFinalizeSamples (void)
 		{
 			/* We weren't able to process the entire buffer. Potential overrun. */
 			spc::sound_in_sync = FALSE;
-			S9xClearSamples();
 
 			if (Settings.SoundSync && !Settings.TurboMode)
 				return;
@@ -451,13 +429,6 @@ void S9xFinalizeSamples (void)
 		spc::sound_in_sync = TRUE;
 	else
 		spc::sound_in_sync = FALSE;
-
-	if(spc::sound_in_sync) {
-		ResetDynamicRateMultiplier ();
-	}
-	else {
-		IncreaseDynamicRateMultiplier ();
-	}
 
 	spc_core->set_output((SNES_SPC::sample_t *) spc::landing_buffer, spc::buffer_size >> 1);
 }
@@ -492,6 +463,14 @@ void S9xSetSamplesAvailableCallback (apu_callback callback, void *data)
 {
 	spc::sa_callback = callback;
 	spc::extra_data  = data;
+}
+
+void S9xUpdateDynamicRate (int avail, int buffer_size)
+{
+	spc::dynamic_rate_multiplier = 1.0 + (Settings.DynamicRateLimit * (buffer_size - 2 * avail)) /
+					(double)(1000 * buffer_size);
+
+	UpdatePlaybackRate();
 }
 
 void UpdatePlaybackRate (void)
