@@ -82,6 +82,11 @@ static void S9xAudioCallback (void *data) {
 		updateUnplayed(1);
 		nextab = (nextab + 1) % BUFFERCOUNT;
 		
+		if(!Settings.TurboMode && ((nextab + 1) % BUFFERCOUNT) == playab) {
+		 	// quick and dirty attempt to prevent reading and writing from/to the same buffer
+			nextab = (nextab + BUFFERCOUNT/2) % BUFFERCOUNT;
+		}
+
 		if(playab == -1) {
 			if(unplayed > 2) {
 				playab = 0;
