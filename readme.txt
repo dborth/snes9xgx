@@ -33,9 +33,9 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-[4.3.9]
+[4.3.9 - August 24, 2018]
 
-* Revert core completely back to Snes9x 1.52 to fix some games
+* Revert core completely back to Snes9x 1.52
 * Rewritten audio handling
 * Fix tinny audio issue when going from the game to the menu and back
 * Fixed random in-game crashes
