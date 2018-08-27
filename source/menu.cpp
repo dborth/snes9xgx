@@ -87,9 +87,6 @@ static int mapMenuCtrlSNES = 0;
 
 static lwp_t guithread = LWP_THREAD_NULL;
 static lwp_t progressthread = LWP_THREAD_NULL;
-#ifdef HW_RVL
-static lwp_t updatethread = LWP_THREAD_NULL;
-#endif
 static bool guiHalt = true;
 static int showProgress = 0;
 
@@ -3972,13 +3969,12 @@ static int MenuSettingsNetwork()
 void
 MainMenu (int menu)
 {
-	static bool init = false;
+	static bool firstRun = true;
 	int currentMenu = menu;
 	lastMenu = MENU_NONE;
 	
-	if(!init)
+	if(firstRun)
 	{
-		init = true;
 		#ifdef HW_RVL
 		pointer[0] = new GuiImageData(player1_point_png);
 		pointer[1] = new GuiImageData(player2_point_png);
@@ -4044,14 +4040,13 @@ MainMenu (int menu)
 	if(currentMenu == MENU_GAMESELECTION)
 		ResumeGui();
 
-	// Load preferences
-	if(!LoadPrefs())
-		SavePrefs(SILENT);
+	if(firstRun) {
+		if(!LoadPrefs())
+			SavePrefs(SILENT);
+	}
 
 #ifdef HW_RVL
-	static bool checkIOS = true;
-
-	if(checkIOS)
+	if(firstRun)
 	{
 		u32 ios = IOS_GetVersion();
 
@@ -4060,20 +4055,24 @@ MainMenu (int menu)
 		else if(!SaneIOS(ios))
 			ErrorPrompt("The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected.");
 	}
-
-	checkIOS = false;
 #endif
 
 	#ifndef NO_SOUND
-	bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
-	bgMusic->SetVolume(GCSettings.MusicVolume);
-	bgMusic->SetLoop(true);
-	enterSound = new GuiSound(enter_ogg, enter_ogg_size, SOUND_OGG);
-	enterSound->SetVolume(GCSettings.SFXVolume);
-	exitSound = new GuiSound(exit_ogg, exit_ogg_size, SOUND_OGG);
-	exitSound->SetVolume(GCSettings.SFXVolume);
-	if(currentMenu == MENU_GAMESELECTION) bgMusic->Play(); // startup music
+	if(firstRun) {
+		bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
+		bgMusic->SetVolume(GCSettings.MusicVolume);
+		bgMusic->SetLoop(true);
+		enterSound = new GuiSound(enter_ogg, enter_ogg_size, SOUND_OGG);
+		enterSound->SetVolume(GCSettings.SFXVolume);
+		exitSound = new GuiSound(exit_ogg, exit_ogg_size, SOUND_OGG);
+		exitSound->SetVolume(GCSettings.SFXVolume);
+	}
+
+	if(currentMenu == MENU_GAMESELECTION)
+		bgMusic->Play(); // startup music
 	#endif
+
+	firstRun = false;
 
 	while(currentMenu != MENU_EXIT || SNESROMSize <= 0)
 	{
@@ -4138,17 +4137,6 @@ MainMenu (int menu)
 
 	CancelAction();
 	HaltGui();
-
-	#ifdef HW_RVL
-	if(updatethread != LWP_THREAD_NULL)
-		LWP_JoinThread(updatethread, NULL);
-	#endif
-
-	#ifndef NO_SOUND
-	delete bgMusic;
-	delete enterSound;
-	delete exitSound;
-	#endif
 
 	delete btnLogo;
 	delete gameScreenImg;
