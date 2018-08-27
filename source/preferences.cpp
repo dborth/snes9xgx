@@ -129,7 +129,7 @@ preparePrefsData ()
 	createXMLSetting("CheatFolder", "Cheats Folder", GCSettings.CheatFolder);
 	createXMLSetting("ScreenshotsFolder", "Screenshots Folder", GCSettings.ScreenshotsFolder);
 	createXMLSetting("CoverFolder", "Covers Folder", GCSettings.CoverFolder);
-	createXMLSetting("ArtworkFolder", "Artworks Folder", GCSettings.ArtworkFolder);
+	createXMLSetting("ArtworkFolder", "Artwork Folder", GCSettings.ArtworkFolder);
 	createXMLSetting("ImageFolder", "Image Folder", GCSettings.ImageFolder);
 	
 	createXMLSection("Network", "Network Settings");
@@ -399,7 +399,7 @@ void FixInvalidSettings()
 	if(GCSettings.Controller > CTRL_PAD4 || GCSettings.Controller < CTRL_MOUSE)
 		GCSettings.Controller = CTRL_PAD2;
 	if(!(GCSettings.render >= 0 && GCSettings.render < 5))
-		GCSettings.render = 4;
+		GCSettings.render = 3;
 	if(!(GCSettings.videomode >= 0 && GCSettings.videomode < 5))
 		GCSettings.videomode = 0;
 }
@@ -423,18 +423,18 @@ DefaultSettings ()
 	sprintf (GCSettings.CheatFolder, "%s/cheats", APPFOLDER); // Path to cheat files
 	sprintf (GCSettings.ScreenshotsFolder, "%s/screenshots", APPFOLDER); // Path to screenshot files
 	sprintf (GCSettings.CoverFolder, "%s/covers", APPFOLDER); // Path to cover files
-	sprintf (GCSettings.ArtworkFolder, "%s/artworks", APPFOLDER); // Path to artwork files
-	sprintf (GCSettings.ImageFolder, "%s/covers", APPFOLDER);
+	sprintf (GCSettings.ArtworkFolder, "%s/artwork", APPFOLDER); // Path to artwork files
+	sprintf (GCSettings.ImageFolder, "%s/screenshots", APPFOLDER);
 	GCSettings.AutoLoad = 1;
 	GCSettings.AutoSave = 1;
 
 	GCSettings.Controller = CTRL_PAD2;
 
 	GCSettings.videomode = 0; // automatic video mode detection
-	GCSettings.render = 2; // Unfiltered
+	GCSettings.render = 3; // Filtered (sharp)
 	GCSettings.FilterMethod = FILTER_NONE;	// no hq2x
 
-	GCSettings.widescreen = 0; // no aspect ratio correction
+	GCSettings.widescreen = 1; // aspect ratio correction
 	GCSettings.zoomHor = 1.0; // horizontal zoom level
 	GCSettings.zoomVert = 1.0; // vertical zoom level
 	GCSettings.xshift = 0; // horizontal video shift
@@ -690,8 +690,8 @@ bool LoadPrefs()
 	if(strcmp(GCSettings.CoverFolder, "snes9x/covers") == 0)
 		sprintf(GCSettings.CoverFolder, "snes9xgx/covers");
 	
-	if(strcmp(GCSettings.ArtworkFolder, "snes9x/artworks") == 0)
-		sprintf(GCSettings.ArtworkFolder, "snes9xgx/artworks");
+	if(strcmp(GCSettings.ArtworkFolder, "snes9x/artwork") == 0)
+		sprintf(GCSettings.ArtworkFolder, "snes9xgx/artwork");
 	
 	// attempt to create directories if they don't exist
 	if(GCSettings.LoadMethod != DEVICE_AUTO) {

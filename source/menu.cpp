@@ -3467,7 +3467,7 @@ static int MenuSettingsFile()
 	sprintf(options.name[i++], "Cheats Folder");
 	sprintf(options.name[i++], "Screenshots Folder");
 	sprintf(options.name[i++], "Covers Folder");
-	sprintf(options.name[i++], "Artworks Folder");
+	sprintf(options.name[i++], "Artwork Folder");
 	sprintf(options.name[i++], "Auto Load");
 	sprintf(options.name[i++], "Auto Save");
 	options.length = i;
@@ -3839,7 +3839,7 @@ static int MenuSettingsMenu()
 					snprintf(GCSettings.ImageFolder, MAXJOLIET, "%s", GCSettings.CoverFolder);
 					break; 
 				case 2:	
-					sprintf(options.value[6], "Artworks");
+					sprintf(options.value[6], "Artwork");
 					snprintf(GCSettings.ImageFolder, MAXJOLIET, "%s", GCSettings.ArtworkFolder);
 					break; 
 			}
