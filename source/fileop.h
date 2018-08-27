@@ -21,7 +21,7 @@
 #include <fat.h>
 #include <unistd.h>
 
-#define SAVEBUFFERSIZE (1024 * 512)
+#define SAVEBUFFERSIZE (1024 * 1024 * 2) // leave room for IPS/UPS files and large images
 
 void InitDeviceThread();
 void ResumeDeviceThread();

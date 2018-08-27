@@ -863,6 +863,18 @@ LoadFile (char * rbuffer, char *filepath, size_t length, bool silent)
 
 size_t LoadFile(char * filepath, bool silent)
 {
+	struct stat filestat;
+
+	if(stat(filepath, &filestat) != 0) {
+		return 0;
+	}
+
+	int size = filestat.st_size;
+
+	if(size >= SAVEBUFFERSIZE) {
+		return 0;
+	}
+
 	return LoadFile((char *)savebuffer, filepath, 0, silent);
 }
 
