@@ -46,7 +46,7 @@ LoadSRAM (char * filepath, bool silent)
 
 	if (size)
 	{
-		len = LoadFile((char *)Memory.SRAM, filepath, size, silent);
+		len = LoadFile((char *)Memory.SRAM, filepath, 0, 0x20000, silent);
 
 		if (len > 0)
 		{
@@ -59,7 +59,7 @@ LoadSRAM (char * filepath, bool silent)
 				filepath[pathlen-3] = 'r';
 				filepath[pathlen-2] = 't';
 				filepath[pathlen-1] = 'c';
-				LoadFile((char *)RTCData.reg, filepath, 20, silent);
+				LoadFile((char *)RTCData.reg, filepath, 0, 20, silent);
 			}
 			result = true;
 		}
