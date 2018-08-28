@@ -346,14 +346,6 @@ int FileSortCallback(const void *f1, const void *f2)
  ***************************************************************************/
 static bool IsValidROM()
 {
-	// file size should be between 32K and 8MB
-	if(browserList[browser.selIndex].length < (1024*32) ||
-		browserList[browser.selIndex].length > Memory.MAX_ROM_SIZE)
-	{
-		ErrorPrompt("Invalid file size!");
-		return false;
-	}
-
 	if (strlen(browserList[browser.selIndex].filename) > 4)
 	{
 		char * p = strrchr(browserList[browser.selIndex].filename, '.');
@@ -467,7 +459,7 @@ int WiiFileLoader()
 		if(!MakeFilePath(filepath, FILE_ROM))
 			return 0;
 
-		size = LoadFile ((char *)Memory.ROM, filepath, browserList[browser.selIndex].length, NOTSILENT);
+		size = LoadFile ((char *)Memory.ROM, filepath, 0, Memory.MAX_ROM_SIZE, NOTSILENT);
 	}
 	else
 	{
@@ -500,8 +492,6 @@ int BrowserLoadFile()
 
 	if(!FindDevice(browser.dir, &device))
 		return 0;
-
-	GetFileSize(browser.selIndex);
 
 	// check that this is a valid ROM
 	if(!IsValidROM())

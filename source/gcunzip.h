@@ -14,7 +14,7 @@
 
 int IsZipFile (char *buffer);
 char * GetFirstZipFilename();
-size_t UnZipBuffer (unsigned char *outbuffer);
+size_t UnZipBuffer (unsigned char *outbuffer, size_t buffersize);
 int SzParse(char * filepath);
 size_t SzExtractFile(int i, unsigned char *buffer);
 void SzClose();
