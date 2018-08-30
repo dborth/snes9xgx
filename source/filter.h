@@ -42,22 +42,12 @@ enum RenderFilter{
 typedef void (*TFilterMethod)(uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
 
 extern TFilterMethod FilterMethod;
-extern TFilterMethod FilterMethodHiRes;
 
 extern unsigned char * filtermem;
 
-//
-// Prototypes
-//
 void SelectFilterMethod ();
-void RenderPlain (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
-void SelectFilterMethod ();
-TFilterMethod FilterToMethod (RenderFilter filterID);
 const char* GetFilterName (RenderFilter filterID);
-bool GetFilterHiResSupport (RenderFilter filterID);
 int GetFilterScale(RenderFilter filterID);
-template<int GuiScale> void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
-template<int GuiScale> void Scanlines (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
 void InitLUTs();
 
 #endif

@@ -31,28 +31,12 @@
 static int RGBtoYUV[1<<NUMBITS];
 static uint16 RGBtoBright[1<<NUMBITS];
 
-TFilterMethod FilterMethod = RenderPlain;
-//TFilterMethod FilterMethodHiRes = RenderPlain;
+TFilterMethod FilterMethod;
 
-//
-// Functions:
-//
+template<int GuiScale> void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
+template<int GuiScale> void Scanlines (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
 
-bool
-GetFilterHiResSupport (RenderFilter filterID)
-{
-	switch(filterID)
-	{
-		case FILTER_NONE:
-			return true;
-
-		default:
-			return false;
-	}
-}
-
-const char*
-GetFilterName (RenderFilter filterID)
+const char* GetFilterName (RenderFilter filterID)
 {
 	switch(filterID)
 	{
@@ -66,17 +50,15 @@ GetFilterName (RenderFilter filterID)
 }
 
 // Return pointer to appropriate function
-TFilterMethod
-FilterToMethod (RenderFilter filterID)
+static TFilterMethod FilterToMethod (RenderFilter filterID)
 {
 	switch(filterID)
 	{
-        default:
-        case FILTER_NONE:       return RenderPlain;
         case FILTER_HQ2X:       return RenderHQ2X<FILTER_HQ2X>;
         case FILTER_HQ2XS:      return RenderHQ2X<FILTER_HQ2XS>;
         case FILTER_HQ2XBOLD:   return RenderHQ2X<FILTER_HQ2XBOLD>;
 		case FILTER_SCANLINES:  return Scanlines<FILTER_SCANLINES>;
+		default: return 0;
 	}
 }
 
@@ -86,7 +68,6 @@ int GetFilterScale(RenderFilter filterID)
 	{
 		case FILTER_NONE:
 			return 1;
-
 		default:
         case FILTER_HQ2X:
         case FILTER_HQ2XS:
@@ -96,32 +77,9 @@ int GetFilterScale(RenderFilter filterID)
 	}
 }
 
-void
-SelectFilterMethod ()
+void SelectFilterMethod ()
 {
-	//InfoPrompt((char*)"Select Filter Method.");	// debug
-
 	FilterMethod = FilterToMethod((RenderFilter)GCSettings.FilterMethod);
-	//FilterMethodHiRes = FilterToMethod((RenderFilter)GCSettings.FilterMethodHiRes);
-
-	// check whether or not we need filter memory (alloc or free it)
-}
-
-//
-// Filter Codes:
-//
-
-// No enlargement, just render to the screen
-void
-RenderPlain (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
-{
-	if (dstPtr == NULL)
-	{
-		ErrorPrompt((char*)"dstPtr is NULL. exiting!");
-		exit(1);
-	}
-	//memcpy (dstPtr, srcPtr, width*height*srcPitch);
-	return;
 }
 
 //
@@ -236,16 +194,9 @@ void InitLUTs(void)
 
 	for (c = 0 ; c < (1<<NUMBITS) ; c++)
   	{
-//#ifdef R5G6B5
 		b = (int)((c & 0x1F)) << 3;
 		g = (int)((c & 0x7E0)) >> 3;
 		r = (int)((c & 0xF800)) >> 8;
-
-//#else
-//		b = (int)((c & 0x1F)) << 3;
-//		g = (int)((c & 0x3E0)) >> 2;
-//		r = (int)((c & 0x7C00)) >> 7;
-//#endif
 
 		RGBtoBright[c] = r+r+r + g+g+g + b+b;
 
@@ -254,7 +205,6 @@ void InitLUTs(void)
 		v = (int)( 0.439216f*r - 0.367788f*g - 0.071427f*b + 0.5f) + 128;
 
 		RGBtoYUV[c] = (y << 16) + (u << 8) + v;
-
 	}
 }
 
@@ -427,7 +377,6 @@ void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
     // If Snes9x is rendering anything in HiRes, then just copy, don't interpolate
     if (height > SNES_HEIGHT_EXTENDED || width == 512)
     {
-		//RenderSimple2X (Src, Dst, rect);
         return;
     }
 
