@@ -15,7 +15,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 #include <ogcsys.h>
 #include <unistd.h>
@@ -35,6 +34,8 @@
 #include "snes9x/snes9x.h"
 #include "snes9x/memmap.h"
 #include "snes9x/controls.h"
+
+#define ANALOG_SENSITIVITY 30
 
 int rumbleRequest[4] = {0,0,0,0};
 GuiTrigger userInput[4];
@@ -324,23 +325,23 @@ static void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
 
 	// gc left joystick
 
-	if (userInput[chan].pad.stickX > SCOPEPADCAL)
+	if (userInput[chan].pad.stickX > ANALOG_SENSITIVITY)
 	{
 		pos_x += (userInput[chan].pad.stickX*1.0)/SCOPEPADCAL;
 		if (pos_x > 256) pos_x = 256;
 	}
-	if (userInput[chan].pad.stickX < -SCOPEPADCAL)
+	else if (userInput[chan].pad.stickX < -ANALOG_SENSITIVITY)
 	{
 		pos_x -= (userInput[chan].pad.stickX*-1.0)/SCOPEPADCAL;
 		if (pos_x < 0) pos_x = 0;
 	}
 
-	if (userInput[chan].pad.stickY < -SCOPEPADCAL)
+	if (userInput[chan].pad.stickY < -ANALOG_SENSITIVITY)
 	{
 		pos_y += (userInput[chan].pad.stickY*-1.0)/SCOPEPADCAL;
 		if (pos_y > 224) pos_y = 224;
 	}
-	if (userInput[chan].pad.stickY > SCOPEPADCAL)
+	else if (userInput[chan].pad.stickY > ANALOG_SENSITIVITY)
 	{
 		pos_y -= (userInput[chan].pad.stickY*1.0)/SCOPEPADCAL;
 		if (pos_y < 0) pos_y = 0;
@@ -357,23 +358,23 @@ static void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
 		s8 wm_ax = userInput[chan].WPAD_StickX(0);
 		s8 wm_ay = userInput[chan].WPAD_StickY(0);
 
-		if (wm_ax > SCOPEPADCAL)
+		if (wm_ax > ANALOG_SENSITIVITY)
 		{
 			pos_x += (wm_ax*1.0)/SCOPEPADCAL;
 			if (pos_x > 256) pos_x = 256;
 		}
-		if (wm_ax < -SCOPEPADCAL)
+		else if (wm_ax < -ANALOG_SENSITIVITY)
 		{
 			pos_x -= (wm_ax*-1.0)/SCOPEPADCAL;
 			if (pos_x < 0) pos_x = 0;
 		}
 
-		if (wm_ay < -SCOPEPADCAL)
+		if (wm_ay < -ANALOG_SENSITIVITY)
 		{
 			pos_y += (wm_ay*-1.0)/SCOPEPADCAL;
 			if (pos_y > 224) pos_y = 224;
 		}
-		if (wm_ay > SCOPEPADCAL)
+		else if (wm_ay > ANALOG_SENSITIVITY)
 		{
 			pos_y -= (wm_ay*1.0)/SCOPEPADCAL;
 			if (pos_y < 0) pos_y = 0;
@@ -392,8 +393,6 @@ static void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
 static void decodepad (int chan)
 {
 	int i, offset;
-	double angle;
-	static const double THRES = 0.38268343236508984; // cos(67.5)
 
 	s8 pad_x = userInput[chan].pad.stickX;
 	s8 pad_y = userInput[chan].pad.stickY;
@@ -413,20 +412,14 @@ static void decodepad (int chan)
 	/***
 	Gamecube Joystick input
 	***/
-	// Is XY inside the "zone"?
-	if (pad_x * pad_x + pad_y * pad_y > PADCAL * PADCAL)
-	{
-		angle = atan2(pad_y, pad_x);
- 
-		if(cos(angle) > THRES)
-			jp |= PAD_BUTTON_RIGHT;
-		else if(cos(angle) < -THRES)
-			jp |= PAD_BUTTON_LEFT;
-		if(sin(angle) > THRES)
-			jp |= PAD_BUTTON_UP;
-		else if(sin(angle) < -THRES)
-			jp |= PAD_BUTTON_DOWN;
-	}
+	if (pad_y > ANALOG_SENSITIVITY)
+		jp |= PAD_BUTTON_UP;
+	else if (pad_y < -ANALOG_SENSITIVITY)
+		jp |= PAD_BUTTON_DOWN;
+	if (pad_x < -ANALOG_SENSITIVITY)
+		jp |= PAD_BUTTON_LEFT;
+	else if (pad_x > ANALOG_SENSITIVITY)
+		jp |= PAD_BUTTON_RIGHT;
 
 	// Count as pressed if down far enough (~50% down)
 	if (userInput[chan].pad.triggerL > 0x80)
@@ -438,20 +431,14 @@ static void decodepad (int chan)
 	/***
 	Wii Joystick (classic, nunchuk) input
 	***/
-	// Is XY inside the "zone"?
-	if (wm_ax * wm_ax + wm_ay * wm_ay > PADCAL * PADCAL)
-	{
-		angle = atan2(wm_ay, wm_ax);
- 
-		if(cos(angle) > THRES)
-			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_RIGHT : WPAD_BUTTON_RIGHT;
-		else if(cos(angle) < -THRES)
-			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_LEFT : WPAD_BUTTON_LEFT;
-		if(sin(angle) > THRES)
-			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_UP : WPAD_BUTTON_UP;
-		else if(sin(angle) < -THRES)
-			wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_DOWN : WPAD_BUTTON_DOWN;
-	}
+	if (wm_ay > ANALOG_SENSITIVITY)
+		wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_UP : WPAD_BUTTON_UP;
+	else if (wm_ay < -ANALOG_SENSITIVITY)
+		wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_DOWN : WPAD_BUTTON_DOWN;
+	if (wm_ax < -ANALOG_SENSITIVITY)
+		wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_LEFT : WPAD_BUTTON_LEFT;
+	else if (wm_ax > ANALOG_SENSITIVITY)
+		wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_RIGHT : WPAD_BUTTON_RIGHT;
 #endif
 
 	/*** Fix offset to pad ***/
