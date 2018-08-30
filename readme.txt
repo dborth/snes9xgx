@@ -33,6 +33,11 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.4.0]
+
+* Improved WiiFlow integration
+* Fixed mangled image when switching between HQ2x and scanlines filters
+
 [4.3.9 - August 24, 2018]
 
 * Revert core completely back to Snes9x 1.52

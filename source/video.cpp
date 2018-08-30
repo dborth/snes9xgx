@@ -757,6 +757,7 @@ update_video (int width, int height)
 			fscale = 1;
 #endif
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
+		memset(filtermem, 0, FILTERMEM_SIZE);
 
 		/** Update scaling **/
 		if (GCSettings.render == 0)	// original render mode
