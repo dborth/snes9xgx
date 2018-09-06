@@ -16,7 +16,8 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
 * Based on Snes9x 1.52
-* Wiimote, Nunchuk, Classic, and Gamecube controller support
+* Wiimote, Nunchuk, Classic, Wii U Pro, and Gamecube controller support
+* Wii U GamePad support (requires homebrew injection into Wii U VC title)
 * SNES Superscope, Mouse, Justifier support
 * Cheat support
 * Satellaview (BS-X) support
@@ -37,6 +38,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 * Improved WiiFlow integration
 * Fixed mangled image when switching between HQ2x and scanlines filters
+* Added Wii U GamePad support (thanks Fix94!)
 
 [4.3.9 - August 24, 2018]
 

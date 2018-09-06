@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <wiiuse/wpad.h>
 
+#include "utils/wiidrc.h"
 #include "button_mapping.h"
 
 /****************************************************************************
@@ -25,7 +26,7 @@
  * and for displaying the name of said button
  ***************************************************************************/
 
-CtrlrMap ctrlr_def[5] = {
+CtrlrMap ctrlr_def[6] = {
 // Gamecube controller btn def
 {
 	CTRLR_GCPAD,
@@ -114,7 +115,7 @@ CtrlrMap ctrlr_def[5] = {
 		{WPAD_CLASSIC_BUTTON_ZR, "ZR"}
 	}
 },
-// Wii U pro controller
+// Wii U Pro controller
 {
 	CTRLR_WUPC,
 	15,
@@ -134,6 +135,28 @@ CtrlrMap ctrlr_def[5] = {
 		{WPAD_CLASSIC_BUTTON_FULL_R, "R"},
 		{WPAD_CLASSIC_BUTTON_ZL, "ZL"},
 		{WPAD_CLASSIC_BUTTON_ZR, "ZR"}
+	}
+},
+// Wii U Gamepad btn def
+{
+	CTRLR_WIIDRC,
+	15,
+	{
+		{WIIDRC_BUTTON_DOWN, "DOWN"},
+		{WIIDRC_BUTTON_UP, "UP"},
+		{WIIDRC_BUTTON_LEFT, "LEFT"},
+		{WIIDRC_BUTTON_RIGHT, "RIGHT"},
+		{WIIDRC_BUTTON_A, "A"},
+		{WIIDRC_BUTTON_B, "B"},
+		{WIIDRC_BUTTON_X, "X"},
+		{WIIDRC_BUTTON_Y, "Y"},
+		{WIIDRC_BUTTON_PLUS, "PLUS"},
+		{WIIDRC_BUTTON_MINUS, "MINUS"},
+		{WIIDRC_BUTTON_HOME, "HOME"},
+		{WIIDRC_BUTTON_L, "L"},
+		{WIIDRC_BUTTON_R, "R"},
+		{WIIDRC_BUTTON_ZL, "ZL"},
+		{WIIDRC_BUTTON_ZR, "ZR"}
 	}
 }
 };

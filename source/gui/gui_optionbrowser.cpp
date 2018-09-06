@@ -25,9 +25,9 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
-	trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A);
+	trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A, WIIDRC_BUTTON_A);
 	trig2 = new GuiTrigger;
-	trig2->SetSimpleTrigger(-1, WPAD_BUTTON_2, 0);
+	trig2->SetSimpleTrigger(-1, WPAD_BUTTON_2, 0, 0);
 
 	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND_PCM);

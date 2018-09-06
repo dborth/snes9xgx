@@ -60,7 +60,7 @@ static int cursor_y[5] = {0,0,0,0,0};
 	  S9xMapButton( keycode, cmd = S9xGetCommandT(snescmd), false)
 
 static int scopeTurbo = 0; // tracks whether superscope turbo is on or off
-u32 btnmap[4][5][12]; // button mapping
+u32 btnmap[4][6][12]; // button mapping
 
 void ResetControls(int consoleCtrl, int wiiCtrl)
 {
@@ -135,6 +135,24 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 		btnmap[CTRL_PAD][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_DOWN;
 		btnmap[CTRL_PAD][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_LEFT;
 		btnmap[CTRL_PAD][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_RIGHT;
+	}
+
+	/*** Wii U Gamepad Padmap ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == CTRLR_WIIDRC))
+	{
+		i=0;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_A;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_B;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_X;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_Y;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_L;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_R;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_PLUS;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_MINUS;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_UP;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_DOWN;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_LEFT;
+		btnmap[CTRL_PAD][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_RIGHT;
 	}
 		
 	/*** Nunchuk + wiimote Padmap ***/
@@ -224,6 +242,7 @@ void
 UpdatePads()
 {
 	#ifdef HW_RVL
+	WiiDRC_ScanPads();
 	WPAD_ScanPads();
 	#endif
 
@@ -407,6 +426,10 @@ static void decodepad (int chan)
 	u32 exp_type;
 	if ( WPAD_Probe(chan, &exp_type) != 0 )
 		exp_type = WPAD_EXP_NONE;
+
+	s16 wiidrc_ax = userInput[chan].wiidrcdata.stickX;
+	s16 wiidrc_ay = userInput[chan].wiidrcdata.stickY;
+	u32 wiidrcp = userInput[chan].wiidrcdata.btns_h;
 #endif
 
 	/***
@@ -439,6 +462,16 @@ static void decodepad (int chan)
 		wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_LEFT : WPAD_BUTTON_LEFT;
 	else if (wm_ax > ANALOG_SENSITIVITY)
 		wp |= (exp_type == WPAD_EXP_CLASSIC) ? WPAD_CLASSIC_BUTTON_RIGHT : WPAD_BUTTON_RIGHT;
+
+	/* Wii U Gamepad */
+	if (wiidrc_ay > ANALOG_SENSITIVITY)
+		wiidrcp |= WIIDRC_BUTTON_UP;
+	else if (wiidrc_ay < -ANALOG_SENSITIVITY)
+		wiidrcp |= WIIDRC_BUTTON_DOWN;
+	if (wiidrc_ax < -ANALOG_SENSITIVITY)
+		wiidrcp |= WIIDRC_BUTTON_LEFT;
+	else if (wiidrc_ax > ANALOG_SENSITIVITY)
+		wiidrcp |= WIIDRC_BUTTON_RIGHT;
 #endif
 
 	/*** Fix offset to pad ***/
@@ -453,6 +486,7 @@ static void decodepad (int chan)
 		|| ( (exp_type == WPAD_EXP_CLASSIC && !isWUPC) && (wp & btnmap[CTRL_PAD][CTRLR_CLASSIC][i]) )	// classic controller
 		|| ( (exp_type == WPAD_EXP_CLASSIC && isWUPC) && (wp & btnmap[CTRL_PAD][CTRLR_WUPC][i]) )	// wii u pro controller
 		|| ( (exp_type == WPAD_EXP_NUNCHUK) && (wp & btnmap[CTRL_PAD][CTRLR_NUNCHUK][i]) )	// nunchuk + wiimote
+		|| ( (wiidrcp & btnmap[CTRL_PAD][CTRLR_WIIDRC][i]) ) // Wii U Gamepad
 #endif
 		)
 			S9xReportButton (offset + i, true);
@@ -559,7 +593,8 @@ bool MenuRequested()
 			(userInput[i].pad.substickX < -70)
 			#ifdef HW_RVL
 			|| (userInput[i].wpad->btns_h & WPAD_BUTTON_HOME) ||
-			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME)
+			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME) ||
+			(userInput[i].wiidrcdata.btns_h & WIIDRC_BUTTON_HOME)
 			#endif
 		)
 		{
@@ -583,7 +618,8 @@ void ReportButtons ()
 
 	Settings.TurboMode = (
 		userInput[0].pad.substickX > 70 ||
-		userInput[0].WPAD_StickX(1) > 70
+		userInput[0].WPAD_StickX(1) > 70 ||
+		userInput[0].wiidrcdata.substickX > 45
 	);	// RIGHT on c-stick and on classic controller right joystick
 
 	if(Settings.TurboMode) {

@@ -22,6 +22,7 @@ static u32 delay[4];
 GuiTrigger::GuiTrigger()
 {
 	chan = -1;
+	memset(&wiidrcdata, 0, sizeof(GamePadData));
 	memset(&wpaddata, 0, sizeof(WPADData));
 	memset(&pad, 0, sizeof(PADData));
 	wpad = &wpaddata;
@@ -39,10 +40,11 @@ GuiTrigger::~GuiTrigger()
  * - Element is selected
  * - Trigger button is pressed
  */
-void GuiTrigger::SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
+void GuiTrigger::SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
 	type = TRIGGER_SIMPLE;
 	chan = ch;
+	wiidrcdata.btns_d = wiidrcbtns;
 	wpaddata.btns_d = wiibtns;
 	pad.btns_d = gcbtns;
 }
@@ -52,10 +54,11 @@ void GuiTrigger::SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
  * - Element is selected
  * - Trigger button is pressed and held
  */
-void GuiTrigger::SetHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
+void GuiTrigger::SetHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
 	type = TRIGGER_HELD;
 	chan = ch;
+	wiidrcdata.btns_h = wiidrcbtns;
 	wpaddata.btns_h = wiibtns;
 	pad.btns_h = gcbtns;
 }
@@ -64,10 +67,11 @@ void GuiTrigger::SetHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
  * Sets a button trigger. Requires:
  * - Trigger button is pressed
  */
-void GuiTrigger::SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
+void GuiTrigger::SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
 	type = TRIGGER_BUTTON_ONLY;
 	chan = ch;
+	wiidrcdata.btns_d = wiidrcbtns;
 	wpaddata.btns_d = wiibtns;
 	pad.btns_d = gcbtns;
 }
@@ -77,10 +81,11 @@ void GuiTrigger::SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
  * - Trigger button is pressed
  * - Parent window is in focus
  */
-void GuiTrigger::SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns)
+void GuiTrigger::SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
 	type = TRIGGER_BUTTON_ONLY_IN_FOCUS;
 	chan = ch;
+	wiidrcdata.btns_d = wiidrcbtns;
 	wpaddata.btns_d = wiibtns;
 	pad.btns_d = gcbtns;
 }
@@ -159,11 +164,14 @@ bool GuiTrigger::Left()
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_UP : WPAD_BUTTON_LEFT;
 
 	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
+			|| (wiidrcdata.btns_d | wiidrcdata.btns_h) & WIIDRC_BUTTON_LEFT
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_LEFT
 			|| pad.stickX < -PADCAL
-			|| WPAD_StickX(0) < -PADCAL)
+			|| WPAD_StickX(0) < -PADCAL
+			|| wiidrcdata.stickX < -WIIDRCCAL)
 	{
 		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
+			|| wiidrcdata.btns_d & WIIDRC_BUTTON_LEFT
 			|| pad.btns_d & PAD_BUTTON_LEFT)
 		{
 			prev[chan] = gettime();
@@ -192,11 +200,14 @@ bool GuiTrigger::Right()
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_DOWN : WPAD_BUTTON_RIGHT;
 
 	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
+			|| (wiidrcdata.btns_d | wiidrcdata.btns_h) & WIIDRC_BUTTON_RIGHT
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_RIGHT
 			|| pad.stickX > PADCAL
-			|| WPAD_StickX(0) > PADCAL)
+			|| WPAD_StickX(0) > PADCAL
+			|| wiidrcdata.stickX > WIIDRCCAL)
 	{
 		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
+			|| wiidrcdata.btns_d & WIIDRC_BUTTON_RIGHT
 			|| pad.btns_d & PAD_BUTTON_RIGHT)
 		{
 			prev[chan] = gettime();
@@ -225,11 +236,14 @@ bool GuiTrigger::Up()
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_RIGHT : WPAD_BUTTON_UP;
 
 	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
+			|| (wiidrcdata.btns_d | wiidrcdata.btns_h) & WIIDRC_BUTTON_UP
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_UP
 			|| pad.stickY > PADCAL
-			|| WPAD_StickY(0) > PADCAL)
+			|| WPAD_StickY(0) > PADCAL
+			|| wiidrcdata.stickY > WIIDRCCAL)
 	{
 		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
+			|| wiidrcdata.btns_d & WIIDRC_BUTTON_UP
 			|| pad.btns_d & PAD_BUTTON_UP)
 		{
 			prev[chan] = gettime();
@@ -258,11 +272,14 @@ bool GuiTrigger::Down()
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_LEFT : WPAD_BUTTON_DOWN;
 
 	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
+			|| (wiidrcdata.btns_d | wiidrcdata.btns_h) & WIIDRC_BUTTON_DOWN
 			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_DOWN
 			|| pad.stickY < -PADCAL
-			|| WPAD_StickY(0) < -PADCAL)
+			|| WPAD_StickY(0) < -PADCAL
+			|| wiidrcdata.stickY < -WIIDRCCAL)
 	{
 		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
+			|| wiidrcdata.btns_d & WIIDRC_BUTTON_DOWN
 			|| pad.btns_d & PAD_BUTTON_DOWN)
 		{
 			prev[chan] = gettime();

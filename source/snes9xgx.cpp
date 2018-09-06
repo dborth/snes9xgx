@@ -43,6 +43,7 @@
 #include "filebrowser.h"
 #include "input.h"
 #include "mem2.h"
+#include "utils/wiidrc.h"
 #include "utils/FreeTypeGX.h"
 
 #include "snes9x/snes9x.h"
@@ -421,6 +422,7 @@ int main(int argc, char *argv[])
 	SYS_SetPowerCallback(ShutdownCB);
 	SYS_SetResetCallback(ResetCB);
 	
+	WiiDRC_Init();
 	WPAD_Init();
 	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
 	DI_Init();
