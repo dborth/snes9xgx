@@ -3244,6 +3244,13 @@ void CMemory::Map_SPC7110HiROMMap (void)
 	map_hirom_offset(0xc0, 0xcf, 0x0000, 0xffff, CalculatedSize, 0);
 	map_index(0xd0, 0xff, 0x0000, 0xffff, MAP_SPC7110_ROM,  MAP_TYPE_ROM);
 
+	// For Tengai Makyou (English) 
+	//if (ROMCRC32 == 0xE589FB4)
+	if (strncmp((char*)&Memory.ROM [0xffc0], "HU TENGAI MAKYO ZERO ", 21) == 0 && CalculatedSize > 5242880)
+	{
+		map_hirom_offset(0x40, 0x4f, 0x0000, 0xffff, CalculatedSize, 0x600000);
+	}
+
 	map_WRAM();
 
 	map_WriteProtectROM();
