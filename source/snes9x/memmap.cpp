@@ -3542,6 +3542,8 @@ void CMemory::ApplyROMFixes (void)
 	{
 		if (match_id("AVCJ"))                                      // Rendering Ranger R2
 			Timings.APUSpeedup = 4;
+		if (match_id("AANJ"))                                      // Chou Aniki
+			Timings.APUSpeedup = 1;
 
 		if (match_na("GAIA GENSOUKI 1 JPN")                     || // Gaia Gensouki
 			match_id("JG  ")                                    || // Illusion of Gaia
