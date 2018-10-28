@@ -39,6 +39,8 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 * Improved WiiFlow integration
 * Fixed mangled image when switching between HQ2x and scanlines filters
 * Added Wii U GamePad support (thanks Fix94!)
+* Fixed black screen Tengai Makyou Zero
+* Fixed black screen Chou Aniki
 
 [4.3.9 - August 24, 2018]
 
