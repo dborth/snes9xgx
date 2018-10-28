@@ -19,8 +19,8 @@ TARGET		:=	snes9xgx-gc
 TARGETDIR   :=  executables
 BUILD		:=	build_gc
 SOURCES		:=	source source/images source/sounds source/fonts source/lang \
-				source/gui source/utils source/utils/sz \
-				source/snes9x source/snes9x/apu source/utils/vm
+				source/gui source/utils source/utils/sz source/utils/vm \
+				source/snes9x source/snes9x/apu
 INCLUDES	:=	source source/snes9x
 
 #---------------------------------------------------------------------------------

@@ -54,6 +54,8 @@ bool inSz = false;
 unsigned long SNESROMSize = 0;
 bool loadingFile = false;
 
+extern bool isBSX();
+
 /****************************************************************************
 * autoLoadMethod()
 * Auto-determines and sets the load device
@@ -449,6 +451,8 @@ int BrowserLoadSz()
 	return szfiles;
 }
 
+static bool bsxBiosLoadFailed;
+
 int WiiFileLoader()
 {
 	size_t size;
@@ -480,7 +484,16 @@ int WiiFileLoader()
 	if(size <= 0)
 		return 0;
 
-	SNESROMSize = Memory.HeaderRemove(size, Memory.HeaderCount, Memory.ROM);
+	SNESROMSize = Memory.HeaderRemove(size, Memory.ROM);
+	bsxBiosLoadFailed = false;
+
+	if(isBSX()) {
+		sprintf (filepath, "%s%s/BS-X.bin", pathPrefix[GCSettings.LoadMethod], APPFOLDER);
+		if(LoadFile ((char *)Memory.BIOSROM, filepath, 0, Memory.MAX_ROM_SIZE,  SILENT) == 0) {
+			bsxBiosLoadFailed = true;
+		}
+	}
+
 	return SNESROMSize;
 }
 
@@ -510,9 +523,12 @@ int BrowserLoadFile()
 	S9xDeleteCheats();
 	Memory.LoadROM("ROM");
 
-	if (SNESROMSize <= 0)
+	if (SNESROMSize == 0)
 	{
 		ErrorPrompt("Error loading game!");
+	}
+	else if(bsxBiosLoadFailed) {
+		ErrorPrompt("BS-X BIOS file not found!");
 	}
 	else
 	{
@@ -663,13 +679,11 @@ OpenGameList ()
 
 bool AutoloadGame(char* filepath, char* filename) {
 	ResetBrowser();
-
 	selectLoadedFile = 1;
 	std::string dir(filepath);
 	dir.assign(&dir[dir.find_last_of(":") + 2]);
 	strncpy(GCSettings.LoadFolder, dir.c_str(), sizeof(GCSettings.LoadFolder));
 	OpenGameList();
-
 	for(int i = 0; i < browser.numEntries; i++) {
 		// Skip it
 		if (strcmp(browserList[i].filename, ".") == 0 || strcmp(browserList[i].filename, "..") == 0) {

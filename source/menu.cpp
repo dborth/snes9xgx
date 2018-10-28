@@ -44,6 +44,7 @@
 #include "snes9x/cheats.h"
 
 extern SCheatData Cheat;
+extern void ToggleCheat(uint32);
 
 #define THREAD_SLEEP 100
 
@@ -2046,10 +2047,13 @@ static int MenuGameSettings()
 		else if(cheatsBtn.GetState() == STATE_CLICKED)
 		{
 			cheatsBtn.ResetState();
-			if(Cheat.num_cheats > 0)
+
+			if(Cheat.g.size() > 0) {
 				menu = MENU_GAMESETTINGS_CHEATS;
-			else
+			}
+			else {
 				InfoPrompt("Cheats file not found!");
+			}
 		}
 		else if(screenshotBtn.GetState() == STATE_CLICKED)
 		{
@@ -2099,10 +2103,10 @@ static int MenuGameCheats()
 	u16 i = 0;
 	OptionList options;
 
-	for(i=0; i < Cheat.num_cheats; i++)
+	for(i=0; i < Cheat.g.size(); i++)
 	{
-		sprintf (options.name[i], "%s", Cheat.c[i].name);
-		sprintf (options.value[i], "%s", Cheat.c[i].enabled == true ? "On" : "Off");
+		sprintf (options.name[i], "%s", Cheat.g[i].name);
+		sprintf (options.value[i], "%s", Cheat.g[i].enabled == true ? "On" : "Off");
 	}
 
 	options.length = i;
@@ -2151,11 +2155,8 @@ static int MenuGameCheats()
 
 		if(ret >= 0)
 		{
-			if(Cheat.c[ret].enabled)
-				S9xDisableCheat(ret);
-			else
-				S9xEnableCheat(ret);
-			sprintf (options.value[ret], "%s", Cheat.c[ret].enabled == true ? "On" : "Off");
+			ToggleCheat(ret);
+			sprintf (options.value[ret], "%s", Cheat.g[ret].enabled == true ? "On" : "Off");
 			optionBrowser.TriggerUpdate();
 		}
 
@@ -2408,6 +2409,7 @@ static int MenuSettingsMappingsController()
 	drcBtn.SetTrigger(trigA);
 	drcBtn.SetTrigger(trig2);
 	drcBtn.SetEffectGrow();
+
 
 	GuiText classicBtnTxt("Classic Controller", 22, (GXColor){0, 0, 0, 255});
 	classicBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-30);
@@ -3146,6 +3148,7 @@ static int MenuSettingsVideo()
 	int ret;
 	int i = 0;
 	bool firstRun = true;
+	bool reset_sfx = false;
 	OptionList options;
 
 	sprintf(options.name[i++], "Rendering");
@@ -3250,18 +3253,17 @@ static int MenuSettingsVideo()
 				break;
 			case 8:
 				GCSettings.sfxOverclock++;
-				if (GCSettings.sfxOverclock > 2) {
+				if (GCSettings.sfxOverclock > 2)
 					GCSettings.sfxOverclock = 0;
-				}
 				switch(GCSettings.sfxOverclock)
 				{
-					case 0: Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6; break;
-					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
-					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
+					case 0: Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6; reset_sfx = true; break;
+					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; reset_sfx = true; break;
+					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; reset_sfx = true; break;			
 				}
-				S9xResetSuperFX();
+				if (reset_sfx) S9xResetSuperFX();
 				S9xReset();
-				break;
+			break;
 		}
 
 		if(ret >= 0 || firstRun)
@@ -3317,6 +3319,7 @@ static int MenuSettingsVideo()
 				case 2:
 					sprintf (options.value[8], "60 Mhz"); break;
 			}
+
 			optionBrowser.TriggerUpdate();
 		}
 
@@ -4104,6 +4107,7 @@ MainMenu (int menu)
 		else if(!SaneIOS(ios))
 			ErrorPrompt("The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected.");
 	}
+
 #endif
 
 	#ifndef NO_SOUND
@@ -4116,7 +4120,6 @@ MainMenu (int menu)
 		exitSound = new GuiSound(exit_ogg, exit_ogg_size, SOUND_OGG);
 		exitSound->SetVolume(GCSettings.SFXVolume);
 	}
-
 	if(currentMenu == MENU_GAMESELECTION)
 		bgMusic->Play(); // startup music
 	#endif

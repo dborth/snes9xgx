@@ -231,6 +231,16 @@ static void loadXMLSetting(float * var, const char * name)
 			*var = atof(tmp);
 	}
 }
+static void loadXMLSetting(uint32 * var, const char * name)
+{
+	item = mxmlFindElement(xml, xml, "setting", "name", name, MXML_DESCEND);
+	if(item)
+	{
+		const char * tmp = mxmlElementGetAttr(item, "value");
+		if(tmp)
+			*var = atoi(tmp);
+	}
+}
 
 /****************************************************************************
  * loadXMLController
@@ -433,7 +443,7 @@ DefaultSettings ()
 	GCSettings.Controller = CTRL_PAD2;
 
 	GCSettings.videomode = 0; // automatic video mode detection
-	GCSettings.render = 3; // Filtered (sharp)
+	GCSettings.render = 3; // Filtered (Sharp)
 	GCSettings.FilterMethod = FILTER_NONE;	// no hq2x
 
 	GCSettings.widescreen = 1; // aspect ratio correction
@@ -493,6 +503,7 @@ DefaultSettings ()
 	// Graphics
 	Settings.Transparency = true;
 	Settings.SupportHiRes = true;
+	Settings.MaxSpriteTilesPerLine = 34;
 	Settings.SkipFrames = AUTO_FRAMERATE;
 	Settings.TurboSkipFrames = 19;
 	Settings.DisplayFrameRate = false;
@@ -502,11 +513,16 @@ DefaultSettings ()
 	// Frame timings in 50hz and 60hz cpu mode
 	Settings.FrameTimePAL = 20000;
 	Settings.FrameTimeNTSC = 16667;
-
+	
 	GCSettings.sfxOverclock = 0;
 	/* Initialize SuperFX CPU to normal speed by default */
 	Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6;
 
+	Settings.SuperFXClockMultiplier = 100;
+    
+	Settings.OneClockCycle = 6;
+    Settings.OneSlowClockCycle = 8;
+    Settings.TwoClockCycles = 12;
 }
 
 /****************************************************************************

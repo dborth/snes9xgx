@@ -17,12 +17,19 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-                             zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2010  BearOso,
+  (c) Copyright 2009 - 2018  BearOso,
                              OV2
+
+  (c) Copyright 2017         qwertymodo
+
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -117,6 +124,9 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
+  S-SMP emulator code used in 1.54+
+  (c) Copyright 2016         byuu
+
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -130,7 +140,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2010  BearOso
+  (c) Copyright 2004 - 2018  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -138,11 +148,16 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2010  OV2
+  (c) Copyright 2009 - 2018  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2010  zones
+  (c) Copyright 2001 - 2011  zones
+
+  Libretro port
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   Specific ports contains the works of other authors. See headers in
@@ -188,8 +203,6 @@
 #include "bsx.h"
 #include "msu1.h"
 
-#if (S9X_ACCURACY_LEVEL >= 2)
-
 #define addCyclesInMemoryAccess \
 	if (!CPU.InDMAorHDMA) \
 	{ \
@@ -205,18 +218,6 @@
 		while (CPU.Cycles >= CPU.NextEvent) \
 			S9xDoHEventProcessing(); \
 	}
-
-#else
-
-#define addCyclesInMemoryAccess \
-	if (!CPU.InDMAorHDMA) \
-		CPU.Cycles += speed;
-
-#define addCyclesInMemoryAccess_x2 \
-	if (!CPU.InDMAorHDMA) \
-		CPU.Cycles += speed << 1;
-
-#endif
 
 extern uint8	OpenBus;
 
@@ -248,10 +249,6 @@ inline uint8 S9xGetByte (uint32 Address)
 
 	if (GetAddress >= (uint8 *) CMemory::MAP_LAST)
 	{
-	#ifdef CPU_SHUTDOWN
-		if (Memory.BlockIsRAM[block])
-			CPU.WaitAddress = CPU.PBPCAtOpcodeStart;
-	#endif
 		byte = *(GetAddress + (Address & 0xffff));
 		addCyclesInMemoryAccess;
 		return (byte);
@@ -348,42 +345,39 @@ inline uint8 S9xGetByte (uint32 Address)
 
 inline uint16 S9xGetWord (uint32 Address, enum s9xwrap_t w = WRAP_NONE)
 {
+	uint16	word;
+
 	uint32	mask = MEMMAP_MASK & (w == WRAP_PAGE ? 0xff : (w == WRAP_BANK ? 0xffff : 0xffffff));
 	if ((Address & mask) == mask)
 	{
 		PC_t	a;
 
-		OpenBus = S9xGetByte(Address);
+		word = OpenBus = S9xGetByte(Address);
 
 		switch (w)
 		{
 			case WRAP_PAGE:
 				a.xPBPC = Address;
 				a.B.xPCl++;
-				return (OpenBus | (S9xGetByte(a.xPBPC) << 8));
+				return (word | (S9xGetByte(a.xPBPC) << 8));
 
 			case WRAP_BANK:
 				a.xPBPC = Address;
 				a.W.xPC++;
-				return (OpenBus | (S9xGetByte(a.xPBPC) << 8));
+				return (word | (S9xGetByte(a.xPBPC) << 8));
 
 			case WRAP_NONE:
 			default:
-				return (OpenBus | (S9xGetByte(Address + 1) << 8));
+				return (word | (S9xGetByte(Address + 1) << 8));
 		}
 	}
 
 	int		block = (Address & 0xffffff) >> MEMMAP_SHIFT;
 	uint8	*GetAddress = Memory.Map[block];
 	int32	speed = memory_speed(Address);
-	uint16	word;
 
 	if (GetAddress >= (uint8 *) CMemory::MAP_LAST)
 	{
-	#ifdef CPU_SHUTDOWN
-		if (Memory.BlockIsRAM[block])
-			CPU.WaitAddress = CPU.PBPCAtOpcodeStart;
-	#endif
 		word = READ_WORD(GetAddress + (Address & 0xffff));
 		addCyclesInMemoryAccess_x2;
 		return (word);
@@ -401,8 +395,8 @@ inline uint16 S9xGetWord (uint32 Address, enum s9xwrap_t w = WRAP_NONE)
 		case CMemory::MAP_PPU:
 			if (CPU.InDMAorHDMA)
 			{
-				OpenBus = S9xGetByte(Address);
-				return (OpenBus | (S9xGetByte(Address + 1) << 8));
+				word = OpenBus = S9xGetByte(Address);
+				return (word | (S9xGetByte(Address + 1) << 8));
 			}
 
 			word  = S9xGetPPU(Address & 0xffff);
@@ -511,33 +505,14 @@ inline uint16 S9xGetWord (uint32 Address, enum s9xwrap_t w = WRAP_NONE)
 
 inline void S9xSetByte (uint8 Byte, uint32 Address)
 {
-#ifdef CPU_SHUTDOWN
-	CPU.WaitAddress = 0xffffffff;
-#endif
-
 	int		block = (Address & 0xffffff) >> MEMMAP_SHIFT;
 	uint8	*SetAddress = Memory.WriteMap[block];
 	int32	speed = memory_speed(Address);
 
 	if (SetAddress >= (uint8 *) CMemory::MAP_LAST)
 	{
-	#ifdef CPU_SHUTDOWN
-		SetAddress += (Address & 0xffff);
-		*SetAddress = Byte;
-		addCyclesInMemoryAccess;
-
-		if (Settings.SA1)
-		{
-			if (SetAddress == SA1.WaitByteAddress1 || SetAddress == SA1.WaitByteAddress2)
-			{
-				SA1.Executing = SA1.S9xOpcodes != NULL;
-				SA1.WaitCounter = 0;
-			}
-		}
-	#else
 		*(SetAddress + (Address & 0xffff)) = Byte;
 		addCyclesInMemoryAccess;
-	#endif
 		return;
 	}
 
@@ -594,7 +569,6 @@ inline void S9xSetByte (uint8 Byte, uint32 Address)
 
 		case CMemory::MAP_SA1RAM:
 			*(Memory.SRAM + (Address & 0xffff)) = Byte;
-			SA1.Executing = !SA1.Waiting;
 			addCyclesInMemoryAccess;
 			return;
 
@@ -671,33 +645,14 @@ inline void S9xSetWord (uint16 Word, uint32 Address, enum s9xwrap_t w = WRAP_NON
 		return;
 	}
 
-#ifdef CPU_SHUTDOWN
-	CPU.WaitAddress = 0xffffffff;
-#endif
-
 	int		block = (Address & 0xffffff) >> MEMMAP_SHIFT;
 	uint8	*SetAddress = Memory.WriteMap[block];
 	int32	speed = memory_speed(Address);
 
 	if (SetAddress >= (uint8 *) CMemory::MAP_LAST)
 	{
-	#ifdef CPU_SHUTDOWN
-		SetAddress += (Address & 0xffff);
-		WRITE_WORD(SetAddress, Word);
-		addCyclesInMemoryAccess_x2;
-
-		if (Settings.SA1)
-		{
-			if (SetAddress == SA1.WaitByteAddress1 || SetAddress == SA1.WaitByteAddress2)
-			{
-				SA1.Executing = SA1.S9xOpcodes != NULL;
-				SA1.WaitCounter = 0;
-			}
-		}
-	#else
 		WRITE_WORD(SetAddress + (Address & 0xffff), Word);
 		addCyclesInMemoryAccess_x2;
-	#endif
 		return;
 	}
 
@@ -807,7 +762,6 @@ inline void S9xSetWord (uint16 Word, uint32 Address, enum s9xwrap_t w = WRAP_NON
 
 		case CMemory::MAP_SA1RAM:
 			WRITE_WORD(Memory.SRAM + (Address & 0xffff), Word);
-			SA1.Executing = !SA1.Waiting;
 			addCyclesInMemoryAccess_x2;
 			return;
 
@@ -931,8 +885,7 @@ inline void S9xSetPCBase (uint32 Address)
 	Registers.PBPC = Address & 0xffffff;
 	ICPU.ShiftedPB = Address & 0xff0000;
 
-	int		block;
-	uint8	*GetAddress = Memory.Map[block = ((Address & 0xffffff) >> MEMMAP_SHIFT)];
+	uint8	*GetAddress = Memory.Map[(int)((Address & 0xffffff) >> MEMMAP_SHIFT)];
 
 	CPU.MemSpeed = memory_speed(Address);
 	CPU.MemSpeedx2 = CPU.MemSpeed << 1;

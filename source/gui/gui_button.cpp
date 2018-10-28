@@ -156,7 +156,7 @@ void GuiButton::Draw()
 			label[0]->Draw();
 			
 		if(labelOver[1])
-			labelOver[1]->Draw();
+			labelOver[1]->Draw();	
 		else if(label[1])
 			label[1]->Draw();
 			

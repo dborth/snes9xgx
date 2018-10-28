@@ -22,7 +22,7 @@
 #include "filter.h"
 #include "video.h"
 #include "snes9xgx.h"
-#include "snes9x/memmap.h"
+#include "memmap.h"
 
 #include "menu.h"
 
