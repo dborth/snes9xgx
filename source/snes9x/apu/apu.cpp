@@ -187,7 +187,7 @@
 #include "../display.h"
 #include "hermite_resampler.h"
 
-#define APU_DEFAULT_INPUT_RATE		32040
+#define APU_DEFAULT_INPUT_RATE		31950 // ~ 59.94Hz
 #define APU_MINIMUM_SAMPLE_COUNT	512
 #define APU_MINIMUM_SAMPLE_BLOCK	128
 #define APU_NUMERATOR_NTSC			15664
