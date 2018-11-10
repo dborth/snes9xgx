@@ -50,6 +50,7 @@ static inline void updateUnplayed(int diff) {
 	else if(unplayed > BUFFERCOUNT-1) {
 		unplayed = BUFFERCOUNT-1;
 	}
+
 }
 
 static void DMACallback () {
@@ -62,17 +63,15 @@ static void DMACallback () {
 
 static void S9xAudioCallback (void *data) {
 	double rate = 1.0;
-
 	if(unplayed > 8) {
 		rate = 1.005;
 	}
 	else if(unplayed < 4) {
 		rate = 0.995;
 	}
-
 	S9xUpdateDynamicRate(rate);
 	S9xFinalizeSamples();
-
+	
 	if (ScreenshotRequested || ConfigRequested) {
 		AUDIO_StopDMA();
 	}
@@ -86,6 +85,7 @@ static void S9xAudioCallback (void *data) {
 		 	// quick and dirty attempt to prevent reading and writing from/to the same buffer
 			nextab = (nextab + BUFFERCOUNT/2) % BUFFERCOUNT;
 		}
+
 
 		if(playab == -1) {
 			if(unplayed > 2) {

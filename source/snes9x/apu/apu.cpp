@@ -180,11 +180,11 @@
 
 
 #include <math.h>
-#include "../snes9x.h"
+#include "snes9x.h"
 #include "apu.h"
-#include "../msu1.h"
-#include "../snapshot.h"
-#include "../display.h"
+#include "msu1.h"
+#include "snapshot.h"
+#include "display.h"
 #include "hermite_resampler.h"
 
 #define APU_DEFAULT_INPUT_RATE		32040

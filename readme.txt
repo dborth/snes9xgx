@@ -39,6 +39,10 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 * Improved WiiFlow integration
 * Fixed mangled image when switching between HQ2x and scanlines filters
 * Added Wii U GamePad support (thanks Fix94!)
+* Updated core to 1.57
+* Get SuperFX Overclock working with core 1.57
+* Get APU Hacks working with core 1.57 to fix Earthworm Jim 2
+* Adjusted SA1 settings to fix Super Mario RPG slowdowns with core 1.57
 
 [4.3.9 - August 24, 2018]
 

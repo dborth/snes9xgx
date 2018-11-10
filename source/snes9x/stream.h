@@ -17,12 +17,19 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-                             zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2010  BearOso,
+  (c) Copyright 2009 - 2018  BearOso,
                              OV2
+
+  (c) Copyright 2017         qwertymodo
+
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -117,6 +124,9 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
+  S-SMP emulator code used in 1.54+
+  (c) Copyright 2016         byuu
+
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -130,7 +140,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2010  BearOso
+  (c) Copyright 2004 - 2018  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -138,11 +148,16 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2010  OV2
+  (c) Copyright 2009 - 2018  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2010  zones
+  (c) Copyright 2001 - 2011  zones
+
+  Libretro port
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   Specific ports contains the works of other authors. See headers in
@@ -175,54 +190,132 @@
  ***********************************************************************************/
 
 
-#ifndef _READER_H_
-#define _READER_H_
+#ifndef _STREAM_H_
+#define _STREAM_H_
 
-class Reader
+#include <string>
+
+class Stream
 {
 	public:
-		Reader (void);
-		virtual ~Reader (void);
+		Stream (void);
+		virtual ~Stream (void);
 		virtual int get_char (void) = 0;
 		virtual char * gets (char *, size_t) = 0;
 		virtual char * getline (void);	// free() when done
 		virtual std::string getline (bool &);
-		virtual size_t read (char *, size_t) = 0;
+		virtual size_t read (void *, size_t) = 0;
+        virtual size_t write (void *, size_t) = 0;
+        virtual size_t pos (void) = 0;
+        virtual size_t size (void) = 0;
+        virtual int revert (uint8 origin, int32 offset) = 0;
+        virtual void closeStream() = 0;
+		
+	protected:
+			size_t pos_from_origin_offset(uint8 origin, int32 offset);
 };
 
-class fReader : public Reader
+class fStream : public Stream
 {
 	public:
-		fReader (STREAM);
-		virtual ~fReader (void);
+		fStream (FSTREAM);
+		virtual ~fStream (void);
 		virtual int get_char (void);
 		virtual char * gets (char *, size_t);
-		virtual size_t read (char *, size_t);
+		virtual size_t read (void *, size_t);
+        virtual size_t write (void *, size_t);
+        virtual size_t pos (void);
+        virtual size_t size (void);
+        virtual int revert (uint8 origin, int32 offset);
+        virtual void closeStream();
 
 	private:
-		STREAM	fp;
+		FSTREAM	fp;
 };
 
 #ifdef UNZIP_SUPPORT
+#  ifdef SYSTEM_ZIP
+#    include <minizip/unzip.h>
+#  else
+#    include "unzip.h"
+#  endif
 
 #define unz_BUFFSIZ	1024
 
-class unzReader : public Reader
+class unzStream : public Stream
 {
 	public:
-		unzReader (unzFile &);
-		virtual ~unzReader (void);
+		unzStream (unzFile &);
+		virtual ~unzStream (void);
 		virtual int get_char (void);
 		virtual char * gets (char *, size_t);
-		virtual size_t read (char *, size_t);
+		virtual size_t read (void *, size_t);
+        virtual size_t write (void *, size_t);
+        virtual size_t pos (void);
+        virtual size_t size (void);
+        virtual int revert (uint8 origin, int32 offset);
+        virtual void closeStream();
 
 	private:
+        void   fill_buffer();
+        size_t buffer_remaining();
+
 		unzFile	file;
 		char	buffer[unz_BUFFSIZ];
-		char	*head;
-		size_t	numbytes;
+        size_t  pos_in_buf;
+        size_t  buf_pos_in_unzipped;
+		size_t	bytes_in_buf;
+        unz_file_pos unz_file_start_pos;
 };
 
 #endif
+
+class memStream : public Stream
+{
+	public:
+        memStream (uint8 *,size_t);
+        memStream (const uint8 *,size_t);
+		virtual ~memStream (void);
+		virtual int get_char (void);
+		virtual char * gets (char *, size_t);
+		virtual size_t read (void *, size_t);
+        virtual size_t write (void *, size_t);
+        virtual size_t pos (void);
+        virtual size_t size (void);
+        virtual int revert (uint8 origin, int32 offset);
+        virtual void closeStream();
+
+	private:
+		uint8   *mem;
+        size_t  msize;
+        size_t  remaining;
+		uint8	*head;
+        bool    readonly;
+};
+
+/* dummy stream that always reads 0 and writes nowhere
+   but counts bytes written
+*/
+class nulStream : public Stream
+{
+	public:
+        nulStream (void);
+		virtual ~nulStream (void);
+        virtual int get_char (void);
+        virtual char * gets (char *, size_t);
+		virtual size_t read (void *, size_t);
+        virtual size_t write (void *, size_t);
+        virtual size_t pos (void);
+        virtual size_t size (void);
+        virtual int revert (uint8 origin, int32 offset);
+        virtual void closeStream();
+
+    private:
+        size_t  bytes_written;
+};
+
+Stream *openStreamFromFSTREAM(const char* filename, const char* mode);
+Stream *reopenStreamFromFd(int fd, const char* mode);
+
 
 #endif

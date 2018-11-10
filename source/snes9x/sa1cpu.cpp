@@ -17,12 +17,19 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-                             zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2010  BearOso,
+  (c) Copyright 2009 - 2018  BearOso,
                              OV2
+
+  (c) Copyright 2017         qwertymodo
+
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -117,6 +124,9 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
+  S-SMP emulator code used in 1.54+
+  (c) Copyright 2016         byuu
+
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -130,7 +140,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2010  BearOso
+  (c) Copyright 2004 - 2018  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -138,11 +148,16 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2010  OV2
+  (c) Copyright 2009 - 2018  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2010  zones
+  (c) Copyright 2001 - 2011  zones
+
+  Libretro port
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   Specific ports contains the works of other authors. See headers in
@@ -221,57 +236,87 @@
 #define StackRelative					SA1StackRelative
 #define StackRelativeIndirectIndexed	SA1StackRelativeIndirectIndexed
 
-//#undef CPU_SHUTDOWN
 #define SA1_OPCODES
 
 #include "cpuops.cpp"
 
+static void S9xSA1UpdateTimer (void);
+
 
 void S9xSA1MainLoop (void)
 {
-	if (SA1.Flags & NMI_FLAG)
+	if (Memory.FillRAM[0x2200] & 0x60)
 	{
-		if (Memory.FillRAM[0x2200] & 0x10)
-		{
-			SA1.Flags &= ~NMI_FLAG;
-			Memory.FillRAM[0x2301] |= 0x10;
-
-			if (SA1.WaitingForInterrupt)
-			{
-				SA1.WaitingForInterrupt = FALSE;
-				SA1Registers.PCw++;
-			}
-
-			S9xSA1Opcode_NMI();
-		}
+		SA1.Cycles += 6; // FIXME
+		S9xSA1UpdateTimer();
+		return;
 	}
 
-	if (SA1.Flags & IRQ_FLAG)
+	// SA-1 NMI
+	if ((Memory.FillRAM[0x2200] & 0x10) && !(Memory.FillRAM[0x220b] & 0x10))
 	{
-		if (SA1.IRQActive)
+		Memory.FillRAM[0x2301] |= 0x10;
+		Memory.FillRAM[0x220b] |= 0x10;
+
+		if (SA1.WaitingForInterrupt)
 		{
+			SA1.WaitingForInterrupt = FALSE;
+			SA1Registers.PCw++;
+		}
+
+		S9xSA1Opcode_NMI();
+	}
+	else
+	if (!SA1CheckFlag(IRQ))
+	{
+		// SA-1 Timer IRQ
+		if ((Memory.FillRAM[0x220a] & 0x40) && !(Memory.FillRAM[0x220b] & 0x40))
+		{
+			Memory.FillRAM[0x2301] |= 0x40;
+
 			if (SA1.WaitingForInterrupt)
 			{
 				SA1.WaitingForInterrupt = FALSE;
 				SA1Registers.PCw++;
 			}
 
-			if (!SA1CheckFlag(IRQ))
-				S9xSA1Opcode_IRQ();
+			S9xSA1Opcode_IRQ();
 		}
 		else
-			SA1.Flags &= ~IRQ_FLAG;
+		// SA-1 DMA IRQ
+		if ((Memory.FillRAM[0x220a] & 0x20) && !(Memory.FillRAM[0x220b] & 0x20))
+		{
+			Memory.FillRAM[0x2301] |= 0x20;
+
+			if (SA1.WaitingForInterrupt)
+			{
+				SA1.WaitingForInterrupt = FALSE;
+				SA1Registers.PCw++;
+			}
+
+			S9xSA1Opcode_IRQ();
+		}
+		else
+		// SA-1 IRQ
+		if ((Memory.FillRAM[0x2200] & 0x80) && !(Memory.FillRAM[0x220b] & 0x80))
+		{
+			Memory.FillRAM[0x2301] |= 0x80;
+
+			if (SA1.WaitingForInterrupt)
+			{
+				SA1.WaitingForInterrupt = FALSE;
+				SA1Registers.PCw++;
+			}
+
+			S9xSA1Opcode_IRQ();
+		}
 	}
 
-	for (int i = 0; i < 3 && SA1.Executing; i++)
+	for (int i = 0; i < 3 && !(Memory.FillRAM[0x2200] & 0x60); i++)
 	{
 	#ifdef DEBUGGER
 		if (SA1.Flags & TRACE_FLAG)
 			S9xSA1Trace();
-	#endif
-
-	#ifdef CPU_SHUTDOWN
-		SA1.PBPCAtOpcodeStart = SA1Registers.PBPC;
 	#endif
 
 		register uint8				Op;
@@ -299,5 +344,71 @@ void S9xSA1MainLoop (void)
 		Registers.PCw++;
 		(*Opcodes[Op].S9xOpcode)();
 	}
+
+	S9xSA1UpdateTimer();
 }
 
+static void S9xSA1UpdateTimer (void) // FIXME
+{
+	SA1.PrevHCounter = SA1.HCounter;
+
+	if (Memory.FillRAM[0x2210] & 0x80)
+	{
+		SA1.HCounter += (SA1.Cycles - SA1.PrevCycles);
+		if (SA1.HCounter >= 0x800)
+		{
+			SA1.HCounter -= 0x800;
+			SA1.PrevHCounter -= 0x800;
+			if (++SA1.VCounter >= 0x200)
+				SA1.VCounter = 0;
+		}
+	}
+	else
+	{
+		SA1.HCounter += (SA1.Cycles - SA1.PrevCycles);
+		if (SA1.HCounter >= Timings.H_Max_Master)
+		{
+			SA1.HCounter -= Timings.H_Max_Master;
+			SA1.PrevHCounter -= Timings.H_Max_Master;
+			if (++SA1.VCounter >= Timings.V_Max_Master)
+				SA1.VCounter = 0;
+		}
+	}
+
+	if (SA1.Cycles >= Timings.H_Max_Master)
+		SA1.Cycles -= Timings.H_Max_Master;
+
+	SA1.PrevCycles = SA1.Cycles;
+
+	bool8	thisIRQ = Memory.FillRAM[0x2210] & 0x03;
+
+	if (Memory.FillRAM[0x2210] & 0x01)
+	{
+		if (SA1.PrevHCounter >= SA1.HTimerIRQPos * ONE_DOT_CYCLE || SA1.HCounter < SA1.HTimerIRQPos * ONE_DOT_CYCLE)
+			thisIRQ = FALSE;
+	}
+
+	if (Memory.FillRAM[0x2210] & 0x02)
+	{
+		if (SA1.VCounter != SA1.VTimerIRQPos * ONE_DOT_CYCLE)
+			thisIRQ = FALSE;
+	}
+
+	// SA-1 Timer IRQ control
+	if (!SA1.TimerIRQLastState && thisIRQ)
+	{
+		Memory.FillRAM[0x2301] |= 0x40;
+		if (Memory.FillRAM[0x220a] & 0x40)
+		{
+			Memory.FillRAM[0x220b] &= ~0x40;
+		#ifdef DEBUGGER
+			S9xTraceFormattedMessage("--- SA-1 Timer IRQ triggered  prev HC:%04d  curr HC:%04d  HTimer:%d Pos:%04d  VTimer:%d Pos:%03d",
+				SA1.PrevHCounter, SA1.HCounter,
+				(Memory.FillRAM[0x2210] & 0x01) ? 1 : 0, SA1.HTimerIRQPos * ONE_DOT_CYCLE,
+				(Memory.FillRAM[0x2210] & 0x02) ? 1 : 0, SA1.VTimerIRQPos);
+		#endif
+		}
+	}
+
+	SA1.TimerIRQLastState = thisIRQ;
+}

@@ -473,19 +473,19 @@ int main(int argc, char *argv[])
 			GCSettings.LoadMethod = DEVICE_USB;
 		}
 		SavePrefs(SILENT);
-
+		
 		GCSettings.AutoloadGame = AutoloadGame(argv[1], argv[2]);
 		autoboot = GCSettings.AutoloadGame;
 	}
 
-	switch (GCSettings.sfxOverclock)
+		switch (GCSettings.sfxOverclock)
 	{
-		case 0: Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6; break;
+		case 0: Settings.SuperFXSpeedPerLine = 5823405; break;
 		case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
 		case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
 		S9xResetSuperFX();
 	}
-
+	
 	while (1) // main loop
 	{
 		if(!autoboot) {
@@ -504,7 +504,7 @@ int main(int argc, char *argv[])
 #ifdef HW_RVL
 		SelectFilterMethod();
 #endif
-		autoboot = false;		
+		autoboot = false;	
 		ConfigRequested = 0;
 		ScreenshotRequested = 0;
 		SwitchAudioMode(0);
