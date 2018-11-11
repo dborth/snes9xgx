@@ -3506,6 +3506,29 @@ void CMemory::Map_BSCartHiROMMap(void)
 	}
 
 	map_HiROMSRAM();
+<<<<<<< HEAD
+=======
+	map_WRAM();
+
+	map_WriteProtectROM();
+}
+
+void CMemory::Map_SPC7110HiROMMap (void)
+{
+	printf("Map_SPC7110HiROMMap\n");
+	map_System();
+
+	map_index(0x00, 0x00, 0x6000, 0x7fff, MAP_HIROM_SRAM, MAP_TYPE_RAM);
+	map_hirom(0x00, 0x0f, 0x8000, 0xffff, CalculatedSize);	
+	map_index(0x30, 0x30, 0x6000, 0x7fff, MAP_HIROM_SRAM, MAP_TYPE_RAM);
+	if(Memory.ROMSize >= 13)
+		map_hirom_offset(0x40, 0x4f, 0x0000, 0xffff, CalculatedSize, 0x600000);
+	map_index(0x50, 0x50, 0x0000, 0xffff, MAP_SPC7110_DRAM, MAP_TYPE_ROM);
+	map_hirom(0x80, 0x8f, 0x8000, 0xffff, CalculatedSize);
+	map_hirom_offset(0xc0, 0xcf, 0x0000, 0xffff, CalculatedSize, 0);
+	map_index(0xd0, 0xff, 0x0000, 0xffff, MAP_SPC7110_ROM,  MAP_TYPE_ROM);
+
+>>>>>>> branch 'master' of https://github.com/dborth/snes9xgx.git
 	map_WRAM();
 
 	map_WriteProtectROM();
@@ -3800,12 +3823,19 @@ void CMemory::ApplyROMFixes (void)
 
 	if (!Settings.DisableGameSpecificHacks)
 	{
+<<<<<<< HEAD
 		//if (match_id("AVCJ"))                                      // Rendering Ranger R2
 		//	Timings.APUSpeedup = 2;
 		if (match_id("AANJ"))                                      // Chou Aniki
 			Timings.APUSpeedup = 1;
 		if (match_na("CIRCUIT USA"))
 			Timings.APUSpeedup = 2;
+=======
+		if (match_id("AVCJ"))                                      // Rendering Ranger R2
+			Timings.APUSpeedup = 4;
+		if (match_id("AANJ"))                                      // Chou Aniki
+			Timings.APUSpeedup = 1;
+>>>>>>> branch 'master' of https://github.com/dborth/snes9xgx.git
 
 /*		if (match_na("GAIA GENSOUKI 1 JPN")                     || // Gaia Gensouki
 			match_id("JG  ")                                    || // Illusion of Gaia
