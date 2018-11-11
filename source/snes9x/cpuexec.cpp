@@ -17,12 +17,19 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-                             zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2010  BearOso,
+  (c) Copyright 2009 - 2018  BearOso,
                              OV2
+
+  (c) Copyright 2017         qwertymodo
+
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -117,6 +124,9 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
+  S-SMP emulator code used in 1.54+
+  (c) Copyright 2016         byuu
+
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -130,7 +140,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2010  BearOso
+  (c) Copyright 2004 - 2018  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -138,11 +148,16 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2010  OV2
+  (c) Copyright 2009 - 2018  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2010  zones
+  (c) Copyright 2001 - 2011  zones
+
+  Libretro port
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   Specific ports contains the works of other authors. See headers in
@@ -187,97 +202,114 @@
 #include "missing.h"
 #endif
 
+static inline void S9xReschedule (void);
+
 
 void S9xMainLoop (void)
 {
+	#define CHECK_FOR_IRQ_CHANGE() \
+	if (Timings.IRQFlagChanging) \
+	{ \
+		if (Timings.IRQFlagChanging == IRQ_CLEAR_FLAG) \
+			ClearIRQ(); \
+		else if (Timings.IRQFlagChanging == IRQ_SET_FLAG) \
+			SetIRQ(); \
+		Timings.IRQFlagChanging = IRQ_NONE; \
+	}
+
 	for (;;)
 	{
-		if (CPU.Flags)
+		if (CPU.NMIPending)
 		{
-			if (CPU.Flags & NMI_FLAG)
+			#ifdef DEBUGGER
+			if (Settings.TraceHCEvent)
+			    S9xTraceFormattedMessage ("Comparing %d to %d\n", Timings.NMITriggerPos, CPU.Cycles);
+			#endif
+			if (Timings.NMITriggerPos <= CPU.Cycles)
 			{
-				if (Timings.NMITriggerPos <= CPU.Cycles)
+				CPU.NMIPending = FALSE;
+				Timings.NMITriggerPos = 0xffff;
+				if (CPU.WaitingForInterrupt)
 				{
-					CPU.Flags &= ~NMI_FLAG;
-					Timings.NMITriggerPos = 0xffff;
-					if (CPU.WaitingForInterrupt)
-					{
-						CPU.WaitingForInterrupt = FALSE;
-						Registers.PCw++;
-					}
-
-					S9xOpcode_NMI();
+					CPU.WaitingForInterrupt = FALSE;
+					Registers.PCw++;
+					CPU.Cycles += TWO_CYCLES + ONE_DOT_CYCLE / 2;
+					while (CPU.Cycles >= CPU.NextEvent)
+						S9xDoHEventProcessing();
 				}
+
+				CHECK_FOR_IRQ_CHANGE();
+				S9xOpcode_NMI();
 			}
-
-		#ifdef DEBUGGER
-			if ((CPU.Flags & BREAK_FLAG) && !(CPU.Flags & SINGLE_STEP_FLAG))
-			{
-				for (int Break = 0; Break != 6; Break++)
-				{
-					if (S9xBreakpoint[Break].Enabled &&
-						S9xBreakpoint[Break].Bank == Registers.PB &&
-						S9xBreakpoint[Break].Address == Registers.PCw)
-					{
-						if (S9xBreakpoint[Break].Enabled == 2)
-							S9xBreakpoint[Break].Enabled = TRUE;
-						else
-							CPU.Flags |= DEBUG_MODE_FLAG;
-					}
-				}
-			}
-		#endif
-
-			if (CPU.Flags & IRQ_FLAG)
-			{
-				if (CPU.IRQPending)
-					// FIXME: In case of IRQ during WRAM refresh
-					CPU.IRQPending--;
-				else
-				{
-					if (CPU.WaitingForInterrupt)
-					{
-						CPU.WaitingForInterrupt = FALSE;
-						Registers.PCw++;
-					}
-
-					if (CPU.IRQActive && !Settings.DisableIRQ)
-					{
-						if (!CheckFlag(IRQ))
-						// in IRQ handler $4211 is supposed to be read, so IRQ_FLAG should be cleared.
-							S9xOpcode_IRQ();
-					}
-					else
-						CPU.Flags &= ~IRQ_FLAG;
-				}
-			}
-
-			if (CPU.Flags & SCAN_KEYS_FLAG)
-				break;
-
-		#ifdef DEBUGGER
-			if (CPU.Flags & DEBUG_MODE_FLAG)
-				break;
-
-			if (CPU.Flags & TRACE_FLAG)
-				S9xTrace();
-
-			if (CPU.Flags & SINGLE_STEP_FLAG)
-			{
-				CPU.Flags &= ~SINGLE_STEP_FLAG;
-				CPU.Flags |= DEBUG_MODE_FLAG;
-			}
-		#endif
 		}
 
-	#ifdef CPU_SHUTDOWN
-		CPU.PBPCAtOpcodeStart = Registers.PBPC;
+		if (CPU.Cycles >= Timings.NextIRQTimer)
+		{
+			#ifdef DEBUGGER
+			S9xTraceMessage ("Timer triggered\n");
+			#endif
+
+			S9xUpdateIRQPositions(false);
+			CPU.IRQLine = TRUE;
+		}
+
+		if (CPU.IRQLine || CPU.IRQExternal)
+		{
+			if (CPU.WaitingForInterrupt)
+			{
+				CPU.WaitingForInterrupt = FALSE;
+				Registers.PCw++;
+				CPU.Cycles += TWO_CYCLES + ONE_DOT_CYCLE / 2;
+				while (CPU.Cycles >= CPU.NextEvent)
+					S9xDoHEventProcessing();
+			}
+
+			if (!CheckFlag(IRQ))
+			{
+				/* The flag pushed onto the stack is the new value */
+				CHECK_FOR_IRQ_CHANGE();
+				S9xOpcode_IRQ();
+			}
+		}
+
+		/* Change IRQ flag for instructions that set it only on last cycle */
+		CHECK_FOR_IRQ_CHANGE();
+
+	#ifdef DEBUGGER
+		if ((CPU.Flags & BREAK_FLAG) && !(CPU.Flags & SINGLE_STEP_FLAG))
+		{
+			for (int Break = 0; Break != 6; Break++)
+			{
+				if (S9xBreakpoint[Break].Enabled &&
+					S9xBreakpoint[Break].Bank == Registers.PB &&
+					S9xBreakpoint[Break].Address == Registers.PCw)
+				{
+					if (S9xBreakpoint[Break].Enabled == 2)
+						S9xBreakpoint[Break].Enabled = TRUE;
+					else
+						CPU.Flags |= DEBUG_MODE_FLAG;
+				}
+			}
+		}
+
+		if (CPU.Flags & DEBUG_MODE_FLAG)
+			break;
+
+		if (CPU.Flags & TRACE_FLAG)
+			S9xTrace();
+
+		if (CPU.Flags & SINGLE_STEP_FLAG)
+		{
+			CPU.Flags &= ~SINGLE_STEP_FLAG;
+			CPU.Flags |= DEBUG_MODE_FLAG;
+		}
 	#endif
+
+		if (CPU.Flags & SCAN_KEYS_FLAG)
+			break;
 
 		register uint8				Op;
 		register struct	SOpcodes	*Opcodes;
-
-		CPU.PrevCycles = CPU.Cycles;
 
 		if (CPU.PCBase)
 		{
@@ -304,13 +336,8 @@ void S9xMainLoop (void)
 		Registers.PCw++;
 		(*Opcodes[Op].S9xOpcode)();
 
-		if (SA1.Executing)
+		if (Settings.SA1)
 			S9xSA1MainLoop();
-
-	#if (S9X_ACCURACY_LEVEL <= 2)
-		while (CPU.Cycles >= CPU.NextEvent)
-			S9xDoHEventProcessing();
-	#endif
 	}
 
 	S9xPackStatus();
@@ -325,76 +352,70 @@ void S9xMainLoop (void)
 	}
 }
 
-void S9xSetIRQ (uint32 source)
+static inline void S9xReschedule (void)
 {
-	CPU.IRQActive |= source;
-	CPU.IRQPending = Timings.IRQPendCount;
-	CPU.Flags |= IRQ_FLAG;
-
-	if (CPU.WaitingForInterrupt)
+	switch (CPU.WhichEvent)
 	{
-		// Force IRQ to trigger immediately after WAI -
-		// Final Fantasy Mystic Quest crashes without this.
-		CPU.WaitingForInterrupt = FALSE;
-		Registers.PCw++;
+		case HC_HBLANK_START_EVENT:
+			CPU.WhichEvent = HC_HDMA_START_EVENT;
+			CPU.NextEvent  = Timings.HDMAStart;
+			break;
+
+		case HC_HDMA_START_EVENT:
+			CPU.WhichEvent = HC_HCOUNTER_MAX_EVENT;
+			CPU.NextEvent  = Timings.H_Max;
+			break;
+
+		case HC_HCOUNTER_MAX_EVENT:
+			CPU.WhichEvent = HC_HDMA_INIT_EVENT;
+			CPU.NextEvent  = Timings.HDMAInit;
+			break;
+
+		case HC_HDMA_INIT_EVENT:
+			CPU.WhichEvent = HC_RENDER_EVENT;
+			CPU.NextEvent  = Timings.RenderPos;
+			break;
+
+		case HC_RENDER_EVENT:
+			CPU.WhichEvent = HC_WRAM_REFRESH_EVENT;
+			CPU.NextEvent  = Timings.WRAMRefreshPos;
+			break;
+
+		case HC_WRAM_REFRESH_EVENT:
+			CPU.WhichEvent = HC_HBLANK_START_EVENT;
+			CPU.NextEvent  = Timings.HBlankStart;
+			break;
 	}
-	
-#ifdef DEBUGGER
-	S9xTraceMessage("--- /IRQ low");
-#endif
-}
-
-void S9xClearIRQ (uint32 source)
-{
-	CPU.IRQActive &= ~source;
-	if (!CPU.IRQActive)
-		CPU.Flags &= ~IRQ_FLAG;
-
-#ifdef DEBUGGER
-	S9xTraceMessage("--- /IRQ high");
-#endif
 }
 
 void S9xDoHEventProcessing (void)
 {
 #ifdef DEBUGGER
-	static char	eventname[13][32] =
+	static char	eventname[7][32] =
 	{
 		"",
 		"HC_HBLANK_START_EVENT",
-		"HC_IRQ_1_3_EVENT     ",
 		"HC_HDMA_START_EVENT  ",
-		"HC_IRQ_3_5_EVENT     ",
 		"HC_HCOUNTER_MAX_EVENT",
-		"HC_IRQ_5_7_EVENT     ",
 		"HC_HDMA_INIT_EVENT   ",
-		"HC_IRQ_7_9_EVENT     ",
 		"HC_RENDER_EVENT      ",
-		"HC_IRQ_9_A_EVENT     ",
-		"HC_WRAM_REFRESH_EVENT",
-		"HC_IRQ_A_1_EVENT     "
+		"HC_WRAM_REFRESH_EVENT"
 	};
 #endif
 
 #ifdef DEBUGGER
 	if (Settings.TraceHCEvent)
-		S9xTraceFormattedMessage("--- HC event processing  (%s)  expected HC:%04d  executed HC:%04d",
-			eventname[CPU.WhichEvent], CPU.NextEvent, CPU.Cycles);
-#endif
-
-#ifdef CPU_SHUTDOWN
-	CPU.WaitCounter++;
+		S9xTraceFormattedMessage("--- HC event processing  (%s)  expected HC:%04d  executed HC:%04d VC:%04d",
+			eventname[CPU.WhichEvent], CPU.NextEvent, CPU.Cycles, CPU.V_Counter);
 #endif
 
 	switch (CPU.WhichEvent)
 	{
 		case HC_HBLANK_START_EVENT:
-			S9xCheckMissingHTimerPosition(Timings.HBlankStart);
 			S9xReschedule();
 			break;
 
 		case HC_HDMA_START_EVENT:
-			S9xCheckMissingHTimerPosition(Timings.HDMAStart);
 			S9xReschedule();
 
 			if (PPU.HDMA && CPU.V_Counter <= PPU.ScreenHeight)
@@ -417,10 +438,11 @@ void S9xDoHEventProcessing (void)
 
 			S9xAPUEndScanline();
 			CPU.Cycles -= Timings.H_Max;
-			S9xAPUSetReferenceTime(CPU.Cycles);
-
-			if ((Timings.NMITriggerPos != 0xffff) && (Timings.NMITriggerPos >= Timings.H_Max))
+			if (Timings.NMITriggerPos != 0xffff)
 				Timings.NMITriggerPos -= Timings.H_Max;
+			if (Timings.NextIRQTimer != 0x0fffffff)
+				Timings.NextIRQTimer -= Timings.H_Max;
+			S9xAPUSetReferenceTime(CPU.Cycles);
 
 			CPU.V_Counter++;
 			if (CPU.V_Counter >= Timings.V_Max)	// V ranges from 0 to Timings.V_Max - 1
@@ -445,12 +467,9 @@ void S9xDoHEventProcessing (void)
 
 				// FIXME: reading $4210 will wait 2 cycles, then perform reading, then wait 4 more cycles.
 				Memory.FillRAM[0x4210] = Model->_5A22;
-				CPU.Flags &= ~NMI_FLAG;
-				Timings.NMITriggerPos = 0xffff;
 
 				ICPU.Frame++;
 				PPU.HVBeamCounterLatched = 0;
-				CPU.Flags |= SCAN_KEYS_FLAG;
 			}
 
 			// From byuu:
@@ -477,11 +496,12 @@ void S9xDoHEventProcessing (void)
 			else
 				Timings.WRAMRefreshPos = SNES_WRAM_REFRESH_HC_v1;
 
-			S9xCheckMissingHTimerPosition(0);
-
 			if (CPU.V_Counter == PPU.ScreenHeight + FIRST_VISIBLE_LINE)	// VBlank starts from V=225(240).
 			{
 				S9xEndScreenRefresh();
+
+				CPU.Flags |= SCAN_KEYS_FLAG;
+
 				PPU.HDMA = 0;
 				// Bits 7 and 6 of $4212 are computed when read in S9xGetPPU.
 			#ifdef DEBUGGER
@@ -511,9 +531,13 @@ void S9xDoHEventProcessing (void)
 				Memory.FillRAM[0x4210] = 0x80 | Model->_5A22;
 				if (Memory.FillRAM[0x4200] & 0x80)
 				{
+#ifdef DEBUGGER
+					if (Settings.TraceHCEvent)
+					    S9xTraceFormattedMessage ("NMI Scheduled for next scanline.");
+#endif
 					// FIXME: triggered at HC=6, checked just before the final CPU cycle,
 					// then, when to call S9xOpcode_NMI()?
-					CPU.Flags |= NMI_FLAG;
+					CPU.NMIPending = TRUE;
 					Timings.NMITriggerPos = 6 + 6;
 				}
 
@@ -528,13 +552,11 @@ void S9xDoHEventProcessing (void)
 			if (CPU.V_Counter == FIRST_VISIBLE_LINE)	// V=1
 				S9xStartScreenRefresh();
 
-			CPU.NextEvent = -1;
 			S9xReschedule();
 
 			break;
 
 		case HC_HDMA_INIT_EVENT:
-			S9xCheckMissingHTimerPosition(Timings.HDMAInit);
 			S9xReschedule();
 
 			if (CPU.V_Counter == 0)
@@ -551,7 +573,6 @@ void S9xDoHEventProcessing (void)
 			if (CPU.V_Counter >= FIRST_VISIBLE_LINE && CPU.V_Counter <= PPU.ScreenHeight)
 				RenderLine((uint8) (CPU.V_Counter - FIRST_VISIBLE_LINE));
 
-			S9xCheckMissingHTimerPosition(Timings.RenderPos);
 			S9xReschedule();
 
 			break;
@@ -561,27 +582,10 @@ void S9xDoHEventProcessing (void)
 			S9xTraceFormattedMessage("*** WRAM Refresh  HC:%04d", CPU.Cycles);
 		#endif
 
-			S9xCheckMissingHTimerHalt(Timings.WRAMRefreshPos, SNES_WRAM_REFRESH_CYCLES);
 			CPU.Cycles += SNES_WRAM_REFRESH_CYCLES;
 
-			S9xCheckMissingHTimerPosition(Timings.WRAMRefreshPos);
 			S9xReschedule();
 
-			break;
-
-		case HC_IRQ_1_3_EVENT:
-		case HC_IRQ_3_5_EVENT:
-		case HC_IRQ_5_7_EVENT:
-		case HC_IRQ_7_9_EVENT:
-		case HC_IRQ_9_A_EVENT:
-		case HC_IRQ_A_1_EVENT:
-			if (PPU.HTimerEnabled && (!PPU.VTimerEnabled || (CPU.V_Counter == PPU.VTimerPosition)))
-				S9xSetIRQ(PPU_IRQ_SOURCE);
-			else
-			if (PPU.VTimerEnabled && (CPU.V_Counter == PPU.VTimerPosition))
-				S9xSetIRQ(PPU_IRQ_SOURCE);
-
-			S9xReschedule();
 			break;
 	}
 
@@ -591,4 +595,3 @@ void S9xDoHEventProcessing (void)
 			eventname[CPU.WhichEvent], CPU.NextEvent, CPU.Cycles);
 #endif
 }
-

@@ -488,7 +488,6 @@ DefaultSettings ()
 	Settings.SoundPlaybackRate = 48000;
 	Settings.SoundInputRate = 31950;
 	Settings.DynamicRateControl = true;
-	Settings.DynamicRateLimit = 1;
 
 	// Graphics
 	Settings.Transparency = true;

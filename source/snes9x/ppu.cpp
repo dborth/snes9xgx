@@ -17,12 +17,19 @@
 
   (c) Copyright 2002 - 2010  Brad Jorsch (anomie@users.sourceforge.net),
                              Nach (n-a-c-h@users.sourceforge.net),
-                             zones (kasumitokoduck@yahoo.com)
+
+  (c) Copyright 2002 - 2011  zones (kasumitokoduck@yahoo.com)
 
   (c) Copyright 2006 - 2007  nitsuja
 
-  (c) Copyright 2009 - 2010  BearOso,
+  (c) Copyright 2009 - 2018  BearOso,
                              OV2
+
+  (c) Copyright 2017         qwertymodo
+
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   BS-X C emulator code
@@ -117,6 +124,9 @@
   Sound emulator code used in 1.52+
   (c) Copyright 2004 - 2007  Shay Green (gblargg@gmail.com)
 
+  S-SMP emulator code used in 1.54+
+  (c) Copyright 2016         byuu
+
   SH assembler code partly based on x86 assembler code
   (c) Copyright 2002 - 2004  Marcus Comstedt (marcus@mc.pp.se)
 
@@ -130,7 +140,7 @@
   (c) Copyright 2006 - 2007  Shay Green
 
   GTK+ GUI code
-  (c) Copyright 2004 - 2010  BearOso
+  (c) Copyright 2004 - 2018  BearOso
 
   Win32 GUI code
   (c) Copyright 2003 - 2006  blip,
@@ -138,11 +148,16 @@
                              Matthew Kendora,
                              Nach,
                              nitsuja
-  (c) Copyright 2009 - 2010  OV2
+  (c) Copyright 2009 - 2018  OV2
 
   Mac OS GUI code
   (c) Copyright 1998 - 2001  John Stiles
-  (c) Copyright 2001 - 2010  zones
+  (c) Copyright 2001 - 2011  zones
+
+  Libretro port
+  (c) Copyright 2011 - 2017  Hans-Kristian Arntzen,
+                             Daniel De Matteis
+                             (Under no circumstances will commercial rights be given)
 
 
   Specific ports contains the works of other authors. See headers in
@@ -204,9 +219,6 @@ static inline void S9xLatchCounters (bool force)
 	#ifdef DEBUGGER
 		missing.h_v_latch = 1;
 	#endif
-	#if 0 // #ifdef CPU_SHUTDOWN
-		CPU.WaitAddress = CPU.PCAtOpcodeStart;
-	#endif
 
 		PPU.HVBeamCounterLatched = 1;
 		PPU.VBeamPosLatched = (uint16) CPU.V_Counter;
@@ -245,9 +257,6 @@ static inline void S9xTryGunLatch (bool force)
 		#ifdef DEBUGGER
 			missing.h_v_latch = 1;
 		#endif
-		#if 0 // #ifdef CPU_SHUTDOWN
-			CPU.WaitAddress = CPU.PCAtOpcodeStart;
-		#endif
 
 			PPU.HVBeamCounterLatched = 1;
 			PPU.VBeamPosLatched = (uint16) PPU.GunVLatch;
@@ -260,189 +269,105 @@ static inline void S9xTryGunLatch (bool force)
 	}
 }
 
-void S9xCheckMissingHTimerPosition (int32 hc)
+static int CyclesUntilNext (int hc, int vc)
 {
-	if (PPU.HTimerPosition == hc)
-	{
-		if (PPU.HTimerEnabled && (!PPU.VTimerEnabled || (CPU.V_Counter == PPU.VTimerPosition)))
-			S9xSetIRQ(PPU_IRQ_SOURCE);
-		else
-		if (PPU.VTimerEnabled && (CPU.V_Counter == PPU.VTimerPosition))
-			S9xSetIRQ(PPU_IRQ_SOURCE);
-	}
-}
+	int32 total = 0;
+	int vpos = CPU.V_Counter;
 
-void S9xCheckMissingHTimerHalt (int32 hc_from, int32 range)
-{
-	if ((PPU.HTimerPosition >= hc_from) && (PPU.HTimerPosition < (hc_from + range)))
+	if (vc - vpos > 0)
 	{
-		if (PPU.HTimerEnabled && (!PPU.VTimerEnabled || (CPU.V_Counter == PPU.VTimerPosition)))
-			CPU.IRQPending = 1;
-		else
-		if (PPU.VTimerEnabled && (CPU.V_Counter == PPU.VTimerPosition))
-			CPU.IRQPending = 1;
-	}
-}
-
-void S9xCheckMissingHTimerRange (int32 hc_from, int32 range)
-{
-	if ((PPU.HTimerPosition >= hc_from) && (PPU.HTimerPosition < (hc_from + range)))
-	{
-		if (PPU.HTimerEnabled && (!PPU.VTimerEnabled || (CPU.V_Counter == PPU.VTimerPosition)))
-			S9xSetIRQ(PPU_IRQ_SOURCE);
-		else
-		if (PPU.VTimerEnabled && (CPU.V_Counter == PPU.VTimerPosition))
-			S9xSetIRQ(PPU_IRQ_SOURCE);
-	}
-}
-
-void S9xUpdateHVTimerPosition (void)
-{
-	if (PPU.HTimerEnabled)
-	{
-	#ifdef DEBUGGER
-		missing.hirq_pos = PPU.IRQHBeamPos;
-	#endif
-		if (PPU.IRQHBeamPos != 0)
-		{
-			// IRQ_read
-			PPU.HTimerPosition = PPU.IRQHBeamPos * ONE_DOT_CYCLE;
-			if (Timings.H_Max == Timings.H_Max_Master)	// 1364
-			{
-				if (PPU.IRQHBeamPos > 322)
-					PPU.HTimerPosition += (ONE_DOT_CYCLE / 2);
-				if (PPU.IRQHBeamPos > 326)
-					PPU.HTimerPosition += (ONE_DOT_CYCLE / 2);
-			}
-
-			PPU.HTimerPosition += 14;
-			// /IRQ
-			PPU.HTimerPosition += 4;
-			// after CPU executing
-			PPU.HTimerPosition += 6;
-		}
-		else
-			PPU.HTimerPosition = 10 + 4 + 6;
+		// It's still in this frame */
+		// Add number of lines
+		total += (vc - vpos) * Timings.H_Max_Master;
+		// If line 240 is in there and we're odd, subtract a dot
+		if (vpos <= 240 && vc > 240 && Timings.InterlaceField & !IPPU.Interlace)
+			total -= ONE_DOT_CYCLE;
 	}
 	else
-		PPU.HTimerPosition = 10 + 4 + 6;
+	{
+		if (vc == vpos && (hc > CPU.Cycles))
+		{
+			return hc;
+		}
 
+		total += (Timings.V_Max - vpos) * Timings.H_Max_Master;
+		if (vpos <= 240 && Timings.InterlaceField && !IPPU.Interlace)
+			total -= ONE_DOT_CYCLE;
+
+		total += (vc) * Timings.H_Max_Master;
+		if (vc > 240 && !Timings.InterlaceField && !IPPU.Interlace)
+			total -= ONE_DOT_CYCLE;
+	}
+
+	total += hc;
+
+	return total;
+}
+
+void S9xUpdateIRQPositions (bool initial)
+{
+	PPU.HTimerPosition = PPU.IRQHBeamPos * ONE_DOT_CYCLE + Timings.IRQTriggerCycles;
+	PPU.HTimerPosition -= PPU.IRQHBeamPos ? 0 : ONE_DOT_CYCLE;
+	PPU.HTimerPosition += PPU.IRQHBeamPos > 322 ? (ONE_DOT_CYCLE / 2) : 0;
+	PPU.HTimerPosition += PPU.IRQHBeamPos > 326 ? (ONE_DOT_CYCLE / 2) : 0;
 	PPU.VTimerPosition = PPU.IRQVBeamPos;
 
-	if ((PPU.HTimerPosition >= Timings.H_Max) && (PPU.IRQHBeamPos < 340))
+	if (PPU.VTimerEnabled && (PPU.VTimerPosition >= (Timings.V_Max + (IPPU.Interlace ? 1 : 0))))
 	{
-		PPU.HTimerPosition -= Timings.H_Max;
-		PPU.VTimerPosition++;
-		// FIXME
-		if (PPU.VTimerPosition >= Timings.V_Max)
-			PPU.VTimerPosition = 0;
+		Timings.NextIRQTimer = 0x0fffffff;
 	}
-
-	if (PPU.HTimerPosition < CPU.Cycles)
+	else if (!PPU.HTimerEnabled && !PPU.VTimerEnabled)
 	{
-		switch (CPU.WhichEvent)
+		Timings.NextIRQTimer = 0x0fffffff;
+	}
+	else if (PPU.HTimerEnabled && !PPU.VTimerEnabled)
+	{
+		int v_pos = CPU.V_Counter;
+
+		Timings.NextIRQTimer = PPU.HTimerPosition;
+		if (CPU.Cycles > Timings.NextIRQTimer - Timings.IRQTriggerCycles)
 		{
-			case HC_IRQ_1_3_EVENT:
-				CPU.WhichEvent = HC_HDMA_START_EVENT;
-				CPU.NextEvent  = Timings.HDMAStart;
-				break;
+			Timings.NextIRQTimer += Timings.H_Max;
+			v_pos++;
+		}
 
-			case HC_IRQ_3_5_EVENT:
-				CPU.WhichEvent = HC_HCOUNTER_MAX_EVENT;
-				CPU.NextEvent  = Timings.H_Max;
-				break;
-
-			case HC_IRQ_5_7_EVENT:
-				CPU.WhichEvent = HC_HDMA_INIT_EVENT;
-				CPU.NextEvent  = Timings.HDMAInit;
-				break;
-
-			case HC_IRQ_7_9_EVENT:
-				CPU.WhichEvent = HC_RENDER_EVENT;
-				CPU.NextEvent  = Timings.RenderPos;
-				break;
-
-			case HC_IRQ_9_A_EVENT:
-				CPU.WhichEvent = HC_WRAM_REFRESH_EVENT;
-				CPU.NextEvent  = Timings.WRAMRefreshPos;
-				break;
-
-			case HC_IRQ_A_1_EVENT:
-				CPU.WhichEvent = HC_HBLANK_START_EVENT;
-				CPU.NextEvent  = Timings.HBlankStart;
-				break;
+		// Check for short dot scanline
+		if (v_pos == 240 && Timings.InterlaceField && !IPPU.Interlace)
+		{
+			Timings.NextIRQTimer -= PPU.IRQHBeamPos <= 322 ? ONE_DOT_CYCLE / 2 : 0;
+			Timings.NextIRQTimer -= PPU.IRQHBeamPos <= 326 ? ONE_DOT_CYCLE / 2 : 0;
 		}
 	}
-	else
-	if ((PPU.HTimerPosition < CPU.NextEvent) || (!(CPU.WhichEvent & 1) && (PPU.HTimerPosition == CPU.NextEvent)))
+	else if (!PPU.HTimerEnabled && PPU.VTimerEnabled)
 	{
-		CPU.NextEvent = PPU.HTimerPosition;
-
-		switch (CPU.WhichEvent)
-		{
-			case HC_HDMA_START_EVENT:
-				CPU.WhichEvent = HC_IRQ_1_3_EVENT;
-				break;
-
-			case HC_HCOUNTER_MAX_EVENT:
-				CPU.WhichEvent = HC_IRQ_3_5_EVENT;
-				break;
-
-			case HC_HDMA_INIT_EVENT:
-				CPU.WhichEvent = HC_IRQ_5_7_EVENT;
-				break;
-
-			case HC_RENDER_EVENT:
-				CPU.WhichEvent = HC_IRQ_7_9_EVENT;
-				break;
-
-			case HC_WRAM_REFRESH_EVENT:
-				CPU.WhichEvent = HC_IRQ_9_A_EVENT;
-				break;
-
-			case HC_HBLANK_START_EVENT:
-				CPU.WhichEvent = HC_IRQ_A_1_EVENT;
-				break;
-		}
+		if (CPU.V_Counter == PPU.VTimerPosition && initial)
+			Timings.NextIRQTimer = CPU.Cycles + Timings.IRQTriggerCycles;
+		else
+			Timings.NextIRQTimer = CyclesUntilNext (Timings.IRQTriggerCycles, PPU.VTimerPosition);
 	}
 	else
 	{
-		switch (CPU.WhichEvent)
+		Timings.NextIRQTimer = CyclesUntilNext (PPU.HTimerPosition, PPU.VTimerPosition);
+
+		// Check for short dot scanline
+		int field = Timings.InterlaceField;
+
+		if (PPU.VTimerPosition < CPU.V_Counter ||
+		   (PPU.VTimerPosition == CPU.V_Counter && Timings.NextIRQTimer > Timings.H_Max))
 		{
-			case HC_IRQ_1_3_EVENT:
-				CPU.WhichEvent = HC_HDMA_START_EVENT;
-				CPU.NextEvent  = Timings.HDMAStart;
-				break;
+			field = !field;
+		}
 
-			case HC_IRQ_3_5_EVENT:
-				CPU.WhichEvent = HC_HCOUNTER_MAX_EVENT;
-				CPU.NextEvent  = Timings.H_Max;
-				break;
-
-			case HC_IRQ_5_7_EVENT:
-				CPU.WhichEvent = HC_HDMA_INIT_EVENT;
-				CPU.NextEvent  = Timings.HDMAInit;
-				break;
-
-			case HC_IRQ_7_9_EVENT:
-				CPU.WhichEvent = HC_RENDER_EVENT;
-				CPU.NextEvent  = Timings.RenderPos;
-				break;
-
-			case HC_IRQ_9_A_EVENT:
-				CPU.WhichEvent = HC_WRAM_REFRESH_EVENT;
-				CPU.NextEvent  = Timings.WRAMRefreshPos;
-				break;
-
-			case HC_IRQ_A_1_EVENT:
-				CPU.WhichEvent = HC_HBLANK_START_EVENT;
-				CPU.NextEvent  = Timings.HBlankStart;
-				break;
+		if (PPU.VTimerPosition == 240 && field && !IPPU.Interlace)
+		{
+			Timings.NextIRQTimer -= PPU.IRQHBeamPos <= 322 ? ONE_DOT_CYCLE / 2 : 0;
+			Timings.NextIRQTimer -= PPU.IRQHBeamPos <= 326 ? ONE_DOT_CYCLE / 2 : 0;
 		}
 	}
 
 #ifdef DEBUGGER
-	S9xTraceFormattedMessage("--- IRQ settings:  H:%d V:%d  (%04d, %03d)", PPU.HTimerEnabled, PPU.VTimerEnabled, PPU.HTimerPosition, PPU.VTimerPosition);
+	S9xTraceFormattedMessage("--- IRQ Timer HC:%d VC:%d set %d cycles HTimer:%d Pos:%04d->%04d  VTimer:%d Pos:%03d->%03d", CPU.Cycles, CPU.V_Counter,
+		Timings.NextIRQTimer, PPU.HTimerEnabled, PPU.IRQHBeamPos, PPU.HTimerPosition, PPU.VTimerEnabled, PPU.IRQVBeamPos, PPU.VTimerPosition);
 #endif
 }
 
@@ -514,9 +439,9 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 					if (PPU.Brightness != (Byte & 0xf))
 					{
 						IPPU.ColorsChanged = TRUE;
-						IPPU.DirectColourMapsNeedRebuild = TRUE;
 						PPU.Brightness = Byte & 0xf;
 						S9xFixColourBrightness();
+						S9xBuildDirectColourMaps();
 						if (PPU.Brightness > IPPU.MaxBrightness)
 							IPPU.MaxBrightness = PPU.Brightness;
 					}
@@ -560,7 +485,7 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 
 			case 0x2102: // OAMADDL
 				PPU.OAMAddr = ((Memory.FillRAM[0x2103] & 1) << 8) | Byte;
-				PPU.OAMFlip = 2;
+				PPU.OAMFlip = 0;
 				PPU.OAMReadFlip = 0;
 				PPU.SavedOAMAddr = PPU.OAMAddr;
 				if (PPU.OAMPriorityRotation && PPU.FirstSprite != (PPU.OAMAddr >> 1))
@@ -621,7 +546,10 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 					PPU.BGMode = Byte & 7;
 					// BJ: BG3Priority only takes effect if BGMode == 1 and the bit is set
 					PPU.BG3Priority = ((Byte & 0x0f) == 0x09);
-					IPPU.Interlace = Memory.FillRAM[0x2133] & 1;
+					if (PPU.BGMode == 6 || PPU.BGMode == 5 || PPU.BGMode == 7)
+					    IPPU.Interlace = Memory.FillRAM[0x2133] & 1;
+					else
+					    IPPU.Interlace = 0;
 				#ifdef DEBUGGER
 					missing.modes[PPU.BGMode] = 1;
 				#endif
@@ -787,7 +715,7 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 			case 0x2116: // VMADDL
 				PPU.VMA.Address &= 0xff00;
 				PPU.VMA.Address |= Byte;
-			#ifdef CORRECT_VRAM_READS
+
 				if (PPU.VMA.FullGraphicCount)
 				{
 					uint32 addr = PPU.VMA.Address;
@@ -797,15 +725,13 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 				}
 				else
 					IPPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((PPU.VMA.Address << 1) & 0xffff));
-			#else
-				IPPU.FirstVRAMRead = TRUE;
-			#endif
+
 				break;
 
 			case 0x2117: // VMADDH
 				PPU.VMA.Address &= 0x00ff;
 				PPU.VMA.Address |= Byte << 8;
-			#ifdef CORRECT_VRAM_READS
+
 				if (PPU.VMA.FullGraphicCount)
 				{
 					uint32 addr = PPU.VMA.Address;
@@ -815,22 +741,14 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 				}
 				else
 					IPPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((PPU.VMA.Address << 1) & 0xffff));
-			#else
-				IPPU.FirstVRAMRead = TRUE;
-			#endif
+
 				break;
 
 			case 0x2118: // VMDATAL
-			#ifndef CORRECT_VRAM_READS
-				IPPU.FirstVRAMRead = TRUE;
-			#endif
 				REGISTER_2118(Byte);
 				break;
 
 			case 0x2119: // VMDATAH
-			#ifndef CORRECT_VRAM_READS
-				IPPU.FirstVRAMRead = TRUE;
-			#endif
 				REGISTER_2119(Byte);
 				break;
 
@@ -1146,13 +1064,20 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 					#endif
 					}
 					else
+					{
 						PPU.ScreenHeight = SNES_HEIGHT;
+						if (IPPU.DoubleHeightPixels)
+							IPPU.RenderedScreenHeight = PPU.ScreenHeight << 1;
+						else
+							IPPU.RenderedScreenHeight = PPU.ScreenHeight;
+					}
 
 					if ((Memory.FillRAM[0x2133] ^ Byte) & 3)
 					{
 						FLUSH_REDRAW();
 						if ((Memory.FillRAM[0x2133] ^ Byte) & 2)
 							IPPU.OBJChanged = TRUE;
+
 						IPPU.Interlace = Byte & 1;
 						IPPU.InterlaceOBJ = Byte & 2;
 					}
@@ -1259,10 +1184,9 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 uint8 S9xGetPPU (uint16 Address)
 {
 	// MAP_PPU: $2000-$3FFF
-
-    if (Settings.MSU1 && (Address & 0xfff8) == 0x2000)
+	if (Settings.MSU1 && (Address & 0xfff8) == 0x2000)
 		return (S9xMSU1ReadPort(Address & 7));
-
+	else
 	if (Address < 0x2100)
 		return (OpenBus);
 
@@ -1337,7 +1261,7 @@ uint8 S9xGetPPU (uint16 Address)
 
 			case 0x2137: // SLHV
 				S9xLatchCounters(0);
-				return (OpenBus);
+				return (PPU.OpenBus1);
 
 			case 0x2138: // OAMDATAREAD
 				if (PPU.OAMAddr & 0x100)
@@ -1384,7 +1308,6 @@ uint8 S9xGetPPU (uint16 Address)
 				return (PPU.OpenBus1 = byte);
 
 			case 0x2139: // VMDATALREAD
-			#ifdef CORRECT_VRAM_READS
 				byte = IPPU.VRAMReadBuffer & 0xff;
 				if (!PPU.VMA.High)
 				{
@@ -1400,33 +1323,13 @@ uint8 S9xGetPPU (uint16 Address)
 
 					PPU.VMA.Address += PPU.VMA.Increment;
 				}
-			#else
-				if (IPPU.FirstVRAMRead)
-					byte = Memory.VRAM[(PPU.VMA.Address << 1) & 0xffff];
-				else
-				if (PPU.VMA.FullGraphicCount)
-				{
-					uint32 addr = PPU.VMA.Address - 1;
-					uint32 rem = addr & PPU.VMA.Mask1;
-					uint32 address = (addr & ~PPU.VMA.Mask1) + (rem >> PPU.VMA.Shift) + ((rem & (PPU.VMA.FullGraphicCount - 1)) << 3);
-					byte = Memory.VRAM[((address << 1) - 2) & 0xffff];
-				}
-				else
-					byte = Memory.VRAM[((PPU.VMA.Address << 1) - 2) & 0xffff];
 
-				if (!PPU.VMA.High)
-				{
-					PPU.VMA.Address += PPU.VMA.Increment;
-					IPPU.FirstVRAMRead = FALSE;
-				}
-			#endif
 			#ifdef DEBUGGER
 				missing.vram_read = 1;
 			#endif
 				return (PPU.OpenBus1 = byte);
 
 			case 0x213a: // VMDATAHREAD
-			#ifdef CORRECT_VRAM_READS
 				byte = (IPPU.VRAMReadBuffer >> 8) & 0xff;
 				if (PPU.VMA.High)
 				{
@@ -1442,26 +1345,6 @@ uint8 S9xGetPPU (uint16 Address)
 
 					PPU.VMA.Address += PPU.VMA.Increment;
 				}
-			#else
-				if (IPPU.FirstVRAMRead)
-					byte = Memory.VRAM[((PPU.VMA.Address << 1) + 1) & 0xffff];
-				else
-				if (PPU.VMA.FullGraphicCount)
-				{
-					uint32 addr = PPU.VMA.Address - 1;
-					uint32 rem = addr & PPU.VMA.Mask1;
-					uint32 address = (addr & ~PPU.VMA.Mask1) + (rem >> PPU.VMA.Shift) + ((rem & (PPU.VMA.FullGraphicCount - 1)) << 3);
-					byte = Memory.VRAM[((address << 1) - 1) & 0xffff];
-				}
-				else
-					byte = Memory.VRAM[((PPU.VMA.Address << 1) - 1) & 0xffff];
-
-				if (PPU.VMA.High)
-				{
-					PPU.VMA.Address += PPU.VMA.Increment;
-					IPPU.FirstVRAMRead = FALSE;
-				}
-			#endif
 			#ifdef DEBUGGER
 				missing.vram_read = 1;
 			#endif
@@ -1541,7 +1424,7 @@ uint8 S9xGetPPU (uint16 Address)
 		else
 		if (Settings.BS      && Address >= 0x2188 && Address <= 0x219f)
 			return (S9xGetBSXPPU(Address));
-		else	
+		else
 		if (Settings.SRTC    && Address == 0x2800)
 			return (S9xGetSRTC(Address));
 		else
@@ -1677,13 +1560,22 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 		switch (Address)
 		{
 			case 0x4200: // NMITIMEN
+				#ifdef DEBUGGER
+				if (Settings.TraceHCEvent)
+					S9xTraceFormattedMessage("Write to 0x4200. Byte is %2x was %2x\n", Byte, Memory.FillRAM[Address]);
+				#endif
+
+				if (Byte == Memory.FillRAM[0x4200])
+					break;
+
 				if (Byte & 0x20)
 				{
 					PPU.VTimerEnabled = TRUE;
-				#ifdef DEBUGGER
+
+					#ifdef DEBUGGER
 					missing.virq = 1;
 					missing.virq_pos = PPU.IRQVBeamPos;
-				#endif
+					#endif
 				}
 				else
 					PPU.VTimerEnabled = FALSE;
@@ -1691,22 +1583,22 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 				if (Byte & 0x10)
 				{
 					PPU.HTimerEnabled = TRUE;
-				#ifdef DEBUGGER
+
+					#ifdef DEBUGGER
 					missing.hirq = 1;
 					missing.hirq_pos = PPU.IRQHBeamPos;
-				#endif
+					#endif
 				}
 				else
 					PPU.HTimerEnabled = FALSE;
 
-				S9xUpdateHVTimerPosition();
+				if (!(Byte & 0x10) && !(Byte & 0x20))
+				{
+					CPU.IRQLine = FALSE;
+					CPU.IRQTransition = FALSE;
+				}
 
-				// The case that IRQ will trigger in an instruction such as STA $4200.
-				// FIXME: not true but good enough for Snes9x, I think.
-				S9xCheckMissingHTimerRange(CPU.PrevCycles, CPU.Cycles - CPU.PrevCycles);
-
-				if (!(Byte & 0x30))
-				S9xClearIRQ(PPU_IRQ_SOURCE);
+				S9xUpdateIRQPositions(true);
 
 				// NMI can trigger immediately during VBlank as long as NMI_read ($4210) wasn't cleard.
 				if ((Byte & 0x80) && !(Memory.FillRAM[0x4200] & 0x80) &&
@@ -1714,9 +1606,19 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 				{
 					// FIXME: triggered at HC+=6, checked just before the final CPU cycle,
 					// then, when to call S9xOpcode_NMI()?
-					CPU.Flags |= NMI_FLAG;
+					CPU.NMIPending = TRUE;
 					Timings.NMITriggerPos = CPU.Cycles + 6 + 6;
+
+					#ifdef DEBUGGER
+					if (Settings.TraceHCEvent)
+						S9xTraceFormattedMessage("NMI Triggered on low-to-high occurring at next HC=%d\n", Timings.NMITriggerPos);
+					#endif
 				}
+
+				#ifdef DEBUGGER
+				S9xTraceFormattedMessage("--- IRQ Timer Enable HTimer:%d Pos:%04d  VTimer:%d Pos:%03d",
+				PPU.HTimerEnabled, PPU.HTimerPosition, PPU.VTimerEnabled, PPU.VTimerPosition);
+				#endif
 
 				break;
 
@@ -1761,7 +1663,7 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 				pos = PPU.IRQHBeamPos;
 				PPU.IRQHBeamPos = (PPU.IRQHBeamPos & 0xff00) | Byte;
 				if (PPU.IRQHBeamPos != pos)
-					S9xUpdateHVTimerPosition();
+					S9xUpdateIRQPositions(false);
 			#ifdef DEBUGGER
 				missing.hirq_pos = PPU.IRQHBeamPos;
 			#endif
@@ -1771,7 +1673,7 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 				pos = PPU.IRQHBeamPos;
 				PPU.IRQHBeamPos = (PPU.IRQHBeamPos & 0xff) | ((Byte & 1) << 8);
 				if (PPU.IRQHBeamPos != pos)
-					S9xUpdateHVTimerPosition();
+					S9xUpdateIRQPositions(false);
 			#ifdef DEBUGGER
 				missing.hirq_pos = PPU.IRQHBeamPos;
 			#endif
@@ -1781,7 +1683,7 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 				pos = PPU.IRQVBeamPos;
 				PPU.IRQVBeamPos = (PPU.IRQVBeamPos & 0xff00) | Byte;
 				if (PPU.IRQVBeamPos != pos)
-					S9xUpdateHVTimerPosition();
+					S9xUpdateIRQPositions(true);
 			#ifdef DEBUGGER
 				missing.virq_pos = PPU.IRQVBeamPos;
 			#endif
@@ -1791,7 +1693,7 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 				pos = PPU.IRQVBeamPos;
 				PPU.IRQVBeamPos = (PPU.IRQVBeamPos & 0xff) | ((Byte & 1) << 8);
 				if (PPU.IRQVBeamPos != pos)
-					S9xUpdateHVTimerPosition();
+					S9xUpdateIRQPositions(true);
 			#ifdef DEBUGGER
 				missing.virq_pos = PPU.IRQVBeamPos;
 			#endif
@@ -1801,8 +1703,9 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 				if (CPU.InDMAorHDMA)
 					return;
 				// XXX: Not quite right...
-				if (Byte)
-					CPU.Cycles += Timings.DMACPUSync;
+                if (Byte) {
+				CPU.Cycles += Timings.DMACPUSync;
+                }
 				if (Byte & 0x01)
 					S9xDoDMA(0);
 				if (Byte & 0x02)
@@ -1828,8 +1731,6 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 			case 0x420c: // HDMAEN
 				if (CPU.InDMAorHDMA)
 					return;
-				if (Settings.DisableHDMA)
-					Byte = 0;
 				Memory.FillRAM[0x420c] = Byte;
 				// Yoshi's Island, Genjyu Ryodan, Mortal Kombat, Tales of Phantasia
 				PPU.HDMA = Byte & ~PPU.HDMAEnded;
@@ -1856,17 +1757,7 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 				break;
 
 			case 0x4210: // RDNMI
-			#if 0
-				Memory.FillRAM[0x4210] = Model->_5A22;
-			#endif
-				return;
-
 			case 0x4211: // TIMEUP
-			#if 0
-				S9xClearIRQ(PPU_IRQ_SOURCE);
-			#endif
-				return;
-
 			case 0x4212: // HVBJOY
 			case 0x4213: // RDIO
 			case 0x4214: // RDDIVL
@@ -1982,22 +1873,22 @@ uint8 S9xGetCPU (uint16 Address)
 		switch (Address)
 		{
 			case 0x4210: // RDNMI
-			#ifdef CPU_SHUTDOWN
-				CPU.WaitAddress = CPU.PBPCAtOpcodeStart;
-			#endif
 				byte = Memory.FillRAM[0x4210];
 				Memory.FillRAM[0x4210] = Model->_5A22;
 				return ((byte & 0x80) | (OpenBus & 0x70) | Model->_5A22);
 
 			case 0x4211: // TIMEUP
-				byte = (CPU.IRQActive & PPU_IRQ_SOURCE) ? 0x80 : 0;
-				S9xClearIRQ(PPU_IRQ_SOURCE);
+				byte = 0;
+				if (CPU.IRQLine)
+				{
+					byte = 0x80;
+					CPU.IRQLine = FALSE;
+					CPU.IRQTransition = FALSE;
+				}
+
 				return (byte | (OpenBus & 0x7f));
 
 			case 0x4212: // HVBJOY
-			#ifdef CPU_SHUTDOWN
-				CPU.WaitAddress = CPU.PBPCAtOpcodeStart;
-			#endif
 				return (REGISTER_4212() | (OpenBus & 0x3e));
 
 			case 0x4213: // RDIO
@@ -2044,6 +1935,20 @@ void S9xResetPPU (void)
 	PPU.M7HOFS = 0;
 	PPU.M7VOFS = 0;
 	PPU.M7byte = 0;
+}
+
+void S9xResetPPUFast (void)
+{
+	PPU.RecomputeClipWindows = TRUE;
+	IPPU.ColorsChanged = TRUE;
+	IPPU.OBJChanged = TRUE;
+	memset(IPPU.TileCached[TILE_2BIT], 0, MAX_2BIT_TILES);
+	memset(IPPU.TileCached[TILE_4BIT], 0, MAX_4BIT_TILES);
+	memset(IPPU.TileCached[TILE_8BIT], 0, MAX_8BIT_TILES);
+	memset(IPPU.TileCached[TILE_2BIT_EVEN], 0, MAX_2BIT_TILES);
+	memset(IPPU.TileCached[TILE_2BIT_ODD], 0, MAX_2BIT_TILES);
+	memset(IPPU.TileCached[TILE_4BIT_EVEN], 0, MAX_4BIT_TILES);
+	memset(IPPU.TileCached[TILE_4BIT_ODD], 0, MAX_4BIT_TILES);
 }
 
 void S9xSoftResetPPU (void)
@@ -2109,7 +2014,7 @@ void S9xSoftResetPPU (void)
 	PPU.OAMReadFlip = 0;
 	PPU.OAMTileAddress = 0;
 	PPU.OAMWriteRegister = 0;
-	ZeroMemory(PPU.OAMData, 512 + 32);
+	memset(PPU.OAMData, 0, 512 + 32);
 
 	PPU.FirstSprite = 0;
 	PPU.LastSprite = 127;
@@ -2145,7 +2050,7 @@ void S9xSoftResetPPU (void)
 	PPU.BGMosaic[1] = FALSE;
 	PPU.BGMosaic[2] = FALSE;
 	PPU.BGMosaic[3] = FALSE;
-	
+
 	PPU.Window1Left = 1;
 	PPU.Window1Right = 0;
 	PPU.Window2Left = 1;
@@ -2183,19 +2088,15 @@ void S9xSoftResetPPU (void)
 		memset(&IPPU.Clip[c], 0, sizeof(struct ClipData));
 	IPPU.ColorsChanged = TRUE;
 	IPPU.OBJChanged = TRUE;
-	IPPU.DirectColourMapsNeedRebuild = TRUE;
-	ZeroMemory(IPPU.TileCached[TILE_2BIT], MAX_2BIT_TILES);
-	ZeroMemory(IPPU.TileCached[TILE_4BIT], MAX_4BIT_TILES);
-	ZeroMemory(IPPU.TileCached[TILE_8BIT], MAX_8BIT_TILES);
-	ZeroMemory(IPPU.TileCached[TILE_2BIT_EVEN], MAX_2BIT_TILES);
-	ZeroMemory(IPPU.TileCached[TILE_2BIT_ODD],  MAX_2BIT_TILES);
-	ZeroMemory(IPPU.TileCached[TILE_4BIT_EVEN], MAX_4BIT_TILES);
-	ZeroMemory(IPPU.TileCached[TILE_4BIT_ODD],  MAX_4BIT_TILES);
-#ifdef CORRECT_VRAM_READS
+	memset(IPPU.TileCached[TILE_2BIT], 0, MAX_2BIT_TILES);
+	memset(IPPU.TileCached[TILE_4BIT], 0, MAX_4BIT_TILES);
+	memset(IPPU.TileCached[TILE_8BIT], 0, MAX_8BIT_TILES);
+	memset(IPPU.TileCached[TILE_2BIT_EVEN], 0, MAX_2BIT_TILES);
+	memset(IPPU.TileCached[TILE_2BIT_ODD], 0,  MAX_2BIT_TILES);
+	memset(IPPU.TileCached[TILE_4BIT_EVEN], 0, MAX_4BIT_TILES);
+	memset(IPPU.TileCached[TILE_4BIT_ODD], 0,  MAX_4BIT_TILES);
 	IPPU.VRAMReadBuffer = 0; // XXX: FIXME: anything better?
-#else
-	IPPU.FirstVRAMRead = FALSE;
-#endif
+	GFX.InterlaceFrame = 0;
 	IPPU.Interlace = FALSE;
 	IPPU.InterlaceOBJ = FALSE;
 	IPPU.DoubleWidthPixels = FALSE;
@@ -2216,14 +2117,16 @@ void S9xSoftResetPPU (void)
 	IPPU.FrameSkip = 0;
 
 	S9xFixColourBrightness();
+	S9xBuildDirectColourMaps();
 
 	for (int c = 0; c < 0x8000; c += 0x100)
 		memset(&Memory.FillRAM[c], c >> 8, 0x100);
-	ZeroMemory(&Memory.FillRAM[0x2100], 0x100);
-	ZeroMemory(&Memory.FillRAM[0x4200], 0x100);
-	ZeroMemory(&Memory.FillRAM[0x4000], 0x100);
+	memset(&Memory.FillRAM[0x2100], 0, 0x100);
+	memset(&Memory.FillRAM[0x4200], 0, 0x100);
+	memset(&Memory.FillRAM[0x4000], 0, 0x100);
 	// For BS Suttehakkun 2...
-	ZeroMemory(&Memory.FillRAM[0x1000], 0x1000);
+	memset(&Memory.FillRAM[0x1000], 0, 0x1000);
 
 	Memory.FillRAM[0x4201] = Memory.FillRAM[0x4213] = 0xff;
+	Memory.FillRAM[0x2126] = Memory.FillRAM[0x2128] = 1;
 }

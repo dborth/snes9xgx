@@ -15,7 +15,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                                FEATURES  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-* Based on Snes9x 1.52
+* Based on Snes9x 1.57 (with faster Blargg S-SMP module)
 * Wiimote, Nunchuk, Classic, Wii U Pro, and Gamecube controller support
 * Wii U GamePad support (requires homebrew injection into Wii U VC title)
 * SNES Superscope, Mouse, Justifier support
@@ -36,9 +36,11 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 [4.4.0]
 
+* Updated core to 1.57
 * Improved WiiFlow integration
 * Fixed mangled image when switching between HQ2x and scanlines filters
 * Added Wii U GamePad support (thanks Fix94!)
+* Added BS-X BIOS loading
 
 [4.3.9 - August 24, 2018]
 
@@ -528,6 +530,14 @@ the emulator). Once you've copied the directories to your SD Card you will
 need to place your ROM image(s) into "\snes9xgx\roms" directory and place any
 cheat code files (optional) in the "\snes9xgx\cheats" directory. Once this is
 done you can proceed to run the emulator via the Homebrew Channel.
+
+-=[ Satellaview (BS-X) ]=-
+
+Snes9x GX supports loading BS games. The BSX BIOS is required.
+Download the English + No DRM BS-X ROM here: 
+https://project.satellaview.org/downloads.htm 
+
+Put it in your snes9xgx folder, renamed to BS-X.bin.
 
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                           INITIAL SETUP  |

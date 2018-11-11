@@ -190,55 +190,129 @@
  ***********************************************************************************/
 
 
-#ifndef _BSX_H_
-#define _BSX_H_
+#ifndef _STREAM_H_
+#define _STREAM_H_
 
-#include <fstream>
+#include <string>
 
-struct SBSX
+class Stream
 {
-	bool8	dirty;			// Changed register values
-	bool8	dirty2;			// Changed register values
-	bool8	bootup;			// Start in bios mapping
-	bool8	flash_enable;	// Flash state
-	bool8	write_enable;	// ROM write protection
-	bool8	read_enable;	// Allow card vendor reading
-	uint32	flash_command;	// Flash command
-	uint32	old_write;		// Previous flash write address
-	uint32	new_write;		// Current flash write address
-	uint8	out_index;
-	uint8	output[32];
-	uint8	PPU[32];
-	uint8	MMC[16];
-	uint8	prevMMC[16];
-	uint8	test2192[32];
-
-	bool	flash_csr;
-	bool	flash_gsr;
-	bool	flash_bsr;
-	bool	flash_cmd_done;
-
-	std::ifstream	sat_stream1;
-	std::ifstream	sat_stream2;
-
-	bool	sat_pf_latch1_enable, sat_dt_latch1_enable;
-	bool	sat_pf_latch2_enable, sat_dt_latch2_enable;
-
-	bool	sat_stream1_loaded, sat_stream2_loaded;
-	bool	sat_stream1_first, sat_stream2_first;
-	uint8	sat_stream1_count, sat_stream2_count;
-	uint16	sat_stream1_queue, sat_stream2_queue;
+	public:
+		Stream (void);
+		virtual ~Stream (void);
+		virtual int get_char (void) = 0;
+		virtual char * gets (char *, size_t) = 0;
+		virtual char * getline (void);	// free() when done
+		virtual std::string getline (bool &);
+		virtual size_t read (void *, size_t) = 0;
+        virtual size_t write (void *, size_t) = 0;
+        virtual size_t pos (void) = 0;
+        virtual size_t size (void) = 0;
+        virtual int revert (size_t from, size_t offset) = 0;
+        virtual void closeStream() = 0;
 };
 
-extern struct SBSX	BSX;
+class fStream : public Stream
+{
+	public:
+		fStream (FSTREAM);
+		virtual ~fStream (void);
+		virtual int get_char (void);
+		virtual char * gets (char *, size_t);
+		virtual size_t read (void *, size_t);
+        virtual size_t write (void *, size_t);
+        virtual size_t pos (void);
+        virtual size_t size (void);
+        virtual int revert (size_t from, size_t offset);
+        virtual void closeStream();
 
-uint8 S9xGetBSX (uint32);
-void S9xSetBSX (uint8, uint32);
-uint8 S9xGetBSXPPU (uint16);
-void S9xSetBSXPPU (uint8, uint16);
-uint8 * S9xGetBasePointerBSX (uint32);
-void S9xInitBSX (void);
-void S9xResetBSX (void);
-void S9xBSXPostLoadState (void);
+	private:
+		FSTREAM	fp;
+};
+
+#ifdef UNZIP_SUPPORT
+#  ifdef SYSTEM_ZIP
+#    include <minizip/unzip.h>
+#  else
+#    include "unzip.h"
+#  endif
+
+#define unz_BUFFSIZ	1024
+
+class unzStream : public Stream
+{
+	public:
+		unzStream (unzFile &);
+		virtual ~unzStream (void);
+		virtual int get_char (void);
+		virtual char * gets (char *, size_t);
+		virtual size_t read (void *, size_t);
+        virtual size_t write (void *, size_t);
+        virtual size_t pos (void);
+        virtual size_t size (void);
+        virtual int revert (size_t from, size_t offset);
+        virtual void closeStream();
+
+	private:
+        void   fill_buffer();
+        size_t buffer_remaining();
+
+		unzFile	file;
+		char	buffer[unz_BUFFSIZ];
+        size_t  pos_in_buf;
+        size_t  buf_pos_in_unzipped;
+		size_t	bytes_in_buf;
+        unz_file_pos unz_file_start_pos;
+};
+
+#endif
+
+class memStream : public Stream
+{
+	public:
+        memStream (uint8 *,size_t);
+        memStream (const uint8 *,size_t);
+		virtual ~memStream (void);
+		virtual int get_char (void);
+		virtual char * gets (char *, size_t);
+		virtual size_t read (void *, size_t);
+        virtual size_t write (void *, size_t);
+        virtual size_t pos (void);
+        virtual size_t size (void);
+        virtual int revert (size_t from, size_t offset);
+        virtual void closeStream();
+
+	private:
+		uint8   *mem;
+        size_t  msize;
+        size_t  remaining;
+		uint8	*head;
+        bool    readonly;
+};
+
+/* dummy stream that always reads 0 and writes nowhere
+   but counts bytes written
+*/
+class nulStream : public Stream
+{
+	public:
+        nulStream (void);
+		virtual ~nulStream (void);
+        virtual int get_char (void);
+        virtual char * gets (char *, size_t);
+		virtual size_t read (void *, size_t);
+        virtual size_t write (void *, size_t);
+        virtual size_t pos (void);
+        virtual size_t size (void);
+        virtual int revert (size_t from, size_t offset);
+        virtual void closeStream();
+
+    private:
+        size_t  bytes_written;
+};
+
+Stream *openStreamFromFSTREAM(const char* filename, const char* mode);
+Stream *reopenStreamFromFd(int fd, const char* mode);
+
 
 #endif
