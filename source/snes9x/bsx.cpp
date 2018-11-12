@@ -399,7 +399,7 @@ static void BSX_Map_FlashIO (void)
 				BlockIsROM[i + 0x400] = BlockIsROM[i + 0xC00] = FALSE;
 			}
 		}
-	}
+	}	
 }
 
 static void BSX_Map_SRAM (void)
@@ -677,12 +677,12 @@ static void BSX_Map (void)
 
 	MapROM = FlashROM;
 	FlashSize = FLASH_SIZE;
-
+	
 	if (BSX.prevMMC[0x02])
 		BSX_Map_HiROM();
 	else
 		BSX_Map_LoROM();
-
+	
 	BSX_Map_FlashIO();
 	BSX_Map_PSRAM();
 
@@ -804,7 +804,7 @@ void S9xSetBSX (uint8 byte, uint32 address)
 	}
 
 	// Flash IO
-
+	
 	// Write to Flash
 	if (BSX.write_enable)
 	{
@@ -814,7 +814,7 @@ void S9xSetBSX (uint8 byte, uint32 address)
 	}
 
 	// Flash Command Handling
-
+	
 	//Memory Pack Type 1 & 3 & 4
 	BSX.flash_command <<= 8;
 	BSX.flash_command |= byte;
