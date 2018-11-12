@@ -489,7 +489,7 @@ int WiiFileLoader()
 
 	if(isBSX()) {
 		sprintf (filepath, "%s%s/BS-X.bin", pathPrefix[GCSettings.LoadMethod], APPFOLDER);
-		if(LoadFile ((char *)Memory.BIOSROM, filepath, 0, 0x100000, SILENT) == 0) {
+		if(LoadFile ((char *)Memory.BIOSROM, filepath, 0, Memory.MAX_ROM_SIZE,  SILENT) == 0) {
 			bsxBiosLoadFailed = true;
 		}
 	}
@@ -679,13 +679,13 @@ OpenGameList ()
 
 bool AutoloadGame(char* filepath, char* filename) {
 	ResetBrowser();
-
+	
 	selectLoadedFile = 1;
 	std::string dir(filepath);
 	dir.assign(&dir[dir.find_last_of(":") + 2]);
 	strncpy(GCSettings.LoadFolder, dir.c_str(), sizeof(GCSettings.LoadFolder));
 	OpenGameList();
-
+	
 	for(int i = 0; i < browser.numEntries; i++) {
 		// Skip it
 		if (strcmp(browserList[i].filename, ".") == 0 || strcmp(browserList[i].filename, "..") == 0) {

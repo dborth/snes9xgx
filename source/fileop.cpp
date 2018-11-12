@@ -827,10 +827,10 @@ LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersize, bool
 					{
 						ShowProgress ("Loading...", offset, size);
 						readsize = fread (rbuffer + offset, 1, 4096, file); // read in next chunk
-
+						
 						if(readsize <= 0)
 							break; // reading finished (or failed)
-
+						
 						offset += readsize;
 					}
 					size = offset;

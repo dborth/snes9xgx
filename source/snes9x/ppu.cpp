@@ -341,9 +341,9 @@ void S9xUpdateIRQPositions (bool initial)
 	else if (!PPU.HTimerEnabled && PPU.VTimerEnabled)
 	{
 		if (CPU.V_Counter == PPU.VTimerPosition && initial)
-			Timings.NextIRQTimer = CPU.Cycles + Timings.IRQTriggerCycles;
+			Timings.NextIRQTimer = CPU.Cycles + Timings.IRQTriggerCycles - ONE_DOT_CYCLE;
 		else
-			Timings.NextIRQTimer = CyclesUntilNext (Timings.IRQTriggerCycles, PPU.VTimerPosition);
+			Timings.NextIRQTimer = CyclesUntilNext (Timings.IRQTriggerCycles - ONE_DOT_CYCLE, PPU.VTimerPosition);
 	}
 	else
 	{
@@ -716,15 +716,7 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 				PPU.VMA.Address &= 0xff00;
 				PPU.VMA.Address |= Byte;
 
-				if (PPU.VMA.FullGraphicCount)
-				{
-					uint32 addr = PPU.VMA.Address;
-					uint32 rem = addr & PPU.VMA.Mask1;
-					uint32 address = (addr & ~PPU.VMA.Mask1) + (rem >> PPU.VMA.Shift) + ((rem & (PPU.VMA.FullGraphicCount - 1)) << 3);
-					IPPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((address << 1) & 0xffff));
-				}
-				else
-					IPPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((PPU.VMA.Address << 1) & 0xffff));
+				S9xUpdateVRAMReadBuffer();
 
 				break;
 
@@ -732,15 +724,7 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 				PPU.VMA.Address &= 0x00ff;
 				PPU.VMA.Address |= Byte << 8;
 
-				if (PPU.VMA.FullGraphicCount)
-				{
-					uint32 addr = PPU.VMA.Address;
-					uint32 rem = addr & PPU.VMA.Mask1;
-					uint32 address = (addr & ~PPU.VMA.Mask1) + (rem >> PPU.VMA.Shift) + ((rem & (PPU.VMA.FullGraphicCount - 1)) << 3);
-					IPPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((address << 1) & 0xffff));
-				}
-				else
-					IPPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((PPU.VMA.Address << 1) & 0xffff));
+				S9xUpdateVRAMReadBuffer();
 
 				break;
 
@@ -1308,18 +1292,10 @@ uint8 S9xGetPPU (uint16 Address)
 				return (PPU.OpenBus1 = byte);
 
 			case 0x2139: // VMDATALREAD
-				byte = IPPU.VRAMReadBuffer & 0xff;
+				byte = PPU.VRAMReadBuffer & 0xff;
 				if (!PPU.VMA.High)
 				{
-					if (PPU.VMA.FullGraphicCount)
-					{
-						uint32 addr = PPU.VMA.Address;
-						uint32 rem = addr & PPU.VMA.Mask1;
-						uint32 address = (addr & ~PPU.VMA.Mask1) + (rem >> PPU.VMA.Shift) + ((rem & (PPU.VMA.FullGraphicCount - 1)) << 3);
-						IPPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((address << 1) & 0xffff));
-					}
-					else
-						IPPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((PPU.VMA.Address << 1) & 0xffff));
+					S9xUpdateVRAMReadBuffer();
 
 					PPU.VMA.Address += PPU.VMA.Increment;
 				}
@@ -1330,18 +1306,10 @@ uint8 S9xGetPPU (uint16 Address)
 				return (PPU.OpenBus1 = byte);
 
 			case 0x213a: // VMDATAHREAD
-				byte = (IPPU.VRAMReadBuffer >> 8) & 0xff;
+				byte = (PPU.VRAMReadBuffer >> 8) & 0xff;
 				if (PPU.VMA.High)
 				{
-					if (PPU.VMA.FullGraphicCount)
-					{
-						uint32 addr = PPU.VMA.Address;
-						uint32 rem = addr & PPU.VMA.Mask1;
-						uint32 address = (addr & ~PPU.VMA.Mask1) + (rem >> PPU.VMA.Shift) + ((rem & (PPU.VMA.FullGraphicCount - 1)) << 3);
-						IPPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((address << 1) & 0xffff));
-					}
-					else
-						IPPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((PPU.VMA.Address << 1) & 0xffff));
+					S9xUpdateVRAMReadBuffer();
 
 					PPU.VMA.Address += PPU.VMA.Increment;
 				}
@@ -1598,7 +1566,8 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 					CPU.IRQTransition = FALSE;
 				}
 
-				S9xUpdateIRQPositions(true);
+				if ((Byte & 0x30) != (Memory.FillRAM[0x4200] & 0x30))
+					S9xUpdateIRQPositions(true);
 
 				// NMI can trigger immediately during VBlank as long as NMI_read ($4210) wasn't cleard.
 				if ((Byte & 0x80) && !(Memory.FillRAM[0x4200] & 0x80) &&
@@ -1752,6 +1721,8 @@ void S9xSetCPU (uint8 Byte, uint16 Address)
 					}
 					else
 						CPU.FastROMSpeed = SLOW_ONE_CYCLE;
+					// we might currently be in FastROMSpeed region, S9xSetPCBase will update CPU.MemSpeed
+					S9xSetPCBase(Registers.PBPC);
 				}
 
 				break;
@@ -2095,7 +2066,7 @@ void S9xSoftResetPPU (void)
 	memset(IPPU.TileCached[TILE_2BIT_ODD], 0,  MAX_2BIT_TILES);
 	memset(IPPU.TileCached[TILE_4BIT_EVEN], 0, MAX_4BIT_TILES);
 	memset(IPPU.TileCached[TILE_4BIT_ODD], 0,  MAX_4BIT_TILES);
-	IPPU.VRAMReadBuffer = 0; // XXX: FIXME: anything better?
+	PPU.VRAMReadBuffer = 0; // XXX: FIXME: anything better?
 	GFX.InterlaceFrame = 0;
 	IPPU.Interlace = FALSE;
 	IPPU.InterlaceOBJ = FALSE;

@@ -677,15 +677,15 @@ static void BSX_Map (void)
 
 	MapROM = FlashROM;
 	FlashSize = FLASH_SIZE;
-
+	
 	if (BSX.prevMMC[0x02])
 		BSX_Map_HiROM();
 	else
 		BSX_Map_LoROM();
-
+	
 	BSX_Map_FlashIO();
 	BSX_Map_PSRAM();
-
+	
 	BSX_Map_SNES();
 	BSX_Map_SRAM();
 	BSX_Map_RAM();
@@ -814,7 +814,7 @@ void S9xSetBSX (uint8 byte, uint32 address)
 	}
 
 	// Flash Command Handling
-
+	
 	//Memory Pack Type 1 & 3 & 4
 	BSX.flash_command <<= 8;
 	BSX.flash_command |= byte;

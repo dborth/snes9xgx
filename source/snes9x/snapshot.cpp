@@ -204,6 +204,7 @@
 #include "movie.h"
 #include "display.h"
 #include "language.h"
+#include "gfx.h"
 
 #ifndef min
 #define min(a,b)	(((a) < (b)) ? (a) : (b))
@@ -433,6 +434,7 @@ static FreezeData	SnapPPU[] =
 	INT_ENTRY(6, CGFLIP),
 	INT_ENTRY(6, CGFLIPRead),
 	INT_ENTRY(6, CGADD),
+	INT_ENTRY(11, CGSavedByte),
 	ARRAY_ENTRY(6, CGDATA, 256, uint16_ARRAY_V),
 #define O(N) \
 	INT_ENTRY(6, OBJ[N].HPos), \
@@ -529,7 +531,8 @@ static FreezeData	SnapPPU[] =
 	INT_ENTRY(6, HDMA),
 	INT_ENTRY(6, HDMAEnded),
 	INT_ENTRY(6, OpenBus1),
-	INT_ENTRY(6, OpenBus2)
+	INT_ENTRY(6, OpenBus2),
+	INT_ENTRY(11, VRAMReadBuffer)
 };
 
 #undef STRUCT
@@ -599,7 +602,8 @@ static FreezeData	SnapTimings[] =
 	INT_ENTRY(6, IRQFlagChanging),
 	INT_ENTRY(6, APUSpeedup),
 	INT_ENTRY(7, IRQTriggerCycles),
-	INT_ENTRY(7, APUAllowTimeOverflow)
+	INT_ENTRY(7, APUAllowTimeOverflow),
+	INT_ENTRY(11, NextIRQTimer)
 };
 
 #undef STRUCT
@@ -1825,11 +1829,13 @@ int S9xUnfreezeFromStream (STREAM stream)
 		ICPU.ShiftedDB = Registers.DB << 16;
 		S9xSetPCBase(Registers.PBPC);
 		S9xUnpackStatus();
-		S9xUpdateIRQPositions(false);
+		if(version < SNAPSHOT_VERSION_IRQ_2018)
+			S9xUpdateIRQPositions(false); // calculate the new trigger pos from saved PPU data
 		S9xFixCycles();
 
 		for (int d = 0; d < 8; d++)
 			DMA[d] = dma_snap.dma[d];
+		// TODO: these should already be correct since they are stored in the snapshot
 		CPU.InDMA = CPU.InHDMA = FALSE;
 		CPU.InDMAorHDMA = CPU.InWRAMDMAorHDMA = FALSE;
 		CPU.HDMARanInDMA = 0;
@@ -1839,10 +1845,19 @@ int S9xUnfreezeFromStream (STREAM stream)
 		IPPU.ColorsChanged = TRUE;
 		IPPU.OBJChanged = TRUE;
 		IPPU.RenderThisFrame = TRUE;
-
-		uint8 hdma_byte = Memory.FillRAM[0x420c];
-		S9xSetCPU(hdma_byte, 0x420c);
-
+		
+		GFX.InterlaceFrame = Timings.InterlaceField;
+		GFX.DoInterlace = 0;
+		
+		S9xGraphicsScreenResize();
+		
+		if (Settings.FastSavestates == 0)
+			memset(GFX.Screen,0,GFX.Pitch * MAX_SNES_HEIGHT);
+		
+		// TODO: this seems to be a relic from 1.43 changes, completely remove if no issues in the future
+		/*uint8 hdma_byte = Memory.FillRAM[0x420c];
+		S9xSetCPU(hdma_byte, 0x420c);*/
+		
 		S9xControlPostLoadState(&ctl_snap);
 
 		if (local_superfx)
@@ -1934,12 +1949,6 @@ int S9xUnfreezeFromStream (STREAM stream)
 				memset(GFX.Screen + y * GFX.RealPPL, 0, GFX.RealPPL * 2);
 
 			delete ssi;
-		}
-		else
-		{
-			// couldn't load graphics, so black out the screen instead
-			for (uint32 y = 0; y < (uint32) (IMAGE_HEIGHT); y++)
-				memset(GFX.Screen + y * GFX.RealPPL, 0, GFX.RealPPL * 2);
 		}
 	}
 

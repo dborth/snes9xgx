@@ -225,10 +225,8 @@ struct InternalPPU
 	struct ClipData Clip[2][6];
 	bool8	ColorsChanged;
 	bool8	OBJChanged;
-	bool8	DirectColourMapsNeedRebuild;
 	uint8	*TileCache[7];
 	uint8	*TileCached[7];
-	uint16	VRAMReadBuffer;
 	bool8	Interlace;
 	bool8	InterlaceOBJ;
 	bool8	PseudoHires;
@@ -295,6 +293,7 @@ struct SPPU
 	bool8	CGFLIP;
 	uint8	CGFLIPRead;
 	uint8	CGADD;
+	uint8	CGSavedByte;
 	uint16	CGDATA[256];
 
 	struct SOBJ OBJ[128];
@@ -378,6 +377,8 @@ struct SPPU
 
 	uint8	OpenBus1;
 	uint8	OpenBus2;
+	
+	uint16	VRAMReadBuffer;
 };
 
 extern uint16				SignExtend[2];
@@ -417,6 +418,19 @@ static inline void FLUSH_REDRAW (void)
 {
 	if (IPPU.PreviousLine != IPPU.CurrentLine)
 		S9xUpdateScreen();
+}
+
+static inline void S9xUpdateVRAMReadBuffer()
+{
+	if (PPU.VMA.FullGraphicCount)
+	{
+		uint32 addr = PPU.VMA.Address;
+		uint32 rem = addr & PPU.VMA.Mask1;
+		uint32 address = (addr & ~PPU.VMA.Mask1) + (rem >> PPU.VMA.Shift) + ((rem & (PPU.VMA.FullGraphicCount - 1)) << 3);
+		PPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((address << 1) & 0xffff));
+	}
+	else
+		PPU.VRAMReadBuffer = READ_WORD(Memory.VRAM + ((PPU.VMA.Address << 1) & 0xffff));
 }
 
 static inline void REGISTER_2104 (uint8 Byte)
@@ -720,12 +734,12 @@ static inline void REGISTER_2122 (uint8 Byte)
 {
 	if (PPU.CGFLIP)
 	{
-		if ((Byte & 0x7f) != (PPU.CGDATA[PPU.CGADD] >> 8))
+		if ((Byte & 0x7f) != (PPU.CGDATA[PPU.CGADD] >> 8) || PPU.CGSavedByte != (uint8) (PPU.CGDATA[PPU.CGADD] & 0xff))
 		{
 			FLUSH_REDRAW();
-			PPU.CGDATA[PPU.CGADD] &= 0x00ff;
-			PPU.CGDATA[PPU.CGADD] |= (Byte & 0x7f) << 8;
+			PPU.CGDATA[PPU.CGADD] = (Byte & 0x7f) << 8 | PPU.CGSavedByte;
 			IPPU.ColorsChanged = TRUE;
+			IPPU.Red[PPU.CGADD] = IPPU.XB[PPU.CGSavedByte & 0x1f];
 			IPPU.Blue[PPU.CGADD] = IPPU.XB[(Byte >> 2) & 0x1f];
 			IPPU.Green[PPU.CGADD] = IPPU.XB[(PPU.CGDATA[PPU.CGADD] >> 5) & 0x1f];
 			IPPU.ScreenColors[PPU.CGADD] = (uint16) BUILD_PIXEL(IPPU.Red[PPU.CGADD], IPPU.Green[PPU.CGADD], IPPU.Blue[PPU.CGADD]);
@@ -735,16 +749,7 @@ static inline void REGISTER_2122 (uint8 Byte)
 	}
 	else
 	{
-		if (Byte != (uint8) (PPU.CGDATA[PPU.CGADD] & 0xff))
-		{
-			FLUSH_REDRAW();
-			PPU.CGDATA[PPU.CGADD] &= 0x7f00;
-			PPU.CGDATA[PPU.CGADD] |= Byte;
-			IPPU.ColorsChanged = TRUE;
-			IPPU.Red[PPU.CGADD] = IPPU.XB[Byte & 0x1f];
-			IPPU.Green[PPU.CGADD] = IPPU.XB[(PPU.CGDATA[PPU.CGADD] >> 5) & 0x1f];
-			IPPU.ScreenColors[PPU.CGADD] = (uint16) BUILD_PIXEL(IPPU.Red[PPU.CGADD], IPPU.Green[PPU.CGADD], IPPU.Blue[PPU.CGADD]);
-		}
+		PPU.CGSavedByte = Byte;
 	}
 
 	PPU.CGFLIP ^= 1;

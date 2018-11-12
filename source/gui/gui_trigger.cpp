@@ -119,7 +119,7 @@ s8 GuiTrigger::WPAD_Stick(u8 stick, int axis)
 		int min;
 		int max;
 		int center;
-
+		
 		if(axis == 1) {
 			pos = js->pos.y;
 			min = js->min.y;
