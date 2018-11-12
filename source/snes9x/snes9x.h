@@ -485,14 +485,13 @@ struct SSettings
 	bool8	UpAndDown;
 
 	bool8	OpenGLEnable;
+	float	SuperFXSpeedPerLine;
 
 	uint32	SuperFXClockMultiplier;
 	int	OneClockCycle;
 	int	OneSlowClockCycle;
 	int	TwoClockCycles;
 	int	MaxSpriteTilesPerLine;
-	
-	float	SuperFXSpeedPerLine;
 };
 
 struct SSNESGameFixes

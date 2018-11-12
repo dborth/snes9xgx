@@ -20,7 +20,7 @@
 #include "filelist.h"
 
 #define APPNAME 			"Snes9x GX"
-#define APPVERSION 			"4.3.9"
+#define APPVERSION 			"4.4.0"
 #define APPFOLDER 			"snes9xgx"
 #define PREF_FILE_NAME		"settings.xml"
 
@@ -119,6 +119,10 @@ struct SGCSettings{
 	int		PreviewImage;
 
 	int		sfxOverclock;
+	int		OneClockCycle;
+	int		OneSlowClockCycle;
+	int		TwoClockCycles;
+	int		MaxSpriteTilesPerLine;
 };
 
 void ExitApp();

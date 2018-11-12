@@ -3819,6 +3819,8 @@ void CMemory::ApplyROMFixes (void)
 	//// APU timing hacks :(
 
 	Timings.APUSpeedup = 0;
+	#ifdef GEKKO
+	Timings.APUAllowTimeOverflow = FALSE;
 
 	if (!Settings.DisableGameSpecificHacks)
 	{
@@ -3864,9 +3866,22 @@ void CMemory::ApplyROMFixes (void)
 			match_na("HEIWA Parlor!Mini8")                      || // Parlor mini 8
 			match_nn("SANKYO Fever! \xCC\xA8\xB0\xCA\xDE\xB0!"))   // SANKYO Fever! Fever!
 			Timings.APUSpeedup = 1; */
+			
+		if (match_na ("EARTHWORM JIM 2")						|| // Earthworm Jim 2
+			match_na ("NBA Hangtime")							|| // NBA Hang Time
+			match_na ("MSPACMAN")								|| // Ms Pacman
+			match_na ("THE MASK")								|| // The Mask
+			match_na ("PRIMAL RAGE")							|| // Primal Rage
+			match_na ("PORKY PIGS HAUNTED")						|| // Porky Pig's Haunted Holiday
+			match_na ("Big Sky Trooper")						|| // Big Sky Trooper
+			match_id ("A35")									|| // Mechwarrior 3050 / Battle Tech 3050
+			match_na ("DOOM TROOPERS"))							   // Doom Troopers
+			Timings.APUAllowTimeOverflow = TRUE;
+	#endif
 	}
 
 	S9xAPUTimingSetSpeedup(Timings.APUSpeedup);
+	S9xAPUAllowTimeOverflow(Timings.APUAllowTimeOverflow);
 
 	//// Other timing hacks :(
 

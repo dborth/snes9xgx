@@ -3147,6 +3147,7 @@ static int MenuSettingsVideo()
 	int ret;
 	int i = 0;
 	bool firstRun = true;
+	bool reset_sfx = false;
 	OptionList options;
 
 	sprintf(options.name[i++], "Rendering");
@@ -3256,7 +3257,7 @@ static int MenuSettingsVideo()
 				}
 				switch(GCSettings.sfxOverclock)
 				{
-					case 0: Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6; break;
+					case 0: Settings.SuperFXSpeedPerLine = 5823405; break;
 					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
 					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
 				}
