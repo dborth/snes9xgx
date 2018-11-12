@@ -504,7 +504,7 @@ DefaultSettings ()
 
 	GCSettings.sfxOverclock = 0;
 	/* Initialize SuperFX CPU to normal speed by default */
-	Settings.SuperFXSpeedPerLine = 0.417 * 10.5e6;
+	Settings.SuperFXSpeedPerLine = 5823405;
 
 }
 
