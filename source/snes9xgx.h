@@ -119,10 +119,6 @@ struct SGCSettings{
 	int		PreviewImage;
 
 	int		sfxOverclock;
-	int		OneClockCycle;
-	int		OneSlowClockCycle;
-	int		TwoClockCycles;
-	int		MaxSpriteTilesPerLine;
 };
 
 void ExitApp();
