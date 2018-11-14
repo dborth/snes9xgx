@@ -3821,6 +3821,7 @@ void CMemory::ApplyROMFixes (void)
 	Timings.APUSpeedup = 0;
 	#ifdef GEKKO
 	Timings.APUAllowTimeOverflow = FALSE;
+	#endif
 
 	if (!Settings.DisableGameSpecificHacks)
 	{
@@ -3866,7 +3867,7 @@ void CMemory::ApplyROMFixes (void)
 			match_na("HEIWA Parlor!Mini8")                      || // Parlor mini 8
 			match_nn("SANKYO Fever! \xCC\xA8\xB0\xCA\xDE\xB0!"))   // SANKYO Fever! Fever!
 			Timings.APUSpeedup = 1; */
-			
+	#ifdef GEKKO
 		if (match_na ("EARTHWORM JIM 2")						|| // Earthworm Jim 2
 			match_na ("NBA Hangtime")							|| // NBA Hang Time
 			match_na ("MSPACMAN")								|| // Ms Pacman
@@ -3881,8 +3882,9 @@ void CMemory::ApplyROMFixes (void)
 	}
 
 	S9xAPUTimingSetSpeedup(Timings.APUSpeedup);
+	#ifdef GEKKO
 	S9xAPUAllowTimeOverflow(Timings.APUAllowTimeOverflow);
-
+	#endif
 	//// Other timing hacks :(
 
 	Timings.HDMAStart   = SNES_HDMA_START_HC + Settings.HDMATimingHack - 100;
