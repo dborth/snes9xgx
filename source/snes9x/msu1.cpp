@@ -247,6 +247,8 @@ STREAM S9xMSU1OpenFile(const char *msu_ext, bool skip_unpacked)
 #ifdef GEKKO
 	char filename[1024];
 	sprintf(filename, "%s%s%s", Memory.ROMFilePath, Memory.ROMFilename, msu_ext);
+#else
+	const char *filename = S9xGetFilename(msu_ext, ROMFILENAME_DIR); 
 #endif
     
 	STREAM file = 0;
