@@ -311,8 +311,12 @@ void S9xSA1MainLoop (void)
 			S9xSA1Opcode_IRQ();
 		}
 	}
-
-	for (int i = 0; i < 5 && !(Memory.FillRAM[0x2200] & 0x60); i++)
+	
+	#ifdef GEKKO
+	for (int i = 0; i < 3 && !(Memory.FillRAM[0x2200] & 0x60); i++)
+	#else
+	for (int i = 0; i < 5 && !(Memory.FillRAM[0x2200] & 0x60); i++)	
+	#endif
 	{
 	#ifdef DEBUGGER
 		if (SA1.Flags & TRACE_FLAG)

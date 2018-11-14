@@ -189,6 +189,12 @@
   Nintendo Co., Limited and its subsidiary companies.
  ***********************************************************************************/
 
+#ifdef GEKKO
+void S9xResetLogger (void) { }
+void S9xCloseLogger (void) { }
+void S9xVideoLogger (void *pixels, int width, int height, int depth, int bytes_per_line) { }
+void S9xAudioLogger (void *samples, int length) { }
+#else
 
 #include "snes9x.h"
 #include "movie.h"
@@ -280,3 +286,5 @@ void S9xAudioLogger (void *samples, int length)
 		ignore = fwrite(samples, 1, length, audio);
 	}
 }
+
+#endif

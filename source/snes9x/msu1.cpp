@@ -197,7 +197,6 @@
 #include "display.h"
 #include "msu1.h"
 #include "apu/blargg_endian.h"
-#include "snes9xgx.h"
 #include <fstream>
 #include <sys/stat.h>
 
@@ -246,11 +245,12 @@ static int unzFindExtension(unzFile &file, const char *ext, bool restart = TRUE,
 STREAM S9xMSU1OpenFile(const char *msu_ext, bool skip_unpacked)
 {
 #ifdef GEKKO
-	char filename[MAXPATHLEN];
+	char filename[1024];
 	sprintf(filename, "%s%s%s", Memory.ROMFilePath, Memory.ROMFilename, msu_ext);
 #else
-    const char *filename = S9xGetFilename(msu_ext, ROMFILENAME_DIR);
+	const char *filename = S9xGetFilename(msu_ext, ROMFILENAME_DIR); 
 #endif
+    
 	STREAM file = 0;
 
 	if (!skip_unpacked)
