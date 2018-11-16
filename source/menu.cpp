@@ -3157,7 +3157,6 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Crosshair");
 	sprintf(options.name[i++], "Video Mode");
 	sprintf(options.name[i++], "Show Framerate");
-	sprintf(options.name[i++], "SuperFX Overclock");
 	options.length = i;
 	
 #ifdef HW_DOL
@@ -3249,20 +3248,6 @@ static int MenuSettingsVideo()
 				Settings.AutoDisplayMessages ^= 1;
 				Settings.DisplayFrameRate ^= 1;
 				break;
-			case 8:
-				GCSettings.sfxOverclock++;
-				if (GCSettings.sfxOverclock > 2) {
-					GCSettings.sfxOverclock = 0;
-				}
-				switch(GCSettings.sfxOverclock)
-				{
-					case 0: Settings.SuperFXSpeedPerLine = 5823405; break;
-					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
-					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
-				}
-				S9xResetSuperFX();
-				S9xReset();
-				break;
 		}
 
 		if(ret >= 0 || firstRun)
@@ -3309,15 +3294,6 @@ static int MenuSettingsVideo()
 					sprintf (options.value[6], "PAL (60Hz)"); break;
 			}
 			sprintf (options.value[7], "%s", Settings.DisplayFrameRate ? "On" : "Off");
-			switch(GCSettings.sfxOverclock)
-			{
-				case 0:
-					sprintf (options.value[8], "Default"); break;
-				case 1:
-					sprintf (options.value[8], "40 Mhz"); break;
-				case 2:
-					sprintf (options.value[8], "60 Mhz"); break;
-			}
 			optionBrowser.TriggerUpdate();
 		}
 

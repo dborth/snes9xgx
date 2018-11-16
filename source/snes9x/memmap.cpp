@@ -3886,6 +3886,13 @@ void CMemory::ApplyROMFixes (void)
 		else {
 			Timings.SA1Cycles = 3;
 		}
+		
+		if (match_id("YI"))							     { // Super Mario World 2 Yoshi's Island
+			Timings.SuperFXSpeedPerLine = 0.417 * 40.5e6;
+		}
+		else {
+			Timings.SuperFXSpeedPerLine = 5823405;
+		}
 	#endif
 	}
 

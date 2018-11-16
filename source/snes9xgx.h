@@ -117,8 +117,6 @@ struct SGCSettings{
 	int		Rumble;
 	int		language;
 	int		PreviewImage;
-
-	int		sfxOverclock;
 };
 
 void ExitApp();

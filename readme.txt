@@ -43,9 +43,12 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 * Added BS-X BIOS loading
 * Fixed Tengai Mekyou Zero black screen
 * Fixed Chou Aniki black screen
-* Get SuperFX Overclock working with core 1.57
+* Removed SuperFX Overclock
+* Set 40 MHz Overclock as default for Yoshi's story
 * Get APU Hacks working with core 1.57 to fix Earthworm Jim 2
 * Adjusted SA1 settings to fix Super Mario RPG slowdowns with core 1.57
+* Fixed Kirby's Dreamland 3 intro
+* Fixed Kirby Super Star intro
 
 [4.3.9 - August 24, 2018]
 

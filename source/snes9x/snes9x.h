@@ -368,9 +368,10 @@ struct STimings
 	int32	NMIDMADelay;	// The delay of NMI trigger after DMA transfers. Snes9x cannot emulate correctly.
 	int32	IRQFlagChanging;	// This value is just a hack.
 	int32	APUSpeedup;
-	bool8	APUAllowTimeOverflow;
 #ifdef GEKKO
+	bool8	APUAllowTimeOverflow;
 	int32	SA1Cycles;
+	float	SuperFXSpeedPerLine;
 #endif
 };
 
@@ -488,7 +489,6 @@ struct SSettings
 	bool8	UpAndDown;
 
 	bool8	OpenGLEnable;
-	float	SuperFXSpeedPerLine;
 
 	uint32	SuperFXClockMultiplier;
 	int	OneClockCycle;
