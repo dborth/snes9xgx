@@ -100,6 +100,9 @@ s8 GuiTrigger::WPAD_Stick(u8 stick, int axis)
 {
 	#ifdef HW_RVL
 	struct joystick_t* js = NULL;
+	
+	float mag = 0.0;
+	float ang = 0.0;
 
 	switch (wpad->exp.type) {
 		case WPAD_EXP_NUNCHUK:
@@ -107,12 +110,37 @@ s8 GuiTrigger::WPAD_Stick(u8 stick, int axis)
 			break;
 
 		case WPAD_EXP_CLASSIC:
-			js = stick ? &wpad->exp.classic.rjs : &wpad->exp.classic.ljs;
-			break;
-
+			if (stick == 0)
+			{
+				mag = wpad->exp.classic.ljs.mag;
+				ang = wpad->exp.classic.ljs.ang;
+			}
+			else
+			{
+				mag = wpad->exp.classic.rjs.mag;
+				ang = wpad->exp.classic.rjs.ang;
+			}
 		default:
 			break;
 	}
+		
+	/* calculate x/y value (angle need to be converted into radian) */
+		if (mag > 1.0) { 
+		mag = 1.0;
+		}
+		else if (mag < -1.0) {
+		mag = -1.0;
+		}
+		double val;
+		
+		if(axis == 0) // x-axis
+		val = mag * sin((PI * ang)/180.0f);
+		else // y-axis
+		val = mag * cos((PI * ang)/180.0f);
+		
+		return (s8)(val * 128.0f);
+		
+		return 0;
 
 	if (js) {
 		int pos;
