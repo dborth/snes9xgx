@@ -195,6 +195,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <limits.h>
 #ifndef GEKKO
 #include <memory.h>
@@ -333,6 +334,20 @@ void SetInfoDlgColor(unsigned char, unsigned char, unsigned char);
 #define S9xDisplayString	DisplayStringFromBottom
 #endif  // __LIBRETRO__
 #endif  // __WIN32__
+
+inline void ssnprintf(char *dst, size_t size, const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    if (vsnprintf(dst, size, fmt, args) >= (int) size)
+        dst[size - 1] = '\0';
+    va_end(args);
+}
+inline void sstrncpy(char *dst, const char *src, size_t size)
+{
+    strncpy(dst, src, size - 1);
+    dst[size - 1] = '\0';
+}
 
 #if defined(__DJGPP) || defined(__WIN32__)
 #define SLASH_STR	"\\"

@@ -2095,13 +2095,13 @@ bool8 CMemory::LoadGNEXT ()
 bool8 CMemory::LoadSRTC (void)
 {
 	FILE	*fp;
-	size_t	ignore;
 
 	fp = fopen(S9xGetFilename(".rtc", SRAM_DIR), "rb");
 	if (!fp)
 		return (FALSE);
 
-	ignore = fread(RTCData.reg, 1, 20, fp);
+	if (fread(RTCData.reg, 1, 20, fp) < 20)
+			memset (RTCData.reg, 0, 20);
 	fclose(fp);
 
 	return (TRUE);
@@ -2110,13 +2110,15 @@ bool8 CMemory::LoadSRTC (void)
 bool8 CMemory::SaveSRTC (void)
 {
 	FILE	*fp;
-	size_t	ignore;
 
 	fp = fopen(S9xGetFilename(".rtc", SRAM_DIR), "wb");
 	if (!fp)
 		return (FALSE);
 
-	ignore = fwrite(RTCData.reg, 1, 20, fp);
+	if (fwrite(RTCData.reg, 1, 20, fp) < 20)
+	{
+		printf ("Failed to save clock data.\n");
+	}
 	fclose(fp);
 
 	return (TRUE);
@@ -2243,8 +2245,8 @@ bool8 CMemory::SaveSRAM (const char *filename)
 		file = fopen(name, "wb");
 		if (file)
 		{
-			size_t	ignore;
-			ignore = fwrite((char *) Multi.sramB, size, 1, file);
+			if (!fwrite((char *) Multi.sramB, size, 1, file))
+				printf ("Couldn't write to subcart SRAM file.\n");
 			fclose(file);
 		}
 
@@ -2260,8 +2262,8 @@ bool8 CMemory::SaveSRAM (const char *filename)
 		file = fopen(sramName, "wb");
 		if (file)
 		{
-			size_t	ignore;
-			ignore = fwrite((char *) SRAM, size, 1, file);
+			if (!fwrite((char *) SRAM, size, 1, file))
+				printf ("Couldn't write to SRAM file.\n");
 			fclose(file);
 
 			if (Settings.SRTC || Settings.SPC7110RTC)
@@ -2289,11 +2291,11 @@ bool8 CMemory::SaveMPAK (const char *filename)
 			file = fopen(mempakName, "wb");
 			if (file)
 			{
-				size_t	ignore;
-				ignore = fwrite((char *)Memory.ROM + Multi.cartOffsetB, size, 1, file);
+				size_t	written;
+				written = fwrite((char *)Memory.ROM + Multi.cartOffsetB, size, 1, file);
 				fclose(file);
 
-				return (TRUE);
+				return (written > 0);
 			}
 		}
 	}
