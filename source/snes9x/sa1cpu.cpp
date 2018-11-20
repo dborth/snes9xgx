@@ -323,8 +323,8 @@ void S9xSA1MainLoop (void)
 			S9xSA1Trace();
 	#endif
 
-		register uint8				Op;
-		register struct SOpcodes	*Opcodes;
+		uint8				Op;
+		struct SOpcodes	*Opcodes;
 
 		if (SA1.PCBase)
 		{
