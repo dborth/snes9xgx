@@ -130,6 +130,8 @@ extern const u8		icon_settings_network_png[];
 extern const u32	icon_settings_network_png_size;
 extern const u8		icon_settings_video_png[];
 extern const u32	icon_settings_video_png_size;
+extern const u8		icon_settings_audio_png[];
+extern const u32	icon_settings_audio_png_size;
 extern const u8		icon_settings_screenshot_png[];
 extern const u32	icon_settings_screenshot_png_size;
 
