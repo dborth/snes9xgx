@@ -46,6 +46,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 * Get SuperFX Overclock working with core 1.57
 * Get APU Hacks working with core 1.57 to fix Earthworm Jim 2
 * Adjusted SA1 settings to fix Super Mario RPG slowdowns with core 1.57
+* Add Interpolation Methods
 
 [4.3.9 - August 24, 2018]
 

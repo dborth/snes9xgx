@@ -47,4 +47,10 @@ void S9xUpdateDynamicRate (double rate);
 
 extern SNES_SPC	*spc_core;
 
+#define DSP_INTERPOLATION_NONE     0
+#define DSP_INTERPOLATION_LINEAR   1
+#define DSP_INTERPOLATION_GAUSSIAN 2
+#define DSP_INTERPOLATION_CUBIC    3
+#define DSP_INTERPOLATION_SINC     4
+
 #endif
