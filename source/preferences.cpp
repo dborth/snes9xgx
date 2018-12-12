@@ -501,7 +501,7 @@ DefaultSettings ()
 
 	// Frame timings in 50hz and 60hz cpu mode
 	Settings.FrameTimePAL = 20000;
-	Settings.FrameTimeNTSC = 16667;
+	Settings.FrameTimeNTSC = 16666;
 
 	GCSettings.sfxOverclock = 0;
 	/* Initialize SuperFX CPU to normal speed by default */
