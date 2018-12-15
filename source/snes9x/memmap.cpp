@@ -3696,8 +3696,7 @@ void CMemory::ApplyROMFixes (void)
 			match_na ("DOOM TROOPERS"))			       // Doom Troopers
 			Timings.APUAllowTimeOverflow = TRUE;
 
-		if (match_id("AFJJ") || match_id("AFJE")		    || // Hoshi no Kirby 3, Kirby's Dream Land 3
-			match_id("AKFE"))				     { // Kirby Super Star
+		if (match_id("AKFJ") || match_id("AKFE"))				     { // Hoshi no Kirby / Kirby Super Star
 			Timings.SA1Cycles = 5;
 		}
 		else {
