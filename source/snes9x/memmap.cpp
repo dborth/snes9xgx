@@ -3645,11 +3645,12 @@ void CMemory::ApplyROMFixes (void)
 		//if (match_id("AVCJ"))                                      // Rendering Ranger R2
 		//	Timings.APUSpeedup = 2;
 		if (match_id("AANJ"))                                      // Chou Aniki
-			Timings.APUSpeedup = 1;
+			Timings.APUSpeedup = -3;
 		if (match_na("CIRCUIT USA"))
 			Timings.APUSpeedup = 2;
 
-/*		if (match_na("GAIA GENSOUKI 1 JPN")                     || // Gaia Gensouki
+	#ifdef GEKKO
+		if (match_na("GAIA GENSOUKI 1 JPN")                     || // Gaia Gensouki
 			match_id("JG  ")                                    || // Illusion of Gaia
 			match_id("CQ  ")                                    || // Stunt Race FX
 			match_na("SOULBLADER - 1")                          || // Soul Blader
@@ -3659,7 +3660,7 @@ void CMemory::ApplyROMFixes (void)
 			match_nn("ACTRAISER")                               || // Actraiser
 			match_nn("ActRaiser-2")                             || // Actraiser 2
 			match_id("AQT")                                     || // Tenchi Souzou, Terranigma
-			match_id("ATV")                                     || // Tales of Phantasia
+			match_id("ATV") || match_id("ATVJ")                 || // Tales of Phantasia / Teiruzu obu Fantajia
 			match_id("ARF")                                     || // Star Ocean
 			match_id("APR")                                     || // Zen-Nippon Pro Wrestling 2 - 3-4 Budoukan
 			match_id("A4B")                                     || // Super Bomberman 4
@@ -3683,8 +3684,8 @@ void CMemory::ApplyROMFixes (void)
 			match_nn("Parlor")                                  || // Parlor mini/2/3/4/5/6/7, Parlor Parlor!/2/3/4/5
 			match_na("HEIWA Parlor!Mini8")                      || // Parlor mini 8
 			match_nn("SANKYO Fever! \xCC\xA8\xB0\xCA\xDE\xB0!"))   // SANKYO Fever! Fever!
-			Timings.APUSpeedup = 1; */
-	#ifdef GEKKO
+			Timings.APUSpeedup = 1;
+	
 		if (match_na ("EARTHWORM JIM 2")			    || // Earthworm Jim 2
 			match_na ("NBA Hangtime")			    || // NBA Hang Time
 			match_na ("MSPACMAN")				    || // Ms Pacman
@@ -3696,8 +3697,7 @@ void CMemory::ApplyROMFixes (void)
 			match_na ("DOOM TROOPERS"))			       // Doom Troopers
 			Timings.APUAllowTimeOverflow = TRUE;
 
-		if (match_id("AFJJ") || match_id("AFJE")		    || // Hoshi no Kirby 3, Kirby's Dream Land 3
-			match_id("AKFE"))				     { // Kirby Super Star
+		if (match_id("AKFJ") || match_id("AKFE"))				     { // Hoshi no Kirby / Kirby Super Star
 			Timings.SA1Cycles = 5;
 		}
 		else {
