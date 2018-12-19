@@ -23,6 +23,7 @@ extern struct SLineMatrixData	LineMatrixData[240];
 void S9xComputeClipWindows (void);
 
 static int	font_width = 8, font_height = 9;
+void (*S9xCustomDisplayString) (const char *, int, int, bool, int) = NULL;
 
 static void SetupOBJ (void);
 static void DrawOBJS (int);
@@ -38,6 +39,7 @@ static inline void DrawBackgroundMode7 (int, void (*DrawMath) (uint32, uint32, i
 static inline void DrawBackdrop (void);
 static inline void RenderScreen (bool8);
 static uint16 get_crosshair_color (uint8);
+static void S9xDisplayStringType (const char *, int, int, bool, int);
 
 #define TILE_PLUS(t, x)	(((t) & 0xfc00) | ((t + x) & 0x3ff))
 
@@ -1825,6 +1827,12 @@ void S9xDisplayChar (uint16 *s, uint8 c)
 
 static void DisplayStringFromBottom (const char *string, int linesFromBottom, int pixelsFromLeft, bool allowWrap)
 {
+	if (S9xCustomDisplayString)
+	{
+		S9xCustomDisplayString (string, linesFromBottom, pixelsFromLeft, allowWrap, S9X_NO_INFO);
+		return;
+	}
+
 	if (linesFromBottom <= 0)
 		linesFromBottom = 1;
 
@@ -1854,6 +1862,16 @@ static void DisplayStringFromBottom (const char *string, int linesFromBottom, in
 		S9xDisplayChar(dst, string[i]);
 		dst += font_width - 1;
 	}
+}
+
+static void S9xDisplayStringType (const char *string, int linesFromBottom, int pixelsFromLeft, bool allowWrap, int type)
+{
+    if (S9xCustomDisplayString)
+    {
+            S9xCustomDisplayString (string, linesFromBottom, pixelsFromLeft, allowWrap, type);
+            return;
+    }
+    S9xDisplayString (string, linesFromBottom, pixelsFromLeft, allowWrap);
 }
 
 static void DisplayFrameRate (void)
@@ -1886,8 +1904,8 @@ static void DisplayFrameRate (void)
 
 static void DisplayPressedKeys (void)
 {
-	static char	KeyMap[]   = { '0', '1', '2', 'R', 'L', 'X', 'A', '>', '<', 'v', '^', 'S', 's', 'Y', 'B' };
-	static int	KeyOrder[] = { 8, 10, 7, 9, 0, 6, 14, 13, 5, 1, 4, 3, 2, 11, 12 }; // < ^ > v   A B Y X  L R  S s
+	static unsigned char	KeyMap[]   = { '0', '1', '2', 'R', 'L', 'X', 'A', 225, 224, 227, 226, 'S', 's', 'Y', 'B' };
+	static int		KeyOrder[] = { 8, 10, 7, 9, 0, 6, 14, 13, 5, 1, 4, 3, 2, 11, 12 }; // < ^ > v   A B Y X  L R  S s
 
 	enum controllers	controller;
     int					line = Settings.DisplayMovieFrame && S9xMovieActive() ? 2 : 1;
@@ -1910,7 +1928,7 @@ static void DisplayPressedKeys (void)
 				uint8 buttons = buf[4];
 				sprintf(string, "#%d %d: (%03d,%03d) %c%c", port + 1, ids[0] + 1, x, y,
 						(buttons & 0x40) ? 'L' : ' ', (buttons & 0x80) ? 'R' : ' ');
-				S9xDisplayString(string, line++, 1, false);
+				S9xDisplayStringType(string, line++, 1, false, S9X_PRESSED_KEYS_INFO);
 				break;
 			}
 
@@ -1925,7 +1943,7 @@ static void DisplayPressedKeys (void)
 				sprintf(string, "#%d %d: (%03d,%03d) %c%c%c%c", port + 1, ids[0] + 1, x, y,
 						(buttons & 0x80) ? 'F' : ' ', (buttons & 0x40) ? 'C' : ' ',
 						(buttons & 0x20) ? 'T' : ' ', (buttons & 0x10) ? 'P' : ' ');
-				S9xDisplayString(string, line++, 1, false);
+				S9xDisplayStringType(string, line++, 1, false, S9X_PRESSED_KEYS_INFO);
 				break;
 			}
 
@@ -1944,7 +1962,7 @@ static void DisplayPressedKeys (void)
 				sprintf(string, "#%d %d: (%03d,%03d) %c%c%c / (%03d,%03d) %c%c%c", port + 1, ids[0] + 1,
 						x1, y1, (buttons & 0x80) ? 'T' : ' ', (buttons & 0x20) ? 'S' : ' ', offscreen1 ? 'O' : ' ',
 						x2, y2, (buttons & 0x40) ? 'T' : ' ', (buttons & 0x10) ? 'S' : ' ', offscreen2 ? 'O' : ' ');
-				S9xDisplayString(string, line++, 1, false);
+				S9xDisplayStringType(string, line++, 1, false, S9X_PRESSED_KEYS_INFO);
 				break;
 			}
 
@@ -1959,7 +1977,7 @@ static void DisplayPressedKeys (void)
 					string[6 + i]= (pad & mask) ? KeyMap[j] : ' ';
 				}
 
-				S9xDisplayString(string, line++, 1, false);
+				S9xDisplayStringType(string, line++, 1, false, S9X_PRESSED_KEYS_INFO);
 				break;
 			}
 
@@ -1978,7 +1996,7 @@ static void DisplayPressedKeys (void)
 							string[6 + i]= (pad & mask) ? KeyMap[j] : ' ';
 						}
 
-						S9xDisplayString(string, line++, 1, false);
+						S9xDisplayStringType(string, line++, 1, false, S9X_PRESSED_KEYS_INFO);
 					}
 				}
 
