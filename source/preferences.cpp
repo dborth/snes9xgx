@@ -23,6 +23,8 @@
 #include "input.h"
 #include "button_mapping.h"
 
+#include "snes9x/apu/apu.h"
+
 struct SGCSettings GCSettings;
 
 /****************************************************************************
@@ -151,6 +153,7 @@ preparePrefsData ()
 	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
 	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
 	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(GCSettings.sfxOverclock));
+	createXMLSetting("Interpolation", "Interpolation", toStr(GCSettings.Interpolation));
 
 	createXMLSection("Menu", "Menu Settings");
 
@@ -334,8 +337,12 @@ decodePrefsData ()
 			loadXMLSetting(&GCSettings.FilterMethod, "FilterMethod");
 			loadXMLSetting(&GCSettings.xshift, "xshift");
 			loadXMLSetting(&GCSettings.yshift, "yshift");
+			
+			// Audio Settings
+			
+			loadXMLSetting(&GCSettings.Interpolation, "Interpolation");
 
-			//Emulation Settings
+			// Emulation Settings
 
 			loadXMLSetting(&GCSettings.sfxOverclock, "sfxOverclock");
 
@@ -488,6 +495,10 @@ DefaultSettings ()
 	Settings.SoundPlaybackRate = 48000;
 	Settings.SoundInputRate = 31950;
 	Settings.DynamicRateControl = true;
+	
+	// Interpolation Method
+	GCSettings.Interpolation = 0;
+	Settings.InterpolationMethod = DSP_INTERPOLATION_GAUSSIAN;
 
 	// Graphics
 	Settings.Transparency = true;

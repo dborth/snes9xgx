@@ -1,5 +1,7 @@
 // snes_spc 0.9.0. http://www.slack.net/~ant/
 
+#include "snes9x.h"
+
 #include "SPC_DSP.h"
 
 #include "blargg_endian.h"
@@ -127,24 +129,43 @@ static short const gauss [512] =
 
 inline int SPC_DSP::interpolate( voice_t const* v )
 {
-	// Make pointers into gaussian based on fractional position between samples
-	int offset = v->interp_pos >> 4 & 0xFF;
-	short const* fwd = gauss + 255 - offset;
-	short const* rev = gauss       + offset; // mirror left half of gaussian
-	
-	int const* in = &v->buf [(v->interp_pos >> 12) + v->buf_pos];
-	int out;
-	out  = (fwd [  0] * in [0]) >> 11;
-	out += (fwd [256] * in [1]) >> 11;
-	out += (rev [256] * in [2]) >> 11;
-	out = (int16_t) out;
-	out += (rev [  0] * in [3]) >> 11;
-	
-	CLAMP16( out );
-	out &= ~1;
-	return out;
+    int out;
+    int const* in = &v->buf [(v->interp_pos >> 12) + v->buf_pos];
+    switch (Settings.InterpolationMethod)
+    {
+    case 0: // raw
+    {
+        out = v->buf [(v->interp_pos >> 12) + v->buf_pos] & ~1;
+        break;
+    }
+    case 1: // linear interpolation
+    {
+        int fract = v->interp_pos & 0xFFF;
+        out  = (0x1000 - fract) * in [0];
+        out +=           fract  * in [1];
+        out >>= 12;
+        break;
+    }
+    default:
+    case 2: // Original gaussian filter
+    {
+        // Make pointers into gaussian based on fractional position between samples
+        int offset = v->interp_pos >> 4 & 0xFF;
+        short const* fwd = gauss + 255 - offset;
+        short const* rev = gauss       + offset; // mirror left half of gaussian
+        int const* in = &v->buf [(v->interp_pos >> 12) + v->buf_pos];
+        out  = (fwd [  0] * in [0]) >> 11;
+        out += (fwd [256] * in [1]) >> 11;
+        out += (rev [256] * in [2]) >> 11;
+        out = (int16_t) out;
+        out += (rev [  0] * in [3]) >> 11;
+        CLAMP16( out );
+        out &= ~1;
+        break;
+    }
+    }
+    return out;
 }
-
 
 //// Counters
 

@@ -41,6 +41,7 @@
 #include "snes9x/snes9x.h"
 #include "snes9x/fxemu.h"
 #include "snes9x/memmap.h"
+#include "snes9x/apu/apu.h"
 #include "snes9x/cheats.h"
 
 extern SCheatData Cheat;
@@ -1886,6 +1887,7 @@ static int MenuGameSettings()
 	GuiImageData btnLargeOutlineOver(button_large_over_png);
 	GuiImageData iconMappings(icon_settings_mappings_png);
 	GuiImageData iconVideo(icon_settings_video_png);
+	GuiImageData iconAudio(icon_settings_audio_png);
 	GuiImageData iconController(icon_game_controllers_png);
 	GuiImageData iconCheats(icon_game_cheats_png);
 	GuiImageData iconScreenshot(icon_settings_screenshot_png);
@@ -1902,7 +1904,7 @@ static int MenuGameSettings()
 	GuiImage mappingBtnIcon(&iconMappings);
 	GuiButton mappingBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	mappingBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	mappingBtn.SetPosition(-125, 120);
+	mappingBtn.SetPosition(-200, 120);
 	mappingBtn.SetLabel(&mappingBtnTxt);
 	mappingBtn.SetImage(&mappingBtnImg);
 	mappingBtn.SetImageOver(&mappingBtnImgOver);
@@ -1912,7 +1914,25 @@ static int MenuGameSettings()
 	mappingBtn.SetTrigger(trigA);
 	mappingBtn.SetTrigger(trig2);
 	mappingBtn.SetEffectGrow();
-
+	
+	GuiText audioBtnTxt("Audio", 22, (GXColor){0, 0, 0, 255});
+	audioBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-20);
+	GuiImage audioBtnImg(&btnLargeOutline);
+	GuiImage audioBtnImgOver(&btnLargeOutlineOver);
+	GuiImage audioBtnIcon(&iconAudio);
+	GuiButton audioBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	audioBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	audioBtn.SetPosition(0, 120);
+	audioBtn.SetLabel(&audioBtnTxt);
+	audioBtn.SetImage(&audioBtnImg);
+	audioBtn.SetImageOver(&audioBtnImgOver);
+	audioBtn.SetIcon(&audioBtnIcon);
+	audioBtn.SetSoundOver(&btnSoundOver);
+	audioBtn.SetSoundClick(&btnSoundClick);
+	audioBtn.SetTrigger(trigA);
+	audioBtn.SetTrigger(trig2);
+	audioBtn.SetEffectGrow();
+	
 	GuiText videoBtnTxt("Video", 22, (GXColor){0, 0, 0, 255});
 	videoBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-20);
 	GuiImage videoBtnImg(&btnLargeOutline);
@@ -1920,7 +1940,7 @@ static int MenuGameSettings()
 	GuiImage videoBtnIcon(&iconVideo);
 	GuiButton videoBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	videoBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	videoBtn.SetPosition(125, 120);
+	videoBtn.SetPosition(200, 120);
 	videoBtn.SetLabel(&videoBtnTxt);
 	videoBtn.SetImage(&videoBtnImg);
 	videoBtn.SetImageOver(&videoBtnImgOver);
@@ -2018,6 +2038,7 @@ static int MenuGameSettings()
 	w.Append(&titleTxt);
 	w.Append(&mappingBtn);
 	w.Append(&videoBtn);
+	w.Append(&audioBtn);
 	w.Append(&controllerBtn);
 	w.Append(&screenshotBtn);
 	w.Append(&cheatsBtn);
@@ -2039,6 +2060,10 @@ static int MenuGameSettings()
 		else if(videoBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_GAMESETTINGS_VIDEO;
+		}
+		else if(audioBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_GAMESETTINGS_AUDIO;
 		}
 		else if(controllerBtn.GetState() == STATE_CLICKED)
 		{
@@ -3334,6 +3359,102 @@ static int MenuSettingsVideo()
 }
 
 /****************************************************************************
+ * MenuSettingsAudio
+ ***************************************************************************/
+static int MenuSettingsAudio()
+{
+	int menu = MENU_NONE;
+	int ret;
+	int i = 0;
+	bool firstRun = true;
+	OptionList options;
+	sprintf(options.name[i++], "Interpolation");
+	options.length = i;
+	for(i=0; i < options.length; i++)
+		options.value[i][0] = 0;
+	GuiText titleTxt("Game Settings - Audio", 26, (GXColor){255, 255, 255, 255});
+	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	titleTxt.SetPosition(50,50);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
+	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND_PCM);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(50, -35);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetSoundClick(&btnSoundClick);
+	backBtn.SetTrigger(trigA);
+	backBtn.SetTrigger(trig2);
+	backBtn.SetEffectGrow();
+	GuiOptionBrowser optionBrowser(552, 248, &options);
+	optionBrowser.SetPosition(0, 108);
+	optionBrowser.SetCol2Position(200);
+	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	HaltGui();
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&backBtn);
+	mainWindow->Append(&optionBrowser);
+	mainWindow->Append(&w);
+	mainWindow->Append(&titleTxt);
+	ResumeGui();
+	
+	while(menu == MENU_NONE)
+	{
+		usleep(THREAD_SLEEP);
+		ret = optionBrowser.GetClickedOption();
+		
+		switch (ret)
+		{
+		case 0:
+				GCSettings.Interpolation++;
+				if (GCSettings.Interpolation > 2) {
+					GCSettings.Interpolation = 0;
+				}
+				switch(GCSettings.Interpolation)
+				{
+					case 0: Settings.InterpolationMethod = DSP_INTERPOLATION_GAUSSIAN; break;
+					case 1: Settings.InterpolationMethod = DSP_INTERPOLATION_LINEAR; break;
+					case 2: Settings.InterpolationMethod = DSP_INTERPOLATION_NONE; break;
+				}
+				break;
+				S9xReset();
+		}
+		
+	if(ret >= 0 || firstRun)
+		{
+			firstRun = false;
+			
+			switch(GCSettings.Interpolation)
+			{
+				case 0:
+					sprintf (options.value[0], "Gaussian (Accurate)"); break;
+				case 1:
+					sprintf (options.value[0], "Linear"); break;
+				case 2:
+					sprintf (options.value[0], "None"); break;
+			}
+			optionBrowser.TriggerUpdate();
+		}
+		if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_GAMESETTINGS;
+		}
+	}
+	HaltGui();
+	mainWindow->Remove(&optionBrowser);
+	mainWindow->Remove(&w);
+	mainWindow->Remove(&titleTxt);
+	return menu;
+}
+
+/****************************************************************************
  * MenuSettings
  ***************************************************************************/
 static int MenuSettings()
@@ -4157,6 +4278,9 @@ MainMenu (int menu)
 				break;
 			case MENU_GAMESETTINGS_VIDEO:
 				currentMenu = MenuSettingsVideo();
+				break;
+			case MENU_GAMESETTINGS_AUDIO:
+				currentMenu = MenuSettingsAudio();
 				break;
 			case MENU_GAMESETTINGS_CHEATS:
 				currentMenu = MenuGameCheats();
