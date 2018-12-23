@@ -15,7 +15,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                                FEATURES  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-* Based on Snes9x 1.57 (with faster Blargg S-SMP module)
+* Based on Snes9x 1.58 (with faster Blargg S-SMP module)
 * Wiimote, Nunchuk, Classic, Wii U Pro, and Gamecube controller support
 * Wii U GamePad support (requires homebrew injection into Wii U VC title)
 * SNES Superscope, Mouse, Justifier support
@@ -34,18 +34,18 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-[4.4.0]
+[4.4.0 - December 23, 2018]
 
-* Updated core to 1.57
+* Updated core to 1.58
 * Improved WiiFlow integration
-* Fixed mangled image when switching between HQ2x and scanlines filters
 * Added Wii U GamePad support (thanks Fix94!)
+* Added setting to change sound interpolation
+* Fixed mangled image when switching between HQ2x and scanlines filters
 * Added BS-X BIOS loading
 * Fixed Tengai Mekyou Zero black screen
 * Fixed Chou Aniki black screen
-* Get SuperFX Overclock working with core 1.57
-* Get APU Hacks working with core 1.57 to fix Earthworm Jim 2
-* Adjusted SA1 settings to fix Super Mario RPG slowdowns with core 1.57
+* APU Hacks for 1.58 core to fix Earthworm Jim 2
+* Adjusted SA1 settings to fix Super Mario RPG slowdowns with 1.58 core
 
 [4.3.9 - August 24, 2018]
 
