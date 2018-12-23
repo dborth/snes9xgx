@@ -119,6 +119,8 @@ struct SGCSettings{
 	int		PreviewImage;
 
 	int		sfxOverclock;
+	
+	int		Interpolation;
 };
 
 void ExitApp();
