@@ -3,7 +3,7 @@
  *
  * crunchy2 April 2007-July 2007
  * Michniewski 2008
- * Tantric 2008-2010
+ * Tantric 2008-2019
  *
  * sram.cpp
  *

@@ -1,7 +1,7 @@
 /****************************************************************************
  * Snes9x Nintendo Wii/Gamecube Port
  *
- * Tantric 2008-2010
+ * Tantric 2008-2019
  *
  * networkop.h
  *
