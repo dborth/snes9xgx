@@ -443,7 +443,7 @@ DefaultSettings ()
 	GCSettings.render = 3; // Filtered (sharp)
 	GCSettings.FilterMethod = FILTER_NONE;	// no hq2x
 
-	GCSettings.widescreen = 1; // aspect ratio correction
+	GCSettings.widescreen = 0; // no aspect ratio correction
 	GCSettings.zoomHor = 1.0; // horizontal zoom level
 	GCSettings.zoomVert = 1.0; // vertical zoom level
 	GCSettings.xshift = 0; // horizontal video shift
