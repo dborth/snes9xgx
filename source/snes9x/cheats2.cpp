@@ -4,10 +4,23 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
+#include <ctype.h>
+
 #include "snes9x.h"
 #include "memmap.h"
 #include "cheats.h"
 #include "bml.h"
+
+static inline char *trim (char *string)
+{
+    int start;
+    int end;
+
+    for (start = 0; string[start] && isspace (string[start]); start++) {}
+    for (end = start; string[end] && !isspace (string[end]); end++) {}
+    string[end] = '\0';
+    return &string[start];
+}
 
 static inline uint8 S9xGetByteFree (uint32 Address)
 {
@@ -394,20 +407,23 @@ SCheat S9xTextToCheat (char *text)
 SCheatGroup S9xCreateCheatGroup (const char *name, const char *cheat)
 {
     SCheatGroup g;
-    char *code;
     char *code_string = strdup (cheat);
+	char *code_ptr = code_string;
+    int len;
 
     g.name = strdup (name);
     g.enabled = false;
 
-    for (code = strtok (code_string, "+"); code; code = strtok (NULL, "+"))
+    for (len = strcspn (code_ptr, "+"); len; len = strcspn (code_ptr, "+"))
     {
-        if (code)
-        {
-            SCheat c = S9xTextToCheat (code);
-            if (c.address)
-                g.c.push_back (c);
-        }
+        char *code = code_ptr;
+        code_ptr += len + (code_ptr[len] == '\0' ? 0 : 1);
+        code[len] = '\0';
+        code = trim (code);
+
+        SCheat c = S9xTextToCheat (code);
+        if (c.address)
+            g.c.push_back (c);
     }
 
     delete[] code_string;
