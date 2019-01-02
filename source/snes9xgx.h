@@ -92,7 +92,6 @@ struct SGCSettings{
 	char	ScreenshotsFolder[MAXPATHLEN]; // Path to screenshots files
 	char	CoverFolder[MAXPATHLEN]; 	// Path to cover files
 	char	ArtworkFolder[MAXPATHLEN]; 	// Path to artwork files
-	char 	ImageFolder[MAXPATHLEN]; 	// Saved image folder path
 	int		AutoloadGame;
 
 	char	smbip[80];
@@ -122,6 +121,8 @@ struct SGCSettings{
 	
 	int		Interpolation;
 };
+
+char* ImageFolder();
 
 void ExitApp();
 void ShutdownWii();

@@ -948,7 +948,7 @@ static int MenuGameSelection()
 	GuiFileBrowser gameBrowser(330, 268);
 	gameBrowser.SetPosition(20, 98);
 	ResetBrowser();
-		
+	
 	GuiImage bgPreview(&bgPreviewImg);
 	bgPreview.SetPosition(365, 98);
 	
@@ -3999,16 +3999,13 @@ static int MenuSettingsMenu()
 			switch(GCSettings.PreviewImage)
 			{
 				case 0:	
-					sprintf(options.value[6], "Screenshots"); 
-					snprintf(GCSettings.ImageFolder, MAXJOLIET, "%s", GCSettings.ScreenshotsFolder);
+					sprintf(options.value[6], "Screenshots");
 					break; 
 				case 1:	
-					sprintf(options.value[6], "Covers");	  
-					snprintf(GCSettings.ImageFolder, MAXJOLIET, "%s", GCSettings.CoverFolder);
+					sprintf(options.value[6], "Covers");
 					break; 
 				case 2:	
 					sprintf(options.value[6], "Artwork");
-					snprintf(GCSettings.ImageFolder, MAXJOLIET, "%s", GCSettings.ArtworkFolder);
 					break; 
 			}
 			
