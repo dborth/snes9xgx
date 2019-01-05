@@ -34,6 +34,11 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.4.1 - January 4, 2019]
+
+* Fixed controllers with no analog sticks
+* Fixed GameCube build
+
 [4.4.0 - December 23, 2018]
 
 * Updated core to 1.58
