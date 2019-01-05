@@ -260,6 +260,18 @@ UpdatePads()
 		userInput[i].pad.triggerL = PAD_TriggerL(i);
 		userInput[i].pad.triggerR = PAD_TriggerR(i);
 	}
+#ifdef HW_RVL
+	if(WiiDRC_Inited() && WiiDRC_Connected())
+	{
+		userInput[0].wiidrcdata.btns_d = WiiDRC_ButtonsDown();
+		userInput[0].wiidrcdata.btns_u = WiiDRC_ButtonsUp();
+		userInput[0].wiidrcdata.btns_h = WiiDRC_ButtonsHeld();
+		userInput[0].wiidrcdata.stickX = WiiDRC_lStickX();
+		userInput[0].wiidrcdata.stickY = WiiDRC_lStickY();
+		userInput[0].wiidrcdata.substickX = WiiDRC_rStickX();
+		userInput[0].wiidrcdata.substickY = WiiDRC_rStickY();
+	}
+#endif
 }
 
 /****************************************************************************
