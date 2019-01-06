@@ -483,9 +483,14 @@ int main(int argc, char *argv[])
 		case 0: Settings.SuperFXSpeedPerLine = 5823405; break;
 		case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
 		case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
-		S9xResetSuperFX();
 	}
-	
+
+	if (GCSettings.sfxOverclock > 0)
+	{
+		S9xResetSuperFX();
+		S9xReset();
+	}
+
 	switch (GCSettings.Interpolation)
 	{
 		case 0: Settings.InterpolationMethod = DSP_INTERPOLATION_GAUSSIAN; break;
