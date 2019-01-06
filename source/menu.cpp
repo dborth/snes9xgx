@@ -98,6 +98,9 @@ static char progressMsg[201];
 static int progressDone = 0;
 static int progressTotal = 0;
 
+u8 * bg_music;
+u32 bg_music_size;
+
 /****************************************************************************
  * ResumeGui
  *
@@ -4292,7 +4295,7 @@ MainMenu (int menu)
 
 	#ifndef NO_SOUND
 	if(firstRun) {
-		bgMusic = new GuiSound(bg_music_ogg, bg_music_ogg_size, SOUND_OGG);
+		bgMusic = new GuiSound(bg_music, bg_music_size, SOUND_OGG);
 		bgMusic->SetVolume(GCSettings.MusicVolume);
 		bgMusic->SetLoop(true);
 		enterSound = new GuiSound(enter_ogg, enter_ogg_size, SOUND_OGG);

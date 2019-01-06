@@ -890,6 +890,35 @@ size_t LoadFont(char * filepath)
 	fclose(file);
 	return loadSize;
 }
+
+void LoadBgMusic()
+{
+	char filepath[MAXPATHLEN];
+	sprintf(filepath, "%s/bg_music.ogg", appPath);
+	FILE *file = fopen (filepath, "rb");
+	if(!file) {
+		return;
+	}
+
+	fseeko(file,0,SEEK_END);
+	size_t ogg_size = ftello(file);
+
+	if(ogg_size == 0) {
+		return;
+	}
+
+	u8 * ogg_data = (u8 *)mem2_malloc(ogg_size);
+
+	if(!ogg_data) {
+		return;
+	}
+
+	fseeko(file, 0, SEEK_SET);
+	fread (ogg_data, 1, ogg_size, file);
+	fclose(file);
+	bg_music = ogg_data;
+	bg_music_size = ogg_size;
+}
 #endif
 
 /****************************************************************************

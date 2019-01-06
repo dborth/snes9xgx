@@ -19,7 +19,7 @@ static heap_cntrl mem2_heap;
 
 u32 InitMem2Manager () 
 {
-	int size = (12*1024*1024);
+	int size = (20*1024*1024);
 	u32 level;
 	_CPU_ISR_Disable(level);
 	size &= ~0x1f; // round down, because otherwise we may exceed the area

@@ -37,6 +37,7 @@ size_t LoadFile(char * rbuffer, char *filepath, size_t length, size_t buffersize
 size_t LoadFile(char * filepath, bool silent);
 size_t LoadSzFile(char * filepath, unsigned char * rbuffer);
 size_t LoadFont(char *filepath);
+void LoadBgMusic();
 size_t SaveFile(char * buffer, char *filepath, size_t datasize, bool silent);
 size_t SaveFile(char * filepath, size_t datasize, bool silent);
 

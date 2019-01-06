@@ -39,6 +39,8 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 * Fixed Wii U GamePad support
 * Added ability to load external fonts and activated Japanese/Korean 
   translations. Simply put the ko.ttf or jp.ttf in the app directory
+* Added ability to customize background music. Simply put a bg_music.ogg
+  in the app directory
 * Added ability to change preview image source with + button (thanks Zalo!)
 
 [4.4.1 - January 4, 2019]
