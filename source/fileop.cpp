@@ -33,9 +33,14 @@
 #include "filebrowser.h"
 #include "gui/gui.h"
 
+#ifdef HW_RVL
+	#include "mem2.h"
+#endif
+
 #define THREAD_SLEEP 100
 
 unsigned char *savebuffer = NULL;
+u8 *ext_font_ttf = NULL;
 static mutex_t bufferLock = LWP_MUTEX_NULL;
 FILE * file; // file pointer - the only one we should ever use!
 bool unmountRequired[7] = { false, false, false, false, false, false, false };
@@ -849,6 +854,43 @@ size_t LoadFile(char * filepath, bool silent)
 {
 	return LoadFile((char *)savebuffer, filepath, 0, SAVEBUFFERSIZE, silent);
 }
+
+#ifdef HW_RVL
+size_t LoadFont(char * filepath)
+{
+	FILE *file = fopen (filepath, "rb");
+
+	if(!file) {
+		ErrorPrompt("Font file not found!");
+		return 0;
+	}
+
+	fseeko(file,0,SEEK_END);
+	size_t loadSize = ftello(file);
+
+	if(loadSize == 0) {
+		ErrorPrompt("Error loading font!");
+		return 0;
+	}
+
+	if(ext_font_ttf) {
+		mem2_free(ext_font_ttf);
+	}
+
+	ext_font_ttf = (u8 *)mem2_malloc(loadSize);
+
+	if(!ext_font_ttf) {
+		ErrorPrompt("Font file is too large!");
+		fclose(file);
+		return 0;
+	}
+
+	fseeko(file,0,SEEK_SET);
+	fread (ext_font_ttf, 1, loadSize, file);
+	fclose(file);
+	return loadSize;
+}
+#endif
 
 /****************************************************************************
  * SaveFile
