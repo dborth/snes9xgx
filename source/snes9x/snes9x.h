@@ -184,9 +184,6 @@ struct STimings
 	int32	IRQFlagChanging;	// This value is just a hack.
 	int32	APUSpeedup;
 	bool8	APUAllowTimeOverflow;
-#ifdef GEKKO
-	int32	SA1Cycles;
-#endif
 };
 
 struct SSettings

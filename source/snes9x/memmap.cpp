@@ -3156,13 +3156,13 @@ void CMemory::Map_SA1LoROMMap (void)
 
 	map_hirom_offset(0xc0, 0xff, 0x0000, 0xffff, CalculatedSize, 0);
 
-	map_space(0x00, 0x3f, 0x3000, 0x3fff, FillRAM);
-	map_space(0x80, 0xbf, 0x3000, 0x3fff, FillRAM);
+	map_space(0x00, 0x3f, 0x3000, 0x37ff, FillRAM);
+	map_space(0x80, 0xbf, 0x3000, 0x37ff, FillRAM);
 	map_index(0x00, 0x3f, 0x6000, 0x7fff, MAP_BWRAM, MAP_TYPE_I_O);
 	map_index(0x80, 0xbf, 0x6000, 0x7fff, MAP_BWRAM, MAP_TYPE_I_O);
 
-	for (int c = 0x40; c < 0x80; c++)
-		map_space(c, c, 0x0000, 0xffff, SRAM + (c & 1) * 0x10000);
+	for (int c = 0x40; c < 0x4f; c++)
+		map_space(c, c, 0x0000, 0xffff, SRAM + (c & 3) * 0x10000);
 
 	map_WRAM();
 
@@ -3180,6 +3180,10 @@ void CMemory::Map_SA1LoROMMap (void)
 		SA1.WriteMap[c + 0] = SA1.WriteMap[c + 0x800] = FillRAM + 0x3000;
 		SA1.WriteMap[c + 1] = SA1.WriteMap[c + 0x801] = (uint8 *) MAP_NONE;
 	}
+	
+	// SA-1 Banks 40->4f
+	for (int c = 0x400; c < 0x500; c++)
+		SA1.Map[c] = SA1.WriteMap[c] = (uint8*)MAP_HIROM_SRAM;
 
 	// SA-1 Banks 60->6f
 	for (int c = 0x600; c < 0x700; c++)
@@ -3696,13 +3700,6 @@ void CMemory::ApplyROMFixes (void)
 			match_id ("A35")				    || // Mechwarrior 3050 / Battle Tech 3050
 			match_na ("DOOM TROOPERS"))			       // Doom Troopers
 			Timings.APUAllowTimeOverflow = TRUE;
-
-		if (match_id("AKFJ") || match_id("AKFE"))				     { // Hoshi no Kirby / Kirby Super Star
-			Timings.SA1Cycles = 5;
-		}
-		else {
-			Timings.SA1Cycles = 3;
-		}
 	#endif
 	}
 
