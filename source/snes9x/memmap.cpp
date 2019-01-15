@@ -3700,6 +3700,14 @@ void CMemory::ApplyROMFixes (void)
 			match_id ("A35")				    || // Mechwarrior 3050 / Battle Tech 3050
 			match_na ("DOOM TROOPERS"))			       // Doom Troopers
 			Timings.APUAllowTimeOverflow = TRUE;
+		
+		if (match_id("ARWJ") || match_id("ARWE") 				|| // Super Mario RPG
+			match_id("AFJJ") || match_id("AFJE")) 				 { // Kirby's Dream Land 3
+			Settings.OneClockCycle = 8;
+		}
+		else {
+			Settings.OneClockCycle = 6;
+		}
 	#endif
 	}
 
