@@ -61,6 +61,9 @@ msgstr "불러온 장치 확인 시도 중..."
 msgid "Attempting to determine save device..."
 msgstr "저장 장치 확인 시도 중..."
 
+msgid "Audio"
+msgstr "오디오"
+
 msgid "Auto"
 msgstr "자동"
 
@@ -157,6 +160,9 @@ msgstr "자르기"
 msgid "Crosshair"
 msgstr "십자 버튼"
 
+msgid "Current Screenshot image will be overwritten."
+msgstr "현재 스크린샷 이미지를 덮어씁니다."
+
 msgid "Cursor"
 msgstr "커서"
 
@@ -167,7 +173,13 @@ msgid "Default"
 msgstr "기본값"
 
 msgid "Delete"
-msgstr "삭제"
+msgstr "삭제하기"
+
+msgid "Delete files can not be restored."
+msgstr "삭제 파일은 복원할 수 없습니다."
+
+msgid "Delete this save file?"
+msgstr "이 저장 파일을 삭제 하겠습니까?"
 
 msgid "Delete this save file? Delete files can not be restored."
 msgstr "이 저장 파일을 삭제 하겠습니까? 삭제 파일은 복원할 수 없습니다."
@@ -256,8 +268,17 @@ msgstr "FDS 바이오스 파일을 찾을 수 없습니다!"
 msgid "Filtered"
 msgstr "필터"
 
+msgid "Filtered (Soft)"
+msgstr "필터 (부드러움)"
+
+msgid "Filtered (Sharp)"
+msgstr "필터 (날카로움)"
+
 msgid "Filtering"
 msgstr "필터링"
+
+msgid "Font file not found!"
+msgstr "폰트 파일을 찾을 수 없습니다!"
 
 msgid "Fire"
 msgstr "발사"
@@ -295,6 +316,9 @@ msgstr "게임 지니 사용 가능"
 msgid "GameCube Controller"
 msgstr "게임큐브 컨트롤러"
 
+msgid "Gaussian (Accurate)"
+msgstr "가우스 (정확한)"
+
 msgid "German"
 msgstr "독일어"
 
@@ -307,6 +331,15 @@ msgstr "뒤로 가기"
 msgid "Horizontal"
 msgstr "수평"
 
+msgid "hq2x"
+msgstr "고품질2배율"
+
+msgid "hq2x Bold"
+msgstr "고품질2배율 선명함"
+
+msgid "hq2x Soft"
+msgstr "고품질2배율 부드러움"
+
 msgid "Information"
 msgstr "정보"
 
@@ -318,6 +351,9 @@ msgstr "동전 투입"
 
 msgid "Insert Coin / Switch Disk"
 msgstr "동전 투입 / 디스크 스위치"
+
+msgid "Interpolation"
+msgstr "보간법"
 
 msgid "Invalid file size!"
 msgstr "잘못된 파일 크기입니다!"
@@ -375,6 +411,9 @@ msgstr "왼쪽"
 
 msgid "Left Button"
 msgstr "왼쪽 버튼"
+
+msgid "Linear"
+msgstr "선형"
 
 msgid "Load"
 msgstr "불러오기"
@@ -638,7 +677,7 @@ msgid "Rumble"
 msgstr "진동"
 
 msgid "Save"
-msgstr "저장"
+msgstr "저장하기"
 
 msgid "Save Device"
 msgstr "저장 장치"
@@ -655,8 +694,11 @@ msgstr "저장 폴더"
 msgid "Save Game"
 msgstr "저장 게임"
 
-msgid "Save a New Preview Screenshot? Current Screenshot image will be overwritten"
-msgstr "새 스크린샷 미리보기를 저장하겠습니까? 현재 스크린샷 이미지를 덮어 씁니다."
+msgid "Save a New Preview Screenshot?"
+msgstr "새 스크린샷 미리보기를 저장하겠습니까?"
+
+msgid "Save a New Preview Screenshot? Current Screenshot image will be overwritten."
+msgstr "새 스크린샷 미리보기를 저장하겠습니까? 현재 스크린샷 이미지를 덮어씁니다."
 
 msgid "Save RAM and State?"
 msgstr "RAM과 상태를 저장하겠습니까?"
@@ -674,7 +716,7 @@ msgid "Save successful"
 msgstr "저장에 성공했습니다."
 
 msgid "Saving"
-msgstr "저장"
+msgstr "저장하기"
 
 msgid "Saving preferences..."
 msgstr "환경 설정 저장 중..."
@@ -684,6 +726,15 @@ msgstr "저장 중..."
 
 msgid "Scaling"
 msgstr "스케일"
+
+msgid "Scanlines"
+msgstr "스캔라인"
+
+msgid "Screenshot"
+msgstr "스크린샷"
+
+msgid "ScreenShot"
+msgstr "스크린샷"
 
 msgid "Screenshots"
 msgstr "스크린샷"
@@ -723,6 +774,9 @@ msgstr "SD 카드를 찾을 수 없습니다!"
 
 msgid "Shift"
 msgstr "시프트"
+
+msgid "Show Framerate"
+msgstr "프레임속도 보기"
 
 msgid "Simp_chinese"
 msgstr "간체 중국어"
@@ -793,6 +847,12 @@ msgstr "스페인어"
 msgid "Sprite Limit"
 msgstr "스프라이트 제한"
 
+msgid "SRAM"
+msgstr ""
+
+msgid "SRAM (Auto)"
+msgstr "SRAM (자동)"
+
 msgid "SRAM file not found"
 msgstr "SRAM 파일을 찾을 수 없습니다."
 
@@ -816,6 +876,9 @@ msgstr "화면에 맞춤"
 
 msgid "Super Scope"
 msgstr "슈퍼 스코프"
+
+msgid "SuperFX Overclock"
+msgstr "슈퍼FX 오버클럭"
 
 msgid "Superscope"
 msgstr "슈퍼스코프"
@@ -845,7 +908,7 @@ msgid "Unable to open snapshot!"
 msgstr "스냅샷을 열 수 없습니다!"
 
 msgid "Unfiltered"
-msgstr "필터 안됨"
+msgstr "필터링되지 않음"
 
 msgid "Unknown file type!"
 msgstr "알 수 없는 파일 유형!"
@@ -878,7 +941,7 @@ msgid "Update now"
 msgstr "지금 업데이트"
 
 msgid "Update successful!"
-msgstr "공적인 업데이트!"
+msgstr "성공적인 업데이트!"
 
 msgid "USB drive not found!"
 msgstr "USB 드라이버를 찾을 수 없습니다!"
@@ -977,7 +1040,7 @@ msgid "VS Castlevania palette"
 msgstr "VS 캐슬베니아 팔레트"
 
 msgid "VS SMB/VS Ice Climber palette"
-msgstr "VS SMB/VS아이스 클라이머 팔레트"
+msgstr "VS SMB/VS 아이스 클라이머 팔레트"
 
 msgid "Catalan"
 msgstr "카탈루니아어"
