@@ -31,11 +31,17 @@ msgstr "추가 코딩"
 msgid "Aim Offscreen"
 msgstr "조준 숨기기"
 
+msgid "AM"
+msgstr "오전"
+
 msgid "An update is available!"
 msgstr "업데이트를 사용할 수 있습니다!"
 
-msgid "Append Auto to .SAVE Files"
+msgid "Append Auto to .SAV Files"
 msgstr ".SAVE 파일에 자동 추가"
+
+msgid "Apr"
+msgstr "4월"
 
 msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
 msgstr "이 게임을 재설정 하겠습니까? 저장되지 않는 진행은 손실됩니다."
@@ -63,6 +69,9 @@ msgstr "저장 장치 확인 시도 중..."
 
 msgid "Audio"
 msgstr "오디오"
+
+msgid "Aug"
+msgstr "8월"
 
 msgid "Auto"
 msgstr "자동"
@@ -105,6 +114,9 @@ msgstr "취소"
 
 msgid "Caps"
 msgstr "대문자"
+
+msgid "Catalan"
+msgstr "카탈루니아어"
 
 msgid "Cheats"
 msgstr "치트"
@@ -169,19 +181,16 @@ msgstr "커서"
 msgid "Data DVD"
 msgstr "데이터 DVD"
 
+msgid "Dec"
+msgstr "12월"
+
 msgid "Default"
 msgstr "기본값"
 
 msgid "Delete"
 msgstr "삭제하기"
 
-msgid "Delete files can not be restored."
-msgstr "삭제 파일은 복원할 수 없습니다."
-
-msgid "Delete this save file?"
-msgstr "이 저장 파일을 삭제 하겠습니까?"
-
-msgid "Delete this save file? Delete files can not be restored."
+msgid "Delete this save file? Deleted files can not be restored."
 msgstr "이 저장 파일을 삭제 하겠습니까? 삭제 파일은 복원할 수 없습니다."
 
 msgid "Directory name is too long!"
@@ -220,6 +229,9 @@ msgstr "사용 가능"
 msgid "ENABLED"
 msgstr "사용 가능"
 
+msgid "Emulation"
+msgstr "에뮬레이션"
+
 msgid "English"
 msgstr "영어"
 
@@ -250,6 +262,9 @@ msgstr "파일 읽기 오류!"
 msgid "Error saving file!"
 msgstr "파일 저장 오류!"
 
+msgid "European RGB (240i)"
+msgstr "유럽 RGB (240i)"
+
 msgid "Exit"
 msgstr "종료"
 
@@ -258,6 +273,9 @@ msgstr "종료 작업"
 
 msgid "Failed to connect to network share."
 msgstr "네트워크 공유 접속에 실패하였습니다."
+
+msgid "Feb"
+msgstr "2월"
 
 msgid "FDS BIOS file is invalid!"
 msgstr "FDS 바이오스 파일이 잘못되었습니다."
@@ -268,6 +286,9 @@ msgstr "FDS 바이오스 파일을 찾을 수 없습니다!"
 msgid "Filtered"
 msgstr "필터"
 
+msgid "Filtered (Auto)"
+msgstr "필터 (자동)"
+
 msgid "Filtered (Soft)"
 msgstr "필터 (부드러움)"
 
@@ -277,17 +298,32 @@ msgstr "필터 (날카로움)"
 msgid "Filtering"
 msgstr "필터링"
 
-msgid "Font file not found!"
-msgstr "폰트 파일을 찾을 수 없습니다!"
-
 msgid "Fire"
 msgstr "발사"
+
+msgid "Font file not found!"
+msgstr "폰트 파일을 찾을 수 없습니다!"
 
 msgid "French"
 msgstr "프랑스어"
 
-msgid "GBA Screen Zoom"
-msgstr "GBA 화면 확대"
+msgid "Fri"
+msgstr "금"
+
+msgid "From game (SGB only)"
+msgstr "(SGB 전용) 게임에서"
+
+msgid "From .png file"
+msgstr ".png 파일에서"
+
+msgid "Game Boy"
+msgstr "게임 보이"
+
+msgid "Game Boy Advance"
+msgstr "게임 보이 어드밴스"
+
+msgid "Game Boy Color"
+msgstr "게임 보이 컬러"
 
 msgid "Game Genie ROM not found!"
 msgstr "게임 지니 ROM을 찾을 수 없습니다!"
@@ -301,11 +337,17 @@ msgstr "게임 설정 - 버튼 맵핑"
 msgid "Game Settings - Cheats"
 msgstr "게임 설정 - 치트"
 
+msgid "Game Settings - Emulation"
+msgstr "게임 설정 - 에뮬레이션"
+
 msgid "Game Settings - Video"
 msgstr "게임 설정 - 비디오"
 
 msgid "Game Timing"
 msgstr "게임 속도"
+
+msgid "Game Genie"
+msgstr "게임 지니"
 
 msgid "Game Genie DISABLED"
 msgstr "게임 지니 사용 불가"
@@ -319,6 +361,18 @@ msgstr "게임큐브 컨트롤러"
 msgid "Gaussian (Accurate)"
 msgstr "가우스 (정확한)"
 
+msgid "GBA Fixed Pixel Ratio"
+msgstr "GBA 수정 픽셀 비율"
+
+msgid "GBA Frameskip"
+msgstr "GBA 프레임스킵"
+
+msgid "GBA Screen Zoom"
+msgstr "GBA 화면 확대"
+
+msgid "GB Screen Palette"
+msgstr "GB 화면 팔레트"
+
 msgid "German"
 msgstr "독일어"
 
@@ -327,6 +381,12 @@ msgstr "GNU 일반 공중 사용허가 (GPL) 버전 2."
 
 msgid "Go Back"
 msgstr "뒤로 가기"
+
+msgid "Green Screen"
+msgstr "녹색 화면"
+
+msgid "Hardware (GB/GBC)"
+msgstr "하드웨어 (GB/GBC)"
 
 msgid "Horizontal"
 msgstr "수평"
@@ -379,8 +439,17 @@ msgstr "잘못된 상태 파일입니다."
 msgid "Italian"
 msgstr "이탈리아어"
 
+msgid "Jan"
+msgstr "1월"
+
 msgid "Japanese"
 msgstr "일본어"
+
+msgid "Jul"
+msgstr "7월"
+
+msgid "Jun"
+msgstr "6월"
 
 msgid "Justifier"
 msgstr "광선총"
@@ -442,6 +511,9 @@ msgstr "불러오기 중..."
 msgid "Main Menu"
 msgstr "메인 메뉴"
 
+msgid "Mar"
+msgstr "3월"
+
 msgid "Match GC Controls"
 msgstr "게임큐브 조종 일치"
 
@@ -450,6 +522,9 @@ msgstr "Wii 조종 일치"
 
 msgid "Maximum filepath length reached!"
 msgid "최대 파일경로 길이입니다!"
+
+msgid "May"
+msgstr "5월"
 
 msgid "Menu"
 msgstr "메뉴"
@@ -463,14 +538,20 @@ msgstr "사운드 메뉴"
 msgid "MINUS"
 msgstr "마이너스"
 
+msgid "Mon"
+msgstr "월"
+
+msgid "Monochrome Screen"
+msgstr "단색 화면"
+
 msgid "Music Volume"
 msgstr "음악 볼륨"
 
 msgid "Mute"
 msgstr "무음"
 
-msgid "NES Classic (FBX)"
-msgstr "NES 클래식 (FBX)"
+msgid "NES Classic (FBX-FS)"
+msgstr "NES 클래식 (FBX-FS)"
 
 msgid "NES Controller"
 msgstr "NES 컨트롤러"
@@ -517,13 +598,22 @@ msgstr "게임 저장을 찾을 수 없습니다."
 msgid "None"
 msgstr "없음"
 
+msgid "Nov"
+msgstr "11월"
+
 msgid "NTSC (480i)"
 msgstr "NTSC (480i)"
 
 msgid "Nunchuk"
 msgstr "눈챠크"
 
+msgid "Oct"
+msgstr "10월"
+
 msgid "Off"
+msgstr "끔"
+
+msgid "OFF"
 msgstr "끔"
 
 msgid "Official Site: http://code.google.com/p/fceugc/"
@@ -535,10 +625,16 @@ msgstr "공식 사이트: http://code.google.com/p/snes9x-gx/"
 msgid "Official Site: http://code.google.com/p/vba-wii/"
 msgstr "공식 사이트: http://code.google.com/p/vba-wii/"
 
+msgid "Offset from UTC (hours)"
+msgstr "UTC로부터 오프셋 (시간)"
+
 msgid "OK"
 msgstr "확인"
 
 msgid "On"
+msgstr "켬"
+
+msgid "ON"
 msgstr "켬"
 
 msgid "Original"
@@ -582,6 +678,9 @@ msgstr "잠시만 기다려주세요"
 
 msgid "PLUS"
 msgstr "플러스"
+
+msgid "PM"
+msgstr "오후"
 
 msgid "Portuguese"
 msgstr "포르투갈어"
@@ -694,10 +793,10 @@ msgstr "저장 폴더"
 msgid "Save Game"
 msgstr "저장 게임"
 
-msgid "Save a New Preview Screenshot?"
+msgid "Save a new Preview Screenshot?"
 msgstr "새 스크린샷 미리보기를 저장하겠습니까?"
 
-msgid "Save a New Preview Screenshot? Current Screenshot image will be overwritten."
+msgid "Save a new Preview Screenshot? Current Screenshot image will be overwritten."
 msgstr "새 스크린샷 미리보기를 저장하겠습니까? 현재 스크린샷 이미지를 덮어씁니다."
 
 msgid "Save RAM and State?"
@@ -748,11 +847,14 @@ msgstr "화면 위치"
 msgid "Screen Zoom"
 msgstr "화면 확대"
 
+msgid "Seek error!"
+msgstr "탐색 오류!"
+
 msgid "Select"
 msgstr "선택"
 
-msgid "Seek error!"
-msgstr "탐색 오류!"
+msgid "Sep"
+msgstr "9월"
 
 msgid "Settings"
 msgstr "설정"
@@ -874,6 +976,18 @@ msgstr "상태 파일을 찾을 수 없습니다"
 msgid "Stretch to Fit"
 msgstr "화면에 맞춤"
 
+msgid "Sun"
+msgstr "일"
+
+msgid "Super Game Boy border"
+msgstr "슈퍼 게임 보이 테두리"
+
+msgid "Super Game Boy"
+msgstr "슈퍼 게임 보이"
+
+msgid "Super Game Boy 2"
+msgstr "슈퍼 게임 보이 2"
+
 msgid "Super Scope"
 msgstr "슈퍼 스코프"
 
@@ -892,8 +1006,17 @@ msgstr "슈퍼스코프 - 위모트"
 msgid "This software is open source and may be copied,"
 msgstr "이 소프트웨어는 오픈 소스고 복사할 수 있습니다."
 
+msgid "Thu"
+msgstr "목"
+
 msgid "Trad_chinese"
 msgstr "번체 중국어"
+
+msgid "Tue"
+msgstr "화"
+
+msgid "Turkish"
+msgstr "터키어"
 
 msgid "Unable to initialize network!"
 msgstr "네트워크 초기화 할 수 없습니다!"
@@ -941,7 +1064,7 @@ msgid "Update now"
 msgstr "지금 업데이트"
 
 msgid "Update successful!"
-msgstr "성공적인 업데이트!"
+msgstr "업데이트가 성공!"
 
 msgid "USB drive not found!"
 msgstr "USB 드라이버를 찾을 수 없습니다!"
@@ -966,6 +1089,9 @@ msgstr "VM16: 알 수 없는 페이지 유형!"
 
 msgid "VM32: Unknown page type!"
 msgstr "VM32: 알 수 없는 페이지 유형!"
+
+msgid "Wed"
+msgstr "수"
 
 msgid "Wiimote"
 msgstr "위모트"
@@ -1042,14 +1168,8 @@ msgstr "VS 캐슬베니아 팔레트"
 msgid "VS SMB/VS Ice Climber palette"
 msgstr "VS SMB/VS 아이스 클라이머 팔레트"
 
-msgid "Catalan"
-msgstr "카탈루니아어"
-
 msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
 msgstr "현재 IOS는 (가짜 서명) 변경되었습니다. 기능 및 안정성에 부정적인 영향을 줄 수 있습니다"
 
 msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
 msgstr "현재 IOS는 지원하지 않습니다. 기능 및 안정성에 부정적인 영향을 줄 수 있습니다."
-
-msgid "Turkish"
-msgstr "터키어"
