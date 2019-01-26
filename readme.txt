@@ -34,13 +34,15 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-[4.4.2]
+[4.4.2 - January 25, 2019]
 
 * Fixed Wii U GamePad support
 * Added ability to load external fonts and activated Japanese/Korean 
   translations. Simply put the ko.ttf or jp.ttf in the app directory
 * Added ability to customize background music. Simply put a bg_music.ogg
   in the app directory
+* Updated to latest upstream Snes9x
+* Added speed hacks for Super Mario RPG and Kirby's Dreamland 3
 * Added ability to change preview image source with + button (thanks Zalo!)
 
 [4.4.1 - January 4, 2019]
