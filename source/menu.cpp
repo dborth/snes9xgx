@@ -3707,6 +3707,7 @@ static int MenuSettingsFile()
 	sprintf(options.name[i++], "Artwork Folder");
 	sprintf(options.name[i++], "Auto Load");
 	sprintf(options.name[i++], "Auto Save");
+	sprintf(options.name[i++], "Append Auto to .SAV Files");
 	options.length = i;
 
 	for(i=0; i < options.length; i++)
@@ -3800,6 +3801,12 @@ static int MenuSettingsFile()
 				if (GCSettings.AutoSave > 3)
 					GCSettings.AutoSave = 0;
 				break;
+
+			case 10:
+				GCSettings.AppendAuto++;
+				if (GCSettings.AppendAuto > 1)
+					GCSettings.AppendAuto = 0;
+				break;
 		}
 
 		if(ret >= 0 || firstRun)
@@ -3873,6 +3880,9 @@ static int MenuSettingsFile()
 			else if (GCSettings.AutoSave == 1) sprintf (options.value[9],"SRAM");
 			else if (GCSettings.AutoSave == 2) sprintf (options.value[9],"Snapshot");
 			else if (GCSettings.AutoSave == 3) sprintf (options.value[9],"Both");
+
+			if (GCSettings.AppendAuto == 0) sprintf (options.value[10], "Off");
+			else if (GCSettings.AppendAuto == 1) sprintf (options.value[10], "On");
 
 			optionBrowser.TriggerUpdate();
 		}

@@ -290,7 +290,10 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 					if(filenum == -1)
 						sprintf(file, "%s.%s", filename, ext);
 					else if(filenum == 0)
-						sprintf(file, "%s Auto.%s", filename, ext);
+						if (GCSettings.AppendAuto <= 0)
+							sprintf(file, "%s.%s", filename, ext);
+						else
+							sprintf(file, "%s Auto.%s", filename, ext);
 					else
 						sprintf(file, "%s %i.%s", filename, filenum, ext);
 				}

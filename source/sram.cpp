@@ -85,6 +85,9 @@ LoadSRAMAuto (bool silent)
 	if (LoadSRAM(filepath, silent))
 		return true;
 
+	if (!GCSettings.AppendAuto)
+		return false;
+
 	// look for file with no number or Auto appended
 	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, -1))
 		return false;
