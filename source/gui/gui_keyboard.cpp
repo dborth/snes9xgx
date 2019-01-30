@@ -17,12 +17,7 @@ static char * GetDisplayText(char * t)
 	if(!t)
 		return NULL;
 
-	int len = strlen(t);
-
-	if(len < MAX_KEYBOARD_DISPLAY)
-		return t;
-
-	snprintf(tmptxt, MAX_KEYBOARD_DISPLAY, "%s", &t[len-MAX_KEYBOARD_DISPLAY]);
+	snprintf(tmptxt, MAX_KEYBOARD_DISPLAY, "%s", t);
 	return &tmptxt[0];
 }
 
@@ -330,16 +325,19 @@ void GuiKeyboard::Update(GuiTrigger * t)
 
 				if(keyBtn[i][j]->GetState() == STATE_CLICKED)
 				{
-					if(strlen(kbtextstr) < kbtextmaxlen)
+					int len = strlen(kbtextstr);
+
+					if(len < kbtextmaxlen-1)
 					{
 						if(shift || caps)
 						{
-							kbtextstr[strlen(kbtextstr)] = keys[i][j].chShift;
+							kbtextstr[len] = keys[i][j].chShift;
 						}
 						else
 						{
-							kbtextstr[strlen(kbtextstr)] = keys[i][j].ch;
+							kbtextstr[len] = keys[i][j].ch;
 						}
+						kbtextstr[len+1] = '\0';
 					}
 					kbText->SetText(GetDisplayText(kbtextstr));
 					keyBtn[i][j]->SetState(STATE_SELECTED, t->chan);
