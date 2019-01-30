@@ -85,6 +85,7 @@ struct SGCSettings{
 	int		AutoSave;
 	int		LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
 	int		SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, USB, SMB
+	int		AppendAuto; // 0 - no, 1 - yes
 	char	LoadFolder[MAXPATHLEN]; 	// Path to game files
 	char	LastFileLoaded[MAXPATHLEN]; // Last file loaded filename
 	char	SaveFolder[MAXPATHLEN]; 	// Path to save files
