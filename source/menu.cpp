@@ -138,7 +138,11 @@ static void ResetText()
 	LoadLanguage();
 
 	if(mainWindow)
+	{
+		HaltGui();
 		mainWindow->ResetText();
+		ResumeGui();
+	}
 }
 
 static int currentLanguage = -1;
@@ -187,10 +191,8 @@ void ChangeLanguage() {
 		}
 	}
 #endif
-	HaltGui();
 	ResetText();
 	currentLanguage = GCSettings.language;
-	ResumeGui();
 }
 
 /****************************************************************************
