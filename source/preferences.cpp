@@ -498,7 +498,7 @@ DefaultSettings ()
 	Settings.Stereo = true;
 	Settings.ReverseStereo = true;
 	Settings.SoundPlaybackRate = 48000;
-	Settings.SoundInputRate = 31950;
+	Settings.SoundInputRate = 31920;
 	Settings.DynamicRateControl = true;
 	
 	// Interpolation Method

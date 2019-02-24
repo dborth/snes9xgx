@@ -638,7 +638,7 @@ ResetVideo_Emu ()
 		else
 			ResetFbWidth(512, rmode);
 		
-		Settings.SoundInputRate = 31950;
+		Settings.SoundInputRate = 31920;
 		UpdatePlaybackRate();
 	}
 
