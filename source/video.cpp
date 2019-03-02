@@ -907,6 +907,16 @@ void TakeScreenshot()
 	}
 }
 
+void ClearScreenshot()
+{
+	if(gameScreenPng)
+	{
+		gameScreenPngSize = 0;
+		free(gameScreenPng);
+		gameScreenPng = NULL;
+	}
+}
+
 /****************************************************************************
  * ResetVideo_Menu
  *
