@@ -9,7 +9,7 @@
 #define _SNES9X_H_
 
 #ifndef VERSION
-#define VERSION	"1.59"
+#define VERSION	"1.59.2"
 #endif
 
 #include "port.h"
