@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 #include "snes9x.h"
 #include "memmap.h"
 #include "dma.h"
@@ -189,6 +188,14 @@ void S9xUpdateIRQPositions (bool initial)
 void S9xFixColourBrightness (void)
 {
 	IPPU.XB = mul_brightness[PPU.Brightness];
+
+	for (int i = 0; i < 64; i++)
+	{
+		if (i > IPPU.XB[0x1f])
+			brightness_cap[i] = IPPU.XB[0x1f];
+		else
+			brightness_cap[i] = i;
+	}
 
 	for (int i = 0; i < 256; i++)
 	{
