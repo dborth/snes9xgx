@@ -34,16 +34,10 @@
 #define RIGHTSHIFT_int32_IS_SAR
 #ifndef GEKKO
 #define SNES_JOY_READ_CALLBACKS
-#define GFX_MULTI_FORMAT
 #endif
-#endif
-
-#ifdef __LIBRETRO__
-#define GFX_MULTI_FORMAT
 #endif
 
 #ifdef __MACOSX__
-#undef GFX_MULTI_FORMAT
 #define PIXEL_FORMAT RGB555
 #endif
 
