@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 // This file includes itself multiple times.
 // The other option would be to have 4 files, where A includes B, and B includes C 3 times, and C includes D 5 times.
 // Look for the following marker to find where the divisions are.

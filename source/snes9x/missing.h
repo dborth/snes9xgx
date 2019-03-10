@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 #ifdef DEBUGGER
 
 #ifndef _MISSING_H_

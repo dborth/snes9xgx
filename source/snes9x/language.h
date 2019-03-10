@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 #ifndef _LANGUAGE_H_
 #define _LANGUAGE_H_
 

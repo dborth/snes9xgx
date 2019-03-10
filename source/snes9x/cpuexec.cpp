@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 #include "snes9x.h"
 #include "memmap.h"
 #include "cpuops.h"
@@ -25,9 +24,14 @@ void S9xMainLoop (void)
 	#define CHECK_FOR_IRQ_CHANGE() \
 	if (Timings.IRQFlagChanging) \
 	{ \
-		if (Timings.IRQFlagChanging == IRQ_CLEAR_FLAG) \
+		if (Timings.IRQFlagChanging & IRQ_TRIGGER_NMI) \
+		{ \
+			CPU.NMIPending = TRUE; \
+			Timings.NMITriggerPos = CPU.Cycles + 6; \
+		} \
+		if (Timings.IRQFlagChanging & IRQ_CLEAR_FLAG) \
 			ClearIRQ(); \
-		else if (Timings.IRQFlagChanging == IRQ_SET_FLAG) \
+		else if (Timings.IRQFlagChanging & IRQ_SET_FLAG) \
 			SetIRQ(); \
 		Timings.IRQFlagChanging = IRQ_NONE; \
 	}
@@ -132,11 +136,12 @@ void S9xMainLoop (void)
 			if (!(CPU.Flags & FRAME_ADVANCE_FLAG))
 			#endif
 			{
-					S9xSyncSpeed();
+				S9xSyncSpeed();
 			}
+
 			break;
 		}
-			
+
 		uint8				Op;
 		struct	SOpcodes	*Opcodes;
 
@@ -263,9 +268,9 @@ void S9xDoHEventProcessing (void)
 			if (Timings.NextIRQTimer != 0x0fffffff)
 				Timings.NextIRQTimer -= Timings.H_Max;
 			S9xAPUSetReferenceTime(CPU.Cycles);
-			
+
 			if (Settings.SA1)
-					SA1.Cycles -= Timings.H_Max * 3;
+				SA1.Cycles -= Timings.H_Max * 3;
 
 			CPU.V_Counter++;
 			if (CPU.V_Counter >= Timings.V_Max)	// V ranges from 0 to Timings.V_Max - 1

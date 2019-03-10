@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 #include "snes9x.h"
 #include "fxinst.h"
 #include "fxemu.h"

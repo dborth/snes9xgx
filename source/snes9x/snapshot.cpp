@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 #include <assert.h>
 #include "snes9x.h"
 #include "memmap.h"
