@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 // Abstract the details of reading from zip files versus FILE *'s.
 
 #include <string>

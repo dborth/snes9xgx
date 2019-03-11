@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 #ifndef _SA1_H_
 #define _SA1_H_
 

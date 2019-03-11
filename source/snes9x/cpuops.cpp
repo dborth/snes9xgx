@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 #include "snes9x.h"
 #include "memmap.h"
 #include "apu/apu.h"
@@ -1453,7 +1452,7 @@ static void Op58 (void)
 	AddCycles(ONE_CYCLE);
 
 #ifndef SA1_OPCODES
-	Timings.IRQFlagChanging = IRQ_CLEAR_FLAG;
+	Timings.IRQFlagChanging |= IRQ_CLEAR_FLAG;
 #else
 	ClearIRQ();
 #endif
@@ -1465,7 +1464,7 @@ static void Op78 (void)
 	AddCycles(ONE_CYCLE);
 
 #ifndef SA1_OPCODES
-	Timings.IRQFlagChanging = IRQ_SET_FLAG;
+	Timings.IRQFlagChanging |= IRQ_SET_FLAG;
 #else
 	SetIRQ();
 #endif
@@ -2781,7 +2780,7 @@ static void OpDC (void)
 {
 	S9xSetPCBase(AbsoluteIndirectLong(JUMP));
 #ifdef SA1_OPCODES
-		AddCycles(ONE_CYCLE);
+	AddCycles(ONE_CYCLE);
 #endif
 }
 
@@ -2789,7 +2788,7 @@ static void OpDCSlow (void)
 {
 	S9xSetPCBase(AbsoluteIndirectLongSlow(JUMP));
 #ifdef SA1_OPCODES
-		AddCycles(ONE_CYCLE);
+	AddCycles(ONE_CYCLE);
 #endif
 }
 
@@ -2797,7 +2796,7 @@ static void Op5C (void)
 {
 	S9xSetPCBase(AbsoluteLong(JUMP));
 #ifdef SA1_OPCODES
-		AddCycles(ONE_CYCLE);
+	AddCycles(ONE_CYCLE);
 #endif
 }
 
@@ -2805,7 +2804,7 @@ static void Op5CSlow (void)
 {
 	S9xSetPCBase(AbsoluteLongSlow(JUMP));
 #ifdef SA1_OPCODES
-		AddCycles(ONE_CYCLE);
+	AddCycles(ONE_CYCLE);
 #endif
 }
 

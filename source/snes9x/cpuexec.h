@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 #ifndef _CPUEXEC_H_
 #define _CPUEXEC_H_
 

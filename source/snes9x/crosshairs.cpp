@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 #ifdef HAVE_LIBPNG
 #include <png.h>
 #endif
