@@ -3700,7 +3700,8 @@ void CMemory::ApplyROMFixes (void)
 			Timings.APUAllowTimeOverflow = TRUE;
 		
 		if (match_id("ARWJ") || match_id("ARWE") 				|| // Super Mario RPG
-			match_id("AFJJ") || match_id("AFJE")) 				 { // Kirby's Dream Land 3
+			match_id("AFJJ") || match_id("AFJE") 				|| // Kirby's Dream Land 3
+			match_na("\xC3\xDD\xBC\xC9\xB3\xC0"))                		 { // Tenshi no Uta
 			Settings.OneClockCycle = 8;
 		}
 		else {
