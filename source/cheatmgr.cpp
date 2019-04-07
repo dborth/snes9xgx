@@ -16,7 +16,7 @@
 #include "fileop.h"
 #include "filebrowser.h"
 
-#define MAX_CHEATS      100
+#define MAX_CHEATS      150
 
 extern SCheatData Cheat;
 
