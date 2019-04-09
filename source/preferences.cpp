@@ -500,6 +500,7 @@ DefaultSettings ()
 	Settings.SoundPlaybackRate = 48000;
 	Settings.SoundInputRate = 31920;
 	Settings.DynamicRateControl = true;
+	Settings.SeparateEchoBuffer = false;
 	
 	// Interpolation Method
 	GCSettings.Interpolation = 0;
@@ -524,7 +525,7 @@ DefaultSettings ()
 	Settings.SuperFXSpeedPerLine = 5823405;
 	
 	Settings.SuperFXClockMultiplier = 100;
-	
+	Settings.OverclockMode = 0;
 	Settings.OneClockCycle = 6;
 	Settings.OneSlowClockCycle = 8;
 	Settings.TwoClockCycles = 12;

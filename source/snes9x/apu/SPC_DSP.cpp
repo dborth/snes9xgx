@@ -612,7 +612,7 @@ VOICE_CLOCK(V9_V6_V3) { voice_V9(v); voice_V6(v+1); voice_V3(v+2); }
 //// Echo
 
 // Current echo buffer pointer for left/right channel
-#define ECHO_PTR( ch )      (&m.ram [m.t_echo_ptr + ch * 2])
+#define ECHO_PTR( ch )      ((Settings.SeparateEchoBuffer) ? (&m.separate_echo_buffer [m.t_echo_ptr + ch * 2]) : (&m.ram [m.t_echo_ptr + ch * 2]))
 
 // Sample in echo history buffer, where 0 is the oldest
 #define ECHO_FIR( i )       (m.echo_hist_pos [i])
@@ -881,6 +881,8 @@ void SPC_DSP::soft_reset_common()
 	m.echo_offset        = 0;
 	m.phase              = 0;
 	
+	memset(m.separate_echo_buffer, 0, 0x10000);
+
 	init_counter();
 
 	for (int i = 0; i < voice_count; i++)
