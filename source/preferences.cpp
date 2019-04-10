@@ -491,6 +491,8 @@ DefaultSettings ()
 
 	Settings.HDMATimingHack = 100;
 	Settings.BlockInvalidVRAMAccessMaster = true;
+	
+	Settings.IsPatched = false;
 
 	// Sound
 	Settings.SoundSync = true;
