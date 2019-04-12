@@ -27,7 +27,7 @@ INCLUDES	:=	source source/snes9x
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS		=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) \
+CFLAGS		=	-g -O3 -Wall $(MACHDEP) $(INCLUDE) `freetype-config --cflags` \
 				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
 				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
 				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
@@ -42,8 +42,8 @@ LDFLAGS		=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-ldi -liso9660 -lpng -lmxml \
-			-lfat -lwiiuse -lz -lbte -lasnd -logc -lvorbisidec -logg -lfreetype -ltinysmb
+LIBS	:=	-ldi -liso9660 -lpng -lmxml `freetype-config --libs` \
+			-lfat -lwiiuse -lz -lbte -lasnd -logc -lvorbisidec -logg -ltinysmb
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
@@ -94,7 +94,7 @@ export OFILES	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 					-I$(CURDIR)/$(BUILD) \
-					-I$(LIBOGC_INC) -I$(PORTLIBS)/include/freetype2
+					-I$(LIBOGC_INC)
 
 #---------------------------------------------------------------------------------
 # build a list of library paths
