@@ -237,7 +237,7 @@ void S9xMSU1Generate(size_t sample_count)
 {
 	partial_frames += 4410 * (sample_count / 2);
 
-	while ((bufPos < (bufEnd - 2)) && partial_frames >= 3200)
+	while ((bufPos < (bufEnd - 2)) && partial_frames >= 3204)
 	{
 		if (MSU1.MSU1_STATUS & AudioPlaying && audioStream)
 		{
@@ -255,7 +255,7 @@ void S9xMSU1Generate(size_t sample_count)
 				*(bufPos++) = *left;
 				*(bufPos++) = *right;
 				MSU1.MSU1_AUDIO_POS += 4;
-				partial_frames -= 3200;
+				partial_frames -= 3204;
 			}
 			else
 			if (bytes_read >= 0)
@@ -279,7 +279,7 @@ void S9xMSU1Generate(size_t sample_count)
 		else
 		{
 			MSU1.MSU1_STATUS &= ~(AudioPlaying | AudioRepeating);
-			partial_frames -= 3200;
+			partial_frames -= 3204;
 			*(bufPos++) = 0;
 			*(bufPos++) = 0;
 		}
