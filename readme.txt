@@ -34,6 +34,21 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.4.3 - April 13, 2019]
+
+* Game-specific fixes (Chou Aniki, Rendering Rangers R2, Tenshi no Uta, Circuit USA)
+* Increased maximum cheats to 150
+* Fixed BPS patch support
+* Snes9x drawing optimization (3-4% speed boost)
+* Updated to latest upstream Snes9x
+* Updated spanish translation (thanks Psycho RFG)
+* Fixed preview image not displaying on GameCube
+* Added option to not append Auto to save filenames
+* Fixed crash when used as wiiflow plugin
+* Fixed crash on launch when using network shares
+* Fixed issues with on-screen keyboard
+* Updated Korean translation
+
 [4.4.2 - January 25, 2019]
 
 * Fixed Wii U GamePad support
