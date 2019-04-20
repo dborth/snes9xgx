@@ -605,8 +605,7 @@ bool MenuRequested()
 			(userInput[i].pad.substickX < -70) ||
 			(userInput[i].pad.btns_h & PAD_TRIGGER_L &&
 			userInput[i].pad.btns_h & PAD_TRIGGER_R &&
-			userInput[i].pad.btns_h & PAD_BUTTON_X &&
-			userInput[i].pad.btns_h & PAD_BUTTON_Y)
+			userInput[i].pad.btns_h & PAD_BUTTON_SELECT)
 			#ifdef HW_RVL
 			|| (userInput[i].wpad->btns_h & WPAD_BUTTON_HOME) ||
 			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME) ||
