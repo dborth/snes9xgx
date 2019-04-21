@@ -605,7 +605,7 @@ bool MenuRequested()
 			(userInput[i].pad.substickX < -70) ||
 			(userInput[i].pad.btns_h & PAD_TRIGGER_L &&
 			userInput[i].pad.btns_h & PAD_TRIGGER_R &&
-			userInput[i].pad.btns_h & PAD_BUTTON_SELECT)
+			userInput[i].pad.btns_h & PAD_BUTTON_START)
 			#ifdef HW_RVL
 			|| (userInput[i].wpad->btns_h & WPAD_BUTTON_HOME) ||
 			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME) ||
@@ -646,7 +646,7 @@ void ReportButtons ()
 
 	/* Check for menu:
 	 * CStick left
-	 * OR "L+R+X+Y" (eg. Homebrew/Adapted SNES controllers)
+	 * OR "L+R+START" (eg. Homebrew/Adapted SNES controllers)
 	 * OR "Home" on the wiimote or classic controller
 	 * OR Left on classic right analog stick
 	 */
