@@ -3249,6 +3249,7 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Crosshair");
 	sprintf(options.name[i++], "Video Mode");
 	sprintf(options.name[i++], "Show Framerate");
+	sprintf(options.name[i++], "Show Local Time");
 	sprintf(options.name[i++], "SuperFX Overclock");
 	options.length = i;
 	
@@ -3342,6 +3343,10 @@ static int MenuSettingsVideo()
 				Settings.DisplayFrameRate ^= 1;
 				break;
 			case 8:
+				Settings.AutoDisplayMessages ^= 1;
+				Settings.DisplayTime ^= 1;
+				break;
+			case 9:
 				GCSettings.sfxOverclock++;
 				if (GCSettings.sfxOverclock > 2) {
 					GCSettings.sfxOverclock = 0;
@@ -3401,14 +3406,15 @@ static int MenuSettingsVideo()
 					sprintf (options.value[6], "PAL (60Hz)"); break;
 			}
 			sprintf (options.value[7], "%s", Settings.DisplayFrameRate ? "On" : "Off");
+			sprintf (options.value[8], "%s", Settings.DisplayTime ? "On" : "Off");
 			switch(GCSettings.sfxOverclock)
 			{
 				case 0:
-					sprintf (options.value[8], "Default"); break;
+					sprintf (options.value[9], "Default"); break;
 				case 1:
-					sprintf (options.value[8], "40 Mhz"); break;
+					sprintf (options.value[9], "40 Mhz"); break;
 				case 2:
-					sprintf (options.value[8], "60 Mhz"); break;
+					sprintf (options.value[9], "60 Mhz"); break;
 			}
 			optionBrowser.TriggerUpdate();
 		}
