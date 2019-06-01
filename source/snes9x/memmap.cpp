@@ -3723,7 +3723,16 @@ void CMemory::ApplyROMFixes (void)
 	Timings.HDMAStart   = SNES_HDMA_START_HC + Settings.HDMATimingHack - 100;
 	Timings.HBlankStart = SNES_HBLANK_START_HC + Timings.HDMAStart - SNES_HDMA_START_HC;
 	Timings.IRQTriggerCycles = 14;
-
+	
+	#ifdef GEKKO
+	if (match_id("YI  ")) { // Super Mario World 2 - Yoshi's Island 
+			Timings.SuperFX2CoreSpeed = 8 / 3;
+		}
+		else {
+			Timings.SuperFX2CoreSpeed = 5 / 2;
+		}
+	#endif
+	
 	if (!Settings.DisableGameSpecificHacks)
 	{
 		// The delay to sync CPU and DMA which Snes9x cannot emulate.
