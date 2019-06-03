@@ -3703,9 +3703,30 @@ void CMemory::ApplyROMFixes (void)
 			match_na ("DOOM TROOPERS"))			       // Doom Troopers
 			Timings.APUAllowTimeOverflow = TRUE;
 		
-		if (match_id("ARWJ") || match_id("ARWE") 				|| // Super Mario RPG
-			match_id("AFJJ") || match_id("AFJE") 				|| // Kirby's Dream Land 3
-			match_na("\xC3\xDD\xBC\xC9\xB3\xC0"))                		 { // Tenshi no Uta
+		if (match_id("AEVJ")                     || // Daisenryaku Expert WWII (J)
+			match_id("A2DJ")                     || // Derby Jockey 2 (J)
+			match_id("AZIJ")                     || // Dragon Ball Z - Hyper Dimension (J)
+			match_id("AO3J")                     || // Harukanaru Augusta 3 - Masters New (J)
+			match_id("AFJJ")                     || // Hoshi no Kirby 3 (J)
+			match_id("ZBPJ")                     || // Itoi Shigesato no Bass Tsuri No.1 (J)
+			match_id("AJ6J")                     || // J. League '96 Dream Stadium (J)
+			match_id("AJUJ")                     || // Jumpin' Derby (J)
+			match_id("AKAJ")                     || // Kakinoki Shougi (J)
+			match_id("AFJE")                     || // Kirby's Dream Land 3 (U)
+			match_id("AVRJ")                     || // Marvelous (J)
+			match_id("A4WJ")                     || // Mini Yonku Shining Scorpion - Let's & Go!! (J)
+			match_id("AONJ")                     || // Pebble Beach no Hatou New - Tournament Edition (J)
+			match_id("AEPE")                     || // PGA European Tour (U)
+			match_id("A3GE")                     || // PGA Tour 96 (U)
+			match_id("A4RE")                     || // Power Rangers Zeo - Battle Racers (U)
+			match_id("AGFJ")                     || // SD F-1 Grand Prix (J)
+			match_id("ZX3J")                     || // SD Gundam G NEXT (J)
+			match_id("AX2J")                     || // Shougi Saikyou II (J)
+			match_id("APBJ")                     || // Super Bomberman - Panic Bomber W (J)
+			match_id("ARWJ")                     || // Super Mario RPG (J)
+			match_id("ARWE")                     || // Super Mario RPG (U)
+			match_id("AITJ")                     || // Takemiya Masaki Kudan no Igo Taishou (J)
+			match_na("\xC3\xDD\xBC\xC9\xB3\xC0"))                     { // Tenshi no Uta (J)
 			Settings.OneClockCycle = 8;
 		}
 		else {
