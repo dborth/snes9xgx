@@ -3339,11 +3339,21 @@ static int MenuSettingsVideo()
 					GCSettings.videomode = 0;
 				break;
 			case 7:
-				Settings.AutoDisplayMessages ^= 1;
+				if (Settings.AutoDisplayMessages == 1) {
+					// do nothing
+				}
+				else {
+					Settings.AutoDisplayMessages ^= 1;
+				}
 				Settings.DisplayFrameRate ^= 1;
 				break;
 			case 8:
-				Settings.AutoDisplayMessages ^= 1;
+				if (Settings.AutoDisplayMessages == 1) {
+					// do nothing
+				}
+				else {
+					Settings.AutoDisplayMessages ^= 1;
+				}
 				Settings.DisplayTime ^= 1;
 				break;
 			case 9:
