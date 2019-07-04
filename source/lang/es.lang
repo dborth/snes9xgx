@@ -35,7 +35,7 @@ msgid "Fire"
 msgstr "Disparar"
 
 msgid "Aim Offscreen"
-msgstr "Apuntar Fuera de la Pantalla"
+msgstr "Apuntar Fuera de Pantalla"
 
 msgid "Crosshair"
 msgstr "Cursor"
@@ -57,6 +57,9 @@ msgstr "Botón Izquierdo"
 
 msgid "Right Button"
 msgstr "Botón Derecho"
+
+msgid "Button Mapping"
+msgstr "Controles"
 
 msgid "16:9 Correction"
 msgstr "Corrección 16:9"
@@ -577,6 +580,9 @@ msgstr "Modo de Vídeo"
 msgid "Wiimote Orientation"
 msgstr "Orientación del Wiimote"
 
+msgid "SNES Controllers"
+msgstr "Mandos de SNES"
+
 msgid "Wii U Pro Controller"
 msgstr "Mando Pro de Wii U"
 
@@ -606,3 +612,54 @@ msgstr "Configuración - Audio"
 
 msgid "Game Settings - Video"
 msgstr "Configuración - Vídeo"
+
+msgid "Rumble"
+msgstr "Vibración"
+
+msgid "Interpolation"
+msgstr "Interpolación"
+
+msgid "Gaussian (Accurate)"
+msgstr "Gausiana (Precisa)"
+
+msgid "Linear"
+msgstr "Lineal"
+
+msgid "Append Auto to .SAV Files"
+msgstr "Añadir Auto a arch. .SAV"
+
+msgid "Spanish"
+msgstr "Español"
+
+msgid "Italian"
+msgstr "Italiano"
+
+msgid "Dutch"
+msgstr "Holandés"
+
+msgid "Korean"
+msgstr "Coreano"
+
+msgid "Portuguese"
+msgstr "Portugués"
+
+msgid "Brazilian Portuguese"
+msgstr "Portugués Brasileño"
+
+msgid "Catalan"
+msgstr "Catalán"
+
+msgid "Turkish"
+msgstr "Turco"
+
+msgid "Japanese"
+msgstr "Japonés"
+
+msgid "English"
+msgstr "Inglés"
+
+msgid "German"
+msgstr "Alemán"
+
+msgid "French"
+msgstr "Francés"
