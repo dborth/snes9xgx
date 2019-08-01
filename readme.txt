@@ -19,6 +19,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 * Wiimote, Nunchuk, Classic, Wii U Pro, and Gamecube controller support
 * Wii U GamePad support (requires homebrew injection into Wii U VC title)
 * SNES Superscope, Mouse, Justifier support
+* Retrode support for up to 4 players
 * Cheat support
 * Satellaview (BS-X) support
 * Auto Load/Save Game Snapshots and SRAM
