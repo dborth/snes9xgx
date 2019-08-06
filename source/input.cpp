@@ -35,6 +35,10 @@
 #include "snes9x/memmap.h"
 #include "snes9x/controls.h"
 
+#ifdef HW_RVL
+#include "utils/retrode.h"
+#endif
+
 #define ANALOG_SENSITIVITY 30
 
 int rumbleRequest[4] = {0,0,0,0};
@@ -243,6 +247,7 @@ UpdatePads()
 {
 	#ifdef HW_RVL
 	WiiDRC_ScanPads();
+	Retrode_ScanPads();
 	WPAD_ScanPads();
 	#endif
 
@@ -442,6 +447,8 @@ static void decodepad (int chan)
 	s16 wiidrc_ax = userInput[chan].wiidrcdata.stickX;
 	s16 wiidrc_ay = userInput[chan].wiidrcdata.stickY;
 	u32 wiidrcp = userInput[chan].wiidrcdata.btns_h;
+
+	jp |= Retrode_ButtonsHeld(chan);
 #endif
 
 	/***

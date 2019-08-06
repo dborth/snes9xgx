@@ -18,6 +18,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 * Based on Snes9x 1.58 (with faster Blargg S-SMP module)
 * Wiimote, Nunchuk, Classic, Wii U Pro, and Gamecube controller support
 * Wii U GamePad support (requires homebrew injection into Wii U VC title)
+* Retrode support for up to 4 players
 * SNES Superscope, Mouse, Justifier support
 * Cheat support
 * Satellaview (BS-X) support
@@ -33,6 +34,10 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
+
+[4.4.4]
+
+* Added retrode support (thanks revvv!)
 
 [4.4.3 - April 13, 2019]
 
