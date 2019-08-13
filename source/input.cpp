@@ -201,6 +201,42 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 		btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_PLUS;
 	}
 
+	/*** Superscope : Classic Controller button mapping ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_SCOPE && wiiCtrl == CTRLR_CLASSIC))
+	{
+		i=0;
+		btnmap[CTRL_SCOPE][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_B;
+		btnmap[CTRL_SCOPE][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_A;
+		btnmap[CTRL_SCOPE][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_MINUS;
+		btnmap[CTRL_SCOPE][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_Y;
+		btnmap[CTRL_SCOPE][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_X;
+		btnmap[CTRL_SCOPE][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_PLUS;
+	}
+
+	/*** Superscope : Wii U Pro Controller button mapping ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_SCOPE && wiiCtrl == CTRLR_WUPC))
+	{
+		i=0;
+		btnmap[CTRL_SCOPE][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_B;
+		btnmap[CTRL_SCOPE][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_A;
+		btnmap[CTRL_SCOPE][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_MINUS;
+		btnmap[CTRL_SCOPE][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_Y;
+		btnmap[CTRL_SCOPE][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_X;
+		btnmap[CTRL_SCOPE][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_PLUS;
+	}
+
+	/*** Superscope : Wii U Gamepad button mapping ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_SCOPE && wiiCtrl == CTRLR_WIIDRC))
+	{
+		i=0;
+		btnmap[CTRL_SCOPE][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_B;
+		btnmap[CTRL_SCOPE][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_A;
+		btnmap[CTRL_SCOPE][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_MINUS;
+		btnmap[CTRL_SCOPE][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_Y;
+		btnmap[CTRL_SCOPE][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_X;
+		btnmap[CTRL_SCOPE][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_PLUS;
+	}
+
 	/*** Mouse : GC controller button mapping ***/
 	if(consoleCtrl == -1 || (consoleCtrl == CTRL_MOUSE && wiiCtrl == CTRLR_GCPAD))
 	{
@@ -215,6 +251,30 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 		i=0;
 		btnmap[CTRL_MOUSE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_A;
 		btnmap[CTRL_MOUSE][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;
+	}
+
+	/*** Mouse : Classic Controller button mapping ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_MOUSE && wiiCtrl == CTRLR_CLASSIC))
+	{
+		i=0;
+		btnmap[CTRL_MOUSE][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_A;
+		btnmap[CTRL_MOUSE][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_B;
+	}
+
+	/*** Mouse : Wii U Pro Controller button mapping ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_MOUSE && wiiCtrl == CTRLR_WUPC))
+	{
+		i=0;
+		btnmap[CTRL_MOUSE][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_A;
+		btnmap[CTRL_MOUSE][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_B;
+	}
+
+	/*** Mouse : Wii U Gamepad button mapping ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_MOUSE && wiiCtrl == CTRLR_WIIDRC))
+	{
+		i=0;
+		btnmap[CTRL_MOUSE][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_A;
+		btnmap[CTRL_MOUSE][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_B;
 	}
 
 	/*** Justifier : GC controller button mapping ***/
@@ -233,6 +293,33 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 		btnmap[CTRL_JUST][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_B;
 		btnmap[CTRL_JUST][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_A;
 		btnmap[CTRL_JUST][CTRLR_WIIMOTE][i++] = WPAD_BUTTON_PLUS;
+	}
+
+	/*** Justifier : Classic Controller button mapping ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_JUST && wiiCtrl == CTRLR_CLASSIC))
+	{
+		i=0;
+		btnmap[CTRL_JUST][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_B;
+		btnmap[CTRL_JUST][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_A;
+		btnmap[CTRL_JUST][CTRLR_CLASSIC][i++] = WPAD_CLASSIC_BUTTON_PLUS;
+	}
+
+	/*** Justifier : Wii U Pro Controller button mapping ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_JUST && wiiCtrl == CTRLR_WUPC))
+	{
+		i=0;
+		btnmap[CTRL_JUST][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_B;
+		btnmap[CTRL_JUST][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_A;
+		btnmap[CTRL_JUST][CTRLR_WUPC][i++] = WPAD_CLASSIC_BUTTON_PLUS;
+	}
+
+	/*** Justifier : Wii U Gamepad button mapping ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_JUST && wiiCtrl == CTRLR_WIIDRC))
+	{
+		i=0;
+		btnmap[CTRL_JUST][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_B;
+		btnmap[CTRL_JUST][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_A;
+		btnmap[CTRL_JUST][CTRLR_WIIDRC][i++] = WIIDRC_BUTTON_PLUS;
 	}
 }
 
@@ -523,6 +610,9 @@ static void decodepad (int chan)
 			if (jp & btnmap[CTRL_SCOPE][CTRLR_GCPAD][i]
 #ifdef HW_RVL
 			|| wp & btnmap[CTRL_SCOPE][CTRLR_WIIMOTE][i]
+			|| wp & btnmap[CTRL_SCOPE][CTRLR_CLASSIC][i]
+			|| wp & btnmap[CTRL_SCOPE][CTRLR_WUPC][i]
+			|| wiidrcp & btnmap[CTRL_SCOPE][CTRLR_WIIDRC][i]
 #endif
 			)
 			{
@@ -560,6 +650,9 @@ static void decodepad (int chan)
 			if (jp & btnmap[CTRL_MOUSE][CTRLR_GCPAD][i]
 #ifdef HW_RVL
 			|| wp & btnmap[CTRL_MOUSE][CTRLR_WIIMOTE][i]
+			|| wp & btnmap[CTRL_MOUSE][CTRLR_CLASSIC][i]
+			|| wp & btnmap[CTRL_MOUSE][CTRLR_WUPC][i]
+			|| wiidrcp & btnmap[CTRL_MOUSE][CTRLR_WIIDRC][i]
 #endif
 			)
 				S9xReportButton(offset + i, true);
@@ -582,6 +675,9 @@ static void decodepad (int chan)
 			if (jp & btnmap[CTRL_JUST][CTRLR_GCPAD][i]
 #ifdef HW_RVL
 			|| wp & btnmap[CTRL_JUST][CTRLR_WIIMOTE][i]
+			|| wp & btnmap[CTRL_JUST][CTRLR_CLASSIC][i]
+			|| wp & btnmap[CTRL_JUST][CTRLR_WUPC][i]
+			|| wiidrcp & btnmap[CTRL_JUST][CTRLR_WIIDRC][i]
 #endif
 			)
 				S9xReportButton(offset + i, true);
