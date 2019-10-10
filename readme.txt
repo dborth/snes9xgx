@@ -35,9 +35,17 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-[4.4.4]
+[4.4.4 - October 10, 2019]
 
 * Added retrode support (thanks revvv!)
+* Added L+R+START trigger to go back to emulator
+* Added option to show local time
+* Fixed buttons for all SNES peripherals (thanks niuus!)
+* Fixed bg_preview image (thanks Tanooki16!)
+* Fixed ZL button mapping for Wii U GamePad
+* Fixed SuperFX2 Core Speed (Yoshi's Island was running too fast)
+* Fixed Dragon Ball Z Hyper Dimension black screen
+* Reduce compile time by unmacro Tile file
 
 [4.4.3 - April 13, 2019]
 
