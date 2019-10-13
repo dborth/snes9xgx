@@ -35,7 +35,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-[4.4.4 - October 10, 2019]
+[4.4.4 - October 13, 2019]
 
 * Added retrode support (thanks revvv!)
 * Added L+R+START trigger to go back to emulator
