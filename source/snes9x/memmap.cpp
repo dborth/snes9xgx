@@ -2635,6 +2635,12 @@ void CMemory::InitROM (void)
 	   and the NMI handler, time enough for an instruction or two. */
 	// Wild Guns, Mighty Morphin Power Rangers - The Fighting Edition
 	Timings.NMIDMADelay  = 24;
+	Timings.IRQTriggerCycles = 14;
+	Timings.APUSpeedup = 0;
+	#ifdef GEKKO
+	Timings.APUAllowTimeOverflow = FALSE;
+	#endif
+	S9xAPUTimingSetSpeedup(Timings.APUSpeedup);
 
 	IPPU.TotalEmulatedFrames = 0;
 
@@ -3645,26 +3651,8 @@ void CMemory::ApplyROMFixes (void)
 {
 	Settings.BlockInvalidVRAMAccess = Settings.BlockInvalidVRAMAccessMaster;
 
-	//// Warnings
-
-	// Reject strange hacked games
-	if ((ROMCRC32 == 0x6810aa95) ||
-		(ROMCRC32 == 0x340f23e5) ||
-		(ROMCRC32 == 0x77fd806a) ||
-		(match_nn("HIGHWAY BATTLE 2")) ||
-		(match_na("FX SKIING NINTENDO 96") && (ROM[0x7fda] == 0)) ||
-		(match_nn("HONKAKUHA IGO GOSEI")   && (ROM[0xffd5] != 0x31)))
-	{
-		Settings.DisplayColor = BUILD_PIXEL(31, 0, 0);
-		SET_UI_COLOR(255, 0, 0);
-	}
-
-	//// APU timing hacks :(
-
-	Timings.APUSpeedup = 0;
-	#ifdef GEKKO
-	Timings.APUAllowTimeOverflow = FALSE;
-	#endif
+	if (Settings.DisableGameSpecificHacks)
+		return;
 
 	if (!Settings.DisableGameSpecificHacks)
 	{
@@ -3736,11 +3724,6 @@ void CMemory::ApplyROMFixes (void)
 	#ifdef GEKKO
 	S9xAPUAllowTimeOverflow(Timings.APUAllowTimeOverflow);
 	#endif
-	//// Other timing hacks :(
-
-	Timings.HDMAStart   = SNES_HDMA_START_HC + Settings.HDMATimingHack - 100;
-	Timings.HBlankStart = SNES_HBLANK_START_HC + Timings.HDMAStart - SNES_HDMA_START_HC;
-	Timings.IRQTriggerCycles = 14;
 	
 	#ifdef GEKKO
 	if (match_id("YI  ")) { // Super Mario World 2 - Yoshi's Island 
@@ -3751,61 +3734,66 @@ void CMemory::ApplyROMFixes (void)
 		}
 	#endif
 	
-	if (!Settings.DisableGameSpecificHacks)
+	// Other timing hacks
+	// The delay to sync CPU and DMA which Snes9x does not emulate.
+	// Some games need really severe delay timing...
+	if (match_na("BATTLE GRANDPRIX")) // Battle Grandprix
+		Timings.DMACPUSync = 20;
+	else if (match_na("KORYU NO MIMI ENG")) // Koryu no Mimi translation by rpgone)
 	{
-		// The delay to sync CPU and DMA which Snes9x cannot emulate.
-		// Some games need really severe delay timing...
-		if (match_na("BATTLE GRANDPRIX")) // Battle Grandprix
-		{
-			Timings.DMACPUSync = 20;
-			printf("DMA sync: %d\n", Timings.DMACPUSync);
-		}
-		else if (match_na("KORYU NO MIMI ENG")) // Koryu no Mimi translation by rpgone)
-		{
-			// An infinite loop reads $4210 and checks NMI flag. This only works if LDA instruction executes before the NMI triggers,
-			// which doesn't work very well with s9x's default DMA timing.
-			Timings.DMACPUSync = 20;
-			printf("DMA sync: %d\n", Timings.DMACPUSync);
-		}
+		// An infinite loop reads $4210 and checks NMI flag. This only works if LDA instruction executes before the NMI triggers,
+		// which doesn't work very well with s9x's default DMA timing.
+		Timings.DMACPUSync = 20;
 	}
 
-	//// SRAM initial value
+	if (Timings.DMACPUSync != 18)
+		printf("DMA sync: %d\n", Timings.DMACPUSync);
 
-	if (!Settings.DisableGameSpecificHacks)
+
+	// SRAM initial value
+	if (match_na("HITOMI3"))
 	{
-		if (match_na("HITOMI3"))
-		{
-			SRAMSize = 1;
-			SRAMMask = ((1 << (SRAMSize + 3)) * 128) - 1;
-		}
-
-		// SRAM value fixes
-		if (match_na("SUPER DRIFT OUT")      || // Super Drift Out
-			match_na("SATAN IS OUR FATHER!") ||
-			match_na("goemon 4"))               // Ganbare Goemon Kirakira Douchuu
-			SNESGameFixes.SRAMInitialValue = 0x00;
-
-		// Additional game fixes by sanmaiwashi ...
-		// XXX: unnecessary?
-		if (match_na("SFX \xC5\xB2\xC4\xB6\xDE\xDD\xC0\xDE\xD1\xD3\xC9\xB6\xDE\xC0\xD8 1")) // SD Gundam Gaiden - Knight Gundam Monogatari
-			SNESGameFixes.SRAMInitialValue = 0x6b;
-
-		// others: BS and ST-01x games are 0x00.
+		SRAMSize = 1;
+		SRAMMask = ((1 << (SRAMSize + 3)) * 128) - 1;
 	}
 
-	//// OAM hacks :(
+	// SRAM value fixes
+	if (match_na("SUPER DRIFT OUT")      || // Super Drift Out
+		match_na("SATAN IS OUR FATHER!") ||
+		match_na("goemon 4"))               // Ganbare Goemon Kirakira Douchuu
+		SNESGameFixes.SRAMInitialValue = 0x00;
 
-	if (!Settings.DisableGameSpecificHacks)
+	// Additional game fixes by sanmaiwashi ...
+	// XXX: unnecessary?
+	if (match_na("SFX \xC5\xB2\xC4\xB6\xDE\xDD\xC0\xDE\xD1\xD3\xC9\xB6\xDE\xC0\xD8 1")) // SD Gundam Gaiden - Knight Gundam Monogatari
+		SNESGameFixes.SRAMInitialValue = 0x6b;
+
+	// others: BS and ST-01x games are 0x00.
+
+	// OAM hacks :(
+	// OAM hacks because we don't fully understand the behavior of the SNES.
+	// Totally wacky display in 2P mode...
+	// seems to need a disproven behavior, so we're definitely overlooking some other bug?
+	if (match_nn("UNIRACERS")) // Uniracers
 	{
-		// OAM hacks because we don't fully understand the behavior of the SNES.
-		// Totally wacky display in 2P mode...
-		// seems to need a disproven behavior, so we're definitely overlooking some other bug?
-		if (match_nn("UNIRACERS")) // Uniracers
-		{
-			SNESGameFixes.Uniracers = TRUE;
-			printf("Applied Uniracers hack.\n");
-		}
+		SNESGameFixes.Uniracers = TRUE;
+		printf("Applied Uniracers hack.\n");
 	}
+
+	// Render Position
+	if (match_na("Sugoro Quest++"))
+		Timings.RenderPos = 128;
+	else if (match_na("FIREPOWER 2000"))
+		Timings.RenderPos = 32;
+	else if (match_na("DERBY STALLION 98"))
+		Timings.RenderPos = 128;
+	else if (match_na("AIR STRIKE PATROL") || match_na("DESERT FIGHTER"))
+		Timings.RenderPos = 128; // Just hides shadow
+	// From bsnes
+	else if (match_na("NHL '94") || match_na("NHL PROHOCKEY'94"))
+		Timings.RenderPos = 32;
+	else if (match_na("ADVENTURES OF FRANKEN") && Settings.PAL)
+		Timings.RenderPos = 32;
 }
 
 // BPS % UPS % IPS
