@@ -53,6 +53,7 @@ bool isMounted[7] = { false, false, false, false, false, false, false };
 #else
 	const DISC_INTERFACE* carda = &__io_gcsda;
 	const DISC_INTERFACE* cardb = &__io_gcsdb;
+	const DISC_INTERFACE* port2 = &__io_gcsd2;
 	const DISC_INTERFACE* dvd = &__io_gcdvd;
 #endif
 
@@ -205,6 +206,7 @@ void UnmountAllFAT()
 #else
 	fatUnmount("carda:");
 	fatUnmount("cardb:");
+	fatUnmount("port2:");
 #endif
 }
 
@@ -242,11 +244,15 @@ static bool MountFAT(int device, int silent)
 			sprintf(name2, "carda:");
 			disc = carda;
 			break;
-
 		case DEVICE_SD_SLOTB:
 			sprintf(name, "cardb");
 			sprintf(name2, "cardb:");
 			disc = cardb;
+			break;
+		case DEVICE_SD_PORT2:
+			sprintf(name, "port2");
+			sprintf(name2, "port2:");
+			disc = port2;
 			break;
 #endif
 		default:
@@ -291,6 +297,7 @@ void MountAllFAT()
 #else
 	MountFAT(DEVICE_SD_SLOTA, SILENT);
 	MountFAT(DEVICE_SD_SLOTB, SILENT);
+	MountFAT(DEVICE_SD_PORT2, SILENT);
 #endif
 }
 
@@ -369,6 +376,11 @@ bool FindDevice(char * filepath, int * device)
 		*device = DEVICE_SD_SLOTB;
 		return true;
 	}
+	else if(strncmp(filepath, "port2:", 6) == 0)
+	{
+		*device = DEVICE_SD_PORT2;
+		return true;
+	}
 	else if(strncmp(filepath, "dvd:", 4) == 0)
 	{
 		*device = DEVICE_DVD;
@@ -409,6 +421,7 @@ bool ChangeInterface(int device, bool silent)
 #else
 		case DEVICE_SD_SLOTA:
 		case DEVICE_SD_SLOTB:
+		case DEVICE_SD_PORT2:
 #endif
 			mounted = MountFAT(device, silent);
 			break;

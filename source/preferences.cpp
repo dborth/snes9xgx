@@ -666,9 +666,10 @@ bool LoadPrefs()
 	sprintf(filepath[3], "sd:/%s", APPFOLDER);
 	sprintf(filepath[4], "usb:/%s", APPFOLDER);
 #else
-	numDevices = 2;
+	numDevices = 3;
 	sprintf(filepath[0], "carda:/%s", APPFOLDER);
 	sprintf(filepath[1], "cardb:/%s", APPFOLDER);
+	sprintf(filepath[2], "port2:/%s", APPFOLDER);
 #endif
 
 	for(int i=0; i<numDevices; i++)
