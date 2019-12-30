@@ -37,6 +37,7 @@
 
 #ifdef HW_RVL
 #include "utils/retrode.h"
+#include "utils/xbox360.h"
 #endif
 
 #define ANALOG_SENSITIVITY 30
@@ -335,6 +336,7 @@ UpdatePads()
 	#ifdef HW_RVL
 	WiiDRC_ScanPads();
 	Retrode_ScanPads();
+	XBOX360_ScanPads();
 	WPAD_ScanPads();
 	#endif
 
@@ -536,6 +538,7 @@ static void decodepad (int chan)
 	u32 wiidrcp = userInput[chan].wiidrcdata.btns_h;
 
 	jp |= Retrode_ButtonsHeld(chan);
+	jp |= XBOX360_ButtonsHeld(chan);
 #endif
 
 	/***
@@ -895,4 +898,11 @@ void SetDefaultButtonMap ()
 	//ASSIGN_BUTTON_FALSE (maxcode++, "Screenshot");
 
 	SetControllers();
+}
+
+char* GetUSBControllerInfo()
+{
+    static char info[50];
+    snprintf(info, 50, "Retrode: %s, XBOX360: %s", Retrode_Status(), XBOX360_Status());
+    return info;
 }

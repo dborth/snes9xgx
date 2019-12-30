@@ -868,10 +868,12 @@ static void WindowCredits(void * ptr)
 	txt[i] = new GuiText("under the terms of the GNU General Public License (GPL) Version 2.");
 	txt[i]->SetPosition(0,y); i++; y+=20;
 
-	char iosVersion[20];
+	//char iosVersion[20];
+	char iosVersion[70]; // added 50 for Retrode info
 
 #ifdef HW_RVL
-	sprintf(iosVersion, "IOS: %ld", IOS_GetVersion());
+	//sprintf(iosVersion, "IOS: %ld", IOS_GetVersion());
+	snprintf(iosVersion, 70, "IOS: %ld / %s", IOS_GetVersion(), GetUSBControllerInfo());
 #endif
 
 	txt[i] = new GuiText(iosVersion, 18, (GXColor){0, 0, 0, 255});
