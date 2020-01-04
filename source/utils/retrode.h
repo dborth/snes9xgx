@@ -1,6 +1,8 @@
 #ifndef _RETRODE_H_
 #define _RETRODE_H_
 
+#include <gctypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -1,6 +1,9 @@
 #ifdef HW_RVL
 #include <gccore.h>
 
+#define RETRODE_VID 0x0403
+#define RETRODE_PID 0x97C1
+
 static bool setup = false;
 static bool replugRequired = false;
 static s32 deviceId = 0;
@@ -9,9 +12,14 @@ static u8 bMaxPacketSize = 0;
 
 static u32 jpRetrode[4];
 
+static bool isRetrode(usb_device_entry dev)
+{
+	return dev.vid == RETRODE_VID && dev.pid == RETRODE_PID;
+}
+
 static bool isRetrodeGamepad(usb_devdesc devdesc)
 {
-	if (devdesc.idVendor != 0x0403 || devdesc.idProduct != 0x97C1 ||
+	if (devdesc.idVendor != RETRODE_VID || devdesc.idProduct != RETRODE_PID ||
 		devdesc.configurations == NULL || devdesc.configurations->interfaces == NULL ||
 		devdesc.configurations->interfaces->endpoints == NULL)
 	{
@@ -32,20 +40,20 @@ static u8 getEndpoint(usb_devdesc devdesc)
 
 static int removal_cb(int result, void *usrdata)
 {
-    s32 fd = (s32) usrdata;
-    if (fd == deviceId)
-    {
-        deviceId = 0;
-    }
-    return 1;
+	s32 fd = (s32) usrdata;
+	if (fd == deviceId)
+	{
+		deviceId = 0;
+	}
+	return 1;
 }
 
 static void open()
 {
 	if (deviceId != 0)
-    {
-        return;
-    }
+	{
+		return;
+	}
 
 	usb_device_entry dev_entry[8];
 	u8 dev_count;
@@ -55,9 +63,12 @@ static void open()
 	}
 
 	// Retrode has two entries in USB_GetDeviceList(), one for gamepads and one for SNES mouse
-	int i;
-	for	(i = 0; i < dev_count; ++i)
+	for (int i = 0; i < dev_count; ++i)
 	{
+		if (!isRetrode(dev_entry[i]))
+		{
+			continue;
+		}
 		s32 fd;
 		if (USB_OpenDevice(dev_entry[i].device_id, dev_entry[i].vid, dev_entry[i].pid, &fd) < 0)
 		{
@@ -76,19 +87,19 @@ static void open()
 		if (isRetrodeGamepad(devdesc))
 		{
 			deviceId = fd;
-            replugRequired = false;
-            endpoint = getEndpoint(devdesc);
-            bMaxPacketSize = devdesc.bMaxPacketSize0;
-            USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
-            break;
+			replugRequired = false;
+			endpoint = getEndpoint(devdesc);
+			bMaxPacketSize = devdesc.bMaxPacketSize0;
+			USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
+			break;
 		}
 		else
 		{
-		    USB_CloseDevice(&fd);
+			USB_CloseDevice(&fd);
 		}
 	}
 
-    setup = true;
+	setup = true;
 }
 
 void Retrode_ScanPads()
@@ -100,7 +111,7 @@ void Retrode_ScanPads()
 
 	uint8_t ATTRIBUTE_ALIGN(32) buf[bMaxPacketSize];
 
-    // Retrode gamepad endpoint returns 5 bytes with gamepad events
+	// Retrode gamepad endpoint returns 5 bytes with gamepad events
 	if (USB_ReadIntrMsg(deviceId, endpoint, sizeof(buf), buf) != 5)
 	{
 		return;
@@ -115,21 +126,21 @@ void Retrode_ScanPads()
 	// 4 = right Genesis/MD
 
 	// Button layout
-    // A=3,10
-    // B=3,01
-    // X=3,20
-    // Y=3,02
-    // L=3,40
-    // R=3,80
-    // Up=2,9C
-    // Down=2,64
-    // Left=1,9C
-    // Right=1,64
-    // Start=3,08
-    // Select=3,04
+	// A=3,10
+	// B=3,01
+	// X=3,20
+	// Y=3,02
+	// L=3,40
+	// R=3,80
+	// Up=2,9C
+	// Down=2,64
+	// Left=1,9C
+	// Right=1,64
+	// Start=3,08
+	// Select=3,04
 
 	u32 jp = 0;
-	jp |= ((buf[2] & 0x9C) == 0x9C) ? PAD_BUTTON_UP    : 0;
+	jp |= ((buf[2] & 0x9C) == 0x9C) ? PAD_BUTTON_UP	: 0;
 	jp |= ((buf[2] & 0x64) == 0x64) ? PAD_BUTTON_DOWN  : 0;
 	jp |= ((buf[1] & 0x9C) == 0x9C) ? PAD_BUTTON_LEFT  : 0;
 	jp |= ((buf[1] & 0x64) == 0x64) ? PAD_BUTTON_RIGHT : 0;
@@ -143,7 +154,7 @@ void Retrode_ScanPads()
 	jp |= (buf[3] & 0x80) ? PAD_TRIGGER_R : 0;
 
 	jp |= (buf[3] & 0x08) ? PAD_BUTTON_START : 0;
-	jp |= (buf[3] & 0x04) ? PAD_TRIGGER_Z    : 0; // SNES select button maps to Z
+	jp |= (buf[3] & 0x04) ? PAD_TRIGGER_Z	: 0; // SNES select button maps to Z
 
 	// Required, otherwise if the returned port isn't the one we are looking for, jp will be set to zero,
 	// and held buttons are not possible w/o saving the state.
@@ -152,10 +163,10 @@ void Retrode_ScanPads()
 
 u32 Retrode_ButtonsHeld(int chan)
 {
-    if(!setup)
-    {
-        open();
-    }
+	if(!setup)
+	{
+		open();
+	}
 	if (deviceId == 0)
 	{
 		return 0;
@@ -165,10 +176,10 @@ u32 Retrode_ButtonsHeld(int chan)
 
 char* Retrode_Status()
 {
-    open();
-    if (replugRequired)
-        return "please replug";
-    return deviceId ? "connected" : "not found";
+	open();
+	if (replugRequired)
+		return "please replug";
+	return deviceId ? "connected" : "not found";
 }
 
 #endif
