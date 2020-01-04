@@ -43,8 +43,8 @@ unsigned char *savebuffer = NULL;
 u8 *ext_font_ttf = NULL;
 static mutex_t bufferLock = LWP_MUTEX_NULL;
 FILE * file; // file pointer - the only one we should ever use!
-bool unmountRequired[7] = { false, false, false, false, false, false, false };
-bool isMounted[7] = { false, false, false, false, false, false, false };
+bool unmountRequired[8] = { false, false, false, false, false, false, false, false };
+bool isMounted[8] = { false, false, false, false, false, false, false, false };
 
 #ifdef HW_RVL
 	const DISC_INTERFACE* sd = &__io_wiisd;
