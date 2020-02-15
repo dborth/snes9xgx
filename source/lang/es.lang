@@ -59,40 +59,40 @@ msgid "Right Button"
 msgstr "Botón Derecho"
 
 msgid "Button Mapping"
-msgstr "Controles"
+msgstr "Asignación de botones"
 
 msgid "16:9 Correction"
 msgstr "Corrección 16:9"
 
-msgid "7z decompression failed: Archive contains too many files"
-msgstr "Descompresión 7z fallida: contiene demasiados archivos"
+msgid "7z decompression failed: Archive contains too many files."
+msgstr "Descompresión 7z falló: El archivo contiene demasiados archivos."
 
-msgid "7z decompression failed: Failed to read file data"
-msgstr "Descompresión 7z fallida: fallo en la lectura del archivo"
+msgid "7z decompression failed: Failed to read file data."
+msgstr "Descompresión 7z falló: Error al leer los datos del archivo."
 
-msgid "7z decompression failed: File is corrupt"
-msgstr "Descompresión 7z fallida: el archivo está corrupto"
+msgid "7z decompression failed: File is corrupt."
+msgstr "Descompresión 7z falló: El archivo está dañado."
 
-msgid "7z decompression failed: File is corrupt (CRC mismatch)"
-msgstr "Descompresión 7z fallida: el archivo está corrupto (CRC no coincide)"
+msgid "7z decompression failed: File is corrupt (CRC mismatch)."
+msgstr "Descompresión 7z falló: El archivo está dañado (CRC no coincide)"
 
-msgid "7z decompression failed: File uses too high of compression settings (dictionary size is too large)"
-msgstr "Descompresión 7z fallida: el archivo utiliza una compresión muy alta (el tamaño del diccionario es muy grande)"
+msgid "7z decompression failed: File uses too high of compression settings (dictionary size is too large)."
+msgstr "Descompresión 7z falló: El archivo utiliza una compresión muy alta (el tamaño del diccionario es muy grande)."
 
-msgid "7z decompression failed: File uses unsupported compression settings"
-msgstr "Descompresión 7z fallida: el archivo utiliza una configuración de compresión desconocida"
+msgid "7z decompression failed: File uses unsupported compression settings."
+msgstr "Descompresión 7z falló: El archivo utiliza una compresión no compatible."
 
-msgid "Compressed GBA files are not supported!"
-msgstr "¡Archivos GBA comprimidos no soportados!"
-
-msgid "Empty or invalid ZIP file!"
-msgstr "¡Archivo ZIP vacío o inválido!"
+msgid "Additional improvements"
+msgstr "Mejoras adicionales"
 
 msgid "Error - Invalid ZIP file!"
-msgstr "Error - ¡Archivo ZIP inválido!"
+msgstr "Error - ¡Archivo ZIP no válido!"
 
 msgid "Error creating file!"
 msgstr "¡Error al crear el archivo!"
+
+msgid "Error loading font!"
+msgstr "¡Error al cargar la fuente!"
 
 msgid "Error loading game!"
 msgstr "¡Error al cargar el juego!"
@@ -113,85 +113,52 @@ msgid "Error saving file!"
 msgstr "¡Error al guardar el archivo!"
 
 msgid "Failed to connect to network share."
-msgstr "Fallo al conectar a la red"
+msgstr "No se pudo conectar a la red compartida."
 
-msgid "FDS BIOS file is invalid!"
-msgstr "¡Archivo de BIOS FDS inválido!"
-
-msgid "FDS BIOS file not found!"
-msgstr "¡Archivo de BIOS FDS no encontrado!"
-
-msgid "Game Genie ROM not found!"
-msgstr "¡Game Genie no encontrado!"
-
-msgid "Invalid file size!"
-msgstr "¡Tamaño de archivo no válido!"
-
-msgid "Invalid game file!"
-msgstr "¡Archivo de juego inválido!"
-
-msgid "Invalid network settings - Check settingsRX.xml."
-msgstr "Configuración de Red inválida - Verifique settingsRX.xml."
+msgid "Invalid network settings - Check settings.xml."
+msgstr "Configuración de red no válida - Compruebe la Configuración de Red."
 
 msgid "Invalid network settings - Share IP is blank."
-msgstr "Configuración de Red inválida - La IP está en blanco."
+msgstr "Configuración de red no válida - La IP del SMB está en blanco."
 
 msgid "Invalid network settings - Share name is blank."
-msgstr "Configuración de Red inválida - El nombre está en blanco."
-
-msgid "Invalid save file"
-msgstr "Archivo de guardado inválido"
-
-msgid "Invalid state file"
-msgstr "Archivo de carga inválido"
+msgstr "Configuración de red no válida - El nombre del SMB está en blanco."
 
 msgid "Loading DVD..."
 msgstr "Cargando DVD..."
 
-msgid "Loading patch..."
-msgstr "Cargando parche..."
-
 msgid "No SRAM data to save!"
 msgstr "¡No hay datos SRAM para guardar!"
-
-msgid "Out of memory!"
-msgstr "¡Sin memoria!"
 
 msgid "Out of memory: too many files!"
 msgstr "¡Sin memoria: demasiados archivos!"
 
 msgid "Unable to initialize network!"
-msgstr "¡Imposible iniciar red!"
+msgstr "¡No se puede iniciar la red!"
 
 msgid "Unable to locate a load device!"
-msgstr "¡Imposible localizar el dispositivo de carga!"
+msgstr "¡No se puede localizar un dispositivo de carga!"
 
 msgid "Unable to locate a save device!"
-msgstr "¡Imposible localizar el dispositivo de guardado!"
+msgstr "¡No se puede encontrar un dispositivo de guardado!"
 
 msgid "Unable to open snapshot!"
-msgstr "¡Imposible abrir instantánea!"
+msgstr "¡No se puede abrir la partida guardada!"
 
 msgid "Unknown file type!"
 msgstr "¡Tipo de archivo desconocido!"
 
 msgid "Unrecognized DVD format."
-msgstr "¡Formato de DVD desconocido!"
-
-msgid "Unrecognized file extension!"
-msgstr "¡Extensión de archivo desconocida!"
-
-msgid "An update is available!"
-msgstr "¡Actualización disponible!"
+msgstr "Formato de DVD no reconocido."
 
 msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
 msgstr "¿Seguro que desea reiniciar el juego? Se perderá cualquier progreso no guardado."
 
 msgid "Are you sure that you want to reset your mappings?"
-msgstr "¿Seguro que desea reiniciar los controles?"
+msgstr "¿Seguro que desea restablecer los controles?"
 
 msgid "Are you sure that you want to reset your settings?"
-msgstr "¿Seguro que desea reiniciar la configuración?"
+msgstr "¿Seguro que desea restablecer la configuración?"
 
 msgid "Artwork Folder"
 msgstr "Carpeta de Arte"
@@ -218,13 +185,13 @@ msgid "Both"
 msgstr "Ambos"
 
 msgid "Button Mappings"
-msgstr "Redefinir Controles"
+msgstr "Controles"
 
 msgid "Cancel"
 msgstr "Cancelar"
 
 msgid "Caps"
-msgstr "Mayús."
+msgstr "BloMay"
 
 msgid "Cheats"
 msgstr "Trucos"
@@ -239,7 +206,7 @@ msgid "Choose Game"
 msgstr "Elegir Juego"
 
 msgid "Classic Controller"
-msgstr "Mando Clásico"
+msgstr "Control Clásico"
 
 msgid "Close"
 msgstr "Cerrar"
@@ -250,8 +217,11 @@ msgstr "Programación"
 msgid "Coding & menu design"
 msgstr "Programación y diseño de menú"
 
+msgid "Connecting to network share..."
+msgstr "Conectando a la red compartida..."
+
 msgid "Controller"
-msgstr "Mando"
+msgstr "Control"
 
 msgid "Cover View"
 msgstr "Vista de Portada"
@@ -277,14 +247,17 @@ msgstr "Carpeta de Capturas"
 msgid "Credits"
 msgstr "Créditos"
 
+msgid "Data DVD"
+msgstr "DVD Datos"
+
 msgid "Delete"
-msgstr "Borrar"
+msgstr "Eliminar"
 
 msgid "Delete File"
-msgstr "Borrar Archivo"
+msgstr "Eliminar archivo"
 
 msgid "Delete this save file? Deleted files can not be restored."
-msgstr "¿Borrar este archivo de guardado? Los archivos borrados no pueden ser recuperados."
+msgstr "¿Eliminar esta partida guardada?"
 
 msgid "Default"
 msgstr "Por Defecto"
@@ -302,7 +275,7 @@ msgid "Exit"
 msgstr "Salir"
 
 msgid "Exit Action"
-msgstr "Acción al salir"
+msgstr "Acción al Salir"
 
 msgid "Filtered (Sharp)"
 msgstr "Filtrado (Nítido)"
@@ -316,20 +289,23 @@ msgstr "Filtrado"
 msgid "Filtering"
 msgstr "Filtro"
 
+msgid "Font file not found!"
+msgstr "¡Archivo de fuente no encontrado!"
+
+msgid "Font file is too large!"
+msgstr "¡El archivo de fuente es demasiado grande!"
+
 msgid "Game Settings"
 msgstr "Configuración"
 
 msgid "GameCube Controller"
-msgstr "Mando de GameCube"
+msgstr "Control de GameCube"
 
-msgid "This software is Open Source and may be copied,"
-msgstr "Este software es de Código Abierto y puede ser copiado,"
+msgid "This software is open source and may be copied, distributed, or modified "
+msgstr "Este software es de código abierto y puede ser copiado, distribuido, o modificado "
 
-msgid "distributed, or modified under the terms of the"
-msgstr "distribuido, o modificado bajo los términos de"
-
-msgid "GNU General Public License (GPL) Version 2."
-msgstr "la Licencia Pública General GNU (GPL) Versión 2."
+msgid "under the terms of the GNU General Public License (GPL) Version 2."
+msgstr "bajo los términos de la Licencia Pública General GNU (GPL) Versión 2."
 
 msgid "Go Back"
 msgstr "Volver"
@@ -337,20 +313,20 @@ msgstr "Volver"
 msgid "Information"
 msgstr "Información"
 
+msgid "Initializing network..."
+msgstr "Iniciando red..."
+
 msgid "Justifier"
-msgstr "Pistola Justifier"
+msgstr "Pistola"
 
 msgid "Language"
 msgstr "Idioma"
-
-msgid "Languages Folder"
-msgstr "Carpeta de Idiomas"
 
 msgid "Load"
 msgstr "Cargar"
 
 msgid "Load Device"
-msgstr "Disposit. de Carga"
+msgstr "Dispositivo de Carga"
 
 msgid "Load Folder"
 msgstr "Carpeta de Juegos"
@@ -360,6 +336,9 @@ msgstr "Cargar Juego"
 
 msgid "Loading"
 msgstr "Cargar"
+
+msgid "Loading..."
+msgstr "Cargando..."
 
 msgid "Main Menu"
 msgstr "Menú Principal"
@@ -373,6 +352,9 @@ msgstr "Silenciar"
 msgid "Network"
 msgstr "Red"
 
+msgid "Network Share"
+msgstr "Red compartida"
+
 msgid "New"
 msgstr "Nuevo"
 
@@ -385,11 +367,11 @@ msgstr "No hay partidas guardadas."
 msgid "Off"
 msgstr "Desactivado"
 
-msgid "Official Site: "
-msgstr "Página Oficial: "
+msgid "Official Site: https://github.com/dborth/snes9xgx"
+msgstr "Sitio oficial: https://github.com/dborth/snes9xgx"
 
 msgid "Ok"
-msgstr "Vale"
+msgstr "Aceptar"
 
 msgid "On"
 msgstr "Activado"
@@ -401,22 +383,22 @@ msgid "Power off Wii"
 msgstr "Apagar Wii"
 
 msgid "Press any button on the Classic Controller now. Press Home to clear the existing mapping."
-msgstr "Presione un botón en el Mando Clásico. Presione HOME para eliminar la configuración actual."
+msgstr "Presione cualquier botón en el Control Clásico. Presione HOME para borrar la asignación existente."
 
 msgid "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping."
-msgstr "Presione un botón en el Mando de GameCube. Presione HOME o mueva el Stick-C para eliminar la configuración actual."
+msgstr "Presione cualquier botón en el Control de GameCube. Presione HOME o mueva el Stick-C para borrar la asignación existente."
 
 msgid "Press any button on the GameCube Controller now. Press the C-Stick in any direction to clear the existing mapping."
-msgstr "Presione un botón en el Mando de GameCube. Mueva el Stick-C para eliminar la configuración actual."
+msgstr "Presione cualquier botón en el Control de GameCube. Mueva el Stick-C para borrar la asignación existente."
 
 msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
-msgstr "Presione un botón en el Wiimote. Presione HOME para eliminar la configuración actual."
+msgstr "Presione cualquier botón en el Wiimote. Presione HOME para borrar la asignación existente."
 
 msgid "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping."
-msgstr "Presione un botón en el Wiimote o Nunchuck. Presione HOME para eliminar la configuración actual."
+msgstr "Presione cualquier botón en el Wiimote o Nunchuck. Presione HOME para borrar la asignación existente."
 
 msgid "Press any button on the Wii U Pro Controller now. Press Home to clear the existing mapping."
-msgstr "Presione un botón en el Mando Pro de Wii U. Presione HOME para eliminar la configuración actual."
+msgstr "Presione cualquier botón en el Control Pro de Wii U. Presione HOME para borrar la asignación existente."
 
 msgid "Save a new Preview Screenshot? Current Screenshot image will be overwritten."
 msgstr "¿Guardar una nueva captura de pantalla? Se sobreescribirá la imagen actual."
@@ -425,7 +407,7 @@ msgid "Preview Image"
 msgstr "Imagen de Previsualización"
 
 msgid "Preview Screenshot"
-msgstr "Captura de Previsualización"
+msgstr "Captura de pantalla"
 
 msgid "Progressive (480p)"
 msgstr "Progresivo (480p)"
@@ -449,10 +431,10 @@ msgid "Reset Game"
 msgstr "Reiniciar"
 
 msgid "Reset Mappings"
-msgstr "Reiniciar"
+msgstr "Restablecer"
 
 msgid "Reset Settings"
-msgstr "Reiniciar"
+msgstr "Restablecer"
 
 msgid "Retry"
 msgstr "Reintentar"
@@ -467,7 +449,7 @@ msgid "Save"
 msgstr "Guardar"
 
 msgid "Save Device"
-msgstr "Disposit. de Guardado"
+msgstr "Dispositivo de Guardado"
 
 msgid "Save Folder"
 msgstr "Carpeta de Guardado"
@@ -476,13 +458,13 @@ msgid "Save Game"
 msgstr "Guardar Juego"
 
 msgid "Save Snapshot?"
-msgstr "¿Guardar Instantánea?"
+msgstr "¿Guardar Captura?"
 
 msgid "Save SRAM and Snapshot?"
-msgstr "¿Guardar SRAM e Instantánea?"
+msgstr "¿Guardar SRAM y Captura?"
 
 msgid "Save successful"
-msgstr "Guardado con éxito"
+msgstr "Guardado con éxito."
 
 msgid "Saving"
 msgstr "Guardar"
@@ -499,6 +481,9 @@ msgstr "Posición de Pantalla"
 msgid "Screen Zoom"
 msgstr "Zoom de Pantalla"
 
+msgid "SD in SP2"
+msgstr "SD en SP2"
+
 msgid "Settings"
 msgstr "Configuración"
 
@@ -511,11 +496,14 @@ msgstr "Configuración - Red"
 msgid "Settings - Saving & Loading"
 msgstr "Configuración - Guardar y Cargar"
 
-msgid "Caps"
-msgstr "Mayús."
+msgid "SD Card"
+msgstr "SD"
+
+msgid "SD card not found!"
+msgstr "¡Tarjeta SD no encontrada!"
 
 msgid "Shift"
-msgstr "Mayus."
+msgstr "Mayús"
 
 msgid "Show Framerate"
 msgstr "Mostrar FPS"
@@ -533,13 +521,16 @@ msgid "SMB Share Username"
 msgstr "Nombre de Usuario del SMB"
 
 msgid "Snapshot"
-msgstr "Instantánea"
+msgstr "Estado"
 
 msgid "SNES Controller"
-msgstr "Mando de SNES"
+msgstr "Control de SNES"
 
-msgid "SNES Controllers"
-msgstr "Mandos de SNES"
+msgid "SNES Controllers (2)"
+msgstr "Controles de SNES (2)"
+
+msgid "SNES Controllers (4)"
+msgstr "Controles de SNES (4)"
 
 msgid "SNES Mouse"
 msgstr "Ratón de SNES"
@@ -547,14 +538,26 @@ msgstr "Ratón de SNES"
 msgid "SuperFX Overclock"
 msgstr "Overclock SuperFX"
 
+msgid "Superscope"
+msgstr "Super Escopeta"
+
+msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
+msgstr "El IOS actual ha sido alterado (falso firmado). La funcionalidad y/o la estabilidad pueden verse afectadas negativamente."
+
+msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
+msgstr "El IOS actual no es compatible. La funcionalidad y/o la estabilidad pueden verse afectadas negativamente."
+
 msgid "Unfiltered"
 msgstr "Sin filtrado"
 
 msgid "Unknown file type!"
 msgstr "¡Tipo de archivo desconocido!"
 
+msgid "Unrecognized DVD format."
+msgstr "Formato de DVD no reconocido."
+
 msgid "Up One Level"
-msgstr "Subir Nivel"
+msgstr "Subir nivel"
 
 msgid "Update Available"
 msgstr "Actualización disponible"
@@ -569,7 +572,10 @@ msgid "Update failed!"
 msgstr "¡Actualización fallida!"
 
 msgid "USB drive not found!"
-msgstr "¡Dispositivo USB no encontrado!"
+msgstr "¡Unidad USB no encontrada!"
+
+msgid "USB Mass Storage"
+msgstr "USB"
 
 msgid "Video"
 msgstr "Vídeo"
@@ -581,10 +587,10 @@ msgid "Wiimote Orientation"
 msgstr "Orientación del Wiimote"
 
 msgid "SNES Controllers"
-msgstr "Mandos de SNES"
+msgstr "Controles de SNES"
 
 msgid "Wii U Pro Controller"
-msgstr "Mando Pro de Wii U"
+msgstr "Control Pro de Wii U"
 
 msgid "Yes"
 msgstr "Sí"
@@ -593,10 +599,10 @@ msgid "Display Virtual Memory"
 msgstr "Mostrar Memoria Virtual"
 
 msgid "Delete Saves"
-msgstr "Borrar Partidas"
+msgstr "Eliminar partidas"
 
 msgid "Append Auto to .SAV"
-msgstr "Añadir "Auto" a .SAV"
+msgstr "Añadir Auto a .SAV"
 
 msgid "Music Volume"
 msgstr "Volumen de la Música"
@@ -605,7 +611,7 @@ msgid "Sound Effects Volume"
 msgstr "Volumen de los Efectos"
 
 msgid "Game Settings - Button Mappings"
-msgstr "Configuración - Redefinir Controles"
+msgstr "Configuración - Controles"
 
 msgid "Game Settings - Audio"
 msgstr "Configuración - Audio"
@@ -620,7 +626,7 @@ msgid "Interpolation"
 msgstr "Interpolación"
 
 msgid "Gaussian (Accurate)"
-msgstr "Gausiana (Precisa)"
+msgstr "Gausiana (Preciso)"
 
 msgid "Linear"
 msgstr "Lineal"
@@ -669,3 +675,60 @@ msgstr "Alemán"
 
 msgid "French"
 msgstr "Francés"
+
+msgid "Jan"
+msgstr "Enero"
+
+msgid "Feb"
+msgstr "Febrero"
+
+msgid "Mar"
+msgstr "Marzo"
+
+msgid "Apr"
+msgstr "Abril"
+
+msgid "May"
+msgstr "Mayo"
+
+msgid "Jun"
+msgstr "Junio"
+
+msgid "Jul"
+msgstr "Julio"
+
+msgid "Aug"
+msgstr "Agosto"
+
+msgid "Sep"
+msgstr "Septiembre"
+
+msgid "Oct"
+msgstr "Obtubre"
+
+msgid "Nov"
+msgstr "Noviembre"
+
+msgid "Dec"
+msgstr "Diciembre"
+
+msgid "Mon"
+msgstr "Lunes"
+
+msgid "Tue"
+msgstr "Martes"
+
+msgid "Wed"
+msgstr "Miércoles"
+
+msgid "Thu"
+msgstr "Jueves"
+
+msgid "Fri"
+msgstr "Viernes"
+
+msgid "Sat"
+msgstr "Sábado"
+
+msgid "Sun"
+msgstr "Domingo"
