@@ -266,7 +266,7 @@ msgid "Disabled"
 msgstr "Desactivado"
 
 msgid "Don't Save"
-msgstr "No Guardar"
+msgstr "No"
 
 msgid "Enabled"
 msgstr "Activado"
@@ -458,10 +458,10 @@ msgid "Save Game"
 msgstr "Guardar Juego"
 
 msgid "Save Snapshot?"
-msgstr "¿Guardar Captura?"
+msgstr "¿Guardar partida?"
 
 msgid "Save SRAM and Snapshot?"
-msgstr "¿Guardar SRAM y Captura?"
+msgstr "¿Guardar SRAM y partida?"
 
 msgid "Save successful"
 msgstr "Guardado con éxito."
