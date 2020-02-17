@@ -35,6 +35,11 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.4.6 - February 16, 2020]
+
+* Fixed box art not working on GameCube
+* Fixed some 3rd party controllers with invalid calibration data
+
 [4.4.5 - February 1, 2020]
 
 * Disable ROM information display by default
