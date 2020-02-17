@@ -1322,7 +1322,7 @@ static int MenuGame()
 	deleteBtn.SetTrigger(trig2);
 	deleteBtn.SetEffectGrow();
 	
-	GuiText resetBtnTxt("Reset", 22, (GXColor){0, 0, 0, 255});
+	GuiText resetBtnTxt("Reset Mappings", 22, (GXColor){0, 0, 0, 255});
 	GuiImage resetBtnImg(&btnLargeOutline);
 	GuiImage resetBtnImgOver(&btnLargeOutlineOver);
 	GuiImage resetBtnIcon(&iconReset);
@@ -3410,9 +3410,9 @@ static int MenuSettingsVideo()
 				case 0:
 					sprintf (options.value[9], "Default"); break;
 				case 1:
-					sprintf (options.value[9], "40 Mhz"); break;
+					sprintf (options.value[9], "40 MHz"); break;
 				case 2:
-					sprintf (options.value[9], "60 Mhz"); break;
+					sprintf (options.value[9], "60 MHz"); break;
 			}
 			optionBrowser.TriggerUpdate();
 		}
