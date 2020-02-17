@@ -123,7 +123,7 @@ GuiKeyboard::GuiKeyboard(char * t, u32 max)
 
 	keyBackImg = new GuiImage(keyMedium);
 	keyBackOverImg = new GuiImage(keyMediumOver);
-	keyBackText = new GuiText("Back", 22, (GXColor){0, 0, 0, 0xff});
+	keyBackText = new GuiText("Backsp", 22, (GXColor){0, 0, 0, 0xff});
 	keyBack = new GuiButton(keyMedium->GetWidth(), keyMedium->GetHeight());
 	keyBack->SetImage(keyBackImg);
 	keyBack->SetImageOver(keyBackOverImg);
