@@ -1322,7 +1322,7 @@ static int MenuGame()
 	deleteBtn.SetTrigger(trig2);
 	deleteBtn.SetEffectGrow();
 	
-	GuiText resetBtnTxt("Reset Mappings", 22, (GXColor){0, 0, 0, 255});
+	GuiText resetBtnTxt("Reset", 22, (GXColor){0, 0, 0, 255});
 	GuiImage resetBtnImg(&btnLargeOutline);
 	GuiImage resetBtnImgOver(&btnLargeOutlineOver);
 	GuiImage resetBtnIcon(&iconReset);
@@ -2828,7 +2828,7 @@ static int MenuSettingsMappingsMap()
 	backBtn.SetTrigger(trig2);
 	backBtn.SetEffectGrow();
 
-	GuiText resetBtnTxt("Reset", 22, (GXColor){0, 0, 0, 255});
+	GuiText resetBtnTxt("Reset Mappings", 22, (GXColor){0, 0, 0, 255});
 	GuiImage resetBtnImg(&btnShortOutline);
 	GuiImage resetBtnImgOver(&btnShortOutlineOver);
 	GuiButton resetBtn(btnShortOutline.GetWidth(), btnShortOutline.GetHeight());
