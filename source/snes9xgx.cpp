@@ -449,11 +449,10 @@ int main(int argc, char *argv[])
 	savebuffer = (unsigned char *)mem2_malloc(SAVEBUFFERSIZE);
 	browserList = (BROWSERENTRY *)mem2_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
 #else
+	savebuffer = (unsigned char *)memalign(32,SAVEBUFFERSIZE);
 #ifdef USE_VM
-	savebuffer = (unsigned char *)vm_malloc(SAVEBUFFERSIZE);
 	browserList = (BROWSERENTRY *)vm_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
 #else
-	savebuffer = (unsigned char *)memalign(32,SAVEBUFFERSIZE);
 	browserList = (BROWSERENTRY *)memalign(32,sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
 #endif
 #endif
