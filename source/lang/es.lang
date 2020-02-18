@@ -137,13 +137,13 @@ msgid "Failed to connect to network share."
 msgstr "No se pudo conectar a la red compartida."
 
 msgid "Invalid network settings - Check settings.xml."
-msgstr "Configuración de red no válida.\nCompruebe la Configuración de Red."
+msgstr "Configuración de red no válida. Compruebe la Configuración de Red."
 
 msgid "Invalid network settings - Share IP is blank."
-msgstr "Configuración de red no válida.\nLa IP del SMB está en blanco."
+msgstr "Configuración de red no válida. La IP del SMB está en blanco."
 
 msgid "Invalid network settings - Share name is blank."
-msgstr "Configuración de red no válida.\nEl nombre del SMB está en blanco."
+msgstr "Configuración de red no válida. El nombre del SMB está en blanco."
 
 msgid "IOS: "
 msgstr "IOS: "
