@@ -1,6 +1,12 @@
 msgid "&"
 msgstr "y"
 
+msgid "40 MHz"
+msgstr "40 MHz"
+
+msgid "60 MHz"
+msgstr "60 MHz"
+
 msgid "Up"
 msgstr "Arriba"
 
@@ -37,7 +43,13 @@ msgstr "Disparar"
 msgid "Aim Offscreen"
 msgstr "Apuntar Fuera de Pantalla"
 
+msgid "AM"
+msgstr "AM"
+
 msgid "Crosshair"
+msgstr "Cursor"
+
+msgid "Cursor"
 msgstr "Cursor"
 
 msgid "Turbo On"
@@ -46,8 +58,14 @@ msgstr "Turbo Activado"
 msgid "Turbo Off"
 msgstr "Turbo Desactivado"
 
-msgid "Pause"
-msgstr "Pausa"
+msgid "SRAM"
+msgstr "SRAM"
+
+msgid "SRAM file not found"
+msgstr "Archivo SRAM no encontrado."
+
+msgid "Start"
+msgstr "Start"
 
 msgid "START"
 msgstr "START"
@@ -85,8 +103,11 @@ msgstr "Descompresión 7z falló: El archivo utiliza una compresión no compatib
 msgid "Additional improvements"
 msgstr "Mejoras adicionales"
 
+msgid "Error"
+msgstr "Error"
+
 msgid "Error - Invalid ZIP file!"
-msgstr "Error - ¡Archivo ZIP no válido!"
+msgstr "Error archivo ZIP no válido!"
 
 msgid "Error creating file!"
 msgstr "¡Error al crear el archivo!"
@@ -116,13 +137,16 @@ msgid "Failed to connect to network share."
 msgstr "No se pudo conectar a la red compartida."
 
 msgid "Invalid network settings - Check settings.xml."
-msgstr "Configuración de red no válida - Compruebe la Configuración de Red."
+msgstr "Configuración de red no válida. Compruebe la Configuración de Red."
 
 msgid "Invalid network settings - Share IP is blank."
-msgstr "Configuración de red no válida - La IP del SMB está en blanco."
+msgstr "Configuración de red no válida. La IP del SMB está en blanco."
 
 msgid "Invalid network settings - Share name is blank."
-msgstr "Configuración de red no válida - El nombre del SMB está en blanco."
+msgstr "Configuración de red no válida. El nombre del SMB está en blanco."
+
+msgid "IOS: "
+msgstr "IOS: "
 
 msgid "Loading DVD..."
 msgstr "Cargando DVD..."
@@ -130,17 +154,38 @@ msgstr "Cargando DVD..."
 msgid "No SRAM data to save!"
 msgstr "¡No hay datos SRAM para guardar!"
 
+msgid "NTSC (480i)"
+msgstr "NTSC (480i)"
+
+msgid "Nunchuk"
+msgstr "Nunchuk"
+
+msgid "Nunchuk + Wiimote"
+msgstr "Wiimote y Nunchuk"
+
+msgid "Original"
+msgstr "Original"
+
 msgid "Out of memory: too many files!"
 msgstr "¡Sin memoria: demasiados archivos!"
+
+msgid "PAL (50Hz)"
+msgstr "PAL (50Hz)"
+
+msgid "PAL (60Hz)"
+msgstr "PAL (60Hz)"
+
+msgid "PM"
+msgstr "PM"
 
 msgid "Unable to initialize network!"
 msgstr "¡No se puede iniciar la red!"
 
 msgid "Unable to locate a load device!"
-msgstr "¡No se puede localizar un dispositivo de carga!"
+msgstr "¡No se puede localizar un dispositivo para carga!"
 
 msgid "Unable to locate a save device!"
-msgstr "¡No se puede encontrar un dispositivo de guardado!"
+msgstr "¡No se puede encontrar un dispositivo para guardados!"
 
 msgid "Unable to open snapshot!"
 msgstr "¡No se puede abrir la partida guardada!"
@@ -161,7 +206,16 @@ msgid "Are you sure that you want to reset your settings?"
 msgstr "¿Seguro que desea restablecer la configuración?"
 
 msgid "Artwork Folder"
-msgstr "Carpeta de Arte"
+msgstr "Carpeta de Artes"
+
+msgid "Attempting to determine load device..."
+msgstr "Intentando determinar el dispositivo para carga..."
+
+msgid "Attempting to determine save device..."
+msgstr "Intentando determinar el dispositivo para guardados..."
+
+msgid "Audio"
+msgstr "Audio"
 
 msgid "Auto"
 msgstr "Auto"
@@ -180,6 +234,9 @@ msgstr "Automático (Recomendado)"
 
 msgid "Back"
 msgstr "Atrás"
+
+msgid "Backsp"
+msgstr "Retroceso"
 
 msgid "Both"
 msgstr "Ambos"
@@ -211,9 +268,6 @@ msgstr "Control Clásico"
 msgid "Close"
 msgstr "Cerrar"
 
-msgid "Coding"
-msgstr "Programación"
-
 msgid "Coding & menu design"
 msgstr "Programación y diseño de menú"
 
@@ -222,9 +276,6 @@ msgstr "Conectando a la red compartida..."
 
 msgid "Controller"
 msgstr "Control"
-
-msgid "Cover View"
-msgstr "Vista de Portada"
 
 msgid "Artwork"
 msgstr "Arte"
@@ -257,7 +308,10 @@ msgid "Delete File"
 msgstr "Eliminar archivo"
 
 msgid "Delete this save file? Deleted files can not be restored."
-msgstr "¿Eliminar esta partida guardada?"
+msgstr "¿Eliminar este archivo guardado?"
+
+msgid "Directory name is too long!"
+msgstr "¡El nombre del directorio es demasiado largo!"
 
 msgid "Default"
 msgstr "Por Defecto"
@@ -310,6 +364,18 @@ msgstr "bajo los términos de la Licencia Pública General GNU (GPL) Versión 2.
 msgid "Go Back"
 msgstr "Volver"
 
+msgid "Horizontal"
+msgstr "Horizontal"
+
+msgid "hq2x"
+msgstr "hq2x"
+
+msgid "hq2x Bold"
+msgstr "hq2x Bold"
+
+msgid "hq2x Soft"
+msgstr "hq2x Soft"
+
 msgid "Information"
 msgstr "Información"
 
@@ -326,13 +392,13 @@ msgid "Load"
 msgstr "Cargar"
 
 msgid "Load Device"
-msgstr "Dispositivo de Carga"
+msgstr "Dispositivo para Carga"
 
 msgid "Load Folder"
 msgstr "Carpeta de Juegos"
 
 msgid "Load Game"
-msgstr "Cargar Juego"
+msgstr "Cargar partida"
 
 msgid "Loading"
 msgstr "Cargar"
@@ -343,8 +409,17 @@ msgstr "Cargando..."
 msgid "Main Menu"
 msgstr "Menú Principal"
 
+msgid "Maximum filepath length reached!"
+msgstr "¡Longitud máxima de la ruta del archivo alcanzada!"
+
 msgid "Menu"
 msgstr "Menú"
+
+msgid "Menu artwork"
+msgstr "Ilustraciones del menú"
+
+msgid "Menu sound"
+msgstr "Sonido del menú"
 
 msgid "Mute"
 msgstr "Silenciar"
@@ -353,13 +428,19 @@ msgid "Network"
 msgstr "Red"
 
 msgid "Network Share"
-msgstr "Red compartida"
+msgstr "Red Compartida"
 
 msgid "New"
 msgstr "Nuevo"
 
 msgid "None"
 msgstr "Ninguno"
+
+msgid "No"
+msgstr "No"
+
+msgid "No disc inserted!"
+msgstr "¡Disco no insertado!"
 
 msgid "No game saves found."
 msgstr "No hay partidas guardadas."
@@ -370,7 +451,7 @@ msgstr "Desactivado"
 msgid "Official Site: https://github.com/dborth/snes9xgx"
 msgstr "Sitio oficial: https://github.com/dborth/snes9xgx"
 
-msgid "Ok"
+msgid "OK"
 msgstr "Aceptar"
 
 msgid "On"
@@ -381,6 +462,9 @@ msgstr "Espere, por favor"
 
 msgid "Power off Wii"
 msgstr "Apagar Wii"
+
+msgid "Preferences saved"
+msgstr "Configuraciones guardadas"
 
 msgid "Press any button on the Classic Controller now. Press Home to clear the existing mapping."
 msgstr "Presione cualquier botón en el Control Clásico. Presione HOME para borrar la asignación existente."
@@ -428,7 +512,7 @@ msgid "Reset"
 msgstr "Reiniciar"
 
 msgid "Reset Game"
-msgstr "Reiniciar"
+msgstr "Reiniciar el juego"
 
 msgid "Reset Mappings"
 msgstr "Restablecer"
@@ -449,13 +533,16 @@ msgid "Save"
 msgstr "Guardar"
 
 msgid "Save Device"
-msgstr "Dispositivo de Guardado"
+msgstr "Dispositivo para Guardados"
+
+msgid "Save failed!"
+msgstr "¡Error al guardar!"
 
 msgid "Save Folder"
-msgstr "Carpeta de Guardado"
+msgstr "Carpeta de Guardados"
 
 msgid "Save Game"
-msgstr "Guardar Juego"
+msgstr "Guardar partida"
 
 msgid "Save Snapshot?"
 msgstr "¿Guardar partida?"
@@ -469,11 +556,17 @@ msgstr "Guardado con éxito."
 msgid "Saving"
 msgstr "Guardar"
 
+msgid "Saving preferences..."
+msgstr "Guardando configuraciones..."
+
 msgid "Saving..."
 msgstr "Guardando..."
 
 msgid "Scaling"
 msgstr "Escalado"
+
+msgid "Scanlines"
+msgstr "Scanlines"
 
 msgid "Screen Position"
 msgstr "Posición de Pantalla"
@@ -483,6 +576,9 @@ msgstr "Zoom de Pantalla"
 
 msgid "SD in SP2"
 msgstr "SD en SP2"
+
+msgid "Select"
+msgstr "Select"
 
 msgid "Settings"
 msgstr "Configuración"
@@ -533,12 +629,12 @@ msgid "SNES Controllers (4)"
 msgstr "Controles de SNES (4)"
 
 msgid "SNES Mouse"
-msgstr "Ratón de SNES"
+msgstr "Mouse de SNES"
 
-msgid "SuperFX Overclock"
-msgstr "Overclock SuperFX"
+msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
+msgstr "Snes9x - Derechos de autor (c) Snes9x Team 1996 - 2006"
 
-msgid "Superscope"
+msgid "Super Scope"
 msgstr "Super Escopeta"
 
 msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
@@ -550,32 +646,17 @@ msgstr "El IOS actual no es compatible. La funcionalidad y/o la estabilidad pued
 msgid "Unfiltered"
 msgstr "Sin filtrado"
 
-msgid "Unknown file type!"
-msgstr "¡Tipo de archivo desconocido!"
-
-msgid "Unrecognized DVD format."
-msgstr "Formato de DVD no reconocido."
-
 msgid "Up One Level"
 msgstr "Subir nivel"
-
-msgid "Update Available"
-msgstr "Actualización disponible"
-
-msgid "Update later"
-msgstr "Actualizar después"
-
-msgid "Update now"
-msgstr "Actualizar ahora"
-
-msgid "Update failed!"
-msgstr "¡Actualización fallida!"
 
 msgid "USB drive not found!"
 msgstr "¡Unidad USB no encontrada!"
 
 msgid "USB Mass Storage"
 msgstr "USB"
+
+msgid "Vertical"
+msgstr "Vertical"
 
 msgid "Video"
 msgstr "Vídeo"
@@ -586,23 +667,17 @@ msgstr "Modo de Vídeo"
 msgid "Wiimote Orientation"
 msgstr "Orientación del Wiimote"
 
-msgid "SNES Controllers"
-msgstr "Controles de SNES"
-
 msgid "Wii U Pro Controller"
 msgstr "Control Pro de Wii U"
+
+msgid "Wiimote"
+msgstr "Wiimote"
 
 msgid "Yes"
 msgstr "Sí"
 
-msgid "Display Virtual Memory"
-msgstr "Mostrar Memoria Virtual"
-
 msgid "Delete Saves"
 msgstr "Eliminar partidas"
-
-msgid "Append Auto to .SAV"
-msgstr "Añadir Auto a .SAV"
 
 msgid "Music Volume"
 msgstr "Volumen de la Música"
@@ -612,6 +687,9 @@ msgstr "Volumen de los Efectos"
 
 msgid "Game Settings - Button Mappings"
 msgstr "Configuración - Controles"
+
+msgid "Game Settings - Cheats"
+msgstr "Configuración - Trucos"
 
 msgid "Game Settings - Audio"
 msgstr "Configuración - Audio"
@@ -632,7 +710,7 @@ msgid "Linear"
 msgstr "Lineal"
 
 msgid "Append Auto to .SAV Files"
-msgstr "Añadir Auto a arch. .SAV"
+msgstr "Añadir Auto a archivos .SAV"
 
 msgid "Show Local Time"
 msgstr "Mostrar Hora Local"
