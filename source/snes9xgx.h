@@ -61,7 +61,7 @@ enum
 };
 
 const char ctrlName[6][24] =
-{ "SNES Controller", "SNES Mouse", "Superscope", "Justifier", "SNES Controllers (2)", "SNES Controllers (4)" };
+{ "SNES Controller", "SNES Mouse", "Super Scope", "Justifier", "SNES Controllers (2)", "SNES Controllers (4)" };
 
 enum {
 	LANG_JAPANESE = 0,
