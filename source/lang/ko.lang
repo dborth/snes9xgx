@@ -4,12 +4,6 @@ msgstr "&"
 msgid "16:9 Correction"
 msgstr "16:9 수정"
 
-msgid "40 MHz"
-msgstr "40 MHz"
-
-msgid "60 MHz"
-msgstr "60 MHz"
-
 msgid "7z decompression failed: Archive contains too many files."
 msgstr "7z 압축 해제 실패: 압축 파일에 너무 많은 파일이 포함되었습니다."
 
@@ -30,9 +24,6 @@ msgstr "7z 압축 해제 실패: 파일이 지원되지 않는 압축 설정을 
 
 msgid "Additional improvements"
 msgstr "Additional improvements"
-
-msgid "Aim Offscreen"
-msgstr "조준 숨기기"
 
 msgid "AM"
 msgstr "오전"
@@ -64,9 +55,6 @@ msgstr "불러온 장치 확인 시도 중..."
 msgid "Attempting to determine save device..."
 msgstr "저장 장치 확인 시도 중..."
 
-msgid "Audio"
-msgstr "오디오"
-
 msgid "Aug"
 msgstr "8월"
 
@@ -87,9 +75,6 @@ msgstr "자동 (추천)"
 
 msgid "Back"
 msgstr "뒤로"
-
-msgid "Backsp"
-msgstr "Backsp"
 
 msgid "Both"
 msgstr "둘 다"
@@ -150,9 +135,6 @@ msgstr "크레딧"
 
 msgid "Crosshair"
 msgstr "십자 버튼"
-
-msgid "Cursor"
-msgstr "커서"
 
 msgid "Data DVD"
 msgstr "데이터 DVD"
@@ -271,9 +253,6 @@ msgstr "금"
 msgid "Game Settings"
 msgstr "게임 설정"
 
-msgid "Game Settings - Audio"
-msgstr "게임 설정 - Audio"
-
 msgid "Game Settings - Button Mappings"
 msgstr "게임 설정 - 버튼 맵핑"
 
@@ -286,9 +265,6 @@ msgstr "게임 설정 - 비디오"
 msgid "GameCube Controller"
 msgstr "게임큐브 컨트롤러"
 
-msgid "Gaussian (Accurate)"
-msgstr "가우스 (정확한)"
-
 msgid "German"
 msgstr "독일어"
 
@@ -298,23 +274,11 @@ msgstr "뒤로 가기"
 msgid "Horizontal"
 msgstr "수평"
 
-msgid "hq2x"
-msgstr "고품질2배율"
-
-msgid "hq2x Bold"
-msgstr "고품질2배율 선명함"
-
-msgid "hq2x Soft"
-msgstr "고품질2배율 부드러움"
-
 msgid "Information"
 msgstr "정보"
 
 msgid "Initializing network..."
 msgstr "네트워크 초기화 중..."
-
-msgid "Interpolation"
-msgstr "보간법"
 
 msgid "Invalid network settings - Check settings.xml."
 msgstr "잘못된 네트워크 설정 - settings.xml 확인"
@@ -343,9 +307,6 @@ msgstr "7월"
 msgid "Jun"
 msgstr "6월"
 
-msgid "Justifier"
-msgstr "광선총"
-
 msgid "Korean"
 msgstr "한국어"
 
@@ -357,12 +318,6 @@ msgstr "왼쪽"
 
 msgid "LEFT"
 msgstr "왼쪽"
-
-msgid "Left Button"
-msgstr "왼쪽 버튼"
-
-msgid "Linear"
-msgstr "선형"
 
 msgid "Load"
 msgstr "불러오기"
@@ -435,12 +390,6 @@ msgstr "삽입된 디스크가 없습니다!"
 
 msgid "No game saves found."
 msgstr "게임 저장을 찾을 수 없습니다."
-
-msgid "No SRAM data to save!"
-msgstr "저장된 SRAM 데이터가 없습니다!"
-
-msgid "None"
-msgstr "없음"
 
 msgid "Nov"
 msgstr "11월"
@@ -565,9 +514,6 @@ msgstr "오른쪽"
 msgid "RIGHT"
 msgstr "오른쪽"
 
-msgid "Right Button"
-msgstr "오른쪽 버튼"
-
 msgid "Rumble"
 msgstr "진동"
 
@@ -583,9 +529,6 @@ msgstr "새 스크린샷 미리보기를 저장하겠습니까? 현재 스크린
 msgid "Save Device"
 msgstr "저장 장치"
 
-msgid "Save failed!"
-msgstr "저장 실패!"
-
 msgid "Save Folder"
 msgstr "저장 폴더"
 
@@ -594,9 +537,6 @@ msgstr "저장 게임"
 
 msgid "Save Snapshot?"
 msgstr "스냅샷을 저장하겠습니까?"
-
-msgid "Save SRAM and Snapshot?"
-msgstr "SRAM과 스냅샷을 저장하겠습니까?"
 
 msgid "Save successful"
 msgstr "저장에 성공했습니다."
@@ -612,9 +552,6 @@ msgstr "저장 중..."
 
 msgid "Scaling"
 msgstr "스케일"
-
-msgid "Scanlines"
-msgstr "스캔라인"
 
 msgid "Screen Position"
 msgstr "화면 위치"
@@ -661,12 +598,6 @@ msgstr "설정 - 저장하기 & 불러오기"
 msgid "Shift"
 msgstr "시프트"
 
-msgid "Show Framerate"
-msgstr "프레임속도 보기"
-
-msgid "Show Local Time"
-msgstr "Show Local Time"
-
 msgid "SMB Share IP"
 msgstr "SMB 공유 IP"
 
@@ -682,32 +613,11 @@ msgstr "SMB 공유 사용자명"
 msgid "Snapshot"
 msgstr "스냅샷"
 
-msgid "SNES Controller"
-msgstr "SNES 컨트롤러"
-
-msgid "SNES Controllers (2)"
-msgstr "SNES 컨트롤러 (2)"
-
-msgid "SNES Controllers (4)"
-msgstr "SNES 컨트롤러 (4)"
-
-msgid "SNES Mouse"
-msgstr "SNES 마우스"
-
-msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
-msgstr "Snes9x - 제작 (c) Snes9x 팀 1996-2006"
-
 msgid "Sound Effects Volume"
 msgstr "사운드 효과 볼륨"
 
 msgid "Spanish"
 msgstr "스페인어"
-
-msgid "SRAM"
-msgstr "SRAM"
-
-msgid "SRAM file not found"
-msgstr "SRAM 파일을 찾을 수 없습니다."
 
 msgid "Start"
 msgstr "시작"
@@ -718,20 +628,11 @@ msgstr "시작"
 msgid "Sun"
 msgstr "일"
 
-msgid "Super Scope"
-msgstr "슈퍼 스코프"
-
-msgid "SuperFX Overclock"
-msgstr "슈퍼FX 오버클럭"
-
 msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
 msgstr "현재 IOS는 (가짜 서명) 변경되었습니다. 기능 및 안정성에 부정적인 영향을 줄 수 있습니다"
 
 msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
 msgstr "현재 IOS는 지원하지 않습니다. 기능 및 안정성에 부정적인 영향을 줄 수 있습니다."
-
-msgid "This software is open source and may be copied, distributed, or modified "
-msgstr "이 소프트웨어는 오픈 소스고 복사할 수 있습니다. distributed, or modified "
 
 msgid "Thu"
 msgstr "목"
@@ -756,12 +657,6 @@ msgstr "불러온 장치를 찾을 수 없습니다!"
 
 msgid "Unable to locate a save device!"
 msgstr "저장 장치를 찾을 수 없습니다!"
-
-msgid "Unable to open snapshot!"
-msgstr "스냅샷을 열 수 없습니다!"
-
-msgid "under the terms of the GNU General Public License (GPL) Version 2."
-msgstr "under the terms of the GNU 일반 공중 사용허가 (GPL) 버전 2."
 
 msgid "Unfiltered"
 msgstr "필터링되지 않음"
@@ -810,3 +705,105 @@ msgstr "위모트 방향"
 
 msgid "Yes"
 msgstr "예"
+
+msgid "40 MHz"
+msgstr "40 MHz"
+
+msgid "60 MHz"
+msgstr "60 MHz"
+
+msgid "Aim Offscreen"
+msgstr "조준 숨기기"
+
+msgid "Audio"
+msgstr "오디오"
+
+msgid "Cursor"
+msgstr "커서"
+
+msgid "Game Settings - Audio"
+msgstr "게임 설정 - Audio"
+
+msgid "Gaussian (Accurate)"
+msgstr "가우스 (정확한)"
+
+msgid "hq2x"
+msgstr "고품질2배율"
+
+msgid "hq2x Bold"
+msgstr "고품질2배율 선명함"
+
+msgid "hq2x Soft"
+msgstr "고품질2배율 부드러움"
+
+msgid "Interpolation"
+msgstr "보간법"
+
+msgid "Justifier"
+msgstr "광선총"
+
+msgid "Left Button"
+msgstr "왼쪽 버튼"
+
+msgid "Linear"
+msgstr "선형"
+
+msgid "No SRAM data to save!"
+msgstr "저장된 SRAM 데이터가 없습니다!"
+
+msgid "None"
+msgstr "없음"
+
+msgid "Right Button"
+msgstr "오른쪽 버튼"
+
+msgid "Save failed!"
+msgstr "저장 실패!"
+
+msgid "Save SRAM and Snapshot?"
+msgstr "SRAM과 스냅샷을 저장하겠습니까?"
+
+msgid "Scanlines"
+msgstr "스캔라인"
+
+msgid "Show Framerate"
+msgstr "프레임속도 보기"
+
+msgid "Show Local Time"
+msgstr "Show Local Time"
+
+msgid "SNES Controller"
+msgstr "SNES 컨트롤러"
+
+msgid "SNES Controllers (2)"
+msgstr "SNES 컨트롤러 (2)"
+
+msgid "SNES Controllers (4)"
+msgstr "SNES 컨트롤러 (4)"
+
+msgid "SNES Mouse"
+msgstr "SNES 마우스"
+
+msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
+msgstr "Snes9x - 제작 (c) Snes9x 팀 1996-2006"
+
+msgid "SRAM"
+msgstr "SRAM"
+
+msgid "SRAM file not found"
+msgstr "SRAM 파일을 찾을 수 없습니다."
+
+msgid "Super Scope"
+msgstr "슈퍼 스코프"
+
+msgid "SuperFX Overclock"
+msgstr "슈퍼FX 오버클럭"
+
+msgid "This software is open source and may be copied, distributed, or modified "
+msgstr "이 소프트웨어는 오픈 소스고 복사할 수 있습니다. distributed, or modified "
+
+msgid "Unable to open snapshot!"
+msgstr "스냅샷을 열 수 없습니다!"
+
+msgid "under the terms of the GNU General Public License (GPL) Version 2."
+msgstr "under the terms of the GNU 일반 공중 사용허가 (GPL) 버전 2."
