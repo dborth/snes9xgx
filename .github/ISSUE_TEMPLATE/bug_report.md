@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Feature requests will be closed immediately!
 title: ''
 labels: ''
 assignees: ''
