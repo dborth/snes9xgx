@@ -133,10 +133,6 @@ s8 GuiTrigger::WPAD_Stick(u8 stick, int axis)
 			center = js->center.x;
 		}
 
-		if(min == max) {
-			return 0;
-		}
-
 		// some 3rd party controllers return invalid analog sticks calibration data
 		if ((min >= center) || (max <= center)) {
 			// force default calibration settings
