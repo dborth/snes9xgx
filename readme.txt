@@ -35,6 +35,11 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.4.7 - March 4, 2020]
+
+* Fixed 3rd party controllers (again)
+* Fixed GameCube version issues with SD2SP2 
+
 [4.4.6 - February 16, 2020]
 
 * Fixed box art not working on GameCube
