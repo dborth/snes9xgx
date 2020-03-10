@@ -4006,7 +4006,7 @@ static int MenuSettingsMenu()
 					GCSettings.language = LANG_JAPANESE;
 
 				if(GCSettings.language == LANG_SIMP_CHINESE)
-					GCSettings.language = LANG_KOREAN;
+					GCSettings.language = LANG_SIMP_CHINESE;
 	
 				break;
 				
