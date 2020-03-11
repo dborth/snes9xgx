@@ -146,7 +146,8 @@ void ChangeLanguage() {
 		return;
 	}
 
-	if(GCSettings.language == LANG_JAPANESE || GCSettings.language == LANG_KOREAN) {
+	if(GCSettings.language == LANG_JAPANESE || GCSettings.language == LANG_KOREAN
+	    || GCSettings.language == LANG_SIMP_CHINESE) {
 #ifdef HW_RVL
 		char filepath[MAXPATHLEN];
 
@@ -156,6 +157,9 @@ void ChangeLanguage() {
 				break;
 			case LANG_JAPANESE:
 				sprintf(filepath, "%s/jp.ttf", appPath);
+				break;
+			case LANG_SIMP_CHINESE:
+				sprintf(filepath, "%s/zh.ttf", appPath);
 				break;
 		}
 
