@@ -262,6 +262,9 @@ msgstr "游戏设定 - 金手指"
 msgid "Game Settings - Video"
 msgstr "游戏设定 - 视频"
 
+msgid "Game Settings - Audio"
+msgstr "游戏设定 - 音频"
+
 msgid "Game Timing"
 msgstr "游戏速度"
 
@@ -850,6 +853,9 @@ msgstr "垂直方向"
 msgid "Video"
 msgstr "图像"
 
+msgid "Audio"
+msgstr "音频"
+
 msgid "Video Mode"
 msgstr "图像模式"
 
@@ -1051,7 +1057,7 @@ msgstr "保存一个新的预览截图吗？ 当前预览截图将会被覆盖�
 msgid "Preview Image"
 msgstr "预览图片"
 
-msgid "Artworks Folder"
+msgid "Artwork Folder"
 msgstr "插图目录"
 
 msgid "Emulation"
@@ -1077,3 +1083,15 @@ msgstr "GBA 固定像素比例"
 
 msgid "GBA Frameskip"
 msgstr "GBA 跳帧"
+
+msgid "Show Framerate"
+msgstr "显示帧率"
+
+msgid "Show Local Time"
+msgstr "显示本地时间"
+
+msgid "SuperFX Overclock"
+msgstr "SuperFX超频"
+
+msgid "Wii U Pro Controller"
+msgstr "Wii U Pro 控制器"
