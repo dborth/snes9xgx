@@ -467,7 +467,6 @@ DefaultSettings ()
 	GCSettings.language = CONF_GetLanguage();
 
 	if(GCSettings.language == LANG_JAPANESE || 
-		GCSettings.language == LANG_SIMP_CHINESE || 
 		GCSettings.language == LANG_TRAD_CHINESE || 
 		GCSettings.language == LANG_KOREAN)
 		GCSettings.language = LANG_ENGLISH;
