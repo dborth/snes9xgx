@@ -146,8 +146,7 @@ void ChangeLanguage() {
 		return;
 	}
 
-	if(GCSettings.language == LANG_JAPANESE || GCSettings.language == LANG_KOREAN
-	    || GCSettings.language == LANG_SIMP_CHINESE) {
+	if(GCSettings.language == LANG_JAPANESE || GCSettings.language == LANG_KOREAN || GCSettings.language == LANG_SIMP_CHINESE) {
 #ifdef HW_RVL
 		char filepath[MAXPATHLEN];
 
@@ -4006,14 +4005,11 @@ static int MenuSettingsMenu()
 			case 5:
 				GCSettings.language++;
 				
-				if(GCSettings.language >= LANG_LENGTH)
+				if(GCSettings.language == LANG_TRAD_CHINESE) // skip (not supported)
+					GCSettings.language = LANG_KOREAN;
+				else if(GCSettings.language >= LANG_LENGTH)
 					GCSettings.language = LANG_JAPANESE;
-
-				if(GCSettings.language == LANG_SIMP_CHINESE)
-					GCSettings.language = LANG_SIMP_CHINESE;
-	
 				break;
-				
 			case 6:
 				GCSettings.PreviewImage++;
 				if(GCSettings.PreviewImage > 2)

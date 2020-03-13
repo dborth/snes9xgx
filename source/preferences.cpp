@@ -466,10 +466,8 @@ DefaultSettings ()
 #ifdef HW_RVL
 	GCSettings.language = CONF_GetLanguage();
 
-	if(GCSettings.language == LANG_JAPANESE || 
-		GCSettings.language == LANG_TRAD_CHINESE || 
-		GCSettings.language == LANG_KOREAN)
-		GCSettings.language = LANG_ENGLISH;
+	if(GCSettings.language == LANG_TRAD_CHINESE)
+		GCSettings.language = LANG_SIMP_CHINESE;
 #else
 	GCSettings.language = LANG_ENGLISH;
 #endif
