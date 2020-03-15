@@ -15,7 +15,11 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef HW_RVL
 #define SAVEBUFFERSIZE (1024 * 1024 * 2) // leave room for IPS/UPS files and large images
+#else
+#define SAVEBUFFERSIZE (1024 * 1024 * 1)
+#endif
 
 void InitDeviceThread();
 void ResumeDeviceThread();
