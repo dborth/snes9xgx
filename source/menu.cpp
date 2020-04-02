@@ -1870,7 +1870,7 @@ static int MenuGameSaves(int action)
 						menu = MENU_GAME_SAVE;
 					}
 				}
-				else if(ret == -1) // new Snapshot
+				else if(ret == -1) // new State
 				{
 					for(i=1; i < 100; i++)
 						if(saves.files[FILE_SNAPSHOT][i] == 0)
@@ -1883,7 +1883,7 @@ static int MenuGameSaves(int action)
 						menu = MENU_GAME_SAVE;
 					}
 				}
-				else // overwrite SRAM/Snapshot
+				else // overwrite SRAM/State
 				{
 					MakeFilePath(filepath, saves.type[ret], saves.filename[ret]);
 					switch(saves.type[ret])
@@ -3885,11 +3885,11 @@ static int MenuSettingsFile()
 
 			if (GCSettings.AutoLoad == 0) sprintf (options.value[8],"Off");
 			else if (GCSettings.AutoLoad == 1) sprintf (options.value[8],"SRAM");
-			else if (GCSettings.AutoLoad == 2) sprintf (options.value[8],"Snapshot");
+			else if (GCSettings.AutoLoad == 2) sprintf (options.value[8],"State");
 
 			if (GCSettings.AutoSave == 0) sprintf (options.value[9],"Off");
 			else if (GCSettings.AutoSave == 1) sprintf (options.value[9],"SRAM");
-			else if (GCSettings.AutoSave == 2) sprintf (options.value[9],"Snapshot");
+			else if (GCSettings.AutoSave == 2) sprintf (options.value[9],"State");
 			else if (GCSettings.AutoSave == 3) sprintf (options.value[9],"Both");
 
 			if (GCSettings.AppendAuto == 0) sprintf (options.value[10], "Off");
