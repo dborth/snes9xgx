@@ -102,7 +102,7 @@ LoadSnapshot (char * filepath, bool silent)
 	if(!fp)
 	{
 		if(!silent)
-			ErrorPrompt("Unable to open snapshot!");
+			ErrorPrompt("Unable to open state!");
 		return 0;
 	}
 
