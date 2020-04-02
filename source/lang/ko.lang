@@ -1,5 +1,5 @@
 msgid "&"
-msgstr "&"
+msgstr ""
 
 msgid "16:9 Correction"
 msgstr "16:9 수정"
@@ -23,7 +23,7 @@ msgid "7z decompression failed: File uses unsupported compression settings."
 msgstr "7z 압축 해제 실패: 파일이 지원되지 않는 압축 설정을 사용합니다."
 
 msgid "Additional improvements"
-msgstr "Additional improvements"
+msgstr ""
 
 msgid "AM"
 msgstr "오전"
@@ -149,10 +149,10 @@ msgid "Delete"
 msgstr "삭제하기"
 
 msgid "Delete File"
-msgstr "Delete File"
+msgstr ""
 
 msgid "Delete Saves"
-msgstr "Delete Saves"
+msgstr ""
 
 msgid "Delete this save file? Deleted files can not be restored."
 msgstr "이 저장 파일을 삭제 하겠습니까? 삭제 파일은 복원할 수 없습니다."
@@ -191,7 +191,7 @@ msgid "Error creating file!"
 msgstr "파일 생성 오류!"
 
 msgid "Error loading font!"
-msgstr "Error loading font!"
+msgstr ""
 
 msgid "Error loading game!"
 msgstr "게임 불러오기 오류!"
@@ -239,7 +239,7 @@ msgid "Fire"
 msgstr "발사"
 
 msgid "Font file is too large!"
-msgstr "Font file is too large!"
+msgstr ""
 
 msgid "Font file not found!"
 msgstr "폰트 파일을 찾을 수 없습니다!"
@@ -290,7 +290,7 @@ msgid "Invalid network settings - Share name is blank."
 msgstr "잘못된 네트워크 설정 - 공유명이 비었습니다."
 
 msgid "IOS: "
-msgstr "IOS: "
+msgstr ""
 
 msgid "Italian"
 msgstr "이탈리아어"
@@ -395,13 +395,13 @@ msgid "Nov"
 msgstr "11월"
 
 msgid "NTSC (480i)"
-msgstr "NTSC (480i)"
+msgstr ""
 
 msgid "Nunchuk"
 msgstr "눈챠크"
 
 msgid "Nunchuk + Wiimote"
-msgstr "Wiimote y Nunchuk"
+msgstr ""
 
 msgid "Oct"
 msgstr "10월"
@@ -425,10 +425,10 @@ msgid "Out of memory: too many files!"
 msgstr "메모리 부족: 너무 많은 파일!"
 
 msgid "PAL (50Hz)"
-msgstr "PAL (50Hz)"
+msgstr ""
 
 msgid "PAL (60Hz)"
-msgstr "PAL (60Hz)"
+msgstr ""
 
 msgid "Please Wait"
 msgstr "잠시만 기다려주세요"
@@ -458,7 +458,7 @@ msgid "Press any button on the GameCube Controller now. Press the C-Stick in any
 msgstr "지금 클래식 컨트롤러의 아무 버튼이나 누릅니다. C-스틱을 눌러 기존 매핑을 정리합니다."
 
 msgid "Press any button on the Wii U Pro Controller now. Press Home to clear the existing mapping."
-msgstr "Press any button on the Wii U Pro Controller now. 홈 버튼을 눌러 기존 매핑을 정리합니다."
+msgstr ""
 
 msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
 msgstr "지금 위모트의 아무 버튼이나 누릅니다. 홈 버튼을 눌러 기존 매핑을 정리합니다."
@@ -476,7 +476,7 @@ msgid "Progressive (480p)"
 msgstr "프로그레시브 (480p)"
 
 msgid "Quit Game"
-msgstr "Quit Game"
+msgstr ""
 
 msgid "Quit this game? Any unsaved progress will be lost."
 msgstr "이 게임을 종료하겠습니까? 저장되지 않는 진행은 손실됩니다."
@@ -701,10 +701,10 @@ msgid "Yes"
 msgstr "예"
 
 msgid "40 MHz"
-msgstr "40 MHz"
+msgstr ""
 
 msgid "60 MHz"
-msgstr "60 MHz"
+msgstr ""
 
 msgid "Aim Offscreen"
 msgstr "조준 숨기기"
@@ -764,7 +764,7 @@ msgid "Show Framerate"
 msgstr "프레임속도 보기"
 
 msgid "Show Local Time"
-msgstr "Show Local Time"
+msgstr ""
 
 msgid "SNES Controller"
 msgstr "SNES 컨트롤러"
@@ -782,7 +782,7 @@ msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
 msgstr "Snes9x - 제작 (c) Snes9x 팀 1996-2006"
 
 msgid "SRAM"
-msgstr "SRAM"
+msgstr ""
 
 msgid "SRAM file not found"
 msgstr "SRAM 파일을 찾을 수 없습니다."
