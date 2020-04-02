@@ -640,12 +640,6 @@ msgstr "Jueves"
 msgid "Tue"
 msgstr "Martes"
 
-msgid "Turbo Off"
-msgstr "Turbo Desactivado"
-
-msgid "Turbo On"
-msgstr "Turbo Activado"
-
 msgid "Turkish"
 msgstr "Turco"
 
@@ -801,6 +795,12 @@ msgstr "Overclock SuperFX"
 
 msgid "This software is open source and may be copied, distributed, or modified "
 msgstr "Este software es de código abierto y puede ser copiado, distribuido, o modificado "
+
+msgid "Turbo Off"
+msgstr "Turbo Desactivado"
+
+msgid "Turbo On"
+msgstr "Turbo Activado"
 
 msgid "Unable to open snapshot!"
 msgstr "¡No se puede abrir la partida guardada!"
