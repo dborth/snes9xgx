@@ -24,7 +24,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 
 	if(action == 0) // load
 		listOffset = 0;
-	else if(action == 2) // delete SRAM / Snapshot
+	else if(action == 2) // delete SRAM / State
 		listOffset = 0;
 	else
 		listOffset = -2; // save - reserve -2 & -1 for new slots
@@ -328,7 +328,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			saveTime[0]->SetText("New");
 			saveTime[1]->SetText("New");
 			saveType[0]->SetText("SRAM");
-			saveType[1]->SetText("Snapshot");
+			saveType[1]->SetText("State");
 			savePreviewImg[0]->SetImage(gameSaveBlank);
 			savePreviewImg[1]->SetImage(gameSaveBlank);
 			saveBtn[0]->SetVisible(true);
@@ -353,7 +353,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			if(saves->type[listOffset+i] == FILE_SRAM)
 				sprintf(savetext, "SRAM");
 			else
-				sprintf(savetext, "Snapshot");
+				sprintf(savetext, "State");
 
 			len = strlen(saves->filename[listOffset+i]);
 			if(len > 10 &&
