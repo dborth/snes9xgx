@@ -640,12 +640,6 @@ msgstr "목"
 msgid "Tue"
 msgstr "화"
 
-msgid "Turbo Off"
-msgstr "연사 끔"
-
-msgid "Turbo On"
-msgstr "연사 켬"
-
 msgid "Turkish"
 msgstr "터키어"
 
@@ -801,6 +795,12 @@ msgstr "슈퍼FX 오버클럭"
 
 msgid "This software is open source and may be copied, distributed, or modified "
 msgstr "이 소프트웨어는 오픈 소스고 복사할 수 있습니다. distributed, or modified "
+
+msgid "Turbo Off"
+msgstr "연사 끔"
+
+msgid "Turbo On"
+msgstr "연사 켬"
 
 msgid "Unable to open snapshot!"
 msgstr "스냅샷을 열 수 없습니다!"
