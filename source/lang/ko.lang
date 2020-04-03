@@ -1,5 +1,5 @@
 msgid "&"
-msgstr "&"
+msgstr ""
 
 msgid "16:9 Correction"
 msgstr "16:9 수정"
@@ -23,7 +23,7 @@ msgid "7z decompression failed: File uses unsupported compression settings."
 msgstr "7z 압축 해제 실패: 파일이 지원되지 않는 압축 설정을 사용합니다."
 
 msgid "Additional improvements"
-msgstr "Additional improvements"
+msgstr ""
 
 msgid "AM"
 msgstr "오전"
@@ -106,6 +106,12 @@ msgstr "치트 파일을 찾을 수 없습니다!"
 msgid "Cheats Folder"
 msgstr "치트 폴더"
 
+msgid "Chinese (Simplified)"
+msgstr "중국어 (간체)"
+
+msgid "Chinese (Traditional)"
+msgstr "중국어 (전통적인)"
+
 msgid "Choose Game"
 msgstr "게임 선택"
 
@@ -114,9 +120,6 @@ msgstr "클래식 컨트롤러"
 
 msgid "Close"
 msgstr "닫기"
-
-msgid "Coding & menu design"
-msgstr "코딩 & 메뉴 디자인"
 
 msgid "Connecting to network share..."
 msgstr "네트워크 공유 연결 중..."
@@ -133,9 +136,6 @@ msgstr "커버 폴더"
 msgid "Credits"
 msgstr "크레딧"
 
-msgid "Crosshair"
-msgstr "십자 버튼"
-
 msgid "Data DVD"
 msgstr "데이터 DVD"
 
@@ -149,10 +149,10 @@ msgid "Delete"
 msgstr "삭제하기"
 
 msgid "Delete File"
-msgstr "Delete File"
+msgstr ""
 
 msgid "Delete Saves"
-msgstr "Delete Saves"
+msgstr ""
 
 msgid "Delete this save file? Deleted files can not be restored."
 msgstr "이 저장 파일을 삭제 하겠습니까? 삭제 파일은 복원할 수 없습니다."
@@ -191,7 +191,7 @@ msgid "Error creating file!"
 msgstr "파일 생성 오류!"
 
 msgid "Error loading font!"
-msgstr "Error loading font!"
+msgstr ""
 
 msgid "Error loading game!"
 msgstr "게임 불러오기 오류!"
@@ -223,23 +223,14 @@ msgstr "네트워크 공유 접속에 실패하였습니다."
 msgid "Feb"
 msgstr "2월"
 
-msgid "Filtered"
-msgstr "필터"
-
 msgid "Filtered (Sharp)"
 msgstr "필터 (날카로움)"
 
 msgid "Filtered (Soft)"
 msgstr "필터 (부드러움)"
 
-msgid "Filtering"
-msgstr "필터링"
-
-msgid "Fire"
-msgstr "발사"
-
 msgid "Font file is too large!"
-msgstr "Font file is too large!"
+msgstr ""
 
 msgid "Font file not found!"
 msgstr "폰트 파일을 찾을 수 없습니다!"
@@ -290,7 +281,7 @@ msgid "Invalid network settings - Share name is blank."
 msgstr "잘못된 네트워크 설정 - 공유명이 비었습니다."
 
 msgid "IOS: "
-msgstr "IOS: "
+msgstr ""
 
 msgid "Italian"
 msgstr "이탈리아어"
@@ -395,13 +386,13 @@ msgid "Nov"
 msgstr "11월"
 
 msgid "NTSC (480i)"
-msgstr "NTSC (480i)"
+msgstr ""
 
 msgid "Nunchuk"
 msgstr "눈챠크"
 
 msgid "Nunchuk + Wiimote"
-msgstr "Wiimote y Nunchuk"
+msgstr ""
 
 msgid "Oct"
 msgstr "10월"
@@ -425,10 +416,10 @@ msgid "Out of memory: too many files!"
 msgstr "메모리 부족: 너무 많은 파일!"
 
 msgid "PAL (50Hz)"
-msgstr "PAL (50Hz)"
+msgstr ""
 
 msgid "PAL (60Hz)"
-msgstr "PAL (60Hz)"
+msgstr ""
 
 msgid "Please Wait"
 msgstr "잠시만 기다려주세요"
@@ -458,7 +449,7 @@ msgid "Press any button on the GameCube Controller now. Press the C-Stick in any
 msgstr "지금 클래식 컨트롤러의 아무 버튼이나 누릅니다. C-스틱을 눌러 기존 매핑을 정리합니다."
 
 msgid "Press any button on the Wii U Pro Controller now. Press Home to clear the existing mapping."
-msgstr "Press any button on the Wii U Pro Controller now. 홈 버튼을 눌러 기존 매핑을 정리합니다."
+msgstr ""
 
 msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
 msgstr "지금 위모트의 아무 버튼이나 누릅니다. 홈 버튼을 눌러 기존 매핑을 정리합니다."
@@ -472,11 +463,8 @@ msgstr "이미지 미리보기"
 msgid "Preview Screenshot"
 msgstr "스크린샷 미리보기"
 
-msgid "Progressive (480p)"
-msgstr "프로그레시브 (480p)"
-
 msgid "Quit Game"
-msgstr "Quit Game"
+msgstr ""
 
 msgid "Quit this game? Any unsaved progress will be lost."
 msgstr "이 게임을 종료하겠습니까? 저장되지 않는 진행은 손실됩니다."
@@ -535,8 +523,8 @@ msgstr "저장 폴더"
 msgid "Save Game"
 msgstr "저장 게임"
 
-msgid "Save Snapshot?"
-msgstr "스냅샷을 저장하겠습니까?"
+msgid "Save State?"
+msgstr "상태를 저장하겠습니까?"
 
 msgid "Save successful"
 msgstr "저장에 성공했습니다."
@@ -559,7 +547,7 @@ msgstr "화면 위치"
 msgid "Screen Zoom"
 msgstr "화면 확대"
 
-msgid "ScreenShot"
+msgid "Screenshot"
 msgstr "스크린샷"
 
 msgid "Screenshots"
@@ -610,9 +598,6 @@ msgstr "SMB 공유 비밀번호"
 msgid "SMB Share Username"
 msgstr "SMB 공유 사용자명"
 
-msgid "Snapshot"
-msgstr "스냅샷"
-
 msgid "Sound Effects Volume"
 msgstr "사운드 효과 볼륨"
 
@@ -624,6 +609,9 @@ msgstr "시작"
 
 msgid "START"
 msgstr "시작"
+
+msgid "State"
+msgstr "상태"
 
 msgid "Sun"
 msgstr "일"
@@ -640,12 +628,6 @@ msgstr "목"
 msgid "Tue"
 msgstr "화"
 
-msgid "Turbo Off"
-msgstr "연사 끔"
-
-msgid "Turbo On"
-msgstr "연사 켬"
-
 msgid "Turkish"
 msgstr "터키어"
 
@@ -660,9 +642,6 @@ msgstr "저장 장치를 찾을 수 없습니다!"
 
 msgid "Unfiltered"
 msgstr "필터링되지 않음"
-
-msgid "Unknown file type!"
-msgstr "알 수 없는 파일 유형!"
 
 msgid "Unrecognized DVD format."
 msgstr "인식할 수 없는 DVD 형식입니다."
@@ -707,10 +686,10 @@ msgid "Yes"
 msgstr "예"
 
 msgid "40 MHz"
-msgstr "40 MHz"
+msgstr ""
 
 msgid "60 MHz"
-msgstr "60 MHz"
+msgstr ""
 
 msgid "Aim Offscreen"
 msgstr "조준 숨기기"
@@ -718,8 +697,23 @@ msgstr "조준 숨기기"
 msgid "Audio"
 msgstr "오디오"
 
+msgid "Coding & menu design"
+msgstr "코딩 & 메뉴 디자인"
+
+msgid "Crosshair"
+msgstr "십자 버튼"
+
 msgid "Cursor"
 msgstr "커서"
+
+msgid "Filtered"
+msgstr "필터"
+
+msgid "Filtering"
+msgstr "필터링"
+
+msgid "Fire"
+msgstr "발사"
 
 msgid "Game Settings - Audio"
 msgstr "게임 설정 - Audio"
@@ -754,14 +748,17 @@ msgstr "저장된 SRAM 데이터가 없습니다!"
 msgid "None"
 msgstr "없음"
 
+msgid "Progressive (480p)"
+msgstr "프로그레시브 (480p)"
+
 msgid "Right Button"
 msgstr "오른쪽 버튼"
 
 msgid "Save failed!"
 msgstr "저장 실패!"
 
-msgid "Save SRAM and Snapshot?"
-msgstr "SRAM과 스냅샷을 저장하겠습니까?"
+msgid "Save SRAM and State?"
+msgstr "SRAM과 상태를 저장하겠습니까?"
 
 msgid "Scanlines"
 msgstr "스캔라인"
@@ -770,7 +767,7 @@ msgid "Show Framerate"
 msgstr "프레임속도 보기"
 
 msgid "Show Local Time"
-msgstr "Show Local Time"
+msgstr ""
 
 msgid "SNES Controller"
 msgstr "SNES 컨트롤러"
@@ -788,7 +785,7 @@ msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
 msgstr "Snes9x - 제작 (c) Snes9x 팀 1996-2006"
 
 msgid "SRAM"
-msgstr "SRAM"
+msgstr ""
 
 msgid "SRAM file not found"
 msgstr "SRAM 파일을 찾을 수 없습니다."
@@ -802,8 +799,17 @@ msgstr "슈퍼FX 오버클럭"
 msgid "This software is open source and may be copied, distributed, or modified "
 msgstr "이 소프트웨어는 오픈 소스고 복사할 수 있습니다. distributed, or modified "
 
-msgid "Unable to open snapshot!"
-msgstr "스냅샷을 열 수 없습니다!"
+msgid "Turbo Off"
+msgstr "연사 끔"
+
+msgid "Turbo On"
+msgstr "연사 켬"
+
+msgid "Unable to open state!"
+msgstr "상태를 열 수 없습니다!"
 
 msgid "under the terms of the GNU General Public License (GPL) Version 2."
 msgstr "under the terms of the GNU 일반 공중 사용허가 (GPL) 버전 2."
+
+msgid "Unknown file type!"
+msgstr "알 수 없는 파일 유형!"
