@@ -106,6 +106,12 @@ msgstr "¡Archivo de Trucos no encontrado!"
 msgid "Cheats Folder"
 msgstr "Carpeta de Trucos"
 
+msgid "Chinese (Simplified)"
+msgstr "Chino (Simplificado)"
+
+msgid "Chinese (Traditional)"
+msgstr "Chino (Tradicional)"
+
 msgid "Choose Game"
 msgstr "Elegir Juego"
 
@@ -114,9 +120,6 @@ msgstr "Control Clásico"
 
 msgid "Close"
 msgstr "Cerrar"
-
-msgid "Coding & menu design"
-msgstr "Programación y diseño de menú"
 
 msgid "Connecting to network share..."
 msgstr "Conectando a la red compartida..."
@@ -132,9 +135,6 @@ msgstr "Carpeta de Portadas"
 
 msgid "Credits"
 msgstr "Créditos"
-
-msgid "Crosshair"
-msgstr "Cursor"
 
 msgid "Data DVD"
 msgstr "DVD Datos"
@@ -223,20 +223,11 @@ msgstr "No se pudo conectar a la red compartida."
 msgid "Feb"
 msgstr "Febrero"
 
-msgid "Filtered"
-msgstr "Filtrado"
-
 msgid "Filtered (Sharp)"
 msgstr "Filtrado (Nítido)"
 
 msgid "Filtered (Soft)"
 msgstr "Filtrado (Suave)"
-
-msgid "Filtering"
-msgstr "Filtro"
-
-msgid "Fire"
-msgstr "Disparar"
 
 msgid "Font file is too large!"
 msgstr "¡El archivo de fuente es demasiado grande!"
@@ -332,7 +323,7 @@ msgid "Load Game"
 msgstr "Cargar partida"
 
 msgid "Loading"
-msgstr "Cargar"
+msgstr "Cargando"
 
 msgid "Loading DVD..."
 msgstr "Cargando DVD..."
@@ -472,9 +463,6 @@ msgstr "Imagen de Previsualización"
 msgid "Preview Screenshot"
 msgstr "Captura de pantalla"
 
-msgid "Progressive (480p)"
-msgstr "Progresivo (480p)"
-
 msgid "Quit Game"
 msgstr "Salir del Juego"
 
@@ -535,7 +523,7 @@ msgstr "Carpeta de Guardados"
 msgid "Save Game"
 msgstr "Guardar partida"
 
-msgid "Save Snapshot?"
+msgid "Save State?"
 msgstr "¿Guardar partida?"
 
 msgid "Save successful"
@@ -559,7 +547,7 @@ msgstr "Posición de Pantalla"
 msgid "Screen Zoom"
 msgstr "Zoom de Pantalla"
 
-msgid "ScreenShot"
+msgid "Screenshot"
 msgstr "Captura"
 
 msgid "Screenshots"
@@ -610,9 +598,6 @@ msgstr "Contraseña del SMB"
 msgid "SMB Share Username"
 msgstr "Nombre de Usuario del SMB"
 
-msgid "Snapshot"
-msgstr "Estado"
-
 msgid "Sound Effects Volume"
 msgstr "Volumen de los Efectos"
 
@@ -624,6 +609,9 @@ msgstr "Start"
 
 msgid "START"
 msgstr "START"
+
+msgid "State"
+msgstr "Estado"
 
 msgid "Sun"
 msgstr "Domingo"
@@ -640,12 +628,6 @@ msgstr "Jueves"
 msgid "Tue"
 msgstr "Martes"
 
-msgid "Turbo Off"
-msgstr "Turbo Desactivado"
-
-msgid "Turbo On"
-msgstr "Turbo Activado"
-
 msgid "Turkish"
 msgstr "Turco"
 
@@ -660,9 +642,6 @@ msgstr "¡No se puede encontrar un dispositivo para guardados!"
 
 msgid "Unfiltered"
 msgstr "Sin filtrado"
-
-msgid "Unknown file type!"
-msgstr "¡Tipo de archivo desconocido!"
 
 msgid "Unrecognized DVD format."
 msgstr "Formato de DVD no reconocido."
@@ -718,8 +697,23 @@ msgstr "Apuntar Fuera de Pantalla"
 msgid "Audio"
 msgstr "Audio"
 
+msgid "Coding & menu design"
+msgstr "Programación y diseño de menú"
+
+msgid "Crosshair"
+msgstr "Cursor"
+
 msgid "Cursor"
 msgstr "Cursor"
+
+msgid "Filtered"
+msgstr "Filtrado"
+
+msgid "Filtering"
+msgstr "Filtro"
+
+msgid "Fire"
+msgstr "Disparar"
 
 msgid "Game Settings - Audio"
 msgstr "Configuración - Audio"
@@ -754,13 +748,16 @@ msgstr "¡No hay datos SRAM para guardar!"
 msgid "None"
 msgstr "Ninguno"
 
+msgid "Progressive (480p)"
+msgstr "Progresivo (480p)"
+
 msgid "Right Button"
 msgstr "Botón Derecho"
 
 msgid "Save failed!"
 msgstr "¡Error al guardar!"
 
-msgid "Save SRAM and Snapshot?"
+msgid "Save SRAM and State?"
 msgstr "¿Guardar SRAM y partida?"
 
 msgid "Scanlines"
@@ -802,8 +799,17 @@ msgstr "Overclock SuperFX"
 msgid "This software is open source and may be copied, distributed, or modified "
 msgstr "Este software es de código abierto y puede ser copiado, distribuido, o modificado "
 
-msgid "Unable to open snapshot!"
+msgid "Turbo Off"
+msgstr "Turbo Desactivado"
+
+msgid "Turbo On"
+msgstr "Turbo Activado"
+
+msgid "Unable to open state!"
 msgstr "¡No se puede abrir la partida guardada!"
 
 msgid "under the terms of the GNU General Public License (GPL) Version 2."
 msgstr "bajo los términos de la Licencia Pública General GNU (GPL) Versión 2."
+
+msgid "Unknown file type!"
+msgstr "¡Tipo de archivo desconocido!"
