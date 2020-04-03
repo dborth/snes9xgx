@@ -601,7 +601,7 @@ void InfoPrompt(const char *msg)
 /****************************************************************************
  * AutoSave
  *
- * Automatically saves SRAM/snapshot when returning from in-game to the menu
+ * Automatically saves SRAM/state when returning from in-game to the menu
  ***************************************************************************/
 void AutoSave()
 {
@@ -611,12 +611,12 @@ void AutoSave()
 	}
 	else if (GCSettings.AutoSave == 2)
 	{
-		if (WindowPrompt("Save", "Save Snapshot?", "Save", "Don't Save") )
+		if (WindowPrompt("Save", "Save State?", "Save", "Don't Save") )
 			SaveSnapshotAuto(NOTSILENT);
 	}
 	else if (GCSettings.AutoSave == 3)
 	{
-		if (WindowPrompt("Save", "Save SRAM and Snapshot?", "Save", "Don't Save") )
+		if (WindowPrompt("Save", "Save SRAM and State?", "Save", "Don't Save") )
 		{
 			SaveSRAMAuto(NOTSILENT);
 			SaveSnapshotAuto(NOTSILENT);
@@ -1870,7 +1870,7 @@ static int MenuGameSaves(int action)
 						menu = MENU_GAME_SAVE;
 					}
 				}
-				else if(ret == -1) // new Snapshot
+				else if(ret == -1) // new State
 				{
 					for(i=1; i < 100; i++)
 						if(saves.files[FILE_SNAPSHOT][i] == 0)
@@ -1883,7 +1883,7 @@ static int MenuGameSaves(int action)
 						menu = MENU_GAME_SAVE;
 					}
 				}
-				else // overwrite SRAM/Snapshot
+				else // overwrite SRAM/State
 				{
 					MakeFilePath(filepath, saves.type[ret], saves.filename[ret]);
 					switch(saves.type[ret])
@@ -2035,7 +2035,7 @@ static int MenuGameSettings()
 	controllerBtn.SetTrigger(trig2);
 	controllerBtn.SetEffectGrow();
 
-	GuiText screenshotBtnTxt("ScreenShot", 22, (GXColor){0, 0, 0, 255});
+	GuiText screenshotBtnTxt("Screenshot", 22, (GXColor){0, 0, 0, 255});
 	GuiImage screenshotBtnImg(&btnLargeOutline);
 	GuiImage screenshotBtnImgOver(&btnLargeOutlineOver);
 	GuiImage screenshotBtnIcon(&iconScreenshot);
@@ -3885,11 +3885,11 @@ static int MenuSettingsFile()
 
 			if (GCSettings.AutoLoad == 0) sprintf (options.value[8],"Off");
 			else if (GCSettings.AutoLoad == 1) sprintf (options.value[8],"SRAM");
-			else if (GCSettings.AutoLoad == 2) sprintf (options.value[8],"Snapshot");
+			else if (GCSettings.AutoLoad == 2) sprintf (options.value[8],"State");
 
 			if (GCSettings.AutoSave == 0) sprintf (options.value[9],"Off");
 			else if (GCSettings.AutoSave == 1) sprintf (options.value[9],"SRAM");
-			else if (GCSettings.AutoSave == 2) sprintf (options.value[9],"Snapshot");
+			else if (GCSettings.AutoSave == 2) sprintf (options.value[9],"State");
 			else if (GCSettings.AutoSave == 3) sprintf (options.value[9],"Both");
 
 			if (GCSettings.AppendAuto == 0) sprintf (options.value[10], "Off");
