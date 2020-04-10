@@ -562,6 +562,12 @@ msgstr "SD"
 msgid "SD card not found!"
 msgstr "¡Tarjeta SD no encontrada!"
 
+msgid "SD Gecko Slot A"
+msgstr "SD Gecko Ranura A"
+
+msgid "SD Gecko Slot B"
+msgstr "SD Gecko Ranura B"
+
 msgid "SD in SP2"
 msgstr "SD en SP2"
 
