@@ -18,6 +18,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ogc/texconv.h>
+#include <ogc/machine/processor.h>
 
 #include "snes9xgx.h"
 #include "menu.h"
@@ -552,6 +553,14 @@ InitGCVideo ()
 	xfb[1] = (u32 *) MEM_K0_TO_K1 (xfb[1]);
 
 	GXRModeObj *rmode = FindVideoMode();
+
+#ifdef HW_RVL
+if (CONF_GetAspectRatio() == CONF_ASPECT_16_9 && (*(u32*)(0xCD8005A0) >> 16) == 0xCAFE) // Wii U
+{
+	write32(0xd8006a0, 0x30000004), mask32(0xd8006a8, 0, 2);
+}
+#endif
+
 	SetupVideoMode(rmode);
 #ifdef HW_RVL
 	InitLUTs();	// init LUTs for hq2x
