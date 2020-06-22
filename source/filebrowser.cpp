@@ -50,7 +50,7 @@ bool inSz = false;
 unsigned long SNESROMSize = 0;
 bool loadingFile = false;
 
-extern bool isBSX();
+//extern bool isBSX();
 
 /****************************************************************************
 * autoLoadMethod()
@@ -380,7 +380,8 @@ static bool IsValidROM()
 				if (strcasecmp(p, ".smc") == 0 ||
 					strcasecmp(p, ".fig") == 0 ||
 					strcasecmp(p, ".sfc") == 0 ||
-					strcasecmp(p, ".swc") == 0)
+					strcasecmp(p, ".swc") == 0 ||
+					strcasecmp(p, ".bs") == 0) 
 				{
 					if(zippedFilename) free(zippedFilename);
 					return true;
@@ -490,14 +491,14 @@ int WiiFileLoader()
 
 	SNESROMSize = Memory.HeaderRemove(size, Memory.ROM);
 	bsxBiosLoadFailed = false;
-
+	/*
 	if(isBSX()) {
 		sprintf (filepath, "%s%s/BS-X.bin", pathPrefix[GCSettings.LoadMethod], APPFOLDER);
 		if(LoadFile ((char *)Memory.BIOSROM, filepath, 0, 0x100000, SILENT) == 0) {
 			bsxBiosLoadFailed = true;
 		}
 	}
-
+	*/
 	return SNESROMSize;
 }
 
@@ -689,6 +690,7 @@ OpenGameList ()
 	return browser.numEntries;
 }
 
+/* only called when booted with args (mainly from wiiflow) */
 bool AutoloadGame(char* filepath, char* filename) {
 	ResetBrowser();
 
