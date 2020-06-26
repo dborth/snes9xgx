@@ -1,0 +1,16 @@
+snes9xgx_gamecube-wii_task:
+  container:
+    image: devkitpro/devkitppc
+  
+  update_script:
+    - sudo dkp-pacman -Sy --noconfirm
+    - sudo dkp-pacman -S libfat-ogc libogc --noconfirm
+  
+  setup_script:
+    - cp -r /tmp/cirrus-ci-build/buildtools/libfreetype.a /opt/devkitpro/portlibs/ppc/lib/
+    - cp -r /tmp/cirrus-ci-build/buildtools/libfreetype.la /opt/devkitpro/portlibs/ppc/lib/
+    
+  compile_script:
+    - make -j3
+  build_artifacts:
+    path: "executables/*"
