@@ -3135,8 +3135,13 @@ static void ScreenPositionWindowUpdate(void * ptr, int x, int y)
 		GCSettings.xshift += x;
 		GCSettings.yshift += y;
 
+		if(!(GCSettings.xshift > -50 && GCSettings.xshift < 50))
+			GCSettings.xshift = 0;
+		if(!(GCSettings.yshift > -50 && GCSettings.yshift < 50))
+			GCSettings.yshift = 0;
+
 		char shift[10];
-		sprintf(shift, "%i, %i", GCSettings.xshift, GCSettings.yshift);
+		sprintf(shift, "%hd, %hd", GCSettings.xshift, GCSettings.yshift);
 		settingText->SetText(shift);
 		b->ResetState();
 	}

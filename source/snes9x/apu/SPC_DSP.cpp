@@ -866,8 +866,6 @@ void SPC_DSP::init( void* ram_64k )
 		int i;
 		i = +0x8000; CLAMP16( i ); assert( i == +0x7FFF );
 		i = -0x8001; CLAMP16( i ); assert( i == -0x8000 );
-		
-		blargg_verify_byte_order();
 	#endif
 }
 
