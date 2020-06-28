@@ -54,7 +54,7 @@ SaveSnapshot (char * filepath, bool silent)
 		char screenpath[1024];
 		strcpy(screenpath, filepath);
 		screenpath[strlen(screenpath)-4] = 0;
-		sprintf(screenpath, "%s.png", screenpath);
+		strcat(screenpath, ".png");
 		SaveFile((char *)gameScreenPng, screenpath, gameScreenPngSize, silent);
 	}
 
@@ -157,7 +157,7 @@ int SavePreviewImg (char * filepath, bool silent)
 		char screenpath[1024];
 		strcpy(screenpath, filepath);
 		screenpath[strlen(screenpath)] = 0;
-		sprintf(screenpath, "%s.png", screenpath);
+		strcat(screenpath, ".png");
 		SaveFile((char *)gameScreenPng, screenpath, gameScreenPngSize, silent);
 	}
 	return 1;
