@@ -49,6 +49,7 @@ bool inSz = false;
 
 unsigned long SNESROMSize = 0;
 bool loadingFile = false;
+bool bsxBiosLoadFailed;
 
 extern bool isBSX();
 
@@ -377,9 +378,10 @@ static bool IsValidROM()
 
 			if(p != NULL)
 			{
-				if (strcasecmp(p, ".smc") == 0 ||
+				if (strcasecmp(p, ".bs") == 0 ||
 					strcasecmp(p, ".fig") == 0 ||
 					strcasecmp(p, ".sfc") == 0 ||
+					strcasecmp(p, ".smc") == 0 ||
 					strcasecmp(p, ".swc") == 0)
 				{
 					if(zippedFilename) free(zippedFilename);
@@ -455,8 +457,6 @@ int BrowserLoadSz()
 	return szfiles;
 }
 
-static bool bsxBiosLoadFailed;
-
 int WiiFileLoader()
 {
 	size_t size;
@@ -530,9 +530,6 @@ int BrowserLoadFile()
 	if (SNESROMSize == 0)
 	{
 		ErrorPrompt("Error loading game!");
-	}
-	else if(bsxBiosLoadFailed) {
-		ErrorPrompt("BS-X BIOS file not found!");
 	}
 	else
 	{

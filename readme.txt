@@ -600,8 +600,8 @@ done you can proceed to run the emulator via the Homebrew Channel.
 
 -=[ Satellaview (BS-X) ]=-
 
-Snes9x GX supports loading BS games. The BSX BIOS is required.
-Download the English + No DRM BS-X ROM here: 
+Snes9x GX supports loading BS games. The BSX BIOS is not required.
+If you wish to use one, download the English + No DRM BS-X ROM here: 
 https://project.satellaview.org/downloads.htm 
 
 Put it in your snes9xgx folder, renamed to BS-X.bin.
