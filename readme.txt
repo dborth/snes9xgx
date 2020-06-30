@@ -35,6 +35,16 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                          UPDATE HISTORY  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
+[4.4.8 - June 29, 2020]
+
+* Compiled with latest devkitPPC/libogc
+* Fixed graphical glitches on GameCube port
+* Translation updates
+* Added Wii U vWii Channel, widescreen patch, and now reports console/CPU speed
+* Upstream updates for Snes9x
+* BS-X rom is now optional. If missing, will load directly into the game
+* Other minor fixes
+
 [4.4.7 - March 4, 2020]
 
 * Fixed 3rd party controllers (again)
