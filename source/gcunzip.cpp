@@ -3,7 +3,7 @@
  *
  * softdev July 2006
  * Michniewski 2008
- * Tantric 2008-2019
+ * Tantric 2008-2020
  *
  * gcunzip.cpp
  *
