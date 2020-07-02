@@ -15,8 +15,9 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |                                                                FEATURES  |
 •˜———–—––-- - —————————––––– ———–—––-- - —————————––––– ———–—––-- - ————————•
 
-* Based on Snes9x 1.58 (with faster Blargg S-SMP module)
-* Wiimote, Nunchuk, Classic, Wii U Pro, and Gamecube controller support
+* Based on Snes9x 1.60 (with faster Blargg S-SMP module)
+* Wiimote, Nunchuk, Wii Classic, Wii Pro, Wii Super NES Classic, 
+  Wii U Pro, and Gamecube controller support
 * Wii U GamePad support (requires homebrew injection into Wii U VC title)
 * Retrode/Xbox 360/Hornet controller support
 * SNES Superscope, Mouse, Justifier support
