@@ -10,11 +10,11 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 ## Nightly builds
 
-|Download nightly builds from continuous integration: 	| [![Build Status][snes9xgx_gamecube-wii]][cirrus-ci] 
+|Download nightly builds from continuous integration: 	| [![Build Status][Build]][Actions] 
 |-------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 
-[cirrus-ci]: https://cirrus-ci.com/github/dborth/snes9xgx
-[snes9xgx_gamecube-wii]: https://api.cirrus-ci.com/github/dborth/snes9xgx.svg?task=snes9xgx_gamecube-wii
+[Actions]: https://github.com/dborth/snes9xgx/actions
+[Build]: https://github.com/dborth/snes9xgx/workflows/Snes9x%20GX%20Build/badge.svg
 
 
 ## FEATURES
@@ -988,14 +988,14 @@ changes to the emulator settings again and save them.
                       Additional coding                           michniewski
                       Menu artwork                              the3seashells
                       Menu sound                                 Peter de Man
-                      Extra coding                      Zopenko,Burnt Lasagna
-                                                        Askot
+                      Extra coding                     Zopenko, Burnt Lasagna,
+                                                         Askot, bladeoner
 
                       Snes9x GX GameCube                    SoftDev, crunchy2,
                                                             eke-eke, others
 
                       Snes9x                                      Snes9x Team
-                      libogc/devkitPPC                   shagkur & wintermute
+                      libogc/devkitPPC                   shagkur & WinterMute
                       FreeTypeGX                              Armin Tamzarian
 
 
