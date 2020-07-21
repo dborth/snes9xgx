@@ -1,0 +1,30 @@
+name: Snes9x GX Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ubuntu-20.04
+    runs-on: ubuntu-20.04
+    container: devkitpro/devkitppc:latest
+ 
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+
+    - name: Copy build files
+      run: |
+        cp -r libfreetype.a /opt/devkitpro/portlibs/ppc/lib/
+        cp -r libfreetype.la /opt/devkitpro/portlibs/ppc/lib/
+      working-directory: ./buildtools
+
+    - name: Build
+      run: |
+        make -j2
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2
+      with: 
+        name: executables
+        path: executables/*
