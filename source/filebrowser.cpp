@@ -78,8 +78,6 @@ int autoLoadMethod()
 		device = DEVICE_DVD;
 	else if(ChangeInterface(DEVICE_SMB, SILENT))
 		device = DEVICE_SMB;
-	else
-		ErrorPrompt("Unable to locate a load device!");
 
 	if(GCSettings.LoadMethod == DEVICE_AUTO)
 		GCSettings.LoadMethod = device; // save device found for later use
@@ -672,15 +670,31 @@ int
 OpenGameList ()
 {
 	int device = GCSettings.LoadMethod;
+	bool autoLoad = false;
 
-	if(device == DEVICE_AUTO && strlen(GCSettings.LoadFolder) > 0)
+	if(device == DEVICE_AUTO && strlen(GCSettings.LoadFolder) > 0) {
 		device = autoLoadMethod();
+		autoLoad = true;
+	}
 
 	// change current dir to roms directory
-	if(device > 0)
+	if(device > 0) {
 		sprintf(browser.dir, "%s%s/", pathPrefix[device], GCSettings.LoadFolder);
-	else
+
+		if(autoLoad) {
+			DIR *dir = opendir(browser.dir);
+
+			if(dir == NULL) {
+				sprintf(browser.dir, "%s", pathPrefix[device]);
+			}
+			else {
+				closedir(dir);
+			}
+		}
+	}
+	else {
 		browser.dir[0] = 0;
+	}
 	
 	BrowserChangeFolder();
 	return browser.numEntries;
