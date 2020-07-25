@@ -51,7 +51,7 @@ typedef struct ftgxCharData_ {
 	int16_t renderOffsetMax;	/**< Texture Y axis bearing maximum value. */
 	int16_t renderOffsetMin;	/**< Texture Y axis bearing minimum value. */
 
-	uint32_t* glyphDataTexture;	/**< Glyph texture bitmap data buffer. */
+	uint8_t* glyphDataTexture;	/**< Glyph texture bitmap data buffer. */
 } ftgxCharData;
 
 /*! \struct ftgxDataOffset_

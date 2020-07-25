@@ -22,6 +22,8 @@
 
 #include "FreeTypeGX.h"
 
+#define ALIGN8(x) (((x) + 7) & ~7)
+
 static FT_Library ftLibrary;	/**< FreeType FT_Library instance. */
 static FT_Face ftFace;			/**< FreeType reusable FT_Face typographic object. */
 static FT_GlyphSlot ftSlot;		/**< FreeType reusable FT_GlyphSlot glyph container object. */
@@ -233,27 +235,30 @@ ftgxCharData *FreeTypeGX::cacheGlyphData(wchar_t charCode)
 	FT_UInt gIndex;
 	uint16_t textureWidth = 0, textureHeight = 0;
 
-	gIndex = FT_Get_Char_Index( ftFace, charCode );
-	if (!FT_Load_Glyph(ftFace, gIndex, FT_LOAD_DEFAULT | FT_LOAD_RENDER ))
+	gIndex = FT_Get_Char_Index(ftFace, (FT_ULong) charCode);
+	if (gIndex != 0 && FT_Load_Glyph(ftFace, gIndex, FT_LOAD_DEFAULT | FT_LOAD_RENDER) == 0)
 	{
 		if(ftSlot->format == FT_GLYPH_FORMAT_BITMAP)
 		{
 			FT_Bitmap *glyphBitmap = &ftSlot->bitmap;
 
-			textureWidth = adjustTextureWidth(glyphBitmap->width);
-			textureHeight = adjustTextureHeight(glyphBitmap->rows);
+			textureWidth = ALIGN8(glyphBitmap->width);
+			textureHeight = ALIGN8(glyphBitmap->rows);
+			if(textureWidth == 0)
+				textureWidth = 8;
+			if(textureHeight == 0)
+				textureHeight = 8;
 
-			this->fontData[charCode] = (ftgxCharData){
-				ftSlot->bitmap_left,
-				ftSlot->advance.x >> 6,
-				gIndex,
-				textureWidth,
-				textureHeight,
-				ftSlot->bitmap_top,
-				ftSlot->bitmap_top,
-				glyphBitmap->rows - ftSlot->bitmap_top,
-				NULL
-			};
+			this->fontData[charCode].renderOffsetX = (int16_t) ftFace->glyph->bitmap_left;
+			this->fontData[charCode].glyphAdvanceX = (uint16_t) (ftFace->glyph->advance.x >> 6);
+			this->fontData[charCode].glyphIndex = (uint32_t) gIndex;
+			this->fontData[charCode].textureWidth = (uint16_t) textureWidth;
+			this->fontData[charCode].textureHeight = (uint16_t) textureHeight;
+			this->fontData[charCode].renderOffsetY = (int16_t) ftFace->glyph->bitmap_top;
+			this->fontData[charCode].renderOffsetMax = (int16_t) ftFace->glyph->bitmap_top;
+			this->fontData[charCode].renderOffsetMin = (int16_t) glyphBitmap->rows - ftFace->glyph->bitmap_top;
+			this->fontData[charCode].glyphDataTexture = NULL;
+
 			this->loadGlyphData(glyphBitmap, &this->fontData[charCode]);
 
 			return &this->fontData[charCode];
@@ -295,31 +300,38 @@ uint16_t FreeTypeGX::cacheGlyphDataComplete()
  */
 void FreeTypeGX::loadGlyphData(FT_Bitmap *bmp, ftgxCharData *charData)
 {
-    int length = charData->textureWidth * charData->textureHeight * 4;
+	int glyphSize = (charData->textureWidth * charData->textureHeight) >> 1;
 
-	uint8_t * glyphData = (uint8_t *) memalign(32, length);
-	if(!glyphData)
-        return;
-
-	memset(glyphData, 0x00, length);
+	uint8_t *glyphData = (uint8_t *) memalign(32, glyphSize);
+	memset(glyphData, 0x00, glyphSize);
 
 	uint8_t *src = (uint8_t *)bmp->buffer;
-	uint32_t offset;
+	uint8_t *dst = glyphData;
+	int32_t pos, x1, y1, x, y;
 
-	for (int imagePosY = 0; imagePosY < bmp->rows; ++imagePosY)
+	for(y1 = 0; y1 < bmp->rows; y1 += 8)
 	{
-		for (int imagePosX = 0; imagePosX < bmp->width; ++imagePosX)
+		for(x1 = 0; x1 < bmp->width; x1 += 8)
 		{
-		    offset = ((((imagePosY >> 2) * (charData->textureWidth >> 2) + (imagePosX >> 2)) << 5) + ((imagePosY & 3) << 2) + (imagePosX & 3)) << 1;
-			glyphData[offset] = *src;
-			glyphData[offset+1] = *src;
-			glyphData[offset+32] = *src;
-			glyphData[offset+33] = *src;
-			++src;
+			for(y = y1; y < (y1 + 8); y++)
+			{
+				for(x = x1; x < (x1 + 8); x += 2, dst++)
+				{
+					if(x >= bmp->width || y >= bmp->rows)
+						continue;
+
+					pos = y * bmp->width + x;
+					*dst = (src[pos] & 0xF0);
+
+					if(x+1 < bmp->width)
+						*dst |= (src[pos + 1] >> 4);
+				}
+			}
 		}
 	}
-	DCFlushRange(glyphData, length);
-	charData->glyphDataTexture = (uint32_t *) glyphData;
+
+	DCFlushRange(glyphData, glyphSize);
+	charData->glyphDataTexture = glyphData;
 }
 
 /**
@@ -430,7 +442,7 @@ uint16_t FreeTypeGX::drawText(int16_t x, int16_t y, wchar_t *text, GXColor color
 				x_pos += pairDelta.x >> 6;
 			}
 
-			GX_InitTexObj(&glyphTexture, glyphData->glyphDataTexture, glyphData->textureWidth, glyphData->textureHeight, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+			GX_InitTexObj(&glyphTexture, glyphData->glyphDataTexture, glyphData->textureWidth, glyphData->textureHeight, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
 			this->copyTextureToFramebuffer(&glyphTexture, glyphData->textureWidth, glyphData->textureHeight, x_pos + glyphData->renderOffsetX + x_offset, y - glyphData->renderOffsetY + y_offset, color);
 
 			x_pos += glyphData->glyphAdvanceX;
