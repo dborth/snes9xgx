@@ -53,12 +53,6 @@ void S9xExit()
 
 /*** File based functions ***/
 const char *
-S9xChooseFilename(bool8 read_only)
-{
-	return NULL;
-}
-
-const char *
 S9xGetDirectory(enum s9x_getdirtype dirtype)
 {
 	return NULL;
