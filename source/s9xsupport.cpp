@@ -168,11 +168,6 @@ bool8 S9xContinueUpdate(int Width, int Height)
 	return (TRUE);
 }
 
-void S9xSetPalette()
-{
-	return;
-}
-
 /*** Input functions ***/
 void S9xHandlePortCommand(s9xcommand_t cmd, int16 data1, int16 data2)
 {
