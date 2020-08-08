@@ -59,12 +59,6 @@ S9xChooseFilename(bool8 read_only)
 }
 
 const char *
-S9xChooseMovieFilename(bool8 read_only)
-{
-	return NULL;
-}
-
-const char *
 S9xGetDirectory(enum s9x_getdirtype dirtype)
 {
 	return NULL;
