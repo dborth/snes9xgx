@@ -53,12 +53,6 @@ void S9xExit()
 
 /*** File based functions ***/
 const char *
-S9xChooseMovieFilename(bool8 read_only)
-{
-	return NULL;
-}
-
-const char *
 S9xGetDirectory(enum s9x_getdirtype dirtype)
 {
 	return NULL;
@@ -212,11 +206,6 @@ bool8 S9xDeinitUpdate(int Width, int Height)
 bool8 S9xContinueUpdate(int Width, int Height)
 {
 	return (TRUE);
-}
-
-void S9xSetPalette()
-{
-	return;
 }
 
 /*** Input functions ***/
