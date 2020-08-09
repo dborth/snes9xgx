@@ -124,8 +124,6 @@ struct SGCSettings{
 	int		Interpolation;
 };
 
-char* ImageFolder();
-
 void ExitApp();
 void ShutdownWii();
 bool SupportedIOS(u32 ios);

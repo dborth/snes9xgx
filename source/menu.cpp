@@ -951,6 +951,16 @@ static void WindowCredits(void * ptr)
  * Displays a list of games on the specified load device, and allows the user
  * to browse and select from this list.
  ***************************************************************************/
+static char* getImageFolder()
+{
+	switch(GCSettings.PreviewImage)
+	{
+		case 1 : return GCSettings.CoverFolder; break;
+		case 2 : return GCSettings.ArtworkFolder; break;
+		default: return GCSettings.ScreenshotsFolder; break;
+	}
+}
+
 static int MenuGameSelection()
 {
 	int menu = MENU_NONE;
@@ -1120,27 +1130,18 @@ static int MenuGameSelection()
 		{			
 			previousBrowserIndex = browser.selIndex;
 			previousPreviewImg = GCSettings.PreviewImage;
-			snprintf(imagePath, MAXJOLIET, "%s%s/%s.png", pathPrefix[GCSettings.LoadMethod], ImageFolder(), browserList[browser.selIndex].displayname);
+			snprintf(imagePath, MAXJOLIET, "%s%s/%s.png", pathPrefix[GCSettings.LoadMethod], getImageFolder(), browserList[browser.selIndex].displayname);
 			
-			AllocSaveBuffer();
 			int width, height;
-			if(LoadFile(imagePath, SILENT))
+			if(DecodePNGFromFile(imagePath, &width, &height, imgBuffer, 512, 512))
 			{
-				if(DecodePNG(savebuffer, &width, &height, imgBuffer, 512, 512))
-				{
-					preview.SetImage(imgBuffer, width, height);
-					preview.SetScale( MIN(225.0f / width, 235.0f / height) );
-				}
-				else
-				{
-					preview.SetImage(NULL, 0, 0);
-				}
+				preview.SetImage(imgBuffer, width, height);
+				preview.SetScale( MIN(225.0f / width, 235.0f / height) );
 			}
-			else 
+			else
 			{
 				preview.SetImage(NULL, 0, 0);
 			}
-			FreeSaveBuffer();
 		}
 
 		if(settingsBtn.GetState() == STATE_CLICKED)

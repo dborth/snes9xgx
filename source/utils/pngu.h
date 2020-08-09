@@ -64,6 +64,7 @@ int PNGU_GetImageProperties (IMGCTX ctx, PNGUPROP *fileproperties);
 ****************************************************************************/
 
 u8 * DecodePNG(const u8 *src, int *width, int *height, u8 *dst, int maxwidth, int maxheight);
+u8 * DecodePNGFromFile(const char *filepath, int *width, int *height, u8 *dst, int maxwidth, int maxheight);
 int PNGU_EncodeFromRGB (IMGCTX ctx, u32 width, u32 height, void *buffer, u32 stride);
 int PNGU_EncodeFromGXTexture (IMGCTX ctx, u32 width, u32 height, void *buffer, u32 stride);
 int PNGU_EncodeFromEFB (IMGCTX ctx, u32 width, u32 height);

@@ -110,10 +110,6 @@ static int pngu_info (IMGCTX ctx)
 
 	else if (ctx->source == PNGU_SOURCE_DEVICE)
 	{
-		// Open file
-		if (!(ctx->fd = fopen (ctx->filename, "rb")))
-			return PNGU_CANT_OPEN_FILE;
-
 		// Load first 8 bytes into magic buffer
         if (fread (magic, 1, 8, ctx->fd) != 8)
 		{
@@ -574,6 +570,29 @@ u8 * DecodePNG(const u8 *src, int * width, int * height, u8 *dstPtr, int maxwidt
 		return NULL;
 
 	if(PNGU_GetImageProperties(ctx, &imgProp) == PNGU_OK)
+		dst = PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, width, height, dstPtr, maxwidth, maxheight);
+
+	PNGU_ReleaseImageContext (ctx);
+	return dst;
+}
+
+u8 * DecodePNGFromFile(const char *filepath, int * width, int * height, u8 *dstPtr, int maxwidth, int maxheight)
+{
+	FILE *file = fopen (filepath, "rb");
+
+	if (!file)
+		return NULL;
+
+	IMGCTX ctx = PNGU_SelectImageFromDevice(filepath);
+
+	if(!ctx)
+		return NULL;
+
+	ctx->fd = file;
+	PNGUPROP imgProp;
+	u8 *dst = NULL;
+
+	if(PNGU_GetImageProperties(ctx, &imgProp) == PNGU_OK && imgProp.imgWidth <= maxwidth && imgProp.imgHeight < maxheight)
 		dst = PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, width, height, dstPtr, maxwidth, maxheight);
 
 	PNGU_ReleaseImageContext (ctx);
