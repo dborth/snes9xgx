@@ -121,9 +121,9 @@ static GXRModeObj TV_239p =
 	512,             // fbWidth
 	239,             // efbHeight
 	239,             // xfbHeight
-	(VI_MAX_WIDTH_PAL - 640)/2,         // viXOrigin
+	(VI_MAX_WIDTH_PAL - 644)/2,         // viXOrigin
 	(VI_MAX_HEIGHT_PAL/2 - 478/2)/2,        // viYOrigin
-	640,             // viWidth
+	644,             // viWidth
 	478,             // viHeight
 	VI_XFBMODE_SF,   // xFBmode
 	GX_FALSE,        // field_rendering
@@ -156,9 +156,9 @@ static GXRModeObj TV_478i =
 	512,             // fbWidth
 	478,             // efbHeight
 	478,             // xfbHeight
-	(VI_MAX_WIDTH_PAL - 640)/2,         // viXOrigin
+	(VI_MAX_WIDTH_PAL - 644)/2,         // viXOrigin
 	(VI_MAX_HEIGHT_PAL - 478)/2,        // viYOrigin
-	640,             // viWidth
+	644,             // viWidth
 	478,             // viHeight
 	VI_XFBMODE_DF,   // xFBmode
 	GX_FALSE,         // field_rendering
@@ -193,9 +193,9 @@ static GXRModeObj TV_224p =
 	512,             // fbWidth
 	224,             // efbHeight
 	224,             // xfbHeight
-	(VI_MAX_WIDTH_NTSC - 640)/2,	// viXOrigin
+	(VI_MAX_WIDTH_NTSC - 644)/2,	// viXOrigin
 	(VI_MAX_HEIGHT_NTSC/2 - 448/2)/2,	// viYOrigin
-	640,             // viWidth
+	644,             // viWidth
 	448,             // viHeight
 	VI_XFBMODE_SF,   // xFBmode
 	GX_FALSE,        // field_rendering
@@ -228,9 +228,9 @@ static GXRModeObj TV_448i =
 	512,             // fbWidth
 	448,             // efbHeight
 	448,             // xfbHeight
-	(VI_MAX_WIDTH_NTSC - 640)/2,        // viXOrigin
+	(VI_MAX_WIDTH_NTSC - 644)/2,        // viXOrigin
 	(VI_MAX_HEIGHT_NTSC - 448)/2,       // viYOrigin
-	640,             // viWidth
+	644,             // viWidth
 	448,             // viHeight
 	VI_XFBMODE_DF,   // xFBmode
 	GX_FALSE,         // field_rendering
