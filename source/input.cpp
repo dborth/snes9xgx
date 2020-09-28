@@ -44,6 +44,7 @@
 #define ANALOG_SENSITIVITY 30
 
 int rumbleRequest[4] = {0,0,0,0};
+int playerMapping[4] = {0,1,2,3};
 GuiTrigger userInput[4];
 
 #ifdef HW_RVL
@@ -517,7 +518,7 @@ static void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
  * Reads the changes (buttons pressed, etc) from a controller and reports
  * these changes to Snes9x
  ***************************************************************************/
-static void decodepad (int chan)
+static void decodepad (int chan, int emuChan)
 {
 	int i, offset;
 
@@ -587,7 +588,7 @@ static void decodepad (int chan)
 #endif
 
 	/*** Fix offset to pad ***/
-	offset = ((chan + 1) << 4);
+	offset = ((emuChan + 1) << 4);
 
 	/*** Report pressed buttons (gamepads) ***/
 	for (i = 0; i < MAXJP; i++)
@@ -607,7 +608,7 @@ static void decodepad (int chan)
     }
 
 	/*** Superscope ***/
-	if (Settings.SuperScopeMaster && chan == 0) // report only once
+	if (Settings.SuperScopeMaster && emuChan == 0) // report only once
 	{
 		// buttons
 		offset = 0x50;
@@ -643,14 +644,14 @@ static void decodepad (int chan)
 		}
 		// pointer
 		offset = 0x80;
-		UpdateCursorPosition(chan, cursor_x[0], cursor_y[0]);
+		UpdateCursorPosition(emuChan, cursor_x[0], cursor_y[0]);
 		S9xReportPointer(offset, (u16) cursor_x[0], (u16) cursor_y[0]);
 	}
 	/*** Mouse ***/
-	else if (Settings.MouseMaster && chan == 0)
+	else if (Settings.MouseMaster && emuChan == 0)
 	{
 		// buttons
-		offset = 0x60 + (2 * chan);
+		offset = 0x60 + (2 * emuChan);
 		for (i = 0; i < 2; i++)
 		{
 			if (jp & btnmap[CTRL_MOUSE][CTRLR_GCPAD][i]
@@ -667,15 +668,15 @@ static void decodepad (int chan)
 		}
 		// pointer
 		offset = 0x81;
-		UpdateCursorPosition(chan, cursor_x[1 + chan], cursor_y[1 + chan]);
-		S9xReportPointer(offset + chan, (u16) cursor_x[1 + chan],
-				(u16) cursor_y[1 + chan]);
+		UpdateCursorPosition(emuChan, cursor_x[1 + emuChan], cursor_y[1 + emuChan]);
+		S9xReportPointer(offset + emuChan, (u16) cursor_x[1 + emuChan],
+				(u16) cursor_y[1 + emuChan]);
 	}
 	/*** Justifier ***/
-	else if (Settings.JustifierMaster && chan < 2)
+	else if (Settings.JustifierMaster && emuChan < 2)
 	{
 		// buttons
-		offset = 0x70 + (3 * chan);
+		offset = 0x70 + (3 * emuChan);
 		for (i = 0; i < 3; i++)
 		{
 			if (jp & btnmap[CTRL_JUST][CTRLR_GCPAD][i]
@@ -692,9 +693,9 @@ static void decodepad (int chan)
 		}
 		// pointer
 		offset = 0x83;
-		UpdateCursorPosition(chan, cursor_x[3 + chan], cursor_y[3 + chan]);
-		S9xReportPointer(offset + chan, (u16) cursor_x[3 + chan],
-				(u16) cursor_y[3 + chan]);
+		UpdateCursorPosition(emuChan, cursor_x[3 + emuChan], cursor_y[3 + emuChan]);
+		S9xReportPointer(offset + emuChan, (u16) cursor_x[3 + emuChan],
+				(u16) cursor_y[3 + emuChan]);
 	}
 
 #ifdef HW_RVL
@@ -736,7 +737,7 @@ bool MenuRequested()
  ***************************************************************************/
 void ReportButtons ()
 {
-	int i, j;
+	int i;
 
 	UpdatePads();
 
@@ -762,10 +763,13 @@ void ReportButtons ()
 	if(MenuRequested())
 		ScreenshotRequested = 1; // go to the menu
 
-	j = (Settings.MultiPlayer5Master == true ? 4 : 2);
+	int numControllers = (Settings.MultiPlayer5Master == true ? 4 : 2);
 
-	for (i = 0; i < j; i++)
-		decodepad (i);
+	for (i = 0; i < 4; i++) {
+		if(playerMapping[i] < numControllers) {
+			decodepad (i, playerMapping[i]);
+		}
+	}
 }
 
 void SetControllers()

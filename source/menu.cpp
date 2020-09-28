@@ -68,6 +68,9 @@ static GuiTrigger * trigA = NULL;
 static GuiTrigger * trig2 = NULL;
 
 static GuiButton * btnLogo = NULL;
+#ifdef HW_RVL
+static GuiButton * batteryBtn[4];
+#endif
 static GuiImageData * gameScreen = NULL;
 static GuiImage * gameScreenImg = NULL;
 static GuiImage * bgTopImg = NULL;
@@ -1256,6 +1259,97 @@ static void ControllerWindow()
 	delete(settingText);
 }
 
+#ifdef HW_RVL
+static int playerMappingChan = 0;
+
+static void PlayerMappingWindowUpdate(void * ptr, int dir)
+{
+	GuiButton * b = (GuiButton *)ptr;
+	if(b->GetState() == STATE_CLICKED)
+	{
+		playerMapping[playerMappingChan] += dir;
+
+		if(playerMapping[playerMappingChan] > 3)
+			playerMapping[playerMappingChan] = 0;
+		if(playerMapping[playerMappingChan] < 0)
+			playerMapping[playerMappingChan] = 3;
+
+		char playerNumber[20];
+		sprintf(playerNumber, "Player %d", playerMapping[playerMappingChan]+1);
+
+		settingText->SetText(playerNumber);
+		b->ResetState();
+	}
+}
+
+static void PlayerMappingWindowLeftClick(void * ptr) { PlayerMappingWindowUpdate(ptr, -1); }
+static void PlayerMappingWindowRightClick(void * ptr) { PlayerMappingWindowUpdate(ptr, +1); }
+
+static void PlayerMappingWindow(int chan)
+{
+	playerMappingChan = chan;
+
+	GuiWindow * w = new GuiWindow(300,250);
+	w->SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+
+	GuiTrigger trigLeft;
+	trigLeft.SetButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT, PAD_BUTTON_LEFT, WIIDRC_BUTTON_LEFT);
+
+	GuiTrigger trigRight;
+	trigRight.SetButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT, PAD_BUTTON_RIGHT, WIIDRC_BUTTON_RIGHT);
+
+	GuiImageData arrowLeft(button_arrow_left_png);
+	GuiImage arrowLeftImg(&arrowLeft);
+	GuiImageData arrowLeftOver(button_arrow_left_over_png);
+	GuiImage arrowLeftOverImg(&arrowLeftOver);
+	GuiButton arrowLeftBtn(arrowLeft.GetWidth(), arrowLeft.GetHeight());
+	arrowLeftBtn.SetImage(&arrowLeftImg);
+	arrowLeftBtn.SetImageOver(&arrowLeftOverImg);
+	arrowLeftBtn.SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+	arrowLeftBtn.SetTrigger(trigA);
+	arrowLeftBtn.SetTrigger(trig2);
+	arrowLeftBtn.SetTrigger(&trigLeft);
+	arrowLeftBtn.SetSelectable(false);
+	arrowLeftBtn.SetUpdateCallback(PlayerMappingWindowLeftClick);
+
+	GuiImageData arrowRight(button_arrow_right_png);
+	GuiImage arrowRightImg(&arrowRight);
+	GuiImageData arrowRightOver(button_arrow_right_over_png);
+	GuiImage arrowRightOverImg(&arrowRightOver);
+	GuiButton arrowRightBtn(arrowRight.GetWidth(), arrowRight.GetHeight());
+	arrowRightBtn.SetImage(&arrowRightImg);
+	arrowRightBtn.SetImageOver(&arrowRightOverImg);
+	arrowRightBtn.SetAlignment(ALIGN_RIGHT, ALIGN_MIDDLE);
+	arrowRightBtn.SetTrigger(trigA);
+	arrowRightBtn.SetTrigger(trig2);
+	arrowRightBtn.SetTrigger(&trigRight);
+	arrowRightBtn.SetSelectable(false);
+	arrowRightBtn.SetUpdateCallback(PlayerMappingWindowRightClick);
+	
+	char playerNumber[20];
+	sprintf(playerNumber, "Player %d", playerMapping[playerMappingChan]+1);
+
+	settingText = new GuiText(playerNumber, 22, (GXColor){0, 0, 0, 255});
+
+	int currentController = GCSettings.Controller;
+
+	w->Append(&arrowLeftBtn);
+	w->Append(&arrowRightBtn);
+	w->Append(settingText);
+
+	char title[50];
+	sprintf(title, "Player Mapping - Controller %d", chan+1);
+
+	int previousPlayerMapping = playerMapping[playerMappingChan];
+
+	if(!SettingWindow(title,w))
+		playerMapping[playerMappingChan] = previousPlayerMapping; // undo changes
+
+	delete(w);
+	delete(settingText);
+}
+#endif
+
 /****************************************************************************
  * MenuGame
  *
@@ -1420,7 +1514,6 @@ static int MenuGame()
 	GuiText * batteryTxt[4];
 	GuiImage * batteryImg[4];
 	GuiImage * batteryBarImg[4];
-	GuiButton * batteryBtn[4];
 
 	for(i=0; i < 4; i++)
 	{
@@ -1441,11 +1534,14 @@ static int MenuGame()
 		batteryBtn[i]->SetImage(batteryImg[i]);
 		batteryBtn[i]->SetIcon(batteryBarImg[i]);
 		batteryBtn[i]->SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-		batteryBtn[i]->SetRumble(false);
+		batteryBtn[i]->SetTrigger(trigA);
+		batteryBtn[i]->SetSoundOver(&btnSoundOver);
+		batteryBtn[i]->SetSoundClick(&btnSoundClick);
 		batteryBtn[i]->SetSelectable(false);
+		batteryBtn[i]->SetState(STATE_DISABLED);
 		batteryBtn[i]->SetAlpha(150);
 	}
-
+	
 	batteryBtn[0]->SetPosition(45, -65);
 	batteryBtn[1]->SetPosition(135, -65);
 	batteryBtn[2]->SetPosition(45, -40);
@@ -1523,6 +1619,7 @@ static int MenuGame()
 				if(newStatus == true) // controller connected
 				{
 					batteryBtn[i]->SetAlpha(255);
+					batteryBtn[i]->SetState(STATE_DEFAULT);
 					batteryBarImg[i]->SetTile(newLevel);
 
 					if(newLevel == 0)
@@ -1533,6 +1630,7 @@ static int MenuGame()
 				else // controller not connected
 				{
 					batteryBtn[i]->SetAlpha(150);
+					batteryBtn[i]->SetState(STATE_DISABLED);
 					batteryBarImg[i]->SetTile(0);
 					batteryImg[i]->SetImage(&battery);
 				}
@@ -1566,6 +1664,24 @@ static int MenuGame()
 		{
 			menu = MENU_GAMESETTINGS;
 		}
+#ifdef HW_RVL
+		else if(batteryBtn[0]->GetState() == STATE_CLICKED)
+		{
+			PlayerMappingWindow(0);
+		}
+		else if(batteryBtn[1]->GetState() == STATE_CLICKED)
+		{
+			PlayerMappingWindow(1);
+		}
+		else if(batteryBtn[2]->GetState() == STATE_CLICKED)
+		{
+			PlayerMappingWindow(2);
+		}
+		else if(batteryBtn[3]->GetState() == STATE_CLICKED)
+		{
+			PlayerMappingWindow(3);
+		}
+#endif
 		else if(mainmenuBtn.GetState() == STATE_CLICKED)
 		{
 			if (WindowPrompt("Quit Game", "Quit this game? Any unsaved progress will be lost.", "OK", "Cancel"))
