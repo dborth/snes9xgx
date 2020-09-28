@@ -1331,8 +1331,6 @@ static void PlayerMappingWindow(int chan)
 
 	settingText = new GuiText(playerNumber, 22, (GXColor){0, 0, 0, 255});
 
-	int currentController = GCSettings.Controller;
-
 	w->Append(&arrowLeftBtn);
 	w->Append(&arrowRightBtn);
 	w->Append(settingText);
