@@ -13,12 +13,6 @@ jobs:
       with:
         submodules: true
 
-    - name: Copy build files
-      run: |
-        cp -r libfreetype.a /opt/devkitpro/portlibs/ppc/lib/
-        cp -r libfreetype.la /opt/devkitpro/portlibs/ppc/lib/
-      working-directory: ./buildtools
-
     - name: Build
       run: |
         make -j2

@@ -39,6 +39,7 @@ CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) `freetype-config --cflags` \
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
+LDFLAGS +=	-L../buildtools
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
