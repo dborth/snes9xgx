@@ -11,12 +11,17 @@ include $(DEVKITPPC)/wii_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
+# TARGETDIR is the directory where the output files will be placed
+# SUBDIR are the directories where the cheats, roms and saves need to be placed
+# ROOTDIR is the root directory of the build
 # BUILD is the directory where object files & intermediate files will be placed
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	snes9xgx-wii
-TARGETDIR	:=	executables
+TARGET		:=	boot
+TARGETDIR	:=	executables/Snes9xGX/apps/snes9xgx
+ROOTDIR		:=	executables/Snes9xGX
+SUBDIR		:=	executables/Snes9xGX/snes9xgx/{cheats,roms,saves}
 BUILD		:=	build_wii
 SOURCES		:=	source source/gui source/utils source/utils/sz \
 				source/snes9x source/snes9x/apu
@@ -110,13 +115,13 @@ export OUTPUT	:=	$(CURDIR)/$(TARGETDIR)/$(TARGET)
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@[ -d $(TARGETDIR) ] || mkdir -p $(TARGETDIR)
+	@[ -d $(TARGETDIR) ] || mkdir -p $(TARGETDIR) $(SUBDIR)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile.wii
 
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
+	@rm -fr $(BUILD) $(ROOTDIR)
 
 #---------------------------------------------------------------------------------
 run:
