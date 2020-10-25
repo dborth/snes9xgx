@@ -16,9 +16,26 @@ jobs:
     - name: Build
       run: |
         make -j2
+    
+    - name: Copy files
+      run: | 
+        cp -f hbc/* executables/Snes9xGX/apps/snes9xgx/
+        cp -f hbc/* executables/Snes9xGX-GameCube/
+        cp -f README.md executables/Snes9xGX/apps/snes9xgx/
+        cp -f README.md executables/Snes9xGX-GameCube/
 
-    - name: Upload a Build Artifact
+    - name: Upload Wii Build Artifacts
       uses: actions/upload-artifact@v2
       with: 
-        name: executables
-        path: executables/*
+        name: Snes9xGX-Nightly
+        path: |
+         executables/Snes9xGX/
+         !executables/Snes9xGX/apps/snes9xgx/*.elf
+    
+    - name: Upload GameCube Build Artifacts
+      uses: actions/upload-artifact@v2
+      with: 
+        name: Snes9xGX-Nightly-GameCube
+        path: |
+         executables/Snes9xGX-GameCube/
+         !executables/Snes9xGX-GameCube/*.elf
