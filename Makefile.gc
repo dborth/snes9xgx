@@ -11,13 +11,12 @@ include $(DEVKITPPC)/gamecube_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
-# TARGETDIR is the directory where the output files will be placed
 # BUILD is the directory where object files & intermediate files will be placed
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	boot
-TARGETDIR	:=	executables/Snes9xGX-GameCube
+TARGET		:=	snes9xgx-gc
+TARGETDIR	:=	executables
 BUILD		:=	build_gc
 SOURCES		:=	source source/gui source/utils source/utils/sz source/utils/vm \
 				source/snes9x source/snes9x/apu
@@ -117,7 +116,7 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGETDIR)
+	@rm -fr $(BUILD) $(OUTPUT).elf $(OUTPUT).dol
 
 #---------------------------------------------------------------------------------
 run:
