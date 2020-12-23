@@ -24,6 +24,9 @@ jobs:
         mkdir dist/Snes9xGX/snes9xgx/cheats
         mkdir dist/Snes9xGX/snes9xgx/saves
         mkdir dist/Snes9xGX-GameCube/
+        touch dist/Snes9xGX/snes9xgx/roms/romsdir
+        touch dist/Snes9xGX/snes9xgx/cheats/cheatsdir
+        touch dist/Snes9xGX/snes9xgx/saves/savesdir
         cp hbc/* dist/Snes9xGX/apps/snes9xgx/
         cp executables/snes9xgx-wii.dol dist/Snes9xGX/apps/snes9xgx/boot.dol
         cp executables/snes9xgx-gc.dol dist/Snes9xGX-GameCube/
