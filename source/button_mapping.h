@@ -2,7 +2,7 @@
  * Snes9x Nintendo Wii/Gamecube Port
  *
  * michniewski August 2008
- * Tantric 2008-2020
+ * Tantric 2008-2021
  *
  * button_mapping.h
  *
