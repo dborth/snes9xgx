@@ -39,6 +39,14 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 ## UPDATE HISTORY
 
+[4.4.9 - January 18, 2021]
+
+* Compiled with latest devkitPPC/libogc
+* Added ability to change the player mapped to a connected controller
+* Corrected aspect ratio by changing viWidth to 644 (vaguerant)
+* Significant memory usage reductions (fonts and loading cover images)
+* Other minor fixes
+
 [4.4.8 - June 29, 2020]
 
 * Compiled with latest devkitPPC/libogc
