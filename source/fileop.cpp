@@ -564,9 +564,10 @@ static bool ParseDirEntries()
 				if(ext == NULL)
 					continue;
 
-				if(	strcasecmp(ext, "smc") != 0 && strcasecmp(ext, "fig") != 0 &&
-					strcasecmp(ext, "sfc") != 0 && strcasecmp(ext, "swc") != 0 &&
-					strcasecmp(ext, "zip") != 0 && strcasecmp(ext, "7z") != 0)
+				if(	strcasecmp(ext, "bs") != 0 && strcasecmp(ext, "smc") != 0 &&
+					strcasecmp(ext, "fig") != 0 && strcasecmp(ext, "sfc") != 0 &&
+					strcasecmp(ext, "swc") != 0 && strcasecmp(ext, "zip") != 0 &&
+					strcasecmp(ext, "7z") != 0)
 					continue;
 			}
 		}
