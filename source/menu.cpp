@@ -3989,9 +3989,9 @@ static int MenuSettingsFile()
 			#endif
 
 			// correct load/save methods out of bounds
-			if(GCSettings.LoadMethod > 6)
+			if(GCSettings.LoadMethod > 7)
 				GCSettings.LoadMethod = 0;
-			if(GCSettings.SaveMethod > 6)
+			if(GCSettings.SaveMethod > 7)
 				GCSettings.SaveMethod = 0;
 
 			if (GCSettings.LoadMethod == DEVICE_AUTO) sprintf (options.value[0],"Auto Detect");

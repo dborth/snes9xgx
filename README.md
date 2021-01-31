@@ -39,6 +39,12 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 ## UPDATE HISTORY
 
+[4.5.0 - January 31, 2021]
+
+* Fixed SD2SP2 issues
+* Changed max game image dimensions to 640x480 to support screenshots
+* Fixed .bs files not appearing
+
 [4.4.9 - January 18, 2021]
 
 * Compiled with latest devkitPPC/libogc
