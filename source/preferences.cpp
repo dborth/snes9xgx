@@ -387,9 +387,9 @@ decodePrefsData ()
  ***************************************************************************/
 void FixInvalidSettings()
 {
-	if(GCSettings.LoadMethod > 6)
+	if(GCSettings.LoadMethod > 7)
 		GCSettings.LoadMethod = DEVICE_AUTO;
-	if(GCSettings.SaveMethod > 6)
+	if(GCSettings.SaveMethod > 7)
 		GCSettings.SaveMethod = DEVICE_AUTO;	
 	if(!(GCSettings.zoomHor > 0.5 && GCSettings.zoomHor < 1.5))
 		GCSettings.zoomHor = 1.0;
@@ -664,9 +664,9 @@ bool LoadPrefs()
 	sprintf(filepath[4], "usb:/%s", APPFOLDER);
 #else
 	numDevices = 3;
-	sprintf(filepath[0], "carda:/%s", APPFOLDER);
-	sprintf(filepath[1], "cardb:/%s", APPFOLDER);
-	sprintf(filepath[2], "port2:/%s", APPFOLDER);
+	sprintf(filepath[0], "port2:/%s", APPFOLDER);
+	sprintf(filepath[1], "carda:/%s", APPFOLDER);
+	sprintf(filepath[2], "cardb:/%s", APPFOLDER);
 #endif
 
 	for(int i=0; i<numDevices; i++)

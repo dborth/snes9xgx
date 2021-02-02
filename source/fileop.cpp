@@ -204,9 +204,9 @@ void UnmountAllFAT()
 	fatUnmount("sd:");
 	fatUnmount("usb:");
 #else
+	fatUnmount("port2:");
 	fatUnmount("carda:");
 	fatUnmount("cardb:");
-	fatUnmount("port2:");
 #endif
 }
 
@@ -295,9 +295,9 @@ void MountAllFAT()
 	MountFAT(DEVICE_SD, SILENT);
 	MountFAT(DEVICE_USB, SILENT);
 #else
+	MountFAT(DEVICE_SD_PORT2, SILENT);
 	MountFAT(DEVICE_SD_SLOTA, SILENT);
 	MountFAT(DEVICE_SD_SLOTB, SILENT);
-	MountFAT(DEVICE_SD_PORT2, SILENT);
 #endif
 }
 
