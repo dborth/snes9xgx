@@ -662,12 +662,6 @@ bool LoadPrefs()
 	sprintf(filepath[2], "usb:/apps/%s", APPFOLDER);
 	sprintf(filepath[3], "sd:/%s", APPFOLDER);
 	sprintf(filepath[4], "usb:/%s", APPFOLDER);
-#else
-	numDevices = 3;
-	sprintf(filepath[0], "port2:/%s", APPFOLDER);
-	sprintf(filepath[1], "carda:/%s", APPFOLDER);
-	sprintf(filepath[2], "cardb:/%s", APPFOLDER);
-#endif
 
 	for(int i=0; i<numDevices; i++)
 	{
@@ -676,6 +670,20 @@ bool LoadPrefs()
 		if(prefFound)
 			break;
 	}
+#else
+	if(ChangeInterface(DEVICE_SD_SLOTA, SILENT)) {
+		sprintf(filepath[0], "carda:/%s", APPFOLDER);
+		prefFound = LoadPrefsFromMethod(filepath[0]);
+	}
+	else if(ChangeInterface(DEVICE_SD_SLOTB, SILENT)) {
+		sprintf(filepath[0], "cardb:/%s", APPFOLDER);
+		prefFound = LoadPrefsFromMethod(filepath[0]);
+	}
+	else if(ChangeInterface(DEVICE_SD_PORT2, SILENT)) {
+		sprintf(filepath[0], "port2:/%s", APPFOLDER);
+		prefFound = LoadPrefsFromMethod(filepath[0]);
+	}
+#endif
 
 	prefLoaded = true; // attempted to load preferences
 

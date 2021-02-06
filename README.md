@@ -39,6 +39,10 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 ## UPDATE HISTORY
 
+[4.5.1 - February 6, 2021]
+
+* Fixed SD2SP2 / SD gecko issues (again)
+
 [4.5.0 - January 31, 2021]
 
 * Fixed SD2SP2 issues
