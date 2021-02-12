@@ -719,7 +719,10 @@ bool MenuRequested()
 			#ifdef HW_RVL
 			|| (userInput[i].wpad->btns_h & WPAD_BUTTON_HOME) ||
 			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME) ||
-			(userInput[i].wiidrcdata.btns_h & WIIDRC_BUTTON_HOME)
+			(userInput[i].wiidrcdata.btns_h & WIIDRC_BUTTON_HOME) ||
+			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_L &&
+			userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_R &&
+			userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_PLUS)
 			#endif
 		)
 		{
