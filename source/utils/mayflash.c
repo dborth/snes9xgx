@@ -117,7 +117,7 @@ void Mayflash_ScanPads()
 	// L=6,04
 	// R=6,08
 
-	jp = 0;
+	u32 jp = 0;
 	jp |= (buf[4] == 0x00) ? PAD_BUTTON_UP	: 0;
 	jp |= (buf[4] == 0xFF) ? PAD_BUTTON_DOWN  : 0;
 	jp |= (buf[3] == 0x00) ? PAD_BUTTON_LEFT  : 0;
