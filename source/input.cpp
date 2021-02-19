@@ -39,6 +39,7 @@
 #include "utils/retrode.h"
 #include "utils/xbox360.h"
 #include "utils/hornet.h"
+#include "utils/mayflash.h"
 #endif
 
 #define ANALOG_SENSITIVITY 30
@@ -340,6 +341,7 @@ UpdatePads()
 	Retrode_ScanPads();
 	XBOX360_ScanPads();
 	Hornet_ScanPads();
+	Mayflash_ScanPads();
 	WPAD_ScanPads();
 	#endif
 
@@ -543,6 +545,7 @@ static void decodepad (int chan, int emuChan)
 	jp |= Retrode_ButtonsHeld(chan);
     jp |= XBOX360_ButtonsHeld(chan);
 	jp |= Hornet_ButtonsHeld(chan);
+	jp |= Mayflash_ButtonsHeld(chan);
 #endif
 
 	/***
@@ -914,7 +917,7 @@ void SetDefaultButtonMap ()
 char* GetUSBControllerInfo()
 {
     static char info[70];
-    snprintf(info, 70, "Retrode: %s, XBOX360: %s, Hornet: %s", Retrode_Status(), XBOX360_Status(), Hornet_Status());
+    snprintf(info, 70, "Retrode: %s, XBOX360: %s, Hornet: %s, Mayflash: %s", Retrode_Status(), XBOX360_Status(), Hornet_Status(), Mayflash_Status());
     return info;
 }
 #endif
