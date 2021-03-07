@@ -892,7 +892,7 @@ static void WindowCredits(void * ptr)
 
 	GuiText::SetPresets(12, (GXColor){0, 0, 0, 255}, 0, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_TOP, ALIGN_CENTRE, ALIGN_BOTTOM);
 
-	txt[i] = new GuiText("Snes9x - Copyright (c) Snes9x Team 1996 - 2006");
+	txt[i] = new GuiText("Snes9x - Copyright (c) Snes9x Team 1996 - 2021");
 	txt[i]->SetPosition(0,-44); i++;
 	txt[i] = new GuiText("This software is open source and may be copied, distributed, or modified ");
 	txt[i]->SetPosition(0,-32); i++;
