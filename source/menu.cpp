@@ -867,7 +867,7 @@ static void WindowCredits(void * ptr)
 
 	char wiiDetails[30];
 	char wiiInfo[20];
-	char controllerInfo[70];
+	char controllerInfo[100];
 
 #ifdef HW_RVL
 	if(!IsWiiU()) {
