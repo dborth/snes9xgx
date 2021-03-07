@@ -1045,7 +1045,7 @@ static int MenuGameSelection()
 	GuiImage preview;
 	preview.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	preview.SetPosition(174, -8);
-	u8* imgBuffer = MEM_ALLOC(640 * 480 * 4);
+	u8* imgBuffer = MEM_ALLOC(640 * 512 * 4);
 	int  previousBrowserIndex = -1;
 	char imagePath[MAXJOLIET + 1];
 	
@@ -1136,7 +1136,7 @@ static int MenuGameSelection()
 			snprintf(imagePath, MAXJOLIET, "%s%s/%s.png", pathPrefix[GCSettings.LoadMethod], getImageFolder(), browserList[browser.selIndex].displayname);
 			
 			int width, height;
-			if(DecodePNGFromFile(imagePath, &width, &height, imgBuffer, 640, 480))
+			if(DecodePNGFromFile(imagePath, &width, &height, imgBuffer, 640, 512))
 			{
 				preview.SetImage(imgBuffer, width, height);
 				preview.SetScale( MIN(225.0f / width, 235.0f / height) );
