@@ -592,7 +592,7 @@ u8 * DecodePNGFromFile(const char *filepath, int * width, int * height, u8 *dstP
 	PNGUPROP imgProp;
 	u8 *dst = NULL;
 
-	if(PNGU_GetImageProperties(ctx, &imgProp) == PNGU_OK && imgProp.imgWidth <= maxwidth && imgProp.imgHeight < maxheight)
+	if(PNGU_GetImageProperties(ctx, &imgProp) == PNGU_OK && imgProp.imgWidth <= maxwidth && imgProp.imgHeight <= maxheight)
 		dst = PNGU_DecodeTo4x4RGBA8 (ctx, imgProp.imgWidth, imgProp.imgHeight, width, height, dstPtr, maxwidth, maxheight);
 
 	PNGU_ReleaseImageContext (ctx);
