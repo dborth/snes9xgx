@@ -39,6 +39,13 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 ## UPDATE HISTORY
 
+[4.5.2 - March 23, 2021]
+
+* Added support for Mayflash 2-port SNES USB adapter (thanks EthanArmbrust!)
+* Added L+R+START for back to menu for Wii Classic Controller
+* Updated French translation (thanks Tanooki16!)
+* Fixed issue with displaying screenshots
+
 [4.5.1 - February 6, 2021]
 
 * Fixed SD2SP2 / SD gecko issues (again)
