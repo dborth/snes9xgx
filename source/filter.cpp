@@ -495,16 +495,26 @@ void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 template<int GuiScale>
 void Scanlines (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
 {
-	while (height--) {
-		uint16 *dp = (uint16 *) dstPtr;
-		for (int i = 0; i < width; ++i, dp += 2) {
-			uint16 sp = *((uint16 *)srcPtr + i);
-			*(dp) = sp;
-			*(dp + 1) = sp;
-			*(dp + dstPitch) = 0;
-			*(dp + dstPitch + 1) = 0;
+	unsigned int nextlineSrc = srcPitch / sizeof(uint16);
+	uint16 *p = (uint16 *)srcPtr;
+
+	unsigned int nextlineDst = dstPitch / sizeof(uint16);
+	uint16 *q = (uint16 *)dstPtr;
+
+	while(height--) {
+		for (int i = 0, j = 0; i < width; ++i, j += 2) {
+			uint16 p1 = *(p + i);
+			uint32 pi;
+
+			pi = (((p1 & Mask_2) * 6) >> 3) & Mask_2;
+			pi |= (((p1 & Mask13) * 6) >> 3) & Mask13;
+
+			*(q + j) = p1;
+			*(q + j + 1) = p1;
+			*(q + j + nextlineDst) = (uint16)pi;
+			*(q + j + nextlineDst + 1) = (uint16)pi;
 		}
-		dstPtr += dstPitch<<1;
-		srcPtr += srcPitch;
+		p += nextlineSrc;
+		q += nextlineDst << 1;
 	}
 }
