@@ -751,7 +751,7 @@ LoadSzFile(char * filepath, unsigned char * rbuffer)
 	HaltParseThread();
 
 	file = fopen (filepath, "rb");
-	if (file > 0)
+	if (file)
 	{
 		size = SzExtractFile(browserList[browser.selIndex].filenum, rbuffer);
 		fclose (file);
