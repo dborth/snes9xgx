@@ -5,22 +5,22 @@ msgid "16:9 Correction"
 msgstr 16:9 Correctie"
 
 msgid "7z decompression failed: Archive contains too many files"
-msgstr "7z decompressie mislukt: te veel bestanden in archief"
+msgstr "7z uitpakken mislukt: te veel bestanden in het archief"
 
 msgid "7z decompression failed: Failed to read file data"
-msgstr "7z decompressie mislukt: fout bij lezen van bestand"
+msgstr "7z uitpakken mislukt: fout bij het lezen van het bestand"
 
 msgid "7z decompression failed: File is corrupt"
-msgstr "7z decompressie mislukt: fout bij lezen van bestand"
+msgstr "7z uitpakken mislukt: bestand is corrupt"
 
 msgid "7z decompression failed: File is corrupt (CRC mismatch)"
-msgstr "7z decompressie mislukt: fout bij lezen van bestand (CRC komt niet overeen)"
+msgstr "7z uitpakken mislukt: bestand is corrupt (CRC komt niet overeen)"
 
 msgid "7z decompression failed: File uses too high of compression settings (dictionary size is too large)"
-msgstr "7z decompressie mislukt: bestand gebruikt een te hoge compressie (woordenboek is te groot)"
+msgstr "7z uitpakken mislukt: bestand gebruikt een te hoge compressie (woordenboek is te groot)"
 
 msgid "7z decompression failed: File uses unsupported compression settings"
-msgstr "7z decompressie mislukt: bestand gebruikt een niet ondersteunde compressie"
+msgstr "7z uitpakken mislukt: bestand gebruikt niet ondersteunde compressie instellingen"
 
 msgid "A (Rapid)"
 msgstr "A (Snel)"
@@ -50,19 +50,19 @@ msgid "Attempting to determine load device..."
 msgstr "Poging om het laadapparaat te bepalen..."
 
 msgid "Attempting to determine save device..."
-msgstr "Poging om het opslaanapparaat te bepalen..."
+msgstr "Poging om het opslagapparaat te bepalen..."
 
 msgid "Auto"
 msgstr "Auto"
 
 msgid "Auto Detect"
-msgstr "Detecteer Automatisch"
+msgstr "Automatisch Detecteren"
 
 msgid "Auto Load"
-msgstr "Auto Openen"
+msgstr "Automatisch Openen"
 
 msgid "Auto Save"
-msgstr "Auto Opslaan"
+msgstr "Automatisch Opslaan"
 
 msgid "Automatic (Recommended)"
 msgstr "Automatisch (Aanbevolen)"
@@ -77,7 +77,7 @@ msgid "Both"
 msgstr "Beide"
 
 msgid "Button Mapping"
-msgstr "Controller"
+msgstr "Controller Instelling"
 
 msgid "Button Mappings"
 msgstr "Controller Instellingen"
@@ -86,7 +86,7 @@ msgid "Cancel"
 msgstr "Annuleren"
 
 msgid "Caps"
-msgstr "Caps"
+msgstr "Hoofdletters"
 
 msgid "Cheats"
 msgstr "Cheats"
@@ -113,7 +113,7 @@ msgid "Coding & menu design"
 msgstr "Programmering & menu ontwerp"
 
 msgid "Compressed GBA files are not supported!"
-msgstr "Gecomprimeerde GBA bestanden zijn niet ondersteund!"
+msgstr "Gecomprimeerde GBA bestanden worden niet ondersteund!"
 
 msgid "Connecting to network share..."
 msgstr "Verbinden met gedeelde map..."
@@ -122,10 +122,10 @@ msgid "Controller"
 msgstr "Controller"
 
 msgid "Cover View"
-msgstr "Hoes Weergave"
+msgstr "Omslag Weergave"
 
 msgid "Covers Folder"
-msgstr "Hoezen map"
+msgstr "Omslagmap"
 
 msgid "Credits"
 msgstr "Credits"
@@ -215,10 +215,10 @@ msgid "Exit"
 msgstr "Afsluiten"
 
 msgid "Exit Action"
-msgstr "Afsluitactie"
+msgstr "Actie afsluiten"
 
 msgid "Failed to connect to network share."
-msgstr "Verbinden met gedeelde map is mislukt."
+msgstr "Verbinden met de gedeelde map is mislukt."
 
 msgid "FDS BIOS file is invalid!"
 msgstr "FDS BIOS bestand is verkeerd!"
@@ -227,10 +227,10 @@ msgid "FDS BIOS file not found!"
 msgstr "FDS BIOS bestand kan niet gevonden worden!"
 
 msgid "Filtered"
-msgstr "Gesorteerd"
+msgstr "Gefilterd"
 
 msgid "Filtering"
-msgstr "Sortering"
+msgstr "Filteren"
 
 msgid "Fire"
 msgstr "Vuren"
@@ -239,7 +239,7 @@ msgid "French"
 msgstr "Frans"
 
 msgid "GBA Screen Zoom"
-msgstr "GBA Scherm Zomen"
+msgstr "GBA Scherm Zoomen"
 
 msgid "Game Genie ROM not found!"
 msgstr "Game Genie ROM niet gevonden!"
@@ -308,10 +308,10 @@ msgid "Invalid network settings - Share name is blank."
 msgstr "Verkeerde netwerk instellingen - Gedeelde map is niet opgegeven."
 
 msgid "Invalid save file"
-msgstr "Invalide opgeslagen bestand"
+msgstr "Ongeldig opslagbestand"
 
 msgid "Invalid state file"
-msgstr "Invalide status bestand"
+msgstr "Ongeldige status bestand"
 
 msgid "Italian"
 msgstr "Italiaans"
@@ -446,7 +446,6 @@ msgid "No game saves found."
 msgstr "Geen opgeslagen spellen gevonden."
 
 msgid "None"
-
 msgstr "Geen"
 
 msgid "NTSC (480i)"
@@ -458,14 +457,14 @@ msgstr "Nunchuk"
 msgid "Off"
 msgstr "Uit"
 
-msgid "Official Site: http://code.google.com/p/fceugc/"
-msgstr "Officiële Website: http://code.google.com/p/fceugc/"
+msgid "Official Site: https://github.com/dborth/fceugx"
+msgstr "Officiële Website: https://github.com/dborth/fceugx"
 
-msgid "Official Site: http://code.google.com/p/snes9x-gx/"
-msgstr "Officiële Website: http://code.google.com/p/snes9x-gx/"
+msgid "Official Site: https://github.com/dborth/snes9xgx"
+msgstr "Officiële Website: https://github.com/dborth/snes9xgx"
 
-msgid "Official Site: http://code.google.com/p/vba-wii/"
-msgstr "Officiële Website: http://code.google.com/p/vba-wii/"
+msgid "Official Site: https://github.com/dborth/vbagx"
+msgstr "Officiële Website: https://github.com/dborth/vbagx"
 
 msgid "OK"
 msgstr "OK"
@@ -546,7 +545,7 @@ msgid "Quit Game"
 msgstr "Spel Afsluiten"
 
 msgid "Quit this game? Any unsaved progress will be lost."
-msgstr "Sluit dit spel af? Niet opgeslagen gegevens zullen verloren gaan."
+msgstr "Spel stoppen? Niet opgeslagen gegevens zullen verloren gaan."
 
 msgid "R TRIG"
 msgstr "R"
@@ -558,7 +557,7 @@ msgid "Reboot"
 msgstr "Herstart"
 
 msgid "Rendering"
-msgstr "Rendering"
+msgstr "Renderen"
 
 msgid "Reset"
 msgstr "Reset"
@@ -645,13 +644,13 @@ msgid "Screen Position"
 msgstr "Schermpositie"
 
 msgid "Screen Zoom"
-msgstr "Zomen"
+msgstr "Zoomen"
 
 msgid "Select"
 msgstr "Selecteer"
 
 msgid "Seek error!"
-msgstr "Zoekfout!"
+msgstr "Zoek fout!"
 
 msgid "Settings"
 msgstr "Instellingen"
@@ -725,8 +724,8 @@ msgstr "SNES Muis - GameCube Controller"
 msgid "SNES Mouse - Wiimote"
 msgstr "SNES Muis - Wiimote"
 
-msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
-msgstr "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
+msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2021"
+msgstr "Snes9x - Copyright (c) Snes9x Team 1996 - 2021"
 
 msgid "Sound Effects Volume"
 msgstr "Volume Geluidseffecten"
@@ -771,10 +770,10 @@ msgid "Unable to initialize network!"
 msgstr "Kan netwerk niet initialiseren!"
 
 msgid "Unable to locate a load device!"
-msgstr "Kan laad apparaat niet vinden!"
+msgstr "Kan laadapparaat niet vinden!"
 
 msgid "Unable to locate a save device!"
-msgstr "Kan opslaan apparaat niet vinden!"
+msgstr "Kan opslagapparaat niet vinden!"
 
 msgid "Unable to open snapshot!"
 msgstr "Kan snapshot niet openen!"
@@ -831,10 +830,10 @@ msgid "Video Mode"
 msgstr "Video Modus"
 
 msgid "VM8: Unknown page type!"
-msgstr "VM8: Onbekend pagina type!"
+msgstr "VM8: Onbekende pagina type!"
 
 msgid "VM16: Unknown page type!"
-msgstr "VM16: Onbekend pagina type!"
+msgstr "VM16: Onbekende pagina type!"
 
 msgid "VM32: Unknown page type!"
-msgstr "VM32: Onbekend pagina type!"
+msgstr "VM32: Onbekende pagina type!"

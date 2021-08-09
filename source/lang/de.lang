@@ -457,14 +457,14 @@ msgstr ""
 msgid "Off"
 msgstr "Aus"
 
-msgid "Official Site: http://code.google.com/p/fceugc/"
-msgstr "Offizielle Seite: http://code.google.com/p/fceugc/"
+msgid "Official Site: https://github.com/dborth/fceugx"
+msgstr "Offizielle Seite: https://github.com/dborth/fceugx"
 
-msgid "Official Site: http://code.google.com/p/snes9x-gx/"
-msgstr "Offizielle Seite: http://code.google.com/p/snes9x-gx/"
+msgid "Official Site: https://github.com/dborth/snes9xgx"
+msgstr "Offizielle Seite: https://github.com/dborth/snes9xgx"
 
-msgid "Official Site: http://code.google.com/p/vba-wii/"
-msgstr "Offizielle Seite: http://code.google.com/p/vba-wii/"
+msgid "Official Site: https://github.com/dborth/vbagx"
+msgstr "Offizielle Seite: https://github.com/dborth/vbagx"
 
 msgid "OK"
 msgstr ""
@@ -724,7 +724,7 @@ msgstr "SNES Maus - GameCube Controller"
 msgid "SNES Mouse - Wiimote"
 msgstr "SNES Maus - Wii-FB"
 
-msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
+msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2021"
 msgstr ""
 
 msgid "Sound Effects Volume"
