@@ -463,14 +463,14 @@ msgstr "Nunchuk"
 msgid "Off"
 msgstr "Kapalı"
 
-msgid "Official Site: http://code.google.com/p/fceugc/"
-msgstr "Resmi Site: http://code.google.com/p/fceugc/"
+msgid "Official Site: https://github.com/dborth/fceugx"
+msgstr "Resmi Site: https://github.com/dborth/fceugx"
 
-msgid "Official Site: http://code.google.com/p/snes9x-gx/"
-msgstr "Resmi Site: http://code.google.com/p/snes9x-gx/"
+msgid "Official Site: https://github.com/dborth/snes9xgx"
+msgstr "Resmi Site: https://github.com/dborth/snes9xgx"
 
-msgid "Official Site: http://code.google.com/p/vba-wii/"
-msgstr "Resmi Site: http://code.google.com/p/vba-wii/"
+msgid "Official Site: https://github.com/dborth/vbagx"
+msgstr "Resmi Site: https://github.com/dborth/vbagx"
 
 msgid "OK"
 msgstr "Tamam"
@@ -733,8 +733,8 @@ msgstr "SNES Faresi - GameCube Oyun Kumandası"
 msgid "SNES Mouse - Wiimote"
 msgstr "SNES Faresi - Wii Kumanda"
 
-msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
-msgstr "Snes9x - Telif Hakkı (c) Snes9x Team 1996-2006"
+msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2021"
+msgstr "Snes9x - Telif Hakkı (c) Snes9x Team 1996-2021"
 
 msgid "Sound Effects Volume"
 msgstr "Efekt Sesleri"

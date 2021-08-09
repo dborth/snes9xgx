@@ -463,14 +463,14 @@ msgstr "ヌンチャク"
 msgid "Off"
 msgstr "オフ"
 
-msgid "Official Site: http://code.google.com/p/fceugc/"
-msgstr "公式サイト:http://code.google.com/p/fceugc/"
+msgid "Official Site: https://github.com/dborth/fceugx"
+msgstr "公式サイト:https://github.com/dborth/fceugx"
 
-msgid "Official Site: http://code.google.com/p/snes9x-gx/"
-msgstr "公式サイト: http://code.google.com/p/snes9x-gx/"
+msgid "Official Site: https://github.com/dborth/snes9xgx"
+msgstr "公式サイト: https://github.com/dborth/snes9xgx"
 
-msgid "Official Site: http://code.google.com/p/vba-wii/"
-msgstr "公式サイト: http://code.google.com/p/vba-wii/"
+msgid "Official Site: https://github.com/dborth/vbagx"
+msgstr "公式サイト: https://github.com/dborth/vbagx"
 
 msgid "OK"
 msgstr "OK"
@@ -733,8 +733,8 @@ msgstr "マウス - GCコン"
 msgid "SNES Mouse - Wiimote"
 msgstr "マウス - Wiiリモコン"
 
-msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2006"
-msgstr "Snes9x - 著作権(c) Snes9xチーム1996-2006"
+msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2021"
+msgstr "Snes9x - 著作権(c) Snes9xチーム1996-2021"
 
 msgid "Sound Effects Volume"
 msgstr "効果音の音量"
