@@ -24,6 +24,10 @@
 #include "netplay.h"
 #endif
 
+#ifdef GEKKO
+#include "snes9xgx.h"
+#endif
+
 using namespace	std;
 
 #define NONE					(-2)
@@ -3202,6 +3206,9 @@ void S9xControlEOF (void)
 						DoGunLatch(superscope.x, superscope.y);
 
 					c = &superscope.crosshair;
+					#ifdef GEKKO
+					if(GCSettings.crosshair)
+					#endif
 					if (IPPU.RenderThisFrame)
 						S9xDrawCrosshair(S9xGetCrosshair(c->img), c->fg, c->bg, superscope.x, superscope.y);
 				}
@@ -3212,6 +3219,9 @@ void S9xControlEOF (void)
 				if (n == 1 && !justifier.offscreen[1])
 				{
 					c = &justifier.crosshair[1];
+					#ifdef GEKKO
+					if(GCSettings.crosshair)
+					#endif
 					if (IPPU.RenderThisFrame)
 						S9xDrawCrosshair(S9xGetCrosshair(c->img), c->fg, c->bg, justifier.x[1], justifier.y[1]);
 				}
@@ -3231,6 +3241,9 @@ void S9xControlEOF (void)
 					if (!justifier.offscreen[0])
 					{
 						c = &justifier.crosshair[0];
+						#ifdef GEKKO
+						if(GCSettings.crosshair)
+						#endif
 						if (IPPU.RenderThisFrame)
 							S9xDrawCrosshair(S9xGetCrosshair(c->img), c->fg, c->bg, justifier.x[0], justifier.y[0]);
 					}

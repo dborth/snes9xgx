@@ -24,6 +24,9 @@
 #include "snes9x/memmap.h"
 #include "snes9x/srtc.h"
 
+bool HiROM;
+bool LoROM;
+
 /****************************************************************************
  * Load SRAM
  ***************************************************************************/
@@ -41,12 +44,14 @@ LoadSRAM (char * filepath, bool silent)
 
 	int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
 
-	if (size > 0x20000)
-		size = 0x20000;
+	if (LoROM)
+		size = size < 0x70000 ? size : 0x70000;
+	else if (HiROM)
+		size = size < 0x40000 ? size : 0x40000;
 
 	if (size)
 	{
-		len = LoadFile((char *)Memory.SRAM, filepath, 0, 0x20000, silent);
+		len = LoadFile((char *)Memory.SRAM, filepath, 0, size, silent);
 
 		if (len > 0)
 		{
@@ -120,8 +125,10 @@ SaveSRAM (char * filepath, bool silent)
 	// determine SRAM size
 	int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
 
-	if (size > 0x20000)
-		size = 0x20000;
+	if (LoROM)
+		size = size < 0x70000 ? size : 0x70000;
+	else if (HiROM)
+		size = size < 0x40000 ? size : 0x40000;
 
 	if (size > 0)
 	{
