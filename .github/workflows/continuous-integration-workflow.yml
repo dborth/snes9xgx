@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    name: ubuntu-20.04
+    name: Build Snes9x GX
     runs-on: ubuntu-20.04
     container: devkitpro/devkitppc:latest
  
