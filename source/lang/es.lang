@@ -155,7 +155,7 @@ msgid "Delete Saves"
 msgstr "Eliminar partidas"
 
 msgid "Delete this save file? Deleted files can not be restored."
-msgstr "¿Eliminar este archivo guardado?"
+msgstr "¿Eliminar este archivo guardado? Esto no se puede deshacer."
 
 msgid "Directory name is too long!"
 msgstr "¡El nombre del directorio es demasiado largo!"
