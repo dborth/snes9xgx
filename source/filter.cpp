@@ -34,7 +34,8 @@ static uint16 RGBtoBright[1<<NUMBITS];
 TFilterMethod FilterMethod;
 
 template<int GuiScale> void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
-template<int GuiScale> void Scanlines (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
+template<int GuiScale> void RenderScale2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
+template<int GuiScale> void RenderTVMode (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
 
 const char* GetFilterName (RenderFilter filterID)
 {
@@ -45,7 +46,8 @@ const char* GetFilterName (RenderFilter filterID)
 		case FILTER_HQ2X: return "hq2x";
 		case FILTER_HQ2XS: return "hq2x Soft";
 		case FILTER_HQ2XBOLD: return "hq2x Bold";
-		case FILTER_SCANLINES: return "Scanlines";
+		case FILTER_SCALE2X: return "Scale2x";
+		case FILTER_TVMODE: return "TV Mode";
 	}
 }
 
@@ -57,7 +59,8 @@ static TFilterMethod FilterToMethod (RenderFilter filterID)
         case FILTER_HQ2X:       return RenderHQ2X<FILTER_HQ2X>;
         case FILTER_HQ2XS:      return RenderHQ2X<FILTER_HQ2XS>;
         case FILTER_HQ2XBOLD:   return RenderHQ2X<FILTER_HQ2XBOLD>;
-		case FILTER_SCANLINES:  return Scanlines<FILTER_SCANLINES>;
+		case FILTER_SCALE2X:    return RenderScale2X<FILTER_SCALE2X>;
+		case FILTER_TVMODE:     return RenderTVMode<FILTER_TVMODE>;
 		default: return 0;
 	}
 }
@@ -72,7 +75,8 @@ int GetFilterScale(RenderFilter filterID)
         case FILTER_HQ2X:
         case FILTER_HQ2XS:
         case FILTER_HQ2XBOLD:
-		case FILTER_SCANLINES:
+		case FILTER_SCALE2X:
+		case FILTER_TVMODE:
 			return 2;
 	}
 }
@@ -493,7 +497,34 @@ void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 }
 
 template<int GuiScale>
-void Scanlines (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
+void RenderScale2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
+{
+	unsigned int nextlineSrc = srcPitch / sizeof(uint16);
+	uint16 *p = (uint16 *)srcPtr;
+
+	unsigned int nextlineDst = dstPitch / sizeof(uint16);
+	uint16 *q = (uint16 *)dstPtr;
+
+	while (height--) {
+		for (int i = 0; i < width; ++i) {
+			uint16 B = *(p + i - nextlineSrc);
+			uint16 D = *(p + i - 1);
+			uint16 E = *(p + i);
+			uint16 F = *(p + i + 1);
+			uint16 H = *(p + i + nextlineSrc);
+
+			*(q + (i << 1)) = D == B && B != F && D != H ? D : E;
+			*(q + (i << 1) + 1) = B == F && B != D && F != H ? F : E;
+			*(q + (i << 1) + nextlineDst) = D == H && D != B && H != F ? D : E;
+			*(q + (i << 1) + nextlineDst + 1) = H == F && D != H && B != F ? F : E;
+		}
+		p += nextlineSrc;
+		q += nextlineDst << 1;
+	}
+}
+
+template<int GuiScale>
+void RenderTVMode (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
 {
 	unsigned int nextlineSrc = srcPitch / sizeof(uint16);
 	uint16 *p = (uint16 *)srcPtr;
