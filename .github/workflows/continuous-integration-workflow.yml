@@ -6,6 +6,9 @@ jobs:
   build:
     name: Build Snes9x GX
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        image: ["Wii", "GameCube"]
     container: devkitpro/devkitppc:latest
  
     steps:
@@ -13,33 +16,46 @@ jobs:
       with:
         submodules: true
 
-    - name: Build
+    - name: Build Wii
+      if: ${{ matrix.image == 'Wii' }}
       run: |
-        make -j2
+        make -f Makefile.wii -j2
     
-    - name: Copy files
+    - name: Copy Wii artifact
+      if: ${{ matrix.image == 'Wii' }}
       run: | 
         mkdir -p dist/Snes9xGX/apps/snes9xgx
         mkdir -p dist/Snes9xGX/snes9xgx/roms
         mkdir dist/Snes9xGX/snes9xgx/cheats
         mkdir dist/Snes9xGX/snes9xgx/saves
-        mkdir dist/Snes9xGX-GameCube/
         touch dist/Snes9xGX/snes9xgx/roms/romsdir
         touch dist/Snes9xGX/snes9xgx/cheats/cheatsdir
         touch dist/Snes9xGX/snes9xgx/saves/savesdir
         cp hbc/* dist/Snes9xGX/apps/snes9xgx/
         cp executables/snes9xgx-wii.dol dist/Snes9xGX/apps/snes9xgx/boot.dol
-        cp executables/snes9xgx-gc.dol dist/Snes9xGX-GameCube/
 
-    - name: Upload Wii Build Artifacts
+    - name: Upload Wii artifacts
       uses: actions/upload-artifact@v2
+      if: ${{ matrix.image == 'Wii' }}
       with: 
         name: Snes9xGX
         path: |
          dist/Snes9xGX/
     
-    - name: Upload GameCube Build Artifacts
+    - name: Build GameCube
+      if: ${{ matrix.image == 'GameCube' }}
+      run: |
+        make -f Makefile.gc -j2
+        
+    - name: Copy GameCube artifact
+      if: ${{ matrix.image == 'GameCube' }}
+      run: | 
+        mkdir -p dist/Snes9xGX-GameCube
+        cp executables/snes9xgx-gc.dol dist/Snes9xGX-GameCube/
+    
+    - name: Upload GameCube artifact
       uses: actions/upload-artifact@v2
+      if: ${{ matrix.image == 'GameCube' }}
       with: 
         name: Snes9xGX-GameCube
         path: |
