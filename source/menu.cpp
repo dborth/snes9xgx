@@ -3502,10 +3502,6 @@ static int MenuSettingsVideo()
 		{
 			firstRun = false;
 
-			// don't allow original render mode if progressive video mode detected
-			if (GCSettings.render==0 && progressive)
-				GCSettings.render++;
-
 			if (GCSettings.render == 0)
 				sprintf (options.value[0], "Original");
 			else if (GCSettings.render == 1)
@@ -3513,9 +3509,9 @@ static int MenuSettingsVideo()
 			else if (GCSettings.render == 2)
 				sprintf (options.value[0], "Unfiltered");
 			else if (GCSettings.render == 3)
-				sprintf (options.value[0], "Filtered (Sharp)");
-			else if (GCSettings.render == 4)
 				sprintf (options.value[0], "Filtered (Soft)");
+			else if (GCSettings.render == 4)
+				sprintf (options.value[0], "Filtered (Sharp)");
 
 			if(GCSettings.widescreen)
 				sprintf (options.value[1], "16:9 Correction");
