@@ -907,6 +907,8 @@ static void S9xDeinterleaveGD24 (int size, uint8 *base)
 
 bool8 CMemory::Init (void)
 {
+	// TODO: If these change size, check other locations in the code that also
+	// have the fixed size. In the future, make this a static allocation.
     RAM	 = (uint8 *) memalign(32,0x20000);
     SRAM = (uint8 *) memalign(32,0x80000);
     VRAM = (uint8 *) memalign(32,0x10000);
@@ -1947,7 +1949,8 @@ void CMemory::ClearSRAM (bool8 onlyNonSavedSRAM)
 		if (!(Settings.SuperFX && ROMType < 0x15) && !(Settings.SA1 && ROMType == 0x34)) // can have SRAM
 			return;
 
-	memset(SRAM, SNESGameFixes.SRAMInitialValue, sizeof(SRAM));
+	// TODO: If SRAM size changes change this value as well
+	memset(SRAM, SNESGameFixes.SRAMInitialValue, (32,0x80000));
 }
 
 bool8 CMemory::LoadSRAM (const char *filename)
