@@ -3806,6 +3806,8 @@ void CMemory::ApplyROMFixes (void)
 		Timings.RenderPos = 128;
 	else if (match_na("AIR STRIKE PATROL") || match_na("DESERT FIGHTER"))
 		Timings.RenderPos = 128; // Just hides shadow
+	else if (match_na("FULL THROTTLE RACING"))
+		Timings.RenderPos = 128;
 	// From bsnes
 	else if (match_na("NHL '94") || match_na("NHL PROHOCKEY'94"))
 		Timings.RenderPos = 32;
