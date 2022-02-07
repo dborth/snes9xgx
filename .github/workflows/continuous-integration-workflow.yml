@@ -21,7 +21,7 @@ jobs:
       run: |
         make -f Makefile.wii -j2
     
-    - name: Copy Wii artifact
+    - name: Copy Wii artifacts
       if: ${{ matrix.image == 'Wii' }}
       run: | 
         mkdir -p dist/Snes9xGX/apps/snes9xgx
