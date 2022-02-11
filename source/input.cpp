@@ -491,23 +491,23 @@ static void UpdateCursorPosition (int chan, int &pos_x, int &pos_y)
 		if (wm_ax > ANALOG_SENSITIVITY)
 		{
 			pos_x += (wm_ax*1.0)/SCOPEPADCAL;
-			if (pos_x > 256) pos_x = 256;
+			/* if (pos_x > 256) pos_x = 256; */  // FIXED Issue #758 - Cursor can now move off screen when using GC/Classic Pad
 		}
 		else if (wm_ax < -ANALOG_SENSITIVITY)
 		{
 			pos_x -= (wm_ax*-1.0)/SCOPEPADCAL;
-			if (pos_x < 0) pos_x = 0;
+			/* if (pos_x < 0) pos_x = 0; */
 		}
 
 		if (wm_ay < -ANALOG_SENSITIVITY)
 		{
 			pos_y += (wm_ay*-1.0)/SCOPEPADCAL;
-			if (pos_y > 224) pos_y = 224;
+			/* if (pos_y > 224) pos_y = 224; */
 		}
 		else if (wm_ay > ANALOG_SENSITIVITY)
 		{
 			pos_y -= (wm_ay*1.0)/SCOPEPADCAL;
-			if (pos_y < 0) pos_y = 0;
+			/* if (pos_y < 0) pos_y = 0; */
 		}
 	}
 #endif
