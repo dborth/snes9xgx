@@ -34,6 +34,9 @@ msgstr "Añadir Auto a archivos .SAV"
 msgid "Apr"
 msgstr "Abril"
 
+msgid "Reset this game? Any unsaved progress will be lost."
+msgstr "¿Reiniciar el juego? Se perderá cualquier progreso no guardado."
+
 msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
 msgstr "¿Seguro que desea reiniciar el juego? Se perderá cualquier progreso no guardado."
 
