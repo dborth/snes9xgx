@@ -5,7 +5,7 @@ labels: question
 body:
   - type: markdown
     attributes:
-      value: **Feature requests will be closed immediately!**
+      value: Feature requests will be closed immediately!
   - type: textarea
     id: describe-question
     attributes:
