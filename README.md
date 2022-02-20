@@ -8,7 +8,24 @@ unsigned code on your Nintendo Wii. The best website for getting started with
 Wii homebrew is WiiBrew (www.wiibrew.org).
 
 
-## Nightly builds
+## TABLE OF CONTENTS
+ - [Nightly Builds](#nightly-builds)
+ - [Features](#features)
+ - [Update History](#update-history)
+ - [Installation](#installation)
+ - [Initial Setup](#initial-setup)
+ - [Configuration](#configuration)
+ - [File Browser](#file-browser)
+ - [Gameplay](#gameplay)
+ - [Cheats](#cheats)
+ - [Turbo Mode](#turbo-mode)
+ - [Importing and Exporting SRAM](#importing-and-exporting-sram)
+ - [Update History (OLD)](#update-history-old)
+ - [Credits](#credits)
+ - [Links](#links)
+
+
+## NIGHTLY BUILDS
 
 |Download nightly builds from continuous integration: 	| [![Build Status][Build]][Actions] 
 |-------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
