@@ -30,8 +30,8 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 |Download nightly builds from continuous integration: 	| [![Build Status][Build]][Actions] 
 |-------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 
-[Actions]: https://github.com/dborth/snes9xgx/actions
-[Build]: https://github.com/dborth/snes9xgx/workflows/Snes9x%20GX%20Build/badge.svg
+[Actions]: https://github.com/dborth/snes9xgx/actions/workflows/continuous-integration-workflow.yml
+[Build]: https://github.com/dborth/snes9xgx/actions/workflows/continuous-integration-workflow.yml/badge.svg
 
 
 ## FEATURES
