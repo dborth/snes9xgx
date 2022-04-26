@@ -289,8 +289,7 @@ int main(void)
 	S9xInitSound (5, TRUE, 1024);
 
 	// Initialise Graphics
-		
-//	setGFX ();
+
 	videoInit();
 	
 	if (!S9xGraphicsInit ())

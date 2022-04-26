@@ -34,7 +34,7 @@
 extern void UpdatePlaybackRate(void);
 
 /*** Snes9x GFX Buffer ***/
-#define SNES9XGFX_SIZE 		(EXT_PITCH*EXT_HEIGHT)
+#define SNES9XGFX_SIZE 		(GFX.Pitch*MAX_SNES_HEIGHT)
 #define FILTERMEM_SIZE 		(512*MAX_SNES_HEIGHT*4)
 
 static unsigned char * snes9xgfx = NULL;
@@ -828,7 +828,7 @@ update_video (int width, int height)
 	// convert image to texture
 	if (GCSettings.FilterMethod != FILTER_NONE && vheight <= 239 && vwidth <= 256)	// don't do filtering on game textures > 256 x 239
 	{
-		FilterMethod ((uint8*) GFX.Screen, EXT_PITCH, (uint8*) filtermem, vwidth*fscale*2, vwidth, vheight);
+		FilterMethod ((uint8*) GFX.Screen, GFX.Pitch, (uint8*) filtermem, vwidth*fscale*2, vwidth, vheight);
 		MakeTexture565((char *) filtermem, (char *) texturemem, vwidth*fscale, vheight*fscale);
 	}
 	else
@@ -883,19 +883,7 @@ void AllocGfxMem()
 	memset(filtermem, 0, FILTERMEM_SIZE);
 #endif
 
-	GFX.Pitch = EXT_PITCH;
-	GFX.Screen = (uint16*)(snes9xgfx + EXT_OFFSET);
-}
-
-/****************************************************************************
- * setGFX
- *
- * Setup the global GFX information for Snes9x
- ***************************************************************************/
-void
-setGFX ()
-{
-	GFX.Pitch = EXT_PITCH;
+	GFX.Screen = (uint16*)(snes9xgfx + (GFX.Pitch * 2 + 2 * 2));
 }
 
 /****************************************************************************

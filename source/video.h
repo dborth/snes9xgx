@@ -21,7 +21,6 @@ void AllocGfxMem();
 void InitGCVideo ();
 void StopGX();
 void ResetVideo_Emu();
-void setGFX();
 void update_video (int width, int height);
 void ResetVideo_Menu();
 void TakeScreenshot();

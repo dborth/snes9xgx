@@ -507,7 +507,6 @@ DefaultSettings ()
 
 	// Graphics
 	Settings.Transparency = true;
-	Settings.SupportHiRes = true;
 	Settings.MaxSpriteTilesPerLine = 34;
 	Settings.SkipFrames = AUTO_FRAMERATE;
 	Settings.TurboSkipFrames = 19;

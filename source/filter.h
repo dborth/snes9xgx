@@ -32,14 +32,6 @@ enum RenderFilter{
 	NUM_FILTERS
 };
 
-#define EXT_WIDTH (MAX_SNES_WIDTH + 4)
-#define EXT_PITCH (EXT_WIDTH * 2)
-#define EXT_HEIGHT (MAX_SNES_HEIGHT + 4)
-// Offset into buffer to allow a two pixel border around the whole rendered
-// SNES image. This is a speed up hack to allow some of the image processing
-// routines to access black pixel data outside the normal bounds of the buffer.
-#define EXT_OFFSET (EXT_PITCH * 2 + 2 * 2)
-
 typedef void (*TFilterMethod)(uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
 
 extern TFilterMethod FilterMethod;
