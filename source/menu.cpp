@@ -3545,11 +3545,11 @@ static int MenuSettingsVideo()
 				case 0:
 					sprintf (options.value[9], "Default"); break;
 				case 1:
-					sprintf (options.value[8], "20 MHz"); break;
+					sprintf (options.value[9], "20 MHz"); break;
 				case 2:
-					sprintf (options.value[8], "40 MHz"); break;
+					sprintf (options.value[9], "40 MHz"); break;
 				case 3:
-					sprintf (options.value[8], "60 MHz"); break;
+					sprintf (options.value[9], "60 MHz"); break;
 			}
 			optionBrowser.TriggerUpdate();
 		}
