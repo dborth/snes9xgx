@@ -3484,14 +3484,15 @@ static int MenuSettingsVideo()
 				break;
 			case 9:
 				GCSettings.sfxOverclock++;
-				if (GCSettings.sfxOverclock > 2) {
+				if (GCSettings.sfxOverclock > 3) {
 					GCSettings.sfxOverclock = 0;
 				}
 				switch(GCSettings.sfxOverclock)
 				{
 					case 0: Settings.SuperFXSpeedPerLine = 5823405; break;
-					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
-					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
+					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 20.5e6; break;
+					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
+					case 3: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
 				}
 				S9xResetSuperFX();
 				S9xReset();
@@ -3544,8 +3545,10 @@ static int MenuSettingsVideo()
 				case 0:
 					sprintf (options.value[9], "Default"); break;
 				case 1:
-					sprintf (options.value[9], "40 MHz"); break;
+					sprintf (options.value[9], "20 MHz"); break;
 				case 2:
+					sprintf (options.value[9], "40 MHz"); break;
+				case 3:
 					sprintf (options.value[9], "60 MHz"); break;
 			}
 			optionBrowser.TriggerUpdate();
