@@ -3389,7 +3389,7 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Show Framerate");
 	sprintf(options.name[i++], "Show Local Time");
 	sprintf(options.name[i++], "SuperFX Overclock");
-	sprintf(options.name[i++], "Fast Forward");
+	sprintf(options.name[i++], "Enable Turbo Mode");
 	options.length = i;
 	
 #ifdef HW_DOL
