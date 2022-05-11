@@ -3389,6 +3389,7 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Show Framerate");
 	sprintf(options.name[i++], "Show Local Time");
 	sprintf(options.name[i++], "SuperFX Overclock");
+	sprintf(options.name[i++], "Fast Forward");
 	options.length = i;
 	
 #ifdef HW_DOL
@@ -3497,6 +3498,11 @@ static int MenuSettingsVideo()
 				S9xResetSuperFX();
 				S9xReset();
 				break;
+			case 10:
+				GCSettings.TurboModeEnabled++;
+				if (GCSettings.TurboModeEnabled > 1)
+					GCSettings.TurboModeEnabled = 0;
+				break;
 		}
 
 		if(ret >= 0 || firstRun)
@@ -3551,6 +3557,7 @@ static int MenuSettingsVideo()
 				case 3:
 					sprintf (options.value[9], "60 MHz"); break;
 			}
+			sprintf (options.value[10], "%s", GCSettings.TurboModeEnabled == 1 ? "On" : "Off");
 			optionBrowser.TriggerUpdate();
 		}
 

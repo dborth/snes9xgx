@@ -154,6 +154,7 @@ preparePrefsData ()
 	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
 	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(GCSettings.sfxOverclock));
 	createXMLSetting("Interpolation", "Interpolation", toStr(GCSettings.Interpolation));
+	createXMLSetting("TurboModeEnabled", "Turbo Mode Enabled", toStr(GCSettings.TurboModeEnabled));
 
 	createXMLSection("Menu", "Menu Settings");
 
@@ -337,6 +338,7 @@ decodePrefsData ()
 			loadXMLSetting(&GCSettings.FilterMethod, "FilterMethod");
 			loadXMLSetting(&GCSettings.xshift, "xshift");
 			loadXMLSetting(&GCSettings.yshift, "yshift");
+			loadXMLSetting(&GCSettings.TurboModeEnabled, "TurboModeEnabled");
 			
 			// Audio Settings
 			
@@ -529,6 +531,8 @@ DefaultSettings ()
 	Settings.OneClockCycle = 6;
 	Settings.OneSlowClockCycle = 8;
 	Settings.TwoClockCycles = 12;
+
+	GCSettings.TurboModeEnabled = 1; // Enabled by default
 }
 
 /****************************************************************************
