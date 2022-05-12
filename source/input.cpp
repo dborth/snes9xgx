@@ -747,12 +747,15 @@ void ReportButtons ()
 
 	UpdatePads();
 
-	Settings.TurboMode = (
-		userInput[0].pad.substickX > 70 ||
-		userInput[0].WPAD_StickX(1) > 70 ||
-		userInput[0].wiidrcdata.substickX > 45
-	);	// RIGHT on c-stick and on classic controller right joystick
-
+	if (GCSettings.TurboModeEnabled == 1)
+	{
+		Settings.TurboMode = (
+			userInput[0].pad.substickX > 70 ||
+			userInput[0].WPAD_StickX(1) > 70 ||
+			userInput[0].wiidrcdata.substickX > 45
+		);	// RIGHT on c-stick and on classic controller right joystick
+	}
+	
 	if(Settings.TurboMode) {
 		Settings.SoundSync = false;
 	}
