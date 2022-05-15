@@ -2459,7 +2459,7 @@ static int MenuSettingsMappings()
 	GuiImage mouseBtnIcon(&iconMouse);
 	GuiButton mouseBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	mouseBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	mouseBtn.SetPosition(-125, 250);
+	mouseBtn.SetPosition(-200, 250);
 	mouseBtn.SetLabel(&mouseBtnTxt);
 	mouseBtn.SetImage(&mouseBtnImg);
 	mouseBtn.SetImageOver(&mouseBtnImgOver);
@@ -2476,7 +2476,7 @@ static int MenuSettingsMappings()
 	GuiImage justifierBtnIcon(&iconJustifier);
 	GuiButton justifierBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
 	justifierBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	justifierBtn.SetPosition(125, 250);
+	justifierBtn.SetPosition(0, 250);
 	justifierBtn.SetLabel(&justifierBtnTxt);
 	justifierBtn.SetImage(&justifierBtnImg);
 	justifierBtn.SetImageOver(&justifierBtnImgOver);
@@ -2486,6 +2486,21 @@ static int MenuSettingsMappings()
 	justifierBtn.SetTrigger(trigA);
 	justifierBtn.SetTrigger(trig2);
 	justifierBtn.SetEffectGrow();
+
+	GuiText turboBtnTxt("Turbo Mode", 22, (GXColor){0, 0, 0, 255});
+	GuiImage turboBtnImg(&btnLargeOutline);
+	GuiImage turboBtnImgOver(&btnLargeOutlineOver);
+	GuiButton turboBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	turboBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	turboBtn.SetPosition(200, 250);
+	turboBtn.SetLabel(&turboBtnTxt);
+	turboBtn.SetImage(&turboBtnImg);
+	turboBtn.SetImageOver(&turboBtnImgOver);
+	turboBtn.SetSoundOver(&btnSoundOver);
+	turboBtn.SetSoundClick(&btnSoundClick);
+	turboBtn.SetTrigger(trigA);
+	turboBtn.SetTrigger(trig2);
+	turboBtn.SetEffectGrow();
 
 	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -2509,6 +2524,7 @@ static int MenuSettingsMappings()
 	w.Append(&superscopeBtn);
 	w.Append(&mouseBtn);
 	w.Append(&justifierBtn);
+	w.Append(&turboBtn);
 
 	w.Append(&backBtn);
 
@@ -2539,6 +2555,10 @@ static int MenuSettingsMappings()
 		{
 			menu = MENU_GAMESETTINGS_MAPPINGS_CTRL;
 			mapMenuCtrlSNES = CTRL_JUST;
+		}
+		else if(turboBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_GAMESETTINGS_TURBOMODE;
 		}
 		else if(backBtn.GetState() == STATE_CLICKED)
 		{
@@ -3371,6 +3391,97 @@ static void ScreenPositionWindow()
 	delete(settingText);
 }
 
+static int MenuSettingsTurboMode()
+{
+	int menu = MENU_NONE;
+	int ret;
+	int i = 0;
+	bool firstRun = true;
+	OptionList options;
+
+	sprintf(options.name[i++], "Enable Turbo Mode");
+	///sprintf(options.name[i++], "Turbo Mode Button");
+
+	options.length = i;
+
+	for(i=0; i < options.length; i++)
+		options.value[i][0] = 0;
+
+	GuiText titleTxt("Turbo Mode Settings", 26, (GXColor){255, 255, 255, 255});
+	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
+	titleTxt.SetPosition(50,50);
+
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
+	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND_PCM);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+
+	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
+	GuiImage backBtnImg(&btnOutline);
+	GuiImage backBtnImgOver(&btnOutlineOver);
+	GuiButton backBtn(btnOutline.GetWidth(), btnOutline.GetHeight());
+	backBtn.SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
+	backBtn.SetPosition(50, -35);
+	backBtn.SetLabel(&backBtnTxt);
+	backBtn.SetImage(&backBtnImg);
+	backBtn.SetImageOver(&backBtnImgOver);
+	backBtn.SetSoundOver(&btnSoundOver);
+	backBtn.SetSoundClick(&btnSoundClick);
+	backBtn.SetTrigger(trigA);
+	backBtn.SetTrigger(trig2);
+	backBtn.SetEffectGrow();
+
+	GuiOptionBrowser optionBrowser(552, 248, &options);
+	optionBrowser.SetPosition(0, 108);
+	optionBrowser.SetCol2Position(200);
+	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+
+	HaltGui();
+	GuiWindow w(screenwidth, screenheight);
+	w.Append(&backBtn);
+	mainWindow->Append(&optionBrowser);
+	mainWindow->Append(&w);
+	mainWindow->Append(&titleTxt);
+	ResumeGui();
+
+	while(menu == MENU_NONE)
+	{
+		usleep(THREAD_SLEEP);
+
+		ret = optionBrowser.GetClickedOption();
+
+		switch (ret)
+		{
+			case 0:
+				GCSettings.TurboModeEnabled ^= 1;
+				break;
+
+			// case 1:
+			// 	break;
+
+			optionBrowser.TriggerUpdate();
+		}
+
+		if(ret >= 0 || firstRun)
+		{
+			firstRun = false;
+			sprintf (options.value[0], "%s", GCSettings.TurboModeEnabled == 1 ? "On" : "Off");
+			//sprintf (options.value[1], "%s", GCSettings.TurboModeEnabled == 1 ? "On" : "Off");
+			optionBrowser.TriggerUpdate();
+		}
+
+		if(backBtn.GetState() == STATE_CLICKED)
+		{
+			menu = MENU_GAMESETTINGS_MAPPINGS;
+		}
+	}
+	HaltGui();
+	mainWindow->Remove(&optionBrowser);
+	mainWindow->Remove(&w);
+	mainWindow->Remove(&titleTxt);
+	return menu;
+}
+
 static int MenuSettingsVideo()
 {
 	int menu = MENU_NONE;
@@ -3389,7 +3500,6 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Show Framerate");
 	sprintf(options.name[i++], "Show Local Time");
 	sprintf(options.name[i++], "SuperFX Overclock");
-	sprintf(options.name[i++], "Enable Turbo Mode");
 	options.length = i;
 	
 #ifdef HW_DOL
@@ -3498,11 +3608,6 @@ static int MenuSettingsVideo()
 				S9xResetSuperFX();
 				S9xReset();
 				break;
-			case 10:
-				GCSettings.TurboModeEnabled++;
-				if (GCSettings.TurboModeEnabled > 1)
-					GCSettings.TurboModeEnabled = 0;
-				break;
 		}
 
 		if(ret >= 0 || firstRun)
@@ -3557,7 +3662,6 @@ static int MenuSettingsVideo()
 				case 3:
 					sprintf (options.value[9], "60 MHz"); break;
 			}
-			sprintf (options.value[10], "%s", GCSettings.TurboModeEnabled == 1 ? "On" : "Off");
 			optionBrowser.TriggerUpdate();
 		}
 
@@ -4520,6 +4624,9 @@ MainMenu (int menu)
 				break;
 			case MENU_SETTINGS_NETWORK:
 				currentMenu = MenuSettingsNetwork();
+				break;
+			case MENU_GAMESETTINGS_TURBOMODE:
+				currentMenu = MenuSettingsTurboMode();
 				break;
 			default: // unrecognized menu
 				currentMenu = MenuGameSelection();
