@@ -3466,8 +3466,6 @@ static int MenuSettingsTurboMode()
 				if (GCSettings.TurboModeButton > 14)
 					GCSettings.TurboModeButton = 0;
 				break;
-
-			optionBrowser.TriggerUpdate();
 		}
 
 		if(ret >= 0 || firstRun)
