@@ -735,6 +735,83 @@ bool MenuRequested()
 	return false;
 }
 
+bool TurboModeInputPressed()
+{
+	switch(GCSettings.TurboModeButton)
+	{
+		case 0:
+			return (
+				userInput[0].pad.substickX > 70 ||
+				userInput[0].WPAD_StickX(1) > 70 ||
+				userInput[0].wiidrcdata.substickX > 45);
+		case 1:
+			return (
+				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_A ||
+				userInput[0].wpad->btns_h & WPAD_BUTTON_A ||
+				userInput[0].pad.btns_h & PAD_BUTTON_A ||
+				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_A);
+		case 2:
+			return (
+				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_B ||
+				userInput[0].wpad->btns_h & WPAD_BUTTON_B ||
+				userInput[0].pad.btns_h & PAD_BUTTON_B ||
+				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_B);
+		case 3:
+			return (
+				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_X ||
+				userInput[0].pad.btns_h & PAD_BUTTON_X ||
+				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_X);
+		case 4:
+			return (
+				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_Y ||
+				userInput[0].pad.btns_h & PAD_BUTTON_Y ||
+				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_Y);
+		case 5:
+			return (
+				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_L ||
+				userInput[0].pad.btns_h & PAD_TRIGGER_L ||
+				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_L);
+		case 6:
+			return (
+				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_R ||
+				userInput[0].pad.btns_h & PAD_TRIGGER_R ||
+				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_R);
+		case 7:
+			return (
+				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_ZL ||
+				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_ZL);
+		case 8:
+			return (
+				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_ZR ||
+				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_ZR);
+		case 9:
+			return (
+				userInput[0].pad.btns_h & PAD_TRIGGER_Z ||
+				userInput[0].wpad->btns_h & WPAD_NUNCHUK_BUTTON_Z);
+		case 10:
+			return (
+				userInput[0].wpad->btns_h & WPAD_NUNCHUK_BUTTON_C);
+		case 11:
+			return (
+				userInput[0].wpad->btns_h & WPAD_BUTTON_1);
+		case 12:
+			return (
+				userInput[0].wpad->btns_h & WPAD_BUTTON_2);
+		case 13:
+			return (
+				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_PLUS ||
+				userInput[0].wpad->btns_h & WPAD_BUTTON_PLUS ||
+				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_PLUS);
+		case 14:
+			return (
+				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_MINUS ||
+				userInput[0].wpad->btns_h & WPAD_BUTTON_MINUS ||
+				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_MINUS);
+		default:
+			return false;
+	}
+}
+
 /****************************************************************************
  * ReportButtons
  *
@@ -749,11 +826,7 @@ void ReportButtons ()
 
 	if (GCSettings.TurboModeEnabled == 1)
 	{
-		Settings.TurboMode = (
-			userInput[0].pad.substickX > 70 ||
-			userInput[0].WPAD_StickX(1) > 70 ||
-			userInput[0].wiidrcdata.substickX > 45
-		);	// RIGHT on c-stick and on classic controller right joystick
+		Settings.TurboMode = TurboModeInputPressed();
 	}
 	
 	if(Settings.TurboMode) {
