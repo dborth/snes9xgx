@@ -2558,7 +2558,7 @@ static int MenuSettingsMappings()
 		}
 		else if(turboBtn.GetState() == STATE_CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_TURBOMODE;
+			menu = MENU_GAMESETTINGS_MAPPINGS_TURBOMODE;
 		}
 		else if(backBtn.GetState() == STATE_CLICKED)
 		{
@@ -4668,7 +4668,7 @@ MainMenu (int menu)
 			case MENU_SETTINGS_NETWORK:
 				currentMenu = MenuSettingsNetwork();
 				break;
-			case MENU_GAMESETTINGS_TURBOMODE:
+			case MENU_GAMESETTINGS_MAPPINGS_TURBOMODE:
 				currentMenu = MenuSettingsTurboMode();
 				break;
 			default: // unrecognized menu
