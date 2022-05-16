@@ -735,7 +735,7 @@ bool MenuRequested()
 	return false;
 }
 
-bool TurboModeInputPressed()
+bool IsTurboModeInputPressed()
 {
 	switch(GCSettings.TurboModeButton)
 	{
@@ -828,7 +828,7 @@ void ReportButtons ()
 
 	if (GCSettings.TurboModeEnabled == 1)
 	{
-		Settings.TurboMode = TurboModeInputPressed();
+		Settings.TurboMode = IsTurboModeInputPressed();
 	}
 	
 	if(Settings.TurboMode) {

@@ -2487,20 +2487,20 @@ static int MenuSettingsMappings()
 	justifierBtn.SetTrigger(trig2);
 	justifierBtn.SetEffectGrow();
 
-	GuiText turboBtnTxt("Turbo Mode", 22, (GXColor){0, 0, 0, 255});
-	GuiImage turboBtnImg(&btnLargeOutline);
-	GuiImage turboBtnImgOver(&btnLargeOutlineOver);
-	GuiButton turboBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
-	turboBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	turboBtn.SetPosition(200, 250);
-	turboBtn.SetLabel(&turboBtnTxt);
-	turboBtn.SetImage(&turboBtnImg);
-	turboBtn.SetImageOver(&turboBtnImgOver);
-	turboBtn.SetSoundOver(&btnSoundOver);
-	turboBtn.SetSoundClick(&btnSoundClick);
-	turboBtn.SetTrigger(trigA);
-	turboBtn.SetTrigger(trig2);
-	turboBtn.SetEffectGrow();
+	GuiText otherBtnTxt("Other Mappings", 22, (GXColor){0, 0, 0, 255});
+	GuiImage otherBtnImg(&btnLargeOutline);
+	GuiImage otherBtnImgOver(&btnLargeOutlineOver);
+	GuiButton otherBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	otherBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	otherBtn.SetPosition(200, 250);
+	otherBtn.SetLabel(&otherBtnTxt);
+	otherBtn.SetImage(&otherBtnImg);
+	otherBtn.SetImageOver(&otherBtnImgOver);
+	otherBtn.SetSoundOver(&btnSoundOver);
+	otherBtn.SetSoundClick(&btnSoundClick);
+	otherBtn.SetTrigger(trigA);
+	otherBtn.SetTrigger(trig2);
+	otherBtn.SetEffectGrow();
 
 	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -2524,7 +2524,7 @@ static int MenuSettingsMappings()
 	w.Append(&superscopeBtn);
 	w.Append(&mouseBtn);
 	w.Append(&justifierBtn);
-	w.Append(&turboBtn);
+	w.Append(&otherBtn);
 
 	w.Append(&backBtn);
 
@@ -2556,9 +2556,9 @@ static int MenuSettingsMappings()
 			menu = MENU_GAMESETTINGS_MAPPINGS_CTRL;
 			mapMenuCtrlSNES = CTRL_JUST;
 		}
-		else if(turboBtn.GetState() == STATE_CLICKED)
+		else if(otherBtn.GetState() == STATE_CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_TURBOMODE;
+			menu = MENU_GAMESETTINGS_MAPPINGS_OTHER;
 		}
 		else if(backBtn.GetState() == STATE_CLICKED)
 		{
@@ -3391,7 +3391,7 @@ static void ScreenPositionWindow()
 	delete(settingText);
 }
 
-static int MenuSettingsTurboMode()
+static int MenuSettingsOtherMappings()
 {
 	int menu = MENU_NONE;
 	int ret;
@@ -3411,7 +3411,7 @@ static int MenuSettingsTurboMode()
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,30);
 
-	GuiText subtitleTxt("Snes9xGX Turbo Mode", 20, (GXColor){255, 255, 255, 255});
+	GuiText subtitleTxt("Other Mappings", 20, (GXColor){255, 255, 255, 255});
 	subtitleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	subtitleTxt.SetPosition(50,60);
 
@@ -4666,8 +4666,8 @@ MainMenu (int menu)
 			case MENU_SETTINGS_NETWORK:
 				currentMenu = MenuSettingsNetwork();
 				break;
-			case MENU_GAMESETTINGS_MAPPINGS_TURBOMODE:
-				currentMenu = MenuSettingsTurboMode();
+			case MENU_GAMESETTINGS_MAPPINGS_OTHER:
+				currentMenu = MenuSettingsOtherMappings();
 				break;
 			default: // unrecognized menu
 				currentMenu = MenuGameSelection();
