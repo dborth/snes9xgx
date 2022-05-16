@@ -787,9 +787,11 @@ bool TurboModeInputPressed()
 		case 9:
 			return (
 				userInput[0].pad.btns_h & PAD_TRIGGER_Z ||
-				userInput[0].wpad->btns_h & WPAD_NUNCHUK_BUTTON_Z);
+				(userInput[0].wpad->exp.type == WPAD_EXP_NUNCHUK &&
+				userInput[0].wpad->btns_h & WPAD_NUNCHUK_BUTTON_Z));
 		case 10:
 			return (
+				userInput[0].wpad->exp.type == WPAD_EXP_NUNCHUK &&
 				userInput[0].wpad->btns_h & WPAD_NUNCHUK_BUTTON_C);
 		case 11:
 			return (
