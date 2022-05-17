@@ -739,72 +739,72 @@ bool IsTurboModeInputPressed()
 {
 	switch(GCSettings.TurboModeButton)
 	{
-		case 0:
+		case TURBO_BUTTON_RSTICK:
 			return (
 				userInput[0].pad.substickX > 70 ||
 				userInput[0].WPAD_StickX(1) > 70 ||
 				userInput[0].wiidrcdata.substickX > 45);
-		case 1:
+		case TURBO_BUTTON_A:
 			return (
 				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_A ||
 				userInput[0].wpad->btns_h & WPAD_BUTTON_A ||
 				userInput[0].pad.btns_h & PAD_BUTTON_A ||
 				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_A);
-		case 2:
+		case TURBO_BUTTON_B:
 			return (
 				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_B ||
 				userInput[0].wpad->btns_h & WPAD_BUTTON_B ||
 				userInput[0].pad.btns_h & PAD_BUTTON_B ||
 				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_B);
-		case 3:
+		case TURBO_BUTTON_X:
 			return (
 				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_X ||
 				userInput[0].pad.btns_h & PAD_BUTTON_X ||
 				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_X);
-		case 4:
+		case TURBO_BUTTON_Y:
 			return (
 				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_Y ||
 				userInput[0].pad.btns_h & PAD_BUTTON_Y ||
 				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_Y);
-		case 5:
+		case TURBO_BUTTON_L:
 			return (
 				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_L ||
 				userInput[0].pad.btns_h & PAD_TRIGGER_L ||
 				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_L);
-		case 6:
+		case TURBO_BUTTON_R:
 			return (
 				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_R ||
 				userInput[0].pad.btns_h & PAD_TRIGGER_R ||
 				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_R);
-		case 7:
+		case TURBO_BUTTON_ZL:
 			return (
 				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_ZL ||
 				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_ZL);
-		case 8:
+		case TURBO_BUTTON_ZR:
 			return (
 				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_ZR ||
 				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_ZR);
-		case 9:
+		case TURBO_BUTTON_Z:
 			return (
 				userInput[0].pad.btns_h & PAD_TRIGGER_Z ||
 				(userInput[0].wpad->exp.type == WPAD_EXP_NUNCHUK &&
 				userInput[0].wpad->btns_h & WPAD_NUNCHUK_BUTTON_Z));
-		case 10:
+		case TURBO_BUTTON_C:
 			return (
 				userInput[0].wpad->exp.type == WPAD_EXP_NUNCHUK &&
 				userInput[0].wpad->btns_h & WPAD_NUNCHUK_BUTTON_C);
-		case 11:
+		case TURBO_BUTTON_1:
 			return (
 				userInput[0].wpad->btns_h & WPAD_BUTTON_1);
-		case 12:
+		case TURBO_BUTTON_2:
 			return (
 				userInput[0].wpad->btns_h & WPAD_BUTTON_2);
-		case 13:
+		case TURBO_BUTTON_PLUS:
 			return (
 				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_PLUS ||
 				userInput[0].wpad->btns_h & WPAD_BUTTON_PLUS ||
 				userInput[0].wiidrcdata.btns_h & WIIDRC_BUTTON_PLUS);
-		case 14:
+		case TURBO_BUTTON_MINUS:
 			return (
 				userInput[0].wpad->btns_h & WPAD_CLASSIC_BUTTON_MINUS ||
 				userInput[0].wpad->btns_h & WPAD_BUTTON_MINUS ||
