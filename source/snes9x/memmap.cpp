@@ -1032,7 +1032,7 @@ void CMemory::Deinit (void)
 		ROM = NULL;
 	}
 
-	for (int t = 0; t < 7; t++)
+	for (int t = 0; t <= TILE_8BIT; t++)
 	{
 		if (IPPU.TileCache[t])
 		{
