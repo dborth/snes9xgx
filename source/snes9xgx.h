@@ -112,6 +112,7 @@ struct SGCSettings{
 	char	ScreenshotsFolder[MAXPATHLEN]; // Path to screenshots files
 	char	CoverFolder[MAXPATHLEN]; 	// Path to cover files
 	char	ArtworkFolder[MAXPATHLEN]; 	// Path to artwork files
+	int		HideSRAMSaving;
 	int		AutoloadGame;
 
 	char	smbip[80];

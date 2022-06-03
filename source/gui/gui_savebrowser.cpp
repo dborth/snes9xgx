@@ -323,21 +323,27 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 	{
 		if(listOffset+i < 0 && action == 1)
 		{
+
 			saveDate[0]->SetText(NULL);
-			saveDate[1]->SetText(NULL);
 			saveTime[0]->SetText("New");
-			saveTime[1]->SetText("New");
-			saveType[0]->SetText("SRAM");
-			saveType[1]->SetText("State");
+			saveType[0]->SetText("State");
 			savePreviewImg[0]->SetImage(gameSaveBlank);
-			savePreviewImg[1]->SetImage(gameSaveBlank);
 			saveBtn[0]->SetVisible(true);
-			saveBtn[1]->SetVisible(true);
 
 			if(saveBtn[0]->GetState() == STATE_DISABLED)
 				saveBtn[0]->SetState(STATE_DEFAULT);
-			if(saveBtn[1]->GetState() == STATE_DISABLED)
-				saveBtn[1]->SetState(STATE_DEFAULT);
+			
+			if (GCSettings.HideSRAMSaving == 0)
+			{
+				saveDate[1]->SetText(NULL);
+				saveTime[1]->SetText("New");
+				saveType[1]->SetText("SRAM");
+				savePreviewImg[1]->SetImage(gameSaveBlank);
+				saveBtn[1]->SetVisible(true);
+
+				if(saveBtn[1]->GetState() == STATE_DISABLED)
+					saveBtn[1]->SetState(STATE_DEFAULT);
+			}
 		}
 		else if(listOffset+i < saves->length)
 		{

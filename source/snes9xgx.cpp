@@ -514,14 +514,15 @@ int main(int argc, char *argv[])
 
 			if (GCSettings.sfxOverclock > 0)
 			S9xResetSuperFX();
-			else
 			S9xReset();
 
 			switch (GCSettings.Interpolation)
 			{
 			case 0: Settings.InterpolationMethod = DSP_INTERPOLATION_GAUSSIAN; break;
 			case 1: Settings.InterpolationMethod = DSP_INTERPOLATION_LINEAR; break;
-			case 2: Settings.InterpolationMethod = DSP_INTERPOLATION_NONE; break;
+			case 2: Settings.InterpolationMethod = DSP_INTERPOLATION_CUBIC; break;
+			case 3: Settings.InterpolationMethod = DSP_INTERPOLATION_SINC; break;
+			case 4: Settings.InterpolationMethod = DSP_INTERPOLATION_NONE; break;
 			}
 		}
 		
