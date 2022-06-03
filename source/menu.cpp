@@ -3790,14 +3790,16 @@ static int MenuSettingsAudio()
 		{
 		case 0:
 				GCSettings.Interpolation++;
-				if (GCSettings.Interpolation > 2) {
+				if (GCSettings.Interpolation > 4) {
 					GCSettings.Interpolation = 0;
 				}
 				switch(GCSettings.Interpolation)
 				{
 					case 0: Settings.InterpolationMethod = DSP_INTERPOLATION_GAUSSIAN; break;
 					case 1: Settings.InterpolationMethod = DSP_INTERPOLATION_LINEAR; break;
-					case 2: Settings.InterpolationMethod = DSP_INTERPOLATION_NONE; break;
+					case 2: Settings.InterpolationMethod = DSP_INTERPOLATION_CUBIC; break;
+					case 3: Settings.InterpolationMethod = DSP_INTERPOLATION_SINC; break;
+					case 4: Settings.InterpolationMethod = DSP_INTERPOLATION_NONE; break;
 				}
 				break;
 				S9xReset();
@@ -3814,6 +3816,10 @@ static int MenuSettingsAudio()
 				case 1:
 					sprintf (options.value[0], "Linear"); break;
 				case 2:
+					sprintf (options.value[0], "Cubic"); break;
+				case 3:
+					sprintf (options.value[0], "Sinc"); break;
+				case 4:
 					sprintf (options.value[0], "None"); break;
 			}
 			optionBrowser.TriggerUpdate();
