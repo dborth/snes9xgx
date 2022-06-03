@@ -3629,10 +3629,10 @@ static int MenuSettingsVideo()
 					GCSettings.videomode = 0;
 				break;
 			case 7:
-				Settings.DisplayFrameRate ^= 1;
+				GCSettings.ShowFrameRate ^= 1;
 				break;
 			case 8:
-				Settings.DisplayTime ^= 1;
+				GCSettings.ShowLocalTime ^= 1;
 				break;
 			case 9:
 				#ifdef HW_RVL
@@ -3700,8 +3700,9 @@ static int MenuSettingsVideo()
 				case 4:
 					sprintf (options.value[6], "PAL (60Hz)"); break;
 			}
-			sprintf (options.value[7], "%s", Settings.DisplayFrameRate ? "On" : "Off");
-			sprintf (options.value[8], "%s", Settings.DisplayTime ? "On" : "Off");
+			sprintf (options.value[7], "%s", GCSettings.ShowFrameRate ? "On" : "Off");
+			sprintf (options.value[8], "%s", GCSettings.ShowLocalTime ? "On" : "Off");
+			
 			switch(GCSettings.sfxOverclock)
 			{
 				case 0:
@@ -3744,17 +3745,23 @@ static int MenuSettingsAudio()
 	int i = 0;
 	bool firstRun = true;
 	OptionList options;
+	
+	sprintf(options.name[i++], "Stereo Reverse");
 	sprintf(options.name[i++], "Interpolation");
 	options.length = i;
+	
 	for(i=0; i < options.length; i++)
 		options.value[i][0] = 0;
+	
 	GuiText titleTxt("Game Settings - Audio", 26, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
+	
 	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
 	GuiImageData btnOutlineOver(button_over_png);
+	
 	GuiText backBtnTxt("Go Back", 22, (GXColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
 	GuiImage backBtnImgOver(&btnOutlineOver);
@@ -3769,10 +3776,12 @@ static int MenuSettingsAudio()
 	backBtn.SetTrigger(trigA);
 	backBtn.SetTrigger(trig2);
 	backBtn.SetEffectGrow();
+	
 	GuiOptionBrowser optionBrowser(552, 248, &options);
 	optionBrowser.SetPosition(0, 108);
 	optionBrowser.SetCol2Position(200);
 	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	
 	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.Append(&backBtn);
@@ -3788,7 +3797,11 @@ static int MenuSettingsAudio()
 		
 		switch (ret)
 		{
-		case 0:
+			case 0:
+				GCSettings.ReverseStereo ^= 1;
+				break;
+
+			case 1:
 				GCSettings.Interpolation++;
 				if (GCSettings.Interpolation > 4) {
 					GCSettings.Interpolation = 0;
@@ -3805,25 +3818,28 @@ static int MenuSettingsAudio()
 				S9xReset();
 		}
 		
-	if(ret >= 0 || firstRun)
+		if(ret >= 0 || firstRun)
 		{
 			firstRun = false;
+			
+			sprintf (options.value[0], "%s", GCSettings.ReverseStereo == 1 ? "On" : "Off");
 			
 			switch(GCSettings.Interpolation)
 			{
 				case 0:
-					sprintf (options.value[0], "Gaussian (Accurate)"); break;
+					sprintf (options.value[1], "Gaussian (Accurate)"); break;
 				case 1:
-					sprintf (options.value[0], "Linear"); break;
+					sprintf (options.value[1], "Linear"); break;
 				case 2:
-					sprintf (options.value[0], "Cubic"); break;
+					sprintf (options.value[1], "Cubic"); break;
 				case 3:
-					sprintf (options.value[0], "Sinc"); break;
+					sprintf (options.value[1], "Sinc"); break;
 				case 4:
-					sprintf (options.value[0], "None"); break;
+					sprintf (options.value[1], "None"); break;
 			}
 			optionBrowser.TriggerUpdate();
 		}
+		
 		if(backBtn.GetState() == STATE_CLICKED)
 		{
 			menu = MENU_GAMESETTINGS;
