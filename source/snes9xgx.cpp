@@ -531,6 +531,8 @@ int main(int argc, char *argv[])
 		ScreenshotRequested = 0;
 		SwitchAudioMode(0);
 
+		Settings.SupportHiRes = (GCSettings.HiResolution == 1);
+		Settings.MaxSpriteTilesPerLine = (GCSettings.SpriteLimit ? 34 : 128);
 		Settings.AutoDisplayMessages = (Settings.DisplayFrameRate || Settings.DisplayTime ? true : false);
 		Settings.MultiPlayer5Master = (GCSettings.Controller == CTRL_PAD4 ? true : false);
 		Settings.SuperScopeMaster = (GCSettings.Controller == CTRL_SCOPE ? true : false);
