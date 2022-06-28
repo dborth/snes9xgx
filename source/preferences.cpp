@@ -486,10 +486,10 @@ DefaultSettings ()
 
 	// General
 
-	Settings.MouseMaster = true;
-	Settings.SuperScopeMaster = true;
-	Settings.JustifierMaster = true;
-	Settings.MultiPlayer5Master = true;
+	Settings.MouseMaster = false;
+	Settings.SuperScopeMaster = false;
+	Settings.JustifierMaster = false;
+	Settings.MultiPlayer5Master = false;
 	Settings.DontSaveOopsSnapshot = true;
 	Settings.ApplyCheats = true;
 
