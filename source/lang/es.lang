@@ -793,11 +793,17 @@ msgstr "Controles de SNES (2)"
 msgid "SNES Controllers (4)"
 msgstr "Controles de SNES (4)"
 
+msgid "SNES Hi-Res Mode"
+msgstr "Modo Alta-Res SNES"
+
 msgid "SNES Mouse"
 msgstr "Mouse de SNES"
 
 msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2022"
 msgstr "Snes9x - Derechos de autor (c) Snes9x Team 1996 - 2022"
+
+msgid "Sprites per-line Limit"
+msgstr "Límite de Sprites"
 
 msgid "SRAM"
 msgstr "SRAM"
