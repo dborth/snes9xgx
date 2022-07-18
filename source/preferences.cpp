@@ -151,6 +151,8 @@ preparePrefsData ()
 	createXMLSetting("widescreen", "Aspect Ratio Correction", toStr(GCSettings.widescreen));
 	createXMLSetting("crosshair", "Crosshair", toStr(GCSettings.crosshair));
 	createXMLSetting("FilterMethod", "Filter Method", toStr(GCSettings.FilterMethod));
+	createXMLSetting("HiResolution", "SNES Hi-Res Mode", toStr(GCSettings.HiResolution));
+	createXMLSetting("SpriteLimit", "Sprites per-line Limit", toStr(GCSettings.SpriteLimit));
 	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
 	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
 	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(GCSettings.sfxOverclock));
@@ -339,6 +341,8 @@ decodePrefsData ()
 			loadXMLSetting(&GCSettings.widescreen, "widescreen");
 			loadXMLSetting(&GCSettings.crosshair, "crosshair");
 			loadXMLSetting(&GCSettings.FilterMethod, "FilterMethod");
+			loadXMLSetting(&GCSettings.HiResolution, "HiResolution");
+			loadXMLSetting(&GCSettings.SpriteLimit, "SpriteLimit");
 			loadXMLSetting(&GCSettings.xshift, "xshift");
 			loadXMLSetting(&GCSettings.yshift, "yshift");
 			loadXMLSetting(&GCSettings.TurboModeEnabled, "TurboModeEnabled");
@@ -487,10 +491,10 @@ DefaultSettings ()
 
 	// General
 
-	Settings.MouseMaster = true;
-	Settings.SuperScopeMaster = true;
-	Settings.JustifierMaster = true;
-	Settings.MultiPlayer5Master = true;
+	Settings.MouseMaster = false;
+	Settings.SuperScopeMaster = false;
+	Settings.JustifierMaster = false;
+	Settings.MultiPlayer5Master = false;
 	Settings.DontSaveOopsSnapshot = true;
 	Settings.ApplyCheats = true;
 
@@ -515,14 +519,15 @@ DefaultSettings ()
 
 	// Graphics
 	Settings.Transparency = true;
-	Settings.SupportHiRes = true;
 	Settings.MaxSpriteTilesPerLine = 34;
 	Settings.SkipFrames = AUTO_FRAMERATE;
 	Settings.TurboSkipFrames = 19;
-	Settings.DisplayFrameRate = false;
 	Settings.AutoDisplayMessages = false;
 	Settings.InitialInfoStringTimeout = 200; // # frames to display messages for
+	Settings.DisplayFrameRate = false;
 	Settings.DisplayTime = false;
+	GCSettings.HiResolution = 1; // Enabled by default
+	GCSettings.SpriteLimit = 1; // Enabled by default
 
 	// Frame timings in 50hz and 60hz cpu mode
 	Settings.FrameTimePAL = 20000;
