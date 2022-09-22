@@ -39,6 +39,7 @@
 #include "movie.h"
 #include "display.h"
 #include "sha256.h"
+#include "snapshot.h"
 
 #ifdef GEKKO
 #include "../filebrowser.h"
@@ -1419,6 +1420,8 @@ bool8 CMemory::LoadROM (const char *filename)
     if(!filename || !*filename)
         return FALSE;
 
+    S9xResetSaveTimer(FALSE); // reset oops timer here so that .oops file has rom name of previous rom
+
     int32 totalFileSize;
 
     do
@@ -1703,6 +1706,8 @@ bool8 CMemory::LoadMultiCartMem (const uint8 *sourceA, uint32 sourceASize,
 
 bool8 CMemory::LoadMultiCart (const char *cartA, const char *cartB)
 {
+    S9xResetSaveTimer(FALSE); // reset oops timer here so that .oops file has rom name of previous rom
+	
     memset(ROM, 0, MAX_ROM_SIZE);
 	memset(&Multi, 0, sizeof(Multi));
 
