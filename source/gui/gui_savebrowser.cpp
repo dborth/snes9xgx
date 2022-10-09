@@ -269,7 +269,10 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		}
 		else
 		{
-			selectedItem -= 1;
+			if(saveBtn[selectedItem-1]->IsVisible())
+			{
+				selectedItem -= 1;
+			}
 		}
 	}
 	else if(t->Down() || arrowDownBtn->GetState() == STATE_CLICKED)
@@ -307,7 +310,10 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		}
 		else
 		{
-			selectedItem -= 2;
+			if(saveBtn[selectedItem-2]->IsVisible())
+			{
+				selectedItem -= 2;
+			}
 		}
 	}
 
