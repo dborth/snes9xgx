@@ -590,6 +590,50 @@ static void decodepad (int chan, int emuChan)
 		wiidrcp |= WIIDRC_BUTTON_RIGHT;
 #endif
 
+	if (GCSettings.MapABXYRightStick == 1)
+	{
+		s8 pad_substickX = userInput[chan].pad.substickX;
+		s8 pad_substickY = userInput[chan].pad.substickY;
+#ifdef HW_RVL
+		s8 wm_substickX = userInput[chan].WPAD_StickX(1);
+		s8 wm_substickY = userInput[chan].WPAD_StickY(1);
+		s16 wiidrc_substickX = userInput[chan].wiidrcdata.substickX;
+		s16 wiidrc_substickY = userInput[chan].wiidrcdata.substickY;
+#endif
+
+		/* Gamecube Controller */
+		if (pad_substickY > ANALOG_SENSITIVITY)
+			jp |= PAD_BUTTON_X;
+		else if (pad_substickY < -ANALOG_SENSITIVITY)
+			jp |= PAD_BUTTON_B;
+		if (pad_substickX < -ANALOG_SENSITIVITY)
+			jp |= PAD_BUTTON_Y;
+		else if (pad_substickX > ANALOG_SENSITIVITY)
+			jp |= PAD_BUTTON_A;
+
+#ifdef HW_RVL
+		/* Wii Controller */
+		if (wm_substickY > ANALOG_SENSITIVITY)
+			wp |= WPAD_CLASSIC_BUTTON_X;
+		else if (wm_substickY < -ANALOG_SENSITIVITY)
+			wp |= WPAD_CLASSIC_BUTTON_B;
+		if (wm_substickX < -ANALOG_SENSITIVITY)
+			wp |= WPAD_CLASSIC_BUTTON_Y;
+		else if (wm_substickX > ANALOG_SENSITIVITY)
+			wp |= WPAD_CLASSIC_BUTTON_A;
+
+		/* Wii U Gamepad */
+		if (wiidrc_substickY > ANALOG_SENSITIVITY)
+			wiidrcp |= WIIDRC_BUTTON_X;
+		else if (wiidrc_substickY < -ANALOG_SENSITIVITY)
+			wiidrcp |= WIIDRC_BUTTON_B;
+		if (wiidrc_substickX < -ANALOG_SENSITIVITY)
+			wiidrcp |= WIIDRC_BUTTON_Y;
+		else if (wiidrc_substickX > ANALOG_SENSITIVITY)
+			wiidrcp |= WIIDRC_BUTTON_A;
+#endif
+	}
+
 	/*** Fix offset to pad ***/
 	offset = ((emuChan + 1) << 4);
 

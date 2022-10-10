@@ -160,6 +160,7 @@ preparePrefsData ()
 	createXMLSetting("TurboModeEnabled", "Turbo Mode Enabled", toStr(GCSettings.TurboModeEnabled));
 	createXMLSetting("TurboModeButton", "Turbo Mode Button", toStr(GCSettings.TurboModeButton));
 	createXMLSetting("GamepadMenuToggle", "Gamepad Menu Toggle", toStr(GCSettings.GamepadMenuToggle));
+	createXMLSetting("MapABXYRightStick", "Map ABXY Right Stick", toStr(GCSettings.MapABXYRightStick));
 
 	createXMLSection("Menu", "Menu Settings");
 
@@ -349,6 +350,7 @@ decodePrefsData ()
 			loadXMLSetting(&GCSettings.TurboModeEnabled, "TurboModeEnabled");
 			loadXMLSetting(&GCSettings.TurboModeButton, "TurboModeButton");
 			loadXMLSetting(&GCSettings.GamepadMenuToggle, "GamepadMenuToggle");
+			loadXMLSetting(&GCSettings.MapABXYRightStick, "MapABXYRightStick");
 			
 			// Audio Settings
 			
@@ -548,6 +550,7 @@ DefaultSettings ()
 	GCSettings.TurboModeEnabled = 1; // Enabled by default
 	GCSettings.TurboModeButton = 0; // Default is Right Analog Stick (0)
 	GCSettings.GamepadMenuToggle = 0; // 0 = All options (default), 1 = C-Stick left, 2 = R+L+Start
+	GCSettings.MapABXYRightStick = 0; 
 }
 
 /****************************************************************************

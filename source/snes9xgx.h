@@ -147,6 +147,7 @@ struct SGCSettings{
 	int		TurboModeEnabled; // 0 - disabled, 1 - enabled
 	int		TurboModeButton;
 	int		GamepadMenuToggle;
+	int		MapABXYRightStick;
 };
 
 void ExitApp();
