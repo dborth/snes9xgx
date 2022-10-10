@@ -3403,6 +3403,8 @@ static int MenuSettingsOtherMappings()
 
 	sprintf(options.name[i++], "Enable Turbo Mode");
 	sprintf(options.name[i++], "Turbo Mode Button");
+	sprintf(options.name[i++], "Menu Toggle");
+	sprintf(options.name[i++], "Map ABXY to Right Stick");
 
 	options.length = i;
 
@@ -3468,6 +3470,16 @@ static int MenuSettingsOtherMappings()
 				if (GCSettings.TurboModeButton > 14)
 					GCSettings.TurboModeButton = 0;
 				break;
+
+			case 2:
+				GCSettings.GamepadMenuToggle++;
+				if (GCSettings.GamepadMenuToggle > 2)
+					GCSettings.GamepadMenuToggle = 0;
+				break;
+
+			case 3:
+				GCSettings.MapABXYRightStick ^= 1;
+				break;
 		}
 
 		if(ret >= 0 || firstRun)
@@ -3508,6 +3520,18 @@ static int MenuSettingsOtherMappings()
 				case 14:
 					sprintf (options.value[1], "Minus"); break;
 			}
+
+			switch(GCSettings.GamepadMenuToggle)
+			{
+				case 0:
+					sprintf (options.value[2], "Default (All Enabled)"); break;
+				case 1:
+					sprintf (options.value[2], "Home / Right Stick"); break;
+				case 2:
+					sprintf (options.value[2], "L+R+Start"); break;
+			}
+
+			sprintf (options.value[3], "%s", GCSettings.MapABXYRightStick == 1 ? "On" : "Off");
 
 			optionBrowser.TriggerUpdate();
 		}

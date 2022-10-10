@@ -590,6 +590,50 @@ static void decodepad (int chan, int emuChan)
 		wiidrcp |= WIIDRC_BUTTON_RIGHT;
 #endif
 
+	if (GCSettings.MapABXYRightStick == 1)
+	{
+		s8 pad_substickX = userInput[chan].pad.substickX;
+		s8 pad_substickY = userInput[chan].pad.substickY;
+#ifdef HW_RVL
+		s8 wm_substickX = userInput[chan].WPAD_StickX(1);
+		s8 wm_substickY = userInput[chan].WPAD_StickY(1);
+		s16 wiidrc_substickX = userInput[chan].wiidrcdata.substickX;
+		s16 wiidrc_substickY = userInput[chan].wiidrcdata.substickY;
+#endif
+
+		/* Gamecube Controller */
+		if (pad_substickY > ANALOG_SENSITIVITY)
+			jp |= PAD_BUTTON_X;
+		else if (pad_substickY < -ANALOG_SENSITIVITY)
+			jp |= PAD_BUTTON_B;
+		if (pad_substickX < -ANALOG_SENSITIVITY)
+			jp |= PAD_BUTTON_Y;
+		else if (pad_substickX > ANALOG_SENSITIVITY)
+			jp |= PAD_BUTTON_A;
+
+#ifdef HW_RVL
+		/* Wii Controller */
+		if (wm_substickY > ANALOG_SENSITIVITY)
+			wp |= WPAD_CLASSIC_BUTTON_X;
+		else if (wm_substickY < -ANALOG_SENSITIVITY)
+			wp |= WPAD_CLASSIC_BUTTON_B;
+		if (wm_substickX < -ANALOG_SENSITIVITY)
+			wp |= WPAD_CLASSIC_BUTTON_Y;
+		else if (wm_substickX > ANALOG_SENSITIVITY)
+			wp |= WPAD_CLASSIC_BUTTON_A;
+
+		/* Wii U Gamepad */
+		if (wiidrc_substickY > ANALOG_SENSITIVITY)
+			wiidrcp |= WIIDRC_BUTTON_X;
+		else if (wiidrc_substickY < -ANALOG_SENSITIVITY)
+			wiidrcp |= WIIDRC_BUTTON_B;
+		if (wiidrc_substickX < -ANALOG_SENSITIVITY)
+			wiidrcp |= WIIDRC_BUTTON_Y;
+		else if (wiidrc_substickX > ANALOG_SENSITIVITY)
+			wiidrcp |= WIIDRC_BUTTON_A;
+#endif
+	}
+
 	/*** Fix offset to pad ***/
 	offset = ((emuChan + 1) << 4);
 
@@ -714,23 +758,58 @@ bool MenuRequested()
 {
 	for(int i=0; i<4; i++)
 	{
-		if (
-			(userInput[i].pad.substickX < -70) ||
-			(userInput[i].pad.btns_h & PAD_TRIGGER_L &&
-			userInput[i].pad.btns_h & PAD_TRIGGER_R &&
-			userInput[i].pad.btns_h & PAD_BUTTON_START)
-			#ifdef HW_RVL
-			|| (userInput[i].wpad->btns_h & WPAD_BUTTON_HOME) ||
-			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME) ||
-			(userInput[i].wiidrcdata.btns_h & WIIDRC_BUTTON_HOME) ||
-			(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_L &&
-			userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_R &&
-			userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_PLUS)
-			#endif
-		)
+		if (GCSettings.GamepadMenuToggle == 1) // Home (WiiPad) or Right Stick (GC/3rd party gamepad) only
 		{
-			return true;
+			if (
+				(userInput[i].pad.substickX < -70)
+				#ifdef HW_RVL
+				|| (userInput[i].wpad->btns_h & WPAD_BUTTON_HOME) ||
+				(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME) ||
+				(userInput[i].wiidrcdata.btns_h & WIIDRC_BUTTON_HOME)
+				#endif
+			)
+			{
+				return true;
+			}
 		}
+		else if (GCSettings.GamepadMenuToggle == 2) // L+R+Start combo only (frees up the right stick on GC/3rd party gamepad)
+		{
+			if (
+				(userInput[i].pad.btns_h & PAD_TRIGGER_L &&
+				userInput[i].pad.btns_h & PAD_TRIGGER_R &&
+				userInput[i].pad.btns_h & PAD_BUTTON_START)
+				#ifdef HW_RVL
+				|| (userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_L &&
+				userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_R &&
+				userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_PLUS)
+				#endif
+			)
+			{
+				return true;
+			}
+		}
+		else // All toggle options enabled
+		{
+			if (
+				(userInput[i].pad.substickX < -70) ||
+				(userInput[i].pad.btns_h & PAD_TRIGGER_L &&
+				userInput[i].pad.btns_h & PAD_TRIGGER_R &&
+				userInput[i].pad.btns_h & PAD_BUTTON_START)
+				#ifdef HW_RVL
+				|| (userInput[i].wpad->btns_h & WPAD_BUTTON_HOME) ||
+				(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_HOME) ||
+				(userInput[i].wiidrcdata.btns_h & WIIDRC_BUTTON_HOME) ||
+				(userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_L &&
+				userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_FULL_R &&
+				userInput[i].wpad->btns_h & WPAD_CLASSIC_BUTTON_PLUS)
+				#endif
+			)
+			{
+				return true;
+			}
+		}
+
+		
 	}
 	return false;
 }
