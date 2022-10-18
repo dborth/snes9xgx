@@ -435,7 +435,7 @@ class GuiElement
 		//!Called constantly to redraw the element's tooltip
 		virtual void DrawTooltip();
 	protected:
-		GuiTrigger * trigger[3]; //!< GuiTriggers (input actions) that this element responds to
+		GuiTrigger * trigger[5]; //!< GuiTriggers (input actions) that this element responds to
 		UpdateCallback updateCB; //!< Callback function to call when this element is updated
 		GuiElement * parentElement; //!< Parent element
 		int focus; //!< Element focus (-1 = focus disabled, 0 = not focused, 1 = focused)

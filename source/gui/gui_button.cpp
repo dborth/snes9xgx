@@ -255,7 +255,7 @@ void GuiButton::Update(GuiTrigger * t)
 	if(this->IsClickable())
 	{
 		s32 wm_btns, wm_btns_trig, cc_btns, cc_btns_trig, wiidrc_btns, wiidrc_btns_trig;
-		for(int i=0; i<3; i++)
+		for(int i=0; i<5; i++)
 		{
 			if(trigger[i] && (trigger[i]->chan == -1 || trigger[i]->chan == t->chan))
 			{
@@ -310,7 +310,7 @@ void GuiButton::Update(GuiTrigger * t)
 		bool held = false;
 		s32 wm_btns, wm_btns_h, wm_btns_trig, cc_btns, cc_btns_h, cc_btns_trig, wiidrc_btns, wiidrc_btns_h, wiidrc_btns_trig;
 
-		for(int i=0; i<3; i++)
+		for(int i=0; i<5; i++)
 		{
 			if(trigger[i] && (trigger[i]->chan == -1 || trigger[i]->chan == t->chan))
 			{
