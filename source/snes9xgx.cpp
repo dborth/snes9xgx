@@ -536,7 +536,7 @@ int main(int argc, char *argv[])
 		Settings.AutoDisplayMessages = (Settings.DisplayFrameRate || Settings.DisplayTime ? true : false);
 		Settings.MultiPlayer5Master = (GCSettings.Controller == CTRL_PAD4 ? true : false);
 		Settings.SuperScopeMaster = (GCSettings.Controller == CTRL_SCOPE ? true : false);
-		Settings.MouseMaster = (GCSettings.Controller == CTRL_MOUSE ? true : false);
+		Settings.MouseMaster = (GCSettings.Controller == CTRL_MOUSE || GCSettings.Controller == CTRL_MOUSE_PORT2 || GCSettings.Controller == CTRL_MOUSE_BOTH_PORTS);
 		Settings.JustifierMaster = (GCSettings.Controller == CTRL_JUST ? true : false);
 		SetControllers ();
 
