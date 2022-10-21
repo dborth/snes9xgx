@@ -819,7 +819,7 @@ static void WindowCredits(void * ptr)
 	creditsBoxImg.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	creditsWindowBox.Append(&creditsBoxImg);
 
-	int numEntries = 24;
+	int numEntries = 25;
 	GuiText * txt[numEntries];
 
 	txt[i] = new GuiText("Credits", 30, (GXColor){0, 0, 0, 255});
@@ -836,6 +836,8 @@ static void WindowCredits(void * ptr)
 	txt[i] = new GuiText("Additional improvements");
 	txt[i]->SetPosition(60,y); i++;
 	txt[i] = new GuiText("Zopenko, michniewski");
+	txt[i]->SetPosition(350,y); i++; y+=24;
+	txt[i] = new GuiText("InfiniteBlue, others");
 	txt[i]->SetPosition(350,y); i++; y+=24;
 	txt[i] = new GuiText("Menu artwork");
 	txt[i]->SetPosition(60,y); i++;
