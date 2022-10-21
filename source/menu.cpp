@@ -3574,7 +3574,7 @@ static int MenuSettingsOtherMappings()
 				case 1:
 					sprintf (options.value[2], "Home / Right Stick"); break;
 				case 2:
-					sprintf (options.value[2], "L+R+Start"); break;
+					sprintf (options.value[2], "L+R+Start / 1+2+Plus"); break;
 			}
 
 			sprintf (options.value[3], "%s", GCSettings.MapABXYRightStick == 1 ? "On" : "Off");
