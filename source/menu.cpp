@@ -218,6 +218,11 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	GuiImageData btnOutline(button_prompt_png);
 	GuiImageData btnOutlineOver(button_prompt_over_png);
 
+	GuiTrigger trigB;
+	GuiTrigger trig1;
+	trigB.SetButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
+	trig1.SetButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+
 	GuiImageData dialogBox(dialogue_box_png);
 	GuiImage dialogBoxImg(&dialogBox);
 
@@ -243,6 +248,8 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	{
 		btn1.SetAlignment(ALIGN_CENTRE, ALIGN_BOTTOM);
 		btn1.SetPosition(0, -25);
+		btn1.SetTrigger(&trigB);
+		btn1.SetTrigger(&trig1);
 	}
 
 	btn1.SetLabel(&btn1Txt);
@@ -276,7 +283,11 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	promptWindow.Append(&btn1);
 
 	if(btn2Label)
+	{
 		promptWindow.Append(&btn2);
+		btn2.SetTrigger(&trigB);
+		btn2.SetTrigger(&trig1);
+	}	
 
 	promptWindow.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 50);
 	CancelAction();
