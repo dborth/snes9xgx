@@ -531,6 +531,7 @@ int main(int argc, char *argv[])
 		ScreenshotRequested = 0;
 		SwitchAudioMode(0);
 
+		Settings.Mute = GCSettings.MuteAudio;
 		Settings.SupportHiRes = (GCSettings.HiResolution == 1);
 		Settings.MaxSpriteTilesPerLine = (GCSettings.SpriteLimit ? 34 : 128);
 		Settings.AutoDisplayMessages = (Settings.DisplayFrameRate || Settings.DisplayTime ? true : false);

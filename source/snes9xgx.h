@@ -154,6 +154,7 @@ struct SGCSettings{
 	int		sfxOverclock;
 	
 	int		Interpolation;
+	int		MuteAudio;
 
 	int		TurboModeEnabled; // 0 - disabled, 1 - enabled
 	int		TurboModeButton;
