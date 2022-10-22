@@ -218,6 +218,11 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	GuiImageData btnOutline(button_prompt_png);
 	GuiImageData btnOutlineOver(button_prompt_over_png);
 
+	GuiTrigger trigB;
+	GuiTrigger trig1;
+	trigB.SetButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
+	trig1.SetButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+
 	GuiImageData dialogBox(dialogue_box_png);
 	GuiImage dialogBoxImg(&dialogBox);
 
@@ -243,6 +248,8 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	{
 		btn1.SetAlignment(ALIGN_CENTRE, ALIGN_BOTTOM);
 		btn1.SetPosition(0, -25);
+		btn1.SetTrigger(&trigB);
+		btn1.SetTrigger(&trig1);
 	}
 
 	btn1.SetLabel(&btn1Txt);
@@ -276,7 +283,11 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	promptWindow.Append(&btn1);
 
 	if(btn2Label)
+	{
 		promptWindow.Append(&btn2);
+		btn2.SetTrigger(&trigB);
+		btn2.SetTrigger(&trig1);
+	}	
 
 	promptWindow.SetEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 50);
 	CancelAction();
@@ -819,7 +830,7 @@ static void WindowCredits(void * ptr)
 	creditsBoxImg.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	creditsWindowBox.Append(&creditsBoxImg);
 
-	int numEntries = 24;
+	int numEntries = 25;
 	GuiText * txt[numEntries];
 
 	txt[i] = new GuiText("Credits", 30, (GXColor){0, 0, 0, 255});
@@ -836,6 +847,8 @@ static void WindowCredits(void * ptr)
 	txt[i] = new GuiText("Additional improvements");
 	txt[i]->SetPosition(60,y); i++;
 	txt[i] = new GuiText("Zopenko, michniewski");
+	txt[i]->SetPosition(350,y); i++; y+=24;
+	txt[i] = new GuiText("InfiniteBlue, others");
 	txt[i]->SetPosition(350,y); i++; y+=24;
 	txt[i] = new GuiText("Menu artwork");
 	txt[i]->SetPosition(60,y); i++;
@@ -3440,7 +3453,7 @@ static int MenuSettingsOtherMappings()
 	bool firstRun = true;
 	OptionList options;
 
-	sprintf(options.name[i++], "Enable Turbo Mode");
+	sprintf(options.name[i++], "Turbo Mode");
 	sprintf(options.name[i++], "Turbo Mode Button");
 	sprintf(options.name[i++], "Menu Toggle");
 	sprintf(options.name[i++], "Map ABXY to Right Stick");
@@ -3536,7 +3549,7 @@ static int MenuSettingsOtherMappings()
 			switch(GCSettings.TurboModeButton)
 			{
 				case 0:
-					sprintf (options.value[1], "Right Stick (default)"); break;
+					sprintf (options.value[1], "Default (Right Stick)"); break;
 				case 1:
 					sprintf (options.value[1], "A"); break;
 				case 2:
@@ -3574,7 +3587,7 @@ static int MenuSettingsOtherMappings()
 				case 1:
 					sprintf (options.value[2], "Home / Right Stick"); break;
 				case 2:
-					sprintf (options.value[2], "L+R+Start"); break;
+					sprintf (options.value[2], "L+R+Start / 1+2+Plus"); break;
 			}
 
 			sprintf (options.value[3], "%s", GCSettings.MapABXYRightStick == 1 ? "On" : "Off");
@@ -3610,7 +3623,7 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Screen Position");
 	sprintf(options.name[i++], "Video Mode");
 	sprintf(options.name[i++], "SNES Hi-Res Mode");
-	sprintf(options.name[i++], "Sprites per-line Limit");
+	sprintf(options.name[i++], "Sprites Per-Line Limit");
 	sprintf(options.name[i++], "Crosshair");
 	sprintf(options.name[i++], "Show Framerate");
 	sprintf(options.name[i++], "Show Local Time");
@@ -3758,7 +3771,7 @@ static int MenuSettingsVideo()
 			firstRun = false;
 
 			if (GCSettings.render == 0)
-				sprintf (options.value[0], "Original");
+				sprintf (options.value[0], "Original (240p)");
 			else if (GCSettings.render == 1)
 				sprintf (options.value[0], "Filtered");
 			else if (GCSettings.render == 2)
@@ -3839,6 +3852,7 @@ static int MenuSettingsAudio()
 	bool firstRun = true;
 	OptionList options;
 	sprintf(options.name[i++], "Interpolation");
+	sprintf(options.name[i++], "Mute Game Audio");
 	options.length = i;
 	for(i=0; i < options.length; i++)
 		options.value[i][0] = 0;
@@ -3890,7 +3904,7 @@ static int MenuSettingsAudio()
 		
 		switch (ret)
 		{
-		case 0:
+			case 0:
 				GCSettings.Interpolation++;
 				if (GCSettings.Interpolation > 4) {
 					GCSettings.Interpolation = 0;
@@ -3905,6 +3919,10 @@ static int MenuSettingsAudio()
 				}
 				break;
 				S9xReset();
+
+			case 1:
+				GCSettings.MuteAudio ^= 1;
+				break;
 		}
 		
 	if(ret >= 0 || firstRun)
@@ -3924,6 +3942,9 @@ static int MenuSettingsAudio()
 				case 4:
 					sprintf (options.value[0], "None"); break;
 			}
+
+			sprintf (options.value[1], "%s", GCSettings.MuteAudio ? "On" : "Off");
+
 			optionBrowser.TriggerUpdate();
 		}
 		if(backBtn.GetState() == STATE_CLICKED)
@@ -4483,7 +4504,7 @@ static int MenuSettingsMenu()
 			if (GCSettings.ExitAction == 1)
 				sprintf (options.value[0], "Return to Wii Menu");
 			else if (GCSettings.ExitAction == 2)
-				sprintf (options.value[0], "Power off Wii");
+				sprintf (options.value[0], "Power Off Wii");
 			else if (GCSettings.ExitAction == 3)
 				sprintf (options.value[0], "Return to Loader");
 			else
