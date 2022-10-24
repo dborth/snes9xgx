@@ -427,6 +427,7 @@ int main(int argc, char *argv[])
 	WiiDRC_Init();
 	isWiiVC = WiiDRC_Inited();
 	WPAD_Init();
+	//usleep(2000000);
 	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
 	DI_Init();
 	USBStorage_Initialize();
