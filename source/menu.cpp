@@ -2979,8 +2979,7 @@ ButtonMappingWindow()
 							pressed = 0; // not a valid input (Nunchuk Z/C is assigned as Classic Controller Up/Left for some reason)
 						else if(pressed <= 0x1000)
 							pressed = 0;
-						if((userInput[0].wpad->exp.classic.type == 2 && (userInput[0].wpad->btns_d & WPAD_CLASSIC_BUTTON_B)) ||
-								userInput[0].pad.btns_d & PAD_BUTTON_B || 
+						if(userInput[0].pad.btns_d & PAD_BUTTON_B || 
 								userInput[0].wiidrcdata.btns_d & WIIDRC_BUTTON_B ||
 								userInput[0].wpad->btns_d & WPAD_BUTTON_B ||
 								userInput[0].wpad->btns_d & WPAD_BUTTON_1)
@@ -2992,8 +2991,7 @@ ButtonMappingWindow()
 							pressed = 0; // not a valid input
 						else if(pressed <= 0x1000)
 							pressed = 0;
-						if((userInput[0].wpad->exp.classic.type < 2 && (userInput[0].wpad->btns_d & WPAD_CLASSIC_BUTTON_B)) ||
-								userInput[0].pad.btns_d & PAD_BUTTON_B || 
+						if(userInput[0].pad.btns_d & PAD_BUTTON_B || 
 								userInput[0].wiidrcdata.btns_d & WIIDRC_BUTTON_B ||
 								userInput[0].wpad->btns_d & WPAD_BUTTON_B ||
 								userInput[0].wpad->btns_d & WPAD_BUTTON_1)
@@ -3004,8 +3002,8 @@ ButtonMappingWindow()
 						if(userInput[0].wpad->exp.type != WPAD_EXP_NUNCHUK)
 							pressed = 0; // not a valid input
 						if((userInput[0].wpad->exp.type != WPAD_EXP_NUNCHUK && userInput[0].wpad->btns_d & WPAD_BUTTON_B) ||
+								(userInput[0].wpad->exp.type != WPAD_EXP_NUNCHUK && userInput[0].wpad->btns_d & WPAD_BUTTON_1) ||
 								userInput[0].pad.btns_d & PAD_BUTTON_B || 
-								userInput[0].wpad->btns_d & WPAD_BUTTON_1 ||
 								userInput[0].wiidrcdata.btns_d & WIIDRC_BUTTON_B ||
 								userInput[0].wpad->btns_d & WPAD_CLASSIC_BUTTON_B)
 							buttonMappingCancelled = true;
