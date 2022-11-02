@@ -15,6 +15,7 @@
 #include "snes9xgx.h"
 #include "fileop.h"
 #include "filebrowser.h"
+#include "bml.h"
 
 #define MAX_CHEATS      150
 
@@ -51,6 +52,73 @@ static bool LoadCheatFile (int length)
 		S9xAddCheatGroup (name, cheat);
 	}
 	return true;
+}
+
+int S9xCheatIsDuplicate (const char *name, const char *code)
+{
+    unsigned int i;
+
+    for (i = 0; i < Cheat.g.size(); i++)
+    {
+        if (!strcmp (name, Cheat.g[i].name))
+        {
+            char *code_string = S9xCheatGroupToText (i);
+            char *validated   = S9xCheatValidate (code);
+
+            if (validated && !strcmp (code_string, validated))
+            {
+                free (code_string);
+                free (validated);
+                return TRUE;
+            }
+
+            free (code_string);
+            free (validated);
+        }
+    }
+
+    return FALSE;
+}
+
+static void S9xLoadCheatsFromBMLNode (bml_node *n)
+{
+    unsigned int i;
+
+    for (i = 0; i < n->child.size (); i++)
+    {
+        if (!strcasecmp (n->child[i].name.c_str(), "cheat"))
+        {
+            const char *desc = NULL;
+            const char *code = NULL;
+            bool8 enabled = false;
+
+            bml_node *c = &n->child[i];
+            bml_node *tmp = NULL;
+
+            tmp = c->find_subnode("name");
+            if (!tmp)
+                desc = (char *) "";
+            else
+                desc = tmp->data.c_str();
+
+            tmp = c->find_subnode("code");
+            if (tmp)
+                code = tmp->data.c_str();
+
+            if (c->find_subnode("enable"))
+                enabled = true;
+
+            if (code && !S9xCheatIsDuplicate (desc, code))
+            {
+                int index = S9xAddCheatGroup (desc, code);
+
+                if (enabled)
+                    S9xEnableCheatGroup (index);
+            }
+        }
+    }
+
+    return;
 }
 
 void ToggleCheat(uint32 num) {
@@ -91,7 +159,25 @@ WiiSetupCheats()
 
 	// load cheat file if present
 	if(offset > 0)
-		LoadCheatFile (offset);
+	{
+		bml_node bml;
+		if (!bml.parse_file(filepath))
+		{
+			LoadCheatFile (offset);
+		}
+
+		bml_node *n = bml.find_subnode("cheat");
+		if (n)
+		{
+			S9xLoadCheatsFromBMLNode (&bml);
+		}
+
+		if (!n)
+		{
+			LoadCheatFile (offset);
+		}
+	}
+		
 
 	FreeSaveBuffer ();
 }
