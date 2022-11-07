@@ -558,7 +558,7 @@ static int S9xCheatIsDuplicate (const char *name, const char *code)
     return FALSE;
 }
 
-static void S9xLoadCheatsFromBMLNode (bml_node *n)
+void S9xLoadCheatsFromBMLNode (bml_node *n)
 {
     unsigned int i;
 

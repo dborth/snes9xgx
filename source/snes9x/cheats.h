@@ -8,6 +8,7 @@
 #define _CHEATS_H_
 
 #include "port.h"
+#include "bml.h"
 #include <vector>
 
 struct SCheat
@@ -95,6 +96,7 @@ void S9xSearchForChange (SCheatData *, S9xCheatComparisonType, S9xCheatDataSize,
 void S9xSearchForValue (SCheatData *, S9xCheatComparisonType, S9xCheatDataSize, uint32, bool8, bool8);
 void S9xSearchForAddress (SCheatData *, S9xCheatComparisonType, S9xCheatDataSize, uint32, bool8);
 void S9xOutputCheatSearchResults (SCheatData *);
+void S9xLoadCheatsFromBMLNode (bml_node *);
 
 const char * S9xGameGenieToRaw (const char *, uint32 &, uint8 &);
 const char * S9xProActionReplayToRaw (const char *, uint32 &, uint8 &);
