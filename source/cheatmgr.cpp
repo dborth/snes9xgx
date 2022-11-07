@@ -15,6 +15,7 @@
 #include "snes9xgx.h"
 #include "fileop.h"
 #include "filebrowser.h"
+#include "bml.h"
 
 #define MAX_CHEATS      150
 
@@ -91,7 +92,25 @@ WiiSetupCheats()
 
 	// load cheat file if present
 	if(offset > 0)
-		LoadCheatFile (offset);
+	{
+		bml_node bml;
+		if (!bml.parse_file(filepath))
+		{
+			LoadCheatFile (offset);
+		}
+
+		bml_node *n = bml.find_subnode("cheat");
+		if (n)
+		{
+			S9xLoadCheatsFromBMLNode (&bml);
+		}
+
+		if (!n)
+		{
+			LoadCheatFile (offset);
+		}
+	}
+		
 
 	FreeSaveBuffer ();
 }

@@ -79,6 +79,7 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 		optionTxt[i] = new GuiText(NULL, 20, (GXColor){0, 0, 0, 0xff});
 		optionTxt[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
 		optionTxt[i]->SetPosition(8,0);
+		optionTxt[i]->SetMaxWidth(235);
 
 		optionVal[i] = new GuiText(NULL, 20, (GXColor){0, 0, 0, 0xff});
 		optionVal[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
@@ -312,6 +313,11 @@ void GuiOptionBrowser::Update(GuiTrigger * t)
 
 		if(optionBtn[i]->GetState() == STATE_SELECTED)
 			selectedItem = i;
+
+		if(selectedItem == i)
+			optionTxt[i]->SetScroll(SCROLL_HORIZONTAL);
+		else
+			optionTxt[i]->SetScroll(SCROLL_NONE);
 	}
 
 	// pad/joystick navigation
