@@ -3862,19 +3862,19 @@ static int MenuSettingsVideo()
 			switch(GCSettings.sfxOverclock)
 			{
 				case 0:
-					sprintf (options.value[11], "Default"); break;
+					sprintf (options.value[12], "Default"); break;
 				case 1:
-					sprintf (options.value[11], "20 MHz"); break;
+					sprintf (options.value[12], "20 MHz"); break;
 				case 2:
-					sprintf (options.value[11], "40 MHz"); break;
+					sprintf (options.value[12], "40 MHz"); break;
 				case 3:
-					sprintf (options.value[11], "60 MHz"); break;
+					sprintf (options.value[12], "60 MHz"); break;
 				case 4:
-					sprintf (options.value[11], "80 MHz"); break;
+					sprintf (options.value[12], "80 MHz"); break;
 				case 5:
-					sprintf (options.value[11], "100 MHz"); break;
+					sprintf (options.value[12], "100 MHz"); break;
 				case 6:
-					sprintf (options.value[11], "120 MHz"); break;
+					sprintf (options.value[12], "120 MHz"); break;
 			}
 			optionBrowser.TriggerUpdate();
 		}
