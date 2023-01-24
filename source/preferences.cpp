@@ -153,6 +153,7 @@ preparePrefsData ()
 	createXMLSetting("FilterMethod", "Filter Method", toStr(GCSettings.FilterMethod));
 	createXMLSetting("HiResolution", "SNES Hi-Res Mode", toStr(GCSettings.HiResolution));
 	createXMLSetting("SpriteLimit", "Sprites per-line Limit", toStr(GCSettings.SpriteLimit));
+	createXMLSetting("FrameSkip", "Frame Skipping", toStr(GCSettings.FrameSkip));
 	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
 	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
 	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(GCSettings.sfxOverclock));
@@ -346,6 +347,7 @@ decodePrefsData ()
 			loadXMLSetting(&GCSettings.FilterMethod, "FilterMethod");
 			loadXMLSetting(&GCSettings.HiResolution, "HiResolution");
 			loadXMLSetting(&GCSettings.SpriteLimit, "SpriteLimit");
+			loadXMLSetting(&GCSettings.FrameSkip, "FrameSkip");
 			loadXMLSetting(&GCSettings.xshift, "xshift");
 			loadXMLSetting(&GCSettings.yshift, "yshift");
 			loadXMLSetting(&GCSettings.TurboModeEnabled, "TurboModeEnabled");
@@ -426,7 +428,7 @@ void FixInvalidSettings()
 		GCSettings.Controller = CTRL_PAD2;
 	if(!(GCSettings.render >= 0 && GCSettings.render < 5))
 		GCSettings.render = 3;
-	if(!(GCSettings.videomode >= 0 && GCSettings.videomode < 5))
+	if(!(GCSettings.videomode >= 0 && GCSettings.videomode < 6))
 		GCSettings.videomode = 0;
 }
 
@@ -533,13 +535,14 @@ DefaultSettings ()
 	Settings.DisplayTime = false;
 	GCSettings.HiResolution = 1; // Enabled by default
 	GCSettings.SpriteLimit = 1; // Enabled by default
+	GCSettings.FrameSkip = 1; // Enabled by default
 
 	// Frame timings in 50hz and 60hz cpu mode
 	Settings.FrameTimePAL = 20000;
 	Settings.FrameTimeNTSC = 16667;
 
 	GCSettings.sfxOverclock = 0;
-	/* Initialize SuperFX CPU to normal speed by default */
+	/* Initialize Super FX CPU to normal speed by default */
 	Settings.SuperFXSpeedPerLine = 5823405;
 	
 	Settings.SuperFXClockMultiplier = 100;

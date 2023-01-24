@@ -3666,6 +3666,7 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Video Mode");
 	sprintf(options.name[i++], "SNES Hi-Res Mode");
 	sprintf(options.name[i++], "Sprites Per-Line Limit");
+	sprintf(options.name[i++], "Frame Skipping");
 	sprintf(options.name[i++], "Crosshair");
 	sprintf(options.name[i++], "Show Framerate");
 	sprintf(options.name[i++], "Show Local Time");
@@ -3770,18 +3771,22 @@ static int MenuSettingsVideo()
 				break;
 
 			case 8:
+				GCSettings.FrameSkip ^= 1;
+				break;
+
+			case 9:
 				GCSettings.crosshair ^= 1;
 				break;
 				
-			case 9:
+			case 10:
 				Settings.DisplayFrameRate ^= 1;
 				break;
 				
-			case 10:
+			case 11:
 				Settings.DisplayTime ^= 1;
 				break;
 				
-			case 11:
+			case 12:
 				#ifdef HW_RVL
 				GCSettings.sfxOverclock++;
 				if (GCSettings.sfxOverclock > 6) {
@@ -3842,15 +3847,18 @@ static int MenuSettingsVideo()
 				case 2:
 					sprintf (options.value[5], "Progressive (480p)"); break;
 				case 3:
-					sprintf (options.value[5], "PAL (50Hz)"); break;
+					sprintf (options.value[5], "Progressive (576p)"); break;
 				case 4:
+					sprintf (options.value[5], "PAL (50Hz)"); break;
+				case 5:
 					sprintf (options.value[5], "PAL (60Hz)"); break;
 			}
 			sprintf (options.value[6], "%s", GCSettings.HiResolution == 1 ? "On" : "Off");
 			sprintf (options.value[7], "%s", GCSettings.SpriteLimit == 1 ? "On" : "Off");
-			sprintf (options.value[8], "%s", GCSettings.crosshair == 1 ? "On" : "Off");
-			sprintf (options.value[9], "%s", Settings.DisplayFrameRate ? "On" : "Off");
-			sprintf (options.value[10], "%s", Settings.DisplayTime ? "On" : "Off");
+			sprintf (options.value[8], "%s", GCSettings.FrameSkip == 1 ? "On" : "Off");
+			sprintf (options.value[9], "%s", GCSettings.crosshair == 1 ? "On" : "Off");
+			sprintf (options.value[10], "%s", Settings.DisplayFrameRate ? "On" : "Off");
+			sprintf (options.value[11], "%s", Settings.DisplayTime ? "On" : "Off");
 			switch(GCSettings.sfxOverclock)
 			{
 				case 0:

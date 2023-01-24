@@ -108,9 +108,7 @@ static camera cam = {
 };
 
 
-/***
-*** Custom Video modes (used to emulate original console video modes)
-***/
+/*** Custom Video modes (used to emulate original console video modes) ***/
 
 /** Original SNES PAL Resolutions: **/
 
@@ -261,8 +259,8 @@ static GXRModeObj TV_Custom;
 
 /* TV Modes table */
 static GXRModeObj *tvmodes[4] = {
-	&TV_239p, &TV_478i,			/* Snes PAL video modes */
-	&TV_224p, &TV_448i,			/* Snes NTSC video modes */
+	&TV_239p, &TV_478i,			/* SNES PAL video modes */
+	&TV_224p, &TV_448i,			/* SNES NTSC video modes */
 };
 
 /****************************************************************************
@@ -401,10 +399,13 @@ static GXRModeObj * FindVideoMode()
 		case 2: // Progressive (480p)
 			mode = &TVNtsc480Prog;
 			break;
-		case 3: // PAL (50Hz)
+		case 3: // Progressive (576p)
+			mode = &TVPal576ProgScale;
+			break;
+		case 4: // PAL (50Hz)
 			mode = &TVPal576IntDfScale;
 			break;
-		case 4: // PAL (60Hz)
+		case 5: // PAL (60Hz)
 			mode = &TVEurgb60Hz480IntDf;
 			break;
 		default:
@@ -416,6 +417,8 @@ static GXRModeObj * FindVideoMode()
 			 * on the Wii, the user can do this themselves on their Wii Settings */
 			if(VIDEO_HaveComponentCable())
 				mode = &TVNtsc480Prog;
+			else
+				mode = &TVPal576ProgScale;
 			#endif
 
 			break;
@@ -430,9 +433,13 @@ static GXRModeObj * FindVideoMode()
 
 			// Original Video modes (forced to PAL 50Hz)
 			// set video signal mode
+			TV_239p.viTVMode = VI_TVMODE_PAL_DS;
+			TV_478i.viTVMode = VI_TVMODE_PAL_INT;
 			TV_224p.viTVMode = VI_TVMODE_PAL_DS;
 			TV_448i.viTVMode = VI_TVMODE_PAL_INT;
 			// set VI position
+			TV_239p.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 478/2)/2;
+			TV_478i.viYOrigin = (VI_MAX_HEIGHT_PAL - 478)/2;
 			TV_224p.viYOrigin = (VI_MAX_HEIGHT_PAL/2 - 448/2)/2;
 			TV_448i.viYOrigin = (VI_MAX_HEIGHT_PAL - 448)/2;
 			break;
@@ -473,7 +480,7 @@ static GXRModeObj * FindVideoMode()
 	}
 
 	// check for progressive scan
-	if (mode->viTVMode == VI_TVMODE_NTSC_PROG)
+	if (mode->viTVMode == VI_TVMODE_NTSC_PROG || VI_TVMODE_PAL_PROG)
 		progressive = true;
 	else
 		progressive = false;
@@ -538,7 +545,6 @@ static void SetupVideoMode(GXRModeObj * mode)
  * This function MUST be called at startup.
  * - also sets up menu video mode
  ***************************************************************************/
-
 void
 InitGCVideo ()
 {
@@ -635,7 +641,11 @@ ResetVideo_Emu ()
 			rmode->xfbMode = VI_XFBMODE_DF;
 			rmode->viTVMode |= VI_INTERLACE;
 		}
-		Settings.SoundInputRate = 31894;
+
+		if (Settings.PAL == 1)
+			Settings.SoundInputRate = 32090;
+		else
+			Settings.SoundInputRate = 31894;
 		UpdatePlaybackRate();
 	}
 	else
