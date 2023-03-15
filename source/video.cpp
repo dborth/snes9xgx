@@ -893,7 +893,7 @@ void AllocGfxMem()
 	memset(filtermem, 0, FILTERMEM_SIZE);
 #endif
 
-	GFX.Pitch = EXT_PITCH;
+	GFX.Pitch;
 	GFX.Screen = (uint16*)(snes9xgfx + EXT_OFFSET);
 }
 
@@ -905,7 +905,7 @@ void AllocGfxMem()
 void
 setGFX ()
 {
-	GFX.Pitch = EXT_PITCH;
+	GFX.Pitch;
 }
 
 /****************************************************************************
