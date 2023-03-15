@@ -704,7 +704,7 @@ ResetVideo_Emu ()
 void
 MakeTexture (const void *src, void *dst, s32 width, s32 height)
 {
-	register u32 tmp0=0,tmp1=0,tmp2=0,tmp3=0;
+	u32 tmp0=0,tmp1=0,tmp2=0,tmp3=0;
 
 	__asm__ __volatile__ (
 		"	srwi		%6,%6,2\n"
