@@ -125,6 +125,7 @@ void S9xSA1MainLoop (void)
 			S9xSA1Opcode_IRQ();
 		}
 	}
+
 	#undef CPU
 	int cycles = CPU.Cycles * 3;
 	#define CPU SA1

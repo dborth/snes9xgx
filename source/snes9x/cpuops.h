@@ -4,7 +4,6 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-
 #ifndef _CPUOPS_H_
 #define _CPUOPS_H_
 

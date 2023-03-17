@@ -393,7 +393,7 @@ static void flush_movie (void)
 	fseek(Movie.File, Movie.ControllerDataOffset, SEEK_SET);
 
 	if (!fwrite(Movie.InputBuffer, 1, Movie.BytesPerSample * (Movie.MaxSample + 1), Movie.File))
-			printf ("Movie flush failed.\n");
+		printf ("Movie flush failed.\n");
 }
 
 static void truncate_movie (void)
@@ -405,7 +405,7 @@ static void truncate_movie (void)
 		return;
 
 	if (ftruncate(fileno(Movie.File), Movie.ControllerDataOffset + Movie.BytesPerSample * (Movie.MaxSample + 1)))
-			printf ("Couldn't truncate file.\n");
+		printf ("Couldn't truncate file.\n");
 }
 
 static int read_movie_header (FILE *fd, SMovie *movie)
@@ -492,7 +492,7 @@ static void write_movie_header (FILE *fd, SMovie *movie)
 	}
 
 	if (!fwrite(buf, 1, SMV_HEADER_SIZE, fd))
-			printf ("Couldn't write movie header.\n");
+		printf ("Couldn't write movie header.\n");
 }
 
 static void write_movie_extrarominfo (FILE *fd, SMovie *movie)
@@ -762,7 +762,7 @@ int S9xMovieCreate (const char *filename, uint8 controllers_mask, uint8 opts, co
 		}
 
 		if (!fwrite(meta_buf, sizeof(uint16), metadata_length, fd))
-				printf ("Failed writing movie metadata.\n");
+			printf ("Failed writing movie metadata.\n");
 	}
 
 	Movie.ROMCRC32 = Memory.ROMCRC32;
@@ -930,7 +930,7 @@ void S9xMovieUpdate (bool addFrame)
 				Movie.MaxFrame = ++Movie.CurrentFrame;
 
 			if (!fwrite((Movie.InputBufferPtr - Movie.BytesPerSample), 1, Movie.BytesPerSample, Movie.File))
-					printf ("Error writing control data.\n");
+				printf ("Error writing control data.\n");
 
 			break;
 		}
@@ -956,7 +956,7 @@ void S9xMovieUpdateOnReset (void)
 		Movie.MaxFrame = ++Movie.CurrentFrame;
 
 		if (!fwrite((Movie.InputBufferPtr - Movie.BytesPerSample), 1, Movie.BytesPerSample, Movie.File))
-				printf ("Failed writing reset data.\n");
+			printf ("Failed writing reset data.\n");
 	}
 }
 

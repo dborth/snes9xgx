@@ -1307,7 +1307,7 @@ void S9xInitBSX (void)
 			uint8	*header = r1 ? Memory.ROM + 0x7FC0 : Memory.ROM + 0xFFC0;
 
 			FlashMode = (header[0x18] & 0xEF) == 0x20 ? FALSE : TRUE;
-			FlashSize = (header[0x19] & 0x20) ? PSRAM_SIZE : FLASH_SIZE;
+			FlashSize = FLASH_SIZE;
 
 			// Fix Block Allocation Flags
 			// (for games that don't have it setup properly,
@@ -1376,38 +1376,12 @@ void S9xResetBSX (void)
 	BSX.out_index = 0;
 	memset(BSX.output, 0, sizeof(BSX.output));
 
-	if(bsxBiosLoadFailed) {
-		BSX.MMC[0x02] = FlashMode ? 0x80: 0;
+	// starting from the bios
+	BSX.MMC[0x02] = BSX.MMC[0x03] = BSX.MMC[0x05] = BSX.MMC[0x06] = 0x80;
+	BSX.MMC[0x09] = BSX.MMC[0x0B] = 0x80;
 
-		// per bios: run from psram or flash card
-		if (FlashSize == PSRAM_SIZE)
-		{
-			memcpy(PSRAM, FlashROM, PSRAM_SIZE);
-
-			BSX.MMC[0x01] = 0x80;
-			BSX.MMC[0x03] = 0x80;
-			BSX.MMC[0x04] = 0x80;
-			BSX.MMC[0x0C] = 0x80;
-			BSX.MMC[0x0D] = 0x80;
-		}
-		else
-		{
-			BSX.MMC[0x03] = 0x80;
-			BSX.MMC[0x05] = 0x80;
-			BSX.MMC[0x06] = 0x80;
-			BSX.MMC[0x09] = BSX.MMC[0x0B] = 0x80;
-		}
-
-		BSX.MMC[0x0E] = 0x80;
-	}
-	else {
-		// starting from the bios
-		BSX.MMC[0x02] = BSX.MMC[0x03] = BSX.MMC[0x05] = BSX.MMC[0x06] = 0x80;
-		BSX.MMC[0x09] = BSX.MMC[0x0B] = 0x80;
-
-		BSX.MMC[0x07] = BSX.MMC[0x08] = 0x80;
-		BSX.MMC[0x0E] = 0x80;
-	}
+	BSX.MMC[0x07] = BSX.MMC[0x08] = 0x80;
+	BSX.MMC[0x0E] = 0x80;
 
 	// default register values
 	BSX.PPU[0x2196 - BSXPPUBASE] = 0x10;

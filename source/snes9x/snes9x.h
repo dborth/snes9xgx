@@ -305,9 +305,9 @@ struct SSettings
 	bool8	OpenGLEnable;
 	float	SuperFXSpeedPerLine;
 
-	bool8   SeparateEchoBuffer;
+    bool8   SeparateEchoBuffer;
 	uint32	SuperFXClockMultiplier;
-	int	OverclockMode;
+    int OverclockMode;
 	int	OneClockCycle;
 	int	OneSlowClockCycle;
 	int	TwoClockCycles;
