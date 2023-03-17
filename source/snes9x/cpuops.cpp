@@ -1406,7 +1406,7 @@ bOP(70Slow, RelativeSlow,  CheckOverflow(), 0, CheckEmulation())
 static void Op82 (void)
 {
 	S9xSetPCBase(ICPU.ShiftedPB + RelativeLong(JUMP));
-	AddCycles(ONE_CYCLE);	
+	AddCycles(ONE_CYCLE);
 }
 
 static void Op82Slow (void)

@@ -786,7 +786,7 @@ uint8 S9xSA1GetByte (uint32 address)
 
 		case CMemory::MAP_BWRAM_BITMAP:
 			SA1.Cycles += ONE_CYCLE * 2;
-			
+
 			address -= 0x600000;
 			if (SA1.VirtualBitmapFormat == 2)
 				return ((Memory.SRAM[(address >> 2) & 0x3ffff] >> ((address & 3) << 1)) &  3);
@@ -795,7 +795,7 @@ uint8 S9xSA1GetByte (uint32 address)
 
 		case CMemory::MAP_BWRAM_BITMAP2:
 			SA1.Cycles += ONE_CYCLE * 2;
-			
+
 			address = (address & 0xffff) - 0x6000;
 			if (SA1.VirtualBitmapFormat == 2)
 				return ((SA1.BWRAM[(address >> 2) & 0x3ffff] >> ((address & 3) << 1)) &  3);

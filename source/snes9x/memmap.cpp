@@ -1421,7 +1421,7 @@ bool8 CMemory::LoadROM (const char *filename)
         return FALSE;
 
     S9xResetSaveTimer(FALSE); // reset oops timer here so that .oops file has rom name of previous rom
-
+	
     int32 totalFileSize;
 
     do
@@ -1925,7 +1925,7 @@ bool8 CMemory::LoadSRTC (void)
 		return (FALSE);
 
 	if (fread(RTCData.reg, 1, 20, fp) < 20)
-			memset (RTCData.reg, 0, 20);
+		memset (RTCData.reg, 0, 20);
 	fclose(fp);
 
 	return (TRUE);
@@ -1955,7 +1955,7 @@ void CMemory::ClearSRAM (bool8 onlyNonSavedSRAM)
 			return;
 
 	// TODO: If SRAM size changes change this value as well
-	memset(SRAM, SNESGameFixes.SRAMInitialValue, (32,0x80000));
+	memset(SRAM, SNESGameFixes.SRAMInitialValue, 0x80000);
 }
 
 bool8 CMemory::LoadSRAM (const char *filename)
@@ -2621,8 +2621,8 @@ void CMemory::InitROM (void)
 		Settings.DisplayColor = BUILD_PIXEL(31, 31, 0);
 		SET_UI_COLOR(255, 255, 0);
 	}
-	
-		// Use slight blue tint to indicate ROM was patched.
+
+	// Use slight blue tint to indicate ROM was patched.
 	if (Settings.IsPatched)
 	{
 		Settings.DisplayColor = BUILD_PIXEL(26, 26, 31);
@@ -3228,7 +3228,7 @@ void CMemory::Map_SA1LoROMMap (void)
 		SA1.WriteMap[c + 0] = SA1.WriteMap[c + 0x800] = FillRAM + 0x3000;
 		SA1.WriteMap[c + 1] = SA1.WriteMap[c + 0x801] = (uint8 *) MAP_NONE;
 	}
-	
+
 	// SA-1 Banks 40->4f
 	for (int c = 0x400; c < 0x500; c++)
 		SA1.Map[c] = SA1.WriteMap[c] = (uint8*)MAP_HIROM_SRAM;
@@ -3768,7 +3768,6 @@ void CMemory::ApplyROMFixes (void)
 
 	if (Timings.DMACPUSync != 18)
 		printf("DMA sync: %d\n", Timings.DMACPUSync);
-
 
 	// SRAM initial value
 	if (match_na("HITOMI3"))
