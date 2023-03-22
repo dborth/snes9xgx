@@ -34,7 +34,7 @@ CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) `freetype-config --cflags` \
 				-fomit-frame-pointer \
 				-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wno-strict-aliasing \
 				-Wno-format -Wno-format-overflow -Wno-stringop-truncation -Wno-stringop-overflow -Wno-format-truncation -Wno-narrowing -Wno-sign-compare \
-				-Wno-unused-function -Wno-write-strings -Wno-parentheses
+				-Wno-unused-function -Wno-write-strings -Wno-parentheses -Wno-uninitialized -Wno-infinite-recursion
 
 CXXFLAGS	=	$(CFLAGS)
 
