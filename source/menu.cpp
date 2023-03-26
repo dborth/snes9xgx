@@ -3847,11 +3847,11 @@ static int MenuSettingsVideo()
 				case 2:
 					sprintf (options.value[5], "Progressive (480p)"); break;
 				case 3:
-					sprintf (options.value[5], "Progressive (576p)"); break;
-				case 4:
 					sprintf (options.value[5], "PAL (50Hz)"); break;
-				case 5:
+				case 4:
 					sprintf (options.value[5], "PAL (60Hz)"); break;
+				case 5:
+					sprintf (options.value[5], "Progressive (576p)"); break;
 			}
 			sprintf (options.value[6], "%s", GCSettings.HiResolution == 1 ? "On" : "Off");
 			sprintf (options.value[7], "%s", GCSettings.SpriteLimit == 1 ? "On" : "Off");
