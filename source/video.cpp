@@ -399,14 +399,14 @@ static GXRModeObj * FindVideoMode()
 		case 2: // Progressive (480p)
 			mode = &TVNtsc480Prog;
 			break;
-		case 3: // Progressive (576p)
-			mode = &TVPal576ProgScale;
-			break;
-		case 4: // PAL (50Hz)
+		case 3: // PAL (50Hz)
 			mode = &TVPal576IntDfScale;
 			break;
-		case 5: // PAL (60Hz)
+		case 4: // PAL (60Hz)
 			mode = &TVEurgb60Hz480IntDf;
+			break;
+		case 5: // Progressive (576p)
+			mode = &TVPal576ProgScale;
 			break;
 		default:
 			mode = VIDEO_GetPreferredMode(NULL);
@@ -417,8 +417,6 @@ static GXRModeObj * FindVideoMode()
 			 * on the Wii, the user can do this themselves on their Wii Settings */
 			if(VIDEO_HaveComponentCable())
 				mode = &TVNtsc480Prog;
-			else
-				mode = &TVPal576ProgScale;
 			#endif
 
 			break;
