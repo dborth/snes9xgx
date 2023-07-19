@@ -43,6 +43,7 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 * Retrode/Xbox 360/Hornet controller support
 * SNES Superscope, Mouse, Justifier support
 * Cheat support
+* Artwork (artwork, cover or screenshot) support
 * Satellaview (BS-X) support
 * Auto Load/Save Game Snapshots and SRAM
 * Custom controller configurations
@@ -869,6 +870,14 @@ the Sound Effects Volume. The Exit Action can be set to "Return to Loader",
 "Return to Wii Menu" and "Power off Wii". The Wiimote Orientation can be set
 to Vertical or Horizontal and then you can increase and decrease the Music
 and Sound Effects Volume.
+
+### ARTWORK
+
+Artwork, covers or screenshots will be displayed on the main menu when
+each game is selected. Select which type to display on the menu by going
+to Settings > Menu > Preview Image. Each image resides in the respectively
+named folder at SD:/snes9x/*. They shall be named exactly as the rom and
+formatted as 316x224px PNG with a 32bit depth.
 
 ### NETWORK
 
