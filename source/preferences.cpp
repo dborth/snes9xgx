@@ -87,7 +87,7 @@ static const char * XMLSaveCallback(mxml_node_t *node, int where)
 {
 	const char *name;
 
-	name = node->value.element.name;
+	name = mxmlGetElement(node);
 
 	if(where == MXML_WS_BEFORE_CLOSE)
 	{
