@@ -876,8 +876,9 @@ and Sound Effects Volume.
 Artwork, covers or screenshots will be displayed on the main menu when
 each game is selected. Select which type to display on the menu by going
 to Settings > Menu > Preview Image. Each image resides in the respectively
-named folder at SD:/snes9x/*. They shall be named exactly as the rom and
-formatted as 316x224px PNG with a 32bit depth.
+named folder (eg: sd:/snes9xgx/covers). They should be a PNG named exactly 
+the same as as the rom and sized no more than 640px by 480px. Recommendend 
+format is 316px x 224px PNG with a 32bit depth.
 
 ### NETWORK
 
