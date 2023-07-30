@@ -2,7 +2,7 @@ msgid "&"
 msgstr ""
 
 msgid "16:9 Correction"
-msgstr "16:9"
+msgstr "16:9 Korrektur"
 
 msgid "7z decompression failed: Archive contains too many files"
 msgstr "7z Dekomprimierung fehlgeschlagen: Archiv enthält zu viele Dateien"
@@ -26,7 +26,7 @@ msgid "A (Rapid)"
 msgstr "A (Turbo)"
 
 msgid "Additional coding"
-msgstr "Uusätzliche Programmierung"
+msgstr "Zusätzliche Programmierung"
 
 msgid "Aim Offscreen"
 msgstr "Neben Bildsch. zielen"
