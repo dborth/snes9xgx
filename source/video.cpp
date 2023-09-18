@@ -568,6 +568,7 @@ if (CONF_GetAspectRatio() == CONF_ASPECT_16_9 && (*(u32*)(0xCD8005A0) >> 16) == 
 	SetupVideoMode(rmode);
 #ifdef HW_RVL
 	InitLUTs();	// init LUTs for hq2x
+	SetupFormat();   // For 2xBR
 #endif
 	LWP_CreateThread (&vbthread, vbgetback, NULL, vbstack, TSTACK, 68);
 	

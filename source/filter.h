@@ -28,6 +28,8 @@ enum RenderFilter{
 	FILTER_HQ2XBOLD,
     FILTER_SCALE2X,
 	FILTER_TVMODE,
+	FILTER_2XBR,
+	FILTER_DDT,
 
 	NUM_FILTERS
 };
@@ -50,6 +52,7 @@ void SelectFilterMethod ();
 const char* GetFilterName (RenderFilter filterID);
 int GetFilterScale(RenderFilter filterID);
 void InitLUTs();
+void SetupFormat();
 
 #endif
 
