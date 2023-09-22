@@ -1,15 +1,15 @@
 /****************************************************************************
-    * Snes9x Nintendo Wii/Gamecube Port
-    *
-    * Michniewski 2008
-    *
-    * HQ2x, HQ3x, HQ4x filters
-    * (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
-    *
-    * filter.cpp
-    *
-    * Adapted from Snes9x Win32/MacOSX ports
-    * Video Filter Code (hq2x)
+ * Snes9x Nintendo Wii/Gamecube Port
+ *
+ * Michniewski 2008
+ *
+ * HQ2x, HQ3x, HQ4x filters
+ * (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+ *
+ * filter.cpp
+ *
+ * Adapted from Snes9x Win32/MacOSX ports
+ * Video Filter Code (hq2x)
 ****************************************************************************/
 #include <gccore.h>
 #include <stdio.h>
@@ -37,6 +37,7 @@ template<int GuiScale> void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *d
 template<int GuiScale> void RenderScale2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
 template<int GuiScale> void RenderTVMode (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
 template<int GuiScale> void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
+template<int GuiScale> void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
 template<int GuiScale> void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height);
 
 const char* GetFilterName (RenderFilter filterID)
@@ -51,6 +52,7 @@ const char* GetFilterName (RenderFilter filterID)
         case FILTER_SCALE2X: return "Scale2x";
         case FILTER_TVMODE: return "TV Mode";
         case FILTER_2XBR: return "2xBR";
+        case FILTER_2XBRLV1: return "2xBR-lv1";
         case FILTER_DDT: return "DDT";
     }
 }
@@ -66,6 +68,7 @@ static TFilterMethod FilterToMethod (RenderFilter filterID)
         case FILTER_SCALE2X:    return RenderScale2X<FILTER_SCALE2X>;
         case FILTER_TVMODE:     return RenderTVMode<FILTER_TVMODE>;
         case FILTER_2XBR:     return Render2xBR<FILTER_2XBR>;
+        case FILTER_2XBRLV1:     return Render2xBRlv1<FILTER_2XBRLV1>;
         case FILTER_DDT:     return RenderDDT<FILTER_DDT>;
         default: return 0;
     }
@@ -84,6 +87,7 @@ int GetFilterScale(RenderFilter filterID)
         case FILTER_SCALE2X:
         case FILTER_TVMODE:
         case FILTER_2XBR:
+        case FILTER_2XBRLV1:
         case FILTER_DDT:
         return 2;
     }
@@ -595,15 +599,20 @@ static const uint16 lb_mask = LB_MASK565;
           (rb_mask & ((dst & rb_mask) + ((((src & rb_mask) - (dst & rb_mask))) >>2))) | \
           ( g_mask & ((dst &  g_mask) + ((((src &  g_mask) - (dst &  g_mask))) >>2))) )
 
+#define ALPHA_BLEND_96_W(dst, src) \
+    dst = ( \
+          (rb_mask & ((dst & rb_mask) + ((((src & rb_mask) - (dst & rb_mask)) * 96) >>8))) | \
+          ( g_mask & ((dst &  g_mask) + ((((src &  g_mask) - (dst &  g_mask)) * 96) >>8))) )
+
 #define ALPHA_BLEND_192_W(dst, src) \
     dst = ( \
-          (rb_mask & ((dst & rb_mask) + ((((src & rb_mask) - (dst & rb_mask)) * 192) >>8))) | \
-          ( g_mask & ((dst &  g_mask) + ((((src &  g_mask) - (dst &  g_mask)) * 192) >>8))) )
+          (rb_mask & ((src & rb_mask) + ((((dst & rb_mask) - (src & rb_mask))) >>2))) | \
+          ( g_mask & ((src &  g_mask) + ((((dst &  g_mask) - (src &  g_mask))) >>2))) )
 
 #define ALPHA_BLEND_224_W(dst, src) \
     dst = ( \
-          (rb_mask & ((dst & rb_mask) + ((((src & rb_mask) - (dst & rb_mask)) * 224) >>8))) | \
-          ( g_mask & ((dst &  g_mask) + ((((src &  g_mask) - (dst &  g_mask)) * 224) >>8))) )
+          (rb_mask & ((src & rb_mask) + ((((dst & rb_mask) - (src & rb_mask))) >>3))) | \
+          ( g_mask & ((src &  g_mask) + ((((dst &  g_mask) - (src &  g_mask))) >>3))) )
 
 
 #define LEFT_UP_2_2X(N3, N2, N1, PIXEL)\
@@ -631,17 +640,24 @@ static const uint16 lb_mask = LB_MASK565;
           (rb_mask & ((dst & rb_mask) + ((((src & rb_mask) - (dst & rb_mask)) * VAL) >>5))) | \
           ( g_mask & ((dst &  g_mask) + ((((src &  g_mask) - (dst &  g_mask)) * VAL) >>5))))
 
-#define BIL2X(PF, PH, PI, N3) \
-    ALPHA_BLEND_64_W(Ep[N3], PF); \
-    ALPHA_BLEND_X_W(Ep[N3], PH, 6); \
-    ALPHA_BLEND_16_W(Ep[N3], PI); \
+#define BIL2X_ODD(PF, PH, PI, N1, N2, N3) \
+    ALPHA_BLEND_128_W(Ep[N1], PF); \
+    ALPHA_BLEND_128_W(Ep[N2], PH); \
+    Ep[N3] = Ep[N1]; \
+    aux = PH; \
+    ALPHA_BLEND_128_W(aux, PI); \
+    ALPHA_BLEND_128_W(Ep[N3], aux); \
 
-#define DDT2X_BC(PF, PH, PI, N3) \
-    ALPHA_BLEND_64_W(Ep[N3], PI); \
+#define DDT2XBC_ODD(PF, PH, PI, N1, N2, N3) \
+    ALPHA_BLEND_128_W(Ep[N1], PF); \
+    ALPHA_BLEND_128_W(Ep[N2], PH); \
+    ALPHA_BLEND_128_W(Ep[N3], PI); \
 
-#define DDT2X_D(PF, PH, N3) \
-    ALPHA_BLEND_X_W(Ep[N3], PF, 11); \
-    ALPHA_BLEND_64_W(Ep[N3], PH); \
+#define DDT2XD_ODD(PF, PH, N1, N2, N3) \
+    ALPHA_BLEND_128_W(Ep[N1], PF); \
+    ALPHA_BLEND_128_W(Ep[N2], PH); \
+    Ep[N3] = PF; \
+    ALPHA_BLEND_128_W(Ep[N3], PH); \
 
 #define df(A, B)\
     abs(RGBlum[A] - RGBlum[B])\
@@ -687,33 +703,40 @@ static const uint16 lb_mask = LB_MASK565;
         }\
     }\
 
-#define BLEND_SUBPIXEL(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3) \
-  if (PE!=PF || PE!=PH || PE!=PI) \
-  {\
+#define XBRLV1(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3) \
+    irlv1   = (PE!=PH && PE!=PF); \
+    if ( irlv1 )\
+    {\
+        wd1 = ((df(PE,PC)+df(PE,PG))+(df(PH,PF)<<1)); \
+        wd2 = ( df(PH,PD)+df(PF,PB))+(df(PE,PI)<<1); \
+        if (((wd1<<1)<wd2) && eq(PB,PD) && PB!=PF && PD!=PH)\
+        {\
+                px = (df(PE,PF) <= df(PE,PH)) ? PF : PH; \
+                DIA_2X(N3, px);\
+        }\
+	else if (wd1<=wd2)\
+        {\
+            px = (df(PE,PF) <= df(PE,PH)) ? PF : PH;\
+            ALPHA_BLEND_64_W( Ep[N3], px); \
+        }\
+    }\
+
+
+#define DDT(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3) \
         wd1 = (df(PH,PF)); \
         wd2 = (df(PE,PI)); \
 	if (wd1>wd2)\
 	{\
-            DDT2X_BC(PF, PH, PI, N3);\
+            DDT2XBC_ODD(PF, PH, PI, N1, N2, N3);\
 	}\
 	else if (wd1<wd2)\
 	{\
-            DDT2X_D(PF, PH, N3);\
+            DDT2XD_ODD(PF, PH, N1, N2, N3);\
 	}\
 	else\
 	{\
-            BIL2X(PF, PH, PI, N3);\
-        }\
-  }
-
-#define DDT(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3) \
-    if (PE!=PH || PE!=PI || PE!=PF || PE!=PC || PE!=PB || PE!=PA || PE!=PD || PE!=PG) \
-    {\
-            BLEND_SUBPIXEL(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3);\
-            BLEND_SUBPIXEL(PE, PC, PF, PB, PI, PA, PH, PD, PG, N2, N0, N3, N1);\
-            BLEND_SUBPIXEL(PE, PA, PB, PD, PC, PG, PF, PH, PI, N3, N2, N1, N0);\
-            BLEND_SUBPIXEL(PE, PG, PD, PH, PA, PI, PB, PF, PC, N1, N3, N0, N2);\
-    }\
+            BIL2X_ODD(PF, PH, PI, N1, N2, N3);\
+        }
 
 //---------------------------------------------------------------------------------------------------------------------------
 
@@ -743,12 +766,12 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
         return;
     }
     
-    uint32 wd1, wd2, px;
+    uint32 wd1, wd2;
     uint32 irlv1, irlv2u, irlv2l;
     uint32 dFG, dHC;
     uint32 E0, E1, E2, E3;
 
-    uint16 A, B, C, D, E, F, G, H, I;
+    uint16 A, B, C, D, E, F, G, H, I, px;
    
     uint32 nextlineSrc = srcPitch / sizeof(uint16);
     uint16 *p  = (uint16 *)srcPtr;
@@ -795,9 +818,8 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
     }
 }
 
-
 template<int GuiScale>
-void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
+void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
 {
     // If Snes9x is rendering anything in HiRes, then just copy, don't interpolate
     if (height > SNES_HEIGHT_EXTENDED || width == 512)
@@ -805,12 +827,12 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
         return;
     }
     
-    uint32 wd1, wd2, px;
+    uint32 wd1, wd2;
     uint32 irlv1, irlv2u, irlv2l;
     uint32 dFG, dHC;
     uint32 E0, E1, E2, E3;
 
-    uint16 A, B, C, D, E, F, G, H, I;
+    uint16 A, B, C, D, E, F, G, H, I, px;
    
     uint32 nextlineSrc = srcPitch / sizeof(uint16);
     uint16 *p  = (uint16 *)srcPtr;
@@ -842,7 +864,10 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
 
             Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; // 0, 1, 2, 3
             
-            DDT( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3);
+            XBRLV1( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3);
+            XBRLV1( E, C, F, B, I, A, H, D, G, E2, E0, E3, E1);
+            XBRLV1( E, A, B, D, C, G, F, H, I, E3, E2, E1, E0);
+            XBRLV1( E, G, D, H, A, I, B, F, C, E1, E3, E0, E2);        	
             
             A= B; B=C;
             D= E; E=F;
@@ -853,3 +878,65 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
         Ep += nextlineDst << 1;
     }
 }
+
+template<int GuiScale>
+void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
+{
+    // If Snes9x is rendering anything in HiRes, then just copy, don't interpolate
+    if (height > SNES_HEIGHT_EXTENDED || width == 512)
+    {
+        return;
+    }
+    
+    uint32 wd1, wd2;
+    uint32 irlv1, irlv2u, irlv2l;
+    uint32 dFG, dHC;
+    uint32 E0, E1, E2, E3;
+
+    uint16 A, B, C, D, E, F, G, H, I, px, aux;
+   
+    uint32 nextlineSrc = srcPitch / sizeof(uint16);
+    uint16 *p  = (uint16 *)srcPtr;
+    
+    uint32 nextlineDst = dstPitch / sizeof(uint16);
+    uint16 *Ep = (uint16 *)dstPtr;
+    
+    while (height--) {
+        
+        A  = *(p - 1 - nextlineSrc);
+        B  = *(p     - nextlineSrc);
+        
+        D  = *(p - 1);
+        E  = *(p);
+        
+        G  = *(p - 1 + nextlineSrc);
+        H  = *(p     + nextlineSrc);
+        
+
+        for (int i = 0; i < width; i++) {
+            C  = *(p + i + 1 - nextlineSrc);
+            F  = *(p + i + 1);
+            I  = *(p + i + 1 + nextlineSrc);
+	    
+	    E0 = (i << 1);
+	    E1 = (i << 1) + 1;
+	    E2 = (i << 1) + nextlineDst;
+	    E3 = (i << 1) + nextlineDst + 1;
+
+            Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; // 0, 1, 2, 3
+
+            if (E!=F || E!=H || F!=I || H!=I)
+            {
+                DDT( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3);
+            }
+
+            A= B; B=C;
+            D= E; E=F;
+            G= H; H=I;
+        }
+        
+        p += nextlineSrc;
+        Ep += nextlineDst << 1;
+    }
+}
+
