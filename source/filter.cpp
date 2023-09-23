@@ -667,14 +667,13 @@ static const uint16 lb_mask = LB_MASK565;
 
 
 #define XBR(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3) \
-    irlv1   = (PE!=PH && PE!=PF); \
-    if ( irlv1 )\
+    if ( PE!=PH && PE!=PF )\
     {\
-        wd1 = (df(PE,PC)+df(PE,PG))+(df(PH,PF)<<2); \
-        wd2 = (df(PH,PD)+df(PF,PB))+(df(PE,PI)<<2); \
-        if (wd1<wd2)\
+        wd1 = df(PH,PF); \
+        wd2 = df(PE,PI); \
+        if ((wd1<<1)<wd2)\
         {\
-            if ( ( !eq(PF,PB) && !eq(PF,PC) || !eq(PH,PD) && !eq(PH,PG) || eq(PE,PG) || eq(PE,PC)) )\
+            if ( !eq(PF,PB) && !eq(PF,PC) || !eq(PH,PD) && !eq(PH,PG) || eq(PE,PG) || eq(PE,PC) )\
                 {\
                 dFG=df(PF,PG); dHC=df(PH,PC); \
                 irlv2u = (PE!=PC && PB!=PC); irlv2l = (PE!=PG && PD!=PG); px = (df(PE,PF) <= df(PE,PH)) ? PF : PH; \
@@ -703,12 +702,13 @@ static const uint16 lb_mask = LB_MASK565;
         }\
     }\
 
+
 #define XBRLV1(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3) \
     irlv1   = (PE!=PH && PE!=PF); \
     if ( irlv1 )\
     {\
-        wd1 = ((df(PE,PC)+df(PE,PG))+(df(PH,PF)<<1)); \
-        wd2 = ( df(PH,PD)+df(PF,PB))+(df(PE,PI)<<1); \
+        wd1 = df(PH,PF); \
+        wd2 = df(PE,PI); \
         if (((wd1<<1)<wd2) && eq(PB,PD) && PB!=PF && PD!=PH)\
         {\
                 px = (df(PE,PF) <= df(PE,PH)) ? PF : PH; \
@@ -722,7 +722,7 @@ static const uint16 lb_mask = LB_MASK565;
     }\
 
 
-#define DDT(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3) \
+#define DDT(PE, PI, PH, PF, N0, N1, N2, N3) \
         wd1 = (df(PH,PF)); \
         wd2 = (df(PE,PI)); \
 	if (wd1>wd2)\
@@ -803,10 +803,13 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 
             Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; // 0, 1, 2, 3
             
-            XBR( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3);
-            XBR( E, C, F, B, I, A, H, D, G, E2, E0, E3, E1);
-            XBR( E, A, B, D, C, G, F, H, I, E3, E2, E1, E0);
-            XBR( E, G, D, H, A, I, B, F, C, E1, E3, E0, E2);        	
+	    if (  (E!=F || E!=D) && (E!=H || E!=B) )
+            {	    
+                XBR( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3);
+                XBR( E, C, F, B, I, A, H, D, G, E2, E0, E3, E1);
+                XBR( E, A, B, D, C, G, F, H, I, E3, E2, E1, E0);
+                XBR( E, G, D, H, A, I, B, F, C, E1, E3, E0, E2);
+	    }
             
             A= B; B=C;
             D= E; E=F;
@@ -828,8 +831,7 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
     }
     
     uint32 wd1, wd2;
-    uint32 irlv1, irlv2u, irlv2l;
-    uint32 dFG, dHC;
+    uint32 irlv1;
     uint32 E0, E1, E2, E3;
 
     uint16 A, B, C, D, E, F, G, H, I, px;
@@ -863,11 +865,14 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
 	    E3 = (i << 1) + nextlineDst + 1;
 
             Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; // 0, 1, 2, 3
-            
-            XBRLV1( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3);
-            XBRLV1( E, C, F, B, I, A, H, D, G, E2, E0, E3, E1);
-            XBRLV1( E, A, B, D, C, G, F, H, I, E3, E2, E1, E0);
-            XBRLV1( E, G, D, H, A, I, B, F, C, E1, E3, E0, E2);        	
+
+	    if (  (E!=F || E!=D) && (E!=H || E!=B) )
+	    {            
+                XBRLV1( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3);
+                XBRLV1( E, C, F, B, I, A, H, D, G, E2, E0, E3, E1);
+                XBRLV1( E, A, B, D, C, G, F, H, I, E3, E2, E1, E0);
+                XBRLV1( E, G, D, H, A, I, B, F, C, E1, E3, E0, E2);
+	    }
             
             A= B; B=C;
             D= E; E=F;
@@ -879,6 +884,7 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
     }
 }
 
+
 template<int GuiScale>
 void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
 {
@@ -889,11 +895,9 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
     }
     
     uint32 wd1, wd2;
-    uint32 irlv1, irlv2u, irlv2l;
-    uint32 dFG, dHC;
     uint32 E0, E1, E2, E3;
 
-    uint16 A, B, C, D, E, F, G, H, I, px, aux;
+    uint16 E, F, H, I, aux;
    
     uint32 nextlineSrc = srcPitch / sizeof(uint16);
     uint16 *p  = (uint16 *)srcPtr;
@@ -903,18 +907,10 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
     
     while (height--) {
         
-        A  = *(p - 1 - nextlineSrc);
-        B  = *(p     - nextlineSrc);
-        
-        D  = *(p - 1);
         E  = *(p);
-        
-        G  = *(p - 1 + nextlineSrc);
         H  = *(p     + nextlineSrc);
-        
 
         for (int i = 0; i < width; i++) {
-            C  = *(p + i + 1 - nextlineSrc);
             F  = *(p + i + 1);
             I  = *(p + i + 1 + nextlineSrc);
 	    
@@ -927,16 +923,16 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
 
             if (E!=F || E!=H || F!=I || H!=I)
             {
-                DDT( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3);
+                DDT( E, I, H, F, E0, E1, E2, E3);
             }
 
-            A= B; B=C;
-            D= E; E=F;
-            G= H; H=I;
+            E=F;
+            H=I;
         }
         
         p += nextlineSrc;
         Ep += nextlineDst << 1;
     }
 }
+
 
