@@ -2,25 +2,25 @@ msgid "&"
 msgstr ""
 
 msgid "16:9 Correction"
-msgstr "16:9 Korrektur"
+msgstr "16:9-Korrektur"
 
 msgid "7z decompression failed: Archive contains too many files"
-msgstr "7z Dekomprimierung fehlgeschlagen: Archiv enthält zu viele Dateien"
+msgstr "7z-Dekomprimierung fehlgeschlagen: Archiv enthält zu viele Dateien"
 
 msgid "7z decompression failed: Failed to read file data"
-msgstr "7z Dekomprimierung fehlgeschlagen: Dateidaten konnten nicht gelesen werden"
+msgstr "7z-Dekomprimierung fehlgeschlagen: Dateidaten konnten nicht gelesen werden"
 
 msgid "7z decompression failed: File is corrupt"
-msgstr "7z Dekomprimierung fehlgeschlagen: Datei ist fehlerhaft"
+msgstr "7z-Dekomprimierung fehlgeschlagen: Datei ist fehlerhaft"
 
 msgid "7z decompression failed: File is corrupt (CRC mismatch)"
-msgstr "7z Dekomprimierung fehlgeschlagen: Datei ist fehlerhaft (CRC-Fehler)"
+msgstr "7z-Dekomprimierung fehlgeschlagen: Datei ist fehlerhaft (CRC-Fehler)"
 
 msgid "7z decompression failed: File uses too high of compression settings (dictionary size is too large)"
-msgstr "7z Dekomprimierung fehlgeschlagen: Datei benutzt zu hohe Komprimierungseinstellungen (Wörterbuch ist zu groß)"
+msgstr "7z-Dekomprimierung fehlgeschlagen: Datei benutzt zu hohe Komprimierungseinstellungen (Wörterbuch ist zu groß)"
 
 msgid "7z decompression failed: File uses unsupported compression settings"
-msgstr "7z Dekomprimierung fehlgeschlagen: Datei benutzt nicht unterstüzte Komprimierungseinstellungen"
+msgstr "7z-Dekomprimierung fehlgeschlagen: Datei benutzt nicht unterstüzte Komprimierungseinstellungen"
 
 msgid "A (Rapid)"
 msgstr "A (Turbo)"
@@ -53,7 +53,7 @@ msgid "Attempting to determine save device..."
 msgstr "Versuche Speichergerät zu ermitteln..."
 
 msgid "Auto"
-msgstr ""
+msgstr "Auto."
 
 msgid "Auto Detect"
 msgstr "Auto. feststellen"
@@ -80,7 +80,7 @@ msgid "Button Mapping"
 msgstr "Tastenbelegung"
 
 msgid "Button Mappings"
-msgstr "Tasten Belegung"
+msgstr "Tastenbelegungen"
 
 msgid "Cancel"
 msgstr "Abbrechen"
