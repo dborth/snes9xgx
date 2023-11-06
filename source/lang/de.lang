@@ -326,7 +326,7 @@ msgid "Justifier - GameCube Controller"
 msgstr ""
 
 msgid "Justifier - Wiimote"
-msgstr "Justifier - Wii-FB"
+msgstr ""
 
 msgid "Korean"
 msgstr "Koreanisch"
@@ -533,10 +533,10 @@ msgid "Press any button on the GameCube Controller now. Press the C-Stick in any
 msgstr "Drücke jetzt eine Taste auf dem GameCube Controller. Drücke den C-Stick in eine beliebige Richtung um die vorhandene Belegung zu löschen."
 
 msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
-msgstr "Drücke jetzt eine Taste auf der Wii-FB. Drücke HOME um die vorhandene Belegung zu löschen."
+msgstr "Drücke jetzt eine Taste auf der Wiimote. Drücke HOME um die vorhandene Belegung zu löschen."
 
 msgid "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping."
-msgstr "Drücke jetzt eine Taste auf der Wii-FB oder dem Nunchuk. Drücke HOME um die vorhandene Belegung zu löschen."
+msgstr "Drücke jetzt eine Taste auf der Wiimote oder dem Nunchuk. Drücke HOME um die vorhandene Belegung zu löschen."
 
 msgid "Progressive (480p)"
 msgstr ""
@@ -710,10 +710,10 @@ msgid "SNES Controller - GameCube Controller"
 msgstr ""
 
 msgid "SNES Controller - Nunchuk + Wiimote"
-msgstr "SNES Controller - Nunchuk + Wii-FB"
+msgstr ""
 
 msgid "SNES Controller - Wiimote"
-msgstr "SNES Controller - Wii-FB"
+msgstr ""
 
 msgid "SNES Mouse"
 msgstr "SNES Maus"
@@ -722,7 +722,7 @@ msgid "SNES Mouse - GameCube Controller"
 msgstr "SNES Maus - GameCube Controller"
 
 msgid "SNES Mouse - Wiimote"
-msgstr "SNES Maus - Wii-FB"
+msgstr ""
 
 msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2023"
 msgstr ""
@@ -758,7 +758,7 @@ msgid "Superscope - GameCube Controller"
 msgstr ""
 
 msgid "Superscope - Wiimote"
-msgstr "Superscope - Wii-FB"
+msgstr ""
 
 msgid "This software is open source and may be copied,"
 msgstr "Diese Software ist Open Source und evtl. kopiert,"
@@ -839,10 +839,10 @@ msgid "VM32: Unknown page type!"
 msgstr "VM32: Unbekannter Seitentyp!"
 
 msgid "Wiimote"
-msgstr "Wii-FB"
+msgstr ""
 
 msgid "Wiimote Orientation"
-msgstr "Wii-FB Ausrichtung"
+msgstr "Wiimote-Ausrichtung"
 
 msgid "Yes"
 msgstr "Ja"
