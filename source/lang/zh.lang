@@ -301,6 +301,12 @@ msgstr "磁盘驱动器 BIOS 文件没有找到！"
 msgid "Filtered"
 msgstr "已过滤"
 
+msgid "Filtered (Sharp)"
+msgstr "锐化过滤"
+
+msgid "Filtered (Soft)"
+msgstr "柔化过滤"
+
 msgid "Filtering"
 msgstr "滤镜"
 
@@ -312,6 +318,9 @@ msgstr "字体文件太大！"
 
 msgid "Font file not found!"
 msgstr "找不到字体文件！"
+
+msgid "Frame Skipping"
+msgstr "跳帧"
 
 msgid "French"
 msgstr "法语"
@@ -372,6 +381,9 @@ msgstr "硬件（GB/GBC）"
 
 msgid "Hide RAM Saving"
 msgstr "隐藏 RAM 保存"
+
+msgid "Hide SRAM Saving"
+msgstr "隐藏 SRAM 保存"
 
 msgid "HOME"
 msgstr "HOME 键"
@@ -496,6 +508,9 @@ msgstr "主菜单"
 msgid "Maintain Aspect Ratio"
 msgstr "保持宽高比例"
 
+msgid "Map ABXY to Right Stick"
+msgstr "ABXY 键对应右摇杆"
+
 msgid "Match GC Controls"
 msgstr "匹配 GC 控制器"
 
@@ -616,6 +631,9 @@ msgstr "原始"
 msgid "Original FCE"
 msgstr "最初版的 FCE"
 
+msgid "Original (240p)"
+msgstr "原生 240Pp"
+
 msgid "Other Mappings"
 msgstr "其他映射"
 
@@ -702,6 +720,9 @@ msgstr "预览截图"
 
 msgid "Progressive (480p)"
 msgstr "逐行扫描（480p）"
+
+msgid "Progressive (576p)"
+msgstr "逐行扫描（576p）"
 
 msgid "Quit Game"
 msgstr "退出游戏"
@@ -898,6 +919,9 @@ msgstr "超任控制器（2）"
 msgid "SNES Controllers (4)"
 msgstr "超任控制器（4）"
 
+msgid "SNES Hi-Res Mode"
+msgstr "超任 Hi-Res 模式"
+
 msgid "SNES Mouse"
 msgstr "超任鼠标"
 
@@ -923,6 +947,9 @@ msgid "Spanish"
 msgstr "西班牙语"
 
 msgid "Sprite Limit"
+msgstr "画面限制"
+
+msgid "Sprites Per-Line Limit"
 msgstr "画面限制"
 
 msgid "SRAM file not found"
