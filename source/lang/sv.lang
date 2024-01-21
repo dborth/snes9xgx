@@ -1,0 +1,869 @@
+msgid "&"
+msgstr ""
+
+msgid "16:9 Correction"
+msgstr "Korrigering för 16:9"
+
+msgid "7z decompression failed: Archive contains too many files"
+msgstr "7z-dekomprimering misslyckades: Arkivet innehåller för många filer"
+
+msgid "7z decompression failed: Failed to read file data"
+msgstr "7z-dekomprimering misslyckades: Det gick inte att läsa fildata"
+
+msgid "7z decompression failed: File is corrupt"
+msgstr "7z-dekomprimering misslyckades: Filen är korrupt"
+
+msgid "7z decompression failed: File is corrupt (CRC mismatch)"
+msgstr "7z-dekomprimering misslyckades: Filen är korrupt (CRC-fel överensstämmer)"
+
+msgid "7z decompression failed: File uses too high of compression settings (dictionary size is too large)"
+msgstr "7z-dekomprimering misslyckades: Filen använder för höga komprimeringsinställningar (ordbokstorleken är för stor)"
+
+msgid "7z decompression failed: File uses unsupported compression settings"
+msgstr "7z-dekomprimering misslyckades: Filen använder komprimeringsinställningar som inte stöds"
+
+msgid "A (Rapid)"
+msgstr "A (snabb)"
+
+msgid "Additional improvements"
+msgstr "Ytterligare förbättringar"
+
+msgid "Aim Offscreen"
+msgstr "Sikta utanför skärmen"
+
+msgid "An update is available!"
+msgstr "En uppdatering är tillgänglig!"
+
+msgid "Append Auto to .SAV Files"
+msgstr "Lägg till Auto till .SAV-filer"
+
+msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
+msgstr "Är du säker på att du vill återställa det här spelet? Alla osparade framsteg kommer att gå förlorade."
+
+msgid "Are you sure that you want to reset your mappings?"
+msgstr "Är du säker på att du vill återställa dina styrenhetsmappningar?"
+
+msgid "Are you sure that you want to reset your settings?"
+msgstr "Är du säker på att du vill återställa dina inställningar?"
+
+msgid "Artwork"
+msgstr "Konstverk"
+
+msgid "Artwork Folder"
+msgstr "Konstverksmapp"
+
+msgid "Maintain Aspect Ratio"
+msgstr "Behåll bildformat"
+
+msgid "Attempting to determine load device..."
+msgstr "Försöker fastställa lagringsenhet att ladda från..."
+
+msgid "Attempting to determine save device..."
+msgstr "Försöker fastställa lagringsenhet att spara till..."
+
+msgid "Auto Detect"
+msgstr "Autoavkänning"
+
+msgid "Auto Load"
+msgstr "Automatisk laddning"
+
+msgid "Auto Save"
+msgstr "Automatisk sparning"
+
+msgid "Automatic (Recommended)"
+msgstr "Automatisk (rekommenderas)"
+
+msgid "B (Rapid)"
+msgstr "B (snabb)"
+
+msgid "Back"
+msgstr "Gå tillbaka"
+
+msgid "Both"
+msgstr "Både"
+
+msgid "Brazilian Portuguese"
+msgstr "Brasiliansk portugisiska"
+
+msgid "Button Mapping"
+msgstr "Knappmappning"
+
+msgid "Button Mappings"
+msgstr "Knappmappningar"
+
+msgid "Cancel"
+msgstr "Avbryt"
+
+msgid "Caps"
+msgstr "Caps Lock"
+
+msgid "Cheats"
+msgstr "Fusk"
+
+msgid "Cheats file not found!"
+msgstr "Fuskfilen hittades inte!"
+
+msgid "Cheats Folder"
+msgstr "Fuskmapp"
+
+msgid "Choose Game"
+msgstr "Välj spel"
+
+msgid "Classic Controller"
+msgstr "Klassisk kontroll"
+
+msgid "Close"
+msgstr "Stäng"
+
+msgid "Coding & menu design"
+msgstr "Programmering & menydesign"
+
+msgid "Compressed GBA files are not supported!"
+msgstr "Komprimerade GBA-filer stöds inte!"
+
+msgid "Connecting to network share..."
+msgstr "Ansluter till lagringsenhet på nätverket..."
+
+msgid "Controller"
+msgstr "Kontroll"
+
+msgid "Covers"
+msgstr "Omslag"
+
+msgid "Cover View"
+msgstr "Omslagsvy"
+
+msgid "Covers Folder"
+msgstr "Omslagsmapp"
+
+msgid "Credits"
+msgstr "Credits"
+
+msgid "Cropping"
+msgstr "Beskärning"
+
+msgid "Crosshair"
+msgstr "Hårkors"
+
+msgid "Cursor"
+msgstr "Markör"
+
+msgid "Data DVD"
+msgstr "Data DVD"
+
+msgid "Default"
+msgstr "Standard"
+
+msgid "Delete"
+msgstr "Radera"
+
+msgid "Delete File"
+msgstr "Radera fil"
+
+msgid "Delete Saves"
+msgstr "Radera sparfiler"
+
+msgid "Delete this save file? Deleted files can not be restored."
+msgstr "Vill du ta bort den här sparade filen? Raderade filer kan inte återställas."
+
+msgid "Directory name is too long!"
+msgstr "Katalognamnet är för långt!"
+
+msgid "Disabled"
+msgstr "Inaktiverad"
+
+msgid "DISABLED"
+msgstr "INAKTIVERAD"
+
+msgid "under the terms of the GNU General Public License (GPL) Version 2."
+msgstr "under villkoren i GNU General Public License (GPL) version 2."
+
+msgid "Don't Save"
+msgstr "Spara inte"
+
+msgid "Down"
+msgstr "Ner"
+
+msgid "DOWN"
+msgstr "NER"
+
+msgid "Downloading..."
+msgstr "Laddar ned..."
+
+msgid "Dutch"
+msgstr "Holländska"
+
+msgid "Empty or invalid ZIP file!"
+msgstr "Tomt eller ogiltigt ZIP-arkiv!"
+
+msgid "Enabled"
+msgstr "Aktiverad"
+
+msgid "ENABLED"
+msgstr "AKTIVERAD"
+
+msgid "English"
+msgstr "Engelska"
+
+msgid "Error"
+msgstr "Fel"
+
+msgid "Error - Invalid ZIP file!"
+msgstr "Fel - Ogiltigt ZIP-arkiv!"
+
+msgid "Error creating file!"
+msgstr "Det gick inte att skapa filen!"
+
+msgid "Error loading game!"
+msgstr "Det gick inte att ladda spelet!"
+
+msgid "Error opening archive!"
+msgstr "Det gick inte att öppna arkivet!"
+
+msgid "Error opening directory!"
+msgstr "Det gick inte att öppna katalogen!"
+
+msgid "Error opening file!"
+msgstr "Det gick inte att öppna filen!"
+
+msgid "Error reading file!"
+msgstr "Det gick inte att läsa filen!"
+
+msgid "Error saving file!"
+msgstr "Det gick inte att spara filen!"
+
+msgid "Exit"
+msgstr "Gå ut"
+
+msgid "Exit Action"
+msgstr "Lämna emulatorn"
+
+msgid "Failed to connect to network share."
+msgstr "Det gick inte att ansluta till lagringsenheten på nätverket."
+
+msgid "FDS BIOS file is invalid!"
+msgstr "BIOS-filen för FDS (Famicom Disk System) är ogiltig!"
+
+msgid "FDS BIOS file not found!"
+msgstr "BIOS-filen för FDS (Famicom Disk System) hittades inte!"
+
+msgid "Filtered"
+msgstr "Filtrerad"
+
+msgid "Filtered (Sharp)"
+msgstr "Filtrerad (Skarp)"
+
+msgid "Filtered (Soft)"
+msgstr "Filtrerad (Mjuk)"
+
+msgid "Filtering"
+msgstr "Filtrering"
+
+msgid "Fire"
+msgstr "Skjut"
+
+msgid "French"
+msgstr "Franska"
+
+msgid "GBA skärmzoom"
+msgstr "Zoom de l'écran GBA"
+
+msgid "Game Genie ROM not found!"
+msgstr "Genie ROM-spel hittades inte!"
+
+msgid "Game Settings"
+msgstr "Spelinställningar"
+
+msgid "Game Settings - Audio"
+msgstr "Spelinställningar - Ljud"
+
+msgid "Game Settings - Button Mappings"
+msgstr "Spelinställningar - Knappmappningar"
+
+msgid "Game Settings - Cheats"
+msgstr "Spelinställningar - Fusk"
+
+msgid "Game Settings - Video"
+msgstr "Spelinställningar - Video"
+
+msgid "Game Timing"
+msgstr "Område"
+
+msgid "Game Genie DISABLED"
+msgstr "Genie-spel inaktiverade"
+
+msgid "Game Genie ENABLED"
+msgstr "Genie-spel aktiverade"
+
+msgid "GameCube Controller"
+msgstr "GameCube-styrenhet"
+
+msgid "Gaussian (Accurate)"
+msgstr "Gaussisk (exakt)"
+
+msgid "German"
+msgstr "Tyska"
+
+msgid "Go Back"
+msgstr "Gå tillbaka"
+
+msgid "Initializing network..."
+msgstr "Initierar nätverk..."
+
+msgid "Insert Coin"
+msgstr "Sätt in mynt"
+
+msgid "Insert Coin / Switch Disk"
+msgstr "Sätt i mynt / Byt skiva"
+
+msgid "Invalid file size!"
+msgstr "Ogiltig filstorlek!"
+
+msgid "Invalid game file!"
+msgstr "Ogiltig spelfil!"
+
+msgid "Invalid network settings - Check settings.xml."
+msgstr "Ogiltiga nätverksinställningar - Kontrollera settings.xml."
+
+msgid "Invalid network settings - Share IP is blank."
+msgstr "Ogiltiga nätverksinställningar - Utdelnings-IP är tom."
+
+msgid "Invalid network settings - Share name is blank."
+msgstr "Ogiltiga nätverksinställningar - Utdelningsnamnet är tomt."
+
+msgid "Invalid save file"
+msgstr "Ogiltig sparfil"
+
+msgid "Invalid state file"
+msgstr "Ogiltig state-fil"
+
+msgid "Italian"
+msgstr "Italienska"
+
+msgid "Japanese"
+msgstr "Japanska"
+
+msgid "Justifier"
+msgstr "Justerare"
+
+msgid "Justifier - GameCube Controller"
+msgstr "Justerare - GameCube-styrenhet"
+
+msgid "Justifier - Wiimote"
+msgstr "Justerare - Wiimote-styrenhet"
+
+msgid "Korean"
+msgstr "Koreanska"
+
+msgid "L TRIG"
+msgstr "L"
+
+msgid "Language"
+msgstr "Språk"
+
+msgid "Languages Folder"
+msgstr "Språkmapp"
+
+msgid "Left"
+msgstr "Vänster"
+
+msgid "LEFT"
+msgstr "VÄNSTER"
+
+msgid "Left Button"
+msgstr "Vänster-knapp"
+
+msgid "Linear"
+msgstr "Linjär"
+
+msgid "Load"
+msgstr "Ladda"
+
+msgid "Load Device"
+msgstr "Inmatningsenhet"
+
+msgid "Load Folder"
+msgstr "Spelmapp"
+
+msgid "Load Game"
+msgstr "Ladda in spel"
+
+msgid "Loading"
+msgstr "Läser in"
+
+msgid "Loading DVD..."
+msgstr "Läser in DVD..."
+
+msgid "Loading patch..."
+msgstr "Läser in patch..."
+
+msgid "Loading..."
+msgstr "Läser in..."
+
+msgid "Main Menu"
+msgstr "Huvudmeny"
+
+msgid "Match GC Controls"
+msgstr "Matcha GameCube-kontroller"
+
+msgid "Match Wii Controls"
+msgstr "Matcha Wii-kontroller"
+
+msgid "Maximum filepath length reached!"
+msgstr "Maximal filsökväg har nåtts!"
+
+msgid "Menu artwork"
+msgstr "Menykonstverk"
+
+msgid "Menu sound"
+msgstr "Menyljud"
+
+msgid "MINUS"
+msgstr "MINUS"
+
+msgid "Music Volume"
+msgstr "Musikvolym"
+
+msgid "Mute"
+msgstr "Tyst"
+
+msgid "NES Controller"
+msgstr "NES-styrenhet"
+
+msgid "NES Controllers (2)"
+msgstr "NES-styrenheter (2)"
+
+msgid "NES Controllers (4)"
+msgstr "NES-styrenheter (4)"
+
+msgid "NES Zapper"
+msgstr "NES Zapper"
+
+msgid "Network"
+msgstr "Nätverk"
+
+msgid "Network Share"
+msgstr "Nätverksutdelning"
+
+msgid "New"
+msgstr "Ny"
+
+msgid "New Snapshot"
+msgstr "Ny ögonblicksbild"
+
+msgid "New SRAM"
+msgstr "Ny SRAM-sparfil"
+
+msgid "No"
+msgstr "Nej"
+
+msgid "No data to save!"
+msgstr "Ingen data att spara!"
+
+msgid "No disc inserted!"
+msgstr "Ingen skiva isatt!"
+
+msgid "No SRAM data to save!"
+msgstr "Inga SRAM-data att spara!"
+
+msgid "No game saves found."
+msgstr "Inga sparfiler hittades."
+
+msgid "None"
+msgstr "Inga"
+
+msgid "Official Site: https://github.com/dborth/fceugx"
+msgstr "Officiell webbplats: https://github.com/dborth/fceugx"
+
+msgid "Official Site: https://github.com/dborth/snes9xgx"
+msgstr "Officiell webbplats: https://github.com/dborth/snes9xgx"
+
+msgid "Official Site: https://github.com/dborth/vbagx"
+msgstr "Officiell webbplats: https://github.com/dborth/vbagx"
+
+msgid "Out of memory!"
+msgstr "Slut på minne!"
+
+msgid "Out of memory: too many files!"
+msgstr "Slut på minne: för många filer!"
+
+msgid "P1"
+msgstr "S1"
+
+msgid "P2"
+msgstr "S2"
+
+msgid "P3"
+msgstr "S3"
+
+msgid "P4"
+msgstr "S4"
+
+msgid "Palette saved"
+msgstr "Palett sparad"
+
+msgid "Partial Stretch"
+msgstr "Partiell Stretch"
+
+msgid "Please Wait"
+msgstr "Var god vänta"
+
+msgid "Portuguese"
+msgstr "Portugisiska"
+
+msgid "Power off Wii"
+msgstr "Stäng av Wii-konsolen"
+
+msgid "Preferences saved"
+msgstr "Inställningar sparade"
+
+msgid "Press any button on the Classic Controller now. Press Home to clear the existing mapping."
+msgstr "Tryck på valfri knapp på Classic Controller nu. Tryck på HOME för att rensa den befintliga knappmappningen."
+
+msgid "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping."
+msgstr "Tryck på valfri knapp på GameCube-kontrollen nu. Tryck på HOME eller C-stickan i valfri riktning för att rensa den befintliga knappmappningen."
+
+msgid "Press any button on the GameCube Controller now. Press the C-Stick in any direction to clear the existing mapping."
+msgstr "Tryck på valfri knapp på GameCube-kontrollen nu. Tryck på C-stickan i valfri riktning för att rensa den befintliga knappmappningen."
+
+msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
+msgstr "Tryck på valfri knapp på Wiimote nu. Tryck på HOME för att rensa den befintliga knappmappningen."
+
+msgid "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping."
+msgstr "Tryck på valfri knapp på Wiimote eller Nunchuk nu. Tryck på HOME för att rensa den befintliga mappningen."
+
+msgid "Progressive (480p)"
+msgstr "Progressiv (480p)"
+
+msgid "Preview Image"
+msgstr "Förhandsgranska bild"
+
+msgid "Preview Screenshot"
+msgstr "Förhandsgranska skärmdump"
+
+msgid "Quit Game"
+msgstr "Avsluta spelet"
+
+msgid "Quit this game? Any unsaved progress will be lost."
+msgstr "Vill du avsluta det här spelet? Alla osparade framsteg kommer att gå förlorade."
+
+msgid "R TRIG"
+msgstr "R"
+
+msgid "RAM saving is not available for FDS games!"
+msgstr "Spara till RAM är inte tillgängligt för FDS-spel (Famicom Disk System)!"
+
+msgid "Reboot"
+msgstr "Starta om"
+
+msgid "Rendering"
+msgstr "Rendering"
+
+msgid "Reset"
+msgstr "Återställ"
+
+msgid "Reset Game"
+msgstr "Återställ spel"
+
+msgid "Reset this game? Any unsaved progress will be lost."
+msgstr "Återställ det här spelet? Alla osparade framsteg kommer att gå förlorade."
+
+msgid "Reset Mappings"
+msgstr "Återställ knappmappningar"
+
+msgid "Reset Settings"
+msgstr "Återställ inställningar"
+
+msgid "Retry"
+msgstr "Försök igen"
+
+msgid "Return to Loader"
+msgstr "Återgå till Loader"
+
+msgid "Return to Wii Menu"
+msgstr "Återgå till Wii-menyn"
+
+msgid "Right"
+msgstr "Höger"
+
+msgid "RIGHT"
+msgstr "HÖGER"
+
+msgid "Right Button"
+msgstr "Höger-knapp"
+
+msgid "Rumble"
+msgstr "Vibrera"
+
+msgid "Save"
+msgstr "Spara"
+
+msgid "Save a new Preview Screenshot? Current Screenshot image will be overwritten."
+msgstr "Vill du spara en ny skärmdump? Aktuell skärmdumpsbild kommer att skrivas över."
+
+msgid "Save Device"
+msgstr "Sparenhet"
+
+msgid "Save failed!"
+msgstr "Det gick inte att spara!"
+
+msgid "Save file not found"
+msgstr "Sparfilen hittades inte"
+
+msgid "Save Folder"
+msgstr "Sparfilsmapp"
+
+msgid "Save Game"
+msgstr "Spara spel"
+
+msgid "Save RAM and State?"
+msgstr "Spara RAM och position i spelet (ögonblicksbild)?"
+
+msgid "Save Snapshot?"
+msgstr "Spara position i spelet (ögonblicksbild)?"
+
+msgid "Save SRAM and Snapshot?"
+msgstr "Spara SRAM och position i spelet (ögonblicksbild)?"
+
+msgid "Save State?"
+msgstr "Spara position i spelet (ögonblicksbild)?"
+
+msgid "Save successful"
+msgstr "Sparandet lyckades"
+
+msgid "Saving"
+msgstr "Sparar"
+
+msgid "Saving preferences..."
+msgstr "Sparar inställningar..."
+
+msgid "Saving..."
+msgstr "Sparar..."
+
+msgid "Scaling"
+msgstr "Format"
+
+msgid "Screen Position"
+msgstr "Skärmposition"
+
+msgid "Screen Zoom"
+msgstr "Skärmzoom"
+
+msgid "Screenshot"
+msgstr "Skärmdump"
+
+msgid "Screenshots"
+msgstr "Skärmdumpar"
+
+msgid "Screenshots Folder"
+msgstr "Skärmdumpsmapp"
+
+msgid "Seek error!"
+msgstr "Sökfel!"
+
+msgid "Settings"
+msgstr "Inställningar"
+
+msgid "Settings - Menu"
+msgstr "Inställningar - Meny"
+
+msgid "Settings - Network"
+msgstr "Inställningar - Nätverk"
+
+msgid "Settings - Saving & Loading"
+msgstr "Inställningar - Spara & Ladda"
+
+msgid "SD Card"
+msgstr "SD-kort"
+
+msgid "SD card not found!"
+msgstr "SD-kort hittades inte!"
+
+msgid "Shift"
+msgstr "Shift"
+
+msgid "Show Framerate"
+msgstr "Visa bildhastighet"
+
+msgid "Show Local Time"
+msgstr "Visa lokal tid"
+
+msgid "Chinese (Simplified)"
+msgstr "Kinesiska (förenklad)"
+
+msgid "SMB Share IP"
+msgstr "IP för SMB-utdelning"
+
+msgid "SMB Share Name"
+msgstr "Namn för SMB-utdelning"
+
+msgid "SMB Share Password"
+msgstr "Lösenord för SMB-utdelning"
+
+msgid "SMB Share Username"
+msgstr "Användarnamn för SMB-utdelning"
+
+msgid "Snapshot"
+msgstr "Ögonblicksbild"
+
+msgid "Snapshot (auto)"
+msgstr "Ögonblicksbild (auto)"
+
+msgid "SNES Controller"
+msgstr "SNES-styrenhet"
+
+msgid "SNES Controllers (2)"
+msgstr "SNES-styrenheter (2)"
+
+msgid "SNES Controllers (4)"
+msgstr "SNES-styrenheter (4)"
+
+msgid "SNES Controller - Classic Controller"
+msgstr "SNES-styrenhet - Classic Controller"
+
+msgid "SNES Controller - GameCube Controller"
+msgstr "SNES-styrenhet - GameCube Controller"
+
+msgid "SNES Controller - Nunchuk + Wiimote"
+msgstr "SNES-styrenhet - Nunchuk + Wiimote"
+
+msgid "SNES Controller - Wiimote"
+msgstr "SNES-styrenhet - Wiimote"
+
+msgid "SNES Mouse"
+msgstr "SNES-mus"
+
+msgid "SNES Mouse - GameCube Controller"
+msgstr "SNES-mus - GameCube Controller"
+
+msgid "SNES Mouse - Wiimote"
+msgstr "SNES-mus - Wiimote"
+
+msgid "Sound Effects Volume"
+msgstr "Ljudeffektvolym"
+
+msgid "Spanish"
+msgstr "Spanska"
+
+msgid "Sprite Limit"
+msgstr "Sprajtgräns"
+
+msgid "SRAM file not found"
+msgstr "SRAM-filen hittades inte"
+
+msgid "State"
+msgstr "Ögonblicksbild"
+
+msgid "State (Auto)"
+msgstr "Ögonblicksbild (auto)"
+
+msgid "State file not found"
+msgstr "Ögonblickbildsfilen hittades inte"
+
+msgid "Stretch to Fit"
+msgstr "Sträck ut bild för att matcha skärm"
+
+msgid "Super Scope"
+msgstr "Nintendo Super Scope"
+
+msgid "Super Scope - GameCube Controller"
+msgstr "Nintendo Super Scope - GameCube Controller
+
+msgid "Super Scope - Wiimote"
+msgstr "Nintendo Super Scope - Wiimote"
+
+msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
+msgstr "Det nuvarande IOS-systemet har ändrats (falsksignerat). Funktionalitet och/eller stabilitet kan påverkas negativt."
+
+msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
+msgstr "Det nuvarande IOS-systemet stöds inte. Funktionalitet och/eller stabilitet kan påverkas negativt."
+
+msgid "This software is open source and may be copied, distributed, or modified "
+msgstr "Denna programvara är öppen källkod och kan kopieras, distribueras eller modifieras "
+
+msgid "Turkish"
+msgstr "Turkiska"
+
+msgid "Unable to initialize network!"
+msgstr "Det gick inte att initiera nätverket!"
+
+msgid "Unable to locate a load device!"
+msgstr "Det gick inte att hitta en lagringsenhet att ladda ifrån!"
+
+msgid "Unable to locate a save device!"
+msgstr "Det gick inte att hitta en lagringsenhet att spara till!"
+
+msgid "Unable to open snapshot!"
+msgstr "Det gick inte att öppna ögonblicksbilden!"
+
+msgid "Unfiltered"
+msgstr "Ofiltrerad"
+
+msgid "Unknown file type!"
+msgstr "Okänd filtyp!"
+
+msgid "Unrecognized DVD format."
+msgstr "Okänt DVD-format."
+
+msgid "Unrecognized file extension!"
+msgstr "Okänd filändelse!"
+
+msgid "Unzipping..."
+msgstr "Packar upp arkiv..."
+
+msgid "Up"
+msgstr "Upp"
+
+msgid "UP"
+msgstr "UPP"
+
+msgid "Up One Level"
+msgstr "Upp en nivå"
+
+msgid "Update Available"
+msgstr "Uppdatering tillgänglig"
+
+msgid "Update failed!"
+msgstr "Uppdateringen misslyckades!"
+
+msgid "Update later"
+msgstr "Uppdatera senare"
+
+msgid "Update now"
+msgstr "Uppdatera nu"
+
+msgid "Update successful!"
+msgstr "Uppdateringen lyckades!"
+
+msgid "USB drive not found!"
+msgstr "USB-enheten hittades inte!"
+
+msgid "USB Mass Storage"
+msgstr "USB-masslagring"
+
+msgid "Video"
+msgstr "Video"
+
+msgid "Video Mode"
+msgstr "Videoläge"
+
+msgid "VM8: Unknown page type!"
+msgstr "VM8: Okänd sidtyp!"
+
+msgid "VM16: Unknown page type!"
+msgstr "VM16: Okänd sidtyp!"
+
+msgid "VM32: Unknown page type!"
+msgstr "VM32: Okänd sidtyp!"
+
+msgid "Wiimote Orientation"
+msgstr "Wiimote-orientering"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "Zapper"
+msgstr "Nintendo Zapper"
+
+msgid "Zapper Crosshair"
+msgstr "Hårkors för Zapper"
