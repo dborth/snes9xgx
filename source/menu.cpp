@@ -4614,6 +4614,7 @@ static int MenuSettingsMenu()
 				case LANG_BRAZILIAN_PORTUGUESE: sprintf(options.value[5], "Brazilian Portuguese"); break;
 				case LANG_CATALAN:		sprintf(options.value[5], "Catalan"); break;
 				case LANG_TURKISH:		sprintf(options.value[5], "Turkish"); break;
+				case LANG_SWEDISH:		sprintf(options.value[5], "Swedish"); break;
 			}
 			
 			switch(GCSettings.PreviewImage)
