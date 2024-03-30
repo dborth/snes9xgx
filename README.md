@@ -64,6 +64,12 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 ## UPDATE HISTORY
 
+[4.5.5 - March 30, 2024]
+* Added 2xBR, 2xBR-lv1 and DDT video filters (Hyllian)
+* Compiled with latest devkitPPC/libogc
+* Added Swedish translation (IsakTheHacker)
+* Updated translations
+
 [4.5.4 - July 31, 2023]
 * Compiled with latest devkitPPC/libogc
 * Updated to newer Snes9x (bladeoner)
