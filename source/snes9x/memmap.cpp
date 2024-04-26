@@ -1132,7 +1132,7 @@ int CMemory::ScoreHiROM (bool8 skip_header, int32 romoff)
 	// Check for extended HiROM expansion used in Mother 2 Deluxe et al.
 	// Looks for size byte 13 (8MB) and an actual ROM size greater than 4MB
 	if (buf[0xd7] == 13 && CalculatedSize > 1024 * 1024 * 4)
-		score += 5;
+		score += 3;
 
 	if (buf[0xd5] & 0x1)
 		score += 2;
@@ -3676,6 +3676,7 @@ void CMemory::ApplyROMFixes (void)
 
 	if (!Settings.DisableGameSpecificHacks)
 	{
+		// APU timing hacks
 		if (match_id("AVCJ"))                                      // Rendering Ranger R2
 			Timings.APUSpeedup = 4;
 		if (match_na("CIRCUIT USA"))
@@ -3778,6 +3779,8 @@ void CMemory::ApplyROMFixes (void)
 
 	// SRAM value fixes
 	if (match_na("SUPER DRIFT OUT")      || // Super Drift Out
+		match_na("S.F.S.95 della SerieA") ||
+		match_id("AACJ") || // Nichibutsu Arcade Classics
 		match_na("SATAN IS OUR FATHER!") ||
 		match_na("goemon 4"))               // Ganbare Goemon Kirakira Douchuu
 		SNESGameFixes.SRAMInitialValue = 0x00;
