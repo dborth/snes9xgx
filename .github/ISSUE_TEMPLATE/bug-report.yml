@@ -1,5 +1,5 @@
 name: Bug report
-description: If you are experiencing an issue, please fill out this form. Feature requests will be closed immediately!
+description: If you have encountered a bug, please fill out this form. Questions, support requests, and feature requests will be closed immediately.
 title: "[Issue]: "
 labels: bug
 body:
