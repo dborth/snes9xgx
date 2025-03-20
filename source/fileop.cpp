@@ -47,14 +47,14 @@ bool unmountRequired[8] = { false, false, false, false, false, false, false, fal
 bool isMounted[8] = { false, false, false, false, false, false, false, false };
 
 #ifdef HW_RVL
-	const DISC_INTERFACE* sd = &__io_wiisd;
-	const DISC_INTERFACE* usb = &__io_usbstorage;
-	const DISC_INTERFACE* dvd = &__io_wiidvd;
+	static DISC_INTERFACE* sd = &__io_wiisd;
+	static DISC_INTERFACE* usb = &__io_usbstorage;
+	static DISC_INTERFACE* dvd = &__io_wiidvd;
 #else
-	const DISC_INTERFACE* carda = &__io_gcsda;
-	const DISC_INTERFACE* cardb = &__io_gcsdb;
-	const DISC_INTERFACE* port2 = &__io_gcsd2;
-	const DISC_INTERFACE* dvd = &__io_gcdvd;
+	static DISC_INTERFACE* carda = &__io_gcsda;
+	static DISC_INTERFACE* cardb = &__io_gcsdb;
+	static DISC_INTERFACE* port2 = &__io_gcsd2;
+	static DISC_INTERFACE* dvd = &__io_gcdvd;
 #endif
 
 // folder parsing thread
@@ -128,7 +128,7 @@ devicecallback (void *arg)
 	{
 		if(isMounted[DEVICE_SD])
 		{
-			if(!sd->isInserted()) // check if the device was removed
+			if(!sd->isInserted(sd)) // check if the device was removed
 			{
 				unmountRequired[DEVICE_SD] = true;
 				isMounted[DEVICE_SD] = false;
@@ -137,7 +137,7 @@ devicecallback (void *arg)
 
 		if(isMounted[DEVICE_USB])
 		{
-			if(!usb->isInserted()) // check if the device was removed
+			if(!usb->isInserted(usb)) // check if the device was removed
 			{
 				unmountRequired[DEVICE_USB] = true;
 				isMounted[DEVICE_USB] = false;
@@ -146,7 +146,7 @@ devicecallback (void *arg)
 
 		if(isMounted[DEVICE_DVD])
 		{
-			if(!dvd->isInserted()) // check if the device was removed
+			if(!dvd->isInserted(dvd)) // check if the device was removed
 			{
 				unmountRequired[DEVICE_DVD] = true;
 				isMounted[DEVICE_DVD] = false;
@@ -223,7 +223,7 @@ static bool MountFAT(int device, int silent)
 	bool mounted = false;
 	int retry = 1;
 	char name[10], name2[10];
-	const DISC_INTERFACE* disc = NULL;
+	DISC_INTERFACE* disc = NULL;
 
 	switch(device)
 	{
@@ -263,13 +263,13 @@ static bool MountFAT(int device, int silent)
 	{
 		unmountRequired[device] = false;
 		fatUnmount(name2);
-		disc->shutdown();
+		disc->shutdown(disc);
 		isMounted[device] = false;
 	}
 
 	while(retry)
 	{
-		if(disc->startup() && fatMountSimple(name, disc))
+		if(disc->startup(disc) && fatMountSimple(name, disc))
 			mounted = true;
 
 		if(mounted || silent)
@@ -317,7 +317,7 @@ bool MountDVD(bool silent)
 	{
 		ShowAction("Loading DVD...");
 
-		if(!dvd->isInserted())
+		if(!dvd->isInserted(dvd))
 		{
 			if(silent)
 				break;

@@ -8,6 +8,8 @@ $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>dev
 endif
 
 include $(DEVKITPPC)/gamecube_rules
+export	LIBOGC_INC	:=	$(DEVKITPRO)/libogc2/include
+export	LIBOGC_LIB	:=	$(DEVKITPRO)/libogc2/lib/cube
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output

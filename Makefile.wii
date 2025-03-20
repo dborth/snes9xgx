@@ -8,6 +8,8 @@ $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>dev
 endif
 
 include $(DEVKITPPC)/wii_rules
+export	LIBOGC_INC	:=	$(DEVKITPRO)/libogc2/include
+export	LIBOGC_LIB	:=	$(DEVKITPRO)/libogc2/lib/wii
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output

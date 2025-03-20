@@ -172,7 +172,7 @@ bool InitializeNetwork(bool silent)
 				break;
 		}
 #else
-		networkInit = !(if_config(wiiIP, NULL, NULL, true, 10) < 0);
+		networkInit = !(if_config(wiiIP, NULL, NULL, true) < 0);
 #endif
 
 		CancelAction();
