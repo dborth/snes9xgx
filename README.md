@@ -65,6 +65,12 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 ## UPDATE HISTORY
 
+[4.5.6] 
+
+* Compiled with latest devkitPPC/libogc2
+* Added support for the Mayflash MF105 adapter (thanks Tyler Sanders!)
+* Added upstream SRAM/ExtHiROM fixes from Snes9x
+
 [4.5.5 - March 30, 2024]
 * Added 2xBR, 2xBR-lv1 and DDT video filters (Hyllian)
 * Compiled with latest devkitPPC/libogc

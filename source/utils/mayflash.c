@@ -14,7 +14,7 @@ static u8 endpoint = 0;
 static u8 secondEndpoint = 0; //Need to keep track of 2 endpoints, since MF105 enumerates as 2 devices
 static u8 bMaxPacketSize = 0; //Size of usb HID packets sent by device
 static u32 jpMayflash[2]; //Array containing inputs for player 1 (index 0) and player 2 (index 1)
-static s8 mayflashDeviceType = -1; //-1 for unkown/uninitialized, 0 for PC044, 1 for MF105
+static s8 mayflashDeviceType = -1; //-1 for unknown/uninitialized, 0 for PC044, 1 for MF105
 
 static bool isMayflashGamepad(usb_device_entry dev)
 {
