@@ -607,7 +607,8 @@ void ResetFbWidth(int width, GXRModeObj *rmode)
 void
 ResetVideo_Emu ()
 {
-	GXRModeObj *rmode;
+	GXRModeObj *rmode = FindVideoMode();
+
 	Mtx44 p;
 	int i = -1;
 
@@ -649,8 +650,6 @@ ResetVideo_Emu ()
 	}
 	else
 	{
-		rmode = FindVideoMode();
-		
 		if (GCSettings.widescreen)
 			ResetFbWidth(640, rmode);
 		else
