@@ -65,19 +65,22 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 ## UPDATE HISTORY
 
-[4.5.6] 
+[4.5.6 - May 18, 2025] 
 
 * Compiled with latest devkitPPC/libogc2
 * Added support for the Mayflash MF105 adapter (thanks Tyler Sanders!)
+* Improved PAL behaviour
 * Added upstream SRAM/ExtHiROM fixes from Snes9x
 
 [4.5.5 - March 30, 2024]
+
 * Added 2xBR, 2xBR-lv1 and DDT video filters (Hyllian)
 * Compiled with latest devkitPPC/libogc
 * Added Swedish translation (IsakTheHacker)
 * Updated translations
 
 [4.5.4 - July 31, 2023]
+
 * Compiled with latest devkitPPC/libogc
 * Updated to newer Snes9x (bladeoner)
 * Switch to chosen video mode on first load if not automatic
