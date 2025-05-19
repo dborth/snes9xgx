@@ -90,12 +90,13 @@ jobs:
 
     - name: Re-zip artifacts
       run: |
-        cd dist
-        rm -r Snes9xGX/snes9xgx/cheats/*
-        rm -r Snes9xGX/snes9xgx/roms/*
-        rm -r Snes9xGX/snes9xgx/saves/*
-        zip -r Snes9xGX.zip Snes9xGX
-        zip -r Snes9xGX-GameCube.zip Snes9xGX-GameCube
+        cd dist/Snes9xGX
+        rm -r snes9xgx/cheats/*
+        rm -r snes9xgx/roms/*
+        rm -r snes9xgx/saves/*
+        zip -r ../Snes9xGX.zip *
+        cd ../Snes9xGX-GameCube
+        zip -r ../Snes9xGX-GameCube.zip *
 
     - name: Update Git Tag
       run: |
