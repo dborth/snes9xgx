@@ -43,8 +43,8 @@ unsigned char *savebuffer = NULL;
 u8 *ext_font_ttf = NULL;
 static mutex_t bufferLock = LWP_MUTEX_NULL;
 FILE * file; // file pointer - the only one we should ever use!
-bool unmountRequired[8] = { false, false, false, false, false, false, false, false };
-bool isMounted[8] = { false, false, false, false, false, false, false, false };
+bool unmountRequired[9] = { false, false, false, false, false, false, false, false, false };
+bool isMounted[9] = { false, false, false, false, false, false, false, false, false };
 
 #ifdef HW_RVL
 	static DISC_INTERFACE* sd = &__io_wiisd;
@@ -55,6 +55,7 @@ bool isMounted[8] = { false, false, false, false, false, false, false, false };
 	static DISC_INTERFACE* cardb = &__io_gcsdb;
 	static DISC_INTERFACE* port2 = &__io_gcsd2;
 	static DISC_INTERFACE* dvd = &__io_gcdvd;
+	static DISC_INTERFACE* gcloader = &__io_gcode;
 #endif
 
 // folder parsing thread
@@ -207,6 +208,7 @@ void UnmountAllFAT()
 	fatUnmount("port2:");
 	fatUnmount("carda:");
 	fatUnmount("cardb:");
+	fatUnmount("gcloader:");
 #endif
 }
 
@@ -253,6 +255,11 @@ static bool MountFAT(int device, int silent)
 			sprintf(name, "port2");
 			sprintf(name2, "port2:");
 			disc = port2;
+			break;
+		case DEVICE_SD_GCLOADER:
+			sprintf(name, "gcloader");
+			sprintf(name2, "gcloader:");
+			disc = gcloader;
 			break;
 #endif
 		default:
@@ -389,6 +396,11 @@ bool FindDevice(char * filepath, int * device)
 		*device = DEVICE_DVD;
 		return true;
 	}
+	else if(strncmp(filepath, "gcloader:", 9) == 0)
+	{
+		*device = DEVICE_SD_GCLOADER;
+		return true;
+	}
 	return false;
 }
 
@@ -425,6 +437,7 @@ bool ChangeInterface(int device, bool silent)
 		case DEVICE_SD_SLOTA:
 		case DEVICE_SD_SLOTB:
 		case DEVICE_SD_PORT2:
+		case DEVICE_SD_GCLOADER:
 #endif
 			mounted = MountFAT(device, silent);
 			break;
