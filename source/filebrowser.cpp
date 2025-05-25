@@ -74,6 +74,8 @@ int autoLoadMethod()
 		device = DEVICE_SD_SLOTB;
 	else if(ChangeInterface(DEVICE_SD_PORT2, SILENT))
 		device = DEVICE_SD_PORT2;
+	else if(ChangeInterface(DEVICE_SD_GCLOADER, SILENT))
+		device = DEVICE_SD_GCLOADER;
 	else if(ChangeInterface(DEVICE_DVD, SILENT))
 		device = DEVICE_DVD;
 	else if(ChangeInterface(DEVICE_SMB, SILENT))
@@ -107,6 +109,8 @@ int autoSaveMethod(bool silent)
 		device = DEVICE_SD_SLOTB;
 	else if(ChangeInterface(DEVICE_SD_PORT2, SILENT))
 		device = DEVICE_SD_PORT2;
+	else if(ChangeInterface(DEVICE_SD_GCLOADER, SILENT))
+		device = DEVICE_SD_GCLOADER;
 	else if(ChangeInterface(DEVICE_SMB, SILENT))
 		device = DEVICE_SMB;
 	else if(!silent)
@@ -177,7 +181,8 @@ bool IsDeviceRoot(char * path)
 		strcmp(path, "smb:/")   == 0 ||
 		strcmp(path, "carda:/") == 0 ||
 		strcmp(path, "cardb:/") == 0 ||
-		strcmp(path, "port2:/") == 0)
+		strcmp(path, "port2:/") == 0 ||
+		strcmp(path, "gcloader:/") == 0 )
 	{
 		return true;
 	}

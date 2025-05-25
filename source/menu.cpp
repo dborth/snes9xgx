@@ -4372,9 +4372,9 @@ static int MenuSettingsFile()
 			#endif
 
 			// correct load/save methods out of bounds
-			if(GCSettings.LoadMethod > 7)
+			if(GCSettings.LoadMethod > 8)
 				GCSettings.LoadMethod = 0;
-			if(GCSettings.SaveMethod > 7)
+			if(GCSettings.SaveMethod > 8)
 				GCSettings.SaveMethod = 0;
 
 			if (GCSettings.LoadMethod == DEVICE_AUTO) sprintf (options.value[0],"Auto Detect");
@@ -4385,6 +4385,7 @@ static int MenuSettingsFile()
 			else if (GCSettings.LoadMethod == DEVICE_SD_SLOTA) sprintf (options.value[0],"SD Gecko Slot A");
 			else if (GCSettings.LoadMethod == DEVICE_SD_SLOTB) sprintf (options.value[0],"SD Gecko Slot B");
 			else if (GCSettings.LoadMethod == DEVICE_SD_PORT2) sprintf (options.value[0],"SD in SP2");
+			else if (GCSettings.LoadMethod == DEVICE_SD_GCLOADER) sprintf (options.value[0],"GC Loader");
 
 			if (GCSettings.SaveMethod == DEVICE_AUTO) sprintf (options.value[1],"Auto Detect");
 			else if (GCSettings.SaveMethod == DEVICE_SD) sprintf (options.value[1],"SD");
@@ -4393,6 +4394,7 @@ static int MenuSettingsFile()
 			else if (GCSettings.SaveMethod == DEVICE_SD_SLOTA) sprintf (options.value[1],"SD Gecko Slot A");
 			else if (GCSettings.SaveMethod == DEVICE_SD_SLOTB) sprintf (options.value[1],"SD Gecko Slot B");
 			else if (GCSettings.SaveMethod == DEVICE_SD_PORT2) sprintf (options.value[1],"SD in SP2");
+			else if (GCSettings.SaveMethod == DEVICE_SD_GCLOADER) sprintf (options.value[1],"GC Loader");
 
 			snprintf (options.value[2], 35, "%s", GCSettings.LoadFolder);
 			snprintf (options.value[3], 35, "%s", GCSettings.SaveFolder);

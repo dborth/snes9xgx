@@ -406,9 +406,9 @@ decodePrefsData ()
  ***************************************************************************/
 void FixInvalidSettings()
 {
-	if(GCSettings.LoadMethod > 7)
+	if(GCSettings.LoadMethod > 8)
 		GCSettings.LoadMethod = DEVICE_AUTO;
-	if(GCSettings.SaveMethod > 7)
+	if(GCSettings.SaveMethod > 8)
 		GCSettings.SaveMethod = DEVICE_AUTO;	
 	if(!(GCSettings.zoomHor > 0.5 && GCSettings.zoomHor < 1.5))
 		GCSettings.zoomHor = 1.0;
@@ -709,6 +709,10 @@ bool LoadPrefs()
 	}
 	else if(ChangeInterface(DEVICE_SD_PORT2, SILENT)) {
 		sprintf(filepath[0], "port2:/%s", APPFOLDER);
+		prefFound = LoadPrefsFromMethod(filepath[0]);
+	}
+	else if(ChangeInterface(DEVICE_SD_GCLOADER, SILENT)) {
+		sprintf(filepath[0], "gcloader:/%s", APPFOLDER);
 		prefFound = LoadPrefsFromMethod(filepath[0]);
 	}
 #endif
