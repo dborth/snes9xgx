@@ -631,6 +631,14 @@ int BrowserChangeFolder()
 		browserList[i].isdir = 1;
 		browserList[i].icon = ICON_SD;
 		i++;
+
+		AddBrowserEntry();
+		sprintf(browserList[i].filename, "gcloader:/");
+		sprintf(browserList[i].displayname, "GC Loader");
+		browserList[i].length = 0;
+		browserList[i].isdir = 1;
+		browserList[i].icon = ICON_SD;
+		i++;
 #endif
 		AddBrowserEntry();
 		sprintf(browserList[i].filename, "smb:/");

@@ -148,9 +148,9 @@ static void tlbia(void)
  * it has to adjust the stack pointer and finish filling frame_context itself
  */
 void __exception_sethandler(u32 nExcept, void (*pHndl)(frame_context*));
-extern void default_exceptionhandler();
+extern void default_exceptionhandler(frame_context*);
 // use our own exception stub because libogc stupidly requires it
-extern void dsi_handler();
+extern void dsi_handler(frame_context*);
 
 void* VM_Init(u32 VMSize, u32 MEMSize)
 {
