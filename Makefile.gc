@@ -10,6 +10,8 @@ endif
 include $(DEVKITPPC)/gamecube_rules
 export	LIBOGC_INC	:=	$(DEVKITPRO)/libogc2/include
 export	LIBOGC_LIB	:=	$(DEVKITPRO)/libogc2/lib/cube
+export	FREETYPE_CFLAGS 	:=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config --cflags freetype2`
+export	FREETYPE_LIBS	:=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config --libs freetype2`
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -29,7 +31,7 @@ INCLUDES	:=	source source/snes9x
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) `freetype-config --cflags` \
+CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
 				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
 				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
 				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ -DNO_SOUND -DUSE_VM \
@@ -46,7 +48,7 @@ LDFLAGS +=	-L../buildtools
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lpng -lmxml -ltinysmb -lbba -lfat -liso9660 -lz -logc `freetype-config --libs`
+LIBS	:=	-lpng -lmxml -ltinysmb -lbba -lfat -liso9660 -lz -logc $(FREETYPE_LIBS)
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
