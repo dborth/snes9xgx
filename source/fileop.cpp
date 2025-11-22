@@ -51,9 +51,6 @@ bool isMounted[9] = { false, false, false, false, false, false, false, false, fa
 	static DISC_INTERFACE* usb = &__io_usbstorage;
 	static DISC_INTERFACE* dvd = &__io_wiidvd;
 #else
-	static DISC_INTERFACE* carda = &__io_gcsda;
-	static DISC_INTERFACE* cardb = &__io_gcsdb;
-	static DISC_INTERFACE* port2 = &__io_gcsd2;
 	static DISC_INTERFACE* dvd = &__io_gcdvd;
 	static DISC_INTERFACE* gcloader = &__io_gcode;
 #endif
@@ -244,17 +241,17 @@ static bool MountFAT(int device, int silent)
 		case DEVICE_SD_SLOTA:
 			sprintf(name, "carda");
 			sprintf(name2, "carda:");
-			disc = carda;
+			disc = get_io_gcsda();
 			break;
 		case DEVICE_SD_SLOTB:
 			sprintf(name, "cardb");
 			sprintf(name2, "cardb:");
-			disc = cardb;
+			disc = get_io_gcsdb();
 			break;
 		case DEVICE_SD_PORT2:
 			sprintf(name, "port2");
 			sprintf(name2, "port2:");
-			disc = port2;
+			disc = get_io_gcsd2();
 			break;
 		case DEVICE_SD_GCLOADER:
 			sprintf(name, "gcloader");
