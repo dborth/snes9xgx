@@ -524,7 +524,7 @@ static void * ProgressThread (void *arg)
 void
 InitGUIThreads()
 {
-	LWP_CreateThread (&guithread, UpdateGUI, NULL, NULL, 0, 70);
+	LWP_CreateThread (&guithread, UpdateGUI, NULL, NULL, 24576, 70);
 	LWP_CreateThread (&progressthread, ProgressThread, NULL, NULL, 0, 40);
 }
 
