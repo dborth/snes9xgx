@@ -110,7 +110,7 @@ void ExitApp()
 	ExitCleanup();
 
 	if(ShutdownRequested) {
-		SYS_ResetSystem(SYS_POWEROFF_STANDBY, 0, 0);
+		SYS_ResetSystem(SYS_POWEROFF_STANDBY, 0, FALSE);
 	}
 	else if(GCSettings.AutoloadGame) {
 		if( !!*(u32*)0x80001800 )
@@ -121,7 +121,7 @@ void ExitApp()
 		else
 		{
 			// Wii channel support
-			SYS_ResetSystem( SYS_RETURNTOMENU, 0, 0 );
+			SYS_ResetSystem(SYS_RETURNTOMENU, 0, FALSE);
 		}
 	}
 	else {
@@ -146,16 +146,11 @@ void ExitApp()
 
 		if(GCSettings.ExitAction == 1) // Exit to Menu
 		{
-			#ifdef HW_RVL
-				SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
-			#else
-				#define SOFTRESET_ADR ((volatile u32*)0xCC003024)
-				*SOFTRESET_ADR = 0x00000000;
-			#endif
+			SYS_ResetSystem(SYS_RETURNTOMENU, 0, FALSE);
 		}
 		else if(GCSettings.ExitAction == 2) // Shutdown Wii
 		{
-			SYS_ResetSystem(SYS_POWEROFF_STANDBY, 0, 0);
+			SYS_ResetSystem(SYS_POWEROFF_STANDBY, 0, FALSE);
 		}
 		else // Exit to Loader
 		{

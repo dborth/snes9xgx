@@ -278,7 +278,7 @@ static private_data_ogg private_ogg;
 
 #define STACKSIZE		8192
 
-static u8 oggplayer_stack[STACKSIZE];
+static u8 oggplayer_stack[STACKSIZE] ATTRIBUTE_ALIGN(8);
 static lwpq_t oggplayer_queue = LWP_TQUEUE_NULL;
 static lwp_t h_oggplayer = LWP_THREAD_NULL;
 static int ogg_thread_running = 0;
