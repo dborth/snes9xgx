@@ -10,10 +10,8 @@
 
 #ifdef USE_VM
 
-#include <ogc/machine/asm.h>
 #include <ogc/lwp_heap.h>
 #include <ogc/system.h>
-#include <ogc/machine/processor.h>
 #include "utils/vm/vm.h"
 
 static heap_cntrl vm_heap;

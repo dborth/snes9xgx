@@ -273,7 +273,7 @@ static bool MountFAT(int device, int silent)
 
 	while(retry)
 	{
-		if(disc->startup(disc) && fatMountSimple(name, disc))
+		if(fatMountSimple(name, disc))
 			mounted = true;
 
 		if(mounted || silent)
@@ -323,12 +323,8 @@ bool MountDVD(bool silent)
 
 #ifdef HW_DOL
 		DVD_Mount();
-		s32 dvdstatus = DVD_GetDriveStatus();
-
-		if (dvdstatus == DVD_STATE_NO_DISK)
-#else
-		if(!dvd->isInserted(dvd))
 #endif
+		if(!dvd->isInserted(dvd))
 		{
 			if(silent)
 				break;

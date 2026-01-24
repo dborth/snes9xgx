@@ -32,7 +32,6 @@ static int netHalt = 0;
  ***************************************************************************/
 
 static lwp_t networkthread = LWP_THREAD_NULL;
-static u8 netstack[32768] ATTRIBUTE_ALIGN (32);
 
 static void * netcb (void *arg)
 {
@@ -95,7 +94,7 @@ static void * netcb (void *arg)
 			hostip.s_addr = net_gethostip();
 			if (hostip.s_addr)
 			{
-				strcpy(wiiIP, inet_ntoa(hostip));
+				inet_ntoa_r(hostip, wiiIP, sizeof(wiiIP));
 				networkInit = true;	
 				prevInit = true;
 			}
@@ -115,7 +114,7 @@ void StartNetworkThread()
 	netHalt = 0;
 
 	if(networkthread == LWP_THREAD_NULL)
-		LWP_CreateThread(&networkthread, netcb, NULL, netstack, 8192, 40);
+		LWP_CreateThread(&networkthread, netcb, NULL, NULL, 0, 40);
 	else
 		LWP_ResumeThread(networkthread);
 }
@@ -131,7 +130,7 @@ void StopNetworkThread()
 		return;
 
 	netHalt = 2;
-	LWP_ResumeThread(networkthread);
+	LWP_ContinueThread(networkthread);
 
 	// wait for thread to finish
 	LWP_JoinThread(networkthread, NULL);
