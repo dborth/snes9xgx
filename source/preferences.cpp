@@ -762,15 +762,28 @@ bool LoadPrefs()
 		sprintf(GCSettings.ArtworkFolder, "snes9xgx/artwork");
 	
 	// attempt to create directories if they don't exist
-	if((GCSettings.LoadMethod == DEVICE_SD && sdMounted) || (GCSettings.LoadMethod == DEVICE_USB && usbMounted) ) {
+	int deviceForDirs = GCSettings.LoadMethod;
+	if(deviceForDirs == DEVICE_AUTO)
+	{
+		deviceForDirs = autoSaveMethod(true);
+	}
+
+	if(deviceForDirs > 0)
+	{
 		char dirPath[MAXPATHLEN];
-		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.ScreenshotsFolder);
+		sprintf(dirPath, "%s%s", pathPrefix[deviceForDirs], APPFOLDER);
 		CreateDirectory(dirPath);
-		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.CoverFolder);
+		sprintf(dirPath, "%s%s", pathPrefix[deviceForDirs], GCSettings.LoadFolder);
 		CreateDirectory(dirPath);
-		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.ArtworkFolder);
+		sprintf(dirPath, "%s%s", pathPrefix[deviceForDirs], GCSettings.SaveFolder);
 		CreateDirectory(dirPath);
-		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.CheatFolder);
+		sprintf(dirPath, "%s%s", pathPrefix[deviceForDirs], GCSettings.CheatFolder);
+		CreateDirectory(dirPath);
+		sprintf(dirPath, "%s%s", pathPrefix[deviceForDirs], GCSettings.ScreenshotsFolder);
+		CreateDirectory(dirPath);
+		sprintf(dirPath, "%s%s", pathPrefix[deviceForDirs], GCSettings.CoverFolder);
+		CreateDirectory(dirPath);
+		sprintf(dirPath, "%s%s", pathPrefix[deviceForDirs], GCSettings.ArtworkFolder);
 		CreateDirectory(dirPath);
 	}
 
