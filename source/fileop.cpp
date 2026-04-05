@@ -416,6 +416,9 @@ char * StripDevice(char * path)
  ***************************************************************************/
 bool ChangeInterface(int device, bool silent)
 {
+	if(device == DEVICE_AUTO)
+		return false;
+
 	if(isMounted[device])
 		return true;
 

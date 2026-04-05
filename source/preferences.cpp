@@ -568,7 +568,7 @@ SavePrefs (bool silent)
 	char filepath[MAXPATHLEN];
 	int datasize;
 	int offset = 0;
-	int device = 0;
+	int device = DEVICE_AUTO;
 	
 	if(prefpath[0] != 0)
 	{
@@ -583,33 +583,20 @@ SavePrefs (bool silent)
 	}
 	else
 	{
-		device = autoSaveMethod(silent);
-		
-		if(device == 0)
+		if(!ChangeInterface(device, silent)) {
 			return false;
+		}
 		
 		sprintf(filepath, "%s%s", pathPrefix[device], APPFOLDER);
-		DIR *dir = opendir(filepath);
-		if (!dir)
-		{
-			if(mkdir(filepath, 0777) != 0)
-				return false;
-			sprintf(filepath, "%s%s/roms", pathPrefix[device], APPFOLDER);
-			if(mkdir(filepath, 0777) != 0)
-				return false;
-			sprintf(filepath, "%s%s/saves", pathPrefix[device], APPFOLDER);
-			if(mkdir(filepath, 0777) != 0)
-				return false;
+		if(!CreateDirectory(filepath)) {
+			return false;
 		}
-		else
-		{
-			closedir(dir);
-		}
+
 		sprintf(filepath, "%s%s/%s", pathPrefix[device], APPFOLDER, PREF_FILE_NAME);
 		sprintf(prefpath, "%s%s", pathPrefix[device], APPFOLDER);
 	}
 	
-	if(device == 0)
+	if(device == DEVICE_AUTO)
 		return false;
 
 	if (!silent)
@@ -680,8 +667,6 @@ bool LoadPrefs()
 	bool prefFound = false;
 	char filepath[5][MAXPATHLEN];
 	int numDevices;
-	bool sdMounted = false;
-	bool usbMounted = false;
 	
 #ifdef HW_RVL
 	numDevices = 5;
@@ -723,55 +708,36 @@ bool LoadPrefs()
 		FixInvalidSettings();
 	}
 	
-	// rename snes9x to snes9xgx
-	if(GCSettings.LoadMethod == DEVICE_SD)
-	{
-		sdMounted = ChangeInterface(DEVICE_SD, NOTSILENT);
-		if(sdMounted && opendir("sd:/snes9x"))
-			rename("sd:/snes9x", "sd:/snes9xgx");
-	}
-	else if(GCSettings.LoadMethod == DEVICE_USB)
-	{
-		usbMounted = ChangeInterface(DEVICE_USB, NOTSILENT);
-		if(usbMounted && opendir("usb:/snes9x"))
-			rename("usb:/snes9x", "usb:/snes9xgx");	
-	}
-	else if(GCSettings.LoadMethod == DEVICE_SMB)
-	{
-		if(ChangeInterface(DEVICE_SMB, NOTSILENT) && opendir("smb:/snes9x"))
-			rename("smb:/snes9x", "smb:/snes9xgx");
-	}
-
-	// update folder locations
-	if(strcmp(GCSettings.LoadFolder, "snes9x/roms") == 0)
-		sprintf(GCSettings.LoadFolder, "snes9xgx/roms");
-	
-	if(strcmp(GCSettings.SaveFolder, "snes9x/saves") == 0)
-		sprintf(GCSettings.SaveFolder, "snes9xgx/saves");
-	
-	if(strcmp(GCSettings.CheatFolder, "snes9x/cheats") == 0)
-		sprintf(GCSettings.CheatFolder, "snes9xgx/cheats");
-		
-	if(strcmp(GCSettings.ScreenshotsFolder, "snes9x/screenshots") == 0)
-		sprintf(GCSettings.ScreenshotsFolder, "snes9xgx/screenshots");
-
-	if(strcmp(GCSettings.CoverFolder, "snes9x/covers") == 0)
-		sprintf(GCSettings.CoverFolder, "snes9xgx/covers");
-	
-	if(strcmp(GCSettings.ArtworkFolder, "snes9x/artwork") == 0)
-		sprintf(GCSettings.ArtworkFolder, "snes9xgx/artwork");
-	
 	// attempt to create directories if they don't exist
-	if((GCSettings.LoadMethod == DEVICE_SD && sdMounted) || (GCSettings.LoadMethod == DEVICE_USB && usbMounted) ) {
-		char dirPath[MAXPATHLEN];
-		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.ScreenshotsFolder);
-		CreateDirectory(dirPath);
-		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.CoverFolder);
-		CreateDirectory(dirPath);
-		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.ArtworkFolder);
-		CreateDirectory(dirPath);
-		sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.CheatFolder);
-		CreateDirectory(dirPath);
+	char dirPath[MAXPATHLEN];
+	if(GCSettings.SaveMethod == DEVICE_AUTO) {
+		autoSaveMethod(true);
+	}
+
+	if(GCSettings.SaveMethod > DEVICE_AUTO) {
+		if(ChangeInterface(GCSettings.SaveMethod, NOTSILENT)) {
+			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.SaveMethod], APPFOLDER);
+			CreateDirectory(dirPath);
+			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.SaveMethod], GCSettings.SaveFolder);
+			CreateDirectory(dirPath);
+			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.SaveMethod], GCSettings.CheatFolder);
+			CreateDirectory(dirPath);
+		}
+	}
+
+	if(GCSettings.LoadMethod > DEVICE_AUTO && GCSettings.LoadMethod != DEVICE_DVD) {
+		if(ChangeInterface(GCSettings.LoadMethod, NOTSILENT)) {
+			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], APPFOLDER);
+			CreateDirectory(dirPath);
+			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.LoadFolder);
+			CreateDirectory(dirPath);
+			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.ScreenshotsFolder);
+			CreateDirectory(dirPath);
+			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.CoverFolder);
+			CreateDirectory(dirPath);
+			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.ArtworkFolder);
+			CreateDirectory(dirPath);
+		}
 	}
 
 	if(GCSettings.videomode > 0) {
