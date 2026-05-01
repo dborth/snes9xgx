@@ -709,16 +709,21 @@ ParseDirectory(bool waitParse, bool filter)
 	return browser.numEntries;
 }
 
-bool CreateDirectory(char * path)
-{
+bool DirExists(const char * path) {
 	DIR *dir = opendir(path);
-	if (!dir) {
-		if(mkdir(path, 0777) != 0) {
-			return false;
-		}
-	}
-	else {
+	if (dir) {
 		closedir(dir);
+		return true;
+	}
+	return false;
+}
+
+bool CreateDirectory(char * path) {
+	if(DirExists(path)) {
+		return true;
+	}
+	if(mkdir(path, 0777) != 0) {
+		return false;
 	}
 	return true;
 }

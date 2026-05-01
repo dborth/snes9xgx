@@ -34,6 +34,7 @@ bool ChangeInterface(char * filepath, bool silent);
 void CreateAppPath(char * origpath);
 void FindAndSelectLastLoadedFile();
 int ParseDirectory(bool waitParse = false, bool filter = true);
+bool DirExists(const char * path);
 bool CreateDirectory(char * path);
 void AllocSaveBuffer();
 void FreeSaveBuffer();

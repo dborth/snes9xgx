@@ -446,12 +446,12 @@ DefaultSettings ()
 
 	GCSettings.LoadMethod = DEVICE_AUTO; // Auto, SD, DVD, USB, Network (SMB)
 	GCSettings.SaveMethod = DEVICE_AUTO; // Auto, SD, USB, Network (SMB)
-	sprintf (GCSettings.LoadFolder, "%s/roms", APPFOLDER); // Path to game files
-	sprintf (GCSettings.SaveFolder, "%s/saves", APPFOLDER); // Path to save files
-	sprintf (GCSettings.CheatFolder, "%s/cheats", APPFOLDER); // Path to cheat files
-	sprintf (GCSettings.ScreenshotsFolder, "%s/screenshots", APPFOLDER); // Path to screenshot files
-	sprintf (GCSettings.CoverFolder, "%s/covers", APPFOLDER); // Path to cover files
-	sprintf (GCSettings.ArtworkFolder, "%s/artwork", APPFOLDER); // Path to artwork files
+	sprintf (GCSettings.LoadFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_ROMS].name); // Path to game files
+	sprintf (GCSettings.SaveFolder, "%s/%s", APPFOLDER, saveFolder[SAVEFOLDER_SAVES].name); // Path to save files
+	sprintf (GCSettings.CheatFolder, "%s/%s", APPFOLDER, saveFolder[SAVEFOLDER_CHEATS].name); // Path to cheat files
+	sprintf (GCSettings.ScreenshotsFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_SCREENSHOTS].name); // Path to screenshots files
+	sprintf (GCSettings.CoverFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_COVERS].name); // Path to cover files
+	sprintf (GCSettings.ArtworkFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_ARTWORK].name); // Path to artwork files
 	GCSettings.AutoLoad = 1;
 	GCSettings.AutoSave = 1;
 
@@ -583,6 +583,9 @@ SavePrefs (bool silent)
 	}
 	else
 	{
+		autoSaveMethod(true);
+		device = GCSettings.SaveMethod;
+
 		if(!ChangeInterface(device, silent)) {
 			return false;
 		}
@@ -657,17 +660,20 @@ LoadPrefsFromMethod (char * path)
  * Load Preferences
  * Checks sources consecutively until we find a preference file
  ***************************************************************************/
-static bool prefLoaded = false;
+static bool prefLoadAttempted = false;
+static bool prefFound = false;
 
 bool LoadPrefs()
 {
-	if(prefLoaded) // already attempted loading
+	if(prefLoadAttempted) // already attempted loading
 		return true;
+
+	prefLoadAttempted = true;
 
 	bool prefFound = false;
 	char filepath[5][MAXPATHLEN];
 	int numDevices;
-	
+
 #ifdef HW_RVL
 	numDevices = 5;
 	sprintf(filepath[0], "%s", appPath);
@@ -675,81 +681,86 @@ bool LoadPrefs()
 	sprintf(filepath[2], "usb:/apps/%s", APPFOLDER);
 	sprintf(filepath[3], "sd:/%s", APPFOLDER);
 	sprintf(filepath[4], "usb:/%s", APPFOLDER);
+#else
+	numDevices = 4;
+	sprintf(filepath[0], "carda:/%s", APPFOLDER);
+	sprintf(filepath[1], "cardb:/%s", APPFOLDER);
+	sprintf(filepath[2], "port2:/%s", APPFOLDER);
+	sprintf(filepath[3], "gcloader:/%s", APPFOLDER);
+#endif
 
-	for(int i=0; i<numDevices; i++)
-	{
+	for(int i=0; i<numDevices; i++) {
 		prefFound = LoadPrefsFromMethod(filepath[i]);
-		
+
 		if(prefFound)
 			break;
 	}
-#else
-	if(ChangeInterface(DEVICE_SD_SLOTA, SILENT)) {
-		sprintf(filepath[0], "carda:/%s", APPFOLDER);
-		prefFound = LoadPrefsFromMethod(filepath[0]);
-	}
-	else if(ChangeInterface(DEVICE_SD_SLOTB, SILENT)) {
-		sprintf(filepath[0], "cardb:/%s", APPFOLDER);
-		prefFound = LoadPrefsFromMethod(filepath[0]);
-	}
-	else if(ChangeInterface(DEVICE_SD_PORT2, SILENT)) {
-		sprintf(filepath[0], "port2:/%s", APPFOLDER);
-		prefFound = LoadPrefsFromMethod(filepath[0]);
-	}
-	else if(ChangeInterface(DEVICE_SD_GCLOADER, SILENT)) {
-		sprintf(filepath[0], "gcloader:/%s", APPFOLDER);
-		prefFound = LoadPrefsFromMethod(filepath[0]);
-	}
-#endif
 
-	prefLoaded = true; // attempted to load preferences
-
-	if(prefFound) {
-		FixInvalidSettings();
-	}
-	
-	// attempt to create directories if they don't exist
-	char dirPath[MAXPATHLEN];
-	if(GCSettings.SaveMethod == DEVICE_AUTO) {
-		autoSaveMethod(true);
+	if(!prefFound) {
+		return false;
 	}
 
-	if(GCSettings.SaveMethod > DEVICE_AUTO) {
-		if(ChangeInterface(GCSettings.SaveMethod, NOTSILENT)) {
-			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.SaveMethod], APPFOLDER);
-			CreateDirectory(dirPath);
-			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.SaveMethod], GCSettings.SaveFolder);
-			CreateDirectory(dirPath);
-			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.SaveMethod], GCSettings.CheatFolder);
-			CreateDirectory(dirPath);
-		}
-	}
-
-	if(GCSettings.LoadMethod > DEVICE_AUTO && GCSettings.LoadMethod != DEVICE_DVD) {
-		if(ChangeInterface(GCSettings.LoadMethod, NOTSILENT)) {
-			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], APPFOLDER);
-			CreateDirectory(dirPath);
-			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.LoadFolder);
-			CreateDirectory(dirPath);
-			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.ScreenshotsFolder);
-			CreateDirectory(dirPath);
-			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.CoverFolder);
-			CreateDirectory(dirPath);
-			sprintf(dirPath, "%s%s", pathPrefix[GCSettings.LoadMethod], GCSettings.ArtworkFolder);
-			CreateDirectory(dirPath);
-		}
-	}
+	FixInvalidSettings();
 
 	if(GCSettings.videomode > 0) {
 		ResetVideo_Menu();
 	}
 
-	ChangeLanguage();
-	
 #ifdef HW_RVL
 	bg_music = (u8 * )bg_music_ogg;
 	bg_music_size = bg_music_ogg_size;
 	LoadBgMusic();
 #endif
-	return prefFound;
+
+	ChangeLanguage();
+	return true;
+}
+
+void CreatePathWithPrefix(int device, const char* folder) {
+    char fullPath[MAXPATHLEN];
+    MakeFilePathForFolderPath(fullPath, device, folder);
+    CreateDirectory(fullPath);
+}
+
+void CreateMissingDirectories() {
+    char defaultFolder[MAXPATHLEN];
+
+    if (GCSettings.SaveMethod > DEVICE_AUTO && ChangeInterface(GCSettings.SaveMethod, NOTSILENT)) {
+        const char* savePointers[] = { GCSettings.SaveFolder, GCSettings.CheatFolder };
+
+        for (int i = 0; i < SAVEFOLDER_LENGTH; i++) {
+            const char* currentPath = savePointers[i];
+
+            if (strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
+                CreatePathWithPrefix(GCSettings.SaveMethod, APPFOLDER);
+            }
+
+            GetDefaultFolderPath(defaultFolder, saveFolder[i].name);
+            if (strcmp(currentPath, defaultFolder) == 0) {
+                CreatePathWithPrefix(GCSettings.SaveMethod, currentPath);
+            }
+        }
+    }
+
+    if (GCSettings.LoadMethod > DEVICE_AUTO && GCSettings.LoadMethod != DEVICE_DVD && ChangeInterface(GCSettings.LoadMethod, NOTSILENT)) {
+        const char* loadPointers[] = {
+            GCSettings.LoadFolder,
+            GCSettings.ScreenshotsFolder,
+            GCSettings.CoverFolder,
+            GCSettings.ArtworkFolder
+        };
+
+        for (int i = 0; i < LOADFOLDER_LENGTH; i++) {
+            const char* currentPath = loadPointers[i];
+
+            if (strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
+                CreatePathWithPrefix(GCSettings.LoadMethod, APPFOLDER);
+            }
+
+            GetDefaultFolderPath(defaultFolder, loadFolder[i].name);
+            if (strcmp(currentPath, defaultFolder) == 0) {
+                CreatePathWithPrefix(GCSettings.LoadMethod, currentPath);
+            }
+        }
+    }
 }

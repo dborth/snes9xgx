@@ -58,31 +58,52 @@ extern bool isBSX();
 * Auto-determines and sets the load device
 * Returns device set
 ****************************************************************************/
-int autoLoadMethod()
+int autoLoadMethod(bool silent)
 {
-	ShowAction ("Attempting to determine load device...");
+	if(GCSettings.LoadMethod > DEVICE_AUTO) {
+		return GCSettings.LoadMethod;
+	}
 
+	char defaultFolderPath[MAXPATHLEN];
+	char fullPath[MAXPATHLEN];
 	int device = DEVICE_AUTO;
 
-	if(ChangeInterface(DEVICE_SD, SILENT))
-		device = DEVICE_SD;
-	else if(ChangeInterface(DEVICE_USB, SILENT))
-		device = DEVICE_USB;
-	else if(ChangeInterface(DEVICE_SD_SLOTA, SILENT))
-		device = DEVICE_SD_SLOTA;
-	else if(ChangeInterface(DEVICE_SD_SLOTB, SILENT))
-		device = DEVICE_SD_SLOTB;
-	else if(ChangeInterface(DEVICE_SD_PORT2, SILENT))
-		device = DEVICE_SD_PORT2;
-	else if(ChangeInterface(DEVICE_SD_GCLOADER, SILENT))
-		device = DEVICE_SD_GCLOADER;
-	else if(ChangeInterface(DEVICE_DVD, SILENT))
-		device = DEVICE_DVD;
-	else if(ChangeInterface(DEVICE_SMB, SILENT))
-		device = DEVICE_SMB;
+	GetDefaultFolderPath(defaultFolderPath, loadFolder[LOADFOLDER_ROMS].name);
 
-	if(GCSettings.LoadMethod == DEVICE_AUTO)
-		GCSettings.LoadMethod = device; // save device found for later use
+	if(!silent)
+		ShowAction ("Attempting to determine load device...");
+
+#ifdef HW_RVL
+	int deviceCount = 4;
+	int devices[deviceCount] = { DEVICE_SD, DEVICE_USB, DEVICE_DVD, DEVICE_SMB };
+#else
+	int deviceCount = 6;
+	int devices[deviceCount] = { DEVICE_SD_SLOTA, DEVICE_SD_SLOTB, DEVICE_SD_PORT2, DEVICE_SD_GCLOADER, DEVICE_DVD, DEVICE_SMB };
+#endif
+
+	// look for default roms folder first
+	for (int i = 0; i < deviceCount; i++) {
+	    if (ChangeInterface(devices[i], SILENT)) {
+	        MakeFilePathForFolderPath(fullPath, devices[i], defaultFolderPath);
+
+	        if(DirExists(fullPath)) {
+	        	device = devices[i];
+	        	break;
+	        }
+	    }
+	}
+
+	// set to first connected device instead
+	if(device == DEVICE_AUTO) {
+		for (int i = 0; i < deviceCount; i++) {
+			if (ChangeInterface(devices[i], SILENT)) {
+				device = devices[i];
+				break;
+			}
+		}
+	}
+
+	GCSettings.LoadMethod = device; // load device found for later use
 	CancelAction();
 	return device;
 }
@@ -94,30 +115,53 @@ int autoLoadMethod()
 ****************************************************************************/
 int autoSaveMethod(bool silent)
 {
+	if(GCSettings.SaveMethod > DEVICE_AUTO) {
+		return GCSettings.SaveMethod;
+	}
+
+	char defaultFolderPath[MAXPATHLEN];
+	char fullPath[MAXPATHLEN];
+	int device = DEVICE_AUTO;
+
+	GetDefaultFolderPath(defaultFolderPath, saveFolder[SAVEFOLDER_SAVES].name);
+
 	if(!silent)
 		ShowAction ("Attempting to determine save device...");
 
-	int device = DEVICE_AUTO;
+#ifdef HW_RVL
+	int deviceCount = 3;
+	int devices[deviceCount] = { DEVICE_SD, DEVICE_USB, DEVICE_SMB };
+#else
+	int deviceCount = 5;
+	int devices[deviceCount] = { DEVICE_SD_SLOTA, DEVICE_SD_SLOTB, DEVICE_SD_PORT2, DEVICE_SD_GCLOADER, DEVICE_SMB };
+#endif
 
-	if(ChangeInterface(DEVICE_SD, SILENT))
-		device = DEVICE_SD;
-	else if(ChangeInterface(DEVICE_USB, SILENT))
-		device = DEVICE_USB;
-	else if(ChangeInterface(DEVICE_SD_SLOTA, SILENT))
-		device = DEVICE_SD_SLOTA;
-	else if(ChangeInterface(DEVICE_SD_SLOTB, SILENT))
-		device = DEVICE_SD_SLOTB;
-	else if(ChangeInterface(DEVICE_SD_PORT2, SILENT))
-		device = DEVICE_SD_PORT2;
-	else if(ChangeInterface(DEVICE_SD_GCLOADER, SILENT))
-		device = DEVICE_SD_GCLOADER;
-	else if(ChangeInterface(DEVICE_SMB, SILENT))
-		device = DEVICE_SMB;
-	else if(!silent)
+	// look for default saves folder first
+	for (int i = 0; i < deviceCount; i++) {
+	    if (ChangeInterface(devices[i], SILENT)) {
+	        MakeFilePathForFolderPath(fullPath, devices[i], defaultFolderPath);
+
+	        if(DirExists(fullPath)) {
+	        	device = devices[i];
+	        	break;
+	        }
+	    }
+	}
+
+	// set to first connected device instead
+	if(device == DEVICE_AUTO) {
+		for (int i = 0; i < deviceCount; i++) {
+			if (ChangeInterface(devices[i], SILENT)) {
+				device = devices[i];
+				break;
+			}
+		}
+	}
+
+	GCSettings.SaveMethod = device; // save device found for later use
+
+	if(device == DEVICE_AUTO && !silent)
 		ErrorPrompt("Unable to locate a save device!");
-
-	if(GCSettings.SaveMethod == DEVICE_AUTO)
-		GCSettings.SaveMethod = device; // save device found for later use
 
 	CancelAction();
 	return device;
@@ -198,12 +242,9 @@ int UpdateDirName()
 	int size=0;
 	char * test;
 	char temp[1024];
-	int device = 0;
 
 	if(browser.numEntries == 0)
 		return 1;
-
-	FindDevice(browser.dir, &device);
 
 	/* current directory doesn't change */
 	if (strcmp(browserList[browser.selIndex].filename,".") == 0)
@@ -254,6 +295,14 @@ int UpdateDirName()
 			return -1;
 		}
 	}
+}
+
+void GetDefaultFolderPath(char *folderPath, const char *folderName) {
+    sprintf(folderPath, "%s/%s", APPFOLDER, folderName);
+}
+
+void MakeFilePathForFolderPath(char *fullPath, int device, const char *folder) {
+	sprintf(fullPath, "%s%s", pathPrefix[device], folder);
 }
 
 bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
@@ -554,9 +603,6 @@ done:
  ***************************************************************************/
 int BrowserChangeFolder()
 {
-	int device = 0;
-	FindDevice(browser.dir, &device);
-	
 	if(inSz && browser.selIndex == 0) // inside a 7z, requesting to leave
 	{
 		inSz = false;
@@ -680,18 +726,12 @@ int
 OpenGameList ()
 {
 	int device = GCSettings.LoadMethod;
-	bool autoLoad = false;
 
-	if(device == DEVICE_AUTO && strlen(GCSettings.LoadFolder) > 0) {
-		device = autoLoadMethod();
-		autoLoad = true;
-	}
-
-	// change current dir to roms directory
-	if(device > 0) {
+	if(device > 0 && ChangeInterface(device, SILENT)) {
+		// change current dir to roms directory
 		sprintf(browser.dir, "%s%s/", pathPrefix[device], GCSettings.LoadFolder);
 
-		if(autoLoad) {
+		if(strlen(GCSettings.LoadFolder) > 0) {
 			DIR *dir = opendir(browser.dir);
 
 			if(dir == NULL) {
@@ -704,6 +744,7 @@ OpenGameList ()
 	}
 	else {
 		browser.dir[0] = 0;
+		browser.numEntries = 0;
 	}
 	
 	BrowserChangeFolder();

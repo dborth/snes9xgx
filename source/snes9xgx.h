@@ -32,7 +32,7 @@ const char pathPrefix[10][11] =
 { "", "sd:/", "usb:/", "dvd:/", "smb:/", "carda:/", "cardb:/", "port2:/", "gcloader:/" };
 
 enum {
-	DEVICE_AUTO,
+	DEVICE_AUTO = 0,
 	DEVICE_SD,
 	DEVICE_USB,
 	DEVICE_DVD,
@@ -41,6 +41,37 @@ enum {
 	DEVICE_SD_SLOTB,
 	DEVICE_SD_PORT2,
 	DEVICE_SD_GCLOADER,
+};
+
+enum {
+    SAVEFOLDER_SAVES = 0,
+    SAVEFOLDER_CHEATS,
+    SAVEFOLDER_LENGTH
+};
+
+enum {
+    LOADFOLDER_ROMS = 0,
+    LOADFOLDER_SCREENSHOTS,
+    LOADFOLDER_COVERS,
+    LOADFOLDER_ARTWORK,
+    LOADFOLDER_LENGTH
+};
+
+typedef struct {
+    int id;
+    const char *name;
+} FolderDef;
+
+const FolderDef saveFolder[] = {
+    { SAVEFOLDER_SAVES,  "saves" },
+    { SAVEFOLDER_CHEATS, "cheats" }
+};
+
+const FolderDef loadFolder[] = {
+    { LOADFOLDER_ROMS,        "roms" },
+    { LOADFOLDER_SCREENSHOTS, "screenshots" },
+    { LOADFOLDER_COVERS,      "covers" },
+    { LOADFOLDER_ARTWORK,     "artwork" }
 };
 
 enum {
