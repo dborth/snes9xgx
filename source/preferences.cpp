@@ -620,6 +620,9 @@ SavePrefs (bool silent)
 	{
 		if (!silent)
 			InfoPrompt("Preferences saved");
+
+		if(appPath[0] == 0)
+			strcpy(appPath, prefpath);
 		return true;
 	}
 	return false;
