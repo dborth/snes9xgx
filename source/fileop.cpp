@@ -21,6 +21,7 @@
 #include <sdcard/wiisd_io.h>
 #include <sdcard/gcsd.h>
 #include <ogc/usbstorage.h>
+#include <ogc/cond.h>
 #include <di/di.h>
 #include <ogc/dvd.h>
 #include <iso9660.h>
@@ -58,14 +59,28 @@ bool isMounted[9] = { false, false, false, false, false, false, false, false, fa
 // folder parsing thread
 static lwp_t parsethread = LWP_THREAD_NULL;
 static DIR *dir = NULL;
-static bool parseHalt = true;
+static volatile bool parseHalt = true;
 static bool parseFilter = true;
 static bool ParseDirEntries();
 int selectLoadedFile = 0;
 
+// parse thread synchronization
+static mutex_t parseMutex    = LWP_MUTEX_NULL;
+static cond_t  parseCond     = LWP_COND_NULL; // main -> parse: work available
+static cond_t  parseIdleCond = LWP_COND_NULL; // parse -> main: now idle
+static bool    parseActive   = false;          // protected by parseMutex
+
 // device thread
 static lwp_t devicethread = LWP_THREAD_NULL;
-static bool deviceHalt = true;
+static volatile bool deviceHalt = true;
+
+#ifdef HW_RVL
+// device thread synchronization
+static mutex_t deviceMutex    = LWP_MUTEX_NULL;
+static cond_t  deviceWakeCond = LWP_COND_NULL; // main -> device: wake / re-check halt
+static cond_t  deviceHaltCond = LWP_COND_NULL; // device -> main: now halted
+static bool    deviceIdle     = false;          // protected by deviceMutex
+#endif
 
 /****************************************************************************
  * ResumeDeviceThread
@@ -75,8 +90,12 @@ static bool deviceHalt = true;
 void
 ResumeDeviceThread()
 {
+#ifdef HW_RVL
+	LWP_MutexLock(deviceMutex);
 	deviceHalt = false;
-	LWP_ResumeThread(devicethread);
+	LWP_CondSignal(deviceWakeCond);
+	LWP_MutexUnlock(deviceMutex);
+#endif
 }
 
 /****************************************************************************
@@ -89,10 +108,11 @@ HaltDeviceThread()
 {
 #ifdef HW_RVL
 	deviceHalt = true;
-
-	// wait for thread to finish
-	while(!LWP_ThreadIsSuspended(devicethread))
-		usleep(THREAD_SLEEP);
+	LWP_MutexLock(deviceMutex);
+	LWP_CondSignal(deviceWakeCond); // interrupt condvar sleep if the thread is in one
+	while(!deviceIdle)
+		LWP_CondWait(deviceHaltCond, deviceMutex);
+	LWP_MutexUnlock(deviceMutex);
 #endif
 }
 
@@ -105,9 +125,10 @@ void
 HaltParseThread()
 {
 	parseHalt = true;
-
-	while(!LWP_ThreadIsSuspended(parsethread))
-		usleep(THREAD_SLEEP);
+	LWP_MutexLock(parseMutex);
+	while(parseActive)
+		LWP_CondWait(parseIdleCond, parseMutex);
+	LWP_MutexUnlock(parseMutex);
 }
 
 
@@ -117,8 +138,6 @@ HaltParseThread()
  * This checks our devices for changes (SD/USB/DVD removed)
  ***************************************************************************/
 #ifdef HW_RVL
-static int devsleep;
-
 static void *
 devicecallback (void *arg)
 {
@@ -130,7 +149,7 @@ devicecallback (void *arg)
 			{
 				unmountRequired[DEVICE_SD] = true;
 				isMounted[DEVICE_SD] = false;
-				parseHalt = true; // abort in-progress dir parsing on this device
+				parseHalt = true; // abort any in-progress dir parse on this device
 			}
 		}
 
@@ -140,7 +159,7 @@ devicecallback (void *arg)
 			{
 				unmountRequired[DEVICE_USB] = true;
 				isMounted[DEVICE_USB] = false;
-				parseHalt = true; // abort in-progress dir parsing on this device
+				parseHalt = true; // abort any in-progress dir parse on this device
 			}
 		}
 
@@ -150,18 +169,24 @@ devicecallback (void *arg)
 			{
 				unmountRequired[DEVICE_DVD] = true;
 				isMounted[DEVICE_DVD] = false;
-				parseHalt = true; // abort in-progress dir parsing on this device
+				parseHalt = true; // abort any in-progress dir parse on this device
 			}
 		}
 
-		devsleep = 1000*1000; // 1 sec
-
-		while(devsleep > 0)
-		{
-			if(deviceHalt)
-				LWP_SuspendThread(devicethread);
+		// sleep ~1 sec in 100us steps so we can react to a halt request quickly
+		for(int i = 0; i < 10000 && !deviceHalt; i++)
 			usleep(THREAD_SLEEP);
-			devsleep -= THREAD_SLEEP;
+
+		// if halted, block here until ResumeDeviceThread wakes us
+		if(deviceHalt)
+		{
+			LWP_MutexLock(deviceMutex);
+			deviceIdle = true;
+			LWP_CondBroadcast(deviceHaltCond); // tell HaltDeviceThread we've stopped
+			while(deviceHalt)
+				LWP_CondWait(deviceWakeCond, deviceMutex);
+			deviceIdle = false;
+			LWP_MutexUnlock(deviceMutex);
 		}
 	}
 	return NULL;
@@ -171,11 +196,20 @@ devicecallback (void *arg)
 static void *
 parsecallback (void *arg)
 {
+	LWP_MutexLock(parseMutex);
 	while(1)
 	{
+		// sleep until ParseDirectory signals there is work to do
+		while(!parseActive)
+			LWP_CondWait(parseCond, parseMutex);
+		LWP_MutexUnlock(parseMutex);
+
 		while(ParseDirEntries())
 			usleep(THREAD_SLEEP);
-		LWP_SuspendThread(parsethread);
+
+		LWP_MutexLock(parseMutex);
+		parseActive = false;
+		LWP_CondBroadcast(parseIdleCond); // wake HaltParseThread / waitParse callers
 	}
 	return NULL;
 }
@@ -190,9 +224,15 @@ void
 InitDeviceThread()
 {
 #ifdef HW_RVL
-	LWP_CreateThread (&devicethread, devicecallback, NULL, NULL, 0, 40);
+	LWP_MutexInit(&deviceMutex, false);
+	LWP_CondInit(&deviceWakeCond);
+	LWP_CondInit(&deviceHaltCond);
+	LWP_CreateThread(&devicethread, devicecallback, NULL, NULL, 0, 40);
 #endif
-	LWP_CreateThread (&parsethread, parsecallback, NULL, NULL, 0, 80);
+	LWP_MutexInit(&parseMutex, false);
+	LWP_CondInit(&parseCond);
+	LWP_CondInit(&parseIdleCond);
+	LWP_CreateThread(&parsethread, parsecallback, NULL, NULL, 0, 80);
 }
 
 /****************************************************************************
@@ -697,14 +737,20 @@ ParseDirectory(bool waitParse, bool filter)
 	parseHalt = false;
 	ParseDirEntries(); // index first 20 entries
 
-	LWP_ResumeThread(parsethread); // index remaining entries
+	// signal parse thread to continue indexing remaining entries
+	LWP_MutexLock(parseMutex);
+	parseActive = true;
+	LWP_CondSignal(parseCond);
+	LWP_MutexUnlock(parseMutex);
 
 	if(waitParse) // wait for complete parsing
 	{
 		ShowAction("Loading...");
 
-		while(!LWP_ThreadIsSuspended(parsethread))
-			usleep(THREAD_SLEEP);
+		LWP_MutexLock(parseMutex);
+		while(parseActive)
+			LWP_CondWait(parseIdleCond, parseMutex);
+		LWP_MutexUnlock(parseMutex);
 
 		CancelAction();
 	}

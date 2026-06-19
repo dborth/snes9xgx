@@ -10,6 +10,7 @@
 
 #include <gccore.h>
 #include <ogcsys.h>
+#include <ogc/cond.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -87,8 +88,20 @@ static int mapMenuCtrlSNES = 0;
 
 static lwp_t guithread = LWP_THREAD_NULL;
 static lwp_t progressthread = LWP_THREAD_NULL;
-static bool guiHalt = true;
-static int showProgress = 0;
+static volatile bool guiHalt = true;
+static volatile int showProgress = 0;
+
+// GUI thread synchronization
+static mutex_t guiMutex    = LWP_MUTEX_NULL;
+static cond_t  guiHaltCond = LWP_COND_NULL; // GUI thread -> main: halted
+static cond_t  guiWakeCond = LWP_COND_NULL; // main -> GUI thread: resume
+static bool    guiHalted   = false;          // protected by guiMutex
+
+// progress thread synchronization
+static mutex_t progMutex      = LWP_MUTEX_NULL;
+static cond_t  progActiveCond = LWP_COND_NULL; // main -> progress: work available
+static cond_t  progIdleCond   = LWP_COND_NULL; // progress -> main: now idle
+static bool    progIdle       = true;           // protected by progMutex
 static bool showCredits = false;
 
 static char progressTitle[101];
@@ -110,8 +123,10 @@ u32 bg_music_size;
 static void
 ResumeGui()
 {
+	LWP_MutexLock(guiMutex);
 	guiHalt = false;
-	LWP_ResumeThread (guithread);
+	LWP_CondSignal(guiWakeCond);
+	LWP_MutexUnlock(guiMutex);
 }
 
 /****************************************************************************
@@ -125,11 +140,11 @@ ResumeGui()
 static void
 HaltGui()
 {
+	LWP_MutexLock(guiMutex);
 	guiHalt = true;
-
-	// wait for thread to finish
-	while(!LWP_ThreadIsSuspended(guithread))
-		usleep(THREAD_SLEEP);
+	while(!guiHalted)
+		LWP_CondWait(guiHaltCond, guiMutex);
+	LWP_MutexUnlock(guiMutex);
 }
 
 static void ResetText()
@@ -335,8 +350,17 @@ UpdateGUI (void *arg)
 
 	while(1)
 	{
+		// if halted, block here until ResumeGui wakes us; signal HaltGui we have stopped
+		LWP_MutexLock(guiMutex);
 		if(guiHalt)
-			LWP_SuspendThread(guithread);
+		{
+			guiHalted = true;
+			LWP_CondBroadcast(guiHaltCond);
+			while(guiHalt)
+				LWP_CondWait(guiWakeCond, guiMutex);
+			guiHalted = false;
+		}
+		LWP_MutexUnlock(guiMutex);
 
 		UpdatePads();
 		mainWindow->Draw();
@@ -385,8 +409,6 @@ UpdateGUI (void *arg)
  * progress bar showing % completion, or a throbber that only shows that an
  * action is in progress.
  ***************************************************************************/
-static int progsleep = 0;
-
 static void
 ProgressWindow(char *title, char *msg)
 {
@@ -445,7 +467,7 @@ ProgressWindow(char *title, char *msg)
 	}
 
 	// wait to see if progress flag changes soon
-	progsleep = 400000;
+	int progsleep = 400000;
 
 	while(progsleep > 0)
 	{
@@ -505,13 +527,20 @@ ProgressWindow(char *title, char *msg)
 
 static void * ProgressThread (void *arg)
 {
+	LWP_MutexLock(progMutex);
 	while(1)
 	{
-		if(!showProgress)
-			LWP_SuspendThread (progressthread);
+		// sleep until ShowProgress/ShowAction signals there is work to do
+		while(!showProgress)
+			LWP_CondWait(progActiveCond, progMutex);
+		progIdle = false;
+		LWP_MutexUnlock(progMutex);
 
 		ProgressWindow(progressTitle, progressMsg);
-		usleep(THREAD_SLEEP);
+
+		LWP_MutexLock(progMutex);
+		progIdle = true;
+		LWP_CondBroadcast(progIdleCond); // wake CancelAction callers
 	}
 	return NULL;
 }
@@ -524,8 +553,16 @@ static void * ProgressThread (void *arg)
 void
 InitGUIThreads()
 {
-	LWP_CreateThread (&guithread, UpdateGUI, NULL, NULL, 24576, 70);
-	LWP_CreateThread (&progressthread, ProgressThread, NULL, NULL, 0, 40);
+	LWP_MutexInit(&guiMutex, false);
+	LWP_CondInit(&guiHaltCond);
+	LWP_CondInit(&guiWakeCond);
+
+	LWP_MutexInit(&progMutex, false);
+	LWP_CondInit(&progActiveCond);
+	LWP_CondInit(&progIdleCond);
+
+	LWP_CreateThread(&guithread, UpdateGUI, NULL, NULL, 24576, 70);
+	LWP_CreateThread(&progressthread, ProgressThread, NULL, NULL, 0, 40);
 }
 
 /****************************************************************************
@@ -538,11 +575,11 @@ InitGUIThreads()
 void
 CancelAction()
 {
+	LWP_MutexLock(progMutex);
 	showProgress = 0;
-
-	// wait for thread to finish
-	while(!LWP_ThreadIsSuspended(progressthread))
-		usleep(THREAD_SLEEP);
+	while(!progIdle)
+		LWP_CondWait(progIdleCond, progMutex);
+	LWP_MutexUnlock(progMutex);
 }
 
 /****************************************************************************
@@ -568,12 +605,14 @@ ShowProgress (const char *msg, int done, int total)
 	if(showProgress != 1)
 		CancelAction(); // wait for previous progress window to finish
 
+	LWP_MutexLock(progMutex);
 	snprintf(progressMsg, 200, "%s", msg);
 	sprintf(progressTitle, "Please Wait");
 	showProgress = 1;
 	progressTotal = total;
 	progressDone = done;
-	LWP_ResumeThread (progressthread);
+	LWP_CondSignal(progActiveCond);
+	LWP_MutexUnlock(progMutex);
 }
 
 /****************************************************************************
@@ -591,12 +630,14 @@ ShowAction (const char *msg)
 	if(showProgress != 0)
 		CancelAction(); // wait for previous progress window to finish
 
+	LWP_MutexLock(progMutex);
 	snprintf(progressMsg, 200, "%s", msg);
 	sprintf(progressTitle, "Please Wait");
 	showProgress = 2;
 	progressDone = 0;
 	progressTotal = 0;
-	LWP_ResumeThread (progressthread);
+	LWP_CondSignal(progActiveCond);
+	LWP_MutexUnlock(progMutex);
 }
 
 void ErrorPrompt(const char *msg)
