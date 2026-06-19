@@ -56,10 +56,11 @@ int CheckVideo = 0; // for forcing video reset
 static unsigned char texturemem[TEXTUREMEM_SIZE] ATTRIBUTE_ALIGN (32);
 
 #define DEFAULT_FIFO_SIZE 256 * 1024
-static unsigned int copynow = GX_FALSE;
+static volatile unsigned int copynow = GX_FALSE;
 static unsigned char gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 static GXTexObj texobj;
 static Mtx view;
+static Mtx modelView;
 static Mtx GXmodelView2D;
 static int vwidth, vheight, oldvwidth, oldvheight;
 
@@ -332,7 +333,12 @@ draw_init ()
 
 	memset (&view, 0, sizeof (Mtx));
 	guLookAt(view, &cam.pos, &cam.up, &cam.view);
-	GX_LoadPosMtxImm (view, GX_PNMTX0);
+	
+	Mtx m;
+	guMtxTrans (m, 0, 0, -100);
+	guMtxConcat (view, m, modelView);
+
+	GX_LoadPosMtxImm (modelView, GX_PNMTX0);
 
 	GX_InvVtxCache ();	// update vertex cache
 }
@@ -346,16 +352,11 @@ draw_vert (u8 pos, u8 c, f32 s, f32 t)
 }
 
 static inline void
-draw_square (Mtx v)
+draw_square ()
 {
-	Mtx m;			// model matrix.
-	Mtx mv;			// modelview matrix.
 
-	guMtxIdentity (m);
-	guMtxTransApply (m, m, 0, 0, -100);
-	guMtxConcat (v, m, mv);
-
-	GX_LoadPosMtxImm (mv, GX_PNMTX0);
+	GX_LoadPosMtxImm (modelView, GX_PNMTX0);
+	
 	GX_Begin (GX_QUADS, GX_VTXFMT0, 4);
 	draw_vert (0, 0, 0.0, 0.0);
 	draw_vert (1, 0, 1.0, 0.0);
@@ -831,7 +832,7 @@ update_video (int width, int height)
 	DCFlushRange (texturemem, TEXTUREMEM_SIZE);	// update the texture memory
 	GX_InvalidateTexAll ();
 
-	draw_square (view);		// draw the quad
+	draw_square ();		// draw the quad
 
 	GX_DrawDone ();
 
@@ -902,7 +903,17 @@ void TakeScreenshot()
 	{
 		gameScreenPngSize = PNGU_EncodeFromEFB(pngContext, vmode->fbWidth, vmode->efbHeight);
 		PNGU_ReleaseImageContext(pngContext);
-		gameScreenPng = (u8 *)malloc(gameScreenPngSize);
+
+		if (gameScreenPngSize <= 0) {
+			gameScreenPngSize = 0;
+			return;
+		}
+
+		gameScreenPng = (u8 *) malloc(gameScreenPngSize);
+		if (gameScreenPng == NULL) {
+			gameScreenPngSize = 0;
+			return;
+		}
 		memcpy(gameScreenPng, savebuffer, gameScreenPngSize);
 	}
 }
@@ -1023,8 +1034,7 @@ void Menu_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[],
 	width  >>= 1;
 	height >>= 1;
 
-	guMtxIdentity (m1);
-	guMtxScaleApply(m1,m1,scaleX,scaleY,1.0);
+	guMtxScale(m1, scaleX, scaleY, 1.0);
 	guVector axis = (guVector) {0 , 0, 1 };
 	guMtxRotAxisDeg (m2, &axis, degrees);
 	guMtxConcat(m2,m1,m);
@@ -1083,4 +1093,3 @@ void Menu_DrawRectangle(f32 x, f32 y, f32 width, f32 height, GXColor color, u8 f
 	}
 	GX_End();
 }
-
