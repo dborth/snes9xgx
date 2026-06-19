@@ -118,6 +118,7 @@ void S9xSyncSpeed () {
 		{
 			usleep(50);
 		}
+		bool behindSchedule = (pendingFrames > 1);
 
 		if (pendingFrames > skipFrms)
 		{
@@ -125,7 +126,10 @@ void S9xSyncSpeed () {
 			pendingFrames = skipFrms;
 		}
 
-		S9xChooseFrameToRender(pendingFrames > 1, skipFrms);
+		S9xChooseFrameToRender(behindSchedule, skipFrms);
+
+		if (!Settings.TurboMode)
+			FrameTimer--;
 	}
 	else /* use internal timer for PAL roms */
 	{
@@ -138,7 +142,9 @@ void S9xSyncSpeed () {
 			/*** Ahead - so hold up until the frame's time budget elapses ***/
 			do
 			{
-				usleep(50);
+				if ((timediffallowed - diff_usec(prev, now)) > 50) {
+					usleep(50);
+				}
 				now = gettime();
 			} while (diff_usec(prev, now) < timediffallowed);
 
@@ -153,9 +159,6 @@ void S9xSyncSpeed () {
 
 		prev = now;
 	}
-
-	if (!Settings.TurboMode)
-		FrameTimer--;
 }
 
 /*** Video / Display related functions ***/
