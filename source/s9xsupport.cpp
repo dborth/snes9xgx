@@ -85,62 +85,70 @@ void S9xInitSync()
 
 /*** Synchronisation ***/
 
-void S9xSyncSpeed () {
-	uint32 skipFrms = Settings.SkipFrames;
+/*
+ * Decide whether to render or skip the current frame.
+ *
+ * behindSchedule is true when emulation is running behind the target rate and
+ * a frame may be dropped to catch up. Frames are only ever skipped up to the
+ * configured limit so that the display cannot stall indefinitely.
+ */
+static void S9xChooseFrameToRender(bool behindSchedule, int32 skipFrms)
+{
+	if (behindSchedule && (IPPU.SkippedFrames < skipFrms))
+	{
+		IPPU.SkippedFrames++;
+		IPPU.RenderThisFrame = FALSE;
+	}
+	else
+	{
+		IPPU.SkippedFrames = 0;
+		IPPU.RenderThisFrame = TRUE;
+	}
+}
 
-	if (Settings.TurboMode)
-		skipFrms = Settings.TurboSkipFrames;
+void S9xSyncSpeed () {
+	const int32 skipFrms = Settings.TurboMode
+		? (int32) Settings.TurboSkipFrames
+		: (int32) Settings.SkipFrames;
 
 	if (timerstyle == 0) /* use Wii vertical sync (VSYNC) with NTSC roms */
 	{
-		while (FrameTimer == 0)
+		int32 pendingFrames;
+		while ((pendingFrames = FrameTimer) == 0)
 		{
 			usleep(50);
 		}
 
-		if (FrameTimer > skipFrms)
+		if (pendingFrames > skipFrms)
+		{
 			FrameTimer = skipFrms;
+			pendingFrames = skipFrms;
+		}
 
-		if ((FrameTimer > 1) && (IPPU.SkippedFrames < skipFrms))
-		{
-			IPPU.SkippedFrames++;
-			IPPU.RenderThisFrame = FALSE;
-		}
-		else
-		{
-			IPPU.SkippedFrames = 0;
-			IPPU.RenderThisFrame = TRUE;
-		}
+		S9xChooseFrameToRender(pendingFrames > 1, skipFrms);
 	}
 	else /* use internal timer for PAL roms */
 	{
-		unsigned int timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
+		const u32 timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
+
 		now = gettime();
 
-		if (diff_usec(prev, now) > timediffallowed)
+		if (diff_usec(prev, now) < timediffallowed)
 		{
-			/* Timer has already expired */
-			if (IPPU.SkippedFrames < skipFrms)
+			/*** Ahead - so hold up until the frame's time budget elapses ***/
+			do
 			{
-				IPPU.SkippedFrames++;
-				IPPU.RenderThisFrame = FALSE;
-			}
-			else
-			{
-				IPPU.SkippedFrames = 0;
-				IPPU.RenderThisFrame = TRUE;
-			}
+				usleep(50);
+				now = gettime();
+			} while (diff_usec(prev, now) < timediffallowed);
+
+			IPPU.RenderThisFrame = TRUE;
+			IPPU.SkippedFrames = 0;
 		}
 		else
 		{
-			/*** Ahead - so hold up ***/
-			while (diff_usec(prev, now) < timediffallowed)
-			{
-				now = gettime();
-				usleep(50);
-			}
-			IPPU.RenderThisFrame = TRUE;
-			IPPU.SkippedFrames = 0;
+			/* Timer has already expired - we are behind, so consider skipping. */
+			S9xChooseFrameToRender(true, skipFrms);
 		}
 
 		prev = now;
@@ -148,7 +156,6 @@ void S9xSyncSpeed () {
 
 	if (!Settings.TurboMode)
 		FrameTimer--;
-	return;
 }
 
 /*** Video / Display related functions ***/
