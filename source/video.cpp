@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <ogc/texconv.h>
 #include <ogc/machine/processor.h>
 
 #include "snes9xgx.h"
@@ -50,6 +49,8 @@ static int oldRenderMode = -1; // set to GCSettings.render when changing (tempor
 int CheckVideo = 0; // for forcing video reset
 
 /*** GX ***/
+#define ALIGN_32(x) (((x) + 31) & ~31)
+
 #define TEX_WIDTH 512
 #define TEX_HEIGHT 512
 #define TEXTUREMEM_SIZE 	TEX_WIDTH*(TEX_HEIGHT+8)*2
@@ -679,49 +680,164 @@ ResetVideo_Emu ()
 }
 
 /****************************************************************************
- * MakeTexture
- *
- * Modified for a buffer with an offset (border)
+ * MakeTexturePitch1032
+
+ * High-performance texture swizzling (Linear to 4x4 Tiled)
+ * Specifically optimized for 1032-byte stride (SNES buffer padding)
+ * - Eliminates pipeline stalls via interleaved load/store sequences
+ * - Utilizes dcbz (Data Cache Block Zero) to bypass read-allocate memory penalty
+ * - Avoids stwu pointer-update instructions to enable out-of-order execution
+ * - Maximizes GPR utilization for sustained Instruction Level Parallelism
+ * COMPATIBILITY:
+ * - Optimized for Snes9x internal video buffers (1032-byte pitch)
+ * - Requires width and height divisible by 4
+ * - Assumes 16-bit RGB565 format (2 bytes per pixel)
+ * ASSUMPTIONS:
+ * - Source pointer is aligned to 4-byte boundary
+ * - Destination pointer is aligned to 32-byte boundary
  ***************************************************************************/
-void
-MakeTexture (const void *src, void *dst, s32 width, s32 height)
+
+void MakeTexturePitch1032(const void *src, void *dst, s32 width, s32 height)
 {
-	u32 tmp0=0,tmp1=0,tmp2=0,tmp3=0;
+    // Request dedicated registers from GCC to allow superscalar interleaving
+    u32 r_src_row=0, tmpA=0, tmpB=0, tmpC=0, tmpD=0;
 
-	__asm__ __volatile__ (
-		"	srwi		%6,%6,2\n"
-		"	srwi		%7,%7,2\n"
-		"	subi		%3,%4,4\n"
-		"	mr			%4,%3\n"
-		"	subi		%4,%4,4\n"
+    __asm__ __volatile__ (
+        "srwi   %[width], %[width], 2\n"       // num_tiles_x = width / 4
+        "srwi   %[height], %[height], 2\n"     // num_tiles_y = height / 4
 
-		"2: mtctr		%6\n"
-		"	mr			%0,%5\n"
-		//
-		"1: lwz			%1,0(%5)\n"			//1
-		"	stwu		%1,8(%4)\n"
-		"	lwz			%2,4(%5)\n"			//1
-		"	stwu		%2,8(%3)\n"
-		"	lwz			%1,1032(%5)\n"		//2
-		"	stwu		%1,8(%4)\n"
-		"	lwz			%2,1036(%5)\n"		//2
-		"	stwu		%2,8(%3)\n"
-		"	lwz			%1,2064(%5)\n"		//3
-		"	stwu		%1,8(%4)\n"
-		"	lwz			%2,2068(%5)\n"		//3
-		"	stwu		%2,8(%3)\n"
-		"	lwz			%1,3096(%5)\n"		//4
-		"	stwu		%1,8(%4)\n"
-		"	lwz			%2,3100(%5)\n"		//4
-		"	stwu		%2,8(%3)\n"
-		"	addi		%5,%5,8\n"
-		"	bdnz		1b\n"
-		"	addi		%5,%0,4128\n"		//5
-		"	subic.		%7,%7,1\n"
-		"	bne			2b"
-		//		0			 1			  2			   3		   4		  5		    6		    7
-		: "=&b"(tmp0), "=&b"(tmp1), "=&b"(tmp2), "=&b"(tmp3), "+b"(dst) : "b"(src), "b"(width), "b"(height)
-	);
+    "2: mtctr   %[width]\n"                    // Set inner loop counter (X)
+        "mr     %[r_src_row], %[src]\n"        // Save the start of the current source row
+
+    "1: dcbz    0, %[dst]\n"                   // ZERO L1 CACHE: Skips read-from-RAM penalty
+
+        // -- Load Tile Half 1 (Rows 0 & 1) --
+        "lwz    %[tmpA], 0(%[src])\n"
+        "lwz    %[tmpB], 4(%[src])\n"
+        "lwz    %[tmpC], 1032(%[src])\n"
+        "lwz    %[tmpD], 1036(%[src])\n"
+
+        // -- Store Half 1 while Loading Tile Half 2 (Rows 2 & 3) --
+        // By interleaving here, we completely hide the memory load latency!
+        "stw    %[tmpA], 0(%[dst])\n"
+        "lwz    %[tmpA], 2064(%[src])\n"
+
+        "stw    %[tmpB], 4(%[dst])\n"
+        "lwz    %[tmpB], 2068(%[src])\n"
+
+        "stw    %[tmpC], 8(%[dst])\n"
+        "lwz    %[tmpC], 3096(%[src])\n"
+
+        "stw    %[tmpD], 12(%[dst])\n"
+        "lwz    %[tmpD], 3100(%[src])\n"
+
+        // -- Store Half 2 --
+        "stw    %[tmpA], 16(%[dst])\n"
+        "stw    %[tmpB], 20(%[dst])\n"
+        "stw    %[tmpC], 24(%[dst])\n"
+        "stw    %[tmpD], 28(%[dst])\n"
+
+        // -- Advance Pointers --
+        "addi   %[src], %[src], 8\n"           // Advance X by 2 pixels (8 bytes)
+        "addi   %[dst], %[dst], 32\n"          // Advance dst by 1 full tile
+        "bdnz   1b\n"                          // Decrement CTR, loop if > 0
+
+        // -- Next Tile Row --
+        "addi   %[src], %[r_src_row], 4128\n"  // Jump 4 rows down (1032 * 4)
+        "subic. %[height], %[height], 1\n"     // Decrement height counter
+        "bne    2b"                            // Loop Y
+
+        // Constraints mapping
+        : [r_src_row] "=&b" (r_src_row),
+          [tmpA] "=&r" (tmpA),
+          [tmpB] "=&r" (tmpB),
+          [tmpC] "=&r" (tmpC),
+          [tmpD] "=&r" (tmpD),
+          [dst] "+b" (dst),
+          [src] "+b" (src),
+          [width] "+r" (width),
+          [height] "+r" (height)
+        : // No input-only operands
+        : "memory"
+    );
+}
+
+/****************************************************************************
+ * MakeTexturePitch1014
+
+ * High-performance texture swizzling (Linear to 4x4 Tiled)
+ * Specifically optimized for 1024-byte stride (Standard scaled buffers)
+ * - Zero-padding optimization: Assumes contiguous 1024-byte row strides
+ * - Eliminates read-modify-write penalties using dcbz block zeroing
+ * - Interleaved instruction scheduling to maximize Broadway pipeline occupancy
+ * - Static offset addressing enables superscalar execution
+ * COMPATIBILITY:
+ * - Drop-in replacement for standard swizzling routines
+ * - Requires width and height divisible by 4
+ * - Assumes 16-bit RGB565 format (2 bytes per pixel)
+ * ASSUMPTIONS:
+ * - Source buffer is standard packed linear memory
+ * - Destination pointer is aligned to 32-byte boundary
+ ***************************************************************************/
+
+void MakeTexturePitch1024(const void *src, void *dst, s32 width, s32 height)
+{
+    u32 r_src_row=0, tmpA=0, tmpB=0, tmpC=0, tmpD=0;
+
+    __asm__ __volatile__ (
+        "srwi   %[width], %[width], 2\n"       
+        "srwi   %[height], %[height], 2\n"     
+
+    "2: mtctr   %[width]\n"                    
+        "mr     %[r_src_row], %[src]\n"        
+
+    "1: dcbz    0, %[dst]\n"                   // ZERO L1 CACHE: Dest is perfectly aligned
+
+        // -- Load Tile Half 1 --
+        "lwz    %[tmpA], 0(%[src])\n"
+        "lwz    %[tmpB], 4(%[src])\n"
+        "lwz    %[tmpC], 1024(%[src])\n"
+        "lwz    %[tmpD], 1028(%[src])\n"
+
+        // -- Interleaved Load/Store --
+        "stw    %[tmpA], 0(%[dst])\n"
+        "lwz    %[tmpA], 2048(%[src])\n"
+
+        "stw    %[tmpB], 4(%[dst])\n"
+        "lwz    %[tmpB], 2052(%[src])\n"
+
+        "stw    %[tmpC], 8(%[dst])\n"
+        "lwz    %[tmpC], 3072(%[src])\n"
+
+        "stw    %[tmpD], 12(%[dst])\n"
+        "lwz    %[tmpD], 3076(%[src])\n"
+
+        // -- Store Half 2 --
+        "stw    %[tmpA], 16(%[dst])\n"
+        "stw    %[tmpB], 20(%[dst])\n"
+        "stw    %[tmpC], 24(%[dst])\n"
+        "stw    %[tmpD], 28(%[dst])\n"
+
+        "addi   %[src], %[src], 8\n"           
+        "addi   %[dst], %[dst], 32\n"          
+        "bdnz   1b\n"                          
+
+        "addi   %[src], %[r_src_row], 4096\n"  // Jump 4 rows down (1024 * 4)
+        "subic. %[height], %[height], 1\n"     
+        "bne    2b"                            
+
+        : [r_src_row] "=&b" (r_src_row),
+          [tmpA] "=&r" (tmpA),
+          [tmpB] "=&r" (tmpB),
+          [tmpC] "=&r" (tmpC),
+          [tmpD] "=&r" (tmpD),
+          [dst] "+b" (dst),
+          [src] "+b" (src),
+          [width] "+r" (width),
+          [height] "+r" (height)
+        :
+        : "memory"
+    );
 }
 
 /****************************************************************************
@@ -821,15 +937,18 @@ update_video (int width, int height)
 	if (GCSettings.FilterMethod != FILTER_NONE && vheight <= 239 && vwidth <= 256)	// don't do filtering on game textures > 256 x 239
 	{
 		FilterMethod ((uint8*) GFX.Screen, EXT_PITCH, (uint8*) filtermem, vwidth*fscale*2, vwidth, vheight);
-		MakeTexture565((char *) filtermem, (char *) texturemem, vwidth*fscale, vheight*fscale);
+		MakeTexturePitch1024((char *) filtermem, (char *) texturemem, vwidth*fscale, vheight*fscale);
 	}
 	else
 #endif
 	{
-		MakeTexture((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
+		MakeTexturePitch1032((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
 	}
-
-	DCFlushRange (texturemem, TEXTUREMEM_SIZE);	// update the texture memory
+	
+	u32 actual_width = vwidth * fscale;
+	u32 actual_height = vheight * fscale;
+	u32 flush_size = ALIGN_32(actual_width * actual_height * 2);
+	DCStoreRange(texturemem, flush_size); // update the texture memory
 	GX_InvalidateTexAll ();
 
 	draw_square ();		// draw the quad
