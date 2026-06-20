@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ogc/cond.h>
 #include <ogc/machine/processor.h>
 
 #include "snes9xgx.h"
@@ -267,6 +268,10 @@ static GXRModeObj *tvmodes[4] = {
  * VideoThreading
  ***************************************************************************/
 static lwp_t vbthread = LWP_THREAD_NULL;
+static mutex_t sync_mutex = LWP_MUTEX_NULL;
+static cond_t vsync_cond = LWP_COND_NULL;
+static cond_t resume_cond = LWP_COND_NULL;
+static bool frame_submitted = false;
 
 /****************************************************************************
  * vbgetback
@@ -281,8 +286,15 @@ vbgetback (void *arg)
 {
 	while (1)
 	{
-		VIDEO_WaitVSync ();	 /**< Wait for video vertical blank */
-		LWP_SuspendThread (vbthread);
+		VIDEO_WaitVSync ();
+
+		LWP_MutexLock (sync_mutex);
+		LWP_CondSignal (vsync_cond);
+		while (!frame_submitted) {
+			LWP_CondWait (resume_cond, sync_mutex);
+		}
+		frame_submitted = false;
+		LWP_MutexUnlock (sync_mutex);
 	}
 	return NULL;
 }
@@ -553,6 +565,11 @@ if (CONF_GetAspectRatio() == CONF_ASPECT_16_9 && (*(u32*)(0xCD8005A0) >> 16) == 
 	InitLUTs();	// init LUTs for hq2x
 	SetupFormat();   // For 2xBR
 #endif
+
+	LWP_MutexInit(&sync_mutex, false);
+	LWP_CondInit(&vsync_cond);
+	LWP_CondInit(&resume_cond);
+
 	LWP_CreateThread (&vbthread, vbgetback, NULL, NULL, 0, 68);
 	
 	// Initialize GX
@@ -854,8 +871,10 @@ update_video (int width, int height)
 		return; // we haven't rendered any frames yet, so we can't draw anything!
 
 	// Ensure previous vb has complete
-	while ((LWP_ThreadIsSuspended (vbthread) == 0) || (copynow == GX_TRUE))
-		usleep (50);
+	LWP_MutexLock (sync_mutex);
+	while (copynow == GX_TRUE)
+		LWP_CondWait (vsync_cond, sync_mutex);
+	LWP_MutexUnlock (sync_mutex);
 
 	whichfb ^= 1;
 
@@ -981,10 +1000,12 @@ update_video (int width, int height)
 
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
 	VIDEO_Flush ();
-	copynow = GX_TRUE;
 
-	// Return to caller, don't waste time waiting for vb
-	LWP_ResumeThread (vbthread);
+	LWP_MutexLock (sync_mutex);
+	copynow = GX_TRUE;
+	frame_submitted = true;
+	LWP_CondSignal (resume_cond);
+	LWP_MutexUnlock (sync_mutex);
 }
 
 void AllocGfxMem()
