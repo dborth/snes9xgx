@@ -31,6 +31,7 @@ void ResetControls(int cc = -1, int wc = -1);
 void ShutoffRumble();
 void DoRumble(int i);
 void ReportButtons ();
+void ClearButtonsReported ();
 void SetControllers ();
 void SetDefaultButtonMap ();
 bool MenuRequested();

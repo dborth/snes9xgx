@@ -2794,6 +2794,10 @@ static void UpdatePolledMouse (int i)
 	}
 }
 
+#ifdef GEKKO
+extern void ClearButtonsReported();
+#endif
+
 void S9xSetJoypadLatch (bool latch)
 {
 	if (!latch && FLAG_LATCH)
@@ -2805,6 +2809,9 @@ void S9xSetJoypadLatch (bool latch)
 
 	if (latch && !FLAG_LATCH)
 	{
+#ifdef GEKKO
+		ClearButtonsReported();
+#endif
 		int	i;
 
 		for (int n = 0; n < 2; n++)

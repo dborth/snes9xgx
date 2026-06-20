@@ -899,6 +899,12 @@ bool IsTurboModeInputPressed()
 	}
 }
 
+static bool buttonsReported = false;
+
+void ClearButtonsReported () {
+	buttonsReported = false;
+}
+
 /****************************************************************************
  * ReportButtons
  *
@@ -907,6 +913,11 @@ bool IsTurboModeInputPressed()
  ***************************************************************************/
 void ReportButtons ()
 {
+	if(buttonsReported)
+		return;
+
+	buttonsReported = true;
+
 	int i;
 
 	UpdatePads();
