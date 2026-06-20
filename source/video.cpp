@@ -49,8 +49,6 @@ static int oldRenderMode = -1; // set to GCSettings.render when changing (tempor
 int CheckVideo = 0; // for forcing video reset
 
 /*** GX ***/
-#define ALIGN_32(x) (((x) + 31) & ~31)
-
 #define TEX_WIDTH 512
 #define TEX_HEIGHT 512
 #define TEXTUREMEM_SIZE 	TEX_WIDTH*(TEX_HEIGHT+8)*2
@@ -945,9 +943,14 @@ update_video (int width, int height)
 		MakeTexturePitch1032((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
 	}
 	
-	u32 actual_width = vwidth * fscale;
-	u32 actual_height = vheight * fscale;
-	u32 flush_size = ALIGN_32(actual_width * actual_height * 2);
+	// Pad dimensions to 4x4 tile boundaries
+	u32 padded_width = (vwidth * fscale + 3) & ~3;
+	u32 padded_height = (vheight * fscale + 3) & ~3;
+
+	// A 4x4 tile is 16 pixels * 2 bytes = 32 bytes.
+	// Padded dimensions guarantee the result is naturally a multiple of 32.
+	u32 flush_size = padded_width * padded_height * 2;
+
 	DCStoreRange(texturemem, flush_size); // update the texture memory
 	GX_InvalidateTexAll ();
 
