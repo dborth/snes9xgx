@@ -949,7 +949,7 @@ update_video (int width, int height)
 		// initialize the texture obj we are going to use
 		GX_InitTexObj (&texobj, texturemem, vwidth*fscale, vheight*fscale, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
-	    if (GCSettings.render == 0 || GCSettings.render == 2)
+		if (GCSettings.render == RENDER_ORIGINAL || GCSettings.render == RENDER_UNFILTERED)
 			GX_InitTexObjFilterMode(&texobj,GX_NEAR,GX_NEAR); // original/unfiltered video mode: force texture filtering OFF
 
 		GX_LoadTexObj (&texobj, GX_TEXMAP0);	// load texture object so its ready to use
