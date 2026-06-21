@@ -613,7 +613,7 @@ ResetVideo_Emu ()
 	int i = -1;
 
 	// original render mode or hq2x
-	if (GCSettings.render == 0)
+	if (GCSettings.render == RENDER_ORIGINAL)
 	{
 		for (int j=0; j<4; j++)
 		{
@@ -673,8 +673,8 @@ ResetVideo_Emu ()
 	u8 sharp[7] = {0,0,21,22,21,0,0};
 	u8 soft[7] = {8,8,10,12,10,8,8};
 	u8* vfilter =
-		GCSettings.render == 3 ? sharp
-		: GCSettings.render == 4 ? soft
+		GCSettings.render == RENDER_FILTERED_SHARP ? sharp
+		: GCSettings.render == RENDER_FILTERED_SOFT ? soft
 		: rmode->vfilter;
 	GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, (rmode->xfbMode == VI_XFBMODE_SF) ? GX_FALSE : GX_TRUE, vfilter);
 
@@ -895,7 +895,7 @@ update_video (int width, int height)
 		memset(filtermem, 0, FILTERMEM_SIZE);
 #endif
 		/** Update scaling **/
-		if (GCSettings.render == 0)	// original render mode
+		if (GCSettings.render == RENDER_ORIGINAL)	// original render mode
 		{
 			if (GCSettings.FilterMethod != FILTER_NONE && vheight <= 239 && vwidth <= 256)
 			{	// filters; normal operation

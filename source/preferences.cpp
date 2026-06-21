@@ -426,10 +426,10 @@ void FixInvalidSettings()
 		GCSettings.language = LANG_ENGLISH;
 	if(GCSettings.Controller > CTRL_PAD4 || GCSettings.Controller < CTRL_SCOPE)
 		GCSettings.Controller = CTRL_PAD2;
-	if(!(GCSettings.render >= 0 && GCSettings.render < 5))
-		GCSettings.render = 3;
-	if(!(GCSettings.videomode >= 0 && GCSettings.videomode < 6))
-		GCSettings.videomode = 0;
+	if(!(GCSettings.render >= 0 && GCSettings.render < RENDER_LENGTH))
+		GCSettings.render = RENDER_FILTERED_SHARP;
+	if(!(GCSettings.videomode >= 0 && GCSettings.videomode < VIDEOMODE_LENGTH))
+		GCSettings.videomode = VIDEOMODE_AUTO;
 }
 
 /****************************************************************************
@@ -457,8 +457,8 @@ DefaultSettings ()
 
 	GCSettings.Controller = CTRL_PAD2;
 
-	GCSettings.videomode = 0; // automatic video mode detection
-	GCSettings.render = 3; // Filtered (sharp)
+	GCSettings.videomode = VIDEOMODE_AUTO;
+	GCSettings.render = RENDER_FILTERED_SHARP;
 	GCSettings.FilterMethod = FILTER_NONE;	// no hq2x
 
 	GCSettings.widescreen = 1;
@@ -474,7 +474,7 @@ DefaultSettings ()
 	GCSettings.yshift = 0; // vertical video shift
 	GCSettings.crosshair = 1;
 
-	GCSettings.WiimoteOrientation = 0;
+	GCSettings.WiimoteOrientation = WIIMOTE_ORIENTATION_VERTICAL;
 	GCSettings.ExitAction = 0;
 	GCSettings.AutoloadGame = 0;
 	GCSettings.MusicVolume = 20;

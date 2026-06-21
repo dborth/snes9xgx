@@ -3773,8 +3773,8 @@ static int MenuSettingsVideo()
 		{
 			case 0:
 				GCSettings.render++;
-				if (GCSettings.render > 4)
-					GCSettings.render = 0;
+				if (GCSettings.render >= RENDER_LENGTH)
+					GCSettings.render = RENDER_ORIGINAL;
 				break;
 
 			case 1:
@@ -3784,7 +3784,7 @@ static int MenuSettingsVideo()
 			case 2:
 				GCSettings.FilterMethod++;
 				if (GCSettings.FilterMethod >= NUM_FILTERS)
-					GCSettings.FilterMethod = 0;
+					GCSettings.FilterMethod = FILTER_NONE;
 				break;
 
 			case 3:
@@ -3797,8 +3797,8 @@ static int MenuSettingsVideo()
 
 			case 5:
 				GCSettings.videomode++;
-				if(GCSettings.videomode > 5)
-					GCSettings.videomode = 0;
+				if(GCSettings.videomode >= VIDEOMODE_LENGTH)
+					GCSettings.videomode = VIDEOMODE_AUTO;
 				break;
 				
 			case 6:
@@ -3828,24 +3828,24 @@ static int MenuSettingsVideo()
 			case 12:
 				#ifdef HW_RVL
 				GCSettings.sfxOverclock++;
-				if (GCSettings.sfxOverclock > 6) {
-					GCSettings.sfxOverclock = 0;
+				if (GCSettings.sfxOverclock >= SFXOVERCLOCK_LENGTH) {
+					GCSettings.sfxOverclock = SFXOVERCLOCK_OFF;
 				}
 				#else
 				GCSettings.sfxOverclock++;
-				if (GCSettings.sfxOverclock > 3) {
-					GCSettings.sfxOverclock = 0;
+				if (GCSettings.sfxOverclock > SFXOVERCLOCK_60MHZ) {
+					GCSettings.sfxOverclock = SFXOVERCLOCK_OFF;
 				}
 				#endif
 				switch(GCSettings.sfxOverclock)
 				{
-					case 0: Settings.SuperFXSpeedPerLine = 5823405; break;
-					case 1: Settings.SuperFXSpeedPerLine = 0.417 * 20.5e6; break;
-					case 2: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
-					case 3: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
-					case 4: Settings.SuperFXSpeedPerLine = 0.417 * 80.5e6; break;
-					case 5: Settings.SuperFXSpeedPerLine = 0.417 * 100.5e6; break;
-					case 6: Settings.SuperFXSpeedPerLine = 0.417 * 120.5e6; break;
+					case SFXOVERCLOCK_OFF: Settings.SuperFXSpeedPerLine = 5823405; break;
+					case SFXOVERCLOCK_20MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 20.5e6; break;
+					case SFXOVERCLOCK_40MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
+					case SFXOVERCLOCK_60MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
+					case SFXOVERCLOCK_80MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 80.5e6; break;
+					case SFXOVERCLOCK_100MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 100.5e6; break;
+					case SFXOVERCLOCK_120MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 120.5e6; break;
 				}
 				S9xResetSuperFX();
 				S9xReset();
@@ -3856,15 +3856,15 @@ static int MenuSettingsVideo()
 		{
 			firstRun = false;
 
-			if (GCSettings.render == 0)
+			if (GCSettings.render == RENDER_ORIGINAL)
 				sprintf (options.value[0], "Original (240p)");
-			else if (GCSettings.render == 1)
+			else if (GCSettings.render == RENDER_FILTERED)
 				sprintf (options.value[0], "Filtered");
-			else if (GCSettings.render == 2)
+			else if (GCSettings.render == RENDER_UNFILTERED)
 				sprintf (options.value[0], "Unfiltered");
-			else if (GCSettings.render == 3)
+			else if (GCSettings.render == RENDER_FILTERED_SHARP)
 				sprintf (options.value[0], "Filtered (Sharp)");
-			else if (GCSettings.render == 4)
+			else if (GCSettings.render == RENDER_FILTERED_SOFT)
 				sprintf (options.value[0], "Filtered (Soft)");
 
 			if(GCSettings.widescreen)
@@ -3879,17 +3879,17 @@ static int MenuSettingsVideo()
 
 			switch(GCSettings.videomode)
 			{
-				case 0:
+				case VIDEOMODE_AUTO:
 					sprintf (options.value[5], "Automatic (Recommended)"); break;
-				case 1:
+				case VIDEOMODE_NTSC:
 					sprintf (options.value[5], "NTSC (480i)"); break;
-				case 2:
+				case VIDEOMODE_PROGRESSIVE:
 					sprintf (options.value[5], "Progressive (480p)"); break;
-				case 3:
+				case VIDEOMODE_PAL:
 					sprintf (options.value[5], "PAL (50Hz)"); break;
-				case 4:
+				case VIDEOMODE_PAL60:
 					sprintf (options.value[5], "PAL (60Hz)"); break;
-				case 5:
+				case VIDEOMODE_PROGRESSIVE_576P:
 					sprintf (options.value[5], "Progressive (576p)"); break;
 			}
 			sprintf (options.value[6], "%s", GCSettings.HiResolution == 1 ? "On" : "Off");
@@ -3900,19 +3900,19 @@ static int MenuSettingsVideo()
 			sprintf (options.value[11], "%s", Settings.DisplayTime ? "On" : "Off");
 			switch(GCSettings.sfxOverclock)
 			{
-				case 0:
+				case SFXOVERCLOCK_OFF:
 					sprintf (options.value[12], "Default"); break;
-				case 1:
+				case SFXOVERCLOCK_20MHZ:
 					sprintf (options.value[12], "20 MHz"); break;
-				case 2:
+				case SFXOVERCLOCK_40MHZ:
 					sprintf (options.value[12], "40 MHz"); break;
-				case 3:
+				case SFXOVERCLOCK_60MHZ:
 					sprintf (options.value[12], "60 MHz"); break;
-				case 4:
+				case SFXOVERCLOCK_80MHZ:
 					sprintf (options.value[12], "80 MHz"); break;
-				case 5:
+				case SFXOVERCLOCK_100MHZ:
 					sprintf (options.value[12], "100 MHz"); break;
-				case 6:
+				case SFXOVERCLOCK_120MHZ:
 					sprintf (options.value[12], "120 MHz"); break;
 			}
 			optionBrowser.TriggerUpdate();
