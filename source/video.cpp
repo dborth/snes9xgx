@@ -908,23 +908,32 @@ update_video (int width, int height)
 				xscale = 256;
 				yscale = vheight / 2;
 			}
+
+			if (GCSettings.widescreen) {
+				xscale = (3*xscale)/4;
+			}
 		}
 		else // unfiltered and filtered mode
 		{
-			xscale = 256;
+			if (GCSettings.widescreen) {
+				// 1. Determine the raw height of the SNES signal
+				float base_height = (vheight == 224 || vheight == 448) ? 224.0f : 239.0f;
 
-			if(vheight == 224 || vheight == 448)
-				yscale = 224;
-			else
-				yscale = 239;
-		}
+				// 2. Calculate the uniform scale required to make the height fill the 480 screen
+				float scale_factor = (vmode->efbHeight / 2.0f) / base_height;
 
-		if (GCSettings.widescreen)
-		{
-			if(GCSettings.render == 0)
-				xscale = (3*xscale)/4;
-			else
-				xscale = 256; // match the original console's width for "widescreen" to prevent flickering
+				// 3. Apply the exact same scale factor to both the width and the height
+				xscale = (256.0f * scale_factor * 15) / 16; // Mathematically perfect compensation for the 640 widescreen EFB
+				yscale = vmode->efbHeight / 2;
+			}
+			else {
+				xscale = 256;
+
+				if(vheight == 224 || vheight == 448)
+					yscale = 224;
+				else
+					yscale = 239;
+			}
 		}
 
 		xscale *= GCSettings.zoomHor;
