@@ -406,9 +406,9 @@ decodePrefsData ()
  ***************************************************************************/
 void FixInvalidSettings()
 {
-	if(GCSettings.LoadMethod > 8)
+	if(GCSettings.LoadMethod >= DEVICE_LENGTH)
 		GCSettings.LoadMethod = DEVICE_AUTO;
-	if(GCSettings.SaveMethod > 8)
+	if(GCSettings.SaveMethod >= DEVICE_LENGTH)
 		GCSettings.SaveMethod = DEVICE_AUTO;	
 	if(!(GCSettings.zoomHor > 0.5 && GCSettings.zoomHor < 1.5))
 		GCSettings.zoomHor = 1.0;
@@ -426,9 +426,9 @@ void FixInvalidSettings()
 		GCSettings.language = LANG_ENGLISH;
 	if(GCSettings.Controller > CTRL_PAD4 || GCSettings.Controller < CTRL_SCOPE)
 		GCSettings.Controller = CTRL_PAD2;
-	if(!(GCSettings.render >= 0 && GCSettings.render < RENDER_LENGTH))
+	if(!(GCSettings.render >= RENDER_ORIGINAL && GCSettings.render < RENDER_LENGTH))
 		GCSettings.render = RENDER_FILTERED_SHARP;
-	if(!(GCSettings.videomode >= 0 && GCSettings.videomode < VIDEOMODE_LENGTH))
+	if(!(GCSettings.videomode >= VIDEOMODE_AUTO && GCSettings.videomode < VIDEOMODE_LENGTH))
 		GCSettings.videomode = VIDEOMODE_AUTO;
 }
 
@@ -475,7 +475,11 @@ DefaultSettings ()
 	GCSettings.crosshair = 1;
 
 	GCSettings.WiimoteOrientation = WIIMOTE_ORIENTATION_VERTICAL;
-	GCSettings.ExitAction = 0;
+#ifdef HW_RVL
+	GCSettings.ExitAction = EXITACTION_WII_AUTO;
+#else
+	GCSettings.ExitAction = EXITACTION_GC_RETURN_TO_LOADER;
+#endif
 	GCSettings.AutoloadGame = 0;
 	GCSettings.MusicVolume = 20;
 	GCSettings.SFXVolume = 40;
@@ -705,7 +709,7 @@ bool LoadPrefs()
 
 	FixInvalidSettings();
 
-	if(GCSettings.videomode > 0) {
+	if(GCSettings.videomode > VIDEOMODE_AUTO) {
 		ResetVideo_Menu();
 	}
 

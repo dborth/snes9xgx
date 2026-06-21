@@ -722,7 +722,7 @@ int BrowserChangeFolder()
 	if(browser.dir[0] == 0)
 	{
 		GCSettings.LoadFolder[0] = 0;
-		GCSettings.LoadMethod = 0;
+		GCSettings.LoadMethod = DEVICE_AUTO;
 	}
 	else
 	{

@@ -4418,10 +4418,10 @@ static int MenuSettingsFile()
 			#endif
 
 			// correct load/save methods out of bounds
-			if(GCSettings.LoadMethod > 8)
-				GCSettings.LoadMethod = 0;
-			if(GCSettings.SaveMethod > 8)
-				GCSettings.SaveMethod = 0;
+			if(GCSettings.LoadMethod >= DEVICE_LENGTH)
+				GCSettings.LoadMethod = DEVICE_AUTO;
+			if(GCSettings.SaveMethod >= DEVICE_LENGTH)
+				GCSettings.SaveMethod = DEVICE_AUTO;
 
 			if (GCSettings.LoadMethod == DEVICE_AUTO) sprintf (options.value[0],"Auto Detect");
 			else if (GCSettings.LoadMethod == DEVICE_SD) sprintf (options.value[0],"SD");
@@ -4558,8 +4558,13 @@ static int MenuSettingsMenu()
 		{
 			case 0:
 				GCSettings.ExitAction++;
-				if(GCSettings.ExitAction > 3)
-					GCSettings.ExitAction = 0;
+				#ifdef HW_RVL
+				if(GCSettings.ExitAction >= EXITACTION_WII_LENGTH)
+					GCSettings.ExitAction = EXITACTION_WII_AUTO;
+				#else
+				if(GCSettings.ExitAction >= EXITACTION_GC_LENGTH)
+					GCSettings.ExitAction = EXITACTION_GC_RETURN_TO_LOADER;
+				#endif
 				break;
 			case 1:
 				GCSettings.WiimoteOrientation ^= 1;
@@ -4601,18 +4606,16 @@ static int MenuSettingsMenu()
 			firstRun = false;
 
 			#ifdef HW_RVL
-			if (GCSettings.ExitAction == 1)
+			if (GCSettings.ExitAction == EXITACTION_WII_RETURN_TO_MENU)
 				sprintf (options.value[0], "Return to Wii Menu");
-			else if (GCSettings.ExitAction == 2)
+			else if (GCSettings.ExitAction == EXITACTION_WII_POWER_OFF)
 				sprintf (options.value[0], "Power Off Wii");
-			else if (GCSettings.ExitAction == 3)
+			else if (GCSettings.ExitAction == EXITACTION_WII_RETURN_TO_LOADER)
 				sprintf (options.value[0], "Return to Loader");
 			else
 				sprintf (options.value[0], "Auto");
 			#else // GameCube
-			if(GCSettings.ExitAction > 1)
-				GCSettings.ExitAction = 0;
-			if (GCSettings.ExitAction == 0)
+			if (GCSettings.ExitAction == EXITACTION_GC_RETURN_TO_LOADER)
 				sprintf (options.value[0], "Return to Loader");
 			else
 				sprintf (options.value[0], "Reboot");

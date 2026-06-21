@@ -126,7 +126,7 @@ void ExitApp()
 		}
 	}
 	else {
-		if(GCSettings.ExitAction == 0) // Auto
+		if(GCSettings.ExitAction == EXITACTION_WII_AUTO) // Auto
 		{
 			char * sig = (char *)0x80001804;
 			if(
@@ -138,16 +138,16 @@ void ExitApp()
 				sig[5] == 'A' &&
 				sig[6] == 'X' &&
 				sig[7] == 'X')
-				GCSettings.ExitAction = 3; // Exit to HBC
+				GCSettings.ExitAction = EXITACTION_WII_RETURN_TO_LOADER; // Exit to HBC
 			else
-				GCSettings.ExitAction = 1; // HBC not found
+				GCSettings.ExitAction = EXITACTION_WII_RETURN_TO_MENU; // HBC not found
 		}
 
-		if(GCSettings.ExitAction == 1) // Exit to Menu
+		if(GCSettings.ExitAction == EXITACTION_WII_RETURN_TO_MENU) // Exit to Menu
 		{
 			SYS_ResetSystem(SYS_RETURNTOMENU, 0, FALSE);
 		}
-		else if(GCSettings.ExitAction == 2) // Shutdown Wii
+		else if(GCSettings.ExitAction == EXITACTION_WII_POWER_OFF) // Shutdown Wii
 		{
 			SYS_ResetSystem(SYS_POWEROFF_STANDBY, 0, FALSE);
 		}
@@ -157,7 +157,7 @@ void ExitApp()
 		}
 	}
 #else
-	if(GCSettings.ExitAction == 1) // Reboot
+	if(GCSettings.ExitAction == EXITACTION_GC_REBOOT) // Reboot
 	{
 		SYS_ResetSystem(SYS_RETURNTOMENU, 0, FALSE);
 	}
