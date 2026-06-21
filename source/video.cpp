@@ -268,34 +268,27 @@ static GXRModeObj *tvmodes[4] = {
  * VideoThreading
  ***************************************************************************/
 static lwp_t vbthread = LWP_THREAD_NULL;
-static mutex_t sync_mutex = LWP_MUTEX_NULL;
-static cond_t vsync_cond = LWP_COND_NULL;
-static cond_t resume_cond = LWP_COND_NULL;
-static bool frame_submitted = false;
+static lwpq_t render_queue;          // Queue for the main thread to sleep on
+static lwpq_t vb_queue;              // Queue for the VSync thread to sleep on
+static volatile bool vb_done = true; // Tracks if the VSync thread has completed its wait
 
 /****************************************************************************
  * vbgetback
  *
  * This callback enables the emulator to keep running while waiting for a
- * vertical blank.
- *
- * Putting LWP to good use :)
+ * vertical blank
  ***************************************************************************/
 static void *
 vbgetback (void *arg)
 {
 	while (1)
 	{
-		VIDEO_WaitVSync ();
-
-		LWP_MutexLock (sync_mutex);
-		LWP_CondSignal (vsync_cond);
-		while (!frame_submitted) {
-			LWP_CondWait (resume_cond, sync_mutex);
-		}
-		frame_submitted = false;
-		LWP_MutexUnlock (sync_mutex);
+		LWP_ThreadSleep(vb_queue);     // Sleep until kicked off by copy_to_xfb
+		VIDEO_WaitVSync ();	         /**< Wait for video vertical blank */
+		vb_done = true;
+		LWP_ThreadSignal(render_queue); // Instantly alert the main thread if it is waiting
 	}
+
 	return NULL;
 }
 
@@ -313,6 +306,7 @@ copy_to_xfb (u32 arg)
 		GX_CopyDisp (xfb[whichfb], GX_TRUE);
 		GX_Flush ();
 		copynow = GX_FALSE;
+		LWP_ThreadSignal(render_queue); // Wake up the main thread if it is waiting for the copy
 	}
 	++FrameTimer;
 }
@@ -566,10 +560,10 @@ if (CONF_GetAspectRatio() == CONF_ASPECT_16_9 && (*(u32*)(0xCD8005A0) >> 16) == 
 	SetupFormat();   // For 2xBR
 #endif
 
-	LWP_MutexInit(&sync_mutex, false);
-	LWP_CondInit(&vsync_cond);
-	LWP_CondInit(&resume_cond);
-
+	// Setup synchronization queues
+	LWP_InitQueue(&render_queue);
+	LWP_InitQueue(&vb_queue);
+	vb_done = true;
 	LWP_CreateThread (&vbthread, vbgetback, NULL, NULL, 0, 68);
 	
 	// Initialize GX
@@ -870,11 +864,11 @@ update_video (int width, int height)
 	if(CheckVideo == 2 && IPPU.RenderedFramesCount == prevRenderedFrameCount)
 		return; // we haven't rendered any frames yet, so we can't draw anything!
 
-	// Ensure previous vb has complete
-	LWP_MutexLock (sync_mutex);
-	while (copynow == GX_TRUE)
-		LWP_CondWait (vsync_cond, sync_mutex);
-	LWP_MutexUnlock (sync_mutex);
+	// Ensure previous frame copy and background VSync block have finished cleanly
+	while (!vb_done || (copynow == GX_TRUE))
+	{
+		LWP_ThreadSleep(render_queue); // Halts main thread with 0 CPU load until signals occur
+	}
 
 	whichfb ^= 1;
 
@@ -1010,11 +1004,9 @@ update_video (int width, int height)
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
 	VIDEO_Flush ();
 
-	LWP_MutexLock (sync_mutex);
-	copynow = GX_TRUE;
-	frame_submitted = true;
-	LWP_CondSignal (resume_cond);
-	LWP_MutexUnlock (sync_mutex);
+	// Reset state and signal background VSync thread to begin waiting for next blanking interval
+	vb_done = false;
+	LWP_ThreadSignal(vb_queue);
 }
 
 void AllocGfxMem()
