@@ -1015,9 +1015,10 @@ static char* getImageFolder()
 {
 	switch(GCSettings.PreviewImage)
 	{
-		case 1 : return GCSettings.CoverFolder; break;
-		case 2 : return GCSettings.ArtworkFolder; break;
-		default: return GCSettings.ScreenshotsFolder; break;
+		case PREVIEWIMAGE_SCREENSHOT : return GCSettings.ScreenshotsFolder;
+		case PREVIEWIMAGE_COVER : return GCSettings.CoverFolder;
+		case PREVIEWIMAGE_ARTWORK : return GCSettings.ArtworkFolder;
+		default : return GCSettings.CoverFolder;
 	}
 }
 
@@ -1093,10 +1094,7 @@ static int MenuGameSelection()
 	trigPlusMinus.SetButtonOnlyTrigger(-1, WPAD_BUTTON_PLUS | WPAD_CLASSIC_BUTTON_PLUS, PAD_TRIGGER_Z, WIIDRC_BUTTON_PLUS);
 	
 	GuiImage bgPreview(&bgPreviewImg);
-	GuiButton bgPreviewBtn(bgPreview.GetWidth(), bgPreview.GetHeight());
-	bgPreviewBtn.SetImage(&bgPreview);
-	bgPreviewBtn.SetPosition(365, 98);
-	bgPreviewBtn.SetTrigger(&trigPlusMinus);
+	bgPreview.SetPosition(365, 98);
 	int previousPreviewImg = GCSettings.PreviewImage;
 	
 	GuiImage preview;
@@ -1112,7 +1110,7 @@ static int MenuGameSelection()
 	mainWindow->Append(&titleTxt);
 	mainWindow->Append(&gameBrowser);
 	mainWindow->Append(&buttonWindow);
-	mainWindow->Append(&bgPreviewBtn);
+	mainWindow->Append(&bgPreview);
 	mainWindow->Append(&preview);
 	ResumeGui();
 
@@ -1216,11 +1214,6 @@ static int MenuGameSelection()
 			menu = MENU_SETTINGS;
 		else if(exitBtn.GetState() == STATE_CLICKED)
 			ExitRequested = 1;
-		else if(bgPreviewBtn.GetState() == STATE_CLICKED)
-		{
-			GCSettings.PreviewImage = (GCSettings.PreviewImage + 1) % 3;
-			bgPreviewBtn.ResetState();
-		}
 	}
 
 	HaltParseThread(); // halt parsing
@@ -1229,7 +1222,7 @@ static int MenuGameSelection()
 	mainWindow->Remove(&titleTxt);
 	mainWindow->Remove(&buttonWindow);
 	mainWindow->Remove(&gameBrowser);
-	mainWindow->Remove(&bgPreviewBtn);
+	mainWindow->Remove(&bgPreview);
 	mainWindow->Remove(&preview);
 	MEM_DEALLOC(imgBuffer);
 	return menu;
@@ -4595,8 +4588,8 @@ static int MenuSettingsMenu()
 				break;
 			case 6:
 				GCSettings.PreviewImage++;
-				if(GCSettings.PreviewImage > 2)
-					GCSettings.PreviewImage = 0;
+				if(GCSettings.PreviewImage >= PREVIEWIMAGE_LENGTH)
+					GCSettings.PreviewImage = PREVIEWIMAGE_SCREENSHOT;
 				break;
 			case 7:
 				GCSettings.HideSRAMSaving ^= 1;
