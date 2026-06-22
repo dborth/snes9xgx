@@ -319,11 +319,9 @@ draw_init ()
 {
 	GX_ClearVtxDesc ();
 	GX_SetVtxDesc (GX_VA_POS, GX_INDEX8);
-	GX_SetVtxDesc (GX_VA_CLR0, GX_INDEX8);
 	GX_SetVtxDesc (GX_VA_TEX0, GX_DIRECT);
 
 	GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
-	GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
 	GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
 
 	GX_SetArray (GX_VA_POS, square, 3 * sizeof (s16));
@@ -349,10 +347,9 @@ draw_init ()
 }
 
 static inline void
-draw_vert (u8 pos, u8 c, f32 s, f32 t)
+draw_vert (u8 pos, f32 s, f32 t)
 {
 	GX_Position1x8 (pos);
-	GX_Color1x8 (c);
 	GX_TexCoord2f32 (s, t);
 }
 
@@ -363,10 +360,10 @@ draw_square ()
 	GX_LoadPosMtxImm (modelView, GX_PNMTX0);
 	
 	GX_Begin (GX_QUADS, GX_VTXFMT0, 4);
-	draw_vert (0, 0, 0.0, 0.0);
-	draw_vert (1, 0, 1.0, 0.0);
-	draw_vert (2, 0, 1.0, 1.0);
-	draw_vert (3, 0, 0.0, 1.0);
+	draw_vert (0, 0.0, 0.0);
+	draw_vert (1, 1.0, 0.0);
+	draw_vert (2, 1.0, 1.0);
+	draw_vert (3, 0.0, 1.0);
 	GX_End ();
 }
 
@@ -1003,6 +1000,7 @@ update_video (int width, int height)
 
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
 	VIDEO_Flush ();
+	copynow = GX_TRUE;
 
 	// Reset state and signal background VSync thread to begin waiting for next blanking interval
 	vb_done = false;
