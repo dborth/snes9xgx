@@ -29,19 +29,24 @@ INCLUDES	:=	source source/snes9x
 # options for code generation
 #---------------------------------------------------------------------------------
 
+# -fno-strict-aliasing to prevent GCC 16 from breaking legacy type-punning.
+# -ffast-math to speed up APU/DSP floating point operations.
 CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
 				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
 				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
 				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
 				-flto=auto \
-				-fomit-frame-pointer \
-				-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wno-strict-aliasing \
-				-Wno-format -Wno-format-overflow -Wno-stringop-truncation -Wno-stringop-overflow -Wno-format-truncation -Wno-narrowing -Wno-sign-compare \
+				-fomit-frame-pointer -fno-strict-aliasing -ffast-math \
+				-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable \
+				-Wno-format -Wno-format-overflow -Wno-stringop-truncation \
+				-Wno-stringop-overflow -Wno-format-truncation -Wno-narrowing -Wno-sign-compare \
 				-Wno-unused-function -Wno-write-strings -Wno-parentheses -Wno-uninitialized -Wno-infinite-recursion
 
-CXXFLAGS	=	$(CFLAGS)
+# Isolated CXXFLAGS to strip out C++ runtime overhead (Exceptions/RTTI)
+# This saves instruction cache space, critical for the 750CL.
+CXXFLAGS	=	$(CFLAGS) -fno-exceptions -fno-rtti
 
-LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
+LDFLAGS	=	-g -O3 -flto=auto $(MACHDEP) -Wl,-Map,$(notdir $@).map
 LDFLAGS +=	-L../buildtools
 
 #---------------------------------------------------------------------------------
@@ -89,8 +94,8 @@ else
 endif
 
 export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
-export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
-export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
+export OFILES_SOURCES := $(filter-out cpuops.o, $(CPPFILES:.cpp=.o)) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
+export OFILES := $(OFILES_BIN) $(OFILES_SOURCES) $(BUILD)/cpuops.o
 
 export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
@@ -167,6 +172,15 @@ $(OFILES_SOURCES) : $(HFILES)
 	$(bin2o)
 
 -include $(DEPENDS)
+
+#---------------------------------------------------------------------------------
+# Optimized rule for cpuops.cpp to prevent I-Cache thrashing
+# The % pattern allows make to find cpuops.cpp inside the VPATH directories
+#---------------------------------------------------------------------------------
+$(BUILD)/cpuops.o: cpuops.cpp
+	@mkdir -p $(dir $@)
+	@echo "Compiling cpuops.o to $(BUILD) with I-Cache tuned flags..."
+	$(CXX) -c -O2 -fno-unroll-loops $(CXXFLAGS) $< -o $@
 
 #---------------------------------------------------------------------------------
 endif
