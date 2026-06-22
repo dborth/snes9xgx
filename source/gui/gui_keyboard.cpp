@@ -266,8 +266,7 @@ void GuiKeyboard::Update(GuiTrigger * t)
 
 	for (u8 i = 0; i < _elements.size(); i++)
 	{
-		try	{ _elements.at(i)->Update(t); }
-		catch (const std::exception& e) { }
+		_elements.at(i)->Update(t);
 	}
 
 	bool update = false;
