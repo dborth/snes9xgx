@@ -36,7 +36,7 @@ CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
 				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
 				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ -DNO_SOUND -DUSE_VM \
 				-flto=auto \
-				-fomit-frame-pointer -fno-strict-aliasing -ffast-math \
+				-fomit-frame-pointer -fno-strict-aliasing \
 				-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable \
 				-Wno-format -Wno-format-overflow -Wno-stringop-truncation \
 				-Wno-stringop-overflow -Wno-format-truncation -Wno-narrowing -Wno-sign-compare \
