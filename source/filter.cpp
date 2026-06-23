@@ -746,6 +746,29 @@ void RenderTVMode (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitc
 
 //---------------------------------------------------------------------------------------------------------------------------
 
+// Inline Assembly Helpers for RGB565 Extraction
+
+static inline uint32 ExtractR(uint16 c) {
+    uint32 res;
+    // Rotate left 0 (no rotation), mask bits 0-4
+    __asm__ volatile ("rlwinm %0, %1, 0, 0, 4" : "=r"(res) : "r"(c));
+    return res;
+}
+
+static inline uint32 ExtractG(uint16 c) {
+    uint32 res;
+    // Rotate left 5, mask bits 0-5 (Extracts bits 5-10)
+    __asm__ volatile ("rlwinm %0, %1, 5, 0, 5" : "=r"(res) : "r"(c));
+    return res;
+}
+
+static inline uint32 ExtractB(uint16 c) {
+    uint32 res;
+    // Rotate left 11, mask bits 0-4 (Extracts bits 11-15)
+    __asm__ volatile ("rlwinm %0, %1, 11, 0, 4" : "=r"(res) : "r"(c));
+    return res;
+}
+
 #define RB_MASK565 0xF81F
 #define R_MASK565  0xF800
 #define G_MASK565  0x07E0
@@ -809,11 +832,15 @@ static const uint16 lb_mask = LB_MASK565;
 #define DIA_2X(N3, PIXEL)\
     ALPHA_BLEND_128_W(Ep[N3], PIXEL); \
 
-
-#define ALPHA_BLEND_X_W(dst, src, VAL) \
-    dst = ( \
-          (rb_mask & ((dst & rb_mask) + ((((src & rb_mask) - (dst & rb_mask)) * VAL) >>5))) | \
-          ( g_mask & ((dst &  g_mask) + ((((src &  g_mask) - (dst &  g_mask)) * VAL) >>5))))
+#define ALPHA_BLEND_X_W(dst, src, weight) \
+({ \
+    uint32 sR = ExtractR(S); uint32 sG = ExtractG(S); uint32 sB = ExtractB(S); \
+    uint32 dR = ExtractR(D); uint32 dG = ExtractG(D); uint32 dB = ExtractB(D); \
+    uint32 r = ((sR * weight) + (dR * (32 - weight))) >> 5; \
+    uint32 g = ((sG * weight) + (dG * (32 - weight))) >> 5; \
+    uint32 b = ((sB * weight) + (dB * (32 - weight))) >> 5; \
+    ((r & 0x1F) << 11) | ((g & 0x3F) << 5) | (b & 0x1F); \
+})
 
 #define BIL2X_ODD(PF, PH, PI, N1, N2, N3) \
     ALPHA_BLEND_128_W(Ep[N1], PF); \
