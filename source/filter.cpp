@@ -123,7 +123,6 @@ static inline int inlineRGBtoYUV(uint16 c) {
 	return ((y & 0xFF) << 16) | ((u & 0xFF) << 8) | (v & 0xFF);
 }
 
-// Memory-free replacement for RGBlum array.
 // Condenses 8-bit expansion and luminance weighting into pure inline constants
 // to completely eliminate 256KB L2 cache thrashing on Gekko processors.
 static inline int RGB565_to_Lum(uint16 c) {
@@ -744,13 +743,6 @@ void RenderTVMode (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitc
         q += nextlineDst << 1;
     }
 }
-
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-static int  RGBlum[65536];
-static const uint32 tbl_5_to_8[32]={0, 8, 16, 25, 33, 41, 49,  58, 66, 74, 82, 90, 99, 107, 115, 123, 132, 140, 148, 156, 165, 173, 181, 189,  197, 206, 214, 222, 230, 239, 247, 255};
-static const uint32 tbl_6_to_8[64]={0, 4, 8, 12, 16, 20, 24,  28, 32, 36, 40, 45, 49, 53, 57, 61, 65, 69, 73, 77, 81, 85, 89, 93, 97, 101,  105, 109, 113, 117, 121, 125, 130, 134, 138, 142, 146, 150, 154, 158, 162, 166,  170, 174, 178, 182, 186, 190, 194, 198, 202, 206, 210, 215, 219, 223, 227, 231,  235, 239, 243, 247, 251, 255};
 
 //---------------------------------------------------------------------------------------------------------------------------
 
