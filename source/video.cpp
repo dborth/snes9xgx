@@ -552,9 +552,6 @@ if (CONF_GetAspectRatio() == CONF_ASPECT_16_9 && (*(u32*)(0xCD8005A0) >> 16) == 
 #endif
 
 	SetupVideoMode(rmode);
-#ifdef HW_RVL
-	SetupFormat();   // For 2xBR
-#endif
 
 	// Setup synchronization queues
 	LWP_InitQueue(&render_queue);

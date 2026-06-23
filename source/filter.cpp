@@ -123,6 +123,16 @@ static inline int inlineRGBtoYUV(uint16 c) {
 	return ((y & 0xFF) << 16) | ((u & 0xFF) << 8) | (v & 0xFF);
 }
 
+// Memory-free replacement for RGBlum array.
+// Condenses 8-bit expansion and luminance weighting into pure inline constants
+// to completely eliminate 256KB L2 cache thrashing on Gekko processors.
+static inline int RGB565_to_Lum(uint16 c) {
+    int r = (c >> 11);
+    int g = (c >> 5) & 0x3F;
+    int b = (c & 0x1F);
+    return (r * 140) + (g * 113) + (b * 62);
+}
+
 //
 // HQ2X Filter Code:
 //
@@ -833,7 +843,7 @@ static const uint16 lb_mask = LB_MASK565;
     ALPHA_BLEND_128_W(Ep[N3], PH); \
 
 #define df(A, B)\
-    abs(RGBlum[A] - RGBlum[B])\
+    abs(RGB565_to_Lum(A) - RGB565_to_Lum(B))\
 
 #define eq(A, B)\
     (df(A, B) < 155)\
@@ -910,25 +920,6 @@ static const uint16 lb_mask = LB_MASK565;
 	{\
             BIL2X_ODD(PF, PH, PI, N1, N2, N3);\
         }
-
-//---------------------------------------------------------------------------------------------------------------------------
-
-void SetupFormat(void)
-{
-	uint32 c, r, g, b, y, u, v;
-
-	for (c = 0; c < 65536; c++)
-	{
-		r = tbl_5_to_8[(c &   R_MASK565) >> 11];
-		g = tbl_6_to_8[(c & G_MASK565) >>  5];
-		b = tbl_5_to_8[(c &  B_MASK565)      ];
-		y = ((r<<4) + (g<<5) + (b<<2));
-		u = (   -r  - (g<<1) + (b<<2));
-		v = ((r<<1) - (g<<1) - (b>>1));
-		RGBlum[c] = (int) (y + u + v);
-	}
-}
-
 
 template<int GuiScale>
 void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
