@@ -123,13 +123,25 @@ static inline int inlineRGBtoYUV(uint16 c) {
 	return ((y & 0xFF) << 16) | ((u & 0xFF) << 8) | (v & 0xFF);
 }
 
-// Condenses 8-bit expansion and luminance weighting into pure inline constants
-// to completely eliminate 256KB L2 cache thrashing on Gekko processors.
+/**
+ * Optimized RGB565_to_Lum using PowerPC rlwinm
+ * Logic:
+ * - Red:   Rotate Left 5, Mask bottom 5 bits
+ * - Green: Rotate Left 11, Mask bottom 6 bits
+ * - Blue:  Rotate Left 0, Mask bottom 5 bits
+ */
 static inline int RGB565_to_Lum(uint16 c) {
-    int r = (c >> 11);
-    int g = (c >> 5) & 0x3F;
-    int b = (c & 0x1F);
-    return (r * 140) + (g * 113) + (b * 62);
+    uint32 r, g, b;
+
+    // Use rlwinm to perform shift and mask in one cycle
+    // We treat 'c' as a 16-bit value in a 32-bit register.
+    __asm__ volatile ("rlwinm %0, %1, 5, 27, 31"  : "=r"(r) : "r"(c)); // Red
+    __asm__ volatile ("rlwinm %0, %1, 11, 26, 31" : "=r"(g) : "r"(c)); // Green
+    __asm__ volatile ("rlwinm %0, %1, 0, 27, 31"  : "=r"(b) : "r"(c)); // Blue
+
+    // Return weighted luminance (scaled)
+    // 30/100, 59/100, 11/100 weighting
+    return (r * 30 + g * 59 + b * 11) / 100;
 }
 
 //
