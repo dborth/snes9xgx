@@ -54,11 +54,13 @@ int CheckVideo = 0; // for forcing video reset
 #define TEX_HEIGHT 512
 #define TEXTUREMEM_SIZE 	TEX_WIDTH*(TEX_HEIGHT+8)*2
 static unsigned char texturemem[TEXTUREMEM_SIZE] ATTRIBUTE_ALIGN (32);
+static unsigned char scanline_tex_data[32] ATTRIBUTE_ALIGN (32);
 
 #define DEFAULT_FIFO_SIZE 256 * 1024
 static volatile unsigned int copynow = GX_FALSE;
 static unsigned char gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 static GXTexObj texobj;
+static GXTexObj scanlineTexObj;
 static Mtx view;
 static Mtx modelView;
 static Mtx GXmodelView2D;
@@ -89,7 +91,7 @@ camera;
      This structure controls the size of the image on the screen.
 	 Think of the output as a -80 x 80 by -60 x 60 graph.
 ***/
-s16 square[] ATTRIBUTE_ALIGN (32) =
+static s16 square[] ATTRIBUTE_ALIGN (32) =
 {
   /*
    * X,   Y,  Z
@@ -312,6 +314,60 @@ copy_to_xfb (u32 arg)
 }
 
 /****************************************************************************
+ * Scanline Support Functions
+ ***************************************************************************/
+
+static void InitScanlineTexture() {
+	// GX_TF_I8 represents one byte per pixel.
+	// We create an 8x4 tile: Rows 0 and 2 are white (0xFF), Rows 1 and 3 are dark (0xA0).
+	for (int y = 0; y < 4; y++) {
+		u8 intensity = (y % 2 == 0) ? 0xFF : 0xA0; // 0xA0 controls the scanline darkness
+		for (int x = 0; x < 8; x++) {
+			scanline_tex_data[y * 8 + x] = intensity;
+		}
+	}
+
+	// CRITICAL: Flush the CPU data cache. GX reads directly from main memory.
+	DCStoreRange(scanline_tex_data, 32);
+
+	// Initialize the texture object. Wrap modes MUST be GX_REPEAT to tile across the screen.
+	GX_InitTexObj(&scanlineTexObj, scanline_tex_data, 8, 4, GX_TF_I8, GX_REPEAT, GX_REPEAT, GX_FALSE);
+
+	// CRITICAL: Filter mode MUST be GX_NEAR. GX_LINEAR will blur the lines into a muddy gray.
+	GX_InitTexObjFilterMode(&scanlineTexObj, GX_NEAR, GX_NEAR);
+
+	// Load the scanline texture into MAP1
+	GX_LoadTexObj(&scanlineTexObj, GX_TEXMAP1);
+}
+
+static void SetupScanlineFilterTEV() {
+	GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_TEX1, GX_TEX_ST, GX_F32, 0);
+
+	// Allow a second texture coordinate to be passed to the vertex stream
+	GX_SetVtxDesc(GX_VA_TEX1, GX_DIRECT);
+
+	// Enable two textures and two TEV stages
+	GX_SetNumTexGens(2);
+	GX_SetNumTevStages(2);
+	GX_SetNumChans(0);
+
+	// Configure Texture Coordinate Generation for the second texture (Scanlines)
+	GX_SetTexCoordGen(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, GX_IDENTITY);
+
+	// --- STAGE 0: Sample the Game Screen ---
+	GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+	GX_SetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXC);
+	GX_SetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+
+	// --- STAGE 1: Multiply by Scanlines ---
+	GX_SetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD1, GX_TEXMAP1, GX_COLORNULL);
+	// Formula: d + ((1.0 - c) * a + c * b)
+	// By setting: a=ZERO, b=CPREV, c=TEXC, d=ZERO -> (TEXC * CPREV)
+	GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_TEXC, GX_CC_ZERO);
+	GX_SetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+}
+
+/****************************************************************************
  * Scaler Support Functions
  ***************************************************************************/
 static inline void
@@ -324,15 +380,21 @@ draw_init ()
 	GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
 	GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
 
+	if(GCSettings.FilterMethod == FILTER_SCANLINES) {
+		SetupScanlineFilterTEV();
+	}
+	else {
+		GX_SetNumTexGens (1);
+		GX_SetNumTevStages (1);
+		GX_SetNumChans (0);
+
+		GX_SetTexCoordGen (GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+
+		GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+		GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
+	}
+
 	GX_SetArray (GX_VA_POS, square, 3 * sizeof (s16));
-
-	GX_SetNumTexGens (1);
-	GX_SetNumChans (0);
-
-	GX_SetTexCoordGen (GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
-
-	GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
-	GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
 
 	memset (&view, 0, sizeof (Mtx));
 	guLookAt(view, &cam.pos, &cam.up, &cam.view);
@@ -356,15 +418,58 @@ draw_vert (u8 pos, f32 s, f32 t)
 static inline void
 draw_square ()
 {
-
 	GX_LoadPosMtxImm (modelView, GX_PNMTX0);
 	
 	GX_Begin (GX_QUADS, GX_VTXFMT0, 4);
-	draw_vert (0, 0.0, 0.0);
-	draw_vert (1, 1.0, 0.0);
-	draw_vert (2, 1.0, 1.0);
-	draw_vert (3, 0.0, 1.0);
+
+	if(GCSettings.FilterMethod == FILTER_SCANLINES) {
+		// Calculate physical dimensions of the rendering quad in EFB pixels
+		// We use the static 'square' array which holds the final scaled/zoomed screen footprint
+		// square[3] and square[0] are the Right and Left X bounds
+		// square[1] and square[7] are the Top and Bottom Y bounds
+		f32 quad_width = (f32)(square[3] - square[0]);
+		f32 quad_height = (f32)(square[1] - square[7]);
+
+		// Map exactly 1 texel to 1 EFB physical TV pixel
+		// Our scanline texture is 8 pixels wide and 4 pixels high
+		f32 u_repeat = quad_width / 8.0f;
+		f32 v_repeat = quad_height / 4.0f;
+
+		// The "Half-Texel Offset" Epsilon.
+		// By shifting the UV start coordinates by exactly half a texel, we force the
+		// GPU sampler to hit the 'dead center' of the texture pixels (e.g. 0.5, 1.5, 2.5),
+		// preventing the moiré effect caused by floating-point edge-rounding.
+		// U: 1/8 texel = 0.125. Half of that = 0.0625f
+		// V: 1/4 texel = 0.25. Half of that = 0.125f
+		f32 u_off = 0.0625f;
+		f32 v_off = 0.125f;
+
+		draw_vert (0, 0.0f, 0.0f); // TEX0
+		GX_TexCoord2f32 (u_off, v_off); // TEX1
+
+		draw_vert (1, 1.0f, 0.0f); // TEX0
+		GX_TexCoord2f32 (u_repeat + u_off, v_off); // TEX1
+
+		draw_vert (2, 1.0f, 1.0f); // TEX0
+		GX_TexCoord2f32 (u_repeat + u_off, v_repeat + v_off); // TEX1
+
+		draw_vert (3, 0.0f, 1.0f); // TEX0
+		GX_TexCoord2f32 (u_off, v_repeat + v_off); // TEX1
+	}
+	else {
+		draw_vert (0, 0.0f, 0.0f);
+		draw_vert (1, 1.0f, 0.0f);
+		draw_vert (2, 1.0f, 1.0f);
+		draw_vert (3, 0.0f, 1.0f);
+	}
 	GX_End ();
+
+	if(GCSettings.FilterMethod == FILTER_SCANLINES) {
+		// force identity matrix to ensure texture mapping is pristine and devoid of stray scaling
+		Mtx texMtx;
+		guMtxIdentity(texMtx);
+		GX_LoadTexMtxImm(texMtx, GX_TEXMTX1, GX_MTX2x4);
+	}
 }
 
 /****************************************************************************
@@ -674,6 +779,7 @@ ResetVideo_Emu ()
 
 	GX_SetZMode (GX_TRUE, GX_LEQUAL, GX_TRUE);
 	GX_SetColorUpdate (GX_TRUE);
+	GX_SetBlendMode (GX_BM_NONE, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 
 	guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 100, 1000);	// matrix, t, b, l, r, n, f
 	GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
@@ -865,12 +971,12 @@ update_video (int width, int height)
 	}
 
 	// Guarantee the GPU has fully finished rendering the previous frame
-	// before we begin swizzling new data into texturemem.
+	// before we begin swizzling new data into texturemem
 	GX_DrawDone();
 
 	whichfb ^= 1;
 
-	if (oldvheight != vheight || oldvwidth != vwidth)	// if rendered width/height changes, update scaling
+	if (oldvheight != vheight || oldvwidth != vwidth) // if rendered width/height changes, update scaling
 		CheckVideo = 1;
 
 	if (CheckVideo)	// if we get back from the menu, and have rendered at least 1 frame
@@ -908,13 +1014,13 @@ update_video (int width, int height)
 		else // unfiltered and filtered mode
 		{
 			if (GCSettings.widescreen) {
-				// 1. Determine the raw height of the SNES signal
+				// Determine the raw height of the SNES signal
 				float base_height = (vheight == 224 || vheight == 448) ? 224.0f : 239.0f;
 
-				// 2. Calculate the uniform scale required to make the height fill the 480 screen
+				// Calculate the uniform scale required to make the height fill the 480 screen
 				float scale_factor = (vmode->efbHeight / 2.0f) / base_height;
 
-				// 3. Apply the exact same scale factor to both the width and the height
+				// Apply the exact same scale factor to both the width and the height
 				xscale = (256.0f * scale_factor * 15) / 16; // Mathematically perfect compensation for the 640 widescreen EFB
 				yscale = vmode->efbHeight / 2;
 			}
@@ -944,7 +1050,10 @@ update_video (int width, int height)
 		if (GCSettings.render == RENDER_ORIGINAL || GCSettings.render == RENDER_UNFILTERED)
 			GX_InitTexObjFilterMode(&texobj,GX_NEAR,GX_NEAR); // original/unfiltered video mode: force texture filtering OFF
 
-		GX_LoadTexObj (&texobj, GX_TEXMAP0);	// load texture object so its ready to use
+		GX_LoadTexObj (&texobj, GX_TEXMAP0); // load texture object so its ready to use
+
+		if(GCSettings.FilterMethod == FILTER_SCANLINES)
+			InitScanlineTexture();
 
 		oldvwidth = vwidth;
 		oldvheight = vheight;
@@ -952,7 +1061,9 @@ update_video (int width, int height)
 	}
 #ifdef HW_RVL
 	// convert image to texture
-	if (GCSettings.FilterMethod != FILTER_NONE && vheight <= 239 && vwidth <= 256)	// don't do filtering on game textures > 256 x 239
+	if (GCSettings.FilterMethod != FILTER_NONE &&
+		GCSettings.FilterMethod != FILTER_SCANLINES &&
+		vheight <= 239 && vwidth <= 256)	// don't do filtering on game textures > 256 x 239
 	{
 		FilterMethod ((uint8*) GFX.Screen, EXT_PITCH, (uint8*) filtermem, vwidth*fscale*2, vwidth, vheight);
 		MakeTexturePitch1024((char *) filtermem, (char *) texturemem, vwidth*fscale, vheight*fscale);
@@ -967,8 +1078,8 @@ update_video (int width, int height)
 	u32 padded_width = (vwidth * fscale + 3) & ~3;
 	u32 padded_height = (vheight * fscale + 3) & ~3;
 
-	// A 4x4 tile is 16 pixels * 2 bytes = 32 bytes.
-	// Padded dimensions guarantee the result is naturally a multiple of 32.
+	// A 4x4 tile is 16 pixels * 2 bytes = 32 bytes
+	// Padded dimensions guarantee the result is naturally a multiple of 32
 	u32 flush_size = padded_width * padded_height * 2;
 
 	DCStoreRange(texturemem, flush_size); // update the texture memory
@@ -978,10 +1089,10 @@ update_video (int width, int height)
 
 	if(ScreenshotRequested)
 	{
-		if(GCSettings.render == 0) // we can't take a screenshot in Original mode
+		if(GCSettings.render == RENDER_ORIGINAL) // we can't take a screenshot in Original mode
 		{
-			oldRenderMode = 0;
-			GCSettings.render = 2; // switch to unfiltered mode
+			oldRenderMode = RENDER_ORIGINAL;
+			GCSettings.render = RENDER_UNFILTERED; // switch to unfiltered mode
 			CheckVideo = 1; // request the switch
 		}
 		else
@@ -1121,6 +1232,7 @@ ResetVideo_Menu ()
 
 	GX_SetNumChans(1);
 	GX_SetNumTexGens(1);
+	GX_SetNumTevStages(1);
 	GX_SetTevOp (GX_TEVSTAGE0, GX_PASSCLR);
 	GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
 	GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
