@@ -114,11 +114,10 @@ void S9xSyncSpeed () {
 
 	if (timerstyle == 0) /* use Wii vertical sync (VSYNC) with NTSC roms */
 	{
-		int32 pendingFrames;
-		while ((pendingFrames = FrameTimer) == 0)
-		{
-			usleep(50);
-		}
+		// Capture current VBlank ticks
+		// update_video() acts as our hardware VBlank throttle.
+		int32 pendingFrames = FrameTimer;
+
 		bool behindSchedule = (pendingFrames > 1);
 
 		if (pendingFrames > skipFrms)
@@ -129,10 +128,12 @@ void S9xSyncSpeed () {
 
 		S9xChooseFrameToRender(behindSchedule, skipFrms);
 
-		if (!Settings.TurboMode)
+		// Only consume a VBlank if one actually occurred to prevent underflow.
+		// If pendingFrames == 0, we are perfectly pipelined (1 frame ahead).
+		if (!Settings.TurboMode && FrameTimer > 0)
 			FrameTimer--;
 	}
-	else /* use internal timer for PAL roms */
+	else /* use internal timer for PAL roms (or TV/ROM mismatches) */
 	{
 		const u32 timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
 
@@ -144,7 +145,7 @@ void S9xSyncSpeed () {
 			do
 			{
 				if ((timediffallowed - diff_usec(prev, now)) > 50) {
-					usleep(50);
+					usleep(50); // The GPU draws concurrently during this CPU sleep!
 				}
 				now = gettime();
 			} while (diff_usec(prev, now) < timediffallowed);

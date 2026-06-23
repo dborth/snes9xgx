@@ -861,11 +861,16 @@ update_video (int width, int height)
 	if(CheckVideo == 2 && IPPU.RenderedFramesCount == prevRenderedFrameCount)
 		return; // we haven't rendered any frames yet, so we can't draw anything!
 
-	// Ensure previous frame copy and background VSync block have finished cleanly
+	// Wait for the VI to display the PREVIOUSLY submitted frame
+	// This naturally throttles the emulator to the TV's refresh rate
 	while (!vb_done || (copynow == GX_TRUE))
 	{
 		LWP_ThreadSleep(render_queue); // Halts main thread with 0 CPU load until signals occur
 	}
+
+	// Guarantee the GPU has fully finished rendering the previous frame
+	// before we begin swizzling new data into texturemem.
+	GX_DrawDone();
 
 	whichfb ^= 1;
 
@@ -975,8 +980,6 @@ update_video (int width, int height)
 
 	draw_square ();		// draw the quad
 
-	GX_DrawDone ();
-
 	if(ScreenshotRequested)
 	{
 		if(GCSettings.render == 0) // we can't take a screenshot in Original mode
@@ -987,6 +990,9 @@ update_video (int width, int height)
 		}
 		else
 		{
+			// We MUST wait for the GPU to finish the CURRENT frame before 
+			// reading from the EFB to encode the PNG
+			GX_DrawDone();
 			ScreenshotRequested = 0;
 			TakeScreenshot();
 			if(oldRenderMode != -1)
