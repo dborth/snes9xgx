@@ -860,23 +860,25 @@ static inline uint16 branchless_select(uint32 a, uint32 b, uint16 x, uint16 y) {
 }
 #define BRANCHLESS_SELECT(a, b, x, y) branchless_select((a), (b), (x), (y))
 
-#define df(A, B)\
-    abs(RGB565_to_Lum(A) - RGB565_to_Lum(B))\
+// Modified macros to calculate differences using pre-computed Luma state variables
+#define df(lA, lB)\
+    abs((int)(lA) - (int)(lB))\
 
-#define eq(A, B)\
-    (df(A, B) < 155)\
+#define eq(lA, lB)\
+    (df(lA, lB) < 155)\
 
-#define XBR(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3) \
+// Pass pre-computed Luma values directly to avoid redundant RGB565_to_Lum calls
+#define XBR(PE, PI, PH, PF, PG, PC, PD, PB, PA, lPE, lPI, lPH, lPF, lPG, lPC, lPD, lPB, lPA, N0, N1, N2, N3) \
     if ( PE!=PH && PE!=PF )\
     {\
-        wd1 = df(PH,PF); \
-        wd2 = df(PE,PI); \
+        wd1 = df(lPH,lPF); \
+        wd2 = df(lPE,lPI); \
         if ((wd1<<1)<wd2)\
         {\
-            if ( !eq(PF,PB) && !eq(PF,PC) || !eq(PH,PD) && !eq(PH,PG) || eq(PE,PG) || eq(PE,PC) )\
+            if ( !eq(lPF,lPB) && !eq(lPF,lPC) || !eq(lPH,lPD) && !eq(lPH,lPG) || eq(lPE,lPG) || eq(lPE,lPC) )\
                 {\
-                dFG=df(PF,PG); dHC=df(PH,PC); \
-                irlv2u = (PE!=PC && PB!=PC); irlv2l = (PE!=PG && PD!=PG); px = BRANCHLESS_SELECT(df(PE,PF), df(PE,PH), PF, PH); \
+                dFG=df(lPF,lPG); dHC=df(lPH,lPC); \
+                irlv2u = (PE!=PC && PB!=PC); irlv2l = (PE!=PG && PD!=PG); px = BRANCHLESS_SELECT(df(lPE,lPF), df(lPE,lPH), PF, PH); \
                 if ( irlv2l && irlv2u && ((dFG<<1)<=dHC) && (dFG>=(dHC<<1)) ) \
                 {\
                     LEFT_UP_2_2X(N3, N2, N1, px)\
@@ -897,32 +899,32 @@ static inline uint16 branchless_select(uint32 a, uint32 b, uint16 x, uint16 y) {
         }\
         else if (wd1<=wd2)\
         {\
-            px = BRANCHLESS_SELECT(df(PE,PF), df(PE,PH), PF, PH);\
+            px = BRANCHLESS_SELECT(df(lPE,lPF), df(lPE,lPH), PF, PH);\
             ALPHA_BLEND_64_W( Ep[N3], px); \
         }\
     }\
 
-#define XBRLV1(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3) \
+#define XBRLV1(PE, PI, PH, PF, PG, PC, PD, PB, PA, lPE, lPI, lPH, lPF, lPG, lPC, lPD, lPB, lPA, N0, N1, N2, N3) \
     irlv1   = (PE!=PH && PE!=PF); \
     if ( irlv1 )\
     {\
-        wd1 = df(PH,PF); \
-        wd2 = df(PE,PI); \
-        if (((wd1<<1)<wd2) && eq(PB,PD) && PB!=PF && PD!=PH)\
+        wd1 = df(lPH,lPF); \
+        wd2 = df(lPE,lPI); \
+        if (((wd1<<1)<wd2) && eq(lPB,lPD) && PB!=PF && PD!=PH)\
         {\
-                px = BRANCHLESS_SELECT(df(PE,PF), df(PE,PH), PF, PH); \
+                px = BRANCHLESS_SELECT(df(lPE,lPF), df(lPE,lPH), PF, PH); \
                 DIA_2X(N3, px);\
         }\
 	else if (wd1<=wd2)\
         {\
-            px = BRANCHLESS_SELECT(df(PE,PF), df(PE,PH), PF, PH);\
+            px = BRANCHLESS_SELECT(df(lPE,lPF), df(lPE,lPH), PF, PH);\
             ALPHA_BLEND_64_W( Ep[N3], px); \
         }\
     }\
 
-#define DDT(PE, PI, PH, PF, N0, N1, N2, N3) \
-        wd1 = (df(PH,PF)); \
-        wd2 = (df(PE,PI)); \
+#define DDT(PE, PI, PH, PF, lPE, lPI, lPH, lPF, N0, N1, N2, N3) \
+        wd1 = (df(lPH,lPF)); \
+        wd2 = (df(lPE,lPI)); \
 	if (wd1>wd2)\
 	{\
             DDT2XBC_ODD(PF, PH, PI, N1, N2, N3);\
@@ -936,18 +938,21 @@ static inline uint16 branchless_select(uint32 a, uint32 b, uint16 x, uint16 y) {
             BIL2X_ODD(PF, PH, PI, N1, N2, N3);\
         }
 
-// Sliding Window inner-loop macro
+// Sliding Window inner-loop macro with integrated Luma caching
 #define PROCESS_XBR_WINDOW() \
     C = *(p + i + 1 - nextlineSrc); F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
+    lC = RGB565_to_Lum(C); lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
     E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
     Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; \
     if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
-        XBR( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3); \
-        XBR( E, C, F, B, I, A, H, D, G, E2, E0, E3, E1); \
-        XBR( E, A, B, D, C, G, F, H, I, E3, E2, E1, E0); \
-        XBR( E, G, D, H, A, I, B, F, C, E1, E3, E0, E2); \
+        XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, E0, E1, E2, E3); \
+        XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, E2, E0, E3, E1); \
+        XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, E3, E2, E1, E0); \
+        XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, E1, E3, E0, E2); \
     } \
-    A=B; B=C; D=E; E=F; G=H; H=I; i++;
+    A=B; B=C; D=E; E=F; G=H; H=I; \
+    lA=lB; lB=lC; lD=lE; lE=lF; lG=lH; lH=lI; \
+    i++;
 
 template<int GuiScale>
 void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
@@ -960,6 +965,8 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 
 	uint32 wd1, wd2, irlv1, irlv2u, irlv2l, dFG, dHC, E0, E1, E2, E3;
 	uint16 A, B, C, D, E, F, G, H, I, px;
+    uint32 lA, lB, lC, lD, lE, lF, lG, lH, lI;
+
 	uint32 nextlineSrc = srcPitch / sizeof(uint16);
 	uint16 *p  = (uint16 *)srcPtr;
 	uint32 nextlineDst = dstPitch / sizeof(uint16);
@@ -969,6 +976,10 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 		A = *(p - 1 - nextlineSrc); B = *(p - nextlineSrc);
 		D = *(p - 1);               E = *(p);
 		G = *(p - 1 + nextlineSrc); H = *(p + nextlineSrc);
+
+        lA = RGB565_to_Lum(A); lB = RGB565_to_Lum(B);
+        lD = RGB565_to_Lum(D); lE = RGB565_to_Lum(E);
+        lG = RGB565_to_Lum(G); lH = RGB565_to_Lum(H);
 
 		int i = 0;
 		for (; i <= width - 8;) {
@@ -984,15 +995,18 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 
 #define PROCESS_XBRLV1_WINDOW() \
     C = *(p + i + 1 - nextlineSrc); F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
+    lC = RGB565_to_Lum(C); lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
     E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
     Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; \
     if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
-        XBRLV1( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3); \
-        XBRLV1( E, C, F, B, I, A, H, D, G, E2, E0, E3, E1); \
-        XBRLV1( E, A, B, D, C, G, F, H, I, E3, E2, E1, E0); \
-        XBRLV1( E, G, D, H, A, I, B, F, C, E1, E3, E0, E2); \
+        XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, E0, E1, E2, E3); \
+        XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, E2, E0, E3, E1); \
+        XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, E3, E2, E1, E0); \
+        XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, E1, E3, E0, E2); \
     } \
-    A=B; B=C; D=E; E=F; G=H; H=I; i++;
+    A=B; B=C; D=E; E=F; G=H; H=I; \
+    lA=lB; lB=lC; lD=lE; lE=lF; lG=lH; lH=lI; \
+    i++;
 
 template<int GuiScale>
 void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
@@ -1005,6 +1019,8 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
 
 	uint32 wd1, wd2, irlv1, E0, E1, E2, E3;
 	uint16 A, B, C, D, E, F, G, H, I, px;
+    uint32 lA, lB, lC, lD, lE, lF, lG, lH, lI;
+
 	uint32 nextlineSrc = srcPitch / sizeof(uint16);
 	uint16 *p  = (uint16 *)srcPtr;
 	uint32 nextlineDst = dstPitch / sizeof(uint16);
@@ -1014,6 +1030,10 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
 		A = *(p - 1 - nextlineSrc); B = *(p - nextlineSrc);
 		D = *(p - 1);               E = *(p);
 		G = *(p - 1 + nextlineSrc); H = *(p + nextlineSrc);
+
+        lA = RGB565_to_Lum(A); lB = RGB565_to_Lum(B);
+        lD = RGB565_to_Lum(D); lE = RGB565_to_Lum(E);
+        lG = RGB565_to_Lum(G); lH = RGB565_to_Lum(H);
 
 		int i = 0;
 		for (; i <= width - 8;) {
@@ -1029,10 +1049,13 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
 
 #define PROCESS_DDT_WINDOW() \
     F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
+    lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
     E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
     Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; \
-    if (E!=F || E!=H || F!=I || H!=I) { DDT( E, I, H, F, E0, E1, E2, E3); } \
-    E=F; H=I; i++;
+    if (E!=F || E!=H || F!=I || H!=I) { DDT( E, I, H, F, lE, lI, lH, lF, E0, E1, E2, E3); } \
+    E=F; H=I; \
+    lE=lF; lH=lI; \
+    i++;
 
 template<int GuiScale>
 void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
@@ -1045,6 +1068,8 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
 	
 	uint32 wd1, wd2, E0, E1, E2, E3;
 	uint16 E, F, H, I, aux;
+    uint32 lE, lF, lH, lI;
+
 	uint32 nextlineSrc = srcPitch / sizeof(uint16);
 	uint16 *p  = (uint16 *)srcPtr;
 	uint32 nextlineDst = dstPitch / sizeof(uint16);
@@ -1052,6 +1077,8 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
 
 	while (height--) {
 		E = *(p); H = *(p + nextlineSrc);
+        lE = RGB565_to_Lum(E); lH = RGB565_to_Lum(H);
+
 		int i = 0;
 		for (; i <= width - 8;) {
 			DCBT(p + i + 16); DCBT(p + i + 16 + nextlineSrc);
