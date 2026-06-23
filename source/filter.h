@@ -52,7 +52,6 @@ extern unsigned char * filtermem;
 void SelectFilterMethod ();
 const char* GetFilterName (RenderFilter filterID);
 int GetFilterScale(RenderFilter filterID);
-void InitLUTs();
 void SetupFormat();
 
 #endif
