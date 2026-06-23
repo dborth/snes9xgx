@@ -511,28 +511,193 @@ void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 template<int GuiScale>
 void RenderScale2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
 {
-    unsigned int nextlineSrc = srcPitch / sizeof(uint16);
-    uint16 *p = (uint16 *)srcPtr;
-    
-    unsigned int nextlineDst = dstPitch / sizeof(uint16);
-    uint16 *q = (uint16 *)dstPtr;
-    
-    while (height--) {
-        for (int i = 0; i < width; ++i) {
-            uint16 B = *(p + i - nextlineSrc);
-            uint16 D = *(p + i - 1);
-            uint16 E = *(p + i);
-            uint16 F = *(p + i + 1);
-            uint16 H = *(p + i + nextlineSrc);
-            
-            *(q + (i << 1)) = D == B && B != F && D != H ? D : E;
-            *(q + (i << 1) + 1) = B == F && B != D && F != H ? F : E;
-            *(q + (i << 1) + nextlineDst) = D == H && D != B && H != F ? D : E;
-            *(q + (i << 1) + nextlineDst + 1) = H == F && D != H && B != F ? F : E;
-        }
-        p += nextlineSrc;
-        q += nextlineDst << 1;
-    }
+    if (height <= 0 || width <= 0) return;
+
+    u32 p = (u32)srcPtr;
+    u32 q = (u32)dstPtr;
+
+    // Pitch variables (Constrained to base registers to prevent r0 allocation for lhzx/stwx)
+    u32 srcP = srcPitch;
+    s32 negSrcP = -(s32)srcPitch;
+    u32 dstP = dstPitch;
+    u32 dstP2x = dstPitch << 1;
+
+    u32 w = width >> 1; // Unrolled by 2 pixels per iteration
+    u32 h = height;     // Explicitly declared for the outer loop constraint
+
+    // Register allocation mappings
+    u32 src, dst, B, D, E, F, H;
+    u32 M_DB, M_BF, M_DH, M_HF;
+    u32 C0, C1, C2, C3, T1, T2;
+
+    __asm__ __volatile__ (
+        "1: \n" // --- Outer Row Loop ---
+        "mr     %[src], %[p] \n"
+        "mr     %[dst], %[q] \n"
+
+        // Prime the sliding window (D and E) for the start of the row
+        "lhz    %[D], -2(%[src]) \n"
+        "lhz    %[E],  0(%[src]) \n"
+        "mtctr  %[w] \n"
+
+        "2: \n" // --- Inner Pixel Loop (Unrolled x2) ---
+
+        // 1. Prefetch Cache Line (32 bytes / 16 pixels ahead)
+        "addi   %[T1], %[src], 32 \n"
+        "dcbt   0, %[T1] \n"
+
+        // ==========================================
+        // PIXEL ITERATION 1
+        // ==========================================
+        "lhzx   %[B], %[negSrcP], %[src] \n"
+        "lhz    %[F], 2(%[src]) \n"
+        "lhzx   %[H], %[srcP], %[src] \n"
+
+        // 2. Superscalar Equality Evaluation
+        "xor    %[T1], %[D], %[B] \n"
+        "xor    %[T2], %[B], %[F] \n"
+        "cntlzw %[T1], %[T1] \n"
+        "cntlzw %[T2], %[T2] \n"
+        "srwi   %[M_DB], %[T1], 5 \n"
+        "srwi   %[M_BF], %[T2], 5 \n"
+        "neg    %[M_DB], %[M_DB] \n"
+        "neg    %[M_BF], %[M_BF] \n"
+
+        "xor    %[T1], %[D], %[H] \n"
+        "xor    %[T2], %[H], %[F] \n"
+        "cntlzw %[T1], %[T1] \n"
+        "cntlzw %[T2], %[T2] \n"
+        "srwi   %[M_DH], %[T1], 5 \n"
+        "srwi   %[M_HF], %[T2], 5 \n"
+        "neg    %[M_DH], %[M_DH] \n"
+        "neg    %[M_HF], %[M_HF] \n"
+
+        // 3. Compound Logic Synthesis
+        "andc   %[C0], %[M_DB], %[M_BF] \n"
+        "andc   %[C0], %[C0], %[M_DH] \n" // C0: D==B && B!=F && D!=H
+
+        "andc   %[C1], %[M_BF], %[M_DB] \n"
+        "andc   %[C1], %[C1], %[M_HF] \n" // C1: B==F && B!=D && F!=H
+
+        "andc   %[C2], %[M_DH], %[M_DB] \n"
+        "andc   %[C2], %[C2], %[M_HF] \n" // C2: D==H && D!=B && H!=F
+
+        "andc   %[C3], %[M_HF], %[M_DH] \n"
+        "andc   %[C3], %[C3], %[M_BF] \n" // C3: H==F && D!=H && B!=F
+
+        // 4. Pixel Resolution & Packing
+        "and    %[T1], %[D], %[C0] \n"
+        "andc   %[T2], %[E], %[C0] \n"
+        "or     %[C0], %[T1], %[T2] \n"   // Resolve Top-Left
+
+        "and    %[T1], %[F], %[C1] \n"
+        "andc   %[T2], %[E], %[C1] \n"
+        "or     %[C1], %[T1], %[T2] \n"   // Resolve Top-Right
+
+        "rlwimi %[C1], %[C0], 16, 0, 15 \n" // Pack Top-Left and Top-Right
+        "stw    %[C1], 0(%[dst]) \n"
+
+        "and    %[T1], %[D], %[C2] \n"
+        "andc   %[T2], %[E], %[C2] \n"
+        "or     %[C2], %[T1], %[T2] \n"   // Resolve Bottom-Left
+
+        "and    %[T1], %[F], %[C3] \n"
+        "andc   %[T2], %[E], %[C3] \n"
+        "or     %[C3], %[T1], %[T2] \n"   // Resolve Bottom-Right
+
+        "rlwimi %[C3], %[C2], 16, 0, 15 \n" // Pack Bottom-Left and Bottom-Right
+        "stwx   %[C3], %[dstP], %[dst] \n"
+
+        // 5. Shift Sliding Window
+        "mr     %[D], %[E] \n"
+        "mr     %[E], %[F] \n"
+        "addi   %[src], %[src], 2 \n"
+        "addi   %[dst], %[dst], 4 \n"
+
+        // ==========================================
+        // PIXEL ITERATION 2
+        // ==========================================
+        "lhzx   %[B], %[negSrcP], %[src] \n"
+        "lhz    %[F], 2(%[src]) \n"
+        "lhzx   %[H], %[srcP], %[src] \n"
+
+        "xor    %[T1], %[D], %[B] \n"
+        "xor    %[T2], %[B], %[F] \n"
+        "cntlzw %[T1], %[T1] \n"
+        "cntlzw %[T2], %[T2] \n"
+        "srwi   %[M_DB], %[T1], 5 \n"
+        "srwi   %[M_BF], %[T2], 5 \n"
+        "neg    %[M_DB], %[M_DB] \n"
+        "neg    %[M_BF], %[M_BF] \n"
+
+        "xor    %[T1], %[D], %[H] \n"
+        "xor    %[T2], %[H], %[F] \n"
+        "cntlzw %[T1], %[T1] \n"
+        "cntlzw %[T2], %[T2] \n"
+        "srwi   %[M_DH], %[T1], 5 \n"
+        "srwi   %[M_HF], %[T2], 5 \n"
+        "neg    %[M_DH], %[M_DH] \n"
+        "neg    %[M_HF], %[M_HF] \n"
+
+        "andc   %[C0], %[M_DB], %[M_BF] \n"
+        "andc   %[C0], %[C0], %[M_DH] \n"
+
+        "andc   %[C1], %[M_BF], %[M_DB] \n"
+        "andc   %[C1], %[C1], %[M_HF] \n"
+
+        "andc   %[C2], %[M_DH], %[M_DB] \n"
+        "andc   %[C2], %[C2], %[M_HF] \n"
+
+        "andc   %[C3], %[M_HF], %[M_DH] \n"
+        "andc   %[C3], %[C3], %[M_BF] \n"
+
+        "and    %[T1], %[D], %[C0] \n"
+        "andc   %[T2], %[E], %[C0] \n"
+        "or     %[C0], %[T1], %[T2] \n"
+
+        "and    %[T1], %[F], %[C1] \n"
+        "andc   %[T2], %[E], %[C1] \n"
+        "or     %[C1], %[T1], %[T2] \n"
+
+        "rlwimi %[C1], %[C0], 16, 0, 15 \n"
+        "stw    %[C1], 0(%[dst]) \n"
+
+        "and    %[T1], %[D], %[C2] \n"
+        "andc   %[T2], %[E], %[C2] \n"
+        "or     %[C2], %[T1], %[T2] \n"
+
+        "and    %[T1], %[F], %[C3] \n"
+        "andc   %[T2], %[E], %[C3] \n"
+        "or     %[C3], %[T1], %[T2] \n"
+
+        "rlwimi %[C3], %[C2], 16, 0, 15 \n"
+        "stwx   %[C3], %[dstP], %[dst] \n"
+
+        "mr     %[D], %[E] \n"
+        "mr     %[E], %[F] \n"
+        "addi   %[src], %[src], 2 \n"
+        "addi   %[dst], %[dst], 4 \n"
+
+        "bdnz   2b \n" // Loop until row is done
+
+        // --- Advance Row Pointers ---
+        "add    %[p], %[p], %[srcP] \n"
+        "add    %[q], %[q], %[dstP2x] \n"
+        "subic. %[h], %[h], 1 \n"
+        "bne    1b \n" // Loop until all rows are done
+
+        // --- Constraints ---
+        : [p] "+b" (p), [q] "+b" (q), [h] "+r" (h),
+          [src] "=&b" (src), [dst] "=&b" (dst),
+          [B] "=&r" (B), [D] "=&r" (D), [E] "=&r" (E), [F] "=&r" (F), [H] "=&r" (H),
+          [M_DB] "=&r" (M_DB), [M_BF] "=&r" (M_BF), [M_DH] "=&r" (M_DH), [M_HF] "=&r" (M_HF),
+          [C0] "=&r" (C0), [C1] "=&r" (C1), [C2] "=&r" (C2), [C3] "=&r" (C3),
+          [T1] "=&r" (T1), [T2] "=&r" (T2)
+        : [w] "r" (w),
+          [srcP] "b" (srcP), [negSrcP] "b" (negSrcP), // "b" constraint guarantees r1-r31
+          [dstP] "b" (dstP), [dstP2x] "r" (dstP2x)
+        : "cc", "memory"
+    );
 }
 
 template<int GuiScale>
