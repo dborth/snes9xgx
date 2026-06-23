@@ -67,9 +67,9 @@ static TFilterMethod FilterToMethod (RenderFilter filterID)
         case FILTER_HQ2XBOLD:   return RenderHQ2X<FILTER_HQ2XBOLD>;
         case FILTER_SCALE2X:    return RenderScale2X<FILTER_SCALE2X>;
         case FILTER_TVMODE:     return RenderTVMode<FILTER_TVMODE>;
-        case FILTER_2XBR:     return Render2xBR<FILTER_2XBR>;
-        case FILTER_2XBRLV1:     return Render2xBRlv1<FILTER_2XBRLV1>;
-        case FILTER_DDT:     return RenderDDT<FILTER_DDT>;
+        case FILTER_2XBR:       return Render2xBR<FILTER_2XBR>;
+        case FILTER_2XBRLV1:    return Render2xBRlv1<FILTER_2XBRLV1>;
+        case FILTER_DDT:        return RenderDDT<FILTER_DDT>;
         default: return 0;
     }
 }
@@ -123,25 +123,13 @@ static inline int inlineRGBtoYUV(uint16 c) {
 	return ((y & 0xFF) << 16) | ((u & 0xFF) << 8) | (v & 0xFF);
 }
 
-/**
- * Optimized RGB565_to_Lum using PowerPC rlwinm
- * Logic:
- * - Red:   Rotate Left 5, Mask bottom 5 bits
- * - Green: Rotate Left 11, Mask bottom 6 bits
- * - Blue:  Rotate Left 0, Mask bottom 5 bits
- */
+// PowerPC rlwinm masks for 16-bit uints in 32-bit GPRs
 static inline int RGB565_to_Lum(uint16 c) {
     uint32 r, g, b;
-
-    // Use rlwinm to perform shift and mask in one cycle
-    // We treat 'c' as a 16-bit value in a 32-bit register.
-    __asm__ volatile ("rlwinm %0, %1, 5, 27, 31"  : "=r"(r) : "r"(c)); // Red
-    __asm__ volatile ("rlwinm %0, %1, 11, 26, 31" : "=r"(g) : "r"(c)); // Green
-    __asm__ volatile ("rlwinm %0, %1, 0, 27, 31"  : "=r"(b) : "r"(c)); // Blue
-
-    // Return weighted luminance (scaled)
-    // 30/100, 59/100, 11/100 weighting
-    return (r * 30 + g * 59 + b * 11) / 100;
+    __asm__ volatile ("rlwinm %0, %1, 21, 27, 31" : "=r"(r) : "r"(c)); // Red: shift right 11 -> rotate 21
+    __asm__ volatile ("rlwinm %0, %1, 27, 26, 31" : "=r"(g) : "r"(c)); // Green: shift right 5 -> rotate 27
+    __asm__ volatile ("rlwinm %0, %1, 0,  27, 31" : "=r"(b) : "r"(c)); // Blue: shift right 0 -> rotate 0
+    return (r * 140) + (g * 113) + (b * 62);
 }
 
 //
@@ -762,22 +750,19 @@ void RenderTVMode (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitc
 
 static inline uint32 ExtractR(uint16 c) {
     uint32 res;
-    // Rotate left 0 (no rotation), mask bits 0-4
-    __asm__ volatile ("rlwinm %0, %1, 0, 0, 4" : "=r"(res) : "r"(c));
+    __asm__ volatile ("rlwinm %0, %1, 21, 27, 31" : "=r"(res) : "r"(c));
     return res;
 }
 
 static inline uint32 ExtractG(uint16 c) {
     uint32 res;
-    // Rotate left 5, mask bits 0-5 (Extracts bits 5-10)
-    __asm__ volatile ("rlwinm %0, %1, 5, 0, 5" : "=r"(res) : "r"(c));
+    __asm__ volatile ("rlwinm %0, %1, 27, 26, 31" : "=r"(res) : "r"(c));
     return res;
 }
 
 static inline uint32 ExtractB(uint16 c) {
     uint32 res;
-    // Rotate left 11, mask bits 0-4 (Extracts bits 11-15)
-    __asm__ volatile ("rlwinm %0, %1, 11, 0, 4" : "=r"(res) : "r"(c));
+    __asm__ volatile ("rlwinm %0, %1, 0, 27, 31" : "=r"(res) : "r"(c));
     return res;
 }
 
@@ -788,31 +773,14 @@ static inline uint32 ExtractB(uint16 c) {
 #define LB_MASK565 0xF7DE
 
 static const uint16 rb_mask = RB_MASK565;
-static const uint16  r_mask =  R_MASK565;
 static const uint16  g_mask =  G_MASK565;
-static const uint16  b_mask =  B_MASK565;
 static const uint16 lb_mask = LB_MASK565;
 
 #define ALPHA_BLEND_128_W(dst, src) dst = ((src & lb_mask) >> 1) + ((dst & lb_mask) >> 1)
-
-#define ALPHA_BLEND_16_W(dst, src) \
-    dst = ( (rb_mask & ((dst & rb_mask) + ((((src & rb_mask) - (dst & rb_mask))) >>4))) | \
-            ( g_mask & ((dst &  g_mask) + ((((src &  g_mask) - (dst &  g_mask))) >>4))) )
-
-#define ALPHA_BLEND_32_W(dst, src) \
-    dst = ( \
-          (rb_mask & ((dst & rb_mask) + ((((src & rb_mask) - (dst & rb_mask))) >>3))) | \
-          ( g_mask & ((dst &  g_mask) + ((((src &  g_mask) - (dst &  g_mask))) >>3))) )
-
 #define ALPHA_BLEND_64_W(dst, src) \
     dst = ( \
           (rb_mask & ((dst & rb_mask) + ((((src & rb_mask) - (dst & rb_mask))) >>2))) | \
           ( g_mask & ((dst &  g_mask) + ((((src &  g_mask) - (dst &  g_mask))) >>2))) )
-
-#define ALPHA_BLEND_96_W(dst, src) \
-    dst = ( \
-          (rb_mask & ((dst & rb_mask) + ((((src & rb_mask) - (dst & rb_mask)) * 96) >>8))) | \
-          ( g_mask & ((dst &  g_mask) + ((((src &  g_mask) - (dst &  g_mask)) * 96) >>8))) )
 
 #define ALPHA_BLEND_192_W(dst, src) \
     dst = ( \
@@ -824,35 +792,32 @@ static const uint16 lb_mask = LB_MASK565;
           (rb_mask & ((src & rb_mask) + ((((dst & rb_mask) - (src & rb_mask))) >>3))) | \
           ( g_mask & ((src &  g_mask) + ((((dst &  g_mask) - (src &  g_mask))) >>3))) )
 
-
 #define LEFT_UP_2_2X(N3, N2, N1, PIXEL)\
     ALPHA_BLEND_224_W(Ep[N3], PIXEL); \
     ALPHA_BLEND_64_W( Ep[N2], PIXEL); \
     Ep[N1] = Ep[N2]; \
 
-
 #define LEFT_2_2X(N3, N2, PIXEL)\
     ALPHA_BLEND_192_W(Ep[N3], PIXEL); \
     ALPHA_BLEND_64_W( Ep[N2], PIXEL); \
-
 
 #define UP_2_2X(N3, N1, PIXEL)\
     ALPHA_BLEND_192_W(Ep[N3], PIXEL); \
     ALPHA_BLEND_64_W( Ep[N1], PIXEL); \
 
-
 #define DIA_2X(N3, PIXEL)\
     ALPHA_BLEND_128_W(Ep[N3], PIXEL); \
 
+// Fixed Extract macros applied properly
 #define ALPHA_BLEND_X_W(dst, src, weight) \
-({ \
-    uint32 sR = ExtractR(S); uint32 sG = ExtractG(S); uint32 sB = ExtractB(S); \
-    uint32 dR = ExtractR(D); uint32 dG = ExtractG(D); uint32 dB = ExtractB(D); \
-    uint32 r = ((sR * weight) + (dR * (32 - weight))) >> 5; \
-    uint32 g = ((sG * weight) + (dG * (32 - weight))) >> 5; \
-    uint32 b = ((sB * weight) + (dB * (32 - weight))) >> 5; \
-    ((r & 0x1F) << 11) | ((g & 0x3F) << 5) | (b & 0x1F); \
-})
+    dst = ({ \
+        uint32 sR = ExtractR(src); uint32 sG = ExtractG(src); uint32 sB = ExtractB(src); \
+        uint32 dR = ExtractR(dst); uint32 dG = ExtractG(dst); uint32 dB = ExtractB(dst); \
+        uint32 r = ((sR * weight) + (dR * (32 - weight))) >> 5; \
+        uint32 g = ((sG * weight) + (dG * (32 - weight))) >> 5; \
+        uint32 b = ((sB * weight) + (dB * (32 - weight))) >> 5; \
+        ((r & 0x1F) << 11) | ((g & 0x3F) << 5) | (b & 0x1F); \
+    })
 
 #define BIL2X_ODD(PF, PH, PI, N1, N2, N3) \
     ALPHA_BLEND_128_W(Ep[N1], PF); \
@@ -878,7 +843,6 @@ static const uint16 lb_mask = LB_MASK565;
 
 #define eq(A, B)\
     (df(A, B) < 155)\
-
 
 #define XBR(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3) \
     if ( PE!=PH && PE!=PF )\
@@ -916,7 +880,6 @@ static const uint16 lb_mask = LB_MASK565;
         }\
     }\
 
-
 #define XBRLV1(PE, PI, PH, PF, PG, PC, PD, PB, PA, N0, N1, N2, N3) \
     irlv1   = (PE!=PH && PE!=PF); \
     if ( irlv1 )\
@@ -935,7 +898,6 @@ static const uint16 lb_mask = LB_MASK565;
         }\
     }\
 
-
 #define DDT(PE, PI, PH, PF, N0, N1, N2, N3) \
         wd1 = (df(PH,PF)); \
         wd2 = (df(PE,PI)); \
@@ -952,6 +914,19 @@ static const uint16 lb_mask = LB_MASK565;
             BIL2X_ODD(PF, PH, PI, N1, N2, N3);\
         }
 
+// Sliding Window inner-loop macro
+#define PROCESS_XBR_WINDOW() \
+    C = *(p + i + 1 - nextlineSrc); F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
+    E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
+    Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; \
+    if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
+        XBR( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3); \
+        XBR( E, C, F, B, I, A, H, D, G, E2, E0, E3, E1); \
+        XBR( E, A, B, D, C, G, F, H, I, E3, E2, E1, E0); \
+        XBR( E, G, D, H, A, I, B, F, C, E1, E3, E0, E2); \
+    } \
+    A=B; B=C; D=E; E=F; G=H; H=I; i++;
+
 template<int GuiScale>
 void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
 {
@@ -961,58 +936,41 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 		return;
 	}
 
-	uint32 wd1, wd2;
-	uint32 irlv1, irlv2u, irlv2l;
-	uint32 dFG, dHC;
-	uint32 E0, E1, E2, E3;
-	uint16 px;
-
+	uint32 wd1, wd2, irlv1, irlv2u, irlv2l, dFG, dHC, E0, E1, E2, E3;
+	uint16 A, B, C, D, E, F, G, H, I, px;
 	uint32 nextlineSrc = srcPitch / sizeof(uint16);
 	uint16 *p  = (uint16 *)srcPtr;
 	uint32 nextlineDst = dstPitch / sizeof(uint16);
 	uint16 *Ep = (uint16 *)dstPtr;
 
-	// Macro for pixel processing to maintain logic consistency across unrolled iterations
-	#define PROCESS_XBR_PIXEL(idx) \
-		E0 = (idx << 1); \
-		E1 = (idx << 1) + 1; \
-		E2 = (idx << 1) + nextlineDst; \
-		E3 = (idx << 1) + nextlineDst + 1; \
-		Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = *(p + idx); \
-		if ( (*(p + idx) != *(p + idx + 1) || *(p + idx) != *(p + idx - 1)) && \
-		     (*(p + idx) != *(p + idx + nextlineSrc) || *(p + idx) != *(p + idx - nextlineSrc)) ) { \
-			XBR(*(p + idx), *(p + idx + 1 + nextlineSrc), *(p + idx + nextlineSrc), *(p + idx + 1), *(p + idx - 1 + nextlineSrc), *(p + idx + 1 - nextlineSrc), *(p + idx - 1), *(p + idx - nextlineSrc), *(p + idx - 1 - nextlineSrc), E0, E1, E2, E3); \
-			XBR(*(p + idx), *(p + idx + 1 - nextlineSrc), *(p + idx + 1), *(p + idx - nextlineSrc), *(p + idx + 1 + nextlineSrc), *(p + idx - 1 - nextlineSrc), *(p + idx + nextlineSrc), *(p + idx - 1), *(p + idx - 1 + nextlineSrc), E2, E0, E3, E1); \
-			XBR(*(p + idx), *(p + idx - 1 - nextlineSrc), *(p + idx - nextlineSrc), *(p + idx - 1), *(p + idx + 1 - nextlineSrc), *(p + idx - 1 + nextlineSrc), *(p + idx + 1), *(p + idx + nextlineSrc), *(p + idx + 1 + nextlineSrc), E3, E2, E1, E0); \
-			XBR(*(p + idx), *(p + idx - 1 + nextlineSrc), *(p + idx - 1), *(p + idx + nextlineSrc), *(p + idx - 1 - nextlineSrc), *(p + idx + 1 + nextlineSrc), *(p + idx - nextlineSrc), *(p + idx + 1), *(p + idx + 1 - nextlineSrc), E1, E3, E0, E2); \
-		}
-
 	while (height--) {
-		int i = 0;
-		// Unrolled loop: 8 pixels per chunk
-		for (; i <= width - 8; i += 8) {
-			DCBT(p + i + 16 - nextlineSrc);
-			DCBT(p + i + 16);
-			DCBT(p + i + 16 + nextlineSrc);
+		A = *(p - 1 - nextlineSrc); B = *(p - nextlineSrc);
+		D = *(p - 1);               E = *(p);
+		G = *(p - 1 + nextlineSrc); H = *(p + nextlineSrc);
 
-			PROCESS_XBR_PIXEL(i);
-			PROCESS_XBR_PIXEL(i + 1);
-			PROCESS_XBR_PIXEL(i + 2);
-			PROCESS_XBR_PIXEL(i + 3);
-			PROCESS_XBR_PIXEL(i + 4);
-			PROCESS_XBR_PIXEL(i + 5);
-			PROCESS_XBR_PIXEL(i + 6);
-			PROCESS_XBR_PIXEL(i + 7);
+		int i = 0;
+		for (; i <= width - 8;) {
+			DCBT(p + i + 16 - nextlineSrc); DCBT(p + i + 16); DCBT(p + i + 16 + nextlineSrc);
+			PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW();
+			PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW();
 		}
-		// Remainder loop
-		for (; i < width; i++) {
-			PROCESS_XBR_PIXEL(i);
-		}
-		p += nextlineSrc;
-		Ep += nextlineDst << 1;
+		for (; i < width;) { PROCESS_XBR_WINDOW(); }
+
+		p += nextlineSrc; Ep += nextlineDst << 1;
 	}
-	#undef PROCESS_XBR_PIXEL
 }
+
+#define PROCESS_XBRLV1_WINDOW() \
+    C = *(p + i + 1 - nextlineSrc); F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
+    E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
+    Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; \
+    if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
+        XBRLV1( E, I, H, F, G, C, D, B, A, E0, E1, E2, E3); \
+        XBRLV1( E, C, F, B, I, A, H, D, G, E2, E0, E3, E1); \
+        XBRLV1( E, A, B, D, C, G, F, H, I, E3, E2, E1, E0); \
+        XBRLV1( E, G, D, H, A, I, B, F, C, E1, E3, E0, E2); \
+    } \
+    A=B; B=C; D=E; E=F; G=H; H=I; i++;
 
 template<int GuiScale>
 void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
@@ -1023,54 +981,36 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
 		return;
 	}
 
-	uint32 wd1, wd2;
-	uint32 irlv1;
-	uint32 E0, E1, E2, E3;
-	uint16 px;
-
+	uint32 wd1, wd2, irlv1, E0, E1, E2, E3;
+	uint16 A, B, C, D, E, F, G, H, I, px;
 	uint32 nextlineSrc = srcPitch / sizeof(uint16);
 	uint16 *p  = (uint16 *)srcPtr;
 	uint32 nextlineDst = dstPitch / sizeof(uint16);
 	uint16 *Ep = (uint16 *)dstPtr;
 
-	#define PROCESS_XBRLV1_PIXEL(idx) \
-		E0 = (idx << 1); \
-		E1 = (idx << 1) + 1; \
-		E2 = (idx << 1) + nextlineDst; \
-		E3 = (idx << 1) + nextlineDst + 1; \
-		Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = *(p + idx); \
-		if ( (*(p + idx) != *(p + idx + 1) || *(p + idx) != *(p + idx - 1)) && \
-		     (*(p + idx) != *(p + idx + nextlineSrc) || *(p + idx) != *(p + idx - nextlineSrc)) ) { \
-			XBRLV1(*(p + idx), *(p + idx + 1 + nextlineSrc), *(p + idx + nextlineSrc), *(p + idx + 1), *(p + idx - 1 + nextlineSrc), *(p + idx + 1 - nextlineSrc), *(p + idx - 1), *(p + idx - nextlineSrc), *(p + idx - 1 - nextlineSrc), E0, E1, E2, E3); \
-			XBRLV1(*(p + idx), *(p + idx + 1 - nextlineSrc), *(p + idx + 1), *(p + idx - nextlineSrc), *(p + idx + 1 + nextlineSrc), *(p + idx - 1 - nextlineSrc), *(p + idx + nextlineSrc), *(p + idx - 1), *(p + idx - 1 + nextlineSrc), E2, E0, E3, E1); \
-			XBRLV1(*(p + idx), *(p + idx - 1 - nextlineSrc), *(p + idx - nextlineSrc), *(p + idx - 1), *(p + idx + 1 - nextlineSrc), *(p + idx - 1 + nextlineSrc), *(p + idx + 1), *(p + idx + nextlineSrc), *(p + idx + 1 + nextlineSrc), E3, E2, E1, E0); \
-			XBRLV1(*(p + idx), *(p + idx - 1 + nextlineSrc), *(p + idx - 1), *(p + idx + nextlineSrc), *(p + idx - 1 - nextlineSrc), *(p + idx + 1 + nextlineSrc), *(p + idx - nextlineSrc), *(p + idx + 1), *(p + idx + 1 - nextlineSrc), E1, E3, E0, E2); \
-		}
-
 	while (height--) {
-		int i = 0;
-		for (; i <= width - 8; i += 8) {
-			DCBT(p + i + 16 - nextlineSrc);
-			DCBT(p + i + 16);
-			DCBT(p + i + 16 + nextlineSrc);
+		A = *(p - 1 - nextlineSrc); B = *(p - nextlineSrc);
+		D = *(p - 1);               E = *(p);
+		G = *(p - 1 + nextlineSrc); H = *(p + nextlineSrc);
 
-			PROCESS_XBRLV1_PIXEL(i);
-			PROCESS_XBRLV1_PIXEL(i + 1);
-			PROCESS_XBRLV1_PIXEL(i + 2);
-			PROCESS_XBRLV1_PIXEL(i + 3);
-			PROCESS_XBRLV1_PIXEL(i + 4);
-			PROCESS_XBRLV1_PIXEL(i + 5);
-			PROCESS_XBRLV1_PIXEL(i + 6);
-			PROCESS_XBRLV1_PIXEL(i + 7);
+		int i = 0;
+		for (; i <= width - 8;) {
+			DCBT(p + i + 16 - nextlineSrc); DCBT(p + i + 16); DCBT(p + i + 16 + nextlineSrc);
+			PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW();
+			PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW();
 		}
-		for (; i < width; i++) {
-			PROCESS_XBRLV1_PIXEL(i);
-		}
-		p += nextlineSrc;
-		Ep += nextlineDst << 1;
+		for (; i < width;) { PROCESS_XBRLV1_WINDOW(); }
+
+		p += nextlineSrc; Ep += nextlineDst << 1;
 	}
-	#undef PROCESS_XBRLV1_PIXEL
 }
+
+#define PROCESS_DDT_WINDOW() \
+    F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
+    E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
+    Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; \
+    if (E!=F || E!=H || F!=I || H!=I) { DDT( E, I, H, F, E0, E1, E2, E3); } \
+    E=F; H=I; i++;
 
 template<int GuiScale>
 void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
@@ -1080,46 +1020,24 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
 	{
 		return;
 	}
-
-	uint32 wd1, wd2;
-	uint32 E0, E1, E2, E3;
-	uint16 aux;
-
+	
+	uint32 wd1, wd2, E0, E1, E2, E3;
+	uint16 E, F, H, I, aux;
 	uint32 nextlineSrc = srcPitch / sizeof(uint16);
 	uint16 *p  = (uint16 *)srcPtr;
 	uint32 nextlineDst = dstPitch / sizeof(uint16);
 	uint16 *Ep = (uint16 *)dstPtr;
 
-	#define PROCESS_DDT_PIXEL(idx) \
-		E0 = (idx << 1); \
-		E1 = (idx << 1) + 1; \
-		E2 = (idx << 1) + nextlineDst; \
-		E3 = (idx << 1) + nextlineDst + 1; \
-		Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = *(p + idx); \
-		if (*(p + idx) != *(p + idx + 1) || *(p + idx) != *(p + idx + nextlineSrc) || *(p + idx + 1) != *(p + idx + 1 + nextlineSrc) || *(p + idx + nextlineSrc) != *(p + idx + 1 + nextlineSrc)) { \
-			DDT(*(p + idx), *(p + idx + 1 + nextlineSrc), *(p + idx + nextlineSrc), *(p + idx + 1), E0, E1, E2, E3); \
-		}
-
 	while (height--) {
+		E = *(p); H = *(p + nextlineSrc);
 		int i = 0;
-		for (; i <= width - 8; i += 8) {
-			DCBT(p + i + 16);
-			DCBT(p + i + 16 + nextlineSrc);
+		for (; i <= width - 8;) {
+			DCBT(p + i + 16); DCBT(p + i + 16 + nextlineSrc);
+			PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW();
+			PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW();
+		}
+		for (; i < width;) { PROCESS_DDT_WINDOW(); }
 
-			PROCESS_DDT_PIXEL(i);
-			PROCESS_DDT_PIXEL(i + 1);
-			PROCESS_DDT_PIXEL(i + 2);
-			PROCESS_DDT_PIXEL(i + 3);
-			PROCESS_DDT_PIXEL(i + 4);
-			PROCESS_DDT_PIXEL(i + 5);
-			PROCESS_DDT_PIXEL(i + 6);
-			PROCESS_DDT_PIXEL(i + 7);
-		}
-		for (; i < width; i++) {
-			PROCESS_DDT_PIXEL(i);
-		}
-		p += nextlineSrc;
-		Ep += nextlineDst << 1;
+		p += nextlineSrc; Ep += nextlineDst << 1;
 	}
-	#undef PROCESS_DDT_PIXEL
 }
