@@ -838,6 +838,28 @@ static const uint16 lb_mask = LB_MASK565;
     Ep[N3] = PF; \
     ALPHA_BLEND_128_W(Ep[N3], PH); \
 
+// -------------------------------------------------------------------------
+// Branchless execution helpers for Gekko/Broadway pipeline optimization
+// -------------------------------------------------------------------------
+static inline uint16 branchless_select(uint32 a, uint32 b, uint16 x, uint16 y) {
+    uint32 mask;
+    // subfc calculates: b + ~a + 1 (which resolves to b - a)
+    // If b >= a (i.e. a <= b), the subtraction sets the Carry flag (CA) to 1.
+    // subfe calculates: mask + ~mask + CA = -1 + CA.
+    // If CA = 1 (a <= b), mask = 0x00000000.
+    // If CA = 0 (a > b), mask = 0xFFFFFFFF.
+    __asm__ volatile (
+        "subfc %0, %1, %2 \n\t"
+        "subfe %0, %0, %0 \n\t"
+        : "=r" (mask)
+        : "r" (a), "r" (b)
+        : "xer"
+    );
+    // Returns x when mask == 0, returns y when mask == 0xFFFFFFFF
+    return x ^ ((x ^ y) & mask);
+}
+#define BRANCHLESS_SELECT(a, b, x, y) branchless_select((a), (b), (x), (y))
+
 #define df(A, B)\
     abs(RGB565_to_Lum(A) - RGB565_to_Lum(B))\
 
@@ -854,7 +876,7 @@ static const uint16 lb_mask = LB_MASK565;
             if ( !eq(PF,PB) && !eq(PF,PC) || !eq(PH,PD) && !eq(PH,PG) || eq(PE,PG) || eq(PE,PC) )\
                 {\
                 dFG=df(PF,PG); dHC=df(PH,PC); \
-                irlv2u = (PE!=PC && PB!=PC); irlv2l = (PE!=PG && PD!=PG); px = (df(PE,PF) <= df(PE,PH)) ? PF : PH; \
+                irlv2u = (PE!=PC && PB!=PC); irlv2l = (PE!=PG && PD!=PG); px = BRANCHLESS_SELECT(df(PE,PF), df(PE,PH), PF, PH); \
                 if ( irlv2l && irlv2u && ((dFG<<1)<=dHC) && (dFG>=(dHC<<1)) ) \
                 {\
                     LEFT_UP_2_2X(N3, N2, N1, px)\
@@ -875,7 +897,7 @@ static const uint16 lb_mask = LB_MASK565;
         }\
         else if (wd1<=wd2)\
         {\
-            px = (df(PE,PF) <= df(PE,PH)) ? PF : PH;\
+            px = BRANCHLESS_SELECT(df(PE,PF), df(PE,PH), PF, PH);\
             ALPHA_BLEND_64_W( Ep[N3], px); \
         }\
     }\
@@ -888,12 +910,12 @@ static const uint16 lb_mask = LB_MASK565;
         wd2 = df(PE,PI); \
         if (((wd1<<1)<wd2) && eq(PB,PD) && PB!=PF && PD!=PH)\
         {\
-                px = (df(PE,PF) <= df(PE,PH)) ? PF : PH; \
+                px = BRANCHLESS_SELECT(df(PE,PF), df(PE,PH), PF, PH); \
                 DIA_2X(N3, px);\
         }\
 	else if (wd1<=wd2)\
         {\
-            px = (df(PE,PF) <= df(PE,PH)) ? PF : PH;\
+            px = BRANCHLESS_SELECT(df(PE,PF), df(PE,PH), PF, PH);\
             ALPHA_BLEND_64_W( Ep[N3], px); \
         }\
     }\
