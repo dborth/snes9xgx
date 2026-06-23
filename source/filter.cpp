@@ -943,7 +943,8 @@ static inline uint16 branchless_select(uint32 a, uint32 b, uint16 x, uint16 y) {
     C = *(p + i + 1 - nextlineSrc); F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
     lC = RGB565_to_Lum(C); lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
     E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
-    Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; \
+    E32 = ((uint32)E << 16) | E; \
+    *(uint32*)&Ep[E0] = E32; *(uint32*)&Ep[E2] = E32; \
     if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
         XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, E0, E1, E2, E3); \
         XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, E2, E0, E3, E1); \
@@ -963,7 +964,7 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 		return;
 	}
 
-	uint32 wd1, wd2, irlv1, irlv2u, irlv2l, dFG, dHC, E0, E1, E2, E3;
+	uint32 wd1, wd2, irlv1, irlv2u, irlv2l, dFG, dHC, E0, E1, E2, E3, E32;
 	uint16 A, B, C, D, E, F, G, H, I, px;
     uint32 lA, lB, lC, lD, lE, lF, lG, lH, lI;
 
@@ -997,7 +998,8 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
     C = *(p + i + 1 - nextlineSrc); F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
     lC = RGB565_to_Lum(C); lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
     E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
-    Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; \
+    E32 = ((uint32)E << 16) | E; \
+    *(uint32*)&Ep[E0] = E32; *(uint32*)&Ep[E2] = E32; \
     if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
         XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, E0, E1, E2, E3); \
         XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, E2, E0, E3, E1); \
@@ -1017,7 +1019,7 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
 		return;
 	}
 
-	uint32 wd1, wd2, irlv1, E0, E1, E2, E3;
+	uint32 wd1, wd2, irlv1, E0, E1, E2, E3, E32;
 	uint16 A, B, C, D, E, F, G, H, I, px;
     uint32 lA, lB, lC, lD, lE, lF, lG, lH, lI;
 
@@ -1051,7 +1053,8 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
     F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
     lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
     E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
-    Ep[E0] = Ep[E1] = Ep[E2] = Ep[E3] = E; \
+    E32 = ((uint32)E << 16) | E; \
+    *(uint32*)&Ep[E0] = E32; *(uint32*)&Ep[E2] = E32; \
     if (E!=F || E!=H || F!=I || H!=I) { DDT( E, I, H, F, lE, lI, lH, lF, E0, E1, E2, E3); } \
     E=F; H=I; \
     lE=lF; lH=lI; \
@@ -1066,7 +1069,7 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
 		return;
 	}
 	
-	uint32 wd1, wd2, E0, E1, E2, E3;
+	uint32 wd1, wd2, E0, E1, E2, E3, E32;
 	uint16 E, F, H, I, aux;
     uint32 lE, lF, lH, lI;
 
