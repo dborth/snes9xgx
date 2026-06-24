@@ -576,9 +576,97 @@ static inline uint32 BranchlessDiff(uint32 c1, uint32 c2) {
 #define EVAL_XS_BIT(bX, avg, diff5_mask, bit) \
     ( ( (-((int)(bX > avg))) ^ diff5_mask ) & (1 << bit) )
 
+// -------------------------------------------------------------------------
+// HQ2X Pipeline Single-Pixel Chunking Macros
+// -------------------------------------------------------------------------
+
+#define PROCESS_HQ2X_PIXEL() do { \
+    sp++; \
+    w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line); \
+    y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9); \
+    pattern = 0; \
+    pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0); \
+    pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1); \
+    pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2); \
+    pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3); \
+    pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4); \
+    pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5); \
+    pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6); \
+    pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7); \
+    if (pattern > 255) __builtin_unreachable(); \
+    switch (pattern) { HQ2XCASES } \
+    w1 = w2; w4 = w5; w7 = w8; \
+    w2 = w3; w5 = w6; w8 = w9; \
+    y1 = y2; y4 = y5; y7 = y8; \
+    y2 = y3; y5 = y6; y8 = y9; \
+    dp += 2; \
+} while(0)
+
+#define PROCESS_HQ2XBOLD_PIXEL() do { \
+    sp++; \
+    w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line); \
+    b3 = inlineRGBtoBright(w3); b6 = inlineRGBtoBright(w6); b9 = inlineRGBtoBright(w9); \
+    uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9; \
+    uint32 diff5_mask = -((int)(b5 > avg)); \
+    pattern = 0; \
+    pattern |= EVAL_BOLD_BIT(w1, w5, b1, avg, diff5_mask, 0); \
+    pattern |= EVAL_BOLD_BIT(w2, w5, b2, avg, diff5_mask, 1); \
+    pattern |= EVAL_BOLD_BIT(w3, w5, b3, avg, diff5_mask, 2); \
+    pattern |= EVAL_BOLD_BIT(w4, w5, b4, avg, diff5_mask, 3); \
+    pattern |= EVAL_BOLD_BIT(w6, w5, b6, avg, diff5_mask, 4); \
+    pattern |= EVAL_BOLD_BIT(w7, w5, b7, avg, diff5_mask, 5); \
+    pattern |= EVAL_BOLD_BIT(w8, w5, b8, avg, diff5_mask, 6); \
+    pattern |= EVAL_BOLD_BIT(w9, w5, b9, avg, diff5_mask, 7); \
+    if (pattern > 255) __builtin_unreachable(); \
+    switch (pattern) { HQ2XCASES } \
+    w1 = w2; w4 = w5; w7 = w8; \
+    w2 = w3; w5 = w6; w8 = w9; \
+    b1 = b2; b4 = b5; b7 = b8; \
+    b2 = b3; b5 = b6; b8 = b9; \
+    dp += 2; \
+} while(0)
+
+#define PROCESS_HQ2XS_PIXEL() do { \
+    sp++; \
+    w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line); \
+    y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9); \
+    pattern = 0; \
+    uint32 match = (w1 == w5) | (w3 == w5) | (w7 == w5) | (w9 == w5); \
+    if (!match) { \
+        uint16 b1 = inlineRGBtoBright(w1); uint16 b2 = inlineRGBtoBright(w2); uint16 b3 = inlineRGBtoBright(w3); \
+        uint16 b4 = inlineRGBtoBright(w4); uint16 b5 = inlineRGBtoBright(w5); uint16 b6 = inlineRGBtoBright(w6); \
+        uint16 b7 = inlineRGBtoBright(w7); uint16 b8 = inlineRGBtoBright(w8); uint16 b9 = inlineRGBtoBright(w9); \
+        uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9; \
+        uint32 diff5_mask = -((int)(b5 > avg)); \
+        pattern |= EVAL_XS_BIT(b1, avg, diff5_mask, 0); \
+        pattern |= EVAL_XS_BIT(b2, avg, diff5_mask, 1); \
+        pattern |= EVAL_XS_BIT(b3, avg, diff5_mask, 2); \
+        pattern |= EVAL_XS_BIT(b4, avg, diff5_mask, 3); \
+        pattern |= EVAL_XS_BIT(b6, avg, diff5_mask, 4); \
+        pattern |= EVAL_XS_BIT(b7, avg, diff5_mask, 5); \
+        pattern |= EVAL_XS_BIT(b8, avg, diff5_mask, 6); \
+        pattern |= EVAL_XS_BIT(b9, avg, diff5_mask, 7); \
+    } else { \
+        pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0); \
+        pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1); \
+        pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2); \
+        pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3); \
+        pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4); \
+        pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5); \
+        pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6); \
+        pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7); \
+    } \
+    if (pattern > 255) __builtin_unreachable(); \
+    switch (pattern) { HQ2XCASES } \
+    w1 = w2; w4 = w5; w7 = w8; \
+    w2 = w3; w5 = w6; w8 = w9; \
+    y1 = y2; y4 = y5; y7 = y8; \
+    y2 = y3; y5 = y6; y8 = y9; \
+    dp += 2; \
+} while(0)
 
 // -------------------------------------------------------------------------
-// Optimized HQ2X Render Loop (Unrolled x2 + Static LUT Jump Table)
+// Optimized HQ2X Render Loop (Branchless DCBZ + DCBT Chunking)
 // -------------------------------------------------------------------------
 template<int GuiScale>
 void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
@@ -613,79 +701,34 @@ void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
             w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
             y2 = inlineRGBtoYUV(w2); y5 = inlineRGBtoYUV(w5); y8 = inlineRGBtoYUV(w8);
 
-            // Unrolled by 2
-            for (int l = width >> 1; l; l--) {
-                // --- PIXEL 1 ---
-                sp++;
-                DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+            int w = width;
 
-                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
-
-                pattern = 0;
-                pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
-                pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
-                pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
-                pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
-                pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
-                pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
-                pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
-                pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
-
-                if (pattern > 255) __builtin_unreachable(); // Forces raw LUT generation
-                switch (pattern) { HQ2XCASES }
-
-                w1 = w2; w4 = w5; w7 = w8;
-                w2 = w3; w5 = w6; w8 = w9;
-                y1 = y2; y4 = y5; y7 = y8;
-                y2 = y3; y5 = y6; y8 = y9;
-                dp += 2;
-
-                // --- PIXEL 2 ---
-                sp++;
-                // Notice: No DCBT here! Halves memory cache interface pressure.
-                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
-
-                pattern = 0;
-                pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
-                pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
-                pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
-                pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
-                pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
-                pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
-                pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
-                pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
-
-                if (pattern > 255) __builtin_unreachable();
-                switch (pattern) { HQ2XCASES }
-
-                w1 = w2; w4 = w5; w7 = w8;
-                w2 = w3; w5 = w6; w8 = w9;
-                y1 = y2; y4 = y5; y7 = y8;
-                y2 = y3; y5 = y6; y8 = y9;
-                dp += 2;
+            while (((uint32)dp & 0x1F) != 0 && w > 0) {
+                PROCESS_HQ2X_PIXEL();
+                w--;
             }
 
-            // Trailing pixel handler (If width is odd)
-            if (width & 1) {
-                sp++;
-                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
+            int chunks = w >> 3;
+            int tail = w & 7;
+            bool bot_aligned = (((uint32)(dp + dst1line) & 0x1F) == 0);
 
-                pattern = 0;
-                pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
-                pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
-                pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
-                pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
-                pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
-                pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
-                pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
-                pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
+            if (bot_aligned) {
+                while (chunks--) {
+                    __asm__ volatile ("dcbz 0, %0" :: "r" (dp));
+                    __asm__ volatile ("dcbz 0, %0" :: "r" (dp + dst1line));
+                    DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+                    for(int i=0; i<8; i++) { PROCESS_HQ2X_PIXEL(); }
+                }
+            } else {
+                while (chunks--) {
+                    __asm__ volatile ("dcbz 0, %0" :: "r" (dp));
+                    DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+                    for(int i=0; i<8; i++) { PROCESS_HQ2X_PIXEL(); }
+                }
+            }
 
-                if (pattern > 255) __builtin_unreachable();
-                switch (pattern) { HQ2XCASES }
-                dp += 2;
+            while (tail--) {
+                PROCESS_HQ2X_PIXEL();
             }
 
             dp += ((dst1line - width) << 1);
@@ -708,85 +751,34 @@ void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
             w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
             b2 = inlineRGBtoBright(w2); b5 = inlineRGBtoBright(w5); b8 = inlineRGBtoBright(w8);
 
-            for (int l = width >> 1; l; l--) {
-                // --- PIXEL 1 ---
-                sp++;
-                DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+            int w = width;
 
-                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-                b3 = inlineRGBtoBright(w3); b6 = inlineRGBtoBright(w6); b9 = inlineRGBtoBright(w9);
-
-                uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
-                uint32 diff5_mask = -((int)(b5 > avg));
-
-                pattern = 0;
-                pattern |= EVAL_BOLD_BIT(w1, w5, b1, avg, diff5_mask, 0);
-                pattern |= EVAL_BOLD_BIT(w2, w5, b2, avg, diff5_mask, 1);
-                pattern |= EVAL_BOLD_BIT(w3, w5, b3, avg, diff5_mask, 2);
-                pattern |= EVAL_BOLD_BIT(w4, w5, b4, avg, diff5_mask, 3);
-                pattern |= EVAL_BOLD_BIT(w6, w5, b6, avg, diff5_mask, 4);
-                pattern |= EVAL_BOLD_BIT(w7, w5, b7, avg, diff5_mask, 5);
-                pattern |= EVAL_BOLD_BIT(w8, w5, b8, avg, diff5_mask, 6);
-                pattern |= EVAL_BOLD_BIT(w9, w5, b9, avg, diff5_mask, 7);
-
-                if (pattern > 255) __builtin_unreachable();
-                switch (pattern) { HQ2XCASES }
-
-                w1 = w2; w4 = w5; w7 = w8;
-                w2 = w3; w5 = w6; w8 = w9;
-                b1 = b2; b4 = b5; b7 = b8;
-                b2 = b3; b5 = b6; b8 = b9;
-                dp += 2;
-
-                // --- PIXEL 2 ---
-                sp++;
-                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-                b3 = inlineRGBtoBright(w3); b6 = inlineRGBtoBright(w6); b9 = inlineRGBtoBright(w9);
-
-                avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
-                diff5_mask = -((int)(b5 > avg));
-
-                pattern = 0;
-                pattern |= EVAL_BOLD_BIT(w1, w5, b1, avg, diff5_mask, 0);
-                pattern |= EVAL_BOLD_BIT(w2, w5, b2, avg, diff5_mask, 1);
-                pattern |= EVAL_BOLD_BIT(w3, w5, b3, avg, diff5_mask, 2);
-                pattern |= EVAL_BOLD_BIT(w4, w5, b4, avg, diff5_mask, 3);
-                pattern |= EVAL_BOLD_BIT(w6, w5, b6, avg, diff5_mask, 4);
-                pattern |= EVAL_BOLD_BIT(w7, w5, b7, avg, diff5_mask, 5);
-                pattern |= EVAL_BOLD_BIT(w8, w5, b8, avg, diff5_mask, 6);
-                pattern |= EVAL_BOLD_BIT(w9, w5, b9, avg, diff5_mask, 7);
-
-                if (pattern > 255) __builtin_unreachable();
-                switch (pattern) { HQ2XCASES }
-
-                w1 = w2; w4 = w5; w7 = w8;
-                w2 = w3; w5 = w6; w8 = w9;
-                b1 = b2; b4 = b5; b7 = b8;
-                b2 = b3; b5 = b6; b8 = b9;
-                dp += 2;
+            while (((uint32)dp & 0x1F) != 0 && w > 0) {
+                PROCESS_HQ2XBOLD_PIXEL();
+                w--;
             }
 
-            if (width & 1) {
-                sp++;
-                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-                b3 = inlineRGBtoBright(w3); b6 = inlineRGBtoBright(w6); b9 = inlineRGBtoBright(w9);
+            int chunks = w >> 3;
+            int tail = w & 7;
+            bool bot_aligned = (((uint32)(dp + dst1line) & 0x1F) == 0);
 
-                uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
-                uint32 diff5_mask = -((int)(b5 > avg));
+            if (bot_aligned) {
+                while (chunks--) {
+                    __asm__ volatile ("dcbz 0, %0" :: "r" (dp));
+                    __asm__ volatile ("dcbz 0, %0" :: "r" (dp + dst1line));
+                    DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+                    for(int i=0; i<8; i++) { PROCESS_HQ2XBOLD_PIXEL(); }
+                }
+            } else {
+                while (chunks--) {
+                    __asm__ volatile ("dcbz 0, %0" :: "r" (dp));
+                    DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+                    for(int i=0; i<8; i++) { PROCESS_HQ2XBOLD_PIXEL(); }
+                }
+            }
 
-                pattern = 0;
-                pattern |= EVAL_BOLD_BIT(w1, w5, b1, avg, diff5_mask, 0);
-                pattern |= EVAL_BOLD_BIT(w2, w5, b2, avg, diff5_mask, 1);
-                pattern |= EVAL_BOLD_BIT(w3, w5, b3, avg, diff5_mask, 2);
-                pattern |= EVAL_BOLD_BIT(w4, w5, b4, avg, diff5_mask, 3);
-                pattern |= EVAL_BOLD_BIT(w6, w5, b6, avg, diff5_mask, 4);
-                pattern |= EVAL_BOLD_BIT(w7, w5, b7, avg, diff5_mask, 5);
-                pattern |= EVAL_BOLD_BIT(w8, w5, b8, avg, diff5_mask, 6);
-                pattern |= EVAL_BOLD_BIT(w9, w5, b9, avg, diff5_mask, 7);
-
-                if (pattern > 255) __builtin_unreachable();
-                switch (pattern) { HQ2XCASES }
-                dp += 2;
+            while (tail--) {
+                PROCESS_HQ2XBOLD_PIXEL();
             }
 
             dp += ((dst1line - width) << 1);
@@ -809,136 +801,34 @@ void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
             w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
             y2 = inlineRGBtoYUV(w2); y5 = inlineRGBtoYUV(w5); y8 = inlineRGBtoYUV(w8);
 
-            for (int l = width >> 1; l; l--) {
-                // --- PIXEL 1 ---
-                sp++;
-                DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+            int w = width;
 
-                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
-
-                pattern = 0;
-                uint32 match = (w1 == w5) | (w3 == w5) | (w7 == w5) | (w9 == w5);
-
-                if (!match) {
-                    uint16 b1 = inlineRGBtoBright(w1); uint16 b2 = inlineRGBtoBright(w2); uint16 b3 = inlineRGBtoBright(w3);
-                    uint16 b4 = inlineRGBtoBright(w4); uint16 b5 = inlineRGBtoBright(w5); uint16 b6 = inlineRGBtoBright(w6);
-                    uint16 b7 = inlineRGBtoBright(w7); uint16 b8 = inlineRGBtoBright(w8); uint16 b9 = inlineRGBtoBright(w9);
-
-                    uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
-                    uint32 diff5_mask = -((int)(b5 > avg));
-
-                    pattern |= EVAL_XS_BIT(b1, avg, diff5_mask, 0);
-                    pattern |= EVAL_XS_BIT(b2, avg, diff5_mask, 1);
-                    pattern |= EVAL_XS_BIT(b3, avg, diff5_mask, 2);
-                    pattern |= EVAL_XS_BIT(b4, avg, diff5_mask, 3);
-                    pattern |= EVAL_XS_BIT(b6, avg, diff5_mask, 4);
-                    pattern |= EVAL_XS_BIT(b7, avg, diff5_mask, 5);
-                    pattern |= EVAL_XS_BIT(b8, avg, diff5_mask, 6);
-                    pattern |= EVAL_XS_BIT(b9, avg, diff5_mask, 7);
-                } else {
-                    pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
-                    pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
-                    pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
-                    pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
-                    pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
-                    pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
-                    pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
-                    pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
-                }
-
-                if (pattern > 255) __builtin_unreachable();
-                switch (pattern) { HQ2XCASES }
-
-                w1 = w2; w4 = w5; w7 = w8;
-                w2 = w3; w5 = w6; w8 = w9;
-                y1 = y2; y4 = y5; y7 = y8;
-                y2 = y3; y5 = y6; y8 = y9;
-                dp += 2;
-
-                // --- PIXEL 2 ---
-                sp++;
-                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
-
-                pattern = 0;
-                match = (w1 == w5) | (w3 == w5) | (w7 == w5) | (w9 == w5);
-
-                if (!match) {
-                    uint16 b1 = inlineRGBtoBright(w1); uint16 b2 = inlineRGBtoBright(w2); uint16 b3 = inlineRGBtoBright(w3);
-                    uint16 b4 = inlineRGBtoBright(w4); uint16 b5 = inlineRGBtoBright(w5); uint16 b6 = inlineRGBtoBright(w6);
-                    uint16 b7 = inlineRGBtoBright(w7); uint16 b8 = inlineRGBtoBright(w8); uint16 b9 = inlineRGBtoBright(w9);
-
-                    uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
-                    uint32 diff5_mask = -((int)(b5 > avg));
-
-                    pattern |= EVAL_XS_BIT(b1, avg, diff5_mask, 0);
-                    pattern |= EVAL_XS_BIT(b2, avg, diff5_mask, 1);
-                    pattern |= EVAL_XS_BIT(b3, avg, diff5_mask, 2);
-                    pattern |= EVAL_XS_BIT(b4, avg, diff5_mask, 3);
-                    pattern |= EVAL_XS_BIT(b6, avg, diff5_mask, 4);
-                    pattern |= EVAL_XS_BIT(b7, avg, diff5_mask, 5);
-                    pattern |= EVAL_XS_BIT(b8, avg, diff5_mask, 6);
-                    pattern |= EVAL_XS_BIT(b9, avg, diff5_mask, 7);
-                } else {
-                    pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
-                    pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
-                    pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
-                    pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
-                    pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
-                    pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
-                    pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
-                    pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
-                }
-
-                if (pattern > 255) __builtin_unreachable();
-                switch (pattern) { HQ2XCASES }
-
-                w1 = w2; w4 = w5; w7 = w8;
-                w2 = w3; w5 = w6; w8 = w9;
-                y1 = y2; y4 = y5; y7 = y8;
-                y2 = y3; y5 = y6; y8 = y9;
-                dp += 2;
+            while (((uint32)dp & 0x1F) != 0 && w > 0) {
+                PROCESS_HQ2XS_PIXEL();
+                w--;
             }
 
-            if (width & 1) {
-                sp++;
-                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
+            int chunks = w >> 3;
+            int tail = w & 7;
+            bool bot_aligned = (((uint32)(dp + dst1line) & 0x1F) == 0);
 
-                pattern = 0;
-                uint32 match = (w1 == w5) | (w3 == w5) | (w7 == w5) | (w9 == w5);
-
-                if (!match) {
-                    uint16 b1 = inlineRGBtoBright(w1); uint16 b2 = inlineRGBtoBright(w2); uint16 b3 = inlineRGBtoBright(w3);
-                    uint16 b4 = inlineRGBtoBright(w4); uint16 b5 = inlineRGBtoBright(w5); uint16 b6 = inlineRGBtoBright(w6);
-                    uint16 b7 = inlineRGBtoBright(w7); uint16 b8 = inlineRGBtoBright(w8); uint16 b9 = inlineRGBtoBright(w9);
-
-                    uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
-                    uint32 diff5_mask = -((int)(b5 > avg));
-
-                    pattern |= EVAL_XS_BIT(b1, avg, diff5_mask, 0);
-                    pattern |= EVAL_XS_BIT(b2, avg, diff5_mask, 1);
-                    pattern |= EVAL_XS_BIT(b3, avg, diff5_mask, 2);
-                    pattern |= EVAL_XS_BIT(b4, avg, diff5_mask, 3);
-                    pattern |= EVAL_XS_BIT(b6, avg, diff5_mask, 4);
-                    pattern |= EVAL_XS_BIT(b7, avg, diff5_mask, 5);
-                    pattern |= EVAL_XS_BIT(b8, avg, diff5_mask, 6);
-                    pattern |= EVAL_XS_BIT(b9, avg, diff5_mask, 7);
-                } else {
-                    pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
-                    pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
-                    pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
-                    pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
-                    pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
-                    pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
-                    pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
-                    pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
+            if (bot_aligned) {
+                while (chunks--) {
+                    __asm__ volatile ("dcbz 0, %0" :: "r" (dp));
+                    __asm__ volatile ("dcbz 0, %0" :: "r" (dp + dst1line));
+                    DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+                    for(int i=0; i<8; i++) { PROCESS_HQ2XS_PIXEL(); }
                 }
+            } else {
+                while (chunks--) {
+                    __asm__ volatile ("dcbz 0, %0" :: "r" (dp));
+                    DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+                    for(int i=0; i<8; i++) { PROCESS_HQ2XS_PIXEL(); }
+                }
+            }
 
-                if (pattern > 255) __builtin_unreachable();
-                switch (pattern) { HQ2XCASES }
-                dp += 2;
+            while (tail--) {
+                PROCESS_HQ2XS_PIXEL();
             }
 
             dp += ((dst1line - width) << 1);
@@ -1349,7 +1239,31 @@ static inline uint32 branchless_abs_diff(uint32 a, uint32 b) {
         }
 
 // -------------------------------------------------------------------------
-// Optimized Render2xBR (Explicit Register Pinning & lhzu Window Sliding)
+// Helper Macros for chunked 2xBR execution (DCBT hoisted)
+// -------------------------------------------------------------------------
+#define PROCESS_2XBR_PIXEL() \
+    __asm__ volatile ( \
+        "lhzu %[C], 2(%[ptop]) \n\t" \
+        "lhzu %[F], 2(%[pmid]) \n\t" \
+        "lhzu %[I], 2(%[pbot]) \n\t" \
+        : [C] "=r" (C), [F] "=r" (F), [I] "=r" (I), \
+          [ptop] "+b" (p_top), [pmid] "+b" (p_mid), [pbot] "+b" (p_bot) \
+    ); \
+    lC = RGB565_to_Lum(C); lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
+    uint32 E32 = ((uint32)E << 16) | E; \
+    *(uint32*)&Ep[0] = E32; *(uint32*)&Ep[nextlineDst] = E32; \
+    if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
+        XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1); \
+        XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1); \
+        XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0); \
+        XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst); \
+    } \
+    A=B; B=C; D=E; E=F; G=H; H=I; \
+    lA=lB; lB=lC; lD=lE; lE=lF; lG=lH; lH=lI; \
+    Ep += 2;
+
+// -------------------------------------------------------------------------
+// Optimized Render2xBR (Explicit Register Pinning & DCBZ/DCBT Chunking)
 // -------------------------------------------------------------------------
 template<int GuiScale>
 void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
@@ -1400,42 +1314,36 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
         p_top++; p_mid++; p_bot++;
 
         int w = width;
-        while (w--) {
-            // Pre-fetch 16 bytes ahead
-            DCBT(p_mid + 8);
 
-            __asm__ volatile (
-                "lhzu %[C], 2(%[ptop]) \n\t"
-                "lhzu %[F], 2(%[pmid]) \n\t"
-                "lhzu %[I], 2(%[pbot]) \n\t"
-                : [C] "=r" (C), [F] "=r" (F), [I] "=r" (I),
-                  [ptop] "+b" (p_top), [pmid] "+b" (p_mid), [pbot] "+b" (p_bot)
-            );
+        // Phase 1: Advance pixel-by-pixel until Destination Cache Line is 32-Byte aligned
+        while (((uint32)Ep & 0x1F) != 0 && w > 0) {
+            PROCESS_2XBR_PIXEL();
+            w--;
+        }
 
-            lC = RGB565_to_Lum(C);
-            lF = RGB565_to_Lum(F);
-            lI = RGB565_to_Lum(I);
+        // Phase 2: DCBZ Chunking
+        int chunks = w >> 3;
+        int tail = w & 7;
+        bool bot_aligned = (((uint32)(Ep + nextlineDst) & 0x1F) == 0);
 
-            uint32 E32 = ((uint32)E << 16) | E;
-            *(uint32*)&Ep[0] = E32;
-            *(uint32*)&Ep[nextlineDst] = E32;
-
-            if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
-                XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
-                XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
-                XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
-                XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+        if (bot_aligned) {
+            while (chunks--) {
+                __asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
+                __asm__ volatile ("dcbz 0, %0" :: "r" (Ep + nextlineDst));
+                DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
+                for(int i=0; i<8; i++) { PROCESS_2XBR_PIXEL(); }
             }
+        } else {
+            while (chunks--) {
+                __asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
+                DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
+                for(int i=0; i<8; i++) { PROCESS_2XBR_PIXEL(); }
+            }
+        }
 
-            // Shift register window
-            A=B; B=C;
-            D=E; E=F;
-            G=H; H=I;
-            lA=lB; lB=lC;
-            lD=lE; lE=lF;
-            lG=lH; lH=lI;
-
-            Ep += 2;
+        // Phase 3: Trailing pixels
+        while (tail--) {
+            PROCESS_2XBR_PIXEL();
         }
 
         p_top_base += nextlineSrc;
@@ -1446,7 +1354,31 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 }
 
 // -------------------------------------------------------------------------
-// Optimized Render2xBRlv1
+// Helper Macros for chunked 2xBRlv1 execution
+// -------------------------------------------------------------------------
+#define PROCESS_2XBRLV1_PIXEL() \
+    __asm__ volatile ( \
+        "lhzu %[C], 2(%[ptop]) \n\t" \
+        "lhzu %[F], 2(%[pmid]) \n\t" \
+        "lhzu %[I], 2(%[pbot]) \n\t" \
+        : [C] "=r" (C), [F] "=r" (F), [I] "=r" (I), \
+          [ptop] "+b" (p_top), [pmid] "+b" (p_mid), [pbot] "+b" (p_bot) \
+    ); \
+    lC = RGB565_to_Lum(C); lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
+    uint32 E32 = ((uint32)E << 16) | E; \
+    *(uint32*)&Ep[0] = E32; *(uint32*)&Ep[nextlineDst] = E32; \
+    if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
+        XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1); \
+        XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1); \
+        XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0); \
+        XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst); \
+    } \
+    A=B; B=C; D=E; E=F; G=H; H=I; \
+    lA=lB; lB=lC; lD=lE; lE=lF; lG=lH; lH=lI; \
+    Ep += 2;
+
+// -------------------------------------------------------------------------
+// Optimized Render2xBRlv1 (Explicit Register Pinning & DCBZ/DCBT Chunking)
 // -------------------------------------------------------------------------
 template<int GuiScale>
 void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
@@ -1493,40 +1425,33 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
         p_top++; p_mid++; p_bot++;
 
         int w = width;
-        while (w--) {
-            DCBT(p_mid + 8);
 
-            __asm__ volatile (
-                "lhzu %[C], 2(%[ptop]) \n\t"
-                "lhzu %[F], 2(%[pmid]) \n\t"
-                "lhzu %[I], 2(%[pbot]) \n\t"
-                : [C] "=r" (C), [F] "=r" (F), [I] "=r" (I),
-                  [ptop] "+b" (p_top), [pmid] "+b" (p_mid), [pbot] "+b" (p_bot)
-            );
+        while (((uint32)Ep & 0x1F) != 0 && w > 0) {
+            PROCESS_2XBRLV1_PIXEL();
+            w--;
+        }
 
-            lC = RGB565_to_Lum(C);
-            lF = RGB565_to_Lum(F);
-            lI = RGB565_to_Lum(I);
+        int chunks = w >> 3;
+        int tail = w & 7;
+        bool bot_aligned = (((uint32)(Ep + nextlineDst) & 0x1F) == 0);
 
-            uint32 E32 = ((uint32)E << 16) | E;
-            *(uint32*)&Ep[0] = E32;
-            *(uint32*)&Ep[nextlineDst] = E32;
-
-            if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
-                XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
-                XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
-                XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
-                XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+        if (bot_aligned) {
+            while (chunks--) {
+                __asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
+                __asm__ volatile ("dcbz 0, %0" :: "r" (Ep + nextlineDst));
+                DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
+                for(int i=0; i<8; i++) { PROCESS_2XBRLV1_PIXEL(); }
             }
+        } else {
+            while (chunks--) {
+                __asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
+                DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
+                for(int i=0; i<8; i++) { PROCESS_2XBRLV1_PIXEL(); }
+            }
+        }
 
-            A=B; B=C;
-            D=E; E=F;
-            G=H; H=I;
-            lA=lB; lB=lC;
-            lD=lE; lE=lF;
-            lG=lH; lH=lI;
-
-            Ep += 2;
+        while (tail--) {
+            PROCESS_2XBRLV1_PIXEL();
         }
 
         p_top_base += nextlineSrc;
@@ -1537,7 +1462,26 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
 }
 
 // -------------------------------------------------------------------------
-// Optimized RenderDDT
+// Helper Macros for chunked DDT execution
+// -------------------------------------------------------------------------
+#define PROCESS_DDT_PIXEL() \
+    __asm__ volatile ( \
+        "lhzu %[F], 2(%[pmid]) \n\t" \
+        "lhzu %[I], 2(%[pbot]) \n\t" \
+        : [F] "=r" (F), [I] "=r" (I), \
+          [pmid] "+b" (p_mid), [pbot] "+b" (p_bot) \
+    ); \
+    lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
+    uint32 E32 = ((uint32)E << 16) | E; \
+    *(uint32*)&Ep[0] = E32; *(uint32*)&Ep[nextlineDst] = E32; \
+    if (E!=F || E!=H || F!=I || H!=I) { \
+        DDT( E, I, H, F, lE, lI, lH, lF, 0, 1, nextlineDst, nextlineDst + 1); \
+    } \
+    E=F; H=I; lE=lF; lH=lI; \
+    Ep += 2;
+
+// -------------------------------------------------------------------------
+// Optimized RenderDDT (Explicit Register Pinning & DCBZ/DCBT Chunking)
 // -------------------------------------------------------------------------
 template<int GuiScale>
 void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
@@ -1580,31 +1524,33 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
         p_mid++; p_bot++;
 
         int w = width;
-        while (w--) {
-            DCBT(p_mid + 8);
 
-            __asm__ volatile (
-                "lhzu %[F], 2(%[pmid]) \n\t"
-                "lhzu %[I], 2(%[pbot]) \n\t"
-                : [F] "=r" (F), [I] "=r" (I),
-                  [pmid] "+b" (p_mid), [pbot] "+b" (p_bot)
-            );
+        while (((uint32)Ep & 0x1F) != 0 && w > 0) {
+            PROCESS_DDT_PIXEL();
+            w--;
+        }
 
-            lF = RGB565_to_Lum(F);
-            lI = RGB565_to_Lum(I);
+        int chunks = w >> 3;
+        int tail = w & 7;
+        bool bot_aligned = (((uint32)(Ep + nextlineDst) & 0x1F) == 0);
 
-            uint32 E32 = ((uint32)E << 16) | E;
-            *(uint32*)&Ep[0] = E32;
-            *(uint32*)&Ep[nextlineDst] = E32;
-
-            if (E!=F || E!=H || F!=I || H!=I) {
-                DDT( E, I, H, F, lE, lI, lH, lF, 0, 1, nextlineDst, nextlineDst + 1);
+        if (bot_aligned) {
+            while (chunks--) {
+                __asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
+                __asm__ volatile ("dcbz 0, %0" :: "r" (Ep + nextlineDst));
+                DCBT(p_mid + 16); DCBT(p_bot + 16);
+                for(int i=0; i<8; i++) { PROCESS_DDT_PIXEL(); }
             }
+        } else {
+            while (chunks--) {
+                __asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
+                DCBT(p_mid + 16); DCBT(p_bot + 16);
+                for(int i=0; i<8; i++) { PROCESS_DDT_PIXEL(); }
+            }
+        }
 
-            E=F; H=I;
-            lE=lF; lH=lI;
-
-            Ep += 2;
+        while (tail--) {
+            PROCESS_DDT_PIXEL();
         }
 
         p_mid_base += nextlineSrc;
