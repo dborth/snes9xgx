@@ -324,7 +324,7 @@ void GuiKeyboard::Update(GuiTrigger * t)
 
 				if(keyBtn[i][j]->GetState() == STATE_CLICKED)
 				{
-					int len = strlen(kbtextstr);
+					u32 len = strlen(kbtextstr);
 
 					if(len < kbtextmaxlen-1)
 					{

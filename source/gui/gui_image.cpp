@@ -249,7 +249,7 @@ void GuiImage::Draw()
 		int thisHeight = this->GetHeight();
 		int thisWidth = this->GetWidth();
 		for(int y=0; y < thisHeight; y+=6)
-			Menu_DrawRectangle(currLeft,thisTop+y,thisWidth,3,(GXColor){0, 0, 0, stripe},1);
+			Menu_DrawRectangle(currLeft,thisTop+y,thisWidth,3,(GXColor){0, 0, 0, (u8)stripe},1);
 	}
 	this->UpdateEffects();
 }

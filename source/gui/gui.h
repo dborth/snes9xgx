@@ -513,7 +513,7 @@ class GuiWindow : public GuiElement
 		void ResetState();
 		//!Sets the window's state
 		//!\param s State
-		void SetState(int s);
+		void SetState(int s, int c = -1);
 		//!Gets the index of the GuiElement inside the window that is currently selected
 		//!\return index of selected GuiElement
 		int GetSelected();
