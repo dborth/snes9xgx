@@ -707,8 +707,6 @@ void ResetFbWidth(int width, GXRModeObj *rmode)
 void
 ResetVideo_Emu ()
 {
-	SelectFilterMethod(GCSettings.FilterMethod); // Initialize / Re-evaluate active filter
-
 	GXRModeObj *rmode = FindVideoMode();
 
 	Mtx44 p;

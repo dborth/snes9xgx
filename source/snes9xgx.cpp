@@ -33,6 +33,7 @@
 #include "snes9xgx.h"
 #include "networkop.h"
 #include "video.h"
+#include "filter.h"
 #include "audio.h"
 #include "menu.h"
 #include "sram.h"
@@ -556,6 +557,7 @@ int main(int argc, char *argv[])
 		CheckVideo = 2;		// force video update
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;
 		currentMode = GCSettings.render;
+		SelectFilterMethod(GCSettings.FilterMethod); // Initialize / Re-evaluate active filter
 
 		while(1) // emulation loop
 		{
