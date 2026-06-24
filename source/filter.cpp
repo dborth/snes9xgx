@@ -1,15 +1,11 @@
 /****************************************************************************
  * Snes9x Nintendo Wii/Gamecube Port
  *
- * Michniewski 2008
- *
- * HQ2x, HQ3x, HQ4x filters
- * (c) Copyright 2003         Maxim Stepin (maxim@hiend3d.com)
+ * Tantric 2008-2026
  *
  * filter.cpp
- *
- * Adapted from Snes9x Win32/MacOSX ports
- * Video Filter Code (hq2x)
+ * HQ2x, Scale2X, 2xBR, DDT filters
+ * Original code from Michniewski, adapted from Snes9x Win32/MacOSX ports
 ****************************************************************************/
 #include <gccore.h>
 #include <stdio.h>
@@ -28,7 +24,7 @@
 
 #define NUMBITS (16)
 
-// DCBT: Data Cache Block Touch for Gekko/Broadway (32-byte cache lines)
+// Data Cache Block Touch for Gekko/Broadway (32-byte cache lines)
 #define DCBT(ptr) __builtin_prefetch((void*)(ptr), 0, 0)
 
 TFilterMethod FilterMethod;
@@ -144,30 +140,150 @@ static inline int RGB565_to_Lum(uint16 c) {
 #define	trU		0x000700
 #define	trV		0x000006
 
-#define Interp01(c1, c2) \
-((((c1) == (c2)) ? (c1) : \
-(((((((c1) & Mask_2) *  3) + ((c2) & Mask_2)) >> 2) & Mask_2) + \
-((((((c1) & Mask13) *  3) + ((c2) & Mask13)) >> 2) & Mask13))))
+// -------------------------------------------------------------------------
+// Optimized Gekko/Broadway Inline Assembly Interpolation
+// -------------------------------------------------------------------------
 
-#define Interp02(c1, c2, c3) \
-((((((c1) & Mask_2) *  2 + ((c2) & Mask_2)     + ((c3) & Mask_2)    ) >> 2) & Mask_2) + \
-(((((c1) & Mask13) *  2 + ((c2) & Mask13)     + ((c3) & Mask13)    ) >> 2) & Mask13))
+static inline uint16 Interp01(uint16 c1, uint16 c2) {
+    if (c1 == c2) return c1;
+    uint32 out, g1, rb1, g_tmp, rb_tmp;
+    __asm__ volatile (
+        "rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"    // Extract Green (0x07E0)
+        "rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"   // Extract Red/Blue using wrap mask (0xFFFFF81F)
+        "mulli   %[g1], %[g1], 3         \n\t"    // G1 * 3
+        "mulli   %[rb1], %[rb1], 3       \n\t"    // RB1 * 3
+        "rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t" // Interleaved extract to hide mulli latency
+        "rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
+        "add     %[g1], %[g1], %[g_tmp]  \n\t"    // G1*3 + G2
+        "add     %[rb1], %[rb1], %[rb_tmp]\n\t"   // RB1*3 + RB2
+        "rlwinm  %[out], %[g1], 30, 21, 26 \n\t"  // Shift right 2 (left 30) & mask G
+        "rlwimi  %[out], %[rb1], 30, 27, 20 \n\t" // Shift right 2 & mask Insert RB into output
+        : [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
+        : [c1] "r" (c1), [c2] "r" (c2)
+    );
+    return out;
+}
 
-#define Interp06(c1, c2, c3) \
-((((((c1) & Mask_2) *  5 + ((c2) & Mask_2) * 2 + ((c3) & Mask_2)    ) >> 3) & Mask_2) + \
-(((((c1) & Mask13) *  5 + ((c2) & Mask13) * 2 + ((c3) & Mask13)    ) >> 3) & Mask13))
+static inline uint16 Interp02(uint16 c1, uint16 c2, uint16 c3) {
+    uint32 out, g1, rb1, g_tmp, rb_tmp;
+    __asm__ volatile (
+        "rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"
+        "rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"
+        "rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t"
+        "rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
+        "add     %[g1], %[g1], %[g1]     \n\t"    // c1 * 2
+        "add     %[rb1], %[rb1], %[rb1]  \n\t"
+        "add     %[g1], %[g1], %[g_tmp]  \n\t"    // + c2
+        "add     %[rb1], %[rb1], %[rb_tmp]\n\t"
+        "rlwinm  %[g_tmp], %[c3], 0, 21, 26 \n\t"
+        "rlwinm  %[rb_tmp], %[c3], 0, 27, 20 \n\t"
+        "add     %[g1], %[g1], %[g_tmp]  \n\t"    // + c3
+        "add     %[rb1], %[rb1], %[rb_tmp]\n\t"
+        "rlwinm  %[out], %[g1], 30, 21, 26 \n\t"  // >> 2
+        "rlwimi  %[out], %[rb1], 30, 27, 20 \n\t"
+        : [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
+        : [c1] "r" (c1), [c2] "r" (c2), [c3] "r" (c3)
+    );
+    return out;
+}
 
-#define Interp07(c1, c2, c3) \
-((((((c1) & Mask_2) *  6 + ((c2) & Mask_2)     + ((c3) & Mask_2)    ) >> 3) & Mask_2) + \
-(((((c1) & Mask13) *  6 + ((c2) & Mask13)     + ((c3) & Mask13)    ) >> 3) & Mask13))
+static inline uint16 Interp06(uint16 c1, uint16 c2, uint16 c3) {
+    uint32 out, g1, rb1, g_tmp, rb_tmp;
+    __asm__ volatile (
+        "rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"
+        "rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"
+        "mulli   %[g1], %[g1], 5         \n\t"
+        "mulli   %[rb1], %[rb1], 5       \n\t"
+        "rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t"
+        "rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
+        "add     %[g_tmp], %[g_tmp], %[g_tmp] \n\t" // c2 * 2
+        "add     %[rb_tmp], %[rb_tmp], %[rb_tmp] \n\t"
+        "add     %[g1], %[g1], %[g_tmp]  \n\t"
+        "add     %[rb1], %[rb1], %[rb_tmp]\n\t"
+        "rlwinm  %[g_tmp], %[c3], 0, 21, 26 \n\t"
+        "rlwinm  %[rb_tmp], %[c3], 0, 27, 20 \n\t"
+        "add     %[g1], %[g1], %[g_tmp]  \n\t"
+        "add     %[rb1], %[rb1], %[rb_tmp]\n\t"
+        "rlwinm  %[out], %[g1], 29, 21, 26 \n\t"  // >> 3 (left 29)
+        "rlwimi  %[out], %[rb1], 29, 27, 20 \n\t"
+        : [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
+        : [c1] "r" (c1), [c2] "r" (c2), [c3] "r" (c3)
+    );
+    return out;
+}
 
-#define Interp09(c1, c2, c3) \
-((((((c1) & Mask_2) *  2 + ((c2) & Mask_2) * 3 + ((c3) & Mask_2) * 3) >> 3) & Mask_2) + \
-(((((c1) & Mask13) *  2 + ((c2) & Mask13) * 3 + ((c3) & Mask13) * 3) >> 3) & Mask13))
+static inline uint16 Interp07(uint16 c1, uint16 c2, uint16 c3) {
+    uint32 out, g1, rb1, g_tmp, rb_tmp;
+    __asm__ volatile (
+        "rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"
+        "rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"
+        "mulli   %[g1], %[g1], 6         \n\t"
+        "mulli   %[rb1], %[rb1], 6       \n\t"
+        "rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t"
+        "rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
+        "add     %[g1], %[g1], %[g_tmp]  \n\t"
+        "add     %[rb1], %[rb1], %[rb_tmp]\n\t"
+        "rlwinm  %[g_tmp], %[c3], 0, 21, 26 \n\t"
+        "rlwinm  %[rb_tmp], %[c3], 0, 27, 20 \n\t"
+        "add     %[g1], %[g1], %[g_tmp]  \n\t"
+        "add     %[rb1], %[rb1], %[rb_tmp]\n\t"
+        "rlwinm  %[out], %[g1], 29, 21, 26 \n\t"  // >> 3
+        "rlwimi  %[out], %[rb1], 29, 27, 20 \n\t"
+        : [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
+        : [c1] "r" (c1), [c2] "r" (c2), [c3] "r" (c3)
+    );
+    return out;
+}
 
-#define Interp10(c1, c2, c3) \
-((((((c1) & Mask_2) * 14 + ((c2) & Mask_2)     + ((c3) & Mask_2)    ) >> 4) & Mask_2) + \
-(((((c1) & Mask13) * 14 + ((c2) & Mask13)     + ((c3) & Mask13)    ) >> 4) & Mask13))
+static inline uint16 Interp09(uint16 c1, uint16 c2, uint16 c3) {
+    uint32 out, g1, rb1, g_tmp, rb_tmp;
+    __asm__ volatile (
+        "rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"
+        "rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"
+        "add     %[g1], %[g1], %[g1]     \n\t"    // c1 * 2
+        "add     %[rb1], %[rb1], %[rb1]  \n\t"
+        "rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t"
+        "rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
+        "mulli   %[g_tmp], %[g_tmp], 3   \n\t"    // c2 * 3
+        "mulli   %[rb_tmp], %[rb_tmp], 3 \n\t"
+        "add     %[g1], %[g1], %[g_tmp]  \n\t"
+        "add     %[rb1], %[rb1], %[rb_tmp]\n\t"
+        "rlwinm  %[g_tmp], %[c3], 0, 21, 26 \n\t"
+        "rlwinm  %[rb_tmp], %[c3], 0, 27, 20 \n\t"
+        "mulli   %[g_tmp], %[g_tmp], 3   \n\t"    // c3 * 3
+        "mulli   %[rb_tmp], %[rb_tmp], 3 \n\t"
+        "add     %[g1], %[g1], %[g_tmp]  \n\t"
+        "add     %[rb1], %[rb1], %[rb_tmp]\n\t"
+        "rlwinm  %[out], %[g1], 29, 21, 26 \n\t"  // >> 3
+        "rlwimi  %[out], %[rb1], 29, 27, 20 \n\t"
+        : [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
+        : [c1] "r" (c1), [c2] "r" (c2), [c3] "r" (c3)
+    );
+    return out;
+}
+
+static inline uint16 Interp10(uint16 c1, uint16 c2, uint16 c3) {
+    uint32 out, g1, rb1, g_tmp, rb_tmp;
+    __asm__ volatile (
+        "rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"
+        "rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"
+        "mulli   %[g1], %[g1], 14        \n\t"
+        "mulli   %[rb1], %[rb1], 14      \n\t"
+        "rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t"
+        "rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
+        "add     %[g1], %[g1], %[g_tmp]  \n\t"
+        "add     %[rb1], %[rb1], %[rb_tmp]\n\t"
+        "rlwinm  %[g_tmp], %[c3], 0, 21, 26 \n\t"
+        "rlwinm  %[rb_tmp], %[c3], 0, 27, 20 \n\t"
+        "add     %[g1], %[g1], %[g_tmp]  \n\t"
+        "add     %[rb1], %[rb1], %[rb_tmp]\n\t"
+        "rlwinm  %[out], %[g1], 28, 21, 26 \n\t"  // >> 4 (left 28)
+        "rlwimi  %[out], %[rb1], 28, 27, 20 \n\t"
+        : [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
+        : [c1] "r" (c1), [c2] "r" (c2), [c3] "r" (c3)
+    );
+    return out;
+}
 
 #define PIXEL00_0		*(dp) = w5
 #define PIXEL00_10		*(dp) = Interp01(w5, w1)
@@ -399,128 +515,436 @@ case 223: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXE
 case 247: PIXEL00_11; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_100; PIXEL10_12; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_100; break; \
 case 255: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_100; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_100; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_100; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_100; break;
 
+// -------------------------------------------------------------------------
+// Branchless YUV Difference Evaluator (PowerPC Assembly)
+// Returns 0xFFFFFFFF if the threshold is exceeded, or 0x00000000 if not.
+// -------------------------------------------------------------------------
+static inline uint32 BranchlessDiff(uint32 c1, uint32 c2) {
+    uint32 mask, tmp1, tmp2;
+    __asm__ volatile (
+        // --- Y Component ---
+        "andis. %[tmp1], %[c1], 0xFF00 \n\t"
+        "andis. %[tmp2], %[c2], 0xFF00 \n\t"
+        "subf   %[tmp1], %[tmp2], %[tmp1] \n\t" // tmp1 = c1 - c2
+        "srawi  %[tmp2], %[tmp1], 31 \n\t"      // tmp2 = sign mask (tmp1 >> 31)
+        "xor    %[tmp1], %[tmp1], %[tmp2] \n\t"
+        "subf   %[tmp1], %[tmp2], %[tmp1] \n\t" // tmp1 = abs(c1 - c2)
+        "lis    %[tmp2], 0x0030 \n\t"           // threshold trY = 0x300000
+        "subfc  %[tmp1], %[tmp1], %[tmp2] \n\t" // trY - abs(Y)
+        "subfe  %[mask], %[tmp1], %[tmp1] \n\t" // mask = -1 if borrow (CA=0)
+
+        // --- U Component ---
+        "rlwinm %[tmp1], %[c1], 0, 16, 23 \n\t" // Extract 0x00FF00
+        "rlwinm %[tmp2], %[c2], 0, 16, 23 \n\t"
+        "subf   %[tmp1], %[tmp2], %[tmp1] \n\t"
+        "srawi  %[tmp2], %[tmp1], 31 \n\t"
+        "xor    %[tmp1], %[tmp1], %[tmp2] \n\t"
+        "subf   %[tmp1], %[tmp2], %[tmp1] \n\t"
+        "li     %[tmp2], 0x0700 \n\t"           // threshold trU = 0x0700
+        "subfc  %[tmp1], %[tmp1], %[tmp2] \n\t"
+        "subfe  %[tmp2], %[tmp1], %[tmp1] \n\t"
+        "or     %[mask], %[mask], %[tmp2] \n\t" // Accumulate mask
+
+        // --- V Component ---
+        "rlwinm %[tmp1], %[c1], 0, 24, 31 \n\t" // Extract 0x0000FF
+        "rlwinm %[tmp2], %[c2], 0, 24, 31 \n\t"
+        "subf   %[tmp1], %[tmp2], %[tmp1] \n\t"
+        "srawi  %[tmp2], %[tmp1], 31 \n\t"
+        "xor    %[tmp1], %[tmp1], %[tmp2] \n\t"
+        "subf   %[tmp1], %[tmp2], %[tmp1] \n\t"
+        "li     %[tmp2], 0x0006 \n\t"           // threshold trV = 0x0006
+        "subfc  %[tmp1], %[tmp1], %[tmp2] \n\t"
+        "subfe  %[tmp2], %[tmp1], %[tmp1] \n\t"
+        "or     %[mask], %[mask], %[tmp2] \n\t" // Accumulate mask
+
+        : [mask] "=r" (mask), [tmp1] "=&r" (tmp1), [tmp2] "=&r" (tmp2)
+        : [c1] "r" (c1), [c2] "r" (c2)
+        : "cc"
+    );
+    return mask;
+}
+
+// -------------------------------------------------------------------------
+// Fast Branchless Pattern Evaluation Macros
+// -------------------------------------------------------------------------
+#define EVAL_PATTERN_BIT(wX, w5, yX, y5, bit) \
+    ( (-((int)(wX != w5))) & BranchlessDiff(yX, y5) & (1 << bit) )
+
+#define EVAL_BOLD_BIT(wX, w5, bX, avg, diff5_mask, bit) \
+    ( (-((int)(wX != w5))) & ( (-((int)(bX > avg))) ^ diff5_mask ) & (1 << bit) )
+
+#define EVAL_XS_BIT(bX, avg, diff5_mask, bit) \
+    ( ( (-((int)(bX > avg))) ^ diff5_mask ) & (1 << bit) )
+
+
+// -------------------------------------------------------------------------
+// Optimized HQ2X Render Loop (Unrolled x2 + Static LUT Jump Table)
+// -------------------------------------------------------------------------
 template<int GuiScale>
 void RenderHQ2X (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
 {
-	// If Snes9x is rendering anything in HiRes, then just copy, don't interpolate
-	if (height > SNES_HEIGHT_EXTENDED || width == 512)
-	{
-		return;
-	}
+    // If Snes9x is rendering anything in HiRes, then just copy, don't interpolate
+    if (height > SNES_HEIGHT_EXTENDED || width == 512)
+    {
+        return;
+    }
 
-	int	w1, w2, w3, w4, w5, w6, w7, w8, w9;
+    uint32 src1line = srcPitch >> 1;
+    uint32 dst1line = dstPitch >> 1;
+    uint16 *sp = (uint16 *) srcPtr;
+    uint16 *dp = (uint16 *) dstPtr;
 
-	uint32	src1line = srcPitch >> 1;
-	uint32	dst1line = dstPitch >> 1;
-	uint16	*sp = (uint16 *) srcPtr;
-	uint16	*dp = (uint16 *) dstPtr;
+    int w1, w2, w3, w4, w5, w6, w7, w8, w9;
+    uint32 pattern;
 
-	uint32  pattern;
-	int		l, y;
+    // ---------------------------------------------------------
+    // FILTER: HQ2X (Standard YUV Differencing)
+    // ---------------------------------------------------------
+    if (GuiScale == FILTER_HQ2X)
+    {
+        uint32 y1, y2, y3, y4, y5, y6, y7, y8, y9;
 
-	while (height--)
-	{
-		sp--;
+        while (height--) {
+            sp--;
+            w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
+            y1 = inlineRGBtoYUV(w1); y4 = inlineRGBtoYUV(w4); y7 = inlineRGBtoYUV(w7);
 
-		w1 = *(sp - src1line);
-		w4 = *(sp);
-		w7 = *(sp + src1line);
+            sp++;
+            w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
+            y2 = inlineRGBtoYUV(w2); y5 = inlineRGBtoYUV(w5); y8 = inlineRGBtoYUV(w8);
 
-		sp++;
+            // Unrolled by 2
+            for (int l = width >> 1; l; l--) {
+                // --- PIXEL 1 ---
+                sp++;
+                DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
 
-		w2 = *(sp - src1line);
-		w5 = *(sp);
-		w8 = *(sp + src1line);
+                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
 
-		for (l = width; l; l--)
-		{
-			sp++;
+                pattern = 0;
+                pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
+                pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
+                pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
+                pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
+                pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
+                pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
+                pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
+                pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
 
-			// Prefetch the next cache line (32 bytes ahead) for each active row
-			DCBT(sp + 16 - src1line);
-			DCBT(sp + 16);
-			DCBT(sp + 16 + src1line);
+                if (pattern > 255) __builtin_unreachable(); // Forces raw LUT generation
+                switch (pattern) { HQ2XCASES }
 
-			w3 = *(sp - src1line);
-			w6 = *(sp);
-			w9 = *(sp + src1line);
+                w1 = w2; w4 = w5; w7 = w8;
+                w2 = w3; w5 = w6; w8 = w9;
+                y1 = y2; y4 = y5; y7 = y8;
+                y2 = y3; y5 = y6; y8 = y9;
+                dp += 2;
 
-			pattern = 0;
+                // --- PIXEL 2 ---
+                sp++;
+                // Notice: No DCBT here! Halves memory cache interface pressure.
+                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
 
-			switch(GuiScale)
-			{
-				case FILTER_HQ2XBOLD: {
-					const uint16 avg = (inlineRGBtoBright(w1) + inlineRGBtoBright(w2) + inlineRGBtoBright(w3) + inlineRGBtoBright(w4) + inlineRGBtoBright(w5) + inlineRGBtoBright(w6) + inlineRGBtoBright(w7) + inlineRGBtoBright(w8) + inlineRGBtoBright(w9)) / 9;
-					const bool diff5 = inlineRGBtoBright(w5) > avg;
-					if ((w1 != w5) && ((inlineRGBtoBright(w1) > avg) != diff5)) pattern |= (1 << 0);
-					if ((w2 != w5) && ((inlineRGBtoBright(w2) > avg) != diff5)) pattern |= (1 << 1);
-					if ((w3 != w5) && ((inlineRGBtoBright(w3) > avg) != diff5)) pattern |= (1 << 2);
-					if ((w4 != w5) && ((inlineRGBtoBright(w4) > avg) != diff5)) pattern |= (1 << 3);
-					if ((w6 != w5) && ((inlineRGBtoBright(w6) > avg) != diff5)) pattern |= (1 << 4);
-					if ((w7 != w5) && ((inlineRGBtoBright(w7) > avg) != diff5)) pattern |= (1 << 5);
-					if ((w8 != w5) && ((inlineRGBtoBright(w8) > avg) != diff5)) pattern |= (1 << 6);
-					if ((w9 != w5) && ((inlineRGBtoBright(w9) > avg) != diff5)) pattern |= (1 << 7);
-				}  break;
+                pattern = 0;
+                pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
+                pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
+                pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
+                pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
+                pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
+                pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
+                pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
+                pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
 
-				case FILTER_HQ2XS: {
-					bool nosame = true;
-					if(w1 == w5 || w3 == w5 || w7 == w5 || w9 == w5)
-					nosame = false;
+                if (pattern > 255) __builtin_unreachable();
+                switch (pattern) { HQ2XCASES }
 
-					if(nosame)
-					{
-						const uint16 avg = (inlineRGBtoBright(w1) + inlineRGBtoBright(w2) + inlineRGBtoBright(w3) + inlineRGBtoBright(w4) + inlineRGBtoBright(w5) + inlineRGBtoBright(w6) + inlineRGBtoBright(w7) + inlineRGBtoBright(w8) + inlineRGBtoBright(w9)) / 9;
-						const bool diff5 = inlineRGBtoBright(w5) > avg;
-						if((inlineRGBtoBright(w1) > avg) != diff5) pattern |= (1 << 0);
-						if((inlineRGBtoBright(w2) > avg) != diff5) pattern |= (1 << 1);
-						if((inlineRGBtoBright(w3) > avg) != diff5) pattern |= (1 << 2);
-						if((inlineRGBtoBright(w4) > avg) != diff5) pattern |= (1 << 3);
-						if((inlineRGBtoBright(w6) > avg) != diff5) pattern |= (1 << 4);
-						if((inlineRGBtoBright(w7) > avg) != diff5) pattern |= (1 << 5);
-						if((inlineRGBtoBright(w8) > avg) != diff5) pattern |= (1 << 6);
-						if((inlineRGBtoBright(w9) > avg) != diff5) pattern |= (1 << 7);
-					}
-					else
-					{
-						y = inlineRGBtoYUV(w5);
-						if ((w1 != w5) && (Diff(y, inlineRGBtoYUV(w1)))) pattern |= (1 << 0);
-						if ((w2 != w5) && (Diff(y, inlineRGBtoYUV(w2)))) pattern |= (1 << 1);
-						if ((w3 != w5) && (Diff(y, inlineRGBtoYUV(w3)))) pattern |= (1 << 2);
-						if ((w4 != w5) && (Diff(y, inlineRGBtoYUV(w4)))) pattern |= (1 << 3);
-						if ((w6 != w5) && (Diff(y, inlineRGBtoYUV(w6)))) pattern |= (1 << 4);
-						if ((w7 != w5) && (Diff(y, inlineRGBtoYUV(w7)))) pattern |= (1 << 5);
-						if ((w8 != w5) && (Diff(y, inlineRGBtoYUV(w8)))) pattern |= (1 << 6);
-						if ((w9 != w5) && (Diff(y, inlineRGBtoYUV(w9)))) pattern |= (1 << 7);
-					}
-				}  break;
-				default:
-				case FILTER_HQ2X:
-				y = inlineRGBtoYUV(w5);
-				if ((w1 != w5) && (Diff(y, inlineRGBtoYUV(w1)))) pattern |= (1 << 0);
-				if ((w2 != w5) && (Diff(y, inlineRGBtoYUV(w2)))) pattern |= (1 << 1);
-				if ((w3 != w5) && (Diff(y, inlineRGBtoYUV(w3)))) pattern |= (1 << 2);
-				if ((w4 != w5) && (Diff(y, inlineRGBtoYUV(w4)))) pattern |= (1 << 3);
-				if ((w6 != w5) && (Diff(y, inlineRGBtoYUV(w6)))) pattern |= (1 << 4);
-				if ((w7 != w5) && (Diff(y, inlineRGBtoYUV(w7)))) pattern |= (1 << 5);
-				if ((w8 != w5) && (Diff(y, inlineRGBtoYUV(w8)))) pattern |= (1 << 6);
-				if ((w9 != w5) && (Diff(y, inlineRGBtoYUV(w9)))) pattern |= (1 << 7);
-				break;
-			}
+                w1 = w2; w4 = w5; w7 = w8;
+                w2 = w3; w5 = w6; w8 = w9;
+                y1 = y2; y4 = y5; y7 = y8;
+                y2 = y3; y5 = y6; y8 = y9;
+                dp += 2;
+            }
 
-			switch (pattern)
-			{
-				HQ2XCASES
-			}
+            // Trailing pixel handler (If width is odd)
+            if (width & 1) {
+                sp++;
+                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
 
-			w1 = w2; w4 = w5; w7 = w8;
-			w2 = w3; w5 = w6; w8 = w9;
+                pattern = 0;
+                pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
+                pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
+                pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
+                pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
+                pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
+                pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
+                pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
+                pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
 
-			dp += 2;
-		}
+                if (pattern > 255) __builtin_unreachable();
+                switch (pattern) { HQ2XCASES }
+                dp += 2;
+            }
 
-		dp += ((dst1line - width) << 1);
-		sp +=  (src1line - width);
-	}
+            dp += ((dst1line - width) << 1);
+            sp +=  (src1line - width);
+        }
+    }
+    // ---------------------------------------------------------
+    // FILTER: HQ2X BOLD (Brightness Averaging)
+    // ---------------------------------------------------------
+    else if (GuiScale == FILTER_HQ2XBOLD)
+    {
+        uint16 b1, b2, b3, b4, b5, b6, b7, b8, b9;
+
+        while (height--) {
+            sp--;
+            w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
+            b1 = inlineRGBtoBright(w1); b4 = inlineRGBtoBright(w4); b7 = inlineRGBtoBright(w7);
+
+            sp++;
+            w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
+            b2 = inlineRGBtoBright(w2); b5 = inlineRGBtoBright(w5); b8 = inlineRGBtoBright(w8);
+
+            for (int l = width >> 1; l; l--) {
+                // --- PIXEL 1 ---
+                sp++;
+                DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+
+                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+                b3 = inlineRGBtoBright(w3); b6 = inlineRGBtoBright(w6); b9 = inlineRGBtoBright(w9);
+
+                uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+                uint32 diff5_mask = -((int)(b5 > avg));
+
+                pattern = 0;
+                pattern |= EVAL_BOLD_BIT(w1, w5, b1, avg, diff5_mask, 0);
+                pattern |= EVAL_BOLD_BIT(w2, w5, b2, avg, diff5_mask, 1);
+                pattern |= EVAL_BOLD_BIT(w3, w5, b3, avg, diff5_mask, 2);
+                pattern |= EVAL_BOLD_BIT(w4, w5, b4, avg, diff5_mask, 3);
+                pattern |= EVAL_BOLD_BIT(w6, w5, b6, avg, diff5_mask, 4);
+                pattern |= EVAL_BOLD_BIT(w7, w5, b7, avg, diff5_mask, 5);
+                pattern |= EVAL_BOLD_BIT(w8, w5, b8, avg, diff5_mask, 6);
+                pattern |= EVAL_BOLD_BIT(w9, w5, b9, avg, diff5_mask, 7);
+
+                if (pattern > 255) __builtin_unreachable();
+                switch (pattern) { HQ2XCASES }
+
+                w1 = w2; w4 = w5; w7 = w8;
+                w2 = w3; w5 = w6; w8 = w9;
+                b1 = b2; b4 = b5; b7 = b8;
+                b2 = b3; b5 = b6; b8 = b9;
+                dp += 2;
+
+                // --- PIXEL 2 ---
+                sp++;
+                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+                b3 = inlineRGBtoBright(w3); b6 = inlineRGBtoBright(w6); b9 = inlineRGBtoBright(w9);
+
+                avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+                diff5_mask = -((int)(b5 > avg));
+
+                pattern = 0;
+                pattern |= EVAL_BOLD_BIT(w1, w5, b1, avg, diff5_mask, 0);
+                pattern |= EVAL_BOLD_BIT(w2, w5, b2, avg, diff5_mask, 1);
+                pattern |= EVAL_BOLD_BIT(w3, w5, b3, avg, diff5_mask, 2);
+                pattern |= EVAL_BOLD_BIT(w4, w5, b4, avg, diff5_mask, 3);
+                pattern |= EVAL_BOLD_BIT(w6, w5, b6, avg, diff5_mask, 4);
+                pattern |= EVAL_BOLD_BIT(w7, w5, b7, avg, diff5_mask, 5);
+                pattern |= EVAL_BOLD_BIT(w8, w5, b8, avg, diff5_mask, 6);
+                pattern |= EVAL_BOLD_BIT(w9, w5, b9, avg, diff5_mask, 7);
+
+                if (pattern > 255) __builtin_unreachable();
+                switch (pattern) { HQ2XCASES }
+
+                w1 = w2; w4 = w5; w7 = w8;
+                w2 = w3; w5 = w6; w8 = w9;
+                b1 = b2; b4 = b5; b7 = b8;
+                b2 = b3; b5 = b6; b8 = b9;
+                dp += 2;
+            }
+
+            if (width & 1) {
+                sp++;
+                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+                b3 = inlineRGBtoBright(w3); b6 = inlineRGBtoBright(w6); b9 = inlineRGBtoBright(w9);
+
+                uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+                uint32 diff5_mask = -((int)(b5 > avg));
+
+                pattern = 0;
+                pattern |= EVAL_BOLD_BIT(w1, w5, b1, avg, diff5_mask, 0);
+                pattern |= EVAL_BOLD_BIT(w2, w5, b2, avg, diff5_mask, 1);
+                pattern |= EVAL_BOLD_BIT(w3, w5, b3, avg, diff5_mask, 2);
+                pattern |= EVAL_BOLD_BIT(w4, w5, b4, avg, diff5_mask, 3);
+                pattern |= EVAL_BOLD_BIT(w6, w5, b6, avg, diff5_mask, 4);
+                pattern |= EVAL_BOLD_BIT(w7, w5, b7, avg, diff5_mask, 5);
+                pattern |= EVAL_BOLD_BIT(w8, w5, b8, avg, diff5_mask, 6);
+                pattern |= EVAL_BOLD_BIT(w9, w5, b9, avg, diff5_mask, 7);
+
+                if (pattern > 255) __builtin_unreachable();
+                switch (pattern) { HQ2XCASES }
+                dp += 2;
+            }
+
+            dp += ((dst1line - width) << 1);
+            sp +=  (src1line - width);
+        }
+    }
+    // ---------------------------------------------------------
+    // FILTER: HQ2X SOFT (Hybrid YUV / Brightness)
+    // ---------------------------------------------------------
+    else if (GuiScale == FILTER_HQ2XS)
+    {
+        uint32 y1, y2, y3, y4, y5, y6, y7, y8, y9;
+
+        while (height--) {
+            sp--;
+            w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
+            y1 = inlineRGBtoYUV(w1); y4 = inlineRGBtoYUV(w4); y7 = inlineRGBtoYUV(w7);
+
+            sp++;
+            w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
+            y2 = inlineRGBtoYUV(w2); y5 = inlineRGBtoYUV(w5); y8 = inlineRGBtoYUV(w8);
+
+            for (int l = width >> 1; l; l--) {
+                // --- PIXEL 1 ---
+                sp++;
+                DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+
+                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
+
+                pattern = 0;
+                uint32 match = (w1 == w5) | (w3 == w5) | (w7 == w5) | (w9 == w5);
+
+                if (!match) {
+                    uint16 b1 = inlineRGBtoBright(w1); uint16 b2 = inlineRGBtoBright(w2); uint16 b3 = inlineRGBtoBright(w3);
+                    uint16 b4 = inlineRGBtoBright(w4); uint16 b5 = inlineRGBtoBright(w5); uint16 b6 = inlineRGBtoBright(w6);
+                    uint16 b7 = inlineRGBtoBright(w7); uint16 b8 = inlineRGBtoBright(w8); uint16 b9 = inlineRGBtoBright(w9);
+
+                    uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+                    uint32 diff5_mask = -((int)(b5 > avg));
+
+                    pattern |= EVAL_XS_BIT(b1, avg, diff5_mask, 0);
+                    pattern |= EVAL_XS_BIT(b2, avg, diff5_mask, 1);
+                    pattern |= EVAL_XS_BIT(b3, avg, diff5_mask, 2);
+                    pattern |= EVAL_XS_BIT(b4, avg, diff5_mask, 3);
+                    pattern |= EVAL_XS_BIT(b6, avg, diff5_mask, 4);
+                    pattern |= EVAL_XS_BIT(b7, avg, diff5_mask, 5);
+                    pattern |= EVAL_XS_BIT(b8, avg, diff5_mask, 6);
+                    pattern |= EVAL_XS_BIT(b9, avg, diff5_mask, 7);
+                } else {
+                    pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
+                    pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
+                    pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
+                    pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
+                    pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
+                    pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
+                    pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
+                    pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
+                }
+
+                if (pattern > 255) __builtin_unreachable();
+                switch (pattern) { HQ2XCASES }
+
+                w1 = w2; w4 = w5; w7 = w8;
+                w2 = w3; w5 = w6; w8 = w9;
+                y1 = y2; y4 = y5; y7 = y8;
+                y2 = y3; y5 = y6; y8 = y9;
+                dp += 2;
+
+                // --- PIXEL 2 ---
+                sp++;
+                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
+
+                pattern = 0;
+                match = (w1 == w5) | (w3 == w5) | (w7 == w5) | (w9 == w5);
+
+                if (!match) {
+                    uint16 b1 = inlineRGBtoBright(w1); uint16 b2 = inlineRGBtoBright(w2); uint16 b3 = inlineRGBtoBright(w3);
+                    uint16 b4 = inlineRGBtoBright(w4); uint16 b5 = inlineRGBtoBright(w5); uint16 b6 = inlineRGBtoBright(w6);
+                    uint16 b7 = inlineRGBtoBright(w7); uint16 b8 = inlineRGBtoBright(w8); uint16 b9 = inlineRGBtoBright(w9);
+
+                    uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+                    uint32 diff5_mask = -((int)(b5 > avg));
+
+                    pattern |= EVAL_XS_BIT(b1, avg, diff5_mask, 0);
+                    pattern |= EVAL_XS_BIT(b2, avg, diff5_mask, 1);
+                    pattern |= EVAL_XS_BIT(b3, avg, diff5_mask, 2);
+                    pattern |= EVAL_XS_BIT(b4, avg, diff5_mask, 3);
+                    pattern |= EVAL_XS_BIT(b6, avg, diff5_mask, 4);
+                    pattern |= EVAL_XS_BIT(b7, avg, diff5_mask, 5);
+                    pattern |= EVAL_XS_BIT(b8, avg, diff5_mask, 6);
+                    pattern |= EVAL_XS_BIT(b9, avg, diff5_mask, 7);
+                } else {
+                    pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
+                    pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
+                    pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
+                    pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
+                    pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
+                    pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
+                    pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
+                    pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
+                }
+
+                if (pattern > 255) __builtin_unreachable();
+                switch (pattern) { HQ2XCASES }
+
+                w1 = w2; w4 = w5; w7 = w8;
+                w2 = w3; w5 = w6; w8 = w9;
+                y1 = y2; y4 = y5; y7 = y8;
+                y2 = y3; y5 = y6; y8 = y9;
+                dp += 2;
+            }
+
+            if (width & 1) {
+                sp++;
+                w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+                y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9);
+
+                pattern = 0;
+                uint32 match = (w1 == w5) | (w3 == w5) | (w7 == w5) | (w9 == w5);
+
+                if (!match) {
+                    uint16 b1 = inlineRGBtoBright(w1); uint16 b2 = inlineRGBtoBright(w2); uint16 b3 = inlineRGBtoBright(w3);
+                    uint16 b4 = inlineRGBtoBright(w4); uint16 b5 = inlineRGBtoBright(w5); uint16 b6 = inlineRGBtoBright(w6);
+                    uint16 b7 = inlineRGBtoBright(w7); uint16 b8 = inlineRGBtoBright(w8); uint16 b9 = inlineRGBtoBright(w9);
+
+                    uint16 avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+                    uint32 diff5_mask = -((int)(b5 > avg));
+
+                    pattern |= EVAL_XS_BIT(b1, avg, diff5_mask, 0);
+                    pattern |= EVAL_XS_BIT(b2, avg, diff5_mask, 1);
+                    pattern |= EVAL_XS_BIT(b3, avg, diff5_mask, 2);
+                    pattern |= EVAL_XS_BIT(b4, avg, diff5_mask, 3);
+                    pattern |= EVAL_XS_BIT(b6, avg, diff5_mask, 4);
+                    pattern |= EVAL_XS_BIT(b7, avg, diff5_mask, 5);
+                    pattern |= EVAL_XS_BIT(b8, avg, diff5_mask, 6);
+                    pattern |= EVAL_XS_BIT(b9, avg, diff5_mask, 7);
+                } else {
+                    pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0);
+                    pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1);
+                    pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2);
+                    pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3);
+                    pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4);
+                    pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5);
+                    pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6);
+                    pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7);
+                }
+
+                if (pattern > 255) __builtin_unreachable();
+                switch (pattern) { HQ2XCASES }
+                dp += 2;
+            }
+
+            dp += ((dst1line - width) << 1);
+            sp +=  (src1line - width);
+        }
+    }
 }
 
 template<int GuiScale>
