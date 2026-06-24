@@ -1255,9 +1255,24 @@ static inline uint16 branchless_select(uint32 a, uint32 b, uint16 x, uint16 y) {
 }
 #define BRANCHLESS_SELECT(a, b, x, y) branchless_select((a), (b), (x), (y))
 
-// Modified macros to calculate differences using pre-computed Luma state variables
-#define df(lA, lB)\
-    abs((int)(lA) - (int)(lB))\
+// -------------------------------------------------------------------------
+// Branchless Absolute Difference (PowerPC subfc/subfe implementation)
+// -------------------------------------------------------------------------
+static inline uint32 branchless_abs_diff(uint32 a, uint32 b) {
+    uint32 diff, mask;
+    __asm__ volatile (
+        "subfc %[diff], %[a], %[b] \n\t"       // diff = b - a (Sets CA=1 if b>=a, CA=0 if b<a)
+        "subfe %[mask], %[diff], %[diff] \n\t" // mask = -1 + CA (0x0 if pos, 0xFFFFFFFF if neg)
+        "xor   %[diff], %[diff], %[mask] \n\t" // Invert bits if negative
+        "subf  %[diff], %[mask], %[diff] \n\t" // Add 1 if negative (completing two's complement absolute)
+        : [diff] "=&r" (diff), [mask] "=&r" (mask)
+        : [a] "r" (a), [b] "r" (b)
+        : "cc" // Notifies the compiler that XER (carry flags) are altered
+    );
+    return diff;
+}
+
+#define df(A, B) branchless_abs_diff((A), (B))
 
 #define eq(lA, lB)\
     (df(lA, lB) < 155)\
@@ -1333,23 +1348,9 @@ static inline uint16 branchless_select(uint32 a, uint32 b, uint16 x, uint16 y) {
             BIL2X_ODD(PF, PH, PI, N1, N2, N3);\
         }
 
-// Sliding Window inner-loop macro with integrated Luma caching
-#define PROCESS_XBR_WINDOW() \
-    C = *(p + i + 1 - nextlineSrc); F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
-    lC = RGB565_to_Lum(C); lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
-    E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
-    E32 = ((uint32)E << 16) | E; \
-    *(uint32*)&Ep[E0] = E32; *(uint32*)&Ep[E2] = E32; \
-    if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
-        XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, E0, E1, E2, E3); \
-        XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, E2, E0, E3, E1); \
-        XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, E3, E2, E1, E0); \
-        XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, E1, E3, E0, E2); \
-    } \
-    A=B; B=C; D=E; E=F; G=H; H=I; \
-    lA=lB; lB=lC; lD=lE; lE=lF; lG=lH; lH=lI; \
-    i++;
-
+// -------------------------------------------------------------------------
+// Optimized Render2xBR (Explicit Register Pinning & lhzu Window Sliding)
+// -------------------------------------------------------------------------
 template<int GuiScale>
 void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
 {
@@ -1359,52 +1360,94 @@ void Render2xBR (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch,
 		return;
 	}
 
-	uint32 wd1, wd2, irlv1, irlv2u, irlv2l, dFG, dHC, E0, E1, E2, E3, E32;
-	uint16 A, B, C, D, E, F, G, H, I, px;
-    uint32 lA, lB, lC, lD, lE, lF, lG, lH, lI;
+    uint32 wd1, wd2, irlv1, irlv2u, irlv2l, dFG, dHC;
+    uint16 px;
 
-	uint32 nextlineSrc = srcPitch / sizeof(uint16);
-	uint16 *p  = (uint16 *)srcPtr;
-	uint32 nextlineDst = dstPitch / sizeof(uint16);
-	uint16 *Ep = (uint16 *)dstPtr;
+    uint32 nextlineSrc = srcPitch;
+    uint32 nextlineDst = dstPitch >> 1;
 
-	while (height--) {
-		A = *(p - 1 - nextlineSrc); B = *(p - nextlineSrc);
-		D = *(p - 1);               E = *(p);
-		G = *(p - 1 + nextlineSrc); H = *(p + nextlineSrc);
+    // Pin sliding window to non-volatile GPRs
+    register uint32 A asm("r14"), B asm("r15"), C asm("r16");
+    register uint32 D asm("r17"), E asm("r18"), F asm("r19");
+    register uint32 G asm("r20"), H asm("r21"), I asm("r22");
+
+    register uint32 lA asm("r23"), lB asm("r24"), lC asm("r25");
+    register uint32 lD asm("r26"), lE asm("r27"), lF asm("r28");
+    register uint32 lG asm("r29"), lH asm("r30"), lI asm("r31");
+
+    uint8 *p_top_base = srcPtr - nextlineSrc;
+    uint8 *p_mid_base = srcPtr;
+    uint8 *p_bot_base = srcPtr + nextlineSrc;
+    uint16 *Ep_base = (uint16 *)dstPtr;
+
+    while (height--) {
+        // Offset by -1 for lhzu pre-increment
+        uint16 *p_top = (uint16 *)p_top_base - 1;
+        uint16 *p_mid = (uint16 *)p_mid_base - 1;
+        uint16 *p_bot = (uint16 *)p_bot_base - 1;
+        uint16 *Ep = Ep_base;
+
+        // Prime the left side of the window
+        A = p_top[0]; B = p_top[1];
+        D = p_mid[0]; E = p_mid[1];
+        G = p_bot[0]; H = p_bot[1];
 
         lA = RGB565_to_Lum(A); lB = RGB565_to_Lum(B);
         lD = RGB565_to_Lum(D); lE = RGB565_to_Lum(E);
         lG = RGB565_to_Lum(G); lH = RGB565_to_Lum(H);
 
-		int i = 0;
-		for (; i <= width - 8;) {
-			DCBT(p + i + 16 - nextlineSrc); DCBT(p + i + 16); DCBT(p + i + 16 + nextlineSrc);
-			PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW();
-			PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW(); PROCESS_XBR_WINDOW();
-		}
-		for (; i < width;) { PROCESS_XBR_WINDOW(); }
+        // Advance pointers so lhzu fetches column index 2
+        p_top++; p_mid++; p_bot++;
 
-		p += nextlineSrc; Ep += nextlineDst << 1;
-	}
+        int w = width;
+        while (w--) {
+            // Pre-fetch 16 bytes ahead
+            DCBT(p_mid + 8);
+
+            __asm__ volatile (
+                "lhzu %[C], 2(%[ptop]) \n\t"
+                "lhzu %[F], 2(%[pmid]) \n\t"
+                "lhzu %[I], 2(%[pbot]) \n\t"
+                : [C] "=r" (C), [F] "=r" (F), [I] "=r" (I),
+                  [ptop] "+b" (p_top), [pmid] "+b" (p_mid), [pbot] "+b" (p_bot)
+            );
+
+            lC = RGB565_to_Lum(C);
+            lF = RGB565_to_Lum(F);
+            lI = RGB565_to_Lum(I);
+
+            uint32 E32 = ((uint32)E << 16) | E;
+            *(uint32*)&Ep[0] = E32;
+            *(uint32*)&Ep[nextlineDst] = E32;
+
+            if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
+                XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
+                XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
+                XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
+                XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+            }
+
+            // Shift register window
+            A=B; B=C;
+            D=E; E=F;
+            G=H; H=I;
+            lA=lB; lB=lC;
+            lD=lE; lE=lF;
+            lG=lH; lH=lI;
+
+            Ep += 2;
+        }
+
+        p_top_base += nextlineSrc;
+        p_mid_base += nextlineSrc;
+        p_bot_base += nextlineSrc;
+        Ep_base += nextlineDst << 1;
+    }
 }
 
-#define PROCESS_XBRLV1_WINDOW() \
-    C = *(p + i + 1 - nextlineSrc); F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
-    lC = RGB565_to_Lum(C); lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
-    E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
-    E32 = ((uint32)E << 16) | E; \
-    *(uint32*)&Ep[E0] = E32; *(uint32*)&Ep[E2] = E32; \
-    if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
-        XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, E0, E1, E2, E3); \
-        XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, E2, E0, E3, E1); \
-        XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, E3, E2, E1, E0); \
-        XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, E1, E3, E0, E2); \
-    } \
-    A=B; B=C; D=E; E=F; G=H; H=I; \
-    lA=lB; lB=lC; lD=lE; lE=lF; lG=lH; lH=lI; \
-    i++;
-
+// -------------------------------------------------------------------------
+// Optimized Render2xBRlv1
+// -------------------------------------------------------------------------
 template<int GuiScale>
 void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
 {
@@ -1414,47 +1457,88 @@ void Render2xBRlv1 (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPit
 		return;
 	}
 
-	uint32 wd1, wd2, irlv1, E0, E1, E2, E3, E32;
-	uint16 A, B, C, D, E, F, G, H, I, px;
-    uint32 lA, lB, lC, lD, lE, lF, lG, lH, lI;
+    uint32 wd1, wd2, irlv1;
+    uint16 px;
 
-	uint32 nextlineSrc = srcPitch / sizeof(uint16);
-	uint16 *p  = (uint16 *)srcPtr;
-	uint32 nextlineDst = dstPitch / sizeof(uint16);
-	uint16 *Ep = (uint16 *)dstPtr;
+    uint32 nextlineSrc = srcPitch;
+    uint32 nextlineDst = dstPitch >> 1;
 
-	while (height--) {
-		A = *(p - 1 - nextlineSrc); B = *(p - nextlineSrc);
-		D = *(p - 1);               E = *(p);
-		G = *(p - 1 + nextlineSrc); H = *(p + nextlineSrc);
+    register uint32 A asm("r14"), B asm("r15"), C asm("r16");
+    register uint32 D asm("r17"), E asm("r18"), F asm("r19");
+    register uint32 G asm("r20"), H asm("r21"), I asm("r22");
+
+    register uint32 lA asm("r23"), lB asm("r24"), lC asm("r25");
+    register uint32 lD asm("r26"), lE asm("r27"), lF asm("r28");
+    register uint32 lG asm("r29"), lH asm("r30"), lI asm("r31");
+
+    uint8 *p_top_base = srcPtr - nextlineSrc;
+    uint8 *p_mid_base = srcPtr;
+    uint8 *p_bot_base = srcPtr + nextlineSrc;
+    uint16 *Ep_base = (uint16 *)dstPtr;
+
+    while (height--) {
+        uint16 *p_top = (uint16 *)p_top_base - 1;
+        uint16 *p_mid = (uint16 *)p_mid_base - 1;
+        uint16 *p_bot = (uint16 *)p_bot_base - 1;
+        uint16 *Ep = Ep_base;
+
+        A = p_top[0]; B = p_top[1];
+        D = p_mid[0]; E = p_mid[1];
+        G = p_bot[0]; H = p_bot[1];
 
         lA = RGB565_to_Lum(A); lB = RGB565_to_Lum(B);
         lD = RGB565_to_Lum(D); lE = RGB565_to_Lum(E);
         lG = RGB565_to_Lum(G); lH = RGB565_to_Lum(H);
 
-		int i = 0;
-		for (; i <= width - 8;) {
-			DCBT(p + i + 16 - nextlineSrc); DCBT(p + i + 16); DCBT(p + i + 16 + nextlineSrc);
-			PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW();
-			PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW(); PROCESS_XBRLV1_WINDOW();
-		}
-		for (; i < width;) { PROCESS_XBRLV1_WINDOW(); }
+        p_top++; p_mid++; p_bot++;
 
-		p += nextlineSrc; Ep += nextlineDst << 1;
-	}
+        int w = width;
+        while (w--) {
+            DCBT(p_mid + 8);
+
+            __asm__ volatile (
+                "lhzu %[C], 2(%[ptop]) \n\t"
+                "lhzu %[F], 2(%[pmid]) \n\t"
+                "lhzu %[I], 2(%[pbot]) \n\t"
+                : [C] "=r" (C), [F] "=r" (F), [I] "=r" (I),
+                  [ptop] "+b" (p_top), [pmid] "+b" (p_mid), [pbot] "+b" (p_bot)
+            );
+
+            lC = RGB565_to_Lum(C);
+            lF = RGB565_to_Lum(F);
+            lI = RGB565_to_Lum(I);
+
+            uint32 E32 = ((uint32)E << 16) | E;
+            *(uint32*)&Ep[0] = E32;
+            *(uint32*)&Ep[nextlineDst] = E32;
+
+            if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
+                XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
+                XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
+                XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
+                XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+            }
+
+            A=B; B=C;
+            D=E; E=F;
+            G=H; H=I;
+            lA=lB; lB=lC;
+            lD=lE; lE=lF;
+            lG=lH; lH=lI;
+
+            Ep += 2;
+        }
+
+        p_top_base += nextlineSrc;
+        p_mid_base += nextlineSrc;
+        p_bot_base += nextlineSrc;
+        Ep_base += nextlineDst << 1;
+    }
 }
 
-#define PROCESS_DDT_WINDOW() \
-    F = *(p + i + 1); I = *(p + i + 1 + nextlineSrc); \
-    lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
-    E0 = (i << 1); E1 = E0 + 1; E2 = E0 + nextlineDst; E3 = E2 + 1; \
-    E32 = ((uint32)E << 16) | E; \
-    *(uint32*)&Ep[E0] = E32; *(uint32*)&Ep[E2] = E32; \
-    if (E!=F || E!=H || F!=I || H!=I) { DDT( E, I, H, F, lE, lI, lH, lF, E0, E1, E2, E3); } \
-    E=F; H=I; \
-    lE=lF; lH=lI; \
-    i++;
-
+// -------------------------------------------------------------------------
+// Optimized RenderDDT
+// -------------------------------------------------------------------------
 template<int GuiScale>
 void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, int width, int height)
 {
@@ -1463,28 +1547,68 @@ void RenderDDT (uint8 *srcPtr, uint32 srcPitch, uint8 *dstPtr, uint32 dstPitch, 
 	{
 		return;
 	}
-	
-	uint32 wd1, wd2, E0, E1, E2, E3, E32;
-	uint16 E, F, H, I, aux;
-    uint32 lE, lF, lH, lI;
 
-	uint32 nextlineSrc = srcPitch / sizeof(uint16);
-	uint16 *p  = (uint16 *)srcPtr;
-	uint32 nextlineDst = dstPitch / sizeof(uint16);
-	uint16 *Ep = (uint16 *)dstPtr;
+    uint32 wd1, wd2;
+    uint16 aux; // Required internally by the DDT/BIL2X macros
 
-	while (height--) {
-		E = *(p); H = *(p + nextlineSrc);
-        lE = RGB565_to_Lum(E); lH = RGB565_to_Lum(H);
+    uint32 nextlineSrc = srcPitch;
+    uint32 nextlineDst = dstPitch >> 1;
 
-		int i = 0;
-		for (; i <= width - 8;) {
-			DCBT(p + i + 16); DCBT(p + i + 16 + nextlineSrc);
-			PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW();
-			PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW(); PROCESS_DDT_WINDOW();
-		}
-		for (; i < width;) { PROCESS_DDT_WINDOW(); }
+    // Smaller sliding window for DDT (no top row)
+    register uint32 E asm("r18"), F asm("r19");
+    register uint32 H asm("r21"), I asm("r22");
 
-		p += nextlineSrc; Ep += nextlineDst << 1;
-	}
+    register uint32 lE asm("r27"), lF asm("r28");
+    register uint32 lH asm("r30"), lI asm("r31");
+
+    uint8 *p_mid_base = srcPtr;
+    uint8 *p_bot_base = srcPtr + nextlineSrc;
+    uint16 *Ep_base = (uint16 *)dstPtr;
+
+    while (height--) {
+        uint16 *p_mid = (uint16 *)p_mid_base - 1;
+        uint16 *p_bot = (uint16 *)p_bot_base - 1;
+        uint16 *Ep = Ep_base;
+
+        // Prime the 2x2 forward window
+        E = p_mid[1];
+        H = p_bot[1];
+
+        lE = RGB565_to_Lum(E);
+        lH = RGB565_to_Lum(H);
+
+        p_mid++; p_bot++;
+
+        int w = width;
+        while (w--) {
+            DCBT(p_mid + 8);
+
+            __asm__ volatile (
+                "lhzu %[F], 2(%[pmid]) \n\t"
+                "lhzu %[I], 2(%[pbot]) \n\t"
+                : [F] "=r" (F), [I] "=r" (I),
+                  [pmid] "+b" (p_mid), [pbot] "+b" (p_bot)
+            );
+
+            lF = RGB565_to_Lum(F);
+            lI = RGB565_to_Lum(I);
+
+            uint32 E32 = ((uint32)E << 16) | E;
+            *(uint32*)&Ep[0] = E32;
+            *(uint32*)&Ep[nextlineDst] = E32;
+
+            if (E!=F || E!=H || F!=I || H!=I) {
+                DDT( E, I, H, F, lE, lI, lH, lF, 0, 1, nextlineDst, nextlineDst + 1);
+            }
+
+            E=F; H=I;
+            lE=lF; lH=lI;
+
+            Ep += 2;
+        }
+
+        p_mid_base += nextlineSrc;
+        p_bot_base += nextlineSrc;
+        Ep_base += nextlineDst << 1;
+    }
 }
