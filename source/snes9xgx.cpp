@@ -33,7 +33,7 @@
 #include "snes9xgx.h"
 #include "networkop.h"
 #include "video.h"
-#include "filter.h"
+#include "videofilters.h"
 #include "audio.h"
 #include "menu.h"
 #include "sram.h"

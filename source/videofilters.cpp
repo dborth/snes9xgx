@@ -3,13 +3,14 @@
  *
  * Tantric 2008-2026
  *
- * filter.cpp
+ * videofilters.cpp
  * HQ2x, Scale2X, 2xBR, DDT filters
  * Original code from Michniewski, adapted from Snes9x Win32/MacOSX ports
 ****************************************************************************/
+#include "videofilters.h"
+
 #include <gccore.h>
 
-#include "filter.h"
 
 #define MAX_HEIGHT 512
 #define MAX_WIDTH 512

@@ -7,8 +7,8 @@
  * HQ2x, Scale2X, 2xBR, DDT filters
  * Original code from Michniewski, adapted from Snes9x Win32/MacOSX ports
  ****************************************************************************/
-#ifndef _FILTER_H_
-#define _FILTER_H_
+#ifndef _VIDEOFILTERS_H_
+#define _VIDEOFILTERS_H_
 
 #include <stdint.h>
 

@@ -22,7 +22,7 @@
 
 #include "snes9xgx.h"
 #include "menu.h"
-#include "filter.h"
+#include "videofilters.h"
 #include "filelist.h"
 #include "audio.h"
 #include "gui/gui.h"

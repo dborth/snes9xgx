@@ -33,7 +33,7 @@
 #include "preferences.h"
 #include "button_mapping.h"
 #include "input.h"
-#include "filter.h"
+#include "videofilters.h"
 #include "filelist.h"
 #include "gui/gui.h"
 #include "menu.h"

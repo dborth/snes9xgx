@@ -19,7 +19,7 @@
 #include "snes9xgx.h"
 #include "menu.h"
 #include "fileop.h"
-#include "filter.h"
+#include "videofilters.h"
 #include "video.h"
 #include "filebrowser.h"
 #include "input.h"
@@ -431,6 +431,8 @@ void FixInvalidSettings()
 		GCSettings.render = RENDER_FILTERED_SHARP;
 	if(!(GCSettings.videomode >= VIDEOMODE_AUTO && GCSettings.videomode < VIDEOMODE_LENGTH))
 		GCSettings.videomode = VIDEOMODE_AUTO;
+	if(!(GCSettings.render >= FILTER_NONE && GCSettings.render <= NUM_FILTERS))
+		GCSettings.FilterMethod = FILTER_NONE;
 }
 
 /****************************************************************************
@@ -460,7 +462,7 @@ DefaultSettings ()
 
 	GCSettings.videomode = VIDEOMODE_AUTO;
 	GCSettings.render = RENDER_FILTERED_SHARP;
-	GCSettings.FilterMethod = FILTER_NONE;	// no hq2x
+	GCSettings.FilterMethod = FILTER_NONE;
 
 	GCSettings.widescreen = 1;
 
