@@ -96,7 +96,7 @@ endif
 
 export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
 export OFILES_SOURCES := $(filter-out cpuops.o, $(CPPFILES:.cpp=.o)) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
-export OFILES := $(OFILES_BIN) $(OFILES_SOURCES) $(BUILD)/cpuops.o
+export OFILES := $(OFILES_BIN) $(OFILES_SOURCES) cpuops.o
 
 export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
@@ -174,7 +174,7 @@ $(OFILES_SOURCES) : $(HFILES)
 # Optimized rule for cpuops.cpp to prevent I-Cache thrashing
 # The % pattern allows make to find cpuops.cpp inside the VPATH directories
 #---------------------------------------------------------------------------------
-$(BUILD)/cpuops.o: cpuops.cpp
+cpuops.o: cpuops.cpp
 	@mkdir -p $(dir $@)
 	@echo "Compiling cpuops.o to $(BUILD) with I-Cache tuned flags..."
 	$(CXX) -c -O2 -fno-unroll-loops $(CXXFLAGS) $< -o $@
