@@ -19,6 +19,7 @@
 #include "snes9xgx.h"
 #include "menu.h"
 #include "fileop.h"
+#include "filter.h"
 #include "video.h"
 #include "filebrowser.h"
 #include "input.h"

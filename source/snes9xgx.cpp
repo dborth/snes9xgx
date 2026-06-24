@@ -500,9 +500,6 @@ int main(int argc, char *argv[])
 				MainMenu(MENU_GAME);
 		}
 
-#ifdef HW_RVL
-		SelectFilterMethod();
-#endif
 		if (firstRun)
 		{
 			firstRun = false;

@@ -34,6 +34,14 @@
 extern void UpdatePlaybackRate(void);
 
 /*** Snes9x GFX Buffer ***/
+#define EXT_WIDTH (MAX_SNES_WIDTH + 4)
+#define EXT_PITCH (EXT_WIDTH * 2)
+#define EXT_HEIGHT (MAX_SNES_HEIGHT + 4)
+// Offset into buffer to allow a two pixel border around the whole rendered
+// SNES image. This is a speed up hack to allow some of the image processing
+// routines to access black pixel data outside the normal bounds of the buffer.
+#define EXT_OFFSET (EXT_PITCH * 2 + 2 * 2)
+
 #define SNES9XGFX_SIZE 		(EXT_PITCH*EXT_HEIGHT)
 #define FILTERMEM_SIZE 		(512*MAX_SNES_HEIGHT*4)
 
@@ -699,6 +707,8 @@ void ResetFbWidth(int width, GXRModeObj *rmode)
 void
 ResetVideo_Emu ()
 {
+	SelectFilterMethod(GCSettings.FilterMethod); // Initialize / Re-evaluate active filter
+
 	GXRModeObj *rmode = FindVideoMode();
 
 	Mtx44 p;
@@ -984,7 +994,7 @@ update_video (int width, int height)
 		int xscale, yscale;
 #ifdef HW_RVL
 		if(vwidth <= 256)
-			fscale = GetFilterScale((RenderFilter)GCSettings.FilterMethod);
+			fscale = GetFilterScale();
 		else
 			fscale = 1;
 #endif
