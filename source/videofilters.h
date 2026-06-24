@@ -3,7 +3,7 @@
  *
  * Tantric 2008-2026
  *
- * filter.h
+ * videofilters.h
  * HQ2x, Scale2X, 2xBR, DDT filters
  * Original code from Michniewski, adapted from Snes9x Win32/MacOSX ports
  ****************************************************************************/
