@@ -3872,7 +3872,7 @@ static int MenuSettingsVideo()
 			else
 				sprintf (options.value[1], "Default");
 #ifdef HW_RVL
-			sprintf (options.value[2], "%s", GetFilterName((RenderFilter)GCSettings.FilterMethod));
+			sprintf (options.value[2], "%s", GetFilterName(GCSettings.FilterMethod));
 #endif
 			sprintf (options.value[3], "%.2f%%, %.2f%%", GCSettings.zoomHor*100, GCSettings.zoomVert*100);
 			sprintf (options.value[4], "%d, %d", GCSettings.xshift, GCSettings.yshift);
