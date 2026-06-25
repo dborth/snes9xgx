@@ -690,14 +690,28 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 }
 
 // -------------------------------------------------------------------------
-// Optimized RenderScale2X (Short-Circuit + 32-bit Packed Stores)
+// Optimized RenderScale2X (dcbz Chunking + Relative Pointer Sliding)
 // -------------------------------------------------------------------------
+
+#define PROCESS_SCALE2X_PIXEL() do { \
+	uint32_t B = p_top[0]; \
+	uint32_t F = p_mid[1]; \
+	uint32_t H = p_bot[0]; \
+	uint32_t E0 = (D == B && B != F && D != H) ? D : E; \
+	uint32_t E1 = (B == F && B != D && F != H) ? F : E; \
+	uint32_t E2 = (D == H && D != B && H != F) ? D : E; \
+	uint32_t E3 = (H == F && D != H && B != F) ? F : E; \
+	*(uint32_t*)&dp[0] = (E0 << 16) | E1; \
+	*(uint32_t*)&dp[nextlineDst] = (E2 << 16) | E3; \
+	D = E; E = F; \
+	p_top++; p_mid++; p_bot++; dp += 2; \
+} while(0)
+
 template<int GuiScale>
 void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
 {
 	if(!isValidDimensions(width, height)) return;
 
-	// Convert pitches to array indices for 16-bit pointer math
 	uint32_t nextlineSrc = srcPitch / sizeof(uint16_t);
 	uint32_t nextlineDst = dstPitch / sizeof(uint16_t);
 
@@ -708,33 +722,39 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 		uint16_t *p_mid = src_base;
 		uint16_t *p_top = src_base - nextlineSrc;
 		uint16_t *p_bot = src_base + nextlineSrc;
+		uint16_t *dp = dst_base;
 
-		// Output cast to 32-bit pointers for coalesced burst writes
-		uint32_t *dp_top = (uint32_t *)dst_base;
-		uint32_t *dp_bot = (uint32_t *)(dst_base + nextlineDst);
+		uint32_t D = p_mid[-1];
+		uint32_t E = p_mid[0];
 
-		// Prime the L1 cache for the beginning of the row
-		__builtin_prefetch(p_mid + 16, 0, 0);
-		__builtin_prefetch(p_top + 16, 0, 0);
-		__builtin_prefetch(p_bot + 16, 0, 0);
+		int w = width;
 
-		for (int x = 0; x < width; ++x) {
-			uint32_t B = p_top[x];
-			uint32_t D = p_mid[x - 1]; // Relies on pitch margin safety
-			uint32_t E = p_mid[x];
-			uint32_t F = p_mid[x + 1];
-			uint32_t H = p_bot[x];
+		// Phase 1: Unaligned leading pixels
+		while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
+			PROCESS_SCALE2X_PIXEL();
+			w--;
+		}
 
-			// Short-Circuit Logic for highly predictable branch savings
-			uint32_t E0 = (D == B && B != F && D != H) ? D : E;
-			uint32_t E1 = (B == F && B != D && F != H) ? F : E;
-			uint32_t E2 = (D == H && D != B && H != F) ? D : E;
-			uint32_t E3 = (H == F && D != H && B != F) ? F : E;
+		// Phase 2: Cache-Aligned Chunking
+		int chunks = w >> 3;
+		int tail = w & 7;
+		bool bot_aligned = (((uint32_t)(dp + nextlineDst) & 0x1F) == 0);
 
-			// Big Endian 32-bit packed writes.
-			// E0/E2 land in the high byte (left pixel), E1/E3 in the low byte (right pixel)
-			dp_top[x] = (E0 << 16) | E1;
-			dp_bot[x] = (E2 << 16) | E3;
+		while (chunks--) {
+			__asm__ volatile ("dcbz 0, %0" :: "b" (dp) : "memory");
+			if (bot_aligned) {
+				__asm__ volatile ("dcbz 0, %0" :: "b" (dp + nextlineDst) : "memory");
+			}
+			DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
+
+			for (int i = 0; i < 8; i++) {
+				PROCESS_SCALE2X_PIXEL();
+			}
+		}
+
+		// Phase 3: Trailing pixels
+		while (tail--) {
+			PROCESS_SCALE2X_PIXEL();
 		}
 
 		src_base += nextlineSrc;
@@ -1201,8 +1221,39 @@ static inline uint32_t ddt_fast_luma(uint16_t c) {
 }
 
 // -------------------------------------------------------------------------
-// Optimized RenderDDT (Lazy Luma + 32-bit Fast Path)
+// Optimized RenderDDT (dcbz Chunking + Relative Pointer Sliding)
 // -------------------------------------------------------------------------
+
+#define PROCESS_DDT_PIXEL() do { \
+	uint16_t F = p_mid[1]; \
+	uint16_t I = p_bot[1]; \
+	if (E != F || E != H || F != I || H != I) { \
+		uint32_t lE = ddt_fast_luma(E); \
+		uint32_t lH = ddt_fast_luma(H); \
+		uint32_t lF = ddt_fast_luma(F); \
+		uint32_t lI = ddt_fast_luma(I); \
+		Ep[0] = E; Ep[1] = E; \
+		Ep[nextlineDst] = E; Ep[nextlineDst + 1] = E; \
+		uint32_t wd1 = __builtin_abs((int)lH - (int)lF); \
+		uint32_t wd2 = __builtin_abs((int)lE - (int)lI); \
+		uint16_t aux; \
+		if (wd1 > wd2) { \
+			DDT2XBC_ODD(F, H, I, 1, nextlineDst, nextlineDst + 1); \
+		} else if (wd1 < wd2) { \
+			DDT2XD_ODD(F, H, 1, nextlineDst, nextlineDst + 1); \
+		} else { \
+			BIL2X_ODD(F, H, I, 1, nextlineDst, nextlineDst + 1); \
+		} \
+	} else { \
+		uint32_t E32 = ((uint32_t)E << 16) | E; \
+		*(uint32_t*)&Ep[0] = E32; \
+		*(uint32_t*)&Ep[nextlineDst] = E32; \
+	} \
+	E = F; H = I; \
+	p_mid++; p_bot++; Ep += 2; \
+} while(0)
+
+
 template<int GuiScale>
 void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
 {
@@ -1215,58 +1266,41 @@ void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t ds
 	uint16_t *Ep_base = (uint16_t *)dstPtr;
 
 	for (int y = 0; y < height; ++y) {
-		uint16_t *p  = p_base;
-		uint16_t *Ep = Ep_base;
+		uint16_t *p_mid = p_base;
+		uint16_t *p_bot = p_base + nextlineSrc;
+		uint16_t *Ep    = Ep_base;
 
-		__builtin_prefetch(p + 16, 0, 0);
-		__builtin_prefetch(p + nextlineSrc + 16, 0, 0);
+		uint16_t E = p_mid[0];
+		uint16_t H = p_bot[0];
 
-		uint16_t E = p[0];
-		uint16_t H = p[nextlineSrc];
+		int w = width;
 
-		for (int i = 0; i < width; ++i) {
-			uint16_t F = p[i + 1];
-			uint16_t I = p[i + 1 + nextlineSrc];
+		// Phase 1: Unaligned leading pixels
+		while (((uint32_t)Ep & 0x1F) != 0 && w > 0) {
+			PROCESS_DDT_PIXEL();
+			w--;
+		}
 
-			uint32_t E0 = (i << 1);
-			uint32_t E1 = E0 + 1;
-			uint32_t E2 = E0 + nextlineDst;
-			uint32_t E3 = E2 + 1;
+		// Phase 2: Cache-Aligned Chunking
+		int chunks = w >> 3;
+		int tail = w & 7;
+		bool bot_aligned = (((uint32_t)(Ep + nextlineDst) & 0x1F) == 0);
 
-			// Edge detection branch (True ~15% of the time in standard 2D art)
-			if (E != F || E != H || F != I || H != I)
-			{
-				// LAZY EVALUATION: Calculate Luma ONLY when an edge is detected.
-				uint32_t lE = ddt_fast_luma(E);
-				uint32_t lH = ddt_fast_luma(H);
-				uint32_t lF = ddt_fast_luma(F);
-				uint32_t lI = ddt_fast_luma(I);
-
-				Ep[E0] = E; Ep[E1] = E;
-				Ep[E2] = E; Ep[E3] = E;
-
-				uint32_t wd1 = __builtin_abs((int)lH - (int)lF);
-				uint32_t wd2 = __builtin_abs((int)lE - (int)lI);
-				uint16_t aux;
-
-				if (wd1 > wd2) {
-					DDT2XBC_ODD(F, H, I, E1, E2, E3);
-				} else if (wd1 < wd2) {
-					DDT2XD_ODD(F, H, E1, E2, E3);
-				} else {
-					BIL2X_ODD(F, H, I, E1, E2, E3);
-				}
+		while (chunks--) {
+			__asm__ volatile ("dcbz 0, %0" :: "b" (Ep) : "memory");
+			if (bot_aligned) {
+				__asm__ volatile ("dcbz 0, %0" :: "b" (Ep + nextlineDst) : "memory");
 			}
-			else
-			{
-				// Flat area 32-bit fast path (avoids 16-bit fragmentation)
-				uint32_t E32 = ((uint32_t)E << 16) | E;
-				*(uint32_t*)&Ep[E0] = E32;
-				*(uint32_t*)&Ep[E2] = E32;
-			}
+			DCBT(p_mid + 16); DCBT(p_bot + 16);
 
-			E = F;
-			H = I;
+			for (int i = 0; i < 8; i++) {
+				PROCESS_DDT_PIXEL();
+			}
+		}
+
+		// Phase 3: Trailing pixels
+		while (tail--) {
+			PROCESS_DDT_PIXEL();
 		}
 
 		p_base  += nextlineSrc;
