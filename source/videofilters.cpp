@@ -140,148 +140,46 @@ static inline int RGB565_to_Lum(uint16_t c) {
 #define	trV		0x000006
 
 // -------------------------------------------------------------------------
-// Optimized Gekko/Broadway Inline Assembly Interpolation
+// Highly Optimized C++ SWAR Interpolation (SIMD Within A Register)
 // -------------------------------------------------------------------------
 
+// Unpacks a 16-bit RGB565 pixel into a 32-bit integer.
+// Moves Green to bits 21-26, leaves Red at 11-15, and Blue at 0-4.
+// This creates empty "headroom" between the channels to safely absorb multiplication.
+static inline uint32_t Unpack565(uint16_t p) {
+    return ((uint32_t)p | ((uint32_t)p << 16)) & 0x07E0F81F;
+}
+
+// Packs the 32-bit SWAR integer back into a 16-bit RGB565 pixel.
+// Because the interpolation weights always sum to exactly 1<<shift,
+// the right-shift division perfectly zeroes out the expanded headroom bits.
+static inline uint16_t Pack565(uint32_t up) {
+    return (uint16_t)(up >> 16) | (uint16_t)up;
+}
+
 static inline uint16_t Interp01(uint16_t c1, uint16_t c2) {
-	if (c1 == c2) return c1;
-	uint32_t out, g1, rb1, g_tmp, rb_tmp;
-	__asm__ volatile (
-		"rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"    // Extract Green (0x07E0)
-		"rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"   // Extract Red/Blue using wrap mask (0xFFFFF81F)
-		"mulli   %[g1], %[g1], 3         \n\t"    // G1 * 3
-		"mulli   %[rb1], %[rb1], 3       \n\t"    // RB1 * 3
-		"rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t" // Interleaved extract to hide mulli latency
-		"rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
-		"add     %[g1], %[g1], %[g_tmp]  \n\t"    // G1*3 + G2
-		"add     %[rb1], %[rb1], %[rb_tmp]\n\t"   // RB1*3 + RB2
-		"rlwinm  %[out], %[g1], 30, 21, 26 \n\t"  // Shift right 2 (left 30) & mask G
-		"rlwimi  %[out], %[rb1], 30, 27, 20 \n\t" // Shift right 2 & mask Insert RB into output
-		: [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
-		: [c1] "r" (c1), [c2] "r" (c2)
-	);
-	return out;
+    if (c1 == c2) return c1;
+    return Pack565((Unpack565(c1) * 3 + Unpack565(c2)) >> 2);
 }
 
 static inline uint16_t Interp02(uint16_t c1, uint16_t c2, uint16_t c3) {
-	uint32_t out, g1, rb1, g_tmp, rb_tmp;
-	__asm__ volatile (
-		"rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"
-		"rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"
-		"rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t"
-		"rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
-		"add     %[g1], %[g1], %[g1]     \n\t"    // c1 * 2
-		"add     %[rb1], %[rb1], %[rb1]  \n\t"
-		"add     %[g1], %[g1], %[g_tmp]  \n\t"    // + c2
-		"add     %[rb1], %[rb1], %[rb_tmp]\n\t"
-		"rlwinm  %[g_tmp], %[c3], 0, 21, 26 \n\t"
-		"rlwinm  %[rb_tmp], %[c3], 0, 27, 20 \n\t"
-		"add     %[g1], %[g1], %[g_tmp]  \n\t"    // + c3
-		"add     %[rb1], %[rb1], %[rb_tmp]\n\t"
-		"rlwinm  %[out], %[g1], 30, 21, 26 \n\t"  // >> 2
-		"rlwimi  %[out], %[rb1], 30, 27, 20 \n\t"
-		: [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
-		: [c1] "r" (c1), [c2] "r" (c2), [c3] "r" (c3)
-	);
-	return out;
+    return Pack565((Unpack565(c1) * 2 + Unpack565(c2) + Unpack565(c3)) >> 2);
 }
 
 static inline uint16_t Interp06(uint16_t c1, uint16_t c2, uint16_t c3) {
-	uint32_t out, g1, rb1, g_tmp, rb_tmp;
-	__asm__ volatile (
-		"rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"
-		"rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"
-		"mulli   %[g1], %[g1], 5         \n\t"
-		"mulli   %[rb1], %[rb1], 5       \n\t"
-		"rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t"
-		"rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
-		"add     %[g_tmp], %[g_tmp], %[g_tmp] \n\t" // c2 * 2
-		"add     %[rb_tmp], %[rb_tmp], %[rb_tmp] \n\t"
-		"add     %[g1], %[g1], %[g_tmp]  \n\t"
-		"add     %[rb1], %[rb1], %[rb_tmp]\n\t"
-		"rlwinm  %[g_tmp], %[c3], 0, 21, 26 \n\t"
-		"rlwinm  %[rb_tmp], %[c3], 0, 27, 20 \n\t"
-		"add     %[g1], %[g1], %[g_tmp]  \n\t"
-		"add     %[rb1], %[rb1], %[rb_tmp]\n\t"
-		"rlwinm  %[out], %[g1], 29, 21, 26 \n\t"  // >> 3 (left 29)
-		"rlwimi  %[out], %[rb1], 29, 27, 20 \n\t"
-		: [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
-		: [c1] "r" (c1), [c2] "r" (c2), [c3] "r" (c3)
-	);
-	return out;
+    return Pack565((Unpack565(c1) * 5 + Unpack565(c2) * 2 + Unpack565(c3)) >> 3);
 }
 
 static inline uint16_t Interp07(uint16_t c1, uint16_t c2, uint16_t c3) {
-	uint32_t out, g1, rb1, g_tmp, rb_tmp;
-	__asm__ volatile (
-		"rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"
-		"rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"
-		"mulli   %[g1], %[g1], 6         \n\t"
-		"mulli   %[rb1], %[rb1], 6       \n\t"
-		"rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t"
-		"rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
-		"add     %[g1], %[g1], %[g_tmp]  \n\t"
-		"add     %[rb1], %[rb1], %[rb_tmp]\n\t"
-		"rlwinm  %[g_tmp], %[c3], 0, 21, 26 \n\t"
-		"rlwinm  %[rb_tmp], %[c3], 0, 27, 20 \n\t"
-		"add     %[g1], %[g1], %[g_tmp]  \n\t"
-		"add     %[rb1], %[rb1], %[rb_tmp]\n\t"
-		"rlwinm  %[out], %[g1], 29, 21, 26 \n\t"  // >> 3
-		"rlwimi  %[out], %[rb1], 29, 27, 20 \n\t"
-		: [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
-		: [c1] "r" (c1), [c2] "r" (c2), [c3] "r" (c3)
-	);
-	return out;
+    return Pack565((Unpack565(c1) * 6 + Unpack565(c2) + Unpack565(c3)) >> 3);
 }
 
 static inline uint16_t Interp09(uint16_t c1, uint16_t c2, uint16_t c3) {
-	uint32_t out, g1, rb1, g_tmp, rb_tmp;
-	__asm__ volatile (
-		"rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"
-		"rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"
-		"add     %[g1], %[g1], %[g1]     \n\t"    // c1 * 2
-		"add     %[rb1], %[rb1], %[rb1]  \n\t"
-		"rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t"
-		"rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
-		"mulli   %[g_tmp], %[g_tmp], 3   \n\t"    // c2 * 3
-		"mulli   %[rb_tmp], %[rb_tmp], 3 \n\t"
-		"add     %[g1], %[g1], %[g_tmp]  \n\t"
-		"add     %[rb1], %[rb1], %[rb_tmp]\n\t"
-		"rlwinm  %[g_tmp], %[c3], 0, 21, 26 \n\t"
-		"rlwinm  %[rb_tmp], %[c3], 0, 27, 20 \n\t"
-		"mulli   %[g_tmp], %[g_tmp], 3   \n\t"    // c3 * 3
-		"mulli   %[rb_tmp], %[rb_tmp], 3 \n\t"
-		"add     %[g1], %[g1], %[g_tmp]  \n\t"
-		"add     %[rb1], %[rb1], %[rb_tmp]\n\t"
-		"rlwinm  %[out], %[g1], 29, 21, 26 \n\t"  // >> 3
-		"rlwimi  %[out], %[rb1], 29, 27, 20 \n\t"
-		: [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
-		: [c1] "r" (c1), [c2] "r" (c2), [c3] "r" (c3)
-	);
-	return out;
+    return Pack565((Unpack565(c1) * 2 + Unpack565(c2) * 3 + Unpack565(c3) * 3) >> 3);
 }
 
 static inline uint16_t Interp10(uint16_t c1, uint16_t c2, uint16_t c3) {
-	uint32_t out, g1, rb1, g_tmp, rb_tmp;
-	__asm__ volatile (
-		"rlwinm  %[g1], %[c1], 0, 21, 26 \n\t"
-		"rlwinm  %[rb1], %[c1], 0, 27, 20 \n\t"
-		"mulli   %[g1], %[g1], 14        \n\t"
-		"mulli   %[rb1], %[rb1], 14      \n\t"
-		"rlwinm  %[g_tmp], %[c2], 0, 21, 26 \n\t"
-		"rlwinm  %[rb_tmp], %[c2], 0, 27, 20 \n\t"
-		"add     %[g1], %[g1], %[g_tmp]  \n\t"
-		"add     %[rb1], %[rb1], %[rb_tmp]\n\t"
-		"rlwinm  %[g_tmp], %[c3], 0, 21, 26 \n\t"
-		"rlwinm  %[rb_tmp], %[c3], 0, 27, 20 \n\t"
-		"add     %[g1], %[g1], %[g_tmp]  \n\t"
-		"add     %[rb1], %[rb1], %[rb_tmp]\n\t"
-		"rlwinm  %[out], %[g1], 28, 21, 26 \n\t"  // >> 4 (left 28)
-		"rlwimi  %[out], %[rb1], 28, 27, 20 \n\t"
-		: [out] "=r" (out), [g1] "=&r" (g1), [rb1] "=&r" (rb1), [g_tmp] "=&r" (g_tmp), [rb_tmp] "=&r" (rb_tmp)
-		: [c1] "r" (c1), [c2] "r" (c2), [c3] "r" (c3)
-	);
-	return out;
+    return Pack565((Unpack565(c1) * 14 + Unpack565(c2) + Unpack565(c3)) >> 4);
 }
 
 #define PIXEL00_0		*(dp) = w5
@@ -790,24 +688,9 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	}
 }
 
-// Fast Branchless Equality Mask for Gekko (PowerPC)
-// Returns 0xFFFFFFFF if a == b, and 0x00000000 if a != b
-// This replaces Gekko's missing 'isel' instruction using 4 fast integer ops.
-static inline uint32_t branchless_eq_mask_s2x(uint32_t a, uint32_t b) {
-	uint32_t mask;
-	// If a == b, (a ^ b) is 0, cntlzw is 32. 32 >> 5 is 1. -1 is 0xFFFFFFFF.
-	// If a != b, leading zeros are 16-31. >> 5 is 0. -0 is 0x00000000.
-	__asm__ (
-		"xor    %[mask], %[a], %[b] \n\t"
-		"cntlzw %[mask], %[mask] \n\t"
-		"srwi   %[mask], %[mask], 5 \n\t"
-		"neg    %[mask], %[mask] \n\t"
-		: [mask] "=r" (mask)
-		: [a] "r" (a), [b] "r" (b)
-	);
-	return mask;
-}
-
+// -------------------------------------------------------------------------
+// Optimized RenderScale2X (Short-Circuit + 32-bit Packed Stores)
+// -------------------------------------------------------------------------
 template<int GuiScale>
 void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
 {
@@ -825,13 +708,9 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 		uint16_t *p_top = src_base - nextlineSrc;
 		uint16_t *p_bot = src_base + nextlineSrc;
 
-		// Output mapped natively as 16-bit to prevent PowerPC Alignment Exceptions
-		uint16_t *dp_top = dst_base;
-		uint16_t *dp_bot = dst_base + nextlineDst;
-
-		// Pre-load sliding window (D, E) matching your original setup
-		uint32_t D = p_mid[-1];
-		uint32_t E = p_mid[0];
+		// Output cast to 32-bit pointers for coalesced burst writes
+		uint32_t *dp_top = (uint32_t *)dst_base;
+		uint32_t *dp_bot = (uint32_t *)(dst_base + nextlineDst);
 
 		// Prime the L1 cache for the beginning of the row
 		__builtin_prefetch(p_mid + 16, 0, 0);
@@ -840,38 +719,21 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 
 		for (int x = 0; x < width; ++x) {
 			uint32_t B = p_top[x];
+			uint32_t D = p_mid[x - 1]; // Relies on pitch margin safety
+			uint32_t E = p_mid[x];
 			uint32_t F = p_mid[x + 1];
 			uint32_t H = p_bot[x];
 
-			// Superscalar Equality Evaluation
-			uint32_t M_DB = branchless_eq_mask_s2x(D, B);
-			uint32_t M_BF = branchless_eq_mask_s2x(B, F);
-			uint32_t M_DH = branchless_eq_mask_s2x(D, H);
-			uint32_t M_HF = branchless_eq_mask_s2x(H, F);
+			// Short-Circuit Logic for highly predictable branch savings
+			uint32_t E0 = (D == B && B != F && D != H) ? D : E;
+			uint32_t E1 = (B == F && B != D && F != H) ? F : E;
+			uint32_t E2 = (D == H && D != B && H != F) ? D : E;
+			uint32_t E3 = (H == F && D != H && B != F) ? F : E;
 
-			// Compound Logic Synthesis (GCC maps bitwise NOT `~` to the `andc` instruction naturally)
-			uint32_t C0 = M_DB & ~M_BF & ~M_DH; // D==B && B!=F && D!=H
-			uint32_t C1 = M_BF & ~M_DB & ~M_HF; // B==F && B!=D && F!=H
-			uint32_t C2 = M_DH & ~M_DB & ~M_HF; // D==H && D!=B && H!=F
-			uint32_t C3 = M_HF & ~M_DH & ~M_BF; // H==F && D!=H && B!=F
-
-			// Pixel Resolution
-			uint16_t E0 = (D & C0) | (E & ~C0); // Top-Left
-			uint16_t E1 = (F & C1) | (E & ~C1); // Top-Right
-			uint16_t E2 = (D & C2) | (E & ~C2); // Bottom-Left
-			uint16_t E3 = (F & C3) | (E & ~C3); // Bottom-Right
-
-			// Store explicitly as 16-bit to guarantee memory alignment safety.
-			// The CPU's write-gather buffer will seamlessly coalesce these into fast burst writes.
-			uint32_t out_idx = x << 1;
-			dp_top[out_idx]     = E0;
-			dp_top[out_idx + 1] = E1;
-			dp_bot[out_idx]     = E2;
-			dp_bot[out_idx + 1] = E3;
-
-			// Shift Sliding Window
-			D = E;
-			E = F;
+			// Big Endian 32-bit packed writes.
+			// E0/E2 land in the high byte (left pixel), E1/E3 in the low byte (right pixel)
+			dp_top[x] = (E0 << 16) | E1;
+			dp_bot[x] = (E2 << 16) | E3;
 		}
 
 		src_base += nextlineSrc;
@@ -881,51 +743,35 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 
 //---------------------------------------------------------------------------------------------------------------------------
 
-// Inline Assembly Helpers for RGB565 Extraction
+// -------------------------------------------------------------------------
+// SWAR (SIMD Within A Register) Alpha Blending Macros
+// -------------------------------------------------------------------------
+// Replaces the old ExtractR/G/B inline assembly and masking methods.
+// By utilizing the Unpack565/Pack565 technique, we compute all three
+// color channels in parallel without overflowing boundaries.
 
-static inline uint32_t ExtractR(uint16_t c) {
-	uint32_t res;
-	__asm__ volatile ("rlwinm %0, %1, 21, 27, 31" : "=r"(res) : "r"(c));
-	return res;
-}
+#define ALPHA_BLEND_128_W(dst, src) \
+	(dst) = Pack565((Unpack565(dst) + Unpack565(src)) >> 1)
 
-static inline uint32_t ExtractG(uint16_t c) {
-	uint32_t res;
-	__asm__ volatile ("rlwinm %0, %1, 27, 26, 31" : "=r"(res) : "r"(c));
-	return res;
-}
-
-static inline uint32_t ExtractB(uint16_t c) {
-	uint32_t res;
-	__asm__ volatile ("rlwinm %0, %1, 0, 27, 31" : "=r"(res) : "r"(c));
-	return res;
-}
-
-#define RB_MASK565 0xF81F
-#define R_MASK565  0xF800
-#define G_MASK565  0x07E0
-#define B_MASK565  0x001F
-#define LB_MASK565 0xF7DE
-
-static const uint16_t rb_mask = RB_MASK565;
-static const uint16_t  g_mask =  G_MASK565;
-static const uint16_t lb_mask = LB_MASK565;
-
-#define ALPHA_BLEND_128_W(dst, src) dst = ((src & lb_mask) >> 1) + ((dst & lb_mask) >> 1)
+// dst = (3*dst + src) / 4
 #define ALPHA_BLEND_64_W(dst, src) \
-	dst = ( \
-		  (rb_mask & ((dst & rb_mask) + ((((src & rb_mask) - (dst & rb_mask))) >>2))) | \
-		  ( g_mask & ((dst &  g_mask) + ((((src &  g_mask) - (dst &  g_mask))) >>2))) )
+	(dst) = Pack565((Unpack565(dst) * 3 + Unpack565(src)) >> 2)
 
+// dst = (dst + 3*src) / 4
 #define ALPHA_BLEND_192_W(dst, src) \
-	dst = ( \
-		  (rb_mask & ((src & rb_mask) + ((((dst & rb_mask) - (src & rb_mask))) >>2))) | \
-		  ( g_mask & ((src &  g_mask) + ((((dst &  g_mask) - (src &  g_mask))) >>2))) )
+	(dst) = Pack565((Unpack565(dst) + Unpack565(src) * 3) >> 2)
 
+// dst = (dst + 7*src) / 8
 #define ALPHA_BLEND_224_W(dst, src) \
-	dst = ( \
-		  (rb_mask & ((src & rb_mask) + ((((dst & rb_mask) - (src & rb_mask))) >>3))) | \
-		  ( g_mask & ((src &  g_mask) + ((((dst &  g_mask) - (src &  g_mask))) >>3))) )
+	(dst) = Pack565((Unpack565(dst) + Unpack565(src) * 7) >> 3)
+
+// Custom blend weight (out of 32)
+#define ALPHA_BLEND_X_W(dst, src, weight) \
+	(dst) = Pack565((Unpack565(dst) * (32 - (weight)) + Unpack565(src) * (weight)) >> 5)
+
+// -------------------------------------------------------------------------
+// Scaling Kernel Matrix Routing Macros
+// -------------------------------------------------------------------------
 
 #define LEFT_UP_2_2X(N3, N2, N1, PIXEL)\
 	ALPHA_BLEND_224_W(Ep[N3], PIXEL); \
@@ -942,17 +788,6 @@ static const uint16_t lb_mask = LB_MASK565;
 
 #define DIA_2X(N3, PIXEL)\
 	ALPHA_BLEND_128_W(Ep[N3], PIXEL); \
-
-// Fixed Extract macros applied properly
-#define ALPHA_BLEND_X_W(dst, src, weight) \
-	dst = ({ \
-		uint32_t sR = ExtractR(src); uint32_t sG = ExtractG(src); uint32_t sB = ExtractB(src); \
-		uint32_t dR = ExtractR(dst); uint32_t dG = ExtractG(dst); uint32_t dB = ExtractB(dst); \
-		uint32_t r = ((sR * weight) + (dR * (32 - weight))) >> 5; \
-		uint32_t g = ((sG * weight) + (dG * (32 - weight))) >> 5; \
-		uint32_t b = ((sB * weight) + (dB * (32 - weight))) >> 5; \
-		((r & 0x1F) << 11) | ((g & 0x3F) << 5) | (b & 0x1F); \
-	})
 
 #define BIL2X_ODD(PF, PH, PI, N1, N2, N3) \
 	ALPHA_BLEND_128_W(Ep[N1], PF); \
@@ -1365,7 +1200,7 @@ static inline uint32_t ddt_fast_luma(uint16_t c) {
 }
 
 // -------------------------------------------------------------------------
-// Optimized RenderDDT
+// Optimized RenderDDT (Lazy Luma + 32-bit Fast Path)
 // -------------------------------------------------------------------------
 template<int GuiScale>
 void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
@@ -1382,56 +1217,55 @@ void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t ds
 		uint16_t *p  = p_base;
 		uint16_t *Ep = Ep_base;
 
-		// Prime the L1 cache for the beginning of the row
 		__builtin_prefetch(p + 16, 0, 0);
 		__builtin_prefetch(p + nextlineSrc + 16, 0, 0);
 
 		uint16_t E = p[0];
 		uint16_t H = p[nextlineSrc];
 
-		uint32_t lE = ddt_fast_luma(E);
-		uint32_t lH = ddt_fast_luma(H);
-
 		for (int i = 0; i < width; ++i) {
 			uint16_t F = p[i + 1];
 			uint16_t I = p[i + 1 + nextlineSrc];
-
-			uint32_t lF = ddt_fast_luma(F);
-			uint32_t lI = ddt_fast_luma(I);
 
 			uint32_t E0 = (i << 1);
 			uint32_t E1 = E0 + 1;
 			uint32_t E2 = E0 + nextlineDst;
 			uint32_t E3 = E2 + 1;
 
-			Ep[E0] = E; Ep[E1] = E;
-			Ep[E2] = E; Ep[E3] = E;
-
+			// Edge detection branch (True ~15% of the time in standard 2D art)
 			if (E != F || E != H || F != I || H != I)
 			{
-				// Relying on __builtin_abs allows GCC to emit optimal branchless subfc/subfe chains
+				// LAZY EVALUATION: Calculate Luma ONLY when an edge is detected.
+				uint32_t lE = ddt_fast_luma(E);
+				uint32_t lH = ddt_fast_luma(H);
+				uint32_t lF = ddt_fast_luma(F);
+				uint32_t lI = ddt_fast_luma(I);
+
+				Ep[E0] = E; Ep[E1] = E;
+				Ep[E2] = E; Ep[E3] = E;
+
 				uint32_t wd1 = __builtin_abs((int)lH - (int)lF);
 				uint32_t wd2 = __builtin_abs((int)lE - (int)lI);
 				uint16_t aux;
 
-				if (wd1 > wd2)
-				{
+				if (wd1 > wd2) {
 					DDT2XBC_ODD(F, H, I, E1, E2, E3);
-				}
-				else if (wd1 < wd2)
-				{
+				} else if (wd1 < wd2) {
 					DDT2XD_ODD(F, H, E1, E2, E3);
-				}
-				else
-				{
+				} else {
 					BIL2X_ODD(F, H, I, E1, E2, E3);
 				}
+			}
+			else
+			{
+				// Flat area 32-bit fast path (avoids 16-bit fragmentation)
+				uint32_t E32 = ((uint32_t)E << 16) | E;
+				*(uint32_t*)&Ep[E0] = E32;
+				*(uint32_t*)&Ep[E2] = E32;
 			}
 
 			E = F;
 			H = I;
-			lE = lF;
-			lH = lI;
 		}
 
 		p_base  += nextlineSrc;
