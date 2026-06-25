@@ -564,108 +564,7 @@ static inline uint32_t BranchlessDiff(uint32_t c1, uint32_t c2) {
 }
 
 // -------------------------------------------------------------------------
-// Fast Branchless Pattern Evaluation Macros
-// -------------------------------------------------------------------------
-#define EVAL_PATTERN_BIT(wX, w5, yX, y5, bit) \
-	( (-((int)(wX != w5))) & BranchlessDiff(yX, y5) & (1 << bit) )
-
-#define EVAL_BOLD_BIT(wX, w5, bX, avg, diff5_mask, bit) \
-	( (-((int)(wX != w5))) & ( (-((int)(bX > avg))) ^ diff5_mask ) & (1 << bit) )
-
-#define EVAL_XS_BIT(bX, avg, diff5_mask, bit) \
-	( ( (-((int)(bX > avg))) ^ diff5_mask ) & (1 << bit) )
-
-// -------------------------------------------------------------------------
-// HQ2X Pipeline Single-Pixel Chunking Macros
-// -------------------------------------------------------------------------
-
-#define PROCESS_HQ2X_PIXEL() do { \
-	sp++; \
-	w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line); \
-	y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9); \
-	pattern = 0; \
-	pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0); \
-	pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1); \
-	pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2); \
-	pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3); \
-	pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4); \
-	pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5); \
-	pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6); \
-	pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7); \
-	if (pattern > 255) __builtin_unreachable(); \
-	switch (pattern) { HQ2XCASES } \
-	w1 = w2; w4 = w5; w7 = w8; \
-	w2 = w3; w5 = w6; w8 = w9; \
-	y1 = y2; y4 = y5; y7 = y8; \
-	y2 = y3; y5 = y6; y8 = y9; \
-	dp += 2; \
-} while(0)
-
-#define PROCESS_HQ2XBOLD_PIXEL() do { \
-	sp++; \
-	w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line); \
-	b3 = inlineRGBtoBright(w3); b6 = inlineRGBtoBright(w6); b9 = inlineRGBtoBright(w9); \
-	uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9; \
-	uint32_t diff5_mask = -((int)(b5 > avg)); \
-	pattern = 0; \
-	pattern |= EVAL_BOLD_BIT(w1, w5, b1, avg, diff5_mask, 0); \
-	pattern |= EVAL_BOLD_BIT(w2, w5, b2, avg, diff5_mask, 1); \
-	pattern |= EVAL_BOLD_BIT(w3, w5, b3, avg, diff5_mask, 2); \
-	pattern |= EVAL_BOLD_BIT(w4, w5, b4, avg, diff5_mask, 3); \
-	pattern |= EVAL_BOLD_BIT(w6, w5, b6, avg, diff5_mask, 4); \
-	pattern |= EVAL_BOLD_BIT(w7, w5, b7, avg, diff5_mask, 5); \
-	pattern |= EVAL_BOLD_BIT(w8, w5, b8, avg, diff5_mask, 6); \
-	pattern |= EVAL_BOLD_BIT(w9, w5, b9, avg, diff5_mask, 7); \
-	if (pattern > 255) __builtin_unreachable(); \
-	switch (pattern) { HQ2XCASES } \
-	w1 = w2; w4 = w5; w7 = w8; \
-	w2 = w3; w5 = w6; w8 = w9; \
-	b1 = b2; b4 = b5; b7 = b8; \
-	b2 = b3; b5 = b6; b8 = b9; \
-	dp += 2; \
-} while(0)
-
-#define PROCESS_HQ2XS_PIXEL() do { \
-	sp++; \
-	w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line); \
-	y3 = inlineRGBtoYUV(w3); y6 = inlineRGBtoYUV(w6); y9 = inlineRGBtoYUV(w9); \
-	pattern = 0; \
-	uint32_t match = (w1 == w5) | (w3 == w5) | (w7 == w5) | (w9 == w5); \
-	if (!match) { \
-		uint16_t b1 = inlineRGBtoBright(w1); uint16_t b2 = inlineRGBtoBright(w2); uint16_t b3 = inlineRGBtoBright(w3); \
-		uint16_t b4 = inlineRGBtoBright(w4); uint16_t b5 = inlineRGBtoBright(w5); uint16_t b6 = inlineRGBtoBright(w6); \
-		uint16_t b7 = inlineRGBtoBright(w7); uint16_t b8 = inlineRGBtoBright(w8); uint16_t b9 = inlineRGBtoBright(w9); \
-		uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9; \
-		uint32_t diff5_mask = -((int)(b5 > avg)); \
-		pattern |= EVAL_XS_BIT(b1, avg, diff5_mask, 0); \
-		pattern |= EVAL_XS_BIT(b2, avg, diff5_mask, 1); \
-		pattern |= EVAL_XS_BIT(b3, avg, diff5_mask, 2); \
-		pattern |= EVAL_XS_BIT(b4, avg, diff5_mask, 3); \
-		pattern |= EVAL_XS_BIT(b6, avg, diff5_mask, 4); \
-		pattern |= EVAL_XS_BIT(b7, avg, diff5_mask, 5); \
-		pattern |= EVAL_XS_BIT(b8, avg, diff5_mask, 6); \
-		pattern |= EVAL_XS_BIT(b9, avg, diff5_mask, 7); \
-	} else { \
-		pattern |= EVAL_PATTERN_BIT(w1, w5, y1, y5, 0); \
-		pattern |= EVAL_PATTERN_BIT(w2, w5, y2, y5, 1); \
-		pattern |= EVAL_PATTERN_BIT(w3, w5, y3, y5, 2); \
-		pattern |= EVAL_PATTERN_BIT(w4, w5, y4, y5, 3); \
-		pattern |= EVAL_PATTERN_BIT(w6, w5, y6, y5, 4); \
-		pattern |= EVAL_PATTERN_BIT(w7, w5, y7, y5, 5); \
-		pattern |= EVAL_PATTERN_BIT(w8, w5, y8, y5, 6); \
-		pattern |= EVAL_PATTERN_BIT(w9, w5, y9, y5, 7); \
-	} \
-	if (pattern > 255) __builtin_unreachable(); \
-	switch (pattern) { HQ2XCASES } \
-	w1 = w2; w4 = w5; w7 = w8; \
-	w2 = w3; w5 = w6; w8 = w9; \
-	y1 = y2; y4 = y5; y7 = y8; \
-	y2 = y3; y5 = y6; y8 = y9; \
-	dp += 2; \
-} while(0)
-
-// -------------------------------------------------------------------------
-// Optimized HQ2X Render Loop (Branchless DCBZ + DCBT Chunking)
+// Optimized HQ2X Render Loop
 // -------------------------------------------------------------------------
 template<int GuiScale>
 void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
@@ -685,45 +584,98 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	// ---------------------------------------------------------
 	if (GuiScale == FILTER_HQ2X)
 	{
-		uint32_t y1, y2, y3, y4, y5, y6, y7, y8, y9;
+		uint32_t y5;
 
 		while (height--) {
 			sp--;
 			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
-			y1 = inlineRGBtoYUV(w1); y4 = inlineRGBtoYUV(w4); y7 = inlineRGBtoYUV(w7);
-
 			sp++;
 			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
-			y2 = inlineRGBtoYUV(w2); y5 = inlineRGBtoYUV(w5); y8 = inlineRGBtoYUV(w8);
 
 			int w = width;
 
+			// Phase 1: Unaligned leading pixels
 			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
-				PROCESS_HQ2X_PIXEL();
-				w--;
+				sp++;
+				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+				y5 = inlineRGBtoYUV(w5);
+				pattern = 0;
+
+				if (w1 != w5 && BranchlessDiff(inlineRGBtoYUV(w1), y5)) pattern |= (1 << 0);
+				if (w2 != w5 && BranchlessDiff(inlineRGBtoYUV(w2), y5)) pattern |= (1 << 1);
+				if (w3 != w5 && BranchlessDiff(inlineRGBtoYUV(w3), y5)) pattern |= (1 << 2);
+				if (w4 != w5 && BranchlessDiff(inlineRGBtoYUV(w4), y5)) pattern |= (1 << 3);
+				if (w6 != w5 && BranchlessDiff(inlineRGBtoYUV(w6), y5)) pattern |= (1 << 4);
+				if (w7 != w5 && BranchlessDiff(inlineRGBtoYUV(w7), y5)) pattern |= (1 << 5);
+				if (w8 != w5 && BranchlessDiff(inlineRGBtoYUV(w8), y5)) pattern |= (1 << 6);
+				if (w9 != w5 && BranchlessDiff(inlineRGBtoYUV(w9), y5)) pattern |= (1 << 7);
+
+				switch (pattern) { HQ2XCASES }
+
+				w1 = w2; w4 = w5; w7 = w8;
+				w2 = w3; w5 = w6; w8 = w9;
+				dp += 2; w--;
 			}
 
+			// Phase 2: Cache-Aligned Chunking
 			int chunks = w >> 3;
 			int tail = w & 7;
 			bool bot_aligned = (((uint32_t)(dp + dst1line) & 0x1F) == 0);
 
-			if (bot_aligned) {
-				while (chunks--) {
-					__asm__ volatile ("dcbz 0, %0" :: "r" (dp));
-					__asm__ volatile ("dcbz 0, %0" :: "r" (dp + dst1line));
-					DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
-					for(int i=0; i<8; i++) { PROCESS_HQ2X_PIXEL(); }
+			while (chunks--) {
+				// "b" constraint prevents r0 allocation. "memory" clobber prevents instruction reordering.
+				__asm__ volatile ("dcbz 0, %0" :: "b" (dp) : "memory");
+				if (bot_aligned) {
+					__asm__ volatile ("dcbz 0, %0" :: "b" (dp + dst1line) : "memory");
 				}
-			} else {
-				while (chunks--) {
-					__asm__ volatile ("dcbz 0, %0" :: "r" (dp));
-					DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
-					for(int i=0; i<8; i++) { PROCESS_HQ2X_PIXEL(); }
+				DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
+
+				// Process 8 pixels. We avoid a macro here to prevent GCC from easily
+				// unrolling the massive switch statement and thrashing the I-Cache.
+				for(int i = 0; i < 8; i++) {
+					sp++;
+					w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+					y5 = inlineRGBtoYUV(w5);
+					pattern = 0;
+
+					if (w1 != w5 && BranchlessDiff(inlineRGBtoYUV(w1), y5)) pattern |= (1 << 0);
+					if (w2 != w5 && BranchlessDiff(inlineRGBtoYUV(w2), y5)) pattern |= (1 << 1);
+					if (w3 != w5 && BranchlessDiff(inlineRGBtoYUV(w3), y5)) pattern |= (1 << 2);
+					if (w4 != w5 && BranchlessDiff(inlineRGBtoYUV(w4), y5)) pattern |= (1 << 3);
+					if (w6 != w5 && BranchlessDiff(inlineRGBtoYUV(w6), y5)) pattern |= (1 << 4);
+					if (w7 != w5 && BranchlessDiff(inlineRGBtoYUV(w7), y5)) pattern |= (1 << 5);
+					if (w8 != w5 && BranchlessDiff(inlineRGBtoYUV(w8), y5)) pattern |= (1 << 6);
+					if (w9 != w5 && BranchlessDiff(inlineRGBtoYUV(w9), y5)) pattern |= (1 << 7);
+
+					switch (pattern) { HQ2XCASES }
+
+					w1 = w2; w4 = w5; w7 = w8;
+					w2 = w3; w5 = w6; w8 = w9;
+					dp += 2;
 				}
 			}
 
+			// Phase 3: Trailing pixels
 			while (tail--) {
-				PROCESS_HQ2X_PIXEL();
+				sp++;
+				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+				y5 = inlineRGBtoYUV(w5);
+				pattern = 0;
+
+				if (w1 != w5 && BranchlessDiff(inlineRGBtoYUV(w1), y5)) pattern |= (1 << 0);
+				if (w2 != w5 && BranchlessDiff(inlineRGBtoYUV(w2), y5)) pattern |= (1 << 1);
+				if (w3 != w5 && BranchlessDiff(inlineRGBtoYUV(w3), y5)) pattern |= (1 << 2);
+				if (w4 != w5 && BranchlessDiff(inlineRGBtoYUV(w4), y5)) pattern |= (1 << 3);
+				if (w6 != w5 && BranchlessDiff(inlineRGBtoYUV(w6), y5)) pattern |= (1 << 4);
+				if (w7 != w5 && BranchlessDiff(inlineRGBtoYUV(w7), y5)) pattern |= (1 << 5);
+				if (w8 != w5 && BranchlessDiff(inlineRGBtoYUV(w8), y5)) pattern |= (1 << 6);
+				if (w9 != w5 && BranchlessDiff(inlineRGBtoYUV(w9), y5)) pattern |= (1 << 7);
+
+				switch (pattern) { HQ2XCASES }
+
+				w1 = w2; w4 = w5; w7 = w8;
+				w2 = w3; w5 = w6; w8 = w9;
+				dp += 2;
 			}
 
 			dp += ((dst1line - width) << 1);
@@ -741,41 +693,38 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			sp--;
 			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
 			b1 = inlineRGBtoBright(w1); b4 = inlineRGBtoBright(w4); b7 = inlineRGBtoBright(w7);
-
 			sp++;
 			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
 			b2 = inlineRGBtoBright(w2); b5 = inlineRGBtoBright(w5); b8 = inlineRGBtoBright(w8);
 
 			int w = width;
 
-			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
-				PROCESS_HQ2XBOLD_PIXEL();
-				w--;
+			while (w > 0) {
+				sp++;
+				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+				b3 = inlineRGBtoBright(w3); b6 = inlineRGBtoBright(w6); b9 = inlineRGBtoBright(w9);
+
+				uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+				bool diff5 = (b5 > avg);
+				pattern = 0;
+
+				if (w1 != w5 && (b1 > avg) != diff5) pattern |= (1 << 0);
+				if (w2 != w5 && (b2 > avg) != diff5) pattern |= (1 << 1);
+				if (w3 != w5 && (b3 > avg) != diff5) pattern |= (1 << 2);
+				if (w4 != w5 && (b4 > avg) != diff5) pattern |= (1 << 3);
+				if (w6 != w5 && (b6 > avg) != diff5) pattern |= (1 << 4);
+				if (w7 != w5 && (b7 > avg) != diff5) pattern |= (1 << 5);
+				if (w8 != w5 && (b8 > avg) != diff5) pattern |= (1 << 6);
+				if (w9 != w5 && (b9 > avg) != diff5) pattern |= (1 << 7);
+
+				switch (pattern) { HQ2XCASES }
+
+				w1 = w2; w4 = w5; w7 = w8;
+				w2 = w3; w5 = w6; w8 = w9;
+				b1 = b2; b4 = b5; b7 = b8;
+				b2 = b3; b5 = b6; b8 = b9;
+				dp += 2; w--;
 			}
-
-			int chunks = w >> 3;
-			int tail = w & 7;
-			bool bot_aligned = (((uint32_t)(dp + dst1line) & 0x1F) == 0);
-
-			if (bot_aligned) {
-				while (chunks--) {
-					__asm__ volatile ("dcbz 0, %0" :: "r" (dp));
-					__asm__ volatile ("dcbz 0, %0" :: "r" (dp + dst1line));
-					DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
-					for(int i=0; i<8; i++) { PROCESS_HQ2XBOLD_PIXEL(); }
-				}
-			} else {
-				while (chunks--) {
-					__asm__ volatile ("dcbz 0, %0" :: "r" (dp));
-					DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
-					for(int i=0; i<8; i++) { PROCESS_HQ2XBOLD_PIXEL(); }
-				}
-			}
-
-			while (tail--) {
-				PROCESS_HQ2XBOLD_PIXEL();
-			}
-
 			dp += ((dst1line - width) << 1);
 			sp +=  (src1line - width);
 		}
@@ -785,243 +734,153 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	// ---------------------------------------------------------
 	else if (GuiScale == FILTER_HQ2XS)
 	{
-		uint32_t y1, y2, y3, y4, y5, y6, y7, y8, y9;
+		uint16_t b1, b2, b3, b4, b5, b6, b7, b8, b9;
+		uint32_t y5;
 
 		while (height--) {
 			sp--;
 			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
-			y1 = inlineRGBtoYUV(w1); y4 = inlineRGBtoYUV(w4); y7 = inlineRGBtoYUV(w7);
-
+			b1 = inlineRGBtoBright(w1); b4 = inlineRGBtoBright(w4); b7 = inlineRGBtoBright(w7);
 			sp++;
 			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
-			y2 = inlineRGBtoYUV(w2); y5 = inlineRGBtoYUV(w5); y8 = inlineRGBtoYUV(w8);
+			b2 = inlineRGBtoBright(w2); b5 = inlineRGBtoBright(w5); b8 = inlineRGBtoBright(w8);
 
 			int w = width;
 
-			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
-				PROCESS_HQ2XS_PIXEL();
-				w--;
-			}
+			while (w > 0) {
+				sp++;
+				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+				b3 = inlineRGBtoBright(w3); b6 = inlineRGBtoBright(w6); b9 = inlineRGBtoBright(w9);
 
-			int chunks = w >> 3;
-			int tail = w & 7;
-			bool bot_aligned = (((uint32_t)(dp + dst1line) & 0x1F) == 0);
-
-			if (bot_aligned) {
-				while (chunks--) {
-					__asm__ volatile ("dcbz 0, %0" :: "r" (dp));
-					__asm__ volatile ("dcbz 0, %0" :: "r" (dp + dst1line));
-					DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
-					for(int i=0; i<8; i++) { PROCESS_HQ2XS_PIXEL(); }
+				pattern = 0;
+				if(w1 == w5 || w3 == w5 || w7 == w5 || w9 == w5) {
+					y5 = inlineRGBtoYUV(w5);
+					if (w1 != w5 && BranchlessDiff(inlineRGBtoYUV(w1), y5)) pattern |= (1 << 0);
+					if (w2 != w5 && BranchlessDiff(inlineRGBtoYUV(w2), y5)) pattern |= (1 << 1);
+					if (w3 != w5 && BranchlessDiff(inlineRGBtoYUV(w3), y5)) pattern |= (1 << 2);
+					if (w4 != w5 && BranchlessDiff(inlineRGBtoYUV(w4), y5)) pattern |= (1 << 3);
+					if (w6 != w5 && BranchlessDiff(inlineRGBtoYUV(w6), y5)) pattern |= (1 << 4);
+					if (w7 != w5 && BranchlessDiff(inlineRGBtoYUV(w7), y5)) pattern |= (1 << 5);
+					if (w8 != w5 && BranchlessDiff(inlineRGBtoYUV(w8), y5)) pattern |= (1 << 6);
+					if (w9 != w5 && BranchlessDiff(inlineRGBtoYUV(w9), y5)) pattern |= (1 << 7);
+				} else {
+					uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+					bool diff5 = (b5 > avg);
+					if ((b1 > avg) != diff5) pattern |= (1 << 0);
+					if ((b2 > avg) != diff5) pattern |= (1 << 1);
+					if ((b3 > avg) != diff5) pattern |= (1 << 2);
+					if ((b4 > avg) != diff5) pattern |= (1 << 3);
+					if ((b6 > avg) != diff5) pattern |= (1 << 4);
+					if ((b7 > avg) != diff5) pattern |= (1 << 5);
+					if ((b8 > avg) != diff5) pattern |= (1 << 6);
+					if ((b9 > avg) != diff5) pattern |= (1 << 7);
 				}
-			} else {
-				while (chunks--) {
-					__asm__ volatile ("dcbz 0, %0" :: "r" (dp));
-					DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
-					for(int i=0; i<8; i++) { PROCESS_HQ2XS_PIXEL(); }
-				}
-			}
 
-			while (tail--) {
-				PROCESS_HQ2XS_PIXEL();
-			}
+				switch (pattern) { HQ2XCASES }
 
+				w1 = w2; w4 = w5; w7 = w8;
+				w2 = w3; w5 = w6; w8 = w9;
+				b1 = b2; b4 = b5; b7 = b8;
+				b2 = b3; b5 = b6; b8 = b9;
+				dp += 2; w--;
+			}
 			dp += ((dst1line - width) << 1);
 			sp +=  (src1line - width);
 		}
 	}
 }
 
+// Fast Branchless Equality Mask for Gekko (PowerPC)
+// Returns 0xFFFFFFFF if a == b, and 0x00000000 if a != b
+// This replaces Gekko's missing 'isel' instruction using 4 fast integer ops.
+static inline uint32_t branchless_eq_mask_s2x(uint32_t a, uint32_t b) {
+	uint32_t mask;
+	// If a == b, (a ^ b) is 0, cntlzw is 32. 32 >> 5 is 1. -1 is 0xFFFFFFFF.
+	// If a != b, leading zeros are 16-31. >> 5 is 0. -0 is 0x00000000.
+	__asm__ (
+		"xor    %[mask], %[a], %[b] \n\t"
+		"cntlzw %[mask], %[mask] \n\t"
+		"srwi   %[mask], %[mask], 5 \n\t"
+		"neg    %[mask], %[mask] \n\t"
+		: [mask] "=r" (mask)
+		: [a] "r" (a), [b] "r" (b)
+	);
+	return mask;
+}
+
 template<int GuiScale>
 void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
 {
-	if(!isValidDimensions(width, height)) return;
+	if (height <= 0 || width <= 0) return;
 
-	u32 p = (u32)srcPtr;
-	u32 q = (u32)dstPtr;
+	// Convert pitches to array indices for 16-bit pointer math
+	uint32_t nextlineSrc = srcPitch / sizeof(uint16_t);
+	uint32_t nextlineDst = dstPitch / sizeof(uint16_t);
 
-	// Pitch variables (Constrained to base registers to prevent r0 allocation for lhzx/stwx)
-	u32 srcP = srcPitch;
-	s32 negSrcP = -(s32)srcPitch;
-	u32 dstP = dstPitch;
-	u32 dstP2x = dstPitch << 1;
+	uint16_t *src_base = (uint16_t *)srcPtr;
+	uint16_t *dst_base = (uint16_t *)dstPtr;
 
-	u32 w = width >> 1; // Unrolled by 2 pixels per iteration
-	u32 h = height;     // Explicitly declared for the outer loop constraint
+	for (int y = 0; y < height; ++y) {
+		uint16_t *p_mid = src_base;
+		uint16_t *p_top = src_base - nextlineSrc;
+		uint16_t *p_bot = src_base + nextlineSrc;
 
-	// Register allocation mappings
-	u32 src, dst, B, D, E, F, H;
-	u32 M_DB, M_BF, M_DH, M_HF;
-	u32 C0, C1, C2, C3, T1, T2;
+		// Output mapped as 32-bit to halve the number of store operations (mimics rlwimi/stw)
+		uint32_t *dp_top = (uint32_t *)dst_base;
+		uint32_t *dp_bot = (uint32_t *)(dst_base + nextlineDst);
 
-	__asm__ __volatile__ (
-		"1: \n" // --- Outer Row Loop ---
-		"mr     %[src], %[p] \n"
-		"mr     %[dst], %[q] \n"
+		// Pre-load sliding window (D, E) matching your original setup
+		uint32_t D = p_mid[-1];
+		uint32_t E = p_mid[0];
 
-		// Prime the sliding window (D and E) for the start of the row
-		"lhz    %[D], -2(%[src]) \n"
-		"lhz    %[E],  0(%[src]) \n"
-		"mtctr  %[w] \n"
+		// Prime the L1 cache for the beginning of the row
+		__builtin_prefetch(p_mid + 16, 0, 0);
+		__builtin_prefetch(p_top + 16, 0, 0);
+		__builtin_prefetch(p_bot + 16, 0, 0);
 
-		"2: \n" // --- Inner Pixel Loop (Unrolled x2) ---
+		for (int x = 0; x < width; ++x) {
+			// Software prefetch ~32 bytes (1 cache line) ahead every 16 pixels
+			if ((x & 15) == 0) {
+				__builtin_prefetch(p_mid + x + 16, 0, 0);
+				__builtin_prefetch(p_top + x + 16, 0, 0);
+				__builtin_prefetch(p_bot + x + 16, 0, 0);
+			}
 
-		// 1. Prefetch Cache Line (32 bytes / 16 pixels ahead)
-		"addi   %[T1], %[src], 32 \n"
-		"dcbt   0, %[T1] \n"
+			uint32_t B = p_top[x];
+			uint32_t F = p_mid[x + 1];
+			uint32_t H = p_bot[x];
 
-		// ==========================================
-		// PIXEL ITERATION 1
-		// ==========================================
-		"lhzx   %[B], %[negSrcP], %[src] \n"
-		"lhz    %[F], 2(%[src]) \n"
-		"lhzx   %[H], %[srcP], %[src] \n"
+			// Superscalar Equality Evaluation
+			uint32_t M_DB = branchless_eq_mask_s2x(D, B);
+			uint32_t M_BF = branchless_eq_mask_s2x(B, F);
+			uint32_t M_DH = branchless_eq_mask_s2x(D, H);
+			uint32_t M_HF = branchless_eq_mask_s2x(H, F);
 
-		// 2. Superscalar Equality Evaluation
-		"xor    %[T1], %[D], %[B] \n"
-		"xor    %[T2], %[B], %[F] \n"
-		"cntlzw %[T1], %[T1] \n"
-		"cntlzw %[T2], %[T2] \n"
-		"srwi   %[M_DB], %[T1], 5 \n"
-		"srwi   %[M_BF], %[T2], 5 \n"
-		"neg    %[M_DB], %[M_DB] \n"
-		"neg    %[M_BF], %[M_BF] \n"
+			// Compound Logic Synthesis (GCC maps bitwise NOT `~` to the `andc` instruction naturally)
+			uint32_t C0 = M_DB & ~M_BF & ~M_DH; // D==B && B!=F && D!=H
+			uint32_t C1 = M_BF & ~M_DB & ~M_HF; // B==F && B!=D && F!=H
+			uint32_t C2 = M_DH & ~M_DB & ~M_HF; // D==H && D!=B && H!=F
+			uint32_t C3 = M_HF & ~M_DH & ~M_BF; // H==F && D!=H && B!=F
 
-		"xor    %[T1], %[D], %[H] \n"
-		"xor    %[T2], %[H], %[F] \n"
-		"cntlzw %[T1], %[T1] \n"
-		"cntlzw %[T2], %[T2] \n"
-		"srwi   %[M_DH], %[T1], 5 \n"
-		"srwi   %[M_HF], %[T2], 5 \n"
-		"neg    %[M_DH], %[M_DH] \n"
-		"neg    %[M_HF], %[M_HF] \n"
+			// Pixel Resolution
+			uint32_t E0 = (D & C0) | (E & ~C0); // Top-Left
+			uint32_t E1 = (F & C1) | (E & ~C1); // Top-Right
+			uint32_t E2 = (D & C2) | (E & ~C2); // Bottom-Left
+			uint32_t E3 = (F & C3) | (E & ~C3); // Bottom-Right
 
-		// 3. Compound Logic Synthesis
-		"andc   %[C0], %[M_DB], %[M_BF] \n"
-		"andc   %[C0], %[C0], %[M_DH] \n" // C0: D==B && B!=F && D!=H
+			// Pack and store. Gekko is Big Endian, so shifting the left pixel up by 16
+			// perfectly places the 16-bit colors sequentially in memory via a single 'stw'.
+			dp_top[x] = (E0 << 16) | E1;
+			dp_bot[x] = (E2 << 16) | E3;
 
-		"andc   %[C1], %[M_BF], %[M_DB] \n"
-		"andc   %[C1], %[C1], %[M_HF] \n" // C1: B==F && B!=D && F!=H
+			// Shift Sliding Window
+			D = E;
+			E = F;
+		}
 
-		"andc   %[C2], %[M_DH], %[M_DB] \n"
-		"andc   %[C2], %[C2], %[M_HF] \n" // C2: D==H && D!=B && H!=F
-
-		"andc   %[C3], %[M_HF], %[M_DH] \n"
-		"andc   %[C3], %[C3], %[M_BF] \n" // C3: H==F && D!=H && B!=F
-
-		// 4. Pixel Resolution & Packing
-		"and    %[T1], %[D], %[C0] \n"
-		"andc   %[T2], %[E], %[C0] \n"
-		"or     %[C0], %[T1], %[T2] \n"   // Resolve Top-Left
-
-		"and    %[T1], %[F], %[C1] \n"
-		"andc   %[T2], %[E], %[C1] \n"
-		"or     %[C1], %[T1], %[T2] \n"   // Resolve Top-Right
-
-		"rlwimi %[C1], %[C0], 16, 0, 15 \n" // Pack Top-Left and Top-Right
-		"stw    %[C1], 0(%[dst]) \n"
-
-		"and    %[T1], %[D], %[C2] \n"
-		"andc   %[T2], %[E], %[C2] \n"
-		"or     %[C2], %[T1], %[T2] \n"   // Resolve Bottom-Left
-
-		"and    %[T1], %[F], %[C3] \n"
-		"andc   %[T2], %[E], %[C3] \n"
-		"or     %[C3], %[T1], %[T2] \n"   // Resolve Bottom-Right
-
-		"rlwimi %[C3], %[C2], 16, 0, 15 \n" // Pack Bottom-Left and Bottom-Right
-		"stwx   %[C3], %[dstP], %[dst] \n"
-
-		// 5. Shift Sliding Window
-		"mr     %[D], %[E] \n"
-		"mr     %[E], %[F] \n"
-		"addi   %[src], %[src], 2 \n"
-		"addi   %[dst], %[dst], 4 \n"
-
-		// ==========================================
-		// PIXEL ITERATION 2
-		// ==========================================
-		"lhzx   %[B], %[negSrcP], %[src] \n"
-		"lhz    %[F], 2(%[src]) \n"
-		"lhzx   %[H], %[srcP], %[src] \n"
-
-		"xor    %[T1], %[D], %[B] \n"
-		"xor    %[T2], %[B], %[F] \n"
-		"cntlzw %[T1], %[T1] \n"
-		"cntlzw %[T2], %[T2] \n"
-		"srwi   %[M_DB], %[T1], 5 \n"
-		"srwi   %[M_BF], %[T2], 5 \n"
-		"neg    %[M_DB], %[M_DB] \n"
-		"neg    %[M_BF], %[M_BF] \n"
-
-		"xor    %[T1], %[D], %[H] \n"
-		"xor    %[T2], %[H], %[F] \n"
-		"cntlzw %[T1], %[T1] \n"
-		"cntlzw %[T2], %[T2] \n"
-		"srwi   %[M_DH], %[T1], 5 \n"
-		"srwi   %[M_HF], %[T2], 5 \n"
-		"neg    %[M_DH], %[M_DH] \n"
-		"neg    %[M_HF], %[M_HF] \n"
-
-		"andc   %[C0], %[M_DB], %[M_BF] \n"
-		"andc   %[C0], %[C0], %[M_DH] \n"
-
-		"andc   %[C1], %[M_BF], %[M_DB] \n"
-		"andc   %[C1], %[C1], %[M_HF] \n"
-
-		"andc   %[C2], %[M_DH], %[M_DB] \n"
-		"andc   %[C2], %[C2], %[M_HF] \n"
-
-		"andc   %[C3], %[M_HF], %[M_DH] \n"
-		"andc   %[C3], %[C3], %[M_BF] \n"
-
-		"and    %[T1], %[D], %[C0] \n"
-		"andc   %[T2], %[E], %[C0] \n"
-		"or     %[C0], %[T1], %[T2] \n"
-
-		"and    %[T1], %[F], %[C1] \n"
-		"andc   %[T2], %[E], %[C1] \n"
-		"or     %[C1], %[T1], %[T2] \n"
-
-		"rlwimi %[C1], %[C0], 16, 0, 15 \n"
-		"stw    %[C1], 0(%[dst]) \n"
-
-		"and    %[T1], %[D], %[C2] \n"
-		"andc   %[T2], %[E], %[C2] \n"
-		"or     %[C2], %[T1], %[T2] \n"
-
-		"and    %[T1], %[F], %[C3] \n"
-		"andc   %[T2], %[E], %[C3] \n"
-		"or     %[C3], %[T1], %[T2] \n"
-
-		"rlwimi %[C3], %[C2], 16, 0, 15 \n"
-		"stwx   %[C3], %[dstP], %[dst] \n"
-
-		"mr     %[D], %[E] \n"
-		"mr     %[E], %[F] \n"
-		"addi   %[src], %[src], 2 \n"
-		"addi   %[dst], %[dst], 4 \n"
-
-		"bdnz   2b \n" // Loop until row is done
-
-		// --- Advance Row Pointers ---
-		"add    %[p], %[p], %[srcP] \n"
-		"add    %[q], %[q], %[dstP2x] \n"
-		"subic. %[h], %[h], 1 \n"
-		"bne    1b \n" // Loop until all rows are done
-
-		// --- Constraints ---
-		: [p] "+b" (p), [q] "+b" (q), [h] "+r" (h),
-		  [src] "=&b" (src), [dst] "=&b" (dst),
-		  [B] "=&r" (B), [D] "=&r" (D), [E] "=&r" (E), [F] "=&r" (F), [H] "=&r" (H),
-		  [M_DB] "=&r" (M_DB), [M_BF] "=&r" (M_BF), [M_DH] "=&r" (M_DH), [M_HF] "=&r" (M_HF),
-		  [C0] "=&r" (C0), [C1] "=&r" (C1), [C2] "=&r" (C2), [C3] "=&r" (C3),
-		  [T1] "=&r" (T1), [T2] "=&r" (T2)
-		: [w] "r" (w),
-		  [srcP] "b" (srcP), [negSrcP] "b" (negSrcP), // "b" constraint guarantees r1-r31
-		  [dstP] "b" (dstP), [dstP2x] "r" (dstP2x)
-		: "cc", "memory"
-	);
+		src_base += nextlineSrc;
+		dst_base += (nextlineDst << 1);
+	}
 }
 
 //---------------------------------------------------------------------------------------------------------------------------
@@ -1234,31 +1093,7 @@ static inline uint32_t branchless_abs_diff(uint32_t a, uint32_t b) {
 		}
 
 // -------------------------------------------------------------------------
-// Helper Macros for chunked 2xBR execution (DCBT hoisted)
-// -------------------------------------------------------------------------
-#define PROCESS_2XBR_PIXEL() \
-	__asm__ volatile ( \
-		"lhzu %[C], 2(%[ptop]) \n\t" \
-		"lhzu %[F], 2(%[pmid]) \n\t" \
-		"lhzu %[I], 2(%[pbot]) \n\t" \
-		: [C] "=r" (C), [F] "=r" (F), [I] "=r" (I), \
-		  [ptop] "+b" (p_top), [pmid] "+b" (p_mid), [pbot] "+b" (p_bot) \
-	); \
-	lC = RGB565_to_Lum(C); lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
-	uint32_t E32 = ((uint32_t)E << 16) | E; \
-	*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32; \
-	if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
-		XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1); \
-		XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1); \
-		XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0); \
-		XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst); \
-	} \
-	A=B; B=C; D=E; E=F; G=H; H=I; \
-	lA=lB; lB=lC; lD=lE; lE=lF; lG=lH; lH=lI; \
-	Ep += 2;
-
-// -------------------------------------------------------------------------
-// Optimized Render2xBR (Explicit Register Pinning & DCBZ/DCBT Chunking)
+// Optimized Render2xBR (Middle Ground: Lazy Luma + Memory-Safe DCBZ)
 // -------------------------------------------------------------------------
 template<int GuiScale>
 void Render2xBR (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
@@ -1268,108 +1103,121 @@ void Render2xBR (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	uint32_t wd1, wd2, irlv1, irlv2u, irlv2l, dFG, dHC;
 	uint16_t px;
 
-	uint32_t nextlineSrc = srcPitch;
+	uint32_t nextlineSrc = srcPitch >> 1; // Convert pitch in bytes to pitch in uint16_t
 	uint32_t nextlineDst = dstPitch >> 1;
 
-	// Pin sliding window to non-volatile GPRs
-	register uint32_t A asm("r14"), B asm("r15"), C asm("r16");
-	register uint32_t D asm("r17"), E asm("r18"), F asm("r19");
-	register uint32_t G asm("r20"), H asm("r21"), I asm("r22");
-
-	register uint32_t lA asm("r23"), lB asm("r24"), lC asm("r25");
-	register uint32_t lD asm("r26"), lE asm("r27"), lF asm("r28");
-	register uint32_t lG asm("r29"), lH asm("r30"), lI asm("r31");
-
-	uint8_t *p_top_base = srcPtr - nextlineSrc;
-	uint8_t *p_mid_base = srcPtr;
-	uint8_t *p_bot_base = srcPtr + nextlineSrc;
+	uint16_t *p_base = (uint16_t *)srcPtr;
 	uint16_t *Ep_base = (uint16_t *)dstPtr;
 
+	uint16_t A, B, C, D, E, F, G, H, I;
+
 	while (height--) {
-		// Offset by -1 for lhzu pre-increment
-		uint16_t *p_top = (uint16_t *)p_top_base - 1;
-		uint16_t *p_mid = (uint16_t *)p_mid_base - 1;
-		uint16_t *p_bot = (uint16_t *)p_bot_base - 1;
+		// Set up pointers for the 3 rows. Offset by -1 because we pre-prime A, D, G.
+		uint16_t *p_top = p_base - nextlineSrc;
+		uint16_t *p_mid = p_base;
+		uint16_t *p_bot = p_base + nextlineSrc;
 		uint16_t *Ep = Ep_base;
 
-		// Prime the left side of the window
+		// Prime the left side of the 3x3 sliding window
 		A = p_top[0]; B = p_top[1];
 		D = p_mid[0]; E = p_mid[1];
 		G = p_bot[0]; H = p_bot[1];
 
-		lA = RGB565_to_Lum(A); lB = RGB565_to_Lum(B);
-		lD = RGB565_to_Lum(D); lE = RGB565_to_Lum(E);
-		lG = RGB565_to_Lum(G); lH = RGB565_to_Lum(H);
-
-		// Advance pointers so lhzu fetches column index 2
+		// Advance pointers so index 2 always points to the next new column
 		p_top++; p_mid++; p_bot++;
 
 		int w = width;
 
-		// Phase 1: Advance pixel-by-pixel until Destination Cache Line is 32-Byte aligned
+		// Phase 1: Unaligned leading pixels
 		while (((uint32_t)Ep & 0x1F) != 0 && w > 0) {
-			PROCESS_2XBR_PIXEL();
-			w--;
+			C = p_top[1]; F = p_mid[1]; I = p_bot[1];
+
+			uint32_t E32 = ((uint32_t)E << 16) | E;
+			*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
+
+			if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
+				// LAZY EVALUATION: Only calculate Luma if an edge is detected
+				uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
+				uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
+				uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
+
+				XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
+				XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
+				XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
+				XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+			}
+
+			A=B; B=C; D=E; E=F; G=H; H=I;
+			p_top++; p_mid++; p_bot++;
+			Ep += 2; w--;
 		}
 
-		// Phase 2: DCBZ Chunking
+		// Phase 2: Cache-Aligned Chunking
 		int chunks = w >> 3;
 		int tail = w & 7;
 		bool bot_aligned = (((uint32_t)(Ep + nextlineDst) & 0x1F) == 0);
 
-		if (bot_aligned) {
-			while (chunks--) {
-				__asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
-				__asm__ volatile ("dcbz 0, %0" :: "r" (Ep + nextlineDst));
-				DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
-				for(int i=0; i<8; i++) { PROCESS_2XBR_PIXEL(); }
+		while (chunks--) {
+			// Memory clobbers prevent GCC from writing pixels before the cache block is zeroed
+			__asm__ volatile ("dcbz 0, %0" :: "b" (Ep) : "memory");
+			if (bot_aligned) {
+				__asm__ volatile ("dcbz 0, %0" :: "b" (Ep + nextlineDst) : "memory");
 			}
-		} else {
-			while (chunks--) {
-				__asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
-				DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
-				for(int i=0; i<8; i++) { PROCESS_2XBR_PIXEL(); }
+			DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
+
+			for (int i = 0; i < 8; i++) {
+				C = p_top[1]; F = p_mid[1]; I = p_bot[1];
+
+				uint32_t E32 = ((uint32_t)E << 16) | E;
+				*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
+
+				if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
+					uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
+					uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
+					uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
+
+					XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
+					XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
+					XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
+					XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+				}
+
+				A=B; B=C; D=E; E=F; G=H; H=I;
+				p_top++; p_mid++; p_bot++;
+				Ep += 2;
 			}
 		}
 
 		// Phase 3: Trailing pixels
 		while (tail--) {
-			PROCESS_2XBR_PIXEL();
+			C = p_top[1]; F = p_mid[1]; I = p_bot[1];
+
+			uint32_t E32 = ((uint32_t)E << 16) | E;
+			*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
+
+			if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
+				uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
+				uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
+				uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
+
+				XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
+				XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
+				XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
+				XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+			}
+
+			A=B; B=C; D=E; E=F; G=H; H=I;
+			p_top++; p_mid++; p_bot++;
+			Ep += 2;
 		}
 
-		p_top_base += nextlineSrc;
-		p_mid_base += nextlineSrc;
-		p_bot_base += nextlineSrc;
+		p_base += nextlineSrc;
 		Ep_base += nextlineDst << 1;
 	}
 }
 
 // -------------------------------------------------------------------------
-// Helper Macros for chunked 2xBRlv1 execution
-// -------------------------------------------------------------------------
-#define PROCESS_2XBRLV1_PIXEL() \
-	__asm__ volatile ( \
-		"lhzu %[C], 2(%[ptop]) \n\t" \
-		"lhzu %[F], 2(%[pmid]) \n\t" \
-		"lhzu %[I], 2(%[pbot]) \n\t" \
-		: [C] "=r" (C), [F] "=r" (F), [I] "=r" (I), \
-		  [ptop] "+b" (p_top), [pmid] "+b" (p_mid), [pbot] "+b" (p_bot) \
-	); \
-	lC = RGB565_to_Lum(C); lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
-	uint32_t E32 = ((uint32_t)E << 16) | E; \
-	*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32; \
-	if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
-		XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1); \
-		XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1); \
-		XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0); \
-		XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst); \
-	} \
-	A=B; B=C; D=E; E=F; G=H; H=I; \
-	lA=lB; lB=lC; lD=lE; lE=lF; lG=lH; lH=lI; \
-	Ep += 2;
-
-// -------------------------------------------------------------------------
-// Optimized Render2xBRlv1 (Explicit Register Pinning & DCBZ/DCBT Chunking)
+// Optimized Render2xBRlv1
 // -------------------------------------------------------------------------
 template<int GuiScale>
 void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
@@ -1379,165 +1227,198 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 	uint32_t wd1, wd2, irlv1;
 	uint16_t px;
 
-	uint32_t nextlineSrc = srcPitch;
+	uint32_t nextlineSrc = srcPitch >> 1;
 	uint32_t nextlineDst = dstPitch >> 1;
 
-	register uint32_t A asm("r14"), B asm("r15"), C asm("r16");
-	register uint32_t D asm("r17"), E asm("r18"), F asm("r19");
-	register uint32_t G asm("r20"), H asm("r21"), I asm("r22");
-
-	register uint32_t lA asm("r23"), lB asm("r24"), lC asm("r25");
-	register uint32_t lD asm("r26"), lE asm("r27"), lF asm("r28");
-	register uint32_t lG asm("r29"), lH asm("r30"), lI asm("r31");
-
-	uint8_t *p_top_base = srcPtr - nextlineSrc;
-	uint8_t *p_mid_base = srcPtr;
-	uint8_t *p_bot_base = srcPtr + nextlineSrc;
+	uint16_t *p_base = (uint16_t *)srcPtr;
 	uint16_t *Ep_base = (uint16_t *)dstPtr;
 
+	uint16_t A, B, C, D, E, F, G, H, I;
+
 	while (height--) {
-		uint16_t *p_top = (uint16_t *)p_top_base - 1;
-		uint16_t *p_mid = (uint16_t *)p_mid_base - 1;
-		uint16_t *p_bot = (uint16_t *)p_bot_base - 1;
+		uint16_t *p_top = p_base - nextlineSrc;
+		uint16_t *p_mid = p_base;
+		uint16_t *p_bot = p_base + nextlineSrc;
 		uint16_t *Ep = Ep_base;
 
 		A = p_top[0]; B = p_top[1];
 		D = p_mid[0]; E = p_mid[1];
 		G = p_bot[0]; H = p_bot[1];
 
-		lA = RGB565_to_Lum(A); lB = RGB565_to_Lum(B);
-		lD = RGB565_to_Lum(D); lE = RGB565_to_Lum(E);
-		lG = RGB565_to_Lum(G); lH = RGB565_to_Lum(H);
-
 		p_top++; p_mid++; p_bot++;
 
 		int w = width;
 
 		while (((uint32_t)Ep & 0x1F) != 0 && w > 0) {
-			PROCESS_2XBRLV1_PIXEL();
-			w--;
+			C = p_top[1]; F = p_mid[1]; I = p_bot[1];
+
+			uint32_t E32 = ((uint32_t)E << 16) | E;
+			*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
+
+			if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
+				uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
+				uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
+				uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
+
+				XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
+				XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
+				XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
+				XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+			}
+
+			A=B; B=C; D=E; E=F; G=H; H=I;
+			p_top++; p_mid++; p_bot++;
+			Ep += 2; w--;
 		}
 
 		int chunks = w >> 3;
 		int tail = w & 7;
 		bool bot_aligned = (((uint32_t)(Ep + nextlineDst) & 0x1F) == 0);
 
-		if (bot_aligned) {
-			while (chunks--) {
-				__asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
-				__asm__ volatile ("dcbz 0, %0" :: "r" (Ep + nextlineDst));
-				DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
-				for(int i=0; i<8; i++) { PROCESS_2XBRLV1_PIXEL(); }
+		while (chunks--) {
+			__asm__ volatile ("dcbz 0, %0" :: "b" (Ep) : "memory");
+			if (bot_aligned) {
+				__asm__ volatile ("dcbz 0, %0" :: "b" (Ep + nextlineDst) : "memory");
 			}
-		} else {
-			while (chunks--) {
-				__asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
-				DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
-				for(int i=0; i<8; i++) { PROCESS_2XBRLV1_PIXEL(); }
+			DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
+
+			for (int i = 0; i < 8; i++) {
+				C = p_top[1]; F = p_mid[1]; I = p_bot[1];
+
+				uint32_t E32 = ((uint32_t)E << 16) | E;
+				*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
+
+				if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
+					uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
+					uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
+					uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
+
+					XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
+					XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
+					XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
+					XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+				}
+
+				A=B; B=C; D=E; E=F; G=H; H=I;
+				p_top++; p_mid++; p_bot++;
+				Ep += 2;
 			}
 		}
 
 		while (tail--) {
-			PROCESS_2XBRLV1_PIXEL();
+			C = p_top[1]; F = p_mid[1]; I = p_bot[1];
+
+			uint32_t E32 = ((uint32_t)E << 16) | E;
+			*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
+
+			if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
+				uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
+				uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
+				uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
+
+				XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
+				XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
+				XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
+				XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+			}
+
+			A=B; B=C; D=E; E=F; G=H; H=I;
+			p_top++; p_mid++; p_bot++;
+			Ep += 2;
 		}
 
-		p_top_base += nextlineSrc;
-		p_mid_base += nextlineSrc;
-		p_bot_base += nextlineSrc;
+		p_base += nextlineSrc;
 		Ep_base += nextlineDst << 1;
 	}
 }
 
-// -------------------------------------------------------------------------
-// Helper Macros for chunked DDT execution
-// -------------------------------------------------------------------------
-#define PROCESS_DDT_PIXEL() \
-	__asm__ volatile ( \
-		"lhzu %[F], 2(%[pmid]) \n\t" \
-		"lhzu %[I], 2(%[pbot]) \n\t" \
-		: [F] "=r" (F), [I] "=r" (I), \
-		  [pmid] "+b" (p_mid), [pbot] "+b" (p_bot) \
-	); \
-	lF = RGB565_to_Lum(F); lI = RGB565_to_Lum(I); \
-	uint32_t E32 = ((uint32_t)E << 16) | E; \
-	*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32; \
-	if (E!=F || E!=H || F!=I || H!=I) { \
-		DDT( E, I, H, F, lE, lI, lH, lF, 0, 1, nextlineDst, nextlineDst + 1); \
-	} \
-	E=F; H=I; lE=lF; lH=lI; \
-	Ep += 2;
+// GCC automatically translates these masks and shifts into
+// optimized rlwinm instructions for the PowerPC pipeline.
+static inline uint32_t ddt_fast_luma(uint16_t c) {
+    uint32_t r = (c >> 11) & 0x1F;
+    uint32_t g = (c >> 5)  & 0x3F;
+    uint32_t b =  c        & 0x1F;
+    return (r * 140) + (g * 113) + (b * 62);
+}
 
-// -------------------------------------------------------------------------
-// Optimized RenderDDT (Explicit Register Pinning & DCBZ/DCBT Chunking)
-// -------------------------------------------------------------------------
 template<int GuiScale>
 void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
 {
-	if(!isValidDimensions(width, height)) return;
+    // If Snes9x is rendering anything in HiRes, then just copy, don't interpolate
+    if (height > 512 || width == 512 || height <= 0 || width <= 0)
+    {
+        return;
+    }
 
-	uint32_t wd1, wd2;
-	uint16_t aux; // Required internally by the DDT/BIL2X macros
+    uint32_t nextlineSrc = srcPitch / sizeof(uint16_t);
+    uint32_t nextlineDst = dstPitch / sizeof(uint16_t);
 
-	uint32_t nextlineSrc = srcPitch;
-	uint32_t nextlineDst = dstPitch >> 1;
+    uint16_t *p_base  = (uint16_t *)srcPtr;
+    uint16_t *Ep_base = (uint16_t *)dstPtr;
 
-	// Smaller sliding window for DDT (no top row)
-	register uint32_t E asm("r18"), F asm("r19");
-	register uint32_t H asm("r21"), I asm("r22");
+    for (int y = 0; y < height; ++y) {
+        uint16_t *p  = p_base;
+        uint16_t *Ep = Ep_base;
 
-	register uint32_t lE asm("r27"), lF asm("r28");
-	register uint32_t lH asm("r30"), lI asm("r31");
+        // Prime the L1 cache for the beginning of the row
+        __builtin_prefetch(p + 16, 0, 0);
+        __builtin_prefetch(p + nextlineSrc + 16, 0, 0);
 
-	uint8_t *p_mid_base = srcPtr;
-	uint8_t *p_bot_base = srcPtr + nextlineSrc;
-	uint16_t *Ep_base = (uint16_t *)dstPtr;
+        uint16_t E = p[0];
+        uint16_t H = p[nextlineSrc];
 
-	while (height--) {
-		uint16_t *p_mid = (uint16_t *)p_mid_base - 1;
-		uint16_t *p_bot = (uint16_t *)p_bot_base - 1;
-		uint16_t *Ep = Ep_base;
+        uint32_t lE = ddt_fast_luma(E);
+        uint32_t lH = ddt_fast_luma(H);
 
-		// Prime the 2x2 forward window
-		E = p_mid[1];
-		H = p_bot[1];
+        for (int i = 0; i < width; ++i) {
+            // Software prefetch roughly 1 cache line (32 bytes) ahead every 16 pixels
+            if ((i & 15) == 0) {
+                __builtin_prefetch(p + i + 16, 0, 0);
+                __builtin_prefetch(p + i + nextlineSrc + 16, 0, 0);
+            }
 
-		lE = RGB565_to_Lum(E);
-		lH = RGB565_to_Lum(H);
+            uint16_t F = p[i + 1];
+            uint16_t I = p[i + 1 + nextlineSrc];
 
-		p_mid++; p_bot++;
+            uint32_t lF = ddt_fast_luma(F);
+            uint32_t lI = ddt_fast_luma(I);
 
-		int w = width;
+            uint32_t E0 = (i << 1);
+            uint32_t E1 = E0 + 1;
+            uint32_t E2 = E0 + nextlineDst;
+            uint32_t E3 = E2 + 1;
 
-		while (((uint32_t)Ep & 0x1F) != 0 && w > 0) {
-			PROCESS_DDT_PIXEL();
-			w--;
-		}
+            Ep[E0] = E; Ep[E1] = E;
+            Ep[E2] = E; Ep[E3] = E;
 
-		int chunks = w >> 3;
-		int tail = w & 7;
-		bool bot_aligned = (((uint32_t)(Ep + nextlineDst) & 0x1F) == 0);
+            if (E != F || E != H || F != I || H != I)
+            {
+                // Relying on __builtin_abs allows GCC to emit optimal branchless subfc/subfe chains
+                uint32_t wd1 = __builtin_abs((int)lH - (int)lF);
+                uint32_t wd2 = __builtin_abs((int)lE - (int)lI);
+                uint16_t aux;
 
-		if (bot_aligned) {
-			while (chunks--) {
-				__asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
-				__asm__ volatile ("dcbz 0, %0" :: "r" (Ep + nextlineDst));
-				DCBT(p_mid + 16); DCBT(p_bot + 16);
-				for(int i=0; i<8; i++) { PROCESS_DDT_PIXEL(); }
-			}
-		} else {
-			while (chunks--) {
-				__asm__ volatile ("dcbz 0, %0" :: "r" (Ep));
-				DCBT(p_mid + 16); DCBT(p_bot + 16);
-				for(int i=0; i<8; i++) { PROCESS_DDT_PIXEL(); }
-			}
-		}
+                if (wd1 > wd2)
+                {
+                    DDT2XBC_ODD(F, H, I, E1, E2, E3);
+                }
+                else if (wd1 < wd2)
+                {
+                    DDT2XD_ODD(F, H, E1, E2, E3);
+                }
+                else
+                {
+                    BIL2X_ODD(F, H, I, E1, E2, E3);
+                }
+            }
 
-		while (tail--) {
-			PROCESS_DDT_PIXEL();
-		}
+            E = F;
+            H = I;
+            lE = lF;
+            lH = lI;
+        }
 
-		p_mid_base += nextlineSrc;
-		p_bot_base += nextlineSrc;
-		Ep_base += nextlineDst << 1;
-	}
+        p_base  += nextlineSrc;
+        Ep_base += (nextlineDst << 1);
+    }
 }
