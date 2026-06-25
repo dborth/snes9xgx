@@ -1332,15 +1332,45 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 	}
 }
 
-// GCC automatically translates these masks and shifts into
-// optimized rlwinm instructions for the PowerPC pipeline.
+// -------------------------------------------------------------------------
+// Micro-LUTs for fast Luma Calculation
+// Total Memory Footprint: 512 Bytes (fits comfortably in L1 Cache)
+// -------------------------------------------------------------------------
+
+// 5-to-8 bit expansion pre-calculated with: 17 * R
+static const uint32_t luma_r_lut[32] = {
+    0, 136, 272, 425, 561, 697, 833, 986, 1122, 1258, 1394, 1530, 1683,
+    1819, 1955, 2091, 2244, 2380, 2516, 2652, 2805, 2941, 3077, 3213, 3349,
+    3502, 3638, 3774, 3910, 4063, 4199, 4335
+};
+
+// 6-to-8 bit expansion pre-calculated with: 28 * G
+static const uint32_t luma_g_lut[64] = {
+    0, 112, 224, 336, 448, 560, 672, 784, 896, 1008, 1120, 1260, 1372,
+    1484, 1596, 1708, 1820, 1932, 2044, 2156, 2268, 2380, 2492, 2604, 2716,
+    2828, 2940, 3052, 3164, 3276, 3388, 3500, 3640, 3752, 3864, 3976, 4088,
+    4200, 4312, 4424, 4536, 4648, 4760, 4872, 4984, 5096, 5208, 5320, 5432,
+    5544, 5656, 5768, 5880, 6020, 6132, 6244, 6356, 6468, 6580, 6692, 6804,
+    6916, 7028, 7140
+};
+
+// 5-to-8 bit expansion pre-calculated with: 8 * B - floor(B / 2)
+static const uint32_t luma_b_lut[32] = {
+    0, 60, 120, 188, 248, 308, 368, 435, 495, 555, 615, 675, 743, 803,
+    863, 923, 990, 1050, 1110, 1170, 1238, 1298, 1358, 1418, 1478, 1545,
+    1605, 1665, 1725, 1793, 1853, 1913
+};
+
+// GCC translates bitwise masking logic into fused 1-cycle rlwinm instructions
 static inline uint32_t ddt_fast_luma(uint16_t c) {
-    uint32_t r = (c >> 11) & 0x1F;
-    uint32_t g = (c >> 5)  & 0x3F;
-    uint32_t b =  c        & 0x1F;
-    return (r * 140) + (g * 113) + (b * 62);
+    return luma_r_lut[(c >> 11) & 0x1F] +
+           luma_g_lut[(c >>  5) & 0x3F] +
+           luma_b_lut[ c        & 0x1F];
 }
 
+// -------------------------------------------------------------------------
+// Optimized RenderDDT
+// -------------------------------------------------------------------------
 template<int GuiScale>
 void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
 {
@@ -1371,12 +1401,6 @@ void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t ds
         uint32_t lH = ddt_fast_luma(H);
 
         for (int i = 0; i < width; ++i) {
-            // Software prefetch roughly 1 cache line (32 bytes) ahead every 16 pixels
-            if ((i & 15) == 0) {
-                __builtin_prefetch(p + i + 16, 0, 0);
-                __builtin_prefetch(p + i + nextlineSrc + 16, 0, 0);
-            }
-
             uint16_t F = p[i + 1];
             uint16_t I = p[i + 1 + nextlineSrc];
 
