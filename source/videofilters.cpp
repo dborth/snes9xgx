@@ -811,7 +811,7 @@ static inline uint32_t branchless_eq_mask_s2x(uint32_t a, uint32_t b) {
 template<int GuiScale>
 void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
 {
-	if (height <= 0 || width <= 0) return;
+	if(!isValidDimensions(width, height)) return;
 
 	// Convert pitches to array indices for 16-bit pointer math
 	uint32_t nextlineSrc = srcPitch / sizeof(uint16_t);
@@ -825,9 +825,9 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 		uint16_t *p_top = src_base - nextlineSrc;
 		uint16_t *p_bot = src_base + nextlineSrc;
 
-		// Output mapped as 32-bit to halve the number of store operations (mimics rlwimi/stw)
-		uint32_t *dp_top = (uint32_t *)dst_base;
-		uint32_t *dp_bot = (uint32_t *)(dst_base + nextlineDst);
+		// Output mapped natively as 16-bit to prevent PowerPC Alignment Exceptions
+		uint16_t *dp_top = dst_base;
+		uint16_t *dp_bot = dst_base + nextlineDst;
 
 		// Pre-load sliding window (D, E) matching your original setup
 		uint32_t D = p_mid[-1];
@@ -839,13 +839,6 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 		__builtin_prefetch(p_bot + 16, 0, 0);
 
 		for (int x = 0; x < width; ++x) {
-			// Software prefetch ~32 bytes (1 cache line) ahead every 16 pixels
-			if ((x & 15) == 0) {
-				__builtin_prefetch(p_mid + x + 16, 0, 0);
-				__builtin_prefetch(p_top + x + 16, 0, 0);
-				__builtin_prefetch(p_bot + x + 16, 0, 0);
-			}
-
 			uint32_t B = p_top[x];
 			uint32_t F = p_mid[x + 1];
 			uint32_t H = p_bot[x];
@@ -863,15 +856,18 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 			uint32_t C3 = M_HF & ~M_DH & ~M_BF; // H==F && D!=H && B!=F
 
 			// Pixel Resolution
-			uint32_t E0 = (D & C0) | (E & ~C0); // Top-Left
-			uint32_t E1 = (F & C1) | (E & ~C1); // Top-Right
-			uint32_t E2 = (D & C2) | (E & ~C2); // Bottom-Left
-			uint32_t E3 = (F & C3) | (E & ~C3); // Bottom-Right
+			uint16_t E0 = (D & C0) | (E & ~C0); // Top-Left
+			uint16_t E1 = (F & C1) | (E & ~C1); // Top-Right
+			uint16_t E2 = (D & C2) | (E & ~C2); // Bottom-Left
+			uint16_t E3 = (F & C3) | (E & ~C3); // Bottom-Right
 
-			// Pack and store. Gekko is Big Endian, so shifting the left pixel up by 16
-			// perfectly places the 16-bit colors sequentially in memory via a single 'stw'.
-			dp_top[x] = (E0 << 16) | E1;
-			dp_bot[x] = (E2 << 16) | E3;
+			// Store explicitly as 16-bit to guarantee memory alignment safety.
+			// The CPU's write-gather buffer will seamlessly coalesce these into fast burst writes.
+			uint32_t out_idx = x << 1;
+			dp_top[out_idx]     = E0;
+			dp_top[out_idx + 1] = E1;
+			dp_bot[out_idx]     = E2;
+			dp_bot[out_idx + 1] = E3;
 
 			// Shift Sliding Window
 			D = E;
@@ -1339,33 +1335,33 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 
 // 5-to-8 bit expansion pre-calculated with: 17 * R
 static const uint32_t luma_r_lut[32] = {
-    0, 136, 272, 425, 561, 697, 833, 986, 1122, 1258, 1394, 1530, 1683,
-    1819, 1955, 2091, 2244, 2380, 2516, 2652, 2805, 2941, 3077, 3213, 3349,
-    3502, 3638, 3774, 3910, 4063, 4199, 4335
+	0, 136, 272, 425, 561, 697, 833, 986, 1122, 1258, 1394, 1530, 1683,
+	1819, 1955, 2091, 2244, 2380, 2516, 2652, 2805, 2941, 3077, 3213, 3349,
+	3502, 3638, 3774, 3910, 4063, 4199, 4335
 };
 
 // 6-to-8 bit expansion pre-calculated with: 28 * G
 static const uint32_t luma_g_lut[64] = {
-    0, 112, 224, 336, 448, 560, 672, 784, 896, 1008, 1120, 1260, 1372,
-    1484, 1596, 1708, 1820, 1932, 2044, 2156, 2268, 2380, 2492, 2604, 2716,
-    2828, 2940, 3052, 3164, 3276, 3388, 3500, 3640, 3752, 3864, 3976, 4088,
-    4200, 4312, 4424, 4536, 4648, 4760, 4872, 4984, 5096, 5208, 5320, 5432,
-    5544, 5656, 5768, 5880, 6020, 6132, 6244, 6356, 6468, 6580, 6692, 6804,
-    6916, 7028, 7140
+	0, 112, 224, 336, 448, 560, 672, 784, 896, 1008, 1120, 1260, 1372,
+	1484, 1596, 1708, 1820, 1932, 2044, 2156, 2268, 2380, 2492, 2604, 2716,
+	2828, 2940, 3052, 3164, 3276, 3388, 3500, 3640, 3752, 3864, 3976, 4088,
+	4200, 4312, 4424, 4536, 4648, 4760, 4872, 4984, 5096, 5208, 5320, 5432,
+	5544, 5656, 5768, 5880, 6020, 6132, 6244, 6356, 6468, 6580, 6692, 6804,
+	6916, 7028, 7140
 };
 
 // 5-to-8 bit expansion pre-calculated with: 8 * B - floor(B / 2)
 static const uint32_t luma_b_lut[32] = {
-    0, 60, 120, 188, 248, 308, 368, 435, 495, 555, 615, 675, 743, 803,
-    863, 923, 990, 1050, 1110, 1170, 1238, 1298, 1358, 1418, 1478, 1545,
-    1605, 1665, 1725, 1793, 1853, 1913
+	0, 60, 120, 188, 248, 308, 368, 435, 495, 555, 615, 675, 743, 803,
+	863, 923, 990, 1050, 1110, 1170, 1238, 1298, 1358, 1418, 1478, 1545,
+	1605, 1665, 1725, 1793, 1853, 1913
 };
 
 // GCC translates bitwise masking logic into fused 1-cycle rlwinm instructions
 static inline uint32_t ddt_fast_luma(uint16_t c) {
-    return luma_r_lut[(c >> 11) & 0x1F] +
-           luma_g_lut[(c >>  5) & 0x3F] +
-           luma_b_lut[ c        & 0x1F];
+	return luma_r_lut[(c >> 11) & 0x1F] +
+		   luma_g_lut[(c >>  5) & 0x3F] +
+		   luma_b_lut[ c        & 0x1F];
 }
 
 // -------------------------------------------------------------------------
@@ -1374,75 +1370,71 @@ static inline uint32_t ddt_fast_luma(uint16_t c) {
 template<int GuiScale>
 void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
 {
-    // If Snes9x is rendering anything in HiRes, then just copy, don't interpolate
-    if (height > 512 || width == 512 || height <= 0 || width <= 0)
-    {
-        return;
-    }
+	if(!isValidDimensions(width, height)) return;
 
-    uint32_t nextlineSrc = srcPitch / sizeof(uint16_t);
-    uint32_t nextlineDst = dstPitch / sizeof(uint16_t);
+	uint32_t nextlineSrc = srcPitch / sizeof(uint16_t);
+	uint32_t nextlineDst = dstPitch / sizeof(uint16_t);
 
-    uint16_t *p_base  = (uint16_t *)srcPtr;
-    uint16_t *Ep_base = (uint16_t *)dstPtr;
+	uint16_t *p_base  = (uint16_t *)srcPtr;
+	uint16_t *Ep_base = (uint16_t *)dstPtr;
 
-    for (int y = 0; y < height; ++y) {
-        uint16_t *p  = p_base;
-        uint16_t *Ep = Ep_base;
+	for (int y = 0; y < height; ++y) {
+		uint16_t *p  = p_base;
+		uint16_t *Ep = Ep_base;
 
-        // Prime the L1 cache for the beginning of the row
-        __builtin_prefetch(p + 16, 0, 0);
-        __builtin_prefetch(p + nextlineSrc + 16, 0, 0);
+		// Prime the L1 cache for the beginning of the row
+		__builtin_prefetch(p + 16, 0, 0);
+		__builtin_prefetch(p + nextlineSrc + 16, 0, 0);
 
-        uint16_t E = p[0];
-        uint16_t H = p[nextlineSrc];
+		uint16_t E = p[0];
+		uint16_t H = p[nextlineSrc];
 
-        uint32_t lE = ddt_fast_luma(E);
-        uint32_t lH = ddt_fast_luma(H);
+		uint32_t lE = ddt_fast_luma(E);
+		uint32_t lH = ddt_fast_luma(H);
 
-        for (int i = 0; i < width; ++i) {
-            uint16_t F = p[i + 1];
-            uint16_t I = p[i + 1 + nextlineSrc];
+		for (int i = 0; i < width; ++i) {
+			uint16_t F = p[i + 1];
+			uint16_t I = p[i + 1 + nextlineSrc];
 
-            uint32_t lF = ddt_fast_luma(F);
-            uint32_t lI = ddt_fast_luma(I);
+			uint32_t lF = ddt_fast_luma(F);
+			uint32_t lI = ddt_fast_luma(I);
 
-            uint32_t E0 = (i << 1);
-            uint32_t E1 = E0 + 1;
-            uint32_t E2 = E0 + nextlineDst;
-            uint32_t E3 = E2 + 1;
+			uint32_t E0 = (i << 1);
+			uint32_t E1 = E0 + 1;
+			uint32_t E2 = E0 + nextlineDst;
+			uint32_t E3 = E2 + 1;
 
-            Ep[E0] = E; Ep[E1] = E;
-            Ep[E2] = E; Ep[E3] = E;
+			Ep[E0] = E; Ep[E1] = E;
+			Ep[E2] = E; Ep[E3] = E;
 
-            if (E != F || E != H || F != I || H != I)
-            {
-                // Relying on __builtin_abs allows GCC to emit optimal branchless subfc/subfe chains
-                uint32_t wd1 = __builtin_abs((int)lH - (int)lF);
-                uint32_t wd2 = __builtin_abs((int)lE - (int)lI);
-                uint16_t aux;
+			if (E != F || E != H || F != I || H != I)
+			{
+				// Relying on __builtin_abs allows GCC to emit optimal branchless subfc/subfe chains
+				uint32_t wd1 = __builtin_abs((int)lH - (int)lF);
+				uint32_t wd2 = __builtin_abs((int)lE - (int)lI);
+				uint16_t aux;
 
-                if (wd1 > wd2)
-                {
-                    DDT2XBC_ODD(F, H, I, E1, E2, E3);
-                }
-                else if (wd1 < wd2)
-                {
-                    DDT2XD_ODD(F, H, E1, E2, E3);
-                }
-                else
-                {
-                    BIL2X_ODD(F, H, I, E1, E2, E3);
-                }
-            }
+				if (wd1 > wd2)
+				{
+					DDT2XBC_ODD(F, H, I, E1, E2, E3);
+				}
+				else if (wd1 < wd2)
+				{
+					DDT2XD_ODD(F, H, E1, E2, E3);
+				}
+				else
+				{
+					BIL2X_ODD(F, H, I, E1, E2, E3);
+				}
+			}
 
-            E = F;
-            H = I;
-            lE = lF;
-            lH = lI;
-        }
+			E = F;
+			H = I;
+			lE = lF;
+			lH = lI;
+		}
 
-        p_base  += nextlineSrc;
-        Ep_base += (nextlineDst << 1);
-    }
+		p_base  += nextlineSrc;
+		Ep_base += (nextlineDst << 1);
+	}
 }
