@@ -153,8 +153,9 @@ static inline uint32_t Unpack565(uint16_t p) {
 // Packs the 32-bit SWAR integer back into a 16-bit RGB565 pixel.
 // Because the interpolation weights always sum to exactly 1<<shift,
 // the right-shift division perfectly zeroes out the expanded headroom bits.
+// & 0x07E0 and & 0xF81F masks to truncate downward channel bleed
 static inline uint16_t Pack565(uint32_t up) {
-    return (uint16_t)(up >> 16) | (uint16_t)up;
+    return (uint16_t)((up >> 16) & 0x07E0) | (uint16_t)(up & 0xF81F);
 }
 
 static inline uint16_t Interp01(uint16_t c1, uint16_t c2) {
