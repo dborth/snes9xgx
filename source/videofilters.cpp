@@ -21,6 +21,34 @@
 static RenderFilter renderFilter = FILTER_NONE;
 TFilterMethod FilterMethod;
 
+// -------------------------------------------------------------------------
+// HQ2X Symmetry Maps & Lookup Tables
+// -------------------------------------------------------------------------
+static uint8_t rotateTable[256];
+static const uint8_t hqTable[256] = {
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 15, 12, 5,  3, 17, 13,
+	4, 4, 6, 18, 4, 4, 6, 18, 5,  3, 12, 12, 5,  3,  1, 12,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 17, 13, 5,  3, 16, 14,
+	4, 4, 6, 18, 4, 4, 6, 18, 5,  3, 16, 12, 5,  3,  1, 14,
+	4, 4, 6,  2, 4, 4, 6,  2, 5, 19, 12, 12, 5, 19, 16, 12,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3, 16, 12,
+	4, 4, 6,  2, 4, 4, 6,  2, 5, 19,  1, 12, 5, 19,  1, 14,
+	4, 4, 6,  2, 4, 4, 6, 18, 5,  3, 16, 12, 5, 19,  1, 14,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 15, 12, 5,  3, 17, 13,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3, 16, 12,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 17, 13, 5,  3, 16, 14,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 13, 5,  3,  1, 14,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3, 16, 13,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3,  1, 12,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3,  1, 14,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3,  1, 12, 5,  3,  1, 14
+};
+
+static int32_t y_r_lut[32], y_g_lut[64], y_b_lut[32];
+static int32_t u_r_lut[32], u_g_lut[64], u_b_lut[32];
+static int32_t v_r_lut[32], v_g_lut[64], v_b_lut[32];
+static bool hq2x_initialized = false;
+
 template<int GuiScale> void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height);
 template<int GuiScale> void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height);
 template<int GuiScale> void Render2xBR (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height);
@@ -79,24 +107,24 @@ int GetFilterScale()
 	}
 }
 
-static int32_t y_r_lut[32], y_g_lut[64], y_b_lut[32];
-static int32_t u_r_lut[32], u_g_lut[64], u_b_lut[32];
-static int32_t v_r_lut[32], v_g_lut[64], v_b_lut[32];
-static bool hq2x_luts_initialized = false;
-
-static void InitHQ2XLUTs() {
-    if (hq2x_luts_initialized) return;
-    for (int i = 0; i < 32; i++) {
-        int32_t r = i << 3;
-        int32_t b = i << 3;
-        y_r_lut[i] = 16829 * r; u_r_lut[i] = -9714 * r; v_r_lut[i] = 28784 * r;
-        y_b_lut[i] =  6416 * b; u_b_lut[i] = 28784 * b; v_b_lut[i] = -4681 * b;
-    }
-    for (int i = 0; i < 64; i++) {
-        int32_t g = i << 2;
-        y_g_lut[i] = 33039 * g; u_g_lut[i] = -19071 * g; v_g_lut[i] = -24103 * g;
-    }
-    hq2x_luts_initialized = true;
+static void InitHQ2X() {
+	if (hq2x_initialized) return;
+	for (int i = 0; i < 32; i++) {
+		int32_t r = i << 3; int32_t b = i << 3;
+		y_r_lut[i] = 16829 * r; u_r_lut[i] = -9714 * r; v_r_lut[i] = 28784 * r;
+		y_b_lut[i] =  6416 * b; u_b_lut[i] = 28784 * b; v_b_lut[i] = -4681 * b;
+	}
+	for (int i = 0; i < 64; i++) {
+		int32_t g = i << 2;
+		y_g_lut[i] = 33039 * g; u_g_lut[i] = -19071 * g; v_g_lut[i] = -24103 * g;
+	}
+	// Build the bitmask 90-degree rotational map
+	for(unsigned n = 0; n < 256; n++) {
+		rotateTable[n] = ((n >> 2) & 0x11) | ((n << 2) & 0x88) |
+						 ((n & 0x01) << 5) | ((n & 0x08) << 3) |
+						 ((n & 0x10) >> 3) | ((n & 0x80) >> 5);
+	}
+	hq2x_initialized = true;
 }
 
 void SelectFilterMethod (int filterID)
@@ -105,7 +133,7 @@ void SelectFilterMethod (int filterID)
 	FilterMethod = FilterToMethod(renderFilter);
 
 	if(renderFilter == FILTER_HQ2X || renderFilter == FILTER_HQ2XS || renderFilter == FILTER_HQ2XBOLD) {
-		InitHQ2XLUTs();
+		InitHQ2X();
 	}
 }
 
@@ -147,16 +175,6 @@ static inline int RGB565_to_Lum(uint16_t c) {
 //
 // HQ2X Filter Code:
 //
-
-#define	Mask_2	0x07E0	// 00000 111111 00000
-#define	Mask13	0xF81F	// 11111 000000 11111
-
-#define	Ymask	0xFF0000
-#define	Umask	0x00FF00
-#define	Vmask	0x0000FF
-#define	trY		0x300000
-#define	trU		0x000700
-#define	trV		0x000006
 
 // -------------------------------------------------------------------------
 // Highly Optimized C++ SWAR Interpolation (SIMD Within A Register)
@@ -202,58 +220,6 @@ static inline uint16_t Interp10(uint16_t c1, uint16_t c2, uint16_t c3) {
     return Pack565((Unpack565(c1) * 14 + Unpack565(c2) + Unpack565(c3)) >> 4);
 }
 
-#define PIXEL00_0		*(dp) = w5
-#define PIXEL00_10		*(dp) = Interp01(w5, w1)
-#define PIXEL00_11		*(dp) = Interp01(w5, w4)
-#define PIXEL00_12		*(dp) = Interp01(w5, w2)
-#define PIXEL00_20		*(dp) = Interp02(w5, w4, w2)
-#define PIXEL00_21		*(dp) = Interp02(w5, w1, w2)
-#define PIXEL00_22		*(dp) = Interp02(w5, w1, w4)
-#define PIXEL00_60		*(dp) = Interp06(w5, w2, w4)
-#define PIXEL00_61		*(dp) = Interp06(w5, w4, w2)
-#define PIXEL00_70		*(dp) = Interp07(w5, w4, w2)
-#define PIXEL00_90		*(dp) = Interp09(w5, w4, w2)
-#define PIXEL00_100		*(dp) = Interp10(w5, w4, w2)
-
-#define PIXEL01_0		*(dp + 1) = w5
-#define PIXEL01_10		*(dp + 1) = Interp01(w5, w3)
-#define PIXEL01_11		*(dp + 1) = Interp01(w5, w2)
-#define PIXEL01_12		*(dp + 1) = Interp01(w5, w6)
-#define PIXEL01_20		*(dp + 1) = Interp02(w5, w2, w6)
-#define PIXEL01_21		*(dp + 1) = Interp02(w5, w3, w6)
-#define PIXEL01_22		*(dp + 1) = Interp02(w5, w3, w2)
-#define PIXEL01_60		*(dp + 1) = Interp06(w5, w6, w2)
-#define PIXEL01_61		*(dp + 1) = Interp06(w5, w2, w6)
-#define PIXEL01_70		*(dp + 1) = Interp07(w5, w2, w6)
-#define PIXEL01_90		*(dp + 1) = Interp09(w5, w2, w6)
-#define PIXEL01_100		*(dp + 1) = Interp10(w5, w2, w6)
-
-#define PIXEL10_0		*(dp + dst1line) = w5
-#define PIXEL10_10		*(dp + dst1line) = Interp01(w5, w7)
-#define PIXEL10_11		*(dp + dst1line) = Interp01(w5, w8)
-#define PIXEL10_12		*(dp + dst1line) = Interp01(w5, w4)
-#define PIXEL10_20		*(dp + dst1line) = Interp02(w5, w8, w4)
-#define PIXEL10_21		*(dp + dst1line) = Interp02(w5, w7, w4)
-#define PIXEL10_22		*(dp + dst1line) = Interp02(w5, w7, w8)
-#define PIXEL10_60		*(dp + dst1line) = Interp06(w5, w4, w8)
-#define PIXEL10_61		*(dp + dst1line) = Interp06(w5, w8, w4)
-#define PIXEL10_70		*(dp + dst1line) = Interp07(w5, w8, w4)
-#define PIXEL10_90		*(dp + dst1line) = Interp09(w5, w8, w4)
-#define PIXEL10_100		*(dp + dst1line) = Interp10(w5, w8, w4)
-
-#define PIXEL11_0		*(dp + dst1line + 1) = w5
-#define PIXEL11_10		*(dp + dst1line + 1) = Interp01(w5, w9)
-#define PIXEL11_11		*(dp + dst1line + 1) = Interp01(w5, w6)
-#define PIXEL11_12		*(dp + dst1line + 1) = Interp01(w5, w8)
-#define PIXEL11_20		*(dp + dst1line + 1) = Interp02(w5, w6, w8)
-#define PIXEL11_21		*(dp + dst1line + 1) = Interp02(w5, w9, w8)
-#define PIXEL11_22		*(dp + dst1line + 1) = Interp02(w5, w9, w6)
-#define PIXEL11_60		*(dp + dst1line + 1) = Interp06(w5, w8, w6)
-#define PIXEL11_61		*(dp + dst1line + 1) = Interp06(w5, w6, w8)
-#define PIXEL11_70		*(dp + dst1line + 1) = Interp07(w5, w6, w8)
-#define PIXEL11_90		*(dp + dst1line + 1) = Interp09(w5, w6, w8)
-#define PIXEL11_100		*(dp + dst1line + 1) = Interp10(w5, w6, w8)
-
 // -------------------------------------------------------------------------
 // Fast YUV Difference Evaluator (Short-Circuiting C++)
 // Uses __builtin_abs for 3-cycle absolute diff.
@@ -267,331 +233,49 @@ static inline bool Diff(uint32_t c1, uint32_t c2) {
     return (dy > 48) | (du > 7) | (dv > 6);
 }
 
-#define HQ2XCASES \
-case 0: case 1: case 4: case 32: case 128: case 5: case 132: case 160: case 33: case 129: case 36: case 133: case 164: case 161: case 37: case 165: PIXEL00_20; PIXEL01_20; PIXEL10_20; PIXEL11_20; break; \
-case 2: case 34: case 130: case 162: PIXEL00_22; PIXEL01_21; PIXEL10_20; PIXEL11_20; break; \
-case 16: case 17: case 48: case 49: PIXEL00_20; PIXEL01_22; PIXEL10_20; PIXEL11_21; break; \
-case 64: case 65: case 68: case 69: PIXEL00_20; PIXEL01_20; PIXEL10_21; PIXEL11_22; break; \
-case 8: case 12: case 136: case 140: PIXEL00_21; PIXEL01_20; PIXEL10_22; PIXEL11_20; break; \
-case 3: case 35: case 131: case 163: PIXEL00_11; PIXEL01_21; PIXEL10_20; PIXEL11_20; break; \
-case 6: case 38: case 134: case 166: PIXEL00_22; PIXEL01_12; PIXEL10_20; PIXEL11_20; break; \
-case 20: case 21: case 52: case 53: PIXEL00_20; PIXEL01_11; PIXEL10_20; PIXEL11_21; break; \
-case 144: case 145: case 176: case 177: PIXEL00_20; PIXEL01_22; PIXEL10_20; PIXEL11_12; break; \
-case 192: case 193: case 196: case 197: PIXEL00_20; PIXEL01_20; PIXEL10_21; PIXEL11_11; break; \
-case 96: case 97: case 100: case 101: PIXEL00_20; PIXEL01_20; PIXEL10_12; PIXEL11_22; break; \
-case 40: case 44: case 168: case 172: PIXEL00_21; PIXEL01_20; PIXEL10_11; PIXEL11_20; break; \
-case 9: case 13: case 137: case 141: PIXEL00_12; PIXEL01_20; PIXEL10_22; PIXEL11_20; break; \
-case 18: case 50: PIXEL00_22; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_20; PIXEL10_20; PIXEL11_21; break; \
-case 80: case 81: PIXEL00_20; PIXEL01_22; PIXEL10_21; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_20; break; \
-case 72: case 76: PIXEL00_21; PIXEL01_20; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_20; PIXEL11_22; break; \
-case 10: case 138: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_20; PIXEL01_21; PIXEL10_22; PIXEL11_20; break; \
-case 66: PIXEL00_22; PIXEL01_21; PIXEL10_21; PIXEL11_22; break; \
-case 24: PIXEL00_21; PIXEL01_22; PIXEL10_22; PIXEL11_21; break; \
-case 7: case 39: case 135: PIXEL00_11; PIXEL01_12; PIXEL10_20; PIXEL11_20; break; \
-case 148: case 149: case 180: PIXEL00_20; PIXEL01_11; PIXEL10_20; PIXEL11_12; break; \
-case 224: case 228: case 225: PIXEL00_20; PIXEL01_20; PIXEL10_12; PIXEL11_11; break; \
-case 41: case 169: case 45: PIXEL00_12; PIXEL01_20; PIXEL10_11; PIXEL11_20; break; \
-case 22: case 54: PIXEL00_22; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_20; PIXEL11_21; break; \
-case 208: case 209: PIXEL00_20; PIXEL01_22; PIXEL10_21; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 104: case 108: PIXEL00_21; PIXEL01_20; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 11: case 139: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; PIXEL01_21; PIXEL10_22; PIXEL11_20; break; \
-case 19: case 51: if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL00_11, PIXEL01_10; else PIXEL00_60, PIXEL01_90; PIXEL10_20; PIXEL11_21; break; \
-case 146: case 178: PIXEL00_22; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10, PIXEL11_12; else PIXEL01_90, PIXEL11_61; PIXEL10_20; break; \
-case 84: case 85: PIXEL00_20; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL01_11, PIXEL11_10; else PIXEL01_60, PIXEL11_90; PIXEL10_21; break; \
-case 112: case 113: PIXEL00_20; PIXEL01_22; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL10_12, PIXEL11_10; else PIXEL10_61, PIXEL11_90; break; \
-case 200: case 204: PIXEL00_21; PIXEL01_20; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10, PIXEL11_11; else PIXEL10_90, PIXEL11_60; break; \
-case 73: case 77: if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL00_12, PIXEL10_10; else PIXEL00_61, PIXEL10_90; PIXEL01_20; PIXEL11_22; break; \
-case 42: case 170: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10, PIXEL10_11; else PIXEL00_90, PIXEL10_60; PIXEL01_21; PIXEL11_20; break; \
-case 14: case 142: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10, PIXEL01_12; else PIXEL00_90, PIXEL01_61; PIXEL10_22; PIXEL11_20; break; \
-case 67: PIXEL00_11; PIXEL01_21; PIXEL10_21; PIXEL11_22; break; \
-case 70: PIXEL00_22; PIXEL01_12; PIXEL10_21; PIXEL11_22; break; \
-case 28: PIXEL00_21; PIXEL01_11; PIXEL10_22; PIXEL11_21; break; \
-case 152: PIXEL00_21; PIXEL01_22; PIXEL10_22; PIXEL11_12; break; \
-case 194: PIXEL00_22; PIXEL01_21; PIXEL10_21; PIXEL11_11; break; \
-case 98: PIXEL00_22; PIXEL01_21; PIXEL10_12; PIXEL11_22; break; \
-case 56: PIXEL00_21; PIXEL01_22; PIXEL10_11; PIXEL11_21; break; \
-case 25: PIXEL00_12; PIXEL01_22; PIXEL10_22; PIXEL11_21; break; \
-case 26: case 31: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_22; PIXEL11_21; break; \
-case 82: case 214: PIXEL00_22; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_21; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 88: case 248: PIXEL00_21; PIXEL01_22; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 74: case 107: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; PIXEL01_21; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 27: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; PIXEL01_10; PIXEL10_22; PIXEL11_21; break; \
-case 86: PIXEL00_22; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_21; PIXEL11_10; break; \
-case 216: PIXEL00_21; PIXEL01_22; PIXEL10_10; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 106: PIXEL00_10; PIXEL01_21; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 30: PIXEL00_10; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_22; PIXEL11_21; break; \
-case 210: PIXEL00_22; PIXEL01_10; PIXEL10_21; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 120: PIXEL00_21; PIXEL01_22; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 75: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; PIXEL01_21; PIXEL10_10; PIXEL11_22; break; \
-case 29: PIXEL00_12; PIXEL01_11; PIXEL10_22; PIXEL11_21; break; \
-case 198: PIXEL00_22; PIXEL01_12; PIXEL10_21; PIXEL11_11; break; \
-case 184: PIXEL00_21; PIXEL01_22; PIXEL10_11; PIXEL11_12; break; \
-case 99: PIXEL00_11; PIXEL01_21; PIXEL10_12; PIXEL11_22; break; \
-case 57: PIXEL00_12; PIXEL01_22; PIXEL10_11; PIXEL11_21; break; \
-case 71: PIXEL00_11; PIXEL01_12; PIXEL10_21; PIXEL11_22; break; \
-case 156: PIXEL00_21; PIXEL01_11; PIXEL10_22; PIXEL11_12; break; \
-case 226: PIXEL00_22; PIXEL01_21; PIXEL10_12; PIXEL11_11; break; \
-case 60: PIXEL00_21; PIXEL01_11; PIXEL10_11; PIXEL11_21; break; \
-case 195: PIXEL00_11; PIXEL01_21; PIXEL10_21; PIXEL11_11; break; \
-case 102: PIXEL00_22; PIXEL01_12; PIXEL10_12; PIXEL11_22; break; \
-case 153: PIXEL00_12; PIXEL01_22; PIXEL10_22; PIXEL11_12; break; \
-case 58: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; PIXEL10_11; PIXEL11_21; break; \
-case 83: PIXEL00_11; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; PIXEL10_21; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 92: PIXEL00_21; PIXEL01_11; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 202: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; PIXEL01_21; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; PIXEL11_11; break; \
-case 78: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; PIXEL01_12; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; PIXEL11_22; break; \
-case 154: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; PIXEL10_22; PIXEL11_12; break; \
-case 114: PIXEL00_22; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; PIXEL10_12; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 89: PIXEL00_12; PIXEL01_22; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 90: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 55: case 23: if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL00_11, PIXEL01_0; else PIXEL00_60, PIXEL01_90; PIXEL10_20; PIXEL11_21; break; \
-case 182: case 150: PIXEL00_22; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0, PIXEL11_12; else PIXEL01_90, PIXEL11_61; PIXEL10_20; break; \
-case 213: case 212: PIXEL00_20; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL01_11, PIXEL11_0; else PIXEL01_60, PIXEL11_90; PIXEL10_21; break; \
-case 241: case 240: PIXEL00_20; PIXEL01_22; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL10_12, PIXEL11_0; else PIXEL10_61, PIXEL11_90; break; \
-case 236: case 232: PIXEL00_21; PIXEL01_20; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0, PIXEL11_11; else PIXEL10_90, PIXEL11_60; break; \
-case 109: case 105: if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL00_12, PIXEL10_0; else PIXEL00_61, PIXEL10_90; PIXEL01_20; PIXEL11_22; break; \
-case 171: case 43: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0, PIXEL10_11; else PIXEL00_90, PIXEL10_60; PIXEL01_21; PIXEL11_20; break; \
-case 143: case 15: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0, PIXEL01_12; else PIXEL00_90, PIXEL01_61; PIXEL10_22; PIXEL11_20; break; \
-case 124: PIXEL00_21; PIXEL01_11; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 203: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; PIXEL01_21; PIXEL10_10; PIXEL11_11; break; \
-case 62: PIXEL00_10; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_11; PIXEL11_21; break; \
-case 211: PIXEL00_11; PIXEL01_10; PIXEL10_21; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 118: PIXEL00_22; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_12; PIXEL11_10; break; \
-case 217: PIXEL00_12; PIXEL01_22; PIXEL10_10; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 110: PIXEL00_10; PIXEL01_12; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 155: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; PIXEL01_10; PIXEL10_22; PIXEL11_12; break; \
-case 188: PIXEL00_21; PIXEL01_11; PIXEL10_11; PIXEL11_12; break; \
-case 185: PIXEL00_12; PIXEL01_22; PIXEL10_11; PIXEL11_12; break; \
-case 61: PIXEL00_12; PIXEL01_11; PIXEL10_11; PIXEL11_21; break; \
-case 157: PIXEL00_12; PIXEL01_11; PIXEL10_22; PIXEL11_12; break; \
-case 103: PIXEL00_11; PIXEL01_12; PIXEL10_12; PIXEL11_22; break; \
-case 227: PIXEL00_11; PIXEL01_21; PIXEL10_12; PIXEL11_11; break; \
-case 230: PIXEL00_22; PIXEL01_12; PIXEL10_12; PIXEL11_11; break; \
-case 199: PIXEL00_11; PIXEL01_12; PIXEL10_21; PIXEL11_11; break; \
-case 220: PIXEL00_21; PIXEL01_11; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 158: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_22; PIXEL11_12; break; \
-case 234: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; PIXEL01_21; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; PIXEL11_11; break; \
-case 242: PIXEL00_22; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; PIXEL10_12; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 59: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; PIXEL10_11; PIXEL11_21; break; \
-case 121: PIXEL00_12; PIXEL01_22; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 87: PIXEL00_11; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_21; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 79: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; PIXEL01_12; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; PIXEL11_22; break; \
-case 122: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 94: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 218: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 91: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 229: PIXEL00_20; PIXEL01_20; PIXEL10_12; PIXEL11_11; break; \
-case 167: PIXEL00_11; PIXEL01_12; PIXEL10_20; PIXEL11_20; break; \
-case 173: PIXEL00_12; PIXEL01_20; PIXEL10_11; PIXEL11_20; break; \
-case 181: PIXEL00_20; PIXEL01_11; PIXEL10_20; PIXEL11_12; break; \
-case 186: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; PIXEL10_11; PIXEL11_12; break; \
-case 115: PIXEL00_11; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; PIXEL10_12; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 93: PIXEL00_12; PIXEL01_11; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 206: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; PIXEL01_12; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; PIXEL11_11; break; \
-case 205: case 201: PIXEL00_12; PIXEL01_20; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_10; else PIXEL10_70; PIXEL11_11; break; \
-case 174: case 46: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_10; else PIXEL00_70; PIXEL01_12; PIXEL10_11; PIXEL11_20; break; \
-case 179: case 147: PIXEL00_11; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_10; else PIXEL01_70; PIXEL10_20; PIXEL11_12; break; \
-case 117: case 116: PIXEL00_20; PIXEL01_11; PIXEL10_12; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_10; else PIXEL11_70; break; \
-case 189: PIXEL00_12; PIXEL01_11; PIXEL10_11; PIXEL11_12; break; \
-case 231: PIXEL00_11; PIXEL01_12; PIXEL10_12; PIXEL11_11; break; \
-case 126: PIXEL00_10; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 219: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; PIXEL01_10; PIXEL10_10; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 125: if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL00_12, PIXEL10_0; else PIXEL00_61, PIXEL10_90; PIXEL01_11; PIXEL11_10; break; \
-case 221: PIXEL00_12; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL01_11, PIXEL11_0; else PIXEL01_60, PIXEL11_90; PIXEL10_10; break; \
-case 207: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0, PIXEL01_12; else PIXEL00_90, PIXEL01_61; PIXEL10_10; PIXEL11_11; break; \
-case 238: PIXEL00_10; PIXEL01_12; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0, PIXEL11_11; else PIXEL10_90, PIXEL11_60; break; \
-case 190: PIXEL00_10; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0, PIXEL11_12; else PIXEL01_90, PIXEL11_61; PIXEL10_11; break; \
-case 187: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0, PIXEL10_11; else PIXEL00_90, PIXEL10_60; PIXEL01_10; PIXEL11_12; break; \
-case 243: PIXEL00_11; PIXEL01_10; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL10_12, PIXEL11_0; else PIXEL10_61, PIXEL11_90; break; \
-case 119: if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL00_11, PIXEL01_0; else PIXEL00_60, PIXEL01_90; PIXEL10_12; PIXEL11_10; break; \
-case 237: case 233: PIXEL00_12; PIXEL01_20; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_100; PIXEL11_11; break; \
-case 175: case 47: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_100; PIXEL01_12; PIXEL10_11; PIXEL11_20; break; \
-case 183: case 151: PIXEL00_11; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_100; PIXEL10_20; PIXEL11_12; break; \
-case 245: case 244: PIXEL00_20; PIXEL01_11; PIXEL10_12; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_100; break; \
-case 250: PIXEL00_10; PIXEL01_10; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 123: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; PIXEL01_10; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 95: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_10; PIXEL11_10; break; \
-case 222: PIXEL00_10; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_10; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 252: PIXEL00_21; PIXEL01_11; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_100; break; \
-case 249: PIXEL00_12; PIXEL01_22; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_100; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 235: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; PIXEL01_21; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_100; PIXEL11_11; break; \
-case 111: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_100; PIXEL01_12; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 63: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_100; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_11; PIXEL11_21; break; \
-case 159: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_100; PIXEL10_22; PIXEL11_12; break; \
-case 215: PIXEL00_11; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_100; PIXEL10_21; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 246: PIXEL00_22; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; PIXEL10_12; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_100; break; \
-case 254: PIXEL00_10; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_100; break; \
-case 253: PIXEL00_12; PIXEL01_11; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_100; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_100; break; \
-case 251: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; PIXEL01_10; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_100; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 239: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_100; PIXEL01_12; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_100; PIXEL11_11; break; \
-case 127: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_100; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_20; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 191: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_100; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_100; PIXEL10_11; PIXEL11_12; break; \
-case 223: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_20; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_100; PIXEL10_10; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_20; break; \
-case 247: PIXEL00_11; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_100; PIXEL10_12; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_100; break; \
-case 255: if (Diff(inlineRGBtoYUV(w4), inlineRGBtoYUV(w2))) PIXEL00_0; else PIXEL00_100; if (Diff(inlineRGBtoYUV(w2), inlineRGBtoYUV(w6))) PIXEL01_0; else PIXEL01_100; if (Diff(inlineRGBtoYUV(w8), inlineRGBtoYUV(w4))) PIXEL10_0; else PIXEL10_100; if (Diff(inlineRGBtoYUV(w6), inlineRGBtoYUV(w8))) PIXEL11_0; else PIXEL11_100; break;
+// -------------------------------------------------------------------------
+// Flattened Symmetry Rule Evaluator
+// Pure integer selection math
+// -------------------------------------------------------------------------
+static inline uint16_t EvalRule(uint8_t rule, uint16_t E, uint16_t A, uint16_t B, uint16_t D, uint16_t F, uint16_t H, bool diff_BD, bool diff_BF, bool diff_DH) {
+	switch(rule) {
+		case 0:  return E;
+		case 1:  return Interp01(E, A);
+		case 2:  return Interp01(E, D);
+		case 3:  return Interp01(E, B);
+		case 4:  return Interp02(E, D, B);
+		case 5:  return Interp02(E, A, B);
+		case 6:  return Interp02(E, A, D);
+		case 7:  return Interp06(E, B, D);
+		case 8:  return Interp06(E, D, B);
+		case 9:  return Interp07(E, D, B);
+		case 10: return Interp09(E, D, B);
+		case 11: return Interp10(E, D, B);
+		case 12: return !diff_BD ? Interp02(E, D, B) : E;
+		case 13: return !diff_BD ? Interp09(E, D, B) : E;
+		case 14: return !diff_BD ? Interp10(E, D, B) : E;
+		case 15: return !diff_BD ? Interp02(E, D, B) : Interp01(E, A);
+		case 16: return !diff_BD ? Interp07(E, D, B) : Interp01(E, A);
+		case 17: return !diff_BD ? Interp09(E, D, B) : Interp01(E, A);
+		case 18: return !diff_BF ? Interp06(E, B, D) : Interp01(E, D);
+		case 19: return !diff_DH ? Interp06(E, D, B) : Interp01(E, B);
+		default: return E;
+	}
+}
 
-#define HQ2XCASES_CACHED \
-case 0: case 1: case 4: case 32: case 128: case 5: case 132: case 160: case 33: case 129: case 36: case 133: case 164: case 161: case 37: case 165: PIXEL00_20; PIXEL01_20; PIXEL10_20; PIXEL11_20; break; \
-case 2: case 34: case 130: case 162: PIXEL00_22; PIXEL01_21; PIXEL10_20; PIXEL11_20; break; \
-case 16: case 17: case 48: case 49: PIXEL00_20; PIXEL01_22; PIXEL10_20; PIXEL11_21; break; \
-case 64: case 65: case 68: case 69: PIXEL00_20; PIXEL01_20; PIXEL10_21; PIXEL11_22; break; \
-case 8: case 12: case 136: case 140: PIXEL00_21; PIXEL01_20; PIXEL10_22; PIXEL11_20; break; \
-case 3: case 35: case 131: case 163: PIXEL00_11; PIXEL01_21; PIXEL10_20; PIXEL11_20; break; \
-case 6: case 38: case 134: case 166: PIXEL00_22; PIXEL01_12; PIXEL10_20; PIXEL11_20; break; \
-case 20: case 21: case 52: case 53: PIXEL00_20; PIXEL01_11; PIXEL10_20; PIXEL11_21; break; \
-case 144: case 145: case 176: case 177: PIXEL00_20; PIXEL01_22; PIXEL10_20; PIXEL11_12; break; \
-case 192: case 193: case 196: case 197: PIXEL00_20; PIXEL01_20; PIXEL10_21; PIXEL11_11; break; \
-case 96: case 97: case 100: case 101: PIXEL00_20; PIXEL01_20; PIXEL10_12; PIXEL11_22; break; \
-case 40: case 44: case 168: case 172: PIXEL00_21; PIXEL01_20; PIXEL10_11; PIXEL11_20; break; \
-case 9: case 13: case 137: case 141: PIXEL00_12; PIXEL01_20; PIXEL10_22; PIXEL11_20; break; \
-case 18: case 50: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_20; PIXEL10_20; PIXEL11_21; break; \
-case 80: case 81: PIXEL00_20; PIXEL01_22; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_20; break; \
-case 72: case 76: PIXEL00_21; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_20; PIXEL11_22; break; \
-case 10: case 138: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_20; PIXEL01_21; PIXEL10_22; PIXEL11_20; break; \
-case 66: PIXEL00_22; PIXEL01_21; PIXEL10_21; PIXEL11_22; break; \
-case 24: PIXEL00_21; PIXEL01_22; PIXEL10_22; PIXEL11_21; break; \
-case 7: case 39: case 135: PIXEL00_11; PIXEL01_12; PIXEL10_20; PIXEL11_20; break; \
-case 148: case 149: case 180: PIXEL00_20; PIXEL01_11; PIXEL10_20; PIXEL11_12; break; \
-case 224: case 228: case 225: PIXEL00_20; PIXEL01_20; PIXEL10_12; PIXEL11_11; break; \
-case 41: case 169: case 45: PIXEL00_12; PIXEL01_20; PIXEL10_11; PIXEL11_20; break; \
-case 22: case 54: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_20; PIXEL11_21; break; \
-case 208: case 209: PIXEL00_20; PIXEL01_22; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 104: case 108: PIXEL00_21; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 11: case 139: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_21; PIXEL10_22; PIXEL11_20; break; \
-case 19: case 51: if (Diff(y2, y6)) PIXEL00_11, PIXEL01_10; else PIXEL00_60, PIXEL01_90; PIXEL10_20; PIXEL11_21; break; \
-case 146: case 178: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_10, PIXEL11_12; else PIXEL01_90, PIXEL11_61; PIXEL10_20; break; \
-case 84: case 85: PIXEL00_20; if (Diff(y6, y8)) PIXEL01_11, PIXEL11_10; else PIXEL01_60, PIXEL11_90; PIXEL10_21; break; \
-case 112: case 113: PIXEL00_20; PIXEL01_22; if (Diff(y6, y8)) PIXEL10_12, PIXEL11_10; else PIXEL10_61, PIXEL11_90; break; \
-case 200: case 204: PIXEL00_21; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_10, PIXEL11_11; else PIXEL10_90, PIXEL11_60; break; \
-case 73: case 77: if (Diff(y8, y4)) PIXEL00_12, PIXEL10_10; else PIXEL00_61, PIXEL10_90; PIXEL01_20; PIXEL11_22; break; \
-case 42: case 170: if (Diff(y4, y2)) PIXEL00_10, PIXEL10_11; else PIXEL00_90, PIXEL10_60; PIXEL01_21; PIXEL11_20; break; \
-case 14: case 142: if (Diff(y4, y2)) PIXEL00_10, PIXEL01_12; else PIXEL00_90, PIXEL01_61; PIXEL10_22; PIXEL11_20; break; \
-case 67: PIXEL00_11; PIXEL01_21; PIXEL10_21; PIXEL11_22; break; \
-case 70: PIXEL00_22; PIXEL01_12; PIXEL10_21; PIXEL11_22; break; \
-case 28: PIXEL00_21; PIXEL01_11; PIXEL10_22; PIXEL11_21; break; \
-case 152: PIXEL00_21; PIXEL01_22; PIXEL10_22; PIXEL11_12; break; \
-case 194: PIXEL00_22; PIXEL01_21; PIXEL10_21; PIXEL11_11; break; \
-case 98: PIXEL00_22; PIXEL01_21; PIXEL10_12; PIXEL11_22; break; \
-case 56: PIXEL00_21; PIXEL01_22; PIXEL10_11; PIXEL11_21; break; \
-case 25: PIXEL00_12; PIXEL01_22; PIXEL10_22; PIXEL11_21; break; \
-case 26: case 31: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_22; PIXEL11_21; break; \
-case 82: case 214: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 88: case 248: PIXEL00_21; PIXEL01_22; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 74: case 107: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_21; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 27: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_10; PIXEL10_22; PIXEL11_21; break; \
-case 86: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_21; PIXEL11_10; break; \
-case 216: PIXEL00_21; PIXEL01_22; PIXEL10_10; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 106: PIXEL00_10; PIXEL01_21; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 30: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_22; PIXEL11_21; break; \
-case 210: PIXEL00_22; PIXEL01_10; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 120: PIXEL00_21; PIXEL01_22; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 75: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_21; PIXEL10_10; PIXEL11_22; break; \
-case 29: PIXEL00_12; PIXEL01_11; PIXEL10_22; PIXEL11_21; break; \
-case 198: PIXEL00_22; PIXEL01_12; PIXEL10_21; PIXEL11_11; break; \
-case 184: PIXEL00_21; PIXEL01_22; PIXEL10_11; PIXEL11_12; break; \
-case 99: PIXEL00_11; PIXEL01_21; PIXEL10_12; PIXEL11_22; break; \
-case 57: PIXEL00_12; PIXEL01_22; PIXEL10_11; PIXEL11_21; break; \
-case 71: PIXEL00_11; PIXEL01_12; PIXEL10_21; PIXEL11_22; break; \
-case 156: PIXEL00_21; PIXEL01_11; PIXEL10_22; PIXEL11_12; break; \
-case 226: PIXEL00_22; PIXEL01_21; PIXEL10_12; PIXEL11_11; break; \
-case 60: PIXEL00_21; PIXEL01_11; PIXEL10_11; PIXEL11_21; break; \
-case 195: PIXEL00_11; PIXEL01_21; PIXEL10_21; PIXEL11_11; break; \
-case 102: PIXEL00_22; PIXEL01_12; PIXEL10_12; PIXEL11_22; break; \
-case 153: PIXEL00_12; PIXEL01_22; PIXEL10_22; PIXEL11_12; break; \
-case 58: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_11; PIXEL11_21; break; \
-case 83: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 92: PIXEL00_21; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 202: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; PIXEL01_21; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; PIXEL11_11; break; \
-case 78: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; PIXEL11_22; break; \
-case 154: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_22; PIXEL11_12; break; \
-case 114: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 89: PIXEL00_12; PIXEL01_22; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 90: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 55: case 23: if (Diff(y2, y6)) PIXEL00_11, PIXEL01_0; else PIXEL00_60, PIXEL01_90; PIXEL10_20; PIXEL11_21; break; \
-case 182: case 150: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0, PIXEL11_12; else PIXEL01_90, PIXEL11_61; PIXEL10_20; break; \
-case 213: case 212: PIXEL00_20; if (Diff(y6, y8)) PIXEL01_11, PIXEL11_0; else PIXEL01_60, PIXEL11_90; PIXEL10_21; break; \
-case 241: case 240: PIXEL00_20; PIXEL01_22; if (Diff(y6, y8)) PIXEL10_12, PIXEL11_0; else PIXEL10_61, PIXEL11_90; break; \
-case 236: case 232: PIXEL00_21; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0, PIXEL11_11; else PIXEL10_90, PIXEL11_60; break; \
-case 109: case 105: if (Diff(y8, y4)) PIXEL00_12, PIXEL10_0; else PIXEL00_61, PIXEL10_90; PIXEL01_20; PIXEL11_22; break; \
-case 171: case 43: if (Diff(y4, y2)) PIXEL00_0, PIXEL10_11; else PIXEL00_90, PIXEL10_60; PIXEL01_21; PIXEL11_20; break; \
-case 143: case 15: if (Diff(y4, y2)) PIXEL00_0, PIXEL01_12; else PIXEL00_90, PIXEL01_61; PIXEL10_22; PIXEL11_20; break; \
-case 124: PIXEL00_21; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 203: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_21; PIXEL10_10; PIXEL11_11; break; \
-case 62: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_11; PIXEL11_21; break; \
-case 211: PIXEL00_11; PIXEL01_10; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 118: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_12; PIXEL11_10; break; \
-case 217: PIXEL00_12; PIXEL01_22; PIXEL10_10; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 110: PIXEL00_10; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 155: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_10; PIXEL10_22; PIXEL11_12; break; \
-case 188: PIXEL00_21; PIXEL01_11; PIXEL10_11; PIXEL11_12; break; \
-case 185: PIXEL00_12; PIXEL01_22; PIXEL10_11; PIXEL11_12; break; \
-case 61: PIXEL00_12; PIXEL01_11; PIXEL10_11; PIXEL11_21; break; \
-case 157: PIXEL00_12; PIXEL01_11; PIXEL10_22; PIXEL11_12; break; \
-case 103: PIXEL00_11; PIXEL01_12; PIXEL10_12; PIXEL11_22; break; \
-case 227: PIXEL00_11; PIXEL01_21; PIXEL10_12; PIXEL11_11; break; \
-case 230: PIXEL00_22; PIXEL01_12; PIXEL10_12; PIXEL11_11; break; \
-case 199: PIXEL00_11; PIXEL01_12; PIXEL10_21; PIXEL11_11; break; \
-case 220: PIXEL00_21; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 158: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_22; PIXEL11_12; break; \
-case 234: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; PIXEL01_21; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_11; break; \
-case 242: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 59: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_11; PIXEL11_21; break; \
-case 121: PIXEL00_12; PIXEL01_22; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 87: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 79: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; PIXEL11_22; break; \
-case 122: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 94: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 218: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 91: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 229: PIXEL00_20; PIXEL01_20; PIXEL10_12; PIXEL11_11; break; \
-case 167: PIXEL00_11; PIXEL01_12; PIXEL10_20; PIXEL11_20; break; \
-case 173: PIXEL00_12; PIXEL01_20; PIXEL10_11; PIXEL11_20; break; \
-case 181: PIXEL00_20; PIXEL01_11; PIXEL10_20; PIXEL11_12; break; \
-case 186: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_11; PIXEL11_12; break; \
-case 115: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 93: PIXEL00_12; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 206: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; PIXEL11_11; break; \
-case 205: case 201: PIXEL00_12; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; PIXEL11_11; break; \
-case 174: case 46: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; PIXEL01_12; PIXEL10_11; PIXEL11_20; break; \
-case 179: case 147: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_20; PIXEL11_12; break; \
-case 117: case 116: PIXEL00_20; PIXEL01_11; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 189: PIXEL00_12; PIXEL01_11; PIXEL10_11; PIXEL11_12; break; \
-case 231: PIXEL00_11; PIXEL01_12; PIXEL10_12; PIXEL11_11; break; \
-case 126: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 219: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_10; PIXEL10_10; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 125: if (Diff(y8, y4)) PIXEL00_12, PIXEL10_0; else PIXEL00_61, PIXEL10_90; PIXEL01_11; PIXEL11_10; break; \
-case 221: PIXEL00_12; if (Diff(y6, y8)) PIXEL01_11, PIXEL11_0; else PIXEL01_60, PIXEL11_90; PIXEL10_10; break; \
-case 207: if (Diff(y4, y2)) PIXEL00_0, PIXEL01_12; else PIXEL00_90, PIXEL01_61; PIXEL10_10; PIXEL11_11; break; \
-case 238: PIXEL00_10; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_0, PIXEL11_11; else PIXEL10_90, PIXEL11_60; break; \
-case 190: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0, PIXEL11_12; else PIXEL01_90, PIXEL11_61; PIXEL10_11; break; \
-case 187: if (Diff(y4, y2)) PIXEL00_0, PIXEL10_11; else PIXEL00_90, PIXEL10_60; PIXEL01_10; PIXEL11_12; break; \
-case 243: PIXEL00_11; PIXEL01_10; if (Diff(y6, y8)) PIXEL10_12, PIXEL11_0; else PIXEL10_61, PIXEL11_90; break; \
-case 119: if (Diff(y2, y6)) PIXEL00_11, PIXEL01_0; else PIXEL00_60, PIXEL01_90; PIXEL10_12; PIXEL11_10; break; \
-case 237: case 233: PIXEL00_12; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; PIXEL11_11; break; \
-case 175: case 47: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; PIXEL01_12; PIXEL10_11; PIXEL11_20; break; \
-case 183: case 151: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_20; PIXEL11_12; break; \
-case 245: case 244: PIXEL00_20; PIXEL01_11; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 250: PIXEL00_10; PIXEL01_10; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 123: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_10; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 95: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_10; PIXEL11_10; break; \
-case 222: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_10; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 252: PIXEL00_21; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 249: PIXEL00_12; PIXEL01_22; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 235: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_21; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; PIXEL11_11; break; \
-case 111: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 63: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_11; PIXEL11_21; break; \
-case 159: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_22; PIXEL11_12; break; \
-case 215: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 246: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 254: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 253: PIXEL00_12; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 251: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_10; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 239: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; PIXEL11_11; break; \
-case 127: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 191: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_11; PIXEL11_12; break; \
-case 223: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_10; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 247: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 255: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break;
+// Centralized Pixel Processing Macro
+// Feeds the 90-degree rotated grids directly into EvalRule
+#define EVALUATE_HQ2X_SUBPIXELS() do { \
+	bool diff24 = Diff(y2, y4); \
+	bool diff26 = Diff(y2, y6); \
+	bool diff48 = Diff(y4, y8); \
+	bool diff68 = Diff(y6, y8); \
+	uint8_t pat = pattern; \
+	*(dp)                = EvalRule(hqTable[pat], w5, w1, w2, w4, w6, w8, diff24, diff26, diff48); pat = rotateTable[pat]; \
+	*(dp + 1)            = EvalRule(hqTable[pat], w5, w3, w6, w2, w8, w4, diff26, diff68, diff24); pat = rotateTable[pat]; \
+	*(dp + dst1line + 1) = EvalRule(hqTable[pat], w5, w9, w8, w6, w4, w2, diff68, diff48, diff26); pat = rotateTable[pat]; \
+	*(dp + dst1line)     = EvalRule(hqTable[pat], w5, w7, w4, w8, w2, w6, diff48, diff24, diff68); \
+} while(0)
 
 // -------------------------------------------------------------------------
 // Optimized HQ2X Render Loop
@@ -638,7 +322,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				uint32_t y9 = inlineRGBtoYUV(w9);
 
 				pattern = 0;
-
+				
 				if (w1 != w5 && Diff(y1, y5)) pattern |= (1 << 0);
 				if (w2 != w5 && Diff(y2, y5)) pattern |= (1 << 1);
 				if (w3 != w5 && Diff(y3, y5)) pattern |= (1 << 2);
@@ -648,7 +332,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				if (w8 != w5 && Diff(y8, y5)) pattern |= (1 << 6);
 				if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
 
-				switch (pattern) { HQ2XCASES_CACHED }
+				EVALUATE_HQ2X_SUBPIXELS();
 
 				w1 = w2; w4 = w5; w7 = w8;
 				w2 = w3; w5 = w6; w8 = w9;
@@ -690,7 +374,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 					if (w8 != w5 && Diff(y8, y5)) pattern |= (1 << 6);
 					if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
 
-					switch (pattern) { HQ2XCASES_CACHED }
+					EVALUATE_HQ2X_SUBPIXELS();
 
 					w1 = w2; w4 = w5; w7 = w8;
 					w2 = w3; w5 = w6; w8 = w9;
@@ -719,7 +403,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				if (w8 != w5 && Diff(y8, y5)) pattern |= (1 << 6);
 				if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
 
-				switch (pattern) { HQ2XCASES_CACHED }
+				EVALUATE_HQ2X_SUBPIXELS();
 
 				w1 = w2; w4 = w5; w7 = w8;
 				w2 = w3; w5 = w6; w8 = w9;
@@ -772,8 +456,13 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				if (w8 != w5 && (b8 > avg) != diff5) pattern |= (1 << 6);
 				if (w9 != w5 && (b9 > avg) != diff5) pattern |= (1 << 7);
 
-				// Uses the ORIGINAL macro to keep YUV evaluation lazy
-				switch (pattern) { HQ2XCASES }
+				// Re-eval YUV solely for edge-rule verification inside the rule map
+				uint32_t y2 = inlineRGBtoYUV(w2);
+				uint32_t y4 = inlineRGBtoYUV(w4);
+				uint32_t y6 = inlineRGBtoYUV(w6);
+				uint32_t y8 = inlineRGBtoYUV(w8);
+
+				EVALUATE_HQ2X_SUBPIXELS();
 
 				w1 = w2; w4 = w5; w7 = w8;
 				w2 = w3; w5 = w6; w8 = w9;
@@ -814,8 +503,12 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 					if (w8 != w5 && (b8 > avg) != diff5) pattern |= (1 << 6);
 					if (w9 != w5 && (b9 > avg) != diff5) pattern |= (1 << 7);
 
-					// Uses the ORIGINAL macro to keep YUV evaluation lazy
-					switch (pattern) { HQ2XCASES }
+					uint32_t y2 = inlineRGBtoYUV(w2);
+					uint32_t y4 = inlineRGBtoYUV(w4);
+					uint32_t y6 = inlineRGBtoYUV(w6);
+					uint32_t y8 = inlineRGBtoYUV(w8);
+
+					EVALUATE_HQ2X_SUBPIXELS();
 
 					w1 = w2; w4 = w5; w7 = w8;
 					w2 = w3; w5 = w6; w8 = w9;
@@ -846,8 +539,12 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				if (w8 != w5 && (b8 > avg) != diff5) pattern |= (1 << 6);
 				if (w9 != w5 && (b9 > avg) != diff5) pattern |= (1 << 7);
 
-				// Uses the ORIGINAL macro to keep YUV evaluation lazy
-				switch (pattern) { HQ2XCASES }
+				uint32_t y2 = inlineRGBtoYUV(w2);
+				uint32_t y4 = inlineRGBtoYUV(w4);
+				uint32_t y6 = inlineRGBtoYUV(w6);
+				uint32_t y8 = inlineRGBtoYUV(w8);
+
+				EVALUATE_HQ2X_SUBPIXELS();
 
 				w1 = w2; w4 = w5; w7 = w8;
 				w2 = w3; w5 = w6; w8 = w9;
@@ -915,7 +612,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 					if ((b9 > avg) != diff5) pattern |= (1 << 7);
 				}
 
-				switch (pattern) { HQ2XCASES_CACHED }
+				EVALUATE_HQ2X_SUBPIXELS();
 
 				w1 = w2; w4 = w5; w7 = w8;
 				w2 = w3; w5 = w6; w8 = w9;
@@ -971,7 +668,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 						if ((b9 > avg) != diff5) pattern |= (1 << 7);
 					}
 
-					switch (pattern) { HQ2XCASES_CACHED }
+					EVALUATE_HQ2X_SUBPIXELS();
 
 					w1 = w2; w4 = w5; w7 = w8;
 					w2 = w3; w5 = w6; w8 = w9;
@@ -1017,7 +714,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 					if ((b9 > avg) != diff5) pattern |= (1 << 7);
 				}
 
-				switch (pattern) { HQ2XCASES_CACHED }
+				EVALUATE_HQ2X_SUBPIXELS();
 
 				w1 = w2; w4 = w5; w7 = w8;
 				w2 = w3; w5 = w6; w8 = w9;
