@@ -186,23 +186,23 @@ static bool isValidDimensions (int width, int height) {
 // Optimized Brightness using shifts instead of multiplication
 // 3R + 3G + B, range 0..186.
 static inline uint16_t inlineRGBtoBright(uint16_t c) {
-    uint32_t r = (c >> 11) & 0x1F;
-    uint32_t g = (c >> 5) & 0x3F;
-    uint32_t b = c & 0x1F;
-    return (r << 1) + r + (g << 1) + g + b;
+	uint32_t r = (c >> 11) & 0x1F;
+	uint32_t g = (c >> 5) & 0x3F;
+	uint32_t b = c & 0x1F;
+	return (r << 1) + r + (g << 1) + g + b;
 }
 
 // fast L1-cached LUT approach - avoids heavy multiplication stalls
 static inline uint32_t inlineRGBtoYUV(uint16_t c) {
-    uint32_t r_idx = c >> 11;
-    uint32_t g_idx = (c >> 5) & 0x3F;
-    uint32_t b_idx = c & 0x1F;
+	uint32_t r_idx = c >> 11;
+	uint32_t g_idx = (c >> 5) & 0x3F;
+	uint32_t b_idx = c & 0x1F;
 
-    int32_t y = (y_r_lut[r_idx] + y_g_lut[g_idx] + y_b_lut[b_idx] + 32768) >> 16;
-    int32_t u = (u_r_lut[r_idx] + u_g_lut[g_idx] + u_b_lut[b_idx] + 32768) >> 16;
-    int32_t v = (v_r_lut[r_idx] + v_g_lut[g_idx] + v_b_lut[b_idx] + 32768) >> 16;
+	int32_t y = (y_r_lut[r_idx] + y_g_lut[g_idx] + y_b_lut[b_idx] + 32768) >> 16;
+	int32_t u = (u_r_lut[r_idx] + u_g_lut[g_idx] + u_b_lut[b_idx] + 32768) >> 16;
+	int32_t v = (v_r_lut[r_idx] + v_g_lut[g_idx] + v_b_lut[b_idx] + 32768) >> 16;
 
-    return (((y + 16) & 0xFF) << 16) | (((u + 128) & 0xFF) << 8) | ((v + 128) & 0xFF);
+	return (((y + 16) & 0xFF) << 16) | (((u + 128) & 0xFF) << 8) | ((v + 128) & 0xFF);
 }
 
 // PowerPC rlwinm masks for 16-bit uints in 32-bit GPRs
@@ -217,11 +217,11 @@ static inline int RGB565_to_Lum(uint16_t c) {
 // YUV threshold compare on two ALREADY-CACHED packed YUV values
 // Thresholds - 48/7/6
 static inline bool DiffYUVCached(uint32_t a, uint32_t b) {
-    if (a == b) return false;
-    uint32_t dy = __builtin_abs((int)((a >> 16) & 0xFF) - (int)((b >> 16) & 0xFF));
-    uint32_t du = __builtin_abs((int)((a >> 8) & 0xFF) - (int)((b >> 8) & 0xFF));
-    uint32_t dv = __builtin_abs((int)(a & 0xFF) - (int)(b & 0xFF));
-    return (dy > 48) | (du > 7) | (dv > 6);
+	if (a == b) return false;
+	uint32_t dy = __builtin_abs((int)((a >> 16) & 0xFF) - (int)((b >> 16) & 0xFF));
+	uint32_t du = __builtin_abs((int)((a >> 8) & 0xFF) - (int)((b >> 8) & 0xFF));
+	uint32_t dv = __builtin_abs((int)(a & 0xFF) - (int)(b & 0xFF));
+	return (dy > 48) | (du > 7) | (dv > 6);
 }
 
 //
@@ -236,7 +236,7 @@ static inline bool DiffYUVCached(uint32_t a, uint32_t b) {
 // Moves Green to bits 21-26, leaves Red at 11-15, and Blue at 0-4.
 // This creates empty "headroom" between the channels to safely absorb multiplication.
 static inline uint32_t Unpack565(uint16_t p) {
-    return ((uint32_t)p | ((uint32_t)p << 16)) & 0x07E0F81F;
+	return ((uint32_t)p | ((uint32_t)p << 16)) & 0x07E0F81F;
 }
 
 // Packs the 32-bit SWAR integer back into a 16-bit RGB565 pixel.
@@ -244,7 +244,7 @@ static inline uint32_t Unpack565(uint16_t p) {
 // the right-shift division perfectly zeroes out the expanded headroom bits.
 // & 0x07E0 and & 0xF81F masks to truncate downward channel bleed
 static inline uint16_t Pack565(uint32_t up) {
-    return (uint16_t)((up >> 16) & 0x07E0) | (uint16_t)(up & 0xF81F);
+	return (uint16_t)((up >> 16) & 0x07E0) | (uint16_t)(up & 0xF81F);
 }
 
 // HQ2X blend operator, UNPACKED SWAR domain (single source of truth).
@@ -254,21 +254,21 @@ static inline uint16_t Pack565(uint32_t up) {
 // Results are bit-identical to the canonical HQ2X blends: the per-op weights and
 // shifts are unchanged, and Pack565(Unpack565(x)) == x for any RGB565 value.
 static inline uint16_t BlendU(uint8_t op, uint32_t uc, uint32_t ucrn, uint32_t us1, uint32_t us2) {
-    switch(op) {
-        case 0:  return Pack565(uc);              // center unchanged
-        case 1:  return Pack565(((uc << 1) + uc + ucrn) >> 2);
-        case 2:  return Pack565(((uc << 1) + uc + us2) >> 2);
-        case 3:  return Pack565(((uc << 1) + uc + us1) >> 2);
-        case 4:  return Pack565(((uc << 1) + us1 + us2) >> 2);
-        case 5:  return Pack565(((uc << 1) + ucrn + us1) >> 2);
-        case 6:  return Pack565(((uc << 1) + ucrn + us2) >> 2);
-        case 7:  return Pack565(((uc << 2) + uc + (us1 << 1) + us2) >> 3);
-        case 8:  return Pack565(((uc << 2) + uc + us1 + (us2 << 1)) >> 3);
-        case 9:  return Pack565(((uc << 2) + (uc << 1) + us1 + us2) >> 3);
-        case 10: return Pack565(((uc << 1) + (us1 << 1) + us1 + (us2 << 1) + us2) >> 3);
-        case 11: return Pack565(((uc << 4) - (uc << 1) + us1 + us2) >> 4);
-        default: return Pack565(uc);
-    }
+	switch(op) {
+		case 0:  return Pack565(uc);              // center unchanged
+		case 1:  return Pack565(((uc << 1) + uc + ucrn) >> 2);
+		case 2:  return Pack565(((uc << 1) + uc + us2) >> 2);
+		case 3:  return Pack565(((uc << 1) + uc + us1) >> 2);
+		case 4:  return Pack565(((uc << 1) + us1 + us2) >> 2);
+		case 5:  return Pack565(((uc << 1) + ucrn + us1) >> 2);
+		case 6:  return Pack565(((uc << 1) + ucrn + us2) >> 2);
+		case 7:  return Pack565(((uc << 2) + uc + (us1 << 1) + us2) >> 3);
+		case 8:  return Pack565(((uc << 2) + uc + us1 + (us2 << 1)) >> 3);
+		case 9:  return Pack565(((uc << 2) + (uc << 1) + us1 + us2) >> 3);
+		case 10: return Pack565(((uc << 1) + (us1 << 1) + us1 + (us2 << 1) + us2) >> 3);
+		case 11: return Pack565(((uc << 4) - (uc << 1) + us1 + us2) >> 4);
+		default: return Pack565(uc);
+	}
 }
 
 // Resolve only the OP for a pattern+rule, given cached YUV signatures for the
@@ -276,23 +276,23 @@ static inline uint16_t BlendU(uint8_t op, uint32_t uc, uint32_t ucrn, uint32_t u
 // ladder; only the blending was split out (into BlendU) for unpack reuse.
 static inline uint8_t ResolveOp(uint8_t pat, uint32_t ds1, uint32_t ds2, uint32_t do1, uint32_t do2) {
 	uint8_t rule = hqTable[pat];
-    if (rule < 12) return rule;
+	if (rule < 12) return rule;
 
-    if (rule <= 17) {
-        bool diff = DiffYUVCached(ds1, ds2);
-        switch(rule) {
-            case 12: return diff ? 0 : 4;
-            case 13: return diff ? 0 : 10;
-            case 14: return diff ? 0 : 11;
-            case 15: return diff ? 1 : 4;
-            case 16: return diff ? 1 : 9;
-            default: return diff ? 1 : 10;  // rule 17
-        }
-    } else if (rule == 18) {
-        return DiffYUVCached(ds1, do1) ? 2 : 7;
-    } else { // rule == 19
-        return DiffYUVCached(ds2, do2) ? 3 : 8;
-    }
+	if (rule <= 17) {
+		bool diff = DiffYUVCached(ds1, ds2);
+		switch(rule) {
+			case 12: return diff ? 0 : 4;
+			case 13: return diff ? 0 : 10;
+			case 14: return diff ? 0 : 11;
+			case 15: return diff ? 1 : 4;
+			case 16: return diff ? 1 : 9;
+			default: return diff ? 1 : 10;  // rule 17
+		}
+	} else if (rule == 18) {
+		return DiffYUVCached(ds1, do1) ? 2 : 7;
+	} else { // rule == 19
+		return DiffYUVCached(ds2, do2) ? 3 : 8;
+	}
 }
 
 //
@@ -302,149 +302,66 @@ static inline uint8_t ResolveOp(uint8_t pat, uint32_t ds1, uint32_t ds2, uint32_
 // Passing the four signatures as macro args avoids any variable shadowing
 // between the YUV-ring path and the BOLD on-demand path.
 #define EVALUATE_HQ2X_SUBPIXELS(sig2, sig4, sig6, sig8) do { \
-    uint8_t p = pattern; \
-    *(dp)                = BlendU(ResolveOp(p, sig2, sig4, sig6, sig8), U5, U1, U2, U4); p = rotateTable[p]; \
-    *(dp + 1)            = BlendU(ResolveOp(p, sig6, sig2, sig8, sig4), U5, U3, U6, U2); p = rotateTable[p]; \
-    *(dp + dst1line + 1) = BlendU(ResolveOp(p, sig8, sig6, sig4, sig2), U5, U9, U8, U6); p = rotateTable[p]; \
-    *(dp + dst1line)     = BlendU(ResolveOp(p, sig4, sig8, sig2, sig6), U5, U7, U4, U8); \
+	uint8_t p = pattern; \
+	*(dp)                = BlendU(ResolveOp(p, sig2, sig4, sig6, sig8), U5, U1, U2, U4); p = rotateTable[p]; \
+	*(dp + 1)            = BlendU(ResolveOp(p, sig6, sig2, sig8, sig4), U5, U3, U6, U2); p = rotateTable[p]; \
+	*(dp + dst1line + 1) = BlendU(ResolveOp(p, sig8, sig6, sig4, sig2), U5, U9, U8, U6); p = rotateTable[p]; \
+	*(dp + dst1line)     = BlendU(ResolveOp(p, sig4, sig8, sig2, sig6), U5, U7, U4, U8); \
 } while(0)
 
-//
 // SIGNATURE ROW BUILDERS
 //
 // Convert one full source scanline into cached signatures, ONCE. Guard cells at
 // index 0 and width+1 replicate the edge columns so the seeded sliding window
 // (which starts at x=-1) reads defined values without per-pixel clamping.
-//
-// =========================================================================
-// OPTIONAL builder-level deduplication - fully self-contained
-//
-// To REMOVE this optimization entirely, set HQ2X_BUILDER_DEDUP to 0 (or delete
-// the dedup builders and the prevRow plumbing in RenderHQ2X marked "[A4 DEDUP]").
-// Nothing else in the filter depends on it; output is byte-for-byte identical
-// either way. The dedup only avoids RECOMPUTING conversions that are probably
-// equal, so it changes performance, never pixels.
-//
-// It exploits two forms of flatness that dominate retro frames:
-// A2 (run-length): within a row, src[x]==src[x-1] => signature is identical,
-// so copy the previous cell instead of reconverting.
-// A3 (row repeat): if the whole new source row is bit-identical to the row
-// already converted into the "previous signature row", copy
-// that row wholesale (one memcpy) instead of reconverting.
-//
-// Both are EXACT: conversion is a pure function of the pixel, so equal pixels
-// (or equal rows) yield equal signatures. The only added cost on non-flat
-// content is a per-pixel "src[x]==src[x-1] compare (A2) and an early-out row
-// compare (A3) - both highly predictable branches, which the Broadway rules
-// prefer over arithmetic. On noisy/dithered content these compares fail fast
-// and cost a few cycles/pixel with no payoff (the documented, bounded worst
-// case); they never produce wrong output.
-//
-// A2 and A3 can be toggled INDEPENDENTLY (set either to 0). A2 is essentially
-// always a win (1 cheap compare/pixel, big saving on horizontal runs). A3 adds
-// value mainly for vertically-REPEATED horizontal detail (textured bands, UI
-// borders, letterboxing); its only cost is an early-out row compare (~<=1
-// cycle/pixel worst case). Disable A3 alone if profiling a scroll-heavy title
-// shows the row compare not paying off.
-//
-// =========================================================================
-#define HQ2X_BUILDER_DEDUP 1
-#define HQ2X_DEDUP_RUNLENGTH 1 // A2
-#define HQ2X_DEDUP_ROWREPEAT 1 // A3
 
-// Plain builders (the fallback / reference implementation). Always defined so
-// HQ2X_BUILDER_DEDUP can be flipped to 0 with no other code changes.
-static inline void BuildYuvRowPlain(uint32_t *dst, const uint16_t *src, int width) {
-    dst[0] = inlineRGBtoYUV(src[0]);
-    for (int x = 0; x < width; x++) dst[x + 1] = inlineRGBtoYUV(src[x]);
-    dst[width + 1] = dst[width];
-}
-static inline void BuildBrtRowPlain(uint16_t *dst, const uint16_t *src, int width) {
-    dst[0] = inlineRGBtoBright(src[0]);
-    for (int x = 0; x < width; x++) dst[x + 1] = inlineRGBtoBright(src[x]);
-    dst[width + 1] = dst[width];
-}
-
-#if HQ2X_BUILDER_DEDUP
-#if HQ2X_DEDUP_ROWREPEAT
-// [A4 DEDUP] Returns true iff two source rows are bit-identical (early-out).
+// DEDUP - Returns true iff two source rows are bit-identical (early-out).
 static inline bool RowsEqual(const uint16_t *a, const uint16_t *b, int width) {
-    for (int x = 0; x < width; x++) if (a[x] != b[x]) return false;
-    return true;
-}
-#endif
-
-// DEDUP - YUV row builder with run-length (A2) + optional row-repeat (A3).
-// Output is identical to BuildYuvRowPlain(dst, src, width) in all cases.
-static inline void BuildYuvRow(uint32_t *dst, const uint16_t *src,
-                const uint16_t *prevSrc, const uint32_t *prevSig, int width) {
-
-#if HQ2X_DEDUP_ROWREPEAT
-    // A3: whole-row repeat. If this source row equals the previous one, its
-    // signatures equal the previous signature row verbatim (incl. guard cells).
-    if (prevSrc && RowsEqual(src, prevSrc, width)) {
-        __builtin_memcpy(dst, prevSig, (size_t)(width + 2) * sizeof(uint32_t));
-        return;
-    }
-#else
-    (void)prevSrc; (void)prevSig;
-#endif
-#if HQ2X_DEDUP_RUNLENGTH
-    // A2: run-length dedup within the row.
-    uint16_t prevPix = src[0];
-    uint32_t prevVal = inlineRGBtoYUV(prevPix);
-    dst[0] = prevVal;         // left guard mirrors column 0
-    dst[1] = prevVal;         // column 0 itself
-    for (int x = 1; x < width; x++) {
-        uint16_t p = src[x];
-        if (p != prevPix) { prevVal = inlineRGBtoYUV(p); prevPix = p; }
-        dst[x + 1] = prevVal;
-    }
-    dst[width + 1] = dst[width]; // right guard mirrors last column
-#else
-    BuildYuvRowPlain(dst, src, width);
-#endif
+	for (int x = 0; x < width; x++)
+		if (a[x] != b[x])
+			return false;
+	return true;
 }
 
-// DEDUP - Brightness row builder with the same A2/A3 dedup
-static inline void BuildBrtRow(uint16_t *dst, const uint16_t *src,
-                const uint16_t *prevSrc, const uint16_t *prevSig, int width) {
-#if HQ2X_DEDUP_ROWREPEAT
-    if (prevSrc && RowsEqual(src, prevSrc, width)) {
-        __builtin_memcpy(dst, prevSig, (size_t)(width + 2) * sizeof(uint16_t));
-        return;
-    }
-#else
-    (void)prevSrc; (void)prevSig;
-#endif
-#if HQ2X_DEDUP_RUNLENGTH
-    uint16_t prevPix = src[0];
-    uint16_t prevVal = inlineRGBtoBright(prevPix);
-    dst[0] = prevVal;
-    dst[1] = prevVal;
-    for (int x = 1; x < width; x++) {
-        uint16_t p = src[x];
-        if (p != prevPix) { prevVal = inlineRGBtoBright(p); prevPix = p; }
-        dst[x + 1] = prevVal;
-    }
-    dst[width + 1] = dst[width];
-#else
-    BuildBrtRowPlain(dst, src, width);
-#endif
+// YUV row builder with run-length + row-repeat
+static inline void BuildYuvRow(uint32_t *dst, const uint16_t *src, const uint16_t *prevSrc, const uint32_t *prevSig, int width) {
+	// whole-row repeat. If this source row equals the previous one, its
+	// signatures equal the previous signature row verbatim (incl. guard cells).
+	if (prevSrc && RowsEqual(src, prevSrc, width)) {
+		__builtin_memcpy(dst, prevSig, (size_t)(width + 2) * sizeof(uint32_t));
+		return;
+	}
+
+	uint16_t prevPix = src[0];
+	uint32_t prevVal = inlineRGBtoYUV(prevPix);
+	dst[0] = prevVal;         // left guard mirrors column 0
+	dst[1] = prevVal;         // column 0 itself
+	for (int x = 1; x < width; x++) {
+		uint16_t p = src[x];
+		if (p != prevPix) { prevVal = inlineRGBtoYUV(p); prevPix = p; }
+		dst[x + 1] = prevVal;
+	}
+	dst[width + 1] = dst[width]; // right guard mirrors last column
 }
 
-#else
-// DEDUP - disabled: forward the dedup signatures to the plain builders so the
-// call sites in RenderHQ2X compile unchanged.
-static inline void BuildYuvRow(uint32_t *dst, const uint16_t *src,
-                const uint16_t *prevSrc, const uint32_t *prevSig, int width) {
-    BuildYuvRowPlain(dst, src, width);
+// Brightness row builder
+static inline void BuildBrtRow(uint16_t *dst, const uint16_t *src, const uint16_t *prevSrc, const uint16_t *prevSig, int width) {
+	if (prevSrc && RowsEqual(src, prevSrc, width)) {
+		__builtin_memcpy(dst, prevSig, (size_t)(width + 2) * sizeof(uint16_t));
+		return;
+	}
+
+	uint16_t prevPix = src[0];
+	uint16_t prevVal = inlineRGBtoBright(prevPix);
+	dst[0] = prevVal;
+	dst[1] = prevVal;
+	for (int x = 1; x < width; x++) {
+		uint16_t p = src[x];
+		if (p != prevPix) { prevVal = inlineRGBtoBright(p); prevPix = p; }
+		dst[x + 1] = prevVal;
+	}
+	dst[width + 1] = dst[width];
 }
-static inline void BuildBrtRow(uint16_t *dst, const uint16_t *src,
-                const uint16_t *prevSrc, const uint16_t *prevSig, int width) {
-    BuildBrtRowPlain(dst, src, width);
-}
-#endif // HQ2X_BUILDER_DEDUP
 
 // =========================================================================
 // OPTIMIZED HQ2X RENDER LOOP
