@@ -518,7 +518,8 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		if (USE_BRIGHT) BuildBrtRow(bBot, rowBot, rowMid, bMid, width);
 
 		// Prefetch the scanline we'll convert next iteration (~1 row ahead).
-		DCBT(rowBot + src1line);
+		if (y + 2 < height)
+			DCBT(rowBot + src1line);
 
 		// ---- Seed the horizontal sliding window at column x = 0 ----
 		// Pixels (left column clamps to column 0):
@@ -608,19 +609,19 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				// // identical to the original's reciprocal-multiply mean.
 				uint32_t mean = ((uint32_t)(bb1 + bb2 + bb3 + bb4 + bb5 + bb6 + bb7 + bb8 + bb9) * 7282) >> 16;
 				bool c5 = (bb5 > mean);
-				pattern  = ((w1 == w5) && ((bb1 > mean) != c5)) << 0;
-				pattern |= ((w2 == w5) && ((bb2 > mean) != c5)) << 1;
-				pattern |= ((w3 == w5) && ((bb3 > mean) != c5)) << 2;
-				pattern |= ((w4 == w5) && ((bb4 > mean) != c5)) << 3;
-				pattern |= ((w6 == w5) && ((bb6 > mean) != c5)) << 4;
-				pattern |= ((w7 == w5) && ((bb7 > mean) != c5)) << 5;
-				pattern |= ((w8 == w5) && ((bb8 > mean) != c5)) << 6;
-				pattern |= ((w9 == w5) && ((bb9 > mean) != c5)) << 7;
+				pattern  = ((w1 != w5) && ((bb1 > mean) != c5)) << 0;
+				pattern |= ((w2 != w5) && ((bb2 > mean) != c5)) << 1;
+				pattern |= ((w3 != w5) && ((bb3 > mean) != c5)) << 2;
+				pattern |= ((w4 != w5) && ((bb4 > mean) != c5)) << 3;
+				pattern |= ((w6 != w5) && ((bb6 > mean) != c5)) << 4;
+				pattern |= ((w7 != w5) && ((bb7 > mean) != c5)) << 5;
+				pattern |= ((w8 != w5) && ((bb8 > mean) != c5)) << 6;
+				pattern |= ((w9 != w5) && ((bb9 > mean) != c5)) << 7;
 			}
 			else { // FILTER_HQ2XS - hybrid (identical rule to original SOFT)
 				bool use_yuv = (w1 == w5) | (w3 == w5) | (w7 == w5) | (w9 == w5);
 				if (use_yuv) {
-					pattern = DiffYUVCached(y1, y5) << 0;
+					pattern  = DiffYUVCached(y1, y5) << 0;
 					pattern |= DiffYUVCached(y2, y5) << 1;
 					pattern |= DiffYUVCached(y3, y5) << 2;
 					pattern |= DiffYUVCached(y4, y5) << 3;
