@@ -477,51 +477,6 @@ static inline uint16_t ApplyRule(uint32_t rule, uint16_t c, uint16_t crn, uint16
 }
 
 // -------------------------------------------------------------------------
-// Flattened Symmetry Rule Evaluator
-// Pure integer selection math
-// -------------------------------------------------------------------------
-static inline uint16_t EvalRule(uint8_t rule, uint16_t E, uint16_t A, uint16_t B, uint16_t D, uint16_t F, uint16_t H, bool diff_BD, bool diff_BF, bool diff_DH) {
-	switch(rule) {
-		case 0:  return E;
-		case 1:  return Interp01(E, A);
-		case 2:  return Interp01(E, D);
-		case 3:  return Interp01(E, B);
-		case 4:  return Interp02(E, D, B);
-		case 5:  return Interp02(E, A, B);
-		case 6:  return Interp02(E, A, D);
-		case 7:  return Interp06(E, B, D);
-		case 8:  return Interp06(E, D, B);
-		case 9:  return Interp07(E, D, B);
-		case 10: return Interp09(E, D, B);
-		case 11: return Interp10(E, D, B);
-		case 12: return !diff_BD ? Interp02(E, D, B) : E;
-		case 13: return !diff_BD ? Interp09(E, D, B) : E;
-		case 14: return !diff_BD ? Interp10(E, D, B) : E;
-		case 15: return !diff_BD ? Interp02(E, D, B) : Interp01(E, A);
-		case 16: return !diff_BD ? Interp07(E, D, B) : Interp01(E, A);
-		case 17: return !diff_BD ? Interp09(E, D, B) : Interp01(E, A);
-		case 18: return !diff_BF ? Interp06(E, B, D) : Interp01(E, D);
-		case 19: return !diff_DH ? Interp06(E, D, B) : Interp01(E, B);
-		default: return E;
-	}
-}
-
-// Centralized Pixel Processing Macro
-// Feeds the 90-degree rotated grids directly into EvalRule
-// Aggressive short-circuiting on diagonal checks. Skips mathematical difference if raw pixels match.
-#define EVALUATE_HQ2X_SUBPIXELS() do { \
-    bool diff24 = (w2 != w4) && Diff(y2, y4); \
-    bool diff26 = (w2 != w6) && Diff(y2, y6); \
-    bool diff48 = (w4 != w8) && Diff(y4, y8); \
-    bool diff68 = (w6 != w8) && Diff(y6, y8); \
-    uint8_t pat = pattern; \
-    *(dp)                = EvalRule(hqTable[pat], w5, w1, w2, w4, w6, w8, diff24, diff26, diff48); pat = rotateTable[pat]; \
-    *(dp + 1)            = EvalRule(hqTable[pat], w5, w3, w6, w2, w8, w4, diff26, diff68, diff24); pat = rotateTable[pat]; \
-    *(dp + dst1line + 1) = EvalRule(hqTable[pat], w5, w9, w8, w6, w4, w2, diff68, diff48, diff26); pat = rotateTable[pat]; \
-    *(dp + dst1line)     = EvalRule(hqTable[pat], w5, w7, w4, w8, w2, w6, diff48, diff24, diff68); \
-} while(0)
-
-// -------------------------------------------------------------------------
 // Optimized HQ2X Render Loop
 // -------------------------------------------------------------------------
 template<int GuiScale>
