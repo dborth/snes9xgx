@@ -172,44 +172,6 @@ static inline uint16_t Pack565(uint32_t up) {
     return (uint16_t)((up >> 16) & 0x07E0) | (uint16_t)(up & 0xF81F);
 }
 
-// Pure bit-shift & addition interpolations. Zero integer multiplication.
-static inline uint16_t Interp01(uint16_t c1, uint16_t c2) {
-    if (c1 == c2) return c1;
-    uint32_t u1 = Unpack565(c1);
-    return Pack565(((u1 << 1) + u1 + Unpack565(c2)) >> 2);
-}
-
-static inline uint16_t Interp02(uint16_t c1, uint16_t c2, uint16_t c3) {
-    if (c1 == c2 && c1 == c3) return c1;
-    return Pack565(((Unpack565(c1) << 1) + Unpack565(c2) + Unpack565(c3)) >> 2);
-}
-
-static inline uint16_t Interp06(uint16_t c1, uint16_t c2, uint16_t c3) {
-    if (c1 == c2 && c1 == c3) return c1;
-    uint32_t u1 = Unpack565(c1);
-    uint32_t u2 = Unpack565(c2);
-    return Pack565(((u1 << 2) + u1 + (u2 << 1) + Unpack565(c3)) >> 3);
-}
-
-static inline uint16_t Interp07(uint16_t c1, uint16_t c2, uint16_t c3) {
-    if (c1 == c2 && c1 == c3) return c1;
-    uint32_t u1 = Unpack565(c1);
-    return Pack565(((u1 << 2) + (u1 << 1) + Unpack565(c2) + Unpack565(c3)) >> 3);
-}
-
-static inline uint16_t Interp09(uint16_t c1, uint16_t c2, uint16_t c3) {
-    if (c1 == c2 && c1 == c3) return c1;
-    uint32_t u2 = Unpack565(c2);
-    uint32_t u3 = Unpack565(c3);
-    return Pack565(((Unpack565(c1) << 1) + (u2 << 1) + u2 + (u3 << 1) + u3) >> 3);
-}
-
-static inline uint16_t Interp10(uint16_t c1, uint16_t c2, uint16_t c3) {
-    if (c1 == c2 && c1 == c3) return c1;
-    uint32_t u1 = Unpack565(c1);
-    return Pack565(((u1 << 4) - (u1 << 1) + Unpack565(c2) + Unpack565(c3)) >> 4);
-}
-
 // -------------------------------------------------------------------------
 // Fast YUV Difference Evaluator (Short-Circuiting C++)
 // Uses __builtin_abs for 3-cycle absolute diff.
@@ -224,75 +186,73 @@ static inline bool Diff(uint32_t c1, uint32_t c2) {
 }
 
 // -------------------------------------------------------------------------
-// Decoupled Rule Architecture (I-Cache Optimized)
+// Arithmetic Multiplexer Weights
+// Format: (Shift << 16) | (W_Center << 12) | (W_Corner << 8) | (W_Side1 << 4) | (W_Side2)
 // -------------------------------------------------------------------------
+#define W_0   0x00000 // c
+#define W_10  0x23100 // (3c + crn) >> 2
+#define W_11  0x23010 // (3c + s1) >> 2
+#define W_12  0x23001 // (3c + s2) >> 2
+#define W_20  0x22011 // (2c + s1 + s2) >> 2
+#define W_21  0x22101 // (2c + crn + s2) >> 2
+#define W_22  0x22110 // (2c + crn + s1) >> 2
+#define W_60  0x35012 // (5c + s1 + 2s2) >> 3
+#define W_61  0x35021 // (5c + 2s1 + s2) >> 3
+#define W_70  0x36011 // (6c + s1 + s2) >> 3
+#define W_90  0x32033 // (2c + 3s1 + 3s2) >> 3
+#define W_100 0x4E011 // (14c + s1 + s2) >> 4  (0xE = 14)
 
-#define R_0 0
-#define R_10 1
-#define R_11 2
-#define R_12 3
-#define R_20 4
-#define R_21 5
-#define R_22 6
-#define R_60 7
-#define R_61 8
-#define R_70 9
-#define R_90 10
-#define R_100 11
+#define PIXEL00_0    wt00 = W_0
+#define PIXEL00_10   wt00 = W_10
+#define PIXEL00_11   wt00 = W_11
+#define PIXEL00_12   wt00 = W_12
+#define PIXEL00_20   wt00 = W_20
+#define PIXEL00_21   wt00 = W_21
+#define PIXEL00_22   wt00 = W_22
+#define PIXEL00_60   wt00 = W_60
+#define PIXEL00_61   wt00 = W_61
+#define PIXEL00_70   wt00 = W_70
+#define PIXEL00_90   wt00 = W_90
+#define PIXEL00_100  wt00 = W_100
 
-// The switch statement now merely sets integer rule IDs.
-// This shrinks the generated Jump Table footprint so it fits comfortably in the 32KB I-Cache.
-#define PIXEL00_0    r00 = R_0
-#define PIXEL00_10   r00 = R_10
-#define PIXEL00_11   r00 = R_11
-#define PIXEL00_12   r00 = R_12
-#define PIXEL00_20   r00 = R_20
-#define PIXEL00_21   r00 = R_21
-#define PIXEL00_22   r00 = R_22
-#define PIXEL00_60   r00 = R_60
-#define PIXEL00_61   r00 = R_61
-#define PIXEL00_70   r00 = R_70
-#define PIXEL00_90   r00 = R_90
-#define PIXEL00_100  r00 = R_100
+#define PIXEL01_0    wt01 = W_0
+#define PIXEL01_10   wt01 = W_10
+#define PIXEL01_11   wt01 = W_11
+#define PIXEL01_12   wt01 = W_12
+#define PIXEL01_20   wt01 = W_20
+#define PIXEL01_21   wt01 = W_21
+#define PIXEL01_22   wt01 = W_22
+#define PIXEL01_60   wt01 = W_60
+#define PIXEL01_61   wt01 = W_61
+#define PIXEL01_70   wt01 = W_70
+#define PIXEL01_90   wt01 = W_90
+#define PIXEL01_100  wt01 = W_100
 
-#define PIXEL01_0    r01 = R_0
-#define PIXEL01_10   r01 = R_10
-#define PIXEL01_11   r01 = R_11
-#define PIXEL01_12   r01 = R_12
-#define PIXEL01_20   r01 = R_20
-#define PIXEL01_21   r01 = R_21
-#define PIXEL01_22   r01 = R_22
-#define PIXEL01_60   r01 = R_60
-#define PIXEL01_61   r01 = R_61
-#define PIXEL01_70   r01 = R_70
-#define PIXEL01_90   r01 = R_90
-#define PIXEL01_100  r01 = R_100
+#define PIXEL10_0    wt10 = W_0
+#define PIXEL10_10   wt10 = W_10
+#define PIXEL10_11   wt10 = W_11
+#define PIXEL10_12   wt10 = W_12
+#define PIXEL10_20   wt10 = W_20
+#define PIXEL10_21   wt10 = W_21
+#define PIXEL10_22   wt10 = W_22
+#define PIXEL10_60   wt10 = W_60
+#define PIXEL10_61   wt10 = W_61
+#define PIXEL10_70   wt10 = W_70
+#define PIXEL10_90   wt10 = W_90
+#define PIXEL10_100  wt10 = W_100
 
-#define PIXEL10_0    r10 = R_0
-#define PIXEL10_10   r10 = R_10
-#define PIXEL10_11   r10 = R_11
-#define PIXEL10_12   r10 = R_12
-#define PIXEL10_20   r10 = R_20
-#define PIXEL10_21   r10 = R_21
-#define PIXEL10_22   r10 = R_22
-#define PIXEL10_60   r10 = R_60
-#define PIXEL10_61   r10 = R_61
-#define PIXEL10_70   r10 = R_70
-#define PIXEL10_90   r10 = R_90
-#define PIXEL10_100  r10 = R_100
-
-#define PIXEL11_0    r11 = R_0
-#define PIXEL11_10   r11 = R_10
-#define PIXEL11_11   r11 = R_11
-#define PIXEL11_12   r11 = R_12
-#define PIXEL11_20   r11 = R_20
-#define PIXEL11_21   r11 = R_21
-#define PIXEL11_22   r11 = R_22
-#define PIXEL11_60   r11 = R_60
-#define PIXEL11_61   r11 = R_61
-#define PIXEL11_70   r11 = R_70
-#define PIXEL11_90   r11 = R_90
-#define PIXEL11_100  r11 = R_100
+#define PIXEL11_0    wt11 = W_0
+#define PIXEL11_10   wt11 = W_10
+#define PIXEL11_11   wt11 = W_11
+#define PIXEL11_12   wt11 = W_12
+#define PIXEL11_20   wt11 = W_20
+#define PIXEL11_21   wt11 = W_21
+#define PIXEL11_22   wt11 = W_22
+#define PIXEL11_60   wt11 = W_60
+#define PIXEL11_61   wt11 = W_61
+#define PIXEL11_70   wt11 = W_70
+#define PIXEL11_90   wt11 = W_90
+#define PIXEL11_100  wt11 = W_100
 
 #define HQ2XCASES \
 case 0: case 1: case 4: case 32: case 128: case 5: case 132: case 160: case 33: case 129: case 36: case 133: case 164: case 161: case 37: case 165: PIXEL00_20; PIXEL01_20; PIXEL10_20; PIXEL11_20; break; \
@@ -457,23 +417,17 @@ case 223: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL0
 case 247: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
 case 255: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break;
 
-// Centralized execution router. Mathematical generation occurs strictly here.
-static inline uint16_t ApplyRule(uint32_t rule, uint16_t c, uint16_t crn, uint16_t s1, uint16_t s2) {
-    switch(rule) {
-        case R_0:   return c;
-        case R_10:  return Interp01(c, crn);
-        case R_11:  return Interp01(c, s1);
-        case R_12:  return Interp01(c, s2);
-        case R_20:  return Interp02(c, s1, s2);
-        case R_21:  return Interp02(c, crn, s2);
-        case R_22:  return Interp02(c, crn, s1);
-        case R_60:  return Interp06(c, s2, s1);
-        case R_61:  return Interp06(c, s1, s2);
-        case R_70:  return Interp07(c, s1, s2);
-        case R_90:  return Interp09(c, s1, s2);
-        case R_100: return Interp10(c, s1, s2);
-        default:    return c;
-    }
+// The single, centralized math engine. Executed 4 times per pixel. No branches.
+static inline uint16_t UniversalBlend(uint16_t c, uint32_t u_c, uint32_t u_crn, uint32_t u_s1, uint32_t u_s2, uint32_t wt) {
+    if (wt == W_0) return c; // Fast return for flat colors
+
+    uint32_t shift = wt >> 16;
+    uint32_t wc    = (wt >> 12) & 0xF;
+    uint32_t wcrn  = (wt >> 8) & 0xF;
+    uint32_t ws1   = (wt >> 4) & 0xF;
+    uint32_t ws2   = wt & 0xF;
+
+    return Pack565((u_c * wc + u_crn * wcrn + u_s1 * ws1 + u_s2 * ws2) >> shift);
 }
 
 // -------------------------------------------------------------------------
@@ -490,8 +444,9 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	uint16_t *dp = (uint16_t *) dstPtr;
 
 	int w1, w2, w3, w4, w5, w6, w7, w8, w9;
+	uint32_t u1, u2, u3, u4, u5, u6, u7, u8, u9;
 	uint32_t pattern;
-	uint32_t r00, r01, r10, r11; // Rule IDs
+	uint32_t wt00, wt01, wt10, wt11;
 
 	// ---------------------------------------------------------
 	// FILTER: HQ2X (Standard YUV Differencing)
@@ -501,12 +456,14 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		while (height--) {
 			sp--;
 			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
+			u1 = Unpack565(w1); u4 = Unpack565(w4); u7 = Unpack565(w7);
 			uint32_t y1 = inlineRGBtoYUV(w1);
 			uint32_t y4 = inlineRGBtoYUV(w4);
 			uint32_t y7 = inlineRGBtoYUV(w7);
 
 			sp++;
 			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
+			u2 = Unpack565(w2); u5 = Unpack565(w5); u8 = Unpack565(w8);
 			uint32_t y2 = inlineRGBtoYUV(w2);
 			uint32_t y5 = inlineRGBtoYUV(w5);
 			uint32_t y8 = inlineRGBtoYUV(w8);
@@ -517,6 +474,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint32_t y3 = inlineRGBtoYUV(w3);
 				uint32_t y6 = inlineRGBtoYUV(w6);
 				uint32_t y9 = inlineRGBtoYUV(w9);
@@ -532,15 +490,13 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
 
 				switch (pattern) { HQ2XCASES }
-				*(dp)                = ApplyRule(r00, w5, w1, w4, w2);
-				*(dp + 1)            = ApplyRule(r01, w5, w3, w2, w6);
-				*(dp + dst1line)     = ApplyRule(r10, w5, w7, w8, w4);
-				*(dp + dst1line + 1) = ApplyRule(r11, w5, w9, w6, w8);
+				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
+				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
+				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
+				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
 
-				w1 = w2; w4 = w5; w7 = w8;
-				w2 = w3; w5 = w6; w8 = w9;
-				y1 = y2; y4 = y5; y7 = y8;
-				y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
+				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
 				dp += 2; w--;
 			}
 
@@ -562,6 +518,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				for(int i = 0; i < 8; i++) {
 					sp++;
 					w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+					u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 					uint32_t y3 = inlineRGBtoYUV(w3);
 					uint32_t y6 = inlineRGBtoYUV(w6);
 					uint32_t y9 = inlineRGBtoYUV(w9);
@@ -577,15 +534,13 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 					if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
 
 					switch (pattern) { HQ2XCASES }
-					*(dp)                = ApplyRule(r00, w5, w1, w4, w2);
-					*(dp + 1)            = ApplyRule(r01, w5, w3, w2, w6);
-					*(dp + dst1line)     = ApplyRule(r10, w5, w7, w8, w4);
-					*(dp + dst1line + 1) = ApplyRule(r11, w5, w9, w6, w8);
+					*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
+					*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
+					*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
+					*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
 
-					w1 = w2; w4 = w5; w7 = w8;
-					w2 = w3; w5 = w6; w8 = w9;
-					y1 = y2; y4 = y5; y7 = y8;
-					y2 = y3; y5 = y6; y8 = y9;
+					w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
+					w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
 					dp += 2;
 				}
 			}
@@ -594,6 +549,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			while (tail--) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint32_t y3 = inlineRGBtoYUV(w3);
 				uint32_t y6 = inlineRGBtoYUV(w6);
 				uint32_t y9 = inlineRGBtoYUV(w9);
@@ -609,15 +565,13 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
 
 				switch (pattern) { HQ2XCASES }
-				*(dp)                = ApplyRule(r00, w5, w1, w4, w2);
-				*(dp + 1)            = ApplyRule(r01, w5, w3, w2, w6);
-				*(dp + dst1line)     = ApplyRule(r10, w5, w7, w8, w4);
-				*(dp + dst1line + 1) = ApplyRule(r11, w5, w9, w6, w8);
+				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
+				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
+				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
+				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
 
-				w1 = w2; w4 = w5; w7 = w8;
-				w2 = w3; w5 = w6; w8 = w9;
-				y1 = y2; y4 = y5; y7 = y8;
-				y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
+				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
 				dp += 2;
 			}
 			dp += ((dst1line - width) << 1);
@@ -632,11 +586,14 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		while (height--) {
 			sp--;
 			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
+			u1 = Unpack565(w1); u4 = Unpack565(w4); u7 = Unpack565(w7);
 			uint16_t b1 = inlineRGBtoBright(w1);
 			uint16_t b4 = inlineRGBtoBright(w4);
 			uint16_t b7 = inlineRGBtoBright(w7);
+
 			sp++;
 			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
+			u2 = Unpack565(w2); u5 = Unpack565(w5); u8 = Unpack565(w8);
 			uint16_t b2 = inlineRGBtoBright(w2);
 			uint16_t b5 = inlineRGBtoBright(w5);
 			uint16_t b8 = inlineRGBtoBright(w8);
@@ -647,6 +604,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint16_t b3 = inlineRGBtoBright(w3);
 				uint16_t b6 = inlineRGBtoBright(w6);
 				uint16_t b9 = inlineRGBtoBright(w9);
@@ -671,15 +629,13 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				uint32_t y8 = inlineRGBtoYUV(w8);
 
 				switch (pattern) { HQ2XCASES }
-				*(dp)                = ApplyRule(r00, w5, w1, w4, w2);
-				*(dp + 1)            = ApplyRule(r01, w5, w3, w2, w6);
-				*(dp + dst1line)     = ApplyRule(r10, w5, w7, w8, w4);
-				*(dp + dst1line + 1) = ApplyRule(r11, w5, w9, w6, w8);
+				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
+				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
+				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
+				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
 
-				w1 = w2; w4 = w5; w7 = w8;
-				w2 = w3; w5 = w6; w8 = w9;
-				b1 = b2; b4 = b5; b7 = b8;
-				b2 = b3; b5 = b6; b8 = b9;
+				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; b1 = b2; b4 = b5; b7 = b8;
+				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; b2 = b3; b5 = b6; b8 = b9;
 				dp += 2; w--;
 			}
 
@@ -698,6 +654,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				for(int i = 0; i < 8; i++) {
 					sp++;
 					w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+					u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 					uint16_t b3 = inlineRGBtoBright(w3);
 					uint16_t b6 = inlineRGBtoBright(w6);
 					uint16_t b9 = inlineRGBtoBright(w9);
@@ -721,15 +678,13 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 					uint32_t y8 = inlineRGBtoYUV(w8);
 
 					switch (pattern) { HQ2XCASES }
-					*(dp)                = ApplyRule(r00, w5, w1, w4, w2);
-					*(dp + 1)            = ApplyRule(r01, w5, w3, w2, w6);
-					*(dp + dst1line)     = ApplyRule(r10, w5, w7, w8, w4);
-					*(dp + dst1line + 1) = ApplyRule(r11, w5, w9, w6, w8);
+					*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
+					*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
+					*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
+					*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
 
-					w1 = w2; w4 = w5; w7 = w8;
-					w2 = w3; w5 = w6; w8 = w9;
-					b1 = b2; b4 = b5; b7 = b8;
-					b2 = b3; b5 = b6; b8 = b9;
+					w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; b1 = b2; b4 = b5; b7 = b8;
+					w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; b2 = b3; b5 = b6; b8 = b9;
 					dp += 2;
 				}
 			}
@@ -738,6 +693,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			while (tail--) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint16_t b3 = inlineRGBtoBright(w3);
 				uint16_t b6 = inlineRGBtoBright(w6);
 				uint16_t b9 = inlineRGBtoBright(w9);
@@ -761,15 +717,13 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				uint32_t y8 = inlineRGBtoYUV(w8);
 
 				switch (pattern) { HQ2XCASES }
-				*(dp)                = ApplyRule(r00, w5, w1, w4, w2);
-				*(dp + 1)            = ApplyRule(r01, w5, w3, w2, w6);
-				*(dp + dst1line)     = ApplyRule(r10, w5, w7, w8, w4);
-				*(dp + dst1line + 1) = ApplyRule(r11, w5, w9, w6, w8);
+				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
+				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
+				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
+				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
 
-				w1 = w2; w4 = w5; w7 = w8;
-				w2 = w3; w5 = w6; w8 = w9;
-				b1 = b2; b4 = b5; b7 = b8;
-				b2 = b3; b5 = b6; b8 = b9;
+				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; b1 = b2; b4 = b5; b7 = b8;
+				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; b2 = b3; b5 = b6; b8 = b9;
 				dp += 2;
 			}
 			dp += ((dst1line - width) << 1);
@@ -784,22 +738,24 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		while (height--) {
 			sp--;
 			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
+			u1 = Unpack565(w1); u4 = Unpack565(w4); u7 = Unpack565(w7);
 			uint32_t y1 = inlineRGBtoYUV(w1);
 			uint32_t y4 = inlineRGBtoYUV(w4);
 			uint32_t y7 = inlineRGBtoYUV(w7);
 
 			sp++;
 			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
+			u2 = Unpack565(w2); u5 = Unpack565(w5); u8 = Unpack565(w8);
 			uint32_t y2 = inlineRGBtoYUV(w2);
 			uint32_t y5 = inlineRGBtoYUV(w5);
 			uint32_t y8 = inlineRGBtoYUV(w8);
 
 			int w = width;
 
-			// Phase 1: Unaligned leading pixels
 			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint32_t y3 = inlineRGBtoYUV(w3);
 				uint32_t y6 = inlineRGBtoYUV(w6);
 				uint32_t y9 = inlineRGBtoYUV(w9);
@@ -833,15 +789,13 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				}
 
 				switch (pattern) { HQ2XCASES }
-				*(dp)                = ApplyRule(r00, w5, w1, w4, w2);
-				*(dp + 1)            = ApplyRule(r01, w5, w3, w2, w6);
-				*(dp + dst1line)     = ApplyRule(r10, w5, w7, w8, w4);
-				*(dp + dst1line + 1) = ApplyRule(r11, w5, w9, w6, w8);
+				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
+				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
+				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
+				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
 
-				w1 = w2; w4 = w5; w7 = w8;
-				w2 = w3; w5 = w6; w8 = w9;
-				y1 = y2; y4 = y5; y7 = y8;
-				y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
+				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
 				dp += 2; w--;
 			}
 
@@ -860,6 +814,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				for(int i = 0; i < 8; i++) {
 					sp++;
 					w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+					u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 					uint32_t y3 = inlineRGBtoYUV(w3);
 					uint32_t y6 = inlineRGBtoYUV(w6);
 					uint32_t y9 = inlineRGBtoYUV(w9);
@@ -893,15 +848,13 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 					}
 
 					switch (pattern) { HQ2XCASES }
-					*(dp)                = ApplyRule(r00, w5, w1, w4, w2);
-					*(dp + 1)            = ApplyRule(r01, w5, w3, w2, w6);
-					*(dp + dst1line)     = ApplyRule(r10, w5, w7, w8, w4);
-					*(dp + dst1line + 1) = ApplyRule(r11, w5, w9, w6, w8);
+					*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
+					*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
+					*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
+					*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
 
-					w1 = w2; w4 = w5; w7 = w8;
-					w2 = w3; w5 = w6; w8 = w9;
-					y1 = y2; y4 = y5; y7 = y8;
-					y2 = y3; y5 = y6; y8 = y9;
+					w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
+					w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
 					dp += 2;
 				}
 			}
@@ -910,6 +863,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			while (tail--) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
+				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint32_t y3 = inlineRGBtoYUV(w3);
 				uint32_t y6 = inlineRGBtoYUV(w6);
 				uint32_t y9 = inlineRGBtoYUV(w9);
@@ -943,15 +897,13 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				}
 
 				switch (pattern) { HQ2XCASES }
-				*(dp)                = ApplyRule(r00, w5, w1, w4, w2);
-				*(dp + 1)            = ApplyRule(r01, w5, w3, w2, w6);
-				*(dp + dst1line)     = ApplyRule(r10, w5, w7, w8, w4);
-				*(dp + dst1line + 1) = ApplyRule(r11, w5, w9, w6, w8);
+				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
+				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
+				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
+				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
 
-				w1 = w2; w4 = w5; w7 = w8;
-				w2 = w3; w5 = w6; w8 = w9;
-				y1 = y2; y4 = y5; y7 = y8;
-				y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
+				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
 				dp += 2;
 			}
 			dp += ((dst1line - width) << 1);
