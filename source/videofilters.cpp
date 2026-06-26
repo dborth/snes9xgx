@@ -22,8 +22,27 @@ static RenderFilter renderFilter = FILTER_NONE;
 TFilterMethod FilterMethod;
 
 // -------------------------------------------------------------------------
-// HQ2X Lookup Tables
+// HQ2X Symmetry Maps & Lookup Tables
 // -------------------------------------------------------------------------
+static uint8_t rotateTable[256];
+static const uint8_t hqTable[256] = {
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 15, 12, 5,  3, 17, 13,
+	4, 4, 6, 18, 4, 4, 6, 18, 5,  3, 12, 12, 5,  3,  1, 12,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 17, 13, 5,  3, 16, 14,
+	4, 4, 6, 18, 4, 4, 6, 18, 5,  3, 16, 12, 5,  3,  1, 14,
+	4, 4, 6,  2, 4, 4, 6,  2, 5, 19, 12, 12, 5, 19, 16, 12,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3, 16, 12,
+	4, 4, 6,  2, 4, 4, 6,  2, 5, 19,  1, 12, 5, 19,  1, 14,
+	4, 4, 6,  2, 4, 4, 6, 18, 5,  3, 16, 12, 5, 19,  1, 14,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 15, 12, 5,  3, 17, 13,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3, 16, 12,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 17, 13, 5,  3, 16, 14,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 13, 5,  3,  1, 14,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3, 16, 13,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3,  1, 12,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3,  1, 14,
+	4, 4, 6,  2, 4, 4, 6,  2, 5,  3,  1, 12, 5,  3,  1, 14
+};
 
 static int32_t y_r_lut[32], y_g_lut[64], y_b_lut[32];
 static int32_t u_r_lut[32], u_g_lut[64], u_b_lut[32];
@@ -90,6 +109,13 @@ int GetFilterScale()
 
 static void InitHQ2X() {
 	if (hq2x_initialized) return;
+
+	for(unsigned n = 0; n < 256; n++) {
+		rotateTable[n] = ((n >> 2) & 0x11) | ((n << 2) & 0x88) |
+						 ((n & 0x01) << 5) | ((n & 0x08) << 3) |
+						 ((n & 0x10) >> 3) | ((n & 0x80) >> 5);
+	}
+
 	for (int i = 0; i < 32; i++) {
 		int32_t r = i << 3; int32_t b = i << 3;
 		y_r_lut[i] = 16829 * r; u_r_lut[i] = -9714 * r; v_r_lut[i] = 28784 * r;
@@ -180,255 +206,89 @@ static inline bool Diff(uint32_t c1, uint32_t c2) {
     uint32_t dy = __builtin_abs((int)(c1 >> 16) - (int)(c2 >> 16));
     uint32_t du = __builtin_abs((int)((c1 >> 8) & 0xFF) - (int)((c2 >> 8) & 0xFF));
     uint32_t dv = __builtin_abs((int)(c1 & 0xFF) - (int)(c2 & 0xFF));
-
+    
     // Bitwise OR forces straight-line evaluation, eliminating branch prediction penalties
     return (dy > 48) | (du > 7) | (dv > 6);
 }
 
-// -------------------------------------------------------------------------
-// Arithmetic Multiplexer Weights
-// Format: (Shift << 16) | (W_Center << 12) | (W_Corner << 8) | (W_Side1 << 4) | (W_Side2)
-// -------------------------------------------------------------------------
-#define W_0   0x00000 // c
-#define W_10  0x23100 // (3c + crn) >> 2
-#define W_11  0x23010 // (3c + s1) >> 2
-#define W_12  0x23001 // (3c + s2) >> 2
-#define W_20  0x22011 // (2c + s1 + s2) >> 2
-#define W_21  0x22101 // (2c + crn + s2) >> 2
-#define W_22  0x22110 // (2c + crn + s1) >> 2
-#define W_60  0x35012 // (5c + s1 + 2s2) >> 3
-#define W_61  0x35021 // (5c + 2s1 + s2) >> 3
-#define W_70  0x36011 // (6c + s1 + s2) >> 3
-#define W_90  0x32033 // (2c + 3s1 + 3s2) >> 3
-#define W_100 0x4E011 // (14c + s1 + s2) >> 4  (0xE = 14)
 
-#define PIXEL00_0    wt00 = W_0
-#define PIXEL00_10   wt00 = W_10
-#define PIXEL00_11   wt00 = W_11
-#define PIXEL00_12   wt00 = W_12
-#define PIXEL00_20   wt00 = W_20
-#define PIXEL00_21   wt00 = W_21
-#define PIXEL00_22   wt00 = W_22
-#define PIXEL00_60   wt00 = W_60
-#define PIXEL00_61   wt00 = W_61
-#define PIXEL00_70   wt00 = W_70
-#define PIXEL00_90   wt00 = W_90
-#define PIXEL00_100  wt00 = W_100
-
-#define PIXEL01_0    wt01 = W_0
-#define PIXEL01_10   wt01 = W_10
-#define PIXEL01_11   wt01 = W_11
-#define PIXEL01_12   wt01 = W_12
-#define PIXEL01_20   wt01 = W_20
-#define PIXEL01_21   wt01 = W_21
-#define PIXEL01_22   wt01 = W_22
-#define PIXEL01_60   wt01 = W_60
-#define PIXEL01_61   wt01 = W_61
-#define PIXEL01_70   wt01 = W_70
-#define PIXEL01_90   wt01 = W_90
-#define PIXEL01_100  wt01 = W_100
-
-#define PIXEL10_0    wt10 = W_0
-#define PIXEL10_10   wt10 = W_10
-#define PIXEL10_11   wt10 = W_11
-#define PIXEL10_12   wt10 = W_12
-#define PIXEL10_20   wt10 = W_20
-#define PIXEL10_21   wt10 = W_21
-#define PIXEL10_22   wt10 = W_22
-#define PIXEL10_60   wt10 = W_60
-#define PIXEL10_61   wt10 = W_61
-#define PIXEL10_70   wt10 = W_70
-#define PIXEL10_90   wt10 = W_90
-#define PIXEL10_100  wt10 = W_100
-
-#define PIXEL11_0    wt11 = W_0
-#define PIXEL11_10   wt11 = W_10
-#define PIXEL11_11   wt11 = W_11
-#define PIXEL11_12   wt11 = W_12
-#define PIXEL11_20   wt11 = W_20
-#define PIXEL11_21   wt11 = W_21
-#define PIXEL11_22   wt11 = W_22
-#define PIXEL11_60   wt11 = W_60
-#define PIXEL11_61   wt11 = W_61
-#define PIXEL11_70   wt11 = W_70
-#define PIXEL11_90   wt11 = W_90
-#define PIXEL11_100  wt11 = W_100
-
-#define HQ2XCASES \
-case 0: case 1: case 4: case 32: case 128: case 5: case 132: case 160: case 33: case 129: case 36: case 133: case 164: case 161: case 37: case 165: PIXEL00_20; PIXEL01_20; PIXEL10_20; PIXEL11_20; break; \
-case 2: case 34: case 130: case 162: PIXEL00_22; PIXEL01_21; PIXEL10_20; PIXEL11_20; break; \
-case 16: case 17: case 48: case 49: PIXEL00_20; PIXEL01_22; PIXEL10_20; PIXEL11_21; break; \
-case 64: case 65: case 68: case 69: PIXEL00_20; PIXEL01_20; PIXEL10_21; PIXEL11_22; break; \
-case 8: case 12: case 136: case 140: PIXEL00_21; PIXEL01_20; PIXEL10_22; PIXEL11_20; break; \
-case 3: case 35: case 131: case 163: PIXEL00_11; PIXEL01_21; PIXEL10_20; PIXEL11_20; break; \
-case 6: case 38: case 134: case 166: PIXEL00_22; PIXEL01_12; PIXEL10_20; PIXEL11_20; break; \
-case 20: case 21: case 52: case 53: PIXEL00_20; PIXEL01_11; PIXEL10_20; PIXEL11_21; break; \
-case 144: case 145: case 176: case 177: PIXEL00_20; PIXEL01_22; PIXEL10_20; PIXEL11_12; break; \
-case 192: case 193: case 196: case 197: PIXEL00_20; PIXEL01_20; PIXEL10_21; PIXEL11_11; break; \
-case 96: case 97: case 100: case 101: PIXEL00_20; PIXEL01_20; PIXEL10_12; PIXEL11_22; break; \
-case 40: case 44: case 168: case 172: PIXEL00_21; PIXEL01_20; PIXEL10_11; PIXEL11_20; break; \
-case 9: case 13: case 137: case 141: PIXEL00_12; PIXEL01_20; PIXEL10_22; PIXEL11_20; break; \
-case 18: case 50: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_20; PIXEL10_20; PIXEL11_21; break; \
-case 80: case 81: PIXEL00_20; PIXEL01_22; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_20; break; \
-case 72: case 76: PIXEL00_21; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_20; PIXEL11_22; break; \
-case 10: case 138: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_20; PIXEL01_21; PIXEL10_22; PIXEL11_20; break; \
-case 66: PIXEL00_22; PIXEL01_21; PIXEL10_21; PIXEL11_22; break; \
-case 24: PIXEL00_21; PIXEL01_22; PIXEL10_22; PIXEL11_21; break; \
-case 7: case 39: case 135: PIXEL00_11; PIXEL01_12; PIXEL10_20; PIXEL11_20; break; \
-case 148: case 149: case 180: PIXEL00_20; PIXEL01_11; PIXEL10_20; PIXEL11_12; break; \
-case 224: case 228: case 225: PIXEL00_20; PIXEL01_20; PIXEL10_12; PIXEL11_11; break; \
-case 41: case 169: case 45: PIXEL00_12; PIXEL01_20; PIXEL10_11; PIXEL11_20; break; \
-case 22: case 54: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_20; PIXEL11_21; break; \
-case 208: case 209: PIXEL00_20; PIXEL01_22; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 104: case 108: PIXEL00_21; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 11: case 139: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_21; PIXEL10_22; PIXEL11_20; break; \
-case 19: case 51: if (Diff(y2, y6)) PIXEL00_11, PIXEL01_10; else PIXEL00_60, PIXEL01_90; PIXEL10_20; PIXEL11_21; break; \
-case 146: case 178: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_10, PIXEL11_12; else PIXEL01_90, PIXEL11_61; PIXEL10_20; break; \
-case 84: case 85: PIXEL00_20; if (Diff(y6, y8)) PIXEL01_11, PIXEL11_10; else PIXEL01_60, PIXEL11_90; PIXEL10_21; break; \
-case 112: case 113: PIXEL00_20; PIXEL01_22; if (Diff(y6, y8)) PIXEL10_12, PIXEL11_10; else PIXEL10_61, PIXEL11_90; break; \
-case 200: case 204: PIXEL00_21; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_10, PIXEL11_11; else PIXEL10_90, PIXEL11_60; break; \
-case 73: case 77: if (Diff(y8, y4)) PIXEL00_12, PIXEL10_10; else PIXEL00_61, PIXEL10_90; PIXEL01_20; PIXEL11_22; break; \
-case 42: case 170: if (Diff(y4, y2)) PIXEL00_10, PIXEL10_11; else PIXEL00_90, PIXEL10_60; PIXEL01_21; PIXEL11_20; break; \
-case 14: case 142: if (Diff(y4, y2)) PIXEL00_10, PIXEL01_12; else PIXEL00_90, PIXEL01_61; PIXEL10_22; PIXEL11_20; break; \
-case 67: PIXEL00_11; PIXEL01_21; PIXEL10_21; PIXEL11_22; break; \
-case 70: PIXEL00_22; PIXEL01_12; PIXEL10_21; PIXEL11_22; break; \
-case 28: PIXEL00_21; PIXEL01_11; PIXEL10_22; PIXEL11_21; break; \
-case 152: PIXEL00_21; PIXEL01_22; PIXEL10_22; PIXEL11_12; break; \
-case 194: PIXEL00_22; PIXEL01_21; PIXEL10_21; PIXEL11_11; break; \
-case 98: PIXEL00_22; PIXEL01_21; PIXEL10_12; PIXEL11_22; break; \
-case 56: PIXEL00_21; PIXEL01_22; PIXEL10_11; PIXEL11_21; break; \
-case 25: PIXEL00_12; PIXEL01_22; PIXEL10_22; PIXEL11_21; break; \
-case 26: case 31: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_22; PIXEL11_21; break; \
-case 82: case 214: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 88: case 248: PIXEL00_21; PIXEL01_22; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 74: case 107: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_21; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 27: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_10; PIXEL10_22; PIXEL11_21; break; \
-case 86: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_21; PIXEL11_10; break; \
-case 216: PIXEL00_21; PIXEL01_22; PIXEL10_10; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 106: PIXEL00_10; PIXEL01_21; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 30: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_22; PIXEL11_21; break; \
-case 210: PIXEL00_22; PIXEL01_10; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 120: PIXEL00_21; PIXEL01_22; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 75: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_21; PIXEL10_10; PIXEL11_22; break; \
-case 29: PIXEL00_12; PIXEL01_11; PIXEL10_22; PIXEL11_21; break; \
-case 198: PIXEL00_22; PIXEL01_12; PIXEL10_21; PIXEL11_11; break; \
-case 184: PIXEL00_21; PIXEL01_22; PIXEL10_11; PIXEL11_12; break; \
-case 99: PIXEL00_11; PIXEL01_21; PIXEL10_12; PIXEL11_22; break; \
-case 57: PIXEL00_12; PIXEL01_22; PIXEL10_11; PIXEL11_21; break; \
-case 71: PIXEL00_11; PIXEL01_12; PIXEL10_21; PIXEL11_22; break; \
-case 156: PIXEL00_21; PIXEL01_11; PIXEL10_22; PIXEL11_12; break; \
-case 226: PIXEL00_22; PIXEL01_21; PIXEL10_12; PIXEL11_11; break; \
-case 60: PIXEL00_21; PIXEL01_11; PIXEL10_11; PIXEL11_21; break; \
-case 195: PIXEL00_11; PIXEL01_21; PIXEL10_21; PIXEL11_11; break; \
-case 102: PIXEL00_22; PIXEL01_12; PIXEL10_12; PIXEL11_22; break; \
-case 153: PIXEL00_12; PIXEL01_22; PIXEL10_22; PIXEL11_12; break; \
-case 58: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_11; PIXEL11_21; break; \
-case 83: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 92: PIXEL00_21; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 202: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; PIXEL01_21; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; PIXEL11_11; break; \
-case 78: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; PIXEL11_22; break; \
-case 154: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_22; PIXEL11_12; break; \
-case 114: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 89: PIXEL00_12; PIXEL01_22; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 90: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 55: case 23: if (Diff(y2, y6)) PIXEL00_11, PIXEL01_0; else PIXEL00_60, PIXEL01_90; PIXEL10_20; PIXEL11_21; break; \
-case 182: case 150: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0, PIXEL11_12; else PIXEL01_90, PIXEL11_61; PIXEL10_20; break; \
-case 213: case 212: PIXEL00_20; if (Diff(y6, y8)) PIXEL01_11, PIXEL11_0; else PIXEL01_60, PIXEL11_90; PIXEL10_21; break; \
-case 241: case 240: PIXEL00_20; PIXEL01_22; if (Diff(y6, y8)) PIXEL10_12, PIXEL11_0; else PIXEL10_61, PIXEL11_90; break; \
-case 236: case 232: PIXEL00_21; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0, PIXEL11_11; else PIXEL10_90, PIXEL11_60; break; \
-case 109: case 105: if (Diff(y8, y4)) PIXEL00_12, PIXEL10_0; else PIXEL00_61, PIXEL10_90; PIXEL01_20; PIXEL11_22; break; \
-case 171: case 43: if (Diff(y4, y2)) PIXEL00_0, PIXEL10_11; else PIXEL00_90, PIXEL10_60; PIXEL01_21; PIXEL11_20; break; \
-case 143: case 15: if (Diff(y4, y2)) PIXEL00_0, PIXEL01_12; else PIXEL00_90, PIXEL01_61; PIXEL10_22; PIXEL11_20; break; \
-case 124: PIXEL00_21; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 203: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_21; PIXEL10_10; PIXEL11_11; break; \
-case 62: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_11; PIXEL11_21; break; \
-case 211: PIXEL00_11; PIXEL01_10; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 118: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_12; PIXEL11_10; break; \
-case 217: PIXEL00_12; PIXEL01_22; PIXEL10_10; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 110: PIXEL00_10; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 155: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_10; PIXEL10_22; PIXEL11_12; break; \
-case 188: PIXEL00_21; PIXEL01_11; PIXEL10_11; PIXEL11_12; break; \
-case 185: PIXEL00_12; PIXEL01_22; PIXEL10_11; PIXEL11_12; break; \
-case 61: PIXEL00_12; PIXEL01_11; PIXEL10_11; PIXEL11_21; break; \
-case 157: PIXEL00_12; PIXEL01_11; PIXEL10_22; PIXEL11_12; break; \
-case 103: PIXEL00_11; PIXEL01_12; PIXEL10_12; PIXEL11_22; break; \
-case 227: PIXEL00_11; PIXEL01_21; PIXEL10_12; PIXEL11_11; break; \
-case 230: PIXEL00_22; PIXEL01_12; PIXEL10_12; PIXEL11_11; break; \
-case 199: PIXEL00_11; PIXEL01_12; PIXEL10_21; PIXEL11_11; break; \
-case 220: PIXEL00_21; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 158: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_22; PIXEL11_12; break; \
-case 234: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; PIXEL01_21; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_11; break; \
-case 242: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 59: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_11; PIXEL11_21; break; \
-case 121: PIXEL00_12; PIXEL01_22; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 87: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 79: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; PIXEL11_22; break; \
-case 122: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 94: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 218: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 91: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 229: PIXEL00_20; PIXEL01_20; PIXEL10_12; PIXEL11_11; break; \
-case 167: PIXEL00_11; PIXEL01_12; PIXEL10_20; PIXEL11_20; break; \
-case 173: PIXEL00_12; PIXEL01_20; PIXEL10_11; PIXEL11_20; break; \
-case 181: PIXEL00_20; PIXEL01_11; PIXEL10_20; PIXEL11_12; break; \
-case 186: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_11; PIXEL11_12; break; \
-case 115: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 93: PIXEL00_12; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 206: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; PIXEL11_11; break; \
-case 205: case 201: PIXEL00_12; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_10; else PIXEL10_70; PIXEL11_11; break; \
-case 174: case 46: if (Diff(y4, y2)) PIXEL00_10; else PIXEL00_70; PIXEL01_12; PIXEL10_11; PIXEL11_20; break; \
-case 179: case 147: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_10; else PIXEL01_70; PIXEL10_20; PIXEL11_12; break; \
-case 117: case 116: PIXEL00_20; PIXEL01_11; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_10; else PIXEL11_70; break; \
-case 189: PIXEL00_12; PIXEL01_11; PIXEL10_11; PIXEL11_12; break; \
-case 231: PIXEL00_11; PIXEL01_12; PIXEL10_12; PIXEL11_11; break; \
-case 126: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 219: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_10; PIXEL10_10; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 125: if (Diff(y8, y4)) PIXEL00_12, PIXEL10_0; else PIXEL00_61, PIXEL10_90; PIXEL01_11; PIXEL11_10; break; \
-case 221: PIXEL00_12; if (Diff(y6, y8)) PIXEL01_11, PIXEL11_0; else PIXEL01_60, PIXEL11_90; PIXEL10_10; break; \
-case 207: if (Diff(y4, y2)) PIXEL00_0, PIXEL01_12; else PIXEL00_90, PIXEL01_61; PIXEL10_10; PIXEL11_11; break; \
-case 238: PIXEL00_10; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_0, PIXEL11_11; else PIXEL10_90, PIXEL11_60; break; \
-case 190: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0, PIXEL11_12; else PIXEL01_90, PIXEL11_61; PIXEL10_11; break; \
-case 187: if (Diff(y4, y2)) PIXEL00_0, PIXEL10_11; else PIXEL00_90, PIXEL10_60; PIXEL01_10; PIXEL11_12; break; \
-case 243: PIXEL00_11; PIXEL01_10; if (Diff(y6, y8)) PIXEL10_12, PIXEL11_0; else PIXEL10_61, PIXEL11_90; break; \
-case 119: if (Diff(y2, y6)) PIXEL00_11, PIXEL01_0; else PIXEL00_60, PIXEL01_90; PIXEL10_12; PIXEL11_10; break; \
-case 237: case 233: PIXEL00_12; PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; PIXEL11_11; break; \
-case 175: case 47: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; PIXEL01_12; PIXEL10_11; PIXEL11_20; break; \
-case 183: case 151: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_20; PIXEL11_12; break; \
-case 245: case 244: PIXEL00_20; PIXEL01_11; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 250: PIXEL00_10; PIXEL01_10; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 123: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_10; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 95: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_10; PIXEL11_10; break; \
-case 222: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_10; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 252: PIXEL00_21; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 249: PIXEL00_12; PIXEL01_22; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 235: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_21; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; PIXEL11_11; break; \
-case 111: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_22; break; \
-case 63: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_11; PIXEL11_21; break; \
-case 159: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_22; PIXEL11_12; break; \
-case 215: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_21; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 246: PIXEL00_22; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 254: PIXEL00_10; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 253: PIXEL00_12; PIXEL01_11; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 251: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; PIXEL01_10; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 239: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; PIXEL01_12; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; PIXEL11_11; break; \
-case 127: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_20; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_20; PIXEL11_10; break; \
-case 191: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_11; PIXEL11_12; break; \
-case 223: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_20; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_10; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_20; break; \
-case 247: PIXEL00_11; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; PIXEL10_12; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break; \
-case 255: if (Diff(y4, y2)) PIXEL00_0; else PIXEL00_100; if (Diff(y2, y6)) PIXEL01_0; else PIXEL01_100; if (Diff(y8, y4)) PIXEL10_0; else PIXEL10_100; if (Diff(y6, y8)) PIXEL11_0; else PIXEL11_100; break;
-
-// The single, centralized math engine. Executed 4 times per pixel. No branches.
-static inline uint16_t UniversalBlend(uint16_t c, uint32_t u_c, uint32_t u_crn, uint32_t u_s1, uint32_t u_s2, uint32_t wt) {
-    if (wt == W_0) return c; // Fast return for flat colors
-
-    uint32_t shift = wt >> 16;
-    uint32_t wc    = (wt >> 12) & 0xF;
-    uint32_t wcrn  = (wt >> 8) & 0xF;
-    uint32_t ws1   = (wt >> 4) & 0xF;
-    uint32_t ws2   = wt & 0xF;
-
-    return Pack565((u_c * wc + u_crn * wcrn + u_s1 * ws1 + u_s2 * ws2) >> shift);
+static inline uint16_t Interp01(uint16_t c1, uint16_t c2) {
+    if (c1 == c2) return c1;
+    return Pack565((Unpack565(c1) * 3 + Unpack565(c2)) >> 2);
 }
+
+static inline uint16_t Interp02(uint16_t c1, uint16_t c2, uint16_t c3) {
+    return Pack565((Unpack565(c1) * 2 + Unpack565(c2) + Unpack565(c3)) >> 2);
+}
+
+static inline uint16_t Interp06(uint16_t c1, uint16_t c2, uint16_t c3) {
+    return Pack565((Unpack565(c1) * 5 + Unpack565(c2) * 2 + Unpack565(c3)) >> 3);
+}
+
+static inline uint16_t Interp07(uint16_t c1, uint16_t c2, uint16_t c3) {
+    return Pack565((Unpack565(c1) * 6 + Unpack565(c2) + Unpack565(c3)) >> 3);
+}
+
+static inline uint16_t Interp09(uint16_t c1, uint16_t c2, uint16_t c3) {
+    return Pack565((Unpack565(c1) * 2 + Unpack565(c2) * 3 + Unpack565(c3) * 3) >> 3);
+}
+
+static inline uint16_t Interp10(uint16_t c1, uint16_t c2, uint16_t c3) {
+    return Pack565((Unpack565(c1) * 14 + Unpack565(c2) + Unpack565(c3)) >> 4);
+}
+
+// -------------------------------------------------------------------------
+// Native Bitwise Select (Replaces missing 'isel' on PowerPC 750)
+// Uses a 32-bit mask generation to select results natively in ALU.
+// -------------------------------------------------------------------------
+static inline uint16_t BranchlessSelect(bool condition, uint16_t if_true, uint16_t if_false) {
+    uint32_t mask = -(uint32_t)condition; // Creates 0xFFFFFFFF if true, 0x00000000 if false
+    return (if_true & mask) | (if_false & ~mask);
+}
+
+// -------------------------------------------------------------------------
+// Interpolation Rule Router
+// -------------------------------------------------------------------------
+static inline uint16_t ApplyRule(uint8_t rule, uint16_t E, uint16_t A, uint16_t B, uint16_t D, uint16_t F, uint16_t H, bool diff_BD, bool diff_BF, bool diff_DH) {
+    switch(rule) {
+        case 0:  return E;
+        case 1:  return Interp01(E, A);
+        case 2:  return Interp01(E, D);
+        case 3:  return Interp01(E, B);
+        case 4:  return Interp02(E, D, B);
+        case 5:  return Interp02(E, A, B);
+        case 6:  return Interp02(E, A, D);
+        case 7:  return Interp06(E, B, D);
+        case 8:  return Interp06(E, D, B);
+        case 9:  return Interp07(E, D, B);
+        case 10: return Interp09(E, D, B);
+        case 11: return Interp10(E, D, B);
+
+		// Branchless masking logic for corner evaluation
+        case 12: return BranchlessSelect(diff_BD, E, Interp02(E, D, B));
+        case 13: return BranchlessSelect(diff_BD, E, Interp09(E, D, B));
+        case 14: return BranchlessSelect(diff_BD, E, Interp10(E, D, B));
+        case 15: return BranchlessSelect(diff_BD, Interp01(E, A), Interp02(E, D, B));
+        case 16: return BranchlessSelect(diff_BD, Interp01(E, A), Interp07(E, D, B));
+        case 17: return BranchlessSelect(diff_BD, Interp01(E, A), Interp09(E, D, B));
+        case 18: return BranchlessSelect(diff_BF, Interp01(E, D), Interp06(E, B, D));
+        case 19: return BranchlessSelect(diff_DH, Interp01(E, B), Interp06(E, D, B));
+        default: return E;
+    }
+}
+
+// Rotates inputs and applies the current pattern rule
+#define EVALUATE_HQ2X_SUBPIXELS() do { \
+    bool d24 = Diff(y2, y4); \
+    bool d26 = Diff(y2, y6); \
+    bool d48 = Diff(y4, y8); \
+    bool d68 = Diff(y6, y8); \
+    uint8_t pat = pattern; \
+    *(dp)                = ApplyRule(hqTable[pat], w5, w1, w2, w4, w6, w8, d24, d26, d48); pat = rotateTable[pat]; \
+    *(dp + 1)            = ApplyRule(hqTable[pat], w5, w3, w6, w2, w8, w4, d26, d68, d24); pat = rotateTable[pat]; \
+    *(dp + dst1line + 1) = ApplyRule(hqTable[pat], w5, w9, w8, w6, w4, w2, d68, d48, d26); pat = rotateTable[pat]; \
+    *(dp + dst1line)     = ApplyRule(hqTable[pat], w5, w7, w4, w8, w2, w6, d48, d24, d68); \
+} while(0)
 
 // -------------------------------------------------------------------------
 // Optimized HQ2X Render Loop
@@ -444,9 +304,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	uint16_t *dp = (uint16_t *) dstPtr;
 
 	int w1, w2, w3, w4, w5, w6, w7, w8, w9;
-	uint32_t u1, u2, u3, u4, u5, u6, u7, u8, u9;
 	uint32_t pattern;
-	uint32_t wt00, wt01, wt10, wt11;
 
 	// ---------------------------------------------------------
 	// FILTER: HQ2X (Standard YUV Differencing)
@@ -456,14 +314,12 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		while (height--) {
 			sp--;
 			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
-			u1 = Unpack565(w1); u4 = Unpack565(w4); u7 = Unpack565(w7);
 			uint32_t y1 = inlineRGBtoYUV(w1);
 			uint32_t y4 = inlineRGBtoYUV(w4);
 			uint32_t y7 = inlineRGBtoYUV(w7);
 
 			sp++;
 			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
-			u2 = Unpack565(w2); u5 = Unpack565(w5); u8 = Unpack565(w8);
 			uint32_t y2 = inlineRGBtoYUV(w2);
 			uint32_t y5 = inlineRGBtoYUV(w5);
 			uint32_t y8 = inlineRGBtoYUV(w8);
@@ -474,29 +330,24 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint32_t y3 = inlineRGBtoYUV(w3);
 				uint32_t y6 = inlineRGBtoYUV(w6);
 				uint32_t y9 = inlineRGBtoYUV(w9);
 
-				pattern = 0;
-				if (w1 != w5 && Diff(y1, y5)) pattern |= (1 << 0);
-				if (w2 != w5 && Diff(y2, y5)) pattern |= (1 << 1);
-				if (w3 != w5 && Diff(y3, y5)) pattern |= (1 << 2);
-				if (w4 != w5 && Diff(y4, y5)) pattern |= (1 << 3);
-				if (w6 != w5 && Diff(y6, y5)) pattern |= (1 << 4);
-				if (w7 != w5 && Diff(y7, y5)) pattern |= (1 << 5);
-				if (w8 != w5 && Diff(y8, y5)) pattern |= (1 << 6);
-				if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
+				// Branchless Pattern Generator
+				pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
+				pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
+				pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
+				pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
+				pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
+				pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
+				pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
+				pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
 
-				switch (pattern) { HQ2XCASES }
-				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
-				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
-				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
-				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
+				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
-				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
+				w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
 				dp += 2; w--;
 			}
 
@@ -518,29 +369,23 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				for(int i = 0; i < 8; i++) {
 					sp++;
 					w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-					u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 					uint32_t y3 = inlineRGBtoYUV(w3);
 					uint32_t y6 = inlineRGBtoYUV(w6);
 					uint32_t y9 = inlineRGBtoYUV(w9);
 
-					pattern = 0;
-					if (w1 != w5 && Diff(y1, y5)) pattern |= (1 << 0);
-					if (w2 != w5 && Diff(y2, y5)) pattern |= (1 << 1);
-					if (w3 != w5 && Diff(y3, y5)) pattern |= (1 << 2);
-					if (w4 != w5 && Diff(y4, y5)) pattern |= (1 << 3);
-					if (w6 != w5 && Diff(y6, y5)) pattern |= (1 << 4);
-					if (w7 != w5 && Diff(y7, y5)) pattern |= (1 << 5);
-					if (w8 != w5 && Diff(y8, y5)) pattern |= (1 << 6);
-					if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
+					pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
+					pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
+					pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
+					pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
+					pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
+					pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
+					pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
+					pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
 
-					switch (pattern) { HQ2XCASES }
-					*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
-					*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
-					*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
-					*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
+					EVALUATE_HQ2X_SUBPIXELS();
 
-					w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
-					w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
+					w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
+					w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
 					dp += 2;
 				}
 			}
@@ -549,29 +394,23 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			while (tail--) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint32_t y3 = inlineRGBtoYUV(w3);
 				uint32_t y6 = inlineRGBtoYUV(w6);
 				uint32_t y9 = inlineRGBtoYUV(w9);
 
-				pattern = 0;
-				if (w1 != w5 && Diff(y1, y5)) pattern |= (1 << 0);
-				if (w2 != w5 && Diff(y2, y5)) pattern |= (1 << 1);
-				if (w3 != w5 && Diff(y3, y5)) pattern |= (1 << 2);
-				if (w4 != w5 && Diff(y4, y5)) pattern |= (1 << 3);
-				if (w6 != w5 && Diff(y6, y5)) pattern |= (1 << 4);
-				if (w7 != w5 && Diff(y7, y5)) pattern |= (1 << 5);
-				if (w8 != w5 && Diff(y8, y5)) pattern |= (1 << 6);
-				if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
+				pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
+				pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
+				pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
+				pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
+				pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
+				pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
+				pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
+				pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
 
-				switch (pattern) { HQ2XCASES }
-				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
-				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
-				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
-				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
+				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
-				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
+				w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
 				dp += 2;
 			}
 			dp += ((dst1line - width) << 1);
@@ -586,14 +425,12 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		while (height--) {
 			sp--;
 			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
-			u1 = Unpack565(w1); u4 = Unpack565(w4); u7 = Unpack565(w7);
 			uint16_t b1 = inlineRGBtoBright(w1);
 			uint16_t b4 = inlineRGBtoBright(w4);
 			uint16_t b7 = inlineRGBtoBright(w7);
 
 			sp++;
 			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
-			u2 = Unpack565(w2); u5 = Unpack565(w5); u8 = Unpack565(w8);
 			uint16_t b2 = inlineRGBtoBright(w2);
 			uint16_t b5 = inlineRGBtoBright(w5);
 			uint16_t b8 = inlineRGBtoBright(w8);
@@ -604,38 +441,30 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint16_t b3 = inlineRGBtoBright(w3);
 				uint16_t b6 = inlineRGBtoBright(w6);
 				uint16_t b9 = inlineRGBtoBright(w9);
 
 				uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
 				bool diff5 = (b5 > avg);
-				pattern = 0;
 
-				if (w1 != w5 && (b1 > avg) != diff5) pattern |= (1 << 0);
-				if (w2 != w5 && (b2 > avg) != diff5) pattern |= (1 << 1);
-				if (w3 != w5 && (b3 > avg) != diff5) pattern |= (1 << 2);
-				if (w4 != w5 && (b4 > avg) != diff5) pattern |= (1 << 3);
-				if (w6 != w5 && (b6 > avg) != diff5) pattern |= (1 << 4);
-				if (w7 != w5 && (b7 > avg) != diff5) pattern |= (1 << 5);
-				if (w8 != w5 && (b8 > avg) != diff5) pattern |= (1 << 6);
-				if (w9 != w5 && (b9 > avg) != diff5) pattern |= (1 << 7);
+				pattern  = ((w1 != w5) & ((b1 > avg) != diff5)) << 0;
+				pattern |= ((w2 != w5) & ((b2 > avg) != diff5)) << 1;
+				pattern |= ((w3 != w5) & ((b3 > avg) != diff5)) << 2;
+				pattern |= ((w4 != w5) & ((b4 > avg) != diff5)) << 3;
+				pattern |= ((w6 != w5) & ((b6 > avg) != diff5)) << 4;
+				pattern |= ((w7 != w5) & ((b7 > avg) != diff5)) << 5;
+				pattern |= ((w8 != w5) & ((b8 > avg) != diff5)) << 6;
+				pattern |= ((w9 != w5) & ((b9 > avg) != diff5)) << 7;
 
-				// Re-eval YUV solely for edge-rule verification inside the rule map
-				uint32_t y2 = inlineRGBtoYUV(w2);
-				uint32_t y4 = inlineRGBtoYUV(w4);
-				uint32_t y6 = inlineRGBtoYUV(w6);
-				uint32_t y8 = inlineRGBtoYUV(w8);
+				// Verify dynamic edges via explicit YUV only when needed
+				uint32_t y2 = inlineRGBtoYUV(w2); uint32_t y4 = inlineRGBtoYUV(w4);
+				uint32_t y6 = inlineRGBtoYUV(w6); uint32_t y8 = inlineRGBtoYUV(w8);
 
-				switch (pattern) { HQ2XCASES }
-				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
-				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
-				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
-				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
+				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; b1 = b2; b4 = b5; b7 = b8;
-				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; b2 = b3; b5 = b6; b8 = b9;
+				w1 = w2; w4 = w5; w7 = w8; b1 = b2; b4 = b5; b7 = b8;
+				w2 = w3; w5 = w6; w8 = w9; b2 = b3; b5 = b6; b8 = b9;
 				dp += 2; w--;
 			}
 
@@ -654,37 +483,29 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				for(int i = 0; i < 8; i++) {
 					sp++;
 					w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-					u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 					uint16_t b3 = inlineRGBtoBright(w3);
 					uint16_t b6 = inlineRGBtoBright(w6);
 					uint16_t b9 = inlineRGBtoBright(w9);
 
 					uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
 					bool diff5 = (b5 > avg);
-					pattern = 0;
 
-					if (w1 != w5 && (b1 > avg) != diff5) pattern |= (1 << 0);
-					if (w2 != w5 && (b2 > avg) != diff5) pattern |= (1 << 1);
-					if (w3 != w5 && (b3 > avg) != diff5) pattern |= (1 << 2);
-					if (w4 != w5 && (b4 > avg) != diff5) pattern |= (1 << 3);
-					if (w6 != w5 && (b6 > avg) != diff5) pattern |= (1 << 4);
-					if (w7 != w5 && (b7 > avg) != diff5) pattern |= (1 << 5);
-					if (w8 != w5 && (b8 > avg) != diff5) pattern |= (1 << 6);
-					if (w9 != w5 && (b9 > avg) != diff5) pattern |= (1 << 7);
+					pattern  = ((w1 != w5) & ((b1 > avg) != diff5)) << 0;
+					pattern |= ((w2 != w5) & ((b2 > avg) != diff5)) << 1;
+					pattern |= ((w3 != w5) & ((b3 > avg) != diff5)) << 2;
+					pattern |= ((w4 != w5) & ((b4 > avg) != diff5)) << 3;
+					pattern |= ((w6 != w5) & ((b6 > avg) != diff5)) << 4;
+					pattern |= ((w7 != w5) & ((b7 > avg) != diff5)) << 5;
+					pattern |= ((w8 != w5) & ((b8 > avg) != diff5)) << 6;
+					pattern |= ((w9 != w5) & ((b9 > avg) != diff5)) << 7;
 
-					uint32_t y2 = inlineRGBtoYUV(w2);
-					uint32_t y4 = inlineRGBtoYUV(w4);
-					uint32_t y6 = inlineRGBtoYUV(w6);
-					uint32_t y8 = inlineRGBtoYUV(w8);
+					uint32_t y2 = inlineRGBtoYUV(w2); uint32_t y4 = inlineRGBtoYUV(w4);
+					uint32_t y6 = inlineRGBtoYUV(w6); uint32_t y8 = inlineRGBtoYUV(w8);
 
-					switch (pattern) { HQ2XCASES }
-					*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
-					*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
-					*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
-					*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
+					EVALUATE_HQ2X_SUBPIXELS();
 
-					w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; b1 = b2; b4 = b5; b7 = b8;
-					w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; b2 = b3; b5 = b6; b8 = b9;
+					w1 = w2; w4 = w5; w7 = w8; b1 = b2; b4 = b5; b7 = b8;
+					w2 = w3; w5 = w6; w8 = w9; b2 = b3; b5 = b6; b8 = b9;
 					dp += 2;
 				}
 			}
@@ -693,37 +514,29 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			while (tail--) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint16_t b3 = inlineRGBtoBright(w3);
 				uint16_t b6 = inlineRGBtoBright(w6);
 				uint16_t b9 = inlineRGBtoBright(w9);
 
 				uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
 				bool diff5 = (b5 > avg);
-				pattern = 0;
 
-				if (w1 != w5 && (b1 > avg) != diff5) pattern |= (1 << 0);
-				if (w2 != w5 && (b2 > avg) != diff5) pattern |= (1 << 1);
-				if (w3 != w5 && (b3 > avg) != diff5) pattern |= (1 << 2);
-				if (w4 != w5 && (b4 > avg) != diff5) pattern |= (1 << 3);
-				if (w6 != w5 && (b6 > avg) != diff5) pattern |= (1 << 4);
-				if (w7 != w5 && (b7 > avg) != diff5) pattern |= (1 << 5);
-				if (w8 != w5 && (b8 > avg) != diff5) pattern |= (1 << 6);
-				if (w9 != w5 && (b9 > avg) != diff5) pattern |= (1 << 7);
+				pattern  = ((w1 != w5) & ((b1 > avg) != diff5)) << 0;
+				pattern |= ((w2 != w5) & ((b2 > avg) != diff5)) << 1;
+				pattern |= ((w3 != w5) & ((b3 > avg) != diff5)) << 2;
+				pattern |= ((w4 != w5) & ((b4 > avg) != diff5)) << 3;
+				pattern |= ((w6 != w5) & ((b6 > avg) != diff5)) << 4;
+				pattern |= ((w7 != w5) & ((b7 > avg) != diff5)) << 5;
+				pattern |= ((w8 != w5) & ((b8 > avg) != diff5)) << 6;
+				pattern |= ((w9 != w5) & ((b9 > avg) != diff5)) << 7;
 
-				uint32_t y2 = inlineRGBtoYUV(w2);
-				uint32_t y4 = inlineRGBtoYUV(w4);
-				uint32_t y6 = inlineRGBtoYUV(w6);
-				uint32_t y8 = inlineRGBtoYUV(w8);
+				uint32_t y2 = inlineRGBtoYUV(w2); uint32_t y4 = inlineRGBtoYUV(w4);
+				uint32_t y6 = inlineRGBtoYUV(w6); uint32_t y8 = inlineRGBtoYUV(w8);
 
-				switch (pattern) { HQ2XCASES }
-				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
-				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
-				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
-				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
+				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; b1 = b2; b4 = b5; b7 = b8;
-				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; b2 = b3; b5 = b6; b8 = b9;
+				w1 = w2; w4 = w5; w7 = w8; b1 = b2; b4 = b5; b7 = b8;
+				w2 = w3; w5 = w6; w8 = w9; b2 = b3; b5 = b6; b8 = b9;
 				dp += 2;
 			}
 			dp += ((dst1line - width) << 1);
@@ -738,14 +551,12 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		while (height--) {
 			sp--;
 			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
-			u1 = Unpack565(w1); u4 = Unpack565(w4); u7 = Unpack565(w7);
 			uint32_t y1 = inlineRGBtoYUV(w1);
 			uint32_t y4 = inlineRGBtoYUV(w4);
 			uint32_t y7 = inlineRGBtoYUV(w7);
 
 			sp++;
 			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
-			u2 = Unpack565(w2); u5 = Unpack565(w5); u8 = Unpack565(w8);
 			uint32_t y2 = inlineRGBtoYUV(w2);
 			uint32_t y5 = inlineRGBtoYUV(w5);
 			uint32_t y8 = inlineRGBtoYUV(w8);
@@ -755,21 +566,21 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint32_t y3 = inlineRGBtoYUV(w3);
 				uint32_t y6 = inlineRGBtoYUV(w6);
 				uint32_t y9 = inlineRGBtoYUV(w9);
 
 				pattern = 0;
-				if(w1 == w5 || w3 == w5 || w7 == w5 || w9 == w5) {
-					if (w1 != w5 && Diff(y1, y5)) pattern |= (1 << 0);
-					if (w2 != w5 && Diff(y2, y5)) pattern |= (1 << 1);
-					if (w3 != w5 && Diff(y3, y5)) pattern |= (1 << 2);
-					if (w4 != w5 && Diff(y4, y5)) pattern |= (1 << 3);
-					if (w6 != w5 && Diff(y6, y5)) pattern |= (1 << 4);
-					if (w7 != w5 && Diff(y7, y5)) pattern |= (1 << 5);
-					if (w8 != w5 && Diff(y8, y5)) pattern |= (1 << 6);
-					if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
+				bool use_yuv = (w1==w5) | (w3==w5) | (w7==w5) | (w9==w5);
+				if(use_yuv) {
+					pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
+					pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
+					pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
+					pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
+					pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
+					pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
+					pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
+					pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
 				} else {
 					// Lazy Brightness: Only calculated when YUV is bypassed, saving 9 registers in the sliding window.
 					uint16_t b1 = inlineRGBtoBright(w1); uint16_t b2 = inlineRGBtoBright(w2); uint16_t b3 = inlineRGBtoBright(w3);
@@ -778,24 +589,20 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 
 					uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
 					bool diff5 = (b5 > avg);
-					if ((b1 > avg) != diff5) pattern |= (1 << 0);
-					if ((b2 > avg) != diff5) pattern |= (1 << 1);
-					if ((b3 > avg) != diff5) pattern |= (1 << 2);
-					if ((b4 > avg) != diff5) pattern |= (1 << 3);
-					if ((b6 > avg) != diff5) pattern |= (1 << 4);
-					if ((b7 > avg) != diff5) pattern |= (1 << 5);
-					if ((b8 > avg) != diff5) pattern |= (1 << 6);
-					if ((b9 > avg) != diff5) pattern |= (1 << 7);
+					pattern  = ((b1 > avg) != diff5) << 0;
+					pattern |= ((b2 > avg) != diff5) << 1;
+					pattern |= ((b3 > avg) != diff5) << 2;
+					pattern |= ((b4 > avg) != diff5) << 3;
+					pattern |= ((b6 > avg) != diff5) << 4;
+					pattern |= ((b7 > avg) != diff5) << 5;
+					pattern |= ((b8 > avg) != diff5) << 6;
+					pattern |= ((b9 > avg) != diff5) << 7;
 				}
 
-				switch (pattern) { HQ2XCASES }
-				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
-				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
-				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
-				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
+				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
-				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
+				w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
 				dp += 2; w--;
 			}
 
@@ -814,70 +621,64 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				for(int i = 0; i < 8; i++) {
 					sp++;
 					w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-					u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 					uint32_t y3 = inlineRGBtoYUV(w3);
 					uint32_t y6 = inlineRGBtoYUV(w6);
 					uint32_t y9 = inlineRGBtoYUV(w9);
 
 					pattern = 0;
-					if(w1 == w5 || w3 == w5 || w7 == w5 || w9 == w5) {
-						if (w1 != w5 && Diff(y1, y5)) pattern |= (1 << 0);
-						if (w2 != w5 && Diff(y2, y5)) pattern |= (1 << 1);
-						if (w3 != w5 && Diff(y3, y5)) pattern |= (1 << 2);
-						if (w4 != w5 && Diff(y4, y5)) pattern |= (1 << 3);
-						if (w6 != w5 && Diff(y6, y5)) pattern |= (1 << 4);
-						if (w7 != w5 && Diff(y7, y5)) pattern |= (1 << 5);
-						if (w8 != w5 && Diff(y8, y5)) pattern |= (1 << 6);
-						if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
+					bool use_yuv = (w1==w5) | (w3==w5) | (w7==w5) | (w9==w5);
+					if(use_yuv) {
+						pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
+						pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
+						pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
+						pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
+						pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
+						pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
+						pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
+						pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
 					} else {
-						// Lazy Brightness
 						uint16_t b1 = inlineRGBtoBright(w1); uint16_t b2 = inlineRGBtoBright(w2); uint16_t b3 = inlineRGBtoBright(w3);
 						uint16_t b4 = inlineRGBtoBright(w4); uint16_t b5 = inlineRGBtoBright(w5); uint16_t b6 = inlineRGBtoBright(w6);
 						uint16_t b7 = inlineRGBtoBright(w7); uint16_t b8 = inlineRGBtoBright(w8); uint16_t b9 = inlineRGBtoBright(w9);
 
 						uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
 						bool diff5 = (b5 > avg);
-						if ((b1 > avg) != diff5) pattern |= (1 << 0);
-						if ((b2 > avg) != diff5) pattern |= (1 << 1);
-						if ((b3 > avg) != diff5) pattern |= (1 << 2);
-						if ((b4 > avg) != diff5) pattern |= (1 << 3);
-						if ((b6 > avg) != diff5) pattern |= (1 << 4);
-						if ((b7 > avg) != diff5) pattern |= (1 << 5);
-						if ((b8 > avg) != diff5) pattern |= (1 << 6);
-						if ((b9 > avg) != diff5) pattern |= (1 << 7);
+						pattern  = ((b1 > avg) != diff5) << 0;
+						pattern |= ((b2 > avg) != diff5) << 1;
+						pattern |= ((b3 > avg) != diff5) << 2;
+						pattern |= ((b4 > avg) != diff5) << 3;
+						pattern |= ((b6 > avg) != diff5) << 4;
+						pattern |= ((b7 > avg) != diff5) << 5;
+						pattern |= ((b8 > avg) != diff5) << 6;
+						pattern |= ((b9 > avg) != diff5) << 7;
 					}
 
-					switch (pattern) { HQ2XCASES }
-					*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
-					*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
-					*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
-					*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
+					EVALUATE_HQ2X_SUBPIXELS();
 
-					w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
-					w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
+					w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
+					w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
 					dp += 2;
 				}
 			}
 
-			// Phase 3: Trailing pixels
 			while (tail--) {
 				sp++;
 				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				u3 = Unpack565(w3); u6 = Unpack565(w6); u9 = Unpack565(w9);
 				uint32_t y3 = inlineRGBtoYUV(w3);
 				uint32_t y6 = inlineRGBtoYUV(w6);
 				uint32_t y9 = inlineRGBtoYUV(w9);
 
 				pattern = 0;
-				if(w1 == w5 || w3 == w5 || w7 == w5 || w9 == w5) {
-					if (w1 != w5 && Diff(y1, y5)) pattern |= (1 << 0);
-					if (w2 != w5 && Diff(y2, y5)) pattern |= (1 << 1);
-					if (w3 != w5 && Diff(y3, y5)) pattern |= (1 << 2);
-					if (w4 != w5 && Diff(y4, y5)) pattern |= (1 << 3);
-					if (w6 != w5 && Diff(y6, y5)) pattern |= (1 << 4);
-					if (w7 != w5 && Diff(y7, y5)) pattern |= (1 << 5);
-					if (w8 != w5 && Diff(y8, y5)) pattern |= (1 << 6);
-					if (w9 != w5 && Diff(y9, y5)) pattern |= (1 << 7);
+				bool use_yuv = (w1==w5) | (w3==w5) | (w7==w5) | (w9==w5);
+				if(use_yuv) {
+					pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
+					pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
+					pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
+					pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
+					pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
+					pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
+					pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
+					pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
 				} else {
 					// Lazy Brightness
 					uint16_t b1 = inlineRGBtoBright(w1); uint16_t b2 = inlineRGBtoBright(w2); uint16_t b3 = inlineRGBtoBright(w3);
@@ -886,24 +687,20 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 
 					uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
 					bool diff5 = (b5 > avg);
-					if ((b1 > avg) != diff5) pattern |= (1 << 0);
-					if ((b2 > avg) != diff5) pattern |= (1 << 1);
-					if ((b3 > avg) != diff5) pattern |= (1 << 2);
-					if ((b4 > avg) != diff5) pattern |= (1 << 3);
-					if ((b6 > avg) != diff5) pattern |= (1 << 4);
-					if ((b7 > avg) != diff5) pattern |= (1 << 5);
-					if ((b8 > avg) != diff5) pattern |= (1 << 6);
-					if ((b9 > avg) != diff5) pattern |= (1 << 7);
+					pattern  = ((b1 > avg) != diff5) << 0;
+					pattern |= ((b2 > avg) != diff5) << 1;
+					pattern |= ((b3 > avg) != diff5) << 2;
+					pattern |= ((b4 > avg) != diff5) << 3;
+					pattern |= ((b6 > avg) != diff5) << 4;
+					pattern |= ((b7 > avg) != diff5) << 5;
+					pattern |= ((b8 > avg) != diff5) << 6;
+					pattern |= ((b9 > avg) != diff5) << 7;
 				}
 
-				switch (pattern) { HQ2XCASES }
-				*(dp)                = UniversalBlend(w5, u5, (w1==w5)?u5:u1, (w4==w5)?u5:u4, (w2==w5)?u5:u2, wt00);
-				*(dp + 1)            = UniversalBlend(w5, u5, (w3==w5)?u5:u3, (w2==w5)?u5:u2, (w6==w5)?u5:u6, wt01);
-				*(dp + dst1line)     = UniversalBlend(w5, u5, (w7==w5)?u5:u7, (w8==w5)?u5:u8, (w4==w5)?u5:u4, wt10);
-				*(dp + dst1line + 1) = UniversalBlend(w5, u5, (w9==w5)?u5:u9, (w6==w5)?u5:u6, (w8==w5)?u5:u8, wt11);
+				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; u1 = u2; u4 = u5; u7 = u8; y1 = y2; y4 = y5; y7 = y8;
-				w2 = w3; w5 = w6; w8 = w9; u2 = u3; u5 = u6; u8 = u9; y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
+				w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
 				dp += 2;
 			}
 			dp += ((dst1line - width) << 1);
