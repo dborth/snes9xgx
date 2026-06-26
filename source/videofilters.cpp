@@ -21,32 +21,21 @@
 static RenderFilter renderFilter = FILTER_NONE;
 TFilterMethod FilterMethod;
 
-// -------------------------------------------------------------------------
-// HQ2X Symmetry Maps & Lookup Tables
-// -------------------------------------------------------------------------
-static uint8_t rotateTable[256];
-static const uint8_t hqTable[256] = {
-	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 15, 12, 5,  3, 17, 13,
-	4, 4, 6, 18, 4, 4, 6, 18, 5,  3, 12, 12, 5,  3,  1, 12,
-	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 17, 13, 5,  3, 16, 14,
-	4, 4, 6, 18, 4, 4, 6, 18, 5,  3, 16, 12, 5,  3,  1, 14,
-	4, 4, 6,  2, 4, 4, 6,  2, 5, 19, 12, 12, 5, 19, 16, 12,
-	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3, 16, 12,
-	4, 4, 6,  2, 4, 4, 6,  2, 5, 19,  1, 12, 5, 19,  1, 14,
-	4, 4, 6,  2, 4, 4, 6, 18, 5,  3, 16, 12, 5, 19,  1, 14,
-	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 15, 12, 5,  3, 17, 13,
-	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3, 16, 12,
-	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 17, 13, 5,  3, 16, 14,
-	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 13, 5,  3,  1, 14,
-	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3, 16, 13,
-	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3,  1, 12,
-	4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 16, 12, 5,  3,  1, 14,
-	4, 4, 6,  2, 4, 4, 6,  2, 5,  3,  1, 12, 5,  3,  1, 14
-};
+// YUV fixed-point multiplication LUTs.
+// Total Size: 1.5 KB (Locks permanently into 32KB L1 Data Cache)
+static int32_t y_r_lut[32] __attribute__((aligned(32)));
+static int32_t y_g_lut[64] __attribute__((aligned(32)));
+static int32_t y_b_lut[32] __attribute__((aligned(32)));
+static int32_t u_r_lut[32] __attribute__((aligned(32)));
+static int32_t u_g_lut[64] __attribute__((aligned(32)));
+static int32_t u_b_lut[32] __attribute__((aligned(32)));
+static int32_t v_r_lut[32] __attribute__((aligned(32)));
+static int32_t v_g_lut[64] __attribute__((aligned(32)));
+static int32_t v_b_lut[32] __attribute__((aligned(32)));
 
-static int32_t y_r_lut[32], y_g_lut[64], y_b_lut[32];
-static int32_t u_r_lut[32], u_g_lut[64], u_b_lut[32];
-static int32_t v_r_lut[32], v_g_lut[64], v_b_lut[32];
+// Byuu's Symmetry Encoding Tables (512 Bytes Total)
+static uint8_t rotateTable[256] __attribute__((aligned(32)));
+static uint8_t hqTable[256] __attribute__((aligned(32)));
 static bool hq2x_initialized = false;
 
 template<int GuiScale> void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height);
@@ -110,20 +99,38 @@ int GetFilterScale()
 static void InitHQ2X() {
 	if (hq2x_initialized) return;
 
+	for (int i = 0; i < 32; i++) {
+		y_r_lut[i] = 134632 * i; u_r_lut[i] = -77712 * i; v_r_lut[i] = 230272 * i;
+		y_b_lut[i] = 51328 * i; u_b_lut[i] = 230272 * i; v_b_lut[i] = -37448 * i;
+	}
+	for (int i = 0; i < 64; i++) {
+		y_g_lut[i] = 132156 * i; u_g_lut[i] = -76284 * i; v_g_lut[i] = -96412 * i;
+	}
+
+	const uint8_t base_hqTable[256] = {
+		4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 15, 12, 5,  3, 17, 13,
+		4, 4, 6, 18, 4, 4, 6, 18, 5,  3, 12, 12, 5,  3,  1, 13,
+		6, 6, 6,  2, 6, 6, 6,  2, 16, 14,15, 12, 16, 14,17, 13,
+		2, 2, 2,  2, 2, 2, 2,  2, 12, 12,12, 12, 12, 12, 1, 13,
+		4, 4, 6,  2, 4, 4, 6,  2, 5,  3, 15, 12, 5,  3, 17, 13,
+		4, 4, 6, 18, 4, 4, 6, 18, 5,  3, 12, 12, 5,  3,  1, 13,
+		6, 6, 6,  2, 6, 6, 6,  2, 16, 14,15, 12, 16, 14,17, 13,
+		2, 2, 2,  2, 2, 2, 2,  2, 12, 12,12, 12, 12, 12, 1, 13,
+		5, 5, 15, 12, 5, 5, 15, 12, 5, 5, 15, 12, 5, 5, 15, 12,
+		3, 3, 12, 12, 3, 3, 12, 12, 3, 3, 12, 12, 3, 3, 12, 12,
+		16, 16, 15, 12, 16, 16, 15, 12, 16, 16, 15, 12, 16, 16, 15, 12,
+		14, 14, 12, 12, 14, 14, 12, 12, 14, 14, 12, 12, 14, 14, 12, 12,
+		5, 5, 15, 12, 5, 5, 15, 12, 5, 5, 15, 12, 5, 5, 15, 12,
+		3, 3, 12, 12, 3, 3, 12, 12, 3, 3, 12, 12, 3, 3, 12, 12,
+		19, 19, 15, 12, 19, 19, 15, 12, 19, 19, 15, 12, 19, 19, 15, 12,
+		13, 13, 12, 12, 13, 13, 12, 12, 13, 13, 12, 12, 13, 13, 12, 12
+	};
+
 	for(unsigned n = 0; n < 256; n++) {
+		hqTable[n] = base_hqTable[n];
 		rotateTable[n] = ((n >> 2) & 0x11) | ((n << 2) & 0x88) |
 						 ((n & 0x01) << 5) | ((n & 0x08) << 3) |
 						 ((n & 0x10) >> 3) | ((n & 0x80) >> 5);
-	}
-
-	for (int i = 0; i < 32; i++) {
-		int32_t r = i << 3; int32_t b = i << 3;
-		y_r_lut[i] = 16829 * r; u_r_lut[i] = -9714 * r; v_r_lut[i] = 28784 * r;
-		y_b_lut[i] =  6416 * b; u_b_lut[i] = 28784 * b; v_b_lut[i] = -4681 * b;
-	}
-	for (int i = 0; i < 64; i++) {
-		int32_t g = i << 2;
-		y_g_lut[i] = 33039 * g; u_g_lut[i] = -19071 * g; v_g_lut[i] = -24103 * g;
 	}
 	hq2x_initialized = true;
 }
@@ -154,7 +161,7 @@ static inline uint16_t inlineRGBtoBright(uint16_t c) {
 }
 
 // fast L1-cached LUT approach - avoids heavy multiplication stalls
-static inline int inlineRGBtoYUV(uint16_t c) {
+static inline uint32_t inlineRGBtoYUV(uint16_t c) {
     uint32_t r_idx = c >> 11;
     uint32_t g_idx = (c >> 5) & 0x3F;
     uint32_t b_idx = c & 0x1F;
@@ -211,83 +218,81 @@ static inline bool Diff(uint32_t c1, uint32_t c2) {
     return (dy > 48) | (du > 7) | (dv > 6);
 }
 
-
-static inline uint16_t Interp01(uint16_t c1, uint16_t c2) {
-    if (c1 == c2) return c1;
-    return Pack565((Unpack565(c1) * 3 + Unpack565(c2)) >> 2);
+// Fast YUV Diff (For edge verification)
+static inline bool FastDiff(uint16_t w1, uint16_t w2) {
+    if (w1 == w2) return false;
+    uint32_t y1 = inlineRGBtoYUV(w1);
+    uint32_t y2 = inlineRGBtoYUV(w2);
+    uint32_t dy = __builtin_abs((int)(y1 >> 16) - (int)(y2 >> 16));
+    uint32_t du = __builtin_abs((int)((y1 >> 8) & 0xFF) - (int)((y2 >> 8) & 0xFF));
+    uint32_t dv = __builtin_abs((int)(y1 & 0xFF) - (int)(y2 & 0xFF));
+    return (dy > 48) | (du > 7) | (dv > 6);
 }
 
-static inline uint16_t Interp02(uint16_t c1, uint16_t c2, uint16_t c3) {
-    return Pack565((Unpack565(c1) * 2 + Unpack565(c2) + Unpack565(c3)) >> 2);
+// Optimized Diff that accepts pre-calculated Center YUV
+static inline bool DiffYUV(uint16_t wX, uint32_t yC) {
+    uint32_t yX = inlineRGBtoYUV(wX);
+    uint32_t dy = __builtin_abs((int)(yX >> 16) - (int)(yC >> 16));
+    uint32_t du = __builtin_abs((int)((yX >> 8) & 0xFF) - (int)((yC >> 8) & 0xFF));
+    uint32_t dv = __builtin_abs((int)(yX & 0xFF) - (int)(yC & 0xFF));
+    return (dy > 48) | (du > 7) | (dv > 6);
 }
 
-static inline uint16_t Interp06(uint16_t c1, uint16_t c2, uint16_t c3) {
-    return Pack565((Unpack565(c1) * 5 + Unpack565(c2) * 2 + Unpack565(c3)) >> 3);
-}
+static inline uint16_t Blend(uint8_t op, uint16_t c, uint16_t crn, uint16_t s1, uint16_t s2) {
+    if (op == 0) return c; // Fast path out
 
-static inline uint16_t Interp07(uint16_t c1, uint16_t c2, uint16_t c3) {
-    return Pack565((Unpack565(c1) * 6 + Unpack565(c2) + Unpack565(c3)) >> 3);
-}
-
-static inline uint16_t Interp09(uint16_t c1, uint16_t c2, uint16_t c3) {
-    return Pack565((Unpack565(c1) * 2 + Unpack565(c2) * 3 + Unpack565(c3) * 3) >> 3);
-}
-
-static inline uint16_t Interp10(uint16_t c1, uint16_t c2, uint16_t c3) {
-    return Pack565((Unpack565(c1) * 14 + Unpack565(c2) + Unpack565(c3)) >> 4);
-}
-
-// -------------------------------------------------------------------------
-// Native Bitwise Select (Replaces missing 'isel' on PowerPC 750)
-// Uses a 32-bit mask generation to select results natively in ALU.
-// -------------------------------------------------------------------------
-static inline uint16_t BranchlessSelect(bool condition, uint16_t if_true, uint16_t if_false) {
-    uint32_t mask = -(uint32_t)condition; // Creates 0xFFFFFFFF if true, 0x00000000 if false
-    return (if_true & mask) | (if_false & ~mask);
-}
-
-// -------------------------------------------------------------------------
-// Interpolation Rule Router
-// -------------------------------------------------------------------------
-static inline uint16_t ApplyRule(uint8_t rule, uint16_t E, uint16_t A, uint16_t B, uint16_t D, uint16_t F, uint16_t H, bool diff_BD, bool diff_BF, bool diff_DH) {
-    switch(rule) {
-        case 0:  return E;
-        case 1:  return Interp01(E, A);
-        case 2:  return Interp01(E, D);
-        case 3:  return Interp01(E, B);
-        case 4:  return Interp02(E, D, B);
-        case 5:  return Interp02(E, A, B);
-        case 6:  return Interp02(E, A, D);
-        case 7:  return Interp06(E, B, D);
-        case 8:  return Interp06(E, D, B);
-        case 9:  return Interp07(E, D, B);
-        case 10: return Interp09(E, D, B);
-        case 11: return Interp10(E, D, B);
-
-		// Branchless masking logic for corner evaluation
-        case 12: return BranchlessSelect(diff_BD, E, Interp02(E, D, B));
-        case 13: return BranchlessSelect(diff_BD, E, Interp09(E, D, B));
-        case 14: return BranchlessSelect(diff_BD, E, Interp10(E, D, B));
-        case 15: return BranchlessSelect(diff_BD, Interp01(E, A), Interp02(E, D, B));
-        case 16: return BranchlessSelect(diff_BD, Interp01(E, A), Interp07(E, D, B));
-        case 17: return BranchlessSelect(diff_BD, Interp01(E, A), Interp09(E, D, B));
-        case 18: return BranchlessSelect(diff_BF, Interp01(E, D), Interp06(E, B, D));
-        case 19: return BranchlessSelect(diff_DH, Interp01(E, B), Interp06(E, D, B));
-        default: return E;
+    uint32_t uc = Unpack565(c);
+    switch(op) {
+        case 1:  return Pack565(((uc << 1) + uc + Unpack565(crn)) >> 2);
+        case 2:  return Pack565(((uc << 1) + uc + Unpack565(s2)) >> 2);
+        case 3:  return Pack565(((uc << 1) + uc + Unpack565(s1)) >> 2);
+        case 4:  return Pack565(((uc << 1) + Unpack565(s1) + Unpack565(s2)) >> 2);
+        case 5:  return Pack565(((uc << 1) + Unpack565(crn) + Unpack565(s1)) >> 2);
+        case 6:  return Pack565(((uc << 1) + Unpack565(crn) + Unpack565(s2)) >> 2);
+        case 7:  return Pack565(((uc << 2) + uc + (Unpack565(s1) << 1) + Unpack565(s2)) >> 3);
+        case 8:  return Pack565(((uc << 2) + uc + Unpack565(s1) + (Unpack565(s2) << 1)) >> 3);
+        case 9:  return Pack565(((uc << 2) + (uc << 1) + Unpack565(s1) + Unpack565(s2)) >> 3);
+        case 10: return Pack565(((uc << 1) + (Unpack565(s1) << 1) + Unpack565(s1) + (Unpack565(s2) << 1) + Unpack565(s2)) >> 3);
+        case 11: return Pack565(((uc << 4) - (uc << 1) + Unpack565(s1) + Unpack565(s2)) >> 4);
+        default: return c;
     }
 }
 
-// Rotates inputs and applies the current pattern rule
+// -------------------------------------------------------------------------
+// The Rule Router (Restores True Lazy Evaluation)
+// -------------------------------------------------------------------------
+static inline uint16_t EvalSubpixel(uint8_t pat, uint16_t c, uint16_t crn, uint16_t s1, uint16_t s2, uint16_t opp1, uint16_t opp2) {
+    uint8_t rule = hqTable[pat];
+    uint8_t op = rule;
+
+    // Dynamic Edge Detection (Rare, only executed when necessary)
+    if (rule >= 12) {
+        if (rule <= 17) {
+            bool diff = FastDiff(s1, s2);
+            if (rule == 12) op = diff ? 0 : 4;
+            else if (rule == 13) op = diff ? 0 : 10;
+            else if (rule == 14) op = diff ? 0 : 11;
+            else if (rule == 15) op = diff ? 1 : 4;
+            else if (rule == 16) op = diff ? 1 : 9;
+            else if (rule == 17) op = diff ? 1 : 10;
+        } else if (rule == 18) {
+            bool diff = FastDiff(s1, opp1);
+            op = diff ? 2 : 7;
+        } else if (rule == 19) {
+            bool diff = FastDiff(s2, opp2);
+            op = diff ? 3 : 8;
+        }
+    }
+    return Blend(op, c, crn, s1, s2);
+}
+
+// Universal Macro to apply the rotation matrix mapping
 #define EVALUATE_HQ2X_SUBPIXELS() do { \
-    bool d24 = Diff(y2, y4); \
-    bool d26 = Diff(y2, y6); \
-    bool d48 = Diff(y4, y8); \
-    bool d68 = Diff(y6, y8); \
-    uint8_t pat = pattern; \
-    *(dp)                = ApplyRule(hqTable[pat], w5, w1, w2, w4, w6, w8, d24, d26, d48); pat = rotateTable[pat]; \
-    *(dp + 1)            = ApplyRule(hqTable[pat], w5, w3, w6, w2, w8, w4, d26, d68, d24); pat = rotateTable[pat]; \
-    *(dp + dst1line + 1) = ApplyRule(hqTable[pat], w5, w9, w8, w6, w4, w2, d68, d48, d26); pat = rotateTable[pat]; \
-    *(dp + dst1line)     = ApplyRule(hqTable[pat], w5, w7, w4, w8, w2, w6, d48, d24, d68); \
+    uint8_t p = pattern; \
+    *(dp)                = EvalSubpixel(p, w5, w1, w2, w4, w6, w8); p = rotateTable[p]; \
+    *(dp + 1)            = EvalSubpixel(p, w5, w3, w6, w2, w8, w4); p = rotateTable[p]; \
+    *(dp + dst1line + 1) = EvalSubpixel(p, w5, w9, w8, w6, w4, w2); p = rotateTable[p]; \
+    *(dp + dst1line)     = EvalSubpixel(p, w5, w7, w4, w8, w2, w6); \
 } while(0)
 
 // -------------------------------------------------------------------------
@@ -303,7 +308,6 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	uint16_t *sp = (uint16_t *) srcPtr;
 	uint16_t *dp = (uint16_t *) dstPtr;
 
-	int w1, w2, w3, w4, w5, w6, w7, w8, w9;
 	uint32_t pattern;
 
 	// ---------------------------------------------------------
@@ -313,79 +317,62 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	{
 		while (height--) {
 			sp--;
-			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
-			uint32_t y1 = inlineRGBtoYUV(w1);
-			uint32_t y4 = inlineRGBtoYUV(w4);
-			uint32_t y7 = inlineRGBtoYUV(w7);
-
+			uint16_t w1 = *(sp - src1line), w4 = *(sp), w7 = *(sp + src1line);
 			sp++;
-			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
-			uint32_t y2 = inlineRGBtoYUV(w2);
-			uint32_t y5 = inlineRGBtoYUV(w5);
-			uint32_t y8 = inlineRGBtoYUV(w8);
+			uint16_t w2 = *(sp - src1line), w5 = *(sp), w8 = *(sp + src1line);
 
 			int w = width;
 
 			// Phase 1: Unaligned leading pixels
 			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
 				sp++;
-				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				uint32_t y3 = inlineRGBtoYUV(w3);
-				uint32_t y6 = inlineRGBtoYUV(w6);
-				uint32_t y9 = inlineRGBtoYUV(w9);
+				uint16_t w3 = *(sp - src1line), w6 = *(sp), w9 = *(sp + src1line);
+				uint32_t y5 = inlineRGBtoYUV(w5);
 
-				// Branchless Pattern Generator
-				pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
-				pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
-				pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
-				pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
-				pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
-				pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
-				pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
-				pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
+				// Fast predictability: && bypasses YUV lookup/math entirely if pixels match
+				pattern  = ((w1 != w5) && DiffYUV(w1, y5)) << 0;
+				pattern |= ((w2 != w5) && DiffYUV(w2, y5)) << 1;
+				pattern |= ((w3 != w5) && DiffYUV(w3, y5)) << 2;
+				pattern |= ((w4 != w5) && DiffYUV(w4, y5)) << 3;
+				pattern |= ((w6 != w5) && DiffYUV(w6, y5)) << 4;
+				pattern |= ((w7 != w5) && DiffYUV(w7, y5)) << 5;
+				pattern |= ((w8 != w5) && DiffYUV(w8, y5)) << 6;
+				pattern |= ((w9 != w5) && DiffYUV(w9, y5)) << 7;
 
 				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
-				w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8;
+				w2 = w3; w5 = w6; w8 = w9;
 				dp += 2; w--;
 			}
 
 			// Phase 2: Cache-Aligned Chunking
 			int chunks = w >> 3;
 			int tail = w & 7;
-			bool bot_aligned = (((uint32_t)(dp + dst1line) & 0x1F) == 0);
 
 			while (chunks--) {
-				// "b" constraint prevents r0 allocation. "memory" clobber prevents instruction reordering.
-				__asm__ volatile ("dcbz 0, %0" :: "b" (dp) : "memory");
-				if (bot_aligned) {
-					__asm__ volatile ("dcbz 0, %0" :: "b" (dp + dst1line) : "memory");
-				}
 				DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
 
 				// Process 8 pixels. We avoid a macro here to prevent GCC from easily
 				// unrolling the massive switch statement and thrashing the I-Cache.
 				for(int i = 0; i < 8; i++) {
 					sp++;
-					w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-					uint32_t y3 = inlineRGBtoYUV(w3);
-					uint32_t y6 = inlineRGBtoYUV(w6);
-					uint32_t y9 = inlineRGBtoYUV(w9);
+					uint16_t w3 = *(sp - src1line), w6 = *(sp), w9 = *(sp + src1line);
+					uint32_t y5 = inlineRGBtoYUV(w5);
 
-					pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
-					pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
-					pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
-					pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
-					pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
-					pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
-					pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
-					pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
+					pattern  = ((w1 != w5) && DiffYUV(w1, y5)) << 0;
+					pattern |= ((w2 != w5) && DiffYUV(w2, y5)) << 1;
+					pattern |= ((w3 != w5) && DiffYUV(w3, y5)) << 2;
+					pattern |= ((w4 != w5) && DiffYUV(w4, y5)) << 3;
+					pattern |= ((w6 != w5) && DiffYUV(w6, y5)) << 4;
+					pattern |= ((w7 != w5) && DiffYUV(w7, y5)) << 5;
+					pattern |= ((w8 != w5) && DiffYUV(w8, y5)) << 6;
+					pattern |= ((w9 != w5) && DiffYUV(w9, y5)) << 7;
 
 					EVALUATE_HQ2X_SUBPIXELS();
 
-					w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
-					w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
+					w1 = w2; w4 = w5; w7 = w8;
+					w2 = w3; w5 = w6; w8 = w9;
 					dp += 2;
 				}
 			}
@@ -393,24 +380,22 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			// Phase 3: Trailing pixels
 			while (tail--) {
 				sp++;
-				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				uint32_t y3 = inlineRGBtoYUV(w3);
-				uint32_t y6 = inlineRGBtoYUV(w6);
-				uint32_t y9 = inlineRGBtoYUV(w9);
+				uint16_t w3 = *(sp - src1line), w6 = *(sp), w9 = *(sp + src1line);
+				uint32_t y5 = inlineRGBtoYUV(w5);
 
-				pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
-				pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
-				pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
-				pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
-				pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
-				pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
-				pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
-				pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
+				pattern  = ((w1 != w5) && DiffYUV(w1, y5)) << 0;
+				pattern |= ((w2 != w5) && DiffYUV(w2, y5)) << 1;
+				pattern |= ((w3 != w5) && DiffYUV(w3, y5)) << 2;
+				pattern |= ((w4 != w5) && DiffYUV(w4, y5)) << 3;
+				pattern |= ((w6 != w5) && DiffYUV(w6, y5)) << 4;
+				pattern |= ((w7 != w5) && DiffYUV(w7, y5)) << 5;
+				pattern |= ((w8 != w5) && Diff(w8, y5)) << 6;
+				pattern |= ((w9 != w5) && DiffYUV(w9, y5)) << 7;
 
 				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
-				w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8;
+				w2 = w3; w5 = w6; w8 = w9;
 				dp += 2;
 			}
 			dp += ((dst1line - width) << 1);
@@ -424,88 +409,69 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	{
 		while (height--) {
 			sp--;
-			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
-			uint16_t b1 = inlineRGBtoBright(w1);
-			uint16_t b4 = inlineRGBtoBright(w4);
-			uint16_t b7 = inlineRGBtoBright(w7);
-
+			uint16_t w1 = *(sp - src1line), w4 = *(sp), w7 = *(sp + src1line);
 			sp++;
-			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
-			uint16_t b2 = inlineRGBtoBright(w2);
-			uint16_t b5 = inlineRGBtoBright(w5);
-			uint16_t b8 = inlineRGBtoBright(w8);
+			uint16_t w2 = *(sp - src1line), w5 = *(sp), w8 = *(sp + src1line);
 
 			int w = width;
 
 			// Phase 1: Unaligned leading pixels
 			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
 				sp++;
-				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				uint16_t b3 = inlineRGBtoBright(w3);
-				uint16_t b6 = inlineRGBtoBright(w6);
-				uint16_t b9 = inlineRGBtoBright(w9);
+				uint16_t w3 = *(sp - src1line), w6 = *(sp), w9 = *(sp + src1line);
 
-				uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+				uint16_t b5 = inlineRGBtoBright(w5);
+				uint16_t avg = ((inlineRGBtoBright(w1) + inlineRGBtoBright(w2) + inlineRGBtoBright(w3) +
+								 inlineRGBtoBright(w4) + b5 + inlineRGBtoBright(w6) +
+								 inlineRGBtoBright(w7) + inlineRGBtoBright(w8) + inlineRGBtoBright(w9)) * 7282) >> 16;
 				bool diff5 = (b5 > avg);
 
-				pattern  = ((w1 != w5) & ((b1 > avg) != diff5)) << 0;
-				pattern |= ((w2 != w5) & ((b2 > avg) != diff5)) << 1;
-				pattern |= ((w3 != w5) & ((b3 > avg) != diff5)) << 2;
-				pattern |= ((w4 != w5) & ((b4 > avg) != diff5)) << 3;
-				pattern |= ((w6 != w5) & ((b6 > avg) != diff5)) << 4;
-				pattern |= ((w7 != w5) & ((b7 > avg) != diff5)) << 5;
-				pattern |= ((w8 != w5) & ((b8 > avg) != diff5)) << 6;
-				pattern |= ((w9 != w5) & ((b9 > avg) != diff5)) << 7;
-
-				// Verify dynamic edges via explicit YUV only when needed
-				uint32_t y2 = inlineRGBtoYUV(w2); uint32_t y4 = inlineRGBtoYUV(w4);
-				uint32_t y6 = inlineRGBtoYUV(w6); uint32_t y8 = inlineRGBtoYUV(w8);
+				pattern  = ((w1 != w5) && ((inlineRGBtoBright(w1) > avg) != diff5)) << 0;
+				pattern |= ((w2 != w5) && ((inlineRGBtoBright(w2) > avg) != diff5)) << 1;
+				pattern |= ((w3 != w5) && ((inlineRGBtoBright(w3) > avg) != diff5)) << 2;
+				pattern |= ((w4 != w5) && ((inlineRGBtoBright(w4) > avg) != diff5)) << 3;
+				pattern |= ((w6 != w5) && ((inlineRGBtoBright(w6) > avg) != diff5)) << 4;
+				pattern |= ((w7 != w5) && ((inlineRGBtoBright(w7) > avg) != diff5)) << 5;
+				pattern |= ((w8 != w5) && ((inlineRGBtoBright(w8) > avg) != diff5)) << 6;
+				pattern |= ((w9 != w5) && ((inlineRGBtoBright(w9) > avg) != diff5)) << 7;
 
 				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; b1 = b2; b4 = b5; b7 = b8;
-				w2 = w3; w5 = w6; w8 = w9; b2 = b3; b5 = b6; b8 = b9;
+				w1 = w2; w4 = w5; w7 = w8;
+				w2 = w3; w5 = w6; w8 = w9;
 				dp += 2; w--;
 			}
 
 			// Phase 2: Cache-Aligned Chunking
 			int chunks = w >> 3;
 			int tail = w & 7;
-			bool bot_aligned = (((uint32_t)(dp + dst1line) & 0x1F) == 0);
 
 			while (chunks--) {
-				__asm__ volatile ("dcbz 0, %0" :: "b" (dp) : "memory");
-				if (bot_aligned) {
-					__asm__ volatile ("dcbz 0, %0" :: "b" (dp + dst1line) : "memory");
-				}
 				DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
 
 				for(int i = 0; i < 8; i++) {
 					sp++;
-					w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-					uint16_t b3 = inlineRGBtoBright(w3);
-					uint16_t b6 = inlineRGBtoBright(w6);
-					uint16_t b9 = inlineRGBtoBright(w9);
+					uint16_t w3 = *(sp - src1line), w6 = *(sp), w9 = *(sp + src1line);
 
-					uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+					uint16_t b5 = inlineRGBtoBright(w5);
+					uint16_t avg = ((inlineRGBtoBright(w1) + inlineRGBtoBright(w2) + inlineRGBtoBright(w3) +
+									 inlineRGBtoBright(w4) + b5 + inlineRGBtoBright(w6) +
+									 inlineRGBtoBright(w7) + inlineRGBtoBright(w8) + inlineRGBtoBright(w9)) * 7282) >> 16;
 					bool diff5 = (b5 > avg);
 
-					pattern  = ((w1 != w5) & ((b1 > avg) != diff5)) << 0;
-					pattern |= ((w2 != w5) & ((b2 > avg) != diff5)) << 1;
-					pattern |= ((w3 != w5) & ((b3 > avg) != diff5)) << 2;
-					pattern |= ((w4 != w5) & ((b4 > avg) != diff5)) << 3;
-					pattern |= ((w6 != w5) & ((b6 > avg) != diff5)) << 4;
-					pattern |= ((w7 != w5) & ((b7 > avg) != diff5)) << 5;
-					pattern |= ((w8 != w5) & ((b8 > avg) != diff5)) << 6;
-					pattern |= ((w9 != w5) & ((b9 > avg) != diff5)) << 7;
-
-					uint32_t y2 = inlineRGBtoYUV(w2); uint32_t y4 = inlineRGBtoYUV(w4);
-					uint32_t y6 = inlineRGBtoYUV(w6); uint32_t y8 = inlineRGBtoYUV(w8);
+					pattern  = ((w1 != w5) && ((inlineRGBtoBright(w1) > avg) != diff5)) << 0;
+					pattern |= ((w2 != w5) && ((inlineRGBtoBright(w2) > avg) != diff5)) << 1;
+					pattern |= ((w3 != w5) && ((inlineRGBtoBright(w3) > avg) != diff5)) << 2;
+					pattern |= ((w4 != w5) && ((inlineRGBtoBright(w4) > avg) != diff5)) << 3;
+					pattern |= ((w6 != w5) && ((inlineRGBtoBright(w6) > avg) != diff5)) << 4;
+					pattern |= ((w7 != w5) && ((inlineRGBtoBright(w7) > avg) != diff5)) << 5;
+					pattern |= ((w8 != w5) && ((inlineRGBtoBright(w8) > avg) != diff5)) << 6;
+					pattern |= ((w9 != w5) && ((inlineRGBtoBright(w9) > avg) != diff5)) << 7;
 
 					EVALUATE_HQ2X_SUBPIXELS();
 
-					w1 = w2; w4 = w5; w7 = w8; b1 = b2; b4 = b5; b7 = b8;
-					w2 = w3; w5 = w6; w8 = w9; b2 = b3; b5 = b6; b8 = b9;
+					w1 = w2; w4 = w5; w7 = w8;
+					w2 = w3; w5 = w6; w8 = w9;
 					dp += 2;
 				}
 			}
@@ -513,30 +479,27 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			// Phase 3: Trailing pixels
 			while (tail--) {
 				sp++;
-				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				uint16_t b3 = inlineRGBtoBright(w3);
-				uint16_t b6 = inlineRGBtoBright(w6);
-				uint16_t b9 = inlineRGBtoBright(w9);
+				uint16_t w3 = *(sp - src1line), w6 = *(sp), w9 = *(sp + src1line);
 
-				uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+				uint16_t b5 = inlineRGBtoBright(w5);
+				uint16_t avg = ((inlineRGBtoBright(w1) + inlineRGBtoBright(w2) + inlineRGBtoBright(w3) +
+								 inlineRGBtoBright(w4) + b5 + inlineRGBtoBright(w6) +
+								 inlineRGBtoBright(w7) + inlineRGBtoBright(w8) + inlineRGBtoBright(w9)) * 7282) >> 16;
 				bool diff5 = (b5 > avg);
 
-				pattern  = ((w1 != w5) & ((b1 > avg) != diff5)) << 0;
-				pattern |= ((w2 != w5) & ((b2 > avg) != diff5)) << 1;
-				pattern |= ((w3 != w5) & ((b3 > avg) != diff5)) << 2;
-				pattern |= ((w4 != w5) & ((b4 > avg) != diff5)) << 3;
-				pattern |= ((w6 != w5) & ((b6 > avg) != diff5)) << 4;
-				pattern |= ((w7 != w5) & ((b7 > avg) != diff5)) << 5;
-				pattern |= ((w8 != w5) & ((b8 > avg) != diff5)) << 6;
-				pattern |= ((w9 != w5) & ((b9 > avg) != diff5)) << 7;
-
-				uint32_t y2 = inlineRGBtoYUV(w2); uint32_t y4 = inlineRGBtoYUV(w4);
-				uint32_t y6 = inlineRGBtoYUV(w6); uint32_t y8 = inlineRGBtoYUV(w8);
+				pattern  = ((w1 != w5) && ((inlineRGBtoBright(w1) > avg) != diff5)) << 0;
+				pattern |= ((w2 != w5) && ((inlineRGBtoBright(w2) > avg) != diff5)) << 1;
+				pattern |= ((w3 != w5) && ((inlineRGBtoBright(w3) > avg) != diff5)) << 2;
+				pattern |= ((w4 != w5) && ((inlineRGBtoBright(w4) > avg) != diff5)) << 3;
+				pattern |= ((w6 != w5) && ((inlineRGBtoBright(w6) > avg) != diff5)) << 4;
+				pattern |= ((w7 != w5) && ((inlineRGBtoBright(w7) > avg) != diff5)) << 5;
+				pattern |= ((w8 != w5) && ((inlineRGBtoBright(w8) > avg) != diff5)) << 6;
+				pattern |= ((w9 != w5) && ((inlineRGBtoBright(w9) > avg) != diff5)) << 7;
 
 				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; b1 = b2; b4 = b5; b7 = b8;
-				w2 = w3; w5 = w6; w8 = w9; b2 = b3; b5 = b6; b8 = b9;
+				w1 = w2; w4 = w5; w7 = w8;
+				w2 = w3; w5 = w6; w8 = w9;
 				dp += 2;
 			}
 			dp += ((dst1line - width) << 1);
@@ -550,157 +513,136 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	{
 		while (height--) {
 			sp--;
-			w1 = *(sp - src1line); w4 = *(sp); w7 = *(sp + src1line);
-			uint32_t y1 = inlineRGBtoYUV(w1);
-			uint32_t y4 = inlineRGBtoYUV(w4);
-			uint32_t y7 = inlineRGBtoYUV(w7);
-
+			uint16_t w1 = *(sp - src1line), w4 = *(sp), w7 = *(sp + src1line);
 			sp++;
-			w2 = *(sp - src1line); w5 = *(sp); w8 = *(sp + src1line);
-			uint32_t y2 = inlineRGBtoYUV(w2);
-			uint32_t y5 = inlineRGBtoYUV(w5);
-			uint32_t y8 = inlineRGBtoYUV(w8);
+			uint16_t w2 = *(sp - src1line), w5 = *(sp), w8 = *(sp + src1line);
 
 			int w = width;
 
+			// Phase 1: Unaligned leading pixels
 			while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
 				sp++;
-				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				uint32_t y3 = inlineRGBtoYUV(w3);
-				uint32_t y6 = inlineRGBtoYUV(w6);
-				uint32_t y9 = inlineRGBtoYUV(w9);
+				uint16_t w3 = *(sp - src1line), w6 = *(sp), w9 = *(sp + src1line);
 
-				pattern = 0;
 				bool use_yuv = (w1==w5) | (w3==w5) | (w7==w5) | (w9==w5);
 				if(use_yuv) {
-					pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
-					pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
-					pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
-					pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
-					pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
-					pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
-					pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
-					pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
+					uint32_t y5 = inlineRGBtoYUV(w5);
+					pattern  = ((w1 != w5) && DiffYUV(w1, y5)) << 0;
+					pattern |= ((w2 != w5) && DiffYUV(w2, y5)) << 1;
+					pattern |= ((w3 != w5) && DiffYUV(w3, y5)) << 2;
+					pattern |= ((w4 != w5) && DiffYUV(w4, y5)) << 3;
+					pattern |= ((w6 != w5) && DiffYUV(w6, y5)) << 4;
+					pattern |= ((w7 != w5) && DiffYUV(w7, y5)) << 5;
+					pattern |= ((w8 != w5) && DiffYUV(w8, y5)) << 6;
+					pattern |= ((w9 != w5) && DiffYUV(w9, y5)) << 7;
 				} else {
-					// Lazy Brightness: Only calculated when YUV is bypassed, saving 9 registers in the sliding window.
-					uint16_t b1 = inlineRGBtoBright(w1); uint16_t b2 = inlineRGBtoBright(w2); uint16_t b3 = inlineRGBtoBright(w3);
-					uint16_t b4 = inlineRGBtoBright(w4); uint16_t b5 = inlineRGBtoBright(w5); uint16_t b6 = inlineRGBtoBright(w6);
-					uint16_t b7 = inlineRGBtoBright(w7); uint16_t b8 = inlineRGBtoBright(w8); uint16_t b9 = inlineRGBtoBright(w9);
-
-					uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+					uint16_t b5 = inlineRGBtoBright(w5);
+					uint16_t avg = ((inlineRGBtoBright(w1) + inlineRGBtoBright(w2) + inlineRGBtoBright(w3) +
+									 inlineRGBtoBright(w4) + b5 + inlineRGBtoBright(w6) +
+									 inlineRGBtoBright(w7) + inlineRGBtoBright(w8) + inlineRGBtoBright(w9)) * 7282) >> 16;
 					bool diff5 = (b5 > avg);
-					pattern  = ((b1 > avg) != diff5) << 0;
-					pattern |= ((b2 > avg) != diff5) << 1;
-					pattern |= ((b3 > avg) != diff5) << 2;
-					pattern |= ((b4 > avg) != diff5) << 3;
-					pattern |= ((b6 > avg) != diff5) << 4;
-					pattern |= ((b7 > avg) != diff5) << 5;
-					pattern |= ((b8 > avg) != diff5) << 6;
-					pattern |= ((b9 > avg) != diff5) << 7;
+
+					pattern  = ((inlineRGBtoBright(w1) > avg) != diff5) << 0;
+					pattern |= ((inlineRGBtoBright(w2) > avg) != diff5) << 1;
+					pattern |= ((inlineRGBtoBright(w3) > avg) != diff5) << 2;
+					pattern |= ((inlineRGBtoBright(w4) > avg) != diff5) << 3;
+					pattern |= ((inlineRGBtoBright(w6) > avg) != diff5) << 4;
+					pattern |= ((inlineRGBtoBright(w7) > avg) != diff5) << 5;
+					pattern |= ((inlineRGBtoBright(w8) > avg) != diff5) << 6;
+					pattern |= ((inlineRGBtoBright(w9) > avg) != diff5) << 7;
 				}
 
 				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
-				w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8;
+				w2 = w3; w5 = w6; w8 = w9;
 				dp += 2; w--;
 			}
 
 			// Phase 2: Cache-Aligned Chunking
 			int chunks = w >> 3;
 			int tail = w & 7;
-			bool bot_aligned = (((uint32_t)(dp + dst1line) & 0x1F) == 0);
 
 			while (chunks--) {
-				__asm__ volatile ("dcbz 0, %0" :: "b" (dp) : "memory");
-				if (bot_aligned) {
-					__asm__ volatile ("dcbz 0, %0" :: "b" (dp + dst1line) : "memory");
-				}
 				DCBT(sp + 16 - src1line); DCBT(sp + 16); DCBT(sp + 16 + src1line);
 
 				for(int i = 0; i < 8; i++) {
 					sp++;
-					w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-					uint32_t y3 = inlineRGBtoYUV(w3);
-					uint32_t y6 = inlineRGBtoYUV(w6);
-					uint32_t y9 = inlineRGBtoYUV(w9);
+					uint16_t w3 = *(sp - src1line), w6 = *(sp), w9 = *(sp + src1line);
 
-					pattern = 0;
 					bool use_yuv = (w1==w5) | (w3==w5) | (w7==w5) | (w9==w5);
 					if(use_yuv) {
-						pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
-						pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
-						pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
-						pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
-						pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
-						pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
-						pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
-						pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
+						uint32_t y5 = inlineRGBtoYUV(w5);
+						pattern  = ((w1 != w5) && DiffYUV(w1, y5)) << 0;
+						pattern |= ((w2 != w5) && DiffYUV(w2, y5)) << 1;
+						pattern |= ((w3 != w5) && DiffYUV(w3, y5)) << 2;
+						pattern |= ((w4 != w5) && DiffYUV(w4, y5)) << 3;
+						pattern |= ((w6 != w5) && DiffYUV(w6, y5)) << 4;
+						pattern |= ((w7 != w5) && DiffYUV(w7, y5)) << 5;
+						pattern |= ((w8 != w5) && DiffYUV(w8, y5)) << 6;
+						pattern |= ((w9 != w5) && DiffYUV(w9, y5)) << 7;
 					} else {
-						uint16_t b1 = inlineRGBtoBright(w1); uint16_t b2 = inlineRGBtoBright(w2); uint16_t b3 = inlineRGBtoBright(w3);
-						uint16_t b4 = inlineRGBtoBright(w4); uint16_t b5 = inlineRGBtoBright(w5); uint16_t b6 = inlineRGBtoBright(w6);
-						uint16_t b7 = inlineRGBtoBright(w7); uint16_t b8 = inlineRGBtoBright(w8); uint16_t b9 = inlineRGBtoBright(w9);
-
-						uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+						uint16_t b5 = inlineRGBtoBright(w5);
+						uint16_t avg = ((inlineRGBtoBright(w1) + inlineRGBtoBright(w2) + inlineRGBtoBright(w3) +
+										 inlineRGBtoBright(w4) + b5 + inlineRGBtoBright(w6) +
+										 inlineRGBtoBright(w7) + inlineRGBtoBright(w8) + inlineRGBtoBright(w9)) * 7282) >> 16;
 						bool diff5 = (b5 > avg);
-						pattern  = ((b1 > avg) != diff5) << 0;
-						pattern |= ((b2 > avg) != diff5) << 1;
-						pattern |= ((b3 > avg) != diff5) << 2;
-						pattern |= ((b4 > avg) != diff5) << 3;
-						pattern |= ((b6 > avg) != diff5) << 4;
-						pattern |= ((b7 > avg) != diff5) << 5;
-						pattern |= ((b8 > avg) != diff5) << 6;
-						pattern |= ((b9 > avg) != diff5) << 7;
+
+						pattern  = ((inlineRGBtoBright(w1) > avg) != diff5) << 0;
+						pattern |= ((inlineRGBtoBright(w2) > avg) != diff5) << 1;
+						pattern |= ((inlineRGBtoBright(w3) > avg) != diff5) << 2;
+						pattern |= ((inlineRGBtoBright(w4) > avg) != diff5) << 3;
+						pattern |= ((inlineRGBtoBright(w6) > avg) != diff5) << 4;
+						pattern |= ((inlineRGBtoBright(w7) > avg) != diff5) << 5;
+						pattern |= ((inlineRGBtoBright(w8) > avg) != diff5) << 6;
+						pattern |= ((inlineRGBtoBright(w9) > avg) != diff5) << 7;
 					}
 
 					EVALUATE_HQ2X_SUBPIXELS();
 
-					w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
-					w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
+					w1 = w2; w4 = w5; w7 = w8;
+					w2 = w3; w5 = w6; w8 = w9;
 					dp += 2;
 				}
 			}
 
+			// Phase 3: Trailing pixels
 			while (tail--) {
 				sp++;
-				w3 = *(sp - src1line); w6 = *(sp); w9 = *(sp + src1line);
-				uint32_t y3 = inlineRGBtoYUV(w3);
-				uint32_t y6 = inlineRGBtoYUV(w6);
-				uint32_t y9 = inlineRGBtoYUV(w9);
+				uint16_t w3 = *(sp - src1line), w6 = *(sp), w9 = *(sp + src1line);
 
-				pattern = 0;
 				bool use_yuv = (w1==w5) | (w3==w5) | (w7==w5) | (w9==w5);
 				if(use_yuv) {
-					pattern  = ((w1 != w5) & Diff(y1, y5)) << 0;
-					pattern |= ((w2 != w5) & Diff(y2, y5)) << 1;
-					pattern |= ((w3 != w5) & Diff(y3, y5)) << 2;
-					pattern |= ((w4 != w5) & Diff(y4, y5)) << 3;
-					pattern |= ((w6 != w5) & Diff(y6, y5)) << 4;
-					pattern |= ((w7 != w5) & Diff(y7, y5)) << 5;
-					pattern |= ((w8 != w5) & Diff(y8, y5)) << 6;
-					pattern |= ((w9 != w5) & Diff(y9, y5)) << 7;
+					uint32_t y5 = inlineRGBtoYUV(w5);
+					pattern  = ((w1 != w5) && DiffYUV(w1, y5)) << 0;
+					pattern |= ((w2 != w5) && DiffYUV(w2, y5)) << 1;
+					pattern |= ((w3 != w5) && DiffYUV(w3, y5)) << 2;
+					pattern |= ((w4 != w5) && DiffYUV(w4, y5)) << 3;
+					pattern |= ((w6 != w5) && DiffYUV(w6, y5)) << 4;
+					pattern |= ((w7 != w5) && DiffYUV(w7, y5)) << 5;
+					pattern |= ((w8 != w5) && DiffYUV(w8, y5)) << 6;
+					pattern |= ((w9 != w5) && DiffYUV(w9, y5)) << 7;
 				} else {
-					// Lazy Brightness
-					uint16_t b1 = inlineRGBtoBright(w1); uint16_t b2 = inlineRGBtoBright(w2); uint16_t b3 = inlineRGBtoBright(w3);
-					uint16_t b4 = inlineRGBtoBright(w4); uint16_t b5 = inlineRGBtoBright(w5); uint16_t b6 = inlineRGBtoBright(w6);
-					uint16_t b7 = inlineRGBtoBright(w7); uint16_t b8 = inlineRGBtoBright(w8); uint16_t b9 = inlineRGBtoBright(w9);
-
-					uint16_t avg = (b1 + b2 + b3 + b4 + b5 + b6 + b7 + b8 + b9) / 9;
+					uint16_t b5 = inlineRGBtoBright(w5);
+					uint16_t avg = ((inlineRGBtoBright(w1) + inlineRGBtoBright(w2) + inlineRGBtoBright(w3) +
+									 inlineRGBtoBright(w4) + b5 + inlineRGBtoBright(w6) +
+									 inlineRGBtoBright(w7) + inlineRGBtoBright(w8) + inlineRGBtoBright(w9)) * 7282) >> 16;
 					bool diff5 = (b5 > avg);
-					pattern  = ((b1 > avg) != diff5) << 0;
-					pattern |= ((b2 > avg) != diff5) << 1;
-					pattern |= ((b3 > avg) != diff5) << 2;
-					pattern |= ((b4 > avg) != diff5) << 3;
-					pattern |= ((b6 > avg) != diff5) << 4;
-					pattern |= ((b7 > avg) != diff5) << 5;
-					pattern |= ((b8 > avg) != diff5) << 6;
-					pattern |= ((b9 > avg) != diff5) << 7;
+
+					pattern  = ((inlineRGBtoBright(w1) > avg) != diff5) << 0;
+					pattern |= ((inlineRGBtoBright(w2) > avg) != diff5) << 1;
+					pattern |= ((inlineRGBtoBright(w3) > avg) != diff5) << 2;
+					pattern |= ((inlineRGBtoBright(w4) > avg) != diff5) << 3;
+					pattern |= ((inlineRGBtoBright(w6) > avg) != diff5) << 4;
+					pattern |= ((inlineRGBtoBright(w7) > avg) != diff5) << 5;
+					pattern |= ((inlineRGBtoBright(w8) > avg) != diff5) << 6;
+					pattern |= ((inlineRGBtoBright(w9) > avg) != diff5) << 7;
 				}
 
 				EVALUATE_HQ2X_SUBPIXELS();
 
-				w1 = w2; w4 = w5; w7 = w8; y1 = y2; y4 = y5; y7 = y8;
-				w2 = w3; w5 = w6; w8 = w9; y2 = y3; y5 = y6; y8 = y9;
+				w1 = w2; w4 = w5; w7 = w8;
+				w2 = w3; w5 = w6; w8 = w9;
 				dp += 2;
 			}
 			dp += ((dst1line - width) << 1);
