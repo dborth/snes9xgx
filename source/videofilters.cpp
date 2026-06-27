@@ -24,6 +24,11 @@
 static RenderFilter renderFilter = FILTER_NONE;
 TFilterMethod FilterMethod;
 
+// -------------------------------------------------------------------------
+// Micro-LUTs for fast Luma Calculation
+// Small memory footprint (fits comfortably in L1 Cache)
+// -------------------------------------------------------------------------
+
 // YUV fixed-point multiplication LUTs
 // Total Size: 1.5 KB (Locks permanently into 32KB L1 Data Cache)
 static int32_t y_r_lut[32] __attribute__((aligned(32)));
@@ -36,10 +41,42 @@ static int32_t v_r_lut[32] __attribute__((aligned(32)));
 static int32_t v_g_lut[64] __attribute__((aligned(32)));
 static int32_t v_b_lut[32] __attribute__((aligned(32)));
 
+// 2xBR Fast Luma LUTs
+static uint32_t xbr_luma_r_lut[32] __attribute__((aligned(32)));
+static uint32_t xbr_luma_g_lut[64] __attribute__((aligned(32)));
+static uint32_t xbr_luma_b_lut[32] __attribute__((aligned(32)));
+
+
+// DDT Fast Luma LUTs
+// 5-to-8 bit expansion pre-calculated with: 17 * R
+static const uint32_t ddt_luma_r_lut[32] = {
+	0, 136, 272, 425, 561, 697, 833, 986, 1122, 1258, 1394, 1530, 1683,
+	1819, 1955, 2091, 2244, 2380, 2516, 2652, 2805, 2941, 3077, 3213, 3349,
+	3502, 3638, 3774, 3910, 4063, 4199, 4335
+};
+
+// 6-to-8 bit expansion pre-calculated with: 28 * G
+static const uint32_t ddt_luma_g_lut[64] = {
+	0, 112, 224, 336, 448, 560, 672, 784, 896, 1008, 1120, 1260, 1372,
+	1484, 1596, 1708, 1820, 1932, 2044, 2156, 2268, 2380, 2492, 2604, 2716,
+	2828, 2940, 3052, 3164, 3276, 3388, 3500, 3640, 3752, 3864, 3976, 4088,
+	4200, 4312, 4424, 4536, 4648, 4760, 4872, 4984, 5096, 5208, 5320, 5432,
+	5544, 5656, 5768, 5880, 6020, 6132, 6244, 6356, 6468, 6580, 6692, 6804,
+	6916, 7028, 7140
+};
+
+// 5-to-8 bit expansion pre-calculated with: 8 * B - floor(B / 2)
+static const uint32_t ddt_luma_b_lut[32] = {
+	0, 60, 120, 188, 248, 308, 368, 435, 495, 555, 615, 675, 743, 803,
+	863, 923, 990, 1050, 1110, 1170, 1238, 1298, 1358, 1418, 1478, 1545,
+	1605, 1665, 1725, 1793, 1853, 1913
+};
+
 // Byuu's Symmetry Encoding Tables (512 Bytes Total)
 static uint8_t rotateTable[256] __attribute__((aligned(32)));
 static uint8_t hqTable[256] __attribute__((aligned(32)));
-static bool hq2x_initialized = false;
+
+static bool tables_initialized = false;
 
 // ------------------------------------------------------------------------------
 // HQ2X PER-PIXEL SIGNATURE RING
@@ -137,15 +174,20 @@ int GetFilterScale()
 	}
 }
 
-static void InitHQ2X() {
-	if (hq2x_initialized) return;
+static void InitFilterTables() {
+	if (tables_initialized) return;
 
 	for (int i = 0; i < 32; i++) {
 		y_r_lut[i] = 134632 * i; u_r_lut[i] = -77712 * i; v_r_lut[i] = 230272 * i;
 		y_b_lut[i] = 51328 * i; u_b_lut[i] = 230272 * i; v_b_lut[i] = -37448 * i;
+
+		// Populate xBR Luma LUTs
+		xbr_luma_r_lut[i] = i * 140;
+		xbr_luma_b_lut[i] = i * 62;
 	}
 	for (int i = 0; i < 64; i++) {
 		y_g_lut[i] = 132156 * i; u_g_lut[i] = -76284 * i; v_g_lut[i] = -96412 * i;
+		xbr_luma_g_lut[i] = i * 113;
 	}
 
 	const uint8_t base_hqTable[256] = {
@@ -173,7 +215,7 @@ static void InitHQ2X() {
 						 ((n & 0x01) << 5) | ((n & 0x08) << 3) |
 						 ((n & 0x10) >> 3) | ((n & 0x80) >> 5);
 	}
-	hq2x_initialized = true;
+	tables_initialized = true;
 }
 
 void SelectFilterMethod (int filterID)
@@ -181,11 +223,9 @@ void SelectFilterMethod (int filterID)
 	renderFilter = (RenderFilter)filterID;
 	FilterMethod = FilterToMethod(renderFilter);
 
-	if(renderFilter == FILTER_HQ2X || renderFilter == FILTER_HQ2XS || renderFilter == FILTER_HQ2XBOLD) {
-		// Handle menu transition. Next frame will fully render and resync filtermem.
-		invalidate_hashes = true;
-		InitHQ2X();
-	}
+	// Handle menu transition. Next frame will fully render and resync filtermem.
+	invalidate_hashes = true;
+	InitFilterTables();
 }
 
 static bool isValidDimensions (int width, int height) {
@@ -218,12 +258,13 @@ static inline uint32_t inlineRGBtoYUV(uint16_t c) {
 }
 
 // PowerPC rlwinm masks for 16-bit uints in 32-bit GPRs
+// Optimized with L1 Micro-LUTs to eliminate mullw cycle stalls
 static inline int RGB565_to_Lum(uint16_t c) {
 	uint32_t r, g, b;
 	__asm__ volatile ("rlwinm %0, %1, 21, 27, 31" : "=r"(r) : "r"(c)); // Red: shift right 11 -> rotate 21
 	__asm__ volatile ("rlwinm %0, %1, 27, 26, 31" : "=r"(g) : "r"(c)); // Green: shift right 5 -> rotate 27
 	__asm__ volatile ("rlwinm %0, %1, 0,  27, 31" : "=r"(b) : "r"(c)); // Blue: shift right 0 -> rotate 0
-	return (r * 140) + (g * 113) + (b * 62);
+	return xbr_luma_r_lut[r] + xbr_luma_g_lut[g] + xbr_luma_b_lut[b];
 }
 
 // YUV threshold compare on two ALREADY-CACHED packed YUV values
@@ -714,6 +755,8 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 {
 	if(!isValidDimensions(width, height)) return;
 
+	ComputeBlockDifferences(srcPtr, srcPitch, width, height);
+
 	uint32_t nextlineSrc = srcPitch / sizeof(uint16_t);
 	uint32_t nextlineDst = dstPitch / sizeof(uint16_t);
 
@@ -742,7 +785,19 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 		int tail = w & 7;
 		bool bot_aligned = (((uint32_t)(dp + nextlineDst) & 0x1F) == 0);
 
+		// Only allow chunk skipping if Phase 1 didn't offset us from the 8x8 grid
+		bool aligned_chunking = (((width - w) % 8) == 0);
+		int bx = (width - w) >> 3;
+		int by = y >> 3;
+
 		while (chunks--) {
+			if (aligned_chunking && !render_mask[by + 1][bx + 1]) {
+				p_top += 8; p_mid += 8; p_bot += 8; dp += 16;
+				D = p_mid[-1]; E = p_mid[0]; // Scale2X history is left and center
+				bx++;
+				continue;
+			}
+
 			__asm__ volatile ("dcbz 0, %0" :: "b" (dp) : "memory");
 			if (bot_aligned) {
 				__asm__ volatile ("dcbz 0, %0" :: "b" (dp + nextlineDst) : "memory");
@@ -752,6 +807,7 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 			for (int i = 0; i < 8; i++) {
 				PROCESS_SCALE2X_PIXEL();
 			}
+			bx++;
 		}
 
 		// Phase 3: Trailing pixels
@@ -954,6 +1010,8 @@ void Render2xBR (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 {
 	if(!isValidDimensions(width, height)) return;
 
+	ComputeBlockDifferences(srcPtr, srcPitch, width, height);
+
 	uint32_t wd1, wd2, irlv1, irlv2u, irlv2l, dFG, dHC;
 	uint16_t px;
 
@@ -965,7 +1023,7 @@ void Render2xBR (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 
 	uint16_t A, B, C, D, E, F, G, H, I;
 
-	while (height--) {
+	for (int y = 0; y < height; ++y) {
 		// Set up pointers for the 3 rows. Offset by -1 because we pre-prime A, D, G.
 		uint16_t *p_top = p_base - nextlineSrc;
 		uint16_t *p_mid = p_base;
@@ -1011,7 +1069,24 @@ void Render2xBR (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		int tail = w & 7;
 		bool bot_aligned = (((uint32_t)(Ep + nextlineDst) & 0x1F) == 0);
 
+		// Guard against misalignment
+		bool aligned_chunking = (((width - w) % 8) == 0);
+		int bx = (width - w) >> 3;
+		int by = y >> 3;
+
 		while (chunks--) {
+			if (aligned_chunking && !render_mask[by + 1][bx + 1]) {
+				p_top += 8; p_mid += 8; p_bot += 8; Ep += 16;
+
+				// To maintain history, A/D/G are offset -1, B/E/H are offset 0
+				A = p_top[-1]; B = p_top[0];
+				D = p_mid[-1]; E = p_mid[0];
+				G = p_bot[-1]; H = p_bot[0];
+
+				bx++;
+				continue;
+			}
+
 			// Memory clobbers prevent GCC from writing pixels before the cache block is zeroed
 			__asm__ volatile ("dcbz 0, %0" :: "b" (Ep) : "memory");
 			if (bot_aligned) {
@@ -1040,6 +1115,7 @@ void Render2xBR (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 				p_top++; p_mid++; p_bot++;
 				Ep += 2;
 			}
+			bx++;
 		}
 
 		// Phase 3: Trailing pixels
@@ -1078,6 +1154,8 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 {
 	if(!isValidDimensions(width, height)) return;
 
+	ComputeBlockDifferences(srcPtr, srcPitch, width, height);
+
 	uint32_t wd1, wd2, irlv1;
 	uint16_t px;
 
@@ -1089,7 +1167,7 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 
 	uint16_t A, B, C, D, E, F, G, H, I;
 
-	while (height--) {
+	for (int y = 0; y < height; ++y) {
 		uint16_t *p_top = p_base - nextlineSrc;
 		uint16_t *p_mid = p_base;
 		uint16_t *p_bot = p_base + nextlineSrc;
@@ -1129,7 +1207,23 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 		int tail = w & 7;
 		bool bot_aligned = (((uint32_t)(Ep + nextlineDst) & 0x1F) == 0);
 
+		// Guard against misalignment
+		bool aligned_chunking = (((width - w) % 8) == 0);
+		int bx = (width - w) >> 3;
+		int by = y >> 3;
+
 		while (chunks--) {
+			if (aligned_chunking && !render_mask[by + 1][bx + 1]) {
+				p_top += 8; p_mid += 8; p_bot += 8; Ep += 16;
+
+				A = p_top[-1]; B = p_top[0];
+				D = p_mid[-1]; E = p_mid[0];
+				G = p_bot[-1]; H = p_bot[0];
+
+				bx++;
+				continue;
+			}
+
 			__asm__ volatile ("dcbz 0, %0" :: "b" (Ep) : "memory");
 			if (bot_aligned) {
 				__asm__ volatile ("dcbz 0, %0" :: "b" (Ep + nextlineDst) : "memory");
@@ -1157,6 +1251,7 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 				p_top++; p_mid++; p_bot++;
 				Ep += 2;
 			}
+			bx++;
 		}
 
 		while (tail--) {
@@ -1186,40 +1281,11 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 	}
 }
 
-// -------------------------------------------------------------------------
-// Micro-LUTs for fast Luma Calculation
-// Total Memory Footprint: 512 Bytes (fits comfortably in L1 Cache)
-// -------------------------------------------------------------------------
-
-// 5-to-8 bit expansion pre-calculated with: 17 * R
-static const uint32_t luma_r_lut[32] = {
-	0, 136, 272, 425, 561, 697, 833, 986, 1122, 1258, 1394, 1530, 1683,
-	1819, 1955, 2091, 2244, 2380, 2516, 2652, 2805, 2941, 3077, 3213, 3349,
-	3502, 3638, 3774, 3910, 4063, 4199, 4335
-};
-
-// 6-to-8 bit expansion pre-calculated with: 28 * G
-static const uint32_t luma_g_lut[64] = {
-	0, 112, 224, 336, 448, 560, 672, 784, 896, 1008, 1120, 1260, 1372,
-	1484, 1596, 1708, 1820, 1932, 2044, 2156, 2268, 2380, 2492, 2604, 2716,
-	2828, 2940, 3052, 3164, 3276, 3388, 3500, 3640, 3752, 3864, 3976, 4088,
-	4200, 4312, 4424, 4536, 4648, 4760, 4872, 4984, 5096, 5208, 5320, 5432,
-	5544, 5656, 5768, 5880, 6020, 6132, 6244, 6356, 6468, 6580, 6692, 6804,
-	6916, 7028, 7140
-};
-
-// 5-to-8 bit expansion pre-calculated with: 8 * B - floor(B / 2)
-static const uint32_t luma_b_lut[32] = {
-	0, 60, 120, 188, 248, 308, 368, 435, 495, 555, 615, 675, 743, 803,
-	863, 923, 990, 1050, 1110, 1170, 1238, 1298, 1358, 1418, 1478, 1545,
-	1605, 1665, 1725, 1793, 1853, 1913
-};
-
 // GCC translates bitwise masking logic into fused 1-cycle rlwinm instructions
 static inline uint32_t ddt_fast_luma(uint16_t c) {
-	return luma_r_lut[(c >> 11) & 0x1F] +
-		   luma_g_lut[(c >>  5) & 0x3F] +
-		   luma_b_lut[ c        & 0x1F];
+	return  ddt_luma_r_lut[(c >> 11) & 0x1F] +
+			ddt_luma_g_lut[(c >>  5) & 0x3F] +
+			ddt_luma_b_lut[ c        & 0x1F];
 }
 
 // -------------------------------------------------------------------------
@@ -1261,6 +1327,8 @@ void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t ds
 {
 	if(!isValidDimensions(width, height)) return;
 
+	ComputeBlockDifferences(srcPtr, srcPitch, width, height);
+
 	uint32_t nextlineSrc = srcPitch / sizeof(uint16_t);
 	uint32_t nextlineDst = dstPitch / sizeof(uint16_t);
 
@@ -1288,7 +1356,20 @@ void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t ds
 		int tail = w & 7;
 		bool bot_aligned = (((uint32_t)(Ep + nextlineDst) & 0x1F) == 0);
 
+		// Guard against misalignment
+		bool aligned_chunking = (((width - w) % 8) == 0);
+		int bx = (width - w) >> 3;
+		int by = y >> 3;
+
 		while (chunks--) {
+			if (aligned_chunking && !render_mask[by + 1][bx + 1]) {
+				p_mid += 8; p_bot += 8; Ep += 16;
+				// DDT needs the current center pixels restored
+				E = p_mid[0]; H = p_bot[0];
+				bx++;
+				continue;
+			}
+
 			__asm__ volatile ("dcbz 0, %0" :: "b" (Ep) : "memory");
 			if (bot_aligned) {
 				__asm__ volatile ("dcbz 0, %0" :: "b" (Ep + nextlineDst) : "memory");
@@ -1298,6 +1379,7 @@ void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t ds
 			for (int i = 0; i < 8; i++) {
 				PROCESS_DDT_PIXEL();
 			}
+			bx++;
 		}
 
 		// Phase 3: Trailing pixels
