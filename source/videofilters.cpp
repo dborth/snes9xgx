@@ -251,8 +251,6 @@ static inline uint16_t Pack565(uint32_t up) {
 // uc/ucrn/us1/us2 are Unpack565() of the center / corner / side1 / side2 pixels.
 // The caller unpacks each of the nine window pixels ONCE per 2x2 block and
 // reuses them across all four subpixels, so no pixel is unpacked more than once.
-// Results are bit-identical to the canonical HQ2X blends: the per-op weights and
-// shifts are unchanged, and Pack565(Unpack565(x)) == x for any RGB565 value.
 static inline uint16_t BlendU(uint8_t op, uint32_t uc, uint32_t ucrn, uint32_t us1, uint32_t us2) {
 	switch(op) {
 		case 0:  return Pack565(uc);              // center unchanged
@@ -272,8 +270,7 @@ static inline uint16_t BlendU(uint8_t op, uint32_t uc, uint32_t ucrn, uint32_t u
 }
 
 // Resolve only the OP for a pattern+rule, given cached YUV signatures for the
-// dynamic edge rules. Logic is byte-for-byte the original EvalSubpixel rule
-// ladder; only the blending was split out (into BlendU) for unpack reuse.
+// dynamic edge rules.
 static inline uint8_t ResolveOp(uint8_t pat, uint32_t ds1, uint32_t ds2, uint32_t do1, uint32_t do2) {
 	uint8_t rule = hqTable[pat];
 	if (rule < 12) return rule;
@@ -433,35 +430,17 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 
 		// ---- Seed the horizontal sliding window at column x = 0 ----
         // Directly into the 32-bit unpacked SWAR state (no 16-bit variables kept)
+		// Initialize only the unpacked values in registers (avoids stack spilling)
 		uint32_t U1 = Unpack565(rowTop[0]), U2 = U1;
 		uint32_t U4 = Unpack565(rowMid[0]), U5 = U4;
 		uint32_t U7 = Unpack565(rowBot[0]), U8 = U7;
 
-		// Cached signatures for the same columns (guard cell at index 0):
-		uint32_t y1 = 0, y2 = 0, y4 = 0, y5 = 0, y7 = 0, y8 = 0;
-		uint16_t bb1 = 0, bb2 = 0, bb4 = 0, bb5 = 0, bb7 = 0, bb8 = 0;
-
-		if (USE_YUV) {
-			y1 = yTop[0]; y2 = yTop[0]; y4 = yMid[0]; y5 = yMid[0]; y7 = yBot[0]; y8 = yBot[0];
-		}
-
-		if (USE_BRIGHT) {
-			bb1 = bTop[0]; bb2 = bTop[0]; bb4 = bMid[0]; bb5 = bMid[0]; bb7 = bBot[0]; bb8 = bBot[0];
-		}
-
 		for (int x = 0; x < width; x++) {
-			// Bring in the new right column (clamp at the right edge).
-			int rx = (x + 1 < width) ? x + 1 : x;      // pixel index (clamped)
-			int gx = x + 2;                            // signature index (guard +1)
+			int rx = (x + 1 < width) ? x + 1 : x;
 
 			uint32_t U3 = Unpack565(rowTop[rx]);
 			uint32_t U6 = Unpack565(rowMid[rx]);
 			uint32_t U9 = Unpack565(rowBot[rx]);
-
-			uint32_t y3 = 0, y6 = 0, y9 = 0;
-			uint16_t bb3 = 0, bb6 = 0, bb9 = 0;
-			if (USE_YUV) { y3 = yTop[gx]; y6 = yMid[gx]; y9 = yBot[gx]; }
-			if (USE_BRIGHT) { bb3 = bTop[gx]; bb6 = bMid[gx]; bb9 = bBot[gx]; }
 
 			// ---- FLAT-BLOCK FAST PATH (bit-exact, all variants) --------
 			// If all nine window pixels are BIT-identical to the centre, the
@@ -487,92 +466,92 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 
 			if (flatBits == 0) {
 				uint16_t w5 = Pack565(U5);
-				dp[0]        = w5;
-				dp[1]        = w5;
-				dp[dst1line]  = w5;
+				dp[0]            = w5;
+				dp[1]            = w5;
+				dp[dst1line]     = w5;
 				dp[dst1line + 1] = w5;
 
 				// Slide the window/signatures so the next column is correct
 				U1 = U2; U4 = U5; U7 = U8;
 				U2 = U3; U5 = U6; U8 = U9;
-				if (USE_YUV) { y1 = y2; y4 = y5; y7 = y8; y2 = y3; y5 = y6; y8 = y9; }
-				if (USE_BRIGHT) { bb1 = bb2; bb4 = bb5; bb7 = bb8; bb2 = bb3; bb5 = bb6; bb8 = bb9; }
 				dp += 2;
 				continue;
 			}
 
-			// ---- Build the 8-bit edge pattern, per-variant (compile-time) ----
+			// Complex path: Fetch signatures from cache on-demand to save GPRs
+            // Guard cells at index 0 guarantee x, x+1, x+2 align to Left, Center, Right
 			uint32_t pattern = 0;
+			uint32_t c_y2 = 0, c_y4 = 0, c_y6 = 0, c_y8 = 0;
 
 			if (GuiScale == FILTER_HQ2X) {
 				// Standard: each neighbour's cached YUV vs center cached YUV
-				pattern  = DiffYUVCached(y1, y5) << 0;
-				pattern |= DiffYUVCached(y2, y5) << 1;
-				pattern |= DiffYUVCached(y3, y5) << 2;
-				pattern |= DiffYUVCached(y4, y5) << 3;
-				pattern |= DiffYUVCached(y6, y5) << 4;
-				pattern |= DiffYUVCached(y7, y5) << 5;
-				pattern |= DiffYUVCached(y8, y5) << 6;
-				pattern |= DiffYUVCached(y9, y5) << 7;
+				uint32_t y5 = yMid[x+1];
+				pattern  = DiffYUVCached(yTop[x], y5) << 0;
+				pattern |= DiffYUVCached(yTop[x+1], y5) << 1;
+				pattern |= DiffYUVCached(yTop[x+2], y5) << 2;
+				pattern |= DiffYUVCached(yMid[x], y5) << 3;
+				pattern |= DiffYUVCached(yMid[x+2], y5) << 4;
+				pattern |= DiffYUVCached(yBot[x], y5) << 5;
+				pattern |= DiffYUVCached(yBot[x+1], y5) << 6;
+				pattern |= DiffYUVCached(yBot[x+2], y5) << 7;
+				c_y2 = yTop[x+1]; c_y4 = yMid[x]; c_y6 = yMid[x+2]; c_y8 = yBot[x+1];
 			}
 			else if (GuiScale == FILTER_HQ2XBOLD) {
 				// Brightness vs 3x3 mean. sum<=9*186=1674; (sum*7282)>>16 ~= sum/9
-				uint32_t mean = ((uint32_t)(bb1 + bb2 + bb3 + bb4 + bb5 + bb6 + bb7 + bb8 + bb9) * 7282) >> 16;
-				bool c5 = (bb5 > mean);
-				pattern  = ((U1 != U5) && ((bb1 > mean) != c5)) << 0;
-				pattern |= ((U2 != U5) && ((bb2 > mean) != c5)) << 1;
-				pattern |= ((U3 != U5) && ((bb3 > mean) != c5)) << 2;
-				pattern |= ((U4 != U5) && ((bb4 > mean) != c5)) << 3;
-				pattern |= ((U6 != U5) && ((bb6 > mean) != c5)) << 4;
-				pattern |= ((U7 != U5) && ((bb7 > mean) != c5)) << 5;
-				pattern |= ((U8 != U5) && ((bb8 > mean) != c5)) << 6;
-				pattern |= ((U9 != U5) && ((bb9 > mean) != c5)) << 7;
+				uint32_t sum = bTop[x] + bTop[x+1] + bTop[x+2] +
+				               bMid[x] + bMid[x+1] + bMid[x+2] +
+				               bBot[x] + bBot[x+1] + bBot[x+2];
+				uint32_t mean = (sum * 7282) >> 16;
+				bool c5 = (bMid[x+1] > mean);
+				pattern  = ((U1 != U5) && ((bTop[x] > mean) != c5)) << 0;
+				pattern |= ((U2 != U5) && ((bTop[x+1] > mean) != c5)) << 1;
+				pattern |= ((U3 != U5) && ((bTop[x+2] > mean) != c5)) << 2;
+				pattern |= ((U4 != U5) && ((bMid[x] > mean) != c5)) << 3;
+				pattern |= ((U6 != U5) && ((bMid[x+2] > mean) != c5)) << 4;
+				pattern |= ((U7 != U5) && ((bBot[x] > mean) != c5)) << 5;
+				pattern |= ((U8 != U5) && ((bBot[x+1] > mean) != c5)) << 6;
+				pattern |= ((U9 != U5) && ((bBot[x+2] > mean) != c5)) << 7;
+
+				c_y2 = inlineRGBtoYUV(Pack565(U2));
+				c_y4 = inlineRGBtoYUV(Pack565(U4));
+				c_y6 = inlineRGBtoYUV(Pack565(U6));
+				c_y8 = inlineRGBtoYUV(Pack565(U8));
 			}
 			else { // FILTER_HQ2XS - hybrid
 				bool use_yuv = (U1 == U5) | (U3 == U5) | (U7 == U5) | (U9 == U5);
 				if (use_yuv) {
-					pattern  = DiffYUVCached(y1, y5) << 0;
-					pattern |= DiffYUVCached(y2, y5) << 1;
-					pattern |= DiffYUVCached(y3, y5) << 2;
-					pattern |= DiffYUVCached(y4, y5) << 3;
-					pattern |= DiffYUVCached(y6, y5) << 4;
-					pattern |= DiffYUVCached(y7, y5) << 5;
-					pattern |= DiffYUVCached(y8, y5) << 6;
-					pattern |= DiffYUVCached(y9, y5) << 7;
+					uint32_t y5 = yMid[x+1];
+					pattern  = DiffYUVCached(yTop[x], y5) << 0;
+					pattern |= DiffYUVCached(yTop[x+1], y5) << 1;
+					pattern |= DiffYUVCached(yTop[x+2], y5) << 2;
+					pattern |= DiffYUVCached(yMid[x], y5) << 3;
+					pattern |= DiffYUVCached(yMid[x+2], y5) << 4;
+					pattern |= DiffYUVCached(yBot[x], y5) << 5;
+					pattern |= DiffYUVCached(yBot[x+1], y5) << 6;
+					pattern |= DiffYUVCached(yBot[x+2], y5) << 7;
 				} else {
-	                uint32_t mean = ((uint32_t)(bb1 + bb2 + bb3 + bb4 + bb5 + bb6 + bb7 + bb8 + bb9) * 7282) >> 16;
-	                bool c5 = (bb5 > mean);
-	                pattern  = ((bb1 > mean) != c5) << 0;
-	                pattern |= ((bb2 > mean) != c5) << 1;
-	                pattern |= ((bb3 > mean) != c5) << 2;
-	                pattern |= ((bb4 > mean) != c5) << 3;
-	                pattern |= ((bb6 > mean) != c5) << 4;
-	                pattern |= ((bb7 > mean) != c5) << 5;
-	                pattern |= ((bb8 > mean) != c5) << 6;
-	                pattern |= ((bb9 > mean) != c5) << 7;
+					uint32_t sum = bTop[x] + bTop[x+1] + bTop[x+2] +
+					               bMid[x] + bMid[x+1] + bMid[x+2] +
+					               bBot[x] + bBot[x+1] + bBot[x+2];
+	                uint32_t mean = (sum * 7282) >> 16;
+	                bool c5 = (bMid[x+1] > mean);
+	                pattern  = ((bTop[x] > mean) != c5) << 0;
+	                pattern |= ((bTop[x+1] > mean) != c5) << 1;
+	                pattern |= ((bTop[x+2] > mean) != c5) << 2;
+	                pattern |= ((bMid[x] > mean) != c5) << 3;
+	                pattern |= ((bMid[x+2] > mean) != c5) << 4;
+	                pattern |= ((bBot[x] > mean) != c5) << 5;
+	                pattern |= ((bBot[x+1] > mean) != c5) << 6;
+	                pattern |= ((bBot[x+2] > mean) != c5) << 7;
 	            }
+	            c_y2 = yTop[x+1]; c_y4 = yMid[x]; c_y6 = yMid[x+2]; c_y8 = yBot[x+1];
 			}
 
-			// EvalSubpixel's edge sub-rules (12..19) always use YUV signatures
-			// of the four axis neighbours (w2,w4,w6,w8). HQ2X/HQ2XS already have
-			// these cached as y2/y4/y6/y8. BOLD does not maintain the YUV ring,
-			// so it builds those four on demand (edge rules are rare, so
-			// this is cheap and keeps the common paths zero-cost yet correct).
-			if (GuiScale == FILTER_HQ2XBOLD) {
-				uint32_t e2 = inlineRGBtoYUV(Pack565(U2));
-				uint32_t e4 = inlineRGBtoYUV(Pack565(U4));
-				uint32_t e6 = inlineRGBtoYUV(Pack565(U6));
-				uint32_t e8 = inlineRGBtoYUV(Pack565(U8));
-				EVALUATE_HQ2X_SUBPIXELS(e2, e4, e6, e8);
-			} else {
-				EVALUATE_HQ2X_SUBPIXELS(y2, y4, y6, y8);
-			}
+			EVALUATE_HQ2X_SUBPIXELS(c_y2, c_y4, c_y6, c_y8);
 
-			// ---- Slide the window one column to the right (register shuffle) ----
+			// Slide the window one column to the right (register shuffle)
 			U1 = U2; U4 = U5; U7 = U8;
 			U2 = U3; U5 = U6; U8 = U9;
-			if (USE_YUV) { y1 = y2; y4 = y5; y7 = y8; y2 = y3; y5 = y6; y8 = y9; }
-			if (USE_BRIGHT) { bb1 = bb2; bb4 = bb5; bb7 = bb8; bb2 = bb3; bb5 = bb6; bb8 = bb9; }
 
 			dp += 2;
 		}
@@ -585,6 +564,7 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		if (USE_BRIGHT) { uint16_t *t = bTop; bTop = bMid; bMid = bBot; bBot = t; }
 	}
 }
+
 // -------------------------------------------------------------------------
 // Optimized RenderScale2X (dcbz Chunking + Relative Pointer Sliding)
 // -------------------------------------------------------------------------
@@ -593,10 +573,13 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	uint32_t B = p_top[0]; \
 	uint32_t F = p_mid[1]; \
 	uint32_t H = p_bot[0]; \
-	uint32_t E0 = (D == B && B != F && D != H) ? D : E; \
-	uint32_t E1 = (B == F && B != D && F != H) ? F : E; \
-	uint32_t E2 = (D == H && D != B && H != F) ? D : E; \
-	uint32_t E3 = (H == F && D != H && B != F) ? F : E; \
+	uint32_t E0 = E, E1 = E, E2 = E, E3 = E; \
+	if (B != H && D != F) { \
+		if (D == B) E0 = D; \
+		if (B == F) E1 = F; \
+		if (D == H) E2 = D; \
+		if (H == F) E3 = F; \
+	} \
 	*(uint32_t*)&dp[0] = (E0 << 16) | E1; \
 	*(uint32_t*)&dp[nextlineDst] = (E2 << 16) | E3; \
 	D = E; E = F; \
