@@ -9,7 +9,7 @@
 ****************************************************************************/
 
 #include "videofilters.h"
-#include <gccore.h>
+#include <unistd.h>
 
 // SNES filtered-framebuffer limits. Hi-res (512-wide) modes are NOT routed
 // through these 2x filters, so 256 is the true maximum in both axes (the
@@ -223,7 +223,7 @@ void SelectFilterMethod (int filterID)
 	renderFilter = (RenderFilter)filterID;
 	FilterMethod = FilterToMethod(renderFilter);
 
-	// Handle menu transition. Next frame will fully render and resync filtermem.
+	// Handle menu transition. Next frame will fully render
 	invalidate_hashes = true;
 	InitFilterTables();
 }
@@ -233,53 +233,6 @@ static bool isValidDimensions (int width, int height) {
 		return false;
 	return true;
 }
-
-// Fixed Point Inlined Replacements for RGB Lookup Tables
-// Optimized Brightness using shifts instead of multiplication
-// 3R + 3G + B, range 0..186.
-static inline uint16_t inlineRGBtoBright(uint16_t c) {
-	uint32_t r = (c >> 11) & 0x1F;
-	uint32_t g = (c >> 5) & 0x3F;
-	uint32_t b = c & 0x1F;
-	return (r << 1) + r + (g << 1) + g + b;
-}
-
-// fast L1-cached LUT approach - avoids heavy multiplication stalls
-static inline uint32_t inlineRGBtoYUV(uint16_t c) {
-	uint32_t r_idx = c >> 11;
-	uint32_t g_idx = (c >> 5) & 0x3F;
-	uint32_t b_idx = c & 0x1F;
-
-	int32_t y = (y_r_lut[r_idx] + y_g_lut[g_idx] + y_b_lut[b_idx] + 32768) >> 16;
-	int32_t u = (u_r_lut[r_idx] + u_g_lut[g_idx] + u_b_lut[b_idx] + 32768) >> 16;
-	int32_t v = (v_r_lut[r_idx] + v_g_lut[g_idx] + v_b_lut[b_idx] + 32768) >> 16;
-
-	return (((y + 16) & 0xFF) << 16) | (((u + 128) & 0xFF) << 8) | ((v + 128) & 0xFF);
-}
-
-// PowerPC rlwinm masks for 16-bit uints in 32-bit GPRs
-// Optimized with L1 Micro-LUTs to eliminate mullw cycle stalls
-static inline int RGB565_to_Lum(uint16_t c) {
-	uint32_t r, g, b;
-	__asm__ volatile ("rlwinm %0, %1, 21, 27, 31" : "=r"(r) : "r"(c)); // Red: shift right 11 -> rotate 21
-	__asm__ volatile ("rlwinm %0, %1, 27, 26, 31" : "=r"(g) : "r"(c)); // Green: shift right 5 -> rotate 27
-	__asm__ volatile ("rlwinm %0, %1, 0,  27, 31" : "=r"(b) : "r"(c)); // Blue: shift right 0 -> rotate 0
-	return xbr_luma_r_lut[r] + xbr_luma_g_lut[g] + xbr_luma_b_lut[b];
-}
-
-// YUV threshold compare on two ALREADY-CACHED packed YUV values
-// Thresholds - 48/7/6
-static inline bool DiffYUVCached(uint32_t a, uint32_t b) {
-	if (a == b) return false;
-	uint32_t dy = __builtin_abs((int)((a >> 16) & 0xFF) - (int)((b >> 16) & 0xFF));
-	uint32_t du = __builtin_abs((int)((a >> 8) & 0xFF) - (int)((b >> 8) & 0xFF));
-	uint32_t dv = __builtin_abs((int)(a & 0xFF) - (int)(b & 0xFF));
-	return (dy > 48) | (du > 7) | (dv > 6);
-}
-
-//
-// HQ2X Filter Code:
-//
 
 // -------------------------------------------------------------------------
 // DEDUPLICATION PRE-PASS: Combined Compare & Copy
@@ -385,6 +338,43 @@ static inline uint16_t Pack565(uint32_t up) {
 	return (uint16_t)((up >> 16) & 0x07E0) | (uint16_t)(up & 0xF81F);
 }
 
+//
+// HQ2X Filter Code:
+//
+
+// Fixed Point Inlined Replacements for RGB Lookup Tables
+// Optimized Brightness using shifts instead of multiplication
+// 3R + 3G + B, range 0..186.
+static inline uint16_t inlineRGBtoBright(uint16_t c) {
+	uint32_t r = (c >> 11) & 0x1F;
+	uint32_t g = (c >> 5) & 0x3F;
+	uint32_t b = c & 0x1F;
+	return (r << 1) + r + (g << 1) + g + b;
+}
+
+// fast L1-cached LUT approach - avoids heavy multiplication stalls
+static inline uint32_t inlineRGBtoYUV(uint16_t c) {
+	uint32_t r_idx = c >> 11;
+	uint32_t g_idx = (c >> 5) & 0x3F;
+	uint32_t b_idx = c & 0x1F;
+
+	int32_t y = (y_r_lut[r_idx] + y_g_lut[g_idx] + y_b_lut[b_idx] + 32768) >> 16;
+	int32_t u = (u_r_lut[r_idx] + u_g_lut[g_idx] + u_b_lut[b_idx] + 32768) >> 16;
+	int32_t v = (v_r_lut[r_idx] + v_g_lut[g_idx] + v_b_lut[b_idx] + 32768) >> 16;
+
+	return (((y + 16) & 0xFF) << 16) | (((u + 128) & 0xFF) << 8) | ((v + 128) & 0xFF);
+}
+
+// YUV threshold compare on two ALREADY-CACHED packed YUV values
+// Thresholds - 48/7/6
+static inline bool DiffYUVCached(uint32_t a, uint32_t b) {
+	if (a == b) return false;
+	uint32_t dy = __builtin_abs((int)((a >> 16) & 0xFF) - (int)((b >> 16) & 0xFF));
+	uint32_t du = __builtin_abs((int)((a >> 8) & 0xFF) - (int)((b >> 8) & 0xFF));
+	uint32_t dv = __builtin_abs((int)(a & 0xFF) - (int)(b & 0xFF));
+	return (dy > 48) | (du > 7) | (dv > 6);
+}
+
 // HQ2X blend operator, UNPACKED SWAR domain (single source of truth).
 // uc/ucrn/us1/us2 are Unpack565() of the center / corner / side1 / side2 pixels.
 // The caller unpacks each of the nine window pixels ONCE per 2x2 block and
@@ -429,23 +419,6 @@ static inline uint8_t ResolveOp(uint8_t pat, uint32_t ds1, uint32_t ds2, uint32_
 		return DiffYUVCached(ds2, do2) ? 3 : 8;
 	}
 }
-
-// -------------------------------------------------------------------------
-// EMIT 2x2 BLOCK (Write Gather Pipe Optimized)
-// -------------------------------------------------------------------------
-// Passing the four signatures as macro args avoids any variable shadowing
-// between the YUV-ring path and the BOLD on-demand path.
-// On Big-Endian (PowerPC), a 32-bit store maps perfectly to two contiguous
-// 16-bit pixel writes, halving the write transactions across the bus.
-#define EVALUATE_HQ2X_SUBPIXELS(sig2, sig4, sig6, sig8) do { \
-	uint8_t p = pattern; \
-	uint16_t p0 = BlendU(ResolveOp(p, sig2, sig4, sig6, sig8), U5, U1, U2, U4); p = rotateTable[p]; \
-	uint16_t p1 = BlendU(ResolveOp(p, sig6, sig2, sig8, sig4), U5, U3, U6, U2); p = rotateTable[p]; \
-	uint16_t p3 = BlendU(ResolveOp(p, sig8, sig6, sig4, sig2), U5, U9, U8, U6); p = rotateTable[p]; \
-	uint16_t p2 = BlendU(ResolveOp(p, sig4, sig8, sig2, sig6), U5, U7, U4, U8); \
-	*(uint32_t*)(dp) = (p0 << 16) | p1; \
-	*(uint32_t*)(dp + dst1line) = (p2 << 16) | p3; \
-} while(0)
 
 // SIGNATURE ROW BUILDERS
 //
@@ -521,6 +494,7 @@ static inline void BuildBrtRow(uint16_t *dst, const uint16_t *src, const uint16_
 // is ~4.5 KB of rings + ~2 KB tables =~ 6.5 KB of 32 KB L1 - comfortably bounded.
 // isValidDimensions() rejects anything larger, so the footprint can never grow
 // beyond this.
+
 template<int GuiScale>
 void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height) {
 	if(!isValidDimensions(width, height)) return;
@@ -529,10 +503,8 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	ComputeBlockDifferences(srcPtr, srcPitch, width, height);
 
 	const uint32_t src1line = srcPitch >> 1;
-	const uint32_t dst1line = dstPitch >> 1;
-
+	uint32_t tile_row_pitch = width * 16;
 	uint16_t *srcBase = (uint16_t *)srcPtr;
-	uint16_t *dp      = (uint16_t *)dstPtr;
 
 	// Rolling YUV signature rows (used by HQ2X and HQ2XS).
 	uint32_t *yTop = yuvRowA, *yMid = yuvRowB, *yBot = yuvRowC;
@@ -550,11 +522,14 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	// run-length A2 still applies). yMid is built from the SAME row 0, so we
 	// hand it (srcBase, yTop) and A3 collapses it to a single memcpy.
 
-	if (USE_YUV) { BuildYuvRow(yTop, srcBase, nullptr, nullptr, width);
-				   BuildYuvRow(yMid, srcBase, srcBase, yTop, width); }
-
-	if (USE_BRIGHT) { BuildBrtRow(bTop, srcBase, nullptr, nullptr, width);
-					  BuildBrtRow(bMid, srcBase, srcBase, bTop, width); }
+	if (USE_YUV) {
+		BuildYuvRow(yTop, srcBase, nullptr, nullptr, width);
+		BuildYuvRow(yMid, srcBase, srcBase, yTop, width);
+	}
+	if (USE_BRIGHT) {
+		BuildBrtRow(bTop, srcBase, nullptr, nullptr, width);
+		BuildBrtRow(bMid, srcBase, srcBase, bTop, width);
+	}
 
 	for (int y = 0; y < height; y++) {
 		int by = y >> 3;
@@ -574,6 +549,9 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		if (y + 2 < height)
 			DCBT(rowBot + src1line);
 
+		bool y_is_even = ((y & 1) == 0);
+		uint8_t *tile_ptr = dstPtr + (y >> 1) * tile_row_pitch + (y_is_even ? 0 : 16);
+
 		// ---- Seed the horizontal sliding window at column x = 0 ----
         // Directly into the 32-bit unpacked SWAR state (no 16-bit variables kept)
 		// Initialize only the unpacked values in registers (avoids stack spilling)
@@ -588,9 +566,9 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			if (!render_mask[by + 1][bx + 1]) {
 				int skip_to = (bx + 1) << 3;
 				if (skip_to > width) skip_to = width;
-
-				int diff = skip_to - x;
-				dp += diff * 2;
+				
+				// Advance the swizzle tile pointer natively (diff is always even)
+				tile_ptr += ((skip_to - x) >> 1) * 32; 
 				x = skip_to - 1;
 
 				int left = x;
@@ -607,6 +585,8 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 			uint32_t U6 = Unpack565(rowMid[rx]);
 			uint32_t U9 = Unpack565(rowBot[rx]);
 
+			uint32_t w0, w1;
+			
 			// ---- FLAT-BLOCK FAST PATH (bit-exact, all variants) --------
 			// If all nine window pixels are BIT-identical to the centre, the
 			// 3x3 neighbourhood is uniform and canonical HQ2X emits the centre
@@ -631,97 +611,101 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 
 			if (flatBits == 0) {
 				uint16_t w5 = Pack565(U5);
-				uint32_t w32 = (w5 << 16) | w5; // WGP 32-bit optimization
-				*(uint32_t*)(dp) = w32;
-				*(uint32_t*)(dp + dst1line) = w32;
-
-				// Slide the window/signatures so the next column is correct
-				U1 = U2; U4 = U5; U7 = U8;
-				U2 = U3; U5 = U6; U8 = U9;
-				dp += 2;
-				continue;
-			}
-
-			// Complex path: Fetch signatures from cache on-demand to save GPRs
-            // Guard cells at index 0 guarantee x, x+1, x+2 align to Left, Center, Right
-			uint32_t pattern = 0;
-			uint32_t c_y2 = 0, c_y4 = 0, c_y6 = 0, c_y8 = 0;
-
-			if (GuiScale == FILTER_HQ2X) {
-				// Standard: each neighbour's cached YUV vs center cached YUV
-				uint32_t y5 = yMid[x+1];
-				pattern  = DiffYUVCached(yTop[x], y5) << 0;
-				pattern |= DiffYUVCached(yTop[x+1], y5) << 1;
-				pattern |= DiffYUVCached(yTop[x+2], y5) << 2;
-				pattern |= DiffYUVCached(yMid[x], y5) << 3;
-				pattern |= DiffYUVCached(yMid[x+2], y5) << 4;
-				pattern |= DiffYUVCached(yBot[x], y5) << 5;
-				pattern |= DiffYUVCached(yBot[x+1], y5) << 6;
-				pattern |= DiffYUVCached(yBot[x+2], y5) << 7;
-				c_y2 = yTop[x+1]; c_y4 = yMid[x]; c_y6 = yMid[x+2]; c_y8 = yBot[x+1];
-			}
-			else if (GuiScale == FILTER_HQ2XBOLD) {
-				// Brightness vs 3x3 mean. sum<=9*186=1674; (sum*7282)>>16 ~= sum/9
-				uint32_t sum = bTop[x] + bTop[x+1] + bTop[x+2] +
-				               bMid[x] + bMid[x+1] + bMid[x+2] +
-				               bBot[x] + bBot[x+1] + bBot[x+2];
-				uint32_t mean = (sum * 7282) >> 16;
-				bool c5 = (bMid[x+1] > mean);
-				pattern  = ((U1 != U5) && ((bTop[x] > mean) != c5)) << 0;
-				pattern |= ((U2 != U5) && ((bTop[x+1] > mean) != c5)) << 1;
-				pattern |= ((U3 != U5) && ((bTop[x+2] > mean) != c5)) << 2;
-				pattern |= ((U4 != U5) && ((bMid[x] > mean) != c5)) << 3;
-				pattern |= ((U6 != U5) && ((bMid[x+2] > mean) != c5)) << 4;
-				pattern |= ((U7 != U5) && ((bBot[x] > mean) != c5)) << 5;
-				pattern |= ((U8 != U5) && ((bBot[x+1] > mean) != c5)) << 6;
-				pattern |= ((U9 != U5) && ((bBot[x+2] > mean) != c5)) << 7;
-
-				c_y2 = inlineRGBtoYUV(Pack565(U2));
-				c_y4 = inlineRGBtoYUV(Pack565(U4));
-				c_y6 = inlineRGBtoYUV(Pack565(U6));
-				c_y8 = inlineRGBtoYUV(Pack565(U8));
-			}
-			else { // FILTER_HQ2XS - hybrid
-				bool use_yuv = (U1 == U5) | (U3 == U5) | (U7 == U5) | (U9 == U5);
-				if (use_yuv) {
+				w0 = w1 = (w5 << 16) | w5; // WGP 32-bit optimization
+			} else {
+				// Complex path: Fetch signatures from cache on-demand to save GPRs
+            	// Guard cells at index 0 guarantee x, x+1, x+2 align to Left, Center, Right
+				uint32_t pattern = 0;
+				uint32_t c_y2 = 0, c_y4 = 0, c_y6 = 0, c_y8 = 0;
+				if (GuiScale == FILTER_HQ2X) {
+					// Standard: each neighbour's cached YUV vs center cached YUV
 					uint32_t y5 = yMid[x+1];
-					pattern  = DiffYUVCached(yTop[x], y5) << 0;
-					pattern |= DiffYUVCached(yTop[x+1], y5) << 1;
-					pattern |= DiffYUVCached(yTop[x+2], y5) << 2;
-					pattern |= DiffYUVCached(yMid[x], y5) << 3;
-					pattern |= DiffYUVCached(yMid[x+2], y5) << 4;
-					pattern |= DiffYUVCached(yBot[x], y5) << 5;
-					pattern |= DiffYUVCached(yBot[x+1], y5) << 6;
-					pattern |= DiffYUVCached(yBot[x+2], y5) << 7;
-				} else {
-					uint32_t sum = bTop[x] + bTop[x+1] + bTop[x+2] +
-					               bMid[x] + bMid[x+1] + bMid[x+2] +
-					               bBot[x] + bBot[x+1] + bBot[x+2];
-	                uint32_t mean = (sum * 7282) >> 16;
-	                bool c5 = (bMid[x+1] > mean);
-	                pattern  = ((bTop[x] > mean) != c5) << 0;
-	                pattern |= ((bTop[x+1] > mean) != c5) << 1;
-	                pattern |= ((bTop[x+2] > mean) != c5) << 2;
-	                pattern |= ((bMid[x] > mean) != c5) << 3;
-	                pattern |= ((bMid[x+2] > mean) != c5) << 4;
-	                pattern |= ((bBot[x] > mean) != c5) << 5;
-	                pattern |= ((bBot[x+1] > mean) != c5) << 6;
-	                pattern |= ((bBot[x+2] > mean) != c5) << 7;
-	            }
-	            c_y2 = yTop[x+1]; c_y4 = yMid[x]; c_y6 = yMid[x+2]; c_y8 = yBot[x+1];
+					pattern  = 	DiffYUVCached(yTop[x], y5) 		<< 0 | 
+								DiffYUVCached(yTop[x+1], y5) 	<< 1 | 
+								DiffYUVCached(yTop[x+2], y5) 	<< 2 | 
+								DiffYUVCached(yMid[x], y5)		<< 3 | 
+								DiffYUVCached(yMid[x+2], y5) 	<< 4 | 
+								DiffYUVCached(yBot[x], y5) 		<< 5 | 
+								DiffYUVCached(yBot[x+1], y5) 	<< 6 |
+								DiffYUVCached(yBot[x+2], y5) 	<< 7;
+					c_y2 = yTop[x+1]; c_y4 = yMid[x]; c_y6 = yMid[x+2]; c_y8 = yBot[x+1];
+				} else if (GuiScale == FILTER_HQ2XBOLD) {
+					// Brightness vs 3x3 mean. sum<=9*186=1674; (sum*7282)>>16 ~= sum/9
+					uint32_t mean = ((	bTop[x] + bTop[x+1] + bTop[x+2] + 
+										bMid[x] + bMid[x+1] + bMid[x+2] + 
+										bBot[x] + bBot[x+1] + bBot[x+2]) * 7282) >> 16;
+					bool c5 = (bMid[x+1] > mean);
+					pattern  = 	((U1 != U5) && ((bTop[x] > mean) != c5)) 	<< 0 | 
+								((U2 != U5) && ((bTop[x+1] > mean) != c5)) 	<< 1 | 
+								((U3 != U5) && ((bTop[x+2] > mean) != c5)) 	<< 2 | 
+								((U4 != U5) && ((bMid[x] > mean) != c5)) 	<< 3 | 
+								((U6 != U5) && ((bMid[x+2] > mean) != c5)) 	<< 4 | 
+								((U7 != U5) && ((bBot[x] > mean) != c5)) 	<< 5 | 
+								((U8 != U5) && ((bBot[x+1] > mean) != c5)) 	<< 6 | 
+								((U9 != U5) && ((bBot[x+2] > mean) != c5)) 	<< 7;
+					
+					c_y2 = inlineRGBtoYUV(Pack565(U2));
+					c_y4 = inlineRGBtoYUV(Pack565(U4));
+					c_y6 = inlineRGBtoYUV(Pack565(U6));
+					c_y8 = inlineRGBtoYUV(Pack565(U8));
+				}
+				else { // FILTER_HQ2XS - hybrid
+					// use yuv
+					if ((U1 == U5) | (U3 == U5) | (U7 == U5) | (U9 == U5)) {
+						uint32_t y5 = yMid[x+1];
+						pattern  = 	DiffYUVCached(yTop[x], y5) 		<< 0 | 
+									DiffYUVCached(yTop[x+1], y5) 	<< 1 | 
+									DiffYUVCached(yTop[x+2], y5) 	<< 2 | 
+									DiffYUVCached(yMid[x], y5) 		<< 3 | 
+									DiffYUVCached(yMid[x+2], y5) 	<< 4 | 
+									DiffYUVCached(yBot[x], y5) 		<< 5 | 
+									DiffYUVCached(yBot[x+1], y5) 	<< 6 | 
+									DiffYUVCached(yBot[x+2], y5)	<< 7;
+					} else {
+						uint32_t mean = ((bTop[x] + bTop[x+1] + bTop[x+2] + 
+						bMid[x] + bMid[x+1] + bMid[x+2] + 
+						bBot[x] + bBot[x+1] + bBot[x+2]) * 7282) >> 16;
+						bool c5 = (bMid[x+1] > mean);
+						pattern  = 	((bTop[x] > mean) != c5) 	<< 0 | 
+									((bTop[x+1] > mean) != c5) 	<< 1 | 
+									((bTop[x+2] > mean) != c5) 	<< 2 | 
+									((bMid[x] > mean) != c5) 	<< 3 | 
+									((bMid[x+2] > mean) != c5) 	<< 4 | 
+									((bBot[x] > mean) != c5) 	<< 5 | 
+									((bBot[x+1] > mean) != c5) 	<< 6 | 
+									((bBot[x+2] > mean) != c5) 	<< 7;
+					}
+					c_y2 = yTop[x+1]; c_y4 = yMid[x]; c_y6 = yMid[x+2]; c_y8 = yBot[x+1];
+				}
+
+				// evaluate subpixels
+				uint8_t p = pattern;
+				uint16_t p0 = BlendU(ResolveOp(p, c_y2, c_y4, c_y6, c_y8), U5, U1, U2, U4); p = rotateTable[p];
+				uint16_t p1 = BlendU(ResolveOp(p, c_y6, c_y2, c_y8, c_y4), U5, U3, U6, U2); p = rotateTable[p];
+				uint16_t p3 = BlendU(ResolveOp(p, c_y8, c_y6, c_y4, c_y2), U5, U9, U8, U6); p = rotateTable[p];
+				uint16_t p2 = BlendU(ResolveOp(p, c_y4, c_y8, c_y2, c_y6), U5, U7, U4, U8);
+
+				// emit 2x2 block (Write Gather Pipe Optimized)
+				// On Big-Endian (PowerPC), a 32-bit store maps perfectly to two contiguous
+				// 16-bit pixel writes, halving the write transactions across the bus
+				w0 = (p0 << 16) | p1; w1 = (p2 << 16) | p3;
 			}
 
-			EVALUATE_HQ2X_SUBPIXELS(c_y2, c_y4, c_y6, c_y8);
+			// GX WGP Swizzle Routing (Alternating left/right tile writes)
+			if ((x & 1) == 0) {
+				if (y_is_even) { __asm__ volatile ("dcbz 0, %0" :: "b" (tile_ptr) : "memory"); }
+				*(uint32_t*)(tile_ptr + 0) = w0;
+				*(uint32_t*)(tile_ptr + 8) = w1;
+			} else {
+				*(uint32_t*)(tile_ptr + 4) = w0;
+				*(uint32_t*)(tile_ptr + 12) = w1;
+				tile_ptr += 32; // Advance tile after right-side pixel is written
+			}
 
 			// Slide the window one column to the right (register shuffle)
 			U1 = U2; U4 = U5; U7 = U8;
 			U2 = U3; U5 = U6; U8 = U9;
-
-			dp += 2;
 		}
-
-		// Advance destination by one output scanline (we wrote two rows).
-		dp += ((dst1line - (uint32_t)width) << 1);
 
 		// Rotate the signature rings: mid->top, bot->mid, reuse old top as bot.
 		if (USE_YUV) { uint32_t *t = yTop; yTop = yMid; yMid = yBot; yBot = t; }
@@ -730,10 +714,10 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 }
 
 // -------------------------------------------------------------------------
-// Optimized RenderScale2X (dcbz Chunking + Relative Pointer Sliding)
+// Optimized RenderScale2X
 // -------------------------------------------------------------------------
 
-#define PROCESS_SCALE2X_PIXEL() do { \
+#define PROCESS_SCALE2X_PIXEL(w0, w1) do { \
 	uint32_t B = p_top[0]; \
 	uint32_t F = p_mid[1]; \
 	uint32_t H = p_bot[0]; \
@@ -744,10 +728,10 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		if (D == H) E2 = D; \
 		if (H == F) E3 = F; \
 	} \
-	*(uint32_t*)&dp[0] = (E0 << 16) | E1; \
-	*(uint32_t*)&dp[nextlineDst] = (E2 << 16) | E3; \
+	w0 = (E0 << 16) | E1; \
+	w1 = (E2 << 16) | E3; \
 	D = E; E = F; \
-	p_top++; p_mid++; p_bot++; dp += 2; \
+	p_top++; p_mid++; p_bot++; \
 } while(0)
 
 template<int GuiScale>
@@ -758,65 +742,80 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 	ComputeBlockDifferences(srcPtr, srcPitch, width, height);
 
 	uint32_t nextlineSrc = srcPitch / sizeof(uint16_t);
-	uint32_t nextlineDst = dstPitch / sizeof(uint16_t);
+	uint32_t tile_row_pitch = width * 16;
 
 	uint16_t *src_base = (uint16_t *)srcPtr;
-	uint16_t *dst_base = (uint16_t *)dstPtr;
 
 	for (int y = 0; y < height; ++y) {
-		uint16_t *p_mid = src_base;
 		uint16_t *p_top = src_base - nextlineSrc;
+		uint16_t *p_mid = src_base;
 		uint16_t *p_bot = src_base + nextlineSrc;
-		uint16_t *dp = dst_base;
 
 		uint32_t D = p_mid[-1];
 		uint32_t E = p_mid[0];
 
-		int w = width;
-
-		// Phase 1: Unaligned leading pixels
-		while (((uint32_t)dp & 0x1F) != 0 && w > 0) {
-			PROCESS_SCALE2X_PIXEL();
-			w--;
-		}
-
-		// Phase 2: Cache-Aligned Chunking
-		int chunks = w >> 3;
-		int tail = w & 7;
-		bool bot_aligned = (((uint32_t)(dp + nextlineDst) & 0x1F) == 0);
-
-		// Only allow chunk skipping if Phase 1 didn't offset us from the 8x8 grid
-		bool aligned_chunking = (((width - w) % 8) == 0);
-		int bx = (width - w) >> 3;
+		bool y_is_even = ((y & 1) == 0);
 		int by = y >> 3;
 
+		uint8_t *tile_ptr = dstPtr + (y >> 1) * tile_row_pitch + (y_is_even ? 0 : 16);
+
+		int chunks = width >> 3;
+		int tail_pairs = (width & 7) >> 1;
+		int bx = 0;
+
+		// Phase 1: Cache-Aligned Chunking (Processing pairs of pixels)
 		while (chunks--) {
-			if (aligned_chunking && !render_mask[by + 1][bx + 1]) {
-				p_top += 8; p_mid += 8; p_bot += 8; dp += 16;
+			// Macro-Block Frame Skip Check (+1 offset due to padded grid)
+			if (!render_mask[by + 1][bx + 1]) {
+				p_top += 8; p_mid += 8; p_bot += 8;
 				D = p_mid[-1]; E = p_mid[0]; // Scale2X history is left and center
+				tile_ptr += 128;
 				bx++;
 				continue;
 			}
 
-			__asm__ volatile ("dcbz 0, %0" :: "b" (dp) : "memory");
-			if (bot_aligned) {
-				__asm__ volatile ("dcbz 0, %0" :: "b" (dp + nextlineDst) : "memory");
-			}
 			DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
 
-			for (int i = 0; i < 8; i++) {
-				PROCESS_SCALE2X_PIXEL();
+			for (int i = 0; i < 4; i++) {
+				if (y_is_even) {
+					__asm__ volatile ("dcbz 0, %0" :: "b" (tile_ptr) : "memory");
+				}
+
+				uint32_t w0, w1;
+
+				PROCESS_SCALE2X_PIXEL(w0, w1);
+				*(uint32_t*)(tile_ptr + 0) = w0;
+				*(uint32_t*)(tile_ptr + 8) = w1;
+
+				PROCESS_SCALE2X_PIXEL(w0, w1);
+				*(uint32_t*)(tile_ptr + 4) = w0;
+				*(uint32_t*)(tile_ptr + 12) = w1;
+
+				tile_ptr += 32;
 			}
 			bx++;
 		}
 
-		// Phase 3: Trailing pixels
-		while (tail--) {
-			PROCESS_SCALE2X_PIXEL();
+		// Phase 2: Trailing pixels (Pairs)
+		while (tail_pairs--) {
+			if (y_is_even) {
+				__asm__ volatile ("dcbz 0, %0" :: "b" (tile_ptr) : "memory");
+			}
+
+			uint32_t w0, w1;
+
+			PROCESS_SCALE2X_PIXEL(w0, w1);
+			*(uint32_t*)(tile_ptr + 0) = w0;
+			*(uint32_t*)(tile_ptr + 8) = w1;
+
+			PROCESS_SCALE2X_PIXEL(w0, w1);
+			*(uint32_t*)(tile_ptr + 4) = w0;
+			*(uint32_t*)(tile_ptr + 12) = w1;
+
+			tile_ptr += 32;
 		}
 
 		src_base += nextlineSrc;
-		dst_base += (nextlineDst << 1);
 	}
 }
 
@@ -844,10 +843,6 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 #define ALPHA_BLEND_224_W(dst, src) \
 	(dst) = Pack565((Unpack565(dst) + Unpack565(src) * 7) >> 3)
 
-// Custom blend weight (out of 32)
-#define ALPHA_BLEND_X_W(dst, src, weight) \
-	(dst) = Pack565((Unpack565(dst) * (32 - (weight)) + Unpack565(src) * (weight)) >> 5)
-
 // -------------------------------------------------------------------------
 // Scaling Kernel Matrix Routing Macros
 // -------------------------------------------------------------------------
@@ -867,25 +862,6 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 
 #define DIA_2X(N3, PIXEL)\
 	ALPHA_BLEND_128_W(Ep[N3], PIXEL); \
-
-#define BIL2X_ODD(PF, PH, PI, N1, N2, N3) \
-	ALPHA_BLEND_128_W(Ep[N1], PF); \
-	ALPHA_BLEND_128_W(Ep[N2], PH); \
-	Ep[N3] = Ep[N1]; \
-	aux = PH; \
-	ALPHA_BLEND_128_W(aux, PI); \
-	ALPHA_BLEND_128_W(Ep[N3], aux); \
-
-#define DDT2XBC_ODD(PF, PH, PI, N1, N2, N3) \
-	ALPHA_BLEND_128_W(Ep[N1], PF); \
-	ALPHA_BLEND_128_W(Ep[N2], PH); \
-	ALPHA_BLEND_128_W(Ep[N3], PI); \
-
-#define DDT2XD_ODD(PF, PH, N1, N2, N3) \
-	ALPHA_BLEND_128_W(Ep[N1], PF); \
-	ALPHA_BLEND_128_W(Ep[N2], PH); \
-	Ep[N3] = PF; \
-	ALPHA_BLEND_128_W(Ep[N3], PH); \
 
 // -------------------------------------------------------------------------
 // Branchless execution helpers for Gekko/Broadway pipeline optimization
@@ -930,6 +906,20 @@ static inline uint32_t branchless_abs_diff(uint32_t a, uint32_t b) {
 
 #define eq(lA, lB)\
 	(df(lA, lB) < 155)\
+	
+// PowerPC rlwinm masks for 16-bit uints in 32-bit GPRs
+// Optimized with L1 Micro-LUTs to eliminate mullw cycle stalls
+static inline int RGB565_to_Lum(uint16_t c) {
+	uint32_t r, g, b;
+	__asm__ volatile ("rlwinm %0, %1, 21, 27, 31" : "=r"(r) : "r"(c)); // Red: shift right 11 -> rotate 21
+	__asm__ volatile ("rlwinm %0, %1, 27, 26, 31" : "=r"(g) : "r"(c)); // Green: shift right 5 -> rotate 27
+	__asm__ volatile ("rlwinm %0, %1, 0,  27, 31" : "=r"(b) : "r"(c)); // Blue: shift right 0 -> rotate 0
+	return xbr_luma_r_lut[r] + xbr_luma_g_lut[g] + xbr_luma_b_lut[b];
+}
+	
+// -------------------------------------------------------------------------
+// Optimized Render2xBR
+// -------------------------------------------------------------------------
 
 // Pass pre-computed Luma values directly to avoid redundant RGB565_to_Lum calls
 #define XBR(PE, PI, PH, PF, PG, PC, PD, PB, PA, lPE, lPI, lPH, lPF, lPG, lPC, lPD, lPB, lPA, N0, N1, N2, N3) \
@@ -968,6 +958,129 @@ static inline uint32_t branchless_abs_diff(uint32_t a, uint32_t b) {
 		}\
 	}\
 
+// Only calculates Luma if an edge is detected
+#define PROCESS_2XBR_PIXEL(w0, w1) do { \
+	C = p_top[1]; F = p_mid[1]; I = p_bot[1]; \
+	uint16_t Ep[4] = {E, E, E, E}; \
+	if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
+		uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C); \
+		uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F); \
+		uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I); \
+		XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, 2, 3); \
+		XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, 2, 0, 3, 1); \
+		XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, 3, 2, 1, 0); \
+		XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, 3, 0, 2); \
+	} \
+	w0 = ((uint32_t)Ep[0] << 16) | Ep[1]; \
+	w1 = ((uint32_t)Ep[2] << 16) | Ep[3]; \
+	A=B; B=C; D=E; E=F; G=H; H=I; \
+	p_top++; p_mid++; p_bot++; \
+} while(0)
+
+template<int GuiScale>
+void Render2xBR (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
+{
+	if(!isValidDimensions(width, height)) return;
+
+	ComputeBlockDifferences(srcPtr, srcPitch, width, height);
+
+	uint32_t wd1, wd2, irlv1, irlv2u, irlv2l, dFG, dHC;
+	uint16_t px;
+
+	uint32_t nextlineSrc = srcPitch >> 1; // Convert pitch in bytes to pitch in uint16_t
+	uint32_t tile_row_pitch = width * 16;
+
+	uint16_t *p_base = (uint16_t *)srcPtr;
+	uint16_t A, B, C, D, E, F, G, H, I;
+
+	for (int y = 0; y < height; ++y) {
+		// Set up pointers for the 3 rows. Offset by -1 because we pre-prime A, D, G.
+		uint16_t *p_top = p_base - nextlineSrc;
+		uint16_t *p_mid = p_base;
+		uint16_t *p_bot = p_base + nextlineSrc;
+
+		// Prime the left side of the 3x3 sliding window
+		A = p_top[0]; B = p_top[1];
+		D = p_mid[0]; E = p_mid[1];
+		G = p_bot[0]; H = p_bot[1];
+
+		// Advance pointers so index 2 always points to the next new column
+		p_top++; p_mid++; p_bot++;
+
+		bool y_is_even = ((y & 1) == 0);
+		int by = y >> 3;
+
+		uint8_t *tile_ptr = dstPtr + (y >> 1) * tile_row_pitch + (y_is_even ? 0 : 16);
+
+		int chunks = width >> 3;
+		int tail_pairs = (width & 7) >> 1;
+		int bx = 0;
+
+		// Phase 1: Cache-Aligned Chunking
+		while (chunks--) {
+			// Macro-Block Frame Skip Check (+1 offset due to padded grid)
+			if (!render_mask[by + 1][bx + 1]) {
+				p_top += 8; p_mid += 8; p_bot += 8;
+
+				// Safely restore memory sliding window
+				A = p_top[-1]; B = p_top[0];
+				D = p_mid[-1]; E = p_mid[0];
+				G = p_bot[-1]; H = p_bot[0];
+
+				tile_ptr += 128;
+				bx++;
+				continue;
+			}
+
+			DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
+
+			for (int i = 0; i < 4; i++) {
+				if (y_is_even) {
+					__asm__ volatile ("dcbz 0, %0" :: "b" (tile_ptr) : "memory");
+				}
+
+				uint32_t w0, w1;
+
+				PROCESS_2XBR_PIXEL(w0, w1);
+				*(uint32_t*)(tile_ptr + 0) = w0;
+				*(uint32_t*)(tile_ptr + 8) = w1;
+
+				PROCESS_2XBR_PIXEL(w0, w1);
+				*(uint32_t*)(tile_ptr + 4) = w0;
+				*(uint32_t*)(tile_ptr + 12) = w1;
+
+				tile_ptr += 32;
+			}
+			bx++;
+		}
+
+		// Phase 2: Trailing pixels
+		while (tail_pairs--) {
+			if (y_is_even) {
+				__asm__ volatile ("dcbz 0, %0" :: "b" (tile_ptr) : "memory");
+			}
+
+			uint32_t w0, w1;
+
+			PROCESS_2XBR_PIXEL(w0, w1);
+			*(uint32_t*)(tile_ptr + 0) = w0;
+			*(uint32_t*)(tile_ptr + 8) = w1;
+
+			PROCESS_2XBR_PIXEL(w0, w1);
+			*(uint32_t*)(tile_ptr + 4) = w0;
+			*(uint32_t*)(tile_ptr + 12) = w1;
+
+			tile_ptr += 32;
+		}
+
+		p_base += nextlineSrc;
+	}
+}
+
+// -------------------------------------------------------------------------
+// Optimized Render2xBRlv1
+// -------------------------------------------------------------------------
+
 #define XBRLV1(PE, PI, PH, PF, PG, PC, PD, PB, PA, lPE, lPI, lPH, lPF, lPG, lPC, lPD, lPB, lPA, N0, N1, N2, N3) \
 	irlv1   = (PE!=PH && PE!=PF); \
 	if ( irlv1 )\
@@ -986,169 +1099,24 @@ static inline uint32_t branchless_abs_diff(uint32_t a, uint32_t b) {
 		}\
 	}\
 
-#define DDT(PE, PI, PH, PF, lPE, lPI, lPH, lPF, N0, N1, N2, N3) \
-		wd1 = (df(lPH,lPF)); \
-		wd2 = (df(lPE,lPI)); \
-	if (wd1>wd2)\
-	{\
-			DDT2XBC_ODD(PF, PH, PI, N1, N2, N3);\
-	}\
-	else if (wd1<wd2)\
-	{\
-			DDT2XD_ODD(PF, PH, N1, N2, N3);\
-	}\
-	else\
-	{\
-			BIL2X_ODD(PF, PH, PI, N1, N2, N3);\
-		}
+#define PROCESS_2XBRLV1_PIXEL(w0, w1) do { \
+	C = p_top[1]; F = p_mid[1]; I = p_bot[1]; \
+	uint16_t Ep[4] = {E, E, E, E}; \
+	if ( (E!=F || E!=D) && (E!=H || E!=B) ) { \
+		uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C); \
+		uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F); \
+		uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I); \
+		XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, 2, 3); \
+		XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, 2, 0, 3, 1); \
+		XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, 3, 2, 1, 0); \
+		XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, 3, 0, 2); \
+	} \
+	w0 = ((uint32_t)Ep[0] << 16) | Ep[1]; \
+	w1 = ((uint32_t)Ep[2] << 16) | Ep[3]; \
+	A=B; B=C; D=E; E=F; G=H; H=I; \
+	p_top++; p_mid++; p_bot++; \
+} while(0)
 
-// -------------------------------------------------------------------------
-// Optimized Render2xBR (Middle Ground: Lazy Luma + Memory-Safe DCBZ)
-// -------------------------------------------------------------------------
-template<int GuiScale>
-void Render2xBR (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
-{
-	if(!isValidDimensions(width, height)) return;
-
-	ComputeBlockDifferences(srcPtr, srcPitch, width, height);
-
-	uint32_t wd1, wd2, irlv1, irlv2u, irlv2l, dFG, dHC;
-	uint16_t px;
-
-	uint32_t nextlineSrc = srcPitch >> 1; // Convert pitch in bytes to pitch in uint16_t
-	uint32_t nextlineDst = dstPitch >> 1;
-
-	uint16_t *p_base = (uint16_t *)srcPtr;
-	uint16_t *Ep_base = (uint16_t *)dstPtr;
-
-	uint16_t A, B, C, D, E, F, G, H, I;
-
-	for (int y = 0; y < height; ++y) {
-		// Set up pointers for the 3 rows. Offset by -1 because we pre-prime A, D, G.
-		uint16_t *p_top = p_base - nextlineSrc;
-		uint16_t *p_mid = p_base;
-		uint16_t *p_bot = p_base + nextlineSrc;
-		uint16_t *Ep = Ep_base;
-
-		// Prime the left side of the 3x3 sliding window
-		A = p_top[0]; B = p_top[1];
-		D = p_mid[0]; E = p_mid[1];
-		G = p_bot[0]; H = p_bot[1];
-
-		// Advance pointers so index 2 always points to the next new column
-		p_top++; p_mid++; p_bot++;
-
-		int w = width;
-
-		// Phase 1: Unaligned leading pixels
-		while (((uint32_t)Ep & 0x1F) != 0 && w > 0) {
-			C = p_top[1]; F = p_mid[1]; I = p_bot[1];
-
-			uint32_t E32 = ((uint32_t)E << 16) | E;
-			*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
-
-			if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
-				// LAZY EVALUATION: Only calculate Luma if an edge is detected
-				uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
-				uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
-				uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
-
-				XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
-				XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
-				XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
-				XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
-			}
-
-			A=B; B=C; D=E; E=F; G=H; H=I;
-			p_top++; p_mid++; p_bot++;
-			Ep += 2; w--;
-		}
-
-		// Phase 2: Cache-Aligned Chunking
-		int chunks = w >> 3;
-		int tail = w & 7;
-		bool bot_aligned = (((uint32_t)(Ep + nextlineDst) & 0x1F) == 0);
-
-		// Guard against misalignment
-		bool aligned_chunking = (((width - w) % 8) == 0);
-		int bx = (width - w) >> 3;
-		int by = y >> 3;
-
-		while (chunks--) {
-			if (aligned_chunking && !render_mask[by + 1][bx + 1]) {
-				p_top += 8; p_mid += 8; p_bot += 8; Ep += 16;
-
-				// To maintain history, A/D/G are offset -1, B/E/H are offset 0
-				A = p_top[-1]; B = p_top[0];
-				D = p_mid[-1]; E = p_mid[0];
-				G = p_bot[-1]; H = p_bot[0];
-
-				bx++;
-				continue;
-			}
-
-			// Memory clobbers prevent GCC from writing pixels before the cache block is zeroed
-			__asm__ volatile ("dcbz 0, %0" :: "b" (Ep) : "memory");
-			if (bot_aligned) {
-				__asm__ volatile ("dcbz 0, %0" :: "b" (Ep + nextlineDst) : "memory");
-			}
-			DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
-
-			for (int i = 0; i < 8; i++) {
-				C = p_top[1]; F = p_mid[1]; I = p_bot[1];
-
-				uint32_t E32 = ((uint32_t)E << 16) | E;
-				*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
-
-				if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
-					uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
-					uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
-					uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
-
-					XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
-					XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
-					XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
-					XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
-				}
-
-				A=B; B=C; D=E; E=F; G=H; H=I;
-				p_top++; p_mid++; p_bot++;
-				Ep += 2;
-			}
-			bx++;
-		}
-
-		// Phase 3: Trailing pixels
-		while (tail--) {
-			C = p_top[1]; F = p_mid[1]; I = p_bot[1];
-
-			uint32_t E32 = ((uint32_t)E << 16) | E;
-			*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
-
-			if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
-				uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
-				uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
-				uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
-
-				XBR( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
-				XBR( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
-				XBR( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
-				XBR( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
-			}
-
-			A=B; B=C; D=E; E=F; G=H; H=I;
-			p_top++; p_mid++; p_bot++;
-			Ep += 2;
-		}
-
-		p_base += nextlineSrc;
-		Ep_base += nextlineDst << 1;
-	}
-}
-
-// -------------------------------------------------------------------------
-// Optimized Render2xBRlv1
-// -------------------------------------------------------------------------
 template<int GuiScale>
 void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height)
 {
@@ -1160,18 +1128,15 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 	uint16_t px;
 
 	uint32_t nextlineSrc = srcPitch >> 1;
-	uint32_t nextlineDst = dstPitch >> 1;
+	uint32_t tile_row_pitch = width * 16;
 
 	uint16_t *p_base = (uint16_t *)srcPtr;
-	uint16_t *Ep_base = (uint16_t *)dstPtr;
-
 	uint16_t A, B, C, D, E, F, G, H, I;
 
 	for (int y = 0; y < height; ++y) {
 		uint16_t *p_top = p_base - nextlineSrc;
 		uint16_t *p_mid = p_base;
 		uint16_t *p_bot = p_base + nextlineSrc;
-		uint16_t *Ep = Ep_base;
 
 		A = p_top[0]; B = p_top[1];
 		D = p_mid[0]; E = p_mid[1];
@@ -1179,107 +1144,78 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 
 		p_top++; p_mid++; p_bot++;
 
-		int w = width;
-
-		while (((uint32_t)Ep & 0x1F) != 0 && w > 0) {
-			C = p_top[1]; F = p_mid[1]; I = p_bot[1];
-
-			uint32_t E32 = ((uint32_t)E << 16) | E;
-			*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
-
-			if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
-				uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
-				uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
-				uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
-
-				XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
-				XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
-				XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
-				XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
-			}
-
-			A=B; B=C; D=E; E=F; G=H; H=I;
-			p_top++; p_mid++; p_bot++;
-			Ep += 2; w--;
-		}
-
-		int chunks = w >> 3;
-		int tail = w & 7;
-		bool bot_aligned = (((uint32_t)(Ep + nextlineDst) & 0x1F) == 0);
-
-		// Guard against misalignment
-		bool aligned_chunking = (((width - w) % 8) == 0);
-		int bx = (width - w) >> 3;
+		bool y_is_even = ((y & 1) == 0);
 		int by = y >> 3;
 
+		uint8_t *tile_ptr = dstPtr + (y >> 1) * tile_row_pitch + (y_is_even ? 0 : 16);
+
+		int chunks = width >> 3;
+		int tail_pairs = (width & 7) >> 1;
+		int bx = 0;
+
+		// Phase 1: Cache-Aligned Chunking
 		while (chunks--) {
-			if (aligned_chunking && !render_mask[by + 1][bx + 1]) {
-				p_top += 8; p_mid += 8; p_bot += 8; Ep += 16;
+			// Macro-Block Frame Skip Check (+1 offset due to padded grid)
+			if (!render_mask[by + 1][bx + 1]) {
+				p_top += 8; p_mid += 8; p_bot += 8;
 
 				A = p_top[-1]; B = p_top[0];
 				D = p_mid[-1]; E = p_mid[0];
 				G = p_bot[-1]; H = p_bot[0];
 
+				tile_ptr += 128;
 				bx++;
 				continue;
 			}
 
-			__asm__ volatile ("dcbz 0, %0" :: "b" (Ep) : "memory");
-			if (bot_aligned) {
-				__asm__ volatile ("dcbz 0, %0" :: "b" (Ep + nextlineDst) : "memory");
-			}
 			DCBT(p_top + 16); DCBT(p_mid + 16); DCBT(p_bot + 16);
 
-			for (int i = 0; i < 8; i++) {
-				C = p_top[1]; F = p_mid[1]; I = p_bot[1];
-
-				uint32_t E32 = ((uint32_t)E << 16) | E;
-				*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
-
-				if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
-					uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
-					uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
-					uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
-
-					XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
-					XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
-					XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
-					XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+			for (int i = 0; i < 4; i++) {
+				if (y_is_even) {
+					__asm__ volatile ("dcbz 0, %0" :: "b" (tile_ptr) : "memory");
 				}
 
-				A=B; B=C; D=E; E=F; G=H; H=I;
-				p_top++; p_mid++; p_bot++;
-				Ep += 2;
+				uint32_t w0, w1;
+
+				PROCESS_2XBRLV1_PIXEL(w0, w1);
+				*(uint32_t*)(tile_ptr + 0) = w0;
+				*(uint32_t*)(tile_ptr + 8) = w1;
+
+				PROCESS_2XBRLV1_PIXEL(w0, w1);
+				*(uint32_t*)(tile_ptr + 4) = w0;
+				*(uint32_t*)(tile_ptr + 12) = w1;
+
+				tile_ptr += 32;
 			}
 			bx++;
 		}
 
-		while (tail--) {
-			C = p_top[1]; F = p_mid[1]; I = p_bot[1];
-
-			uint32_t E32 = ((uint32_t)E << 16) | E;
-			*(uint32_t*)&Ep[0] = E32; *(uint32_t*)&Ep[nextlineDst] = E32;
-
-			if ( (E!=F || E!=D) && (E!=H || E!=B) ) {
-				uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B); uint32_t lC = RGB565_to_Lum(C);
-				uint32_t lD = RGB565_to_Lum(D); uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
-				uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H); uint32_t lI = RGB565_to_Lum(I);
-
-				XBRLV1( E, I, H, F, G, C, D, B, A, lE, lI, lH, lF, lG, lC, lD, lB, lA, 0, 1, nextlineDst, nextlineDst + 1);
-				XBRLV1( E, C, F, B, I, A, H, D, G, lE, lC, lF, lB, lI, lA, lH, lD, lG, nextlineDst, 0, nextlineDst + 1, 1);
-				XBRLV1( E, A, B, D, C, G, F, H, I, lE, lA, lB, lD, lC, lG, lF, lH, lI, nextlineDst + 1, nextlineDst, 1, 0);
-				XBRLV1( E, G, D, H, A, I, B, F, C, lE, lG, lD, lH, lA, lI, lB, lF, lC, 1, nextlineDst + 1, 0, nextlineDst);
+		// Phase 2: Trailing pixels
+		while (tail_pairs--) {
+			if (y_is_even) {
+				__asm__ volatile ("dcbz 0, %0" :: "b" (tile_ptr) : "memory");
 			}
 
-			A=B; B=C; D=E; E=F; G=H; H=I;
-			p_top++; p_mid++; p_bot++;
-			Ep += 2;
+			uint32_t w0, w1;
+
+			PROCESS_2XBRLV1_PIXEL(w0, w1);
+			*(uint32_t*)(tile_ptr + 0) = w0;
+			*(uint32_t*)(tile_ptr + 8) = w1;
+
+			PROCESS_2XBRLV1_PIXEL(w0, w1);
+			*(uint32_t*)(tile_ptr + 4) = w0;
+			*(uint32_t*)(tile_ptr + 12) = w1;
+
+			tile_ptr += 32;
 		}
 
 		p_base += nextlineSrc;
-		Ep_base += nextlineDst << 1;
 	}
 }
+
+// -------------------------------------------------------------------------
+// Optimized RenderDDT
+// -------------------------------------------------------------------------
 
 // GCC translates bitwise masking logic into fused 1-cycle rlwinm instructions
 static inline uint32_t ddt_fast_luma(uint16_t c) {
@@ -1289,36 +1225,39 @@ static inline uint32_t ddt_fast_luma(uint16_t c) {
 }
 
 // -------------------------------------------------------------------------
-// Optimized RenderDDT (dcbz Chunking + Relative Pointer Sliding)
+// Direct-to-Texture SWAR Blending
 // -------------------------------------------------------------------------
 
-#define PROCESS_DDT_PIXEL() do { \
+#define PROCESS_DDT_PIXEL(w0, w1) do { \
 	uint16_t F = p_mid[1]; \
 	uint16_t I = p_bot[1]; \
+	uint16_t out00 = E, out01 = E, out10 = E, out11 = E; \
 	if (E != F || E != H || F != I || H != I) { \
 		uint32_t lE = ddt_fast_luma(E); \
 		uint32_t lH = ddt_fast_luma(H); \
 		uint32_t lF = ddt_fast_luma(F); \
 		uint32_t lI = ddt_fast_luma(I); \
-		Ep[0] = E; Ep[1] = E; \
-		Ep[nextlineDst] = E; Ep[nextlineDst + 1] = E; \
-		uint32_t wd1 = __builtin_abs((int)lH - (int)lF); \
-		uint32_t wd2 = __builtin_abs((int)lE - (int)lI); \
-		uint16_t aux; \
+		uint32_t wd1 = df(lH, lF); \
+		uint32_t wd2 = df(lE, lI); \
 		if (wd1 > wd2) { \
-			DDT2XBC_ODD(F, H, I, 1, nextlineDst, nextlineDst + 1); \
+			out01 = Pack565((Unpack565(E) + Unpack565(F)) >> 1); \
+			out10 = Pack565((Unpack565(E) + Unpack565(H)) >> 1); \
+			out11 = Pack565((Unpack565(E) + Unpack565(I)) >> 1); \
 		} else if (wd1 < wd2) { \
-			DDT2XD_ODD(F, H, 1, nextlineDst, nextlineDst + 1); \
+			out01 = Pack565((Unpack565(E) + Unpack565(F)) >> 1); \
+			out10 = Pack565((Unpack565(E) + Unpack565(H)) >> 1); \
+			out11 = Pack565((Unpack565(F) + Unpack565(H)) >> 1); \
 		} else { \
-			BIL2X_ODD(F, H, I, 1, nextlineDst, nextlineDst + 1); \
+			out01 = Pack565((Unpack565(E) + Unpack565(F)) >> 1); \
+			out10 = Pack565((Unpack565(E) + Unpack565(H)) >> 1); \
+			uint16_t aux = Pack565((Unpack565(H) + Unpack565(I)) >> 1); \
+			out11 = Pack565((Unpack565(out01) + Unpack565(aux)) >> 1); \
 		} \
-	} else { \
-		uint32_t E32 = ((uint32_t)E << 16) | E; \
-		*(uint32_t*)&Ep[0] = E32; \
-		*(uint32_t*)&Ep[nextlineDst] = E32; \
 	} \
+	w0 = ((uint32_t)out00 << 16) | out01; \
+	w1 = ((uint32_t)out10 << 16) | out11; \
 	E = F; H = I; \
-	p_mid++; p_bot++; Ep += 2; \
+	p_mid++; p_bot++; \
 } while(0)
 
 
@@ -1330,64 +1269,89 @@ void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t ds
 	ComputeBlockDifferences(srcPtr, srcPitch, width, height);
 
 	uint32_t nextlineSrc = srcPitch / sizeof(uint16_t);
-	uint32_t nextlineDst = dstPitch / sizeof(uint16_t);
 
-	uint16_t *p_base  = (uint16_t *)srcPtr;
-	uint16_t *Ep_base = (uint16_t *)dstPtr;
+	// Pre-calculate tile row pitch. width is console resolution, scaled is width*2.
+	// (width*2 / 4) tiles per row * 32 bytes per tile = width * 16
+	uint32_t tile_row_pitch = width * 16;
+
+	uint16_t *p_base = (uint16_t *)srcPtr;
 
 	for (int y = 0; y < height; ++y) {
 		uint16_t *p_mid = p_base;
 		uint16_t *p_bot = p_base + nextlineSrc;
-		uint16_t *Ep    = Ep_base;
 
 		uint16_t E = p_mid[0];
 		uint16_t H = p_bot[0];
 
-		int w = width;
-
-		// Phase 1: Unaligned leading pixels
-		while (((uint32_t)Ep & 0x1F) != 0 && w > 0) {
-			PROCESS_DDT_PIXEL();
-			w--;
-		}
-
-		// Phase 2: Cache-Aligned Chunking
-		int chunks = w >> 3;
-		int tail = w & 7;
-		bool bot_aligned = (((uint32_t)(Ep + nextlineDst) & 0x1F) == 0);
-
-		// Guard against misalignment
-		bool aligned_chunking = (((width - w) % 8) == 0);
-		int bx = (width - w) >> 3;
+		bool y_is_even = ((y & 1) == 0);
 		int by = y >> 3;
 
+		// Base pointer for this scanline's tiles
+		// If odd row, offset by 16 bytes to write to the bottom half of the 32-byte tile
+		uint8_t *tile_ptr = dstPtr + (y >> 1) * tile_row_pitch + (y_is_even ? 0 : 16);
+
+		int chunks = width >> 3;
+		int tail_pairs = (width & 7) >> 1;
+		int bx = 0;
+
+		// Phase 1: Cache-Aligned Chunking (Processing pairs of pixels per iteration)
 		while (chunks--) {
-			if (aligned_chunking && !render_mask[by + 1][bx + 1]) {
-				p_mid += 8; p_bot += 8; Ep += 16;
+			// Macro-Block Frame Skip Check (+1 offset due to padded grid)
+			if (!render_mask[by + 1][bx + 1]) {
+				p_mid += 8; p_bot += 8;
 				// DDT needs the current center pixels restored
 				E = p_mid[0]; H = p_bot[0];
+				tile_ptr += 128; // 4 tiles * 32 bytes = 128 bytes
 				bx++;
 				continue;
 			}
 
-			__asm__ volatile ("dcbz 0, %0" :: "b" (Ep) : "memory");
-			if (bot_aligned) {
-				__asm__ volatile ("dcbz 0, %0" :: "b" (Ep + nextlineDst) : "memory");
-			}
 			DCBT(p_mid + 16); DCBT(p_bot + 16);
 
-			for (int i = 0; i < 8; i++) {
-				PROCESS_DDT_PIXEL();
+			// Unroll processing 8 source pixels (4 pairs)
+			for (int i = 0; i < 4; i++) {
+				// Only zero the cache line when starting the top half of the tile
+				if (y_is_even) {
+					__asm__ volatile ("dcbz 0, %0" :: "b" (tile_ptr) : "memory");
+				}
+
+				uint32_t w0, w1;
+
+				// Pixel 1 (Even x) -> Writes to left side of tile (Offsets 0, 8)
+				PROCESS_DDT_PIXEL(w0, w1);
+				*(uint32_t*)(tile_ptr + 0) = w0;
+				*(uint32_t*)(tile_ptr + 8) = w1;
+
+				// Pixel 2 (Odd x) -> Writes to right side of tile (Offsets 4, 12)
+				PROCESS_DDT_PIXEL(w0, w1);
+				*(uint32_t*)(tile_ptr + 4) = w0;
+				*(uint32_t*)(tile_ptr + 12) = w1;
+
+				// Advance to the next 4x4 tile
+				tile_ptr += 32;
 			}
 			bx++;
 		}
 
-		// Phase 3: Trailing pixels
-		while (tail--) {
-			PROCESS_DDT_PIXEL();
+		// Phase 2: Trailing pixels (Guaranteed to be pairs because width is div by 4)
+		while (tail_pairs--) {
+			if (y_is_even) {
+				__asm__ volatile ("dcbz 0, %0" :: "b" (tile_ptr) : "memory");
+			}
+
+			uint32_t w0, w1;
+
+			PROCESS_DDT_PIXEL(w0, w1);
+			*(uint32_t*)(tile_ptr + 0) = w0;
+			*(uint32_t*)(tile_ptr + 8) = w1;
+
+			PROCESS_DDT_PIXEL(w0, w1);
+			*(uint32_t*)(tile_ptr + 4) = w0;
+			*(uint32_t*)(tile_ptr + 12) = w1;
+
+			tile_ptr += 32;
 		}
 
-		p_base  += nextlineSrc;
-		Ep_base += (nextlineDst << 1);
+		p_base += nextlineSrc;
 	}
 }

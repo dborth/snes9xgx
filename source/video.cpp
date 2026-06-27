@@ -43,10 +43,8 @@ extern void UpdatePlaybackRate(void);
 #define EXT_OFFSET (EXT_PITCH * 2 + 2 * 2)
 
 #define SNES9XGFX_SIZE 		(EXT_PITCH*EXT_HEIGHT)
-#define FILTERMEM_SIZE 		(512*MAX_SNES_HEIGHT*4)
 
 static unsigned char * snes9xgfx = NULL;
-unsigned char * filtermem = NULL; // only want ((512*2) X (239*2))
 
 /*** 2D Video ***/
 static u32 *xfb[2] = { NULL, NULL }; // Double buffered
@@ -117,7 +115,6 @@ static camera cam = {
 	{0.0F, 0.5F, 0.0F},
 	{0.0F, 0.0F, -0.5F}
 };
-
 
 /*** Custom Video modes (used to emulate original console video modes) ***/
 
@@ -879,84 +876,6 @@ void MakeTexturePitch1032(const void *src, void *dst, s32 width, s32 height)
 }
 
 /****************************************************************************
- * MakeTexturePitch1014
-
- * High-performance texture swizzling (Linear to 4x4 Tiled)
- * Specifically optimized for 1024-byte stride (Standard scaled buffers)
- * - Zero-padding optimization: Assumes contiguous 1024-byte row strides
- * - Eliminates read-modify-write penalties using dcbz block zeroing
- * - Interleaved instruction scheduling to maximize Broadway pipeline occupancy
- * - Static offset addressing enables superscalar execution
- * COMPATIBILITY:
- * - Drop-in replacement for standard swizzling routines
- * - Requires width and height divisible by 4
- * - Assumes 16-bit RGB565 format (2 bytes per pixel)
- * ASSUMPTIONS:
- * - Source buffer is standard packed linear memory
- * - Destination pointer is aligned to 32-byte boundary
- ***************************************************************************/
-
-void MakeTexturePitch1024(const void *src, void *dst, s32 width, s32 height)
-{
-    u32 r_src_row=0, tmpA=0, tmpB=0, tmpC=0, tmpD=0;
-
-    __asm__ __volatile__ (
-        "srwi   %[width], %[width], 2\n"       
-        "srwi   %[height], %[height], 2\n"     
-
-    "2: mtctr   %[width]\n"                    
-        "mr     %[r_src_row], %[src]\n"        
-
-    "1: dcbz    0, %[dst]\n"                   // ZERO L1 CACHE: Dest is perfectly aligned
-
-        // -- Load Tile Half 1 --
-        "lwz    %[tmpA], 0(%[src])\n"
-        "lwz    %[tmpB], 4(%[src])\n"
-        "lwz    %[tmpC], 1024(%[src])\n"
-        "lwz    %[tmpD], 1028(%[src])\n"
-
-        // -- Interleaved Load/Store --
-        "stw    %[tmpA], 0(%[dst])\n"
-        "lwz    %[tmpA], 2048(%[src])\n"
-
-        "stw    %[tmpB], 4(%[dst])\n"
-        "lwz    %[tmpB], 2052(%[src])\n"
-
-        "stw    %[tmpC], 8(%[dst])\n"
-        "lwz    %[tmpC], 3072(%[src])\n"
-
-        "stw    %[tmpD], 12(%[dst])\n"
-        "lwz    %[tmpD], 3076(%[src])\n"
-
-        // -- Store Half 2 --
-        "stw    %[tmpA], 16(%[dst])\n"
-        "stw    %[tmpB], 20(%[dst])\n"
-        "stw    %[tmpC], 24(%[dst])\n"
-        "stw    %[tmpD], 28(%[dst])\n"
-
-        "addi   %[src], %[src], 8\n"           
-        "addi   %[dst], %[dst], 32\n"          
-        "bdnz   1b\n"                          
-
-        "addi   %[src], %[r_src_row], 4096\n"  // Jump 4 rows down (1024 * 4)
-        "subic. %[height], %[height], 1\n"     
-        "bne    2b"                            
-
-        : [r_src_row] "=&b" (r_src_row),
-          [tmpA] "=&r" (tmpA),
-          [tmpB] "=&r" (tmpB),
-          [tmpC] "=&r" (tmpC),
-          [tmpD] "=&r" (tmpD),
-          [dst] "+b" (dst),
-          [src] "+b" (src),
-          [width] "+r" (width),
-          [height] "+r" (height)
-        :
-        : "memory"
-    );
-}
-
-/****************************************************************************
  * Update Video
  ***************************************************************************/
 uint32 prevRenderedFrameCount = 0;
@@ -997,9 +916,7 @@ update_video (int width, int height)
 			fscale = 1;
 #endif
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
-#ifdef HW_RVL
-		memset(filtermem, 0, FILTERMEM_SIZE);
-#endif
+
 		/** Update scaling **/
 		if (GCSettings.render == RENDER_ORIGINAL)	// original render mode
 		{
@@ -1073,8 +990,7 @@ update_video (int width, int height)
 		GCSettings.FilterMethod != FILTER_SCANLINES &&
 		vheight <= 239 && vwidth <= 256)	// don't do filtering on game textures > 256 x 239
 	{
-		FilterMethod ((uint8*) GFX.Screen, EXT_PITCH, (uint8*) filtermem, vwidth*fscale*2, vwidth, vheight);
-		MakeTexturePitch1024((char *) filtermem, (char *) texturemem, vwidth*fscale, vheight*fscale);
+		FilterMethod ((uint8*) GFX.Screen, EXT_PITCH, (uint8*) texturemem, vwidth*fscale*2, vwidth, vheight);
 	}
 	else
 #endif
@@ -1132,11 +1048,6 @@ void AllocGfxMem()
 {
 	snes9xgfx = (unsigned char *)memalign(32, SNES9XGFX_SIZE);
 	memset(snes9xgfx, 0, SNES9XGFX_SIZE);
-
-#ifdef HW_RVL
-	filtermem = (unsigned char *)memalign(32, FILTERMEM_SIZE);
-	memset(filtermem, 0, FILTERMEM_SIZE);
-#endif
 
 	GFX.Pitch = EXT_PITCH;
 	GFX.Screen = (uint16*)(snes9xgfx + EXT_OFFSET);
