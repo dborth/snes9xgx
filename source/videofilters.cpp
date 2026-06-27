@@ -69,6 +69,16 @@ static uint16_t brtRowA[MAX_WIDTH + 2] __attribute__((aligned(32)));
 static uint16_t brtRowB[MAX_WIDTH + 2] __attribute__((aligned(32)));
 static uint16_t brtRowC[MAX_WIDTH + 2] __attribute__((aligned(32)));
 
+// ------------------------------------------------------------------------------
+// MACRO-BLOCK DEDUPLICATION STATE
+// ------------------------------------------------------------------------------
+// Padded to 34x34 to allow branchless dirty dilation (no bounds checking)
+static bool render_mask[34][34] __attribute__((aligned(32)));
+static bool invalidate_hashes = true; // Forces a full render on first pass or res change
+
+// 128KB static buffer to hold the raw frame. Aligned to 32 bytes for cache.
+static uint16_t previousEmuScreen[MAX_HEIGHT * MAX_WIDTH] __attribute__((aligned(32)));
+
 template<int GuiScale> void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height);
 template<int GuiScale> void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height);
 template<int GuiScale> void Render2xBR (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height);
@@ -172,6 +182,8 @@ void SelectFilterMethod (int filterID)
 	FilterMethod = FilterToMethod(renderFilter);
 
 	if(renderFilter == FILTER_HQ2X || renderFilter == FILTER_HQ2XS || renderFilter == FILTER_HQ2XBOLD) {
+		// Handle menu transition. Next frame will fully render and resync filtermem.
+		invalidate_hashes = true;
 		InitHQ2X();
 	}
 }
@@ -227,6 +239,91 @@ static inline bool DiffYUVCached(uint32_t a, uint32_t b) {
 //
 // HQ2X Filter Code:
 //
+
+// -------------------------------------------------------------------------
+// DEDUPLICATION PRE-PASS: Combined Compare & Copy
+// -------------------------------------------------------------------------
+static inline void ComputeBlockDifferences(const uint8_t* srcPtr, uint32_t srcPitch, int width, int height) {
+	static int prev_width = 0;
+	static int prev_height = 0;
+
+	// If the emulator changes resolution, clear the previous buffer
+	if (width != prev_width || height != prev_height || invalidate_hashes) {
+		__builtin_memset(previousEmuScreen, 0, sizeof(previousEmuScreen));
+		invalidate_hashes = true;
+		prev_width = width;
+		prev_height = height;
+	}
+
+	int blocks_w = (width + 7) >> 3;
+	int blocks_h = (height + 7) >> 3;
+
+	// Clear mask. Padded to 34x34 to allow branchless assignments.
+	__builtin_memset(render_mask, 0, sizeof(render_mask));
+
+	bool force = invalidate_hashes;
+	invalidate_hashes = false;
+
+	bool dirty[34][34] = {false};
+	const uint32_t prevPitch = MAX_WIDTH * 2; // Prev buffer is fixed width
+
+	// Pass 1: Compare Blocks and Copy if Dirty
+	for (int by = 0; by < blocks_h; by++) {
+		const uint8_t* row_base = srcPtr + (by << 3) * srcPitch;
+		uint8_t* prev_row_base  = (uint8_t*)previousEmuScreen + (by << 3) * prevPitch;
+
+		for (int bx = 0; bx < blocks_w; bx++) {
+			const uint32_t* block_ptr = (const uint32_t*)row_base;
+			uint32_t* prev_ptr        = (uint32_t*)prev_row_base;
+			bool is_dirty = force;
+
+			// Exact memory comparison reading 16 bytes (four 32-bit ints) per row
+			if (!is_dirty) {
+				for (int y = 0; y < 8 && ((by << 3) + y) < height; y++) {
+					if (block_ptr[0] != prev_ptr[0] || block_ptr[1] != prev_ptr[1] ||
+					    block_ptr[2] != prev_ptr[2] || block_ptr[3] != prev_ptr[3]) {
+						is_dirty = true;
+						break;
+					}
+					block_ptr = (const uint32_t*)((const uint8_t*)block_ptr + srcPitch);
+					prev_ptr  = (uint32_t*)((uint8_t*)prev_ptr + prevPitch);
+				}
+			}
+
+			// If block changed, flag dirty AND update previous buffer immediately
+			if (is_dirty) {
+				dirty[by + 1][bx + 1] = true;
+
+				block_ptr = (const uint32_t*)row_base;
+				prev_ptr  = (uint32_t*)prev_row_base;
+
+				for (int y = 0; y < 8 && ((by << 3) + y) < height; y++) {
+					prev_ptr[0] = block_ptr[0];
+					prev_ptr[1] = block_ptr[1];
+					prev_ptr[2] = block_ptr[2];
+					prev_ptr[3] = block_ptr[3];
+					block_ptr = (const uint32_t*)((const uint8_t*)block_ptr + srcPitch);
+					prev_ptr  = (uint32_t*)((uint8_t*)prev_ptr + prevPitch);
+				}
+			}
+
+			row_base += 16;
+			prev_row_base += 16;
+		}
+	}
+
+	// Pass 2: Branchless Dirty Dilation
+	// Unconditionally set the 3x3 footprint for any dirty block to solve HQ2X seams
+	for (int by = 1; by <= blocks_h; by++) {
+		for (int bx = 1; bx <= blocks_w; bx++) {
+			if (dirty[by][bx]) {
+				render_mask[by-1][bx-1] = true; render_mask[by-1][bx] = true; render_mask[by-1][bx+1] = true;
+				render_mask[by  ][bx-1] = true; render_mask[by  ][bx] = true; render_mask[by  ][bx+1] = true;
+				render_mask[by+1][bx-1] = true; render_mask[by+1][bx] = true; render_mask[by+1][bx+1] = true;
+			}
+		}
+	}
+}
 
 // -------------------------------------------------------------------------
 // Highly Optimized C++ SWAR Interpolation (SIMD Within A Register)
@@ -292,18 +389,21 @@ static inline uint8_t ResolveOp(uint8_t pat, uint32_t ds1, uint32_t ds2, uint32_
 	}
 }
 
-//
 // -------------------------------------------------------------------------
-// EMIT 2x2 BLOCK
+// EMIT 2x2 BLOCK (Write Gather Pipe Optimized)
 // -------------------------------------------------------------------------
 // Passing the four signatures as macro args avoids any variable shadowing
 // between the YUV-ring path and the BOLD on-demand path.
+// On Big-Endian (PowerPC), a 32-bit store maps perfectly to two contiguous
+// 16-bit pixel writes, halving the write transactions across the bus.
 #define EVALUATE_HQ2X_SUBPIXELS(sig2, sig4, sig6, sig8) do { \
 	uint8_t p = pattern; \
-	*(dp)                = BlendU(ResolveOp(p, sig2, sig4, sig6, sig8), U5, U1, U2, U4); p = rotateTable[p]; \
-	*(dp + 1)            = BlendU(ResolveOp(p, sig6, sig2, sig8, sig4), U5, U3, U6, U2); p = rotateTable[p]; \
-	*(dp + dst1line + 1) = BlendU(ResolveOp(p, sig8, sig6, sig4, sig2), U5, U9, U8, U6); p = rotateTable[p]; \
-	*(dp + dst1line)     = BlendU(ResolveOp(p, sig4, sig8, sig2, sig6), U5, U7, U4, U8); \
+	uint16_t p0 = BlendU(ResolveOp(p, sig2, sig4, sig6, sig8), U5, U1, U2, U4); p = rotateTable[p]; \
+	uint16_t p1 = BlendU(ResolveOp(p, sig6, sig2, sig8, sig4), U5, U3, U6, U2); p = rotateTable[p]; \
+	uint16_t p3 = BlendU(ResolveOp(p, sig8, sig6, sig4, sig2), U5, U9, U8, U6); p = rotateTable[p]; \
+	uint16_t p2 = BlendU(ResolveOp(p, sig4, sig8, sig2, sig6), U5, U7, U4, U8); \
+	*(uint32_t*)(dp) = (p0 << 16) | p1; \
+	*(uint32_t*)(dp + dst1line) = (p2 << 16) | p3; \
 } while(0)
 
 // SIGNATURE ROW BUILDERS
@@ -384,6 +484,9 @@ template<int GuiScale>
 void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height) {
 	if(!isValidDimensions(width, height)) return;
 
+	// Execute Pre-Pass Deduplication (Combined Exact Compare & Copy)
+	ComputeBlockDifferences(srcPtr, srcPitch, width, height);
+
 	const uint32_t src1line = srcPitch >> 1;
 	const uint32_t dst1line = dstPitch >> 1;
 
@@ -413,6 +516,8 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 					  BuildBrtRow(bMid, srcBase, srcBase, bTop, width); }
 
 	for (int y = 0; y < height; y++) {
+		int by = y >> 3;
+
 		const uint16_t *rowMid = srcBase + (uint32_t)y * src1line;
 		const uint16_t *rowTop = (y > 0) ? rowMid - src1line : rowMid;
 		const uint16_t *rowBot = (y + 1 < height) ? rowMid + src1line : rowMid;
@@ -436,6 +541,25 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 		uint32_t U7 = Unpack565(rowBot[0]), U8 = U7;
 
 		for (int x = 0; x < width; x++) {
+			int bx = x >> 3;
+
+			// Macro-Block Frame Skip Check (+1 offset due to padded grid)
+			if (!render_mask[by + 1][bx + 1]) {
+				int skip_to = (bx + 1) << 3;
+				if (skip_to > width) skip_to = width;
+
+				int diff = skip_to - x;
+				dp += diff * 2;
+				x = skip_to - 1;
+
+				int left = x;
+				int center = (skip_to < width) ? skip_to : width - 1;
+
+				U1 = Unpack565(rowTop[left]); U4 = Unpack565(rowMid[left]); U7 = Unpack565(rowBot[left]);
+				U2 = Unpack565(rowTop[center]); U5 = Unpack565(rowMid[center]); U8 = Unpack565(rowBot[center]);
+				continue;
+			}
+
 			int rx = (x + 1 < width) ? x + 1 : x;
 
 			uint32_t U3 = Unpack565(rowTop[rx]);
@@ -466,10 +590,9 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 
 			if (flatBits == 0) {
 				uint16_t w5 = Pack565(U5);
-				dp[0]            = w5;
-				dp[1]            = w5;
-				dp[dst1line]     = w5;
-				dp[dst1line + 1] = w5;
+				uint32_t w32 = (w5 << 16) | w5; // WGP 32-bit optimization
+				*(uint32_t*)(dp) = w32;
+				*(uint32_t*)(dp + dst1line) = w32;
 
 				// Slide the window/signatures so the next column is correct
 				U1 = U2; U4 = U5; U7 = U8;
