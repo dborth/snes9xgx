@@ -4,22 +4,15 @@
  * softdev July 2006
  * crunchy2 May 2007
  * Michniewski 2008
- * Tantric 2008-2023
+ * Tantric 2008-2026
  *
  * s9xsupport.cpp
  *
  * Snes9x support functions
  ***************************************************************************/
 
-#include <gccore.h>
-#include <ogcsys.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <ogc/lwp_watchdog.h>
 
-#include "snes9x/port.h"
 #include "snes9xgx.h"
 #include "video.h"
 #include "audio.h"
@@ -34,6 +27,53 @@
 
 static long long prev;
 static long long now;
+
+/****************************************************************************
+ * setFrameTimerMethod()
+ * change frametimer method depending on whether ROM is NTSC or PAL
+ ***************************************************************************/
+
+void setFrameTimerMethod()
+{
+	/*
+	Set frametimer method
+	(timerstyle: 0=NTSC vblank, 1=PAL int timer)
+	*/
+	if ( Settings.PAL ) {
+		if(vmode_60hz)
+			timerstyle = 1;
+		else
+			timerstyle = 0;
+	} else {
+		if(vmode_60hz)
+			timerstyle = 0;
+		else
+			timerstyle = 1;
+	}
+	return;
+}
+
+void InitializeSnes9x() {
+	S9xUnmapAllControls ();
+	SetDefaultButtonMap ();
+
+	// Allocate SNES Memory
+	if (!Memory.Init ())
+		ExitApp();
+
+	// Allocate APU
+	if (!S9xInitAPU ())
+		ExitApp();
+
+	S9xInitSound (64, 0); // Initialise Sound System
+
+	// Initialise Graphics
+	setGFX ();
+	if (!S9xGraphicsInit ())
+		ExitApp();
+
+	AllocGfxMem();
+}
 
 /*** Miscellaneous Functions ***/
 void S9xExit()
@@ -73,7 +113,6 @@ void S9xToggleSoundChannel(int c)
  ***************************************************************************/
 bool8 S9xOpenSoundDevice(void)
 {
-	InitAudio();
 	return TRUE;
 }
 

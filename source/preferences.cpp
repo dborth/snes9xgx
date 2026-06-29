@@ -17,6 +17,7 @@
 #include <mxml.h>
 
 #include "snes9xgx.h"
+#include "system.h"
 #include "menu.h"
 #include "fileop.h"
 #include "videofilters.h"

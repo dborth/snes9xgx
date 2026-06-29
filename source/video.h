@@ -18,7 +18,7 @@
 #include "snes9x/snes9x.h"
 
 void AllocGfxMem();
-void InitGCVideo ();
+void InitVideo ();
 void StopGX();
 void ResetVideo_Emu();
 void setGFX();
@@ -39,6 +39,7 @@ extern int gameScreenPngSize;
 extern u32 FrameTimer;
 extern bool vmode_60hz;
 extern int timerstyle;
+extern uint32 prevRenderedFrameCount;
 extern int CheckVideo;
 
 #endif
