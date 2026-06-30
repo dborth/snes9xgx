@@ -295,13 +295,17 @@ void SystemExit(int exitAction, bool autoloadedGame)
 }
 
 typedef enum {
+#ifdef HW_DOL
     CONSOLE_GAMECUBE,
+#else
     CONSOLE_WII,
 	CONSOLE_WIIU_VWII,
 	CONSOLE_WIIU_WIIVC,
 	CONSOLE_DOLPHIN
+#endif
 } ConsoleType;
 
+#ifdef HW_RVL
 static inline bool IsWiiUFastCPU() {
 	return ((*(vu16*)0xCD8005A0 == 0xCAFE) && ((*(vu32*)0xCD8005B0 & 0x20) == 0));
 }
@@ -316,7 +320,7 @@ static inline bool IsDolphinEmulator() {
 
     return false;
 }
-
+#endif
 static ConsoleType GetConsoleType() {
 #ifdef HW_DOL
 	return CONSOLE_GAMECUBE;
@@ -338,10 +342,10 @@ static ConsoleType GetConsoleType() {
 }
 
 static const char* GetCPUSpeed(ConsoleType type) {
+#ifdef HW_DOL
+	return "486 MHz"; // GameCube "Gekko" CPU
+#else
 	switch(type) {
-		case CONSOLE_GAMECUBE:
-			return "486 MHz"; // GameCube "Gekko" CPU
-
 		case CONSOLE_WII:
 		case CONSOLE_WIIU_VWII:
 			return "729 MHz"; // Wii "Broadway" CPU (vWii mode is throttled to this by default)
@@ -355,6 +359,7 @@ static const char* GetCPUSpeed(ConsoleType type) {
 		default:
 			return "729 MHz";
 	}
+#endif
 }
 
 char * getConsoleDetails() {
@@ -362,26 +367,26 @@ char * getConsoleDetails() {
     ConsoleType type = GetConsoleType();
     const char *cpu_speed = GetCPUSpeed(type);
 
-    switch(type) {
-        case CONSOLE_GAMECUBE:
-            snprintf(description, sizeof(description), "GameCube (%s)", cpu_speed);
-            break;
+#ifdef HW_DOL
+    snprintf(description, sizeof(description), "GameCube (%s)", cpu_speed);
+#else
+	switch(type) {
+		case CONSOLE_WII:
+			snprintf(description, sizeof(description), "Wii (%s), IOS: %d", cpu_speed, IOS_GetVersion());
+			break;
 
-        case CONSOLE_WII:
-            snprintf(description, sizeof(description), "Wii (%s), IOS: %d", cpu_speed, IOS_GetVersion());
-            break;
+		case CONSOLE_WIIU_VWII:
+			snprintf(description, sizeof(description), "vWii (%s), IOS: %d", cpu_speed, IOS_GetVersion());
+			break;
 
-        case CONSOLE_WIIU_VWII:
-            snprintf(description, sizeof(description), "vWii (%s), IOS: %d", cpu_speed, IOS_GetVersion());
-            break;
+		case CONSOLE_WIIU_WIIVC:
+			snprintf(description, sizeof(description), "Wii U VC (%s), IOS: %d", cpu_speed, IOS_GetVersion());
+			break;
 
-        case CONSOLE_WIIU_WIIVC:
-            snprintf(description, sizeof(description), "Wii U VC (%s), IOS: %d", cpu_speed, IOS_GetVersion());
-            break;
-
-        case CONSOLE_DOLPHIN:
+		case CONSOLE_DOLPHIN:
 			snprintf(description, sizeof(description), "Dolphin Emulator");
 			break;
+#endif
     }
 
     return description;
@@ -395,15 +400,15 @@ char * getMemoryFreeInfo() {
 
     ConsoleType type = GetConsoleType();
 
-    if (type == CONSOLE_GAMECUBE) {
-        snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM1 free: %.2fMB", mem1_mb);
-    } else {
+#ifdef HW_DOL
+    snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM1 free: %.2fMB", mem1_mb);
+
+#else
         uint32_t mem2_bytes = SYS_GetArena2Size();
         float mem2_mb = (float)mem2_bytes / (1024.0f * 1024.0f);
-
         snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM1 free: %.2fMB, MEM2 free: %.2fMB", mem1_mb, mem2_mb);
     }
-
+#endif
     return memoryFreeInfo;
 }
 
