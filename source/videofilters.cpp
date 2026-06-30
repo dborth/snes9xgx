@@ -1240,32 +1240,15 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 // RenderDDT
 // -------------------------------------------------------------------------
 
-// GCC translates bitwise masking logic into fused 1-cycle rlwinm instructions
-static inline uint32_t ddt_fast_luma(uint16_t c) {
-	return  ddt_luma_r_lut[(c >> 11) & 0x1F] +
-			ddt_luma_g_lut[(c >>  5) & 0x3F] +
-			ddt_luma_b_lut[ c        & 0x1F];
-}
-
 // -------------------------------------------------------------------------
 // BRANCHLESS SWAR EVALUATOR: DDT
 // -------------------------------------------------------------------------
 
-// Safe, branchless Manhattan distance calculator for packed RGB565 pixels.
-// Prevents the unsigned underflow that ruins edge detection logic.
-static inline uint32_t BranchlessColorDiff565(uint32_t p1, uint32_t p2) __attribute__((always_inline));
-static inline uint32_t BranchlessColorDiff565(uint32_t p1, uint32_t p2) {
-	int32_t r = (p1 >> 11) - (p2 >> 11);
-	int32_t g = ((p1 >> 5) & 0x3F) - ((p2 >> 5) & 0x3F);
-	int32_t b = (p1 & 0x1F) - (p2 & 0x1F);
-
-	// Fast branchless absolute value: (v + (v >> 31)) ^ (v >> 31)
-	uint32_t abs_r = (r + (r >> 31)) ^ (r >> 31);
-	uint32_t abs_g = (g + (g >> 31)) ^ (g >> 31);
-	uint32_t abs_b = (b + (b >> 31)) ^ (b >> 31);
-
-	// Weight Green slightly higher to approximate human Luma perception naturally
-	return abs_r + (abs_g << 1) + abs_b;
+static inline uint32_t ddt_fast_luma(uint16_t c) __attribute__((always_inline));
+static inline uint32_t ddt_fast_luma(uint16_t c) {
+	return  ddt_luma_r_lut[(c >> 11) & 0x1F] +
+			ddt_luma_g_lut[(c >>  5) & 0x3F] +
+			ddt_luma_b_lut[ c        & 0x1F];
 }
 
 template<typename Format>
@@ -1278,20 +1261,28 @@ static inline void EvaluateDDTSubpixels(
 	uint32_t E, uint32_t F, uint32_t H, uint32_t I,
 	uint32_t &w0, uint32_t &w1)
 {
+	// Transitive Equality Early Out
 	if (__builtin_expect((E == F) & (E == H) & (E == I), 1)) {
 		w0 = (E << 16) | E;
 		w1 = w0;
 		return;
 	}
 
-	// Calculate correct structural distances without underflow
-	uint32_t wd1 = BranchlessColorDiff565(H, F);
-	uint32_t wd2 = BranchlessColorDiff565(E, I);
+	// Calculate Luma
+	uint32_t lE = ddt_fast_luma(E);
+	uint32_t lH = ddt_fast_luma(H);
+	uint32_t lF = ddt_fast_luma(F);
+	uint32_t lI = ddt_fast_luma(I);
+
+	// df() safely computes unsigned absolute difference utilizing PPC carry flags
+	uint32_t wd1 = df(lH, lF);
+	uint32_t wd2 = df(lE, lI);
 
 	uint32_t out00 = E;
 	uint32_t out01 = Pack565((Unpack565(E) + Unpack565(F)) >> 1);
 	uint32_t out10 = Pack565((Unpack565(E) + Unpack565(H)) >> 1);
 
+	// Branchless route selector masks
 	uint32_t is_gt = -(uint32_t)(wd1 > wd2);
 	uint32_t is_lt = -(uint32_t)(wd1 < wd2);
 	uint32_t is_eq = ~(is_gt | is_lt);
@@ -1299,10 +1290,12 @@ static inline void EvaluateDDTSubpixels(
 	uint32_t bEI = Pack565((Unpack565(E) + Unpack565(I)) >> 1);
 	uint32_t bFH = Pack565((Unpack565(F) + Unpack565(H)) >> 1);
 
-	// Sum all 4 pixels natively to prevent double-rounding SWAR precision loss
-	uint32_t sum_all = Unpack565(E) + Unpack565(F) + Unpack565(H) + Unpack565(I);
-	uint32_t bEQ = Pack565(sum_all >> 2);
+	// Intermediate Pack565 truncation is mathematically required
+	// to prevent bit-boundary shifting across SWAR channels
+	uint32_t aux = Pack565((Unpack565(H) + Unpack565(I)) >> 1);
+	uint32_t bEQ = Pack565((Unpack565(out01) + Unpack565(aux)) >> 1);
 
+	// Route the correct subpixel blend
 	uint32_t out11 = (bEI & is_gt) | (bFH & is_lt) | (bEQ & is_eq);
 
 	w0 = (out00 << 16) | out01;
