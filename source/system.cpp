@@ -393,21 +393,27 @@ char * getConsoleDetails() {
 }
 
 char * getMemoryFreeInfo() {
-	static char memoryFreeInfo[50];
-
-    uint32_t mem1_bytes = SYS_GetArena1Size();
-    float mem1_mb = (float)mem1_bytes / (1024.0f * 1024.0f);
-
-    ConsoleType type = GetConsoleType();
+    static char memoryFreeInfo[50];
+    float mem1_mb = 0.0f;
 
 #ifdef HW_DOL
-    snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM1 free: %.2fMB", mem1_mb);
+    // GameCube uses standard libogc arena allocation
+    uint32_t mem1_bytes = SYS_GetArena1Size();
+    mem1_mb = (float)mem1_bytes / (1024.0f * 1024.0f);
 
+    snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM1 free: %.2fMB", mem1_mb);
 #else
-	uint32_t mem2_bytes = SYS_GetArena2Size();
-	float mem2_mb = (float)mem2_bytes / (1024.0f * 1024.0f);
-	snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM1 free: %.2fMB, MEM2 free: %.2fMB", mem1_mb, mem2_mb);
+    // Wii uses libogc2's malloc_wii split-heap mspace wrapper.
+    // fordblks tracks the actual free memory inside the MEM1 pool.
+    struct mallinfo mi = mallinfo();
+    mem1_mb = (float)mi.fordblks / (1024.0f * 1024.0f);
+
+    uint32_t mem2_bytes = SYS_GetArena2Size();
+    float mem2_mb = (float)mem2_bytes / (1024.0f * 1024.0f);
+
+    snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM1 free: %.2fMB, MEM2 free: %.2fMB", mem1_mb, mem2_mb);
 #endif
+
     return memoryFreeInfo;
 }
 
