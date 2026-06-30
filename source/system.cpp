@@ -386,8 +386,8 @@ char * getConsoleDetails() {
 		case CONSOLE_DOLPHIN:
 			snprintf(description, sizeof(description), "Dolphin Emulator");
 			break;
-#endif
     }
+#endif
 
     return description;
 }
