@@ -404,10 +404,9 @@ char * getMemoryFreeInfo() {
     snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM1 free: %.2fMB", mem1_mb);
 
 #else
-        uint32_t mem2_bytes = SYS_GetArena2Size();
-        float mem2_mb = (float)mem2_bytes / (1024.0f * 1024.0f);
-        snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM1 free: %.2fMB, MEM2 free: %.2fMB", mem1_mb, mem2_mb);
-    }
+	uint32_t mem2_bytes = SYS_GetArena2Size();
+	float mem2_mb = (float)mem2_bytes / (1024.0f * 1024.0f);
+	snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM1 free: %.2fMB, MEM2 free: %.2fMB", mem1_mb, mem2_mb);
 #endif
     return memoryFreeInfo;
 }
