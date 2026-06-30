@@ -45,32 +45,6 @@ static uint32_t xbr_luma_r_lut[32] __attribute__((aligned(32)));
 static uint32_t xbr_luma_g_lut[64] __attribute__((aligned(32)));
 static uint32_t xbr_luma_b_lut[32] __attribute__((aligned(32)));
 
-
-// DDT Fast Luma LUTs
-// 5-to-8 bit expansion pre-calculated with: 17 * R
-static const uint32_t ddt_luma_r_lut[32] = {
-	0, 136, 272, 425, 561, 697, 833, 986, 1122, 1258, 1394, 1530, 1683,
-	1819, 1955, 2091, 2244, 2380, 2516, 2652, 2805, 2941, 3077, 3213, 3349,
-	3502, 3638, 3774, 3910, 4063, 4199, 4335
-};
-
-// 6-to-8 bit expansion pre-calculated with: 28 * G
-static const uint32_t ddt_luma_g_lut[64] = {
-	0, 112, 224, 336, 448, 560, 672, 784, 896, 1008, 1120, 1260, 1372,
-	1484, 1596, 1708, 1820, 1932, 2044, 2156, 2268, 2380, 2492, 2604, 2716,
-	2828, 2940, 3052, 3164, 3276, 3388, 3500, 3640, 3752, 3864, 3976, 4088,
-	4200, 4312, 4424, 4536, 4648, 4760, 4872, 4984, 5096, 5208, 5320, 5432,
-	5544, 5656, 5768, 5880, 6020, 6132, 6244, 6356, 6468, 6580, 6692, 6804,
-	6916, 7028, 7140
-};
-
-// 5-to-8 bit expansion pre-calculated with: 8 * B - floor(B / 2)
-static const uint32_t ddt_luma_b_lut[32] = {
-	0, 60, 120, 188, 248, 308, 368, 435, 495, 555, 615, 675, 743, 803,
-	863, 923, 990, 1050, 1110, 1170, 1238, 1298, 1358, 1418, 1478, 1545,
-	1605, 1665, 1725, 1793, 1853, 1913
-};
-
 // Byuu's Symmetry Encoding Tables (512 Bytes Total)
 static uint8_t rotateTable[256] __attribute__((aligned(32)));
 static uint8_t hqTable[256] __attribute__((aligned(32)));
@@ -1246,9 +1220,17 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 
 static inline uint32_t ddt_fast_luma(uint16_t c) __attribute__((always_inline));
 static inline uint32_t ddt_fast_luma(uint16_t c) {
-	return  ddt_luma_r_lut[(c >> 11) & 0x1F] +
-			ddt_luma_g_lut[(c >>  5) & 0x3F] +
-			ddt_luma_b_lut[ c        & 0x1F];
+	uint32_t r5 = (c >> 11) & 0x1F;
+	uint32_t g6 = (c >>  5) & 0x3F;
+	uint32_t b5 =  c        & 0x1F;
+
+	// 5/6-to-8 bit exact hardware replication
+	uint32_t r8 = (r5 << 3) | (r5 >> 2);
+	uint32_t g8 = (g6 << 2) | (g6 >> 4);
+	uint32_t b8 = (b5 << 3) | (b5 >> 2);
+
+	// 17*R, 28*G, 8*B - floor(B/2) using pure single-cycle ALU shifts
+	return ((r8 << 4) + r8) + ((g8 << 5) - (g8 << 2)) + ((b8 << 3) - (b8 >> 1));
 }
 
 template<typename Format>
@@ -1268,32 +1250,33 @@ static inline void EvaluateDDTSubpixels(
 		return;
 	}
 
-	// Calculate Luma
+	// Calculate exact ALU Luma
 	uint32_t lE = ddt_fast_luma(E);
 	uint32_t lH = ddt_fast_luma(H);
 	uint32_t lF = ddt_fast_luma(F);
 	uint32_t lI = ddt_fast_luma(I);
 
-	// df() safely computes unsigned absolute difference utilizing PPC carry flags
-	uint32_t wd1 = df(lH, lF);
-	uint32_t wd2 = df(lE, lI);
+	// Branchlessly compute strict unsigned absolute difference
+	uint32_t wd1 = (lH > lF) ? (lH - lF) : (lF - lH);
+	uint32_t wd2 = (lE > lI) ? (lE - lI) : (lI - lE);
 
+	// Native 16-bit RGB565 SWAR blending (prevents cross-channel color bleed)
+	// 0xF7DE masks out the LSB of R, G, and B prior to shifting.
 	uint32_t out00 = E;
-	uint32_t out01 = Pack565((Unpack565(E) + Unpack565(F)) >> 1);
-	uint32_t out10 = Pack565((Unpack565(E) + Unpack565(H)) >> 1);
+	uint32_t out01 = ((E & 0xF7DE) >> 1) + ((F & 0xF7DE) >> 1);
+	uint32_t out10 = ((E & 0xF7DE) >> 1) + ((H & 0xF7DE) >> 1);
 
 	// Branchless route selector masks
 	uint32_t is_gt = -(uint32_t)(wd1 > wd2);
 	uint32_t is_lt = -(uint32_t)(wd1 < wd2);
 	uint32_t is_eq = ~(is_gt | is_lt);
 
-	uint32_t bEI = Pack565((Unpack565(E) + Unpack565(I)) >> 1);
-	uint32_t bFH = Pack565((Unpack565(F) + Unpack565(H)) >> 1);
+	uint32_t bEI = ((E & 0xF7DE) >> 1) + ((I & 0xF7DE) >> 1);
+	uint32_t bFH = ((F & 0xF7DE) >> 1) + ((H & 0xF7DE) >> 1);
 
-	// Intermediate Pack565 truncation is mathematically required
-	// to prevent bit-boundary shifting across SWAR channels
-	uint32_t aux = Pack565((Unpack565(H) + Unpack565(I)) >> 1);
-	uint32_t bEQ = Pack565((Unpack565(out01) + Unpack565(aux)) >> 1);
+	// Equal weight blend mathematically requires sequential truncated addition
+	uint32_t aux = ((H & 0xF7DE) >> 1) + ((I & 0xF7DE) >> 1);
+	uint32_t bEQ = ((out01 & 0xF7DE) >> 1) + ((aux & 0xF7DE) >> 1);
 
 	// Route the correct subpixel blend
 	uint32_t out11 = (bEI & is_gt) | (bFH & is_lt) | (bEQ & is_eq);
