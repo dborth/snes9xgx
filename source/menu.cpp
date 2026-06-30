@@ -873,7 +873,7 @@ static void WindowCredits(void * ptr)
 	creditsBoxImg.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	creditsWindowBox.Append(&creditsBoxImg);
 
-	int numEntries = 25;
+	int numEntries = 24;
 	GuiText * txt[numEntries];
 
 	txt[i] = new GuiText("Credits", 30, (GXColor){0, 0, 0, 255});
@@ -917,35 +917,27 @@ static void WindowCredits(void * ptr)
 	txt[i]->SetPosition(60,y); i++;
 	txt[i] = new GuiText("shagkur & WinterMute");
 	txt[i]->SetPosition(350,y); i++; y+=24;
-	txt[i] = new GuiText("FreeTypeGX");
-	txt[i]->SetPosition(60,y); i++;
-	txt[i] = new GuiText("Armin Tamzarian");
-	txt[i]->SetPosition(350,y); i++;
 
-	char wiiDetails[30];
-	char wiiInfo[20];
+	char consoleDetails[40];
+	char memoryFreeInfo[50];
 	char controllerInfo[100];
 
+	sprintf(consoleDetails, getConsoleDetails());
+	sprintf(memoryFreeInfo, getMemoryFreeInfo());
+
 #ifdef HW_RVL
-	if(!IsWiiU()) {
-		sprintf(wiiInfo, "Wii");
-	}
-	else if(IsWiiUFastCPU()) {
-		sprintf(wiiInfo, "vWii (1.215 GHz)");
-	}
-	else {
-		sprintf(wiiInfo, "vWii (729 MHz)");
-	}
-	sprintf(wiiDetails, "IOS: %d / %s", IOS_GetVersion(), wiiInfo);
 	sprintf(controllerInfo, GetUSBControllerInfo());
 #endif
 
+	txt[i] = new GuiText(consoleDetails, 14, (GXColor){0, 0, 0, 255});
+	txt[i]->SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
+	txt[i]->SetPosition(-20,-90); i++;
+	txt[i] = new GuiText(memoryFreeInfo, 14, (GXColor){0, 0, 0, 255});
+	txt[i]->SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
+	txt[i]->SetPosition(-20,-76); i++;
 	txt[i] = new GuiText(controllerInfo, 14, (GXColor){0, 0, 0, 255});
 	txt[i]->SetAlignment(ALIGN_LEFT, ALIGN_BOTTOM);
-	txt[i]->SetPosition(20,-50); i++;
-	txt[i] = new GuiText(wiiDetails, 14, (GXColor){0, 0, 0, 255});
-	txt[i]->SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
-	txt[i]->SetPosition(-20,-70); i++;
+	txt[i]->SetPosition(20,-52); i++;
 
 	GuiText::SetPresets(12, (GXColor){0, 0, 0, 255}, 0, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_TOP, ALIGN_CENTRE, ALIGN_BOTTOM);
 
