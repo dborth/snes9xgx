@@ -4832,12 +4832,14 @@ MainMenu (int menu)
 
 	if(menu == MENU_GAME)
 	{
-		gameScreen = new GuiImageData(gameScreenPng);
+		gameScreen = new GuiImageData(gameScreenPng.buffer);
 		gameScreenImg = new GuiImage(gameScreen);
 		gameScreenImg->SetAlpha(192);
 		gameScreenImg->ColorStripe(30);
-		gameScreenImg->SetScaleX(screenwidth/(float)vmode->fbWidth);
-		gameScreenImg->SetScaleY(screenheight/(float)vmode->efbHeight);
+		gameScreenImg->SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
+		gameScreenImg->SetPosition(gameScreenPng.xoffset, gameScreenPng.yoffset);
+		gameScreenImg->SetScaleX(gameScreenPng.scaleX);
+		gameScreenImg->SetScaleY(gameScreenPng.scaleY);
 	}
 	else
 	{

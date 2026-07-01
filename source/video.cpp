@@ -52,7 +52,6 @@ static int whichfb = 0; // Switch
 GXRModeObj *vmode = NULL; // Current video mode
 int screenheight = 480;
 int screenwidth = 640;
-static int oldRenderMode = -1; // set to GCSettings.render when changing (temporarily) to another mode
 int CheckVideo = 0; // for forcing video reset
 
 /*** GX ***/
@@ -72,8 +71,7 @@ static Mtx modelView;
 static Mtx GXmodelView2D;
 static int vwidth, vheight, oldvwidth, oldvheight;
 
-u8 * gameScreenPng = NULL;
-int gameScreenPngSize = 0;
+GameScreenPng gameScreenPng;
 
 u32 FrameTimer = 0;
 
@@ -103,7 +101,7 @@ static s16 square[] ATTRIBUTE_ALIGN (32) =
    * X,   Y,  Z
    * Values set are for roughly 4:3 aspect
    */
-	-HASPECT,  VASPECT, 0,		// 0
+	-HASPECT,  VASPECT, 0,	// 0
 	 HASPECT,  VASPECT, 0,	// 1
 	 HASPECT, -VASPECT, 0,	// 2
 	-HASPECT, -VASPECT, 0	// 3
@@ -648,8 +646,7 @@ static void SetupVideoMode(GXRModeObj * mode)
  * This function MUST be called at startup.
  * - also sets up menu video mode
  ***************************************************************************/
-void
-InitVideo ()
+void InitVideo ()
 {
 	VIDEO_Init();
 
@@ -690,7 +687,7 @@ if (CONF_GetAspectRatio() == CONF_ASPECT_16_9 && (*(u32*)(0xCD8005A0) >> 16) == 
 	vheight = 100;
 }
 
-void ResetFbWidth(int width, GXRModeObj *rmode)
+static void ResetFbWidth(int width, GXRModeObj *rmode)
 {
 	if(rmode->fbWidth == width)
 		return;
@@ -975,7 +972,18 @@ update_video (int width, int height)
 		square[0] = square[9]  = -xscale + GCSettings.xshift;
 		square[4] = square[1]  =  yscale - GCSettings.yshift;
 		square[7] = square[10] = -yscale - GCSettings.yshift;
+
 		DCFlushRange (square, 32); // update memory BEFORE the GPU accesses it!
+
+		float targetWidth = screenwidth * (2.0f * xscale) / (float)vmode->fbWidth;
+		float targetHeight = screenheight * (2.0f * yscale) / (float)vmode->efbHeight;
+		gameScreenPng.width = vwidth * fscale;
+		gameScreenPng.height = vheight * fscale;
+		gameScreenPng.scaleX = targetWidth / (float)gameScreenPng.width;
+		gameScreenPng.scaleY = targetHeight / (float)gameScreenPng.height;
+		gameScreenPng.xoffset = (GCSettings.xshift * screenwidth) / vmode->fbWidth;
+		gameScreenPng.yoffset = (GCSettings.yshift * screenheight) / vmode->efbHeight;
+
     	draw_init ();
 
 		// initialize the texture obj we are going to use
@@ -1022,26 +1030,12 @@ update_video (int width, int height)
 
 	if(ScreenshotRequested)
 	{
-		if(GCSettings.render == RENDER_ORIGINAL) // we can't take a screenshot in Original mode
-		{
-			oldRenderMode = RENDER_ORIGINAL;
-			GCSettings.render = RENDER_UNFILTERED; // switch to unfiltered mode
-			CheckVideo = 1; // request the switch
-		}
-		else
-		{
-			// We MUST wait for the GPU to finish the CURRENT frame before 
-			// reading from the EFB to encode the PNG
-			GX_DrawDone();
-			ScreenshotRequested = 0;
-			TakeScreenshot();
-			if(oldRenderMode != -1)
-			{
-				GCSettings.render = oldRenderMode;
-				oldRenderMode = -1;
-			}
-			ConfigRequested = 1;
-		}
+		// We MUST wait for the GPU to finish the CURRENT frame before
+		// reading from the EFB to encode the PNG
+		GX_DrawDone();
+		ScreenshotRequested = 0;
+		TakeScreenshot();
+		ConfigRequested = 1;
 	}
 
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
@@ -1073,42 +1067,43 @@ setGFX ()
 	GFX.Pitch = EXT_PITCH;
 }
 
+void ClearScreenshot()
+{
+	if(gameScreenPng.buffer) {
+		free(gameScreenPng.buffer);
+		gameScreenPng.buffer = NULL;
+	}
+
+	gameScreenPng.size = 0;
+}
+
 /****************************************************************************
  * TakeScreenshot
  *
- * Copies the current screen into a GX texture
+ * Copies the current texturemem screen into a PNG
  ***************************************************************************/
 void TakeScreenshot()
 {
 	IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
 
-	if (pngContext != NULL)
-	{
-		gameScreenPngSize = PNGU_EncodeFromEFB(pngContext, vmode->fbWidth, vmode->efbHeight);
-		PNGU_ReleaseImageContext(pngContext);
-
-		if (gameScreenPngSize <= 0) {
-			gameScreenPngSize = 0;
-			return;
-		}
-
-		gameScreenPng = (u8 *) malloc(gameScreenPngSize);
-		if (gameScreenPng == NULL) {
-			gameScreenPngSize = 0;
-			return;
-		}
-		memcpy(gameScreenPng, savebuffer, gameScreenPngSize);
+	if (pngContext == NULL) {
+		return;
 	}
-}
 
-void ClearScreenshot()
-{
-	if(gameScreenPng)
-	{
-		gameScreenPngSize = 0;
-		free(gameScreenPng);
-		gameScreenPng = NULL;
+	gameScreenPng.size = PNGU_EncodeFromGXTexture(pngContext, gameScreenPng.width, gameScreenPng.height, texturemem, gameScreenPng.width * 3);
+	PNGU_ReleaseImageContext(pngContext);
+
+	if (gameScreenPng.size <= 0) {
+		ClearScreenshot();
+		return;
 	}
+
+	gameScreenPng.buffer = (u8 *) malloc(gameScreenPng.size);
+	if (gameScreenPng.buffer == NULL) {
+		ClearScreenshot();
+		return;
+	}
+	memcpy(gameScreenPng.buffer, savebuffer, gameScreenPng.size);
 }
 
 /****************************************************************************

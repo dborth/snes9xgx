@@ -49,13 +49,13 @@ SaveSnapshot (char * filepath, bool silent)
 		return 0;
 
 	// save screenshot
-	if(gameScreenPngSize > 0)
+	if(gameScreenPng.size > 0)
 	{
 		char screenpath[1024];
 		strcpy(screenpath, filepath);
 		screenpath[strlen(screenpath)-4] = 0;
 		strcat(screenpath, ".png");
-		SaveFile((char *)gameScreenPng, screenpath, gameScreenPngSize, silent);
+		SaveFile((char *)gameScreenPng.buffer, screenpath, gameScreenPng.size, silent);
 	}
 
 	STREAM fp = OPEN_STREAM(filepath, "wb");
@@ -152,13 +152,13 @@ int SavePreviewImg (char * filepath, bool silent)
 		return 0;
 
 	// save screenshot
-	if(gameScreenPngSize > 0)
+	if(gameScreenPng.size > 0)
 	{
 		char screenpath[1024];
 		strcpy(screenpath, filepath);
 		screenpath[strlen(screenpath)] = 0;
 		strcat(screenpath, ".png");
-		SaveFile((char *)gameScreenPng, screenpath, gameScreenPngSize, silent);
+		SaveFile((char *)gameScreenPng.buffer, screenpath, gameScreenPng.size, silent);
 	}
 	return 1;
 }

@@ -710,36 +710,43 @@ int PNGU_EncodeFromRGB (IMGCTX ctx, u32 width, u32 height, void *buffer, u32 str
 
 int PNGU_EncodeFromGXTexture (IMGCTX ctx, u32 width, u32 height, void *buffer, u32 stride)
 {
-	int res;
-	u32 x, y, tmpy1, tmpy2, tmpyWid, tmpxy;
+	// GX textures are padded to multiples of 4
+	int padded_width = (width + 3) & ~3;
 
-	unsigned char * ptr = (unsigned char*)buffer;
-	unsigned char * tmpbuffer = malloc(width*height*3);
+	// Allocate linear RGB24 buffer
+	u8 *tmpbuffer = (u8 *)malloc(width * height * 3);
 
 	if(!tmpbuffer)
 		return PNGU_LIB_ERROR;
 
-	memset(tmpbuffer, 0, width*height*3);
-	png_uint_32 offset;
-	
-	for(y=0; y < height; y++)
-	{
-		tmpy1 = y * 640*3;
-		tmpy2 = y%4 << 2;
-		tmpyWid = (((y >> 2)<<4)*width);
+	u16 *tex16 = (u16 *)buffer;
 
-		for(x=0; x < width; x++)
-		{
-			offset = tmpyWid + ((x >> 2)<<6) + ((tmpy2+ x%4 ) << 1);
-			tmpxy = x * 3 + tmpy1;
+	// Un-swizzle the 4x4 tiled GX_TF_RGB565 texture
+	for (int y = 0; y < height; y++) {
+		int tile_y = y / 4;
+		int in_tile_y = y % 4;
+		for (int x = 0; x < width; x++) {
+			int tile_x = x / 4;
+			int in_tile_x = x % 4;
 
-			tmpbuffer[tmpxy  ] = ptr[offset+1]; // R
-			tmpbuffer[tmpxy+1] = ptr[offset+32]; // G
-			tmpbuffer[tmpxy+2] = ptr[offset+33]; // B
+			// Calculate absolute index in the tiled array
+			int tex_pixel_idx = (tile_y * (padded_width / 4) + tile_x) * 16 + (in_tile_y * 4 + in_tile_x);
+			u16 color = tex16[tex_pixel_idx];
+
+			// Extract 5:6:5 channels
+			u8 r = (color >> 11) & 0x1F;
+			u8 g = (color >> 5) & 0x3F;
+			u8 b = color & 0x1F;
+
+			// Write to linear buffer (expanding bits to fill 0-255 completely)
+			int out_idx = (y * width + x) * 3;
+			tmpbuffer[out_idx]     = (r << 3) | (r >> 2);
+			tmpbuffer[out_idx + 1] = (g << 2) | (g >> 4);
+			tmpbuffer[out_idx + 2] = (b << 3) | (b >> 2);
 		}
 	}
 	
-	res = PNGU_EncodeFromRGB (ctx, width, height, tmpbuffer, stride);
+	int res = PNGU_EncodeFromRGB (ctx, width, height, tmpbuffer, stride);
 	free(tmpbuffer);
 	return res;
 }
