@@ -432,7 +432,7 @@ void FixInvalidSettings()
 		GCSettings.render = RENDER_FILTERED_SHARP;
 	if(!(GCSettings.videomode >= VIDEOMODE_AUTO && GCSettings.videomode < VIDEOMODE_LENGTH))
 		GCSettings.videomode = VIDEOMODE_AUTO;
-	if(!(GCSettings.render >= FILTER_NONE && GCSettings.render <= NUM_FILTERS))
+	if(!(GCSettings.FilterMethod >= FILTER_NONE && GCSettings.FilterMethod <= NUM_FILTERS))
 		GCSettings.FilterMethod = FILTER_NONE;
 }
 
