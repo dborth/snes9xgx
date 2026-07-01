@@ -53,6 +53,7 @@ GXRModeObj *vmode = NULL; // Current video mode
 int screenheight = 480;
 int screenwidth = 640;
 int CheckVideo = 0; // for forcing video reset
+static int fscale = 1;
 
 /*** GX ***/
 #define TEX_WIDTH 512
@@ -715,7 +716,6 @@ ResetVideo_Emu ()
 	Mtx44 p;
 	int i = -1;
 
-	// original render mode or hq2x
 	if (GCSettings.render == RENDER_ORIGINAL)
 	{
 		for (int j=0; j<4; j++)
@@ -732,8 +732,8 @@ ResetVideo_Emu ()
 	{
 		rmode = tvmodes[i];
 
-		// hack to fix video output for hq2x (only when actually filtering; h<=239, w<=256)
-		if (GCSettings.FilterMethod != FILTER_NONE && vheight <= 239 && vwidth <= 256)
+		// fix original video output for 2X filters (only when actually filtering; h<=239, w<=256)
+		if (fscale > 1 && vheight <= 239 && vwidth <= 256)
 		{
 			memcpy(&TV_Custom, tvmodes[i], sizeof(TV_Custom));
 			rmode = &TV_Custom;
@@ -742,7 +742,7 @@ ResetVideo_Emu ()
 			rmode->efbHeight *= 2;
 			rmode->xfbHeight *= 2;
 			rmode->xfbMode = VI_XFBMODE_DF;
-			rmode->viTVMode |= VI_INTERLACE;
+			rmode->viTVMode = VI_TVMODE(rmode->viTVMode >> 2, VI_INTERLACE);
 		}
 
 		if (Settings.PAL == 1)
@@ -885,7 +885,6 @@ void MakeTexturePitch1032(const void *src, void *dst, s32 width, s32 height)
  * Update Video
  ***************************************************************************/
 uint32 prevRenderedFrameCount = 0;
-static int fscale = 1;
 
 void
 update_video (int width, int height)
