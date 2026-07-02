@@ -55,6 +55,9 @@ int screenwidth = 640;
 int CheckVideo = 0; // for forcing video reset
 static int fscale = 1;
 
+#define MAX_FB_WIDTH 640
+#define MAX_FB_HEIGHT 576
+
 /*** GX ***/
 #define TEX_WIDTH 512
 #define TEX_HEIGHT 512
@@ -628,9 +631,18 @@ static void SetupVideoMode(GXRModeObj * mode)
 	VIDEO_Configure (mode);
 	VIDEO_Flush();
 
-	// Clear framebuffers etc.
-	VIDEO_ClearFrameBuffer (mode, xfb[0], COLOR_BLACK);
-	VIDEO_ClearFrameBuffer (mode, xfb[1], COLOR_BLACK);
+	// Clear framebuffers
+	// Force clear the maximum allocated size (640*576*2 bytes) to YUYV Black
+	// Prevents out-of-phase pink flashes when shrinking to RENDER_ORIGINAL
+	u32 max_xfb_words = (MAX_FB_WIDTH * MAX_FB_HEIGHT * 2) / 4;
+	for(u32 i = 0; i < max_xfb_words; i++) {
+		xfb[0][i] = COLOR_BLACK;
+		xfb[1][i] = COLOR_BLACK;
+	}
+
+	// Flush the CPU data cache so the VI immediately sees the cleared memory
+	DCFlushRange(xfb[0], MAX_FB_WIDTH * MAX_FB_HEIGHT * 2);
+	DCFlushRange(xfb[1], MAX_FB_WIDTH * MAX_FB_HEIGHT * 2);
 	VIDEO_SetNextFramebuffer (xfb[0]);
 
 	VIDEO_SetBlack (false);
@@ -652,10 +664,10 @@ void InitVideo ()
 	VIDEO_Init();
 
 	// Allocate the video buffers
-	xfb[0] = (u32 *) memalign(32, 640*576*2);
-	xfb[1] = (u32 *) memalign(32, 640*576*2);
-	DCInvalidateRange(xfb[0], 640*576*2);
-	DCInvalidateRange(xfb[1], 640*576*2);
+	xfb[0] = (u32 *) memalign(32, MAX_FB_WIDTH*MAX_FB_HEIGHT*2);
+	xfb[1] = (u32 *) memalign(32, MAX_FB_WIDTH*MAX_FB_HEIGHT*2);
+	DCInvalidateRange(xfb[0], MAX_FB_WIDTH*MAX_FB_HEIGHT*2);
+	DCInvalidateRange(xfb[1], MAX_FB_WIDTH*MAX_FB_HEIGHT*2);
 	xfb[0] = (u32 *) MEM_K0_TO_K1 (xfb[0]);
 	xfb[1] = (u32 *) MEM_K0_TO_K1 (xfb[1]);
 
