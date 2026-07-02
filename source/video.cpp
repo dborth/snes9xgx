@@ -986,14 +986,16 @@ update_video (int width, int height)
 
 		DCFlushRange (square, 32); // update memory BEFORE the GPU accesses it!
 
-		float targetWidth = screenwidth * (2.0f * xscale) / (float)vmode->fbWidth;
-		float targetHeight = screenheight * (2.0f * yscale) / (float)vmode->efbHeight;
+		float targetWidth = screenwidth * (2.0f * xscale / (float)vmode->fbWidth);
+		float targetHeight = screenheight * (2.0f * yscale / (float)vmode->efbHeight);
+		float menuCenterX = (screenwidth / 2.0f) + (GCSettings.xshift * screenwidth / (float)vmode->fbWidth);
+		float menuCenterY = (screenheight / 2.0f) + (GCSettings.yshift * screenheight / (float)vmode->efbHeight);
 		gameScreenPng.width = vwidth * fscale;
 		gameScreenPng.height = vheight * fscale;
 		gameScreenPng.scaleX = targetWidth / (float)gameScreenPng.width;
 		gameScreenPng.scaleY = targetHeight / (float)gameScreenPng.height;
-		gameScreenPng.xoffset = (GCSettings.xshift * screenwidth) / vmode->fbWidth;
-		gameScreenPng.yoffset = (GCSettings.yshift * screenheight) / vmode->efbHeight;
+		gameScreenPng.xoffset = menuCenterX - (screenwidth / 2.0f);
+		gameScreenPng.yoffset = menuCenterY - (screenheight / 2.0f);
 
     	draw_init ();
 
