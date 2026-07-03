@@ -952,25 +952,24 @@ update_video (int width, int height)
 	if (CheckVideo)	// if we get back from the menu, and have rendered at least 1 frame
 	{
 		int xscale, yscale;
-#ifdef HW_RVL
+
 		if(vwidth <= 256)
 			fscale = GetFilterScale();
 		else
 			fscale = 1;
-#endif
+
 		ResetVideo_Emu ();	// reset video to emulator rendering settings
 
 		/** Update scaling **/
 		if (GCSettings.render == RENDER_ORIGINAL)	// original render mode
 		{
-			if (GCSettings.FilterMethod != FILTER_NONE && vheight <= 239 && vwidth <= 256)
-			{	// filters; normal operation
+			if (fscale > 1)
+			{
 				xscale = vwidth;
 				yscale = vheight;
 			}
 			else
-			{	// no filtering
-				fscale = 1;
+			{
 				xscale = 256;
 				yscale = vheight / 2;
 			}
@@ -1057,7 +1056,7 @@ update_video (int width, int height)
 		oldvheight = vheight;
 		CheckVideo = 0;
 	}
-#ifdef HW_RVL
+
 	// convert image to texture
 	if (GCSettings.FilterMethod != FILTER_NONE &&
 		GCSettings.FilterMethod != FILTER_SCANLINES &&
@@ -1066,7 +1065,6 @@ update_video (int width, int height)
 		FilterMethod ((uint8*) GFX.Screen, EXT_PITCH, (uint8*) texturemem, vwidth*fscale*2, vwidth, vheight);
 	}
 	else
-#endif
 	{
 		MakeTexturePitch1032((char *) GFX.Screen, (char *) texturemem, vwidth, vheight);
 	}
