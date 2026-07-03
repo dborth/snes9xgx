@@ -633,8 +633,13 @@ static GXRModeObj * FindVideoMode()
  ***************************************************************************/
 static void SetupVideoMode(GXRModeObj * mode)
 {
-	if(vmode == mode)
+	static u32 last_fbWidth = 0;
+
+	// Force a video reset and XFB clear if the width was dynamically mutated
+	if(vmode == mode && last_fbWidth == mode->fbWidth)
 		return;
+
+	last_fbWidth = mode->fbWidth;
 
 	VIDEO_SetPostRetraceCallback (NULL);
 	copynow = GX_FALSE;
@@ -1000,16 +1005,26 @@ update_video (int width, int height)
 
 		DCFlushRange (square, 32); // update memory BEFORE the GPU accesses it!
 
-		float targetWidth = screenwidth * (2.0f * xscale / (float)vmode->fbWidth);
-		float targetHeight = screenheight * (2.0f * yscale / (float)vmode->efbHeight);
-		float menuCenterX = (screenwidth / 2.0f) + (GCSettings.xshift * screenwidth / (float)vmode->fbWidth);
-		float menuCenterY = (screenheight / 2.0f) + (GCSettings.yshift * screenheight / (float)vmode->efbHeight);
-		gameScreenPng.width = vwidth * fscale;
+		// 1. Map the active EFB bounds directly to the 640x480 logical menu space.
+		// The hardware VI inherently stretches the EFB to fill the screen, so we replicate
+		// that CRT stretching mathematically against the Menu's fixed 640x480 bounds.
+		float efb_to_menu_x = (float)screenwidth / (float)vmode->fbWidth;
+		float efb_to_menu_y = (float)screenheight / (float)vmode->efbHeight;
+
+		// 2. The rendered game quad footprint is exactly (2 * xscale) by (2 * yscale) EFB pixels.
+		// We multiply by our menu mapping ratio to get the final logical UI dimensions.
+		float targetWidth  = (2.0f * xscale) * efb_to_menu_x;
+		float targetHeight = (2.0f * yscale) * efb_to_menu_y;
+
+		gameScreenPng.width  = vwidth * fscale;
 		gameScreenPng.height = vheight * fscale;
+
 		gameScreenPng.scaleX = targetWidth / (float)gameScreenPng.width;
 		gameScreenPng.scaleY = targetHeight / (float)gameScreenPng.height;
-		gameScreenPng.xoffset = menuCenterX - (screenwidth / 2.0f);
-		gameScreenPng.yoffset = menuCenterY - (screenheight / 2.0f);
+
+		// 3. Any deviation from center is purely dictated by user shift settings
+		gameScreenPng.xoffset = GCSettings.xshift * efb_to_menu_x;
+		gameScreenPng.yoffset = GCSettings.yshift * efb_to_menu_y;
 
     	draw_init ();
 
