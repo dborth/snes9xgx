@@ -37,14 +37,14 @@ CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
 				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
 				-flto=auto \
 				-fomit-frame-pointer -fno-strict-aliasing \
-				-Wno-register -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable \
+				-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable \
 				-Wno-format -Wno-format-overflow -Wno-stringop-truncation \
 				-Wno-stringop-overflow -Wno-format-truncation -Wno-narrowing -Wno-sign-compare \
 				-Wno-unused-function -Wno-write-strings -Wno-parentheses -Wno-uninitialized -Wno-infinite-recursion
 
 # Isolated CXXFLAGS to strip out C++ runtime overhead (Exceptions/RTTI)
 # This saves instruction cache space, critical for the 750CL.
-CXXFLAGS	=	$(CFLAGS) -fno-exceptions -fno-rtti -fno-threadsafe-statics
+CXXFLAGS	=	$(CFLAGS) -Wno-register -fno-exceptions -fno-rtti -fno-threadsafe-statics
 
 LDFLAGS	=	-g -O3 -flto=auto $(MACHDEP) -Wl,-Map,$(notdir $@).map
 LDFLAGS +=	-L../buildtools
