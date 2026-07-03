@@ -393,6 +393,10 @@ static void SetupScanlineFilterTEV() {
 	GX_SetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
 }
 
+static bool should_apply_scanlines() {
+	return GCSettings.FilterMethod == FILTER_SCANLINES && vmode->efbHeight > 300;
+}
+
 /****************************************************************************
  * Scaler Support Functions
  ***************************************************************************/
@@ -406,7 +410,7 @@ draw_init ()
 	GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
 	GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
 
-	if(GCSettings.FilterMethod == FILTER_SCANLINES) {
+	if(should_apply_scanlines()) {
 		SetupScanlineFilterTEV();
 	}
 	else {
@@ -448,7 +452,9 @@ draw_square ()
 	
 	GX_Begin (GX_QUADS, GX_VTXFMT0, 4);
 
-	if(GCSettings.FilterMethod == FILTER_SCANLINES) {
+	int scanlines = should_apply_scanlines();
+
+	if(scanlines) {
 		// Calculate physical dimensions of the rendering quad in EFB pixels
 		// We use the static 'square' array which holds the final scaled/zoomed screen footprint
 		// square[3] and square[0] are the Right and Left X bounds
@@ -490,7 +496,7 @@ draw_square ()
 	}
 	GX_End ();
 
-	if(GCSettings.FilterMethod == FILTER_SCANLINES) {
+	if(scanlines) {
 		// force identity matrix to ensure texture mapping is pristine and devoid of stray scaling
 		Mtx texMtx;
 		guMtxIdentity(texMtx);
@@ -1049,7 +1055,7 @@ update_video (int width, int height)
 
 		GX_LoadTexObj (&texobj, GX_TEXMAP0); // load texture object so its ready to use
 
-		if(GCSettings.FilterMethod == FILTER_SCANLINES)
+		if(should_apply_scanlines())
 			InitScanlineTexture();
 
 		oldvwidth = vwidth;
@@ -1058,9 +1064,7 @@ update_video (int width, int height)
 	}
 
 	// convert image to texture
-	if (GCSettings.FilterMethod != FILTER_NONE &&
-		GCSettings.FilterMethod != FILTER_SCANLINES &&
-		vheight <= 239 && vwidth <= 256)	// don't do filtering on game textures > 256 x 239
+	if (fscale > 1 && vheight <= 239 && vwidth <= 256) // don't do filtering on game textures > 256 x 239
 	{
 		FilterMethod ((uint8*) GFX.Screen, EXT_PITCH, (uint8*) texturemem, vwidth*fscale*2, vwidth, vheight);
 	}
