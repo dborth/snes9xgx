@@ -838,6 +838,52 @@ ResetVideo_Emu ()
 	draw_init ();
 }
 
+void ClearScreenshot()
+{
+	if(gameScreenPng.buffer) {
+		free(gameScreenPng.buffer);
+		gameScreenPng.buffer = NULL;
+	}
+
+	gameScreenPng.size = 0;
+}
+
+/****************************************************************************
+ * TakeScreenshot
+ *
+ * Copies the current texturemem screen into a PNG
+ ***************************************************************************/
+static void TakeScreenshot()
+{
+	IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
+
+	if (pngContext == NULL) {
+		return;
+	}
+
+	int res = PNGU_EncodeFromGXTexture(pngContext, gameScreenPng.width, gameScreenPng.height, texturemem, gameScreenPng.width * 3);
+
+	if(res == PNGU_OK) {
+		gameScreenPng.size = pngContext->cursor;
+	} else {
+		gameScreenPng.size = 0;
+	}
+
+	PNGU_ReleaseImageContext(pngContext);
+
+	if (gameScreenPng.size <= 0) {
+		ClearScreenshot();
+		return;
+	}
+
+	gameScreenPng.buffer = (u8 *) malloc(gameScreenPng.size);
+	if (gameScreenPng.buffer == NULL) {
+		ClearScreenshot();
+		return;
+	}
+	memcpy(gameScreenPng.buffer, savebuffer, gameScreenPng.size);
+}
+
 /****************************************************************************
  * MakeTexturePitch1032
 
@@ -1126,45 +1172,6 @@ void
 setGFX ()
 {
 	GFX.Pitch = EXT_PITCH;
-}
-
-void ClearScreenshot()
-{
-	if(gameScreenPng.buffer) {
-		free(gameScreenPng.buffer);
-		gameScreenPng.buffer = NULL;
-	}
-
-	gameScreenPng.size = 0;
-}
-
-/****************************************************************************
- * TakeScreenshot
- *
- * Copies the current texturemem screen into a PNG
- ***************************************************************************/
-void TakeScreenshot()
-{
-	IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
-
-	if (pngContext == NULL) {
-		return;
-	}
-
-	gameScreenPng.size = PNGU_EncodeFromGXTexture(pngContext, gameScreenPng.width, gameScreenPng.height, texturemem, gameScreenPng.width * 3);
-	PNGU_ReleaseImageContext(pngContext);
-
-	if (gameScreenPng.size <= 0) {
-		ClearScreenshot();
-		return;
-	}
-
-	gameScreenPng.buffer = (u8 *) malloc(gameScreenPng.size);
-	if (gameScreenPng.buffer == NULL) {
-		ClearScreenshot();
-		return;
-	}
-	memcpy(gameScreenPng.buffer, savebuffer, gameScreenPng.size);
 }
 
 /****************************************************************************
