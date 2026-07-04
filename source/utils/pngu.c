@@ -543,6 +543,68 @@ u8 * DecodePNG(const u8 *src, int * width, int * height, u8 *dstPtr, int maxwidt
 	return dst;
 }
 
+u8 * DecodePNGToRGBA8 (const u8 *src, int width, int height)
+{
+	PNGUPROP imgProp;
+	IMGCTX ctx = PNGU_SelectImageFromBuffer(src);
+	u8 *dst = NULL;
+	int x, y, dstIdx;
+	png_byte *pixel;
+
+	if(!ctx)
+		return NULL;
+
+	if (pngu_decode (ctx, width, height, 0) != PNGU_OK)
+	{
+		PNGU_ReleaseImageContext (ctx);
+		return NULL;
+	}
+
+	// Allocate flat linear destination buffer (4 bytes per pixel)
+	dst = (u8 *) malloc (width * height * 4);
+	if (!dst)
+	{
+		free (ctx->img_data);
+		free (ctx->row_pointers);
+		PNGU_ReleaseImageContext (ctx);
+		return NULL;
+	}
+
+	// Copy data sequentially to match linear R, G, B, A lookup structures
+	for (y = 0; y < height; y++)
+	{
+		for (x = 0; x < width; x++)
+		{
+			dstIdx = (y * width + x) * 4;
+
+			if (ctx->prop.imgColorType == PNGU_COLOR_TYPE_GRAY_ALPHA ||
+				ctx->prop.imgColorType == PNGU_COLOR_TYPE_RGB_ALPHA)
+			{
+				pixel = &(ctx->row_pointers[y][x * 4]);
+				dst[dstIdx + 0] = pixel[0]; // Red
+				dst[dstIdx + 1] = pixel[1]; // Green
+				dst[dstIdx + 2] = pixel[2]; // Blue
+				dst[dstIdx + 3] = pixel[3]; // Alpha
+			}
+			else
+			{
+				pixel = &(ctx->row_pointers[y][x * 3]);
+				dst[dstIdx + 0] = pixel[0]; // Red
+				dst[dstIdx + 1] = pixel[1]; // Green
+				dst[dstIdx + 2] = pixel[2]; // Blue
+				dst[dstIdx + 3] = 255;      // Opaque Alpha Baseline
+			}
+		}
+	}
+
+	// Clean up temporary decoding buffers allocated by libpng / pngu_decode
+	free (ctx->img_data);
+	free (ctx->row_pointers);
+
+	PNGU_ReleaseImageContext (ctx);
+	return dst;
+}
+
 u8 * DecodePNGFromFile(const char *filepath, int * width, int * height, u8 *dstPtr, int maxwidth, int maxheight)
 {
 	FILE *file = fopen (filepath, "rb");

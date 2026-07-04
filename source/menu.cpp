@@ -73,7 +73,7 @@ static GuiButton * btnLogo = NULL;
 #ifdef HW_RVL
 static GuiButton * batteryBtn[4];
 #endif
-static GuiImageData * gameScreen = NULL;
+static u8 * gameScreenTexture = NULL;
 static GuiImage * gameScreenImg = NULL;
 static GuiImage * bgTopImg = NULL;
 static GuiImage * bgBottomImg = NULL;
@@ -1744,8 +1744,10 @@ static int MenuGame()
 				HaltGui();
 				mainWindow->Remove(gameScreenImg);
 				delete gameScreenImg;
-				delete gameScreen;
-				gameScreen = NULL;
+				if(gameScreenTexture != NULL) {
+					free(gameScreenTexture);
+					gameScreenTexture = NULL;
+				}
 				ClearScreenshot();
 				if(GCSettings.AutoloadGame) {
 					ExitApp();
@@ -4802,6 +4804,208 @@ static int MenuSettingsNetwork()
 	return menu;
 }
 
+static u8 * CreateBlurredGameTexture() {
+	if(gameScreenPng.size == 0) {
+		return NULL;
+	}
+
+	u8 *src = DecodePNGToRGBA8(gameScreenPng.buffer, gameScreenPng.width, gameScreenPng.height);
+	if(!src) {
+		return NULL;
+	}
+
+	int blurAmount = 4; // blur amount
+	GXColor blurOverlayColor = (GXColor){50, 50, 50, 160};
+
+	u8 * dst = (u8 *)memalign(32, screenwidth * screenheight * 4);
+	if(!dst) {
+		return NULL;
+	}
+
+	int scaledWidth = (int)(gameScreenPng.width * gameScreenPng.scaleX);
+	int scaledHeight = (int)(gameScreenPng.height * gameScreenPng.scaleY);
+
+	// Failsafe for invalid scale metrics
+	if (scaledWidth <= 0 || scaledHeight <= 0) {
+		memset(dst, 0, screenwidth * screenheight * 4);
+		return dst;
+	}
+
+	// Calculate the absolute top-left starting pixel of the scaled image.
+	int targetCenterX = (screenwidth / 2) + gameScreenPng.xoffset;
+	int targetCenterY = (screenheight / 2) + gameScreenPng.yoffset;
+
+	int trueOffsetX = targetCenterX - (scaledWidth / 2);
+	int trueOffsetY = targetCenterY - (scaledHeight / 2);
+
+	// --- VIEWABLE AREA CLAMPING LOGIC ---
+	// Determine where to start drawing on the screen bounds
+	int drawX = trueOffsetX < 0 ? 0 : trueOffsetX;
+	int drawY = trueOffsetY < 0 ? 0 : trueOffsetY;
+
+	// Determine the max visible boundaries clipped to screen dimensions
+	int endX = (trueOffsetX + scaledWidth > screenwidth) ? screenwidth : (trueOffsetX + scaledWidth);
+	int endY = (trueOffsetY + scaledHeight > screenheight) ? screenheight : (trueOffsetY + scaledHeight);
+
+	// Calculate the dimensions of the viewable (cropped) area
+	int cropWidth = endX - drawX;
+	int cropHeight = endY - drawY;
+
+	// Failsafe if the image is pushed entirely off-screen
+	if (cropWidth <= 0 || cropHeight <= 0) {
+		memset(dst, 0, screenwidth * screenheight * 4);
+		return dst;
+	}
+
+	// Determine the starting offset within the theoretical scaled image
+	int cropStartX = trueOffsetX < 0 ? -trueOffsetX : 0;
+	int cropStartY = trueOffsetY < 0 ? -trueOffsetY : 0;
+
+	// Allocate scratch space ONLY for the viewable cropped portion
+	u8 *scaledImg = (u8 *)malloc(cropWidth * cropHeight * 4);
+	u8 *rowBuf    = (u8 *)malloc(cropWidth * 4);
+
+	if (!scaledImg || !rowBuf) {
+		if (scaledImg) free(scaledImg);
+		if (rowBuf) free(rowBuf);
+		free(dst);
+		return NULL;
+	}
+
+	// Scale the raw input PNG directly into our viewable cropped buffer
+	for (int dy = 0; dy < cropHeight; ++dy) {
+		int scaledImgY = cropStartY + dy;
+		int sy = (scaledImgY * gameScreenPng.height) / scaledHeight;
+		if (sy < 0) sy = 0;
+		if (sy >= gameScreenPng.height) sy = gameScreenPng.height - 1;
+
+		for (int dx = 0; dx < cropWidth; ++dx) {
+			int scaledImgX = cropStartX + dx;
+			int sx = (scaledImgX * gameScreenPng.width) / scaledWidth;
+			if (sx < 0) sx = 0;
+			if (sx >= gameScreenPng.width) sx = gameScreenPng.width - 1;
+
+			int srcIdx = (sy * gameScreenPng.width + sx) * 4;
+			int dstIdx = (dy * cropWidth + dx) * 4;
+
+			scaledImg[dstIdx + 0] = src[srcIdx + 0];
+			scaledImg[dstIdx + 1] = src[srcIdx + 1];
+			scaledImg[dstIdx + 2] = src[srcIdx + 2];
+			scaledImg[dstIdx + 3] = src[srcIdx + 3];
+		}
+	}
+
+	int div = 2 * blurAmount + 1;
+
+	// Horizontal Box Blur Pass (in-place using the small rowBuf)
+	for (int y = 0; y < cropHeight; ++y) {
+		memcpy(rowBuf, &scaledImg[y * cropWidth * 4], cropWidth * 4);
+
+		for (int x = 0; x < cropWidth; ++x) {
+			int sumR = 0, sumG = 0, sumB = 0;
+
+			for (int k = -blurAmount; k <= blurAmount; ++k) {
+				int nx = x + k;
+				if (nx < 0) nx = 0;
+				if (nx >= cropWidth) nx = cropWidth - 1;
+
+				int idx = nx * 4;
+				sumR += rowBuf[idx + 0];
+				sumG += rowBuf[idx + 1];
+				sumB += rowBuf[idx + 2];
+			}
+
+			int dstIdx = (y * cropWidth + x) * 4;
+			scaledImg[dstIdx + 0] = sumR / div;
+			scaledImg[dstIdx + 1] = sumG / div;
+			scaledImg[dstIdx + 2] = sumB / div;
+		}
+	}
+
+	// Precalculate flat background color (Solid Black + Overlay)
+	int alphaIn = blurOverlayColor.a;
+	int invAlpha = 255 - alphaIn;
+
+	u8 bgR = (u8)((0 * invAlpha + blurOverlayColor.r * alphaIn) / 255);
+	u8 bgG = (u8)((0 * invAlpha + blurOverlayColor.g * alphaIn) / 255);
+	u8 bgB = (u8)((0 * invAlpha + blurOverlayColor.b * alphaIn) / 255);
+	u8 bgA = 255;
+
+	// Vertical Blur, Overlay, & Swizzle directly to the GX Destination Layout
+	int tilesX = (screenwidth + 3) / 4;
+	int tilesY = (screenheight + 3) / 4;
+
+	for (int ty = 0; ty < tilesY; ++ty) {
+		for (int tx = 0; tx < tilesX; ++tx) {
+			int tileIdx = ty * tilesX + tx;
+			u8* destTilePtr = dst + (tileIdx * 64);
+
+			for (int py = 0; py < 4; ++py) {
+				for (int px = 0; px < 4; ++px) {
+					int currX = tx * 4 + px;
+					int currY = ty * 4 + py;
+					int pixelIdx = (py * 4) + px;
+
+					if (currX >= screenwidth || currY >= screenheight) {
+						destTilePtr[pixelIdx * 2 + 0] = bgA;
+						destTilePtr[pixelIdx * 2 + 1] = bgR;
+						destTilePtr[32 + (pixelIdx * 2 + 0)] = bgG;
+						destTilePtr[32 + (pixelIdx * 2 + 1)] = bgB;
+						continue;
+					}
+
+					// Check bounds against our true absolute coordinates
+					if (currX >= drawX && currX < drawX + cropWidth &&
+						currY >= drawY && currY < drawY + cropHeight) {
+
+						int cx = currX - drawX;
+						int cy = currY - drawY;
+
+						int sumR = 0, sumG = 0, sumB = 0;
+
+						for (int k = -blurAmount; k <= blurAmount; ++k) {
+							int ny = cy + k;
+							if (ny < 0) ny = 0;
+							if (ny >= cropHeight) ny = cropHeight - 1;
+
+							int idx = (ny * cropWidth + cx) * 4;
+							sumR += scaledImg[idx + 0];
+							sumG += scaledImg[idx + 1];
+							sumB += scaledImg[idx + 2];
+						}
+
+						u8 blurredR = sumR / div;
+						u8 blurredG = sumG / div;
+						u8 blurredB = sumB / div;
+
+						u8 finalR = (u8)((blurredR * invAlpha + blurOverlayColor.r * alphaIn) / 255);
+						u8 finalG = (u8)((blurredG * invAlpha + blurOverlayColor.g * alphaIn) / 255);
+						u8 finalB = (u8)((blurredB * invAlpha + blurOverlayColor.b * alphaIn) / 255);
+
+						destTilePtr[pixelIdx * 2 + 0] = 255;
+						destTilePtr[pixelIdx * 2 + 1] = finalR;
+						destTilePtr[32 + (pixelIdx * 2 + 0)] = finalG;
+						destTilePtr[32 + (pixelIdx * 2 + 1)] = finalB;
+
+					} else {
+						destTilePtr[pixelIdx * 2 + 0] = bgA;
+						destTilePtr[pixelIdx * 2 + 1] = bgR;
+						destTilePtr[32 + (pixelIdx * 2 + 0)] = bgG;
+						destTilePtr[32 + (pixelIdx * 2 + 1)] = bgB;
+					}
+				}
+			}
+		}
+	}
+
+	DCFlushRange(dst, screenwidth * screenheight * 4);
+
+	free(scaledImg);
+	free(rowBuf);
+	free(src);
+	return dst;
+}
+
 /****************************************************************************
  * MainMenu
  ***************************************************************************/
@@ -4832,17 +5036,13 @@ MainMenu (int menu)
 
 	if(menu == MENU_GAME)
 	{
-		gameScreen = new GuiImageData(gameScreenPng.buffer);
-		gameScreenImg = new GuiImage(gameScreen);
-		gameScreenImg->SetAlpha(192);
-		gameScreenImg->ColorStripe(30);
-		gameScreenImg->SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
-		gameScreenImg->SetPosition(gameScreenPng.xoffset, gameScreenPng.yoffset);
-		gameScreenImg->SetScaleX(gameScreenPng.scaleX);
-		gameScreenImg->SetScaleY(gameScreenPng.scaleY);
+		gameScreenTexture = CreateBlurredGameTexture();
+		if(gameScreenTexture != NULL) {
+			gameScreenImg = new GuiImage(gameScreenTexture, screenwidth, screenheight);
+		}
 	}
-	else
-	{
+
+	if(gameScreenImg == NULL) {
 		gameScreenImg = new GuiImage(screenwidth, screenheight, (GXColor){175, 200, 215, 255});
 		gameScreenImg->ColorStripe(10);
 	}
@@ -5003,8 +5203,10 @@ MainMenu (int menu)
 
 	mainWindow = NULL;
 
-	if(gameScreen)
-		delete gameScreen;
+	if(gameScreenTexture != NULL) {
+		free(gameScreenTexture);
+		gameScreenTexture = NULL;
+	}
 
 	ClearScreenshot();
 
