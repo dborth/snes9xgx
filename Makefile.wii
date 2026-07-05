@@ -176,11 +176,12 @@ $(OFILES_SOURCES) : $(HFILES)
 #---------------------------------------------------------------------------------
 # Optimized rule for cpuops.cpp to prevent I-Cache thrashing
 # The % pattern allows make to find cpuops.cpp inside the VPATH directories
+# Place -O2 and -fno-unroll-loops AFTER $(CXXFLAGS) to ensure they aren't overwritten by the global -O3
 #---------------------------------------------------------------------------------
 cpuops.o: cpuops.cpp
 	@mkdir -p $(dir $@)
 	@echo "Compiling cpuops.o to $(BUILD) with I-Cache tuned flags..."
-	$(CXX) -c -O2 -fno-unroll-loops $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CXXFLAGS) -O2 -fno-unroll-loops $< -o $@
 
 #---------------------------------------------------------------------------------
 endif
