@@ -645,6 +645,16 @@ static void SetupVideoMode(GXRModeObj * mode)
 	if(vmode == mode && last_fbWidth == mode->fbWidth)
 		return;
 
+	// Detect if we are transitioning between Progressive and Interlaced
+	bool mode_switch = false;
+	if (vmode != NULL) {
+		bool was_progressive = (vmode->viTVMode & 3) == VI_NON_INTERLACE || (vmode->viTVMode & 3) == VI_PROGRESSIVE;
+		bool is_progressive = (mode->viTVMode & 3) == VI_NON_INTERLACE || (mode->viTVMode & 3) == VI_PROGRESSIVE;
+		if (was_progressive != is_progressive) {
+			mode_switch = true;
+		}
+	}
+
 	last_fbWidth = mode->fbWidth;
 
 	VIDEO_SetPostRetraceCallback (NULL);
@@ -664,7 +674,16 @@ static void SetupVideoMode(GXRModeObj * mode)
 	// Flush the CPU data cache so the VI immediately sees the cleared memory
 	DCFlushRange(xfb[0], MAX_FB_WIDTH * MAX_FB_HEIGHT * 2);
 	DCFlushRange(xfb[1], MAX_FB_WIDTH * MAX_FB_HEIGHT * 2);
+
 	VIDEO_SetNextFramebuffer (xfb[0]);
+
+	// If the hardware sync is changing, hold the black screen for one extra frame
+	// to allow the TV DAC to lock before un-blanking.
+	if (mode_switch) {
+		VIDEO_SetBlack(true);
+		VIDEO_Flush();
+		VIDEO_WaitForFlush();
+	}
 
 	VIDEO_SetBlack (false);
 	VIDEO_Flush ();
