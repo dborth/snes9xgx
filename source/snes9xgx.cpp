@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
 void ExitApp() {
 	SavePrefs(SILENT);
 
-	if (SNESROMSize > 0 && !ConfigRequested && GCSettings.AutoSave == 1)
+	if (SNESROMSize > 0 && !ConfigRequested && GCSettings.AutoSave == AUTOSAVE_SRAM)
 		SaveSRAMAuto(SILENT);
 
 	SystemExit(GCSettings.ExitAction, autoboot);

@@ -76,9 +76,22 @@ const FolderDef loadFolder[] = {
 
 enum {
 	FILE_SRAM,
-	FILE_SNAPSHOT,
+	FILE_STATE,
 	FILE_ROM,
 	FILE_CHEAT
+};
+
+enum {
+	AUTOLOAD_OFF = 0,
+	AUTOLOAD_SRAM,
+	AUTOLOAD_STATE
+};
+
+enum {
+	AUTOSAVE_OFF = 0,
+	AUTOSAVE_SRAM,
+	AUTOSAVE_STATE,
+	AUTOSAVE_BOTH
 };
 
 enum {
@@ -122,6 +135,12 @@ enum {
 	WIIMOTE_ORIENTATION_VERTICAL = 0,
 	WIIMOTE_ORIENTATION_HORIZONTAL,
 	WIIMOTE_ORIENTATION_LENGTH
+};
+
+enum {
+	GAMEPAD_MENU_TOGGLE_DEFAULT = 0,
+	GAMEPAD_MENU_TOGGLE_HOME_RIGHTSTICK,
+	GAMEPAD_MENU_TOGGLE_LRSTART_12PLUS,
 };
 
 enum
@@ -191,7 +210,7 @@ struct SGCSettings{
 	int		AutoSave;
 	int		LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
 	int		SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, USB, SMB
-	int		AppendAuto; // 0 - no, 1 - yes
+	bool	AppendAuto;
 	char	LoadFolder[MAXPATHLEN]; 	// Path to game files
 	char	LastFileLoaded[MAXPATHLEN]; // Last file loaded filename
 	char	SaveFolder[MAXPATHLEN]; 	// Path to save files
@@ -199,8 +218,8 @@ struct SGCSettings{
 	char	ScreenshotsFolder[MAXPATHLEN]; // Path to screenshots files
 	char	CoverFolder[MAXPATHLEN]; 	// Path to cover files
 	char	ArtworkFolder[MAXPATHLEN]; 	// Path to artwork files
-	int		HideSRAMSaving;
-	int		AutoloadGame;
+	bool	HideSRAMSaving;
+	bool	AutoloadGame;
 
 	char	smbip[80];
 	char	smbuser[20];
@@ -213,30 +232,30 @@ struct SGCSettings{
 	int		render;		// 0 - original, 1 - filtered, 2 - unfiltered
 	int		FilterMethod; // convert to RenderFilter
 	int		Controller;
-	int		HiResolution;
-	int		SpriteLimit;
-	int		FrameSkip;
-	int		crosshair;
-	int		widescreen;	// 0 - 4:3 aspect, 1 - 16:9 aspect
+	bool	HiResolution;
+	bool	SpriteLimit;
+	bool	FrameSkip;
+	bool	crosshair;
+	bool	widescreen;	// 0 - 4:3 aspect, 1 - 16:9 aspect
 	int		xshift;	// video output shift
 	int		yshift;
 	int		WiimoteOrientation;
 	int		ExitAction;
 	int		MusicVolume;
 	int		SFXVolume;
-	int		Rumble;
+	bool	Rumble;
 	int		language;
 	int		PreviewImage;
 
 	int		sfxOverclock;
 	
 	int		Interpolation;
-	int		MuteAudio;
+	bool	MuteAudio;
 
-	int		TurboModeEnabled; // 0 - disabled, 1 - enabled
+	bool	TurboModeEnabled;
 	int		TurboModeButton;
 	int		GamepadMenuToggle;
-	int		MapABXYRightStick;
+	bool	MapABXYRightStick;
 };
 
 void ExitApp();

@@ -336,7 +336,7 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 		switch(type)
 		{
 			case FILE_SRAM:
-			case FILE_SNAPSHOT:
+			case FILE_STATE:
 				sprintf(folder, GCSettings.SaveFolder);
 
 				if(type == FILE_SRAM) sprintf(ext, "srm");
@@ -347,7 +347,7 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 					if(filenum == -1)
 						sprintf(file, "%s.%s", filename, ext);
 					else if(filenum == 0)
-						if (GCSettings.AppendAuto <= 0)
+						if (!GCSettings.AppendAuto)
 							sprintf(file, "%s.%s", filename, ext);
 						else
 							sprintf(file, "%s Auto.%s", filename, ext);
@@ -585,9 +585,9 @@ int BrowserLoadFile()
 	else
 	{
 		// load SRAM or snapshot
-		if (GCSettings.AutoLoad == 1)
+		if (GCSettings.AutoLoad == AUTOLOAD_SRAM)
 			LoadSRAMAuto(SILENT);
-		else if (GCSettings.AutoLoad == 2)
+		else if (GCSettings.AutoLoad == AUTOLOAD_STATE)
 			LoadSnapshotAuto(SILENT);
 
 		ResetBrowser();

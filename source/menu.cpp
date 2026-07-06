@@ -663,16 +663,16 @@ void InfoPrompt(const char *msg)
  ***************************************************************************/
 void AutoSave()
 {
-	if (GCSettings.AutoSave == 1)
+	if (GCSettings.AutoSave == AUTOSAVE_SRAM)
 	{
 		SaveSRAMAuto(SILENT);
 	}
-	else if (GCSettings.AutoSave == 2)
+	else if (GCSettings.AutoSave == AUTOSAVE_STATE)
 	{
 		if (WindowPrompt("Save", "Save State?", "Save", "Don't Save") )
 			SaveSnapshotAuto(NOTSILENT);
 	}
-	else if (GCSettings.AutoSave == 3)
+	else if (GCSettings.AutoSave == AUTOSAVE_BOTH)
 	{
 		if (WindowPrompt("Save", "Save SRAM and State?", "Save", "Don't Save") )
 		{
@@ -1943,7 +1943,7 @@ static int MenuGameSaves(int action)
 		if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
 			type = FILE_SRAM;
 		else if(strncmp(&browserList[i].filename[len2-4], ".frz", 4) == 0)
-			type = FILE_SNAPSHOT;
+			type = FILE_STATE;
 		else
 			continue;
 
@@ -1957,7 +1957,7 @@ static int MenuGameSaves(int action)
 			saves.files[saves.type[j]][n] = 1;
 			strcpy(saves.filename[j], browserList[i].filename);
 
-			if(saves.type[j] == FILE_SNAPSHOT)
+			if(saves.type[j] == FILE_STATE)
 			{
 				sprintf(scrfile, "%s%s/%s.png", pathPrefix[GCSettings.SaveMethod], GCSettings.SaveFolder, tmp);
 
@@ -2013,7 +2013,7 @@ static int MenuGameSaves(int action)
 					case FILE_SRAM:
 						result = LoadSRAM(filepath, NOTSILENT);
 						break;
-					case FILE_SNAPSHOT:
+					case FILE_STATE:
 						result = LoadSnapshot (filepath, NOTSILENT);
 						break;
 				}
@@ -2033,7 +2033,7 @@ static int MenuGameSaves(int action)
 							strcat(deletepath, ".srm");
 							remove(deletepath); // Delete the *.srm file (Battery save file)
 						break;
-						case FILE_SNAPSHOT:
+						case FILE_STATE:
 							strncpy(deletepath, filepath, 1024);
 							deletepath[strlen(deletepath)-4] = 0;
 							strcat(deletepath, ".png");
@@ -2052,12 +2052,12 @@ static int MenuGameSaves(int action)
 				if(ret == -2) // new State
 				{
 					for(i=1; i < 100; i++)
-						if(saves.files[FILE_SNAPSHOT][i] == 0)
+						if(saves.files[FILE_STATE][i] == 0)
 							break;
 
 					if(i < 100)
 					{
-						MakeFilePath(filepath, FILE_SNAPSHOT, Memory.ROMFilename, i);
+						MakeFilePath(filepath, FILE_STATE, Memory.ROMFilename, i);
 						SaveSnapshot(filepath, NOTSILENT);
 						menu = MENU_GAME_SAVE;
 					}
@@ -2083,7 +2083,7 @@ static int MenuGameSaves(int action)
 						case FILE_SRAM:
 							SaveSRAM(filepath, NOTSILENT);
 							break;
-						case FILE_SNAPSHOT:
+						case FILE_STATE:
 							SaveSnapshot (filepath, NOTSILENT);
 							break;
 					}
@@ -3597,7 +3597,7 @@ static int MenuSettingsOtherMappings()
 		switch (ret)
 		{
 			case 0:
-				GCSettings.TurboModeEnabled ^= 1;
+				GCSettings.TurboModeEnabled = !GCSettings.TurboModeEnabled;
 				break;
 
 			case 1:
@@ -3608,19 +3608,19 @@ static int MenuSettingsOtherMappings()
 
 			case 2:
 				GCSettings.GamepadMenuToggle++;
-				if (GCSettings.GamepadMenuToggle > 2)
-					GCSettings.GamepadMenuToggle = 0;
+				if (GCSettings.GamepadMenuToggle >= GAMEPAD_MENU_TOGGLE_LENGTH)
+					GCSettings.GamepadMenuToggle = GAMEPAD_MENU_TOGGLE_DEFAULT;
 				break;
 
 			case 3:
-				GCSettings.MapABXYRightStick ^= 1;
+				GCSettings.MapABXYRightStick = !GCSettings.MapABXYRightStick;
 				break;
 		}
 
 		if(ret >= 0 || firstRun)
 		{
 			firstRun = false;
-			sprintf (options.value[0], "%s", GCSettings.TurboModeEnabled == 1 ? "On" : "Off");
+			sprintf (options.value[0], "%s", GCSettings.TurboModeEnabled ? "On" : "Off");
 			
 			switch(GCSettings.TurboModeButton)
 			{
@@ -3658,15 +3658,15 @@ static int MenuSettingsOtherMappings()
 
 			switch(GCSettings.GamepadMenuToggle)
 			{
-				case 0:
+				case GAMEPAD_MENU_TOGGLE_DEFAULT:
 					sprintf (options.value[2], "Default (All Enabled)"); break;
-				case 1:
+				case GAMEPAD_MENU_TOGGLE_HOME_RIGHTSTICK:
 					sprintf (options.value[2], "Home / Right Stick"); break;
-				case 2:
+				case GAMEPAD_MENU_TOGGLE_LRSTART_12PLUS:
 					sprintf (options.value[2], "L+R+Start / 1+2+Plus"); break;
 			}
 
-			sprintf (options.value[3], "%s", GCSettings.MapABXYRightStick == 1 ? "On" : "Off");
+			sprintf (options.value[3], "%s", GCSettings.MapABXYRightStick ? "On" : "Off");
 
 			optionBrowser.TriggerUpdate();
 		}
@@ -3773,7 +3773,7 @@ static int MenuSettingsVideo()
 				break;
 
 			case 1:
-				GCSettings.widescreen ^= 1;
+				GCSettings.widescreen = !GCSettings.widescreen;
 				break;
 
 			case 2:
@@ -3797,27 +3797,27 @@ static int MenuSettingsVideo()
 				break;
 				
 			case 6:
-				GCSettings.HiResolution ^= 1;
+				GCSettings.HiResolution = !GCSettings.HiResolution;
 				break;
 				
 			case 7:
-				GCSettings.SpriteLimit ^= 1;
+				GCSettings.SpriteLimit = !GCSettings.SpriteLimit;
 				break;
 
 			case 8:
-				GCSettings.FrameSkip ^= 1;
+				GCSettings.FrameSkip = !GCSettings.FrameSkip;
 				break;
 
 			case 9:
-				GCSettings.crosshair ^= 1;
+				GCSettings.crosshair = !GCSettings.crosshair;
 				break;
 				
 			case 10:
-				Settings.DisplayFrameRate ^= 1;
+				Settings.DisplayFrameRate = !Settings.DisplayFrameRate;
 				break;
 				
 			case 11:
-				Settings.DisplayTime ^= 1;
+				Settings.DisplayTime = !Settings.DisplayTime;
 				break;
 				
 			case 12:
@@ -3885,10 +3885,10 @@ static int MenuSettingsVideo()
 				case VIDEOMODE_PROGRESSIVE_576P:
 					sprintf (options.value[5], "Progressive (576p)"); break;
 			}
-			sprintf (options.value[6], "%s", GCSettings.HiResolution == 1 ? "On" : "Off");
-			sprintf (options.value[7], "%s", GCSettings.SpriteLimit == 1 ? "On" : "Off");
-			sprintf (options.value[8], "%s", GCSettings.FrameSkip == 1 ? "On" : "Off");
-			sprintf (options.value[9], "%s", GCSettings.crosshair == 1 ? "On" : "Off");
+			sprintf (options.value[6], "%s", GCSettings.HiResolution ? "On" : "Off");
+			sprintf (options.value[7], "%s", GCSettings.SpriteLimit ? "On" : "Off");
+			sprintf (options.value[8], "%s", GCSettings.FrameSkip ? "On" : "Off");
+			sprintf (options.value[9], "%s", GCSettings.crosshair ? "On" : "Off");
 			sprintf (options.value[10], "%s", Settings.DisplayFrameRate ? "On" : "Off");
 			sprintf (options.value[11], "%s", Settings.DisplayTime ? "On" : "Off");
 			switch(GCSettings.sfxOverclock)
@@ -4003,7 +4003,7 @@ static int MenuSettingsAudio()
 				S9xReset();
 
 			case 1:
-				GCSettings.MuteAudio ^= 1;
+				GCSettings.MuteAudio = !GCSettings.MuteAudio;
 				break;
 		}
 		
@@ -4350,20 +4350,18 @@ static int MenuSettingsFile()
 				
 			case 8:
 				GCSettings.AutoLoad++;
-				if (GCSettings.AutoLoad > 2)
-					GCSettings.AutoLoad = 0;
+				if (GCSettings.AutoLoad > AUTOLOAD_STATE)
+					GCSettings.AutoLoad = AUTOLOAD_OFF;
 				break;
 
 			case 9:
 				GCSettings.AutoSave++;
-				if (GCSettings.AutoSave > 3)
-					GCSettings.AutoSave = 0;
+				if (GCSettings.AutoSave > AUTOSAVE_BOTH)
+					GCSettings.AutoSave = AUTOSAVE_OFF;
 				break;
 
 			case 10:
-				GCSettings.AppendAuto++;
-				if (GCSettings.AppendAuto > 1)
-					GCSettings.AppendAuto = 0;
+				GCSettings.AppendAuto = !GCSettings.AppendAuto;
 				break;
 		}
 
@@ -4442,17 +4440,17 @@ static int MenuSettingsFile()
 			snprintf (options.value[6], 35, "%s", GCSettings.CoverFolder);
 			snprintf (options.value[7], 35, "%s", GCSettings.ArtworkFolder);
 
-			if (GCSettings.AutoLoad == 0) sprintf (options.value[8],"Off");
-			else if (GCSettings.AutoLoad == 1) sprintf (options.value[8],"SRAM");
-			else if (GCSettings.AutoLoad == 2) sprintf (options.value[8],"State");
+			if (GCSettings.AutoLoad == AUTOLOAD_OFF) sprintf (options.value[8],"Off");
+			else if (GCSettings.AutoLoad == AUTOLOAD_SRAM) sprintf (options.value[8],"SRAM");
+			else if (GCSettings.AutoLoad == AUTOLOAD_STATE) sprintf (options.value[8],"State");
 
-			if (GCSettings.AutoSave == 0) sprintf (options.value[9],"Off");
-			else if (GCSettings.AutoSave == 1) sprintf (options.value[9],"SRAM");
-			else if (GCSettings.AutoSave == 2) sprintf (options.value[9],"State");
-			else if (GCSettings.AutoSave == 3) sprintf (options.value[9],"Both");
+			if (GCSettings.AutoSave == AUTOSAVE_OFF) sprintf (options.value[9],"Off");
+			else if (GCSettings.AutoSave == AUTOSAVE_SRAM) sprintf (options.value[9],"SRAM");
+			else if (GCSettings.AutoSave == AUTOSAVE_STATE) sprintf (options.value[9],"State");
+			else if (GCSettings.AutoSave == AUTOSAVE_BOTH) sprintf (options.value[9],"Both");
 
-			if (GCSettings.AppendAuto == 0) sprintf (options.value[10], "Off");
-			else if (GCSettings.AppendAuto == 1) sprintf (options.value[10], "On");
+			if (!GCSettings.AppendAuto) sprintf (options.value[10], "Off");
+			else sprintf (options.value[10], "On");
 
 			optionBrowser.TriggerUpdate();
 		}
@@ -4574,7 +4572,7 @@ static int MenuSettingsMenu()
 					GCSettings.SFXVolume = 0;
 				break;
 			case 4:
-				GCSettings.Rumble ^= 1;
+				GCSettings.Rumble = !GCSettings.Rumble;
 				break;
 			case 5:
 				GCSettings.language++;
@@ -4590,7 +4588,7 @@ static int MenuSettingsMenu()
 					GCSettings.PreviewImage = PREVIEWIMAGE_SCREENSHOT;
 				break;
 			case 7:
-				GCSettings.HideSRAMSaving ^= 1;
+				GCSettings.HideSRAMSaving = !GCSettings.HideSRAMSaving;
 				break;
 		}
 
@@ -4619,9 +4617,9 @@ static int MenuSettingsMenu()
 			options.name[4][0] = 0; // Rumble
 			#endif
 
-			if (GCSettings.WiimoteOrientation == 0)
+			if (GCSettings.WiimoteOrientation == WIIMOTE_ORIENTATION_VERTICAL)
 				sprintf (options.value[1], "Vertical");
-			else if (GCSettings.WiimoteOrientation == 1)
+			else if (GCSettings.WiimoteOrientation == WIIMOTE_ORIENTATION_HORIZONTAL)
 				sprintf (options.value[1], "Horizontal");
 
 			if(GCSettings.MusicVolume > 0)
@@ -4634,12 +4632,12 @@ static int MenuSettingsMenu()
 			else
 				sprintf(options.value[3], "Mute");
 
-			if (GCSettings.Rumble == 1)
+			if (GCSettings.Rumble)
 				sprintf (options.value[4], "Enabled");
 			else
 				sprintf (options.value[4], "Disabled");
 			
-			if (GCSettings.HideSRAMSaving == 1)
+			if (GCSettings.HideSRAMSaving)
 				sprintf (options.value[7], "On");
 			else
 				sprintf (options.value[7], "Off");

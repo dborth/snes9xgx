@@ -80,7 +80,7 @@ SaveSnapshotAuto (bool silent)
 {
 	char filepath[1024];
 
-	if(!MakeFilePath(filepath, FILE_SNAPSHOT, Memory.ROMFilename, 0))
+	if(!MakeFilePath(filepath, FILE_STATE, Memory.ROMFilename, 0))
 		return false;
 
 	return SaveSnapshot(filepath, silent);
@@ -134,7 +134,7 @@ LoadSnapshotAuto (bool silent)
 {
 	char filepath[1024];
 
-	if(!MakeFilePath(filepath, FILE_SNAPSHOT, Memory.ROMFilename, 0))
+	if(!MakeFilePath(filepath, FILE_STATE, Memory.ROMFilename, 0))
 		return false;
 
 	return LoadSnapshot(filepath, silent);
