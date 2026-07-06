@@ -31,13 +31,13 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 | Name                    | Status                            | File                                       |
 |-------------------------|-----------------------------------|--------------------------------------------|
-| Snes9x GX Wii/Wii U     | [![Build Status][Build]][Actions] | [![Emulator][Download]][snes9xgx-wiiu]     |
+| Snes9x GX Wii/Wii U     | [![Build Status][Build]][Actions] | [![Emulator][Download]][snes9xgx-wii]      |
 | Snex9x GX GameCube      | [![Build Status][Build]][Actions] | [![Emulator][Download]][snes9xgx-gamecube] |
 
 [Actions]: https://github.com/dborth/snes9xgx/actions/workflows/build.yml
 [Build]: https://github.com/dborth/snes9xgx/actions/workflows/build.yml/badge.svg
 [Download]: https://img.shields.io/badge/Download-blue
-[snes9xgx-wiiu]: https://github.com/dborth/snes9xgx/releases/download/Pre-release/Snes9xGX.zip
+[snes9xgx-wii]: https://github.com/dborth/snes9xgx/releases/download/Pre-release/Snes9xGX.zip
 [snes9xgx-gamecube]: https://github.com/dborth/snes9xgx/releases/download/Pre-release/Snes9xGX-GameCube.zip
 
 
@@ -58,12 +58,32 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 * SD, USB, DVD, SMB, Zip, and 7z support
 * Autodetect PAL/NTSC, 16:9 widescreen support
 * Original/filtered/unfiltered video modes
+* Video filters - hq2x, Scale2x, Scanlines, 2xBR, DDT
 * Turbo Mode - up to 2x the normal speed
 * Zoom option to zoom in/out
 * Open Source!
 
 
 ## UPDATE HISTORY
+
+[5.0.0 - July 6, 2026]
+
+* Completely rewritten filters hq2x, Scale2x, 2xBR, DDT with improved performance
+* Replaced scanlines filter with a rewritten GX/TEV powered one
+* Significantly improved video rendering performance
+* Rewritten audio code with a hysteretic dynamic-rate controller
+* Refactored/improved synchronization and frameskip handling
+* Significantly reduced input lag by moving input polling to exactly when Snes9x polls (at vblank) instead of after each frame
+* Replaced C texture generation with optimized PPC ASM
+* New blur effect when pausing a game
+* Improved widescreen experience by removing the pillarbox (only letterboxed)
+* Reworked save/load device and preferences logic
+* Fixed crash when removing devices (eg: SD/USB)
+* Fixed flashes/artifacts/colors when switching video modes
+* Streamlined/enhanced build
+* General performance enhancements
+* Other general enhancements
+* Compiled with latest devkitPPC/libogc2
 
 [4.5.8 - April 13, 2026]
 
