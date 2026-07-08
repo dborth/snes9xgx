@@ -6,12 +6,7 @@
 #ifndef _VM_H_
 #define _VM_H_
 
-#include <gccore.h>
-#include <stdlib.h>
-#include <malloc.h>
-#include <errno.h>
-#include <ogc/machine/processor.h>
-#include <stdio.h>
+#include <gctypes.h>
 
 #define KB 				(1024)
 #define MB				(1024*KB)

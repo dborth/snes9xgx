@@ -27,6 +27,9 @@
 #include "mem2.h"
 
 #ifdef USE_VM
+	extern "C" {
+		#include "utils/vm/vm.h"
+	}
 	#include "vmalloc.h"
 #endif
 
@@ -43,6 +46,9 @@ static bool autoboot = false;
 
 int main(int argc, char *argv[])
 {
+	#ifdef USE_VM
+	VM_Init(ARAM_SIZE, MRAM_BACKING); // Setup Virtual Memory with the entire ARAM
+	#endif
 	DefaultSettings (); // Set defaults
 	InitializeSnes9x(); // ensure Snes9x memory is in MEM1 for Wii
 	SystemInit();

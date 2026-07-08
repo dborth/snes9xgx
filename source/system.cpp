@@ -34,10 +34,6 @@
 #endif
 
 extern "C" {
-#ifdef USE_VM
-	#include "utils/vm/vm.h"
-#endif
-extern char* strcasestr(const char *, const char *);
 extern void __exception_setreload(int t);
 }
 
@@ -149,10 +145,6 @@ static void ipl_set_config(unsigned char c)
 #endif
 
 void SystemInit() {
-	#ifdef USE_VM
-	VM_Init(ARAM_SIZE, MRAM_BACKING); // Setup Virtual Memory with the entire ARAM
-	#endif
-
 	#ifdef HW_RVL
 	L2Enhance();
 

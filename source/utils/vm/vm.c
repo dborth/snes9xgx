@@ -9,9 +9,9 @@
 #include <errno.h>
 #include <ogc/machine/processor.h>
 #include <ogc/aram.h>
-#include "vm.h"
-
 #include <stdio.h>
+
+#include "vm.h"
 
 typedef u8 vm_page[PAGE_SIZE];
 
