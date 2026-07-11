@@ -8,9 +8,9 @@
  * Audio driver
  * Audio is fixed to 48Khz/16bit/Stereo
  ***************************************************************************/
-
+#ifndef NO_SOUND
 #include <asndlib.h>
-
+#endif
 #include "video.h"
 
 #include "snes9x/memmap.h"

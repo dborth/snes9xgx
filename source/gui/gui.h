@@ -39,7 +39,9 @@
 #include <exception>
 #include <wchar.h>
 #include <math.h>
+#ifndef NO_SOUND
 #include <asndlib.h>
+#endif
 #include <wiiuse/wpad.h>
 
 #include "snes9xgx.h"
