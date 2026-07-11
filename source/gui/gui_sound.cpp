@@ -120,10 +120,11 @@ void GuiSound::Resume()
 
 bool GuiSound::IsPlaying()
 {
+#ifndef NO_SOUND
 	if(ASND_StatusVoice(voice) == SND_WORKING || ASND_StatusVoice(voice) == SND_WAITING)
 		return true;
-	else
-		return false;
+#endif
+	return false;
 }
 
 void GuiSound::SetVolume(int vol)
