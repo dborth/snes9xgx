@@ -210,21 +210,20 @@ ConnectShare (bool silent)
 		return true;
 
 	int retry = 1;
-	int chkS = (strlen(GCSettings.smbshare) > 0) ? 0:1;
-	int chkI = (strlen(GCSettings.smbip) > 0) ? 0:1;
+	bool invalidShare = strlen(GCSettings.smbshare) == 0;
+	bool invalidIp = strlen(GCSettings.smbip) == 0;
 
-	// check that all parameters have been set
-	if(chkS + chkI > 0)
+	if(invalidShare || invalidIp)
 	{
 		if(!silent)
 		{
 			char msg[50];
 			char msg2[100];
-			if(chkS + chkI > 1) // more than one thing is wrong
+			if(invalidShare && invalidIp) // more than one thing is wrong
 				sprintf(msg, "Check settings.xml.");
-			else if(chkS)
+			else if(invalidShare)
 				sprintf(msg, "Share name is blank.");
-			else if(chkI)
+			else if(invalidIp)
 				sprintf(msg, "Share IP is blank.");
 
 			sprintf(msg2, "Invalid network settings - %s", msg);

@@ -3706,10 +3706,6 @@ static int MenuSettingsVideo()
 	sprintf(options.name[i++], "Show Local Time");
 	sprintf(options.name[i++], "SuperFX Overclock");
 	options.length = i;
-	
-#ifdef HW_DOL
-	options.name[2][0] = 0; // disable hq2x on GameCube
-#endif
 
 	for(i=0; i < options.length; i++)
 		options.value[i][0] = 0;
@@ -4317,11 +4313,11 @@ static int MenuSettingsFile()
 		switch (ret)
 		{
 			case 0:
-				GCSettings.LoadMethod++;
+				GCSettings.LoadMethod = getNextLoadDevice(GCSettings.LoadMethod);
 				break;
 
 			case 1:
-				GCSettings.SaveMethod++;
+				GCSettings.SaveMethod = getNextSaveDevice(GCSettings.SaveMethod);
 				break;
 
 			case 2:
@@ -4368,51 +4364,6 @@ static int MenuSettingsFile()
 		if(ret >= 0 || firstRun)
 		{
 			firstRun = false;
-
-			// some load/save methods are not implemented - here's where we skip them
-			// they need to be skipped in the order they were enumerated
-
-			// no SD/USB ports on GameCube
-			#ifdef HW_DOL
-			if(GCSettings.LoadMethod == DEVICE_SD)
-				GCSettings.LoadMethod++;
-			if(GCSettings.SaveMethod == DEVICE_SD)
-				GCSettings.SaveMethod++;
-			if(GCSettings.LoadMethod == DEVICE_USB)
-				GCSettings.LoadMethod++;
-			if(GCSettings.SaveMethod == DEVICE_USB)
-				GCSettings.SaveMethod++;
-			#endif
-
-			// saving to DVD is impossible
-			if(GCSettings.SaveMethod == DEVICE_DVD)
-				GCSettings.SaveMethod++;
-
-			// skip GameCube devices on Wii
-			#ifdef HW_RVL
-			if(GCSettings.LoadMethod == DEVICE_SD_SLOTA)
-				GCSettings.LoadMethod++;
-			if(GCSettings.SaveMethod == DEVICE_SD_SLOTA)
-				GCSettings.SaveMethod++;
-			if(GCSettings.LoadMethod == DEVICE_SD_SLOTB)
-				GCSettings.LoadMethod++;
-			if(GCSettings.SaveMethod == DEVICE_SD_SLOTB)
-				GCSettings.SaveMethod++;
-			if(GCSettings.LoadMethod == DEVICE_SD_PORT2)
-				GCSettings.LoadMethod++;
-			if(GCSettings.SaveMethod == DEVICE_SD_PORT2)
-				GCSettings.SaveMethod++;
-			if(GCSettings.LoadMethod == DEVICE_SD_GCLOADER)
-				GCSettings.LoadMethod++;
-			if(GCSettings.SaveMethod == DEVICE_SD_GCLOADER)
-				GCSettings.SaveMethod++;
-			#endif
-
-			// correct load/save methods out of bounds
-			if(GCSettings.LoadMethod >= DEVICE_LENGTH)
-				GCSettings.LoadMethod = DEVICE_AUTO;
-			if(GCSettings.SaveMethod >= DEVICE_LENGTH)
-				GCSettings.SaveMethod = DEVICE_AUTO;
 
 			if (GCSettings.LoadMethod == DEVICE_AUTO) sprintf (options.value[0],"Auto Detect");
 			else if (GCSettings.LoadMethod == DEVICE_SD) sprintf (options.value[0],"SD");
