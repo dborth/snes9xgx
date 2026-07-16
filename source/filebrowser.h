@@ -55,7 +55,6 @@ enum
 };
 
 extern unsigned long SNESROMSize;
-extern bool loadingFile;
 extern char szname[MAXPATHLEN];
 extern bool inSz;
 

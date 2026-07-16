@@ -48,7 +48,6 @@ char szname[MAXPATHLEN];
 bool inSz = false;
 
 unsigned long SNESROMSize = 0;
-bool loadingFile = false;
 bool bsxBiosLoadFailed;
 
 extern bool isBSX();
@@ -551,7 +550,6 @@ int WiiFileLoader()
 
 	memset(Memory.NSRTHeader, 0, sizeof(Memory.NSRTHeader));
 	Memory.HeaderCount = 0;
-	loadingFile = true;
 
 	if(!inSz)
 	{
@@ -570,7 +568,6 @@ int WiiFileLoader()
 			BrowserChangeFolder();
 		}
 	}
-	loadingFile = false;
 
 	if(size <= 0)
 		return 0;
