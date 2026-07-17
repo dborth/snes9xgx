@@ -7,7 +7,6 @@ Snes9x GX is a "homebrew application" which means you will need a way to run
 unsigned code on your Nintendo Wii. The best website for getting started with
 Wii homebrew is WiiBrew (www.wiibrew.org).
 
-
 ## TABLE OF CONTENTS
  - [Nightly Builds](#nightly-builds)
  - [Features](#features)
