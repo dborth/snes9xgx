@@ -65,6 +65,12 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 ## UPDATE HISTORY
 
+[5.0.1 - July 24, 2026]
+
+* Fixed static in audio on turbo mode
+* Reverted some build changes - they actually made the emulator measurably slower
+* Fixed crashes on GameCube
+
 [5.0.0 - July 6, 2026]
 
 * Completely rewritten filters hq2x, Scale2x, 2xBR, DDT with improved performance
