@@ -59,6 +59,7 @@ enum RateState {
 #define MAX_QUEUED_BUFFERS 12
 
 static u8 soundbuffer[BUFFERCOUNT][AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
+static u8 dummy[AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
 
 // These are shared between S9xAudioCallback and the DMA interrupt callback,
 // so they must not be cached in registers across reads
@@ -160,7 +161,6 @@ static void S9xAudioCallback (void *data) {
 		} else {
 			// Buffer ring is full (Turbo mode running faster than real-time playback).
 			// Safely drop excess samples to keep APU emulation moving.
-			static u8 dummy[AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
 			S9xMixSamples(dummy, SAMPLES_TO_PROCESS);
 		}
 	}
