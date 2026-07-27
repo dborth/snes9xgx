@@ -49,7 +49,6 @@ extern int screenwidth;
 extern bool progressive;
 extern u32 FrameTimer;
 extern bool vmode_60hz;
-extern int timerstyle;
 extern uint32 prevRenderedFrameCount;
 extern int CheckVideo;
 

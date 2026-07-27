@@ -25,6 +25,7 @@
 
 #define MAX_MESSAGE_LEN (36 * 3)
 
+static int timerstyle = 0;
 static long long prev;
 static long long now;
 
