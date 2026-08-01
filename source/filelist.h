@@ -50,6 +50,7 @@
 #include "bg_bottom_png.h"
 #include "icon_settings_png.h"
 #include "icon_home_png.h"
+#include "icon_credits_png.h"
 #include "icon_game_settings_png.h"
 #include "icon_game_cheats_png.h"
 #include "icon_game_controllers_png.h"
