@@ -8,7 +8,7 @@
  * GC VM memory allocator
  ***************************************************************************/
 
-#ifdef USE_VM
+#ifdef HW_DOL
 
 #include <ogc/lwp_heap.h>
 #include <ogc/system.h>

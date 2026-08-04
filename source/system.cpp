@@ -29,7 +29,7 @@
 #include "utils/wiidrc.h"
 #include "utils/FreeTypeGX.h"
 
-#ifdef USE_VM
+#ifdef HW_DOL
 	#include "vmalloc.h"
 #endif
 

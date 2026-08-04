@@ -26,7 +26,7 @@
 #include "input.h"
 #include "mem2.h"
 
-#ifdef USE_VM
+#ifdef HW_DOL
 	extern "C" {
 		#include "utils/vm/vm.h"
 	}
@@ -46,7 +46,7 @@ static bool autoboot = false;
 
 int main(int argc, char *argv[])
 {
-	#ifdef USE_VM
+	#ifdef HW_DOL
 	VM_Init(ARAM_SIZE, MRAM_BACKING); // Setup Virtual Memory with the entire ARAM
 	#endif
 	DefaultSettings (); // Set defaults
@@ -60,11 +60,7 @@ int main(int argc, char *argv[])
 	browserList = (BROWSERENTRY *)mem2_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
 #else
 	savebuffer = (unsigned char *)memalign(32,SAVEBUFFERSIZE);
-#ifdef USE_VM
 	browserList = (BROWSERENTRY *)vm_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
-#else
-	browserList = (BROWSERENTRY *)memalign(32,sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
-#endif
 #endif
 	InitGUIThreads();
 

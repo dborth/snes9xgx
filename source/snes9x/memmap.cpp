@@ -46,7 +46,7 @@
 extern int WiiFileLoader();
 extern void WiiSetupCheats();
 #endif
-#ifdef USE_VM
+#ifdef HW_DOL
 	#include "vmalloc.h"
 #endif
 
@@ -913,7 +913,7 @@ bool8 CMemory::Init (void)
     RAM	 = (uint8 *) memalign(32,0x20000);
     SRAM = (uint8 *) memalign(32,0x80000);
     VRAM = (uint8 *) memalign(32,0x10000);
-#ifdef USE_VM
+#ifdef HW_DOL
 	ROM  = (uint8 *) vm_malloc(MAX_ROM_SIZE + 0x200 + 0x8000);
 #else
     ROM  = (uint8 *) memalign(32,MAX_ROM_SIZE + 0x200 + 0x8000);
@@ -1025,7 +1025,7 @@ void CMemory::Deinit (void)
 	if (ROM)
 	{
 		ROM -= 0x8000;
-		#ifdef USE_VM
+		#ifdef HW_DOL
 		vm_free(ROM);
 		#else
 		free(ROM);

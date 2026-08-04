@@ -21,7 +21,6 @@
 #include <wiiuse/wpad.h>
 #endif
 
-#include "snes9x/port.h"
 #include "snes9xgx.h"
 #include "system.h"
 #include "video.h"
@@ -41,6 +40,7 @@
 #include "utils/gettext.h"
 #include "utils/FreeTypeGX.h"
 
+#include "snes9x/port.h"
 #include "snes9x/snes9x.h"
 #include "snes9x/fxemu.h"
 #include "snes9x/memmap.h"
