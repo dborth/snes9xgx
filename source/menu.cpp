@@ -528,12 +528,13 @@ ProgressWindow(char *title, char *msg)
 
 static void * ProgressThread (void *arg)
 {
-	LWP_MutexLock(progMutex);
 	while(1)
 	{
+		LWP_MutexLock(progMutex);
 		// sleep until ShowProgress/ShowAction signals there is work to do
 		while(!showProgress)
 			LWP_CondWait(progActiveCond, progMutex);
+
 		progIdle = false;
 		LWP_MutexUnlock(progMutex);
 
@@ -542,6 +543,7 @@ static void * ProgressThread (void *arg)
 		LWP_MutexLock(progMutex);
 		progIdle = true;
 		LWP_CondBroadcast(progIdleCond); // wake CancelAction callers
+		LWP_MutexUnlock(progMutex);
 	}
 	return NULL;
 }
@@ -563,7 +565,7 @@ InitGUIThreads()
 	LWP_CondInit(&progIdleCond);
 
 	LWP_CreateThread(&guithread, UpdateGUI, NULL, NULL, 24576, 70);
-	LWP_CreateThread(&progressthread, ProgressThread, NULL, NULL, 0, 40);
+	LWP_CreateThread(&progressthread, ProgressThread, NULL, NULL, 8192, 80);
 }
 
 /****************************************************************************
