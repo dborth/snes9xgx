@@ -1,10 +1,10 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x GX
  *
  * softdev July 2006
  * crunchy2 May 2007-July 2007
  * Michniewski 2008
- * Tantric 2008-2023
+ * Daryl Borth 2008-2026
  *
  * snes9xgx.cpp
  *
@@ -24,14 +24,7 @@
 #include "fileop.h"
 #include "filebrowser.h"
 #include "input.h"
-#include "mem2.h"
-
-#ifdef HW_DOL
-	extern "C" {
-		#include "utils/vm/vm.h"
-	}
-	#include "vmalloc.h"
-#endif
+#include "memmanager.h"
 
 #include "snes9x/snes9x.h"
 #include "snes9x/fxemu.h"
@@ -46,21 +39,18 @@ static bool autoboot = false;
 
 int main(int argc, char *argv[])
 {
-	#ifdef HW_DOL
-	VM_Init(ARAM_SIZE, MRAM_BACKING); // Setup Virtual Memory with the entire ARAM
-	#endif
+	SystemInit();
 	DefaultSettings (); // Set defaults
 	InitializeSnes9x(); // ensure Snes9x memory is in MEM1 for Wii
-	SystemInit();
 	ResetVideo_Menu (); // change to menu video mode
 	S9xInitSync(); // initialize frame sync
 
 #ifdef HW_RVL
-	savebuffer = (unsigned char *)mem2_malloc(SAVEBUFFERSIZE);
-	browserList = (BROWSERENTRY *)mem2_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
+	savebuffer = (unsigned char *)extmem_malloc(SAVEBUFFERSIZE);
+	browserList = (BROWSERENTRY *)extmem_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
 #else
 	savebuffer = (unsigned char *)memalign(32,SAVEBUFFERSIZE);
-	browserList = (BROWSERENTRY *)vm_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
+	browserList = (BROWSERENTRY *)extmem_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
 #endif
 	InitGUIThreads();
 
@@ -94,8 +84,8 @@ int main(int argc, char *argv[])
 			// go back to checking if devices were inserted/removed
 			// since we're entering the menu
 			ResumeDeviceThread();
-
 			SwitchAudioMode(1);
+			SwitchMemoryMode(MEMORY_MODE_MENU);
 
 			if(SNESROMSize == 0)
 				MainMenu(MENU_GAMESELECTION);
@@ -151,6 +141,7 @@ int main(int argc, char *argv[])
 		// since we're starting emulation again
 		HaltDeviceThread();
 
+		SwitchMemoryMode(MEMORY_MODE_GAME);
 		AudioStart ();
 
 		FrameTimer = 0;

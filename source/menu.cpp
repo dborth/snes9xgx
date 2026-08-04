@@ -1,7 +1,7 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x GX
  *
- * Tantric 2008-2023
+ * Daryl Borth 2008-2026
  *
  * menu.cpp
  *
@@ -22,6 +22,7 @@
 #endif
 
 #include "snes9xgx.h"
+#include "memmanager.h"
 #include "system.h"
 #include "video.h"
 #include "filebrowser.h"
@@ -57,10 +58,8 @@ static GuiImageData * pointer[4];
 #endif
 
 #ifdef HW_RVL
-	#include "mem2.h"
-
-	#define MEM_ALLOC(A) (u8*)mem2_malloc(A)
-	#define MEM_DEALLOC(A) mem2_free(A)
+	#define MEM_ALLOC(A) (u8*)extmem_malloc(A)
+	#define MEM_DEALLOC(A) extmem_free(A)
 #else
 	#define MEM_ALLOC(A) (u8*)memalign(32, A)
 	#define MEM_DEALLOC(A) free(A)
@@ -203,7 +202,7 @@ void ChangeLanguage() {
 		if(ext_font_ttf != NULL) {
 			HaltGui();
 			DeinitFreeType();
-			mem2_free(ext_font_ttf);
+			extmem_free(ext_font_ttf);
 			ext_font_ttf = NULL;
 			InitFreeType((u8*)font_ttf, font_ttf_size);
 		}

@@ -1,10 +1,10 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x GX
  *
  * softdev July 2006
  * crunchy2 May 2007
  * Michniewski 2008
- * Tantric 2008-2023
+ * Daryl Borth 2008-2026
  *
  * system.cpp
  *
@@ -24,14 +24,10 @@
 #include "audio.h"
 #include "fileop.h"
 #include "input.h"
-#include "mem2.h"
+#include "memmanager.h"
 #include "font_ttf.h"
 #include "utils/wiidrc.h"
 #include "utils/FreeTypeGX.h"
-
-#ifdef HW_DOL
-	#include "vmalloc.h"
-#endif
 
 extern "C" {
 extern void __exception_setreload(int t);
@@ -164,7 +160,8 @@ void SystemInit() {
 	USBGeckoOutput();
 	__exception_setreload(8);
 
-	InitVideo(); // Initialize video
+	InitMemManager();
+	InitVideo();
 	InitAudio();
 
 	#ifdef HW_RVL
@@ -189,11 +186,6 @@ void SystemInit() {
 	SetupPads();
 	InitDeviceThread();
 	MountAllFAT(); // Initialize libFAT for SD and USB
-
-	#ifdef HW_RVL
-	InitMem2Manager();
-	#endif
-
 	InitFreeType((u8*)font_ttf, font_ttf_size); // Initialize font system
 }
 

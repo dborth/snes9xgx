@@ -13,6 +13,69 @@
 
 #include "vm.h"
 
+#define ARAM_START		(ARAM_RESERVED + ARAM_VM_BASE)
+
+// maximum virtual memory size
+#define MAX_VM_SIZE      (256*1024*1024)
+// maximum physical memory size
+#define MAX_MEM_SIZE     (  8*1024*1024)
+// minimum physical memory size
+#define MIN_MEM_SIZE     (256*1024)
+// page size as defined by hardware
+#define PAGE_SIZE        4096
+#define PAGE_MASK        (~(PAGE_SIZE-1))
+
+#define VM_VSID          0
+#define VM_SEGMENT       0x70000000
+
+// use 64KB for PTEs
+#define HTABMASK         0
+#define PTE_SIZE         ((HTABMASK+1)*65536)
+#define PTE_COUNT        (PTE_SIZE>>3)
+
+// keeps a record of each currently mapped page
+typedef union
+{
+	u32 data;
+	struct
+	{
+		u32 valid      :  1;
+		u32 locked     :  1;
+		u32 dirty      :  1;
+		u32 pte_index  : 13;
+		u32 page_index : 16;
+	};
+} p_map;
+
+// maps VM addresses to mapped pages
+typedef struct
+{
+	// data must be fetched when paging in?
+	u16 committed  :  1;
+	u16 p_map_index: 12;
+} vm_map;
+
+typedef union
+{
+	u32 data[2];
+	struct
+	{
+		u32 valid  :  1;
+		u32 VSID   : 24;
+		u32 hash   :  1;
+		u32 API    :  6;
+
+		u32 RPN    : 20;
+		u32 pad0   :  3;
+		u32 R      :  1;
+		u32 C      :  1;
+		u32 WIMG   :  4;
+		u32 pad1   :  1;
+		u32 PP     :  2;
+	};
+} PTE;
+typedef PTE* PTEG;
+
 typedef u8 vm_page[PAGE_SIZE];
 
 static p_map phys_map[2048+(PTE_SIZE/PAGE_SIZE)];
@@ -86,8 +149,7 @@ static PTE* StorePTE(PTEG pteg, u32 virtual, u32 physical, u8 WIMG, u8 PP, int s
 	{
 		if (pteg[i].data[0] == p.data[0])
 		{
-//			printf("Error: address %08x already had a PTE entry\r\n", virtual);
-//			abort();
+
 		}
 		else if (pteg[i].valid)
 			continue;
@@ -95,8 +157,6 @@ static PTE* StorePTE(PTEG pteg, u32 virtual, u32 physical, u8 WIMG, u8 PP, int s
 		asm volatile("tlbie %0" : : "r"(virtual));
 		pteg[i].data[1] = p.data[1];
 		pteg[i].data[0] = p.data[0];
-//		if (i || secondary)
-//			printf("PTE for address %08x/%08x in PTEG %p index %d (%s)\r\n", virtual, physical, pteg, i, secondary ? "secondary" : "primary");
 		return pteg+i;
 	}
 
@@ -130,9 +190,6 @@ static PTE* insert_pte(u16 index, u32 physical, u8 WIMG, u8 PP)
 		if (pte)
 			return pte;
 	}
-
-//	printf("Failed to insert PTE for %p\r\n", VM_Base+index);
-//	abort();
 
 	return NULL;
 }
@@ -169,11 +226,8 @@ void* VM_Init(u32 VMSize, u32 MEMSize)
 
 	VMSize = (VMSize+PAGE_SIZE-1)&PAGE_MASK;
 	MEMSize = (MEMSize+PAGE_SIZE-1)&PAGE_MASK;
-	//VM_Base = (vm_page*)(0x80000000 - VMSize);
 	VM_Base = (vm_page*)(ARAM_VM_BASE);
 	pmap_max = MEMSize / PAGE_SIZE + 16;
-
-//	printf("VMSize %08x MEMSize %08x VM_Base %p pmap_max %u\r\n", VMSize, MEMSize, VM_Base, pmap_max);
 
 	if (VMSize <= MEMSize)
 	{
@@ -188,11 +242,7 @@ void* VM_Init(u32 VMSize, u32 MEMSize)
 	}
 	
 	pagefile_fd = AR_Init(NULL, 0);
-//	ISFS_Initialize();
-	// doesn't matter if this fails, will be caught when file is opened
-//	ISFS_CreateFile(VM_FILENAME, 0, ISFS_OPEN_RW, ISFS_OPEN_RW, ISFS_OPEN_RW);
 
-//	pagefile_fd = ISFS_Open(VM_FILENAME, ISFS_OPEN_RW);
 	if (pagefile_fd < 0)
 	{
 		errno = ENOENT;
@@ -202,12 +252,9 @@ void* VM_Init(u32 VMSize, u32 MEMSize)
 	MEMSize += PTE_SIZE;
 	MEM_Base = (vm_page*)memalign(PAGE_SIZE, MEMSize);
 
-//	printf("MEM_Base: %p\r\n", MEM_Base);
-
 	if (MEM_Base==NULL)
 	{
 		AR_Reset();
-//		ISFS_Close(pagefile_fd);
 		errno = ENOMEM;
 		return NULL;
 	}
@@ -215,33 +262,12 @@ void* VM_Init(u32 VMSize, u32 MEMSize)
 	tlbia();
 	DCZeroRange(MEM_Base, MEMSize);
 	HTABORG = (PTE*)(((u32)MEM_Base+0xFFFF)&~0xFFFF);
-//	printf("HTABORG: %p\r\n", HTABORG);
-
-	// attempt to make the pagefile the correct size
-/*	ISFS_Seek(pagefile_fd, 0, SEEK_SET);
-	for (i=0; i<VMSize;)
-	{
-		u32 to_write = VMSize - i;
-		if (to_write > MEMSize)
-			to_write = MEMSize;
-
-		if (ISFS_Write(pagefile_fd, MEM_Base, to_write) != to_write)
-		{
-			free(MEM_Base);
-			ISFS_Close(pagefile_fd);
-			errno = ENOSPC;
-			return NULL;
-		}
-//		printf("Wrote %u bytes to offset %u\r\n", to_write, page);
-		i += to_write;
-	}*/
 
 	// initial commit: map pmap_max pages to fill PTEs with valid RPNs
 	for (index=0,v_index=0; index<pmap_max; ++index,++v_index)
 	{
 		if ((PTE*)(MEM_Base+index) == HTABORG)
 		{
-		//	printf("p_map hole: %u -> %u\r\n", index, index+(PTE_SIZE/PAGE_SIZE));
 			for (i=0; i<(PTE_SIZE/PAGE_SIZE); ++i,++index)
 				phys_map[index].valid = 0;
 
@@ -270,7 +296,6 @@ void* VM_Init(u32 VMSize, u32 MEMSize)
 
 	// set SDR1
 	mtspr(25, MEM_VIRTUAL_TO_PHYSICAL(HTABORG)|HTABMASK);
-	//printf("SDR1: %08x\r\n", MEM_VIRTUAL_TO_PHYSICAL(HTABORG));
 	// enable SR
 	asm volatile("mtsrin %0,%1" :: "r"(VM_VSID), "r"(VM_Base));
 	// hook DSI
@@ -305,9 +330,7 @@ void VM_Deinit(void)
 	if (pagefile_fd)
 	{
 		AR_Reset();
-//		ISFS_Close(pagefile_fd);
 		pagefile_fd = -1;
-//		ISFS_Delete(VM_FILENAME);
 	}
 
 	vm_initialized = 0;
@@ -341,7 +364,6 @@ int vm_dsi_handler(u32 DSISR, u32 DAR)
 		virt_map[phys_map[p_index].page_index].committed = 1;
 		virt_map[phys_map[p_index].page_index].p_map_index = pmap_max;
 		phys_map[p_index].dirty = 0;
-//		printf("VM page %d was purged\r\n", phys_map[p_index].page_index);
 	}
 
 	// fetch v_index if it has been previously committed
@@ -350,12 +372,9 @@ int vm_dsi_handler(u32 DSISR, u32 DAR)
 		DCInvalidateRange(MEM_Base+p_index, PAGE_SIZE);
 		AR_StartDMA(AR_ARAMTOMRAM,(u32)(MEM_Base+p_index),v_index*PAGE_SIZE,PAGE_SIZE);
 		while (AR_GetDMAStatus());
-//		printf("VM page %d was fetched\r\n", v_index);
 	}
 	else
 		DCZeroRange(MEM_Base+p_index, PAGE_SIZE);
-
-//	printf("VM page %u (0x%08x) replaced page %u (%p)\r\n", v_index, DAR, phys_map[p_index].page_index, VM_Base+phys_map[p_index].page_index);
 
 	virt_map[v_index].p_map_index = p_index;
 	phys_map[p_index].page_index = v_index;

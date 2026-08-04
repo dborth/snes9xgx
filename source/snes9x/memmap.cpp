@@ -42,12 +42,10 @@
 #include "snapshot.h"
 
 #ifdef GEKKO
+#include "../memmanager.h"
 #include "../filebrowser.h"
 extern int WiiFileLoader();
 extern void WiiSetupCheats();
-#endif
-#ifdef HW_DOL
-	#include "vmalloc.h"
 #endif
 
 #ifndef SET_UI_COLOR
@@ -914,7 +912,7 @@ bool8 CMemory::Init (void)
     SRAM = (uint8 *) memalign(32,0x80000);
     VRAM = (uint8 *) memalign(32,0x10000);
 #ifdef HW_DOL
-	ROM  = (uint8 *) vm_malloc(MAX_ROM_SIZE + 0x200 + 0x8000);
+	ROM  = (uint8 *) extmem_malloc(MAX_ROM_SIZE + 0x200 + 0x8000);
 #else
     ROM  = (uint8 *) memalign(32,MAX_ROM_SIZE + 0x200 + 0x8000);
 #endif
@@ -1026,7 +1024,7 @@ void CMemory::Deinit (void)
 	{
 		ROM -= 0x8000;
 		#ifdef HW_DOL
-		vm_free(ROM);
+		extmem_free(ROM);
 		#else
 		free(ROM);
 		#endif

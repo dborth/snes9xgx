@@ -1,14 +1,13 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x GX
  *
- * Tantric 2008-2023
+ * Daryl Borth 2008-2026
  *
  * fileop.cpp
  *
  * File operations
  ***************************************************************************/
 
-#include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,15 +27,12 @@
 
 #include "snes9xgx.h"
 #include "fileop.h"
+#include "memmanager.h"
 #include "networkop.h"
 #include "gcunzip.h"
 #include "menu.h"
 #include "filebrowser.h"
 #include "gui/gui.h"
-
-#ifdef HW_RVL
-	#include "mem2.h"
-#endif
 
 #define THREAD_SLEEP 100
 
@@ -954,10 +950,10 @@ size_t LoadFont(char * filepath)
 	}
 
 	if(ext_font_ttf) {
-		mem2_free(ext_font_ttf);
+		extmem_free(ext_font_ttf);
 	}
 
-	ext_font_ttf = (u8 *)mem2_malloc(loadSize);
+	ext_font_ttf = (u8 *)extmem_malloc(loadSize);
 
 	if(!ext_font_ttf) {
 		ErrorPrompt("Font file is too large!");
@@ -987,7 +983,7 @@ void LoadBgMusic()
 		return;
 	}
 
-	u8 * ogg_data = (u8 *)mem2_malloc(ogg_size);
+	u8 * ogg_data = (u8 *)extmem_malloc(ogg_size);
 
 	if(!ogg_data) {
 		return;
