@@ -607,7 +607,7 @@ u8 * DecodePNGToRGBA8 (const u8 *src, int width, int height)
 
 u8 * DecodePNGFromFile(const char *filepath, int * width, int * height, u8 *dstPtr, int maxwidth, int maxheight)
 {
-	if(!dstPtr)
+	if(!dstPtr || !filepath)
 		return NULL;
 
 	FILE *file = fopen (filepath, "rb");
