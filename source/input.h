@@ -34,7 +34,7 @@ void ReportButtons ();
 void ClearButtonsReported ();
 void SetControllers ();
 void SetDefaultButtonMap ();
-bool MenuRequested();
+bool isMenuRequested();
 void SetupPads();
 void UpdatePads();
 #ifdef HW_RVL

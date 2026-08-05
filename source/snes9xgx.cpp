@@ -31,8 +31,7 @@
 #include "snes9x/memmap.h"
 #include "snes9x/apu/apu.h"
 
-int ScreenshotRequested = 0;
-int ConfigRequested = 0;
+bool MenuRequested = false;
 char appPath[1024] = { 0 };
 static bool firstRun = true;
 static bool autoboot = false;
@@ -114,8 +113,7 @@ int main(int argc, char *argv[])
 		}
 		
 		autoboot = false;		
-		ConfigRequested = 0;
-		ScreenshotRequested = 0;
+		MenuRequested = false;
 		SwitchAudioMode(0);
 
 		Settings.Mute = GCSettings.MuteAudio;
@@ -154,9 +152,11 @@ int main(int argc, char *argv[])
 				S9xSoftReset (); // reset game
 				ResetRequested = 0;
 			}
-			if (ConfigRequested)
+			if (MenuRequested)
 			{
-				ConfigRequested = 0;
+				MenuRequested = false;
+				SwitchMemoryModeMenu();
+				TakeScreenshot();
 				ResetVideo_Menu();
 				break;
 			}
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 void ExitApp() {
 	SavePrefs(SILENT);
 
-	if (SNESROMSize > 0 && !ConfigRequested && GCSettings.AutoSave == AUTOSAVE_SRAM)
+	if (SNESROMSize > 0 && !MenuRequested && GCSettings.AutoSave == AUTOSAVE_SRAM)
 		SaveSRAMAuto(SILENT);
 
 	SystemExit(GCSettings.ExitAction, autoboot);

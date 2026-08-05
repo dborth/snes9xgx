@@ -872,9 +872,8 @@ void ClearScreenshot()
  *
  * Copies the current texturemem screen into a PNG
  ***************************************************************************/
-static void TakeScreenshot()
+void TakeScreenshot()
 {
-	SwitchMemoryModeMenu();
 	AllocSaveBuffer();
 	IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
 
@@ -1152,16 +1151,6 @@ update_video (int width, int height)
 	GX_InvalidateTexAll ();
 
 	draw_square ();	// draw the quad
-
-	if(ScreenshotRequested)
-	{
-		// We MUST wait for the GPU to finish the CURRENT frame before
-		// reading from the EFB to encode the PNG
-		GX_DrawDone();
-		ScreenshotRequested = 0;
-		TakeScreenshot();
-		ConfigRequested = 1;
-	}
 
 	VIDEO_SetNextFramebuffer (xfb[whichfb]);
 	VIDEO_Flush ();

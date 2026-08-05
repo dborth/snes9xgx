@@ -754,7 +754,7 @@ static void decodepad (int chan, int emuChan)
 #endif
 }
 
-bool MenuRequested()
+bool isMenuRequested()
 {
 	for(int i=0; i<4; i++)
 	{
@@ -940,8 +940,8 @@ void ReportButtons ()
 	 * OR "Home" on the wiimote or classic controller
 	 * OR Left on classic right analog stick
 	 */
-	if(MenuRequested())
-		ScreenshotRequested = 1; // go to the menu
+	if(isMenuRequested())
+		MenuRequested = true; // go to the menu
 
 	int numControllers = (Settings.MultiPlayer5Master == true ? 4 : 2);
 

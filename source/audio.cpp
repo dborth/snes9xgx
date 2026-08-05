@@ -11,13 +11,11 @@
 #ifndef NO_SOUND
 #include <asndlib.h>
 #endif
+#include "snes9xgx.h"
 #include "video.h"
 
 #include "snes9x/memmap.h"
 #include "snes9x/apu/apu.h"
-
-extern int ScreenshotRequested;
-extern int ConfigRequested;
 
 void AudioStart ();
 
@@ -133,7 +131,7 @@ static void S9xAudioCallback (void *data) {
 	S9xUpdateDynamicRate(rate);
 	S9xFinalizeSamples();
 
-	if (ScreenshotRequested || ConfigRequested) {
+	if (MenuRequested) {
 		// Stop playback while the screenshot/config overlay is active. Reset the
 		// ring so that once the request clears, the start path below re-primes
 		// and restarts DMA cleanly instead of leaving playback dead on a stale,
