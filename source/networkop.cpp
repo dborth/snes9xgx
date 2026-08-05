@@ -10,7 +10,6 @@
 
 #include <errno.h>
 #include <network.h>
-#include <malloc.h>
 #include <ogc/lwp_watchdog.h>
 #include <smb.h>
 

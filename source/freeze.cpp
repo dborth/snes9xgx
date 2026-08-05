@@ -9,7 +9,6 @@
  * freeze.cpp
  ***************************************************************************/
 
-#include <malloc.h>
 #include <gccore.h>
 #include <stdio.h>
 

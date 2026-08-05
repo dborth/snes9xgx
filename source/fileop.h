@@ -14,12 +14,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "memmanager.h"
 
-#ifdef HW_RVL
-#define SAVEBUFFERSIZE (1024 * 1024 * 2) // leave room for IPS/UPS files and large images
-#else
-#define SAVEBUFFERSIZE (1024 * 1024 * 1)
-#endif
+#define SAVEBUFFERSIZE SHAREDBUFFERSIZE
 
 void InitDeviceThread();
 void ResumeDeviceThread();

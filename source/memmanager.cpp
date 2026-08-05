@@ -27,8 +27,11 @@ enum
 	MEMORY_MODE_GAME
 };
 
+
 static heap_cntrl extmem_heap;
 static int memoryMode = -1;
+static mutex_t sharedBufferLock = LWP_MUTEX_NULL;
+static unsigned char *sharedBuffer = NULL;
 
 void InitMemManager ()
 {
@@ -39,6 +42,25 @@ void InitMemManager ()
 	void *mem2_heap_ptr = SYS_AllocArenaMem2Hi(MEM2_SIZE, 32);
 	__lwp_heap_init(&extmem_heap, mem2_heap_ptr, MEM2_SIZE, 32);
 	#endif
+
+#ifdef HW_RVL
+	sharedBuffer = (unsigned char *)extmem_malloc(SHAREDBUFFERSIZE);
+#else
+	sharedBuffer = (unsigned char *)memalign(32,SHAREDBUFFERSIZE);
+#endif
+
+	LWP_MutexInit(&sharedBufferLock, false);
+}
+
+unsigned char * getSharedBuffer()
+{
+	LWP_MutexLock(sharedBufferLock);
+	return sharedBuffer;
+}
+
+void ReleaseSharedBuffer()
+{
+	LWP_MutexUnlock(sharedBufferLock);
 }
 
 void* extmem_malloc(u32 size)
@@ -63,13 +85,6 @@ void SwitchMemoryModeMenu() {
 		return;
 
 	memoryMode = MEMORY_MODE_MENU;
-
-#ifdef HW_RVL
-	savebuffer = (unsigned char *)extmem_malloc(SAVEBUFFERSIZE);
-#else
-	savebuffer = (unsigned char *)memalign(32,SAVEBUFFERSIZE);
-#endif
-
 	browserList = (BROWSERENTRY *)extmem_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
 }
 
@@ -78,9 +93,6 @@ void SwitchMemoryModeGame() {
 		return;
 
 	memoryMode = MEMORY_MODE_GAME;
-
-	free(savebuffer);
 	extmem_free(browserList);
-	savebuffer = NULL;
 	browserList = NULL;
 }

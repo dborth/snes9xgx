@@ -37,7 +37,6 @@
 
 unsigned char *savebuffer = NULL;
 u8 *ext_font_ttf = NULL;
-static mutex_t bufferLock = LWP_MUTEX_NULL;
 FILE * file; // file pointer - the only one we should ever use!
 bool unmountRequired[9] = { false, false, false, false, false, false, false, false, false };
 bool isMounted[9] = { false, false, false, false, false, false, false, false, false };
@@ -779,11 +778,7 @@ bool CreateDirectory(char * path) {
 void
 AllocSaveBuffer ()
 {
-	if(bufferLock == LWP_MUTEX_NULL)
-		LWP_MutexInit(&bufferLock, false);
-
-	if(bufferLock != LWP_MUTEX_NULL)
-		LWP_MutexLock(bufferLock);
+	savebuffer = getSharedBuffer();
 	memset (savebuffer, 0, SAVEBUFFERSIZE);
 }
 
@@ -794,8 +789,8 @@ AllocSaveBuffer ()
 void
 FreeSaveBuffer ()
 {
-	if(bufferLock != LWP_MUTEX_NULL)
-		LWP_MutexUnlock(bufferLock);
+	savebuffer = NULL;
+	ReleaseSharedBuffer();
 }
 
 /****************************************************************************
