@@ -11,14 +11,9 @@
 #ifndef _MEMMANAGER_H_
 #define _MEMMANAGER_H_
 
-enum
-{
-	MEMORY_MODE_MENU,
-	MEMORY_MODE_GAME
-};
-
 void InitMemManager();
-void SwitchMemoryMode(int mode);
+void SwitchMemoryModeMenu();
+void SwitchMemoryModeGame();
 
 void* extmem_malloc(u32 size);
 void extmem_free(void *ptr);

@@ -22,6 +22,7 @@
 
 #include "snes9xgx.h"
 #include "menu.h"
+#include "memmanager.h"
 #include "videofilters.h"
 #include "filelist.h"
 #include "audio.h"
@@ -859,7 +860,7 @@ ResetVideo_Emu ()
 void ClearScreenshot()
 {
 	if(gameScreenPng.buffer) {
-		free(gameScreenPng.buffer);
+		extmem_free(gameScreenPng.buffer);
 		gameScreenPng.buffer = NULL;
 	}
 
@@ -873,6 +874,7 @@ void ClearScreenshot()
  ***************************************************************************/
 static void TakeScreenshot()
 {
+	SwitchMemoryModeMenu();
 	IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
 
 	if (pngContext == NULL) {
@@ -893,7 +895,7 @@ static void TakeScreenshot()
 		return;
 	}
 
-	gameScreenPng.buffer = (u8 *) malloc(gameScreenPng.size);
+	gameScreenPng.buffer = (u8 *) extmem_malloc(gameScreenPng.size);
 	if (gameScreenPng.buffer == NULL) {
 		gameScreenPng.size = 0;
 		return;
@@ -1147,7 +1149,7 @@ update_video (int width, int height)
 	DCStoreRange(texturemem, flush_size); // update the texture memory
 	GX_InvalidateTexAll ();
 
-	draw_square ();		// draw the quad
+	draw_square ();	// draw the quad
 
 	if(ScreenshotRequested)
 	{

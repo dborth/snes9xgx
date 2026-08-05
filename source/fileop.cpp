@@ -15,7 +15,6 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <zlib.h>
-#include <malloc.h>
 #include <fat.h>
 #include <sdcard/wiisd_io.h>
 #include <sdcard/gcsd.h>

@@ -14,7 +14,6 @@
 #include <string.h>
 #include <wiiuse/wpad.h>
 #include <sys/dir.h>
-#include <malloc.h>
 
 #ifdef HW_RVL
 #include <di/di.h>

@@ -57,14 +57,6 @@ extern void ToggleCheat(uint32);
 static GuiImageData * pointer[4];
 #endif
 
-#ifdef HW_RVL
-	#define MEM_ALLOC(A) (u8*)extmem_malloc(A)
-	#define MEM_DEALLOC(A) extmem_free(A)
-#else
-	#define MEM_ALLOC(A) (u8*)memalign(32, A)
-	#define MEM_DEALLOC(A) free(A)
-#endif
-
 static GuiTrigger * trigA = NULL;
 static GuiTrigger * trig2 = NULL;
 
@@ -1094,7 +1086,7 @@ static int MenuGameSelection()
 	GuiImage preview;
 	preview.SetAlignment(ALIGN_CENTRE, ALIGN_MIDDLE);
 	preview.SetPosition(174, -8);
-	u8* imgBuffer = MEM_ALLOC(640 * 480 * 4);
+	u8* imgBuffer = (u8*)memalign(32, 640 * 480 * 4);
 	int  previousBrowserIndex = -1;
 	char imagePath[MAXJOLIET + 1];
 	
@@ -1218,7 +1210,7 @@ static int MenuGameSelection()
 	mainWindow->Remove(&gameBrowser);
 	mainWindow->Remove(&bgPreview);
 	mainWindow->Remove(&preview);
-	MEM_DEALLOC(imgBuffer);
+	free(imgBuffer);
 	return menu;
 }
 
@@ -4815,12 +4807,12 @@ static u8 * CreateBlurredGameTexture() {
 	int cropStartY = trueOffsetY < 0 ? -trueOffsetY : 0;
 
 	// Allocate scratch space ONLY for the viewable cropped portion
-	u8 *scaledImg = (u8 *)malloc(cropWidth * cropHeight * 4);
-	u8 *rowBuf    = (u8 *)malloc(cropWidth * 4);
+	u8 *scaledImg = (u8 *)extmem_malloc(cropWidth * cropHeight * 4);
+	u8 *rowBuf    = (u8 *)extmem_malloc(cropWidth * 4);
 
 	if (!scaledImg || !rowBuf) {
-		if (scaledImg) free(scaledImg);
-		if (rowBuf) free(rowBuf);
+		if (scaledImg) extmem_free(scaledImg);
+		if (rowBuf) extmem_free(rowBuf);
 		free(dst);
 		return NULL;
 	}
@@ -4950,12 +4942,11 @@ static u8 * CreateBlurredGameTexture() {
 			}
 		}
 	}
-
 	DCFlushRange(dst, screenwidth * screenheight * 4);
 
-	free(scaledImg);
-	free(rowBuf);
-	free(src);
+	extmem_free(scaledImg);
+	extmem_free(rowBuf);
+	extmem_free(src);
 	return dst;
 }
 
@@ -5154,6 +5145,10 @@ MainMenu (int menu)
 	delete bgBottomImg;
 	delete mainWindow;
 
+	btnLogo = NULL;
+	gameScreenImg = NULL;
+	bgTopImg = NULL;
+	bgBottomImg = NULL;
 	mainWindow = NULL;
 
 	if(gameScreenTexture != NULL) {

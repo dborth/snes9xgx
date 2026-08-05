@@ -21,7 +21,14 @@
 
 #define MEM2_SIZE		(42*1024*1024)
 
+enum
+{
+	MEMORY_MODE_MENU,
+	MEMORY_MODE_GAME
+};
+
 static heap_cntrl extmem_heap;
+static int memoryMode = -1;
 
 void InitMemManager ()
 {
@@ -51,6 +58,29 @@ int extmem_size_free()
 	return info.free_size;
 }
 
-void SwitchMemoryMode(int mode) {
+void SwitchMemoryModeMenu() {
+	if(memoryMode == MEMORY_MODE_MENU)
+		return;
 
+	memoryMode = MEMORY_MODE_MENU;
+
+#ifdef HW_RVL
+	savebuffer = (unsigned char *)extmem_malloc(SAVEBUFFERSIZE);
+#else
+	savebuffer = (unsigned char *)memalign(32,SAVEBUFFERSIZE);
+#endif
+
+	browserList = (BROWSERENTRY *)extmem_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
+}
+
+void SwitchMemoryModeGame() {
+	if(memoryMode == MEMORY_MODE_GAME)
+		return;
+
+	memoryMode = MEMORY_MODE_GAME;
+
+	free(savebuffer);
+	extmem_free(browserList);
+	savebuffer = NULL;
+	browserList = NULL;
 }

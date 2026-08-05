@@ -44,14 +44,6 @@ int main(int argc, char *argv[])
 	InitializeSnes9x(); // ensure Snes9x memory is in MEM1 for Wii
 	ResetVideo_Menu (); // change to menu video mode
 	S9xInitSync(); // initialize frame sync
-
-#ifdef HW_RVL
-	savebuffer = (unsigned char *)extmem_malloc(SAVEBUFFERSIZE);
-	browserList = (BROWSERENTRY *)extmem_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
-#else
-	savebuffer = (unsigned char *)memalign(32,SAVEBUFFERSIZE);
-	browserList = (BROWSERENTRY *)extmem_malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
-#endif
 	InitGUIThreads();
 
 #ifdef HW_RVL
@@ -85,7 +77,7 @@ int main(int argc, char *argv[])
 			// since we're entering the menu
 			ResumeDeviceThread();
 			SwitchAudioMode(1);
-			SwitchMemoryMode(MEMORY_MODE_MENU);
+			SwitchMemoryModeMenu();
 
 			if(SNESROMSize == 0)
 				MainMenu(MENU_GAMESELECTION);
@@ -141,7 +133,7 @@ int main(int argc, char *argv[])
 		// since we're starting emulation again
 		HaltDeviceThread();
 
-		SwitchMemoryMode(MEMORY_MODE_GAME);
+		SwitchMemoryModeGame();
 		AudioStart ();
 
 		FrameTimer = 0;
