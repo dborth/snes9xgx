@@ -35,7 +35,8 @@
 
 #define THREAD_SLEEP 100
 
-unsigned char *savebuffer = NULL;
+static mutex_t saveBufferLock = LWP_MUTEX_NULL;
+unsigned char *savebuffer;
 u8 *ext_font_ttf = NULL;
 FILE * file; // file pointer - the only one we should ever use!
 bool unmountRequired[9] = { false, false, false, false, false, false, false, false, false };
@@ -217,6 +218,9 @@ parsecallback (void *arg)
 void
 InitDeviceThread()
 {
+	savebuffer = (u8 *)extmem_malloc(SAVEBUFFERSIZE);
+	LWP_MutexInit(&saveBufferLock, false);
+
 #ifdef HW_RVL
 	LWP_MutexInit(&deviceMutex, false);
 	LWP_CondInit(&deviceWakeCond);
@@ -778,7 +782,7 @@ bool CreateDirectory(char * path) {
 void
 AllocSaveBuffer ()
 {
-	savebuffer = getSharedBuffer();
+	LWP_MutexLock(saveBufferLock);
 	memset (savebuffer, 0, SAVEBUFFERSIZE);
 }
 
@@ -789,8 +793,7 @@ AllocSaveBuffer ()
 void
 FreeSaveBuffer ()
 {
-	savebuffer = NULL;
-	ReleaseSharedBuffer();
+	LWP_MutexUnlock(saveBufferLock);
 }
 
 /****************************************************************************

@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include "memmanager.h"
 
-#define SAVEBUFFERSIZE SHAREDBUFFERSIZE
+#define SAVEBUFFERSIZE (1024 * 1024 * 2) // leave room for IPS/UPS files and large images
 
 void InitDeviceThread();
 void ResumeDeviceThread();

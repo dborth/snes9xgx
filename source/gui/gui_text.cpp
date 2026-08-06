@@ -46,7 +46,7 @@ GuiText::GuiText(const char * t, int s, GXColor c)
 
 	if(t)
 	{
-		origText = strdup(t);
+		origText = extmem_strdup(t);
 		text = charToWideChar(gettext(t));
 	}
 
@@ -78,7 +78,7 @@ GuiText::GuiText(const char * t)
 
 	if(t)
 	{
-		origText = strdup(t);
+		origText = extmem_strdup(t);
 		text = charToWideChar(gettext(t));
 	}
 
@@ -92,7 +92,7 @@ GuiText::GuiText(const char * t)
 GuiText::~GuiText()
 {
 	if(origText)
-		free(origText);
+		extmem_free(origText);
 	if(text)
 		delete[] text;
 
@@ -107,7 +107,7 @@ GuiText::~GuiText()
 void GuiText::SetText(const char * t)
 {
 	if(origText)
-		free(origText);
+		extmem_free(origText);
 	if(text)
 		delete[] text;
 
@@ -126,7 +126,7 @@ void GuiText::SetText(const char * t)
 
 	if(t)
 	{
-		origText = strdup(t);
+		origText = extmem_strdup(t);
 		text = charToWideChar(gettext(t));
 	}
 }
@@ -134,7 +134,7 @@ void GuiText::SetText(const char * t)
 void GuiText::SetWText(wchar_t * t)
 {
 	if(origText)
-		free(origText);
+		extmem_free(origText);
 	if(text)
 		delete[] text;
 
