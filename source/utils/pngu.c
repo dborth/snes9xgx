@@ -62,6 +62,15 @@ static void pngu_flush_data_to_buffer (png_structp png_ptr)
 	// Nothing to do here
 }
 
+static void pngu_user_error_fn(png_structp png_ptr, png_const_charp error_msg) {
+    // Return control back to setjmp point on corrupt image error
+    longjmp(png_jmpbuf(png_ptr), 1);
+}
+
+static void pngu_user_warning_fn(png_structp png_ptr, png_const_charp warning_msg) {
+    // Suppress warnings or log them if desired
+}
+
 static int pngu_info (IMGCTX ctx)
 {
 	png_byte magic[8];
@@ -97,7 +106,7 @@ static int pngu_info (IMGCTX ctx)
 	}
 
 	// Allocation of libpng structs
-	ctx->png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	ctx->png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, pngu_user_error_fn, pngu_user_warning_fn);
     if (!(ctx->png_ptr))
 	{
 		if (ctx->source == PNGU_SOURCE_DEVICE)
@@ -125,6 +134,12 @@ static int pngu_info (IMGCTX ctx)
 		// Default data provider uses function fread, so it needs to use our FILE*
 		png_init_io (ctx->png_ptr, ctx->fd);
 		png_set_sig_bytes (ctx->png_ptr, 8); // We have read 8 bytes already to check PNG authenticity
+	}
+
+	if (setjmp(png_jmpbuf(ctx->png_ptr))) {
+	    // If header reading fails due to corruption
+	    pngu_free_info(ctx);
+	    return PNGU_FILE_IS_NOT_PNG;
 	}
 
 	// Read png header
@@ -326,6 +341,14 @@ static int pngu_decode (IMGCTX ctx, u32 width, u32 height, u32 stripAlpha)
 	propImgHeight = ctx->prop.imgHeight;
 	for (i = 0; i < propImgHeight; ++i)
 		ctx->row_pointers[i] = ctx->img_data + (i * rowbytes);
+
+	// Trap any corruption errors during full image decompression
+	if (setjmp(png_jmpbuf(ctx->png_ptr))) {
+	    if (ctx->img_data) extmem_free(ctx->img_data);
+	    if (ctx->row_pointers) extmem_free(ctx->row_pointers);
+	    pngu_free_info(ctx);
+	    return PNGU_LIB_ERROR;
+	}
 
 	// Transform the image and copy it to our allocated memory
 	png_read_image (ctx->png_ptr, ctx->row_pointers);
