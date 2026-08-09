@@ -41,7 +41,7 @@
 #endif
 
 #ifndef PIXEL_FORMAT
-#define PIXEL_FORMAT RGB565
+#define PIXEL_FORMAT RGB555
 #endif
 
 #if defined(__GNUC__)

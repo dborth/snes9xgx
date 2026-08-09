@@ -82,7 +82,7 @@ static uint16_t brtRowC[MAX_WIDTH + 2] __attribute__((aligned(32)));
 // -------------------------------------------------------------------------
 // Pixel Format Trait Classes (Zero-Overhead Compile-Time Abstraction)
 // -------------------------------------------------------------------------
-struct FormatRGB565 {
+struct FormatRGB555 {
     typedef uint16_t Type;
     static inline uint16_t Read(const Type* ptr) { return *ptr; }
 
@@ -99,11 +99,11 @@ struct FormatRGB565 {
     }
 };
 
-extern unsigned short rgb565[256];
+extern unsigned short rgb555[256];
 
 struct FormatPal8 {
     typedef uint8_t Type;
-    static inline uint16_t Read(const Type* ptr) { return rgb565[*ptr]; }
+    static inline uint16_t Read(const Type* ptr) { return rgb555[*ptr]; }
 
     // Deduplicator helpers (8 pixels = 8 bytes)
     static inline bool Compare8(const Type* a, const Type* b) {
@@ -122,7 +122,7 @@ struct FormatPal8 {
 #ifdef FORMAT_PAL8
     typedef FormatPal8 ActiveSrcFormat;
 #else
-    typedef FormatRGB565 ActiveSrcFormat;
+    typedef FormatRGB555 ActiveSrcFormat;
 #endif
 
 // ------------------------------------------------------------------------------
@@ -338,39 +338,36 @@ static inline void ComputeBlockDifferences(const uint8_t* srcPtr, uint32_t srcPi
 // Highly Optimized C++ SWAR Interpolation (SIMD Within A Register)
 // -------------------------------------------------------------------------
 
-// Unpacks a 16-bit RGB565 pixel into a 32-bit integer.
-// Moves Green to bits 21-26, leaves Red at 11-15, and Blue at 0-4.
-// This creates empty "headroom" between the channels to safely absorb multiplication.
-static inline uint32_t Unpack565(uint16_t p) {
-	return ((uint32_t)p | ((uint32_t)p << 16)) & 0x07E0F81F;
+// Unpacks a 16-bit RGB555 pixel into a 32-bit integer.
+// Moves Green to bits 21-25, leaves Red at 10-14, Blue at 0-4.
+// 0x03E07C1F strips out Bit 15 entirely so it doesn't skew Red math.
+static inline uint32_t Unpack555(uint16_t p) {
+	return ((uint32_t)p | ((uint32_t)p << 16)) & 0x03E07C1F;
 }
 
-// Packs the 32-bit SWAR integer back into a 16-bit RGB565 pixel.
-// Because the interpolation weights always sum to exactly 1<<shift,
-// the right-shift division perfectly zeroes out the expanded headroom bits.
-// & 0x07E0 and & 0xF81F masks to truncate downward channel bleed
-static inline uint16_t Pack565(uint32_t up) {
-	return (uint16_t)((up >> 16) & 0x07E0) | (uint16_t)(up & 0xF81F);
+// Packs the 32-bit SWAR integer back into a 16-bit RGB555 pixel.
+// No alpha packing necessary here as we will explicitly |= 0x80008000 on final tile write.
+static inline uint16_t Pack555(uint32_t up) {
+	return (uint16_t)((up >> 16) & 0x03E0) | (uint16_t)(up & 0x7C1F);
 }
 
 //
 // HQ2X Filter Code:
 //
 
-// Fixed Point Inlined Replacements for RGB Lookup Tables
+// Fixed Point Inlined Replacements for RGB Lookup Tables (strict 5-bit)
 // Optimized Brightness using shifts instead of multiplication
-// 3R + 3G + B, range 0..186.
 static inline uint16_t inlineRGBtoBright(uint16_t c) {
-	uint32_t r = (c >> 11) & 0x1F;
-	uint32_t g = (c >> 5) & 0x3F;
+	uint32_t r = (c >> 10) & 0x1F;
+	uint32_t g = (c >> 5) & 0x1F;
 	uint32_t b = c & 0x1F;
 	return (r << 1) + r + (g << 1) + g + b;
 }
 
-// fast L1-cached LUT approach - avoids heavy multiplication stalls
+// Fast L1-cached LUT approach
 static inline uint32_t inlineRGBtoYUV(uint16_t c) {
-	uint32_t r_idx = c >> 11;
-	uint32_t g_idx = (c >> 5) & 0x3F;
+	uint32_t r_idx = (c >> 10) & 0x1F;
+	uint32_t g_idx = (c >> 5) & 0x1F;
 	uint32_t b_idx = c & 0x1F;
 
 	int32_t y = (y_r_lut[r_idx] + y_g_lut[g_idx] + y_b_lut[b_idx] + 32768) >> 16;
@@ -391,24 +388,24 @@ static inline bool DiffYUVCached(uint32_t a, uint32_t b) {
 }
 
 // HQ2X blend operator, UNPACKED SWAR domain (single source of truth).
-// uc/ucrn/us1/us2 are Unpack565() of the center / corner / side1 / side2 pixels.
+// uc/ucrn/us1/us2 are Unpack555() of the center / corner / side1 / side2 pixels.
 // The caller unpacks each of the nine window pixels ONCE per 2x2 block and
 // reuses them across all four subpixels, so no pixel is unpacked more than once.
 static inline uint16_t BlendU(uint8_t op, uint32_t uc, uint32_t ucrn, uint32_t us1, uint32_t us2) {
 	switch(op) {
-		case 0:  return Pack565(uc);              // center unchanged
-		case 1:  return Pack565(((uc << 1) + uc + ucrn) >> 2);
-		case 2:  return Pack565(((uc << 1) + uc + us2) >> 2);
-		case 3:  return Pack565(((uc << 1) + uc + us1) >> 2);
-		case 4:  return Pack565(((uc << 1) + us1 + us2) >> 2);
-		case 5:  return Pack565(((uc << 1) + ucrn + us1) >> 2);
-		case 6:  return Pack565(((uc << 1) + ucrn + us2) >> 2);
-		case 7:  return Pack565(((uc << 2) + uc + (us1 << 1) + us2) >> 3);
-		case 8:  return Pack565(((uc << 2) + uc + us1 + (us2 << 1)) >> 3);
-		case 9:  return Pack565(((uc << 2) + (uc << 1) + us1 + us2) >> 3);
-		case 10: return Pack565(((uc << 1) + (us1 << 1) + us1 + (us2 << 1) + us2) >> 3);
-		case 11: return Pack565(((uc << 4) - (uc << 1) + us1 + us2) >> 4);
-		default: return Pack565(uc);
+		case 0:  return Pack555(uc); // center unchanged
+		case 1:  return Pack555(((uc << 1) + uc + ucrn) >> 2);
+		case 2:  return Pack555(((uc << 1) + uc + us2) >> 2);
+		case 3:  return Pack555(((uc << 1) + uc + us1) >> 2);
+		case 4:  return Pack555(((uc << 1) + us1 + us2) >> 2);
+		case 5:  return Pack555(((uc << 1) + ucrn + us1) >> 2);
+		case 6:  return Pack555(((uc << 1) + ucrn + us2) >> 2);
+		case 7:  return Pack555(((uc << 2) + uc + (us1 << 1) + us2) >> 3);
+		case 8:  return Pack555(((uc << 2) + uc + us1 + (us2 << 1)) >> 3);
+		case 9:  return Pack555(((uc << 2) + (uc << 1) + us1 + us2) >> 3);
+		case 10: return Pack555(((uc << 1) + (us1 << 1) + us1 + (us2 << 1) + us2) >> 3);
+		case 11: return Pack555(((uc << 4) - (uc << 1) + us1 + us2) >> 4);
+		default: return Pack555(uc);
 	}
 }
 
@@ -515,14 +512,14 @@ static inline void EvaluateHQ2XSubpixels(
 	uint32_t mask = (cx + 1 - width) >> 31;
 	int rx = cx + (1 & mask);
 
-	U3 = Unpack565(Format::Read(&rowTop[rx]));
-	U6 = Unpack565(Format::Read(&rowMid[rx]));
-	U9 = Unpack565(Format::Read(&rowBot[rx]));
+	U3 = Unpack555(Format::Read(&rowTop[rx]));
+	U6 = Unpack555(Format::Read(&rowMid[rx]));
+	U9 = Unpack555(Format::Read(&rowBot[rx]));
 
 	uint32_t flatBits = (U1 ^ U5) | (U2 ^ U5) | (U3 ^ U5) | (U4 ^ U5) | (U6 ^ U5) | (U7 ^ U5) | (U8 ^ U5) | (U9 ^ U5);
 
 	if (flatBits == 0) {
-		uint16_t w5 = Pack565(U5);
+		uint16_t w5 = Pack555(U5);
 		w0 = w1 = (w5 << 16) | w5;
 	} else {
 		uint32_t pattern = 0, c_y2 = 0, c_y4 = 0, c_y6 = 0, c_y8 = 0;
@@ -541,8 +538,8 @@ static inline void EvaluateHQ2XSubpixels(
 					  ((U3 != U5) && ((bTop[cx+2] > mean) != c5)) << 2 | ((U4 != U5) && ((bMid[cx] > mean) != c5)) << 3 |
 					  ((U6 != U5) && ((bMid[cx+2] > mean) != c5)) << 4 | ((U7 != U5) && ((bBot[cx] > mean) != c5)) << 5 |
 					  ((U8 != U5) && ((bBot[cx+1] > mean) != c5)) << 6 | ((U9 != U5) && ((bBot[cx+2] > mean) != c5)) << 7;
-			c_y2 = inlineRGBtoYUV(Pack565(U2)); c_y4 = inlineRGBtoYUV(Pack565(U4));
-			c_y6 = inlineRGBtoYUV(Pack565(U6)); c_y8 = inlineRGBtoYUV(Pack565(U8));
+			c_y2 = inlineRGBtoYUV(Pack555(U2)); c_y4 = inlineRGBtoYUV(Pack555(U4));
+			c_y6 = inlineRGBtoYUV(Pack555(U6)); c_y8 = inlineRGBtoYUV(Pack555(U8));
 		} else { // FILTER_HQ2XS - hybrid
 			// use yuv
 			if ((U1 == U5) | (U3 == U5) | (U7 == U5) | (U9 == U5)) {
@@ -598,9 +595,9 @@ static inline void ProcessHQ2XRow(
 	int cx = 0;
 
 	// Seed initial sliding window
-	uint32_t U1 = Unpack565(Format::Read(&rowTop[0])), U2 = U1;
-	uint32_t U4 = Unpack565(Format::Read(&rowMid[0])), U5 = U4;
-	uint32_t U7 = Unpack565(Format::Read(&rowBot[0])), U8 = U7;
+	uint32_t U1 = Unpack555(Format::Read(&rowTop[0])), U2 = U1;
+	uint32_t U4 = Unpack555(Format::Read(&rowMid[0])), U5 = U4;
+	uint32_t U7 = Unpack555(Format::Read(&rowBot[0])), U8 = U7;
 
 	while (chunks--) {
 		// Macro-Block Frame Skip Check (+1 offset due to padded grid)
@@ -609,8 +606,8 @@ static inline void ProcessHQ2XRow(
 			tile_ptr += 128;
 			int left = cx - 1;
 			int center = cx;
-			U1 = Unpack565(Format::Read(&rowTop[left])); U4 = Unpack565(Format::Read(&rowMid[left])); U7 = Unpack565(Format::Read(&rowBot[left]));
-			U2 = Unpack565(Format::Read(&rowTop[center])); U5 = Unpack565(Format::Read(&rowMid[center])); U8 = Unpack565(Format::Read(&rowBot[center]));
+			U1 = Unpack555(Format::Read(&rowTop[left])); U4 = Unpack555(Format::Read(&rowMid[left])); U7 = Unpack555(Format::Read(&rowBot[left]));
+			U2 = Unpack555(Format::Read(&rowTop[center])); U5 = Unpack555(Format::Read(&rowMid[center])); U8 = Unpack555(Format::Read(&rowBot[center]));
 			bx++;
 			continue;
 		}
@@ -625,6 +622,7 @@ static inline void ProcessHQ2XRow(
 				cx, width, rowTop, rowMid, rowBot, yTop, yMid, yBot, bTop, bMid, bBot,
 				U1, U2, U4, U5, U7, U8, U3, U6, U9, w0, w1
 			);
+			w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 			*(uint32_t*)(tile_ptr + 0) = w0; *(uint32_t*)(tile_ptr + 8) = w1;
 			U1 = U2; U4 = U5; U7 = U8; U2 = U3; U5 = U6; U8 = U9;
 			cx++;
@@ -634,6 +632,7 @@ static inline void ProcessHQ2XRow(
 				cx, width, rowTop, rowMid, rowBot, yTop, yMid, yBot, bTop, bMid, bBot,
 				U1, U2, U4, U5, U7, U8, U3, U6, U9, w0, w1
 			);
+			w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 			*(uint32_t*)(tile_ptr + 4) = w0; *(uint32_t*)(tile_ptr + 12) = w1;
 			U1 = U2; U4 = U5; U7 = U8; U2 = U3; U5 = U6; U8 = U9;
 			cx++;
@@ -653,6 +652,7 @@ static inline void ProcessHQ2XRow(
 			cx, width, rowTop, rowMid, rowBot, yTop, yMid, yBot, bTop, bMid, bBot,
 			U1, U2, U4, U5, U7, U8, U3, U6, U9, w0, w1
 		);
+		w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 		*(uint32_t*)(tile_ptr + 0) = w0; *(uint32_t*)(tile_ptr + 8) = w1;
 		U1 = U2; U4 = U5; U7 = U8; U2 = U3; U5 = U6; U8 = U9;
 		cx++;
@@ -661,6 +661,7 @@ static inline void ProcessHQ2XRow(
 			cx, width, rowTop, rowMid, rowBot, yTop, yMid, yBot, bTop, bMid, bBot,
 			U1, U2, U4, U5, U7, U8, U3, U6, U9, w0, w1
 		);
+		w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 		*(uint32_t*)(tile_ptr + 4) = w0; *(uint32_t*)(tile_ptr + 12) = w1;
 		U1 = U2; U4 = U5; U7 = U8; U2 = U3; U5 = U6; U8 = U9;
 		cx++;
@@ -839,6 +840,7 @@ static inline void ProcessScale2XRow(
 			F = Format::Read(&rowMid[cx + 1]);
 			uint32_t H = Format::Read(&rowBot[cx]);
 			EvaluateScale2XSubpixels<Format>(B, D, E, F, H, w0, w1);
+			w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 			*(uint32_t*)(tile_ptr + 0) = w0;
 			*(uint32_t*)(tile_ptr + 8) = w1;
 
@@ -849,6 +851,7 @@ static inline void ProcessScale2XRow(
 			F = Format::Read(&rowMid[cx + 1]);
 			H = Format::Read(&rowBot[cx]);
 			EvaluateScale2XSubpixels<Format>(B, D, E, F, H, w0, w1);
+			w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 			*(uint32_t*)(tile_ptr + 4) = w0;
 			*(uint32_t*)(tile_ptr + 12) = w1;
 
@@ -868,6 +871,7 @@ static inline void ProcessScale2XRow(
 		uint32_t H = Format::Read(&rowBot[cx]);
 
 		EvaluateScale2XSubpixels<Format>(B, D, E, F, H, w0, w1);
+		w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 		*(uint32_t*)(tile_ptr + 0) = w0; *(uint32_t*)(tile_ptr + 8) = w1;
 		D = E; E = F; cx++;
 
@@ -876,6 +880,7 @@ static inline void ProcessScale2XRow(
 		H = Format::Read(&rowBot[cx]);
 
 		EvaluateScale2XSubpixels<Format>(B, D, E, F, H, w0, w1);
+		w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 		*(uint32_t*)(tile_ptr + 4) = w0; *(uint32_t*)(tile_ptr + 12) = w1;
 		D = E; E = F; cx++;
 		tile_ptr += 32;
@@ -914,24 +919,21 @@ void RenderScale2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 // -------------------------------------------------------------------------
 // SWAR (SIMD Within A Register) Alpha Blending Macros
 // -------------------------------------------------------------------------
-// Replaces the old ExtractR/G/B inline assembly and masking methods.
-// By utilizing the Unpack565/Pack565 technique, we compute all three
-// color channels in parallel without overflowing boundaries.
 
 #define ALPHA_BLEND_128_W(dst, src) \
-	(dst) = Pack565((Unpack565(dst) + Unpack565(src)) >> 1)
+	(dst) = Pack555((Unpack555(dst) + Unpack555(src)) >> 1)
 
 // dst = (3*dst + src) / 4
 #define ALPHA_BLEND_64_W(dst, src) \
-	(dst) = Pack565((Unpack565(dst) * 3 + Unpack565(src)) >> 2)
+	(dst) = Pack555((Unpack555(dst) * 3 + Unpack555(src)) >> 2)
 
 // dst = (dst + 3*src) / 4
 #define ALPHA_BLEND_192_W(dst, src) \
-	(dst) = Pack565((Unpack565(dst) + Unpack565(src) * 3) >> 2)
+	(dst) = Pack555((Unpack555(dst) + Unpack555(src) * 3) >> 2)
 
 // dst = (dst + 7*src) / 8
 #define ALPHA_BLEND_224_W(dst, src) \
-	(dst) = Pack565((Unpack565(dst) + Unpack565(src) * 7) >> 3)
+	(dst) = Pack555((Unpack555(dst) + Unpack555(src) * 7) >> 3)
 
 // -------------------------------------------------------------------------
 // Branchless Absolute Difference (PowerPC subfc/subfe implementation)
@@ -956,12 +958,12 @@ static inline uint32_t branchless_abs_diff(uint32_t a, uint32_t b) {
 	(df(lA, lB) < 155)\
 
 // PowerPC rlwinm masks for 16-bit uints in 32-bit GPRs
-// Optimized with L1 Micro-LUTs to eliminate mullw cycle stalls
-static inline int RGB565_to_Lum(uint16_t c) {
+// RGB555 memory geometry (5 bits per channel)
+static inline int RGB555_to_Lum(uint16_t c) {
 	uint32_t r, g, b;
-	__asm__ volatile ("rlwinm %0, %1, 21, 27, 31" : "=r"(r) : "r"(c)); // Red: shift right 11 -> rotate 21
-	__asm__ volatile ("rlwinm %0, %1, 27, 26, 31" : "=r"(g) : "r"(c)); // Green: shift right 5 -> rotate 27
-	__asm__ volatile ("rlwinm %0, %1, 0,  27, 31" : "=r"(b) : "r"(c)); // Blue: shift right 0 -> rotate 0
+	__asm__ volatile ("rlwinm %0, %1, 22, 27, 31" : "=r"(r) : "r"(c)); // Red (10-14): shift right 10 -> rotate 22 (mask 5 bits)
+	__asm__ volatile ("rlwinm %0, %1, 27, 27, 31" : "=r"(g) : "r"(c)); // Green (5-9): shift right 5 -> rotate 27 (mask 5 bits)
+	__asm__ volatile ("rlwinm %0, %1, 0,  27, 31" : "=r"(b) : "r"(c)); // Blue (0-4): shift right 0 -> rotate 0 (mask 5 bits)
 	return xbr_luma_r_lut[r] + xbr_luma_g_lut[g] + xbr_luma_b_lut[b];
 }
 // -------------------------------------------------------------------------
@@ -989,12 +991,12 @@ static inline void Evaluate2XBRSubpixels(
     // Initialize subpixels to the 16-bit packed Center pixel
     uint32_t E0 = E, E1 = E, E2 = E, E3 = E;
 
-    // Pre-calculate Lumas natively (A-I are already 16-bit packed, avoiding SWAR overhead)
-    uint32_t lA = RGB565_to_Lum(A); uint32_t lB = RGB565_to_Lum(B);
-    uint32_t lC = RGB565_to_Lum(C); uint32_t lD = RGB565_to_Lum(D);
-    uint32_t lE = RGB565_to_Lum(E); uint32_t lF = RGB565_to_Lum(F);
-    uint32_t lG = RGB565_to_Lum(G); uint32_t lH = RGB565_to_Lum(H);
-    uint32_t lI = RGB565_to_Lum(I);
+	// Pre-calculate Lumas natively (A-I are already 16-bit packed, avoiding SWAR overhead)
+    uint32_t lA = RGB555_to_Lum(A); uint32_t lB = RGB555_to_Lum(B);
+    uint32_t lC = RGB555_to_Lum(C); uint32_t lD = RGB555_to_Lum(D);
+    uint32_t lE = RGB555_to_Lum(E); uint32_t lF = RGB555_to_Lum(F);
+    uint32_t lG = RGB555_to_Lum(G); uint32_t lH = RGB555_to_Lum(H);
+    uint32_t lI = RGB555_to_Lum(I);
 
     #define EVAL_CORNER(PE, PI, PH, PF, PG, PC, PD, PB, PA, lPE, lPI, lPH, lPF, lPG, lPC, lPD, lPB, lPA, OUT_N) \
     do { \
@@ -1105,6 +1107,7 @@ static inline void Process2XBRRow(
             F = Format::Read(&rowMid[cx + 1]);
             I = Format::Read(&rowBot[cx + 1]);
             Evaluate2XBRSubpixels<IsLv1>(A, B, C, D, E, F, G, H, I, w0, w1);
+            w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
             *(uint32_t*)(tile_ptr + 0) = w0;
             *(uint32_t*)(tile_ptr + 8) = w1;
 
@@ -1115,6 +1118,7 @@ static inline void Process2XBRRow(
             F = Format::Read(&rowMid[cx + 1]);
             I = Format::Read(&rowBot[cx + 1]);
             Evaluate2XBRSubpixels<IsLv1>(A, B, C, D, E, F, G, H, I, w0, w1);
+            w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
             *(uint32_t*)(tile_ptr + 4) = w0;
             *(uint32_t*)(tile_ptr + 12) = w1;
 
@@ -1137,6 +1141,7 @@ static inline void Process2XBRRow(
         F = Format::Read(&rowMid[cx + 1]);
         I = Format::Read(&rowBot[cx + 1]);
         Evaluate2XBRSubpixels<IsLv1>(A, B, C, D, E, F, G, H, I, w0, w1);
+        w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
         *(uint32_t*)(tile_ptr + 0) = w0; *(uint32_t*)(tile_ptr + 8) = w1;
         A = B; B = C; D = E; E = F; G = H; H = I; cx++;
 
@@ -1144,6 +1149,7 @@ static inline void Process2XBRRow(
         F = Format::Read(&rowMid[cx + 1]);
         I = Format::Read(&rowBot[cx + 1]);
         Evaluate2XBRSubpixels<IsLv1>(A, B, C, D, E, F, G, H, I, w0, w1);
+        w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
         *(uint32_t*)(tile_ptr + 4) = w0; *(uint32_t*)(tile_ptr + 12) = w1;
         A = B; B = C; D = E; E = F; G = H; H = I; cx++;
 
@@ -1220,13 +1226,13 @@ void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_
 
 static inline uint32_t ddt_fast_luma(uint16_t c) __attribute__((always_inline));
 static inline uint32_t ddt_fast_luma(uint16_t c) {
-	uint32_t r5 = (c >> 11) & 0x1F;
-	uint32_t g6 = (c >>  5) & 0x3F;
+	uint32_t r5 = (c >> 10) & 0x1F;
+	uint32_t g5 = (c >>  5) & 0x1F;
 	uint32_t b5 =  c        & 0x1F;
 
-	// 5/6-to-8 bit exact hardware replication
+	// 5-to-8 bit exact hardware replication
 	uint32_t r8 = (r5 << 3) | (r5 >> 2);
-	uint32_t g8 = (g6 << 2) | (g6 >> 4);
+	uint32_t g8 = (g5 << 3) | (g5 >> 2);
 	uint32_t b8 = (b5 << 3) | (b5 >> 2);
 
 	// 17*R, 28*G, 8*B - floor(B/2) using pure single-cycle ALU shifts
@@ -1260,23 +1266,23 @@ static inline void EvaluateDDTSubpixels(
 	uint32_t wd1 = (lH > lF) ? (lH - lF) : (lF - lH);
 	uint32_t wd2 = (lE > lI) ? (lE - lI) : (lI - lE);
 
-	// Native 16-bit RGB565 SWAR blending (prevents cross-channel color bleed)
-	// 0xF7DE masks out the LSB of R, G, and B prior to shifting.
+	// Native 16-bit RGB555 SWAR blending (prevents cross-channel color bleed)
+	// 0x7BDE (0111 1011 1101 1110) clears Bit 15 + the LSBs of R, G, and B
 	uint32_t out00 = E;
-	uint32_t out01 = ((E & 0xF7DE) >> 1) + ((F & 0xF7DE) >> 1);
-	uint32_t out10 = ((E & 0xF7DE) >> 1) + ((H & 0xF7DE) >> 1);
+	uint32_t out01 = ((E & 0x7BDE) >> 1) + ((F & 0x7BDE) >> 1);
+	uint32_t out10 = ((E & 0x7BDE) >> 1) + ((H & 0x7BDE) >> 1);
 
 	// Branchless route selector masks
 	uint32_t is_gt = -(uint32_t)(wd1 > wd2);
 	uint32_t is_lt = -(uint32_t)(wd1 < wd2);
 	uint32_t is_eq = ~(is_gt | is_lt);
 
-	uint32_t bEI = ((E & 0xF7DE) >> 1) + ((I & 0xF7DE) >> 1);
-	uint32_t bFH = ((F & 0xF7DE) >> 1) + ((H & 0xF7DE) >> 1);
-
+	uint32_t bEI = ((E & 0x7BDE) >> 1) + ((I & 0x7BDE) >> 1);
+	uint32_t bFH = ((F & 0x7BDE) >> 1) + ((H & 0x7BDE) >> 1);
+	
 	// Equal weight blend mathematically requires sequential truncated addition
-	uint32_t aux = ((H & 0xF7DE) >> 1) + ((I & 0xF7DE) >> 1);
-	uint32_t bEQ = ((out01 & 0xF7DE) >> 1) + ((aux & 0xF7DE) >> 1);
+	uint32_t aux = ((H & 0x7BDE) >> 1) + ((I & 0x7BDE) >> 1);
+	uint32_t bEQ = ((out01 & 0x7BDE) >> 1) + ((aux & 0x7BDE) >> 1);
 
 	// Route the correct subpixel blend
 	uint32_t out11 = (bEI & is_gt) | (bFH & is_lt) | (bEQ & is_eq);
@@ -1329,6 +1335,7 @@ static inline void ProcessDDTRow(
 			F = Format::Read(&rowMid[cx + 1]);
 			I = Format::Read(&rowBot[cx + 1]);
 			EvaluateDDTSubpixels<Format>(E, F, H, I, w0, w1);
+			w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 			*(uint32_t*)(tile_ptr + 0) = w0;
 			*(uint32_t*)(tile_ptr + 8) = w1;
 
@@ -1337,6 +1344,7 @@ static inline void ProcessDDTRow(
 			F = Format::Read(&rowMid[cx + 1]);
 			I = Format::Read(&rowBot[cx + 1]);
 			EvaluateDDTSubpixels<Format>(E, F, H, I, w0, w1);
+			w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 			*(uint32_t*)(tile_ptr + 4) = w0;
 			*(uint32_t*)(tile_ptr + 12) = w1;
 
@@ -1354,12 +1362,14 @@ static inline void ProcessDDTRow(
 		F = Format::Read(&rowMid[cx + 1]);
 		I = Format::Read(&rowBot[cx + 1]);
 		EvaluateDDTSubpixels<Format>(E, F, H, I, w0, w1);
+		w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 		*(uint32_t*)(tile_ptr + 0) = w0; *(uint32_t*)(tile_ptr + 8) = w1;
 		E = F; H = I; cx++;
 
 		F = Format::Read(&rowMid[cx + 1]);
 		I = Format::Read(&rowBot[cx + 1]);
 		EvaluateDDTSubpixels<Format>(E, F, H, I, w0, w1);
+		w0 |= 0x80008000; w1 |= 0x80008000; // Force MSB for GX_TF_RGB5A3 opaque output
 		*(uint32_t*)(tile_ptr + 4) = w0; *(uint32_t*)(tile_ptr + 12) = w1;
 		E = F; H = I; cx++;
 

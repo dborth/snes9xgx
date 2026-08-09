@@ -916,7 +916,7 @@ void TakeScreenshot()
  * COMPATIBILITY:
  * - Optimized for Snes9x internal video buffers (1032-byte pitch)
  * - Requires width and height divisible by 4
- * - Assumes 16-bit RGB565 format (2 bytes per pixel)
+ * - Assumes 15-bit RGB555 format (2 bytes per pixel)
  * ASSUMPTIONS:
  * - Source pointer is aligned to 4-byte boundary
  * - Destination pointer is aligned to 32-byte boundary
@@ -924,17 +924,19 @@ void TakeScreenshot()
 
 void MakeTexturePitch1032(const void *src, void *dst, s32 width, s32 height)
 {
-    // Request dedicated registers from GCC to allow superscalar interleaving
-    u32 r_src_row=0, tmpA=0, tmpB=0, tmpC=0, tmpD=0;
+    u32 r_src_row=0, tmpA=0, tmpB=0, tmpC=0, tmpD=0, mask=0;
 
     __asm__ __volatile__ (
+        "lis    %[mask], 0x8000\n"             // mask = 0x80000000
+        "ori    %[mask], %[mask], 0x8000\n"    // mask = 0x80008000 (Sets MSB for 2x RGB555 pixels)
+
         "srwi   %[width], %[width], 2\n"       // num_tiles_x = width / 4
         "srwi   %[height], %[height], 2\n"     // num_tiles_y = height / 4
 
     "2: mtctr   %[width]\n"                    // Set inner loop counter (X)
-        "mr     %[r_src_row], %[src]\n"        // Save the start of the current source row
+        "mr     %[r_src_row], %[src]\n"        // Save start of source row
 
-    "1: dcbz    0, %[dst]\n"                   // ZERO L1 CACHE: Skips read-from-RAM penalty
+    "1: dcbz    0, %[dst]\n"                   // ZERO L1 CACHE
 
         // -- Load Tile Half 1 (Rows 0 & 1) --
         "lwz    %[tmpA], 0(%[src])\n"
@@ -942,8 +944,13 @@ void MakeTexturePitch1032(const void *src, void *dst, s32 width, s32 height)
         "lwz    %[tmpC], 1032(%[src])\n"
         "lwz    %[tmpD], 1036(%[src])\n"
 
+        // -- Force MSB high for GX_TF_RGB5A3 --
+        "or     %[tmpA], %[tmpA], %[mask]\n"
+        "or     %[tmpB], %[tmpB], %[mask]\n"
+        "or     %[tmpC], %[tmpC], %[mask]\n"
+        "or     %[tmpD], %[tmpD], %[mask]\n"
+
         // -- Store Half 1 while Loading Tile Half 2 (Rows 2 & 3) --
-        // By interleaving here, we completely hide the memory load latency!
         "stw    %[tmpA], 0(%[dst])\n"
         "lwz    %[tmpA], 2064(%[src])\n"
 
@@ -955,6 +962,12 @@ void MakeTexturePitch1032(const void *src, void *dst, s32 width, s32 height)
 
         "stw    %[tmpD], 12(%[dst])\n"
         "lwz    %[tmpD], 3100(%[src])\n"
+
+        // -- Force MSB high for Tile Half 2 --
+        "or     %[tmpA], %[tmpA], %[mask]\n"
+        "or     %[tmpB], %[tmpB], %[mask]\n"
+        "or     %[tmpC], %[tmpC], %[mask]\n"
+        "or     %[tmpD], %[tmpD], %[mask]\n"
 
         // -- Store Half 2 --
         "stw    %[tmpA], 16(%[dst])\n"
@@ -978,11 +991,12 @@ void MakeTexturePitch1032(const void *src, void *dst, s32 width, s32 height)
           [tmpB] "=&r" (tmpB),
           [tmpC] "=&r" (tmpC),
           [tmpD] "=&r" (tmpD),
+          [mask] "=&r" (mask),
           [dst] "+b" (dst),
           [src] "+b" (src),
           [width] "+r" (width),
           [height] "+r" (height)
-        : // No input-only operands
+        :
         : "memory"
     );
 }
@@ -1114,7 +1128,7 @@ update_video (int width, int height)
     	draw_init ();
 
 		// initialize the texture obj we are going to use
-		GX_InitTexObj (&texobj, texturemem, vwidth*fscale, vheight*fscale, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+		GX_InitTexObj (&texobj, texturemem, vwidth*fscale, vheight*fscale, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
 		if (GCSettings.render == RENDER_ORIGINAL || GCSettings.render == RENDER_UNFILTERED)
 			GX_InitTexObjFilterMode(&texobj,GX_NEAR,GX_NEAR); // original/unfiltered video mode: force texture filtering OFF

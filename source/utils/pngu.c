@@ -776,7 +776,7 @@ int PNGU_EncodeFromGXTexture (IMGCTX ctx, u32 width, u32 height, void *buffer, u
 
 	u16 *tex16 = (u16 *)buffer;
 
-	// Un-swizzle the 4x4 tiled GX_TF_RGB565 texture
+	// Un-swizzle the 4x4 tiled GX_TF_RGB5A3 texture
 	for (int y = 0; y < height; y++) {
 		int tile_y = y / 4;
 		int in_tile_y = y % 4;
@@ -788,15 +788,15 @@ int PNGU_EncodeFromGXTexture (IMGCTX ctx, u32 width, u32 height, void *buffer, u
 			int tex_pixel_idx = (tile_y * (padded_width / 4) + tile_x) * 16 + (in_tile_y * 4 + in_tile_x);
 			u16 color = tex16[tex_pixel_idx];
 
-			// Extract 5:6:5 channels
-			u8 r = (color >> 11) & 0x1F;
-			u8 g = (color >> 5) & 0x3F;
+			// RGB555 format
+			u8 r = (color >> 10) & 0x1F;
+			u8 g = (color >> 5) & 0x1F;
 			u8 b = color & 0x1F;
 
 			// Write to linear buffer (expanding bits to fill 0-255 completely)
 			int out_idx = (y * width + x) * 3;
 			tmpbuffer[out_idx]     = (r << 3) | (r >> 2);
-			tmpbuffer[out_idx + 1] = (g << 2) | (g >> 4);
+			tmpbuffer[out_idx + 1] = (g << 3) | (g >> 2);
 			tmpbuffer[out_idx + 2] = (b << 3) | (b >> 2);
 		}
 	}
