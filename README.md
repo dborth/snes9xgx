@@ -65,6 +65,14 @@ Wii homebrew is WiiBrew (www.wiibrew.org).
 
 ## UPDATE HISTORY
 
+[5.0.2 - August 11, 2026]
+
+* Switched to RGB555 for better color accuracy
+* Fixed bug during preference loading
+* Improved memory management
+* Fixed crash when loading broken PNGs
+* Compiled with latest devkitPPC/libogc2
+
 [5.0.1 - July 24, 2026]
 
 * Fixed static in audio on turbo mode
