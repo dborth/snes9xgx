@@ -54,6 +54,8 @@ void InitMemManager ()
 	#else
 	romPtr = (uint8 *) memalign(32, Memory.MAX_ROM_SIZE + 0x200 + 0x8000);
 	#endif
+
+	SwitchMemoryModeMenu();
 }
 
 void* extmem_malloc(u32 size)
