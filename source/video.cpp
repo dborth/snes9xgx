@@ -838,7 +838,10 @@ ResetVideo_Emu ()
 		GCSettings.videoHardwareSoften == VIDEO_HW_SOFTEN_SHARP ? sharp
 		: GCSettings.videoHardwareSoften == VIDEO_HW_SOFTEN_SOFT ? soft
 		: rmode->vfilter;
-	GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, (rmode->xfbMode == VI_XFBMODE_SF) ? GX_FALSE : GX_TRUE, vfilter);
+
+	// Enable the copy filter if not in SF mode, OR if the user explicitly selected a filter
+	u8 vf_enable = (rmode->xfbMode != VI_XFBMODE_SF || GCSettings.videoHardwareSoften != VIDEO_HW_SOFTEN_OFF) ? GX_TRUE : GX_FALSE;
+	GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, vf_enable, vfilter);
 
 	GX_SetFieldMode (rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
 
@@ -1140,10 +1143,10 @@ update_video (int width, int height)
 		// initialize the texture obj we are going to use
 		GX_InitTexObj (&texobj, texturemem, vwidth*fscale, vheight*fscale, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
-		if (!GCSettings.videoBilinearFilter || GCSettings.videoMode == VIDEOMODE_ORIGINAL_240P)
-			GX_InitTexObjFilterMode(&texobj,GX_NEAR,GX_NEAR); // original/unfiltered video mode: force texture filtering OFF
+		if (!GCSettings.videoBilinearFilter)
+			GX_InitTexObjFilterMode(&texobj,GX_NEAR,GX_NEAR);
 		else
-			GX_InitTexObjFilterMode(&texobj,GX_LINEAR,GX_LINEAR); // apply user-selected bilinear filtering
+			GX_InitTexObjFilterMode(&texobj,GX_LINEAR,GX_LINEAR);
 
 		GX_LoadTexObj (&texobj, GX_TEXMAP0); // load texture object so its ready to use
 
