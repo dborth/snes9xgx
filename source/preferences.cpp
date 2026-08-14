@@ -150,14 +150,14 @@ preparePrefsData ()
 
 	createXMLSection("Video", "Video Settings");
 
-	createXMLSetting("videoMode", "Video Mode", toStr(GCSettings.videoMode));
-	createXMLSetting("videoZoomHor", "Horizontal Zoom Level", FtoStr(GCSettings.videoZoomHor));
-	createXMLSetting("videoZoomVert", "Vertical Zoom Level", FtoStr(GCSettings.videoZoomVert));
+	createXMLSetting("videoMode", "Output Mode", toStr(GCSettings.videoMode));
 	createXMLSetting("videoAspectRatioCorrection", "Aspect Ratio Correction", toStr(GCSettings.videoAspectRatioCorrection));
 	createXMLSetting("videoBilinearFilter", "Bilinear Filtering", BtoStr(GCSettings.videoBilinearFilter));
 	createXMLSetting("videoHardwareSoften", "Hardware Soften", toStr(GCSettings.videoHardwareSoften));
 	createXMLSetting("videoScanlines", "Scanlines", BtoStr(GCSettings.videoScanlines));
 	createXMLSetting("videoUpscalingFilter", "Upscaling Filter Method", toStr(GCSettings.videoUpscalingFilter));
+	createXMLSetting("videoZoomHor", "Horizontal Zoom Level", FtoStr(GCSettings.videoZoomHor));
+	createXMLSetting("videoZoomVert", "Vertical Zoom Level", FtoStr(GCSettings.videoZoomVert));
 	createXMLSetting("videoXshift", "Horizontal Video Shift", toStr(GCSettings.videoXshift));
 	createXMLSetting("videoYshift", "Vertical Video Shift", toStr(GCSettings.videoYshift));
 
