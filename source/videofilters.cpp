@@ -29,20 +29,19 @@ TFilterMethod FilterMethod;
 // -------------------------------------------------------------------------
 
 // YUV fixed-point multiplication LUTs
-// Total Size: 1.5 KB (Locks permanently into 32KB L1 Data Cache)
 static int32_t y_r_lut[32] __attribute__((aligned(32)));
-static int32_t y_g_lut[64] __attribute__((aligned(32)));
+static int32_t y_g_lut[32] __attribute__((aligned(32)));
 static int32_t y_b_lut[32] __attribute__((aligned(32)));
 static int32_t u_r_lut[32] __attribute__((aligned(32)));
-static int32_t u_g_lut[64] __attribute__((aligned(32)));
+static int32_t u_g_lut[32] __attribute__((aligned(32)));
 static int32_t u_b_lut[32] __attribute__((aligned(32)));
 static int32_t v_r_lut[32] __attribute__((aligned(32)));
-static int32_t v_g_lut[64] __attribute__((aligned(32)));
+static int32_t v_g_lut[32] __attribute__((aligned(32)));
 static int32_t v_b_lut[32] __attribute__((aligned(32)));
 
 // 2xBR Fast Luma LUTs
 static uint32_t xbr_luma_r_lut[32] __attribute__((aligned(32)));
-static uint32_t xbr_luma_g_lut[64] __attribute__((aligned(32)));
+static uint32_t xbr_luma_g_lut[32] __attribute__((aligned(32)));
 static uint32_t xbr_luma_b_lut[32] __attribute__((aligned(32)));
 
 // Byuu's Symmetry Encoding Tables (512 Bytes Total)
@@ -83,46 +82,56 @@ static uint16_t brtRowC[MAX_WIDTH + 2] __attribute__((aligned(32)));
 // Pixel Format Trait Classes (Zero-Overhead Compile-Time Abstraction)
 // -------------------------------------------------------------------------
 struct FormatRGB555 {
-    typedef uint16_t Type;
-    static inline uint16_t Read(const Type* ptr) { return *ptr; }
+	typedef uint16_t Type;
 
-    // Deduplicator helpers (8 pixels = 16 bytes)
-    static inline bool Compare8(const Type* a, const Type* b) {
-        const uint32_t* wa = (const uint32_t*)a;
-        const uint32_t* wb = (const uint32_t*)b;
-        return (wa[0] == wb[0] && wa[1] == wb[1] && wa[2] == wb[2] && wa[3] == wb[3]);
-    }
-    static inline void Copy8(Type* dst, const Type* src) {
-        uint32_t* wd = (uint32_t*)dst;
-        const uint32_t* ws = (const uint32_t*)src;
-        wd[0] = ws[0]; wd[1] = ws[1]; wd[2] = ws[2]; wd[3] = ws[3];
-    }
+	// Mask out bit 15 (0x7FFF) on read
+	static inline uint16_t Read(const Type* ptr) { return *ptr & 0x7FFF; }
+
+	// Deduplicator helpers (8 pixels = 16 bytes)
+	static inline bool Compare8(const Type* a, const Type* b) {
+		const uint32_t* wa = (const uint32_t*)a;
+		const uint32_t* wb = (const uint32_t*)b;
+
+		// Apply a 32-bit mask to ignore bit 15 on both packed 16-bit pixels simultaneously.
+		const uint32_t mask = 0x7FFF7FFF;
+		return ((wa[0] & mask) == (wb[0] & mask) &&
+				(wa[1] & mask) == (wb[1] & mask) &&
+				(wa[2] & mask) == (wb[2] & mask) &&
+				(wa[3] & mask) == (wb[3] & mask));
+	}
+
+	static inline void Copy8(Type* dst, const Type* src) {
+		uint32_t* wd = (uint32_t*)dst;
+		const uint32_t* ws = (const uint32_t*)src;
+		// Raw copy is fine here; the pipeline outputs force 0x80008000 at the end anyway.
+		wd[0] = ws[0]; wd[1] = ws[1]; wd[2] = ws[2]; wd[3] = ws[3];
+	}
 };
 
 extern unsigned short rgb555[256];
 
 struct FormatPal8 {
-    typedef uint8_t Type;
-    static inline uint16_t Read(const Type* ptr) { return rgb555[*ptr]; }
+	typedef uint8_t Type;
+	static inline uint16_t Read(const Type* ptr) { return rgb555[*ptr]; }
 
-    // Deduplicator helpers (8 pixels = 8 bytes)
-    static inline bool Compare8(const Type* a, const Type* b) {
-        const uint32_t* wa = (const uint32_t*)a;
-        const uint32_t* wb = (const uint32_t*)b;
-        return (wa[0] == wb[0] && wa[1] == wb[1]);
-    }
-    static inline void Copy8(Type* dst, const Type* src) {
-        uint32_t* wd = (uint32_t*)dst;
-        const uint32_t* ws = (const uint32_t*)src;
-        wd[0] = ws[0]; wd[1] = ws[1];
-    }
+	// Deduplicator helpers (8 pixels = 8 bytes)
+	static inline bool Compare8(const Type* a, const Type* b) {
+		const uint32_t* wa = (const uint32_t*)a;
+		const uint32_t* wb = (const uint32_t*)b;
+		return (wa[0] == wb[0] && wa[1] == wb[1]);
+	}
+	static inline void Copy8(Type* dst, const Type* src) {
+		uint32_t* wd = (uint32_t*)dst;
+		const uint32_t* ws = (const uint32_t*)src;
+		wd[0] = ws[0]; wd[1] = ws[1];
+	}
 };
 
 // Aliased at compile time based on the active emulator
 #ifdef FORMAT_PAL8
-    typedef FormatPal8 ActiveSrcFormat;
+	typedef FormatPal8 ActiveSrcFormat;
 #else
-    typedef FormatRGB555 ActiveSrcFormat;
+	typedef FormatRGB555 ActiveSrcFormat;
 #endif
 
 // ------------------------------------------------------------------------------
@@ -198,15 +207,13 @@ static void InitFilterTables() {
 
 	for (int i = 0; i < 32; i++) {
 		y_r_lut[i] = 134632 * i; u_r_lut[i] = -77712 * i; v_r_lut[i] = 230272 * i;
+		y_g_lut[i] = 264312 * i; u_g_lut[i] = -152568 * i; v_g_lut[i] = -192824 * i;
 		y_b_lut[i] = 51328 * i; u_b_lut[i] = 230272 * i; v_b_lut[i] = -37448 * i;
 
 		// Populate xBR Luma LUTs
 		xbr_luma_r_lut[i] = i * 140;
+		xbr_luma_g_lut[i] = i * 226;
 		xbr_luma_b_lut[i] = i * 62;
-	}
-	for (int i = 0; i < 64; i++) {
-		y_g_lut[i] = 132156 * i; u_g_lut[i] = -76284 * i; v_g_lut[i] = -96412 * i;
-		xbr_luma_g_lut[i] = i * 113;
 	}
 
 	const uint8_t base_hqTable[256] = {
@@ -441,11 +448,12 @@ static inline uint8_t ResolveOp(uint8_t pat, uint32_t ds1, uint32_t ds2, uint32_
 // DEDUP - Returns true iff two source rows are bit-identical (early-out).
 template<typename Format>
 static inline bool RowsEqual(const typename Format::Type *a, const typename Format::Type *b, int width) {
-	for (int x = 0; x < width; x++) {
-		if (a[x] != b[x])
-			return false;
-	}
-	return true;
+    for (int x = 0; x < width; x++) {
+        // Use the Format's Read method so the bit 15 mask is respected, avoiding false-negatives
+        if (Format::Read(&a[x]) != Format::Read(&b[x]))
+            return false;
+    }
+    return true;
 }
 
 // YUV row builder with run-length + row-repeat
