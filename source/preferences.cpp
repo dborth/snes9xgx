@@ -150,18 +150,20 @@ preparePrefsData ()
 
 	createXMLSection("Video", "Video Settings");
 
-	createXMLSetting("videomode", "Video Mode", toStr(GCSettings.videomode));
-	createXMLSetting("zoomHor", "Horizontal Zoom Level", FtoStr(GCSettings.zoomHor));
-	createXMLSetting("zoomVert", "Vertical Zoom Level", FtoStr(GCSettings.zoomVert));
-	createXMLSetting("render", "Video Filtering", toStr(GCSettings.render));
-	createXMLSetting("widescreen", "Aspect Ratio Correction", BtoStr(GCSettings.widescreen));
+	createXMLSetting("videoMode", "Video Mode", toStr(GCSettings.videoMode));
+	createXMLSetting("videoZoomHor", "Horizontal Zoom Level", FtoStr(GCSettings.videoZoomHor));
+	createXMLSetting("videoZoomVert", "Vertical Zoom Level", FtoStr(GCSettings.videoZoomVert));
+	createXMLSetting("videoAspectRatioCorrection", "Aspect Ratio Correction", toStr(GCSettings.videoAspectRatioCorrection));
+	createXMLSetting("videoBilinearFilter", "Bilinear Filtering", BtoStr(GCSettings.videoBilinearFilter));
+	createXMLSetting("videoHardwareSoften", "Hardware Soften", toStr(GCSettings.videoHardwareSoften));
+	createXMLSetting("videoScanlines", "Scanlines", BtoStr(GCSettings.videoScanlines));
+	createXMLSetting("videoUpscalingFilter", "Upscaling Filter Method", toStr(GCSettings.videoUpscalingFilter));
 	createXMLSetting("crosshair", "Crosshair", BtoStr(GCSettings.crosshair));
-	createXMLSetting("FilterMethod", "Filter Method", toStr(GCSettings.FilterMethod));
 	createXMLSetting("HiResolution", "SNES Hi-Res Mode", BtoStr(GCSettings.HiResolution));
 	createXMLSetting("SpriteLimit", "Sprites per-line Limit", BtoStr(GCSettings.SpriteLimit));
 	createXMLSetting("FrameSkip", "Frame Skipping", BtoStr(GCSettings.FrameSkip));
-	createXMLSetting("xshift", "Horizontal Video Shift", toStr(GCSettings.xshift));
-	createXMLSetting("yshift", "Vertical Video Shift", toStr(GCSettings.yshift));
+	createXMLSetting("videoXshift", "Horizontal Video Shift", toStr(GCSettings.videoXshift));
+	createXMLSetting("videoYshift", "Vertical Video Shift", toStr(GCSettings.videoYshift));
 	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(GCSettings.sfxOverclock));
 	createXMLSetting("Interpolation", "Interpolation", toStr(GCSettings.Interpolation));
 	createXMLSetting("MuteAudio", "Mute", BtoStr(GCSettings.MuteAudio));
@@ -330,18 +332,20 @@ decodePrefsData ()
 
 	// Video Settings
 
-	loadXMLSetting(&GCSettings.videomode, "videomode");
-	loadXMLSetting(&GCSettings.zoomHor, "zoomHor");
-	loadXMLSetting(&GCSettings.zoomVert, "zoomVert");
-	loadXMLSetting(&GCSettings.render, "render");
-	loadXMLSetting(&GCSettings.widescreen, "widescreen");
+	loadXMLSetting(&GCSettings.videoMode, "videoMode");
+	loadXMLSetting(&GCSettings.videoZoomHor, "videoZoomHor");
+	loadXMLSetting(&GCSettings.videoZoomVert, "videoZoomVert");
+	loadXMLSetting(&GCSettings.videoAspectRatioCorrection, "videoAspectRatioCorrection");
+	loadXMLSetting(&GCSettings.videoBilinearFilter, "videoBilinearFilter");
+	loadXMLSetting(&GCSettings.videoHardwareSoften, "videoHardwareSoften");
+	loadXMLSetting(&GCSettings.videoScanlines, "videoScanlines");
+	loadXMLSetting(&GCSettings.videoUpscalingFilter, "videoUpscalingFilter");
 	loadXMLSetting(&GCSettings.crosshair, "crosshair");
-	loadXMLSetting(&GCSettings.FilterMethod, "FilterMethod");
 	loadXMLSetting(&GCSettings.HiResolution, "HiResolution");
 	loadXMLSetting(&GCSettings.SpriteLimit, "SpriteLimit");
 	loadXMLSetting(&GCSettings.FrameSkip, "FrameSkip");
-	loadXMLSetting(&GCSettings.xshift, "xshift");
-	loadXMLSetting(&GCSettings.yshift, "yshift");
+	loadXMLSetting(&GCSettings.videoXshift, "videoXshift");
+	loadXMLSetting(&GCSettings.videoYshift, "videoYshift");
 	loadXMLSetting(&GCSettings.TurboModeEnabled, "TurboModeEnabled");
 	loadXMLSetting(&GCSettings.TurboModeButton, "TurboModeButton");
 	loadXMLSetting(&GCSettings.GamepadMenuToggle, "GamepadMenuToggle");
@@ -410,14 +414,14 @@ void FixInvalidSettings()
 		}
 	}
 
-	if(!(GCSettings.zoomHor > 0.5 && GCSettings.zoomHor < 1.5))
-		GCSettings.zoomHor = 1.0;
-	if(!(GCSettings.zoomVert > 0.5 && GCSettings.zoomVert < 1.5))
-		GCSettings.zoomVert = 1.0;
-	if(!(GCSettings.xshift > -50 && GCSettings.xshift < 50))
-		GCSettings.xshift = 0;
-	if(!(GCSettings.yshift > -50 && GCSettings.yshift < 50))
-		GCSettings.yshift = 0;
+	if(!(GCSettings.videoZoomHor > 0.5 && GCSettings.videoZoomHor < 1.5))
+		GCSettings.videoZoomHor = 1.0;
+	if(!(GCSettings.videoZoomVert > 0.5 && GCSettings.videoZoomVert < 1.5))
+		GCSettings.videoZoomVert = 1.0;
+	if(!(GCSettings.videoXshift > -50 && GCSettings.videoXshift < 50))
+		GCSettings.videoXshift = 0;
+	if(!(GCSettings.videoYshift > -50 && GCSettings.videoYshift < 50))
+		GCSettings.videoYshift = 0;
 	if(!(GCSettings.MusicVolume >= 0 && GCSettings.MusicVolume <= 100))
 		GCSettings.MusicVolume = 20;
 	if(!(GCSettings.SFXVolume >= 0 && GCSettings.SFXVolume <= 100))
@@ -426,12 +430,14 @@ void FixInvalidSettings()
 		GCSettings.language = LANG_ENGLISH;
 	if(GCSettings.Controller > CTRL_PAD4 || GCSettings.Controller < CTRL_SCOPE)
 		GCSettings.Controller = CTRL_PAD2;
-	if(!(GCSettings.render >= RENDER_ORIGINAL && GCSettings.render < RENDER_LENGTH))
-		GCSettings.render = RENDER_FILTERED_SHARP;
-	if(!(GCSettings.videomode >= VIDEOMODE_AUTO && GCSettings.videomode < VIDEOMODE_LENGTH))
-		GCSettings.videomode = VIDEOMODE_AUTO;
-	if(!(GCSettings.FilterMethod >= FILTER_NONE && GCSettings.FilterMethod <= NUM_FILTERS))
-		GCSettings.FilterMethod = FILTER_NONE;
+	if(!(GCSettings.videoHardwareSoften >= VIDEO_HW_SOFTEN_OFF && GCSettings.videoHardwareSoften < VIDEO_HW_SOFTEN_LENGTH))
+		GCSettings.videoHardwareSoften = VIDEO_HW_SOFTEN_AUTO;
+	if(!(GCSettings.videoAspectRatioCorrection >= VIDEO_ASPECT_RATIO_CORRECTION_NONE && GCSettings.videoAspectRatioCorrection < VIDEO_ASPECT_RATIO_CORRECTION_LENGTH))
+		GCSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
+	if(!(GCSettings.videoMode >= VIDEOMODE_AUTO && GCSettings.videoMode < VIDEOMODE_LENGTH))
+		GCSettings.videoMode = VIDEOMODE_AUTO;
+	if(!(GCSettings.videoUpscalingFilter >= FILTER_NONE && GCSettings.videoUpscalingFilter <= NUM_FILTERS))
+		GCSettings.videoUpscalingFilter = FILTER_NONE;
 }
 
 /****************************************************************************
@@ -459,23 +465,25 @@ DefaultSettings ()
 
 	GCSettings.Controller = CTRL_PAD2;
 
-	GCSettings.videomode = VIDEOMODE_AUTO;
-	GCSettings.render = RENDER_FILTERED_SHARP;
-	GCSettings.FilterMethod = FILTER_NONE;
+	GCSettings.videoMode = VIDEOMODE_AUTO;
+	GCSettings.videoBilinearFilter = true;
+	GCSettings.videoHardwareSoften = VIDEO_HW_SOFTEN_SHARP;
+	GCSettings.videoScanlines = false;
+	GCSettings.videoUpscalingFilter = FILTER_NONE;
 
 #ifdef HW_RVL
 	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
-		GCSettings.widescreen = true;
+		GCSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_16_9;
 	else
-		GCSettings.widescreen = false;
+		GCSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
 #else
-	GCSettings.widescreen = true;
+	GCSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
 #endif
 
-	GCSettings.zoomHor = 1.0; // horizontal zoom level
-	GCSettings.zoomVert = 1.0; // vertical zoom level
-	GCSettings.xshift = 0; // horizontal video shift
-	GCSettings.yshift = 0; // vertical video shift
+	GCSettings.videoZoomHor = 1.0; // horizontal zoom level
+	GCSettings.videoZoomVert = 1.0; // vertical zoom level
+	GCSettings.videoXshift = 0; // horizontal video shift
+	GCSettings.videoYshift = 0; // vertical video shift
 	GCSettings.crosshair = true;
 
 	GCSettings.WiimoteOrientation = WIIMOTE_ORIENTATION_VERTICAL;
@@ -712,7 +720,7 @@ bool LoadPrefs()
 
 	FixInvalidSettings();
 
-	if(GCSettings.videomode > VIDEOMODE_AUTO) {
+	if(GCSettings.videoMode > VIDEOMODE_AUTO) {
 		ResetVideo_Menu();
 	}
 

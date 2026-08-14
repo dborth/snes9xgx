@@ -2139,7 +2139,7 @@ static int MenuGameSettings()
 	GuiImageData btnLargeOutlineOver(button_large_over_png);
 	GuiImageData iconMappings(icon_settings_mappings_png);
 	GuiImageData iconVideo(icon_settings_video_png);
-	GuiImageData iconAudio(icon_settings_audio_png);
+	GuiImageData iconEmulation(icon_settings_emulation_png);
 	GuiImageData iconController(icon_game_controllers_png);
 	GuiImageData iconCheats(icon_game_cheats_png);
 	GuiImageData iconScreenshot(icon_settings_screenshot_png);
@@ -2171,23 +2171,23 @@ static int MenuGameSettings()
 	mappingBtn.SetTrigger(trig2);
 	mappingBtn.SetEffectGrow();
 	
-	GuiText audioBtnTxt("Audio", 22, (GXColor){0, 0, 0, 255});
-	audioBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-20);
-	GuiImage audioBtnImg(&btnLargeOutline);
-	GuiImage audioBtnImgOver(&btnLargeOutlineOver);
-	GuiImage audioBtnIcon(&iconAudio);
-	GuiButton audioBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
-	audioBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
-	audioBtn.SetPosition(0, 120);
-	audioBtn.SetLabel(&audioBtnTxt);
-	audioBtn.SetImage(&audioBtnImg);
-	audioBtn.SetImageOver(&audioBtnImgOver);
-	audioBtn.SetIcon(&audioBtnIcon);
-	audioBtn.SetSoundOver(&btnSoundOver);
-	audioBtn.SetSoundClick(&btnSoundClick);
-	audioBtn.SetTrigger(trigA);
-	audioBtn.SetTrigger(trig2);
-	audioBtn.SetEffectGrow();
+	GuiText emulationBtnTxt("Emulation", 22, (GXColor){0, 0, 0, 255});
+	emulationBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-20);
+	GuiImage emulationBtnImg(&btnLargeOutline);
+	GuiImage emulationBtnImgOver(&btnLargeOutlineOver);
+	GuiImage emulationBtnIcon(&iconEmulation);
+	GuiButton emulationBtn(btnLargeOutline.GetWidth(), btnLargeOutline.GetHeight());
+	emulationBtn.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	emulationBtn.SetPosition(0, 120);
+	emulationBtn.SetLabel(&emulationBtnTxt);
+	emulationBtn.SetImage(&emulationBtnImg);
+	emulationBtn.SetImageOver(&emulationBtnImgOver);
+	emulationBtn.SetIcon(&emulationBtnIcon);
+	emulationBtn.SetSoundOver(&btnSoundOver);
+	emulationBtn.SetSoundClick(&btnSoundClick);
+	emulationBtn.SetTrigger(trigA);
+	emulationBtn.SetTrigger(trig2);
+	emulationBtn.SetEffectGrow();
 	
 	GuiText videoBtnTxt("Video", 22, (GXColor){0, 0, 0, 255});
 	videoBtnTxt.SetWrap(true, btnLargeOutline.GetWidth()-20);
@@ -2296,7 +2296,7 @@ static int MenuGameSettings()
 	w.Append(&titleTxt);
 	w.Append(&mappingBtn);
 	w.Append(&videoBtn);
-	w.Append(&audioBtn);
+	w.Append(&emulationBtn);
 	w.Append(&controllerBtn);
 	w.Append(&screenshotBtn);
 	w.Append(&cheatsBtn);
@@ -2319,9 +2319,9 @@ static int MenuGameSettings()
 		{
 			menu = MENU_GAMESETTINGS_VIDEO;
 		}
-		else if(audioBtn.GetState() == STATE_CLICKED)
+		else if(emulationBtn.GetState() == STATE_CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_AUDIO;
+			menu = MENU_GAMESETTINGS_EMULATION;
 		}
 		else if(controllerBtn.GetState() == STATE_CLICKED)
 		{
@@ -3254,13 +3254,13 @@ static void ScreenZoomWindowUpdate(void * ptr, float h, float v)
 	GuiButton * b = (GuiButton *)ptr;
 	if(b->GetState() == STATE_CLICKED)
 	{
-		GCSettings.zoomHor += h;
-		GCSettings.zoomVert += v;
+		GCSettings.videoZoomHor += h;
+		GCSettings.videoZoomVert += v;
 
 		char zoom[10];
-		sprintf(zoom, "%.2f%%", GCSettings.zoomHor*100);
+		sprintf(zoom, "%.2f%%", GCSettings.videoZoomHor*100);
 		settingText->SetText(zoom);
-		sprintf(zoom, "%.2f%%", GCSettings.zoomVert*100);
+		sprintf(zoom, "%.2f%%", GCSettings.videoZoomVert*100);
 		settingText2->SetText(zoom);
 		b->ResetState();
 	}
@@ -3356,15 +3356,15 @@ static void ScreenZoomWindow()
 	settingText = new GuiText(NULL, 20, (GXColor){0, 0, 0, 255});
 	settingText2 = new GuiText(NULL, 20, (GXColor){0, 0, 0, 255});
 	char zoom[10];
-	sprintf(zoom, "%.2f%%", GCSettings.zoomHor*100);
+	sprintf(zoom, "%.2f%%", GCSettings.videoZoomHor*100);
 	settingText->SetText(zoom);
 	settingText->SetPosition(108, 0);
-	sprintf(zoom, "%.2f%%", GCSettings.zoomVert*100);
+	sprintf(zoom, "%.2f%%", GCSettings.videoZoomVert*100);
 	settingText2->SetText(zoom);
 	settingText2->SetPosition(-76, 0);
 
-	float currentZoomHor = GCSettings.zoomHor;
-	float currentZoomVert = GCSettings.zoomVert;
+	float currentZoomHor = GCSettings.videoZoomHor;
+	float currentZoomVert = GCSettings.videoZoomVert;
 
 	w->Append(&arrowLeftBtn);
 	w->Append(&arrowRightBtn);
@@ -3377,8 +3377,8 @@ static void ScreenZoomWindow()
 	if(!SettingWindow("Screen Zoom",w))
 	{
 		// undo changes
-		GCSettings.zoomHor = currentZoomHor;
-		GCSettings.zoomVert = currentZoomVert;
+		GCSettings.videoZoomHor = currentZoomHor;
+		GCSettings.videoZoomVert = currentZoomVert;
 	}
 
 	delete(w);
@@ -3391,16 +3391,16 @@ static void ScreenPositionWindowUpdate(void * ptr, int x, int y)
 	GuiButton * b = (GuiButton *)ptr;
 	if(b->GetState() == STATE_CLICKED)
 	{
-		GCSettings.xshift += x;
-		GCSettings.yshift += y;
+		GCSettings.videoXshift += x;
+		GCSettings.videoYshift += y;
 
-		if(!(GCSettings.xshift > -50 && GCSettings.xshift < 50))
-			GCSettings.xshift = 0;
-		if(!(GCSettings.yshift > -50 && GCSettings.yshift < 50))
-			GCSettings.yshift = 0;
+		if(!(GCSettings.videoXshift > -50 && GCSettings.videoXshift < 50))
+			GCSettings.videoXshift = 0;
+		if(!(GCSettings.videoYshift > -50 && GCSettings.videoYshift < 50))
+			GCSettings.videoYshift = 0;
 
 		char shift[10];
-		sprintf(shift, "%hd, %hd", GCSettings.xshift, GCSettings.yshift);
+		sprintf(shift, "%hd, %hd", GCSettings.videoXshift, GCSettings.videoYshift);
 		settingText->SetText(shift);
 		b->ResetState();
 	}
@@ -3491,11 +3491,11 @@ static void ScreenPositionWindow()
 
 	settingText = new GuiText(NULL, 20, (GXColor){0, 0, 0, 255});
 	char shift[10];
-	sprintf(shift, "%i, %i", GCSettings.xshift, GCSettings.yshift);
+	sprintf(shift, "%i, %i", GCSettings.videoXshift, GCSettings.videoYshift);
 	settingText->SetText(shift);
 
-	int currentX = GCSettings.xshift;
-	int currentY = GCSettings.yshift;
+	int currentX = GCSettings.videoXshift;
+	int currentY = GCSettings.videoYshift;
 
 	w->Append(&arrowLeftBtn);
 	w->Append(&arrowRightBtn);
@@ -3507,8 +3507,8 @@ static void ScreenPositionWindow()
 	if(!SettingWindow("Screen Position",w))
 	{
 		// undo changes
-		GCSettings.xshift = currentX;
-		GCSettings.yshift = currentY;
+		GCSettings.videoXshift = currentX;
+		GCSettings.videoYshift = currentY;
 	}
 
 	delete(w);
@@ -3686,19 +3686,14 @@ static int MenuSettingsVideo()
 	bool firstRun = true;
 	OptionList options;
 
-	sprintf(options.name[i++], "Rendering");
-	sprintf(options.name[i++], "Scaling");
-	sprintf(options.name[i++], "Filtering");
+	sprintf(options.name[i++], "Output Mode");
+	sprintf(options.name[i++], "Aspect Ratio Correction");
+	sprintf(options.name[i++], "Bilinear Filtering");
+	sprintf(options.name[i++], "Hardware Softening");
+	sprintf(options.name[i++], "Upscaling");
+	sprintf(options.name[i++], "Scanline Overlay");
 	sprintf(options.name[i++], "Screen Zoom");
 	sprintf(options.name[i++], "Screen Position");
-	sprintf(options.name[i++], "Video Mode");
-	sprintf(options.name[i++], "SNES Hi-Res Mode");
-	sprintf(options.name[i++], "Sprites Per-Line Limit");
-	sprintf(options.name[i++], "Frame Skipping");
-	sprintf(options.name[i++], "Crosshair");
-	sprintf(options.name[i++], "Show Framerate");
-	sprintf(options.name[i++], "Show Local Time");
-	sprintf(options.name[i++], "SuperFX Overclock");
 	options.length = i;
 
 	for(i=0; i < options.length; i++)
@@ -3757,83 +3752,43 @@ static int MenuSettingsVideo()
 		switch (ret)
 		{
 			case 0:
-				GCSettings.render++;
-				if (GCSettings.render >= RENDER_LENGTH)
-					GCSettings.render = RENDER_ORIGINAL;
+				GCSettings.videoMode++;
+				if(GCSettings.videoMode >= VIDEOMODE_LENGTH)
+					GCSettings.videoMode = VIDEOMODE_AUTO;
 				break;
 
 			case 1:
-				GCSettings.widescreen = !GCSettings.widescreen;
+				GCSettings.videoAspectRatioCorrection++;
+				if(GCSettings.videoAspectRatioCorrection >= VIDEO_ASPECT_RATIO_CORRECTION_LENGTH)
+					GCSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
 				break;
 
 			case 2:
-				GCSettings.FilterMethod++;
-				if (GCSettings.FilterMethod >= NUM_FILTERS)
-					GCSettings.FilterMethod = FILTER_NONE;
+				GCSettings.videoBilinearFilter = !GCSettings.videoBilinearFilter;
 				break;
 
 			case 3:
-				ScreenZoomWindow();
+				GCSettings.videoHardwareSoften++;
+				if(GCSettings.videoHardwareSoften >= VIDEO_HW_SOFTEN_LENGTH)
+					GCSettings.videoHardwareSoften = VIDEO_HW_SOFTEN_OFF;
 				break;
 
 			case 4:
-				ScreenPositionWindow();
+				GCSettings.videoUpscalingFilter++;
+				if (GCSettings.videoUpscalingFilter >= NUM_FILTERS)
+					GCSettings.videoUpscalingFilter = FILTER_NONE;
 				break;
 
 			case 5:
-				GCSettings.videomode++;
-				if(GCSettings.videomode >= VIDEOMODE_LENGTH)
-					GCSettings.videomode = VIDEOMODE_AUTO;
+				GCSettings.videoScanlines = !GCSettings.videoScanlines;
 				break;
-				
+
 			case 6:
-				GCSettings.HiResolution = !GCSettings.HiResolution;
+				ScreenZoomWindow();
 				break;
-				
+
 			case 7:
-				GCSettings.SpriteLimit = !GCSettings.SpriteLimit;
-				break;
-
-			case 8:
-				GCSettings.FrameSkip = !GCSettings.FrameSkip;
-				break;
-
-			case 9:
-				GCSettings.crosshair = !GCSettings.crosshair;
-				break;
-				
-			case 10:
-				Settings.DisplayFrameRate = !Settings.DisplayFrameRate;
-				break;
-				
-			case 11:
-				Settings.DisplayTime = !Settings.DisplayTime;
-				break;
-				
-			case 12:
-				#ifdef HW_RVL
-				GCSettings.sfxOverclock++;
-				if (GCSettings.sfxOverclock >= SFXOVERCLOCK_LENGTH) {
-					GCSettings.sfxOverclock = SFXOVERCLOCK_OFF;
-				}
-				#else
-				GCSettings.sfxOverclock++;
-				if (GCSettings.sfxOverclock > SFXOVERCLOCK_60MHZ) {
-					GCSettings.sfxOverclock = SFXOVERCLOCK_OFF;
-				}
-				#endif
-				switch(GCSettings.sfxOverclock)
-				{
-					case SFXOVERCLOCK_OFF: Settings.SuperFXSpeedPerLine = 5823405; break;
-					case SFXOVERCLOCK_20MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 20.5e6; break;
-					case SFXOVERCLOCK_40MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
-					case SFXOVERCLOCK_60MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
-					case SFXOVERCLOCK_80MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 80.5e6; break;
-					case SFXOVERCLOCK_100MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 100.5e6; break;
-					case SFXOVERCLOCK_120MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 120.5e6; break;
-				}
-				S9xResetSuperFX();
-				S9xReset();
+				ScreenPositionWindow();
 				break;
 		}
 
@@ -3841,63 +3796,53 @@ static int MenuSettingsVideo()
 		{
 			firstRun = false;
 
-			if (GCSettings.render == RENDER_ORIGINAL)
-				sprintf (options.value[0], "Original (240p)");
-			else if (GCSettings.render == RENDER_FILTERED)
-				sprintf (options.value[0], "Filtered");
-			else if (GCSettings.render == RENDER_UNFILTERED)
-				sprintf (options.value[0], "Unfiltered");
-			else if (GCSettings.render == RENDER_FILTERED_SHARP)
-				sprintf (options.value[0], "Filtered (Sharp)");
-			else if (GCSettings.render == RENDER_FILTERED_SOFT)
-				sprintf (options.value[0], "Filtered (Soft)");
-
-			if(GCSettings.widescreen)
-				sprintf (options.value[1], "16:9 Correction");
-			else
-				sprintf (options.value[1], "Default");
-			sprintf (options.value[2], "%s", GetFilterName(GCSettings.FilterMethod));
-			sprintf (options.value[3], "%.2f%%, %.2f%%", GCSettings.zoomHor*100, GCSettings.zoomVert*100);
-			sprintf (options.value[4], "%d, %d", GCSettings.xshift, GCSettings.yshift);
-
-			switch(GCSettings.videomode)
+			switch(GCSettings.videoMode)
 			{
 				case VIDEOMODE_AUTO:
-					sprintf (options.value[5], "Automatic (Recommended)"); break;
+					sprintf (options.value[0], "Automatic (Recommended)"); break;
 				case VIDEOMODE_NTSC:
-					sprintf (options.value[5], "NTSC (480i)"); break;
+					sprintf (options.value[0], "NTSC (480i)"); break;
 				case VIDEOMODE_PROGRESSIVE:
-					sprintf (options.value[5], "Progressive (480p)"); break;
+					sprintf (options.value[0], "Progressive (480p)"); break;
 				case VIDEOMODE_PAL:
-					sprintf (options.value[5], "PAL (50Hz)"); break;
+					sprintf (options.value[0], "PAL (50Hz)"); break;
 				case VIDEOMODE_PAL60:
-					sprintf (options.value[5], "PAL (60Hz)"); break;
+					sprintf (options.value[0], "PAL (60Hz)"); break;
 				case VIDEOMODE_PROGRESSIVE_576P:
-					sprintf (options.value[5], "Progressive (576p)"); break;
+					sprintf (options.value[0], "Progressive (576p)"); break;
+				case VIDEOMODE_ORIGINAL_240P:
+					sprintf (options.value[0], "Original (240p)"); break;
 			}
-			sprintf (options.value[6], "%s", GCSettings.HiResolution ? "On" : "Off");
-			sprintf (options.value[7], "%s", GCSettings.SpriteLimit ? "On" : "Off");
-			sprintf (options.value[8], "%s", GCSettings.FrameSkip ? "On" : "Off");
-			sprintf (options.value[9], "%s", GCSettings.crosshair ? "On" : "Off");
-			sprintf (options.value[10], "%s", Settings.DisplayFrameRate ? "On" : "Off");
-			sprintf (options.value[11], "%s", Settings.DisplayTime ? "On" : "Off");
-			switch(GCSettings.sfxOverclock)
+
+			switch(GCSettings.videoAspectRatioCorrection)
 			{
-				case SFXOVERCLOCK_OFF:
-					sprintf (options.value[12], "Default"); break;
-				case SFXOVERCLOCK_20MHZ:
-					sprintf (options.value[12], "20 MHz"); break;
-				case SFXOVERCLOCK_40MHZ:
-					sprintf (options.value[12], "40 MHz"); break;
-				case SFXOVERCLOCK_60MHZ:
-					sprintf (options.value[12], "60 MHz"); break;
-				case SFXOVERCLOCK_80MHZ:
-					sprintf (options.value[12], "80 MHz"); break;
-				case SFXOVERCLOCK_100MHZ:
-					sprintf (options.value[12], "100 MHz"); break;
-				case SFXOVERCLOCK_120MHZ:
-					sprintf (options.value[12], "120 MHz"); break;
+				case VIDEO_ASPECT_RATIO_CORRECTION_NONE:
+					sprintf (options.value[1], "None"); break;
+				case VIDEO_ASPECT_RATIO_CORRECTION_16_9:
+					sprintf (options.value[1], "16:9"); break;
+				case VIDEO_ASPECT_RATIO_CORRECTION_16_9_FIXED:
+					sprintf (options.value[1], "16:9 (Fixed Pixel Ratio)"); break;
 			}
+
+			sprintf (options.value[2], "%s", GCSettings.videoBilinearFilter ? "On" : "Off");
+
+			switch(GCSettings.videoHardwareSoften)
+			{
+				case VIDEO_HW_SOFTEN_OFF:
+					sprintf (options.value[3], "Off"); break;
+				case VIDEO_HW_SOFTEN_AUTO:
+					sprintf (options.value[3], "Auto"); break;
+				case VIDEO_HW_SOFTEN_SHARP:
+					sprintf (options.value[3], "Sharp"); break;
+				case VIDEO_HW_SOFTEN_SOFT:
+					sprintf (options.value[3], "Soft"); break;
+			}
+
+			sprintf (options.value[4], "%s", GetFilterName(GCSettings.videoUpscalingFilter));
+			sprintf (options.value[5], "%s", GCSettings.videoScanlines ? "On" : "Off");
+			sprintf (options.value[6], "%.2f%%, %.2f%%", GCSettings.videoZoomHor*100, GCSettings.videoZoomVert*100);
+			sprintf (options.value[7], "%d, %d", GCSettings.videoXshift, GCSettings.videoYshift);
+
 			optionBrowser.TriggerUpdate();
 		}
 
@@ -3914,23 +3859,34 @@ static int MenuSettingsVideo()
 }
 
 /****************************************************************************
- * MenuSettingsAudio
+ * MenuSettingsEmulation
  ***************************************************************************/
-static int MenuSettingsAudio()
+static int MenuSettingsEmulation()
 {
 	int menu = MENU_NONE;
 	int ret;
 	int i = 0;
 	bool firstRun = true;
 	OptionList options;
-	sprintf(options.name[i++], "Interpolation");
+
+	sprintf(options.name[i++], "SNES Hi-Res Mode");
+	sprintf(options.name[i++], "Sprites Per-Line Limit");
+	sprintf(options.name[i++], "SuperFX Overclock");
+	sprintf(options.name[i++], "Audio Interpolation");
 	sprintf(options.name[i++], "Mute Game Audio");
+	sprintf(options.name[i++], "Frame Skipping");
+	sprintf(options.name[i++], "Crosshair");
+	sprintf(options.name[i++], "Show Framerate");
+	sprintf(options.name[i++], "Show Local Time");
 	options.length = i;
+
 	for(i=0; i < options.length; i++)
 		options.value[i][0] = 0;
-	GuiText titleTxt("Game Settings - Audio", 26, (GXColor){255, 255, 255, 255});
+
+	GuiText titleTxt("Game Settings - Emulation", 26, (GXColor){255, 255, 255, 255});
 	titleTxt.SetAlignment(ALIGN_LEFT, ALIGN_TOP);
 	titleTxt.SetPosition(50,50);
+
 	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND_PCM);
 	GuiImageData btnOutline(button_png);
@@ -3957,10 +3913,12 @@ static int MenuSettingsAudio()
 	backBtn.SetTrigger(&trigB);
 	backBtn.SetTrigger(&trig1);
 	backBtn.SetEffectGrow();
+
 	GuiOptionBrowser optionBrowser(552, 248, &options);
 	optionBrowser.SetPosition(0, 108);
 	optionBrowser.SetCol2Position(200);
 	optionBrowser.SetAlignment(ALIGN_CENTRE, ALIGN_TOP);
+
 	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.Append(&backBtn);
@@ -3977,6 +3935,40 @@ static int MenuSettingsAudio()
 		switch (ret)
 		{
 			case 0:
+				GCSettings.HiResolution = !GCSettings.HiResolution;
+				break;
+
+			case 1:
+				GCSettings.SpriteLimit = !GCSettings.SpriteLimit;
+				break;
+
+			case 2:
+				#ifdef HW_RVL
+				GCSettings.sfxOverclock++;
+				if (GCSettings.sfxOverclock >= SFXOVERCLOCK_LENGTH) {
+					GCSettings.sfxOverclock = SFXOVERCLOCK_OFF;
+				}
+				#else
+				GCSettings.sfxOverclock++;
+				if (GCSettings.sfxOverclock > SFXOVERCLOCK_60MHZ) {
+					GCSettings.sfxOverclock = SFXOVERCLOCK_OFF;
+				}
+				#endif
+				switch(GCSettings.sfxOverclock)
+				{
+					case SFXOVERCLOCK_OFF: Settings.SuperFXSpeedPerLine = 5823405; break;
+					case SFXOVERCLOCK_20MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 20.5e6; break;
+					case SFXOVERCLOCK_40MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
+					case SFXOVERCLOCK_60MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
+					case SFXOVERCLOCK_80MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 80.5e6; break;
+					case SFXOVERCLOCK_100MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 100.5e6; break;
+					case SFXOVERCLOCK_120MHZ: Settings.SuperFXSpeedPerLine = 0.417 * 120.5e6; break;
+				}
+				S9xResetSuperFX();
+				S9xReset();
+				break;
+
+			case 3:
 				GCSettings.Interpolation++;
 				if (GCSettings.Interpolation > 4) {
 					GCSettings.Interpolation = 0;
@@ -3989,33 +3981,74 @@ static int MenuSettingsAudio()
 					case 3: Settings.InterpolationMethod = DSP_INTERPOLATION_SINC; break;
 					case 4: Settings.InterpolationMethod = DSP_INTERPOLATION_NONE; break;
 				}
-				break;
 				S9xReset();
+				break;
 
-			case 1:
+			case 4:
 				GCSettings.MuteAudio = !GCSettings.MuteAudio;
+				break;
+
+			case 5:
+				GCSettings.FrameSkip = !GCSettings.FrameSkip;
+				break;
+
+			case 6:
+				GCSettings.crosshair = !GCSettings.crosshair;
+				break;
+
+			case 7:
+				Settings.DisplayFrameRate = !Settings.DisplayFrameRate;
+				break;
+
+			case 8:
+				Settings.DisplayTime = !Settings.DisplayTime;
 				break;
 		}
 		
 	if(ret >= 0 || firstRun)
 		{
 			firstRun = false;
+
+			sprintf (options.value[0], "%s", GCSettings.HiResolution ? "On" : "Off");
+			sprintf (options.value[1], "%s", GCSettings.SpriteLimit ? "On" : "Off");
 			
+			switch(GCSettings.sfxOverclock)
+			{
+				case SFXOVERCLOCK_OFF:
+					sprintf (options.value[2], "Default"); break;
+				case SFXOVERCLOCK_20MHZ:
+					sprintf (options.value[2], "20 MHz"); break;
+				case SFXOVERCLOCK_40MHZ:
+					sprintf (options.value[2], "40 MHz"); break;
+				case SFXOVERCLOCK_60MHZ:
+					sprintf (options.value[2], "60 MHz"); break;
+				case SFXOVERCLOCK_80MHZ:
+					sprintf (options.value[2], "80 MHz"); break;
+				case SFXOVERCLOCK_100MHZ:
+					sprintf (options.value[2], "100 MHz"); break;
+				case SFXOVERCLOCK_120MHZ:
+					sprintf (options.value[2], "120 MHz"); break;
+			}
+
 			switch(GCSettings.Interpolation)
 			{
 				case 0:
-					sprintf (options.value[0], "Gaussian (Accurate)"); break;
+					sprintf (options.value[3], "Gaussian (Accurate)"); break;
 				case 1:
-					sprintf (options.value[0], "Linear"); break;
+					sprintf (options.value[3], "Linear"); break;
 				case 2:
-					sprintf (options.value[0], "Cubic"); break;
+					sprintf (options.value[3], "Cubic"); break;
 				case 3:
-					sprintf (options.value[0], "Sinc"); break;
+					sprintf (options.value[3], "Sinc"); break;
 				case 4:
-					sprintf (options.value[0], "None"); break;
+					sprintf (options.value[3], "None"); break;
 			}
 
-			sprintf (options.value[1], "%s", GCSettings.MuteAudio ? "On" : "Off");
+			sprintf (options.value[4], "%s", GCSettings.MuteAudio ? "On" : "Off");
+			sprintf (options.value[5], "%s", GCSettings.FrameSkip ? "On" : "Off");
+			sprintf (options.value[6], "%s", GCSettings.crosshair ? "On" : "Off");
+			sprintf (options.value[7], "%s", Settings.DisplayFrameRate ? "On" : "Off");
+			sprintf (options.value[8], "%s", Settings.DisplayTime ? "On" : "Off");
 
 			optionBrowser.TriggerUpdate();
 		}
@@ -5099,8 +5132,8 @@ MainMenu (int menu)
 			case MENU_GAMESETTINGS_VIDEO:
 				currentMenu = MenuSettingsVideo();
 				break;
-			case MENU_GAMESETTINGS_AUDIO:
-				currentMenu = MenuSettingsAudio();
+			case MENU_GAMESETTINGS_EMULATION:
+				currentMenu = MenuSettingsEmulation();
 				break;
 			case MENU_GAMESETTINGS_CHEATS:
 				currentMenu = MenuGameCheats();

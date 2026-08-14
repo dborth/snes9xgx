@@ -102,12 +102,18 @@ enum {
 };
 
 enum {
-	RENDER_ORIGINAL = 0,
-	RENDER_FILTERED,
-	RENDER_UNFILTERED,
-	RENDER_FILTERED_SOFT,
-	RENDER_FILTERED_SHARP,
-	RENDER_LENGTH
+	VIDEO_ASPECT_RATIO_CORRECTION_NONE = 0,
+	VIDEO_ASPECT_RATIO_CORRECTION_16_9,
+	VIDEO_ASPECT_RATIO_CORRECTION_16_9_FIXED,
+	VIDEO_ASPECT_RATIO_CORRECTION_LENGTH
+};
+
+enum {
+	VIDEO_HW_SOFTEN_OFF = 0,
+	VIDEO_HW_SOFTEN_AUTO,
+	VIDEO_HW_SOFTEN_SHARP,
+	VIDEO_HW_SOFTEN_SOFT,
+	VIDEO_HW_SOFTEN_LENGTH
 };
 
 enum {
@@ -117,6 +123,7 @@ enum {
 	VIDEOMODE_PAL,
 	VIDEOMODE_PAL60,
 	VIDEOMODE_PROGRESSIVE_576P,
+	VIDEOMODE_ORIGINAL_240P,
 	VIDEOMODE_LENGTH
 };
 
@@ -227,19 +234,26 @@ struct SGCSettings{
 	char	smbpwd[20];
 	char	smbshare[20];
 
-	float	zoomHor; // horizontal zoom amount
-	float	zoomVert; // vertical zoom amount
-	int		videomode; // 0 - Automatic, 1 - NTSC (480i), 2 - Progressive (480p), 3 - PAL (50Hz), 4 - PAL (60Hz), 5 - Progressive (576p)
-	int		render;		// 0 - original, 1 - filtered, 2 - unfiltered
-	int		FilterMethod; // convert to RenderFilter
-	int		Controller;
+	int		videoMode; // 0 - Automatic, 1 - NTSC (480i), 2 - Progressive (480p), 3 - PAL (50Hz), 4 - PAL (60Hz), 5 - Progressive (576p)
+	int		videoAspectRatioCorrection;
+	bool	videoBilinearFilter;
+	int		videoHardwareSoften;
+	bool	videoScanlines;
+	int		videoUpscalingFilter;
+	float	videoZoomHor; // horizontal zoom amount
+	float	videoZoomVert; // vertical zoom amount
+	int		videoXshift;
+	int		videoYshift;
+
 	bool	HiResolution;
 	bool	SpriteLimit;
 	bool	FrameSkip;
 	bool	crosshair;
-	bool	widescreen;	// 0 - 4:3 aspect, 1 - 16:9 aspect
-	int		xshift;	// video output shift
-	int		yshift;
+	int		sfxOverclock;
+	int		Interpolation;
+	bool	MuteAudio;
+	
+	int		Controller;
 	int		WiimoteOrientation;
 	int		ExitAction;
 	int		MusicVolume;
@@ -248,10 +262,6 @@ struct SGCSettings{
 	int		language;
 	int		PreviewImage;
 
-	int		sfxOverclock;
-	
-	int		Interpolation;
-	bool	MuteAudio;
 
 	bool	TurboModeEnabled;
 	int		TurboModeButton;

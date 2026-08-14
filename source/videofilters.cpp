@@ -160,7 +160,6 @@ const char* GetFilterName (int filterID)
 		case FILTER_HQ2XS: return "hq2x Soft";
 		case FILTER_HQ2XBOLD: return "hq2x Bold";
 		case FILTER_SCALE2X: return "Scale2x";
-		case FILTER_SCANLINES: return "TV Mode";
 		case FILTER_2XBR: return "2xBR";
 		case FILTER_2XBRLV1: return "2xBR-lv1";
 		case FILTER_DDT: return "DDT";
@@ -188,7 +187,6 @@ int GetFilterScale()
 	switch(renderFilter)
 	{
 		case FILTER_NONE:
-		case FILTER_SCANLINES:
 		return 1;
 		default:
 		case FILTER_HQ2X:
@@ -448,12 +446,12 @@ static inline uint8_t ResolveOp(uint8_t pat, uint32_t ds1, uint32_t ds2, uint32_
 // DEDUP - Returns true iff two source rows are bit-identical (early-out).
 template<typename Format>
 static inline bool RowsEqual(const typename Format::Type *a, const typename Format::Type *b, int width) {
-    for (int x = 0; x < width; x++) {
-        // Use the Format's Read method so the bit 15 mask is respected, avoiding false-negatives
-        if (Format::Read(&a[x]) != Format::Read(&b[x]))
-            return false;
-    }
-    return true;
+	for (int x = 0; x < width; x++) {
+		// Use the Format's Read method so the bit 15 mask is respected, avoiding false-negatives
+		if (Format::Read(&a[x]) != Format::Read(&b[x]))
+			return false;
+	}
+	return true;
 }
 
 // YUV row builder with run-length + row-repeat

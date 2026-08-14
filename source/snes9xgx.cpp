@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 
 		CheckVideo = 2;		// force video update
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;
-		SelectFilterMethod(GCSettings.FilterMethod); // Initialize / Re-evaluate active filter
+		SelectFilterMethod(GCSettings.videoUpscalingFilter); // Initialize / Re-evaluate active filter
 
 		while(1) // emulation loop
 		{

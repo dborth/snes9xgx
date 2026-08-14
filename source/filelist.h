@@ -73,7 +73,7 @@
 #include "icon_settings_menu_png.h"
 #include "icon_settings_network_png.h"
 #include "icon_settings_video_png.h"
-#include "icon_settings_audio_png.h"
+#include "icon_settings_emulation_png.h"
 #include "icon_settings_screenshot_png.h"
 #include "button_png.h"
 #include "button_over_png.h"
