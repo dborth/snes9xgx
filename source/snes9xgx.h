@@ -216,16 +216,16 @@ enum {
 struct SGCSettings{
 	int		AutoLoad;
 	int		AutoSave;
-	int		LoadMethod; // For ROMS: Auto, SD, DVD, USB, Network (SMB)
-	int		SaveMethod; // For SRAM, Freeze, Prefs: Auto, SD, USB, SMB
+	int		LoadMethod;
+	int		SaveMethod;
 	bool	AppendAuto;
-	char	LoadFolder[MAXPATHLEN]; 	// Path to game files
-	char	LastFileLoaded[MAXPATHLEN]; // Last file loaded filename
-	char	SaveFolder[MAXPATHLEN]; 	// Path to save files
-	char	CheatFolder[MAXPATHLEN]; 	// Path to cheat files
-	char	ScreenshotsFolder[MAXPATHLEN]; // Path to screenshots files
-	char	CoverFolder[MAXPATHLEN]; 	// Path to cover files
-	char	ArtworkFolder[MAXPATHLEN]; 	// Path to artwork files
+	char	LoadFolder[MAXPATHLEN];
+	char	LastFileLoaded[MAXPATHLEN];
+	char	SaveFolder[MAXPATHLEN];
+	char	CheatFolder[MAXPATHLEN];
+	char	ScreenshotsFolder[MAXPATHLEN];
+	char	CoverFolder[MAXPATHLEN];
+	char	ArtworkFolder[MAXPATHLEN];
 	bool	HideSRAMSaving;
 	bool	AutoloadGame;
 
@@ -234,14 +234,14 @@ struct SGCSettings{
 	char	smbpwd[20];
 	char	smbshare[20];
 
-	int		videoMode; // 0 - Automatic, 1 - NTSC (480i), 2 - Progressive (480p), 3 - PAL (50Hz), 4 - PAL (60Hz), 5 - Progressive (576p)
+	int		videoMode;
 	int		videoAspectRatioCorrection;
 	bool	videoBilinearFilter;
 	int		videoHardwareSoften;
 	bool	videoScanlines;
 	int		videoUpscalingFilter;
-	float	videoZoomHor; // horizontal zoom amount
-	float	videoZoomVert; // vertical zoom amount
+	float	videoZoomHor;
+	float	videoZoomVert;
 	int		videoXshift;
 	int		videoYshift;
 
