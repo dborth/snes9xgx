@@ -158,12 +158,15 @@ preparePrefsData ()
 	createXMLSetting("videoHardwareSoften", "Hardware Soften", toStr(GCSettings.videoHardwareSoften));
 	createXMLSetting("videoScanlines", "Scanlines", BtoStr(GCSettings.videoScanlines));
 	createXMLSetting("videoUpscalingFilter", "Upscaling Filter Method", toStr(GCSettings.videoUpscalingFilter));
+	createXMLSetting("videoXshift", "Horizontal Video Shift", toStr(GCSettings.videoXshift));
+	createXMLSetting("videoYshift", "Vertical Video Shift", toStr(GCSettings.videoYshift));
+
+	createXMLSection("Emulation", "Emulation Settings");
+
 	createXMLSetting("crosshair", "Crosshair", BtoStr(GCSettings.crosshair));
 	createXMLSetting("HiResolution", "SNES Hi-Res Mode", BtoStr(GCSettings.HiResolution));
 	createXMLSetting("SpriteLimit", "Sprites per-line Limit", BtoStr(GCSettings.SpriteLimit));
 	createXMLSetting("FrameSkip", "Frame Skipping", BtoStr(GCSettings.FrameSkip));
-	createXMLSetting("videoXshift", "Horizontal Video Shift", toStr(GCSettings.videoXshift));
-	createXMLSetting("videoYshift", "Vertical Video Shift", toStr(GCSettings.videoYshift));
 	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(GCSettings.sfxOverclock));
 	createXMLSetting("Interpolation", "Interpolation", toStr(GCSettings.Interpolation));
 	createXMLSetting("MuteAudio", "Mute", BtoStr(GCSettings.MuteAudio));
