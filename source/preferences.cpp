@@ -170,10 +170,6 @@ preparePrefsData ()
 	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(GCSettings.sfxOverclock));
 	createXMLSetting("Interpolation", "Interpolation", toStr(GCSettings.Interpolation));
 	createXMLSetting("MuteAudio", "Mute", BtoStr(GCSettings.MuteAudio));
-	createXMLSetting("TurboModeEnabled", "Turbo Mode Enabled", BtoStr(GCSettings.TurboModeEnabled));
-	createXMLSetting("TurboModeButton", "Turbo Mode Button", toStr(GCSettings.TurboModeButton));
-	createXMLSetting("GamepadMenuToggle", "Gamepad Menu Toggle", toStr(GCSettings.GamepadMenuToggle));
-	createXMLSetting("MapABXYRightStick", "Map ABXY Right Stick", BtoStr(GCSettings.MapABXYRightStick));
 
 	createXMLSection("Menu", "Menu Settings");
 
@@ -191,6 +187,10 @@ preparePrefsData ()
 	createXMLSection("Controller", "Controller Settings");
 
 	createXMLSetting("Controller", "Controller", toStr(GCSettings.Controller));
+	createXMLSetting("TurboModeEnabled", "Turbo Mode Enabled", BtoStr(GCSettings.TurboModeEnabled));
+	createXMLSetting("TurboModeButton", "Turbo Mode Button", toStr(GCSettings.TurboModeButton));
+	createXMLSetting("GamepadMenuToggle", "Gamepad Menu Toggle", toStr(GCSettings.GamepadMenuToggle));
+	createXMLSetting("MapABXYRightStick", "Map ABXY Right Stick", BtoStr(GCSettings.MapABXYRightStick));
 
 	createXMLController(btnmap[CTRL_PAD][CTRLR_GCPAD], "btnmap_pad_gcpad", "SNES Pad - GameCube Controller");
 #ifdef HW_RVL
@@ -336,32 +336,24 @@ decodePrefsData ()
 	// Video Settings
 
 	loadXMLSetting(&GCSettings.videoMode, "videoMode");
-	loadXMLSetting(&GCSettings.videoZoomHor, "videoZoomHor");
-	loadXMLSetting(&GCSettings.videoZoomVert, "videoZoomVert");
 	loadXMLSetting(&GCSettings.videoAspectRatioCorrection, "videoAspectRatioCorrection");
 	loadXMLSetting(&GCSettings.videoBilinearFilter, "videoBilinearFilter");
 	loadXMLSetting(&GCSettings.videoHardwareSoften, "videoHardwareSoften");
-	loadXMLSetting(&GCSettings.videoScanlines, "videoScanlines");
 	loadXMLSetting(&GCSettings.videoUpscalingFilter, "videoUpscalingFilter");
+	loadXMLSetting(&GCSettings.videoScanlines, "videoScanlines");
+	loadXMLSetting(&GCSettings.videoZoomHor, "videoZoomHor");
+	loadXMLSetting(&GCSettings.videoZoomVert, "videoZoomVert");
+	loadXMLSetting(&GCSettings.videoXshift, "videoXshift");
+	loadXMLSetting(&GCSettings.videoYshift, "videoYshift");
+
+	// Emulation Settings
+	loadXMLSetting(&GCSettings.sfxOverclock, "sfxOverclock");
 	loadXMLSetting(&GCSettings.crosshair, "crosshair");
 	loadXMLSetting(&GCSettings.HiResolution, "HiResolution");
 	loadXMLSetting(&GCSettings.SpriteLimit, "SpriteLimit");
 	loadXMLSetting(&GCSettings.FrameSkip, "FrameSkip");
-	loadXMLSetting(&GCSettings.videoXshift, "videoXshift");
-	loadXMLSetting(&GCSettings.videoYshift, "videoYshift");
-	loadXMLSetting(&GCSettings.TurboModeEnabled, "TurboModeEnabled");
-	loadXMLSetting(&GCSettings.TurboModeButton, "TurboModeButton");
-	loadXMLSetting(&GCSettings.GamepadMenuToggle, "GamepadMenuToggle");
-	loadXMLSetting(&GCSettings.MapABXYRightStick, "MapABXYRightStick");
-
-	// Audio Settings
-
 	loadXMLSetting(&GCSettings.Interpolation, "Interpolation");
 	loadXMLSetting(&GCSettings.MuteAudio, "MuteAudio");
-
-	// Emulation Settings
-
-	loadXMLSetting(&GCSettings.sfxOverclock, "sfxOverclock");
 
 	// Menu Settings
 
@@ -377,6 +369,10 @@ decodePrefsData ()
 	// Controller Settings
 
 	loadXMLSetting(&GCSettings.Controller, "Controller");
+	loadXMLSetting(&GCSettings.TurboModeEnabled, "TurboModeEnabled");
+	loadXMLSetting(&GCSettings.TurboModeButton, "TurboModeButton");
+	loadXMLSetting(&GCSettings.GamepadMenuToggle, "GamepadMenuToggle");
+	loadXMLSetting(&GCSettings.MapABXYRightStick, "MapABXYRightStick");
 
 	loadXMLController(btnmap[CTRL_PAD][CTRLR_GCPAD], "btnmap_pad_gcpad");
 	loadXMLController(btnmap[CTRL_PAD][CTRLR_WIIMOTE], "btnmap_pad_wiimote");
