@@ -13,6 +13,7 @@
 
 #include <gccore.h>
 #include <sys/iosupport.h>
+#include <ogc/lwp_threads.h>
 
 #ifdef HW_RVL
 #include <di/di.h>
@@ -266,9 +267,14 @@ void SystemExit(int exitAction, bool autoloadedGame)
 	else // Exit to Loader
 	{
 		if (psoid[0] == PSOSDLOADID)
-			PSOReload();
+		{
+			SYS_ResetSystem(SYS_SHUTDOWN, 0, FALSE);
+			__lwp_thread_stopmultitasking(PSOReload);
+		}
 		else
+		{
 			exit(0);
+		}
 	}
 #endif
 }
