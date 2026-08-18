@@ -10,7 +10,8 @@
 
 #include <ogc/lwp_watchdog.h>
 #include <gctypes.h>
-#include "Gui.h"
+
+#include "../libgui/Gui.h"
 
 static u64 prev[4];
 static u64 now[4];

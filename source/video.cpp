@@ -26,8 +26,8 @@
 #include "videofilters.h"
 #include "filelist.h"
 #include "audio.h"
-#include "gui/Gui.h"
 #include "input.h"
+#include "libgui/Gui.h"
 
 #include "snes9x/snes9x.h"
 #include "snes9x/memmap.h"

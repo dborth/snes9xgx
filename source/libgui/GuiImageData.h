@@ -1,7 +1,7 @@
 #ifndef GUIIMAGEDATA_H
 #define GUIIMAGEDATA_H
 
-#include "Gui.h"
+#include "../libgui/Gui.h"
 
 //!Converts image data into GX-useable RGBA8. Currently designed for use only with PNG files
 class GuiImageData

@@ -1,7 +1,7 @@
 #ifndef GUISOUND_H
 #define GUISOUND_H
 
-#include "Gui.h"
+#include "../libgui/Gui.h"
 
 enum
 {

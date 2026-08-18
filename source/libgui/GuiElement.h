@@ -1,7 +1,7 @@
 #ifndef GUIELEMENT_H
 #define GUIELEMENT_H
 
-#include "Gui.h"
+#include "../libgui/Gui.h"
 
 typedef void (*UpdateCallback)(void * e);
 

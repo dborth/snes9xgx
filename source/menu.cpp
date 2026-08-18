@@ -36,7 +36,7 @@
 #include "input.h"
 #include "videofilters.h"
 #include "filelist.h"
-#include "gui/Gui.h"
+#include "libgui/Gui.h"
 #include "menu.h"
 #include "utils/gettext.h"
 #include "utils/FreeTypeGX.h"

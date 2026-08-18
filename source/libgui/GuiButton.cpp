@@ -8,7 +8,7 @@
  * GUI class definitions
  ***************************************************************************/
 
-#include "Gui.h"
+#include "../libgui/Gui.h"
 /**
  * Constructor for the GuiButton class.
  */

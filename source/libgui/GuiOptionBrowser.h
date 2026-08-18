@@ -1,7 +1,7 @@
 #ifndef GUIOPTIONBROWSER_H
 #define GUIOPTIONBROWSER_H
 
-#include "Gui.h"
+#include "../libgui/Gui.h"
 
 #define MAX_OPTIONS 			150
 #define OPTION_PAGESIZE 		8

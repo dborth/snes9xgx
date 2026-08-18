@@ -80,18 +80,18 @@ enum
 	SCROLL_HORIZONTAL
 };
 
-#include "GuiTrigger.h"
-#include "GuiElement.h"
-#include "GuiWindow.h"
-#include "GuiText.h"
-#include "GuiSound.h"
-#include "GuiImageData.h"
-#include "GuiImage.h"
-#include "GuiTooltip.h"
-#include "GuiButton.h"
-#include "GuiFileBrowser.h"
-#include "GuiKeyboard.h"
-#include "GuiOptionBrowser.h"
-#include "GuiSaveBrowser.h"
+#include "../libgui/GuiTrigger.h"
+#include "../libgui/GuiElement.h"
+#include "../libgui/GuiWindow.h"
+#include "../libgui/GuiText.h"
+#include "../libgui/GuiSound.h"
+#include "../libgui/GuiImageData.h"
+#include "../libgui/GuiImage.h"
+#include "../libgui/GuiTooltip.h"
+#include "../libgui/GuiButton.h"
+#include "../libgui/GuiFileBrowser.h"
+#include "../libgui/GuiKeyboard.h"
+#include "../libgui/GuiOptionBrowser.h"
+#include "../libgui/GuiSaveBrowser.h"
 
 #endif

@@ -20,7 +20,7 @@ export	FREETYPE_LIBS	:=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config -
 TARGET		:=	snes9xgx-gc
 TARGETDIR	:=	executables
 BUILD		:=	build_gc
-SOURCES		:=	source source/gui source/utils source/utils/sz source/utils/vm \
+SOURCES		:=	source source/libgui source/utils source/utils/sz source/utils/vm \
 				source/snes9x source/snes9x/apu
 DATA		:=	source/images source/sounds source/fonts source/lang
 INCLUDES	:=	source source/snes9x
