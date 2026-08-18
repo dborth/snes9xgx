@@ -3,11 +3,10 @@
 
 #include "Gui.h"
 
-enum
-{
-	IMAGE_TEXTURE,
-	IMAGE_COLOR,
-	IMAGE_DATA
+enum class IMAGE {
+	TEXTURE,
+	COLOR,
+	DATA
 };
 
 //!Display, manage, and manipulate images in the GUI
@@ -70,7 +69,7 @@ class GuiImage : public GuiElement
 		//!\param s Alpha amount to draw over the image
 		void setStripe(int s);
 	protected:
-		int imgType; //!< Type of image data (IMAGE_TEXTURE, IMAGE_COLOR, IMAGE_DATA)
+		IMAGE imgType; //!< Type of image data (TEXTURE, COLOR, DATA)
 		u8 * image; //!< Poiner to image data. May be shared with GuiImageData data
 		f32 imageangle; //!< Angle to draw the image
 		int tile; //!< Number of times to draw (tile) the image horizontally

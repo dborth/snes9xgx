@@ -20,7 +20,7 @@ GuiImage::GuiImage()
 	imageangle = 0;
 	tile = -1;
 	stripe = 0;
-	imgType = IMAGE_DATA;
+	imgType = IMAGE::DATA;
 }
 
 GuiImage::GuiImage(GuiImageData * img)
@@ -37,7 +37,7 @@ GuiImage::GuiImage(GuiImageData * img)
 	imageangle = 0;
 	tile = -1;
 	stripe = 0;
-	imgType = IMAGE_DATA;
+	imgType = IMAGE::DATA;
 }
 
 GuiImage::GuiImage(u8 * img, int w, int h)
@@ -48,7 +48,7 @@ GuiImage::GuiImage(u8 * img, int w, int h)
 	imageangle = 0;
 	tile = -1;
 	stripe = 0;
-	imgType = IMAGE_TEXTURE;
+	imgType = IMAGE::TEXTURE;
 }
 
 GuiImage::GuiImage(int w, int h, GXColor c)
@@ -59,7 +59,7 @@ GuiImage::GuiImage(int w, int h, GXColor c)
 	imageangle = 0;
 	tile = -1;
 	stripe = 0;
-	imgType = IMAGE_COLOR;
+	imgType = IMAGE::COLOR;
 
 	if(!image)
 		return;
@@ -83,7 +83,7 @@ GuiImage::GuiImage(int w, int h, GXColor c)
  */
 GuiImage::~GuiImage()
 {
-	if(imgType == IMAGE_COLOR && image)
+	if(imgType == IMAGE::COLOR && image)
 		free(image);
 }
 
@@ -103,7 +103,7 @@ void GuiImage::setImage(GuiImageData * img)
 		width = img->getWidth();
 		height = img->getHeight();
 	}
-	imgType = IMAGE_DATA;
+	imgType = IMAGE::DATA;
 }
 
 void GuiImage::setImage(u8 * img, int w, int h)
@@ -111,7 +111,7 @@ void GuiImage::setImage(u8 * img, int w, int h)
 	image = img;
 	width = w;
 	height = h;
-	imgType = IMAGE_TEXTURE;
+	imgType = IMAGE::TEXTURE;
 }
 
 void GuiImage::setAngle(float a)
