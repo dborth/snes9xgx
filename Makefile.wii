@@ -22,7 +22,7 @@ TARGETDIR	:=	executables
 BUILD		:=	build_wii
 SOURCES		:=	source source/libgui source/utils source/utils/sz \
 				source/snes9x source/snes9x/apu
-DATA		:=	source/images source/sounds source/fonts source/lang
+DATA		:=	data/images data/sounds data/fonts data/lang
 INCLUDES	:=	source source/snes9x
 
 #---------------------------------------------------------------------------------

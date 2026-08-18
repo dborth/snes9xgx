@@ -22,7 +22,7 @@ TARGETDIR	:=	executables
 BUILD		:=	build_gc
 SOURCES		:=	source source/libgui source/utils source/utils/sz source/utils/vm \
 				source/snes9x source/snes9x/apu
-DATA		:=	source/images source/sounds source/fonts source/lang
+DATA		:=	data/images data/fonts data/lang
 INCLUDES	:=	source source/snes9x
 
 #---------------------------------------------------------------------------------
@@ -81,8 +81,7 @@ CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.ttf) \
-					$(wildcard $(dir)/*.lang) $(wildcard $(dir)/*.png) \
-					$(wildcard $(dir)/*.pcm)))
+					$(wildcard $(dir)/*.lang) $(wildcard $(dir)/*.png)
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
