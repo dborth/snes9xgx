@@ -290,11 +290,11 @@ void GuiButton::update(GuiTrigger * t)
 									soundClick->play();
 							}
 						}
-						else if(trigger[i]->type == TRIGGER_BUTTON_ONLY)
+						else if(trigger[i]->type == TRIGGER::BUTTON_ONLY)
 						{
 							this->setState(STATE::CLICKED, t->chan);
 						}
-						else if(trigger[i]->type == TRIGGER_BUTTON_ONLY_IN_FOCUS &&
+						else if(trigger[i]->type == TRIGGER::BUTTON_ONLY_IN_FOCUS &&
 								parentElement->isFocused())
 						{
 							this->setState(STATE::CLICKED, t->chan);
@@ -336,7 +336,7 @@ void GuiButton::update(GuiTrigger * t)
 					(t->pad.btns_d == trigger[i]->pad.btns_h && t->pad.btns_d > 0) ||
 					(wiidrc_btns == wiidrc_btns_trig && wiidrc_btns > 0))
 				{
-					if(trigger[i]->type == TRIGGER_HELD && state == STATE::SELECTED &&
+					if(trigger[i]->type == TRIGGER::HELD && state == STATE::SELECTED &&
 						(t->chan == stateChan || stateChan == -1))
 						this->setState(STATE::CLICKED, t->chan);
 				}
@@ -348,7 +348,7 @@ void GuiButton::update(GuiTrigger * t)
 					(t->pad.btns_h == trigger[i]->pad.btns_h && t->pad.btns_h > 0) ||
 					(wiidrc_btns_h == wiidrc_btns_trig && wiidrc_btns_h > 0))
 				{
-					if(trigger[i]->type == TRIGGER_HELD)
+					if(trigger[i]->type == TRIGGER::HELD)
 						held = true;
 				}
 

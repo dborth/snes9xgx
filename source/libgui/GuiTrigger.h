@@ -7,12 +7,11 @@
 #define SCROLL_DELAY_LOOP		30000
 #define SCROLL_DELAY_DECREASE	300
 
-enum
-{
-	TRIGGER_SIMPLE,
-	TRIGGER_HELD,
-	TRIGGER_BUTTON_ONLY,
-	TRIGGER_BUTTON_ONLY_IN_FOCUS
+enum class TRIGGER {
+	SIMPLE,
+	HELD,
+	BUTTON_ONLY,
+	BUTTON_ONLY_IN_FOCUS
 };
 
 typedef struct _paddata {
@@ -100,7 +99,7 @@ class GuiTrigger
 		GamePadData wiidrcdata; //!< Wii U Gamepad trigger data
 		WPADData * wpad; //!< Wii controller trigger
 		s32 chan; //!< Trigger controller channel (0-3, -1 for all)
-		u8 type; //!< trigger type (TRIGGER_SIMPLE,	TRIGGER_HELD, TRIGGER_BUTTON_ONLY, TRIGGER_BUTTON_ONLY_IN_FOCUS)
+		u8 type; //!< trigger type (SIMPLE,	HELD, BUTTON_ONLY, BUTTON_ONLY_IN_FOCUS)
 };
 
 extern GuiTrigger userInput[4];

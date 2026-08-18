@@ -43,7 +43,7 @@ GuiTrigger::~GuiTrigger()
  */
 void GuiTrigger::setSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
-	type = TRIGGER_SIMPLE;
+	type = TRIGGER::SIMPLE;
 	chan = ch;
 	wiidrcdata.btns_d = wiidrcbtns;
 	wpaddata.btns_d = wiibtns;
@@ -57,7 +57,7 @@ void GuiTrigger::setSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtn
  */
 void GuiTrigger::setHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
-	type = TRIGGER_HELD;
+	type = TRIGGER::HELD;
 	chan = ch;
 	wiidrcdata.btns_h = wiidrcbtns;
 	wpaddata.btns_h = wiibtns;
@@ -70,7 +70,7 @@ void GuiTrigger::setHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
  */
 void GuiTrigger::setButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
-	type = TRIGGER_BUTTON_ONLY;
+	type = TRIGGER::BUTTON_ONLY;
 	chan = ch;
 	wiidrcdata.btns_d = wiidrcbtns;
 	wpaddata.btns_d = wiibtns;
@@ -84,7 +84,7 @@ void GuiTrigger::setButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidr
  */
 void GuiTrigger::setButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
-	type = TRIGGER_BUTTON_ONLY_IN_FOCUS;
+	type = TRIGGER::BUTTON_ONLY_IN_FOCUS;
 	chan = ch;
 	wiidrcdata.btns_d = wiidrcbtns;
 	wpaddata.btns_d = wiibtns;
