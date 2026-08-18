@@ -22,7 +22,7 @@ TARGETDIR	:=	executables
 BUILD		:=	build_gc
 SOURCES		:=	source source/libgui source/utils source/utils/sz source/utils/vm \
 				source/snes9x source/snes9x/apu
-DATA		:=	data/images data/fonts data/lang data/pcm
+DATA		:=	data/images data/fonts data/lang data/sounds
 INCLUDES	:=	source source/snes9x
 
 #---------------------------------------------------------------------------------
