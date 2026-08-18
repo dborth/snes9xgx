@@ -9,7 +9,7 @@
  ***************************************************************************/
 
 #include "../filebrowser.h"
-#include "../libgui/Gui.h"
+#include "Gui.h"
 
 /**
  * Constructor for the GuiFileBrowser class.

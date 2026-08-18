@@ -1,7 +1,7 @@
 #ifndef GUIKEYBOARD_H
 #define GUIKEYBOARD_H
 
-#include "../libgui/Gui.h"
+#include "Gui.h"
 
 #define MAX_KEYBOARD_DISPLAY	32
 

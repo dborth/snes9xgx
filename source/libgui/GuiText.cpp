@@ -8,7 +8,7 @@
  * GUI class definitions
  ***************************************************************************/
 
-#include "../libgui/Gui.h"
+#include "Gui.h"
 #include "../utils/gettext.h"
 
 static GXColor presetColor = (GXColor){255, 255, 255, 255};

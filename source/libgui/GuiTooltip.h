@@ -1,7 +1,7 @@
 #ifndef GUITOOLTIP_H
 #define GUITOOLTIP_H
 
-#include "../libgui/Gui.h"
+#include "Gui.h"
 
 //!Display, manage, and manipulate tooltips in the GUI
 class GuiTooltip : public GuiElement

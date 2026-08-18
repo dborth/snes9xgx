@@ -8,7 +8,7 @@
  * GUI class definitions
  ***************************************************************************/
 
-#include "../libgui/Gui.h"
+#include "Gui.h"
 
 static char tmptxt[MAX_KEYBOARD_DISPLAY];
 

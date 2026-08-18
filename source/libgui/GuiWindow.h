@@ -1,7 +1,7 @@
 #ifndef GUIWINDOW_H
 #define GUIWINDOW_H
 
-#include "../libgui/Gui.h"
+#include "Gui.h"
 
 //!Allows GuiElements to be grouped together into a "window"
 class GuiWindow : public GuiElement
