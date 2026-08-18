@@ -280,7 +280,7 @@ float GuiElement::getScaleY()
 	return s;
 }
 
-int GuiElement::getState()
+STATE GuiElement::getState()
 {
 	return state;
 }
@@ -290,7 +290,7 @@ int GuiElement::getStateChan()
 	return stateChan;
 }
 
-void GuiElement::setState(int s, int c)
+void GuiElement::setState(STATE s, int c)
 {
 	state = s;
 	stateChan = c;
@@ -556,7 +556,7 @@ void GuiElement::setPosition(int xoff, int yoff)
 	yoffset = yoff;
 }
 
-void GuiElement::setAlignment(int hor, int vert)
+void GuiElement::setAlignment(ALIGN_H hor, ALIGN_V vert)
 {
 	alignmentHor = hor;
 	alignmentVert = vert;

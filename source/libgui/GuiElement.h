@@ -94,7 +94,7 @@ class GuiElement
 		void setHoldable(bool h);
 		//!Gets the element's current state
 		//!\return state
-		int getState();
+		STATE getState();
 		//!Gets the controller channel that last changed the element's state
 		//!\return Channel number (0-3, -1 = no channel)
 		int getStateChan();
@@ -182,7 +182,7 @@ class GuiElement
 		//!Sets the element's state
 		//!\param s State (STATE::DEFAULT, STATE::SELECTED, STATE::CLICKED, STATE::DISABLED)
 		//!\param c Controller channel (0-3, -1 = none)
-		virtual void setState(int s, int c = -1);
+		virtual void setState(STATE s, int c = -1);
 		//!Resets the element's state to STATE::DEFAULT
 		virtual void resetState();
 		//!Gets whether or not the element is in STATE::SELECTED
@@ -191,7 +191,7 @@ class GuiElement
 		//!Sets the element's alignment respective to its parent element
 		//!\param hor Horizontal alignment (ALIGN_H::LEFT, ALIGN_H::RIGHT, ALIGN_H::CENTRE)
 		//!\param vert Vertical alignment (ALIGN_V::TOP, ALIGN_V::BOTTOM, ALIGN_V::MIDDLE)
-		virtual void setAlignment(int hor, int vert);
+		virtual void setAlignment(ALIGN_H hor, ALIGN_V vert);
 		//!Called when the language has changed, to obtain new text values for all text elements
 		virtual void resetText();
 		//!Called constantly to allow the element to respond to the current input data
@@ -227,9 +227,9 @@ class GuiElement
 		int effectsOver; //!< Effects to enable when wiimote cursor is over this element. Copied to effects variable on over event
 		int effectAmountOver; //!< EffectAmount to set when wiimote cursor is over this element
 		int effectTargetOver; //!< EffectTarget to set when wiimote cursor is over this element
-		int alignmentHor; //!< Horizontal element alignment, respective to parent element (LEFT, RIGHT, CENTRE)
-		int alignmentVert; //!< Horizontal element alignment, respective to parent element (TOP, BOTTOM, MIDDLE)
-		int state; //!< Element state (DEFAULT, SELECTED, CLICKED, DISABLED)
+		ALIGN_H alignmentHor; //!< Horizontal element alignment, respective to parent element (LEFT, RIGHT, CENTRE)
+		ALIGN_V alignmentVert; //!< Horizontal element alignment, respective to parent element (TOP, BOTTOM, MIDDLE)
+		STATE state; //!< Element state (DEFAULT, SELECTED, CLICKED, DISABLED)
 		int stateChan; //!< Which controller channel is responsible for the last change in state
 		bool selectable; //!< Whether or not this element selectable (can change to SELECTED state)
 		bool clickable; //!< Whether or not this element is clickable (can change to CLICKED state)

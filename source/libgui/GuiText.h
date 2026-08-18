@@ -34,7 +34,7 @@ class GuiText : public GuiElement
 		//!\param s Font size
 		//!\param h Text alignment (horizontal)
 		//!\param v Text alignment (vertical)
-		static void setPresets(int sz, GXColor c, int w, u16 s, int h, int v);
+		static void setPresets(int sz, GXColor c, int w, u16 s, ALIGN_H h, ALIGN_V v);
 		//!Sets the font size
 		//!\param s Font size
 		void setFontSize(int s);
@@ -45,7 +45,7 @@ class GuiText : public GuiElement
 		int getTextWidth();
 		//!Enables/disables text scrolling
 		//!\param s Scrolling on/off
-		void setScroll(int s);
+		void setScroll(SCROLL s);
 		//!Enables/disables text wrapping
 		//!\param w Wrapping on/off
 		//!\param width Maximum width (0 to disable)
@@ -57,9 +57,9 @@ class GuiText : public GuiElement
 		//!\param s Style attributes
 		void setStyle(u16 s);
 		//!Sets the text alignment
-		//!\param hor Horizontal alignment (ALIGN_H::LEFT, ALIGN_H::RIGHT, ALIGN_H::CENTRE)
-		//!\param vert Vertical alignment (ALIGN_V::TOP, ALIGN_V::BOTTOM, ALIGN_V::MIDDLE)
-		void setAlignment(int hor, int vert);
+		//!\param hor Horizontal alignment (LEFT, RIGHT, CENTRE)
+		//!\param vert Vertical alignment (TOP, BOTTOM, MIDDLE)
+		void setAlignment(ALIGN_H hor, ALIGN_V vert);
 		//!Updates the text to the selected language
 		void resetText();
 		//!Constantly called to draw the text
@@ -72,7 +72,7 @@ class GuiText : public GuiElement
 		char * origText; //!< Original text data (English)
 		int size; //!< Font size
 		int maxWidth; //!< Maximum width of the generated text object (for text wrapping)
-		int textScroll; //!< Scrolling toggle
+		SCROLL textScroll; //!< Scrolling toggle
 		int textScrollPos; //!< Current starting index of text string for scrolling
 		int textScrollInitialDelay; //!< Delay to wait before starting to scroll
 		int textScrollDelay; //!< Scrolling speed

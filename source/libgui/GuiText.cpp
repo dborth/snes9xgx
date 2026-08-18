@@ -15,8 +15,8 @@ static GXColor presetColor = (GXColor){255, 255, 255, 255};
 static int currentSize = 0;
 static int presetSize = 0;
 static int presetMaxWidth = 0;
-static int presetAlignmentHor = 0;
-static int presetAlignmentVert = 0;
+static ALIGN_H presetAlignmentHor = ALIGN_H::LEFT;
+static ALIGN_V presetAlignmentVert = ALIGN_V::TOP;
 static u16 presetStyle = 0;
 
 #define TEXT_SCROLL_DELAY			8
@@ -32,7 +32,7 @@ GuiText::GuiText(const char * t, int s, GXColor c)
 	size = s;
 	color = c;
 	alpha = c.a;
-	style = FTGX_JUSTIFY_CENTER | FTGX_ALIGN_V::MIDDLE;
+	style = FTGX_JUSTIFY_CENTER | FTGX_ALIGN_MIDDLE;
 	maxWidth = 0;
 	wrap = false;
 	textDynNum = 0;
@@ -163,7 +163,7 @@ int GuiText::getLength()
 	return wcslen(text);
 }
 
-void GuiText::setPresets(int sz, GXColor c, int w, u16 s, int h, int v)
+void GuiText::setPresets(int sz, GXColor c, int w, u16 s, ALIGN_H h, ALIGN_V v)
 {
 	presetSize = sz;
 	presetColor = c;
@@ -228,7 +228,7 @@ void GuiText::setWrap(bool w, int width)
 	textDynNum = 0;
 }
 
-void GuiText::setScroll(int s)
+void GuiText::setScroll(SCROLL s)
 {
 	if(textScroll == s)
 		return;
@@ -261,7 +261,7 @@ void GuiText::setStyle(u16 s)
 	style = s;
 }
 
-void GuiText::setAlignment(int hor, int vert)
+void GuiText::setAlignment(ALIGN_H hor, ALIGN_V vert)
 {
 	style = 0;
 
@@ -280,13 +280,13 @@ void GuiText::setAlignment(int hor, int vert)
 	switch(vert)
 	{
 		case ALIGN_V::TOP:
-			style |= FTGX_ALIGN_V::TOP;
+			style |= FTGX_ALIGN_TOP;
 			break;
 		case ALIGN_V::BOTTOM:
-			style |= FTGX_ALIGN_V::BOTTOM;
+			style |= FTGX_ALIGN_BOTTOM;
 			break;
 		default:
-			style |= FTGX_ALIGN_V::MIDDLE;
+			style |= FTGX_ALIGN_MIDDLE;
 			break;
 	}
 

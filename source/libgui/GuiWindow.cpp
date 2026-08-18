@@ -134,7 +134,7 @@ void GuiWindow::resetState()
 	}
 }
 
-void GuiWindow::setState(int s, int c)
+void GuiWindow::setState(STATE s, int c)
 {
 	state = s;
 

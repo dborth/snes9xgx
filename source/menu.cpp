@@ -473,7 +473,7 @@ ProgressWindow(char *title, char *msg)
 		return;
 
 	HaltGui();
-	int oldState = mainWindow->getState();
+	STATE oldState = mainWindow->getState();
 	mainWindow->setState(STATE::DISABLED);
 	mainWindow->append(&promptWindow);
 	mainWindow->changeFocus(&promptWindow);
@@ -875,7 +875,7 @@ static void WindowCredits(void * ptr)
 	txt[i] = new GuiText("Official Site: https://github.com/dborth/snes9xgx", 20, (GXColor){0, 0, 0, 255});
 	txt[i]->setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP); txt[i]->setPosition(0,y); i++; y+=40;
 
-	GuiText::setPresets(20, (GXColor){0, 0, 0, 255}, 0, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_V::TOP, ALIGN_H::LEFT, ALIGN_V::TOP);
+	GuiText::setPresets(20, (GXColor){0, 0, 0, 255}, 0, FTGX_JUSTIFY_LEFT | FTGX_ALIGN_TOP, ALIGN_H::LEFT, ALIGN_V::TOP);
 	txt[i] = new GuiText("Coding & menu design");
 	txt[i]->setPosition(60,y); i++;
 	txt[i] = new GuiText("Tantric");
@@ -932,7 +932,7 @@ static void WindowCredits(void * ptr)
 	txt[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
 	txt[i]->setPosition(20,-52); i++;
 
-	GuiText::setPresets(12, (GXColor){0, 0, 0, 255}, 0, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_V::TOP, ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
+	GuiText::setPresets(12, (GXColor){0, 0, 0, 255}, 0, FTGX_JUSTIFY_CENTER | FTGX_ALIGN_TOP, ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
 
 	txt[i] = new GuiText("Snes9x - Copyright (c) Snes9x Team 1996 - 2023");
 	txt[i]->setPosition(0,-44); i++;
