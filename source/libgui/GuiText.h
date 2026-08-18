@@ -57,8 +57,8 @@ class GuiText : public GuiElement
 		//!\param s Style attributes
 		void setStyle(u16 s);
 		//!Sets the text alignment
-		//!\param hor Horizontal alignment (ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTRE)
-		//!\param vert Vertical alignment (ALIGN_TOP, ALIGN_BOTTOM, ALIGN_MIDDLE)
+		//!\param hor Horizontal alignment (ALIGN_H::LEFT, ALIGN_H::RIGHT, ALIGN_H::CENTRE)
+		//!\param vert Vertical alignment (ALIGN_V::TOP, ALIGN_V::BOTTOM, ALIGN_V::MIDDLE)
 		void setAlignment(int hor, int vert);
 		//!Updates the text to the selected language
 		void resetText();

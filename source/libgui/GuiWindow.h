@@ -33,7 +33,7 @@ class GuiWindow : public GuiElement
 		bool find(GuiElement* e);
 		//!Returns the GuiElement at the specified index
 		//!\param index The index of the element
-		//!\return A pointer to the element at the index, NULL on error (eg: out of bounds)
+		//!\return A pointer to the element at the index, nullptr on error (eg: out of bounds)
 		GuiElement* getGuiElementAt(u32 index) const;
 		//!Returns the size of the list of elements
 		//!\return The size of the current element list
@@ -41,7 +41,7 @@ class GuiWindow : public GuiElement
 		//!Sets the visibility of the window
 		//!\param v visibility (true = visible)
 		void setVisible(bool v);
-		//!Resets the window's state to STATE_DEFAULT
+		//!Resets the window's state to STATE::DEFAULT
 		void resetState();
 		//!Sets the window's state
 		//!\param s State

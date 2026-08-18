@@ -46,7 +46,7 @@ void GuiSound::play()
 		voice = ASND_GetFirstUnusedVoice();
 		if(voice >= 0)
 			ASND_SetVoice(voice, VOICE_STEREO_16BIT, 48000, 0,
-				(u8 *)sound, length, vol, vol, NULL);
+				(u8 *)sound, length, vol, vol, nullptr);
 		break;
 
 		case SOUND_OGG:

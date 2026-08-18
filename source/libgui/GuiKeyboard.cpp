@@ -15,7 +15,7 @@ static char tmptxt[MAX_KEYBOARD_DISPLAY];
 static char * GetDisplayText(char * t)
 {
 	if(!t)
-		return NULL;
+		return nullptr;
 
 	snprintf(tmptxt, MAX_KEYBOARD_DISPLAY, "%s", t);
 	return &tmptxt[0];
@@ -33,8 +33,8 @@ GuiKeyboard::GuiKeyboard(char * t, u32 max)
 	caps = 0;
 	selectable = true;
 	focus = 0; // allow focus
-	alignmentHor = ALIGN_CENTRE;
-	alignmentVert = ALIGN_MIDDLE;
+	alignmentHor = ALIGN_H::CENTRE;
+	alignmentVert = ALIGN_V::MIDDLE;
 	snprintf(kbtextstr, 255, "%s", t);
 	kbtextmaxlen = max;
 
@@ -97,12 +97,12 @@ GuiKeyboard::GuiKeyboard(char * t, u32 max)
 
 	keyTextbox = new GuiImageData(keyboard_textbox_png);
 	keyTextboxImg = new GuiImage(keyTextbox);
-	keyTextboxImg->setAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	keyTextboxImg->setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	keyTextboxImg->setPosition(0, 0);
 	this->append(keyTextboxImg);
 
 	kbText = new GuiText(GetDisplayText(kbtextstr), 22, (GXColor){0, 0, 0, 0xff});
-	kbText->setAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	kbText->setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	kbText->setPosition(0, 13);
 	this->append(kbText);
 
@@ -176,7 +176,7 @@ GuiKeyboard::GuiKeyboard(char * t, u32 max)
 	keySpace->setTrigger(trigA);
 	keySpace->setTrigger(trig2);
 	keySpace->setPosition(0, 4*42+80);
-	keySpace->setAlignment(ALIGN_CENTRE, ALIGN_TOP);
+	keySpace->setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	keySpace->setEffectGrow();
 	this->append(keySpace);
 
@@ -192,7 +192,7 @@ GuiKeyboard::GuiKeyboard(char * t, u32 max)
 				keyImg[i][j] = new GuiImage(key);
 				keyImgOver[i][j] = new GuiImage(keyOver);
 				keyTxt[i][j] = new GuiText(txt, 22, (GXColor){0, 0, 0, 0xff});
-				keyTxt[i][j]->setAlignment(ALIGN_CENTRE, ALIGN_BOTTOM);
+				keyTxt[i][j]->setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
 				keyTxt[i][j]->setPosition(0, -8);
 				keyBtn[i][j] = new GuiButton(key->getWidth(), key->getHeight());
 				keyBtn[i][j]->setImage(keyImg[i][j]);
@@ -261,7 +261,7 @@ GuiKeyboard::~GuiKeyboard()
 
 void GuiKeyboard::update(GuiTrigger * t)
 {
-	if(_elements.size() == 0 || (state == STATE_DISABLED && parentElement))
+	if(_elements.size() == 0 || (state == STATE::DISABLED && parentElement))
 		return;
 
 	for (u8 i = 0; i < _elements.size(); i++)
@@ -271,34 +271,34 @@ void GuiKeyboard::update(GuiTrigger * t)
 
 	bool update = false;
 
-	if(keySpace->getState() == STATE_CLICKED)
+	if(keySpace->getState() == STATE::CLICKED)
 	{
 		if(strlen(kbtextstr) < kbtextmaxlen)
 		{
 			kbtextstr[strlen(kbtextstr)] = ' ';
 			kbText->setText(kbtextstr);
 		}
-		keySpace->setState(STATE_SELECTED, t->chan);
+		keySpace->setState(STATE::SELECTED, t->chan);
 	}
-	else if(keyBack->getState() == STATE_CLICKED)
+	else if(keyBack->getState() == STATE::CLICKED)
 	{
 		if(strlen(kbtextstr) > 0)
 		{
 			kbtextstr[strlen(kbtextstr)-1] = 0;
 			kbText->setText(GetDisplayText(kbtextstr));
 		}
-		keyBack->setState(STATE_SELECTED, t->chan);
+		keyBack->setState(STATE::SELECTED, t->chan);
 	}
-	else if(keyShift->getState() == STATE_CLICKED)
+	else if(keyShift->getState() == STATE::CLICKED)
 	{
 		shift ^= 1;
-		keyShift->setState(STATE_SELECTED, t->chan);
+		keyShift->setState(STATE::SELECTED, t->chan);
 		update = true;
 	}
-	else if(keyCaps->getState() == STATE_CLICKED)
+	else if(keyCaps->getState() == STATE::CLICKED)
 	{
 		caps ^= 1;
-		keyCaps->setState(STATE_SELECTED, t->chan);
+		keyCaps->setState(STATE::SELECTED, t->chan);
 		update = true;
 	}
 
@@ -322,7 +322,7 @@ void GuiKeyboard::update(GuiTrigger * t)
 					keyTxt[i][j]->setText(txt);
 				}
 
-				if(keyBtn[i][j]->getState() == STATE_CLICKED)
+				if(keyBtn[i][j]->getState() == STATE::CLICKED)
 				{
 					u32 len = strlen(kbtextstr);
 
@@ -339,7 +339,7 @@ void GuiKeyboard::update(GuiTrigger * t)
 						kbtextstr[len+1] = '\0';
 					}
 					kbText->setText(GetDisplayText(kbtextstr));
-					keyBtn[i][j]->setState(STATE_SELECTED, t->chan);
+					keyBtn[i][j]->setState(STATE::SELECTED, t->chan);
 
 					if(shift)
 					{

@@ -17,27 +17,27 @@ GuiButton::GuiButton(int w, int h)
 {
 	width = w;
 	height = h;
-	image = NULL;
-	imageOver = NULL;
-	imageHold = NULL;
-	imageClick = NULL;
-	icon = NULL;
-	iconOver = NULL;
-	iconHold = NULL;
-	iconClick = NULL;
+	image = nullptr;
+	imageOver = nullptr;
+	imageHold = nullptr;
+	imageClick = nullptr;
+	icon = nullptr;
+	iconOver = nullptr;
+	iconHold = nullptr;
+	iconClick = nullptr;
 
 	for(int i=0; i < 3; i++)
 	{
-		label[i] = NULL;
-		labelOver[i] = NULL;
-		labelHold[i] = NULL;
-		labelClick[i] = NULL;
+		label[i] = nullptr;
+		labelOver[i] = nullptr;
+		labelHold[i] = nullptr;
+		labelClick[i] = nullptr;
 	}
 
-	soundOver = NULL;
-	soundHold = NULL;
-	soundClick = NULL;
-	tooltip = NULL;
+	soundOver = nullptr;
+	soundHold = nullptr;
+	soundClick = nullptr;
+	tooltip = nullptr;
 	selectable = true;
 	holdable = false;
 	clickable = true;
@@ -137,7 +137,7 @@ void GuiButton::draw()
 	if(!this->isVisible())
 		return;
 
-	if(state == STATE_SELECTED || state == STATE_HELD)
+	if(state == STATE::SELECTED || state == STATE::HELD)
 	{
 		if(imageOver)
 			imageOver->draw();
@@ -205,9 +205,9 @@ void GuiButton::resetText()
 
 void GuiButton::update(GuiTrigger * t)
 {
-	if(state == STATE_CLICKED || state == STATE_DISABLED || !t)
+	if(state == STATE::CLICKED || state == STATE::DISABLED || !t)
 		return;
-	else if(parentElement && parentElement->getState() == STATE_DISABLED)
+	else if(parentElement && parentElement->getState() == STATE::DISABLED)
 		return;
 
 	#ifdef HW_RVL
@@ -216,9 +216,9 @@ void GuiButton::update(GuiTrigger * t)
 	{
 		if(this->isInside(t->wpad->ir.x, t->wpad->ir.y))
 		{
-			if(state == STATE_DEFAULT) // we weren't on the button before!
+			if(state == STATE::DEFAULT) // we weren't on the button before!
 			{
-				this->setState(STATE_SELECTED, t->chan);
+				this->setState(STATE::SELECTED, t->chan);
 
 				if(this->isRumble())
 					rumbleRequest[t->chan] = 1;
@@ -237,7 +237,7 @@ void GuiButton::update(GuiTrigger * t)
 		}
 		else
 		{
-			if(state == STATE_SELECTED && (stateChan == t->chan || stateChan == -1))
+			if(state == STATE::SELECTED && (stateChan == t->chan || stateChan == -1))
 				this->resetState();
 
 			if(effectTarget == effectTargetOver && effectAmount == effectAmountOver)
@@ -280,11 +280,11 @@ void GuiButton::update(GuiTrigger * t)
 				{
 					if(t->chan == stateChan || stateChan == -1)
 					{
-						if(state == STATE_SELECTED)
+						if(state == STATE::SELECTED)
 						{
 							if(!t->wpad->ir.valid ||	this->isInside(t->wpad->ir.x, t->wpad->ir.y))
 							{
-								this->setState(STATE_CLICKED, t->chan);
+								this->setState(STATE::CLICKED, t->chan);
 
 								if(soundClick)
 									soundClick->play();
@@ -292,12 +292,12 @@ void GuiButton::update(GuiTrigger * t)
 						}
 						else if(trigger[i]->type == TRIGGER_BUTTON_ONLY)
 						{
-							this->setState(STATE_CLICKED, t->chan);
+							this->setState(STATE::CLICKED, t->chan);
 						}
 						else if(trigger[i]->type == TRIGGER_BUTTON_ONLY_IN_FOCUS &&
 								parentElement->isFocused())
 						{
-							this->setState(STATE_CLICKED, t->chan);
+							this->setState(STATE::CLICKED, t->chan);
 						}
 					}
 				}
@@ -336,9 +336,9 @@ void GuiButton::update(GuiTrigger * t)
 					(t->pad.btns_d == trigger[i]->pad.btns_h && t->pad.btns_d > 0) ||
 					(wiidrc_btns == wiidrc_btns_trig && wiidrc_btns > 0))
 				{
-					if(trigger[i]->type == TRIGGER_HELD && state == STATE_SELECTED &&
+					if(trigger[i]->type == TRIGGER_HELD && state == STATE::SELECTED &&
 						(t->chan == stateChan || stateChan == -1))
-						this->setState(STATE_CLICKED, t->chan);
+						this->setState(STATE::CLICKED, t->chan);
 				}
 
 				if(
@@ -352,13 +352,13 @@ void GuiButton::update(GuiTrigger * t)
 						held = true;
 				}
 
-				if(!held && state == STATE_HELD && stateChan == t->chan)
+				if(!held && state == STATE::HELD && stateChan == t->chan)
 				{
 					this->resetState();
 				}
-				else if(held && state == STATE_CLICKED && stateChan == t->chan)
+				else if(held && state == STATE::CLICKED && stateChan == t->chan)
 				{
-					this->setState(STATE_HELD, t->chan);
+					this->setState(STATE::HELD, t->chan);
 				}
 			}
 		}

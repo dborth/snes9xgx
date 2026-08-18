@@ -47,7 +47,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	scrollbar = new GuiImageData(scrollbar_png);
 	scrollbarImg = new GuiImage(scrollbar);
 	scrollbarImg->setParent(this);
-	scrollbarImg->setAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	scrollbarImg->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
 	scrollbarImg->setPosition(0, 30);
 
 	arrowDown = new GuiImageData(scrollbar_arrowdown_png);
@@ -63,7 +63,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	arrowUpBtn->setParent(this);
 	arrowUpBtn->setImage(arrowUpImg);
 	arrowUpBtn->setImageOver(arrowUpOverImg);
-	arrowUpBtn->setAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	arrowUpBtn->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
 	arrowUpBtn->setSelectable(false);
 	arrowUpBtn->setTrigger(trigA);
 	arrowUpBtn->setSoundOver(btnSoundOver);
@@ -73,7 +73,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	arrowDownBtn->setParent(this);
 	arrowDownBtn->setImage(arrowDownImg);
 	arrowDownBtn->setImageOver(arrowDownOverImg);
-	arrowDownBtn->setAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
+	arrowDownBtn->setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
 	arrowDownBtn->setSelectable(false);
 	arrowDownBtn->setTrigger(trigA);
 	arrowDownBtn->setSoundOver(btnSoundOver);
@@ -81,21 +81,21 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
-		saveDate[i] = new GuiText(NULL, 18, (GXColor){0, 0, 0, 0xff});
-		saveDate[i]->setAlignment(ALIGN_LEFT, ALIGN_TOP);
+		saveDate[i] = new GuiText(nullptr, 18, (GXColor){0, 0, 0, 0xff});
+		saveDate[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 		saveDate[i]->setPosition(80,5);
-		saveTime[i] = new GuiText(NULL, 18, (GXColor){0, 0, 0, 0xff});
-		saveTime[i]->setAlignment(ALIGN_LEFT, ALIGN_TOP);
+		saveTime[i] = new GuiText(nullptr, 18, (GXColor){0, 0, 0, 0xff});
+		saveTime[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 		saveTime[i]->setPosition(80,27);
 
-		saveType[i] = new GuiText(NULL, 18, (GXColor){0, 0, 0, 0xff});
-		saveType[i]->setAlignment(ALIGN_LEFT, ALIGN_TOP);
+		saveType[i] = new GuiText(nullptr, 18, (GXColor){0, 0, 0, 0xff});
+		saveType[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 		saveType[i]->setPosition(80,50);
 
 		saveBgImg[i] = new GuiImage(gameSave);
 		saveBgOverImg[i] = new GuiImage(gameSaveOver);
 		savePreviewImg[i] = new GuiImage(gameSaveBlank);
-		savePreviewImg[i]->setAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+		savePreviewImg[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 		savePreviewImg[i]->setPosition(5,0);
 
 		saveBtn[i] = new GuiButton(saveBgImg[i]->getWidth(),saveBgImg[i]->getHeight());
@@ -106,18 +106,18 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 		saveBtn[i]->setImage(saveBgImg[i]);
 		saveBtn[i]->setImageOver(saveBgOverImg[i]);
 		saveBtn[i]->setIcon(savePreviewImg[i]);
-		saveBtn[i]->setAlignment(ALIGN_LEFT, ALIGN_TOP);
+		saveBtn[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 		saveBtn[i]->setPosition(257*(i % 2),87*(i>>1));
 		saveBtn[i]->setTrigger(trigA);
 		saveBtn[i]->setTrigger(trig2);
-		saveBtn[i]->setState(STATE_DISABLED);
+		saveBtn[i]->setState(STATE::DISABLED);
 		saveBtn[i]->setEffectGrow();
 		saveBtn[i]->setVisible(false);
 		saveBtn[i]->setSoundOver(btnSoundOver);
 		saveBtn[i]->setSoundClick(btnSoundClick);
 		saveBtnLastOver[i] = false;
 	}
-	saveBtn[0]->setState(STATE_SELECTED, -1);
+	saveBtn[0]->setState(STATE::SELECTED, -1);
 	saveBtn[0]->setVisible(true);
 }
 
@@ -169,14 +169,14 @@ void GuiSaveBrowser::setFocus(int f)
 		saveBtn[i]->resetState();
 
 	if(f == 1 && selectedItem >= 0)
-		saveBtn[selectedItem]->setState(STATE_SELECTED);
+		saveBtn[selectedItem]->setState(STATE::SELECTED);
 }
 
 void GuiSaveBrowser::resetState()
 {
-	if(state != STATE_DISABLED)
+	if(state != STATE::DISABLED)
 	{
-		state = STATE_DEFAULT;
+		state = STATE::DEFAULT;
 		stateChan = -1;
 	}
 
@@ -191,9 +191,9 @@ int GuiSaveBrowser::getClickedSave()
 	int found = -3;
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
-		if(saveBtn[i]->getState() == STATE_CLICKED)
+		if(saveBtn[i]->getState() == STATE::CLICKED)
 		{
-			saveBtn[i]->setState(STATE_SELECTED);
+			saveBtn[i]->setState(STATE::SELECTED);
 			found = listOffset+i;
 			break;
 		}
@@ -221,7 +221,7 @@ void GuiSaveBrowser::draw()
 
 void GuiSaveBrowser::update(GuiTrigger * t)
 {
-	if(state == STATE_DISABLED || !t)
+	if(state == STATE::DISABLED || !t)
 		return;
 
 	int i, len;
@@ -250,7 +250,7 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 		else if(saveBtn[selectedItem+1]->isVisible())
 		{
 			saveBtn[selectedItem]->resetState();
-			saveBtn[selectedItem+1]->setState(STATE_SELECTED, t->chan);
+			saveBtn[selectedItem+1]->setState(STATE::SELECTED, t->chan);
 			selectedItem += 1;
 		}
 	}
@@ -275,7 +275,7 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 			}
 		}
 	}
-	else if(t->down() || arrowDownBtn->getState() == STATE_CLICKED)
+	else if(t->down() || arrowDownBtn->getState() == STATE::CLICKED)
 	{
 		if(selectedItem >= SAVELISTSIZE-2)
 		{
@@ -296,7 +296,7 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 			selectedItem += 2;
 		}
 	}
-	else if(t->up() || arrowUpBtn->getState() == STATE_CLICKED)
+	else if(t->up() || arrowUpBtn->getState() == STATE::CLICKED)
 	{
 		if(selectedItem < 2)
 		{
@@ -319,10 +319,10 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 
 	endNavigation:
 
-	if(arrowDownBtn->getState() == STATE_CLICKED)
+	if(arrowDownBtn->getState() == STATE::CLICKED)
 		arrowDownBtn->resetState();
 
-	if(arrowUpBtn->getState() == STATE_CLICKED)
+	if(arrowUpBtn->getState() == STATE::CLICKED)
 		arrowUpBtn->resetState();
 
 	for(i=0; i<SAVELISTSIZE; i++)
@@ -330,33 +330,33 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 		if(listOffset+i < 0 && action == 1)
 		{
 
-			saveDate[0]->setText(NULL);
+			saveDate[0]->setText(nullptr);
 			saveTime[0]->setText("New");
 			saveType[0]->setText("State");
 			savePreviewImg[0]->setImage(gameSaveBlank);
 			saveBtn[0]->setVisible(true);
 
-			if(saveBtn[0]->getState() == STATE_DISABLED)
-				saveBtn[0]->setState(STATE_DEFAULT);
+			if(saveBtn[0]->getState() == STATE::DISABLED)
+				saveBtn[0]->setState(STATE::DEFAULT);
 			
 			if (GCSettings.HideSRAMSaving == 0)
 			{
-				saveDate[1]->setText(NULL);
+				saveDate[1]->setText(nullptr);
 				saveTime[1]->setText("New");
 				saveType[1]->setText("SRAM");
 				savePreviewImg[1]->setImage(gameSaveBlank);
 				saveBtn[1]->setVisible(true);
 
-				if(saveBtn[1]->getState() == STATE_DISABLED)
-					saveBtn[1]->setState(STATE_DEFAULT);
+				if(saveBtn[1]->getState() == STATE::DISABLED)
+					saveBtn[1]->setState(STATE::DEFAULT);
 			}
 		}
 		else if(listOffset+i < saves->length)
 		{
-			if(saveBtn[i]->getState() == STATE_DISABLED || !saveBtn[i]->isVisible())
+			if(saveBtn[i]->getState() == STATE::DISABLED || !saveBtn[i]->isVisible())
 			{
 				saveBtn[i]->setVisible(true);
-				saveBtn[i]->setState(STATE_DEFAULT);
+				saveBtn[i]->setState(STATE::DEFAULT);
 			}
 
 			saveDate[i]->setText(saves->date[listOffset+i]);
@@ -380,7 +380,7 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 			}
 			saveType[i]->setText(savetext);
 
-			if(saves->previewImg[listOffset+i] != NULL)
+			if(saves->previewImg[listOffset+i] != nullptr)
 				savePreviewImg[i]->setImage(saves->previewImg[listOffset+i]);
 			else
 				savePreviewImg[i]->setImage(gameSaveBlank);
@@ -388,13 +388,13 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 		else
 		{
 			saveBtn[i]->setVisible(false);
-			saveBtn[i]->setState(STATE_DISABLED);
+			saveBtn[i]->setState(STATE::DISABLED);
 		}
 
-		if(i != selectedItem && saveBtn[i]->getState() == STATE_SELECTED)
+		if(i != selectedItem && saveBtn[i]->getState() == STATE::SELECTED)
 			saveBtn[i]->resetState();
-		else if(focus && i == selectedItem && saveBtn[i]->getState() == STATE_DEFAULT)
-			saveBtn[selectedItem]->setState(STATE_SELECTED, t->chan);
+		else if(focus && i == selectedItem && saveBtn[i]->getState() == STATE::DEFAULT)
+			saveBtn[selectedItem]->setState(STATE::SELECTED, t->chan);
 
 		if(t->wpad->ir.valid)
 		{
@@ -405,7 +405,7 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 
 		saveBtn[i]->update(t);
 
-		if(saveBtn[i]->getState() == STATE_SELECTED)
+		if(saveBtn[i]->getState() == STATE::SELECTED)
 			selectedItem = i;
 	}
 

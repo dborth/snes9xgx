@@ -15,7 +15,7 @@
  */
 GuiImageData::GuiImageData(const u8 * i, int maxw, int maxh)
 {
-	data = NULL;
+	data = nullptr;
 	width = 0;
 	height = 0;
 
@@ -31,7 +31,7 @@ GuiImageData::~GuiImageData()
 	if(data)
 	{
 		free(data);
-		data = NULL;
+		data = nullptr;
 	}
 }
 

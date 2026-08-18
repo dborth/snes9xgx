@@ -180,17 +180,17 @@ class GuiElement
 		//!\param f Focus (true = in focus)
 		virtual void setFocus(int f);
 		//!Sets the element's state
-		//!\param s State (STATE_DEFAULT, STATE_SELECTED, STATE_CLICKED, STATE_DISABLED)
+		//!\param s State (STATE::DEFAULT, STATE::SELECTED, STATE::CLICKED, STATE::DISABLED)
 		//!\param c Controller channel (0-3, -1 = none)
 		virtual void setState(int s, int c = -1);
-		//!Resets the element's state to STATE_DEFAULT
+		//!Resets the element's state to STATE::DEFAULT
 		virtual void resetState();
-		//!Gets whether or not the element is in STATE_SELECTED
+		//!Gets whether or not the element is in STATE::SELECTED
 		//!\return true if selected, false otherwise
 		virtual int getSelected();
 		//!Sets the element's alignment respective to its parent element
-		//!\param hor Horizontal alignment (ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTRE)
-		//!\param vert Vertical alignment (ALIGN_TOP, ALIGN_BOTTOM, ALIGN_MIDDLE)
+		//!\param hor Horizontal alignment (ALIGN_H::LEFT, ALIGN_H::RIGHT, ALIGN_H::CENTRE)
+		//!\param vert Vertical alignment (ALIGN_V::TOP, ALIGN_V::BOTTOM, ALIGN_V::MIDDLE)
 		virtual void setAlignment(int hor, int vert);
 		//!Called when the language has changed, to obtain new text values for all text elements
 		virtual void resetText();

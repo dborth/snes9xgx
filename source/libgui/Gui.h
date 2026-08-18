@@ -55,29 +55,29 @@
 
 extern FreeTypeGX *fontSystem[];
 
-enum
-{
-	ALIGN_LEFT,
-	ALIGN_RIGHT,
-	ALIGN_CENTRE,
-	ALIGN_TOP,
-	ALIGN_BOTTOM,
-	ALIGN_MIDDLE
+enum class ALIGN_V {
+	TOP,
+	BOTTOM,
+	MIDDLE
 };
 
-enum
-{
-	STATE_DEFAULT,
-	STATE_SELECTED,
-	STATE_CLICKED,
-	STATE_HELD,
-	STATE_DISABLED
+enum class ALIGN_H {
+	LEFT,
+	RIGHT,
+	CENTRE
 };
 
-enum
-{
-	SCROLL_NONE,
-	SCROLL_HORIZONTAL
+enum class STATE {
+	DEFAULT,
+	SELECTED,
+	CLICKED,
+	HELD,
+	DISABLED
+};
+
+enum class SCROLL {
+	NONE,
+	HORIZONTAL
 };
 
 #include "GuiTrigger.h"

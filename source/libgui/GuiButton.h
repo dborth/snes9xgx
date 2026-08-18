@@ -76,20 +76,20 @@ class GuiButton : public GuiElement
 		void update(GuiTrigger * t);
 	protected:
 		GuiImage * image; //!< Button image (default)
-		GuiImage * imageOver; //!< Button image for STATE_SELECTED
-		GuiImage * imageHold; //!< Button image for STATE_HELD
-		GuiImage * imageClick; //!< Button image for STATE_CLICKED
+		GuiImage * imageOver; //!< Button image for STATE::SELECTED
+		GuiImage * imageHold; //!< Button image for STATE::HELD
+		GuiImage * imageClick; //!< Button image for STATE::CLICKED
 		GuiImage * icon; //!< Button icon (drawn after button image)
-		GuiImage * iconOver; //!< Button icon for STATE_SELECTED
-		GuiImage * iconHold; //!< Button icon for STATE_HELD
-		GuiImage * iconClick; //!< Button icon for STATE_CLICKED
+		GuiImage * iconOver; //!< Button icon for STATE::SELECTED
+		GuiImage * iconHold; //!< Button icon for STATE::HELD
+		GuiImage * iconClick; //!< Button icon for STATE::CLICKED
 		GuiText * label[3]; //!< Label(s) to display (default)
-		GuiText * labelOver[3]; //!< Label(s) to display for STATE_SELECTED
-		GuiText * labelHold[3]; //!< Label(s) to display for STATE_HELD
-		GuiText * labelClick[3]; //!< Label(s) to display for STATE_CLICKED
-		GuiSound * soundOver; //!< Sound to play for STATE_SELECTED
-		GuiSound * soundHold; //!< Sound to play for STATE_HELD
-		GuiSound * soundClick; //!< Sound to play for STATE_CLICKED
+		GuiText * labelOver[3]; //!< Label(s) to display for STATE::SELECTED
+		GuiText * labelHold[3]; //!< Label(s) to display for STATE::HELD
+		GuiText * labelClick[3]; //!< Label(s) to display for STATE::CLICKED
+		GuiSound * soundOver; //!< Sound to play for STATE::SELECTED
+		GuiSound * soundHold; //!< Sound to play for STATE::HELD
+		GuiSound * soundClick; //!< Sound to play for STATE::CLICKED
 		GuiTooltip * tooltip; //!< Tooltip to display on over
 };
 

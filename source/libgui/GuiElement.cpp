@@ -26,21 +26,21 @@ GuiElement::GuiElement()
 	alpha = 255;
 	xscale = 1;
 	yscale = 1;
-	state = STATE_DEFAULT;
+	state = STATE::DEFAULT;
 	stateChan = -1;
-	trigger[0] = NULL;
-	trigger[1] = NULL;
-	trigger[2] = NULL;
-	trigger[3] = NULL;
-	trigger[4] = NULL;
-	parentElement = NULL;
+	trigger[0] = nullptr;
+	trigger[1] = nullptr;
+	trigger[2] = nullptr;
+	trigger[3] = nullptr;
+	trigger[4] = nullptr;
+	parentElement = nullptr;
 	rumble = true;
 	selectable = false;
 	clickable = false;
 	holdable = false;
 	visible = true;
 	focus = -1; // cannot be focused
-	updateCB = NULL;
+	updateCB = nullptr;
 	yoffsetDyn = 0;
 	xoffsetDyn = 0;
 	alphaDyn = -1;
@@ -53,8 +53,8 @@ GuiElement::GuiElement()
 	effectTargetOver = 0;
 
 	// default alignment - align to top left
-	alignmentVert = ALIGN_TOP;
-	alignmentHor = ALIGN_LEFT;
+	alignmentVert = ALIGN_V::TOP;
+	alignmentHor = ALIGN_H::LEFT;
 }
 
 /**
@@ -91,13 +91,13 @@ int GuiElement::getLeft()
 
 	switch(alignmentHor)
 	{
-		case ALIGN_LEFT:
+		case ALIGN_H::LEFT:
 			x = pLeft;
 			break;
-		case ALIGN_CENTRE:
+		case ALIGN_H::CENTRE:
 			x = pLeft + pWidth/2.0 - (width*xscale)/2.0;
 			break;
-		case ALIGN_RIGHT:
+		case ALIGN_H::RIGHT:
 			x = pLeft + pWidth - width*xscale;
 			break;
 	}
@@ -122,13 +122,13 @@ int GuiElement::getTop()
 
 	switch(alignmentVert)
 	{
-		case ALIGN_TOP:
+		case ALIGN_V::TOP:
 			y = pTop;
 			break;
-		case ALIGN_MIDDLE:
+		case ALIGN_V::MIDDLE:
 			y = pTop + pHeight/2.0 - (height*yscale)/2.0;
 			break;
-		case ALIGN_BOTTOM:
+		case ALIGN_V::BOTTOM:
 			y = pTop + pHeight - height*yscale;
 			break;
 	}
@@ -298,9 +298,9 @@ void GuiElement::setState(int s, int c)
 
 void GuiElement::resetState()
 {
-	if(state != STATE_DISABLED)
+	if(state != STATE::DISABLED)
 	{
-		state = STATE_DEFAULT;
+		state = STATE::DEFAULT;
 		stateChan = -1;
 	}
 }
@@ -322,7 +322,7 @@ void GuiElement::setHoldable(bool d)
 
 bool GuiElement::isSelectable()
 {
-	if(state == STATE_DISABLED || state == STATE_CLICKED)
+	if(state == STATE::DISABLED || state == STATE::CLICKED)
 		return false;
 	else
 		return selectable;
@@ -330,9 +330,9 @@ bool GuiElement::isSelectable()
 
 bool GuiElement::isClickable()
 {
-	if(state == STATE_DISABLED ||
-		state == STATE_CLICKED ||
-		state == STATE_HELD)
+	if(state == STATE::DISABLED ||
+		state == STATE::CLICKED ||
+		state == STATE::HELD)
 		return false;
 	else
 		return clickable;
@@ -340,7 +340,7 @@ bool GuiElement::isClickable()
 
 bool GuiElement::isHoldable()
 {
-	if(state == STATE_DISABLED)
+	if(state == STATE::DISABLED)
 		return false;
 	else
 		return holdable;

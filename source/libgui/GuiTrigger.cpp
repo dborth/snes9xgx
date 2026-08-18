@@ -100,11 +100,11 @@ void GuiTrigger::setButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u1
 s8 GuiTrigger::WPAD_Stick(u8 stick, int axis)
 {
 	#ifdef HW_RVL
-	struct joystick_t* js = NULL;
+	struct joystick_t* js = nullptr;
 
 	switch (wpad->exp.type) {
 		case WPAD_EXP_NUNCHUK:
-			js = stick ? NULL : &wpad->exp.nunchuk.js;
+			js = stick ? nullptr : &wpad->exp.nunchuk.js;
 			break;
 
 		case WPAD_EXP_CLASSIC:

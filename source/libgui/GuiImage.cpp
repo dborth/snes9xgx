@@ -14,7 +14,7 @@
  */
 GuiImage::GuiImage()
 {
-	image = NULL;
+	image = nullptr;
 	width = 0;
 	height = 0;
 	imageangle = 0;
@@ -25,7 +25,7 @@ GuiImage::GuiImage()
 
 GuiImage::GuiImage(GuiImageData * img)
 {
-	image = NULL;
+	image = nullptr;
 	width = 0;
 	height = 0;
 	if(img)
@@ -94,7 +94,7 @@ u8 * GuiImage::getImage()
 
 void GuiImage::setImage(GuiImageData * img)
 {
-	image = NULL;
+	image = nullptr;
 	width = 0;
 	height = 0;
 	if(img)
