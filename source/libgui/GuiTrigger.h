@@ -99,7 +99,7 @@ class GuiTrigger
 		GamePadData wiidrcdata; //!< Wii U Gamepad trigger data
 		WPADData * wpad; //!< Wii controller trigger
 		s32 chan; //!< Trigger controller channel (0-3, -1 for all)
-		u8 type; //!< trigger type (SIMPLE,	HELD, BUTTON_ONLY, BUTTON_ONLY_IN_FOCUS)
+		TRIGGER type; //!< trigger type (SIMPLE, HELD, BUTTON_ONLY, BUTTON_ONLY_IN_FOCUS)
 };
 
 extern GuiTrigger userInput[4];
