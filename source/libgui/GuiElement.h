@@ -5,15 +5,17 @@
 
 typedef void (*UpdateCallback)(void * e);
 
-#define EFFECT_SLIDE_TOP			1
-#define EFFECT_SLIDE_BOTTOM			2
-#define EFFECT_SLIDE_RIGHT			4
-#define EFFECT_SLIDE_LEFT			8
-#define EFFECT_SLIDE_IN				16
-#define EFFECT_SLIDE_OUT			32
-#define EFFECT_FADE					64
-#define EFFECT_SCALE				128
-#define EFFECT_COLOR_TRANSITION		256
+enum EFFECT {
+	SLIDE_TOP = (1u << 0),
+	SLIDE_BOTTOM = (1u << 1),
+	SLIDE_RIGHT = (1u << 2),
+	SLIDE_LEFT = (1u << 3),
+	SLIDE_IN = (1u << 4),
+	SLIDE_OUT = (1u << 5),
+	FADE = (1u << 6),
+	SCALE = (1u << 7),
+	COLOR_TRANSITION = (1u << 8)
+};
 
 //!Primary GUI class. Most other classes inherit from this class.
 class GuiElement
@@ -150,7 +152,7 @@ class GuiElement
 		//!\param a Amount of the effect (usage varies on effect)
 		//!\param t Target amount of the effect (usage varies on effect)
 		void setEffectOnOver(int e, int a, int t=0);
-		//!Shortcut to SetEffectOnOver(EFFECT_SCALE, 4, 110)
+		//!Shortcut to SetEffectOnOver(EFFECT::SCALE, 4, 110)
 		void setEffectGrow();
 		//!Gets the current element effects
 		//!\return element effects

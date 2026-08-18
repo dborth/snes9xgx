@@ -297,7 +297,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 		btn2.setTrigger(&trig1);
 	}	
 
-	promptWindow.setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 50);
+	promptWindow.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 50);
 	CancelAction();
 	HaltGui();
 	mainWindow->setState(STATE::DISABLED);
@@ -320,7 +320,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 			choice = 0;
 	}
 
-	promptWindow.setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 50);
+	promptWindow.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 50);
 	while(promptWindow.getEffect() > 0) usleep(THREAD_SLEEP);
 	HaltGui();
 	mainWindow->remove(&promptWindow);
@@ -1622,20 +1622,20 @@ static int MenuGame()
 	if(lastMenu == MENU_NONE)
 	{
 		enterSound->play();
-		bgTopImg->setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 35);
-		closeBtn.setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 35);
-		titleTxt.setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_IN, 35);
-		mainmenuBtn.setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
-		bgBottomImg->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
-		btnLogo->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
+		bgTopImg->setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 35);
+		closeBtn.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 35);
+		titleTxt.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 35);
+		mainmenuBtn.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
+		bgBottomImg->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
+		btnLogo->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
 		#ifdef HW_RVL
-		batteryBtn[0]->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
-		batteryBtn[1]->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
-		batteryBtn[2]->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
-		batteryBtn[3]->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_IN, 35);
+		batteryBtn[0]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
+		batteryBtn[1]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
+		batteryBtn[2]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
+		batteryBtn[3]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
 		#endif
 
-		w.setEffect(EFFECT_FADE, 15);
+		w.setEffect(EFFECT::FADE, 15);
 	}
 
 	ResumeGui();
@@ -1762,20 +1762,20 @@ static int MenuGame()
 			menu = MENU_EXIT;
 
 			exitSound->play();
-			bgTopImg->setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
-			closeBtn.setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
-			titleTxt.setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
-			mainmenuBtn.setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
-			bgBottomImg->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
-			btnLogo->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
+			bgTopImg->setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			closeBtn.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			titleTxt.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			mainmenuBtn.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			bgBottomImg->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			btnLogo->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 			#ifdef HW_RVL
-			batteryBtn[0]->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
-			batteryBtn[1]->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
-			batteryBtn[2]->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
-			batteryBtn[3]->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
+			batteryBtn[0]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			batteryBtn[1]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			batteryBtn[2]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			batteryBtn[3]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 			#endif
 
-			w.setEffect(EFFECT_FADE, -15);
+			w.setEffect(EFFECT::FADE, -15);
 			usleep(350000); // wait for effects to finish
 		}
 	}
@@ -2093,14 +2093,14 @@ static int MenuGameSaves(int action)
 			menu = MENU_EXIT;
 
 			exitSound->play();
-			bgTopImg->setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
-			closeBtn.setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
-			titleTxt.setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
-			backBtn.setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
-			bgBottomImg->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
-			btnLogo->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
+			bgTopImg->setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			closeBtn.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			titleTxt.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			backBtn.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			bgBottomImg->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			btnLogo->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 
-			w.setEffect(EFFECT_FADE, -15);
+			w.setEffect(EFFECT::FADE, -15);
 
 			usleep(350000); // wait for effects to finish
 		}
@@ -2351,14 +2351,14 @@ static int MenuGameSettings()
 			menu = MENU_EXIT;
 
 			exitSound->play();
-			bgTopImg->setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
-			closeBtn.setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
-			titleTxt.setEffect(EFFECT_SLIDE_TOP | EFFECT_SLIDE_OUT, 15);
-			backBtn.setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
-			bgBottomImg->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
-			btnLogo->setEffect(EFFECT_SLIDE_BOTTOM | EFFECT_SLIDE_OUT, 15);
+			bgTopImg->setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			closeBtn.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			titleTxt.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			backBtn.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			bgBottomImg->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			btnLogo->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 
-			w.setEffect(EFFECT_FADE, -15);
+			w.setEffect(EFFECT::FADE, -15);
 
 			usleep(350000); // wait for effects to finish
 		}

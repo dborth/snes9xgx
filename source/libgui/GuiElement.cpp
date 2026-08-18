@@ -86,7 +86,7 @@ int GuiElement::getLeft()
 		pLeft = parentElement->getLeft();
 	}
 
-	if(effects & (EFFECT_SLIDE_IN | EFFECT_SLIDE_OUT))
+	if(effects & (EFFECT::SLIDE_IN | EFFECT::SLIDE_OUT))
 		pLeft += xoffsetDyn;
 
 	switch(alignmentHor)
@@ -117,7 +117,7 @@ int GuiElement::getTop()
 		pTop = parentElement->getTop();
 	}
 
-	if(effects & (EFFECT_SLIDE_IN | EFFECT_SLIDE_OUT))
+	if(effects & (EFFECT::SLIDE_IN | EFFECT::SLIDE_OUT))
 		pTop += yoffsetDyn;
 
 	switch(alignmentVert)
@@ -394,19 +394,19 @@ int GuiElement::getEffect()
 
 void GuiElement::setEffect(int eff, int amount, int target)
 {
-	if(eff & EFFECT_SLIDE_IN)
+	if(eff & EFFECT::SLIDE_IN)
 	{
 		// these calculations overcompensate a little
-		if(eff & EFFECT_SLIDE_TOP)
+		if(eff & EFFECT::SLIDE_TOP)
 			yoffsetDyn = -screenheight;
-		else if(eff & EFFECT_SLIDE_LEFT)
+		else if(eff & EFFECT::SLIDE_LEFT)
 			xoffsetDyn = -screenwidth;
-		else if(eff & EFFECT_SLIDE_BOTTOM)
+		else if(eff & EFFECT::SLIDE_BOTTOM)
 			yoffsetDyn = screenheight;
-		else if(eff & EFFECT_SLIDE_RIGHT)
+		else if(eff & EFFECT::SLIDE_RIGHT)
 			xoffsetDyn = screenwidth;
 	}
-	if(eff & EFFECT_FADE)
+	if(eff & EFFECT::FADE)
 	{
 		if(amount > 0)
 			alphaDyn = 0;
@@ -428,16 +428,16 @@ void GuiElement::setEffectOnOver(int eff, int amount, int target)
 
 void GuiElement::setEffectGrow()
 {
-	setEffectOnOver(EFFECT_SCALE, 4, 110);
+	setEffectOnOver(EFFECT::SCALE, 4, 110);
 }
 
 void GuiElement::updateEffects()
 {
-	if(effects & (EFFECT_SLIDE_IN | EFFECT_SLIDE_OUT))
+	if(effects & (EFFECT::SLIDE_IN | EFFECT::SLIDE_OUT))
 	{
-		if(effects & EFFECT_SLIDE_IN)
+		if(effects & EFFECT::SLIDE_IN)
 		{
-			if(effects & EFFECT_SLIDE_LEFT)
+			if(effects & EFFECT::SLIDE_LEFT)
 			{
 				xoffsetDyn += effectAmount;
 
@@ -447,7 +447,7 @@ void GuiElement::updateEffects()
 					effects = 0;
 				}
 			}
-			else if(effects & EFFECT_SLIDE_RIGHT)
+			else if(effects & EFFECT::SLIDE_RIGHT)
 			{
 				xoffsetDyn -= effectAmount;
 
@@ -457,7 +457,7 @@ void GuiElement::updateEffects()
 					effects = 0;
 				}
 			}
-			else if(effects & EFFECT_SLIDE_TOP)
+			else if(effects & EFFECT::SLIDE_TOP)
 			{
 				yoffsetDyn += effectAmount;
 
@@ -467,7 +467,7 @@ void GuiElement::updateEffects()
 					effects = 0;
 				}
 			}
-			else if(effects & EFFECT_SLIDE_BOTTOM)
+			else if(effects & EFFECT::SLIDE_BOTTOM)
 			{
 				yoffsetDyn -= effectAmount;
 
@@ -480,28 +480,28 @@ void GuiElement::updateEffects()
 		}
 		else
 		{
-			if(effects & EFFECT_SLIDE_LEFT)
+			if(effects & EFFECT::SLIDE_LEFT)
 			{
 				xoffsetDyn -= effectAmount;
 
 				if(xoffsetDyn <= -screenwidth)
 					effects = 0; // shut off effect
 			}
-			else if(effects & EFFECT_SLIDE_RIGHT)
+			else if(effects & EFFECT::SLIDE_RIGHT)
 			{
 				xoffsetDyn += effectAmount;
 
 				if(xoffsetDyn >= screenwidth)
 					effects = 0; // shut off effect
 			}
-			else if(effects & EFFECT_SLIDE_TOP)
+			else if(effects & EFFECT::SLIDE_TOP)
 			{
 				yoffsetDyn -= effectAmount;
 
 				if(yoffsetDyn <= -screenheight)
 					effects = 0; // shut off effect
 			}
-			else if(effects & EFFECT_SLIDE_BOTTOM)
+			else if(effects & EFFECT::SLIDE_BOTTOM)
 			{
 				yoffsetDyn += effectAmount;
 
@@ -510,7 +510,7 @@ void GuiElement::updateEffects()
 			}
 		}
 	}
-	if(effects & EFFECT_FADE)
+	if(effects & EFFECT::FADE)
 	{
 		alphaDyn += effectAmount;
 
@@ -525,7 +525,7 @@ void GuiElement::updateEffects()
 			effects = 0; // shut off effect
 		}
 	}
-	if(effects & EFFECT_SCALE)
+	if(effects & EFFECT::SCALE)
 	{
 		scaleDyn += f32(effectAmount)*0.01f;
 		f32 effTar100 = f32(effectTarget)*0.01f;
