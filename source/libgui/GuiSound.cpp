@@ -13,7 +13,7 @@
 /**
  * Constructor for the GuiSound class.
  */
-GuiSound::GuiSound(const u8 * s, s32 l, int t)
+GuiSound::GuiSound(const u8 * s, s32 l, SOUND t)
 {
 	sound = s;
 	length = l;
@@ -29,7 +29,7 @@ GuiSound::GuiSound(const u8 * s, s32 l, int t)
 GuiSound::~GuiSound()
 {
 	#ifndef NO_SOUND
-	if(type == SOUND_OGG)
+	if(type == SOUND::OGG)
 		StopOgg();
 	#endif
 }
@@ -41,7 +41,7 @@ void GuiSound::play()
 
 	switch(type)
 	{
-		case SOUND_PCM:
+		case SOUND::PCM:
 		vol = 0.0255f*(volume*GCSettings.SFXVolume);
 		voice = ASND_GetFirstUnusedVoice();
 		if(voice >= 0)
@@ -49,7 +49,7 @@ void GuiSound::play()
 				(u8 *)sound, length, vol, vol, nullptr);
 		break;
 
-		case SOUND_OGG:
+		case SOUND::OGG:
 		voice = 0;
 		if(loop)
 			PlayOgg((char *)sound, length, 0, OGG_INFINITE_TIME);
@@ -69,11 +69,11 @@ void GuiSound::stop()
 
 	switch(type)
 	{
-		case SOUND_PCM:
+		case SOUND::PCM:
 		ASND_StopVoice(voice);
 		break;
 
-		case SOUND_OGG:
+		case SOUND::OGG:
 		StopOgg();
 		break;
 	}
@@ -88,11 +88,11 @@ void GuiSound::pause()
 
 	switch(type)
 	{
-		case SOUND_PCM:
+		case SOUND::PCM:
 		ASND_PauseVoice(voice, 1);
 		break;
 
-		case SOUND_OGG:
+		case SOUND::OGG:
 		PauseOgg(1);
 		break;
 	}
@@ -107,11 +107,11 @@ void GuiSound::resume()
 
 	switch(type)
 	{
-		case SOUND_PCM:
+		case SOUND::PCM:
 		ASND_PauseVoice(voice, 0);
 		break;
 
-		case SOUND_OGG:
+		case SOUND::OGG:
 		PauseOgg(0);
 		break;
 	}
@@ -139,11 +139,11 @@ void GuiSound::setVolume(int vol)
 
 	switch(type)
 	{
-		case SOUND_PCM:
+		case SOUND::PCM:
 		ASND_ChangeVolumeVoice(voice, newvol, newvol);
 		break;
 
-		case SOUND_OGG:
+		case SOUND::OGG:
 		SetVolumeOgg(2.55f*(volume));
 		break;
 	}

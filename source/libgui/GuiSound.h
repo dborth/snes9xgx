@@ -3,10 +3,9 @@
 
 #include "Gui.h"
 
-enum
-{
-	SOUND_PCM,
-	SOUND_OGG
+enum class SOUND {
+	PCM,
+	OGG
 };
 
 //!Sound conversion and playback. A wrapper for other sound libraries - ASND, libmad, ltremor, etc
@@ -16,8 +15,8 @@ class GuiSound
 		//!Constructor
 		//!\param s Pointer to the sound data
 		//!\param l Length of sound data
-		//!\param t Sound format type (SOUND_PCM or SOUND_OGG)
-		GuiSound(const u8 * s, s32 l, int t);
+		//!\param t Sound format type (PCM or OGG)
+		GuiSound(const u8 * s, s32 l, SOUND t);
 		//!Destructor
 		~GuiSound();
 		//!Start sound playback
@@ -39,11 +38,11 @@ class GuiSound
 		void setLoop(bool l);
 	protected:
 		const u8 * sound; //!< Pointer to the sound data
-		int type; //!< Sound format type (SOUND_PCM or SOUND_OGG)
+		SOUND type; //!< Sound format type (PCM or OGG)
 		s32 length; //!< Length of sound data
 		s32 voice; //!< Currently assigned ASND voice channel
 		s32 volume; //!< Sound volume (0-100)
 		bool loop; //!< Loop sound playback
 };
 
-#endif // GUISOUND_H
+#endif // GUISOUND::H

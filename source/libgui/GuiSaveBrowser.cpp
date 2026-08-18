@@ -37,8 +37,8 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	trig2 = new GuiTrigger;
 	trig2->setSimpleTrigger(-1, WPAD_BUTTON_2, 0, 0);
 
-	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND_PCM);
-	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND_PCM);
+	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND::PCM);
+	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND::PCM);
 
 	gameSave = new GuiImageData(button_gamesave_png);
 	gameSaveOver = new GuiImageData(button_gamesave_over_png);
