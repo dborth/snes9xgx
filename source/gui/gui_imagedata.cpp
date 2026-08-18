@@ -1,9 +1,9 @@
 /****************************************************************************
- * libwiigui
+ * libgui
  *
- * Tantric 2009
+ * Daryl Borth 2009-2026
  *
- * gui_imagedata.cpp
+ * GuiImageData.cpp
  *
  * GUI class definitions
  ***************************************************************************/
@@ -35,17 +35,17 @@ GuiImageData::~GuiImageData()
 	}
 }
 
-u8 * GuiImageData::GetImage()
+u8 * GuiImageData::getImage()
 {
 	return data;
 }
 
-int GuiImageData::GetWidth()
+int GuiImageData::getWidth()
 {
 	return width;
 }
 
-int GuiImageData::GetHeight()
+int GuiImageData::getHeight()
 {
 	return height;
 }

@@ -1,9 +1,9 @@
 /****************************************************************************
- * libwiigui
+ * libgui
  *
- * Tantric 2009
+ * Daryl Borth 2009-2026
  *
- * gui_trigger.cpp
+ * GuiTrigger.cpp
  *
  * GUI class definitions
  ***************************************************************************/
@@ -40,7 +40,7 @@ GuiTrigger::~GuiTrigger()
  * - Element is selected
  * - Trigger button is pressed
  */
-void GuiTrigger::SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
+void GuiTrigger::setSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
 	type = TRIGGER_SIMPLE;
 	chan = ch;
@@ -54,7 +54,7 @@ void GuiTrigger::SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtn
  * - Element is selected
  * - Trigger button is pressed and held
  */
-void GuiTrigger::SetHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
+void GuiTrigger::setHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
 	type = TRIGGER_HELD;
 	chan = ch;
@@ -67,7 +67,7 @@ void GuiTrigger::SetHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
  * Sets a button trigger. Requires:
  * - Trigger button is pressed
  */
-void GuiTrigger::SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
+void GuiTrigger::setButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
 	type = TRIGGER_BUTTON_ONLY;
 	chan = ch;
@@ -81,7 +81,7 @@ void GuiTrigger::SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidr
  * - Trigger button is pressed
  * - Parent window is in focus
  */
-void GuiTrigger::SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
+void GuiTrigger::setButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
 {
 	type = TRIGGER_BUTTON_ONLY_IN_FOCUS;
 	chan = ch;
@@ -171,7 +171,7 @@ s8 GuiTrigger::WPAD_StickY(u8 stick)
 	return WPAD_Stick(stick, 1);
 }
 
-bool GuiTrigger::Left()
+bool GuiTrigger::left()
 {
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_UP : WPAD_BUTTON_LEFT;
 
@@ -207,7 +207,7 @@ bool GuiTrigger::Left()
 	return false;
 }
 
-bool GuiTrigger::Right()
+bool GuiTrigger::right()
 {
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_DOWN : WPAD_BUTTON_RIGHT;
 
@@ -243,7 +243,7 @@ bool GuiTrigger::Right()
 	return false;
 }
 
-bool GuiTrigger::Up()
+bool GuiTrigger::up()
 {
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_RIGHT : WPAD_BUTTON_UP;
 
@@ -279,7 +279,7 @@ bool GuiTrigger::Up()
 	return false;
 }
 
-bool GuiTrigger::Down()
+bool GuiTrigger::down()
 {
 	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_LEFT : WPAD_BUTTON_DOWN;
 

@@ -1,11 +1,11 @@
-/*!\mainpage libwiigui Documentation
+/*!\mainpage libgui Documentation
  *
  * \section Introduction
- * libwiigui is a GUI library for the Wii, created to help structure the
- * design of a complicated GUI interface, and to enable an author to create
- * a sophisticated, feature-rich GUI. It was originally conceived and written
- * after I started to design a GUI for Snes9x GX, and found libwiisprite and
- * GRRLIB inadequate for the purpose. It uses GX for drawing, and makes use
+ * libgui is a GUI library originally created for the Wii/GameCube, created to 
+ * help structure the design of a complicated GUI interface, and to enable an 
+ * author to create a sophisticated, feature-rich GUI. It was originally conceived 
+ * and written after I started to design a GUI for Snes9x GX, and found libwiisprite 
+ * and GRRLIB inadequate for the purpose. It uses GX for drawing, and makes use
  * of PNGU for displaying images and FreeTypeGX for text. It was designed to
  * be flexible and is easy to modify - don't be afraid to change the way it
  * works or expand it to suit your GUI's purposes! If you do, and you think
@@ -18,8 +18,8 @@
 
  * \section Contact
  * If you have any suggestions for the library or documentation, or want to
- * contribute, please visit the libwiigui website:
- * http://code.google.com/p/libwiigui/
+ * contribute, please visit the libgui website:
+ * http://code.google.com/p/libgui/
 
  * \section Credits
  * This library was wholly designed and written by Tantric. Thanks to the
@@ -28,8 +28,8 @@
  *
 */
 
-#ifndef LIBWIIGUI_H
-#define LIBWIIGUI_H
+#ifndef LIBGUI_H
+#define LIBGUI_H
 
 #include <gccore.h>
 #include <malloc.h>
@@ -157,22 +157,22 @@ class GuiSound
 		//!Destructor
 		~GuiSound();
 		//!Start sound playback
-		void Play();
+		void play();
 		//!Stop sound playback
-		void Stop();
+		void stop();
 		//!Pause sound playback
-		void Pause();
+		void pause();
 		//!Resume sound playback
-		void Resume();
+		void resume();
 		//!Checks if the sound is currently playing
 		//!\return true if sound is playing, false otherwise
-		bool IsPlaying();
+		bool isPlaying();
 		//!Set sound volume
 		//!\param v Sound volume (0-100)
-		void SetVolume(int v);
+		void setVolume(int v);
 		//!Set the sound to loop playback (only applies to OGG)
 		//!\param l Loop (true to loop)
-		void SetLoop(bool l);
+		void setLoop(bool l);
 	protected:
 		const u8 * sound; //!< Pointer to the sound data
 		int type; //!< Sound format type (SOUND_PCM or SOUND_OGG)
@@ -195,25 +195,25 @@ class GuiTrigger
 		//!\param wiibtns Wii controller trigger button(s) - classic controller buttons are considered separately
 		//!\param gcbtns GameCube controller trigger button(s)
 		//!\param wiidrcbtns Wii U Gamepad trigger button(s)
-		void SetSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns);
+		void setSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns);
 		//!Sets a held trigger. Requires: element is selected, and trigger button is pressed
 		//!\param ch Controller channel number
 		//!\param wiibtns Wii controller trigger button(s) - classic controller buttons are considered separately
 		//!\param gcbtns GameCube controller trigger button(s)
 		//!\param wiidrcbtns Wii U Gamepad trigger button(s)
-		void SetHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns);
+		void setHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns);
 		//!Sets a button-only trigger. Requires: Trigger button is pressed
 		//!\param ch Controller channel number
 		//!\param wiibtns Wii controller trigger button(s) - classic controller buttons are considered separately
 		//!\param gcbtns GameCube controller trigger button(s)
 		//!\param wiidrcbtns Wii U Gamepad trigger button(s)
-		void SetButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns);
+		void setButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns);
 		//!Sets a button-only trigger. Requires: trigger button is pressed and parent window of element is in focus
 		//!\param ch Controller channel number
 		//!\param wiibtns Wii controller trigger button(s) - classic controller buttons are considered separately
 		//!\param gcbtns GameCube controller trigger button(s)
 		//!\param wiidrcbtns Wii U Gamepad trigger button(s)
-		void SetButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns);
+		void setButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns);
 		//!Get X or Y value from Wii Joystick (classic, nunchuk) input
 		//!\param stick Controller stick (left = 0, right = 1)
 		//!\param axis Controller stick axis (x-axis = 0, y-axis = 1)
@@ -229,16 +229,16 @@ class GuiTrigger
 		s8 WPAD_StickY(u8 stick);
 		//!Move menu selection left (via pad/joystick). Allows scroll delay and button overriding
 		//!\return true if selection should be moved left, false otherwise
-		bool Left();
+		bool left();
 		//!Move menu selection right (via pad/joystick). Allows scroll delay and button overriding
 		//!\return true if selection should be moved right, false otherwise
-		bool Right();
+		bool right();
 		//!Move menu selection up (via pad/joystick). Allows scroll delay and button overriding
 		//!\return true if selection should be moved up, false otherwise
-		bool Up();
+		bool up();
 		//!Move menu selection down (via pad/joystick). Allows scroll delay and button overriding
 		//!\return true if selection should be moved down, false otherwise
-		bool Down();
+		bool down();
 
 		WPADData wpaddata; //!< Wii controller trigger data
 		PADData pad; //!< GameCube controller trigger data
@@ -260,182 +260,182 @@ class GuiElement
 		virtual ~GuiElement();
 		//!Set the element's parent
 		//!\param e Pointer to parent element
-		void SetParent(GuiElement * e);
+		void setParent(GuiElement * e);
 		//!Gets the element's parent
 		//!\return Pointer to parent element
-		GuiElement * GetParent();
+		GuiElement * getParent();
 		//!Gets the current leftmost coordinate of the element
 		//!Considers horizontal alignment, x offset, width, and parent element's GetLeft() / GetWidth() values
 		//!\return left coordinate
-		int GetLeft();
+		int getLeft();
 		//!Gets the current topmost coordinate of the element
 		//!Considers vertical alignment, y offset, height, and parent element's GetTop() / GetHeight() values
 		//!\return top coordinate
-		int GetTop();
+		int getTop();
 		//!Sets the minimum y offset of the element
 		//!\param y Y offset
-		void SetMinY(int y);
+		void setMinY(int y);
 		//!Gets the minimum y offset of the element
 		//!\return Minimum Y offset
-		int GetMinY();
+		int getMinY();
 		//!Sets the maximum y offset of the element
 		//!\param y Y offset
-		void SetMaxY(int y);
+		void setMaxY(int y);
 		//!Gets the maximum y offset of the element
 		//!\return Maximum Y offset
-		int GetMaxY();
+		int getMaxY();
 		//!Sets the minimum x offset of the element
 		//!\param x X offset
-		void SetMinX(int x);
+		void setMinX(int x);
 		//!Gets the minimum x offset of the element
 		//!\return Minimum X offset
-		int GetMinX();
+		int getMinX();
 		//!Sets the maximum x offset of the element
 		//!\param x X offset
-		void SetMaxX(int x);
+		void setMaxX(int x);
 		//!Gets the maximum x offset of the element
 		//!\return Maximum X offset
-		int GetMaxX();
+		int getMaxX();
 		//!Gets the current width of the element. Does not currently consider the scale
 		//!\return width
-		int GetWidth();
+		int getWidth();
 		//!Gets the height of the element. Does not currently consider the scale
 		//!\return height
-		int GetHeight();
+		int getHeight();
 		//!Sets the size (width/height) of the element
 		//!\param w Width of element
 		//!\param h Height of element
-		void SetSize(int w, int h);
+		void setSize(int w, int h);
 		//!Checks whether or not the element is visible
 		//!\return true if visible, false otherwise
-		bool IsVisible();
+		bool isVisible();
 		//!Checks whether or not the element is selectable
 		//!\return true if selectable, false otherwise
-		bool IsSelectable();
+		bool isSelectable();
 		//!Checks whether or not the element is clickable
 		//!\return true if clickable, false otherwise
-		bool IsClickable();
+		bool isClickable();
 		//!Checks whether or not the element is holdable
 		//!\return true if holdable, false otherwise
-		bool IsHoldable();
+		bool isHoldable();
 		//!Sets whether or not the element is selectable
 		//!\param s Selectable
-		void SetSelectable(bool s);
+		void setSelectable(bool s);
 		//!Sets whether or not the element is clickable
 		//!\param c Clickable
-		void SetClickable(bool c);
+		void setClickable(bool c);
 		//!Sets whether or not the element is holdable
 		//!\param h Holdable
-		void SetHoldable(bool h);
+		void setHoldable(bool h);
 		//!Gets the element's current state
 		//!\return state
-		int GetState();
+		int getState();
 		//!Gets the controller channel that last changed the element's state
 		//!\return Channel number (0-3, -1 = no channel)
-		int GetStateChan();
+		int getStateChan();
 		//!Sets the element's alpha value
 		//!\param a alpha value
-		void SetAlpha(int a);
+		void setAlpha(int a);
 		//!Gets the element's alpha value
 		//!Considers alpha, alphaDyn, and the parent element's GetAlpha() value
 		//!\return alpha
-		int GetAlpha();
+		int getAlpha();
 		//!Sets the element's x and y scale
 		//!\param s scale (1 is 100%)
-		void SetScale(float s);
+		void setScale(float s);
 		//!Sets the element's x scale
 		//!\param s scale (1 is 100%)
-		void SetScaleX(float s);
+		void setScaleX(float s);
 		//!Sets the element's y scale
 		//!\param s scale (1 is 100%)
-		void SetScaleY(float s);
+		void setScaleY(float s);
 		//!Sets the element's x and y scale, using the provided max width/height
 		//!\param w Maximum width
 		//!\param h Maximum height
-		void SetScale(int w, int h);
+		void setScale(int w, int h);
 		//!Gets the element's current scale
 		//!Considers scale, scaleDyn, and the parent element's GetScale() value
-		float GetScale();
+		float getScale();
 		//!Gets the element's current x scale
 		//!Considers scale, scaleDyn, and the parent element's GetScale() value
-		float GetScaleX();
+		float getScaleX();
 		//!Gets the element's current y scale
 		//!Considers scale, scaleDyn, and the parent element's GetScale() value
-		float GetScaleY();
+		float getScaleY();
 		//!Set a new GuiTrigger for the element
 		//!\param t Pointer to GuiTrigger
-		void SetTrigger(GuiTrigger * t);
+		void setTrigger(GuiTrigger * t);
 		//!\overload
 		//!\param i Index of trigger array to set
 		//!\param t Pointer to GuiTrigger
-		void SetTrigger(u8 i, GuiTrigger * t);
+		void setTrigger(u8 i, GuiTrigger * t);
 		//!Checks whether rumble was requested by the element
 		//!\return true is rumble was requested, false otherwise
-		bool Rumble();
+		bool isRumble();
 		//!Sets whether or not the element is requesting a rumble event
 		//!\param r true if requesting rumble, false if not
-		void SetRumble(bool r);
+		void setRumble(bool r);
 		//!Set an effect for the element
 		//!\param e Effect to enable
 		//!\param a Amount of the effect (usage varies on effect)
 		//!\param t Target amount of the effect (usage varies on effect)
-		void SetEffect(int e, int a, int t=0);
+		void setEffect(int e, int a, int t=0);
 		//!Sets an effect to be enabled on wiimote cursor over
 		//!\param e Effect to enable
 		//!\param a Amount of the effect (usage varies on effect)
 		//!\param t Target amount of the effect (usage varies on effect)
-		void SetEffectOnOver(int e, int a, int t=0);
+		void setEffectOnOver(int e, int a, int t=0);
 		//!Shortcut to SetEffectOnOver(EFFECT_SCALE, 4, 110)
-		void SetEffectGrow();
+		void setEffectGrow();
 		//!Gets the current element effects
 		//!\return element effects
-		int GetEffect();
+		int getEffect();
 		//!Checks whether the specified coordinates are within the element's boundaries
 		//!\param x X coordinate
 		//!\param y Y coordinate
 		//!\return true if contained within, false otherwise
-		bool IsInside(int x, int y);
+		bool isInside(int x, int y);
 		//!Sets the element's position
 		//!\param x X coordinate
 		//!\param y Y coordinate
-		void SetPosition(int x, int y);
+		void setPosition(int x, int y);
 		//!Updates the element's effects (dynamic values)
 		//!Called by Draw(), used for animation purposes
-		void UpdateEffects();
+		void updateEffects();
 		//!Sets a function to called after after Update()
 		//!Callback function can be used to response to changes in the state of the element, and/or update the element's attributes
-		void SetUpdateCallback(UpdateCallback u);
+		void setUpdateCallback(UpdateCallback u);
 		//!Checks whether the element is in focus
 		//!\return true if element is in focus, false otherwise
-		int IsFocused();
+		int isFocused();
 		//!Sets the element's visibility
 		//!\param v Visibility (true = visible)
-		virtual void SetVisible(bool v);
+		virtual void setVisible(bool v);
 		//!Sets the element's focus
 		//!\param f Focus (true = in focus)
-		virtual void SetFocus(int f);
+		virtual void setFocus(int f);
 		//!Sets the element's state
 		//!\param s State (STATE_DEFAULT, STATE_SELECTED, STATE_CLICKED, STATE_DISABLED)
 		//!\param c Controller channel (0-3, -1 = none)
-		virtual void SetState(int s, int c = -1);
+		virtual void setState(int s, int c = -1);
 		//!Resets the element's state to STATE_DEFAULT
-		virtual void ResetState();
+		virtual void resetState();
 		//!Gets whether or not the element is in STATE_SELECTED
 		//!\return true if selected, false otherwise
-		virtual int GetSelected();
+		virtual int getSelected();
 		//!Sets the element's alignment respective to its parent element
 		//!\param hor Horizontal alignment (ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTRE)
 		//!\param vert Vertical alignment (ALIGN_TOP, ALIGN_BOTTOM, ALIGN_MIDDLE)
-		virtual void SetAlignment(int hor, int vert);
+		virtual void setAlignment(int hor, int vert);
 		//!Called when the language has changed, to obtain new text values for all text elements
-		virtual void ResetText();
+		virtual void resetText();
 		//!Called constantly to allow the element to respond to the current input data
 		//!\param t Pointer to a GuiTrigger, containing the current input data from PAD/WPAD
-		virtual void Update(GuiTrigger * t);
+		virtual void update(GuiTrigger * t);
 		//!Called constantly to redraw the element
-		virtual void Draw();
+		virtual void draw();
 		//!Called constantly to redraw the element's tooltip
-		virtual void DrawTooltip();
+		virtual void drawTooltip();
 	protected:
 		GuiTrigger * trigger[5]; //!< GuiTriggers (input actions) that this element responds to
 		UpdateCallback updateCB; //!< Callback function to call when this element is updated
@@ -487,67 +487,67 @@ class GuiWindow : public GuiElement
 		~GuiWindow();
 		//!Appends a GuiElement to the GuiWindow
 		//!\param e The GuiElement to append. If it is already in the GuiWindow, it is removed first
-		void Append(GuiElement* e);
+		void append(GuiElement* e);
 		//!Inserts a GuiElement into the GuiWindow at the specified index
 		//!\param e The GuiElement to insert. If it is already in the GuiWindow, it is removed first
 		//!\param i Index in which to insert the element
-		void Insert(GuiElement* e, u32 i);
+		void insert(GuiElement* e, u32 i);
 		//!Removes the specified GuiElement from the GuiWindow
 		//!\param e GuiElement to be removed
-		void Remove(GuiElement* e);
+		void remove(GuiElement* e);
 		//!Removes all GuiElements
-		void RemoveAll();
+		void removeAll();
 		//!Looks for the specified GuiElement
 		//!\param e The GuiElement to find
 		//!\return true if found, false otherwise
-		bool Find(GuiElement* e);
+		bool find(GuiElement* e);
 		//!Returns the GuiElement at the specified index
 		//!\param index The index of the element
 		//!\return A pointer to the element at the index, NULL on error (eg: out of bounds)
-		GuiElement* GetGuiElementAt(u32 index) const;
+		GuiElement* getGuiElementAt(u32 index) const;
 		//!Returns the size of the list of elements
 		//!\return The size of the current element list
-		u32 GetSize();
+		u32 getSize();
 		//!Sets the visibility of the window
 		//!\param v visibility (true = visible)
-		void SetVisible(bool v);
+		void setVisible(bool v);
 		//!Resets the window's state to STATE_DEFAULT
-		void ResetState();
+		void resetState();
 		//!Sets the window's state
 		//!\param s State
-		void SetState(int s, int c = -1);
+		void setState(int s, int c = -1);
 		//!Gets the index of the GuiElement inside the window that is currently selected
 		//!\return index of selected GuiElement
-		int GetSelected();
+		int getSelected();
 		//!Sets the window focus
 		//!\param f Focus
-		void SetFocus(int f);
+		void setFocus(int f);
 		//!Change the focus to the specified element
 		//!This is intended for the primary GuiWindow only
 		//!\param e GuiElement that should have focus
-		void ChangeFocus(GuiElement * e);
+		void changeFocus(GuiElement * e);
 		//!Changes window focus to the next focusable window or element
 		//!If no element is in focus, changes focus to the first available element
 		//!If B or 1 button is pressed, changes focus to the next available element
 		//!This is intended for the primary GuiWindow only
 		//!\param t Pointer to a GuiTrigger, containing the current input data from PAD/WPAD
-		void ToggleFocus(GuiTrigger * t);
+		void toggleFocus(GuiTrigger * t);
 		//!Moves the selected element to the element to the left or right
 		//!\param d Direction to move (-1 = left, 1 = right)
-		void MoveSelectionHor(int d);
+		void moveSelectionHor(int d);
 		//!Moves the selected element to the element above or below
 		//!\param d Direction to move (-1 = up, 1 = down)
-		void MoveSelectionVert(int d);
+		void moveSelectionVert(int d);
 		//!Resets the text for all contained elements
-		void ResetText();
+		void resetText();
 		//!Draws all the elements in this GuiWindow
-		void Draw();
+		void draw();
 		//!Draws all of the tooltips in this GuiWindow
-		void DrawTooltip();
+		void drawTooltip();
 		//!Updates the window and all elements contains within
 		//!Allows the GuiWindow and all elements to respond to the input data specified
 		//!\param t Pointer to a GuiTrigger, containing the current input data from PAD/WPAD
-		void Update(GuiTrigger * t);
+		void update(GuiTrigger * t);
 	protected:
 		std::vector<GuiElement*> _elements; //!< Contains all elements within the GuiWindow
 };
@@ -566,13 +566,13 @@ class GuiImageData
 		~GuiImageData();
 		//!Gets a pointer to the image data
 		//!\return pointer to image data
-		u8 * GetImage();
+		u8 * getImage();
 		//!Gets the image width
 		//!\return image width
-		int GetWidth();
+		int getWidth();
 		//!Gets the image height
 		//!\return image height
-		int GetHeight();
+		int getHeight();
 	protected:
 		u8 * data; //!< Image data
 		int height; //!< Height of image
@@ -604,40 +604,40 @@ class GuiImage : public GuiElement
 		~GuiImage();
 		//!Sets the image rotation angle for drawing
 		//!\param a Angle (in degrees)
-		void SetAngle(float a);
+		void setAngle(float a);
 		//!Sets the number of times to draw the image horizontally
 		//!\param t Number of times to draw the image
-		void SetTile(int t);
+		void setTile(int t);
 		//!Constantly called to draw the image
-		void Draw();
+		void draw();
 		//!Gets the image data
 		//!\return pointer to image data
-		u8 * GetImage();
+		u8 * getImage();
 		//!Sets up a new image using the GuiImageData object specified
 		//!\param img Pointer to GuiImageData object
-		void SetImage(GuiImageData * img);
+		void setImage(GuiImageData * img);
 		//!\overload
 		//!\param img Pointer to image data
 		//!\param w Width
 		//!\param h Height
-		void SetImage(u8 * img, int w, int h);
+		void setImage(u8 * img, int w, int h);
 		//!Gets the pixel color at the specified coordinates of the image
 		//!\param x X coordinate
 		//!\param y Y coordinate
-		GXColor GetPixel(int x, int y);
+		GXColor getPixel(int x, int y);
 		//!Sets the pixel color at the specified coordinates of the image
 		//!\param x X coordinate
 		//!\param y Y coordinate
 		//!\param color Pixel color
-		void SetPixel(int x, int y, GXColor color);
+		void setPixel(int x, int y, GXColor color);
 		//!Directly modifies the image data to create a color-striped effect
 		//!Alters the RGB values by the specified amount
 		//!\param s Amount to increment/decrement the RGB values in the image
-		void ColorStripe(int s);
+		void colorStripe(int s);
 		//!Sets a stripe effect on the image, overlaying alpha blended rectangles
 		//!Does not alter the image data
 		//!\param s Alpha amount to draw over the image
-		void SetStripe(int s);
+		void setStripe(int s);
 	protected:
 		int imgType; //!< Type of image data (IMAGE_TEXTURE, IMAGE_COLOR, IMAGE_DATA)
 		u8 * image; //!< Poiner to image data. May be shared with GuiImageData data
@@ -663,12 +663,12 @@ class GuiText : public GuiElement
 		~GuiText();
 		//!Sets the text of the GuiText element
 		//!\param t Text
-		void SetText(const char * t);
+		void setText(const char * t);
 		//!Sets the text of the GuiText element
 		//!\param t UTF-8 Text
-		void SetWText(wchar_t * t);
+		void setWText(wchar_t * t);
 		//!Gets the translated text length of the GuiText element
-		int GetLength();
+		int getLength();
 		//!Sets up preset values to be used by GuiText(t)
 		//!Useful when printing multiple text elements, all with the same attributes set
 		//!\param sz Font size
@@ -677,36 +677,36 @@ class GuiText : public GuiElement
 		//!\param s Font size
 		//!\param h Text alignment (horizontal)
 		//!\param v Text alignment (vertical)
-		static void SetPresets(int sz, GXColor c, int w, u16 s, int h, int v);
+		static void setPresets(int sz, GXColor c, int w, u16 s, int h, int v);
 		//!Sets the font size
 		//!\param s Font size
-		void SetFontSize(int s);
+		void setFontSize(int s);
 		//!Sets the maximum width of the drawn texture image
 		//!\param w Maximum width
-		void SetMaxWidth(int w);
+		void setMaxWidth(int w);
 		//!Gets the width of the text when rendered
-		int GetTextWidth();
+		int getTextWidth();
 		//!Enables/disables text scrolling
 		//!\param s Scrolling on/off
-		void SetScroll(int s);
+		void setScroll(int s);
 		//!Enables/disables text wrapping
 		//!\param w Wrapping on/off
 		//!\param width Maximum width (0 to disable)
-		void SetWrap(bool w, int width = 0);
+		void setWrap(bool w, int width = 0);
 		//!Sets the font color
 		//!\param c Font color
-		void SetColor(GXColor c);
+		void setColor(GXColor c);
 		//!Sets the FreeTypeGX style attributes
 		//!\param s Style attributes
-		void SetStyle(u16 s);
+		void setStyle(u16 s);
 		//!Sets the text alignment
 		//!\param hor Horizontal alignment (ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTRE)
 		//!\param vert Vertical alignment (ALIGN_TOP, ALIGN_BOTTOM, ALIGN_MIDDLE)
-		void SetAlignment(int hor, int vert);
+		void setAlignment(int hor, int vert);
 		//!Updates the text to the selected language
-		void ResetText();
+		void resetText();
 		//!Constantly called to draw the text
-		void Draw();
+		void draw();
 	protected:
 		GXColor color; //!< Font color
 		wchar_t* text; //!< Translated Unicode text value
@@ -733,12 +733,12 @@ class GuiTooltip : public GuiElement
 		//!Destructor
 		~GuiTooltip();
 		//!Gets the element's current scale
-		float GetScale();
+		float getScale();
 		//!Sets the text of the GuiTooltip element
 		//!\param t Text
-		void SetText(const char * t);
+		void setText(const char * t);
 		//!Constantly called to draw the GuiTooltip
-		void DrawTooltip();
+		void drawTooltip();
 	
 		time_t time1, time2; //!< Tooltip times
 
@@ -761,65 +761,65 @@ class GuiButton : public GuiElement
 		~GuiButton();
 		//!Sets the button's image
 		//!\param i Pointer to GuiImage object
-		void SetImage(GuiImage* i);
+		void setImage(GuiImage* i);
 		//!Sets the button's image on over
 		//!\param i Pointer to GuiImage object
-		void SetImageOver(GuiImage* i);
+		void setImageOver(GuiImage* i);
 		//!Sets the button's image on hold
 		//!\param i Pointer to GuiImage object
-		void SetImageHold(GuiImage* i);
+		void setImageHold(GuiImage* i);
 		//!Sets the button's image on click
 		//!\param i Pointer to GuiImage object
-		void SetImageClick(GuiImage* i);
+		void setImageClick(GuiImage* i);
 		//!Sets the button's icon
 		//!\param i Pointer to GuiImage object
-		void SetIcon(GuiImage* i);
+		void setIcon(GuiImage* i);
 		//!Sets the button's icon on over
 		//!\param i Pointer to GuiImage object
-		void SetIconOver(GuiImage* i);
+		void setIconOver(GuiImage* i);
 		//!Sets the button's icon on hold
 		//!\param i Pointer to GuiImage object
-		void SetIconHold(GuiImage* i);
+		void setIconHold(GuiImage* i);
 		//!Sets the button's icon on click
 		//!\param i Pointer to GuiImage object
-		void SetIconClick(GuiImage* i);
+		void setIconClick(GuiImage* i);
 		//!Sets the button's label
 		//!\param t Pointer to GuiText object
 		//!\param n Index of label to set (optional, default is 0)
-		void SetLabel(GuiText* t, int n = 0);
+		void setLabel(GuiText* t, int n = 0);
 		//!Sets the button's label on over (eg: different colored text)
 		//!\param t Pointer to GuiText object
 		//!\param n Index of label to set (optional, default is 0)
-		void SetLabelOver(GuiText* t, int n = 0);
+		void setLabelOver(GuiText* t, int n = 0);
 		//!Sets the button's label on hold
 		//!\param t Pointer to GuiText object
 		//!\param n Index of label to set (optional, default is 0)
-		void SetLabelHold(GuiText* t, int n = 0);
+		void setLabelHold(GuiText* t, int n = 0);
 		//!Sets the button's label on click
 		//!\param t Pointer to GuiText object
 		//!\param n Index of label to set (optional, default is 0)
-		void SetLabelClick(GuiText* t, int n = 0);
+		void setLabelClick(GuiText* t, int n = 0);
 		//!Sets the sound to play on over
 		//!\param s Pointer to GuiSound object
-		void SetSoundOver(GuiSound * s);
+		void setSoundOver(GuiSound * s);
 		//!Sets the sound to play on hold
 		//!\param s Pointer to GuiSound object
-		void SetSoundHold(GuiSound * s);
+		void setSoundHold(GuiSound * s);
 		//!Sets the sound to play on click
 		//!\param s Pointer to GuiSound object
-		void SetSoundClick(GuiSound * s);
+		void setSoundClick(GuiSound * s);
 		//!Sets the tooltip for the button
 		//!\param t Tooltip
-		void SetTooltip(GuiTooltip * t);
+		void setTooltip(GuiTooltip * t);
 		//!Constantly called to draw the GuiButton
-		void Draw();
+		void draw();
 		//!Constantly called to draw the GuiButton's tooltip
-		void DrawTooltip();
+		void drawTooltip();
 		//!Resets the text for all contained elements
-		void ResetText();
+		void resetText();
 		//!Constantly called to allow the GuiButton to respond to updated input data
 		//!\param t Pointer to a GuiTrigger, containing the current input data from PAD/WPAD
-		void Update(GuiTrigger * t);
+		void update(GuiTrigger * t);
 	protected:
 		GuiImage * image; //!< Button image (default)
 		GuiImage * imageOver; //!< Button image for STATE_SELECTED
@@ -849,7 +849,7 @@ class GuiKeyboard : public GuiWindow
 	public:
 		GuiKeyboard(char * t, u32 m);
 		~GuiKeyboard();
-		void Update(GuiTrigger * t);
+		void update(GuiTrigger * t);
 		char kbtextstr[256];
 	protected:
 		u32 kbtextmaxlen;
@@ -892,7 +892,7 @@ class GuiKeyboard : public GuiWindow
 
 typedef struct _optionlist {
 	int length;
-	char name[MAX_OPTIONS][50];
+	char name[MAX_OPTIONS][100];
 	char value[MAX_OPTIONS][50];
 } OptionList;
 
@@ -902,16 +902,16 @@ class GuiOptionBrowser : public GuiElement
 	public:
 		GuiOptionBrowser(int w, int h, OptionList * l);
 		~GuiOptionBrowser();
-		void SetCol1Position(int x);
-		void SetCol2Position(int x);
-		int FindMenuItem(int c, int d);
-		int GetClickedOption();
-		void ResetState();
-		void SetFocus(int f);
-		void Draw();
-		void TriggerUpdate();
-		void ResetText();
-		void Update(GuiTrigger * t);
+		void setCol1Position(int x);
+		void setCol2Position(int x);
+		int findMenuItem(int c, int d);
+		int getClickedOption();
+		void resetState();
+		void setFocus(int f);
+		void draw();
+		void triggerUpdate();
+		void resetText();
+		void update(GuiTrigger * t);
 		GuiText * optionVal[PAGESIZE];
 	protected:
 		int optionIndex[PAGESIZE];
@@ -965,11 +965,11 @@ class GuiSaveBrowser : public GuiElement
 	public:
 		GuiSaveBrowser(int w, int h, SaveList * l, int a);
 		~GuiSaveBrowser();
-		int GetClickedSave();
-		void ResetState();
-		void SetFocus(int f);
-		void Draw();
-		void Update(GuiTrigger * t);
+		int getClickedSave();
+		void resetState();
+		void setFocus(int f);
+		void draw();
+		void update(GuiTrigger * t);
 	protected:
 		int selectedItem;
 		int action;
@@ -1016,12 +1016,12 @@ class GuiFileBrowser : public GuiElement
 	public:
 		GuiFileBrowser(int w, int h);
 		~GuiFileBrowser();
-		void ResetState();
-		void SetFocus(int f);
-		void Draw();
-		void DrawTooltip();
-		void TriggerUpdate();
-		void Update(GuiTrigger * t);
+		void resetState();
+		void setFocus(int f);
+		void draw();
+		void drawTooltip();
+		void triggerUpdate();
+		void update(GuiTrigger * t);
 		GuiButton * fileList[FILE_PAGESIZE];
 	protected:
 		GuiText * fileListText[FILE_PAGESIZE];

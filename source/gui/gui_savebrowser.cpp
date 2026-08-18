@@ -1,9 +1,9 @@
 /****************************************************************************
- * libwiigui
+ * libgui
  *
- * Tantric 2009
+ * Daryl Borth 2009-2026
  *
- * gui_savebrowser.cpp
+ * GuiSaveBrowser.cpp
  *
  * GUI class definitions
  ***************************************************************************/
@@ -33,9 +33,9 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
-	trigA->SetSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A, WIIDRC_BUTTON_A);
+	trigA->setSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A, WIIDRC_BUTTON_A);
 	trig2 = new GuiTrigger;
-	trig2->SetSimpleTrigger(-1, WPAD_BUTTON_2, 0, 0);
+	trig2->setSimpleTrigger(-1, WPAD_BUTTON_2, 0, 0);
 
 	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND_PCM);
 	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND_PCM);
@@ -46,9 +46,9 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 
 	scrollbar = new GuiImageData(scrollbar_png);
 	scrollbarImg = new GuiImage(scrollbar);
-	scrollbarImg->SetParent(this);
-	scrollbarImg->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	scrollbarImg->SetPosition(0, 30);
+	scrollbarImg->setParent(this);
+	scrollbarImg->setAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	scrollbarImg->setPosition(0, 30);
 
 	arrowDown = new GuiImageData(scrollbar_arrowdown_png);
 	arrowDownImg = new GuiImage(arrowDown);
@@ -59,66 +59,66 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	arrowUpOver = new GuiImageData(scrollbar_arrowup_over_png);
 	arrowUpOverImg = new GuiImage(arrowUpOver);
 
-	arrowUpBtn = new GuiButton(arrowUpImg->GetWidth(), arrowUpImg->GetHeight());
-	arrowUpBtn->SetParent(this);
-	arrowUpBtn->SetImage(arrowUpImg);
-	arrowUpBtn->SetImageOver(arrowUpOverImg);
-	arrowUpBtn->SetAlignment(ALIGN_RIGHT, ALIGN_TOP);
-	arrowUpBtn->SetSelectable(false);
-	arrowUpBtn->SetTrigger(trigA);
-	arrowUpBtn->SetSoundOver(btnSoundOver);
-	arrowUpBtn->SetSoundClick(btnSoundClick);
+	arrowUpBtn = new GuiButton(arrowUpImg->getWidth(), arrowUpImg->getHeight());
+	arrowUpBtn->setParent(this);
+	arrowUpBtn->setImage(arrowUpImg);
+	arrowUpBtn->setImageOver(arrowUpOverImg);
+	arrowUpBtn->setAlignment(ALIGN_RIGHT, ALIGN_TOP);
+	arrowUpBtn->setSelectable(false);
+	arrowUpBtn->setTrigger(trigA);
+	arrowUpBtn->setSoundOver(btnSoundOver);
+	arrowUpBtn->setSoundClick(btnSoundClick);
 
-	arrowDownBtn = new GuiButton(arrowDownImg->GetWidth(), arrowDownImg->GetHeight());
-	arrowDownBtn->SetParent(this);
-	arrowDownBtn->SetImage(arrowDownImg);
-	arrowDownBtn->SetImageOver(arrowDownOverImg);
-	arrowDownBtn->SetAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
-	arrowDownBtn->SetSelectable(false);
-	arrowDownBtn->SetTrigger(trigA);
-	arrowDownBtn->SetSoundOver(btnSoundOver);
-	arrowDownBtn->SetSoundClick(btnSoundClick);
+	arrowDownBtn = new GuiButton(arrowDownImg->getWidth(), arrowDownImg->getHeight());
+	arrowDownBtn->setParent(this);
+	arrowDownBtn->setImage(arrowDownImg);
+	arrowDownBtn->setImageOver(arrowDownOverImg);
+	arrowDownBtn->setAlignment(ALIGN_RIGHT, ALIGN_BOTTOM);
+	arrowDownBtn->setSelectable(false);
+	arrowDownBtn->setTrigger(trigA);
+	arrowDownBtn->setSoundOver(btnSoundOver);
+	arrowDownBtn->setSoundClick(btnSoundClick);
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
 		saveDate[i] = new GuiText(NULL, 18, (GXColor){0, 0, 0, 0xff});
-		saveDate[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
-		saveDate[i]->SetPosition(80,5);
+		saveDate[i]->setAlignment(ALIGN_LEFT, ALIGN_TOP);
+		saveDate[i]->setPosition(80,5);
 		saveTime[i] = new GuiText(NULL, 18, (GXColor){0, 0, 0, 0xff});
-		saveTime[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
-		saveTime[i]->SetPosition(80,27);
+		saveTime[i]->setAlignment(ALIGN_LEFT, ALIGN_TOP);
+		saveTime[i]->setPosition(80,27);
 
 		saveType[i] = new GuiText(NULL, 18, (GXColor){0, 0, 0, 0xff});
-		saveType[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
-		saveType[i]->SetPosition(80,50);
+		saveType[i]->setAlignment(ALIGN_LEFT, ALIGN_TOP);
+		saveType[i]->setPosition(80,50);
 
 		saveBgImg[i] = new GuiImage(gameSave);
 		saveBgOverImg[i] = new GuiImage(gameSaveOver);
 		savePreviewImg[i] = new GuiImage(gameSaveBlank);
-		savePreviewImg[i]->SetAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
-		savePreviewImg[i]->SetPosition(5,0);
+		savePreviewImg[i]->setAlignment(ALIGN_LEFT, ALIGN_MIDDLE);
+		savePreviewImg[i]->setPosition(5,0);
 
-		saveBtn[i] = new GuiButton(saveBgImg[i]->GetWidth(),saveBgImg[i]->GetHeight());
-		saveBtn[i]->SetParent(this);
-		saveBtn[i]->SetLabel(saveDate[i], 0);
-		saveBtn[i]->SetLabel(saveTime[i], 1);
-		saveBtn[i]->SetLabel(saveType[i], 2);
-		saveBtn[i]->SetImage(saveBgImg[i]);
-		saveBtn[i]->SetImageOver(saveBgOverImg[i]);
-		saveBtn[i]->SetIcon(savePreviewImg[i]);
-		saveBtn[i]->SetAlignment(ALIGN_LEFT, ALIGN_TOP);
-		saveBtn[i]->SetPosition(257*(i % 2),87*(i>>1));
-		saveBtn[i]->SetTrigger(trigA);
-		saveBtn[i]->SetTrigger(trig2);
-		saveBtn[i]->SetState(STATE_DISABLED);
-		saveBtn[i]->SetEffectGrow();
-		saveBtn[i]->SetVisible(false);
-		saveBtn[i]->SetSoundOver(btnSoundOver);
-		saveBtn[i]->SetSoundClick(btnSoundClick);
+		saveBtn[i] = new GuiButton(saveBgImg[i]->getWidth(),saveBgImg[i]->getHeight());
+		saveBtn[i]->setParent(this);
+		saveBtn[i]->setLabel(saveDate[i], 0);
+		saveBtn[i]->setLabel(saveTime[i], 1);
+		saveBtn[i]->setLabel(saveType[i], 2);
+		saveBtn[i]->setImage(saveBgImg[i]);
+		saveBtn[i]->setImageOver(saveBgOverImg[i]);
+		saveBtn[i]->setIcon(savePreviewImg[i]);
+		saveBtn[i]->setAlignment(ALIGN_LEFT, ALIGN_TOP);
+		saveBtn[i]->setPosition(257*(i % 2),87*(i>>1));
+		saveBtn[i]->setTrigger(trigA);
+		saveBtn[i]->setTrigger(trig2);
+		saveBtn[i]->setState(STATE_DISABLED);
+		saveBtn[i]->setEffectGrow();
+		saveBtn[i]->setVisible(false);
+		saveBtn[i]->setSoundOver(btnSoundOver);
+		saveBtn[i]->setSoundClick(btnSoundClick);
 		saveBtnLastOver[i] = false;
 	}
-	saveBtn[0]->SetState(STATE_SELECTED, -1);
-	saveBtn[0]->SetVisible(true);
+	saveBtn[0]->setState(STATE_SELECTED, -1);
+	saveBtn[0]->setVisible(true);
 }
 
 /**
@@ -161,18 +161,18 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	}
 }
 
-void GuiSaveBrowser::SetFocus(int f)
+void GuiSaveBrowser::setFocus(int f)
 {
 	focus = f;
 
 	for(int i=0; i<SAVELISTSIZE; i++)
-		saveBtn[i]->ResetState();
+		saveBtn[i]->resetState();
 
 	if(f == 1 && selectedItem >= 0)
-		saveBtn[selectedItem]->SetState(STATE_SELECTED);
+		saveBtn[selectedItem]->setState(STATE_SELECTED);
 }
 
-void GuiSaveBrowser::ResetState()
+void GuiSaveBrowser::resetState()
 {
 	if(state != STATE_DISABLED)
 	{
@@ -182,18 +182,18 @@ void GuiSaveBrowser::ResetState()
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
-		saveBtn[i]->ResetState();
+		saveBtn[i]->resetState();
 	}
 }
 
-int GuiSaveBrowser::GetClickedSave()
+int GuiSaveBrowser::getClickedSave()
 {
 	int found = -3;
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
-		if(saveBtn[i]->GetState() == STATE_CLICKED)
+		if(saveBtn[i]->getState() == STATE_CLICKED)
 		{
-			saveBtn[i]->SetState(STATE_SELECTED);
+			saveBtn[i]->setState(STATE_SELECTED);
 			found = listOffset+i;
 			break;
 		}
@@ -204,22 +204,22 @@ int GuiSaveBrowser::GetClickedSave()
 /**
  * Draw the button on screen
  */
-void GuiSaveBrowser::Draw()
+void GuiSaveBrowser::draw()
 {
-	if(!this->IsVisible())
+	if(!this->isVisible())
 		return;
 
 	for(int i=0; i<SAVELISTSIZE; i++)
-		saveBtn[i]->Draw();
+		saveBtn[i]->draw();
 
-	scrollbarImg->Draw();
-	arrowUpBtn->Draw();
-	arrowDownBtn->Draw();
+	scrollbarImg->draw();
+	arrowUpBtn->draw();
+	arrowDownBtn->draw();
 
-	this->UpdateEffects();
+	this->updateEffects();
 }
 
-void GuiSaveBrowser::Update(GuiTrigger * t)
+void GuiSaveBrowser::update(GuiTrigger * t)
 {
 	if(state == STATE_DISABLED || !t)
 		return;
@@ -227,8 +227,8 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 	int i, len;
 	char savetext[50];
 
-	arrowUpBtn->Update(t);
-	arrowDownBtn->Update(t);
+	arrowUpBtn->update(t);
+	arrowDownBtn->update(t);
 
 	// pad/joystick navigation
 	if(!focus)
@@ -236,7 +236,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 
 	if(selectedItem < 0) selectedItem = 0;
 
-	if(t->Right())
+	if(t->right())
 	{
 		if(selectedItem == SAVELISTSIZE-1)
 		{
@@ -247,14 +247,14 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 				selectedItem -= 1;
 			}
 		}
-		else if(saveBtn[selectedItem+1]->IsVisible())
+		else if(saveBtn[selectedItem+1]->isVisible())
 		{
-			saveBtn[selectedItem]->ResetState();
-			saveBtn[selectedItem+1]->SetState(STATE_SELECTED, t->chan);
+			saveBtn[selectedItem]->resetState();
+			saveBtn[selectedItem+1]->setState(STATE_SELECTED, t->chan);
 			selectedItem += 1;
 		}
 	}
-	else if(t->Left())
+	else if(t->left())
 	{
 		if(selectedItem == 0)
 		{
@@ -269,13 +269,13 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		}
 		else
 		{
-			if(saveBtn[selectedItem-1]->IsVisible())
+			if(saveBtn[selectedItem-1]->isVisible())
 			{
 				selectedItem -= 1;
 			}
 		}
 	}
-	else if(t->Down() || arrowDownBtn->GetState() == STATE_CLICKED)
+	else if(t->down() || arrowDownBtn->getState() == STATE_CLICKED)
 	{
 		if(selectedItem >= SAVELISTSIZE-2)
 		{
@@ -291,12 +291,12 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 					selectedItem -= 1;
 			}
 		}
-		else if(saveBtn[selectedItem+2]->IsVisible())
+		else if(saveBtn[selectedItem+2]->isVisible())
 		{
 			selectedItem += 2;
 		}
 	}
-	else if(t->Up() || arrowUpBtn->GetState() == STATE_CLICKED)
+	else if(t->up() || arrowUpBtn->getState() == STATE_CLICKED)
 	{
 		if(selectedItem < 2)
 		{
@@ -310,7 +310,7 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 		}
 		else
 		{
-			if(saveBtn[selectedItem-2]->IsVisible())
+			if(saveBtn[selectedItem-2]->isVisible())
 			{
 				selectedItem -= 2;
 			}
@@ -319,48 +319,48 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 
 	endNavigation:
 
-	if(arrowDownBtn->GetState() == STATE_CLICKED)
-		arrowDownBtn->ResetState();
+	if(arrowDownBtn->getState() == STATE_CLICKED)
+		arrowDownBtn->resetState();
 
-	if(arrowUpBtn->GetState() == STATE_CLICKED)
-		arrowUpBtn->ResetState();
+	if(arrowUpBtn->getState() == STATE_CLICKED)
+		arrowUpBtn->resetState();
 
 	for(i=0; i<SAVELISTSIZE; i++)
 	{
 		if(listOffset+i < 0 && action == 1)
 		{
 
-			saveDate[0]->SetText(NULL);
-			saveTime[0]->SetText("New");
-			saveType[0]->SetText("State");
-			savePreviewImg[0]->SetImage(gameSaveBlank);
-			saveBtn[0]->SetVisible(true);
+			saveDate[0]->setText(NULL);
+			saveTime[0]->setText("New");
+			saveType[0]->setText("State");
+			savePreviewImg[0]->setImage(gameSaveBlank);
+			saveBtn[0]->setVisible(true);
 
-			if(saveBtn[0]->GetState() == STATE_DISABLED)
-				saveBtn[0]->SetState(STATE_DEFAULT);
+			if(saveBtn[0]->getState() == STATE_DISABLED)
+				saveBtn[0]->setState(STATE_DEFAULT);
 			
 			if (GCSettings.HideSRAMSaving == 0)
 			{
-				saveDate[1]->SetText(NULL);
-				saveTime[1]->SetText("New");
-				saveType[1]->SetText("SRAM");
-				savePreviewImg[1]->SetImage(gameSaveBlank);
-				saveBtn[1]->SetVisible(true);
+				saveDate[1]->setText(NULL);
+				saveTime[1]->setText("New");
+				saveType[1]->setText("SRAM");
+				savePreviewImg[1]->setImage(gameSaveBlank);
+				saveBtn[1]->setVisible(true);
 
-				if(saveBtn[1]->GetState() == STATE_DISABLED)
-					saveBtn[1]->SetState(STATE_DEFAULT);
+				if(saveBtn[1]->getState() == STATE_DISABLED)
+					saveBtn[1]->setState(STATE_DEFAULT);
 			}
 		}
 		else if(listOffset+i < saves->length)
 		{
-			if(saveBtn[i]->GetState() == STATE_DISABLED || !saveBtn[i]->IsVisible())
+			if(saveBtn[i]->getState() == STATE_DISABLED || !saveBtn[i]->isVisible())
 			{
-				saveBtn[i]->SetVisible(true);
-				saveBtn[i]->SetState(STATE_DEFAULT);
+				saveBtn[i]->setVisible(true);
+				saveBtn[i]->setState(STATE_DEFAULT);
 			}
 
-			saveDate[i]->SetText(saves->date[listOffset+i]);
-			saveTime[i]->SetText(saves->time[listOffset+i]);
+			saveDate[i]->setText(saves->date[listOffset+i]);
+			saveTime[i]->setText(saves->time[listOffset+i]);
 
 			if(saves->type[listOffset+i] == FILE_SRAM)
 				sprintf(savetext, "SRAM");
@@ -378,34 +378,34 @@ void GuiSaveBrowser::Update(GuiTrigger * t)
 			{
 				strcat(savetext, " (Auto)");
 			}
-			saveType[i]->SetText(savetext);
+			saveType[i]->setText(savetext);
 
 			if(saves->previewImg[listOffset+i] != NULL)
-				savePreviewImg[i]->SetImage(saves->previewImg[listOffset+i]);
+				savePreviewImg[i]->setImage(saves->previewImg[listOffset+i]);
 			else
-				savePreviewImg[i]->SetImage(gameSaveBlank);
+				savePreviewImg[i]->setImage(gameSaveBlank);
 		}
 		else
 		{
-			saveBtn[i]->SetVisible(false);
-			saveBtn[i]->SetState(STATE_DISABLED);
+			saveBtn[i]->setVisible(false);
+			saveBtn[i]->setState(STATE_DISABLED);
 		}
 
-		if(i != selectedItem && saveBtn[i]->GetState() == STATE_SELECTED)
-			saveBtn[i]->ResetState();
-		else if(focus && i == selectedItem && saveBtn[i]->GetState() == STATE_DEFAULT)
-			saveBtn[selectedItem]->SetState(STATE_SELECTED, t->chan);
+		if(i != selectedItem && saveBtn[i]->getState() == STATE_SELECTED)
+			saveBtn[i]->resetState();
+		else if(focus && i == selectedItem && saveBtn[i]->getState() == STATE_DEFAULT)
+			saveBtn[selectedItem]->setState(STATE_SELECTED, t->chan);
 
 		if(t->wpad->ir.valid)
 		{
-			if(!saveBtnLastOver[i] && saveBtn[i]->IsInside(t->wpad->ir.x, t->wpad->ir.y))
-				saveBtn[i]->ResetState();
-			saveBtnLastOver[i] = saveBtn[i]->IsInside(t->wpad->ir.x, t->wpad->ir.y);
+			if(!saveBtnLastOver[i] && saveBtn[i]->isInside(t->wpad->ir.x, t->wpad->ir.y))
+				saveBtn[i]->resetState();
+			saveBtnLastOver[i] = saveBtn[i]->isInside(t->wpad->ir.x, t->wpad->ir.y);
 		}
 
-		saveBtn[i]->Update(t);
+		saveBtn[i]->update(t);
 
-		if(saveBtn[i]->GetState() == STATE_SELECTED)
+		if(saveBtn[i]->getState() == STATE_SELECTED)
 			selectedItem = i;
 	}
 

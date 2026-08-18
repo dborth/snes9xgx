@@ -1,9 +1,9 @@
 /****************************************************************************
- * libwiigui
+ * libgui
  *
- * Tantric 2009
+ * Daryl Borth 2009-2026
  *
- * gui_image.cpp
+ * GuiImage.cpp
  *
  * GUI class definitions
  ***************************************************************************/
@@ -30,9 +30,9 @@ GuiImage::GuiImage(GuiImageData * img)
 	height = 0;
 	if(img)
 	{
-		image = img->GetImage();
-		width = img->GetWidth();
-		height = img->GetHeight();
+		image = img->getImage();
+		width = img->getWidth();
+		height = img->getHeight();
 	}
 	imageangle = 0;
 	tile = -1;
@@ -70,7 +70,7 @@ GuiImage::GuiImage(int w, int h, GXColor c)
 	{
 		for(x=0; x < w; ++x)
 		{
-			this->SetPixel(x, y, c);
+			this->setPixel(x, y, c);
 		}
 	}
 	int len = w * h << 2;
@@ -87,26 +87,26 @@ GuiImage::~GuiImage()
 		free(image);
 }
 
-u8 * GuiImage::GetImage()
+u8 * GuiImage::getImage()
 {
 	return image;
 }
 
-void GuiImage::SetImage(GuiImageData * img)
+void GuiImage::setImage(GuiImageData * img)
 {
 	image = NULL;
 	width = 0;
 	height = 0;
 	if(img)
 	{
-		image = img->GetImage();
-		width = img->GetWidth();
-		height = img->GetHeight();
+		image = img->getImage();
+		width = img->getWidth();
+		height = img->getHeight();
 	}
 	imgType = IMAGE_DATA;
 }
 
-void GuiImage::SetImage(u8 * img, int w, int h)
+void GuiImage::setImage(u8 * img, int w, int h)
 {
 	image = img;
 	width = w;
@@ -114,22 +114,22 @@ void GuiImage::SetImage(u8 * img, int w, int h)
 	imgType = IMAGE_TEXTURE;
 }
 
-void GuiImage::SetAngle(float a)
+void GuiImage::setAngle(float a)
 {
 	imageangle = a;
 }
 
-void GuiImage::SetTile(int t)
+void GuiImage::setTile(int t)
 {
 	tile = t;
 }
 
-GXColor GuiImage::GetPixel(int x, int y)
+GXColor GuiImage::getPixel(int x, int y)
 {
-	if(!image || this->GetWidth() <= 0 || x < 0 || y < 0)
+	if(!image || this->getWidth() <= 0 || x < 0 || y < 0)
 		return (GXColor){0, 0, 0, 0};
 
-	u32 offset = (((y >> 2)<<4)*this->GetWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
+	u32 offset = (((y >> 2)<<4)*this->getWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
 	GXColor color;
 	color.a = *(image+offset);
 	color.r = *(image+offset+1);
@@ -138,31 +138,31 @@ GXColor GuiImage::GetPixel(int x, int y)
 	return color;
 }
 
-void GuiImage::SetPixel(int x, int y, GXColor color)
+void GuiImage::setPixel(int x, int y, GXColor color)
 {
-	if(!image || this->GetWidth() <= 0 || x < 0 || y < 0)
+	if(!image || this->getWidth() <= 0 || x < 0 || y < 0)
 		return;
 
-	u32 offset = (((y >> 2)<<4)*this->GetWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
+	u32 offset = (((y >> 2)<<4)*this->getWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
 	*(image+offset) = color.a;
 	*(image+offset+1) = color.r;
 	*(image+offset+32) = color.g;
 	*(image+offset+33) = color.b;
 }
 
-void GuiImage::SetStripe(int s)
+void GuiImage::setStripe(int s)
 {
 	stripe = s;
 }
 
-void GuiImage::ColorStripe(int shift)
+void GuiImage::colorStripe(int shift)
 {
 	GXColor color;
 	int x, y=0;
 	int alt = 0;
 	
-	int thisHeight =  this->GetHeight();
-	int thisWidth =  this->GetWidth();
+	int thisHeight =  this->getHeight();
+	int thisWidth =  this->getWidth();
 
 	for(; y < thisHeight; ++y)
 	{
@@ -173,7 +173,7 @@ void GuiImage::ColorStripe(int shift)
 		{
 			for(x=0; x < thisWidth; ++x)
 			{
-				color = GetPixel(x, y);
+				color = getPixel(x, y);
 
 				if(color.r < 255-shift)
 					color.r += shift;
@@ -189,14 +189,14 @@ void GuiImage::ColorStripe(int shift)
 					color.b = 255;
 
 				color.a = 255;
-				SetPixel(x, y, color);
+				setPixel(x, y, color);
 			}
 		}
 		else
 		{
 			for(x=0; x < thisWidth; ++x)
 			{
-				color = GetPixel(x, y);
+				color = getPixel(x, y);
 
 				if(color.r > shift)
 					color.r -= shift;
@@ -212,7 +212,7 @@ void GuiImage::ColorStripe(int shift)
 					color.b = 0;
 
 				color.a = 255;
-				SetPixel(x, y, color);
+				setPixel(x, y, color);
 			}
 		}
 	}
@@ -221,19 +221,19 @@ void GuiImage::ColorStripe(int shift)
 /**
  * Draw the button on screen
  */
-void GuiImage::Draw()
+void GuiImage::draw()
 {
-	if(!image || !this->IsVisible() || tile == 0)
+	if(!image || !this->isVisible() || tile == 0)
 		return;
 
-	float currScaleX = this->GetScaleX();
-	float currScaleY = this->GetScaleY();
-	int currLeft = this->GetLeft();
-	int thisTop = this->GetTop();
+	float currScaleX = this->getScaleX();
+	float currScaleY = this->getScaleY();
+	int currLeft = this->getLeft();
+	int thisTop = this->getTop();
 
 	if(tile > 0)
 	{
-		int alpha = this->GetAlpha();
+		int alpha = this->getAlpha();
 		for(int i=0; i<tile; ++i)
 		{
 			Menu_DrawImg(currLeft+width*i, thisTop, width, height, image, imageangle, currScaleX, currScaleY, alpha);
@@ -241,15 +241,15 @@ void GuiImage::Draw()
 	}
 	else
 	{
-		Menu_DrawImg(currLeft, thisTop, width, height, image, imageangle, currScaleX, currScaleY, this->GetAlpha());
+		Menu_DrawImg(currLeft, thisTop, width, height, image, imageangle, currScaleX, currScaleY, this->getAlpha());
 	}
 
 	if(stripe > 0)
 	{
-		int thisHeight = this->GetHeight();
-		int thisWidth = this->GetWidth();
+		int thisHeight = this->getHeight();
+		int thisWidth = this->getWidth();
 		for(int y=0; y < thisHeight; y+=6)
 			Menu_DrawRectangle(currLeft,thisTop+y,thisWidth,3,(GXColor){0, 0, 0, (u8)stripe},1);
 	}
-	this->UpdateEffects();
+	this->updateEffects();
 }
