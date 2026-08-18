@@ -1,7 +1,7 @@
 #ifndef GUIBUTTON_H
 #define GUIBUTTON_H
 
-#include "gui.h"
+#include "Gui.h"
 
 //!Display, manage, and manipulate buttons in the GUI. Buttons can have images, icons, text, and sound set (all of which are optional)
 class GuiButton : public GuiElement

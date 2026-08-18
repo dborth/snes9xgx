@@ -1,7 +1,7 @@
 #ifndef GUITEXT_H
 #define GUITEXT_H
 
-#include "gui.h"
+#include "Gui.h"
 
 //!Display, manage, and manipulate text in the GUI
 class GuiText : public GuiElement

@@ -1,7 +1,7 @@
 #ifndef GUIFILEBROWSER_H
 #define GUIFILEBROWSER_H
 
-#include "gui.h"
+#include "Gui.h"
 
 #define FILE_PAGESIZE 			10
 

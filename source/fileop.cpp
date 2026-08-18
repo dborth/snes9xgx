@@ -31,7 +31,7 @@
 #include "gcunzip.h"
 #include "menu.h"
 #include "filebrowser.h"
-#include "gui/gui.h"
+#include "gui/Gui.h"
 
 #define THREAD_SLEEP 100
 

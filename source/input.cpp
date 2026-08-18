@@ -29,7 +29,7 @@
 #include "menu.h"
 #include "video.h"
 #include "input.h"
-#include "gui/gui.h"
+#include "gui/Gui.h"
 
 #include "snes9x/snes9x.h"
 #include "snes9x/memmap.h"

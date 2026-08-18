@@ -1,7 +1,7 @@
 #ifndef GUIIMAGE_H
 #define GUIIMAGE_H
 
-#include "gui.h"
+#include "Gui.h"
 
 enum
 {
