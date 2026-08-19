@@ -1,7 +1,9 @@
-#ifndef GUITEXT_H
-#define GUITEXT_H
-
-#include "Gui.h"
+/****************************************************************************
+ * libgui
+ * Daryl Borth 2009-2026
+ * GuiText.h
+ ***************************************************************************/
+#pragma once
 
 //!Display, manage, and manipulate text in the GUI
 class GuiText : public GuiElement
@@ -11,7 +13,7 @@ class GuiText : public GuiElement
 		//!\param t Text
 		//!\param s Font size
 		//!\param c Font color
-		GuiText(const char * t, int s, GXColor c);
+		GuiText(const char * t, int s, GuiColor c);
 		//!\overload
 		//!Assumes SetPresets() has been called to setup preferred text attributes
 		//!\param t Text
@@ -34,7 +36,7 @@ class GuiText : public GuiElement
 		//!\param s Font size
 		//!\param h Text alignment (horizontal)
 		//!\param v Text alignment (vertical)
-		static void setPresets(int sz, GXColor c, int w, u16 s, ALIGN_H h, ALIGN_V v);
+		static void setPresets(int sz, GuiColor c, int w, u16 s, ALIGN_H h, ALIGN_V v);
 		//!Sets the font size
 		//!\param s Font size
 		void setFontSize(int s);
@@ -52,20 +54,20 @@ class GuiText : public GuiElement
 		void setWrap(bool w, int width = 0);
 		//!Sets the font color
 		//!\param c Font color
-		void setColor(GXColor c);
-		//!Sets the FreeTypeGX style attributes
+		void setColor(GuiColor c);
+		//!Sets the GuiTextRenderer style attributes
 		//!\param s Style attributes
 		void setStyle(u16 s);
 		//!Sets the text alignment
-		//!\param hor Horizontal alignment (LEFT, RIGHT, CENTRE)
-		//!\param vert Vertical alignment (TOP, BOTTOM, MIDDLE)
+	//!\param hor Horizontal alignment (LEFT, RIGHT, CENTRE)
+	//!\param vert Vertical alignment (TOP, BOTTOM, MIDDLE)
 		void setAlignment(ALIGN_H hor, ALIGN_V vert);
 		//!Updates the text to the selected language
 		void resetText();
 		//!Constantly called to draw the text
-		void draw();
-	protected:
-		GXColor color; //!< Font color
+	void draw() override;
+	private:
+		GuiColor color; //!< Font color
 		wchar_t* text; //!< Translated Unicode text value
 		wchar_t *textDyn[20]; //!< Text value, if max width, scrolling, or wrapping enabled
 		int textDynNum; //!< Number of text lines
@@ -76,8 +78,10 @@ class GuiText : public GuiElement
 		int textScrollPos; //!< Current starting index of text string for scrolling
 		int textScrollInitialDelay; //!< Delay to wait before starting to scroll
 		int textScrollDelay; //!< Scrolling speed
-		u16 style; //!< FreeTypeGX style attributes
+		u16 style; //!< GuiTextRenderer style attributes
 		bool wrap; //!< Wrapping toggle
+
+		wchar_t* getText(const char *text) const;
 };
 
-#endif // GUITEXT_H
+extern GuiTextTranslator* textTranslator;

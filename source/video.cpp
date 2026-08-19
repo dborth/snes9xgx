@@ -1357,7 +1357,7 @@ void Menu_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[],
  *
  * Draws a rectangle at the specified coordinates using GX
  ***************************************************************************/
-void Menu_DrawRectangle(f32 x, f32 y, f32 width, f32 height, GXColor color, u8 filled)
+void Menu_DrawRectangle(f32 x, f32 y, f32 width, f32 height, GuiColor color, u8 filled)
 {
 	long n = 4;
 	f32 x2 = x+width;

@@ -51,7 +51,7 @@ GuiImage::GuiImage(u8 * img, int w, int h)
 	imgType = IMAGE::TEXTURE;
 }
 
-GuiImage::GuiImage(int w, int h, GXColor c)
+GuiImage::GuiImage(int w, int h, GuiColor c)
 {
 	image = (u8 *)memalign (32, w * h << 2);
 	width = w;
@@ -124,13 +124,13 @@ void GuiImage::setTile(int t)
 	tile = t;
 }
 
-GXColor GuiImage::getPixel(int x, int y)
+GuiColor GuiImage::getPixel(int x, int y)
 {
 	if(!image || this->getWidth() <= 0 || x < 0 || y < 0)
-		return (GXColor){0, 0, 0, 0};
+		return (GuiColor){0, 0, 0, 0};
 
 	u32 offset = (((y >> 2)<<4)*this->getWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
-	GXColor color;
+	GuiColor color;
 	color.a = *(image+offset);
 	color.r = *(image+offset+1);
 	color.g = *(image+offset+32);
@@ -138,7 +138,7 @@ GXColor GuiImage::getPixel(int x, int y)
 	return color;
 }
 
-void GuiImage::setPixel(int x, int y, GXColor color)
+void GuiImage::setPixel(int x, int y, GuiColor color)
 {
 	if(!image || this->getWidth() <= 0 || x < 0 || y < 0)
 		return;
@@ -157,7 +157,7 @@ void GuiImage::setStripe(int s)
 
 void GuiImage::colorStripe(int shift)
 {
-	GXColor color;
+	GuiColor color;
 	int x, y=0;
 	int alt = 0;
 	
@@ -249,7 +249,7 @@ void GuiImage::draw()
 		int thisHeight = this->getHeight();
 		int thisWidth = this->getWidth();
 		for(int y=0; y < thisHeight; y+=6)
-			Menu_DrawRectangle(currLeft,thisTop+y,thisWidth,3,(GXColor){0, 0, 0, (u8)stripe},1);
+			Menu_DrawRectangle(currLeft,thisTop+y,thisWidth,3,(GuiColor){0, 0, 0, (u8)stripe},1);
 	}
 	this->updateEffects();
 }

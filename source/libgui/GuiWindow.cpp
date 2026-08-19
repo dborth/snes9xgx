@@ -107,7 +107,7 @@ void GuiWindow::draw()
 	this->updateEffects();
 
 	if(parentElement && state == STATE::DISABLED)
-		Menu_DrawRectangle(0,0,screenwidth,screenheight,(GXColor){0xbe, 0xca, 0xd5, 0x70},1);
+		Menu_DrawRectangle(0,0,screenwidth,screenheight,(GuiColor){0xbe, 0xca, 0xd5, 0x70},1);
 }
 
 void GuiWindow::drawTooltip()

@@ -28,7 +28,7 @@
 #include "memmanager.h"
 #include "font_ttf.h"
 #include "utils/wiidrc.h"
-#include "utils/FreeTypeGX.h"
+#include "libgui/Gui.h"
 
 extern "C" {
 extern void __exception_setreload(int t);
@@ -182,7 +182,10 @@ void SystemInit() {
 	SetupPads();
 	InitDeviceThread();
 	MountAllFAT(); // Initialize libFAT for SD and USB
-	InitFreeType((u8*)font_ttf, font_ttf_size); // Initialize font system
+
+	glyphRenderer = new WiiGlyphRenderer();
+	fontSystem = new GuiTextRenderer(font_ttf, font_ttf_size, glyphRenderer);
+	textTranslator->loadLanguage(en_lang, en_lang_size);
 }
 
 static void ExitCleanup()

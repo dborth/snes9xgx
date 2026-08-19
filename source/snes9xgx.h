@@ -14,7 +14,6 @@
 #ifndef _SNES9XGX_H_
 #define _SNES9XGX_H_
 
-#include "utils/FreeTypeGX.h"
 #include "snes9x.h"
 #include "filelist.h"
 
@@ -273,6 +272,4 @@ void ExitApp();
 extern struct SGCSettings GCSettings;
 extern bool MenuRequested;
 extern char appPath[];
-extern FreeTypeGX *fontSystem[];
-
 #endif
