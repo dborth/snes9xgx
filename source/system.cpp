@@ -28,6 +28,7 @@
 #include "memmanager.h"
 #include "font_ttf.h"
 #include "utils/wiidrc.h"
+#include "utils/WiiGlyphRenderer.h"
 #include "libgui/Gui.h"
 
 extern "C" {
