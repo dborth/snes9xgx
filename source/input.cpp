@@ -445,7 +445,7 @@ void UpdatePads()
 		#endif
 
 		// 4. Merge into unified aggregate state for UI Elements
-		for (int hw = 0; hw < GUI_HW_MAX; hw++)
+		for (uint32_t hw = 0; hw < GUI_HW_MAX; hw++)
 		{
 			if (padData.hw_connected[hw])
 			{
@@ -598,7 +598,7 @@ static void decodepad (int chan, int emuChan)
 		bool button_pressed = false;
 
 		// Check if ANY connected hardware matches the mapping
-		for (int hw = 0; hw < GUI_HW_MAX; hw++)
+		for (uint32_t hw = 0; hw < GUI_HW_MAX; hw++)
 		{
 			if (!pad.hw_connected[hw]) continue;
 			uint32_t mapped_btn = btnmap[CTRL_PAD][hw][i];
@@ -619,7 +619,7 @@ static void decodepad (int chan, int emuChan)
 		for (i = 0; i < 6; i++)
 		{
 			bool button_pressed = false;
-			for (int hw = 0; hw < GUI_HW_MAX; hw++) {
+			for (uint32_t hw = 0; hw < GUI_HW_MAX; hw++) {
 				if (!pad.hw_connected[hw]) continue;
 				if (pad.hw_buttons_h[hw] & btnmap[CTRL_SCOPE][hw][i]) {
 					button_pressed = true;
@@ -653,7 +653,7 @@ static void decodepad (int chan, int emuChan)
 		for (i = 0; i < 2; i++)
 		{
 			bool button_pressed = false;
-			for (int hw = 0; hw < GUI_HW_MAX; hw++) {
+			for (uint32_t hw = 0; hw < GUI_HW_MAX; hw++) {
 				if (!pad.hw_connected[hw]) continue;
 				if (pad.hw_buttons_h[hw] & btnmap[CTRL_MOUSE][hw][i]) {
 					button_pressed = true; break;
@@ -672,7 +672,7 @@ static void decodepad (int chan, int emuChan)
 		for (i = 0; i < 3; i++)
 		{
 			bool button_pressed = false;
-			for (int hw = 0; hw < GUI_HW_MAX; hw++) {
+			for (uint32_t hw = 0; hw < GUI_HW_MAX; hw++) {
 				if (!pad.hw_connected[hw]) continue;
 				if (pad.hw_buttons_h[hw] & btnmap[CTRL_JUST][hw][i]) {
 					button_pressed = true; break;
