@@ -139,7 +139,7 @@ class GuiElement
 		//!\overload
 		//!\param i Index of trigger array to set
 		//!\param t Pointer to GuiTrigger
-		void setTrigger(u8 i, GuiTrigger * t);
+		void setTrigger(uint8_t i, GuiTrigger * t);
 		//!Checks whether rumble was requested by the element
 		//!\return true is rumble was requested, false otherwise
 		bool isRumble();
@@ -224,9 +224,9 @@ class GuiElement
 		int yoffsetDyn; //!< Element Y offset, dynamic (added to yoffset value for animation effects)
 		int alpha; //!< Element alpha value (0-255)
 		int alphaDyn; //!< Element alpha, dynamic (multiplied by alpha value for blending/fading effects)
-		f32 xscale; //!< Element X scale (1 = 100%)
-		f32 yscale; //!< Element Y scale (1 = 100%)
-		f32 scaleDyn; //!< Element scale, dynamic (multiplied by alpha value for blending/fading effects)
+		float xscale; //!< Element X scale (1 = 100%)
+		float yscale; //!< Element Y scale (1 = 100%)
+		float scaleDyn; //!< Element scale, dynamic (multiplied by alpha value for blending/fading effects)
 		int effects; //!< Currently enabled effect(s). 0 when no effects are enabled
 		int effectAmount; //!< Effect amount. Used by different effects for different purposes
 		int effectTarget; //!< Effect target amount. Used by different effects for different purposes

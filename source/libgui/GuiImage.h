@@ -25,7 +25,7 @@ class GuiImage : public GuiElement
 		//!\param img
 		//!\param w Image width
 		//!\param h Image height
-		GuiImage(u8 * img, int w, int h);
+		GuiImage(uint8_t * img, int w, int h);
 		//!\overload
 		//!Creates an image filled with the specified color
 		//!\param w Image width
@@ -44,7 +44,7 @@ class GuiImage : public GuiElement
 		void draw() override;
 		//!Gets the image data
 		//!\return pointer to image data
-		u8 * getImage();
+		uint8_t * getImage();
 		//!Sets up a new image using the GuiImageData object specified
 		//!\param img Pointer to GuiImageData object
 		void setImage(GuiImageData * img);
@@ -52,7 +52,7 @@ class GuiImage : public GuiElement
 		//!\param img Pointer to image data
 		//!\param w Width
 		//!\param h Height
-		void setImage(u8 * img, int w, int h);
+		void setImage(uint8_t * img, int w, int h);
 		//!Gets the pixel color at the specified coordinates of the image
 		//!\param x X coordinate
 		//!\param y Y coordinate
@@ -72,8 +72,8 @@ class GuiImage : public GuiElement
 		void setStripe(int s);
 	protected:
 		IMAGE imgType; //!< Type of image data (TEXTURE, COLOR, DATA)
-		u8 * image; //!< Poiner to image data. May be shared with GuiImageData data
-		f32 imageangle; //!< Angle to draw the image
+		uint8_t * image; //!< Poiner to image data. May be shared with GuiImageData data
+		float imageangle; //!< Angle to draw the image
 		int tile; //!< Number of times to draw (tile) the image horizontally
 		int stripe; //!< Alpha value (0-255) to apply a stripe effect to the texture
 };

@@ -19,12 +19,12 @@ typedef struct _keytype {
 class GuiKeyboard : public GuiWindow
 {
 	public:
-		GuiKeyboard(char * t, u32 m);
+		GuiKeyboard(char * t, uint32_t m);
 		~GuiKeyboard();
 		void update(GuiInputController * c);
 		char kbtextstr[256];
 	protected:
-		u32 kbtextmaxlen;
+		uint32_t kbtextmaxlen;
 		int shift;
 		int caps;
 		GuiText * kbText;

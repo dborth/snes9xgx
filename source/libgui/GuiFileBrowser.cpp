@@ -206,7 +206,7 @@ void GuiFileBrowser::draw()
 
 	bgFileSelectionImg->draw();
 
-	for(u32 i=0; i<FILE_PAGESIZE; ++i)
+	for(uint32_t i=0; i<FILE_PAGESIZE; ++i)
 	{
 		fileList[i]->draw();
 	}

@@ -34,7 +34,7 @@ GuiImage::GuiImage(GuiImageData * img)
 	imgType = IMAGE::DATA;
 }
 
-GuiImage::GuiImage(u8 * img, int w, int h)
+GuiImage::GuiImage(uint8_t * img, int w, int h)
 {
 	image = img;
 	width = w;
@@ -47,7 +47,7 @@ GuiImage::GuiImage(u8 * img, int w, int h)
 
 GuiImage::GuiImage(int w, int h, GuiColor c)
 {
-	image = (u8 *)memalign (32, w * h << 2);
+	image = (uint8_t *)memalign (32, w * h << 2);
 	width = w;
 	height = h;
 	imageangle = 0;
@@ -78,7 +78,7 @@ GuiImage::~GuiImage()
 		free(image);
 }
 
-u8 * GuiImage::getImage()
+uint8_t * GuiImage::getImage()
 {
 	return image;
 }
@@ -97,7 +97,7 @@ void GuiImage::setImage(GuiImageData * img)
 	imgType = IMAGE::DATA;
 }
 
-void GuiImage::setImage(u8 * img, int w, int h)
+void GuiImage::setImage(uint8_t * img, int w, int h)
 {
 	image = img;
 	width = w;
@@ -120,7 +120,7 @@ GuiColor GuiImage::getPixel(int x, int y)
 	if(!image || this->getWidth() <= 0 || x < 0 || y < 0)
 		return (GuiColor){0, 0, 0, 0};
 
-	u32 offset = (((y >> 2)<<4)*this->getWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
+	uint32_t offset = (((y >> 2)<<4)*this->getWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
 	GuiColor color;
 	color.a = *(image+offset);
 	color.r = *(image+offset+1);
@@ -134,7 +134,7 @@ void GuiImage::setPixel(int x, int y, GuiColor color)
 	if(!image || this->getWidth() <= 0 || x < 0 || y < 0)
 		return;
 
-	u32 offset = (((y >> 2)<<4)*this->getWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
+	uint32_t offset = (((y >> 2)<<4)*this->getWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
 	*(image+offset) = color.a;
 	*(image+offset+1) = color.r;
 	*(image+offset+32) = color.g;
@@ -240,7 +240,7 @@ void GuiImage::draw()
 		int thisHeight = this->getHeight();
 		int thisWidth = this->getWidth();
 		for(int y=0; y < thisHeight; y+=6)
-			Menu_DrawRectangle(currLeft,thisTop+y,thisWidth,3,(GuiColor){0, 0, 0, (u8)stripe},1);
+			Menu_DrawRectangle(currLeft,thisTop+y,thisWidth,3,(GuiColor){0, 0, 0, (uint8_t)stripe},1);
 	}
 	this->updateEffects();
 }

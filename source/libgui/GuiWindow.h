@@ -23,7 +23,7 @@ class GuiWindow : public GuiElement
 		//!Inserts a GuiElement into the GuiWindow at the specified index
 		//!\param e The GuiElement to insert. If it is already in the GuiWindow, it is removed first
 		//!\param i Index in which to insert the element
-		void insert(GuiElement* e, u32 i);
+		void insert(GuiElement* e, uint32_t i);
 		//!Removes the specified GuiElement from the GuiWindow
 		//!\param e GuiElement to be removed
 		void remove(GuiElement* e);
@@ -36,10 +36,10 @@ class GuiWindow : public GuiElement
 		//!Returns the GuiElement at the specified index
 		//!\param index The index of the element
 		//!\return A pointer to the element at the index, nullptr on error (eg: out of bounds)
-		GuiElement* getGuiElementAt(u32 index) const;
+		GuiElement* getGuiElementAt(uint32_t index) const;
 		//!Returns the size of the list of elements
 		//!\return The size of the current element list
-		u32 getSize();
+		uint32_t getSize();
 		//!Sets the visibility of the window
 		//!\param v visibility (true = visible)
 		void setVisible(bool v);

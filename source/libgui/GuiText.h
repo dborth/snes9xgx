@@ -36,7 +36,7 @@ class GuiText : public GuiElement
 		//!\param s Font size
 		//!\param h Text alignment (horizontal)
 		//!\param v Text alignment (vertical)
-		static void setPresets(int sz, GuiColor c, int w, u16 s, ALIGN_H h, ALIGN_V v);
+		static void setPresets(int sz, GuiColor c, int w, uint16_t s, ALIGN_H h, ALIGN_V v);
 		//!Sets the font size
 		//!\param s Font size
 		void setFontSize(int s);
@@ -57,7 +57,7 @@ class GuiText : public GuiElement
 		void setColor(GuiColor c);
 		//!Sets the GuiTextRenderer style attributes
 		//!\param s Style attributes
-		void setStyle(u16 s);
+		void setStyle(uint16_t s);
 		//!Sets the text alignment
 	//!\param hor Horizontal alignment (LEFT, RIGHT, CENTRE)
 	//!\param vert Vertical alignment (TOP, BOTTOM, MIDDLE)
@@ -78,7 +78,7 @@ class GuiText : public GuiElement
 		int textScrollPos; //!< Current starting index of text string for scrolling
 		int textScrollInitialDelay; //!< Delay to wait before starting to scroll
 		int textScrollDelay; //!< Scrolling speed
-		u16 style; //!< GuiTextRenderer style attributes
+		uint16_t style; //!< GuiTextRenderer style attributes
 		bool wrap; //!< Wrapping toggle
 
 		wchar_t* getText(const char *text) const;

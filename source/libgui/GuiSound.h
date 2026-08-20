@@ -18,7 +18,7 @@ class GuiSound
 		//!\param s Pointer to the sound data
 		//!\param l Length of sound data
 		//!\param t Sound format type (PCM or OGG)
-		GuiSound(const u8 * s, s32 l, SOUND t);
+		GuiSound(const uint8_t * s, int32_t l, SOUND t);
 		//!Destructor
 		~GuiSound();
 		//!Start sound playback
@@ -39,10 +39,10 @@ class GuiSound
 		//!\param l Loop (true to loop)
 		void setLoop(bool l);
 	protected:
-		const u8 * sound; //!< Pointer to the sound data
+		const uint8_t * sound; //!< Pointer to the sound data
 		SOUND type; //!< Sound format type (PCM or OGG)
-		s32 length; //!< Length of sound data
-		s32 voice; //!< Currently assigned ASND voice channel
-		s32 volume; //!< Sound volume (0-100)
+		int32_t length; //!< Length of sound data
+		int32_t voice; //!< Currently assigned ASND voice channel
+		int32_t volume; //!< Sound volume (0-100)
 		bool loop; //!< Loop sound playback
 };

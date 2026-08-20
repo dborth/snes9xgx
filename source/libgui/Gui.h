@@ -73,10 +73,10 @@ enum class SCROLL {
 };
 
 typedef struct _gui_color {
-	u8 r;			/*!< Red color component. */
-	u8 g;			/*!< Green color component. */
-	u8 b;			/*!< Blue alpha component. */
-	u8 a;			/*!< Alpha component. If a function does not use the alpha value, it is safely ignored. */
+	uint8_t r;			/*!< Red color component. */
+	uint8_t g;			/*!< Green color component. */
+	uint8_t b;			/*!< Blue alpha component. */
+	uint8_t a;			/*!< Alpha component. If a function does not use the alpha value, it is safely ignored. */
 } GuiColor;
 
 #include "video.h"

@@ -34,7 +34,7 @@ void GuiWindow::append(GuiElement* e)
 	e->setParent(this);
 }
 
-void GuiWindow::insert(GuiElement* e, u32 index)
+void GuiWindow::insert(GuiElement* e, uint32_t index)
 {
 	if (e == nullptr || index > (_elements.size() - 1))
 		return;
@@ -49,8 +49,8 @@ void GuiWindow::remove(GuiElement* e)
 	if (e == nullptr)
 		return;
 
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; ++i)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; ++i)
 	{
 		if(e == _elements.at(i))
 		{
@@ -70,21 +70,21 @@ bool GuiWindow::find(GuiElement* e)
 	if (e == nullptr)
 		return false;
 
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; ++i)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; ++i)
 		if(e == _elements.at(i))
 			return true;
 	return false;
 }
 
-GuiElement* GuiWindow::getGuiElementAt(u32 index) const
+GuiElement* GuiWindow::getGuiElementAt(uint32_t index) const
 {
 	if (index >= _elements.size())
 		return nullptr;
 	return _elements.at(index);
 }
 
-u32 GuiWindow::getSize()
+uint32_t GuiWindow::getSize()
 {
 	return _elements.size();
 }
@@ -94,8 +94,8 @@ void GuiWindow::draw()
 	if(_elements.size() == 0 || !this->isVisible())
 		return;
 
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; ++i)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; ++i)
 	{
 		_elements.at(i)->draw();
 	}
@@ -111,8 +111,8 @@ void GuiWindow::drawTooltip()
 	if(_elements.size() == 0 || !this->isVisible())
 		return;
 
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; i++)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; i++)
 	{
 		_elements.at(i)->drawTooltip();
 	}
@@ -123,8 +123,8 @@ void GuiWindow::resetState()
 	if(state != STATE::DISABLED)
 		state = STATE::DEFAULT;
 
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; ++i)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; ++i)
 	{
 		_elements.at(i)->resetState();
 	}
@@ -134,8 +134,8 @@ void GuiWindow::setState(STATE s, int c)
 {
 	state = s;
 
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; ++i)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; ++i)
 	{
 		_elements.at(i)->setState(s, c);
 	}
@@ -145,8 +145,8 @@ void GuiWindow::setVisible(bool v)
 {
 	visible = v;
 
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; ++i)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; ++i)
 	{
 		_elements.at(i)->setVisible(v);
 	}
@@ -167,8 +167,8 @@ void GuiWindow::changeFocus(GuiElement* e)
 	if(parentElement)
 		return; // this is only intended for the main window
 
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; ++i)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; ++i)
 	{
 		if(e == _elements.at(i))
 			_elements.at(i)->setFocus(1);
@@ -244,8 +244,8 @@ int GuiWindow::getSelected()
 {
 	// find selected element
 	int found = -1;
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; ++i)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; ++i)
 	{
 		if(_elements.at(i)->getState() == STATE::SELECTED)
 		{
@@ -261,10 +261,10 @@ int GuiWindow::getSelected()
 void GuiWindow::moveSelectionHor(int dir)
 {
 	int found = -1;
-	u16 left = 0;
-	u16 top = 0;
-	u32 i;
-	u32 elemSize = _elements.size();
+	uint16_t left = 0;
+	uint16_t top = 0;
+	uint32_t i;
+	uint32_t elemSize = _elements.size();
 
 	int selected = this->getSelected();
 
@@ -324,8 +324,8 @@ void GuiWindow::moveSelectionHor(int dir)
 void GuiWindow::moveSelectionVert(int dir)
 {
 	int found = -1;
-	u16 left = 0;
-	u16 top = 0;
+	uint16_t left = 0;
+	uint16_t top = 0;
 
 	int selected = this->getSelected();
 
@@ -336,8 +336,8 @@ void GuiWindow::moveSelectionVert(int dir)
 	}
 
 	// look for a button above/below, with the least horizontal difference
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; ++i)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; ++i)
 	{
 		if(_elements.at(i)->isSelectable())
 		{
@@ -370,8 +370,8 @@ void GuiWindow::moveSelectionVert(int dir)
 
 void GuiWindow::resetText()
 {
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; i++)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; i++)
 	{
 		_elements.at(i)->resetText();
 	}
@@ -382,8 +382,8 @@ void GuiWindow::update(GuiInputController * controller)
 	if(_elements.size() == 0 || (state == STATE::DISABLED && parentElement))
 		return;
 
-	u32 elemSize = _elements.size();
-	for (u32 i = 0; i < elemSize; ++i)
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; ++i)
 	{
 		_elements.at(i)->update(controller);
 	}

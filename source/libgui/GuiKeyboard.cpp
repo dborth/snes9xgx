@@ -21,7 +21,7 @@ static const char * GetDisplayText(const char * t)
 	return &tmptxt[0];
 }
 
-GuiKeyboard::GuiKeyboard(char * t, u32 max)
+GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 {
 	width = 540;
 	height = 400;
@@ -249,7 +249,7 @@ void GuiKeyboard::update(GuiInputController * c)
 	if(_elements.size() == 0 || (state == STATE::DISABLED && parentElement))
 		return;
 
-	for (u8 i = 0; i < _elements.size(); i++)
+	for (uint8_t i = 0; i < _elements.size(); i++)
 	{
 		_elements.at(i)->update(c);
 	}

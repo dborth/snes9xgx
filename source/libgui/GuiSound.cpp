@@ -6,7 +6,7 @@
 
 #include "Gui.h"
 
-GuiSound::GuiSound(const u8 * s, s32 l, SOUND t)
+GuiSound::GuiSound(const uint8_t * s, int32_t l, SOUND t)
 {
 	sound = s;
 	length = l;
@@ -36,7 +36,7 @@ void GuiSound::play()
 		voice = ASND_GetFirstUnusedVoice();
 		if(voice >= 0)
 			ASND_SetVoice(voice, VOICE_STEREO_16BIT, 48000, 0,
-				(u8 *)sound, length, vol, vol, nullptr);
+				(uint8_t *)sound, length, vol, vol, nullptr);
 		break;
 
 		case SOUND::OGG:

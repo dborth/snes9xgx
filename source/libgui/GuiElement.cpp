@@ -359,7 +359,7 @@ void GuiElement::setTrigger(GuiTrigger * t)
 		trigger[0] = t;
 }
 
-void GuiElement::setTrigger(u8 i, GuiTrigger * t)
+void GuiElement::setTrigger(uint8_t i, GuiTrigger * t)
 {
 	if (i < MAX_TRIGGERS)
 		trigger[i] = t;
@@ -515,8 +515,8 @@ void GuiElement::updateEffects()
 	}
 	if(effects & EFFECT::SCALE)
 	{
-		scaleDyn += f32(effectAmount)*0.01f;
-		f32 effTar100 = f32(effectTarget)*0.01f;
+		scaleDyn += float(effectAmount)*0.01f;
+		float effTar100 = float(effectTarget)*0.01f;
 
 		if((effectAmount < 0 && scaleDyn <= effTar100)
 			|| (effectAmount > 0 && scaleDyn >= effTar100))

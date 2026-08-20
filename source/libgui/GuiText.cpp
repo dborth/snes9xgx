@@ -13,7 +13,7 @@ static int presetSize = 0;
 static int presetMaxWidth = 0;
 static ALIGN_H presetAlignmentHor = ALIGN_H::LEFT;
 static ALIGN_V presetAlignmentVert = ALIGN_V::TOP;
-static u16 presetStyle = 0;
+static uint16_t presetStyle = 0;
 
 #define TEXT_SCROLL_DELAY			8
 #define	TEXT_SCROLL_INITIAL_DELAY	6
@@ -163,7 +163,7 @@ int GuiText::getLength()
 	return wcslen(text);
 }
 
-void GuiText::setPresets(int sz, GuiColor c, int w, u16 s, ALIGN_H h, ALIGN_V v)
+void GuiText::setPresets(int sz, GuiColor c, int w, uint16_t s, ALIGN_H h, ALIGN_V v)
 {
 	presetSize = sz;
 	presetColor = c;
@@ -248,7 +248,7 @@ void GuiText::setColor(GuiColor c)
 	alpha = c.a;
 }
 
-void GuiText::setStyle(u16 s)
+void GuiText::setStyle(uint16_t s)
 {
 	style = s;
 }
@@ -333,14 +333,14 @@ void GuiText::draw()
 		return;
 	}
 
-	u32 textlen = wcslen(text);
+	uint32_t textlen = wcslen(text);
 
 	if(wrap)
 	{
 		if(textDynNum == 0)
 		{
 			int n = 0;
-			u32 ch = 0;
+			uint32_t ch = 0;
 			int linenum = 0;
 			int lastSpace = -1;
 			int lastSpaceIndex = -1;
@@ -418,14 +418,14 @@ void GuiText::draw()
 				else
 				{
 					++textScrollPos;
-					if((u32)textScrollPos > textlen-1)
+					if((uint32_t)textScrollPos > textlen-1)
 					{
 						textScrollPos = 0;
 						textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
 					}
 
 					wcscpy(textDyn[0], &text[textScrollPos]);
-					u32 dynlen = wcslen(textDyn[0]);
+					uint32_t dynlen = wcslen(textDyn[0]);
 
 					if(dynlen+2 < textlen)
 					{
