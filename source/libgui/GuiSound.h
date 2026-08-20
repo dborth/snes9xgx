@@ -1,7 +1,9 @@
-#ifndef GUISOUND_H
-#define GUISOUND_H
-
-#include "Gui.h"
+/****************************************************************************
+ * libgui
+ * Daryl Borth 2009-2026
+ * GuiSound.h
+ ***************************************************************************/
+#pragma once
 
 enum class SOUND {
 	PCM,
@@ -44,5 +46,3 @@ class GuiSound
 		s32 volume; //!< Sound volume (0-100)
 		bool loop; //!< Loop sound playback
 };
-
-#endif // GUISOUND::H

@@ -1143,12 +1143,11 @@ changes to the emulator settings again and save them.
 
                       Snes9x                                      Snes9x Team
                       libogc/devkitPPC                   shagkur & WinterMute
-                      FreeTypeGX                              Armin Tamzarian
 
 
 ## LINKS
 
-                      SNES9X GX Project Page
+                      Snes9X GX Project Page
                       https://github.com/dborth/snes9xgx
 
                       Wii Homebrew Community

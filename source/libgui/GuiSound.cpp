@@ -1,18 +1,11 @@
 /****************************************************************************
  * libgui
- *
  * Daryl Borth 2009-2026
- *
  * GuiSound.cpp
- *
- * GUI class definitions
  ***************************************************************************/
 
 #include "Gui.h"
 
-/**
- * Constructor for the GuiSound class.
- */
 GuiSound::GuiSound(const u8 * s, s32 l, SOUND t)
 {
 	sound = s;
@@ -23,9 +16,6 @@ GuiSound::GuiSound(const u8 * s, s32 l, SOUND t)
 	loop = false;
 }
 
-/**
- * Destructor for the GuiSound class.
- */
 GuiSound::~GuiSound()
 {
 	#ifndef NO_SOUND

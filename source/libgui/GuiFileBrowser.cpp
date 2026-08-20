@@ -1,19 +1,12 @@
 /****************************************************************************
  * libgui
- *
  * Daryl Borth 2009-2026
- *
  * GuiFileBrowser.cpp
- *
- * GUI class definitions
  ***************************************************************************/
 
-#include "../filebrowser.h"
 #include "Gui.h"
+#include "../filebrowser.h"
 
-/**
- * Constructor for the GuiFileBrowser class.
- */
 GuiFileBrowser::GuiFileBrowser(int w, int h)
 {
 	width = w;
@@ -25,12 +18,10 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
-	trigA->setSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A, WIIDRC_BUTTON_A);
-	trig2 = new GuiTrigger;
-	trig2->setSimpleTrigger(-1, WPAD_BUTTON_2, 0, 0);
+	trigA->setPrimaryTrigger();
 
 	trigHeldA = new GuiTrigger;
-	trigHeldA->setHeldTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A, WIIDRC_BUTTON_A);
+	trigHeldA->setHeldTrigger(-1, GUI_BTN_A);
 
 	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND::PCM);
 	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND::PCM);
@@ -119,14 +110,10 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 		fileList[i]->setImageOver(fileListBg[i]);
 		fileList[i]->setPosition(2,26*i+3);
 		fileList[i]->setTrigger(trigA);
-		fileList[i]->setTrigger(trig2);
 		fileList[i]->setSoundClick(btnSoundClick);
 	}
 }
 
-/**
- * Destructor for the GuiFileBrowser class.
- */
 GuiFileBrowser::~GuiFileBrowser()
 {
 	delete arrowUpBtn;
@@ -161,7 +148,6 @@ GuiFileBrowser::~GuiFileBrowser()
 	delete btnSoundClick;
 	delete trigHeldA;
 	delete trigA;
-	delete trig2;
 
 	for(int i=0; i<FILE_PAGESIZE; i++)
 	{
@@ -233,31 +219,29 @@ void GuiFileBrowser::draw()
 	this->updateEffects();
 }
 
-void GuiFileBrowser::drawTooltip()
+void GuiFileBrowser::update(GuiInputController * controller)
 {
-}
-
-void GuiFileBrowser::update(GuiTrigger * t)
-{
-	if(state == STATE::DISABLED || !t)
+	if(state == STATE::DISABLED || !controller)
 		return;
 
 	int position = 0;
 	int positionWiimote = 0;
 
-	arrowUpBtn->update(t);
-	arrowDownBtn->update(t);
-	scrollbarBoxBtn->update(t);
+	arrowUpBtn->update(controller);
+	arrowDownBtn->update(controller);
+	scrollbarBoxBtn->update(controller);
+
+	auto pad = controller->getPadData();
+	int currentChan = controller->getChannel();
 
 	// move the file listing to respond to wiimote cursor movement
 	if(scrollbarBoxBtn->getState() == STATE::HELD &&
-		scrollbarBoxBtn->getStateChan() == t->chan &&
-		t->wpad->ir.valid &&
-		browser.numEntries > FILE_PAGESIZE
-		)
+		scrollbarBoxBtn->getStateChan() == currentChan &&
+		pad.validPointer &&
+		browser.numEntries > FILE_PAGESIZE)
 	{
 		scrollbarBoxBtn->setPosition(0,0);
-		positionWiimote = t->wpad->ir.y - 60 - scrollbarBoxBtn->getTop();
+		positionWiimote = pad.cursor_y - 60 - scrollbarBoxBtn->getTop();
 
 		if(positionWiimote < scrollbarBoxBtn->getMinY())
 			positionWiimote = scrollbarBoxBtn->getMinY();
@@ -278,15 +262,17 @@ void GuiFileBrowser::update(GuiTrigger * t)
 		focus = false;
 	}
 
-	if(arrowDownBtn->getState() == STATE::HELD && arrowDownBtn->getStateChan() == t->chan)
+    // Evaluate simulated D-Pad actions via on-screen buttons
+	bool simulateDown = arrowDownBtn->getState() == STATE::HELD && arrowDownBtn->getStateChan() == currentChan;
+	bool simulateUp = arrowUpBtn->getState() == STATE::HELD && arrowUpBtn->getStateChan() == currentChan;
+
+	if(simulateDown)
 	{
-		t->wpad->btns_d |= WPAD_BUTTON_DOWN;
 		if(!this->isFocused())
 			((GuiWindow *)this->getParent())->changeFocus(this);
 	}
-	else if(arrowUpBtn->getState() == STATE::HELD && arrowUpBtn->getStateChan() == t->chan)
+	else if(simulateUp)
 	{
-		t->wpad->btns_d |= WPAD_BUTTON_UP;
 		if(!this->isFocused())
 			((GuiWindow *)this->getParent())->changeFocus(this);
 	}
@@ -298,7 +284,7 @@ void GuiFileBrowser::update(GuiTrigger * t)
 		listChanged = false;
 	}
 
-	if(t->right())
+	if(controller->right())
 	{
 		if(browser.pageIndex < browser.numEntries && browser.numEntries > FILE_PAGESIZE)
 		{
@@ -308,7 +294,7 @@ void GuiFileBrowser::update(GuiTrigger * t)
 			listChanged = true;
 		}
 	}
-	else if(t->left())
+	else if(controller->left())
 	{
 		if(browser.pageIndex > 0)
 		{
@@ -318,7 +304,7 @@ void GuiFileBrowser::update(GuiTrigger * t)
 			listChanged = true;
 		}
 	}
-	else if(t->down())
+	else if(controller->down() || simulateDown)
 	{
 		if(browser.pageIndex + selectedItem + 1 < browser.numEntries)
 		{
@@ -331,11 +317,11 @@ void GuiFileBrowser::update(GuiTrigger * t)
 			else if(fileList[selectedItem+1]->isVisible())
 			{
 				fileList[selectedItem]->resetState();
-				fileList[++selectedItem]->setState(STATE::SELECTED, t->chan);
+				fileList[++selectedItem]->setState(STATE::SELECTED, currentChan);
 			}
 		}
 	}
-	else if(t->up())
+	else if(controller->up() || simulateUp)
 	{
 		if(selectedItem == 0 &&	browser.pageIndex + selectedItem > 0)
 		{
@@ -346,7 +332,7 @@ void GuiFileBrowser::update(GuiTrigger * t)
 		else if(selectedItem > 0)
 		{
 			fileList[selectedItem]->resetState();
-			fileList[--selectedItem]->setState(STATE::SELECTED, t->chan);
+			fileList[--selectedItem]->setState(STATE::SELECTED, currentChan);
 		}
 	}
 
@@ -404,15 +390,10 @@ void GuiFileBrowser::update(GuiTrigger * t)
 		if(i != selectedItem && fileList[i]->getState() == STATE::SELECTED)
 			fileList[i]->resetState();
 		else if(focus && i == selectedItem && fileList[i]->getState() == STATE::DEFAULT)
-			fileList[selectedItem]->setState(STATE::SELECTED, t->chan);
+			fileList[selectedItem]->setState(STATE::SELECTED, currentChan);
 
-		int currChan = t->chan;
-
-		if(t->wpad->ir.valid && !fileList[i]->isInside(t->wpad->ir.x, t->wpad->ir.y))
-			t->chan = -1;
-
-		fileList[i]->update(t);
-		t->chan = currChan;
+        // Update delegates cursor checking to the element itself
+		fileList[i]->update(controller);
 
 		if(fileList[i]->getState() == STATE::SELECTED)
 		{

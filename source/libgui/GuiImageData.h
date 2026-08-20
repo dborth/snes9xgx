@@ -1,7 +1,9 @@
-#ifndef GUIIMAGEDATA_H
-#define GUIIMAGEDATA_H
-
-#include "Gui.h"
+/****************************************************************************
+ * libgui
+ * Daryl Borth 2009-2026
+ * GuiImageData.h
+ ***************************************************************************/
+#pragma once
 
 //!Converts image data into GX-useable RGBA8. Currently designed for use only with PNG files
 class GuiImageData
@@ -29,5 +31,3 @@ class GuiImageData
 		int height; //!< Height of image
 		int width; //!< Width of image
 };
-
-#endif // GUIIMAGEDATA_H

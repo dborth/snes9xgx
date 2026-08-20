@@ -2,17 +2,11 @@
  * libgui
  *
  * Daryl Borth 2009-2026
- *
  * GuiOptionBrowser.cpp
- *
- * GUI class definitions
  ***************************************************************************/
 
 #include "Gui.h"
 
-/**
- * Constructor for the GuiOptionBrowser class.
- */
 GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 {
 	width = w;
@@ -25,9 +19,7 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
-	trigA->setSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A, WIIDRC_BUTTON_A);
-	trig2 = new GuiTrigger;
-	trig2->setSimpleTrigger(-1, WPAD_BUTTON_2, 0, 0);
+	trigA->setPrimaryTrigger();
 
 	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND::PCM);
 	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND::PCM);
@@ -94,14 +86,10 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 		optionBtn[i]->setImageOver(optionBg[i]);
 		optionBtn[i]->setPosition(0,30*i+3);
 		optionBtn[i]->setTrigger(trigA);
-		optionBtn[i]->setTrigger(trig2);
 		optionBtn[i]->setSoundClick(btnSoundClick);
 	}
 }
 
-/**
- * Destructor for the GuiOptionBrowser class.
- */
 GuiOptionBrowser::~GuiOptionBrowser()
 {
 	delete arrowUpBtn;
@@ -123,7 +111,6 @@ GuiOptionBrowser::~GuiOptionBrowser()
 	delete arrowUpOver;
 
 	delete trigA;
-	delete trig2;
 	delete btnSoundOver;
 	delete btnSoundClick;
 
@@ -258,15 +245,15 @@ void GuiOptionBrowser::resetText()
 	}
 }
 
-void GuiOptionBrowser::update(GuiTrigger * t)
+void GuiOptionBrowser::update(GuiInputController * controller)
 {
-	if(state == STATE::DISABLED || !t)
+	if(state == STATE::DISABLED || !controller)
 		return;
 
 	int next, prev;
 
-	arrowUpBtn->update(t);
-	arrowDownBtn->update(t);
+	arrowUpBtn->update(controller);
+	arrowDownBtn->update(controller);
 
 	next = listOffset;
 
@@ -301,32 +288,29 @@ void GuiOptionBrowser::update(GuiTrigger * t)
 		if(i != selectedItem && optionBtn[i]->getState() == STATE::SELECTED)
 			optionBtn[i]->resetState();
 		else if(focus && i == selectedItem && optionBtn[i]->getState() == STATE::DEFAULT)
-			optionBtn[selectedItem]->setState(STATE::SELECTED, t->chan);
+			optionBtn[selectedItem]->setState(STATE::SELECTED, controller->getChannel());
 
-		int currChan = t->chan;
-
-		if(t->wpad->ir.valid && !optionBtn[i]->isInside(t->wpad->ir.x, t->wpad->ir.y))
-			t->chan = -1;
-
-		optionBtn[i]->update(t);
-		t->chan = currChan;
+		optionBtn[i]->update(controller);
 
 		if(optionBtn[i]->getState() == STATE::SELECTED)
-		{
 			selectedItem = i;
-		}
 
-		if(selectedItem == i)
+		if(selectedItem == i) {
 			optionTxt[i]->setScroll(SCROLL::HORIZONTAL);
+			optionVal[i]->setScroll(SCROLL::HORIZONTAL);
+		}
 		else
+		{
 			optionTxt[i]->setScroll(SCROLL::NONE);
+			optionVal[i]->setScroll(SCROLL::NONE);
+		}
 	}
 
 	// pad/joystick navigation
 	if(!focus)
 		return; // skip navigation
 
-	if(t->down() || arrowDownBtn->getState() == STATE::CLICKED)
+	if(controller->down() || arrowDownBtn->getState() == STATE::CLICKED)
 	{
 		next = this->findMenuItem(optionIndex[selectedItem], 1);
 
@@ -341,13 +325,13 @@ void GuiOptionBrowser::update(GuiTrigger * t)
 			else if(optionBtn[selectedItem+1]->isVisible())
 			{
 				optionBtn[selectedItem]->resetState();
-				optionBtn[selectedItem+1]->setState(STATE::SELECTED, t->chan);
+				optionBtn[selectedItem+1]->setState(STATE::SELECTED, controller->getChannel());
 				++selectedItem;
 			}
 		}
 		arrowDownBtn->resetState();
 	}
-	else if(t->up() || arrowUpBtn->getState() == STATE::CLICKED)
+	else if(controller->up() || arrowUpBtn->getState() == STATE::CLICKED)
 	{
 		prev = this->findMenuItem(optionIndex[selectedItem], -1);
 
@@ -362,7 +346,7 @@ void GuiOptionBrowser::update(GuiTrigger * t)
 			else
 			{
 				optionBtn[selectedItem]->resetState();
-				optionBtn[selectedItem-1]->setState(STATE::SELECTED, t->chan);
+				optionBtn[selectedItem-1]->setState(STATE::SELECTED, controller->getChannel());
 				--selectedItem;
 			}
 		}

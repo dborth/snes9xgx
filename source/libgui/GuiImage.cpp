@@ -1,17 +1,11 @@
 /****************************************************************************
  * libgui
- *
  * Daryl Borth 2009-2026
- *
  * GuiImage.cpp
- *
- * GUI class definitions
  ***************************************************************************/
 
 #include "Gui.h"
-/**
- * Constructor for the GuiImage class.
- */
+
 GuiImage::GuiImage()
 {
 	image = nullptr;
@@ -78,9 +72,6 @@ GuiImage::GuiImage(int w, int h, GuiColor c)
 	DCFlushRange(image, len);
 }
 
-/**
- * Destructor for the GuiImage class.
- */
 GuiImage::~GuiImage()
 {
 	if(imgType == IMAGE::COLOR && image)

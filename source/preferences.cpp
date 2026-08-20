@@ -192,25 +192,25 @@ preparePrefsData ()
 	createXMLSetting("GamepadMenuToggle", "Gamepad Menu Toggle", toStr(GCSettings.GamepadMenuToggle));
 	createXMLSetting("MapABXYRightStick", "Map ABXY Right Stick", BtoStr(GCSettings.MapABXYRightStick));
 
-	createXMLController(btnmap[CTRL_PAD][CTRLR_GCPAD], "btnmap_pad_gcpad", "SNES Pad - GameCube Controller");
+	createXMLController(btnmap[CTRL_PAD][GUI_HW_GAMECUBE], "btnmapping_pad_gcpad", "SNES Pad - GameCube Controller");
 #ifdef HW_RVL
-	createXMLController(btnmap[CTRL_PAD][CTRLR_WIIMOTE], "btnmap_pad_wiimote", "SNES Pad - Wiimote");
-	createXMLController(btnmap[CTRL_PAD][CTRLR_CLASSIC], "btnmap_pad_classic", "SNES Pad - Classic Controller");
-	createXMLController(btnmap[CTRL_PAD][CTRLR_WUPC], "btnmap_pad_wupc", "SNES Pad - Wii U Pro Controller");
-	createXMLController(btnmap[CTRL_PAD][CTRLR_WIIDRC], "btnmap_pad_wiidrc", "SNES Pad - Wii U Gamepad");
-	createXMLController(btnmap[CTRL_PAD][CTRLR_NUNCHUK], "btnmap_pad_nunchuk", "SNES Pad - Nunchuk + Wiimote");
+	createXMLController(btnmap[CTRL_PAD][GUI_HW_WIIMOTE], "btnmapping_pad_wiimote", "SNES Pad - Wiimote");
+	createXMLController(btnmap[CTRL_PAD][GUI_HW_CLASSIC], "btnmapping_pad_classic", "SNES Pad - Classic Controller");
+	createXMLController(btnmap[CTRL_PAD][GUI_HW_WUPC], "btnmapping_pad_wupc", "SNES Pad - Wii U Pro Controller");
+	createXMLController(btnmap[CTRL_PAD][GUI_HW_DRC], "btnmapping_pad_wiidrc", "SNES Pad - Wii U Gamepad");
+	createXMLController(btnmap[CTRL_PAD][GUI_HW_NUNCHUK], "btnmapping_pad_nunchuk", "SNES Pad - Nunchuk + Wiimote");
 #endif
-	createXMLController(btnmap[CTRL_SCOPE][CTRLR_GCPAD], "btnmap_scope_gcpad", "Superscope - GameCube Controller");
+	createXMLController(btnmap[CTRL_SCOPE][GUI_HW_GAMECUBE], "btnmapping_scope_gcpad", "Superscope - GameCube Controller");
 #ifdef HW_RVL
-	createXMLController(btnmap[CTRL_SCOPE][CTRLR_WIIMOTE], "btnmap_scope_wiimote", "Superscope - Wiimote");
+	createXMLController(btnmap[CTRL_SCOPE][GUI_HW_WIIMOTE], "btnmapping_scope_wiimote", "Superscope - Wiimote");
 #endif
-	createXMLController(btnmap[CTRL_MOUSE][CTRLR_GCPAD], "btnmap_mouse_gcpad", "Mouse - GameCube Controller");
+	createXMLController(btnmap[CTRL_MOUSE][GUI_HW_GAMECUBE], "btnmapping_mouse_gcpad", "Mouse - GameCube Controller");
 #ifdef HW_RVL
-	createXMLController(btnmap[CTRL_MOUSE][CTRLR_WIIMOTE], "btnmap_mouse_wiimote", "Mouse - Wiimote");
+	createXMLController(btnmap[CTRL_MOUSE][GUI_HW_WIIMOTE], "btnmapping_mouse_wiimote", "Mouse - Wiimote");
 #endif
-	createXMLController(btnmap[CTRL_JUST][CTRLR_GCPAD], "btnmap_just_gcpad", "Justifier - GameCube Controller");
+	createXMLController(btnmap[CTRL_JUST][GUI_HW_GAMECUBE], "btnmapping_just_gcpad", "Justifier - GameCube Controller");
 #ifdef HW_RVL
-	createXMLController(btnmap[CTRL_JUST][CTRLR_WIIMOTE], "btnmap_just_wiimote", "Justifier - Wiimote");
+	createXMLController(btnmap[CTRL_JUST][GUI_HW_WIIMOTE], "btnmapping_just_wiimote", "Justifier - Wiimote");
 #endif
 	int datasize = mxmlSaveString(xml, (char *)savebuffer, SAVEBUFFERSIZE, XMLSaveCallback);
 
@@ -374,18 +374,18 @@ decodePrefsData ()
 	loadXMLSetting(&GCSettings.GamepadMenuToggle, "GamepadMenuToggle");
 	loadXMLSetting(&GCSettings.MapABXYRightStick, "MapABXYRightStick");
 
-	loadXMLController(btnmap[CTRL_PAD][CTRLR_GCPAD], "btnmap_pad_gcpad");
-	loadXMLController(btnmap[CTRL_PAD][CTRLR_WIIMOTE], "btnmap_pad_wiimote");
-	loadXMLController(btnmap[CTRL_PAD][CTRLR_CLASSIC], "btnmap_pad_classic");
-	loadXMLController(btnmap[CTRL_PAD][CTRLR_WUPC], "btnmap_pad_wupc");
-	loadXMLController(btnmap[CTRL_PAD][CTRLR_WIIDRC], "btnmap_pad_wiidrc");
-	loadXMLController(btnmap[CTRL_PAD][CTRLR_NUNCHUK], "btnmap_pad_nunchuk");
-	loadXMLController(btnmap[CTRL_SCOPE][CTRLR_GCPAD], "btnmap_scope_gcpad");
-	loadXMLController(btnmap[CTRL_SCOPE][CTRLR_WIIMOTE], "btnmap_scope_wiimote");
-	loadXMLController(btnmap[CTRL_MOUSE][CTRLR_GCPAD], "btnmap_mouse_gcpad");
-	loadXMLController(btnmap[CTRL_MOUSE][CTRLR_WIIMOTE], "btnmap_mouse_wiimote");
-	loadXMLController(btnmap[CTRL_JUST][CTRLR_GCPAD], "btnmap_just_gcpad");
-	loadXMLController(btnmap[CTRL_JUST][CTRLR_WIIMOTE], "btnmap_just_wiimote");
+	loadXMLController(btnmap[CTRL_PAD][GUI_HW_GAMECUBE], "btnmapping_pad_gcpad");
+	loadXMLController(btnmap[CTRL_PAD][GUI_HW_WIIMOTE], "btnmapping_pad_wiimote");
+	loadXMLController(btnmap[CTRL_PAD][GUI_HW_CLASSIC], "btnmapping_pad_classic");
+	loadXMLController(btnmap[CTRL_PAD][GUI_HW_WUPC], "btnmapping_pad_wupc");
+	loadXMLController(btnmap[CTRL_PAD][GUI_HW_DRC], "btnmapping_pad_wiidrc");
+	loadXMLController(btnmap[CTRL_PAD][GUI_HW_NUNCHUK], "btnmapping_pad_nunchuk");
+	loadXMLController(btnmap[CTRL_SCOPE][GUI_HW_GAMECUBE], "btnmapping_scope_gcpad");
+	loadXMLController(btnmap[CTRL_SCOPE][GUI_HW_WIIMOTE], "btnmapping_scope_wiimote");
+	loadXMLController(btnmap[CTRL_MOUSE][GUI_HW_GAMECUBE], "btnmapping_mouse_gcpad");
+	loadXMLController(btnmap[CTRL_MOUSE][GUI_HW_WIIMOTE], "btnmapping_mouse_wiimote");
+	loadXMLController(btnmap[CTRL_JUST][GUI_HW_GAMECUBE], "btnmapping_just_gcpad");
+	loadXMLController(btnmap[CTRL_JUST][GUI_HW_WIIMOTE], "btnmapping_just_wiimote");
 
 	mxmlDelete(xml);
 	return true;

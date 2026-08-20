@@ -1,7 +1,9 @@
-#ifndef GUIFILEBROWSER_H
-#define GUIFILEBROWSER_H
-
-#include "Gui.h"
+/****************************************************************************
+ * libgui
+ * Daryl Borth 2009-2026
+ * GuiFileBrowser.h
+ ***************************************************************************/
+#pragma once
 
 #define FILE_PAGESIZE 			10
 
@@ -13,10 +15,9 @@ class GuiFileBrowser : public GuiElement
 		~GuiFileBrowser();
 		void resetState();
 		void setFocus(int f);
-		void draw();
-		void drawTooltip();
+		void draw() override;
 		void triggerUpdate();
-		void update(GuiTrigger * t);
+		void update(GuiInputController * c);
 		GuiButton * fileList[FILE_PAGESIZE];
 	protected:
 		GuiText * fileListText[FILE_PAGESIZE];
@@ -54,12 +55,9 @@ class GuiFileBrowser : public GuiElement
 		GuiSound * btnSoundOver;
 		GuiSound * btnSoundClick;
 		GuiTrigger * trigA;
-		GuiTrigger * trig2;
 		GuiTrigger * trigHeldA;
 
 		int selectedItem;
 		int numEntries;
 		bool listChanged;
 };
-
-#endif // GUIFILEBROWSER_H

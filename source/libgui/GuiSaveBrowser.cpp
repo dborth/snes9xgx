@@ -33,9 +33,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
-	trigA->setSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A, WIIDRC_BUTTON_A);
-	trig2 = new GuiTrigger;
-	trig2->setSimpleTrigger(-1, WPAD_BUTTON_2, 0, 0);
+	trigA->setPrimaryTrigger();
 
 	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND::PCM);
 	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND::PCM);
@@ -109,7 +107,6 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 		saveBtn[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 		saveBtn[i]->setPosition(257*(i % 2),87*(i>>1));
 		saveBtn[i]->setTrigger(trigA);
-		saveBtn[i]->setTrigger(trig2);
 		saveBtn[i]->setState(STATE::DISABLED);
 		saveBtn[i]->setEffectGrow();
 		saveBtn[i]->setVisible(false);
@@ -147,7 +144,6 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	delete btnSoundOver;
 	delete btnSoundClick;
 	delete trigA;
-	delete trig2;
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
@@ -219,16 +215,16 @@ void GuiSaveBrowser::draw()
 	this->updateEffects();
 }
 
-void GuiSaveBrowser::update(GuiTrigger * t)
+void GuiSaveBrowser::update(GuiInputController * controller)
 {
-	if(state == STATE::DISABLED || !t)
+	if(state == STATE::DISABLED || !controller)
 		return;
 
 	int i, len;
 	char savetext[50];
 
-	arrowUpBtn->update(t);
-	arrowDownBtn->update(t);
+	arrowUpBtn->update(controller);
+	arrowDownBtn->update(controller);
 
 	// pad/joystick navigation
 	if(!focus)
@@ -236,7 +232,7 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 
 	if(selectedItem < 0) selectedItem = 0;
 
-	if(t->right())
+	if(controller->right())
 	{
 		if(selectedItem == SAVELISTSIZE-1)
 		{
@@ -250,11 +246,11 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 		else if(saveBtn[selectedItem+1]->isVisible())
 		{
 			saveBtn[selectedItem]->resetState();
-			saveBtn[selectedItem+1]->setState(STATE::SELECTED, t->chan);
+			saveBtn[selectedItem+1]->setState(STATE::SELECTED, controller->getChannel());
 			selectedItem += 1;
 		}
 	}
-	else if(t->left())
+	else if(controller->left())
 	{
 		if(selectedItem == 0)
 		{
@@ -275,7 +271,7 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 			}
 		}
 	}
-	else if(t->down() || arrowDownBtn->getState() == STATE::CLICKED)
+	else if(controller->down() || arrowDownBtn->getState() == STATE::CLICKED)
 	{
 		if(selectedItem >= SAVELISTSIZE-2)
 		{
@@ -296,7 +292,7 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 			selectedItem += 2;
 		}
 	}
-	else if(t->up() || arrowUpBtn->getState() == STATE::CLICKED)
+	else if(controller->up() || arrowUpBtn->getState() == STATE::CLICKED)
 	{
 		if(selectedItem < 2)
 		{
@@ -329,7 +325,6 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 	{
 		if(listOffset+i < 0 && action == 1)
 		{
-
 			saveDate[0]->setText(nullptr);
 			saveTime[0]->setText("New");
 			saveType[0]->setText("State");
@@ -338,7 +333,7 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 
 			if(saveBtn[0]->getState() == STATE::DISABLED)
 				saveBtn[0]->setState(STATE::DEFAULT);
-			
+
 			if (GCSettings.HideSRAMSaving == 0)
 			{
 				saveDate[1]->setText(nullptr);
@@ -394,16 +389,18 @@ void GuiSaveBrowser::update(GuiTrigger * t)
 		if(i != selectedItem && saveBtn[i]->getState() == STATE::SELECTED)
 			saveBtn[i]->resetState();
 		else if(focus && i == selectedItem && saveBtn[i]->getState() == STATE::DEFAULT)
-			saveBtn[selectedItem]->setState(STATE::SELECTED, t->chan);
+			saveBtn[selectedItem]->setState(STATE::SELECTED, controller->getChannel());
 
-		if(t->wpad->ir.valid)
+		auto pad = controller->getPadData();
+
+		if(pad.validPointer)
 		{
-			if(!saveBtnLastOver[i] && saveBtn[i]->isInside(t->wpad->ir.x, t->wpad->ir.y))
+			if(!saveBtnLastOver[i] && saveBtn[i]->isInside(pad.cursor_x, pad.cursor_y))
 				saveBtn[i]->resetState();
-			saveBtnLastOver[i] = saveBtn[i]->isInside(t->wpad->ir.x, t->wpad->ir.y);
+			saveBtnLastOver[i] = saveBtn[i]->isInside(pad.cursor_x, pad.cursor_y);
 		}
 
-		saveBtn[i]->update(t);
+		saveBtn[i]->update(controller);
 
 		if(saveBtn[i]->getState() == STATE::SELECTED)
 			selectedItem = i;

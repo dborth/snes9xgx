@@ -56,7 +56,6 @@ static GuiImageData * pointer[4];
 #endif
 
 static GuiTrigger * trigA = NULL;
-static GuiTrigger * trig2 = NULL;
 
 static GuiButton * btnLogo = NULL;
 #ifdef HW_RVL
@@ -257,9 +256,7 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	GuiImageData btnOutlineOver(button_prompt_over_png);
 
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigB.setSecondaryTrigger();
 
 	GuiImageData dialogBox(dialogue_box_png);
 	GuiImage dialogBoxImg(&dialogBox);
@@ -287,7 +284,6 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 		btn1.setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
 		btn1.setPosition(0, -25);
 		btn1.setTrigger(&trigB);
-		btn1.setTrigger(&trig1);
 	}
 
 	btn1.setLabel(&btn1Txt);
@@ -296,7 +292,6 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	btn1.setSoundOver(&btnSoundOver);
 	btn1.setSoundClick(&btnSoundClick);
 	btn1.setTrigger(trigA);
-	btn1.setTrigger(trig2);
 	btn1.setState(STATE::SELECTED);
 	btn1.setEffectGrow();
 
@@ -312,7 +307,6 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	btn2.setSoundOver(&btnSoundOver);
 	btn2.setSoundClick(&btnSoundClick);
 	btn2.setTrigger(trigA);
-	btn2.setTrigger(trig2);
 	btn2.setEffectGrow();
 
 	promptWindow.append(&dialogBoxImg);
@@ -324,7 +318,6 @@ WindowPrompt(const char *title, const char *msg, const char *btn1Label, const ch
 	{
 		promptWindow.append(&btn2);
 		btn2.setTrigger(&trigB);
-		btn2.setTrigger(&trig1);
 	}	
 
 	promptWindow.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 50);
@@ -394,8 +387,8 @@ UpdateGUI (void *arg)
 		i = 3;
 		do
 		{
-			if(userInput[i].wpad->ir.valid) {
-				Menu_DrawImg(userInput[i].wpad->ir.x-48, userInput[i].wpad->ir.y-48, 96, 96, pointer[i]->getImage(), userInput[i].wpad->ir.angle, 1, 1, 255);
+			if(userInput[i]->getPadData().validPointer) {
+				Menu_DrawImg(userInput[i]->getPadData().cursor_x-48, userInput[i]->getPadData().cursor_y-48, 96, 96, pointer[i]->getImage(), userInput[i]->getPadData().cursor_angle, 1, 1, 255);
 			}
 			DoRumble(i);
 			--i;
@@ -404,10 +397,10 @@ UpdateGUI (void *arg)
 
 		Menu_Render();
 
-		mainWindow->update(&userInput[3]);
-		mainWindow->update(&userInput[2]);
-		mainWindow->update(&userInput[1]);
-		mainWindow->update(&userInput[0]);
+		mainWindow->update(userInput[3]);
+		mainWindow->update(userInput[2]);
+		mainWindow->update(userInput[1]);
+		mainWindow->update(userInput[0]);
 
 		if(ExitRequested || ShutdownRequested)
 		{
@@ -736,7 +729,6 @@ static void OnScreenKeyboard(char * var, u32 maxlen)
 	okBtn.setSoundOver(&btnSoundOver);
 	okBtn.setSoundClick(&btnSoundClick);
 	okBtn.setTrigger(trigA);
-	okBtn.setTrigger(trig2);
 	okBtn.setEffectGrow();
 
 	GuiText cancelBtnTxt("Cancel", 22, (GuiColor){0, 0, 0, 255});
@@ -751,7 +743,6 @@ static void OnScreenKeyboard(char * var, u32 maxlen)
 	cancelBtn.setSoundOver(&btnSoundOver);
 	cancelBtn.setSoundClick(&btnSoundClick);
 	cancelBtn.setTrigger(trigA);
-	cancelBtn.setTrigger(trig2);
 	cancelBtn.setEffectGrow();
 
 	keyboard.append(&okBtn);
@@ -823,7 +814,6 @@ SettingWindow(const char * title, GuiWindow * w)
 	okBtn.setSoundOver(&btnSoundOver);
 	okBtn.setSoundClick(&btnSoundClick);
 	okBtn.setTrigger(trigA);
-	okBtn.setTrigger(trig2);
 	okBtn.setEffectGrow();
 
 	GuiText cancelBtnTxt("Cancel", 22, (GuiColor){0, 0, 0, 255});
@@ -838,7 +828,6 @@ SettingWindow(const char * title, GuiWindow * w)
 	cancelBtn.setSoundOver(&btnSoundOver);
 	cancelBtn.setSoundClick(&btnSoundClick);
 	cancelBtn.setTrigger(trigA);
-	cancelBtn.setTrigger(trig2);
 	cancelBtn.setEffectGrow();
 
 	promptWindow.append(&dialogBoxImg);
@@ -976,7 +965,10 @@ static void WindowCredits(void * ptr)
 
 	creditsWindow.append(&creditsWindowBox);
 
-	while(!exit)
+	auto buttonPressed = [&]()-> bool { return userInput[0]->getPadData().buttons_d || userInput[1]->getPadData().buttons_d ||
+			   userInput[2]->getPadData().buttons_d || userInput[3]->getPadData().buttons_d; };
+
+	while(!exit || (buttonPressed() && exit))
 	{
 		UpdatePads();
 
@@ -988,8 +980,8 @@ static void WindowCredits(void * ptr)
 		#ifdef HW_RVL
 		i = 3;
 		do {	
-			if(userInput[i].wpad->ir.valid) {
-				Menu_DrawImg(userInput[i].wpad->ir.x-48, userInput[i].wpad->ir.y-48, 96, 96, pointer[i]->getImage(), userInput[i].wpad->ir.angle, 1, 1, 255);
+			if(userInput[i]->getPadData().validPointer) {
+				Menu_DrawImg(userInput[i]->getPadData().cursor_x-48, userInput[i]->getPadData().cursor_y-48, 96, 96, pointer[i]->getImage(), userInput[i]->getPadData().cursor_angle, 1, 1, 255);
 			}
 			DoRumble(i);
 			--i;
@@ -998,27 +990,18 @@ static void WindowCredits(void * ptr)
 
 		Menu_Render();
 
-		if((userInput[0].wpad->btns_d || userInput[0].pad.btns_d || userInput[0].wiidrcdata.btns_d) ||
-		   (userInput[1].wpad->btns_d || userInput[1].pad.btns_d || userInput[1].wiidrcdata.btns_d) ||
-		   (userInput[2].wpad->btns_d || userInput[2].pad.btns_d || userInput[2].wiidrcdata.btns_d) ||
-		   (userInput[3].wpad->btns_d || userInput[3].pad.btns_d || userInput[3].wiidrcdata.btns_d))
+		if(buttonPressed())
 		{
 			exit = true;
-			showCredits = false;
+
 		}
 		usleep(THREAD_SLEEP);
 	}
 
-	// clear buttons pressed
-	for(i=0; i < 4; i++)
-	{
-		userInput[i].wiidrcdata.btns_d = 0;
-		userInput[i].wpad->btns_d = 0;
-		userInput[i].pad.btns_d = 0;
-	}
-
 	for(i=0; i < numEntries; i++)
 		delete txt[i];
+
+	showCredits = false;
 }
 
 /****************************************************************************
@@ -1057,7 +1040,7 @@ static int MenuGameSelection()
 	GuiImageData bgPreviewImg(bg_preview_png);
 
 	GuiTrigger trigHome;
-	trigHome.setButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, 0, WIIDRC_BUTTON_HOME);
+	trigHome.setButtonOnlyTrigger(-1, GUI_BTN_HOME);
 
 	GuiText settingsBtnTxt("Settings", 22, (GuiColor){0, 0, 0, 255});
 	GuiImage settingsBtnIcon(&iconSettings);
@@ -1075,7 +1058,6 @@ static int MenuGameSelection()
 	settingsBtn.setSoundOver(&btnSoundOver);
 	settingsBtn.setSoundClick(&btnSoundClick);
 	settingsBtn.setTrigger(trigA);
-	settingsBtn.setTrigger(trig2);
 	settingsBtn.setEffectGrow();
 
 	GuiText exitBtnTxt("Exit", 22, (GuiColor){0, 0, 0, 255});
@@ -1094,7 +1076,6 @@ static int MenuGameSelection()
 	exitBtn.setSoundOver(&btnSoundOver);
 	exitBtn.setSoundClick(&btnSoundClick);
 	exitBtn.setTrigger(trigA);
-	exitBtn.setTrigger(trig2);
 	exitBtn.setTrigger(&trigHome);
 	exitBtn.setEffectGrow();
 
@@ -1105,9 +1086,6 @@ static int MenuGameSelection()
 	GuiFileBrowser gameBrowser(330, 268);
 	gameBrowser.setPosition(20, 98);
 	ResetBrowser();
-	
-	GuiTrigger trigPlusMinus;
-	trigPlusMinus.setButtonOnlyTrigger(-1, WPAD_BUTTON_PLUS | WPAD_CLASSIC_BUTTON_PLUS, PAD_TRIGGER_Z, WIIDRC_BUTTON_PLUS);
 	
 	GuiImage bgPreview(&bgPreviewImg);
 	bgPreview.setPosition(365, 98);
@@ -1285,10 +1263,10 @@ static void ControllerWindow()
 	w->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 
 	GuiTrigger trigLeft;
-	trigLeft.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT, PAD_BUTTON_LEFT, WIIDRC_BUTTON_LEFT);
+	trigLeft.setButtonOnlyInFocusTrigger(-1, GUI_BTN_LEFT);
 
 	GuiTrigger trigRight;
-	trigRight.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT, PAD_BUTTON_RIGHT, WIIDRC_BUTTON_RIGHT);
+	trigLeft.setButtonOnlyInFocusTrigger(-1, GUI_BTN_RIGHT);
 
 	GuiImageData arrowLeft(button_arrow_left_png);
 	GuiImage arrowLeftImg(&arrowLeft);
@@ -1299,7 +1277,6 @@ static void ControllerWindow()
 	arrowLeftBtn.setImageOver(&arrowLeftOverImg);
 	arrowLeftBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 	arrowLeftBtn.setTrigger(trigA);
-	arrowLeftBtn.setTrigger(trig2);
 	arrowLeftBtn.setTrigger(&trigLeft);
 	arrowLeftBtn.setSelectable(false);
 	arrowLeftBtn.setUpdateCallback(ControllerWindowLeftClick);
@@ -1313,7 +1290,6 @@ static void ControllerWindow()
 	arrowRightBtn.setImageOver(&arrowRightOverImg);
 	arrowRightBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
 	arrowRightBtn.setTrigger(trigA);
-	arrowRightBtn.setTrigger(trig2);
 	arrowRightBtn.setTrigger(&trigRight);
 	arrowRightBtn.setSelectable(false);
 	arrowRightBtn.setUpdateCallback(ControllerWindowRightClick);
@@ -1367,10 +1343,10 @@ static void PlayerMappingWindow(int chan)
 	w->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 
 	GuiTrigger trigLeft;
-	trigLeft.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT, PAD_BUTTON_LEFT, WIIDRC_BUTTON_LEFT);
+	trigLeft.setButtonOnlyInFocusTrigger(-1, GUI_BTN_LEFT);
 
 	GuiTrigger trigRight;
-	trigRight.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT, PAD_BUTTON_RIGHT, WIIDRC_BUTTON_RIGHT);
+	trigLeft.setButtonOnlyInFocusTrigger(-1, GUI_BTN_RIGHT);
 
 	GuiImageData arrowLeft(button_arrow_left_png);
 	GuiImage arrowLeftImg(&arrowLeft);
@@ -1381,7 +1357,6 @@ static void PlayerMappingWindow(int chan)
 	arrowLeftBtn.setImageOver(&arrowLeftOverImg);
 	arrowLeftBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 	arrowLeftBtn.setTrigger(trigA);
-	arrowLeftBtn.setTrigger(trig2);
 	arrowLeftBtn.setTrigger(&trigLeft);
 	arrowLeftBtn.setSelectable(false);
 	arrowLeftBtn.setUpdateCallback(PlayerMappingWindowLeftClick);
@@ -1395,7 +1370,6 @@ static void PlayerMappingWindow(int chan)
 	arrowRightBtn.setImageOver(&arrowRightOverImg);
 	arrowRightBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
 	arrowRightBtn.setTrigger(trigA);
-	arrowRightBtn.setTrigger(trig2);
 	arrowRightBtn.setTrigger(&trigRight);
 	arrowRightBtn.setSelectable(false);
 	arrowRightBtn.setUpdateCallback(PlayerMappingWindowRightClick);
@@ -1455,10 +1429,8 @@ static int MenuGame()
 
 	GuiTrigger trigHome;
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigHome.setButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, PAD_BUTTON_START, WIIDRC_BUTTON_HOME);
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigHome.setButtonOnlyTrigger(-1, GUI_BTN_HOME);
+	trigB.setSecondaryTrigger();
 
 	GuiText saveBtnTxt("Save", 22, (GuiColor){0, 0, 0, 255});
 	GuiImage saveBtnImg(&btnLargeOutline);
@@ -1474,7 +1446,6 @@ static int MenuGame()
 	saveBtn.setSoundOver(&btnSoundOver);
 	saveBtn.setSoundClick(&btnSoundClick);
 	saveBtn.setTrigger(trigA);
-	saveBtn.setTrigger(trig2);
 	saveBtn.setEffectGrow();
 
 	GuiText loadBtnTxt("Load", 22, (GuiColor){0, 0, 0, 255});
@@ -1491,7 +1462,6 @@ static int MenuGame()
 	loadBtn.setSoundOver(&btnSoundOver);
 	loadBtn.setSoundClick(&btnSoundClick);
 	loadBtn.setTrigger(trigA);
-	loadBtn.setTrigger(trig2);
 	loadBtn.setEffectGrow();
 
 	GuiText deleteBtnTxt("Delete", 22, (GuiColor){0, 0, 0, 255});
@@ -1508,7 +1478,6 @@ static int MenuGame()
 	deleteBtn.setSoundOver(&btnSoundOver);
 	deleteBtn.setSoundClick(&btnSoundClick);
 	deleteBtn.setTrigger(trigA);
-	deleteBtn.setTrigger(trig2);
 	deleteBtn.setEffectGrow();
 	
 	GuiText resetBtnTxt("Reset", 22, (GuiColor){0, 0, 0, 255});
@@ -1525,7 +1494,6 @@ static int MenuGame()
 	resetBtn.setSoundOver(&btnSoundOver);
 	resetBtn.setSoundClick(&btnSoundClick);
 	resetBtn.setTrigger(trigA);
-	resetBtn.setTrigger(trig2);
 	resetBtn.setEffectGrow();
 
 	GuiText gameSettingsBtnTxt("Game Settings", 22, (GuiColor){0, 0, 0, 255});
@@ -1543,7 +1511,6 @@ static int MenuGame()
 	gameSettingsBtn.setSoundOver(&btnSoundOver);
 	gameSettingsBtn.setSoundClick(&btnSoundClick);
 	gameSettingsBtn.setTrigger(trigA);
-	gameSettingsBtn.setTrigger(trig2);
 	gameSettingsBtn.setEffectGrow();
 
 	GuiText mainmenuBtnTxt("Main Menu", 22, (GuiColor){0, 0, 0, 255});
@@ -1561,7 +1528,6 @@ static int MenuGame()
 	mainmenuBtn.setSoundOver(&btnSoundOver);
 	mainmenuBtn.setSoundClick(&btnSoundClick);
 	mainmenuBtn.setTrigger(trigA);
-	mainmenuBtn.setTrigger(trig2);
 	mainmenuBtn.setEffectGrow();
 
 	GuiText closeBtnTxt("Close", 20, (GuiColor){0, 0, 0, 255});
@@ -1576,10 +1542,8 @@ static int MenuGame()
 	closeBtn.setSoundOver(&btnSoundOver);
 	closeBtn.setSoundClick(&btnSoundClick);
 	closeBtn.setTrigger(trigA);
-	closeBtn.setTrigger(trig2);
 	closeBtn.setTrigger(&trigHome);
 	closeBtn.setTrigger(&trigB);
-	closeBtn.setTrigger(&trig1);
 	closeBtn.setEffectGrow();
 
 	#ifdef HW_RVL
@@ -1683,7 +1647,7 @@ static int MenuGame()
 			if(WPAD_Probe(i, NULL) == WPAD_ERR_NONE)
 			{
 				newStatus = true;
-				newLevel = (userInput[i].wpad->battery_level / 100.0) * 4;
+				newLevel = (userInput[i]->getPadData().battery_level / 100.0) * 4;
 				if(newLevel > 4) newLevel = 4;
 			}
 			else
@@ -1900,10 +1864,8 @@ static int MenuGameSaves(int action)
 
 	GuiTrigger trigHome;
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigHome.setButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, PAD_BUTTON_START, WIIDRC_BUTTON_HOME);
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigHome.setButtonOnlyTrigger(-1, GUI_BTN_HOME);
+	trigB.setSecondaryTrigger();
 
 	GuiText backBtnTxt("Go Back", 22, (GuiColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -1917,9 +1879,7 @@ static int MenuGameSaves(int action)
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	GuiText closeBtnTxt("Close", 20, (GuiColor){0, 0, 0, 255});
@@ -1934,7 +1894,6 @@ static int MenuGameSaves(int action)
 	closeBtn.setSoundOver(&btnSoundOver);
 	closeBtn.setSoundClick(&btnSoundClick);
 	closeBtn.setTrigger(trigA);
-	closeBtn.setTrigger(trig2);
 	closeBtn.setTrigger(&trigHome);
 	closeBtn.setEffectGrow();
 
@@ -2178,10 +2137,8 @@ static int MenuGameSettings()
 
 	GuiTrigger trigHome;
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigHome.setButtonOnlyTrigger(-1, WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME, PAD_BUTTON_START, WIIDRC_BUTTON_HOME);
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigHome.setButtonOnlyTrigger(-1, GUI_BTN_HOME);
+	trigB.setSecondaryTrigger();
 
 	GuiText mappingBtnTxt("Button Mappings", 22, (GuiColor){0, 0, 0, 255});
 	mappingBtnTxt.setWrap(true, btnLargeOutline.getWidth()-30);
@@ -2198,7 +2155,6 @@ static int MenuGameSettings()
 	mappingBtn.setSoundOver(&btnSoundOver);
 	mappingBtn.setSoundClick(&btnSoundClick);
 	mappingBtn.setTrigger(trigA);
-	mappingBtn.setTrigger(trig2);
 	mappingBtn.setEffectGrow();
 	
 	GuiText emulationBtnTxt("Emulation", 22, (GuiColor){0, 0, 0, 255});
@@ -2216,7 +2172,6 @@ static int MenuGameSettings()
 	emulationBtn.setSoundOver(&btnSoundOver);
 	emulationBtn.setSoundClick(&btnSoundClick);
 	emulationBtn.setTrigger(trigA);
-	emulationBtn.setTrigger(trig2);
 	emulationBtn.setEffectGrow();
 	
 	GuiText videoBtnTxt("Video", 22, (GuiColor){0, 0, 0, 255});
@@ -2234,7 +2189,6 @@ static int MenuGameSettings()
 	videoBtn.setSoundOver(&btnSoundOver);
 	videoBtn.setSoundClick(&btnSoundClick);
 	videoBtn.setTrigger(trigA);
-	videoBtn.setTrigger(trig2);
 	videoBtn.setEffectGrow();
 
 	GuiText controllerBtnTxt("Controller", 22, (GuiColor){0, 0, 0, 255});
@@ -2251,7 +2205,6 @@ static int MenuGameSettings()
 	controllerBtn.setSoundOver(&btnSoundOver);
 	controllerBtn.setSoundClick(&btnSoundClick);
 	controllerBtn.setTrigger(trigA);
-	controllerBtn.setTrigger(trig2);
 	controllerBtn.setEffectGrow();
 
 	GuiText screenshotBtnTxt("Screenshot", 22, (GuiColor){0, 0, 0, 255});
@@ -2268,7 +2221,6 @@ static int MenuGameSettings()
 	screenshotBtn.setSoundOver(&btnSoundOver);
 	screenshotBtn.setSoundClick(&btnSoundClick);
 	screenshotBtn.setTrigger(trigA);
-	screenshotBtn.setTrigger(trig2);
 	screenshotBtn.setEffectGrow();
 	
 	GuiText cheatsBtnTxt("Cheats", 22, (GuiColor){0, 0, 0, 255});
@@ -2285,7 +2237,6 @@ static int MenuGameSettings()
 	cheatsBtn.setSoundOver(&btnSoundOver);
 	cheatsBtn.setSoundClick(&btnSoundClick);
 	cheatsBtn.setTrigger(trigA);
-	cheatsBtn.setTrigger(trig2);
 	cheatsBtn.setEffectGrow();
 
 	GuiText closeBtnTxt("Close", 20, (GuiColor){0, 0, 0, 255});
@@ -2300,7 +2251,6 @@ static int MenuGameSettings()
 	closeBtn.setSoundOver(&btnSoundOver);
 	closeBtn.setSoundClick(&btnSoundClick);
 	closeBtn.setTrigger(trigA);
-	closeBtn.setTrigger(trig2);
 	closeBtn.setTrigger(&trigHome);
 	closeBtn.setEffectGrow();
 
@@ -2316,9 +2266,7 @@ static int MenuGameSettings()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	HaltGui();
@@ -2434,9 +2382,7 @@ static int MenuGameCheats()
 	GuiImageData btnOutlineOver(button_over_png);
 
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigB.setSecondaryTrigger();
 
 	GuiText backBtnTxt("Go Back", 22, (GuiColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -2450,9 +2396,7 @@ static int MenuGameCheats()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
@@ -2516,9 +2460,7 @@ static int MenuSettingsMappings()
 	GuiImageData iconMouse(icon_settings_mouse_png);
 
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigB.setSecondaryTrigger();
 
 	GuiText snesBtnTxt("SNES Controller", 22, (GuiColor){0, 0, 0, 255});
 	snesBtnTxt.setWrap(true, btnLargeOutline.getWidth()-40);
@@ -2535,7 +2477,6 @@ static int MenuSettingsMappings()
 	snesBtn.setSoundOver(&btnSoundOver);
 	snesBtn.setSoundClick(&btnSoundClick);
 	snesBtn.setTrigger(trigA);
-	snesBtn.setTrigger(trig2);
 	snesBtn.setEffectGrow();
 
 	GuiText superscopeBtnTxt("Super Scope", 22, (GuiColor){0, 0, 0, 255});
@@ -2553,7 +2494,6 @@ static int MenuSettingsMappings()
 	superscopeBtn.setSoundOver(&btnSoundOver);
 	superscopeBtn.setSoundClick(&btnSoundClick);
 	superscopeBtn.setTrigger(trigA);
-	superscopeBtn.setTrigger(trig2);
 	superscopeBtn.setEffectGrow();
 
 	GuiText mouseBtnTxt("SNES Mouse", 22, (GuiColor){0, 0, 0, 255});
@@ -2571,7 +2511,6 @@ static int MenuSettingsMappings()
 	mouseBtn.setSoundOver(&btnSoundOver);
 	mouseBtn.setSoundClick(&btnSoundClick);
 	mouseBtn.setTrigger(trigA);
-	mouseBtn.setTrigger(trig2);
 	mouseBtn.setEffectGrow();
 
 	GuiText justifierBtnTxt("Justifier", 22, (GuiColor){0, 0, 0, 255});
@@ -2588,7 +2527,6 @@ static int MenuSettingsMappings()
 	justifierBtn.setSoundOver(&btnSoundOver);
 	justifierBtn.setSoundClick(&btnSoundClick);
 	justifierBtn.setTrigger(trigA);
-	justifierBtn.setTrigger(trig2);
 	justifierBtn.setEffectGrow();
 
 	GuiText otherBtnTxt("Other Mappings", 22, (GuiColor){0, 0, 0, 255});
@@ -2603,7 +2541,6 @@ static int MenuSettingsMappings()
 	otherBtn.setSoundOver(&btnSoundOver);
 	otherBtn.setSoundClick(&btnSoundClick);
 	otherBtn.setTrigger(trigA);
-	otherBtn.setTrigger(trig2);
 	otherBtn.setEffectGrow();
 
 	GuiText backBtnTxt("Go Back", 22, (GuiColor){0, 0, 0, 255});
@@ -2618,9 +2555,7 @@ static int MenuSettingsMappings()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	HaltGui();
@@ -2706,9 +2641,7 @@ static int MenuSettingsMappingsController()
 	GuiImageData iconDrc(icon_settings_drc_png);
 
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigB.setSecondaryTrigger();
 	
 	GuiText gamecubeBtnTxt("GameCube Controller", 22, (GuiColor){0, 0, 0, 255});
 	gamecubeBtnTxt.setWrap(true, btnLargeOutline.getWidth()-30);
@@ -2725,7 +2658,6 @@ static int MenuSettingsMappingsController()
 	gamecubeBtn.setSoundOver(&btnSoundOver);
 	gamecubeBtn.setSoundClick(&btnSoundClick);
 	gamecubeBtn.setTrigger(trigA);
-	gamecubeBtn.setTrigger(trig2);
 	gamecubeBtn.setEffectGrow();
 
 	GuiText wiimoteBtnTxt("Wiimote", 22, (GuiColor){0, 0, 0, 255});
@@ -2742,7 +2674,6 @@ static int MenuSettingsMappingsController()
 	wiimoteBtn.setSoundOver(&btnSoundOver);
 	wiimoteBtn.setSoundClick(&btnSoundClick);
 	wiimoteBtn.setTrigger(trigA);
-	wiimoteBtn.setTrigger(trig2);
 	wiimoteBtn.setEffectGrow();
 
 	GuiText drcBtnTxt("Wii U GamePad", 22, (GuiColor){0, 0, 0, 255});
@@ -2760,7 +2691,6 @@ static int MenuSettingsMappingsController()
 	drcBtn.setSoundOver(&btnSoundOver);
 	drcBtn.setSoundClick(&btnSoundClick);
 	drcBtn.setTrigger(trigA);
-	drcBtn.setTrigger(trig2);
 	drcBtn.setEffectGrow();
 
 	GuiText classicBtnTxt("Classic Controller", 22, (GuiColor){0, 0, 0, 255});
@@ -2778,7 +2708,6 @@ static int MenuSettingsMappingsController()
 	classicBtn.setSoundOver(&btnSoundOver);
 	classicBtn.setSoundClick(&btnSoundClick);
 	classicBtn.setTrigger(trigA);
-	classicBtn.setTrigger(trig2);
 	classicBtn.setEffectGrow();
 
 	GuiText nunchukBtnTxt1("Wiimote", 22, (GuiColor){0, 0, 0, 255});
@@ -2801,7 +2730,6 @@ static int MenuSettingsMappingsController()
 	nunchukBtn.setSoundOver(&btnSoundOver);
 	nunchukBtn.setSoundClick(&btnSoundClick);
 	nunchukBtn.setTrigger(trigA);
-	nunchukBtn.setTrigger(trig2);
 	nunchukBtn.setEffectGrow();
 
 	GuiText wiiuproBtnTxt("Wii U Pro Controller", 22, (GuiColor){0, 0, 0, 255});
@@ -2819,7 +2747,6 @@ static int MenuSettingsMappingsController()
 	wiiuproBtn.setSoundOver(&btnSoundOver);
 	wiiuproBtn.setSoundClick(&btnSoundClick);
 	wiiuproBtn.setTrigger(trigA);
-	wiiuproBtn.setTrigger(trig2);
 	wiiuproBtn.setEffectGrow();
 
 	GuiText backBtnTxt("Go Back", 22, (GuiColor){0, 0, 0, 255});
@@ -2834,9 +2761,7 @@ static int MenuSettingsMappingsController()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	HaltGui();
@@ -2874,32 +2799,32 @@ static int MenuSettingsMappingsController()
 		if(wiimoteBtn.getState() == STATE::CLICKED)
 		{
 			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = CTRLR_WIIMOTE;
+			mapMenuCtrl = GUI_HW_WIIMOTE;
 		}
 		else if(nunchukBtn.getState() == STATE::CLICKED)
 		{
 			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = CTRLR_NUNCHUK;
+			mapMenuCtrl = GUI_HW_NUNCHUK;
 		}
 		else if(classicBtn.getState() == STATE::CLICKED)
 		{
 			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = CTRLR_CLASSIC;
+			mapMenuCtrl = GUI_HW_CLASSIC;
 		}
 		else if(wiiuproBtn.getState() == STATE::CLICKED)
 		{
 			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = CTRLR_WUPC;
+			mapMenuCtrl = GUI_HW_WUPC;
 		}
 		else if(drcBtn.getState() == STATE::CLICKED)
 		{
 			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = CTRLR_WIIDRC;
+			mapMenuCtrl = GUI_HW_DRC;
 		}
 		else if(gamecubeBtn.getState() == STATE::CLICKED)
 		{
 			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = CTRLR_GCPAD;
+			mapMenuCtrl = GUI_HW_GAMECUBE;
 		}
 		else if(backBtn.getState() == STATE::CLICKED)
 		{
@@ -2914,9 +2839,7 @@ static int MenuSettingsMappingsController()
 /****************************************************************************
  * ButtonMappingWindow
  ***************************************************************************/
-
-static u32
-ButtonMappingWindow()
+static u32 ButtonMappingWindow()
 {
 	GuiWindow promptWindow(448,288);
 	promptWindow.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
@@ -2937,27 +2860,26 @@ ButtonMappingWindow()
 
 	switch(mapMenuCtrl)
 	{
-		case CTRLR_GCPAD:
-			#ifdef HW_RVL
+		case GUI_HW_GAMECUBE:
 			sprintf(msg, "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping.");
-			#else
-			sprintf(msg, "Press any button on the GameCube Controller now. Press the C-Stick in any direction to clear the existing mapping.");
-			#endif
 			break;
-		case CTRLR_WIIMOTE:
+		case GUI_HW_WIIMOTE:
 			sprintf(msg, "Press any button on the Wiimote now. Press Home to clear the existing mapping.");
 			break;
-		case CTRLR_CLASSIC:
+		case GUI_HW_CLASSIC:
 			sprintf(msg, "Press any button on the Classic Controller now. Press Home to clear the existing mapping.");
 			break;
-		case CTRLR_WUPC:
+		case GUI_HW_WUPC:
 			sprintf(msg, "Press any button on the Wii U Pro Controller now. Press Home to clear the existing mapping.");
 			break;
-		case CTRLR_WIIDRC:
+		case GUI_HW_DRC:
 			sprintf(msg, "Press any button on the Wii U GamePad now. Press Home to clear the existing mapping.");
 			break;
-		case CTRLR_NUNCHUK:
+		case GUI_HW_NUNCHUK:
 			sprintf(msg, "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping.");
+			break;
+		default:
+			sprintf(msg, "Press any button to map. Press Home to clear.");
 			break;
 	}
 
@@ -2977,106 +2899,46 @@ ButtonMappingWindow()
 	ResumeGui();
 
 	u32 pressed = 0;
-	
 	buttonMappingCancelled = false;
+
 	while(pressed == 0 && !buttonMappingCancelled)
 	{
 		usleep(THREAD_SLEEP);
 
-		if(mapMenuCtrl == CTRLR_GCPAD)
+		if(!userInput[0]) continue;
+
+		const GuiInputPadData& pad = userInput[0]->getPadData();
+
+		// Listen strictly to the specific hardware profile being mapped
+		pressed = pad.hw_buttons_d[mapMenuCtrl];
+
+		// C-Stick clear for GameCube specifically
+		if(mapMenuCtrl == GUI_HW_GAMECUBE)
 		{
-			pressed = userInput[0].pad.btns_d;
-
-			if(userInput[0].pad.substickX < -70 ||
-					userInput[0].pad.substickX > 70 ||
-					userInput[0].pad.substickY < -70 ||
-					userInput[0].pad.substickY > 70)
-				pressed = WPAD_BUTTON_HOME;
-
-			if(userInput[0].wpad->btns_d == WPAD_BUTTON_HOME)
-				pressed = WPAD_BUTTON_HOME;
-
-			if(userInput[0].wpad->btns_d & WPAD_CLASSIC_BUTTON_B ||
-					userInput[0].wpad->btns_d & WPAD_BUTTON_B ||
-					userInput[0].wpad->btns_d & WPAD_BUTTON_1 ||
-					userInput[0].wiidrcdata.btns_d & WIIDRC_BUTTON_B)
-				buttonMappingCancelled = true; 
-		}
-		else if(mapMenuCtrl == CTRLR_WIIDRC)
-		{
-			pressed = userInput[0].wiidrcdata.btns_d;
-
-			if(userInput[0].wpad->btns_d & WPAD_CLASSIC_BUTTON_B ||
-					userInput[0].wpad->btns_d & WPAD_BUTTON_B ||
-					userInput[0].wpad->btns_d & WPAD_BUTTON_1 ||
-					userInput[0].pad.btns_d & PAD_BUTTON_B)
-				buttonMappingCancelled = true; 
-		}
-		else
-		{
-			pressed = userInput[0].wpad->btns_d;
-
-			// always allow Home button to be pressed to clear the existing mapping
-			if(pressed != WPAD_BUTTON_HOME)
+			if(pad.hw_substickX[GUI_HW_GAMECUBE] < -0.55f || pad.hw_substickX[GUI_HW_GAMECUBE] > 0.55f ||
+			   pad.hw_substickY[GUI_HW_GAMECUBE] < -0.55f || pad.hw_substickY[GUI_HW_GAMECUBE] > 0.55f)
 			{
-				switch(mapMenuCtrl)
-				{
-					case CTRLR_WIIMOTE:
-						if(pressed > 0x1000)
-							pressed = 0; // not a valid input
-						if(userInput[0].pad.btns_d & PAD_BUTTON_B || 
-								userInput[0].wiidrcdata.btns_d & WIIDRC_BUTTON_B ||
-								userInput[0].wpad->btns_d & WPAD_CLASSIC_BUTTON_B)
-							buttonMappingCancelled = true;
-						break;
+				pressed = GUI_BTN_HOME;
+			}
+		}
 
-					case CTRLR_CLASSIC:
-						if(userInput[0].wpad->exp.type != WPAD_EXP_CLASSIC && userInput[0].wpad->exp.classic.type < 2)
-							pressed = 0; // not a valid input
-						else if(userInput[0].wpad->exp.type == WPAD_EXP_NUNCHUK)
-							pressed = 0; // not a valid input (Nunchuk Z/C is assigned as Classic Controller Up/Left for some reason)
-						else if(pressed <= 0x1000)
-							pressed = 0;
-						if(userInput[0].pad.btns_d & PAD_BUTTON_B || 
-								userInput[0].wiidrcdata.btns_d & WIIDRC_BUTTON_B ||
-								userInput[0].wpad->btns_d & WPAD_BUTTON_B ||
-								userInput[0].wpad->btns_d & WPAD_BUTTON_1)
-							buttonMappingCancelled = true;
-						break;
+		// Normalize Home button press to clear mapping
+		if (pressed & GUI_BTN_HOME) {
+			pressed = GUI_BTN_HOME;
+		}
 
-					case CTRLR_WUPC:
-						if(userInput[0].wpad->exp.type != WPAD_EXP_CLASSIC && userInput[0].wpad->exp.classic.type == 2)
-							pressed = 0; // not a valid input
-						else if(pressed <= 0x1000)
-							pressed = 0;
-						if(userInput[0].pad.btns_d & PAD_BUTTON_B || 
-								userInput[0].wiidrcdata.btns_d & WIIDRC_BUTTON_B ||
-								userInput[0].wpad->btns_d & WPAD_BUTTON_B ||
-								userInput[0].wpad->btns_d & WPAD_BUTTON_1)
-							buttonMappingCancelled = true;
-						break;
-
-					case CTRLR_NUNCHUK:
-						if(userInput[0].wpad->exp.type != WPAD_EXP_NUNCHUK)
-							pressed = 0; // not a valid input
-						if((userInput[0].wpad->exp.type != WPAD_EXP_NUNCHUK && userInput[0].wpad->btns_d & WPAD_BUTTON_B) ||
-								(userInput[0].wpad->exp.type != WPAD_EXP_NUNCHUK && userInput[0].wpad->btns_d & WPAD_BUTTON_1) ||
-								userInput[0].pad.btns_d & PAD_BUTTON_B || 
-								userInput[0].wiidrcdata.btns_d & WIIDRC_BUTTON_B ||
-								userInput[0].wpad->btns_d & WPAD_CLASSIC_BUTTON_B)
-							buttonMappingCancelled = true;
-						break;
-				}
+		// If no button was pressed on the target hardware, check if the user
+		// hit the generic "Cancel" button (B/1) on ANY controller to back out.
+		if(pressed == 0)
+		{
+			if(userInput[0]->isSecondaryPressed()) {
+				buttonMappingCancelled = true;
 			}
 		}
 	}
 
-	if(mapMenuCtrl == CTRLR_WIIDRC) {
-		if(pressed == WIIDRC_BUTTON_HOME) {
-			pressed = 0;
-		}
-	}
-	else if(pressed == WPAD_BUTTON_HOME || pressed == WPAD_CLASSIC_BUTTON_HOME) {
+	// GUI_BTN_HOME explicitly clears the mapped button
+	if(pressed == GUI_BTN_HOME) {
 		pressed = 0;
 	}
 
@@ -3127,7 +2989,6 @@ static int MenuSettingsMappingsMap()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setEffectGrow();
 
 	GuiText resetBtnTxt("Reset Mappings", 22, (GuiColor){0, 0, 0, 255});
@@ -3142,7 +3003,6 @@ static int MenuSettingsMappingsMap()
 	resetBtn.setSoundOver(&btnSoundOver);
 	resetBtn.setSoundClick(&btnSoundClick);
 	resetBtn.setTrigger(trigA);
-	resetBtn.setTrigger(trig2);
 	resetBtn.setEffectGrow();
 
 	i=0;
@@ -3307,16 +3167,16 @@ static void ScreenZoomWindow()
 	w->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 
 	GuiTrigger trigLeft;
-	trigLeft.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT, PAD_BUTTON_LEFT, WIIDRC_BUTTON_LEFT);
+	trigLeft.setButtonOnlyInFocusTrigger(-1, GUI_BTN_LEFT);
 
 	GuiTrigger trigRight;
-	trigRight.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT, PAD_BUTTON_RIGHT, WIIDRC_BUTTON_RIGHT);
+	trigLeft.setButtonOnlyInFocusTrigger(-1, GUI_BTN_RIGHT);
 
 	GuiTrigger trigUp;
-	trigUp.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP, PAD_BUTTON_UP, WIIDRC_BUTTON_UP);
+	trigUp.setButtonOnlyInFocusTrigger(-1, GUI_BTN_UP);
 
 	GuiTrigger trigDown;
-	trigDown.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN, PAD_BUTTON_DOWN, WIIDRC_BUTTON_DOWN);
+	trigDown.setButtonOnlyInFocusTrigger(-1, GUI_BTN_DOWN);
 
 	GuiImageData arrowLeft(button_arrow_left_png);
 	GuiImage arrowLeftImg(&arrowLeft);
@@ -3328,7 +3188,6 @@ static void ScreenZoomWindow()
 	arrowLeftBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	arrowLeftBtn.setPosition(50, 0);
 	arrowLeftBtn.setTrigger(trigA);
-	arrowLeftBtn.setTrigger(trig2);
 	arrowLeftBtn.setTrigger(&trigLeft);
 	arrowLeftBtn.setSelectable(false);
 	arrowLeftBtn.setUpdateCallback(ScreenZoomWindowLeftClick);
@@ -3343,7 +3202,6 @@ static void ScreenZoomWindow()
 	arrowRightBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	arrowRightBtn.setPosition(164, 0);
 	arrowRightBtn.setTrigger(trigA);
-	arrowRightBtn.setTrigger(trig2);
 	arrowRightBtn.setTrigger(&trigRight);
 	arrowRightBtn.setSelectable(false);
 	arrowRightBtn.setUpdateCallback(ScreenZoomWindowRightClick);
@@ -3358,7 +3216,6 @@ static void ScreenZoomWindow()
 	arrowUpBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	arrowUpBtn.setPosition(-76, -27);
 	arrowUpBtn.setTrigger(trigA);
-	arrowUpBtn.setTrigger(trig2);
 	arrowUpBtn.setTrigger(&trigUp);
 	arrowUpBtn.setSelectable(false);
 	arrowUpBtn.setUpdateCallback(ScreenZoomWindowUpClick);
@@ -3373,7 +3230,6 @@ static void ScreenZoomWindow()
 	arrowDownBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	arrowDownBtn.setPosition(-76, 27);
 	arrowDownBtn.setTrigger(trigA);
-	arrowDownBtn.setTrigger(trig2);
 	arrowDownBtn.setTrigger(&trigDown);
 	arrowDownBtn.setSelectable(false);
 	arrowDownBtn.setUpdateCallback(ScreenZoomWindowDownClick);
@@ -3448,16 +3304,16 @@ static void ScreenPositionWindow()
 	w->setPosition(0, -10);
 
 	GuiTrigger trigLeft;
-	trigLeft.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT, PAD_BUTTON_LEFT, WIIDRC_BUTTON_LEFT);
+	trigLeft.setButtonOnlyInFocusTrigger(-1, GUI_BTN_LEFT);
 
 	GuiTrigger trigRight;
-	trigRight.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT, PAD_BUTTON_RIGHT, WIIDRC_BUTTON_RIGHT);
+	trigLeft.setButtonOnlyInFocusTrigger(-1, GUI_BTN_RIGHT);
 
 	GuiTrigger trigUp;
-	trigUp.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP, PAD_BUTTON_UP, WIIDRC_BUTTON_UP);
+	trigUp.setButtonOnlyInFocusTrigger(-1, GUI_BTN_UP);
 
 	GuiTrigger trigDown;
-	trigDown.setButtonOnlyInFocusTrigger(-1, WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN, PAD_BUTTON_DOWN, WIIDRC_BUTTON_DOWN);
+	trigDown.setButtonOnlyInFocusTrigger(-1, GUI_BTN_DOWN);
 
 	GuiImageData arrowLeft(button_arrow_left_png);
 	GuiImage arrowLeftImg(&arrowLeft);
@@ -3468,7 +3324,6 @@ static void ScreenPositionWindow()
 	arrowLeftBtn.setImageOver(&arrowLeftOverImg);
 	arrowLeftBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 	arrowLeftBtn.setTrigger(trigA);
-	arrowLeftBtn.setTrigger(trig2);
 	arrowLeftBtn.setTrigger(&trigLeft);
 	arrowLeftBtn.setSelectable(false);
 	arrowLeftBtn.setUpdateCallback(ScreenPositionWindowLeftClick);
@@ -3482,7 +3337,6 @@ static void ScreenPositionWindow()
 	arrowRightBtn.setImageOver(&arrowRightOverImg);
 	arrowRightBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
 	arrowRightBtn.setTrigger(trigA);
-	arrowRightBtn.setTrigger(trig2);
 	arrowRightBtn.setTrigger(&trigRight);
 	arrowRightBtn.setSelectable(false);
 	arrowRightBtn.setUpdateCallback(ScreenPositionWindowRightClick);
@@ -3496,7 +3350,6 @@ static void ScreenPositionWindow()
 	arrowUpBtn.setImageOver(&arrowUpOverImg);
 	arrowUpBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	arrowUpBtn.setTrigger(trigA);
-	arrowUpBtn.setTrigger(trig2);
 	arrowUpBtn.setTrigger(&trigUp);
 	arrowUpBtn.setSelectable(false);
 	arrowUpBtn.setUpdateCallback(ScreenPositionWindowUpClick);
@@ -3510,7 +3363,6 @@ static void ScreenPositionWindow()
 	arrowDownBtn.setImageOver(&arrowDownOverImg);
 	arrowDownBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
 	arrowDownBtn.setTrigger(trigA);
-	arrowDownBtn.setTrigger(trig2);
 	arrowDownBtn.setTrigger(&trigDown);
 	arrowDownBtn.setSelectable(false);
 	arrowDownBtn.setUpdateCallback(ScreenPositionWindowDownClick);
@@ -3577,9 +3429,7 @@ static int MenuSettingsOtherMappings()
 	GuiImageData btnOutlineOver(button_over_png);
 
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigB.setSecondaryTrigger();
 
 	GuiText backBtnTxt("Go Back", 22, (GuiColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -3593,9 +3443,7 @@ static int MenuSettingsOtherMappings()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
@@ -3739,9 +3587,7 @@ static int MenuSettingsVideo()
 	GuiImageData btnOutlineOver(button_over_png);
 
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigB.setSecondaryTrigger();
 
 	GuiText backBtnTxt("Go Back", 22, (GuiColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -3755,9 +3601,7 @@ static int MenuSettingsVideo()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
@@ -3923,9 +3767,7 @@ static int MenuSettingsEmulation()
 	GuiImageData btnOutlineOver(button_over_png);
 	
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigB.setSecondaryTrigger();
 
 	GuiText backBtnTxt("Go Back", 22, (GuiColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -3939,9 +3781,7 @@ static int MenuSettingsEmulation()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
@@ -4117,9 +3957,7 @@ static int MenuSettings()
 	GuiImageData iconCredits(icon_credits_png);
 
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigB.setSecondaryTrigger();
 
 	GuiText savingBtnTxt1("Saving", 22, (GuiColor){0, 0, 0, 255});
 	GuiText savingBtnTxt2("&", 18, (GuiColor){0, 0, 0, 255});
@@ -4141,7 +3979,6 @@ static int MenuSettings()
 	savingBtn.setSoundOver(&btnSoundOver);
 	savingBtn.setSoundClick(&btnSoundClick);
 	savingBtn.setTrigger(trigA);
-	savingBtn.setTrigger(trig2);
 	savingBtn.setEffectGrow();
 
 	GuiText menuBtnTxt("Menu", 22, (GuiColor){0, 0, 0, 255});
@@ -4159,7 +3996,6 @@ static int MenuSettings()
 	menuBtn.setSoundOver(&btnSoundOver);
 	menuBtn.setSoundClick(&btnSoundClick);
 	menuBtn.setTrigger(trigA);
-	menuBtn.setTrigger(trig2);
 	menuBtn.setEffectGrow();
 
 	GuiText networkBtnTxt("Network", 22, (GuiColor){0, 0, 0, 255});
@@ -4177,7 +4013,6 @@ static int MenuSettings()
 	networkBtn.setSoundOver(&btnSoundOver);
 	networkBtn.setSoundClick(&btnSoundClick);
 	networkBtn.setTrigger(trigA);
-	networkBtn.setTrigger(trig2);
 	networkBtn.setEffectGrow();
 
 	GuiText creditsBtnTxt("Credits", 22, (GuiColor){0, 0, 0, 255});
@@ -4195,7 +4030,6 @@ static int MenuSettings()
 	creditsBtn.setSoundOver(&btnSoundOver);
 	creditsBtn.setSoundClick(&btnSoundClick);
 	creditsBtn.setTrigger(trigA);
-	creditsBtn.setTrigger(trig2);
 	creditsBtn.setEffectGrow();
 	creditsBtn.setUpdateCallback(WindowCredits);
 
@@ -4211,9 +4045,7 @@ static int MenuSettings()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	GuiText resetBtnTxt("Reset Settings", 22, (GuiColor){0, 0, 0, 255});
@@ -4228,7 +4060,6 @@ static int MenuSettings()
 	resetBtn.setSoundOver(&btnSoundOver);
 	resetBtn.setSoundClick(&btnSoundClick);
 	resetBtn.setTrigger(trigA);
-	resetBtn.setTrigger(trig2);
 	resetBtn.setEffectGrow();
 
 	HaltGui();
@@ -4330,9 +4161,7 @@ static int MenuSettingsFile()
 	GuiImageData btnOutlineOver(button_long_over_png);
 
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigB.setSecondaryTrigger();
 
 	GuiText backBtnTxt("Go Back", 22, (GuiColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -4346,9 +4175,7 @@ static int MenuSettingsFile()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
@@ -4516,9 +4343,7 @@ static int MenuSettingsMenu()
 	GuiImageData btnOutlineOver(button_long_over_png);
 
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigB.setSecondaryTrigger();
 
 	GuiText backBtnTxt("Go Back", 22, (GuiColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -4532,9 +4357,7 @@ static int MenuSettingsMenu()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
@@ -4731,9 +4554,7 @@ static int MenuSettingsNetwork()
 	GuiImageData btnOutlineOver(button_long_over_png);
 
 	GuiTrigger trigB;
-	GuiTrigger trig1;
-	trigB.setButtonOnlyTrigger(-1, WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B, PAD_BUTTON_B, WIIDRC_BUTTON_B);
-	trig1.setButtonOnlyTrigger(-1, WPAD_BUTTON_1, 0, 0);
+	trigB.setSecondaryTrigger();
 
 	GuiText backBtnTxt("Go Back", 22, (GuiColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -4747,9 +4568,7 @@ static int MenuSettingsNetwork()
 	backBtn.setSoundOver(&btnSoundOver);
 	backBtn.setSoundClick(&btnSoundClick);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(trig2);
 	backBtn.setTrigger(&trigB);
-	backBtn.setTrigger(&trig1);
 	backBtn.setEffectGrow();
 
 	GuiOptionBrowser optionBrowser(552, 248, &options);
@@ -5035,9 +4854,7 @@ MainMenu (int menu)
 		#endif
 
 		trigA = new GuiTrigger;
-		trigA->setSimpleTrigger(-1, WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A, PAD_BUTTON_A, WIIDRC_BUTTON_A);
-		trig2 = new GuiTrigger;
-		trig2->setSimpleTrigger(-1, WPAD_BUTTON_2, 0, 0);
+		trigA->setPrimaryTrigger();;
 	}
 
 	mainWindow = new GuiWindow(screenwidth, screenheight);
@@ -5080,7 +4897,6 @@ MainMenu (int menu)
 	btnLogo->setSoundOver(&btnSoundOver);
 	btnLogo->setSoundClick(&btnSoundClick);
 	btnLogo->setTrigger(trigA);
-	btnLogo->setTrigger(trig2);
 	btnLogo->setUpdateCallback(WindowCredits);
 
 	mainWindow->append(bgTopImg);

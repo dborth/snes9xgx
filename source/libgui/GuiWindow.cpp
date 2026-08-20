@@ -1,11 +1,7 @@
 /****************************************************************************
  * libgui
- *
  * Daryl Borth 2009-2026
- *
  * GuiWindow.cpp
- *
- * GUI class definitions
  ***************************************************************************/
 
 #include "Gui.h"
@@ -181,7 +177,7 @@ void GuiWindow::changeFocus(GuiElement* e)
 	}
 }
 
-void GuiWindow::toggleFocus(GuiTrigger * t)
+void GuiWindow::toggleFocus(GuiInputController * controller)
 {
 	if(parentElement)
 		return; // this is only intended for the main window
@@ -214,9 +210,9 @@ void GuiWindow::toggleFocus(GuiTrigger * t)
 			}
 		}
 	}
+
 	// change focus
-	else if((t->wpad->btns_d & (WPAD_BUTTON_1 | WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B))
-		|| (t->pad.btns_d & PAD_BUTTON_B) || (t->wiidrcdata.btns_d & WIIDRC_BUTTON_B))
+	else if(controller->isSecondaryPressed())
 	{
 		for (i = found; i < elemSize; ++i)
 		{
@@ -381,7 +377,7 @@ void GuiWindow::resetText()
 	}
 }
 
-void GuiWindow::update(GuiTrigger * t)
+void GuiWindow::update(GuiInputController * controller)
 {
 	if(_elements.size() == 0 || (state == STATE::DISABLED && parentElement))
 		return;
@@ -389,21 +385,21 @@ void GuiWindow::update(GuiTrigger * t)
 	u32 elemSize = _elements.size();
 	for (u32 i = 0; i < elemSize; ++i)
 	{
-		_elements.at(i)->update(t);
+		_elements.at(i)->update(controller);
 	}
 
-	this->toggleFocus(t);
+	this->toggleFocus(controller);
 
 	if(focus) // only send actions to this window if it's in focus
 	{
 		// pad/joystick navigation
-		if(t->right())
+		if(controller->right())
 			this->moveSelectionHor(1);
-		else if(t->left())
+		else if(controller->left())
 			this->moveSelectionHor(-1);
-		else if(t->down())
+		else if(controller->down())
 			this->moveSelectionVert(1);
-		else if(t->up())
+		else if(controller->up())
 			this->moveSelectionVert(-1);
 	}
 

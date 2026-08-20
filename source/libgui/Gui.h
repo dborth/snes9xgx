@@ -25,8 +25,7 @@
  *
 */
 
-#ifndef LIBGUI_H
-#define LIBGUI_H
+#pragma once
 
 #include <gccore.h>
 #include <malloc.h>
@@ -74,14 +73,16 @@ enum class SCROLL {
 };
 
 typedef struct _gui_color {
- 	u8 r;			/*!< Red color component. */
- 	u8 g;			/*!< Green color component. */
- 	u8 b;			/*!< Blue alpha component. */
+	u8 r;			/*!< Red color component. */
+	u8 g;			/*!< Green color component. */
+	u8 b;			/*!< Blue alpha component. */
 	u8 a;			/*!< Alpha component. If a function does not use the alpha value, it is safely ignored. */
 } GuiColor;
 
 #include "video.h"
 
+#include "GuiInput.h"
+#include "GuiInputController.h"
 #include "GuiTrigger.h"
 #include "GuiElement.h"
 #include "GuiWindow.h"
@@ -97,5 +98,3 @@ typedef struct _gui_color {
 #include "GuiKeyboard.h"
 #include "GuiOptionBrowser.h"
 #include "GuiSaveBrowser.h"
-
-#endif

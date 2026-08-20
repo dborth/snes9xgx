@@ -1,7 +1,11 @@
-#ifndef GUIELEMENT_H
-#define GUIELEMENT_H
+/****************************************************************************
+ * libgui
+ * Daryl Borth 2009-2026
+ * GuiElement.h
+ ***************************************************************************/
+#pragma once
 
-#include "Gui.h"
+#define MAX_TRIGGERS 5
 
 typedef void (*UpdateCallback)(void * e);
 
@@ -191,20 +195,20 @@ class GuiElement
 		//!\return true if selected, false otherwise
 		virtual int getSelected();
 		//!Sets the element's alignment respective to its parent element
-		//!\param hor Horizontal alignment (ALIGN_H::LEFT, ALIGN_H::RIGHT, ALIGN_H::CENTRE)
-		//!\param vert Vertical alignment (ALIGN_V::TOP, ALIGN_V::BOTTOM, ALIGN_V::MIDDLE)
+		//!\param hor Horizontal alignment (LEFT, RIGHT, CENTRE)
+		//!\param vert Vertical alignment (TOP, BOTTOM, MIDDLE)
 		virtual void setAlignment(ALIGN_H hor, ALIGN_V vert);
 		//!Called when the language has changed, to obtain new text values for all text elements
 		virtual void resetText();
 		//!Called constantly to allow the element to respond to the current input data
-		//!\param t Pointer to a GuiTrigger, containing the current input data from PAD/WPAD
-		virtual void update(GuiTrigger * t);
+		//!\param c Pointer to a GuiInputController, containing the current input data
+		virtual void update(GuiInputController * c);
 		//!Called constantly to redraw the element
-		virtual void draw();
+		virtual void draw() = 0;
 		//!Called constantly to redraw the element's tooltip
 		virtual void drawTooltip();
 	protected:
-		GuiTrigger * trigger[5]; //!< GuiTriggers (input actions) that this element responds to
+		GuiTrigger * trigger[MAX_TRIGGERS]; //!< GuiTriggers (input actions) that this element responds to
 		UpdateCallback updateCB; //!< Callback function to call when this element is updated
 		GuiElement * parentElement; //!< Parent element
 		int focus; //!< Element focus (-1 = focus disabled, 0 = not focused, 1 = focused)
@@ -239,5 +243,3 @@ class GuiElement
 		bool visible; //!< Visibility of the element. If false, Draw() is skipped
 		bool rumble; //!< Wiimote rumble (on/off) - set to on when this element requests a rumble event
 };
-
-#endif // GUIELEMENT_H

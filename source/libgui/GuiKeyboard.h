@@ -1,7 +1,13 @@
-#ifndef GUIKEYBOARD_H
-#define GUIKEYBOARD_H
+/****************************************************************************
+ * libgui
+ *
+ * Daryl Borth 2009-2026
+ * GuiKeyboard.h
+ ***************************************************************************/
+#pragma once
 
-#include "Gui.h"
+constexpr int KB_ROWS = 4;
+constexpr int KB_COLUMNS = 11;
 
 #define MAX_KEYBOARD_DISPLAY	32
 
@@ -15,7 +21,7 @@ class GuiKeyboard : public GuiWindow
 	public:
 		GuiKeyboard(char * t, u32 m);
 		~GuiKeyboard();
-		void update(GuiTrigger * t);
+		void update(GuiInputController * c);
 		char kbtextstr[256];
 	protected:
 		u32 kbtextmaxlen;
@@ -38,10 +44,10 @@ class GuiKeyboard : public GuiWindow
 		GuiImage * keySpaceImg;
 		GuiImage * keySpaceOverImg;
 		GuiButton * keySpace;
-		GuiButton * keyBtn[4][11];
-		GuiImage * keyImg[4][11];
-		GuiImage * keyImgOver[4][11];
-		GuiText * keyTxt[4][11];
+		GuiButton * keyBtn[KB_ROWS][KB_COLUMNS];
+		GuiImage * keyImg[KB_ROWS][KB_COLUMNS];
+		GuiImage * keyImgOver[KB_ROWS][KB_COLUMNS];
+		GuiText * keyTxt[KB_ROWS][KB_COLUMNS];
 		GuiImageData * keyTextbox;
 		GuiImageData * key;
 		GuiImageData * keyOver;
@@ -52,8 +58,5 @@ class GuiKeyboard : public GuiWindow
 		GuiSound * keySoundOver;
 		GuiSound * keySoundClick;
 		GuiTrigger * trigA;
-		GuiTrigger * trig2;
-		Key keys[4][11]; // two chars = less space than one pointer
+		Key keys[KB_ROWS][KB_COLUMNS]; // two chars = less space than one pointer
 };
-
-#endif // GUIKEYBOARD_H

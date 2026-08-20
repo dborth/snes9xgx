@@ -1,317 +1,88 @@
 /****************************************************************************
  * libgui
- *
  * Daryl Borth 2009-2026
- *
  * GuiTrigger.cpp
- *
- * GUI class definitions
  ***************************************************************************/
-
-#include <ogc/lwp_watchdog.h>
-#include <gctypes.h>
 
 #include "Gui.h"
 
-static u64 prev[4];
-static u64 now[4];
-static u32 delay[4];
+GuiTrigger::GuiTrigger() :
+	type(TRIGGER_TYPE::SIMPLE),
+	action(TRIGGER_ACTION::NONE),
+	chan(-1),
+	conditionMask(GUI_BTN_NONE)
+{}
 
-/**
- * Constructor for the GuiTrigger class.
- */
-GuiTrigger::GuiTrigger()
-{
-	chan = -1;
-	memset(&wiidrcdata, 0, sizeof(GamePadData));
-	memset(&wpaddata, 0, sizeof(WPADData));
-	memset(&pad, 0, sizeof(PADData));
-	wpad = &wpaddata;
-}
-
-/**
- * Destructor for the GuiTrigger class.
- */
-GuiTrigger::~GuiTrigger()
-{
-}
-
-/**
- * Sets a simple trigger. Requires:
- * - Element is selected
- * - Trigger button is pressed
- */
-void GuiTrigger::setSimpleTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
-{
-	type = TRIGGER::SIMPLE;
+void GuiTrigger::setPrimaryTrigger(int ch) {
+	type = TRIGGER_TYPE::SIMPLE;
+	action = TRIGGER_ACTION::PRIMARY;
 	chan = ch;
-	wiidrcdata.btns_d = wiidrcbtns;
-	wpaddata.btns_d = wiibtns;
-	pad.btns_d = gcbtns;
+	conditionMask = GUI_BTN_NONE; // Handled dynamically in resolveMask
 }
 
-/**
- * Sets a held trigger. Requires:
- * - Element is selected
- * - Trigger button is pressed and held
- */
-void GuiTrigger::setHeldTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
-{
-	type = TRIGGER::HELD;
+void GuiTrigger::setSecondaryTrigger(int ch) {
+	type = TRIGGER_TYPE::BUTTON_ONLY;
+	action = TRIGGER_ACTION::SECONDARY;
 	chan = ch;
-	wiidrcdata.btns_h = wiidrcbtns;
-	wpaddata.btns_h = wiibtns;
-	pad.btns_h = gcbtns;
+	conditionMask = GUI_BTN_NONE; // Handled dynamically in resolveMask
 }
 
-/**
- * Sets a button trigger. Requires:
- * - Trigger button is pressed
- */
-void GuiTrigger::setButtonOnlyTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
-{
-	type = TRIGGER::BUTTON_ONLY;
+void GuiTrigger::setSimpleTrigger(int ch, uint32_t buttonMask) {
+	type = TRIGGER_TYPE::SIMPLE;
+	action = TRIGGER_ACTION::NONE;
 	chan = ch;
-	wiidrcdata.btns_d = wiidrcbtns;
-	wpaddata.btns_d = wiibtns;
-	pad.btns_d = gcbtns;
+	conditionMask = buttonMask;
 }
 
-/**
- * Sets a button trigger. Requires:
- * - Trigger button is pressed
- * - Parent window is in focus
- */
-void GuiTrigger::setButtonOnlyInFocusTrigger(s32 ch, u32 wiibtns, u16 gcbtns, u16 wiidrcbtns)
-{
-	type = TRIGGER::BUTTON_ONLY_IN_FOCUS;
+void GuiTrigger::setHeldTrigger(int ch, uint32_t buttonMask) {
+	type = TRIGGER_TYPE::HELD;
+	action = TRIGGER_ACTION::NONE;
 	chan = ch;
-	wiidrcdata.btns_d = wiidrcbtns;
-	wpaddata.btns_d = wiibtns;
-	pad.btns_d = gcbtns;
+	conditionMask = buttonMask;
 }
 
-/****************************************************************************
- * WPAD_Stick
- *
- * Get X/Y value from Wii Joystick (classic, nunchuk) input
- ***************************************************************************/
+void GuiTrigger::setButtonOnlyTrigger(int ch, uint32_t buttonMask) {
+	type = TRIGGER_TYPE::BUTTON_ONLY;
+	action = TRIGGER_ACTION::NONE;
+	chan = ch;
+	conditionMask = buttonMask;
+}
 
-s8 GuiTrigger::WPAD_Stick(u8 stick, int axis)
-{
-	#ifdef HW_RVL
-	struct joystick_t* js = nullptr;
+void GuiTrigger::setButtonOnlyInFocusTrigger(int ch, uint32_t buttonMask) {
+	type = TRIGGER_TYPE::BUTTON_ONLY_IN_FOCUS;
+	action = TRIGGER_ACTION::NONE;
+	chan = ch;
+	conditionMask = buttonMask;
+}
 
-	switch (wpad->exp.type) {
-		case WPAD_EXP_NUNCHUK:
-			js = stick ? nullptr : &wpad->exp.nunchuk.js;
-			break;
-
-		case WPAD_EXP_CLASSIC:
-			js = stick ? &wpad->exp.classic.rjs : &wpad->exp.classic.ljs;
-			break;
-
-		default:
-			break;
+uint32_t GuiTrigger::resolveMask(const GuiInputController* controller) const {
+	if (action == TRIGGER_ACTION::PRIMARY) {
+		return controller->isSideways() ? GUI_BTN_2 : GUI_BTN_A;
+	}
+	else if (action == TRIGGER_ACTION::SECONDARY) {
+		return controller->isSideways() ? GUI_BTN_1 : GUI_BTN_B;
 	}
 
-	if (js) {
-		int pos;
-		int min;
-		int max;
-		int center;
+	return conditionMask; // Fallback to explicit mask for non-semantic triggers
+}
 
-		if(axis == 1) {
-			pos = js->pos.y;
-			min = js->min.y;
-			max = js->max.y;
-			center = js->center.y;
-		}
-		else {
-			pos = js->pos.x;
-			min = js->min.x;
-			max = js->max.x;
-			center = js->center.x;
-		}
-
-		if(min == max) {
-			return 0;
-		}
-
-		// some 3rd party controllers return invalid analog sticks calibration data
-		if ((min >= center) || (max <= center)) {
-			// force default calibration settings
-			min = 0;
-			max = stick ? 32 : 64;
-			center = stick ? 16 : 32;
-		}
-
-		if (pos > max) return 127;
-		if (pos < min) return -128;
-
-		pos -= center;
-
-		if (pos > 0) {
-			return (s8)(127.0 * ((float)pos / (float)(max - center)));
-		}
-		else {
-			return (s8)(128.0 * ((float)pos / (float)(center - min)));
-		}
+bool GuiTrigger::isClicked(const GuiInputController* controller) const {
+	if (!controller || (chan != -1 && controller->getChannel() != chan)) {
+		return false;
 	}
-	#endif
-	return 0;
+	return (controller->getPadData().buttons_d & resolveMask(controller)) != 0;
 }
 
-s8 GuiTrigger::WPAD_StickX(u8 stick)
-{
-	return WPAD_Stick(stick, 0);
-}
-
-s8 GuiTrigger::WPAD_StickY(u8 stick)
-{
-	return WPAD_Stick(stick, 1);
-}
-
-bool GuiTrigger::left()
-{
-	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_UP : WPAD_BUTTON_LEFT;
-
-	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
-			|| (wiidrcdata.btns_d | wiidrcdata.btns_h) & WIIDRC_BUTTON_LEFT
-			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_LEFT
-			|| pad.stickX < -PADCAL
-			|| WPAD_StickX(0) < -PADCAL
-			|| wiidrcdata.stickX < -WIIDRCCAL)
-	{
-		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_LEFT)
-			|| wiidrcdata.btns_d & WIIDRC_BUTTON_LEFT
-			|| pad.btns_d & PAD_BUTTON_LEFT)
-		{
-			prev[chan] = gettime();
-			delay[chan] = SCROLL_DELAY_INITIAL; // reset scroll delay
-			return true;
-		}
-
-		now[chan] = gettime();
-
-		if(diff_usec(prev[chan], now[chan]) > delay[chan])
-		{
-			prev[chan] = now[chan];
-			
-			if(delay[chan] == SCROLL_DELAY_INITIAL)
-				delay[chan] = SCROLL_DELAY_LOOP;
-			else if(delay[chan] > SCROLL_DELAY_DECREASE)
-				delay[chan] -= SCROLL_DELAY_DECREASE;
-			return true;
-		}
+bool GuiTrigger::isHeld(const GuiInputController* controller) const {
+	if (!controller || (chan != -1 && controller->getChannel() != chan)) {
+		return false;
 	}
-	return false;
+	return (controller->getPadData().buttons_h & resolveMask(controller)) != 0;
 }
 
-bool GuiTrigger::right()
-{
-	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_DOWN : WPAD_BUTTON_RIGHT;
-
-	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
-			|| (wiidrcdata.btns_d | wiidrcdata.btns_h) & WIIDRC_BUTTON_RIGHT
-			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_RIGHT
-			|| pad.stickX > PADCAL
-			|| WPAD_StickX(0) > PADCAL
-			|| wiidrcdata.stickX > WIIDRCCAL)
-	{
-		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_RIGHT)
-			|| wiidrcdata.btns_d & WIIDRC_BUTTON_RIGHT
-			|| pad.btns_d & PAD_BUTTON_RIGHT)
-		{
-			prev[chan] = gettime();
-			delay[chan] = SCROLL_DELAY_INITIAL; // reset scroll delay
-			return true;
-		}
-
-		now[chan] = gettime();
-
-		if(diff_usec(prev[chan], now[chan]) > delay[chan])
-		{
-			prev[chan] = now[chan];
-			
-			if(delay[chan] == SCROLL_DELAY_INITIAL)
-				delay[chan] = SCROLL_DELAY_LOOP;
-			else if(delay[chan] > SCROLL_DELAY_DECREASE)
-				delay[chan] -= SCROLL_DELAY_DECREASE;
-			return true;
-		}
+bool GuiTrigger::isReleased(const GuiInputController* controller) const {
+	if (!controller || (chan != -1 && controller->getChannel() != chan)) {
+		return false;
 	}
-	return false;
-}
-
-bool GuiTrigger::up()
-{
-	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_RIGHT : WPAD_BUTTON_UP;
-
-	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
-			|| (wiidrcdata.btns_d | wiidrcdata.btns_h) & WIIDRC_BUTTON_UP
-			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_UP
-			|| pad.stickY > PADCAL
-			|| WPAD_StickY(0) > PADCAL
-			|| wiidrcdata.stickY > WIIDRCCAL)
-	{
-		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_UP)
-			|| wiidrcdata.btns_d & WIIDRC_BUTTON_UP
-			|| pad.btns_d & PAD_BUTTON_UP)
-		{
-			prev[chan] = gettime();
-			delay[chan] = SCROLL_DELAY_INITIAL; // reset scroll delay
-			return true;
-		}
-
-		now[chan] = gettime();
-
-		if(diff_usec(prev[chan], now[chan]) > delay[chan])
-		{
-			prev[chan] = now[chan];
-			
-			if(delay[chan] == SCROLL_DELAY_INITIAL)
-				delay[chan] = SCROLL_DELAY_LOOP;
-			else if(delay[chan] > SCROLL_DELAY_DECREASE)
-				delay[chan] -= SCROLL_DELAY_DECREASE;
-			return true;
-		}
-	}
-	return false;
-}
-
-bool GuiTrigger::down()
-{
-	u32 wiibtn = GCSettings.WiimoteOrientation ? WPAD_BUTTON_LEFT : WPAD_BUTTON_DOWN;
-
-	if((wpad->btns_d | wpad->btns_h) & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
-			|| (wiidrcdata.btns_d | wiidrcdata.btns_h) & WIIDRC_BUTTON_DOWN
-			|| (pad.btns_d | pad.btns_h) & PAD_BUTTON_DOWN
-			|| pad.stickY < -PADCAL
-			|| WPAD_StickY(0) < -PADCAL
-			|| wiidrcdata.stickY < -WIIDRCCAL)
-	{
-		if(wpad->btns_d & (wiibtn | WPAD_CLASSIC_BUTTON_DOWN)
-			|| wiidrcdata.btns_d & WIIDRC_BUTTON_DOWN
-			|| pad.btns_d & PAD_BUTTON_DOWN)
-		{
-			prev[chan] = gettime();
-			delay[chan] = SCROLL_DELAY_INITIAL; // reset scroll delay
-			return true;
-		}
-
-		now[chan] = gettime();
-
-		if(diff_usec(prev[chan], now[chan]) > delay[chan])
-		{
-			prev[chan] = now[chan];
-			
-			if(delay[chan] == SCROLL_DELAY_INITIAL)
-				delay[chan] = SCROLL_DELAY_LOOP;
-			else if(delay[chan] > SCROLL_DELAY_DECREASE)
-				delay[chan] -= SCROLL_DELAY_DECREASE;
-			return true;
-		}
-	}
-	return false;
+	return (controller->getPadData().buttons_r & resolveMask(controller)) != 0;
 }

@@ -1,7 +1,9 @@
-#ifndef GUIIMAGE_H
-#define GUIIMAGE_H
-
-#include "Gui.h"
+/****************************************************************************
+ * libgui
+ * Daryl Borth 2009-2026
+ * GuiImage.h
+ ***************************************************************************/
+#pragma once
 
 enum class IMAGE {
 	TEXTURE,
@@ -39,7 +41,7 @@ class GuiImage : public GuiElement
 		//!\param t Number of times to draw the image
 		void setTile(int t);
 		//!Constantly called to draw the image
-		void draw();
+		void draw() override;
 		//!Gets the image data
 		//!\return pointer to image data
 		u8 * getImage();
@@ -75,5 +77,3 @@ class GuiImage : public GuiElement
 		int tile; //!< Number of times to draw (tile) the image horizontally
 		int stripe; //!< Alpha value (0-255) to apply a stripe effect to the texture
 };
-
-#endif // GUIIMAGE_H

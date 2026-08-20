@@ -1,18 +1,11 @@
 /****************************************************************************
  * libgui
- *
  * Daryl Borth 2009-2026
- *
  * GuiImageData.cpp
- *
- * GUI class definitions
  ***************************************************************************/
 
 #include "Gui.h"
 
-/**
- * Constructor for the GuiImageData class.
- */
 GuiImageData::GuiImageData(const u8 * i, int maxw, int maxh)
 {
 	data = nullptr;
@@ -23,9 +16,6 @@ GuiImageData::GuiImageData(const u8 * i, int maxw, int maxh)
 		data = DecodePNG(i, &width, &height, data, maxw, maxh);
 }
 
-/**
- * Destructor for the GuiImageData class.
- */
 GuiImageData::~GuiImageData()
 {
 	if(data)

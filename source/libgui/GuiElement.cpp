@@ -1,18 +1,11 @@
 /****************************************************************************
  * libgui
- *
  * Daryl Borth 2009-2026
- *
  * GuiElement.cpp
- *
- * GUI class definitions
  ***************************************************************************/
 
 #include "Gui.h"
 
-/**
- * Constructor for the Object class.
- */
 GuiElement::GuiElement()
 {
 	xoffset = 0;
@@ -28,11 +21,8 @@ GuiElement::GuiElement()
 	yscale = 1;
 	state = STATE::DEFAULT;
 	stateChan = -1;
-	trigger[0] = nullptr;
-	trigger[1] = nullptr;
-	trigger[2] = nullptr;
-	trigger[3] = nullptr;
-	trigger[4] = nullptr;
+	for (int i = 0; i < MAX_TRIGGERS; i++)
+		trigger[i] = nullptr;
 	parentElement = nullptr;
 	rumble = true;
 	selectable = false;
@@ -57,9 +47,6 @@ GuiElement::GuiElement()
 	alignmentHor = ALIGN_H::LEFT;
 }
 
-/**
- * Destructor for the GuiElement class.
- */
 GuiElement::~GuiElement()
 {
 }
@@ -358,23 +345,24 @@ int GuiElement::isFocused()
 
 void GuiElement::setTrigger(GuiTrigger * t)
 {
-	if(!trigger[0])
-		trigger[0] = t;
-	else if(!trigger[1])
-		trigger[1] = t;
-	else if(!trigger[2])
-		trigger[2] = t;
-	else if(!trigger[3])
-		trigger[3] = t;
-	else if(!trigger[4])
-		trigger[4] = t;
-	else // all were assigned, so we'll just overwrite the first one
+	bool set = false;
+	for (int i = 0; i < MAX_TRIGGERS; i++) {
+		if(!trigger[i]) {
+			trigger[i] = t;
+			set = true;
+			break;
+		}
+	}
+
+	// all were assigned, so we'll just overwrite the first one
+	if(!set)
 		trigger[0] = t;
 }
 
 void GuiElement::setTrigger(u8 i, GuiTrigger * t)
 {
-	trigger[i] = t;
+	if (i < MAX_TRIGGERS)
+		trigger[i] = t;
 }
 
 bool GuiElement::isRumble()
@@ -539,8 +527,10 @@ void GuiElement::updateEffects()
 	}
 }
 
-void GuiElement::update(GuiTrigger * t)
+void GuiElement::update(GuiInputController * controller)
 {
+	(void)controller; //unused
+
 	if(updateCB)
 		updateCB(this);
 }
@@ -568,10 +558,6 @@ int GuiElement::getSelected()
 }
 
 void GuiElement::resetText()
-{
-}
-
-void GuiElement::draw()
 {
 }
 

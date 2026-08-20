@@ -1,7 +1,10 @@
-#ifndef GUIOPTIONBROWSER_H
-#define GUIOPTIONBROWSER_H
-
-#include "Gui.h"
+/****************************************************************************
+ * libgui
+ *
+ * Daryl Borth 2009-2026
+ * GuiOptionBrowser.h
+ ***************************************************************************/
+#pragma once
 
 #define MAX_OPTIONS 			150
 #define OPTION_PAGESIZE 		8
@@ -24,10 +27,10 @@ class GuiOptionBrowser : public GuiElement
 		int getClickedOption();
 		void resetState();
 		void setFocus(int f);
-		void draw();
+		void draw() override;
 		void triggerUpdate();
 		void resetText();
-		void update(GuiTrigger * t);
+		void update(GuiInputController * c);
 		GuiText * optionVal[OPTION_PAGESIZE];
 	protected:
 		int optionIndex[OPTION_PAGESIZE];
@@ -60,9 +63,6 @@ class GuiOptionBrowser : public GuiElement
 		GuiSound * btnSoundOver;
 		GuiSound * btnSoundClick;
 		GuiTrigger * trigA;
-		GuiTrigger * trig2;
 
 		bool listChanged;
 };
-
-#endif // GUIOPTIONBROWSER_H
