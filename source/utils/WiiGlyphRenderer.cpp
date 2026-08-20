@@ -23,7 +23,7 @@ void WiiGlyphRenderer::setVertexFormat(uint8_t vtxFmtIndex) {
 	GX_SetVtxAttrFmt(this->vertexIndex, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
 }
 
-void* WiiGlyphRenderer::CreateTexture(uint16_t& width, uint16_t& height) {
+void* WiiGlyphRenderer::createTexture(uint16_t& width, uint16_t& height) {
 	width = ALIGN8(width);
 	if (width == 0) width = 8;
 
@@ -41,7 +41,7 @@ void* WiiGlyphRenderer::CreateTexture(uint16_t& width, uint16_t& height) {
 	return texture;
 }
 
-void WiiGlyphRenderer::LoadTextureData(void* texture, FT_Bitmap* bitmap) {
+void WiiGlyphRenderer::loadTextureData(void* texture, FT_Bitmap* bitmap) {
 	if (!texture || !bitmap) return;
 
 	uint16_t texWidth = ALIGN8(bitmap->width);
@@ -81,13 +81,13 @@ void WiiGlyphRenderer::LoadTextureData(void* texture, FT_Bitmap* bitmap) {
 	DCFlushRange(texture, glyphSize);
 }
 
-void WiiGlyphRenderer::DestroyTexture(void* texture) {
+void WiiGlyphRenderer::destroyTexture(void* texture) {
 	if (texture) {
 		free(texture);
 	}
 }
 
-void WiiGlyphRenderer::DrawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) {
+void WiiGlyphRenderer::drawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) {
 	if (!texture) return;
 
 	GXTexObj glyphTexture;
@@ -128,7 +128,7 @@ void WiiGlyphRenderer::DrawQuad(void* texture, int16_t screenX, int16_t screenY,
 	GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
 }
 
-void WiiGlyphRenderer::DrawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) {
+void WiiGlyphRenderer::drawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) {
 	// Disable textures to draw flat colored quad
 	GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
 	GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);

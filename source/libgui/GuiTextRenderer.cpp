@@ -28,7 +28,7 @@ void GuiTextRenderer::unloadFont() {
 	for (auto& sizePair : fontData) {
 		for (auto& charPair : sizePair.second.charMap) {
 			if (charPair.second.texture) {
-				renderer->DestroyTexture(charPair.second.texture); // Delegate to injected renderer
+				renderer->destroyTexture(charPair.second.texture); // Delegate to injected renderer
 				charPair.second.texture = nullptr;
 			}
 		}
@@ -80,9 +80,9 @@ GlyphData* GuiTextRenderer::cacheGlyphData(wchar_t charCode, int16_t pixelSize) 
 			charData.renderOffsetMin = (int16_t)glyphBitmap->rows - ftFace->glyph->bitmap_top;
 
 			// Delegate Texture creation and data loading to the active backend
-			charData.texture = renderer->CreateTexture(charData.textureWidth, charData.textureHeight);
+			charData.texture = renderer->createTexture(charData.textureWidth, charData.textureHeight);
 			if (charData.texture) {
-				renderer->LoadTextureData(charData.texture, glyphBitmap);
+				renderer->loadTextureData(charData.texture, glyphBitmap);
 			}
 
 			return &charData;
@@ -192,7 +192,7 @@ uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, Gu
 			// Draw current glyph via generic renderer
 			int16_t screenX = x_pos + glyphData->renderOffsetX + x_offset;
 			int16_t screenY = y - glyphData->renderOffsetY + y_offset;
-			renderer->DrawQuad(glyphData->texture, screenX, screenY, glyphData->textureWidth, glyphData->textureHeight, color);
+			renderer->drawQuad(glyphData->texture, screenX, screenY, glyphData->textureWidth, glyphData->textureHeight, color);
 
 			x_pos += glyphData->glyphAdvanceX;
 			++printed;
@@ -213,10 +213,10 @@ void GuiTextRenderer::drawTextFeature(int16_t x, int16_t y, uint16_t width, Font
 	uint16_t featureHeight = currentPixelSize >> 4 > 0 ? currentPixelSize >> 4 : 1;
 
 	if (format & GUI_TEXT_STYLE_UNDERLINE) {
-		renderer->DrawFeature(x, y + 1, width, featureHeight, color);
+		renderer->drawFeature(x, y + 1, width, featureHeight, color);
 	}
 	if (format & GUI_TEXT_STYLE_STRIKE) {
-		renderer->DrawFeature(x, y - (offsetData->max >> 1), width, featureHeight, color);
+		renderer->drawFeature(x, y - (offsetData->max >> 1), width, featureHeight, color);
 	}
 }
 

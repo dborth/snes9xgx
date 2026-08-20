@@ -12,12 +12,12 @@ public:
 	~WiiGlyphRenderer() override;
 
 	// Interface implementations
-	void* CreateTexture(uint16_t& width, uint16_t& height) override;
-	void LoadTextureData(void* texture, FT_Bitmap* bitmap) override;
-	void DestroyTexture(void* texture) override;
+	void* createTexture(uint16_t& width, uint16_t& height) override;
+	void loadTextureData(void* texture, FT_Bitmap* bitmap) override;
+	void destroyTexture(void* texture) override;
 
-	void DrawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) override;
-	void DrawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) override;
+	void drawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) override;
+	void drawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) override;
 
 	void setVertexFormat(uint8_t vtxFmtIndex);
 };
