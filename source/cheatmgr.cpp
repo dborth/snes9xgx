@@ -110,7 +110,7 @@ WiiSetupCheats()
 			LoadCheatFile (offset);
 		}
 	}
-		
+	S9xCheatsDisable();
 
 	FreeSaveBuffer ();
 }
