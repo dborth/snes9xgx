@@ -4,7 +4,7 @@
 
 #define ALIGN8(x) (((x) + 7) & ~7)
 
-IGlyphRenderer* glyphRenderer;
+GlyphRenderer* glyphRenderer;
 
 WiiGlyphRenderer::WiiGlyphRenderer(uint8_t vtxFmtIndex)
 {
@@ -23,7 +23,7 @@ void WiiGlyphRenderer::setVertexFormat(uint8_t vtxFmtIndex) {
 	GX_SetVtxAttrFmt(this->vertexIndex, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
 }
 
-void* WiiGlyphRenderer::createTexture(uint16_t& width, uint16_t& height) {
+void* WiiGlyphRenderer::createTexture(uint16_t width, uint16_t height) {
 	width = ALIGN8(width);
 	if (width == 0) width = 8;
 

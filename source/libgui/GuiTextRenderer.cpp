@@ -10,7 +10,7 @@
 
 GuiTextRenderer* fontSystem;
 
-GuiTextRenderer::GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, IGlyphRenderer* glyphRenderer)
+GuiTextRenderer::GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, GlyphRenderer* glyphRenderer)
     : currentPixelSize(0), renderer(glyphRenderer)
 {
 	FT_Init_FreeType(&ftLibrary);

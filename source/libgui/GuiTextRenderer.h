@@ -58,11 +58,11 @@ struct GlyphData {
 };
 
 // Dependency Injection Interface
-class IGlyphRenderer {
+class GlyphRenderer {
 public:
-	virtual ~IGlyphRenderer() = default;
+	virtual ~GlyphRenderer() = default;
 
-	virtual void* createTexture(uint16_t& width, uint16_t& height) = 0;
+	virtual void* createTexture(uint16_t width, uint16_t height) = 0;
 	virtual void loadTextureData(void* texture, FT_Bitmap* bitmap) = 0;
 	virtual void destroyTexture(void* texture) = 0;
 
@@ -77,7 +77,7 @@ private:
 	int16_t currentPixelSize;
 	bool ftKerningEnabled;
 
-	IGlyphRenderer* renderer;
+	GlyphRenderer* renderer;
 
 	struct ftData {
 		FontOffset align;
@@ -96,7 +96,7 @@ private:
 	GlyphData* cacheGlyphData(wchar_t charCode, int16_t pixelSize);
 
 public:
-	GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, IGlyphRenderer* glyphRenderer);
+	GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, GlyphRenderer* glyphRenderer);
 	~GuiTextRenderer();
 
 	void setPixelSize(int16_t pixelSize);
@@ -118,4 +118,4 @@ public:
 };
 
 extern GuiTextRenderer *fontSystem;
-extern IGlyphRenderer* glyphRenderer;
+extern GlyphRenderer* glyphRenderer;

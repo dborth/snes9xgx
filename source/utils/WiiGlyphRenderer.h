@@ -3,7 +3,7 @@
 #include <gccore.h>
 #include "libgui/GuiTextRenderer.h"
 
-class WiiGlyphRenderer : public IGlyphRenderer {
+class WiiGlyphRenderer : public GlyphRenderer {
 private:
 	uint8_t vertexIndex;
 
@@ -12,7 +12,7 @@ public:
 	~WiiGlyphRenderer() override;
 
 	// Interface implementations
-	void* createTexture(uint16_t& width, uint16_t& height) override;
+	void* createTexture(uint16_t width, uint16_t height) override;
 	void loadTextureData(void* texture, FT_Bitmap* bitmap) override;
 	void destroyTexture(void* texture) override;
 
