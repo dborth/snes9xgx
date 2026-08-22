@@ -423,6 +423,10 @@ void UpdatePads()
 			padData.battery_level = wpad->battery_level;
 
 			if (exp_type == WPAD_EXP_NONE) {
+				padData.hw_buttons_d[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_d);
+				padData.hw_buttons_h[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_h);
+				padData.hw_buttons_r[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_u);
+
 				if (wpad->ir.valid) {
 					padData.validPointer = true;
 					padData.isTouch = false;
