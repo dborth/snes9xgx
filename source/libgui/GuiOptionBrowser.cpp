@@ -283,14 +283,33 @@ void GuiOptionBrowser::update(GuiInputController * controller)
 		}
 	}
 
+	auto pad = controller->getPadData();
+	int currentChan = controller->getChannel();
+
 	for(int i=0; i<OPTION_PAGESIZE; ++i)
 	{
 		if(i != selectedItem && optionBtn[i]->getState() == STATE::SELECTED)
 			optionBtn[i]->resetState();
 		else if(focus && i == selectedItem && optionBtn[i]->getState() == STATE::DEFAULT)
-			optionBtn[selectedItem]->setState(STATE::SELECTED, controller->getChannel());
+			optionBtn[selectedItem]->setState(STATE::SELECTED, currentChan);
+		else if(focus && i == selectedItem && optionBtn[i]->getState() == STATE::SELECTED &&
+			optionBtn[i]->getStateChan() != -1 && optionBtn[i]->getStateChan() != currentChan)
+			// Slot is already SELECTED but carries a stale channel from an earlier
+			// selection (e.g. a reused slot after paging, or a preselected item that
+			// was never actually hovered by the real channel yet). Without this,
+			// currentChan == stateChan never holds and clicks are silently ignored
+			// until the item happens to be navigated away from and back.
+			optionBtn[i]->resetState();
+
+		// Present a "no channel" (-1) identity to any item the cursor isn't
+		// currently over. Without this, a stale stateChan left on a reused
+		// list slot (e.g. after paging/navigating) can permanently block
+		// clicks from the real channel until the item is re-hovered.
+		if(pad.validPointer && !optionBtn[i]->isInside(pad.cursor_x, pad.cursor_y))
+			controller->setChannel(-1);
 
 		optionBtn[i]->update(controller);
+		controller->setChannel(currentChan);
 
 		if(optionBtn[i]->getState() == STATE::SELECTED)
 			selectedItem = i;

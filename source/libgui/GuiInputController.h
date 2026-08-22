@@ -4,7 +4,7 @@
  * GuiInputController.h
  *
  * Represents a single connected logical controller.
- * Handles device-specific translation (like sideways Wiimote mapping) 
+ * Handles device-specific translation (like sideways Wiimote mapping)
  * and repeat-delay logic for UI navigation.
  ***************************************************************************/
 #pragma once
@@ -27,6 +27,14 @@ public:
 	void setSideways(bool s) { sideways = s; }
 	bool isSideways() const { return sideways; }
 	int getChannel() const { return channel; }
+
+	//! Temporarily overrides the channel this controller reports via getChannel().
+	//! Used by list-based elements (e.g. GuiFileBrowser) to present a "no channel"
+	//! (-1) identity to items the cursor isn't currently over, so a stale
+	//! stateChan left on a reused slot can't block clicks from the real channel.
+	//! Callers MUST restore the original value (see getChannel()) after the
+	//! element update() call this wraps.
+	void setChannel(int c) { channel = c; }
 
 	//! State Accessors
 	const GuiInputPadData& getPadData() const { return currentData; }

@@ -338,7 +338,7 @@ void GuiFileBrowser::update(GuiInputController * controller)
 
 	endNavigation:
 
-	for(int i=0; i<FILE_PAGESIZE; ++i)
+		for(int i=0; i<FILE_PAGESIZE; ++i)
 	{
 		if(listChanged || numEntries != browser.numEntries)
 		{
@@ -391,9 +391,24 @@ void GuiFileBrowser::update(GuiInputController * controller)
 			fileList[i]->resetState();
 		else if(focus && i == selectedItem && fileList[i]->getState() == STATE::DEFAULT)
 			fileList[selectedItem]->setState(STATE::SELECTED, currentChan);
+		else if(focus && i == selectedItem && fileList[i]->getState() == STATE::SELECTED &&
+				fileList[i]->getStateChan() != -1 && fileList[i]->getStateChan() != currentChan)
+			// Slot is already SELECTED but carries a stale channel from an earlier
+			// selection (e.g. a reused slot after paging, or a preselected item that
+			// was never actually hovered by the real channel yet). Without this,
+			// currentChan == stateChan never holds and clicks are silently ignored
+			// until the item happens to be navigated away from and back.
+			fileList[i]->resetState();
 
-        // Update delegates cursor checking to the element itself
+		// Present a "no channel" (-1) identity to any item the cursor isn't
+		// currently over. Without this, a stale stateChan left on a reused
+		// list slot (e.g. after paging/navigating) can permanently block
+		// clicks from the real channel until the item is re-hovered.
+		if(pad.validPointer && !fileList[i]->isInside(pad.cursor_x, pad.cursor_y))
+			controller->setChannel(-1);
+
 		fileList[i]->update(controller);
+		controller->setChannel(currentChan);
 
 		if(fileList[i]->getState() == STATE::SELECTED)
 		{
