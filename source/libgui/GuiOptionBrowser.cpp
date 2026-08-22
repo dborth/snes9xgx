@@ -285,14 +285,20 @@ void GuiOptionBrowser::update(GuiInputController * controller)
 
 	auto pad = controller->getPadData();
 	int currentChan = controller->getChannel();
+	// A GuiInputController with no live signal this frame (e.g. a persistent
+	// but currently-disconnected controller slot) must not be able to claim
+	// or evict a selection just by taking its turn through this loop -- only
+	// a channel that's genuinely doing something (pointing or pressing) gets
+	// a say in who owns the selected slot.
+	bool channelActive = pad.validPointer || pad.buttons_d != 0 || pad.buttons_h != 0;
 
 	for(int i=0; i<OPTION_PAGESIZE; ++i)
 	{
 		if(i != selectedItem && optionBtn[i]->getState() == STATE::SELECTED)
 			optionBtn[i]->resetState();
-		else if(focus && i == selectedItem && optionBtn[i]->getState() == STATE::DEFAULT)
+		else if(focus && channelActive && i == selectedItem && optionBtn[i]->getState() == STATE::DEFAULT)
 			optionBtn[selectedItem]->setState(STATE::SELECTED, currentChan);
-		else if(focus && i == selectedItem && optionBtn[i]->getState() == STATE::SELECTED &&
+		else if(focus && channelActive && i == selectedItem && optionBtn[i]->getState() == STATE::SELECTED &&
 			optionBtn[i]->getStateChan() != -1 && optionBtn[i]->getStateChan() != currentChan)
 			// Slot is already SELECTED but carries a stale channel from an earlier
 			// selection (e.g. a reused slot after paging, or a preselected item that
