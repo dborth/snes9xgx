@@ -1644,7 +1644,7 @@ static int MenuGame()
 		#ifdef HW_RVL
 		for(i=0; i < 4; i++)
 		{
-			if(WPAD_Probe(i, NULL) == WPAD_ERR_NONE)
+			if(userInput[i]->getPadData().hw_connected[GUI_HW_WIIMOTE])
 			{
 				newStatus = true;
 				newLevel = (userInput[i]->getPadData().battery_level / 100.0) * 4;

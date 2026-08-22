@@ -262,29 +262,55 @@ static uint32_t MapPADToGeneric(uint32_t pad_btns)
 }
 
 #ifdef HW_RVL
-static uint32_t MapWPADToGeneric(uint32_t wpad_btns)
+static uint32_t MapWiimoteToGeneric(uint32_t wpad_btns)
 {
 	uint32_t mask = GUI_BTN_NONE;
-	if (wpad_btns & (WPAD_BUTTON_A | WPAD_CLASSIC_BUTTON_A)) mask |= GUI_BTN_A;
-	if (wpad_btns & (WPAD_BUTTON_B | WPAD_CLASSIC_BUTTON_B)) mask |= GUI_BTN_B;
 
-	if (wpad_btns & WPAD_BUTTON_1) mask |= GUI_BTN_1;
-	if (wpad_btns & WPAD_BUTTON_2) mask |= GUI_BTN_2;
+	if (wpad_btns & WPAD_BUTTON_A)     mask |= GUI_BTN_A;
+	if (wpad_btns & WPAD_BUTTON_B)     mask |= GUI_BTN_B;
+	if (wpad_btns & WPAD_BUTTON_1)     mask |= GUI_BTN_1;
+	if (wpad_btns & WPAD_BUTTON_2)     mask |= GUI_BTN_2;
+	if (wpad_btns & WPAD_BUTTON_UP)    mask |= GUI_BTN_UP;
+	if (wpad_btns & WPAD_BUTTON_DOWN)  mask |= GUI_BTN_DOWN;
+	if (wpad_btns & WPAD_BUTTON_LEFT)  mask |= GUI_BTN_LEFT;
+	if (wpad_btns & WPAD_BUTTON_RIGHT) mask |= GUI_BTN_RIGHT;
+	if (wpad_btns & WPAD_BUTTON_PLUS)  mask |= GUI_BTN_PLUS;
+	if (wpad_btns & WPAD_BUTTON_MINUS) mask |= GUI_BTN_MINUS;
+	if (wpad_btns & WPAD_BUTTON_HOME)  mask |= GUI_BTN_HOME;
 
+	return mask;
+}
+
+static uint32_t MapNunchukToGeneric(uint32_t wpad_btns)
+{
+	uint32_t mask = GUI_BTN_NONE;
+
+	if (wpad_btns & WPAD_NUNCHUK_BUTTON_Z) mask |= GUI_TRIGGER_ZL;
+	if (wpad_btns & WPAD_NUNCHUK_BUTTON_C) mask |= GUI_TRIGGER_L;
+
+	return mask;
+}
+
+static uint32_t MapClassicToGeneric(uint32_t wpad_btns)
+{
+	uint32_t mask = GUI_BTN_NONE;
+
+	// Classic Controller inputs (upper 16 bits)
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_A) mask |= GUI_BTN_A;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_B) mask |= GUI_BTN_B;
 	if (wpad_btns & WPAD_CLASSIC_BUTTON_X) mask |= GUI_BTN_X;
 	if (wpad_btns & WPAD_CLASSIC_BUTTON_Y) mask |= GUI_BTN_Y;
-
-	if (wpad_btns & (WPAD_BUTTON_UP | WPAD_CLASSIC_BUTTON_UP))       mask |= GUI_BTN_UP;
-	if (wpad_btns & (WPAD_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_DOWN))   mask |= GUI_BTN_DOWN;
-	if (wpad_btns & (WPAD_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_LEFT))   mask |= GUI_BTN_LEFT;
-	if (wpad_btns & (WPAD_BUTTON_RIGHT | WPAD_CLASSIC_BUTTON_RIGHT)) mask |= GUI_BTN_RIGHT;
-
-	if (wpad_btns & (WPAD_BUTTON_PLUS | WPAD_CLASSIC_BUTTON_PLUS))   mask |= GUI_BTN_PLUS;
-	if (wpad_btns & (WPAD_BUTTON_MINUS | WPAD_CLASSIC_BUTTON_MINUS)) mask |= GUI_BTN_MINUS;
-	if (wpad_btns & (WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME))   mask |= GUI_BTN_HOME;
-
-	if (wpad_btns & (WPAD_CLASSIC_BUTTON_FULL_L | WPAD_CLASSIC_BUTTON_ZL)) mask |= GUI_TRIGGER_L;
-	if (wpad_btns & (WPAD_CLASSIC_BUTTON_FULL_R | WPAD_CLASSIC_BUTTON_ZR)) mask |= GUI_TRIGGER_R;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_UP) mask |= GUI_BTN_UP;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_DOWN) mask |= GUI_BTN_DOWN;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_LEFT) mask |= GUI_BTN_LEFT;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_RIGHT) mask |= GUI_BTN_RIGHT;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_PLUS) mask |= GUI_BTN_PLUS;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_MINUS) mask |= GUI_BTN_MINUS;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_HOME) mask |= GUI_BTN_HOME;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_FULL_L) mask |= GUI_TRIGGER_L;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_FULL_R) mask |= GUI_TRIGGER_R;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_ZL) mask |= GUI_TRIGGER_ZL;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_ZR) mask |= GUI_TRIGGER_ZR;
 
 	return mask;
 }
@@ -344,46 +370,59 @@ void UpdatePads()
 	Hornet_ScanPads();
 	Mayflash_ScanPads();
 	WPAD_ScanPads();
+
+	bool retrodeActive  = (Retrode_Status()[0]  == 'c');
+	bool xboxActive     = (XBOX360_Status()[0]  == 'c');
+	bool hornetActive   = (Hornet_Status()[0]   == 'c');
+	bool mayflashActive = (Mayflash_Status()[0] == 'c');
 	#endif
 
-	PAD_ScanPads();
+	u32 activeGamecubePads = PAD_ScanPads();
 
 	float deltaTime = 1.0f / 60.0f;
 
-	for(int i = 0; i < 4; i++)
-	{
-		if(!userInput[i]) continue;
-
+	for(int i = 3; i >= 0; i--) {
 		GuiInputPadData padData;
 
 		// Process GameCube Controller & Third Party USB Adaptors
-		uint32_t padHeld = PAD_ButtonsHeld(i);
+		bool gamecubeActive = (activeGamecubePads & (1 << i)) != 0;
+
 		#ifdef HW_RVL
-		// Inject USB controllers into GameCube held state (since they emulate GC bitmasks)
-		padHeld |= Retrode_ButtonsHeld(i) | XBOX360_ButtonsHeld(i) | Hornet_ButtonsHeld(i) | Mayflash_ButtonsHeld(i);
+		if (retrodeActive) gamecubeActive = true;
+		if (xboxActive) gamecubeActive = true;
+		if (hornetActive && i == 0) gamecubeActive = true;
+		if (mayflashActive && i < 2)  gamecubeActive = true;
 		#endif
 
-		padData.hw_connected[GUI_HW_GAMECUBE] = true;
-		padData.hw_buttons_d[GUI_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsDown(i));
-		padData.hw_buttons_h[GUI_HW_GAMECUBE] = MapPADToGeneric(padHeld);
-		padData.hw_buttons_r[GUI_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsUp(i));
-		padData.hw_stickX[GUI_HW_GAMECUBE] = clampf((float)PAD_StickX(i) / 128.0f, -1.0f, 1.0f);
-		padData.hw_stickY[GUI_HW_GAMECUBE] = clampf((float)PAD_StickY(i) / 128.0f, -1.0f, 1.0f);
-		padData.hw_substickX[GUI_HW_GAMECUBE] = clampf((float)PAD_SubStickX(i) / 128.0f, -1.0f, 1.0f);
-		padData.hw_substickY[GUI_HW_GAMECUBE] = clampf((float)PAD_SubStickY(i) / 128.0f, -1.0f, 1.0f);
+		if(gamecubeActive) {
+			uint32_t padHeld = PAD_ButtonsHeld(i);
+			#ifdef HW_RVL
+			// Inject USB controllers into GameCube held state (since they emulate GC bitmasks)
+			padHeld |= Retrode_ButtonsHeld(i) | XBOX360_ButtonsHeld(i) | Hornet_ButtonsHeld(i) | Mayflash_ButtonsHeld(i);
+			#endif
+
+			padData.hw_connected[GUI_HW_GAMECUBE] = true;
+			padData.hw_buttons_d[GUI_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsDown(i));
+			padData.hw_buttons_h[GUI_HW_GAMECUBE] = MapPADToGeneric(padHeld);
+			padData.hw_buttons_r[GUI_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsUp(i));
+			padData.hw_stickX[GUI_HW_GAMECUBE] = clampf((float)PAD_StickX(i) / 128.0f, -1.0f, 1.0f);
+			padData.hw_stickY[GUI_HW_GAMECUBE] = clampf((float)PAD_StickY(i) / 128.0f, -1.0f, 1.0f);
+			padData.hw_substickX[GUI_HW_GAMECUBE] = clampf((float)PAD_SubStickX(i) / 128.0f, -1.0f, 1.0f);
+			padData.hw_substickY[GUI_HW_GAMECUBE] = clampf((float)PAD_SubStickY(i) / 128.0f, -1.0f, 1.0f);
+		}
 
 		#ifdef HW_RVL
 		// Process Wiimote and Extensions
-		uint32_t exp_type = 0;
-		if (WPAD_Probe(i, &exp_type) == WPAD_ERR_NONE)
-		{
-			WPADData* wpad = WPAD_Data(i);
-			if (wpad != nullptr)
-			{
-				uint32_t wpadDown = MapWPADToGeneric(wpad->btns_d);
-				uint32_t wpadHeld = MapWPADToGeneric(wpad->btns_h);
-				uint32_t wpadUp   = MapWPADToGeneric(wpad->btns_u);
+		uint32_t exp_type = WPAD_EXP_NONE;
 
+		if (WPAD_Probe(i, &exp_type) == WPAD_ERR_NONE) {
+			WPADData* wpad = WPAD_Data(i);
+
+			// Always process base Wiimote
+			padData.hw_connected[GUI_HW_WIIMOTE] = true;
+			padData.battery_level = wpad->battery_level;
+
+			if (exp_type == WPAD_EXP_NONE) {
 				if (wpad->ir.valid) {
 					padData.validPointer = true;
 					padData.isTouch = false;
@@ -392,43 +431,42 @@ void UpdatePads()
 					padData.cursor_angle = wpad->ir.angle;
 				}
 
-				if (exp_type == WPAD_EXP_NONE) {
-					padData.hw_connected[GUI_HW_WIIMOTE] = true;
-					padData.hw_buttons_d[GUI_HW_WIIMOTE] = wpadDown;
-					padData.hw_buttons_h[GUI_HW_WIIMOTE] = wpadHeld;
-					padData.hw_buttons_r[GUI_HW_WIIMOTE] = wpadUp;
-					userInput[i]->setSideways(fabs(wpad->gforce.x) > fabs(wpad->gforce.y));
-				}
-				else if (exp_type == WPAD_EXP_NUNCHUK) {
-					padData.hw_connected[GUI_HW_NUNCHUK] = true;
-					padData.hw_buttons_d[GUI_HW_NUNCHUK] = wpadDown;
-					padData.hw_buttons_h[GUI_HW_NUNCHUK] = wpadHeld;
-					padData.hw_buttons_r[GUI_HW_NUNCHUK] = wpadUp;
-					joystick_t* js = &wpad->exp.nunchuk.js;
-					padData.hw_stickX[GUI_HW_NUNCHUK] = NormalizeWPADAnalog(js->pos.x, js->min.x, js->max.x, js->center.x);
-					padData.hw_stickY[GUI_HW_NUNCHUK] = NormalizeWPADAnalog(js->pos.y, js->min.y, js->max.y, js->center.y);
-					userInput[i]->setSideways(false);
-				}
-				else if (exp_type == WPAD_EXP_CLASSIC) {
-					bool isWUPC = (wpad->exp.classic.type == 2);
-					int hw = isWUPC ? GUI_HW_WUPC : GUI_HW_CLASSIC;
-
-					padData.hw_connected[hw] = true;
-					padData.hw_buttons_d[hw] = wpadDown;
-					padData.hw_buttons_h[hw] = wpadHeld;
-					padData.hw_buttons_r[hw] = wpadUp;
-
-					joystick_t* ljs = &wpad->exp.classic.ljs;
-					joystick_t* rjs = &wpad->exp.classic.rjs;
-					padData.hw_stickX[hw] = NormalizeWPADAnalog(ljs->pos.x, ljs->min.x, ljs->max.x, ljs->center.x);
-					padData.hw_stickY[hw] = NormalizeWPADAnalog(ljs->pos.y, ljs->min.y, ljs->max.y, ljs->center.y);
-					padData.hw_substickX[hw] = NormalizeWPADAnalog(rjs->pos.x, rjs->min.x, rjs->max.x, rjs->center.x);
-					padData.hw_substickY[hw] = NormalizeWPADAnalog(rjs->pos.y, rjs->min.y, rjs->max.y, rjs->center.y);
-					userInput[i]->setSideways(false);
-				}
+				userInput[i]->setSideways(fabs(wpad->gforce.x) > fabs(wpad->gforce.y));
 			}
-		} else {
-			userInput[i]->setSideways(false);
+			else if (exp_type == WPAD_EXP_NUNCHUK) {
+				padData.hw_buttons_d[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_d);
+				padData.hw_buttons_h[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_h);
+				padData.hw_buttons_r[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_u);
+
+				padData.hw_connected[GUI_HW_NUNCHUK] = true;
+				padData.hw_buttons_d[GUI_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_d);
+				padData.hw_buttons_h[GUI_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_h);
+				padData.hw_buttons_r[GUI_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_u);
+				joystick_t* js = &wpad->exp.nunchuk.js;
+				padData.hw_stickX[GUI_HW_NUNCHUK] = NormalizeWPADAnalog(js->pos.x, js->min.x, js->max.x, js->center.x);
+				padData.hw_stickY[GUI_HW_NUNCHUK] = NormalizeWPADAnalog(js->pos.y, js->min.y, js->max.y, js->center.y);
+				userInput[i]->setSideways(false);
+			}
+			else if (exp_type == WPAD_EXP_CLASSIC) {
+				bool isWUPC = (wpad->exp.classic.type == 2);
+				int hw = isWUPC ? GUI_HW_WUPC : GUI_HW_CLASSIC;
+
+				padData.hw_connected[hw] = true;
+				padData.hw_buttons_d[hw] = MapClassicToGeneric(wpad->btns_d);
+				padData.hw_buttons_h[hw] = MapClassicToGeneric(wpad->btns_h);
+				padData.hw_buttons_r[hw] = MapClassicToGeneric(wpad->btns_u);
+
+				joystick_t* ljs = &wpad->exp.classic.ljs;
+				joystick_t* rjs = &wpad->exp.classic.rjs;
+				padData.hw_stickX[hw] = NormalizeWPADAnalog(ljs->pos.x, ljs->min.x, ljs->max.x, ljs->center.x);
+				padData.hw_stickY[hw] = NormalizeWPADAnalog(ljs->pos.y, ljs->min.y, ljs->max.y, ljs->center.y);
+				padData.hw_substickX[hw] = NormalizeWPADAnalog(rjs->pos.x, rjs->min.x, rjs->max.x, rjs->center.x);
+				padData.hw_substickY[hw] = NormalizeWPADAnalog(rjs->pos.y, rjs->min.y, rjs->max.y, rjs->center.y);
+				userInput[i]->setSideways(false);
+			}
+			else {
+				userInput[i]->setSideways(false);
+			}
 		}
 
 		// Process Wii U Gamepad
@@ -445,19 +483,18 @@ void UpdatePads()
 		#endif
 
 		// 4. Merge into unified aggregate state for UI Elements
-		for (uint32_t hw = 0; hw < GUI_HW_MAX; hw++)
-		{
-			if (padData.hw_connected[hw])
-			{
-				padData.buttons_d |= padData.hw_buttons_d[hw];
-				padData.buttons_h |= padData.hw_buttons_h[hw];
-				padData.buttons_r |= padData.hw_buttons_r[hw];
+		for (uint32_t hw = 0; hw < GUI_HW_MAX; hw++) {
+			if (!padData.hw_connected[hw])
+				continue;
 
-				if (std::abs(padData.hw_stickX[hw]) > std::abs(padData.stickX)) padData.stickX = padData.hw_stickX[hw];
-				if (std::abs(padData.hw_stickY[hw]) > std::abs(padData.stickY)) padData.stickY = padData.hw_stickY[hw];
-				if (std::abs(padData.hw_substickX[hw]) > std::abs(padData.substickX)) padData.substickX = padData.hw_substickX[hw];
-				if (std::abs(padData.hw_substickY[hw]) > std::abs(padData.substickY)) padData.substickY = padData.hw_substickY[hw];
-			}
+			padData.buttons_d |= padData.hw_buttons_d[hw];
+			padData.buttons_h |= padData.hw_buttons_h[hw];
+			padData.buttons_r |= padData.hw_buttons_r[hw];
+
+			if (std::abs(padData.hw_stickX[hw]) > std::abs(padData.stickX)) padData.stickX = padData.hw_stickX[hw];
+			if (std::abs(padData.hw_stickY[hw]) > std::abs(padData.stickY)) padData.stickY = padData.hw_stickY[hw];
+			if (std::abs(padData.hw_substickX[hw]) > std::abs(padData.substickX)) padData.substickX = padData.hw_substickX[hw];
+			if (std::abs(padData.hw_substickY[hw]) > std::abs(padData.substickY)) padData.substickY = padData.hw_substickY[hw];
 		}
 
 		// Push the finalized, merged payload to the controller abstraction
@@ -482,11 +519,8 @@ void SetupPads()
 	WPAD_SetVRes(WPAD_CHAN_ALL, screenwidth, screenheight);
 	#endif
 
-	for(int i = 0; i < 4; i++)
-	{
-		if(!userInput[i]) {
-			userInput[i] = new GuiInputController(i);
-		}
+	for(int i = 0; i < 4; i++) {
+		userInput[i] = new GuiInputController(i);
 	}
 }
 
