@@ -35,6 +35,10 @@ class GuiElement
 		//!Gets the element's parent
 		//!\return Pointer to parent element
 		GuiElement * getParent();
+		//!Removes the specified child
+		virtual void remove(GuiElement*) {}
+		//!Whether to notify parent on destruction to allow removal
+		void setRemoveOnDestroy(bool autoRemove) { removeOnDestroy = autoRemove; }
 		//!Gets the current leftmost coordinate of the element
 		//!Considers horizontal alignment, x offset, width, and parent element's GetLeft() / GetWidth() values
 		//!\return left coordinate
@@ -211,6 +215,7 @@ class GuiElement
 		GuiTrigger * trigger[MAX_TRIGGERS]; //!< GuiTriggers (input actions) that this element responds to
 		UpdateCallback updateCB; //!< Callback function to call when this element is updated
 		GuiElement * parentElement; //!< Parent element
+		bool removeOnDestroy; //!< Whether to instruct parent to remove this element when it is destroyed
 		int focus; //!< Element focus (-1 = focus disabled, 0 = not focused, 1 = focused)
 		int width; //!< Element width
 		int height; //!< Element height

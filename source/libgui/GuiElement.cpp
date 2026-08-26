@@ -24,6 +24,7 @@ GuiElement::GuiElement()
 	for (int i = 0; i < MAX_TRIGGERS; i++)
 		trigger[i] = nullptr;
 	parentElement = nullptr;
+	removeOnDestroy = false;
 	rumble = true;
 	selectable = false;
 	clickable = false;
@@ -49,6 +50,9 @@ GuiElement::GuiElement()
 
 GuiElement::~GuiElement()
 {
+	if (parentElement && removeOnDestroy) {
+		parentElement->remove(this);
+	}
 }
 
 void GuiElement::setParent(GuiElement * e)
@@ -527,10 +531,8 @@ void GuiElement::updateEffects()
 	}
 }
 
-void GuiElement::update(GuiInputController * controller)
+void GuiElement::update(GuiInputController *)
 {
-	(void)controller; //unused
-
 	if(updateCB)
 		updateCB(this);
 }

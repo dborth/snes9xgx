@@ -1357,19 +1357,13 @@ void Menu_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[],
  *
  * Draws a rectangle at the specified coordinates using GX
  ***************************************************************************/
-void Menu_DrawRectangle(f32 x, f32 y, f32 width, f32 height, GuiColor color, u8 filled)
+void Menu_DrawRectangle(f32 x, f32 y, f32 width, f32 height, GuiColor color)
 {
 	long n = 4;
 	f32 x2 = x+width;
 	f32 y2 = y+height;
 	guVector v[] = {{x,y,0.0f}, {x2,y,0.0f}, {x2,y2,0.0f}, {x,y2,0.0f}, {x,y,0.0f}};
 	u8 fmt = GX_TRIANGLEFAN;
-
-	if(!filled)
-	{
-		fmt = GX_LINESTRIP;
-		n = 5;
-	}
 
 	GX_Begin(fmt, GX_VTXFMT0, n);
 	for(long i=0; i<n; ++i)

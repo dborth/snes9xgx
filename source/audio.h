@@ -6,7 +6,7 @@
  * audio.h
  *
  * Audio driver
- * Audio is fixed to 32Khz/16bit/Stereo
+ * Audio is fixed to 48Khz/16bit/Stereo
  ***************************************************************************/
 
 void InitAudio ();

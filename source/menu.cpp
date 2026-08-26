@@ -407,7 +407,7 @@ UpdateGUI (void *arg)
 			for(i = 0; i <= 255; i += 15)
 			{
 				mainWindow->draw();
-				Menu_DrawRectangle(0,0,screenwidth,screenheight,(GuiColor){0, 0, 0, (u8)i},1);
+				Menu_DrawRectangle(0,0,screenwidth,screenheight,(GuiColor){0, 0, 0, (u8)i});
 				Menu_Render();
 			}
 			ExitApp();

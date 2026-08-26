@@ -22,6 +22,10 @@ GuiWindow::GuiWindow(int w, int h)
 
 GuiWindow::~GuiWindow()
 {
+	// Orphan all children if the window is destroyed first to prevent dangling pointer
+	for (GuiElement* e : _elements) {
+		e->setParent(nullptr);
+	}
 }
 
 void GuiWindow::append(GuiElement* e)
@@ -32,6 +36,13 @@ void GuiWindow::append(GuiElement* e)
 	remove(e);
 	_elements.push_back(e);
 	e->setParent(this);
+}
+
+void GuiWindow::appendWithAutoRemove(GuiElement* e)
+{
+    if (e == nullptr) return;
+    append(e);
+    e->setRemoveOnDestroy(true);
 }
 
 void GuiWindow::insert(GuiElement* e, uint32_t index)
@@ -54,6 +65,7 @@ void GuiWindow::remove(GuiElement* e)
 	{
 		if(e == _elements.at(i))
 		{
+			e->setParent(nullptr);
 			_elements.erase(_elements.begin()+i);
 			break;
 		}
@@ -62,6 +74,11 @@ void GuiWindow::remove(GuiElement* e)
 
 void GuiWindow::removeAll()
 {
+	uint32_t elemSize = _elements.size();
+	for (uint32_t i = 0; i < elemSize; ++i)
+	{
+		_elements.at(i)->setParent(nullptr);
+	}
 	_elements.clear();
 }
 
@@ -103,7 +120,7 @@ void GuiWindow::draw()
 	this->updateEffects();
 
 	if(parentElement && state == STATE::DISABLED)
-		Menu_DrawRectangle(0,0,screenwidth,screenheight,(GuiColor){0xbe, 0xca, 0xd5, 0x70},1);
+		Menu_DrawRectangle(0,0,screenwidth,screenheight,(GuiColor){0xbe, 0xca, 0xd5, 0x70});
 }
 
 void GuiWindow::drawTooltip()
