@@ -181,7 +181,7 @@ void SystemInit() {
 	#endif
 
 	SetupPads();
-	InitDeviceThread();
+	InitFileOpThreads();
 	MountAllFAT(); // Initialize libFAT for SD and USB
 
 	glyphRenderer = new WiiGlyphRenderer();
@@ -194,7 +194,7 @@ static void ExitCleanup()
 	ShutdownAudio();
 	StopGX();
 
-	HaltDeviceThread();
+	HaltDeviceCheckingThread();
 	UnmountAllFAT();
 
 #ifdef HW_RVL

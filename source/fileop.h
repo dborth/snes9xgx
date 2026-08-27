@@ -18,9 +18,9 @@
 
 #define SAVEBUFFERSIZE (1024 * 1024 * 2) // leave room for IPS/UPS files and large images
 
-void InitDeviceThread();
-void ResumeDeviceThread();
-void HaltDeviceThread();
+void InitFileOpThreads();
+void ResumeDeviceCheckingThread();
+void HaltDeviceCheckingThread();
 void HaltParseThread();
 void MountAllFAT();
 void UnmountAllFAT();

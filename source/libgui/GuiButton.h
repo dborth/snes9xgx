@@ -66,13 +66,8 @@ class GuiButton : public GuiElement
 		//!Sets the sound to play on click
 		//!\param s Pointer to GuiSound object
 		void setSoundClick(GuiSound * s);
-		//!Sets the tooltip for the button
-		//!\param t Tooltip
-		void setTooltip(GuiTooltip * t);
 		//!Constantly called to draw the GuiButton
 		void draw() override;
-		//!Constantly called to draw the GuiButton's tooltip
-		void drawTooltip();
 		//!Resets the text for all contained elements
 		void resetText();
 		//!Constantly called to allow the GuiButton to respond to updated input data
@@ -94,5 +89,4 @@ class GuiButton : public GuiElement
 		GuiSound * soundOver; //!< Sound to play for STATE::SELECTED
 		GuiSound * soundHold; //!< Sound to play for STATE::HELD
 		GuiSound * soundClick; //!< Sound to play for STATE::CLICKED
-		GuiTooltip * tooltip; //!< Tooltip to display on over
 };

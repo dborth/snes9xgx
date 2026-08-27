@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 		if(!autoboot) {
 			// go back to checking if devices were inserted/removed
 			// since we're entering the menu
-			ResumeDeviceThread();
+			ResumeDeviceCheckingThread();
 			SwitchAudioMode(1);
 			SwitchMemoryModeMenu();
 
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 
 		// stop checking if devices were removed/inserted
 		// since we're starting emulation again
-		HaltDeviceThread();
+		HaltDeviceCheckingThread();
 
 		SwitchMemoryModeGame();
 		AudioStart ();

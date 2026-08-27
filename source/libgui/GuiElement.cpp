@@ -563,10 +563,6 @@ void GuiElement::resetText()
 {
 }
 
-void GuiElement::drawTooltip()
-{
-}
-
 bool GuiElement::isInside(int x, int y)
 {
 	if(unsigned(x - this->getLeft())  < unsigned(width)

@@ -65,29 +65,29 @@ static cond_t  parseCond     = LWP_COND_NULL; // main -> parse: work available
 static cond_t  parseIdleCond = LWP_COND_NULL; // parse -> main: now idle
 static bool    parseActive   = false;          // protected by parseMutex
 
-// device thread
-static lwp_t devicethread = LWP_THREAD_NULL;
-static volatile bool deviceHalt = true;
+// device checking thread
+static lwp_t devicecheckingthread = LWP_THREAD_NULL;
+static volatile bool deviceCheckingHalt = true;
 
 #ifdef HW_RVL
 // device thread synchronization
 static mutex_t deviceMutex    = LWP_MUTEX_NULL;
 static cond_t  deviceWakeCond = LWP_COND_NULL; // main -> device: wake / re-check halt
-static cond_t  deviceHaltCond = LWP_COND_NULL; // device -> main: now halted
+static cond_t  deviceCheckingHaltCond = LWP_COND_NULL; // device -> main: now halted
 static bool    deviceIdle     = false;          // protected by deviceMutex
 #endif
 
 /****************************************************************************
- * ResumeDeviceThread
+ * ResumeDeviceCheckingThread
  *
  * Signals the device thread to start, and resumes the thread.
  ***************************************************************************/
 void
-ResumeDeviceThread()
+ResumeDeviceCheckingThread()
 {
 #ifdef HW_RVL
 	LWP_MutexLock(deviceMutex);
-	deviceHalt = false;
+	deviceCheckingHalt = false;
 	LWP_CondSignal(deviceWakeCond);
 	LWP_MutexUnlock(deviceMutex);
 #endif
@@ -99,14 +99,14 @@ ResumeDeviceThread()
  * Signals the device thread to stop.
  ***************************************************************************/
 void
-HaltDeviceThread()
+HaltDeviceCheckingThread()
 {
 #ifdef HW_RVL
-	deviceHalt = true;
+	deviceCheckingHalt = true;
 	LWP_MutexLock(deviceMutex);
 	LWP_CondSignal(deviceWakeCond); // interrupt condvar sleep if the thread is in one
 	while(!deviceIdle)
-		LWP_CondWait(deviceHaltCond, deviceMutex);
+		LWP_CondWait(deviceCheckingHaltCond, deviceMutex);
 	LWP_MutexUnlock(deviceMutex);
 #endif
 }
@@ -169,16 +169,16 @@ devicecallback (void *arg)
 		}
 
 		// sleep ~1 sec in 100us steps so we can react to a halt request quickly
-		for(int i = 0; i < 10000 && !deviceHalt; i++)
+		for(int i = 0; i < 10000 && !deviceCheckingHalt; i++)
 			usleep(THREAD_SLEEP);
 
-		// if halted, block here until ResumeDeviceThread wakes us
-		if(deviceHalt)
+		// if halted, block here until ResumeDeviceCheckingThread wakes us
+		if(deviceCheckingHalt)
 		{
 			LWP_MutexLock(deviceMutex);
 			deviceIdle = true;
-			LWP_CondBroadcast(deviceHaltCond); // tell HaltDeviceThread we've stopped
-			while(deviceHalt)
+			LWP_CondBroadcast(deviceCheckingHaltCond); // tell HaltDeviceCheckingThread we've stopped
+			while(deviceCheckingHalt)
 				LWP_CondWait(deviceWakeCond, deviceMutex);
 			deviceIdle = false;
 			LWP_MutexUnlock(deviceMutex);
@@ -210,13 +210,10 @@ parsecallback (void *arg)
 }
 
 /****************************************************************************
- * InitDeviceThread
- *
- * libOGC provides a nice wrapper for LWP access.
- * This function sets up a new local queue and attaches the thread to it.
+ * InitFileOpThreads
  ***************************************************************************/
 void
-InitDeviceThread()
+InitFileOpThreads()
 {
 	savebuffer = (u8 *)extmem_malloc(SAVEBUFFERSIZE);
 	LWP_MutexInit(&saveBufferLock, false);
@@ -224,8 +221,8 @@ InitDeviceThread()
 #ifdef HW_RVL
 	LWP_MutexInit(&deviceMutex, false);
 	LWP_CondInit(&deviceWakeCond);
-	LWP_CondInit(&deviceHaltCond);
-	LWP_CreateThread(&devicethread, devicecallback, NULL, NULL, 0, 40);
+	LWP_CondInit(&deviceCheckingHaltCond);
+	LWP_CreateThread(&devicecheckingthread, devicecallback, NULL, NULL, 0, 40);
 #endif
 	LWP_MutexInit(&parseMutex, false);
 	LWP_CondInit(&parseCond);
@@ -808,7 +805,7 @@ LoadSzFile(char * filepath, unsigned char * rbuffer)
 
 	// stop checking if devices were removed/inserted
 	// since we're loading a file
-	HaltDeviceThread();
+	HaltDeviceCheckingThread();
 
 	// halt parsing
 	HaltParseThread();
@@ -825,7 +822,7 @@ LoadSzFile(char * filepath, unsigned char * rbuffer)
 	}
 
 	// go back to checking if devices were inserted/removed
-	ResumeDeviceThread();
+	ResumeDeviceCheckingThread();
 
 	return size;
 }
@@ -846,7 +843,7 @@ LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersize, bool
 
 	// stop checking if devices were removed/inserted
 	// since we're loading a file
-	HaltDeviceThread();
+	HaltDeviceCheckingThread();
 
 	// halt parsing
 	HaltParseThread();
@@ -918,7 +915,7 @@ LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersize, bool
 	}
 
 	// go back to checking if devices were inserted/removed
-	ResumeDeviceThread();
+	ResumeDeviceCheckingThread();
 	CancelAction();
 	return size;
 }
@@ -1014,7 +1011,7 @@ SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 
 	// stop checking if devices were removed/inserted
 	// since we're saving a file
-	HaltDeviceThread();
+	HaltDeviceCheckingThread();
 
 	// halt parsing
 	HaltParseThread();
@@ -1059,7 +1056,7 @@ SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 	}
 
 	// go back to checking if devices were inserted/removed
-	ResumeDeviceThread();
+	ResumeDeviceCheckingThread();
 	if(!silent)
 		CancelAction();
 	return written;

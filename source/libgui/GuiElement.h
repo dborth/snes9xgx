@@ -209,8 +209,6 @@ class GuiElement
 		virtual void update(GuiInputController * c);
 		//!Called constantly to redraw the element
 		virtual void draw() = 0;
-		//!Called constantly to redraw the element's tooltip
-		virtual void drawTooltip();
 	protected:
 		GuiTrigger * trigger[MAX_TRIGGERS]; //!< GuiTriggers (input actions) that this element responds to
 		UpdateCallback updateCB; //!< Callback function to call when this element is updated

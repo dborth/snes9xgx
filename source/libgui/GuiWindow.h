@@ -77,8 +77,6 @@ class GuiWindow : public GuiElement
 		void resetText();
 		//!Draws all the elements in this GuiWindow
 		void draw();
-		//!Draws all of the tooltips in this GuiWindow
-		void drawTooltip();
 		//!Updates the window and all elements contains within
 		//!Allows the GuiWindow and all elements to respond to the input data specified
 		//!\param c Pointer to a GuiInputController, containing the current input data

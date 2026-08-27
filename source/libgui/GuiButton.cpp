@@ -30,7 +30,6 @@ GuiButton::GuiButton(int w, int h)
 	soundOver = nullptr;
 	soundHold = nullptr;
 	soundClick = nullptr;
-	tooltip = nullptr;
 	selectable = true;
 	holdable = false;
 	clickable = true;
@@ -116,12 +115,6 @@ void GuiButton::setSoundClick(GuiSound * snd)
 {
 	soundClick = snd;
 }
-void GuiButton::setTooltip(GuiTooltip* t)
-{
-	tooltip = t;
-	if(t)
-		tooltip->setParent(this);
-}
 
 /**
  * Draw the button on screen
@@ -166,12 +159,6 @@ void GuiButton::draw()
 	this->updateEffects();
 }
 
-void GuiButton::drawTooltip()
-{
-	if(tooltip)
-		tooltip->drawTooltip();
-}
-
 void GuiButton::resetText()
 {
 	for(int i=0; i<MAX_BTN_LABELS; i++)
@@ -181,8 +168,6 @@ void GuiButton::resetText()
 		if(labelOver[i])
 			labelOver[i]->resetText();
 	}
-	if(tooltip)
-		tooltip->resetText();
 }
 
 void GuiButton::update(GuiInputController * controller)

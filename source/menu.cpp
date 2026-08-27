@@ -380,9 +380,6 @@ UpdateGUI (void *arg)
 		UpdatePads();
 		mainWindow->draw();
 
-		if (mainWindow->getState() != STATE::DISABLED)
-			mainWindow->drawTooltip();
-
 		#ifdef HW_RVL
 		i = 3;
 		do
