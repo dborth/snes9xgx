@@ -8,7 +8,6 @@
  * Memory manager
  ***************************************************************************/
 
-#include <ogc/system.h>
 #include <malloc.h>
 #include "snes9xgx.h"
 #include "memmanager.h"
@@ -28,31 +27,19 @@ enum
 	MEMORY_MODE_GAME
 };
 
-static mspace extmem_space = NULL;
+static mspace aram_space = NULL;
 static int memoryMode = -1;
 u8 * romPtr = NULL;
 
 void InitMemManager ()
 {
-	void *base_ptr = NULL;
-	size_t capacity = 0;
-
 	#ifdef HW_DOL
 	VM_Init(ARAM_SIZE, MRAM_BACKING); // Setup Virtual Memory with the entire ARAM
-	base_ptr = (void *)ARAM_VM_BASE;
-	capacity = ARAM_SIZE;
-	#else
-	base_ptr = SYS_AllocArenaMem2Hi(MEM2_SIZE, 32);
-	capacity = MEM2_SIZE;
-	#endif
-
-	extmem_space = create_mspace_with_base(base_ptr, capacity, 0);
-	mspace_set_footprint_limit(extmem_space, capacity);
-
-	#ifdef HW_DOL
+	aram_space = create_mspace_with_base((void *)ARAM_VM_BASE, ARAM_SIZE, 0);
+	mspace_set_footprint_limit(aram_space, ARAM_SIZE);
 	romPtr = (uint8 *)extmem_malloc(Memory.MAX_ROM_SIZE + 0x200 + 0x8000);
 	#else
-	romPtr = (uint8 *) memalign(32, Memory.MAX_ROM_SIZE + 0x200 + 0x8000);
+	romPtr = (uint8 *) mem2_malloc(Memory.MAX_ROM_SIZE + 0x200 + 0x8000);
 	#endif
 
 	SwitchMemoryModeMenu();
@@ -60,32 +47,48 @@ void InitMemManager ()
 
 void* extmem_malloc(u32 size)
 {
-	return mspace_malloc(extmem_space, size);
+#if HW_RVL
+	return mem2_malloc(size);
+#else
+	return mspace_malloc(aram_space, size);
+#endif
 }
 
 char* extmem_strdup(const char *s)
 {
-    if (!s)
-        return NULL;
+#if HW_RVL
+	return mem2_strdup(s);
+#else
+	if (!s)
+		return NULL;
 
-    size_t len = strlen(s) + 1;
-    char *dup = (char *)extmem_malloc(len);
+	size_t len = strlen(s) + 1;
+	char *dup = (char *)extmem_malloc(len);
 
-    if (dup)
-        memcpy(dup, s, len);
+	if (dup)
+		memcpy(dup, s, len);
 
-    return dup;
+	return dup;
+#endif
 }
 
 void extmem_free(void *ptr)
 {
-	mspace_free(extmem_space, ptr);
+#if HW_RVL
+	return mem2_free(ptr);
+#else
+	mspace_free(aram_space, ptr);
+#endif
 }
 
 int extmem_size_free()
 {
-	struct mallinfo info = mspace_mallinfo(extmem_space);
+#if HW_RVL
+	return SYS_GetArena2Size();
+#else
+	struct mallinfo info = mspace_mallinfo(aram_space);
 	return info.fordblks;
+#endif
 }
 
 void SwitchMemoryModeMenu() {
