@@ -78,6 +78,22 @@ static bool    deviceIdle     = false;          // protected by deviceMutex
 #endif
 
 /****************************************************************************
+ * Background worker thread
+ ***************************************************************************/
+#define WORKER_THREAD_STACKSIZE (24 * 1024)
+
+typedef int (*BgTaskFn)(void *arg);
+
+static lwp_t   workerThread    = LWP_THREAD_NULL;
+static mutex_t workerMutex     = LWP_MUTEX_NULL;
+static cond_t  workerCond      = LWP_COND_NULL; // main -> worker: task available
+static cond_t  workerIdleCond  = LWP_COND_NULL; // worker -> main: now idle
+static bool    workerBusy      = false; // protected by workerMutex - true while a task is running
+static BgTaskFn workerFn       = NULL;  // protected by workerMutex
+static void *  workerArg       = NULL;  // protected by workerMutex
+static int     workerResult    = 0;     // protected by workerMutex - result of the last completed task
+
+/****************************************************************************
  * ResumeDeviceCheckingThread
  *
  * Signals the device thread to start, and resumes the thread.
@@ -210,6 +226,63 @@ parsecallback (void *arg)
 }
 
 /****************************************************************************
+ * WorkerThread
+ ***************************************************************************/
+static void * workercallback (void *arg)
+{
+	LWP_MutexLock(workerMutex);
+	while(1)
+	{
+		// sleep until RunOnWorkerThread() signals there is work to do
+		while(!workerBusy)
+			LWP_CondWait(workerCond, workerMutex);
+		BgTaskFn fn = workerFn;
+		void * farg = workerArg;
+		LWP_MutexUnlock(workerMutex);
+
+		int result = fn ? fn(farg) : 0;
+
+		LWP_MutexLock(workerMutex);
+		workerResult = result;
+		workerBusy = false;
+		LWP_CondBroadcast(workerIdleCond);
+	}
+	return NULL;
+}
+
+bool RunOnWorkerThread(BgTaskFn fn, void * arg)
+{
+	LWP_MutexLock(workerMutex);
+	if(workerBusy)
+	{
+		LWP_MutexUnlock(workerMutex);
+		return false;
+	}
+	workerFn = fn;
+	workerArg = arg;
+	workerBusy = true;
+	LWP_CondSignal(workerCond);
+	LWP_MutexUnlock(workerMutex);
+	return true;
+}
+
+bool IsWorkerThreadFinished()
+{
+	LWP_MutexLock(workerMutex);
+	bool busy = workerBusy;
+	LWP_MutexUnlock(workerMutex);
+	return !busy;
+}
+
+int GetWorkerThreadResult()
+{
+	LWP_MutexLock(workerMutex);
+	int result = workerResult;
+	LWP_MutexUnlock(workerMutex);
+	return result;
+}
+
+/****************************************************************************
  * InitFileOpThreads
  ***************************************************************************/
 void
@@ -228,6 +301,11 @@ InitFileOpThreads()
 	LWP_CondInit(&parseCond);
 	LWP_CondInit(&parseIdleCond);
 	LWP_CreateThread(&parsethread, parsecallback, NULL, NULL, 0, 80);
+
+	LWP_MutexInit(&workerMutex, false);
+	LWP_CondInit(&workerCond);
+	LWP_CondInit(&workerIdleCond);
+	LWP_CreateThread(&workerThread, workercallback, NULL, NULL, WORKER_THREAD_STACKSIZE, 80);
 }
 
 /****************************************************************************

@@ -43,6 +43,12 @@ void LoadBgMusic();
 size_t SaveFile(char * buffer, char *filepath, size_t datasize, bool silent);
 size_t SaveFile(char * filepath, size_t datasize, bool silent);
 
+// Background worker thread
+typedef int (*BgTaskFn)(void *arg);
+bool RunOnWorkerThread(BgTaskFn fn, void * arg = NULL);
+bool IsWorkerThreadFinished();
+int GetWorkerThreadResult();
+
 extern unsigned char *savebuffer;
 extern u8 *ext_font_ttf;
 extern FILE * file;
