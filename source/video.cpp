@@ -881,6 +881,7 @@ void TakeScreenshot()
 	IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
 
 	if (pngContext == NULL) {
+		FreeSaveBuffer();
 		return;
 	}
 
@@ -895,12 +896,14 @@ void TakeScreenshot()
 	PNGU_ReleaseImageContext(pngContext);
 
 	if (gameScreenPng.size == 0) {
+		FreeSaveBuffer();
 		return;
 	}
 
 	gameScreenPng.buffer = (u8 *) extmem_malloc(gameScreenPng.size);
 	if (gameScreenPng.buffer == NULL) {
 		gameScreenPng.size = 0;
+		FreeSaveBuffer();
 		return;
 	}
 	memcpy(gameScreenPng.buffer, savebuffer, gameScreenPng.size);

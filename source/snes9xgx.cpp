@@ -62,14 +62,14 @@ int main(int argc, char *argv[])
 			GCSettings.SaveMethod = DEVICE_USB;
 			GCSettings.LoadMethod = DEVICE_USB;
 		}
-		SavePrefs(SILENT);
+		SavePrefs();
 
 		GCSettings.AutoloadGame = AutoloadGame(argv[1], argv[2]);
 		autoboot = GCSettings.AutoloadGame;
 	}
 #endif
 
-	while (1) // main loop
+	while (!ExitRequested && !ShutdownRequested) // main loop
 	{
 		if(!autoboot) {
 			// go back to checking if devices were inserted/removed
@@ -82,6 +82,10 @@ int main(int argc, char *argv[])
 				MainMenu(MENU_GAMESELECTION);
 			else
 				MainMenu(MENU_GAME);
+		}
+
+		if(ExitRequested || ShutdownRequested) {
+			break;
 		}
 
 		if (firstRun)
@@ -99,7 +103,7 @@ int main(int argc, char *argv[])
 			}
 
 			if (GCSettings.sfxOverclock > 0)
-			S9xResetSuperFX();
+				S9xResetSuperFX();
 			S9xReset();
 
 			switch (GCSettings.Interpolation)
@@ -141,7 +145,7 @@ int main(int argc, char *argv[])
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;
 		SelectFilterMethod(GCSettings.videoUpscalingFilter); // Initialize / Re-evaluate active filter
 
-		while(1) // emulation loop
+		while(!MenuRequested && !ExitRequested && !ShutdownRequested) // emulation loop
 		{
 			S9xMainLoop ();
 			ReportButtons ();
@@ -160,16 +164,13 @@ int main(int argc, char *argv[])
 				ResetVideo_Menu();
 				break;
 			}
-			#ifdef HW_RVL
-			if(ShutdownRequested)
-				ExitApp();
-			#endif
 		} // emulation loop
 	} // main loop
+	ExitApp();
 }
 
 void ExitApp() {
-	SavePrefs(SILENT);
+	SavePrefs();
 
 	if (SNESROMSize > 0 && !MenuRequested && GCSettings.AutoSave == AUTOSAVE_SRAM)
 		SaveSRAMAuto(SILENT);

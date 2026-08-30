@@ -11,10 +11,13 @@
 #include <gccore.h>
 #include <ogcsys.h>
 #include <ogc/cond.h>
+#include <ogc/lwp.h>
+#include <ogc/lwp_watchdog.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <memory>
 
 #ifdef HW_RVL
 #include <di/di.h>
@@ -57,41 +60,33 @@ static GuiImageData * pointer[4];
 
 static GuiTrigger * trigA = NULL;
 
-static GuiButton * btnLogo = NULL;
 #ifdef HW_RVL
 static GuiButton * batteryBtn[4];
 #endif
 static u8 * gameScreenTexture = NULL;
 static GuiImage * gameScreenImg = NULL;
-static GuiImage * bgTopImg = NULL;
-static GuiImage * bgBottomImg = NULL;
 static GuiSound * bgMusic = NULL;
 static GuiSound * enterSound = NULL;
 static GuiSound * exitSound = NULL;
-static GuiWindow * mainWindow = NULL;
 static GuiText * settingText = NULL;
 static GuiText * settingText2 = NULL;
 static int lastMenu = MENU_NONE;
 static int mapMenuCtrl = 0;
 static int mapMenuCtrlSNES = 0;
 
-static lwp_t guithread = LWP_THREAD_NULL;
-static lwp_t progressthread = LWP_THREAD_NULL;
-static volatile bool guiHalt = true;
+static int currentLanguage = -1;
+
+u8 * bg_music;
+u32 bg_music_size;
+
+struct Menu;
+static Menu * menu = nullptr;
+
 static volatile int showProgress = 0;
 
-// GUI thread synchronization
-static mutex_t guiMutex    = LWP_MUTEX_NULL;
-static cond_t  guiHaltCond = LWP_COND_NULL; // GUI thread -> main: halted
-static cond_t  guiWakeCond = LWP_COND_NULL; // main -> GUI thread: resume
-static bool    guiHalted   = false;          // protected by guiMutex
-
-// progress thread synchronization
 static mutex_t progMutex      = LWP_MUTEX_NULL;
-static cond_t  progActiveCond = LWP_COND_NULL; // main -> progress: work available
-static cond_t  progIdleCond   = LWP_COND_NULL; // progress -> main: now idle
-static bool    progIdle       = true;           // protected by progMutex
-static bool showCredits = false;
+static cond_t  progIdleCond   = LWP_COND_NULL; // signalled when the overlay has been fully torn down
+static bool    progIdle       = true;          // protected by progMutex - true when no overlay is showing/pending
 
 static char progressTitle[101];
 static char progressMsg[201];
@@ -99,430 +94,241 @@ static int progressDone = 0;
 static int progressTotal = 0;
 static bool buttonMappingCancelled = false;
 
-u8 * bg_music;
-u32 bg_music_size;
+static lwp_t mainThreadId = LWP_THREAD_NULL;
+
+static bool IsMainThread()
+{
+	return LWP_GetSelf() == mainThreadId;
+}
+
+static mutex_t promptMutex        = LWP_MUTEX_NULL;
+static cond_t  promptDoneCond     = LWP_COND_NULL; // main -> background: result is ready
+static bool    promptPending      = false; // protected by promptMutex
+static bool    promptResultReady  = false; // protected by promptMutex
+static int     promptResult       = 0;
+static const char * promptPendingTitle;
+static const char * promptPendingMsg;
+static const char * promptPendingBtn1;
+static const char * promptPendingBtn2;
 
 /****************************************************************************
- * ResumeGui
+ * InitGUIThreads
  *
- * Signals the GUI thread to start, and resumes the thread. This is called
- * after finishing the removal/insertion of new elements, and after initial
- * GUI setup.
+ * Startup GUI threads
  ***************************************************************************/
-static void
-ResumeGui()
+void
+InitGUIThreads()
 {
-	LWP_MutexLock(guiMutex);
-	guiHalt = false;
-	LWP_CondSignal(guiWakeCond);
-	LWP_MutexUnlock(guiMutex);
-}
+	mainThreadId = LWP_GetSelf();
 
-/****************************************************************************
- * HaltGui
- *
- * Signals the GUI thread to stop, and waits for GUI thread to stop
- * This is necessary whenever removing/inserting new elements into the GUI.
- * This eliminates the possibility that the GUI is in the middle of accessing
- * an element that is being changed.
- ***************************************************************************/
-static void
-HaltGui()
-{
-	LWP_MutexLock(guiMutex);
-	guiHalt = true;
-	while(!guiHalted)
-		LWP_CondWait(guiHaltCond, guiMutex);
-	LWP_MutexUnlock(guiMutex);
-}
+	LWP_MutexInit(&progMutex, false);
+	LWP_CondInit(&progIdleCond);
 
-static bool LoadLanguage()
-{
-	char line[200];
-	char *lastID = NULL;
-
-	const uint8_t *buffer;
-	size_t size;
-
-	switch(GCSettings.language)
-	{
-		case LANG_JAPANESE: buffer = jp_lang; size = jp_lang_size; break;
-		case LANG_ENGLISH: buffer = en_lang; size = en_lang_size; break;
-		case LANG_GERMAN: buffer = de_lang; size = de_lang_size; break;
-		case LANG_FRENCH: buffer = fr_lang; size = fr_lang_size; break;
-		case LANG_SPANISH: buffer = es_lang; size = es_lang_size; break;
-		case LANG_ITALIAN: buffer = it_lang; size = it_lang_size; break;
-		case LANG_DUTCH: buffer = nl_lang; size = nl_lang_size; break;
-		case LANG_SIMP_CHINESE:
-		case LANG_TRAD_CHINESE: buffer = zh_lang; size = zh_lang_size; break;
-		case LANG_KOREAN: buffer = ko_lang; size = ko_lang_size; break;
-		case LANG_PORTUGUESE: buffer = pt_lang; size = pt_lang_size; break;
-		case LANG_BRAZILIAN_PORTUGUESE: buffer = pt_br_lang; size = pt_br_lang_size; break;
-		case LANG_CATALAN: buffer = ca_lang; size = ca_lang_size; break;
-		case LANG_TURKISH: buffer = tr_lang; size = tr_lang_size; break;
-		case LANG_SWEDISH: buffer = sv_lang; size = sv_lang_size; break;
-		default: return false;
-	}
-
-	textTranslator->loadLanguage(buffer, size);
-	return true;
-}
-
-static void ResetText()
-{
-	LoadLanguage();
-
-	if(mainWindow)
-	{
-		HaltGui();
-		mainWindow->resetText();
-		ResumeGui();
-	}
-}
-
-static int currentLanguage = -1;
-
-void ChangeLanguage() {
-	if(currentLanguage == GCSettings.language) {
-		return;
-	}
-
-	if(GCSettings.language == LANG_JAPANESE || GCSettings.language == LANG_KOREAN || GCSettings.language == LANG_SIMP_CHINESE) {
-#ifdef HW_RVL
-		char filepath[MAXPATHLEN];
-
-		switch(GCSettings.language) {
-			case LANG_KOREAN:
-				sprintf(filepath, "%s/ko.ttf", appPath);
-				break;
-			case LANG_JAPANESE:
-				sprintf(filepath, "%s/jp.ttf", appPath);
-				break;
-			case LANG_SIMP_CHINESE:
-				sprintf(filepath, "%s/zh.ttf", appPath);
-				break;
-		}
-
-		size_t fileSize = LoadFont(filepath);
-
-		if(fileSize > 0) {
-			HaltGui();
-			delete fontSystem;
-			fontSystem = new GuiTextRenderer(ext_font_ttf, fileSize, glyphRenderer);
-		}
-		else {
-			GCSettings.language = currentLanguage;
-		}
-#else
-	GCSettings.language = currentLanguage;
-	ErrorPrompt("Unsupported language!");
-#endif
-	}
-#ifdef HW_RVL
-	else {
-		if(ext_font_ttf != NULL) {
-			HaltGui();
-			delete fontSystem;
-			extmem_free(ext_font_ttf);
-			ext_font_ttf = NULL;
-			fontSystem = new GuiTextRenderer(font_ttf, font_ttf_size, glyphRenderer);
-		}
-	}
-#endif
-	ResetText();
-	currentLanguage = GCSettings.language;
+	LWP_MutexInit(&promptMutex, false);
+	LWP_CondInit(&promptDoneCond);
 }
 
 /****************************************************************************
- * WindowPrompt
+ * UpdateProgressOverlay
  *
- * Displays a prompt window to user, with information, an error message, or
- * presenting a user with a choice
+ * Reflects the current progress/action state into the GUI
  ***************************************************************************/
-int
-WindowPrompt(const char *title, const char *msg, const char *btn1Label, const char *btn2Label)
-{
-	if(!mainWindow || ExitRequested || ShutdownRequested)
-		return 0;
+struct ProgressOverlayState {
+	GuiWindow progressWindow;
+	GuiImageData dialogBox;
+	GuiImage dialogBoxImg;
+	GuiImageData progressbarOutline;
+	GuiImage progressbarOutlineImg;
+	GuiImageData progressbarEmpty;
+	GuiImage progressbarEmptyImg;
+	GuiImageData progressbar;
+	GuiImage progressbarImg;
+	GuiImageData throbber;
+	GuiImage throbberImg;
+	GuiText titleTxt;
+	GuiText msgTxt;
 
-	int choice = -1;
+	bool overlayShown;
+	bool waitingToShow;
+	u64 pendingStart;
+	STATE oldState;
+	float angle;
+	u32 count;
+	int lastProgress;
 
-	GuiWindow promptWindow(448,288);
-	promptWindow.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	promptWindow.setPosition(0, -10);
-	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND::PCM);
-	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND::PCM);
-	GuiImageData btnOutline(button_prompt_png);
-	GuiImageData btnOutlineOver(button_prompt_over_png);
-
-	GuiTrigger trigB;
-	trigB.setSecondaryTrigger();
-
-	GuiImageData dialogBox(dialogue_box_png);
-	GuiImage dialogBoxImg(&dialogBox);
-
-	GuiText titleTxt(title, 26, (GuiColor){255, 255, 255, 255});
-	titleTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	titleTxt.setPosition(0,14);
-	GuiText msgTxt(msg, 26, (GuiColor){0, 0, 0, 255});
-	msgTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	msgTxt.setPosition(0,-20);
-	msgTxt.setWrap(true, 430);
-
-	GuiText btn1Txt(btn1Label, 22, (GuiColor){0, 0, 0, 255});
-	GuiImage btn1Img(&btnOutline);
-	GuiImage btn1ImgOver(&btnOutlineOver);
-	GuiButton btn1(btnOutline.getWidth(), btnOutline.getHeight());
-
-	if(btn2Label)
+	ProgressOverlayState() :
+		progressWindow(448, 288),
+		dialogBox(dialogue_box_png), dialogBoxImg(&dialogBox),
+		progressbarOutline(progressbar_outline_png), progressbarOutlineImg(&progressbarOutline),
+		progressbarEmpty(progressbar_empty_png), progressbarEmptyImg(&progressbarEmpty),
+		progressbar(progressbar_png), progressbarImg(&progressbar),
+		throbber(throbber_png), throbberImg(&throbber),
+		titleTxt(NULL, 26, (GuiColor){255, 255, 255, 255}),
+		msgTxt(NULL, 26, (GuiColor){0, 0, 0, 255}),
+		overlayShown(false), waitingToShow(false), pendingStart(0),
+		oldState(STATE::DEFAULT), angle(0), count(0), lastProgress(0)
 	{
-		btn1.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-		btn1.setPosition(20, -25);
-	}
-	else
-	{
-		btn1.setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
-		btn1.setPosition(0, -25);
-		btn1.setTrigger(&trigB);
-	}
+		progressWindow.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+		progressWindow.setPosition(0, -10);
+		progressWindow.append(&dialogBoxImg);
 
-	btn1.setLabel(&btn1Txt);
-	btn1.setImage(&btn1Img);
-	btn1.setImageOver(&btn1ImgOver);
-	btn1.setSoundOver(&btnSoundOver);
-	btn1.setSoundClick(&btnSoundClick);
-	btn1.setTrigger(trigA);
-	btn1.setState(STATE::SELECTED);
-	btn1.setEffectGrow();
+		titleTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
+		titleTxt.setPosition(0, 14);
+		progressWindow.append(&titleTxt);
 
-	GuiText btn2Txt(btn2Label, 22, (GuiColor){0, 0, 0, 255});
-	GuiImage btn2Img(&btnOutline);
-	GuiImage btn2ImgOver(&btnOutlineOver);
-	GuiButton btn2(btnOutline.getWidth(), btnOutline.getHeight());
-	btn2.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
-	btn2.setPosition(-20, -25);
-	btn2.setLabel(&btn2Txt);
-	btn2.setImage(&btn2Img);
-	btn2.setImageOver(&btn2ImgOver);
-	btn2.setSoundOver(&btnSoundOver);
-	btn2.setSoundClick(&btnSoundClick);
-	btn2.setTrigger(trigA);
-	btn2.setEffectGrow();
+		msgTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
+		msgTxt.setPosition(0, 80);
+		progressWindow.append(&msgTxt);
 
-	promptWindow.append(&dialogBoxImg);
-	promptWindow.append(&titleTxt);
-	promptWindow.append(&msgTxt);
-	promptWindow.append(&btn1);
+		progressbarOutlineImg.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+		progressbarOutlineImg.setPosition(25, 40);
 
-	if(btn2Label)
-	{
-		promptWindow.append(&btn2);
-		btn2.setTrigger(&trigB);
-	}	
+		progressbarEmptyImg.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+		progressbarEmptyImg.setPosition(25, 40);
+		progressbarEmptyImg.setTile(100);
 
-	promptWindow.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 50);
-	CancelAction();
-	HaltGui();
-	mainWindow->setState(STATE::DISABLED);
-	mainWindow->append(&promptWindow);
-	mainWindow->changeFocus(&promptWindow);
-	if(btn2Label)
-	{
-		btn1.resetState();
-		btn2.setState(STATE::SELECTED);
-	}
-	ResumeGui();
+		progressbarImg.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+		progressbarImg.setPosition(25, 40);
 
-	while(choice == -1)
-	{
-		usleep(THREAD_SLEEP);
-
-		if(btn1.getState() == STATE::CLICKED)
-			choice = 1;
-		else if(btn2.getState() == STATE::CLICKED)
-			choice = 0;
+		throbberImg.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+		throbberImg.setPosition(0, 40);
 	}
 
-	promptWindow.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 50);
-	while(promptWindow.getEffect() > 0) usleep(THREAD_SLEEP);
-	HaltGui();
-	mainWindow->remove(&promptWindow);
-	mainWindow->setState(STATE::DEFAULT);
-	ResumeGui();
-	return choice;
-}
+	void update();
+};
 
-/****************************************************************************
- * UpdateGUI
- *
- * Primary thread to allow GUI to respond to state changes, and draws GUI
- ***************************************************************************/
+struct Menu {
+	GuiWindow mainWindow;
 
-static void *
-UpdateGUI (void *arg)
-{
-	int i;
+	GuiImageData bgTop;
+	GuiImage bgTopImg;
+	GuiImageData bgBottom;
+	GuiImage bgBottomImg;
+	GuiImageData logo;
+	GuiImage logoImg;
+	GuiImageData logoOver;
+	GuiImage logoImgOver;
+	GuiText logoTxt;
+	GuiButton btnLogo;
 
-	while(1)
+	GuiSound btnSoundOver;
+	GuiSound btnSoundClick;
+
+	ProgressOverlayState progressOverlayState;
+
+	Menu() :
+		mainWindow(screenwidth, screenheight),
+		bgTop(bg_top_png), bgTopImg(&bgTop),
+		bgBottom(bg_bottom_png), bgBottomImg(&bgBottom),
+		logo(logo_png), logoImg(&logo),
+		logoOver(logo_over_png), logoImgOver(&logoOver),
+		logoTxt(APPVERSION, 18, (GuiColor){255, 255, 255, 255}),
+		btnLogo(logoImg.getWidth(), logoImg.getHeight()),
+		btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND::PCM),
+		btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND::PCM)
 	{
-		// if halted, block here until ResumeGui wakes us; signal HaltGui we have stopped
-		LWP_MutexLock(guiMutex);
-		if(guiHalt)
+		bgBottomImg.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
+
+		logoTxt.setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+		logoTxt.setPosition(0, 4);
+
+		btnLogo.setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+		btnLogo.setPosition(-50, 24);
+		btnLogo.setImage(&logoImg);
+		btnLogo.setImageOver(&logoImgOver);
+		btnLogo.setLabel(&logoTxt);
+		btnLogo.setSoundOver(&btnSoundOver);
+		btnLogo.setSoundClick(&btnSoundClick);
+		btnLogo.setTrigger(trigA);
+		
+		mainWindow.append(gameScreenImg);
+		mainWindow.append(&bgTopImg);
+		mainWindow.append(&bgBottomImg);
+		mainWindow.append(&btnLogo);
+	}
+};
+
+void ProgressOverlayState::update() {
+	if(!menu) return;
+
+	LWP_MutexLock(progMutex);
+	int progress = showProgress;
+	int done = progressDone;
+	int total = progressTotal;
+	char title[101]; snprintf(title, sizeof(title), "%s", progressTitle);
+	char msg[201]; snprintf(msg, sizeof(msg), "%s", progressMsg);
+	LWP_MutexUnlock(progMutex);
+
+	if(!progress)
+	{
+		waitingToShow = false;
+		progIdle = true;
+
+		if(overlayShown)
 		{
-			guiHalted = true;
-			LWP_CondBroadcast(guiHaltCond);
-			while(guiHalt)
-				LWP_CondWait(guiWakeCond, guiMutex);
-			guiHalted = false;
+			menu->mainWindow.remove(&progressWindow);
+			menu->mainWindow.setState(oldState);
+			overlayShown = false;
 		}
-		LWP_MutexUnlock(guiMutex);
 
-		UpdatePads();
-		mainWindow->draw();
-
-		#ifdef HW_RVL
-		i = 3;
-		do
+		if(lastProgress != 0)
 		{
-			if(userInput[i]->getPadData().validPointer) {
-				Menu_DrawImg(userInput[i]->getPadData().cursor_x-48, userInput[i]->getPadData().cursor_y-48, 96, 96, pointer[i]->getImage(), userInput[i]->getPadData().cursor_angle, 1, 1, 255);
-			}
-			DoRumble(i);
-			--i;
-		} while(i>=0);
-		#endif
-
-		Menu_Render();
-
-		mainWindow->update(userInput[3]);
-		mainWindow->update(userInput[2]);
-		mainWindow->update(userInput[1]);
-		mainWindow->update(userInput[0]);
-
-		if(ExitRequested || ShutdownRequested)
+			LWP_MutexLock(progMutex);
+			LWP_CondBroadcast(progIdleCond);
+			LWP_MutexUnlock(progMutex);
+		}
+	}
+	else if(!overlayShown)
+	{
+		if(!waitingToShow)
 		{
-			for(i = 0; i <= 255; i += 15)
+			waitingToShow = true;
+			pendingStart = gettime();
+		}
+		else if(ticks_to_millisecs(diff_ticks(pendingStart, gettime())) >= 400)
+		{
+			titleTxt.setText(title);
+			msgTxt.setText(msg);
+
+			progressWindow.remove(&progressbarEmptyImg);
+			progressWindow.remove(&progressbarImg);
+			progressWindow.remove(&progressbarOutlineImg);
+			progressWindow.remove(&throbberImg);
+
+			if(progress == 1)
 			{
-				mainWindow->draw();
-				Menu_DrawRectangle(0,0,screenwidth,screenheight,(GuiColor){0, 0, 0, (u8)i});
-				Menu_Render();
+				progressWindow.append(&progressbarEmptyImg);
+				progressWindow.append(&progressbarImg);
+				progressWindow.append(&progressbarOutlineImg);
 			}
-			ExitApp();
+			else
+			{
+				progressWindow.append(&throbberImg);
+			}
+
+			oldState = menu->mainWindow.getState();
+			menu->mainWindow.setState(STATE::DISABLED);
+			menu->mainWindow.append(&progressWindow);
+			menu->mainWindow.changeFocus(&progressWindow);
+
+			overlayShown = true;
+			waitingToShow = false;
+			angle = 0;
+			count = 0;
 		}
-		usleep(THREAD_SLEEP);
-	}
-	return NULL;
-}
-
-/****************************************************************************
- * ProgressWindow
- *
- * Opens a window, which displays progress to the user. Can either display a
- * progress bar showing % completion, or a throbber that only shows that an
- * action is in progress.
- ***************************************************************************/
-static void
-ProgressWindow(char *title, char *msg)
-{
-	GuiWindow promptWindow(448,288);
-	promptWindow.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	promptWindow.setPosition(0, -10);
-	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND::PCM);
-	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND::PCM);
-	GuiImageData btnOutline(button_png);
-	GuiImageData btnOutlineOver(button_over_png);
-
-	GuiImageData dialogBox(dialogue_box_png);
-	GuiImage dialogBoxImg(&dialogBox);
-
-	GuiImageData progressbarOutline(progressbar_outline_png);
-	GuiImage progressbarOutlineImg(&progressbarOutline);
-	progressbarOutlineImg.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-	progressbarOutlineImg.setPosition(25, 40);
-
-	GuiImageData progressbarEmpty(progressbar_empty_png);
-	GuiImage progressbarEmptyImg(&progressbarEmpty);
-	progressbarEmptyImg.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-	progressbarEmptyImg.setPosition(25, 40);
-	progressbarEmptyImg.setTile(100);
-
-	GuiImageData progressbar(progressbar_png);
-	GuiImage progressbarImg(&progressbar);
-	progressbarImg.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-	progressbarImg.setPosition(25, 40);
-
-	GuiImageData throbber(throbber_png);
-	GuiImage throbberImg(&throbber);
-	throbberImg.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	throbberImg.setPosition(0, 40);
-
-	GuiText titleTxt(title, 26, (GuiColor){255, 255, 255, 255});
-	titleTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	titleTxt.setPosition(0,14);
-	GuiText msgTxt(msg, 26, (GuiColor){0, 0, 0, 255});
-	msgTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	msgTxt.setPosition(0,80);
-
-	promptWindow.append(&dialogBoxImg);
-	promptWindow.append(&titleTxt);
-	promptWindow.append(&msgTxt);
-
-	if(showProgress == 1)
-	{
-		promptWindow.append(&progressbarEmptyImg);
-		promptWindow.append(&progressbarImg);
-		promptWindow.append(&progressbarOutlineImg);
-	}
-	else
-	{
-		promptWindow.append(&throbberImg);
 	}
 
-	// wait to see if progress flag changes soon
-	int progsleep = 400000;
-
-	while(progsleep > 0)
+	if(overlayShown)
 	{
-		if(!showProgress)
-			break;
-		usleep(THREAD_SLEEP);
-		progsleep -= THREAD_SLEEP;
-	}
-
-	if(!showProgress)
-		return;
-
-	HaltGui();
-	STATE oldState = mainWindow->getState();
-	mainWindow->setState(STATE::DISABLED);
-	mainWindow->append(&promptWindow);
-	mainWindow->changeFocus(&promptWindow);
-	ResumeGui();
-
-	float angle = 0;
-	u32 count = 0;
-
-	while(showProgress)
-	{
-		progsleep = 20000;
-
-		while(progsleep > 0)
+		if(progress == 1 && total > 0)
 		{
-			if(!showProgress)
-				break;
-			usleep(THREAD_SLEEP);
-			progsleep -= THREAD_SLEEP;
+			progressbarImg.setTile(100*done/total);
 		}
-
-		if(showProgress == 1)
-		{
-			progressbarImg.setTile(100*progressDone/progressTotal);
-		}
-		else if(showProgress == 2)
+		else if(progress == 2)
 		{
 			if(count % 5 == 0)
 			{
-				angle+=45.0f;
+				angle += 45.0f;
 				if(angle >= 360.0f)
 					angle = 0;
 				throbberImg.setAngle(angle);
@@ -531,349 +337,49 @@ ProgressWindow(char *title, char *msg)
 		}
 	}
 
-	HaltGui();
-	mainWindow->remove(&promptWindow);
-	mainWindow->setState(oldState);
-	ResumeGui();
+	lastProgress = progress;
 }
 
-static void * ProgressThread (void *arg)
-{
-	while(1)
+static void ProcessGuiInput() {
+	UpdatePads();
+
+	menu->mainWindow.update(userInput[3]);
+	menu->mainWindow.update(userInput[2]);
+	menu->mainWindow.update(userInput[1]);
+	menu->mainWindow.update(userInput[0]);
+}
+
+static void DrawGui() {
+	menu->mainWindow.draw();
+
+	#ifdef HW_RVL
+	int i = 3;
+	do
 	{
-		LWP_MutexLock(progMutex);
-		// sleep until ShowProgress/ShowAction signals there is work to do
-		while(!showProgress)
-			LWP_CondWait(progActiveCond, progMutex);
-
-		progIdle = false;
-		LWP_MutexUnlock(progMutex);
-
-		ProgressWindow(progressTitle, progressMsg);
-
-		LWP_MutexLock(progMutex);
-		progIdle = true;
-		LWP_CondBroadcast(progIdleCond); // wake CancelAction callers
-		LWP_MutexUnlock(progMutex);
-	}
-	return NULL;
-}
-
-/****************************************************************************
- * InitGUIThread
- *
- * Startup GUI threads
- ***************************************************************************/
-void
-InitGUIThreads()
-{
-	LWP_MutexInit(&guiMutex, false);
-	LWP_CondInit(&guiHaltCond);
-	LWP_CondInit(&guiWakeCond);
-
-	LWP_MutexInit(&progMutex, false);
-	LWP_CondInit(&progActiveCond);
-	LWP_CondInit(&progIdleCond);
-
-	LWP_CreateThread(&guithread, UpdateGUI, NULL, NULL, 24576, 70);
-	LWP_CreateThread(&progressthread, ProgressThread, NULL, NULL, 8192, 80);
-}
-
-/****************************************************************************
- * CancelAction
- *
- * Signals the GUI progress window thread to halt, and waits for it to
- * finish. Prevents multiple progress window events from interfering /
- * overriding each other.
- ***************************************************************************/
-void
-CancelAction()
-{
-	LWP_MutexLock(progMutex);
-	showProgress = 0;
-	while(!progIdle)
-		LWP_CondWait(progIdleCond, progMutex);
-	LWP_MutexUnlock(progMutex);
-}
-
-/****************************************************************************
- * ShowProgress
- *
- * Updates the variables used by the progress window for drawing a progress
- * bar. Also resumes the progress window thread if it is suspended.
- ***************************************************************************/
-void
-ShowProgress (const char *msg, int done, int total)
-{
-	if(!mainWindow || ExitRequested || ShutdownRequested)
-		return;
-
-	if(total < (256*1024))
-		return;
-	else if(done > total) // this shouldn't happen
-		done = total;
-
-	if(done/total > 0.99)
-		done = total;
-
-	if(showProgress != 1)
-		CancelAction(); // wait for previous progress window to finish
-
-	LWP_MutexLock(progMutex);
-	snprintf(progressMsg, 200, "%s", msg);
-	sprintf(progressTitle, "Please Wait");
-	showProgress = 1;
-	progressTotal = total;
-	progressDone = done;
-	LWP_CondSignal(progActiveCond);
-	LWP_MutexUnlock(progMutex);
-}
-
-/****************************************************************************
- * ShowAction
- *
- * Shows that an action is underway. Also resumes the progress window thread
- * if it is suspended.
- ***************************************************************************/
-void
-ShowAction (const char *msg)
-{
-	if(!mainWindow || ExitRequested || ShutdownRequested)
-		return;
-
-	if(showProgress != 0)
-		CancelAction(); // wait for previous progress window to finish
-
-	LWP_MutexLock(progMutex);
-	snprintf(progressMsg, 200, "%s", msg);
-	sprintf(progressTitle, "Please Wait");
-	showProgress = 2;
-	progressDone = 0;
-	progressTotal = 0;
-	LWP_CondSignal(progActiveCond);
-	LWP_MutexUnlock(progMutex);
-}
-
-void ErrorPrompt(const char *msg)
-{
-	WindowPrompt("Error", msg, "OK", NULL);
-}
-
-int ErrorPromptRetry(const char *msg)
-{
-	return WindowPrompt("Error", msg, "Retry", "Cancel");
-}
-
-void InfoPrompt(const char *msg)
-{
-	WindowPrompt("Information", msg, "OK", NULL);
-}
-
-/****************************************************************************
- * AutoSave
- *
- * Automatically saves SRAM/state when returning from in-game to the menu
- ***************************************************************************/
-void AutoSave()
-{
-	if (GCSettings.AutoSave == AUTOSAVE_SRAM)
-	{
-		SaveSRAMAuto(SILENT);
-	}
-	else if (GCSettings.AutoSave == AUTOSAVE_STATE)
-	{
-		if (WindowPrompt("Save", "Save State?", "Save", "Don't Save") )
-			SaveSnapshotAuto(NOTSILENT);
-	}
-	else if (GCSettings.AutoSave == AUTOSAVE_BOTH)
-	{
-		if (WindowPrompt("Save", "Save SRAM and State?", "Save", "Don't Save") )
-		{
-			SaveSRAMAuto(NOTSILENT);
-			SaveSnapshotAuto(NOTSILENT);
+		if(userInput[i]->getPadData().validPointer) {
+			Menu_DrawImg(userInput[i]->getPadData().cursor_x-48, userInput[i]->getPadData().cursor_y-48, 96, 96, pointer[i]->getImage(), userInput[i]->getPadData().cursor_angle, 1, 1, 255);
 		}
-	}
+		DoRumble(i);
+		--i;
+	} while(i>=0);
+	#endif
+
+	Menu_Render();
 }
 
 /****************************************************************************
- * OnScreenKeyboard
- *
- * Opens an on-screen keyboard window, with the data entered being stored
- * into the specified variable.
- ***************************************************************************/
-static void OnScreenKeyboard(char * var, u32 maxlen)
-{
-	int save = -1;
-
-	GuiKeyboard keyboard(var, maxlen);
-
-	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND::PCM);
-	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND::PCM);
-	GuiImageData btnOutline(button_png);
-	GuiImageData btnOutlineOver(button_over_png);
-
-	GuiText okBtnTxt("OK", 22, (GuiColor){0, 0, 0, 255});
-	GuiImage okBtnImg(&btnOutline);
-	GuiImage okBtnImgOver(&btnOutlineOver);
-	GuiButton okBtn(btnOutline.getWidth(), btnOutline.getHeight());
-
-	okBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	okBtn.setPosition(25, -25);
-
-	okBtn.setLabel(&okBtnTxt);
-	okBtn.setImage(&okBtnImg);
-	okBtn.setImageOver(&okBtnImgOver);
-	okBtn.setSoundOver(&btnSoundOver);
-	okBtn.setSoundClick(&btnSoundClick);
-	okBtn.setTrigger(trigA);
-	okBtn.setEffectGrow();
-
-	GuiText cancelBtnTxt("Cancel", 22, (GuiColor){0, 0, 0, 255});
-	GuiImage cancelBtnImg(&btnOutline);
-	GuiImage cancelBtnImgOver(&btnOutlineOver);
-	GuiButton cancelBtn(btnOutline.getWidth(), btnOutline.getHeight());
-	cancelBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
-	cancelBtn.setPosition(-25, -25);
-	cancelBtn.setLabel(&cancelBtnTxt);
-	cancelBtn.setImage(&cancelBtnImg);
-	cancelBtn.setImageOver(&cancelBtnImgOver);
-	cancelBtn.setSoundOver(&btnSoundOver);
-	cancelBtn.setSoundClick(&btnSoundClick);
-	cancelBtn.setTrigger(trigA);
-	cancelBtn.setEffectGrow();
-
-	keyboard.append(&okBtn);
-	keyboard.append(&cancelBtn);
-
-	HaltGui();
-	mainWindow->setState(STATE::DISABLED);
-	mainWindow->append(&keyboard);
-	mainWindow->changeFocus(&keyboard);
-	ResumeGui();
-
-	while(save == -1)
-	{
-		usleep(THREAD_SLEEP);
-
-		if(okBtn.getState() == STATE::CLICKED)
-			save = 1;
-		else if(cancelBtn.getState() == STATE::CLICKED)
-			save = 0;
-	}
-
-	if(save)
-	{
-		snprintf(var, maxlen, "%s", keyboard.kbtextstr);
-	}
-
-	HaltGui();
-	mainWindow->remove(&keyboard);
-	mainWindow->setState(STATE::DEFAULT);
-	ResumeGui();
-}
-
-/****************************************************************************
- * SettingWindow
- *
- * Opens a new window, with the specified window element appended. Allows
- * for a customizable prompted setting.
- ***************************************************************************/
-static int
-SettingWindow(const char * title, GuiWindow * w)
-{
-	int save = -1;
-
-	GuiWindow promptWindow(448,288);
-	promptWindow.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND::PCM);
-	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND::PCM);
-	GuiImageData btnOutline(button_png);
-	GuiImageData btnOutlineOver(button_over_png);
-
-	GuiImageData dialogBox(dialogue_box_png);
-	GuiImage dialogBoxImg(&dialogBox);
-
-	GuiText titleTxt(title, 26, (GuiColor){255, 255, 255, 255});
-	titleTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	titleTxt.setPosition(0,14);
-
-	GuiText okBtnTxt("OK", 22, (GuiColor){0, 0, 0, 255});
-	GuiImage okBtnImg(&btnOutline);
-	GuiImage okBtnImgOver(&btnOutlineOver);
-	GuiButton okBtn(btnOutline.getWidth(), btnOutline.getHeight());
-
-	okBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	okBtn.setPosition(20, -25);
-
-	okBtn.setLabel(&okBtnTxt);
-	okBtn.setImage(&okBtnImg);
-	okBtn.setImageOver(&okBtnImgOver);
-	okBtn.setSoundOver(&btnSoundOver);
-	okBtn.setSoundClick(&btnSoundClick);
-	okBtn.setTrigger(trigA);
-	okBtn.setEffectGrow();
-
-	GuiText cancelBtnTxt("Cancel", 22, (GuiColor){0, 0, 0, 255});
-	GuiImage cancelBtnImg(&btnOutline);
-	GuiImage cancelBtnImgOver(&btnOutlineOver);
-	GuiButton cancelBtn(btnOutline.getWidth(), btnOutline.getHeight());
-	cancelBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
-	cancelBtn.setPosition(-20, -25);
-	cancelBtn.setLabel(&cancelBtnTxt);
-	cancelBtn.setImage(&cancelBtnImg);
-	cancelBtn.setImageOver(&cancelBtnImgOver);
-	cancelBtn.setSoundOver(&btnSoundOver);
-	cancelBtn.setSoundClick(&btnSoundClick);
-	cancelBtn.setTrigger(trigA);
-	cancelBtn.setEffectGrow();
-
-	promptWindow.append(&dialogBoxImg);
-	promptWindow.append(&titleTxt);
-	promptWindow.append(&okBtn);
-	promptWindow.append(&cancelBtn);
-
-	HaltGui();
-	mainWindow->setState(STATE::DISABLED);
-	mainWindow->append(&promptWindow);
-	mainWindow->append(w);
-	mainWindow->changeFocus(w);
-	ResumeGui();
-
-	while(save == -1)
-	{
-		usleep(THREAD_SLEEP);
-
-		if(okBtn.getState() == STATE::CLICKED)
-			save = 1;
-		else if(cancelBtn.getState() == STATE::CLICKED)
-			save = 0;
-	}
-	HaltGui();
-	mainWindow->remove(&promptWindow);
-	mainWindow->remove(w);
-	mainWindow->setState(STATE::DEFAULT);
-	ResumeGui();
-	return save;
-}
-
-/****************************************************************************
- * WindowCredits
+ * CreditsWindow
  * Display credits, legal copyright and licence
  *
  * THIS MUST NOT BE REMOVED OR DISABLED IN ANY DERIVATIVE WORK
  ***************************************************************************/
-static void WindowCredits(void * ptr)
+
+static void CreditsWindow()
 {
-	if(btnLogo->getState() != STATE::CLICKED && !showCredits)
-		return;
-
-	btnLogo->resetState();
-
 	bool exit = false;
 	int i = 0;
 	int y = 20;
 
-	GuiWindow creditsWindow(screenwidth,screenheight);
 	GuiWindow creditsWindowBox(580,448);
 	creditsWindowBox.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 
@@ -960,45 +466,528 @@ static void WindowCredits(void * ptr)
 	for(i=0; i < numEntries; i++)
 		creditsWindowBox.append(txt[i]);
 
-	creditsWindow.append(&creditsWindowBox);
+	STATE oldState = menu->mainWindow.getState();
+	menu->mainWindow.setState(STATE::DISABLED);
+	menu->mainWindow.append(&creditsWindowBox);
+	menu->mainWindow.changeFocus(&creditsWindowBox);
 
-	auto buttonPressed = [&]()-> bool { return userInput[0]->getPadData().buttons_d || userInput[1]->getPadData().buttons_d ||
+	auto buttonPressed = [&]()-> bool {
+		return userInput[0]->getPadData().buttons_d || userInput[1]->getPadData().buttons_d ||
 			   userInput[2]->getPadData().buttons_d || userInput[3]->getPadData().buttons_d; };
 
-	while(!exit || (buttonPressed() && exit))
+	// debounce - wait for button to be unpressed
+	while(buttonPressed())
 	{
-		UpdatePads();
-
-		gameScreenImg->draw();
-		bgBottomImg->draw();
-		bgTopImg->draw();
-		creditsWindow.draw();
-
-		#ifdef HW_RVL
-		i = 3;
-		do {	
-			if(userInput[i]->getPadData().validPointer) {
-				Menu_DrawImg(userInput[i]->getPadData().cursor_x-48, userInput[i]->getPadData().cursor_y-48, 96, 96, pointer[i]->getImage(), userInput[i]->getPadData().cursor_angle, 1, 1, 255);
-			}
-			DoRumble(i);
-			--i;
-		} while(i >= 0);
-		#endif
-
-		Menu_Render();
-
-		if(buttonPressed())
-		{
-			exit = true;
-
-		}
-		usleep(THREAD_SLEEP);
+		ProcessGuiInput();
+		DrawGui();
 	}
+
+	// credits open - wait for button to be pressed
+	while(!buttonPressed())
+	{
+		ProcessGuiInput();
+		DrawGui();
+	}
+
+	menu->mainWindow.remove(&creditsWindowBox);
 
 	for(i=0; i < numEntries; i++)
 		delete txt[i];
 
-	showCredits = false;
+	// credits closed - wait for button to be unpressed (so we don't just reopen credits)
+	while(buttonPressed())
+	{
+		ProcessGuiInput();
+		DrawGui();
+	}
+	menu->mainWindow.setState(oldState);
+}
+
+static void ServicePendingCreditsWindowRequest() {
+	if(menu->btnLogo.getState() == STATE::CLICKED)
+	{
+		menu->btnLogo.resetState();
+		CreditsWindow();
+	}
+}
+
+/****************************************************************************
+ * Cross-thread WindowPrompt() support
+ ***************************************************************************/
+static int WindowPrompt(const char *, const char *, const char *, const char *);
+
+static void ServicePendingWindowPromptRequest()
+{
+	LWP_MutexLock(promptMutex);
+	bool pending = promptPending;
+	LWP_MutexUnlock(promptMutex);
+
+	if(!pending)
+		return;
+
+	int result = WindowPrompt(promptPendingTitle, promptPendingMsg, promptPendingBtn1, promptPendingBtn2);
+
+	LWP_MutexLock(promptMutex);
+	promptResult = result;
+	promptResultReady = true;
+	promptPending = false;
+	LWP_CondBroadcast(promptDoneCond);
+	LWP_MutexUnlock(promptMutex);
+}
+
+/****************************************************************************
+ * UpdateGui
+ *
+ * The single shared frame-step primitive. Performs exactly one frame:
+ * scans input for all active controllers, applies that input to the
+ * element tree, reflects the progress overlay state, draws the tree, and
+ * presents/renders
+ *
+ * Returns true if the caller should keep looping, or false if the caller
+ * must stop immediately and return control up the call stack
+ ***************************************************************************/
+
+static bool UpdateGui()
+{
+	static bool exiting = false;
+	if(exiting)
+		return false;
+
+	ProcessGuiInput();
+
+	menu->progressOverlayState.update();
+	ServicePendingWindowPromptRequest();
+	ServicePendingCreditsWindowRequest();
+
+	DrawGui();
+
+	if(ExitRequested || ShutdownRequested)
+	{
+		for(int a = 0; a <= 255; a += 15)
+		{
+			menu->mainWindow.draw();
+			Menu_DrawRectangle(0,0,screenwidth,screenheight,(GuiColor){0, 0, 0, (u8)a});
+			Menu_Render();
+		}
+		exiting = true;
+		return false;
+	}
+
+	return true;
+}
+
+/****************************************************************************
+ * WindowPrompt
+ *
+ * Displays a prompt window to user, with information, an error message, or
+ * presenting a user with a choice.
+ ***************************************************************************/
+static int WindowPrompt(const char *title, const char *msg, const char *btn1Label, const char *btn2Label)
+{
+	if(!menu)
+		return 0;
+
+	int choice = -1;
+
+	GuiWindow promptWindow(448,288);
+	promptWindow.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	promptWindow.setPosition(0, -10);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND::PCM);
+	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND::PCM);
+	GuiImageData btnOutline(button_prompt_png);
+	GuiImageData btnOutlineOver(button_prompt_over_png);
+
+	GuiTrigger trigB;
+	trigB.setSecondaryTrigger();
+
+	GuiImageData dialogBox(dialogue_box_png);
+	GuiImage dialogBoxImg(&dialogBox);
+
+	GuiText titleTxt(title, 26, (GuiColor){255, 255, 255, 255});
+	titleTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
+	titleTxt.setPosition(0,14);
+	GuiText msgTxt(msg, 26, (GuiColor){0, 0, 0, 255});
+	msgTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	msgTxt.setPosition(0,-20);
+	msgTxt.setWrap(true, 430);
+
+	GuiText btn1Txt(btn1Label, 22, (GuiColor){0, 0, 0, 255});
+	GuiImage btn1Img(&btnOutline);
+	GuiImage btn1ImgOver(&btnOutlineOver);
+	GuiButton btn1(btnOutline.getWidth(), btnOutline.getHeight());
+
+	if(btn2Label)
+	{
+		btn1.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
+		btn1.setPosition(20, -25);
+	}
+	else
+	{
+		btn1.setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
+		btn1.setPosition(0, -25);
+		btn1.setTrigger(&trigB);
+	}
+
+	btn1.setLabel(&btn1Txt);
+	btn1.setImage(&btn1Img);
+	btn1.setImageOver(&btn1ImgOver);
+	btn1.setSoundOver(&btnSoundOver);
+	btn1.setSoundClick(&btnSoundClick);
+	btn1.setTrigger(trigA);
+	btn1.setState(STATE::SELECTED);
+	btn1.setEffectGrow();
+
+	GuiText btn2Txt(btn2Label, 22, (GuiColor){0, 0, 0, 255});
+	GuiImage btn2Img(&btnOutline);
+	GuiImage btn2ImgOver(&btnOutlineOver);
+	GuiButton btn2(btnOutline.getWidth(), btnOutline.getHeight());
+	btn2.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
+	btn2.setPosition(-20, -25);
+	btn2.setLabel(&btn2Txt);
+	btn2.setImage(&btn2Img);
+	btn2.setImageOver(&btn2ImgOver);
+	btn2.setSoundOver(&btnSoundOver);
+	btn2.setSoundClick(&btnSoundClick);
+	btn2.setTrigger(trigA);
+	btn2.setEffectGrow();
+
+	promptWindow.append(&dialogBoxImg);
+	promptWindow.append(&titleTxt);
+	promptWindow.append(&msgTxt);
+	promptWindow.append(&btn1);
+
+	if(btn2Label)
+	{
+		promptWindow.append(&btn2);
+		btn2.setTrigger(&trigB);
+	}
+
+	promptWindow.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 50);
+	CancelAction();
+	menu->mainWindow.setState(STATE::DISABLED);
+	menu->mainWindow.appendWithAutoRemove(&promptWindow);
+	menu->mainWindow.changeFocus(&promptWindow);
+	if(btn2Label)
+	{
+		btn1.resetState();
+		btn2.setState(STATE::SELECTED);
+	}
+
+	while(choice == -1)
+	{
+		if(!UpdateGui()) return 0;
+
+		if(btn1.getState() == STATE::CLICKED)
+			choice = 1;
+		else if(btn2.getState() == STATE::CLICKED)
+			choice = 0;
+	}
+
+	promptWindow.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 50);
+	while(promptWindow.getEffect() > 0)
+	{
+		if(!UpdateGui()) return choice;
+	}
+	menu->mainWindow.setState(STATE::DEFAULT);
+	return choice;
+}
+
+/****************************************************************************
+ * CancelAction
+ *
+ * Cancels any progress/action overlay currently showing (or about to show),
+ * and waits for it to be fully torn down before returning.
+ ***************************************************************************/
+void CancelAction()
+{
+	if(!menu) return;
+
+	LWP_MutexLock(progMutex);
+	showProgress = 0;
+	LWP_MutexUnlock(progMutex);
+
+	if(IsMainThread())
+	{
+		menu->progressOverlayState.update(); // synchronously reflect showProgress==0 right now
+	}
+	else
+	{
+		LWP_MutexLock(progMutex);
+
+		while(!progIdle)
+			LWP_CondWait(progIdleCond, progMutex);
+
+		LWP_MutexUnlock(progMutex);
+	}
+}
+
+/****************************************************************************
+ * ShowProgress
+ *
+ * Updates the variables used by the progress window for drawing a progress
+ * bar. Safe to call from a background worker thread - see CancelAction().
+ ***************************************************************************/
+void ShowProgress (const char *msg, int done, int total)
+{
+	if(!menu)
+		return;
+
+	if(total < (256*1024))
+		return;
+	else if(done > total) // this shouldn't happen
+		done = total;
+
+	if(done/total > 0.99)
+		done = total;
+
+	if(showProgress != 1)
+		CancelAction(); // wait for previous progress window to finish
+
+	LWP_MutexLock(progMutex);
+	snprintf(progressMsg, 200, "%s", msg);
+	sprintf(progressTitle, "Please Wait");
+	showProgress = 1;
+	progressTotal = total;
+	progressDone = done;
+	progIdle = false;
+	LWP_MutexUnlock(progMutex);
+}
+
+/****************************************************************************
+ * ShowAction
+ *
+ * Shows that an action is underway. Safe to call from a background worker
+ * thread - see CancelAction().
+ ***************************************************************************/
+void ShowAction (const char *msg)
+{
+	if(!menu)
+		return;
+
+	if(showProgress != 0)
+		CancelAction(); // wait for previous progress window to finish
+
+	LWP_MutexLock(progMutex);
+	snprintf(progressMsg, 200, "%s", msg);
+	sprintf(progressTitle, "Please Wait");
+	showProgress = 2;
+	progressDone = 0;
+	progressTotal = 0;
+	progIdle = false;
+	LWP_MutexUnlock(progMutex);
+}
+
+static int WindowPromptRequest(const char *title, const char *msg, const char *btn1Label, const char *btn2Label)
+{
+	if(IsMainThread())
+		return WindowPrompt(title, msg, btn1Label, btn2Label);
+
+	if(!menu)
+		return 0;
+
+	LWP_MutexLock(promptMutex);
+	promptPendingTitle = title;
+	promptPendingMsg = msg;
+	promptPendingBtn1 = btn1Label;
+	promptPendingBtn2 = btn2Label;
+	promptResultReady = false;
+	promptPending = true;
+	while(!promptResultReady)
+		LWP_CondWait(promptDoneCond, promptMutex);
+	int result = promptResult;
+	LWP_MutexUnlock(promptMutex);
+	return result;
+}
+
+void ErrorPrompt(const char *msg)
+{
+	WindowPromptRequest("Error", msg, "OK", NULL);
+}
+
+int ErrorPromptRetry(const char *msg)
+{
+	return WindowPromptRequest("Error", msg, "Retry", "Cancel");
+}
+
+void InfoPrompt(const char *msg)
+{
+	WindowPromptRequest("Information", msg, "OK", NULL);
+}
+
+/****************************************************************************
+ * AutoSave
+ *
+ * Automatically saves SRAM/state when returning from in-game to the menu
+ ***************************************************************************/
+static void AutoSave()
+{
+	if (GCSettings.AutoSave == AUTOSAVE_SRAM)
+	{
+		SaveSRAMAuto(SILENT);
+	}
+	else if (GCSettings.AutoSave == AUTOSAVE_STATE)
+	{
+		if (WindowPrompt("Save", "Save State?", "Save", "Don't Save") )
+			SaveSnapshotAuto(NOTSILENT);
+	}
+	else if (GCSettings.AutoSave == AUTOSAVE_BOTH)
+	{
+		if (WindowPrompt("Save", "Save SRAM and State?", "Save", "Don't Save") )
+		{
+			SaveSRAMAuto(NOTSILENT);
+			SaveSnapshotAuto(NOTSILENT);
+		}
+	}
+}
+
+/****************************************************************************
+ * OnScreenKeyboard
+ *
+ * Opens an on-screen keyboard window, with the data entered being stored
+ * into the specified variable.
+ ***************************************************************************/
+static void OnScreenKeyboard(char * var, u32 maxlen)
+{
+	int save = -1;
+
+	GuiKeyboard keyboard(var, maxlen);
+
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND::PCM);
+	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND::PCM);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+
+	GuiText okBtnTxt("OK", 22, (GuiColor){0, 0, 0, 255});
+	GuiImage okBtnImg(&btnOutline);
+	GuiImage okBtnImgOver(&btnOutlineOver);
+	GuiButton okBtn(btnOutline.getWidth(), btnOutline.getHeight());
+
+	okBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
+	okBtn.setPosition(25, -25);
+
+	okBtn.setLabel(&okBtnTxt);
+	okBtn.setImage(&okBtnImg);
+	okBtn.setImageOver(&okBtnImgOver);
+	okBtn.setSoundOver(&btnSoundOver);
+	okBtn.setSoundClick(&btnSoundClick);
+	okBtn.setTrigger(trigA);
+	okBtn.setEffectGrow();
+
+	GuiText cancelBtnTxt("Cancel", 22, (GuiColor){0, 0, 0, 255});
+	GuiImage cancelBtnImg(&btnOutline);
+	GuiImage cancelBtnImgOver(&btnOutlineOver);
+	GuiButton cancelBtn(btnOutline.getWidth(), btnOutline.getHeight());
+	cancelBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
+	cancelBtn.setPosition(-25, -25);
+	cancelBtn.setLabel(&cancelBtnTxt);
+	cancelBtn.setImage(&cancelBtnImg);
+	cancelBtn.setImageOver(&cancelBtnImgOver);
+	cancelBtn.setSoundOver(&btnSoundOver);
+	cancelBtn.setSoundClick(&btnSoundClick);
+	cancelBtn.setTrigger(trigA);
+	cancelBtn.setEffectGrow();
+
+	keyboard.append(&okBtn);
+	keyboard.append(&cancelBtn);
+
+	menu->mainWindow.setState(STATE::DISABLED);
+	menu->mainWindow.appendWithAutoRemove(&keyboard);
+	menu->mainWindow.changeFocus(&keyboard);
+
+	while(save == -1)
+	{
+		if(!UpdateGui()) return;
+
+		if(okBtn.getState() == STATE::CLICKED)
+			save = 1;
+		else if(cancelBtn.getState() == STATE::CLICKED)
+			save = 0;
+	}
+
+	if(save)
+	{
+		snprintf(var, maxlen, "%s", keyboard.kbtextstr);
+	}
+
+	menu->mainWindow.setState(STATE::DEFAULT);
+}
+
+/****************************************************************************
+ * SettingWindow
+ *
+ * Opens a new window, with the specified window element appended. Allows
+ * for a customizable prompted setting.
+ ***************************************************************************/
+static int
+SettingWindow(const char * title, GuiWindow * w)
+{
+	int save = -1;
+
+	GuiWindow promptWindow(448,288);
+	promptWindow.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND::PCM);
+	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND::PCM);
+	GuiImageData btnOutline(button_png);
+	GuiImageData btnOutlineOver(button_over_png);
+
+	GuiImageData dialogBox(dialogue_box_png);
+	GuiImage dialogBoxImg(&dialogBox);
+
+	GuiText titleTxt(title, 26, (GuiColor){255, 255, 255, 255});
+	titleTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
+	titleTxt.setPosition(0,14);
+
+	GuiText okBtnTxt("OK", 22, (GuiColor){0, 0, 0, 255});
+	GuiImage okBtnImg(&btnOutline);
+	GuiImage okBtnImgOver(&btnOutlineOver);
+	GuiButton okBtn(btnOutline.getWidth(), btnOutline.getHeight());
+
+	okBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
+	okBtn.setPosition(20, -25);
+
+	okBtn.setLabel(&okBtnTxt);
+	okBtn.setImage(&okBtnImg);
+	okBtn.setImageOver(&okBtnImgOver);
+	okBtn.setSoundOver(&btnSoundOver);
+	okBtn.setSoundClick(&btnSoundClick);
+	okBtn.setTrigger(trigA);
+	okBtn.setEffectGrow();
+
+	GuiText cancelBtnTxt("Cancel", 22, (GuiColor){0, 0, 0, 255});
+	GuiImage cancelBtnImg(&btnOutline);
+	GuiImage cancelBtnImgOver(&btnOutlineOver);
+	GuiButton cancelBtn(btnOutline.getWidth(), btnOutline.getHeight());
+	cancelBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
+	cancelBtn.setPosition(-20, -25);
+	cancelBtn.setLabel(&cancelBtnTxt);
+	cancelBtn.setImage(&cancelBtnImg);
+	cancelBtn.setImageOver(&cancelBtnImgOver);
+	cancelBtn.setSoundOver(&btnSoundOver);
+	cancelBtn.setSoundClick(&btnSoundClick);
+	cancelBtn.setTrigger(trigA);
+	cancelBtn.setEffectGrow();
+
+	promptWindow.append(&dialogBoxImg);
+	promptWindow.append(&titleTxt);
+	promptWindow.append(&okBtn);
+	promptWindow.append(&cancelBtn);
+
+	menu->mainWindow.setState(STATE::DISABLED);
+	menu->mainWindow.appendWithAutoRemove(&promptWindow);
+	menu->mainWindow.appendWithAutoRemove(w);
+	menu->mainWindow.changeFocus(w);
+
+	while(save == -1)
+	{
+		if(!UpdateGui()) return 0;
+
+		if(okBtn.getState() == STATE::CLICKED)
+			save = 1;
+		else if(cancelBtn.getState() == STATE::CLICKED)
+			save = 0;
+	}
+	menu->mainWindow.setState(STATE::DEFAULT);
+	return save;
 }
 
 /****************************************************************************
@@ -1018,9 +1007,22 @@ static char* getImageFolder()
 	}
 }
 
+static int BrowserLoadFileTask(void * arg) { return BrowserLoadFile(); }
+
+struct ChangeInterfaceArgs
+{
+	int device;
+	bool silent;
+};
+
+static int ChangeInterfaceTask(void * arg) {
+	ChangeInterfaceArgs * a = (ChangeInterfaceArgs *)arg;
+	return ChangeInterface(a->device, a->silent) ? 1 : 0;
+}
+
 static int MenuGameSelection()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	bool res;
 	int i;
 
@@ -1095,15 +1097,13 @@ static int MenuGameSelection()
 	int  previousBrowserIndex = -1;
 	char imagePath[MAXJOLIET + 1];
 	
-	HaltGui();
-	btnLogo->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
-	btnLogo->setPosition(-50, 24);
-	mainWindow->append(&titleTxt);
-	mainWindow->append(&gameBrowser);
-	mainWindow->append(&buttonWindow);
-	mainWindow->append(&bgPreview);
-	mainWindow->append(&preview);
-	ResumeGui();
+	menu->btnLogo.setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+	menu->btnLogo.setPosition(-50, 24);
+	menu->mainWindow.appendWithAutoRemove(&titleTxt);
+	menu->mainWindow.appendWithAutoRemove(&gameBrowser);
+	menu->mainWindow.appendWithAutoRemove(&buttonWindow);
+	menu->mainWindow.appendWithAutoRemove(&bgPreview);
+	menu->mainWindow.appendWithAutoRemove(&preview);
 
 	#ifdef HW_RVL
 	ShutoffRumble();
@@ -1118,14 +1118,14 @@ static int MenuGameSelection()
 	gameBrowser.triggerUpdate();
 	titleTxt.setText(inSz ? szname : "Choose Game");
 			
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 		
 		if(selectLoadedFile == 2)
 		{
 			selectLoadedFile = 0;
-			mainWindow->changeFocus(&gameBrowser);
+			menu->mainWindow.changeFocus(&gameBrowser);
 			gameBrowser.triggerUpdate();
 		}
 
@@ -1140,7 +1140,6 @@ static int MenuGameSelection()
 				// check corresponding browser entry
 				if(browserList[browser.selIndex].isdir || IsSz())
 				{	
-					HaltGui();
 					res = BrowserChangeFolder();
 					if(res)
 					{
@@ -1151,24 +1150,36 @@ static int MenuGameSelection()
 					}
 					else
 					{
-						menu = MENU_GAMESELECTION;
+						selection = MENU_GAMESELECTION;
 						break;
 					}
 										
 					titleTxt.setText(inSz ? szname : "Choose Game");
 					
-					ResumeGui();
 				}
 				else
 				{
 					#ifdef HW_RVL
 					ShutoffRumble();
 					#endif
-					mainWindow->setState(STATE::DISABLED);
-					if(BrowserLoadFile())
-						menu = MENU_EXIT;
+					menu->mainWindow.setState(STATE::DISABLED);
+
+					if(RunOnWorkerThread(BrowserLoadFileTask))
+					{
+						while(!IsWorkerThreadFinished())
+						{
+							if(!UpdateGui()) return MENU_EXIT;
+						}
+
+						if(GetWorkerThreadResult())
+							selection = MENU_EXIT;
+						else
+							menu->mainWindow.setState(STATE::DEFAULT);
+					}
 					else
-						mainWindow->setState(STATE::DEFAULT);
+					{
+						menu->mainWindow.setState(STATE::DEFAULT);
+					}
 				}
 			}
 		}
@@ -1202,21 +1213,15 @@ static int MenuGameSelection()
 		}
 
 		if(settingsBtn.getState() == STATE::CLICKED)
-			menu = MENU_SETTINGS;
+			selection = MENU_SETTINGS;
 		else if(exitBtn.getState() == STATE::CLICKED)
 			ExitRequested = 1;
 	}
 
 	HaltParseThread(); // halt parsing
-	HaltGui();
 	ResetBrowser();
-	mainWindow->remove(&titleTxt);
-	mainWindow->remove(&buttonWindow);
-	mainWindow->remove(&gameBrowser);
-	mainWindow->remove(&bgPreview);
-	mainWindow->remove(&preview);
 	free(imgBuffer);
-	return menu;
+	return selection;
 }
 
 /****************************************************************************
@@ -1400,7 +1405,7 @@ static void PlayerMappingWindow(int chan)
  ***************************************************************************/
 static int MenuGame()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	
 	GuiText titleTxt((char *)Memory.ROMFilename, 22, (GuiColor){255, 255, 255, 255});
 	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
@@ -1587,7 +1592,6 @@ static int MenuGame()
 	batteryBtn[3]->setPosition(135, -40);
 	#endif
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&titleTxt);
 	w.append(&saveBtn);
@@ -1606,19 +1610,19 @@ static int MenuGame()
 	w.append(&mainmenuBtn);
 	w.append(&closeBtn);
 
-	btnLogo->setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
-	btnLogo->setPosition(-50, -40);
-	mainWindow->append(&w);
+	menu->btnLogo.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
+	menu->btnLogo.setPosition(-50, -40);
+	menu->mainWindow.appendWithAutoRemove(&w);
 
 	if(lastMenu == MENU_NONE)
 	{
 		enterSound->play();
-		bgTopImg->setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 35);
+		menu->bgTopImg.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 35);
 		closeBtn.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 35);
 		titleTxt.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 35);
 		mainmenuBtn.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
-		bgBottomImg->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
-		btnLogo->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
+		menu->bgBottomImg.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
+		menu->btnLogo.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
 		#ifdef HW_RVL
 		batteryBtn[0]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
 		batteryBtn[1]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
@@ -1629,14 +1633,13 @@ static int MenuGame()
 		w.setEffect(EFFECT::FADE, 15);
 	}
 
-	ResumeGui();
 	
 	if(lastMenu == MENU_NONE)
 		AutoSave();
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		#ifdef HW_RVL
 		for(i=0; i < 4; i++)
@@ -1681,22 +1684,22 @@ static int MenuGame()
 
 		if(saveBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAME_SAVE;
+			selection = MENU_GAME_SAVE;
 		}
 		else if(loadBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAME_LOAD;
+			selection = MENU_GAME_LOAD;
 		}
 		else if(deleteBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAME_DELETE;
+			selection = MENU_GAME_DELETE;
 		}
 		else if(resetBtn.getState() == STATE::CLICKED)
 		{
 			if (WindowPrompt("Reset Game", "Are you sure that you want to reset this game? Any unsaved progress will be lost.", "OK", "Cancel"))
 			{
 				S9xSoftReset ();
-				menu = MENU_EXIT;
+				selection = MENU_EXIT;
 			}
 			else
 			{
@@ -1705,7 +1708,7 @@ static int MenuGame()
 		}
 		else if(gameSettingsBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS;
+			selection = MENU_GAMESETTINGS;
 		}
 #ifdef HW_RVL
 		else if(batteryBtn[0]->getState() == STATE::CLICKED)
@@ -1729,8 +1732,7 @@ static int MenuGame()
 		{
 			if (WindowPrompt("Quit Game", "Quit this game? Any unsaved progress will be lost.", "OK", "Cancel"))
 			{
-				HaltGui();
-				mainWindow->remove(gameScreenImg);
+				menu->mainWindow.remove(gameScreenImg);
 				delete gameScreenImg;
 				if(gameScreenTexture != NULL) {
 					free(gameScreenTexture);
@@ -1743,26 +1745,25 @@ static int MenuGame()
 				else {
 					gameScreenImg = new GuiImage(screenwidth, screenheight, (GuiColor){175, 200, 215, 255});
 					gameScreenImg->colorStripe(10);
-					mainWindow->insert(gameScreenImg, 0);
-					ResumeGui();
+					menu->mainWindow.insert(gameScreenImg, 0);
 					#ifndef NO_SOUND
 					bgMusic->play(); // startup music
 					#endif
-					menu = MENU_GAMESELECTION;
+					selection = MENU_GAMESELECTION;
 				}
 			}
 		}
 		else if(closeBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_EXIT;
+			selection = MENU_EXIT;
 
 			exitSound->play();
-			bgTopImg->setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			menu->bgTopImg.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
 			closeBtn.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
 			titleTxt.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
 			mainmenuBtn.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
-			bgBottomImg->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
-			btnLogo->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			menu->bgBottomImg.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			menu->btnLogo.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 			#ifdef HW_RVL
 			batteryBtn[0]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 			batteryBtn[1]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
@@ -1771,11 +1772,13 @@ static int MenuGame()
 			#endif
 
 			w.setEffect(EFFECT::FADE, -15);
-			usleep(350000); // wait for effects to finish
+			while(w.getEffect() > 0)
+			{
+				if(!UpdateGui()) return MENU_EXIT;
+			}
 		}
 	}
 
-	HaltGui();
 
 	#ifdef HW_RVL
 	for(i=0; i < 4; i++)
@@ -1787,8 +1790,7 @@ static int MenuGame()
 	}
 	#endif
 
-	mainWindow->remove(&w);
-	return menu;
+	return selection;
 }
 
 /****************************************************************************
@@ -1797,7 +1799,7 @@ static int MenuGame()
  * Determines the save file number of the given file name
  * Returns -1 if none is found
  ***************************************************************************/
-static int FindGameSaveNum(char * savefile, int device)
+static int FindGameSaveNum(char * savefile)
 {
 	int n = -1;
 	int romlen = strlen(Memory.ROMFilename);
@@ -1829,7 +1831,7 @@ static int FindGameSaveNum(char * savefile, int device)
  ***************************************************************************/
 static int MenuGameSaves(int action)
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	int ret;
 	int i, n, type, len, len2;
 	int j = 0;
@@ -1840,9 +1842,22 @@ static int MenuGameSaves(int action)
 	char tmp[MAXJOLIET+1];
 	struct stat filestat;
 	struct tm * timeinfo;
-	int device = GCSettings.SaveMethod;
 
-	if(!ChangeInterface(device, NOTSILENT))
+	static ChangeInterfaceArgs ciArgs;
+	ciArgs.device = GCSettings.SaveMethod;
+	ciArgs.silent = NOTSILENT;
+	bool changeOk = false;
+
+	if(RunOnWorkerThread(ChangeInterfaceTask, &ciArgs))
+	{
+		while(!IsWorkerThreadFinished())
+		{
+			if(!UpdateGui()) return MENU_EXIT;
+		}
+		changeOk = GetWorkerThreadResult() != 0;
+	}
+
+	if(!changeOk)
 		return MENU_GAME;
 
 	GuiText titleTxt(NULL, 26, (GuiColor){255, 255, 255, 255});
@@ -1898,13 +1913,11 @@ static int MenuGameSaves(int action)
 	closeBtn.setTrigger(&trigHome);
 	closeBtn.setEffectGrow();
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&backBtn);
 	w.append(&closeBtn);
-	mainWindow->append(&w);
-	mainWindow->append(&titleTxt);
-	ResumeGui();
+	menu->mainWindow.appendWithAutoRemove(&w);
+	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 
 	memset(&saves, 0, sizeof(saves));
 
@@ -1932,7 +1945,7 @@ static int MenuGameSaves(int action)
 
 		strcpy(tmp, browserList[i].filename);
 		tmp[len2-4] = 0;
-		n = FindGameSaveNum(tmp, device);
+		n = FindGameSaveNum(tmp);
 
 		if(n >= 0)
 		{
@@ -1965,21 +1978,19 @@ static int MenuGameSaves(int action)
 	if((saves.length == 0 && action == 0) || (saves.length == 0 && action == 2)) 
 	{
 		InfoPrompt("No game saves found.");
-		menu = MENU_GAME;
+		selection = MENU_GAME;
 	}
 
 	GuiSaveBrowser saveBrowser(552, 248, &saves, action);
 	saveBrowser.setPosition(0, 108);
 	saveBrowser.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 
-	HaltGui();
-	mainWindow->append(&saveBrowser);
-	mainWindow->changeFocus(&saveBrowser);
-	ResumeGui();
+	menu->mainWindow.appendWithAutoRemove(&saveBrowser);
+	menu->mainWindow.changeFocus(&saveBrowser);
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		ret = saveBrowser.getClickedSave();
 
@@ -1997,11 +2008,11 @@ static int MenuGameSaves(int action)
 						result = LoadSRAM(filepath, NOTSILENT);
 						break;
 					case FILE_STATE:
-						result = LoadSnapshot (filepath, NOTSILENT);
+						result = LoadSnapshot(filepath, NOTSILENT);
 						break;
 				}
 				if(result)
-					menu = MENU_EXIT;
+					selection = MENU_EXIT;
 			}
 			else if(action == 2) // delete RAM/State
 			{
@@ -2028,7 +2039,7 @@ static int MenuGameSaves(int action)
 						break;
 					}							
 				}
-				menu = MENU_GAME_DELETE;
+				selection = MENU_GAME_DELETE;
 			}
 			else // save
 			{
@@ -2042,7 +2053,7 @@ static int MenuGameSaves(int action)
 					{
 						MakeFilePath(filepath, FILE_STATE, Memory.ROMFilename, i);
 						SaveSnapshot(filepath, NOTSILENT);
-						menu = MENU_GAME_SAVE;
+						selection = MENU_GAME_SAVE;
 					}
 				}
 				else if(ret == -1 && GCSettings.HideSRAMSaving == 0) // new SRAM
@@ -2054,8 +2065,8 @@ static int MenuGameSaves(int action)
 					if(i < 100)
 					{
 						MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, i);
-						SaveSRAM (filepath, NOTSILENT);
-						menu = MENU_GAME_SAVE;
+						SaveSRAM(filepath, NOTSILENT);
+						selection = MENU_GAME_SAVE;
 					}
 				}
 				else // overwrite SRAM/State
@@ -2067,46 +2078,45 @@ static int MenuGameSaves(int action)
 							SaveSRAM(filepath, NOTSILENT);
 							break;
 						case FILE_STATE:
-							SaveSnapshot (filepath, NOTSILENT);
+							SaveSnapshot(filepath, NOTSILENT);
 							break;
 					}
-					menu = MENU_GAME_SAVE;
+					selection = MENU_GAME_SAVE;
 				}
 			}
 		}
 		if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAME;
+			selection = MENU_GAME;
 		}
 		else if(closeBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_EXIT;
+			selection = MENU_EXIT;
 
 			exitSound->play();
-			bgTopImg->setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			menu->bgTopImg.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
 			closeBtn.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
 			titleTxt.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
 			backBtn.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
-			bgBottomImg->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
-			btnLogo->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			menu->bgBottomImg.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			menu->btnLogo.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 
 			w.setEffect(EFFECT::FADE, -15);
 
-			usleep(350000); // wait for effects to finish
+			while(w.getEffect() > 0)
+			{
+				if(!UpdateGui()) return MENU_EXIT;
+			}
 		}
 	}
 
-	HaltGui();
 
 	for(i=0; i < saves.length; i++)
 		if(saves.previewImg[i])
 			delete saves.previewImg[i];
 
-	mainWindow->remove(&saveBrowser);
-	mainWindow->remove(&w);
-	mainWindow->remove(&titleTxt);
 	ResetBrowser();
-	return menu;
+	return selection;
 }
 
 /****************************************************************************
@@ -2114,7 +2124,7 @@ static int MenuGameSaves(int action)
  ***************************************************************************/
 static int MenuGameSettings()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	char filepath[1024];
 
 	GuiText titleTxt("Game Settings", 26, (GuiColor){255, 255, 255, 255});
@@ -2270,7 +2280,6 @@ static int MenuGameSettings()
 	backBtn.setTrigger(&trigB);
 	backBtn.setEffectGrow();
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&titleTxt);
 	w.append(&mappingBtn);
@@ -2282,25 +2291,24 @@ static int MenuGameSettings()
 	w.append(&closeBtn);
 	w.append(&backBtn);
 	
-	mainWindow->append(&w);
+	menu->mainWindow.appendWithAutoRemove(&w);
 
-	ResumeGui();
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		if(mappingBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS;
+			selection = MENU_GAMESETTINGS_MAPPINGS;
 		}
 		else if(videoBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_VIDEO;
+			selection = MENU_GAMESETTINGS_VIDEO;
 		}
 		else if(emulationBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_EMULATION;
+			selection = MENU_GAMESETTINGS_EMULATION;
 		}
 		else if(controllerBtn.getState() == STATE::CLICKED)
 		{
@@ -2311,7 +2319,7 @@ static int MenuGameSettings()
 			cheatsBtn.resetState();
 
 			if(Cheat.g.size() > 0) {
-				menu = MENU_GAMESETTINGS_CHEATS;
+				selection = MENU_GAMESETTINGS_CHEATS;
 			}
 			else {
 				InfoPrompt("Cheats file not found!");
@@ -2327,29 +2335,30 @@ static int MenuGameSettings()
 		}
 		else if(closeBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_EXIT;
+			selection = MENU_EXIT;
 
 			exitSound->play();
-			bgTopImg->setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
+			menu->bgTopImg.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
 			closeBtn.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
 			titleTxt.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
 			backBtn.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
-			bgBottomImg->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
-			btnLogo->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			menu->bgBottomImg.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			menu->btnLogo.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 
 			w.setEffect(EFFECT::FADE, -15);
 
-			usleep(350000); // wait for effects to finish
+			while(w.getEffect() > 0)
+			{
+				if(!UpdateGui()) return MENU_EXIT;
+			}
 		}
 		else if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAME;
+			selection = MENU_GAME;
 		}
 	}
 
-	HaltGui();
-	mainWindow->remove(&w);
-	return menu;
+	return selection;
 }
 
 /****************************************************************************
@@ -2360,7 +2369,7 @@ static int MenuGameSettings()
  ***************************************************************************/
 static int MenuGameCheats()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	int ret;
 	u16 i = 0;
 	OptionList options;
@@ -2405,17 +2414,15 @@ static int MenuGameCheats()
 	optionBrowser.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	optionBrowser.setCol2Position(475);
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&backBtn);
-	mainWindow->append(&optionBrowser);
-	mainWindow->append(&w);
-	mainWindow->append(&titleTxt);
-	ResumeGui();
+	menu->mainWindow.appendWithAutoRemove(&optionBrowser);
+	menu->mainWindow.appendWithAutoRemove(&w);
+	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		ret = optionBrowser.getClickedOption();
 
@@ -2428,14 +2435,10 @@ static int MenuGameCheats()
 
 		if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS;
+			selection = MENU_GAMESETTINGS;
 		}
 	}
-	HaltGui();
-	mainWindow->remove(&optionBrowser);
-	mainWindow->remove(&w);
-	mainWindow->remove(&titleTxt);
-	return menu;
+	return selection;
 }
 
 /****************************************************************************
@@ -2443,7 +2446,7 @@ static int MenuGameCheats()
  ***************************************************************************/
 static int MenuSettingsMappings()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 
 	GuiText titleTxt("Game Settings - Button Mappings", 26, (GuiColor){255, 255, 255, 255});
 	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
@@ -2559,7 +2562,6 @@ static int MenuSettingsMappings()
 	backBtn.setTrigger(&trigB);
 	backBtn.setEffectGrow();
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&titleTxt);
 	w.append(&snesBtn);
@@ -2570,51 +2572,48 @@ static int MenuSettingsMappings()
 
 	w.append(&backBtn);
 
-	mainWindow->append(&w);
+	menu->mainWindow.appendWithAutoRemove(&w);
 
-	ResumeGui();
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		if(snesBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_CTRL;
+			selection = MENU_GAMESETTINGS_MAPPINGS_CTRL;
 			mapMenuCtrlSNES = CTRL_PAD;
 		}
 		else if(superscopeBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_CTRL;
+			selection = MENU_GAMESETTINGS_MAPPINGS_CTRL;
 			mapMenuCtrlSNES = CTRL_SCOPE;
 		}
 		else if(mouseBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_CTRL;
+			selection = MENU_GAMESETTINGS_MAPPINGS_CTRL;
 			mapMenuCtrlSNES = CTRL_MOUSE;
 		}
 		else if(justifierBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_CTRL;
+			selection = MENU_GAMESETTINGS_MAPPINGS_CTRL;
 			mapMenuCtrlSNES = CTRL_JUST;
 		}
 		else if(otherBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_OTHER;
+			selection = MENU_GAMESETTINGS_MAPPINGS_OTHER;
 		}
 		else if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS;
+			selection = MENU_GAMESETTINGS;
 		}
 	}
-	HaltGui();
-	mainWindow->remove(&w);
-	return menu;
+	return selection;
 }
 
 static int MenuSettingsMappingsController()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	char menuTitle[100];
 	char menuSubtitle[100];
 
@@ -2765,7 +2764,6 @@ static int MenuSettingsMappingsController()
 	backBtn.setTrigger(&trigB);
 	backBtn.setEffectGrow();
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&titleTxt);
 	w.append(&subtitleTxt);
@@ -2789,52 +2787,49 @@ static int MenuSettingsMappingsController()
 #endif
 	w.append(&backBtn);
 
-	mainWindow->append(&w);
+	menu->mainWindow.appendWithAutoRemove(&w);
 
-	ResumeGui();
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		if(wiimoteBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
+			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
 			mapMenuCtrl = GUI_HW_WIIMOTE;
 		}
 		else if(nunchukBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
+			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
 			mapMenuCtrl = GUI_HW_NUNCHUK;
 		}
 		else if(classicBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
+			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
 			mapMenuCtrl = GUI_HW_CLASSIC;
 		}
 		else if(wiiuproBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
+			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
 			mapMenuCtrl = GUI_HW_WUPC;
 		}
 		else if(drcBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
+			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
 			mapMenuCtrl = GUI_HW_DRC;
 		}
 		else if(gamecubeBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_MAP;
+			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
 			mapMenuCtrl = GUI_HW_GAMECUBE;
 		}
 		else if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS;
+			selection = MENU_GAMESETTINGS_MAPPINGS;
 		}
 	}
-	HaltGui();
-	mainWindow->remove(&w);
-	return menu;
+	return selection;
 }
 
 /****************************************************************************
@@ -2893,18 +2888,16 @@ static u32 ButtonMappingWindow()
 	promptWindow.append(&titleTxt);
 	promptWindow.append(&msgTxt);
 
-	HaltGui();
-	mainWindow->setState(STATE::DISABLED);
-	mainWindow->append(&promptWindow);
-	mainWindow->changeFocus(&promptWindow);
-	ResumeGui();
+	menu->mainWindow.setState(STATE::DISABLED);
+	menu->mainWindow.appendWithAutoRemove(&promptWindow);
+	menu->mainWindow.changeFocus(&promptWindow);
 
 	u32 pressed = 0;
 	buttonMappingCancelled = false;
 
 	while(pressed == 0 && !buttonMappingCancelled)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return 0;
 
 		if(!userInput[0]) continue;
 
@@ -2943,17 +2936,14 @@ static u32 ButtonMappingWindow()
 		pressed = 0;
 	}
 
-	HaltGui();
-	mainWindow->remove(&promptWindow);
-	mainWindow->setState(STATE::DEFAULT);
-	ResumeGui();
+	menu->mainWindow.setState(STATE::DEFAULT);
 
 	return pressed;
 }
 
 static int MenuSettingsMappingsMap()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	int ret,i,j;
 	bool firstRun = true;
 	OptionList options;
@@ -3055,23 +3045,21 @@ static int MenuSettingsMappingsMap()
 	optionBrowser.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	optionBrowser.setCol2Position(215);
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&backBtn);
 	w.append(&resetBtn);
-	mainWindow->append(&optionBrowser);
-	mainWindow->append(&w);
-	mainWindow->append(&titleTxt);
-	mainWindow->append(&subtitleTxt);
-	ResumeGui();
+	menu->mainWindow.appendWithAutoRemove(&optionBrowser);
+	menu->mainWindow.appendWithAutoRemove(&w);
+	menu->mainWindow.appendWithAutoRemove(&titleTxt);
+	menu->mainWindow.appendWithAutoRemove(&subtitleTxt);
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS_CTRL;
+			selection = MENU_GAMESETTINGS_MAPPINGS_CTRL;
 		}
 		else if(resetBtn.getState() == STATE::CLICKED)
 		{
@@ -3128,12 +3116,7 @@ static int MenuSettingsMappingsMap()
 		}
 	}
 
-	HaltGui();
-	mainWindow->remove(&optionBrowser);
-	mainWindow->remove(&w);
-	mainWindow->remove(&titleTxt);
-	mainWindow->remove(&subtitleTxt);
-	return menu;
+	return selection;
 }
 
 /****************************************************************************
@@ -3400,7 +3383,7 @@ static void ScreenPositionWindow()
 
 static int MenuSettingsOtherMappings()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	int ret;
 	int i = 0;
 	bool firstRun = true;
@@ -3452,18 +3435,16 @@ static int MenuSettingsOtherMappings()
 	optionBrowser.setCol2Position(200);
 	optionBrowser.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&backBtn);
-	mainWindow->append(&optionBrowser);
-	mainWindow->append(&w);
-	mainWindow->append(&titleTxt);
+	menu->mainWindow.appendWithAutoRemove(&optionBrowser);
+	menu->mainWindow.appendWithAutoRemove(&w);
+	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 	w.append(&subtitleTxt);
-	ResumeGui();
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		ret = optionBrowser.getClickedOption();
 
@@ -3546,20 +3527,15 @@ static int MenuSettingsOtherMappings()
 
 		if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS_MAPPINGS;
+			selection = MENU_GAMESETTINGS_MAPPINGS;
 		}
 	}
-	HaltGui();
-	mainWindow->remove(&optionBrowser);
-	mainWindow->remove(&w);
-	mainWindow->remove(&titleTxt);
-	mainWindow->remove(&subtitleTxt);
-	return menu;
+	return selection;
 }
 
 static int MenuSettingsVideo()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	int ret;
 	int i = 0;
 	bool firstRun = true;
@@ -3610,17 +3586,15 @@ static int MenuSettingsVideo()
 	optionBrowser.setCol2Position(200);
 	optionBrowser.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&backBtn);
-	mainWindow->append(&optionBrowser);
-	mainWindow->append(&w);
-	mainWindow->append(&titleTxt);
-	ResumeGui();
+	menu->mainWindow.appendWithAutoRemove(&optionBrowser);
+	menu->mainWindow.appendWithAutoRemove(&w);
+	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		ret = optionBrowser.getClickedOption();
 
@@ -3723,14 +3697,10 @@ static int MenuSettingsVideo()
 
 		if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS;
+			selection = MENU_GAMESETTINGS;
 		}
 	}
-	HaltGui();
-	mainWindow->remove(&optionBrowser);
-	mainWindow->remove(&w);
-	mainWindow->remove(&titleTxt);
-	return menu;
+	return selection;
 }
 
 /****************************************************************************
@@ -3738,7 +3708,7 @@ static int MenuSettingsVideo()
  ***************************************************************************/
 static int MenuSettingsEmulation()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	int ret;
 	int i = 0;
 	bool firstRun = true;
@@ -3790,17 +3760,15 @@ static int MenuSettingsEmulation()
 	optionBrowser.setCol2Position(200);
 	optionBrowser.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&backBtn);
-	mainWindow->append(&optionBrowser);
-	mainWindow->append(&w);
-	mainWindow->append(&titleTxt);
-	ResumeGui();
+	menu->mainWindow.appendWithAutoRemove(&optionBrowser);
+	menu->mainWindow.appendWithAutoRemove(&w);
+	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 	
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 		ret = optionBrowser.getClickedOption();
 		
 		switch (ret)
@@ -3925,14 +3893,10 @@ static int MenuSettingsEmulation()
 		}
 		if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESETTINGS;
+			selection = MENU_GAMESETTINGS;
 		}
 	}
-	HaltGui();
-	mainWindow->remove(&optionBrowser);
-	mainWindow->remove(&w);
-	mainWindow->remove(&titleTxt);
-	return menu;
+	return selection;
 }
 
 /****************************************************************************
@@ -3940,7 +3904,7 @@ static int MenuSettingsEmulation()
  ***************************************************************************/
 static int MenuSettings()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 
 	GuiText titleTxt("Settings", 26, (GuiColor){255, 255, 255, 255});
 	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
@@ -4032,7 +3996,6 @@ static int MenuSettings()
 	creditsBtn.setSoundClick(&btnSoundClick);
 	creditsBtn.setTrigger(trigA);
 	creditsBtn.setEffectGrow();
-	creditsBtn.setUpdateCallback(WindowCredits);
 
 	GuiText backBtnTxt("Go Back", 22, (GuiColor){0, 0, 0, 255});
 	GuiImage backBtnImg(&btnOutline);
@@ -4063,7 +4026,6 @@ static int MenuSettings()
 	resetBtn.setTrigger(trigA);
 	resetBtn.setEffectGrow();
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&titleTxt);
 	w.append(&savingBtn);
@@ -4073,34 +4035,28 @@ static int MenuSettings()
 	w.append(&backBtn);
 	w.append(&resetBtn);
 
-	mainWindow->append(&w);
+	menu->mainWindow.appendWithAutoRemove(&w);
 
-	ResumeGui();
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		if(savingBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_SETTINGS_FILE;
+			selection = MENU_SETTINGS_FILE;
 		}
 		else if(menuBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_SETTINGS_MENU;
+			selection = MENU_SETTINGS_MENU;
 		}
 		else if(networkBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_SETTINGS_NETWORK;
-		}
-		else if(creditsBtn.getState() == STATE::CLICKED)
-		{
-			showCredits = true;
-			creditsBtn.setState(STATE::SELECTED);
+			selection = MENU_SETTINGS_NETWORK;
 		}
 		else if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_GAMESELECTION;
+			selection = MENU_GAMESELECTION;
 		}
 		else if(resetBtn.getState() == STATE::CLICKED)
 		{
@@ -4114,15 +4070,18 @@ static int MenuSettings()
 
 			if(choice == 1) {
 				DefaultSettings();
-				autoSaveMethod(SILENT);
-				autoLoadMethod(SILENT);
+				autoSaveMethod();
+				autoLoadMethod();
 			}
+		}
+		else if(creditsBtn.getState() == STATE::CLICKED)
+		{
+			creditsBtn.resetState();
+			CreditsWindow();
 		}
 	}
 
-	HaltGui();
-	mainWindow->remove(&w);
-	return menu;
+	return selection;
 }
 
 /****************************************************************************
@@ -4131,7 +4090,7 @@ static int MenuSettings()
 
 static int MenuSettingsFile()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	int ret;
 	int i = 0;
 	bool firstRun = true;
@@ -4184,17 +4143,15 @@ static int MenuSettingsFile()
 	optionBrowser.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	optionBrowser.setCol2Position(215);
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&backBtn);
-	mainWindow->append(&optionBrowser);
-	mainWindow->append(&w);
-	mainWindow->append(&titleTxt);
-	ResumeGui();
+	menu->mainWindow.appendWithAutoRemove(&optionBrowser);
+	menu->mainWindow.appendWithAutoRemove(&w);
+	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		ret = optionBrowser.getClickedOption();
 
@@ -4296,16 +4253,103 @@ static int MenuSettingsFile()
 
 		if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_SETTINGS;
-			autoSaveMethod(SILENT);
-			autoLoadMethod(SILENT);
+			selection = MENU_SETTINGS;
+			autoSaveMethod();
+			autoLoadMethod();
 		}
 	}
-	HaltGui();
-	mainWindow->remove(&optionBrowser);
-	mainWindow->remove(&w);
-	mainWindow->remove(&titleTxt);
-	return menu;
+	return selection;
+}
+
+static bool LoadLanguage()
+{
+	char line[200];
+	char *lastID = NULL;
+
+	const uint8_t *buffer;
+	size_t size;
+
+	switch(GCSettings.language)
+	{
+		case LANG_JAPANESE: buffer = jp_lang; size = jp_lang_size; break;
+		case LANG_ENGLISH: buffer = en_lang; size = en_lang_size; break;
+		case LANG_GERMAN: buffer = de_lang; size = de_lang_size; break;
+		case LANG_FRENCH: buffer = fr_lang; size = fr_lang_size; break;
+		case LANG_SPANISH: buffer = es_lang; size = es_lang_size; break;
+		case LANG_ITALIAN: buffer = it_lang; size = it_lang_size; break;
+		case LANG_DUTCH: buffer = nl_lang; size = nl_lang_size; break;
+		case LANG_SIMP_CHINESE:
+		case LANG_TRAD_CHINESE: buffer = zh_lang; size = zh_lang_size; break;
+		case LANG_KOREAN: buffer = ko_lang; size = ko_lang_size; break;
+		case LANG_PORTUGUESE: buffer = pt_lang; size = pt_lang_size; break;
+		case LANG_BRAZILIAN_PORTUGUESE: buffer = pt_br_lang; size = pt_br_lang_size; break;
+		case LANG_CATALAN: buffer = ca_lang; size = ca_lang_size; break;
+		case LANG_TURKISH: buffer = tr_lang; size = tr_lang_size; break;
+		case LANG_SWEDISH: buffer = sv_lang; size = sv_lang_size; break;
+		default: return false;
+	}
+
+	textTranslator->loadLanguage(buffer, size);
+	return true;
+}
+
+static void ResetText()
+{
+	LoadLanguage();
+
+	if(menu)
+	{
+		menu->mainWindow.resetText();
+	}
+}
+
+void ChangeLanguage() {
+	if(currentLanguage == GCSettings.language) {
+		return;
+	}
+
+	if(GCSettings.language == LANG_JAPANESE || GCSettings.language == LANG_KOREAN || GCSettings.language == LANG_SIMP_CHINESE) {
+#ifdef HW_RVL
+		char filepath[MAXPATHLEN];
+
+		switch(GCSettings.language) {
+			case LANG_KOREAN:
+				sprintf(filepath, "%s/ko.ttf", appPath);
+				break;
+			case LANG_JAPANESE:
+				sprintf(filepath, "%s/jp.ttf", appPath);
+				break;
+			case LANG_SIMP_CHINESE:
+				sprintf(filepath, "%s/zh.ttf", appPath);
+				break;
+		}
+
+		size_t fileSize = LoadFont(filepath);
+
+		if(fileSize > 0) {
+			delete fontSystem;
+			fontSystem = new GuiTextRenderer(ext_font_ttf, fileSize, glyphRenderer);
+		}
+		else {
+			GCSettings.language = currentLanguage;
+		}
+#else
+	GCSettings.language = currentLanguage;
+	ErrorPrompt("Unsupported language!");
+#endif
+	}
+#ifdef HW_RVL
+	else {
+		if(ext_font_ttf != NULL) {
+			delete fontSystem;
+			extmem_free(ext_font_ttf);
+			ext_font_ttf = NULL;
+			fontSystem = new GuiTextRenderer(font_ttf, font_ttf_size, glyphRenderer);
+		}
+	}
+#endif
+	ResetText();
+	currentLanguage = GCSettings.language;
 }
 
 /****************************************************************************
@@ -4314,7 +4358,7 @@ static int MenuSettingsFile()
 
 static int MenuSettingsMenu()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	int ret;
 	int i = 0;
 	bool firstRun = true;
@@ -4366,17 +4410,15 @@ static int MenuSettingsMenu()
 	optionBrowser.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	optionBrowser.setCol2Position(275);
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&backBtn);
-	mainWindow->append(&optionBrowser);
-	mainWindow->append(&w);
-	mainWindow->append(&titleTxt);
-	ResumeGui();
+	menu->mainWindow.appendWithAutoRemove(&optionBrowser);
+	menu->mainWindow.appendWithAutoRemove(&w);
+	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		ret = optionBrowser.getClickedOption();
 
@@ -4514,15 +4556,11 @@ static int MenuSettingsMenu()
 
 		if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_SETTINGS;
+			selection = MENU_SETTINGS;
 		}
 	}
 	ChangeLanguage();
-	HaltGui();
-	mainWindow->remove(&optionBrowser);
-	mainWindow->remove(&w);
-	mainWindow->remove(&titleTxt);
-	return menu;
+	return selection;
 }
 
 /****************************************************************************
@@ -4531,7 +4569,7 @@ static int MenuSettingsMenu()
 
 static int MenuSettingsNetwork()
 {
-	int menu = MENU_NONE;
+	int selection = MENU_NONE;
 	int ret;
 	int i = 0;
 	bool firstRun = true;
@@ -4577,17 +4615,15 @@ static int MenuSettingsNetwork()
 	optionBrowser.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	optionBrowser.setCol2Position(290);
 
-	HaltGui();
 	GuiWindow w(screenwidth, screenheight);
 	w.append(&backBtn);
-	mainWindow->append(&optionBrowser);
-	mainWindow->append(&w);
-	mainWindow->append(&titleTxt);
-	ResumeGui();
+	menu->mainWindow.appendWithAutoRemove(&optionBrowser);
+	menu->mainWindow.appendWithAutoRemove(&w);
+	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 
-	while(menu == MENU_NONE)
+	while(selection == MENU_NONE)
 	{
-		usleep(THREAD_SLEEP);
+		if(!UpdateGui()) return MENU_EXIT;
 
 		ret = optionBrowser.getClickedOption();
 
@@ -4622,15 +4658,11 @@ static int MenuSettingsNetwork()
 
 		if(backBtn.getState() == STATE::CLICKED)
 		{
-			menu = MENU_SETTINGS;
+			selection = MENU_SETTINGS;
 		}
 	}
-	HaltGui();
-	mainWindow->remove(&optionBrowser);
-	mainWindow->remove(&w);
-	mainWindow->remove(&titleTxt);
 	CloseShare();
-	return menu;
+	return selection;
 }
 
 static u8 * CreateBlurredGameTexture() {
@@ -4837,12 +4869,19 @@ static u8 * CreateBlurredGameTexture() {
 /****************************************************************************
  * MainMenu
  ***************************************************************************/
+static int FirstRunTask(void * arg) {
+	LoadPrefs();
+	autoSaveMethod();
+	autoLoadMethod();
+	CreateMissingDirectories();
+	SavePrefs();
+	return 0;
+}
 
-void
-MainMenu (int menu)
+void MainMenu (int selection)
 {
 	static bool firstRun = true;
-	int currentMenu = menu;
+	int currentMenu = selection;
 	lastMenu = MENU_NONE;
 	
 	if(firstRun)
@@ -4855,12 +4894,10 @@ MainMenu (int menu)
 		#endif
 
 		trigA = new GuiTrigger;
-		trigA->setPrimaryTrigger();;
+		trigA->setPrimaryTrigger();
 	}
 
-	mainWindow = new GuiWindow(screenwidth, screenheight);
-
-	if(menu == MENU_GAME)
+	if(selection == MENU_GAME)
 	{
 		gameScreenTexture = CreateBlurredGameTexture();
 		if(gameScreenTexture != NULL) {
@@ -4873,47 +4910,14 @@ MainMenu (int menu)
 		gameScreenImg->colorStripe(10);
 	}
 
-	mainWindow->append(gameScreenImg);
+	std::unique_ptr<Menu> menuInstance = std::make_unique<Menu>();
+	menu = menuInstance.get();
 
-	GuiSound btnSoundOver(button_over_pcm, button_over_pcm_size, SOUND::PCM);
-	GuiSound btnSoundClick(button_click_pcm, button_click_pcm_size, SOUND::PCM);
-	GuiImageData bgTop(bg_top_png);
-	bgTopImg = new GuiImage(&bgTop);
-	GuiImageData bgBottom(bg_bottom_png);
-	bgBottomImg = new GuiImage(&bgBottom);
-	bgBottomImg->setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	GuiImageData logo(logo_png);
-	GuiImage logoImg(&logo);
-	GuiImageData logoOver(logo_over_png);
-	GuiImage logoImgOver(&logoOver);
-	GuiText logoTxt(APPVERSION, 18, (GuiColor){255, 255, 255, 255});
-	logoTxt.setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
-	logoTxt.setPosition(0, 4);
-	btnLogo = new GuiButton(logoImg.getWidth(), logoImg.getHeight());
-	btnLogo->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
-	btnLogo->setPosition(-50, 24);
-	btnLogo->setImage(&logoImg);
-	btnLogo->setImageOver(&logoImgOver);
-	btnLogo->setLabel(&logoTxt);
-	btnLogo->setSoundOver(&btnSoundOver);
-	btnLogo->setSoundClick(&btnSoundClick);
-	btnLogo->setTrigger(trigA);
-	btnLogo->setUpdateCallback(WindowCredits);
-
-	mainWindow->append(bgTopImg);
-	mainWindow->append(bgBottomImg);
-	mainWindow->append(btnLogo);
-
-	if(currentMenu == MENU_GAMESELECTION)
-		ResumeGui();
-
-	if(firstRun) {
-		LoadPrefs();
-		autoSaveMethod(SILENT);
-		autoLoadMethod(SILENT);
-
-		CreateMissingDirectories();
-		SavePrefs(SILENT);
+	if(firstRun && RunOnWorkerThread(FirstRunTask)) {
+		while(!IsWorkerThreadFinished())
+		{
+			if(!UpdateGui()) break;
+		}
 	}
 
 #ifdef HW_RVL
@@ -5005,12 +5009,9 @@ MainMenu (int menu)
 				break;
 		}
 		lastMenu = currentMenu;
-		if (btnLogo->getState() == STATE::CLICKED)
-		{
-			showCredits = true;
-			btnLogo->resetState();
-		}
-		usleep(THREAD_SLEEP);
+
+		if(!UpdateGui())
+			break;
 	}
 
 	#ifdef HW_RVL
@@ -5018,19 +5019,12 @@ MainMenu (int menu)
 	#endif
 
 	CancelAction();
-	HaltGui();
 
-	delete btnLogo;
-	delete gameScreenImg;
-	delete bgTopImg;
-	delete bgBottomImg;
-	delete mainWindow;
-
-	btnLogo = NULL;
-	gameScreenImg = NULL;
-	bgTopImg = NULL;
-	bgBottomImg = NULL;
-	mainWindow = NULL;
+	if(gameScreenImg != NULL) {
+		menuInstance->mainWindow.remove(gameScreenImg);
+		delete gameScreenImg;
+		gameScreenImg = NULL;
+	}
 
 	if(gameScreenTexture != NULL) {
 		free(gameScreenTexture);
@@ -5045,4 +5039,6 @@ MainMenu (int menu)
 		UpdatePads();
 		usleep(THREAD_SLEEP);
 	}
+	
+	menu = nullptr;
 }

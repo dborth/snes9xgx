@@ -108,7 +108,7 @@ int getNextSaveDevice(int device)
 * Auto-determines and sets the load device
 * Returns device set
 ****************************************************************************/
-int autoLoadMethod(bool silent)
+int autoLoadMethod()
 {
 	if(GCSettings.LoadMethod > DEVICE_AUTO && isValidLoadDevice(GCSettings.LoadMethod)) {
 		return GCSettings.LoadMethod;
@@ -119,9 +119,6 @@ int autoLoadMethod(bool silent)
 	int device = DEVICE_AUTO;
 
 	GetDefaultFolderPath(defaultFolderPath, loadFolder[LOADFOLDER_ROMS].name);
-
-	if(!silent)
-		ShowAction ("Attempting to determine load device...");
 
 	// look for default roms folder first
 	for (int i = 1; i < numLoadDevices; i++) {
@@ -155,7 +152,7 @@ int autoLoadMethod(bool silent)
 * Auto-determines and sets the save device
 * Returns device set
 ****************************************************************************/
-int autoSaveMethod(bool silent)
+int autoSaveMethod()
 {
 	if(GCSettings.SaveMethod > DEVICE_AUTO && isValidSaveDevice(GCSettings.SaveMethod)) {
 		return GCSettings.SaveMethod;
@@ -166,9 +163,6 @@ int autoSaveMethod(bool silent)
 	int device = DEVICE_AUTO;
 
 	GetDefaultFolderPath(defaultFolderPath, saveFolder[SAVEFOLDER_SAVES].name);
-
-	if(!silent)
-		ShowAction ("Attempting to determine save device...");
 
 	// look for default saves folder first
 	for (int i = 1; i < numSaveDevices; i++) {
@@ -193,9 +187,6 @@ int autoSaveMethod(bool silent)
 	}
 
 	GCSettings.SaveMethod = device; // save device found for later use
-
-	if(device == DEVICE_AUTO && !silent)
-		ErrorPrompt("Unable to locate a save device!");
 
 	CancelAction();
 	return device;
