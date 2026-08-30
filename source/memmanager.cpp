@@ -15,6 +15,8 @@
 #include "fileop.h"
 #include "snes9x/memmap.h"
 
+#include "libgui/GuiImageData.h"
+
 #ifdef HW_DOL
 #include "utils/vm/vm.h"
 #endif
@@ -38,9 +40,13 @@ void InitMemManager ()
 	aram_space = create_mspace_with_base((void *)ARAM_VM_BASE, ARAM_SIZE, 0);
 	mspace_set_footprint_limit(aram_space, ARAM_SIZE);
 	romPtr = (uint8 *)extmem_malloc(Memory.MAX_ROM_SIZE + 0x200 + 0x8000);
+	void * decodeScratch = extmem_malloc(IMAGE_DECODE_SCRATCH_SIZE);
 	#else
 	romPtr = (uint8 *) mem2_malloc(Memory.MAX_ROM_SIZE + 0x200 + 0x8000);
+	void * decodeScratch = mem2_malloc(IMAGE_DECODE_SCRATCH_SIZE);
 	#endif
+
+	GuiImageData::setDecodeScratch(decodeScratch, decodeScratch ? IMAGE_DECODE_SCRATCH_SIZE : 0);
 
 	SwitchMemoryModeMenu();
 }

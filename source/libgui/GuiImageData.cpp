@@ -9,11 +9,35 @@
 
 #include "Gui.h"
 
+namespace {
+	uint8_t * scratchBuffer = nullptr;
+	unsigned int scratchBufferSize = 0;
+}
+
+void GuiImageData::setDecodeScratch(void * buffer, unsigned int size)
+{
+	scratchBuffer = static_cast<uint8_t *>(buffer);
+	scratchBufferSize = buffer ? size : 0;
+}
+
+GuiImageData::GuiImageData()
+{
+	texture = nullptr;
+	width = 0;
+	height = 0;
+	ownsTexture = false;
+	capWidth = 0;
+	capHeight = 0;
+}
+
 GuiImageData::GuiImageData(const uint8_t * i, int maxw, int maxh)
 {
 	texture = nullptr;
 	width = 0;
 	height = 0;
+	ownsTexture = false;
+	capWidth = 0;
+	capHeight = 0;
 
 	if(i)
 		decodeImage(i, &width, &height, maxw, maxh);
@@ -24,26 +48,32 @@ GuiImageData::GuiImageData(const uint8_t * i, uint8_t * dst, int maxw, int maxh)
 	texture = dst;
 	width = 0;
 	height = 0;
+	ownsTexture = false;
+	capWidth = 0;
+	capHeight = 0;
 
 	if(i) {
 		decodeImage(i, &width, &height, maxw, maxh);
 	}
 }
 
-GuiImageData::GuiImageData(void * tex, int w, int h)
+GuiImageData::GuiImageData(void * tex, int w, int h, bool takeOwnership)
 {
 	texture = tex;
 	width = w;
 	height = h;
+	ownsTexture = takeOwnership && tex;
+	capWidth = ownsTexture ? w : 0;
+	capHeight = ownsTexture ? h : 0;
 }
 
 GuiImageData::~GuiImageData()
 {
-	if(texture)
+	if(ownsTexture && texture)
 	{
 		destroyTexture(texture);
-		texture = nullptr;
 	}
+	texture = nullptr;
 }
 
 struct PngMemoryData
@@ -52,7 +82,7 @@ struct PngMemoryData
 	size_t offset;
 };
 
-void ReadPngDataCb(png_structp png_ptr, png_bytep data, png_size_t length)
+static void ReadPngDataCb(png_structp png_ptr, png_bytep data, png_size_t length)
 {
 	PngMemoryData * memData = static_cast<PngMemoryData *>(png_get_io_ptr(png_ptr));
 	if(!memData)
@@ -62,29 +92,38 @@ void ReadPngDataCb(png_structp png_ptr, png_bytep data, png_size_t length)
 	memData->offset += length;
 }
 
-void GuiImageData::decodeImage(const uint8_t * pngData, int * width, int * height, int maxw, int maxh)
+bool GuiImageData::reload(const uint8_t * pngData, int maxw, int maxh)
 {
 	if(!pngData)
-		return;
+		return false;
+
+	int w = 0, h = 0;
+	return decodeImage(pngData, &w, &h, maxw, maxh);
+}
+
+bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * outHeight, int maxw, int maxh)
+{
+	if(!pngData)
+		return false;
 
 	if(png_sig_cmp(static_cast<png_const_bytep>(pngData), 0, 8))
-		return;
+		return false;
 
 	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 	if(!png_ptr)
-		return;
+		return false;
 
 	png_infop info_ptr = png_create_info_struct(png_ptr);
 	if(!info_ptr)
 	{
 		png_destroy_read_struct(&png_ptr, nullptr, nullptr);
-		return;
+		return false;
 	}
 
 	if(setjmp(png_jmpbuf(png_ptr)))
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-		return;
+		return false;
 	}
 
 	PngMemoryData memData = { pngData, 0 };
@@ -92,29 +131,21 @@ void GuiImageData::decodeImage(const uint8_t * pngData, int * width, int * heigh
 
 	png_read_info(png_ptr, info_ptr);
 
-	png_uint_32 w, h;
+	png_uint_32 srcW, srcH;
 	int bit_depth, color_type, interlace_type;
-	png_get_IHDR(png_ptr, info_ptr, &w, &h, &bit_depth, &color_type, &interlace_type, nullptr, nullptr);
+	png_get_IHDR(png_ptr, info_ptr, &srcW, &srcH, &bit_depth, &color_type, &interlace_type, nullptr, nullptr);
 
-	if((maxw > 0 && static_cast<int>(w) > maxw) || (maxh > 0 && static_cast<int>(h) > maxh))
+	png_uint_32 w = srcW, h = srcH;
+	bool needsResize = (maxw > 0 && static_cast<int>(srcW) > maxw) || (maxh > 0 && static_cast<int>(srcH) > maxh);
+	if(needsResize)
 	{
-		png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-		return;
-	}
-
-	if(width) *width = w;
-	if(height) *height = h;
-
-	void* hwTexture = nullptr;
-
-	if(!texture)
-	{
-		hwTexture = createTexture(w, h);
-		if(!hwTexture)
-		{
-			png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-			return;
-		}
+		double wScale = maxw > 0 ? static_cast<double>(maxw) / srcW : 1e30;
+		double hScale = maxh > 0 ? static_cast<double>(maxh) / srcH : 1e30;
+		double scale = wScale < hScale ? wScale : hScale;
+		w = static_cast<png_uint_32>(srcW * scale);
+		h = static_cast<png_uint_32>(srcH * scale);
+		if(w < 1) w = 1;
+		if(h < 1) h = 1;
 	}
 
 	if(bit_depth == 16)
@@ -131,35 +162,81 @@ void GuiImageData::decodeImage(const uint8_t * pngData, int * width, int * heigh
 		png_set_gray_to_rgb(png_ptr);
 
 	png_read_update_info(png_ptr, info_ptr);
-	int rowBytes = png_get_rowbytes(png_ptr, info_ptr);
+	unsigned int rowBytes = png_get_rowbytes(png_ptr, info_ptr);
 
-	uint8_t * rgba = static_cast<uint8_t *>(malloc(rowBytes * h));
-	if(!rgba)
+	unsigned long long rowPtrBytes = static_cast<unsigned long long>(srcH) * sizeof(png_bytep);
+	unsigned long long srcRgbaBytes = static_cast<unsigned long long>(rowBytes) * srcH;
+	unsigned long long resizedRgbaBytes = needsResize ? static_cast<unsigned long long>(w) * h * 4 : 0;
+	unsigned long long totalScratchBytes = rowPtrBytes + srcRgbaBytes + resizedRgbaBytes;
+	if(!scratchBuffer || totalScratchBytes > scratchBufferSize)
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-		destroyTexture(hwTexture);
-		return;
+		return false;
 	}
 
-	png_bytep * row_pointers = static_cast<png_bytep *>(malloc(sizeof(png_bytep) * h));
-	if(!row_pointers)
+	bool haveUsableTexture = texture && (!ownsTexture || (static_cast<int>(w) <= capWidth && static_cast<int>(h) <= capHeight));
+
+	void * newTexture = texture;
+	if(!haveUsableTexture)
 	{
-		free(rgba);
-		png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-		destroyTexture(hwTexture);
-		return;
+		newTexture = createTexture(w, h);
+		if(!newTexture)
+		{
+			png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
+			return false;
+		}
 	}
 
-	for(png_uint_32 i = 0; i < h; i++)
-		row_pointers[i] = rgba + (i * rowBytes);
+	png_bytep * row_pointers = reinterpret_cast<png_bytep *>(scratchBuffer);
+	uint8_t * srcRgba = scratchBuffer + rowPtrBytes;
+
+	for(png_uint_32 i = 0; i < srcH; i++)
+		row_pointers[i] = srcRgba + (static_cast<size_t>(i) * rowBytes);
 
 	png_read_image(png_ptr, row_pointers);
 
-	if(hwTexture) texture = hwTexture;
+	const uint8_t * finalRgba = srcRgba;
+	if(needsResize)
+	{
+		uint8_t * resizedRgba = srcRgba + srcRgbaBytes;
+		uint32_t xRatio = ((srcW << 16) / w) + 1;
+		uint32_t yRatio = ((srcH << 16) / h) + 1;
 
-	loadTextureData(texture, rgba, w, h);
+		for(png_uint_32 y = 0; y < h; y++)
+		{
+			png_uint_32 sy = (y * yRatio) >> 16;
+			if(sy >= srcH) sy = srcH - 1;
+			const uint8_t * srcRow = srcRgba + static_cast<size_t>(sy) * rowBytes;
+			uint8_t * dstRow = resizedRgba + static_cast<size_t>(y) * w * 4;
 
-	free(row_pointers);
-	free(rgba);
+			for(png_uint_32 x = 0; x < w; x++)
+			{
+				png_uint_32 sx = (x * xRatio) >> 16;
+				if(sx >= srcW) sx = srcW - 1;
+				memcpy(dstRow + x * 4, srcRow + sx * 4, 4);
+			}
+		}
+
+		finalRgba = resizedRgba;
+	}
+
+	loadTextureData(newTexture, finalRgba, w, h);
+
+	if(!haveUsableTexture)
+	{
+		if(ownsTexture && texture)
+			destroyTexture(texture);
+		texture = newTexture;
+		ownsTexture = true;
+		capWidth = w;
+		capHeight = h;
+	}
+
+	width = w;
+	height = h;
+	if(outWidth) *outWidth = w;
+	if(outHeight) *outHeight = h;
+
 	png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
+	return true;
 }

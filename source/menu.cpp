@@ -56,6 +56,7 @@ extern void ToggleCheat(uint32);
 
 #ifdef HW_RVL
 static GuiImageData * pointer[4];
+static GuiImage cursorImg[4];
 #endif
 
 static GuiTrigger * trigA = NULL;
@@ -357,7 +358,9 @@ static void DrawGui() {
 	do
 	{
 		if(userInput[i]->getPadData().validPointer) {
-			Menu_DrawImg((u8 *)pointer[i]->getTexture(), userInput[i]->getPadData().cursor_x-48, userInput[i]->getPadData().cursor_y-48, 96, 96, userInput[i]->getPadData().cursor_angle, 1, 1, 255);
+			cursorImg[i].setPosition(userInput[i]->getPadData().cursor_x-48, userInput[i]->getPadData().cursor_y-48);
+			cursorImg[i].setAngle(userInput[i]->getPadData().cursor_angle);
+			cursorImg[i].draw();
 		}
 		DoRumble(i);
 		--i;
@@ -1090,10 +1093,13 @@ static int MenuGameSelection()
 	bgPreview.setPosition(365, 98);
 	int previousPreviewImg = GCSettings.PreviewImage;
 	
+	GuiImageData previewImageData;
 	GuiImage preview;
 	preview.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	preview.setPosition(174, -8);
-	u8* imgBuffer = (u8*)memalign(32, 640 * 480 * 4);
+
+	std::unique_ptr<u8, decltype(&free)> pngFileBuffer((u8 *)malloc(PNG_FILE_BUFFER_SIZE), free);
+
 	int  previousBrowserIndex = -1;
 	char imagePath[MAXJOLIET + 1];
 	
@@ -1191,25 +1197,24 @@ static int MenuGameSelection()
 			previousPreviewImg = GCSettings.PreviewImage;
 
 			// ensure selected index is valid
-			if(browser.dir[0] == 0 || GCSettings.LoadMethod <= 0 || browser.numEntries <= 0 || browser.selIndex <= 0 || browser.selIndex >= browser.numEntries)
-			{
-				preview.setTexture(NULL, 0, 0);
-			}
-			else
+			bool loadedPreview = false;
+
+			if(browser.dir[0] != 0 && GCSettings.LoadMethod > 0 && browser.numEntries > 0 && browser.selIndex > 0 && browser.selIndex < browser.numEntries)
 			{
 				snprintf(imagePath, MAXJOLIET, "%s%s/%s.png", pathPrefix[GCSettings.LoadMethod], getImageFolder(), browserList[browser.selIndex].displayname);
 
-				int width, height;
-				if(ChangeInterface(imagePath, SILENT) && DecodePNGFromFile(imagePath, &width, &height, imgBuffer, 640, 480))
+				if(ChangeInterface(imagePath, SILENT) &&
+				   LoadFile((char *)pngFileBuffer.get(), imagePath, 0, PNG_FILE_BUFFER_SIZE, SILENT) &&
+				   previewImageData.reload(pngFileBuffer.get(), 640, 480))
 				{
-					preview.setTexture(imgBuffer, width, height);
-					preview.setScale( MIN(225.0f / width, 235.0f / height) );
-				}
-				else
-				{
-					preview.setTexture(NULL, 0, 0);
+					preview.setImage(&previewImageData);
+					preview.setScale( MIN(225.0f / previewImageData.getWidth(), 235.0f / previewImageData.getHeight()) );
+					loadedPreview = true;
 				}
 			}
+
+			if(!loadedPreview)
+				preview.setImage(nullptr);
 		}
 
 		if(settingsBtn.getState() == STATE::CLICKED)
@@ -1220,7 +1225,6 @@ static int MenuGameSelection()
 
 	HaltParseThread(); // halt parsing
 	ResetBrowser();
-	free(imgBuffer);
 	return selection;
 }
 
@@ -1835,7 +1839,7 @@ static int MenuGameSaves(int action)
 	int ret;
 	int i, n, type, len, len2;
 	int j = 0;
-	SaveList saves;
+	SaveList saves{};
 	char filepath[1024];
 	char deletepath[1024];
 	char scrfile[1024];
@@ -1919,8 +1923,6 @@ static int MenuGameSaves(int action)
 	menu->mainWindow.appendWithAutoRemove(&w);
 	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 
-	memset(&saves, 0, sizeof(saves));
-
 	sprintf(browser.dir, "%s%s", pathPrefix[GCSettings.SaveMethod], GCSettings.SaveFolder);
 	ParseDirectory(true, false);
 
@@ -1959,9 +1961,9 @@ static int MenuGameSaves(int action)
 
 				memset(savebuffer, 0, SAVEBUFFERSIZE);
 				if(LoadFile(scrfile, SILENT)) {
-					int scrWidth, scrHeight;
-					void * tex = (void *)DecodePNG(savebuffer, &scrWidth, &scrHeight, nullptr, 64, 48);
-					saves.previewImg[j] = new GuiImageData(tex, scrWidth, scrHeight);
+					auto thumb = std::make_unique<GuiImageData>(savebuffer, 64, 48);
+					if(thumb->getTexture())
+						saves.previewImg[j] = std::move(thumb);
 				}
 			}
 			snprintf(filepath, 1024, "%s%s/%s", pathPrefix[GCSettings.SaveMethod], GCSettings.SaveFolder, saves.filename[j]);
@@ -2112,11 +2114,6 @@ static int MenuGameSaves(int action)
 			}
 		}
 	}
-
-
-	for(i=0; i < saves.length; i++)
-		if(saves.previewImg[i])
-			delete saves.previewImg[i];
 
 	ResetBrowser();
 	return selection;
@@ -4894,6 +4891,8 @@ void MainMenu (int selection)
 		pointer[1] = new GuiImageData(player2_point_png);
 		pointer[2] = new GuiImageData(player3_point_png);
 		pointer[3] = new GuiImageData(player4_point_png);
+		for(int i = 0; i < 4; i++)
+			cursorImg[i].setImage(pointer[i]);
 		#endif
 
 		trigA = new GuiTrigger;

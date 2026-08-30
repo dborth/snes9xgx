@@ -1,6 +1,7 @@
 #ifndef GUISAVEBROWSER_H
 #define GUISAVEBROWSER_H
 
+#include <memory>
 #include "Gui.h"
 
 #define MAX_SAVES 				100
@@ -9,7 +10,7 @@
 typedef struct _savelist {
 	int length;
 	char filename[MAX_SAVES+1][256];
-	GuiImageData * previewImg[MAX_SAVES+1];
+	std::unique_ptr<GuiImageData> previewImg[MAX_SAVES+1];
 	char date[MAX_SAVES+1][20];
 	char time[MAX_SAVES+1][10];
 	int type[MAX_SAVES+1];

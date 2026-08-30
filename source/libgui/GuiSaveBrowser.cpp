@@ -376,7 +376,7 @@ void GuiSaveBrowser::update(GuiInputController * controller)
 			saveType[i]->setText(savetext);
 
 			if(saves->previewImg[listOffset+i] != nullptr && saves->previewImg[listOffset+i]->getTexture() != nullptr)
-				savePreviewImg[i]->setImage(saves->previewImg[listOffset+i]);
+				savePreviewImg[i]->setImage(saves->previewImg[listOffset+i].get());
 			else
 				savePreviewImg[i]->setImage(gameSaveBlank);
 		}

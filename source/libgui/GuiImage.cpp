@@ -171,11 +171,11 @@ void GuiImage::draw()
 		if(tile > 0)
 		{
 			for(int i=0; i<tile; ++i)
-				Menu_DrawImg((u8 *)texture, currLeft+width*i, thisTop, width, height, imageangle, currScaleX, currScaleY, alpha);
+				Menu_DrawImg(texture, currLeft+width*i, thisTop, width, height, imageangle, currScaleX, currScaleY, alpha);
 		}
 		else
 		{
-			Menu_DrawImg((u8 *)texture, currLeft, thisTop, width, height, imageangle, currScaleX, currScaleY, alpha);
+			Menu_DrawImg(texture, currLeft, thisTop, width, height, imageangle, currScaleX, currScaleY, alpha);
 		}
 	}
 
