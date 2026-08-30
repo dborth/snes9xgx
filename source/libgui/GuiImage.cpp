@@ -5,38 +5,44 @@
  ***************************************************************************/
 
 #include "Gui.h"
+#include <malloc.h>
 
 GuiImage::GuiImage()
 {
-	image = nullptr;
+	texture = nullptr;
+	ownsTexture = false;
 	width = 0;
 	height = 0;
 	imageangle = 0;
 	tile = -1;
 	stripe = 0;
-	imgType = IMAGE::DATA;
+	imgType = IMAGE::TEXTURE;
 }
 
 GuiImage::GuiImage(GuiImageData * img)
 {
-	image = nullptr;
+	texture = nullptr;
 	width = 0;
 	height = 0;
+
 	if(img)
 	{
-		image = img->getImage();
+		texture = img->getTexture();
 		width = img->getWidth();
 		height = img->getHeight();
 	}
+
+	ownsTexture = false;
 	imageangle = 0;
 	tile = -1;
 	stripe = 0;
-	imgType = IMAGE::DATA;
+	imgType = IMAGE::TEXTURE;
 }
 
-GuiImage::GuiImage(uint8_t * img, int w, int h)
+GuiImage::GuiImage(uint8_t * tex, int w, int h)
 {
-	image = img;
+	texture = tex;
+	ownsTexture = false;
 	width = w;
 	height = h;
 	imageangle = 0;
@@ -47,59 +53,82 @@ GuiImage::GuiImage(uint8_t * img, int w, int h)
 
 GuiImage::GuiImage(int w, int h, PixelColor c)
 {
-	image = (uint8_t *)memalign (32, w * h << 2);
+	texture = nullptr;
+	ownsTexture = true;
 	width = w;
 	height = h;
 	imageangle = 0;
 	tile = -1;
 	stripe = 0;
 	imgType = IMAGE::COLOR;
-
-	if(!image)
-		return;
-
-	int x, y;
-
-	for(y=0; y < h; ++y)
-	{
-		for(x=0; x < w; ++x)
-		{
-			this->setPixel(x, y, c);
-		}
-	}
-	int len = w * h << 2;
-	if(len%32) len += (32-len%32);
-	DCFlushRange(image, len);
+	baseColor = c;
 }
 
 GuiImage::~GuiImage()
 {
-	if(imgType == IMAGE::COLOR && image)
-		free(image);
-}
-
-uint8_t * GuiImage::getImage()
-{
-	return image;
+	if(ownsTexture && texture)
+	{
+		destroyTexture(texture);
+		texture = nullptr;
+	}
 }
 
 void GuiImage::setImage(GuiImageData * img)
 {
-	image = nullptr;
+	if(ownsTexture && texture)
+	{
+		destroyTexture(texture);
+		texture = nullptr;
+	}
+
+	texture = nullptr;
+	ownsTexture = false;
 	width = 0;
 	height = 0;
 	if(img)
 	{
-		image = img->getImage();
+		texture = img->getTexture();
 		width = img->getWidth();
 		height = img->getHeight();
 	}
-	imgType = IMAGE::DATA;
+	imgType = IMAGE::TEXTURE;
 }
 
 void GuiImage::setImage(uint8_t * img, int w, int h)
 {
-	image = img;
+	if(ownsTexture && texture)
+	{
+		destroyTexture(texture);
+		texture = nullptr;
+	}
+
+	if(img) {
+		texture = createTexture(w, h);
+		loadTextureData(texture, img, w, h);
+		ownsTexture = true;
+		width = w;
+		height = h;
+	}
+	else {
+		texture = nullptr;
+		ownsTexture = false;
+		width = 0;
+		height = 0;
+	}
+
+	imgType = IMAGE::TEXTURE;
+}
+
+void GuiImage::setTexture(uint8_t * tex, int w, int h)
+{
+	if(ownsTexture && texture)
+	{
+		destroyTexture(texture);
+		texture = nullptr;
+	}
+
+	texture = tex;
+	ownsTexture = false;
 	width = w;
 	height = h;
 	imgType = IMAGE::TEXTURE;
@@ -115,124 +144,39 @@ void GuiImage::setTile(int t)
 	tile = t;
 }
 
-PixelColor GuiImage::getPixel(int x, int y)
-{
-	if(!image || this->getWidth() <= 0 || x < 0 || y < 0)
-		return (PixelColor){0, 0, 0, 0};
-
-	uint32_t offset = (((y >> 2)<<4)*this->getWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
-	PixelColor color;
-	color.a = *(image+offset);
-	color.r = *(image+offset+1);
-	color.g = *(image+offset+32);
-	color.b = *(image+offset+33);
-	return color;
-}
-
-void GuiImage::setPixel(int x, int y, PixelColor color)
-{
-	if(!image || this->getWidth() <= 0 || x < 0 || y < 0)
-		return;
-
-	uint32_t offset = (((y >> 2)<<4)*this->getWidth()) + ((x >> 2)<<6) + (((y%4 << 2) + x%4 ) << 1);
-	*(image+offset) = color.a;
-	*(image+offset+1) = color.r;
-	*(image+offset+32) = color.g;
-	*(image+offset+33) = color.b;
-}
-
 void GuiImage::setStripe(int s)
 {
 	stripe = s;
 }
 
-void GuiImage::colorStripe(int shift)
-{
-	PixelColor color;
-	int x, y=0;
-	int alt = 0;
-	
-	int thisHeight =  this->getHeight();
-	int thisWidth =  this->getWidth();
-
-	for(; y < thisHeight; ++y)
-	{
-		if(y % 3 == 0)
-			alt ^= 1;
-
-		if(alt)
-		{
-			for(x=0; x < thisWidth; ++x)
-			{
-				color = getPixel(x, y);
-
-				if(color.r < 255-shift)
-					color.r += shift;
-				else
-					color.r = 255;
-				if(color.g < 255-shift)
-					color.g += shift;
-				else
-					color.g = 255;
-				if(color.b < 255-shift)
-					color.b += shift;
-				else
-					color.b = 255;
-
-				color.a = 255;
-				setPixel(x, y, color);
-			}
-		}
-		else
-		{
-			for(x=0; x < thisWidth; ++x)
-			{
-				color = getPixel(x, y);
-
-				if(color.r > shift)
-					color.r -= shift;
-				else
-					color.r = 0;
-				if(color.g > shift)
-					color.g -= shift;
-				else
-					color.g = 0;
-				if(color.b > shift)
-					color.b -= shift;
-				else
-					color.b = 0;
-
-				color.a = 255;
-				setPixel(x, y, color);
-			}
-		}
-	}
-}
-
-/**
- * Draw the button on screen
- */
 void GuiImage::draw()
 {
-	if(!image || !this->isVisible() || tile == 0)
+	if(!this->isVisible() || tile == 0)
 		return;
 
 	float currScaleX = this->getScaleX();
 	float currScaleY = this->getScaleY();
 	int currLeft = this->getLeft();
 	int thisTop = this->getTop();
+	int alpha = this->getAlpha();
 
-	if(tile > 0)
+	if(imgType == IMAGE::COLOR)
 	{
-		int alpha = this->getAlpha();
-		for(int i=0; i<tile; ++i)
-		{
-			Menu_DrawImg(currLeft+width*i, thisTop, width, height, image, imageangle, currScaleX, currScaleY, alpha);
-		}
+		PixelColor c = baseColor;
+		c.a = alpha;
+		Menu_DrawRectangle(currLeft, thisTop, width, height, c);
 	}
-	else
+	else if(texture)
 	{
-		Menu_DrawImg(currLeft, thisTop, width, height, image, imageangle, currScaleX, currScaleY, this->getAlpha());
+		if(tile > 0)
+		{
+			for(int i=0; i<tile; ++i)
+				Menu_DrawImg((u8 *)texture, currLeft+width*i, thisTop, width, height, imageangle, currScaleX, currScaleY, alpha);
+		}
+		else
+		{
+			Menu_DrawImg((u8 *)texture, currLeft, thisTop, width, height, imageangle, currScaleX, currScaleY, alpha);
+		}
 	}
 
 	if(stripe > 0)
@@ -240,7 +184,8 @@ void GuiImage::draw()
 		int thisHeight = this->getHeight();
 		int thisWidth = this->getWidth();
 		for(int y=0; y < thisHeight; y+=6)
-			Menu_DrawRectangle(currLeft,thisTop+y,thisWidth,3,(PixelColor){0, 0, 0, (uint8_t)stripe});
+			Menu_DrawRectangle(currLeft, thisTop+y, thisWidth, 3, (PixelColor){0, 0, 0, (uint8_t)stripe});
 	}
+
 	this->updateEffects();
 }

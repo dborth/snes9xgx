@@ -28,8 +28,12 @@ void ResetVideo_Menu();
 void ClearScreenshot();
 void TakeScreenshot();
 void Menu_Render();
-void Menu_DrawImg(f32 xpos, f32 ypos, u16 width, u16 height, u8 data[], f32 degrees, f32 scaleX, f32 scaleY, u8 alphaF );
+void Menu_DrawImg(u8 data[], f32 xpos, f32 ypos, u16 width, u16 height, f32 degrees, f32 scaleX, f32 scaleY, u8 alphaF );
 void Menu_DrawRectangle(f32 x, f32 y, f32 width, f32 height, PixelColor color);
+
+void* createTexture(int width, int height);
+void loadTextureData(void* texture, const uint8_t* rgba, int width, int height);
+void destroyTexture(void * texture);
 
 typedef struct
 {

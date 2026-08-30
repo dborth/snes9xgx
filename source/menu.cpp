@@ -357,7 +357,7 @@ static void DrawGui() {
 	do
 	{
 		if(userInput[i]->getPadData().validPointer) {
-			Menu_DrawImg(userInput[i]->getPadData().cursor_x-48, userInput[i]->getPadData().cursor_y-48, 96, 96, pointer[i]->getImage(), userInput[i]->getPadData().cursor_angle, 1, 1, 255);
+			Menu_DrawImg((u8 *)pointer[i]->getTexture(), userInput[i]->getPadData().cursor_x-48, userInput[i]->getPadData().cursor_y-48, 96, 96, userInput[i]->getPadData().cursor_angle, 1, 1, 255);
 		}
 		DoRumble(i);
 		--i;
@@ -1193,7 +1193,7 @@ static int MenuGameSelection()
 			// ensure selected index is valid
 			if(browser.dir[0] == 0 || GCSettings.LoadMethod <= 0 || browser.numEntries <= 0 || browser.selIndex <= 0 || browser.selIndex >= browser.numEntries)
 			{
-				preview.setImage(NULL, 0, 0);
+				preview.setTexture(NULL, 0, 0);
 			}
 			else
 			{
@@ -1202,12 +1202,12 @@ static int MenuGameSelection()
 				int width, height;
 				if(ChangeInterface(imagePath, SILENT) && DecodePNGFromFile(imagePath, &width, &height, imgBuffer, 640, 480))
 				{
-					preview.setImage(imgBuffer, width, height);
+					preview.setTexture(imgBuffer, width, height);
 					preview.setScale( MIN(225.0f / width, 235.0f / height) );
 				}
 				else
 				{
-					preview.setImage(NULL, 0, 0);
+					preview.setTexture(NULL, 0, 0);
 				}
 			}
 		}
@@ -1958,8 +1958,11 @@ static int MenuGameSaves(int action)
 				sprintf(scrfile, "%s%s/%s.png", pathPrefix[GCSettings.SaveMethod], GCSettings.SaveFolder, tmp);
 
 				memset(savebuffer, 0, SAVEBUFFERSIZE);
-				if(LoadFile(scrfile, SILENT))
-					saves.previewImg[j] = new GuiImageData(savebuffer, 64, 48);
+				if(LoadFile(scrfile, SILENT)) {
+					int scrWidth, scrHeight;
+					void * tex = (void *)DecodePNG(savebuffer, &scrWidth, &scrHeight, nullptr, 64, 48);
+					saves.previewImg[j] = new GuiImageData(tex, scrWidth, scrHeight);
+				}
 			}
 			snprintf(filepath, 1024, "%s%s/%s", pathPrefix[GCSettings.SaveMethod], GCSettings.SaveFolder, saves.filename[j]);
 			if (stat(filepath, &filestat) == 0)
