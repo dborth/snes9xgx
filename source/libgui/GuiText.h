@@ -13,7 +13,7 @@ class GuiText : public GuiElement
 		//!\param t Text
 		//!\param s Font size
 		//!\param c Font color
-		GuiText(const char * t, int s, GuiColor c);
+		GuiText(const char * t, int s, PixelColor c);
 		//!\overload
 		//!Assumes SetPresets() has been called to setup preferred text attributes
 		//!\param t Text
@@ -36,7 +36,7 @@ class GuiText : public GuiElement
 		//!\param s Font size
 		//!\param h Text alignment (horizontal)
 		//!\param v Text alignment (vertical)
-		static void setPresets(int sz, GuiColor c, int w, uint16_t s, ALIGN_H h, ALIGN_V v);
+		static void setPresets(int sz, PixelColor c, int w, uint16_t s, ALIGN_H h, ALIGN_V v);
 		//!Sets the font size
 		//!\param s Font size
 		void setFontSize(int s);
@@ -54,7 +54,7 @@ class GuiText : public GuiElement
 		void setWrap(bool w, int width = 0);
 		//!Sets the font color
 		//!\param c Font color
-		void setColor(GuiColor c);
+		void setColor(PixelColor c);
 		//!Sets the GuiTextRenderer style attributes
 		//!\param s Style attributes
 		void setStyle(uint16_t s);
@@ -67,7 +67,7 @@ class GuiText : public GuiElement
 		//!Constantly called to draw the text
 	void draw() override;
 	private:
-		GuiColor color; //!< Font color
+		PixelColor color; //!< Font color
 		wchar_t* text; //!< Translated Unicode text value
 		wchar_t *textDyn[20]; //!< Text value, if max width, scrolling, or wrapping enabled
 		int textDynNum; //!< Number of text lines

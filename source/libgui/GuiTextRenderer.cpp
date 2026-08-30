@@ -161,7 +161,7 @@ uint16_t GuiTextRenderer::getHeight(const wchar_t* text) {
 
 // --- Drawing Pipeline ---
 
-uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, GuiColor color, uint32_t renderFlags) {
+uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, PixelColor color, uint32_t renderFlags) {
 	if (!text) return 0;
 
 	uint16_t x_pos = x, printed = 0;
@@ -209,7 +209,7 @@ uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, Gu
 	return printed;
 }
 
-void GuiTextRenderer::drawTextFeature(int16_t x, int16_t y, uint16_t width, FontOffset* offsetData, uint32_t format, const GuiColor& color) {
+void GuiTextRenderer::drawTextFeature(int16_t x, int16_t y, uint16_t width, FontOffset* offsetData, uint32_t format, const PixelColor& color) {
 	uint16_t featureHeight = currentPixelSize >> 4 > 0 ? currentPixelSize >> 4 : 1;
 
 	if (format & GUI_TEXT_STYLE_UNDERLINE) {
@@ -237,7 +237,7 @@ wchar_t* GuiTextRenderer::charToWideChar(const char* strChar) {
 	return strWChar;
 }
 
-uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const char* text, GuiColor color, uint32_t renderFlags) {
+uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const char* text, PixelColor color, uint32_t renderFlags) {
 	wchar_t* wText = charToWideChar(text);
 	uint16_t result = drawText(x, y, wText, color, renderFlags);
 	delete[] wText;

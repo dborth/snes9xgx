@@ -16,8 +16,8 @@ public:
 	void loadTextureData(void* texture, FT_Bitmap* bitmap) override;
 	void destroyTexture(void* texture) override;
 
-	void drawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) override;
-	void drawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) override;
+	void drawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) override;
+	void drawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) override;
 
 	void setVertexFormat(uint8_t vtxFmtIndex);
 };

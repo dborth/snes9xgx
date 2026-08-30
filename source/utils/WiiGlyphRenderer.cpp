@@ -87,7 +87,7 @@ void WiiGlyphRenderer::destroyTexture(void* texture) {
 	}
 }
 
-void WiiGlyphRenderer::drawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) {
+void WiiGlyphRenderer::drawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) {
 	if (!texture) return;
 
 	GXTexObj glyphTexture;
@@ -128,7 +128,7 @@ void WiiGlyphRenderer::drawQuad(void* texture, int16_t screenX, int16_t screenY,
 	GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
 }
 
-void WiiGlyphRenderer::drawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const GuiColor& color) {
+void WiiGlyphRenderer::drawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) {
 	// Disable textures to draw flat colored quad
 	GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
 	GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);

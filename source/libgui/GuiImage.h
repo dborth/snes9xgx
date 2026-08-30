@@ -31,7 +31,7 @@ class GuiImage : public GuiElement
 		//!\param w Image width
 		//!\param h Image height
 		//!\param c Image color
-		GuiImage(int w, int h, GuiColor c);
+		GuiImage(int w, int h, PixelColor c);
 		//!Destructor
 		~GuiImage();
 		//!Sets the image rotation angle for drawing
@@ -56,12 +56,12 @@ class GuiImage : public GuiElement
 		//!Gets the pixel color at the specified coordinates of the image
 		//!\param x X coordinate
 		//!\param y Y coordinate
-		GuiColor getPixel(int x, int y);
+		PixelColor getPixel(int x, int y);
 		//!Sets the pixel color at the specified coordinates of the image
 		//!\param x X coordinate
 		//!\param y Y coordinate
 		//!\param color Pixel color
-		void setPixel(int x, int y, GuiColor color);
+		void setPixel(int x, int y, PixelColor color);
 		//!Directly modifies the image data to create a color-striped effect
 		//!Alters the RGB values by the specified amount
 		//!\param s Amount to increment/decrement the RGB values in the image

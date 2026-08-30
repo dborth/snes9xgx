@@ -7,7 +7,7 @@
 #include "Gui.h"
 
 GuiTextTranslator* textTranslator = new GuiTextTranslator();
-static GuiColor presetColor = (GuiColor){255, 255, 255, 255};
+static PixelColor presetColor = (PixelColor){255, 255, 255, 255};
 static int currentSize = 0;
 static int presetSize = 0;
 static int presetMaxWidth = 0;
@@ -21,7 +21,7 @@ static uint16_t presetStyle = 0;
 /**
  * Constructor for the GuiText class.
  */
-GuiText::GuiText(const char * t, int s, GuiColor c)
+GuiText::GuiText(const char * t, int s, PixelColor c)
 {
 	origText = nullptr;
 	text = nullptr;
@@ -163,7 +163,7 @@ int GuiText::getLength()
 	return wcslen(text);
 }
 
-void GuiText::setPresets(int sz, GuiColor c, int w, uint16_t s, ALIGN_H h, ALIGN_V v)
+void GuiText::setPresets(int sz, PixelColor c, int w, uint16_t s, ALIGN_H h, ALIGN_V v)
 {
 	presetSize = sz;
 	presetColor = c;
@@ -242,7 +242,7 @@ void GuiText::setScroll(SCROLL s)
 	textScrollDelay = TEXT_SCROLL_DELAY;
 }
 
-void GuiText::setColor(GuiColor c)
+void GuiText::setColor(PixelColor c)
 {
 	color = c;
 	alpha = c.a;
@@ -319,7 +319,7 @@ void GuiText::draw()
 	if(!this->isVisible())
 		return;
 
-	GuiColor c = color;
+	PixelColor c = color;
 	c.a = this->getAlpha();
 
 	int newSize = size*this->getScale();

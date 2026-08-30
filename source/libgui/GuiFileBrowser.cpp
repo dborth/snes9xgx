@@ -96,7 +96,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 
 	for(int i=0; i<FILE_PAGESIZE; ++i)
 	{
-		fileListText[i] = new GuiText(nullptr, 20, (GuiColor){0, 0, 0, 0xff});
+		fileListText[i] = new GuiText(nullptr, 20, (PixelColor){0, 0, 0, 0xff});
 		fileListText[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 		fileListText[i]->setPosition(5,0);
 		fileListText[i]->setMaxWidth(295);
