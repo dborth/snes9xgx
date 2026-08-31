@@ -57,6 +57,8 @@ struct GuiInputPadData {
 	uint32_t buttons_r; // Released this frame
 	float stickX, stickY; // Left analog stick
 	float substickX, substickY; // Right analog stick (C-Stick)
+	float gforceX, gforceY, gforceZ;
+	float pitch, roll, yaw;
 	uint32_t battery_level;
 	float cursor_x, cursor_y, cursor_angle; // Wiimote / DRC
 	bool validPointer;  // True if the IR pointer or touch is active on screen
@@ -71,17 +73,28 @@ struct GuiInputPadData {
 	float    hw_substickX[GUI_HW_MAX];
 	float    hw_substickY[GUI_HW_MAX];
 
+	float    hw_gforceX[GUI_HW_MAX];
+	float    hw_gforceY[GUI_HW_MAX];
+	float    hw_gforceZ[GUI_HW_MAX];
+	float    hw_pitch[GUI_HW_MAX];
+	float    hw_roll[GUI_HW_MAX];
+	float    hw_yaw[GUI_HW_MAX];
+
 	GuiInputPadData() {
 		buttons_d = buttons_h = buttons_r = 0;
 		stickX = stickY = substickX = substickY = 0.0f;
+		gforceX = gforceY = gforceZ = 0.0f;
+		pitch = roll = yaw = 0.0f;
 		battery_level = 0;
 		cursor_x = cursor_y = cursor_angle = 0.0f;
 		validPointer = isTouch = false;
 
-		for(int i = 0; i < GUI_HW_MAX; i++) {
+		for(uint32_t i = 0; i < GUI_HW_MAX; i++) {
 			hw_connected[i] = false;
 			hw_buttons_d[i] = hw_buttons_h[i] = hw_buttons_r[i] = 0;
 			hw_stickX[i] = hw_stickY[i] = hw_substickX[i] = hw_substickY[i] = 0.0f;
+			hw_gforceX[i] = hw_gforceY[i] = hw_gforceZ[i] = 0.0f;
+			hw_pitch[i] = hw_roll[i] = hw_yaw[i] = 0.0f;
 		}
 	}
 };

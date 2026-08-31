@@ -23,9 +23,12 @@
 #include "snes9xgx.h"
 #include "menu.h"
 #include "memmanager.h"
+#include "video.h"
 #include "videofilters.h"
 #include "filelist.h"
 #include "audio.h"
+#include "fileop.h"
+#include "utils/pngu.h"
 #include "input.h"
 #include "libgui/Gui.h"
 
@@ -51,8 +54,6 @@ static unsigned char * snes9xgfx = NULL;
 static u32 *xfb[2] = { NULL, NULL }; // Double buffered
 static int whichfb = 0; // Switch
 GXRModeObj *vmode = NULL; // Current video mode
-int screenheight = 480;
-int screenwidth = 640;
 int CheckVideo = 0; // for forcing video reset
 static int fscale = 1;
 
@@ -73,7 +74,7 @@ static GXTexObj texobj;
 static GXTexObj scanlineTexObj;
 static Mtx view;
 static Mtx modelView;
-static Mtx GXmodelView2D;
+Mtx GXmodelView2D;
 static int vwidth, vheight, oldvwidth, oldvheight;
 
 GameScreenPng gameScreenPng;
@@ -1128,8 +1129,8 @@ update_video (int width, int height)
 		float height_frac = (2.0f * yscale) / (float)vmode->efbHeight;
 
 		// 4. Map completely into the Menu's 640x480 logical canvas
-		float targetWidth  = screenwidth * width_frac * physical_width_ratio;
-		float targetHeight = screenheight * height_frac * physical_height_ratio;
+		float targetWidth  = platform->getVideo()->getScreenWidth() * width_frac * physical_width_ratio;
+		float targetHeight = platform->getVideo()->getScreenHeight() * height_frac * physical_height_ratio;
 
 		gameScreenPng.width  = vwidth * fscale;
 		gameScreenPng.height = vheight * fscale;
@@ -1138,8 +1139,8 @@ update_video (int width, int height)
 		gameScreenPng.scaleY = targetHeight / (float)gameScreenPng.height;
 
 		// 5. Shift calculations must map EFB distances physically through to the Menu canvas
-		gameScreenPng.xoffset = GCSettings.videoXshift * (screenwidth / (float)menu_vmode->viWidth) * ((float)vmode->viWidth / (float)vmode->fbWidth);
-		gameScreenPng.yoffset = GCSettings.videoYshift * (screenheight / menuViHeightAdjusted) * (viHeightAdjusted / (float)vmode->efbHeight);
+		gameScreenPng.xoffset = GCSettings.videoXshift * (platform->getVideo()->getScreenWidth() / (float)menu_vmode->viWidth) * ((float)vmode->viWidth / (float)vmode->fbWidth);
+		gameScreenPng.yoffset = GCSettings.videoYshift * (platform->getVideo()->getScreenHeight() / menuViHeightAdjusted) * (viHeightAdjusted / (float)vmode->efbHeight);
 
     	draw_init ();
 
@@ -1297,123 +1298,4 @@ void Menu_Render()
 	VIDEO_SetNextFramebuffer(xfb[whichfb]);
 	VIDEO_Flush();
 	VIDEO_WaitForFlush();
-}
-
-/****************************************************************************
- * Menu_DrawImg
- *
- * Draws the specified image on screen using GX
- ***************************************************************************/
-void Menu_DrawImg(void * texture, f32 xpos, f32 ypos, u16 width, u16 height, f32 degrees, f32 scaleX, f32 scaleY, u8 alpha)
-{
-	if(texture == NULL)
-		return;
-
-	GXTexObj texObj;
-
-	GX_InitTexObj(&texObj, texture, width,height, GX_TF_RGBA8,GX_CLAMP, GX_CLAMP,GX_FALSE);
-	GX_LoadTexObj(&texObj, GX_TEXMAP0);
-	GX_InvalidateTexAll();
-
-	GX_SetTevOp (GX_TEVSTAGE0, GX_MODULATE);
-	GX_SetVtxDesc (GX_VA_TEX0, GX_DIRECT);
-
-	Mtx m,m1,m2, mv;
-	width  >>= 1;
-	height >>= 1;
-
-	guMtxScale(m1, scaleX, scaleY, 1.0);
-	guVector axis = (guVector) {0 , 0, 1 };
-	guMtxRotAxisDeg (m2, &axis, degrees);
-	guMtxConcat(m2,m1,m);
-
-	guMtxTransApply(m,m, xpos+width,ypos+height,0);
-	guMtxConcat (GXmodelView2D, m, mv);
-	GX_LoadPosMtxImm (mv, GX_PNMTX0);
-
-	GX_Begin(GX_QUADS, GX_VTXFMT0,4);
-	GX_Position3f32(-width, -height,  0);
-	GX_Color4u8(0xFF,0xFF,0xFF,alpha);
-	GX_TexCoord2f32(0, 0);
-
-	GX_Position3f32(width, -height,  0);
-	GX_Color4u8(0xFF,0xFF,0xFF,alpha);
-	GX_TexCoord2f32(1, 0);
-
-	GX_Position3f32(width, height,  0);
-	GX_Color4u8(0xFF,0xFF,0xFF,alpha);
-	GX_TexCoord2f32(1, 1);
-
-	GX_Position3f32(-width, height,  0);
-	GX_Color4u8(0xFF,0xFF,0xFF,alpha);
-	GX_TexCoord2f32(0, 1);
-	GX_End();
-	GX_LoadPosMtxImm (GXmodelView2D, GX_PNMTX0);
-
-	GX_SetTevOp (GX_TEVSTAGE0, GX_PASSCLR);
-	GX_SetVtxDesc (GX_VA_TEX0, GX_NONE);
-}
-
-/****************************************************************************
- * Menu_DrawRectangle
- *
- * Draws a rectangle at the specified coordinates using GX
- ***************************************************************************/
-void Menu_DrawRectangle(f32 x, f32 y, f32 width, f32 height, PixelColor color)
-{
-	long n = 4;
-	f32 x2 = x+width;
-	f32 y2 = y+height;
-	guVector v[] = {{x,y,0.0f}, {x2,y,0.0f}, {x2,y2,0.0f}, {x,y2,0.0f}, {x,y,0.0f}};
-	u8 fmt = GX_TRIANGLEFAN;
-
-	GX_Begin(fmt, GX_VTXFMT0, n);
-	for(long i=0; i<n; ++i)
-	{
-		GX_Position3f32(v[i].x, v[i].y,  v[i].z);
-		GX_Color4u8(color.r, color.g, color.b, color.a);
-	}
-	GX_End();
-}
-
-void* createTexture(int width, int height)
-{
-	int padWidth = width + (4 - width % 4) % 4;
-	int padHeight = height + (4 - height % 4) % 4;
-	int len = (padWidth * padHeight) * 4;
-	if (len % 32) len += (32 - len % 32);
-	return memalign(32, len);
-}
-
-void loadTextureData(void* texture, const uint8_t* rgba, int width, int height)
-{
-	if(!texture || !rgba) return;
-	uint8_t* dst = (uint8_t*)texture;
-	int padWidth = width + (4 - width % 4) % 4;
-	int padHeight = height + (4 - height % 4) % 4;
-
-	for (int y = 0; y < padHeight; y++) {
-		for (int x = 0; x < padWidth; x++) {
-			uint32_t offset = ((((y >> 2) * (padWidth >> 2) + (x >> 2)) << 5) + ((y & 3) << 2) + (x & 3)) << 1;
-			if (y >= height || x >= width) {
-				dst[offset] = 0; dst[offset+1] = 255; dst[offset+32] = 255; dst[offset+33] = 255;
-			} else {
-				const uint8_t* src = rgba + (y * width + x) * 4;
-				dst[offset]   = src[3]; // A
-				dst[offset+1] = src[0]; // R
-				dst[offset+32] = src[1]; // G
-				dst[offset+33] = src[2]; // B
-			}
-		}
-	}
-
-	int len = (padWidth * padHeight) * 2;
-	if (len % 32) len += (32 - len % 32);
-	DCFlushRange(dst, len);
-}
-
-void destroyTexture(void * texture)
-{
-	if(texture)
-		free(texture);
 }

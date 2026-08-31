@@ -390,13 +390,13 @@ void GuiElement::setEffect(int eff, int amount, int target)
 	{
 		// these calculations overcompensate a little
 		if(eff & EFFECT::SLIDE_TOP)
-			yoffsetDyn = -screenheight;
+			yoffsetDyn = -platform->getVideo()->getScreenHeight();
 		else if(eff & EFFECT::SLIDE_LEFT)
-			xoffsetDyn = -screenwidth;
+			xoffsetDyn = -platform->getVideo()->getScreenWidth();
 		else if(eff & EFFECT::SLIDE_BOTTOM)
-			yoffsetDyn = screenheight;
+			yoffsetDyn = platform->getVideo()->getScreenHeight();
 		else if(eff & EFFECT::SLIDE_RIGHT)
-			xoffsetDyn = screenwidth;
+			xoffsetDyn = platform->getVideo()->getScreenWidth();
 	}
 	if(eff & EFFECT::FADE)
 	{
@@ -476,28 +476,28 @@ void GuiElement::updateEffects()
 			{
 				xoffsetDyn -= effectAmount;
 
-				if(xoffsetDyn <= -screenwidth)
+				if(xoffsetDyn <= -platform->getVideo()->getScreenWidth())
 					effects = 0; // shut off effect
 			}
 			else if(effects & EFFECT::SLIDE_RIGHT)
 			{
 				xoffsetDyn += effectAmount;
 
-				if(xoffsetDyn >= screenwidth)
+				if(xoffsetDyn >= platform->getVideo()->getScreenWidth())
 					effects = 0; // shut off effect
 			}
 			else if(effects & EFFECT::SLIDE_TOP)
 			{
 				yoffsetDyn -= effectAmount;
 
-				if(yoffsetDyn <= -screenheight)
+				if(yoffsetDyn <= -platform->getVideo()->getScreenHeight())
 					effects = 0; // shut off effect
 			}
 			else if(effects & EFFECT::SLIDE_BOTTOM)
 			{
 				yoffsetDyn += effectAmount;
 
-				if(yoffsetDyn >= screenheight)
+				if(yoffsetDyn >= platform->getVideo()->getScreenHeight())
 					effects = 0; // shut off effect
 			}
 		}

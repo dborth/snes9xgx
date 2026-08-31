@@ -27,8 +27,8 @@
 #include "input.h"
 #include "memmanager.h"
 #include "font_ttf.h"
-#include "utils/wiidrc.h"
-#include "utils/WiiGlyphRenderer.h"
+#include "drivers/ogc/wiidrc.h"
+#include "drivers/ogc/OgcPlatform.h"
 #include "libgui/Gui.h"
 
 extern "C" {
@@ -41,6 +41,9 @@ int ShutdownRequested = 0;
 int ResetRequested = 0;
 int ExitRequested = 0;
 static bool isWiiVC = false;
+
+static OgcPlatform platformInstance;
+Platform* platform = &platformInstance;
 
 /****************************************************************************
  * USB Gecko Debugging
@@ -160,8 +163,8 @@ void SystemInit() {
 	__exception_setreload(8);
 
 	InitMemManager();
-	InitVideo();
-	InitAudio();
+
+	platform->init(640, 480);
 
 	#ifdef HW_RVL
 	// Wii Power/Reset buttons
@@ -184,15 +187,14 @@ void SystemInit() {
 	InitFileOpThreads();
 	MountAllFAT(); // Initialize libFAT for SD and USB
 
-	glyphRenderer = new WiiGlyphRenderer();
-	fontSystem = new GuiTextRenderer(font_ttf, font_ttf_size, glyphRenderer);
+	fontSystem = new GuiTextRenderer(font_ttf, font_ttf_size, platform->getVideo()->getGlyphRenderer());
+	textTranslator = new GuiTextTranslator();
 	textTranslator->loadLanguage(en_lang, en_lang_size);
 }
 
 static void ExitCleanup()
 {
-	ShutdownAudio();
-	StopGX();
+	platform->shutdown();
 
 	HaltDeviceCheckingThread();
 	UnmountAllFAT();
@@ -210,10 +212,6 @@ static void ExitCleanup()
 
 void SystemExit(int exitAction, bool autoloadedGame)
 {
-#ifdef HW_RVL
-	ShutoffRumble();
-#endif
-
 	ExitCleanup();
 
 #ifdef HW_RVL

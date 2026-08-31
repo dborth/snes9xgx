@@ -68,7 +68,7 @@ GuiImage::~GuiImage()
 {
 	if(ownsTexture && texture)
 	{
-		destroyTexture(texture);
+		platform->getVideo()->getImageRenderer()->destroyTexture(texture);
 		texture = nullptr;
 	}
 }
@@ -77,7 +77,7 @@ void GuiImage::setImage(GuiImageData * img)
 {
 	if(ownsTexture && texture)
 	{
-		destroyTexture(texture);
+		platform->getVideo()->getImageRenderer()->destroyTexture(texture);
 		texture = nullptr;
 	}
 
@@ -98,13 +98,13 @@ void GuiImage::setImage(uint8_t * img, int w, int h)
 {
 	if(ownsTexture && texture)
 	{
-		destroyTexture(texture);
+		platform->getVideo()->getImageRenderer()->destroyTexture(texture);
 		texture = nullptr;
 	}
 
 	if(img) {
-		texture = createTexture(w, h);
-		loadTextureData(texture, img, w, h);
+		texture = platform->getVideo()->getImageRenderer()->createTexture(w, h);
+		platform->getVideo()->getImageRenderer()->loadTextureData(texture, img, w, h);
 		ownsTexture = true;
 		width = w;
 		height = h;
@@ -123,7 +123,7 @@ void GuiImage::setTexture(uint8_t * tex, int w, int h)
 {
 	if(ownsTexture && texture)
 	{
-		destroyTexture(texture);
+		platform->getVideo()->getImageRenderer()->destroyTexture(texture);
 		texture = nullptr;
 	}
 
@@ -164,18 +164,18 @@ void GuiImage::draw()
 	{
 		PixelColor c = baseColor;
 		c.a = alpha;
-		Menu_DrawRectangle(currLeft, thisTop, width, height, c);
+		platform->getVideo()->getImageRenderer()->drawRectangle(currLeft, thisTop, width, height, c);
 	}
 	else if(texture)
 	{
 		if(tile > 0)
 		{
 			for(int i=0; i<tile; ++i)
-				Menu_DrawImg(texture, currLeft+width*i, thisTop, width, height, imageangle, currScaleX, currScaleY, alpha);
+				platform->getVideo()->getImageRenderer()->drawTexture(texture, currLeft+width*i, thisTop, width, height, imageangle, currScaleX, currScaleY, alpha);
 		}
 		else
 		{
-			Menu_DrawImg(texture, currLeft, thisTop, width, height, imageangle, currScaleX, currScaleY, alpha);
+			platform->getVideo()->getImageRenderer()->drawTexture(texture, currLeft, thisTop, width, height, imageangle, currScaleX, currScaleY, alpha);
 		}
 	}
 
@@ -184,7 +184,7 @@ void GuiImage::draw()
 		int thisHeight = this->getHeight();
 		int thisWidth = this->getWidth();
 		for(int y=0; y < thisHeight; y+=6)
-			Menu_DrawRectangle(currLeft, thisTop+y, thisWidth, 3, (PixelColor){0, 0, 0, (uint8_t)stripe});
+			platform->getVideo()->getImageRenderer()->drawRectangle(currLeft, thisTop+y, thisWidth, 3, (PixelColor){0, 0, 0, (uint8_t)stripe});
 	}
 
 	this->updateEffects();

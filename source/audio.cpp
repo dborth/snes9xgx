@@ -167,8 +167,7 @@ static void S9xAudioCallback (void *data) {
 /****************************************************************************
  * InitAudio
  ***************************************************************************/
-void
-InitAudio ()
+void InitAudio()
 {
 	#ifdef NO_SOUND
 	AUDIO_Init(NULL);
@@ -213,17 +212,6 @@ SwitchAudioMode(int mode)
 		AUDIO_StopDMA();
 		#endif
 	}
-}
-
-/****************************************************************************
- * ShutdownAudio
- *
- * Shuts down audio subsystem. Useful to avoid unpleasant sounds if a
- * crash occurs during shutdown.
- ***************************************************************************/
-void ShutdownAudio()
-{
-	AUDIO_StopDMA();
 }
 
 /****************************************************************************

@@ -71,7 +71,7 @@ GuiImageData::~GuiImageData()
 {
 	if(ownsTexture && texture)
 	{
-		destroyTexture(texture);
+		platform->getVideo()->getImageRenderer()->destroyTexture(texture);
 	}
 	texture = nullptr;
 }
@@ -179,7 +179,7 @@ bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * ou
 	void * newTexture = texture;
 	if(!haveUsableTexture)
 	{
-		newTexture = createTexture(w, h);
+		newTexture = platform->getVideo()->getImageRenderer()->createTexture(w, h);
 		if(!newTexture)
 		{
 			png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
@@ -220,12 +220,12 @@ bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * ou
 		finalRgba = resizedRgba;
 	}
 
-	loadTextureData(newTexture, finalRgba, w, h);
+	platform->getVideo()->getImageRenderer()->loadTextureData(newTexture, finalRgba, w, h);
 
 	if(!haveUsableTexture)
 	{
 		if(ownsTexture && texture)
-			destroyTexture(texture);
+			platform->getVideo()->getImageRenderer()->destroyTexture(texture);
 		texture = newTexture;
 		ownsTexture = true;
 		capWidth = w;

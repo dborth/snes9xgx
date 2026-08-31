@@ -15,8 +15,6 @@
 #define _INPUT_H_
 
 #include <gccore.h>
-#include <wiiuse/wpad.h>
-#include "utils/wiidrc.h"
 
 #define PI 				3.14159265f
 #define PADCAL			50
@@ -24,12 +22,9 @@
 #define MAXJP 			12 // # of mappable controller buttons
 
 extern u32 btnmap[4][6][12];
-extern int rumbleRequest[4];
 extern int playerMapping[4];
 
 void ResetControls(int cc = -1, int wc = -1);
-void ShutoffRumble();
-void DoRumble(int i);
 void ReportButtons ();
 void ClearButtonsReported ();
 void SetControllers ();

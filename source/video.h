@@ -20,7 +20,6 @@
 
 void AllocGfxMem();
 void InitVideo ();
-void StopGX();
 void ResetVideo_Emu();
 void setGFX();
 void update_video (int width, int height);
@@ -28,12 +27,6 @@ void ResetVideo_Menu();
 void ClearScreenshot();
 void TakeScreenshot();
 void Menu_Render();
-void Menu_DrawImg(void * texture, f32 xpos, f32 ypos, u16 width, u16 height, f32 degrees, f32 scaleX, f32 scaleY, u8 alphaF );
-void Menu_DrawRectangle(f32 x, f32 y, f32 width, f32 height, PixelColor color);
-
-void* createTexture(int width, int height);
-void loadTextureData(void* texture, const uint8_t* rgba, int width, int height);
-void destroyTexture(void * texture);
 
 typedef struct
 {
@@ -50,8 +43,6 @@ typedef struct
 extern GameScreenPng gameScreenPng;
 
 extern GXRModeObj *vmode;
-extern int screenheight;
-extern int screenwidth;
 extern bool progressive;
 extern u32 FrameTimer;
 extern bool vmode_60hz;

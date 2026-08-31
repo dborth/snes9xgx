@@ -1,36 +1,35 @@
-#include "WiiGlyphRenderer.h"
+/****************************************************************************
+ * libgui - drivers/ogc
+ * Daryl Borth 2009-2026
+ * OgcGlyphRenderer.cpp
+ ***************************************************************************/
+#include "OgcVideoDriver.h"
 #include <malloc.h>
 #include <string.h>
 
 #define ALIGN8(x) (((x) + 7) & ~7)
 
-GlyphRenderer* glyphRenderer;
-
-WiiGlyphRenderer::WiiGlyphRenderer(uint8_t vtxFmtIndex)
+OgcGlyphRenderer::OgcGlyphRenderer(uint8_t vtxFmtIndex)
 {
 	setVertexFormat(vtxFmtIndex);
 }
-WiiGlyphRenderer::~WiiGlyphRenderer() {
+OgcGlyphRenderer::~OgcGlyphRenderer() {}
 
-}
-
-void WiiGlyphRenderer::setVertexFormat(uint8_t vtxFmtIndex) {
+void OgcGlyphRenderer::setVertexFormat(uint8_t vtxFmtIndex) {
 	this->vertexIndex = vtxFmtIndex;
 
-	// Configure vertex attribute formats for immediate-mode drawing
 	GX_SetVtxAttrFmt(this->vertexIndex, GX_VA_POS, GX_POS_XY, GX_S16, 0);
 	GX_SetVtxAttrFmt(this->vertexIndex, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
 	GX_SetVtxAttrFmt(this->vertexIndex, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
 }
 
-void* WiiGlyphRenderer::createTexture(uint16_t width, uint16_t height) {
+void* OgcGlyphRenderer::createTexture(uint16_t width, uint16_t height) {
 	width = ALIGN8(width);
 	if (width == 0) width = 8;
 
 	height = ALIGN8(height);
 	if (height == 0) height = 8;
 
-	// GX_TF_I4 format uses 4 bits per pixel, halving the required footprint
 	uint32_t glyphSize = (width * height) >> 1;
 
 	void* texture = memalign(32, glyphSize);
@@ -41,7 +40,7 @@ void* WiiGlyphRenderer::createTexture(uint16_t width, uint16_t height) {
 	return texture;
 }
 
-void WiiGlyphRenderer::loadTextureData(void* texture, FT_Bitmap* bitmap) {
+void OgcGlyphRenderer::loadTextureData(void* texture, FT_Bitmap* bitmap) {
 	if (!texture || !bitmap) return;
 
 	uint16_t texWidth = ALIGN8(bitmap->width);
@@ -81,13 +80,13 @@ void WiiGlyphRenderer::loadTextureData(void* texture, FT_Bitmap* bitmap) {
 	DCFlushRange(texture, glyphSize);
 }
 
-void WiiGlyphRenderer::destroyTexture(void* texture) {
+void OgcGlyphRenderer::destroyTexture(void* texture) {
 	if (texture) {
 		free(texture);
 	}
 }
 
-void WiiGlyphRenderer::drawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) {
+void OgcGlyphRenderer::drawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) {
 	if (!texture) return;
 
 	GXTexObj glyphTexture;
@@ -128,7 +127,7 @@ void WiiGlyphRenderer::drawQuad(void* texture, int16_t screenX, int16_t screenY,
 	GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
 }
 
-void WiiGlyphRenderer::drawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) {
+void OgcGlyphRenderer::drawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) {
 	// Disable textures to draw flat colored quad
 	GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
 	GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);

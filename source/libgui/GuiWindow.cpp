@@ -120,7 +120,7 @@ void GuiWindow::draw()
 	this->updateEffects();
 
 	if(parentElement && state == STATE::DISABLED)
-		Menu_DrawRectangle(0,0,screenwidth,screenheight,(PixelColor){0xbe, 0xca, 0xd5, 0x70});
+		platform->getVideo()->getImageRenderer()->drawRectangle(0,0,platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight(), (PixelColor){0xbe, 0xca, 0xd5, 0x70});
 }
 
 void GuiWindow::resetState()

@@ -57,19 +57,6 @@ struct GlyphData {
 	void* texture; // Abstracted texture pointer
 };
 
-// Dependency Injection Interface
-class GlyphRenderer {
-public:
-	virtual ~GlyphRenderer() = default;
-
-	virtual void* createTexture(uint16_t width, uint16_t height) = 0;
-	virtual void loadTextureData(void* texture, FT_Bitmap* bitmap) = 0;
-	virtual void destroyTexture(void* texture) = 0;
-
-	virtual void drawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) = 0;
-	virtual void drawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) = 0;
-};
-
 class GuiTextRenderer {
 private:
 	FT_Library ftLibrary;
@@ -118,4 +105,3 @@ public:
 };
 
 extern GuiTextRenderer *fontSystem;
-extern GlyphRenderer* glyphRenderer;

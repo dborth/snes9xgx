@@ -7,8 +7,16 @@
 #include <cmath>
 #include "Gui.h"
 
-int rumbleRequest[4] = {0, 0, 0, 0};
 GuiInputController* userInput[4] = {nullptr, nullptr, nullptr, nullptr};
+
+void InitUserInputControllers()
+{
+	for(int i = 0; i < 4; i++)
+	{
+		if(!userInput[i])
+			userInput[i] = new GuiInputController(i);
+	}
+}
 
 GuiInputController::GuiInputController(int ch) : 
 	channel(ch),

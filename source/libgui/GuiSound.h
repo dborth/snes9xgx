@@ -10,7 +10,8 @@ enum class SOUND {
 	OGG
 };
 
-//!Sound conversion and playback. A wrapper for other sound libraries - ASND, libmad, ltremor, etc
+//!Sound conversion and playback. Generic -- delegates to audioSystem for
+//!everything platform-specific.
 class GuiSound
 {
 	public:
@@ -42,7 +43,7 @@ class GuiSound
 		const uint8_t * sound; //!< Pointer to the sound data
 		SOUND type; //!< Sound format type (PCM or OGG)
 		int32_t length; //!< Length of sound data
-		int32_t voice; //!< Currently assigned ASND voice channel
+		int32_t voice; //!< Backend-assigned voice handle (PCM only)
 		int32_t volume; //!< Sound volume (0-100)
 		bool loop; //!< Loop sound playback
 };

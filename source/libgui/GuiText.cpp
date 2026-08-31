@@ -409,7 +409,7 @@ void GuiText::draw()
 
 		if(textScroll == SCROLL::HORIZONTAL)
 		{
-			if(fontSystem->getWidth(text) > maxWidth && (FrameTimer % textScrollDelay == 0))
+			if(fontSystem->getWidth(text) > maxWidth && (platform->getVideo()->getFrameTimer() % textScrollDelay == 0))
 			{
 				if(textScrollInitialDelay)
 				{
