@@ -12,6 +12,9 @@
 namespace {
 	uint8_t * scratchBuffer = nullptr;
 	unsigned int scratchBufferSize = 0;
+
+	void ErrorCb(png_structp png_ptr, png_const_charp) { longjmp(png_jmpbuf(png_ptr), 1); }
+	void WarningCb(png_structp, png_const_charp) {}
 }
 
 void GuiImageData::setDecodeScratch(void * buffer, unsigned int size)
@@ -109,7 +112,7 @@ bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * ou
 	if(png_sig_cmp(static_cast<png_const_bytep>(pngData), 0, 8))
 		return false;
 
-	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, ErrorCb, WarningCb);
 	if(!png_ptr)
 		return false;
 
