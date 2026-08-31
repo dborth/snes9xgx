@@ -28,7 +28,7 @@
 #include "filelist.h"
 #include "audio.h"
 #include "fileop.h"
-#include "utils/pngu.h"
+#include "utils/pngcodec.h"
 #include "input.h"
 #include "libgui/Gui.h"
 
@@ -871,43 +871,48 @@ void ClearScreenshot()
 	gameScreenPng.size = 0;
 }
 
+// Un-swizzles a 4x4-tiled GX_TF_RGB5A3 texture into savebuffer
+static void UntileRGB5A3ToRGB24(const void * tiledTexture, int width, int height)
+{
+	int padded_width = (width + 3) & ~3;
+	u8 * dst = savebuffer;
+	const u16 * tex16 = (const u16 *) tiledTexture;
+
+	for(int y = 0; y < height; y++) {
+		int tile_y = y / 4;
+		int in_tile_y = y % 4;
+		for(int x = 0; x < width; x++) {
+			int tile_x = x / 4;
+			int in_tile_x = x % 4;
+
+			int tex_pixel_idx = (tile_y * (padded_width / 4) + tile_x) * 16 + (in_tile_y * 4 + in_tile_x);
+			u16 color = tex16[tex_pixel_idx];
+
+			// RGB555 format
+			u8 r = (color >> 10) & 0x1F;
+			u8 g = (color >> 5) & 0x1F;
+			u8 b = color & 0x1F;
+
+			int out_idx = (y * width + x) * 3;
+			dst[out_idx]     = (r << 3) | (r >> 2);
+			dst[out_idx + 1] = (g << 3) | (g >> 2);
+			dst[out_idx + 2] = (b << 3) | (b >> 2);
+		}
+	}
+}
+
 /****************************************************************************
  * TakeScreenshot
  *
- * Copies the current texturemem screen into a PNG
+ * Copies the current texturemem screen into a PNG buffer
  ***************************************************************************/
 void TakeScreenshot()
 {
 	AllocSaveBuffer();
-	IMGCTX pngContext = PNGU_SelectImageFromBuffer(savebuffer);
-
-	if (pngContext == NULL) {
-		FreeSaveBuffer();
-		return;
-	}
-
-	int res = PNGU_EncodeFromGXTexture(pngContext, gameScreenPng.width, gameScreenPng.height, texturemem, gameScreenPng.width * 3);
-
-	if(res == PNGU_OK) {
-		gameScreenPng.size = pngContext->cursor;
-	} else {
-		gameScreenPng.size = 0;
-	}
-
-	PNGU_ReleaseImageContext(pngContext);
-
-	if (gameScreenPng.size == 0) {
-		FreeSaveBuffer();
-		return;
-	}
-
-	gameScreenPng.buffer = (u8 *) extmem_malloc(gameScreenPng.size);
-	if (gameScreenPng.buffer == NULL) {
-		gameScreenPng.size = 0;
-		FreeSaveBuffer();
-		return;
-	}
-	memcpy(gameScreenPng.buffer, savebuffer, gameScreenPng.size);
+	UntileRGB5A3ToRGB24(texturemem, gameScreenPng.width, gameScreenPng.height);
+	u32 size = 0;
+	gameScreenPng.buffer = EncodePNGFromRGB24(gameScreenPng.width, gameScreenPng.height, savebuffer, 0, &size);
+	gameScreenPng.size = (int) size;
 	FreeSaveBuffer();
 }
 

@@ -42,8 +42,8 @@
 #include "libgui/Gui.h"
 #include "menu.h"
 
+#include "utils/pngcodec.h"
 #include "drivers/ogc/wiidrc.h"
-#include "utils/pngu.h"
 
 #include "snes9x/port.h"
 #include "snes9x/snes9x.h"
