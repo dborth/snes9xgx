@@ -5,6 +5,8 @@
  ***************************************************************************/
 #pragma once
 
+#include "../drivers/Mutex.h"
+
 //!Decodes compressed image data (PNG) into a platform-native texture created
 //!from it. Currently designed for use only with PNG files.
 class GuiImageData
@@ -61,6 +63,7 @@ class GuiImageData
 		//!\param buffer Scratch buffer, owned and sized by the caller
 		//!\param size Size of buffer, in bytes
 		static void setDecodeScratch(void * buffer, unsigned int size);
+		static Mutex & scratchLock();
 	protected:
 		void * texture; //!< Attached platform-native texture
 		int height; //!< Height of image

@@ -77,10 +77,13 @@ static cond_t  deviceCheckingHaltCond = LWP_COND_NULL; // device -> main: now ha
 static bool    deviceIdle     = false;          // protected by deviceMutex
 #endif
 
+#define WORKER_THREAD_STACKSIZE (96 * 1024)
+#define DEVICE_THREAD_STACKSIZE (32 * 1024)
+#define PARSE_THREAD_STACKSIZE  (32 * 1024)
+
 /****************************************************************************
  * Background worker thread
  ***************************************************************************/
-#define WORKER_THREAD_STACKSIZE (32 * 1024)
 
 typedef int (*BgTaskFn)(void *arg);
 
@@ -295,12 +298,12 @@ InitFileOpThreads()
 	LWP_MutexInit(&deviceMutex, false);
 	LWP_CondInit(&deviceWakeCond);
 	LWP_CondInit(&deviceCheckingHaltCond);
-	LWP_CreateThread(&devicecheckingthread, devicecallback, NULL, NULL, 0, 40);
+	LWP_CreateThread(&devicecheckingthread, devicecallback, NULL, NULL, DEVICE_THREAD_STACKSIZE, 40);
 #endif
 	LWP_MutexInit(&parseMutex, false);
 	LWP_CondInit(&parseCond);
 	LWP_CondInit(&parseIdleCond);
-	LWP_CreateThread(&parsethread, parsecallback, NULL, NULL, 0, 80);
+	LWP_CreateThread(&parsethread, parsecallback, NULL, NULL, PARSE_THREAD_STACKSIZE, 80);
 
 	LWP_MutexInit(&workerMutex, false);
 	LWP_CondInit(&workerCond);

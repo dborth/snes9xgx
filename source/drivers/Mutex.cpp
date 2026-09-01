@@ -9,23 +9,24 @@
 
 Mutex::Mutex()
 {
-	handle = platform->getThread()->createMutex();
+	if(platform && platform->getThread())
+		handle = platform->getThread()->createMutex();
 }
 
 Mutex::~Mutex()
 {
-	if(handle)
+	if(handle && platform && platform->getThread())
 		platform->getThread()->destroyMutex(handle);
 }
 
 void Mutex::lock()
 {
-	if(handle)
+	if(handle && platform && platform->getThread())
 		platform->getThread()->lockMutex(handle);
 }
 
 void Mutex::unlock()
 {
-	if(handle)
+	if(handle && platform && platform->getThread())
 		platform->getThread()->unlockMutex(handle);
 }
