@@ -31,7 +31,7 @@ enum
 
 static mspace aram_space = nullptr;
 static int memoryMode = -1;
-u8 * romPtr = nullptr;
+uint8_t * romPtr = nullptr;
 
 void InitMemManager ()
 {

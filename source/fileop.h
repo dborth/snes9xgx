@@ -50,7 +50,7 @@ bool IsWorkerThreadFinished();
 int GetWorkerThreadResult();
 
 extern unsigned char *savebuffer;
-extern u8 *ext_font_ttf;
+extern uint8_t *ext_font_ttf;
 extern FILE * file;
 extern bool unmountRequired[];
 extern bool isMounted[];

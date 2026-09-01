@@ -637,7 +637,7 @@ static void decodepad (int chan, int emuChan)
 		}
 		offset = 0x80;
 		UpdateCursorPosition(emuChan, cursor_x[0], cursor_y[0]);
-		S9xReportPointer(offset, (u16) cursor_x[0], (u16) cursor_y[0]);
+		S9xReportPointer(offset, (uint16_t) cursor_x[0], (uint16_t) cursor_y[0]);
 	}
 	/*** Mouse ***/
 	else if (Settings.MouseMaster && emuChan < 2)
@@ -656,7 +656,7 @@ static void decodepad (int chan, int emuChan)
 		}
 		offset = 0x81;
 		UpdateCursorPosition(emuChan, cursor_x[1 + emuChan], cursor_y[1 + emuChan]);
-		S9xReportPointer(offset + emuChan, (u16) cursor_x[1 + emuChan], (u16) cursor_y[1 + emuChan]);
+		S9xReportPointer(offset + emuChan, (uint16_t) cursor_x[1 + emuChan], (uint16_t) cursor_y[1 + emuChan]);
 	}
 	/*** Justifier ***/
 	else if (Settings.JustifierMaster && emuChan < 2)
@@ -675,7 +675,7 @@ static void decodepad (int chan, int emuChan)
 		}
 		offset = 0x83;
 		UpdateCursorPosition(emuChan, cursor_x[3 + emuChan], cursor_y[3 + emuChan]);
-		S9xReportPointer(offset + emuChan, (u16) cursor_x[3 + emuChan], (u16) cursor_y[3 + emuChan]);
+		S9xReportPointer(offset + emuChan, (uint16_t) cursor_x[3 + emuChan], (uint16_t) cursor_y[3 + emuChan]);
 	}
 
 #ifdef HW_RVL

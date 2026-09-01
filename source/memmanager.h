@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-extern u8 * romPtr;
+extern uint8_t * romPtr;
 
 void InitMemManager();
 void SwitchMemoryModeMenu();

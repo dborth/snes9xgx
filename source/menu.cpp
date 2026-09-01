@@ -67,7 +67,7 @@ static GuiTrigger * trigA = nullptr;
 #ifdef HW_RVL
 static GuiButton * batteryBtn[4];
 #endif
-static u8 * gameScreenTexture = nullptr;
+static uint8_t * gameScreenTexture = nullptr;
 static GuiImage * gameScreenImg = nullptr;
 static GuiSound * bgMusic = nullptr;
 static GuiSound * enterSound = nullptr;
@@ -80,7 +80,7 @@ static int mapMenuCtrlSNES = 0;
 
 static int currentLanguage = -1;
 
-u8 * bg_music;
+uint8_t * bg_music;
 uint32_t bg_music_size;
 
 struct Menu;
@@ -568,7 +568,7 @@ static bool UpdateGui()
 		for(int a = 0; a <= 255; a += 15)
 		{
 			menu->mainWindow.draw();
-			platform->getVideo()->getImageRenderer()->drawRectangle(0,0,platform->getVideo()->getScreenWidth(),platform->getVideo()->getScreenHeight(),(PixelColor){0, 0, 0, (u8)a});
+			platform->getVideo()->getImageRenderer()->drawRectangle(0,0,platform->getVideo()->getScreenWidth(),platform->getVideo()->getScreenHeight(),(PixelColor){0, 0, 0, (uint8_t)a});
 			platform->getVideo()->render();
 		}
 		exiting = true;
@@ -1097,7 +1097,7 @@ static int MenuGameSelection()
 	preview.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	preview.setPosition(174, -8);
 
-	std::unique_ptr<u8, decltype(&free)> pngFileBuffer((u8 *)malloc(PNG_FILE_BUFFER_SIZE), free);
+	std::unique_ptr<uint8_t, decltype(&free)> pngFileBuffer((uint8_t *)malloc(PNG_FILE_BUFFER_SIZE), free);
 
 	int  previousBrowserIndex = -1;
 	char imagePath[MAXJOLIET + 1];
@@ -2363,7 +2363,7 @@ static int MenuGameCheats()
 {
 	int selection = MENU_NONE;
 	int ret;
-	u16 i = 0;
+	uint16_t i = 0;
 	OptionList options;
 
 	for(i=0; i < Cheat.g.size(); i++)
@@ -4664,12 +4664,12 @@ static int MenuSettingsNetwork()
 	return selection;
 }
 
-static u8 * CreateBlurredGameTexture() {
+static uint8_t * CreateBlurredGameTexture() {
 	if(gameScreenPng.size == 0) {
 		return nullptr;
 	}
 
-	u8 *src = DecodePNGToRGBA8(gameScreenPng.buffer, gameScreenPng.width, gameScreenPng.height);
+	uint8_t *src = DecodePNGToRGBA8(gameScreenPng.buffer, gameScreenPng.width, gameScreenPng.height);
 	if(!src) {
 		return nullptr;
 	}
@@ -4677,7 +4677,7 @@ static u8 * CreateBlurredGameTexture() {
 	int blurAmount = 4; // blur amount
 	PixelColor blurOverlayColor = (PixelColor){50, 50, 50, 160};
 
-	u8 * dst = (u8 *)memalign(32, platform->getVideo()->getScreenWidth() * platform->getVideo()->getScreenHeight() * 4);
+	uint8_t * dst = (uint8_t *)memalign(32, platform->getVideo()->getScreenWidth() * platform->getVideo()->getScreenHeight() * 4);
 	if(!dst) {
 		extmem_free(src);
 		return nullptr;
@@ -4725,8 +4725,8 @@ static u8 * CreateBlurredGameTexture() {
 	int cropStartY = trueOffsetY < 0 ? -trueOffsetY : 0;
 
 	// Allocate scratch space ONLY for the viewable cropped portion
-	u8 *scaledImg = (u8 *)extmem_malloc(cropWidth * cropHeight * 4);
-	u8 *rowBuf    = (u8 *)extmem_malloc(cropWidth * 4);
+	uint8_t *scaledImg = (uint8_t *)extmem_malloc(cropWidth * cropHeight * 4);
+	uint8_t *rowBuf    = (uint8_t *)extmem_malloc(cropWidth * 4);
 
 	if (!scaledImg || !rowBuf) {
 		if (scaledImg) extmem_free(scaledImg);
@@ -4790,10 +4790,10 @@ static u8 * CreateBlurredGameTexture() {
 	int alphaIn = blurOverlayColor.a;
 	int invAlpha = 255 - alphaIn;
 
-	u8 bgR = (u8)((0 * invAlpha + blurOverlayColor.r * alphaIn) / 255);
-	u8 bgG = (u8)((0 * invAlpha + blurOverlayColor.g * alphaIn) / 255);
-	u8 bgB = (u8)((0 * invAlpha + blurOverlayColor.b * alphaIn) / 255);
-	u8 bgA = 255;
+	uint8_t bgR = (uint8_t)((0 * invAlpha + blurOverlayColor.r * alphaIn) / 255);
+	uint8_t bgG = (uint8_t)((0 * invAlpha + blurOverlayColor.g * alphaIn) / 255);
+	uint8_t bgB = (uint8_t)((0 * invAlpha + blurOverlayColor.b * alphaIn) / 255);
+	uint8_t bgA = 255;
 
 	// Vertical Blur, Overlay, & Swizzle directly to the GX Destination Layout
 	int tilesX = (platform->getVideo()->getScreenWidth() + 3) / 4;
@@ -4802,7 +4802,7 @@ static u8 * CreateBlurredGameTexture() {
 	for (int ty = 0; ty < tilesY; ++ty) {
 		for (int tx = 0; tx < tilesX; ++tx) {
 			int tileIdx = ty * tilesX + tx;
-			u8* destTilePtr = dst + (tileIdx * 64);
+			uint8_t* destTilePtr = dst + (tileIdx * 64);
 
 			for (int py = 0; py < 4; ++py) {
 				for (int px = 0; px < 4; ++px) {
@@ -4838,13 +4838,13 @@ static u8 * CreateBlurredGameTexture() {
 							sumB += scaledImg[idx + 2];
 						}
 
-						u8 blurredR = sumR / div;
-						u8 blurredG = sumG / div;
-						u8 blurredB = sumB / div;
+						uint8_t blurredR = sumR / div;
+						uint8_t blurredG = sumG / div;
+						uint8_t blurredB = sumB / div;
 
-						u8 finalR = (u8)((blurredR * invAlpha + blurOverlayColor.r * alphaIn) / 255);
-						u8 finalG = (u8)((blurredG * invAlpha + blurOverlayColor.g * alphaIn) / 255);
-						u8 finalB = (u8)((blurredB * invAlpha + blurOverlayColor.b * alphaIn) / 255);
+						uint8_t finalR = (uint8_t)((blurredR * invAlpha + blurOverlayColor.r * alphaIn) / 255);
+						uint8_t finalG = (uint8_t)((blurredG * invAlpha + blurOverlayColor.g * alphaIn) / 255);
+						uint8_t finalB = (uint8_t)((blurredB * invAlpha + blurOverlayColor.b * alphaIn) / 255);
 
 						destTilePtr[pixelIdx * 2 + 0] = 255;
 						destTilePtr[pixelIdx * 2 + 1] = finalR;
