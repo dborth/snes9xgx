@@ -175,7 +175,7 @@ void S9xSyncSpeed () {
 	}
 	else /* use internal timer for PAL roms (or TV/ROM mismatches) */
 	{
-		const u32 timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
+		const uint32_t timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
 
 		now = gettime();
 

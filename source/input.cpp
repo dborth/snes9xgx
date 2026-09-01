@@ -64,7 +64,7 @@ static int cursor_y[5] = {0,0,0,0,0};
 	  S9xMapButton( keycode, cmd = S9xGetCommandT(snescmd), false)
 
 static int scopeTurbo = 0; // tracks whether superscope turbo is on or off
-u32 btnmap[4][6][12]; // button mapping
+uint32_t btnmap[4][6][12]; // button mapping
 
 void ResetControls(int consoleCtrl, int wiiCtrl)
 {
@@ -375,7 +375,7 @@ void UpdatePads()
 	bool mayflashActive = (Mayflash_Status()[0] == 'c');
 	#endif
 
-	u32 activeGamecubePads = PAD_ScanPads();
+	uint32_t activeGamecubePads = PAD_ScanPads();
 
 	float deltaTime = 1.0f / 60.0f;
 

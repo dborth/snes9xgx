@@ -81,7 +81,7 @@ static int mapMenuCtrlSNES = 0;
 static int currentLanguage = -1;
 
 u8 * bg_music;
-u32 bg_music_size;
+uint32_t bg_music_size;
 
 struct Menu;
 static Menu * menu = nullptr;
@@ -157,7 +157,7 @@ struct ProgressOverlayState {
 	u64 pendingStart;
 	STATE oldState;
 	float angle;
-	u32 count;
+	uint32_t count;
 
 	ProgressOverlayState() :
 		progressWindow(448, 288),
@@ -848,7 +848,7 @@ static void AutoSave()
  * Opens an on-screen keyboard window, with the data entered being stored
  * into the specified variable.
  ***************************************************************************/
-static void OnScreenKeyboard(char * var, u32 maxlen)
+static void OnScreenKeyboard(char * var, uint32_t maxlen)
 {
 	int save = -1;
 
@@ -2827,7 +2827,7 @@ static int MenuSettingsMappingsController()
 /****************************************************************************
  * ButtonMappingWindow
  ***************************************************************************/
-static u32 ButtonMappingWindow()
+static uint32_t ButtonMappingWindow()
 {
 	GuiWindow promptWindow(448,288);
 	promptWindow.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
@@ -2884,7 +2884,7 @@ static u32 ButtonMappingWindow()
 	menu->mainWindow.appendWithAutoRemove(&promptWindow);
 	menu->mainWindow.changeFocus(&promptWindow);
 
-	u32 pressed = 0;
+	uint32_t pressed = 0;
 	buttonMappingCancelled = false;
 
 	while(pressed == 0 && !buttonMappingCancelled)
@@ -4929,7 +4929,7 @@ void MainMenu (int selection)
 #ifdef HW_RVL
 	if(firstRun)
 	{
-		u32 ios = IOS_GetVersion();
+		uint32_t ios = IOS_GetVersion();
 
 		if(!SupportedIOS(ios))
 			ErrorPrompt("The current IOS is unsupported. Functionality and/or stability may be adversely affected.");

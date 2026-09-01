@@ -54,8 +54,8 @@ PKZIPHEADER;
  * Zip files are stored little endian
  * Support functions for short and int types
  */
-static u32
-FLIP32 (u32 b)
+static uint32_t
+FLIP32 (uint32_t b)
 {
 	unsigned int c;
 

@@ -74,7 +74,7 @@ static void createXMLSetting(const char * name, const char * description, const 
 	mxmlElementSetAttr(item, "description", description);
 }
 
-static void createXMLController(u32 controller[], const char * name, const char * description)
+static void createXMLController(uint32_t controller[], const char * name, const char * description)
 {
 	item = mxmlNewElement(section, "controller");
 	mxmlElementSetAttr(item, "name", name);
@@ -276,7 +276,7 @@ static void loadXMLSetting(float * var, const char * name)
  * Load XML elements into variables for a controller mapping
  ***************************************************************************/
 
-static void loadXMLController(u32 controller[], const char * name)
+static void loadXMLController(uint32_t controller[], const char * name)
 {
 	item = mxmlFindElement(xml, xml, "controller", "name", name, MXML_DESCEND);
 

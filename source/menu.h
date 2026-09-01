@@ -24,7 +24,7 @@ void ShowProgress (const char *msg, int done, int total);
 void ChangeLanguage();
 
 extern u8 * bg_music;
-extern u32 bg_music_size;
+extern uint32_t bg_music_size;
 
 enum
 {

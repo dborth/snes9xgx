@@ -16,7 +16,7 @@ const char ctrlrName[6][32] =
 { "GameCube Controller", "Wiimote", "Nunchuk + Wiimote", "Classic Controller", "Wii U Pro Controller", "Wii U Gamepad" };
 
 typedef struct _btn_map {
-	u32 btn;					// button 'id'
+	uint32_t btn;					// button 'id'
 	char name[7];				// button name
 } BtnMap;
 
