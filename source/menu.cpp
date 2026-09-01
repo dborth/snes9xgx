@@ -4659,12 +4659,12 @@ static int MenuSettingsNetwork()
 
 static u8 * CreateBlurredGameTexture() {
 	if(gameScreenPng.size == 0) {
-		return NULL;
+		return nullptr;
 	}
 
 	u8 *src = DecodePNGToRGBA8(gameScreenPng.buffer, gameScreenPng.width, gameScreenPng.height);
 	if(!src) {
-		return NULL;
+		return nullptr;
 	}
 
 	int blurAmount = 4; // blur amount
@@ -4672,7 +4672,8 @@ static u8 * CreateBlurredGameTexture() {
 
 	u8 * dst = (u8 *)memalign(32, platform->getVideo()->getScreenWidth() * platform->getVideo()->getScreenHeight() * 4);
 	if(!dst) {
-		return NULL;
+		extmem_free(src);
+		return nullptr;
 	}
 
 	int scaledWidth = (int)(gameScreenPng.width * gameScreenPng.scaleX);
@@ -4680,8 +4681,9 @@ static u8 * CreateBlurredGameTexture() {
 
 	// Failsafe for invalid scale metrics
 	if (scaledWidth <= 0 || scaledHeight <= 0) {
-		memset(dst, 0, platform->getVideo()->getScreenWidth() * platform->getVideo()->getScreenHeight() * 4);
-		return dst;
+		extmem_free(src);
+		free(dst);
+		return nullptr;
 	}
 
 	// Calculate the absolute top-left starting pixel of the scaled image.
@@ -4706,8 +4708,9 @@ static u8 * CreateBlurredGameTexture() {
 
 	// Failsafe if the image is pushed entirely off-screen
 	if (cropWidth <= 0 || cropHeight <= 0) {
-		memset(dst, 0, platform->getVideo()->getScreenWidth() * platform->getVideo()->getScreenHeight() * 4);
-		return dst;
+		extmem_free(src);
+		free(dst);
+		return nullptr;
 	}
 
 	// Determine the starting offset within the theoretical scaled image
@@ -4721,8 +4724,9 @@ static u8 * CreateBlurredGameTexture() {
 	if (!scaledImg || !rowBuf) {
 		if (scaledImg) extmem_free(scaledImg);
 		if (rowBuf) extmem_free(rowBuf);
+		extmem_free(src);
 		free(dst);
-		return NULL;
+		return nullptr;
 	}
 
 	// Scale the raw input PNG directly into our viewable cropped buffer
@@ -4850,6 +4854,7 @@ static u8 * CreateBlurredGameTexture() {
 			}
 		}
 	}
+
 	DCFlushRange(dst, platform->getVideo()->getScreenWidth() * platform->getVideo()->getScreenHeight() * 4);
 
 	extmem_free(scaledImg);
@@ -4894,7 +4899,7 @@ void MainMenu (int selection)
 	if(selection == MENU_GAME)
 	{
 		gameScreenTexture = CreateBlurredGameTexture();
-		if(gameScreenTexture != NULL) {
+		if(gameScreenTexture != nullptr) {
 			gameScreenImg = new GuiImage(gameScreenTexture, platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
 		}
 	}
