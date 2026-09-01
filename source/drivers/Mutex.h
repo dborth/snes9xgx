@@ -22,7 +22,8 @@ class Mutex
 		void unlock();
 
 	protected:
-		void * handle; //!< Backend-assigned mutex handle
+		friend class Cond; //!< Cond::wait() needs the raw handle to pass to ThreadDriver::waitCond()
+		void * handle = nullptr; //!< Backend-assigned mutex handle
 };
 
 //!RAII lock guard - locks on construction, unlocks on destruction. Use this

@@ -24,5 +24,10 @@ class OgcThreadDriver : public ThreadDriver
 		void lockMutex(void * mutex) override;
 		void unlockMutex(void * mutex) override;
 
+		void * createCond() override;
+		void destroyCond(void * cond) override;
+		void waitCond(void * cond, void * mutex) override;
+		void signalCond(void * cond) override;
+
 		void sleepMilliseconds(uint32_t ms) override;
 };

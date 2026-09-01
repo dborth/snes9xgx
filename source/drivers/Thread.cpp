@@ -17,6 +17,9 @@ bool Thread::start(ThreadEntry entry, void * arg, uint32_t stackSize, ThreadPrio
 	if(handle)
 		return false;
 
+	if(!platform || !platform->getThread())
+		return false;
+
 	// handle is passed by address so the driver can publish it before the
 	// new thread starts running - entry() may call back into this Thread
 	// (e.g. to suspend itself) as its first action. See ThreadDriver::createThread.
@@ -31,7 +34,8 @@ void Thread::join()
 	if(!handle)
 		return;
 
-	platform->getThread()->joinThread(handle);
+	if(platform && platform->getThread())
+		platform->getThread()->joinThread(handle);
 	handle = nullptr;
 }
 
@@ -40,25 +44,26 @@ void Thread::cancel()
 	if(!handle)
 		return;
 
-	platform->getThread()->cancelThread(handle);
+	if(platform && platform->getThread())
+		platform->getThread()->cancelThread(handle);
 	handle = nullptr;
 }
 
 void Thread::suspend()
 {
-	if(handle)
+	if(handle && platform && platform->getThread())
 		platform->getThread()->suspendThread(handle);
 }
 
 void Thread::resume()
 {
-	if(handle)
+	if(handle && platform && platform->getThread())
 		platform->getThread()->resumeThread(handle);
 }
 
 bool Thread::isSuspended() const
 {
-	if(!handle)
+	if(!handle && platform && platform->getThread())
 		return false;
 
 	return platform->getThread()->isThreadSuspended(handle);

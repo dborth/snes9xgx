@@ -57,5 +57,5 @@ class Thread
 		bool isRunning() const { return handle != nullptr; }
 
 	protected:
-		void * handle; //!< Backend-assigned thread handle
+		void * handle = nullptr; //!< Backend-assigned thread handle
 };

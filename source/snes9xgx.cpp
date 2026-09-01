@@ -45,6 +45,8 @@ int main(int argc, char *argv[])
 	S9xInitSync(); // initialize frame sync
 	InitGUIThreads();
 
+	savebuffer = (uint8_t *)extmem_malloc(SAVEBUFFERSIZE);
+
 #ifdef HW_RVL
 	// store path app was loaded from
 	if(argc > 0 && argv[0] != nullptr)

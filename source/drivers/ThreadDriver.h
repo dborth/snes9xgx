@@ -58,6 +58,18 @@ class ThreadDriver
 		virtual void lockMutex(void * mutex) = 0;
 		virtual void unlockMutex(void * mutex) = 0;
 
+		//!Creates a condition variable. Returns an opaque backend-defined
+		//!handle, or nullptr on failure.
+		virtual void * createCond() = 0;
+		virtual void destroyCond(void * cond) = 0;
+		//!Atomically unlocks mutex and blocks the calling thread until
+		//!signalCond() is called, then reacquires mutex before returning.
+		//!mutex must be locked by the calling thread on entry.
+		virtual void waitCond(void * cond, void * mutex) = 0;
+		//!Wakes every thread currently blocked in waitCond() on this
+		//!condition variable. This is a broadcast-only operation.
+		virtual void signalCond(void * cond) = 0;
+
 		//!Sleeps the calling thread for at least the given duration.
 		virtual void sleepMilliseconds(uint32_t ms) = 0;
 };

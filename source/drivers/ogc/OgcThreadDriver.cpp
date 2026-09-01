@@ -9,6 +9,7 @@
  ***************************************************************************/
 #include <ogcsys.h>
 #include <unistd.h>
+#include <ogc/cond.h>
 
 #include "OgcThreadDriver.h"
 
@@ -161,6 +162,45 @@ void OgcThreadDriver::unlockMutex(void * mutex)
 		return;
 
 	LWP_MutexUnlock(*static_cast<mutex_t *>(mutex));
+}
+
+void * OgcThreadDriver::createCond()
+{
+	cond_t * cond = new cond_t;
+	if(LWP_CondInit(cond) < 0)
+	{
+		delete cond;
+		return nullptr;
+	}
+
+	return cond;
+}
+
+void OgcThreadDriver::destroyCond(void * cond)
+{
+	if(!cond)
+		return;
+
+	cond_t * c = static_cast<cond_t *>(cond);
+	LWP_CondDestroy(*c);
+	delete c;
+}
+
+void OgcThreadDriver::waitCond(void * cond, void * mutex)
+{
+	if(!cond || !mutex)
+		return;
+
+	LWP_CondWait(*static_cast<cond_t *>(cond), *static_cast<mutex_t *>(mutex));
+}
+
+void OgcThreadDriver::signalCond(void * cond)
+{
+	if(!cond)
+		return;
+
+	// Broadcast rather than LWP_CondSignal
+	LWP_CondBroadcast(*static_cast<cond_t *>(cond));
 }
 
 void OgcThreadDriver::sleepMilliseconds(uint32_t ms)
