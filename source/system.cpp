@@ -191,16 +191,6 @@ void SystemInit() {
 	textTranslator->loadLanguage(en_lang, en_lang_size);
 }
 
-static void ExitCleanup()
-{
-	HaltDeviceCheckingThread();
-	UnmountAllFAT();
-
-#ifdef HW_RVL
-	DI_Close();
-#endif
-}
-
 #ifdef HW_DOL
 	#define PSOSDLOADID 0x7c6000a6
 	int *psoid = (int *) 0x80001800;
@@ -209,7 +199,7 @@ static void ExitCleanup()
 
 void SystemExit(int exitAction, bool autoloadedGame)
 {
-	ExitCleanup();
+	HaltDeviceCheckingThread();
 	platform->shutdown();
 
 #ifdef HW_RVL

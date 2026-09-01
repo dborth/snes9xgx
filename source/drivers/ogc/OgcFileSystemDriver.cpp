@@ -16,5 +16,14 @@ void OgcFileSystemDriver::init()
 }
 void OgcFileSystemDriver::shutdown()
 {
-
+#ifdef HW_RVL
+	fatUnmount("sd:");
+	fatUnmount("usb:");
+	DI_Close();
+#else
+	fatUnmount("port2:");
+	fatUnmount("carda:");
+	fatUnmount("cardb:");
+	fatUnmount("gcloader:");
+#endif
 }

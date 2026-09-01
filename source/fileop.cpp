@@ -313,23 +313,6 @@ InitFileOpThreads()
 }
 
 /****************************************************************************
- * UnmountAllFAT
- * Unmounts all FAT devices
- ***************************************************************************/
-void UnmountAllFAT()
-{
-#ifdef HW_RVL
-	fatUnmount("sd:");
-	fatUnmount("usb:");
-#else
-	fatUnmount("port2:");
-	fatUnmount("carda:");
-	fatUnmount("cardb:");
-	fatUnmount("gcloader:");
-#endif
-}
-
-/****************************************************************************
  * MountFAT
  * Checks if the device needs to be (re)mounted
  * If so, unmounts the device

@@ -23,7 +23,6 @@ void ResumeDeviceCheckingThread();
 void HaltDeviceCheckingThread();
 void HaltParseThread();
 void MountAllFAT();
-void UnmountAllFAT();
 bool FindDevice(char * filepath, int * device);
 char * StripDevice(char * path);
 bool ChangeInterface(int device, bool silent);
