@@ -10,6 +10,7 @@
 
 void FixInvalidSettings();
 void DefaultSettings();
+void ApplySettings();
 bool SavePrefs();
 bool LoadPrefs();
 void CreateMissingDirectories();

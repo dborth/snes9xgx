@@ -296,7 +296,7 @@ static void loadXMLController(u32 controller[], const char * name)
 	}
 }
 
-static void applySettings() {
+void ApplySettings() {
 	platform->getInput()->setWiimoteOrientation(GCSettings.wiimoteOrientation);
 	platform->getInput()->setRumbleEnabled(GCSettings.Rumble);
 	GuiSound::setDefaultVolume(SOUND::OGG, GCSettings.MusicVolume);
@@ -455,8 +455,7 @@ void FixInvalidSettings()
  *
  * Sets all the defaults!
  ***************************************************************************/
-void
-DefaultSettings ()
+void DefaultSettings()
 {
 	memset (&GCSettings, 0, sizeof (GCSettings));
 
@@ -581,8 +580,6 @@ DefaultSettings ()
 	GCSettings.TurboModeButton = 0; // Default is Right Analog Stick (0)
 	GCSettings.GamepadMenuToggle = GAMEPAD_MENU_TOGGLE_DEFAULT;
 	GCSettings.MapABXYRightStick = false;
-
-	applySettings();
 }
 
 /****************************************************************************
@@ -724,7 +721,7 @@ bool LoadPrefs()
 	}
 
 	FixInvalidSettings();
-	applySettings();
+	ApplySettings();
 
 #ifdef HW_RVL
 	bg_music = (u8 * )bg_music_ogg;
