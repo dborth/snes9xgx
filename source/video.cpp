@@ -48,12 +48,12 @@ extern void UpdatePlaybackRate(void);
 
 #define SNES9XGFX_SIZE 		(EXT_PITCH*EXT_HEIGHT)
 
-static unsigned char * snes9xgfx = NULL;
+static unsigned char * snes9xgfx = nullptr;
 
 /*** 2D Video ***/
-static u32 *xfb[2] = { NULL, NULL }; // Double buffered
+static u32 *xfb[2] = { nullptr, nullptr }; // Double buffered
 static int whichfb = 0; // Switch
-GXRModeObj *vmode = NULL; // Current video mode
+GXRModeObj *vmode = nullptr; // Current video mode
 int CheckVideo = 0; // for forcing video reset
 static int fscale = 1;
 
@@ -309,7 +309,7 @@ static void * vbgetback (void *arg)
 		LWP_ThreadSignal(render_queue);    // Instantly alert the main thread
 		_CPU_ISR_Restore(level);
 	}
-	return NULL;
+	return nullptr;
 }
 
 /****************************************************************************
@@ -648,7 +648,7 @@ static void SetupVideoMode(GXRModeObj * mode)
 
 	// Detect if we are transitioning between Progressive and Interlaced
 	bool mode_switch = false;
-	if (vmode != NULL) {
+	if (vmode != nullptr) {
 		bool was_progressive = (vmode->viTVMode & 3) == VI_NON_INTERLACE || (vmode->viTVMode & 3) == VI_PROGRESSIVE;
 		bool is_progressive = (mode->viTVMode & 3) == VI_NON_INTERLACE || (mode->viTVMode & 3) == VI_PROGRESSIVE;
 		if (was_progressive != is_progressive) {
@@ -658,7 +658,7 @@ static void SetupVideoMode(GXRModeObj * mode)
 
 	last_fbWidth = mode->fbWidth;
 
-	VIDEO_SetPostRetraceCallback (NULL);
+	VIDEO_SetPostRetraceCallback (nullptr);
 	copynow = GX_FALSE;
 	VIDEO_Configure (mode);
 	VIDEO_Flush();
@@ -865,7 +865,7 @@ void ClearScreenshot()
 {
 	if(gameScreenPng.buffer) {
 		extmem_free(gameScreenPng.buffer);
-		gameScreenPng.buffer = NULL;
+		gameScreenPng.buffer = nullptr;
 	}
 
 	gameScreenPng.size = 0;

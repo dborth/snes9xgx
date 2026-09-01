@@ -100,7 +100,7 @@ static void * netcb (void *arg)
 		}
 		if(netHalt != 2) LWP_SuspendThread(networkthread);
 	}
-	return NULL;
+	return nullptr;
 }
 
 /****************************************************************************

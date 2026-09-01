@@ -29,9 +29,9 @@ enum
 	MEMORY_MODE_GAME
 };
 
-static mspace aram_space = NULL;
+static mspace aram_space = nullptr;
 static int memoryMode = -1;
-u8 * romPtr = NULL;
+u8 * romPtr = nullptr;
 
 void InitMemManager ()
 {
@@ -66,7 +66,7 @@ char* extmem_strdup(const char *s)
 	return mem2_strdup(s);
 #else
 	if (!s)
-		return NULL;
+		return nullptr;
 
 	size_t len = strlen(s) + 1;
 	char *dup = (char *)extmem_malloc(len);
@@ -111,5 +111,5 @@ void SwitchMemoryModeGame() {
 
 	memoryMode = MEMORY_MODE_GAME;
 	extmem_free(browserList);
-	browserList = NULL;
+	browserList = nullptr;
 }

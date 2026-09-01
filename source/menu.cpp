@@ -62,18 +62,18 @@ static GuiImageData * pointer[4];
 static GuiImage cursorImg[4];
 #endif
 
-static GuiTrigger * trigA = NULL;
+static GuiTrigger * trigA = nullptr;
 
 #ifdef HW_RVL
 static GuiButton * batteryBtn[4];
 #endif
-static u8 * gameScreenTexture = NULL;
-static GuiImage * gameScreenImg = NULL;
-static GuiSound * bgMusic = NULL;
-static GuiSound * enterSound = NULL;
-static GuiSound * exitSound = NULL;
-static GuiText * settingText = NULL;
-static GuiText * settingText2 = NULL;
+static u8 * gameScreenTexture = nullptr;
+static GuiImage * gameScreenImg = nullptr;
+static GuiSound * bgMusic = nullptr;
+static GuiSound * enterSound = nullptr;
+static GuiSound * exitSound = nullptr;
+static GuiText * settingText = nullptr;
+static GuiText * settingText2 = nullptr;
 static int lastMenu = MENU_NONE;
 static int mapMenuCtrl = 0;
 static int mapMenuCtrlSNES = 0;
@@ -166,8 +166,8 @@ struct ProgressOverlayState {
 		progressbarEmpty(progressbar_empty_png), progressbarEmptyImg(&progressbarEmpty),
 		progressbar(progressbar_png), progressbarImg(&progressbar),
 		throbber(throbber_png), throbberImg(&throbber),
-		titleTxt(NULL, 26, (PixelColor){255, 255, 255, 255}),
-		msgTxt(NULL, 26, (PixelColor){0, 0, 0, 255}),
+		titleTxt(nullptr, 26, (PixelColor){255, 255, 255, 255}),
+		msgTxt(nullptr, 26, (PixelColor){0, 0, 0, 255}),
 		overlayShown(false), waitingToShow(false), pendingStart(0),
 		oldState(STATE::DEFAULT), angle(0), count(0)
 	{
@@ -803,7 +803,7 @@ static int WindowPromptRequest(const char *title, const char *msg, const char *b
 
 void ErrorPrompt(const char *msg)
 {
-	WindowPromptRequest("Error", msg, "OK", NULL);
+	WindowPromptRequest("Error", msg, "OK", nullptr);
 }
 
 int ErrorPromptRetry(const char *msg)
@@ -813,7 +813,7 @@ int ErrorPromptRetry(const char *msg)
 
 void InfoPrompt(const char *msg)
 {
-	WindowPromptRequest("Information", msg, "OK", NULL);
+	WindowPromptRequest("Information", msg, "OK", nullptr);
 }
 
 /****************************************************************************
@@ -1730,9 +1730,9 @@ static int MenuGame()
 			{
 				menu->mainWindow.remove(gameScreenImg);
 				delete gameScreenImg;
-				if(gameScreenTexture != NULL) {
+				if(gameScreenTexture != nullptr) {
 					free(gameScreenTexture);
-					gameScreenTexture = NULL;
+					gameScreenTexture = nullptr;
 				}
 				ClearScreenshot();
 				if(GCSettings.AutoloadGame) {
@@ -1856,7 +1856,7 @@ static int MenuGameSaves(int action)
 	if(!changeOk)
 		return MENU_GAME;
 
-	GuiText titleTxt(NULL, 26, (PixelColor){255, 255, 255, 255});
+	GuiText titleTxt(nullptr, 26, (PixelColor){255, 255, 255, 255});
 	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 	titleTxt.setPosition(50,50);
 
@@ -3215,8 +3215,8 @@ static void ScreenZoomWindow()
 	screenPositionImg.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	screenPositionImg.setPosition(0, 0);
 
-	settingText = new GuiText(NULL, 20, (PixelColor){0, 0, 0, 255});
-	settingText2 = new GuiText(NULL, 20, (PixelColor){0, 0, 0, 255});
+	settingText = new GuiText(nullptr, 20, (PixelColor){0, 0, 0, 255});
+	settingText2 = new GuiText(nullptr, 20, (PixelColor){0, 0, 0, 255});
 	char zoom[10];
 	sprintf(zoom, "%.2f%%", GCSettings.videoZoomHor*100);
 	settingText->setText(zoom);
@@ -3347,7 +3347,7 @@ static void ScreenPositionWindow()
 	GuiImage screenPositionImg(&screenPosition);
 	screenPositionImg.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 
-	settingText = new GuiText(NULL, 20, (PixelColor){0, 0, 0, 255});
+	settingText = new GuiText(nullptr, 20, (PixelColor){0, 0, 0, 255});
 	char shift[10];
 	sprintf(shift, "%i, %i", GCSettings.videoXshift, GCSettings.videoYshift);
 	settingText->setText(shift);
@@ -4257,7 +4257,7 @@ static int MenuSettingsFile()
 static bool LoadLanguage()
 {
 	char line[200];
-	char *lastID = NULL;
+	char *lastID = nullptr;
 
 	const uint8_t *buffer;
 	size_t size;
@@ -4333,10 +4333,10 @@ void ChangeLanguage() {
 	}
 #ifdef HW_RVL
 	else {
-		if(ext_font_ttf != NULL) {
+		if(ext_font_ttf != nullptr) {
 			if(fontSystem) delete fontSystem;
 			extmem_free(ext_font_ttf);
-			ext_font_ttf = NULL;
+			ext_font_ttf = nullptr;
 			fontSystem = new GuiTextRenderer(font_ttf, font_ttf_size, platform->getVideo()->getGlyphRenderer());
 		}
 	}
@@ -4911,7 +4911,7 @@ void MainMenu (int selection)
 		}
 	}
 
-	if(gameScreenImg == NULL) {
+	if(gameScreenImg == nullptr) {
 		gameScreenImg = new GuiImage(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight(), (PixelColor){175, 200, 215, 255});
 		gameScreenImg->setStripe(10);
 	}
@@ -5022,15 +5022,15 @@ void MainMenu (int selection)
 
 	CancelAction();
 
-	if(gameScreenImg != NULL) {
+	if(gameScreenImg != nullptr) {
 		menuInstance->mainWindow.remove(gameScreenImg);
 		delete gameScreenImg;
-		gameScreenImg = NULL;
+		gameScreenImg = nullptr;
 	}
 
-	if(gameScreenTexture != NULL) {
+	if(gameScreenTexture != nullptr) {
 		free(gameScreenTexture);
-		gameScreenTexture = NULL;
+		gameScreenTexture = nullptr;
 	}
 
 	ClearScreenshot();

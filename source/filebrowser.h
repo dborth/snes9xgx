@@ -62,7 +62,7 @@ bool isValidLoadDevice(int device);
 bool isValidSaveDevice(int device);
 int getNextLoadDevice(int device);
 int getNextSaveDevice(int device);
-bool MakeFilePath(char filepath[], int type, char * filename = NULL, int filenum = -2);
+bool MakeFilePath(char filepath[], int type, char * filename = nullptr, int filenum = -2);
 int UpdateDirName();
 int OpenGameList();
 int autoLoadMethod();

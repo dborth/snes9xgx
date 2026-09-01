@@ -45,7 +45,7 @@ size_t SaveFile(char * filepath, size_t datasize, bool silent);
 
 // Background worker thread
 typedef int (*BgTaskFn)(void *arg);
-bool RunOnWorkerThread(BgTaskFn fn, void * arg = NULL);
+bool RunOnWorkerThread(BgTaskFn fn, void * arg = nullptr);
 bool IsWorkerThreadFinished();
 int GetWorkerThreadResult();
 

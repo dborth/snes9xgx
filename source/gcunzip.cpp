@@ -209,16 +209,16 @@ done:
 char *
 GetFirstZipFilename ()
 {
-	char * firstFilename = NULL;
+	char * firstFilename = nullptr;
 	char tempbuffer[ZIPCHUNK];
 	char filepath[1024];
 
 	if(!MakeFilePath(filepath, FILE_ROM))
-		return NULL;
+		return nullptr;
 
 	// read start of ZIP
 	if(LoadFile (tempbuffer, filepath, ZIPCHUNK, ZIPCHUNK, NOTSILENT) < 35)
-		return NULL;
+		return nullptr;
 
 	tempbuffer[28] = 0; // truncate - filename length is 2 bytes long (bytes 26-27)
 	int namelength = tempbuffer[26]; // filename length starts 26 bytes in
@@ -226,7 +226,7 @@ GetFirstZipFilename ()
 	if(namelength < 0 || namelength > 200) // filename is not a reasonable length
 	{
 		ErrorPrompt("Error - Invalid ZIP file!");
-		return NULL;
+		return nullptr;
 	}
 	
 	firstFilename = &tempbuffer[30]; // first filename of a ZIP starts 31 bytes in

@@ -35,11 +35,11 @@ struct SGCSettings GCSettings;
  *
  * This sets up the save buffer for saving.
  ***************************************************************************/
-static mxml_node_t *xml = NULL;
-static mxml_node_t *data = NULL;
-static mxml_node_t *section = NULL;
-static mxml_node_t *item = NULL;
-static mxml_node_t *elem = NULL;
+static mxml_node_t *xml = nullptr;
+static mxml_node_t *data = nullptr;
+static mxml_node_t *section = nullptr;
+static mxml_node_t *item = nullptr;
+static mxml_node_t *elem = nullptr;
 
 static char temp[200];
 
@@ -113,7 +113,7 @@ static const char * XMLSaveCallback(mxml_node_t *node, int where)
 		else if(!strcmp(name, "button"))
 			return ("\n\t\t");
 	}
-	return (NULL);
+	return (nullptr);
 }
 
 static int
@@ -314,7 +314,7 @@ void ApplySettings() {
 static bool
 decodePrefsData ()
 {
-	xml = mxmlLoadString(NULL, (char *)savebuffer, MXML_TEXT_CALLBACK);
+	xml = mxmlLoadString(nullptr, (char *)savebuffer, MXML_TEXT_CALLBACK);
 
 	if(!xml) {
 		return false;

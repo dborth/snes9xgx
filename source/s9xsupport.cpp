@@ -252,19 +252,19 @@ bool S9xPollPointer(uint32 id, int16 * x, int16 * y)
 const char * S9xGetDirectory(enum s9x_getdirtype dirtype)
 {
 	ExitApp();
-	return NULL;
+	return nullptr;
 }
 
 const char * S9xGetFilename(const char *ex, enum s9x_getdirtype dirtype)
 {
 	ExitApp();
-	return NULL;
+	return nullptr;
 }
 
 const char * S9xGetFilenameInc(const char *e, enum s9x_getdirtype dirtype)
 {
 	ExitApp();
-	return NULL;
+	return nullptr;
 }
 
 const char * S9xBasename(const char *name)
