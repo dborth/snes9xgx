@@ -174,7 +174,7 @@ preparePrefsData ()
 	createXMLSection("Menu", "Menu Settings");
 
 #ifdef HW_RVL
-	createXMLSetting("WiimoteOrientation", "Wiimote Orientation", toStr(GCSettings.WiimoteOrientation));
+	createXMLSetting("wiimoteOrientation", "Wiimote Orientation", toStr(GCSettings.wiimoteOrientation));
 #endif
 	createXMLSetting("ExitAction", "Exit Action", toStr(GCSettings.ExitAction));
 	createXMLSetting("MusicVolume", "Music Volume", toStr(GCSettings.MusicVolume));
@@ -296,6 +296,15 @@ static void loadXMLController(u32 controller[], const char * name)
 	}
 }
 
+static void applySettings() {
+	platform->getInput()->setWiimoteOrientation(GCSettings.wiimoteOrientation);
+	platform->getInput()->setRumbleEnabled(GCSettings.Rumble);
+	GuiSound::setDefaultVolume(SOUND::OGG, GCSettings.MusicVolume);
+	GuiSound::setDefaultVolume(SOUND::PCM, GCSettings.SFXVolume);
+	ResetVideo_Menu();
+	ChangeLanguage();
+}
+
 /****************************************************************************
  * decodePrefsData
  *
@@ -357,7 +366,7 @@ decodePrefsData ()
 
 	// Menu Settings
 
-	loadXMLSetting(&GCSettings.WiimoteOrientation, "WiimoteOrientation");
+	loadXMLSetting(&GCSettings.wiimoteOrientation, "WiimoteOrientation");
 	loadXMLSetting(&GCSettings.ExitAction, "ExitAction");
 	loadXMLSetting(&GCSettings.MusicVolume, "MusicVolume");
 	loadXMLSetting(&GCSettings.SFXVolume, "SFXVolume");
@@ -437,6 +446,8 @@ void FixInvalidSettings()
 		GCSettings.videoMode = VIDEOMODE_AUTO;
 	if(!(GCSettings.videoUpscalingFilter >= FILTER_NONE && GCSettings.videoUpscalingFilter <= NUM_FILTERS))
 		GCSettings.videoUpscalingFilter = FILTER_NONE;
+	if(!(GCSettings.wiimoteOrientation >= WIIMOTE_ORIENTATION_AUTO && GCSettings.wiimoteOrientation < WIIMOTE_ORIENTATION_LENGTH))
+		GCSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_AUTO;
 }
 
 /****************************************************************************
@@ -485,7 +496,7 @@ DefaultSettings ()
 	GCSettings.videoYshift = 0; // vertical video shift
 	GCSettings.crosshair = true;
 
-	GCSettings.WiimoteOrientation = WIIMOTE_ORIENTATION_VERTICAL;
+	GCSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_AUTO;
 #ifdef HW_RVL
 	GCSettings.ExitAction = EXITACTION_WII_AUTO;
 #else
@@ -570,6 +581,8 @@ DefaultSettings ()
 	GCSettings.TurboModeButton = 0; // Default is Right Analog Stick (0)
 	GCSettings.GamepadMenuToggle = GAMEPAD_MENU_TOGGLE_DEFAULT;
 	GCSettings.MapABXYRightStick = false;
+
+	applySettings();
 }
 
 /****************************************************************************
@@ -711,18 +724,13 @@ bool LoadPrefs()
 	}
 
 	FixInvalidSettings();
-
-	if(GCSettings.videoMode > VIDEOMODE_AUTO) {
-		ResetVideo_Menu();
-	}
+	applySettings();
 
 #ifdef HW_RVL
 	bg_music = (u8 * )bg_music_ogg;
 	bg_music_size = bg_music_ogg_size;
 	LoadBgMusic();
 #endif
-
-	ChangeLanguage();
 	return true;
 }
 

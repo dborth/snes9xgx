@@ -4427,21 +4427,26 @@ static int MenuSettingsMenu()
 				#endif
 				break;
 			case 1:
-				GCSettings.WiimoteOrientation ^= 1;
+				GCSettings.wiimoteOrientation++;
+				if(GCSettings.wiimoteOrientation >= WIIMOTE_ORIENTATION_LENGTH)
+					GCSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_AUTO;
+				platform->getInput()->setWiimoteOrientation(GCSettings.wiimoteOrientation);
 				break;
 			case 2:
 				GCSettings.MusicVolume += 10;
 				if(GCSettings.MusicVolume > 100)
 					GCSettings.MusicVolume = 0;
-				bgMusic->setVolume(GCSettings.MusicVolume);
+				GuiSound::setDefaultVolume(SOUND::OGG, GCSettings.MusicVolume);
 				break;
 			case 3:
 				GCSettings.SFXVolume += 10;
 				if(GCSettings.SFXVolume > 100)
 					GCSettings.SFXVolume = 0;
+				GuiSound::setDefaultVolume(SOUND::PCM, GCSettings.SFXVolume);
 				break;
 			case 4:
 				GCSettings.Rumble = !GCSettings.Rumble;
+				platform->getInput()->setRumbleEnabled(GCSettings.Rumble);
 				break;
 			case 5:
 				GCSettings.language++;
@@ -4483,13 +4488,14 @@ static int MenuSettingsMenu()
 			options.name[1][0] = 0; // Wiimote
 			options.name[2][0] = 0; // Music
 			options.name[3][0] = 0; // Sound Effects
-			options.name[4][0] = 0; // Rumble
 			#endif
 
-			if (GCSettings.WiimoteOrientation == WIIMOTE_ORIENTATION_VERTICAL)
+			if (GCSettings.wiimoteOrientation == WIIMOTE_ORIENTATION_VERTICAL)
 				sprintf (options.value[1], "Vertical");
-			else if (GCSettings.WiimoteOrientation == WIIMOTE_ORIENTATION_HORIZONTAL)
+			else if (GCSettings.wiimoteOrientation == WIIMOTE_ORIENTATION_HORIZONTAL)
 				sprintf (options.value[1], "Horizontal");
+			else
+				sprintf (options.value[1], "Auto");
 
 			if(GCSettings.MusicVolume > 0)
 				sprintf(options.value[2], "%d%%", GCSettings.MusicVolume);

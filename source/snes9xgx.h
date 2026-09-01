@@ -14,6 +14,7 @@
 #ifndef _SNES9XGX_H_
 #define _SNES9XGX_H_
 
+#include "drivers/InputDriver.h"
 #include "snes9x.h"
 #include "filelist.h"
 
@@ -138,12 +139,6 @@ enum {
 };
 
 enum {
-	WIIMOTE_ORIENTATION_VERTICAL = 0,
-	WIIMOTE_ORIENTATION_HORIZONTAL,
-	WIIMOTE_ORIENTATION_LENGTH
-};
-
-enum {
 	GAMEPAD_MENU_TOGGLE_DEFAULT = 0,
 	GAMEPAD_MENU_TOGGLE_HOME_RIGHTSTICK,
 	GAMEPAD_MENU_TOGGLE_LRSTART_12PLUS,
@@ -253,7 +248,7 @@ struct SGCSettings{
 	bool	MuteAudio;
 	
 	int		Controller;
-	int		WiimoteOrientation;
+	int		wiimoteOrientation;
 	int		ExitAction;
 	int		MusicVolume;
 	int		SFXVolume;

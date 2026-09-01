@@ -7,9 +7,9 @@
 
 class FileSystemDriver
 {
-public:
-    virtual ~FileSystemDriver() = default;
+	public:
+		virtual ~FileSystemDriver() = default;
 
-    virtual void init() = 0;
-    virtual void shutdown() = 0;
+		virtual void init() = 0;
+		virtual void shutdown() = 0;
 };

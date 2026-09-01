@@ -39,6 +39,12 @@ class GuiSound
 		//!Set the sound to loop playback (only applies to OGG)
 		//!\param l Loop (true to loop)
 		void setLoop(bool l);
+
+		//!Set global default volume for a specific sound type
+		//!\param t Sound format type (PCM or OGG)
+		//!\param v Volume (0-100)
+		static void setDefaultVolume(SOUND t, int v);
+
 	protected:
 		const uint8_t * sound; //!< Pointer to the sound data
 		SOUND type; //!< Sound format type (PCM or OGG)
@@ -46,4 +52,8 @@ class GuiSound
 		int32_t voice; //!< Backend-assigned voice handle (PCM only)
 		int32_t volume; //!< Sound volume (0-100)
 		bool loop; //!< Loop sound playback
+
+		static int defaultPCMVolume; //!< Global PCM volume (0-100)
+		static int defaultOGGVolume; //!< Global OGG volume (0-100)
+		static GuiSound* playingOGG; //!< Pointer to the active OGG instance
 };

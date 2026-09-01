@@ -8,6 +8,10 @@
 
 #include "Gui.h"
 
+int GuiSound::defaultPCMVolume = 100;
+int GuiSound::defaultOGGVolume = 100;
+GuiSound* GuiSound::playingOGG = nullptr;
+
 GuiSound::GuiSound(const uint8_t * s, int32_t l, SOUND t)
 {
 	sound = s;
@@ -20,13 +24,18 @@ GuiSound::GuiSound(const uint8_t * s, int32_t l, SOUND t)
 
 GuiSound::~GuiSound()
 {
-	if(type == SOUND::OGG)
+	if(type == SOUND::OGG) {
 		platform->getAudio()->stopStream();
+		if (playingOGG == this) {
+			playingOGG = nullptr;
+		}
+	}
 }
 
 void GuiSound::play()
 {
-	int vol = 255*(volume/100.0);
+	int typeVol = (type == SOUND::PCM) ? defaultPCMVolume : defaultOGGVolume;
+	int vol = 255 * (volume / 100.0) * (typeVol / 100.0);
 
 	switch(type)
 	{
@@ -35,6 +44,7 @@ void GuiSound::play()
 			break;
 
 		case SOUND::OGG:
+			playingOGG = this;
 			voice = 0;
 			platform->getAudio()->playStream(sound, length, loop, vol);
 			break;
@@ -54,6 +64,9 @@ void GuiSound::stop()
 
 		case SOUND::OGG:
 			platform->getAudio()->stopStream();
+			if (playingOGG == this) {
+				playingOGG = nullptr;
+			}
 			break;
 	}
 }
@@ -116,7 +129,8 @@ void GuiSound::setVolume(int vol)
 	if(voice < 0)
 		return;
 
-	int newvol = 255*(volume/100.0);
+	int typeVol = (type == SOUND::PCM) ? defaultPCMVolume : defaultOGGVolume;
+	int newvol = 255 * (volume / 100.0) * (typeVol / 100.0);
 
 	switch(type)
 	{
@@ -133,4 +147,17 @@ void GuiSound::setVolume(int vol)
 void GuiSound::setLoop(bool l)
 {
 	loop = l;
+}
+
+void GuiSound::setDefaultVolume(SOUND t, int v)
+{
+	if (t == SOUND::PCM) {
+		defaultPCMVolume = v;
+	} else if (t == SOUND::OGG) {
+		defaultOGGVolume = v;
+
+		if (playingOGG && playingOGG->isPlaying()) {
+			playingOGG->setVolume(playingOGG->volume);
+		}
+	}
 }

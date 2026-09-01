@@ -14,6 +14,7 @@
 #include <ogcsys.h>
 #include <unistd.h>
 #include <wiiuse/wpad.h>
+#include <ogc/conf.h>
 
 #include "OgcInputDriver.h"
 #include "../Platform.h"
@@ -154,13 +155,14 @@ void OgcInputDriver::init() {
 }
 
 void OgcInputDriver::shutdown() {
-	#ifdef HW_RVL
 	for (int i = 0; i < 4; i++) {
+		#ifdef HW_RVL
 		WPAD_Rumble(i, 0);
+		#endif
+		PAD_ControlMotor(i, PAD_MOTOR_STOP);
 		rumbleCount[i] = 0;
 		rumbleRequest[i] = false;
 	}
-	#endif
 }
 
 void OgcInputDriver::setRumble(int channel, bool rumble) {
@@ -173,9 +175,13 @@ void OgcInputDriver::update(float deltaTime) {
 	#ifdef HW_RVL
 	WPAD_ScanPads();
 	WiiDRC_ScanPads();
+	bool systemRumbleAllowed = (CONF_GetPadMotorMode() != 0);
+	#else
+	bool systemRumbleAllowed = true;
 	#endif
 
 	u32 activeGamecubePads = PAD_ScanPads();
+	bool allowRumble = isRumbleEnabled() && systemRumbleAllowed;
 
 	for(int i = 3; i >= 0; i--) {
 		GuiInputPadData padData;
@@ -307,17 +313,30 @@ void OgcInputDriver::update(float deltaTime) {
 		// Push the finalized, merged payload to the controller abstraction
 		userInput[i]->update(padData, deltaTime);
 		
-		#ifdef HW_RVL
-		if (rumbleRequest[i] && rumbleCount[i] < 3) {
+		bool doRumble = rumbleRequest[i] && allowRumble;
+
+		if (doRumble && rumbleCount[i] < 3) {
+			#ifdef HW_RVL
 			WPAD_Rumble(i, 1);
+			#endif
+
+			if (gamecubeActive) {
+				PAD_ControlMotor(i, PAD_MOTOR_RUMBLE);
+			}
+
 			rumbleCount[i]++;
-		} else if (rumbleRequest[i]) {
+		} else if (doRumble) {
 			rumbleCount[i] = 12;
 			rumbleRequest[i] = false;
 		} else {
 			if (rumbleCount[i]) rumbleCount[i]--;
+
+			#ifdef HW_RVL
 			WPAD_Rumble(i, 0);
+			#endif
+
+			PAD_ControlMotor(i, PAD_MOTOR_STOP);
+			rumbleRequest[i] = false; // ensure flag clears if toggled off mid-rumble
 		}
-		#endif
 	}
 }
