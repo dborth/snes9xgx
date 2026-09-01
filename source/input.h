@@ -14,8 +14,6 @@
 #ifndef _INPUT_H_
 #define _INPUT_H_
 
-#include <gccore.h>
-
 #define PI 				3.14159265f
 #define PADCAL			50
 #define WIIDRCCAL		20

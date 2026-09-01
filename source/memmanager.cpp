@@ -9,6 +9,7 @@
  ***************************************************************************/
 
 #include <malloc.h>
+#include <ogc/system.h>
 #include "snes9xgx.h"
 #include "memmanager.h"
 #include "filebrowser.h"
@@ -51,7 +52,7 @@ void InitMemManager ()
 	SwitchMemoryModeMenu();
 }
 
-void* extmem_malloc(u32 size)
+void* extmem_malloc(uint32_t size)
 {
 #if HW_RVL
 	return mem2_malloc(size);

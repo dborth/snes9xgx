@@ -11,7 +11,6 @@
  * Console support functions
  ***************************************************************************/
 
-#include <gccore.h>
 #include <sys/iosupport.h>
 #include <ogc/lwp_threads.h>
 

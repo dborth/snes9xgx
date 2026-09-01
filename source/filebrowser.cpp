@@ -8,16 +8,10 @@
  * Generic file routines - reading, writing, browsing
  ***************************************************************************/
 
-#include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <wiiuse/wpad.h>
 #include <sys/dir.h>
-
-#ifdef HW_RVL
-#include <di/di.h>
-#endif
 
 #include "snes9x/port.h"
 #include "snes9xgx.h"

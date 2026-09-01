@@ -4,11 +4,7 @@
    For further information, consult the LICENSE file in the root directory.
 \*****************************************************************************/
 
-#ifdef GEKKO
-#include <gccore.h>
 #include <malloc.h>
-#endif
-
 #include <string>
 #include <numeric>
 #include <assert.h>

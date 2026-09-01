@@ -9,7 +9,6 @@
  * freeze.cpp
  ***************************************************************************/
 
-#include <gccore.h>
 #include <stdio.h>
 
 #include "snes9xgx.h"

@@ -10,7 +10,6 @@
  * SRAM save/load/import/export handling
  ***************************************************************************/
 
-#include <gccore.h>
 #include <stdio.h>
 #include <string.h>
 #include <ogcsys.h>

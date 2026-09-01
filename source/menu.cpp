@@ -8,7 +8,6 @@
  * Menu flow routines - handles all menu logic
  ***************************************************************************/
 
-#include <gccore.h>
 #include <ogcsys.h>
 #include <ogc/cond.h>
 #include <ogc/lwp.h>
@@ -18,11 +17,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <memory>
-
-#ifdef HW_RVL
-#include <di/di.h>
-#include <wiiuse/wpad.h>
-#endif
 
 #include "snes9xgx.h"
 #include "memmanager.h"

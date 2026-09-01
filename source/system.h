@@ -14,6 +14,8 @@
 #ifndef _SYSTEM_H_
 #define _SYSTEM_H_
 
+#include <stdint.h>
+
 enum {
 	EXITACTION_WII_AUTO = 0,
 	EXITACTION_WII_RETURN_TO_MENU,
@@ -31,8 +33,8 @@ enum {
 void SystemInit();
 void SystemExit(int exitAction, bool autoloadedGame);
 void ShutdownWii();
-bool SupportedIOS(u32 ios);
-bool SaneIOS(u32 ios);
+bool SupportedIOS(uint32_t ios);
+bool SaneIOS(uint32_t ios);
 char * getConsoleDetails();
 char * getMemoryFreeInfo();
 extern int ShutdownRequested;
