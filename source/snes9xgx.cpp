@@ -138,7 +138,6 @@ int main(int argc, char *argv[])
 		HaltDeviceCheckingThread();
 
 		SwitchMemoryModeGame();
-		AudioStart ();
 
 		FrameTimer = 0;
 		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded

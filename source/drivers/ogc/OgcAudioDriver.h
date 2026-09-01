@@ -14,6 +14,8 @@ class OgcAudioDriver : public AudioDriver
 	public:
 		void init() override;
 		void shutdown() override;
+		void start() override;
+		void stop() override;
 
 		int32_t playVoice(const uint8_t* data, int32_t length, int volume) override;
 		void stopVoice(int32_t voice) override;

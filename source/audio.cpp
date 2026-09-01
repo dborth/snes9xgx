@@ -8,16 +8,12 @@
  * Audio driver
  * Audio is fixed to 48Khz/16bit/Stereo
  ***************************************************************************/
-#ifndef NO_SOUND
-#include <asndlib.h>
-#endif
 #include "snes9xgx.h"
 #include "video.h"
+#include "drivers/Platform.h"
 
 #include "snes9x/memmap.h"
 #include "snes9x/apu/apu.h"
-
-void AudioStart ();
 
 /*** Double buffered audio ***/
 #define SAMPLES_TO_PROCESS 1024
@@ -82,6 +78,20 @@ static inline int getUnplayed() {
 static void DMACallback() {
 	AUDIO_InitDMA((u32) soundbuffer[playab], AUDIOBUFFER);
 	playab = nextIndex(playab);
+}
+
+/****************************************************************************
+ * AudioStart
+ *
+ * Called to kick off the Audio Queue
+ ***************************************************************************/
+static void AudioStart()
+{
+	nextab = 0;
+	playab = 0;
+	dma_started = false;
+	turbo_drop = false;
+	rateState = RATE_STATE_NEUTRAL;
 }
 
 static void S9xAudioCallback (void *data) {
@@ -165,37 +175,16 @@ static void S9xAudioCallback (void *data) {
 }
 
 /****************************************************************************
- * InitAudio
- ***************************************************************************/
-void InitAudio()
-{
-	#ifdef NO_SOUND
-	AUDIO_Init(NULL);
-	AUDIO_SetDSPSampleRate(AI_SAMPLERATE_48KHZ);
-	AUDIO_RegisterDMACallback(DMACallback);
-	#else
-	ASND_Init();
-	#endif
-}
-
-/****************************************************************************
  * SwitchAudioMode
  *
  * Switches between menu sound and emulator sound
  ***************************************************************************/
-void
-SwitchAudioMode(int mode)
+void SwitchAudioMode(int mode)
 {
 	if(mode == 0) // emulator
 	{
-		#ifndef NO_SOUND
-		ASND_Pause(1);
-		ASND_End();
-		AUDIO_StopDMA();
-		AUDIO_RegisterDMACallback(NULL);
-		DSP_Halt();
+		platform->getAudio()->stop();
 		AUDIO_RegisterDMACallback(DMACallback);
-		#endif
 		// Reset the ring so playback re-primes from a known state instead of
 		// resuming on stale indices left over from the previous session.
 		AudioStart();
@@ -204,27 +193,8 @@ SwitchAudioMode(int mode)
 	else // menu
 	{
 		S9xSetSamplesAvailableCallback(NULL, NULL);
-		#ifndef NO_SOUND
-		DSP_Unhalt();
-		ASND_Init();
-		ASND_Pause(0);
-		#else
 		AUDIO_StopDMA();
-		#endif
+		AUDIO_RegisterDMACallback(NULL);
+		platform->getAudio()->start();
 	}
-}
-
-/****************************************************************************
- * AudioStart
- *
- * Called to kick off the Audio Queue
- ***************************************************************************/
-void
-AudioStart ()
-{
-	nextab = 0;
-	playab = 0;
-	dma_started = false;
-	turbo_drop = false;
-	rateState = RATE_STATE_NEUTRAL;
 }

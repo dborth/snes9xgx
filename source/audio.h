@@ -9,6 +9,4 @@
  * Audio is fixed to 48Khz/16bit/Stereo
  ***************************************************************************/
 
-void InitAudio ();
-void AudioStart ();
 void SwitchAudioMode(int mode);
