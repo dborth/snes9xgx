@@ -11,4 +11,15 @@ class OgcFileSystemDriver : public FileSystemDriver
 	public:
 		void init() override;
 		void shutdown() override;
+
+		int enumerateStorageDevices(StorageDevice outDevices[MAX_STORAGE_DEVICES]) override;
+		MountResult mountStorageDevice(int deviceId) override;
+		const char * mountResultMessage(int deviceId, MountResult result) override;
+		void invalidateStorageDevice(int deviceId) override;
+		void pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES], int & outRemovedCount, bool & deviceListChanged) override;
+		bool hasRemovableStorageDevices() const override;
+
+	private:
+		MountResult mountFAT(int deviceId);
+		MountResult mountDVD();
 };

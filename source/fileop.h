@@ -51,8 +51,6 @@ int GetWorkerThreadResult();
 extern unsigned char *savebuffer;
 extern uint8_t *ext_font_ttf;
 extern FILE * file;
-extern bool unmountRequired[];
-extern bool isMounted[];
 extern int selectLoadedFile;
 
 #endif

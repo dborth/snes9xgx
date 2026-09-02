@@ -15,6 +15,7 @@
 #define _SNES9XGX_H_
 
 #include "drivers/InputDriver.h"
+#include "drivers/ogc/OgcDeviceTypes.h"
 #include "snes9x.h"
 #include "filelist.h"
 
@@ -26,22 +27,6 @@
 #define MAXPATHLEN 1024
 #define NOTSILENT 0
 #define SILENT 1
-
-const char pathPrefix[10][11] =
-{ "", "sd:/", "usb:/", "dvd:/", "smb:/", "carda:/", "cardb:/", "port2:/", "gcloader:/" };
-
-enum {
-	DEVICE_AUTO = 0,
-	DEVICE_SD,
-	DEVICE_USB,
-	DEVICE_DVD,
-	DEVICE_SMB,
-	DEVICE_SD_SLOTA,
-	DEVICE_SD_SLOTB,
-	DEVICE_SD_PORT2,
-	DEVICE_SD_GCLOADER,
-	DEVICE_LENGTH
-};
 
 enum {
     SAVEFOLDER_SAVES = 0,

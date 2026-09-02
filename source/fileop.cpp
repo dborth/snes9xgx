@@ -11,18 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ogcsys.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <zlib.h>
-#include <fat.h>
-#include <sdcard/wiisd_io.h>
-#include <sdcard/gcsd.h>
-#include <ogc/usbstorage.h>
-#include <ogc/cond.h>
-#include <di/di.h>
-#include <ogc/dvd.h>
-#include <iso9660.h>
 
 #include "snes9xgx.h"
 #include "fileop.h"
@@ -35,6 +26,8 @@
 #include "drivers/Thread.h"
 #include "drivers/Mutex.h"
 #include "drivers/Cond.h"
+#include "drivers/Platform.h"
+#include "drivers/FileSystemDriver.h"
 
 #define THREAD_SLEEP 100
 
@@ -53,17 +46,6 @@ static Mutex & SaveBufferLock()  { static Mutex m; return m; }
 unsigned char *savebuffer = nullptr;
 uint8_t *ext_font_ttf = nullptr;
 FILE * file; // file pointer - the only one we should ever use!
-bool unmountRequired[9] = { false, false, false, false, false, false, false, false, false };
-bool isMounted[9] = { false, false, false, false, false, false, false, false, false };
-
-#ifdef HW_RVL
-	static DISC_INTERFACE* sd = &__io_wiisd;
-	static DISC_INTERFACE* usb = &__io_usbstorage;
-	static DISC_INTERFACE* dvd = &__io_wiidvd;
-#else
-	static DISC_INTERFACE* dvd = &__io_gcdvd;
-	static DISC_INTERFACE* gcloader = &__io_gcode;
-#endif
 
 // folder parsing thread
 static Thread parseThread;
@@ -80,12 +62,11 @@ static bool parseActive = false; // protected by ParseSync().mutex
 // device checking thread
 static Thread deviceThread;
 static volatile bool deviceCheckingHalt = true;
+static bool deviceThreadStarted = false; // true if InitFileOpThreads() actually started deviceThread
 
-#ifdef HW_RVL
 // device thread synchronization - DeviceSync().workCond signals main -> device:
 // wake / re-check halt; DeviceSync().idleCond signals device -> main: now halted
 static bool deviceIdle = false; // protected by DeviceSync().mutex
-#endif
 
 #define WORKER_THREAD_STACKSIZE (96 * 1024)
 #define DEVICE_THREAD_STACKSIZE (32 * 1024)
@@ -113,12 +94,13 @@ static int      workerResult    = 0;     // protected by WorkerSync().mutex - re
 void
 ResumeDeviceCheckingThread()
 {
-#ifdef HW_RVL
+	if(!deviceThreadStarted)
+		return;
+
 	DeviceSync().mutex.lock();
 	deviceCheckingHalt = false;
 	DeviceSync().workCond.signal();
 	DeviceSync().mutex.unlock();
-#endif
 }
 
 /****************************************************************************
@@ -129,14 +111,15 @@ ResumeDeviceCheckingThread()
 void
 HaltDeviceCheckingThread()
 {
-#ifdef HW_RVL
+	if(!deviceThreadStarted)
+		return;
+
 	deviceCheckingHalt = true;
 	DeviceSync().mutex.lock();
 	DeviceSync().workCond.signal(); // interrupt condvar sleep if the thread is in one
 	while(!deviceIdle)
 		DeviceSync().idleCond.wait(DeviceSync().mutex);
 	DeviceSync().mutex.unlock();
-#endif
 }
 
 /****************************************************************************
@@ -160,41 +143,19 @@ HaltParseThread()
  *
  * This checks our devices for changes (SD/USB/DVD removed)
  ***************************************************************************/
-#ifdef HW_RVL
 static void *
 devicecallback (void *arg)
 {
 	while (1)
 	{
-		if(isMounted[DEVICE_SD])
-		{
-			if(!sd->isInserted(sd)) // check if the device was removed
-			{
-				unmountRequired[DEVICE_SD] = true;
-				isMounted[DEVICE_SD] = false;
-				parseHalt = true; // abort any in-progress dir parse on this device
-			}
-		}
+		int removed[MAX_STORAGE_DEVICES];
+		int removedCount = 0;
+		bool deviceListChanged = false;
 
-		if(isMounted[DEVICE_USB])
-		{
-			if(!usb->isInserted(usb)) // check if the device was removed
-			{
-				unmountRequired[DEVICE_USB] = true;
-				isMounted[DEVICE_USB] = false;
-				parseHalt = true; // abort any in-progress dir parse on this device
-			}
-		}
+		platform->getFileSystem()->pollStorageDevices(removed, removedCount, deviceListChanged);
 
-		if(isMounted[DEVICE_DVD])
-		{
-			if(!dvd->isInserted(dvd)) // check if the device was removed
-			{
-				unmountRequired[DEVICE_DVD] = true;
-				isMounted[DEVICE_DVD] = false;
-				parseHalt = true; // abort any in-progress dir parse on this device
-			}
-		}
+		if(removedCount > 0)
+			parseHalt = true; // abort any in-progress dir parse if a device it's using just disappeared
 
 		// sleep ~1 sec in 100us steps so we can react to a halt request quickly
 		for(int i = 0; i < 10000 && !deviceCheckingHalt; i++)
@@ -214,7 +175,6 @@ devicecallback (void *arg)
 	}
 	return nullptr;
 }
-#endif
 
 static void *
 parsecallback (void *arg)
@@ -301,155 +261,33 @@ InitFileOpThreads()
 {
 	SaveBufferLock();
 
-#ifdef HW_RVL
-	DeviceSync();
-	deviceThread.start(devicecallback, nullptr, DEVICE_THREAD_STACKSIZE, ThreadPriority::Low);
-#endif
 	ParseSync();
 	parseThread.start(parsecallback, nullptr, PARSE_THREAD_STACKSIZE, ThreadPriority::High);
 
 	WorkerSync();
 	workerThread.start(workercallback, nullptr, WORKER_THREAD_STACKSIZE, ThreadPriority::High);
+
+	if(platform->getFileSystem()->hasRemovableStorageDevices())
+	{
+		DeviceSync();
+		deviceThreadStarted = true;
+		deviceThread.start(devicecallback, nullptr, DEVICE_THREAD_STACKSIZE, ThreadPriority::Low);
+	}
 }
 
 /****************************************************************************
- * MountFAT
- * Checks if the device needs to be (re)mounted
- * If so, unmounts the device
- * Attempts to mount the device specified
- * Sets libfat to use the device by default
+ * MountAllFAT
+ * Silently (pre-)mounts whatever devices the platform driver flags as
+ * auto-mount-at-startup (eg. Wii's SD/USB). No-op on platforms with none.
  ***************************************************************************/
-
-static bool MountFAT(int device, int silent)
-{
-	bool mounted = false;
-	int retry = 1;
-	char name[10], name2[10];
-	DISC_INTERFACE* disc = NULL;
-
-	switch(device)
-	{
-#ifdef HW_RVL
-		case DEVICE_SD:
-			sprintf(name, "sd");
-			sprintf(name2, "sd:");
-			disc = sd;
-			break;
-		case DEVICE_USB:
-			sprintf(name, "usb");
-			sprintf(name2, "usb:");
-			disc = usb;
-			break;
-#else
-		case DEVICE_SD_SLOTA:
-			sprintf(name, "carda");
-			sprintf(name2, "carda:");
-			disc = get_io_gcsda();
-			break;
-		case DEVICE_SD_SLOTB:
-			sprintf(name, "cardb");
-			sprintf(name2, "cardb:");
-			disc = get_io_gcsdb();
-			break;
-		case DEVICE_SD_PORT2:
-			sprintf(name, "port2");
-			sprintf(name2, "port2:");
-			disc = get_io_gcsd2();
-			break;
-		case DEVICE_SD_GCLOADER:
-			sprintf(name, "gcloader");
-			sprintf(name2, "gcloader:");
-			disc = gcloader;
-			break;
-#endif
-		default:
-			return false; // unknown device
-	}
-
-	if(unmountRequired[device])
-	{
-		unmountRequired[device] = false;
-		fatUnmount(name2);
-		disc->shutdown(disc);
-		isMounted[device] = false;
-	}
-
-	while(retry)
-	{
-		if(fatMountSimple(name, disc))
-			mounted = true;
-
-		if(mounted || silent)
-			break;
-
-#ifdef HW_RVL
-		if(device == DEVICE_SD)
-			retry = ErrorPromptRetry("SD card not found!");
-		else
-			retry = ErrorPromptRetry("USB drive not found!");
-#else
-		retry = ErrorPromptRetry("SD card not found!");
-#endif
-	}
-
-	isMounted[device] = mounted;
-	return mounted;
-}
-
 void MountAllFAT()
 {
-#ifdef HW_RVL
-	MountFAT(DEVICE_SD, SILENT);
-	MountFAT(DEVICE_USB, SILENT);
-#endif
-}
+	StorageDevice devices[MAX_STORAGE_DEVICES];
+	int count = platform->getFileSystem()->enumerateStorageDevices(devices);
 
-/****************************************************************************
- * MountDVD()
- *
- * Tests if a ISO9660 DVD is inserted and available, and mounts it
- ***************************************************************************/
-bool MountDVD(bool silent)
-{
-	bool mounted = false;
-	int retry = 1;
-
-	if(unmountRequired[DEVICE_DVD])
-	{
-		unmountRequired[DEVICE_DVD] = false;
-		ISO9660_Unmount("dvd:");
-	}
-
-	while(retry)
-	{
-		ShowAction("Loading DVD...");
-
-#ifdef HW_DOL
-		DVD_Mount();
-#endif
-		if(!dvd->isInserted(dvd))
-		{
-			if(silent)
-				break;
-
-			retry = ErrorPromptRetry("No disc inserted!");
-		}
-		else if(!ISO9660_Mount("dvd", dvd))
-		{
-			if(silent)
-				break;
-			
-			retry = ErrorPromptRetry("Unrecognized DVD format.");
-		}
-		else
-		{
-			mounted = true;
-			break;
-		}
-	}
-	CancelAction();
-	isMounted[DEVICE_DVD] = mounted;
-	return mounted;
+	for(int i = 0; i < count; i++)
+		if(devices[i].autoMountAtStartup)
+			ChangeInterface(devices[i].id, SILENT);
 }
 
 bool FindDevice(char * filepath, int * device)
@@ -457,45 +295,25 @@ bool FindDevice(char * filepath, int * device)
 	if(!filepath || filepath[0] == 0)
 		return false;
 
-	if(strncmp(filepath, "sd:", 3) == 0)
-	{
-		*device = DEVICE_SD;
-		return true;
-	}
-	else if(strncmp(filepath, "usb:", 4) == 0)
-	{
-		*device = DEVICE_USB;
-		return true;
-	}
-	else if(strncmp(filepath, "smb:", 4) == 0)
+	// SMB is a network share, not a local storage device - it isn't part
+	// of the platform driver's device table.
+	if(strncmp(filepath, "smb:", 4) == 0)
 	{
 		*device = DEVICE_SMB;
 		return true;
 	}
-	else if(strncmp(filepath, "carda:", 6) == 0)
+
+	StorageDevice devices[MAX_STORAGE_DEVICES];
+	int count = platform->getFileSystem()->enumerateStorageDevices(devices);
+
+	for(int i = 0; i < count; i++)
 	{
-		*device = DEVICE_SD_SLOTA;
-		return true;
-	}
-	else if(strncmp(filepath, "cardb:", 6) == 0)
-	{
-		*device = DEVICE_SD_SLOTB;
-		return true;
-	}
-	else if(strncmp(filepath, "port2:", 6) == 0)
-	{
-		*device = DEVICE_SD_PORT2;
-		return true;
-	}
-	else if(strncmp(filepath, "dvd:", 4) == 0)
-	{
-		*device = DEVICE_DVD;
-		return true;
-	}
-	else if(strncmp(filepath, "gcloader:", 9) == 0)
-	{
-		*device = DEVICE_SD_GCLOADER;
-		return true;
+		size_t len = strlen(devices[i].prefix); // eg. "sd:/" -> compare against "sd:"
+		if(len > 1 && strncmp(filepath, devices[i].prefix, len - 1) == 0)
+		{
+			*device = devices[i].id;
+			return true;
+		}
 	}
 	return false;
 }
@@ -515,40 +333,37 @@ char * StripDevice(char * path)
 
 /****************************************************************************
  * ChangeInterface
- * Attempts to mount/configure the device specified
+ * Attempts to mount/configure the device specified. Owns the retry/prompt
+ * policy; the platform driver just reports a single mount attempt's result.
  ***************************************************************************/
 bool ChangeInterface(int device, bool silent)
 {
 	if(device == DEVICE_AUTO)
 		return false;
 
-	if(isMounted[device])
-		return true;
+	if(device == DEVICE_SMB)
+		return ConnectShare(silent); // network share, not part of the storage driver
 
-	bool mounted = false;
+	if(device == DEVICE_DVD)
+		ShowAction("Loading DVD...");
 
-	switch(device)
+	int retry = 1;
+	MountResult result = MountResult::DeviceNotFound;
+
+	while(retry)
 	{
-#ifdef HW_RVL
-		case DEVICE_SD:
-		case DEVICE_USB:
-#else
-		case DEVICE_SD_SLOTA:
-		case DEVICE_SD_SLOTB:
-		case DEVICE_SD_PORT2:
-		case DEVICE_SD_GCLOADER:
-#endif
-			mounted = MountFAT(device, silent);
+		result = platform->getFileSystem()->mountStorageDevice(device);
+
+		if(result == MountResult::Success || silent)
 			break;
-		case DEVICE_DVD:
-			mounted = MountDVD(silent);
-			break;
-		case DEVICE_SMB:
-			mounted = ConnectShare(silent);
-			break;
+
+		retry = ErrorPromptRetry(platform->getFileSystem()->mountResultMessage(device, result));
 	}
 
-	return mounted;
+	if(device == DEVICE_DVD)
+		CancelAction();
+
+	return result == MountResult::Success;
 }
 
 bool ChangeInterface(char * filepath, bool silent)
@@ -940,7 +755,7 @@ LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersize, bool
 
 			if(!readsize)
 			{
-				unmountRequired[device] = true;
+				platform->getFileSystem()->invalidateStorageDevice(device);
 				retry = ErrorPromptRetry("Error reading file!");
 				fclose (file);
 				continue;
@@ -1114,7 +929,7 @@ SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 
 		if(!written)
 		{
-			unmountRequired[device] = true;
+			platform->getFileSystem()->invalidateStorageDevice(device);
 			if(silent) break;
 			retry = ErrorPromptRetry("Error saving file!");
 		}

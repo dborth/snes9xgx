@@ -195,7 +195,6 @@ void CloseShare()
 	if(networkShareInit)
 		smbClose("smb");
 	networkShareInit = false;
-	isMounted[DEVICE_SMB] = false;
 }
 
 /****************************************************************************
