@@ -8,8 +8,8 @@ $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>dev
 endif
 
 include $(DEVKITPRO)/libogc2/wii_rules
-export	FREETYPE_CFLAGS 	:=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config --cflags freetype2`
-export	FREETYPE_LIBS	:=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config --libs freetype2`
+export	FREETYPE_CFLAGS		:=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config --cflags freetype2`
+export	FREETYPE_LIBS		:=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config --libs freetype2`
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -20,8 +20,8 @@ export	FREETYPE_LIBS	:=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config -
 TARGET		:=	snes9xgx-wii
 TARGETDIR	:=	executables
 BUILD		:=	build_wii
-SOURCES		:=	source source/drivers source/drivers/ogc source/libgui \
-				source/utils source/utils/sz \
+SOURCES		:=	source source/libgui source/utils source/utils/sz \
+				source/drivers source/drivers/ogc \
 				source/snes9x source/snes9x/apu
 DATA		:=	data/images data/sounds data/fonts data/lang
 INCLUDES	:=	source source/snes9x
