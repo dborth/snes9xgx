@@ -5,12 +5,12 @@
  * Michniewski 2008
  * Tantric 2008-2023
  *
- * gcunzip.h
+ * decompress.h
  *
- * File unzip routines
+ * File decompression routines
  ****************************************************************************/
-#ifndef _GCUNZIP_H_
-#define _GCUNZIP_H_
+#ifndef _DECOMPRESS_H_
+#define _DECOMPRESS_H_
 
 int IsZipFile (char *buffer);
 char * GetFirstZipFilename();

@@ -21,7 +21,7 @@
 #include "networkop.h"
 #include "fileop.h"
 #include "input.h"
-#include "gcunzip.h"
+#include "utils/decompress.h"
 #include "freeze.h"
 #include "sram.h"
 

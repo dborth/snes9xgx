@@ -5,7 +5,7 @@
  * Michniewski 2008
  * Tantric 2008-2023
  *
- * gcunzip.cpp
+ * decompress.cpp
  *
  * File unzip routines
  ***************************************************************************/
@@ -20,12 +20,12 @@
 #include "fileop.h"
 #include "filebrowser.h"
 #include "menu.h"
-#include "gcunzip.h"
+#include "decompress.h"
 
 extern "C" {
-#include "utils/sz/7zCrc.h"
-#include "utils/sz/7zIn.h"
-#include "utils/sz/7zExtract.h"
+#include "sz/7zCrc.h"
+#include "sz/7zIn.h"
+#include "sz/7zExtract.h"
 }
 
 #define ZIPCHUNK 2048

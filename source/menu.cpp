@@ -23,7 +23,7 @@
 #include "system.h"
 #include "video.h"
 #include "filebrowser.h"
-#include "gcunzip.h"
+#include "utils/decompress.h"
 #include "networkop.h"
 #include "fileop.h"
 #include "sram.h"
