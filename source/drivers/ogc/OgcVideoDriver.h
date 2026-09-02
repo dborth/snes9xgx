@@ -6,6 +6,7 @@
 #pragma once
 
 #include <gccore.h>
+#include "OgcEmulatorVideoDriver.h"
 #include "../VideoDriver.h"
 
 extern uint32_t FrameTimer;
@@ -18,7 +19,8 @@ class OgcVideoDriver : public VideoDriver
 
 		void init(int width, int height) override;
 		void shutdown() override;
-		void render() override;
+		void renderMenu() override;
+		void startMenuVideo() override;
 		void clearScreen(const PixelColor& color) override;
 
 		int getScreenWidth() const override { return screenWidth; }
@@ -27,15 +29,20 @@ class OgcVideoDriver : public VideoDriver
 
 		ImageRenderer* getImageRenderer() override { return imageRenderer; }
 		GlyphRenderer* getGlyphRenderer() override { return glyphRenderer; }
+		OgcEmulatorVideoDriver* getEmulatorVideo() override { return emulatorVideoDriver; }
+
+		GXRModeObj* findVideoMode();
+		void setupVideoMode(GXRModeObj* mode);
+		void waitForBufferReady();
+		void presentBuffer();
 
 	private:
-		void resetVideoMenu();
-
 		int screenWidth;
 		int screenHeight;
 
 		ImageRenderer* imageRenderer;
 		GlyphRenderer* glyphRenderer;
+		OgcEmulatorVideoDriver* emulatorVideoDriver;
 };
 
 class OgcImageRenderer : public ImageRenderer

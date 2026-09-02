@@ -13,24 +13,24 @@
 #ifndef _GCVIDEOH_
 #define _GCVIDEOH_
 
-#include <ogcsys.h>
-#include "libgui/Gui.h"
+#include <unistd.h>
 
-#include "snes9x/snes9x.h"
+// Offset into buffer to allow a two pixel border around the whole rendered
+// SNES image. This is a speed up hack to allow some of the image processing
+// routines to access black pixel data outside the normal bounds of the buffer.
+#define EXT_WIDTH (MAX_SNES_WIDTH + 4)
+#define EXT_PITCH (EXT_WIDTH * 2)
+#define EXT_HEIGHT (MAX_SNES_HEIGHT + 4)
+#define EXT_OFFSET (EXT_PITCH * 2 + 2 * 2)
 
 void AllocGfxMem();
-void InitVideo ();
-void ResetVideo_Emu();
 void setGFX();
-void update_video (int width, int height);
-void ResetVideo_Menu();
 void ClearScreenshot();
 void TakeScreenshot();
-void Menu_Render();
 
 typedef struct
 {
-	u8 * buffer;
+	uint8_t * buffer;
 	int size;
 	int width;
 	int height;
@@ -41,12 +41,5 @@ typedef struct
 } GameScreenPng;
 
 extern GameScreenPng gameScreenPng;
-
-extern GXRModeObj *vmode;
-extern bool progressive;
-extern u32 FrameTimer;
-extern bool vmode_60hz;
-extern uint32 prevRenderedFrameCount;
-extern int CheckVideo;
 
 #endif

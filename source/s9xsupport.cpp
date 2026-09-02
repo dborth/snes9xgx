@@ -16,6 +16,8 @@
 #include "snes9xgx.h"
 #include "video.h"
 #include "input.h"
+#include "drivers/ogc/OgcVideoDriver.h"
+#include "drivers/Platform.h"
 #include "snes9x/snes9x.h"
 #include "snes9x/memmap.h"
 #include "snes9x/display.h"
@@ -208,13 +210,13 @@ bool8 S9xInitUpdate()
 	return (TRUE);
 }
 
-bool8 S9xDeinitUpdate(int Width, int Height)
+bool8 S9xDeinitUpdate(int width, int height)
 {
-	update_video(Width, Height);
+	platform->getVideo()->getEmulatorVideo()->presentFrame(width, height);
 	return (TRUE);
 }
 
-bool8 S9xContinueUpdate(int Width, int Height)
+bool8 S9xContinueUpdate(int width, int height)
 {
 	return (TRUE);
 }

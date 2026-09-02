@@ -15,7 +15,6 @@
 #include "system.h"
 #include "s9xsupport.h"
 #include "video.h"
-#include "drivers/ogc/videofilters.h"
 #include "menu.h"
 #include "sram.h"
 #include "freeze.h"
@@ -24,6 +23,9 @@
 #include "filebrowser.h"
 #include "input.h"
 #include "memmanager.h"
+#include "drivers/Platform.h"
+#include "drivers/ogc/videofilters.h"
+#include "drivers/ogc/OgcVideoDriver.h"
 
 #include "snes9x/snes9x.h"
 #include "snes9x/fxemu.h"
@@ -40,7 +42,7 @@ int main(int argc, char *argv[])
 	SystemInit();
 	DefaultSettings (); // Set defaults
 	InitializeSnes9x(); // ensure Snes9x memory is in MEM1 for Wii
-	ResetVideo_Menu (); // change to menu video mode
+	platform->getVideo()->startMenuVideo(); // change to menu video mode
 	S9xInitSync(); // initialize frame sync
 	InitGUIThreads();
 
@@ -161,7 +163,7 @@ int main(int argc, char *argv[])
 				MenuRequested = false;
 				SwitchMemoryModeMenu();
 				TakeScreenshot();
-				ResetVideo_Menu();
+				platform->getVideo()->startMenuVideo();
 				break;
 			}
 		} // emulation loop

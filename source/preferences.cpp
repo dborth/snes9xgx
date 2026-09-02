@@ -23,6 +23,7 @@
 #include "filebrowser.h"
 #include "input.h"
 #include "button_mapping.h"
+#include "libgui/Gui.h"
 
 #include "snes9x/apu/apu.h"
 
@@ -299,7 +300,7 @@ void ApplySettings() {
 	platform->getInput()->setRumbleEnabled(GCSettings.Rumble);
 	GuiSound::setDefaultVolume(SOUND::OGG, GCSettings.MusicVolume);
 	GuiSound::setDefaultVolume(SOUND::PCM, GCSettings.SFXVolume);
-	ResetVideo_Menu();
+	platform->getVideo()->startMenuVideo();
 	ChangeLanguage();
 }
 

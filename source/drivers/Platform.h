@@ -2,6 +2,7 @@
 
 #include "AudioDriver.h"
 #include "VideoDriver.h"
+#include "EmulatorVideoDriver.h"
 #include "InputDriver.h"
 #include "FileSystemDriver.h"
 #include "ThreadDriver.h"
