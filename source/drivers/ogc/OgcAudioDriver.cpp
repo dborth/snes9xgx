@@ -3,32 +3,17 @@
  * Daryl Borth 2009-2026
  * OgcAudioDriver.cpp
  ***************************************************************************/
-#include <ogcsys.h>
+#include <ogc/dsp.h>
+#include <ogc/audio.h>
 #include <asndlib.h>
 #include <unistd.h>
 
 #include "OgcAudioDriver.h"
+#include "OgcEmulatorAudio.h"
+
+#include "snes9x/apu/apu.h"
 
 static OgcAudioDriver *instance = nullptr;
-
-static void stream_callback(int voice) {
-	if (instance)
-		instance->handleStreamCallback(voice);
-}
-
-void OgcAudioDriver::handleStreamCallback(int voice) {
-	if (voice != 0 || !oggPlayer.isPlaying() || oggPlayer.isPaused())
-		return;
-
-	int32_t size = 0;
-	const uint8_t *buf = oggPlayer.getReadyBuffer(&size);
-
-	if (buf && size > 0) {
-		if (ASND_AddVoice(0, (void*) buf, size) == 0) {
-			oggPlayer.consumeBuffer();
-		}
-	}
-}
 
 void OgcAudioDriver::init() {
 	instance = this;
@@ -36,13 +21,25 @@ void OgcAudioDriver::init() {
 	streamVolume = 127;
 }
 
-void OgcAudioDriver::start() {
+void OgcAudioDriver::startEmulatorAudio() {
+	stopMenuAudio();
+	AUDIO_RegisterDMACallback(AudioDMACallback);
+	S9xSetSamplesAvailableCallback(S9xAudioCallback, NULL);
+}
+
+void OgcAudioDriver::stopEmulatorAudio() {
+	S9xSetSamplesAvailableCallback(NULL, NULL);
+}
+
+void OgcAudioDriver::startMenuAudio() {
+	stopEmulatorAudio();
 	DSP_Unhalt();
 	ASND_Init();
 	ASND_Pause(0);
 }
 
-void OgcAudioDriver::stop() {
+void OgcAudioDriver::stopMenuAudio() {
+	stopStream();
 	ASND_Pause(1);
 	ASND_End();
 	AUDIO_StopDMA();
@@ -81,6 +78,25 @@ bool OgcAudioDriver::isVoicePlaying(int32_t voice) {
 
 void OgcAudioDriver::setVoiceVolume(int32_t voice, int volume) {
 	ASND_ChangeVolumeVoice(voice, volume, volume);
+}
+
+static void stream_callback(int voice) {
+	if (instance)
+		instance->handleStreamCallback(voice);
+}
+
+void OgcAudioDriver::handleStreamCallback(int voice) {
+	if (voice != 0 || !oggPlayer.isPlaying() || oggPlayer.isPaused())
+		return;
+
+	int32_t size = 0;
+	const uint8_t *buf = oggPlayer.getReadyBuffer(&size);
+
+	if (buf && size > 0) {
+		if (ASND_AddVoice(0, (void*) buf, size) == 0) {
+			oggPlayer.consumeBuffer();
+		}
+	}
 }
 
 void OgcAudioDriver::playStream(const uint8_t *data, int32_t length, bool loop, int volume) {

@@ -26,7 +26,6 @@
 #include "video.h"
 #include "videofilters.h"
 #include "filelist.h"
-#include "audio.h"
 #include "fileop.h"
 #include "utils/pngcodec.h"
 #include "input.h"

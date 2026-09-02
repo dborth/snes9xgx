@@ -16,7 +16,6 @@
 #include "s9xsupport.h"
 #include "video.h"
 #include "videofilters.h"
-#include "audio.h"
 #include "menu.h"
 #include "sram.h"
 #include "freeze.h"
@@ -77,7 +76,7 @@ int main(int argc, char *argv[])
 			// go back to checking if devices were inserted/removed
 			// since we're entering the menu
 			ResumeDeviceCheckingThread();
-			SwitchAudioMode(1);
+			platform->getAudio()->startMenuAudio();
 			SwitchMemoryModeMenu();
 
 			if(SNESROMSize == 0)
@@ -120,7 +119,7 @@ int main(int argc, char *argv[])
 		
 		autoboot = false;		
 		MenuRequested = false;
-		SwitchAudioMode(0);
+		platform->getAudio()->startEmulatorAudio();
 
 		Settings.Mute = GCSettings.MuteAudio;
 		Settings.SupportHiRes = (GCSettings.HiResolution == 1);

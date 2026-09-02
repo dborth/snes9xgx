@@ -18,8 +18,8 @@ class AudioDriver
 
 		virtual void init() = 0;
 		virtual void shutdown() = 0;
-		virtual void start() = 0;
-		virtual void stop() = 0;
+		virtual void startEmulatorAudio() = 0;
+		virtual void startMenuAudio() = 0;
 
 		//!Start a one-shot/short PCM voice. Returns a backend-defined
 		//!voice handle (>=0) on success, or a negative value if no voice

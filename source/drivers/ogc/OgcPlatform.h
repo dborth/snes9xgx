@@ -7,7 +7,7 @@
 
 #include "../Platform.h"
 #ifdef NO_SOUND
-#include "OgcNullAudioDriver.h"
+#include "OgcGameCubeAudioDriver.h"
 #else
 #include "OgcAudioDriver.h"
 #endif
@@ -31,7 +31,7 @@ class OgcPlatform : public Platform
 			this->videoDriver->init(width, height);
 
 #ifdef NO_SOUND
-			this->audioDriver = new OgcNullAudioDriver();
+			this->audioDriver = new OgcGameCubeAudioDriver();
 #else
 			this->audioDriver = new OgcAudioDriver();
 #endif

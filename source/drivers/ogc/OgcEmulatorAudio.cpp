@@ -1,19 +1,15 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
- *
- * Tantric 2008-2023
- *
- * audio.cpp
- *
- * Audio driver
- * Audio is fixed to 48Khz/16bit/Stereo
+ * libgui - drivers/ogc
+ * Daryl Borth 2009-2026
+ * OgcEmulatorAudio.cpp
  ***************************************************************************/
-#include "snes9xgx.h"
-#include "video.h"
-#include "drivers/Platform.h"
+#include <ogc/audio.h>
+#include <ogc/cache.h>
+#include <unistd.h>
 
-#include "snes9x/memmap.h"
-#include "snes9x/apu/apu.h"
+#include "OgcAudioDriver.h"
+#include "../../snes9xgx.h"
+#include "../../snes9x/apu/apu.h"
 
 /*** Double buffered audio ***/
 #define SAMPLES_TO_PROCESS 1024
@@ -52,8 +48,8 @@ enum RateState {
 // Leaves a mandatory 4-buffer (~85ms) safety zone before playab.
 #define MAX_QUEUED_BUFFERS 12
 
-static u8 soundbuffer[BUFFERCOUNT][AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
-static u8 dummy[AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
+static uint8_t soundbuffer[BUFFERCOUNT][AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
+static uint8_t dummy[AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
 
 // These are shared between S9xAudioCallback and the DMA interrupt callback,
 // so they must not be cached in registers across reads
@@ -75,17 +71,12 @@ static inline int getUnplayed() {
 	return (nextab - playab + BUFFERCOUNT) & (BUFFERCOUNT - 1);
 }
 
-static void DMACallback() {
-	AUDIO_InitDMA((u32) soundbuffer[playab], AUDIOBUFFER);
+void AudioDMACallback() {
+	AUDIO_InitDMA((uint32_t) soundbuffer[playab], AUDIOBUFFER);
 	playab = nextIndex(playab);
 }
 
-/****************************************************************************
- * AudioStart
- *
- * Called to kick off the Audio Queue
- ***************************************************************************/
-static void AudioStart()
+void AudioReset()
 {
 	nextab = 0;
 	playab = 0;
@@ -94,7 +85,7 @@ static void AudioStart()
 	rateState = RATE_STATE_NEUTRAL;
 }
 
-static void S9xAudioCallback (void *data) {
+void S9xAudioCallback (void *data) {
 	int unplayed = getUnplayed();
 	double rate = RATE_NEUTRAL;
 
@@ -147,7 +138,7 @@ static void S9xAudioCallback (void *data) {
 		// and restarts DMA cleanly instead of leaving playback dead on a stale,
 		// never-rearmed buffer index.
 		AUDIO_StopDMA();
-		AudioStart();
+		AudioReset();
 		return;
 	}
 
@@ -161,7 +152,7 @@ static void S9xAudioCallback (void *data) {
 
 			// Handle initial DMA pre-roll / priming
 			if(!dma_started && getUnplayed() >= UNPLAYED_START_LEVEL) {
-				AUDIO_InitDMA((u32) soundbuffer[0], AUDIOBUFFER);
+				AUDIO_InitDMA((uint32_t) soundbuffer[0], AUDIOBUFFER);
 				playab = nextIndex(0);
 				AUDIO_StartDMA();
 				dma_started = true;
@@ -171,30 +162,5 @@ static void S9xAudioCallback (void *data) {
 			// Safely drop excess samples to keep APU emulation moving.
 			S9xMixSamples(dummy, SAMPLES_TO_PROCESS);
 		}
-	}
-}
-
-/****************************************************************************
- * SwitchAudioMode
- *
- * Switches between menu sound and emulator sound
- ***************************************************************************/
-void SwitchAudioMode(int mode)
-{
-	if(mode == 0) // emulator
-	{
-		platform->getAudio()->stop();
-		AUDIO_RegisterDMACallback(DMACallback);
-		// Reset the ring so playback re-primes from a known state instead of
-		// resuming on stale indices left over from the previous session.
-		AudioStart();
-		S9xSetSamplesAvailableCallback(S9xAudioCallback, NULL);
-	}
-	else // menu
-	{
-		S9xSetSamplesAvailableCallback(NULL, NULL);
-		AUDIO_StopDMA();
-		AUDIO_RegisterDMACallback(NULL);
-		platform->getAudio()->start();
 	}
 }

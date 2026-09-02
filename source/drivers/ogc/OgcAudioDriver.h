@@ -14,8 +14,8 @@ class OgcAudioDriver : public AudioDriver
 	public:
 		void init() override;
 		void shutdown() override;
-		void start() override;
-		void stop() override;
+		void startMenuAudio() override;
+		void startEmulatorAudio() override;
 
 		int32_t playVoice(const uint8_t* data, int32_t length, int volume) override;
 		void stopVoice(int32_t voice) override;
@@ -35,6 +35,8 @@ class OgcAudioDriver : public AudioDriver
 		void handleStreamCallback(int voice);
 
 	private:
+		void stopMenuAudio();
+		void stopEmulatorAudio();
 		GuiSoundOggPlayer oggPlayer;
 		int streamVolume;
 };

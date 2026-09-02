@@ -15,7 +15,6 @@
 
 #include "snes9xgx.h"
 #include "video.h"
-#include "audio.h"
 #include "input.h"
 #include "snes9x/snes9x.h"
 #include "snes9x/memmap.h"
