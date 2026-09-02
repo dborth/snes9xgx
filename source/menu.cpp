@@ -1736,7 +1736,9 @@ static int MenuGame()
 					gameScreenImg = new GuiImage(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight(), (PixelColor){175, 200, 215, 255});
 					gameScreenImg->setStripe(10);
 					menu->mainWindow.insert(gameScreenImg, 0);
-					bgMusic->play();
+					#ifndef HW_DOL
+					bgMusic->play(); // startup music
+					#endif
 					selection = MENU_GAMESELECTION;
 				}
 			}
@@ -4930,6 +4932,7 @@ void MainMenu (int selection)
 	}
 #endif
 
+	#ifndef HW_DOL
 	if(firstRun) {
 		bgMusic = new GuiSound(bg_music, bg_music_size, SOUND::OGG);
 		bgMusic->setVolume(GCSettings.MusicVolume);
@@ -4942,6 +4945,7 @@ void MainMenu (int selection)
 
 	if(currentMenu == MENU_GAMESELECTION)
 		bgMusic->play(); // startup music
+	#endif
 
 	firstRun = false;
 
