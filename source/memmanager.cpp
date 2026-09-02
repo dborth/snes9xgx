@@ -19,7 +19,7 @@
 #include "libgui/GuiImageData.h"
 
 #ifdef HW_DOL
-#include "utils/vm/vm.h"
+#include "drivers/ogc/vm.h"
 #endif
 
 #define MEM2_SIZE		(42*1024*1024)
