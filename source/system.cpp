@@ -175,10 +175,6 @@ void SystemInit() {
 	isWiiVC = WiiDRC_Inited();
 	WPAD_Init();
 	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
-	DI_Init();
-	USBStorage_Initialize();
-	#else
-	DVD_Init (); // Initialize DVD subsystem (GameCube only)
 	#endif
 
 	SetupPads();

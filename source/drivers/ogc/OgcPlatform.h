@@ -6,15 +6,16 @@
 #pragma once
 
 #include "../Platform.h"
-#ifdef HW_DOL
-#include "GameCubeAudioDriver.h"
-#else
-#include "WiiAudioDriver.h"
-#endif
 #include "OgcVideoDriver.h"
 #include "OgcInputDriver.h"
-#include "OgcFileSystemDriver.h"
 #include "OgcThreadDriver.h"
+#ifdef HW_DOL
+#include "GameCubeAudioDriver.h"
+#include "GameCubeFileSystemDriver.h"
+#else
+#include "WiiAudioDriver.h"
+#include "WiiFileSystemDriver.h"
+#endif
 
 class OgcPlatform : public Platform
 {
@@ -40,7 +41,11 @@ class OgcPlatform : public Platform
 			this->inputDriver = new OgcInputDriver();
 			this->inputDriver->init();
 
-			this->fileSystemDriver = new OgcFileSystemDriver();
+#ifdef HW_DOL
+			this->fileSystemDriver = new GameCubeFileSystemDriver();
+#else
+			this->fileSystemDriver = new WiiFileSystemDriver();
+#endif
 			this->fileSystemDriver->init();
 		}
 
@@ -93,6 +98,6 @@ class OgcPlatform : public Platform
 		AudioDriver* audioDriver;
 		OgcVideoDriver* videoDriver;
 		OgcInputDriver* inputDriver;
-		OgcFileSystemDriver* fileSystemDriver;
+		FileSystemDriver* fileSystemDriver;
 		OgcThreadDriver* threadDriver;
 };
