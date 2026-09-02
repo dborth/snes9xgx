@@ -504,28 +504,6 @@ void UpdatePads()
 }
 
 /****************************************************************************
- * SetupPads
- * Allocates controllers and initializes hardware
- ***************************************************************************/
-static bool soundSync = false;
-
-void SetupPads()
-{
-	soundSync = Settings.SoundSync;
-	PAD_Init();
-
-	#ifdef HW_RVL
-	WPAD_Init();
-	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
-	WPAD_SetVRes(WPAD_CHAN_ALL, platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
-	#endif
-
-	for(int i = 0; i < 4; i++) {
-		userInput[i] = new GuiInputController(i);
-	}
-}
-
-/****************************************************************************
  * UpdateCursorPosition
  *
  * Updates X/Y coordinates for Superscope/mouse/justifier position
@@ -785,7 +763,7 @@ void ReportButtons ()
 		Settings.SoundSync = false;
 	}
 	else {
-		Settings.SoundSync = soundSync;
+		Settings.SoundSync = true;
 	}
 
 	/* Check for menu:

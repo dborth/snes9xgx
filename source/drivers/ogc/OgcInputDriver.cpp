@@ -15,11 +15,74 @@
 #include <unistd.h>
 #include <wiiuse/wpad.h>
 #include <ogc/conf.h>
+#include <ogc/system.h>
 
 #include "OgcInputDriver.h"
 #include "../Platform.h"
 #include "wiidrc.h"
+#include "../../system.h"
 #include "../../libgui/GuiInputController.h"
+
+extern "C" {
+s32 __STM_Close();
+s32 __STM_Init();
+}
+
+#ifdef HW_RVL
+void ShutdownCB() { ShutdownRequested = 1; }
+void ResetCB() { ResetRequested = 1; }
+#endif
+
+bool isWiiVC = false;
+
+OgcInputDriver::OgcInputDriver() {
+	for (int i = 0; i < 4; i++) {
+		rumbleCount[i] = 0;
+		rumbleRequest[i] = false;
+	}
+}
+
+OgcInputDriver::~OgcInputDriver() {
+	shutdown();
+}
+
+void OgcInputDriver::init() {
+	PAD_Init();
+
+	#ifdef HW_RVL
+	// Wii Power/Reset buttons
+	__STM_Close();
+	__STM_Init();
+	SYS_SetPowerCallback(ShutdownCB);
+	SYS_SetResetCallback(ResetCB);
+
+	WiiDRC_Init();
+	isWiiVC = WiiDRC_Inited();
+	WPAD_Init();
+	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
+	WPAD_SetVRes(WPAD_CHAN_ALL, platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
+	WPAD_SetPowerButtonCallback((WPADShutdownCallback)ShutdownCB);
+	#endif
+
+	InitUserInputControllers();
+}
+
+void OgcInputDriver::shutdown() {
+	for (int i = 0; i < 4; i++) {
+		#ifdef HW_RVL
+		WPAD_Rumble(i, 0);
+		#endif
+		PAD_ControlMotor(i, PAD_MOTOR_STOP);
+		rumbleCount[i] = 0;
+		rumbleRequest[i] = false;
+	}
+}
+
+void OgcInputDriver::setRumble(int channel, bool rumble) {
+	if (channel >= 0 && channel < 4) {
+		rumbleRequest[channel] = rumble;
+	}
+}
 
 static inline float clampf(float v, float lo, float hi) {
     return (v < lo) ? lo : (v > hi) ? hi : v;
@@ -138,38 +201,6 @@ static float NormalizeWPADAnalog(int pos, int min, int max, int center) {
 	}
 }
 #endif
-
-OgcInputDriver::OgcInputDriver() {
-	for (int i = 0; i < 4; i++) {
-		rumbleCount[i] = 0;
-		rumbleRequest[i] = false;
-	}
-}
-
-OgcInputDriver::~OgcInputDriver() {
-	shutdown();
-}
-
-void OgcInputDriver::init() {
-	InitUserInputControllers();
-}
-
-void OgcInputDriver::shutdown() {
-	for (int i = 0; i < 4; i++) {
-		#ifdef HW_RVL
-		WPAD_Rumble(i, 0);
-		#endif
-		PAD_ControlMotor(i, PAD_MOTOR_STOP);
-		rumbleCount[i] = 0;
-		rumbleRequest[i] = false;
-	}
-}
-
-void OgcInputDriver::setRumble(int channel, bool rumble) {
-	if (channel >= 0 && channel < 4) {
-		rumbleRequest[channel] = rumble;
-	}
-}
 
 void OgcInputDriver::update(float deltaTime) {
 	#ifdef HW_RVL
