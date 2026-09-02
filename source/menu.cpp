@@ -4910,27 +4910,24 @@ void MainMenu (int selection)
 	std::unique_ptr<Menu> menuInstance = std::make_unique<Menu>();
 	menu = menuInstance.get();
 
-	if(firstRun && RunOnWorkerThread(FirstRunTask)) {
-		while(!IsWorkerThreadFinished())
-		{
-			if(!UpdateGui()) break;
-		}
-	}
+	if(firstRun) {
+		firstRun = false;
 
-#ifdef HW_RVL
-	if(firstRun)
-	{
+		if(RunOnWorkerThread(FirstRunTask)) {
+			while(!IsWorkerThreadFinished()) {
+				if(!UpdateGui()) break;
+			}
+		}
+
+		#ifdef HW_RVL
 		uint32_t ios = IOS_GetVersion();
 
 		if(!SupportedIOS(ios))
 			ErrorPrompt("The current IOS is unsupported. Functionality and/or stability may be adversely affected.");
 		else if(!SaneIOS(ios))
 			ErrorPrompt("The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected.");
-	}
-#endif
+		#endif
 
-	if(firstRun) {
-		firstRun = false;
 		#ifdef HW_DOL
 		bgMusic = new GuiSound();
 		enterSound = new GuiSound();
