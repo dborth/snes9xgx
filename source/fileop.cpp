@@ -91,8 +91,7 @@ static int      workerResult    = 0;     // protected by WorkerSync().mutex - re
  *
  * Signals the device thread to start, and resumes the thread.
  ***************************************************************************/
-void
-ResumeDeviceCheckingThread()
+void ResumeDeviceCheckingThread()
 {
 	if(!deviceThreadStarted)
 		return;
@@ -108,8 +107,7 @@ ResumeDeviceCheckingThread()
  *
  * Signals the device thread to stop.
  ***************************************************************************/
-void
-HaltDeviceCheckingThread()
+void HaltDeviceCheckingThread()
 {
 	if(!deviceThreadStarted)
 		return;
@@ -127,8 +125,7 @@ HaltDeviceCheckingThread()
  *
  * Signals the parse thread to stop.
  ***************************************************************************/
-void
-HaltParseThread()
+void HaltParseThread()
 {
 	parseHalt = true;
 	ParseSync().mutex.lock();
@@ -137,14 +134,12 @@ HaltParseThread()
 	ParseSync().mutex.unlock();
 }
 
-
 /****************************************************************************
  * devicecallback
  *
  * This checks our devices for changes (SD/USB/DVD removed)
  ***************************************************************************/
-static void *
-devicecallback (void *arg)
+static void * devicecallback (void *arg)
 {
 	while (1)
 	{
@@ -176,8 +171,7 @@ devicecallback (void *arg)
 	return nullptr;
 }
 
-static void *
-parsecallback (void *arg)
+static void * parsecallback (void *arg)
 {
 	ParseSync().mutex.lock();
 	while(1)
@@ -256,8 +250,7 @@ int GetWorkerThreadResult()
  * Starts the device-checking, folder-parsing, and background worker
  * threads via the libgui Thread/Mutex/Cond HAL (see ThreadSync above).
  ***************************************************************************/
-void
-InitFileOpThreads()
+void InitFileOpThreads()
 {
 	SaveBufferLock();
 
@@ -656,8 +649,7 @@ bool CreateDirectory(char * path) {
  * AllocSaveBuffer ()
  * Clear and allocate the savebuffer
  ***************************************************************************/
-void
-AllocSaveBuffer ()
+void AllocSaveBuffer ()
 {
 	SaveBufferLock().lock();
 	memset (savebuffer, 0, SAVEBUFFERSIZE);
@@ -667,8 +659,7 @@ AllocSaveBuffer ()
  * FreeSaveBuffer ()
  * Free the savebuffer memory
  ***************************************************************************/
-void
-FreeSaveBuffer ()
+void FreeSaveBuffer ()
 {
 	SaveBufferLock().unlock();
 }
@@ -678,8 +669,7 @@ FreeSaveBuffer ()
  * Loads the selected file # from the specified 7z into rbuffer
  * Returns file size
  ***************************************************************************/
-size_t
-LoadSzFile(char * filepath, unsigned char * rbuffer)
+size_t LoadSzFile(char * filepath, unsigned char * rbuffer)
 {
 	size_t size = 0;
 
@@ -710,8 +700,7 @@ LoadSzFile(char * filepath, unsigned char * rbuffer)
 /****************************************************************************
  * LoadFile
  ***************************************************************************/
-size_t
-LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersize, bool silent)
+size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersize, bool silent)
 {
 	char zipbuffer[2048];
 	size_t size = 0, offset = 0, readsize = 0;
@@ -875,8 +864,7 @@ void LoadBgMusic()
  * SaveFile
  * Write buffer to file
  ***************************************************************************/
-size_t
-SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
+size_t SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 {
 	size_t written = 0;
 	size_t writesize, nextwrite;
