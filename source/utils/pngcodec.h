@@ -25,7 +25,7 @@ bool PNGGetImageSize(const uint8_t *src, int *outWidth, int *outHeight);
 // flat, row-major RGBA8 buffer (4 bytes/pixel, tightly packed, no tiling).
 // width/height must match the image's actual dimensions exactly - use
 // PNGGetImageSize() first if they aren't already known.
-// Returns NULL on failure. Caller frees the result with mem1_free().
+// Returns NULL on failure. Caller frees the result.
 uint8_t * DecodePNGToRGBA8(const uint8_t *src, int width, int height);
 
 // Encodes a flat, row-major RGB24 buffer (3 bytes/pixel) into a complete
