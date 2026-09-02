@@ -1736,9 +1736,7 @@ static int MenuGame()
 					gameScreenImg = new GuiImage(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight(), (PixelColor){175, 200, 215, 255});
 					gameScreenImg->setStripe(10);
 					menu->mainWindow.insert(gameScreenImg, 0);
-					#ifndef HW_DOL
-					bgMusic->play(); // startup music
-					#endif
+					bgMusic->play();
 					selection = MENU_GAMESELECTION;
 				}
 			}
@@ -1746,7 +1744,6 @@ static int MenuGame()
 		else if(closeBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_EXIT;
-
 			exitSound->play();
 			menu->bgTopImg.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
 			closeBtn.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
@@ -4932,22 +4929,22 @@ void MainMenu (int selection)
 	}
 #endif
 
-	#ifndef HW_DOL
 	if(firstRun) {
+		firstRun = false;
+		#ifdef HW_DOL
+		bgMusic = new GuiSound();
+		enterSound = new GuiSound();
+		exitSound = new GuiSound();
+		#else
 		bgMusic = new GuiSound(bg_music, bg_music_size, SOUND::OGG);
-		bgMusic->setVolume(GCSettings.MusicVolume);
 		bgMusic->setLoop(true);
 		enterSound = new GuiSound(enter_ogg, enter_ogg_size, SOUND::OGG);
-		enterSound->setVolume(GCSettings.SFXVolume);
 		exitSound = new GuiSound(exit_ogg, exit_ogg_size, SOUND::OGG);
-		exitSound->setVolume(GCSettings.SFXVolume);
+		#endif
 	}
 
 	if(currentMenu == MENU_GAMESELECTION)
-		bgMusic->play(); // startup music
-	#endif
-
-	firstRun = false;
+		bgMusic->play();
 
 	while(currentMenu != MENU_EXIT || SNESROMSize <= 0)
 	{

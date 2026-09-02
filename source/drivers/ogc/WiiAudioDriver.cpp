@@ -23,6 +23,7 @@ void WiiAudioDriver::init() {
 
 void WiiAudioDriver::startEmulatorAudio() {
 	stopMenuAudio();
+	AudioReset();
 	AUDIO_RegisterDMACallback(AudioDMACallback);
 	S9xSetSamplesAvailableCallback(S9xAudioCallback, NULL);
 }
