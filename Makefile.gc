@@ -35,8 +35,7 @@ CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
 				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
 				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
 				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
-				-flto=auto \
-				-fomit-frame-pointer -fno-strict-aliasing \
+				-flto=auto -fomit-frame-pointer -fno-strict-aliasing \
 				-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable \
 				-Wno-format -Wno-format-overflow -Wno-stringop-truncation \
 				-Wno-stringop-overflow -Wno-format-truncation -Wno-narrowing -Wno-sign-compare \
@@ -83,7 +82,8 @@ CPPFILES	:=	$(filter-out GuiSoundOggPlayer.cpp WiiAudioDriver.cpp WiiFileSystemD
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.ttf) \
-					$(wildcard $(dir)/*.lang) $(wildcard $(dir)/*.png)))
+					$(wildcard $(dir)/*.lang) $(wildcard $(dir)/*.png) \
+					$(wildcard $(dir)/*.pcm)))
 
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -150,7 +150,7 @@ $(OUTPUT).elf: $(OFILES)
 $(OFILES_SOURCES) : $(HFILES)
 
 #---------------------------------------------------------------------------------
-# This rule links in binary data with these extensions: ttf lang png
+# This rule links in binary data with these extensions: ttf lang png pcm
 #---------------------------------------------------------------------------------
 %.ttf.o %_ttf.h : %.ttf
 	@echo $(notdir $<)
@@ -161,6 +161,10 @@ $(OFILES_SOURCES) : $(HFILES)
 	$(bin2o)
 
 %.png.o %_png.h : %.png
+	@echo $(notdir $<)
+	$(bin2o)
+	
+%.pcm.o %_pcm.h : %.pcm
 	@echo $(notdir $<)
 	$(bin2o)
 

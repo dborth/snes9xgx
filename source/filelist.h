@@ -32,8 +32,8 @@
 #include "sv_lang.h"
 
 // Sounds
-#ifdef HW_RVL
-// background music is Wii-only
+#ifndef HW_DOL
+// exclude background music on GameCube
 #include "bg_music_ogg.h"
 #include "enter_ogg.h"
 #include "exit_ogg.h"
