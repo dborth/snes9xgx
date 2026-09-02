@@ -37,10 +37,10 @@
 #include "snes9x/controls.h"
 
 #ifdef HW_RVL
-#include "utils/retrode.h"
-#include "utils/xbox360.h"
-#include "utils/hornet.h"
-#include "utils/mayflash.h"
+#include "drivers/ogc/input/retrode.h"
+#include "drivers/ogc/input/xbox360.h"
+#include "drivers/ogc/input/hornet.h"
+#include "drivers/ogc/input/mayflash.h"
 #endif
 
 #define ANALOG_SENSITIVITY 30
