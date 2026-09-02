@@ -311,7 +311,7 @@ void OgcVideoDriver::presentBuffer()
 }
 
 OgcVideoDriver::OgcVideoDriver()
-    : screenWidth(0), screenHeight(0), imageRenderer(nullptr), glyphRenderer(nullptr), emulatorVideoDriver(nullptr)
+    : screenWidth(0), screenHeight(0), imageRenderer(nullptr), glyphRenderer(nullptr), emulatorVideo(nullptr)
 {
 
 }
@@ -326,8 +326,8 @@ void OgcVideoDriver::init(int width, int height)
 {
 	screenWidth = width;
 	screenHeight = height;
-	emulatorVideoDriver = new OgcEmulatorVideoDriver();
-	emulatorVideoDriver->init(this);
+	emulatorVideo = new OgcEmulatorVideo();
+	emulatorVideo->init(this);
 
 	VIDEO_Init();
 

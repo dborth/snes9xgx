@@ -3,7 +3,6 @@
  * Daryl Borth 2026
  * GuiSoundOggPlayer.cpp
  ***************************************************************************/
-#ifndef NO_SOUND
 #include "GuiSoundOggPlayer.h"
 #include <malloc.h>
 #include <string.h>
@@ -157,4 +156,3 @@ void GuiSoundOggPlayer::threadLoop() {
 		}
 	}
 }
-#endif

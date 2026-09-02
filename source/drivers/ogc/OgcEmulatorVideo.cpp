@@ -7,7 +7,7 @@
  * Tantric 2008-2023
  * Daryl Borth 2008-2026
  *
- * OgcEmulatorVideoDriver.cpp
+ * OgcEmulatorVideo.cpp
  ***************************************************************************/
 #include <gccore.h>
 #include <ogcsys.h>
@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <ogc/machine/processor.h>
 
-#include "OgcEmulatorVideoDriver.h"
+#include "OgcEmulatorVideo.h"
 #include "OgcVideoDriver.h"
 #include "../../snes9xgx.h"
 #include "../../video.h"
@@ -240,7 +240,7 @@ static GXRModeObj *tvmodes[4] = {
  * resolution mode table, keyed off the broadcast standard of baseMode
  * (as returned by OgcVideoDriver::findVideoMode()).
  ***************************************************************************/
-void OgcEmulatorVideoDriver::configureOriginalModeTables(GXRModeObj* baseMode)
+void OgcEmulatorVideo::configureOriginalModeTables(GXRModeObj* baseMode)
 {
 	switch (baseMode->viTVMode >> 2)
 	{
@@ -288,7 +288,7 @@ void OgcEmulatorVideoDriver::configureOriginalModeTables(GXRModeObj* baseMode)
 /****************************************************************************
  * Scanline Support Functions
  ***************************************************************************/
-void OgcEmulatorVideoDriver::initScanlineTexture()
+void OgcEmulatorVideo::initScanlineTexture()
 {
 	// GX_TF_I8 represents one byte per pixel.
 	// We create an 8x4 tile: Rows 0 and 2 are white (0xFF), Rows 1 and 3 are dark (0xA0).
@@ -312,7 +312,7 @@ void OgcEmulatorVideoDriver::initScanlineTexture()
 	GX_LoadTexObj(&scanlineTexObj, GX_TEXMAP1);
 }
 
-void OgcEmulatorVideoDriver::setupScanlineFilterTEV()
+void OgcEmulatorVideo::setupScanlineFilterTEV()
 {
 	GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_TEX1, GX_TEX_ST, GX_F32, 0);
 
@@ -349,7 +349,7 @@ void OgcEmulatorVideoDriver::setupScanlineFilterTEV()
 	GX_SetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
 }
 
-bool OgcEmulatorVideoDriver::shouldApplyScanlines()
+bool OgcEmulatorVideo::shouldApplyScanlines()
 {
 	return GCSettings.videoScanlines && vmode->efbHeight > 300;
 }
@@ -357,7 +357,7 @@ bool OgcEmulatorVideoDriver::shouldApplyScanlines()
 /****************************************************************************
  * Scaler Support Functions
  ***************************************************************************/
-void OgcEmulatorVideoDriver::drawInit()
+void OgcEmulatorVideo::drawInit()
 {
 	GX_ClearVtxDesc ();
 	GX_SetVtxDesc (GX_VA_POS, GX_INDEX8);
@@ -401,7 +401,7 @@ draw_vert (u8 pos, f32 s, f32 t)
 	GX_TexCoord2f32 (s, t);
 }
 
-void OgcEmulatorVideoDriver::drawSquare()
+void OgcEmulatorVideo::drawSquare()
 {
 	GX_LoadPosMtxImm (modelView, GX_PNMTX0);
 
@@ -459,7 +459,7 @@ void OgcEmulatorVideoDriver::drawSquare()
 	}
 }
 
-void OgcEmulatorVideoDriver::resetFbWidth(int width, GXRModeObj *rmode)
+void OgcEmulatorVideo::resetFbWidth(int width, GXRModeObj *rmode)
 {
 	if(rmode->fbWidth == width)
 		return;
@@ -479,7 +479,7 @@ void OgcEmulatorVideoDriver::resetFbWidth(int width, GXRModeObj *rmode)
  *
  * Reset the video/rendering mode for the emulator rendering
  ***************************************************************************/
-void OgcEmulatorVideoDriver::resetVideo()
+void OgcEmulatorVideo::resetVideo()
 {
 	GXRModeObj *rmode = videoDriver->findVideoMode();
 	configureOriginalModeTables(rmode);
@@ -580,7 +580,7 @@ void OgcEmulatorVideoDriver::resetVideo()
 }
 
 // Un-swizzles a 4x4-tiled GX_TF_RGB5A3 texture into dst (RGB24)
-void OgcEmulatorVideoDriver::untileRGB5A3ToRGB24(const void * tiledTexture, int width, int height, uint8_t* dst)
+void OgcEmulatorVideo::untileRGB5A3ToRGB24(const void * tiledTexture, int width, int height, uint8_t* dst)
 {
 	int padded_width = (width + 3) & ~3;
 	const u16 * tex16 = (const u16 *) tiledTexture;
@@ -608,7 +608,7 @@ void OgcEmulatorVideoDriver::untileRGB5A3ToRGB24(const void * tiledTexture, int 
 	}
 }
 
-void OgcEmulatorVideoDriver::readFrameRGB24(uint8_t* dst)
+void OgcEmulatorVideo::readFrameRGB24(uint8_t* dst)
 {
 	untileRGB5A3ToRGB24(texturemem, gameScreenPng.width, gameScreenPng.height, dst);
 }
@@ -709,7 +709,7 @@ static void MakeTexturePitch1032(const void *src, void *dst, s32 width, s32 heig
     );
 }
 
-void OgcEmulatorVideoDriver::init(VideoDriver* driver)
+void OgcEmulatorVideo::init(VideoDriver* driver)
 {
 	videoDriver = static_cast<OgcVideoDriver*>(driver);
 	vwidth = 100;
@@ -719,7 +719,7 @@ void OgcEmulatorVideoDriver::init(VideoDriver* driver)
 /****************************************************************************
  * presentFrame
  ***************************************************************************/
-void OgcEmulatorVideoDriver::presentFrame(int width, int height)
+void OgcEmulatorVideo::presentFrame(int width, int height)
 {
 	vwidth = width;
 	vheight = height;

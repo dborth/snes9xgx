@@ -6,7 +6,7 @@
 #include "../AudioDriver.h"
 #include "../../snes9x/apu/apu.h"
 
-class OgcGameCubeAudioDriver : public AudioDriver
+class GameCubeAudioDriver : public AudioDriver
 {
 	public:
 		void init() override { AUDIO_Init(NULL); AUDIO_SetDSPSampleRate(AI_SAMPLERATE_48KHZ); AUDIO_RegisterDMACallback(AudioDMACallback); }

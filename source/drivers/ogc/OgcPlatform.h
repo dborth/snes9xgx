@@ -6,10 +6,10 @@
 #pragma once
 
 #include "../Platform.h"
-#ifdef NO_SOUND
-#include "OgcGameCubeAudioDriver.h"
+#ifdef HW_DOL
+#include "GameCubeAudioDriver.h"
 #else
-#include "OgcAudioDriver.h"
+#include "WiiAudioDriver.h"
 #endif
 #include "OgcVideoDriver.h"
 #include "OgcInputDriver.h"
@@ -30,10 +30,10 @@ class OgcPlatform : public Platform
 			this->videoDriver = new OgcVideoDriver();
 			this->videoDriver->init(width, height);
 
-#ifdef NO_SOUND
-			this->audioDriver = new OgcGameCubeAudioDriver();
+#ifdef HW_DOL
+			this->audioDriver = new GameCubeAudioDriver();
 #else
-			this->audioDriver = new OgcAudioDriver();
+			this->audioDriver = new WiiAudioDriver();
 #endif
 			this->audioDriver->init();
 

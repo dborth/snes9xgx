@@ -34,7 +34,7 @@ INCLUDES	:=	source source/snes9x
 CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
 				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
 				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
-				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ -DNO_SOUND \
+				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
 				-flto=auto \
 				-fomit-frame-pointer -fno-strict-aliasing \
 				-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable \
@@ -79,7 +79,7 @@ export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 #---------------------------------------------------------------------------------
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
-CPPFILES	:=	$(filter-out GuiSoundOggPlayer.cpp OgcAudioDriver.cpp, $(CPPFILES))
+CPPFILES	:=	$(filter-out GuiSoundOggPlayer.cpp WiiAudioDriver.cpp, $(CPPFILES))
 sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
 BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.ttf) \

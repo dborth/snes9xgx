@@ -6,7 +6,7 @@
 #pragma once
 
 #include <gccore.h>
-#include "OgcEmulatorVideoDriver.h"
+#include "OgcEmulatorVideo.h"
 #include "../VideoDriver.h"
 
 extern uint32_t FrameTimer;
@@ -29,7 +29,7 @@ class OgcVideoDriver : public VideoDriver
 
 		ImageRenderer* getImageRenderer() override { return imageRenderer; }
 		GlyphRenderer* getGlyphRenderer() override { return glyphRenderer; }
-		OgcEmulatorVideoDriver* getEmulatorVideo() override { return emulatorVideoDriver; }
+		OgcEmulatorVideo* getEmulatorVideo() override { return emulatorVideo; }
 
 		GXRModeObj* findVideoMode();
 		void setupVideoMode(GXRModeObj* mode);
@@ -42,7 +42,7 @@ class OgcVideoDriver : public VideoDriver
 
 		ImageRenderer* imageRenderer;
 		GlyphRenderer* glyphRenderer;
-		OgcEmulatorVideoDriver* emulatorVideoDriver;
+		OgcEmulatorVideo* emulatorVideo;
 };
 
 class OgcImageRenderer : public ImageRenderer

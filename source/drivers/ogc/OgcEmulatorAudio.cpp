@@ -7,7 +7,7 @@
 #include <ogc/cache.h>
 #include <unistd.h>
 
-#include "OgcAudioDriver.h"
+#include "WiiAudioDriver.h"
 #include "../../snes9xgx.h"
 #include "../../snes9x/apu/apu.h"
 

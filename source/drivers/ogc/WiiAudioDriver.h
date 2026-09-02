@@ -1,7 +1,7 @@
 /****************************************************************************
  * libgui - drivers/ogc
  * Daryl Borth 2009-2026
- * OgcAudioDriver.h
+ * WiiAudioDriver.h
  ***************************************************************************/
 #pragma once
 
@@ -9,7 +9,7 @@
 #include "../AudioDriver.h"
 #include "../../libgui/GuiSoundOggPlayer.h"
 
-class OgcAudioDriver : public AudioDriver
+class WiiAudioDriver : public AudioDriver
 {
 	public:
 		void init() override;

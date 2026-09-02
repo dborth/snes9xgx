@@ -3,7 +3,7 @@
  *
  * Daryl Borth 2008-2026
  *
- * OgcEmulatorVideoDriver.h
+ * OgcEmulatorVideo.h
  ***************************************************************************/
 #pragma once
 
@@ -19,10 +19,10 @@ extern int CheckVideo;
 
 class OgcVideoDriver;
 
-class OgcEmulatorVideoDriver : public EmulatorVideoDriver
+class OgcEmulatorVideo : public EmulatorVideoDriver
 {
 	public:
-		OgcEmulatorVideoDriver() : videoDriver(nullptr) {}
+		OgcEmulatorVideo() : videoDriver(nullptr) {}
 
 		void init(VideoDriver* videoDriver) override;
 		void resetVideo() override;
