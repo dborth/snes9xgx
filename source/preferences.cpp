@@ -18,7 +18,7 @@
 #include "system.h"
 #include "menu.h"
 #include "fileop.h"
-#include "videofilters.h"
+#include "drivers/ogc/videofilters.h"
 #include "video.h"
 #include "filebrowser.h"
 #include "input.h"

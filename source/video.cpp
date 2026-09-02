@@ -24,7 +24,7 @@
 #include "menu.h"
 #include "memmanager.h"
 #include "video.h"
-#include "videofilters.h"
+#include "drivers/ogc/videofilters.h"
 #include "filelist.h"
 #include "fileop.h"
 #include "utils/pngcodec.h"

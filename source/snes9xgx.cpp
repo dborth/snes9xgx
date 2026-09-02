@@ -15,7 +15,7 @@
 #include "system.h"
 #include "s9xsupport.h"
 #include "video.h"
-#include "videofilters.h"
+#include "drivers/ogc/videofilters.h"
 #include "menu.h"
 #include "sram.h"
 #include "freeze.h"

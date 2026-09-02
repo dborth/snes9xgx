@@ -31,7 +31,7 @@
 #include "preferences.h"
 #include "button_mapping.h"
 #include "input.h"
-#include "videofilters.h"
+#include "drivers/ogc/videofilters.h"
 #include "filelist.h"
 #include "libgui/Gui.h"
 #include "menu.h"
