@@ -27,7 +27,7 @@ class GuiSaveBrowser : public GuiElement
 		void resetState();
 		void setFocus(int f);
 		void draw();
-		void update(GuiInputController * c);
+		void update(InputController * c);
 	protected:
 		int selectedItem;
 		int action;

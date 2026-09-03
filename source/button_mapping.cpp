@@ -9,7 +9,7 @@
  * Controller button mapping
  ***************************************************************************/
 
-#include "libgui/Gui.h"
+#include "drivers/InputData.h"
 #include "button_mapping.h"
 
 /****************************************************************************
@@ -24,21 +24,21 @@ CtrlrMap ctrlr_def[6] = {
 	GUI_HW_GAMECUBE,
 	13,
 	{
-		{GUI_BTN_DOWN, "DOWN"},
-		{GUI_BTN_UP, "UP"},
-		{GUI_BTN_LEFT, "LEFT"},
-		{GUI_BTN_RIGHT, "RIGHT"},
-		{GUI_BTN_A, "A"},
-		{GUI_BTN_B, "B"},
-		{GUI_BTN_X, "X"},
-		{GUI_BTN_Y, "Y"},
-		{GUI_BTN_PLUS, "START"},
-		{GUI_BTN_PLUS, "START"},
-		{GUI_TRIGGER_L, "L"},
-		{GUI_TRIGGER_R, "R"},
-		{GUI_TRIGGER_ZL, "Z"},
-		{GUI_BTN_NONE, ""},
-		{GUI_BTN_NONE, ""}
+		{INPUT_BTN_DOWN, "DOWN"},
+		{INPUT_BTN_UP, "UP"},
+		{INPUT_BTN_LEFT, "LEFT"},
+		{INPUT_BTN_RIGHT, "RIGHT"},
+		{INPUT_BTN_A, "A"},
+		{INPUT_BTN_B, "B"},
+		{INPUT_BTN_X, "X"},
+		{INPUT_BTN_Y, "Y"},
+		{INPUT_BTN_PLUS, "START"},
+		{INPUT_BTN_PLUS, "START"},
+		{INPUT_TRIGGER_L, "L"},
+		{INPUT_TRIGGER_R, "R"},
+		{INPUT_TRIGGER_ZL, "Z"},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""}
 	}
 },
 // Wiimote btn def
@@ -46,21 +46,21 @@ CtrlrMap ctrlr_def[6] = {
 	GUI_HW_WIIMOTE,
 	11,
 	{
-		{GUI_BTN_DOWN, "DOWN"},
-		{GUI_BTN_UP, "UP"},
-		{GUI_BTN_LEFT, "LEFT"},
-		{GUI_BTN_RIGHT, "RIGHT"},
-		{GUI_BTN_A, "A"},
-		{GUI_BTN_B, "B"},
-		{GUI_BTN_1, "1"},
-		{GUI_BTN_2, "2"},
-		{GUI_BTN_PLUS, "PLUS"},
-		{GUI_BTN_MINUS, "MINUS"},
-		{GUI_BTN_HOME, "HOME"},
-		{GUI_BTN_NONE, ""},
-		{GUI_BTN_NONE, ""},
-		{GUI_BTN_NONE, ""},
-		{GUI_BTN_NONE, ""}
+		{INPUT_BTN_DOWN, "DOWN"},
+		{INPUT_BTN_UP, "UP"},
+		{INPUT_BTN_LEFT, "LEFT"},
+		{INPUT_BTN_RIGHT, "RIGHT"},
+		{INPUT_BTN_A, "A"},
+		{INPUT_BTN_B, "B"},
+		{INPUT_BTN_1, "1"},
+		{INPUT_BTN_2, "2"},
+		{INPUT_BTN_PLUS, "PLUS"},
+		{INPUT_BTN_MINUS, "MINUS"},
+		{INPUT_BTN_HOME, "HOME"},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""}
 	}
 },
 // Nunchuk btn def
@@ -68,21 +68,21 @@ CtrlrMap ctrlr_def[6] = {
 	GUI_HW_NUNCHUK,
 	13,
 	{
-		{GUI_BTN_DOWN, "DOWN"},
-		{GUI_BTN_UP, "UP"},
-		{GUI_BTN_LEFT, "LEFT"},
-		{GUI_BTN_RIGHT, "RIGHT"},
-		{GUI_BTN_A, "A"},
-		{GUI_BTN_B, "B"},
-		{GUI_BTN_1, "1"},
-		{GUI_BTN_2, "2"},
-		{GUI_BTN_PLUS, "PLUS"},
-		{GUI_BTN_MINUS, "MINUS"},
-		{GUI_BTN_HOME, "HOME"},
-		{GUI_TRIGGER_ZL, "Z"},
-		{GUI_TRIGGER_L, "C"},
-		{GUI_BTN_NONE, ""},
-		{GUI_BTN_NONE, ""}
+		{INPUT_BTN_DOWN, "DOWN"},
+		{INPUT_BTN_UP, "UP"},
+		{INPUT_BTN_LEFT, "LEFT"},
+		{INPUT_BTN_RIGHT, "RIGHT"},
+		{INPUT_BTN_A, "A"},
+		{INPUT_BTN_B, "B"},
+		{INPUT_BTN_1, "1"},
+		{INPUT_BTN_2, "2"},
+		{INPUT_BTN_PLUS, "PLUS"},
+		{INPUT_BTN_MINUS, "MINUS"},
+		{INPUT_BTN_HOME, "HOME"},
+		{INPUT_TRIGGER_ZL, "Z"},
+		{INPUT_TRIGGER_L, "C"},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""}
 	}
 },
 // Classic btn def
@@ -90,21 +90,21 @@ CtrlrMap ctrlr_def[6] = {
 	GUI_HW_CLASSIC,
 	15,
 	{
-		{GUI_BTN_DOWN, "DOWN"},
-		{GUI_BTN_UP, "UP"},
-		{GUI_BTN_LEFT, "LEFT"},
-		{GUI_BTN_RIGHT, "RIGHT"},
-		{GUI_BTN_A, "A"},
-		{GUI_BTN_B, "B"},
-		{GUI_BTN_X, "X"},
-		{GUI_BTN_Y, "Y"},
-		{GUI_BTN_PLUS, "PLUS"},
-		{GUI_BTN_MINUS, "MINUS"},
-		{GUI_BTN_HOME, "HOME"},
-		{GUI_TRIGGER_L, "L TRIG"},
-		{GUI_TRIGGER_R, "R TRIG"},
-		{GUI_TRIGGER_ZL, "ZL"},
-		{GUI_TRIGGER_ZR, "ZR"}
+		{INPUT_BTN_DOWN, "DOWN"},
+		{INPUT_BTN_UP, "UP"},
+		{INPUT_BTN_LEFT, "LEFT"},
+		{INPUT_BTN_RIGHT, "RIGHT"},
+		{INPUT_BTN_A, "A"},
+		{INPUT_BTN_B, "B"},
+		{INPUT_BTN_X, "X"},
+		{INPUT_BTN_Y, "Y"},
+		{INPUT_BTN_PLUS, "PLUS"},
+		{INPUT_BTN_MINUS, "MINUS"},
+		{INPUT_BTN_HOME, "HOME"},
+		{INPUT_TRIGGER_L, "L TRIG"},
+		{INPUT_TRIGGER_R, "R TRIG"},
+		{INPUT_TRIGGER_ZL, "ZL"},
+		{INPUT_TRIGGER_ZR, "ZR"}
 	}
 },
 // Wii U Pro controller
@@ -112,21 +112,21 @@ CtrlrMap ctrlr_def[6] = {
 	GUI_HW_WUPC,
 	15,
 	{
-		{GUI_BTN_DOWN, "DOWN"},
-		{GUI_BTN_UP, "UP"},
-		{GUI_BTN_LEFT, "LEFT"},
-		{GUI_BTN_RIGHT, "RIGHT"},
-		{GUI_BTN_A, "A"},
-		{GUI_BTN_B, "B"},
-		{GUI_BTN_X, "X"},
-		{GUI_BTN_Y, "Y"},
-		{GUI_BTN_PLUS, "PLUS"},
-		{GUI_BTN_MINUS, "MINUS"},
-		{GUI_BTN_HOME, "HOME"},
-		{GUI_TRIGGER_L, "L"},
-		{GUI_TRIGGER_R, "R"},
-		{GUI_TRIGGER_ZL, "ZL"},
-		{GUI_TRIGGER_ZR, "ZR"}
+		{INPUT_BTN_DOWN, "DOWN"},
+		{INPUT_BTN_UP, "UP"},
+		{INPUT_BTN_LEFT, "LEFT"},
+		{INPUT_BTN_RIGHT, "RIGHT"},
+		{INPUT_BTN_A, "A"},
+		{INPUT_BTN_B, "B"},
+		{INPUT_BTN_X, "X"},
+		{INPUT_BTN_Y, "Y"},
+		{INPUT_BTN_PLUS, "PLUS"},
+		{INPUT_BTN_MINUS, "MINUS"},
+		{INPUT_BTN_HOME, "HOME"},
+		{INPUT_TRIGGER_L, "L"},
+		{INPUT_TRIGGER_R, "R"},
+		{INPUT_TRIGGER_ZL, "ZL"},
+		{INPUT_TRIGGER_ZR, "ZR"}
 	}
 },
 // Wii U Gamepad btn def
@@ -134,21 +134,21 @@ CtrlrMap ctrlr_def[6] = {
 	GUI_HW_DRC,
 	15,
 	{
-		{GUI_BTN_DOWN, "DOWN"},
-		{GUI_BTN_UP, "UP"},
-		{GUI_BTN_LEFT, "LEFT"},
-		{GUI_BTN_RIGHT, "RIGHT"},
-		{GUI_BTN_A, "A"},
-		{GUI_BTN_B, "B"},
-		{GUI_BTN_X, "X"},
-		{GUI_BTN_Y, "Y"},
-		{GUI_BTN_PLUS, "PLUS"},
-		{GUI_BTN_MINUS, "MINUS"},
-		{GUI_BTN_HOME, "HOME"},
-		{GUI_TRIGGER_L, "L"},
-		{GUI_TRIGGER_R, "R"},
-		{GUI_TRIGGER_ZL, "ZL"},
-		{GUI_TRIGGER_ZR, "ZR"}
+		{INPUT_BTN_DOWN, "DOWN"},
+		{INPUT_BTN_UP, "UP"},
+		{INPUT_BTN_LEFT, "LEFT"},
+		{INPUT_BTN_RIGHT, "RIGHT"},
+		{INPUT_BTN_A, "A"},
+		{INPUT_BTN_B, "B"},
+		{INPUT_BTN_X, "X"},
+		{INPUT_BTN_Y, "Y"},
+		{INPUT_BTN_PLUS, "PLUS"},
+		{INPUT_BTN_MINUS, "MINUS"},
+		{INPUT_BTN_HOME, "HOME"},
+		{INPUT_TRIGGER_L, "L"},
+		{INPUT_TRIGGER_R, "R"},
+		{INPUT_TRIGGER_ZL, "ZL"},
+		{INPUT_TRIGGER_ZR, "ZR"}
 	}
 }
 };

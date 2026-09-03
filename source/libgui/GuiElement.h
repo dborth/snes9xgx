@@ -205,8 +205,8 @@ class GuiElement
 		//!Called when the language has changed, to obtain new text values for all text elements
 		virtual void resetText();
 		//!Called constantly to allow the element to respond to the current input data
-		//!\param c Pointer to a GuiInputController, containing the current input data
-		virtual void update(GuiInputController * c);
+		//!\param c Pointer to a InputController, containing the current input data
+		virtual void update(InputController * c);
 		//!Called constantly to redraw the element
 		virtual void draw() = 0;
 	protected:

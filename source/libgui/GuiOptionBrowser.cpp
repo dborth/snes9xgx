@@ -245,7 +245,7 @@ void GuiOptionBrowser::resetText()
 	}
 }
 
-void GuiOptionBrowser::update(GuiInputController * controller)
+void GuiOptionBrowser::update(InputController * controller)
 {
 	if(state == STATE::DISABLED || !controller)
 		return;
@@ -285,7 +285,7 @@ void GuiOptionBrowser::update(GuiInputController * controller)
 
 	auto pad = controller->getPadData();
 	int currentChan = controller->getChannel();
-	// A GuiInputController with no live signal this frame (e.g. a persistent
+	// A InputController with no live signal this frame (e.g. a persistent
 	// but currently-disconnected controller slot) must not be able to claim
 	// or evict a selection just by taking its turn through this loop -- only
 	// a channel that's genuinely doing something (pointing or pressing) gets

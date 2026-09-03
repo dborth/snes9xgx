@@ -215,7 +215,7 @@ void GuiSaveBrowser::draw()
 	this->updateEffects();
 }
 
-void GuiSaveBrowser::update(GuiInputController * controller)
+void GuiSaveBrowser::update(InputController * controller)
 {
 	if(state == STATE::DISABLED || !controller)
 		return;

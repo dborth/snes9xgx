@@ -17,7 +17,7 @@ class GuiFileBrowser : public GuiElement
 		void setFocus(int f);
 		void draw() override;
 		void triggerUpdate();
-		void update(GuiInputController * c);
+		void update(InputController * c);
 		GuiButton * fileList[FILE_PAGESIZE];
 	protected:
 		GuiText * fileListText[FILE_PAGESIZE];

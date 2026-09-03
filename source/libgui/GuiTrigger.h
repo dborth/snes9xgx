@@ -54,9 +54,9 @@ public:
 	void setButtonOnlyInFocusTrigger(int ch, uint32_t buttonMask);
 
 	//! Evaluation methods
-	bool isClicked(const GuiInputController* controller) const;
-	bool isHeld(const GuiInputController* controller) const;
-	bool isReleased(const GuiInputController* controller) const;
+	bool isClicked(const InputController* controller) const;
+	bool isHeld(const InputController* controller) const;
+	bool isReleased(const InputController* controller) const;
 
 	//! Accessors
 	TRIGGER_TYPE getType() const { return type; }
@@ -69,5 +69,5 @@ private:
 	uint32_t conditionMask;
 
 	//! Dynamically calculates the required bitmask based on orientation
-	uint32_t resolveMask(const GuiInputController* controller) const;
+	uint32_t resolveMask(const InputController* controller) const;
 };

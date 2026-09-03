@@ -21,7 +21,7 @@ class GuiKeyboard : public GuiWindow
 	public:
 		GuiKeyboard(char * t, uint32_t m);
 		~GuiKeyboard();
-		void update(GuiInputController * c);
+		void update(InputController * c);
 		char kbtextstr[256];
 	protected:
 		uint32_t kbtextmaxlen;

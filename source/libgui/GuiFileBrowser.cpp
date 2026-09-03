@@ -21,7 +21,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	trigA->setPrimaryTrigger();
 
 	trigHeldA = new GuiTrigger;
-	trigHeldA->setHeldTrigger(-1, GUI_BTN_A);
+	trigHeldA->setHeldTrigger(-1, INPUT_BTN_A);
 
 	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND::PCM);
 	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND::PCM);
@@ -219,7 +219,7 @@ void GuiFileBrowser::draw()
 	this->updateEffects();
 }
 
-void GuiFileBrowser::update(GuiInputController * controller)
+void GuiFileBrowser::update(InputController * controller)
 {
 	if(state == STATE::DISABLED || !controller)
 		return;
@@ -233,7 +233,7 @@ void GuiFileBrowser::update(GuiInputController * controller)
 
 	auto pad = controller->getPadData();
 	int currentChan = controller->getChannel();
-	// A GuiInputController with no live signal this frame (e.g. a persistent
+	// A InputController with no live signal this frame (e.g. a persistent
 	// but currently-disconnected controller slot) must not be able to claim
 	// or evict a selection just by taking its turn through this loop -- only
 	// a channel that's genuinely doing something (pointing or pressing) gets

@@ -182,7 +182,7 @@ void GuiWindow::changeFocus(GuiElement* e)
 	}
 }
 
-void GuiWindow::toggleFocus(GuiInputController * controller)
+void GuiWindow::toggleFocus(InputController * controller)
 {
 	if(parentElement)
 		return; // this is only intended for the main window
@@ -382,7 +382,7 @@ void GuiWindow::resetText()
 	}
 }
 
-void GuiWindow::update(GuiInputController * controller)
+void GuiWindow::update(InputController * controller)
 {
 	if(_elements.size() == 0 || (state == STATE::DISABLED && parentElement))
 		return;

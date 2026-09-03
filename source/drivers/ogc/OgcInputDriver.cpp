@@ -29,7 +29,7 @@
 #endif
 
 #include "../../system.h"
-#include "../../libgui/GuiInputController.h"
+#include "../InputController.h"
 
 extern "C" {
 s32 __STM_Close();
@@ -101,93 +101,93 @@ static inline float clampf(float v, float lo, float hi) {
  * Translates raw libogc hardware bits to our generic UI masks
  ***************************************************************************/
 static uint32_t MapPADToGeneric(uint32_t pad_btns) {
-	uint32_t mask = GUI_BTN_NONE;
-	if (pad_btns & PAD_BUTTON_A)      mask |= GUI_BTN_A;
-	if (pad_btns & PAD_BUTTON_B)      mask |= GUI_BTN_B;
-	if (pad_btns & PAD_BUTTON_X)      mask |= GUI_BTN_X;
-	if (pad_btns & PAD_BUTTON_Y)      mask |= GUI_BTN_Y;
-	if (pad_btns & PAD_BUTTON_UP)     mask |= GUI_BTN_UP;
-	if (pad_btns & PAD_BUTTON_DOWN)   mask |= GUI_BTN_DOWN;
-	if (pad_btns & PAD_BUTTON_LEFT)   mask |= GUI_BTN_LEFT;
-	if (pad_btns & PAD_BUTTON_RIGHT)  mask |= GUI_BTN_RIGHT;
-	if (pad_btns & PAD_BUTTON_START)  mask |= GUI_BTN_PLUS;
-	if (pad_btns & PAD_TRIGGER_L)     mask |= GUI_TRIGGER_L;
-	if (pad_btns & PAD_TRIGGER_R)     mask |= GUI_TRIGGER_R;
-	if (pad_btns & PAD_TRIGGER_Z)     mask |= GUI_TRIGGER_ZR;
+	uint32_t mask = INPUT_BTN_NONE;
+	if (pad_btns & PAD_BUTTON_A)      mask |= INPUT_BTN_A;
+	if (pad_btns & PAD_BUTTON_B)      mask |= INPUT_BTN_B;
+	if (pad_btns & PAD_BUTTON_X)      mask |= INPUT_BTN_X;
+	if (pad_btns & PAD_BUTTON_Y)      mask |= INPUT_BTN_Y;
+	if (pad_btns & PAD_BUTTON_UP)     mask |= INPUT_BTN_UP;
+	if (pad_btns & PAD_BUTTON_DOWN)   mask |= INPUT_BTN_DOWN;
+	if (pad_btns & PAD_BUTTON_LEFT)   mask |= INPUT_BTN_LEFT;
+	if (pad_btns & PAD_BUTTON_RIGHT)  mask |= INPUT_BTN_RIGHT;
+	if (pad_btns & PAD_BUTTON_START)  mask |= INPUT_BTN_PLUS;
+	if (pad_btns & PAD_TRIGGER_L)     mask |= INPUT_TRIGGER_L;
+	if (pad_btns & PAD_TRIGGER_R)     mask |= INPUT_TRIGGER_R;
+	if (pad_btns & PAD_TRIGGER_Z)     mask |= INPUT_TRIGGER_ZR;
 	return mask;
 }
 
 #ifdef HW_RVL
 static uint32_t MapWiimoteToGeneric(uint32_t wpad_btns)
 {
-	uint32_t mask = GUI_BTN_NONE;
+	uint32_t mask = INPUT_BTN_NONE;
 
-	if (wpad_btns & WPAD_BUTTON_A)     mask |= GUI_BTN_A;
-	if (wpad_btns & WPAD_BUTTON_B)     mask |= GUI_BTN_B;
-	if (wpad_btns & WPAD_BUTTON_1)     mask |= GUI_BTN_1;
-	if (wpad_btns & WPAD_BUTTON_2)     mask |= GUI_BTN_2;
-	if (wpad_btns & WPAD_BUTTON_UP)    mask |= GUI_BTN_UP;
-	if (wpad_btns & WPAD_BUTTON_DOWN)  mask |= GUI_BTN_DOWN;
-	if (wpad_btns & WPAD_BUTTON_LEFT)  mask |= GUI_BTN_LEFT;
-	if (wpad_btns & WPAD_BUTTON_RIGHT) mask |= GUI_BTN_RIGHT;
-	if (wpad_btns & WPAD_BUTTON_PLUS)  mask |= GUI_BTN_PLUS;
-	if (wpad_btns & WPAD_BUTTON_MINUS) mask |= GUI_BTN_MINUS;
-	if (wpad_btns & WPAD_BUTTON_HOME)  mask |= GUI_BTN_HOME;
+	if (wpad_btns & WPAD_BUTTON_A)     mask |= INPUT_BTN_A;
+	if (wpad_btns & WPAD_BUTTON_B)     mask |= INPUT_BTN_B;
+	if (wpad_btns & WPAD_BUTTON_1)     mask |= INPUT_BTN_1;
+	if (wpad_btns & WPAD_BUTTON_2)     mask |= INPUT_BTN_2;
+	if (wpad_btns & WPAD_BUTTON_UP)    mask |= INPUT_BTN_UP;
+	if (wpad_btns & WPAD_BUTTON_DOWN)  mask |= INPUT_BTN_DOWN;
+	if (wpad_btns & WPAD_BUTTON_LEFT)  mask |= INPUT_BTN_LEFT;
+	if (wpad_btns & WPAD_BUTTON_RIGHT) mask |= INPUT_BTN_RIGHT;
+	if (wpad_btns & WPAD_BUTTON_PLUS)  mask |= INPUT_BTN_PLUS;
+	if (wpad_btns & WPAD_BUTTON_MINUS) mask |= INPUT_BTN_MINUS;
+	if (wpad_btns & WPAD_BUTTON_HOME)  mask |= INPUT_BTN_HOME;
 
 	return mask;
 }
 
 static uint32_t MapNunchukToGeneric(uint32_t wpad_btns)
 {
-	uint32_t mask = GUI_BTN_NONE;
+	uint32_t mask = INPUT_BTN_NONE;
 
-	if (wpad_btns & WPAD_NUNCHUK_BUTTON_Z) mask |= GUI_TRIGGER_ZL;
-	if (wpad_btns & WPAD_NUNCHUK_BUTTON_C) mask |= GUI_TRIGGER_L;
+	if (wpad_btns & WPAD_NUNCHUK_BUTTON_Z) mask |= INPUT_TRIGGER_ZL;
+	if (wpad_btns & WPAD_NUNCHUK_BUTTON_C) mask |= INPUT_TRIGGER_L;
 
 	return mask;
 }
 
 static uint32_t MapClassicToGeneric(uint32_t wpad_btns)
 {
-	uint32_t mask = GUI_BTN_NONE;
+	uint32_t mask = INPUT_BTN_NONE;
 
 	// Classic Controller inputs (upper 16 bits)
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_A) mask |= GUI_BTN_A;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_B) mask |= GUI_BTN_B;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_X) mask |= GUI_BTN_X;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_Y) mask |= GUI_BTN_Y;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_UP) mask |= GUI_BTN_UP;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_DOWN) mask |= GUI_BTN_DOWN;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_LEFT) mask |= GUI_BTN_LEFT;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_RIGHT) mask |= GUI_BTN_RIGHT;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_PLUS) mask |= GUI_BTN_PLUS;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_MINUS) mask |= GUI_BTN_MINUS;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_HOME) mask |= GUI_BTN_HOME;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_FULL_L) mask |= GUI_TRIGGER_L;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_FULL_R) mask |= GUI_TRIGGER_R;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_ZL) mask |= GUI_TRIGGER_ZL;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_ZR) mask |= GUI_TRIGGER_ZR;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_A) mask |= INPUT_BTN_A;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_B) mask |= INPUT_BTN_B;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_X) mask |= INPUT_BTN_X;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_Y) mask |= INPUT_BTN_Y;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_UP) mask |= INPUT_BTN_UP;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_DOWN) mask |= INPUT_BTN_DOWN;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_LEFT) mask |= INPUT_BTN_LEFT;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_RIGHT) mask |= INPUT_BTN_RIGHT;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_PLUS) mask |= INPUT_BTN_PLUS;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_MINUS) mask |= INPUT_BTN_MINUS;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_HOME) mask |= INPUT_BTN_HOME;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_FULL_L) mask |= INPUT_TRIGGER_L;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_FULL_R) mask |= INPUT_TRIGGER_R;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_ZL) mask |= INPUT_TRIGGER_ZL;
+	if (wpad_btns & WPAD_CLASSIC_BUTTON_ZR) mask |= INPUT_TRIGGER_ZR;
 
 	return mask;
 }
 
 static uint32_t MapWiiUGamepadToGeneric(uint32_t drc_btns) {
-	uint32_t mask = GUI_BTN_NONE;
-	if (drc_btns & WIIDRC_BUTTON_A) mask |= GUI_BTN_A;
-	if (drc_btns & WIIDRC_BUTTON_B) mask |= GUI_BTN_B;
-	if (drc_btns & WIIDRC_BUTTON_X) mask |= GUI_BTN_X;
-	if (drc_btns & WIIDRC_BUTTON_Y) mask |= GUI_BTN_Y;
-	if (drc_btns & WIIDRC_BUTTON_UP) mask |= GUI_BTN_UP;
-	if (drc_btns & WIIDRC_BUTTON_DOWN) mask |= GUI_BTN_DOWN;
-	if (drc_btns & WIIDRC_BUTTON_LEFT) mask |= GUI_BTN_LEFT;
-	if (drc_btns & WIIDRC_BUTTON_RIGHT) mask |= GUI_BTN_RIGHT;
-	if (drc_btns & WIIDRC_BUTTON_PLUS) mask |= GUI_BTN_PLUS;
-	if (drc_btns & WIIDRC_BUTTON_MINUS) mask |= GUI_BTN_MINUS;
-	if (drc_btns & WIIDRC_BUTTON_HOME) mask |= GUI_BTN_HOME;
-	if (drc_btns & WIIDRC_BUTTON_L) mask |= GUI_TRIGGER_L;
-	if (drc_btns & WIIDRC_BUTTON_R) mask |= GUI_TRIGGER_R;
-	if (drc_btns & WIIDRC_BUTTON_ZL) mask |= GUI_TRIGGER_ZL;
-	if (drc_btns & WIIDRC_BUTTON_ZR) mask |= GUI_TRIGGER_ZR;
+	uint32_t mask = INPUT_BTN_NONE;
+	if (drc_btns & WIIDRC_BUTTON_A) mask |= INPUT_BTN_A;
+	if (drc_btns & WIIDRC_BUTTON_B) mask |= INPUT_BTN_B;
+	if (drc_btns & WIIDRC_BUTTON_X) mask |= INPUT_BTN_X;
+	if (drc_btns & WIIDRC_BUTTON_Y) mask |= INPUT_BTN_Y;
+	if (drc_btns & WIIDRC_BUTTON_UP) mask |= INPUT_BTN_UP;
+	if (drc_btns & WIIDRC_BUTTON_DOWN) mask |= INPUT_BTN_DOWN;
+	if (drc_btns & WIIDRC_BUTTON_LEFT) mask |= INPUT_BTN_LEFT;
+	if (drc_btns & WIIDRC_BUTTON_RIGHT) mask |= INPUT_BTN_RIGHT;
+	if (drc_btns & WIIDRC_BUTTON_PLUS) mask |= INPUT_BTN_PLUS;
+	if (drc_btns & WIIDRC_BUTTON_MINUS) mask |= INPUT_BTN_MINUS;
+	if (drc_btns & WIIDRC_BUTTON_HOME) mask |= INPUT_BTN_HOME;
+	if (drc_btns & WIIDRC_BUTTON_L) mask |= INPUT_TRIGGER_L;
+	if (drc_btns & WIIDRC_BUTTON_R) mask |= INPUT_TRIGGER_R;
+	if (drc_btns & WIIDRC_BUTTON_ZL) mask |= INPUT_TRIGGER_ZL;
+	if (drc_btns & WIIDRC_BUTTON_ZR) mask |= INPUT_TRIGGER_ZR;
 	return mask;
 }
 
@@ -231,7 +231,7 @@ void OgcInputDriver::update() {
 	bool allowRumble = isRumbleEnabled() && systemRumbleAllowed;
 
 	for(int i = 3; i >= 0; i--) {
-		GuiInputPadData padData;
+		InputPadData padData;
 
 		// Process GameCube Controller & Third Party USB Adaptors
 		bool gamecubeActive = (activeGamecubePads & (1 << i)) != 0;

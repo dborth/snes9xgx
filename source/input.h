@@ -12,7 +12,7 @@
 #ifndef _INPUT_H_
 #define _INPUT_H_
 
-#include "libgui/GuiInput.h"
+#include "drivers/InputData.h"
 #include "snes9xgx.h"
 
 #define MAXJP 			12 // # of mappable controller buttons

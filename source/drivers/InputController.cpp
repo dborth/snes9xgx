@@ -1,31 +1,32 @@
 /****************************************************************************
  * libgui
  * Daryl Borth 2009-2026
- * GuiInputController.cpp
+ * InputController.cpp
  ***************************************************************************/
 
 #include <cmath>
-#include "Gui.h"
+#include "Platform.h"
+#include "InputController.h"
 
-GuiInputController* userInput[4] = {nullptr, nullptr, nullptr, nullptr};
+InputController* userInput[4] = {nullptr, nullptr, nullptr, nullptr};
 
 void InitUserInputControllers()
 {
 	for(int i = 0; i < 4; i++)
 	{
 		if(!userInput[i])
-			userInput[i] = new GuiInputController(i);
+			userInput[i] = new InputController(i);
 	}
 }
 
-GuiInputController::GuiInputController(int ch) : 
+InputController::InputController(int ch) : 
 	channel(ch),
 	sideways(false),
 	scrollTimer(0.0f),
 	internalScrollTimer(0.0f)
 {}
 
-void GuiInputController::update(const GuiInputPadData& data, float deltaTime) {
+void InputController::update(const InputPadData& data, float deltaTime) {
 	currentData = data;
 
 	// Advance the scroll timer
@@ -39,7 +40,7 @@ void GuiInputController::update(const GuiInputPadData& data, float deltaTime) {
 	}
 }
 
-bool GuiInputController::processDirection(uint32_t logicalButtonMask, float stickAxis, bool isPositiveAxis) const {
+bool InputController::processDirection(uint32_t logicalButtonMask, float stickAxis, bool isPositiveAxis) const {
 	bool isPressedDown = (currentData.buttons_d & logicalButtonMask);
 	bool isHeld = (currentData.buttons_h & logicalButtonMask);
 	bool isStickActive = isPositiveAxis ? (stickAxis > STICK_DEADZONE) : (stickAxis < -STICK_DEADZONE);
@@ -62,40 +63,40 @@ bool GuiInputController::processDirection(uint32_t logicalButtonMask, float stic
 	return false;
 }
 
-bool GuiInputController::isPrimaryPressed() const {
-	uint32_t targetBtn = sideways ? GUI_BTN_2 : GUI_BTN_A;
+bool InputController::isPrimaryPressed() const {
+	uint32_t targetBtn = sideways ? INPUT_BTN_2 : INPUT_BTN_A;
 	return (currentData.buttons_d & targetBtn);
 }
 
-bool GuiInputController::isSecondaryPressed() const {
-	uint32_t targetBtn = sideways ? GUI_BTN_1 : GUI_BTN_B;
+bool InputController::isSecondaryPressed() const {
+	uint32_t targetBtn = sideways ? INPUT_BTN_1 : INPUT_BTN_B;
 	return (currentData.buttons_d & targetBtn);
 }
 
-bool GuiInputController::isPressed(uint32_t logicalButtonMask) const {
+bool InputController::isPressed(uint32_t logicalButtonMask) const {
 	return (currentData.buttons_d & logicalButtonMask);
 }
 
-bool GuiInputController::isHeld(uint32_t logicalButtonMask) const {
+bool InputController::isHeld(uint32_t logicalButtonMask) const {
 	return (currentData.buttons_h & logicalButtonMask);
 }
 
-bool GuiInputController::up() const {
-	uint32_t targetBtn = sideways ? GUI_BTN_RIGHT : GUI_BTN_UP;
+bool InputController::up() const {
+	uint32_t targetBtn = sideways ? INPUT_BTN_RIGHT : INPUT_BTN_UP;
 	return processDirection(targetBtn, currentData.stickY, true);
 }
 
-bool GuiInputController::down() const {
-	uint32_t targetBtn = sideways ? GUI_BTN_LEFT : GUI_BTN_DOWN;
+bool InputController::down() const {
+	uint32_t targetBtn = sideways ? INPUT_BTN_LEFT : INPUT_BTN_DOWN;
 	return processDirection(targetBtn, currentData.stickY, false);
 }
 
-bool GuiInputController::left() const {
-	uint32_t targetBtn = sideways ? GUI_BTN_UP : GUI_BTN_LEFT;
+bool InputController::left() const {
+	uint32_t targetBtn = sideways ? INPUT_BTN_UP : INPUT_BTN_LEFT;
 	return processDirection(targetBtn, currentData.stickX, false);
 }
 
-bool GuiInputController::right() const {
-	uint32_t targetBtn = sideways ? GUI_BTN_DOWN : GUI_BTN_RIGHT;
+bool InputController::right() const {
+	uint32_t targetBtn = sideways ? INPUT_BTN_DOWN : INPUT_BTN_RIGHT;
 	return processDirection(targetBtn, currentData.stickX, true);
 }

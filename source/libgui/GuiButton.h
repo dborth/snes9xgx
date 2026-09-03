@@ -71,8 +71,8 @@ class GuiButton : public GuiElement
 		//!Resets the text for all contained elements
 		void resetText();
 		//!Constantly called to allow the GuiButton to respond to updated input data
-		//!\param c Pointer to a GuiInputController, containing the current input data
-		void update(GuiInputController * c);
+		//!\param c Pointer to a InputController, containing the current input data
+		void update(InputController * c);
 	protected:
 		GuiImage * image; //!< Button image (default)
 		GuiImage * imageOver; //!< Button image for STATE::SELECTED

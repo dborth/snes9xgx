@@ -170,7 +170,7 @@ void GuiButton::resetText()
 	}
 }
 
-void GuiButton::update(GuiInputController * controller)
+void GuiButton::update(InputController * controller)
 {
 	if(state == STATE::CLICKED || state == STATE::DISABLED || !controller)
 		return;

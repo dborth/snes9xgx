@@ -244,7 +244,7 @@ GuiKeyboard::~GuiKeyboard()
 	}
 }
 
-void GuiKeyboard::update(GuiInputController * c)
+void GuiKeyboard::update(InputController * c)
 {
 	if(_elements.size() == 0 || (state == STATE::DISABLED && parentElement))
 		return;

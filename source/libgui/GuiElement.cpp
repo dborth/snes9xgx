@@ -531,7 +531,7 @@ void GuiElement::updateEffects()
 	}
 }
 
-void GuiElement::update(GuiInputController *)
+void GuiElement::update(InputController *)
 {
 	if(updateCB)
 		updateCB(this);

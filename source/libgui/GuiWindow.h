@@ -65,8 +65,8 @@ class GuiWindow : public GuiElement
 		//!If no element is in focus, changes focus to the first available element
 		//!If B or 1 button is pressed, changes focus to the next available element
 		//!This is intended for the primary GuiWindow only
-		//!\param c Pointer to a GuiInputController, containing the current input data
-		void toggleFocus(GuiInputController * c);
+		//!\param c Pointer to a InputController, containing the current input data
+		void toggleFocus(InputController * c);
 		//!Moves the selected element to the element to the left or right
 		//!\param d Direction to move (-1 = left, 1 = right)
 		void moveSelectionHor(int d);
@@ -79,8 +79,8 @@ class GuiWindow : public GuiElement
 		void draw();
 		//!Updates the window and all elements contains within
 		//!Allows the GuiWindow and all elements to respond to the input data specified
-		//!\param c Pointer to a GuiInputController, containing the current input data
-		void update(GuiInputController * c);
+		//!\param c Pointer to a InputController, containing the current input data
+		void update(InputController * c);
 	protected:
 		std::vector<GuiElement*> _elements; //!< Contains all elements within the GuiWindow
 };

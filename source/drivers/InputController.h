@@ -1,7 +1,7 @@
 /****************************************************************************
  * libgui
  * Daryl Borth 2009-2026
- * GuiInputController.h
+ * InputController.h
  *
  * Represents a single connected logical controller.
  * Handles device-specific translation (like sideways Wiimote mapping)
@@ -9,19 +9,19 @@
  ***************************************************************************/
 #pragma once
 
-#include "GuiInput.h"
+#include "InputData.h"
 
-class GuiInputController {
+class InputController {
 public:
-	GuiInputController(int channel);
-	~GuiInputController() = default;
+	InputController(int channel);
+	~InputController() = default;
 
 	/**
 	 * Updates the controller state. Called once per frame by the driver.
 	 * @param data The raw, mapped inputs from the hardware.
 	 * @param deltaTime Elapsed time since last frame in seconds.
 	 */
-	void update(const GuiInputPadData& data, float deltaTime);
+	void update(const InputPadData& data, float deltaTime);
 
 	//! Configuration
 	void setSideways(bool s) { sideways = s; }
@@ -37,7 +37,7 @@ public:
 	void setChannel(int c) { channel = c; }
 
 	//! State Accessors
-	const GuiInputPadData& getPadData() const { return currentData; }
+	const InputPadData& getPadData() const { return currentData; }
 
 	bool isPressed(uint32_t logicalButtonMask) const;
 	bool isHeld(uint32_t logicalButtonMask) const;
@@ -53,7 +53,7 @@ public:
 private:
 	int channel;
 	bool sideways;
-	GuiInputPadData currentData;
+	InputPadData currentData;
 
 	// Analog stick deadzone
 	const float STICK_DEADZONE = 0.2f;
@@ -72,6 +72,6 @@ private:
 	mutable float internalScrollTimer;
 };
 
-extern GuiInputController* userInput[4];
+extern InputController* userInput[4];
 
 void InitUserInputControllers();

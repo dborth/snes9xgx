@@ -30,7 +30,7 @@ class GuiOptionBrowser : public GuiElement
 		void draw() override;
 		void triggerUpdate();
 		void resetText();
-		void update(GuiInputController * c);
+		void update(InputController * c);
 		GuiText * optionVal[OPTION_PAGESIZE];
 	protected:
 		int optionIndex[OPTION_PAGESIZE];
