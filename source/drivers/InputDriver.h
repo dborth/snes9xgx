@@ -23,7 +23,7 @@ class InputDriver
 		virtual void init() = 0;
 		virtual void shutdown() = 0;
 		
-		//! Polls the hardware and dispatches GuiInputPadData payloads to the UI
+		//! Polls the hardware and dispatches GuiInputPadData payloads
 		virtual void update() = 0;
 		
 		//! Requests a rumble event on the specified controller channel
