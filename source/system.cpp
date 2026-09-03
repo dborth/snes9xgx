@@ -25,7 +25,7 @@
 #include "input.h"
 #include "memmanager.h"
 #include "font_ttf.h"
-#include "drivers/ogc/wiidrc.h"
+#include "drivers/ogc/input/wiidrc.h"
 #include "drivers/ogc/OgcPlatform.h"
 #include "libgui/Gui.h"
 

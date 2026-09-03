@@ -19,7 +19,15 @@
 
 #include "OgcInputDriver.h"
 #include "../Platform.h"
-#include "wiidrc.h"
+
+#ifdef HW_RVL
+#include "input/wiidrc.h"
+#include "input/retrode.h"
+#include "input/xbox360.h"
+#include "input/hornet.h"
+#include "input/mayflash.h"
+#endif
+
 #include "../../system.h"
 #include "../../libgui/GuiInputController.h"
 
@@ -202,11 +210,19 @@ static float NormalizeWPADAnalog(int pos, int min, int max, int center) {
 }
 #endif
 
-void OgcInputDriver::update(float deltaTime) {
+void OgcInputDriver::update() {
 	#ifdef HW_RVL
-	WPAD_ScanPads();
 	WiiDRC_ScanPads();
+	Retrode_ScanPads();
+	XBOX360_ScanPads();
+	Hornet_ScanPads();
+	Mayflash_ScanPads();
+	WPAD_ScanPads();
 	bool systemRumbleAllowed = (CONF_GetPadMotorMode() != 0);
+	bool retrodeActive  = (Retrode_Status()[0]  == 'c');
+	bool xboxActive     = (XBOX360_Status()[0]  == 'c');
+	bool hornetActive   = (Hornet_Status()[0]   == 'c');
+	bool mayflashActive = (Mayflash_Status()[0] == 'c');
 	#else
 	bool systemRumbleAllowed = true;
 	#endif
@@ -217,12 +233,26 @@ void OgcInputDriver::update(float deltaTime) {
 	for(int i = 3; i >= 0; i--) {
 		GuiInputPadData padData;
 
+		// Process GameCube Controller & Third Party USB Adaptors
 		bool gamecubeActive = (activeGamecubePads & (1 << i)) != 0;
 
+		#ifdef HW_RVL
+		if (retrodeActive) gamecubeActive = true;
+		if (xboxActive) gamecubeActive = true;
+		if (hornetActive && i == 0) gamecubeActive = true;
+		if (mayflashActive && i < 2)  gamecubeActive = true;
+		#endif
+
 		if(gamecubeActive) {
+			uint32_t padHeld = PAD_ButtonsHeld(i);
+			#ifdef HW_RVL
+			// Inject USB controllers into GameCube held state (since they emulate GC bitmasks)
+			padHeld |= Retrode_ButtonsHeld(i) | XBOX360_ButtonsHeld(i) | Hornet_ButtonsHeld(i) | Mayflash_ButtonsHeld(i);
+			#endif
+
 			padData.hw_connected[GUI_HW_GAMECUBE] = true;
 			padData.hw_buttons_d[GUI_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsDown(i));
-			padData.hw_buttons_h[GUI_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsHeld(i));
+			padData.hw_buttons_h[GUI_HW_GAMECUBE] = MapPADToGeneric(padHeld);
 			padData.hw_buttons_r[GUI_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsUp(i));
 			padData.hw_stickX[GUI_HW_GAMECUBE] = clampf((float)PAD_StickX(i) / 128.0f, -1.0f, 1.0f);
 			padData.hw_stickY[GUI_HW_GAMECUBE] = clampf((float)PAD_StickY(i) / 128.0f, -1.0f, 1.0f);
@@ -342,7 +372,7 @@ void OgcInputDriver::update(float deltaTime) {
 		}
 
 		// Push the finalized, merged payload to the controller abstraction
-		userInput[i]->update(padData, deltaTime);
+		userInput[i]->update(padData, platform->getVideo()->getDeltaTime());
 		
 		bool doRumble = rumbleRequest[i] && allowRumble;
 

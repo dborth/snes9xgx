@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 
 		SwitchMemoryModeGame();
 
-		FrameTimer = 0;
+		platform->getVideo()->setFrameTimer(0);
 		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
 
 		CheckVideo = 2;		// force video update

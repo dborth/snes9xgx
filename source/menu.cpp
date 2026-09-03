@@ -8,7 +8,6 @@
  * Menu flow routines - handles all menu logic
  ***************************************************************************/
 
-#include <ogcsys.h>
 #include <ogc/cond.h>
 #include <ogc/lwp.h>
 #include <ogc/lwp_watchdog.h>
@@ -31,13 +30,13 @@
 #include "preferences.h"
 #include "button_mapping.h"
 #include "input.h"
-#include "drivers/ogc/videofilters.h"
+#include "menu.h"
 #include "filelist.h"
 #include "libgui/Gui.h"
-#include "menu.h"
-
 #include "utils/pngcodec.h"
-#include "drivers/ogc/wiidrc.h"
+
+#include "drivers/ogc/videofilters.h"
+#include "drivers/ogc/input/wiidrc.h"
 
 #include "snes9x/port.h"
 #include "snes9x/snes9x.h"
@@ -336,7 +335,7 @@ void ProgressOverlayState::update() {
 }
 
 static void ProcessGuiInput() {
-	UpdatePads();
+	platform->getInput()->update();
 
 	menu->mainWindow.update(userInput[3]);
 	menu->mainWindow.update(userInput[2]);
@@ -5026,7 +5025,7 @@ void MainMenu (int selection)
 	// wait for keys to be depressed
 	while(isMenuRequested())
 	{
-		UpdatePads();
+		platform->getInput()->update();
 		usleep(THREAD_SLEEP);
 	}
 	

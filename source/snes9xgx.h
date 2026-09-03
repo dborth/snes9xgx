@@ -143,7 +143,9 @@ enum
 	CTRL_LENGTH
 };
 
-const char ctrlName[8][24] =
+#define CTRL_BTN_MAPPINGS 4 // CTRL_PAD, CTRL_SCOPE, CTRL_JUST, CTRL_MOUSE
+
+const char ctrlName[CTRL_LENGTH][24] =
 { 
 	"SNES Controller", 
 	"Super Scope", 

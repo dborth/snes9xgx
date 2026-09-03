@@ -12,12 +12,12 @@
 #ifndef _INPUT_H_
 #define _INPUT_H_
 
-#define PI 				3.14159265f
-#define PADCAL			50
-#define WIIDRCCAL		20
+#include "libgui/GuiInput.h"
+#include "snes9xgx.h"
+
 #define MAXJP 			12 // # of mappable controller buttons
 
-extern uint32_t btnmap[4][6][12];
+extern uint32_t btnmap[CTRL_BTN_MAPPINGS][GUI_HW_MAX][MAXJP];
 extern int playerMapping[4];
 
 void ResetControls(int cc = -1, int wc = -1);
@@ -26,7 +26,6 @@ void ClearButtonsReported ();
 void SetControllers ();
 void SetDefaultButtonMap ();
 bool isMenuRequested();
-void UpdatePads();
 #ifdef HW_RVL
 char* GetUSBControllerInfo();
 #endif

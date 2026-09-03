@@ -11,9 +11,7 @@
 #include <stdint.h>
 #include "../EmulatorVideoDriver.h"
 
-extern GXRModeObj *vmode;
 extern bool progressive;
-extern bool vmode_60hz;
 extern uint32_t prevRenderedFrameCount;
 extern int CheckVideo;
 

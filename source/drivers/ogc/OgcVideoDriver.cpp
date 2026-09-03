@@ -21,7 +21,6 @@
 /*** 2D Video ***/
 static u32 *xfb[2] = { nullptr, nullptr }; // Double buffered
 static int whichfb = 0; // Switch
-GXRModeObj *vmode = nullptr; // Current video mode
 
 #define MAX_FB_WIDTH 640
 #define MAX_FB_HEIGHT 576
@@ -31,8 +30,7 @@ static volatile unsigned int copynow = GX_FALSE;
 static unsigned char gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 Mtx GXmodelView2D;
 
-uint32_t FrameTimer = 0;
-bool vmode_60hz = true;
+static uint32_t systemFrameTimer = 0;
 bool progressive = 0;
 
 /****************************************************************************
@@ -79,8 +77,7 @@ static void * vbgetback (void *arg)
  * Stock code to copy the GX buffer to the current display mode.
  * Also increments the frameticker, as it's called for each vb.
  ***************************************************************************/
-static inline void
-copy_to_xfb (u32 arg)
+static inline void copy_to_xfb (u32 arg)
 {
 	if (copynow == GX_TRUE)
 	{
@@ -89,7 +86,17 @@ copy_to_xfb (u32 arg)
 		copynow = GX_FALSE;
 		LWP_ThreadSignal(render_queue); // Wake up the main thread if it is waiting for the copy
 	}
-	++FrameTimer;
+	++systemFrameTimer;
+}
+
+uint32_t OgcVideoDriver::getFrameTimer()
+{
+    return systemFrameTimer;
+}
+
+void OgcVideoDriver::setFrameTimer(uint32_t frameTimer)
+{
+	systemFrameTimer = frameTimer;
 }
 
 /****************************************************************************
@@ -102,13 +109,13 @@ void OgcVideoDriver::setupVideoMode(GXRModeObj * mode)
 	static u32 last_fbWidth = 0;
 
 	// Force a video reset and XFB clear if the width was dynamically mutated
-	if(vmode == mode && last_fbWidth == mode->fbWidth)
+	if(videoMode == mode && last_fbWidth == mode->fbWidth)
 		return;
 
 	// Detect if we are transitioning between Progressive and Interlaced
 	bool mode_switch = false;
-	if (vmode != nullptr) {
-		bool was_progressive = (vmode->viTVMode & 3) == VI_NON_INTERLACE || (vmode->viTVMode & 3) == VI_PROGRESSIVE;
+	if (videoMode != nullptr) {
+		bool was_progressive = (videoMode->viTVMode & 3) == VI_NON_INTERLACE || (videoMode->viTVMode & 3) == VI_PROGRESSIVE;
 		bool is_progressive = (mode->viTVMode & 3) == VI_NON_INTERLACE || (mode->viTVMode & 3) == VI_PROGRESSIVE;
 		if (was_progressive != is_progressive) {
 			mode_switch = true;
@@ -150,7 +157,7 @@ void OgcVideoDriver::setupVideoMode(GXRModeObj * mode)
 	VIDEO_WaitForFlush ();
 
 	VIDEO_SetPostRetraceCallback ((VIRetraceCallback)copy_to_xfb);
-	vmode = mode;
+	videoMode = mode;
 }
 
 /****************************************************************************
@@ -230,15 +237,15 @@ void OgcVideoDriver::startMenuVideo()
 	GXColor background = {0, 0, 0, 255};
 	GX_SetCopyClear (background, GX_MAX_Z24);
 
-	yscale = GX_GetYScaleFactor(vmode->efbHeight,vmode->xfbHeight);
+	yscale = GX_GetYScaleFactor(videoMode->efbHeight,videoMode->xfbHeight);
 	xfbHeight = GX_SetDispCopyYScale(yscale);
-	GX_SetScissor(0,0,vmode->fbWidth,vmode->efbHeight);
-	GX_SetDispCopySrc(0,0,vmode->fbWidth,vmode->efbHeight);
-	GX_SetDispCopyDst(vmode->fbWidth,xfbHeight);
-	GX_SetCopyFilter(vmode->aa,vmode->sample_pattern,GX_TRUE,vmode->vfilter);
-	GX_SetFieldMode(vmode->field_rendering,((vmode->viHeight==2*vmode->xfbHeight)?GX_ENABLE:GX_DISABLE));
+	GX_SetScissor(0,0,videoMode->fbWidth,videoMode->efbHeight);
+	GX_SetDispCopySrc(0,0,videoMode->fbWidth,videoMode->efbHeight);
+	GX_SetDispCopyDst(videoMode->fbWidth,xfbHeight);
+	GX_SetCopyFilter(videoMode->aa,videoMode->sample_pattern,GX_TRUE,videoMode->vfilter);
+	GX_SetFieldMode(videoMode->field_rendering,((videoMode->viHeight==2*videoMode->xfbHeight)?GX_ENABLE:GX_DISABLE));
 
-	if (vmode->aa)
+	if (videoMode->aa)
 		GX_SetPixelFmt(GX_PF_RGB565_Z16, GX_ZC_LINEAR);
 	else
 		GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
@@ -272,7 +279,7 @@ void OgcVideoDriver::startMenuVideo()
 	guOrtho(p,0,479,0,639,0,300);
 	GX_LoadProjectionMtx(p, GX_ORTHOGRAPHIC);
 
-	GX_SetViewport(0,0,vmode->fbWidth,vmode->efbHeight,0,1);
+	GX_SetViewport(0,0,videoMode->fbWidth,videoMode->efbHeight,0,1);
 	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 	GX_SetAlphaUpdate(GX_TRUE);
 }

@@ -33,14 +33,13 @@ static long long now;
 /****************************************************************************
  * setFrameTimerMethod()
  * change frametimer method depending on whether ROM is NTSC or PAL
+ * timerstyle: 0=NTSC vblank, 1=PAL int timer
  ***************************************************************************/
 
 void setFrameTimerMethod()
 {
-	/*
-	Set frametimer method
-	(timerstyle: 0=NTSC vblank, 1=PAL int timer)
-	*/
+	bool vmode_60hz = platform->getVideo()->getRefreshRate() == 60;
+
 	if ( Settings.PAL ) {
 		if(vmode_60hz)
 			timerstyle = 1;
@@ -121,7 +120,7 @@ bool8 S9xOpenSoundDevice(void)
 /* eke-eke */
 void S9xInitSync()
 {
-	FrameTimer = 0;
+	platform->getVideo()->setFrameTimer(0);
 	prev = gettime();
 }
 
@@ -157,13 +156,13 @@ void S9xSyncSpeed () {
 	{
 		// Capture current VBlank ticks
 		// update_video() acts as our hardware VBlank throttle.
-		int32 pendingFrames = FrameTimer;
+		int32 pendingFrames = platform->getVideo()->getFrameTimer();
 
 		bool behindSchedule = (pendingFrames > 1);
 
 		if (pendingFrames > skipFrms)
 		{
-			FrameTimer = skipFrms;
+			platform->getVideo()->setFrameTimer(skipFrms);
 			pendingFrames = skipFrms;
 		}
 
@@ -171,8 +170,8 @@ void S9xSyncSpeed () {
 
 		// Only consume a VBlank if one actually occurred to prevent underflow.
 		// If pendingFrames == 0, we are perfectly pipelined (1 frame ahead).
-		if (!Settings.TurboMode && FrameTimer > 0)
-			FrameTimer--;
+		if (!Settings.TurboMode && pendingFrames > 0)
+			platform->getVideo()->setFrameTimer(--pendingFrames);
 	}
 	else /* use internal timer for PAL roms (or TV/ROM mismatches) */
 	{

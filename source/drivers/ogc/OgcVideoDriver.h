@@ -9,8 +9,6 @@
 #include "OgcEmulatorVideo.h"
 #include "../VideoDriver.h"
 
-extern uint32_t FrameTimer;
-
 class OgcVideoDriver : public VideoDriver
 {
 	public:
@@ -25,24 +23,30 @@ class OgcVideoDriver : public VideoDriver
 
 		int getScreenWidth() const override { return screenWidth; }
 		int getScreenHeight() const override { return screenHeight; }
-		uint32_t getFrameTimer() override { return FrameTimer; }
+		int getRefreshRate() const override { return vmode_60hz ? 60 : 50; }
+		float getDeltaTime() const override { return vmode_60hz ? (1.0f / 60.0f) : (1.0f / 50.0f); }
+		uint32_t getFrameTimer() override;
+		void setFrameTimer(uint32_t frameTimer) override;
 
 		ImageRenderer* getImageRenderer() override { return imageRenderer; }
 		GlyphRenderer* getGlyphRenderer() override { return glyphRenderer; }
 		OgcEmulatorVideo* getEmulatorVideo() override { return emulatorVideo; }
 
+		GXRModeObj* getVideoMode() const { return videoMode; };
 		GXRModeObj* findVideoMode();
 		void setupVideoMode(GXRModeObj* mode);
 		void waitForBufferReady();
 		void presentBuffer();
 
 	private:
-		int screenWidth;
-		int screenHeight;
+		int screenWidth = 0;
+		int screenHeight = 0;
+		GXRModeObj *videoMode = nullptr; // Current video mode
+		bool vmode_60hz = true;
 
-		ImageRenderer* imageRenderer;
-		GlyphRenderer* glyphRenderer;
-		OgcEmulatorVideo* emulatorVideo;
+		ImageRenderer* imageRenderer = nullptr;
+		GlyphRenderer* glyphRenderer = nullptr;
+		OgcEmulatorVideo* emulatorVideo = nullptr;
 };
 
 class OgcImageRenderer : public ImageRenderer

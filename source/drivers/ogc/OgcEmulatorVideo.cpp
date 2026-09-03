@@ -350,7 +350,7 @@ void OgcEmulatorVideo::setupScanlineFilterTEV()
 
 bool OgcEmulatorVideo::shouldApplyScanlines()
 {
-	return GCSettings.videoScanlines && vmode->efbHeight > 300;
+	return GCSettings.videoScanlines && videoDriver->getVideoMode()->efbHeight > 300;
 }
 
 /****************************************************************************
@@ -465,7 +465,7 @@ void OgcEmulatorVideo::resetFbWidth(int width, GXRModeObj *rmode)
 
 	rmode->fbWidth = width;
 
-	if(rmode != vmode)
+	if(rmode != videoDriver->getVideoMode())
 		return;
 
 	GX_InvVtxCache();
@@ -743,6 +743,7 @@ void OgcEmulatorVideo::presentFrame(int width, int height)
 			fscale = 1;
 
 		resetVideo();	// reset video to emulator rendering settings
+		GXRModeObj* vmode = videoDriver->getVideoMode();
 
 		/** Update scaling **/
 		if (GCSettings.videoMode == VIDEOMODE_ORIGINAL_240P)
