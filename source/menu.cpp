@@ -337,10 +337,10 @@ void ProgressOverlayState::update() {
 static void ProcessInputData() {
 	platform->getInput()->update();
 
-	menu->mainWindow.update(userInput[3]);
-	menu->mainWindow.update(userInput[2]);
-	menu->mainWindow.update(userInput[1]);
-	menu->mainWindow.update(userInput[0]);
+	menu->mainWindow.update(controller[3]);
+	menu->mainWindow.update(controller[2]);
+	menu->mainWindow.update(controller[1]);
+	menu->mainWindow.update(controller[0]);
 }
 
 static void DrawGui() {
@@ -350,9 +350,9 @@ static void DrawGui() {
 	int i = 3;
 	do
 	{
-		if(userInput[i]->getPadData().validPointer) {
-			cursorImg[i].setPosition(userInput[i]->getPadData().cursor_x-48, userInput[i]->getPadData().cursor_y-48);
-			cursorImg[i].setAngle(userInput[i]->getPadData().cursor_angle);
+		if(controller[i]->getPadData().validPointer) {
+			cursorImg[i].setPosition(controller[i]->getPadData().cursor_x-48, controller[i]->getPadData().cursor_y-48);
+			cursorImg[i].setAngle(controller[i]->getPadData().cursor_angle);
 			cursorImg[i].draw();
 		}
 		--i;
@@ -467,8 +467,8 @@ static void CreditsWindow()
 	menu->mainWindow.changeFocus(&creditsWindowBox);
 
 	auto buttonPressed = [&]()-> bool {
-		return userInput[0]->getPadData().buttons_d || userInput[1]->getPadData().buttons_d ||
-			   userInput[2]->getPadData().buttons_d || userInput[3]->getPadData().buttons_d; };
+		return controller[0]->getPadData().buttons_d || controller[1]->getPadData().buttons_d ||
+			   controller[2]->getPadData().buttons_d || controller[3]->getPadData().buttons_d; };
 
 	// debounce - wait for button to be unpressed
 	while(buttonPressed())
@@ -1633,10 +1633,10 @@ static int MenuGame()
 		#ifdef HW_RVL
 		for(i=0; i < 4; i++)
 		{
-			if(userInput[i]->getPadData().hw_connected[GUI_HW_WIIMOTE])
+			if(controller[i]->getPadData().hw_connected[GUI_HW_WIIMOTE])
 			{
 				newStatus = true;
-				newLevel = (userInput[i]->getPadData().battery_level / 100.0) * 4;
+				newLevel = (controller[i]->getPadData().battery_level / 100.0) * 4;
 				if(newLevel > 4) newLevel = 4;
 			}
 			else
@@ -2881,9 +2881,9 @@ static uint32_t ButtonMappingWindow()
 	{
 		if(!UpdateGui()) return 0;
 
-		if(!userInput[0]) continue;
+		if(!controller[0]) continue;
 
-		const InputPadData& pad = userInput[0]->getPadData();
+		const InputPadData& pad = controller[0]->getPadData();
 
 		// Listen strictly to the specific hardware profile being mapped
 		pressed = pad.hw_buttons_d[mapMenuCtrl];
@@ -2907,7 +2907,7 @@ static uint32_t ButtonMappingWindow()
 		// hit the generic "Cancel" button (B/1) on ANY controller to back out.
 		if(pressed == 0)
 		{
-			if(userInput[0]->isSecondaryPressed()) {
+			if(controller[0]->isSecondaryPressed()) {
 				buttonMappingCancelled = true;
 			}
 		}

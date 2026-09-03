@@ -72,6 +72,6 @@ private:
 	mutable float internalScrollTimer;
 };
 
-extern InputController* userInput[4];
+extern InputController* controller[4];
 
 void InitUserInputControllers();

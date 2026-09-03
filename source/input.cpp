@@ -230,8 +230,8 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
  ***************************************************************************/
 static void UpdateCursorPosition(int chan, int &pos_x, int &pos_y)
 {
-	if (!userInput[chan]) return;
-	const InputPadData& pad = userInput[chan]->getPadData();
+	if (!controller[chan]) return;
+	const InputPadData& pad = controller[chan]->getPadData();
 
 	if (pad.validPointer)
 	{
@@ -259,8 +259,8 @@ static void UpdateCursorPosition(int chan, int &pos_x, int &pos_y)
  ***************************************************************************/
 static void decodepad (int chan, int emuChan)
 {
-	if (!userInput[chan]) return;
-	const InputPadData& pad = userInput[chan]->getPadData();
+	if (!controller[chan]) return;
+	const InputPadData& pad = controller[chan]->getPadData();
 	int i, offset;
 
 	float sensitivity = (float)ANALOG_SENSITIVITY / 128.0f;
@@ -385,8 +385,8 @@ bool isMenuRequested()
 {
 	for(int i=0; i<4; i++)
 	{
-		if (!userInput[i]) continue;
-		const InputPadData& pad = userInput[i]->getPadData();
+		if (!controller[i]) continue;
+		const InputPadData& pad = controller[i]->getPadData();
 
 		bool rightStickLeft = (pad.substickX < -0.55f);
 		bool homePressed = (pad.buttons_h & INPUT_BTN_HOME);
@@ -411,8 +411,8 @@ bool isMenuRequested()
 
 bool IsTurboModeInputPressed()
 {
-	if (!userInput[0]) return false;
-	const InputPadData& pad = userInput[0]->getPadData();
+	if (!controller[0]) return false;
+	const InputPadData& pad = controller[0]->getPadData();
 
 	switch(GCSettings.TurboModeButton)
 	{
