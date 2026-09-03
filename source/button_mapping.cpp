@@ -1,8 +1,8 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x GX
  *
  * michniewski August 2008
- * Tantric 2008-2023
+ * Daryl Borth 2008-2026
  *
  * button_mapping.cpp
  *

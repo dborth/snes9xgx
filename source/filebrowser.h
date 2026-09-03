@@ -1,7 +1,7 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x GX
  *
- * Tantric 2008-2023
+ * Daryl Borth 2008-2026
  *
  * filebrowser.h
  *

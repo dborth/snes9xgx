@@ -1,7 +1,7 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x GX
  *
- * Tantric 2008-2026
+ * Daryl Borth 2008-2026
  *
  * videofilters.cpp
  * HQ2x, Scale2X, 2xBR, DDT filters

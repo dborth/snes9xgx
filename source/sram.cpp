@@ -1,9 +1,9 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x GX
  *
  * crunchy2 April 2007-July 2007
  * Michniewski 2008
- * Tantric 2008-2023
+ * Daryl Borth 2008-2026
  *
  * sram.cpp
  *

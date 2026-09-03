@@ -1,14 +1,12 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x GX
  *
  * softdev July 2006
  * crunchy2 May-June 2007
  * Michniewski 2008
- * Tantric 2008-2023
+ * Daryl Borth 2008-2026
  *
  * input.h
- *
- * Wii/Gamecube controller management
  ***************************************************************************/
 
 #ifndef _INPUT_H_

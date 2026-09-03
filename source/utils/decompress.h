@@ -1,9 +1,9 @@
 /****************************************************************************
- * Snes9x Nintendo Wii/Gamecube Port
+ * Snes9x GX
  *
  * softdev July 2006
  * Michniewski 2008
- * Tantric 2008-2023
+ * Daryl Borth 2008-2026
  *
  * decompress.h
  *
