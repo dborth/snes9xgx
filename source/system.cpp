@@ -14,18 +14,12 @@
 #include <sys/iosupport.h>
 #include <ogc/lwp_threads.h>
 
-#ifdef HW_RVL
-#include <di/di.h>
-#include <wiiuse/wpad.h>
-#endif
-
 #include "system.h"
 #include "video.h"
 #include "fileop.h"
 #include "input.h"
 #include "memmanager.h"
 #include "font_ttf.h"
-#include "drivers/ogc/input/wiidrc.h"
 #include "drivers/ogc/OgcPlatform.h"
 #include "libgui/Gui.h"
 

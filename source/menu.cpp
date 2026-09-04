@@ -36,7 +36,6 @@
 #include "utils/pngcodec.h"
 
 #include "drivers/ogc/videofilters.h"
-#include "drivers/ogc/input/wiidrc.h"
 
 #include "snes9x/port.h"
 #include "snes9x/snes9x.h"
@@ -2756,7 +2755,7 @@ static int MenuSettingsMappingsController()
 
 	if(mapMenuCtrlSNES == CTRL_PAD)
 	{
-		if(WiiDRC_Inited() && WiiDRC_Connected()) {
+		if(controller[0]->getPadData().hw_connected[GUI_HW_DRC]) {
 			gamecubeBtn.setPosition(-200, 120);
 			wiimoteBtn.setPosition(0, 120);
 			w.append(&drcBtn);
