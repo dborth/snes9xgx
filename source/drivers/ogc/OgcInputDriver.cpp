@@ -250,14 +250,14 @@ void OgcInputDriver::update() {
 			padHeld |= Retrode_ButtonsHeld(i) | XBOX360_ButtonsHeld(i) | Hornet_ButtonsHeld(i) | Mayflash_ButtonsHeld(i);
 			#endif
 
-			padData.hw_connected[GUI_HW_GAMECUBE] = true;
-			padData.hw_buttons_d[GUI_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsDown(i));
-			padData.hw_buttons_h[GUI_HW_GAMECUBE] = MapPADToGeneric(padHeld);
-			padData.hw_buttons_r[GUI_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsUp(i));
-			padData.hw_stickX[GUI_HW_GAMECUBE] = clampf((float)PAD_StickX(i) / 128.0f, -1.0f, 1.0f);
-			padData.hw_stickY[GUI_HW_GAMECUBE] = clampf((float)PAD_StickY(i) / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickX[GUI_HW_GAMECUBE] = clampf((float)PAD_SubStickX(i) / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickY[GUI_HW_GAMECUBE] = clampf((float)PAD_SubStickY(i) / 128.0f, -1.0f, 1.0f);
+			padData.hw_connected[INPUT_HW_GAMECUBE] = true;
+			padData.hw_buttons_d[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsDown(i));
+			padData.hw_buttons_h[INPUT_HW_GAMECUBE] = MapPADToGeneric(padHeld);
+			padData.hw_buttons_r[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsUp(i));
+			padData.hw_stickX[INPUT_HW_GAMECUBE] = clampf((float)PAD_StickX(i) / 128.0f, -1.0f, 1.0f);
+			padData.hw_stickY[INPUT_HW_GAMECUBE] = clampf((float)PAD_StickY(i) / 128.0f, -1.0f, 1.0f);
+			padData.hw_substickX[INPUT_HW_GAMECUBE] = clampf((float)PAD_SubStickX(i) / 128.0f, -1.0f, 1.0f);
+			padData.hw_substickY[INPUT_HW_GAMECUBE] = clampf((float)PAD_SubStickY(i) / 128.0f, -1.0f, 1.0f);
 		}
 
 		#ifdef HW_RVL
@@ -268,20 +268,20 @@ void OgcInputDriver::update() {
 			WPADData* wpad = WPAD_Data(i);
 
 			// Always process base Wiimote
-			padData.hw_connected[GUI_HW_WIIMOTE] = true;
+			padData.hw_connected[INPUT_HW_WIIMOTE] = true;
 			padData.battery_level = wpad->battery_level;
 			
-			padData.hw_gforceX[GUI_HW_WIIMOTE] = wpad->gforce.x;
-			padData.hw_gforceY[GUI_HW_WIIMOTE] = wpad->gforce.y;
-			padData.hw_gforceZ[GUI_HW_WIIMOTE] = wpad->gforce.z;
-			padData.hw_pitch[GUI_HW_WIIMOTE]   = wpad->orient.pitch;
-			padData.hw_roll[GUI_HW_WIIMOTE]    = wpad->orient.roll;
-			padData.hw_yaw[GUI_HW_WIIMOTE]     = wpad->orient.yaw;
+			padData.hw_gforceX[INPUT_HW_WIIMOTE] = wpad->gforce.x;
+			padData.hw_gforceY[INPUT_HW_WIIMOTE] = wpad->gforce.y;
+			padData.hw_gforceZ[INPUT_HW_WIIMOTE] = wpad->gforce.z;
+			padData.hw_pitch[INPUT_HW_WIIMOTE]   = wpad->orient.pitch;
+			padData.hw_roll[INPUT_HW_WIIMOTE]    = wpad->orient.roll;
+			padData.hw_yaw[INPUT_HW_WIIMOTE]     = wpad->orient.yaw;
 
 			if (exp_type == WPAD_EXP_NONE) {
-				padData.hw_buttons_d[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_d);
-				padData.hw_buttons_h[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_h);
-				padData.hw_buttons_r[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_u);
+				padData.hw_buttons_d[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_d);
+				padData.hw_buttons_h[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_h);
+				padData.hw_buttons_r[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_u);
 
 				if (wpad->ir.valid) {
 					padData.validPointer = true;
@@ -294,30 +294,30 @@ void OgcInputDriver::update() {
 				controller[i]->setSideways(fabs(wpad->gforce.x) > fabs(wpad->gforce.y));
 			}
 			else if (exp_type == WPAD_EXP_NUNCHUK) {
-				padData.hw_buttons_d[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_d);
-				padData.hw_buttons_h[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_h);
-				padData.hw_buttons_r[GUI_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_u);
+				padData.hw_buttons_d[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_d);
+				padData.hw_buttons_h[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_h);
+				padData.hw_buttons_r[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_u);
 
-				padData.hw_connected[GUI_HW_NUNCHUK] = true;
-				padData.hw_buttons_d[GUI_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_d);
-				padData.hw_buttons_h[GUI_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_h);
-				padData.hw_buttons_r[GUI_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_u);
+				padData.hw_connected[INPUT_HW_NUNCHUK] = true;
+				padData.hw_buttons_d[INPUT_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_d);
+				padData.hw_buttons_h[INPUT_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_h);
+				padData.hw_buttons_r[INPUT_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_u);
 				joystick_t* js = &wpad->exp.nunchuk.js;
-				padData.hw_stickX[GUI_HW_NUNCHUK] = NormalizeWPADAnalog(js->pos.x, js->min.x, js->max.x, js->center.x);
-				padData.hw_stickY[GUI_HW_NUNCHUK] = NormalizeWPADAnalog(js->pos.y, js->min.y, js->max.y, js->center.y);
+				padData.hw_stickX[INPUT_HW_NUNCHUK] = NormalizeWPADAnalog(js->pos.x, js->min.x, js->max.x, js->center.x);
+				padData.hw_stickY[INPUT_HW_NUNCHUK] = NormalizeWPADAnalog(js->pos.y, js->min.y, js->max.y, js->center.y);
 				
-				padData.hw_gforceX[GUI_HW_NUNCHUK] = wpad->exp.nunchuk.gforce.x;
-				padData.hw_gforceY[GUI_HW_NUNCHUK] = wpad->exp.nunchuk.gforce.y;
-				padData.hw_gforceZ[GUI_HW_NUNCHUK] = wpad->exp.nunchuk.gforce.z;
-				padData.hw_pitch[GUI_HW_NUNCHUK]   = wpad->exp.nunchuk.orient.pitch;
-				padData.hw_roll[GUI_HW_NUNCHUK]    = wpad->exp.nunchuk.orient.roll;
-				padData.hw_yaw[GUI_HW_NUNCHUK]     = wpad->exp.nunchuk.orient.yaw;
+				padData.hw_gforceX[INPUT_HW_NUNCHUK] = wpad->exp.nunchuk.gforce.x;
+				padData.hw_gforceY[INPUT_HW_NUNCHUK] = wpad->exp.nunchuk.gforce.y;
+				padData.hw_gforceZ[INPUT_HW_NUNCHUK] = wpad->exp.nunchuk.gforce.z;
+				padData.hw_pitch[INPUT_HW_NUNCHUK]   = wpad->exp.nunchuk.orient.pitch;
+				padData.hw_roll[INPUT_HW_NUNCHUK]    = wpad->exp.nunchuk.orient.roll;
+				padData.hw_yaw[INPUT_HW_NUNCHUK]     = wpad->exp.nunchuk.orient.yaw;
 				
 				controller[i]->setSideways(false);
 			}
 			else if (exp_type == WPAD_EXP_CLASSIC) {
 				bool isWUPC = (wpad->exp.classic.type == 2);
-				int hw = isWUPC ? GUI_HW_WUPC : GUI_HW_CLASSIC;
+				int hw = isWUPC ? INPUT_HW_WUPC : INPUT_HW_CLASSIC;
 
 				padData.hw_connected[hw] = true;
 				padData.hw_buttons_d[hw] = MapClassicToGeneric(wpad->btns_d);
@@ -339,19 +339,19 @@ void OgcInputDriver::update() {
 
 		// Process Wii U Gamepad
 		if(i == 0 && WiiDRC_Inited() && WiiDRC_Connected()) {
-			padData.hw_connected[GUI_HW_DRC] = true;
-			padData.hw_buttons_d[GUI_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsDown());
-			padData.hw_buttons_h[GUI_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsHeld());
-			padData.hw_buttons_r[GUI_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsUp());
-			padData.hw_stickX[GUI_HW_DRC] = clampf((float)WiiDRC_lStickX() / 128.0f, -1.0f, 1.0f);
-			padData.hw_stickY[GUI_HW_DRC] = clampf((float)WiiDRC_lStickY() / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickX[GUI_HW_DRC] = clampf((float)WiiDRC_rStickX() / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickY[GUI_HW_DRC] = clampf((float)WiiDRC_rStickY() / 128.0f, -1.0f, 1.0f);
+			padData.hw_connected[INPUT_HW_DRC] = true;
+			padData.hw_buttons_d[INPUT_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsDown());
+			padData.hw_buttons_h[INPUT_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsHeld());
+			padData.hw_buttons_r[INPUT_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsUp());
+			padData.hw_stickX[INPUT_HW_DRC] = clampf((float)WiiDRC_lStickX() / 128.0f, -1.0f, 1.0f);
+			padData.hw_stickY[INPUT_HW_DRC] = clampf((float)WiiDRC_lStickY() / 128.0f, -1.0f, 1.0f);
+			padData.hw_substickX[INPUT_HW_DRC] = clampf((float)WiiDRC_rStickX() / 128.0f, -1.0f, 1.0f);
+			padData.hw_substickY[INPUT_HW_DRC] = clampf((float)WiiDRC_rStickY() / 128.0f, -1.0f, 1.0f);
 		}
 		#endif
 
 		// Merge into unified aggregate state for UI Elements
-		for (uint32_t hw = 0; hw < GUI_HW_MAX; hw++) {
+		for (uint32_t hw = 0; hw < INPUT_HW_MAX; hw++) {
 			if (!padData.hw_connected[hw])
 				continue;
 

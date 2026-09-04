@@ -1632,7 +1632,7 @@ static int MenuGame()
 		#ifdef HW_RVL
 		for(i=0; i < 4; i++)
 		{
-			if(controller[i]->getPadData().hw_connected[GUI_HW_WIIMOTE])
+			if(controller[i]->getPadData().hw_connected[INPUT_HW_WIIMOTE])
 			{
 				newStatus = true;
 				newLevel = (controller[i]->getPadData().battery_level / 100.0) * 4;
@@ -2755,7 +2755,7 @@ static int MenuSettingsMappingsController()
 
 	if(mapMenuCtrlSNES == CTRL_PAD)
 	{
-		if(controller[0]->getPadData().hw_connected[GUI_HW_DRC]) {
+		if(controller[0]->getPadData().hw_connected[INPUT_HW_DRC]) {
 			gamecubeBtn.setPosition(-200, 120);
 			wiimoteBtn.setPosition(0, 120);
 			w.append(&drcBtn);
@@ -2778,32 +2778,32 @@ static int MenuSettingsMappingsController()
 		if(wiimoteBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = GUI_HW_WIIMOTE;
+			mapMenuCtrl = INPUT_HW_WIIMOTE;
 		}
 		else if(nunchukBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = GUI_HW_NUNCHUK;
+			mapMenuCtrl = INPUT_HW_NUNCHUK;
 		}
 		else if(classicBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = GUI_HW_CLASSIC;
+			mapMenuCtrl = INPUT_HW_CLASSIC;
 		}
 		else if(wiiuproBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = GUI_HW_WUPC;
+			mapMenuCtrl = INPUT_HW_WUPC;
 		}
 		else if(drcBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = GUI_HW_DRC;
+			mapMenuCtrl = INPUT_HW_DRC;
 		}
 		else if(gamecubeBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
-			mapMenuCtrl = GUI_HW_GAMECUBE;
+			mapMenuCtrl = INPUT_HW_GAMECUBE;
 		}
 		else if(backBtn.getState() == STATE::CLICKED)
 		{
@@ -2837,22 +2837,22 @@ static uint32_t ButtonMappingWindow()
 
 	switch(mapMenuCtrl)
 	{
-		case GUI_HW_GAMECUBE:
+		case INPUT_HW_GAMECUBE:
 			sprintf(msg, "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping.");
 			break;
-		case GUI_HW_WIIMOTE:
+		case INPUT_HW_WIIMOTE:
 			sprintf(msg, "Press any button on the Wiimote now. Press Home to clear the existing mapping.");
 			break;
-		case GUI_HW_CLASSIC:
+		case INPUT_HW_CLASSIC:
 			sprintf(msg, "Press any button on the Classic Controller now. Press Home to clear the existing mapping.");
 			break;
-		case GUI_HW_WUPC:
+		case INPUT_HW_WUPC:
 			sprintf(msg, "Press any button on the Wii U Pro Controller now. Press Home to clear the existing mapping.");
 			break;
-		case GUI_HW_DRC:
+		case INPUT_HW_DRC:
 			sprintf(msg, "Press any button on the Wii U GamePad now. Press Home to clear the existing mapping.");
 			break;
-		case GUI_HW_NUNCHUK:
+		case INPUT_HW_NUNCHUK:
 			sprintf(msg, "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping.");
 			break;
 		default:
@@ -2888,10 +2888,10 @@ static uint32_t ButtonMappingWindow()
 		pressed = pad.hw_buttons_d[mapMenuCtrl];
 
 		// C-Stick clear for GameCube specifically
-		if(mapMenuCtrl == GUI_HW_GAMECUBE)
+		if(mapMenuCtrl == INPUT_HW_GAMECUBE)
 		{
-			if(pad.hw_substickX[GUI_HW_GAMECUBE] < -0.55f || pad.hw_substickX[GUI_HW_GAMECUBE] > 0.55f ||
-			   pad.hw_substickY[GUI_HW_GAMECUBE] < -0.55f || pad.hw_substickY[GUI_HW_GAMECUBE] > 0.55f)
+			if(pad.hw_substickX[INPUT_HW_GAMECUBE] < -0.55f || pad.hw_substickX[INPUT_HW_GAMECUBE] > 0.55f ||
+			   pad.hw_substickY[INPUT_HW_GAMECUBE] < -0.55f || pad.hw_substickY[INPUT_HW_GAMECUBE] > 0.55f)
 			{
 				pressed = INPUT_BTN_HOME;
 			}

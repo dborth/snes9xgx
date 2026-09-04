@@ -17,7 +17,7 @@
 
 #define MAXJP 			12 // # of mappable controller buttons
 
-extern uint32_t btnmap[CTRL_BTN_MAPPINGS][GUI_HW_MAX][MAXJP];
+extern uint32_t btnmap[CTRL_BTN_MAPPINGS][INPUT_HW_MAX][MAXJP];
 extern int playerMapping[4];
 
 void ResetControls(int cc = -1, int wc = -1);

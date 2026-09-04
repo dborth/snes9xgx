@@ -32,18 +32,18 @@ enum InputDataButtons : uint32_t {
 	INPUT_TRIGGER_R   = (1 << 14),  // R Trigger / Bumper
 	INPUT_TRIGGER_ZL  = (1 << 15),  // ZL Trigger / GC Z Button, Nunchuk Z
 	INPUT_TRIGGER_ZR  = (1 << 16),  // ZR Trigger
-	GUI_THUMB_L     = (1 << 17),  // Left Stick Click (L3)
-	GUI_THUMB_R     = (1 << 18)   // Right Stick Click (R3)
+	INPUT_THUMB_L     = (1 << 17),  // Left Stick Click (L3)
+	INPUT_THUMB_R     = (1 << 18)   // Right Stick Click (R3)
 };
 
 enum GuiHardwareProfile : uint32_t {
-    GUI_HW_GAMECUBE = 0,
-    GUI_HW_WIIMOTE  = 1,
-    GUI_HW_NUNCHUK  = 2,
-    GUI_HW_CLASSIC  = 3,
-    GUI_HW_WUPC     = 4,
-    GUI_HW_DRC      = 5,
-    GUI_HW_MAX      = 6
+    INPUT_HW_GAMECUBE = 0,
+    INPUT_HW_WIIMOTE  = 1,
+    INPUT_HW_NUNCHUK  = 2,
+    INPUT_HW_CLASSIC  = 3,
+    INPUT_HW_WUPC     = 4,
+    INPUT_HW_DRC      = 5,
+    INPUT_HW_MAX      = 6
 };
 
 /**
@@ -64,21 +64,21 @@ struct InputPadData {
 	bool validPointer;  // True if the IR pointer or touch is active on screen
 	bool isTouch;       // True if input is direct touch (VPad) vs IR pointer
 
-	bool     hw_connected[GUI_HW_MAX];
-	uint32_t hw_buttons_d[GUI_HW_MAX];
-	uint32_t hw_buttons_h[GUI_HW_MAX];
-	uint32_t hw_buttons_r[GUI_HW_MAX];
-	float    hw_stickX[GUI_HW_MAX];
-	float    hw_stickY[GUI_HW_MAX];
-	float    hw_substickX[GUI_HW_MAX];
-	float    hw_substickY[GUI_HW_MAX];
+	bool     hw_connected[INPUT_HW_MAX];
+	uint32_t hw_buttons_d[INPUT_HW_MAX];
+	uint32_t hw_buttons_h[INPUT_HW_MAX];
+	uint32_t hw_buttons_r[INPUT_HW_MAX];
+	float    hw_stickX[INPUT_HW_MAX];
+	float    hw_stickY[INPUT_HW_MAX];
+	float    hw_substickX[INPUT_HW_MAX];
+	float    hw_substickY[INPUT_HW_MAX];
 
-	float    hw_gforceX[GUI_HW_MAX];
-	float    hw_gforceY[GUI_HW_MAX];
-	float    hw_gforceZ[GUI_HW_MAX];
-	float    hw_pitch[GUI_HW_MAX];
-	float    hw_roll[GUI_HW_MAX];
-	float    hw_yaw[GUI_HW_MAX];
+	float    hw_gforceX[INPUT_HW_MAX];
+	float    hw_gforceY[INPUT_HW_MAX];
+	float    hw_gforceZ[INPUT_HW_MAX];
+	float    hw_pitch[INPUT_HW_MAX];
+	float    hw_roll[INPUT_HW_MAX];
+	float    hw_yaw[INPUT_HW_MAX];
 
 	InputPadData() {
 		buttons_d = buttons_h = buttons_r = 0;
@@ -89,7 +89,7 @@ struct InputPadData {
 		cursor_x = cursor_y = cursor_angle = 0.0f;
 		validPointer = isTouch = false;
 
-		for(uint32_t i = 0; i < GUI_HW_MAX; i++) {
+		for(uint32_t i = 0; i < INPUT_HW_MAX; i++) {
 			hw_connected[i] = false;
 			hw_buttons_d[i] = hw_buttons_h[i] = hw_buttons_r[i] = 0;
 			hw_stickX[i] = hw_stickY[i] = hw_substickX[i] = hw_substickY[i] = 0.0f;
