@@ -124,6 +124,9 @@ bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * ou
 	uint8_t * const localScratchBuffer = scratchBuffer;
 	const unsigned int localScratchBufferSize = scratchBufferSize;
 
+	if(!localScratchBuffer || localScratchBufferSize == 0)
+		return false;
+
 	if(png_sig_cmp(static_cast<png_const_bytep>(pngData), 0, 8))
 		return false;
 
@@ -186,7 +189,7 @@ bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * ou
 	unsigned long long srcRgbaBytes = static_cast<unsigned long long>(rowBytes) * srcH;
 	unsigned long long resizedRgbaBytes = needsResize ? static_cast<unsigned long long>(w) * h * 4 : 0;
 	unsigned long long totalScratchBytes = rowPtrBytes + srcRgbaBytes + resizedRgbaBytes;
-	if(!localScratchBuffer || totalScratchBytes > localScratchBufferSize)
+	if(totalScratchBytes > localScratchBufferSize)
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
 		return false;
