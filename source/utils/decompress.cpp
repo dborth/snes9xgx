@@ -240,9 +240,9 @@ GetFirstZipFilename ()
 typedef struct _SzFileInStream
 {
    ISzInStream InStream;
-   u64 offset; // offset of the file
+   uint64_t offset; // offset of the file
    unsigned int len; // length of the file
-   u64 pos;  // current position of the file pointer
+   uint64_t pos;  // current position of the file pointer
 } SzFileInStream;
 
 // 7zip error list

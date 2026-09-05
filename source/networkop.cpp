@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <network.h>
 #include <smb.h>
+#include <ogc/lwp.h>
 
 #include "snes9xgx.h"
 #include "menu.h"

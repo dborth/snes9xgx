@@ -13,6 +13,8 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <mxml.h>
+#include <ogc/conf.h>
+#include <ogc/system.h>
 
 #include "snes9xgx.h"
 #include "system.h"

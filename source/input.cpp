@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ogcsys.h>
 #include <unistd.h>
 
 #include "snes9x/port.h"

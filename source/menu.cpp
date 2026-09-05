@@ -14,6 +14,9 @@
 #include <sys/stat.h>
 #include <memory>
 
+#include <ogc/ios.h>
+#include <ogc/cache.h>
+
 #include "snes9xgx.h"
 #include "memmanager.h"
 #include "system.h"
@@ -1194,7 +1197,7 @@ static int MenuGameSelection()
 				   previewImageData.reload(pngFileBuffer.get(), 640, 480))
 				{
 					preview.setImage(&previewImageData);
-					preview.setScale( MIN(225.0f / previewImageData.getWidth(), 235.0f / previewImageData.getHeight()) );
+					preview.setScale( std::min(225.0f / previewImageData.getWidth(), 235.0f / previewImageData.getHeight()) );
 					loadedPreview = true;
 				}
 			}

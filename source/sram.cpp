@@ -12,7 +12,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <ogcsys.h>
 
 #include "snes9xgx.h"
 #include "menu.h"
@@ -29,8 +28,7 @@ bool LoROM;
 /****************************************************************************
  * Load SRAM
  ***************************************************************************/
-bool
-LoadSRAM (char * filepath, bool silent)
+bool LoadSRAM (char * filepath, bool silent)
 {
 	int len = 0;
 	int device;
@@ -77,8 +75,7 @@ LoadSRAM (char * filepath, bool silent)
 	return result;
 }
 
-bool
-LoadSRAMAuto (bool silent)
+bool LoadSRAMAuto (bool silent)
 {
 	char filepath[MAXPATHLEN];
 
@@ -105,8 +102,7 @@ LoadSRAMAuto (bool silent)
 /****************************************************************************
  * Save SRAM
  ***************************************************************************/
-bool
-SaveSRAM (char * filepath, bool silent)
+bool SaveSRAM (char * filepath, bool silent)
 {
 	bool retval = false;
 	int offset = 0;
@@ -157,8 +153,7 @@ SaveSRAM (char * filepath, bool silent)
 	return retval;
 }
 
-bool
-SaveSRAMAuto (bool silent)
+bool SaveSRAMAuto (bool silent)
 {
 	char filepath[1024];
 
