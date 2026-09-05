@@ -31,13 +31,6 @@
 
 #define THREAD_SLEEP 100
 
-struct ThreadSync
-{
-	Mutex mutex;
-	Cond  workCond; // main -> worker: work/wake available
-	Cond  idleCond; // worker -> main: now idle/halted
-};
-
 static ThreadSync & DeviceSync() { static ThreadSync s; return s; }
 static ThreadSync & ParseSync()  { static ThreadSync s; return s; }
 static ThreadSync & WorkerSync() { static ThreadSync s; return s; }

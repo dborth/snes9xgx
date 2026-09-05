@@ -207,3 +207,11 @@ void OgcThreadDriver::sleepMilliseconds(uint32_t ms)
 {
 	usleep(ms * 1000);
 }
+
+uintptr_t OgcThreadDriver::getCurrentThreadId()
+{
+	// lwp_t is an opaque libogc handle that already uniquely identifies
+	// the calling thread (including the app's original/main thread,
+	// which was never created via createThread() above) - just widen it.
+	return (uintptr_t)LWP_GetSelf();
+}

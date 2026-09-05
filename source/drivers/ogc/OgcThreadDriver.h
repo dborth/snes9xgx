@@ -30,4 +30,6 @@ class OgcThreadDriver : public ThreadDriver
 		void signalCond(void * cond) override;
 
 		void sleepMilliseconds(uint32_t ms) override;
+
+		uintptr_t getCurrentThreadId() override;
 };

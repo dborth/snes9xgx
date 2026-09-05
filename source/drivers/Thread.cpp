@@ -68,3 +68,11 @@ bool Thread::isSuspended() const
 
 	return platform->getThread()->isThreadSuspended(handle);
 }
+
+ThreadId ThreadId::current()
+{
+	if(platform && platform->getThread())
+		return ThreadId(platform->getThread()->getCurrentThreadId());
+
+	return ThreadId();
+}

@@ -72,4 +72,12 @@ class ThreadDriver
 
 		//!Sleeps the calling thread for at least the given duration.
 		virtual void sleepMilliseconds(uint32_t ms) = 0;
+
+		//!Returns an opaque, comparable identifier for the calling thread.
+		//!Unlike the thread handles above, this does NOT require the
+		//!thread to have been created via createThread() - it also
+		//!identifies the app's original/main thread, which is never
+		//!itself a Thread object. Two calls from the same thread must
+		//!compare equal; that's the only guarantee callers may rely on.
+		virtual uintptr_t getCurrentThreadId() = 0;
 };

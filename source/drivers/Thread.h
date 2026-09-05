@@ -7,6 +7,11 @@
  ***************************************************************************/
 #pragma once
 
+#include <stdint.h>
+
+#include "Mutex.h"
+#include "Cond.h"
+
 enum class ThreadPriority
 {
 	Idle,
@@ -58,4 +63,40 @@ class Thread
 
 	protected:
 		void * handle = nullptr; //!< Backend-assigned thread handle
+};
+
+//!A lightweight, comparable identifier for a thread - including the app's
+//!own main/original thread, which was never itself started via Thread and
+//!so has no Thread object of its own to name it. Use this when code just
+//!needs to answer "is this the same thread that did X earlier?" (eg. "is
+//!this the main/GUI thread?"), not to own or join a thread.
+class ThreadId
+{
+	public:
+		ThreadId() : id(0) {}
+
+		//!\return an identifier for the calling thread.
+		static ThreadId current();
+
+		bool operator==(const ThreadId & other) const { return id == other.id; }
+		bool operator!=(const ThreadId & other) const { return !(*this == other); }
+
+	protected:
+		explicit ThreadId(uintptr_t v) : id(v) {}
+		uintptr_t id;
+};
+
+//!Bundles the mutex and pair of condition variables used by the common
+//!producer/consumer handshake between a background thread and its caller:
+//!one side sets a flag (protected by mutex) and signals workCond to wake
+//!the other; the other clears the flag and signals idleCond once it's
+//!done/idle. Both conds share the single mutex that protects whatever
+//!flag(s) the caller defines. Not every user needs both directions - eg.
+//!a request that's only ever polled, never woken, can leave workCond
+//!unused.
+struct ThreadSync
+{
+	Mutex mutex;
+	Cond  workCond; //!< signalled to wake a waiter when new work/state is available
+	Cond  idleCond; //!< signalled to wake a waiter once the other side is idle/done
 };

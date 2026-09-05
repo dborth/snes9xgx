@@ -8,8 +8,6 @@
  * Menu flow routines - handles all menu logic
  ***************************************************************************/
 
-#include <ogc/cond.h>
-#include <ogc/lwp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +32,9 @@
 #include "libgui/Gui.h"
 #include "utils/pngcodec.h"
 #include "drivers/Time.h"
+#include "drivers/Thread.h"
+#include "drivers/Mutex.h"
+#include "drivers/Cond.h"
 
 #include "drivers/ogc/videofilters.h"
 
@@ -80,9 +81,10 @@ static Menu * menu = nullptr;
 
 static volatile int showProgress = 0;
 
-static mutex_t progMutex      = LWP_MUTEX_NULL;
-static cond_t  progIdleCond   = LWP_COND_NULL; // signalled when the overlay has been fully torn down
-static bool    progIdle       = true;          // protected by progMutex - true when no overlay is showing/pending
+// ProgressSync().idleCond signals when the overlay has been fully torn
+// down; ProgressSync().workCond is unused - see ThreadSync in drivers/Thread.h.
+static ThreadSync & ProgressSync() { static ThreadSync s; return s; }
+static bool progIdle = true; // protected by ProgressSync().mutex - true when no overlay is showing/pending
 
 static char progressTitle[101];
 static char progressMsg[201];
@@ -90,17 +92,18 @@ static int progressDone = 0;
 static int progressTotal = 0;
 static bool buttonMappingCancelled = false;
 
-static lwp_t mainThreadId = LWP_THREAD_NULL;
+static ThreadId mainThreadId;
 
 static bool IsMainThread()
 {
-	return LWP_GetSelf() == mainThreadId;
+	return ThreadId::current() == mainThreadId;
 }
 
-static mutex_t promptMutex        = LWP_MUTEX_NULL;
-static cond_t  promptDoneCond     = LWP_COND_NULL; // main -> background: result is ready
-static bool    promptPending      = false; // protected by promptMutex
-static bool    promptResultReady  = false; // protected by promptMutex
+// PromptSync().idleCond signals main -> background: result is ready;
+// PromptSync().workCond is unused.
+static ThreadSync & PromptSync() { static ThreadSync s; return s; }
+static bool promptPending      = false; // protected by PromptSync().mutex
+static bool promptResultReady  = false; // protected by PromptSync().mutex
 static int     promptResult       = 0;
 static const char * promptPendingTitle;
 static const char * promptPendingMsg;
@@ -115,13 +118,12 @@ static const char * promptPendingBtn2;
 void
 InitGUIThreads()
 {
-	mainThreadId = LWP_GetSelf();
+	mainThreadId = ThreadId::current();
 
-	LWP_MutexInit(&progMutex, false);
-	LWP_CondInit(&progIdleCond);
-
-	LWP_MutexInit(&promptMutex, false);
-	LWP_CondInit(&promptDoneCond);
+	// Force ProgressSync()/PromptSync()'s function-local statics to
+	// construct now rather than on first use from a background thread.
+	ProgressSync();
+	PromptSync();
 }
 
 /****************************************************************************
@@ -246,13 +248,13 @@ struct Menu {
 void ProgressOverlayState::update() {
 	if(!menu) return;
 
-	LWP_MutexLock(progMutex);
+	ProgressSync().mutex.lock();
 	int progress = showProgress;
 	int done = progressDone;
 	int total = progressTotal;
 	char title[101]; snprintf(title, sizeof(title), "%s", progressTitle);
 	char msg[201]; snprintf(msg, sizeof(msg), "%s", progressMsg);
-	LWP_MutexUnlock(progMutex);
+	ProgressSync().mutex.unlock();
 
 	if(!progress)
 	{
@@ -265,13 +267,13 @@ void ProgressOverlayState::update() {
 			overlayShown = false;
 		}
 
-		LWP_MutexLock(progMutex);
+		ProgressSync().mutex.lock();
 		if(!progIdle)
 		{
 			progIdle = true;
-			LWP_CondBroadcast(progIdleCond);
+			ProgressSync().idleCond.signal();
 		}
-		LWP_MutexUnlock(progMutex);
+		ProgressSync().mutex.unlock();
 	}
 	else if(!overlayShown)
 	{
@@ -512,21 +514,21 @@ static int WindowPrompt(const char *, const char *, const char *, const char *);
 
 static void ServicePendingWindowPromptRequest()
 {
-	LWP_MutexLock(promptMutex);
+	PromptSync().mutex.lock();
 	bool pending = promptPending;
-	LWP_MutexUnlock(promptMutex);
+	PromptSync().mutex.unlock();
 
 	if(!pending)
 		return;
 
 	int result = WindowPrompt(promptPendingTitle, promptPendingMsg, promptPendingBtn1, promptPendingBtn2);
 
-	LWP_MutexLock(promptMutex);
+	PromptSync().mutex.lock();
 	promptResult = result;
 	promptResultReady = true;
 	promptPending = false;
-	LWP_CondBroadcast(promptDoneCond);
-	LWP_MutexUnlock(promptMutex);
+	PromptSync().idleCond.signal();
+	PromptSync().mutex.unlock();
 }
 
 /****************************************************************************
@@ -696,9 +698,9 @@ void CancelAction()
 {
 	if(!menu) return;
 
-	LWP_MutexLock(progMutex);
+	ProgressSync().mutex.lock();
 	showProgress = 0;
-	LWP_MutexUnlock(progMutex);
+	ProgressSync().mutex.unlock();
 
 	if(IsMainThread())
 	{
@@ -706,12 +708,12 @@ void CancelAction()
 	}
 	else
 	{
-		LWP_MutexLock(progMutex);
+		ProgressSync().mutex.lock();
 
 		while(!progIdle)
-			LWP_CondWait(progIdleCond, progMutex);
+			ProgressSync().idleCond.wait(ProgressSync().mutex);
 
-		LWP_MutexUnlock(progMutex);
+		ProgressSync().mutex.unlock();
 	}
 }
 
@@ -737,14 +739,14 @@ void ShowProgress (const char *msg, int done, int total)
 	if(showProgress != 1)
 		CancelAction(); // wait for previous progress window to finish
 
-	LWP_MutexLock(progMutex);
+	ProgressSync().mutex.lock();
 	snprintf(progressMsg, 200, "%s", msg);
 	sprintf(progressTitle, "Please Wait");
 	showProgress = 1;
 	progressTotal = total;
 	progressDone = done;
 	progIdle = false;
-	LWP_MutexUnlock(progMutex);
+	ProgressSync().mutex.unlock();
 }
 
 /****************************************************************************
@@ -761,14 +763,14 @@ void ShowAction (const char *msg)
 	if(showProgress != 0)
 		CancelAction(); // wait for previous progress window to finish
 
-	LWP_MutexLock(progMutex);
+	ProgressSync().mutex.lock();
 	snprintf(progressMsg, 200, "%s", msg);
 	sprintf(progressTitle, "Please Wait");
 	showProgress = 2;
 	progressDone = 0;
 	progressTotal = 0;
 	progIdle = false;
-	LWP_MutexUnlock(progMutex);
+	ProgressSync().mutex.unlock();
 }
 
 static int WindowPromptRequest(const char *title, const char *msg, const char *btn1Label, const char *btn2Label)
@@ -779,7 +781,7 @@ static int WindowPromptRequest(const char *title, const char *msg, const char *b
 	if(!menu)
 		return 0;
 
-	LWP_MutexLock(promptMutex);
+	PromptSync().mutex.lock();
 	promptPendingTitle = title;
 	promptPendingMsg = msg;
 	promptPendingBtn1 = btn1Label;
@@ -787,9 +789,9 @@ static int WindowPromptRequest(const char *title, const char *msg, const char *b
 	promptResultReady = false;
 	promptPending = true;
 	while(!promptResultReady)
-		LWP_CondWait(promptDoneCond, promptMutex);
+		PromptSync().idleCond.wait(PromptSync().mutex);
 	int result = promptResult;
-	LWP_MutexUnlock(promptMutex);
+	PromptSync().mutex.unlock();
 	return result;
 }
 
