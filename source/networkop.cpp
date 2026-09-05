@@ -10,13 +10,13 @@
 
 #include <errno.h>
 #include <network.h>
-#include <ogc/lwp_watchdog.h>
 #include <smb.h>
 
 #include "snes9xgx.h"
 #include "menu.h"
 #include "fileop.h"
 #include "filebrowser.h"
+#include "drivers/Time.h"
 
 static bool networkInit = false;
 static bool networkShareInit = false;
@@ -159,14 +159,14 @@ bool InitializeNetwork(bool silent)
 		ShowAction("Initializing network...");
 
 #ifdef HW_RVL
-		u64 start = gettime();
+		Ticks start = SystemTime::now();
 		StartNetworkThread();
 
 		while (!LWP_ThreadIsSuspended(networkthread))
 		{
 			usleep(50 * 1000);
 
-			if(diff_sec(start, gettime()) > 10) // wait for 10 seconds max for net init
+			if(SystemTime::diffSecs(start, SystemTime::now()) > 10) // wait for 10 seconds max for net init
 				break;
 		}
 #else

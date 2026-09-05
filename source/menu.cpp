@@ -10,7 +10,6 @@
 
 #include <ogc/cond.h>
 #include <ogc/lwp.h>
-#include <ogc/lwp_watchdog.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +33,7 @@
 #include "filelist.h"
 #include "libgui/Gui.h"
 #include "utils/pngcodec.h"
+#include "drivers/Time.h"
 
 #include "drivers/ogc/videofilters.h"
 
@@ -146,7 +146,7 @@ struct ProgressOverlayState {
 
 	bool overlayShown;
 	bool waitingToShow;
-	u64 pendingStart;
+	Ticks pendingStart;
 	STATE oldState;
 	float angle;
 	uint32_t count;
@@ -278,9 +278,9 @@ void ProgressOverlayState::update() {
 		if(!waitingToShow)
 		{
 			waitingToShow = true;
-			pendingStart = gettime();
+			pendingStart = SystemTime::now();
 		}
-		else if(ticks_to_millisecs(diff_ticks(pendingStart, gettime())) >= 400)
+		else if(SystemTime::diffMillisecs(pendingStart, SystemTime::now()) >= 400)
 		{
 			titleTxt.setText(title);
 			msgTxt.setText(msg);

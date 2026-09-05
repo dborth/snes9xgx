@@ -18,7 +18,6 @@
 #include "utils/pngcodec.h"
 
 #include "drivers/Platform.h"
-#include "drivers/ogc/videofilters.h"
 
 #include "snes9x/memmap.h"
 

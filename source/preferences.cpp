@@ -18,13 +18,13 @@
 #include "system.h"
 #include "menu.h"
 #include "fileop.h"
-#include "drivers/ogc/videofilters.h"
 #include "video.h"
 #include "filebrowser.h"
 #include "input.h"
 #include "button_mapping.h"
 #include "libgui/Gui.h"
 
+#include "drivers/ogc/videofilters.h"
 #include "snes9x/apu/apu.h"
 
 struct SGCSettings GCSettings;

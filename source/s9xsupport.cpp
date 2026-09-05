@@ -11,13 +11,11 @@
  * Snes9x support functions
  ***************************************************************************/
 
-#include <ogc/lwp_watchdog.h>
-
 #include "snes9xgx.h"
 #include "video.h"
 #include "input.h"
-#include "drivers/ogc/OgcVideoDriver.h"
 #include "drivers/Platform.h"
+#include "drivers/Time.h"
 #include "snes9x/snes9x.h"
 #include "snes9x/memmap.h"
 #include "snes9x/display.h"
@@ -27,8 +25,8 @@
 #define MAX_MESSAGE_LEN (36 * 3)
 
 static int timerstyle = 0;
-static long long prev;
-static long long now;
+static Ticks prev;
+static Ticks now;
 
 /****************************************************************************
  * setFrameTimerMethod()
@@ -121,7 +119,7 @@ bool8 S9xOpenSoundDevice(void)
 void S9xInitSync()
 {
 	platform->getVideo()->setFrameTimer(0);
-	prev = gettime();
+	prev = SystemTime::now();
 }
 
 /*** Synchronisation ***/
@@ -177,18 +175,18 @@ void S9xSyncSpeed () {
 	{
 		const uint32_t timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
 
-		now = gettime();
+		now = SystemTime::now();
 
-		if (diff_usec(prev, now) < timediffallowed)
+		if (SystemTime::diffMicrosecs(prev, now) < timediffallowed)
 		{
 			/*** Ahead - so hold up until the frame's time budget elapses ***/
 			do
 			{
-				if ((timediffallowed - diff_usec(prev, now)) > 50) {
+				if ((timediffallowed - SystemTime::diffMicrosecs(prev, now)) > 50) {
 					usleep(50); // The GPU draws concurrently during this CPU sleep!
 				}
-				now = gettime();
-			} while (diff_usec(prev, now) < timediffallowed);
+				now = SystemTime::now();
+			} while (SystemTime::diffMicrosecs(prev, now) < timediffallowed);
 
 			IPPU.RenderThisFrame = TRUE;
 			IPPU.SkippedFrames = 0;
