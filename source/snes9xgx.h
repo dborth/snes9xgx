@@ -252,6 +252,7 @@ struct SGCSettings{
 
 void ExitApp();
 extern struct SGCSettings GCSettings;
-extern bool MenuRequested;
+enum class AppRequest { NONE, MENU, EXIT };
+extern AppRequest appRequest;
 extern char appPath[];
 #endif

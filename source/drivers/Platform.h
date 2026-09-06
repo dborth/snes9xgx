@@ -13,6 +13,19 @@ class InputDriver;
 class FileSystemDriver;
 class ThreadDriver;
 
+//!A hardware/OS-level system event a Platform can report. These are
+//!mutually exclusive by construction.
+enum class SystemEvent
+{
+	None,
+	//!Power button pressed (console or, on Wii, a Wiimote) - or, on Wii U,
+	//!the OS asking the app to exit. Stop running as soon as practical.
+	ShutdownRequested,
+	//!Reset button pressed (Wii only).
+	//!Soft-reset the currently running game and keep going.
+	ResetRequested,
+};
+
 class Platform
 {
 	public:
@@ -27,7 +40,18 @@ class Platform
 		virtual FileSystemDriver* getFileSystem() = 0;
 		virtual ThreadDriver* getThread() = 0;
 
-		virtual bool shutdownRequested() = 0;
+		//!Current hardware/OS-level system event, if any. A single query
+		//!rather than independent shutdown/reset flags.
+		virtual SystemEvent getSystemEvent() = 0;
+
+		//!Human-readable console/CPU description and free-memory summary,
+		//!for an in-app diagnostics screen.
+		virtual const char* getConsoleDetails() = 0;
+		virtual const char* getMemoryFreeInfo() = 0;
+
+		//!Hands control back to the OS/loader. exitAction and autoloadedGame
+		//!are interpreted per-platform. Never returns.
+		virtual void requestExit(int exitAction, bool autoloadedGame) = 0;
 };
 
 //! The globally accessible platform instance

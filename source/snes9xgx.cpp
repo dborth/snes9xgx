@@ -12,7 +12,6 @@
  ***************************************************************************/
 
 #include "snes9xgx.h"
-#include "system.h"
 #include "s9xsupport.h"
 #include "video.h"
 #include "menu.h"
@@ -23,26 +22,45 @@
 #include "filebrowser.h"
 #include "input.h"
 #include "memmanager.h"
-#include "drivers/Platform.h"
-#include "drivers/ogc/videofilters.h"
-#include "drivers/ogc/OgcVideoDriver.h"
+#include "font_ttf.h"
+#include "libgui/Gui.h"
 
 #include "snes9x/snes9x.h"
 #include "snes9x/fxemu.h"
 #include "snes9x/memmap.h"
 #include "snes9x/apu/apu.h"
 
-bool MenuRequested = false;
+#include "drivers/Platform.h"
+#include "drivers/ogc/videofilters.h"
+
+#ifdef HW_DOL
+#include "drivers/ogc/GameCubePlatform.h"
+static GameCubePlatform platformInstance;
+#else
+#include "drivers/ogc/WiiPlatform.h"
+static WiiPlatform platformInstance;
+#endif
+Platform* platform = &platformInstance;
+
+AppRequest appRequest = AppRequest::NONE;
 char appPath[1024] = { 0 };
 static bool firstRun = true;
 static bool autoboot = false;
 
 int main(int argc, char *argv[])
 {
-	SystemInit();
-	DefaultSettings (); // Set defaults
+	InitMemManager();
+	platform->init(640, 480);
+	InitFileOpThreads();
+	MountAllFAT();
+
+	fontSystem = new GuiTextRenderer(font_ttf, font_ttf_size, platform->getVideo()->getGlyphRenderer());
+	textTranslator = new GuiTextTranslator();
+	textTranslator->loadLanguage(en_lang, en_lang_size);
+
+	DefaultSettings();
 	InitializeSnes9x(); // ensure Snes9x memory is in MEM1 for Wii
-	platform->getVideo()->startMenuVideo(); // change to menu video mode
+	platform->getVideo()->startMenuVideo();
 	S9xInitSync(); // initialize frame sync
 	InitGUIThreads();
 
@@ -72,7 +90,7 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	while (!ExitRequested && !ShutdownRequested) // main loop
+	while (appRequest != AppRequest::EXIT && platform->getSystemEvent() != SystemEvent::ShutdownRequested) // main loop
 	{
 		if(!autoboot) {
 			// go back to checking if devices were inserted/removed
@@ -87,7 +105,7 @@ int main(int argc, char *argv[])
 				MainMenu(MENU_GAME);
 		}
 
-		if(ExitRequested || ShutdownRequested) {
+		if(appRequest == AppRequest::EXIT || platform->getSystemEvent() == SystemEvent::ShutdownRequested) {
 			break;
 		}
 
@@ -120,7 +138,7 @@ int main(int argc, char *argv[])
 		}
 		
 		autoboot = false;		
-		MenuRequested = false;
+		appRequest = AppRequest::NONE;
 		platform->getAudio()->startEmulatorAudio();
 
 		Settings.Mute = GCSettings.MuteAudio;
@@ -147,20 +165,23 @@ int main(int argc, char *argv[])
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;
 		SelectFilterMethod(GCSettings.videoUpscalingFilter); // Initialize / Re-evaluate active filter
 
-		while(!MenuRequested && !ExitRequested && !ShutdownRequested) // emulation loop
+		while(appRequest == AppRequest::NONE) // emulation loop
 		{
+			SystemEvent event = platform->getSystemEvent(); // poll exactly once per iteration
+			if(event == SystemEvent::ShutdownRequested)
+				break;
+
 			S9xMainLoop ();
 			ReportButtons ();
 			ClearButtonsReported ();
 
-			if(ResetRequested)
+			if(event == SystemEvent::ResetRequested)
 			{
 				S9xSoftReset (); // reset game
-				ResetRequested = 0;
 			}
-			if (MenuRequested)
+			if (appRequest == AppRequest::MENU)
 			{
-				MenuRequested = false;
+				appRequest = AppRequest::NONE;
 				SwitchMemoryModeMenu();
 				TakeScreenshot();
 				platform->getVideo()->startMenuVideo();
@@ -174,8 +195,9 @@ int main(int argc, char *argv[])
 void ExitApp() {
 	SavePrefs();
 
-	if (SNESROMSize > 0 && !MenuRequested && GCSettings.AutoSave == AUTOSAVE_SRAM)
+	if (SNESROMSize > 0 && appRequest != AppRequest::MENU && GCSettings.AutoSave == AUTOSAVE_SRAM)
 		SaveSRAMAuto(SILENT);
 
-	SystemExit(GCSettings.ExitAction, autoboot);
+	HaltDeviceCheckingThread();
+	platform->requestExit(GCSettings.ExitAction, autoboot);
 }

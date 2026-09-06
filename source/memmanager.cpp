@@ -29,8 +29,9 @@ enum
 	MEMORY_MODE_MENU,
 	MEMORY_MODE_GAME
 };
-
+#ifdef HW_DOL
 static mspace aram_space = nullptr;
+#endif
 static int memoryMode = -1;
 uint8_t * romPtr = nullptr;
 
@@ -47,7 +48,7 @@ void InitMemManager ()
 	void * decodeScratch = mem2_malloc(IMAGE_DECODE_SCRATCH_SIZE);
 	#endif
 
-	GuiImageData::setDecodeScratch(decodeScratch, decodeScratch ? IMAGE_DECODE_SCRATCH_SIZE : 0);
+	GuiImageData::setDecodeScratch(decodeScratch, IMAGE_DECODE_SCRATCH_SIZE);
 
 	SwitchMemoryModeMenu();
 }

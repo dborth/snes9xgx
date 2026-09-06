@@ -19,7 +19,6 @@
 
 #include "snes9xgx.h"
 #include "memmanager.h"
-#include "system.h"
 #include "video.h"
 #include "filebrowser.h"
 #include "utils/decompress.h"
@@ -40,6 +39,8 @@
 #include "drivers/Cond.h"
 
 #include "drivers/ogc/videofilters.h"
+#include "drivers/ogc/WiiPlatform.h"
+#include "drivers/ogc/GameCubePlatform.h"
 
 #include "snes9x/port.h"
 #include "snes9x/snes9x.h"
@@ -436,8 +437,8 @@ static void CreditsWindow()
 	char memoryFreeInfo[50];
 	char controllerInfo[100];
 
-	sprintf(consoleDetails, getConsoleDetails());
-	sprintf(memoryFreeInfo, getMemoryFreeInfo());
+	sprintf(consoleDetails, platform->getConsoleDetails());
+	sprintf(memoryFreeInfo, platform->getMemoryFreeInfo());
 
 #ifdef HW_RVL
 	sprintf(controllerInfo, GetUSBControllerInfo());
@@ -560,7 +561,7 @@ static bool UpdateGui()
 
 	DrawGui();
 
-	if(ExitRequested || ShutdownRequested)
+	if(appRequest == AppRequest::EXIT || platform->getSystemEvent() == SystemEvent::ShutdownRequested)
 	{
 		for(int a = 0; a <= 255; a += 15)
 		{
@@ -1209,7 +1210,7 @@ static int MenuGameSelection()
 		if(settingsBtn.getState() == STATE::CLICKED)
 			selection = MENU_SETTINGS;
 		else if(exitBtn.getState() == STATE::CLICKED)
-			ExitRequested = 1;
+			appRequest = AppRequest::EXIT;
 	}
 
 	HaltParseThread(); // halt parsing

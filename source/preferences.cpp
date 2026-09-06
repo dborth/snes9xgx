@@ -17,7 +17,6 @@
 #include <ogc/system.h>
 
 #include "snes9xgx.h"
-#include "system.h"
 #include "menu.h"
 #include "fileop.h"
 #include "video.h"
@@ -25,9 +24,11 @@
 #include "input.h"
 #include "button_mapping.h"
 #include "libgui/Gui.h"
-
-#include "drivers/ogc/videofilters.h"
 #include "snes9x/apu/apu.h"
+
+#include "drivers/ogc/WiiPlatform.h"
+#include "drivers/ogc/GameCubePlatform.h"
+#include "drivers/ogc/videofilters.h"
 
 struct SGCSettings GCSettings;
 

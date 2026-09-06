@@ -132,7 +132,7 @@ void S9xAudioCallback (void *data) {
 	S9xUpdateDynamicRate(rate);
 	S9xFinalizeSamples();
 
-	if (MenuRequested) {
+	if (appRequest == AppRequest::MENU) {
 		// Stop playback while the screenshot/config overlay is active. Reset the
 		// ring so that once the request clears, the start path below re-primes
 		// and restarts DMA cleanly instead of leaving playback dead on a stale,

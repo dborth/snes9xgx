@@ -492,7 +492,7 @@ void ReportButtons ()
 	 * OR Left on classic right analog stick
 	 */
 	if(isMenuRequested())
-		MenuRequested = true; // go to the menu
+		appRequest = AppRequest::MENU; // go to the menu
 
 	int numControllers = (Settings.MultiPlayer5Master == true ? 4 : 2);
 
