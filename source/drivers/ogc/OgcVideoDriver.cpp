@@ -411,6 +411,16 @@ void* OgcImageRenderer::createTexture(int width, int height)
 	return memalign(32, len);
 }
 
+// GX RGBA8 textures are stored as 4x4 tiles, each tile split into a 32-byte
+// AR plane followed by a 32-byte GB plane. Both loadTextureData() and
+// fillTexture() write into that same layout; this just computes the byte
+// offset of tile-relative pixel (x,y)'s AR pair within the buffer (the GB
+// pair for the same pixel sits at offset+32).
+static inline uint32_t OgcTiledPixelOffset(int x, int y, int padWidth)
+{
+	return ((((y >> 2) * (padWidth >> 2) + (x >> 2)) << 5) + ((y & 3) << 2) + (x & 3)) << 1;
+}
+
 void OgcImageRenderer::loadTextureData(void* texture, const uint8_t* rgba, int width, int height)
 {
 	if(!texture || !rgba) return;
@@ -420,7 +430,7 @@ void OgcImageRenderer::loadTextureData(void* texture, const uint8_t* rgba, int w
 
 	for (int y = 0; y < padHeight; y++) {
 		for (int x = 0; x < padWidth; x++) {
-			uint32_t offset = ((((y >> 2) * (padWidth >> 2) + (x >> 2)) << 5) + ((y & 3) << 2) + (x & 3)) << 1;
+			uint32_t offset = OgcTiledPixelOffset(x, y, padWidth);
 			if (y >= height || x >= width) {
 				dst[offset] = 0; dst[offset+1] = 255; dst[offset+32] = 255; dst[offset+33] = 255;
 			} else {
@@ -430,6 +440,35 @@ void OgcImageRenderer::loadTextureData(void* texture, const uint8_t* rgba, int w
 				dst[offset+32] = src[1]; // G
 				dst[offset+33] = src[2]; // B
 			}
+		}
+	}
+
+	int len = (padWidth * padHeight) * 2;
+	if (len % 32) len += (32 - len % 32);
+	DCFlushRange(dst, len);
+}
+
+void OgcImageRenderer::fillTexture(void* texture, int width, int height, ImageRenderer::PixelSourceFn source, void* userdata)
+{
+	if(!texture || !source) return;
+	uint8_t* dst = (uint8_t*)texture;
+	int padWidth = width + (4 - width % 4) % 4;
+	int padHeight = height + (4 - height % 4) % 4;
+
+	PixelColor c;
+	for (int y = 0; y < padHeight; y++) {
+		for (int x = 0; x < padWidth; x++) {
+			uint32_t offset = OgcTiledPixelOffset(x, y, padWidth);
+			if (y >= height || x >= width) {
+				dst[offset] = 0; dst[offset+1] = 255; dst[offset+32] = 255; dst[offset+33] = 255;
+				continue;
+			}
+
+			source(x, y, &c, userdata);
+			dst[offset]    = c.a;
+			dst[offset+1]  = c.r;
+			dst[offset+32] = c.g;
+			dst[offset+33] = c.b;
 		}
 	}
 

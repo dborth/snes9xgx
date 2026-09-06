@@ -63,7 +63,7 @@ static GuiTrigger * trigA = nullptr;
 #ifdef HW_RVL
 static GuiButton * batteryBtn[4];
 #endif
-static uint8_t * gameScreenTexture = nullptr;
+static void * gameScreenTexture = nullptr;
 static GuiImage * gameScreenImg = nullptr;
 static GuiSound * bgMusic = nullptr;
 static GuiSound * enterSound = nullptr;
@@ -1728,7 +1728,7 @@ static int MenuGame()
 				menu->mainWindow.remove(gameScreenImg);
 				delete gameScreenImg;
 				if(gameScreenTexture != nullptr) {
-					free(gameScreenTexture);
+					platform->getVideo()->getImageRenderer()->destroyTexture(gameScreenTexture);
 					gameScreenTexture = nullptr;
 				}
 				ClearScreenshot();
@@ -4658,38 +4658,89 @@ static int MenuSettingsNetwork()
 	return selection;
 }
 
-static uint8_t * CreateBlurredGameTexture() {
-	if(gameScreenPng.size == 0) {
-		return nullptr;
-	}
+// Context passed to BlurredOverlayPixelSource() via fillTexture()'s userdata.
+// Holds everything needed to compute the final (post vertical-blur, post
+// overlay) color of a single destination pixel, without ever having a
+// full-screen plain RGBA8 buffer materialized anywhere.
+struct BlurredGameTextureContext {
+	const uint8_t * scaledImg; // horizontally-blurred crop, cropWidth x cropHeight, RGBA8
+	int cropWidth;
+	int cropHeight;
+	int drawX;
+	int drawY;
+	int blurAmount;
+	int div;
+	PixelColor overlayColor;
+	uint8_t bgR, bgG, bgB, bgA; // precomputed flat background (black + overlay)
+};
 
-	uint8_t *src = DecodePNGToRGBA8(gameScreenPng.buffer, gameScreenPng.width, gameScreenPng.height);
-	if(!src) {
+// ImageRenderer::PixelSourceFn implementation: does the vertical blur pass
+// and overlay blend for destination pixel (x,y), sourcing from the
+// horizontally-blurred crop buffer, or returns the flat background color
+// for anything outside the crop/screen bounds.
+static void BlurredOverlayPixelSource(int x, int y, PixelColor * outColor, void * userdata)
+{
+	BlurredGameTextureContext * ctx = (BlurredGameTextureContext *)userdata;
+
+	if (x >= ctx->drawX && x < ctx->drawX + ctx->cropWidth &&
+		y >= ctx->drawY && y < ctx->drawY + ctx->cropHeight) {
+
+		int cx = x - ctx->drawX;
+		int cy = y - ctx->drawY;
+
+		int sumR = 0, sumG = 0, sumB = 0;
+		for (int k = -ctx->blurAmount; k <= ctx->blurAmount; ++k) {
+			int ny = cy + k;
+			if (ny < 0) ny = 0;
+			if (ny >= ctx->cropHeight) ny = ctx->cropHeight - 1;
+
+			int idx = (ny * ctx->cropWidth + cx) * 4;
+			sumR += ctx->scaledImg[idx + 0];
+			sumG += ctx->scaledImg[idx + 1];
+			sumB += ctx->scaledImg[idx + 2];
+		}
+
+		uint8_t blurredR = sumR / ctx->div;
+		uint8_t blurredG = sumG / ctx->div;
+		uint8_t blurredB = sumB / ctx->div;
+
+		int alphaIn = ctx->overlayColor.a;
+		int invAlpha = 255 - alphaIn;
+
+		outColor->r = (uint8_t)((blurredR * invAlpha + ctx->overlayColor.r * alphaIn) / 255);
+		outColor->g = (uint8_t)((blurredG * invAlpha + ctx->overlayColor.g * alphaIn) / 255);
+		outColor->b = (uint8_t)((blurredB * invAlpha + ctx->overlayColor.b * alphaIn) / 255);
+		outColor->a = 255;
+	} else {
+		outColor->r = ctx->bgR;
+		outColor->g = ctx->bgG;
+		outColor->b = ctx->bgB;
+		outColor->a = ctx->bgA;
+	}
+}
+
+static void * CreateBlurredGameTexture() {
+	if(gameScreenPng.size == 0) {
 		return nullptr;
 	}
 
 	int blurAmount = 4; // blur amount
 	PixelColor blurOverlayColor = (PixelColor){50, 50, 50, 160};
 
-	uint8_t * dst = (uint8_t *)memalign(32, platform->getVideo()->getScreenWidth() * platform->getVideo()->getScreenHeight() * 4);
-	if(!dst) {
-		extmem_free(src);
-		return nullptr;
-	}
+	int screenWidth = platform->getVideo()->getScreenWidth();
+	int screenHeight = platform->getVideo()->getScreenHeight();
 
 	int scaledWidth = (int)(gameScreenPng.width * gameScreenPng.scaleX);
 	int scaledHeight = (int)(gameScreenPng.height * gameScreenPng.scaleY);
 
 	// Failsafe for invalid scale metrics
 	if (scaledWidth <= 0 || scaledHeight <= 0) {
-		extmem_free(src);
-		free(dst);
 		return nullptr;
 	}
 
 	// Calculate the absolute top-left starting pixel of the scaled image.
-	int targetCenterX = (platform->getVideo()->getScreenWidth() / 2) + gameScreenPng.xoffset;
-	int targetCenterY = (platform->getVideo()->getScreenHeight() / 2) + gameScreenPng.yoffset;
+	int targetCenterX = (screenWidth / 2) + gameScreenPng.xoffset;
+	int targetCenterY = (screenHeight / 2) + gameScreenPng.yoffset;
 
 	int trueOffsetX = targetCenterX - (scaledWidth / 2);
 	int trueOffsetY = targetCenterY - (scaledHeight / 2);
@@ -4700,8 +4751,8 @@ static uint8_t * CreateBlurredGameTexture() {
 	int drawY = trueOffsetY < 0 ? 0 : trueOffsetY;
 
 	// Determine the max visible boundaries clipped to screen dimensions
-	int endX = (trueOffsetX + scaledWidth > platform->getVideo()->getScreenWidth()) ? platform->getVideo()->getScreenWidth() : (trueOffsetX + scaledWidth);
-	int endY = (trueOffsetY + scaledHeight > platform->getVideo()->getScreenHeight()) ? platform->getVideo()->getScreenHeight() : (trueOffsetY + scaledHeight);
+	int endX = (trueOffsetX + scaledWidth > screenWidth) ? screenWidth : (trueOffsetX + scaledWidth);
+	int endY = (trueOffsetY + scaledHeight > screenHeight) ? screenHeight : (trueOffsetY + scaledHeight);
 
 	// Calculate the dimensions of the viewable (cropped) area
 	int cropWidth = endX - drawX;
@@ -4709,14 +4760,24 @@ static uint8_t * CreateBlurredGameTexture() {
 
 	// Failsafe if the image is pushed entirely off-screen
 	if (cropWidth <= 0 || cropHeight <= 0) {
-		extmem_free(src);
-		free(dst);
 		return nullptr;
 	}
 
 	// Determine the starting offset within the theoretical scaled image
 	int cropStartX = trueOffsetX < 0 ? -trueOffsetX : 0;
 	int cropStartY = trueOffsetY < 0 ? -trueOffsetY : 0;
+
+	// Allocate texture before scratch memory to avoid fragmentation
+	void * texture = platform->getVideo()->getImageRenderer()->createTexture(screenWidth, screenHeight);
+	if (!texture) {
+		return nullptr;
+	}
+
+	uint8_t *src = DecodePNGToRGBA8(gameScreenPng.buffer, gameScreenPng.width, gameScreenPng.height);
+	if(!src) {
+		platform->getVideo()->getImageRenderer()->destroyTexture(texture);
+		return nullptr;
+	}
 
 	// Allocate scratch space ONLY for the viewable cropped portion
 	uint8_t *scaledImg = (uint8_t *)extmem_malloc(cropWidth * cropHeight * 4);
@@ -4726,7 +4787,7 @@ static uint8_t * CreateBlurredGameTexture() {
 		if (scaledImg) extmem_free(scaledImg);
 		if (rowBuf) extmem_free(rowBuf);
 		extmem_free(src);
-		free(dst);
+		platform->getVideo()->getImageRenderer()->destroyTexture(texture);
 		return nullptr;
 	}
 
@@ -4780,88 +4841,39 @@ static uint8_t * CreateBlurredGameTexture() {
 		}
 	}
 
-	// Precalculate flat background color (Solid Black + Overlay)
+	// The horizontally-blurred crop (scaledImg) and rowBuf are all we need from
+	// here on.
+	extmem_free(rowBuf);
+	extmem_free(src);
+
+	// Precalculate flat background color (Solid Black + Overlay) once, rather
+	// than per background pixel.
 	int alphaIn = blurOverlayColor.a;
 	int invAlpha = 255 - alphaIn;
 
-	uint8_t bgR = (uint8_t)((0 * invAlpha + blurOverlayColor.r * alphaIn) / 255);
-	uint8_t bgG = (uint8_t)((0 * invAlpha + blurOverlayColor.g * alphaIn) / 255);
-	uint8_t bgB = (uint8_t)((0 * invAlpha + blurOverlayColor.b * alphaIn) / 255);
-	uint8_t bgA = 255;
+	BlurredGameTextureContext ctx;
+	ctx.scaledImg = scaledImg;
+	ctx.cropWidth = cropWidth;
+	ctx.cropHeight = cropHeight;
+	ctx.drawX = drawX;
+	ctx.drawY = drawY;
+	ctx.blurAmount = blurAmount;
+	ctx.div = div;
+	ctx.overlayColor = blurOverlayColor;
+	ctx.bgR = (uint8_t)((0 * invAlpha + blurOverlayColor.r * alphaIn) / 255);
+	ctx.bgG = (uint8_t)((0 * invAlpha + blurOverlayColor.g * alphaIn) / 255);
+	ctx.bgB = (uint8_t)((0 * invAlpha + blurOverlayColor.b * alphaIn) / 255);
+	ctx.bgA = 255;
 
-	// Vertical Blur, Overlay, & Swizzle directly to the GX Destination Layout
-	int tilesX = (platform->getVideo()->getScreenWidth() + 3) / 4;
-	int tilesY = (platform->getVideo()->getScreenHeight() + 3) / 4;
-
-	for (int ty = 0; ty < tilesY; ++ty) {
-		for (int tx = 0; tx < tilesX; ++tx) {
-			int tileIdx = ty * tilesX + tx;
-			uint8_t* destTilePtr = dst + (tileIdx * 64);
-
-			for (int py = 0; py < 4; ++py) {
-				for (int px = 0; px < 4; ++px) {
-					int currX = tx * 4 + px;
-					int currY = ty * 4 + py;
-					int pixelIdx = (py * 4) + px;
-
-					if (currX >= platform->getVideo()->getScreenWidth() || currY >= platform->getVideo()->getScreenHeight()) {
-						destTilePtr[pixelIdx * 2 + 0] = bgA;
-						destTilePtr[pixelIdx * 2 + 1] = bgR;
-						destTilePtr[32 + (pixelIdx * 2 + 0)] = bgG;
-						destTilePtr[32 + (pixelIdx * 2 + 1)] = bgB;
-						continue;
-					}
-
-					// Check bounds against our true absolute coordinates
-					if (currX >= drawX && currX < drawX + cropWidth &&
-						currY >= drawY && currY < drawY + cropHeight) {
-
-						int cx = currX - drawX;
-						int cy = currY - drawY;
-
-						int sumR = 0, sumG = 0, sumB = 0;
-
-						for (int k = -blurAmount; k <= blurAmount; ++k) {
-							int ny = cy + k;
-							if (ny < 0) ny = 0;
-							if (ny >= cropHeight) ny = cropHeight - 1;
-
-							int idx = (ny * cropWidth + cx) * 4;
-							sumR += scaledImg[idx + 0];
-							sumG += scaledImg[idx + 1];
-							sumB += scaledImg[idx + 2];
-						}
-
-						uint8_t blurredR = sumR / div;
-						uint8_t blurredG = sumG / div;
-						uint8_t blurredB = sumB / div;
-
-						uint8_t finalR = (uint8_t)((blurredR * invAlpha + blurOverlayColor.r * alphaIn) / 255);
-						uint8_t finalG = (uint8_t)((blurredG * invAlpha + blurOverlayColor.g * alphaIn) / 255);
-						uint8_t finalB = (uint8_t)((blurredB * invAlpha + blurOverlayColor.b * alphaIn) / 255);
-
-						destTilePtr[pixelIdx * 2 + 0] = 255;
-						destTilePtr[pixelIdx * 2 + 1] = finalR;
-						destTilePtr[32 + (pixelIdx * 2 + 0)] = finalG;
-						destTilePtr[32 + (pixelIdx * 2 + 1)] = finalB;
-
-					} else {
-						destTilePtr[pixelIdx * 2 + 0] = bgA;
-						destTilePtr[pixelIdx * 2 + 1] = bgR;
-						destTilePtr[32 + (pixelIdx * 2 + 0)] = bgG;
-						destTilePtr[32 + (pixelIdx * 2 + 1)] = bgB;
-					}
-				}
-			}
-		}
-	}
-
-	DCFlushRange(dst, platform->getVideo()->getScreenWidth() * platform->getVideo()->getScreenHeight() * 4);
+	// Vertical blur + overlay compositing happens here, in platform-agnostic
+	// pixel math (BlurredOverlayPixelSource). The platform driver's only job
+	// is to place each resulting pixel into its own native texture layout -
+	// this function still only ever holds the small cropped scratch buffer,
+	// never a full-screen plain RGBA8 intermediate.
+	platform->getVideo()->getImageRenderer()->fillTexture(texture, screenWidth, screenHeight, BlurredOverlayPixelSource, &ctx);
 
 	extmem_free(scaledImg);
-	extmem_free(rowBuf);
-	extmem_free(src);
-	return dst;
+	return texture;
 }
 
 /****************************************************************************
@@ -4901,7 +4913,7 @@ void MainMenu (int selection)
 	{
 		gameScreenTexture = CreateBlurredGameTexture();
 		if(gameScreenTexture != nullptr) {
-			gameScreenImg = new GuiImage(gameScreenTexture, platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
+			gameScreenImg = new GuiImage((uint8_t *)gameScreenTexture, platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
 		}
 	}
 
@@ -5020,7 +5032,7 @@ void MainMenu (int selection)
 	}
 
 	if(gameScreenTexture != nullptr) {
-		free(gameScreenTexture);
+		platform->getVideo()->getImageRenderer()->destroyTexture(gameScreenTexture);
 		gameScreenTexture = nullptr;
 	}
 

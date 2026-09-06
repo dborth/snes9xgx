@@ -64,6 +64,15 @@ class ImageRenderer
 		virtual void * createTexture(int width, int height) = 0;
 		//! Loads raw RGBA8 pixels into the pre-allocated texture
 		virtual void loadTextureData(void * texture, const uint8_t * rgba, int width, int height) = 0;
+		//! Callback used by fillTexture(): supplies the RGBA8 color for pixel (x,y).
+		typedef void (*PixelSourceFn)(int x, int y, PixelColor * outColor, void * userdata);
+		//! Fills a texture created by createTexture() by invoking `source` once per destination
+		//! pixel and writing the returned color directly into the texture's native memory layout
+		//! (eg. GX's 4x4-tiled RGBA8). Lets platform-agnostic code synthesize or composite a
+		//! full-size texture (blur/overlay/procedural effects, etc.) without ever needing to
+		//! allocate a plain row-major RGBA8 buffer the size of the destination - callers only
+		//! need scratch space for whatever smaller working set their pixel math requires.
+		virtual void fillTexture(void * texture, int width, int height, PixelSourceFn source, void * userdata) = 0;
 		//!Destroys a texture created by createTexture.
 		virtual void destroyTexture(void * texture) = 0;
 		//!Draws a texture created by createTexture.
