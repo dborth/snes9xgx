@@ -7,15 +7,20 @@
 
 #include <stdint.h>
 #include "../AudioDriver.h"
+#include "OgcEmulatorAudio.h"
 #include "../../libgui/GuiSoundOggPlayer.h"
 
 class WiiAudioDriver : public AudioDriver
 {
 	public:
+		~WiiAudioDriver() override;
+
 		void init() override;
 		void shutdown() override;
 		void startMenuAudio() override;
 		void startEmulatorAudio() override;
+
+		OgcEmulatorAudio* getEmulatorAudio() override { return emulatorAudio; }
 
 		int32_t playVoice(const uint8_t* data, int32_t length, int volume) override;
 		void stopVoice(int32_t voice) override;
@@ -39,4 +44,5 @@ class WiiAudioDriver : public AudioDriver
 		void stopEmulatorAudio();
 		GuiSoundOggPlayer oggPlayer;
 		int streamVolume;
+		OgcEmulatorAudio* emulatorAudio = nullptr;
 };

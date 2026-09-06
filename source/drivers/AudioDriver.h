@@ -10,6 +10,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "EmulatorAudioDriver.h"
 
 class AudioDriver
 {
@@ -20,6 +21,11 @@ class AudioDriver
 		virtual void shutdown() = 0;
 		virtual void startEmulatorAudio() = 0;
 		virtual void startMenuAudio() = 0;
+
+		//! The emulator-core-facing audio backend. Distinct from the
+		//! voice/stream API below, which is used for menu sound effects
+		//! and music rather than in-game emulator audio.
+		virtual EmulatorAudioDriver* getEmulatorAudio() = 0;
 
 		//!Start a one-shot/short PCM voice. Returns a backend-defined
 		//!voice handle (>=0) on success, or a negative value if no voice

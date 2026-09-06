@@ -19,11 +19,13 @@ void WiiAudioDriver::init() {
 	instance = this;
 	ASND_Init();
 	streamVolume = 127;
+	emulatorAudio = new OgcEmulatorAudio();
+	emulatorAudio->init();
 }
 
 void WiiAudioDriver::startEmulatorAudio() {
 	stopMenuAudio();
-	AudioReset();
+	emulatorAudio->resetAudio();
 	AUDIO_RegisterDMACallback(AudioDMACallback);
 	S9xSetSamplesAvailableCallback(S9xAudioCallback, NULL);
 }
@@ -54,6 +56,10 @@ void WiiAudioDriver::shutdown() {
 	ASND_End();
 	AUDIO_StopDMA();
 	instance = nullptr;
+}
+
+WiiAudioDriver::~WiiAudioDriver() {
+	delete emulatorAudio;
 }
 
 int32_t WiiAudioDriver::playVoice(const uint8_t *data, int32_t length, int volume) {

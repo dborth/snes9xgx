@@ -14,10 +14,14 @@
 class GameCubeAudioDriver : public AudioDriver
 {
 	public:
-		void init() override { AUDIO_Init(NULL); AUDIO_SetDSPSampleRate(AI_SAMPLERATE_48KHZ); AUDIO_RegisterDMACallback(AudioDMACallback); }
+		~GameCubeAudioDriver() override { delete emulatorAudio; }
+
+		void init() override { AUDIO_Init(NULL); AUDIO_SetDSPSampleRate(AI_SAMPLERATE_48KHZ); AUDIO_RegisterDMACallback(AudioDMACallback); emulatorAudio = new OgcEmulatorAudio(); emulatorAudio->init(); }
 		void startMenuAudio() override { S9xSetSamplesAvailableCallback(NULL, NULL); AUDIO_StopDMA(); }
-		void startEmulatorAudio() override { AudioReset(); S9xSetSamplesAvailableCallback(S9xAudioCallback, NULL); }
+		void startEmulatorAudio() override { emulatorAudio->resetAudio(); S9xSetSamplesAvailableCallback(S9xAudioCallback, NULL); }
 		void shutdown() override { AUDIO_StopDMA(); AUDIO_RegisterDMACallback(NULL); }
+
+		OgcEmulatorAudio* getEmulatorAudio() override { return emulatorAudio; }
 
 		int32_t playVoice(const uint8_t* data, int32_t length, int volume) override { return -1; }
 		void stopVoice(int32_t voice) override {}
@@ -32,4 +36,7 @@ class GameCubeAudioDriver : public AudioDriver
 		void resumeStream() override {}
 		bool isStreamPlaying() override { return false; }
 		void setStreamVolume(int volume) override {}
+
+	private:
+		OgcEmulatorAudio* emulatorAudio = nullptr;
 };

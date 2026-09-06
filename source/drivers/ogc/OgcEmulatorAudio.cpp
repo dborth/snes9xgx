@@ -6,19 +6,14 @@
 #include <ogc/audio.h>
 #include <ogc/cache.h>
 #include <unistd.h>
+#include <string.h>
 
-#include "WiiAudioDriver.h"
+#include "OgcEmulatorAudio.h"
 #include "../../snes9xgx.h"
 #include "../../snes9x/apu/apu.h"
 
 /*** Double buffered audio ***/
 #define SAMPLES_TO_PROCESS 1024
-#define AUDIOBUFFER 2048
-#define BUFFERCOUNT 16
-
-// BUFFERCOUNT must be a power of two so the ring index can advance with a cheap
-// bitwise mask (see nextIndex) instead of an integer modulo on the hot path.
-static_assert((BUFFERCOUNT & (BUFFERCOUNT - 1)) == 0, "BUFFERCOUNT must be a power of two");
 
 // Dynamic-rate control: nudge the emulated sample rate up or down slightly to
 // keep the number of unplayed (queued) buffers within a comfortable band,
@@ -35,49 +30,47 @@ static_assert((BUFFERCOUNT & (BUFFERCOUNT - 1)) == 0, "BUFFERCOUNT must be a pow
 #define RATE_SPEED_UP 0.995         // emit samples slightly faster to fill the queue
 #define RATE_NEUTRAL 1.0
 
-// Discrete state of the dynamic-rate controller. Kept separate from the rate
-// multiplier so the hysteresis logic compares enums rather than floating-point
-// values (exact, and robust against future tweaks to the multipliers).
-enum RateState {
-    RATE_STATE_NEUTRAL,
-    RATE_STATE_DRAINING,  // running slow to shrink an over-full queue
-    RATE_STATE_FILLING,   // running fast to grow an under-full queue
-};
-
 // Maximum allowed queued buffers (12 out of 16).
 // Leaves a mandatory 4-buffer (~85ms) safety zone before playab.
 #define MAX_QUEUED_BUFFERS 12
 
-static uint8_t soundbuffer[BUFFERCOUNT][AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
-static uint8_t dummy[AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
-
-// These are shared between S9xAudioCallback and the DMA interrupt callback,
-// so they must not be cached in registers across reads
-static volatile int playab = 0;
-static volatile int nextab = 0;
-static bool dma_started = false;
-static bool turbo_drop = false;
-// Current dynamic-rate controller state. Only touched by S9xAudioCallback and
-// AudioStart (both non-interrupt context), so it needs no synchronization.
-// Persisting it gives the controller hysteresis across cycles.
-static RateState rateState = RATE_STATE_NEUTRAL;
-
-static inline int nextIndex(int current) {
-	return (current + 1) & (BUFFERCOUNT - 1);
-}
-
-// Ring buffer occupancy calculation
-static inline int getUnplayed() {
-	return (nextab - playab + BUFFERCOUNT) & (BUFFERCOUNT - 1);
-}
+// The single OgcEmulatorAudio instance currently registered with the DMA and
+// Snes9x sample-ready trampolines below. There is only ever one emulator
+// audio backend alive at a time.
+static OgcEmulatorAudio* instance = nullptr;
 
 void AudioDMACallback() {
+	if (instance)
+		instance->dmaCallback();
+}
+
+void S9xAudioCallback(void *data) {
+	if (instance)
+		instance->audioCallback();
+}
+
+OgcEmulatorAudio::OgcEmulatorAudio() :
+	playab(0), nextab(0), dma_started(false), turbo_drop(false), rateState(RATE_STATE_NEUTRAL)
+{
+	memset(soundbuffer, 0, sizeof(soundbuffer));
+	memset(dummy, 0, sizeof(dummy));
+	instance = this;
+}
+
+OgcEmulatorAudio::~OgcEmulatorAudio() {
+	if (instance == this)
+		instance = nullptr;
+}
+
+void OgcEmulatorAudio::init() {
+}
+
+void OgcEmulatorAudio::dmaCallback() {
 	AUDIO_InitDMA((uint32_t) soundbuffer[playab], AUDIOBUFFER);
 	playab = nextIndex(playab);
 }
 
-void AudioReset()
-{
+void OgcEmulatorAudio::resetAudio() {
 	nextab = 0;
 	playab = 0;
 	dma_started = false;
@@ -85,7 +78,7 @@ void AudioReset()
 	rateState = RATE_STATE_NEUTRAL;
 }
 
-void S9xAudioCallback (void *data) {
+void OgcEmulatorAudio::audioCallback() {
 	int unplayed = getUnplayed();
 	double rate = RATE_NEUTRAL;
 
@@ -138,7 +131,7 @@ void S9xAudioCallback (void *data) {
 		// and restarts DMA cleanly instead of leaving playback dead on a stale,
 		// never-rearmed buffer index.
 		AUDIO_StopDMA();
-		AudioReset();
+		resetAudio();
 		return;
 	}
 
