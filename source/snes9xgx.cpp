@@ -31,7 +31,9 @@
 #include "snes9x/apu/apu.h"
 
 #include "drivers/Platform.h"
+#if defined(HW_RVL) || defined(HW_DOL)
 #include "drivers/ogc/videofilters.h"
+#endif
 
 #ifdef HW_DOL
 #include "drivers/ogc/GameCubePlatform.h"
@@ -163,7 +165,9 @@ int main(int argc, char *argv[])
 
 		CheckVideo = 2;		// force video update
 		prevRenderedFrameCount = IPPU.RenderedFramesCount;
+#if defined(HW_RVL) || defined(HW_DOL)
 		SelectFilterMethod(GCSettings.videoUpscalingFilter); // Initialize / Re-evaluate active filter
+#endif
 
 		while(appRequest == AppRequest::NONE) // emulation loop
 		{

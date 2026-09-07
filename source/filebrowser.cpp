@@ -18,7 +18,6 @@
 #include "filebrowser.h"
 #include "menu.h"
 #include "video.h"
-#include "networkop.h"
 #include "fileop.h"
 #include "input.h"
 #include "utils/decompress.h"
