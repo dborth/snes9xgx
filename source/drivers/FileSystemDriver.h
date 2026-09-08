@@ -4,8 +4,26 @@
  * FileSystemDriver.h
  ***************************************************************************/
 #pragma once
+#include <stddef.h>
+#include <stdio.h>
 
 #define MAX_STORAGE_DEVICES 16
+
+//!Storage device kind, shared by every platform's FileSystemDriver
+//!All platforms are limited to exactly one mount per device type
+enum Device
+{
+	DEVICE_AUTO = 0,
+	DEVICE_SD,
+	DEVICE_USB,
+	DEVICE_DVD,
+	DEVICE_SMB,
+	DEVICE_SD_SLOTA,     //!< GameCube memory card slot A
+	DEVICE_SD_SLOTB,     //!< GameCube memory card slot B
+	DEVICE_SD_PORT2,     //!< GameCube SD Gecko in memory card slot B
+	DEVICE_SD_GCLOADER,
+	DEVICE_LENGTH
+};
 
 struct StorageDevice
 {
@@ -58,4 +76,39 @@ class FileSystemDriver
 
 		//! Whether the device-checking thread should run on this platform
 		virtual bool hasRemovableStorageDevices() const = 0;
+
+		//! devoptab-style mount path for device (eg. "sd:/"), or "" if
+		//! device isn't recognized or currently mounted on this platform.
+		virtual const char * getMountPath(int device) const = 0;
+
+		//! Writes getMountPath(device) + suffix into out (bounds-checked to
+		//! sizeof(out) via the array-reference template parameter N).
+		template<size_t N>
+		void getPath(char (&out)[N], int device, const char * suffix) const
+		{
+			getPath(out, N, device, suffix);
+		}
+
+		//! Joins a folder and a filename with '/' after the mount path.
+		template<size_t N>
+		void getPath(char (&out)[N], int device, const char * folder, const char * file) const
+		{
+			getPath(out, N, device, folder, file);
+		}
+
+		//! Explicit-size equivalents of the two templates above, for call
+		//! sites where the destination buffer arrives as a `char *`
+		//! function parameter rather than a fixed array.
+		void getPath(char * out, size_t outSize, int device, const char * suffix) const
+		{
+			snprintf(out, outSize, "%s%s", getMountPath(device), suffix ? suffix : "");
+		}
+
+		void getPath(char * out, size_t outSize, int device, const char * folder, const char * file) const
+		{
+			snprintf(out, outSize, "%s%s/%s", getMountPath(device), folder ? folder : "", file ? file : "");
+		}
+
+		virtual const int * getValidLoadDevices(int & outCount) const = 0;
+		virtual const int * getValidSaveDevices(int & outCount) const = 0;
 };

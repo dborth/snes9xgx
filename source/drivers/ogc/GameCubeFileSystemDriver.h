@@ -19,6 +19,10 @@ class GameCubeFileSystemDriver : public FileSystemDriver
 		void pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES], int & outRemovedCount, bool & deviceListChanged) override;
 		bool hasRemovableStorageDevices() const override { return false; } // card slots/GC Loader aren't polled for removal
 
+		const char * getMountPath(int device) const override;
+		const int * getValidLoadDevices(int & outCount) const override;
+		const int * getValidSaveDevices(int & outCount) const override;
+
 	private:
 		MountResult mountFAT(int deviceId);
 		MountResult mountDVD();

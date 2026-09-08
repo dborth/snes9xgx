@@ -624,13 +624,13 @@ bool SavePrefs()
 			return false;
 		}
 		
-		sprintf(filepath, "%s%s", pathPrefix[device], APPFOLDER);
+		platform->getFileSystem()->getPath(filepath, device, APPFOLDER);
 		if(!CreateDirectory(filepath)) {
 			return false;
 		}
 
-		sprintf(filepath, "%s%s/%s", pathPrefix[device], APPFOLDER, PREF_FILE_NAME);
-		sprintf(prefpath, "%s%s", pathPrefix[device], APPFOLDER);
+		platform->getFileSystem()->getPath(filepath, device, APPFOLDER, PREF_FILE_NAME);
+		platform->getFileSystem()->getPath(prefpath, device, APPFOLDER);
 	}
 	
 	if(device == DEVICE_AUTO)

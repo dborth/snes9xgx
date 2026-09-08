@@ -15,7 +15,7 @@
 #define _SNES9XGX_H_
 
 #include "drivers/InputDriver.h"
-#include "drivers/ogc/OgcDeviceTypes.h"
+#include "drivers/FileSystemDriver.h"
 #include "snes9x.h"
 #include "filelist.h"
 

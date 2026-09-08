@@ -15,7 +15,6 @@
 #include <iso9660.h>
 
 #include "WiiFileSystemDriver.h"
-#include "OgcDeviceTypes.h"
 
 static DISC_INTERFACE* sd  = &__io_wiisd;
 static DISC_INTERFACE* usb = &__io_usbstorage;
@@ -175,4 +174,36 @@ void WiiFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 		invalidateStorageDevice(DEVICE_DVD);
 		removedIds[outRemovedCount++] = DEVICE_DVD;
 	}
+}
+
+//!Mount-path lookup, keyed by the shared Device enum.
+static const char * const kMountPath[DEVICE_LENGTH] =
+{
+	"",       // DEVICE_AUTO
+	"sd:/",   // DEVICE_SD
+	"usb:/",  // DEVICE_USB
+	"dvd:/",  // DEVICE_DVD
+	"",       // DEVICE_SMB
+	"", "", "", ""
+};
+
+const char * WiiFileSystemDriver::getMountPath(int device) const
+{
+	if(device < 0 || device >= DEVICE_LENGTH)
+		return "";
+	return kMountPath[device];
+}
+
+const int * WiiFileSystemDriver::getValidLoadDevices(int & outCount) const
+{
+	static const int devices[] = { DEVICE_AUTO, DEVICE_SD, DEVICE_USB, DEVICE_DVD, DEVICE_SMB };
+	outCount = sizeof(devices) / sizeof(devices[0]);
+	return devices;
+}
+
+const int * WiiFileSystemDriver::getValidSaveDevices(int & outCount) const
+{
+	static const int devices[] = { DEVICE_AUTO, DEVICE_SD, DEVICE_USB, DEVICE_SMB };
+	outCount = sizeof(devices) / sizeof(devices[0]);
+	return devices;
 }

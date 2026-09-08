@@ -13,7 +13,6 @@
 #include <iso9660.h>
 
 #include "GameCubeFileSystemDriver.h"
-#include "OgcDeviceTypes.h"
 
 static DISC_INTERFACE* dvd      = &__io_gcdvd;
 static DISC_INTERFACE* gcloader = &__io_gcode;
@@ -166,4 +165,39 @@ void GameCubeFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEV
 {
 	outRemovedCount = 0;
 	deviceListChanged = false;
+}
+
+//!Mount-path lookup, keyed by the shared Device enum.
+static const char * const kMountPath[DEVICE_LENGTH] =
+{
+	"",         // DEVICE_AUTO
+	"",         // DEVICE_SD
+	"",         // DEVICE_USB
+	"dvd:/",    // DEVICE_DVD
+	"",         // DEVICE_SMB
+	"carda:/",  // DEVICE_SD_SLOTA
+	"cardb:/",  // DEVICE_SD_SLOTB
+	"port2:/",  // DEVICE_SD_PORT2
+	"gcloader:/", // DEVICE_SD_GCLOADER
+};
+
+const char * GameCubeFileSystemDriver::getMountPath(int device) const
+{
+	if(device < 0 || device >= DEVICE_LENGTH)
+		return "";
+	return kMountPath[device];
+}
+
+const int * GameCubeFileSystemDriver::getValidLoadDevices(int & outCount) const
+{
+	static const int devices[] = { DEVICE_AUTO, DEVICE_SD_SLOTA, DEVICE_SD_SLOTB, DEVICE_SD_PORT2, DEVICE_SD_GCLOADER, DEVICE_DVD, DEVICE_SMB };
+	outCount = sizeof(devices) / sizeof(devices[0]);
+	return devices;
+}
+
+const int * GameCubeFileSystemDriver::getValidSaveDevices(int & outCount) const
+{
+	static const int devices[] = { DEVICE_AUTO, DEVICE_SD_SLOTA, DEVICE_SD_SLOTB, DEVICE_SD_PORT2, DEVICE_SD_GCLOADER, DEVICE_SMB };
+	outCount = sizeof(devices) / sizeof(devices[0]);
+	return devices;
 }
