@@ -14,8 +14,9 @@
 #include <sys/stat.h>
 #include <memory>
 
+#ifdef HW_RVL
 #include <ogc/ios.h>
-#include <ogc/cache.h>
+#endif
 
 #include "snes9xgx.h"
 #include "memmanager.h"
@@ -42,9 +43,9 @@
 
 #if defined(HW_RVL) || defined(HW_DOL)
 #include "drivers/ogc/videofilters.h"
-#endif
 #include "drivers/ogc/WiiPlatform.h"
 #include "drivers/ogc/GameCubePlatform.h"
+#endif
 
 #include "snes9x/port.h"
 #include "snes9x/snes9x.h"
@@ -58,14 +59,14 @@ extern void ToggleCheat(uint32);
 
 #define THREAD_SLEEP 100
 
-#ifdef HW_RVL
+#ifndef HW_DOL
 static GuiImageData * pointer[4];
 static GuiImage cursorImg[4];
 #endif
 
 static GuiTrigger * trigA = nullptr;
 
-#ifdef HW_RVL
+#ifndef HW_DOL
 static GuiButton * batteryBtn[4];
 #endif
 static void * gameScreenTexture = nullptr;
@@ -355,7 +356,7 @@ static void ProcessInputData() {
 static void DrawGui() {
 	menu->mainWindow.draw();
 
-	#ifdef HW_RVL
+	#ifndef HW_DOL
 	int i = 3;
 	do
 	{
@@ -1311,7 +1312,7 @@ static void ControllerWindow()
 	delete(settingText);
 }
 
-#ifdef HW_RVL
+#ifndef HW_DOL
 static int playerMappingChan = 0;
 
 static void PlayerMappingWindowUpdate(void * ptr, int dir)
@@ -1548,7 +1549,7 @@ static int MenuGame()
 	closeBtn.setTrigger(&trigB);
 	closeBtn.setEffectGrow();
 
-	#ifdef HW_RVL
+	#ifndef HW_DOL
 	int i;
 	char txt[3];
 	bool status[4] = { false, false, false, false };
@@ -1600,7 +1601,7 @@ static int MenuGame()
 	w.append(&resetBtn);
 	w.append(&gameSettingsBtn);
 
-	#ifdef HW_RVL
+	#ifndef HW_DOL
 	w.append(batteryBtn[0]);
 	w.append(batteryBtn[1]);
 	w.append(batteryBtn[2]);
@@ -1623,7 +1624,7 @@ static int MenuGame()
 		mainmenuBtn.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
 		menu->bgBottomImg.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
 		menu->btnLogo.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
-		#ifdef HW_RVL
+		#ifndef HW_DOL
 		batteryBtn[0]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
 		batteryBtn[1]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
 		batteryBtn[2]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
@@ -1641,7 +1642,7 @@ static int MenuGame()
 	{
 		if(!UpdateGui()) return MENU_EXIT;
 
-		#ifdef HW_RVL
+		#ifndef HW_DOL
 		for(i=0; i < 4; i++)
 		{
 			if(controller[i]->getPadData().hw_connected[INPUT_HW_WIIMOTE])
@@ -1710,7 +1711,7 @@ static int MenuGame()
 		{
 			selection = MENU_GAMESETTINGS;
 		}
-#ifdef HW_RVL
+#ifndef HW_DOL
 		else if(batteryBtn[0]->getState() == STATE::CLICKED)
 		{
 			PlayerMappingWindow(0);
@@ -1761,7 +1762,7 @@ static int MenuGame()
 			mainmenuBtn.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 			menu->bgBottomImg.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 			menu->btnLogo.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
-			#ifdef HW_RVL
+			#ifndef HW_DOL
 			batteryBtn[0]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 			batteryBtn[1]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 			batteryBtn[2]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
@@ -1777,7 +1778,7 @@ static int MenuGame()
 	}
 
 
-	#ifdef HW_RVL
+	#ifndef HW_DOL
 	for(i=0; i < 4; i++)
 	{
 		delete batteryTxt[i];
@@ -2764,7 +2765,7 @@ static int MenuSettingsMappingsController()
 	w.append(&subtitleTxt);
 
 	w.append(&gamecubeBtn);
-#ifdef HW_RVL
+#ifndef HW_DOL
 	w.append(&wiimoteBtn);
 
 	if(mapMenuCtrlSNES == CTRL_PAD)
@@ -3785,7 +3786,7 @@ static int MenuSettingsEmulation()
 				break;
 
 			case 2:
-				#ifdef HW_RVL
+				#ifndef HW_DOL
 				GCSettings.sfxOverclock++;
 				if (GCSettings.sfxOverclock >= SFXOVERCLOCK_LENGTH) {
 					GCSettings.sfxOverclock = SFXOVERCLOCK_OFF;
@@ -4313,7 +4314,7 @@ void ChangeLanguage() {
 	}
 
 	if(GCSettings.language == LANG_JAPANESE || GCSettings.language == LANG_KOREAN || GCSettings.language == LANG_SIMP_CHINESE) {
-#ifdef HW_RVL
+#ifndef HW_DOL
 		char filepath[MAXPATHLEN];
 
 		switch(GCSettings.language) {
@@ -4342,7 +4343,7 @@ void ChangeLanguage() {
 	ErrorPrompt("Unsupported language!");
 #endif
 	}
-#ifdef HW_RVL
+#ifndef HW_DOL
 	else {
 		if(ext_font_ttf != nullptr) {
 			if(fontSystem) delete fontSystem;
@@ -4369,7 +4370,11 @@ static int MenuSettingsMenu()
 	OptionList options;
 	currentLanguage = GCSettings.language;
 
+#if defined(HW_RVL) || defined(HW_DOL)
 	sprintf(options.name[i++], "Exit Action");
+#else
+	options.name[i++][0] = 0; // Exit Action not available on this platform
+#endif
 	sprintf(options.name[i++], "Wiimote Orientation");
 	sprintf(options.name[i++], "Music Volume");
 	sprintf(options.name[i++], "Sound Effects Volume");
@@ -4433,7 +4438,7 @@ static int MenuSettingsMenu()
 				#ifdef HW_RVL
 				if(GCSettings.ExitAction >= EXITACTION_WII_LENGTH)
 					GCSettings.ExitAction = EXITACTION_WII_AUTO;
-				#else
+				#elif HW_DOL
 				if(GCSettings.ExitAction >= EXITACTION_GC_LENGTH)
 					GCSettings.ExitAction = EXITACTION_GC_RETURN_TO_LOADER;
 				#endif
@@ -4491,7 +4496,7 @@ static int MenuSettingsMenu()
 				sprintf (options.value[0], "Return to Loader");
 			else
 				sprintf (options.value[0], "Auto");
-			#else // GameCube
+			#elif HW_DOL // GameCube
 			if (GCSettings.ExitAction == EXITACTION_GC_RETURN_TO_LOADER)
 				sprintf (options.value[0], "Return to Loader");
 			else
@@ -4915,7 +4920,7 @@ void MainMenu (int selection)
 	
 	if(firstRun)
 	{
-		#ifdef HW_RVL
+		#ifndef HW_DOL
 		pointer[0] = new GuiImageData(player1_point_png);
 		pointer[1] = new GuiImageData(player2_point_png);
 		pointer[2] = new GuiImageData(player3_point_png);
