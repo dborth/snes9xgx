@@ -56,7 +56,7 @@ static int unzFindExtension(unzFile &file, const char *ext, bool restart = TRUE,
 
 STREAM S9xMSU1OpenFile(const char *msu_ext, bool skip_unpacked)
 {
-#ifdef GEKKO
+#ifdef SNES9XGX
 	char filename[1024];
 	sprintf(filename, "%s%s%s", Memory.ROMFilePath, Memory.ROMFilename, msu_ext);
 #else

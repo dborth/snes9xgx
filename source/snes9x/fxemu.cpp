@@ -29,7 +29,7 @@ void S9xResetSuperFX (void)
 {
 	// FIXME: Snes9x only runs the SuperFX at the end of every line.
 	// 5823405 is a magic number that seems to work for most games.
-	#ifdef GEKKO
+	#ifdef SNES9XGX
 	SuperFX.speedPerLine = (uint32) (Settings.SuperFXSpeedPerLine * ((1.0f / Memory.ROMFramesPerSecond) / ((float) (Timings.V_Max)))); 
 	#else
 	SuperFX.speedPerLine = (uint32) (5823405 * ((1.0 / (float) Memory.ROMFramesPerSecond) / ((float) (Timings.V_Max)))); 
@@ -148,7 +148,7 @@ void S9xSuperFXExec (void)
 {
 	if ((Memory.FillRAM[0x3000 + GSU_SFR] & FLG_G) && (Memory.FillRAM[0x3000 + GSU_SCMR] & 0x18) == 0x18)
 	{
-		#ifdef GEKKO
+		#ifdef SNES9XGX
 		FxEmulate(((Memory.FillRAM[0x3000 + GSU_CLSR] & 1) ? (SuperFX.speedPerLine * Timings.SuperFX2CoreSpeed) : SuperFX.speedPerLine) * Settings.SuperFXClockMultiplier / 100);
 		#endif
 

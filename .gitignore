@@ -1,4 +1,5 @@
 build_wii
+build_wiiu
 build_gc
 executables
 .project

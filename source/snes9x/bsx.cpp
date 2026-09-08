@@ -868,7 +868,7 @@ uint8 S9xGetBSXPPU (uint16 address)
 				break;
 			}
 
-#ifndef GEKKO
+#ifndef SNES9XGX
 			if (BSX.sat_stream1_queue <= 0)
 			{
 				BSX.sat_stream1_count++;
@@ -987,7 +987,7 @@ uint8 S9xGetBSXPPU (uint16 address)
 				break;
 			}
 
-#ifndef GEKKO
+#ifndef SNES9XGX
 			if (BSX.sat_stream2_queue <= 0)
 			{
 				BSX.sat_stream2_count++;
@@ -1210,7 +1210,7 @@ uint8 * S9xGetBasePointerBSX (uint32 address)
 
 static bool8 BSX_LoadBIOS (void)
 {
-#ifdef GEKKO
+#ifdef SNES9XGX
 	return TRUE; // We're not loading the BIOS!
 #else
 	FILE	*fp;
@@ -1258,7 +1258,7 @@ static bool8 is_BSX_BIOS (const uint8 *data, uint32 size)
 	else
 		return (FALSE);
 }
-#ifdef GEKKO
+#ifdef SNES9XGX
 bool isBSX() {
 	if(is_bsx(Memory.ROM + 0x7FC0) == 1 || is_bsx(Memory.ROM + 0xFFC0) == 1) {
 		return true;

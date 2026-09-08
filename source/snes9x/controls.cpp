@@ -24,7 +24,7 @@
 #include "netplay.h"
 #endif
 
-#ifdef GEKKO
+#ifdef SNES9XGX
 #include "snes9xgx.h"
 #endif
 
@@ -2794,7 +2794,7 @@ static void UpdatePolledMouse (int i)
 	}
 }
 
-#ifdef GEKKO
+#ifdef SNES9XGX
 extern void ClearButtonsReported();
 #endif
 
@@ -2809,7 +2809,7 @@ void S9xSetJoypadLatch (bool latch)
 
 	if (latch && !FLAG_LATCH)
 	{
-#ifdef GEKKO
+#ifdef SNES9XGX
 		ClearButtonsReported();
 #endif
 		int	i;
@@ -3188,7 +3188,7 @@ void S9xControlEOF (void)
 						DoGunLatch(superscope.x, superscope.y);
 
 					c = &superscope.crosshair;
-					#ifdef GEKKO
+					#ifdef SNES9XGX
 					if(GCSettings.crosshair)
 					#endif
 					if (IPPU.RenderThisFrame)
@@ -3201,7 +3201,7 @@ void S9xControlEOF (void)
 				if (n == 1 && !justifier.offscreen[1])
 				{
 					c = &justifier.crosshair[1];
-					#ifdef GEKKO
+					#ifdef SNES9XGX
 					if(GCSettings.crosshair)
 					#endif
 					if (IPPU.RenderThisFrame)
@@ -3223,7 +3223,7 @@ void S9xControlEOF (void)
 					if (!justifier.offscreen[0])
 					{
 						c = &justifier.crosshair[0];
-						#ifdef GEKKO
+						#ifdef SNES9XGX
 						if(GCSettings.crosshair)
 						#endif
 						if (IPPU.RenderThisFrame)

@@ -37,11 +37,10 @@
 #include "sha256.h"
 #include "snapshot.h"
 
-#ifdef GEKKO
+#ifdef SNES9XGX
 #include "../memmanager.h"
 #include "../filebrowser.h"
-extern int WiiFileLoader();
-extern void WiiSetupCheats();
+#include "../cheatmgr.h"
 #endif
 
 #ifndef SET_UI_COLOR
@@ -1415,8 +1414,8 @@ bool8 CMemory::LoadROM (const char *filename)
         memset(ROM,0, MAX_ROM_SIZE);
         memset(&Multi, 0,sizeof(Multi));
         
-        #ifdef GEKKO
-			totalFileSize = WiiFileLoader();
+        #ifdef SNES9XGX
+			totalFileSize = ROMLoader();
 		#else
 			totalFileSize = FileLoader(ROM, filename, MAX_ROM_SIZE);
 		#endif
@@ -1646,8 +1645,8 @@ bool8 CMemory::LoadROMInt (int32 ROMfillSize)
 	S9xReset();
 
 	S9xDeleteCheats();
-#ifdef GEKKO
-	WiiSetupCheats();
+#ifdef SNES9XGX
+	SetupCheats();
 #else
 	S9xLoadCheatFile(S9xGetFilename(".cht", CHEAT_DIR));
 #endif
@@ -2645,7 +2644,7 @@ void CMemory::InitROM (void)
 	Timings.NMIDMADelay  = 24;
 	Timings.IRQTriggerCycles = 14;
 	Timings.APUSpeedup = 0;
-	#ifdef GEKKO
+	#ifdef SNES9XGX
 	Timings.APUAllowTimeOverflow = FALSE;
 	#endif
 	S9xAPUTimingSetSpeedup(Timings.APUSpeedup);
@@ -3172,7 +3171,7 @@ void CMemory::Map_SA1LoROMMap (void)
 
 	map_hirom_offset(0xc0, 0xff, 0x0000, 0xffff, CalculatedSize, 0);
 
-	#ifdef GEKKO
+	#ifdef SNES9XGX
 	if (match_id("AZIJ"))                    { // Dragon Ball Z - Hyper Dimension (J)	
 		map_space(0x00, 0x3f, 0x3000, 0x3fff, FillRAM);
 		map_space(0x80, 0xbf, 0x3000, 0x3fff, FillRAM);
@@ -3187,7 +3186,7 @@ void CMemory::Map_SA1LoROMMap (void)
 	map_index(0x00, 0x3f, 0x6000, 0x7fff, MAP_BWRAM, MAP_TYPE_I_O);
 	map_index(0x80, 0xbf, 0x6000, 0x7fff, MAP_BWRAM, MAP_TYPE_I_O);
 
-	#ifdef GEKKO
+	#ifdef SNES9XGX
 	if (match_id("AZIJ"))                    { // Dragon Ball Z - Hyper Dimension (J)	
 		for (int c = 0x40; c < 0x80; c++)
 			map_space(c, c, 0x0000, 0xffff, SRAM + (c & 1) * 0x10000);
@@ -3668,7 +3667,7 @@ void CMemory::ApplyROMFixes (void)
 		if (match_na("CIRCUIT USA"))
 			Timings.APUSpeedup = 3;
 
-	#ifdef GEKKO
+	#ifdef SNES9XGX
 		if (match_na("GAIA GENSOUKI 1 JPN")                     || // Gaia Gensouki
 			match_id("JG  ")                                    || // Illusion of Gaia
 			match_id("CQ  ")                                    || // Stunt Race FX
@@ -3728,11 +3727,11 @@ void CMemory::ApplyROMFixes (void)
 	}
 
 	S9xAPUTimingSetSpeedup(Timings.APUSpeedup);
-	#ifdef GEKKO
+	#ifdef SNES9XGX
 	S9xAPUAllowTimeOverflow(Timings.APUAllowTimeOverflow);
 	#endif
 	
-	#ifdef GEKKO
+	#ifdef SNES9XGX
 	if (match_id("YI  ")) { // Super Mario World 2 - Yoshi's Island 
 			Timings.SuperFX2CoreSpeed = 8 / 3;
 		}
@@ -4147,7 +4146,7 @@ void CMemory::CheckForAnyPatch (const char *rom_filename, bool8 header, int32 &r
 	if (Settings.NoPatch)
 		return;
 
-#ifdef GEKKO
+#ifdef SNES9XGX
 	int patchtype;
 	char patchpath[3][512];
 	FSTREAM patchfile = NULL;

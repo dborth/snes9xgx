@@ -11,9 +11,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <limits.h>
-#ifndef GEKKO
+
 #include <memory.h>
-#endif
+
 #include <time.h>
 #include <string.h>
 #ifdef HAVE_STRINGS_H
@@ -31,7 +31,7 @@
 #define RIGHTSHIFT_int8_IS_SAR
 #define RIGHTSHIFT_int16_IS_SAR
 #define RIGHTSHIFT_int32_IS_SAR
-#ifndef GEKKO
+#ifndef SNES9XGX
 #define SNES_JOY_READ_CALLBACKS
 #endif
 #endif

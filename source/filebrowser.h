@@ -57,6 +57,7 @@ extern unsigned long SNESROMSize;
 extern char szname[MAXPATHLEN];
 extern bool inSz;
 
+int ROMLoader();
 bool isValidLoadDevice(int device);
 bool isValidSaveDevice(int device);
 int getNextLoadDevice(int device);

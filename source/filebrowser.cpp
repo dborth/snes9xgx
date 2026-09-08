@@ -530,7 +530,7 @@ int BrowserLoadSz()
 	return szfiles;
 }
 
-int WiiFileLoader()
+int ROMLoader()
 {
 	size_t size;
 	char filepath[1024];

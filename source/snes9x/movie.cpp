@@ -7,7 +7,7 @@
 //  Input recording/playback code
 //  (c) Copyright 2004 blip
 
-#ifdef GEKKO
+#ifdef SNES9XGX
 #include "snes9x.h"
 int S9xMovieOpen (const char *filename, bool8 read_only) { return 1; }
 int S9xMovieCreate (const char *filename, uint8 controllers_mask, uint8 opts, const wchar_t *metadata, int metadata_length) { return 1; }

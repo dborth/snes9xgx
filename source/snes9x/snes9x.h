@@ -68,7 +68,7 @@
 #define SNES_MAX_PAL_VCOUNTER		312
 #define SNES_HCOUNTER_MAX			341
 
-#ifdef GEKKO
+#ifdef SNES9XGX
 #define ONE_CYCLE      (Settings.OneClockCycle)
 #define SLOW_ONE_CYCLE (Settings.OneSlowClockCycle)
 #define TWO_CYCLES     (Settings.TwoClockCycles)
@@ -181,7 +181,7 @@ struct STimings
 	int32	IRQFlagChanging;	// This value is just a hack.
 	int32	APUSpeedup;
 	bool8	APUAllowTimeOverflow;
-#ifdef GEKKO
+#ifdef SNES9XGX
 	int32	SuperFX2CoreSpeed;		// Make the SuperFX2 Core Speed adjustable
 #endif
 };

@@ -8,7 +8,6 @@
  * Cheat handling
  ***************************************************************************/
 
-
 #include "snes9x/port.h"
 #include "snes9x/cheats.h"
 
@@ -62,7 +61,7 @@ void ToggleCheat(uint32 num) {
 		S9xEnableCheatGroup(num);
 	}
 
-	for(int i=0; i < Cheat.g.size(); i++) {
+	for(uint32_t i=0; i < Cheat.g.size(); i++) {
 		if(Cheat.g[i].enabled) {
 			Cheat.enabled = TRUE;
 			return;
@@ -77,8 +76,7 @@ void ToggleCheat(uint32 num) {
  * Erases any prexisting cheats, loads cheats from a cheat file
  * Called when a ROM is first loaded
  ***************************************************************************/
-void
-WiiSetupCheats()
+void SetupCheats()
 {
 	char filepath[1024];
 	int offset = 0;
