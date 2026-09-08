@@ -8,8 +8,10 @@
  * Memory manager
  ***************************************************************************/
 
-#include <malloc.h>
+#ifdef GEKKO
 #include <ogc/system.h>
+#endif
+#include <malloc.h>
 #include "snes9xgx.h"
 #include "memmanager.h"
 #include "filebrowser.h"
@@ -32,7 +34,7 @@ enum
 #ifdef HW_DOL
 static mspace aram_space = nullptr;
 #endif
-static int memoryMode = -1;
+
 uint8_t * romPtr = nullptr;
 
 void InitMemManager ()
@@ -43,15 +45,29 @@ void InitMemManager ()
 	mspace_set_footprint_limit(aram_space, ARAM_SIZE);
 	romPtr = (uint8 *)extmem_malloc(Memory.MAX_ROM_SIZE + 0x200 + 0x8000);
 	void * decodeScratch = extmem_malloc(IMAGE_DECODE_SCRATCH_SIZE);
-	#else
+	#elif HW_RVL
 	romPtr = (uint8 *) mem2_malloc(Memory.MAX_ROM_SIZE + 0x200 + 0x8000);
 	void * decodeScratch = mem2_malloc(IMAGE_DECODE_SCRATCH_SIZE);
+	#else
+	romPtr = (uint8 *) malloc(Memory.MAX_ROM_SIZE + 0x200 + 0x8000);
+	void * decodeScratch = malloc(IMAGE_DECODE_SCRATCH_SIZE);
+	browserList = (BROWSERENTRY *)malloc(sizeof(BROWSERENTRY)*MAX_BROWSER_SIZE);
 	#endif
 
 	GuiImageData::setDecodeScratch(decodeScratch, IMAGE_DECODE_SCRATCH_SIZE);
 
 	SwitchMemoryModeMenu();
 }
+
+#if (!defined(HW_RVL) && !defined(HW_DOL))
+void* extmem_malloc(uint32_t size) { return malloc(size); }
+char* extmem_strdup(const char *s) { return strdup(s); }
+void extmem_free(void *ptr) { free(ptr); }
+int extmem_size_free() { return 0; }
+void SwitchMemoryModeMenu() { }
+void SwitchMemoryModeGame() { }
+#else
+static int memoryMode = -1;
 
 void* extmem_malloc(uint32_t size)
 {
@@ -115,3 +131,4 @@ void SwitchMemoryModeGame() {
 	extmem_free(browserList);
 	browserList = nullptr;
 }
+#endif

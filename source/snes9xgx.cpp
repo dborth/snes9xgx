@@ -39,7 +39,7 @@
 #ifdef HW_DOL
 #include "drivers/ogc/GameCubePlatform.h"
 static GameCubePlatform platformInstance;
-#else
+#elif HW_RVL
 #include "drivers/ogc/WiiPlatform.h"
 static WiiPlatform platformInstance;
 #endif
