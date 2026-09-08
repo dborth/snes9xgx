@@ -46,11 +46,6 @@ bool bsxBiosLoadFailed;
 
 extern bool isBSX();
 
-// Valid load/save device lists (and the #ifdef HW_RVL branch over them)
-// used to be duplicated here; they now live on the platform's
-// FileSystemDriver, one list per platform, so this file doesn't need to
-// know which devices a given platform supports.
-
 bool isValidLoadDevice(int device)
 {
 	int numLoadDevices;
