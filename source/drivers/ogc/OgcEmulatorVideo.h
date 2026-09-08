@@ -11,10 +11,6 @@
 #include <stdint.h>
 #include "../EmulatorVideoDriver.h"
 
-extern bool progressive;
-extern uint32_t prevRenderedFrameCount;
-extern int CheckVideo;
-
 class OgcVideoDriver;
 
 class OgcEmulatorVideo : public EmulatorVideoDriver
@@ -26,6 +22,7 @@ class OgcEmulatorVideo : public EmulatorVideoDriver
 		void resetVideo() override;
 		void presentFrame(int width, int height) override;
 		void readFrameRGB24(uint8_t* dst) override;
+		void forceVideoUpdate() override;
 
 	private:
 		void configureOriginalModeTables(GXRModeObj* baseMode);

@@ -40,8 +40,8 @@ static Mtx modelView;
 static int vwidth, vheight, oldvwidth, oldvheight;
 static int fscale = 1;
 
-int CheckVideo = 0; // for forcing video reset
-uint32 prevRenderedFrameCount = 0;
+static int CheckVideo = 0; // for forcing video reset
+static uint32 prevRenderedFrameCount = 0;
 
 #define HASPECT 320
 #define VASPECT 240
@@ -713,6 +713,20 @@ void OgcEmulatorVideo::init(VideoDriver* driver)
 	videoDriver = static_cast<OgcVideoDriver*>(driver);
 	vwidth = 100;
 	vheight = 100;
+}
+
+/****************************************************************************
+ * forceVideoUpdate
+ *
+ * Forces the next presentFrame() to rebuild scaling/texture state, and
+ * primes the "have we actually rendered a frame yet" check so presentFrame
+ * doesn't try to draw a texture before the core has produced one (eg. right
+ * after a ROM load).
+ ***************************************************************************/
+void OgcEmulatorVideo::forceVideoUpdate()
+{
+	CheckVideo = 2;
+	prevRenderedFrameCount = IPPU.RenderedFramesCount;
 }
 
 /****************************************************************************

@@ -164,8 +164,7 @@ int main(int argc, char *argv[])
 		platform->getVideo()->setFrameTimer(0);
 		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
 
-		CheckVideo = 2;		// force video update
-		prevRenderedFrameCount = IPPU.RenderedFramesCount;
+		platform->getVideo()->getEmulatorVideo()->forceVideoUpdate();
 #if defined(HW_RVL) || defined(HW_DOL)
 		SelectFilterMethod(GCSettings.videoUpscalingFilter); // Initialize / Re-evaluate active filter
 #endif

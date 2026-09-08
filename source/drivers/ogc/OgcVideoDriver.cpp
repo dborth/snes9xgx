@@ -18,20 +18,19 @@
 #include "../../video.h"
 #include "../../snes9xgx.h"
 
-/*** 2D Video ***/
-static u32 *xfb[2] = { nullptr, nullptr }; // Double buffered
-static int whichfb = 0; // Switch
-
 #define MAX_FB_WIDTH 640
 #define MAX_FB_HEIGHT 576
 #define DEFAULT_FIFO_SIZE 256 * 1024
 
+/*** 2D Video ***/
+static u32 *xfb[2] = { nullptr, nullptr }; // Double buffered
+static int whichfb = 0; // Switch
 static volatile unsigned int copynow = GX_FALSE;
 static unsigned char gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
-Mtx GXmodelView2D;
+static Mtx GXmodelView2D;
 
 static uint32_t systemFrameTimer = 0;
-bool progressive = 0;
+static bool progressive = 0;
 
 /****************************************************************************
  * VideoThreading
