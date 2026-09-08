@@ -130,13 +130,43 @@ void HaltParseThread()
 }
 
 /****************************************************************************
+ * Wake*Thread
+ *
+ * Thread::JoinAll()'s wake callbacks - each breaks its thread out of
+ * whatever cond it may be parked in so it can notice stopRequested() and
+ * actually return. Mirror the corresponding Halt/Resume function above,
+ * but don't wait for the thread to go idle - JoinAll()'s join() is the wait.
+ ***************************************************************************/
+static void WakeDeviceThread()
+{
+	DeviceSync().mutex.lock();
+	deviceCheckingHalt = false; // let a parked wait fall through to re-check stopRequested()
+	DeviceSync().workCond.signal();
+	DeviceSync().mutex.unlock();
+}
+
+static void WakeParseThread()
+{
+	ParseSync().mutex.lock();
+	ParseSync().workCond.signal();
+	ParseSync().mutex.unlock();
+}
+
+static void WakeWorkerThread()
+{
+	WorkerSync().mutex.lock();
+	WorkerSync().workCond.signal();
+	WorkerSync().mutex.unlock();
+}
+
+/****************************************************************************
  * devicecallback
  *
  * This checks our devices for changes (SD/USB/DVD removed)
  ***************************************************************************/
 static void * devicecallback (void *arg)
 {
-	while (1)
+	while (!deviceThread.stopRequested())
 	{
 		int removed[MAX_STORAGE_DEVICES];
 		int removedCount = 0;
@@ -147,17 +177,20 @@ static void * devicecallback (void *arg)
 		if(removedCount > 0)
 			parseHalt = true; // abort any in-progress dir parse if a device it's using just disappeared
 
-		// sleep ~1 sec in 100us steps so we can react to a halt request quickly
-		for(int i = 0; i < 10000 && !deviceCheckingHalt; i++)
+		// sleep ~1 sec in 100us steps so we can react to a halt/stop request quickly
+		for(int i = 0; i < 10000 && !deviceCheckingHalt && !deviceThread.stopRequested(); i++)
 			usleep(THREAD_SLEEP);
 
-		// if halted, block here until ResumeDeviceCheckingThread wakes us
+		if(deviceThread.stopRequested())
+			break;
+
+		// if halted, block here until ResumeDeviceCheckingThread (or a stop request) wakes us
 		if(deviceCheckingHalt)
 		{
 			DeviceSync().mutex.lock();
 			deviceIdle = true;
 			DeviceSync().idleCond.signal(); // tell HaltDeviceCheckingThread we've stopped
-			while(deviceCheckingHalt)
+			while(deviceCheckingHalt && !deviceThread.stopRequested())
 				DeviceSync().workCond.wait(DeviceSync().mutex);
 			deviceIdle = false;
 			DeviceSync().mutex.unlock();
@@ -169,11 +202,15 @@ static void * devicecallback (void *arg)
 static void * parsecallback (void *arg)
 {
 	ParseSync().mutex.lock();
-	while(1)
+	while(!parseThread.stopRequested())
 	{
 		// sleep until ParseDirectory signals there is work to do
-		while(!parseActive)
+		while(!parseActive && !parseThread.stopRequested())
 			ParseSync().workCond.wait(ParseSync().mutex);
+
+		if(parseThread.stopRequested())
+			break;
+
 		ParseSync().mutex.unlock();
 
 		while(ParseDirEntries())
@@ -183,6 +220,7 @@ static void * parsecallback (void *arg)
 		parseActive = false;
 		ParseSync().idleCond.signal(); // wake HaltParseThread / waitParse callers
 	}
+	ParseSync().mutex.unlock();
 	return nullptr;
 }
 
@@ -192,11 +230,15 @@ static void * parsecallback (void *arg)
 static void * workercallback (void *arg)
 {
 	WorkerSync().mutex.lock();
-	while(1)
+	while(!workerThread.stopRequested())
 	{
 		// sleep until RunOnWorkerThread() signals there is work to do
-		while(!workerBusy)
+		while(!workerBusy && !workerThread.stopRequested())
 			WorkerSync().workCond.wait(WorkerSync().mutex);
+
+		if(workerThread.stopRequested())
+			break;
+
 		BgTaskFn fn = workerFn;
 		void * farg = workerArg;
 		WorkerSync().mutex.unlock();
@@ -208,6 +250,7 @@ static void * workercallback (void *arg)
 		workerBusy = false;
 		WorkerSync().idleCond.signal();
 	}
+	WorkerSync().mutex.unlock();
 	return nullptr;
 }
 
@@ -250,16 +293,16 @@ void InitFileOpThreads()
 	SaveBufferLock();
 
 	ParseSync();
-	parseThread.start(parsecallback, nullptr, PARSE_THREAD_STACKSIZE, ThreadPriority::High);
+	parseThread.start(parsecallback, nullptr, PARSE_THREAD_STACKSIZE, ThreadPriority::High, WakeParseThread);
 
 	WorkerSync();
-	workerThread.start(workercallback, nullptr, WORKER_THREAD_STACKSIZE, ThreadPriority::High);
+	workerThread.start(workercallback, nullptr, WORKER_THREAD_STACKSIZE, ThreadPriority::High, WakeWorkerThread);
 
 	if(platform->getFileSystem()->hasRemovableStorageDevices())
 	{
 		DeviceSync();
 		deviceThreadStarted = true;
-		deviceThread.start(devicecallback, nullptr, DEVICE_THREAD_STACKSIZE, ThreadPriority::Low);
+		deviceThread.start(devicecallback, nullptr, DEVICE_THREAD_STACKSIZE, ThreadPriority::Low, WakeDeviceThread);
 	}
 }
 

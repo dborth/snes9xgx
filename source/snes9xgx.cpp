@@ -31,6 +31,7 @@
 #include "snes9x/apu/apu.h"
 
 #include "drivers/Platform.h"
+#include "drivers/Thread.h"
 #if defined(HW_RVL) || defined(HW_DOL)
 #include "drivers/ogc/videofilters.h"
 #endif
@@ -203,5 +204,11 @@ void ExitApp() {
 		SaveSRAMAuto(SILENT);
 
 	HaltDeviceCheckingThread();
+
+	// Generic safety net: stop and join every Thread still outstanding
+	// (device/parse/worker) before any driver it might touch gets torn
+	// down inside requestExit()/shutdown().
+	Thread::JoinAll();
+
 	platform->requestExit(GCSettings.ExitAction, autoboot);
 }

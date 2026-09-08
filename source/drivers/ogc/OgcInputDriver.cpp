@@ -46,6 +46,10 @@ OgcInputDriver::~OgcInputDriver() {
 	shutdown();
 }
 
+#ifdef HW_RVL
+static void WiimotePowerButtonCallback(s32 chan) { NotifyWiiShutdownRequested(); }
+#endif
+
 void OgcInputDriver::init() {
 	PAD_Init();
 
@@ -60,7 +64,7 @@ void OgcInputDriver::init() {
 	WPAD_Init();
 	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
 	WPAD_SetVRes(WPAD_CHAN_ALL, platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
-	WPAD_SetPowerButtonCallback((WPADShutdownCallback)NotifyWiiShutdownRequested);
+	WPAD_SetPowerButtonCallback(WiimotePowerButtonCallback);
 	#endif
 
 	InitUserInputControllers();
