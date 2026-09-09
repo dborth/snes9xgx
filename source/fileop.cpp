@@ -834,7 +834,7 @@ size_t LoadFile(char * filepath, bool silent)
 	return LoadFile((char *)savebuffer, filepath, 0, SAVEBUFFERSIZE, silent);
 }
 
-#ifdef HW_RVL
+#ifndef HW_DOL
 size_t LoadFont(char * filepath)
 {
 	FILE *file = fopen (filepath, "rb");
