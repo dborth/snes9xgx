@@ -381,7 +381,6 @@ static void DrawGui() {
 
 static void CreditsWindow()
 {
-	bool exit = false;
 	int i = 0;
 	int y = 20;
 
@@ -1012,7 +1011,7 @@ static char* getImageFolder()
 	}
 }
 
-static int BrowserLoadFileTask(void * arg) { return BrowserLoadFile(); }
+static int BrowserLoadFileTask(void *) { return BrowserLoadFile(); }
 
 struct ChangeInterfaceArgs
 {
@@ -4268,9 +4267,6 @@ static int MenuSettingsFile()
 
 static bool LoadLanguage()
 {
-	char line[200];
-	char *lastID = nullptr;
-
 	const uint8_t *buffer;
 	size_t size;
 
@@ -4903,7 +4899,7 @@ static void * CreateBlurredGameTexture() {
 /****************************************************************************
  * MainMenu
  ***************************************************************************/
-static int FirstRunTask(void * arg) {
+static int FirstRunTask(void *) {
 	LoadPrefs();
 	autoSaveMethod();
 	autoLoadMethod();

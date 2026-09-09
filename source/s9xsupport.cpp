@@ -133,7 +133,7 @@ void S9xInitSync()
  */
 static void S9xChooseFrameToRender(bool behindSchedule, int32 skipFrms)
 {
-	if (behindSchedule && (IPPU.SkippedFrames < skipFrms))
+	if (behindSchedule && (static_cast<int32>(IPPU.SkippedFrames) < skipFrms))
 	{
 		IPPU.SkippedFrames++;
 		IPPU.RenderThisFrame = FALSE;
@@ -213,30 +213,30 @@ bool8 S9xDeinitUpdate(int width, int height)
 	return (TRUE);
 }
 
-bool8 S9xContinueUpdate(int width, int height)
+bool8 S9xContinueUpdate(int, int)
 {
 	return (TRUE);
 }
 
 /*** Input functions ***/
-void S9xHandlePortCommand(s9xcommand_t cmd, int16 data1, int16 data2)
+void S9xHandlePortCommand(s9xcommand_t, int16, int16)
 {
 	return;
 }
 
-bool S9xPollButton(uint32 id, bool * pressed)
+bool S9xPollButton(uint32, bool *)
 {
 	ReportButtons();
 	return 0;
 }
 
-bool S9xPollAxis(uint32 id, int16 * value)
+bool S9xPollAxis(uint32, int16 *)
 {
 	ReportButtons();
 	return 0;
 }
 
-bool S9xPollPointer(uint32 id, int16 * x, int16 * y)
+bool S9xPollPointer(uint32, int16 *, int16 *)
 {
 	ReportButtons();
 	return 0;
@@ -247,19 +247,19 @@ bool S9xPollPointer(uint32 id, int16 * x, int16 * y)
  * compile. Where possible, they will return an error signal.
  ***************************************************************************/
 
-const char * S9xGetDirectory(enum s9x_getdirtype dirtype)
+const char * S9xGetDirectory(enum s9x_getdirtype)
 {
 	ExitApp();
 	return nullptr;
 }
 
-const char * S9xGetFilename(const char *ex, enum s9x_getdirtype dirtype)
+const char * S9xGetFilename(const char *, enum s9x_getdirtype)
 {
 	ExitApp();
 	return nullptr;
 }
 
-const char * S9xGetFilenameInc(const char *e, enum s9x_getdirtype dirtype)
+const char * S9xGetFilenameInc(const char *, enum s9x_getdirtype)
 {
 	ExitApp();
 	return nullptr;
@@ -277,18 +277,17 @@ const char * S9xStringInput (const char * s)
 	return s;
 }
 
-void _splitpath(char const *buf, char *drive, char *dir, char *fname, char *ext)
+void _splitpath(char const *, char *, char *, char *, char *)
 {
 	ExitApp();
 }
 
-void _makepath(char *filename, const char *drive, const char *dir,
-		const char *fname, const char *ext)
+void _makepath(char *, const char *, const char *, const char *, const char *)
 {
 	ExitApp();
 }
 
-int access(const char *pathname, int mode)
+int access(const char *, int)
 {
 	ExitApp();
 	return 1;

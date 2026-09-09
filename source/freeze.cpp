@@ -23,12 +23,12 @@
 #include "snes9x/snapshot.h"
 #include "snes9x/language.h"
 
-bool8 S9xOpenSnapshotFile(const char *filepath, bool8 readonly, STREAM *file)
+bool8 S9xOpenSnapshotFile(const char *, bool8, STREAM *)
 {
 	return FALSE;
 }
 
-void S9xCloseSnapshotFile(STREAM s)
+void S9xCloseSnapshotFile(STREAM)
 {
 
 }

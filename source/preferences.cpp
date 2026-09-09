@@ -608,12 +608,12 @@ bool SavePrefs()
 	
 	if(prefpath[0] != 0)
 	{
-		sprintf(filepath, "%s/%s", prefpath, PREF_FILE_NAME);
+		snprintf(filepath, sizeof(filepath), "%s/%s", prefpath, PREF_FILE_NAME);
 		FindDevice(filepath, &device);
 	}
 	else if(appPath[0] != 0)
 	{
-		sprintf(filepath, "%s/%s", appPath, PREF_FILE_NAME);
+		snprintf(filepath, sizeof(filepath), "%s/%s", appPath, PREF_FILE_NAME);
 		strcpy(prefpath, appPath);
 		FindDevice(filepath, &device);
 	}

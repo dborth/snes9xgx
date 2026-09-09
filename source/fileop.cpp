@@ -164,7 +164,7 @@ static void WakeWorkerThread()
  *
  * This checks our devices for changes (SD/USB/DVD removed)
  ***************************************************************************/
-static void * devicecallback (void *arg)
+static void * devicecallback (void *)
 {
 	while (!deviceThread.stopRequested())
 	{
@@ -199,7 +199,7 @@ static void * devicecallback (void *arg)
 	return nullptr;
 }
 
-static void * parsecallback (void *arg)
+static void * parsecallback (void *)
 {
 	ParseSync().mutex.lock();
 	while(!parseThread.stopRequested())
@@ -227,7 +227,7 @@ static void * parsecallback (void *arg)
 /****************************************************************************
  * WorkerThread
  ***************************************************************************/
-static void * workercallback (void *arg)
+static void * workercallback (void *)
 {
 	WorkerSync().mutex.lock();
 	while(!workerThread.stopRequested())

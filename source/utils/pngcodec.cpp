@@ -214,8 +214,7 @@ uint8_t * EncodePNGFromRGB24(uint32_t width, uint32_t height, const void *rgb, u
 	if(!rgb || width == 0 || height == 0)
 		return nullptr;
 
-	if(stride == 0)
-		stride = width * 3;
+	const uint32_t rowStride = (stride != 0) ? stride : width * 3;
 
 	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
 	if(!png_ptr)
@@ -265,7 +264,7 @@ uint8_t * EncodePNGFromRGB24(uint32_t width, uint32_t height, const void *rgb, u
 
 	const uint8_t *src = static_cast<const uint8_t *>(rgb);
 	for(uint32_t y = 0; y < height; y++)
-		rowPointers[y] = const_cast<png_bytep>(src + static_cast<size_t>(y) * stride);
+		rowPointers[y] = const_cast<png_bytep>(src + static_cast<size_t>(y) * rowStride);
 
 	png_set_rows(png_ptr, info_ptr, rowPointers);
 	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, nullptr);
