@@ -117,7 +117,7 @@ void* GuiSoundOggPlayer::threadEntry(void* arg) {
 }
 
 void GuiSoundOggPlayer::threadLoop() {
-	while (threadRunning) {
+	while (threadRunning && !decodeThread.stopRequested()) {
 		if (streamPaused) {
 			usleep(10000);
 			continue;
@@ -126,7 +126,7 @@ void GuiSoundOggPlayer::threadLoop() {
 		if (!bufferReady[decodeIndex]) {
 			int bytesRead = 0;
 			// Accumulate data until the buffer is full or the stream ends
-			while (bytesRead < BUFFER_SIZE && threadRunning && !streamPaused) {
+			while (bytesRead < BUFFER_SIZE && threadRunning && !streamPaused && !decodeThread.stopRequested()) {
 				int currentSection = 0;
 				long ret = ov_read(&vf, (char*)pcmBuffer[decodeIndex] + bytesRead, BUFFER_SIZE - bytesRead, &currentSection);
 

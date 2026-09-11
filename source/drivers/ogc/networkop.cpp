@@ -42,17 +42,17 @@ static void * netcb (void *arg)
 	int wait;
 	static bool prevInit = false;
 
-	while(netHalt != 2)
+	while(netHalt != 2 && !networkThread.stopRequested())
 	{
 		retry = 5;
 		
-		while (retry>0 && (netHalt != 2))
+		while (retry>0 && (netHalt != 2) && !networkThread.stopRequested())
 		{			
 			if(prevInit) 
 			{
 				int i;
 				net_deinit();
-				for(i=0; i < 400 && (netHalt != 2); i++) // 10 seconds to try to reset
+				for(i=0; i < 400 && (netHalt != 2) && !networkThread.stopRequested(); i++) // 10 seconds to try to reset
 				{
 					res = net_get_status();
 					if(res != -EBUSY) // trying to init net so we can't kill the net
@@ -79,7 +79,7 @@ static void * netcb (void *arg)
 
 			res = net_get_status();
 			wait = 400; // only wait 8 sec
-			while (res == -EBUSY && wait > 0  && (netHalt != 2))
+			while (res == -EBUSY && wait > 0  && (netHalt != 2) && !networkThread.stopRequested())
 			{
 				usleep(20000);
 				res = net_get_status();
@@ -101,9 +101,14 @@ static void * netcb (void *arg)
 				prevInit = true;
 			}
 		}
-		if(netHalt != 2) networkThread.suspend();
+		if(netHalt != 2 && !networkThread.stopRequested()) networkThread.suspend();
 	}
 	return nullptr;
+}
+
+static void WakeNetworkThread()
+{
+	networkThread.resume();
 }
 
 /****************************************************************************
@@ -116,7 +121,7 @@ void StartNetworkThread()
 	netHalt = 0;
 
 	if(!networkThread.isRunning())
-		networkThread.start(netcb, nullptr, NETWORK_THREAD_STACKSIZE, ThreadPriority::Low);
+		networkThread.start(netcb, nullptr, NETWORK_THREAD_STACKSIZE, ThreadPriority::Low, WakeNetworkThread);
 	else
 		networkThread.resume();
 }
