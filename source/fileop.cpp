@@ -367,8 +367,8 @@ static void CopyField(char * dst, size_t dstSize, const char * src)
 
 bool ConnectShare(bool silent)
 {
-	bool invalidShare = strlen(GCSettings.smbshare) == 0;
-	bool invalidIp = strlen(GCSettings.smbip) == 0;
+	bool invalidShare = strlen(Settings.smbshare) == 0;
+	bool invalidIp = strlen(Settings.smbip) == 0;
 
 	if(invalidShare || invalidIp)
 	{
@@ -391,10 +391,10 @@ bool ConnectShare(bool silent)
 	}
 
 	SmbShareInfo info = {};
-	CopyField(info.host, sizeof(info.host), GCSettings.smbip);
-	CopyField(info.share, sizeof(info.share), GCSettings.smbshare);
-	CopyField(info.user, sizeof(info.user), GCSettings.smbuser);
-	CopyField(info.password, sizeof(info.password), GCSettings.smbpwd);
+	CopyField(info.host, sizeof(info.host), Settings.smbip);
+	CopyField(info.share, sizeof(info.share), Settings.smbshare);
+	CopyField(info.user, sizeof(info.user), Settings.smbuser);
+	CopyField(info.password, sizeof(info.password), Settings.smbpwd);
 
 	SmbDriver * smb = platform->getFileSystem()->getSmb();
 	int retry = 1;
@@ -520,7 +520,7 @@ void FindAndSelectLastLoadedFile ()
 	
 	for(int j=1; j < browser.numEntries; j++)
 	{
-		if(strcmp(browserList[j].filename, GCSettings.LastFileLoaded) == 0)
+		if(strcmp(browserList[j].filename, Settings.LastFileLoaded) == 0)
 		{
 			indexFound = j;
 			break;

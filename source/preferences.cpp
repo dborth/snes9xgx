@@ -34,7 +34,7 @@
 #include "drivers/ogc/videofilters.h"
 #endif
 
-struct SGCSettings GCSettings;
+struct SSettings Settings;
 
 /****************************************************************************
  * Prepare Preferences Data
@@ -134,69 +134,69 @@ preparePrefsData ()
 
 	createXMLSection("File", "File Settings");
 
-	createXMLSetting("AutoLoad", "Auto Load", toStr(GCSettings.AutoLoad));
-	createXMLSetting("AutoSave", "Auto Save", toStr(GCSettings.AutoSave));
-	createXMLSetting("LoadMethod", "Load Method", toStr(GCSettings.LoadMethod));
-	createXMLSetting("SaveMethod", "Save Method", toStr(GCSettings.SaveMethod));
-	createXMLSetting("LoadFolder", "Load Folder", GCSettings.LoadFolder);
-	createXMLSetting("LastFileLoaded", "Last File Loaded", GCSettings.LastFileLoaded);
-	createXMLSetting("SaveFolder", "Save Folder", GCSettings.SaveFolder);
-	createXMLSetting("AppendAuto", "Append Auto to .SAV Files", BtoStr(GCSettings.AppendAuto));
-	createXMLSetting("CheatFolder", "Cheats Folder", GCSettings.CheatFolder);
-	createXMLSetting("ScreenshotsFolder", "Screenshots Folder", GCSettings.ScreenshotsFolder);
-	createXMLSetting("CoverFolder", "Covers Folder", GCSettings.CoverFolder);
-	createXMLSetting("ArtworkFolder", "Artwork Folder", GCSettings.ArtworkFolder);
+	createXMLSetting("AutoLoad", "Auto Load", toStr(Settings.AutoLoad));
+	createXMLSetting("AutoSave", "Auto Save", toStr(Settings.AutoSave));
+	createXMLSetting("LoadMethod", "Load Method", toStr(Settings.LoadMethod));
+	createXMLSetting("SaveMethod", "Save Method", toStr(Settings.SaveMethod));
+	createXMLSetting("LoadFolder", "Load Folder", Settings.LoadFolder);
+	createXMLSetting("LastFileLoaded", "Last File Loaded", Settings.LastFileLoaded);
+	createXMLSetting("SaveFolder", "Save Folder", Settings.SaveFolder);
+	createXMLSetting("AppendAuto", "Append Auto to .SAV Files", BtoStr(Settings.AppendAuto));
+	createXMLSetting("CheatFolder", "Cheats Folder", Settings.CheatFolder);
+	createXMLSetting("ScreenshotsFolder", "Screenshots Folder", Settings.ScreenshotsFolder);
+	createXMLSetting("CoverFolder", "Covers Folder", Settings.CoverFolder);
+	createXMLSetting("ArtworkFolder", "Artwork Folder", Settings.ArtworkFolder);
 	
 	createXMLSection("Network", "Network Settings");
 
-	createXMLSetting("smbip", "Share Computer IP", GCSettings.smbip);
-	createXMLSetting("smbshare", "Share Name", GCSettings.smbshare);
-	createXMLSetting("smbuser", "Share Username", GCSettings.smbuser);
-	createXMLSetting("smbpwd", "Share Password", GCSettings.smbpwd);
+	createXMLSetting("smbip", "Share Computer IP", Settings.smbip);
+	createXMLSetting("smbshare", "Share Name", Settings.smbshare);
+	createXMLSetting("smbuser", "Share Username", Settings.smbuser);
+	createXMLSetting("smbpwd", "Share Password", Settings.smbpwd);
 
 	createXMLSection("Video", "Video Settings");
 
-	createXMLSetting("videoMode", "Output Mode", toStr(GCSettings.videoMode));
-	createXMLSetting("videoAspectRatioCorrection", "Aspect Ratio Correction", toStr(GCSettings.videoAspectRatioCorrection));
-	createXMLSetting("videoBilinearFilter", "Bilinear Filtering", BtoStr(GCSettings.videoBilinearFilter));
-	createXMLSetting("videoHardwareSoften", "Hardware Soften", toStr(GCSettings.videoHardwareSoften));
-	createXMLSetting("videoScanlines", "Scanlines", BtoStr(GCSettings.videoScanlines));
-	createXMLSetting("videoUpscalingFilter", "Upscaling Filter Method", toStr(GCSettings.videoUpscalingFilter));
-	createXMLSetting("videoZoomHor", "Horizontal Zoom Level", FtoStr(GCSettings.videoZoomHor));
-	createXMLSetting("videoZoomVert", "Vertical Zoom Level", FtoStr(GCSettings.videoZoomVert));
-	createXMLSetting("videoXshift", "Horizontal Video Shift", toStr(GCSettings.videoXshift));
-	createXMLSetting("videoYshift", "Vertical Video Shift", toStr(GCSettings.videoYshift));
+	createXMLSetting("videoMode", "Output Mode", toStr(Settings.videoMode));
+	createXMLSetting("videoAspectRatioCorrection", "Aspect Ratio Correction", toStr(Settings.videoAspectRatioCorrection));
+	createXMLSetting("videoBilinearFilter", "Bilinear Filtering", BtoStr(Settings.videoBilinearFilter));
+	createXMLSetting("videoHardwareSoften", "Hardware Soften", toStr(Settings.videoHardwareSoften));
+	createXMLSetting("videoScanlines", "Scanlines", BtoStr(Settings.videoScanlines));
+	createXMLSetting("videoUpscalingFilter", "Upscaling Filter Method", toStr(Settings.videoUpscalingFilter));
+	createXMLSetting("videoZoomHor", "Horizontal Zoom Level", FtoStr(Settings.videoZoomHor));
+	createXMLSetting("videoZoomVert", "Vertical Zoom Level", FtoStr(Settings.videoZoomVert));
+	createXMLSetting("videoXshift", "Horizontal Video Shift", toStr(Settings.videoXshift));
+	createXMLSetting("videoYshift", "Vertical Video Shift", toStr(Settings.videoYshift));
 
 	createXMLSection("Emulation", "Emulation Settings");
 
-	createXMLSetting("crosshair", "Crosshair", BtoStr(GCSettings.crosshair));
-	createXMLSetting("HiResolution", "SNES Hi-Res Mode", BtoStr(GCSettings.HiResolution));
-	createXMLSetting("SpriteLimit", "Sprites per-line Limit", BtoStr(GCSettings.SpriteLimit));
-	createXMLSetting("FrameSkip", "Frame Skipping", BtoStr(GCSettings.FrameSkip));
-	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(GCSettings.sfxOverclock));
-	createXMLSetting("Interpolation", "Interpolation", toStr(GCSettings.Interpolation));
-	createXMLSetting("MuteAudio", "Mute", BtoStr(GCSettings.MuteAudio));
+	createXMLSetting("crosshair", "Crosshair", BtoStr(Settings.crosshair));
+	createXMLSetting("HiResolution", "SNES Hi-Res Mode", BtoStr(Settings.HiResolution));
+	createXMLSetting("SpriteLimit", "Sprites per-line Limit", BtoStr(Settings.SpriteLimit));
+	createXMLSetting("FrameSkip", "Frame Skipping", BtoStr(Settings.FrameSkip));
+	createXMLSetting("sfxOverclock", "SuperFX Overclock", toStr(Settings.sfxOverclock));
+	createXMLSetting("Interpolation", "Interpolation", toStr(Settings.Interpolation));
+	createXMLSetting("MuteAudio", "Mute", BtoStr(Settings.MuteAudio));
 
 	createXMLSection("Menu", "Menu Settings");
 
 #ifdef HW_RVL
-	createXMLSetting("wiimoteOrientation", "Wiimote Orientation", toStr(GCSettings.wiimoteOrientation));
+	createXMLSetting("wiimoteOrientation", "Wiimote Orientation", toStr(Settings.wiimoteOrientation));
 #endif
-	createXMLSetting("ExitAction", "Exit Action", toStr(GCSettings.ExitAction));
-	createXMLSetting("MusicVolume", "Music Volume", toStr(GCSettings.MusicVolume));
-	createXMLSetting("SFXVolume", "Sound Effects Volume", toStr(GCSettings.SFXVolume));
-	createXMLSetting("Rumble", "Rumble", BtoStr(GCSettings.Rumble));
-	createXMLSetting("language", "Language", toStr(GCSettings.language));
-	createXMLSetting("PreviewImage", "Preview Image", toStr(GCSettings.PreviewImage));
-	createXMLSetting("HideSRAMSaving", "Hide SRAM Saving", BtoStr(GCSettings.HideSRAMSaving));
+	createXMLSetting("ExitAction", "Exit Action", toStr(Settings.ExitAction));
+	createXMLSetting("MusicVolume", "Music Volume", toStr(Settings.MusicVolume));
+	createXMLSetting("SFXVolume", "Sound Effects Volume", toStr(Settings.SFXVolume));
+	createXMLSetting("Rumble", "Rumble", BtoStr(Settings.Rumble));
+	createXMLSetting("language", "Language", toStr(Settings.language));
+	createXMLSetting("PreviewImage", "Preview Image", toStr(Settings.PreviewImage));
+	createXMLSetting("HideSRAMSaving", "Hide SRAM Saving", BtoStr(Settings.HideSRAMSaving));
 	
 	createXMLSection("Controller", "Controller Settings");
 
-	createXMLSetting("Controller", "Controller", toStr(GCSettings.Controller));
-	createXMLSetting("TurboModeEnabled", "Turbo Mode Enabled", BtoStr(GCSettings.TurboModeEnabled));
-	createXMLSetting("TurboModeButton", "Turbo Mode Button", toStr(GCSettings.TurboModeButton));
-	createXMLSetting("GamepadMenuToggle", "Gamepad Menu Toggle", toStr(GCSettings.GamepadMenuToggle));
-	createXMLSetting("MapABXYRightStick", "Map ABXY Right Stick", BtoStr(GCSettings.MapABXYRightStick));
+	createXMLSetting("Controller", "Controller", toStr(Settings.Controller));
+	createXMLSetting("TurboModeEnabled", "Turbo Mode Enabled", BtoStr(Settings.TurboModeEnabled));
+	createXMLSetting("TurboModeButton", "Turbo Mode Button", toStr(Settings.TurboModeButton));
+	createXMLSetting("GamepadMenuToggle", "Gamepad Menu Toggle", toStr(Settings.GamepadMenuToggle));
+	createXMLSetting("MapABXYRightStick", "Map ABXY Right Stick", BtoStr(Settings.MapABXYRightStick));
 
 	createXMLController(btnmap[CTRL_PAD][INPUT_HW_GAMECUBE], "btnmapping_pad_gcpad", "SNES Pad - GameCube Controller");
 #ifdef HW_RVL
@@ -303,10 +303,10 @@ static void loadXMLController(uint32_t controller[], const char * name)
 }
 
 void ApplySettings() {
-	platform->getInput()->setWiimoteOrientation(GCSettings.wiimoteOrientation);
-	platform->getInput()->setRumbleEnabled(GCSettings.Rumble);
-	GuiSound::setDefaultVolume(SOUND::OGG, GCSettings.MusicVolume);
-	GuiSound::setDefaultVolume(SOUND::PCM, GCSettings.SFXVolume);
+	platform->getInput()->setWiimoteOrientation(Settings.wiimoteOrientation);
+	platform->getInput()->setRumbleEnabled(Settings.Rumble);
+	GuiSound::setDefaultVolume(SOUND::OGG, Settings.MusicVolume);
+	GuiSound::setDefaultVolume(SOUND::PCM, Settings.SFXVolume);
 	platform->getVideo()->startMenuVideo();
 	ChangeLanguage();
 }
@@ -328,66 +328,66 @@ decodePrefsData ()
 
 	// File Settings
 
-	loadXMLSetting(&GCSettings.AutoLoad, "AutoLoad");
-	loadXMLSetting(&GCSettings.AutoSave, "AutoSave");
-	loadXMLSetting(&GCSettings.LoadMethod, "LoadMethod");
-	loadXMLSetting(&GCSettings.SaveMethod, "SaveMethod");
-	loadXMLSetting(GCSettings.LoadFolder, "LoadFolder", sizeof(GCSettings.LoadFolder));
-	loadXMLSetting(GCSettings.LastFileLoaded, "LastFileLoaded", sizeof(GCSettings.LastFileLoaded));
-	loadXMLSetting(GCSettings.SaveFolder, "SaveFolder", sizeof(GCSettings.SaveFolder));
-	loadXMLSetting(&GCSettings.AppendAuto, "AppendAuto");
-	loadXMLSetting(GCSettings.CheatFolder, "CheatFolder", sizeof(GCSettings.CheatFolder));
-	loadXMLSetting(GCSettings.ScreenshotsFolder, "ScreenshotsFolder", sizeof(GCSettings.ScreenshotsFolder));
-	loadXMLSetting(GCSettings.CoverFolder, "CoverFolder", sizeof(GCSettings.CoverFolder));
-	loadXMLSetting(GCSettings.ArtworkFolder, "ArtworkFolder", sizeof(GCSettings.ArtworkFolder));
+	loadXMLSetting(&Settings.AutoLoad, "AutoLoad");
+	loadXMLSetting(&Settings.AutoSave, "AutoSave");
+	loadXMLSetting(&Settings.LoadMethod, "LoadMethod");
+	loadXMLSetting(&Settings.SaveMethod, "SaveMethod");
+	loadXMLSetting(Settings.LoadFolder, "LoadFolder", sizeof(Settings.LoadFolder));
+	loadXMLSetting(Settings.LastFileLoaded, "LastFileLoaded", sizeof(Settings.LastFileLoaded));
+	loadXMLSetting(Settings.SaveFolder, "SaveFolder", sizeof(Settings.SaveFolder));
+	loadXMLSetting(&Settings.AppendAuto, "AppendAuto");
+	loadXMLSetting(Settings.CheatFolder, "CheatFolder", sizeof(Settings.CheatFolder));
+	loadXMLSetting(Settings.ScreenshotsFolder, "ScreenshotsFolder", sizeof(Settings.ScreenshotsFolder));
+	loadXMLSetting(Settings.CoverFolder, "CoverFolder", sizeof(Settings.CoverFolder));
+	loadXMLSetting(Settings.ArtworkFolder, "ArtworkFolder", sizeof(Settings.ArtworkFolder));
 
 	// Network Settings
 
-	loadXMLSetting(GCSettings.smbip, "smbip", sizeof(GCSettings.smbip));
-	loadXMLSetting(GCSettings.smbshare, "smbshare", sizeof(GCSettings.smbshare));
-	loadXMLSetting(GCSettings.smbuser, "smbuser", sizeof(GCSettings.smbuser));
-	loadXMLSetting(GCSettings.smbpwd, "smbpwd", sizeof(GCSettings.smbpwd));
+	loadXMLSetting(Settings.smbip, "smbip", sizeof(Settings.smbip));
+	loadXMLSetting(Settings.smbshare, "smbshare", sizeof(Settings.smbshare));
+	loadXMLSetting(Settings.smbuser, "smbuser", sizeof(Settings.smbuser));
+	loadXMLSetting(Settings.smbpwd, "smbpwd", sizeof(Settings.smbpwd));
 
 	// Video Settings
 
-	loadXMLSetting(&GCSettings.videoMode, "videoMode");
-	loadXMLSetting(&GCSettings.videoAspectRatioCorrection, "videoAspectRatioCorrection");
-	loadXMLSetting(&GCSettings.videoBilinearFilter, "videoBilinearFilter");
-	loadXMLSetting(&GCSettings.videoHardwareSoften, "videoHardwareSoften");
-	loadXMLSetting(&GCSettings.videoUpscalingFilter, "videoUpscalingFilter");
-	loadXMLSetting(&GCSettings.videoScanlines, "videoScanlines");
-	loadXMLSetting(&GCSettings.videoZoomHor, "videoZoomHor");
-	loadXMLSetting(&GCSettings.videoZoomVert, "videoZoomVert");
-	loadXMLSetting(&GCSettings.videoXshift, "videoXshift");
-	loadXMLSetting(&GCSettings.videoYshift, "videoYshift");
+	loadXMLSetting(&Settings.videoMode, "videoMode");
+	loadXMLSetting(&Settings.videoAspectRatioCorrection, "videoAspectRatioCorrection");
+	loadXMLSetting(&Settings.videoBilinearFilter, "videoBilinearFilter");
+	loadXMLSetting(&Settings.videoHardwareSoften, "videoHardwareSoften");
+	loadXMLSetting(&Settings.videoUpscalingFilter, "videoUpscalingFilter");
+	loadXMLSetting(&Settings.videoScanlines, "videoScanlines");
+	loadXMLSetting(&Settings.videoZoomHor, "videoZoomHor");
+	loadXMLSetting(&Settings.videoZoomVert, "videoZoomVert");
+	loadXMLSetting(&Settings.videoXshift, "videoXshift");
+	loadXMLSetting(&Settings.videoYshift, "videoYshift");
 
 	// Emulation Settings
-	loadXMLSetting(&GCSettings.sfxOverclock, "sfxOverclock");
-	loadXMLSetting(&GCSettings.crosshair, "crosshair");
-	loadXMLSetting(&GCSettings.HiResolution, "HiResolution");
-	loadXMLSetting(&GCSettings.SpriteLimit, "SpriteLimit");
-	loadXMLSetting(&GCSettings.FrameSkip, "FrameSkip");
-	loadXMLSetting(&GCSettings.Interpolation, "Interpolation");
-	loadXMLSetting(&GCSettings.MuteAudio, "MuteAudio");
+	loadXMLSetting(&Settings.sfxOverclock, "sfxOverclock");
+	loadXMLSetting(&Settings.crosshair, "crosshair");
+	loadXMLSetting(&Settings.HiResolution, "HiResolution");
+	loadXMLSetting(&Settings.SpriteLimit, "SpriteLimit");
+	loadXMLSetting(&Settings.FrameSkip, "FrameSkip");
+	loadXMLSetting(&Settings.Interpolation, "Interpolation");
+	loadXMLSetting(&Settings.MuteAudio, "MuteAudio");
 
 	// Menu Settings
 
-	loadXMLSetting(&GCSettings.wiimoteOrientation, "WiimoteOrientation");
-	loadXMLSetting(&GCSettings.ExitAction, "ExitAction");
-	loadXMLSetting(&GCSettings.MusicVolume, "MusicVolume");
-	loadXMLSetting(&GCSettings.SFXVolume, "SFXVolume");
-	loadXMLSetting(&GCSettings.Rumble, "Rumble");
-	loadXMLSetting(&GCSettings.language, "language");
-	loadXMLSetting(&GCSettings.PreviewImage, "PreviewImage");
-	loadXMLSetting(&GCSettings.HideSRAMSaving, "HideSRAMSaving");
+	loadXMLSetting(&Settings.wiimoteOrientation, "WiimoteOrientation");
+	loadXMLSetting(&Settings.ExitAction, "ExitAction");
+	loadXMLSetting(&Settings.MusicVolume, "MusicVolume");
+	loadXMLSetting(&Settings.SFXVolume, "SFXVolume");
+	loadXMLSetting(&Settings.Rumble, "Rumble");
+	loadXMLSetting(&Settings.language, "language");
+	loadXMLSetting(&Settings.PreviewImage, "PreviewImage");
+	loadXMLSetting(&Settings.HideSRAMSaving, "HideSRAMSaving");
 
 	// Controller Settings
 
-	loadXMLSetting(&GCSettings.Controller, "Controller");
-	loadXMLSetting(&GCSettings.TurboModeEnabled, "TurboModeEnabled");
-	loadXMLSetting(&GCSettings.TurboModeButton, "TurboModeButton");
-	loadXMLSetting(&GCSettings.GamepadMenuToggle, "GamepadMenuToggle");
-	loadXMLSetting(&GCSettings.MapABXYRightStick, "MapABXYRightStick");
+	loadXMLSetting(&Settings.Controller, "Controller");
+	loadXMLSetting(&Settings.TurboModeEnabled, "TurboModeEnabled");
+	loadXMLSetting(&Settings.TurboModeButton, "TurboModeButton");
+	loadXMLSetting(&Settings.GamepadMenuToggle, "GamepadMenuToggle");
+	loadXMLSetting(&Settings.MapABXYRightStick, "MapABXYRightStick");
 
 	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_GAMECUBE], "btnmapping_pad_gcpad");
 	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_WIIMOTE], "btnmapping_pad_wiimote");
@@ -414,48 +414,48 @@ decodePrefsData ()
  ***************************************************************************/
 void FixInvalidSettings()
 {
-	if(!isValidLoadDevice(GCSettings.LoadMethod))
-		GCSettings.LoadMethod = DEVICE_AUTO;
-	if(!isValidSaveDevice(GCSettings.SaveMethod))
-		GCSettings.SaveMethod = DEVICE_AUTO;
+	if(!isValidLoadDevice(Settings.LoadMethod))
+		Settings.LoadMethod = DEVICE_AUTO;
+	if(!isValidSaveDevice(Settings.SaveMethod))
+		Settings.SaveMethod = DEVICE_AUTO;
 
-	if(strlen(GCSettings.smbshare) == 0 || strlen(GCSettings.smbip) == 0) {
-		if(GCSettings.LoadMethod == DEVICE_SMB) {
-			GCSettings.LoadMethod = DEVICE_AUTO;
+	if(strlen(Settings.smbshare) == 0 || strlen(Settings.smbip) == 0) {
+		if(Settings.LoadMethod == DEVICE_SMB) {
+			Settings.LoadMethod = DEVICE_AUTO;
 		}
-		if(GCSettings.SaveMethod == DEVICE_SMB) {
-			GCSettings.SaveMethod = DEVICE_AUTO;
+		if(Settings.SaveMethod == DEVICE_SMB) {
+			Settings.SaveMethod = DEVICE_AUTO;
 		}
 	}
 
-	if(!(GCSettings.videoZoomHor > 0.5 && GCSettings.videoZoomHor < 1.5))
-		GCSettings.videoZoomHor = 1.0;
-	if(!(GCSettings.videoZoomVert > 0.5 && GCSettings.videoZoomVert < 1.5))
-		GCSettings.videoZoomVert = 1.0;
-	if(!(GCSettings.videoXshift > -50 && GCSettings.videoXshift < 50))
-		GCSettings.videoXshift = 0;
-	if(!(GCSettings.videoYshift > -50 && GCSettings.videoYshift < 50))
-		GCSettings.videoYshift = 0;
-	if(!(GCSettings.MusicVolume >= 0 && GCSettings.MusicVolume <= 100))
-		GCSettings.MusicVolume = 20;
-	if(!(GCSettings.SFXVolume >= 0 && GCSettings.SFXVolume <= 100))
-		GCSettings.SFXVolume = 40;
-	if(GCSettings.language < 0 || GCSettings.language >= LANG_LENGTH)
-		GCSettings.language = LANG_ENGLISH;
-	if(GCSettings.Controller > CTRL_PAD4 || GCSettings.Controller < CTRL_SCOPE)
-		GCSettings.Controller = CTRL_PAD2;
-	if(!(GCSettings.videoHardwareSoften >= VIDEO_HW_SOFTEN_OFF && GCSettings.videoHardwareSoften < VIDEO_HW_SOFTEN_LENGTH))
-		GCSettings.videoHardwareSoften = VIDEO_HW_SOFTEN_AUTO;
-	if(!(GCSettings.videoAspectRatioCorrection >= VIDEO_ASPECT_RATIO_CORRECTION_NONE && GCSettings.videoAspectRatioCorrection < VIDEO_ASPECT_RATIO_CORRECTION_LENGTH))
-		GCSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
-	if(!(GCSettings.videoMode >= VIDEOMODE_AUTO && GCSettings.videoMode < VIDEOMODE_LENGTH))
-		GCSettings.videoMode = VIDEOMODE_AUTO;
+	if(!(Settings.videoZoomHor > 0.5 && Settings.videoZoomHor < 1.5))
+		Settings.videoZoomHor = 1.0;
+	if(!(Settings.videoZoomVert > 0.5 && Settings.videoZoomVert < 1.5))
+		Settings.videoZoomVert = 1.0;
+	if(!(Settings.videoXshift > -50 && Settings.videoXshift < 50))
+		Settings.videoXshift = 0;
+	if(!(Settings.videoYshift > -50 && Settings.videoYshift < 50))
+		Settings.videoYshift = 0;
+	if(!(Settings.MusicVolume >= 0 && Settings.MusicVolume <= 100))
+		Settings.MusicVolume = 20;
+	if(!(Settings.SFXVolume >= 0 && Settings.SFXVolume <= 100))
+		Settings.SFXVolume = 40;
+	if(Settings.language < 0 || Settings.language >= LANG_LENGTH)
+		Settings.language = LANG_ENGLISH;
+	if(Settings.Controller > CTRL_PAD4 || Settings.Controller < CTRL_SCOPE)
+		Settings.Controller = CTRL_PAD2;
+	if(!(Settings.videoHardwareSoften >= VIDEO_HW_SOFTEN_OFF && Settings.videoHardwareSoften < VIDEO_HW_SOFTEN_LENGTH))
+		Settings.videoHardwareSoften = VIDEO_HW_SOFTEN_AUTO;
+	if(!(Settings.videoAspectRatioCorrection >= VIDEO_ASPECT_RATIO_CORRECTION_NONE && Settings.videoAspectRatioCorrection < VIDEO_ASPECT_RATIO_CORRECTION_LENGTH))
+		Settings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
+	if(!(Settings.videoMode >= VIDEOMODE_AUTO && Settings.videoMode < VIDEOMODE_LENGTH))
+		Settings.videoMode = VIDEOMODE_AUTO;
 #if defined(HW_RVL) || defined(HW_DOL)
-	if(!(GCSettings.videoUpscalingFilter >= FILTER_NONE && GCSettings.videoUpscalingFilter <= NUM_FILTERS))
-		GCSettings.videoUpscalingFilter = FILTER_NONE;
+	if(!(Settings.videoUpscalingFilter >= FILTER_NONE && Settings.videoUpscalingFilter <= NUM_FILTERS))
+		Settings.videoUpscalingFilter = FILTER_NONE;
 #endif
-	if(!(GCSettings.wiimoteOrientation >= WIIMOTE_ORIENTATION_AUTO && GCSettings.wiimoteOrientation < WIIMOTE_ORIENTATION_LENGTH))
-		GCSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_AUTO;
+	if(!(Settings.wiimoteOrientation >= WIIMOTE_ORIENTATION_AUTO && Settings.wiimoteOrientation < WIIMOTE_ORIENTATION_LENGTH))
+		Settings.wiimoteOrientation = WIIMOTE_ORIENTATION_AUTO;
 }
 
 /****************************************************************************
@@ -465,68 +465,68 @@ void FixInvalidSettings()
  ***************************************************************************/
 void DefaultSettings()
 {
-	memset (&GCSettings, 0, sizeof (GCSettings));
+	memset (&Settings, 0, sizeof (Settings));
 
 	ResetControls(); // controller button mappings
 
-	GCSettings.LoadMethod = DEVICE_AUTO;
-	GCSettings.SaveMethod = DEVICE_AUTO;
-	sprintf (GCSettings.LoadFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_ROMS].name); // Path to game files
-	sprintf (GCSettings.SaveFolder, "%s/%s", APPFOLDER, saveFolder[SAVEFOLDER_SAVES].name); // Path to save files
-	sprintf (GCSettings.CheatFolder, "%s/%s", APPFOLDER, saveFolder[SAVEFOLDER_CHEATS].name); // Path to cheat files
-	sprintf (GCSettings.ScreenshotsFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_SCREENSHOTS].name); // Path to screenshots files
-	sprintf (GCSettings.CoverFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_COVERS].name); // Path to cover files
-	sprintf (GCSettings.ArtworkFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_ARTWORK].name); // Path to artwork files
-	GCSettings.AutoLoad = true;
-	GCSettings.AutoSave = true;
+	Settings.LoadMethod = DEVICE_AUTO;
+	Settings.SaveMethod = DEVICE_AUTO;
+	sprintf (Settings.LoadFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_ROMS].name); // Path to game files
+	sprintf (Settings.SaveFolder, "%s/%s", APPFOLDER, saveFolder[SAVEFOLDER_SAVES].name); // Path to save files
+	sprintf (Settings.CheatFolder, "%s/%s", APPFOLDER, saveFolder[SAVEFOLDER_CHEATS].name); // Path to cheat files
+	sprintf (Settings.ScreenshotsFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_SCREENSHOTS].name); // Path to screenshots files
+	sprintf (Settings.CoverFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_COVERS].name); // Path to cover files
+	sprintf (Settings.ArtworkFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_ARTWORK].name); // Path to artwork files
+	Settings.AutoLoad = true;
+	Settings.AutoSave = true;
 
-	GCSettings.Controller = CTRL_PAD2;
+	Settings.Controller = CTRL_PAD2;
 
-	GCSettings.videoMode = VIDEOMODE_AUTO;
-	GCSettings.videoBilinearFilter = true;
-	GCSettings.videoHardwareSoften = VIDEO_HW_SOFTEN_SHARP;
-	GCSettings.videoScanlines = false;
+	Settings.videoMode = VIDEOMODE_AUTO;
+	Settings.videoBilinearFilter = true;
+	Settings.videoHardwareSoften = VIDEO_HW_SOFTEN_SHARP;
+	Settings.videoScanlines = false;
 #if defined(HW_RVL) || defined(HW_DOL)
-	GCSettings.videoUpscalingFilter = FILTER_NONE;
+	Settings.videoUpscalingFilter = FILTER_NONE;
 #else
-	GCSettings.videoUpscalingFilter = 0;
+	Settings.videoUpscalingFilter = 0;
 #endif
 
 #ifdef HW_RVL
 	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
-		GCSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_16_9;
+		Settings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_16_9;
 	else
-		GCSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
+		Settings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
 #elif HW_DOL
-	GCSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
+	Settings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
 #endif
 
-	GCSettings.videoZoomHor = 1.0; // horizontal zoom level
-	GCSettings.videoZoomVert = 1.0; // vertical zoom level
-	GCSettings.videoXshift = 0; // horizontal video shift
-	GCSettings.videoYshift = 0; // vertical video shift
-	GCSettings.crosshair = true;
+	Settings.videoZoomHor = 1.0; // horizontal zoom level
+	Settings.videoZoomVert = 1.0; // vertical zoom level
+	Settings.videoXshift = 0; // horizontal video shift
+	Settings.videoYshift = 0; // vertical video shift
+	Settings.crosshair = true;
 
-	GCSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_AUTO;
+	Settings.wiimoteOrientation = WIIMOTE_ORIENTATION_AUTO;
 #ifdef HW_RVL
-	GCSettings.ExitAction = EXITACTION_WII_AUTO;
+	Settings.ExitAction = EXITACTION_WII_AUTO;
 #elif HW_DOL
-	GCSettings.ExitAction = EXITACTION_GC_RETURN_TO_LOADER;
+	Settings.ExitAction = EXITACTION_GC_RETURN_TO_LOADER;
 #endif
-	GCSettings.AutoloadGame = false;
-	GCSettings.MusicVolume = 20;
-	GCSettings.SFXVolume = 40;
-	GCSettings.Rumble = true;
-	GCSettings.PreviewImage = PREVIEWIMAGE_COVER;
-	GCSettings.HideSRAMSaving = false;
+	Settings.AutoloadGame = false;
+	Settings.MusicVolume = 20;
+	Settings.SFXVolume = 40;
+	Settings.Rumble = true;
+	Settings.PreviewImage = PREVIEWIMAGE_COVER;
+	Settings.HideSRAMSaving = false;
 	
 #ifdef HW_RVL
-	GCSettings.language = CONF_GetLanguage();
+	Settings.language = CONF_GetLanguage();
 
-	if(GCSettings.language == LANG_TRAD_CHINESE)
-		GCSettings.language = LANG_SIMP_CHINESE;
+	if(Settings.language == LANG_TRAD_CHINESE)
+		Settings.language = LANG_SIMP_CHINESE;
 #elif HW_DOL
-	GCSettings.language = SYS_GetLanguage() + LANG_ENGLISH;
+	Settings.language = SYS_GetLanguage() + LANG_ENGLISH;
 #endif
 
 	/****************** SNES9x Settings ***********************/
@@ -557,8 +557,8 @@ void DefaultSettings()
 	Settings.SoundInputRate = 31920;
 	Settings.DynamicRateControl = true;
 	Settings.SeparateEchoBuffer = false;
-	GCSettings.MuteAudio = false;
-	GCSettings.Interpolation = 0;
+	Settings.MuteAudio = false;
+	Settings.Interpolation = 0;
 	Settings.InterpolationMethod = DSP_INTERPOLATION_GAUSSIAN;
 
 	// Graphics
@@ -570,15 +570,15 @@ void DefaultSettings()
 	Settings.InitialInfoStringTimeout = 200; // # frames to display messages for
 	Settings.DisplayFrameRate = false;
 	Settings.DisplayTime = false;
-	GCSettings.HiResolution = true; // Enabled by default
-	GCSettings.SpriteLimit = true; // Enabled by default
-	GCSettings.FrameSkip = true; // Enabled by default
+	Settings.HiResolution = true; // Enabled by default
+	Settings.SpriteLimit = true; // Enabled by default
+	Settings.FrameSkip = true; // Enabled by default
 
 	// Frame timings in 50hz and 60hz cpu mode
 	Settings.FrameTimePAL = 20000;
 	Settings.FrameTimeNTSC = 16667;
 
-	GCSettings.sfxOverclock = 0;
+	Settings.sfxOverclock = 0;
 	/* Initialize Super FX CPU to normal speed by default */
 	Settings.SuperFXSpeedPerLine = 5823405;
 	
@@ -588,10 +588,10 @@ void DefaultSettings()
 	Settings.OneSlowClockCycle = 8;
 	Settings.TwoClockCycles = 12;
 
-	GCSettings.TurboModeEnabled = true; // Enabled by default
-	GCSettings.TurboModeButton = 0; // Default is Right Analog Stick (0)
-	GCSettings.GamepadMenuToggle = GAMEPAD_MENU_TOGGLE_DEFAULT;
-	GCSettings.MapABXYRightStick = false;
+	Settings.TurboModeEnabled = true; // Enabled by default
+	Settings.TurboModeButton = 0; // Default is Right Analog Stick (0)
+	Settings.GamepadMenuToggle = GAMEPAD_MENU_TOGGLE_DEFAULT;
+	Settings.MapABXYRightStick = false;
 }
 
 /****************************************************************************
@@ -620,7 +620,7 @@ bool SavePrefs()
 	else
 	{
 		autoSaveMethod();
-		device = GCSettings.SaveMethod;
+		device = Settings.SaveMethod;
 
 		if(!ChangeInterface(device, true)) {
 			return false;
@@ -752,41 +752,41 @@ void CreatePathWithPrefix(int device, const char* folder) {
 void CreateMissingDirectories() {
     char defaultFolder[MAXPATHLEN];
 
-    if (GCSettings.SaveMethod > DEVICE_AUTO && ChangeInterface(GCSettings.SaveMethod, NOTSILENT)) {
-        const char* savePointers[] = { GCSettings.SaveFolder, GCSettings.CheatFolder };
+    if (Settings.SaveMethod > DEVICE_AUTO && ChangeInterface(Settings.SaveMethod, NOTSILENT)) {
+        const char* savePointers[] = { Settings.SaveFolder, Settings.CheatFolder };
 
         for (int i = 0; i < SAVEFOLDER_LENGTH; i++) {
             const char* currentPath = savePointers[i];
 
             if (strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
-                CreatePathWithPrefix(GCSettings.SaveMethod, APPFOLDER);
+                CreatePathWithPrefix(Settings.SaveMethod, APPFOLDER);
             }
 
             GetDefaultFolderPath(defaultFolder, saveFolder[i].name);
             if (strcmp(currentPath, defaultFolder) == 0) {
-                CreatePathWithPrefix(GCSettings.SaveMethod, currentPath);
+                CreatePathWithPrefix(Settings.SaveMethod, currentPath);
             }
         }
     }
 
-    if (GCSettings.LoadMethod > DEVICE_AUTO && GCSettings.LoadMethod != DEVICE_DVD && ChangeInterface(GCSettings.LoadMethod, NOTSILENT)) {
+    if (Settings.LoadMethod > DEVICE_AUTO && Settings.LoadMethod != DEVICE_DVD && ChangeInterface(Settings.LoadMethod, NOTSILENT)) {
         const char* loadPointers[] = {
-            GCSettings.LoadFolder,
-            GCSettings.ScreenshotsFolder,
-            GCSettings.CoverFolder,
-            GCSettings.ArtworkFolder
+            Settings.LoadFolder,
+            Settings.ScreenshotsFolder,
+            Settings.CoverFolder,
+            Settings.ArtworkFolder
         };
 
         for (int i = 0; i < LOADFOLDER_LENGTH; i++) {
             const char* currentPath = loadPointers[i];
 
             if (strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
-                CreatePathWithPrefix(GCSettings.LoadMethod, APPFOLDER);
+                CreatePathWithPrefix(Settings.LoadMethod, APPFOLDER);
             }
 
             GetDefaultFolderPath(defaultFolder, loadFolder[i].name);
             if (strcmp(currentPath, defaultFolder) == 0) {
-                CreatePathWithPrefix(GCSettings.LoadMethod, currentPath);
+                CreatePathWithPrefix(Settings.LoadMethod, currentPath);
             }
         }
     }
