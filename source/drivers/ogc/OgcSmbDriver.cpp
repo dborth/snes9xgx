@@ -173,7 +173,7 @@ bool OgcSmbDriver::ensureNetworkUp()
 	StartNetworkAttempt();
 
 	Ticks start = SystemTime::now();
-	for(;;)
+	while(SystemTime::diffSecs(start, SystemTime::now()) <= NETWORK_BRINGUP_TIMEOUT_SECS)
 	{
 		bool idle, up;
 		{
@@ -185,11 +185,9 @@ bool OgcSmbDriver::ensureNetworkUp()
 		if(idle)
 			return up && net_gethostip() > 0;
 
-		if(SystemTime::diffSecs(start, SystemTime::now()) > NETWORK_BRINGUP_TIMEOUT_SECS)
-			return false;
-
 		usleep(50 * 1000);
 	}
+	return false;
 #elif defined(HW_DOL)
 	if(net_gethostip() > 0)
 		return true;
