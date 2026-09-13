@@ -86,7 +86,7 @@ bool LoadSRAMAuto (bool silent)
 	if (LoadSRAM(filepath, silent))
 		return true;
 
-	if (!Settings.AppendAuto)
+	if (!GCSettings.AppendAuto)
 		return false;
 
 	// look for file with no number or Auto appended

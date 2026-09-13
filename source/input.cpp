@@ -271,7 +271,7 @@ static void decodepad (int chan, int emuChan)
 	if (pad.stickX < -sensitivity) virtual_jp |= INPUT_BTN_LEFT;
 	else if (pad.stickX > sensitivity) virtual_jp |= INPUT_BTN_RIGHT;
 
-	if (Settings.MapABXYRightStick)
+	if (GCSettings.MapABXYRightStick)
 	{
 		if (pad.substickY > sensitivity) virtual_jp |= INPUT_BTN_X;
 		else if (pad.substickY < -sensitivity) virtual_jp |= INPUT_BTN_B;
@@ -392,11 +392,11 @@ bool isMenuRequested()
 		bool lPlusRPlusStart = (pad.buttons_h & INPUT_TRIGGER_L) && (pad.buttons_h & INPUT_TRIGGER_R) && (pad.buttons_h & INPUT_BTN_PLUS);
 		bool oneTwoPlus = (pad.buttons_h & INPUT_BTN_1) && (pad.buttons_h & INPUT_BTN_2) && (pad.buttons_h & INPUT_BTN_PLUS);
 
-		if (Settings.GamepadMenuToggle == GAMEPAD_MENU_TOGGLE_HOME_RIGHTSTICK)
+		if (GCSettings.GamepadMenuToggle == GAMEPAD_MENU_TOGGLE_HOME_RIGHTSTICK)
 		{
 			if (rightStickLeft || homePressed) return true;
 		}
-		else if (Settings.GamepadMenuToggle == GAMEPAD_MENU_TOGGLE_LRSTART_12PLUS)
+		else if (GCSettings.GamepadMenuToggle == GAMEPAD_MENU_TOGGLE_LRSTART_12PLUS)
 		{
 			if (lPlusRPlusStart || oneTwoPlus) return true;
 		}
@@ -413,7 +413,7 @@ bool IsTurboModeInputPressed()
 	if (!controller[0]) return false;
 	const InputPadData& pad = controller[0]->getPadData();
 
-	switch(Settings.TurboModeButton)
+	switch(GCSettings.TurboModeButton)
 	{
 		case TURBO_BUTTON_RSTICK:
 			return (pad.substickX > 0.55f);
@@ -473,7 +473,7 @@ void ReportButtons ()
 
 	platform->getInput()->update();
 
-	if (Settings.TurboModeEnabled)
+	if (GCSettings.TurboModeEnabled)
 	{
 		Settings.TurboMode = IsTurboModeInputPressed();
 	}
@@ -517,17 +517,17 @@ void SetControllers()
 	}
 	else if (Settings.MouseMaster == true)
 	{
-		if (Settings.Controller == CTRL_MOUSE)
+		if (GCSettings.Controller == CTRL_MOUSE)
 		{
 			S9xSetController (0, CTL_MOUSE, 0, 0, 0, 0);
 			S9xSetController (1, CTL_JOYPAD, 1, 0, 0, 0);
 		}
-		else if (Settings.Controller == CTRL_MOUSE_PORT2)
+		else if (GCSettings.Controller == CTRL_MOUSE_PORT2)
 		{
 			S9xSetController (0, CTL_JOYPAD, 0, 0, 0, 0);
 			S9xSetController (1, CTL_MOUSE, 1, 0, 0, 0);
 		}
-		else if (Settings.Controller == CTRL_MOUSE_BOTH_PORTS)
+		else if (GCSettings.Controller == CTRL_MOUSE_BOTH_PORTS)
 		{
 			S9xSetController (0, CTL_MOUSE, 0, 0, 0, 0);
 			S9xSetController (1, CTL_MOUSE, 1, 0, 0, 0);

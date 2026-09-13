@@ -101,8 +101,8 @@ int getNextSaveDevice(int device)
 ****************************************************************************/
 int autoLoadMethod()
 {
-	if(Settings.LoadMethod > DEVICE_AUTO && isValidLoadDevice(Settings.LoadMethod)) {
-		return Settings.LoadMethod;
+	if(GCSettings.LoadMethod > DEVICE_AUTO && isValidLoadDevice(GCSettings.LoadMethod)) {
+		return GCSettings.LoadMethod;
 	}
 
 	char defaultFolderPath[MAXPATHLEN];
@@ -136,7 +136,7 @@ int autoLoadMethod()
 		}
 	}
 
-	Settings.LoadMethod = device; // load device found for later use
+	GCSettings.LoadMethod = device; // load device found for later use
 	CancelAction();
 	return device;
 }
@@ -148,8 +148,8 @@ int autoLoadMethod()
 ****************************************************************************/
 int autoSaveMethod()
 {
-	if(Settings.SaveMethod > DEVICE_AUTO && isValidSaveDevice(Settings.SaveMethod)) {
-		return Settings.SaveMethod;
+	if(GCSettings.SaveMethod > DEVICE_AUTO && isValidSaveDevice(GCSettings.SaveMethod)) {
+		return GCSettings.SaveMethod;
 	}
 
 	char defaultFolderPath[MAXPATHLEN];
@@ -183,7 +183,7 @@ int autoSaveMethod()
 		}
 	}
 
-	Settings.SaveMethod = device; // save device found for later use
+	GCSettings.SaveMethod = device; // save device found for later use
 
 	CancelAction();
 	return device;
@@ -296,8 +296,8 @@ int UpdateDirName()
 	
 			/* remove last subdirectory name */
 			size = strlen(browser.dir) - size - 1;
-			strncpy(Settings.LastFileLoaded, &browser.dir[size], strlen(browser.dir) - size - 1); //set as loaded file the previous dir
-			Settings.LastFileLoaded[strlen(browser.dir) - size - 1] = 0;
+			strncpy(GCSettings.LastFileLoaded, &browser.dir[size], strlen(browser.dir) - size - 1); //set as loaded file the previous dir
+			GCSettings.LastFileLoaded[strlen(browser.dir) - size - 1] = 0;
 			browser.dir[size] = 0;
 		}
 
@@ -352,14 +352,14 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 	}
 	else
 	{
-		if(Settings.SaveMethod == DEVICE_AUTO)
+		if(GCSettings.SaveMethod == DEVICE_AUTO)
 			return false;
 
 		switch(type)
 		{
 			case FILE_SRAM:
 			case FILE_STATE:
-				sprintf(folder, Settings.SaveFolder);
+				sprintf(folder, GCSettings.SaveFolder);
 
 				if(type == FILE_SRAM) sprintf(ext, "srm");
 				else sprintf(ext, "frz");
@@ -369,7 +369,7 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 					if(filenum == -1)
 						snprintf(file, sizeof(file), "%s.%s", filename, ext);
 					else if(filenum == 0)
-						if (!Settings.AppendAuto)
+						if (!GCSettings.AppendAuto)
 							snprintf(file, sizeof(file), "%s.%s", filename, ext);
 						else
 							snprintf(file, sizeof(file), "%s Auto.%s", filename, ext);
@@ -382,11 +382,11 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 				}
 				break;
 			case FILE_CHEAT:
-				sprintf(folder, Settings.CheatFolder);
+				sprintf(folder, GCSettings.CheatFolder);
 				snprintf(file, sizeof(file), "%s.cht", Memory.ROMFilename);
 				break;
 		}
-		platform->getFileSystem()->getPath(temppath, Settings.SaveMethod, folder, file);
+		platform->getFileSystem()->getPath(temppath, GCSettings.SaveMethod, folder, file);
 	}
 	CleanupPath(temppath); // cleanup path
 	snprintf(filepath, MAXPATHLEN, "%s", temppath);
@@ -565,7 +565,7 @@ int ROMLoader()
 	bsxBiosLoadFailed = false;
 
 	if(isBSX()) {
-		platform->getFileSystem()->getPath(filepath, Settings.LoadMethod, APPFOLDER, "BS-X.bin");
+		platform->getFileSystem()->getPath(filepath, GCSettings.LoadMethod, APPFOLDER, "BS-X.bin");
 		if(LoadFile ((char *)Memory.BIOSROM, filepath, 0, 0x100000, SILENT) == 0) {
 			bsxBiosLoadFailed = true;
 		}
@@ -593,7 +593,7 @@ int BrowserLoadFile()
 
 	// store the filename (w/o ext) - used for sram/freeze naming
 	StripExt(Memory.ROMFilename, browserList[browser.selIndex].filename);
-	snprintf(Settings.LastFileLoaded, MAXPATHLEN, "%s", browserList[browser.selIndex].filename);
+	snprintf(GCSettings.LastFileLoaded, MAXPATHLEN, "%s", browserList[browser.selIndex].filename);
 	strncpy(Memory.ROMFilePath, browser.dir, PATH_MAX);
 	Memory.ROMFilePath[PATH_MAX] = 0;
 
@@ -608,9 +608,9 @@ int BrowserLoadFile()
 	else
 	{
 		// load SRAM or snapshot
-		if (Settings.AutoLoad == AUTOLOAD_SRAM)
+		if (GCSettings.AutoLoad == AUTOLOAD_SRAM)
 			LoadSRAMAuto(SILENT);
-		else if (Settings.AutoLoad == AUTOLOAD_STATE)
+		else if (GCSettings.AutoLoad == AUTOLOAD_STATE)
 			LoadSnapshotAuto(SILENT);
 
 		ResetBrowser();
@@ -744,15 +744,15 @@ int BrowserChangeFolder()
 	
 	if(browser.dir[0] == 0)
 	{
-		Settings.LoadFolder[0] = 0;
-		Settings.LoadMethod = DEVICE_AUTO;
+		GCSettings.LoadFolder[0] = 0;
+		GCSettings.LoadMethod = DEVICE_AUTO;
 	}
 	else
 	{
 		char * path = StripDevice(browser.dir);
 		if(path != nullptr)
-			strcpy(Settings.LoadFolder, path);
-		FindDevice(browser.dir, &Settings.LoadMethod);
+			strcpy(GCSettings.LoadFolder, path);
+		FindDevice(browser.dir, &GCSettings.LoadMethod);
 	}
 
 	return browser.numEntries;
@@ -765,13 +765,13 @@ int BrowserChangeFolder()
 int
 OpenGameList ()
 {
-	int device = Settings.LoadMethod;
+	int device = GCSettings.LoadMethod;
 
 	if(device > 0 && ChangeInterface(device, NOTSILENT)) {
 		// change current dir to roms directory
-		platform->getFileSystem()->getPath(browser.dir, device, Settings.LoadFolder, "");
+		platform->getFileSystem()->getPath(browser.dir, device, GCSettings.LoadFolder, "");
 
-		if(strlen(Settings.LoadFolder) > 0) {
+		if(strlen(GCSettings.LoadFolder) > 0) {
 			DIR *dir = opendir(browser.dir);
 
 			if(dir == nullptr) {
@@ -797,8 +797,8 @@ bool AutoloadGame(char* filepath, char* filename) {
 	selectLoadedFile = 1;
 	std::string dir(filepath);
 	dir.assign(&dir[dir.find_last_of(":") + 2]);
-	strncpy(Settings.LoadFolder, dir.c_str(), sizeof(Settings.LoadFolder) - 1);
-	Settings.LoadFolder[sizeof(Settings.LoadFolder) - 1] = 0;
+	strncpy(GCSettings.LoadFolder, dir.c_str(), sizeof(GCSettings.LoadFolder) - 1);
+	GCSettings.LoadFolder[sizeof(GCSettings.LoadFolder) - 1] = 0;
 	OpenGameList();
 
 	for(int i = 0; i < browser.numEntries; i++) {

@@ -169,7 +169,7 @@ GXRModeObj* OgcVideoDriver::findVideoMode()
 	GXRModeObj * mode;
 
 	// choose the desired video mode
-	switch(Settings.videoMode)
+	switch(GCSettings.videoMode)
 	{
 		case VIDEOMODE_NTSC: // NTSC (480i)
 			mode = &TVNtsc480IntDf;
