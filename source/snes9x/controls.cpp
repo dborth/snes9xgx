@@ -3189,7 +3189,7 @@ void S9xControlEOF (void)
 
 					c = &superscope.crosshair;
 					#ifdef SNES9XGX
-					if(GCSettings.crosshair)
+					if(EmuSettings.crosshair)
 					#endif
 					if (IPPU.RenderThisFrame)
 						S9xDrawCrosshair(S9xGetCrosshair(c->img), c->fg, c->bg, superscope.x, superscope.y);
@@ -3202,7 +3202,7 @@ void S9xControlEOF (void)
 				{
 					c = &justifier.crosshair[1];
 					#ifdef SNES9XGX
-					if(GCSettings.crosshair)
+					if(EmuSettings.crosshair)
 					#endif
 					if (IPPU.RenderThisFrame)
 						S9xDrawCrosshair(S9xGetCrosshair(c->img), c->fg, c->bg, justifier.x[1], justifier.y[1]);
@@ -3224,7 +3224,7 @@ void S9xControlEOF (void)
 					{
 						c = &justifier.crosshair[0];
 						#ifdef SNES9XGX
-						if(GCSettings.crosshair)
+						if(EmuSettings.crosshair)
 						#endif
 						if (IPPU.RenderThisFrame)
 							S9xDrawCrosshair(S9xGetCrosshair(c->img), c->fg, c->bg, justifier.x[0], justifier.y[0]);

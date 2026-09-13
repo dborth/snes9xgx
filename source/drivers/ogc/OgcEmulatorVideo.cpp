@@ -350,7 +350,7 @@ void OgcEmulatorVideo::setupScanlineFilterTEV()
 
 bool OgcEmulatorVideo::shouldApplyScanlines()
 {
-	return GCSettings.videoScanlines && videoDriver->getVideoMode()->efbHeight > 300;
+	return EmuSettings.videoScanlines && videoDriver->getVideoMode()->efbHeight > 300;
 }
 
 /****************************************************************************
@@ -486,7 +486,7 @@ void OgcEmulatorVideo::resetVideo()
 	Mtx44 p;
 	int i = -1;
 
-	if (GCSettings.videoMode == VIDEOMODE_ORIGINAL_240P)
+	if (EmuSettings.videoMode == VIDEOMODE_ORIGINAL_240P)
 	{
 		for (int j=0; j<4; j++)
 		{
@@ -530,7 +530,7 @@ void OgcEmulatorVideo::resetVideo()
 	}
 	else
 	{
-		if (GCSettings.videoAspectRatioCorrection != VIDEO_ASPECT_RATIO_CORRECTION_NONE)
+		if (EmuSettings.videoAspectRatioCorrection != VIDEO_ASPECT_RATIO_CORRECTION_NONE)
 			resetFbWidth(640, rmode);
 		else
 			resetFbWidth(512, rmode);
@@ -553,12 +553,12 @@ void OgcEmulatorVideo::resetVideo()
 	u8 sharp[7] = {0,0,21,22,21,0,0};
 	u8 soft[7] = {8,8,10,12,10,8,8};
 	u8* vfilter =
-		GCSettings.videoHardwareSoften == VIDEO_HW_SOFTEN_SHARP ? sharp
-		: GCSettings.videoHardwareSoften == VIDEO_HW_SOFTEN_SOFT ? soft
+		EmuSettings.videoHardwareSoften == VIDEO_HW_SOFTEN_SHARP ? sharp
+		: EmuSettings.videoHardwareSoften == VIDEO_HW_SOFTEN_SOFT ? soft
 		: rmode->vfilter;
 
 	// Enable the copy filter if not in SF mode, OR if the user explicitly selected a filter
-	u8 vf_enable = (rmode->xfbMode != VI_XFBMODE_SF || GCSettings.videoHardwareSoften != VIDEO_HW_SOFTEN_OFF) ? GX_TRUE : GX_FALSE;
+	u8 vf_enable = (rmode->xfbMode != VI_XFBMODE_SF || EmuSettings.videoHardwareSoften != VIDEO_HW_SOFTEN_OFF) ? GX_TRUE : GX_FALSE;
 	GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, vf_enable, vfilter);
 
 	GX_SetFieldMode (rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
@@ -760,7 +760,7 @@ void OgcEmulatorVideo::presentFrame(int width, int height)
 		GXRModeObj* vmode = videoDriver->getVideoMode();
 
 		/** Update scaling **/
-		if (GCSettings.videoMode == VIDEOMODE_ORIGINAL_240P)
+		if (EmuSettings.videoMode == VIDEOMODE_ORIGINAL_240P)
 		{
 			if (fscale > 1)
 			{
@@ -774,13 +774,13 @@ void OgcEmulatorVideo::presentFrame(int width, int height)
 			}
 
 			// Original Mode 16:9 corrections
-			if (GCSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9 || GCSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9_FIXED) {
+			if (EmuSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9 || EmuSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9_FIXED) {
 				xscale = (3*xscale)/4;
 			}
 		}
 		else
 		{
-			if (GCSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9) {
+			if (EmuSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9) {
 				// Determine the raw height of the SNES signal
 				float base_height = (vheight == 224 || vheight == 448) ? 224.0f : 239.0f;
 
@@ -791,7 +791,7 @@ void OgcEmulatorVideo::presentFrame(int width, int height)
 				xscale = (256.0f * scale_factor * 15) / 16; // Mathematically perfect compensation for the 640 widescreen EFB
 				yscale = vmode->efbHeight / 2;
 			}
-			else if (GCSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9_FIXED) {
+			else if (EmuSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9_FIXED) {
 				if(vheight == 224 || vheight == 448) {
 					xscale = 224;
 					yscale = 224;
@@ -810,13 +810,13 @@ void OgcEmulatorVideo::presentFrame(int width, int height)
 			}
 		}
 
-		xscale *= GCSettings.videoZoomHor;
-		yscale *= GCSettings.videoZoomVert;
+		xscale *= EmuSettings.videoZoomHor;
+		yscale *= EmuSettings.videoZoomVert;
 
-		square[6] = square[3]  =  xscale + GCSettings.videoXshift;
-		square[0] = square[9]  = -xscale + GCSettings.videoXshift;
-		square[4] = square[1]  =  yscale - GCSettings.videoYshift;
-		square[7] = square[10] = -yscale - GCSettings.videoYshift;
+		square[6] = square[3]  =  xscale + EmuSettings.videoXshift;
+		square[0] = square[9]  = -xscale + EmuSettings.videoXshift;
+		square[4] = square[1]  =  yscale - EmuSettings.videoYshift;
+		square[7] = square[10] = -yscale - EmuSettings.videoYshift;
 
 		DCFlushRange (square, 32); // update memory BEFORE the GPU accesses it!
 
@@ -845,15 +845,15 @@ void OgcEmulatorVideo::presentFrame(int width, int height)
 		gameScreenPng.scaleY = targetHeight / (float)gameScreenPng.height;
 
 		// 5. Shift calculations must map EFB distances physically through to the Menu canvas
-		gameScreenPng.xoffset = GCSettings.videoXshift * (videoDriver->getScreenWidth() / (float)menu_vmode->viWidth) * ((float)vmode->viWidth / (float)vmode->fbWidth);
-		gameScreenPng.yoffset = GCSettings.videoYshift * (videoDriver->getScreenHeight() / menuViHeightAdjusted) * (viHeightAdjusted / (float)vmode->efbHeight);
+		gameScreenPng.xoffset = EmuSettings.videoXshift * (videoDriver->getScreenWidth() / (float)menu_vmode->viWidth) * ((float)vmode->viWidth / (float)vmode->fbWidth);
+		gameScreenPng.yoffset = EmuSettings.videoYshift * (videoDriver->getScreenHeight() / menuViHeightAdjusted) * (viHeightAdjusted / (float)vmode->efbHeight);
 
     	drawInit ();
 
 		// initialize the texture obj we are going to use
 		GX_InitTexObj (&texobj, texturemem, vwidth*fscale, vheight*fscale, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
-		if (!GCSettings.videoBilinearFilter)
+		if (!EmuSettings.videoBilinearFilter)
 			GX_InitTexObjFilterMode(&texobj,GX_NEAR,GX_NEAR);
 		else
 			GX_InitTexObjFilterMode(&texobj,GX_LINEAR,GX_LINEAR);

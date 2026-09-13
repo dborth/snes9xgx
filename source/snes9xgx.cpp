@@ -78,18 +78,18 @@ int main(int argc, char *argv[])
 		LoadPrefs();
 		if(strncmp(argv[1], "sd", 2) == 0)
 		{
-			GCSettings.SaveMethod = DEVICE_SD;
-			GCSettings.LoadMethod = DEVICE_SD;
+			EmuSettings.SaveMethod = DEVICE_SD;
+			EmuSettings.LoadMethod = DEVICE_SD;
 		}
 		else if(strncmp(argv[1], "usb", 3) == 0)
 		{
-			GCSettings.SaveMethod = DEVICE_USB;
-			GCSettings.LoadMethod = DEVICE_USB;
+			EmuSettings.SaveMethod = DEVICE_USB;
+			EmuSettings.LoadMethod = DEVICE_USB;
 		}
 		SavePrefs();
 
-		GCSettings.AutoloadGame = AutoloadGame(argv[1], argv[2]);
-		autoboot = GCSettings.AutoloadGame;
+		EmuSettings.AutoloadGame = AutoloadGame(argv[1], argv[2]);
+		autoboot = EmuSettings.AutoloadGame;
 	}
 #endif
 
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 		if (firstRun)
 		{
 			firstRun = false;
-			switch (GCSettings.sfxOverclock)
+			switch (EmuSettings.sfxOverclock)
 			{
 				case 0: Settings.SuperFXSpeedPerLine = 5823405; break;
 				case 1: Settings.SuperFXSpeedPerLine = 0.417 * 20.5e6; break;
@@ -126,11 +126,11 @@ int main(int argc, char *argv[])
 				case 6: Settings.SuperFXSpeedPerLine = 0.417 * 120.5e6; break;
 			}
 
-			if (GCSettings.sfxOverclock > 0)
+			if (EmuSettings.sfxOverclock > 0)
 				S9xResetSuperFX();
 			S9xReset();
 
-			switch (GCSettings.Interpolation)
+			switch (EmuSettings.Interpolation)
 			{
 			case 0: Settings.InterpolationMethod = DSP_INTERPOLATION_GAUSSIAN; break;
 			case 1: Settings.InterpolationMethod = DSP_INTERPOLATION_LINEAR; break;
@@ -144,15 +144,15 @@ int main(int argc, char *argv[])
 		appRequest = AppRequest::NONE;
 		platform->getAudio()->startEmulatorAudio();
 
-		Settings.Mute = GCSettings.MuteAudio;
-		Settings.SupportHiRes = (GCSettings.HiResolution == 1);
-		Settings.MaxSpriteTilesPerLine = (GCSettings.SpriteLimit ? 34 : 128);
-		Settings.SkipFrames = (GCSettings.FrameSkip ? AUTO_FRAMERATE : 0);
+		Settings.Mute = EmuSettings.MuteAudio;
+		Settings.SupportHiRes = (EmuSettings.HiResolution == 1);
+		Settings.MaxSpriteTilesPerLine = (EmuSettings.SpriteLimit ? 34 : 128);
+		Settings.SkipFrames = (EmuSettings.FrameSkip ? AUTO_FRAMERATE : 0);
 		Settings.AutoDisplayMessages = (Settings.DisplayFrameRate || Settings.DisplayTime ? true : false);
-		Settings.MultiPlayer5Master = (GCSettings.Controller == CTRL_PAD4 ? true : false);
-		Settings.SuperScopeMaster = (GCSettings.Controller == CTRL_SCOPE ? true : false);
-		Settings.MouseMaster = (GCSettings.Controller == CTRL_MOUSE || GCSettings.Controller == CTRL_MOUSE_PORT2 || GCSettings.Controller == CTRL_MOUSE_BOTH_PORTS);
-		Settings.JustifierMaster = (GCSettings.Controller == CTRL_JUST ? true : false);
+		Settings.MultiPlayer5Master = (EmuSettings.Controller == CTRL_PAD4 ? true : false);
+		Settings.SuperScopeMaster = (EmuSettings.Controller == CTRL_SCOPE ? true : false);
+		Settings.MouseMaster = (EmuSettings.Controller == CTRL_MOUSE || EmuSettings.Controller == CTRL_MOUSE_PORT2 || EmuSettings.Controller == CTRL_MOUSE_BOTH_PORTS);
+		Settings.JustifierMaster = (EmuSettings.Controller == CTRL_JUST ? true : false);
 		SetControllers ();
 
 		// stop checking if devices were removed/inserted
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 
 		platform->getVideo()->getEmulatorVideo()->forceVideoUpdate();
 #if defined(HW_RVL) || defined(HW_DOL)
-		SelectFilterMethod(GCSettings.videoUpscalingFilter); // Initialize / Re-evaluate active filter
+		SelectFilterMethod(EmuSettings.videoUpscalingFilter); // Initialize / Re-evaluate active filter
 #endif
 
 		while(appRequest == AppRequest::NONE) // emulation loop
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
 void ExitApp() {
 	SavePrefs();
 
-	if (SNESROMSize > 0 && appRequest != AppRequest::MENU && GCSettings.AutoSave == AUTOSAVE_SRAM)
+	if (SNESROMSize > 0 && appRequest != AppRequest::MENU && EmuSettings.AutoSave == AUTOSAVE_SRAM)
 		SaveSRAMAuto(SILENT);
 
 	HaltDeviceCheckingThread();
@@ -209,5 +209,5 @@ void ExitApp() {
 	// down inside requestExit()/shutdown().
 	Thread::JoinAll();
 
-	platform->requestExit(GCSettings.ExitAction, autoboot);
+	platform->requestExit(EmuSettings.ExitAction, autoboot);
 }
