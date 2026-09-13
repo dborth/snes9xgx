@@ -7,6 +7,8 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#include "SmbDriver.h"
+
 #define MAX_STORAGE_DEVICES 16
 
 //!Storage device kind, shared by every platform's FileSystemDriver
@@ -111,4 +113,6 @@ class FileSystemDriver
 
 		virtual const int * getValidLoadDevices(int & outCount) const = 0;
 		virtual const int * getValidSaveDevices(int & outCount) const = 0;
+
+		virtual SmbDriver * getSmb() = 0;
 };

@@ -18,9 +18,6 @@
 #include "snes9xgx.h"
 #include "fileop.h"
 #include "memmanager.h"
-#if defined(HW_RVL) || defined(HW_DOL)
-#include "drivers/ogc/networkop.h"
-#endif
 #include "utils/decompress.h"
 #include "menu.h"
 #include "filebrowser.h"
@@ -30,6 +27,7 @@
 #include "drivers/Cond.h"
 #include "drivers/Platform.h"
 #include "drivers/FileSystemDriver.h"
+#include "drivers/SmbDriver.h"
 
 #define THREAD_SLEEP 100
 
@@ -326,14 +324,6 @@ bool FindDevice(char * filepath, int * device)
 	if(!filepath || filepath[0] == 0)
 		return false;
 
-	// SMB is a network share, not a local storage device - it isn't part
-	// of the platform driver's device table.
-	if(strncmp(filepath, "smb:", 4) == 0)
-	{
-		*device = DEVICE_SMB;
-		return true;
-	}
-
 	StorageDevice devices[MAX_STORAGE_DEVICES];
 	int count = platform->getFileSystem()->enumerateStorageDevices(devices);
 
@@ -363,6 +353,78 @@ char * StripDevice(char * path)
 }
 
 /****************************************************************************
+ * ConnectShare / CloseShare
+ *
+ * Builds an SmbShareInfo from the app's network settings and owns the
+ * retry/prompt policy around connecting - the SmbDriver itself only makes
+ * a single connect() attempt per call.
+ ***************************************************************************/
+static void CopyField(char * dst, size_t dstSize, const char * src)
+{
+	strncpy(dst, src, dstSize - 1);
+	dst[dstSize - 1] = 0;
+}
+
+bool ConnectShare(bool silent)
+{
+	bool invalidShare = strlen(GCSettings.smbshare) == 0;
+	bool invalidIp = strlen(GCSettings.smbip) == 0;
+
+	if(invalidShare || invalidIp)
+	{
+		if(!silent)
+		{
+			char msg[50];
+			char msg2[100];
+
+			if(invalidShare && invalidIp)
+				sprintf(msg, "Check settings.xml.");
+			else if(invalidShare)
+				sprintf(msg, "Share name is blank.");
+			else
+				sprintf(msg, "Share IP is blank.");
+
+			sprintf(msg2, "Invalid network settings - %s", msg);
+			ErrorPrompt(msg2);
+		}
+		return false;
+	}
+
+	SmbShareInfo info = {};
+	CopyField(info.host, sizeof(info.host), GCSettings.smbip);
+	CopyField(info.share, sizeof(info.share), GCSettings.smbshare);
+	CopyField(info.user, sizeof(info.user), GCSettings.smbuser);
+	CopyField(info.password, sizeof(info.password), GCSettings.smbpwd);
+
+	SmbDriver * smb = platform->getFileSystem()->getSmb();
+	int retry = 1;
+	SmbConnectResult result = SmbConnectResult::InvalidSettings;
+
+	while(retry)
+	{
+		if(!silent)
+			ShowAction("Connecting to network share...");
+
+		result = smb->connect(info);
+
+		if(!silent)
+			CancelAction();
+
+		if(result == SmbConnectResult::Success || silent)
+			break;
+
+		retry = ErrorPromptRetry(smb->connectResultMessage(result));
+	}
+
+	return result == SmbConnectResult::Success;
+}
+
+void CloseShare()
+{
+	platform->getFileSystem()->getSmb()->disconnect();
+}
+
+/****************************************************************************
  * ChangeInterface
  * Attempts to mount/configure the device specified. Owns the retry/prompt
  * policy; the platform driver just reports a single mount attempt's result.
@@ -372,10 +434,8 @@ bool ChangeInterface(int device, bool silent)
 	if(device == DEVICE_AUTO)
 		return false;
 
-#if defined(HW_RVL) || defined(HW_DOL)
 	if(device == DEVICE_SMB)
-		return ConnectShare(silent); // network share, not part of the storage driver
-#endif
+		return ConnectShare(silent);
 
 	if(device == DEVICE_DVD)
 		ShowAction("Loading DVD...");

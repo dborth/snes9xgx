@@ -27,10 +27,12 @@ void WiiFileSystemDriver::init()
 {
 	DI_Init();
 	USBStorage_Initialize();
+	smbDriver.init();
 }
 
 void WiiFileSystemDriver::shutdown()
 {
+	smbDriver.shutdown();
 	fatUnmount("sd:");
 	fatUnmount("usb:");
 	USBStorage_Deinitialize();
@@ -43,6 +45,7 @@ int WiiFileSystemDriver::enumerateStorageDevices(StorageDevice outDevices[MAX_ST
 	outDevices[count++] = StorageDevice{ DEVICE_SD,  "sd",  "sd:/",  true, true  };
 	outDevices[count++] = StorageDevice{ DEVICE_USB, "usb", "usb:/", true, true  };
 	outDevices[count++] = StorageDevice{ DEVICE_DVD, "",    "dvd:/", true, false };
+	outDevices[count++] = StorageDevice{ DEVICE_SMB, "network", "smb:/", false, false }; // not polled for removal, never auto-mounted at boot
 	return count;
 }
 
@@ -114,6 +117,15 @@ MountResult WiiFileSystemDriver::mountDVD()
 
 MountResult WiiFileSystemDriver::mountStorageDevice(int deviceId)
 {
+	// DEVICE_SMB isn't mounted here - actually connecting requires
+	// credentials (host/share/user/password) that this generic interface
+	// has no way to be handed, so ChangeInterface() calls
+	// getSmb()->connect() directly with settings from the app instead.
+	// This just reports current connection state, same as any other
+	// already-mounted device.
+	if(deviceId == DEVICE_SMB)
+		return smbDriver.isConnected() ? MountResult::Success : MountResult::DeviceNotFound;
+
 	if(isMounted[deviceId])
 		return MountResult::Success;
 
@@ -125,7 +137,7 @@ MountResult WiiFileSystemDriver::mountStorageDevice(int deviceId)
 		case DEVICE_DVD:
 			return mountDVD();
 		default:
-			return MountResult::DeviceNotFound; // not ours - eg. DEVICE_SMB is network, handled by fileop.cpp directly
+			return MountResult::DeviceNotFound;
 	}
 }
 
@@ -139,12 +151,19 @@ const char * WiiFileSystemDriver::mountResultMessage(int deviceId, MountResult r
 		case DEVICE_SD:  return "SD card not found!";
 		case DEVICE_USB: return "USB drive not found!";
 		case DEVICE_DVD: return "No disc inserted!";
+		case DEVICE_SMB: return "Network share not connected!";
 		default:         return "Device not found!";
 	}
 }
 
 void WiiFileSystemDriver::invalidateStorageDevice(int deviceId)
 {
+	if(deviceId == DEVICE_SMB)
+	{
+		smbDriver.disconnect();
+		return;
+	}
+
 	if(deviceId < 0 || deviceId >= MAX_STORAGE_DEVICES)
 		return;
 
@@ -176,19 +195,24 @@ void WiiFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 	}
 }
 
-//!Mount-path lookup, keyed by the shared Device enum.
+//!Mount-path lookup, keyed by the shared Device enum. DEVICE_SMB isn't
+//!here - its path depends on live connection state, so getMountPath()
+//!below asks smbDriver directly rather than a fixed table entry.
 static const char * const kMountPath[DEVICE_LENGTH] =
 {
 	"",       // DEVICE_AUTO
 	"sd:/",   // DEVICE_SD
 	"usb:/",  // DEVICE_USB
 	"dvd:/",  // DEVICE_DVD
-	"",       // DEVICE_SMB
+	"",       // DEVICE_SMB (unused - see above)
 	"", "", "", ""
 };
 
 const char * WiiFileSystemDriver::getMountPath(int device) const
 {
+	if(device == DEVICE_SMB)
+		return smbDriver.getMountPath();
+
 	if(device < 0 || device >= DEVICE_LENGTH)
 		return "";
 	return kMountPath[device];

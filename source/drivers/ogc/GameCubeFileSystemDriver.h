@@ -5,6 +5,7 @@
  ***************************************************************************/
 #pragma once
 #include "../FileSystemDriver.h"
+#include "OgcSmbDriver.h"
 
 class GameCubeFileSystemDriver : public FileSystemDriver
 {
@@ -23,7 +24,11 @@ class GameCubeFileSystemDriver : public FileSystemDriver
 		const int * getValidLoadDevices(int & outCount) const override;
 		const int * getValidSaveDevices(int & outCount) const override;
 
+		SmbDriver * getSmb() override { return &smbDriver; }
+
 	private:
 		MountResult mountFAT(int deviceId);
 		MountResult mountDVD();
+
+		OgcSmbDriver smbDriver;
 };
