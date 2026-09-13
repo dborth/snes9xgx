@@ -690,7 +690,7 @@ int BrowserChangeFolder()
 		browserList[i].isdir = 1;
 		browserList[i].icon = ICON_USB;
 		i++;
-#else
+#elif HW_DOL
 		AddBrowserEntry();
 		sprintf(browserList[i].filename, "carda:/");
 		sprintf(browserList[i].displayname, "SD Gecko Slot A");
@@ -722,6 +722,14 @@ int BrowserChangeFolder()
 		browserList[i].isdir = 1;
 		browserList[i].icon = ICON_SD;
 		i++;
+#elif __WUT__
+		AddBrowserEntry();
+		sprintf(browserList[i].filename, platform->getFileSystem()->getMountPath(DEVICE_SD));
+		sprintf(browserList[i].displayname, "SD Card");
+		browserList[i].length = 0;
+		browserList[i].isdir = 1;
+		browserList[i].icon = ICON_SD;
+		i++;
 #endif
 		AddBrowserEntry();
 		sprintf(browserList[i].filename, "smb:/");
@@ -730,7 +738,7 @@ int BrowserChangeFolder()
 		browserList[i].isdir = 1;
 		browserList[i].icon = ICON_SMB;
 		i++;
-		
+#if defined(HW_RVL) || defined(HW_DOL)
 		AddBrowserEntry();
 		sprintf(browserList[i].filename, "dvd:/");
 		sprintf(browserList[i].displayname, "Data DVD");
@@ -738,7 +746,7 @@ int BrowserChangeFolder()
 		browserList[i].isdir = 1;
 		browserList[i].icon = ICON_DVD;
 		i++;
-		
+#endif
 		browser.numEntries += i;
 	}
 	

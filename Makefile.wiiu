@@ -1,0 +1,171 @@
+#---------------------------------------------------------------------------------
+# Clear the implicit built in rules
+#---------------------------------------------------------------------------------
+.SUFFIXES:
+#---------------------------------------------------------------------------------
+ifeq ($(strip $(DEVKITPRO)),)
+$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>devkitPro")
+endif
+
+include $(DEVKITPRO)/wut/share/wut_rules
+export	FREETYPE_CFLAGS :=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config --cflags freetype2`
+export	FREETYPE_LIBS	:=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config --libs freetype2`
+
+# Set TOPDIR to the repository root before any sub-make recursion
+TOPDIR ?= $(CURDIR)
+export TOPDIR
+
+#---------------------------------------------------------------------------------
+# TARGET is the name of the output
+# BUILD is the directory where object files & intermediate files will be placed
+# EXECUTABLES is the directory where final binaries (.elf, .rpx, .wuhb) are placed
+# SOURCES is a list of directories containing source code
+# INCLUDES is a list of directories containing extra header files
+#---------------------------------------------------------------------------------
+TARGET		:=	snes9xgx-wiiu
+BUILD		:=	build_wiiu
+EXECUTABLES	:=	executables
+
+SOURCES		:=	source source/libgui source/utils source/utils/sz \
+				source/drivers source/drivers/wut source/drivers/wut/shaders \
+				source/snes9x source/snes9x/apu
+INCLUDES	:=	source source/snes9x
+DATA		:=	data/images data/sounds data/fonts data/lang
+
+#---------------------------------------------------------------------------------
+# options for code generation
+#---------------------------------------------------------------------------------
+
+# Using -O3 for emulator performance
+CFLAGS		=	-g -O3 -Wall -Wextra $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
+				-DSNES9XGX -D__WIIU__ -D__WUT__ \
+				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
+				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
+				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ
+CXXFLAGS	=	$(CFLAGS) -std=c++17
+LDFLAGS		=	-g $(MACHDEP) $(RPXSPECS) -Wl,-Map,$(notdir $@).map
+
+#---------------------------------------------------------------------------------
+# any extra libraries we wish to link with the project
+#---------------------------------------------------------------------------------
+LIBS :=	-lsmb2 -lwut -lmocha -ldvm -lpng -lmxml -lz -lvorbisidec -logg $(FREETYPE_LIBS)
+
+#---------------------------------------------------------------------------------
+# list of directories containing libraries, this must be the top level containing
+# include and lib
+#---------------------------------------------------------------------------------
+LIBDIRS	:= $(PORTLIBS) $(WUT_ROOT) $(WUT_ROOT)/usr
+
+#---------------------------------------------------------------------------------
+# no real need to edit anything past this point unless you need to add additional
+# rules for different file extensions
+#---------------------------------------------------------------------------------
+ifneq ($(BUILD),$(notdir $(CURDIR)))
+#---------------------------------------------------------------------------------
+
+export VPATH	:=	$(foreach dir,$(SOURCES),$(TOPDIR)/$(dir)) \
+					$(foreach dir,$(DATA),$(TOPDIR)/$(dir))
+export DEPSDIR	:=	$(TOPDIR)/$(BUILD)
+
+#---------------------------------------------------------------------------------
+# automatically build a list of object files for our project
+#---------------------------------------------------------------------------------
+CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
+sFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
+SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.S)))
+BINFILES	:=	$(foreach dir,$(DATA),$(notdir $(wildcard $(dir)/*.ttf) \
+					$(wildcard $(dir)/*.lang) $(wildcard $(dir)/*.png) \
+					$(wildcard $(dir)/*.ogg) $(wildcard $(dir)/*.pcm)))
+
+#---------------------------------------------------------------------------------
+# use CXX for linking C++ projects, CC for standard C
+#---------------------------------------------------------------------------------
+ifeq ($(strip $(CPPFILES)),)
+	export LD	:=	$(CC)
+else
+	export LD	:=	$(CXX)
+endif
+
+export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
+export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
+export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
+
+export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
+
+#---------------------------------------------------------------------------------
+# build a list of include paths
+#---------------------------------------------------------------------------------
+export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(TOPDIR)/$(dir)) \
+				$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
+				-I$(TOPDIR)/$(BUILD)
+
+#---------------------------------------------------------------------------------
+# build a list of library paths
+#---------------------------------------------------------------------------------
+export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+
+export OUTPUT	:=	$(TOPDIR)/$(EXECUTABLES)/$(TARGET)
+.PHONY: $(BUILD) clean
+
+#---------------------------------------------------------------------------------
+$(BUILD):
+	@[ -d $@ ] || mkdir -p $@
+	@[ -d $(TOPDIR)/$(EXECUTABLES) ] || mkdir -p $(TOPDIR)/$(EXECUTABLES)
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(TOPDIR)/Makefile.wiiu
+	
+#---------------------------------------------------------------------------------
+clean:
+	@echo clean ...
+	@rm -fr $(BUILD) $(EXECUTABLES)
+
+#---------------------------------------------------------------------------------
+else
+
+DEPENDS	:=	$(OFILES:.o=.d)
+
+#---------------------------------------------------------------------------------
+# main targets
+#---------------------------------------------------------------------------------
+$(OUTPUT).wuhb: $(OUTPUT).rpx
+	@echo packaging $@ ...
+	@$(DEVKITPRO)/tools/bin/wuhbtool $< $@ \
+		--name="Snes9x GX" \
+		--short-name="snes9xgx" \
+		--author="dborth" \
+		--icon=$(TOPDIR)/meta/icon.png \
+		--tv-image=$(TOPDIR)/meta/tv_splash.png \
+		--drc-image=$(TOPDIR)/meta/drc_splash.png
+
+$(OUTPUT).rpx: $(OUTPUT).elf
+$(OUTPUT).elf: $(OFILES)
+
+$(OFILES_SOURCES): $(HFILES)
+#---------------------------------------------------------------------------------
+# This rule links in binary data with .ttf, .png, and .mp3 extensions
+#---------------------------------------------------------------------------------
+%.ttf.o %_ttf.h : %.ttf
+	@echo $(notdir $<)
+	$(bin2o)
+
+%.lang.o %_lang.h : %.lang
+	@echo $(notdir $<)
+	$(bin2o)
+
+%.png.o %_png.h : %.png
+	@echo $(notdir $<)
+	$(bin2o)
+
+%.ogg.o %_ogg.h : %.ogg
+	@echo $(notdir $<)
+	$(bin2o)
+
+%.pcm.o %_pcm.h : %.pcm
+	@echo $(notdir $<)
+	$(bin2o)
+
+-include $(DEPENDS)
+
+#---------------------------------------------------------------------------------
+endif
+#---------------------------------------------------------------------------------

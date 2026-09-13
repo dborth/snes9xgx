@@ -18,6 +18,8 @@ enum Device
 	DEVICE_AUTO = 0,
 	DEVICE_SD,
 	DEVICE_USB,
+	DEVICE_USB2,
+	DEVICE_USB3,
 	DEVICE_DVD,
 	DEVICE_SMB,
 	DEVICE_SD_SLOTA,     //!< GameCube memory card slot A
@@ -31,9 +33,21 @@ struct StorageDevice
 {
 	int  id;
 	char name[16];
-	char prefix[16];
+	char prefix[32];
 	bool removable;          //!< can this device disappear at runtime? (polled by the device-checking thread)
 	bool autoMountAtStartup; //!< silently attempted at boot (eg. Wii's SD/USB)
+
+	// Optional capacity/health telemetry. A driver that can't (or hasn't yet)
+	// determined these leaves metricsValid false - check it before trusting
+	// totalBytes/freeBytes/blockSize/readOnly. Aggregate-initialized structs
+	// (eg. WiiFileSystemDriver's static device table) get these zeroed for
+	// free since they're trailing members.
+	uint64_t	totalBytes;
+	uint64_t	freeBytes;
+	uint32_t	blockSize;      //!< allocation unit / cluster size in bytes - useful for sizing savestate writes
+	bool		readOnly;
+	bool		metricsValid;
+	char		label[16];
 };
 
 //! Result of a single mount attempt. Deliberately has no retry/backoff behavior baked in
@@ -44,6 +58,9 @@ enum class MountResult
 	MountFailed     //!< present, but couldn't be mounted (eg. unrecognized format)
 };
 
+//!Storage device enumeration/mount/poll backend for the SD/USB/DVD file
+//!browser. Exactly one driver implements this and assigns the single
+//!global Platform instance.
 class FileSystemDriver
 {
 	public:
@@ -116,3 +133,16 @@ class FileSystemDriver
 
 		virtual SmbDriver * getSmb() = 0;
 };
+
+//! Convenience for "try these devices in priority order, use whichever one
+//! is actually mounted" call sites.
+inline const char * FindFirstMountedPath(FileSystemDriver * fs, const int * candidates, int count)
+{
+	for(int i = 0; i < count; i++)
+	{
+		const char * path = fs->getMountPath(candidates[i]);
+		if(path && path[0] != '\0')
+			return path;
+	}
+	return "";
+}

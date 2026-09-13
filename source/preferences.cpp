@@ -719,6 +719,8 @@ bool LoadPrefs()
 	sprintf(filepath[1], "cardb:/%s", APPFOLDER);
 	sprintf(filepath[2], "port2:/%s", APPFOLDER);
 	sprintf(filepath[3], "gcloader:/%s", APPFOLDER);
+#elif __WUT__
+	numDevices = 0;
 #endif
 
 	for(int i=0; i<numDevices; i++) {
@@ -735,7 +737,7 @@ bool LoadPrefs()
 	FixInvalidSettings();
 	ApplySettings();
 
-#ifdef HW_RVL
+#ifndef HW_DOL
 	bg_music = (uint8_t * )bg_music_ogg;
 	bg_music_size = bg_music_ogg_size;
 	LoadBgMusic();

@@ -4,11 +4,11 @@ on: [push, pull_request]
 
 jobs:
   build:
-    name: Build
+    name: Build (${{ matrix.image }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: ["Wii", "GameCube"]
+        image: ["Wii", "GameCube", "WiiU"]
     container: ghcr.io/extremscorner/libogc2:latest
 
     steps:
@@ -17,10 +17,41 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Install Wii U dependencies
+      if: ${{ matrix.image == 'WiiU' }}
+      run: dkp-pacman -Syu --noconfirm wiiu-dev
+
+    - name: Install Ninja build tool
+      run: apt-get update && apt-get install -y ninja-build
+
+    - name: Build and install libmocha
+      if: ${{ matrix.image == 'WiiU' }}
+      run: |
+        git clone --depth 1 https://github.com/dborth/libmocha.git /tmp/libmocha
+        cd /tmp/libmocha && make install
+
+    - name: Build and install libdvm
+      if: ${{ matrix.image == 'WiiU' }}
+      run: |
+        git clone --depth 1 --recurse-submodules --shallow-submodules https://github.com/dborth/libdvm.git /tmp/libdvm
+        cd /tmp/libdvm && make install
+
+    - name: Build and install libsmb2
+      run: |
+        git clone --depth 1 https://github.com/dborth/libsmb2.git /tmp/libsmb2
+        cd /tmp/libsmb2
+        if [ "${{ matrix.image }}" = "Wii" ]; then
+          make -f Makefile.platform wii_install
+        elif [ "${{ matrix.image }}" = "GameCube" ]; then
+          make -f Makefile.gc_install
+        elif [ "${{ matrix.image }}" = "WiiU" ]; then
+          make -f Makefile.platform wiiu_install
+        fi
+
     - name: Build Wii
       if: ${{ matrix.image == 'Wii' }}
       run: |
-        make -f Makefile.wii -j2
+        make -f Makefile.wii -j3
 
     - name: Copy Wii artifacts
       if: ${{ matrix.image == 'Wii' }}
@@ -46,7 +77,7 @@ jobs:
     - name: Build GameCube
       if: ${{ matrix.image == 'GameCube' }}
       run: |
-        make -f Makefile.gc -j2
+        make -f Makefile.gc -j3
 
     - name: Copy GameCube artifact
       if: ${{ matrix.image == 'GameCube' }}
@@ -61,6 +92,11 @@ jobs:
         name: Snes9xGX-GameCube
         path: |
           dist/Snes9xGX-GameCube/
+
+    - name: Build Wii U
+      if: ${{ matrix.image == 'WiiU' }}
+      run: |
+        make -f Makefile.wiiu -j3
 
   release:
     name: Release
