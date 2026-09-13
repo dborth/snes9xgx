@@ -1,11 +1,10 @@
 /****************************************************************************
- * libgui
- * Daryl Borth 2009-2026
+ * Platform Abstraction Layer
+ * Daryl Borth 2026
  * InputController.cpp
  ***************************************************************************/
 
 #include <cmath>
-#include "Platform.h"
 #include "InputController.h"
 
 InputController* controller[4] = {nullptr, nullptr, nullptr, nullptr};

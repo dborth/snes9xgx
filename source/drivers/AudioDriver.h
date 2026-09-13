@@ -1,7 +1,6 @@
 /****************************************************************************
- * libgui
- *
- * Daryl Borth 2009-2026
+ * Platform Abstraction Layer
+ * Daryl Borth 2026
  * AudioDriver.h
  *
  * Platform audio backend GuiSound delegates to. Exactly one driver

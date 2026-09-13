@@ -1,8 +1,8 @@
 /****************************************************************************
- * libgui - drivers/ogc
+ * Platform Abstraction Layer (OGC driver)
  * Daryl Borth 2009-2026
  * OgcInputDriver.cpp
- * Hardware Translation Layer (Driver)
+ *
  * Wii/GameCube controller management and normalization
  ***************************************************************************/
 
@@ -18,12 +18,12 @@
 #include "../Platform.h"
 
 #ifdef HW_RVL
+#include "WiiPlatform.h"
 #include "input/wiidrc.h"
 #include "input/retrode.h"
 #include "input/xbox360.h"
 #include "input/hornet.h"
 #include "input/mayflash.h"
-#include "WiiSystemEvents.h"
 #endif
 
 #include "../InputController.h"

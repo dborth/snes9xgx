@@ -1,6 +1,6 @@
 /****************************************************************************
- * libgui - drivers/ogc
- * Daryl Borth 2009-2026
+ * Platform Abstraction Layer (OGC driver)
+ * Daryl Borth 2026
  * OgcThreadDriver.cpp
  *
  * Wraps libogc LWP threads/mutexes. lwp_t/mutex_t are opaque integer

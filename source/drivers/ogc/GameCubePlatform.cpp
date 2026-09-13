@@ -1,6 +1,6 @@
 /****************************************************************************
- * libgui - drivers/ogc
- * Daryl Borth 2009-2026
+ * Platform Abstraction Layer (OGC driver)
+ * Daryl Borth 2026
  * GameCubePlatform.cpp
  ***************************************************************************/
 #include <gccore.h>
@@ -8,7 +8,6 @@
 #include <stdio.h>
 
 #include "GameCubePlatform.h"
-#include "OgcDebugOutput.h"
 
 extern "C" {
 extern void __exception_setreload(int t);
@@ -59,10 +58,34 @@ void GameCubePlatform::init(int width, int height)
 
 	this->fileSystemDriver = new GameCubeFileSystemDriver();
 	this->fileSystemDriver->init();
+
+#if LOGGING_ENABLED
+	this->logger = new Logger();
+	this->logger->registerBackend(LOGGER_OSREPORT,	new OgcLoggerSysReport());
+	this->logger->registerBackend(LOGGER_SERIAL,	new OgcLoggerUsbGecko());
+	this->logger->registerBackend(LOGGER_FILE,		new LoggerFile());
+
+	LogConfig config;
+	static const int deviceCandidates[] = { DEVICE_SD_PORT2 };
+	const char * mountPath = FindFirstMountedPath(this->fileSystemDriver, deviceCandidates, 1);
+
+	if(mountPath[0] != '\0') {
+		// mountPath already ends in "/" (eg. "port2:/") - no separator needed.
+		snprintf(config.filePath, sizeof(config.filePath), "%sdebug.log", mountPath);
+	}
+
+	this->logger->init(config);
+#endif
 }
 
 void GameCubePlatform::shutdown()
 {
+	if (logger) {
+		logger->shutdown();
+		delete logger;
+		logger = nullptr;
+	}
+
 	if (fileSystemDriver) {
 		fileSystemDriver->shutdown();
 		delete fileSystemDriver;
@@ -121,7 +144,7 @@ const char* GameCubePlatform::getMemoryFreeInfo() {
 static int *psoid = (int *) 0x80001800;
 static void (*PSOReload) () = (void (*)()) 0x80001800;
 
-void GameCubePlatform::requestExit(int exitAction, bool /*autoloadedGame*/)
+void GameCubePlatform::requestExit(int exitAction, bool)
 {
 	this->shutdown();
 

@@ -186,7 +186,6 @@ bool InitializeNetwork(bool silent)
 			break;
 
 		retry = ErrorPromptRetry("Unable to initialize network!");
-		
 #ifdef HW_RVL  	
 		if(networkInit && net_gethostip() > 0)
 #else
@@ -236,7 +235,7 @@ ConnectShare (bool silent)
 		}
 		return false;
 	}
-
+	
 	if(!InitializeNetwork(silent))
 		return false;
 

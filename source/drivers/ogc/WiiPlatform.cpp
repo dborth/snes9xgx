@@ -1,17 +1,13 @@
 /****************************************************************************
- * libgui - drivers/ogc
- * Daryl Borth 2009-2026
+ * Platform Abstraction Layer (OGC driver)
+ * Daryl Borth 2026
  * WiiPlatform.cpp
  ***************************************************************************/
 #include <gccore.h>
 #include <malloc.h>
 #include <stdio.h>
-#include <sys/iosupport.h>
-#include <ogc/lwp_threads.h>
 
 #include "WiiPlatform.h"
-#include "WiiSystemEvents.h"
-#include "OgcDebugOutput.h"
 
 extern "C" {
 extern void __exception_setreload(int t);
@@ -22,13 +18,15 @@ extern bool isWiiVC;
 /****************************************************************************
  * Shutdown/reset
  ***************************************************************************/
-static bool shutdownRequestedFlag = false;
 
-void NotifyWiiShutdownRequested() { shutdownRequestedFlag = true; }
+// Status::Exiting alone doesn't tell requestExit() what to do below
+static bool hardwarePowerOffRequested = false;
+
+void NotifyWiiShutdownRequested() { hardwarePowerOffRequested = true; platform->triggerExit(); }
 
 SystemEvent WiiPlatform::getSystemEvent()
 {
-	if(shutdownRequestedFlag)
+	if(platform->getStatus() == Status::Exiting)
 		return SystemEvent::ShutdownRequested;
 
 	static bool wasResetDown = false;
@@ -164,10 +162,36 @@ void WiiPlatform::init(int width, int height)
 
 	this->fileSystemDriver = new WiiFileSystemDriver();
 	this->fileSystemDriver->init();
+
+#if LOGGING_ENABLED
+	this->logger = new Logger();
+	this->logger->registerBackend(LOGGER_OSREPORT,	new OgcLoggerSysReport());
+	this->logger->registerBackend(LOGGER_UDP,		new OgcLoggerUdp());
+	this->logger->registerBackend(LOGGER_SERIAL,	new OgcLoggerUsbGecko());
+	this->logger->registerBackend(LOGGER_FILE,		new LoggerFile());
+
+	LogConfig config;
+	static const int deviceCandidates[] = { DEVICE_SD, DEVICE_USB };
+
+	const char * mountPath = FindFirstMountedPath(this->fileSystemDriver, deviceCandidates, 2);
+
+	if(mountPath[0] != '\0') {
+		// mountPath already ends in "/" (eg. "sd:/") - no separator needed.
+		snprintf(config.filePath, sizeof(config.filePath), "%sdebug.log", mountPath);
+	}
+
+	this->logger->init(config);
+#endif
 }
 
 void WiiPlatform::shutdown()
 {
+	if (logger) {
+		logger->shutdown();
+		delete logger;
+		logger = nullptr;
+	}
+
 	if (fileSystemDriver) {
 		fileSystemDriver->shutdown();
 		delete fileSystemDriver;
@@ -295,7 +319,7 @@ void WiiPlatform::requestExit(int exitAction, bool autoloadedGame)
 {
 	this->shutdown();
 
-	if(shutdownRequestedFlag) {
+	if(hardwarePowerOffRequested) {
 		SYS_ResetSystem(SYS_POWEROFF_STANDBY, 0, FALSE);
 	}
 	else if(autoloadedGame) {

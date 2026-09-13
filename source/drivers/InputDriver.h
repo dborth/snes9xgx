@@ -1,6 +1,6 @@
 /****************************************************************************
- * libgui
- * Daryl Borth 2009-2026
+ * Platform Abstraction Layer
+ * Daryl Borth 2026
  * InputDriver.h
  *
  * Platform input backend GuiElements delegate to.

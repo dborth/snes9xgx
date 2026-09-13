@@ -1,6 +1,6 @@
 /****************************************************************************
- * libgui - drivers/ogc
- * Daryl Borth 2009-2026
+ * Platform Abstraction Layer (OGC driver)
+ * Daryl Borth 2026
  * WiiFileSystemDriver.cpp
  *
  * Wii storage device enumeration + mounting: SD, USB, DVD. All three are
