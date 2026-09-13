@@ -562,7 +562,7 @@ static bool UpdateGui()
 
 	DrawGui();
 
-	if(platform->getSystemEvent() == SystemEvent::ShutdownRequested)
+	if(platform->shouldExit())
 	{
 		for(int a = 0; a <= 255; a += 15)
 		{

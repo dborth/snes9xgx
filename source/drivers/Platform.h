@@ -55,18 +55,11 @@ class Platform
 		//!\param width Design canvas width in pixels
 		//!\param height Design canvas height in pixels
 		virtual void init(int width, int height) = 0;
-		//!Shuts down and releases all five drivers. Does not itself end
-		//!the process/return to a menu/power off - see requestExit(). Any
-		//!background Thread that might still call into a driver must be
-		//!stopped and joined (eg. via Thread::JoinAll()) before calling
-		//!this, since the drivers it deletes may be in active use.
-		virtual void shutdown() = 0;
 		//!Tears down the platform (via shutdown()) and then performs
 		//!whatever platform-appropriate action actually ends the app -
 		//!return to loader/menu, power off, or just exit(), depending on
 		//!how getSystemEvent() last reported and how the platform was
-		//!reached. Callers should call this instead of shutdown() to
-		//!leave the platform; it does not return.
+		//!reached. It does not return.
 		virtual void requestExit(int exitAction, bool autoloadedGame) = 0;
 
 		virtual AudioDriver* getAudio() = 0;
@@ -92,6 +85,21 @@ class Platform
 		virtual Status getStatus() const = 0;
 		//! Transitions platform state to move to Exiting.
 		virtual void triggerExit() = 0;
+		//!True once triggerExit() has been called, or the platform's own
+		//!getSystemEvent() independently reports ShutdownRequested (eg. a
+		//!hardware power button). Not every platform folds Status::Exiting
+		//!into its getSystemEvent() report - GameCube has no hardware
+		//!event source and always reports None, relying entirely on
+		//!triggerExit() - so callers wanting to leave promptly on either
+		//!signal should check this rather than either alone.
+		bool shouldExit() { return getStatus() == Status::Exiting || getSystemEvent() == SystemEvent::ShutdownRequested; }
+
+	protected:
+		//!Shuts down and releases all five drivers. Any background
+		//!Thread that might still call into a driver must be
+		//!stopped and joined (eg. via Thread::JoinAll()) before calling
+		//!this, since the drivers it deletes may be in active use.
+		virtual void shutdown() = 0;
 };
 
 //! The globally accessible platform instance
