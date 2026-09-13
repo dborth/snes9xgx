@@ -355,20 +355,13 @@ char * StripDevice(char * path)
 /****************************************************************************
  * ConnectShare / CloseShare
  *
- * Builds an SmbShareInfo from the app's network settings and owns the
- * retry/prompt policy around connecting - the SmbDriver itself only makes
+ * Owns the retry/prompt policy around connecting; the SmbDriver only makes
  * a single connect() attempt per call.
  ***************************************************************************/
-static void CopyField(char * dst, size_t dstSize, const char * src)
-{
-	strncpy(dst, src, dstSize - 1);
-	dst[dstSize - 1] = 0;
-}
-
 bool ConnectShare(bool silent)
 {
-	bool invalidShare = strlen(EmuSettings.smbshare) == 0;
-	bool invalidIp = strlen(EmuSettings.smbip) == 0;
+	bool invalidShare = strlen(EmuSettings.smbShare.share) == 0;
+	bool invalidIp = strlen(EmuSettings.smbShare.host) == 0;
 
 	if(invalidShare || invalidIp)
 	{
@@ -390,12 +383,6 @@ bool ConnectShare(bool silent)
 		return false;
 	}
 
-	SmbShareInfo info = {};
-	CopyField(info.host, sizeof(info.host), EmuSettings.smbip);
-	CopyField(info.share, sizeof(info.share), EmuSettings.smbshare);
-	CopyField(info.user, sizeof(info.user), EmuSettings.smbuser);
-	CopyField(info.password, sizeof(info.password), EmuSettings.smbpwd);
-
 	SmbDriver * smb = platform->getFileSystem()->getSmb();
 	int retry = 1;
 	SmbConnectResult result = SmbConnectResult::InvalidSettings;
@@ -405,7 +392,7 @@ bool ConnectShare(bool silent)
 		if(!silent)
 			ShowAction("Connecting to network share...");
 
-		result = smb->connect(info);
+		result = smb->connect(EmuSettings.smbShare);
 
 		if(!silent)
 			CancelAction();

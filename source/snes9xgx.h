@@ -210,10 +210,7 @@ struct SEmuSettings{
 	bool	HideSRAMSaving;
 	bool	AutoloadGame;
 
-	char	smbip[80];
-	char	smbuser[20];
-	char	smbpwd[20];
-	char	smbshare[20];
+	SmbShareInfo smbShare;
 
 	int		videoMode;
 	int		videoAspectRatioCorrection;

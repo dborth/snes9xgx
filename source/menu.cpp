@@ -4638,29 +4638,29 @@ static int MenuSettingsNetwork()
 		switch (ret)
 		{
 			case 0:
-				OnScreenKeyboard(EmuSettings.smbip, 80);
+				OnScreenKeyboard(EmuSettings.smbShare.host, sizeof(EmuSettings.smbShare.host));
 				break;
 
 			case 1:
-				OnScreenKeyboard(EmuSettings.smbshare, 20);
+				OnScreenKeyboard(EmuSettings.smbShare.share, sizeof(EmuSettings.smbShare.share));
 				break;
 
 			case 2:
-				OnScreenKeyboard(EmuSettings.smbuser, 20);
+				OnScreenKeyboard(EmuSettings.smbShare.user, sizeof(EmuSettings.smbShare.user));
 				break;
 
 			case 3:
-				OnScreenKeyboard(EmuSettings.smbpwd, 20);
+				OnScreenKeyboard(EmuSettings.smbShare.password, sizeof(EmuSettings.smbShare.password));
 				break;
 		}
 
 		if(ret >= 0 || firstRun)
 		{
 			firstRun = false;
-			snprintf (options.value[0], 25, "%s", EmuSettings.smbip);
-			snprintf (options.value[1], 19, "%s", EmuSettings.smbshare);
-			snprintf (options.value[2], 19, "%s", EmuSettings.smbuser);
-			snprintf (options.value[3], 19, "%s", EmuSettings.smbpwd);
+			snprintf (options.value[0], 25, "%s", EmuSettings.smbShare.host);
+			snprintf (options.value[1], 19, "%s", EmuSettings.smbShare.share);
+			snprintf (options.value[2], 19, "%s", EmuSettings.smbShare.user);
+			snprintf (options.value[3], 19, "%s", EmuSettings.smbShare.password);
 			optionBrowser.triggerUpdate();
 		}
 
