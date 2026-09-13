@@ -43,7 +43,7 @@ jobs:
         if [ "${{ matrix.image }}" = "Wii" ]; then
           make -f Makefile.platform wii_install
         elif [ "${{ matrix.image }}" = "GameCube" ]; then
-          make -f Makefile.gc_install
+          make -f Makefile.platform gc_install
         elif [ "${{ matrix.image }}" = "WiiU" ]; then
           make -f Makefile.platform wiiu_install
         fi
