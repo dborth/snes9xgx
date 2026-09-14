@@ -4,9 +4,11 @@
  * GameCubeFileSystemDriver.h
  ***************************************************************************/
 #pragma once
-#include "../FileSystemDriver.h"
-#include "OgcSmbDriver.h"
+#include "../../FileSystemDriver.h"
+#include "../OgcSmbDriver.h"
 
+//!GameCube FileSystemDriver: memory card slots, GC Loader, and DVD, plus
+//!DEVICE_SMB (broadband adapter) via the shared OgcSmbDriver.
 class GameCubeFileSystemDriver : public FileSystemDriver
 {
 	public:
@@ -18,7 +20,8 @@ class GameCubeFileSystemDriver : public FileSystemDriver
 		const char * mountResultMessage(int deviceId, MountResult result) override;
 		void invalidateStorageDevice(int deviceId) override;
 		void pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES], int & outRemovedCount, bool & deviceListChanged) override;
-		bool hasRemovableStorageDevices() const override { return false; } // card slots/GC Loader aren't polled for removal
+		bool hasRemovableStorageDevices() const override { return true; }
+		bool isDevicePresent(int deviceId) const override;
 
 		const char * getMountPath(int device) const override;
 		const int * getValidLoadDevices(int & outCount) const override;

@@ -4,8 +4,11 @@
  * GameCubeFileSystemDriver.cpp
  *
  * GameCube storage device enumeration + mounting: SD Gecko slots A/B,
- * SD2SP2 (port2), GC Loader, and DVD. None of these are polled.
+ * SD2SP2 (port2), GC Loader, and DVD. Slots A/B and port2 are polled for
+ * hotplug via a real EXI presence probe (see isPresentCache below); GC
+ * Loader and DVD are not.
  ***************************************************************************/
+#include <stdio.h>
 #include <string.h>
 #include <fat.h>
 #include <sdcard/gcsd.h>
@@ -19,11 +22,28 @@ static DISC_INTERFACE* gcloader = &__io_gcode;
 
 static bool isMounted[MAX_STORAGE_DEVICES]       = { false };
 static bool unmountRequired[MAX_STORAGE_DEVICES] = { false };
+static char volumeLabel[MAX_STORAGE_DEVICES][16] = { { 0 } };
+
+// Cached hardware-presence per device, refreshed once at init() and then
+// every pollStorageDevices() cycle - see isDevicePresent().
+static bool isPresentCache[MAX_STORAGE_DEVICES] = { false };
 
 void GameCubeFileSystemDriver::init()
 {
 	DVD_Init();
 	smbDriver.init();
+
+	isPresentCache[DEVICE_SD_SLOTA] = get_io_gcsda()->isInserted(get_io_gcsda());
+	isPresentCache[DEVICE_SD_SLOTB] = get_io_gcsdb()->isInserted(get_io_gcsdb());
+	isPresentCache[DEVICE_SD_PORT2] = get_io_gcsd2()->isInserted(get_io_gcsd2());
+	isPresentCache[DEVICE_DVD]      = dvd->isInserted(dvd);
+
+	StorageDevice devices[MAX_STORAGE_DEVICES];
+	int count = enumerateStorageDevices(devices);
+
+	for(int i = 0; i < count; i++)
+		if(devices[i].autoMountAtStartup)
+			mountStorageDevice(devices[i].id);
 }
 
 void GameCubeFileSystemDriver::shutdown()
@@ -35,15 +55,23 @@ void GameCubeFileSystemDriver::shutdown()
 	fatUnmount("gcloader:");
 }
 
+static void CopyLabel(StorageDevice & out, int deviceId)
+{
+	snprintf(out.label, sizeof(out.label), "%s", volumeLabel[deviceId]);
+}
+
 int GameCubeFileSystemDriver::enumerateStorageDevices(StorageDevice outDevices[MAX_STORAGE_DEVICES])
 {
 	int count = 0;
-	outDevices[count++] = StorageDevice{ DEVICE_SD_SLOTA,    "carda",    "carda:/",    false, false };
-	outDevices[count++] = StorageDevice{ DEVICE_SD_SLOTB,    "cardb",    "cardb:/",    false, false };
-	outDevices[count++] = StorageDevice{ DEVICE_SD_PORT2,    "port2",    "port2:/",    false, false };
-	outDevices[count++] = StorageDevice{ DEVICE_SD_GCLOADER, "gcloader", "gcloader:/", false, false };
-	outDevices[count++] = StorageDevice{ DEVICE_DVD,         "",         "dvd:/",      false, false };
-	outDevices[count++] = StorageDevice{ DEVICE_SMB,         "network",  "smb:/",      false, false }; // not polled for removal, never auto-mounted at boot
+	// autoMountAtStartup: true for carda/cardb/port2 - all three go through
+	// the same cheap, safe EXI presence probe.
+	outDevices[count] = StorageDevice{ DEVICE_SD_SLOTA,    "SD Gecko Slot A", "carda:/",    false, true,  0, 0, 0, false, false, "", false }; CopyLabel(outDevices[count], DEVICE_SD_SLOTA);    count++;
+	outDevices[count] = StorageDevice{ DEVICE_SD_SLOTB,    "SD Gecko Slot B", "cardb:/",    false, true,  0, 0, 0, false, false, "", false }; CopyLabel(outDevices[count], DEVICE_SD_SLOTB);    count++;
+	outDevices[count] = StorageDevice{ DEVICE_SD_PORT2,    "SD in SP2",       "port2:/",    false, true,  0, 0, 0, false, false, "", false }; CopyLabel(outDevices[count], DEVICE_SD_PORT2);    count++;
+	outDevices[count] = StorageDevice{ DEVICE_SD_GCLOADER, "GC Loader",       "gcloader:/", false, false, 0, 0, 0, false, false, "", true  }; CopyLabel(outDevices[count], DEVICE_SD_GCLOADER); count++;
+	outDevices[count] = StorageDevice{ DEVICE_DVD,         "Data DVD",        "dvd:/",      false, false, 0, 0, 0, false, false, "", true  }; count++;
+	outDevices[count] = StorageDevice{ DEVICE_SMB,         "Network Share",   "smb:/",      false, false, 0, 0, 0, false, false, "", true  }; count++;
+
 	return count;
 }
 
@@ -88,9 +116,23 @@ MountResult GameCubeFileSystemDriver::mountFAT(int deviceId)
 		isMounted[deviceId] = false;
 	}
 
+	// Distinguish "nothing there" from "something's there but we can't read it"
+	if(!disc->startup(disc) || !disc->isInserted(disc))
+	{
+		isMounted[deviceId] = false;
+		volumeLabel[deviceId][0] = '\0';
+		return MountResult::DeviceNotFound;
+	}
+
 	bool mounted = fatMountSimple(name, disc);
 	isMounted[deviceId] = mounted;
-	return mounted ? MountResult::Success : MountResult::DeviceNotFound;
+
+	if(mounted)
+		fatGetVolumeLabel(mountPoint, volumeLabel[deviceId]);
+	else
+		volumeLabel[deviceId][0] = '\0';
+
+	return mounted ? MountResult::Success : MountResult::MountFailed;
 }
 
 MountResult GameCubeFileSystemDriver::mountDVD()
@@ -100,8 +142,6 @@ MountResult GameCubeFileSystemDriver::mountDVD()
 		unmountRequired[DEVICE_DVD] = false;
 		ISO9660_Unmount("dvd:");
 	}
-
-	DVD_Mount();
 
 	if(!dvd->isInserted(dvd))
 	{
@@ -121,12 +161,6 @@ MountResult GameCubeFileSystemDriver::mountDVD()
 
 MountResult GameCubeFileSystemDriver::mountStorageDevice(int deviceId)
 {
-	// DEVICE_SMB isn't mounted here - actually connecting requires
-	// credentials (host/share/user/password) that this generic interface
-	// has no way to be handed, so ChangeInterface() calls
-	// getSmb()->connect() directly with settings from the app instead.
-	// This just reports current connection state, same as any other
-	// already-mounted device.
 	if(deviceId == DEVICE_SMB)
 		return smbDriver.isConnected() ? MountResult::Success : MountResult::DeviceNotFound;
 
@@ -150,7 +184,18 @@ MountResult GameCubeFileSystemDriver::mountStorageDevice(int deviceId)
 const char * GameCubeFileSystemDriver::mountResultMessage(int deviceId, MountResult result)
 {
 	if(result == MountResult::MountFailed)
-		return "Unrecognized DVD format.";
+	{
+		switch(deviceId)
+		{
+			case DEVICE_SD_SLOTA:
+			case DEVICE_SD_SLOTB:
+			case DEVICE_SD_PORT2:
+			case DEVICE_SD_GCLOADER:
+				return "Unsupported format - please use FAT32/exFAT.";
+			default: 
+				return "Unrecognized DVD format.";
+		}
+	}
 
 	switch(deviceId)
 	{
@@ -167,45 +212,95 @@ const char * GameCubeFileSystemDriver::mountResultMessage(int deviceId, MountRes
 
 void GameCubeFileSystemDriver::invalidateStorageDevice(int deviceId)
 {
-	// A read/write failure against the network share doesn't necessarily
-	// mean the network itself dropped, but it's exactly the kind of
-	// staleness that should force a fresh connect() next time rather than
-	// silently reusing what might be a dead session - disconnecting here
-	// makes the next ChangeInterface(DEVICE_SMB) call re-validate (and, if
-	// needed, re-bring-up) the network rather than trusting the old state.
-	if(deviceId == DEVICE_SMB)
-	{
-		smbDriver.disconnect();
-		return;
-	}
-
 	if(deviceId < 0 || deviceId >= MAX_STORAGE_DEVICES)
 		return;
 
 	isMounted[deviceId] = false;
 	unmountRequired[deviceId] = true;
+	volumeLabel[deviceId][0] = '\0';
 }
 
 void GameCubeFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES], int & outRemovedCount, bool & deviceListChanged)
 {
 	outRemovedCount = 0;
 	deviceListChanged = false;
+
+	DISC_INTERFACE * discA = get_io_gcsda();
+	DISC_INTERFACE * discB = get_io_gcsdb();
+	DISC_INTERFACE * discP2 = get_io_gcsd2();
+
+	bool slotAPresent = discA->isInserted(discA);
+	bool slotBPresent = discB->isInserted(discB);
+	bool port2Present = discP2->isInserted(discP2);
+	bool dvdPresent    = dvd->isInserted(dvd);
+
+	if(slotAPresent != isPresentCache[DEVICE_SD_SLOTA])
+	{
+		isPresentCache[DEVICE_SD_SLOTA] = slotAPresent;
+		deviceListChanged = true;
+	}
+	if(slotBPresent != isPresentCache[DEVICE_SD_SLOTB])
+	{
+		isPresentCache[DEVICE_SD_SLOTB] = slotBPresent;
+		deviceListChanged = true;
+	}
+	if(port2Present != isPresentCache[DEVICE_SD_PORT2])
+	{
+		isPresentCache[DEVICE_SD_PORT2] = port2Present;
+		deviceListChanged = true;
+	}
+	isPresentCache[DEVICE_DVD] = dvdPresent;
+
+	if(isMounted[DEVICE_SD_SLOTA] && !slotAPresent)
+	{
+		invalidateStorageDevice(DEVICE_SD_SLOTA);
+		removedIds[outRemovedCount++] = DEVICE_SD_SLOTA;
+	}
+	if(isMounted[DEVICE_SD_SLOTB] && !slotBPresent)
+	{
+		invalidateStorageDevice(DEVICE_SD_SLOTB);
+		removedIds[outRemovedCount++] = DEVICE_SD_SLOTB;
+	}
+	if(isMounted[DEVICE_SD_PORT2] && !port2Present)
+	{
+		invalidateStorageDevice(DEVICE_SD_PORT2);
+		removedIds[outRemovedCount++] = DEVICE_SD_PORT2;
+	}
+	if(isMounted[DEVICE_DVD] && !dvdPresent)
+	{
+		invalidateStorageDevice(DEVICE_DVD);
+		removedIds[outRemovedCount++] = DEVICE_DVD;
+	}
 }
 
-//!Mount-path lookup, keyed by the shared Device enum. DEVICE_SMB isn't
-//!here - its path depends on live connection state, so getMountPath()
-//!below asks smbDriver directly rather than a fixed table entry.
-static const char * const kMountPath[DEVICE_LENGTH] =
+bool GameCubeFileSystemDriver::isDevicePresent(int deviceId) const
+{
+	switch(deviceId)
+	{
+		case DEVICE_SD_SLOTA:    return isPresentCache[DEVICE_SD_SLOTA];
+		case DEVICE_SD_SLOTB:    return isPresentCache[DEVICE_SD_SLOTB];
+		case DEVICE_SD_PORT2:    return isPresentCache[DEVICE_SD_PORT2];
+		case DEVICE_SD_GCLOADER: return false;
+		case DEVICE_DVD:         return isPresentCache[DEVICE_DVD]; // informational only - DVD is alwaysListed
+		case DEVICE_SMB:         return smbDriver.isConnected();    // informational only - SMB is alwaysListed
+		default:                 return false;
+	}
+}
+
+//!Mount-path lookup, keyed by the shared Device enum.
+static const char * const mountPath[DEVICE_LENGTH] =
 {
 	"",         // DEVICE_AUTO
 	"",         // DEVICE_SD
 	"",         // DEVICE_USB
+	"",         // DEVICE_USB2
+	"",         // DEVICE_USB3
 	"dvd:/",    // DEVICE_DVD
-	"",         // DEVICE_SMB (unused - see above)
+	"",         // DEVICE_SMB
 	"carda:/",  // DEVICE_SD_SLOTA
 	"cardb:/",  // DEVICE_SD_SLOTB
 	"port2:/",  // DEVICE_SD_PORT2
-	"gcloader:/", // DEVICE_SD_GCLOADER
+	"gcloader:/" // DEVICE_SD_GCLOADER
 };
 
 const char * GameCubeFileSystemDriver::getMountPath(int device) const
@@ -213,9 +308,9 @@ const char * GameCubeFileSystemDriver::getMountPath(int device) const
 	if(device == DEVICE_SMB)
 		return smbDriver.getMountPath();
 
-	if(device < 0 || device >= DEVICE_LENGTH)
+	if(device < 0 || device >= DEVICE_LENGTH || !isMounted[device])
 		return "";
-	return kMountPath[device];
+	return mountPath[device];
 }
 
 const int * GameCubeFileSystemDriver::getValidLoadDevices(int & outCount) const

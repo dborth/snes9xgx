@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #include "WiiAudioDriver.h"
-#include "OgcEmulatorAudio.h"
+#include "../OgcEmulatorAudio.h"
 
 #include "snes9x/apu/apu.h"
 

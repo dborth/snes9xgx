@@ -7,16 +7,16 @@
 
 #include <stdint.h>
 
-#include "../Platform.h"
-#include "OgcVideoDriver.h"
-#include "OgcInputDriver.h"
-#include "OgcThreadDriver.h"
+#include "../../Platform.h"
+#include "../OgcVideoDriver.h"
+#include "../OgcInputDriver.h"
+#include "../OgcThreadDriver.h"
 #include "WiiAudioDriver.h"
 #include "WiiFileSystemDriver.h"
-#include "OgcLoggerSysReport.h"
-#include "OgcLoggerUdp.h"
-#include "OgcLoggerUsbGecko.h"
-#include "../LoggerFile.h"
+#include "../OgcLoggerSysReport.h"
+#include "../OgcLoggerUdp.h"
+#include "../OgcLoggerUsbGecko.h"
+#include "../../LoggerFile.h"
 
 enum {
 	EXITACTION_WII_AUTO = 0,

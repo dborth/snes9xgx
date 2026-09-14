@@ -5,15 +5,15 @@
  ***************************************************************************/
 #pragma once
 
-#include "../Platform.h"
-#include "OgcVideoDriver.h"
-#include "OgcInputDriver.h"
-#include "OgcThreadDriver.h"
+#include "../../Platform.h"
+#include "../OgcVideoDriver.h"
+#include "../OgcInputDriver.h"
+#include "../OgcThreadDriver.h"
 #include "GameCubeAudioDriver.h"
 #include "GameCubeFileSystemDriver.h"
-#include "OgcLoggerSysReport.h"
-#include "OgcLoggerUsbGecko.h"
-#include "../LoggerFile.h"
+#include "../OgcLoggerSysReport.h"
+#include "../OgcLoggerUsbGecko.h"
+#include "../../LoggerFile.h"
 
 enum {
 	EXITACTION_GC_RETURN_TO_LOADER = 0,

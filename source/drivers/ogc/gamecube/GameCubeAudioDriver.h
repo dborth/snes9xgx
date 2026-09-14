@@ -7,9 +7,9 @@
 
 #include <stdint.h>
 #include <ogc/audio.h>
-#include "OgcEmulatorAudio.h"
-#include "../AudioDriver.h"
-#include "../../snes9x/apu/apu.h"
+#include "../OgcEmulatorAudio.h"
+#include "../../AudioDriver.h"
+#include "../../../snes9x/apu/apu.h"
 
 class GameCubeAudioDriver : public AudioDriver
 {

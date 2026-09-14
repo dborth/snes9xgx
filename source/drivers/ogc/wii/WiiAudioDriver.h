@@ -6,9 +6,9 @@
 #pragma once
 
 #include <stdint.h>
-#include "../AudioDriver.h"
-#include "OgcEmulatorAudio.h"
-#include "../../libgui/GuiSoundOggPlayer.h"
+#include "../../AudioDriver.h"
+#include "../OgcEmulatorAudio.h"
+#include "../../../libgui/GuiSoundOggPlayer.h"
 
 class WiiAudioDriver : public AudioDriver
 {
