@@ -43,7 +43,8 @@ void S9xAudioCallback(void *data) {
 }
 
 WutEmulatorAudio::WutEmulatorAudio() :
-	voiceL(nullptr), voiceR(nullptr), writeOffset(0), started(false), turboDrop(false), rateState(RATE_STATE_NEUTRAL)
+	voiceL(nullptr), voiceR(nullptr), writeOffset(0), started(false), turboDrop(false),
+	queuedFrames(0), lastHwFrame(0), rateState(RATE_STATE_NEUTRAL)
 {
 	memset(ringL, 0, sizeof(ringL));
 	memset(ringR, 0, sizeof(ringR));
@@ -110,6 +111,8 @@ void WutEmulatorAudio::resetAudio() {
 	writeOffset = 0;
 	started = false;
 	turboDrop = false;
+	queuedFrames = 0;
+	lastHwFrame = 0;
 	rateState = RATE_STATE_NEUTRAL;
 
 	memset(ringL, 0, sizeof(ringL));
@@ -153,32 +156,42 @@ void WutEmulatorAudio::armAndStartVoices() {
 	AXSetVoiceSrcType(voiceL, srcType);
 	AXSetVoiceSrcType(voiceR, srcType);
 
+	// Hardware starts reading from offset 0. Set it explicitly here so the two can't silently drift.
+	lastHwFrame = 0;
+	queuedFrames = writeOffset;
+
 	AXSetVoiceState(voiceL, 1);
 	AXSetVoiceState(voiceR, 1);
 }
 
 /****************************************************************************
- * getUnplayedBuffers
+ * syncQueuedFrames
  *
- * Before the voices are started, everything written so far is by
- * definition unplayed.
- * Once started, measures how far writeOffset is ahead of the hardware's
- * actual read position.
+ * Refreshes queuedFrames (the authoritative "how much is unplayed" count)
+ * against the hardware's actual read position, once voiceL has started.
+ * Before that point queuedFrames is simply kept equal to writeOffset by
+ * every write below, since nothing is consuming it yet.
+ *
+ * Deliberately computed as a bounded per-call *delta* off the previous
+ * hardware position, then clamped to what we know is queued - not as a
+ * raw (writeOffset - currentFrame) subtraction.
  ***************************************************************************/
-int WutEmulatorAudio::getUnplayedBuffers() const {
-	uint32_t unplayedFrames;
+void WutEmulatorAudio::syncQueuedFrames() {
+	if (!started || !voiceL)
+		return;
 
-	if (started && voiceL) {
-		uint32_t currentFrame = AXGetVoiceCurrentOffsetEx(voiceL, ringL);
-		unplayedFrames = (writeOffset - currentFrame + RING_FRAMES) % RING_FRAMES;
-	} else {
-		unplayedFrames = writeOffset;
-	}
+	uint32_t hwFrame = AXGetVoiceCurrentOffsetEx(voiceL, ringL);
+	uint32_t consumed = (hwFrame - lastHwFrame + RING_FRAMES) % RING_FRAMES;
 
-	return unplayedFrames / CHUNK_FRAMES;
+	if (consumed > queuedFrames)
+		consumed = queuedFrames;
+
+	queuedFrames -= consumed;
+	lastHwFrame = hwFrame;
 }
 
 void WutEmulatorAudio::audioCallback() {
+	syncQueuedFrames();
 	int unplayed = getUnplayedBuffers();
 	double rate = RATE_NEUTRAL;
 
@@ -251,6 +264,7 @@ void WutEmulatorAudio::audioCallback() {
 			DCFlushRange(&ringR[writeOffset], CHUNK_FRAMES * sizeof(int16_t));
 
 			writeOffset = (writeOffset + CHUNK_FRAMES) % RING_FRAMES;
+			queuedFrames += CHUNK_FRAMES;
 
 			// Handle initial voice pre-roll / priming
 			if (!started && getUnplayedBuffers() >= UNPLAYED_START_LEVEL) {

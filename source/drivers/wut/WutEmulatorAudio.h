@@ -43,7 +43,8 @@ class WutEmulatorAudio : public EmulatorAudioDriver
 
 	private:
 		void armAndStartVoices();
-		int getUnplayedBuffers() const;
+		int getUnplayedBuffers() const { return queuedFrames / CHUNK_FRAMES; }
+		void syncQueuedFrames();
 
 		// Chosen to match OgcEmulatorAudio's SAMPLES_TO_PROCESS/BUFFERCOUNT
 		// exactly (512 stereo frames per chunk, 16 chunks of ring capacity)
@@ -71,6 +72,13 @@ class WutEmulatorAudio : public EmulatorAudioDriver
 		uint32_t writeOffset;
 		bool started;
 		bool turboDrop;
+
+		// Authoritative, software-owned count of frames queued ahead of the
+		// hardware playhead, always clamped to [0, RING_FRAMES]. Deliberately
+		// NOT derived by subtracting the hardware's current read position from
+		// writeOffset on every call.
+		uint32_t queuedFrames;
+		uint32_t lastHwFrame;
 
 		// Same discrete rate-controller states as OgcEmulatorAudio, for
 		// the same reason (hysteresis compares enums, not floats).
