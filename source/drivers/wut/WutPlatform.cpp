@@ -35,7 +35,7 @@ void WutPlatform::init(int width, int height)
 	this->logger->registerBackend(LOGGER_OSREPORT,	new WutLoggerOSReport());
 	this->logger->registerBackend(LOGGER_UDP,		new WutLoggerUdp());
 	this->logger->registerBackend(LOGGER_SERIAL,	new WutLoggerUsbSerial());
-/*	this->logger->registerBackend(LOGGER_FILE,		new LoggerFile());
+	this->logger->registerBackend(LOGGER_FILE,		new LoggerFile());
 
 	LogConfig config;
 	static const int deviceCandidates[] = { DEVICE_SD };
@@ -46,7 +46,7 @@ void WutPlatform::init(int width, int height)
 		// mountPath already ends in "/" (eg. "/vol/external01/") - no separator needed.
 		snprintf(config.filePath, sizeof(config.filePath), "%sdebug.log", mountPath);
 	}
-	*/
+
 	LogConfig config;
 	this->logger->init(config);
 #endif
@@ -136,7 +136,7 @@ const char* WutPlatform::getConsoleDetails() {
 // menu), or the user explicitly exited from within the app - in which
 // case we're still in the foreground and need to tell Cafe OS we're
 // ready to shut down.
-void WutPlatform::requestExit(int exitAction, bool autoloadedGame)
+void WutPlatform::requestExit(int, bool)
 {
 	// If the exit was user-initiated, Cafe OS has not been notified yet.
 	// SYSLaunchMenu() tells Cafe OS to switch back to the system menu or loader.

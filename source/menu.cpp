@@ -44,6 +44,10 @@
 #include "drivers/ogc/GameCubePlatform.h"
 #endif
 
+#ifdef __WUT__
+#include "drivers/wut/WutInputDriver.h"
+#endif
+
 #include "snes9x/port.h"
 #include "snes9x/snes9x.h"
 #include "snes9x/fxemu.h"
@@ -1076,12 +1080,22 @@ static int MenuGameSelection()
 	exitBtn.setSoundOver(&btnSoundOver);
 	exitBtn.setSoundClick(&btnSoundClick);
 	exitBtn.setTrigger(trigA);
+
+	#if defined(HW_RVL) || defined(HW_DOL)
 	exitBtn.setTrigger(&trigHome);
+	#endif
+
 	exitBtn.setEffectGrow();
 
 	GuiWindow buttonWindow(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
 	buttonWindow.append(&settingsBtn);
 	buttonWindow.append(&exitBtn);
+
+	#ifdef __WUT__
+	GuiButton hiddenHomeBtn;
+	hiddenHomeBtn.setTrigger(&trigHome);
+	buttonWindow.append(&hiddenHomeBtn);
+	#endif
 
 	GuiFileBrowser gameBrowser(330, 268);
 	gameBrowser.setPosition(20, 98);
@@ -1214,6 +1228,13 @@ static int MenuGameSelection()
 			selection = MENU_SETTINGS;
 		else if(exitBtn.getState() == STATE::CLICKED)
 			platform->triggerExit();
+
+		#ifdef __WUT__
+		if(hiddenHomeBtn.getState() == STATE::CLICKED) {
+			hiddenHomeBtn.resetState();
+			static_cast<WutInputDriver*>(platform->getInput())->openHomeButtonOverlay();
+		}
+		#endif
 	}
 
 	HaltParseThread(); // halt parsing
