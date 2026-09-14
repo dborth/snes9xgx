@@ -36,6 +36,7 @@ extern char* strcasestr(const char *, const char *);
 
 BROWSERINFO browser;
 BROWSERENTRY * browserList = nullptr; // list of files/folders in browser
+bool browserDeviceListChanged = false;
 
 static char szpath[MAXPATHLEN];
 char szname[MAXPATHLEN];
@@ -629,6 +630,57 @@ void CloseSzIfOpen() {
 }
 
 /****************************************************************************
+ * DeviceIcon
+ ***************************************************************************/
+static int DeviceIcon(int deviceId)
+{
+	switch(deviceId)
+	{
+		case DEVICE_SD:
+		case DEVICE_SD_SLOTA:
+		case DEVICE_SD_SLOTB:
+		case DEVICE_SD_PORT2:
+		case DEVICE_SD_GCLOADER:
+			return ICON_SD;
+		case DEVICE_USB: return ICON_USB;
+		case DEVICE_DVD: return ICON_DVD;
+		case DEVICE_SMB: return ICON_SMB;
+		default:         return ICON_NONE;
+	}
+}
+
+/****************************************************************************
+ * AddDeviceListing
+ *
+ * Builds the root "choose a device" listing shown when there's no current
+ * directory. Sourced from the platform's FileSystemDriver.
+ ***************************************************************************/
+int AddDeviceListing()
+{
+	StorageDevice devices[MAX_STORAGE_DEVICES];
+	int count = platform->getFileSystem()->enumerateStorageDevices(devices);
+	int i = 0;
+
+	for(int d = 0; d < count; d++)
+	{
+		StorageDevice & dev = devices[d];
+
+		if(!dev.alwaysListed && !platform->getFileSystem()->isDevicePresent(dev.id))
+			continue;
+
+		AddBrowserEntry();
+		sprintf(browserList[i].filename, "%s", dev.prefix);
+		sprintf(browserList[i].displayname, "%s", dev.name);
+		browserList[i].length = 0;
+		browserList[i].isdir = 1;
+		browserList[i].icon = DeviceIcon(dev.id);
+		i++;
+	}
+
+	return i;
+}
+
+/****************************************************************************
  * BrowserChangeFolder
  *
  * Update current directory and set new entry list if directory has changed
@@ -672,82 +724,7 @@ int BrowserChangeFolder()
 	if(browser.numEntries == 0)
 	{
 		browser.dir[0] = 0;
-		int i=0;
-		
-#ifdef HW_RVL
-		AddBrowserEntry();
-		sprintf(browserList[i].filename, "sd:/");
-		sprintf(browserList[i].displayname, "SD Card");
-		browserList[i].length = 0;
-		browserList[i].isdir = 1;
-		browserList[i].icon = ICON_SD;
-		i++;
-
-		AddBrowserEntry();
-		sprintf(browserList[i].filename, "usb:/");
-		sprintf(browserList[i].displayname, "USB Mass Storage");
-		browserList[i].length = 0;
-		browserList[i].isdir = 1;
-		browserList[i].icon = ICON_USB;
-		i++;
-#elif HW_DOL
-		AddBrowserEntry();
-		sprintf(browserList[i].filename, "carda:/");
-		sprintf(browserList[i].displayname, "SD Gecko Slot A");
-		browserList[i].length = 0;
-		browserList[i].isdir = 1;
-		browserList[i].icon = ICON_SD;
-		i++;
-		
-		AddBrowserEntry();
-		sprintf(browserList[i].filename, "cardb:/");
-		sprintf(browserList[i].displayname, "SD Gecko Slot B");
-		browserList[i].length = 0;
-		browserList[i].isdir = 1;
-		browserList[i].icon = ICON_SD;
-		i++;
-
-		AddBrowserEntry();
-		sprintf(browserList[i].filename, "port2:/");
-		sprintf(browserList[i].displayname, "SD in SP2");
-		browserList[i].length = 0;
-		browserList[i].isdir = 1;
-		browserList[i].icon = ICON_SD;
-		i++;
-
-		AddBrowserEntry();
-		sprintf(browserList[i].filename, "gcloader:/");
-		sprintf(browserList[i].displayname, "GC Loader");
-		browserList[i].length = 0;
-		browserList[i].isdir = 1;
-		browserList[i].icon = ICON_SD;
-		i++;
-#elif __WUT__
-		AddBrowserEntry();
-		sprintf(browserList[i].filename, platform->getFileSystem()->getMountPath(DEVICE_SD));
-		sprintf(browserList[i].displayname, "SD Card");
-		browserList[i].length = 0;
-		browserList[i].isdir = 1;
-		browserList[i].icon = ICON_SD;
-		i++;
-#endif
-		AddBrowserEntry();
-		sprintf(browserList[i].filename, "smb:/");
-		sprintf(browserList[i].displayname, "Network Share");
-		browserList[i].length = 0;
-		browserList[i].isdir = 1;
-		browserList[i].icon = ICON_SMB;
-		i++;
-#if defined(HW_RVL) || defined(HW_DOL)
-		AddBrowserEntry();
-		sprintf(browserList[i].filename, "dvd:/");
-		sprintf(browserList[i].displayname, "Data DVD");
-		browserList[i].length = 0;
-		browserList[i].isdir = 1;
-		browserList[i].icon = ICON_DVD;
-		i++;
-#endif
-		browser.numEntries += i;
+		browser.numEntries += AddDeviceListing();
 	}
 	
 	if(browser.dir[0] == 0)

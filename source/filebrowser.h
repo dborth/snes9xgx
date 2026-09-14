@@ -42,6 +42,7 @@ typedef struct
 
 extern BROWSERINFO browser;
 extern BROWSERENTRY * browserList;
+extern bool browserDeviceListChanged;
 
 enum
 {
@@ -72,6 +73,7 @@ void StripExt(char* returnstring, char * inputstring);
 bool IsSz();
 void ResetBrowser();
 bool AddBrowserEntry();
+int AddDeviceListing();
 bool IsDeviceRoot(char * path);
 void GetDefaultFolderPath(char * fullPath, const char * folderName);
 void MakeFilePathForFolderPath(char * filepath, int device, const char * folder);

@@ -162,26 +162,10 @@ static void WakeWorkerThread()
  *
  * This checks our devices for changes (SD/USB/DVD removed)
  ***************************************************************************/
-static void * devicecallback (void *)
+static void * devicecallback(void *)
 {
 	while (!deviceThread.stopRequested())
 	{
-		int removed[MAX_STORAGE_DEVICES];
-		int removedCount = 0;
-		bool deviceListChanged = false;
-
-		platform->getFileSystem()->pollStorageDevices(removed, removedCount, deviceListChanged);
-
-		if(removedCount > 0)
-			parseHalt = true; // abort any in-progress dir parse if a device it's using just disappeared
-
-		// sleep ~1 sec in 100us steps so we can react to a halt/stop request quickly
-		for(int i = 0; i < 10000 && !deviceCheckingHalt && !deviceThread.stopRequested(); i++)
-			usleep(THREAD_SLEEP);
-
-		if(deviceThread.stopRequested())
-			break;
-
 		// if halted, block here until ResumeDeviceCheckingThread (or a stop request) wakes us
 		if(deviceCheckingHalt)
 		{
@@ -193,6 +177,25 @@ static void * devicecallback (void *)
 			deviceIdle = false;
 			DeviceSync().mutex.unlock();
 		}
+
+		if(deviceThread.stopRequested())
+			break;
+
+		int removed[MAX_STORAGE_DEVICES];
+		int removedCount = 0;
+		bool deviceListChanged = false;
+
+		platform->getFileSystem()->pollStorageDevices(removed, removedCount, deviceListChanged);
+
+		if(removedCount > 0)
+			parseHalt = true; // abort any in-progress dir parse if a device it's using just disappeared
+
+		if(deviceListChanged)
+			browserDeviceListChanged = true; // signal the menu loop to refresh the device listing if it's on screen
+
+		// sleep ~1 sec in 100us steps so we can react to a halt/stop request quickly
+		for(int i = 0; i < 10000 && !deviceCheckingHalt && !deviceThread.stopRequested(); i++)
+			usleep(THREAD_SLEEP);
 	}
 	return nullptr;
 }

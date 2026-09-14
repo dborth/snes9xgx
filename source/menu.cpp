@@ -1135,6 +1135,23 @@ static int MenuGameSelection()
 	while(selection == MENU_NONE)
 	{
 		if(!UpdateGui()) return MENU_EXIT;
+
+		// A device appeared/disappeared since the last check  - refresh the device listing
+		if(browserDeviceListChanged)
+		{
+			browserDeviceListChanged = false;
+
+			if(browser.dir[0] == 0)
+			{
+				ResetBrowser();
+				browser.numEntries = AddDeviceListing();
+				gameBrowser.resetState();
+				if(browser.numEntries > 0)
+					gameBrowser.fileList[0]->setState(STATE::SELECTED);
+				gameBrowser.triggerUpdate();
+				previousBrowserIndex = -1;
+			}
+		}
 		
 		if(selectLoadedFile == 2)
 		{
@@ -3984,7 +4001,7 @@ static int MenuSettings()
 	menuBtn.setTrigger(trigA);
 	menuBtn.setEffectGrow();
 
-	GuiText networkBtnTxt("Network", 22, (PixelColor){0, 0, 0, 255});
+	GuiText networkBtnTxt("Network Share", 22, (PixelColor){0, 0, 0, 255});
 	networkBtnTxt.setWrap(true, btnLargeOutline.getWidth()-20);
 	GuiImage networkBtnImg(&btnLargeOutline);
 	GuiImage networkBtnImgOver(&btnLargeOutlineOver);
@@ -4236,7 +4253,7 @@ static int MenuSettingsFile()
 			else if (EmuSettings.LoadMethod == DEVICE_SD) sprintf (options.value[0],"SD");
 			else if (EmuSettings.LoadMethod == DEVICE_USB) sprintf (options.value[0],"USB");
 			else if (EmuSettings.LoadMethod == DEVICE_DVD) sprintf (options.value[0],"DVD");
-			else if (EmuSettings.LoadMethod == DEVICE_SMB) sprintf (options.value[0],"Network");
+			else if (EmuSettings.LoadMethod == DEVICE_SMB) sprintf (options.value[0],"Network Share");
 			else if (EmuSettings.LoadMethod == DEVICE_SD_SLOTA) sprintf (options.value[0],"SD Gecko Slot A");
 			else if (EmuSettings.LoadMethod == DEVICE_SD_SLOTB) sprintf (options.value[0],"SD Gecko Slot B");
 			else if (EmuSettings.LoadMethod == DEVICE_SD_PORT2) sprintf (options.value[0],"SD in SP2");
@@ -4245,7 +4262,7 @@ static int MenuSettingsFile()
 			if (EmuSettings.SaveMethod == DEVICE_AUTO) sprintf (options.value[1],"Auto Detect");
 			else if (EmuSettings.SaveMethod == DEVICE_SD) sprintf (options.value[1],"SD");
 			else if (EmuSettings.SaveMethod == DEVICE_USB) sprintf (options.value[1],"USB");
-			else if (EmuSettings.SaveMethod == DEVICE_SMB) sprintf (options.value[1],"Network");
+			else if (EmuSettings.SaveMethod == DEVICE_SMB) sprintf (options.value[1],"Network Share");
 			else if (EmuSettings.SaveMethod == DEVICE_SD_SLOTA) sprintf (options.value[1],"SD Gecko Slot A");
 			else if (EmuSettings.SaveMethod == DEVICE_SD_SLOTB) sprintf (options.value[1],"SD Gecko Slot B");
 			else if (EmuSettings.SaveMethod == DEVICE_SD_PORT2) sprintf (options.value[1],"SD in SP2");
@@ -4603,16 +4620,16 @@ static int MenuSettingsNetwork()
 	int i = 0;
 	bool firstRun = true;
 	OptionList options;
-	sprintf(options.name[i++], "SMB Share IP");
-	sprintf(options.name[i++], "SMB Share Name");
-	sprintf(options.name[i++], "SMB Share Username");
-	sprintf(options.name[i++], "SMB Share Password");
+	sprintf(options.name[i++], "IP");
+	sprintf(options.name[i++], "Name");
+	sprintf(options.name[i++], "Username");
+	sprintf(options.name[i++], "Password");
 	options.length = i;
 
 	for(i=0; i < options.length; i++)
 		options.value[i][0] = 0;
 
-	GuiText titleTxt("Settings - Network", 26, (PixelColor){255, 255, 255, 255});
+	GuiText titleTxt("Settings - Network Share", 26, (PixelColor){255, 255, 255, 255});
 	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 	titleTxt.setPosition(50,50);
 
