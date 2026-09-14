@@ -61,6 +61,7 @@ WutVideoDriver::~WutVideoDriver()
 {
 	delete imageRenderer;
 	delete glyphRenderer;
+	delete emulatorVideo;
 }
 
 void WutVideoDriver::init(int width, int height)
@@ -72,6 +73,9 @@ void WutVideoDriver::init(int width, int height)
 
 	imageRenderer = new WutImageRenderer(this);
 	glyphRenderer = new WutGlyphRenderer(this);
+
+	emulatorVideo = new WutEmulatorVideo();
+	emulatorVideo->init(this);
 
 	prepareFrame();
 }
@@ -112,6 +116,16 @@ void WutVideoDriver::prepareFrame()
 
 void WutVideoDriver::renderMenu()
 {
+	presentBuffer();
+}
+
+void WutVideoDriver::startMenuVideo()
+{
+
+}
+
+void WutVideoDriver::presentBuffer()
+{
 	if(isForeground())
 	{
 		WHBGfxFinishRenderTV();
@@ -122,16 +136,6 @@ void WutVideoDriver::renderMenu()
 	frameTimer++;
 
 	prepareFrame();
-}
-
-void WutVideoDriver::startMenuVideo()
-{
-
-}
-
-void WutVideoDriver::presentBuffer()
-{
-
 }
 
 void WutVideoDriver::clearScreen(const PixelColor& color)
@@ -200,7 +204,34 @@ void WutImageRenderer::loadTextureData(void * texture, const uint8_t * rgba, int
 
 void WutImageRenderer::fillTexture(void* texture, int width, int height, ImageRenderer::PixelSourceFn source, void* userdata)
 {
+	if(!texture || !source || width <= 0 || height <= 0)
+		return;
 
+	GX2Texture * tex = static_cast<GX2Texture *>(texture);
+	if(!tex->surface.image)
+		return;
+
+	uint8_t * dst = static_cast<uint8_t *>(tex->surface.image);
+	const uint32_t dstStride = tex->surface.pitch * 4;
+
+	// Linear-aligned tiling, same row-major RGBA8 layout as loadTextureData -
+	// no tile swizzle to work around, unlike OgcImageRenderer::fillTexture.
+	PixelColor c;
+	for(int y = 0; y < height; y++)
+	{
+		uint8_t * dstRow = dst + y * dstStride;
+		for(int x = 0; x < width; x++)
+		{
+			source(x, y, &c, userdata);
+			uint8_t * px = dstRow + x * 4;
+			px[0] = c.r;
+			px[1] = c.g;
+			px[2] = c.b;
+			px[3] = c.a;
+		}
+	}
+
+	GX2Invalidate(GX2_INVALIDATE_MODE_CPU_TEXTURE, tex->surface.image, tex->surface.imageSize);
 }
 
 void WutImageRenderer::destroyTexture(void * texture)
