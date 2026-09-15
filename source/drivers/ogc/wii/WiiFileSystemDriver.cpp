@@ -220,6 +220,12 @@ void WiiFileSystemDriver::invalidateStorageDevice(int deviceId)
 	if(deviceId < 0 || deviceId >= MAX_STORAGE_DEVICES)
 		return;
 
+	if(deviceId == DEVICE_SMB)
+	{
+		smbDriver.disconnect();
+		return;
+	}
+
 	isMounted[deviceId] = false;
 	unmountRequired[deviceId] = true;
 	volumeLabel[deviceId][0] = '\0';

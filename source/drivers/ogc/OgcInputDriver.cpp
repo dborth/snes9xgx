@@ -18,12 +18,12 @@
 #include "../Platform.h"
 
 #ifdef HW_RVL
-#include "WiiPlatform.h"
-#include "input/wiidrc.h"
-#include "input/retrode.h"
-#include "input/xbox360.h"
-#include "input/hornet.h"
-#include "input/mayflash.h"
+#include "wii/WiiPlatform.h"
+#include "wii/input/wiidrc.h"
+#include "wii/input/retrode.h"
+#include "wii/input/xbox360.h"
+#include "wii/input/hornet.h"
+#include "wii/input/mayflash.h"
 #endif
 
 #include "../InputController.h"
