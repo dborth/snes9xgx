@@ -5,6 +5,9 @@
  ***************************************************************************/
 #pragma once
 
+#include <memory>
+#include <cstdlib>
+
 #include "../drivers/Mutex.h"
 
 //!Decodes compressed image data (PNG) into a platform-native texture created
@@ -64,6 +67,35 @@ class GuiImageData
 		//!\param size Size of buffer, in bytes
 		static void setDecodeScratch(void * buffer, unsigned int size);
 		static Mutex & scratchLock();
+
+		//!CPU-only decode result from decodeToRgba(): raw RGBA8 pixel data
+		//!that has NOT been uploaded to a platform texture yet.
+		struct DecodedImage
+		{
+			std::unique_ptr<uint8_t, decltype(&free)> rgba{nullptr, free}; //!< row-major RGBA8, or null if decode failed
+			int width = 0;
+			int height = 0;
+			bool valid() const { return rgba != nullptr; }
+		};
+		//!Decodes a PNG buffer into plain RGBA8 pixels, resizing to fit
+		//!maxw/maxh the same way the decoding constructors/reload() do.
+		//!\param pngData Source image data (PNG)
+		//!\param maxw Max image width (0 = not set)
+		//!\param maxh Max image height (0 = not set)
+		//!\return a DecodedImage; check valid() before use
+		static DecodedImage decodeToRgba(const uint8_t * pngData, int maxw = 0, int maxh = 0);
+		//!Uploads a DecodedImage produced by decodeToRgba() into this
+		//!object's own texture, reusing the existing allocation whenever
+		//!it's already large enough (same policy as reload()). Must be
+		//!called on the main/GPU thread.
+		//!\param decoded Result of a prior decodeToRgba() call
+		//!\return true on success
+		bool uploadDecoded(DecodedImage && decoded);
+		//!Releases any owned texture and resets this object to the same
+		//!(empty) state as a default-constructed GuiImageData. Useful for
+		//!explicitly freeing GPU memory (eg. an evicted cache entry)
+		//!before the object itself is destroyed.
+		void clear();
 	protected:
 		void * texture; //!< Attached platform-native texture
 		int height; //!< Height of image

@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "SmbDriver.h"
+#include "Mutex.h"
 
 #define MAX_STORAGE_DEVICES 16
 
@@ -139,6 +140,14 @@ class FileSystemDriver
 		virtual const int * getValidSaveDevices(int & outCount) const = 0;
 
 		virtual SmbDriver * getSmb() = 0;
+
+		//! Serializes raw devoptab I/O (open/read/write/readdir/stat) issued
+		//! by more than one thread against a mounted volume.
+		static Mutex & getIoLock()
+		{
+			static Mutex lock;
+			return lock;
+		}
 };
 
 //! Convenience for "try these devices in priority order, use whichever one

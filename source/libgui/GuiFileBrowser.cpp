@@ -181,6 +181,60 @@ void GuiFileBrowser::resetState()
 	{
 		fileList[i]->resetState();
 	}
+
+	// The listing itself just changed (new folder/device) - index N no
+	// longer refers to the same file it used to, so any cached/in-flight
+	// preview needs to go, and the display should show nothing until the
+	// new selection's preview resolves.
+	if(previewCache)
+	{
+		previewCache->flush();
+		previewRequestedIndex = -1;
+		if(previewTarget && previewLastImage != nullptr)
+		{
+			previewTarget->setImage(nullptr);
+			previewLastImage = nullptr;
+			if(previewChangedCB)
+				previewChangedCB(previewChangedCBContext, previewTarget);
+		}
+	}
+}
+
+void GuiFileBrowser::setPreviewImage(GuiImage * target, GuiPreviewPathResolver resolver, void * resolverContext,
+                                      int capacity, int prefetchRadius, int maxImageWidth, int maxImageHeight,
+                                      GuiPreviewImageChangedCB changedCB, void * changedCBContext)
+{
+	if(!target)
+	{
+		// disable - free the cache and its background thread
+		previewCache.reset();
+		previewTarget = nullptr;
+		previewLastImage = nullptr;
+		previewResolver = nullptr;
+		previewResolverContext = nullptr;
+		previewChangedCB = nullptr;
+		previewChangedCBContext = nullptr;
+		previewRequestedIndex = -1;
+		return;
+	}
+
+	previewCache.reset(new GuiImageAsyncCache(capacity, prefetchRadius, maxImageWidth, maxImageHeight));
+	previewTarget = target;
+	previewLastImage = nullptr;
+	previewResolver = resolver;
+	previewResolverContext = resolverContext;
+	previewChangedCB = changedCB;
+	previewChangedCBContext = changedCBContext;
+	previewRequestedIndex = -1;
+}
+
+void GuiFileBrowser::refreshPreview()
+{
+	if(!previewCache)
+		return;
+
+	previewCache->flush();
+	previewRequestedIndex = -1;
 }
 
 void GuiFileBrowser::triggerUpdate()
@@ -453,6 +507,49 @@ void GuiFileBrowser::update(InputController * controller)
 
 	listChanged = false;
 	numEntries = browser.numEntries;
+
+	if(previewCache)
+	{
+		if(browser.selIndex != previewRequestedIndex)
+		{
+			previewRequestedIndex = browser.selIndex;
+
+			char path[GUI_IMAGE_CACHE_MAX_PATH];
+			if(previewResolver && browser.selIndex >= 0 && browser.selIndex < browser.numEntries &&
+			   previewResolver(previewResolverContext, browser.selIndex, path, sizeof(path)))
+			{
+				previewCache->request(browser.selIndex, path);
+
+				int radius = previewCache->getPrefetchRadius();
+				for(int d = 1; d <= radius; d++)
+				{
+					char neighborPath[GUI_IMAGE_CACHE_MAX_PATH];
+
+					if(browser.selIndex + d < browser.numEntries &&
+					   previewResolver(previewResolverContext, browser.selIndex + d, neighborPath, sizeof(neighborPath)))
+						previewCache->prefetch(browser.selIndex + d, neighborPath);
+
+					if(browser.selIndex - d >= 0 &&
+					   previewResolver(previewResolverContext, browser.selIndex - d, neighborPath, sizeof(neighborPath)))
+						previewCache->prefetch(browser.selIndex - d, neighborPath);
+				}
+			}
+		}
+
+		previewCache->update();
+
+		if(previewTarget)
+		{
+			GuiImageData * img = previewCache->get(browser.selIndex);
+			if(img != previewLastImage)
+			{
+				previewTarget->setImage(img);
+				previewLastImage = img;
+				if(previewChangedCB)
+					previewChangedCB(previewChangedCBContext, previewTarget);
+			}
+		}
+	}
 
 	if(updateCB)
 		updateCB(this);

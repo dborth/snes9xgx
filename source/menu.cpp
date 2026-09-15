@@ -1012,6 +1012,24 @@ static char* getImageFolder()
 	}
 }
 
+static bool ResolvePreviewImagePath(void *, int index, char * outPath, size_t outPathSize)
+{
+	if(browser.dir[0] == 0 || EmuSettings.LoadMethod <= 0 ||
+	   browser.numEntries <= 0 || index <= 0 || index >= browser.numEntries)
+		return false;
+
+	char imageFile[MAXJOLIET + 1];
+	snprintf(imageFile, sizeof(imageFile), "%s.png", browserList[index].displayname);
+	platform->getFileSystem()->getPath(outPath, outPathSize, EmuSettings.LoadMethod, getImageFolder(), imageFile);
+	return true;
+}
+
+static void OnPreviewImageChanged(void *, GuiImage * target)
+{
+	if(target->getWidth() > 0 && target->getHeight() > 0)
+		target->setScale( std::min(225.0f / target->getWidth(), 235.0f / target->getHeight()) );
+}
+
 static int BrowserLoadFileTask(void *) { return BrowserLoadFile(); }
 
 struct ChangeInterfaceArgs
@@ -1103,18 +1121,17 @@ static int MenuGameSelection()
 	
 	GuiImage bgPreview(&bgPreviewImg);
 	bgPreview.setPosition(365, 98);
-	int previousPreviewImg = EmuSettings.PreviewImage;
 	
-	GuiImageData previewImageData;
 	GuiImage preview;
 	preview.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	preview.setPosition(174, -8);
 
-	std::unique_ptr<uint8_t, decltype(&free)> pngFileBuffer((uint8_t *)malloc(PNG_FILE_BUFFER_SIZE), free);
+#if defined(HW_RVL) || defined(HW_DOL)
+	gameBrowser.setPreviewImage(&preview, ResolvePreviewImagePath, nullptr, 1, 0, 640, 480, OnPreviewImageChanged, nullptr);
+#else
+	gameBrowser.setPreviewImage(&preview, ResolvePreviewImagePath, nullptr, 6, 2, 640, 480, OnPreviewImageChanged, nullptr);
+#endif
 
-	int  previousBrowserIndex = -1;
-	char imagePath[MAXJOLIET + 1];
-	
 	menu->btnLogo.setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
 	menu->btnLogo.setPosition(-50, 24);
 	menu->mainWindow.appendWithAutoRemove(&titleTxt);
@@ -1149,7 +1166,6 @@ static int MenuGameSelection()
 				if(browser.numEntries > 0)
 					gameBrowser.fileList[0]->setState(STATE::SELECTED);
 				gameBrowser.triggerUpdate();
-				previousBrowserIndex = -1;
 			}
 		}
 		
@@ -1176,8 +1192,7 @@ static int MenuGameSelection()
 					{
 						gameBrowser.resetState();
 						gameBrowser.fileList[0]->setState(STATE::SELECTED);
-						gameBrowser.triggerUpdate();
-						previousBrowserIndex = -1;			
+						gameBrowser.triggerUpdate();		
 					}
 					else
 					{
@@ -1210,35 +1225,6 @@ static int MenuGameSelection()
 					}
 				}
 			}
-		}
-		
-		//update gamelist image
-		if(previousBrowserIndex != browser.selIndex || previousPreviewImg != EmuSettings.PreviewImage)
-		{
-			previousBrowserIndex = browser.selIndex;
-			previousPreviewImg = EmuSettings.PreviewImage;
-
-			// ensure selected index is valid
-			bool loadedPreview = false;
-
-			if(browser.dir[0] != 0 && EmuSettings.LoadMethod > 0 && browser.numEntries > 0 && browser.selIndex > 0 && browser.selIndex < browser.numEntries)
-			{
-				char imageFile[MAXJOLIET + 1];
-				snprintf(imageFile, sizeof(imageFile), "%s.png", browserList[browser.selIndex].displayname);
-				platform->getFileSystem()->getPath(imagePath, EmuSettings.LoadMethod, getImageFolder(), imageFile);
-
-				if(ChangeInterface(imagePath, SILENT) &&
-				   LoadFile((char *)pngFileBuffer.get(), imagePath, 0, PNG_FILE_BUFFER_SIZE, SILENT) &&
-				   previewImageData.reload(pngFileBuffer.get(), 640, 480))
-				{
-					preview.setImage(&previewImageData);
-					preview.setScale( std::min(225.0f / previewImageData.getWidth(), 235.0f / previewImageData.getHeight()) );
-					loadedPreview = true;
-				}
-			}
-
-			if(!loadedPreview)
-				preview.setImage(nullptr);
 		}
 
 		if(settingsBtn.getState() == STATE::CLICKED)

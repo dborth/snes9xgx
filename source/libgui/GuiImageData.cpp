@@ -83,11 +83,20 @@ GuiImageData::GuiImageData(void * tex, int w, int h, bool takeOwnership)
 
 GuiImageData::~GuiImageData()
 {
+	clear();
+}
+
+void GuiImageData::clear()
+{
 	if(ownsTexture && texture)
-	{
 		platform->getVideo()->getImageRenderer()->destroyTexture(texture);
-	}
+
 	texture = nullptr;
+	width = 0;
+	height = 0;
+	ownsTexture = false;
+	capWidth = 0;
+	capHeight = 0;
 }
 
 struct PngMemoryData
@@ -115,36 +124,38 @@ bool GuiImageData::reload(const uint8_t * pngData, int maxw, int maxh)
 	return decodeImage(pngData, &w, &h, maxw, maxh);
 }
 
-bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * outHeight, int maxw, int maxh)
+GuiImageData::DecodedImage GuiImageData::decodeToRgba(const uint8_t * pngData, int maxw, int maxh)
 {
+	DecodedImage out;
+
 	if(!pngData)
-		return false;
+		return out;
 
 	MutexLock scratchGuard(getScratchMutex());
 	uint8_t * const localScratchBuffer = scratchBuffer;
 	const unsigned int localScratchBufferSize = scratchBufferSize;
 
 	if(!localScratchBuffer || localScratchBufferSize == 0)
-		return false;
+		return out;
 
 	if(png_sig_cmp(static_cast<png_const_bytep>(pngData), 0, 8))
-		return false;
+		return out;
 
 	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, ErrorCb, WarningCb);
 	if(!png_ptr)
-		return false;
+		return out;
 
 	png_infop info_ptr = png_create_info_struct(png_ptr);
 	if(!info_ptr)
 	{
 		png_destroy_read_struct(&png_ptr, nullptr, nullptr);
-		return false;
+		return out;
 	}
 
 	if(setjmp(png_jmpbuf(png_ptr)))
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-		return false;
+		return out;
 	}
 
 	PngMemoryData memData = { pngData, 0 };
@@ -192,20 +203,16 @@ bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * ou
 	if(totalScratchBytes > localScratchBufferSize)
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-		return false;
+		return out;
 	}
 
-	bool haveUsableTexture = texture && (!ownsTexture || (static_cast<int>(w) <= capWidth && static_cast<int>(h) <= capHeight));
-
-	void * newTexture = texture;
-	if(!haveUsableTexture)
+	// Final output buffer this call owns and returns - deliberately NOT part of the shared scratch allocation,
+	// since the caller (eg: a background thread) will go on using it.
+	std::unique_ptr<uint8_t, decltype(&free)> outRgba(static_cast<uint8_t *>(malloc(static_cast<size_t>(w) * h * 4)), free);
+	if(!outRgba)
 	{
-		newTexture = platform->getVideo()->getImageRenderer()->createTexture(w, h);
-		if(!newTexture)
-		{
-			png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
-			return false;
-		}
+		png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
+		return out;
 	}
 
 	png_bytep * row_pointers = reinterpret_cast<png_bytep *>(localScratchBuffer);
@@ -216,10 +223,8 @@ bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * ou
 
 	png_read_image(png_ptr, row_pointers);
 
-	const uint8_t * finalRgba = srcRgba;
 	if(needsResize)
 	{
-		uint8_t * resizedRgba = srcRgba + srcRgbaBytes;
 		uint32_t xRatio = ((srcW << 16) / w) + 1;
 		uint32_t yRatio = ((srcH << 16) / h) + 1;
 
@@ -228,7 +233,7 @@ bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * ou
 			png_uint_32 sy = (y * yRatio) >> 16;
 			if(sy >= srcH) sy = srcH - 1;
 			const uint8_t * srcRow = srcRgba + static_cast<size_t>(sy) * rowBytes;
-			uint8_t * dstRow = resizedRgba + static_cast<size_t>(y) * w * 4;
+			uint8_t * dstRow = outRgba.get() + static_cast<size_t>(y) * w * 4;
 
 			for(png_uint_32 x = 0; x < w; x++)
 			{
@@ -237,11 +242,39 @@ bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * ou
 				memcpy(dstRow + x * 4, srcRow + sx * 4, 4);
 			}
 		}
-
-		finalRgba = resizedRgba;
+	}
+	else
+	{
+		memcpy(outRgba.get(), srcRgba, srcRgbaBytes);
 	}
 
-	platform->getVideo()->getImageRenderer()->loadTextureData(newTexture, finalRgba, w, h);
+	png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
+
+	out.rgba = std::move(outRgba);
+	out.width = w;
+	out.height = h;
+	return out;
+}
+
+bool GuiImageData::uploadDecoded(DecodedImage && decoded)
+{
+	if(!decoded.valid())
+		return false;
+
+	int w = decoded.width;
+	int h = decoded.height;
+
+	bool haveUsableTexture = texture && (!ownsTexture || (w <= capWidth && h <= capHeight));
+
+	void * newTexture = texture;
+	if(!haveUsableTexture)
+	{
+		newTexture = platform->getVideo()->getImageRenderer()->createTexture(w, h);
+		if(!newTexture)
+			return false;
+	}
+
+	platform->getVideo()->getImageRenderer()->loadTextureData(newTexture, decoded.rgba.get(), w, h);
 
 	if(!haveUsableTexture)
 	{
@@ -255,9 +288,22 @@ bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * ou
 
 	width = w;
 	height = h;
+	return true;
+}
+
+bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * outHeight, int maxw, int maxh)
+{
+	DecodedImage decoded = decodeToRgba(pngData, maxw, maxh);
+	if(!decoded.valid())
+		return false;
+
+	int w = decoded.width;
+	int h = decoded.height;
+
+	if(!uploadDecoded(std::move(decoded)))
+		return false;
+
 	if(outWidth) *outWidth = w;
 	if(outHeight) *outHeight = h;
-
-	png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
 	return true;
 }
