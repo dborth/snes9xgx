@@ -595,6 +595,72 @@ void DefaultSettings()
 }
 
 /****************************************************************************
+ * Prefs storage location discovery
+ *
+ * Platform-agnostic: driven entirely through FileSystemDriver
+ ***************************************************************************/
+
+//! GameCube's SD-adapter card slots (carda/cardb/port2) have real hardware
+//! presence detection; GCLoader doesn't - it can only be considered a
+//! prefs candidate when none of the other three could possibly be what
+//! the user means - not simply "next in priority order"
+static bool AnyGameCubeSDCardPresent()
+{
+	return platform->getFileSystem()->isDevicePresent(DEVICE_SD_SLOTA) ||
+			platform->getFileSystem()->isDevicePresent(DEVICE_SD_SLOTB) ||
+			platform->getFileSystem()->isDevicePresent(DEVICE_SD_PORT2);
+}
+
+//! Ordered (most-preferred first) list of devices eligible to hold
+//! settings.xml, derived from the platform's own save-device priority
+static int GetPrefsDeviceCandidates(int outDevices[MAX_STORAGE_DEVICES])
+{
+	int numSaveDevices;
+	const int * saveDevices = platform->getFileSystem()->getValidSaveDevices(numSaveDevices);
+
+	bool gameCubeSDCardPresent = AnyGameCubeSDCardPresent();
+	int count = 0;
+
+	for(int i = 0; i < numSaveDevices; i++)
+	{
+		int device = saveDevices[i];
+
+		if(device == DEVICE_AUTO || device == DEVICE_SMB || device == DEVICE_DVD)
+			continue;
+
+		if(device == DEVICE_SD_GCLOADER && gameCubeSDCardPresent)
+			continue;
+
+		outDevices[count++] = device;
+	}
+
+	return count;
+}
+
+//! Candidate subfolder(s) to check for settings.xml on device, most
+//! canonical first. GameCube's card slots/GCLoader predate (and don't
+//! use) the "apps/" loader convention. Wii/Wii U do - Wii U nests an
+//! extra "wiiu/" underneath since its apps folder lives alongside vWii's
+//! on the same SD card and the two must not collide.
+static int GetPrefsSubfolderCandidates(int device, const char * outFolders[2])
+{
+	if(device == DEVICE_SD_SLOTA || device == DEVICE_SD_SLOTB ||
+	   device == DEVICE_SD_PORT2 || device == DEVICE_SD_GCLOADER)
+	{
+		outFolders[0] = APPFOLDER;
+		return 1;
+	}
+
+#ifdef __WIIU__
+	outFolders[0] = "wiiu/apps/" APPFOLDER;
+#else
+	outFolders[0] = "apps/" APPFOLDER;
+#endif
+	outFolders[1] = APPFOLDER; // legacy fallback: pre-"apps/" installs
+	return 2;
+}
+
+/****************************************************************************
  * Save Preferences
  ***************************************************************************/
 static char prefpath[MAXPATHLEN] = { 0 };
@@ -605,7 +671,7 @@ bool SavePrefs()
 	int datasize;
 	int offset = 0;
 	int device = DEVICE_AUTO;
-	
+
 	if(prefpath[0] != 0)
 	{
 		snprintf(filepath, sizeof(filepath), "%s/%s", prefpath, PREF_FILE_NAME);
@@ -617,7 +683,19 @@ bool SavePrefs()
 		strcpy(prefpath, appPath);
 		FindDevice(filepath, &device);
 	}
-	else
+
+	// The remembered location might not be reachable anymore - eg. a USB
+	// drive was unplugged, or moved to a different USB1/2/3 slot since
+	// prefpath was last set. Rather than fail outright, forget it and
+	// fall through to picking a fresh save location below, exactly as on
+	// a first save.
+	if(device != DEVICE_AUTO && !ChangeInterface(device, SILENT))
+	{
+		device = DEVICE_AUTO;
+		prefpath[0] = 0;
+	}
+
+	if(device == DEVICE_AUTO)
 	{
 		autoSaveMethod();
 		device = EmuSettings.SaveMethod;
@@ -625,7 +703,7 @@ bool SavePrefs()
 		if(!ChangeInterface(device, true)) {
 			return false;
 		}
-		
+
 		platform->getFileSystem()->getPath(filepath, device, APPFOLDER);
 		if(!CreateDirectory(filepath)) {
 			return false;
@@ -634,7 +712,7 @@ bool SavePrefs()
 		platform->getFileSystem()->getPath(filepath, device, APPFOLDER, PREF_FILE_NAME);
 		platform->getFileSystem()->getPath(prefpath, device, APPFOLDER);
 	}
-	
+
 	if(device == DEVICE_AUTO)
 		return false;
 
@@ -642,7 +720,6 @@ bool SavePrefs()
 
 	AllocSaveBuffer ();
 	datasize = preparePrefsData ();
-
 	offset = SaveFile(filepath, datasize, true);
 
 	FreeSaveBuffer ();
@@ -689,6 +766,126 @@ LoadPrefsFromMethod (char * path)
 	return retval;
 }
 
+//! Cycles through every connected candidate device (priority order) and
+//! every subfolder convention it might use, looking for an existing
+//! settings.xml. Stops - and leaves prefpath/appPath set via
+//! LoadPrefsFromMethod()'s own side effects - at the first hit.
+static bool ScanForExistingPrefs()
+{
+	int devices[MAX_STORAGE_DEVICES];
+	int deviceCount = GetPrefsDeviceCandidates(devices);
+
+	for(int i = 0; i < deviceCount; i++)
+	{
+		int device = devices[i];
+
+		if(!ChangeInterface(device, SILENT))
+			continue; // not physically present / couldn't mount
+
+		const char * folders[2];
+		int folderCount = GetPrefsSubfolderCandidates(device, folders);
+
+		for(int f = 0; f < folderCount; f++)
+		{
+			char path[MAXPATHLEN];
+			MakeFilePathForFolderPath(path, device, folders[f]);
+
+			if(LoadPrefsFromMethod(path))
+				return true;
+		}
+	}
+
+	return false;
+}
+
+//! Recognizes a devoptab-style USB path prefix and maps it to the
+//! corresponding Device id plus the path suffix after the prefix. Both
+//! Wii's naming ("usb:/" for the first slot) and Wii U's ("usb1:/" for
+//! the first slot) are recognized, since this needs to work unmodified
+//! on both platforms.
+static bool ParseUsbPath(const char * path, int * outDevice, const char ** outSuffix)
+{
+	static const struct { const char * prefix; int device; } usbPrefixes[] = {
+		{ "usb:/",  DEVICE_USB  },
+		{ "usb1:/", DEVICE_USB  },
+		{ "usb2:/", DEVICE_USB2 },
+		{ "usb3:/", DEVICE_USB3 },
+	};
+
+	if(!path)
+		return false;
+
+	for(size_t i = 0; i < sizeof(usbPrefixes) / sizeof(usbPrefixes[0]); i++)
+	{
+		size_t len = strlen(usbPrefixes[i].prefix);
+		if(strncmp(path, usbPrefixes[i].prefix, len) == 0)
+		{
+			*outDevice = usbPrefixes[i].device;
+			*outSuffix = path + len;
+			return true;
+		}
+	}
+	return false;
+}
+
+//! USB1/2/3 slot assignment isn't stable. If path's own device doesn't
+//! currently resolve to that literal path, look for the same relative
+//! path on another currently-mounted USB device and, if found, rewrite
+//! path in place to point at it. No-op for any path that isn't on a
+//! USB1/2/3 device - SD/DVD/SMB/GameCube card paths are left alone.
+static void RemapUsbPathIfNeeded(char * path, size_t pathSize)
+{
+	int device;
+	const char * suffix;
+
+	if(!path || path[0] == 0 || !ParseUsbPath(path, &device, &suffix))
+		return;
+
+	struct stat st;
+
+	// Already resolves as-is - nothing to do.
+	if(ChangeInterface(device, SILENT) && stat(path, &st) == 0)
+		return;
+
+	static const int usbCandidates[] = { DEVICE_USB, DEVICE_USB2, DEVICE_USB3 };
+
+	for(int i = 0; i < 3; i++)
+	{
+		if(usbCandidates[i] == device)
+			continue; // already checked above
+
+		if(!ChangeInterface(usbCandidates[i], SILENT))
+			continue; // this slot isn't mounted right now
+
+		char candidatePath[MAXPATHLEN];
+		MakeFilePathForFolderPath(candidatePath, usbCandidates[i], suffix);
+
+		if(stat(candidatePath, &st) == 0)
+		{
+			snprintf(path, pathSize, "%s", candidatePath);
+			return;
+		}
+	}
+
+	// No match on any other USB device - leave path as-is. Whatever
+	// consumes it (eg. the file browser) already handles a folder or
+	// file that doesn't exist.
+}
+
+//! Applies RemapUsbPathIfNeeded() to every stored path that can point at
+//! removable storage. Called once, right after a settings.xml is
+//! successfully loaded.
+static void RemapUsbPathsIfNeeded()
+{
+	RemapUsbPathIfNeeded(EmuSettings.LoadFolder, sizeof(EmuSettings.LoadFolder));
+	RemapUsbPathIfNeeded(EmuSettings.LastFileLoaded, sizeof(EmuSettings.LastFileLoaded));
+	RemapUsbPathIfNeeded(EmuSettings.SaveFolder, sizeof(EmuSettings.SaveFolder));
+	RemapUsbPathIfNeeded(EmuSettings.CheatFolder, sizeof(EmuSettings.CheatFolder));
+	RemapUsbPathIfNeeded(EmuSettings.ScreenshotsFolder, sizeof(EmuSettings.ScreenshotsFolder));
+	RemapUsbPathIfNeeded(EmuSettings.CoverFolder, sizeof(EmuSettings.CoverFolder));
+	RemapUsbPathIfNeeded(EmuSettings.ArtworkFolder, sizeof(EmuSettings.ArtworkFolder));
+}
+
 /****************************************************************************
  * Load Preferences
  * Checks sources consecutively until we find a preference file
@@ -702,94 +899,79 @@ bool LoadPrefs()
 
 	prefLoadAttempted = true;
 
-	bool prefFound = false;
-	char filepath[5][MAXPATHLEN];
-	int numDevices;
+	// Most likely correct location: wherever the app itself was loaded
+	// from (CreateAppPath(), set from argv[0] at startup), if known.
+	bool prefFound = (appPath[0] != 0) && LoadPrefsFromMethod(appPath);
 
-#ifdef HW_RVL
-	numDevices = 5;
-	sprintf(filepath[0], "%s", appPath);
-	sprintf(filepath[1], "sd:/apps/%s", APPFOLDER);
-	sprintf(filepath[2], "usb:/apps/%s", APPFOLDER);
-	sprintf(filepath[3], "sd:/%s", APPFOLDER);
-	sprintf(filepath[4], "usb:/%s", APPFOLDER);
-#elif HW_DOL
-	numDevices = 4;
-	sprintf(filepath[0], "carda:/%s", APPFOLDER);
-	sprintf(filepath[1], "cardb:/%s", APPFOLDER);
-	sprintf(filepath[2], "port2:/%s", APPFOLDER);
-	sprintf(filepath[3], "gcloader:/%s", APPFOLDER);
-#elif __WUT__
-	numDevices = 0;
-#endif
-
-	for(int i=0; i<numDevices; i++) {
-		prefFound = LoadPrefsFromMethod(filepath[i]);
-
-		if(prefFound)
-			break;
-	}
+	// Otherwise, cycle through every connected device in priority order
+	// (SD before USB1/2/3 on Wii/Wii U; carda/cardb/port2 before
+	// GCLoader on GameCube - see GetPrefsDeviceCandidates()) looking for
+	// an existing settings.xml.
+	if(!prefFound)
+		prefFound = ScanForExistingPrefs();
 
 	if(!prefFound) {
 		return false;
 	}
 
+	RemapUsbPathsIfNeeded();
+
 	FixInvalidSettings();
 	ApplySettings();
 
-#ifndef HW_DOL
+	#ifndef HW_DOL
 	bg_music = (uint8_t * )bg_music_ogg;
 	bg_music_size = bg_music_ogg_size;
 	LoadBgMusic();
-#endif
+	#endif
 	return true;
 }
 
 void CreatePathWithPrefix(int device, const char* folder) {
-    char fullPath[MAXPATHLEN];
-    MakeFilePathForFolderPath(fullPath, device, folder);
-    CreateDirectory(fullPath);
+	char fullPath[MAXPATHLEN];
+	MakeFilePathForFolderPath(fullPath, device, folder);
+	CreateDirectory(fullPath);
 }
 
 void CreateMissingDirectories() {
-    char defaultFolder[MAXPATHLEN];
+	char defaultFolder[MAXPATHLEN];
 
-    if (EmuSettings.SaveMethod > DEVICE_AUTO && ChangeInterface(EmuSettings.SaveMethod, NOTSILENT)) {
-        const char* savePointers[] = { EmuSettings.SaveFolder, EmuSettings.CheatFolder };
+	if (EmuSettings.SaveMethod > DEVICE_AUTO && ChangeInterface(EmuSettings.SaveMethod, NOTSILENT)) {
+		const char* savePointers[] = { EmuSettings.SaveFolder, EmuSettings.CheatFolder };
 
-        for (int i = 0; i < SAVEFOLDER_LENGTH; i++) {
-            const char* currentPath = savePointers[i];
+		for (int i = 0; i < SAVEFOLDER_LENGTH; i++) {
+			const char* currentPath = savePointers[i];
 
-            if (strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
-                CreatePathWithPrefix(EmuSettings.SaveMethod, APPFOLDER);
-            }
+			if (strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
+				CreatePathWithPrefix(EmuSettings.SaveMethod, APPFOLDER);
+			}
 
-            GetDefaultFolderPath(defaultFolder, saveFolder[i].name);
-            if (strcmp(currentPath, defaultFolder) == 0) {
-                CreatePathWithPrefix(EmuSettings.SaveMethod, currentPath);
-            }
-        }
-    }
+			GetDefaultFolderPath(defaultFolder, saveFolder[i].name);
+			if (strcmp(currentPath, defaultFolder) == 0) {
+				CreatePathWithPrefix(EmuSettings.SaveMethod, currentPath);
+			}
+		}
+	}
 
-    if (EmuSettings.LoadMethod > DEVICE_AUTO && EmuSettings.LoadMethod != DEVICE_DVD && ChangeInterface(EmuSettings.LoadMethod, NOTSILENT)) {
-        const char* loadPointers[] = {
-            EmuSettings.LoadFolder,
-            EmuSettings.ScreenshotsFolder,
-            EmuSettings.CoverFolder,
-            EmuSettings.ArtworkFolder
-        };
+	if (EmuSettings.LoadMethod > DEVICE_AUTO && EmuSettings.LoadMethod != DEVICE_DVD && ChangeInterface(EmuSettings.LoadMethod, NOTSILENT)) {
+		const char* loadPointers[] = {
+			EmuSettings.LoadFolder,
+			EmuSettings.ScreenshotsFolder,
+			EmuSettings.CoverFolder,
+			EmuSettings.ArtworkFolder
+		};
 
-        for (int i = 0; i < LOADFOLDER_LENGTH; i++) {
-            const char* currentPath = loadPointers[i];
+		for (int i = 0; i < LOADFOLDER_LENGTH; i++) {
+			const char* currentPath = loadPointers[i];
 
-            if (strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
-                CreatePathWithPrefix(EmuSettings.LoadMethod, APPFOLDER);
-            }
+			if (strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
+				CreatePathWithPrefix(EmuSettings.LoadMethod, APPFOLDER);
+			}
 
-            GetDefaultFolderPath(defaultFolder, loadFolder[i].name);
-            if (strcmp(currentPath, defaultFolder) == 0) {
-                CreatePathWithPrefix(EmuSettings.LoadMethod, currentPath);
-            }
-        }
-    }
+			GetDefaultFolderPath(defaultFolder, loadFolder[i].name);
+			if (strcmp(currentPath, defaultFolder) == 0) {
+				CreatePathWithPrefix(EmuSettings.LoadMethod, currentPath);
+			}
+		}
+	}
 }

@@ -4,12 +4,14 @@
  * WutPlatform.cpp
  ***************************************************************************/
 #include <stdlib.h>
-
-#include "WutPlatform.h"
-
+#include <unistd.h>
+#include <stdio.h>
 #include <sysapp/launch.h>
 #include <proc_ui/procui.h>
-#include <unistd.h>
+#include <coreinit/systeminfo.h>
+#include <coreinit/memexpheap.h>
+
+#include "WutPlatform.h"
 
 void WutPlatform::init(int width, int height)
 {
@@ -124,11 +126,49 @@ SystemEvent WutPlatform::getSystemEvent()
 	return SystemEvent::None;
 }
 
-const char* WutPlatform::getMemoryFreeInfo() {
-	return "MEM free: 0MB";
+/****************************************************************************
+ * Console/memory info
+ ***************************************************************************/
+
+// Espresso's nominal core clock (1.24325GHz) - used only if OSGetSystemInfo()
+// ever returns a bogus/zero reading.
+#define WIIU_FALLBACK_CORE_CLOCK_MHZ 1243
+
+static uint32_t GetCPUSpeedMHz() {
+	OSSystemInfo * info = OSGetSystemInfo();
+
+	if (info && info->coreClockSpeed > 0)
+		return info->coreClockSpeed / 1000000;
+
+	return WIIU_FALLBACK_CORE_CLOCK_MHZ;
 }
+
 const char* WutPlatform::getConsoleDetails() {
-	return "Wii U";
+	static char description[64];
+	uint32_t mhz = GetCPUSpeedMHz();
+
+	char speedStr[16];
+	if (mhz >= 1000) {
+		snprintf(speedStr, sizeof(speedStr), "%.2f GHz", mhz / 1000.0f);
+	} else {
+		snprintf(speedStr, sizeof(speedStr), "%u MHz", mhz);
+	}
+
+	snprintf(description, sizeof(description), "Wii U (%s)", speedStr);
+
+	return description;
+}
+
+const char* WutPlatform::getMemoryFreeInfo() {
+	static char memoryFreeInfo[50];
+
+	MEMHeapHandle mem2Heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_MEM2);
+	uint32_t mem2FreeBytes = mem2Heap ? MEMGetTotalFreeSizeForExpHeap(mem2Heap) : 0;
+	float mem2_mb = (float)mem2FreeBytes / (1024.0f * 1024.0f);
+
+	snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM free: %.2fMB", mem2_mb);
+
+	return memoryFreeInfo;
 }
 
 // Either WHBProcIsRunning() returned false already and we're leaving
