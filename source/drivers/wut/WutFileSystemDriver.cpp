@@ -286,8 +286,7 @@ void WutFileSystemDriver::refreshSmbSlot()
 {
 	WutDeviceState & smb = devices[slotSMB];
 	bool connected = smbDriver.isConnected();
-
-	smb.isPresent = connected;
+	smb.isPresent = true;
 	smb.isMounted = connected;
 
 	if(connected)
@@ -322,6 +321,7 @@ int WutFileSystemDriver::enumerateStorageDevices(StorageDevice outDevices[MAX_ST
 		out.prefix[sizeof(out.prefix) - 1] = '\0';
 		out.removable = (devices[i].id != DEVICE_SMB);
 		out.autoMountAtStartup = (devices[i].id != DEVICE_SMB); // SMB needs explicit getSmb()->connect() first
+		out.alwaysListed = (devices[i].id == DEVICE_SMB);
 
 		WutStorageMetrics metrics;
 		out.metricsValid = getStorageMetrics(devices[i].id, metrics);
@@ -343,6 +343,15 @@ int WutFileSystemDriver::enumerateStorageDevices(StorageDevice outDevices[MAX_ST
 		count++;
 	}
 	return count;
+}
+
+bool WutFileSystemDriver::isDevicePresent(int deviceId) const
+{
+	if(deviceId == DEVICE_SMB)
+		return smbDriver.isConnected(); // informational only - SMB is alwaysListed
+
+	int idx = findDeviceIndex(deviceId);
+	return idx >= 0 && devices[idx].isPresent;
 }
 
 MountResult WutFileSystemDriver::mountStorageDevice(int deviceId)
