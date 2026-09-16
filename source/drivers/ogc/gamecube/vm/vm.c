@@ -336,22 +336,22 @@ void VM_Deinit(void)
 	vm_initialized = 0;
 }
 
-int vm_dsi_handler(u32 DSISR, u32 DAR)
+int vm_dsi_handler(u32 dsisr, u32 dar)
 {
 	u16 v_index;
 	u16 p_index;
 
-	if (DAR<(u32)VM_Base || DAR>=0x80000000)
+	if (dar<(u32)VM_Base || dar>=0x80000000)
 		return 0;
-	if ((DSISR&~0x02000000)!=0x40000000)
+	if ((dsisr&~0x02000000)!=0x40000000)
 		return 0;
 	if (!vm_initialized)
 		return 0;
 
 	LWP_MutexLock(vm_mutex);
 
-	DAR &= ~0xFFF;
-	v_index = (vm_page*)DAR - VM_Base;
+	dar &= ~0xFFF;
+	v_index = (vm_page*)dar - VM_Base;
 
 	p_index = locate_oldest();
 
