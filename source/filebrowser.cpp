@@ -109,33 +109,30 @@ int autoLoadMethod()
 	char defaultFolderPath[MAXPATHLEN];
 	char fullPath[MAXPATHLEN];
 	int device = DEVICE_AUTO;
+	int firstConnectedDevice = DEVICE_AUTO;
 
 	GetDefaultFolderPath(defaultFolderPath, loadFolder[LOADFOLDER_ROMS].name);
 
 	int numLoadDevices;
 	const int * loadDevices = platform->getFileSystem()->getValidLoadDevices(numLoadDevices);
 
-	// look for default roms folder first
-	for (int i = 1; i < numLoadDevices; i++) {
-	    if (ChangeInterface(loadDevices[i], SILENT)) {
-	        MakeFilePathForFolderPath(fullPath, loadDevices[i], defaultFolderPath);
+	// Single pass: mount each candidate device at most once. Prefer the
+	// first one that already has the default ROMs folder; if none do, fall
+	// back to the first one that mounted at all.
+	for (int i = 1; i < numLoadDevices && device == DEVICE_AUTO; i++) {
+		if (!ChangeInterface(loadDevices[i], SILENT))
+			continue;
 
-	        if(DirExists(fullPath)) {
-	        	device = loadDevices[i];
-	        	break;
-	        }
-	    }
+		if (firstConnectedDevice == DEVICE_AUTO)
+			firstConnectedDevice = loadDevices[i];
+
+		MakeFilePathForFolderPath(fullPath, loadDevices[i], defaultFolderPath);
+		if (DirExists(fullPath))
+			device = loadDevices[i];
 	}
 
-	// set to first connected device instead
-	if(device == DEVICE_AUTO) {
-		for (int i = 1; i < numLoadDevices; i++) {
-			if (ChangeInterface(loadDevices[i], SILENT)) {
-				device = loadDevices[i];
-				break;
-			}
-		}
-	}
+	if (device == DEVICE_AUTO)
+		device = firstConnectedDevice;
 
 	EmuSettings.LoadMethod = device; // load device found for later use
 	CancelAction();
@@ -156,33 +153,27 @@ int autoSaveMethod()
 	char defaultFolderPath[MAXPATHLEN];
 	char fullPath[MAXPATHLEN];
 	int device = DEVICE_AUTO;
+	int firstConnectedDevice = DEVICE_AUTO;
 
 	GetDefaultFolderPath(defaultFolderPath, saveFolder[SAVEFOLDER_SAVES].name);
 
 	int numSaveDevices;
 	const int * saveDevices = platform->getFileSystem()->getValidSaveDevices(numSaveDevices);
 
-	// look for default saves folder first
-	for (int i = 1; i < numSaveDevices; i++) {
-	    if (ChangeInterface(saveDevices[i], SILENT)) {
-	        MakeFilePathForFolderPath(fullPath, saveDevices[i], defaultFolderPath);
+	for (int i = 1; i < numSaveDevices && device == DEVICE_AUTO; i++) {
+		if (!ChangeInterface(saveDevices[i], SILENT))
+			continue;
 
-	        if(DirExists(fullPath)) {
-	        	device = saveDevices[i];
-	        	break;
-	        }
-	    }
+		if (firstConnectedDevice == DEVICE_AUTO)
+			firstConnectedDevice = saveDevices[i];
+
+		MakeFilePathForFolderPath(fullPath, saveDevices[i], defaultFolderPath);
+		if (DirExists(fullPath))
+			device = saveDevices[i];
 	}
 
-	// set to first connected device instead
-	if(device == DEVICE_AUTO) {
-		for (int i = 1; i < numSaveDevices; i++) {
-			if (ChangeInterface(saveDevices[i], SILENT)) {
-				device = saveDevices[i];
-				break;
-			}
-		}
-	}
+	if (device == DEVICE_AUTO)
+		device = firstConnectedDevice;
 
 	EmuSettings.SaveMethod = device; // save device found for later use
 
