@@ -58,9 +58,14 @@ private:
 	// Analog stick deadzone
 	const float STICK_DEADZONE = 0.2f;
 
-	// Scrolling delay timers (in seconds)
+	// Scrolling delay timers (in seconds). The repeat rate accelerates the
+	// longer a direction is held: it starts at SCROLL_DELAY_LOOP_START right
+	// after the initial delay, and ramps down to SCROLL_DELAY_LOOP_MIN over
+	// SCROLL_ACCEL_RAMP_TIME seconds of continuous holding.
 	const float SCROLL_DELAY_INITIAL = 0.3f;
-	const float SCROLL_DELAY_LOOP = 0.05f;
+	const float SCROLL_DELAY_LOOP_START = 0.12f; // ~8 rows/sec right after the initial delay
+	const float SCROLL_DELAY_LOOP_MIN = 0.02f;   // ~50 rows/sec once fully ramped up
+	const float SCROLL_ACCEL_RAMP_TIME = 1.5f;   // seconds of continuous holding to reach max speed
 
 	float scrollTimer;
 
@@ -70,6 +75,12 @@ private:
 	// Mutable state to allow the const navigation functions to reset the timer
 	// when a valid scroll triggers. (A common pattern to keep accessors clean).
 	mutable float internalScrollTimer;
+
+	// How long a direction has been continuously held (or the stick pushed
+	// past the deadzone), independent of individual repeat triggers - this
+	// is what the acceleration ramp above is measured against. Reset to 0
+	// whenever nothing directional is held; only ever written from update().
+	float holdDuration;
 };
 
 extern InputController* controller[4];
