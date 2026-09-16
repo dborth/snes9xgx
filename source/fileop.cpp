@@ -327,15 +327,19 @@ bool FindDevice(char * filepath, int * device)
 	if(!filepath || filepath[0] == 0)
 		return false;
 
-	StorageDevice devices[MAX_STORAGE_DEVICES];
-	int count = platform->getFileSystem()->enumerateStorageDevices(devices);
+	int count = 0;
+	const int * candidates = platform->getFileSystem()->getValidLoadDevices(count);
 
 	for(int i = 0; i < count; i++)
 	{
-		size_t len = strlen(devices[i].prefix); // eg. "sd:/" -> compare against "sd:"
-		if(len > 1 && strncmp(filepath, devices[i].prefix, len - 1) == 0)
+		if(candidates[i] == DEVICE_AUTO)
+			continue;
+
+		const char * prefix = platform->getFileSystem()->getMountPath(candidates[i]);
+		size_t len = prefix ? strlen(prefix) : 0; // eg. "sd:/" -> compare against "sd:"
+		if(len > 1 && strncmp(filepath, prefix, len - 1) == 0)
 		{
-			*device = devices[i].id;
+			*device = candidates[i];
 			return true;
 		}
 	}
@@ -556,34 +560,27 @@ static bool ParseDirEntries()
 		if(entry == nullptr)
 			break;
 
-		if(entry->d_name[0] == '.' && entry->d_name[1] != '.')
+		if(entry->d_name[0] == '.')
 			continue;
 
-		if(strcmp(entry->d_name, "..") == 0)
-		{
+		if(entry->d_type==DT_DIR)
 			isdir = 1;
-		}
 		else
-		{
-			if(entry->d_type==DT_DIR)
-				isdir = 1;
-			else
-				isdir = 0;
-			
-			// don't show the file if it's not a valid ROM
-			if(parseFilter && !isdir)
-			{
-				ext = GetExt(entry->d_name);
-				
-				if(ext == nullptr)
-					continue;
+			isdir = 0;
 
-				if(	strcasecmp(ext, "bs") != 0 && strcasecmp(ext, "smc") != 0 &&
-					strcasecmp(ext, "fig") != 0 && strcasecmp(ext, "sfc") != 0 &&
-					strcasecmp(ext, "swc") != 0 && strcasecmp(ext, "zip") != 0 &&
-					strcasecmp(ext, "7z") != 0)
-					continue;
-			}
+		// don't show the file if it's not a valid ROM
+		if(parseFilter && !isdir)
+		{
+			ext = GetExt(entry->d_name);
+			
+			if(ext == nullptr)
+				continue;
+
+			if(	strcasecmp(ext, "bs") != 0 && strcasecmp(ext, "smc") != 0 &&
+				strcasecmp(ext, "fig") != 0 && strcasecmp(ext, "sfc") != 0 &&
+				strcasecmp(ext, "swc") != 0 && strcasecmp(ext, "zip") != 0 &&
+				strcasecmp(ext, "7z") != 0)
+				continue;
 		}
 
 		if(!AddBrowserEntry())
@@ -597,10 +594,7 @@ static bool ParseDirEntries()
 
 		if(isdir)
 		{
-			if(strcmp(entry->d_name, "..") == 0)
-				sprintf(browserList[browser.numEntries+i].displayname, "Up One Level");
-			else
-				snprintf(browserList[browser.numEntries+i].displayname, MAXJOLIET, "%s", browserList[browser.numEntries+i].filename);
+			snprintf(browserList[browser.numEntries+i].displayname, MAXJOLIET, "%s", browserList[browser.numEntries+i].filename);
 			browserList[browser.numEntries+i].icon = ICON_FOLDER;
 		}
 		else
@@ -682,15 +676,13 @@ ParseDirectory(bool waitParse, bool filter)
 	if(dir == nullptr)
 		return -1;
 
-	if(IsDeviceRoot(browser.dir))
-	{
-		AddBrowserEntry();
-		sprintf(browserList[0].filename, "..");
-		sprintf(browserList[0].displayname, "Up One Level");
-		browserList[0].isdir = 1; // flag this as a dir
-		browserList[0].icon = ICON_FOLDER;
-		browser.numEntries++;
-	}
+	// Always add a static "Up One Level" entry
+	AddBrowserEntry();
+	sprintf(browserList[0].filename, "..");
+	sprintf(browserList[0].displayname, "Up One Level");
+	browserList[0].isdir = 1; // flag this as a dir
+	browserList[0].icon = ICON_FOLDER;
+	browser.numEntries++;
 
 	parseHalt = false;
 	ParseDirEntries(); // index first 20 entries
