@@ -66,7 +66,7 @@ int getNextSaveDevice(int device);
 bool MakeFilePath(char filepath[], int type, char * filename = nullptr, int filenum = -2);
 int UpdateDirName();
 int OpenGameList();
-int autoLoadMethod();
+void AutoDetectDevices();
 int autoSaveMethod();
 int FileSortCallback(const void *f1, const void *f2);
 void StripExt(char* returnstring, char * inputstring);

@@ -96,19 +96,16 @@ int getNextSaveDevice(int device)
 }
 
 /****************************************************************************
-* autoLoadMethod()
-* Auto-determines and sets the load device
-* Returns device set
+* ScanForLoadDevice() / ScanForSaveDevice()
+* Walk every valid load/save device once, mounting each
+* Returns the first device with the relevant default folder
+* already on it, or failing that the first device that mounted at all, or
+* DEVICE_AUTO if nothing mounted.
 ****************************************************************************/
-int autoLoadMethod()
+static int ScanForLoadDevice(bool tried[DEVICE_LENGTH], bool mounted[DEVICE_LENGTH])
 {
-	if(EmuSettings.LoadMethod > DEVICE_AUTO && isValidLoadDevice(EmuSettings.LoadMethod)) {
-		return EmuSettings.LoadMethod;
-	}
-
 	char defaultFolderPath[MAXPATHLEN];
 	char fullPath[MAXPATHLEN];
-	int device = DEVICE_AUTO;
 	int firstConnectedDevice = DEVICE_AUTO;
 
 	GetDefaultFolderPath(defaultFolderPath, loadFolder[LOADFOLDER_ROMS].name);
@@ -116,43 +113,31 @@ int autoLoadMethod()
 	int numLoadDevices;
 	const int * loadDevices = platform->getFileSystem()->getValidLoadDevices(numLoadDevices);
 
-	// Single pass: mount each candidate device at most once. Prefer the
-	// first one that already has the default ROMs folder; if none do, fall
-	// back to the first one that mounted at all.
-	for (int i = 1; i < numLoadDevices && device == DEVICE_AUTO; i++) {
-		if (!ChangeInterface(loadDevices[i], SILENT))
+	for (int i = 1; i < numLoadDevices; i++) {
+		int id = loadDevices[i];
+
+		if (!tried[id]) {
+			tried[id] = true;
+			mounted[id] = ChangeInterface(id, SILENT);
+		}
+		if (!mounted[id])
 			continue;
 
 		if (firstConnectedDevice == DEVICE_AUTO)
-			firstConnectedDevice = loadDevices[i];
+			firstConnectedDevice = id;
 
-		MakeFilePathForFolderPath(fullPath, loadDevices[i], defaultFolderPath);
+		MakeFilePathForFolderPath(fullPath, id, defaultFolderPath);
 		if (DirExists(fullPath))
-			device = loadDevices[i];
+			return id;
 	}
 
-	if (device == DEVICE_AUTO)
-		device = firstConnectedDevice;
-
-	EmuSettings.LoadMethod = device; // load device found for later use
-	CancelAction();
-	return device;
+	return firstConnectedDevice;
 }
 
-/****************************************************************************
-* autoSaveMethod()
-* Auto-determines and sets the save device
-* Returns device set
-****************************************************************************/
-int autoSaveMethod()
+static int ScanForSaveDevice(bool tried[DEVICE_LENGTH], bool mounted[DEVICE_LENGTH])
 {
-	if(EmuSettings.SaveMethod > DEVICE_AUTO && isValidSaveDevice(EmuSettings.SaveMethod)) {
-		return EmuSettings.SaveMethod;
-	}
-
 	char defaultFolderPath[MAXPATHLEN];
 	char fullPath[MAXPATHLEN];
-	int device = DEVICE_AUTO;
 	int firstConnectedDevice = DEVICE_AUTO;
 
 	GetDefaultFolderPath(defaultFolderPath, saveFolder[SAVEFOLDER_SAVES].name);
@@ -160,25 +145,84 @@ int autoSaveMethod()
 	int numSaveDevices;
 	const int * saveDevices = platform->getFileSystem()->getValidSaveDevices(numSaveDevices);
 
-	for (int i = 1; i < numSaveDevices && device == DEVICE_AUTO; i++) {
-		if (!ChangeInterface(saveDevices[i], SILENT))
+	for (int i = 1; i < numSaveDevices; i++) {
+		int id = saveDevices[i];
+
+		if (!tried[id]) {
+			tried[id] = true;
+			mounted[id] = ChangeInterface(id, SILENT);
+		}
+		if (!mounted[id])
 			continue;
 
 		if (firstConnectedDevice == DEVICE_AUTO)
-			firstConnectedDevice = saveDevices[i];
+			firstConnectedDevice = id;
 
-		MakeFilePathForFolderPath(fullPath, saveDevices[i], defaultFolderPath);
+		MakeFilePathForFolderPath(fullPath, id, defaultFolderPath);
 		if (DirExists(fullPath))
-			device = saveDevices[i];
+			return id;
 	}
 
-	if (device == DEVICE_AUTO)
-		device = firstConnectedDevice;
+	return firstConnectedDevice;
+}
 
-	EmuSettings.SaveMethod = device; // save device found for later use
+/****************************************************************************
+* AutoDetectDevices()
+* Determines and sets both the load and save device together in a single
+* pass over the hardware.
+****************************************************************************/
+void AutoDetectDevices()
+{
+	bool tried[DEVICE_LENGTH]   = { false };
+	bool mounted[DEVICE_LENGTH] = { false };
+	bool haveLoad = false, haveSave = false;
+
+	if (EmuSettings.LoadMethod > DEVICE_AUTO && isValidLoadDevice(EmuSettings.LoadMethod)) {
+		int id = EmuSettings.LoadMethod;
+		if (!tried[id]) {
+			tried[id] = true;
+			mounted[id] = ChangeInterface(id, SILENT);
+		}
+		haveLoad = mounted[id];
+	}
+
+	if (EmuSettings.SaveMethod > DEVICE_AUTO && isValidSaveDevice(EmuSettings.SaveMethod)) {
+		int id = EmuSettings.SaveMethod;
+		if (!tried[id]) {
+			tried[id] = true;
+			mounted[id] = ChangeInterface(id, SILENT);
+		}
+		haveSave = mounted[id];
+	}
+
+	if (!haveLoad)
+		EmuSettings.LoadMethod = ScanForLoadDevice(tried, mounted);
+	if (!haveSave)
+		EmuSettings.SaveMethod = ScanForSaveDevice(tried, mounted);
 
 	CancelAction();
-	return device;
+}
+
+/****************************************************************************
+* autoSaveMethod()
+* Save-only counterpart to AutoDetectDevices()
+****************************************************************************/
+int autoSaveMethod()
+{
+	bool tried[DEVICE_LENGTH]   = { false };
+	bool mounted[DEVICE_LENGTH] = { false };
+
+	if (EmuSettings.SaveMethod > DEVICE_AUTO && isValidSaveDevice(EmuSettings.SaveMethod)) {
+		int id = EmuSettings.SaveMethod;
+		tried[id] = true;
+		mounted[id] = ChangeInterface(id, SILENT);
+		if (mounted[id])
+			return EmuSettings.SaveMethod;
+	}
+
+	EmuSettings.SaveMethod = ScanForSaveDevice(tried, mounted);
+	CancelAction();
+	return EmuSettings.SaveMethod;
 }
 
 /****************************************************************************

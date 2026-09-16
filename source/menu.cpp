@@ -4101,8 +4101,7 @@ static int MenuSettings()
 			if(choice == 1) {
 				DefaultSettings();
 				ApplySettings();
-				autoSaveMethod();
-				autoLoadMethod();
+				AutoDetectDevices();
 			}
 		}
 		else if(creditsBtn.getState() == STATE::CLICKED)
@@ -4285,8 +4284,7 @@ static int MenuSettingsFile()
 		if(backBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_SETTINGS;
-			autoSaveMethod();
-			autoLoadMethod();
+			AutoDetectDevices();
 		}
 	}
 	return selection;
@@ -4926,8 +4924,7 @@ static void * CreateBlurredGameTexture() {
  ***************************************************************************/
 static int FirstRunTask(void *) {
 	LoadPrefs();
-	autoSaveMethod();
-	autoLoadMethod();
+	AutoDetectDevices();
 	CreateMissingDirectories();
 	SavePrefs();
 	return 0;
