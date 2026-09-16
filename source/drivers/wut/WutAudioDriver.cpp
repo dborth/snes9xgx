@@ -25,17 +25,35 @@ static void wut_frame_callback() {
 		instance->handleStreamCallback();
 }
 
+template <int N>
+static void buildChannelMix(AXVoiceDeviceMixData (&mix)[N], bool left, bool right) {
+	memset(mix, 0, sizeof(mix));
+	if (left)
+		mix[0].bus[0].volume = 0x8000;
+	if (right && N > 1)
+		mix[1].bus[0].volume = 0x8000;
+}
+
+static constexpr int AX_TV_CHANNELS = 6;
+static constexpr int AX_DRC_CHANNELS = 4;
+
 void WutAudioDriver::init() {
 	instance = this;
 	AXInitParams params = {};
 	params.renderer = AX_INIT_RENDERER_48KHZ;
 	params.pipeline = AX_INIT_PIPELINE_SINGLE;
 	AXInitWithParams(&params);
-	AXRegisterFrameCallback(wut_frame_callback);
+	AXRegisterAppFrameCallback(wut_frame_callback);
 
 	nextVoiceSlot = 0;
 
-	// Pre-allocate the 16 hardware SFX voices
+	// Pre-allocate the 16 hardware SFX voices - mono, centered equally on
+	// both output channels of both devices.
+	AXVoiceDeviceMixData tvMixCentered[AX_TV_CHANNELS];
+	AXVoiceDeviceMixData drcMixCentered[AX_DRC_CHANNELS];
+	buildChannelMix(tvMixCentered, true, true);
+	buildChannelMix(drcMixCentered, true, true);
+
 	for (int i = 0; i < 16; i++) {
 		voices[i].voice = AXAcquireVoice(31, 0, 0);
 		voices[i].active = false;
@@ -43,15 +61,8 @@ void WutAudioDriver::init() {
 			AXVoiceBegin(voices[i].voice);
 			AXSetVoiceType(voices[i].voice, 0);
 
-			AXVoiceDeviceMixData mix;
-			memset(&mix, 0, sizeof(mix));
-			mix.bus[0].volume = 0x8000;
-			mix.bus[1].volume = 0x8000;
-			mix.bus[0].delta = 0;
-			mix.bus[1].delta = 0;
-
-			AXSetVoiceDeviceMix(voices[i].voice, (AXDeviceType) 0, 0, &mix);
-			AXSetVoiceDeviceMix(voices[i].voice, (AXDeviceType) 1, 0, &mix);
+			AXSetVoiceDeviceMix(voices[i].voice, AX_DEVICE_TYPE_TV, 0, tvMixCentered);
+			AXSetVoiceDeviceMix(voices[i].voice, AX_DEVICE_TYPE_DRC, 0, drcMixCentered);
 			AXVoiceEnd(voices[i].voice);
 		}
 	}
@@ -60,24 +71,23 @@ void WutAudioDriver::init() {
 	streamVoiceR = AXAcquireVoice(31, 0, 0);
 
 	if (streamVoiceL && streamVoiceR) {
+		AXVoiceDeviceMixData tvMixL[AX_TV_CHANNELS], drcMixL[AX_DRC_CHANNELS];
+		AXVoiceDeviceMixData tvMixR[AX_TV_CHANNELS], drcMixR[AX_DRC_CHANNELS];
+		buildChannelMix(tvMixL, true, false);   // Hard-pan Left
+		buildChannelMix(drcMixL, true, false);
+		buildChannelMix(tvMixR, false, true);   // Hard-pan Right
+		buildChannelMix(drcMixR, false, true);
+
 		AXVoiceBegin(streamVoiceL);
 		AXSetVoiceType(streamVoiceL, 0);
-		AXVoiceDeviceMixData mixL;
-		memset(&mixL, 0, sizeof(mixL));
-		mixL.bus[0].volume = 0x8000; // Hard-pan Left
-		mixL.bus[1].volume = 0;
-		AXSetVoiceDeviceMix(streamVoiceL, (AXDeviceType) 0, 0, &mixL);
-		AXSetVoiceDeviceMix(streamVoiceL, (AXDeviceType) 1, 0, &mixL);
+		AXSetVoiceDeviceMix(streamVoiceL, AX_DEVICE_TYPE_TV, 0, tvMixL);
+		AXSetVoiceDeviceMix(streamVoiceL, AX_DEVICE_TYPE_DRC, 0, drcMixL);
 		AXVoiceEnd(streamVoiceL);
 
 		AXVoiceBegin(streamVoiceR);
 		AXSetVoiceType(streamVoiceR, 0);
-		AXVoiceDeviceMixData mixR;
-		memset(&mixR, 0, sizeof(mixR));
-		mixR.bus[0].volume = 0;
-		mixR.bus[1].volume = 0x8000; // Hard-pan Right
-		AXSetVoiceDeviceMix(streamVoiceR, (AXDeviceType) 0, 0, &mixR);
-		AXSetVoiceDeviceMix(streamVoiceR, (AXDeviceType) 1, 0, &mixR);
+		AXSetVoiceDeviceMix(streamVoiceR, AX_DEVICE_TYPE_TV, 0, tvMixR);
+		AXSetVoiceDeviceMix(streamVoiceR, AX_DEVICE_TYPE_DRC, 0, drcMixR);
 		AXVoiceEnd(streamVoiceR);
 	}
 
@@ -114,7 +124,7 @@ void WutAudioDriver::stopMenuAudio() {
 void WutAudioDriver::shutdown() {
 	stopEmulatorAudio();
 	stopStream();
-	AXRegisterFrameCallback(nullptr);
+	AXDeregisterAppFrameCallback(wut_frame_callback);
 
 	for (int i = 0; i < 16; i++) {
 		if (voices[i].voice) {

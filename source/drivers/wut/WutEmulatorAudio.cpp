@@ -59,20 +59,35 @@ WutEmulatorAudio::~WutEmulatorAudio() {
 		instance = nullptr;
 }
 
+template <int N>
+static void buildChannelMix(AXVoiceDeviceMixData (&mix)[N], bool left, bool right) {
+	memset(mix, 0, sizeof(mix));
+	if (left)
+		mix[0].bus[0].volume = 0x8000;
+	if (right && N > 1)
+		mix[1].bus[0].volume = 0x8000;
+}
+
+static constexpr int AX_TV_CHANNELS = 6;
+static constexpr int AX_DRC_CHANNELS = 4;
+
 void WutEmulatorAudio::init() {
 	voiceL = AXAcquireVoice(31, 0, 0);
 	voiceR = AXAcquireVoice(31, 0, 0);
+
+	AXVoiceDeviceMixData tvMixL[AX_TV_CHANNELS], drcMixL[AX_DRC_CHANNELS];
+	AXVoiceDeviceMixData tvMixR[AX_TV_CHANNELS], drcMixR[AX_DRC_CHANNELS];
+	buildChannelMix(tvMixL, true, false);   // Hard-pan Left
+	buildChannelMix(drcMixL, true, false);
+	buildChannelMix(tvMixR, false, true);   // Hard-pan Right
+	buildChannelMix(drcMixR, false, true);
 
 	if (voiceL) {
 		AXVoiceBegin(voiceL);
 		AXSetVoiceType(voiceL, 0);
 
-		AXVoiceDeviceMixData mix;
-		memset(&mix, 0, sizeof(mix));
-		mix.bus[0].volume = 0x8000; // Hard-pan Left
-		mix.bus[1].volume = 0;
-		AXSetVoiceDeviceMix(voiceL, (AXDeviceType) 0, 0, &mix);
-		AXSetVoiceDeviceMix(voiceL, (AXDeviceType) 1, 0, &mix);
+		AXSetVoiceDeviceMix(voiceL, AX_DEVICE_TYPE_TV, 0, tvMixL);
+		AXSetVoiceDeviceMix(voiceL, AX_DEVICE_TYPE_DRC, 0, drcMixL);
 
 		AXVoiceVeData veData;
 		veData.volume = 0x8000;
@@ -86,12 +101,8 @@ void WutEmulatorAudio::init() {
 		AXVoiceBegin(voiceR);
 		AXSetVoiceType(voiceR, 0);
 
-		AXVoiceDeviceMixData mix;
-		memset(&mix, 0, sizeof(mix));
-		mix.bus[0].volume = 0;
-		mix.bus[1].volume = 0x8000; // Hard-pan Right
-		AXSetVoiceDeviceMix(voiceR, (AXDeviceType) 0, 0, &mix);
-		AXSetVoiceDeviceMix(voiceR, (AXDeviceType) 1, 0, &mix);
+		AXSetVoiceDeviceMix(voiceR, AX_DEVICE_TYPE_TV, 0, tvMixR);
+		AXSetVoiceDeviceMix(voiceR, AX_DEVICE_TYPE_DRC, 0, drcMixR);
 
 		AXVoiceVeData veData;
 		veData.volume = 0x8000;
