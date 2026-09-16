@@ -936,7 +936,7 @@ void CreatePathWithPrefix(int device, const char* folder) {
 void CreateMissingDirectories() {
 	char defaultFolder[MAXPATHLEN];
 
-	if (EmuSettings.SaveMethod > DEVICE_AUTO && ChangeInterface(EmuSettings.SaveMethod, NOTSILENT)) {
+	if (EmuSettings.SaveMethod > DEVICE_AUTO && ChangeInterface(EmuSettings.SaveMethod, SILENT)) {
 		const char* savePointers[] = { EmuSettings.SaveFolder, EmuSettings.CheatFolder };
 
 		for (int i = 0; i < SAVEFOLDER_LENGTH; i++) {
@@ -953,7 +953,7 @@ void CreateMissingDirectories() {
 		}
 	}
 
-	if (EmuSettings.LoadMethod > DEVICE_AUTO && EmuSettings.LoadMethod != DEVICE_DVD && ChangeInterface(EmuSettings.LoadMethod, NOTSILENT)) {
+	if (EmuSettings.LoadMethod > DEVICE_AUTO && EmuSettings.LoadMethod != DEVICE_DVD && ChangeInterface(EmuSettings.LoadMethod, SILENT)) {
 		const char* loadPointers[] = {
 			EmuSettings.LoadFolder,
 			EmuSettings.ScreenshotsFolder,

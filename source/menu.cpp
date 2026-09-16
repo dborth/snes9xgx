@@ -525,17 +525,24 @@ static void ServicePendingWindowPromptRequest()
 {
 	PromptSync().mutex.lock();
 	bool pending = promptPending;
+	const char * title = promptPendingTitle;
+	const char * msg = promptPendingMsg;
+	const char * btn1 = promptPendingBtn1;
+	const char * btn2 = promptPendingBtn2;
+	bool btn1Default = promptPendingBtn1Default;
+	// Reentrant call handling - clear promptPending now, before the blocking WindowPrompt() call below
+	if(pending)
+		promptPending = false;
 	PromptSync().mutex.unlock();
 
 	if(!pending)
 		return;
 
-	int result = WindowPrompt(promptPendingTitle, promptPendingMsg, promptPendingBtn1, promptPendingBtn2);
+	int result = WindowPrompt(title, msg, btn1, btn2, btn1Default);
 
 	PromptSync().mutex.lock();
 	promptResult = result;
 	promptResultReady = true;
-	promptPending = false;
 	PromptSync().idleCond.signal();
 	PromptSync().mutex.unlock();
 }

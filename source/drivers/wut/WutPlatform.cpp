@@ -48,8 +48,6 @@ void WutPlatform::init(int width, int height)
 		// mountPath already ends in "/" (eg. "/vol/external01/") - no separator needed.
 		snprintf(config.filePath, sizeof(config.filePath), "%sdebug.log", mountPath);
 	}
-
-	LogConfig config;
 	this->logger->init(config);
 #endif
 }
