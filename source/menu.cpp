@@ -1142,9 +1142,9 @@ static int MenuGameSelection()
 	menu->btnLogo.setPosition(-50, 24);
 	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 	menu->mainWindow.appendWithAutoRemove(&gameBrowser);
-	menu->mainWindow.appendWithAutoRemove(&buttonWindow);
 	menu->mainWindow.appendWithAutoRemove(&bgPreview);
 	menu->mainWindow.appendWithAutoRemove(&preview);
+	menu->mainWindow.appendWithAutoRemove(&buttonWindow);
 
 	// populate initial directory listing
 	selectLoadedFile = 1;
