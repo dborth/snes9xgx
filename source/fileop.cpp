@@ -335,7 +335,7 @@ bool FindDevice(char * filepath, int * device)
 		if(candidates[i] == DEVICE_AUTO)
 			continue;
 
-		const char * prefix = platform->getFileSystem()->getMountPath(candidates[i]);
+		const char * prefix = platform->getFileSystem()->getDevicePrefix(candidates[i]);
 		size_t len = prefix ? strlen(prefix) : 0; // eg. "sd:/" -> compare against "sd:"
 		if(len > 1 && strncmp(filepath, prefix, len - 1) == 0)
 		{
@@ -458,7 +458,11 @@ bool ChangeInterface(char * filepath, bool silent)
 	int device = -1;
 
 	if(!FindDevice(filepath, &device))
+	{
+		if(!silent)
+			ErrorPrompt("Device not found!");
 		return false;
+	}
 
 	return ChangeInterface(device, silent);
 }

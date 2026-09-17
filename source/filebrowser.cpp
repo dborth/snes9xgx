@@ -683,7 +683,10 @@ static int DeviceIcon(int deviceId)
 		case DEVICE_SD_PORT2:
 		case DEVICE_SD_GCLOADER:
 			return ICON_SD;
-		case DEVICE_USB: return ICON_USB;
+		case DEVICE_USB:
+		case DEVICE_USB2:
+		case DEVICE_USB3:
+			return ICON_USB;
 		case DEVICE_DVD: return ICON_DVD;
 		case DEVICE_SMB: return ICON_SMB;
 		default:         return ICON_NONE;

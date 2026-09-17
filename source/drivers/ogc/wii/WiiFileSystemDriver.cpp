@@ -62,6 +62,13 @@ bool WiiFileSystemDriver::pollPlatformExtra()
 	return WiiUsbMulti::scan();
 }
 
+void WiiFileSystemDriver::prepareMount(int deviceId)
+{
+	// A drive inserted between poll cycles has no open WiiUsbMulti slot yet
+	if(deviceId == DEVICE_USB || deviceId == DEVICE_USB2 || deviceId == DEVICE_USB3)
+		WiiUsbMulti::scan();
+}
+
 const int * WiiFileSystemDriver::getValidLoadDevices(int & outCount) const
 {
 	static const int devices[] = { DEVICE_AUTO, DEVICE_SD, DEVICE_USB, DEVICE_USB2, DEVICE_USB3, DEVICE_DVD, DEVICE_SMB };

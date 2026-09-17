@@ -29,7 +29,8 @@ struct WutDeviceState
 	int  id;
 	char name[16];			//!< human-readable base name, eg. "SD Card"
 	char volumeLabel[16];	//!< volume label, best-effort - empty if none could be read
-	char prefix[32];		//!< devoptab mount prefix, eg. "usb1:/", or the runtime FSA SD path in the non-Mocha fallback
+	char prefix[32];		//!< devoptab mount prefix, eg. "usb1:/", or the runtime FSA SD path in the non-Mocha fallback - "" whenever isMounted is false
+	char stablePrefix[32];	//!< same string as prefix, but set once in init() and never cleared on unmount - this device's identity for path->device resolution (FindDevice()), independent of current mount state
 	bool isPresent;			//!< found on the last poll
 	bool isMounted;
 	bool unmountRequired;
@@ -82,6 +83,7 @@ class WutFileSystemDriver : public FileSystemDriver
 		bool hasRemovableStorageDevices() const override { return true; }
 		bool isDevicePresent(int deviceId) const override;
 
+		const char * getDevicePrefix(int device) const override;
 		const char * getMountPath(int device) const override;
 		const int * getValidLoadDevices(int & outCount) const override;
 		const int * getValidSaveDevices(int & outCount) const override;

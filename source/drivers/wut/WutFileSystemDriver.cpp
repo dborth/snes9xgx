@@ -72,15 +72,20 @@ void WutFileSystemDriver::init()
 
 	if(sdUsesMochaPath)
 	{
+		snprintf(sd.stablePrefix, sizeof(sd.stablePrefix), "%s:/", storageSlots[slotSD].mountName);
 		// Same as USB below - a real presence check happens on the first
 		// pollStorageDevices() cycle, no need to force one here.
 	}
 	else
 	{
+		// WHBGetSdCardMountPath() returns Cafe OS's fixed FSA path (eg. "/vol/external01") independent of 
+		// whether the card is actually inserted/mounted right now
+		NormalizeSdFallbackPrefix(sd.stablePrefix);
+
 		bool mounted = WHBMountSdCard();
 		if(mounted)
 		{
-			NormalizeSdFallbackPrefix(sd.prefix);
+			strcpy(sd.prefix, sd.stablePrefix);
 			sd.isPresent = true;
 			sd.isMounted = true;
 		}
@@ -91,16 +96,19 @@ void WutFileSystemDriver::init()
 	memset(&usb1, 0, sizeof(usb1));
 	usb1.id = DEVICE_USB;
 	strcpy(usb1.name, "USB Storage 1");
+	snprintf(usb1.stablePrefix, sizeof(usb1.stablePrefix), "%s:/", storageSlots[slotUSB1].mountName);
 
 	WutDeviceState & usb2 = devices[slotUSB2];
 	memset(&usb2, 0, sizeof(usb2));
 	usb2.id = DEVICE_USB2;
 	strcpy(usb2.name, "USB Storage 2");
+	snprintf(usb2.stablePrefix, sizeof(usb2.stablePrefix), "%s:/", storageSlots[slotUSB2].mountName);
 
 	WutDeviceState & usb3 = devices[slotUSB3];
 	memset(&usb3, 0, sizeof(usb3));
 	usb3.id = DEVICE_USB3;
 	strcpy(usb3.name, "USB Storage 3");
+	snprintf(usb3.stablePrefix, sizeof(usb3.stablePrefix), "%s:/", storageSlots[slotUSB3].mountName);
 
 	smbDriver.init();
 
@@ -108,6 +116,7 @@ void WutFileSystemDriver::init()
 	memset(&smb, 0, sizeof(smb));
 	smb.id = DEVICE_SMB;
 	strcpy(smb.name, "Network Share");
+	strcpy(smb.stablePrefix, "smb:/");
 
 	deviceCount = slotCount;
 }
@@ -431,6 +440,12 @@ void WutFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 			deviceListChanged = true;
 		}
 	}
+}
+
+const char * WutFileSystemDriver::getDevicePrefix(int device) const
+{
+	int idx = findDeviceIndex(device);
+	return idx < 0 ? "" : devices[idx].stablePrefix;
 }
 
 const char * WutFileSystemDriver::getMountPath(int device) const

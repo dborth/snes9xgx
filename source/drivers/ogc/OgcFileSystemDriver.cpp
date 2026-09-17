@@ -166,11 +166,18 @@ MountResult OgcFileSystemDriver::mountDVD()
 
 MountResult OgcFileSystemDriver::mountStorageDevice(int deviceId)
 {
+	if(deviceId < 0 || deviceId >= MAX_STORAGE_DEVICES)
+		return MountResult::DeviceNotFound;
+
 	if(deviceId == DEVICE_SMB)
 		return smbDriver.isConnected() ? MountResult::Success : MountResult::DeviceNotFound;
 
 	if(isMounted[deviceId])
 		return MountResult::Success;
+
+	// Re-resolve hardware topology first, so a device inserted since the
+	// last poll cycle mounts on this attempt rather than the next one.
+	prepareMount(deviceId);
 
 	if(deviceId == DEVICE_DVD)
 		return mountDVD();
@@ -261,17 +268,31 @@ bool OgcFileSystemDriver::isDevicePresent(int deviceId) const
 	return slot->pollable && isPresentCache[deviceId];
 }
 
-const char * OgcFileSystemDriver::getMountPath(int device) const
+const char * OgcFileSystemDriver::getDevicePrefix(int device) const
 {
-	if(device < 0 || device >= MAX_STORAGE_DEVICES || !isMounted[device])
+	if(device < 0 || device >= MAX_STORAGE_DEVICES)
 		return "";
-		
+
 	if(device == DEVICE_SMB)
-		return smbDriver.getMountPath();
+		return "smb:/";
 
 	if(device == DEVICE_DVD)
 		return "dvd:/";
 
 	const OgcFatSlotDescriptor * slot = findFatSlot(device);
 	return slot ? slot->prefix : "";
+}
+
+const char * OgcFileSystemDriver::getMountPath(int device) const
+{
+	if(device < 0 || device >= MAX_STORAGE_DEVICES)
+		return "";
+
+	if(device == DEVICE_SMB)
+		return smbDriver.getMountPath();
+
+	if(!isMounted[device])
+		return "";
+
+	return getDevicePrefix(device);
 }

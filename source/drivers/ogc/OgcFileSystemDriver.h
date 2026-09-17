@@ -46,6 +46,7 @@ class OgcFileSystemDriver : public FileSystemDriver
 		bool hasRemovableStorageDevices() const override { return true; }
 		bool isDevicePresent(int deviceId) const override;
 
+		const char * getDevicePrefix(int device) const override;
 		const char * getMountPath(int device) const override;
 
 		SmbDriver * getSmb() override { return &smbDriver; }
@@ -71,6 +72,12 @@ class OgcFileSystemDriver : public FileSystemDriver
 		//! getDisc() currently points at). Returns true if this alone
 		//! constitutes a device-list change. No-op/false by default.
 		virtual bool pollPlatformExtra() { return false; }
+
+		//! Platform-specific work that must run immediately before a
+		//! user-initiated mount attempt on deviceId, so the attempt sees
+		//! current hardware topology instead of whatever the last poll
+		//! cycle happened to observe.
+		virtual void prepareMount(int deviceId) {}
 
 		MountResult mountFAT(int deviceId);
 		MountResult mountDVD();

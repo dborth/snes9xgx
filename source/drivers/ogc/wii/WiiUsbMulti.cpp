@@ -13,6 +13,7 @@
 #include <ogc/usbstorage.h>
 
 #include "WiiUsbMulti.h"
+#include "../../Mutex.h"
 
 // Not exported by ogc/usb.h - standard USB mass-storage class code (0x08),
 // matches the private #define of the same name in libogc2's usbstorage.c.
@@ -34,11 +35,26 @@ namespace
 
 	UsbSlot slots[WII_USB_MAX_DEVICES];
 
-	template<int N> bool Startup(DISC_INTERFACE *)    { return slots[N].open; }
-	template<int N> bool IsInserted(DISC_INTERFACE *) { return slots[N].open; }
+	//! Guards the slots[] table. scan() runs on the low-priority device
+	//! checking thread while mounts and directory reads run on the menu
+	//! thread, so without this a hot-unplug detected mid-read could close
+	//! a usbstorage_handle that USBStorage_Read() is using.
+	//!
+	//! Function-local static: a namespace-scope Mutex would be constructed
+	//! during static init, before Platform has wired up the ThreadDriver
+	//! it delegates to.
+	Mutex & SlotLock()
+	{
+		static Mutex lock;
+		return lock;
+	}
+
+	template<int N> bool Startup(DISC_INTERFACE *)    { MutexLock g(SlotLock()); return slots[N].open; }
+	template<int N> bool IsInserted(DISC_INTERFACE *) { MutexLock g(SlotLock()); return slots[N].open; }
 
 	template<int N> bool ReadSectors(DISC_INTERFACE *, sec_t sector, sec_t numSectors, void * buffer)
 	{
+		MutexLock g(SlotLock());
 		if(!slots[N].open)
 			return false;
 		return USBStorage_Read(&slots[N].handle, slots[N].lun, sector, numSectors, (u8 *)buffer) >= 0;
@@ -46,6 +62,7 @@ namespace
 
 	template<int N> bool WriteSectors(DISC_INTERFACE *, sec_t sector, sec_t numSectors, const void * buffer)
 	{
+		MutexLock g(SlotLock());
 		if(!slots[N].open)
 			return false;
 		return USBStorage_Write(&slots[N].handle, slots[N].lun, sector, numSectors, (const u8 *)buffer) >= 0;
@@ -54,16 +71,11 @@ namespace
 	template<int N> bool EraseSectors(DISC_INTERFACE *, sec_t, sec_t) { return false; }
 	template<int N> bool Flush(DISC_INTERFACE *) { return true; }
 
-	template<int N> bool Shutdown(DISC_INTERFACE *)
-	{
-		if(slots[N].open)
-			USBStorage_Close(&slots[N].handle);
-
-		slots[N].open = false;
-		slots[N].deviceId = -1;
-		slots[N].vid = slots[N].pid = 0;
-		return true;
-	}
+	//! Deliberately does NOT close the USB handle.
+	//!
+	//! Slot lifetime is owned by scan(), which is the only thing that can
+	//! tell whether a device is actually gone.
+	template<int N> bool Shutdown(DISC_INTERFACE *) { return true; }
 
 	//! Builds slot N's DISC_INTERFACE with the correct per-slot function pointers. numberOfSectors/bytesPerSector
 	//! start at 0 and are filled in by SlotOpen() on a successful mount.
@@ -91,10 +103,14 @@ namespace
 		UsbSlot & s = slots[i];
 		memset(&s.handle, 0, sizeof(s.handle));
 
-		if(USBStorage_Open(&s.handle, deviceId, vid, pid) < 0)
+		s32 openResult = USBStorage_Open(&s.handle, deviceId, vid, pid);
+		if(openResult < 0)
+		{
 			return false;
+		}
 
 		s32 maxLun = USBStorage_GetMaxLUN(&s.handle);
+
 		for(s32 lun = 0; lun < maxLun; lun++)
 		{
 			s32 retval = USBStorage_MountLUN(&s.handle, (u8)lun);
@@ -138,6 +154,8 @@ void WiiUsbMulti::init()
 
 void WiiUsbMulti::shutdown()
 {
+	MutexLock g(SlotLock());
+
 	for(auto & s : slots)
 	{
 		if(s.open)
@@ -152,6 +170,8 @@ bool WiiUsbMulti::scan()
 	alignas(32) usb_device_entry buffer[USB_DEVLIST_MAXSIZE];
 	u8 deviceCount = 0;
 	bool changed = false;
+
+	MutexLock g(SlotLock());
 
 	if(USB_GetDeviceList(buffer, USB_DEVLIST_MAXSIZE, USB_CLASS_MASS_STORAGE, &deviceCount) < 0)
 		deviceCount = 0;

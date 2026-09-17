@@ -19,4 +19,5 @@ class WiiFileSystemDriver : public OgcFileSystemDriver
 	protected:
 		void shutdownPlatform() override;
 		bool pollPlatformExtra() override;
+		void prepareMount(int deviceId) override;
 };

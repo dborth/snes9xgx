@@ -92,8 +92,14 @@ class FileSystemDriver
 		//! whatever pollStorageDevices() last observed
 		virtual bool isDevicePresent(int deviceId) const = 0;
 
+		//! The devoptab prefix this device *would* use (eg. "usb:/"),
+		//! regardless of whether it is currently mounted.
+		virtual const char * getDevicePrefix(int device) const = 0;
+
 		//! devoptab-style mount path for device (eg. "sd:/"), or "" if
 		//! device isn't recognized or currently mounted on this platform.
+		//! Only for "is this usable already?" call sites - use
+		//! getDevicePrefix() to map a path back to a device id.
 		virtual const char * getMountPath(int device) const = 0;
 
 		//! Writes getMountPath(device) + suffix into out (bounds-checked to
