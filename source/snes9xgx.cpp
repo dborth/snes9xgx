@@ -42,7 +42,7 @@ static GameCubePlatform platformInstance;
 #elif HW_RVL
 #include "drivers/ogc/wii/WiiPlatform.h"
 static WiiPlatform platformInstance;
-#elif __WUT__
+#elif __WIIU__
 #include "drivers/wut/WutPlatform.h"
 static WutPlatform platformInstance;
 #endif
