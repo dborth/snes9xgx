@@ -372,7 +372,7 @@ decodePrefsData ()
 
 	// Menu Settings
 
-	loadXMLSetting(&EmuSettings.wiimoteOrientation, "WiimoteOrientation");
+	loadXMLSetting(&EmuSettings.wiimoteOrientation, "wiimoteOrientation");
 	loadXMLSetting(&EmuSettings.ExitAction, "ExitAction");
 	loadXMLSetting(&EmuSettings.MusicVolume, "MusicVolume");
 	loadXMLSetting(&EmuSettings.SFXVolume, "SFXVolume");
