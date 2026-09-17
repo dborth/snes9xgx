@@ -38,6 +38,12 @@ class WutEmulatorAudio : public EmulatorAudioDriver
 		void init() override;
 		void resetAudio() override;
 
+		//! No-op. Voices are armed lazily by audioCallback() itself once enough have queued.
+		void start() {};
+
+		//! Hard-stops both AX voices (AX_VOICE_STATE_STOPPED).
+		void stop();
+
 		// Called only via the S9xAudioCallback trampoline above.
 		void audioCallback();
 

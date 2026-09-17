@@ -18,7 +18,9 @@ class WiiAudioDriver : public AudioDriver
 		void init() override;
 		void shutdown() override;
 		void startMenuAudio() override;
+		void stopMenuAudio() override;
 		void startEmulatorAudio() override;
+		void stopEmulatorAudio() override;
 
 		OgcEmulatorAudio* getEmulatorAudio() override { return emulatorAudio; }
 
@@ -40,8 +42,6 @@ class WiiAudioDriver : public AudioDriver
 		void handleStreamCallback(int voice);
 
 	private:
-		void stopMenuAudio();
-		void stopEmulatorAudio();
 		GuiSoundOggPlayer oggPlayer;
 		int streamVolume;
 		OgcEmulatorAudio* emulatorAudio = nullptr;

@@ -17,8 +17,10 @@ class GameCubeAudioDriver : public AudioDriver
 		~GameCubeAudioDriver() override { delete emulatorAudio; }
 
 		void init() override { AUDIO_Init(NULL); AUDIO_SetDSPSampleRate(AI_SAMPLERATE_48KHZ); AUDIO_RegisterDMACallback(AudioDMACallback); emulatorAudio = new OgcEmulatorAudio(); emulatorAudio->init(); }
-		void startMenuAudio() override { S9xSetSamplesAvailableCallback(NULL, NULL); AUDIO_StopDMA(); }
-		void startEmulatorAudio() override { emulatorAudio->resetAudio(); S9xSetSamplesAvailableCallback(S9xAudioCallback, NULL); }
+		void startMenuAudio() override {}
+		void stopMenuAudio() override {}
+		void startEmulatorAudio() override { emulatorAudio->resetAudio(); }
+		void stopEmulatorAudio() override { AUDIO_StopDMA(); }
 		void shutdown() override { AUDIO_StopDMA(); AUDIO_RegisterDMACallback(NULL); }
 
 		OgcEmulatorAudio* getEmulatorAudio() override { return emulatorAudio; }

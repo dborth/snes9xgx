@@ -19,7 +19,9 @@ class AudioDriver
 		virtual void init() = 0;
 		virtual void shutdown() = 0;
 		virtual void startEmulatorAudio() = 0;
+		virtual void stopEmulatorAudio() = 0;
 		virtual void startMenuAudio() = 0;
+		virtual void stopMenuAudio() = 0;
 
 		//! The emulator-core-facing audio backend. Distinct from the
 		//! voice/stream API below, which is used for menu sound effects

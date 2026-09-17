@@ -63,6 +63,7 @@ OgcEmulatorAudio::~OgcEmulatorAudio() {
 }
 
 void OgcEmulatorAudio::init() {
+	S9xSetSamplesAvailableCallback(S9xAudioCallback, NULL);
 }
 
 void OgcEmulatorAudio::dmaCallback() {
@@ -126,10 +127,6 @@ void OgcEmulatorAudio::audioCallback() {
 	S9xFinalizeSamples();
 
 	if (appRequest == AppRequest::MENU) {
-		// Stop playback while the screenshot/config overlay is active. Reset the
-		// ring so that once the request clears, the start path below re-primes
-		// and restarts DMA cleanly instead of leaving playback dead on a stale,
-		// never-rearmed buffer index.
 		AUDIO_StopDMA();
 		resetAudio();
 		return;

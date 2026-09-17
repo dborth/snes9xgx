@@ -103,7 +103,6 @@ int main(int argc, char *argv[])
 			// since we're entering the menu
 			ResumeDeviceCheckingThread();
 			platform->getAudio()->startMenuAudio();
-			SwitchMemoryModeMenu();
 
 			if(SNESROMSize == 0)
 				MainMenu(MENU_GAMESELECTION);
@@ -111,9 +110,17 @@ int main(int argc, char *argv[])
 				MainMenu(MENU_GAME);
 		}
 
+		platform->getAudio()->stopMenuAudio();
+
 		if(platform->shouldExit()) {
 			break;
 		}
+
+		// stop checking if devices were removed/inserted
+		// since we're starting emulation again
+		HaltDeviceCheckingThread();
+
+		SwitchMemoryModeGame();
 
 		if (firstRun)
 		{
@@ -156,16 +163,10 @@ int main(int argc, char *argv[])
 		Settings.SuperScopeMaster = (EmuSettings.Controller == CTRL_SCOPE ? true : false);
 		Settings.MouseMaster = (EmuSettings.Controller == CTRL_MOUSE || EmuSettings.Controller == CTRL_MOUSE_PORT2 || EmuSettings.Controller == CTRL_MOUSE_BOTH_PORTS);
 		Settings.JustifierMaster = (EmuSettings.Controller == CTRL_JUST ? true : false);
-		SetControllers ();
-
-		// stop checking if devices were removed/inserted
-		// since we're starting emulation again
-		HaltDeviceCheckingThread();
-
-		SwitchMemoryModeGame();
+		SetControllers();
 
 		platform->getVideo()->setFrameTimer(0);
-		setFrameTimerMethod (); // set frametimer method every time a ROM is loaded
+		setFrameTimerMethod(); // set frametimer method every time a ROM is loaded
 
 		platform->getVideo()->getEmulatorVideo()->forceVideoUpdate();
 #if defined(HW_RVL) || defined(HW_DOL)
@@ -178,23 +179,18 @@ int main(int argc, char *argv[])
 			if(platform->getStatus() == Status::Exiting || event == SystemEvent::ShutdownRequested)
 				break;
 
-			S9xMainLoop ();
-			ReportButtons ();
-			ClearButtonsReported ();
+			S9xMainLoop();
+			ReportButtons();
+			ClearButtonsReported();
 
 			if(event == SystemEvent::ResetRequested)
-			{
 				S9xSoftReset (); // reset game
-			}
-			if (appRequest == AppRequest::MENU)
-			{
-				appRequest = AppRequest::NONE;
-				SwitchMemoryModeMenu();
-				TakeScreenshot();
-				platform->getVideo()->startMenuVideo();
-				break;
-			}
 		} // emulation loop
+
+		platform->getAudio()->stopEmulatorAudio();
+		SwitchMemoryModeMenu();
+		TakeScreenshot();
+		platform->getVideo()->startMenuVideo();
 	} // main loop
 	ExitApp();
 }

@@ -112,12 +112,13 @@ void WutEmulatorAudio::init() {
 		AXVoiceEnd(voiceR);
 	}
 
+	S9xSetSamplesAvailableCallback(S9xAudioCallback, NULL);
 	resetAudio();
 }
 
 void WutEmulatorAudio::resetAudio() {
-	if (voiceL) AXSetVoiceState(voiceL, 0);
-	if (voiceR) AXSetVoiceState(voiceR, 0);
+	if (voiceL) { AXSetVoiceState(voiceL, AX_VOICE_STATE_STOPPED); AXSetVoiceCurrentOffset(voiceL, 0); }
+	if (voiceR) { AXSetVoiceState(voiceR, AX_VOICE_STATE_STOPPED); AXSetVoiceCurrentOffset(voiceR, 0); }
 
 	writeOffset = 0;
 	started = false;
@@ -130,6 +131,12 @@ void WutEmulatorAudio::resetAudio() {
 	memset(ringR, 0, sizeof(ringR));
 	DCFlushRange(ringL, sizeof(ringL));
 	DCFlushRange(ringR, sizeof(ringR));
+}
+
+void WutEmulatorAudio::stop() {
+	if (voiceL) AXSetVoiceState(voiceL, AX_VOICE_STATE_STOPPED);
+	if (voiceR) AXSetVoiceState(voiceR, AX_VOICE_STATE_STOPPED);
+	started = false;
 }
 
 /****************************************************************************
@@ -171,8 +178,8 @@ void WutEmulatorAudio::armAndStartVoices() {
 	lastHwFrame = 0;
 	queuedFrames = writeOffset;
 
-	AXSetVoiceState(voiceL, 1);
-	AXSetVoiceState(voiceR, 1);
+	AXSetVoiceState(voiceL, AX_VOICE_STATE_PLAYING);
+	AXSetVoiceState(voiceR, AX_VOICE_STATE_PLAYING);
 }
 
 /****************************************************************************
@@ -248,16 +255,6 @@ void WutEmulatorAudio::audioCallback() {
 
 	S9xUpdateDynamicRate(rate);
 	S9xFinalizeSamples();
-
-	if (appRequest == AppRequest::MENU) {
-		// Stop playback while the screenshot/config overlay is active. Reset
-		// so that once the request clears, the start path below re-primes
-		// and restarts the voices cleanly instead of looping stale audio.
-		if (voiceL) AXSetVoiceState(voiceL, 0);
-		if (voiceR) AXSetVoiceState(voiceR, 0);
-		resetAudio();
-		return;
-	}
 
 	while (S9xGetSampleCount() >= CHUNK_SAMPLES) {
 		unplayed = getUnplayedBuffers();

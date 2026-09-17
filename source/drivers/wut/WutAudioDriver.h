@@ -22,7 +22,9 @@ class WutAudioDriver : public AudioDriver
 
 		void init() override;
 		void startMenuAudio() override;
+		void stopMenuAudio() override;
 		void startEmulatorAudio() override;
+		void stopEmulatorAudio() override;
 		void shutdown() override;
 
 		WutEmulatorAudio* getEmulatorAudio() override { return emulatorAudio; }
@@ -46,9 +48,6 @@ class WutAudioDriver : public AudioDriver
 		void handleStreamCallback();
 
 	private:
-		void stopMenuAudio();
-		void stopEmulatorAudio();
-
 		struct WutVoiceSlot {
 			AXVoice* voice;
 			bool active;
