@@ -12,12 +12,12 @@
 #include <stdalign.h>
 #include <string.h>
 
-static DvmWutUsbVolume g_usbVolumes[DVM_WUT_MAX_USB_VOLUMES];
-static bool             g_driversRegistered = false;
+static DvmWutVolume volumes[DVM_WUT_MAX_VOLUMES];
+static bool          driversRegistered = false;
 
 bool dvmWutInit(void)
 {
-	if(g_driversRegistered)
+	if(driversRegistered)
 		return true;
 
 	// Both register idempotently (dvmRegisterFsDriver() no-ops on a
@@ -26,42 +26,42 @@ bool dvmWutInit(void)
 	bool exfatOk = dvmRegisterFsDriver(&g_exfatFsDriver);
 	bool ntfsOk  = dvmRegisterFsDriver(&g_ntfsFsDriver);
 
-	g_driversRegistered = vfatOk && exfatOk && ntfsOk;
-	return g_driversRegistered;
+	driversRegistered = vfatOk && exfatOk && ntfsOk;
+	return driversRegistered;
 }
 
-static DvmWutUsbVolume * findVolume(const char * name)
+static DvmWutVolume * findVolume(const char * name)
 {
-	for(int i = 0; i < DVM_WUT_MAX_USB_VOLUMES; i++)
-		if(g_usbVolumes[i].name[0] != '\0' && strcmp(g_usbVolumes[i].name, name) == 0)
-			return &g_usbVolumes[i];
+	for(int i = 0; i < DVM_WUT_MAX_VOLUMES; i++)
+		if(volumes[i].name[0] != '\0' && strcmp(volumes[i].name, name) == 0)
+			return &volumes[i];
 	return NULL;
 }
 
-static DvmWutUsbVolume * claimVolumeSlot(const char * name)
+static DvmWutVolume * claimVolumeSlot(const char * name)
 {
-	DvmWutUsbVolume * vol = findVolume(name);
+	DvmWutVolume * vol = findVolume(name);
 	if(vol)
 		return vol;
 
-	for(int i = 0; i < DVM_WUT_MAX_USB_VOLUMES; i++)
+	for(int i = 0; i < DVM_WUT_MAX_VOLUMES; i++)
 	{
-		if(g_usbVolumes[i].name[0] == '\0')
+		if(volumes[i].name[0] == '\0')
 		{
-			strncpy(g_usbVolumes[i].name, name, sizeof(g_usbVolumes[i].name) - 1);
-			g_usbVolumes[i].name[sizeof(g_usbVolumes[i].name) - 1] = '\0';
-			return &g_usbVolumes[i];
+			strncpy(volumes[i].name, name, sizeof(volumes[i].name) - 1);
+			volumes[i].name[sizeof(volumes[i].name) - 1] = '\0';
+			return &volumes[i];
 		}
 	}
 	return NULL;
 }
 
-bool dvmWutMountUsb(const char * name, DISC_INTERFACE * iface, unsigned cachePages, unsigned sectorsPerPage)
+bool dvmWutMountVolume(const char * name, DISC_INTERFACE * iface, unsigned cachePages, unsigned sectorsPerPage)
 {
-	if(!g_driversRegistered || !name || !iface)
+	if(!driversRegistered || !name || !iface)
 		return false;
 
-	DvmWutUsbVolume * vol = claimVolumeSlot(name);
+	DvmWutVolume * vol = claimVolumeSlot(name);
 	if(!vol || vol->isMounted)
 		return false;
 
@@ -97,9 +97,9 @@ bool dvmWutMountUsb(const char * name, DISC_INTERFACE * iface, unsigned cachePag
 	return true;
 }
 
-void dvmWutUnmountUsb(const char * name)
+void dvmWutUnmountVolume(const char * name)
 {
-	DvmWutUsbVolume * vol = findVolume(name);
+	DvmWutVolume * vol = findVolume(name);
 	if(!vol || !vol->isMounted)
 		return;
 
@@ -113,12 +113,28 @@ void dvmWutUnmountUsb(const char * name)
 	vol->isMounted = false;
 }
 
-bool dvmWutUsbStillPresent(const char * name)
+bool dvmWutVolumeStillPresent(const char * name)
 {
-	DvmWutUsbVolume * vol = findVolume(name);
+	DvmWutVolume * vol = findVolume(name);
 	if(!vol || !vol->isMounted || !vol->disc)
 		return false;
 
 	alignas(LIBDVM_BUFFER_ALIGN) uint8_t scratch[512];
 	return dvmDiscProbePresence((DvmDisc *)vol->disc, scratch);
+}
+
+bool dvmWutGetVolumeLabel(const char * name, char * labelOut, size_t labelOutSize)
+{
+	if(!name || !labelOut || labelOutSize < 12)
+		return false;
+
+	labelOut[0] = '\0';
+
+	// vfat/exfat
+	if(fatGetVolumeLabel(name, labelOut) && labelOut[0] != '\0')
+		return true;
+
+	// ntfs
+	labelOut[0] = '\0';
+	return ntfsGetVolumeLabel(name, labelOut, labelOutSize) && labelOut[0] != '\0';
 }

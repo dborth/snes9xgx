@@ -116,6 +116,9 @@ static int ScanForLoadDevice(bool tried[DEVICE_LENGTH], bool mounted[DEVICE_LENG
 	for (int i = 1; i < numLoadDevices; i++) {
 		int id = loadDevices[i];
 
+		if (id == DEVICE_DVD || id == DEVICE_SD_GCLOADER)
+			continue;
+
 		if (!tried[id]) {
 			tried[id] = true;
 			mounted[id] = ChangeInterface(id, SILENT);
@@ -147,6 +150,9 @@ static int ScanForSaveDevice(bool tried[DEVICE_LENGTH], bool mounted[DEVICE_LENG
 
 	for (int i = 1; i < numSaveDevices; i++) {
 		int id = saveDevices[i];
+
+		if (id == DEVICE_SD_GCLOADER)
+			continue;
 
 		if (!tried[id]) {
 			tried[id] = true;

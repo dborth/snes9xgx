@@ -33,23 +33,12 @@ enum Device
 struct StorageDevice
 {
 	int  id;
-	char name[20];
 	char prefix[32];
+	char name[20];
+	char volumeLabel[16];
 	bool removable;          //!< can this device disappear at runtime? (polled by the device-checking thread)
-	bool autoMountAtStartup; //!< silently attempted at boot (eg. Wii's SD/USB)
-
-	// Optional capacity/health telemetry. A driver that can't (or hasn't yet)
-	// determined these leaves metricsValid false - check it before trusting
-	// totalBytes/freeBytes/blockSize/readOnly. Aggregate-initialized structs
-	// (eg. WiiFileSystemDriver's static device table) get these zeroed for
-	// free since they're trailing members.
-	uint64_t	totalBytes;
-	uint64_t	freeBytes;
-	uint32_t	blockSize;      //!< allocation unit / cluster size in bytes - useful for sizing savestate writes
-	bool		readOnly;
-	bool		metricsValid;
-	char		label[16];
-	bool		alwaysListed; //!< show in a device listing unconditionally, regardless of isDevicePresent()
+	bool autoMountAtStartup; //!< silently attempted at boot
+	bool alwaysListed; //!< show in a device listing unconditionally, regardless of isDevicePresent()
 };
 
 //! Result of a single mount attempt. Deliberately has no retry/backoff behavior baked in
