@@ -32,12 +32,12 @@ namespace
 	{
 		switch (priority)
 		{
-			case ThreadPriority::Idle:         return 0;
-			case ThreadPriority::Low:          return 32;
-			case ThreadPriority::Normal:       return 64;
-			case ThreadPriority::High:         return 80;
-			case ThreadPriority::TimeCritical: return 110;
-			default:                           return 64;
+			case ThreadPriority::Idle:         return LWP_PRIO_IDLE;
+			case ThreadPriority::Low:          return LWP_PRIO_LOWEST;
+			case ThreadPriority::Normal:       return LWP_PRIO_NORMAL;
+			case ThreadPriority::High:         return LWP_PRIO_HIGHEST;
+			case ThreadPriority::TimeCritical: return LWP_PRIO_TIME_CRITICAL;
+			default:                           return LWP_PRIO_NORMAL;
 		}
 	}
 }
@@ -66,7 +66,7 @@ bool OgcThreadDriver::createThread(ThreadEntry entry, void * arg, uint32_t stack
 
 	int nativePriority = MapOgcPriority(priority);
 	int32_t res = LWP_CreateThread(&handle->thread, OgcThreadTrampoline, handle, nullptr, stackSize, nativePriority);
-	if(res < 0)
+	if(res != 0)
 	{
 		*outHandle = nullptr;
 		delete handle;
@@ -123,13 +123,13 @@ bool OgcThreadDriver::isThreadSuspended(void * thread)
 	if(!thread)
 		return false;
 
-	return LWP_ThreadIsSuspended(static_cast<OgcThreadHandle *>(thread)->thread) != 0;
+	return LWP_ThreadIsSuspended(static_cast<OgcThreadHandle *>(thread)->thread) != FALSE;
 }
 
 void * OgcThreadDriver::createMutex()
 {
 	mutex_t * mutex = new mutex_t;
-	if(LWP_MutexInit(mutex, false) < 0)
+	if(LWP_MutexInit(mutex, false) != 0)
 	{
 		delete mutex;
 		return nullptr;
@@ -167,7 +167,7 @@ void OgcThreadDriver::unlockMutex(void * mutex)
 void * OgcThreadDriver::createCond()
 {
 	cond_t * cond = new cond_t;
-	if(LWP_CondInit(cond) < 0)
+	if(LWP_CondInit(cond) != 0)
 	{
 		delete cond;
 		return nullptr;

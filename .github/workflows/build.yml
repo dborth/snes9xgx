@@ -17,13 +17,6 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Install Wii U dependencies
-      if: ${{ matrix.image == 'WiiU' }}
-      run: dkp-pacman -Syu --noconfirm wiiu-dev
-
-    - name: Install Ninja build tool
-      run: apt-get update && apt-get install -y ninja-build
-
     - name: Build and install libmocha
       if: ${{ matrix.image == 'WiiU' }}
       run: |

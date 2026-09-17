@@ -41,7 +41,7 @@ void InitMemManager ()
 {
 	#ifdef HW_DOL
 	VM_Init(ARAM_SIZE, MRAM_BACKING); // Setup Virtual Memory with the entire ARAM
-	aram_space = create_mspace_with_base((void *)ARAM_VM_BASE, ARAM_SIZE, 0);
+	aram_space = create_mspace_with_base((void *)ARAM_VM_BASE, ARAM_SIZE, 1);
 	mspace_set_footprint_limit(aram_space, ARAM_SIZE);
 	romPtr = (uint8 *)extmem_malloc(Memory.MAX_ROM_SIZE + 0x200 + 0x8000);
 	void * decodeScratch = extmem_malloc(IMAGE_DECODE_SCRATCH_SIZE);
@@ -83,16 +83,7 @@ char* extmem_strdup(const char *s)
 #if HW_RVL
 	return mem2_strdup(s);
 #else
-	if (!s)
-		return nullptr;
-
-	size_t len = strlen(s) + 1;
-	char *dup = (char *)extmem_malloc(len);
-
-	if (dup)
-		memcpy(dup, s, len);
-
-	return dup;
+	return mspace_strdup(aram_space, s);
 #endif
 }
 

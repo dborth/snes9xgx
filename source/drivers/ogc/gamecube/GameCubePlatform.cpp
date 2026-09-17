@@ -120,9 +120,23 @@ void GameCubePlatform::shutdown()
 /****************************************************************************
  * Console/memory info
  ***************************************************************************/
+static u32 GetCPUSpeedMHz() {
+	return SYS_GetCoreFrequency() / 1000000;
+}
+
 const char* GameCubePlatform::getConsoleDetails() {
 	static char description[64];
-	snprintf(description, sizeof(description), "GameCube (486 MHz)"); // 162 MHz bus * 3x multiplier
+	u32 mhz = GetCPUSpeedMHz();
+
+	char speedStr[16];
+	if (mhz >= 1000) {
+		snprintf(speedStr, sizeof(speedStr), "%.2f GHz", mhz / 1000.0f);
+	} else {
+		snprintf(speedStr, sizeof(speedStr), "%u MHz", mhz);
+	}
+
+	snprintf(description, sizeof(description), "GameCube (%s)", speedStr);
+
 	return description;
 }
 

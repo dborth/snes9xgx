@@ -12,7 +12,7 @@
 #if defined(__WIIU__)
 #include <coreinit/time.h>
 #else
-#include <ogc/lwp_watchdog.h>
+#include <ogc/timesupp.h>
 #endif
 
 //!An opaque monotonic timestamp, returned by SystemTime::now(). Not
@@ -28,7 +28,7 @@ class SystemTime
 			#if defined(__WIIU__)
 			return (Ticks)OSGetSystemTime();
 			#else
-			return (Ticks)gettime();
+			return (Ticks)SYS_GetSystemTime();
 			#endif
 		}
 

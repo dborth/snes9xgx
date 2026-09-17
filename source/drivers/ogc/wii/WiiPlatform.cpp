@@ -254,13 +254,13 @@ static ConsoleType GetConsoleType() {
 
 static u32 GetCPUSpeedMHz() {
 	u32 busClock = SYS_GetBusFrequency(); // ~243 MHz on Wii/vWii
-	u32 multiplier = SYS_GetCoreMultiplier(); // 3x standard, 5x+ under unlocked vWii/VC
+	f32 multiplier = SYS_GetCoreMultiplier(); // 3x standard, 5x+ under unlocked vWii/VC
 
-	if (busClock > 0 && multiplier > 0) {
-		u64 coreClockHz = (u64)busClock * multiplier;
-		return (u32)(coreClockHz / 1000000);
+	if (multiplier > 0.0f) {
+		f32 coreClockHz = (f32)busClock * multiplier;
+		return (u32)(coreClockHz / 1000000.0f);
 	}
-	return 729; // Fallback
+	return SYS_GetCoreFrequency() / 1000000; // Fallback
 }
 
 const char* WiiPlatform::getConsoleDetails() {
@@ -301,7 +301,7 @@ const char* WiiPlatform::getMemoryFreeInfo() {
 
 	// Wii uses libogc2's malloc_wii split-heap mspace wrapper.
 	// fordblks tracks the actual free memory inside the MEM1 pool.
-	struct mallinfo mi = mallinfo();
+	struct mallinfo mi = mem1_mallinfo();
 	float mem1_mb = (float)mi.fordblks / (1024.0f * 1024.0f);
 
 	uint32_t mem2_bytes = SYS_GetArena2Size();

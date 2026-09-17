@@ -236,13 +236,14 @@ void OgcVideoDriver::startMenuVideo()
 	GXColor background = {0, 0, 0, 255};
 	GX_SetCopyClear (background, GX_MAX_Z24);
 
+	GX_SetScissor(0,0,videoMode->fbWidth,videoMode->efbHeight);
+	GX_SetDispCopyFrame2Field(videoMode->copy_interlaced);
+	GX_SetDispCopySrc(0,0,videoMode->fbWidth,videoMode->efbHeight);
 	yscale = GX_GetYScaleFactor(videoMode->efbHeight,videoMode->xfbHeight);
 	xfbHeight = GX_SetDispCopyYScale(yscale);
-	GX_SetScissor(0,0,videoMode->fbWidth,videoMode->efbHeight);
-	GX_SetDispCopySrc(0,0,videoMode->fbWidth,videoMode->efbHeight);
 	GX_SetDispCopyDst(videoMode->fbWidth,xfbHeight);
 	GX_SetCopyFilter(videoMode->aa,videoMode->sample_pattern,GX_TRUE,videoMode->vfilter);
-	GX_SetFieldMode(videoMode->field_rendering,((videoMode->viHeight==2*videoMode->xfbHeight)?GX_ENABLE:GX_DISABLE));
+	GX_SetFieldMode(videoMode->field_rendering,((videoMode->viHeight/videoMode->efbHeight==2)?GX_ENABLE:GX_DISABLE));
 
 	if (videoMode->aa)
 		GX_SetPixelFmt(GX_PF_RGB565_Z16, GX_ZC_LINEAR);
