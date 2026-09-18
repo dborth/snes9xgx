@@ -10,6 +10,7 @@
  * OgcFileSystemDriver's class comment.
  ***************************************************************************/
 #include <sdcard/wiisd_io.h>
+#include <ogc/usb.h>
 #include <ogc/usbstorage.h>
 #include <di/di.h>
 
@@ -32,6 +33,7 @@ static const OgcFatSlotDescriptor wiiFatSlots[] =
 void WiiFileSystemDriver::init()
 {
 	DI_Init();
+	USB_Initialize();
 	USBStorage_Initialize();
 	WiiUsbMulti::init();
 	WiiUsbMulti::scan(); // populate initial slot state before the auto-mount pass below
