@@ -12,6 +12,7 @@
 #define _FILEBROWSER_H_
 
 #include <unistd.h>
+#include <stdint.h>
 #include "snes9xgx.h"
 
 #define MAXJOLIET 255
@@ -43,6 +44,7 @@ typedef struct
 extern BROWSERINFO browser;
 extern BROWSERENTRY * browserList;
 extern bool browserDeviceListChanged;
+extern volatile uint32_t removedDeviceMask;
 
 enum
 {

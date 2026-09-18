@@ -1159,6 +1159,21 @@ static int MenuGameSelection()
 	{
 		if(!UpdateGui()) return MENU_EXIT;
 
+		// A device the currently-open folder lives on just disappeared - the cached browserList is stale
+		if(removedDeviceMask != 0)
+		{
+			if(browser.dir[0] != 0)
+			{
+				int currentDevice;
+				if(!FindDevice(browser.dir, &currentDevice) || (removedDeviceMask & (1u << currentDevice)))
+				{
+					browser.dir[0] = 0;
+					browserDeviceListChanged = true;
+				}
+			}
+			removedDeviceMask = 0;
+		}
+
 		// A device appeared/disappeared since the last check  - refresh the device listing
 		if(browserDeviceListChanged)
 		{

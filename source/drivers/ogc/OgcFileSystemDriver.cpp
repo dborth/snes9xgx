@@ -164,6 +164,13 @@ MountResult OgcFileSystemDriver::mountDVD()
 	return MountResult::Success;
 }
 
+MountResult OgcFileSystemDriver::attemptFatMount(int deviceId)
+{
+	MountResult result = mountFAT(deviceId);
+	mountFailed[deviceId] = (result == MountResult::MountFailed);
+	return result;
+}
+
 MountResult OgcFileSystemDriver::mountStorageDevice(int deviceId)
 {
 	if(deviceId < 0 || deviceId >= MAX_STORAGE_DEVICES)
@@ -183,7 +190,7 @@ MountResult OgcFileSystemDriver::mountStorageDevice(int deviceId)
 		return mountDVD();
 
 	if(findFatSlot(deviceId))
-		return mountFAT(deviceId);
+		return attemptFatMount(deviceId);
 
 	return MountResult::DeviceNotFound;
 }
@@ -218,6 +225,10 @@ void OgcFileSystemDriver::invalidateStorageDevice(int deviceId)
 	unmountRequired[deviceId] = true;
 	labelFetched[deviceId] = false;
 	volumeLabel[deviceId][0] = '\0';
+
+	// Whatever shows up in this slot next (even the same disk, replugged)
+	// gets exactly one fresh attempt - see attemptFatMount().
+	mountFailed[deviceId] = false;
 }
 
 void OgcFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES], int & outRemovedCount, bool & deviceListChanged)
@@ -240,7 +251,9 @@ void OgcFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 		if(present != isPresentCache[slot.deviceId])
 		{
 			isPresentCache[slot.deviceId] = present;
-			deviceListChanged = true;
+
+			// Hardware topology changed either way
+			mountFailed[slot.deviceId] = false;
 		}
 
 		if(isMounted[slot.deviceId] && !present)
@@ -248,6 +261,13 @@ void OgcFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 			invalidateStorageDevice(slot.deviceId);
 			if(outRemovedCount < MAX_STORAGE_DEVICES)
 				removedIds[outRemovedCount++] = slot.deviceId;
+			deviceListChanged = true;
+		}
+		else if(present && !isMounted[slot.deviceId] && !mountFailed[slot.deviceId])
+		{
+			// Exactly one attempt per insertion
+			if(attemptFatMount(slot.deviceId) == MountResult::Success)
+				deviceListChanged = true;
 		}
 	}
 }
@@ -261,11 +281,10 @@ bool OgcFileSystemDriver::isDevicePresent(int deviceId) const
 		return isPresentCache[DEVICE_DVD]; // informational only - DVD is alwaysListed
 
 	const OgcFatSlotDescriptor * slot = findFatSlot(deviceId);
-	if(!slot)
-		return false;
+	if(!slot || !slot->pollable)
+		return false; // non-pollable slots (GC Loader) can't be known without an explicit mount attempt
 
-	// Non-pollable slots (GC Loader) can't be known without an explicit mount attempt actually touching the DVD bus
-	return slot->pollable && isPresentCache[deviceId];
+	return isMounted[deviceId];
 }
 
 const char * OgcFileSystemDriver::getDevicePrefix(int device) const

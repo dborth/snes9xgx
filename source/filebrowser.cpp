@@ -37,6 +37,7 @@ extern char* strcasestr(const char *, const char *);
 BROWSERINFO browser;
 BROWSERENTRY * browserList = nullptr; // list of files/folders in browser
 bool browserDeviceListChanged = false;
+volatile uint32_t removedDeviceMask = 0;
 
 static char szpath[MAXPATHLEN];
 char szname[MAXPATHLEN];

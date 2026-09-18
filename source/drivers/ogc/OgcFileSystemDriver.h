@@ -81,14 +81,16 @@ class OgcFileSystemDriver : public FileSystemDriver
 
 		MountResult mountFAT(int deviceId);
 		MountResult mountDVD();
+		MountResult attemptFatMount(int deviceId);
 
 		const OgcFatSlotDescriptor * findFatSlot(int deviceId) const;
 
-		bool isMounted[MAX_STORAGE_DEVICES]       = { false };
-		bool unmountRequired[MAX_STORAGE_DEVICES] = { false };
-		bool isPresentCache[MAX_STORAGE_DEVICES]  = { false };
-		bool labelFetched[MAX_STORAGE_DEVICES]    = { false }; //!< fetched since the last mount/removal - see mountFAT()/invalidateStorageDevice()
-		char volumeLabel[MAX_STORAGE_DEVICES][16] = { { 0 } };
+		bool isMounted[MAX_STORAGE_DEVICES]         = { false };
+		bool unmountRequired[MAX_STORAGE_DEVICES]   = { false };
+		bool isPresentCache[MAX_STORAGE_DEVICES]    = { false }; //!< raw hardware insertion only - see isDevicePresent()'s comment for why this is no longer what it returns
+		bool mountFailed[MAX_STORAGE_DEVICES]       = { false }; //!< set by a real MountFailed; cleared on removal/reinsertion - see attemptFatMount()
+		bool labelFetched[MAX_STORAGE_DEVICES]      = { false }; //!< fetched since the last mount/removal - see mountFAT()/invalidateStorageDevice()
+		char volumeLabel[MAX_STORAGE_DEVICES][16]   = { { 0 } };
 
 		OgcSmbDriver smbDriver;
 };
