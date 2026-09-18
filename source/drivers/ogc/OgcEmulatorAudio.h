@@ -25,6 +25,10 @@ class OgcEmulatorAudio : public EmulatorAudioDriver
 		void init() override;
 		void resetAudio() override;
 
+		//! Halts DMA and resyncs dma_started so the pre-roll logic in
+		//! audioCallback() correctly re-arms on the next entry.
+		void stopAudio();
+
 		// Called only via the AudioDMACallback/S9xAudioCallback trampolines above.
 		void dmaCallback();
 		void audioCallback();

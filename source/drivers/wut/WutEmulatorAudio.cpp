@@ -142,8 +142,7 @@ void WutEmulatorAudio::stop() {
 /****************************************************************************
  * armAndStartVoices
  *
- * Lazily called the first time enough samples have queued up after a
- * resetAudio()
+ * Lazily called the first time enough is queued to start
  * ringL/ringR are fixed-address, fixed-size buffers, so offsets/src only
  * need to be (re-)established here, not on every mix.
  ***************************************************************************/
@@ -151,12 +150,16 @@ void WutEmulatorAudio::armAndStartVoices() {
 	if (!voiceL || !voiceR)
 		return;
 
+	// The oldest sample still queued: playback must resume from here
+	uint32_t startFrame = (writeOffset + RING_FRAMES - (queuedFrames % RING_FRAMES)) % RING_FRAMES;
+
 	AXVoiceOffsets offsets;
 	memset(&offsets, 0, sizeof(offsets));
 	offsets.dataType = AX_VOICE_FORMAT_LPCM16;
 	offsets.loopingEnabled = AX_VOICE_LOOP_ENABLED;
 	offsets.loopOffset = 0;
 	offsets.endOffset = RING_FRAMES - 1;
+	offsets.currentOffset = startFrame;
 
 	offsets.data = ringL;
 	AXSetVoiceOffsets(voiceL, &offsets);
@@ -174,9 +177,8 @@ void WutEmulatorAudio::armAndStartVoices() {
 	AXSetVoiceSrcType(voiceL, srcType);
 	AXSetVoiceSrcType(voiceR, srcType);
 
-	// Hardware starts reading from offset 0. Set it explicitly here so the two can't silently drift.
-	lastHwFrame = 0;
-	queuedFrames = writeOffset;
+	// queuedFrames is left exactly as it already was - it's already correct
+	lastHwFrame = startFrame;
 
 	AXSetVoiceState(voiceL, AX_VOICE_STATE_PLAYING);
 	AXSetVoiceState(voiceR, AX_VOICE_STATE_PLAYING);
@@ -187,8 +189,10 @@ void WutEmulatorAudio::armAndStartVoices() {
  *
  * Refreshes queuedFrames (the authoritative "how much is unplayed" count)
  * against the hardware's actual read position, once voiceL has started.
- * Before that point queuedFrames is simply kept equal to writeOffset by
- * every write below, since nothing is consuming it yet.
+ * Before that point queuedFrames is simply carried forward by every write
+ * below (writeOffset and queuedFrames advance by the same CHUNK_FRAMES
+ * each time), whatever its starting value already was - 0 after a fresh
+ * resetAudio(), or a preserved backlog after a plain resume.
  *
  * Deliberately computed as a bounded per-call *delta* off the previous
  * hardware position, then clamped to what we know is queued - not as a

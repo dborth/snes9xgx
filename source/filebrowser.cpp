@@ -650,6 +650,8 @@ int BrowserLoadFile()
 	}
 	else
 	{
+		platform->getAudio()->getEmulatorAudio()->resetAudio();
+
 		// load SRAM or snapshot
 		if (EmuSettings.AutoLoad == AUTOLOAD_SRAM)
 			LoadSRAMAuto(SILENT);

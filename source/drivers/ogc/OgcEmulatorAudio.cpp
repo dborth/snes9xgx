@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "OgcEmulatorAudio.h"
-#include "../../snes9xgx.h"
 #include "../../snes9x/apu/apu.h"
 
 /*** Double buffered audio ***/
@@ -79,6 +78,17 @@ void OgcEmulatorAudio::resetAudio() {
 	rateState = RATE_STATE_NEUTRAL;
 }
 
+/****************************************************************************
+ * stopAudio
+ *
+ * Non-destructive stop: halts DMA and resyncs dma_started, but leaves
+ * soundbuffer/nextab/playab exactly as they are.
+ ***************************************************************************/
+void OgcEmulatorAudio::stopAudio() {
+	AUDIO_StopDMA();
+	dma_started = false;
+}
+
 void OgcEmulatorAudio::audioCallback() {
 	int unplayed = getUnplayed();
 	double rate = RATE_NEUTRAL;
@@ -126,12 +136,6 @@ void OgcEmulatorAudio::audioCallback() {
 	S9xUpdateDynamicRate(rate);
 	S9xFinalizeSamples();
 
-	if (appRequest == AppRequest::MENU) {
-		AUDIO_StopDMA();
-		resetAudio();
-		return;
-	}
-
 	while(S9xGetSampleCount() >= SAMPLES_TO_PROCESS) {
 		unplayed = getUnplayed();
 
@@ -140,10 +144,10 @@ void OgcEmulatorAudio::audioCallback() {
 			DCFlushRange(soundbuffer[nextab], AUDIOBUFFER);
 			nextab = nextIndex(nextab);
 
-			// Handle initial DMA pre-roll / priming
+			// Handle initial DMA pre-roll / priming. Starts from playab.
 			if(!dma_started && getUnplayed() >= UNPLAYED_START_LEVEL) {
-				AUDIO_InitDMA((uint32_t) soundbuffer[0], AUDIOBUFFER);
-				playab = nextIndex(0);
+				AUDIO_InitDMA((uint32_t) soundbuffer[playab], AUDIOBUFFER);
+				playab = nextIndex(playab);
 				AUDIO_StartDMA();
 				dma_started = true;
 			}

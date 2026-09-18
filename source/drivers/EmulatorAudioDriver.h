@@ -14,6 +14,6 @@ class EmulatorAudioDriver
 		virtual void init() = 0;
 
 		//! Clears buffered/queued audio state and the dynamic-rate controller.
-		//! Called when loading a new game and when returning from the menu.
+		//! Called only when loading a new game.
 		virtual void resetAudio() = 0;
 };

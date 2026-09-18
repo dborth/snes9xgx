@@ -113,7 +113,6 @@ void WutAudioDriver::stopMenuAudio() {
 }
 
 void WutAudioDriver::startEmulatorAudio() {
-	emulatorAudio->resetAudio();
 	emulatorAudio->start();
 }
 
