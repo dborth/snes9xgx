@@ -86,6 +86,11 @@ class GuiFileBrowser : public GuiElement
 		int numEntries;
 		bool listChanged;
 
+		// How long the on-screen scrollbar up/down arrow has been continuously held
+		// Drives the fast-scroll step size in update(). Reset to 0 whenever
+		// neither arrow is held.
+		float arrowHoldDuration = 0.0f;
+
 		// preview-image support
 		std::unique_ptr<GuiImageAsyncCache> previewCache;
 		GuiImage * previewTarget = nullptr;

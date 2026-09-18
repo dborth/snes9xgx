@@ -286,7 +286,7 @@ void OgcInputDriver::update() {
 					padData.cursor_angle = wpad->ir.angle;
 				}
 
-				controller[i]->setSideways(fabs(wpad->gforce.x) > fabs(wpad->gforce.y));
+				controller[i]->setSideways(getWiimoteOrientation() == WIIMOTE_ORIENTATION_HORIZONTAL);
 			}
 			else if (exp_type == WPAD_EXP_NUNCHUK) {
 				padData.hw_buttons_d[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_d);

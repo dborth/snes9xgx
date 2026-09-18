@@ -4467,20 +4467,20 @@ static int MenuSettingsMenu()
 			case 1:
 				EmuSettings.wiimoteOrientation++;
 				if(EmuSettings.wiimoteOrientation >= WIIMOTE_ORIENTATION_LENGTH)
-					EmuSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_AUTO;
+					EmuSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_VERTICAL;
 				platform->getInput()->setWiimoteOrientation(EmuSettings.wiimoteOrientation);
 				break;
 			case 2:
 				EmuSettings.MusicVolume += 10;
 				if(EmuSettings.MusicVolume > 100)
 					EmuSettings.MusicVolume = 0;
-				GuiSound::setDefaultVolume(SOUND::OGG, EmuSettings.MusicVolume);
+				GuiSound::setDefaultVolume(VOLUME_TYPE::MUSIC, EmuSettings.MusicVolume);
 				break;
 			case 3:
 				EmuSettings.SFXVolume += 10;
 				if(EmuSettings.SFXVolume > 100)
 					EmuSettings.SFXVolume = 0;
-				GuiSound::setDefaultVolume(SOUND::PCM, EmuSettings.SFXVolume);
+				GuiSound::setDefaultVolume(VOLUME_TYPE::SFX, EmuSettings.SFXVolume);
 				break;
 			case 4:
 				EmuSettings.Rumble = !EmuSettings.Rumble;
@@ -4528,12 +4528,10 @@ static int MenuSettingsMenu()
 			options.name[3][0] = 0; // Sound Effects
 			#endif
 
-			if (EmuSettings.wiimoteOrientation == WIIMOTE_ORIENTATION_VERTICAL)
-				sprintf (options.value[1], "Vertical");
-			else if (EmuSettings.wiimoteOrientation == WIIMOTE_ORIENTATION_HORIZONTAL)
+			if (EmuSettings.wiimoteOrientation == WIIMOTE_ORIENTATION_HORIZONTAL)
 				sprintf (options.value[1], "Horizontal");
 			else
-				sprintf (options.value[1], "Auto");
+				sprintf (options.value[1], "Vertical");
 
 			if(EmuSettings.MusicVolume > 0)
 				sprintf(options.value[2], "%d%%", EmuSettings.MusicVolume);

@@ -11,6 +11,11 @@ enum class SOUND {
 	OGG
 };
 
+enum class VOLUME_TYPE {
+	MUSIC,
+	SFX
+};
+
 //!Sound conversion and playback. Generic -- delegates to audioSystem for
 //!everything platform-specific.
 class GuiSound
@@ -43,10 +48,10 @@ class GuiSound
 		//!\param l Loop (true to loop)
 		void setLoop(bool l);
 
-		//!Set global default volume for a specific sound type
-		//!\param t Sound format type (PCM or OGG)
+		//!Set global default volume for a volume category (music or sound effects)
+		//!\param t Volume category (MUSIC or SFX)
 		//!\param v Volume (0-100)
-		static void setDefaultVolume(SOUND t, int v);
+		static void setDefaultVolume(VOLUME_TYPE t, int v);
 
 	protected:
 		const uint8_t * sound = nullptr; //!< Pointer to the sound data
@@ -56,7 +61,12 @@ class GuiSound
 		int32_t volume = 100; //!< Sound volume (0-100)
 		bool loop = false; //!< Loop sound playback
 
-		static int defaultPCMVolume; //!< Global PCM volume (0-100)
-		static int defaultOGGVolume; //!< Global OGG volume (0-100)
-		static GuiSound* playingOGG; //!< Pointer to the active OGG instance
+		static int defaultMusicVolume; //!< Global music volume (0-100) -- applies to any looping sound
+		static int defaultSfxVolume; //!< Global sound effects volume (0-100) -- applies to any non-looping sound
+
+		//!Pointer to the GuiSound instance currently occupying the single shared hardware OGG stream.
+		static GuiSound* playingOGG;
+
+		//!Pointer to the last GuiSound with loop==true that was told to play, ie: the "background music" track
+		static GuiSound* activeMusic;
 };

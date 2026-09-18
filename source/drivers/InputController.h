@@ -62,10 +62,10 @@ private:
 	// longer a direction is held: it starts at SCROLL_DELAY_LOOP_START right
 	// after the initial delay, and ramps down to SCROLL_DELAY_LOOP_MIN over
 	// SCROLL_ACCEL_RAMP_TIME seconds of continuous holding.
-	const float SCROLL_DELAY_INITIAL = 0.3f;
-	const float SCROLL_DELAY_LOOP_START = 0.12f; // ~8 rows/sec right after the initial delay
-	const float SCROLL_DELAY_LOOP_MIN = 0.02f;   // ~50 rows/sec once fully ramped up
-	const float SCROLL_ACCEL_RAMP_TIME = 1.5f;   // seconds of continuous holding to reach max speed
+	const float SCROLL_DELAY_INITIAL = 0.2f;
+	const float SCROLL_DELAY_LOOP_START = 0.08f; // ~12.5 rows/sec right after the initial delay
+	const float SCROLL_DELAY_LOOP_MIN = 0.012f;  // ~83 rows/sec once fully ramped up
+	const float SCROLL_ACCEL_RAMP_TIME = 1.0f;   // seconds of continuous holding to reach max speed
 
 	float scrollTimer;
 

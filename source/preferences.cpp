@@ -305,8 +305,8 @@ static void loadXMLController(uint32_t controller[], const char * name)
 void ApplySettings() {
 	platform->getInput()->setWiimoteOrientation(EmuSettings.wiimoteOrientation);
 	platform->getInput()->setRumbleEnabled(EmuSettings.Rumble);
-	GuiSound::setDefaultVolume(SOUND::OGG, EmuSettings.MusicVolume);
-	GuiSound::setDefaultVolume(SOUND::PCM, EmuSettings.SFXVolume);
+	GuiSound::setDefaultVolume(VOLUME_TYPE::MUSIC, EmuSettings.MusicVolume);
+	GuiSound::setDefaultVolume(VOLUME_TYPE::SFX, EmuSettings.SFXVolume);
 	platform->getVideo()->startMenuVideo();
 	ChangeLanguage();
 }
@@ -454,8 +454,8 @@ void FixInvalidSettings()
 	if(!(EmuSettings.videoUpscalingFilter >= FILTER_NONE && EmuSettings.videoUpscalingFilter <= NUM_FILTERS))
 		EmuSettings.videoUpscalingFilter = FILTER_NONE;
 #endif
-	if(!(EmuSettings.wiimoteOrientation >= WIIMOTE_ORIENTATION_AUTO && EmuSettings.wiimoteOrientation < WIIMOTE_ORIENTATION_LENGTH))
-		EmuSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_AUTO;
+	if(!(EmuSettings.wiimoteOrientation >= WIIMOTE_ORIENTATION_VERTICAL && EmuSettings.wiimoteOrientation < WIIMOTE_ORIENTATION_LENGTH))
+		EmuSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_VERTICAL;
 }
 
 /****************************************************************************
@@ -507,7 +507,7 @@ void DefaultSettings()
 	EmuSettings.videoYshift = 0; // vertical video shift
 	EmuSettings.crosshair = true;
 
-	EmuSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_AUTO;
+	EmuSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_VERTICAL;
 #ifdef HW_RVL
 	EmuSettings.ExitAction = EXITACTION_WII_AUTO;
 #elif HW_DOL

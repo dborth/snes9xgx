@@ -7,6 +7,18 @@
 #include "Gui.h"
 #include "../filebrowser.h"
 
+//! Step size (in rows) for one scroll action while the on-screen scrollbar
+//! arrow is held, based on how long it's been held continuously.
+static int fastScrollStep(float heldDuration)
+{
+	if(heldDuration >= 2.5f)
+		return 10;
+	else if(heldDuration >= 1.0f)
+		return 4;
+	else
+		return 1;
+}
+
 GuiFileBrowser::GuiFileBrowser(int w, int h)
 {
 	width = w;
@@ -326,6 +338,11 @@ void GuiFileBrowser::update(InputController * controller)
 	bool simulateDown = arrowDownBtn->getState() == STATE::HELD && arrowDownBtn->getStateChan() == currentChan;
 	bool simulateUp = arrowUpBtn->getState() == STATE::HELD && arrowUpBtn->getStateChan() == currentChan;
 
+	if(simulateDown || simulateUp)
+		arrowHoldDuration += platform->getVideo()->getDeltaTime();
+	else
+		arrowHoldDuration = 0.0f;
+
 	if(simulateDown)
 	{
 		if(!this->isFocused())
@@ -366,33 +383,55 @@ void GuiFileBrowser::update(InputController * controller)
 	}
 	else if(controller->down() || simulateDown)
 	{
-		if(browser.pageIndex + selectedItem + 1 < browser.numEntries)
+		// D-pad/analog holds always step by 1 row at a time (their own
+		// repeat rate is InputController's acceleration ramp); only the
+		// on-screen scrollbar arrow gets the extra fast-scroll ramp.
+		int step = simulateDown ? fastScrollStep(arrowHoldDuration) : 1;
+		int newAbsolute = browser.pageIndex + selectedItem + step;
+
+		if(newAbsolute >= browser.numEntries)
+			newAbsolute = browser.numEntries - 1;
+
+		if(newAbsolute > browser.pageIndex + selectedItem)
 		{
-			if(selectedItem == FILE_PAGESIZE-1)
+			if(newAbsolute >= browser.pageIndex + FILE_PAGESIZE)
 			{
-				// move list down by 1
-				++browser.pageIndex;
+				// target isn't on the current page - scroll to it
+				browser.pageIndex = newAbsolute - (FILE_PAGESIZE - 1);
+				selectedItem = FILE_PAGESIZE - 1;
 				listChanged = true;
 			}
-			else if(fileList[selectedItem+1]->isVisible())
+			else
 			{
 				fileList[selectedItem]->resetState();
-				fileList[++selectedItem]->setState(STATE::SELECTED, currentChan);
+				selectedItem = newAbsolute - browser.pageIndex;
 			}
+			fileList[selectedItem]->setState(STATE::SELECTED, currentChan);
 		}
 	}
 	else if(controller->up() || simulateUp)
 	{
-		if(selectedItem == 0 &&	browser.pageIndex + selectedItem > 0)
+		int step = simulateUp ? fastScrollStep(arrowHoldDuration) : 1;
+		int newAbsolute = browser.pageIndex + selectedItem - step;
+
+		if(newAbsolute < 0)
+			newAbsolute = 0;
+
+		if(newAbsolute < browser.pageIndex + selectedItem)
 		{
-			// move list up by 1
-			--browser.pageIndex;
-			listChanged = true;
-		}
-		else if(selectedItem > 0)
-		{
-			fileList[selectedItem]->resetState();
-			fileList[--selectedItem]->setState(STATE::SELECTED, currentChan);
+			if(newAbsolute < browser.pageIndex)
+			{
+				// target isn't on the current page - scroll to it
+				browser.pageIndex = newAbsolute;
+				selectedItem = 0;
+				listChanged = true;
+			}
+			else
+			{
+				fileList[selectedItem]->resetState();
+				selectedItem = newAbsolute - browser.pageIndex;
+			}
+			fileList[selectedItem]->setState(STATE::SELECTED, currentChan);
 		}
 	}
 

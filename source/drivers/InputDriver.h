@@ -9,8 +9,7 @@
 #pragma once
 
 enum {
-	WIIMOTE_ORIENTATION_AUTO = 0,
-	WIIMOTE_ORIENTATION_VERTICAL,
+	WIIMOTE_ORIENTATION_VERTICAL = 0,
 	WIIMOTE_ORIENTATION_HORIZONTAL,
 	WIIMOTE_ORIENTATION_LENGTH
 };
@@ -36,5 +35,5 @@ class InputDriver
 	
 	protected:
 		bool rumbleEnabled = true;
-		int wiimoteOrientation = WIIMOTE_ORIENTATION_AUTO;
+		int wiimoteOrientation = WIIMOTE_ORIENTATION_VERTICAL;
 };
