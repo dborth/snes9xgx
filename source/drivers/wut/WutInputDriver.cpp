@@ -15,10 +15,9 @@
 #include <cmath>
 #include <algorithm>
 
-static uint8_t vpadRumblePattern[15] = {
-	0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-	0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-	0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+// Menu-hover rumble pattern for the Wii U GamePad. VPAD supports variable amplitude
+static uint8_t vpadRumblePattern[6] = {
+	0x60, 0x60, 0x60, 0x60, 0x60, 0x60
 };
 
 static inline float clampf(float v, float lo, float hi) {
@@ -135,8 +134,9 @@ static constexpr float IR_BETA = 0.015f;
 
 WutInputDriver::WutInputDriver() : drcTouchedPrev(false), drcLastTouchX(0.0f), drcLastTouchY(0.0f) {
 	for (int i = 0; i < 4; i++) {
-		rumbleCount[i] = 0;
 		rumbleRequest[i] = false;
+		menuRumbleFrames[i] = 0;
+		menuRumbleGapFrames[i] = 0;
 		irFilterX[i].setParams(IR_MIN_CUTOFF, IR_BETA);
 		irFilterY[i].setParams(IR_MIN_CUTOFF, IR_BETA);
 		irSmoothInit[i] = false;
@@ -162,8 +162,9 @@ void WutInputDriver::init() {
 void WutInputDriver::shutdown() {
 	for (int i = 0; i < 4; i++) {
 		WPADControlMotor((WPADChan)i, FALSE);
-		rumbleCount[i] = 0;
 		rumbleRequest[i] = false;
+		menuRumbleFrames[i] = 0;
+		menuRumbleGapFrames[i] = 0;
 	}
 	VPADStopMotor(VPAD_CHAN_0);
 
@@ -395,24 +396,34 @@ void WutInputDriver::update() {
 		// Update logical controller state
 		controller[i]->update(padData, platform->getVideo()->getDeltaTime());
 
-		// Rumble Lifecycle Management
-		if (rumbleRequest[i] && rumbleCount[i] < 3) {
-			if (padData.hw_connected[INPUT_HW_WIIMOTE] || padData.hw_connected[INPUT_HW_WUPC]) {
-				WPADControlMotor((WPADChan)i, TRUE);
-			}
-			if (i == 0 && padData.hw_connected[INPUT_HW_DRC]) {
-				VPADControlMotor(VPAD_CHAN_0, vpadRumblePattern, sizeof(vpadRumblePattern));
-			}
-			rumbleCount[i]++;
-		} else if (rumbleRequest[i]) {
-			rumbleCount[i] = 12;
+		// Menu (hover) rumble: a short tick with an enforced silent gap afterward
+		static constexpr int kMenuRumbleOnFrames = 2;   // ~33ms motor-on burst
+		static constexpr int kMenuRumbleGapFrames = 6;  // ~100ms enforced silence after a tick
+
+		if (rumbleRequest[i]) {
 			rumbleRequest[i] = false;
-		} else {
-			if (rumbleCount[i]) rumbleCount[i]--;
-			if (padData.hw_connected[INPUT_HW_WIIMOTE] || padData.hw_connected[INPUT_HW_WUPC]) {
-				WPADControlMotor((WPADChan)i, FALSE);
+			if (menuRumbleFrames[i] == 0 && menuRumbleGapFrames[i] == 0) {
+				menuRumbleFrames[i] = kMenuRumbleOnFrames;
 			}
-			if (i == 0) {
+		}
+
+		bool wantRumble = menuRumbleFrames[i] > 0;
+		bool doRumble = wantRumble && isRumbleEnabled();
+
+		if (menuRumbleFrames[i] > 0) {
+			menuRumbleFrames[i]--;
+			if (menuRumbleFrames[i] == 0) menuRumbleGapFrames[i] = kMenuRumbleGapFrames;
+		} else if (menuRumbleGapFrames[i] > 0) {
+			menuRumbleGapFrames[i]--;
+		}
+
+		if (padData.hw_connected[INPUT_HW_WIIMOTE] || padData.hw_connected[INPUT_HW_WUPC]) {
+			WPADControlMotor((WPADChan)i, doRumble ? TRUE : FALSE);
+		}
+		if (i == 0) {
+			if (doRumble && padData.hw_connected[INPUT_HW_DRC]) {
+				VPADControlMotor(VPAD_CHAN_0, vpadRumblePattern, sizeof(vpadRumblePattern));
+			} else {
 				VPADStopMotor(VPAD_CHAN_0);
 			}
 		}

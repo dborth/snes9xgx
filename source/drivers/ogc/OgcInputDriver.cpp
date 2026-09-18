@@ -37,8 +37,9 @@ bool isWiiVC = false;
 
 OgcInputDriver::OgcInputDriver() {
 	for (int i = 0; i < 4; i++) {
-		rumbleCount[i] = 0;
 		rumbleRequest[i] = false;
+		menuRumbleFrames[i] = 0;
+		menuRumbleGapFrames[i] = 0;
 	}
 }
 
@@ -76,8 +77,9 @@ void OgcInputDriver::shutdown() {
 		WPAD_Rumble(i, 0);
 		#endif
 		PAD_ControlMotor(i, PAD_MOTOR_STOP);
-		rumbleCount[i] = 0;
 		rumbleRequest[i] = false;
+		menuRumbleFrames[i] = 0;
+		menuRumbleGapFrames[i] = 0;
 	}
 }
 
@@ -369,30 +371,33 @@ void OgcInputDriver::update() {
 		// Push the finalized, merged payload to the controller abstraction
 		controller[i]->update(padData, platform->getVideo()->getDeltaTime());
 		
-		bool doRumble = rumbleRequest[i] && allowRumble;
+		// Menu (hover) rumble: a short tick with an enforced silent gap afterward
+		static constexpr int kMenuRumbleOnFrames = 2; // ~33ms motor-on burst
+		static constexpr int kMenuRumbleGapFrames = 6; // ~100ms enforced silence after a tick
 
-		if (doRumble && rumbleCount[i] < 3) {
-			#ifdef HW_RVL
-			WPAD_Rumble(i, 1);
-			#endif
-
-			if (gamecubeActive) {
-				PAD_ControlMotor(i, PAD_MOTOR_RUMBLE);
-			}
-
-			rumbleCount[i]++;
-		} else if (doRumble) {
-			rumbleCount[i] = 12;
+		if (rumbleRequest[i]) {
 			rumbleRequest[i] = false;
-		} else {
-			if (rumbleCount[i]) rumbleCount[i]--;
+			if (menuRumbleFrames[i] == 0 && menuRumbleGapFrames[i] == 0) {
+				menuRumbleFrames[i] = kMenuRumbleOnFrames;
+			}
+		}
 
-			#ifdef HW_RVL
-			WPAD_Rumble(i, 0);
-			#endif
+		bool wantRumble = menuRumbleFrames[i] > 0;
+		bool doRumble = wantRumble && allowRumble;
 
-			PAD_ControlMotor(i, PAD_MOTOR_STOP);
-			rumbleRequest[i] = false; // ensure flag clears if toggled off mid-rumble
+		if (menuRumbleFrames[i] > 0) {
+			menuRumbleFrames[i]--;
+			if (menuRumbleFrames[i] == 0) menuRumbleGapFrames[i] = kMenuRumbleGapFrames;
+		} else if (menuRumbleGapFrames[i] > 0) {
+			menuRumbleGapFrames[i]--;
+		}
+
+		#ifdef HW_RVL
+		WPAD_Rumble(i, doRumble ? 1 : 0);
+		#endif
+
+		if (gamecubeActive || !doRumble) {
+			PAD_ControlMotor(i, doRumble ? PAD_MOTOR_RUMBLE : PAD_MOTOR_STOP);
 		}
 	}
 }
