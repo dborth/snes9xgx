@@ -1037,6 +1037,7 @@ static void OnPreviewImageChanged(void *, GuiImage * target)
 }
 
 static int BrowserLoadFileTask(void *) { return BrowserLoadFile(); }
+static int BrowserChangeFolderTask(void * arg) { return BrowserChangeFolder(); }
 
 struct ChangeInterfaceArgs
 {
@@ -1124,10 +1125,10 @@ static int MenuGameSelection()
 	GuiFileBrowser gameBrowser(330, 268);
 	gameBrowser.setPosition(20, 98);
 	ResetBrowser();
-	
+
 	GuiImage bgPreview(&bgPreviewImg);
 	bgPreview.setPosition(365, 98);
-	
+
 	GuiImage preview;
 	preview.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	preview.setPosition(174, -8);
@@ -1154,7 +1155,7 @@ static int MenuGameSelection()
 	gameBrowser.fileList[0]->setState(STATE::SELECTED);
 	gameBrowser.triggerUpdate();
 	titleTxt.setText(inSz ? szname : "Choose Game");
-			
+
 	while(selection == MENU_NONE)
 	{
 		if(!UpdateGui()) return MENU_EXIT;
@@ -1189,7 +1190,7 @@ static int MenuGameSelection()
 				gameBrowser.triggerUpdate();
 			}
 		}
-		
+
 		if(selectLoadedFile == 2)
 		{
 			selectLoadedFile = 0;
@@ -1207,22 +1208,36 @@ static int MenuGameSelection()
 				
 				// check corresponding browser entry
 				if(browserList[browser.selIndex].isdir || IsSz())
-				{	
-					res = BrowserChangeFolder();
+				{
+					gameBrowser.setState(STATE::DISABLED);
+
+					if(!RunOnWorkerThread(BrowserChangeFolderTask))
+					{
+						gameBrowser.setState(STATE::DEFAULT);
+						continue;
+					}
+
+					while(!IsWorkerThreadFinished())
+					{
+						if(!UpdateGui()) return MENU_EXIT;
+						gameBrowser.setState(STATE::DISABLED);
+					}
+
+					res = GetWorkerThreadResult() != 0;
+
 					if(res)
 					{
 						gameBrowser.resetState();
 						gameBrowser.fileList[0]->setState(STATE::SELECTED);
-						gameBrowser.triggerUpdate();		
+						gameBrowser.triggerUpdate();
 					}
 					else
 					{
 						selection = MENU_GAMESELECTION;
 						break;
 					}
-										
+
 					titleTxt.setText(inSz ? szname : "Choose Game");
-					
 				}
 				else
 				{
