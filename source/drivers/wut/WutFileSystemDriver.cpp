@@ -73,18 +73,13 @@ void WutFileSystemDriver::init()
 	if(sdUsesMochaPath)
 	{
 		snprintf(sd.stablePrefix, sizeof(sd.stablePrefix), "%s:/", storageSlots[slotSD].mountName);
-		// Same as USB below - a real presence check happens on the first
-		// pollStorageDevices() cycle, no need to force one here.
 	}
 	else
 	{
-		// WHBGetSdCardMountPath() returns Cafe OS's fixed FSA path (eg. "/vol/external01") independent of 
-		// whether the card is actually inserted/mounted right now
-		NormalizeSdFallbackPrefix(sd.stablePrefix);
-
 		bool mounted = WHBMountSdCard();
 		if(mounted)
 		{
+			NormalizeSdFallbackPrefix(sd.stablePrefix);
 			strcpy(sd.prefix, sd.stablePrefix);
 			sd.isPresent = true;
 			sd.isMounted = true;
