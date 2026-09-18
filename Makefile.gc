@@ -36,7 +36,7 @@ CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
 				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
 				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
 				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
-				-flto=auto -fomit-frame-pointer -fno-strict-aliasing \
+				-fomit-frame-pointer -fno-strict-aliasing \
 				-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable \
 				-Wno-format -Wno-format-overflow -Wno-stringop-truncation \
 				-Wno-stringop-overflow -Wno-format-truncation -Wno-narrowing -Wno-sign-compare \
@@ -47,13 +47,13 @@ CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
 CXXFLAGS	=	$(CFLAGS) -Wno-register -fno-exceptions -fno-rtti -fno-threadsafe-statics
 
 ASFLAGS	=	$(MACHDEP) $(INCLUDE)
-LDFLAGS	=	-g -O3 -flto=auto $(MACHDEP) -Wl,-Map,$(notdir $@).map
+LDFLAGS	=	-g -O3 $(MACHDEP) -Wl,-Map,$(notdir $@).map
 LDFLAGS +=	-L../buildtools
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lpng -lmxml -ltinysmb -lbba -lfat -liso9660 -lz -logc $(FREETYPE_LIBS)
+LIBS	:=	-lpng -lmxml -lsmb2 -lbba -lfat -liso9660 -lz -logc $(FREETYPE_LIBS)
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
