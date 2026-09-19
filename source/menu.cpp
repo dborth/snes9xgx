@@ -440,7 +440,7 @@ static void CreditsWindow()
 
 	char consoleDetails[40];
 	char memoryFreeInfo[50];
-	char controllerInfo[100];
+	char controllerInfo[100] = { 0 };
 
 	sprintf(consoleDetails, platform->getConsoleDetails());
 	sprintf(memoryFreeInfo, platform->getMemoryFreeInfo());
