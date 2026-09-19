@@ -826,32 +826,6 @@ void InfoPrompt(const char *msg)
 }
 
 /****************************************************************************
- * AutoSave
- *
- * Automatically saves SRAM/state when returning from in-game to the menu
- ***************************************************************************/
-static void AutoSave()
-{
-	if (EmuSettings.AutoSave == AUTOSAVE_SRAM)
-	{
-		SaveSRAMAuto(SILENT);
-	}
-	else if (EmuSettings.AutoSave == AUTOSAVE_STATE)
-	{
-		if (WindowPrompt("Save", "Save State?", "Save", "Don't Save") )
-			SaveSnapshotAuto(NOTSILENT);
-	}
-	else if (EmuSettings.AutoSave == AUTOSAVE_BOTH)
-	{
-		if (WindowPrompt("Save", "Save SRAM and State?", "Save", "Don't Save") )
-		{
-			SaveSRAMAuto(NOTSILENT);
-			SaveSnapshotAuto(NOTSILENT);
-		}
-	}
-}
-
-/****************************************************************************
  * OnScreenKeyboard
  *
  * Opens an on-screen keyboard window, with the data entered being stored
@@ -1058,14 +1032,17 @@ static int AutoDetectDevicesTask(void *) { AutoDetectDevices(); return 0; }
  * RunWithGuiUpdates
  * Runs a task on the worker thread while the GUI keeps drawing (and the main
  * window ignores input).
+ * If the app is asked to quit while waiting the task may still be running, so
+ * anything it uses through arg must outlive the caller's stack frame (static
+ * or heap storage).
  * \return false if the app was asked to quit while waiting.
  ***************************************************************************/
-static bool RunWithGuiUpdates(BgTaskFn task, int * result = nullptr)
+static bool RunWithGuiUpdates(BgTaskFn task, int * result = nullptr, void * arg = nullptr)
 {
 	menu->mainWindow.setState(STATE::DISABLED);
 
 	int r;
-	if(RunOnWorkerThread(task))
+	if(RunOnWorkerThread(task, arg))
 	{
 		while(!IsWorkerThreadFinished())
 		{
@@ -1075,7 +1052,7 @@ static bool RunWithGuiUpdates(BgTaskFn task, int * result = nullptr)
 	}
 	else
 	{
-		r = task(nullptr);
+		r = task(arg);
 	}
 
 	menu->mainWindow.setState(STATE::DEFAULT);
@@ -1084,6 +1061,64 @@ static bool RunWithGuiUpdates(BgTaskFn task, int * result = nullptr)
 		*result = r;
 
 	return true;
+}
+
+/****************************************************************************
+ * AutoSave
+ *
+ * Automatically saves SRAM/state when returning from in-game to the menu.
+ * Any prompt is shown from the main thread; the actual writing to the
+ * storage device is done on the worker thread.
+ * \return false if the app was asked to quit
+ ***************************************************************************/
+struct AutoSaveArgs
+{
+	bool sram;
+	bool state;
+	bool silent;
+};
+static AutoSaveArgs autoSaveArgs; // static: the worker may still be running if the app exits mid-save
+
+static int AutoSaveTask(void * arg)
+{
+	AutoSaveArgs * a = (AutoSaveArgs *)arg;
+
+	if(a->sram)
+		SaveSRAMAuto(a->silent);
+	if(a->state)
+		SaveSnapshotAuto(a->silent);
+
+	return 0;
+}
+
+static bool AutoSave()
+{
+	autoSaveArgs.sram = false;
+	autoSaveArgs.state = false;
+	autoSaveArgs.silent = NOTSILENT;
+
+	if (EmuSettings.AutoSave == AUTOSAVE_SRAM)
+	{
+		autoSaveArgs.sram = true;
+		autoSaveArgs.silent = SILENT;
+	}
+	else if (EmuSettings.AutoSave == AUTOSAVE_STATE)
+	{
+		autoSaveArgs.state = WindowPrompt("Save", "Save State?", "Save", "Don't Save");
+	}
+	else if (EmuSettings.AutoSave == AUTOSAVE_BOTH)
+	{
+		if (WindowPrompt("Save", "Save SRAM and State?", "Save", "Don't Save") )
+		{
+			autoSaveArgs.sram = true;
+			autoSaveArgs.state = true;
+		}
+	}
+
+	if(!autoSaveArgs.sram && !autoSaveArgs.state)
+		return true; // nothing to save
+
+	return RunWithGuiUpdates(AutoSaveTask, nullptr, &autoSaveArgs);
 }
 
 static int MenuGameSelection()
@@ -1727,8 +1762,8 @@ static int MenuGame()
 	}
 
 	
-	if(lastMenu == MENU_NONE)
-		AutoSave();
+	if(lastMenu == MENU_NONE && !AutoSave())
+		return MENU_EXIT;
 
 	while(selection == MENU_NONE)
 	{
@@ -1915,6 +1950,161 @@ static int FindGameSaveNum(char * savefile)
 }
 
 /****************************************************************************
+ * SaveScreenData / SaveListTask
+ *
+ * Finds this game's save files and decodes their screenshots on the worker
+ * thread. Every save costs several requests to the storage device, and that
+ * is slow on some platforms. Turning the decoded screenshots into
+ * textures has to wait until we are back on the main thread.
+ ***************************************************************************/
+struct SaveScreenData
+{
+	SaveList saves{};
+	GuiImageData::DecodedImage thumbs[MAX_SAVES + 1];
+};
+
+static int SaveListTask(void * arg)
+{
+	SaveScreenData * data = (SaveScreenData *)arg;
+	SaveList & saves = data->saves;
+	char filepath[1024];
+	char scrfile[1024];
+	char tmp[MAXJOLIET+1];
+	struct stat filestat;
+	struct tm * timeinfo;
+	int i, n, type, len2;
+	int j = 0;
+
+	int len = strlen(Memory.ROMFilename);
+
+	platform->getFileSystem()->getPath(browser.dir, EmuSettings.SaveMethod, EmuSettings.SaveFolder);
+	ParseDirectory(true, false, Memory.ROMFilename); // only this game's files - the folder holds every game's saves
+
+	// find matching files
+	AllocSaveBuffer();
+
+	for(i=0; i < browser.numEntries && j <= MAX_SAVES; i++)
+	{
+		len2 = strlen(browserList[i].filename);
+
+		if(len2 < 6 || len2-len < 5)
+			continue;
+
+		if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
+			type = FILE_SRAM;
+		else if(strncmp(&browserList[i].filename[len2-4], ".frz", 4) == 0)
+			type = FILE_STATE;
+		else
+			continue;
+
+		strcpy(tmp, browserList[i].filename);
+		tmp[len2-4] = 0;
+		n = FindGameSaveNum(tmp);
+
+		if(n >= 0)
+		{
+			saves.type[j] = type;
+			saves.files[saves.type[j]][n] = 1;
+			strcpy(saves.filename[j], browserList[i].filename);
+
+			if(saves.type[j] == FILE_STATE)
+			{
+				char scrname[MAXJOLIET+1];
+				snprintf(scrname, sizeof(scrname), "%s.png", tmp);
+				platform->getFileSystem()->getPath(scrfile, EmuSettings.SaveMethod, EmuSettings.SaveFolder, scrname);
+
+				memset(savebuffer, 0, SAVEBUFFERSIZE);
+				if(LoadFile(scrfile, SILENT))
+					data->thumbs[j] = GuiImageData::decodeToRgba(savebuffer, 64, 48);
+			}
+			platform->getFileSystem()->getPath(filepath, EmuSettings.SaveMethod, EmuSettings.SaveFolder, saves.filename[j]);
+			if (stat(filepath, &filestat) == 0)
+			{
+				timeinfo = localtime(&filestat.st_mtime);
+				strftime(saves.date[j], 20, "%a %b %d", timeinfo);
+				strftime(saves.time[j], 10, "%I:%M %p", timeinfo);
+			}
+			j++;
+		}
+	}
+
+	FreeSaveBuffer();
+	saves.length = j;
+	return j;
+}
+
+/****************************************************************************
+ * SaveOpTask
+ *
+ * Loads, saves or deletes a single save file from the saves screen, on the
+ * worker thread.
+ ***************************************************************************/
+enum { SAVEOP_LOAD, SAVEOP_SAVE, SAVEOP_DELETE };
+
+struct SaveOpArgs
+{
+	int op;
+	int type; // FILE_SRAM / FILE_STATE
+	char filepath[1024];
+};
+static SaveOpArgs saveOpArgs; // static: the worker may still be running if the app exits mid-operation
+
+static int SaveOpTask(void * arg)
+{
+	SaveOpArgs * a = (SaveOpArgs *)arg;
+	char deletepath[1024];
+	int result = 0;
+
+	switch(a->op)
+	{
+		case SAVEOP_LOAD:
+			if(a->type == FILE_SRAM)
+				result = LoadSRAM(a->filepath, NOTSILENT);
+			else if(a->type == FILE_STATE)
+				result = LoadSnapshot(a->filepath, NOTSILENT);
+			break;
+
+		case SAVEOP_SAVE:
+			if(a->type == FILE_SRAM)
+				result = SaveSRAM(a->filepath, NOTSILENT);
+			else if(a->type == FILE_STATE)
+				result = SaveSnapshot(a->filepath, NOTSILENT);
+			break;
+
+		case SAVEOP_DELETE:
+			if(a->type == FILE_SRAM)
+			{
+				snprintf(deletepath, sizeof(deletepath), "%s", a->filepath);
+				deletepath[strlen(deletepath)-4] = 0;
+				strcat(deletepath, ".srm");
+				remove(deletepath); // Delete the *.srm file (Battery save file)
+			}
+			else if(a->type == FILE_STATE)
+			{
+				snprintf(deletepath, sizeof(deletepath), "%s", a->filepath);
+				deletepath[strlen(deletepath)-4] = 0;
+				strcat(deletepath, ".png");
+				remove(deletepath); // Delete the *.png file (Screenshot file)
+				snprintf(deletepath, sizeof(deletepath), "%s", a->filepath);
+				deletepath[strlen(deletepath)-4] = 0;
+				strcat(deletepath, ".frz");
+				remove(deletepath); // Delete the *.frz file (Save State file)
+			}
+			break;
+	}
+	return result;
+}
+
+// \return false if the app was asked to quit
+static bool RunSaveOp(int op, int type, const char * filepath, int * result)
+{
+	saveOpArgs.op = op;
+	saveOpArgs.type = type;
+	snprintf(saveOpArgs.filepath, sizeof(saveOpArgs.filepath), "%s", filepath);
+	return RunWithGuiUpdates(SaveOpTask, result, &saveOpArgs);
+}
+
+/****************************************************************************
  * MenuGameSaves
  *
  * Allows the user to load or save progress.
@@ -1923,15 +2113,8 @@ static int MenuGameSaves(int action)
 {
 	int selection = MENU_NONE;
 	int ret;
-	int i, n, type, len, len2;
-	int j = 0;
-	SaveList saves{};
+	int i;
 	char filepath[1024];
-	char deletepath[1024];
-	char scrfile[1024];
-	char tmp[MAXJOLIET+1];
-	struct stat filestat;
-	struct tm * timeinfo;
 
 	static ChangeInterfaceArgs ciArgs;
 	ciArgs.device = EmuSettings.SaveMethod;
@@ -2009,64 +2192,28 @@ static int MenuGameSaves(int action)
 	menu->mainWindow.appendWithAutoRemove(&w);
 	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 
-	platform->getFileSystem()->getPath(browser.dir, EmuSettings.SaveMethod, EmuSettings.SaveFolder);
-	ParseDirectory(true, false);
+	// Look up the saves on the worker thread so the GUI keeps running. The data is on
+	// the heap because the task may still be using it if the app is asked to quit.
+	std::unique_ptr<SaveScreenData> data(new SaveScreenData);
 
-	len = strlen(Memory.ROMFilename);
-
-	// find matching files
-	AllocSaveBuffer();
-
-	for(i=0; i < browser.numEntries; i++)
+	if(!RunWithGuiUpdates(SaveListTask, nullptr, data.get()))
 	{
-		len2 = strlen(browserList[i].filename);
-
-		if(len2 < 6 || len2-len < 5)
-			continue;
-
-		if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
-			type = FILE_SRAM;
-		else if(strncmp(&browserList[i].filename[len2-4], ".frz", 4) == 0)
-			type = FILE_STATE;
-		else
-			continue;
-
-		strcpy(tmp, browserList[i].filename);
-		tmp[len2-4] = 0;
-		n = FindGameSaveNum(tmp);
-
-		if(n >= 0)
-		{
-			saves.type[j] = type;
-			saves.files[saves.type[j]][n] = 1;
-			strcpy(saves.filename[j], browserList[i].filename);
-
-			if(saves.type[j] == FILE_STATE)
-			{
-				char scrname[MAXJOLIET+1];
-				snprintf(scrname, sizeof(scrname), "%s.png", tmp);
-				platform->getFileSystem()->getPath(scrfile, EmuSettings.SaveMethod, EmuSettings.SaveFolder, scrname);
-
-				memset(savebuffer, 0, SAVEBUFFERSIZE);
-				if(LoadFile(scrfile, SILENT)) {
-					auto thumb = std::make_unique<GuiImageData>(savebuffer, 64, 48);
-					if(thumb->getTexture())
-						saves.previewImg[j] = std::move(thumb);
-				}
-			}
-			platform->getFileSystem()->getPath(filepath, EmuSettings.SaveMethod, EmuSettings.SaveFolder, saves.filename[j]);
-			if (stat(filepath, &filestat) == 0)
-			{
-				timeinfo = localtime(&filestat.st_mtime);
-				strftime(saves.date[j], 20, "%a %b %d", timeinfo);
-				strftime(saves.time[j], 10, "%I:%M %p", timeinfo);
-			}
-			j++;
-		}
+		data.release(); // deliberately leaked - the worker may still be writing to it
+		return MENU_EXIT;
 	}
 
-	FreeSaveBuffer();
-	saves.length = j;
+	SaveList & saves = data->saves;
+
+	// create the screenshot textures (main thread only)
+	for(i=0; i < saves.length; i++)
+	{
+		if(data->thumbs[i].valid())
+		{
+			auto thumb = std::make_unique<GuiImageData>();
+			if(thumb->uploadDecoded(std::move(data->thumbs[i])))
+				saves.previewImg[i] = std::move(thumb);
+		}
+	}
 
 	if((saves.length == 0 && action == 0) || (saves.length == 0 && action == 2)) 
 	{
@@ -2095,42 +2242,18 @@ static int MenuGameSaves(int action)
 			if(action == 0) // load
 			{
 				MakeFilePath(filepath, saves.type[ret], saves.filename[ret]);
-				switch(saves.type[ret])
-				{
-					case FILE_SRAM:
-						result = LoadSRAM(filepath, NOTSILENT);
-						break;
-					case FILE_STATE:
-						result = LoadSnapshot(filepath, NOTSILENT);
-						break;
-				}
+				if(!RunSaveOp(SAVEOP_LOAD, saves.type[ret], filepath, &result))
+					return MENU_EXIT;
 				if(result)
 					selection = MENU_EXIT;
 			}
-			else if(action == 2) // delete RAM/State
+			else if(action == 2) // delete SRAM/State
 			{
 				if (WindowPrompt("Delete File", "Delete this save file? Deleted files can not be restored.", "OK", "Cancel"))
 				{
 					MakeFilePath(filepath, saves.type[ret], saves.filename[ret]);
-					switch(saves.type[ret])
-					{
-						case FILE_SRAM:
-							strncpy(deletepath, filepath, 1024);
-							deletepath[strlen(deletepath)-4] = 0;
-							strcat(deletepath, ".srm");
-							remove(deletepath); // Delete the *.srm file (Battery save file)
-						break;
-						case FILE_STATE:
-							strncpy(deletepath, filepath, 1024);
-							deletepath[strlen(deletepath)-4] = 0;
-							strcat(deletepath, ".png");
-							remove(deletepath); // Delete the *.png file (Screenshot file)
-							strncpy(deletepath, filepath, 1024);
-							deletepath[strlen(deletepath)-4] = 0;
-							strcat(deletepath, ".frz");
-							remove(deletepath); // Delete the *.frz file (Save State file)
-						break;
-					}							
+					if(!RunSaveOp(SAVEOP_DELETE, saves.type[ret], filepath, &result))
+						return MENU_EXIT;
 				}
 				selection = MENU_GAME_DELETE;
 			}
@@ -2145,7 +2268,8 @@ static int MenuGameSaves(int action)
 					if(i < 100)
 					{
 						MakeFilePath(filepath, FILE_STATE, Memory.ROMFilename, i);
-						SaveSnapshot(filepath, NOTSILENT);
+						if(!RunSaveOp(SAVEOP_SAVE, FILE_STATE, filepath, &result))
+							return MENU_EXIT;
 						selection = MENU_GAME_SAVE;
 					}
 				}
@@ -2158,22 +2282,16 @@ static int MenuGameSaves(int action)
 					if(i < 100)
 					{
 						MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, i);
-						SaveSRAM(filepath, NOTSILENT);
+						if(!RunSaveOp(SAVEOP_SAVE, FILE_SRAM, filepath, &result))
+							return MENU_EXIT;
 						selection = MENU_GAME_SAVE;
 					}
 				}
 				else // overwrite SRAM/State
 				{
 					MakeFilePath(filepath, saves.type[ret], saves.filename[ret]);
-					switch(saves.type[ret])
-					{
-						case FILE_SRAM:
-							SaveSRAM(filepath, NOTSILENT);
-							break;
-						case FILE_STATE:
-							SaveSnapshot(filepath, NOTSILENT);
-							break;
-					}
+					if(!RunSaveOp(SAVEOP_SAVE, saves.type[ret], filepath, &result))
+						return MENU_EXIT;
 					selection = MENU_GAME_SAVE;
 				}
 			}
