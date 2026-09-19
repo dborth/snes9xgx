@@ -16,6 +16,7 @@
 #include <malloc.h>
 #include <zlib.h>
 #include <sys/stat.h>
+#include <memory>
 
 #include "snes9xgx.h"
 #include "fileop.h"
