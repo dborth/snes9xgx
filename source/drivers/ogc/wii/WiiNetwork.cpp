@@ -113,6 +113,11 @@ static void * NetworkThreadEntry(void *)
 	return nullptr;
 }
 
+bool WiiNetwork::isUp()
+{
+	return net_gethostip() > 0;
+}
+
 bool WiiNetwork::ensureUp()
 {
 	// The network can go stale (cable pulled, AP dropped, IOS reload) even

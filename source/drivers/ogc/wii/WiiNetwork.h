@@ -20,6 +20,9 @@ class WiiNetwork
 		//! \return true once the console has a usable IP.
 		static bool ensureUp();
 
+		//! Non-blocking: true if the console currently has a usable IP.
+		static bool isUp();
+
 		//! Stops and joins the background bring-up thread
 		static void shutdown();
 };

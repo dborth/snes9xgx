@@ -30,12 +30,14 @@ class WutSmbDriver : public SmbDriver
 		//! in WutSmbDriver.cpp. Only one WutSmbDriver/mount exists at a time.
 		static smb2_context * getContext() { return ctx; }
 
-	private:
+		bool isNetworkUp() const override;
+
 		//! Brings the Wii U network connection up if it isn't already, via
 		//! nn::ac (ACConnect()). Blocking. Returns false (with getLastError()
 		//! set) if AC wasn't initialized or the connect attempt failed.
-		bool ensureNetworkUp();
+		bool ensureNetworkUp() override;
 
+	private:
 		static smb2_context * ctx;
 		SmbShareInfo current = {};
 		bool devoptabAdded = false;

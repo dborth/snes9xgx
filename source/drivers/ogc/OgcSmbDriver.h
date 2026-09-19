@@ -36,12 +36,14 @@ class OgcSmbDriver : public SmbDriver
 		//! in OgcSmbDriver.cpp. Only one OgcSmbDriver/mount exists at a time.
 		static smb2_context * getContext() { return ctx; }
 
-	private:
-		//! Ensures the network is up via OgcNetwork::ensureUp(). Blocking.
-		//! Returns false (with getLastError() set) if it couldn't be
-		//! brought up.
-		bool ensureNetworkUp();
+		bool isNetworkUp() const override;
 
+		//! Ensures the network is up via WiiNetwork/GameCubeNetwork::ensureUp().
+		//! Blocking. Returns false (with getLastError() set) if it couldn't be
+		//! brought up.
+		bool ensureNetworkUp() override;
+
+	private:
 		static smb2_context * ctx;
 		SmbShareInfo current = {};
 		bool devoptabAdded = false;

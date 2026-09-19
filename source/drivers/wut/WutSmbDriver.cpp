@@ -328,6 +328,16 @@ void WutSmbDriver::shutdown()
 }
 }
 
+bool WutSmbDriver::isNetworkUp() const
+{
+	if(!acInitialized)
+		return false;
+
+	BOOL isConnected = FALSE;
+	NNResult result = ACIsApplicationConnected(&isConnected);
+	return NNResult_IsSuccess(result) && isConnected;
+}
+
 bool WutSmbDriver::ensureNetworkUp()
 {
 	if(!acInitialized)

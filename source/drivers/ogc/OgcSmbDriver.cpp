@@ -322,6 +322,15 @@ void OgcSmbDriver::shutdown()
 #endif
 }
 
+bool OgcSmbDriver::isNetworkUp() const
+{
+#ifdef HW_DOL
+	return GameCubeNetwork::isUp();
+#else
+	return WiiNetwork::isUp();
+#endif
+}
+
 bool OgcSmbDriver::ensureNetworkUp()
 {
 #ifdef HW_DOL

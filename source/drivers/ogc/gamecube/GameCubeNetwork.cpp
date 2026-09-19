@@ -7,6 +7,11 @@
 
 #include <network.h>
 
+bool GameCubeNetwork::isUp()
+{
+	return net_gethostip() > 0;
+}
+
 bool GameCubeNetwork::ensureUp()
 {
 	if(net_gethostip() > 0)

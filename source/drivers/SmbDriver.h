@@ -45,6 +45,14 @@ class SmbDriver
 		virtual void init() = 0;
 		virtual void shutdown() = 0;
 
+		//! True if the network is already up, i.e. connect() won't first have to
+		//! bring it up. Cheap and non-blocking - safe to poll.
+		virtual bool isNetworkUp() const = 0;
+
+		//! Brings the network up if it isn't already.
+		//! \return false (with getLastError() set) if it couldn't be brought up.
+		virtual bool ensureNetworkUp() = 0;
+
 		//! Attempts to connect and mount in one call. No-ops (returns Success)
 		//! if already connected to the same host+share; reconnects if info
 		//! describes a different target.

@@ -20,6 +20,9 @@ class GameCubeNetwork
 		//! \return true once the console has a usable IP.
 		static bool ensureUp();
 
+		//! Non-blocking: true if the console currently has a usable IP.
+		static bool isUp();
+
 		//! No-op on GameCube
 		static void shutdown() {}
 };
