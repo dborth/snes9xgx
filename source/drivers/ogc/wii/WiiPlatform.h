@@ -26,6 +26,13 @@ enum {
 	EXITACTION_WII_LENGTH
 };
 
+typedef enum {
+	CONSOLE_WII,
+	CONSOLE_WIIU_VWII,
+	CONSOLE_WIIU_WIIVC,
+	CONSOLE_DOLPHIN
+} ConsoleType;
+
 bool SupportedIOS(uint32_t ios);
 bool SaneIOS(uint32_t ios);
 
@@ -47,6 +54,10 @@ class WiiPlatform : public Platform
 
 		void requestExit(int exitAction, bool autoloadedGame) override;
 		
+		bool isWiiU();
+		ConsoleType getConsoleType();
+		u32 getCPUSpeedMHz();
+
 		AudioDriver* getAudio() override { return audioDriver; }
 		VideoDriver* getVideo() override { return videoDriver; }
 		InputDriver* getInput() override { return inputDriver; }

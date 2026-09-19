@@ -14,6 +14,11 @@
 #include <ogc/machine/processor.h>
 
 #include "OgcVideoDriver.h"
+
+#ifdef HW_RVL
+#include "wii/WiiPlatform.h"
+#endif
+
 #include "../../libgui/Gui.h"
 #include "../../video.h"
 #include "../../snes9xgx.h"
@@ -204,10 +209,16 @@ GXRModeObj* OgcVideoDriver::findVideoMode()
 		progressive = false;
 
 	#ifdef HW_RVL
-	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
-		mode->viWidth = 678;
-	else
+	if (CONF_GetAspectRatio() == CONF_ASPECT_16_9) {
+		WiiPlatform * wiiPlatform = static_cast<WiiPlatform*>(platform);
+		if(wiiPlatform->isWiiU())
+			mode->viWidth = 720;
+		else
+			mode->viWidth = 678;
+	}
+	else {
 		mode->viWidth = 672;
+	}
 
 	if (vmode_60hz)
 	{

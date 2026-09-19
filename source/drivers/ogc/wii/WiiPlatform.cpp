@@ -226,23 +226,17 @@ void WiiPlatform::shutdown()
 /****************************************************************************
  * Console/memory info
  ***************************************************************************/
-typedef enum {
-	CONSOLE_WII,
-	CONSOLE_WIIU_VWII,
-	CONSOLE_WIIU_WIIVC,
-	CONSOLE_DOLPHIN
-} ConsoleType;
 
-static inline bool IsWiiU() {
+bool WiiPlatform::isWiiU() {
 	return (*(vu16*)0xCD8005A0 == 0xCAFE) || (*(vu32*)0xCD8000A0 & 0x00080000);
 }
 
-static ConsoleType GetConsoleType() {
+ConsoleType WiiPlatform::getConsoleType() {
 	if (IsDolphinEmulator()) {
 		return CONSOLE_DOLPHIN;
 	}
 
-	if (IsWiiU()) {
+	if (isWiiU()) {
 		if (isWiiVC) {
 			return CONSOLE_WIIU_WIIVC;
 		}
@@ -252,7 +246,7 @@ static ConsoleType GetConsoleType() {
 	return CONSOLE_WII;
 }
 
-static u32 GetCPUSpeedMHz() {
+u32 WiiPlatform::getCPUSpeedMHz() {
 	u32 busClock = SYS_GetBusFrequency(); // ~243 MHz on Wii/vWii
 	f32 multiplier = SYS_GetCoreMultiplier(); // 3x standard, 5x+ under unlocked vWii/VC
 
@@ -265,8 +259,8 @@ static u32 GetCPUSpeedMHz() {
 
 const char* WiiPlatform::getConsoleDetails() {
 	static char description[64];
-	ConsoleType type = GetConsoleType();
-	u32 mhz = GetCPUSpeedMHz();
+	ConsoleType type = getConsoleType();
+	u32 mhz = getCPUSpeedMHz();
 
 	char speedStr[16];
 	if (mhz >= 1000) {
