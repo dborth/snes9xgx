@@ -404,10 +404,26 @@ bool ConnectShare(bool silent)
 
 	while(retry)
 	{
-		if(!silent)
-			ShowAction("Connecting to network share...");
+		bool networkUp = smb->isNetworkUp();
+		if(!networkUp)
+		{
+			if(!silent)
+				ShowAction("Initializing network...");
 
-		result = smb->connect(EmuSettings.smbShare);
+			networkUp = smb->ensureNetworkUp();
+		}
+
+		if(networkUp)
+		{
+			if(!silent)
+				ShowAction("Connecting to network share...");
+
+			result = smb->connect(EmuSettings.smbShare);
+		}
+		else
+		{
+			result = SmbConnectResult::NetworkUnavailable;
+		}
 
 		if(!silent)
 			CancelAction();
