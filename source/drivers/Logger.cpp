@@ -9,9 +9,12 @@
  ***************************************************************************/
 #include "Logger.h"
 #include "Platform.h"
+#include "Time.h"
 
 #include <cstdio>
 #include <cstring>
+
+static const Ticks processStartTicks = SystemTime::now();
 
 Logger::Logger()
 {
@@ -212,6 +215,14 @@ void Logger::log(LogLevel level, const char * fmt, va_list args)
 	if (config.includeSequenceNumber)
 	{
 		int n = snprintf(line + offset, sizeof(line) - offset, "%06u ", (unsigned)(++sequence));
+		if (n > 0)
+			offset += (size_t)n < (sizeof(line) - offset) ? (size_t)n : (sizeof(line) - offset - 1);
+	}
+
+	if (config.includeTimestamp)
+	{
+		uint32_t ms = SystemTime::diffMillisecs(processStartTicks, SystemTime::now());
+		int n = snprintf(line + offset, sizeof(line) - offset, "[%5u.%03u] ", (unsigned)(ms / 1000), (unsigned)(ms % 1000));
 		if (n > 0)
 			offset += (size_t)n < (sizeof(line) - offset) ? (size_t)n : (sizeof(line) - offset - 1);
 	}

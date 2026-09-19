@@ -129,6 +129,7 @@ struct LogConfig
 	// ---- Formatting ----
 	bool includeLevelTag = true;         //!< prefix each line with "[DEBUG] "/"[INFO] "/etc.
 	bool includeSequenceNumber = false;  //!< prefix each line with a monotonic call counter, useful for spotting dropped UDP packets
+	bool includeTimestamp = true;
 };
 
 //!Abstract backend a Logger fans a formatted line out to. Every method
