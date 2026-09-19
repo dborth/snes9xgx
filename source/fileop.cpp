@@ -31,6 +31,8 @@
 
 #define THREAD_SLEEP 100
 
+#define PARSE_BATCH_SIZE MAX_BROWSER_SIZE
+
 static ThreadSync & DeviceSync() { static ThreadSync s; return s; }
 static ThreadSync & ParseSync()  { static ThreadSync s; return s; }
 static ThreadSync & WorkerSync() { static ThreadSync s; return s; }
@@ -45,6 +47,8 @@ static Thread parseThread;
 static DIR *dir = nullptr;
 static volatile bool parseHalt = true;
 static bool parseFilter = true;
+static char parsePrefix[MAXJOLIET + 1] = { 0 }; // if set, only entries whose name starts with this are listed
+static size_t parsePrefixLen = 0;
 static bool ParseDirEntries();
 int selectLoadedFile = 0;
 
@@ -68,8 +72,6 @@ static bool deviceIdle = false; // protected by DeviceSync().mutex
 /****************************************************************************
  * Background worker thread
  ***************************************************************************/
-
-typedef int (*BgTaskFn)(void *arg);
 
 // worker thread synchronization - WorkerSync().workCond signals main -> worker:
 // task available; WorkerSync().idleCond signals worker -> main: now idle
@@ -578,10 +580,11 @@ static bool ParseDirEntries()
 	char *ext;
 	struct dirent *entry = nullptr;
 	int isdir;
+	bool listFull = false;
 
 	int i = 0;
 
-	while(i < 20 && !parseHalt)
+	while(i < PARSE_BATCH_SIZE && !parseHalt)
 	{
 		entry = readdir(dir);
 
@@ -589,6 +592,9 @@ static bool ParseDirEntries()
 			break;
 
 		if(entry->d_name[0] == '.')
+			continue;
+
+		if(parsePrefixLen > 0 && strncmp(entry->d_name, parsePrefix, parsePrefixLen) != 0)
 			continue;
 
 		if(entry->d_type==DT_DIR)
@@ -613,7 +619,7 @@ static bool ParseDirEntries()
 
 		if(!AddBrowserEntry())
 		{
-			parseHalt = true;
+			listFull = true; // out of room - keep (and sort) what fits, ignore the rest
 			break;
 		}
 
@@ -641,7 +647,7 @@ static bool ParseDirEntries()
 		browser.numEntries += i;
 	}
 
-	if(entry == nullptr || parseHalt)
+	if(entry == nullptr || parseHalt || listFull)
 	{
 		closedir(dir); // close directory
 		dir = nullptr;
@@ -654,12 +660,13 @@ static bool ParseDirEntries()
 /***************************************************************************
  * Browse subdirectories
  **************************************************************************/
-int
-ParseDirectory(bool waitParse, bool filter)
+int ParseDirectory(bool waitParse, bool filter, const char * namePrefix)
 {
 	int retry = 1;
 	bool mounted = false;
 	parseFilter = filter;
+	snprintf(parsePrefix, sizeof(parsePrefix), "%s", namePrefix ? namePrefix : "");
+	parsePrefixLen = strlen(parsePrefix);
 	
 	ResetBrowser(); // reset browser
 	
@@ -713,7 +720,7 @@ ParseDirectory(bool waitParse, bool filter)
 	browser.numEntries++;
 
 	parseHalt = false;
-	ParseDirEntries(); // index first 20 entries
+	ParseDirEntries(); // index the first batch of entries
 
 	// signal parse thread to continue indexing remaining entries
 	ParseSync().mutex.lock();
@@ -876,8 +883,12 @@ size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersiz
 				else {
 					while(!feof(file))
 					{
+						size_t chunk = buffersize - offset; // never read past the end of the caller's buffer
+						if(chunk > FILE_READ_CHUNK)
+							chunk = FILE_READ_CHUNK;
+
 						ShowProgress ("Loading...", offset, size);
-						readsize = fread (rbuffer + offset, 1, 4096, file); // read in next chunk
+						readsize = fread (rbuffer + offset, 1, chunk, file); // read in next chunk
 
 						if(readsize <= 0)
 							break; // reading finished (or failed)
@@ -1015,7 +1026,7 @@ size_t SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 
 		while(written < datasize)
 		{
-			if(datasize - written > 4096) nextwrite=4096;
+			if(datasize - written > FILE_WRITE_CHUNK) nextwrite=FILE_WRITE_CHUNK;
 			else nextwrite = datasize-written;
 			writesize = fwrite (buffer+written, 1, nextwrite, file);
 			if(writesize != nextwrite) break; // write failure

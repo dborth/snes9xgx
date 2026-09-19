@@ -16,7 +16,17 @@
 #include <unistd.h>
 #include "memmanager.h"
 
-#define SAVEBUFFERSIZE (1024 * 1024 * 2) // leave room for IPS/UPS files and large images
+#define SAVEBUFFERSIZE (1024 * 512)
+
+#if defined(HW_RVL) || defined(HW_DOL)
+#define FILE_READ_CHUNK   4096
+#define FILE_WRITE_CHUNK  4096
+#define FILE_BUFFER_ALIGN 32
+#else
+#define FILE_READ_CHUNK   (256 * 1024)
+#define FILE_WRITE_CHUNK  (256 * 1024)
+#define FILE_BUFFER_ALIGN 0x40
+#endif
 
 void InitFileOpThreads();
 void ResumeDeviceCheckingThread();
@@ -31,7 +41,7 @@ bool ConnectShare(bool silent);
 void CloseShare();
 void CreateAppPath(char * origpath);
 void FindAndSelectLastLoadedFile();
-int ParseDirectory(bool waitParse = false, bool filter = true);
+int ParseDirectory(bool waitParse = false, bool filter = true, const char * namePrefix = nullptr);
 bool DirExists(const char * path);
 bool CreateDirectory(char * path);
 void AllocSaveBuffer();

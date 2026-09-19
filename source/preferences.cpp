@@ -937,12 +937,14 @@ void CreateMissingDirectories() {
 	char defaultFolder[MAXPATHLEN];
 	if (EmuSettings.SaveMethod > DEVICE_AUTO) {
 		const char* savePointers[] = { EmuSettings.SaveFolder, EmuSettings.CheatFolder };
+		bool appFolderChecked = false; // only hit the device once per pass
 
 		for (int i = 0; i < SAVEFOLDER_LENGTH; i++) {
 			const char* currentPath = savePointers[i];
 
-			if (strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
+			if (!appFolderChecked && strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
 				CreatePathWithPrefix(EmuSettings.SaveMethod, APPFOLDER);
+				appFolderChecked = true;
 			}
 
 			GetDefaultFolderPath(defaultFolder, saveFolder[i].name);
@@ -959,10 +961,13 @@ void CreateMissingDirectories() {
 			EmuSettings.CoverFolder,
 			EmuSettings.ArtworkFolder
 		};
+		bool appFolderChecked = false; // only hit the device once per pass
+
 		for (int i = 0; i < LOADFOLDER_LENGTH; i++) {
 			const char* currentPath = loadPointers[i];
-			if (strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
+			if (!appFolderChecked && strncmp(currentPath, APPFOLDER, strlen(APPFOLDER)) == 0) {
 				CreatePathWithPrefix(EmuSettings.LoadMethod, APPFOLDER);
+				appFolderChecked = true;
 			}
 
 			GetDefaultFolderPath(defaultFolder, loadFolder[i].name);
@@ -972,3 +977,4 @@ void CreateMissingDirectories() {
 		}
 	}
 }
+

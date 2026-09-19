@@ -1,22 +1,21 @@
 /****************************************************************************
- * Snes9x GX
+ * FCE Ultra GX
  *
- * softdev July 2006
- * Michniewski 2008
  * Daryl Borth 2008-2026
  *
  * decompress.cpp
  *
- * File decompression routines
- ***************************************************************************/
+ * File unzip routines
+ ****************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
-#include <sys/stat.h>
+#include <malloc.h>
+#include <memory>
 
-#include "snes9xgx.h"
+#include "fceugx.h"
 #include "fileop.h"
 #include "filebrowser.h"
 #include "menu.h"
@@ -29,6 +28,12 @@ extern "C" {
 }
 
 #define ZIPCHUNK 2048
+
+#if defined(HW_RVL) || defined(HW_DOL)
+#define ZIP_READ_CHUNK ZIPCHUNK
+#else
+#define ZIP_READ_CHUNK FILE_READ_CHUNK
+#endif
 
 /*
  * Zip file header definition
@@ -108,14 +113,20 @@ UnZipBuffer (unsigned char *outbuffer, size_t buffersize)
 	int res;
 	size_t bufferoffset = 0;
 	size_t have = 0;
-	char readbuffer[ZIPCHUNK];
 	size_t sizeread = 0;
+
+	// input buffer is on the heap - it can be far larger than the worker thread's stack allows
+	std::unique_ptr<char, decltype(&free)> readbufferOwner((char *)memalign(FILE_BUFFER_ALIGN, ZIP_READ_CHUNK), free);
+	char * readbuffer = readbufferOwner.get();
+
+	if(!readbuffer)
+		return 0;
 
 	// Read Zip Header
 	fseek(file, 0, SEEK_SET);
-	sizeread = fread (readbuffer, 1, ZIPCHUNK, file);
+	sizeread = fread (readbuffer, 1, ZIP_READ_CHUNK, file);
 
-	if(sizeread <= 0)
+	if(sizeread < sizeof (PKZIPHEADER))
 		return 0;
 
 	/*** Copy PKZip header to local, used as info ***/
@@ -145,7 +156,11 @@ UnZipBuffer (unsigned char *outbuffer, size_t buffersize)
 	zipoffset =
 	(sizeof (PKZIPHEADER) + FLIP16 (pkzip.filenameLength) +
 	FLIP16 (pkzip.extraDataLength));
-	zipchunk = ZIPCHUNK - zipoffset;
+
+	if(zipoffset >= sizeread) // header claims more data than we read
+		goto done;
+
+	zipchunk = sizeread - zipoffset;
 
 	/*** Now do it! ***/
 	do
@@ -176,13 +191,14 @@ UnZipBuffer (unsigned char *outbuffer, size_t buffersize)
 		}
 		while (zs.avail_out == 0);
 
-		// Readup the next 2k block
+		// Readup the next block
 		zipoffset = 0;
-		zipchunk = ZIPCHUNK;
 
-		sizeread = fread (readbuffer, 1, ZIPCHUNK, file);
+		sizeread = fread (readbuffer, 1, ZIP_READ_CHUNK, file);
 		if(sizeread <= 0)
 			goto done; // read failure
+
+		zipchunk = sizeread;
 
 		ShowProgress ("Loading...", bufferoffset, pkzip.uncompressedSize);
 	}
@@ -268,7 +284,7 @@ static size_t SzOffset;
 static size_t SzOutSizeProcessed;
 static CFileItem *SzF;
 
-static char sz_buffer[2048];
+static char sz_buffer[ZIP_READ_CHUNK] __attribute__((aligned(FILE_BUFFER_ALIGN)));
 static int szMethod = 0;
 
 /****************************************************************************
@@ -309,8 +325,8 @@ static SZ_RESULT SzFileReadImp(void *object, void **buffer, size_t maxRequiredSi
 	// the void* object is a SzFileInStream
 	SzFileInStream *s = (SzFileInStream *) object;
 
-	if (maxRequiredSize > 2048)
-		maxRequiredSize = 2048;
+	if (maxRequiredSize > sizeof(sz_buffer))
+		maxRequiredSize = sizeof(sz_buffer);
 
 	// read data
 	sizeread = fread(sz_buffer, 1, maxRequiredSize, file);
