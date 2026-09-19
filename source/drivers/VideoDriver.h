@@ -43,9 +43,13 @@ class VideoDriver
 		virtual int getScreenWidth() const = 0;
 		virtual int getScreenHeight() const = 0;
 		virtual uint32_t getFrameTimer() = 0;
-		virtual void setFrameTimer(uint32_t frameTimer) = 0;
 		virtual int getRefreshRate() const = 0;
 		virtual float getDeltaTime() const = 0;
+
+		//! Ratio of physical render-target pixels to design-canvas pixels
+		//! (the width/height passed to init()). Greater than 1.0 wherever
+		//! the driver upscales the design canvas to fill a higher-resolution.
+		virtual float getUIScale() const { return 1.0f; }
 
 		virtual ImageRenderer* getImageRenderer() = 0;
 		virtual GlyphRenderer* getGlyphRenderer() = 0;

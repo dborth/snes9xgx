@@ -47,8 +47,16 @@ struct GlyphData {
 	uint16_t glyphAdvanceY;
 	uint32_t glyphIndex;
 
+	// Pixel dims of the rasterized bitmap/texture, at uiScale - always
+	// >= drawWidth/drawHeight, and equal to them when uiScale is 1.0.
 	uint16_t textureWidth;
 	uint16_t textureHeight;
+
+	// Design-pixel dims to actually draw the quad at (textureWidth/Height
+	// divided back down by uiScale) - keeps text laid out and sized
+	// identically to uiScale 1.0 while the texture itself is crisper.
+	uint16_t drawWidth;
+	uint16_t drawHeight;
 
 	int16_t renderOffsetY;
 	int16_t renderOffsetMax;
@@ -82,8 +90,12 @@ private:
 	void unloadFont();
 	GlyphData* cacheGlyphData(wchar_t charCode, int16_t pixelSize);
 
+	// Physical-pixels-per-design-pixel glyphs are rasterized at (see
+	// VideoDriver::getUIScale()).
+	float uiScale;
+
 public:
-	GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, GlyphRenderer* glyphRenderer);
+	GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, GlyphRenderer* glyphRenderer, float uiScale = 1.0f);
 	~GuiTextRenderer();
 
 	void setPixelSize(int16_t pixelSize);

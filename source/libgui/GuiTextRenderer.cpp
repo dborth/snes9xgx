@@ -5,13 +5,23 @@
  ***************************************************************************/
 
 #include "GuiTextRenderer.h"
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 
 GuiTextRenderer* fontSystem;
 
-GuiTextRenderer::GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, GlyphRenderer* glyphRenderer)
-    : currentPixelSize(0), renderer(glyphRenderer)
+namespace {
+	// Converts an already->>6-shifted FreeType value (in physical/rasterized
+	// pixels) back down to the design-pixel units
+	inline int16_t ToDesignPixels(int v, float uiScale)
+	{
+		return uiScale == 1.0f ? (int16_t)v : (int16_t)std::lround(v / uiScale);
+	}
+}
+
+GuiTextRenderer::GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, GlyphRenderer* glyphRenderer, float uiScale_)
+    : currentPixelSize(0), renderer(glyphRenderer), uiScale(uiScale_)
 {
 	FT_Init_FreeType(&ftLibrary);
 	FT_New_Memory_Face(ftLibrary, (FT_Byte*)fontBuffer, bufferSize, 0, &ftFace);
@@ -39,7 +49,10 @@ void GuiTextRenderer::unloadFont() {
 void GuiTextRenderer::setPixelSize(int16_t pixelSize) {
 	if (currentPixelSize != pixelSize) {
 		currentPixelSize = pixelSize;
-		FT_Set_Pixel_Sizes(ftFace, 0, currentPixelSize);
+		// currentPixelSize (and every size callers pass in/read back) stays
+		// in design pixels - FreeType itself is asked to rasterize at
+		// uiScale x that.
+		FT_Set_Pixel_Sizes(ftFace, 0, (FT_UInt)std::lround(currentPixelSize * uiScale));
 	}
 }
 
@@ -51,8 +64,8 @@ GlyphData* GuiTextRenderer::cacheGlyphData(wchar_t charCode, int16_t pixelSize) 
 	// Initialize metrics on first run for this size
 	if (data->charMap.empty()) {
 		setPixelSize(pixelSize);
-		data->align.ascender = (int16_t)(ftFace->size->metrics.ascender >> 6);
-		data->align.descender = (int16_t)(ftFace->size->metrics.descender >> 6);
+		data->align.ascender = ToDesignPixels(ftFace->size->metrics.ascender >> 6, uiScale);
+		data->align.descender = ToDesignPixels(ftFace->size->metrics.descender >> 6, uiScale);
 		data->align.max = 0;
 		data->align.min = 0;
 	}
@@ -68,16 +81,23 @@ GlyphData* GuiTextRenderer::cacheGlyphData(wchar_t charCode, int16_t pixelSize) 
 			FT_Bitmap* glyphBitmap = &ftFace->glyph->bitmap;
 
 			GlyphData& charData = data->charMap[charCode];
-			charData.renderOffsetX = (int16_t)ftFace->glyph->bitmap_left;
-			charData.glyphAdvanceX = (uint16_t)(ftFace->glyph->advance.x >> 6);
-			charData.glyphAdvanceY = (uint16_t)(ftFace->glyph->advance.y >> 6);
+			charData.renderOffsetX = ToDesignPixels(ftFace->glyph->bitmap_left, uiScale);
+			charData.glyphAdvanceX = (uint16_t)ToDesignPixels(ftFace->glyph->advance.x >> 6, uiScale);
+			charData.glyphAdvanceY = (uint16_t)ToDesignPixels(ftFace->glyph->advance.y >> 6, uiScale);
 			charData.glyphIndex = (uint32_t)gIndex;
 
+			// Physical (rasterized-at-uiScale) bitmap dims - what the
+			// texture is actually created/loaded at.
 			charData.textureWidth = glyphBitmap->width;
 			charData.textureHeight = glyphBitmap->rows;
-			charData.renderOffsetY = (int16_t)ftFace->glyph->bitmap_top;
-			charData.renderOffsetMax = (int16_t)ftFace->glyph->bitmap_top;
-			charData.renderOffsetMin = (int16_t)glyphBitmap->rows - ftFace->glyph->bitmap_top;
+			// Design-pixel dims the quad is drawn at, so text lays out and
+			// sizes identically to uiScale 1.0 while the texture is crisper.
+			charData.drawWidth = (uint16_t)ToDesignPixels(glyphBitmap->width, uiScale);
+			charData.drawHeight = (uint16_t)ToDesignPixels(glyphBitmap->rows, uiScale);
+
+			charData.renderOffsetY = ToDesignPixels(ftFace->glyph->bitmap_top, uiScale);
+			charData.renderOffsetMax = charData.renderOffsetY;
+			charData.renderOffsetMin = ToDesignPixels((int)glyphBitmap->rows - ftFace->glyph->bitmap_top, uiScale);
 
 			// Delegate Texture creation and data loading to the active backend
 			charData.texture = renderer->createTexture(charData.textureWidth, charData.textureHeight);
@@ -126,8 +146,8 @@ void GuiTextRenderer::getOffset(const wchar_t* text, FontOffset* offset) {
 		++i;
 	}
 
-	offset->ascender = (int16_t)(ftFace->size->metrics.ascender >> 6);
-	offset->descender = (int16_t)(ftFace->size->metrics.descender >> 6);
+	offset->ascender = ToDesignPixels(ftFace->size->metrics.ascender >> 6, uiScale);
+	offset->descender = ToDesignPixels(ftFace->size->metrics.descender >> 6, uiScale);
 	offset->max = strMax;
 	offset->min = strMin;
 }
@@ -144,7 +164,7 @@ uint16_t GuiTextRenderer::getWidth(const wchar_t* text) {
 		if (glyphData) {
 			if (ftKerningEnabled && i > 0) {
 				FT_Get_Kerning(ftFace, fontData[currentPixelSize].charMap[text[i - 1]].glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
-				strWidth += pairDelta.x >> 6;
+				strWidth += ToDesignPixels(pairDelta.x >> 6, uiScale);
 			}
 			strWidth += glyphData->glyphAdvanceX;
 		}
@@ -186,13 +206,13 @@ uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, Pi
 			// Kerning adjustments
 			if (ftKerningEnabled && i > 0) {
 				FT_Get_Kerning(ftFace, fontData[currentPixelSize].charMap[text[i - 1]].glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
-				x_pos += pairDelta.x >> 6;
+				x_pos += ToDesignPixels(pairDelta.x >> 6, uiScale);
 			}
 
 			// Draw current glyph via generic renderer
 			int16_t screenX = x_pos + glyphData->renderOffsetX + x_offset;
 			int16_t screenY = y - glyphData->renderOffsetY + y_offset;
-			renderer->drawQuad(glyphData->texture, screenX, screenY, glyphData->textureWidth, glyphData->textureHeight, color);
+			renderer->drawQuad(glyphData->texture, screenX, screenY, glyphData->drawWidth, glyphData->drawHeight, color);
 
 			x_pos += glyphData->glyphAdvanceX;
 			++printed;

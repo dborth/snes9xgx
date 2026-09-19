@@ -28,10 +28,10 @@ class WutVideoDriver : public VideoDriver
 		int getScreenWidth() const override { return screenWidth; }
 		int getScreenHeight() const override { return screenHeight; }
 		uint32_t getFrameTimer() override { return frameTimer; }
-		void setFrameTimer(uint32_t _frameTimer) override { frameTimer = _frameTimer; };
 
 		int getRefreshRate() const override;
 		float getDeltaTime() const override;
+		float getUIScale() const override { return uiScale; }
 
 		ImageRenderer* getImageRenderer() override { return imageRenderer; }
 		GlyphRenderer* getGlyphRenderer() override { return glyphRenderer; }
@@ -52,8 +52,13 @@ class WutVideoDriver : public VideoDriver
 		// the top of every render() pass.
 		void prepareFrame();
 
+		// Queries GX2's current TV scan mode/aspect ratio and derives the
+		// physical TV and DRC target dims
+		void computeUIScale();
+
 		int screenWidth;
 		int screenHeight;
+		float uiScale = 1.0f;
 		uint32_t frameTimer;
 		PixelColor clearColor;
 

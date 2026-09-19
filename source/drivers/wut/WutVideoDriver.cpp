@@ -3,6 +3,7 @@
  * Daryl Borth 2026
  * WutVideoDriver.cpp
  ***************************************************************************/
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <malloc.h>
@@ -12,6 +13,7 @@
 #include <gx2/context.h>
 #include <gx2/display.h>
 #include <gx2/draw.h>
+#include <gx2/enum.h>
 #include <gx2/mem.h>
 #include <gx2/registers.h>
 #include <gx2/sampler.h>
@@ -100,6 +102,8 @@ void WutVideoDriver::init(int width, int height)
 	screenWidth = width;
 	screenHeight = height;
 
+	computeUIScale();
+
 	imageRenderer = new WutImageRenderer(this);
 	glyphRenderer = new WutGlyphRenderer(this);
 
@@ -107,6 +111,49 @@ void WutVideoDriver::init(int width, int height)
 	emulatorVideo->init(this);
 
 	prepareFrame();
+}
+
+void WutVideoDriver::computeUIScale()
+{
+	int tvWidth, tvHeight;
+	switch(GX2GetSystemTVScanMode())
+	{
+		case GX2_TV_SCAN_MODE_480I:
+		case GX2_TV_SCAN_MODE_480P:
+			if(GX2GetSystemTVAspectRatio() == GX2_ASPECT_RATIO_16_9)
+			{
+				tvWidth = 854;
+				tvHeight = 480;
+			}
+			else
+			{
+				tvWidth = 640;
+				tvHeight = 480;
+			}
+			break;
+		case GX2_TV_SCAN_MODE_1080I:
+		case GX2_TV_SCAN_MODE_1080P:
+			tvWidth = 1920;
+			tvHeight = 1080;
+			break;
+		case GX2_TV_SCAN_MODE_720P:
+		default:
+			tvWidth = 1280;
+			tvHeight = 720;
+			break;
+	}
+
+	// The GamePad's DRC screen is always this fixed size regardless of TV mode.
+	const int drcWidth = 854;
+	const int drcHeight = 480;
+
+	// PixelRectToNdc stretches the 640x480 canvas to fill each target independently
+	// per axis. uiScale only measures the worst (largest) of those four per-axis
+	// stretch ratios
+	uiScale = std::max({
+		(float)tvWidth / screenWidth, (float)tvHeight / screenHeight,
+		(float)drcWidth / screenWidth, (float)drcHeight / screenHeight
+	});
 }
 
 void WutVideoDriver::shutdown()
