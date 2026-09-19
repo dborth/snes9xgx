@@ -284,16 +284,10 @@ bool IsDeviceRoot(char * path)
 	if(path == nullptr || path[0] == 0)
 		return false;
 
-	if( strcmp(path, "sd:/")    == 0 ||
-		strcmp(path, "usb:/")   == 0 ||
-		strcmp(path, "dvd:/")   == 0 ||
-		strcmp(path, "smb:/")   == 0 ||
-		strcmp(path, "carda:/") == 0 ||
-		strcmp(path, "cardb:/") == 0 ||
-		strcmp(path, "port2:/") == 0 ||
-		strcmp(path, "gcloader:/") == 0 )
-	{
-		return true;
+	for(int device = 0; device < DEVICE_LENGTH; device++) {
+		const char * mountPath = platform->getFileSystem()->getMountPath(device);
+		if(mountPath != nullptr && mountPath[0] != 0 && strcmp(path, mountPath) == 0)
+			return true;
 	}
 	return false;
 }
