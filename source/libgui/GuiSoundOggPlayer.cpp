@@ -14,7 +14,7 @@
 #include <ogc/cache.h>
 #endif
 
-GuiSoundOggPlayer::GuiSoundOggPlayer() : threadRunning(false), streamPaused(false), sampleRate(0), channels(0) {
+GuiSoundOggPlayer::GuiSoundOggPlayer() : vfOpen(false), threadRunning(false), streamPaused(false), sampleRate(0), channels(0) {
 	pcmBuffer[0] = (uint8_t*)memalign(32, BUFFER_SIZE);
 	pcmBuffer[1] = (uint8_t*)memalign(32, BUFFER_SIZE);
 	bufferReady[0] = false;
@@ -67,6 +67,7 @@ bool GuiSoundOggPlayer::play(const uint8_t* data, int32_t length, int time_pos, 
 	if (ov_open_callbacks(&memFile, &vf, nullptr, 0, cb) < 0) {
 		return false;
 	}
+	vfOpen = true;
 
 	vorbis_info* vi = ov_info(&vf, -1);
 	sampleRate = vi->rate;
@@ -83,14 +84,30 @@ bool GuiSoundOggPlayer::play(const uint8_t* data, int32_t length, int time_pos, 
 	threadRunning = true;
 	streamPaused = false;
 
-	return decodeThread.start(threadEntry, this, 16384, ThreadPriority::High);
+	if (!decodeThread.start(threadEntry, this, 16384, ThreadPriority::High)) {
+		// Don't leave isPlaying() true with no decode thread behind it
+		threadRunning = false;
+		ov_clear(&vf);
+		vfOpen = false;
+		return false;
+	}
+
+	return true;
 }
 
 void GuiSoundOggPlayer::stop() {
-	if (threadRunning) {
-		threadRunning = false;
+	// The decode thread clears threadRunning itself when a non-looping stream
+	// hits EOF, so threadRunning says nothing about whether the thread still
+	// needs joining. Skipping the join left decodeThread's handle set (which
+	// makes the next Thread::start() fail) and leaked its stack/OSThread.
+	threadRunning = false;
+
+	if (decodeThread.isRunning())
 		decodeThread.join();
+
+	if (vfOpen) {
 		ov_clear(&vf);
+		vfOpen = false;
 	}
 }
 

@@ -67,6 +67,10 @@ class WutAudioDriver : public AudioDriver
 		alignas(32) int16_t streamBufR[STREAM_BUFFER_SAMPLES];
 
 		uint32_t writeOffset;
+		//!True while playStream() is priming the ring on the calling thread, so
+		//!handleStreamCallback() (AX frame thread) doesn't start the voices or
+		//!consume the first decoded buffer out from under it.
+		volatile bool streamPriming = false;
 		bool eofSilenceWritten;
 		int streamVolume;
 };

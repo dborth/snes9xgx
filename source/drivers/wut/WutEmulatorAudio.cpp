@@ -139,6 +139,13 @@ void WutEmulatorAudio::stop() {
 	started = false;
 }
 
+void WutEmulatorAudio::shutdown()
+{
+	stop();
+	if (voiceL) { AXFreeVoice(voiceL); voiceL = nullptr; }
+	if (voiceR) { AXFreeVoice(voiceR); voiceR = nullptr; }
+}
+
 /****************************************************************************
  * armAndStartVoices
  *

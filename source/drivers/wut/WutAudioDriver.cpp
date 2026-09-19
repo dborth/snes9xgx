@@ -122,6 +122,7 @@ void WutAudioDriver::stopEmulatorAudio() {
 
 void WutAudioDriver::shutdown() {
 	stopEmulatorAudio();
+	emulatorAudio->shutdown();
 	stopStream();
 	AXDeregisterAppFrameCallback(wut_frame_callback);
 
@@ -210,14 +211,7 @@ void WutAudioDriver::setVoiceVolume(int32_t voice, int volume) {
 }
 
 void WutAudioDriver::playStream(const uint8_t *data, int32_t length, bool loop, int volume) {
-	// Don't gate this on isForeground(): the very first call (eg. the
-	// startup bg_music track) can race Cafe OS's foreground-acquire signal,
-	// and bailing out here silently drops it with nothing to ever retry it.
-	// Instead we always prime the buffers/decoder below, and let
-	// handleStreamCallback() (ticking every AX frame, ~3ms) continuously
-	// reconcile the hardware voice state against isForeground() - the same
-	// self-healing pattern WutEmulatorAudio::playSound() already uses for
-	// the emulator's ring buffer voice.
+	streamPriming = true;
 	stopStream();
 	streamVolume = volume;
 
@@ -295,9 +289,14 @@ void WutAudioDriver::playStream(const uint8_t *data, int32_t length, bool loop, 
 			AXSetVoiceState(streamVoiceR, 1);
 		}
 	}
+
+	streamPriming = false;
 }
 
 void WutAudioDriver::handleStreamCallback() {
+	if (streamPriming)
+		return;
+
 	if (!isForeground()) {
 		// Lost (or don't yet have) the foreground - hold the hardware voices stopped directly
 		if (streamVoiceL) AXSetVoiceState(streamVoiceL, 0);

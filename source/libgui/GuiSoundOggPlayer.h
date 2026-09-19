@@ -50,6 +50,7 @@ class GuiSoundOggPlayer {
 
 		MemFile memFile;
 		OggVorbis_File vf;
+		bool vfOpen; //!< true between a successful ov_open_callbacks() and its ov_clear()
 		Thread decodeThread;
 
 		volatile bool threadRunning;

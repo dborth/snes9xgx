@@ -44,6 +44,9 @@ class WutEmulatorAudio : public EmulatorAudioDriver
 		//! Hard-stops both AX voices (AX_VOICE_STATE_STOPPED).
 		void stop();
 
+		//! Frees the two AX voices. Must be called before AXQuit().
+		void shutdown();
+
 		// Called only via the S9xAudioCallback trampoline above.
 		void audioCallback();
 
