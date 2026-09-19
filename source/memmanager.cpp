@@ -60,7 +60,7 @@ void InitMemManager ()
 }
 
 #if (!defined(HW_RVL) && !defined(HW_DOL))
-void* extmem_malloc(uint32_t size) { return malloc(size); }
+void* extmem_malloc(uint32_t size) { return memalign(FILE_BUFFER_ALIGN, size); }
 char* extmem_strdup(const char *s) { return strdup(s); }
 void extmem_free(void *ptr) { free(ptr); }
 int extmem_size_free() { return 0; }
