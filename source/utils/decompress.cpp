@@ -1,21 +1,22 @@
 /****************************************************************************
- * FCE Ultra GX
+ * Snes9x GX
  *
+ * softdev July 2006
+ * Michniewski 2008
  * Daryl Borth 2008-2026
  *
  * decompress.cpp
  *
- * File unzip routines
- ****************************************************************************/
+ * File decompression routines
+ ***************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
-#include <malloc.h>
-#include <memory>
+#include <sys/stat.h>
 
-#include "fceugx.h"
+#include "snes9xgx.h"
 #include "fileop.h"
 #include "filebrowser.h"
 #include "menu.h"
