@@ -9,7 +9,8 @@
 #include <sysapp/launch.h>
 #include <proc_ui/procui.h>
 #include <coreinit/systeminfo.h>
-#include <coreinit/memexpheap.h>
+#include <coreinit/memory.h>
+#include <malloc.h>
 
 #include "WutPlatform.h"
 
@@ -160,11 +161,16 @@ const char* WutPlatform::getConsoleDetails() {
 const char* WutPlatform::getMemoryFreeInfo() {
 	static char memoryFreeInfo[50];
 
-	MEMHeapHandle mem2Heap = MEMGetBaseHeapHandle(MEM_BASE_HEAP_MEM2);
-	uint32_t mem2FreeBytes = mem2Heap ? MEMGetTotalFreeSizeForExpHeap(mem2Heap) : 0;
-	float mem2_mb = (float)mem2FreeBytes / (1024.0f * 1024.0f);
+	uint32_t mem2Addr = 0, mem2TotalBytes = 0;
+	OSGetMemBound(OS_MEM2, &mem2Addr, &mem2TotalBytes);
 
-	snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM free: %.2fMB", mem2_mb);
+	struct mallinfo mi = mallinfo();
+	uint32_t usedBytes = (uint32_t)mi.uordblks;
+
+	uint32_t freeBytes = (mem2TotalBytes > usedBytes) ? (mem2TotalBytes - usedBytes) : 0;
+	float free_mb = (float)freeBytes / (1024.0f * 1024.0f);
+
+	snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "MEM free: %.2fMB", free_mb);
 
 	return memoryFreeInfo;
 }
