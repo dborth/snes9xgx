@@ -43,6 +43,7 @@ class VideoDriver
 		virtual int getScreenWidth() const = 0;
 		virtual int getScreenHeight() const = 0;
 		virtual uint32_t getFrameTimer() = 0;
+		virtual void setFrameTimer(uint32_t frameTimer) = 0;
 		virtual int getRefreshRate() const = 0;
 		virtual float getDeltaTime() const = 0;
 
