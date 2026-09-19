@@ -45,6 +45,35 @@ namespace
 		scale[1] = (h * scaleY) / designHeight;
 		scale[2] = 1.0f;
 	}
+
+	//Rotates a quad about its own center in *canvas-pixel* space and maps the
+	//corners to NDC. Doing it here (rather than in the vertex shader) keeps the
+	//rotation rigid regardless of canvas aspect - the compiled shader bakes in
+	//a 16:9 correction.
+	void RotatedQuadToNdc(float x, float y, float w, float h, float scaleX, float scaleY, float degrees, int designWidth, int designHeight, float corners[8])
+	{
+		const float cx = x + w * 0.5f;
+		const float cy = y + h * 0.5f;
+		const float hw = w * scaleX * 0.5f;
+		const float hh = h * scaleY * 0.5f;
+		const float rad = DegToRad(degrees);
+		const float c = cosf(rad);
+		const float s = sinf(rad);
+
+		static const float lx[4] = { -1.0f,  1.0f, 1.0f, -1.0f };
+		static const float ly[4] = { -1.0f, -1.0f, 1.0f,  1.0f }; // +1 = top of the quad
+
+		for(int i = 0; i < 4; i++)
+		{
+			float dx = lx[i] * hw;
+			float dy = -ly[i] * hh; // pixel space is y-down
+			float px = cx + dx * c - dy * s;
+			float py = cy + dx * s + dy * c;
+
+			corners[i * 2 + 0] = (px / designWidth) * 2.0f - 1.0f;
+			corners[i * 2 + 1] = 1.0f - (py / designHeight) * 2.0f;
+		}
+	}
 }
 
 /****************************************************************************
@@ -112,6 +141,7 @@ void WutVideoDriver::prepareFrame()
 	// GX2R buffer (see ColorShader.h) - rewind the counter here, once per
 	// frame, before anything draws into it.
 	ColorShader::instance()->resetFrame();
+	Texture2DShader::instance()->resetFrame();
 }
 
 void WutVideoDriver::renderMenu()
@@ -258,12 +288,37 @@ void WutImageRenderer::drawTexture(void * texture, float xpos, float ypos, uint1
 
 	Texture2DShader * shader = Texture2DShader::instance();
 
+	// Rotated draws get pre-rotated corners and an identity shader transform.
+	// If the per-frame slots ever run out, fall back to the shader's own
+	// rotation rather than dropping the draw.
+	bool cpuRotated = false;
+	uint32_t rotatedSlot = 0;
+	if(degrees != 0.0f)
+	{
+		float corners[8];
+		RotatedQuadToNdc(xpos, ypos, width, height, scaleX, scaleY, degrees, driver->getScreenWidth(), driver->getScreenHeight(), corners);
+		cpuRotated = shader->uploadRotatedQuad(corners, rotatedSlot);
+	}
+
+	static const float identityOffset[3] = { 0.0f, 0.0f, 0.0f };
+	static const float identityScale[3]  = { 1.0f, 1.0f, 1.0f };
+
 	auto drawPass = [&]() {
 		shader->setShaders();
-		shader->setAttributeBuffer();
-		shader->setAngle(DegToRad(degrees));
-		shader->setOffset(offset);
-		shader->setScale(scale);
+		if(cpuRotated)
+		{
+			shader->setRotatedAttributeBuffer(rotatedSlot);
+			shader->setAngle(0.0f);
+			shader->setOffset(identityOffset);
+			shader->setScale(identityScale);
+		}
+		else
+		{
+			shader->setAttributeBuffer();
+			shader->setAngle(DegToRad(degrees));
+			shader->setOffset(offset);
+			shader->setScale(scale);
+		}
 		shader->setColorIntensity(colorIntensity);
 		shader->clearBlur();
 		shader->setTextureAndSampler(static_cast<GX2Texture *>(texture), &sampler);

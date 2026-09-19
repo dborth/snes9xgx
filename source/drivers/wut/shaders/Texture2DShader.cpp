@@ -238,11 +238,21 @@ Texture2DShader::Texture2DShader()
 	texCoords[i++] = 1.0f; texCoords[i++] = 0.0f;
 	texCoords[i++] = 0.0f; texCoords[i++] = 0.0f;
 	GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, texCoords, ciTexCoordsVtxsSize);
+
+	memset(&rotatedBuffer, 0, sizeof(rotatedBuffer));
+	rotatedBuffer.flags = static_cast<GX2RResourceFlags>(
+		GX2R_RESOURCE_BIND_VERTEX_BUFFER | GX2R_RESOURCE_USAGE_CPU_WRITE | GX2R_RESOURCE_USAGE_GPU_READ);
+	rotatedBuffer.elemSize = cuRotatedSlotSize;
+	rotatedBuffer.elemCount = cuMaxRotatedDraws;
+	GX2RCreateBuffer(&rotatedBuffer);
+	rotatedSlot = 0;
 }
 
 Texture2DShader::~Texture2DShader()
 {
 	free(posVtxs);
 	free(texCoords);
+	if(GX2RBufferExists(&rotatedBuffer))
+		GX2RDestroyBufferEx(&rotatedBuffer, static_cast<GX2RResourceFlags>(0));
 	delete fetchShader;
 }
