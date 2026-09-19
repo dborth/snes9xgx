@@ -3,10 +3,9 @@
  * Daryl Borth 2026
  * WutFileSystemDriver.cpp
  *
- * Wii U storage device enumeration + mounting: SD and USB1/2/3 all go
- * through libmocha's raw disc interface + libdvm (see dvm_wut.c/h)
- * identically when Mocha is available; SD falls back to a plain
- * WHBMountSdCard() FSA mount, once, if it isn't - see mountSdFallback().
+ * Wii U storage device enumeration + mounting: SD via a plain
+ * WHBMountSdCard() FSA mount (assumed always present - see mountSd()),
+ * USB1/2/3 via libmocha's raw disc interface + libdvm (see dvm_wut.c/h).
  ***************************************************************************/
 #include <whb/sdcard.h>
 #include <mocha/mocha.h>
@@ -20,9 +19,9 @@
 
 //! Normalizes WHBGetSdCardMountPath()'s runtime FS path (typically
 //! "/vol/external01") into a devoptab-style prefix with a trailing slash.
-//! Shared between init() and mountSdFallback() - the only two places the
-//! non-Mocha SD path is ever (re-)established.
-static void NormalizeSdFallbackPrefix(char prefix[32])
+//! Shared between init() and mountSd() - the only two places the SD path
+//! is ever (re-)established.
+static void NormalizeSdPrefix(char prefix[32])
 {
 	const char * sdPath = WHBGetSdCardMountPath();
 
@@ -50,40 +49,31 @@ void WutFileSystemDriver::init()
 	memset(devices, 0, sizeof(devices));
 	deviceCount = 0;
 
-	// USB (and, if this succeeds, SD too) go through Mocha's raw
-	// DISC_INTERFACE + libdvm. If this fails - not booted under
-	// Aroma/compatible CFW, or Mocha not installed (it's optional there) -
-	// USB is unavailable entirely and SD falls back to mountSdFallback().
+	// USB goes through Mocha's raw DISC_INTERFACE + libdvm. If this fails -
+	// not booted under Aroma/compatible CFW, or Mocha not installed (it's
+	// optional there) - USB is unavailable entirely.
 	mochaReady = (Mocha_InitLibrary() == MOCHA_RESULT_SUCCESS);
-	sdUsesMochaPath = mochaReady;
 
 	// Independent of Mocha - dvmWutInit() just registers libdvm's vfat/exfat/ntfs filesystem drivers, which don't touch hardware themselves.
 	dvmWutInit();
 
-	storageSlots[slotSD]   = { &Mocha_sdio_disc_interface, "sd",   0, 0 };
-	storageSlots[slotUSB1] = { &Mocha_usb1_disc_interface, "usb1", 0, 0 };
-	storageSlots[slotUSB2] = { &Mocha_usb2_disc_interface, "usb2", 0, 0 };
-	storageSlots[slotUSB3] = { &Mocha_usb3_disc_interface, "usb3", 0, 0 };
+	// storageSlots[] is USB only: [0..2] = USB1..3, i.e. devices[slotUSB1 + i]
+	storageSlots[0] = { &Mocha_usb1_disc_interface, "usb1", 0, 0 };
+	storageSlots[1] = { &Mocha_usb2_disc_interface, "usb2", 0, 0 };
+	storageSlots[2] = { &Mocha_usb3_disc_interface, "usb3", 0, 0 };
 
+	// SD: plain FSA mount. Assumed always present.
 	WutDeviceState & sd = devices[slotSD];
 	memset(&sd, 0, sizeof(sd));
 	sd.id = DEVICE_SD;
 	strcpy(sd.name, "SD Card");
 
-	if(sdUsesMochaPath)
+	if(WHBMountSdCard())
 	{
-		snprintf(sd.stablePrefix, sizeof(sd.stablePrefix), "%s:/", storageSlots[slotSD].mountName);
-	}
-	else
-	{
-		bool mounted = WHBMountSdCard();
-		if(mounted)
-		{
-			NormalizeSdFallbackPrefix(sd.stablePrefix);
-			strcpy(sd.prefix, sd.stablePrefix);
-			sd.isPresent = true;
-			sd.isMounted = true;
-		}
+		NormalizeSdPrefix(sd.stablePrefix);
+		strcpy(sd.prefix, sd.stablePrefix);
+		sd.isPresent = true;
+		sd.isMounted = true;
 	}
 
 	// USB 1/2/3 setup
@@ -91,19 +81,19 @@ void WutFileSystemDriver::init()
 	memset(&usb1, 0, sizeof(usb1));
 	usb1.id = DEVICE_USB;
 	strcpy(usb1.name, "USB Storage 1");
-	snprintf(usb1.stablePrefix, sizeof(usb1.stablePrefix), "%s:/", storageSlots[slotUSB1].mountName);
+	snprintf(usb1.stablePrefix, sizeof(usb1.stablePrefix), "%s:/", storageSlots[0].mountName);
 
 	WutDeviceState & usb2 = devices[slotUSB2];
 	memset(&usb2, 0, sizeof(usb2));
 	usb2.id = DEVICE_USB2;
 	strcpy(usb2.name, "USB Storage 2");
-	snprintf(usb2.stablePrefix, sizeof(usb2.stablePrefix), "%s:/", storageSlots[slotUSB2].mountName);
+	snprintf(usb2.stablePrefix, sizeof(usb2.stablePrefix), "%s:/", storageSlots[1].mountName);
 
 	WutDeviceState & usb3 = devices[slotUSB3];
 	memset(&usb3, 0, sizeof(usb3));
 	usb3.id = DEVICE_USB3;
 	strcpy(usb3.name, "USB Storage 3");
-	snprintf(usb3.stablePrefix, sizeof(usb3.stablePrefix), "%s:/", storageSlots[slotUSB3].mountName);
+	snprintf(usb3.stablePrefix, sizeof(usb3.stablePrefix), "%s:/", storageSlots[2].mountName);
 
 	smbDriver.init();
 
@@ -120,16 +110,12 @@ void WutFileSystemDriver::shutdown()
 {
 	smbDriver.shutdown();
 
-	if(sdUsesMochaPath)
-		unmountStorageSlot(slotSD);
-	else
-		WHBUnmountSdCard();
+	WHBUnmountSdCard();
 
 	// unmountStorageSlot() only touches whichever slots were actually
-	// mounted. Mocha_*_shutdown() is a safe no-op on an interface that
-	// was never started - including SD's here when it never used the
-	// Mocha path at all (!sdUsesMochaPath) - so no special-casing needed.
-	for(int i = slotUSB1; i <= slotUSB3; i++)
+	// mounted. Mocha_usbN_shutdown() is a safe no-op on an interface that
+	// was never started, so no special-casing needed.
+	for(int i = 0; i < storageSlotCount; i++)
 		unmountStorageSlot(i);
 
 	for(int i = 0; i < storageSlotCount; i++)
@@ -162,7 +148,7 @@ void WutFileSystemDriver::getVolumeLabel(WutDeviceState & dev, const char * dvmN
 
 	dev.volumeLabel[0] = '\0';
 
-	if(dvmName) // null on the non-Mocha SD fallback - no label source there
+	if(dvmName) // null when there's no dvm volume behind the device - no label source then
 	{
 		char path[16];
 		snprintf(path, sizeof(path), "%s:", dvmName);
@@ -177,7 +163,7 @@ bool WutFileSystemDriver::tryMountStorageSlot(int slotIdx)
 	if(slotIdx < 0 || slotIdx >= storageSlotCount)
 		return false;
 
-	WutDeviceState & dev = devices[slotIdx];
+	WutDeviceState & dev = devices[slotUSB1 + slotIdx];
 	WutStorageSlot & slot = storageSlots[slotIdx];
 
 	if(dev.isMounted)
@@ -227,7 +213,7 @@ void WutFileSystemDriver::unmountStorageSlot(int slotIdx)
 	if(slotIdx < 0 || slotIdx >= storageSlotCount)
 		return;
 
-	WutDeviceState & dev = devices[slotIdx];
+	WutDeviceState & dev = devices[slotUSB1 + slotIdx];
 	WutStorageSlot & slot = storageSlots[slotIdx];
 
 	if(dev.isMounted)
@@ -248,7 +234,7 @@ bool WutFileSystemDriver::slotStillPresent(int slotIdx)
 	if(slotIdx < 0 || slotIdx >= storageSlotCount || !mochaReady)
 		return false;
 
-	WutDeviceState & dev = devices[slotIdx];
+	WutDeviceState & dev = devices[slotUSB1 + slotIdx];
 	if(!dev.isMounted)
 		return false;
 
@@ -322,28 +308,32 @@ MountResult WutFileSystemDriver::mountStorageDevice(int deviceId)
 		return smbDriver.isConnected() ? MountResult::Success : MountResult::DeviceNotFound;
 	}
 
-	if(deviceId == DEVICE_SD && !sdUsesMochaPath)
-		return mountSdFallback();
+	if(deviceId == DEVICE_SD)
+		return mountSd();
 
-	// SD (Mocha path) and USB1/2/3 - idx lines up with storageSlots[] 1:1
-	return tryMountStorageSlot(idx) ? MountResult::Success : MountResult::DeviceNotFound;
+	// USB1/2/3 - backed by storageSlots[]
+	return tryMountStorageSlot(idx - slotUSB1) ? MountResult::Success : MountResult::DeviceNotFound;
 }
 
-MountResult WutFileSystemDriver::mountSdFallback()
+MountResult WutFileSystemDriver::mountSd()
 {
 	WutDeviceState & sd = devices[slotSD];
 
 	if(sd.isMounted)
 		return MountResult::Success;
 
-	// No cheap presence probe without Mocha
+	// WHBMountSdCard() is the only presence check there is - no raw disc access
 	if(!WHBMountSdCard())
 	{
 		sd.isPresent = false;
 		return MountResult::DeviceNotFound;
 	}
 
-	NormalizeSdFallbackPrefix(sd.prefix);
+	// Also (re)sets stablePrefix: it's only ever populated on a successful
+	// mount, so if init()'s attempt failed it would otherwise stay empty
+	// here and path->device resolution would never match SD.
+	NormalizeSdPrefix(sd.stablePrefix);
+	strcpy(sd.prefix, sd.stablePrefix);
 	sd.isPresent = true;
 	sd.isMounted = true;
 	return MountResult::Success;
@@ -387,16 +377,14 @@ void WutFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 	outRemovedCount = 0;
 	deviceListChanged = false;
 
-	// SD without Mocha has no ongoing hot-plug detection at all (see
-	// mountSdFallback()) - nothing to poll here; its last known state
-	// stands until an explicit mount attempt or an I/O failure
+	// SD is assumed always present and is not polled at all -
+	// its state stands until an explicit mount attempt or an I/O failure
 	// invalidates it.
 
-	// Cheap, read-only nsysuhs scan across USB only - SD is a fixed slot
-	// with no attach-order topology to rescan. Detects a real hardware-
-	// level attach/detach independently of whether Mocha's mount attempt
-	// has succeeded. On a change, a fresh insertion should be tried this
-	// same cycle.
+	// Cheap, read-only nsysuhs scan. Detects a real hardware-level
+	// attach/detach independently of whether Mocha's mount attempt has
+	// succeeded. On a change, a fresh insertion should be tried this same
+	// cycle.
 	UsbHardwareSignature currentHwSig;
 	ScanUsbHardwareSignature(currentHwSig);
 
@@ -407,17 +395,15 @@ void WutFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 		// (that's what backoffPollsLeft=0 buys), but a slot sitting on a
 		// permanently-unmountable device (eg. an unsupported filesystem)
 		// still needs to reach maxQuickRetries and back off properly.
-		for(int i = slotUSB1; i <= slotUSB3; i++)
+		for(int i = 0; i < storageSlotCount; i++)
 			storageSlots[i].backoffPollsLeft = 0;
 	}
 
 	usbHwSignature = currentHwSig;
 
-	int firstSlot = sdUsesMochaPath ? slotSD : slotUSB1;
-
-	for(int slotIdx = firstSlot; slotIdx <= slotUSB3; slotIdx++)
+	for(int slotIdx = 0; slotIdx < storageSlotCount; slotIdx++)
 	{
-		WutDeviceState & dev = devices[slotIdx];
+		WutDeviceState & dev = devices[slotUSB1 + slotIdx];
 
 		if(dev.isMounted)
 		{

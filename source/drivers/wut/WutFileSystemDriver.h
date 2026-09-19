@@ -9,16 +9,14 @@
 #include <mocha/disc_interface.h>
 #include "WutUsbProbe.h"
 
-//! One storage slot as Cafe OS/Mocha actually exposes it. SD and
-//! the three USB mass-storage slots are all just a DISC_INTERFACE handed
-//! to libdvm (vfat/exfat/ntfs) via dvm_wut.c, so they share one
-//! mounting/polling code path - see tryMountStorageSlot(). USB slots are
-//! attach-order slots, not fixed physical ports/port-groups; SD is a
-//! fixed slot with no equivalent topology to enumerate.
+//! One USB mass-storage slot as Cafe OS/Mocha actually exposes it: just a
+//! DISC_INTERFACE handed to libdvm (vfat/exfat/ntfs) via dvm_wut.c - see
+//! tryMountStorageSlot(). These are attach-order slots, not fixed physical
+//! ports/port-groups.
 struct WutStorageSlot
 {
-	const DISC_INTERFACE * iface;	//!< &Mocha_sdio_disc_interface or &Mocha_usb1_disc_interface .. &Mocha_usb3_disc_interface
-	const char * mountName;			//!< devoptab basename, eg. "sd" or "usb1" - also the dvm_wut.c volume name
+	const DISC_INTERFACE * iface;	//!< &Mocha_usb1_disc_interface .. &Mocha_usb3_disc_interface
+	const char * mountName;			//!< devoptab basename, eg. "usb1" - also the dvm_wut.c volume name
 	int failCount;					//!< consecutive mount failures since the last success or hardware change - see tryMountStorageSlot()
 	int backoffPollsLeft;			//!< polls left to skip before the next probe attempt (0 = probe now)
 };
@@ -29,7 +27,7 @@ struct WutDeviceState
 	int  id;
 	char name[16];			//!< human-readable base name, eg. "SD Card"
 	char volumeLabel[16];	//!< volume label, best-effort - empty if none could be read
-	char prefix[32];		//!< devoptab mount prefix, eg. "usb1:/", or the runtime FSA SD path in the non-Mocha fallback - "" whenever isMounted is false
+	char prefix[32];		//!< devoptab mount prefix, eg. "usb1:/", or the runtime FSA path for SD - "" whenever isMounted is false
 	char stablePrefix[32];	//!< same string as prefix, but set once in init() and never cleared on unmount - this device's identity for path->device resolution (FindDevice()), independent of current mount state
 	bool isPresent;			//!< found on the last poll
 	bool isMounted;
@@ -37,15 +35,7 @@ struct WutDeviceState
 	bool labelFetched;		//!< volume label already looked up since the last mount/removal - see getVolumeLabel()
 };
 
-//! SD with Mocha (the normal case under Aroma): Mocha_sdio_disc_interface
-//! + libdvm, identical in every respect to a USB slot - see
-//! WutStorageSlot. This also means SD picks up exFAT/NTFS support it
-//! never had through Cafe OS's own FSA mount.
-//!
-//! SD without Mocha (Mocha is an optional Aroma component): falls back to
-//! a plain WHBMountSdCard() FSA mount, one attempt only - see
-//! mountSdFallback(). There's no cheap presence probe available without
-//! Mocha's raw disc access.
+//! SD: a plain WHBMountSdCard() FSA mount. It is assumed to always be present.
 //!
 //! USB: stock Cafe OS has no FAT/exFAT/NTFS driver at all, so mounting
 //! always goes through libdvm - which also supplies genuine hot-unplug
@@ -57,7 +47,7 @@ struct WutDeviceState
 //! already have the fd open - it doesn't re-probe hardware. While
 //! unmounted, pollStorageDevices() retries dvmWutMountVolume(). A
 //! read-only nsysuhs scan resets USB's backoff immediately on any real
-//! hardware-level change (SD has no equivalent topology to rescan).
+//! hardware-level change.
 //!
 //! Hotplug (removal while mounted): dvmWutVolumeStillPresent() forces a
 //! real, uncached raw sector read through the mounted disc.
@@ -66,7 +56,7 @@ struct WutDeviceState
 //! or genuinely nothing there) gets a few quick immediate retries. The
 //! interface is always left shutdown() between attempts.
 //!
-//! Volume labels (SD-via-Mocha and USB): looked up once via libdvm
+//! Volume labels (USB only): looked up once via libdvm
 //! (dvmWutGetVolumeLabel()) right after a successful mount, never
 //! repeated until the next unmount/remount cycle - see getVolumeLabel().
 class WutFileSystemDriver : public FileSystemDriver
@@ -98,8 +88,8 @@ class WutFileSystemDriver : public FileSystemDriver
 		static const int slotSMB = 4;
 		static const int slotCount = 5;
 
-		//! SD + 3 USB slots, all mounted identically through storageSlots
-		static const int storageSlotCount = 4;
+		//! The 3 USB slots backed by storageSlots[]
+		static const int storageSlotCount = 3;
 
 		//! Cache sizing passed to dvmWutMountVolume() - tuned and hardware-confirmed
 		static const unsigned cachePages     = 512;
@@ -111,11 +101,9 @@ class WutFileSystemDriver : public FileSystemDriver
 
 		WutDeviceState     devices[slotCount];
 		int                deviceCount;
-		bool               mochaReady;      //!< Mocha_InitLibrary() succeeded - USB unavailable entirely if not; SD falls back (see mountSdFallback())
-		bool               sdUsesMochaPath; //!< true once init() decides SD goes through storageSlots[slotSD] rather than mountSdFallback() - tracks mochaReady, kept as its own flag for clarity at call sites
+		bool               mochaReady; //!< Mocha_InitLibrary() succeeded - USB unavailable entirely if not
 
-		//! [slotSD]=SD, [slotUSB1..slotUSB3]=USB1..3 - indices line up
-		//! exactly with devices[] above, so no separate offset is needed.
+		//! [0..2] = USB1..3, so storageSlots[i] backs devices[slotUSB1 + i]
 		WutStorageSlot    storageSlots[storageSlotCount];
 
 		//! Last poll's read-only nsysuhs scan across USB only. A change
@@ -125,12 +113,13 @@ class WutFileSystemDriver : public FileSystemDriver
 		WutSmbDriver       smbDriver;
 
 		int  findDeviceIndex(int deviceId) const;
-		//! dvmName is null for SD on the non-Mocha fallback path - no
-		//! label source there, see the class comment.
+		//! dvmName is null when there's no dvm volume behind the device -
+		//! no label source then.
 		void getVolumeLabel(WutDeviceState & dev, const char * dvmName);
 
 		void refreshSmbSlot();
 
+		//! The three below take an index into storageSlots[] (0..2 = USB1..3), not into devices[].
 		//! Single-slot attempt: handles the backoff check, then a real dvmWutMountVolume() probe if warranted
 		bool tryMountStorageSlot(int slotIdx);
 		//! dvmWutUnmountVolume() on the slot, which shuts down its DISC_INTERFACE
@@ -138,6 +127,6 @@ class WutFileSystemDriver : public FileSystemDriver
 		//! Real liveness check for an already-mounted slot: forces an uncached raw sector read through it
 		bool slotStillPresent(int slotIdx);
 
-		//! Non-Mocha SD path - see the class comment.
-		MountResult mountSdFallback();
+		//! SD mount. No-op success if already mounted.
+		MountResult mountSd();
 };

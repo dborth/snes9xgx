@@ -3,13 +3,9 @@
  * Daryl Borth 2026
  * dvm_wut.h
  *
- * Wii U mounting on top of libdvm - used identically for SD (via
- * Mocha_sdio_disc_interface) and USB1/2/3 (via Mocha_usbN_disc_interface),
- * since both are just a DISC_INTERFACE as far as libdvm is concerned.
+ * Wii U mounting on top of libdvm - USB1/2/3 (via Mocha_usbN_disc_interface)
  * Everything here requires Mocha (Mocha_InitLibrary() having already
- * succeeded) - without it there's no raw disc access at all, and
- * WutFileSystemDriver falls back to a plain WHBMountSdCard() mount for SD
- * with none of this.
+ * succeeded) - without it there's no disc access at all.
  ***************************************************************************/
 #pragma once
 
@@ -21,13 +17,13 @@
 extern "C" {
 #endif
 
-#define DVM_WUT_MAX_VOLUMES 4  // SD + up to 3 USB slots
+#define DVM_WUT_MAX_VOLUMES 3  // 3 USB slots
 
 //! One storage slot's dvm mount state. Purely internal bookkeeping for
 //! dvm_wut.c itself - callers only ever deal in names.
 typedef struct
 {
-	char  name[8];   //!< devoptab basename this volume was mounted as, eg. "sd" or "usb1"
+	char  name[8];   //!< devoptab basename this volume was mounted as, eg. "usb1"
 	bool  isMounted;
 	void* disc;      //!< opaque DvmDisc* - valid only while isMounted, NULL otherwise
 } DvmWutVolume;
