@@ -90,9 +90,14 @@ WutVideoDriver::WutVideoDriver()
 
 WutVideoDriver::~WutVideoDriver()
 {
-	delete imageRenderer;
-	delete glyphRenderer;
 	delete emulatorVideo;
+	emulatorVideo = nullptr;
+
+	delete imageRenderer;
+	imageRenderer = nullptr;
+
+	delete glyphRenderer;
+	glyphRenderer = nullptr;
 }
 
 void WutVideoDriver::init(int width, int height)
