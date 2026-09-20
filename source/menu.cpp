@@ -3748,11 +3748,18 @@ static int MenuSettingsVideo()
 	int i = 0;
 	bool firstRun = true;
 	OptionList options;
-
+#if defined(HW_RVL) || defined(HW_DOL)
 	sprintf(options.name[i++], "Output Mode");
+#else
+	options.name[i++][0] = 0; // Output Mode is GameCube / Wii only
+#endif
 	sprintf(options.name[i++], "Aspect Ratio Correction");
 	sprintf(options.name[i++], "Bilinear Filtering");
+#if defined(HW_RVL) || defined(HW_DOL)
 	sprintf(options.name[i++], "Hardware Softening");
+#else
+	options.name[i++][0] = 0; // Hardware Softening is GameCube / Wii only
+#endif
 #if defined(HW_RVL) || defined(HW_DOL)
 	sprintf(options.name[i++], "Upscaling");
 #else
