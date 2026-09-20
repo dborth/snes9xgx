@@ -483,7 +483,7 @@ void DefaultSettings()
 	EmuSettings.Controller = CTRL_PAD2;
 
 	EmuSettings.videoMode = VIDEOMODE_AUTO;
-	EmuSettings.videoBilinearFilter = true;
+	EmuSettings.videoBilinearFilter = false;
 	EmuSettings.videoHardwareSoften = VIDEO_HW_SOFTEN_SHARP;
 	EmuSettings.videoScanlines = false;
 #if defined(HW_RVL) || defined(HW_DOL)
