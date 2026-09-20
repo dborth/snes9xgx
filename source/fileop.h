@@ -60,6 +60,12 @@ bool RunOnWorkerThread(BgTaskFn fn, void * arg = nullptr);
 bool IsWorkerThreadFinished();
 int GetWorkerThreadResult();
 
+// Fire-and-forget tasks for the worker thread
+bool QueueBackgroundTask(BgTaskFn fn, void * arg = nullptr);
+// Waits until every queued background task has finished.
+// \return false if that didn't happen within timeoutMs
+bool FlushBackgroundTasks(uint32_t timeoutMs);
+
 extern unsigned char *savebuffer;
 extern uint8_t *ext_font_ttf;
 extern FILE * file;

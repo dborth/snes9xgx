@@ -35,7 +35,8 @@ struct WutDeviceState
 	bool labelFetched;		//!< volume label already looked up since the last mount/removal - see getVolumeLabel()
 };
 
-//! SD: a plain WHBMountSdCard() FSA mount. It is assumed to always be present.
+//! SD: a plain WHBMountSdCard() FSA mount, done once in init(). From then on
+//! it is assumed always present and always mounted.
 //!
 //! USB: stock Cafe OS has no FAT/exFAT/NTFS driver at all, so mounting
 //! always goes through libdvm - which also supplies genuine hot-unplug
@@ -126,7 +127,4 @@ class WutFileSystemDriver : public FileSystemDriver
 		void unmountStorageSlot(int slotIdx);
 		//! Real liveness check for an already-mounted slot: forces an uncached raw sector read through it
 		bool slotStillPresent(int slotIdx);
-
-		//! SD mount. No-op success if already mounted.
-		MountResult mountSd();
 };

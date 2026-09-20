@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
 }
 
 void ExitApp() {
-	SavePrefs();
+	SavePrefsAndWait(); // exit is the one time we wait for settings to hit the device
 
 	if (SNESROMSize > 0 && appRequest != AppRequest::MENU && EmuSettings.AutoSave == AUTOSAVE_SRAM)
 		SaveSRAMAuto(SILENT);

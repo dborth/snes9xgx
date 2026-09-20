@@ -81,6 +81,15 @@ static BgTaskFn workerFn        = nullptr;  // protected by WorkerSync().mutex
 static void *   workerArg       = nullptr;  // protected by WorkerSync().mutex
 static int      workerResult    = 0;     // protected by WorkerSync().mutex - result of the last completed task
 
+// queued fire-and-forget tasks, run by the worker thread whenever it has nothing
+// else to do - see QueueBackgroundTask()
+#define BG_TASK_QUEUE_SIZE 4
+struct BgQueuedTask { BgTaskFn fn; void * arg; };
+static BgQueuedTask bgTasks[BG_TASK_QUEUE_SIZE]; // ring buffer, protected by WorkerSync().mutex
+static int  bgHead    = 0;     // protected by WorkerSync().mutex
+static int  bgCount   = 0;     // protected by WorkerSync().mutex
+static bool bgRunning = false; // protected by WorkerSync().mutex - a queued task is running right now
+
 /****************************************************************************
  * ResumeDeviceCheckingThread
  *
@@ -243,23 +252,39 @@ static void * workercallback (void *)
 	WorkerSync().mutex.lock();
 	while(!workerThread.stopRequested())
 	{
-		// sleep until RunOnWorkerThread() signals there is work to do
-		while(!workerBusy && !workerThread.stopRequested())
+		// sleep until RunOnWorkerThread() or QueueBackgroundTask() signals there is work to do
+		while(!workerBusy && bgCount == 0 && !workerThread.stopRequested())
 			WorkerSync().workCond.wait(WorkerSync().mutex);
 
 		if(workerThread.stopRequested())
 			break;
 
-		BgTaskFn fn = workerFn;
-		void * farg = workerArg;
-		WorkerSync().mutex.unlock();
+		if(workerBusy) // something is waiting on this - always ahead of queued tasks
+		{
+			BgTaskFn fn = workerFn;
+			void * farg = workerArg;
+			WorkerSync().mutex.unlock();
 
-		int result = fn ? fn(farg) : 0;
+			int result = fn ? fn(farg) : 0;
 
-		WorkerSync().mutex.lock();
-		workerResult = result;
-		workerBusy = false;
-		WorkerSync().idleCond.signal();
+			WorkerSync().mutex.lock();
+			workerResult = result;
+			workerBusy = false;
+			WorkerSync().idleCond.signal();
+		}
+		else
+		{
+			BgQueuedTask task = bgTasks[bgHead];
+			bgHead = (bgHead + 1) % BG_TASK_QUEUE_SIZE;
+			bgCount--;
+			bgRunning = true;
+			WorkerSync().mutex.unlock();
+
+			task.fn(task.arg);
+
+			WorkerSync().mutex.lock();
+			bgRunning = false;
+		}
 	}
 	WorkerSync().mutex.unlock();
 	return nullptr;
@@ -279,6 +304,50 @@ bool RunOnWorkerThread(BgTaskFn fn, void * arg)
 	WorkerSync().workCond.signal();
 	WorkerSync().mutex.unlock();
 	return true;
+}
+
+bool QueueBackgroundTask(BgTaskFn fn, void * arg)
+{
+	MutexLock guard(WorkerSync().mutex);
+
+	if(!fn || !workerThread.isRunning() || workerThread.stopRequested())
+		return false;
+
+	for(int i = 0; i < bgCount; i++)
+	{
+		const BgQueuedTask & queued = bgTasks[(bgHead + i) % BG_TASK_QUEUE_SIZE];
+		if(queued.fn == fn && queued.arg == arg)
+			return true; // already waiting to run - it will see whatever state is current when it does
+	}
+
+	if(bgCount >= BG_TASK_QUEUE_SIZE)
+		return false;
+
+	bgTasks[(bgHead + bgCount) % BG_TASK_QUEUE_SIZE] = { fn, arg };
+	bgCount++;
+	WorkerSync().workCond.signal();
+	return true;
+}
+
+bool FlushBackgroundTasks(uint32_t timeoutMs)
+{
+	if(!workerThread.isRunning())
+		return true;
+
+	for(uint32_t waited = 0; ; waited += 10)
+	{
+		{
+			MutexLock guard(WorkerSync().mutex);
+			if(bgCount == 0 && !bgRunning)
+				return true;
+		}
+
+		if(waited >= timeoutMs)
+			return false;
+
+		usleep(10000);
+	}
+	return false;
 }
 
 bool IsWorkerThreadFinished()
@@ -815,6 +884,23 @@ size_t LoadSzFile(char * filepath, unsigned char * rbuffer)
 }
 
 /****************************************************************************
+ * NeedsDeviceThreadHalt
+ *
+ * File I/O pauses the device-checking thread so that its removal/insertion
+ * probing can't run concurrently with a transfer over the same raw disc
+ * interface.
+ ***************************************************************************/
+static bool NeedsDeviceThreadHalt(int device)
+{
+	#ifdef __WIIU__
+	return device != DEVICE_SD;
+	#else
+	(void)device;
+	return true;
+	#endif
+}
+
+/****************************************************************************
  * LoadFile
  ***************************************************************************/
 size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersize, bool silent)
@@ -829,7 +915,9 @@ size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersiz
 
 	// stop checking if devices were removed/inserted
 	// since we're loading a file
-	HaltDeviceCheckingThread();
+	bool haltDeviceThread = NeedsDeviceThreadHalt(device);
+	if(haltDeviceThread)
+		HaltDeviceCheckingThread();
 
 	// halt parsing
 	HaltParseThread();
@@ -861,6 +949,12 @@ size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersiz
 
 			if(!readsize)
 			{
+				if(silent) // an empty/unreadable file is not worth a prompt when nobody asked for feedback
+				{
+					fclose (file);
+					break;
+				}
+
 				platform->getFileSystem()->invalidateStorageDevice(device);
 				retry = ErrorPromptRetry("Error reading file!");
 				fclose (file);
@@ -905,7 +999,8 @@ size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersiz
 	}
 
 	// go back to checking if devices were inserted/removed
-	ResumeDeviceCheckingThread();
+	if(haltDeviceThread)
+		ResumeDeviceCheckingThread();
 	CancelAction();
 	return size;
 }
@@ -1000,7 +1095,9 @@ size_t SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 
 	// stop checking if devices were removed/inserted
 	// since we're saving a file
-	HaltDeviceCheckingThread();
+	bool haltDeviceThread = NeedsDeviceThreadHalt(device);
+	if(haltDeviceThread)
+		HaltDeviceCheckingThread();
 
 	// halt parsing
 	HaltParseThread();
@@ -1045,7 +1142,8 @@ size_t SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 	}
 
 	// go back to checking if devices were inserted/removed
-	ResumeDeviceCheckingThread();
+	if(haltDeviceThread)
+		ResumeDeviceCheckingThread();
 	if(!silent)
 		CancelAction();
 	return written;

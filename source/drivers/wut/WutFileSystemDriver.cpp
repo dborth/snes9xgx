@@ -4,7 +4,8 @@
  * WutFileSystemDriver.cpp
  *
  * Wii U storage device enumeration + mounting: SD via a plain
- * WHBMountSdCard() FSA mount (assumed always present - see mountSd()),
+ * WHBMountSdCard() FSA mount, done exactly once in init() and treated as
+ * permanently present from then on
  * USB1/2/3 via libmocha's raw disc interface + libdvm (see dvm_wut.c/h).
  ***************************************************************************/
 #include <whb/sdcard.h>
@@ -12,15 +13,21 @@
 #include <mocha/disc_interface.h>
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "WutFileSystemDriver.h"
 #include "dvm_wut.h"
 #include "../Logger.h"
 
+//! Fallback SD prefix if WHBGetSdCardMountPath() has nothing to report
+static const char * const SD_FALLBACK_PREFIX = "/vol/external01/";
+
+//! One-time SD mount, tried a few times because it can fail transiently
+static const int SD_MOUNT_ATTEMPTS = 3;
+static const useconds_t SD_MOUNT_RETRY_DELAY_US = 100000;
+
 //! Normalizes WHBGetSdCardMountPath()'s runtime FS path (typically
 //! "/vol/external01") into a devoptab-style prefix with a trailing slash.
-//! Shared between init() and mountSd() - the only two places the SD path
-//! is ever (re-)established.
 static void NormalizeSdPrefix(char prefix[32])
 {
 	const char * sdPath = WHBGetSdCardMountPath();
@@ -39,7 +46,7 @@ static void NormalizeSdPrefix(char prefix[32])
 	}
 	else
 	{
-		strncpy(prefix, "sdmc:/", 32 - 1);
+		strncpy(prefix, SD_FALLBACK_PREFIX, 32 - 1);
 		prefix[32 - 1] = '\0';
 	}
 }
@@ -62,19 +69,24 @@ void WutFileSystemDriver::init()
 	storageSlots[1] = { &Mocha_usb2_disc_interface, "usb2", 0, 0 };
 	storageSlots[2] = { &Mocha_usb3_disc_interface, "usb3", 0, 0 };
 
-	// SD: plain FSA mount. Assumed always present.
+	// SD: plain FSA mount, attempted once
 	WutDeviceState & sd = devices[slotSD];
 	memset(&sd, 0, sizeof(sd));
 	sd.id = DEVICE_SD;
 	strcpy(sd.name, "SD Card");
 
-	if(WHBMountSdCard())
+	bool sdMounted = false;
+	for(int attempt = 0; attempt < SD_MOUNT_ATTEMPTS && !sdMounted; attempt++)
 	{
-		NormalizeSdPrefix(sd.stablePrefix);
-		strcpy(sd.prefix, sd.stablePrefix);
-		sd.isPresent = true;
-		sd.isMounted = true;
+		if(attempt > 0)
+			usleep(SD_MOUNT_RETRY_DELAY_US);
+		sdMounted = WHBMountSdCard();
 	}
+
+	NormalizeSdPrefix(sd.stablePrefix);
+	strcpy(sd.prefix, sd.stablePrefix);
+	sd.isPresent = true;
+	sd.isMounted = true;
 
 	// USB 1/2/3 setup
 	WutDeviceState & usb1 = devices[slotUSB1];
@@ -279,8 +291,10 @@ int WutFileSystemDriver::enumerateStorageDevices(StorageDevice outDevices[MAX_ST
 		out.volumeLabel[sizeof(out.volumeLabel) - 1] = '\0';
 		strncpy(out.prefix, devices[i].prefix, sizeof(out.prefix) - 1);
 		out.prefix[sizeof(out.prefix) - 1] = '\0';
-		out.removable = (devices[i].id != DEVICE_SMB);
-		out.autoMountAtStartup = (devices[i].id != DEVICE_SMB); // SMB needs explicit getSmb()->connect() first
+		// SD (mounted in init(), never polled) and SMB (needs explicit getSmb()->connect() first) are neither removable nor auto-mounted
+		bool fixedDevice = (devices[i].id == DEVICE_SD || devices[i].id == DEVICE_SMB);
+		out.removable = !fixedDevice;
+		out.autoMountAtStartup = !fixedDevice;
 		out.alwaysListed = (devices[i].id == DEVICE_SMB);
 		count++;
 	}
@@ -308,35 +322,12 @@ MountResult WutFileSystemDriver::mountStorageDevice(int deviceId)
 		return smbDriver.isConnected() ? MountResult::Success : MountResult::DeviceNotFound;
 	}
 
+	// SD is always present and always mounted
 	if(deviceId == DEVICE_SD)
-		return mountSd();
+		return MountResult::Success;
 
 	// USB1/2/3 - backed by storageSlots[]
 	return tryMountStorageSlot(idx - slotUSB1) ? MountResult::Success : MountResult::DeviceNotFound;
-}
-
-MountResult WutFileSystemDriver::mountSd()
-{
-	WutDeviceState & sd = devices[slotSD];
-
-	if(sd.isMounted)
-		return MountResult::Success;
-
-	// WHBMountSdCard() is the only presence check there is - no raw disc access
-	if(!WHBMountSdCard())
-	{
-		sd.isPresent = false;
-		return MountResult::DeviceNotFound;
-	}
-
-	// Also (re)sets stablePrefix: it's only ever populated on a successful
-	// mount, so if init()'s attempt failed it would otherwise stay empty
-	// here and path->device resolution would never match SD.
-	NormalizeSdPrefix(sd.stablePrefix);
-	strcpy(sd.prefix, sd.stablePrefix);
-	sd.isPresent = true;
-	sd.isMounted = true;
-	return MountResult::Success;
 }
 
 const char * WutFileSystemDriver::mountResultMessage(int deviceId, MountResult result)
@@ -363,6 +354,9 @@ void WutFileSystemDriver::invalidateStorageDevice(int deviceId)
 		return;
 	}
 
+	if(deviceId == DEVICE_SD)
+		return; // SD never goes away
+
 	int idx = findDeviceIndex(deviceId);
 	if(idx < 0)
 		return;
@@ -377,9 +371,7 @@ void WutFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 	outRemovedCount = 0;
 	deviceListChanged = false;
 
-	// SD is assumed always present and is not polled at all -
-	// its state stands until an explicit mount attempt or an I/O failure
-	// invalidates it.
+	// SD is assumed always present and is not polled at all.
 
 	// Cheap, read-only nsysuhs scan. Detects a real hardware-level
 	// attach/detach independently of whether Mocha's mount attempt has

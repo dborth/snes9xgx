@@ -664,8 +664,22 @@ static int GetPrefsSubfolderCandidates(int device, const char * outFolders[2])
  * Save Preferences
  ***************************************************************************/
 static char prefpath[MAXPATHLEN] = { 0 };
+static uint32_t prefsHash = 0;
+static bool prefsHashKnown = false;
 
-bool SavePrefs()
+static uint32_t HashBytes(const void * data, size_t size)
+{
+	const uint8_t * bytes = (const uint8_t *)data;
+	uint32_t hash = 2166136261u; // FNV-1a
+	for(size_t i = 0; i < size; i++)
+	{
+		hash ^= bytes[i];
+		hash *= 16777619u;
+	}
+	return hash;
+}
+
+static bool SavePrefsNow()
 {
 	char filepath[MAXPATHLEN];
 	int datasize;
@@ -720,11 +734,20 @@ bool SavePrefs()
 
 	AllocSaveBuffer ();
 	datasize = preparePrefsData ();
-	offset = SaveFile(filepath, datasize, true);
+
+	uint32_t hash = HashBytes(savebuffer, datasize);
+	if(prefsHashKnown && hash == prefsHash)
+	{
+		offset = datasize; // unchanged - nothing to write
+	}
+	else
+	{
+		offset = SaveFile(filepath, datasize, true);
+		prefsHash = hash;
+		prefsHashKnown = (offset > 0); // if it failed, try again next time
+	}
 
 	FreeSaveBuffer ();
-
-	CancelAction();
 
 	if (offset > 0)
 	{
@@ -733,6 +756,32 @@ bool SavePrefs()
 		return true;
 	}
 	return false;
+}
+
+static int SavePrefsTask(void *)
+{
+	SavePrefsNow();
+	return 0;
+}
+
+// Asynchronous and silent: queued for the worker thread, so the caller never
+// waits on storage and nothing is shown. Saving again while a save is still
+// queued does nothing extra - it will save whatever the settings are by then.
+bool SavePrefs()
+{
+	if(QueueBackgroundTask(SavePrefsTask))
+		return true;
+
+	return SavePrefsNow(); // worker unavailable or queue full
+}
+
+// For exit: lets any queued save finish, then saves right here.
+bool SavePrefsAndWait()
+{
+	if(!FlushBackgroundTasks(15000)) // don't hang the exit forever on a stalled device
+		return false;
+
+	return SavePrefsNow();
 }
 
 /****************************************************************************
@@ -753,8 +802,14 @@ LoadPrefsFromMethod (char * path)
 	if (offset > 0)
 		retval = decodePrefsData ();
 
+	if(retval)
+	{
+		prefsHash = HashBytes(savebuffer, offset);
+		prefsHashKnown = true;
+	}
+
 	FreeSaveBuffer ();
-	
+
 	if(retval)
 	{
 		strcpy(prefpath, path);
