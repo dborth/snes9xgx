@@ -17,6 +17,9 @@
 #include <ogc/conf.h>
 #include <ogc/system.h>
 #endif
+#ifdef __WIIU__
+#include <gx2/display.h>
+#endif
 
 #include "snes9xgx.h"
 #include "menu.h"
@@ -499,6 +502,11 @@ void DefaultSettings()
 		EmuSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
 #elif HW_DOL
 	EmuSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
+#elif defined(__WIIU__)
+	if (GX2GetSystemTVAspectRatio() == GX2_ASPECT_RATIO_16_9)
+		EmuSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_16_9;
+	else
+		EmuSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
 #endif
 
 	EmuSettings.videoZoomHor = 1.0; // horizontal zoom level
