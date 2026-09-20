@@ -91,6 +91,20 @@ jobs:
       run: |
         make -f Makefile.wiiu -j3
 
+    - name: Copy Wii U artifact
+      if: ${{ matrix.image == 'WiiU' }}
+      run: |
+        mkdir -p dist/Snes9xGX-WiiU
+        cp executables/snes9xgx-wiiu.wuhb dist/Snes9xGX-WiiU/
+
+    - name: Upload Wii U artifact
+      uses: actions/upload-artifact@v4
+      if: ${{ matrix.image == 'WiiU' }}
+      with:
+        name: FCEUltraGX-WiiU
+        path: |
+          dist/FCEUltraGX-WiiU/
+
   release:
     name: Release
     runs-on: ubuntu-latest
@@ -114,7 +128,7 @@ jobs:
         rm -r snes9xgx/cheats/*
         rm -r snes9xgx/roms/*
         rm -r snes9xgx/saves/*
-        zip -r ../Snes9xGX.zip *
+        zip -r ../Snes9xGX-Wii.zip *
         cd ../Snes9xGX-GameCube
         zip -r ../Snes9xGX-GameCube.zip *
 
