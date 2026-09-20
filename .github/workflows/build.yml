@@ -49,23 +49,23 @@ jobs:
     - name: Copy Wii artifacts
       if: ${{ matrix.image == 'Wii' }}
       run: |
-        mkdir -p dist/Snes9xGX/apps/snes9xgx
-        mkdir -p dist/Snes9xGX/snes9xgx/roms
-        mkdir dist/Snes9xGX/snes9xgx/cheats
-        mkdir dist/Snes9xGX/snes9xgx/saves
-        touch dist/Snes9xGX/snes9xgx/roms/romsdir
-        touch dist/Snes9xGX/snes9xgx/cheats/cheatsdir
-        touch dist/Snes9xGX/snes9xgx/saves/savesdir
-        cp hbc/* dist/Snes9xGX/apps/snes9xgx/
-        cp executables/snes9xgx-wii.dol dist/Snes9xGX/apps/snes9xgx/boot.dol
+        mkdir -p dist/Snes9xGX-Wii/apps/snes9xgx
+        mkdir -p dist/Snes9xGX-Wii/snes9xgx/roms
+        mkdir dist/Snes9xGX-Wii/snes9xgx/cheats
+        mkdir dist/Snes9xGX-Wii/snes9xgx/saves
+        touch dist/Snes9xGX-Wii/snes9xgx/roms/romsdir
+        touch dist/Snes9xGX-Wii/snes9xgx/cheats/cheatsdir
+        touch dist/Snes9xGX-Wii/snes9xgx/saves/savesdir
+        cp hbc/* dist/Snes9xGX-Wii/apps/snes9xgx/
+        cp executables/snes9xgx-wii.dol dist/Snes9xGX-Wii/apps/snes9xgx/boot.dol
 
     - name: Upload Wii artifacts
       uses: actions/upload-artifact@v4
       if: ${{ matrix.image == 'Wii' }}
       with:
-        name: Snes9xGX
+        name: Snes9xGX-Wii
         path: |
-          dist/Snes9xGX/
+          dist/Snes9xGX-Wii/
 
     - name: Build GameCube
       if: ${{ matrix.image == 'GameCube' }}
@@ -124,7 +124,7 @@ jobs:
 
     - name: Re-zip artifacts
       run: |
-        cd dist/Snes9xGX
+        cd dist/Snes9xGX-Wii
         rm -r snes9xgx/cheats/*
         rm -r snes9xgx/roms/*
         rm -r snes9xgx/saves/*
