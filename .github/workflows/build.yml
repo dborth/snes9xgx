@@ -101,9 +101,9 @@ jobs:
       uses: actions/upload-artifact@v4
       if: ${{ matrix.image == 'WiiU' }}
       with:
-        name: FCEUltraGX-WiiU
+        name: Snes9xGX-WiiU
         path: |
-          dist/FCEUltraGX-WiiU/
+          dist/Snes9xGX-WiiU/
 
   release:
     name: Release
