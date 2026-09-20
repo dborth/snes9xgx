@@ -86,7 +86,7 @@ bool LoadSRAMAuto (bool silent)
 	if (LoadSRAM(filepath, silent))
 		return true;
 
-	if (!EmuSettings.AppendAuto)
+	if (!EmuSettings.appendAuto)
 		return false;
 
 	// look for file with no number or Auto appended

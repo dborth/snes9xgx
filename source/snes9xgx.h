@@ -195,20 +195,20 @@ enum {
 };
 
 struct SEmuSettings{
-	int		AutoLoad;
-	int		AutoSave;
-	int		LoadMethod;
-	int		SaveMethod;
-	bool	AppendAuto;
-	char	LoadFolder[MAXPATHLEN];
-	char	LastFileLoaded[MAXPATHLEN];
-	char	SaveFolder[MAXPATHLEN];
-	char	CheatFolder[MAXPATHLEN];
-	char	ScreenshotsFolder[MAXPATHLEN];
-	char	CoverFolder[MAXPATHLEN];
-	char	ArtworkFolder[MAXPATHLEN];
-	bool	HideSRAMSaving;
-	bool	AutoloadGame;
+	int		autoLoad;
+	int		autoSave;
+	int		loadDevice;
+	int		saveDevice;
+	bool	appendAuto;
+	char	loadFolder[MAXPATHLEN];
+	char	lastFileLoaded[MAXPATHLEN];
+	char	saveFolder[MAXPATHLEN];
+	char	cheatFolder[MAXPATHLEN];
+	char	screenshotsFolder[MAXPATHLEN];
+	char	coverFolder[MAXPATHLEN];
+	char	artworkFolder[MAXPATHLEN];
+	bool	hideSramSaving;
+	bool	autoloadGame;
 
 	SmbShareInfo smbShare;
 
@@ -223,28 +223,28 @@ struct SEmuSettings{
 	int		videoXshift;
 	int		videoYshift;
 
-	bool	HiResolution;
-	bool	SpriteLimit;
-	bool	FrameSkip;
+	bool	hiResolution;
+	bool	spriteLimit;
+	bool	frameSkip;
 	bool	crosshair;
 	int		sfxOverclock;
-	int		Interpolation;
-	bool	MuteAudio;
+	int		interpolation;
+	bool	muteAudio;
 	
-	int		Controller;
+	int		controller;
 	int		wiimoteOrientation;
-	int		ExitAction;
-	int		MusicVolume;
-	int		SFXVolume;
-	bool	Rumble;
+	int		exitAction;
+	int		musicVolume;
+	int		sfxVolume;
+	bool	rumble;
 	int		language;
-	int		PreviewImage;
+	int		previewImage;
 
 
-	bool	TurboModeEnabled;
-	int		TurboModeButton;
-	int		GamepadMenuToggle;
-	bool	MapABXYRightStick;
+	bool	turboModeEnabled;
+	int		turboModeButton;
+	int		gamepadMenuToggle;
+	bool	mapAbxyRightStick;
 };
 
 void ExitApp();

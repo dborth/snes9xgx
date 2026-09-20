@@ -81,18 +81,18 @@ int main(int argc, char *argv[])
 		LoadPrefs();
 		if(strncmp(argv[1], "sd", 2) == 0)
 		{
-			EmuSettings.SaveMethod = DEVICE_SD;
-			EmuSettings.LoadMethod = DEVICE_SD;
+			EmuSettings.saveDevice = DEVICE_SD;
+			EmuSettings.loadDevice = DEVICE_SD;
 		}
 		else if(strncmp(argv[1], "usb", 3) == 0)
 		{
-			EmuSettings.SaveMethod = DEVICE_USB;
-			EmuSettings.LoadMethod = DEVICE_USB;
+			EmuSettings.saveDevice = DEVICE_USB;
+			EmuSettings.loadDevice = DEVICE_USB;
 		}
 		SavePrefs();
 
-		EmuSettings.AutoloadGame = AutoloadGame(argv[1], argv[2]);
-		autoboot = EmuSettings.AutoloadGame;
+		EmuSettings.autoloadGame = AutoloadGame(argv[1], argv[2]);
+		autoboot = EmuSettings.autoloadGame;
 	}
 #endif
 
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 				S9xResetSuperFX();
 			S9xReset();
 
-			switch (EmuSettings.Interpolation)
+			switch (EmuSettings.interpolation)
 			{
 			case 0: Settings.InterpolationMethod = DSP_INTERPOLATION_GAUSSIAN; break;
 			case 1: Settings.InterpolationMethod = DSP_INTERPOLATION_LINEAR; break;
@@ -154,15 +154,15 @@ int main(int argc, char *argv[])
 		appRequest = AppRequest::NONE;
 		platform->getAudio()->startEmulatorAudio();
 
-		Settings.Mute = EmuSettings.MuteAudio;
-		Settings.SupportHiRes = (EmuSettings.HiResolution == 1);
-		Settings.MaxSpriteTilesPerLine = (EmuSettings.SpriteLimit ? 34 : 128);
-		Settings.SkipFrames = (EmuSettings.FrameSkip ? AUTO_FRAMERATE : 0);
+		Settings.Mute = EmuSettings.muteAudio;
+		Settings.SupportHiRes = (EmuSettings.hiResolution == 1);
+		Settings.MaxSpriteTilesPerLine = (EmuSettings.spriteLimit ? 34 : 128);
+		Settings.SkipFrames = (EmuSettings.frameSkip ? AUTO_FRAMERATE : 0);
 		Settings.AutoDisplayMessages = (Settings.DisplayFrameRate || Settings.DisplayTime ? true : false);
-		Settings.MultiPlayer5Master = (EmuSettings.Controller == CTRL_PAD4 ? true : false);
-		Settings.SuperScopeMaster = (EmuSettings.Controller == CTRL_SCOPE ? true : false);
-		Settings.MouseMaster = (EmuSettings.Controller == CTRL_MOUSE || EmuSettings.Controller == CTRL_MOUSE_PORT2 || EmuSettings.Controller == CTRL_MOUSE_BOTH_PORTS);
-		Settings.JustifierMaster = (EmuSettings.Controller == CTRL_JUST ? true : false);
+		Settings.MultiPlayer5Master = (EmuSettings.controller == CTRL_PAD4 ? true : false);
+		Settings.SuperScopeMaster = (EmuSettings.controller == CTRL_SCOPE ? true : false);
+		Settings.MouseMaster = (EmuSettings.controller == CTRL_MOUSE || EmuSettings.controller == CTRL_MOUSE_PORT2 || EmuSettings.controller == CTRL_MOUSE_BOTH_PORTS);
+		Settings.JustifierMaster = (EmuSettings.controller == CTRL_JUST ? true : false);
 		SetControllers();
 
 		platform->getVideo()->setFrameTimer(0);
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 void ExitApp() {
 	SavePrefsAndWait(); // exit is the one time we wait for settings to hit the device
 
-	if (SNESROMSize > 0 && appRequest != AppRequest::MENU && EmuSettings.AutoSave == AUTOSAVE_SRAM)
+	if (SNESROMSize > 0 && appRequest != AppRequest::MENU && EmuSettings.autoSave == AUTOSAVE_SRAM)
 		SaveSRAMAuto(SILENT);
 
 	HaltDeviceCheckingThread();
@@ -208,5 +208,5 @@ void ExitApp() {
 	// down inside requestExit()/shutdown().
 	Thread::JoinAll();
 
-	platform->requestExit(EmuSettings.ExitAction, autoboot);
+	platform->requestExit(EmuSettings.exitAction, autoboot);
 }

@@ -334,7 +334,7 @@ void GuiSaveBrowser::update(InputController * controller)
 			if(saveBtn[0]->getState() == STATE::DISABLED)
 				saveBtn[0]->setState(STATE::DEFAULT);
 
-			if (EmuSettings.HideSRAMSaving == 0)
+			if (EmuSettings.hideSramSaving == 0)
 			{
 				saveDate[1]->setText(nullptr);
 				saveTime[1]->setText("New");
