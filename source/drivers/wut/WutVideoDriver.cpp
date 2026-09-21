@@ -107,6 +107,14 @@ void WutVideoDriver::init(int width, int height)
 	screenWidth = width;
 	screenHeight = height;
 
+	// The colour buffers libwhb allocated are the authoritative physical target sizes
+	const GX2ColorBuffer * tvBuffer = WHBGfxGetTVColourBuffer();
+	const GX2ColorBuffer * drcBuffer = WHBGfxGetDRCColourBuffer();
+	targetWidth[(int)OutputTarget::TV] = tvBuffer->surface.width ? (int)tvBuffer->surface.width : width;
+	targetHeight[(int)OutputTarget::TV] = tvBuffer->surface.height ? (int)tvBuffer->surface.height : height;
+	targetWidth[(int)OutputTarget::DRC] = drcBuffer->surface.width ? (int)drcBuffer->surface.width : width;
+	targetHeight[(int)OutputTarget::DRC] = drcBuffer->surface.height ? (int)drcBuffer->surface.height : height;
+
 	computeUIScale();
 
 	imageRenderer = new WutImageRenderer(this);

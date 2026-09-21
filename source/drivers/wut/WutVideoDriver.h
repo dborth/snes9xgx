@@ -8,6 +8,7 @@
 #include <gx2/sampler.h>
 #include <gx2/texture.h>
 #include "WutEmulatorVideo.h"
+#include "WutOutputTarget.h"
 #include "../VideoDriver.h"
 
 //!Wii U VideoDriver: GX2 + libwhb's WHBGfx* helpers. Every draw pass runs
@@ -33,6 +34,13 @@ class WutVideoDriver : public VideoDriver
 		int getRefreshRate() const override;
 		float getDeltaTime() const override;
 		float getUIScale() const override { return uiScale; }
+
+		//!Physical pixel size of a render target (the TV follows the console's
+		//!output setting, the GamePad is always 854x480). Unrelated to the
+		//!design canvas returned by getScreenWidth()/getScreenHeight(), which
+		//!is stretched onto each target independently per axis.
+		int getTargetWidth(OutputTarget target) const { return targetWidth[(int)target]; }
+		int getTargetHeight(OutputTarget target) const { return targetHeight[(int)target]; }
 
 		ImageRenderer* getImageRenderer() override { return imageRenderer; }
 		GlyphRenderer* getGlyphRenderer() override { return glyphRenderer; }
@@ -60,6 +68,8 @@ class WutVideoDriver : public VideoDriver
 		int screenWidth;
 		int screenHeight;
 		float uiScale = 1.0f;
+		int targetWidth[OUTPUT_TARGET_COUNT] = { 0, 0 };
+		int targetHeight[OUTPUT_TARGET_COUNT] = { 0, 0 };
 		uint32_t frameTimer;
 		PixelColor clearColor;
 

@@ -43,6 +43,7 @@ WutEmulatorVideo::WutEmulatorVideo()
 	, vwidth(100), vheight(100), oldvwidth(0), oldvheight(0)
 	, checkVideo(0), prevRenderedFrameCount(0)
 	, quadX(0), quadY(0), quadWidth(0), quadHeight(0)
+	, placement{ {0, 0, 0, 0}, {0, 0, 0, 0} }
 {
 	GX2InitSampler(&sampler, GX2_TEX_CLAMP_MODE_CLAMP, GX2_TEX_XY_FILTER_MODE_LINEAR);
 }
@@ -109,6 +110,21 @@ void WutEmulatorVideo::resetVideo()
 	quadHeight = 2.0f * yscale;
 	quadX = (videoDriver->getScreenWidth()  / 2.0f) + EmuSettings.videoXshift - quadWidth  / 2.0f;
 	quadY = (videoDriver->getScreenHeight() / 2.0f) - EmuSettings.videoYshift - quadHeight / 2.0f;
+
+	// Same quad in physical pixels of each target. The canvas is stretched onto
+	// every target independently per axis, so this is exactly where the
+	// canvas placement above lands on screen.
+	for (int i = 0; i < OUTPUT_TARGET_COUNT; i++)
+	{
+		const OutputTarget target = static_cast<OutputTarget>(i);
+		const float sx = (float) videoDriver->getTargetWidth(target)  / videoDriver->getScreenWidth();
+		const float sy = (float) videoDriver->getTargetHeight(target) / videoDriver->getScreenHeight();
+
+		placement[i].x = quadX * sx;
+		placement[i].y = quadY * sy;
+		placement[i].w = quadWidth * sx;
+		placement[i].h = quadHeight * sy;
+	}
 
 	// Record where/how big the quad is so we can composite gameScreenPng 
 	// back at the exact spot and size it was actually drawn at.
@@ -213,15 +229,21 @@ void WutEmulatorVideo::drawQuad()
 	GX2InitSampler(&sampler, GX2_TEX_CLAMP_MODE_CLAMP,
 		EmuSettings.videoBilinearFilter ? GX2_TEX_XY_FILTER_MODE_LINEAR : GX2_TEX_XY_FILTER_MODE_POINT);
 
-	float offset[3];
-	float scale[3];
-	PixelRectToNdc(quadX, quadY, quadWidth, quadHeight, videoDriver->getScreenWidth(), videoDriver->getScreenHeight(), offset, scale);
-
 	float colorIntensity[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	Texture2DShader* shader = Texture2DShader::instance();
 
-	auto drawPass = [&]() {
+	// NDC placement of the game quad on a target, from its physical-pixel rect
+	auto placementNdc = [&](OutputTarget target, float offset[3], float scale[3]) {
+		const TargetPlacement& p = placement[static_cast<int>(target)];
+		PixelRectToNdc(p.x, p.y, p.w, p.h, videoDriver->getTargetWidth(target), videoDriver->getTargetHeight(target), offset, scale);
+	};
+
+	auto drawPass = [&](OutputTarget target) {
+		float offset[3];
+		float scale[3];
+		placementNdc(target, offset, scale);
+
 		shader->setShaders();
 		shader->setAttributeBuffer();
 		shader->setAngle(0.0f);
@@ -252,10 +274,17 @@ void WutEmulatorVideo::drawQuad()
 
 	WHBGfxBeginRenderTV();
 	if (useScaleFX)
+	{
+		float offset[3];
+		float scale[3];
+		placementNdc(OutputTarget::TV, offset, scale);
 		scalefx->drawTV(offset, scale);
+	}
 	else
-		drawPass();
-	WHBGfxBeginRenderDRC(); drawPass();
+	{
+		drawPass(OutputTarget::TV);
+	}
+	WHBGfxBeginRenderDRC(); drawPass(OutputTarget::DRC);
 }
 
 /****************************************************************************
