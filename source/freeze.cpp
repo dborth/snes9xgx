@@ -10,11 +10,14 @@
  ***************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "snes9xgx.h"
 #include "fileop.h"
 #include "filebrowser.h"
 #include "menu.h"
+#include "freeze.h"
 #include "video.h"
 
 #include "snes9x/snes9x.h"
@@ -72,15 +75,92 @@ SaveSnapshot (char * filepath, bool silent)
 	return 1;
 }
 
-int
-SaveSnapshotAuto (bool silent)
+/****************************************************************************
+ * Deferred auto-save
+ *
+ * SnapshotStateAuto() serializes the state and copies the screenshot, so it
+ * can be called from the main thread at the moment the game is left.
+ * WriteStateSnapshot() then does the slow part - the device I/O - and can
+ * run whenever, on any thread, even after another game has been loaded and
+ * the screenshot has been cleared.
+ ***************************************************************************/
+struct StateSnapshot
 {
-	char filepath[1024];
+	char path[MAXPATHLEN];
+	unsigned char * data;
+	int size;
+	unsigned char * png; // screenshot, or nullptr
+	int pngSize;
+};
 
-	if(!MakeFilePath(filepath, FILE_STATE, Memory.ROMFilename, 0))
+StateSnapshot * SnapshotStateAuto ()
+{
+	StateSnapshot * snapshot = (StateSnapshot *)calloc(1, sizeof(StateSnapshot));
+
+	if(!snapshot)
+		return nullptr;
+
+	if(!MakeFilePath(snapshot->path, FILE_STATE, Memory.ROMFilename, 0))
+	{
+		FreeStateSnapshot(snapshot);
+		return nullptr;
+	}
+
+	uint32 size = S9xFreezeSize();
+
+	if(size > 0)
+		snapshot->data = (unsigned char *)malloc(size);
+
+	if(!snapshot->data)
+	{
+		FreeStateSnapshot(snapshot);
+		return nullptr;
+	}
+
+	S9xFreezeGameMem(snapshot->data, size);
+	snapshot->size = size;
+
+	if(gameScreenPng.size > 0 && gameScreenPng.buffer)
+	{
+		snapshot->png = (unsigned char *)malloc(gameScreenPng.size);
+
+		if(snapshot->png)
+		{
+			memcpy(snapshot->png, gameScreenPng.buffer, gameScreenPng.size);
+			snapshot->pngSize = gameScreenPng.size;
+		}
+	}
+
+	return snapshot;
+}
+
+bool WriteStateSnapshot (StateSnapshot * snapshot, bool silent)
+{
+	int device;
+
+	if(!snapshot || !snapshot->data || !FindDevice(snapshot->path, &device))
 		return false;
 
-	return SaveSnapshot(filepath, silent);
+	if(snapshot->png)
+	{
+		char screenpath[MAXPATHLEN];
+		snprintf(screenpath, sizeof(screenpath), "%s", snapshot->path);
+		screenpath[strlen(screenpath)-4] = 0;
+		strcat(screenpath, ".png");
+		SaveFile((char *)snapshot->png, screenpath, snapshot->pngSize, silent);
+	}
+
+	return SaveFile((char *)snapshot->data, snapshot->path, snapshot->size, silent) > 0;
+}
+
+void FreeStateSnapshot (StateSnapshot * snapshot)
+{
+	if(!snapshot)
+		return;
+
+	free(snapshot->png);
+	free(snapshot->data);
+	free(snapshot);
 }
 
 /****************************************************************************

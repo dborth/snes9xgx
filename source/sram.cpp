@@ -11,10 +11,12 @@
  ***************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "snes9xgx.h"
 #include "menu.h"
+#include "sram.h"
 #include "fileop.h"
 #include "filebrowser.h"
 #include "input.h"
@@ -102,6 +104,25 @@ bool LoadSRAMAuto (bool silent)
 /****************************************************************************
  * Save SRAM
  ***************************************************************************/
+// \return size in bytes of the SRAM to save - 0 if there is none
+static int GetSRAMSaveSize()
+{
+	if (Settings.SuperFX && Memory.ROMType < 0x15) // doesn't have SRAM
+		return 0;
+
+	if (Settings.SA1 && Memory.ROMType == 0x34)    // doesn't have SRAM
+		return 0;
+
+	int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
+
+	if (LoROM)
+		size = size < 0x70000 ? size : 0x70000;
+	else if (HiROM)
+		size = size < 0x40000 ? size : 0x40000;
+
+	return size;
+}
+
 bool SaveSRAM (char * filepath, bool silent)
 {
 	bool retval = false;
@@ -118,12 +139,7 @@ bool SaveSRAM (char * filepath, bool silent)
 		return true;
 
 	// determine SRAM size
-	int size = Memory.SRAMSize ? (1 << (Memory.SRAMSize + 3)) * 128 : 0;
-
-	if (LoROM)
-		size = size < 0x70000 ? size : 0x70000;
-	else if (HiROM)
-		size = size < 0x40000 ? size : 0x40000;
+	int size = GetSRAMSaveSize();
 
 	if (size > 0)
 	{
@@ -151,6 +167,101 @@ bool SaveSRAM (char * filepath, bool silent)
 			ErrorPrompt("No SRAM data to save!");
 	}
 	return retval;
+}
+
+/****************************************************************************
+ * Deferred auto-save
+ *
+ * SnapshotSRAMAuto() copies everything that is needed (the SRAM and where it
+ * goes) so it can be called from the main thread at the moment the game is
+ * left. WriteSRAMSnapshot() then does the slow part - the device I/O - and
+ * can run whenever, on any thread, even after another game has been loaded.
+ ***************************************************************************/
+struct SRAMSnapshot
+{
+	char path[MAXPATHLEN];       // the Auto file
+	char legacyPath[MAXPATHLEN]; // file with no number or Auto appended - used if it exists
+	unsigned char * data;
+	int size;
+	bool hasRTC;
+	unsigned char rtc[20];
+};
+
+SRAMSnapshot * SnapshotSRAMAuto ()
+{
+	int size = GetSRAMSaveSize();
+
+	if(size <= 0)
+		return nullptr;
+
+	SRAMSnapshot * snapshot = (SRAMSnapshot *)calloc(1, sizeof(SRAMSnapshot));
+
+	if(!snapshot)
+		return nullptr;
+
+	snapshot->data = (unsigned char *)malloc(size);
+
+	if(!snapshot->data
+		|| !MakeFilePath(snapshot->legacyPath, FILE_SRAM, Memory.ROMFilename, -1)
+		|| !MakeFilePath(snapshot->path, FILE_SRAM, Memory.ROMFilename, 0))
+	{
+		FreeSRAMSnapshot(snapshot);
+		return nullptr;
+	}
+
+	memcpy(snapshot->data, Memory.SRAM, size);
+	snapshot->size = size;
+
+	if (Settings.SRTC || Settings.SPC7110RTC)
+	{
+		snapshot->hasRTC = true;
+		memcpy(snapshot->rtc, RTCData.reg, sizeof(snapshot->rtc));
+	}
+
+	return snapshot;
+}
+
+bool WriteSRAMSnapshot (SRAMSnapshot * snapshot, bool silent)
+{
+	char filepath[MAXPATHLEN];
+	int device;
+
+	if(!snapshot || !snapshot->data)
+		return false;
+
+	// use the file with no number or Auto appended if there is one
+	snprintf(filepath, sizeof(filepath), "%s", snapshot->legacyPath);
+	FILE * fp = fopen (filepath, "rb");
+
+	if(fp) // file found
+		fclose (fp);
+	else
+		snprintf(filepath, sizeof(filepath), "%s", snapshot->path);
+
+	if(!FindDevice(filepath, &device))
+		return false;
+
+	int offset = SaveFile((char *)snapshot->data, filepath, snapshot->size, silent);
+
+	if (snapshot->hasRTC)
+	{
+		int pathlen = strlen(filepath);
+		filepath[pathlen-3] = 'r';
+		filepath[pathlen-2] = 't';
+		filepath[pathlen-1] = 'c';
+		SaveFile((char *)snapshot->rtc, filepath, sizeof(snapshot->rtc), silent);
+	}
+
+	return offset > 0;
+}
+
+void FreeSRAMSnapshot (SRAMSnapshot * snapshot)
+{
+	if(!snapshot)
+		return;
+
+	free(snapshot->data);
+	free(snapshot);
 }
 
 bool SaveSRAMAuto (bool silent)
