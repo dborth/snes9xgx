@@ -461,6 +461,7 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 
 			case 0x210d: // BG1HOFS, M7HOFS
 				PPU.BG[0].HOffset = (Byte << 8) | (PPU.BGnxOFSbyte & ~7) | ((PPU.BG[0].HOffset >> 8) & 7);
+				S9xPPULatchM7(PPU.M7HOFSLatch, PPU.M7HOFS, PPU.M7HOFSLatched);
 				PPU.M7HOFS = (Byte << 8) | PPU.M7byte;
 				PPU.BGnxOFSbyte = Byte;
 				PPU.M7byte = Byte;
@@ -468,6 +469,7 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 
 			case 0x210e: // BG1VOFS, M7VOFS
 				PPU.BG[0].VOffset = (Byte << 8) | PPU.BGnxOFSbyte;
+				S9xPPULatchM7(PPU.M7VOFSLatch, PPU.M7VOFS, PPU.M7VOFSLatched);
 				PPU.M7VOFS = (Byte << 8) | PPU.M7byte;
 				PPU.BGnxOFSbyte = Byte;
 				PPU.M7byte = Byte;
@@ -594,11 +596,13 @@ void S9xSetPPU (uint8 Byte, uint16 Address)
 				break;
 
 			case 0x211f: // M7X
+				S9xPPULatchM7(PPU.CentreXLatch, PPU.CentreX, PPU.CentreXLatched);
 				PPU.CentreX = PPU.M7byte | (Byte << 8);
 				PPU.M7byte = Byte;
 				break;
 
 			case 0x2120: // M7Y
+				S9xPPULatchM7(PPU.CentreYLatch, PPU.CentreY, PPU.CentreYLatched);
 				PPU.CentreY = PPU.M7byte | (Byte << 8);
 				PPU.M7byte = Byte;
 				break;
@@ -1676,6 +1680,14 @@ uint8 S9xGetCPU (uint16 Address)
 				return ((byte & 0x80) | (OpenBus & 0x70) | Model->_5A22);
 
 			case 0x4211: // TIMEUP
+				// The main loop only latches CPU.IRQLine at opcode boundaries, so a $4211 read landing after the
+				// H/V-timer trigger cycle but before that boundary would miss the IRQ; latch it here as hardware would.
+				if (!CPU.IRQLine && Timings.NextIRQTimer != 0x0fffffff &&
+					CPU.Cycles >= Timings.NextIRQTimer)
+				{
+					S9xUpdateIRQPositions(false);
+					CPU.IRQLine = TRUE;
+				}
 				byte = 0;
 				if (CPU.IRQLine)
 				{

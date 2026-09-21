@@ -269,6 +269,11 @@ void S9xDoHEventProcessing (void)
 				Timings.NextIRQTimer -= Timings.H_Max;
 			S9xAPUSetReferenceTime(CPU.Cycles);
 
+			PPU.CentreXLatched = false;
+			PPU.CentreYLatched = false;
+			PPU.M7HOFSLatched = false;
+			PPU.M7VOFSLatched = false;
+
 			if (Settings.SA1)
 				SA1.Cycles -= Timings.H_Max * 3;
 
