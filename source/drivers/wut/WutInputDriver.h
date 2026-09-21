@@ -6,6 +6,7 @@
 #pragma once
 
 #include "../InputDriver.h"
+#include "../InputData.h"
 #include "../OneEuroFilter.h"
 
 //!Wii U InputDriver: VPAD for the GamePad (stick, buttons, and touch,
@@ -41,4 +42,10 @@ class WutInputDriver : public InputDriver {
 		OneEuroFilter irFilterX[4];
 		OneEuroFilter irFilterY[4];
 		bool irSmoothInit[4];
+
+		// VPADRead()/KPADReadEx() only report *new* wireless packets
+		// These caches hold the last known held/analog state per source so a
+		// "no new packet yet" tick can carry it forward
+		InputPadData drcCache;      // GamePad (VPAD), channel 0 only
+		InputPadData kpadCache[4];  // Wiimote/Nunchuk/Classic/Pro, per channel
 };

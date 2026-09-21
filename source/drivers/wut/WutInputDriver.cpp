@@ -24,6 +24,24 @@ static inline float clampf(float v, float lo, float hi) {
 	return (v < lo) ? lo : (v > hi) ? hi : v;
 }
 
+// Copies the persistent per-profile state (held buttons + analog stick/
+// orientation) for hardware index `hw` from src into dst. Deliberately
+// excludes hw_buttons_d/hw_buttons_r - those are one-frame events
+static void CarryForwardHwProfile(InputPadData& dst, const InputPadData& src, uint32_t hw) {
+	dst.hw_connected[hw] = src.hw_connected[hw];
+	dst.hw_buttons_h[hw] = src.hw_buttons_h[hw];
+	dst.hw_stickX[hw]    = src.hw_stickX[hw];
+	dst.hw_stickY[hw]    = src.hw_stickY[hw];
+	dst.hw_substickX[hw] = src.hw_substickX[hw];
+	dst.hw_substickY[hw] = src.hw_substickY[hw];
+	dst.hw_gforceX[hw]   = src.hw_gforceX[hw];
+	dst.hw_gforceY[hw]   = src.hw_gforceY[hw];
+	dst.hw_gforceZ[hw]   = src.hw_gforceZ[hw];
+	dst.hw_pitch[hw]     = src.hw_pitch[hw];
+	dst.hw_roll[hw]      = src.hw_roll[hw];
+	dst.hw_yaw[hw]       = src.hw_yaw[hw];
+}
+
 /****************************************************************************
  * Hardware Mapping Helpers
  ***************************************************************************/
@@ -195,7 +213,7 @@ void WutInputDriver::update() {
 			VPADReadError vpadError;
 			VPADRead(VPAD_CHAN_0, &vpadStatus, 1, &vpadError);
 
-			if (vpadError == VPAD_READ_SUCCESS || vpadError == VPAD_READ_NO_SAMPLES) {
+			if (vpadError == VPAD_READ_SUCCESS) {
 				padData.hw_connected[INPUT_HW_DRC] = true;
 				padData.battery_level = vpadStatus.battery * 25; // normalize to 0-100
 
@@ -255,6 +273,30 @@ void WutInputDriver::update() {
 				}
 
 				drcTouchedPrev = drcTouched;
+
+				// Remember this frame's held/analog state so a later tick
+				// with no new packet (still connected) can carry it forward
+				CarryForwardHwProfile(drcCache, padData, INPUT_HW_DRC);
+				drcCache.battery_level = padData.battery_level;
+				drcCache.isTouch       = padData.isTouch;
+				drcCache.validPointer  = padData.validPointer;
+				drcCache.cursor_x      = padData.cursor_x;
+				drcCache.cursor_y      = padData.cursor_y;
+			} else if (vpadError == VPAD_READ_NO_SAMPLES || vpadError == VPAD_READ_BUSY) {
+				// No new packet arrived this tick, but the GamePad hasn't
+				// been reported disconnected either
+				if (drcCache.hw_connected[INPUT_HW_DRC]) {
+					CarryForwardHwProfile(padData, drcCache, INPUT_HW_DRC);
+					padData.battery_level = drcCache.battery_level;
+					padData.isTouch       = drcCache.isTouch;
+					padData.validPointer  = drcCache.validPointer;
+					padData.cursor_x      = drcCache.cursor_x;
+					padData.cursor_y      = drcCache.cursor_y;
+				}
+			} else {
+				// A real error - treat as genuinely disconnected and stop carrying stale state forward
+				drcCache = InputPadData();
+				drcTouchedPrev = false;
 			}
 		}
 
@@ -273,6 +315,9 @@ void WutInputDriver::update() {
 
 			padData.hw_connected[INPUT_HW_WIIMOTE] = true;
 			padData.battery_level = WPADGetBatteryLevel((WPADChan)i) * 25; // normalize to 0-100 range
+			kpadCache[i].battery_level = padData.battery_level;
+			// Default assumption for this fresh frame: no valid IR pointer
+			kpadCache[i].validPointer = false;
 			
 			padData.hw_gforceX[INPUT_HW_WIIMOTE] = kpadStatus.acc.x;
 			padData.hw_gforceY[INPUT_HW_WIIMOTE] = kpadStatus.acc.y;
@@ -340,6 +385,13 @@ void WutInputDriver::update() {
 					padData.cursor_x = smoothX;
 					padData.cursor_y = smoothY;
 					padData.cursor_angle = kpadStatus.angle.y;
+
+					// Remember this frame's IR cursor so a later tick with no new packet won't cause it to drop out
+					kpadCache[i].validPointer = true;
+					kpadCache[i].isTouch = false;
+					kpadCache[i].cursor_x = smoothX;
+					kpadCache[i].cursor_y = smoothY;
+					kpadCache[i].cursor_angle = kpadStatus.angle.y;
 				} else if (!kpadStatus.posValid) {
 					// Sensor bar tracking lost - reset the filter so we don't drag the
 					// cursor toward a stale point when it's reacquired.
@@ -366,10 +418,35 @@ void WutInputDriver::update() {
 					controller[i]->setSideways(std::abs(kpadStatus.acc.x) > std::abs(kpadStatus.acc.y));
 				}
 			}
+
+			// Remember this frame's held/analog state per profile so a later
+			// tick with no new packet (still connected) can carry it forward
+			CarryForwardHwProfile(kpadCache[i], padData, INPUT_HW_WIIMOTE);
+			CarryForwardHwProfile(kpadCache[i], padData, INPUT_HW_NUNCHUK);
+			CarryForwardHwProfile(kpadCache[i], padData, INPUT_HW_CLASSIC);
+			CarryForwardHwProfile(kpadCache[i], padData, INPUT_HW_WUPC);
+		} else if (kpadError == KPAD_ERROR_NO_SAMPLES || kpadError == KPAD_ERROR_BUSY) {
+			// No new packet arrived this tick, but the Wiimote hasn't been reported disconnected either
+			CarryForwardHwProfile(padData, kpadCache[i], INPUT_HW_WIIMOTE);
+			CarryForwardHwProfile(padData, kpadCache[i], INPUT_HW_NUNCHUK);
+			CarryForwardHwProfile(padData, kpadCache[i], INPUT_HW_CLASSIC);
+			CarryForwardHwProfile(padData, kpadCache[i], INPUT_HW_WUPC);
+
+			if (kpadCache[i].hw_connected[INPUT_HW_WIIMOTE]) {
+				padData.battery_level = kpadCache[i].battery_level;
+
+				// Carry the IR cursor forward too, but only if DRC touch hasn't already claimed pointer priority
+				if (!padData.validPointer && kpadCache[i].validPointer) {
+					padData.validPointer = true;
+					padData.isTouch = false;
+					padData.cursor_x = kpadCache[i].cursor_x;
+					padData.cursor_y = kpadCache[i].cursor_y;
+					padData.cursor_angle = kpadCache[i].cursor_angle;
+				}
+			}
 		} else {
-			// No fresh KPAD sample this frame (disconnected, no controller, or a
-			// genuine KPAD_ERROR_NO_SAMPLES tick) - reset the IR filter so a later
-			// reconnect doesn't drag the cursor from a stale position.
+			// A real error - treat as genuinely disconnected
+			kpadCache[i] = InputPadData();
 			irSmoothInit[i] = false;
 		}
 
