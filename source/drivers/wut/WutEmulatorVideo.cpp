@@ -10,6 +10,8 @@
 
 #include "WutEmulatorVideo.h"
 #include "WutVideoDriver.h"
+#include "WutScaleFX.h"
+#include "WutUpscaleFilters.h"
 #include "shaders/Texture2DShader.h"
 #include "../../snes9xgx.h"
 #include "../../video.h"
@@ -231,7 +233,28 @@ void WutEmulatorVideo::drawQuad()
 		shader->draw(GX2_PRIMITIVE_MODE_QUADS, 4);
 	};
 
-	WHBGfxBeginRenderTV(); drawPass();
+	// Upscaling (TV output only)
+	WutScaleFX* scalefx = WutScaleFX::instance();
+	bool useScaleFX = false;
+
+	if (EmuSettings.videoUpscalingFilter != UPSCALE_NONE)
+	{
+		if (scalefx->prepare(texture->surface.width, texture->surface.height))
+		{
+			scalefx->run(texture);
+			useScaleFX = true;
+		}
+	}
+	else
+	{
+		scalefx->release();
+	}
+
+	WHBGfxBeginRenderTV();
+	if (useScaleFX)
+		scalefx->drawTV(offset, scale);
+	else
+		drawPass();
 	WHBGfxBeginRenderDRC(); drawPass();
 }
 

@@ -12,22 +12,22 @@
 
 #include <stdint.h>
 
-enum RenderFilter {
-	FILTER_NONE = 0,
-	FILTER_2XBR,
-	FILTER_DDT,
-	FILTER_HQ2X,
-	FILTER_HQ2XS,
-	FILTER_HQ2XBOLD,
-	FILTER_SCALE2X,
-	FILTER_2XBRLV1,
-	NUM_FILTERS
+enum UpscaleFilter {
+	UPSCALE_NONE = 0,
+	UPSCALE_2XBR,
+	UPSCALE_DDT,
+	UPSCALE_HQ2X,
+	UPSCALE_HQ2XS,
+	UPSCALE_HQ2XBOLD,
+	UPSCALE_SCALE2X,
+	UPSCALE_2XBRLV1,
+	NUM_UPSCALE_FILTERS
 };
 
 typedef void (*TFilterMethod)(uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height);
 
 void SelectFilterMethod (int filterID);
-const char* GetFilterName (int filterID);
+const char* GetUpscaleFilterName (int filterID);
 int GetFilterScale();
 
 extern TFilterMethod FilterMethod;

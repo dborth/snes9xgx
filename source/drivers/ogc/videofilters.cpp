@@ -20,7 +20,7 @@
 // Data Cache Block Touch for Gekko/Broadway (32-byte cache lines)
 #define DCBT(ptr) __builtin_prefetch((void*)(ptr), 0, 0)
 
-static RenderFilter renderFilter = FILTER_NONE;
+static UpscaleFilter upscaleFilter = UPSCALE_NONE;
 TFilterMethod FilterMethod;
 
 // -------------------------------------------------------------------------
@@ -150,52 +150,52 @@ template<int GuiScale> void Render2xBR (uint8_t *srcPtr, uint32_t srcPitch, uint
 template<int GuiScale> void Render2xBRlv1 (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height);
 template<int GuiScale> void RenderDDT (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, int width, int height);
 
-const char* GetFilterName (int filterID)
+const char* GetUpscaleFilterName (int filterID)
 {
 	switch(filterID)
 	{
 		default: return "Unknown";
-		case FILTER_NONE: return "None";
-		case FILTER_HQ2X: return "hq2x";
-		case FILTER_HQ2XS: return "hq2x Soft";
-		case FILTER_HQ2XBOLD: return "hq2x Bold";
-		case FILTER_SCALE2X: return "Scale2x";
-		case FILTER_2XBR: return "2xBR";
-		case FILTER_2XBRLV1: return "2xBR-lv1";
-		case FILTER_DDT: return "DDT";
+		case UPSCALE_NONE: return "None";
+		case UPSCALE_HQ2X: return "hq2x";
+		case UPSCALE_HQ2XS: return "hq2x Soft";
+		case UPSCALE_HQ2XBOLD: return "hq2x Bold";
+		case UPSCALE_SCALE2X: return "Scale2x";
+		case UPSCALE_2XBR: return "2xBR";
+		case UPSCALE_2XBRLV1: return "2xBR-lv1";
+		case UPSCALE_DDT: return "DDT";
 	}
 }
 
 // Return pointer to appropriate function
-static TFilterMethod FilterToMethod (RenderFilter filterID)
+static TFilterMethod FilterToMethod (UpscaleFilter filterID)
 {
 	switch(filterID)
 	{
-		case FILTER_HQ2X:       return RenderHQ2X<FILTER_HQ2X>;
-		case FILTER_HQ2XS:      return RenderHQ2X<FILTER_HQ2XS>;
-		case FILTER_HQ2XBOLD:   return RenderHQ2X<FILTER_HQ2XBOLD>;
-		case FILTER_SCALE2X:    return RenderScale2X<FILTER_SCALE2X>;
-		case FILTER_2XBR:       return Render2xBR<FILTER_2XBR>;
-		case FILTER_2XBRLV1:    return Render2xBRlv1<FILTER_2XBRLV1>;
-		case FILTER_DDT:        return RenderDDT<FILTER_DDT>;
+		case UPSCALE_HQ2X:       return RenderHQ2X<UPSCALE_HQ2X>;
+		case UPSCALE_HQ2XS:      return RenderHQ2X<UPSCALE_HQ2XS>;
+		case UPSCALE_HQ2XBOLD:   return RenderHQ2X<UPSCALE_HQ2XBOLD>;
+		case UPSCALE_SCALE2X:    return RenderScale2X<UPSCALE_SCALE2X>;
+		case UPSCALE_2XBR:       return Render2xBR<UPSCALE_2XBR>;
+		case UPSCALE_2XBRLV1:    return Render2xBRlv1<UPSCALE_2XBRLV1>;
+		case UPSCALE_DDT:        return RenderDDT<UPSCALE_DDT>;
 		default: return 0;
 	}
 }
 
 int GetFilterScale()
 {
-	switch(renderFilter)
+	switch(upscaleFilter)
 	{
-		case FILTER_NONE:
+		case UPSCALE_NONE:
 		return 1;
 		default:
-		case FILTER_HQ2X:
-		case FILTER_HQ2XS:
-		case FILTER_HQ2XBOLD:
-		case FILTER_SCALE2X:
-		case FILTER_2XBR:
-		case FILTER_2XBRLV1:
-		case FILTER_DDT:
+		case UPSCALE_HQ2X:
+		case UPSCALE_HQ2XS:
+		case UPSCALE_HQ2XBOLD:
+		case UPSCALE_SCALE2X:
+		case UPSCALE_2XBR:
+		case UPSCALE_2XBRLV1:
+		case UPSCALE_DDT:
 		return 2;
 	}
 }
@@ -244,8 +244,8 @@ static void InitFilterTables() {
 
 void SelectFilterMethod (int filterID)
 {
-	renderFilter = (RenderFilter)filterID;
-	FilterMethod = FilterToMethod(renderFilter);
+	upscaleFilter = (UpscaleFilter)filterID;
+	FilterMethod = FilterToMethod(upscaleFilter);
 
 	// Handle menu transition. Next frame will fully render
 	invalidate_hashes = true;
@@ -529,14 +529,14 @@ static inline void EvaluateHQ2XSubpixels(
 		w0 = w1 = (w5 << 16) | w5;
 	} else {
 		uint32_t pattern = 0, c_y2 = 0, c_y4 = 0, c_y6 = 0, c_y8 = 0;
-		if (GuiScale == FILTER_HQ2X) {
+		if (GuiScale == UPSCALE_HQ2X) {
 			// Standard: each neighbour's cached YUV vs center cached YUV
 			uint32_t y5 = yMid[cx+1];
 			pattern = DiffYUVCached(yTop[cx], y5) << 0 | DiffYUVCached(yTop[cx+1], y5) << 1 | DiffYUVCached(yTop[cx+2], y5) << 2 |
 					  DiffYUVCached(yMid[cx], y5) << 3 | DiffYUVCached(yMid[cx+2], y5) << 4 | DiffYUVCached(yBot[cx], y5) << 5 |
 					  DiffYUVCached(yBot[cx+1], y5) << 6 | DiffYUVCached(yBot[cx+2], y5) << 7;
 			c_y2 = yTop[cx+1]; c_y4 = yMid[cx]; c_y6 = yMid[cx+2]; c_y8 = yBot[cx+1];
-		} else if (GuiScale == FILTER_HQ2XBOLD) {
+		} else if (GuiScale == UPSCALE_HQ2XBOLD) {
 			// Brightness vs 3x3 mean. sum<=9*186=1674; (sum*7282)>>16 ~= sum/9
 			uint32_t mean = ((bTop[cx] + bTop[cx+1] + bTop[cx+2] + bMid[cx] + bMid[cx+1] + bMid[cx+2] + bBot[cx] + bBot[cx+1] + bBot[cx+2]) * 7282) >> 16;
 			bool c5 = (bMid[cx+1] > mean);
@@ -546,7 +546,7 @@ static inline void EvaluateHQ2XSubpixels(
 					  ((U8 != U5) && ((bBot[cx+1] > mean) != c5)) << 6 | ((U9 != U5) && ((bBot[cx+2] > mean) != c5)) << 7;
 			c_y2 = inlineRGBtoYUV(Pack555(U2)); c_y4 = inlineRGBtoYUV(Pack555(U4));
 			c_y6 = inlineRGBtoYUV(Pack555(U6)); c_y8 = inlineRGBtoYUV(Pack555(U8));
-		} else { // FILTER_HQ2XS - hybrid
+		} else { // UPSCALE_HQ2XS - hybrid
 			// use yuv
 			if ((U1 == U5) | (U3 == U5) | (U7 == U5) | (U9 == U5)) {
 				uint32_t y5 = yMid[cx+1];
@@ -697,8 +697,8 @@ void RenderHQ2X (uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t d
 	uint16_t *bTop = brtRowA, *bMid = brtRowB, *bBot = brtRowC;
 
 	// Compile-time selectors so the loop body has zero variant branches.
-	const bool USE_YUV   = (GuiScale == FILTER_HQ2X) || (GuiScale == FILTER_HQ2XS);
-	const bool USE_BRIGHT = (GuiScale == FILTER_HQ2XBOLD) || (GuiScale == FILTER_HQ2XS);
+	const bool USE_YUV   = (GuiScale == UPSCALE_HQ2X) || (GuiScale == UPSCALE_HQ2XS);
+	const bool USE_BRIGHT = (GuiScale == UPSCALE_HQ2XBOLD) || (GuiScale == UPSCALE_HQ2XS);
 
 	// Prime the top & middle window rows from row 0. The window's row -1 clamps
 	// to row 0 (edge replication).

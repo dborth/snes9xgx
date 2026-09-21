@@ -46,6 +46,7 @@
 
 #ifdef __WIIU__
 #include "drivers/wut/WutInputDriver.h"
+#include "drivers/wut/WutUpscaleFilters.h"
 #endif
 
 #include "snes9x/port.h"
@@ -3760,7 +3761,7 @@ static int MenuSettingsVideo()
 #else
 	options.name[i++][0] = 0; // Hardware Softening is GameCube / Wii only
 #endif
-#if defined(HW_RVL) || defined(HW_DOL)
+#if defined(HW_RVL) || defined(HW_DOL) || defined(__WIIU__)
 	sprintf(options.name[i++], "Upscaling");
 #else
 	options.name[i++][0] = 0; // upscaling filters not available on this platform
@@ -3841,11 +3842,11 @@ static int MenuSettingsVideo()
 					EmuSettings.videoHardwareSoften = VIDEO_HW_SOFTEN_OFF;
 				break;
 
-#if defined(HW_RVL) || defined(HW_DOL)
+#if defined(HW_RVL) || defined(HW_DOL) || defined(__WIIU__)
 			case 4:
 				EmuSettings.videoUpscalingFilter++;
-				if (EmuSettings.videoUpscalingFilter >= NUM_FILTERS)
-					EmuSettings.videoUpscalingFilter = FILTER_NONE;
+				if (EmuSettings.videoUpscalingFilter >= NUM_UPSCALE_FILTERS)
+					EmuSettings.videoUpscalingFilter = UPSCALE_NONE;
 				break;
 #endif
 
@@ -3908,8 +3909,8 @@ static int MenuSettingsVideo()
 					sprintf (options.value[3], "Soft"); break;
 			}
 
-#if defined(HW_RVL) || defined(HW_DOL)
-			sprintf (options.value[4], "%s", GetFilterName(EmuSettings.videoUpscalingFilter));
+#if defined(HW_RVL) || defined(HW_DOL) || defined(__WIIU__)
+			sprintf (options.value[4], "%s", GetUpscaleFilterName(EmuSettings.videoUpscalingFilter));
 #endif
 			sprintf (options.value[5], "%s", EmuSettings.videoScanlines ? "On" : "Off");
 			sprintf (options.value[6], "%.2f%%, %.2f%%", EmuSettings.videoZoomHor*100, EmuSettings.videoZoomVert*100);

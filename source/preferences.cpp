@@ -36,6 +36,9 @@
 #include "drivers/ogc/gamecube/GameCubePlatform.h"
 #include "drivers/ogc/videofilters.h"
 #endif
+#ifdef __WIIU__
+#include "drivers/wut/WutUpscaleFilters.h"
+#endif
 
 struct SEmuSettings EmuSettings;
 
@@ -453,9 +456,9 @@ void FixInvalidSettings()
 		EmuSettings.videoAspectRatioCorrection = VIDEO_ASPECT_RATIO_CORRECTION_NONE;
 	if(!(EmuSettings.videoMode >= VIDEOMODE_AUTO && EmuSettings.videoMode < VIDEOMODE_LENGTH))
 		EmuSettings.videoMode = VIDEOMODE_AUTO;
-#if defined(HW_RVL) || defined(HW_DOL)
-	if(!(EmuSettings.videoUpscalingFilter >= FILTER_NONE && EmuSettings.videoUpscalingFilter <= NUM_FILTERS))
-		EmuSettings.videoUpscalingFilter = FILTER_NONE;
+#if defined(HW_RVL) || defined(HW_DOL) || defined(__WIIU__)
+	if(!(EmuSettings.videoUpscalingFilter >= UPSCALE_NONE && EmuSettings.videoUpscalingFilter <= NUM_UPSCALE_FILTERS))
+		EmuSettings.videoUpscalingFilter = UPSCALE_NONE;
 #endif
 	if(!(EmuSettings.wiimoteOrientation >= WIIMOTE_ORIENTATION_VERTICAL && EmuSettings.wiimoteOrientation < WIIMOTE_ORIENTATION_LENGTH))
 		EmuSettings.wiimoteOrientation = WIIMOTE_ORIENTATION_VERTICAL;
@@ -489,8 +492,8 @@ void DefaultSettings()
 	EmuSettings.videoBilinearFilter = false;
 	EmuSettings.videoHardwareSoften = VIDEO_HW_SOFTEN_SHARP;
 	EmuSettings.videoScanlines = false;
-#if defined(HW_RVL) || defined(HW_DOL)
-	EmuSettings.videoUpscalingFilter = FILTER_NONE;
+#if defined(HW_RVL) || defined(HW_DOL) || defined(__WIIU__)
+	EmuSettings.videoUpscalingFilter = UPSCALE_NONE;
 #else
 	EmuSettings.videoUpscalingFilter = 0;
 #endif
