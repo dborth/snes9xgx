@@ -11,6 +11,7 @@
 #include "WutEmulatorVideo.h"
 #include "WutVideoDriver.h"
 #include "WutScaleFX.h"
+#include "WutPresent.h"
 #include "WutUpscaleFilters.h"
 #include "shaders/Texture2DShader.h"
 #include "../../snes9xgx.h"
@@ -23,6 +24,9 @@
 
 namespace
 {
+	// Darkness of the scanline gaps (0..1) when Scanline Overlay is on
+	const float SCANLINE_STRENGTH = 0.5f;
+
 	void PixelRectToNdc(float x, float y, float w, float h, int designWidth, int designHeight, float offset[3], float scale[3])
 	{
 		float centerPxX = x + w * 0.5f;
@@ -255,11 +259,37 @@ void WutEmulatorVideo::drawQuad()
 		shader->draw(GX2_PRIMITIVE_MODE_QUADS, 4);
 	};
 
-	// Upscaling (TV output only)
+	const bool sharp = EmuSettings.videoUpscalingFilter == UPSCALE_SHARP_BILINEAR;
+	const float scanlines = EmuSettings.videoScanlines ? SCANLINE_STRENGTH : 0.0f;
+
+	// Present shader: sharp bilinear and/or scanlines. Returns false if it is unavailable.
+	auto presentPass = [&](OutputTarget target, const GX2Texture* tex, bool linear, bool sharpSampling) {
+		const TargetPlacement& p = placement[static_cast<int>(target)];
+
+		WutPresent::Params pp;
+		pp.texture = tex;
+		placementNdc(target, pp.offset, pp.scale);
+		pp.outWidth = p.w;
+		pp.outHeight = p.h;
+		pp.linear = linear;
+		pp.sharp = sharpSampling;
+		pp.scanlineStrength = scanlines;
+		pp.sourceLines = (float) texture->surface.height;
+		return WutPresent::instance()->draw(pp);
+	};
+
+	// The frame texture on a target: plain textured quad, or the present shader when it has work to do
+	auto drawGame = [&](OutputTarget target) {
+		if ((sharp || scanlines > 0.0f) && presentPass(target, texture, EmuSettings.videoBilinearFilter, sharp))
+			return;
+		drawPass(target);
+	};
+
+	// ScaleFX (TV output only)
 	WutScaleFX* scalefx = WutScaleFX::instance();
 	bool useScaleFX = false;
 
-	if (EmuSettings.videoUpscalingFilter != UPSCALE_NONE)
+	if (EmuSettings.videoUpscalingFilter == UPSCALE_SCALEFX)
 	{
 		if (scalefx->prepare(texture->surface.width, texture->surface.height))
 		{
@@ -275,16 +305,20 @@ void WutEmulatorVideo::drawQuad()
 	WHBGfxBeginRenderTV();
 	if (useScaleFX)
 	{
-		float offset[3];
-		float scale[3];
-		placementNdc(OutputTarget::TV, offset, scale);
-		scalefx->drawTV(offset, scale);
+		// Scanlines go through the present shader, otherwise the ScaleFX final stage draws it
+		if (scanlines <= 0.0f || !presentPass(OutputTarget::TV, scalefx->outputTexture(), true, false))
+		{
+			float offset[3];
+			float scale[3];
+			placementNdc(OutputTarget::TV, offset, scale);
+			scalefx->drawTV(offset, scale);
+		}
 	}
 	else
 	{
-		drawPass(OutputTarget::TV);
+		drawGame(OutputTarget::TV);
 	}
-	WHBGfxBeginRenderDRC(); drawPass(OutputTarget::DRC);
+	WHBGfxBeginRenderDRC(); drawGame(OutputTarget::DRC);
 }
 
 /****************************************************************************

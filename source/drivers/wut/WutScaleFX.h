@@ -39,6 +39,9 @@ class WutScaleFX
 		//! (same values as Texture2DShader).
 		void drawTV(const float offset[3], const float scale[3]);
 
+		//! Sampled view of the ScaleFX result (3x the source), or nullptr when not prepared
+		const GX2Texture* outputTexture() const { return t4.ok ? &t4.tex : nullptr; }
+
 		void release();
 
 	private:

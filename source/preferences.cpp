@@ -457,7 +457,7 @@ void FixInvalidSettings()
 	if(!(EmuSettings.videoMode >= VIDEOMODE_AUTO && EmuSettings.videoMode < VIDEOMODE_LENGTH))
 		EmuSettings.videoMode = VIDEOMODE_AUTO;
 #if defined(HW_RVL) || defined(HW_DOL) || defined(__WIIU__)
-	if(!(EmuSettings.videoUpscalingFilter >= UPSCALE_NONE && EmuSettings.videoUpscalingFilter <= NUM_UPSCALE_FILTERS))
+	if(!(EmuSettings.videoUpscalingFilter >= UPSCALE_NONE && EmuSettings.videoUpscalingFilter < NUM_UPSCALE_FILTERS))
 		EmuSettings.videoUpscalingFilter = UPSCALE_NONE;
 #endif
 	if(!(EmuSettings.wiimoteOrientation >= WIIMOTE_ORIENTATION_VERTICAL && EmuSettings.wiimoteOrientation < WIIMOTE_ORIENTATION_LENGTH))
@@ -492,8 +492,10 @@ void DefaultSettings()
 	EmuSettings.videoBilinearFilter = false;
 	EmuSettings.videoHardwareSoften = VIDEO_HW_SOFTEN_SHARP;
 	EmuSettings.videoScanlines = false;
-#if defined(HW_RVL) || defined(HW_DOL) || defined(__WIIU__)
+#if defined(HW_RVL) || defined(HW_DOL)
 	EmuSettings.videoUpscalingFilter = UPSCALE_NONE;
+#elif defined(__WIIU__)
+	EmuSettings.videoUpscalingFilter = UPSCALE_SHARP_BILINEAR;
 #else
 	EmuSettings.videoUpscalingFilter = 0;
 #endif

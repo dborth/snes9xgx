@@ -3895,6 +3895,11 @@ static int MenuSettingsVideo()
 					sprintf (options.value[1], "16:9 (Fixed Pixel Ratio)"); break;
 			}
 
+#ifdef __WIIU__
+			if (EmuSettings.videoUpscalingFilter == UPSCALE_SHARP_BILINEAR)
+				sprintf (options.value[2], "N/A"); // Sharp Bilinear does its own filtering
+			else
+#endif
 			sprintf (options.value[2], "%s", EmuSettings.videoBilinearFilter ? "On" : "Off");
 
 			switch(EmuSettings.videoHardwareSoften)
