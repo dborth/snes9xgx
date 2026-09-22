@@ -199,6 +199,11 @@ struct SMulti
 extern CMemory	Memory;
 extern SMulti	Multi;
 
+inline bool S9xInterlaceField (void)
+{
+	return ((Memory.FillRAM[0x213F] & 0x80) >> 7) != 0;
+}
+
 void S9xAutoSaveSRAM (void);
 bool8 LoadZip(const char *, uint32 *, uint8 *);
 
