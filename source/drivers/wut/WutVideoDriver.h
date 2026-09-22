@@ -40,8 +40,8 @@ class WutVideoDriver : public VideoDriver
 
 		int getScreenWidth() const override { return screenWidth; }
 		int getScreenHeight() const override { return screenHeight; }
-		uint32_t getFrameTimer() override { return frameTimer; }
-		void setFrameTimer(uint32_t _frameTimer) override { frameTimer = _frameTimer; };
+		uint32_t getFrameTimer() override;
+		void setFrameTimer(uint32_t _frameTimer) override;
 
 		int getRefreshRate() const override;
 		float getDeltaTime() const override;
@@ -82,7 +82,6 @@ class WutVideoDriver : public VideoDriver
 		float uiScale = 1.0f;
 		int targetWidth[OUTPUT_TARGET_COUNT] = { 0, 0 };
 		int targetHeight[OUTPUT_TARGET_COUNT] = { 0, 0 };
-		uint32_t frameTimer;
 		PixelColor clearColor;
 
 		ImageRenderer * imageRenderer;
