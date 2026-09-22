@@ -256,7 +256,7 @@ static void * workercallback (void *)
 		while(!workerBusy && bgCount == 0 && !workerThread.stopRequested())
 			WorkerSync().workCond.wait(WorkerSync().mutex);
 
-		if(workerThread.stopRequested())
+		if(!workerBusy && bgCount == 0 && workerThread.stopRequested())
 			break;
 
 		if(workerBusy) // something is waiting on this - always ahead of queued tasks
