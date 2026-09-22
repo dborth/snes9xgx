@@ -23,6 +23,7 @@ Snes9x GX is homebrew — it isn't signed by Nintendo, so your console needs to 
   - [Emulation](#emulation)
   - [Saving & Loading](#saving--loading)
   - [Menu](#menu)
+  - [Language & Custom Fonts](#language--custom-fonts)
   - [Artwork](#artwork)
   - [Network](#network)
 - [File Browser](#file-browser)
@@ -166,6 +167,7 @@ Wii U support comes in **three genuinely different forms** — pick the one that
 | GamePad             | Not usable | Usable as an **extra controller** (buttons/sticks; with display but no touch) | **Full support** — touch, buttons, second screen |
 | Output              | vWii-level, up to 480p | Same as plain vWii | Native, up to **1080p** |
 | Upscaling filters   | GX-based (hq2x, Scale2x, 2xBR, DDT) | Same as plain vWii | GX2 shader-based (ScaleFX, Sharp Bilinear) |
+| GC/Wii-only settings | **Full access** — Output Mode switching (NTSC/PAL/240p/etc.), Hardware Softening, and other Wii-side [Video](#video) options | Same as plain vWii | Not available — these are Wii/GameCube-specific; the native build gets ScaleFX/1080p in their place instead |
 | Which download      | `Snes9xGX.zip` (Wii build) | `Snes9xGX.zip` (Wii build) | `Snes9xGX-WiiU.zip` |
 
 If you're not sure which you want: the **native build** is the strongest experience on a console with Aroma installed — full GamePad, four cores, 1080p, and GPU-based upscaling. **VC injection** is the best you'll get out of vWii itself (unlocked CPU and a usable GamePad, at Wii-level output), and plain **Homebrew Channel vWii** is the simplest but weakest of the three.
@@ -188,6 +190,13 @@ SD:/
 
 Note the extra `wiiu/` nesting compared to Wii: the native Wii U app folder is kept separate from vWii's own `apps/` folder so the two can coexist on the same SD card without colliding.
 
+> ⚠️ **Run the latest Aroma.** This port is only tested against, and only intended to work on, whatever the current Aroma release is at the time you're reading this. We can't promise it'll behave — or even boot — on an old Aroma build or an outdated Wii U system version. If something looks wrong, updating Aroma first is the right move before reporting it.
+
+**Recommended companions, installed through the same Wii U Homebrew Guide:**
+
+- **[Mocha](https://github.com/wiiu-env/MochaPayload)** — an Aroma component that gives Cafe OS access to USB storage (FAT32/exFAT/NTFS). Without it, USB drives simply won't show up as a load/save option on the native build; SD still works fine either way.
+- **[Bloopair](https://github.com/GaryOderNichts/Bloopair)** — lets you pair non-Nintendo Bluetooth controllers (Switch Pro Controller, Joy-Con, DualShock/DualSense, Xbox controllers, and others) to your Wii U as if they were a Wii U Pro Controller. Handy if you don't have a GamePad or Pro Controller handy. Bloopair works at the system level within the native Wii U environment and doesn't apply inside vWii.
+
 #### vWii (Wii Homebrew Channel, inside Wii U)
 
 1. Follow the **[Wii Homebrew Guide](https://wii.hacks.guide/)** to install the Homebrew Channel in vWii — the process runs from inside the Wii U's Wii mode and is otherwise the same as on a standalone Wii.
@@ -195,6 +204,8 @@ Note the extra `wiiu/` nesting compared to Wii: the native Wii U app folder is k
 3. Boot into vWii on your Wii U (from the Wii U Menu) and launch it from the Homebrew Channel, same as on Wii.
 
 This is the simplest Wii U path, but it's also the most limited one: standard vWii clock speed, and no GamePad. For GamePad support and a CPU unlock without going all the way to the native build, see VC-style injection below.
+
+One thing plain (and injected) vWii keep that the native build doesn't: full access to the Wii/GameCube-side **[Video](#video)** settings — Output Mode switching (NTSC/PAL/240p/576p/etc.) and Hardware Softening — since those are tied to the GX video hardware vWii emulates. The native build trades that for GX2-based upscaling (ScaleFX) and native 1080p output instead. See the table above.
 
 #### vWii via VC-style injection (GamePad + unlocked CPU)
 
@@ -250,15 +261,15 @@ The **Other Mappings** screen (reached from Button Mappings) also lets you confi
 
 | Option | Notes |
 |---|---|
-| **SNES Hi-Res Mode** | On/Off |
-| **Sprites Per-Line Limit** | Enforces the original hardware's per-scanline sprite limit |
-| **SuperFX Overclock** | Off, or a selectable overclock speed — for SuperFX-chip games that benefit (e.g. Star Fox, Yoshi's Island) |
-| **Audio Interpolation** | |
-| **Mute Game Audio** | |
-| **Frame Skipping** | |
-| **Crosshair** | For Super Scope/Justifier |
-| **Show Framerate** | |
-| **Show Local Time** | |
+| **SNES Hi-Res Mode** | On by default. Enables the SNES's high-resolution (512-pixel-wide) video modes that some games use for menus or specific effects. Leave it on unless you have a specific compatibility reason to turn it off. |
+| **Sprites Per-Line Limit** | On by default, matching the real SNES hardware's 34-sprite-tile-per-scanline limit — the cause of the sprite flicker/dropout some games show on real hardware. Turning it off raises the limit (128 tiles), removing that flicker at the cost of hardware accuracy. |
+| **SuperFX Overclock** | Off (stock SuperFX speed) up to a much higher clock, for SuperFX-chip games (e.g. Star Fox, Yoshi's Island, Super Mario RPG) that can run faster/smoother with the chip sped up. GameCube supports a lower maximum overclock than Wii/Wii U. |
+| **Audio Interpolation** | How the audio output is resampled: Gaussian (default — matches the real SNES DSP's own interpolation), Linear, Cubic, Sinc (highest quality), or None. |
+| **Mute Game Audio** | Silences in-game audio without touching the Menu's Music/Sound Effects volumes. |
+| **Frame Skipping** | On/Off. When on, the emulator can drop rendered frames to keep game speed and audio steady if it's struggling to keep up, rather than slowing everything down. |
+| **Crosshair** | Shows an on-screen crosshair for Super Scope/Justifier light-gun aiming. |
+| **Show Framerate** | Displays an on-screen FPS counter. |
+| **Show Local Time** | Displays the console's clock on-screen. |
 
 ### Saving & Loading
 
@@ -281,9 +292,25 @@ Snes9x GX has two kinds of saves: **SRAM**, the in-game battery save (only appli
 | **Wiimote Orientation** | Vertical, Horizontal |
 | **Music Volume** / **Sound Effects Volume** | |
 | **Hide SRAM Saving** | Hides the SRAM save option in the in-game save menu, for games where you only ever use Snapshots |
-| **Language** | |
+| **Language** | See [Language & Custom Fonts](#language--custom-fonts) |
 | **Preview Image** | See [Artwork](#artwork) |
 | **Rumble** | Enabled/Disabled — on Wii U, the GamePad uses a shorter, reduced-amplitude pattern than the Wiimote |
+
+### Language & Custom Fonts
+
+Set the menu language under **Settings → Menu → Language**. Supported: English, Japanese, German, French, Spanish, Italian, Dutch, Chinese (Simplified), Korean, Portuguese, Brazilian Portuguese, Catalan, Turkish, and Swedish.
+
+The built-in font only covers Latin-script languages. For **Japanese, Korean, or Chinese**, you also need to supply a matching font file yourself — this repository ships them in the [`fonts/`](https://github.com/dborth/snes9xgx/tree/master/fonts) folder:
+
+| Language | Font file |
+|---|---|
+| Japanese | `jp.ttf` |
+| Korean | `ko.ttf` |
+| Chinese (Simplified) | `zh.ttf` |
+
+Copy the matching `.ttf` into your app folder — `apps/snes9xgx/` on Wii, `wiiu/apps/` on Wii U — alongside `boot.dol` / `snes9xgx.wuhb`, then select that language from the menu; it switches fonts automatically once both are in place.
+
+> This is a **Wii and Wii U only** feature — the GameCube build can't load external fonts, so Japanese/Korean/Chinese text won't render correctly there.
 
 ### Artwork
 
@@ -355,4 +382,6 @@ Snes9x GX supports loading Satellaview (BS-X) games. A BS-X BIOS is optional —
 - [gc-forever.com — GameCube homebrew/hardware hub](https://www.gc-forever.com/)
 - [Swiss](https://github.com/emukidid/swiss-gc) — the recommended GameCube loader
 - [TeconMoon's WiiVC Injector Mod](https://github.com/timefox/TeconMoon-s-WiiVC-Injector-Mod)
+- [Mocha](https://github.com/wiiu-env/MochaPayload) — USB storage access for the native Wii U build
+- [Bloopair](https://github.com/GaryOderNichts/Bloopair) — Bluetooth controller pairing for the native Wii U build
 - [Change History (CHANGELOG.md)](CHANGELOG.md)
