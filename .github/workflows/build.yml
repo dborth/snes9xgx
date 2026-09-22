@@ -131,6 +131,8 @@ jobs:
         zip -r ../Snes9xGX-Wii.zip *
         cd ../Snes9xGX-GameCube
         zip -r ../Snes9xGX-GameCube.zip *
+        cd ../Snes9xGX-WiiU
+        zip -r ../Snes9xGX-WiiU.zip *
 
     - name: Update Git Tag
       run: |
