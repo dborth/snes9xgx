@@ -7,9 +7,21 @@
 
 #include <gx2/sampler.h>
 #include <gx2/texture.h>
-#include "WutEmulatorVideo.h"
-#include "WutOutputTarget.h"
 #include "../VideoDriver.h"
+
+//!The two physical render targets every Wii U frame is submitted to.
+//!Their pixel dimensions are not fixed: the TV follows the console's output
+//!setting (480p/720p/1080p), the GamePad is always 854x480. See
+//!WutVideoDriver::getTargetWidth()/getTargetHeight().
+enum class OutputTarget
+{
+	TV = 0,
+	DRC = 1
+};
+
+static const int OUTPUT_TARGET_COUNT = 2;
+
+class WutEmulatorVideo;
 
 //!Wii U VideoDriver: GX2 + libwhb's WHBGfx* helpers. Every draw pass runs
 //!twice per frame - once for the TV, once for the GamePad - so the same
@@ -44,7 +56,7 @@ class WutVideoDriver : public VideoDriver
 
 		ImageRenderer* getImageRenderer() override { return imageRenderer; }
 		GlyphRenderer* getGlyphRenderer() override { return glyphRenderer; }
-		WutEmulatorVideo* getEmulatorVideo() override { return emulatorVideo; }
+		EmulatorVideoDriver* getEmulatorVideo() override;
 
 		//!False once the OS has taken away the foreground (HOME menu overlay,
 		//!forced exit, etc.) - GX2 is off-limits at that point, so every

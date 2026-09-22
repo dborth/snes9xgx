@@ -74,7 +74,7 @@ class WutScaleFX
 		float* uvBuffer;
 		GX2Sampler samplerPoint, samplerLinear;
 
-		Program progP0, progP1, progP2, progP3, progP4, progSmooth, progSharp;
+		Program progP0, progP1, progP2, progP3, progP4, progSmooth;
 		Target t0, t1, t2, t3, t4;
 		int srcW, srcH;
 };

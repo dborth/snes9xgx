@@ -11,7 +11,7 @@
 #include "WutEmulatorVideo.h"
 #include "WutVideoDriver.h"
 #include "WutScaleFX.h"
-#include "WutPresent.h"
+#include "WutOutputFilter.h"
 #include "WutUpscaleFilters.h"
 #include "shaders/Texture2DShader.h"
 #include "../../snes9xgx.h"
@@ -262,11 +262,11 @@ void WutEmulatorVideo::drawQuad()
 	const bool sharp = EmuSettings.videoUpscalingFilter == UPSCALE_SHARP_BILINEAR;
 	const float scanlines = EmuSettings.videoScanlines ? SCANLINE_STRENGTH : 0.0f;
 
-	// Present shader: sharp bilinear and/or scanlines. Returns false if it is unavailable.
-	auto presentPass = [&](OutputTarget target, const GX2Texture* tex, bool linear, bool sharpSampling) {
+	// Output filter: sharp bilinear and/or scanlines. Returns false if it is unavailable.
+	auto outputFilterPass = [&](OutputTarget target, const GX2Texture* tex, bool linear, bool sharpSampling) {
 		const TargetPlacement& p = placement[static_cast<int>(target)];
 
-		WutPresent::Params pp;
+		WutOutputFilter::Params pp;
 		pp.texture = tex;
 		placementNdc(target, pp.offset, pp.scale);
 		pp.outWidth = p.w;
@@ -275,12 +275,12 @@ void WutEmulatorVideo::drawQuad()
 		pp.sharp = sharpSampling;
 		pp.scanlineStrength = scanlines;
 		pp.sourceLines = (float) texture->surface.height;
-		return WutPresent::instance()->draw(pp);
+		return WutOutputFilter::instance()->draw(pp);
 	};
 
-	// The frame texture on a target: plain textured quad, or the present shader when it has work to do
+	// The frame texture on a target: plain textured quad, or the output filter when it has work to do
 	auto drawGame = [&](OutputTarget target) {
-		if ((sharp || scanlines > 0.0f) && presentPass(target, texture, EmuSettings.videoBilinearFilter, sharp))
+		if ((sharp || scanlines > 0.0f) && outputFilterPass(target, texture, EmuSettings.videoBilinearFilter, sharp))
 			return;
 		drawPass(target);
 	};
@@ -305,8 +305,8 @@ void WutEmulatorVideo::drawQuad()
 	WHBGfxBeginRenderTV();
 	if (useScaleFX)
 	{
-		// Scanlines go through the present shader, otherwise the ScaleFX final stage draws it
-		if (scanlines <= 0.0f || !presentPass(OutputTarget::TV, scalefx->outputTexture(), true, false))
+		// Scanlines go through the output filter, otherwise the ScaleFX final stage draws it
+		if (scanlines <= 0.0f || !outputFilterPass(OutputTarget::TV, scalefx->outputTexture(), true, false))
 		{
 			float offset[3];
 			float scale[3];

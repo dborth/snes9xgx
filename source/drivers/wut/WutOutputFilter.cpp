@@ -3,7 +3,7 @@
  *
  * Daryl Borth 2026
  *
- * WutPresent.cpp
+ * WutOutputFilter.cpp
  ***************************************************************************/
 #include <string.h>
 
@@ -13,8 +13,8 @@
 #include <gx2/mem.h>
 #include <gx2/shaders.h>
 
-#include "WutPresent.h"
-#include "shaders/Present.h"
+#include "WutOutputFilter.h"
+#include "shaders/OutputFilter.h"
 
 namespace
 {
@@ -43,13 +43,13 @@ namespace
 	}
 }
 
-WutPresent* WutPresent::instance()
+WutOutputFilter* WutOutputFilter::instance()
 {
-	static WutPresent* inst = new WutPresent();
+	static WutOutputFilter* inst = new WutOutputFilter();
 	return inst;
 }
 
-WutPresent::WutPresent()
+WutOutputFilter::WutOutputFilter()
 	: initialized(false), initFailed(false), posBuffer(nullptr), uvBuffer(nullptr)
 	, locXf(-1), locSize(-1), locOut(-1), locScan(-1), locTex(-1)
 {
@@ -58,7 +58,7 @@ WutPresent::WutPresent()
 	GX2InitSampler(&samplerLinear, GX2_TEX_CLAMP_MODE_CLAMP, GX2_TEX_XY_FILTER_MODE_LINEAR);
 }
 
-bool WutPresent::init()
+bool WutOutputFilter::init()
 {
 	if (initialized)
 		return true;
@@ -68,12 +68,12 @@ bool WutPresent::init()
 	initFailed = true; // until proven otherwise
 
 	// The GFD buffer stays allocated, like WutScaleFX's programs
-	void* buf = MEMAllocFromDefaultHeapEx(sizeof present::program, 0x100);
+	void* buf = MEMAllocFromDefaultHeapEx(sizeof outputfilter::program, 0x100);
 	posBuffer = (float*) MEMAllocFromDefaultHeapEx(8 * sizeof(float), GX2_VERTEX_BUFFER_ALIGNMENT);
 	uvBuffer = (float*) MEMAllocFromDefaultHeapEx(8 * sizeof(float), GX2_VERTEX_BUFFER_ALIGNMENT);
 	if (!buf || !posBuffer || !uvBuffer)
 		return false;
-	memcpy(buf, present::program, sizeof present::program);
+	memcpy(buf, outputfilter::program, sizeof outputfilter::program);
 
 	if (!WHBGfxLoadGFDShaderGroup(&group, 0, buf))
 		return false;
@@ -104,7 +104,7 @@ bool WutPresent::init()
 	return true;
 }
 
-bool WutPresent::draw(const Params& p)
+bool WutOutputFilter::draw(const Params& p)
 {
 	if (!p.texture || !init())
 		return false;

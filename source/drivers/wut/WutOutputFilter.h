@@ -3,11 +3,14 @@
  *
  * Daryl Borth 2026
  *
- * WutPresent.h
+ * WutOutputFilter.h
  *
- * Final draw of the game quad on a render target (TV or GamePad) with the
- * "present" shader (shaders/Present.h): optional sharp bilinear sampling and
- * scanlines, sampling either the emulator's frame texture or the ScaleFX result.
+ * Final draw of the game quad on a render target (TV or GamePad): optional
+ * sharp bilinear sampling and a scanline overlay (shaders/OutputFilter.h),
+ * sampling either the emulator's frame texture or the ScaleFX result. This is
+ * the last shader pass before the target's colour buffer, whatever texture it
+ * is fed - named for what it does (filter the output), not for GX2's use of
+ * "present" for finishing/submitting a frame (WutVideoDriver::presentBuffer()).
  ***************************************************************************/
 #pragma once
 
@@ -16,10 +19,10 @@
 #include <gx2/texture.h>
 #include <whb/gfx.h>
 
-class WutPresent
+class WutOutputFilter
 {
 	public:
-		static WutPresent* instance();
+		static WutOutputFilter* instance();
 
 		struct Params
 		{
@@ -39,7 +42,7 @@ class WutPresent
 		bool draw(const Params& p);
 
 	private:
-		WutPresent();
+		WutOutputFilter();
 
 		bool init();
 

@@ -14,8 +14,8 @@
 #include <stdint.h>
 #include <gx2/sampler.h>
 #include <gx2/texture.h>
+#include "WutVideoDriver.h"
 #include "../EmulatorVideoDriver.h"
-#include "WutOutputTarget.h"
 
 class WutVideoDriver;
 

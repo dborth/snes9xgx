@@ -27,8 +27,6 @@ namespace
 
 	// ScaleFX defaults
 	const float SCALEFX_PARAMS[4] = { 0.50f, 1.0f, 1.0f, 0.0f };
-	
-	const float FINAL_PARAMS[4] = { 0.0f, 0.5f, 0.0f, 0.0f };
 
 	int findPixelUniform(const GX2PixelShader* s, const char* name)
 	{
@@ -66,7 +64,7 @@ WutScaleFX::WutScaleFX()
 {
 	memset(&progP0, 0, sizeof progP0); memset(&progP1, 0, sizeof progP1); memset(&progP2, 0, sizeof progP2);
 	memset(&progP3, 0, sizeof progP3); memset(&progP4, 0, sizeof progP4);
-	memset(&progSmooth, 0, sizeof progSmooth); memset(&progSharp, 0, sizeof progSharp);
+	memset(&progSmooth, 0, sizeof progSmooth);
 	memset(&t0, 0, sizeof t0); memset(&t1, 0, sizeof t1); memset(&t2, 0, sizeof t2);
 	memset(&t3, 0, sizeof t3); memset(&t4, 0, sizeof t4);
 	GX2InitSampler(&samplerPoint, GX2_TEX_CLAMP_MODE_CLAMP, GX2_TEX_XY_FILTER_MODE_POINT);
@@ -307,7 +305,6 @@ void WutScaleFX::drawTV(const float offset[3], const float scale[3])
 		return;
 
 	Program& p = progSmooth;
-	const bool linear = true;
 
 	GX2SetFetchShader(&p.group.fetchShader);
 	GX2SetVertexShader(p.group.vertexShader);
@@ -323,12 +320,10 @@ void WutScaleFX::drawTV(const float offset[3], const float scale[3])
 	const float sz[4] = { 1.0f / t4.w, 1.0f / t4.h, (float) t4.w, (float) t4.h };
 	if ((o = findPixelUniform(p.group.pixelShader, "uSize")) >= 0)
 		GX2SetPixelUniformReg(o, 4, sz);
-	if ((o = findPixelUniform(p.group.pixelShader, "uParams")) >= 0)
-		GX2SetPixelUniformReg(o, 4, FINAL_PARAMS);
 
 	int loc = findSampler(p.group.pixelShader, "uTex0", 0);
 	GX2SetPixelTexture(&t4.tex, loc);
-	GX2SetPixelSampler(linear ? &samplerLinear : &samplerPoint, loc);
+	GX2SetPixelSampler(&samplerLinear, loc);
 
 	GX2DrawEx(GX2_PRIMITIVE_MODE_QUADS, 4, 0, 1);
 }

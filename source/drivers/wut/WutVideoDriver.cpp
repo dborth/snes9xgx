@@ -24,6 +24,7 @@
 
 #include "../Platform.h"
 #include "WutVideoDriver.h"
+#include "WutEmulatorVideo.h"
 #include "shaders/Texture2DShader.h"
 #include "shaders/ColorShader.h"
 
@@ -178,6 +179,12 @@ bool WutVideoDriver::isForeground() const
 {
 	return platform->getStatus() == Status::Running;
 }
+
+EmulatorVideoDriver* WutVideoDriver::getEmulatorVideo()
+{
+	return emulatorVideo;
+}
+
 
 void WutVideoDriver::prepareFrame()
 {
