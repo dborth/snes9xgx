@@ -42,16 +42,16 @@ Snes9x GX is homebrew — it isn't signed by Nintendo, so your console needs to 
 
 Every push builds automatically. Grab the latest continuous-integration build:
 
-| Platform                   | Status                             | Download                                    |
-|-----------------------------|-------------------------------------|-----------------------------------------------|
+| Platform                    | Status                             | Download                                      |
+|-----------------------------|------------------------------------|-----------------------------------------------|
 | Wii / vWii                  | [![Build Status][Build]][Actions]  | [![Download][Download]][snes9xgx-wii]         |
 | GameCube                    | [![Build Status][Build]][Actions]  | [![Download][Download]][snes9xgx-gamecube]    |
-| Wii U (native, `.wuhb`)     | [![Build Status][Build]][Actions]  | [![Download][Download]][snes9xgx-wiiu]        |
+| Wii U                       | [![Build Status][Build]][Actions]  | [![Download][Download]][snes9xgx-wiiu]        |
 
 [Actions]: https://github.com/dborth/snes9xgx/actions/workflows/build.yml
 [Build]: https://github.com/dborth/snes9xgx/actions/workflows/build.yml/badge.svg
 [Download]: https://img.shields.io/badge/Download-blue
-[snes9xgx-wii]: https://github.com/dborth/snes9xgx/releases/download/Pre-release/Snes9xGX.zip
+[snes9xgx-wii]: https://github.com/dborth/snes9xgx/releases/download/Pre-release/Snes9xGX-Wii.zip
 [snes9xgx-gamecube]: https://github.com/dborth/snes9xgx/releases/download/Pre-release/Snes9xGX-GameCube.zip
 [snes9xgx-wiiu]: https://github.com/dborth/snes9xgx/releases/download/Pre-release/Snes9xGX-WiiU.zip
 
@@ -105,7 +105,7 @@ Only `roms/` needs anything in it to get started — the rest are created automa
 ### Wii
 
 1. Follow the **[Wii Homebrew Guide](https://wii.hacks.guide/)** if you haven't already installed the Homebrew Channel. This is a one-time setup per console.
-2. Download the Wii build (`Snes9xGX.zip` above) and extract it to the root of your SD card. This adds two things:
+2. Download the Wii build (`Snes9xGX-Wii.zip` above) and extract it to the root of your SD card. This adds two things:
    - `apps/snes9xgx/boot.dol` (plus its icon/meta files) — this is what the Homebrew Channel launches.
    - `snes9xgx/` — your ROMs and saves folder, per [above](#all-platforms-sd-card--folder-layout).
 3. Insert the SD card, open the **Homebrew Channel**, and launch **Snes9x GX**.
@@ -169,7 +169,7 @@ Wii U support comes in **three genuinely different forms** — pick the one that
 | Output              | vWii-level, up to 480p | Same as plain vWii | Native, up to **1080p** |
 | Upscaling filters   | GX-based (hq2x, Scale2x, 2xBR, DDT) | Same as plain vWii | GX2 shader-based (ScaleFX, Sharp Bilinear) |
 | GC/Wii-only settings | **Full access** — Output Mode switching (NTSC/PAL/240p/etc.), Hardware Softening, and other Wii-side [Video](#video) options | Same as plain vWii | Not available — these are Wii/GameCube-specific; the native build gets ScaleFX/1080p in their place instead |
-| Which download      | `Snes9xGX.zip` (Wii build) | `Snes9xGX.zip` (Wii build) | `Snes9xGX-WiiU.zip` |
+| Which download      | `Snes9xGX-Wii.zip` (Wii build) | `Snes9xGX-Wii.zip` (Wii build) | `Snes9xGX-WiiU.zip` |
 
 If you're not sure which you want: the **native build** is the strongest experience on a console with Aroma installed — full GamePad, four cores, 1080p, and GPU-based upscaling. **VC injection** is the best you'll get out of vWii itself (unlocked CPU and a usable GamePad, at Wii-level output), and plain **Homebrew Channel vWii** is the simplest but weakest of the three.
 
