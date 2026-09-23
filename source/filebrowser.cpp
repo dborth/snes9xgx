@@ -788,14 +788,14 @@ int BrowserChangeFolder()
  * OpenROM
  * Displays a list of ROMS on load device
  ***************************************************************************/
-int
-OpenGameList ()
+int OpenGameList()
 {
 	int device = EmuSettings.loadDevice;
 
 	if(device > 0 && ChangeInterface(device, NOTSILENT)) {
 		// change current dir to roms directory
 		platform->getFileSystem()->getPath(browser.dir, device, EmuSettings.loadFolder, "");
+		CleanupPath(browser.dir);
 
 		if(strlen(EmuSettings.loadFolder) > 0) {
 			DIR *dir = opendir(browser.dir);
@@ -821,9 +821,8 @@ bool AutoloadGame(char* filepath, char* filename) {
 	ResetBrowser();
 
 	selectLoadedFile = 1;
-	std::string dir(filepath);
-	dir.assign(&dir[dir.find_last_of(":") + 2]);
-	strncpy(EmuSettings.loadFolder, dir.c_str(), sizeof(EmuSettings.loadFolder) - 1);
+	const char * folder = StripDevice(filepath);
+	strncpy(EmuSettings.loadFolder, folder ? folder : "", sizeof(EmuSettings.loadFolder) - 1);
 	EmuSettings.loadFolder[sizeof(EmuSettings.loadFolder) - 1] = 0;
 	OpenGameList();
 

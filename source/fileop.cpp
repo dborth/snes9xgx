@@ -425,16 +425,33 @@ bool FindDevice(char * filepath, int * device)
 	return false;
 }
 
+/****************************************************************************
+ * StripDevice
+ *
+ * Returns a pointer into path just past the device's prefix (eg. "sd:/roms/"
+ * -> "roms/", "/vol/external01/roms/" -> "roms/"), or nullptr if path isn't
+ * on a known device.
+ ***************************************************************************/
 char * StripDevice(char * path)
 {
-	if(path == nullptr)
+	int device;
+
+	if(!FindDevice(path, &device))
 		return nullptr;
-	
-	char * newpath = strchr(path,'/');
-	
-	if(newpath != nullptr)
+
+	const char * prefix = platform->getFileSystem()->getDevicePrefix(device);
+	size_t len = prefix ? strlen(prefix) : 0;
+
+	if(len < 2)
+		return nullptr;
+
+	// FindDevice() matches the prefix without its trailing '/', so path may
+	// end right there (eg. "sd:" or "/vol/external01")
+	char * newpath = path + (len - 1);
+
+	if(*newpath == '/')
 		newpath++;
-	
+
 	return newpath;
 }
 
