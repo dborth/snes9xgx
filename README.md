@@ -34,7 +34,7 @@ Snes9x GX is homebrew — it isn't signed by Nintendo, so your console needs to 
 - [Credits](#credits)
 - [Links](#links)
 
-> 📜 Looking for old version notes? They've moved to **[CHANGELOG.md](CHANGELOG.md)**.
+> 📜 Looking for version notes? They're in the **[CHANGELOG.md](CHANGELOG.md)**.
 
 ---
 
