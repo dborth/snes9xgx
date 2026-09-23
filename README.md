@@ -15,7 +15,6 @@ Snes9x GX is homebrew — it isn't signed by Nintendo, so your console needs to 
   - [Wii](#wii)
   - [GameCube](#gamecube)
   - [Wii U](#wii-u)
-  - [Satellaview (BS-X)](#satellaview-bs-x)
 - [Initial Setup](#initial-setup)
 - [Configuration](#configuration)
   - [Button Mappings](#button-mappings)
@@ -31,6 +30,7 @@ Snes9x GX is homebrew — it isn't signed by Nintendo, so your console needs to 
 - [Cheats](#cheats)
 - [Turbo Mode](#turbo-mode)
 - [Importing and Exporting SRAM](#importing-and-exporting-sram)
+- [Satellaview (BS-X)](#satellaview-bs-x)
 - [Credits](#credits)
 - [Links](#links)
 
