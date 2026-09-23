@@ -791,7 +791,7 @@ bool SavePrefs()
 // For exit: lets any queued save finish, then saves right here.
 bool SavePrefsAndWait()
 {
-	if(!FlushBackgroundTasks(15000)) // don't hang the exit forever on a stalled device
+	if(!WaitForBackgroundTasks(15000))
 		return false;
 
 	return SavePrefsNow();

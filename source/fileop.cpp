@@ -25,6 +25,7 @@
 #include "drivers/Thread.h"
 #include "drivers/Mutex.h"
 #include "drivers/Cond.h"
+#include "drivers/Time.h"
 #include "drivers/Platform.h"
 #include "drivers/FileSystemDriver.h"
 #include "drivers/SmbDriver.h"
@@ -329,25 +330,24 @@ bool QueueBackgroundTask(BgTaskFn fn, void * arg)
 	return true;
 }
 
-bool FlushBackgroundTasks(uint32_t timeoutMs)
+bool BackgroundTasksIdle()
 {
-	if(!workerThread.isRunning())
+	MutexLock guard(WorkerSync().mutex);
+	return bgCount == 0 && !bgRunning;
+}
+
+bool WaitForBackgroundTasks(uint32_t timeoutMs)
+{
+	if(!workerThread.isRunning() || BackgroundTasksIdle())
 		return true;
 
-	for(uint32_t waited = 0; ; waited += 10)
+	Ticks start = SystemTime::now();
+	do
 	{
-		{
-			MutexLock guard(WorkerSync().mutex);
-			if(bgCount == 0 && !bgRunning)
-				return true;
-		}
-
-		if(waited >= timeoutMs)
-			return false;
-
 		usleep(10000);
-	}
-	return false;
+	} while(!BackgroundTasksIdle() && SystemTime::diffMillisecs(start, SystemTime::now()) < timeoutMs);
+
+	return BackgroundTasksIdle();
 }
 
 bool IsWorkerThreadFinished()
