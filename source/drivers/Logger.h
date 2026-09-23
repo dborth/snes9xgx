@@ -22,7 +22,7 @@
 //! (CXXFLAGS += -DLOGGING_ENABLED=0) for release builds that must not
 //! carry any logging code or string literals at all. Defaults off.
 #ifndef LOGGING_ENABLED
-#define LOGGING_ENABLED 1
+#define LOGGING_ENABLED 0
 #endif
 
 //! Plain-int mirror of LogLevel's Debug/Info/Warning/Error ordering, for
@@ -93,7 +93,7 @@ enum class LogFlushPolicy : uint8_t
 //!safe/inert: OSReport only, nothing that touches hardware or network).
 struct LogConfig
 {
-	LogMode mode = LogMode::UDP;
+	LogMode mode = LogMode::File;
 	LogLevel level = LogLevel::Info;
 
 	//! Only consulted when mode == LogMode::Multi. OR LOGGER_* flags
@@ -107,7 +107,7 @@ struct LogConfig
 	bool mirrorToOSReport = true;
 
 	// ---- UDP ----
-	const char * targetIp = "192.168.0.226";
+	const char * targetIp = "192.168.1.100";
 	uint16_t targetPort = 4405;
 	bool nonBlocking = true; //!< socket is always created non-blocking; kept for clarity/future use
 

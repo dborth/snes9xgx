@@ -2155,11 +2155,8 @@ static int SaveOpTask(void * arg)
 // \return false if the app was asked to quit
 static bool RunSaveOp(int op, int type, const char * filepath, int * result)
 {
-	if(op == SAVEOP_LOAD) // eg. auto-save of the last game
-	{
-		menu->mainWindow.setState(STATE::DISABLED);
-		if(!WaitForQueuedTasks()) return false;
-	}
+	menu->mainWindow.setState(STATE::DISABLED);
+	if(!WaitForQueuedTasks()) return false;
 
 	saveOpArgs.op = op;
 	saveOpArgs.type = type;
