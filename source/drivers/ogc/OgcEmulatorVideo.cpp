@@ -24,6 +24,7 @@
 
 #include "snes9x/snes9x.h"
 #include "snes9x/memmap.h"
+#include "snes9x/ppu.h"
 
 extern void UpdatePlaybackRate(void);
 
@@ -729,6 +730,34 @@ void OgcEmulatorVideo::forceVideoUpdate()
 }
 
 /****************************************************************************
+ * mapPointerToFrame
+ *
+ * Maps a UI-canvas pointer position to the SNES coordinate space through
+ * the game quad's current on-screen rect
+ ***************************************************************************/
+bool OgcEmulatorVideo::mapPointerToFrame(float canvasX, float canvasY, int* outX, int* outY)
+{
+	if (!outX || !outY || frameW <= 0.0f || frameH <= 0.0f) // scaling hasn't been computed yet
+		return false;
+
+	float u = (canvasX - frameX) / frameW;
+	float v = (canvasY - frameY) / frameH;
+	u = u < 0.0f ? 0.0f : (u > 1.0f ? 1.0f : u);
+	v = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
+
+	const int gunHeight = PPU.ScreenHeight > 0 ? PPU.ScreenHeight : SNES_HEIGHT;
+
+	int x = (int)(u * SNES_WIDTH);
+	int y = (int)(v * gunHeight);
+	if (x > SNES_WIDTH - 1) x = SNES_WIDTH - 1;
+	if (y > gunHeight - 1) y = gunHeight - 1;
+
+	*outX = x;
+	*outY = y;
+	return true;
+}
+
+/****************************************************************************
  * presentFrame
  ***************************************************************************/
 void OgcEmulatorVideo::presentFrame(int width, int height)
@@ -846,6 +875,12 @@ void OgcEmulatorVideo::presentFrame(int width, int height)
 		// 5. Shift calculations must map EFB distances physically through to the Menu canvas
 		gameScreenPng.xoffset = EmuSettings.videoXshift * (videoDriver->getScreenWidth() / (float)menu_vmode->viWidth) * ((float)vmode->viWidth / (float)vmode->fbWidth);
 		gameScreenPng.yoffset = EmuSettings.videoYshift * (videoDriver->getScreenHeight() / menuViHeightAdjusted) * (viHeightAdjusted / (float)vmode->efbHeight);
+
+		// The game quad's rect on the canvas, for mapping the pointer to the frame
+		frameW = targetWidth;
+		frameH = targetHeight;
+		frameX = (videoDriver->getScreenWidth()  * 0.5f) + gameScreenPng.xoffset - (targetWidth  * 0.5f);
+		frameY = (videoDriver->getScreenHeight() * 0.5f) + gameScreenPng.yoffset - (targetHeight * 0.5f);
 
     	drawInit ();
 

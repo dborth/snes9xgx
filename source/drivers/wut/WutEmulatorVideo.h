@@ -30,6 +30,7 @@ class WutEmulatorVideo : public EmulatorVideoDriver
 		void presentFrame(int width, int height) override;
 		void readFrameRGB24(uint8_t* dst) override;
 		void forceVideoUpdate() override;
+		bool mapPointerToFrame(float canvasX, float canvasY, int* frameX, int* frameY) override;
 
 	private:
 		void rebuildTexture(int width, int height);

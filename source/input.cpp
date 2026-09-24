@@ -26,6 +26,7 @@
 #include "snes9x/snes9x.h"
 #include "snes9x/memmap.h"
 #include "snes9x/controls.h"
+#include "snes9x/ppu.h"
 
 #ifdef HW_RVL
 #include "drivers/ogc/wii/input/retrode.h"
@@ -231,11 +232,26 @@ static void UpdateCursorPosition(int chan, int &pos_x, int &pos_y)
 {
 	if (!controller[chan]) return;
 	const InputPadData& pad = controller[chan]->getPadData();
+	const int cursorHeight = PPU.ScreenHeight > 0 ? PPU.ScreenHeight : SNES_HEIGHT;
+
+	EmulatorVideoDriver* emuVideo = platform->getVideo()->getEmulatorVideo();
 
 	if (pad.validPointer)
 	{
-		pos_x = (int)((pad.cursor_x * 256.0f) / 640.0f);
-		pos_y = (int)((pad.cursor_y * 224.0f) / 480.0f);
+		int cursorX, cursorY;
+
+		// The video driver maps through the game's real on-screen placement (aspect correction, zoom, shift)
+		if (emuVideo && emuVideo->mapPointerToFrame(pad.cursor_x, pad.cursor_y, &cursorX, &cursorY))
+		{
+			pos_x = cursorX;
+			pos_y = cursorY;
+		}
+		else
+		{
+			// No driver mapping: assume the frame fills the whole canvas
+			pos_x = (int)((pad.cursor_x * SNES_WIDTH) / platform->getVideo()->getScreenWidth());
+			pos_y = (int)((pad.cursor_y * cursorHeight) / platform->getVideo()->getScreenHeight());
+		}
 	}
 	else
 	{
@@ -244,9 +260,10 @@ static void UpdateCursorPosition(int chan, int &pos_x, int &pos_y)
 		if (std::abs(pad.stickY) > sensitivity) pos_y -= (int)(pad.stickY * 6.4f);
 	}
 
-	if (pos_x > 256) pos_x = 256;
+	// Clamp to the frame the game actually draws
+	if (pos_x > SNES_WIDTH - 1) pos_x = SNES_WIDTH - 1;
 	if (pos_x < 0) pos_x = 0;
-	if (pos_y > 224) pos_y = 224;
+	if (pos_y > cursorHeight - 1) pos_y = cursorHeight - 1;
 	if (pos_y < 0) pos_y = 0;
 }
 

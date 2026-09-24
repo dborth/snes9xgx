@@ -23,6 +23,7 @@ class OgcEmulatorVideo : public EmulatorVideoDriver
 		void presentFrame(int width, int height) override;
 		void readFrameRGB24(uint8_t* dst) override;
 		void forceVideoUpdate() override;
+		bool mapPointerToFrame(float canvasX, float canvasY, int* frameX, int* frameY) override;
 
 	private:
 		void configureOriginalModeTables(GXRModeObj* baseMode);
@@ -34,4 +35,8 @@ class OgcEmulatorVideo : public EmulatorVideoDriver
 		void resetFbWidth(int width, GXRModeObj *rmode);
 		void untileRGB5A3ToRGB24(const void * tiledTexture, int width, int height, uint8_t* dst);
 		OgcVideoDriver* videoDriver;
+
+		// The game quad's rect on the UI canvas (top-left x/y, size w/h),
+		// recomputed with the scaling; used to map the pointer to the frame
+		float frameX = 0, frameY = 0, frameW = 0, frameH = 0;
 };

@@ -85,6 +85,8 @@ void WutEmulatorVideo::forceVideoUpdate()
  ***************************************************************************/
 void WutEmulatorVideo::resetVideo()
 {
+	const float canvasWidth  = (float) videoDriver->getScreenWidth();
+	const float canvasHeight = (float) videoDriver->getScreenHeight();
 	float xscale, yscale;
 	bool tallField = (vheight == 224 || vheight == 448);
 
@@ -103,8 +105,9 @@ void WutEmulatorVideo::resetVideo()
 	}
 	else
 	{
-		xscale = 256.0f;
-		yscale = tallField ? 224.0f : 239.0f;
+		// No correction: the picture fills the whole screen on every output
+		xscale = canvasWidth  / 2.0f;
+		yscale = canvasHeight / 2.0f;
 	}
 
 	xscale *= EmuSettings.videoZoomHor;
@@ -112,8 +115,9 @@ void WutEmulatorVideo::resetVideo()
 
 	quadWidth  = 2.0f * xscale;
 	quadHeight = 2.0f * yscale;
-	quadX = (videoDriver->getScreenWidth()  / 2.0f) + EmuSettings.videoXshift - quadWidth  / 2.0f;
-	quadY = (videoDriver->getScreenHeight() / 2.0f) - EmuSettings.videoYshift - quadHeight / 2.0f;
+	// Positive shift moves the picture right / down
+	quadX = (canvasWidth  / 2.0f) + EmuSettings.videoXshift - quadWidth  / 2.0f;
+	quadY = (canvasHeight / 2.0f) + EmuSettings.videoYshift - quadHeight / 2.0f;
 
 	// Same quad in physical pixels of each target. The canvas is stretched onto
 	// every target independently per axis, so this is exactly where the
@@ -138,6 +142,34 @@ void WutEmulatorVideo::resetVideo()
 	gameScreenPng.scaleY = quadHeight / (float) vheight;
 	gameScreenPng.xoffset = (int) ((quadX + quadWidth  / 2.0f) - videoDriver->getScreenWidth()  / 2.0f);
 	gameScreenPng.yoffset = (int) ((quadY + quadHeight / 2.0f) - videoDriver->getScreenHeight() / 2.0f);
+}
+
+/****************************************************************************
+ * mapPointerToFrame
+ *
+ * Maps a UI-canvas pointer position to the SNES coordinate space through
+ * the game quad's current rect
+ ***************************************************************************/
+bool WutEmulatorVideo::mapPointerToFrame(float canvasX, float canvasY, int* frameX, int* frameY)
+{
+	if (!frameX || !frameY || quadWidth <= 0.0f || quadHeight <= 0.0f) // resetVideo() hasn't run yet
+		return false;
+
+	float u = (canvasX - quadX) / quadWidth;
+	float v = (canvasY - quadY) / quadHeight;
+	u = u < 0.0f ? 0.0f : (u > 1.0f ? 1.0f : u);
+	v = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
+
+	const int gunHeight = PPU.ScreenHeight > 0 ? PPU.ScreenHeight : SNES_HEIGHT;
+
+	int x = (int)(u * SNES_WIDTH);
+	int y = (int)(v * gunHeight);
+	if (x > SNES_WIDTH - 1) x = SNES_WIDTH - 1;
+	if (y > gunHeight - 1) y = gunHeight - 1;
+
+	*frameX = x;
+	*frameY = y;
+	return true;
 }
 
 /****************************************************************************
