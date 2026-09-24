@@ -41,7 +41,6 @@ static Mutex & SaveBufferLock()  { static Mutex m; return m; }
 
 unsigned char *savebuffer = nullptr;
 uint8_t *ext_font_ttf = nullptr;
-FILE * file; // file pointer - the only one we should ever use!
 
 // folder parsing thread
 static Thread parseThread;
@@ -883,11 +882,11 @@ size_t LoadSzFile(char * filepath, unsigned char * rbuffer)
 	// halt parsing
 	HaltParseThread();
 
-	file = fopen (filepath, "rb");
-	if (file)
+	FILE * fp = fopen (filepath, "rb");
+	if (fp)
 	{
-		size = SzExtractFile(browserList[browser.selIndex].filenum, rbuffer);
-		fclose (file);
+		size = SzExtractFile(fp, browserList[browser.selIndex].filenum, rbuffer);
+		fclose (fp);
 	}
 	else
 	{
@@ -945,9 +944,9 @@ size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersiz
 		if(!ChangeInterface(device, silent))
 			break;
 
-		file = fopen (filepath, "rb");
+		FILE * fp = fopen (filepath, "rb");
 
-		if(!file)
+		if(!fp)
 		{
 			if(silent)
 				break;
@@ -958,48 +957,48 @@ size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersiz
 
 		if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
 		{
-			size = fread (rbuffer, 1, length, file);
+			size = fread (rbuffer, 1, length, fp);
 		}
 		else // load whole file
 		{
-			readsize = fread (zipbuffer, 1, 32, file);
+			readsize = fread (zipbuffer, 1, 32, fp);
 
 			if(!readsize)
 			{
 				if(silent) // an empty/unreadable file is not worth a prompt when nobody asked for feedback
 				{
-					fclose (file);
+					fclose (fp);
 					break;
 				}
 
 				platform->getFileSystem()->invalidateStorageDevice(device);
 				retry = ErrorPromptRetry("Error reading file!");
-				fclose (file);
+				fclose (fp);
 				continue;
 			}
 
 			if (IsZipFile (zipbuffer))
 			{
-				size = UnZipBuffer ((unsigned char *)rbuffer, buffersize); // unzip
+				size = UnZipBuffer (fp, (unsigned char *)rbuffer, buffersize); // unzip
 			}
 			else
 			{
-				fseeko(file,0,SEEK_END);
-				size = ftello(file);
-				fseeko(file,0,SEEK_SET);
+				fseeko(fp,0,SEEK_END);
+				size = ftello(fp);
+				fseeko(fp,0,SEEK_SET);
 
 				if(size > buffersize) {
 					size = 0;
 				}
 				else {
-					while(!feof(file))
+					while(!feof(fp))
 					{
 						size_t chunk = buffersize - offset; // never read past the end of the caller's buffer
 						if(chunk > FILE_READ_CHUNK)
 							chunk = FILE_READ_CHUNK;
 
 						ShowProgress ("Loading...", offset, size);
-						readsize = fread (rbuffer + offset, 1, chunk, file); // read in next chunk
+						readsize = fread (rbuffer + offset, 1, chunk, fp); // read in next chunk
 
 						if(readsize <= 0)
 							break; // reading finished (or failed)
@@ -1012,7 +1011,7 @@ size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersiz
 			}
 		}
 		retry = 0;
-		fclose (file);
+		fclose (fp);
 	}
 
 	// go back to checking if devices were inserted/removed
@@ -1127,9 +1126,9 @@ size_t SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 		if(!ChangeInterface(device, silent))
 			break;
 
-		file = fopen (filepath, "wb");
+		FILE * fp = fopen (filepath, "wb");
 
-		if(!file)
+		if(!fp)
 		{
 			if(silent)
 				break;
@@ -1142,11 +1141,11 @@ size_t SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 		{
 			if(datasize - written > FILE_WRITE_CHUNK) nextwrite=FILE_WRITE_CHUNK;
 			else nextwrite = datasize-written;
-			writesize = fwrite (buffer+written, 1, nextwrite, file);
+			writesize = fwrite (buffer+written, 1, nextwrite, fp);
 			if(writesize != nextwrite) break; // write failure
 			written += writesize;
 		}
-		fclose (file);
+		fclose (fp);
 
 		if(written != datasize) written = 0;
 

@@ -103,10 +103,14 @@ IsZipFile (char *buffer)
 
 /*****************************************************************************
 * UnZipBuffer
+*
+* Inflates the first entry of the ZIP read from fp into outbuffer.
+* fp is owned by the caller (opened before, closed after); it is read from
+* the start of the file.
 ******************************************************************************/
 
 size_t
-UnZipBuffer (unsigned char *outbuffer, size_t buffersize)
+UnZipBuffer (FILE * fp, unsigned char *outbuffer, size_t buffersize)
 {
 	PKZIPHEADER pkzip;
 	size_t zipoffset = 0;
@@ -125,9 +129,12 @@ UnZipBuffer (unsigned char *outbuffer, size_t buffersize)
 	if(!readbuffer)
 		return 0;
 
+	if(!fp)
+		return 0;
+
 	// Read Zip Header
-	fseek(file, 0, SEEK_SET);
-	sizeread = fread (readbuffer, 1, ZIP_READ_CHUNK, file);
+	fseek(fp, 0, SEEK_SET);
+	sizeread = fread (readbuffer, 1, ZIP_READ_CHUNK, fp);
 
 	if(sizeread < sizeof (PKZIPHEADER))
 		return 0;
@@ -197,7 +204,7 @@ UnZipBuffer (unsigned char *outbuffer, size_t buffersize)
 		// Readup the next block
 		zipoffset = 0;
 
-		sizeread = fread (readbuffer, 1, ZIP_READ_CHUNK, file);
+		sizeread = fread (readbuffer, 1, ZIP_READ_CHUNK, fp);
 		if(sizeread <= 0)
 			goto done; // read failure
 
@@ -259,6 +266,7 @@ GetFirstZipFilename ()
 typedef struct _SzFileInStream
 {
    ISzInStream InStream;
+   FILE * fp; // open archive - owned by the caller of SzParse()/SzExtractFile(), only valid during those calls
    uint64_t offset; // offset of the file
    unsigned int len; // length of the file
    uint64_t pos;  // current position of the file pointer
@@ -332,7 +340,10 @@ static SZ_RESULT SzFileReadImp(void *object, void **buffer, size_t maxRequiredSi
 		maxRequiredSize = sizeof(sz_buffer);
 
 	// read data
-	sizeread = fread(sz_buffer, 1, maxRequiredSize, file);
+	if(!s->fp)
+		return SZE_FAILREAD;
+
+	sizeread = fread(sz_buffer, 1, maxRequiredSize, s->fp);
 
 	if(sizeread <= 0)
 		return SZE_FAILREAD;
@@ -359,7 +370,7 @@ static SZ_RESULT SzFileSeekImp(void *object, CFileSize pos)
 		return SZE_FAIL;
 
 	// save new position and return
-	if(fseek(file, (long)pos, SEEK_SET) != 0)
+	if(!s->fp || fseek(s->fp, (long)pos, SEEK_SET) != 0)
 		return SZE_FAIL;
 
 	s->pos = pos;
@@ -407,9 +418,10 @@ int SzParse(char * filepath)
 	SzArchiveStream.pos = 0;
 
 	// open file
-	file = fopen (filepath, "rb");
-	if(!file)
+	FILE * fp = fopen (filepath, "rb");
+	if(!fp)
 		return 0;
+	SzArchiveStream.fp = fp;
 
 	// set szMethod to current chosen load device
 	szMethod = device;
@@ -499,7 +511,8 @@ int SzParse(char * filepath)
 	CancelAction();
 
 	// close file
-	fclose(file);
+	SzArchiveStream.fp = nullptr;
+	fclose(fp);
 	return nbfiles;
 }
 
@@ -508,10 +521,17 @@ int SzParse(char * filepath)
 *
 * Extracts the given file # into the buffer specified
 * Must parse the 7z BEFORE running this function
+* fp is the opened 7z archive, owned by the caller (closed by the caller)
 ***************************************************************************/
 
-size_t SzExtractFile(int i, unsigned char *buffer)
+size_t SzExtractFile(FILE * fp, int i, unsigned char *buffer)
 {
+	if(!fp)
+		return 0;
+
+	// the SDK reads through SzArchiveStream - point it at the caller's handle
+	SzArchiveStream.fp = fp;
+
 	// prepare some variables
 	SzBlockIndex = 0xFFFFFFFF;
 	SzOffset = 0;
@@ -529,6 +549,9 @@ size_t SzExtractFile(int i, unsigned char *buffer)
 		&SzOutSizeProcessed,    // size of file in *outBuffer
 		&SzAllocImp,
 		&SzAllocTempImp);
+
+	// the caller closes fp - don't keep a pointer to it
+	SzArchiveStream.fp = nullptr;
 
 	// close 7Zip archive and free memory
 	SzClose();

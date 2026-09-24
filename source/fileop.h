@@ -70,7 +70,6 @@ bool WaitForBackgroundTasks(uint32_t timeoutMs);
 
 extern unsigned char *savebuffer;
 extern uint8_t *ext_font_ttf;
-extern FILE * file;
 extern int selectLoadedFile;
 
 #endif
