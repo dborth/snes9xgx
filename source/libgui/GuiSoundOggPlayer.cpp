@@ -84,6 +84,7 @@ bool GuiSoundOggPlayer::play(const uint8_t* data, int32_t length, int time_pos, 
 	threadRunning = true;
 	streamPaused = false;
 
+	decodeThread.setName("ogg-decode");
 	if (!decodeThread.start(threadEntry, this, 16384, ThreadPriority::High)) {
 		// Don't leave isPlaying() true with no decode thread behind it
 		threadRunning = false;
@@ -98,8 +99,7 @@ bool GuiSoundOggPlayer::play(const uint8_t* data, int32_t length, int time_pos, 
 void GuiSoundOggPlayer::stop() {
 	// The decode thread clears threadRunning itself when a non-looping stream
 	// hits EOF, so threadRunning says nothing about whether the thread still
-	// needs joining. Skipping the join left decodeThread's handle set (which
-	// makes the next Thread::start() fail) and leaked its stack/OSThread.
+	// needs joining.
 	threadRunning = false;
 
 	if (decodeThread.isRunning())
@@ -135,6 +135,8 @@ void* GuiSoundOggPlayer::threadEntry(void* arg) {
 
 void GuiSoundOggPlayer::threadLoop() {
 	while (threadRunning && !decodeThread.stopRequested()) {
+		decodeThread.checkpoint(); // parks here (no locks held) if background threads are parked
+
 		if (streamPaused) {
 			usleep(10000);
 			continue;

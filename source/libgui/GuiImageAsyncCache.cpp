@@ -29,9 +29,8 @@ GuiImageAsyncCache::GuiImageAsyncCache(int capacityIn, int prefetchRadiusIn, int
 	if(!rawFileBuffer)
 		return;
 
-	// No wake callback: Thread::start()'s wake callback is a bare  void(*)(void)
-	// with no userdata. Thread::JoinAll() alone cannot wake this thread out of 
-	// workCond.wait() - this object MUST be shutdown() on any exit
+	thread.setName("image-cache");
+	thread.setWake(wakeTrampoline, this);
 	threadRunning = thread.start(threadTrampoline, this, 48 * 1024, ThreadPriority::Low, nullptr);
 }
 
@@ -195,6 +194,11 @@ GuiImageData * GuiImageAsyncCache::get(int index)
 	return &slot->image;
 }
 
+void GuiImageAsyncCache::wakeTrampoline(void * arg)
+{
+	static_cast<GuiImageAsyncCache *>(arg)->wake();
+}
+
 void GuiImageAsyncCache::wake()
 {
 	MutexLock guard(mutex);
@@ -263,6 +267,15 @@ void GuiImageAsyncCache::threadLoop()
 	mutex.lock();
 	while(!thread.stopRequested())
 	{
+		// park between jobs (never holding the lock or mid-read)
+		if(Thread::ParkRequested())
+		{
+			mutex.unlock();
+			thread.checkpoint();
+			mutex.lock();
+			continue;
+		}
+
 		bool havePrimary = primaryPending;
 		int prefetchPick = -1;
 		if(!havePrimary)
@@ -279,7 +292,8 @@ void GuiImageAsyncCache::threadLoop()
 
 		if(!havePrimary && prefetchPick < 0)
 		{
-			workCond.wait(mutex);
+			if(!Thread::ParkRequested()) // park signal may have arrived since the check above
+				workCond.wait(mutex);
 			continue;
 		}
 

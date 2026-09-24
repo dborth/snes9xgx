@@ -6,7 +6,7 @@
  * fileop.h
  *
  * File operations
- ****************************************************************************/
+ ***************************************************************************/
 
 #ifndef _FILEOP_H_
 #define _FILEOP_H_
@@ -16,7 +16,11 @@
 #include <unistd.h>
 #include "memmanager.h"
 
-#define SAVEBUFFERSIZE (1024 * 512)
+#ifdef HW_DOL
+#define SAVEBUFFERSIZE (1024 * 1024 * 1)
+#else
+#define SAVEBUFFERSIZE (1024 * 1024 * 2) // leave room for IPS/UPS files and large images
+#endif
 
 #if defined(HW_RVL) || defined(HW_DOL)
 #define FILE_READ_CHUNK   4096
@@ -28,9 +32,29 @@
 #define FILE_BUFFER_ALIGN 0x40
 #endif
 
+// Starts the background threads. They start out parked - nothing runs in
+// the background until ResumeBackgroundThreads().
 void InitFileOpThreads();
-void ResumeDeviceCheckingThread();
-void HaltDeviceCheckingThread();
+
+// Whole-app background thread switch. Background threads (device checking,
+// folder parsing, worker/queued tasks, network bring-up, and anything else
+// started via Thread::start) only run while the menu is up.
+//   SuspendBackgroundThreads(): entering emulation - finishes queued work,
+//     aborts any folder parse, then parks EVERY thread (see Thread::ParkAll).
+//   ResumeBackgroundThreads(): returning to the menu - releases them.
+// Both are idempotent.
+// \return false if something didn't finish/park in time
+bool SuspendBackgroundThreads();
+void ResumeBackgroundThreads();
+
+// Counted pause of device checking, for file I/O that mustn't overlap the
+// removal/insertion probe on the same device. Nests across threads; only
+// the last ResumeDeviceChecking() lets the probe run again, and never
+// while background threads are parked. Not the emulation switch.
+void PauseDeviceChecking();
+void ResumeDeviceChecking();
+
+// Aborts an in-flight folder parse and waits until the parse thread is idle
 void HaltParseThread();
 void MountAllFAT();
 bool FindDevice(char * filepath, int * device);
