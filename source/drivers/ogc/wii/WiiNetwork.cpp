@@ -46,8 +46,6 @@ static void * NetworkThreadEntry(void *)
 
 		while(retry > 0 && !networkThread.stopRequested())
 		{
-			networkThread.checkpoint(); // park between steps if background threads are parked
-
 			if(netPrevInit)
 			{
 				net_deinit();
@@ -80,7 +78,6 @@ static void * NetworkThreadEntry(void *)
 			int wait = 400; // ~8 sec
 			while(res == -EBUSY && wait > 0 && !networkThread.stopRequested())
 			{
-				networkThread.checkpoint();
 				usleep(20000);
 				res = net_get_status();
 				wait--;
@@ -110,16 +107,7 @@ static void * NetworkThreadEntry(void *)
 		networkIdle = true;
 		NetSync().idleCond.signal(); // wake anything blocked in ensureUp()
 		while(networkIdle && !networkThread.stopRequested())
-		{
-			if(Thread::ParkRequested())
-			{
-				NetSync().mutex.unlock();
-				networkThread.checkpoint();
-				NetSync().mutex.lock();
-				continue;
-			}
 			NetSync().workCond.wait(NetSync().mutex);
-		}
 	}
 	NetSync().mutex.unlock();
 	return nullptr;
@@ -145,7 +133,6 @@ bool WiiNetwork::ensureUp()
 			MutexLock guard(NetSync().mutex);
 			networkIdle = false;
 		}
-		networkThread.setName("network");
 		networkThread.start(NetworkThreadEntry, nullptr, NETWORK_THREAD_STACKSIZE, ThreadPriority::Low, WakeNetworkThread);
 	}
 	else

@@ -98,7 +98,6 @@ class GuiImageAsyncCache
 		CacheSlot * acquireSlotFor(int index);
 
 		static void * threadTrampoline(void * arg);
-		static void wakeTrampoline(void * arg); //!< Thread wake callback (needs `this`)
 		void threadLoop();
 		void wake();
 

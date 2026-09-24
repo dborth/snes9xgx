@@ -93,46 +93,10 @@ class Thread
 		//!still be touching platform/driver state.
 		static void JoinAll();
 
-		//!Names the thread for diagnostics (ParkAll() reports by name any
-		//!thread that fails to park). Must be a string literal / static.
-		void setName(const char * n) { name = n; }
-
-		//!Like the wake callback of start(), but with a user pointer, for
-		//!threads owned by an object (eg. a cache) rather than a static.
-		//!Invoked alongside the start() wake callback.
-		void setWake(void (*fn)(void *), void * arg) { wakeArgArg = arg; wakeArgFn = fn; }
-
-		//!Requests every registered thread park and waits until each has (or
-		//!until timeoutMs).
-		//!\return true if every thread is parked; false on timeout
-		static bool ParkAll(uint32_t timeoutMs = 15000);
-		//!Releases every parked thread. No-op if not parked.
-		static void UnparkAll();
-		//!\return true from the start of ParkAll() until UnparkAll(). Idle
-		//!waits use this as an extra exit condition.
-		static bool ParkRequested() { return parkFlag; }
-
-		//!Safe-point for entry(): returns immediately unless a park is in
-		//!effect, in which case blocks until UnparkAll(), requestStop() or
-		//!join(), so stopping or joining a parked thread never deadlocks.
-		void checkpoint();
-
 	protected:
 		void * handle = nullptr; //!< Backend-assigned thread handle
 		volatile bool stopFlag = false; //!< Set by requestStop(); polled by entry() via stopRequested()
-		volatile bool joining = false; //!< Set by join(); releases the thread from checkpoint()
-		volatile bool parked = false; //!< True while blocked in checkpoint()
-		volatile bool finished = false; //!< entry() has returned (thread may still need join())
-		ThreadEntry userEntry = nullptr;
-		void * userArg = nullptr;
-		static void * Trampoline(void * self); //!< runs entry(), then sets finished
-		const char * name = nullptr; //!< Diagnostic name, see setName()
 		void (*wakeFn)(void) = nullptr; //!< Optional callback to break entry() out of a wait; set by start()
-		void (*wakeArgFn)(void *) = nullptr; //!< see setWake()
-		void * wakeArgArg = nullptr;
-		static volatile bool parkFlag; //!< Process-wide: a park is in effect
-		void wakeThread(); //!< Invokes both wake callbacks, if set
-		void registryUnlink(); //!< Removes this Thread from the JoinAll() registry
 		Thread * registryNext = nullptr; //!< Intrusive next-pointer for the JoinAll() registry
 };
 

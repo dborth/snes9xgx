@@ -58,17 +58,12 @@ static bool parseActive = false; // protected by ParseSync().mutex
 
 // device checking thread
 static Thread deviceThread;
+static volatile bool deviceCheckingHalt = true;
 static bool deviceThreadStarted = false; // true if InitFileOpThreads() actually started deviceThread
 
 // device thread synchronization - DeviceSync().workCond signals main -> device:
-// wake / re-check pause, park or stop.
-static volatile int devicePause = 0;
-// Held by the device thread for the whole of each probe
-// Lock order: PollLock() -> DeviceSync().mutex, never the reverse.
-static Mutex & PollLock() { static Mutex m; return m; }
-
-#define DEVICE_POLL_INTERVAL_MS 1000
-#define DEVICE_POLL_STEP_US     10000 // granularity for reacting to pause/park/stop while waiting
+// wake / re-check halt; DeviceSync().idleCond signals device -> main: now halted
+static bool deviceIdle = false; // protected by DeviceSync().mutex
 
 #define WORKER_THREAD_STACKSIZE (96 * 1024)
 #define DEVICE_THREAD_STACKSIZE (32 * 1024)
@@ -96,35 +91,36 @@ static int  bgCount   = 0;     // protected by WorkerSync().mutex
 static bool bgRunning = false; // protected by WorkerSync().mutex - a queued task is running right now
 
 /****************************************************************************
- * PauseDeviceChecking / ResumeDeviceChecking
+ * ResumeDeviceCheckingThread
  *
- * Counted: every Pause needs its matching Resume, from any thread. Returns
- * from Pause only once no probe is running.
+ * Signals the device thread to start, and resumes the thread.
  ***************************************************************************/
-void PauseDeviceChecking()
+void ResumeDeviceCheckingThread()
 {
 	if(!deviceThreadStarted)
 		return;
 
 	DeviceSync().mutex.lock();
-	devicePause++;
+	deviceCheckingHalt = false;
+	DeviceSync().workCond.signal();
 	DeviceSync().mutex.unlock();
-
-	// wait out a probe that started before devicePause was raised
-	PollLock().lock();
-	PollLock().unlock();
 }
 
-void ResumeDeviceChecking()
+/****************************************************************************
+ * HaltGui
+ *
+ * Signals the device thread to stop.
+ ***************************************************************************/
+void HaltDeviceCheckingThread()
 {
 	if(!deviceThreadStarted)
 		return;
 
+	deviceCheckingHalt = true;
 	DeviceSync().mutex.lock();
-	if(devicePause > 0)
-		devicePause--;
-	if(devicePause == 0)
-		DeviceSync().workCond.signal();
+	DeviceSync().workCond.signal(); // interrupt condvar sleep if the thread is in one
+	while(!deviceIdle)
+		DeviceSync().idleCond.wait(DeviceSync().mutex);
 	DeviceSync().mutex.unlock();
 }
 
@@ -145,14 +141,15 @@ void HaltParseThread()
 /****************************************************************************
  * Wake*Thread
  *
- * Wake callbacks for Thread::JoinAll() and Thread::ParkAll() - each breaks
- * its thread out of whatever cond it is idling in so it can notice
- * stopRequested() / Thread::ParkRequested() and act on it. They don't wait
- * for the thread - join() / ParkAll() are the wait.
+ * Thread::JoinAll()'s wake callbacks - each breaks its thread out of
+ * whatever cond it may be parked in so it can notice stopRequested() and
+ * actually return. Mirror the corresponding Halt/Resume function above,
+ * but don't wait for the thread to go idle - JoinAll()'s join() is the wait.
  ***************************************************************************/
 static void WakeDeviceThread()
 {
 	DeviceSync().mutex.lock();
+	deviceCheckingHalt = false; // let a parked wait fall through to re-check stopRequested()
 	DeviceSync().workCond.signal();
 	DeviceSync().mutex.unlock();
 }
@@ -174,63 +171,50 @@ static void WakeWorkerThread()
 /****************************************************************************
  * devicecallback
  *
- * This checks our devices for changes (SD/USB/DVD removed). Idle whenever a
- * file transfer needs it quiet (devicePause) or background threads are
- * parked - in both cases blocked, not polling.
+ * This checks our devices for changes (SD/USB/DVD removed)
  ***************************************************************************/
 static void * devicecallback(void *)
 {
 	while (!deviceThread.stopRequested())
 	{
-		deviceThread.checkpoint(); // blocks while background threads are parked
-
-		// if paused for file I/O, block until ResumeDeviceChecking() (or park/stop) wakes us
-		DeviceSync().mutex.lock();
-		while(devicePause > 0 && !deviceThread.stopRequested() && !Thread::ParkRequested())
-			DeviceSync().workCond.wait(DeviceSync().mutex);
-		DeviceSync().mutex.unlock();
+		// if halted, block here until ResumeDeviceCheckingThread (or a stop request) wakes us
+		if(deviceCheckingHalt)
+		{
+			DeviceSync().mutex.lock();
+			deviceIdle = true;
+			DeviceSync().idleCond.signal(); // tell HaltDeviceCheckingThread we've stopped
+			while(deviceCheckingHalt && !deviceThread.stopRequested())
+				DeviceSync().workCond.wait(DeviceSync().mutex);
+			deviceIdle = false;
+			DeviceSync().mutex.unlock();
+		}
 
 		if(deviceThread.stopRequested())
 			break;
 
-		if(Thread::ParkRequested())
-			continue; // back to checkpoint()
+		int removed[MAX_STORAGE_DEVICES];
+		int removedCount = 0;
+		bool deviceListChanged = false;
 
-		PollLock().lock();
+		platform->getFileSystem()->pollStorageDevices(removed, removedCount, deviceListChanged);
 
-		DeviceSync().mutex.lock();
-		bool paused = devicePause > 0;
-		DeviceSync().mutex.unlock();
-
-		if(!paused)
+		if(removedCount > 0)
 		{
-			int removed[MAX_STORAGE_DEVICES];
-			int removedCount = 0;
-			bool deviceListChanged = false;
+			parseHalt = true; // abort any in-progress dir parse if a device it's using just disappeared
 
-			platform->getFileSystem()->pollStorageDevices(removed, removedCount, deviceListChanged);
-
-			if(removedCount > 0)
+			for(int i = 0; i < removedCount; i++)
 			{
-				parseHalt = true; // abort any in-progress dir parse if a device it's using just disappeared
-
-				for(int i = 0; i < removedCount; i++)
-				{
-					if(removed[i] >= 0 && removed[i] < 32)
-						removedDeviceMask |= (1u << removed[i]);
-				}
+				if(removed[i] >= 0 && removed[i] < 32)
+					removedDeviceMask |= (1u << removed[i]);
 			}
-
-			if(deviceListChanged)
-				browserDeviceListChanged = true; // signal the menu loop to refresh the device listing if it's on screen
 		}
 
-		PollLock().unlock();
+		if(deviceListChanged)
+			browserDeviceListChanged = true; // signal the menu loop to refresh the device listing if it's on screen
 
-		// wait out the interval in short steps so a pause/park/stop is honored quickly
-		for(int i = 0; i < (DEVICE_POLL_INTERVAL_MS * 1000) / DEVICE_POLL_STEP_US
-			&& devicePause == 0 && !Thread::ParkRequested() && !deviceThread.stopRequested(); i++)
-			usleep(DEVICE_POLL_STEP_US);
+		// sleep ~1 sec in 100us steps so we can react to a halt/stop request quickly
+		for(int i = 0; i < 10000 && !deviceCheckingHalt && !deviceThread.stopRequested(); i++)
+			usleep(THREAD_SLEEP);
 	}
 	return nullptr;
 }
@@ -241,19 +225,11 @@ static void * parsecallback (void *)
 	while(!parseThread.stopRequested())
 	{
 		// sleep until ParseDirectory signals there is work to do
-		while(!parseActive && !parseThread.stopRequested() && !Thread::ParkRequested())
+		while(!parseActive && !parseThread.stopRequested())
 			ParseSync().workCond.wait(ParseSync().mutex);
 
 		if(parseThread.stopRequested())
 			break;
-
-		if(!parseActive) // woken to park while idle
-		{
-			ParseSync().mutex.unlock();
-			parseThread.checkpoint();
-			ParseSync().mutex.lock();
-			continue;
-		}
 
 		ParseSync().mutex.unlock();
 
@@ -277,21 +253,11 @@ static void * workercallback (void *)
 	while(!workerThread.stopRequested())
 	{
 		// sleep until RunOnWorkerThread() or QueueBackgroundTask() signals there is work to do
-		while(!workerBusy && bgCount == 0 && !workerThread.stopRequested() && !Thread::ParkRequested())
+		while(!workerBusy && bgCount == 0 && !workerThread.stopRequested())
 			WorkerSync().workCond.wait(WorkerSync().mutex);
 
 		if(!workerBusy && bgCount == 0 && workerThread.stopRequested())
 			break;
-
-		// Park between tasks, never inside one (a task holds device I/O). Work
-		// still pending runs after ResumeBackgroundThreads(); stop wins over park.
-		if(Thread::ParkRequested() && !workerThread.stopRequested())
-		{
-			WorkerSync().mutex.unlock();
-			workerThread.checkpoint();
-			WorkerSync().mutex.lock();
-			continue;
-		}
 
 		if(workerBusy) // something is waiting on this - always ahead of queued tasks
 		{
@@ -327,7 +293,7 @@ static void * workercallback (void *)
 bool RunOnWorkerThread(BgTaskFn fn, void * arg)
 {
 	WorkerSync().mutex.lock();
-	if(workerBusy || Thread::ParkRequested()) // parked: nothing may start in the background
+	if(workerBusy)
 	{
 		WorkerSync().mutex.unlock();
 		return false;
@@ -344,8 +310,8 @@ bool QueueBackgroundTask(BgTaskFn fn, void * arg)
 {
 	MutexLock guard(WorkerSync().mutex);
 
-	if(!fn || !workerThread.isRunning() || workerThread.stopRequested() || Thread::ParkRequested())
-		return false; // callers fall back to doing the work themselves, on their own thread
+	if(!fn || !workerThread.isRunning() || workerThread.stopRequested())
+		return false;
 
 	for(int i = 0; i < bgCount; i++)
 	{
@@ -366,7 +332,7 @@ bool QueueBackgroundTask(BgTaskFn fn, void * arg)
 bool BackgroundTasksIdle()
 {
 	MutexLock guard(WorkerSync().mutex);
-	return bgCount == 0 && !bgRunning && !workerBusy;
+	return bgCount == 0 && !bgRunning;
 }
 
 bool WaitForBackgroundTasks(uint32_t timeoutMs)
@@ -404,51 +370,19 @@ int GetWorkerThreadResult()
 void InitFileOpThreads()
 {
 	SaveBufferLock();
-	PollLock();
 
 	ParseSync();
-	parseThread.setName("parse");
 	parseThread.start(parsecallback, nullptr, PARSE_THREAD_STACKSIZE, ThreadPriority::High, WakeParseThread);
 
 	WorkerSync();
-	workerThread.setName("worker");
 	workerThread.start(workercallback, nullptr, WORKER_THREAD_STACKSIZE, ThreadPriority::High, WakeWorkerThread);
 
 	if(platform->getFileSystem()->hasRemovableStorageDevices())
 	{
 		DeviceSync();
 		deviceThreadStarted = true;
-		deviceThread.setName("device");
 		deviceThread.start(devicecallback, nullptr, DEVICE_THREAD_STACKSIZE, ThreadPriority::Low, WakeDeviceThread);
 	}
-
-	// Background threads only run while the menu is up: start parked, the main
-	// loop releases them with ResumeBackgroundThreads() on entering the menu.
-	Thread::ParkAll();
-}
-
-/****************************************************************************
- * SuspendBackgroundThreads / ResumeBackgroundThreads
- *
- * The one place the menu <-> emulation switch happens for every background
- * thread - see fileop.h. Threads are parked by blocking (Thread::ParkAll).
- ***************************************************************************/
-bool SuspendBackgroundThreads()
-{
-	// let queued work (eg. the auto-save of the game just left) finish first -
-	// once parked, tasks are refused rather than run
-	bool drained = WaitForBackgroundTasks(15000);
-
-	// abort any folder parse in flight; the thread is then idle, not mid-listing
-	HaltParseThread();
-
-	bool parked = Thread::ParkAll();
-	return drained && parked;
-}
-
-void ResumeBackgroundThreads()
-{
-	Thread::UnparkAll();
 }
 
 /****************************************************************************
@@ -943,7 +877,7 @@ size_t LoadSzFile(char * filepath, unsigned char * rbuffer)
 
 	// stop checking if devices were removed/inserted
 	// since we're loading a file
-	PauseDeviceChecking();
+	HaltDeviceCheckingThread();
 
 	// halt parsing
 	HaltParseThread();
@@ -960,7 +894,7 @@ size_t LoadSzFile(char * filepath, unsigned char * rbuffer)
 	}
 
 	// go back to checking if devices were inserted/removed
-	ResumeDeviceChecking();
+	ResumeDeviceCheckingThread();
 
 	return size;
 }
@@ -978,7 +912,7 @@ size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersiz
 	if(!FindDevice(filepath, &device))
 		return 0;
 
-	PauseDeviceChecking();
+	HaltDeviceCheckingThread();
 	HaltParseThread();
 
 	// open the file
@@ -1057,7 +991,7 @@ size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersiz
 		fclose (fp);
 	}
 
-	ResumeDeviceChecking();
+	ResumeDeviceCheckingThread();
 	CancelAction();
 	return size;
 }
@@ -1150,7 +1084,7 @@ size_t SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 	if(datasize == 0)
 		return 0;
 
-	PauseDeviceChecking();
+	HaltDeviceCheckingThread();
 	HaltParseThread();
 
 	if(!silent)
@@ -1192,7 +1126,7 @@ size_t SaveFile (char * buffer, char *filepath, size_t datasize, bool silent)
 		}
 	}
 
-	ResumeDeviceChecking();
+	ResumeDeviceCheckingThread();
 	if(!silent)
 		CancelAction();
 	return written;
