@@ -29,8 +29,22 @@
 #endif
 
 void InitFileOpThreads();
-void ResumeDeviceCheckingThread();
-void HaltDeviceCheckingThread();
+
+void ArmDeviceChecking();
+void UpdateDeviceCheckingArm();
+void StopDeviceChecking();
+
+struct DeviceCheckingScope
+{
+	DeviceCheckingScope()  { ArmDeviceChecking(); }
+	~DeviceCheckingScope() { StopDeviceChecking(); }
+	DeviceCheckingScope(const DeviceCheckingScope &) = delete;
+	DeviceCheckingScope & operator=(const DeviceCheckingScope &) = delete;
+
+	void update() { UpdateDeviceCheckingArm(); }
+	void leave() { StopDeviceChecking(); }
+};
+
 void HaltParseThread();
 void MountAllFAT();
 bool FindDevice(char * filepath, int * device);
