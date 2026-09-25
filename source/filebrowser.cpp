@@ -756,7 +756,9 @@ int BrowserChangeFolder()
 			}
 			else
 			{
-				ParseDirectory(true, true);
+				// Block until the whole folder is read when we need to jump to a 
+				// specific remembered file
+				ParseDirectory(selectLoadedFile != 0, true);
 			}
 			FindAndSelectLastLoadedFile();
 		}

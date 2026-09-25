@@ -30,31 +30,24 @@
 #include "drivers/FileSystemDriver.h"
 #include "drivers/SmbDriver.h"
 
-#define THREAD_SLEEP 100
+#define PARSE_FIRST_BATCH 20
+#define PARSE_BATCH_SIZE  100
 
-#define PARSE_BATCH_SIZE MAX_BROWSER_SIZE
-
-static ThreadSync & ParseSync()  { static ThreadSync s; return s; }
 static ThreadSync & WorkerSync() { static ThreadSync s; return s; }
 static Mutex & SaveBufferLock()  { static Mutex m; return m; }
 
 unsigned char *savebuffer = nullptr;
 uint8_t *ext_font_ttf = nullptr;
 
-// folder parsing thread
-static Thread parseThread;
 static DIR *dir = nullptr;
 static volatile bool parseHalt = true;
 static bool parseFilter = true;
 static char parsePrefix[MAXJOLIET + 1] = { 0 }; // if set, only entries whose name starts with this are listed
 static size_t parsePrefixLen = 0;
-static bool ParseDirEntries();
+static bool ParseDirEntries(int batchSize);
+static int  ContinueParseTask(void *);
 static void * devicecallback(void *);
 int selectLoadedFile = 0;
-
-// parse thread synchronization - ParseSync().workCond signals
-// main -> parse: work available; ParseSync().idleCond signals parse -> main: now idle
-static bool parseActive = false; // protected by ParseSync().mutex
 
 static Thread deviceThread;
 static bool deviceCheckingArmed = false;    // ArmDeviceChecking() called, StopDeviceChecking() not yet
@@ -64,7 +57,6 @@ static Ticks deviceCheckingArmedAt = 0;
 
 #define WORKER_THREAD_STACKSIZE (96 * 1024)
 #define DEVICE_THREAD_STACKSIZE (32 * 1024)
-#define PARSE_THREAD_STACKSIZE  (32 * 1024)
 
 /****************************************************************************
  * Background worker thread
@@ -128,31 +120,20 @@ void StopDeviceChecking()
 /****************************************************************************
  * HaltParseThread
  *
- * Signals the parse thread to stop.
+ * Tells an in-progress or queued directory scan to stop at its next opportunity
  ***************************************************************************/
 void HaltParseThread()
 {
 	parseHalt = true;
-	ParseSync().mutex.lock();
-	while(parseActive)
-		ParseSync().idleCond.wait(ParseSync().mutex);
-	ParseSync().mutex.unlock();
 }
 
 /****************************************************************************
- * Wake*Thread
+ * WakeWorkerThread
  *
- * Thread::JoinAll()'s wake callbacks - each breaks its thread out of
+ * Thread::JoinAll()'s wake callback - breaks the worker thread out of
  * whatever cond it may be parked in so it can notice stopRequested() and
  * actually return.
  ***************************************************************************/
-static void WakeParseThread()
-{
-	ParseSync().mutex.lock();
-	ParseSync().workCond.signal();
-	ParseSync().mutex.unlock();
-}
-
 static void WakeWorkerThread()
 {
 	WorkerSync().mutex.lock();
@@ -189,36 +170,10 @@ static void * devicecallback(void *)
 		if(deviceListChanged)
 			browserDeviceListChanged = true; // signal the menu loop to refresh the device listing if it's on screen
 
-		// sleep ~1 sec in 50ms steps so a stop request is noticed quickly
-		// without waking the thread anywhere near as often as before
-		for(int i = 0; i < 20 && !deviceThread.stopRequested(); i++)
-			usleep(50000);
+		// 3 sec between checks (in 100ms steps, so a stop request is still noticed quickly)
+		for(int i = 0; i < 30 && !deviceThread.stopRequested(); i++)
+			usleep(100000);
 	}
-	return nullptr;
-}
-
-static void * parsecallback (void *)
-{
-	ParseSync().mutex.lock();
-	while(!parseThread.stopRequested())
-	{
-		// sleep until ParseDirectory signals there is work to do
-		while(!parseActive && !parseThread.stopRequested())
-			ParseSync().workCond.wait(ParseSync().mutex);
-
-		if(parseThread.stopRequested())
-			break;
-
-		ParseSync().mutex.unlock();
-
-		while(ParseDirEntries())
-			usleep(THREAD_SLEEP);
-
-		ParseSync().mutex.lock();
-		parseActive = false;
-		ParseSync().idleCond.signal(); // wake HaltParseThread / waitParse callers
-	}
-	ParseSync().mutex.unlock();
 	return nullptr;
 }
 
@@ -342,15 +297,12 @@ int GetWorkerThreadResult()
 /****************************************************************************
  * InitFileOpThreads
  *
- * Starts the device-checking, folder-parsing, and background worker
- * threads via the libgui Thread/Mutex/Cond HAL (see ThreadSync above).
+ * Starts the background worker thread via the libgui Thread/Mutex/Cond HAL
+ * (see ThreadSync above).
  ***************************************************************************/
 void InitFileOpThreads()
 {
 	SaveBufferLock();
-
-	ParseSync();
-	parseThread.start(parsecallback, nullptr, PARSE_THREAD_STACKSIZE, ThreadPriority::High, WakeParseThread);
 
 	WorkerSync();
 	workerThread.start(workercallback, nullptr, WORKER_THREAD_STACKSIZE, ThreadPriority::High, WakeWorkerThread);
@@ -628,7 +580,7 @@ void FindAndSelectLastLoadedFile ()
 	selectLoadedFile = 2; // selecting done
 }
 
-static bool ParseDirEntries()
+static bool ParseDirEntries(int batchSize)
 {
 	if(!dir)
 		return false;
@@ -640,7 +592,7 @@ static bool ParseDirEntries()
 
 	int i = 0;
 
-	while(i < PARSE_BATCH_SIZE && !parseHalt)
+	while(i < batchSize && !parseHalt)
 	{
 		entry = readdir(dir);
 
@@ -713,6 +665,20 @@ static bool ParseDirEntries()
 	return true; // more entries
 }
 
+/****************************************************************************
+ * ContinueParseTask
+ *
+ * Queued on the worker thread, indexing a directory PARSE_BATCH_SIZE 
+ * entries at a time
+ ***************************************************************************/
+static int ContinueParseTask(void *)
+{
+	if(ParseDirEntries(PARSE_BATCH_SIZE))
+		QueueBackgroundTask(ContinueParseTask, nullptr);
+
+	return 0;
+}
+
 /***************************************************************************
  * Browse subdirectories
  **************************************************************************/
@@ -776,24 +742,18 @@ int ParseDirectory(bool waitParse, bool filter, const char * namePrefix)
 	browser.numEntries++;
 
 	parseHalt = false;
-	ParseDirEntries(); // index the first batch of entries
 
-	// signal parse thread to continue indexing remaining entries
-	ParseSync().mutex.lock();
-	parseActive = true;
-	ParseSync().workCond.signal();
-	ParseSync().mutex.unlock();
+	// Always show the first small batch right away
+	bool more = ParseDirEntries(PARSE_FIRST_BATCH);
 
-	if(waitParse) // wait for complete parsing
+	if(waitParse) // caller needs the complete list before it can continue
 	{
-        ShowAction("Loading...");
-
-		ParseSync().mutex.lock();
-		while(parseActive)
-			ParseSync().idleCond.wait(ParseSync().mutex);
-		ParseSync().mutex.unlock();
-
-		CancelAction();
+		while(more && !parseHalt)
+			more = ParseDirEntries(PARSE_BATCH_SIZE);
+	}
+	else if(more) // interactive browsing - show what we have, keep going in the background
+	{
+		QueueBackgroundTask(ContinueParseTask, nullptr);
 	}
 
 	return browser.numEntries;
