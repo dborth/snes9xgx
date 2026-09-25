@@ -16,7 +16,11 @@
 #include <unistd.h>
 #include "memmanager.h"
 
-#define SAVEBUFFERSIZE (1024 * 512)
+#ifdef HW_DOL
+#define SAVEBUFFERSIZE (1024 * 1024 * 1)
+#else
+#define SAVEBUFFERSIZE (1024 * 1024 * 2) // leave room for IPS/UPS files and large images
+#endif
 
 #if defined(HW_RVL) || defined(HW_DOL)
 #define FILE_READ_CHUNK   4096
