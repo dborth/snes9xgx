@@ -22,7 +22,7 @@
 #include "../drivers/ThreadDriver.h"
 
 //! Max length (including nul) of a path passed to request()/prefetch().
-#define GUI_IMAGE_CACHE_MAX_PATH 256
+#define GUI_IMAGE_CACHE_MAX_PATH 1024
 
 class GuiImageAsyncCache
 {
@@ -39,8 +39,7 @@ class GuiImageAsyncCache
 		//!\param rawFileBufferSize Size, in bytes, of the persistent
 		//!buffer the background thread reads a source PNG file into
 		//!before decoding.
-		GuiImageAsyncCache(int capacity, int prefetchRadius, int maxImageWidth = 0, int maxImageHeight = 0,
-		                    unsigned int rawFileBufferSize = 512 * 1024);
+		GuiImageAsyncCache(int capacity, int prefetchRadius, int maxImageWidth = 0, int maxImageHeight = 0, unsigned int rawFileBufferSize = 512 * 1024);
 		~GuiImageAsyncCache();
 
 		GuiImageAsyncCache(const GuiImageAsyncCache &) = delete;

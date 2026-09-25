@@ -14,6 +14,8 @@
 #include <ogc/cache.h>
 #endif
 
+#define OGGPLAYER_THREAD_STACKSIZE (8 * 1024)
+
 GuiSoundOggPlayer::GuiSoundOggPlayer() : vfOpen(false), threadRunning(false), streamPaused(false), sampleRate(0), channels(0) {
 	pcmBuffer[0] = (uint8_t*)memalign(32, BUFFER_SIZE);
 	pcmBuffer[1] = (uint8_t*)memalign(32, BUFFER_SIZE);
@@ -84,7 +86,7 @@ bool GuiSoundOggPlayer::play(const uint8_t* data, int32_t length, int time_pos, 
 	threadRunning = true;
 	streamPaused = false;
 
-	if (!decodeThread.start(threadEntry, this, 16384, ThreadPriority::High)) {
+	if (!decodeThread.start(threadEntry, this, OGGPLAYER_THREAD_STACKSIZE, ThreadPriority::High)) {
 		// Don't leave isPlaying() true with no decode thread behind it
 		threadRunning = false;
 		ov_clear(&vf);

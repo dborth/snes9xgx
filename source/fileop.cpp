@@ -56,7 +56,7 @@ static Ticks deviceCheckingArmedAt = 0;
 #define DEVICE_CHECK_ARM_DELAY_MS 5000 // let the browser's own boot work (mount/parse/preview) go first
 
 #define WORKER_THREAD_STACKSIZE (96 * 1024)
-#define DEVICE_THREAD_STACKSIZE (32 * 1024)
+#define DEVICE_THREAD_STACKSIZE (8 * 1024)
 
 /****************************************************************************
  * Background worker thread

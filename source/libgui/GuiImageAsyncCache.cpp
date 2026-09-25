@@ -13,6 +13,12 @@
 #include "../drivers/Platform.h"
 #include "../drivers/FileSystemDriver.h"
 
+#if defined(HW_RVL) || defined(HW_DOL)
+#define IMAGE_LOADING_THREAD_STACKSIZE (16 * 1024)
+#else
+#define IMAGE_LOADING_THREAD_STACKSIZE (64 * 1024)
+#endif
+
 GuiImageAsyncCache::GuiImageAsyncCache(int capacityIn, int prefetchRadiusIn, int maxImageWidthIn, int maxImageHeightIn, unsigned int rawFileBufferSizeIn)
 	: capacity(capacityIn < 1 ? 1 : capacityIn)
 	, prefetchRadius(prefetchRadiusIn < 0 ? 0 : prefetchRadiusIn)
@@ -32,7 +38,7 @@ GuiImageAsyncCache::GuiImageAsyncCache(int capacityIn, int prefetchRadiusIn, int
 	// No wake callback: Thread::start()'s wake callback is a bare  void(*)(void)
 	// with no userdata. Thread::JoinAll() alone cannot wake this thread out of 
 	// workCond.wait() - this object MUST be shutdown() on any exit
-	threadRunning = thread.start(threadTrampoline, this, 48 * 1024, ThreadPriority::Low, nullptr);
+	threadRunning = thread.start(threadTrampoline, this, IMAGE_LOADING_THREAD_STACKSIZE, ThreadPriority::Low, nullptr);
 }
 
 GuiImageAsyncCache::~GuiImageAsyncCache()
