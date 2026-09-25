@@ -289,7 +289,8 @@ int WutFileSystemDriver::enumerateStorageDevices(StorageDevice outDevices[MAX_ST
 		out.name[sizeof(out.name) - 1] = '\0';
 		strncpy(out.volumeLabel, devices[i].volumeLabel, sizeof(out.volumeLabel) - 1);
 		out.volumeLabel[sizeof(out.volumeLabel) - 1] = '\0';
-		strncpy(out.prefix, devices[i].prefix, sizeof(out.prefix) - 1);
+		const char * browsePrefix = (devices[i].id == DEVICE_SMB) ? devices[i].stablePrefix : devices[i].prefix;
+		strncpy(out.prefix, browsePrefix, sizeof(out.prefix) - 1);
 		out.prefix[sizeof(out.prefix) - 1] = '\0';
 		// SD (mounted in init(), never polled) and SMB (needs explicit getSmb()->connect() first) are neither removable nor auto-mounted
 		bool fixedDevice = (devices[i].id == DEVICE_SD || devices[i].id == DEVICE_SMB);
