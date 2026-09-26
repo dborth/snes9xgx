@@ -12,7 +12,7 @@
 #include "../../ThreadDriver.h"
 #include "../../Time.h"
 
-#define NETWORK_THREAD_STACKSIZE (32 * 1024)
+#define NETWORK_THREAD_STACKSIZE (8 * 1024)
 #define NETWORK_BRINGUP_TIMEOUT_SECS 10 // don't block forever if the network never comes up
 
 static ThreadSync & NetSync() { static ThreadSync s; return s; }
