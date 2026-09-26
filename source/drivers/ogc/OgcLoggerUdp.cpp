@@ -8,7 +8,6 @@
 #ifdef HW_RVL
 
 #include <cstring>
-#include <fcntl.h>
 
 #include "../Platform.h"
 
@@ -28,15 +27,14 @@ bool OgcLoggerUdp::init(const LogConfig & config)
 
 bool OgcLoggerUdp::activateSocket()
 {
-	sock = net_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	sock = net_socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0)
 		return false;
 
 	if (pendingConfig.nonBlocking)
 	{
-		int flags = net_fcntl(sock, F_GETFL, 0);
-		if (flags >= 0)
-			net_fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+		u32 nonBlocking = 1;
+		net_ioctl(sock, FIONBIO, &nonBlocking);
 	}
 
 	memset(&serverAddr, 0, sizeof(serverAddr));
