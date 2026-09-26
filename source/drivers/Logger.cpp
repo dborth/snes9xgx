@@ -144,6 +144,29 @@ void Logger::init(const LogConfig & newConfig)
 	initialized = true;
 }
 
+void Logger::activateDeferred(LogBackendId id)
+{
+	MutexLock guard(lock);
+
+	if (!initialized)
+		return; // logging isn't running - never activate behind its back
+
+	uint32_t activeMask = resolveActiveMask();
+	if ((id & activeMask) == 0)
+		return; // not wanted right now - mode off, or on but not this backend
+
+	for (int i = 0; i < slotCount; i++)
+	{
+		if (slots[i].id != id)
+			continue;
+
+		if (!slots[i].active)
+			slots[i].active = true; // backend already finished its own setup - just make it visible to log()
+
+		break;
+	}
+}
+
 void Logger::shutdown()
 {
 	MutexLock guard(lock);

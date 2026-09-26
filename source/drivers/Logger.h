@@ -182,6 +182,10 @@ public:
 	//!the first call.
 	void init(const LogConfig & config);
 
+	//!Called by a backend that deferred its own activation on some
+	//!background precondition (eg. OgcLoggerUdp)
+	void activateDeferred(LogBackendId id);
+
 	//!Shuts down every registered backend and forgets the config.
 	//!Backends themselves remain registered (and owned) until this
 	//!Logger is destroyed, so a later init() call can reactivate

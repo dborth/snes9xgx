@@ -23,6 +23,9 @@ class WiiNetwork
 		//! Non-blocking: true if the console currently has a usable IP.
 		static bool isUp();
 
+		//! Registers callback to run exactly once
+		static void notifyWhenUp(void (*callback)());
+
 		//! Stops and joins the background bring-up thread
 		static void shutdown();
 };

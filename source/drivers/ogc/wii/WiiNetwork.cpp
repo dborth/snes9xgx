@@ -17,9 +17,10 @@
 
 static ThreadSync & NetSync() { static ThreadSync s; return s; }
 static Thread networkThread;
-static bool networkIdle    = false; // protected by NetSync().mutex - true once the current bring-up attempt has finished (success or exhausted retries)
-static bool networkUp      = false; // protected by NetSync().mutex - result of that attempt
-static bool netPrevInit    = false; // true once net_init_async has succeeded at least once; drives the teardown-before-retry dance below
+static bool networkIdle       = false; // protected by NetSync().mutex - true once the current bring-up attempt has finished (success or exhausted retries)
+static bool networkUp         = false; // protected by NetSync().mutex - result of that attempt
+static bool netPrevInit       = false; // true once net_init_async has succeeded at least once; drives the teardown-before-retry dance below
+static void (*onUpCallback)() = nullptr; // protected by NetSync().mutex - armed by notifyWhenUp(), fired once (then cleared) on the first successful bring-up
 
 static void WakeNetworkThread()
 {
@@ -31,8 +32,8 @@ static void WakeNetworkThread()
  * NetworkThreadEntry
  *
  * Brings the network up (net_init_async, with its own bounded internal
- * retry) and goes idle until StartNetworkAttempt() wakes it for another
- * try, or JoinAll()/requestStop() tears it down at app exit.
+ * retry) and goes idle until ensureUp()/notifyWhenUp() wakes it for
+ * another try, or JoinAll()/requestStop() tears it down at app exit.
  ***************************************************************************/
 static void * NetworkThreadEntry(void *)
 {
@@ -41,71 +42,92 @@ static void * NetworkThreadEntry(void *)
 	{
 		NetSync().mutex.unlock();
 
-		s32 res = -1;
-		int retry = 5;
+		// Already up
+		bool success = (net_gethostip() > 0);
 
-		while(retry > 0 && !networkThread.stopRequested())
+		if(!success)
 		{
-			if(netPrevInit)
+			s32 res = -1;
+			int retry = 5;
+
+			while(retry > 0 && !networkThread.stopRequested())
 			{
-				net_deinit();
-				for(int i = 0; i < 400 && !networkThread.stopRequested(); i++) // up to 10 seconds to let the old connection tear down
+				if(netPrevInit)
 				{
-					res = net_get_status();
-					if(res != -EBUSY) // not still busy tearing down the old connection
+					net_deinit();
+					for(int i = 0; i < 400 && !networkThread.stopRequested(); i++) // up to 10 seconds to let the old connection tear down
 					{
-						usleep(2000);
-						net_wc24cleanup();
-						netPrevInit = false; // net_wc24cleanup only needs to run once per net_init_async success
+						res = net_get_status();
+						if(res != -EBUSY) // not still busy tearing down the old connection
+						{
+							usleep(2000);
+							net_wc24cleanup();
+							netPrevInit = false; // net_wc24cleanup only needs to run once per net_init_async success
+							usleep(20000);
+							break;
+						}
 						usleep(20000);
-						break;
 					}
-					usleep(20000);
 				}
-			}
 
-			usleep(2000);
-			res = net_init_async(NULL, NULL);
+				usleep(2000);
+				res = net_init_async(NULL, NULL);
 
-			if(res != 0)
-			{
-				sleep(1);
-				retry--;
-				continue;
-			}
+				if(res != 0)
+				{
+					sleep(1);
+					retry--;
+					continue;
+				}
 
-			res = net_get_status();
-			int wait = 400; // ~8 sec
-			while(res == -EBUSY && wait > 0 && !networkThread.stopRequested())
-			{
-				usleep(20000);
 				res = net_get_status();
-				wait--;
+				int wait = 400; // ~8 sec
+				while(res == -EBUSY && wait > 0 && !networkThread.stopRequested())
+				{
+					usleep(20000);
+					res = net_get_status();
+					wait--;
+				}
+
+				if(res == 0)
+					break;
+
+				retry--;
+				usleep(2000);
 			}
 
 			if(res == 0)
-				break;
-
-			retry--;
-			usleep(2000);
-		}
-
-		bool success = false;
-		if(res == 0)
-		{
-			struct in_addr hostip;
-			hostip.s_addr = net_gethostip();
-			if(hostip.s_addr)
 			{
-				success = true;
-				netPrevInit = true;
+				struct in_addr hostip;
+				hostip.s_addr = net_gethostip();
+				if(hostip.s_addr)
+				{
+					success = true;
+					netPrevInit = true;
+				}
 			}
 		}
+
+		void (*firedCallback)() = nullptr;
 
 		NetSync().mutex.lock();
 		networkUp = success;
 		networkIdle = true;
 		NetSync().idleCond.signal(); // wake anything blocked in ensureUp()
+
+		if(success && onUpCallback)
+		{
+			firedCallback = onUpCallback;
+			onUpCallback = nullptr;
+		}
+
+		if(firedCallback)
+		{
+			NetSync().mutex.unlock();
+			firedCallback();
+			NetSync().mutex.lock();
+		}
+
 		while(networkIdle && !networkThread.stopRequested())
 			NetSync().workCond.wait(NetSync().mutex);
 	}
@@ -160,8 +182,26 @@ bool WiiNetwork::ensureUp()
 	return false;
 }
 
+void WiiNetwork::notifyWhenUp(void (*callback)())
+{
+	{
+		MutexLock guard(NetSync().mutex);
+		onUpCallback = callback;
+		networkIdle = false;
+	}
+
+	if(!networkThread.isRunning())
+		networkThread.start(NetworkThreadEntry, nullptr, NETWORK_THREAD_STACKSIZE, ThreadPriority::Low, WakeNetworkThread);
+	else
+		WakeNetworkThread();
+}
+
 void WiiNetwork::shutdown()
 {
+	{
+		MutexLock guard(NetSync().mutex);
+		onUpCallback = nullptr;
+	}
 	networkThread.requestStop();
 	networkThread.join();
 }

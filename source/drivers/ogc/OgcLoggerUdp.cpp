@@ -10,21 +10,29 @@
 #include <cstring>
 #include <fcntl.h>
 
+#include "../Platform.h"
+
+OgcLoggerUdp * OgcLoggerUdp::self = nullptr;
+
 bool OgcLoggerUdp::init(const LogConfig & config)
 {
 	shutdown();
+	pendingConfig = config;
 
-	// net_init() is safe to call even if some other subsystem already
-	// brought the network stack up (eg. an SMB share) - it is reference
-	// counted internally by libogc and returns immediately if so.
-	if (net_init() < 0)
-		return false;
+	if (WiiNetwork::isUp())
+		return activateSocket();
 
+	WiiNetwork::notifyWhenUp(&OgcLoggerUdp::OnNetworkUp);
+	return false;
+}
+
+bool OgcLoggerUdp::activateSocket()
+{
 	sock = net_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock < 0)
 		return false;
 
-	if (config.nonBlocking)
+	if (pendingConfig.nonBlocking)
 	{
 		int flags = net_fcntl(sock, F_GETFL, 0);
 		if (flags >= 0)
@@ -33,9 +41,9 @@ bool OgcLoggerUdp::init(const LogConfig & config)
 
 	memset(&serverAddr, 0, sizeof(serverAddr));
 	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(config.targetPort);
+	serverAddr.sin_port = htons(pendingConfig.targetPort);
 
-	if (inet_aton(config.targetIp, &serverAddr.sin_addr) == 0)
+	if (inet_aton(pendingConfig.targetIp, &serverAddr.sin_addr) == 0)
 	{
 		// Malformed targetIp - fail activation loudly rather than silently
 		// sending to a zeroed/broadcast address.
@@ -45,6 +53,16 @@ bool OgcLoggerUdp::init(const LogConfig & config)
 	}
 
 	return true;
+}
+
+void OgcLoggerUdp::OnNetworkUp()
+{
+	// Only ever reached from WiiNetwork's background thread
+	if (!self || !self->activateSocket())
+		return;
+
+	if (platform && platform->getLogger())
+		platform->getLogger()->activateDeferred(LOGGER_UDP);
 }
 
 void OgcLoggerUdp::shutdown()
