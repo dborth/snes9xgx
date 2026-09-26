@@ -5,6 +5,7 @@
  ***************************************************************************/
 #pragma once
 
+#include <coreinit/time.h>
 #include <gx2/sampler.h>
 #include <gx2/texture.h>
 #include "../VideoDriver.h"
@@ -64,14 +65,26 @@ class WutVideoDriver : public VideoDriver
 		//!than issuing a GX2 call into a context we no longer own.
 		bool isForeground() const;
 
+		// Copies the drawn TV/DRC contents to their scan buffers and submits
+		// the flip. Always pipelined: submits and returns without waiting for
+		// the GPU to finish (that wait is prepareFrame()'s job, below). The
+		// one wait done here is for the *previous* submit's flip, since the
+		// copy above can't safely land on a scan buffer the display hasn't
+		// finished swapping away from yet.
 		void presentBuffer();
-	private:
-		// Binds the TV context state and resets the per-frame render
-		// state (viewport/scissor/blend/depth/cull) that WHBGfxInit()
-		// doesn't set on its own. Called once at the end of init() so
-		// the first frame's draws land somewhere valid, then again at
-		// the top of every render() pass.
+
+		// Binds the TV context state and resets the per-frame render state
+		// (viewport/scissor/blend/depth/cull) that WHBGfxInit() doesn't set
+		// on its own, and rewinds the shared shader slot counters (see
+		// ColorShader::resetFrame() / Texture2DShader::resetFrame()).
 		void prepareFrame();
+
+		// DrawDone + wait for outstanding flips. Called when leaving the
+		// emulator for the menu, and before shutdown.
+		void drainGpu();
+	private:
+		bool gpuFramesInFlight = false;   // a pipelined frame was submitted and not yet retired/drained
+		OSTime lastSubmitTimeStamp = 0;   // GX2 timestamp of that submit
 
 		// Queries GX2's current TV scan mode/aspect ratio and derives the
 		// physical TV and DRC target dims

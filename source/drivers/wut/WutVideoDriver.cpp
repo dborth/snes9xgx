@@ -16,10 +16,12 @@
 #include <gx2/display.h>
 #include <gx2/draw.h>
 #include <gx2/enum.h>
+#include <gx2/event.h>
 #include <gx2/mem.h>
 #include <gx2/registers.h>
 #include <gx2/sampler.h>
 #include <gx2/surface.h>
+#include <gx2/swap.h>
 #include <gx2/texture.h>
 #include <whb/gfx.h>
 #include <proc_ui/procui.h>
@@ -196,6 +198,7 @@ void WutVideoDriver::shutdown()
 {
 	OSCancelAlarm(&frameTimerAlarm);
 
+	drainGpu();
 	WHBGfxShutdown();
 }
 
@@ -209,13 +212,20 @@ EmulatorVideoDriver* WutVideoDriver::getEmulatorVideo()
 	return emulatorVideo;
 }
 
-
 void WutVideoDriver::prepareFrame()
 {
 	if(!isForeground())
+	{
+		gpuFramesInFlight = false; // GX2 context is gone/reinitialised; stale timestamps are meaningless
 		return;
+	}
 
-	WHBGfxBeginRender();
+	if(gpuFramesInFlight)
+	{
+		if(GX2GetRetiredTimeStamp() < lastSubmitTimeStamp)
+			GX2WaitTimeStamp(lastSubmitTimeStamp);
+		gpuFramesInFlight = false;
+	}
 
 	auto drawPass = [&]() {
 		WHBGfxClearColor(clearColor.r / 255.0f, clearColor.g / 255.0f, clearColor.b / 255.0f, clearColor.a / 255.0f);
@@ -238,23 +248,44 @@ void WutVideoDriver::prepareFrame()
 void WutVideoDriver::renderMenu()
 {
 	presentBuffer();
+	prepareFrame();
 }
 
 void WutVideoDriver::startMenuVideo()
 {
+	// Leaving the emulator: make sure no pipelined frame is still in flight
+	// before the menu starts recording draws into shared GX2 buffers.
+	drainGpu();
+}
 
+void WutVideoDriver::drainGpu()
+{
+	if(!gpuFramesInFlight)
+		return;
+	gpuFramesInFlight = false;
+	if(!isForeground())
+		return;
+
+	GX2DrawDone();
+	WHBGfxBeginRender(); // waits for the outstanding flip(s)
 }
 
 void WutVideoDriver::presentBuffer()
 {
-	if(isForeground())
-	{
-		WHBGfxFinishRenderTV();
-		WHBGfxFinishRenderDRC();
-		WHBGfxFinishRender();
-	}
+	if(!isForeground())
+		return;
 
-	prepareFrame();
+	WHBGfxBeginRender();
+
+	WHBGfxFinishRenderTV();
+	WHBGfxFinishRenderDRC();
+
+	GX2SwapScanBuffers();
+	GX2Flush();
+	GX2SetTVEnable(TRUE);
+	GX2SetDRCEnable(TRUE);
+	lastSubmitTimeStamp = GX2GetLastSubmittedTimeStamp();
+	gpuFramesInFlight = true;
 }
 
 uint32_t WutVideoDriver::getFrameTimer()

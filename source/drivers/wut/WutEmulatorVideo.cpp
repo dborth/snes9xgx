@@ -364,6 +364,8 @@ void WutEmulatorVideo::presentFrame(int width, int height)
 	if (checkVideo == 2 && IPPU.RenderedFramesCount == prevRenderedFrameCount)
 		return; // we haven't rendered any frames yet, so we can't draw anything!
 
+	videoDriver->prepareFrame();
+
 	if (oldvwidth != vwidth || oldvheight != vheight) // if rendered width/height changes, update scaling
 		checkVideo = 1;
 
