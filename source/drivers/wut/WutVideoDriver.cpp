@@ -197,8 +197,6 @@ void WutVideoDriver::computeUIScale()
 void WutVideoDriver::shutdown()
 {
 	OSCancelAlarm(&frameTimerAlarm);
-
-	drainGpu();
 	WHBGfxShutdown();
 }
 
@@ -253,21 +251,7 @@ void WutVideoDriver::renderMenu()
 
 void WutVideoDriver::startMenuVideo()
 {
-	// Leaving the emulator: make sure no pipelined frame is still in flight
-	// before the menu starts recording draws into shared GX2 buffers.
-	drainGpu();
-}
 
-void WutVideoDriver::drainGpu()
-{
-	if(!gpuFramesInFlight)
-		return;
-	gpuFramesInFlight = false;
-	if(!isForeground())
-		return;
-
-	GX2DrawDone();
-	WHBGfxBeginRender(); // waits for the outstanding flip(s)
 }
 
 void WutVideoDriver::presentBuffer()

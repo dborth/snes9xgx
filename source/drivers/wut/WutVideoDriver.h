@@ -78,10 +78,6 @@ class WutVideoDriver : public VideoDriver
 		// on its own, and rewinds the shared shader slot counters (see
 		// ColorShader::resetFrame() / Texture2DShader::resetFrame()).
 		void prepareFrame();
-
-		// DrawDone + wait for outstanding flips. Called when leaving the
-		// emulator for the menu, and before shutdown.
-		void drainGpu();
 	private:
 		bool gpuFramesInFlight = false;   // a pipelined frame was submitted and not yet retired/drained
 		OSTime lastSubmitTimeStamp = 0;   // GX2 timestamp of that submit
