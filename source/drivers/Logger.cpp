@@ -64,27 +64,27 @@ uint32_t Logger::resolveActiveMask() const
 {
 	uint32_t mask;
 
-	switch (config.mode)
+	switch (logConfig.mode)
 	{
 		case LogMode::OSReport:		mask = LOGGER_OSREPORT;			break;
 		case LogMode::UDP:			mask = LOGGER_UDP;				break;
 		case LogMode::SerialGecko:	mask = LOGGER_SERIAL;			break;
 		case LogMode::File:			mask = LOGGER_FILE;				break;
-		case LogMode::Multi:		mask = config.multiBackendMask; break;
+		case LogMode::Multi:		mask = logConfig.multiBackendMask; break;
 		default:					mask = LOGGER_NONE;				break;
 	}
 
-	if (config.mirrorToOSReport)
+	if (logConfig.mirrorToOSReport)
 		mask |= LOGGER_OSREPORT;
 
 	return mask;
 }
 
-void Logger::init(const LogConfig & newConfig)
+void Logger::init(const LoglogConfig & newlogConfig)
 {
 	MutexLock guard(lock);
 
-	config = newConfig;
+	logConfig = newlogConfig;
 	uint32_t activeMask = resolveActiveMask();
 
 	// Tracked per-slot rather than reported inline: we want every
@@ -99,7 +99,7 @@ void Logger::init(const LogConfig & newConfig)
 
 		if (wantActive && !slots[i].active)
 		{
-			slots[i].active = slots[i].backend->init(config);
+			slots[i].active = slots[i].backend->init(logConfig);
 			activationFailed[i] = !slots[i].active;
 		}
 		else if (!wantActive && slots[i].active)
@@ -110,9 +110,9 @@ void Logger::init(const LogConfig & newConfig)
 		else if (wantActive && slots[i].active)
 		{
 			// Already active from a previous init() - reopen against
-			// the new config (target IP/path/etc may have changed).
+			// the new logConfig (target IP/path/etc may have changed).
 			slots[i].backend->shutdown();
-			slots[i].active = slots[i].backend->init(config);
+			slots[i].active = slots[i].backend->init(logConfig);
 			activationFailed[i] = !slots[i].active;
 		}
 	}
@@ -197,7 +197,7 @@ void Logger::shutdown()
 void Logger::setLevel(LogLevel level)
 {
 	MutexLock guard(lock);
-	config.level = level;
+	logConfig.level = level;
 }
 
 static const char * LevelTag(LogLevel level)
@@ -221,28 +221,28 @@ void Logger::log(LogLevel level, const char * fmt, va_list args)
 	// buffer at all - the overwhelmingly common case once a build has
 	// settled on a level (eg. Info in release, Debug only when actively
 	// chasing a bug).
-	if (level < config.level)
+	if (level < logConfig.level)
 		return;
 
 	MutexLock guard(lock);
 
 	// Re-check under the lock: another thread may have raised the level
 	// (or shut Logger down) between the check above and taking it.
-	if (!initialized || level < config.level)
+	if (!initialized || level < logConfig.level)
 		return;
 
 	// Fixed stack buffer only - no malloc/new anywhere in this path.
 	char line[512];
 	size_t offset = 0;
 
-	if (config.includeSequenceNumber)
+	if (logConfig.includeSequenceNumber)
 	{
 		int n = snprintf(line + offset, sizeof(line) - offset, "%06u ", (unsigned)(++sequence));
 		if (n > 0)
 			offset += (size_t)n < (sizeof(line) - offset) ? (size_t)n : (sizeof(line) - offset - 1);
 	}
 
-	if (config.includeTimestamp)
+	if (logConfig.includeTimestamp)
 	{
 		uint32_t ms = SystemTime::diffMillisecs(processStartTicks, SystemTime::now());
 		int n = snprintf(line + offset, sizeof(line) - offset, "[%5u.%03u] ", (unsigned)(ms / 1000), (unsigned)(ms % 1000));
@@ -250,7 +250,7 @@ void Logger::log(LogLevel level, const char * fmt, va_list args)
 			offset += (size_t)n < (sizeof(line) - offset) ? (size_t)n : (sizeof(line) - offset - 1);
 	}
 
-	if (config.includeLevelTag)
+	if (logConfig.includeLevelTag)
 	{
 		size_t remaining = sizeof(line) - offset;
 		size_t tagLen = strlen(LevelTag(level));
