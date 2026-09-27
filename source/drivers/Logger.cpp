@@ -80,11 +80,11 @@ uint32_t Logger::resolveActiveMask() const
 	return mask;
 }
 
-void Logger::init(const LogConfig & newlogConfig)
+void Logger::init(const LogConfig & newConfig)
 {
 	MutexLock guard(lock);
 
-	logConfig = newlogConfig;
+	logConfig = newConfig;
 	uint32_t activeMask = resolveActiveMask();
 
 	// Tracked per-slot rather than reported inline: we want every
