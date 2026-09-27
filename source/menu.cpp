@@ -364,7 +364,7 @@ static void DrawGui() {
 	do
 	{
 		if(controller[i]->getPadData().validPointer) {
-			cursorImg[i].setPosition(controller[i]->getPadData().cursor_x-48, controller[i]->getPadData().cursor_y-48);
+			cursorImg[i].setPosition(controller[i]->getPadData().cursor_x - cursorImg[i].getWidth()/2, controller[i]->getPadData().cursor_y - cursorImg[i].getHeight()/2);
 			cursorImg[i].setAngle(controller[i]->getPadData().cursor_angle);
 			cursorImg[i].draw();
 		}
