@@ -253,6 +253,7 @@ GuiImageData::DecodedImage GuiImageData::decodeToRgba(const uint8_t * pngData, i
 	out.rgba = std::move(outRgba);
 	out.width = w;
 	out.height = h;
+	out.assetScaled = (maxw == 0 && maxh == 0);
 	return out;
 }
 
@@ -263,6 +264,7 @@ bool GuiImageData::uploadDecoded(DecodedImage && decoded)
 
 	int w = decoded.width;
 	int h = decoded.height;
+	bool assetScaled = decoded.assetScaled;
 
 	bool haveUsableTexture = texture && (!ownsTexture || (w <= capWidth && h <= capHeight));
 
@@ -286,8 +288,23 @@ bool GuiImageData::uploadDecoded(DecodedImage && decoded)
 		capHeight = h;
 	}
 
-	width = w;
-	height = h;
+	if(assetScaled)
+	{
+		// Report the design-canvas size. Keeps every GuiImage's on-screen footprint
+		// pinned to canvas pixels even though the backing texture is full native resolution
+		const PlatformConfig& config = platform->getConfig();
+		width = static_cast<int>(w / config.assetScaleX + 0.5f);
+		height = static_cast<int>(h / config.assetScaleY + 0.5f);
+		if(width < 1) width = 1;
+		if(height < 1) height = 1;
+	}
+	else
+	{
+		// Caller fit this decode to an explicit maxw/maxh box (eg. a cover-art thumbnail)
+		width = w;
+		height = h;
+	}
+
 	return true;
 }
 
@@ -297,13 +314,12 @@ bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * ou
 	if(!decoded.valid())
 		return false;
 
-	int w = decoded.width;
-	int h = decoded.height;
-
 	if(!uploadDecoded(std::move(decoded)))
 		return false;
 
-	if(outWidth) *outWidth = w;
-	if(outHeight) *outHeight = h;
+	// width/height were just set by uploadDecoded() to the design-space size
+	// Read them back rather than reusing the raw decoded pixel size
+	if(outWidth) *outWidth = width;
+	if(outHeight) *outHeight = height;
 	return true;
 }

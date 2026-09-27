@@ -132,8 +132,10 @@ bool SaneIOS(uint32_t ios)
 /****************************************************************************
  * init/shutdown
  ***************************************************************************/
-void WiiPlatform::init(int width, int height)
+void WiiPlatform::init(const PlatformConfig& config)
 {
+	this->config = config;
+
 	L2Enhance();
 
 	u32 ios = IOS_GetVersion();
@@ -152,7 +154,7 @@ void WiiPlatform::init(int width, int height)
 	this->threadDriver->init();
 
 	this->videoDriver = new OgcVideoDriver();
-	this->videoDriver->init(width, height);
+	this->videoDriver->init(config.canvasWidth, config.canvasHeight);
 
 	this->audioDriver = new WiiAudioDriver();
 	this->audioDriver->init();

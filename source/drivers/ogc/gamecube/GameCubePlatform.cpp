@@ -39,8 +39,10 @@ static void ipl_set_config(unsigned char c)
 /****************************************************************************
  * init/shutdown
  ***************************************************************************/
-void GameCubePlatform::init(int width, int height)
+void GameCubePlatform::init(const PlatformConfig& config)
 {
+	this->config = config;
+
 	ipl_set_config(6); // disable Qoob modchip
 	__exception_setreload(8);
 
@@ -48,7 +50,7 @@ void GameCubePlatform::init(int width, int height)
 	this->threadDriver->init();
 
 	this->videoDriver = new OgcVideoDriver();
-	this->videoDriver->init(width, height);
+	this->videoDriver->init(config.canvasWidth, config.canvasHeight);
 
 	this->audioDriver = new GameCubeAudioDriver();
 	this->audioDriver->init();

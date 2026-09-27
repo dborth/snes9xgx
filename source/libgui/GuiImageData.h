@@ -75,6 +75,8 @@ class GuiImageData
 			std::unique_ptr<uint8_t, decltype(&free)> rgba{nullptr, free}; //!< row-major RGBA8, or null if decode failed
 			int width = 0;
 			int height = 0;
+			//!False when maxw/maxh constrained this decode to a caller-specified pixel box
+			bool assetScaled = true;
 			bool valid() const { return rgba != nullptr; }
 		};
 		//!Decodes a PNG buffer into plain RGBA8 pixels, resizing to fit

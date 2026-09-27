@@ -30,7 +30,7 @@ SOURCES		:=	source source/libgui source/utils source/utils/sz \
 				source/drivers source/drivers/wut source/drivers/wut/shaders \
 				source/snes9x source/snes9x/apu
 INCLUDES	:=	source source/snes9x
-DATA		:=	data/images data/sounds data/fonts data/lang
+DATA		:=	data/images_hd data/sounds data/fonts data/lang
 
 #---------------------------------------------------------------------------------
 # options for code generation

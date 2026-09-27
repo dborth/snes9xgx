@@ -14,15 +14,17 @@
 
 #include "WutPlatform.h"
 
-void WutPlatform::init(int width, int height)
+void WutPlatform::init(const PlatformConfig& config)
 {
+	this->config = config;
+
 	WHBProcInit();
 
 	this->threadDriver = new WutThreadDriver();
 	this->threadDriver->init();
 
 	this->videoDriver = new WutVideoDriver();
-	this->videoDriver->init(width, height);
+	this->videoDriver->init(config.canvasWidth, config.canvasHeight);
 
 	this->audioDriver = new WutAudioDriver();
 	this->audioDriver->init();

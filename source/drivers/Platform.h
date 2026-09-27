@@ -43,6 +43,14 @@ enum class SystemEvent
 	ResetRequested,
 };
 
+struct PlatformConfig
+{
+	int canvasWidth;
+	int canvasHeight;
+	float assetScaleX = 1.0f;
+	float assetScaleY = 1.0f;
+};
+
 //!Composition root for a platform. Owns the five concrete drivers below
 //!and is the only place app code needs an `#ifdef` to pick a platform -
 //!everything else goes through the abstract driver interfaces.
@@ -52,9 +60,10 @@ class Platform
 		virtual ~Platform() = default;
 
 		//!Constructs and initializes all five drivers for this platform.
-		//!\param width Design canvas width in pixels
-		//!\param height Design canvas height in pixels
-		virtual void init(int width, int height) = 0;
+		//!\param config GUI canvas size and asset scale for this platform
+		virtual void init(const PlatformConfig& config) = 0;
+		//!The PlatformConfig this platform was init()'d with.
+		const PlatformConfig& getConfig() const { return config; }
 		//!Tears down the platform (via shutdown()) and then performs
 		//!whatever platform-appropriate action actually ends the app -
 		//!return to loader/menu, power off, or just exit(), depending on
@@ -95,6 +104,10 @@ class Platform
 		bool shouldExit() { return getStatus() == Status::Exiting || getSystemEvent() == SystemEvent::ShutdownRequested; }
 
 	protected:
+		//!Set by init() in every concrete Platform - store the passed-in
+		//!config as the very first line of the override.
+		PlatformConfig config{};
+
 		//!Shuts down and releases all five drivers. Any background
 		//!Thread that might still call into a driver must be
 		//!stopped and joined (eg. via Thread::JoinAll()) before calling
