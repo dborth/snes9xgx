@@ -80,7 +80,7 @@ uint32_t Logger::resolveActiveMask() const
 	return mask;
 }
 
-void Logger::init(const LoglogConfig & newlogConfig)
+void Logger::init(const LogConfig & newlogConfig)
 {
 	MutexLock guard(lock);
 
