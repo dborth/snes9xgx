@@ -229,9 +229,9 @@ void WutInputDriver::update() {
 				padData.hw_gforceX[INPUT_HW_DRC] = vpadStatus.accelorometer.acc.x;
 				padData.hw_gforceY[INPUT_HW_DRC] = vpadStatus.accelorometer.acc.y;
 				padData.hw_gforceZ[INPUT_HW_DRC] = vpadStatus.accelorometer.acc.z;
-				padData.hw_pitch[INPUT_HW_DRC] = vpadStatus.angle.x;
-				padData.hw_roll[INPUT_HW_DRC]  = vpadStatus.angle.y;
-				padData.hw_yaw[INPUT_HW_DRC]   = vpadStatus.angle.z;
+				padData.hw_pitch[INPUT_HW_DRC] = vpadStatus.angle.x * 360.0f;
+				padData.hw_roll[INPUT_HW_DRC]  = vpadStatus.angle.y * 360.0f;
+				padData.hw_yaw[INPUT_HW_DRC]   = vpadStatus.angle.z * 360.0f;
 
 				// Touch Screen & Pointer Coordinates Mapping
 				bool drcTouched = (vpadStatus.tpNormal.touched != 0);
@@ -322,8 +322,6 @@ void WutInputDriver::update() {
 			padData.hw_gforceX[INPUT_HW_WIIMOTE] = kpadStatus.acc.x;
 			padData.hw_gforceY[INPUT_HW_WIIMOTE] = kpadStatus.acc.y;
 			padData.hw_gforceZ[INPUT_HW_WIIMOTE] = kpadStatus.acc.z;
-			padData.hw_pitch[INPUT_HW_WIIMOTE] = kpadStatus.angle.x;
-			padData.hw_roll[INPUT_HW_WIIMOTE]  = kpadStatus.angle.y;
 
 			if (kpadStatus.extensionType == WPAD_EXT_PRO_CONTROLLER) {
 				padData.hw_connected[INPUT_HW_WUPC] = true;
@@ -380,18 +378,20 @@ void WutInputDriver::update() {
 						smoothY = irFilterY[i].filter(rawY, deltaTime);
 					}
 
+					float cursorAngleDeg = -std::atan2(kpadStatus.angle.y, kpadStatus.angle.x) * (180.0f / (float)M_PI);
+
 					padData.validPointer = true;
 					padData.isTouch = false;
 					padData.cursor_x = smoothX;
 					padData.cursor_y = smoothY;
-					padData.cursor_angle = kpadStatus.angle.y;
+					padData.cursor_angle = cursorAngleDeg;
 
 					// Remember this frame's IR cursor so a later tick with no new packet won't cause it to drop out
 					kpadCache[i].validPointer = true;
 					kpadCache[i].isTouch = false;
 					kpadCache[i].cursor_x = smoothX;
 					kpadCache[i].cursor_y = smoothY;
-					kpadCache[i].cursor_angle = kpadStatus.angle.y;
+					kpadCache[i].cursor_angle = cursorAngleDeg;
 				} else if (!kpadStatus.posValid) {
 					// Sensor bar tracking lost - reset the filter so we don't drag the
 					// cursor toward a stale point when it's reacquired.
