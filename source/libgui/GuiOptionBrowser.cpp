@@ -30,6 +30,8 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	bgOptionsImg->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 
 	bgOptionsEntry = new GuiImageData(bg_options_entry_png);
+	bgOptionsEntryTop = new GuiImageData(bg_options_entry_top_png);
+	bgOptionsEntryBottom = new GuiImageData(bg_options_entry_bottom_png);
 
 	scrollbar = new GuiImageData(scrollbar_png);
 	scrollbarImg = new GuiImage(scrollbar);
@@ -77,7 +79,10 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 		optionVal[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 		optionVal[i]->setPosition(250,0);
 
-		optionBg[i] = new GuiImage(bgOptionsEntry);
+		GuiImageData * optionEntryImg = bgOptionsEntry;
+		if(i == 0) optionEntryImg = bgOptionsEntryTop;
+		else if(i == OPTION_PAGESIZE-1) optionEntryImg = bgOptionsEntryBottom;
+		optionBg[i] = new GuiImage(optionEntryImg);
 
 		optionBtn[i] = new GuiButton(512,30);
 		optionBtn[i]->setParent(this);
@@ -104,6 +109,8 @@ GuiOptionBrowser::~GuiOptionBrowser()
 
 	delete bgOptions;
 	delete bgOptionsEntry;
+	delete bgOptionsEntryTop;
+	delete bgOptionsEntryBottom;
 	delete scrollbar;
 	delete arrowDown;
 	delete arrowDownOver;

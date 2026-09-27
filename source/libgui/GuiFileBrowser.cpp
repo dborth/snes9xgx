@@ -44,6 +44,8 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	bgFileSelectionImg->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 
 	bgFileSelectionEntry = new GuiImageData(bg_game_selection_entry_png);
+	bgFileSelectionEntryTop = new GuiImageData(bg_game_selection_entry_top_png);
+	bgFileSelectionEntryBottom = new GuiImageData(bg_game_selection_entry_bottom_png);
 
 	iconFolder = new GuiImageData(icon_folder_png);
 	iconSD = new GuiImageData(icon_sd_png);
@@ -113,14 +115,17 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 		fileListText[i]->setPosition(5,0);
 		fileListText[i]->setMaxWidth(295);
 
-		fileListBg[i] = new GuiImage(bgFileSelectionEntry);
+		GuiImageData * fileEntryImg = bgFileSelectionEntry;
+		if(i == 0) fileEntryImg = bgFileSelectionEntryTop;
+		else if(i == FILE_PAGESIZE-1) fileEntryImg = bgFileSelectionEntryBottom;
+		fileListBg[i] = new GuiImage(fileEntryImg);
 		fileListIcon[i] = nullptr;
 
 		fileList[i] = new GuiButton(295, 26);
 		fileList[i]->setParent(this);
 		fileList[i]->setLabel(fileListText[i]);
 		fileList[i]->setImageOver(fileListBg[i]);
-		fileList[i]->setPosition(2,26*i+3);
+		fileList[i]->setPosition(3,26*i+3);
 		fileList[i]->setTrigger(trigA);
 		fileList[i]->setSoundClick(btnSoundClick);
 	}
@@ -143,6 +148,8 @@ GuiFileBrowser::~GuiFileBrowser()
 
 	delete bgFileSelection;
 	delete bgFileSelectionEntry;
+	delete bgFileSelectionEntryTop;
+	delete bgFileSelectionEntryBottom;
 	delete iconFolder;
 	delete iconSD;
 	delete iconUSB;

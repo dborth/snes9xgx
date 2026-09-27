@@ -64,6 +64,8 @@ class GuiFileBrowser : public GuiElement
 
 		GuiImageData * bgFileSelection;
 		GuiImageData * bgFileSelectionEntry;
+		GuiImageData * bgFileSelectionEntryTop;
+		GuiImageData * bgFileSelectionEntryBottom;
 		GuiImageData * iconFolder;
 		GuiImageData * iconSD;
 		GuiImageData * iconUSB;

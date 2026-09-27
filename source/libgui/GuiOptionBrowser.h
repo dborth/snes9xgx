@@ -54,6 +54,8 @@ class GuiOptionBrowser : public GuiElement
 
 		GuiImageData * bgOptions;
 		GuiImageData * bgOptionsEntry;
+		GuiImageData * bgOptionsEntryTop;
+		GuiImageData * bgOptionsEntryBottom;
 		GuiImageData * scrollbar;
 		GuiImageData * arrowDown;
 		GuiImageData * arrowDownOver;
