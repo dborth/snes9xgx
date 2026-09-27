@@ -38,6 +38,7 @@ bool OgcLoggerUdp::activateSocket()
 	}
 
 	memset(&serverAddr, 0, sizeof(serverAddr));
+	serverAddr.sin_len = 8;
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(pendingConfig.targetPort);
 
@@ -76,13 +77,13 @@ void OgcLoggerUdp::write(LogLevel, const char * line, size_t len)
 {
 	if (sock < 0)
 		return;
-
+	
 	// Non-blocking send: a dropped packet or an offline listener returns
 	// immediately (typically -EAGAIN) rather than stalling the caller -
 	// deliberately not checked/retried, since UDP logging is inherently
 	// best-effort and retrying here would reintroduce the exact stall
 	// this backend exists to avoid.
-	net_sendto(sock, line, len, 0, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+	net_sendto(sock, line, len, 0, (struct sockaddr *)&serverAddr, 8);
 }
 
 #else // !HW_RVL - GameCube: no network hardware supported by this backend
