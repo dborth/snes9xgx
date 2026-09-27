@@ -1,58 +1,60 @@
-/*!\mainpage libgui Documentation
+/*!
+ * \file Gui.h
+ * \brief Umbrella header for the platform-agnostic libgui core.
  *
- * \section Introduction
- * libgui is a GUI library originally created for the Wii/GameCube, created to 
- * help structure the design of a complicated GUI interface, and to enable an 
- * author to create a sophisticated, feature-rich GUI. It was originally conceived 
- * and written after I started to design a GUI for Snes9x GX, and found libwiisprite 
- * and GRRLIB inadequate for the purpose. It was designed to be flexible and is easy
- * to modify - don't be afraid to change the way it works or expand it to suit your
- * GUI's purposes! If you do, and you think your changes might benefit others, please
- * share them so they might be added to the project!
+ * libgui - a GUI library for GameCube, Wii, and Wii U homebrew.
+ * https://github.com/dborth/libgui
  *
- * \section Quickstart
- * Start from the supplied template example. For more advanced uses, see the
- * source code for Snes9x GX, FCE Ultra GX, and Visual Boy Advance GX.
-
- * \section Contact
- * If you have any suggestions for the library or documentation, or want to
- * contribute, please visit the libgui website:
- * http://code.google.com/p/libgui/
-
- * \section Credits
- * This library was wholly designed and written by Tantric. Thanks to the authors of
- * GRRLIB and libwiisprite for laying the foundations.
+ * Include this one header to get every core UI class (GuiElement, GuiWindow,
+ * GuiButton, GuiImage, GuiText, GuiSound, GuiFileBrowser, GuiKeyboard,
+ * GuiOptionBrowser, GuiSaveBrowser, ...), the alignment/state/scroll enums,
+ * and the platform driver interfaces they are built on.
  *
-*/
+ * Everything reachable from this header is platform-agnostic: nothing in
+ * source/libgui/ includes a platform SDK header (<gccore.h>, <gx2/*.h>,
+ * <wpad/wpad.h>, etc). All hardware access goes through the abstract driver
+ * interfaces in source/drivers/ (Platform, VideoDriver, AudioDriver,
+ * InputDriver, FileSystemDriver, ThreadDriver), which are implemented once
+ * for GameCube/Wii (source/drivers/ogc/) and once for Wii U
+ * (source/drivers/wut/). Application code should only ever need to include
+ * this header plus whichever concrete Platform header it instantiates.
+ *
+ * See README.md, CHANGELOG.md, and the API documentation in the repository
+ * for more information.
+ */
 
 #pragma once
 
-#include <malloc.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 #include <exception>
-#include <wchar.h>
-#include <math.h>
+#include <cwchar>
+#include <cmath>
 
+#include "../filelist.h"
 #include "../drivers/Platform.h"
 #include "../drivers/InputData.h"
 #include "../drivers/InputController.h"
 
-#include "filelist.h"
-
+//!Vertical alignment of a GuiElement relative to its parent.
+//!\ingroup grp_core
 enum class ALIGN_V {
 	TOP,
 	BOTTOM,
 	MIDDLE
 };
 
+//!Horizontal alignment of a GuiElement relative to its parent.
+//!\ingroup grp_core
 enum class ALIGN_H {
 	LEFT,
 	RIGHT,
 	CENTRE
 };
 
+//!Interaction state of a GuiElement (default, selected, clicked, held, disabled).
+//!\ingroup grp_core
 enum class STATE {
 	DEFAULT,
 	SELECTED,
@@ -61,6 +63,8 @@ enum class STATE {
 	DISABLED
 };
 
+//!Scrolling mode of a GuiText (none or horizontal).
+//!\ingroup grp_core
 enum class SCROLL {
 	NONE,
 	HORIZONTAL

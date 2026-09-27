@@ -378,7 +378,7 @@ void WutInputDriver::update() {
 						smoothY = irFilterY[i].filter(rawY, deltaTime);
 					}
 
-					float cursorAngleDeg = -std::atan2(kpadStatus.angle.y, kpadStatus.angle.x) * (180.0f / (float)M_PI);
+					float cursorAngleDeg = std::atan2(kpadStatus.angle.y, kpadStatus.angle.x) * (180.0f / (float)M_PI);
 
 					padData.validPointer = true;
 					padData.isTouch = false;
@@ -414,8 +414,7 @@ void WutInputDriver::update() {
 
 					controller[i]->setSideways(false);
 				} else {
-					// Sideways Wiimote auto-detection when no extension is connected
-					controller[i]->setSideways(std::abs(kpadStatus.acc.x) > std::abs(kpadStatus.acc.y));
+					controller[i]->setSideways(getWiimoteOrientation() == WIIMOTE_ORIENTATION_HORIZONTAL);
 				}
 			}
 
