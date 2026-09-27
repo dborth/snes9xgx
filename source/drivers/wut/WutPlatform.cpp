@@ -42,16 +42,16 @@ void WutPlatform::init(const PlatformConfig& config)
 	this->logger->registerBackend(LOGGER_SERIAL,	new WutLoggerUsbSerial());
 	this->logger->registerBackend(LOGGER_FILE,		new LoggerFile());
 
-	LogConfig config;
+	LogConfig logConfig;
 	static const int deviceCandidates[] = { DEVICE_SD };
 
 	const char * mountPath = FindFirstMountedPath(this->fileSystemDriver, deviceCandidates, 1);
 
 	if(mountPath[0] != '\0') {
 		// mountPath already ends in "/" (eg. "/vol/external01/") - no separator needed.
-		snprintf(config.filePath, sizeof(config.filePath), "%sdebug.log", mountPath);
+		snprintf(logConfig.filePath, sizeof(logConfig.filePath), "%sdebug.log", mountPath);
 	}
-	this->logger->init(config);
+	this->logger->init(logConfig);
 #endif
 }
 

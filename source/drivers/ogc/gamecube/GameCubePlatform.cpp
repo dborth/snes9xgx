@@ -67,16 +67,16 @@ void GameCubePlatform::init(const PlatformConfig& config)
 	this->logger->registerBackend(LOGGER_SERIAL,	new OgcLoggerUsbGecko());
 	this->logger->registerBackend(LOGGER_FILE,		new LoggerFile());
 
-	LogConfig config;
+	LogConfig logConfig;
 	static const int deviceCandidates[] = { DEVICE_SD_PORT2 };
 	const char * mountPath = FindFirstMountedPath(this->fileSystemDriver, deviceCandidates, 1);
 
 	if(mountPath[0] != '\0') {
 		// mountPath already ends in "/" (eg. "port2:/") - no separator needed.
-		snprintf(config.filePath, sizeof(config.filePath), "%sdebug.log", mountPath);
+		snprintf(logConfig.filePath, sizeof(logConfig.filePath), "%sdebug.log", mountPath);
 	}
 
-	this->logger->init(config);
+	this->logger->init(logConfig);
 #endif
 }
 

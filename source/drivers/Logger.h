@@ -205,7 +205,7 @@ public:
 	//!Runtime-adjusts the minimum severity without touching any
 	//!other config field or re-touching backend init/shutdown.
 	void setLevel(LogLevel level);
-	LogLevel getLevel() const { return config.level; }
+	LogLevel getLevel() const { return logConfig.level; }
 
 	//!Formats fmt/args into a fixed stack buffer and fans it out to
 	//!every backend selected by the current config. No-ops (cheaply)
@@ -230,7 +230,7 @@ private:
 
 	Slot slots[MAX_BACKENDS];
 	int slotCount = 0;
-	LogConfig config;
+	LogConfig logConfig;
 	Mutex lock;
 	uint32_t sequence = 0;
 	bool initialized = false;

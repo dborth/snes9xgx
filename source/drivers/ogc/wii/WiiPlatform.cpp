@@ -172,17 +172,17 @@ void WiiPlatform::init(const PlatformConfig& config)
 	this->logger->registerBackend(LOGGER_SERIAL,	new OgcLoggerUsbGecko());
 	this->logger->registerBackend(LOGGER_FILE,		new LoggerFile());
 
-	LogConfig config;
+	LogConfig logConfig;
 	static const int deviceCandidates[] = { DEVICE_SD, DEVICE_USB };
 
 	const char * mountPath = FindFirstMountedPath(this->fileSystemDriver, deviceCandidates, 2);
 
 	if(mountPath[0] != '\0') {
 		// mountPath already ends in "/" (eg. "sd:/") - no separator needed.
-		snprintf(config.filePath, sizeof(config.filePath), "%sdebug.log", mountPath);
+		snprintf(logConfig.filePath, sizeof(logConfig.filePath), "%sdebug.log", mountPath);
 	}
 
-	this->logger->init(config);
+	this->logger->init(logConfig);
 #endif
 }
 
