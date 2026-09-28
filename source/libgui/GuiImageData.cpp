@@ -8,6 +8,7 @@
 #include <setjmp.h>
 
 #include "Gui.h"
+#include "GuiImageDataCache.h"
 
 namespace {
 	uint8_t * scratchBuffer = nullptr;
@@ -95,6 +96,7 @@ void GuiImageData::clear()
 	width = 0;
 	height = 0;
 	ownsTexture = false;
+	cachedView = false;
 	capWidth = 0;
 	capHeight = 0;
 }
@@ -310,6 +312,33 @@ bool GuiImageData::uploadDecoded(DecodedImage && decoded)
 
 bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * outHeight, int maxw, int maxh)
 {
+	if(cachedView)
+	{
+		texture = nullptr;
+		width = 0;
+		height = 0;
+		cachedView = false;
+	}
+
+	GuiImageData * cached = (!texture || ownsTexture) ? GuiImageDataCache::tryGet(pngData, maxw, maxh) : nullptr;
+	if(cached && cached != this)
+	{
+		if(ownsTexture && texture)
+			platform->getVideo()->getImageRenderer()->destroyTexture(texture);
+
+		texture = cached->texture;
+		width = cached->width;
+		height = cached->height;
+		ownsTexture = false;
+		cachedView = true;
+		capWidth = 0;
+		capHeight = 0;
+
+		if(outWidth) *outWidth = width;
+		if(outHeight) *outHeight = height;
+		return true;
+	}
+
 	DecodedImage decoded = decodeToRgba(pngData, maxw, maxh);
 	if(!decoded.valid())
 		return false;

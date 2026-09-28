@@ -106,6 +106,7 @@ class GuiImageData
 		bool ownsTexture; //!< Whether this object may destroy/replace texture
 		int capWidth; //!< Width texture was allocated to hold, if ownsTexture (0 otherwise)
 		int capHeight; //!< Height texture was allocated to hold, if ownsTexture (0 otherwise)
+		bool cachedView = false; //!< texture is a shared GuiImageDataCache texture we merely borrow; never written to or freed
 		//!Decodes a PNG buffer, reusing the existing owned texture if it's
 		//!already large enough, otherwise (re)allocating one.
 		bool decodeImage(const uint8_t * pngData, int * width, int * height, int maxw, int maxh);

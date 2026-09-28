@@ -142,6 +142,21 @@ $(OUTPUT).rpx: $(OUTPUT).elf
 $(OUTPUT).elf: $(OFILES)
 
 $(OFILES_SOURCES): $(HFILES)
+
+#---------------------------------------------------------------------------------
+# imagelist.h: generated array of every compiled-in PNG (guiImageAssets /
+# guiImageAssetCount), for GuiImageDataCache::preload(). Follows BINFILES, so
+# it always matches this platform's data dirs with nothing to maintain by hand.
+#---------------------------------------------------------------------------------
+IMAGE_HFILES := $(filter %_png.h,$(HFILES))
+
+imagelist.h : $(IMAGE_HFILES)
+	@echo generating $@
+	@printf '%s\n' '#pragma once' '#include <stdint.h>' $(foreach h,$(IMAGE_HFILES),'#include "$(h)"') \
+		'static const uint8_t * const guiImageAssets[] = {' $(foreach h,$(IMAGE_HFILES),'    $(basename $(h)),') '};' \
+		'static const int guiImageAssetCount = (int)(sizeof(guiImageAssets) / sizeof(guiImageAssets[0]));' > $@
+
+$(OFILES_SOURCES) : imagelist.h
 #---------------------------------------------------------------------------------
 # This rule links in binary data with .ttf, .png, and .mp3 extensions
 #---------------------------------------------------------------------------------
