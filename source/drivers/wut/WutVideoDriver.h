@@ -5,6 +5,7 @@
  ***************************************************************************/
 #pragma once
 
+#include <vector>
 #include <coreinit/time.h>
 #include <gx2/sampler.h>
 #include <gx2/texture.h>
@@ -24,9 +25,33 @@ static const int OUTPUT_TARGET_COUNT = 2;
 
 class WutEmulatorVideo;
 
-//!Wii U VideoDriver: GX2 + libwhb's WHBGfx* helpers. Every draw pass runs
-//!twice per frame - once for the TV, once for the GamePad - so the same
+//!One recorded UI draw (image, glyph quad or flat rectangle). The renderers
+//!record these instead of drawing immediately, and WutVideoDriver replays the
+//!whole list once for the TV and once for the GamePad (see flushDrawQueue()).
+struct WutDrawCmd
+{
+	enum class Kind : uint8_t
+	{
+		Texture,        //!<textured quad through Texture2DShader, shader-side angle/offset/scale
+		TextureRotated, //!<textured quad whose corners were pre-rotated into a Texture2DShader rotated slot
+		Color           //!<flat-color quad through ColorShader
+	};
+
+	Kind kind;
+	uint32_t slot;                //!<TextureRotated only: slot from Texture2DShader::uploadRotatedQuad()
+	const GX2Texture * texture;   //!<Texture/TextureRotated only
+	const GX2Sampler * sampler;   //!<Texture/TextureRotated only
+	float angle;                  //!<Texture only, radians
+	float offset[3];              //!<NDC position (unused by TextureRotated)
+	float scale[3];               //!<NDC half-extents (unused by TextureRotated)
+	float colorIntensity[4];
+};
+
+//!Wii U VideoDriver: GX2 + libwhb's WHBGfx* helpers. Every frame's draws
+//!are submitted twice - once for the TV, once for the GamePad - so the same
 //!UI always reaches both screens; there's no separate dual-display mode.
+//!UI draws are recorded into a list and replayed per target (one context
+//!switch each) rather than switching targets around every single draw.
 class WutVideoDriver : public VideoDriver
 {
 	public:
@@ -75,12 +100,28 @@ class WutVideoDriver : public VideoDriver
 		// finished swapping away from yet.
 		void presentBuffer();
 
+		//!Records a UI draw for the next flushDrawQueue(). Called by the
+		//!renderers below; must be called from the thread that draws.
+		void queueDraw(const WutDrawCmd& cmd);
+
+		//!Replays every recorded UI draw into the TV context, then the same
+		//!list into the GamePad context, and empties the list. Does nothing
+		//!when the list is empty. presentBuffer() calls this; direct GX2
+		//!drawing that must land on top of (or under) queued UI draws, and
+		//!anything that frees a texture a queued draw may reference, must
+		//!call it first to keep ordering. Leaves the GamePad context bound.
+		void flushDrawQueue();
+
 		// Binds the TV context state and resets the per-frame render state
 		// (viewport/scissor/blend/depth/cull) that WHBGfxInit() doesn't set
 		// on its own, and rewinds the shared shader slot counters (see
 		// ColorShader::resetFrame() / Texture2DShader::resetFrame()).
 		void prepareFrame();
 	private:
+		static const size_t cuMaxQueuedDraws = 4096;
+		std::vector<WutDrawCmd> drawQueue;
+		void replayDrawQueue() const; // draws drawQueue into whichever context is currently bound
+
 		bool gpuFramesInFlight = false;   // a pipelined frame was submitted and not yet retired/drained
 		OSTime lastSubmitTimeStamp = 0;   // GX2 timestamp of that submit
 

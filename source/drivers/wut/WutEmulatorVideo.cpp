@@ -257,6 +257,8 @@ void WutEmulatorVideo::uploadFrame()
  ***************************************************************************/
 void WutEmulatorVideo::drawQuad()
 {
+	videoDriver->flushDrawQueue();
+
 	if (!texture || !videoDriver->isForeground())
 		return;
 
