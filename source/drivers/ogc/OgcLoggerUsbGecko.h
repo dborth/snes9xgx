@@ -3,21 +3,23 @@
  * Daryl Borth 2026
  * OgcLoggerUsbGecko.h
  *
- * Direct EXI reads/writes to a USB Gecko adapter, shared by GameCube and
- * Wii (both expose the same EXI bus / memory card slots). Channel is
- * config-driven (LogConfig::geckoChannel) rather than hardcoded, so a
- * Gecko in slot A vs slot B is a config change, not a rebuild.
+ * USB Gecko backend over EXI, shared by GameCube and Wii (both expose the
+ * same EXI bus / memory card slots). Channel is config-driven
+ * (LogConfig::geckoChannel) rather than hardcoded, so a Gecko in slot A vs
+ * slot B is a config change, not a rebuild.
  *
- * Detection happens once, in init() - if no Gecko answers the identify
- * command on the configured channel, this backend stays inert (write()
- * becomes a no-op) rather than re-probing the bus on every write(), which
- * would add EXI bus traffic and latency to every single log call for a
- * cable that was never attached.
+ * This backend is a thin wrapper around libogc's own implementation
+ *
+ * Hot-plug: the adapter may be plugged in after startup, unplugged, or
+ * stall temporarily (host-side capture tool not reading).
  ***************************************************************************/
 #pragma once
 
 #include "../Logger.h"
+#include "../Time.h"
 
+//!Log backend for a USB Gecko adapter over EXI, via usbgecko.c.
+//!\ingroup grp_logging
 class OgcLoggerUsbGecko : public LoggingDriver
 {
 	public:
@@ -27,12 +29,12 @@ class OgcLoggerUsbGecko : public LoggingDriver
 		const char * name() const override { return "USBGecko"; }
 
 	private:
-		//! \return true if a USB Gecko answered the identify command on `channel`.
-		bool detect(int channel);
-		//! Sends one byte, retrying the ready-check a bounded number of
-		//! times. \return true if the byte was accepted.
-		bool sendByte(int channel, uint8_t byte);
+		//! Probes the configured channel, updating `attached`, and records
+		//! the attempt time for rate limiting. \return true if attached.
+		bool probe();
 
-		int  channel = 1;
-		bool attached = false;
+		int    channel = 1;
+		bool   attached = false;
+		bool   probed = false;     //!< true once lastProbe holds a valid time
+		Ticks  lastProbe = 0;      //!< time of the last probe attempt
 };
