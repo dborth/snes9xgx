@@ -309,6 +309,24 @@ void GuiText::resetText()
 }
 
 /**
+ * Returns true once every textScrollDelay frame timer ticks.
+ */
+bool GuiText::scrollStepDue()
+{
+	const uint32_t now = platform->getVideo()->getFrameTimer();
+
+	// Timer was reset: resync instead of stalling
+	if(now < textScrollLastTick)
+		textScrollLastTick = now;
+
+	if(now - textScrollLastTick < (uint32_t)textScrollDelay)
+		return false;
+
+	textScrollLastTick = now;
+	return true;
+}
+
+/**
  * Draw the text on screen
  */
 void GuiText::draw()
@@ -409,7 +427,7 @@ void GuiText::draw()
 
 		if(textScroll == SCROLL::HORIZONTAL)
 		{
-			if(fontSystem->getWidth(text) > maxWidth && (platform->getVideo()->getFrameTimer() % textScrollDelay == 0))
+			if(fontSystem->getWidth(text) > maxWidth && scrollStepDue())
 			{
 				if(textScrollInitialDelay)
 				{

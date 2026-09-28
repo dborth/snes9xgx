@@ -77,11 +77,13 @@ class GuiText : public GuiElement
 		SCROLL textScroll; //!< Scrolling toggle
 		int textScrollPos; //!< Current starting index of text string for scrolling
 		int textScrollInitialDelay; //!< Delay to wait before starting to scroll
-		int textScrollDelay; //!< Scrolling speed
+		int textScrollDelay; //!< Scrolling speed (frame timer ticks per scroll step)
+		uint32_t textScrollLastTick = 0; //!< Frame timer value at the last scroll step
 		uint16_t style; //!< GuiTextRenderer style attributes
 		bool wrap; //!< Wrapping toggle
 
 		wchar_t* getText(const char *text) const;
+		bool scrollStepDue();
 };
 
 extern GuiTextTranslator* textTranslator;
