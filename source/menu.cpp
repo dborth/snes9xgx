@@ -1284,18 +1284,18 @@ static int MenuGameSelection()
 		deviceChecking.update(); // starts device checking once its delay has elapsed
 
 		// A device the currently-open folder lives on just disappeared - the cached browserList is stale
-		if(removedDeviceMask != 0)
+		const uint32_t removedMask = __atomic_exchange_n(&removedDeviceMask, 0, __ATOMIC_RELAXED);
+		if(removedMask != 0)
 		{
 			if(browser.dir[0] != 0)
 			{
 				int currentDevice;
-				if(!FindDevice(browser.dir, &currentDevice) || (removedDeviceMask & (1u << currentDevice)))
+				if(!FindDevice(browser.dir, &currentDevice) || (removedMask & (1u << currentDevice)))
 				{
 					browser.dir[0] = 0;
 					browserDeviceListChanged = true;
 				}
 			}
-			removedDeviceMask = 0;
 		}
 
 		// A device appeared/disappeared since the last check  - refresh the device listing

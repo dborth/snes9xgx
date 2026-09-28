@@ -163,7 +163,7 @@ static void * devicecallback(void *)
 			for(int i = 0; i < removedCount; i++)
 			{
 				if(removed[i] >= 0 && removed[i] < 32)
-					removedDeviceMask |= (1u << removed[i]);
+					__atomic_fetch_or(&removedDeviceMask, (1u << removed[i]), __ATOMIC_RELAXED);
 			}
 		}
 
