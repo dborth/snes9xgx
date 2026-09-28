@@ -208,8 +208,7 @@ void GuiImageAsyncCache::wake()
 }
 
 // ---------------------------------------------------------------------
-// Raw file read. Takes FileSystemDriver::getIoLock() around the actual 
-// mount+read. Note this only protects callers that also take the lock.
+// Raw file read. If the device has gone away the read just fails.
 // ---------------------------------------------------------------------
 static bool FindDeviceForPath(const char * path, int * outDevice)
 {
@@ -237,10 +236,8 @@ static size_t ReadFileForDecode(const char * path, uint8_t * buffer, size_t buff
 	if(!FindDeviceForPath(path, &device))
 		return 0;
 
-	MutexLock ioGuard(FileSystemDriver::getIoLock());
-
-	if(platform->getFileSystem()->mountStorageDevice(device) != MountResult::Success)
-		return 0;
+	if(platform->getFileSystem()->getMountPath(device)[0] == '\0')
+		return 0; // not mounted (removed, or never mounted)
 
 	size_t size = 0;
 	FILE * f = fopen(path, "rb");
