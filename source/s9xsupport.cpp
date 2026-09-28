@@ -160,7 +160,7 @@ void S9xSyncSpeed () {
 
 		if (pendingFrames > skipFrms)
 		{
-			platform->getVideo()->setFrameTimer(skipFrms);
+			platform->getVideo()->limitFrameTimer(skipFrms);
 			pendingFrames = skipFrms;
 		}
 
@@ -169,7 +169,7 @@ void S9xSyncSpeed () {
 		// Only consume a VBlank if one actually occurred to prevent underflow.
 		// If pendingFrames == 0, we are perfectly pipelined (1 frame ahead).
 		if (!Settings.TurboMode && pendingFrames > 0)
-			platform->getVideo()->setFrameTimer(--pendingFrames);
+			platform->getVideo()->consumeFrameTick();
 	}
 	else /* use internal timer for PAL roms (or TV/ROM mismatches) */
 	{

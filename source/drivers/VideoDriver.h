@@ -44,6 +44,11 @@ class VideoDriver
 		virtual int getScreenHeight() const = 0;
 		virtual uint32_t getFrameTimer() = 0;
 		virtual void setFrameTimer(uint32_t frameTimer) = 0;
+		//! Caps the pending tick count at maxTicks. Safe against the tick source
+		//! running concurrently (VI retrace / OSAlarm)
+		virtual void limitFrameTimer(uint32_t maxTicks) = 0;
+		//! Consumes one pending tick if there is one. Same concurrency guarantee.
+		virtual void consumeFrameTick() = 0;
 		virtual int getRefreshRate() const = 0;
 		virtual float getDeltaTime() const = 0;
 

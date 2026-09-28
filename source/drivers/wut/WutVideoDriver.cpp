@@ -87,7 +87,7 @@ namespace
 
 	void FrameTimerAlarmHandler(OSAlarm *, OSContext *)
 	{
-		++systemFrameTimer;
+		__atomic_fetch_add(&systemFrameTimer, 1, __ATOMIC_RELAXED);
 	}
 
 	OSTime FrameTimerInterval()
@@ -272,14 +272,35 @@ void WutVideoDriver::presentBuffer()
 	gpuFramesInFlight = true;
 }
 
+// The alarm handler increments the timer (possibly on another core), so all
+// access goes through atomics; a plain get + set from the emulator can lose
+// ticks that arrive in between.
 uint32_t WutVideoDriver::getFrameTimer()
 {
-	return systemFrameTimer;
+	return __atomic_load_n(&systemFrameTimer, __ATOMIC_RELAXED);
 }
 
 void WutVideoDriver::setFrameTimer(uint32_t _frameTimer)
 {
-	systemFrameTimer = _frameTimer;
+	__atomic_store_n(&systemFrameTimer, _frameTimer, __ATOMIC_RELAXED);
+}
+
+void WutVideoDriver::limitFrameTimer(uint32_t maxTicks)
+{
+	uint32_t cur = __atomic_load_n(&systemFrameTimer, __ATOMIC_RELAXED);
+	while(cur > maxTicks &&
+		!__atomic_compare_exchange_n(&systemFrameTimer, &cur, maxTicks, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
+	{
+	}
+}
+
+void WutVideoDriver::consumeFrameTick()
+{
+	uint32_t cur = __atomic_load_n(&systemFrameTimer, __ATOMIC_RELAXED);
+	while(cur > 0 &&
+		!__atomic_compare_exchange_n(&systemFrameTimer, &cur, cur - 1, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
+	{
+	}
 }
 
 void WutVideoDriver::clearScreen(const PixelColor& color)

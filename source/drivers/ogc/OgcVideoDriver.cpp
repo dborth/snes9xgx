@@ -34,7 +34,7 @@ static volatile unsigned int copynow = GX_FALSE;
 static unsigned char gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 static Mtx GXmodelView2D;
 
-static uint32_t systemFrameTimer = 0;
+static volatile uint32_t systemFrameTimer = 0; // incremented from the retrace callback
 static bool progressive = 0;
 
 /****************************************************************************
@@ -101,6 +101,26 @@ uint32_t OgcVideoDriver::getFrameTimer()
 void OgcVideoDriver::setFrameTimer(uint32_t frameTimer)
 {
 	systemFrameTimer = frameTimer;
+}
+
+// The retrace callback increments the timer, so any read-modify-write from
+// the main thread must not be interruptible or a tick can be lost.
+void OgcVideoDriver::limitFrameTimer(uint32_t maxTicks)
+{
+	u32 level;
+	_CPU_ISR_Disable(level);
+	if(systemFrameTimer > maxTicks)
+		systemFrameTimer = maxTicks;
+	_CPU_ISR_Restore(level);
+}
+
+void OgcVideoDriver::consumeFrameTick()
+{
+	u32 level;
+	_CPU_ISR_Disable(level);
+	if(systemFrameTimer > 0)
+		--systemFrameTimer;
+	_CPU_ISR_Restore(level);
 }
 
 /****************************************************************************

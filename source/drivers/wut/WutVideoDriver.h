@@ -43,6 +43,8 @@ class WutVideoDriver : public VideoDriver
 		int getScreenHeight() const override { return screenHeight; }
 		uint32_t getFrameTimer() override;
 		void setFrameTimer(uint32_t _frameTimer) override;
+		void limitFrameTimer(uint32_t maxTicks) override;
+		void consumeFrameTick() override;
 
 		int getRefreshRate() const override;
 		float getDeltaTime() const override;

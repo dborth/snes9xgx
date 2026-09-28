@@ -27,6 +27,8 @@ class OgcVideoDriver : public VideoDriver
 		float getDeltaTime() const override { return vmode_60hz ? (1.0f / 60.0f) : (1.0f / 50.0f); }
 		uint32_t getFrameTimer() override;
 		void setFrameTimer(uint32_t frameTimer) override;
+		void limitFrameTimer(uint32_t maxTicks) override;
+		void consumeFrameTick() override;
 
 		ImageRenderer* getImageRenderer() override { return imageRenderer; }
 		GlyphRenderer* getGlyphRenderer() override { return glyphRenderer; }
