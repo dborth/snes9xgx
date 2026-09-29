@@ -2,6 +2,30 @@
 
 All notable changes to Snes9x GX are recorded here, newest first. For the current features and setup instructions, see [README.md](README.md).
 
+## Unreleased
+* **Native Wii U release!** Snes9x GX now runs natively on the Wii U as its own app, with its own icon on the Wii U Menu. Requires [Aroma](https://wiiu.hacks.guide/) - run the latest Aroma release and launch the `.wuhb` directly from it
+  * Output up to 1080p, with a new GPU-powered **ScaleFX** upscaler shader and a **Sharp Bilinear** shader, plus a scanline shader
+  * Crisp, upscaled menus with sharper text and HD artwork
+  * Full **Wii U GamePad** support - touch screen, buttons, and rumble - alongside Wiimote, Nunchuk, Classic Controller, and Wii U Pro Controller
+  * Correct 16:9 aspect ratio handling, with Wii U aspect ratio handling
+  * SD card plus up to 3 USB drives at once, with hotplug. USB supports FAT32, exFAT, and NTFS (requires [Mocha](https://github.com/wiiu-env/MochaPayload), an optional Aroma component)
+  * Press the HOME button to open the Wii U menu overlay. In game, HOME still opens the app menu.
+  * Sound plays on both the TV and the GamePad
+  * Recommended: install [Bloopair](https://github.com/GaryOderNichts/Bloopair) to pair Bluetooth controllers (Switch Pro, Joy-Con, DualShock/DualSense, Xbox, and more) as if they were a Wii U Pro Controller
+* Network shares now use libsmb2 (replacing the old SMB code) for modern SMB2/3 server support, on GameCube, Wii, and Wii U.
+* Wii: added support for multiple USB devices at once, with proper hotplug. Only devices that are actually mounted appear in the device list
+* GameCube: added hotplug support for SD Gecko and SD2SP2 - devices can now be inserted and removed while the app is running
+* Reworked and simplified the video settings, and added a new Emulation menu:
+  * Video options are now: Output Mode, Aspect Ratio Correction, Bilinear Filtering, Hardware Softening (GameCube/Wii), Upscaling, Scanline Overlay, Screen Zoom, and Screen Position
+  * Scanlines are now an independent overlay that can be combined with any upscaling filter, replacing the old "TV Mode" filter
+  * Hi-Res Mode, Sprite Limit, SuperFX Overclock, Audio Interpolation, Mute Game Audio, Frame Skipping, Crosshair, Show Framerate, and Show Local Time are grouped in the new Emulation menu (replacing the separate Audio menu)
+  * Added a new "16:9 (Fixed Pixel Ratio)" aspect ratio option
+* Note: due to renaming, settings will all be reset upon first load
+* Menu rumble is gentler
+* Snes9x emulation fixes: SA-1 memory mapping and RAM access fixes, IRQ timing fix, and a Mode 7 fix for visible glitches in games that change Mode 7 registers mid-scanline. Backported additional upstream Snes9x fixes
+* Fixed cheats from a cheat file not all starting disabled - they now all start off until you turn them on
+* Korean translation updated
+
 ## 5.0.2 — August 11, 2026
 * Switched to RGB555 for better color accuracy
 * Fixed bug during preference loading
