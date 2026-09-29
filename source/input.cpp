@@ -390,11 +390,6 @@ static void decodepad (int chan, int emuChan)
 		UpdateCursorPosition(emuChan, cursor_x[3 + emuChan], cursor_y[3 + emuChan]);
 		S9xReportPointer(offset + emuChan, (uint16_t) cursor_x[3 + emuChan], (uint16_t) cursor_y[3 + emuChan]);
 	}
-
-#ifdef HW_RVL
-	// screenshot (temp)
-	S9xReportButton(0x90, (pad.buttons_h & INPUT_TRIGGER_ZR) != 0);
-#endif
 }
 
 bool isMenuRequested()
@@ -450,9 +445,9 @@ bool IsTurboModeInputPressed()
 			return (pad.buttons_h & INPUT_TRIGGER_ZL);
 		case TURBO_BUTTON_ZR:
 			return (pad.buttons_h & INPUT_TRIGGER_ZR);
-		case TURBO_BUTTON_Z: // GC Z fallback
-			return (pad.buttons_h & INPUT_TRIGGER_ZL);
-		case TURBO_BUTTON_C: // Nunchuk C fallback
+		case TURBO_BUTTON_Z: // GC Z (reported as ZR by the generic mapping)
+			return (pad.buttons_h & INPUT_TRIGGER_ZR);
+		case TURBO_BUTTON_C: // Nunchuk C (reported as L by the generic mapping)
 			return (pad.buttons_h & INPUT_TRIGGER_L);
 		case TURBO_BUTTON_1:
 			return (pad.buttons_h & INPUT_BTN_1);

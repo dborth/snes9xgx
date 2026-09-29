@@ -30,8 +30,8 @@ enum InputDataButtons : uint32_t {
 	INPUT_BTN_HOME    = (1 << 12),  // Home (Wii/Wii U)
 	INPUT_TRIGGER_L   = (1 << 13),  // L Trigger / Bumper, Nunchuk C
 	INPUT_TRIGGER_R   = (1 << 14),  // R Trigger / Bumper
-	INPUT_TRIGGER_ZL  = (1 << 15),  // ZL Trigger / GC Z Button, Nunchuk Z
-	INPUT_TRIGGER_ZR  = (1 << 16),  // ZR Trigger
+	INPUT_TRIGGER_ZL  = (1 << 15),  // ZL Trigger, Nunchuk Z
+	INPUT_TRIGGER_ZR  = (1 << 16),  // ZR Trigger, GC Z Button
 	INPUT_THUMB_L     = (1 << 17),  // Left Stick Click (L3)
 	INPUT_THUMB_R     = (1 << 18)   // Right Stick Click (R3)
 };

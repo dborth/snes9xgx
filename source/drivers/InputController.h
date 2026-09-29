@@ -55,31 +55,46 @@ private:
 	bool sideways;
 	InputPadData currentData;
 
-	// Analog stick deadzone
-	const float STICK_DEADZONE = 0.2f;
+	// Analog stick -> digital direction conversion
+	const float STICK_PRESS_THRESHOLD = 0.39f; // 50/128, same engage point as 5.0.2 (PADCAL)
+	const float STICK_RELEASE_THRESHOLD = 0.20f;
+	const float STICK_AXIS_SWITCH_BIAS = 1.25f; // the other axis must lead by this factor to take over
 
-	// Scrolling delay timers (in seconds). The repeat rate accelerates the
-	// longer a direction is held: it starts at SCROLL_DELAY_LOOP_START right
-	// after the initial delay, and ramps down to SCROLL_DELAY_LOOP_MIN over
-	// SCROLL_ACCEL_RAMP_TIME seconds of continuous holding.
+	enum class StickDir : uint8_t { None, Up, Down, Left, Right };
+
+	// Scrolling delay timers (in seconds)
+
+	// D-pad / buttons
 	const float SCROLL_DELAY_INITIAL = 0.2f;
 	const float SCROLL_DELAY_LOOP_START = 0.08f; // ~12.5 rows/sec right after the initial delay
 	const float SCROLL_DELAY_LOOP_MIN = 0.012f;  // ~83 rows/sec once fully ramped up
 	const float SCROLL_ACCEL_RAMP_TIME = 1.0f;   // seconds of continuous holding to reach max speed
 
+	// Analog stick: a gentler curve, since a stick is harder to release
+	// precisely than a D-pad button and has no click to tell you how far it went.
+	const float STICK_SCROLL_DELAY_INITIAL = 0.3f;
+	const float STICK_SCROLL_DELAY_LOOP_START = 0.12f; // ~8 rows/sec right after the initial delay
+	const float STICK_SCROLL_DELAY_LOOP_MIN = 0.04f;   // ~25 rows/sec once fully ramped up
+	const float STICK_SCROLL_ACCEL_RAMP_TIME = 1.5f;
+
 	float scrollTimer;
+	float lastDeltaTime; // frame time from the most recent update(), used to bound the repeat timer
+
+	// Stick direction state, advanced once per frame in update()
+	StickDir stickDir;      // digital direction the stick is currently holding
+	StickDir prevStickDir;
+	bool stickEdge;         // true only on the frame stickDir changed to a new direction
+
+	StickDir resolveStickDir(float x, float y, StickDir current) const;
 
 	// Internal helper to process directional holds and repeats
-	bool processDirection(uint32_t logicalButtonMask, float stickAxis, bool isNegativeAxis) const;
+	bool processDirection(uint32_t logicalButtonMask, StickDir stickTarget) const;
 
 	// Mutable state to allow the const navigation functions to reset the timer
 	// when a valid scroll triggers. (A common pattern to keep accessors clean).
 	mutable float internalScrollTimer;
 
-	// How long a direction has been continuously held (or the stick pushed
-	// past the deadzone), independent of individual repeat triggers - this
-	// is what the acceleration ramp above is measured against. Reset to 0
-	// whenever nothing directional is held; only ever written from update().
+	// How long a direction has been continuously held (or the stick pushed into a direction)
 	float holdDuration;
 };
 
