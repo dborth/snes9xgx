@@ -16,14 +16,17 @@
 #define DS4_STICK_CENTER 0x80
 #define DS4_HAT_NEUTRAL 8
 #define DS4_MAX_PLAYERS 4
+#define DS4_PLAYER_SWITCH_HOLD_FRAMES 60
 
 static bool replugRequired = false;
 static s32 deviceId = 0;
+static volatile s32 closePending = 0;
 static u8 endpointIn = 0;
 static u8 endpointOut = 0;
 static u8 ATTRIBUTE_ALIGN(32) buf[64];
 static bool isReading = false;
 static u8 player = 0;
+static u32 touchpadHeldFrames = 0;
 
 static volatile u32 reportButtons = 0;
 static volatile u8 reportSticks[4] = { DS4_STICK_CENTER, DS4_STICK_CENTER, DS4_STICK_CENTER, DS4_STICK_CENTER };
@@ -145,6 +148,12 @@ static int read_cb(int res, void *usrdata)
 		return 1;
 	}
 
+	if (res < 0)
+	{
+		isReading = false;
+		return 1;
+	}
+
 	if (res >= DS4_INPUT_REPORT_MIN_SIZE && buf[0] == DS4_INPUT_REPORT_ID)
 	{
 		for (int i = 0; i < 4; ++i)
@@ -154,7 +163,10 @@ static int read_cb(int res, void *usrdata)
 		reportButtons = parseButtons(buf);
 	}
 
-	read();
+	if (read() < 0)
+	{
+		isReading = false;
+	}
 
 	return 1;
 }
@@ -171,7 +183,10 @@ static void startReading()
 		return;
 	}
 	isReading = true;
-	read();
+	if (read() < 0)
+	{
+		isReading = false;
+	}
 }
 
 static void stopReading()
@@ -188,6 +203,7 @@ static void resetState()
 		sticks[i] = 0;
 	}
 	held = down = up = 0;
+	touchpadHeldFrames = 0;
 }
 
 static void updateLightbar()
@@ -219,6 +235,7 @@ static int removal_cb(int result, void *usrdata)
 	{
 		stopReading();
 		deviceId = 0;
+		closePending = fd;
 		resetState();
 	}
 	return 1;
@@ -278,6 +295,13 @@ static void open()
 
 void DS4_ScanPads()
 {
+	if (closePending != 0)
+	{
+		s32 fd = closePending;
+		closePending = 0;
+		USB_CloseDevice(&fd);
+	}
+
 	open();
 	if (deviceId == 0)
 	{
@@ -296,7 +320,11 @@ void DS4_ScanPads()
 	sticks[2] = (s16)reportSticks[2] - DS4_STICK_CENTER;
 	sticks[3] = DS4_STICK_CENTER - (s16)reportSticks[3];
 
-	if (down & DS4_BUTTON_TOUCHPAD)
+	if ((held & DS4_BUTTON_TOUCHPAD) == 0)
+	{
+		touchpadHeldFrames = 0;
+	}
+	else if (++touchpadHeldFrames == DS4_PLAYER_SWITCH_HOLD_FRAMES)
 	{
 		increasePlayer();
 	}
