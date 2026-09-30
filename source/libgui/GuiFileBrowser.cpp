@@ -89,6 +89,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	arrowDownBtn->setImage(arrowDownImg);
 	arrowDownBtn->setImageOver(arrowDownOverImg);
 	arrowDownBtn->setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
+	arrowDownBtn->setPosition(0,-1);
 	arrowDownBtn->setSelectable(false);
 	arrowDownBtn->setClickable(false);
 	arrowDownBtn->setHoldable(true);

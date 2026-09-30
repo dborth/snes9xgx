@@ -53,6 +53,7 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	arrowUpBtn->setImage(arrowUpImg);
 	arrowUpBtn->setImageOver(arrowUpOverImg);
 	arrowUpBtn->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+	arrowUpBtn->setPosition(0, -1);
 	arrowUpBtn->setSelectable(false);
 	arrowUpBtn->setTrigger(trigA);
 	arrowUpBtn->setSoundOver(btnSoundOver);
@@ -63,6 +64,7 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	arrowDownBtn->setImage(arrowDownImg);
 	arrowDownBtn->setImageOver(arrowDownOverImg);
 	arrowDownBtn->setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
+	arrowDownBtn->setPosition(0, -1);
 	arrowDownBtn->setSelectable(false);
 	arrowDownBtn->setTrigger(trigA);
 	arrowDownBtn->setSoundOver(btnSoundOver);
