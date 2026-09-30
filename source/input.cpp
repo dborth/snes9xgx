@@ -298,6 +298,38 @@ static void UpdateCursorPosition(int chan, int &pos_x, int &pos_y)
 	if (pos_y < 0) pos_y = 0;
 }
 
+static uint32_t StickToVirtualButtons(float stickX, float stickY, float substickX, float substickY)
+{
+	const float sensitivity = (float)ANALOG_SENSITIVITY / 128.0f;
+	uint32_t buttons = 0;
+
+	if (stickY > sensitivity) buttons |= INPUT_BTN_UP;
+	else if (stickY < -sensitivity) buttons |= INPUT_BTN_DOWN;
+	if (stickX < -sensitivity) buttons |= INPUT_BTN_LEFT;
+	else if (stickX > sensitivity) buttons |= INPUT_BTN_RIGHT;
+
+	if (EmuSettings.mapAbxyRightStick)
+	{
+		if (substickY > sensitivity) buttons |= INPUT_BTN_X;
+		else if (substickY < -sensitivity) buttons |= INPUT_BTN_B;
+		if (substickX < -sensitivity) buttons |= INPUT_BTN_Y;
+		else if (substickX > sensitivity) buttons |= INPUT_BTN_A;
+	}
+
+	return buttons;
+}
+
+static float StrongestAxisExcluding(const InputPadData& pad, const float axis[], uint32_t excludedHw)
+{
+	float strongest = 0.0f;
+	for (uint32_t hw = 0; hw < INPUT_HW_MAX; hw++)
+	{
+		if (hw == excludedHw || !pad.hw_connected[hw]) continue;
+		if (std::abs(axis[hw]) > std::abs(strongest)) strongest = axis[hw];
+	}
+	return strongest;
+}
+
 /****************************************************************************
  * decodepad
  *
@@ -310,21 +342,20 @@ static void decodepad (int chan, int emuChan)
 	const InputPadData& pad = controller[chan]->getPadData();
 	int i, offset;
 
-	float sensitivity = (float)ANALOG_SENSITIVITY / 128.0f;
-
 	// Inject virtual buttons translated from analog sticks
-	uint32_t virtual_jp = 0;
-	if (pad.stickY > sensitivity) virtual_jp |= INPUT_BTN_UP;
-	else if (pad.stickY < -sensitivity) virtual_jp |= INPUT_BTN_DOWN;
-	if (pad.stickX < -sensitivity) virtual_jp |= INPUT_BTN_LEFT;
-	else if (pad.stickX > sensitivity) virtual_jp |= INPUT_BTN_RIGHT;
+	uint32_t virtual_jp = StickToVirtualButtons(pad.stickX, pad.stickY, pad.substickX, pad.substickY);
+	uint32_t ds4_virtual_jp = 0;
 
-	if (EmuSettings.mapAbxyRightStick)
+	if (pad.hw_connected[INPUT_HW_DS4])
 	{
-		if (pad.substickY > sensitivity) virtual_jp |= INPUT_BTN_X;
-		else if (pad.substickY < -sensitivity) virtual_jp |= INPUT_BTN_B;
-		if (pad.substickX < -sensitivity) virtual_jp |= INPUT_BTN_Y;
-		else if (pad.substickX > sensitivity) virtual_jp |= INPUT_BTN_A;
+		virtual_jp = StickToVirtualButtons(
+			StrongestAxisExcluding(pad, pad.hw_stickX, INPUT_HW_DS4),
+			StrongestAxisExcluding(pad, pad.hw_stickY, INPUT_HW_DS4),
+			StrongestAxisExcluding(pad, pad.hw_substickX, INPUT_HW_DS4),
+			StrongestAxisExcluding(pad, pad.hw_substickY, INPUT_HW_DS4));
+		ds4_virtual_jp = StickToVirtualButtons(
+			pad.hw_stickX[INPUT_HW_DS4], pad.hw_stickY[INPUT_HW_DS4],
+			pad.hw_substickX[INPUT_HW_DS4], pad.hw_substickY[INPUT_HW_DS4]);
 	}
 
 	offset = ((emuChan + 1) << 4);
@@ -340,7 +371,9 @@ static void decodepad (int chan, int emuChan)
 			if (!pad.hw_connected[hw]) continue;
 			uint32_t mapped_btn = btnmap[CTRL_PAD][hw][i];
 
-			if ((pad.hw_buttons_h[hw] & mapped_btn) || (virtual_jp & mapped_btn)) {
+			uint32_t hw_virtual_jp = (hw == INPUT_HW_DS4) ? ds4_virtual_jp : virtual_jp;
+
+			if ((pad.hw_buttons_h[hw] & mapped_btn) || (hw_virtual_jp & mapped_btn)) {
 				button_pressed = true;
 				break;
 			}
