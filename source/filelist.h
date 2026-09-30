@@ -62,6 +62,7 @@
 #include "icon_settings_nunchuk_png.h"
 #include "icon_settings_wiiupro_png.h"
 #include "icon_settings_drc_png.h"
+#include "icon_settings_ds4_png.h"
 #include "icon_settings_snescontroller_png.h"
 #include "icon_settings_superscope_png.h"
 #include "icon_settings_justifier_png.h"

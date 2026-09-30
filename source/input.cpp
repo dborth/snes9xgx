@@ -33,6 +33,7 @@
 #include "drivers/ogc/wii/input/xbox360.h"
 #include "drivers/ogc/wii/input/hornet.h"
 #include "drivers/ogc/wii/input/mayflash.h"
+#include "drivers/ogc/wii/input/ds4.h"
 #endif
 
 #define ANALOG_SENSITIVITY 30
@@ -132,6 +133,24 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 		btnmap[CTRL_PAD][hw][i++] = INPUT_BTN_LEFT;
 		btnmap[CTRL_PAD][hw][i++] = INPUT_BTN_RIGHT;
 	}
+
+	/*** DualShock 4 Padmap ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == INPUT_HW_DS4))
+	{
+		i=0;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_A;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_B;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_X;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_Y;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_TRIGGER_L;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_TRIGGER_R;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_PLUS;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_MINUS;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_UP;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_DOWN;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_LEFT;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_RIGHT;
+	}
 		
 	/*** Nunchuk + Wiimote Padmap ***/
 	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == INPUT_HW_NUNCHUK))
@@ -188,6 +207,13 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 		btnmap[CTRL_SCOPE][INPUT_HW_DRC][i++] = INPUT_BTN_Y;
 		btnmap[CTRL_SCOPE][INPUT_HW_DRC][i++] = INPUT_BTN_X;
 		btnmap[CTRL_SCOPE][INPUT_HW_DRC][i++] = INPUT_BTN_PLUS;
+		i=0;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_B;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_A;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_MINUS;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_Y;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_X;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_PLUS;
 	}
 
 	/*** Mouse & Justifier Mapping (Simplified identically to masks) ***/
@@ -202,6 +228,8 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
         btnmap[CTRL_MOUSE][INPUT_HW_WUPC][1] = INPUT_BTN_B;
         btnmap[CTRL_MOUSE][INPUT_HW_DRC][0] = INPUT_BTN_A;
         btnmap[CTRL_MOUSE][INPUT_HW_DRC][1] = INPUT_BTN_B;
+        btnmap[CTRL_MOUSE][INPUT_HW_DS4][0] = INPUT_BTN_A;
+        btnmap[CTRL_MOUSE][INPUT_HW_DS4][1] = INPUT_BTN_B;
     }
 
     if (consoleCtrl == -1 || consoleCtrl == CTRL_JUST) {
@@ -220,6 +248,9 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
         btnmap[CTRL_JUST][INPUT_HW_DRC][0] = INPUT_BTN_B;
         btnmap[CTRL_JUST][INPUT_HW_DRC][1] = INPUT_BTN_A;
         btnmap[CTRL_JUST][INPUT_HW_DRC][2] = INPUT_BTN_PLUS;
+        btnmap[CTRL_JUST][INPUT_HW_DS4][0] = INPUT_BTN_B;
+        btnmap[CTRL_JUST][INPUT_HW_DS4][1] = INPUT_BTN_A;
+        btnmap[CTRL_JUST][INPUT_HW_DS4][2] = INPUT_BTN_PLUS;
     }
 }
 
@@ -267,6 +298,38 @@ static void UpdateCursorPosition(int chan, int &pos_x, int &pos_y)
 	if (pos_y < 0) pos_y = 0;
 }
 
+static uint32_t StickToVirtualButtons(float stickX, float stickY, float substickX, float substickY)
+{
+	const float sensitivity = (float)ANALOG_SENSITIVITY / 128.0f;
+	uint32_t buttons = 0;
+
+	if (stickY > sensitivity) buttons |= INPUT_BTN_UP;
+	else if (stickY < -sensitivity) buttons |= INPUT_BTN_DOWN;
+	if (stickX < -sensitivity) buttons |= INPUT_BTN_LEFT;
+	else if (stickX > sensitivity) buttons |= INPUT_BTN_RIGHT;
+
+	if (EmuSettings.mapAbxyRightStick)
+	{
+		if (substickY > sensitivity) buttons |= INPUT_BTN_X;
+		else if (substickY < -sensitivity) buttons |= INPUT_BTN_B;
+		if (substickX < -sensitivity) buttons |= INPUT_BTN_Y;
+		else if (substickX > sensitivity) buttons |= INPUT_BTN_A;
+	}
+
+	return buttons;
+}
+
+static float StrongestAxisExcluding(const InputPadData& pad, const float axis[], uint32_t excludedHw)
+{
+	float strongest = 0.0f;
+	for (uint32_t hw = 0; hw < INPUT_HW_MAX; hw++)
+	{
+		if (hw == excludedHw || !pad.hw_connected[hw]) continue;
+		if (std::abs(axis[hw]) > std::abs(strongest)) strongest = axis[hw];
+	}
+	return strongest;
+}
+
 /****************************************************************************
  * decodepad
  *
@@ -279,21 +342,20 @@ static void decodepad (int chan, int emuChan)
 	const InputPadData& pad = controller[chan]->getPadData();
 	int i, offset;
 
-	float sensitivity = (float)ANALOG_SENSITIVITY / 128.0f;
-
 	// Inject virtual buttons translated from analog sticks
-	uint32_t virtual_jp = 0;
-	if (pad.stickY > sensitivity) virtual_jp |= INPUT_BTN_UP;
-	else if (pad.stickY < -sensitivity) virtual_jp |= INPUT_BTN_DOWN;
-	if (pad.stickX < -sensitivity) virtual_jp |= INPUT_BTN_LEFT;
-	else if (pad.stickX > sensitivity) virtual_jp |= INPUT_BTN_RIGHT;
+	uint32_t virtual_jp = StickToVirtualButtons(pad.stickX, pad.stickY, pad.substickX, pad.substickY);
+	uint32_t ds4_virtual_jp = 0;
 
-	if (EmuSettings.mapAbxyRightStick)
+	if (pad.hw_connected[INPUT_HW_DS4])
 	{
-		if (pad.substickY > sensitivity) virtual_jp |= INPUT_BTN_X;
-		else if (pad.substickY < -sensitivity) virtual_jp |= INPUT_BTN_B;
-		if (pad.substickX < -sensitivity) virtual_jp |= INPUT_BTN_Y;
-		else if (pad.substickX > sensitivity) virtual_jp |= INPUT_BTN_A;
+		virtual_jp = StickToVirtualButtons(
+			StrongestAxisExcluding(pad, pad.hw_stickX, INPUT_HW_DS4),
+			StrongestAxisExcluding(pad, pad.hw_stickY, INPUT_HW_DS4),
+			StrongestAxisExcluding(pad, pad.hw_substickX, INPUT_HW_DS4),
+			StrongestAxisExcluding(pad, pad.hw_substickY, INPUT_HW_DS4));
+		ds4_virtual_jp = StickToVirtualButtons(
+			pad.hw_stickX[INPUT_HW_DS4], pad.hw_stickY[INPUT_HW_DS4],
+			pad.hw_substickX[INPUT_HW_DS4], pad.hw_substickY[INPUT_HW_DS4]);
 	}
 
 	offset = ((emuChan + 1) << 4);
@@ -309,7 +371,9 @@ static void decodepad (int chan, int emuChan)
 			if (!pad.hw_connected[hw]) continue;
 			uint32_t mapped_btn = btnmap[CTRL_PAD][hw][i];
 
-			if ((pad.hw_buttons_h[hw] & mapped_btn) || (virtual_jp & mapped_btn)) {
+			uint32_t hw_virtual_jp = (hw == INPUT_HW_DS4) ? ds4_virtual_jp : virtual_jp;
+
+			if ((pad.hw_buttons_h[hw] & mapped_btn) || (hw_virtual_jp & mapped_btn)) {
 				button_pressed = true;
 				break;
 			}
@@ -666,8 +730,8 @@ void SetDefaultButtonMap ()
 #ifdef HW_RVL
 char* GetUSBControllerInfo()
 {
-    static char info[100];
-    snprintf(info, 100, "Retrode: %s, XBOX360: %s, Hornet: %s, Mayflash: %s", Retrode_Status(), XBOX360_Status(), Hornet_Status(), Mayflash_Status());
+    static char info[128];
+    snprintf(info, sizeof(info), "Retrode: %s, XBOX360: %s, Hornet: %s, Mayflash: %s, DS4: %s", Retrode_Status(), XBOX360_Status(), Hornet_Status(), Mayflash_Status(), DS4_Status());
     return info;
 }
 #endif

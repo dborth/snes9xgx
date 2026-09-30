@@ -24,6 +24,7 @@
 #include "wii/input/xbox360.h"
 #include "wii/input/hornet.h"
 #include "wii/input/mayflash.h"
+#include "wii/input/ds4.h"
 #endif
 
 #include "../InputController.h"
@@ -188,6 +189,28 @@ static uint32_t MapWiiUGamepadToGeneric(uint32_t drc_btns) {
 	return mask;
 }
 
+static uint32_t MapDS4ToGeneric(uint32_t ds4_btns) {
+	uint32_t mask = INPUT_BTN_NONE;
+	if (ds4_btns & DS4_BUTTON_CIRCLE) mask |= INPUT_BTN_A;
+	if (ds4_btns & DS4_BUTTON_CROSS) mask |= INPUT_BTN_B;
+	if (ds4_btns & DS4_BUTTON_TRIANGLE) mask |= INPUT_BTN_X;
+	if (ds4_btns & DS4_BUTTON_SQUARE) mask |= INPUT_BTN_Y;
+	if (ds4_btns & DS4_BUTTON_UP) mask |= INPUT_BTN_UP;
+	if (ds4_btns & DS4_BUTTON_DOWN) mask |= INPUT_BTN_DOWN;
+	if (ds4_btns & DS4_BUTTON_LEFT) mask |= INPUT_BTN_LEFT;
+	if (ds4_btns & DS4_BUTTON_RIGHT) mask |= INPUT_BTN_RIGHT;
+	if (ds4_btns & DS4_BUTTON_OPTIONS) mask |= INPUT_BTN_PLUS;
+	if (ds4_btns & DS4_BUTTON_SHARE) mask |= INPUT_BTN_MINUS;
+	if (ds4_btns & DS4_BUTTON_PS) mask |= INPUT_BTN_HOME;
+	if (ds4_btns & DS4_BUTTON_L1) mask |= INPUT_TRIGGER_L;
+	if (ds4_btns & DS4_BUTTON_R1) mask |= INPUT_TRIGGER_R;
+	if (ds4_btns & DS4_BUTTON_L2) mask |= INPUT_TRIGGER_ZL;
+	if (ds4_btns & DS4_BUTTON_R2) mask |= INPUT_TRIGGER_ZR;
+	if (ds4_btns & DS4_BUTTON_L3) mask |= INPUT_THUMB_L;
+	if (ds4_btns & DS4_BUTTON_R3) mask |= INPUT_THUMB_R;
+	return mask;
+}
+
 /****************************************************************************
  * Analog Normalization Helpers
  ***************************************************************************/
@@ -214,6 +237,7 @@ void OgcInputDriver::update() {
 	XBOX360_ScanPads();
 	Hornet_ScanPads();
 	Mayflash_ScanPads();
+	DS4_ScanPads();
 	WPAD_ScanPads();
 	bool systemRumbleAllowed = (CONF_GetPadMotorMode() != 0);
 	bool retrodeActive  = (Retrode_Status()[0]  == 'c');
@@ -344,6 +368,17 @@ void OgcInputDriver::update() {
 			padData.hw_stickY[INPUT_HW_DRC] = clampf((float)WiiDRC_lStickY() / 128.0f, -1.0f, 1.0f);
 			padData.hw_substickX[INPUT_HW_DRC] = clampf((float)WiiDRC_rStickX() / 128.0f, -1.0f, 1.0f);
 			padData.hw_substickY[INPUT_HW_DRC] = clampf((float)WiiDRC_rStickY() / 128.0f, -1.0f, 1.0f);
+		}
+
+		if(DS4_Connected(i)) {
+			padData.hw_connected[INPUT_HW_DS4] = true;
+			padData.hw_buttons_d[INPUT_HW_DS4] = MapDS4ToGeneric(DS4_ButtonsDown());
+			padData.hw_buttons_h[INPUT_HW_DS4] = MapDS4ToGeneric(DS4_ButtonsHeld());
+			padData.hw_buttons_r[INPUT_HW_DS4] = MapDS4ToGeneric(DS4_ButtonsUp());
+			padData.hw_stickX[INPUT_HW_DS4] = clampf((float)DS4_lStickX() / 128.0f, -1.0f, 1.0f);
+			padData.hw_stickY[INPUT_HW_DS4] = clampf((float)DS4_lStickY() / 128.0f, -1.0f, 1.0f);
+			padData.hw_substickX[INPUT_HW_DS4] = clampf((float)DS4_rStickX() / 128.0f, -1.0f, 1.0f);
+			padData.hw_substickY[INPUT_HW_DS4] = clampf((float)DS4_rStickY() / 128.0f, -1.0f, 1.0f);
 		}
 		#endif
 
