@@ -211,6 +211,7 @@ preparePrefsData ()
 	createXMLController(btnmap[CTRL_PAD][INPUT_HW_WUPC], "btnmapping_pad_wupc", "SNES Pad - Wii U Pro Controller");
 	createXMLController(btnmap[CTRL_PAD][INPUT_HW_DRC], "btnmapping_pad_wiidrc", "SNES Pad - Wii U Gamepad");
 	createXMLController(btnmap[CTRL_PAD][INPUT_HW_NUNCHUK], "btnmapping_pad_nunchuk", "SNES Pad - Nunchuk + Wiimote");
+	createXMLController(btnmap[CTRL_PAD][INPUT_HW_DS4], "btnmapping_pad_ds4", "SNES Pad - DualShock 4");
 #endif
 	createXMLController(btnmap[CTRL_SCOPE][INPUT_HW_GAMECUBE], "btnmapping_scope_gcpad", "Superscope - GameCube Controller");
 #ifdef HW_RVL
@@ -401,6 +402,7 @@ decodePrefsData ()
 	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_WUPC], "btnmapping_pad_wupc");
 	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_DRC], "btnmapping_pad_wiidrc");
 	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_NUNCHUK], "btnmapping_pad_nunchuk");
+	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_DS4], "btnmapping_pad_ds4");
 	loadXMLController(btnmap[CTRL_SCOPE][INPUT_HW_GAMECUBE], "btnmapping_scope_gcpad");
 	loadXMLController(btnmap[CTRL_SCOPE][INPUT_HW_WIIMOTE], "btnmapping_scope_wiimote");
 	loadXMLController(btnmap[CTRL_MOUSE][INPUT_HW_GAMECUBE], "btnmapping_mouse_gcpad");

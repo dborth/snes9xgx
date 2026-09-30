@@ -2911,6 +2911,7 @@ static int MenuSettingsMappingsController()
 	GuiImageData iconNunchuk(icon_settings_nunchuk_png);
 	GuiImageData iconWiiupro(icon_settings_wiiupro_png);
 	GuiImageData iconDrc(icon_settings_drc_png);
+	GuiImageData iconDs4(icon_settings_ds4_png);
 
 	GuiTrigger trigB;
 	trigB.setSecondaryTrigger();
@@ -2964,6 +2965,23 @@ static int MenuSettingsMappingsController()
 	drcBtn.setSoundClick(&btnSoundClick);
 	drcBtn.setTrigger(trigA);
 	drcBtn.setEffectGrow();
+
+	GuiText ds4BtnTxt("DualShock 4", 22, (PixelColor){0, 0, 0, 255});
+	ds4BtnTxt.setWrap(true, btnLargeOutline.getWidth()-30);
+	GuiImage ds4BtnImg(&btnLargeOutline);
+	GuiImage ds4BtnImgOver(&btnLargeOutlineOver);
+	GuiImage ds4BtnIcon(&iconDs4);
+	GuiButton ds4Btn(btnLargeOutline.getWidth(), btnLargeOutline.getHeight());
+	ds4Btn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
+	ds4Btn.setPosition(200, 120);
+	ds4Btn.setLabel(&ds4BtnTxt);
+	ds4Btn.setImage(&ds4BtnImg);
+	ds4Btn.setImageOver(&ds4BtnImgOver);
+	ds4Btn.setIcon(&ds4BtnIcon);
+	ds4Btn.setSoundOver(&btnSoundOver);
+	ds4Btn.setSoundClick(&btnSoundClick);
+	ds4Btn.setTrigger(trigA);
+	ds4Btn.setEffectGrow();
 
 	GuiText classicBtnTxt("Classic Controller", 22, (PixelColor){0, 0, 0, 255});
 	classicBtnTxt.setWrap(true, btnLargeOutline.getWidth()-30);
@@ -3046,7 +3064,13 @@ static int MenuSettingsMappingsController()
 
 	if(mapMenuCtrlSNES == CTRL_PAD)
 	{
-		if(controller[0]->getPadData().hw_connected[INPUT_HW_DRC]) {
+		const InputPadData& pad = controller[0]->getPadData();
+		if(pad.hw_connected[INPUT_HW_DS4]) {
+			gamecubeBtn.setPosition(-200, 120);
+			wiimoteBtn.setPosition(0, 120);
+			w.append(&ds4Btn);
+		}
+		else if(pad.hw_connected[INPUT_HW_DRC]) {
 			gamecubeBtn.setPosition(-200, 120);
 			wiimoteBtn.setPosition(0, 120);
 			w.append(&drcBtn);
@@ -3090,6 +3114,11 @@ static int MenuSettingsMappingsController()
 		{
 			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
 			mapMenuCtrl = INPUT_HW_DRC;
+		}
+		else if(ds4Btn.getState() == STATE::CLICKED)
+		{
+			selection = MENU_GAMESETTINGS_MAPPINGS_MAP;
+			mapMenuCtrl = INPUT_HW_DS4;
 		}
 		else if(gamecubeBtn.getState() == STATE::CLICKED)
 		{
@@ -3145,6 +3174,9 @@ static uint32_t ButtonMappingWindow()
 			break;
 		case INPUT_HW_NUNCHUK:
 			sprintf(msg, "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping.");
+			break;
+		case INPUT_HW_DS4:
+			sprintf(msg, "Press any button on the DualShock 4 now. Press PS to clear the existing mapping.");
 			break;
 		default:
 			sprintf(msg, "Press any button to map. Press Home to clear.");

@@ -43,7 +43,8 @@ enum GuiHardwareProfile : uint32_t {
     INPUT_HW_CLASSIC  = 3,
     INPUT_HW_WUPC     = 4,
     INPUT_HW_DRC      = 5,
-    INPUT_HW_MAX      = 6
+    INPUT_HW_DS4      = 6,
+    INPUT_HW_MAX      = 7
 };
 
 /**

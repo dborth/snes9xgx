@@ -65,7 +65,7 @@ Every push builds automatically. Grab the latest continuous-integration build:
 - Wiimote, Nunchuk, Wii Classic Controller, Wii U Pro Controller, and GameCube Controller support
 - **Wii U GamePad** support — full touch + buttons on the **native Wii U build**; buttons/sticks and display (no touch) on **vWii via Virtual Console-style injection** — see [Wii U](#wii-u)
 - Native Wii U version outputs up to **1080p**, with a **GX2 shader-based ScaleFX** upscaler built specifically for the Wii U's GPU
-- **Wii only:** Retrode, Xbox 360, and Hornet USB controller support; Mayflash PC044 / MF105 SNES-to-USB adapter support
+- **Wii only:** Retrode, Xbox 360, DualShock 4 (wired), and Hornet USB controller support; Mayflash PC044 / MF105 SNES-to-USB adapter support
 - SNES Superscope, Mouse, and Justifier support, remappable per input device
 - Cheat code support (`.cht` files)
 - Cover art / screenshot / artwork preview support

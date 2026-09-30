@@ -33,6 +33,7 @@
 #include "drivers/ogc/wii/input/xbox360.h"
 #include "drivers/ogc/wii/input/hornet.h"
 #include "drivers/ogc/wii/input/mayflash.h"
+#include "drivers/ogc/wii/input/ds4.h"
 #endif
 
 #define ANALOG_SENSITIVITY 30
@@ -132,6 +133,24 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 		btnmap[CTRL_PAD][hw][i++] = INPUT_BTN_LEFT;
 		btnmap[CTRL_PAD][hw][i++] = INPUT_BTN_RIGHT;
 	}
+
+	/*** DualShock 4 Padmap ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == INPUT_HW_DS4))
+	{
+		i=0;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_A;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_B;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_X;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_Y;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_TRIGGER_L;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_TRIGGER_R;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_PLUS;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_MINUS;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_UP;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_DOWN;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_LEFT;
+		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_RIGHT;
+	}
 		
 	/*** Nunchuk + Wiimote Padmap ***/
 	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == INPUT_HW_NUNCHUK))
@@ -188,6 +207,13 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 		btnmap[CTRL_SCOPE][INPUT_HW_DRC][i++] = INPUT_BTN_Y;
 		btnmap[CTRL_SCOPE][INPUT_HW_DRC][i++] = INPUT_BTN_X;
 		btnmap[CTRL_SCOPE][INPUT_HW_DRC][i++] = INPUT_BTN_PLUS;
+		i=0;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_B;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_A;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_MINUS;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_Y;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_X;
+		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_PLUS;
 	}
 
 	/*** Mouse & Justifier Mapping (Simplified identically to masks) ***/
@@ -202,6 +228,8 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
         btnmap[CTRL_MOUSE][INPUT_HW_WUPC][1] = INPUT_BTN_B;
         btnmap[CTRL_MOUSE][INPUT_HW_DRC][0] = INPUT_BTN_A;
         btnmap[CTRL_MOUSE][INPUT_HW_DRC][1] = INPUT_BTN_B;
+        btnmap[CTRL_MOUSE][INPUT_HW_DS4][0] = INPUT_BTN_A;
+        btnmap[CTRL_MOUSE][INPUT_HW_DS4][1] = INPUT_BTN_B;
     }
 
     if (consoleCtrl == -1 || consoleCtrl == CTRL_JUST) {
@@ -220,6 +248,9 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
         btnmap[CTRL_JUST][INPUT_HW_DRC][0] = INPUT_BTN_B;
         btnmap[CTRL_JUST][INPUT_HW_DRC][1] = INPUT_BTN_A;
         btnmap[CTRL_JUST][INPUT_HW_DRC][2] = INPUT_BTN_PLUS;
+        btnmap[CTRL_JUST][INPUT_HW_DS4][0] = INPUT_BTN_B;
+        btnmap[CTRL_JUST][INPUT_HW_DS4][1] = INPUT_BTN_A;
+        btnmap[CTRL_JUST][INPUT_HW_DS4][2] = INPUT_BTN_PLUS;
     }
 }
 
@@ -666,8 +697,8 @@ void SetDefaultButtonMap ()
 #ifdef HW_RVL
 char* GetUSBControllerInfo()
 {
-    static char info[100];
-    snprintf(info, 100, "Retrode: %s, XBOX360: %s, Hornet: %s, Mayflash: %s", Retrode_Status(), XBOX360_Status(), Hornet_Status(), Mayflash_Status());
+    static char info[128];
+    snprintf(info, sizeof(info), "Retrode: %s, XBOX360: %s, Hornet: %s, Mayflash: %s, DS4: %s", Retrode_Status(), XBOX360_Status(), Hornet_Status(), Mayflash_Status(), DS4_Status());
     return info;
 }
 #endif
