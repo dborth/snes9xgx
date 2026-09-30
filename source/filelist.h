@@ -138,9 +138,5 @@
 #include "player2_point_png.h"
 #include "player3_point_png.h"
 #include "player4_point_png.h"
-#include "player1_grab_png.h"
-#include "player2_grab_png.h"
-#include "player3_grab_png.h"
-#include "player4_grab_png.h"
 
 #endif
