@@ -2,7 +2,7 @@
 
 All notable changes to Snes9x GX are recorded here, newest first. For the current features and setup instructions, see [README.md](README.md).
 
-## Unreleased
+## 5.0.3 - October 1, 2026
 * **Native Wii U release!** Snes9x GX now runs natively on the Wii U as its own app, with its own icon on the Wii U Menu. Requires [Aroma](https://wiiu.hacks.guide/) - run the latest Aroma release and launch the `.wuhb` directly from it
   * Output up to 1080p, with a new GPU-powered **ScaleFX** upscaler shader and a **Sharp Bilinear** shader, plus a scanline shader
   * Crisp, upscaled menus with sharper text and HD artwork
