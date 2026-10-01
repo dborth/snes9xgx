@@ -33,14 +33,19 @@ class WutSmbDriver : public SmbDriver
 		bool isNetworkUp() const override;
 
 		//! Brings the Wii U network connection up if it isn't already, via
-		//! nn::ac (ACConnect()). Blocking. Returns false (with getLastError()
-		//! set) if AC wasn't initialized or the connect attempt failed.
+		//! nn::ac (ACConnectAsync(), polled). Blocks, but gives up after a
+		//! fixed time or when the cancel check fires. Returns false (with
+		//! getLastError() set) if AC wasn't initialized or the connect failed.
 		bool ensureNetworkUp() override;
+
+		void setCancelCheck(SmbCancelCheck check) override { cancelCheck = check; }
+		bool supportsCancel() const override { return true; }
 
 	private:
 		static smb2_context * ctx;
 		SmbShareInfo current = {};
 		bool devoptabAdded = false;
 		bool acInitialized = false; //!< true once ACInitialize() has succeeded
-		bool acConnected   = false; //!< true once we've brought the network up ourselves via ACConnect()
+		bool acConnected   = false; //!< true once we've brought the network up ourselves via ACConnectAsync()
+		SmbCancelCheck cancelCheck = nullptr;
 };

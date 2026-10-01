@@ -14,6 +14,7 @@
 #include <ctime>
 #include <fcntl.h>
 #include <limits.h>
+#include <poll.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -25,8 +26,19 @@
 #include <nn/ac.h>
 #include "WutSmbDriver.h"
 #include "../Logger.h"
+#include "../Time.h"
 
 smb2_context * WutSmbDriver::ctx = nullptr;
+
+// Hard ceiling on the whole connect
+#define SMB_CONNECT_TIMEOUT_MS   15000
+// Same ceiling for bringing the network interface up through nn::ac
+#define SMB_NETWORK_TIMEOUT_MS   15000
+// How long we block before re-checking the deadline and the cancel check
+#define SMB_WAIT_SLICE_MS        100
+// Per-PDU timeout for the goodbye exchange in disconnect(): a server that has
+// already gone away must not stall app exit for the normal request timeout
+#define SMB_DISCONNECT_TIMEOUT_SECS 2
 
 // Fixed device name (smb:/)
 static const char * const kSmbDeviceName = "smb";
@@ -300,6 +312,72 @@ static devoptab_t BuildSmbDevoptab()
 }
 
 /****************************************************************************
+ * Connect wait loop
+ ***************************************************************************/
+struct ConnectWait
+{
+	volatile bool finished;
+	int status;
+};
+
+static void ConnectCallback(struct smb2_context *, int status, void *, void * privateData)
+{
+	ConnectWait * wait = (ConnectWait *)privateData;
+	wait->status = status;
+	wait->finished = true;
+}
+
+enum class WaitResult
+{
+	Finished,
+	TimedOut,
+	Cancelled,
+	Failed
+};
+
+static WaitResult WaitForConnect(smb2_context * ctx, ConnectWait & wait, SmbCancelCheck cancelCheck)
+{
+	Ticks start = SystemTime::now();
+
+	while(!wait.finished)
+	{
+		if(cancelCheck && cancelCheck())
+			return WaitResult::Cancelled;
+
+		if(SystemTime::diffMillisecs(start, SystemTime::now()) >= SMB_CONNECT_TIMEOUT_MS)
+			return WaitResult::TimedOut;
+
+		int fd = smb2_get_fd(ctx);
+		if(fd < 0)
+		{
+			usleep(SMB_WAIT_SLICE_MS * 1000); // no socket (yet) - the deadline above still applies
+			continue;
+		}
+
+		struct pollfd pfd;
+		pfd.fd = fd;
+		pfd.events = (short)smb2_which_events(ctx);
+		pfd.revents = 0;
+
+		int ready = poll(&pfd, 1, SMB_WAIT_SLICE_MS);
+		if(ready < 0)
+		{
+			if(errno == EINTR)
+				continue;
+			snprintf(g_lastError, sizeof(g_lastError), "Network error while connecting (%d)", errno);
+			return WaitResult::Failed;
+		}
+		if(ready == 0)
+			continue; // slice elapsed with nothing to service
+
+		if(smb2_service(ctx, pfd.revents) < 0)
+			return WaitResult::Failed; // libsmb2's own message is picked up by CaptureSmb2Error()
+	}
+
+	return WaitResult::Finished;
+}
+
+/****************************************************************************
  * WutSmbDriver
  ***************************************************************************/
 void WutSmbDriver::init()
@@ -354,15 +432,37 @@ bool WutSmbDriver::ensureNetworkUp()
 	if(NNResult_IsSuccess(result) && isConnected)
 		return true;
 
-	result = ACConnect(); // blocking - may take a while on cold Wi-Fi association
+	// Start the connection and poll for it rather than using the blocking
+	// ACConnect(): that can sit for a long time on a cold Wi-Fi association
+	// (or forever with no access point) and can't be abandoned
+	result = ACConnectAsync();
 	if(NNResult_IsFailure(result))
 	{
 		snprintf(g_lastError, sizeof(g_lastError), "ACConnect failed (0x%08X)", (unsigned)result.value);
 		return false;
 	}
 
-	acConnected = true;
-	return true;
+	Ticks start = SystemTime::now();
+	while(true)
+	{
+		isConnected = FALSE;
+		result = ACIsApplicationConnected(&isConnected);
+		if(NNResult_IsSuccess(result) && isConnected)
+		{
+			acConnected = true;
+			return true;
+		}
+
+		bool cancelled = cancelCheck && cancelCheck();
+		if(cancelled || SystemTime::diffMillisecs(start, SystemTime::now()) >= SMB_NETWORK_TIMEOUT_MS)
+		{
+			ACClose(); // abandon the attempt; the next ensureNetworkUp() starts a fresh one
+			snprintf(g_lastError, sizeof(g_lastError), cancelled ? "Cancelled" : "Network connection timed out");
+			return false;
+		}
+
+		usleep(SMB_WAIT_SLICE_MS * 1000);
+	}
 }
 
 SmbConnectResult WutSmbDriver::connect(const SmbShareInfo & info)
@@ -388,16 +488,42 @@ SmbConnectResult WutSmbDriver::connect(const SmbShareInfo & info)
 	}
 
 	smb2_set_security_mode(ctx, SMB2_NEGOTIATE_SIGNING_ENABLED);
+	smb2_set_timeout(ctx, 30); // per-request timeout once connected (it's off by default); the connect itself is bounded by SMB_CONNECT_TIMEOUT_MS
 	if(info.user[0] != '\0')
 		smb2_set_user(ctx, info.user);
 	smb2_set_password(ctx, info.password);
 
-	if(smb2_connect_share(ctx, info.host, info.share, info.user[0] ? info.user : nullptr) != 0)
-	{
+	// Name lookup, TCP connect, and the SMB2 negotiate/session-setup/tree-connect exchange
+	ConnectWait wait = { false, 0 };
+	int startResult = smb2_connect_share_async(ctx, info.host, info.share, info.user[0] ? info.user : nullptr, ConnectCallback, &wait);
+	WaitResult waitResult = WaitResult::Failed;
+
+	if(startResult == 0)
+		waitResult = WaitForConnect(ctx, wait, cancelCheck);
+	else
 		CaptureSmb2Error("connect_share");
+
+	if(waitResult != WaitResult::Finished || wait.status != 0)
+	{
+		SmbConnectResult result = SmbConnectResult::ConnectFailed;
+
+		if(waitResult == WaitResult::Cancelled)
+		{
+			snprintf(g_lastError, sizeof(g_lastError), "Cancelled");
+			result = SmbConnectResult::Cancelled;
+		}
+		else if(waitResult == WaitResult::TimedOut)
+		{
+			snprintf(g_lastError, sizeof(g_lastError), "connect_share: no response from server");
+			result = SmbConnectResult::TimedOut;
+		}
+		else if(waitResult == WaitResult::Finished)
+			CaptureSmb2Error("connect_share");
+		// Failed: g_lastError was already set above or by libsmb2
+
 		smb2_destroy_context(ctx);
 		ctx = nullptr;
-		return SmbConnectResult::ConnectFailed;
+		return result;
 	}
 
 	static devoptab_t smbDevoptab = BuildSmbDevoptab();
@@ -427,6 +553,8 @@ void WutSmbDriver::disconnect()
 
 	if(ctx)
 	{
+		// The tree-disconnect is a blocking round trip
+		smb2_set_timeout(ctx, SMB_DISCONNECT_TIMEOUT_SECS);
 		smb2_disconnect_share(ctx);
 		smb2_destroy_context(ctx);
 		ctx = nullptr;
@@ -443,6 +571,8 @@ const char * WutSmbDriver::connectResultMessage(SmbConnectResult result) const
 		case SmbConnectResult::InvalidSettings:    return "Network share host/name is blank.";
 		case SmbConnectResult::NetworkUnavailable: return "Network is not available.";
 		case SmbConnectResult::ConnectFailed:      return "Failed to connect to network share.";
+		case SmbConnectResult::TimedOut:           return "Network share did not respond.";
+		case SmbConnectResult::Cancelled:          return "Cancelled.";
 		default:                                   return "Unknown network share error.";
 	}
 }
