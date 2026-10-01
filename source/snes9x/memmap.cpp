@@ -1151,7 +1151,7 @@ int CMemory::ScoreHiROM (bool8 skip_header, int32 romoff)
 	if (CalculatedSize > 1024 * 1024 * 3)
 		score += 4;
 
-	if ((1 << (buf[0xd7] - 7)) > 48)
+	if (buf[0xd7] > 12)
 		score -= 1;
 
 	if (!allASCII(&buf[0xb0], 6))
@@ -1197,7 +1197,7 @@ int CMemory::ScoreLoROM (bool8 skip_header, int32 romoff)
 	if (CalculatedSize <= 1024 * 1024 * 16)
 		score += 2;
 
-	if ((1 << (buf[0xd7] - 7)) > 48)
+	if (buf[0xd7] > 12)
 		score -= 1;
 
 	if (!allASCII(&buf[0xb0], 6))

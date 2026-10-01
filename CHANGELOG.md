@@ -23,6 +23,7 @@ All notable changes to Snes9x GX are recorded here, newest first. For the curren
 * Note: due to renaming, settings will all be reset upon first load
 * Menu rumble is gentler
 * Snes9x emulation fixes: SA-1 memory mapping and RAM access fixes, IRQ timing fix, and a Mode 7 fix for visible glitches in games that change Mode 7 registers mid-scanline. Backported additional upstream Snes9x fixes
+* Fixed ROMs with an invalid size byte in their header (such as the leaked Project Dream prototype) being mapped differently on PowerPC, which caused a black screen
 * Fixed cheats from a cheat file not all starting disabled - they now all start off until you turn them on
 * Korean translation updated
 
