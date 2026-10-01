@@ -7,9 +7,9 @@
 extern "C" {
 #endif
 
-bool XBOX360_ScanPads();
+void XBOX360_ScanPads(void);
 u32 XBOX360_ButtonsHeld(int chan);
-char* XBOX360_Status();
+char* XBOX360_Status(void);
 
 #ifdef __cplusplus
 }

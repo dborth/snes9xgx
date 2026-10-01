@@ -1,5 +1,6 @@
 #ifdef HW_RVL
 #include <gccore.h>
+#include "hornet.h"
 #include "usbinput.h"
 
 #define HORNET_VID 0x0079
@@ -32,6 +33,7 @@ static int removal_cb(int result, void *usrdata)
 	if (fd == deviceId)
 	{
 		deviceId = 0;
+		jp = 0;
 		UsbInput_DeferClose(fd);
 		UsbInput_Rescan();
 	}
@@ -63,7 +65,7 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 			// You have to replug the controller!
 			replugRequired = true;
 			USB_CloseDevice(&fd);
-			break;
+			continue;
 		}
 
 		deviceId = fd;
@@ -88,7 +90,7 @@ static bool isAttached(void)
 
 const UsbInputDriver Hornet_UsbDriver = { "Hornet", &matches, &attach, &isAttached };
 
-void Hornet_ScanPads()
+void Hornet_ScanPads(void)
 {
 	if (deviceId == 0)
 	{
@@ -152,7 +154,7 @@ u32 Hornet_ButtonsHeld(int chan)
 	return jp;
 }
 
-char* Hornet_Status()
+char* Hornet_Status(void)
 {
 	if (replugRequired)
 		return "please replug";

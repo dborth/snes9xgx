@@ -21,4 +21,5 @@ private:
     bool rumbleRequest[4];
     int menuRumbleFrames[4];     // frames left in the current menu "tick" (0 = idle)
     int menuRumbleGapFrames[4];  // frames left in the enforced silent gap after a tick
+    uint32_t prevUsbHeld[4];     // previous-frame held state of the USB controllers, for down/up edges
 };

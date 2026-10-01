@@ -1,5 +1,7 @@
 #ifdef HW_RVL
 #include <gccore.h>
+#include <string.h>
+#include "retrode.h"
 #include "usbinput.h"
 
 #define RETRODE_VID 0x0403
@@ -44,6 +46,7 @@ static int removal_cb(int result, void *usrdata)
 	if (fd == deviceId)
 	{
 		deviceId = 0;
+		memset(jpRetrode, 0, sizeof(jpRetrode));
 		UsbInput_DeferClose(fd);
 		UsbInput_Rescan();
 	}
@@ -76,7 +79,7 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 			// You have to replug the Retrode controller!
 			replugRequired = true;
 			USB_CloseDevice(&fd);
-			break;
+			continue;
 		}
 
 		if (isRetrodeGamepad(devdesc))
@@ -109,7 +112,7 @@ static bool isAttached(void)
 
 const UsbInputDriver Retrode_UsbDriver = { "Retrode", &matches, &attach, &isAttached };
 
-void Retrode_ScanPads()
+void Retrode_ScanPads(void)
 {
 	if (deviceId == 0)
 	{
@@ -165,19 +168,23 @@ void Retrode_ScanPads()
 
 	// Required, otherwise if the returned port isn't the one we are looking for, jp will be set to zero,
 	// and held buttons are not possible w/o saving the state.
-	jpRetrode[buf[0] - 1] = jp;
+	// buf[0] comes straight from the device: never trust it as an index
+	if (buf[0] >= 1 && buf[0] <= 4)
+	{
+		jpRetrode[buf[0] - 1] = jp;
+	}
 }
 
 u32 Retrode_ButtonsHeld(int chan)
 {
-	if (deviceId == 0)
+	if (deviceId == 0 || chan < 0 || chan >= 4)
 	{
 		return 0;
 	}
 	return jpRetrode[chan];
 }
 
-char* Retrode_Status()
+char* Retrode_Status(void)
 {
 	if (replugRequired)
 		return "please replug";

@@ -7,9 +7,9 @@
 extern "C" {
 #endif
 
-bool Mayflash_ScanPads();
+void Mayflash_ScanPads(void);
 u32 Mayflash_ButtonsHeld(int chan);
-char* Mayflash_Status();
+char* Mayflash_Status(void);
 
 #ifdef __cplusplus
 }

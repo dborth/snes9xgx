@@ -42,6 +42,7 @@ OgcInputDriver::OgcInputDriver() {
 		rumbleRequest[i] = false;
 		menuRumbleFrames[i] = 0;
 		menuRumbleGapFrames[i] = 0;
+		prevUsbHeld[i] = 0;
 	}
 }
 
@@ -268,15 +269,22 @@ void OgcInputDriver::update() {
 
 		if(gamecubeActive) {
 			uint32_t padHeld = PAD_ButtonsHeld(i);
+			uint32_t padDown = PAD_ButtonsDown(i);
+			uint32_t padUp = PAD_ButtonsUp(i);
 			#ifdef HW_RVL
-			// Inject USB controllers into GameCube held state (since they emulate GC bitmasks)
-			padHeld |= Retrode_ButtonsHeld(i) | XBOX360_ButtonsHeld(i) | Hornet_ButtonsHeld(i) | Mayflash_ButtonsHeld(i);
+			// Inject USB controllers into GameCube held state (since they emulate GC bitmasks).
+			// They only report held state, so derive the down/up edges here; menu triggers use them.
+			uint32_t usbHeld = Retrode_ButtonsHeld(i) | XBOX360_ButtonsHeld(i) | Hornet_ButtonsHeld(i) | Mayflash_ButtonsHeld(i);
+			padDown |= usbHeld & ~prevUsbHeld[i];
+			padUp |= prevUsbHeld[i] & ~usbHeld;
+			prevUsbHeld[i] = usbHeld;
+			padHeld |= usbHeld;
 			#endif
 
 			padData.hw_connected[INPUT_HW_GAMECUBE] = true;
-			padData.hw_buttons_d[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsDown(i));
+			padData.hw_buttons_d[INPUT_HW_GAMECUBE] = MapPADToGeneric(padDown);
 			padData.hw_buttons_h[INPUT_HW_GAMECUBE] = MapPADToGeneric(padHeld);
-			padData.hw_buttons_r[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsUp(i));
+			padData.hw_buttons_r[INPUT_HW_GAMECUBE] = MapPADToGeneric(padUp);
 			padData.hw_stickX[INPUT_HW_GAMECUBE] = clampf((float)PAD_StickX(i) / 128.0f, -1.0f, 1.0f);
 			padData.hw_stickY[INPUT_HW_GAMECUBE] = clampf((float)PAD_StickY(i) / 128.0f, -1.0f, 1.0f);
 			padData.hw_substickX[INPUT_HW_GAMECUBE] = clampf((float)PAD_SubStickX(i) / 128.0f, -1.0f, 1.0f);

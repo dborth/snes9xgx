@@ -493,7 +493,7 @@ static void CreditsWindow()
 	sprintf(memoryFreeInfo, platform->getMemoryFreeInfo());
 
 #ifdef HW_RVL
-	sprintf(controllerInfo, GetUSBControllerInfo());
+	snprintf(controllerInfo, sizeof(controllerInfo), "%s", GetUSBControllerInfo());
 #endif
 
 	txt[i] = new GuiText(consoleDetails, 14, (PixelColor){0, 0, 0, 255});

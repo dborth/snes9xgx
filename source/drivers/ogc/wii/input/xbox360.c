@@ -1,6 +1,7 @@
 #ifdef HW_RVL
 #include <gccore.h>
 #include <ogc/usb.h>
+#include "xbox360.h"
 #include "usbinput.h"
 
 #define USB_CLASS_XBOX360 0xFF
@@ -17,7 +18,7 @@ static u8 ATTRIBUTE_ALIGN(32) buf[20];
 static bool isReading = false;
 static u32 jp = 0;
 static u8 player = 0;
-static u32 xboxButtonCount = 0;
+static bool xboxButtonDown = false;
 static bool nextPlayer = false;
 
 static u8 getEndpoint(usb_devdesc devdesc)
@@ -50,7 +51,11 @@ static void start_reading(s32 device_id, u8 endpoint, u8 bMaxPacketSize0)
 		return;
 	}
 	isReading = true;
-	read(deviceId, endpoint_in, bMaxPacketSize0);
+	if (read(deviceId, endpoint_in, bMaxPacketSize0) < 0)
+	{
+		// no transfer is pending, allow the next scan to try again
+		isReading = false;
+	}
 }
 
 static void stop_reading()
@@ -63,6 +68,13 @@ static int read_cb(int res, void *usrdata)
 	if (!isReading)
 	{
 		// stop reading
+		return 1;
+	}
+
+	if (res < 0)
+	{
+		// transfer error: no transfer is pending any more, XBOX360_ScanPads() restarts reading
+		isReading = false;
 		return 1;
 	}
 
@@ -130,22 +142,20 @@ static int read_cb(int res, void *usrdata)
 		jp |= (rx < -16384) ? PAD_BUTTON_LEFT  : 0;
 		jp |= (rx >  16384) ? PAD_BUTTON_RIGHT : 0;
 
-		// XBOX button to switch to next player
-		if ((buf[3] & 0x04) == 0x04)
+		// XBOX button to switch to next player, once per press (on the rising edge)
+		bool guideDown = (buf[3] & 0x04) == 0x04;
+		if (guideDown && !xboxButtonDown)
 		{
-			xboxButtonCount++;
-			// count =  2 means you have to push the button 1x to switch players
-			// count = 10 means you have to push the button 5x to switch players
-			if (xboxButtonCount >= 2)
-			{
-				nextPlayer = true;
-				xboxButtonCount = 0;
-			}
+			nextPlayer = true;
 		}
+		xboxButtonDown = guideDown;
 	}
 
 	// read again
-	read(deviceId, endpoint_in, bMaxPacketSize);
+	if (read(deviceId, endpoint_in, bMaxPacketSize) < 0)
+	{
+		isReading = false;
+	}
 
 	return 1;
 }
@@ -186,6 +196,9 @@ static int removal_cb(int result, void *usrdata)
 	{
 		stop_reading();
 		deviceId = 0;
+		jp = 0;
+		xboxButtonDown = false;
+		nextPlayer = false;
 		UsbInput_DeferClose(fd);
 		UsbInput_Rescan();
 	}
@@ -257,7 +270,7 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 			// You have to replug the XBOX360 controller!
 			replugRequired = true;
 			USB_CloseDevice(&fd);
-			break;
+			continue;
 		}
 
 		if (isXBOX360Gamepad(devdesc) && USB_SetConfiguration(fd, bConfigurationValue) >= 0)
@@ -290,11 +303,19 @@ static bool isAttached(void)
 
 const UsbInputDriver XBOX360_UsbDriver = { "XBOX360", &matches, &attach, &isAttached };
 
-void XBOX360_ScanPads()
+void XBOX360_ScanPads(void)
 {
 	if (deviceId == 0)
 	{
 		return;
+	}
+
+	// player switching is applied here, once per frame, not from ButtonsHeld()
+	// (which is called once per channel and would change player mid-frame)
+	if (nextPlayer)
+	{
+		nextPlayer = false;
+		increasePlayer();
 	}
 
 	start_reading(deviceId, endpoint_in, bMaxPacketSize);
@@ -306,11 +327,6 @@ u32 XBOX360_ButtonsHeld(int chan)
 	{
 		return 0;
 	}
-	if (nextPlayer)
-	{
-		nextPlayer = false;
-		increasePlayer();
-	}
 	if (chan != player)
 	{
 		return 0;
@@ -318,7 +334,7 @@ u32 XBOX360_ButtonsHeld(int chan)
 	return jp;
 }
 
-char* XBOX360_Status()
+char* XBOX360_Status(void)
 {
 	if (replugRequired)
 		return "please replug";

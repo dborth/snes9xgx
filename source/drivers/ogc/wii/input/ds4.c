@@ -266,7 +266,7 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		{
 			replugRequired = true;
 			USB_CloseDevice(&fd);
-			break;
+			continue;
 		}
 
 		bool hasEndpoints = findEndpoints(&devdesc);

@@ -1,5 +1,6 @@
 #ifdef HW_RVL
 #include <gccore.h>
+#include "mayflash.h"
 #include "usbinput.h"
 
 #define MAYFLASH_PC044_VID 0x0E8F
@@ -63,10 +64,12 @@ static int removal_cb(int result, void *usrdata)
 	return 1;
 }
 
+static bool isAttached(void);
+
 static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
 // Opens the device gets the device Id(s), endpoint(s), packet size, etc
-	if (deviceId != 0)
+	if (isAttached())
 	{
 		return;
 	}
@@ -77,6 +80,13 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		{
 			continue;
 		}
+
+		// An MF105 can be attached with only its first device so far: don't open that one again
+		if (deviceId != 0 && dev_entry[i].device_id == deviceId)
+		{
+			continue;
+		}
+
 		s32 fd;
 		if (USB_OpenDevice(dev_entry[i].device_id, dev_entry[i].vid, dev_entry[i].pid, &fd) < 0)
 		{
@@ -89,36 +99,39 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 			// You have to replug the controller!
 			replugRequired = true;
 			USB_CloseDevice(&fd);
-			break;
+			continue;
 		}
 		//set the device type to the given adapter
 		if (dev_entry[i].vid == MAYFLASH_PC044_VID && dev_entry[i].pid == MAYFLASH_PC044_PID)
 		{
 			mayflashDeviceType = 0;
+			deviceId = fd;
+			endpoint = getEndpoint(devdesc);
+			bMaxPacketSize = devdesc.bMaxPacketSize0;
 		}
-		else if (dev_entry[i].vid == MAYFLASH_MF105_VID && dev_entry[i].pid == MAYFLASH_MF105_PID)
+		else
 		{
 			mayflashDeviceType = 1;
-			//If first device ID is uninitialized, initialize it now
+			// First enumerated device is player one, second is player two
 			if (deviceId == 0)
 			{
 				deviceId = fd;
+				endpoint = getEndpoint(devdesc);
+				bMaxPacketSize = devdesc.bMaxPacketSize0;
 			}
 			else
 			{
-				secondDeviceId = deviceId;
-				secondEndpoint = endpoint;
+				secondDeviceId = fd;
+				secondEndpoint = getEndpoint(devdesc);
 			}
 		}
 
-		deviceId = fd;
 		replugRequired = false;
-		endpoint = getEndpoint(devdesc);
-		bMaxPacketSize = devdesc.bMaxPacketSize0;
 		USB_FreeDescriptors(&devdesc);
 		USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
+
 		//May need to continue searching for the other MF105
-		if (mayflashDeviceType == 0 || secondDeviceId != 0)
+		if (isAttached())
 		{
 			break;
 		}
@@ -132,6 +145,11 @@ static bool matches(const usb_device_entry *dev)
 
 static bool isAttached(void)
 {
+	// The MF105 enumerates as two devices (one per port) and is only complete once both are open
+	if (mayflashDeviceType == 1)
+	{
+		return deviceId != 0 && secondDeviceId != 0;
+	}
 	return deviceId != 0;
 }
 
@@ -215,23 +233,23 @@ static u32 getButtonMappingMF105(const uint8_t *buf)
 }
 
 
-void Mayflash_ScanPads()
+void Mayflash_ScanPads(void)
 {
-	if (deviceId == 0)
+	if (deviceId == 0 && secondDeviceId == 0)
 	{
 		return;
 	}
 
 	uint8_t ATTRIBUTE_ALIGN(32) buf[bMaxPacketSize];
-	s32 res = USB_ReadIntrMsg(deviceId, endpoint, sizeof(buf), buf);
-	if (res < 0)
-	{
-		return;
-	}
 
 	// Process inputs for the PC044 type adapter
 	if (mayflashDeviceType == 0)
 	{
+		if (USB_ReadIntrMsg(deviceId, endpoint, sizeof(buf), buf) < 0)
+		{
+			return;
+		}
+
 	// buf[0] is the port this report belongs to (1 = right, 2 = left). Each read returns only
 	// one port, so the state of both ports is kept, otherwise held buttons are not possible.
 	if (buf[0] >= 1 && buf[0] <= 2)
@@ -242,39 +260,34 @@ void Mayflash_ScanPads()
 	//Mapping for the M105 Adapter
 	else if (mayflashDeviceType == 1)
 	{
-	// First enumerated device is treated as player one, second as player two
-	jpMayflash[0] = getButtonMappingMF105(buf); 
-	
-	//now get inputs for the second device
-	if (secondDeviceId == 0)
+	// Each port is read on its own: an idle or failing port must not stop the other one from being read
+	if (deviceId != 0 && USB_ReadIntrMsg(deviceId, endpoint, sizeof(buf), buf) >= 0)
 	{
-		return;
-	}
-	res = USB_ReadIntrMsg(secondDeviceId, secondEndpoint, sizeof(buf), buf);
-	if (res < 0)
-	{
-		return;
-	}
-	jpMayflash[1] = getButtonMappingMF105(buf); 
+		jpMayflash[0] = getButtonMappingMF105(buf);
 	}
 
+	if (secondDeviceId != 0 && USB_ReadIntrMsg(secondDeviceId, secondEndpoint, sizeof(buf), buf) >= 0)
+	{
+		jpMayflash[1] = getButtonMappingMF105(buf);
+	}
+	}
 }
 
 u32 Mayflash_ButtonsHeld(int chan)
 {
 	// Only two ports; the caller asks for all four channels.
-	if (deviceId == 0 || chan < 0 || chan >= 2)
+	if ((deviceId == 0 && secondDeviceId == 0) || chan < 0 || chan >= 2)
 	{
 		return 0;
 	}
 	return jpMayflash[chan];
 }
 
-char* Mayflash_Status()
+char* Mayflash_Status(void)
 {
 	if (replugRequired)
 		return "please replug";
-	return deviceId ? "connected" : "not found";
+	return (deviceId || secondDeviceId) ? "connected" : "not found";
 }
 
 #endif
