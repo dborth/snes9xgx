@@ -14,13 +14,13 @@
 #include <stdint.h>
 
 void InitGUIThreads();
-void MainMenu (int menuitem);
+void MainMenu(int menuitem);
 void ErrorPrompt(const char * msg);
 int ErrorPromptRetry(const char * msg);
 void InfoPrompt(const char * msg);
-void ShowAction (const char *msg);
+void ShowAction(const char *msg, void (*onCancel)(void) = nullptr);
 void CancelAction();
-void ShowProgress (const char *msg, int done, int total);
+void ShowProgress(const char *msg, int done, int total);
 void ChangeLanguage();
 
 extern uint8_t * bg_music;

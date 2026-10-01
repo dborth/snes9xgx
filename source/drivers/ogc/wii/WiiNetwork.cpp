@@ -140,7 +140,7 @@ bool WiiNetwork::isUp()
 	return net_gethostip() > 0;
 }
 
-bool WiiNetwork::ensureUp()
+bool WiiNetwork::ensureUp(bool (*cancel)(void))
 {
 	// The network can go stale (cable pulled, AP dropped, IOS reload) even
 	// after a prior successful bring-up, so re-check liveness every call
@@ -176,6 +176,9 @@ bool WiiNetwork::ensureUp()
 
 		if(idle)
 			return up && net_gethostip() > 0;
+
+		if(cancel && cancel())
+			return false;
 
 		usleep(50 * 1000);
 	}

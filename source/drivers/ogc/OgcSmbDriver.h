@@ -43,8 +43,12 @@ class OgcSmbDriver : public SmbDriver
 		//! brought up.
 		bool ensureNetworkUp() override;
 
+		void setCancelCheck(SmbCancelCheck check) override { cancelCheck = check; }
+		bool supportsCancel() const override { return true; }
+
 	private:
 		static smb2_context * ctx;
 		SmbShareInfo current = {};
 		bool devoptabAdded = false;
+		SmbCancelCheck cancelCheck = nullptr;
 };

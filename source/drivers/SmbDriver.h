@@ -32,8 +32,15 @@ enum class SmbConnectResult
 	Success,
 	InvalidSettings,     //!< host or share is empty - nothing to try
 	NetworkUnavailable,  //!< no usable network connection at all
-	ConnectFailed        //!< network's up but the server/share/credentials didn't work
+	ConnectFailed,       //!< network's up but the server/share/credentials didn't work
+	TimedOut,            //!< the server never answered within the connect deadline
+	Cancelled            //!< the cancel check asked to stop - not an error, don't prompt
 };
+
+//! Polled by a blocking ensureNetworkUp()/connect() (from its own thread, about
+//! ten times a second); return true to abort. It runs on the thread doing the
+//! connecting, so it must be cheap and must only read plain flags.
+typedef bool (*SmbCancelCheck)(void);
 
 class SmbDriver
 {
@@ -49,13 +56,26 @@ class SmbDriver
 		//! bring it up. Cheap and non-blocking - safe to poll.
 		virtual bool isNetworkUp() const = 0;
 
-		//! Brings the network up if it isn't already.
+		//! Brings the network up if it isn't already. Bounded - gives up after a
+		//! fixed time - and abortable via setCancelCheck().
 		//! \return false (with getLastError() set) if it couldn't be brought up.
 		virtual bool ensureNetworkUp() = 0;
 
+		//! Installs (or, with nullptr, removes) the check that lets a caller
+		//! abort a blocking ensureNetworkUp()/connect(). Stateless on purpose:
+		//! the caller owns the flag, so a stale request can never abort a
+		//! later attempt. connect() then returns Cancelled.
+		virtual void setCancelCheck(SmbCancelCheck) {}
+
+		//! True if setCancelCheck() is honored, ie. a blocking connect can
+		//! really be aborted - callers use it to decide whether to offer
+		//! the user a Cancel button.
+		virtual bool supportsCancel() const { return false; }
+
 		//! Attempts to connect and mount in one call. No-ops (returns Success)
 		//! if already connected to the same host+share; reconnects if info
-		//! describes a different target.
+		//! describes a different target. Always returns within a bounded time
+		//! (TimedOut) and can be aborted through setCancelCheck().
 		virtual SmbConnectResult connect(const SmbShareInfo & info) = 0;
 
 		//! Unmounts and drops the connection. Safe to call whether or not

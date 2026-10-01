@@ -21,8 +21,10 @@
 #include <smb2/smb2.h>
 #include <smb2/libsmb2.h>
 #include <cstdio>
+#include <network.h>
 #include "OgcSmbDriver.h"
 #include "../Logger.h"
+#include "../Time.h"
 
 #ifdef HW_DOL
 #include "gamecube/GameCubeNetwork.h"
@@ -31,6 +33,14 @@
 #endif
 
 smb2_context * OgcSmbDriver::ctx = nullptr;
+
+// Hard ceiling on the whole connect
+#define SMB_CONNECT_TIMEOUT_MS   15000
+// How long we block in select() before re-checking the deadline and cancel
+#define SMB_WAIT_SLICE_MS        100
+// Per-PDU timeout for the goodbye exchange in disconnect(): a server that has
+// already gone away must not stall app exit for libsmb2's normal 30 seconds
+#define SMB_DISCONNECT_TIMEOUT_SECS 2
 
 // Fixed device name (smb:/)
 static const char * const smbDeviceName = "smb";
@@ -304,6 +314,88 @@ static devoptab_t BuildSmbDevoptab()
 }
 
 /****************************************************************************
+ * Connect wait loop
+ ***************************************************************************/
+struct ConnectWait
+{
+	volatile bool finished;
+	int status;
+};
+
+static void ConnectCallback(struct smb2_context *, int status, void *, void * privateData)
+{
+	ConnectWait * wait = (ConnectWait *)privateData;
+	wait->status = status;
+	wait->finished = true;
+}
+
+enum class WaitResult
+{
+	Finished,
+	TimedOut,
+	Cancelled,
+	Failed
+};
+
+static WaitResult WaitForConnect(smb2_context * ctx, ConnectWait & wait, SmbCancelCheck cancelCheck)
+{
+	Ticks start = SystemTime::now();
+
+	while(!wait.finished)
+	{
+		if(cancelCheck && cancelCheck())
+			return WaitResult::Cancelled;
+
+		if(SystemTime::diffMillisecs(start, SystemTime::now()) >= SMB_CONNECT_TIMEOUT_MS)
+			return WaitResult::TimedOut;
+
+		int fd = smb2_get_fd(ctx);
+		if(fd < 0)
+		{
+			usleep(SMB_WAIT_SLICE_MS * 1000); // no socket (yet) - the deadline above still applies
+			continue;
+		}
+
+		int events = smb2_which_events(ctx);
+		fd_set rd, wr, ex;
+		FD_ZERO(&rd);
+		FD_ZERO(&wr);
+		FD_ZERO(&ex);
+		if(events & POLLIN)
+			FD_SET(fd, &rd);
+		if(events & POLLOUT)
+			FD_SET(fd, &wr);
+		FD_SET(fd, &ex);
+
+		struct timeval tv;
+		tv.tv_sec = 0;
+		tv.tv_usec = SMB_WAIT_SLICE_MS * 1000;
+
+		int ready = net_select(fd + 1, &rd, &wr, &ex, &tv);
+		if(ready < 0)
+		{
+			snprintf(lastError, sizeof(lastError), "Network error while connecting (%d)", ready);
+			return WaitResult::Failed;
+		}
+		if(ready == 0)
+			continue; // slice elapsed; net_select leaves the sets untouched in this case
+
+		int revents = 0;
+		if(FD_ISSET(fd, &rd))
+			revents |= POLLIN;
+		if(FD_ISSET(fd, &wr))
+			revents |= POLLOUT;
+		if(FD_ISSET(fd, &ex))
+			revents |= POLLHUP;
+
+		if(revents && smb2_service(ctx, revents) < 0)
+			return WaitResult::Failed; // libsmb2's own message is picked up by CaptureSmb2Error()
+	}
+
+	return WaitResult::Finished;
+}
+
+/****************************************************************************
  * OgcSmbDriver
  ***************************************************************************/
 void OgcSmbDriver::init()
@@ -334,9 +426,10 @@ bool OgcSmbDriver::isNetworkUp() const
 bool OgcSmbDriver::ensureNetworkUp()
 {
 #ifdef HW_DOL
+	// lwIP's DHCP wait can't be interrupted
 	if(GameCubeNetwork::ensureUp()) return true;
 #else
-	if(WiiNetwork::ensureUp()) return true;
+	if(WiiNetwork::ensureUp(cancelCheck)) return true;
 #endif
 	snprintf(lastError, sizeof(lastError), "Network unavailable");
 	return false;
@@ -365,25 +458,42 @@ SmbConnectResult OgcSmbDriver::connect(const SmbShareInfo & info)
 
 	smb2_set_security_mode(ctx, SMB2_NEGOTIATE_SIGNING_ENABLED);
 	smb2_set_version(ctx, SMB2_VERSION_ANY2);
-	smb2_set_timeout(ctx, 30);
+	smb2_set_timeout(ctx, 30); // per-request timeout once connected; the connect itself is bounded by SMB_CONNECT_TIMEOUT_MS
 	if(info.user[0] != '\0')
 		smb2_set_user(ctx, info.user);
 	smb2_set_password(ctx, info.password);
 
-	// This is the single call most likely to be the hang: it does DNS
-	// resolution, TCP connect, and the full SMB2 negotiate/session-setup/
-	// tree-connect exchange synchronously, with no timeout of its own.
-	// If a lockup reliably lands here, try connecting by bare IP (rules
-	// out getaddrinfo()/DNS) and check whether libsmb2 was built assuming
-	// standard poll()/select() semantics that libogc's socket layer
-	// doesn't fully provide.
-	int connectResult = smb2_connect_share(ctx, info.host, info.share, info.user[0] ? info.user : nullptr);
-	if(connectResult != 0)
-	{
+	// DNS resolution, TCP connect, and the SMB2 negotiate/session-setup/tree-connect exchange
+	ConnectWait wait = { false, 0 };
+	int startResult = smb2_connect_share_async(ctx, info.host, info.share, info.user[0] ? info.user : nullptr, ConnectCallback, &wait);
+	WaitResult waitResult = WaitResult::Failed;
+
+	if(startResult == 0)
+		waitResult = WaitForConnect(ctx, wait, cancelCheck);
+	else
 		CaptureSmb2Error("connect_share");
+
+	if(waitResult != WaitResult::Finished || wait.status != 0)
+	{
+		SmbConnectResult result = SmbConnectResult::ConnectFailed;
+
+		if(waitResult == WaitResult::Cancelled)
+		{
+			snprintf(lastError, sizeof(lastError), "Cancelled");
+			result = SmbConnectResult::Cancelled;
+		}
+		else if(waitResult == WaitResult::TimedOut)
+		{
+			snprintf(lastError, sizeof(lastError), "connect_share: no response from server");
+			result = SmbConnectResult::TimedOut;
+		}
+		else if(waitResult == WaitResult::Finished)
+			CaptureSmb2Error("connect_share");
+		// Failed: lastError was already set above or by libsmb2
+
 		smb2_destroy_context(ctx);
 		ctx = nullptr;
-		return SmbConnectResult::ConnectFailed;
+		return result;
 	}
 
 	static devoptab_t smbDevoptab = BuildSmbDevoptab();
@@ -413,6 +523,8 @@ void OgcSmbDriver::disconnect()
 
 	if(ctx)
 	{
+		// The tree-disconnect is a blocking round trip
+		smb2_set_timeout(ctx, SMB_DISCONNECT_TIMEOUT_SECS);
 		smb2_disconnect_share(ctx);
 		smb2_destroy_context(ctx);
 		ctx = nullptr;
@@ -429,6 +541,8 @@ const char * OgcSmbDriver::connectResultMessage(SmbConnectResult result) const
 		case SmbConnectResult::InvalidSettings:    return "Network share host/name is blank.";
 		case SmbConnectResult::NetworkUnavailable: return "Unable to initialize network!";
 		case SmbConnectResult::ConnectFailed:      return "Failed to connect to network share.";
+		case SmbConnectResult::TimedOut:           return "Network share did not respond.";
+		case SmbConnectResult::Cancelled:          return "Cancelled.";
 		default:                                   return "Unknown network share error.";
 	}
 }
