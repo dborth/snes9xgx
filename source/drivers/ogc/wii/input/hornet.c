@@ -1,10 +1,10 @@
 #ifdef HW_RVL
 #include <gccore.h>
+#include "usbinput.h"
 
 #define HORNET_VID 0x0079
 #define HORNET_PID 0x0011
 
-static bool setup = false;
 static bool replugRequired = false;
 static s32 deviceId = 0;
 static u8 endpoint = 0;
@@ -32,20 +32,15 @@ static int removal_cb(int result, void *usrdata)
 	if (fd == deviceId)
 	{
 		deviceId = 0;
+		UsbInput_DeferClose(fd);
+		UsbInput_Rescan();
 	}
 	return 1;
 }
 
-static void open()
+static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
 	if (deviceId != 0)
-	{
-		return;
-	}
-
-	usb_device_entry dev_entry[8];
-	u8 dev_count;
-	if (USB_GetDeviceList(dev_entry, 8, USB_CLASS_HID, &dev_count) < 0)
 	{
 		return;
 	}
@@ -75,12 +70,23 @@ static void open()
 		replugRequired = false;
 		endpoint = getEndpoint(devdesc);
 		bMaxPacketSize = devdesc.bMaxPacketSize0;
+		USB_FreeDescriptors(&devdesc);
 		USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
 		break;
 	}
-
-	setup = true;
 }
+
+static bool matches(const usb_device_entry *dev)
+{
+	return isHornetGamepad(*dev);
+}
+
+static bool isAttached(void)
+{
+	return deviceId != 0;
+}
+
+const UsbInputDriver Hornet_UsbDriver = { "Hornet", &matches, &attach, &isAttached };
 
 void Hornet_ScanPads()
 {
@@ -135,10 +141,6 @@ void Hornet_ScanPads()
 
 u32 Hornet_ButtonsHeld(int chan)
 {
-	if(!setup)
-	{
-		open();
-	}
 	if (deviceId == 0)
 	{
 		return 0;
@@ -152,7 +154,6 @@ u32 Hornet_ButtonsHeld(int chan)
 
 char* Hornet_Status()
 {
-	open();
 	if (replugRequired)
 		return "please replug";
 	return deviceId ? "connected" : "not found";

@@ -25,6 +25,7 @@
 #include "wii/input/hornet.h"
 #include "wii/input/mayflash.h"
 #include "wii/input/ds4.h"
+#include "wii/input/usbinput.h"
 #endif
 
 #include "../InputController.h"
@@ -232,6 +233,7 @@ static float NormalizeWPADAnalog(int pos, int min, int max, int center) {
 
 void OgcInputDriver::update() {
 	#ifdef HW_RVL
+	UsbInput_Scan();
 	WiiDRC_ScanPads();
 	Retrode_ScanPads();
 	XBOX360_ScanPads();

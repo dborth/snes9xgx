@@ -2,6 +2,7 @@
 #include <gccore.h>
 #include <ogc/usb.h>
 #include "ds4.h"
+#include "usbinput.h"
 
 #define DS4_VID 0x054C
 #define DS4_V1_PID 0x05C4
@@ -20,7 +21,6 @@
 
 static bool replugRequired = false;
 static s32 deviceId = 0;
-static volatile s32 closePending = 0;
 static u8 endpointIn = 0;
 static u8 endpointOut = 0;
 static u8 ATTRIBUTE_ALIGN(32) buf[64];
@@ -235,22 +235,16 @@ static int removal_cb(int result, void *usrdata)
 	{
 		stopReading();
 		deviceId = 0;
-		closePending = fd;
+		UsbInput_DeferClose(fd);
 		resetState();
+		UsbInput_Rescan();
 	}
 	return 1;
 }
 
-static void open()
+static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
 	if (deviceId != 0)
-	{
-		return;
-	}
-
-	usb_device_entry dev_entry[8];
-	u8 dev_count;
-	if (USB_GetDeviceList(dev_entry, 8, USB_CLASS_HID, &dev_count) < 0)
 	{
 		return;
 	}
@@ -293,16 +287,20 @@ static void open()
 	}
 }
 
+static bool matches(const usb_device_entry *dev)
+{
+	return isDS4(*dev);
+}
+
+static bool isAttached(void)
+{
+	return deviceId != 0;
+}
+
+const UsbInputDriver DS4_UsbDriver = { "DS4", &matches, &attach, &isAttached };
+
 void DS4_ScanPads()
 {
-	if (closePending != 0)
-	{
-		s32 fd = closePending;
-		closePending = 0;
-		USB_CloseDevice(&fd);
-	}
-
-	open();
 	if (deviceId == 0)
 	{
 		return;
@@ -372,7 +370,6 @@ s16 DS4_rStickY()
 
 char* DS4_Status()
 {
-	open();
 	if (replugRequired)
 		return "please replug";
 	return deviceId ? "connected" : "not found";

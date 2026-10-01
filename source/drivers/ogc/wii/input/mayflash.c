@@ -1,12 +1,12 @@
 #ifdef HW_RVL
 #include <gccore.h>
+#include "usbinput.h"
 
 #define MAYFLASH_PC044_VID 0x0E8F
 #define MAYFLASH_PC044_PID 0x3013	
 #define MAYFLASH_MF105_VID 0x2F24
 #define MAYFLASH_MF105_PID 0x00F1
 
-static bool setup = false;
 static bool replugRequired = false;
 static s32 deviceId = 0; 
 static s32 secondDeviceId = 0; //Need to keep track of 2 device IDs, since MF105 enumerates as 2 devices
@@ -35,24 +35,38 @@ static u8 getEndpoint(usb_devdesc devdesc)
 static int removal_cb(int result, void *usrdata)
 {
 	s32 fd = (s32) usrdata;
-	if (fd == deviceId)
+	if (fd != deviceId && fd != secondDeviceId)
 	{
-		deviceId = 0;
+		return 1;
 	}
+
+	// The MF105 enumerates as two devices that are removed together, each with
+	// its own notification. Release everything we hold on the first one, so no
+	// stale second handle/endpoint survives into the next attach; the second
+	// notification then finds nothing left to do.
+	if (deviceId != 0)
+	{
+		UsbInput_DeferClose(deviceId);
+	}
+	if (secondDeviceId != 0)
+	{
+		UsbInput_DeferClose(secondDeviceId);
+	}
+	deviceId = 0;
+	secondDeviceId = 0;
+	endpoint = 0;
+	secondEndpoint = 0;
+	mayflashDeviceType = -1;
+	jpMayflash[0] = 0;
+	jpMayflash[1] = 0;
+	UsbInput_Rescan();
 	return 1;
 }
 
-static void open()
+static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
 // Opens the device gets the device Id(s), endpoint(s), packet size, etc
 	if (deviceId != 0)
-	{
-		return;
-	}
-
-	usb_device_entry dev_entry[8];
-	u8 dev_count;
-	if (USB_GetDeviceList(dev_entry, 8, USB_CLASS_HID, &dev_count) < 0)
 	{
 		return;
 	}
@@ -101,6 +115,7 @@ static void open()
 		replugRequired = false;
 		endpoint = getEndpoint(devdesc);
 		bMaxPacketSize = devdesc.bMaxPacketSize0;
+		USB_FreeDescriptors(&devdesc);
 		USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
 		//May need to continue searching for the other MF105
 		if (mayflashDeviceType == 0 || secondDeviceId != 0)
@@ -108,11 +123,21 @@ static void open()
 			break;
 		}
 	}
-
-	setup = true;
 }
 
-u32 getButtonMappingPC044(const uint8_t *buf) 
+static bool matches(const usb_device_entry *dev)
+{
+	return isMayflashGamepad(*dev);
+}
+
+static bool isAttached(void)
+{
+	return deviceId != 0;
+}
+
+const UsbInputDriver Mayflash_UsbDriver = { "Mayflash", &matches, &attach, &isAttached };
+
+static u32 getButtonMappingPC044(const uint8_t *buf)
 {
 //provided a buffer from a PC044, gets the currently pressed buttons and returns it as a u32
 	// buf[0] contains the port returned
@@ -160,7 +185,7 @@ u32 getButtonMappingPC044(const uint8_t *buf)
     return jp;
 }
 
-u32 getButtonMappingMF105(const uint8_t *buf) 
+static u32 getButtonMappingMF105(const uint8_t *buf)
 {
 //provided a buffer from a MF105, gets the currently pressed buttons and returns it as a u32
 	//Button Inputs
@@ -207,9 +232,12 @@ void Mayflash_ScanPads()
 	// Process inputs for the PC044 type adapter
 	if (mayflashDeviceType == 0)
 	{
-	// Required, otherwise if the returned port isn't the one we are looking for, jp will be set to zero,
-	// and held buttons are not possible
-	jpMayflash[buf[0] - 1] = getButtonMappingMF105(buf);	
+	// buf[0] is the port this report belongs to (1 = right, 2 = left). Each read returns only
+	// one port, so the state of both ports is kept, otherwise held buttons are not possible.
+	if (buf[0] >= 1 && buf[0] <= 2)
+	{
+		jpMayflash[buf[0] - 1] = getButtonMappingPC044(buf);
+	}
 	}
 	//Mapping for the M105 Adapter
 	else if (mayflashDeviceType == 1)
@@ -218,6 +246,10 @@ void Mayflash_ScanPads()
 	jpMayflash[0] = getButtonMappingMF105(buf); 
 	
 	//now get inputs for the second device
+	if (secondDeviceId == 0)
+	{
+		return;
+	}
 	res = USB_ReadIntrMsg(secondDeviceId, secondEndpoint, sizeof(buf), buf);
 	if (res < 0)
 	{
@@ -230,11 +262,8 @@ void Mayflash_ScanPads()
 
 u32 Mayflash_ButtonsHeld(int chan)
 {
-	if(!setup)
-	{
-		open();
-	}
-	if (deviceId == 0)
+	// Only two ports; the caller asks for all four channels.
+	if (deviceId == 0 || chan < 0 || chan >= 2)
 	{
 		return 0;
 	}
@@ -243,7 +272,6 @@ u32 Mayflash_ButtonsHeld(int chan)
 
 char* Mayflash_Status()
 {
-	open();
 	if (replugRequired)
 		return "please replug";
 	return deviceId ? "connected" : "not found";

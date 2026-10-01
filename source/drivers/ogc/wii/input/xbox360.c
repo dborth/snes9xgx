@@ -1,12 +1,12 @@
 #ifdef HW_RVL
 #include <gccore.h>
 #include <ogc/usb.h>
+#include "usbinput.h"
 
 #define USB_CLASS_XBOX360 0xFF
 #define XBOX360_VID 0x045e
 #define XBOX360_PID 0x028e
 
-static bool setup = false;
 static bool replugRequired = false;
 static s32 deviceId = 0;
 static u8 endpoint_in = 0x81;
@@ -186,12 +186,14 @@ static int removal_cb(int result, void *usrdata)
 	{
 		stop_reading();
 		deviceId = 0;
+		UsbInput_DeferClose(fd);
+		UsbInput_Rescan();
 	}
 	return 1;
 }
 
 // adapted from RetroArch input/drivers_hid/wiiusb_hid.c#wiiusb_get_description()
-void wiiusb_get_description(usb_device_entry *device, usb_devdesc *devdesc)
+void wiiusb_get_description(const usb_device_entry *device, usb_devdesc *devdesc)
 {
    unsigned char c;
    unsigned i, k;
@@ -230,16 +232,9 @@ void wiiusb_get_description(usb_device_entry *device, usb_devdesc *devdesc)
    }
 }
 
-static void open()
+static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
 	if (deviceId != 0)
-	{
-		return;
-	}
-
-	usb_device_entry dev_entry[8];
-	u8 dev_count;
-	if (USB_GetDeviceList(dev_entry, 8, USB_CLASS_XBOX360, &dev_count) < 0)
 	{
 		return;
 	}
@@ -270,18 +265,30 @@ static void open()
 			deviceId = fd;
 			replugRequired = false;
 			wiiusb_get_description(&dev_entry[i], &devdesc);
+			USB_FreeDescriptors(&devdesc);
 			turnOnLED();
 			USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
 			break;
 		}
 		else
 		{
+			USB_FreeDescriptors(&devdesc);
 			USB_CloseDevice(&fd);
 		}
 	}
-
-	setup = true;
 }
+
+static bool matches(const usb_device_entry *dev)
+{
+	return isXBOX360(*dev);
+}
+
+static bool isAttached(void)
+{
+	return deviceId != 0;
+}
+
+const UsbInputDriver XBOX360_UsbDriver = { "XBOX360", &matches, &attach, &isAttached };
 
 void XBOX360_ScanPads()
 {
@@ -295,10 +302,6 @@ void XBOX360_ScanPads()
 
 u32 XBOX360_ButtonsHeld(int chan)
 {
-	if(!setup)
-	{
-		open();
-	}
 	if (deviceId == 0)
 	{
 		return 0;
@@ -317,7 +320,6 @@ u32 XBOX360_ButtonsHeld(int chan)
 
 char* XBOX360_Status()
 {
-	open();
 	if (replugRequired)
 		return "please replug";
 	return deviceId ? "connected" : "not found";

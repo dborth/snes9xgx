@@ -1,10 +1,10 @@
 #ifdef HW_RVL
 #include <gccore.h>
+#include "usbinput.h"
 
 #define RETRODE_VID 0x0403
 #define RETRODE_PID 0x97C1
 
-static bool setup = false;
 static bool replugRequired = false;
 static s32 deviceId = 0;
 static u8 endpoint = 0;
@@ -44,20 +44,15 @@ static int removal_cb(int result, void *usrdata)
 	if (fd == deviceId)
 	{
 		deviceId = 0;
+		UsbInput_DeferClose(fd);
+		UsbInput_Rescan();
 	}
 	return 1;
 }
 
-static void open()
+static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
 	if (deviceId != 0)
-	{
-		return;
-	}
-
-	usb_device_entry dev_entry[8];
-	u8 dev_count;
-	if (USB_GetDeviceList(dev_entry, 8, USB_CLASS_HID, &dev_count) < 0)
 	{
 		return;
 	}
@@ -90,17 +85,29 @@ static void open()
 			replugRequired = false;
 			endpoint = getEndpoint(devdesc);
 			bMaxPacketSize = devdesc.bMaxPacketSize0;
+			USB_FreeDescriptors(&devdesc);
 			USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
 			break;
 		}
 		else
 		{
+			USB_FreeDescriptors(&devdesc);
 			USB_CloseDevice(&fd);
 		}
 	}
-
-	setup = true;
 }
+
+static bool matches(const usb_device_entry *dev)
+{
+	return isRetrode(*dev);
+}
+
+static bool isAttached(void)
+{
+	return deviceId != 0;
+}
+
+const UsbInputDriver Retrode_UsbDriver = { "Retrode", &matches, &attach, &isAttached };
 
 void Retrode_ScanPads()
 {
@@ -163,10 +170,6 @@ void Retrode_ScanPads()
 
 u32 Retrode_ButtonsHeld(int chan)
 {
-	if(!setup)
-	{
-		open();
-	}
 	if (deviceId == 0)
 	{
 		return 0;
@@ -176,7 +179,6 @@ u32 Retrode_ButtonsHeld(int chan)
 
 char* Retrode_Status()
 {
-	open();
 	if (replugRequired)
 		return "please replug";
 	return deviceId ? "connected" : "not found";
