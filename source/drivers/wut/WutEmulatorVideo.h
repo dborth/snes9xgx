@@ -58,5 +58,3 @@ class WutEmulatorVideo : public EmulatorVideoDriver
 		// background (gameScreenPng) needs it.
 		float quadX, quadY, quadWidth, quadHeight;
 };
-		TargetPlacement placement[OUTPUT_TARGET_COUNT];
-};
