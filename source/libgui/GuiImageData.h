@@ -44,8 +44,8 @@ class GuiImageData
 		//!Destructor
 		~GuiImageData();
 		//!Decodes new PNG data into this object's own texture, reusing the
-		//!existing allocation whenever it's already large enough for the new
-		//!image instead of freeing and reallocating.
+		//!existing allocation whenever the platform's ImageRenderer says it can
+		//!hold the new image instead of freeing and reallocating.
 		//!\param pngData Source image data (PNG)
 		//!\param maxw Max image width (0 = not set)
 		//!\param maxh Max image height (0 = not set)
@@ -88,7 +88,7 @@ class GuiImageData
 		static DecodedImage decodeToRgba(const uint8_t * pngData, int maxw = 0, int maxh = 0);
 		//!Uploads a DecodedImage produced by decodeToRgba() into this
 		//!object's own texture, reusing the existing allocation whenever
-		//!it's already large enough (same policy as reload()). Must be
+		//!ImageRenderer::canReuseTexture() allows (same policy as reload()). Must be
 		//!called on the main/GPU thread.
 		//!\param decoded Result of a prior decodeToRgba() call
 		//!\return true on success
