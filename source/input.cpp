@@ -272,7 +272,7 @@ static void UpdateCursorPosition(int chan, int &pos_x, int &pos_y)
 		int cursorX, cursorY;
 
 		// The video driver maps through the game's real on-screen placement (aspect correction, zoom, shift)
-		if (emuVideo && emuVideo->mapPointerToFrame(pad.cursor_x, pad.cursor_y, &cursorX, &cursorY))
+		if (emuVideo && emuVideo->mapPointerToFrame(pad.cursor_x, pad.cursor_y, pad.isTouch, &cursorX, &cursorY))
 		{
 			pos_x = cursorX;
 			pos_y = cursorY;

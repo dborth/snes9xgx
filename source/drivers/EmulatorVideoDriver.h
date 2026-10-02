@@ -24,11 +24,13 @@ class EmulatorVideoDriver
 		virtual void forceVideoUpdate() = 0;
 
 		// Maps a UI-canvas pointer position (IR pointer / touch, in the same canvas coordinates
-		// as InputPadData::cursor_x/y) to a position in the SNES coordinate space
+		// as InputPadData::cursor_x/y) to a position in the SNES coordinate space.
+		// onGamePad selects the output the pointer is on (touch is GamePad-only), since
+		// the game can be placed differently on the TV and the GamePad.
 		// Returns false until the placement is known (before the first resetVideo/presentFrame).
-		virtual bool mapPointerToFrame(float canvasX, float canvasY, int* frameX, int* frameY)
+		virtual bool mapPointerToFrame(float canvasX, float canvasY, bool onGamePad, int* frameX, int* frameY)
 		{
-			(void)canvasX; (void)canvasY; (void)frameX; (void)frameY;
+			(void)canvasX; (void)canvasY; (void)onGamePad; (void)frameX; (void)frameY;
 			return false;
 		}
 };

@@ -735,7 +735,7 @@ void OgcEmulatorVideo::forceVideoUpdate()
  * Maps a UI-canvas pointer position to the SNES coordinate space through
  * the game quad's current on-screen rect
  ***************************************************************************/
-bool OgcEmulatorVideo::mapPointerToFrame(float canvasX, float canvasY, int* outX, int* outY)
+bool OgcEmulatorVideo::mapPointerToFrame(float canvasX, float canvasY, bool, int* outX, int* outY)
 {
 	if (!outX || !outY || frameW <= 0.0f || frameH <= 0.0f) // scaling hasn't been computed yet
 		return false;

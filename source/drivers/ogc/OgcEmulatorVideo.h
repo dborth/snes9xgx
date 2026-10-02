@@ -23,7 +23,7 @@ class OgcEmulatorVideo : public EmulatorVideoDriver
 		void presentFrame(int width, int height) override;
 		void readFrameRGB24(uint8_t* dst) override;
 		void forceVideoUpdate() override;
-		bool mapPointerToFrame(float canvasX, float canvasY, int* frameX, int* frameY) override;
+		bool mapPointerToFrame(float canvasX, float canvasY, bool onGamePad, int* frameX, int* frameY) override;
 
 	private:
 		void configureOriginalModeTables(GXRModeObj* baseMode);

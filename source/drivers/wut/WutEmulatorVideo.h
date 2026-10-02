@@ -30,7 +30,7 @@ class WutEmulatorVideo : public EmulatorVideoDriver
 		void presentFrame(int width, int height) override;
 		void readFrameRGB24(uint8_t* dst) override;
 		void forceVideoUpdate() override;
-		bool mapPointerToFrame(float canvasX, float canvasY, int* frameX, int* frameY) override;
+		bool mapPointerToFrame(float canvasX, float canvasY, bool onGamePad, int* frameX, int* frameY) override;
 
 	private:
 		void rebuildTexture(int width, int height);
@@ -48,16 +48,15 @@ class WutEmulatorVideo : public EmulatorVideoDriver
 		int checkVideo;
 		uint32_t prevRenderedFrameCount;
 
-		// On-screen placement of the game quad, in design-canvas pixels
-		// (top-left x/y, size w/h) - recomputed by resetVideo(). This is the
-		// source of truth for the zoom/shift/aspect settings, and the metrics
-		// the menu's game screenshot background (gameScreenPng) is drawn with.
-		float quadX, quadY, quadWidth, quadHeight;
-
-		// The same quad in physical pixels of each render target (top-left
-		// x/y, size w/h), derived from the canvas placement above by the
-		// canvas-to-target stretch. This is what actually gets drawn, and what
-		// scaling/filtering needs (source-to-output scale = size / vwidth,vheight).
+		// Where the game quad is drawn: top-left x/y and size w/h in the pixels of each render target
+		// Scaling/filtering uses it too (source-to-output scale = size / vwidth, vheight).
 		struct TargetPlacement { float x, y, w, h; };
+		TargetPlacement placement[OUTPUT_TARGET_COUNT];
+
+		// The TV placement in UI-canvas pixels (top-left x/y, size w/h), derived
+		// by resetVideo(). Not used for drawing - only the menu's game screenshot
+		// background (gameScreenPng) needs it.
+		float quadX, quadY, quadWidth, quadHeight;
+};
 		TargetPlacement placement[OUTPUT_TARGET_COUNT];
 };

@@ -5,6 +5,9 @@
  *
  * WutEmulatorVideo.cpp
  ***************************************************************************/
+#include <math.h>
+#include <algorithm>
+
 #include <coreinit/memdefaultheap.h>
 #include <whb/gfx.h>
 
@@ -26,6 +29,25 @@ namespace
 {
 	// Darkness of the scanline gaps (0..1) when Scanline Overlay is on
 	const float SCANLINE_STRENGTH = 0.5f;
+
+	// Emulator video is placed in the physical pixels of each output target.
+	// The constants below are NOT a design canvas - they are the units the
+	// saved settings are defined in.
+
+	// Units of the Screen Position (videoXshift/videoYshift) setting: one unit
+	// is 1/640 of the screen width, 1/480 of the screen height. Same on every
+	// platform, so a saved shift looks the same everywhere.
+	const float SHIFT_UNITS_X = 640.0f;
+	const float SHIFT_UNITS_Y = 480.0f;
+
+	// 16:9 (Fixed Pixel Ratio) is for pixel-perfect scaling: the largest whole
+	// number N such that (256 * N) x (lines * N) fits the target, drawn
+	// unfiltered-square in the middle with bars around it. Same shape as on
+	// GC/Wii (2x = 512x448 on a 480-line screen), with N growing on bigger targets.
+
+	// "16:9" correction: picture aspect for a 240-line frame
+	const float PICTURE_ASPECT_240 = 4.0f / 3.0f;
+	const float PICTURE_LINES = 240.0f;
 
 	void PixelRectToNdc(float x, float y, float w, float h, int designWidth, int designHeight, float offset[3], float scale[3])
 	{
@@ -81,60 +103,100 @@ void WutEmulatorVideo::forceVideoUpdate()
 /****************************************************************************
  * resetVideo
  *
- * Recomputes the on-screen placement of the game quad.
+ * Computes where the game quad goes on each output target, in that target's
+ * own physical pixels (placement[]), from the current vheight and EmuSettings'
+ * aspect ratio / zoom / shift options.
+ *
+ *   None:             fill the target (stretch)
+ *   16:9:             picture aspect 4:3 * 240/lines, fitted inside the target
+ *   16:9 Fixed Ratio: largest whole-number scale that fits, square pixels
+ *                     (e.g. 1080p: 4x = 1024x896; 480p: 2x = 512x448)
+ *
+ * quadX/Y/Width/Height (and gameScreenPng) are the TV placement expressed in
+ * UI-canvas pixels. They only exist for the menu's game screenshot, which
+ * lives in canvas space; nothing is drawn from them.
  ***************************************************************************/
 void WutEmulatorVideo::resetVideo()
 {
-	const float canvasWidth  = (float) videoDriver->getScreenWidth();
-	const float canvasHeight = (float) videoDriver->getScreenHeight();
-	float xscale, yscale;
-	bool tallField = (vheight == 224 || vheight == 448);
+	const bool tallField = (vheight == 224 || vheight == 448);
+	const float baseHeight = tallField ? 224.0f : 239.0f;
 
-	if (EmuSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9)
-	{
-		float base_height = tallField ? 224.0f : 239.0f;
-		float scale_factor = (videoDriver->getScreenHeight() / 2.0f) / base_height;
-
-		xscale = (256.0f * scale_factor * 15.0f) / 16.0f;
-		yscale = videoDriver->getScreenHeight() / 2.0f;
-	}
-	else if (EmuSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9_FIXED)
-	{
-		xscale = tallField ? 224.0f : 239.0f;
-		yscale = xscale;
-	}
-	else
-	{
-		// No correction: the picture fills the whole screen on every output
-		xscale = canvasWidth  / 2.0f;
-		yscale = canvasHeight / 2.0f;
-	}
-
-	xscale *= EmuSettings.videoZoomHor;
-	yscale *= EmuSettings.videoZoomVert;
-
-	quadWidth  = 2.0f * xscale;
-	quadHeight = 2.0f * yscale;
-	// Positive shift moves the picture right / down
-	quadX = (canvasWidth  / 2.0f) + EmuSettings.videoXshift - quadWidth  / 2.0f;
-	quadY = (canvasHeight / 2.0f) + EmuSettings.videoYshift - quadHeight / 2.0f;
-
-	// Same quad in physical pixels of each target. The canvas is stretched onto
-	// every target independently per axis, so this is exactly where the
-	// canvas placement above lands on screen.
 	for (int i = 0; i < OUTPUT_TARGET_COUNT; i++)
 	{
 		const OutputTarget target = static_cast<OutputTarget>(i);
-		const float sx = (float) videoDriver->getTargetWidth(target)  / videoDriver->getScreenWidth();
-		const float sy = (float) videoDriver->getTargetHeight(target) / videoDriver->getScreenHeight();
+		const float targetW = (float) videoDriver->getTargetWidth(target);
+		const float targetH = (float) videoDriver->getTargetHeight(target);
 
-		placement[i].x = quadX * sx;
-		placement[i].y = quadY * sy;
-		placement[i].w = quadWidth * sx;
-		placement[i].h = quadHeight * sy;
+		float w, h;
+		bool pixelExact = false;
+
+		if (EmuSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9_FIXED)
+		{
+			// Largest whole scale that fits both axes (never below 1x)
+			const float scale = std::max(1.0f,
+				std::min(floorf(targetW / (float) SNES_WIDTH), floorf(targetH / baseHeight)));
+			w = (float) SNES_WIDTH * scale;
+			h = baseHeight * scale;
+			pixelExact = true;
+		}
+		else
+		{
+			if (EmuSettings.videoAspectRatioCorrection == VIDEO_ASPECT_RATIO_CORRECTION_16_9)
+			{
+				// Fit the picture inside the target at its own aspect ratio
+				const float pictureAspect = PICTURE_ASPECT_240 * (PICTURE_LINES / baseHeight);
+				const float targetAspect = targetW / targetH;
+
+				if (targetAspect > pictureAspect)
+				{
+					h = targetH;
+					w = targetH * pictureAspect;
+				}
+				else
+				{
+					w = targetW;
+					h = targetW / pictureAspect;
+				}
+			}
+			else
+			{
+				// No correction: the picture fills the whole target
+				w = targetW;
+				h = targetH;
+			}
+
+			w *= EmuSettings.videoZoomHor;
+			h *= EmuSettings.videoZoomVert;
+		}
+
+		// Positive shift moves the picture right / down
+		float x = (targetW - w) * 0.5f + EmuSettings.videoXshift * (targetW / SHIFT_UNITS_X);
+		float y = (targetH - h) * 0.5f + EmuSettings.videoYshift * (targetH / SHIFT_UNITS_Y);
+
+		if (pixelExact)
+		{
+			// Pixel-exact only if the quad also starts on a pixel boundary
+			x = floorf(x + 0.5f);
+			y = floorf(y + 0.5f);
+		}
+
+		placement[i].x = x;
+		placement[i].y = y;
+		placement[i].w = w;
+		placement[i].h = h;
 	}
 
-	// Record where/how big the quad is so we can composite gameScreenPng 
+	// The same placement in UI-canvas pixels (menu screenshot), from the TV's placement
+	const TargetPlacement& tv = placement[static_cast<int>(OutputTarget::TV)];
+	const float toCanvasX = (float) videoDriver->getScreenWidth()  / (float) videoDriver->getTargetWidth(OutputTarget::TV);
+	const float toCanvasY = (float) videoDriver->getScreenHeight() / (float) videoDriver->getTargetHeight(OutputTarget::TV);
+
+	quadX      = tv.x * toCanvasX;
+	quadY      = tv.y * toCanvasY;
+	quadWidth  = tv.w * toCanvasX;
+	quadHeight = tv.h * toCanvasY;
+
+	// Record where/how big the quad is so we can composite gameScreenPng
 	// back at the exact spot and size it was actually drawn at.
 	gameScreenPng.width  = vwidth;
 	gameScreenPng.height = vheight;
@@ -147,16 +209,26 @@ void WutEmulatorVideo::resetVideo()
 /****************************************************************************
  * mapPointerToFrame
  *
- * Maps a UI-canvas pointer position to the SNES coordinate space through
- * the game quad's current rect
+ * The pointer is reported in UI-canvas coordinates, which span the whole
+ * screen on every output, so they are a fraction of the target the pointer is
+ * on. That is mapped through that target's own placement (the TV and the
+ * GamePad are fitted independently, so they differ).
  ***************************************************************************/
-bool WutEmulatorVideo::mapPointerToFrame(float canvasX, float canvasY, int* frameX, int* frameY)
+bool WutEmulatorVideo::mapPointerToFrame(float canvasX, float canvasY, bool onGamePad, int* frameX, int* frameY)
 {
-	if (!frameX || !frameY || quadWidth <= 0.0f || quadHeight <= 0.0f) // resetVideo() hasn't run yet
+	if (!frameX || !frameY)
 		return false;
 
-	float u = (canvasX - quadX) / quadWidth;
-	float v = (canvasY - quadY) / quadHeight;
+	const OutputTarget target = onGamePad ? OutputTarget::DRC : OutputTarget::TV;
+	const TargetPlacement& p = placement[static_cast<int>(target)];
+	if (p.w <= 0.0f || p.h <= 0.0f) // resetVideo() hasn't run yet
+		return false;
+
+	const float px = (canvasX / (float) videoDriver->getScreenWidth())  * (float) videoDriver->getTargetWidth(target);
+	const float py = (canvasY / (float) videoDriver->getScreenHeight()) * (float) videoDriver->getTargetHeight(target);
+
+	float u = (px - p.x) / p.w;
+	float v = (py - p.y) / p.h;
 	u = u < 0.0f ? 0.0f : (u > 1.0f ? 1.0f : u);
 	v = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
 
