@@ -100,7 +100,7 @@ namespace
 
 	void FrameTimerAlarmHandler(OSAlarm *, OSContext *)
 	{
-		++systemFrameTimer;
+		__atomic_fetch_add(&systemFrameTimer, 1, __ATOMIC_RELAXED);
 	}
 
 	OSTime FrameTimerInterval()
@@ -249,7 +249,7 @@ void WutVideoDriver::prepareFrame()
 		GX2SetCullOnlyControl(GX2_FRONT_FACE_CCW, GX2_DISABLE, GX2_DISABLE);
 		GX2SetBlendControl(GX2_RENDER_TARGET_0, GX2_BLEND_MODE_SRC_ALPHA, GX2_BLEND_MODE_INV_SRC_ALPHA, GX2_BLEND_COMBINE_MODE_ADD, GX2_DISABLE, GX2_BLEND_MODE_SRC_ALPHA, GX2_BLEND_MODE_INV_SRC_ALPHA, GX2_BLEND_COMBINE_MODE_ADD);
 	};
-
+	
 	WHBGfxBeginRenderTV(); drawPass();
 	WHBGfxBeginRenderDRC();	drawPass();
 
@@ -315,8 +315,6 @@ void WutVideoDriver::replayDrawQueue() const
 		if(bound != BoundShader::Texture)
 		{
 			textureShader->setShaders();
-			// Uniform registers aren't guaranteed to hold their value across a
-			// shader switch (see Texture2DShader::clearBlur()).
 			textureShader->clearBlur();
 			bound = BoundShader::Texture;
 			defaultQuadBound = false;
@@ -399,9 +397,35 @@ void WutVideoDriver::presentBuffer()
 	gpuFramesInFlight = true;
 }
 
+// The alarm handler increments the timer (possibly on another core), so all
+// access goes through atomics; a plain get + set from the emulator can lose
+// ticks that arrive in between.
 uint32_t WutVideoDriver::getFrameTimer()
 {
-	return systemFrameTimer;
+	return __atomic_load_n(&systemFrameTimer, __ATOMIC_RELAXED);
+}
+
+void WutVideoDriver::setFrameTimer(uint32_t _frameTimer)
+{
+	__atomic_store_n(&systemFrameTimer, _frameTimer, __ATOMIC_RELAXED);
+}
+
+void WutVideoDriver::limitFrameTimer(uint32_t maxTicks)
+{
+	uint32_t cur = __atomic_load_n(&systemFrameTimer, __ATOMIC_RELAXED);
+	while(cur > maxTicks &&
+		!__atomic_compare_exchange_n(&systemFrameTimer, &cur, maxTicks, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
+	{
+	}
+}
+
+void WutVideoDriver::consumeFrameTick()
+{
+	uint32_t cur = __atomic_load_n(&systemFrameTimer, __ATOMIC_RELAXED);
+	while(cur > 0 &&
+		!__atomic_compare_exchange_n(&systemFrameTimer, &cur, cur - 1, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED))
+	{
+	}
 }
 
 void WutVideoDriver::clearScreen(const PixelColor& color)
@@ -498,11 +522,6 @@ void WutImageRenderer::fillTexture(void* texture, int width, int height, ImageRe
 	}
 
 	GX2Invalidate(GX2_INVALIDATE_MODE_CPU_TEXTURE, tex->surface.image, tex->surface.imageSize);
-}
-
-bool WutImageRenderer::canReuseTexture(int allocWidth, int allocHeight, int width, int height) const
-{
-	return width == allocWidth && height == allocHeight; // Only an exact-size match is reusable
 }
 
 void WutImageRenderer::destroyTexture(void * texture)

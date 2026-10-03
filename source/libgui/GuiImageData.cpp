@@ -268,7 +268,7 @@ bool GuiImageData::uploadDecoded(DecodedImage && decoded)
 	int h = decoded.height;
 	bool assetScaled = decoded.assetScaled;
 
-	bool haveUsableTexture = texture && (!ownsTexture || platform->getVideo()->getImageRenderer()->canReuseTexture(capWidth, capHeight, w, h));
+	bool haveUsableTexture = texture && (!ownsTexture || (w <= capWidth && h <= capHeight));
 
 	void * newTexture = texture;
 	if(!haveUsableTexture)

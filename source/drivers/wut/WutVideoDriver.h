@@ -67,6 +67,9 @@ class WutVideoDriver : public VideoDriver
 		int getScreenWidth() const override { return screenWidth; }
 		int getScreenHeight() const override { return screenHeight; }
 		uint32_t getFrameTimer() override;
+		void setFrameTimer(uint32_t _frameTimer) override;
+		void limitFrameTimer(uint32_t maxTicks) override;
+		void consumeFrameTick() override;
 
 		int getRefreshRate() const override;
 		float getDeltaTime() const override;
@@ -147,7 +150,6 @@ class WutImageRenderer : public ImageRenderer
 		void * createTexture(int width, int height) override;
 		void loadTextureData(void * texture, const uint8_t * rgba, int width, int height) override;
 		void fillTexture(void * texture, int width, int height, PixelSourceFn source, void * userdata) override;
-		bool canReuseTexture(int allocWidth, int allocHeight, int width, int height) const override;
 		void destroyTexture(void * texture) override;
 		void drawTexture(void * texture, float xpos, float ypos, uint16_t width, uint16_t height, float degrees, float scaleX, float scaleY, uint8_t alpha) override;
 		void drawRectangle(float x, float y, float width, float height, PixelColor color) override;
