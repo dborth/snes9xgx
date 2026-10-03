@@ -1,44 +1,383 @@
 name: Bug report
-description: If you have encountered a bug, please fill out this form. Questions, support requests, and feature requests will be closed immediately.
+description: Report a bug. Please fill out every section you can - detailed reports get fixed, vague ones get closed.
 title: "[Issue]: "
-labels: bug
+labels: ["bug"]
 body:
   - type: markdown
     attributes:
-      value: Feature requests will be closed immediately!
+      value: |
+        ## Before you start
+
+        This project covers **three different consoles and several ways of launching on each**, so the details below matter a lot. A report that doesn't say *which console and which build* usually can't be diagnosed.
+
+        - **Feature requests, questions and support requests will be closed.** This form is for bugs only.
+        - Only reports against the **latest Pre-release build** are triaged. Download it from the *Nightly Builds* table and retest before reporting.
+        - **Wii U (native):** run the **latest Aroma**. Older Aroma builds and outdated Wii U system versions are not supported.
+        - **Do not attach, link to, or ask for ROMs, BIOS files or other copyrighted game files.** Reports containing them will be deleted.
+        - One bug per issue, please.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-flight checklist
+      options:
+        - label: I downloaded the **latest Pre-release build** (not an older download) and the bug still happens.
+          required: true
+        - label: I searched open and closed issues in this repository and this has not been reported already.
+          required: true
+        - label: This is a bug, not a feature request or a question.
+          required: true
+
+  - type: markdown
+    attributes:
+      value: "## Your setup"
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where are you running it?
+      description: |
+        Pick the **exact** option. "Wii U" is not enough - vWii and native Wii U are different builds with different behaviour.
+        If you're on real hardware, please say so; emulator results can differ from hardware.
+      options:
+        - Real GameCube
+        - Real Wii
+        - Wii U - vWii via Homebrew Channel (Wii build)
+        - Wii U - vWii via VC-style injection (Wii build)
+        - Wii U - native (Aroma, .wuhb)
+        - Dolphin (emulating GameCube)
+        - Dolphin (emulating Wii)
+        - Cemu (native Wii U build)
+        - Other emulator or unusual setup (explain below)
+      multiple: false
+    validations:
+      required: true
+
+  - type: input
+    id: build
+    attributes:
+      label: Build version and date
+      description: |
+        The version number shows on the main menu logo, **but it does not change between Pre-releases**, so also give the date you downloaded the build
+        (or the commit hash / Actions run it came from). Example: `5.0.3, downloaded 2026-10-03`
+      placeholder: "5.0.3, downloaded 2026-10-03"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: build-source
+    attributes:
+      label: Where did your build come from?
+      options:
+        - Official Pre-release (README download link)
+        - GitHub Actions artifact (from a branch, PR or specific commit)
+        - Built it myself from source
+        - Someone else's build or a bundle/pack that includes it
+        - I don't know
+    validations:
+      required: true
+
+  - type: textarea
+    id: credits-screen
+    attributes:
+      label: Credits screen info
+      description: |
+        Open **Credits** from the main menu. The bottom of the screen shows your console type, CPU speed, free memory and detected USB controllers.
+        Paste that text here, or attach a photo/screenshot of the screen. This is the single most useful thing you can give us.
+      placeholder: "Example: vWii (729 MHz), IOS: 58"
+    validations:
+      required: true
+
+  - type: textarea
+    id: console-details
+    attributes:
+      label: Console and environment details
+      description: |
+        Fill in the lines that apply to your console and delete the rest.
+        On **Dolphin or Cemu**, give the emulator version and your graphics backend / relevant settings.
+      value: |
+        Console region (NTSC-U, NTSC-J, PAL):
+        System menu / firmware version:
+        Wii / vWii - IOS version and cIOS or patches installed:
+        Wii U native - Aroma version, and Aroma plugins/modules installed (Bloopair, etc.):
+        GameCube - loader used (Swiss version, etc.) and how the app is started:
+        Emulator name, version and backend (Dolphin / Cemu only):
+    validations:
+      required: true
+
+  - type: dropdown
+    id: launch-method
+    attributes:
+      label: How do you launch the app?
+      options:
+        - Homebrew Channel (boot.dol)
+        - Forwarder channel (Wii / vWii)
+        - Aroma - icon on the Wii U Menu
+        - Swiss or other GameCube loader
+        - Dolphin / Cemu directly
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: display
+    attributes:
+      label: Display setup
+      description: |
+        Needed for any video or graphics bug. How is the console connected (composite, component, HDMI adapter, Wii U HDMI), what TV/monitor,
+        which video mode and in-app Output/Video settings (NTSC/PAL/PAL60, 240p, widescreen, filter, scanlines, etc.), and on Wii U whether the problem is on the TV, the GamePad, or both.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: storage
+    attributes:
+      label: Storage devices involved
+      description: Select everything the ROM, saves, cheats, settings or app itself were loaded from or written to when the bug happened.
+      multiple: true
+      options:
+        - SD card
+        - SD Gecko slot A
+        - SD Gecko slot B
+        - SD2SP2 (GameCube port 2)
+        - GC Loader
+        - USB drive (Wii)
+        - USB drive (native Wii U, via Mocha)
+        - DVD
+        - SMB network share
+        - Not storage related
+    validations:
+      required: true
+
+  - type: textarea
+    id: storage-details
+    attributes:
+      label: Storage details
+      description: |
+        Brand, size and **filesystem** (FAT32 / exFAT / NTFS) of each device, whether the USB drive is self-powered, any hub or adapter used,
+        and how many files/folders are in the ROM folder. For SMB: the server OS (Windows / Samba / NAS model) and SMB version if known.
+        Required for loading, saving, "device not found" and SMB problems.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: controllers
+    attributes:
+      label: Controllers in use
+      multiple: true
+      options:
+        - GameCube controller
+        - Wiimote
+        - Wiimote + Nunchuk
+        - Wii Classic Controller / Classic Controller Pro
+        - Wii U Pro Controller
+        - Wii U GamePad
+        - Third-party Bluetooth controller (e.g. via Bloopair)
+        - USB controller or adapter (Hornet, Mayflash, Retrode, Xbox 360, etc.)
+        - Light gun / Zapper / Super Scope / mouse
+        - Not controller related
+    validations:
+      required: true
+
+  - type: textarea
+    id: controller-details
+    attributes:
+      label: Controller details
+      description: |
+        Required for any input problem. Exact controller and adapter models, whether it's official or third-party, wired or wireless, the order you connected them,
+        whether it works in the Wii/Wii U menu or other homebrew, and what the **Credits screen** lists under detected controllers.
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: "## The problem"
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: What kind of problem is it?
+      options:
+        - Crash or freeze at startup / during loading
+        - Crash or freeze in the menus
+        - Crash or freeze during gameplay
+        - Video / graphics (glitches, wrong colours, filters, resolution, black screen)
+        - Audio (crackling, missing, wrong speed)
+        - Controller / input
+        - Saving / loading (saves, save states, settings, ROM browser, storage)
+        - Network / SMB
+        - Performance / slowdown / frame pacing
+        - Game-specific emulation problem
+        - Cheats
+        - Menu / UI / translation / fonts
+        - Other
+    validations:
+      required: true
+
   - type: textarea
     id: describe-bug
     attributes:
       label: Describe the bug
-      description: A clear and concise description of what the bug is.
+      description: |
+        What happens, in as much detail as you can. Include the **exact text of any error message** shown on screen.
+        "It doesn't work" or "it crashes" alone can't be investigated.
     validations:
       required: true
+
   - type: textarea
     id: reproduce
     attributes:
-      label: To Reproduce
-      description: Steps to reproduce the behavior.
+      label: Steps to reproduce
+      description: Numbered steps from launching the app to the problem, including which menu options you used and which button presses trigger it.
+      placeholder: |
+        1. Launch the app from ...
+        2. Load the game ...
+        3. Press ...
+        4. See the problem
     validations:
       required: true
+
   - type: textarea
     id: expected-behavior
     attributes:
       label: Expected behavior
-      description: A clear and concise description of what you expected to happen.
+      description: What you expected to happen instead.
     validations:
       required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often does it happen?
+      options:
+        - Every time, following the same steps
+        - Often, but not every time
+        - Occasionally / hard to reproduce
+        - It happened once
+    validations:
+      required: true
+
+  - type: input
+    id: regression
+    attributes:
+      label: Did it ever work? If so, which version?
+      description: If it used to work, give the last version or download date that was fine and the first that wasn't. This lets us find the change that broke it.
+      placeholder: "Worked on the 2026-09-20 Pre-release, broken since 2026-10-01"
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: "## The game"
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: How widespread is it?
+      options:
+        - Not game related (menus, settings, storage, etc.)
+        - Every game I try
+        - Several games
+        - One specific game
+    validations:
+      required: true
+
+  - type: textarea
+    id: game-info
+    attributes:
+      label: Game details
+      description: |
+        Only if a game is involved. Fill in what applies and delete the rest.
+        Do **not** upload or link to the ROM itself.
+      value: |
+        Game title:
+        Region and revision/version (e.g. USA Rev 1, PAL, Japan):
+        File format and compression (.sfc/.smc/.nes/.fds/.gba/.gb/.gbc, zip/7z, headered?):
+        Hack, translation, or patch applied (IPS/UPS)? Which one:
+        Special hardware or mode, if relevant (SNES enhancement chip such as SuperFX or SA-1, BS-X, FDS disk, VS System, Super Game Boy, etc.):
+        Dumped from my own cartridge/disc (yes/no):
+    validations:
+      required: false
+
+  - type: dropdown
+    id: upstream
+    attributes:
+      label: Does the same game behave correctly in the upstream emulator on PC?
+      description: Snes9x, FCEUX / Mesen, VBA-M / mGBA (or RetroArch with the matching core), using the same ROM and similar settings. This tells us whether it's a port bug or an emulation-core bug.
+      options:
+        - Yes, it works correctly there
+        - No, it has the same problem there
+        - I haven't tested
+        - Not applicable (not game related)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: other-emulators
+    attributes:
+      label: Does the same issue impact Snes9xGX, FCE Ultra GX, and Visual Boy Advance GX?
+      description: This tells us whether it's an issue with shared code or a port-specific problem.
+      options:
+        - Yes, it happens on more than one emulator
+        - No, it's only on this one
+        - Not applicable
+    validations:
+      required: true	  
+
+  - type: markdown
+    attributes:
+      value: "## Settings and diagnostics"
+
+  - type: dropdown
+    id: settings-reset
+    attributes:
+      label: Have you tried with default settings?
+      description: |
+        Close the app, rename `settings.xml` (it sits next to the app: `apps/<appname>/` on Wii and GameCube, `wiiu/apps/` on native Wii U), relaunch so a fresh one is created, and retry.
+      options:
+        - Yes, and the bug still happens
+        - Yes, and the bug went away (I'll list the setting I think caused it below)
+        - No, I haven't tried
+    validations:
+      required: true
+
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings that differ from default
+      description: |
+        List anything you changed that could be relevant (video mode, filters, scanlines, rumble, sound/emulation options, save/load device, etc.).
+        You can also attach your `settings.xml` **zipped** (GitHub won't accept a bare .xml).
+    validations:
+      required: false
+
   - type: textarea
     id: logs
     attributes:
-      label: Relevant log output
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      label: Logs and crash information
+      description: |
+        Paste anything useful. This will be formatted as code, so no backticks needed.
+        - **Crash screens:** the text or a photo of any exception/crash screen, including the register dump and addresses.
+        - **Dolphin / Cemu:** the emulator's log, including any warnings or panic alerts.
+        - **debug.log:** official Pre-release builds do **not** write one. Only attach it if you built from source with `-DLOGGING_ENABLED=1`; it is written to `debug.log` on the first mounted storage device.
       render: shell
     validations:
       required: false
+
   - type: textarea
     id: screenshots
     attributes:
-      label: Screenshots
-      description: If applicable, add screenshots to help explain your problem.
+      label: Screenshots, photos or video
+      description: |
+        Drag and drop images or a short video here. For video/graphics bugs a photo of the screen or an emulator screenshot is very helpful.
+        For hardware crashes and error messages a phone photo is fine.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Anything else?
+      description: Workarounds you found, related issues, things you already tried, or anything else that might help.
     validations:
       required: false
