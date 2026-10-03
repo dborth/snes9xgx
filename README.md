@@ -31,6 +31,7 @@ Snes9x GX is homebrew — it isn't signed by Nintendo, so your console needs to 
 - [Turbo Mode](#turbo-mode)
 - [Importing and Exporting SRAM](#importing-and-exporting-sram)
 - [Satellaview (BS-X)](#satellaview-bs-x)
+- [Building from Source](#building-from-source)
 - [Credits](#credits)
 - [Links](#links)
 
@@ -361,6 +362,27 @@ Snes9x GX can load SRAM saved by Snes9x on other platforms (Mac/PC/Linux/etc.), 
 Snes9x GX supports loading Satellaview (BS-X) games. A BS-X BIOS is optional — most BS games run without it — but if you want one, download the English, no-DRM BS-X ROM from [project.satellaview.org](https://project.satellaview.org/downloads.htm) and place it in your `snes9xgx` folder, renamed to `BS-X.bin`.
 
 ---
+
+## Building from Source
+
+Snes9x GX builds for GameCube, Wii and Wii U from this one repository. The toolchain
+and dependencies (devkitPro, `libogc2` or `wut`, and `libsmb2`, `libmocha` and
+`libdvm` built from source) are the same for every project that uses libgui,
+so they are documented once in the
+**[libgui Building guide](https://github.com/dborth/libgui/blob/master/doc/building.md)**.
+Follow it through to the end of the dependency steps, then:
+
+```sh
+git clone https://github.com/dborth/snes9xgx.git
+cd snes9xgx
+make -f Makefile.wii -j3     # Wii      -> executables/snes9xgx-wii.dol
+make -f Makefile.gc -j3      # GameCube -> executables/snes9xgx-gc.dol
+make -f Makefile.wiiu -j3    # Wii U    -> executables/snes9xgx-wiiu.wuhb
+```
+
+Besides the libgui dependencies, Snes9x GX also needs `ppc-mxml`. This
+repository's `.github/workflows/build.yml` is a working reference for the full
+build.
 
 ## Credits
 
