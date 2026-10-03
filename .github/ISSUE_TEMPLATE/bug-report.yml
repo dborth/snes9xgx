@@ -1,6 +1,6 @@
 name: Bug report
 description: Report a bug. Please fill out every section you can - detailed reports get fixed, vague ones get closed.
-title: "[Issue]: "
+title: ""
 labels: ["bug"]
 body:
   - type: markdown
