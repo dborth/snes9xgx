@@ -524,6 +524,11 @@ void WutImageRenderer::fillTexture(void* texture, int width, int height, ImageRe
 	GX2Invalidate(GX2_INVALIDATE_MODE_CPU_TEXTURE, tex->surface.image, tex->surface.imageSize);
 }
 
+bool WutImageRenderer::canReuseTexture(int allocWidth, int allocHeight, int width, int height) const
+{
+	return width == allocWidth && height == allocHeight;
+}
+
 void WutImageRenderer::destroyTexture(void * texture)
 {
 	if(!texture)

@@ -83,6 +83,11 @@ class ImageRenderer
 		//! allocate a plain row-major RGBA8 buffer the size of the destination - callers only
 		//! need scratch space for whatever smaller working set their pixel math requires.
 		virtual void fillTexture(void * texture, int width, int height, PixelSourceFn source, void * userdata) = 0;
+		//!Whether a texture allocated for allocWidth x allocHeight can be reloaded in place
+		virtual bool canReuseTexture(int allocWidth, int allocHeight, int width, int height) const
+		{
+			return width <= allocWidth && height <= allocHeight;
+		}
 		//!Destroys a texture created by createTexture.
 		virtual void destroyTexture(void * texture) = 0;
 		//!Draws a texture created by createTexture.
