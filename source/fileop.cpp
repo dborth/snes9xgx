@@ -393,7 +393,7 @@ static void OnShareConnectCancel()
 
 static bool ShareConnectCancelRequested()
 {
-	return shareConnectCancelled || platform->getStatus() == Status::Exiting;
+	return shareConnectCancelled || platform->isExiting();
 }
 
 bool ConnectShare(bool silent)
@@ -693,7 +693,7 @@ static bool ParseDirEntries(int batchSize)
 /****************************************************************************
  * ContinueParseTask
  *
- * Queued on the worker thread, indexing a directory PARSE_BATCH_SIZE 
+ * Queued on the worker thread, indexing a directory PARSE_BATCH_SIZE
  * entries at a time
  ***************************************************************************/
 static int ContinueParseTask(void *)

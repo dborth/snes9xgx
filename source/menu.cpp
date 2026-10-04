@@ -658,7 +658,7 @@ static bool UpdateGui()
  ***************************************************************************/
 static int WindowPrompt(const char *title, const char *msg, const char *btn1Label, const char *btn2Label)
 {
-	if(!menu)
+	if(!menu || platform->getStatus() != Status::Running) // no UI without the foreground
 		return 0;
 
 	int choice = -1;
@@ -859,7 +859,7 @@ static int WindowPromptRequest(const char *title, const char *msg, const char *b
 	if(IsMainThread())
 		return WindowPrompt(title, msg, btn1Label, btn2Label);
 
-	if(!menu || guiExiting)
+	if(!menu || guiExiting || platform->getStatus() != Status::Running)
 		return 0;
 
 	PromptSync().mutex.lock();

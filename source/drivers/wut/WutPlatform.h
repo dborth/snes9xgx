@@ -27,6 +27,7 @@ class WutPlatform : public Platform
 		SystemEvent getSystemEvent() override;
 		Status getStatus() const override { return status; }
 		void triggerExit() override { status = Status::Exiting; }
+		void setSaveHandler(SaveHandler handler) override { saveHandler = handler; }
 
 		const char* getConsoleDetails() override;
 		const char* getMemoryFreeInfo() override;
@@ -44,6 +45,9 @@ class WutPlatform : public Platform
 		void shutdown() override;
 
 	private:
+		static uint32_t procSaveCallback(void * context);
+
+		SaveHandler saveHandler = nullptr;
 		Status status = Status::Running;
 		WutAudioDriver* audioDriver = nullptr;
 		WutVideoDriver* videoDriver = nullptr;

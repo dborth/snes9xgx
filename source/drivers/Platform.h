@@ -22,12 +22,22 @@ class FileSystemDriver;
 class ThreadDriver;
 class Logger;
 
-//! Platform execution state.
+//! Platform execution state - what the app may currently do.
 enum class Status
 {
+	//! Have the foreground: drawing, prompting and saving are all fine.
 	Running,
+	//! Wii U: the OS has taken (or is taking) the foreground away, eg. for
+	//! the HOME menu. Nothing may be drawn or prompted. May go back to Running.
 	Paused,
-	Exiting
+	//! Shutting down, with the foreground still ours (the app asked to exit,
+	//! or a power button was pressed). Saving is still fine, but nothing is
+	//! drawn or prompted any more.
+	Exiting,
+	//! Wii U: the OS closed the app while it was in the background (eg. Close
+	//! Software from the HOME menu). Nothing may be drawn, prompted or saved -
+	//! only clean up and exit.
+	Closed
 };
 
 //!A hardware/OS-level system event a Platform can report. These are
@@ -90,8 +100,16 @@ class Platform
 		virtual const char* getConsoleDetails() = 0;
 		virtual const char* getMemoryFreeInfo() = 0;
 
-		//! Current platform lifecycle state (Running, Paused, Exiting).
+		//! Current platform lifecycle state.
 		virtual Status getStatus() const = 0;
+		//!Handler for setSaveHandler().
+		typedef void (*SaveHandler)();
+		//!Wii U only (other platforms never call it): the handler is called,
+		//!on the main thread from inside getSystemEvent(), when the OS is about
+		//!to take the foreground away - the HOME menu, the power button, or
+		//!closing the app. It is the last chance to write to storage, so it
+		//!should only save. The status is no longer Running while it runs.
+		virtual void setSaveHandler(SaveHandler handler) { (void)handler; }
 		//! Transitions platform state to move to Exiting.
 		virtual void triggerExit() = 0;
 		//!True once triggerExit() has been called, or the platform's own
@@ -101,7 +119,10 @@ class Platform
 		//!event source and always reports None, relying entirely on
 		//!triggerExit() - so callers wanting to leave promptly on either
 		//!signal should check this rather than either alone.
-		bool shouldExit() { return getStatus() == Status::Exiting || getSystemEvent() == SystemEvent::ShutdownRequested; }
+		bool shouldExit() { return isExiting() || getSystemEvent() == SystemEvent::ShutdownRequested; }
+		//!True once the platform is shutting down (Exiting or Closed). Only
+		//!reads the status, so any thread may call it.
+		bool isExiting() const { return getStatus() == Status::Exiting || getStatus() == Status::Closed; }
 
 	protected:
 		//!Set by init() in every concrete Platform - store the passed-in

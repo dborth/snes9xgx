@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <sysapp/launch.h>
 #include <proc_ui/procui.h>
+#include <coreinit/foreground.h>
 #include <coreinit/systeminfo.h>
 #include <coreinit/memory.h>
 #include <malloc.h>
@@ -21,6 +22,9 @@ void WutPlatform::init(const PlatformConfig& config)
 	this->config = config;
 
 	WHBProcInit();
+
+	// WHBProcInit()'s save callback only acknowledges the OS. Use ours, so the app can save first
+	ProcUISetSaveCallback(&WutPlatform::procSaveCallback, this);
 
 	this->threadDriver = new WutThreadDriver();
 	this->threadDriver->init();
@@ -105,18 +109,40 @@ void WutPlatform::shutdown()
 	}
 }
 
-//! Polls Cafe OS process events. Transitions permanently to Exiting once
-//! WHBProcIsRunning() returns false, and tracks Paused vs Running via ProcUIInForeground().
+//! Called by ProcUI, from inside the WHBProcIsRunning() pump, each time the OS
+//! is about to take the foreground away - not only when closing (HOME menu then
+//! resume lands here too), so this must only save, never tear anything down.
+//! The OS doesn't take the foreground until this returns. The release callbacks
+//! (which free GX2/MEM1) have already run, so nothing may be drawn.
+uint32_t WutPlatform::procSaveCallback(void * context)
+{
+	WutPlatform * self = static_cast<WutPlatform *>(context);
+
+	// We're losing the foreground. (Already Exiting means the app asked for this and has the foreground until we return)
+	if (self->status == Status::Running)
+		self->status = Status::Paused;
+
+	if (self->saveHandler)
+		self->saveHandler();
+
+	OSSavesDone_ReadyToRelease();
+	return 0;
+}
+
+//! Polls Cafe OS process events. Transitions permanently to Exiting (or Closed,
+//! if we had already lost the foreground) once WHBProcIsRunning() returns false,
+//! and tracks Paused vs Running via ProcUIInForeground().
 SystemEvent WutPlatform::getSystemEvent()
 {
-	// Once latched in Exiting, always return ShutdownRequested
-	if (status == Status::Exiting)
+	// Once latched in Exiting/Closed, always return ShutdownRequested
+	if (isExiting())
 		return SystemEvent::ShutdownRequested;
 
 	// WHBProcIsRunning() pumps the ProcUI message queue - only call this once per frame
 	if (!WHBProcIsRunning())
 	{
-		status = Status::Exiting;
+		// The OS only asks us to close from the background: Paused here means the save callback has run
+		status = (status == Status::Paused) ? Status::Closed : Status::Exiting;
 		return SystemEvent::ShutdownRequested;
 	}
 

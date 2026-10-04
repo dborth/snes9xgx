@@ -52,6 +52,7 @@ AppRequest appRequest = AppRequest::NONE;
 char appPath[1024] = { 0 };
 static bool firstRun = true;
 static bool autoboot = false;
+static void SaveAppDataBeforeRelease();
 
 int main(int argc, char *argv[])
 {
@@ -65,6 +66,7 @@ int main(int argc, char *argv[])
 	platformConfig.assetScaleY = 2.25f;
 #endif
 	platform->init(platformConfig);
+	platform->setSaveHandler(SaveAppDataBeforeRelease);
 
 	InitFileOpThreads();
 	MountAllFAT();
@@ -81,7 +83,7 @@ int main(int argc, char *argv[])
 
 	savebuffer = (uint8_t *)extmem_malloc(SAVEBUFFERSIZE);
 
-#ifdef HW_RVL
+	#ifdef HW_RVL
 	// store path app was loaded from
 	if(argc > 0 && argv[0] != nullptr)
 		CreateAppPath(argv[0]);
@@ -177,10 +179,10 @@ int main(int argc, char *argv[])
 		SelectFilterMethod(EmuSettings.videoUpscalingFilter); // Initialize / Re-evaluate active filter
 #endif
 
-		while(appRequest == AppRequest::NONE) // emulation loop
+		while (appRequest == AppRequest::NONE) // emulation loop
 		{
 			SystemEvent event = platform->getSystemEvent(); // poll exactly once per iteration
-			if(platform->getStatus() == Status::Exiting || event == SystemEvent::ShutdownRequested)
+			if(platform->isExiting() || event == SystemEvent::ShutdownRequested)
 				break;
 
 			S9xMainLoop();
@@ -199,11 +201,30 @@ int main(int argc, char *argv[])
 	ExitApp();
 }
 
-void ExitApp() {
-	SavePrefsAndWait(); // exit is the one time we wait for settings to hit the device
+// Everything that has to reach storage before we can go away
+static void SaveAppData()
+{
+	SavePrefsAndWait(); // exit is the one time we wait for settings to reach the device
 
 	if (SNESROMSize > 0 && appRequest != AppRequest::MENU && EmuSettings.autoSave == AUTOSAVE_SRAM)
 		SaveSRAMAuto(SILENT);
+}
+
+// Wii U: the OS is about to take the foreground away (HOME menu, power
+// button, closing the app) - the last chance to write to storage.
+static void SaveAppDataBeforeRelease()
+{
+	if (platform->isExiting())
+		return; // ExitApp() has the foreground and saves for itself
+
+	SaveAppData();
+}
+
+void ExitApp()
+{
+	// Closed by the OS from the background: SaveAppDataBeforeRelease() has saved, and we can't write any more
+	if (platform->getStatus() != Status::Closed)
+		SaveAppData();
 
 	// Generic safety net: stop and join every Thread still outstanding
 	// (device/parse/worker) before any driver it might touch gets torn
