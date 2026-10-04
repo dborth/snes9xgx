@@ -969,6 +969,7 @@ size_t LoadFont(char * filepath)
 	size_t loadSize = ftello(file);
 
 	if(loadSize == 0) {
+		fclose(file);
 		ErrorPrompt("Error loading font!");
 		return 0;
 	}

@@ -310,7 +310,7 @@ The built-in font only covers Latin-script languages. For **Japanese, Korean, or
 | Korean | `ko.ttf` |
 | Chinese (Simplified) | `zh.ttf` |
 
-Copy the matching `.ttf` into your app folder — `apps/snes9xgx/` on Wii, `wiiu/apps/` on Wii U — alongside `boot.dol` / `snes9xgx.wuhb`, then select that language from the menu; it switches fonts automatically once both are in place.
+Copy the matching `.ttf` into your app folder — `apps/snes9xgx/` on Wii, or `snes9xgx/` on the SD card root on Wii U (the same folder as `settings.xml`) — then select that language from the menu; it switches fonts automatically once both are in place.
 
 > This is a **Wii and Wii U only** feature — the GameCube build can't load external fonts, so Japanese/Korean/Chinese text won't render correctly there.
 
