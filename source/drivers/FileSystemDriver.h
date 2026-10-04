@@ -134,6 +134,13 @@ class FileSystemDriver
 		virtual const int * getValidSaveDevices(int & outCount) const = 0;
 
 		virtual SmbDriver * getSmb() = 0;
+
+		virtual void nameToDisplay(const char * rawName, char * out, size_t outSize) const
+		{
+			if(outSize == 0)
+				return;
+			snprintf(out, outSize, "%s", rawName ? rawName : "");
+		}
 };
 
 //! Convenience for "try these devices in priority order, use whichever one

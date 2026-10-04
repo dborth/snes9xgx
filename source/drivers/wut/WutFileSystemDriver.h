@@ -80,6 +80,7 @@ class WutFileSystemDriver : public FileSystemDriver
 		const int * getValidSaveDevices(int & outCount) const override;
 
 		SmbDriver * getSmb() override { return &smbDriver; }
+		void nameToDisplay(const char * rawName, char * out, size_t outSize) const override;
 
 	private:
 		static const int slotSD  = 0;

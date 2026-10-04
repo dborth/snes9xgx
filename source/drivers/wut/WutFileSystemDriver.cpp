@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 #include "WutFileSystemDriver.h"
+#include "WutFilename.h"
 #include "dvm_wut.h"
 #include "../Logger.h"
 
@@ -445,4 +446,10 @@ const int * WutFileSystemDriver::getValidSaveDevices(int & outCount) const
 	static const int devices[] = { DEVICE_AUTO, DEVICE_SD, DEVICE_USB, DEVICE_USB2, DEVICE_USB3, DEVICE_SMB };
 	outCount = sizeof(devices) / sizeof(devices[0]);
 	return devices;
+}
+
+void WutFileSystemDriver::nameToDisplay(const char * rawName, char * out, size_t outSize) const
+{
+	// FSA hands back non-ASCII FAT names as CP932 (Shift-JIS), not UTF-8
+	WutNameToUtf8(rawName, out, outSize);
 }

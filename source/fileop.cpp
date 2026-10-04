@@ -659,14 +659,17 @@ static bool ParseDirEntries(int batchSize)
 		snprintf(browserList[browser.numEntries+i].filename, MAXJOLIET, "%s", entry->d_name);
 		browserList[browser.numEntries+i].isdir = isdir; // flag this as a dir
 
+		char utf8Name[MAXJOLIET + 1];
+		platform->getFileSystem()->nameToDisplay(browserList[browser.numEntries+i].filename, utf8Name, sizeof(utf8Name));
+
 		if(isdir)
 		{
-			snprintf(browserList[browser.numEntries+i].displayname, MAXJOLIET, "%s", browserList[browser.numEntries+i].filename);
+			snprintf(browserList[browser.numEntries+i].displayname, MAXJOLIET, "%s", utf8Name);
 			browserList[browser.numEntries+i].icon = ICON_FOLDER;
 		}
 		else
 		{
-			StripExt(browserList[browser.numEntries+i].displayname, browserList[browser.numEntries+i].filename); // hide file extension
+			StripExt(browserList[browser.numEntries+i].displayname, utf8Name); // hide file extension
 		}
 		i++;
 	}

@@ -49,7 +49,7 @@ LDFLAGS		=	-g $(MACHDEP) $(RPXSPECS) -Wl,-Map,$(notdir $@).map -Wl,--gc-sections
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS :=	-lsmb2 -lwut -lmocha -ldvm -lpng -lmxml -lz -lvorbisidec -logg $(FREETYPE_LIBS)
+LIBS :=	-lsmb2 -liconv -lwut -lmocha -ldvm -lpng -lmxml -lz -lvorbisidec -logg $(FREETYPE_LIBS)
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
