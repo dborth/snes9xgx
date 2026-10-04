@@ -8,8 +8,8 @@
 #include <cstring>
 #include <malloc.h>
 
-#include <coreinit/memdefaultheap.h>
 #include <coreinit/alarm.h>
+#include <coreinit/memdefaultheap.h>
 #include <coreinit/time.h>
 #include <gx2/clear.h>
 #include <gx2/context.h>
@@ -24,7 +24,6 @@
 #include <gx2/swap.h>
 #include <gx2/texture.h>
 #include <whb/gfx.h>
-#include "../../vba/gba/Debug.h"
 #include <proc_ui/procui.h>
 
 #include "../Platform.h"
@@ -83,7 +82,6 @@ namespace
 		}
 	}
 
-	// valid for the GPU-side copy ColorShader makes.
 	const uint8_t * WhiteVtxs()
 	{
 		static uint8_t whiteVtxs[ColorShader::cuColorVtxsSize];
@@ -251,7 +249,7 @@ void WutVideoDriver::prepareFrame()
 		GX2SetCullOnlyControl(GX2_FRONT_FACE_CCW, GX2_DISABLE, GX2_DISABLE);
 		GX2SetBlendControl(GX2_RENDER_TARGET_0, GX2_BLEND_MODE_SRC_ALPHA, GX2_BLEND_MODE_INV_SRC_ALPHA, GX2_BLEND_COMBINE_MODE_ADD, GX2_DISABLE, GX2_BLEND_MODE_SRC_ALPHA, GX2_BLEND_MODE_INV_SRC_ALPHA, GX2_BLEND_COMBINE_MODE_ADD);
 	};
-
+	
 	WHBGfxBeginRenderTV(); drawPass();
 	WHBGfxBeginRenderDRC();	drawPass();
 
@@ -387,6 +385,7 @@ void WutVideoDriver::presentBuffer()
 	flushDrawQueue();
 
 	WHBGfxBeginRender();
+
 	WHBGfxFinishRenderTV();
 	WHBGfxFinishRenderDRC();
 
