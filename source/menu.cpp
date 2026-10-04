@@ -5435,8 +5435,8 @@ void MainMenu (int selection)
 
 	ClearScreenshot();
 
-	// wait for keys to be depressed
-	while(isMenuRequested())
+	// wait for keys to be depressed - but not when leaving the app
+	while(isMenuRequested() && !platform->isExiting())
 	{
 		platform->getInput()->update();
 		usleep(THREAD_SLEEP);
