@@ -141,6 +141,8 @@ SystemEvent WutPlatform::getSystemEvent()
 	// WHBProcIsRunning() pumps the ProcUI message queue - only call this once per frame
 	if (!WHBProcIsRunning())
 	{
+		procExited = true;
+
 		// The OS only asks us to close from the background: Paused here means the save callback has run
 		status = (status == Status::Paused) ? Status::Closed : Status::Exiting;
 		return SystemEvent::ShutdownRequested;
@@ -218,17 +220,26 @@ void WutPlatform::requestExit(int, bool)
 {
 	// If the exit was user-initiated, Cafe OS has not been notified yet.
 	// SYSLaunchMenu() tells Cafe OS to switch back to the system menu or loader.
-	if(ProcUIIsRunning()) {
+	if(!procExited) {
 		SYSLaunchMenu();
 
 		// On real hardware this resolves within a frame or two. Cemu doesn't
 		// implement SYSLaunchMenu(), so ProcUI never leaves the foreground and
 		// this would spin forever - cap the wait so we can still exit cleanly there.
 		const int timeoutMs = 2000;
-		for (int waited = 0; WHBProcIsRunning() && waited < timeoutMs; waited++) {
+		for (int waited = 0; waited < timeoutMs; waited++) {
+			if (!WHBProcIsRunning()) {
+				procExited = true;
+				break;
+			}
 			usleep(1000);
 		}
 	}
+
+	if(!procExited) {
+		ProcUIShutdown();
+	}
+
 	this->shutdown();
 	WHBProcShutdown();
 	exit(0);

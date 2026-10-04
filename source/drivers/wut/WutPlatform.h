@@ -49,6 +49,7 @@ class WutPlatform : public Platform
 
 		SaveHandler saveHandler = nullptr;
 		Status status = Status::Running;
+		bool procExited = false;
 		WutAudioDriver* audioDriver = nullptr;
 		WutVideoDriver* videoDriver = nullptr;
 		WutInputDriver* inputDriver = nullptr;
