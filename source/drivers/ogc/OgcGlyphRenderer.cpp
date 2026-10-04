@@ -55,6 +55,9 @@ void OgcGlyphRenderer::loadTextureData(void* texture, FT_Bitmap* bitmap) {
 	uint8_t* src = static_cast<uint8_t*>(bitmap->buffer);
 	uint32_t pos, x1, y1, x, y;
 
+	uint32_t srcPitch = bitmap->pitch < 0 ? -bitmap->pitch : bitmap->pitch;
+	if (srcPitch == 0) srcPitch = bitmap->width;
+
 	// 8x8 tiled block processing for GX_TF_I4
 	for (y1 = 0; y1 < bitmap->rows; y1 += 8) {
 		for (x1 = 0; x1 < bitmap->width; x1 += 8) {
@@ -64,7 +67,7 @@ void OgcGlyphRenderer::loadTextureData(void* texture, FT_Bitmap* bitmap) {
 						continue;
 					}
 
-					pos = y * bitmap->width + x;
+					pos = y * srcPitch + x;
 
 					// Extract high bits from current and adjacent pixels
 					*dst = (src[pos] & 0xF0);

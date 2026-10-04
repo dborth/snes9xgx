@@ -8,6 +8,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <cstdint>
+#include <cwchar>
 
 GuiTextRenderer* fontSystem;
 
@@ -76,8 +78,10 @@ GlyphData* GuiTextRenderer::cacheGlyphData(wchar_t charCode, int16_t pixelSize) 
 	}
 
 	FT_UInt gIndex = FT_Get_Char_Index(ftFace, (FT_ULong)charCode);
-	if (gIndex != 0 && FT_Load_Glyph(ftFace, gIndex, FT_LOAD_DEFAULT | FT_LOAD_RENDER) == 0) {
-		if (ftFace->glyph->format == FT_GLYPH_FORMAT_BITMAP) {
+	bool loaded = gIndex != 0 && (FT_Load_Glyph(ftFace, gIndex, FT_LOAD_DEFAULT | FT_LOAD_RENDER | FT_LOAD_NO_BITMAP) == 0 ||
+	                              FT_Load_Glyph(ftFace, gIndex, FT_LOAD_DEFAULT | FT_LOAD_RENDER) == 0);
+	if (loaded) {
+		if (ftFace->glyph->format == FT_GLYPH_FORMAT_BITMAP && ftFace->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_GRAY) {
 			FT_Bitmap* glyphBitmap = &ftFace->glyph->bitmap;
 
 			GlyphData& charData = data->charMap[charCode];
@@ -244,16 +248,47 @@ void GuiTextRenderer::drawTextFeature(int16_t x, int16_t y, uint16_t width, Font
 
 wchar_t* GuiTextRenderer::charToWideChar(const char* strChar) {
 	if (!strChar) return nullptr;
-	wchar_t* strWChar = new wchar_t[strlen(strChar) + 1];
-	int bt = mbstowcs(strWChar, strChar, strlen(strChar));
-	if (bt > 0) {
-		strWChar[bt] = L'\0';
-		return strWChar;
+
+	const unsigned char* s = reinterpret_cast<const unsigned char*>(strChar);
+	wchar_t* strWChar = new wchar_t[strlen(strChar) + 1]; // never longer than the byte count
+	size_t out = 0;
+
+	while (*s) {
+		uint32_t cp = *s;
+		int extra = 0;
+		uint32_t minCp = 0;
+
+		if (cp < 0x80) {
+			// ASCII
+		}
+		else if (cp >= 0xC2 && cp <= 0xDF) { extra = 1; cp &= 0x1F; minCp = 0x80; }
+		else if (cp >= 0xE0 && cp <= 0xEF) { extra = 2; cp &= 0x0F; minCp = 0x800; }
+		else if (cp >= 0xF0 && cp <= 0xF4) { extra = 3; cp &= 0x07; minCp = 0x10000; }
+		// else: stray continuation byte / invalid lead - handled below as Latin-1
+
+		if (extra) {
+			int n = 0;
+			uint32_t v = cp;
+			while (n < extra && (s[1 + n] & 0xC0) == 0x80) {
+				v = (v << 6) | (s[1 + n] & 0x3F);
+				++n;
+			}
+
+			bool valid = (n == extra) && v >= minCp && v <= 0x10FFFF && !(v >= 0xD800 && v <= 0xDFFF);
+			if (valid && v > (uint32_t)WCHAR_MAX) valid = false; // can't represent in a 16-bit wchar_t
+			if (valid) {
+				strWChar[out++] = (wchar_t)v;
+				s += 1 + extra;
+				continue;
+			}
+			cp = *s; // invalid sequence: keep the lead byte as Latin-1
+		}
+
+		strWChar[out++] = (wchar_t)cp;
+		++s;
 	}
 
-	// Fallback
-	wchar_t* tempDest = strWChar;
-	while ((*tempDest++ = *strChar++));
+	strWChar[out] = L'\0';
 	return strWChar;
 }
 

@@ -8,8 +8,8 @@
 #include <cstring>
 #include <malloc.h>
 
-#include <coreinit/alarm.h>
 #include <coreinit/memdefaultheap.h>
+#include <coreinit/alarm.h>
 #include <coreinit/time.h>
 #include <gx2/clear.h>
 #include <gx2/context.h>
@@ -24,6 +24,7 @@
 #include <gx2/swap.h>
 #include <gx2/texture.h>
 #include <whb/gfx.h>
+#include "../../vba/gba/Debug.h"
 #include <proc_ui/procui.h>
 
 #include "../Platform.h"
@@ -82,6 +83,7 @@ namespace
 		}
 	}
 
+	// valid for the GPU-side copy ColorShader makes.
 	const uint8_t * WhiteVtxs()
 	{
 		static uint8_t whiteVtxs[ColorShader::cuColorVtxsSize];
@@ -249,7 +251,7 @@ void WutVideoDriver::prepareFrame()
 		GX2SetCullOnlyControl(GX2_FRONT_FACE_CCW, GX2_DISABLE, GX2_DISABLE);
 		GX2SetBlendControl(GX2_RENDER_TARGET_0, GX2_BLEND_MODE_SRC_ALPHA, GX2_BLEND_MODE_INV_SRC_ALPHA, GX2_BLEND_COMBINE_MODE_ADD, GX2_DISABLE, GX2_BLEND_MODE_SRC_ALPHA, GX2_BLEND_MODE_INV_SRC_ALPHA, GX2_BLEND_COMBINE_MODE_ADD);
 	};
-	
+
 	WHBGfxBeginRenderTV(); drawPass();
 	WHBGfxBeginRenderDRC();	drawPass();
 
@@ -385,7 +387,6 @@ void WutVideoDriver::presentBuffer()
 	flushDrawQueue();
 
 	WHBGfxBeginRender();
-
 	WHBGfxFinishRenderTV();
 	WHBGfxFinishRenderDRC();
 
@@ -653,8 +654,12 @@ void WutGlyphRenderer::loadTextureData(void * texturePtr, FT_Bitmap * bitmap)
 	uint32_t copyWidth = (bitmap->width < texture->surface.width) ? bitmap->width : texture->surface.width;
 	uint32_t copyHeight = (bitmap->rows < texture->surface.height) ? bitmap->rows : texture->surface.height;
 
+	uint32_t srcPitch = bitmap->pitch < 0 ? -bitmap->pitch : bitmap->pitch;
+	if(srcPitch == 0)
+		srcPitch = bitmap->width;
+
 	for(uint32_t y = 0; y < copyHeight; y++)
-		memcpy(dst + y * texture->surface.pitch, src + y * bitmap->width, copyWidth);
+		memcpy(dst + y * texture->surface.pitch, src + y * srcPitch, copyWidth);
 
 	GX2Invalidate(GX2_INVALIDATE_MODE_CPU_TEXTURE, texture->surface.image, texture->surface.imageSize);
 }
