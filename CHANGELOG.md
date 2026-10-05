@@ -7,6 +7,8 @@ All notable changes to Snes9x GX are recorded here, newest first. For the curren
 * Wii U: fix texture reuse causing cover art issues with varying image sizes
 * Wii U: fix calculations for fixed pixel ratio
 * Wii U: fix garbled Japanese file and folder names in the game list and game menu. The Wii U returns non-ASCII names as Shift-JIS (CP932) rather than UTF-8, so they are now converted for display (file access still uses the original name)
+* Wii U: the menu now defaults to the Wii U system language
+* Fixed the default language not being applied at startup
 
 ## 5.0.3 - October 1, 2026
 * **Native Wii U release!** Snes9x GX now runs natively on the Wii U as its own app, with its own icon on the Wii U Menu. Requires [Aroma](https://wiiu.hacks.guide/) - run the latest Aroma release and launch the `.wuhb` directly from it

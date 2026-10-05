@@ -18,6 +18,7 @@
 #include <ogc/system.h>
 #endif
 #ifdef __WIIU__
+#include <coreinit/userconfig.h>
 #include <gx2/display.h>
 #endif
 
@@ -471,6 +472,46 @@ void FixInvalidSettings()
  *
  * Sets all the defaults!
  ***************************************************************************/
+#ifdef __WIIU__
+static int GetWiiUSystemLanguage()
+{
+	uint32_t value = 0;
+	UCHandle handle = UCOpen();
+
+	if(handle < 0)
+		return LANG_ENGLISH;
+
+	UCSysConfig config;
+	memset(&config, 0, sizeof(config));
+	strncpy(config.name, "cafe.language", sizeof(config.name) - 1);
+	config.dataType = UC_DATATYPE_UNSIGNED_INT;
+	config.dataSize = sizeof(value);
+	config.data = &value;
+
+	UCError err = UCReadSysConfig(handle, 1, &config);
+	UCClose(handle);
+
+	if(err != UC_ERROR_OK)
+		return LANG_ENGLISH;
+
+	switch(value)
+	{
+		case 0: return LANG_JAPANESE;
+		case 1: return LANG_ENGLISH;
+		case 2: return LANG_FRENCH;
+		case 3: return LANG_GERMAN;
+		case 4: return LANG_ITALIAN;
+		case 5: return LANG_SPANISH;
+		case 6: return LANG_SIMP_CHINESE;
+		case 7: return LANG_KOREAN;
+		case 8: return LANG_DUTCH;
+		case 9: return LANG_PORTUGUESE;
+		case 11: return LANG_SIMP_CHINESE; // traditional: not supported
+		default: return LANG_ENGLISH;
+	}
+}
+#endif
+
 void DefaultSettings()
 {
 	memset (&EmuSettings, 0, sizeof (EmuSettings));
@@ -542,6 +583,10 @@ void DefaultSettings()
 		EmuSettings.language = LANG_SIMP_CHINESE;
 #elif HW_DOL
 	EmuSettings.language = SYS_GetLanguage() + LANG_ENGLISH;
+#elif defined(__WIIU__)
+	EmuSettings.language = GetWiiUSystemLanguage();
+#else
+	EmuSettings.language = LANG_ENGLISH;
 #endif
 
 	/****************** SNES9x Settings ***********************/

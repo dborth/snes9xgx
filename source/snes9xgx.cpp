@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
 	textTranslator->loadLanguage(en_lang, en_lang_size);
 
 	DefaultSettings();
+	ApplySettings();
 	InitializeSnes9x(); // ensure Snes9x memory is in MEM1 for Wii
 	platform->getVideo()->startMenuVideo();
 	S9xInitSync(); // initialize frame sync

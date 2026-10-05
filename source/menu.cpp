@@ -4748,10 +4748,10 @@ void ChangeLanguage() {
 			fontSystem = new GuiTextRenderer(ext_font_ttf, fileSize, platform->getVideo()->getGlyphRenderer(), platform->getVideo()->getUIScale());
 		}
 		else {
-			EmuSettings.language = currentLanguage;
+			EmuSettings.language = (currentLanguage >= 0) ? currentLanguage : LANG_ENGLISH;
 		}
 #else
-	EmuSettings.language = currentLanguage;
+	EmuSettings.language = (currentLanguage >= 0) ? currentLanguage : LANG_ENGLISH;
 	ErrorPrompt("Unsupported language!");
 #endif
 	}
