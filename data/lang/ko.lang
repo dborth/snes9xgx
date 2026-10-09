@@ -4,6 +4,9 @@ msgstr ""
 msgid "16:9 Correction"
 msgstr "16:9 보정"
 
+msgid "16:9 (Fixed Pixel Ratio)"
+msgstr "16:9 (고정 픽셀 비율)"
+
 msgid "7z decompression failed: Archive contains too many files."
 msgstr "7z 압축 해제 실패: 압축 파일에 너무 많은 파일이 포함되었습니다."
 
@@ -820,7 +823,7 @@ msgstr "under the terms of the GNU 일반 공중 사용허가 (GPL) 버전 2."
 msgid "Unknown file type!"
 msgstr "알 수 없는 파일 유형!"
 
-msgid "Other Mappins"
+msgid "Other Mappings"
 msgstr "기타 매핑"
 
 msgid "Turbo Mode"
@@ -850,6 +853,9 @@ msgstr "ABXY→오른쪽 스틱 할당"
 msgid "Mute Game Audio"
 msgstr "게임 오디오 음소거"
 
+msgid "Output Mode"
+msgstr "출력 모드"
+
 msgid "Cubic"
 msgstr "3차"
 
@@ -858,6 +864,9 @@ msgstr "싱크"
 
 msgid "Original (240p)"
 msgstr "오리지널 (240p)"
+
+msgid "Progressive (576p)"
+msgstr "프로그레시브 (576p)"
 
 msgid "Scale2x"
 msgstr "스케일2배율"
@@ -883,6 +892,27 @@ msgstr "SNES 고해상도 모드"
 msgid "Sprites Per-Line Limit"
 msgstr "라인당 스프라이트 제한"
 
+msgid "Aspect Ratio Correction"
+msgstr "화면비 보정"
+
+msgid "Bilinear Filtering"
+msgstr "선형 필터링"
+
+msgid "Hardware Softening"
+msgstr "하드웨어 연성"
+
+msgid "Sharp"
+msgstr "선명함"
+
+msgid "Soft"
+msgstr "부드러움"
+
+msgid "Upscaling"
+msgstr "업스케일링"
+
+msgid "Scanline Overlay"
+msgstr "스캔라인 오버레이"
+
 msgid "Frame Skipping"
 msgstr "프레임 건너뛰기"
 
@@ -903,3 +933,9 @@ msgstr "Wii 전원 끄기"
 
 msgid "Snes9x GX GameCube"
 msgstr "Snes9x GX 게임큐브"
+
+msgid "Emulation"
+msgstr "에뮬레이션"
+
+msgid "Audio Interpolation"
+msgstr "오디오 보간법"
