@@ -66,23 +66,41 @@ uint32_t GuiTrigger::resolveMask(const InputController* controller) const {
 	return conditionMask; // Fallback to explicit mask for non-semantic triggers
 }
 
+// A sideways Wiimote swaps A/B for 2/1, but only the Wiimote is held that way
+static uint32_t UnrotatedHwMask(TRIGGER_ACTION action, const InputController* c)
+{
+	if (!c->isSideways())
+		return INPUT_BTN_NONE;
+	if (action == TRIGGER_ACTION::PRIMARY)
+		return INPUT_BTN_A;
+	if (action == TRIGGER_ACTION::SECONDARY)
+		return INPUT_BTN_B;
+	return INPUT_BTN_NONE;
+}
+
 bool GuiTrigger::isClicked(const InputController* controller) const {
 	if (!controller || (chan != -1 && controller->getChannel() != chan)) {
 		return false;
 	}
-	return (controller->getPadData().buttons_d & resolveMask(controller)) != 0;
+	const InputPadData& d = controller->getPadData();
+	return ((d.buttons_d & resolveMask(controller)) |
+	        (d.hw_buttons_d[INPUT_HW_DRC] & UnrotatedHwMask(action, controller))) != 0;
 }
 
 bool GuiTrigger::isHeld(const InputController* controller) const {
 	if (!controller || (chan != -1 && controller->getChannel() != chan)) {
 		return false;
 	}
-	return (controller->getPadData().buttons_h & resolveMask(controller)) != 0;
+	const InputPadData& d = controller->getPadData();
+	return ((d.buttons_h & resolveMask(controller)) |
+	        (d.hw_buttons_h[INPUT_HW_DRC] & UnrotatedHwMask(action, controller))) != 0;
 }
 
 bool GuiTrigger::isReleased(const InputController* controller) const {
 	if (!controller || (chan != -1 && controller->getChannel() != chan)) {
 		return false;
 	}
-	return (controller->getPadData().buttons_r & resolveMask(controller)) != 0;
+	const InputPadData& d = controller->getPadData();
+	return ((d.buttons_r & resolveMask(controller)) |
+	        (d.hw_buttons_r[INPUT_HW_DRC] & UnrotatedHwMask(action, controller))) != 0;
 }

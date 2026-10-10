@@ -427,6 +427,8 @@ static void DrawGui() {
  * THIS MUST NOT BE REMOVED OR DISABLED IN ANY DERIVATIVE WORK
  ***************************************************************************/
 
+static bool UpdateGui();
+
 static void CreditsWindow()
 {
 	int i = 0;
@@ -489,8 +491,8 @@ static void CreditsWindow()
 	char memoryFreeInfo[50];
 	char controllerInfo[128] = { 0 };
 
-	sprintf(consoleDetails, platform->getConsoleDetails());
-	sprintf(memoryFreeInfo, platform->getMemoryFreeInfo());
+	snprintf(consoleDetails, sizeof(consoleDetails), "%s", platform->getConsoleDetails());
+	snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "%s", platform->getMemoryFreeInfo());
 
 #ifdef HW_RVL
 	snprintf(controllerInfo, sizeof(controllerInfo), "%s", GetUSBControllerInfo());
@@ -527,19 +529,15 @@ static void CreditsWindow()
 		return controller[0]->getPadData().buttons_d || controller[1]->getPadData().buttons_d ||
 			   controller[2]->getPadData().buttons_d || controller[3]->getPadData().buttons_d; };
 
+	bool running = true;
+
 	// debounce - wait for button to be unpressed
-	while(buttonPressed())
-	{
-		ProcessInputData();
-		DrawGui();
-	}
+	while(running && buttonPressed())
+		running = UpdateGui();
 
 	// credits open - wait for button to be pressed
-	while(!buttonPressed())
-	{
-		ProcessInputData();
-		DrawGui();
-	}
+	while(running && !buttonPressed())
+		running = UpdateGui();
 
 	menu->mainWindow.remove(&creditsWindowBox);
 
@@ -547,11 +545,9 @@ static void CreditsWindow()
 		delete txt[i];
 
 	// credits closed - wait for button to be unpressed (so we don't just reopen credits)
-	while(buttonPressed())
-	{
-		ProcessInputData();
-		DrawGui();
-	}
+	while(running && buttonPressed())
+		running = UpdateGui();
+
 	menu->mainWindow.setState(oldState);
 }
 
