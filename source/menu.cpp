@@ -1902,10 +1902,16 @@ static int MenuGame()
 		#ifndef HW_DOL
 		for(i=0; i < 4; i++)
 		{
-			if(controller[i]->getPadData().hw_connected[INPUT_HW_WIIMOTE])
+			const InputPadData& pad = controller[i]->getPadData();
+			bool hasBattery = pad.hw_connected[INPUT_HW_WIIMOTE];
+			#ifdef __WIIU__
+			hasBattery = hasBattery || pad.hw_connected[INPUT_HW_DRC] || pad.hw_connected[INPUT_HW_WUPC];
+			#endif
+
+			if(hasBattery)
 			{
 				newStatus = true;
-				newLevel = (controller[i]->getPadData().battery_level / 100.0) * 4;
+				newLevel = (pad.battery_level / 100.0) * 4;
 				if(newLevel > 4) newLevel = 4;
 			}
 			else
