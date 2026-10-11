@@ -43,14 +43,20 @@ SystemEvent WiiPlatform::getSystemEvent()
 /****************************************************************************
  * IOS Check
  ***************************************************************************/
-static inline bool IsDolphinEmulator() {
+static bool IsDolphinEmulator() {
+	static int isDolphin = -1;
+
+	if(isDolphin >= 0)
+		return (bool)isDolphin;
+
 	s32 fd = IOS_Open("/dev/dolphin", 0);
 
 	if (fd >= 0) {
 		IOS_Close(fd);
+		isDolphin = 1;
 		return true;
 	}
-
+	isDolphin = 0;
 	return false;
 }
 

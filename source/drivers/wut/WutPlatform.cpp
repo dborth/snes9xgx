@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <sysapp/launch.h>
 #include <proc_ui/procui.h>
+#include <coreinit/dynload.h>
 #include <coreinit/foreground.h>
 #include <coreinit/systeminfo.h>
 #include <coreinit/memory.h>
@@ -164,12 +165,36 @@ SystemEvent WutPlatform::getSystemEvent()
 /****************************************************************************
  * Console/memory info
  ***************************************************************************/
+bool WutPlatform::isCemu() {
+	static int cemu = -1;
+
+	if(cemu >= 0)
+		return (bool)cemu;
+
+	static const char *syms[] = {
+		"OSDynLoad_gLoaderLock", "__OSPlatformInfo",
+		"__OSSchedulerLock",     "__OSCurrentThread",
+	};
+	OSDynLoad_Module coreinit;
+	if (OSDynLoad_Acquire("coreinit", &coreinit) != OS_DYNLOAD_OK) {
+		cemu = 0;
+		return false;
+	}
+
+	for (size_t i = 0; i < sizeof(syms) / sizeof(syms[0]) && !cemu; ++i) {
+		void *addr = NULL;
+		OSDynLoad_Error err = OSDynLoad_FindExport(coreinit, OS_DYNLOAD_EXPORT_DATA, syms[i], &addr);
+		cemu = (int)(err == OS_DYNLOAD_OK && addr == (void *)0xFFFFFFFF);
+	}
+	OSDynLoad_Release(coreinit);
+	return (bool)cemu;
+}
 
 // Espresso's nominal core clock (1.24325GHz) - used only if OSGetSystemInfo()
 // ever returns a bogus/zero reading.
 #define WIIU_FALLBACK_CORE_CLOCK_MHZ 1243
 
-static uint32_t GetCPUSpeedMHz() {
+static uint32_t getCPUSpeedMHz() {
 	OSSystemInfo * info = OSGetSystemInfo();
 
 	if (info && info->coreClockSpeed > 0)
@@ -180,7 +205,7 @@ static uint32_t GetCPUSpeedMHz() {
 
 const char* WutPlatform::getConsoleDetails() {
 	static char description[64];
-	uint32_t mhz = GetCPUSpeedMHz();
+	uint32_t mhz = getCPUSpeedMHz();
 
 	char speedStr[16];
 	if (mhz >= 1000) {
@@ -189,7 +214,7 @@ const char* WutPlatform::getConsoleDetails() {
 		snprintf(speedStr, sizeof(speedStr), "%u MHz", mhz);
 	}
 
-	snprintf(description, sizeof(description), "Wii U (%s)", speedStr);
+	snprintf(description, sizeof(description), "%s (%s)", isCemu() ? "Cemu Emulator" : "Wii U", speedStr);
 
 	return description;
 }
