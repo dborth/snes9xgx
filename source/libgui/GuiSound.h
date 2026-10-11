@@ -5,12 +5,16 @@
  ***************************************************************************/
 #pragma once
 
+//!Encoding of a GuiSound: a short PCM one-shot or a streamed OGG.
+//!\ingroup grp_core
 enum class SOUND {
 	NONE,
 	PCM,
 	OGG
 };
 
+//!Global volume category: music (looping stream) or sound effects.
+//!\ingroup grp_core
 enum class VOLUME_TYPE {
 	MUSIC,
 	SFX
@@ -18,6 +22,7 @@ enum class VOLUME_TYPE {
 
 //!Sound conversion and playback. Generic -- delegates to audioSystem for
 //!everything platform-specific.
+//!\ingroup grp_core
 class GuiSound
 {
 	public:
