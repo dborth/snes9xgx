@@ -5,6 +5,13 @@
  ***************************************************************************/
 #pragma once
 
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#include "GuiElement.h"
+#include "GuiPaint.h"
+#include "GuiTheme.h"
+
 //!Small control icons for lists and hints (the "A" in a circle, a bumper, a D-pad arrow).
 //!\ingroup grp_controller
 enum class GLYPH {
@@ -20,6 +27,8 @@ enum class GLYPH {
 	CAPTURE,	//!< A rounded square with a ring
 	HOME
 };
+
+class GuiText;
 
 //!A small control icon drawn from shapes: a light badge with a dark symbol or letter, for list rows and hint
 //!bars. Not selectable; it is placed by a layout like any element and sized by its kind.
@@ -49,3 +58,73 @@ class GuiGlyph : public GuiElement
 		float meshFeather;
 		std::vector<MeshVertex> scratch;
 };
+
+inline void GuiGlyph::size(GLYPH kind, float& w, float& h)
+{
+	switch(kind)
+	{
+		case GLYPH::BUMPER: w = 30.0f; h = 20.0f; break;
+		default: w = 22.0f; h = 22.0f; break;
+	}
+}
+
+inline void GuiGlyph::build(GuiMesh& mesh, GLYPH kind, float w, float h)
+{
+	const GuiTheme& theme = GuiTheme::current();
+	const GuiFill light = GuiFill::solid(theme.text);
+	const GuiFill dark = GuiFill::solid(theme.background);
+	const GuiRect box = { 0.0f, 0.0f, w, h };
+	const float cx = w * 0.5f, cy = h * 0.5f, u = std::min(w, h) / 22.0f; // u = size relative to a 22-pixel glyph
+
+	switch(kind)
+	{
+		case GLYPH::BUMPER:
+			mesh.addRoundRect(box, GuiCorners(6.0f * u), light);
+			return;
+		case GLYPH::CAPTURE:
+			mesh.addRoundRect(box, GuiCorners(5.0f * u), light);
+			mesh.strokeEllipse(GuiRect{ cx - 6.0f * u, cy - 6.0f * u, 12.0f * u, 12.0f * u }, 1.6f * u, STROKE::INSIDE, dark);
+			return;
+		default:
+			break;
+	}
+
+	mesh.addEllipse(box, light);
+	switch(kind)
+	{
+		case GLYPH::UP:
+		case GLYPH::DOWN:
+		case GLYPH::LEFT:
+		case GLYPH::RIGHT:
+		{
+			// a triangle pointing up, turned to face the right way
+			const float a = kind == GLYPH::UP ? 0.0f : kind == GLYPH::RIGHT ? 90.0f : kind == GLYPH::DOWN ? 180.0f : 270.0f;
+			const float rad = a * 3.14159265f / 180.0f, c = cosf(rad), s = sinf(rad);
+			const float pts[3][2] = { { 0.0f, -5.5f * u }, { -5.0f * u, 4.0f * u }, { 5.0f * u, 4.0f * u } };
+			std::vector<GuiPoint> tri;
+			for(int i = 0; i < 3; i++)
+				tri.push_back(GuiPoint{ cx + pts[i][0] * c - pts[i][1] * s, cy + pts[i][0] * s + pts[i][1] * c });
+			mesh.addPolygon(tri, dark);
+			break;
+		}
+		case GLYPH::PLUS:
+			mesh.addRect(GuiRect{ cx - 5.5f * u, cy - 1.3f * u, 11.0f * u, 2.6f * u }, dark);
+			mesh.addRect(GuiRect{ cx - 1.3f * u, cy - 5.5f * u, 2.6f * u, 11.0f * u }, dark);
+			break;
+		case GLYPH::MINUS:
+			mesh.addRect(GuiRect{ cx - 5.5f * u, cy - 1.3f * u, 11.0f * u, 2.6f * u }, dark);
+			break;
+		case GLYPH::HOME:
+		{
+			std::vector<GuiPoint> house = { { cx, cy - 6.0f * u }, { cx + 6.5f * u, cy - 0.5f * u }, { cx + 4.8f * u, cy + 5.5f * u },
+				{ cx - 4.8f * u, cy + 5.5f * u }, { cx - 6.5f * u, cy - 0.5f * u } };
+			mesh.addPolygon(house, dark);
+			break;
+		}
+		case GLYPH::STICK:
+			mesh.strokeEllipse(GuiRect{ 2.5f * u, 2.5f * u, w - 5.0f * u, h - 5.0f * u }, 1.2f * u, STROKE::INSIDE, dark);
+			break;
+		default:
+			break;
+	}
+}
