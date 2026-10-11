@@ -169,25 +169,26 @@ bool WutPlatform::isCemu() {
 	static int cemu = -1;
 
 	if(cemu >= 0)
-		return (bool)cemu;
+		return cemu != 0;
 
 	static const char *syms[] = {
 		"OSDynLoad_gLoaderLock", "__OSPlatformInfo",
 		"__OSSchedulerLock",     "__OSCurrentThread",
 	};
+
+	bool found = false;
 	OSDynLoad_Module coreinit;
-	if (OSDynLoad_Acquire("coreinit", &coreinit) != OS_DYNLOAD_OK) {
-		cemu = 0;
-		return false;
+	if (OSDynLoad_Acquire("coreinit", &coreinit) == OS_DYNLOAD_OK) {
+		for (size_t i = 0; i < sizeof(syms) / sizeof(syms[0]) && !found; ++i) {
+			void *addr = NULL;
+			OSDynLoad_Error err = OSDynLoad_FindExport(coreinit, OS_DYNLOAD_EXPORT_DATA, syms[i], &addr);
+			found = (err == OS_DYNLOAD_OK && addr == (void *)0xFFFFFFFF);
+		}
+		OSDynLoad_Release(coreinit);
 	}
 
-	for (size_t i = 0; i < sizeof(syms) / sizeof(syms[0]) && !cemu; ++i) {
-		void *addr = NULL;
-		OSDynLoad_Error err = OSDynLoad_FindExport(coreinit, OS_DYNLOAD_EXPORT_DATA, syms[i], &addr);
-		cemu = (int)(err == OS_DYNLOAD_OK && addr == (void *)0xFFFFFFFF);
-	}
-	OSDynLoad_Release(coreinit);
-	return (bool)cemu;
+	cemu = found ? 1 : 0;
+	return found;
 }
 
 // Espresso's nominal core clock (1.24325GHz) - used only if OSGetSystemInfo()
@@ -248,16 +249,15 @@ void WutPlatform::requestExit(int, bool)
 	if(!procExited) {
 		SYSLaunchMenu();
 
-		// On real hardware this resolves within a frame or two. Cemu doesn't
-		// implement SYSLaunchMenu(), so ProcUI never leaves the foreground and
-		// this would spin forever - cap the wait so we can still exit cleanly there.
-		const int timeoutMs = 2000;
-		for (int waited = 0; waited < timeoutMs; waited++) {
-			if (!WHBProcIsRunning()) {
-				procExited = true;
-				break;
+		if(!isCemu()) {
+			const int timeoutMs = 2000; // On real hardware this resolves within a frame or two
+			for (int waited = 0; waited < timeoutMs; waited++) {
+				if (!WHBProcIsRunning()) {
+					procExited = true;
+					break;
+				}
+				usleep(1000);
 			}
-			usleep(1000);
 		}
 	}
 
