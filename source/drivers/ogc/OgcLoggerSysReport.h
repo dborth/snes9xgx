@@ -12,6 +12,8 @@
 
 #include "../Logger.h"
 
+//!Log backend writing to the console debug output via SYS_Report.
+//!\ingroup grp_logging
 class OgcLoggerSysReport : public LoggingDriver
 {
 	public:

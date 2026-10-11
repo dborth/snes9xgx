@@ -12,6 +12,8 @@
 #include "Mutex.h"
 #include "Cond.h"
 
+//!Abstract thread priority, mapped to each platform's native priority scheme.
+//!\ingroup grp_threads
 enum class ThreadPriority
 {
 	Idle,
@@ -33,6 +35,7 @@ enum class ThreadPriority
 //!a subsystem's own halt/resume pausing during normal operation - it's
 //!the final guarantee that nothing is left running (and touching platform/
 //!driver state) once shutdown begins in earnest.
+//!\ingroup grp_threads
 class Thread
 {
 	public:
@@ -105,6 +108,7 @@ class Thread
 //!so has no Thread object of its own to name it. Use this when code just
 //!needs to answer "is this the same thread that did X earlier?" (eg. "is
 //!this the main/GUI thread?"), not to own or join a thread.
+//!\ingroup grp_threads
 class ThreadId
 {
 	public:
@@ -113,12 +117,15 @@ class ThreadId
 		//!\return an identifier for the calling thread.
 		static ThreadId current();
 
+		//!\return true if both ids identify the same thread
 		bool operator==(const ThreadId & other) const { return id == other.id; }
+		//!\return true if the ids identify different threads
 		bool operator!=(const ThreadId & other) const { return !(*this == other); }
 
 	protected:
+		//!Wraps a backend-defined thread identifier; use current() instead.
 		explicit ThreadId(uintptr_t v) : id(v) {}
-		uintptr_t id;
+		uintptr_t id; //!< Backend-defined thread identifier (0 = none)
 };
 
 //!Bundles the mutex and pair of condition variables used by the common
@@ -129,9 +136,10 @@ class ThreadId
 //!flag(s) the caller defines. Not every user needs both directions - eg.
 //!a request that's only ever polled, never woken, can leave workCond
 //!unused.
+//!\ingroup grp_threads
 struct ThreadSync
 {
-	Mutex mutex;
+	Mutex mutex; //!< Protects the flag(s) the caller shares between workCond and idleCond
 	Cond  workCond; //!< signalled to wake a waiter when new work/state is available
 	Cond  idleCond; //!< signalled to wake a waiter once the other side is idle/done
 };

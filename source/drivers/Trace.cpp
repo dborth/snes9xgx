@@ -28,19 +28,21 @@
 #define TRACE_REPEAT_MS     5000 // ...and again this often
 #define WATCHDOG_STACKSIZE  (16 * 1024)
 
+//!One traced thread: its name and the phase it is in right now.
 struct TraceSlot
 {
-	ThreadId id;
-	const char * name;
-	const char * volatile where;
-	volatile uint32_t since; // NowMs() when it entered `where`
+	ThreadId id;                     //!< The traced thread
+	const char * name;               //!< Name given to TraceThread()
+	const char * volatile where;     //!< Current phase; a string literal, compared by pointer
+	volatile uint32_t since; //!< NowMs() when it entered `where`
 };
 
+//!One entry in the ring of recent phase changes.
 struct TraceEvent
 {
-	uint32_t when; // NowMs()
-	int slot;
-	const char * volatile where;
+	uint32_t when; //!< NowMs()
+	int slot;      //!< Index into the slots array of the thread that changed phase
+	const char * volatile where; //!< Phase it entered
 };
 
 static TraceSlot slots[TRACE_MAX_THREADS];

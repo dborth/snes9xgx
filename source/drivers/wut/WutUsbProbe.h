@@ -12,21 +12,23 @@
 //! ScanUsbHardwareSignature() call. Not a per-port identity (see above) -
 //! ifHandle is only meaningful within one boot session and only for
 //! detecting that *something* changed, not attributing it to a slot.
+//!\ingroup grp_wut
 struct UsbHardwareInterfaceInfo
 {
-	uint32_t ifHandle;
-	uint16_t vid;
-	uint16_t pid;
+	uint32_t ifHandle; //!< nsysuhs interface handle; only meaningful within one boot session
+	uint16_t vid; //!< USB vendor id
+	uint16_t pid; //!< USB product id
 };
 
 //! The set of USBCLASS_STORAGE interfaces nsysuhs currently reports
 //! across every controller_num probed. Deliberately small/fixed-size -
 //! this is compared every poll cycle, not stored long-term.
+//!\ingroup grp_wut
 struct UsbHardwareSignature
 {
-	static const int kMaxInterfaces = 8;
-	UsbHardwareInterfaceInfo interfaces[kMaxInterfaces];
-	int count = 0;
+	static const int kMaxInterfaces = 8; //!< Capacity of interfaces[]
+	UsbHardwareInterfaceInfo interfaces[kMaxInterfaces]; //!< Attached USBCLASS_STORAGE interfaces; only the first count entries are valid
+	int count = 0; //!< Number of valid entries in interfaces[]
 };
 
 //! Cheap, read-only nsysuhs scan across all controllers, filtered

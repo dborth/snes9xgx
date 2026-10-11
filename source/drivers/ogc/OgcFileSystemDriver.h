@@ -20,19 +20,22 @@
 
 //! One hot-pluggable FAT-formatted slot, shared shape between GameCube
 //! (SD Gecko A/B/port2, GC Loader) and Wii (SD, USB1-3).
+//!\ingroup grp_ogc
 struct OgcFatSlotDescriptor
 {
-	int    deviceId;
+	int    deviceId; //!< Device enum value this slot mounts (DEVICE_SD, DEVICE_USB, ...)
 	DISC_INTERFACE * (*getDisc)();  //!< resolved lazily - Wii's USB slots move between physical interfaces at runtime (see WiiUsbMulti)
 	const char * mountName;         //!< devoptab basename, no colon/slash - eg. "carda" - passed to fatMountSimple()/fatUnmount()
 	const char * prefix;            //!< precomputed "name:/" literal - returned by getMountPath()/enumerateStorageDevices() as-is
-	const char * displayName;
+	const char * displayName; //!< Short name shown in device lists
 	const char * notFoundMessage;   //!< eg. "SD card not found!" - see mountResultMessage()
 	bool   removable;                //!< advisory only - not currently read by app code
-	bool   autoMountAtStartup;
+	bool   autoMountAtStartup; //!< Mounted silently at boot
 	bool   pollable;                 //!< true: probed every pollStorageDevices() cycle
 };
 
+//!Shared GameCube/Wii FileSystemDriver base: FAT slot enumeration, mounting and polling. DVD is deliberately never probed while polling.
+//!\ingroup grp_ogc
 class OgcFileSystemDriver : public FileSystemDriver
 {
 	public:
@@ -52,9 +55,13 @@ class OgcFileSystemDriver : public FileSystemDriver
 		SmbDriver * getSmb() override { return &smbDriver; }
 
 	protected:
+		//!Table of FAT slots this platform supports; set by the concrete driver
 		const OgcFatSlotDescriptor * fatSlots = nullptr;
+		//!Number of entries in fatSlots
 		int                          fatSlotCount = 0;
+		//!Disc interface used to mount the DVD drive, or nullptr if the platform has none
 		DISC_INTERFACE *             dvdDisc = nullptr;
+		//!Text returned by mountResultMessage() when a present device fails to mount
 		const char *                 unsupportedFormatMessage = "Unsupported format.";
 
 		//! Runs the shared boot-time pass: probe every pollable fatSlots[]
@@ -79,18 +86,23 @@ class OgcFileSystemDriver : public FileSystemDriver
 		//! cycle happened to observe.
 		virtual void prepareMount(int deviceId) {}
 
+		//!Mounts the FAT filesystem on a slot with fatMountSimple(), unmounting first if unmountRequired is set.
 		MountResult mountFAT(int deviceId);
+		//!Mounts the DVD as ISO9660 if a disc is inserted.
 		MountResult mountDVD();
+		//!Single mountFAT() attempt that also records the outcome in mountFailed.
 		MountResult attemptFatMount(int deviceId);
 
+		//!\return the slot descriptor for deviceId, or nullptr if it is not a FAT slot
 		const OgcFatSlotDescriptor * findFatSlot(int deviceId) const;
 
-		bool isMounted[MAX_STORAGE_DEVICES]         = { false };
-		bool unmountRequired[MAX_STORAGE_DEVICES]   = { false };
+		bool isMounted[MAX_STORAGE_DEVICES]         = { false }; //!< A filesystem is currently mounted for this device
+		bool unmountRequired[MAX_STORAGE_DEVICES]   = { false }; //!< A stale mount must be torn down before the next mount attempt
 		bool isPresentCache[MAX_STORAGE_DEVICES]    = { false }; //!< raw hardware insertion only - see isDevicePresent()'s comment for why this is no longer what it returns
 		bool mountFailed[MAX_STORAGE_DEVICES]       = { false }; //!< set by a real MountFailed; cleared on removal/reinsertion - see attemptFatMount()
 		bool labelFetched[MAX_STORAGE_DEVICES]      = { false }; //!< fetched since the last mount/removal - see mountFAT()/invalidateStorageDevice()
-		char volumeLabel[MAX_STORAGE_DEVICES][16]   = { { 0 } };
+		char volumeLabel[MAX_STORAGE_DEVICES][16]   = { { 0 } }; //!< Volume label cached for each device
 
+		//!The network-share driver returned by getSmb()
 		OgcSmbDriver smbDriver;
 };

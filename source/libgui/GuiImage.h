@@ -5,12 +5,15 @@
  ***************************************************************************/
 #pragma once
 
+//!Whether a GuiImage draws a texture or a flat color.
+//!\ingroup grp_core
 enum class IMAGE {
 	TEXTURE,
 	COLOR
 };
 
 //!Display, manage, and manipulate images in the GUI
+//!\ingroup grp_core
 class GuiImage : public GuiElement
 {
 	public:
@@ -21,7 +24,7 @@ class GuiImage : public GuiElement
 		GuiImage(GuiImageData * img);
 		//!\overload
 		//!Sets up a new image from the texture data specified
-		//!\param t Texture data
+		//!\param tex Texture data
 		//!\param w Image width
 		//!\param h Image height
 		GuiImage(uint8_t * tex, int w, int h);

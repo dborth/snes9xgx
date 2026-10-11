@@ -10,6 +10,8 @@
 
 #include "../Logger.h"
 
+//!Log backend writing to the console debug output via OSReport.
+//!\ingroup grp_logging
 class WutLoggerOSReport : public LoggingDriver
 {
 	public:

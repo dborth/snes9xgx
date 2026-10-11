@@ -29,6 +29,8 @@
 	#define WUT_USBSERIAL_AVAILABLE 0
 #endif
 
+//!Log backend writing to a USB serial adapter (requires the optional usbserial module).
+//!\ingroup grp_logging
 class WutLoggerUsbSerial : public LoggingDriver
 {
 	public:

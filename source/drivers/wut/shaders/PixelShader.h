@@ -12,6 +12,7 @@
 
 //!Owns a GX2PixelShader's compiled program and uniform/sampler metadata,
 //!mirroring VertexShader's role on the pixel-shader side.
+//!\ingroup grp_wut
 class PixelShader : public Shader
 {
 	public:
@@ -46,6 +47,11 @@ class PixelShader : public Shader
 			}
 		}
 
+		//!Uploads the compiled shader program.
+		//!\param program Compiled GX2 pixel shader bytecode
+		//!\param programSize Size of program in bytes
+		//!\param regs Precomputed shader register values
+		//!\param regsSize Size of regs in bytes
 		void setProgram(const uint32_t * program, uint32_t programSize, const uint32_t * regs, uint32_t regsSize)
 		{
 			if(!pixelShader)
@@ -62,6 +68,7 @@ class PixelShader : public Shader
 			memcpy(&pixelShader->regs, regs, regsSize);
 		}
 
+		//!Registers a uniform variable so it can be set by location.
 		void addUniformVar(const GX2UniformVar & var)
 		{
 			if(!pixelShader)
@@ -83,6 +90,7 @@ class PixelShader : public Shader
 			pixelShader->uniformVarCount++;
 		}
 
+		//!Registers a texture sampler variable.
 		void addSamplerVar(const GX2SamplerVar & var)
 		{
 			if(!pixelShader)
@@ -104,20 +112,26 @@ class PixelShader : public Shader
 			pixelShader->samplerVarCount++;
 		}
 
+		//!\return the underlying GX2PixelShader
 		GX2PixelShader * getPixelShader() const { return pixelShader; }
 
+		//!Binds this pixel shader for subsequent draws.
 		void setShader() const
 		{
 			GX2SetPixelShader(pixelShader);
 		}
 
+		//!Writes uniform registers for the bound pixel shader.
+		//!\param location Register location of the uniform
+		//!\param size Number of registers to write
+		//!\param reg Source values
 		static inline void setUniformReg(uint32_t location, uint32_t size, const void * reg)
 		{
 			GX2SetPixelUniformReg(location, size, reg);
 		}
 
 	protected:
-		GX2PixelShader * pixelShader;
+		GX2PixelShader * pixelShader; //!< The GX2 pixel shader object
 };
 
 #endif // WUT_PIXEL_SHADER_H_

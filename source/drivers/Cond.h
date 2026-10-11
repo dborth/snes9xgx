@@ -12,6 +12,7 @@
 //!primitive. wait() must be called with lock already held; signal() wakes
 //!every waiter (see ThreadDriver::signalCond - there is no single-waiter
 //!wake across backends).
+//!\ingroup grp_threads
 class Cond
 {
 	public:

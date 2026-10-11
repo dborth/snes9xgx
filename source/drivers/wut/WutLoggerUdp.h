@@ -13,6 +13,8 @@
 #include "../Logger.h"
 #include <netinet/in.h>
 
+//!Non-blocking UDP log backend over nsysnet sockets.
+//!\ingroup grp_logging
 class WutLoggerUdp : public LoggingDriver
 {
 	public:

@@ -13,9 +13,11 @@
 //!Owns a GX2VertexShader's compiled program and uniform/attribute
 //!metadata. setProgram() uploads the compiled bytecode; addUniformVar()/
 //!addAttribVar() register the reflection info GX2 needs to bind it.
+//!\ingroup grp_wut
 class VertexShader : public Shader
 {
 	public:
+		//!\param numAttr Number of vertex attribute streams the shader reads
 		VertexShader(uint32_t numAttr)
 			: attributesCount(numAttr)
 			, attributes(new GX2AttribStream[attributesCount])
@@ -51,6 +53,11 @@ class VertexShader : public Shader
 			}
 		}
 
+		//!Uploads the compiled shader program.
+		//!\param program Compiled GX2 vertex shader bytecode
+		//!\param programSize Size of program in bytes
+		//!\param regs Precomputed shader register values
+		//!\param regsSize Size of regs in bytes
 		void setProgram(const uint32_t * program, uint32_t programSize, const uint32_t * regs, uint32_t regsSize)
 		{
 			if(!vertexShader)
@@ -68,6 +75,7 @@ class VertexShader : public Shader
 			memcpy(&vertexShader->regs, regs, regsSize);
 		}
 
+		//!Registers a uniform variable so it can be set by location.
 		void addUniformVar(const GX2UniformVar & var)
 		{
 			if(!vertexShader)
@@ -89,6 +97,7 @@ class VertexShader : public Shader
 			vertexShader->uniformVarCount++;
 		}
 
+		//!Registers an input attribute variable.
 		void addAttribVar(const GX2AttribVar & var)
 		{
 			if(!vertexShader)
@@ -110,16 +119,23 @@ class VertexShader : public Shader
 			vertexShader->attribVarCount++;
 		}
 
+		//!Binds a vertex data buffer to an attribute buffer slot.
+		//!\param bufferIdx Attribute buffer slot
+		//!\param bufferSize Size of buffer in bytes
+		//!\param stride Bytes between consecutive vertices
+		//!\param buffer Vertex data
 		static inline void setAttributeBuffer(uint32_t bufferIdx, uint32_t bufferSize, uint32_t stride, const void * buffer)
 		{
 			GX2SetAttribBuffer(bufferIdx, bufferSize, stride, buffer);
 		}
 
+		//!Binds this vertex shader for subsequent draws.
 		void setShader() const
 		{
 			GX2SetVertexShader(vertexShader);
 		}
 
+		//!\return the attribute stream description at idx
 		GX2AttribStream * getAttributeBuffer(uint32_t idx = 0) const
 		{
 			if(idx >= attributesCount)
@@ -127,17 +143,22 @@ class VertexShader : public Shader
 			return &attributes[idx];
 		}
 
+		//!\return the number of attribute streams
 		uint32_t getAttributesCount() const { return attributesCount; }
 
+		//!Writes uniform registers for the bound vertex shader.
+		//!\param location Register location of the uniform
+		//!\param size Number of registers to write
+		//!\param reg Source values
 		static void setUniformReg(uint32_t location, uint32_t size, const void * reg)
 		{
 			GX2SetVertexUniformReg(location, size, reg);
 		}
 
 	protected:
-		uint32_t attributesCount;
-		GX2AttribStream * attributes;
-		GX2VertexShader * vertexShader;
+		uint32_t attributesCount; //!< Number of attribute streams
+		GX2AttribStream * attributes; //!< Attribute stream descriptions handed to the fetch shader
+		GX2VertexShader * vertexShader; //!< The GX2 vertex shader object
 };
 
 #endif // WUT_VERTEX_SHADER_H_

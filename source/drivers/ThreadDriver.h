@@ -1,7 +1,6 @@
 /****************************************************************************
- * libgui
- *
- * Daryl Borth 2009-2026
+ * Platform Abstraction Layer
+ * Daryl Borth 2026
  * ThreadDriver.h
  *
  * Platform threading backend Thread and Mutex delegate to. Exactly one
@@ -20,12 +19,18 @@ typedef void* (*ThreadEntry)(void* arg);
 #include "Thread.h"
 #include "Mutex.h"
 
+//!Raw platform threading primitives. Application/core code should not
+//!implement against this directly - use the Thread/Mutex/Cond RAII
+//!wrappers instead, which forward here via platform->getThread().
+//!\ingroup grp_pal
 class ThreadDriver
 {
 	public:
 		virtual ~ThreadDriver() = default;
 
+		//!Initializes the threading backend.
 		virtual void init() = 0;
+		//!Shuts the threading backend down. Every thread must already have been joined.
 		virtual void shutdown() = 0;
 
 		//!Creates and starts a thread running entry(arg). Writes the new
@@ -47,20 +52,27 @@ class ThreadDriver
 		//!condition and calling joinThread() to stop it cleanly wherever
 		//!possible; reach for cancelThread() only as a last resort.
 		virtual void cancelThread(void * thread) = 0;
+		//!Suspends a running thread until resumeThread() is called.
 		virtual void suspendThread(void * thread) = 0;
+		//!Resumes a thread suspended with suspendThread().
 		virtual void resumeThread(void * thread) = 0;
+		//!\return true if the thread is currently suspended
 		virtual bool isThreadSuspended(void * thread) = 0;
 
 		//!Creates an unlocked mutex. Returns an opaque backend-defined
 		//!handle, or nullptr on failure.
 		virtual void * createMutex() = 0;
+		//!Destroys a mutex created by createMutex(). It must not be locked.
 		virtual void destroyMutex(void * mutex) = 0;
+		//!Blocks until the mutex is acquired.
 		virtual void lockMutex(void * mutex) = 0;
+		//!Releases a mutex held by the calling thread.
 		virtual void unlockMutex(void * mutex) = 0;
 
 		//!Creates a condition variable. Returns an opaque backend-defined
 		//!handle, or nullptr on failure.
 		virtual void * createCond() = 0;
+		//!Destroys a condition variable created by createCond(). No thread may be waiting on it.
 		virtual void destroyCond(void * cond) = 0;
 		//!Atomically unlocks mutex and blocks the calling thread until
 		//!signalCond() is called, then reacquires mutex before returning.

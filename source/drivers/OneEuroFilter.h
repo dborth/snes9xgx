@@ -30,10 +30,16 @@
 
 #include <cmath>
 
+//!Exponential low-pass filter used as the building block of OneEuroFilter.
+//!\ingroup grp_input
 class LowPassFilter {
 public:
 	LowPassFilter() : initialized(false), storedValue(0.0f) {}
 
+	//!Feeds one sample through the filter.
+	//!\param value Raw input sample
+	//!\param alpha Smoothing factor, 0-1 (1 = no smoothing). The first sample is returned unchanged.
+	//!\return the filtered value
 	float filter(float value, float alpha) {
 		if (!initialized) {
 			storedValue = value;
@@ -44,7 +50,9 @@ public:
 		return storedValue;
 	}
 
+	//!\return the most recently filtered value
 	float lastValue() const { return storedValue; }
+	//!Forgets all history; the next filter() call returns its input unchanged.
 	void reset() { initialized = false; storedValue = 0.0f; }
 
 private:
@@ -52,12 +60,19 @@ private:
 	float storedValue;
 };
 
+//!Adaptive speed-based low-pass filter (the 1-euro filter) for smoothing noisy pointer signals such as the Wii U IR pointer.
+//!\ingroup grp_input
 class OneEuroFilter {
 public:
+	//!\param minCutoff Cutoff frequency in Hz when the signal is at rest (lower = smoother, more lag)
+	//!\param beta How much the cutoff rises with signal speed (higher = snappier during fast motion)
+	//!\param dCutoff Cutoff frequency in Hz for the speed estimate; rarely needs changing
 	OneEuroFilter(float minCutoff = 1.0f, float beta = 0.0f, float dCutoff = 1.0f)
 		: minCutoff(minCutoff), beta(beta), dCutoff(dCutoff), firstSample(true) {}
 
-	// value: raw noisy sample. dt: seconds since the previous call (must be > 0).
+	//!\param value Raw noisy sample
+	//!\param dt Seconds since the previous call (must be > 0; non-positive values are treated as 1/60 s)
+	//!\return the filtered value
 	float filter(float value, float dt) {
 		if (dt <= 0.0f) dt = 1.0f / 60.0f;
 
@@ -80,12 +95,14 @@ public:
 		return xFilter.filter(value, computeAlpha(cutoff, dt));
 	}
 
+	//!Forgets all history; the next filter() call returns its input unchanged.
 	void reset() {
 		firstSample = true;
 		xFilter.reset();
 		dxFilter.reset();
 	}
 
+	//!Changes the filter parameters without resetting its state; see the constructor for their meaning.
 	void setParams(float newMinCutoff, float newBeta, float newDCutoff = 1.0f) {
 		minCutoff = newMinCutoff;
 		beta = newBeta;

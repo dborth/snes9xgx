@@ -7,6 +7,9 @@
 #ifndef _WIIDRC_H_
 #define _WIIDRC_H_
 
+//!\file
+//!libwiidrc (vendored, FIX94): lets a **Wii** app use a Wii U GamePad.
+
 #ifdef __cplusplus
 extern "C" {
 #endif

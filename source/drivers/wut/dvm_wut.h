@@ -24,7 +24,7 @@ extern "C" {
 typedef struct
 {
 	char  name[8];   //!< devoptab basename this volume was mounted as, eg. "usb1"
-	bool  isMounted;
+	bool  isMounted; //!< true while the volume is mounted through libdvm
 	void* disc;      //!< opaque DvmDisc* - valid only while isMounted, NULL otherwise
 } DvmWutVolume;
 

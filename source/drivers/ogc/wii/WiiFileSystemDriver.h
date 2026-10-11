@@ -8,6 +8,7 @@
 
 //!Wii FileSystemDriver: hot-pluggable SD and up to 3 concurrent USB MSD
 //!plus DVD (ISO9660) and DEVICE_SMB.
+//!\ingroup grp_ogc
 class WiiFileSystemDriver : public OgcFileSystemDriver
 {
 	public:
