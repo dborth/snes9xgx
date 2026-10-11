@@ -18,29 +18,29 @@ class GuiButton : public GuiElement
 		//!Destructor
 		~GuiButton();
 		//!Sets the button's image
-		//!\param i Pointer to GuiImage object
-		void setImage(GuiImage* i);
+		//!\param i Pointer to a GuiImage, GuiShape or other element
+		void setImage(GuiElement* i);
 		//!Sets the button's image on over
-		//!\param i Pointer to GuiImage object
-		void setImageOver(GuiImage* i);
+		//!\param i Pointer to a GuiImage, GuiShape or other element
+		void setImageOver(GuiElement* i);
 		//!Sets the button's image on hold
-		//!\param i Pointer to GuiImage object
-		void setImageHold(GuiImage* i);
+		//!\param i Pointer to a GuiImage, GuiShape or other element
+		void setImageHold(GuiElement* i);
 		//!Sets the button's image on click
-		//!\param i Pointer to GuiImage object
-		void setImageClick(GuiImage* i);
+		//!\param i Pointer to a GuiImage, GuiShape or other element
+		void setImageClick(GuiElement* i);
 		//!Sets the button's icon
-		//!\param i Pointer to GuiImage object
-		void setIcon(GuiImage* i);
+		//!\param i Pointer to a GuiImage, GuiShape or other element
+		void setIcon(GuiElement* i);
 		//!Sets the button's icon on over
-		//!\param i Pointer to GuiImage object
-		void setIconOver(GuiImage* i);
+		//!\param i Pointer to a GuiImage, GuiShape or other element
+		void setIconOver(GuiElement* i);
 		//!Sets the button's icon on hold
-		//!\param i Pointer to GuiImage object
-		void setIconHold(GuiImage* i);
+		//!\param i Pointer to a GuiImage, GuiShape or other element
+		void setIconHold(GuiElement* i);
 		//!Sets the button's icon on click
-		//!\param i Pointer to GuiImage object
-		void setIconClick(GuiImage* i);
+		//!\param i Pointer to a GuiImage, GuiShape or other element
+		void setIconClick(GuiElement* i);
 		//!Sets the button's label
 		//!\param t Pointer to GuiText object
 		//!\param n Index of label to set (optional, default is 0)
@@ -70,18 +70,23 @@ class GuiButton : public GuiElement
 		void draw() override;
 		//!Resets the text for all contained elements
 		void resetText();
+		//!Sets the state and mirrors it into the button's images and icons, so a
+		//!state-aware element such as GuiShape can restyle itself
+		void setState(STATE s, int c = -1) override;
+		//!Resets the state and mirrors it into the button's images and icons
+		void resetState() override;
 		//!Constantly called to allow the GuiButton to respond to updated input data
 		//!\param c Pointer to a InputController, containing the current input data
 		void update(InputController * c);
 	protected:
-		GuiImage * image; //!< Button image (default)
-		GuiImage * imageOver; //!< Button image for STATE::SELECTED
-		GuiImage * imageHold; //!< Button image for STATE::HELD
-		GuiImage * imageClick; //!< Button image for STATE::CLICKED
-		GuiImage * icon; //!< Button icon (drawn after button image)
-		GuiImage * iconOver; //!< Button icon for STATE::SELECTED
-		GuiImage * iconHold; //!< Button icon for STATE::HELD
-		GuiImage * iconClick; //!< Button icon for STATE::CLICKED
+		GuiElement * image; //!< Button image (default): a GuiImage, GuiShape or any element
+		GuiElement * imageOver; //!< Button image for STATE::SELECTED
+		GuiElement * imageHold; //!< Button image for STATE::HELD
+		GuiElement * imageClick; //!< Button image for STATE::CLICKED
+		GuiElement * icon; //!< Button icon (drawn after button image)
+		GuiElement * iconOver; //!< Button icon for STATE::SELECTED
+		GuiElement * iconHold; //!< Button icon for STATE::HELD
+		GuiElement * iconClick; //!< Button icon for STATE::CLICKED
 		GuiText * label[MAX_BTN_LABELS]; //!< Label(s) to display (default)
 		GuiText * labelOver[MAX_BTN_LABELS]; //!< Label(s) to display for STATE::SELECTED
 		GuiText * labelHold[MAX_BTN_LABELS]; //!< Label(s) to display for STATE::HELD

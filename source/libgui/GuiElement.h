@@ -202,6 +202,21 @@ class GuiElement
 		//!\param hor Horizontal alignment (LEFT, RIGHT, CENTRE)
 		//!\param vert Vertical alignment (TOP, BOTTOM, MIDDLE)
 		virtual void setAlignment(ALIGN_H hor, ALIGN_V vert);
+		//!Layout protocol: how a layout container (GuiRow, GuiColumn, GuiGrid, GuiOverlay)
+		//!asks about and arranges its children. The defaults suit any element with a size.
+		//!Gets the size the element wants when laid out (default: its width and height)
+		virtual void getNaturalSize(int& w, int& h);
+		//!Places the element so its top-left corner is at (x, y) relative to its parent's
+		//!top-left (default: LEFT/TOP alignment plus an offset)
+		virtual void setLayoutPosition(int x, int y);
+		//!Gives the element a size chosen by a container (default: sets width and height)
+		virtual void setLayoutSize(int w, int h);
+		//!Brings the element's own layout up to date. Containers call this on their children
+		//!first, so nested layouts settle in a single pass (default: nothing to do).
+		virtual void layout();
+		//!Appends the elements that selection can move between (default: this element;
+		//!layout containers add their children instead, so the D-pad moves through them)
+		virtual void collectNavigable(std::vector<GuiElement*>& out);
 		//!Called when the language has changed, to obtain new text values for all text elements
 		virtual void resetText();
 		//!Called constantly to allow the element to respond to the current input data

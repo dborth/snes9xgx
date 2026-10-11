@@ -39,42 +39,42 @@ GuiButton::~GuiButton()
 {
 }
 
-void GuiButton::setImage(GuiImage* img)
+void GuiButton::setImage(GuiElement* img)
 {
 	image = img;
 	if(img) img->setParent(this);
 }
-void GuiButton::setImageOver(GuiImage* img)
+void GuiButton::setImageOver(GuiElement* img)
 {
 	imageOver = img;
 	if(img) img->setParent(this);
 }
-void GuiButton::setImageHold(GuiImage* img)
+void GuiButton::setImageHold(GuiElement* img)
 {
 	imageHold = img;
 	if(img) img->setParent(this);
 }
-void GuiButton::setImageClick(GuiImage* img)
+void GuiButton::setImageClick(GuiElement* img)
 {
 	imageClick = img;
 	if(img) img->setParent(this);
 }
-void GuiButton::setIcon(GuiImage* img)
+void GuiButton::setIcon(GuiElement* img)
 {
 	icon = img;
 	if(img) img->setParent(this);
 }
-void GuiButton::setIconOver(GuiImage* img)
+void GuiButton::setIconOver(GuiElement* img)
 {
 	iconOver = img;
 	if(img) img->setParent(this);
 }
-void GuiButton::setIconHold(GuiImage* img)
+void GuiButton::setIconHold(GuiElement* img)
 {
 	iconHold = img;
 	if(img) img->setParent(this);
 }
-void GuiButton::setIconClick(GuiImage* img)
+void GuiButton::setIconClick(GuiElement* img)
 {
 	iconClick = img;
 	if(img) img->setParent(this);
@@ -103,6 +103,24 @@ void GuiButton::setLabelClick(GuiText* txt, int n)
 	labelClick[n] = txt;
 	if(txt) txt->setParent(this);
 }
+void GuiButton::setState(STATE s, int c)
+{
+	GuiElement::setState(s, c);
+
+	GuiElement * visuals[] = { image, imageOver, imageHold, imageClick, icon, iconOver, iconHold, iconClick };
+	for(GuiElement * e : visuals)
+		if(e) e->setState(s, c);
+}
+
+void GuiButton::resetState()
+{
+	GuiElement::resetState();
+
+	GuiElement * visuals[] = { image, imageOver, imageHold, imageClick, icon, iconOver, iconHold, iconClick };
+	for(GuiElement * e : visuals)
+		if(e) e->setState(state, stateChan);
+}
+
 void GuiButton::setSoundOver(GuiSound * snd)
 {
 	soundOver = snd;

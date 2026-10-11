@@ -25,6 +25,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <vector>
+#include <string>
+#include <functional>
 #include <exception>
 #include <cwchar>
 #include <cmath>
@@ -67,6 +69,7 @@ enum class SCROLL {
 	HORIZONTAL
 };
 
+#include "GuiLayoutSolver.h"
 #include "GuiTrigger.h"
 #include "GuiElement.h"
 #include "GuiWindow.h"
@@ -77,8 +80,15 @@ enum class SCROLL {
 #include "GuiImageData.h"
 #include "GuiImageDataCache.h"
 #include "GuiImage.h"
+#include "GuiGeometry.h"
+#include "GuiPaint.h"
+#include "GuiTheme.h"
+#include "GuiShape.h"
+#include "GuiLayout.h"
+#include "GuiGlyph.h"
 #include "GuiButton.h"
 #include "GuiFileBrowser.h"
 #include "GuiKeyboard.h"
 #include "GuiOptionBrowser.h"
+#include "GuiUi.h"
 #include "GuiSaveBrowser.h"

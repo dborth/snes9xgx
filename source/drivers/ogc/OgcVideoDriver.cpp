@@ -579,3 +579,30 @@ void OgcImageRenderer::drawRectangle(float x, float y, float width, float height
 	}
 	GX_End();
 }
+
+void OgcImageRenderer::drawMesh(const MeshVertex* vertices, size_t count)
+{
+	// Same GX state as drawRectangle(): TEV pass-through of the per-vertex color,
+	// no texture coordinates, culling off. A GX_Begin() takes at most 65535
+	// vertices, which is also a multiple of 3, so a long list splits cleanly.
+	if(!vertices)
+		return;
+	count -= count % 3;
+
+	while(count > 0)
+	{
+		const uint16_t n = (uint16_t)(count > 65535 ? 65535 : count);
+
+		GX_Begin(GX_TRIANGLES, GX_VTXFMT0, n);
+		for(uint16_t i = 0; i < n; ++i)
+		{
+			const MeshVertex& v = vertices[i];
+			GX_Position3f32(v.x, v.y, 0.0f);
+			GX_Color4u8(v.c.r, v.c.g, v.c.b, v.c.a);
+		}
+		GX_End();
+
+		vertices += n;
+		count -= n;
+	}
+}

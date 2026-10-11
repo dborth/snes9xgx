@@ -10,15 +10,13 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-typedef struct {
-	uint8_t r;			/*!< Red color component. */
-	uint8_t g;			/*!< Green color component. */
-	uint8_t b;			/*!< Blue alpha component. */
-	uint8_t a;			/*!< Alpha component. If a function does not use the alpha value, it is safely ignored. */
-} PixelColor;
+#include "Mesh.h"
+
+// PixelColor and MeshVertex live in Mesh.h so host builds can use them without FreeType
 
 class ImageRenderer;
 class GlyphRenderer;
@@ -93,6 +91,16 @@ class ImageRenderer
 		//!Draws a texture created by createTexture.
 		virtual void drawTexture(void * texture, float xpos, float ypos, uint16_t width, uint16_t height, float degrees, float scaleX, float scaleY, uint8_t alpha) = 0;
 		virtual void drawRectangle(float x, float y, float width, float height, PixelColor color) = 0;
+		//!Draws a triangle list: three vertices per triangle, each with its own color.
+		//!Positions are in design-canvas pixels (the same space as drawRectangle()), colors are
+		//!straight (non-premultiplied) RGBA blended source-over, so per-vertex alpha gives
+		//!gradients and soft edges (see GuiMesh). Winding does not matter. A count that is not a
+		//!multiple of 3 is rounded down.
+		//!The vertices are copied (or consumed) before this returns, so the caller can free or
+		//!reuse the array immediately.
+		//!\param vertices Triangle list
+		//!\param count Number of vertices
+		virtual void drawMesh(const MeshVertex* vertices, size_t count) = 0;
 };
 
 class GlyphRenderer {

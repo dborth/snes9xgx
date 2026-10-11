@@ -263,8 +263,52 @@ int GuiWindow::getSelected()
 
 // set element to left/right as selected
 // there's probably a more clever way to do this, but this way works
+bool GuiWindow::collectNavigation(std::vector<GuiElement*>& out)
+{
+	bool nested = false;
+	for (GuiElement* e : _elements)
+	{
+		size_t before = out.size();
+		e->collectNavigable(out);
+		if(!(out.size() == before + 1 && out.back() == e))
+			nested = true; // the element contributed its children, not itself
+	}
+	return nested;
+}
+
+void GuiWindow::moveSelectionIn(std::vector<GuiElement*>& list, NAV_DIR d)
+{
+	int current = -1;
+	std::vector<GuiNavItem> items(list.size());
+	for (size_t i = 0; i < list.size(); ++i)
+	{
+		if(current < 0 && list[i]->getState() == STATE::SELECTED)
+			current = int(i);
+		items[i].r.x = (float)list[i]->getLeft();
+		items[i].r.y = (float)list[i]->getTop();
+		items[i].r.w = (float)list[i]->getWidth();
+		items[i].r.h = (float)list[i]->getHeight();
+		items[i].selectable = list[i]->isSelectable() && list[i]->getState() != STATE::DISABLED;
+	}
+
+	int next = GuiNavigate(items, current, d);
+	if(next >= 0 && next != current)
+	{
+		list[next]->setState(STATE::SELECTED);
+		if(current >= 0)
+			list[current]->resetState();
+	}
+}
+
 void GuiWindow::moveSelectionHor(int dir)
 {
+	std::vector<GuiElement*> nav;
+	if(this->collectNavigation(nav))
+	{
+		this->moveSelectionIn(nav, dir > 0 ? NAV_DIR::RIGHT : NAV_DIR::LEFT);
+		return;
+	}
+
 	int found = -1;
 	uint16_t left = 0;
 	uint16_t top = 0;
@@ -328,6 +372,13 @@ void GuiWindow::moveSelectionHor(int dir)
 
 void GuiWindow::moveSelectionVert(int dir)
 {
+	std::vector<GuiElement*> nav;
+	if(this->collectNavigation(nav))
+	{
+		this->moveSelectionIn(nav, dir > 0 ? NAV_DIR::DOWN : NAV_DIR::UP);
+		return;
+	}
+
 	int found = -1;
 	uint16_t left = 0;
 	uint16_t top = 0;

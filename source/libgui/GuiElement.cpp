@@ -570,3 +570,30 @@ bool GuiElement::isInside(int x, int y)
 		return true;
 	return false;
 }
+
+void GuiElement::getNaturalSize(int& w, int& h)
+{
+	w = width;
+	h = height;
+}
+
+void GuiElement::setLayoutPosition(int x, int y)
+{
+	this->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+	this->setPosition(x, y);
+}
+
+void GuiElement::setLayoutSize(int w, int h)
+{
+	width = w;
+	height = h;
+}
+
+void GuiElement::layout()
+{
+}
+
+void GuiElement::collectNavigable(std::vector<GuiElement*>& out)
+{
+	out.push_back(this);
+}

@@ -60,6 +60,7 @@ class OgcImageRenderer : public ImageRenderer
 		void destroyTexture(void * texture) override;
 		void drawTexture(void * texture, float xpos, float ypos, uint16_t width, uint16_t height, float degrees, float scaleX, float scaleY, uint8_t alpha) override;
 		void drawRectangle(float x, float y, float width, float height, PixelColor color) override;
+		void drawMesh(const MeshVertex* vertices, size_t count) override;
 };
 
 class OgcGlyphRenderer : public GlyphRenderer {

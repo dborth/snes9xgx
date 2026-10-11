@@ -132,6 +132,8 @@ WutVideoDriver::~WutVideoDriver()
 
 	delete glyphRenderer;
 	glyphRenderer = nullptr;
+	free(meshPositions);
+	free(meshColors);
 }
 
 void WutVideoDriver::init(int width, int height)
@@ -152,6 +154,9 @@ void WutVideoDriver::init(int width, int height)
 	computeUIScale();
 
 	drawQueue.reserve(1024);
+
+	meshPositions = static_cast<float *>(memalign(GX2_VERTEX_BUFFER_ALIGNMENT, cuMeshArenaVertices * 3 * sizeof(float)));
+	meshColors = static_cast<uint8_t *>(memalign(GX2_VERTEX_BUFFER_ALIGNMENT, cuMeshArenaVertices * 4 * sizeof(uint8_t)));
 
 	imageRenderer = new WutImageRenderer(this);
 	glyphRenderer = new WutGlyphRenderer(this);
@@ -228,6 +233,8 @@ EmulatorVideoDriver* WutVideoDriver::getEmulatorVideo()
 void WutVideoDriver::prepareFrame()
 {
 	drawQueue.clear();
+	meshUsed = 0;
+	meshFlushed = 0;
 
 	if(!isForeground())
 	{
@@ -279,6 +286,41 @@ void WutVideoDriver::queueDraw(const WutDrawCmd& cmd)
 	drawQueue.push_back(cmd);
 }
 
+void WutVideoDriver::queueMesh(const MeshVertex* vertices, size_t count)
+{
+	count -= count % 3;
+	if(!vertices || count == 0 || !meshPositions || !meshColors || count > cuMeshArenaVertices - meshUsed)
+		return;
+
+	const float invW = 2.0f / screenWidth;
+	const float invH = 2.0f / screenHeight;
+	float * pos = meshPositions + (size_t)meshUsed * 3;
+	uint8_t * col = meshColors + (size_t)meshUsed * 4;
+
+	for(size_t i = 0; i < count; i++)
+	{
+		const MeshVertex& v = vertices[i];
+		pos[i * 3 + 0] = v.x * invW - 1.0f;
+		pos[i * 3 + 1] = 1.0f - v.y * invH;
+		pos[i * 3 + 2] = 0.0f;
+		col[i * 4 + 0] = v.c.r;
+		col[i * 4 + 1] = v.c.g;
+		col[i * 4 + 2] = v.c.b;
+		col[i * 4 + 3] = v.c.a;
+	}
+
+	WutDrawCmd cmd;
+	cmd.kind = WutDrawCmd::Kind::Mesh;
+	cmd.slot = 0;
+	cmd.texture = nullptr;
+	cmd.sampler = nullptr;
+	cmd.angle = 0.0f;
+	cmd.first = meshUsed;
+	cmd.count = (uint32_t)count;
+	meshUsed += (uint32_t)count;
+	queueDraw(cmd);
+}
+
 void WutVideoDriver::replayDrawQueue() const
 {
 	Texture2DShader * textureShader = Texture2DShader::instance();
@@ -290,11 +332,29 @@ void WutVideoDriver::replayDrawQueue() const
 	enum class BoundShader { None, Texture, Color };
 	BoundShader bound = BoundShader::None;
 	bool defaultQuadBound = false;
+	bool meshBound = false; // ColorShader currently has the mesh arena bound as its vertex streams
 	const GX2Texture * lastTexture = nullptr;
 	const GX2Sampler * lastSampler = nullptr;
 
 	for(const WutDrawCmd& cmd : drawQueue)
 	{
+		if(cmd.kind == WutDrawCmd::Kind::Mesh)
+		{
+			if(bound != BoundShader::Color)
+			{
+				colorShader->setShaders();
+				bound = BoundShader::Color;
+				meshBound = false;
+			}
+			if(!meshBound)
+			{
+				colorShader->bindMesh(meshPositions, meshColors, cuMeshArenaVertices);
+				meshBound = true;
+			}
+			ColorShader::drawMesh(cmd.first, cmd.count);
+			continue;
+		}
+
 		if(cmd.kind == WutDrawCmd::Kind::Color)
 		{
 			if(bound != BoundShader::Color)
@@ -302,6 +362,7 @@ void WutVideoDriver::replayDrawQueue() const
 				colorShader->setShaders();
 				bound = BoundShader::Color;
 			}
+			meshBound = false; // the quad draw below rebinds the vertex streams
 
 			colorShader->setAttributeBuffer(WhiteVtxs());
 			colorShader->setAngle(0.0f);
@@ -317,6 +378,7 @@ void WutVideoDriver::replayDrawQueue() const
 			textureShader->setShaders();
 			textureShader->clearBlur();
 			bound = BoundShader::Texture;
+			meshBound = false;
 			defaultQuadBound = false;
 			lastTexture = nullptr;
 			lastSampler = nullptr;
@@ -364,6 +426,14 @@ void WutVideoDriver::flushDrawQueue()
 	{
 		drawQueue.clear();
 		return;
+	}
+
+	// Make the vertices written since the last flush visible to the GPU
+	if(meshUsed > meshFlushed)
+	{
+		GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, meshPositions + (size_t)meshFlushed * 3, (meshUsed - meshFlushed) * 3 * sizeof(float));
+		GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, meshColors + (size_t)meshFlushed * 4, (meshUsed - meshFlushed) * 4 * sizeof(uint8_t));
+		meshFlushed = meshUsed;
 	}
 
 	WHBGfxBeginRenderTV();
@@ -580,6 +650,14 @@ void WutImageRenderer::drawTexture(void * texture, float xpos, float ypos, uint1
 	}
 
 	driver->queueDraw(cmd);
+}
+
+void WutImageRenderer::drawMesh(const MeshVertex* vertices, size_t count)
+{
+	if(!driver->isForeground())
+		return;
+
+	driver->queueMesh(vertices, count);
 }
 
 void WutImageRenderer::drawRectangle(float x, float y, float width, float height, PixelColor color)

@@ -115,6 +115,34 @@ class ColorShader : public Shader
 			}
 		}
 
+		//!Binds caller-owned vertex streams for mesh draws and sets the uniforms so
+		//!vertices pass through unchanged: positions are already NDC (3 floats each,
+		//!z = 0), colors are RGBA8 per vertex and are multiplied by 1.
+		//!The streams must stay valid and unmodified until the GPU has finished the draws.
+		//!\param positions Vertex positions, GX2_VERTEX_BUFFER_ALIGNMENT aligned
+		//!\param colors Vertex colors, GX2_VERTEX_BUFFER_ALIGNMENT aligned
+		//!\param vertexCapacity Number of vertices both streams hold
+		void bindMesh(const float * positions, const uint8_t * colors, uint32_t vertexCapacity)
+		{
+			static const float zero[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			static const float one[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+			VertexShader::setAttributeBuffer(0, vertexCapacity * cuVertexAttrSize, cuVertexAttrSize, positions);
+			VertexShader::setAttributeBuffer(1, vertexCapacity * cuColorAttrSize, cuColorAttrSize, colors);
+			setAngle(0.0f);
+			setOffset(zero);
+			setScale(one);
+			setColorIntensity(one);
+		}
+
+		//!Draws triangles from the streams bound with bindMesh().
+		//!\param firstVertex Index of the first vertex
+		//!\param vertexCount Number of vertices (a multiple of 3)
+		static void drawMesh(uint32_t firstVertex, uint32_t vertexCount)
+		{
+			GX2DrawEx(GX2_PRIMITIVE_MODE_TRIANGLES, vertexCount, firstVertex, 1);
+		}
+
 		void setAngle(float angleRadians)
 		{
 			VertexShader::setUniformReg(angleLocation, 4, &angleRadians);

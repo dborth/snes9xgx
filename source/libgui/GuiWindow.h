@@ -82,5 +82,11 @@ class GuiWindow : public GuiElement
 		//!\param c Pointer to a InputController, containing the current input data
 		void update(InputController * c);
 	protected:
+		//!Gathers the elements selection can move between, looking inside layout containers
+		//!\param out Receives the elements
+		//!\return true if any came from inside a layout container
+		bool collectNavigation(std::vector<GuiElement*>& out);
+		//!Moves the selection within a collected list by on-screen geometry
+		void moveSelectionIn(std::vector<GuiElement*>& list, NAV_DIR d);
 		std::vector<GuiElement*> _elements; //!< Contains all elements within the GuiWindow
 };

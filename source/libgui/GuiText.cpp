@@ -480,3 +480,19 @@ void GuiText::draw()
 	}
 	this->updateEffects();
 }
+
+void GuiText::getNaturalSize(int& w, int& h)
+{
+	if(!text)
+	{
+		w = 0;
+		h = 0;
+		return;
+	}
+
+	fontSystem->setPixelSize(size);
+	w = fontSystem->getWidth(text);
+	h = fontSystem->getHeight(text);
+	if(maxWidth > 0 && w > maxWidth)
+		w = maxWidth;
+}
