@@ -10,10 +10,53 @@
 #include <cstring>
 #include <cstdint>
 #include <cwchar>
+#include FT_MODULE_H
+#include FT_SYSTEM_H
 
 GuiTextRenderer* fontSystem;
 
+// FT_Init_FreeType() registers every font driver and renderer FreeType was
+// built with, and because those are reached through function-pointer tables the
+// linker has to keep all of them (about 600 KB) even though only one font is
+// ever loaded. Register just the modules that font needs instead, using the
+// same module classes FreeType's own ftinit.c does. They are declared as
+// opaque data because their real types live in FreeType's internal headers;
+// all that is needed is their address.
+//
+// This is enough for a TrueType font that has hinting instructions and a
+// Unicode cmap, which is what the bundled font is. A font without instructions
+// would also want autofit_module_class (otherwise it renders unhinted), and one
+// without a Unicode cmap would want psnames_module_class.
+extern "C" {
+	extern const unsigned char tt_driver_class[];
+	extern const unsigned char sfnt_module_class[];
+	extern const unsigned char ft_smooth_renderer_class[];
+}
+
 namespace {
+	void* ftAlloc(FT_Memory, long size) { return std::malloc(size); }
+	void ftFree(FT_Memory, void* block) { std::free(block); }
+	void* ftRealloc(FT_Memory, long, long newSize, void* block) { return std::realloc(block, newSize); }
+
+	// Must outlive the library, so it is static
+	FT_MemoryRec_ ftMemory = { nullptr, ftAlloc, ftFree, ftRealloc };
+
+	FT_Library createFreeTypeLibrary()
+	{
+		FT_Library library = nullptr;
+		if (FT_New_Library(&ftMemory, &library) != 0)
+			return nullptr;
+
+		if (FT_Add_Module(library, reinterpret_cast<const FT_Module_Class*>(tt_driver_class)) != 0 ||
+		    FT_Add_Module(library, reinterpret_cast<const FT_Module_Class*>(sfnt_module_class)) != 0 ||
+		    FT_Add_Module(library, reinterpret_cast<const FT_Module_Class*>(ft_smooth_renderer_class)) != 0)
+		{
+			FT_Done_Library(library);
+			return nullptr;
+		}
+		return library;
+	}
+
 	// Converts an already->>6-shifted FreeType value (in physical/rasterized
 	// pixels) back down to the design-pixel units
 	inline int16_t ToDesignPixels(int v, float uiScale)
@@ -25,7 +68,7 @@ namespace {
 GuiTextRenderer::GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, GlyphRenderer* glyphRenderer, float uiScale_)
     : currentPixelSize(0), renderer(glyphRenderer), uiScale(uiScale_)
 {
-	FT_Init_FreeType(&ftLibrary);
+	ftLibrary = createFreeTypeLibrary();
 	FT_New_Memory_Face(ftLibrary, (FT_Byte*)fontBuffer, bufferSize, 0, &ftFace);
 	ftKerningEnabled = FT_HAS_KERNING(ftFace);
 }
@@ -33,7 +76,7 @@ GuiTextRenderer::GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, 
 GuiTextRenderer::~GuiTextRenderer() {
 	unloadFont();
 	if (ftFace) FT_Done_Face(ftFace);
-	if (ftLibrary) FT_Done_FreeType(ftLibrary);
+	if (ftLibrary) FT_Done_Library(ftLibrary);
 }
 
 void GuiTextRenderer::unloadFont() {
@@ -311,4 +354,16 @@ uint16_t GuiTextRenderer::getHeight(const char* text) {
 	uint16_t result = getHeight(wText);
 	delete[] wText;
 	return result;
+}
+
+// FreeType's sfnt module uses brotli decoder (~175 KB). WOFF2 support is not needed - so we override it here
+// The signature and the return value come from brotli/decode.h
+// (BROTLI_DECODER_RESULT_ERROR is 0)
+extern "C" int BrotliDecoderDecompress(size_t encodedSize, const uint8_t* encodedBuffer, size_t* decodedSize, uint8_t* decodedBuffer)
+{
+	(void)encodedSize;
+	(void)encodedBuffer;
+	(void)decodedSize;
+	(void)decodedBuffer;
+	return 0;
 }
