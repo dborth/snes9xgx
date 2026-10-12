@@ -442,7 +442,7 @@ static void CreditsWindow()
 	creditsBoxImg.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	creditsWindowBox.append(&creditsBoxImg);
 
-	int numEntries = 24;
+	int numEntries = 22;
 	GuiText * txt[numEntries];
 
 	txt[i] = new GuiText("Credits", 30, (PixelColor){0, 0, 0, 255});
@@ -461,10 +461,6 @@ static void CreditsWindow()
 	txt[i] = new GuiText("Zopenko, michniewski");
 	txt[i]->setPosition(350,y); i++; y+=24;
 	txt[i] = new GuiText("InfiniteBlue, others");
-	txt[i]->setPosition(350,y); i++; y+=24;
-	txt[i] = new GuiText("Menu artwork");
-	txt[i]->setPosition(60,y); i++;
-	txt[i] = new GuiText("the3seashells");
 	txt[i]->setPosition(350,y); i++; y+=24;
 	txt[i] = new GuiText("Menu sound");
 	txt[i]->setPosition(60,y); i++;
