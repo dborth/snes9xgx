@@ -251,7 +251,7 @@ const char* GuiTextTranslator::getText(const char *msgid) const {
 
 	MSG *msg = findMessage(hashString(msgid));
 
-	if (msg && msg->msgstr) {
+	if (msg && msg->msgstr && msg->msgstr[0] != '\0') {
 		return msg->msgstr;
 	}
 
