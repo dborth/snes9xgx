@@ -17,8 +17,8 @@
 #define SLOT_HEIGHT			72
 #define SLOT_PITCH_X		257
 #define SLOT_PITCH_Y		87
-#define PREVIEW_WIDTH		68
-#define PREVIEW_HEIGHT		64
+#define PREVIEW_WIDTH		52
+#define PREVIEW_HEIGHT		44
 #define SB_WIDTH			22		// scrollbar column (arrow buttons)
 #define SB_INSET			12		// column to the browser's right edge
 #define SB_ARROW			22
@@ -27,16 +27,20 @@
 #define SB_THUMB_WIDTH		14
 #define SB_THUMB_MIN_HEIGHT	24
 
-GuiSavePreview::GuiSavePreview(int w, int h) : placeholder(w, h), hasImage(false)
+GuiSavePreview::GuiSavePreview(int w, int h)
+	: placeholder(w, h), noImage("No image", 12, GuiTheme::current().textMuted), hasImage(false)
 {
 	width = w;
 	height = h;
 	const GuiTheme& theme = GuiTheme::current();
 
 	placeholder.setParent(this);
-	placeholder.setCorners(GuiCorners(12.0f));
-	placeholder.setPaint(GuiPaint().gradient(theme.outline, theme.outlineStrong).stroke(1.5f, theme.outlineStrong));
+	placeholder.setCorners(GuiCorners(8.0f));
+	placeholder.setPaint(GuiPaint().gradient(theme.surface, theme.outline).stroke(1.0f, theme.outline));
 	placeholder.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+
+	noImage.setParent(this);
+	noImage.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 
 	image.setParent(this);
 	image.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
@@ -56,7 +60,10 @@ void GuiSavePreview::draw()
 	if(hasImage)
 		image.draw();
 	else
+	{
 		placeholder.draw();
+		noImage.draw();
+	}
 
 	this->updateEffects();
 }
@@ -182,7 +189,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 		saveBtn[i]->setPosition(SLOT_PITCH_X*(i % 2),SLOT_PITCH_Y*(i>>1));
 		saveBtn[i]->setTrigger(trigA);
 		saveBtn[i]->setState(STATE::DISABLED);
-		saveBtn[i]->setEffectGrow();
+		saveBtn[i]->setEffectGrow(106);
 		saveBtn[i]->setVisible(false);
 		saveBtn[i]->setSoundOver(btnSoundOver);
 		saveBtn[i]->setSoundClick(btnSoundClick);

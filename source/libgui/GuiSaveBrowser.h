@@ -28,6 +28,7 @@ class GuiSavePreview : public GuiElement
 		void draw() override;
 	private:
 		GuiShape placeholder;
+		GuiText noImage;
 		GuiImage image;
 		bool hasImage;
 };

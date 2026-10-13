@@ -418,9 +418,9 @@ void GuiElement::setEffectOnOver(int eff, int amount, int target)
 	effectTargetOver = target;
 }
 
-void GuiElement::setEffectGrow()
+void GuiElement::setEffectGrow(int percent)
 {
-	setEffectOnOver(EFFECT::SCALE, 4, 110);
+	setEffectOnOver(EFFECT::SCALE, 4, percent);
 }
 
 void GuiElement::updateEffects()

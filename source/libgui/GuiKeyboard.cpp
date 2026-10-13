@@ -146,7 +146,7 @@ GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 	keyBack->setSoundOver(keySoundOver);
 	keyBack->setSoundClick(keySoundClick);
 	keyBack->setTrigger(trigA);
-	keyBack->setPosition(10*42+40, 0*42+80);
+	keyBack->setPosition(10*42+44, 0*42+80);
 	keyBack->setEffectGrow();
 	this->append(keyBack);
 
@@ -204,7 +204,7 @@ GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 				keyBtn[i][j]->setSoundClick(keySoundClick);
 				keyBtn[i][j]->setTrigger(trigA);
 				keyBtn[i][j]->setLabel(keyTxt[i][j]);
-				keyBtn[i][j]->setPosition(j*42+21*i+40, i*42+80);
+				keyBtn[i][j]->setPosition(j*42+21*i+42, i*42+80);
 				keyBtn[i][j]->setEffectGrow();
 				this->append(keyBtn[i][j]);
 			}

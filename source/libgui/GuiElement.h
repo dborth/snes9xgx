@@ -195,8 +195,9 @@ class GuiElement
 		//!\param a Amount of the effect (usage varies on effect)
 		//!\param t Target amount of the effect (usage varies on effect)
 		void setEffectOnOver(int e, int a, int t=0);
-		//!Shortcut to SetEffectOnOver(EFFECT::SCALE, 4, 110)
-		void setEffectGrow();
+		//!Shortcut to SetEffectOnOver(EFFECT::SCALE, 4, percent)
+		//!\param percent Size when highlighted, as a percentage of normal
+		void setEffectGrow(int percent = 110);
 		//!Gets the current element effects
 		//!\return element effects
 		int getEffect();
