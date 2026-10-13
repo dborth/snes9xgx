@@ -251,8 +251,6 @@ const char* GuiTextTranslator::getText(const char *msgid) const {
 
 	MSG *msg = findMessage(hashString(msgid));
 
-	// An empty msgstr means "not translated" (gettext convention): fall back to
-	// the English msgid instead of showing blank text (e.g. the "OK" button in de.lang).
 	if (msg && msg->msgstr && msg->msgstr[0] != '\0') {
 		return msg->msgstr;
 	}
