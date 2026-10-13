@@ -11,6 +11,56 @@
 #include "../filebrowser.h"
 #include "Gui.h"
 
+// Layout, in design pixels. Each slot is a card; the scrollbar column runs down the
+// right side with round arrow buttons and a thumb showing which rows are on screen.
+#define SLOT_WIDTH			244
+#define SLOT_HEIGHT			72
+#define SLOT_PITCH_X		257
+#define SLOT_PITCH_Y		87
+#define PREVIEW_WIDTH		68
+#define PREVIEW_HEIGHT		64
+#define SB_WIDTH			22		// scrollbar column (arrow buttons)
+#define SB_INSET			12		// column to the browser's right edge
+#define SB_ARROW			22
+#define SB_TRACK_WIDTH		6
+#define SB_TRACK_Y			(SB_ARROW + 6)
+#define SB_THUMB_WIDTH		14
+#define SB_THUMB_MIN_HEIGHT	24
+
+GuiSavePreview::GuiSavePreview(int w, int h) : placeholder(w, h), hasImage(false)
+{
+	width = w;
+	height = h;
+	const GuiTheme& theme = GuiTheme::current();
+
+	placeholder.setParent(this);
+	placeholder.setCorners(GuiCorners(12.0f));
+	placeholder.setPaint(GuiPaint().gradient(theme.outline, theme.outlineStrong).stroke(1.5f, theme.outlineStrong));
+	placeholder.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+
+	image.setParent(this);
+	image.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+}
+
+void GuiSavePreview::setImage(GuiImageData * img)
+{
+	image.setImage(img);
+	hasImage = img != nullptr && img->getTexture() != nullptr;
+}
+
+void GuiSavePreview::draw()
+{
+	if(!this->isVisible())
+		return;
+
+	if(hasImage)
+		image.draw();
+	else
+		placeholder.draw();
+
+	this->updateEffects();
+}
+
 /**
  * Constructor for the GuiSaveBrowser class.
  */
@@ -38,40 +88,63 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND::PCM);
 	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND::PCM);
 
-	gameSave = new GuiImageData(button_gamesave_png);
-	gameSaveOver = new GuiImageData(button_gamesave_over_png);
-	gameSaveBlank = new GuiImageData(button_gamesave_blank_png);
+	const GuiTheme& theme = GuiTheme::current();
+	trackHeight = h - 2 * SB_TRACK_Y;
 
-	scrollbar = new GuiImageData(scrollbar_png);
-	scrollbarImg = new GuiImage(scrollbar);
-	scrollbarImg->setParent(this);
-	scrollbarImg->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
-	scrollbarImg->setPosition(0, 30);
+	// scrollbar: a thin track with a thumb, and round arrow buttons that gray at rest
+	// and take the accent color when the pointer is on them
+	trackShape = new GuiShape(SB_TRACK_WIDTH, trackHeight);
+	trackShape->setParent(this);
+	trackShape->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+	trackShape->setPosition(-(SB_INSET + (SB_WIDTH - SB_TRACK_WIDTH) / 2), SB_TRACK_Y);
+	trackShape->setCapsule();
+	trackShape->setPaint(GuiPaint().color(theme.outline));
 
-	arrowDown = new GuiImageData(scrollbar_arrowdown_png);
-	arrowDownImg = new GuiImage(arrowDown);
-	arrowDownOver = new GuiImageData(scrollbar_arrowdown_over_png);
-	arrowDownOverImg = new GuiImage(arrowDownOver);
-	arrowUp = new GuiImageData(scrollbar_arrowup_png);
-	arrowUpImg = new GuiImage(arrowUp);
-	arrowUpOver = new GuiImageData(scrollbar_arrowup_over_png);
-	arrowUpOverImg = new GuiImage(arrowUpOver);
+	thumbShape = new GuiShape(SB_THUMB_WIDTH, trackHeight);
+	thumbShape->setParent(this);
+	thumbShape->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+	thumbShape->setCapsule();
+	thumbShape->setPaint(GuiPaint().color(theme.outlineStrong));
+	thumbShape->setVisible(false);
 
-	arrowUpBtn = new GuiButton(arrowUpImg->getWidth(), arrowUpImg->getHeight());
+	const GuiPaint controlRest = GuiPaint().color(theme.surfaceRaised).stroke(1.5f, theme.outline);
+	const GuiPaint controlLit = GuiPaint().color(theme.accent).stroke(1.5f, theme.accent);
+	const GuiPaint controlHeld = GuiPaint().color(theme.accentDark).stroke(1.5f, theme.accentDark);
+	const GuiShapeStyle controlStyle = GuiShapeStyle(controlRest).onFocus(controlLit).onPress(controlHeld);
+
+	arrowUpShape = new GuiShape(SB_ARROW, SB_ARROW);
+	arrowUpShape->setShape(SHAPE::ELLIPSE);
+	arrowUpShape->setStyle(controlStyle);
+	arrowUpShape->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	arrowUpGlyph = new GuiArrow(ARROW::UP, 10, 7, theme.textMuted, theme.textOnAccent);
+	arrowUpGlyph->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	arrowUpGlyph->setPosition(0, -1);
+
+	arrowDownShape = new GuiShape(SB_ARROW, SB_ARROW);
+	arrowDownShape->setShape(SHAPE::ELLIPSE);
+	arrowDownShape->setStyle(controlStyle);
+	arrowDownShape->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	arrowDownGlyph = new GuiArrow(ARROW::DOWN, 10, 7, theme.textMuted, theme.textOnAccent);
+	arrowDownGlyph->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	arrowDownGlyph->setPosition(0, 1);
+
+	arrowUpBtn = new GuiButton(SB_WIDTH, SB_ARROW);
 	arrowUpBtn->setParent(this);
-	arrowUpBtn->setImage(arrowUpImg);
-	arrowUpBtn->setImageOver(arrowUpOverImg);
+	arrowUpBtn->setImage(arrowUpShape);
+	arrowUpBtn->setIcon(arrowUpGlyph);
 	arrowUpBtn->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+	arrowUpBtn->setPosition(-SB_INSET, 0);
 	arrowUpBtn->setSelectable(false);
 	arrowUpBtn->setTrigger(trigA);
 	arrowUpBtn->setSoundOver(btnSoundOver);
 	arrowUpBtn->setSoundClick(btnSoundClick);
 
-	arrowDownBtn = new GuiButton(arrowDownImg->getWidth(), arrowDownImg->getHeight());
+	arrowDownBtn = new GuiButton(SB_WIDTH, SB_ARROW);
 	arrowDownBtn->setParent(this);
-	arrowDownBtn->setImage(arrowDownImg);
-	arrowDownBtn->setImageOver(arrowDownOverImg);
+	arrowDownBtn->setImage(arrowDownShape);
+	arrowDownBtn->setIcon(arrowDownGlyph);
 	arrowDownBtn->setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
+	arrowDownBtn->setPosition(-SB_INSET, 0);
 	arrowDownBtn->setSelectable(false);
 	arrowDownBtn->setTrigger(trigA);
 	arrowDownBtn->setSoundOver(btnSoundOver);
@@ -79,33 +152,34 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
-		saveDate[i] = new GuiText(nullptr, 18, (PixelColor){0, 0, 0, 0xff});
+		saveDate[i] = new GuiText(nullptr, 18, theme.text);
 		saveDate[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 		saveDate[i]->setPosition(80,5);
-		saveTime[i] = new GuiText(nullptr, 18, (PixelColor){0, 0, 0, 0xff});
+		saveTime[i] = new GuiText(nullptr, 18, theme.text);
 		saveTime[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 		saveTime[i]->setPosition(80,27);
 
-		saveType[i] = new GuiText(nullptr, 18, (PixelColor){0, 0, 0, 0xff});
+		saveType[i] = new GuiText(nullptr, 18, theme.text);
 		saveType[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 		saveType[i]->setPosition(80,50);
 
-		saveBgImg[i] = new GuiImage(gameSave);
-		saveBgOverImg[i] = new GuiImage(gameSaveOver);
-		savePreviewImg[i] = new GuiImage(gameSaveBlank);
+		// each slot is a card, taking the accent outline and glow when highlighted
+		saveBgImg[i] = new GuiShape(SLOT_WIDTH, SLOT_HEIGHT);
+		saveBgImg[i]->setCorners(GuiCorners(theme.radius));
+		saveBgImg[i]->setStyle(theme.cardStyle());
+		savePreviewImg[i] = new GuiSavePreview(PREVIEW_WIDTH, PREVIEW_HEIGHT);
 		savePreviewImg[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 		savePreviewImg[i]->setPosition(5,0);
 
-		saveBtn[i] = new GuiButton(saveBgImg[i]->getWidth(),saveBgImg[i]->getHeight());
+		saveBtn[i] = new GuiButton(SLOT_WIDTH, SLOT_HEIGHT);
 		saveBtn[i]->setParent(this);
 		saveBtn[i]->setLabel(saveDate[i], 0);
 		saveBtn[i]->setLabel(saveTime[i], 1);
 		saveBtn[i]->setLabel(saveType[i], 2);
 		saveBtn[i]->setImage(saveBgImg[i]);
-		saveBtn[i]->setImageOver(saveBgOverImg[i]);
 		saveBtn[i]->setIcon(savePreviewImg[i]);
 		saveBtn[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-		saveBtn[i]->setPosition(257*(i % 2),87*(i>>1));
+		saveBtn[i]->setPosition(SLOT_PITCH_X*(i % 2),SLOT_PITCH_Y*(i>>1));
 		saveBtn[i]->setTrigger(trigA);
 		saveBtn[i]->setState(STATE::DISABLED);
 		saveBtn[i]->setEffectGrow();
@@ -126,20 +200,12 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	delete arrowUpBtn;
 	delete arrowDownBtn;
 
-	delete scrollbarImg;
-	delete arrowDownImg;
-	delete arrowDownOverImg;
-	delete arrowUpImg;
-	delete arrowUpOverImg;
-
-	delete gameSave;
-	delete gameSaveOver;
-	delete gameSaveBlank;
-	delete scrollbar;
-	delete arrowDown;
-	delete arrowDownOver;
-	delete arrowUp;
-	delete arrowUpOver;
+	delete trackShape;
+	delete thumbShape;
+	delete arrowUpShape;
+	delete arrowDownShape;
+	delete arrowUpGlyph;
+	delete arrowDownGlyph;
 
 	delete btnSoundOver;
 	delete btnSoundClick;
@@ -152,7 +218,6 @@ GuiSaveBrowser::~GuiSaveBrowser()
 		delete saveTime[i];
 		delete saveType[i];
 		delete saveBgImg[i];
-		delete saveBgOverImg[i];
 		delete savePreviewImg[i];
 	}
 }
@@ -208,7 +273,8 @@ void GuiSaveBrowser::draw()
 	for(int i=0; i<SAVELISTSIZE; i++)
 		saveBtn[i]->draw();
 
-	scrollbarImg->draw();
+	trackShape->draw();
+	thumbShape->draw();
 	arrowUpBtn->draw();
 	arrowDownBtn->draw();
 
@@ -328,7 +394,7 @@ void GuiSaveBrowser::update(InputController * controller)
 			saveDate[0]->setText(nullptr);
 			saveTime[0]->setText("New");
 			saveType[0]->setText("State");
-			savePreviewImg[0]->setImage(gameSaveBlank);
+			savePreviewImg[0]->setImage(nullptr);
 			saveBtn[0]->setVisible(true);
 
 			if(saveBtn[0]->getState() == STATE::DISABLED)
@@ -339,7 +405,7 @@ void GuiSaveBrowser::update(InputController * controller)
 				saveDate[1]->setText(nullptr);
 				saveTime[1]->setText("New");
 				saveType[1]->setText("SRAM");
-				savePreviewImg[1]->setImage(gameSaveBlank);
+				savePreviewImg[1]->setImage(nullptr);
 				saveBtn[1]->setVisible(true);
 
 				if(saveBtn[1]->getState() == STATE::DISABLED)
@@ -378,7 +444,7 @@ void GuiSaveBrowser::update(InputController * controller)
 			if(saves->previewImg[listOffset+i] != nullptr && saves->previewImg[listOffset+i]->getTexture() != nullptr)
 				savePreviewImg[i]->setImage(saves->previewImg[listOffset+i].get());
 			else
-				savePreviewImg[i]->setImage(gameSaveBlank);
+				savePreviewImg[i]->setImage(nullptr);
 		}
 		else
 		{
@@ -406,6 +472,33 @@ void GuiSaveBrowser::update(InputController * controller)
 			selectedItem = i;
 	}
 
+	updateThumb();
+
 	if(updateCB)
 		updateCB(this);
+}
+
+//! Sizes and places the scrollbar thumb for the rows currently shown
+void GuiSaveBrowser::updateThumb()
+{
+	// saving reserves two "new" slots (state and RAM) before the existing saves
+	const int reserved = (action == 1) ? 2 : 0;
+	const int pageRows = SAVELISTSIZE / 2;
+	const int totalRows = (saves->length + reserved + 1) / 2;
+	int firstRow = (listOffset + reserved) / 2;
+
+	if(totalRows <= pageRows)
+	{
+		thumbShape->setVisible(false);
+		return;
+	}
+	if(firstRow < 0) firstRow = 0;
+	if(firstRow > totalRows - pageRows) firstRow = totalRows - pageRows;
+
+	const int thumbHeight = std::max(SB_THUMB_MIN_HEIGHT, trackHeight * pageRows / totalRows);
+	const int travel = trackHeight - thumbHeight;
+
+	thumbShape->setVisible(true);
+	thumbShape->setSize(SB_THUMB_WIDTH, thumbHeight);
+	thumbShape->setPosition(-(SB_INSET + (SB_WIDTH - SB_THUMB_WIDTH) / 2), SB_TRACK_Y + travel * firstRow / (totalRows - pageRows));
 }

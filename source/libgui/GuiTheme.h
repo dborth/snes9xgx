@@ -27,6 +27,8 @@ struct GuiTheme {
 	PixelColor textMuted;		/*!< Secondary text. */
 	PixelColor textOnAccent;	/*!< Text drawn over the accent color. */
 	PixelColor good;			/*!< Positive state (connected, charged). */
+	PixelColor highlight;		/*!< Selected row or list item (a light tint on a light theme). */
+	PixelColor shadow;			/*!< Drop shadow of a resting card; its alpha is the peak opacity. */
 
 	// metrics
 	float radius;				/*!< Corner radius of cards and panels. */

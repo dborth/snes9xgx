@@ -11,8 +11,10 @@
 #include "GuiImageAsyncCache.h"
 
 class GuiImage;
+class GuiShape;
+class GuiArrow;
 
-#define FILE_PAGESIZE 			10
+#define FILE_PAGESIZE 			9
 
 //!Resolves the source PNG path for a preview image, given a browser index.
 //!Return false (leaving outPath untouched) if entry index has no preview image.
@@ -46,44 +48,33 @@ class GuiFileBrowser : public GuiElement
 		void refreshPreview();
 	protected:
 		GuiText * fileListText[FILE_PAGESIZE];
-		GuiImage * fileListBg[FILE_PAGESIZE];
+		GuiShape * fileListBg[FILE_PAGESIZE];
 		GuiImage * fileListIcon[FILE_PAGESIZE];
 
 		GuiButton * arrowUpBtn;
 		GuiButton * arrowDownBtn;
 		GuiButton * scrollbarBoxBtn;
 
-		GuiImage * bgFileSelectionImg;
-		GuiImage * scrollbarImg;
-		GuiImage * arrowDownImg;
-		GuiImage * arrowDownOverImg;
-		GuiImage * arrowUpImg;
-		GuiImage * arrowUpOverImg;
-		GuiImage * scrollbarBoxImg;
-		GuiImage * scrollbarBoxOverImg;
+		GuiShape * cardShape;
+		GuiShape * trackShape;
+		GuiShape * arrowUpShape;
+		GuiShape * arrowDownShape;
+		GuiArrow * arrowUpGlyph;
+		GuiArrow * arrowDownGlyph;
+		GuiShape * thumbShape;
 
-		GuiImageData * bgFileSelection;
-		GuiImageData * bgFileSelectionEntry;
-		GuiImageData * bgFileSelectionEntryTop;
-		GuiImageData * bgFileSelectionEntryBottom;
 		GuiImageData * iconFolder;
 		GuiImageData * iconSD;
 		GuiImageData * iconUSB;
 		GuiImageData * iconDVD;
 		GuiImageData * iconSMB;
-		GuiImageData * scrollbar;
-		GuiImageData * arrowDown;
-		GuiImageData * arrowDownOver;
-		GuiImageData * arrowUp;
-		GuiImageData * arrowUpOver;
-		GuiImageData * scrollbarBox;
-		GuiImageData * scrollbarBoxOver;
 
 		GuiSound * btnSoundOver;
 		GuiSound * btnSoundClick;
 		GuiTrigger * trigA;
 		GuiTrigger * trigHeldA;
 
+		int scrollTravel;		// how far the scrollbar thumb can move, in pixels
 		int selectedItem;
 		int numEntries;
 		bool listChanged;

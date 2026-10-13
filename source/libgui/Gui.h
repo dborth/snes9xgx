@@ -58,6 +58,7 @@ enum class SCROLL {
 #include "GuiPaint.h"
 #include "GuiTheme.h"
 #include "GuiShape.h"
+#include "GuiArrow.h"
 #include "GuiLayout.h"
 #include "GuiGlyph.h"
 #include "GuiButton.h"

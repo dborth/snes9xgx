@@ -25,6 +25,8 @@ GuiTheme::GuiTheme() :
 	textMuted(rgb(152, 164, 181)),
 	textOnAccent(rgb(30, 20, 5)),
 	good(rgb(63, 208, 176)),
+	highlight(rgb(62, 74, 94)),
+	shadow(rgb(0, 0, 0, 150)),
 	radius(12.0f),
 	strokeWidth(2.0f),
 	padding(12.0f),
@@ -48,7 +50,7 @@ GuiShapeStyle GuiTheme::cardStyle() const
 	GuiPaint rest = GuiPaint()
 		.gradient(surfaceRaised, surface)
 		.stroke(strokeWidth, outline)
-		.shadow(shadowBlur, rgb(0, 0, 0, 150), 0.0f, 4.0f);
+		.shadow(shadowBlur, shadow, 0.0f, 4.0f);
 	GuiPaint lit = GuiPaint()
 		.gradient(surfaceRaised, surface)
 		.stroke(strokeWidth, accent)
@@ -88,7 +90,7 @@ GuiShapeStyle GuiTheme::chipStyle() const
 
 GuiShapeStyle GuiTheme::rowStyle() const
 {
-	GuiPaint lit = GuiPaint().color(rgb(62, 74, 94));
+	GuiPaint lit = GuiPaint().color(highlight);
 	GuiPaint pressed = GuiPaint().color(rgb(accent.r, accent.g, accent.b, 110));
 	return GuiShapeStyle(GuiPaint()).onFocus(lit).onPress(pressed);
 }

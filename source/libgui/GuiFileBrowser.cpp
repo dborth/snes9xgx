@@ -7,6 +7,25 @@
 #include "Gui.h"
 #include "../filebrowser.h"
 
+// Layout of the browser, in design pixels. The browser is one rounded card: the rows
+// sit inset from its edge, with the scrollbar column down the right side.
+#define BROWSER_PAD			6		// card edge to rows, and top/bottom of the scrollbar column
+#define ROW_HEIGHT			27		// the highlight pill is 2 shorter, leaving a gap between rows
+#define ROW_TEXT_Y			2		// text and icons sit this far below the row's middle: a font's
+#define ROW_ICON_Y			2		// line box carries room for descenders and the icon art is
+										// drawn high in its image, so they otherwise look raised
+#define ROW_GAP				6		// rows to scrollbar column
+#define SB_WIDTH			22		// scrollbar column (arrow buttons and thumb hit area)
+#define SB_INSET			7		// column to card's right edge
+#define SB_ARROW			22		// arrow button size
+#define SB_TRACK_WIDTH		6
+#define SB_TRACK_Y			(BROWSER_PAD + SB_ARROW + 6)
+#define SB_THUMB_WIDTH		14
+#define SB_THUMB_HEIGHT		38
+#define ROW_TEXT_X			10
+#define ROW_TEXT_X_ICON		34
+#define ROW_TEXT_PAD		6		// room kept at the row's right end
+
 //! Step size (in rows) for one scroll action while the on-screen scrollbar
 //! arrow is held, based on how long it's been held continuously.
 static int fastScrollStep(float heldDuration)
@@ -19,6 +38,16 @@ static int fastScrollStep(float heldDuration)
 		return 1;
 }
 
+//! The selected-row tint a little deeper, for the moment the row is clicked
+static PixelColor rowPressColor(PixelColor tint, PixelColor accent)
+{
+	PixelColor c = tint;
+	c.r = (uint8_t)(tint.r + (accent.r - tint.r) * 0.18f + 0.5f);
+	c.g = (uint8_t)(tint.g + (accent.g - tint.g) * 0.18f + 0.5f);
+	c.b = (uint8_t)(tint.b + (accent.b - tint.b) * 0.18f + 0.5f);
+	return c;
+}
+
 GuiFileBrowser::GuiFileBrowser(int w, int h)
 {
 	width = w;
@@ -29,6 +58,12 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	listChanged = true; // trigger an initial list update
 	focus = 0; // allow focus
 
+	const GuiTheme& theme = GuiTheme::current();
+	const int rowWidth = w - BROWSER_PAD - ROW_GAP - SB_WIDTH - SB_INSET;
+	const int rowTop = (h - FILE_PAGESIZE * ROW_HEIGHT) / 2;	// rows centred in the card
+	const int trackHeight = h - 2 * SB_TRACK_Y;
+	scrollTravel = trackHeight - SB_THUMB_HEIGHT;
+
 	trigA = new GuiTrigger;
 	trigA->setPrimaryTrigger();
 
@@ -38,14 +73,11 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND::PCM);
 	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND::PCM);
 
-	bgFileSelection = new GuiImageData(bg_game_selection_png);
-	bgFileSelectionImg = new GuiImage(bgFileSelection);
-	bgFileSelectionImg->setParent(this);
-	bgFileSelectionImg->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-
-	bgFileSelectionEntry = new GuiImageData(bg_game_selection_entry_png);
-	bgFileSelectionEntryTop = new GuiImageData(bg_game_selection_entry_top_png);
-	bgFileSelectionEntryBottom = new GuiImageData(bg_game_selection_entry_bottom_png);
+	// the card everything sits on
+	cardShape = new GuiShape(w, h);
+	cardShape->setParent(this);
+	cardShape->setCorners(GuiCorners(theme.radius));
+	cardShape->setStyle(theme.cardStyle());
 
 	iconFolder = new GuiImageData(icon_folder_png);
 	iconSD = new GuiImageData(icon_sd_png);
@@ -53,30 +85,48 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	iconDVD = new GuiImageData(icon_dvd_png);
 	iconSMB = new GuiImageData(icon_smb_png);
 
-	scrollbar = new GuiImageData(scrollbar_png);
-	scrollbarImg = new GuiImage(scrollbar);
-	scrollbarImg->setParent(this);
-	scrollbarImg->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
-	scrollbarImg->setPosition(0, 30);
+	// scrollbar: a thin track, round arrow buttons and a pill thumb. They gray at rest
+	// and take the accent color when the pointer is on them or they are held.
+	const GuiPaint controlRest = GuiPaint().color(theme.surfaceRaised).stroke(1.5f, theme.outline);
+	const GuiPaint controlLit = GuiPaint().color(theme.accent).stroke(1.5f, theme.accent);
+	const GuiPaint controlHeld = GuiPaint().color(theme.accentDark).stroke(1.5f, theme.accentDark);
+	const GuiShapeStyle controlStyle = GuiShapeStyle(controlRest).onFocus(controlLit).onPress(controlHeld);
 
-	arrowDown = new GuiImageData(scrollbar_arrowdown_png);
-	arrowDownImg = new GuiImage(arrowDown);
-	arrowDownOver = new GuiImageData(scrollbar_arrowdown_over_png);
-	arrowDownOverImg = new GuiImage(arrowDownOver);
-	arrowUp = new GuiImageData(scrollbar_arrowup_png);
-	arrowUpImg = new GuiImage(arrowUp);
-	arrowUpOver = new GuiImageData(scrollbar_arrowup_over_png);
-	arrowUpOverImg = new GuiImage(arrowUpOver);
-	scrollbarBox = new GuiImageData(scrollbar_box_png);
-	scrollbarBoxImg = new GuiImage(scrollbarBox);
-	scrollbarBoxOver = new GuiImageData(scrollbar_box_over_png);
-	scrollbarBoxOverImg = new GuiImage(scrollbarBoxOver);
+	trackShape = new GuiShape(SB_TRACK_WIDTH, trackHeight);
+	trackShape->setParent(this);
+	trackShape->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+	trackShape->setPosition(-(SB_INSET + (SB_WIDTH - SB_TRACK_WIDTH) / 2), SB_TRACK_Y);
+	trackShape->setCapsule();
+	trackShape->setPaint(GuiPaint().color(theme.outline));
 
-	arrowUpBtn = new GuiButton(arrowUpImg->getWidth(), arrowUpImg->getHeight());
+	arrowUpShape = new GuiShape(SB_ARROW, SB_ARROW);
+	arrowUpShape->setShape(SHAPE::ELLIPSE);
+	arrowUpShape->setStyle(controlStyle);
+	arrowUpShape->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	arrowUpGlyph = new GuiArrow(ARROW::UP, 10, 7, theme.textMuted, theme.textOnAccent);
+	arrowUpGlyph->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	arrowUpGlyph->setPosition(0, -1);
+
+	arrowDownShape = new GuiShape(SB_ARROW, SB_ARROW);
+	arrowDownShape->setShape(SHAPE::ELLIPSE);
+	arrowDownShape->setStyle(controlStyle);
+	arrowDownShape->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	arrowDownGlyph = new GuiArrow(ARROW::DOWN, 10, 7, theme.textMuted, theme.textOnAccent);
+	arrowDownGlyph->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	arrowDownGlyph->setPosition(0, 1);
+
+	thumbShape = new GuiShape(SB_THUMB_WIDTH, SB_THUMB_HEIGHT);
+	thumbShape->setCapsule();
+	thumbShape->setStyle(GuiShapeStyle(GuiPaint().color(theme.outlineStrong))
+		.onFocus(GuiPaint().color(theme.accent)).onPress(GuiPaint().color(theme.accentDark)));
+	thumbShape->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+
+	arrowUpBtn = new GuiButton(SB_WIDTH, SB_ARROW);
 	arrowUpBtn->setParent(this);
-	arrowUpBtn->setImage(arrowUpImg);
-	arrowUpBtn->setImageOver(arrowUpOverImg);
+	arrowUpBtn->setImage(arrowUpShape);
+	arrowUpBtn->setIcon(arrowUpGlyph);
 	arrowUpBtn->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+	arrowUpBtn->setPosition(-SB_INSET, BROWSER_PAD);
 	arrowUpBtn->setSelectable(false);
 	arrowUpBtn->setClickable(false);
 	arrowUpBtn->setHoldable(true);
@@ -84,12 +134,12 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	arrowUpBtn->setSoundOver(btnSoundOver);
 	arrowUpBtn->setSoundClick(btnSoundClick);
 
-	arrowDownBtn = new GuiButton(arrowDownImg->getWidth(), arrowDownImg->getHeight());
+	arrowDownBtn = new GuiButton(SB_WIDTH, SB_ARROW);
 	arrowDownBtn->setParent(this);
-	arrowDownBtn->setImage(arrowDownImg);
-	arrowDownBtn->setImageOver(arrowDownOverImg);
+	arrowDownBtn->setImage(arrowDownShape);
+	arrowDownBtn->setIcon(arrowDownGlyph);
 	arrowDownBtn->setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
-	arrowDownBtn->setPosition(0,-1);
+	arrowDownBtn->setPosition(-SB_INSET, -BROWSER_PAD);
 	arrowDownBtn->setSelectable(false);
 	arrowDownBtn->setClickable(false);
 	arrowDownBtn->setHoldable(true);
@@ -97,36 +147,42 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	arrowDownBtn->setSoundOver(btnSoundOver);
 	arrowDownBtn->setSoundClick(btnSoundClick);
 
-	scrollbarBoxBtn = new GuiButton(scrollbarBoxImg->getWidth(), scrollbarBoxImg->getHeight());
+	scrollbarBoxBtn = new GuiButton(SB_WIDTH, SB_THUMB_HEIGHT);
 	scrollbarBoxBtn->setParent(this);
-	scrollbarBoxBtn->setImage(scrollbarBoxImg);
-	scrollbarBoxBtn->setImageOver(scrollbarBoxOverImg);
+	scrollbarBoxBtn->setImage(thumbShape);
 	scrollbarBoxBtn->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+	scrollbarBoxBtn->setPosition(-SB_INSET, SB_TRACK_Y);
 	scrollbarBoxBtn->setMinY(0);
-	scrollbarBoxBtn->setMaxY(156);
+	scrollbarBoxBtn->setMaxY(scrollTravel);
 	scrollbarBoxBtn->setSelectable(false);
 	scrollbarBoxBtn->setClickable(false);
 	scrollbarBoxBtn->setHoldable(true);
 	scrollbarBoxBtn->setTrigger(trigHeldA);
 
+	// The selected row is a rounded, tinted pill inset from the card edge, so it never
+	// touches the card's corners. It fades in and out as the selection moves.
+	const GuiPaint rowLit = GuiPaint().color(theme.highlight).stroke(1.5f, theme.accent);
+	const GuiPaint rowHeld = GuiPaint().color(rowPressColor(theme.highlight, theme.accent)).stroke(1.5f, theme.accent);
+	const GuiShapeStyle rowStyle = GuiShapeStyle(GuiPaint()).onFocus(rowLit).onPress(rowHeld);
+
 	for(int i=0; i<FILE_PAGESIZE; ++i)
 	{
-		fileListText[i] = new GuiText(nullptr, 20, (PixelColor){0, 0, 0, 0xff});
+		fileListText[i] = new GuiText(nullptr, 20, theme.text);
 		fileListText[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-		fileListText[i]->setPosition(5,0);
-		fileListText[i]->setMaxWidth(295);
+		fileListText[i]->setPosition(ROW_TEXT_X,ROW_TEXT_Y);
+		fileListText[i]->setMaxWidth(rowWidth - ROW_TEXT_X - ROW_TEXT_PAD);
 
-		GuiImageData * fileEntryImg = bgFileSelectionEntry;
-		if(i == 0) fileEntryImg = bgFileSelectionEntryTop;
-		else if(i == FILE_PAGESIZE-1) fileEntryImg = bgFileSelectionEntryBottom;
-		fileListBg[i] = new GuiImage(fileEntryImg);
+		fileListBg[i] = new GuiShape(rowWidth, ROW_HEIGHT - 2);
+		fileListBg[i]->setCorners(GuiCorners(9.0f));
+		fileListBg[i]->setStyle(rowStyle);
+		fileListBg[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 		fileListIcon[i] = nullptr;
 
-		fileList[i] = new GuiButton(295, 26);
+		fileList[i] = new GuiButton(rowWidth, ROW_HEIGHT);
 		fileList[i]->setParent(this);
 		fileList[i]->setLabel(fileListText[i]);
-		fileList[i]->setImageOver(fileListBg[i]);
-		fileList[i]->setPosition(3,26*i+3);
+		fileList[i]->setImage(fileListBg[i]);
+		fileList[i]->setPosition(BROWSER_PAD, rowTop + ROW_HEIGHT*i);
 		fileList[i]->setTrigger(trigA);
 		fileList[i]->setSoundClick(btnSoundClick);
 	}
@@ -138,31 +194,19 @@ GuiFileBrowser::~GuiFileBrowser()
 	delete arrowDownBtn;
 	delete scrollbarBoxBtn;
 
-	delete bgFileSelectionImg;
-	delete scrollbarImg;
-	delete arrowDownImg;
-	delete arrowDownOverImg;
-	delete arrowUpImg;
-	delete arrowUpOverImg;
-	delete scrollbarBoxImg;
-	delete scrollbarBoxOverImg;
+	delete cardShape;
+	delete trackShape;
+	delete arrowUpShape;
+	delete arrowDownShape;
+	delete arrowUpGlyph;
+	delete arrowDownGlyph;
+	delete thumbShape;
 
-	delete bgFileSelection;
-	delete bgFileSelectionEntry;
-	delete bgFileSelectionEntryTop;
-	delete bgFileSelectionEntryBottom;
 	delete iconFolder;
 	delete iconSD;
 	delete iconUSB;
 	delete iconDVD;
 	delete iconSMB;
-	delete scrollbar;
-	delete arrowDown;
-	delete arrowDownOver;
-	delete arrowUp;
-	delete arrowUpOver;
-	delete scrollbarBox;
-	delete scrollbarBoxOver;
 
 	delete btnSoundOver;
 	delete btnSoundClick;
@@ -278,14 +322,14 @@ void GuiFileBrowser::draw()
 	if(!this->isVisible())
 		return;
 
-	bgFileSelectionImg->draw();
+	cardShape->draw();
 
 	for(uint32_t i=0; i<FILE_PAGESIZE; ++i)
 	{
 		fileList[i]->draw();
 	}
 
-	scrollbarImg->draw();
+	trackShape->draw();
 	arrowUpBtn->draw();
 	arrowDownBtn->draw();
 	scrollbarBoxBtn->draw();
@@ -320,15 +364,16 @@ void GuiFileBrowser::update(InputController * controller)
 		pad.validPointer &&
 		browser.numEntries > FILE_PAGESIZE)
 	{
-		scrollbarBoxBtn->setPosition(0,0);
-		positionWiimote = pad.cursor_y - 60 - scrollbarBoxBtn->getTop();
+		scrollbarBoxBtn->setPosition(-SB_INSET, 0);
+		// put the thumb's center under the pointer (thumb travels from SB_TRACK_Y)
+		positionWiimote = pad.cursor_y - (SB_TRACK_Y + SB_THUMB_HEIGHT / 2) - scrollbarBoxBtn->getTop();
 
 		if(positionWiimote < scrollbarBoxBtn->getMinY())
 			positionWiimote = scrollbarBoxBtn->getMinY();
 		else if(positionWiimote > scrollbarBoxBtn->getMaxY())
 			positionWiimote = scrollbarBoxBtn->getMaxY();
 
-		browser.pageIndex = (positionWiimote * browser.numEntries)/156.0f - selectedItem;
+		browser.pageIndex = (positionWiimote * browser.numEntries)/(float)scrollTravel - selectedItem;
 
 		if(browser.pageIndex <= 0)
 		{
@@ -462,8 +507,9 @@ void GuiFileBrowser::update(InputController * controller)
 				{
 					delete fileListIcon[i];
 					fileListIcon[i] = nullptr;
-					fileListText[i]->setPosition(5,0);
 				}
+				fileListText[i]->setPosition(ROW_TEXT_X,ROW_TEXT_Y);
+				fileListText[i]->setMaxWidth(fileList[i]->getWidth() - ROW_TEXT_X - ROW_TEXT_PAD);
 
 				switch(browserList[browser.pageIndex+i].icon)
 				{
@@ -485,7 +531,12 @@ void GuiFileBrowser::update(InputController * controller)
 				}
 				fileList[i]->setIcon(fileListIcon[i]);
 				if(fileListIcon[i] != nullptr)
-					fileListText[i]->setPosition(30,0);
+				{
+					fileListIcon[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+					fileListIcon[i]->setPosition(6,ROW_ICON_Y);
+					fileListText[i]->setPosition(ROW_TEXT_X_ICON,ROW_TEXT_Y);
+					fileListText[i]->setMaxWidth(fileList[i]->getWidth() - ROW_TEXT_X_ICON - ROW_TEXT_PAD);
+				}
 			}
 			else
 			{
@@ -533,7 +584,7 @@ void GuiFileBrowser::update(InputController * controller)
 	if(positionWiimote > 0)
 	{
 		position = positionWiimote; // follow wiimote cursor
-		scrollbarBoxBtn->setPosition(0,position+36);
+		scrollbarBoxBtn->setPosition(-SB_INSET,position+SB_TRACK_Y);
 	}
 	else if(listChanged || numEntries != browser.numEntries)
 	{
@@ -543,13 +594,13 @@ void GuiFileBrowser::update(InputController * controller)
 		}
 		else if(browser.pageIndex+FILE_PAGESIZE >= browser.numEntries)
 		{
-			position = 156;
+			position = scrollTravel;
 		}
 		else
 		{
-			position = 156 * (browser.pageIndex + FILE_PAGESIZE/2) / (float)browser.numEntries;
+			position = scrollTravel * (browser.pageIndex + FILE_PAGESIZE/2) / (float)browser.numEntries;
 		}
-		scrollbarBoxBtn->setPosition(0,position+36);
+		scrollbarBoxBtn->setPosition(-SB_INSET,position+SB_TRACK_Y);
 	}
 
 	listChanged = false;

@@ -9,6 +9,32 @@
 
 #define KB_FONTSIZE 22
 
+// The keys are drawn from the theme, in three widths. Text field sits at the top.
+#define KB_KEY_HEIGHT		40
+#define KB_KEY_WIDTH		40
+#define KB_MEDIUM_WIDTH		80
+#define KB_LARGE_WIDTH		200
+#define KB_KEY_RADIUS		10.0f
+#define KB_TEXTBOX_WIDTH	400
+#define KB_TEXTBOX_Y		10
+#define KB_TEXT_Y		23		// text inside the field (KB_TEXTBOX_Y + 13)
+
+//! A key face of the given width: light and outlined at rest, tinted with an accent
+//! outline and glow when the pointer is on it, deeper while pressed.
+static GuiShape * newKeyShape(int w)
+{
+	const GuiTheme& theme = GuiTheme::current();
+	PixelColor glow = theme.accent;
+	glow.a = 110;
+
+	GuiShape * s = new GuiShape(w, KB_KEY_HEIGHT);
+	s->setCorners(GuiCorners(KB_KEY_RADIUS));
+	s->setStyle(GuiShapeStyle(GuiPaint().gradient(theme.surfaceRaised, theme.surface).stroke(1.5f, theme.outlineStrong).shadow(4.0f, theme.shadow, 0.0f, 1.0f))
+		.onFocus(GuiPaint().gradient(theme.surfaceRaised, theme.highlight).stroke(2.5f, theme.accent).glow(10.0f, glow, 1.0f))
+		.onPress(GuiPaint().gradient(theme.highlight, theme.outline).stroke(2.0f, theme.accentDark)));
+	return s;
+}
+
 static char tmptxt[MAX_KEYBOARD_DISPLAY+1];
 
 static const char * GetDisplayText(const char * t)
@@ -91,23 +117,20 @@ GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 	};
 	memcpy(keys, thekeys, sizeof(thekeys));
 
-	keyTextbox = new GuiImageData(keyboard_textbox_png);
-	keyTextboxImg = new GuiImage(keyTextbox);
-	keyTextboxImg->setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	keyTextboxImg->setPosition(0, 0);
-	this->append(keyTextboxImg);
+	const GuiTheme& theme = GuiTheme::current();
 
-	kbText = new GuiText(GetDisplayText(kbtextstr), KB_FONTSIZE, (PixelColor){0, 0, 0, 0xff});
+	// the text being edited: a white capsule field with a firm outline
+	keyTextboxShape = new GuiShape(KB_TEXTBOX_WIDTH, KB_KEY_HEIGHT);
+	keyTextboxShape->setCapsule();
+	keyTextboxShape->setPaint(GuiPaint().color(theme.surfaceRaised).stroke(2.0f, theme.accentDark));
+	keyTextboxShape->setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
+	keyTextboxShape->setPosition(0, KB_TEXTBOX_Y);
+	this->append(keyTextboxShape);
+
+	kbText = new GuiText(GetDisplayText(kbtextstr), KB_FONTSIZE, theme.text);
 	kbText->setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	kbText->setPosition(0, 13);
+	kbText->setPosition(0, KB_TEXT_Y);
 	this->append(kbText);
-
-	key = new GuiImageData(keyboard_key_png);
-	keyOver = new GuiImageData(keyboard_key_over_png);
-	keyMedium = new GuiImageData(keyboard_mediumkey_png);
-	keyMediumOver = new GuiImageData(keyboard_mediumkey_over_png);
-	keyLarge = new GuiImageData(keyboard_largekey_png);
-	keyLargeOver = new GuiImageData(keyboard_largekey_over_png);
 
 	keySoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND::PCM);
 	keySoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND::PCM);
@@ -115,12 +138,10 @@ GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 	trigA = new GuiTrigger;
 	trigA->setPrimaryTrigger();
 
-	keyBackImg = new GuiImage(keyMedium);
-	keyBackOverImg = new GuiImage(keyMediumOver);
-	keyBackText = new GuiText("Back", KB_FONTSIZE, (PixelColor){0, 0, 0, 0xff});
-	keyBack = new GuiButton(keyMedium->getWidth(), keyMedium->getHeight());
+	keyBackImg = newKeyShape(KB_MEDIUM_WIDTH);
+	keyBackText = new GuiText("Back", KB_FONTSIZE, theme.text);
+	keyBack = new GuiButton(KB_MEDIUM_WIDTH, KB_KEY_HEIGHT);
 	keyBack->setImage(keyBackImg);
-	keyBack->setImageOver(keyBackOverImg);
 	keyBack->setLabel(keyBackText);
 	keyBack->setSoundOver(keySoundOver);
 	keyBack->setSoundClick(keySoundClick);
@@ -129,12 +150,10 @@ GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 	keyBack->setEffectGrow();
 	this->append(keyBack);
 
-	keyCapsImg = new GuiImage(keyMedium);
-	keyCapsOverImg = new GuiImage(keyMediumOver);
-	keyCapsText = new GuiText("Caps", KB_FONTSIZE, (PixelColor){0, 0, 0, 0xff});
-	keyCaps = new GuiButton(keyMedium->getWidth(), keyMedium->getHeight());
+	keyCapsImg = newKeyShape(KB_MEDIUM_WIDTH);
+	keyCapsText = new GuiText("Caps", KB_FONTSIZE, theme.text);
+	keyCaps = new GuiButton(KB_MEDIUM_WIDTH, KB_KEY_HEIGHT);
 	keyCaps->setImage(keyCapsImg);
-	keyCaps->setImageOver(keyCapsOverImg);
 	keyCaps->setLabel(keyCapsText);
 	keyCaps->setSoundOver(keySoundOver);
 	keyCaps->setSoundClick(keySoundClick);
@@ -143,12 +162,10 @@ GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 	keyCaps->setEffectGrow();
 	this->append(keyCaps);
 
-	keyShiftImg = new GuiImage(keyMedium);
-	keyShiftOverImg = new GuiImage(keyMediumOver);
-	keyShiftText = new GuiText("Shift", KB_FONTSIZE, (PixelColor){0, 0, 0, 0xff});
-	keyShift = new GuiButton(keyMedium->getWidth(), keyMedium->getHeight());
+	keyShiftImg = newKeyShape(KB_MEDIUM_WIDTH);
+	keyShiftText = new GuiText("Shift", KB_FONTSIZE, theme.text);
+	keyShift = new GuiButton(KB_MEDIUM_WIDTH, KB_KEY_HEIGHT);
 	keyShift->setImage(keyShiftImg);
-	keyShift->setImageOver(keyShiftOverImg);
 	keyShift->setLabel(keyShiftText);
 	keyShift->setSoundOver(keySoundOver);
 	keyShift->setSoundClick(keySoundClick);
@@ -157,11 +174,9 @@ GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 	keyShift->setEffectGrow();
 	this->append(keyShift);
 
-	keySpaceImg = new GuiImage(keyLarge);
-	keySpaceOverImg = new GuiImage(keyLargeOver);
-	keySpace = new GuiButton(keyLarge->getWidth(), keyLarge->getHeight());
+	keySpaceImg = newKeyShape(KB_LARGE_WIDTH);
+	keySpace = new GuiButton(KB_LARGE_WIDTH, KB_KEY_HEIGHT);
 	keySpace->setImage(keySpaceImg);
-	keySpace->setImageOver(keySpaceOverImg);
 	keySpace->setSoundOver(keySoundOver);
 	keySpace->setSoundClick(keySoundClick);
 	keySpace->setTrigger(trigA);
@@ -179,14 +194,12 @@ GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 			if(keys[i][j].ch != '\0')
 			{
 				txt[0] = keys[i][j].ch;
-				keyImg[i][j] = new GuiImage(key);
-				keyImgOver[i][j] = new GuiImage(keyOver);
-				keyTxt[i][j] = new GuiText(txt, KB_FONTSIZE, (PixelColor){0, 0, 0, 0xff});
+				keyImg[i][j] = newKeyShape(KB_KEY_WIDTH);
+				keyTxt[i][j] = new GuiText(txt, KB_FONTSIZE, theme.text);
 				keyTxt[i][j]->setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
 				keyTxt[i][j]->setPosition(0, -8);
-				keyBtn[i][j] = new GuiButton(key->getWidth(), key->getHeight());
+				keyBtn[i][j] = new GuiButton(KB_KEY_WIDTH, KB_KEY_HEIGHT);
 				keyBtn[i][j]->setImage(keyImg[i][j]);
-				keyBtn[i][j]->setImageOver(keyImgOver[i][j]);
 				keyBtn[i][j]->setSoundOver(keySoundOver);
 				keyBtn[i][j]->setSoundClick(keySoundClick);
 				keyBtn[i][j]->setTrigger(trigA);
@@ -202,29 +215,18 @@ GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 GuiKeyboard::~GuiKeyboard()
 {
 	delete kbText;
-	delete keyTextbox;
-	delete keyTextboxImg;
+	delete keyTextboxShape;
 	delete keyCapsText;
 	delete keyCapsImg;
-	delete keyCapsOverImg;
 	delete keyCaps;
 	delete keyShiftText;
 	delete keyShiftImg;
-	delete keyShiftOverImg;
 	delete keyShift;
 	delete keyBackText;
 	delete keyBackImg;
-	delete keyBackOverImg;
 	delete keyBack;
 	delete keySpaceImg;
-	delete keySpaceOverImg;
 	delete keySpace;
-	delete key;
-	delete keyOver;
-	delete keyMedium;
-	delete keyMediumOver;
-	delete keyLarge;
-	delete keyLargeOver;
 	delete keySoundOver;
 	delete keySoundClick;
 	delete trigA;
@@ -236,7 +238,6 @@ GuiKeyboard::~GuiKeyboard()
 			if(keys[i][j].ch != '\0')
 			{
 				delete keyImg[i][j];
-				delete keyImgOver[i][j];
 				delete keyTxt[i][j];
 				delete keyBtn[i][j];
 			}

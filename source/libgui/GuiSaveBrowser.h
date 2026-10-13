@@ -17,6 +17,21 @@ typedef struct _savelist {
 	int files[2][MAX_SAVES+1];
 } SaveList;
 
+//!The screenshot of a save slot, or a gray rounded placeholder while there is none.
+//!A screenshot of another size is centered in the same box.
+class GuiSavePreview : public GuiElement
+{
+	public:
+		GuiSavePreview(int w, int h);
+		//!\param img The screenshot, or nullptr for the placeholder
+		void setImage(GuiImageData * img);
+		void draw() override;
+	private:
+		GuiShape placeholder;
+		GuiImage image;
+		bool hasImage;
+};
+
 //!Display a list of game save files, with screenshots and file information
 class GuiSaveBrowser : public GuiElement
 {
@@ -38,27 +53,21 @@ class GuiSaveBrowser : public GuiElement
 		GuiText * saveTime[SAVELISTSIZE];
 		GuiText * saveType[SAVELISTSIZE];
 
-		GuiImage * saveBgImg[SAVELISTSIZE];
-		GuiImage * saveBgOverImg[SAVELISTSIZE];
-		GuiImage * savePreviewImg[SAVELISTSIZE];
+		GuiShape * saveBgImg[SAVELISTSIZE];
+		GuiSavePreview * savePreviewImg[SAVELISTSIZE];
 
 		GuiButton * arrowUpBtn;
 		GuiButton * arrowDownBtn;
 
-		GuiImage * scrollbarImg;
-		GuiImage * arrowDownImg;
-		GuiImage * arrowDownOverImg;
-		GuiImage * arrowUpImg;
-		GuiImage * arrowUpOverImg;
+		GuiShape * trackShape;
+		GuiShape * thumbShape;		// shows which rows are on screen; not interactive
+		GuiShape * arrowUpShape;
+		GuiShape * arrowDownShape;
+		GuiArrow * arrowUpGlyph;
+		GuiArrow * arrowDownGlyph;
 
-		GuiImageData * gameSave;
-		GuiImageData * gameSaveOver;
-		GuiImageData * gameSaveBlank;
-		GuiImageData * scrollbar;
-		GuiImageData * arrowDown;
-		GuiImageData * arrowDownOver;
-		GuiImageData * arrowUp;
-		GuiImageData * arrowUpOver;
+		int trackHeight;
+		void updateThumb();
 
 		GuiSound * btnSoundOver;
 		GuiSound * btnSoundClick;

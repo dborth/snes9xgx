@@ -93,6 +93,21 @@ class GuiImageData
 		//!\param decoded Result of a prior decodeToRgba() call
 		//!\return true on success
 		bool uploadDecoded(DecodedImage && decoded);
+		//!Decodes PNG data and fits it into a box of a given size, then masks it with
+		//!a rounded rectangle: the image is centred in the box (never scaled), anything
+		//!that falls outside the box or the rounded corners is cropped, and the mask edge
+		//!is anti-aliased. Replaces this object's texture; its size becomes the box size.
+		//!Use it for a picture that sits on a code-drawn button, so it can't spill over
+		//!the button's border or corners.
+		//!\param pngData Source image data (PNG)
+		//!\param boxW Box width, in design-canvas pixels
+		//!\param boxH Box height, in design-canvas pixels
+		//!\param radius Corner radius of the box (clamped to half the shorter side)
+		//!\param inset Shrinks the mask on every side, eg. to stay inside a stroke
+		//!\param offsetX Moves the image horizontally from centre (negative = left)
+		//!\param offsetY Moves the image vertically from centre (negative = up)
+		//!\return true on success
+		bool loadClipped(const uint8_t * pngData, int boxW, int boxH, float radius, float inset = 0.0f, float offsetX = 0.0f, float offsetY = 0.0f);
 		//!Releases any owned texture and resets this object to the same
 		//!(empty) state as a default-constructed GuiImageData. Useful for
 		//!explicitly freeing GPU memory (eg. an evicted cache entry)

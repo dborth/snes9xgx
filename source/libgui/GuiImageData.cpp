@@ -6,6 +6,7 @@
 
 #include <png.h>
 #include <setjmp.h>
+#include <cmath>
 
 #include "Gui.h"
 #include "GuiImageDataCache.h"
@@ -308,6 +309,88 @@ bool GuiImageData::uploadDecoded(DecodedImage && decoded)
 	}
 
 	return true;
+}
+
+bool GuiImageData::loadClipped(const uint8_t * pngData, int boxW, int boxH, float radius, float inset, float offsetX, float offsetY)
+{
+	if(!pngData || boxW < 1 || boxH < 1)
+		return false;
+
+	DecodedImage src = decodeToRgba(pngData);
+	if(!src.valid())
+		return false;
+
+	// Work in the decoded image's own pixels (which are assetScale times the design size),
+	// but evaluate the mask in design pixels so the corner stays round when the two axes
+	// are scaled differently.
+	const PlatformConfig& config = platform->getConfig();
+	const float sx = config.assetScaleX;
+	const float sy = config.assetScaleY;
+	const int dstW = static_cast<int>(boxW * sx + 0.5f);
+	const int dstH = static_cast<int>(boxH * sy + 0.5f);
+
+	DecodedImage out;
+	out.rgba.reset(static_cast<uint8_t *>(calloc(static_cast<size_t>(dstW) * dstH, 4)));
+	if(!out.rgba)
+		return false;
+	out.width = dstW;
+	out.height = dstH;
+	out.assetScaled = true;
+
+	// source pixel that lands on destination (0,0): centred, then moved by the offset
+	const int shiftX = static_cast<int>(offsetX * sx + (offsetX < 0 ? -0.5f : 0.5f));
+	const int shiftY = static_cast<int>(offsetY * sy + (offsetY < 0 ? -0.5f : 0.5f));
+	const int originX = (src.width - dstW) / 2 - shiftX;
+	const int originY = (src.height - dstH) / 2 - shiftY;
+
+	// rounded-rectangle signed distance, in design pixels, for a box shrunk by `inset`
+	const float halfW = boxW * 0.5f - inset;
+	const float halfH = boxH * 0.5f - inset;
+	float r = radius - inset;
+	if(r > halfW) r = halfW;
+	if(r > halfH) r = halfH;
+	if(r < 0.0f) r = 0.0f;
+	const float fringe = sx < sy ? sx : sy; // physical pixels per design pixel
+
+	for(int y = 0; y < dstH; ++y)
+	{
+		const int srcY = y + originY;
+		if(srcY < 0 || srcY >= src.height)
+			continue;
+
+		const float qy = fabsf((y + 0.5f) / sy - boxH * 0.5f) - (halfH - r);
+
+		for(int x = 0; x < dstW; ++x)
+		{
+			const int srcX = x + originX;
+			if(srcX < 0 || srcX >= src.width)
+				continue;
+
+			const uint8_t * s = src.rgba.get() + (static_cast<size_t>(srcY) * src.width + srcX) * 4;
+			if(s[3] == 0)
+				continue;
+
+			const float qx = fabsf((x + 0.5f) / sx - boxW * 0.5f) - (halfW - r);
+			const float ox = qx > 0.0f ? qx : 0.0f;
+			const float oy = qy > 0.0f ? qy : 0.0f;
+			const float inner = qx > qy ? qx : qy;
+			const float dist = sqrtf(ox * ox + oy * oy) + (inner < 0.0f ? inner : 0.0f) - r;
+
+			float coverage = 0.5f - dist * fringe;
+			if(coverage <= 0.0f)
+				continue;
+			if(coverage > 1.0f)
+				coverage = 1.0f;
+
+			uint8_t * d = out.rgba.get() + (static_cast<size_t>(y) * dstW + x) * 4;
+			d[0] = s[0];
+			d[1] = s[1];
+			d[2] = s[2];
+			d[3] = static_cast<uint8_t>(s[3] * coverage + 0.5f);
+		}
+	}
+
+	return uploadDecoded(std::move(out));
 }
 
 bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * outHeight, int maxw, int maxh)
