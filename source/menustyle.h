@@ -116,19 +116,19 @@ struct MenuPalette {
 	PixelColor text, textMuted, textOnAccent;
 };
 
-//!Snes9x GX: indigo chrome, gray secondary
+//!Snes9x GX: blue chrome (matches the original header/footer art), gray secondary
 static inline MenuPalette MenuPaletteDefault()
 {
 	MenuPalette p;
-	p.chromeLight    = MenuRGBA(56, 84, 158);
-	p.chromeDark     = MenuRGBA(22, 36, 98);
-	p.chromeEdge     = MenuRGBA(104, 130, 196);
-	p.backgroundTop    = MenuRGBA(242, 243, 247);
-	p.backgroundBottom = MenuRGBA(213, 215, 224);
-	p.accent         = MenuRGBA(52, 88, 176);
-	p.accentDark     = MenuRGBA(28, 52, 128);
-	p.accentTint     = MenuRGBA(232, 238, 252);
-	p.glow           = MenuRGBA(200, 218, 255, 170);
+	p.chromeLight    = MenuRGBA(30, 88, 140);
+	p.chromeDark     = MenuRGBA(16, 58, 100);
+	p.chromeEdge     = MenuRGBA(84, 126, 166);
+	p.backgroundTop    = MenuRGBA(241, 243, 247);
+	p.backgroundBottom = MenuRGBA(212, 216, 225);
+	p.accent         = MenuRGBA(30, 100, 164);
+	p.accentDark     = MenuRGBA(20, 70, 120);
+	p.accentTint     = MenuRGBA(230, 240, 251);
+	p.glow           = MenuRGBA(200, 224, 252, 170);
 	p.surface        = MenuRGBA(246, 246, 249);
 	p.surfaceRaised  = MenuRGBA(255, 255, 255);
 	p.outline        = MenuRGBA(208, 208, 215);
