@@ -329,6 +329,7 @@ void OgcVideoDriver::waitForBufferReady()
 	// Guarantee the GPU has fully finished rendering the previous frame
 	// before we begin swizzling new data into texture memory
 	GX_DrawDone();
+	OgcFreeRetiredMeshes();
 
 	whichfb ^= 1;
 }
@@ -410,6 +411,7 @@ void OgcVideoDriver::shutdown()
 {
 	GX_AbortFrame();
 	GX_Flush();
+	OgcFreeRetiredMeshes(); // the abort left the GPU idle
 
 	VIDEO_SetBlack(TRUE);
 	VIDEO_Flush();
@@ -422,6 +424,7 @@ void OgcVideoDriver::renderMenu()
 	GX_SetColorUpdate(GX_TRUE);
 	GX_CopyDisp(xfb[whichfb],GX_TRUE);
 	GX_DrawDone();
+	OgcFreeRetiredMeshes();
 	VIDEO_SetNextFramebuffer(xfb[whichfb]);
 	VIDEO_Flush();
 	VIDEO_WaitForFlush();
@@ -605,4 +608,123 @@ void OgcImageRenderer::drawMesh(const MeshVertex* vertices, size_t count)
 		vertices += n;
 		count -= n;
 	}
+}
+
+// A mesh kept as a GX display list: the GX_Begin()/vertex/GX_End() commands recorded once, then
+// replayed by the GPU reading them straight from memory, so drawing one costs the CPU a matrix
+// load and a call command instead of 16 bytes through the FIFO for every vertex.
+struct OgcMesh
+{
+	void * list;
+	u32 size;
+	OgcMesh * next; //!< Link in the retired list
+};
+
+static OgcMesh * retiredMeshes = nullptr;
+
+void * OgcImageRenderer::createMesh(const MeshVertex* vertices, size_t count)
+{
+	if(!vertices)
+		return nullptr;
+	count -= count % 3;
+	if(count == 0)
+		return nullptr;
+
+	// Each GX_Begin() is a 3-byte command followed by 16 bytes per vertex (3 floats and RGBA8).
+	// A display list must start on a 32-byte boundary and be a multiple of 32 bytes long; the
+	// extra 32 is room for the padding GX_EndDispList() adds.
+	const size_t begins = (count + 65534) / 65535;
+	const size_t bytes = (begins * 3 + count * 16 + 63) & ~(size_t)31;
+
+	void * list = memalign(32, bytes);
+	if(!list)
+		return nullptr;
+
+	// Recorded from the current GX state, which is the menu's: the same vertex description and
+	// format drawMesh() relies on. Not tied to the matrix; that is loaded per draw.
+	DCInvalidateRange(list, bytes);
+	GX_BeginDispList(list, bytes);
+	const MeshVertex * v = vertices;
+	size_t left = count;
+	while(left > 0)
+	{
+		const uint16_t n = (uint16_t)(left > 65535 ? 65535 : left);
+
+		GX_Begin(GX_TRIANGLES, GX_VTXFMT0, n);
+		for(uint16_t i = 0; i < n; ++i)
+		{
+			GX_Position3f32(v[i].x, v[i].y, 0.0f);
+			GX_Color4u8(v[i].c.r, v[i].c.g, v[i].c.b, v[i].c.a);
+		}
+		GX_End();
+
+		v += n;
+		left -= n;
+	}
+	const u32 used = GX_EndDispList();
+	if(used == 0) // didn't fit
+	{
+		free(list);
+		return nullptr;
+	}
+	DCFlushRange(list, used);
+
+	OgcMesh * m = (OgcMesh *)malloc(sizeof(OgcMesh));
+	if(!m)
+	{
+		free(list);
+		return nullptr;
+	}
+	m->list = list;
+	m->size = used;
+	m->next = nullptr;
+	return m;
+}
+
+void OgcImageRenderer::destroyMesh(void * mesh)
+{
+	OgcMesh * m = (OgcMesh *)mesh;
+	if(!m)
+		return;
+
+	// The GPU may not have read the list yet; OgcFreeRetiredMeshes() frees it once it has
+	u32 level;
+	_CPU_ISR_Disable(level);
+	m->next = retiredMeshes;
+	retiredMeshes = m;
+	_CPU_ISR_Restore(level);
+}
+
+void OgcFreeRetiredMeshes()
+{
+	u32 level;
+	_CPU_ISR_Disable(level);
+	OgcMesh * m = retiredMeshes;
+	retiredMeshes = nullptr;
+	_CPU_ISR_Restore(level);
+
+	while(m)
+	{
+		OgcMesh * next = m->next;
+		free(m->list);
+		free(m);
+		m = next;
+	}
+}
+
+void OgcImageRenderer::drawMeshInstance(void * mesh, float x, float y, float scaleX, float scaleY)
+{
+	const OgcMesh * m = (const OgcMesh *)mesh;
+	if(!m)
+		return;
+
+	// Place the mesh with the position matrix, the way drawTexture() places a quad, instead of
+	// transforming every vertex on the CPU
+	Mtx t, mv;
+	guMtxScale(t, scaleX, scaleY, 1.0f);
+	guMtxTransApply(t, t, x, y, 0.0f);
+	guMtxConcat(GXmodelView2D, t, mv);
+	GX_LoadPosMtxImm(mv, GX_PNMTX0);
+	GX_CallDispList(m->list, m->size);
+	GX_LoadPosMtxImm(GXmodelView2D, GX_PNMTX0);
 }

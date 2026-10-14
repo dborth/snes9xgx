@@ -122,7 +122,10 @@ class ColorShader : public Shader
 		//!\param positions Vertex positions, GX2_VERTEX_BUFFER_ALIGNMENT aligned
 		//!\param colors Vertex colors, GX2_VERTEX_BUFFER_ALIGNMENT aligned
 		//!\param vertexCapacity Number of vertices both streams hold
-		void bindMesh(const float * positions, const uint8_t * colors, uint32_t vertexCapacity)
+		//!\param offset NDC offset added to every vertex after scaling (nullptr = none). For a
+		//!mesh kept across frames, whose positions are NDC for an instance at the canvas origin
+		//!\param scale NDC scale applied to every vertex (nullptr = 1)
+		void bindMesh(const float * positions, const uint8_t * colors, uint32_t vertexCapacity, const float * offset = nullptr, const float * scale = nullptr)
 		{
 			static const float zero[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 			static const float one[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -130,8 +133,8 @@ class ColorShader : public Shader
 			VertexShader::setAttributeBuffer(0, vertexCapacity * cuVertexAttrSize, cuVertexAttrSize, positions);
 			VertexShader::setAttributeBuffer(1, vertexCapacity * cuColorAttrSize, cuColorAttrSize, colors);
 			setAngle(0.0f);
-			setOffset(zero);
-			setScale(one);
+			setOffset(offset ? offset : zero);
+			setScale(scale ? scale : one);
 			setColorIntensity(one);
 		}
 

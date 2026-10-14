@@ -101,6 +101,26 @@ class ImageRenderer
 		//!\param vertices Triangle list
 		//!\param count Number of vertices
 		virtual void drawMesh(const MeshVertex* vertices, size_t count) = 0;
+
+		//!Hands a triangle list to the backend to keep in its own ready-to-draw form (a GX
+		//!display list, a GX2 vertex buffer), so drawing it again with drawMeshInstance() costs
+		//!the CPU almost nothing, where drawMesh() sends every vertex every time. Same vertex
+		//!rules as drawMesh(); the vertices are copied. Call while drawing, since a backend may
+		//!record from its current render state.
+		//!\return An opaque handle for drawMeshInstance() and destroyMesh(), or nullptr if the
+		//!backend can't, in which case the caller keeps using drawMesh()
+		virtual void* createMesh(const MeshVertex* vertices, size_t count) { (void)vertices; (void)count; return nullptr; }
+		//!Releases a mesh from createMesh(). Safe to call while draws that use it are still
+		//!waiting to be submitted; the backend keeps it until they are done.
+		virtual void destroyMesh(void* mesh) { (void)mesh; }
+		//!Draws a mesh from createMesh() fully opaque, as its vertex colors say. Mesh vertex
+		//!(vx, vy) lands at (x + vx * scaleX, y + vy * scaleY) in design-canvas pixels.
+		//!\param mesh Handle from createMesh()
+		//!\param x Where mesh (0,0) lands
+		//!\param y Where mesh (0,0) lands
+		//!\param scaleX Horizontal stretch about (x,y)
+		//!\param scaleY Vertical stretch about (x,y)
+		virtual void drawMeshInstance(void* mesh, float x, float y, float scaleX, float scaleY) { (void)mesh; (void)x; (void)y; (void)scaleX; (void)scaleY; }
 };
 
 class GlyphRenderer {

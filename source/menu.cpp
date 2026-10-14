@@ -5245,4 +5245,9 @@ void MainMenu (int selection)
 	}
 	
 	menu = nullptr;
+
+	// Give back the shape meshes the menu cached (including the video backend's copies) before
+	// the game runs
+	menuInstance.reset();
+	GuiMeshCache::flush();
 }

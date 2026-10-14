@@ -322,13 +322,13 @@ void GuiMesh::clear()
 
 //Solid fill with an anti-aliasing fringe centered on the edge: opaque out to
 //-feather/2, fading to alpha 0 at +feather/2.
-static void fillShape(std::vector<MeshVertex>& out, float feather, const RingFn& ring, GuiPoint centre, const GuiRect& bounds, const GuiFill& fill)
+static void fillShape(std::vector<MeshVertex>& out, float feather, const RingFn& ring, GuiPoint centre, const GuiRect& bounds, const GuiFill& fill, bool edgeFringe)
 {
 	FillEval ev(fill, bounds);
 	float h = feather * 0.5f;
 	Ring inner = ring(-h);
 	emitFan(out, centre, inner, ev, 1.0f);
-	if(feather > 0.0f)
+	if(feather > 0.0f && edgeFringe)
 		emitBand(out, inner, 1.0f, ring(h), 0.0f, ev);
 }
 
@@ -371,23 +371,23 @@ static void strokeShape(std::vector<MeshVertex>& out, float feather, const RingF
 	emitBand(out, b1, 1.0f, b0, 0.0f, ev);
 }
 
-void GuiMesh::addRect(const GuiRect& r, const GuiFill& fill)
+void GuiMesh::addRect(const GuiRect& r, const GuiFill& fill, bool edgeFringe)
 {
 	std::vector<GuiPoint> pts(4);
 	pts[0].x = r.x;       pts[0].y = r.y;
 	pts[1].x = r.x + r.w; pts[1].y = r.y;
 	pts[2].x = r.x + r.w; pts[2].y = r.y + r.h;
 	pts[3].x = r.x;       pts[3].y = r.y + r.h;
-	addPolygon(pts, fill);
+	addPolygon(pts, fill, edgeFringe);
 }
 
-void GuiMesh::addRoundRect(const GuiRect& r, const GuiCorners& c, const GuiFill& fill)
+void GuiMesh::addRoundRect(const GuiRect& r, const GuiCorners& c, const GuiFill& fill, bool edgeFringe)
 {
 	if(r.w <= 0.0f || r.h <= 0.0f)
 		return;
 	if(c.tl <= 0.0f && c.tr <= 0.0f && c.br <= 0.0f && c.bl <= 0.0f)
 	{
-		addRect(r, fill);
+		addRect(r, fill, edgeFringe);
 		return;
 	}
 	float maxR = std::max(std::max(c.tl, c.tr), std::max(c.br, c.bl));
@@ -395,26 +395,26 @@ void GuiMesh::addRoundRect(const GuiRect& r, const GuiCorners& c, const GuiFill&
 	int n = arcCount(maxR + feather, tolerance);
 	GuiPoint centre = { r.x + r.w * 0.5f, r.y + r.h * 0.5f };
 	RingFn ring = [=](float d) { return roundRectRing(r, c, d, n); };
-	fillShape(verts, feather, ring, centre, r, fill);
+	fillShape(verts, feather, ring, centre, r, fill, edgeFringe);
 }
 
-void GuiMesh::addEllipse(const GuiRect& r, const GuiFill& fill)
+void GuiMesh::addEllipse(const GuiRect& r, const GuiFill& fill, bool edgeFringe)
 {
 	if(r.w <= 0.0f || r.h <= 0.0f)
 		return;
 	int n = circleCount(0.5f * std::max(r.w, r.h) + feather, tolerance);
 	GuiPoint centre = { r.x + r.w * 0.5f, r.y + r.h * 0.5f };
 	RingFn ring = [=](float d) { return ellipseRing(r, d, n); };
-	fillShape(verts, feather, ring, centre, r, fill);
+	fillShape(verts, feather, ring, centre, r, fill, edgeFringe);
 }
 
-void GuiMesh::addPolygon(const std::vector<GuiPoint>& pts, const GuiFill& fill)
+void GuiMesh::addPolygon(const std::vector<GuiPoint>& pts, const GuiFill& fill, bool edgeFringe)
 {
 	Poly poly;
 	if(!buildPoly(pts, poly))
 		return;
 	RingFn ring = [&poly](float d) { return polyRing(poly, d); };
-	fillShape(verts, feather, ring, poly.centre, poly.bounds, fill);
+	fillShape(verts, feather, ring, poly.centre, poly.bounds, fill, edgeFringe);
 }
 
 void GuiMesh::addLine(GuiPoint a, GuiPoint b, float width, const GuiFill& fill)
@@ -552,14 +552,17 @@ void GuiMesh::addShadow(const GuiRect& r, const GuiCorners& c, float blur, float
 		return;
 	blur = std::max(blur, 0.0f);
 	GuiRect s = { r.x + dx, r.y + dy, r.w, r.h };
-	const int steps = 6;
+	// One band per ~1.5px of blur is enough to follow the smoothstep falloff; a fixed six
+	// bands made a 4px key shadow cost as many triangles as a 26px dialog shadow
+	const int maxSteps = 6;
+	const int steps = (int)clampf(ceilf(blur / 1.5f), 2.0f, (float)maxSteps);
 	float maxR = std::min(std::max(std::max(c.tl, c.tr), std::max(c.br, c.bl)), 0.5f * std::min(r.w, r.h));
 	int n = arcCount(maxR + std::max(spread, 0.0f) + blur, tolerance * 2.0f);
 	FillEval ev(GuiFill::solid(color), s);
 	GuiPoint centre = { s.x + s.w * 0.5f, s.y + s.h * 0.5f };
 
 	std::vector<Ring> rings;
-	float alpha[steps + 1];
+	float alpha[maxSteps + 1];
 	for(int k = 0; k <= steps; k++)
 	{
 		float t = (float)k / (float)steps;

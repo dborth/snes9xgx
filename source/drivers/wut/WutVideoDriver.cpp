@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstring>
 #include <malloc.h>
+#include <new>
 
 #include <coreinit/alarm.h>
 #include <coreinit/memdefaultheap.h>
@@ -134,6 +135,10 @@ WutVideoDriver::~WutVideoDriver()
 	glyphRenderer = nullptr;
 	free(meshPositions);
 	free(meshColors);
+
+	freeRetiredMeshes();
+	delete retireLock;
+	retireLock = nullptr;
 }
 
 void WutVideoDriver::init(int width, int height)
@@ -154,6 +159,7 @@ void WutVideoDriver::init(int width, int height)
 	computeUIScale();
 
 	drawQueue.reserve(1024);
+	retireLock = new Mutex();
 
 	meshPositions = static_cast<float *>(memalign(GX2_VERTEX_BUFFER_ALIGNMENT, cuMeshArenaVertices * 3 * sizeof(float)));
 	meshColors = static_cast<uint8_t *>(memalign(GX2_VERTEX_BUFFER_ALIGNMENT, cuMeshArenaVertices * 4 * sizeof(uint8_t)));
@@ -249,6 +255,10 @@ void WutVideoDriver::prepareFrame()
 		gpuFramesInFlight = false;
 	}
 
+	// Every frame that was submitted has now finished, so nothing can still be reading a mesh
+	// that was let go of before this frame began
+	freeRetiredMeshes();
+
 	auto drawPass = [&]() {
 		WHBGfxClearColor(clearColor.r / 255.0f, clearColor.g / 255.0f, clearColor.b / 255.0f, clearColor.a / 255.0f);
 		GX2SetDepthOnlyControl(GX2_DISABLE, GX2_DISABLE, GX2_COMPARE_FUNC_ALWAYS);
@@ -321,6 +331,67 @@ void WutVideoDriver::queueMesh(const MeshVertex* vertices, size_t count)
 	queueDraw(cmd);
 }
 
+void WutVideoDriver::queueMeshInstance(const WutMesh* mesh, float x, float y, float scaleX, float scaleY)
+{
+	if(!mesh || mesh->count == 0)
+		return;
+
+	// The mesh's positions are NDC for an instance at the canvas origin (see createMesh()), so
+	// placing it is the shader's own offset and scale: ndc = position * scale + offset
+	const float invW = 2.0f / screenWidth;
+	const float invH = 2.0f / screenHeight;
+
+	WutDrawCmd cmd;
+	cmd.kind = WutDrawCmd::Kind::MeshInstance;
+	cmd.slot = 0;
+	cmd.texture = nullptr;
+	cmd.sampler = nullptr;
+	cmd.angle = 0.0f;
+	cmd.offset[0] = x * invW - 1.0f;
+	cmd.offset[1] = 1.0f - y * invH;
+	cmd.offset[2] = 0.0f;
+	cmd.scale[0] = scaleX;
+	cmd.scale[1] = scaleY;
+	cmd.scale[2] = 1.0f;
+	cmd.colorIntensity[0] = cmd.colorIntensity[1] = cmd.colorIntensity[2] = cmd.colorIntensity[3] = 1.0f;
+	cmd.first = 0;
+	cmd.count = mesh->count;
+	cmd.mesh = mesh;
+	queueDraw(cmd);
+}
+
+void WutVideoDriver::retireMesh(WutMesh* mesh)
+{
+	if(!mesh)
+		return;
+
+	if(retireLock)
+		retireLock->lock();
+	mesh->next = retiredMeshes;
+	retiredMeshes = mesh;
+	if(retireLock)
+		retireLock->unlock();
+}
+
+void WutVideoDriver::freeRetiredMeshes()
+{
+	if(retireLock)
+		retireLock->lock();
+	WutMesh * list = retiredMeshes;
+	retiredMeshes = nullptr;
+	if(retireLock)
+		retireLock->unlock();
+
+	while(list)
+	{
+		WutMesh * next = list->next;
+		free(list->positions);
+		free(list->colors);
+		delete list;
+		list = next;
+	}
+}
+
 void WutVideoDriver::replayDrawQueue() const
 {
 	Texture2DShader * textureShader = Texture2DShader::instance();
@@ -338,6 +409,20 @@ void WutVideoDriver::replayDrawQueue() const
 
 	for(const WutDrawCmd& cmd : drawQueue)
 	{
+		if(cmd.kind == WutDrawCmd::Kind::MeshInstance)
+		{
+			if(bound != BoundShader::Color)
+			{
+				colorShader->setShaders();
+				bound = BoundShader::Color;
+			}
+			// Its own vertex streams and placement; the arena must be bound again afterwards
+			colorShader->bindMesh(cmd.mesh->positions, cmd.mesh->colors, cmd.mesh->count, cmd.offset, cmd.scale);
+			ColorShader::drawMesh(0, cmd.count);
+			meshBound = false;
+			continue;
+		}
+
 		if(cmd.kind == WutDrawCmd::Kind::Mesh)
 		{
 			if(bound != BoundShader::Color)
@@ -658,6 +743,63 @@ void WutImageRenderer::drawMesh(const MeshVertex* vertices, size_t count)
 		return;
 
 	driver->queueMesh(vertices, count);
+}
+
+void * WutImageRenderer::createMesh(const MeshVertex* vertices, size_t count)
+{
+	count -= count % 3;
+	if(!vertices || count == 0)
+		return nullptr;
+
+	WutMesh * m = new (std::nothrow) WutMesh;
+	if(!m)
+		return nullptr;
+	m->positions = static_cast<float *>(memalign(GX2_VERTEX_BUFFER_ALIGNMENT, count * 3 * sizeof(float)));
+	m->colors = static_cast<uint8_t *>(memalign(GX2_VERTEX_BUFFER_ALIGNMENT, count * 4 * sizeof(uint8_t)));
+	m->count = (uint32_t)count;
+	m->next = nullptr;
+	if(!m->positions || !m->colors)
+	{
+		free(m->positions);
+		free(m->colors);
+		delete m;
+		return nullptr;
+	}
+
+	// NDC for an instance at the canvas origin at scale 1, without the -1/+1 shift: a draw adds
+	// that, and its own placement, through the shader's offset and scale (queueMeshInstance())
+	const float invW = 2.0f / driver->getScreenWidth();
+	const float invH = 2.0f / driver->getScreenHeight();
+	for(size_t i = 0; i < count; i++)
+	{
+		const MeshVertex& v = vertices[i];
+		m->positions[i * 3 + 0] = v.x * invW;
+		m->positions[i * 3 + 1] = -v.y * invH;
+		m->positions[i * 3 + 2] = 0.0f;
+		m->colors[i * 4 + 0] = v.c.r;
+		m->colors[i * 4 + 1] = v.c.g;
+		m->colors[i * 4 + 2] = v.c.b;
+		m->colors[i * 4 + 3] = v.c.a;
+	}
+
+	// written once, here, and only read by the GPU after this
+	GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, m->positions, count * 3 * sizeof(float));
+	GX2Invalidate(GX2_INVALIDATE_MODE_CPU_ATTRIBUTE_BUFFER, m->colors, count * 4 * sizeof(uint8_t));
+	return m;
+}
+
+void WutImageRenderer::destroyMesh(void * mesh)
+{
+	// Draws recorded this frame, or a frame the GPU is still running, may read it
+	driver->retireMesh(static_cast<WutMesh *>(mesh));
+}
+
+void WutImageRenderer::drawMeshInstance(void * mesh, float x, float y, float scaleX, float scaleY)
+{
+	if(!mesh || !driver->isForeground())
+		return;
+
+	driver->queueMeshInstance(static_cast<const WutMesh *>(mesh), x, y, scaleX, scaleY);
 }
 
 void WutImageRenderer::drawRectangle(float x, float y, float width, float height, PixelColor color)

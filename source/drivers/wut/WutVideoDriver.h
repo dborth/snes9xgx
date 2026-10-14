@@ -10,6 +10,7 @@
 #include <gx2/sampler.h>
 #include <gx2/texture.h>
 #include "../VideoDriver.h"
+#include "../Mutex.h"
 
 //!The two physical render targets every Wii U frame is submitted to.
 //!Their pixel dimensions are not fixed: the TV follows the console's output
@@ -25,6 +26,17 @@ static const int OUTPUT_TARGET_COUNT = 2;
 
 class WutEmulatorVideo;
 
+//!A mesh kept in GPU-readable vertex buffers across frames (ImageRenderer::createMesh()).
+//!Positions are NDC for an instance at the design canvas origin at scale 1, so a draw only
+//!sets the shader's offset and scale to place it.
+struct WutMesh
+{
+	float * positions;		//!<3 floats per vertex (x, y, 0)
+	uint8_t * colors;		//!<RGBA8 per vertex
+	uint32_t count;			//!<Number of vertices
+	WutMesh * next;			//!<Link in the retired list
+};
+
 //!One recorded UI draw (image, glyph quad or flat rectangle). The renderers
 //!record these instead of drawing immediately, and WutVideoDriver replays the
 //!whole list once for the TV and once for the GamePad (see flushDrawQueue()).
@@ -35,7 +47,8 @@ struct WutDrawCmd
 		Texture,        //!<textured quad through Texture2DShader, shader-side angle/offset/scale
 		TextureRotated, //!<textured quad whose corners were pre-rotated into a Texture2DShader rotated slot
 		Color,          //!<flat-color quad through ColorShader
-		Mesh            //!<triangle list from the mesh arena through ColorShader (see WutVideoDriver::queueMesh())
+		Mesh,           //!<triangle list from the mesh arena through ColorShader (see WutVideoDriver::queueMesh())
+		MeshInstance    //!<a WutMesh through ColorShader, placed by the shader-side offset/scale (see WutVideoDriver::queueMeshInstance())
 	};
 
 	Kind kind;
@@ -48,6 +61,7 @@ struct WutDrawCmd
 	float colorIntensity[4];
 	uint32_t first;          //!<Mesh only: index of the first vertex in the arena
 	uint32_t count;          //!<Mesh only: number of vertices
+	const WutMesh * mesh;    //!<MeshInstance only
 };
 
 //!Wii U VideoDriver: GX2 + libwhb's WHBGfx* helpers. Every frame's draws
@@ -114,6 +128,20 @@ class WutVideoDriver : public VideoDriver
 		//!\param count Number of vertices
 		void queueMesh(const MeshVertex* vertices, size_t count);
 
+		//!Records a draw of a mesh made by WutImageRenderer::createMesh(). Nothing is copied: the
+		//!mesh must stay alive until the draw has run, which destroyMesh() guarantees by
+		//!handing it to retireMesh().
+		//!\param mesh Mesh to draw
+		//!\param x Where the mesh's (0,0) lands, design-canvas pixels
+		//!\param y Where the mesh's (0,0) lands, design-canvas pixels
+		//!\param scaleX Horizontal stretch about (x,y)
+		//!\param scaleY Vertical stretch about (x,y)
+		void queueMeshInstance(const WutMesh* mesh, float x, float y, float scaleX, float scaleY);
+
+		//!Sets a mesh aside to be freed once the GPU is done with every frame that might draw it.
+		//!Safe from any thread.
+		void retireMesh(WutMesh* mesh);
+
 		//!Replays every recorded UI draw into the TV context, then the same
 		//!list into the GamePad context, and empties the list. Does nothing
 		//!when the list is empty. presentBuffer() calls this; direct GX2
@@ -140,6 +168,11 @@ class WutVideoDriver : public VideoDriver
 		uint8_t * meshColors = nullptr;		// RGBA8 per vertex
 		uint32_t meshUsed = 0;				// vertices written this frame
 		uint32_t meshFlushed = 0;			// vertices already invalidated for the GPU
+
+		// Meshes whose owners let go of them, waiting for the GPU to finish with them
+		Mutex * retireLock = nullptr;
+		WutMesh * retiredMeshes = nullptr;
+		void freeRetiredMeshes();
 		void replayDrawQueue() const; // draws drawQueue into whichever context is currently bound
 
 		bool gpuFramesInFlight = false;   // a pipelined frame was submitted and not yet retired/drained
@@ -175,6 +208,9 @@ class WutImageRenderer : public ImageRenderer
 		void drawTexture(void * texture, float xpos, float ypos, uint16_t width, uint16_t height, float degrees, float scaleX, float scaleY, uint8_t alpha) override;
 		void drawRectangle(float x, float y, float width, float height, PixelColor color) override;
 		void drawMesh(const MeshVertex* vertices, size_t count) override;
+		void* createMesh(const MeshVertex* vertices, size_t count) override;
+		void destroyMesh(void* mesh) override;
+		void drawMeshInstance(void* mesh, float x, float y, float scaleX, float scaleY) override;
 
 	private:
 		WutVideoDriver * driver;

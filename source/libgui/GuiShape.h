@@ -19,6 +19,10 @@ class GuiShape : public GuiElement
 		//!\param w Width
 		//!\param h Height
 		GuiShape(int w = 0, int h = 0);
+		//!Destructor
+		~GuiShape();
+		GuiShape(const GuiShape&) = delete;
+		GuiShape& operator=(const GuiShape&) = delete;
 		//!Sets the shape kind (rectangle or ellipse)
 		void setShape(SHAPE s);
 		//!Sets the corner radii of a rectangle
@@ -42,11 +46,12 @@ class GuiShape : public GuiElement
 		GuiPaint to;		//!< Paint being blended toward
 		GuiPaint shown;		//!< Paint drawn this frame
 		float blend;		//!< 0..1 progress from `from` to `to`
+		int blendStep;		//!< `blend` rounded to one of a few levels; `shown` only changes when this does
 		bool started;		//!< Whether `shown` holds a paint yet
-		bool dirty;			//!< Mesh needs rebuilding
+		bool dirty;			//!< The mesh must be looked up again
 		int meshWidth;
 		int meshHeight;
 		float meshFeather;
-		GuiMesh mesh;
+		GuiSharedMesh * mesh;	//!< Shared with every shape that looks the same, see GuiMeshCache
 		std::vector<MeshVertex> scratch;
 };

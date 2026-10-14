@@ -94,7 +94,7 @@ class GuiMesh
 		//!Pass 1 / VideoDriver::getUIScale() for a one-physical-pixel fringe; 0 disables it.
 		//!\param curveTolerance Largest allowed distance between a true curve and its
 		//!polygon approximation, in design-canvas pixels
-		GuiMesh(float featherWidth = 1.0f, float curveTolerance = 0.15f);
+		GuiMesh(float featherWidth = 1.0f, float curveTolerance = 0.3f);
 
 		//!Removes all geometry (keeps the feather and tolerance settings)
 		void clear();
@@ -108,14 +108,17 @@ class GuiMesh
 		float getFeather() const { return feather; }
 
 		//!Adds a filled rectangle
-		void addRect(const GuiRect& r, const GuiFill& fill);
+		void addRect(const GuiRect& r, const GuiFill& fill, bool edgeFringe = true);
 		//!Adds a filled rounded rectangle. Corner radius h/2 makes a capsule.
-		void addRoundRect(const GuiRect& r, const GuiCorners& corners, const GuiFill& fill);
+		//!\param edgeFringe false leaves out the anti-aliased edge, for a fill whose edge is
+		//!entirely covered by an opaque outline drawn on top of it (saves a third of the fill's triangles)
+		void addRoundRect(const GuiRect& r, const GuiCorners& corners, const GuiFill& fill, bool edgeFringe = true);
 		//!Adds a filled ellipse inscribed in a rectangle (a circle when w == h)
-		void addEllipse(const GuiRect& r, const GuiFill& fill);
+		//!\param edgeFringe see addRoundRect()
+		void addEllipse(const GuiRect& r, const GuiFill& fill, bool edgeFringe = true);
 		//!Adds a filled convex polygon (triangle, chevron, ...). Concave shapes
 		//!must be split into convex pieces.
-		void addPolygon(const std::vector<GuiPoint>& pts, const GuiFill& fill);
+		void addPolygon(const std::vector<GuiPoint>& pts, const GuiFill& fill, bool edgeFringe = true);
 		//!Adds a straight line with flat ends
 		void addLine(GuiPoint a, GuiPoint b, float width, const GuiFill& fill);
 

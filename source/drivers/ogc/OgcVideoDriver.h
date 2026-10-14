@@ -61,7 +61,15 @@ class OgcImageRenderer : public ImageRenderer
 		void drawTexture(void * texture, float xpos, float ypos, uint16_t width, uint16_t height, float degrees, float scaleX, float scaleY, uint8_t alpha) override;
 		void drawRectangle(float x, float y, float width, float height, PixelColor color) override;
 		void drawMesh(const MeshVertex* vertices, size_t count) override;
+		void* createMesh(const MeshVertex* vertices, size_t count) override;
+		void destroyMesh(void* mesh) override;
+		void drawMeshInstance(void* mesh, float x, float y, float scaleX, float scaleY) override;
 };
+
+//!Frees the display lists destroyMesh() set aside. A list can still be waiting in the GX
+//!FIFO when its owner lets go of it, so this runs only once the GPU is known to be idle (just
+//!after GX_DrawDone()).
+void OgcFreeRetiredMeshes();
 
 class OgcGlyphRenderer : public GlyphRenderer {
 	private:

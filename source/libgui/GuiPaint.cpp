@@ -225,10 +225,17 @@ void GuiAddPaintedShape(GuiMesh& mesh, SHAPE shape, const GuiRect& r, const GuiC
 
 	if(paint.hasFill)
 	{
+		// An opaque inside outline at least one feather wide sits exactly over the fill's
+		// anti-aliased edge, and gives the shape its own; the fill's would only bleed its color
+		// into that edge (and cost a third of the fill's triangles)
+		const bool strokeOpaque = paint.strokeFill.from.a == 255 && (!paint.strokeFill.gradient || paint.strokeFill.to.a == 255);
+		const bool edgeFringe = !(paint.strokeWidth > 0.0f && paint.strokeAlign == STROKE::INSIDE && strokeOpaque &&
+			std::min(paint.strokeWidth, half) >= mesh.getFeather());
+
 		if(shape == SHAPE::ELLIPSE)
-			mesh.addEllipse(r, paint.fill);
+			mesh.addEllipse(r, paint.fill, edgeFringe);
 		else
-			mesh.addRoundRect(r, corners, paint.fill);
+			mesh.addRoundRect(r, corners, paint.fill, edgeFringe);
 	}
 
 	if(paint.strokeWidth > 0.0f)

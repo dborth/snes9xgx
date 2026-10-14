@@ -6,12 +6,23 @@
 
 #include "Gui.h"
 
+// A change of state blends through this many looks. Each is a mesh the cache can share between
+// every shape making the same change, so only the first one to fade pays to build them.
+static const int kBlendSteps = 4;
+
 GuiShape::GuiShape(int w, int h) :
 	kind(SHAPE::RECTANGLE), corners(0.0f), transition(0.12f),
-	blend(1.0f), started(false), dirty(true), meshWidth(-1), meshHeight(-1), meshFeather(-1.0f)
+	blend(1.0f), blendStep(kBlendSteps), started(false), dirty(true), meshWidth(-1), meshHeight(-1), meshFeather(-1.0f),
+	mesh(nullptr)
 {
 	width = w;
 	height = h;
+}
+
+GuiShape::~GuiShape()
+{
+	GuiMeshCache::release(mesh);
+	mesh = nullptr;
 }
 
 void GuiShape::setShape(SHAPE s)
@@ -75,6 +86,7 @@ void GuiShape::draw()
 		{
 			from = to = shown = want;
 			blend = 1.0f;
+			blendStep = kBlendSteps;
 			started = true;
 			dirty = true;
 		}
@@ -83,8 +95,13 @@ void GuiShape::draw()
 			from = shown;
 			to = want;
 			blend = transition > 0.0f ? 0.0f : 1.0f;
+			blendStep = 0;
 			if(blend >= 1.0f)
+			{
 				shown = to;
+				blendStep = kBlendSteps;
+				dirty = true;
+			}
 		}
 		if(blend < 1.0f)
 		{
@@ -92,24 +109,40 @@ void GuiShape::draw()
 			if(blend >= 1.0f)
 			{
 				blend = 1.0f;
+				blendStep = kBlendSteps;
 				shown = to;
+				dirty = true;
 			}
 			else
 			{
+				// Look only changes a few times per blend, so the in-between meshes can be shared
 				const float eased = blend * blend * (3.0f - 2.0f * blend);
-				shown = GuiPaint::mix(from, to, eased);
+				const int step = (int)(eased * (float)kBlendSteps + 0.5f);
+				if(step != blendStep)
+				{
+					blendStep = step;
+					shown = GuiPaint::mix(from, to, (float)step / (float)kBlendSteps);
+					dirty = true;
+				}
 			}
-			dirty = true;
 		}
 
-		// rebuild the geometry when anything it depends on changed
+		// look the geometry up again when anything it depends on changed
 		const float scale = video->getUIScale();
 		const float feather = scale > 0.0f ? 1.0f / scale : 1.0f;
-		if(dirty || meshWidth != width || meshHeight != height || meshFeather != feather)
+		if(dirty || !mesh || meshWidth != width || meshHeight != height || meshFeather != feather)
 		{
-			mesh = GuiMesh(feather);
-			GuiRect r = { 0.0f, 0.0f, (float)width, (float)height };
-			GuiAddPaintedShape(mesh, kind, r, corners, shown);
+			GuiMeshKey key;
+			key.kind = kind;
+			key.width = width;
+			key.height = height;
+			key.corners = corners;
+			key.paint = shown;
+			key.feather = feather;
+			key.tolerance = 0.3f * feather; // 0.3 of a physical pixel
+			GuiSharedMesh * next = GuiMeshCache::acquire(key); // before releasing, in case it is the same mesh
+			GuiMeshCache::release(mesh);
+			mesh = next;
 			meshWidth = width;
 			meshHeight = height;
 			meshFeather = feather;
@@ -119,23 +152,9 @@ void GuiShape::draw()
 		// place it like an image: scaled about its own center, at the element's position
 		const float sx = this->getScaleX();
 		const float sy = this->getScaleY();
-		const float cx = this->getLeft() + width * 0.5f;
-		const float cy = this->getTop() + height * 0.5f;
 		const float hw = width * 0.5f;
 		const float hh = height * 0.5f;
-		const std::vector<MeshVertex>& src = mesh.vertices();
-
-		scratch.resize(src.size());
-		for(size_t i = 0; i < src.size(); i++)
-		{
-			scratch[i].x = cx + (src[i].x - hw) * sx;
-			scratch[i].y = cy + (src[i].y - hh) * sy;
-			scratch[i].c = src[i].c;
-			if(a < 255)
-				scratch[i].c.a = (uint8_t)((src[i].c.a * a + 127) / 255);
-		}
-		if(!scratch.empty())
-			platform->getVideo()->getImageRenderer()->drawMesh(scratch.data(), scratch.size());
+		GuiMeshCache::draw(mesh, this->getLeft() + hw - hw * sx, this->getTop() + hh - hh * sy, sx, sy, (uint8_t)a, scratch);
 	}
 
 	this->updateEffects();
