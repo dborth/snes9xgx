@@ -34,6 +34,7 @@
 #include "filelist.h"
 #include "libgui/Gui.h"
 #include "menuart.h"
+#include "controllerstatus.h"
 #include "utils/pngcodec.h"
 #include "drivers/Time.h"
 #include "drivers/Thread.h"
