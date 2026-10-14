@@ -1021,7 +1021,7 @@ static bool ResolvePreviewImagePath(void *, int index, char * outPath, size_t ou
 }
 
 // Fits the preview image inside its card (with a margin) and sizes the shadow behind it to match
-static void OnPreviewImageChanged(void * context, GuiImage * target)
+static void OnPreviewImageChanged(void * context, GuiImage * target, bool isDefault)
 {
 	MenuCoverShadow * shadow = (MenuCoverShadow *)context;
 	int w = 0, h = 0;
@@ -1033,7 +1033,7 @@ static void OnPreviewImageChanged(void * context, GuiImage * target)
 		w = (int)(target->getWidth() * scale + 0.5f);
 		h = (int)(target->getHeight() * scale + 0.5f);
 	}
-	shadow->fit(w, h);
+	shadow->fit(isDefault ? 0 : w, isDefault ? 0 : h); // the default image has no drop shadow
 }
 
 static int BrowserLoadFileTask(void *) { return BrowserLoadFile(); }
@@ -1263,9 +1263,6 @@ static int MenuGameSelection()
 	gameBrowser.setPosition(MENU_LIST_X, MENU_LIST_Y);
 	ResetBrowser();
 
-	MenuCardShape bgPreview(MENU_PREVIEW_W, MENU_PREVIEW_H);
-	bgPreview.setPosition(MENU_PREVIEW_X, MENU_LIST_Y);
-
 	MenuCoverShadow previewShadow;
 	previewShadow.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	previewShadow.setPosition(MENU_PREVIEW_X + MENU_PREVIEW_W/2 - platform->getVideo()->getScreenWidth()/2,
@@ -1286,7 +1283,6 @@ static int MenuGameSelection()
 	menu->btnLogo.setPosition(-50, 24);
 	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 	menu->mainWindow.appendWithAutoRemove(&gameBrowser);
-	menu->mainWindow.appendWithAutoRemove(&bgPreview);
 	menu->mainWindow.appendWithAutoRemove(&previewShadow);
 	menu->mainWindow.appendWithAutoRemove(&preview);
 	menu->mainWindow.appendWithAutoRemove(&buttonWindow);

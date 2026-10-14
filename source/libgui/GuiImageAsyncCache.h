@@ -57,7 +57,8 @@ class GuiImageAsyncCache
 
 		//!Call once per frame, before get(). Cheap; does nothing most frames.
 		//!Must be called from the main/GPU thread.
-		void update();
+		//!\return true if a decoded image was uploaded this call (which can overwrite a slot's texture)
+		bool update();
 
 		//!Requests the image for index, loaded from path. Cheap and non-blocking
 		void request(int index, const char * path);
@@ -71,6 +72,16 @@ class GuiImageAsyncCache
 		//!confirmed to have no image at that path). Never blocks. Main
 		//!thread only.
 		GuiImageData * get(int index);
+
+		//!\return true once index has finished loading, successfully or not (so a nullptr
+		//!from get() then means "no image", rather than "still loading"). Main thread only.
+		bool isResolved(int index);
+
+		//!Marks the image currently on screen so the cache never evicts, overwrites or
+		//!clears it while it's being displayed (GuiImage only borrows its texture).
+		//!Pass nullptr when the displayed image isn't one of this cache's. With capacity 1
+		//!the one slot can't be spared, so it's overwritten when the next image lands.
+		void pin(GuiImageData * img) { pinned = img; }
 
 		int getCapacity() const { return capacity; }
 		int getPrefetchRadius() const { return prefetchRadius; }
@@ -110,6 +121,7 @@ class GuiImageAsyncCache
 		std::unique_ptr<PrefetchSlot[]> prefetchSlots; // size: max(1, prefetchRadius*2)
 		int prefetchSlotCount;
 		uint32_t lruClock = 0;
+		GuiImageData * pinned = nullptr;
 
 		// ---- everything below is guarded by sync.mutex ----
 		Mutex mutex;

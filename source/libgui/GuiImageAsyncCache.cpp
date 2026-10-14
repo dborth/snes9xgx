@@ -85,7 +85,8 @@ void GuiImageAsyncCache::flush()
 		cache[i].index = -1;
 		cache[i].resolved = false;
 		cache[i].hasImage = false;
-		cache[i].image.clear();
+		if(&cache[i].image != pinned)
+			cache[i].image.clear(); // the displayed image stays valid until it's replaced
 	}
 	lruClock = 0;
 }
@@ -104,14 +105,17 @@ GuiImageAsyncCache::CacheSlot * GuiImageAsyncCache::acquireSlotFor(int index)
 	if(existing)
 		return existing;
 
+	// never hand out the slot that's on screen (unless it's the only one)
 	for(int i = 0; i < capacity; i++)
-		if(cache[i].index == -1)
+		if(cache[i].index == -1 && (&cache[i].image != pinned || capacity == 1))
 			return &cache[i];
 
-	CacheSlot * victim = &cache[0];
-	for(int i = 1; i < capacity; i++)
-		if(cache[i].lastUsed < victim->lastUsed)
+	CacheSlot * victim = nullptr;
+	for(int i = 0; i < capacity; i++)
+		if(&cache[i].image != pinned && (!victim || cache[i].lastUsed < victim->lastUsed))
 			victim = &cache[i];
+	if(!victim)
+		victim = &cache[0];
 
 	victim->index = -1;
 	victim->resolved = false;
@@ -119,7 +123,7 @@ GuiImageAsyncCache::CacheSlot * GuiImageAsyncCache::acquireSlotFor(int index)
 	return victim;
 }
 
-void GuiImageAsyncCache::update()
+bool GuiImageAsyncCache::update()
 {
 	int index;
 	GuiImageData::DecodedImage decoded;
@@ -127,7 +131,7 @@ void GuiImageAsyncCache::update()
 	{
 		MutexLock guard(mutex);
 		if(!completedReady)
-			return;
+			return false;
 		index = completedIndex;
 		decoded = std::move(completedImage);
 		completedReady = false;
@@ -135,13 +139,14 @@ void GuiImageAsyncCache::update()
 	}
 
 	if(index < 0)
-		return; // never file a result under the "empty slot" index
+		return false; // never file a result under the "empty slot" index
 
 	CacheSlot * slot = acquireSlotFor(index);
 	slot->index = index;
 	slot->lastUsed = ++lruClock;
 	slot->resolved = true;
 	slot->hasImage = decoded.valid() && slot->image.uploadDecoded(std::move(decoded));
+	return true;
 }
 
 void GuiImageAsyncCache::request(int index, const char * path)
@@ -204,6 +209,12 @@ GuiImageData * GuiImageAsyncCache::get(int index)
 	if(!slot || !slot->resolved || !slot->hasImage)
 		return nullptr;
 	return &slot->image;
+}
+
+bool GuiImageAsyncCache::isResolved(int index)
+{
+	CacheSlot * slot = findSlot(index);
+	return slot && slot->resolved;
 }
 
 void GuiImageAsyncCache::wake()

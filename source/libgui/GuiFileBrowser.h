@@ -21,8 +21,9 @@ class GuiArrow;
 typedef bool (*GuiPreviewPathResolver)(void * context, int index, char * outPath, size_t outPathSize);
 
 //!Called whenever GuiFileBrowser actually changes what target (the
-//!GuiImage passed to setPreviewImage()) is showing.
-typedef void (*GuiPreviewImageChangedCB)(void * context, GuiImage * target);
+//!GuiImage passed to setPreviewImage()) is showing. isDefault is true when it's the
+//!built-in default image rather than the selected entry's own preview.
+typedef void (*GuiPreviewImageChangedCB)(void * context, GuiImage * target, bool isDefault);
 
 //!Display a list of files
 class GuiFileBrowser : public GuiElement
@@ -93,4 +94,7 @@ class GuiFileBrowser : public GuiElement
 		GuiPreviewImageChangedCB previewChangedCB = nullptr;
 		void * previewChangedCBContext = nullptr;
 		int previewRequestedIndex = -1;
+		bool previewSelHasPath = false; // whether the selected entry has a preview file to load at all
+		GuiImageData previewDefaultImage; // shown for entries with no preview; the panel is never left empty
+		void showPreview(GuiImageData * img, bool isDefault);
 };

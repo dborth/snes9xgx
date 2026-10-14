@@ -49,6 +49,7 @@ static PixelColor rowPressColor(PixelColor tint, PixelColor accent)
 }
 
 GuiFileBrowser::GuiFileBrowser(int w, int h)
+	: previewDefaultImage(default_preview_png)
 {
 	width = w;
 	height = h;
@@ -248,19 +249,11 @@ void GuiFileBrowser::resetState()
 
 	// The listing itself just changed (new folder/device) - index N no
 	// longer refers to the same file it used to, so any cached/in-flight
-	// preview needs to go, and the display should show nothing until the
-	// new selection's preview resolves.
+	// preview needs to go. What's on screen stays until the new selection resolves.
 	if(previewCache)
 	{
 		previewCache->flush();
 		previewRequestedIndex = -1;
-		if(previewTarget && previewLastImage != nullptr)
-		{
-			previewTarget->setImage(nullptr);
-			previewLastImage = nullptr;
-			if(previewChangedCB)
-				previewChangedCB(previewChangedCBContext, previewTarget);
-		}
 	}
 }
 
@@ -290,6 +283,19 @@ void GuiFileBrowser::setPreviewImage(GuiImage * target, GuiPreviewPathResolver r
 	previewChangedCB = changedCB;
 	previewChangedCBContext = changedCBContext;
 	previewRequestedIndex = -1;
+	showPreview(&previewDefaultImage, true);
+}
+
+void GuiFileBrowser::showPreview(GuiImageData * img, bool isDefault)
+{
+	if(img == previewLastImage)
+		return;
+
+	previewTarget->setImage(img);
+	previewLastImage = img;
+	previewCache->pin(isDefault ? nullptr : img);
+	if(previewChangedCB)
+		previewChangedCB(previewChangedCBContext, previewTarget, isDefault);
 }
 
 void GuiFileBrowser::refreshPreview()
@@ -611,11 +617,13 @@ void GuiFileBrowser::update(InputController * controller)
 		if(browser.selIndex != previewRequestedIndex)
 		{
 			previewRequestedIndex = browser.selIndex;
+			previewSelHasPath = false;
 
 			char path[GUI_IMAGE_CACHE_MAX_PATH];
 			if(previewResolver && browser.selIndex >= 0 && browser.selIndex < browser.numEntries &&
 			   previewResolver(previewResolverContext, browser.selIndex, path, sizeof(path)))
 			{
+				previewSelHasPath = true;
 				previewCache->request(browser.selIndex, path);
 
 				int radius = previewCache->getPrefetchRadius();
@@ -634,17 +642,34 @@ void GuiFileBrowser::update(InputController * controller)
 			}
 		}
 
-		previewCache->update();
+		bool landed = previewCache->update();
 
 		if(previewTarget)
 		{
-			GuiImageData * img = previewCache->get(browser.selIndex);
-			if(img != previewLastImage)
+			if(landed && previewLastImage && previewLastImage != &previewDefaultImage)
 			{
-				previewTarget->setImage(img);
-				previewLastImage = img;
-				if(previewChangedCB)
-					previewChangedCB(previewChangedCBContext, previewTarget);
+				if(previewLastImage->getTexture())
+				{
+					previewTarget->setImage(previewLastImage);
+					if(previewChangedCB)
+						previewChangedCB(previewChangedCBContext, previewTarget, false);
+				}
+				else // that landing was a failed decode that wiped the slot: fall back, never blank
+				{
+					previewLastImage = nullptr;
+					showPreview(&previewDefaultImage, true);
+				}
+			}
+
+			if(!previewSelHasPath)
+				showPreview(&previewDefaultImage, true);
+			else if(previewCache->isResolved(browser.selIndex))
+			{
+				GuiImageData * img = previewCache->get(browser.selIndex);
+				if(img)
+					showPreview(img, false);
+				else
+					showPreview(&previewDefaultImage, true);
 			}
 		}
 	}
