@@ -66,6 +66,8 @@ struct InputPadData {
 	bool isTouch;       // True if input is direct touch (VPad) vs IR pointer
 
 	bool     hw_connected[INPUT_HW_MAX];
+	uint32_t hw_battery_level[INPUT_HW_MAX]; // 0-100, per profile: only Wiimote (any KPAD/WPAD device) and DRC fill it
+	bool     hw_charging[INPUT_HW_MAX];      // GamePad plugged in / charging
 	uint32_t hw_buttons_d[INPUT_HW_MAX];
 	uint32_t hw_buttons_h[INPUT_HW_MAX];
 	uint32_t hw_buttons_r[INPUT_HW_MAX];
@@ -92,6 +94,8 @@ struct InputPadData {
 
 		for(uint32_t i = 0; i < INPUT_HW_MAX; i++) {
 			hw_connected[i] = false;
+			hw_battery_level[i] = 0;
+			hw_charging[i] = false;
 			hw_buttons_d[i] = hw_buttons_h[i] = hw_buttons_r[i] = 0;
 			hw_stickX[i] = hw_stickY[i] = hw_substickX[i] = hw_substickY[i] = 0.0f;
 			hw_gforceX[i] = hw_gforceY[i] = hw_gforceZ[i] = 0.0f;
@@ -99,3 +103,9 @@ struct InputPadData {
 		}
 	}
 };
+
+static inline void DrcBatteryFromRaw(uint8_t raw, uint32_t& level, bool& charging)
+{
+	charging = (raw == 0);
+	level = (raw >= 4 || charging) ? 100 : raw * 25;
+}

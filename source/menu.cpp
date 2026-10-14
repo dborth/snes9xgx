@@ -1608,7 +1608,7 @@ static int MenuGame()
 		if(!AutoSave())
 			return MENU_EXIT;
 	}
-	
+
 	char romTitle[512];
 	platform->getFileSystem()->nameToDisplay(Memory.ROMFilename, romTitle, sizeof(romTitle)); // raw name -> UTF-8 for display only
 	GuiText titleTxt(romTitle, 22, (PixelColor){255, 255, 255, 255});
@@ -1622,10 +1622,6 @@ static int MenuGame()
 	MenuIconData iconSave(icon_game_save_png);
 	MenuIconData iconDelete(icon_game_delete_png);
 	MenuIconData iconReset(icon_game_reset_png);
-
-	GuiImageData battery(battery_png);
-	GuiImageData batteryRed(battery_red_png);
-	GuiImageData batteryBar(battery_bar_png);
 
 	GuiTrigger trigHome;
 	GuiTrigger trigB;
@@ -1733,47 +1729,8 @@ static int MenuGame()
 	closeBtn.setEffectGrow();
 
 	#ifndef HW_DOL
-	int i;
-	char txt[3];
-	bool status[4] = { false, false, false, false };
-	int level[4] = { 0, 0, 0, 0 };
-	bool newStatus;
-	int newLevel;
-	GuiText * batteryTxt[4];
-	GuiImage * batteryImg[4];
-	GuiImage * batteryBarImg[4];
-
-	for(i=0; i < 4; i++)
-	{
-		sprintf(txt, "P%d", i+1);
-
-		batteryTxt[i] = new GuiText(txt, 20, (PixelColor){255, 255, 255, 255});
-		batteryTxt[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-		batteryImg[i] = new GuiImage(&battery);
-		batteryImg[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-		batteryImg[i]->setPosition(30, 0);
-		batteryBarImg[i] = new GuiImage(&batteryBar);
-		batteryBarImg[i]->setTile(0);
-		batteryBarImg[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-		batteryBarImg[i]->setPosition(34, 0);
-
-		batteryBtn[i] = new GuiButton(70, 20);
-		batteryBtn[i]->setLabel(batteryTxt[i]);
-		batteryBtn[i]->setImage(batteryImg[i]);
-		batteryBtn[i]->setIcon(batteryBarImg[i]);
-		batteryBtn[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-		batteryBtn[i]->setTrigger(trigA);
-		batteryBtn[i]->setSoundOver(&btnSoundOver);
-		batteryBtn[i]->setSoundClick(&btnSoundClick);
-		batteryBtn[i]->setSelectable(false);
-		batteryBtn[i]->setState(STATE::DISABLED);
-		batteryBtn[i]->setAlpha(150);
-	}
-	
-	batteryBtn[0]->setPosition(45, -65);
-	batteryBtn[1]->setPosition(135, -65);
-	batteryBtn[2]->setPosition(45, -40);
-	batteryBtn[3]->setPosition(135, -40);
+	ControllerStatus controllerStatus(trigA, &btnSoundOver, &btnSoundClick);
+	int controllerClicked;
 	#endif
 
 	GuiWindow w(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
@@ -1785,10 +1742,7 @@ static int MenuGame()
 	w.append(&gameSettingsBtn);
 
 	#ifndef HW_DOL
-	w.append(batteryBtn[0]);
-	w.append(batteryBtn[1]);
-	w.append(batteryBtn[2]);
-	w.append(batteryBtn[3]);
+	controllerStatus.appendTo(w);
 	#endif
 
 	w.append(&mainmenuBtn);
@@ -1804,10 +1758,7 @@ static int MenuGame()
 		titleTxt.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 35);
 		mainmenuBtn.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
 		#ifndef HW_DOL
-		batteryBtn[0]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
-		batteryBtn[1]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
-		batteryBtn[2]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
-		batteryBtn[3]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
+		controllerStatus.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
 		#endif
 
 		w.setEffect(EFFECT::FADE, 15);
@@ -1818,50 +1769,7 @@ static int MenuGame()
 		if(!UpdateGui()) return MENU_EXIT;
 
 		#ifndef HW_DOL
-		for(i=0; i < 4; i++)
-		{
-			const InputPadData& pad = controller[i]->getPadData();
-			bool hasBattery = pad.hw_connected[INPUT_HW_WIIMOTE];
-			#ifdef __WIIU__
-			hasBattery = hasBattery || pad.hw_connected[INPUT_HW_DRC] || pad.hw_connected[INPUT_HW_WUPC];
-			#endif
-
-			if(hasBattery)
-			{
-				newStatus = true;
-				newLevel = (pad.battery_level / 100.0) * 4;
-				if(newLevel > 4) newLevel = 4;
-			}
-			else
-			{
-				newStatus = false;
-				newLevel = 0;
-			}
-			
-			if(status[i] != newStatus || level[i] != newLevel)
-			{
-				if(newStatus == true) // controller connected
-				{
-					batteryBtn[i]->setAlpha(255);
-					batteryBtn[i]->setState(STATE::DEFAULT);
-					batteryBarImg[i]->setTile(newLevel);
-
-					if(newLevel == 0)
-						batteryImg[i]->setImage(&batteryRed);
-					else
-						batteryImg[i]->setImage(&battery);
-				}
-				else // controller not connected
-				{
-					batteryBtn[i]->setAlpha(150);
-					batteryBtn[i]->setState(STATE::DISABLED);
-					batteryBarImg[i]->setTile(0);
-					batteryImg[i]->setImage(&battery);
-				}
-				status[i] = newStatus;
-				level[i] = newLevel;
-			}
-		}
+		controllerStatus.update();
 		#endif
 
 		if(saveBtn.getState() == STATE::CLICKED)
@@ -1893,21 +1801,9 @@ static int MenuGame()
 			selection = MENU_GAMESETTINGS;
 		}
 #ifndef HW_DOL
-		else if(batteryBtn[0]->getState() == STATE::CLICKED)
+		else if((controllerClicked = controllerStatus.clicked()) >= 0)
 		{
-			PlayerMappingWindow(0);
-		}
-		else if(batteryBtn[1]->getState() == STATE::CLICKED)
-		{
-			PlayerMappingWindow(1);
-		}
-		else if(batteryBtn[2]->getState() == STATE::CLICKED)
-		{
-			PlayerMappingWindow(2);
-		}
-		else if(batteryBtn[3]->getState() == STATE::CLICKED)
-		{
-			PlayerMappingWindow(3);
+			PlayerMappingWindow(controllerClicked);
 		}
 #endif
 		else if(mainmenuBtn.getState() == STATE::CLICKED)
@@ -1935,6 +1831,7 @@ static int MenuGame()
 		else if(closeBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_EXIT;
+
 			exitSound->play();
 			menu->bgTopImg.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
 			closeBtn.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_OUT, 15);
@@ -1943,13 +1840,11 @@ static int MenuGame()
 			menu->bgBottomImg.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 			menu->btnLogo.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 			#ifndef HW_DOL
-			batteryBtn[0]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
-			batteryBtn[1]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
-			batteryBtn[2]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
-			batteryBtn[3]->setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
+			controllerStatus.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_OUT, 15);
 			#endif
 
 			w.setEffect(EFFECT::FADE, -15);
+
 			while(w.getEffect() > 0)
 			{
 				if(!UpdateGui()) return MENU_EXIT;
@@ -1957,16 +1852,6 @@ static int MenuGame()
 		}
 	}
 
-
-	#ifndef HW_DOL
-	for(i=0; i < 4; i++)
-	{
-		delete batteryTxt[i];
-		delete batteryImg[i];
-		delete batteryBarImg[i];
-		delete batteryBtn[i];
-	}
-	#endif
 
 	return selection;
 }

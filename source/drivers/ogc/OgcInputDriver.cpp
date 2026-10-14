@@ -301,6 +301,7 @@ void OgcInputDriver::update() {
 			// Always process base Wiimote
 			padData.hw_connected[INPUT_HW_WIIMOTE] = true;
 			padData.battery_level = wpad->battery_level;
+			padData.hw_battery_level[INPUT_HW_WIIMOTE] = wpad->battery_level;
 			
 			padData.hw_gforceX[INPUT_HW_WIIMOTE] = wpad->gforce.x;
 			padData.hw_gforceY[INPUT_HW_WIIMOTE] = wpad->gforce.y;
@@ -371,6 +372,7 @@ void OgcInputDriver::update() {
 		// Process Wii U Gamepad
 		if(i == 0 && WiiDRC_Inited() && WiiDRC_Connected()) {
 			padData.hw_connected[INPUT_HW_DRC] = true;
+			DrcBatteryFromRaw(WiiDRC_Data()->battery, padData.hw_battery_level[INPUT_HW_DRC], padData.hw_charging[INPUT_HW_DRC]);
 			padData.hw_buttons_d[INPUT_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsDown());
 			padData.hw_buttons_h[INPUT_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsHeld());
 			padData.hw_buttons_r[INPUT_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsUp());

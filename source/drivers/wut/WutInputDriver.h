@@ -34,6 +34,7 @@ class WutInputDriver : public InputDriver {
 		bool drcTouchedPrev;
 		float drcLastTouchX;
 		float drcLastTouchY;
+		uint8_t drcLastRawBattery; // last raw VPAD battery value seen, logged when it changes
 
 		// IR pointer smoothing (per Wiimote channel). One Euro Filter adapts
 		// its own smoothing strength to pointer speed each frame, so unlike
