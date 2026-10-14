@@ -78,12 +78,16 @@
 
 // the two cards of the game list page (the list itself is drawn by GuiFileBrowser)
 #define MENU_LIST_X			20
-#define MENU_LIST_Y			101
+#define MENU_LIST_Y			107
 #define MENU_LIST_W			330
-#define MENU_LIST_H			262
+#define MENU_LIST_H			249
 #define MENU_PREVIEW_X		364
-#define MENU_PREVIEW_W		256
+#define MENU_PREVIEW_W		248
 #define MENU_PREVIEW_H		MENU_LIST_H
+
+// option browser
+#define MENU_OPTIONS_W		552
+#define MENU_OPTIONS_H		MENU_LIST_H
 
 static inline PixelColor MenuRGBA(int r, int g, int b, int a = 255)
 {
