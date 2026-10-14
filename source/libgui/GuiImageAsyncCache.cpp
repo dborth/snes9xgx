@@ -77,6 +77,7 @@ void GuiImageAsyncCache::flush()
 		completedImage = GuiImageData::DecodedImage();
 		completedIndex = -1;
 		generation++; // any job already popped by the worker carries the old generation and will be discarded
+		workCond.signal(); // the worker may be parked waiting for the result slot to drain
 	}
 
 	for(int i = 0; i < capacity; i++)
@@ -130,6 +131,7 @@ void GuiImageAsyncCache::update()
 		index = completedIndex;
 		decoded = std::move(completedImage);
 		completedReady = false;
+		workCond.signal(); // the worker doesn't start another job until the previous result is taken
 	}
 
 	CacheSlot * slot = acquireSlotFor(index);
@@ -266,6 +268,13 @@ void GuiImageAsyncCache::threadLoop()
 	mutex.lock();
 	while(!thread.stopRequested())
 	{
+		// Never start a job while the previous result is still waiting for update() to take it
+		if(completedReady)
+		{
+			workCond.wait(mutex);
+			continue;
+		}
+
 		bool havePrimary = primaryPending;
 		int prefetchPick = -1;
 		if(!havePrimary)
@@ -318,9 +327,7 @@ void GuiImageAsyncCache::threadLoop()
 
 		if(jobGeneration == generation)
 		{
-			// Overwrites (and frees) any previous undrained result - if the main thread hasn't kept up,
-			// that older result is stale anyway (a newer request already superseded it).
-			completedIndex = jobIndex;
+			// completedReady is always false here: the loop above doesn't start a job while a result is pending
 			completedImage = std::move(decoded);
 			completedReady = true;
 		}
