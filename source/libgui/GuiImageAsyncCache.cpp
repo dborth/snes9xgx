@@ -134,6 +134,9 @@ void GuiImageAsyncCache::update()
 		workCond.signal(); // the worker doesn't start another job until the previous result is taken
 	}
 
+	if(index < 0)
+		return; // never file a result under the "empty slot" index
+
 	CacheSlot * slot = acquireSlotFor(index);
 	slot->index = index;
 	slot->lastUsed = ++lruClock;
@@ -328,6 +331,7 @@ void GuiImageAsyncCache::threadLoop()
 		if(jobGeneration == generation)
 		{
 			// completedReady is always false here: the loop above doesn't start a job while a result is pending
+			completedIndex = jobIndex; // update() files the result under this index; without it get() never finds it
 			completedImage = std::move(decoded);
 			completedReady = true;
 		}
