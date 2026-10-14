@@ -80,6 +80,7 @@
 #include "battery_png.h"
 #include "battery_red_png.h"
 #include "battery_bar_png.h"
+#include "default_preview_png.h"
 #include "player1_point_png.h"
 #include "player2_point_png.h"
 #include "player3_point_png.h"
