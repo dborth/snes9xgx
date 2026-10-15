@@ -86,8 +86,23 @@ class GuiText : public GuiElement
 		uint16_t style; //!< GuiTextRenderer style attributes
 		bool wrap; //!< Wrapping toggle
 
+		// What measuring the text cost, kept so a layout pass that asks for the size every frame costs
+		// nothing. Measured at `size`, and valid while the text, the size and the font are unchanged.
+		int measuredW;				//!< Rendered width at measuredSize
+		int measuredH;				//!< Rendered height at measuredSize
+		int measuredSize;			//!< Font size measuredW/H are for; -1 when stale
+		uint32_t measuredGen;		//!< GuiTextRenderer::getMetricsGeneration() when measured
+		// The same for the full width of the text at the size it is drawn at (which follows the
+		// element's scale), used by the scroll check every frame
+		int fullWidth;
+		int fullWidthSize;			//!< -1 when stale
+		uint32_t fullWidthGen;
+
 		wchar_t* getText(const char *text) const;
 		bool scrollStepDue();
+		void measure();
+		void forgetMeasurements();
+		int getFullWidth(int atSize);
 };
 
 extern GuiTextTranslator* textTranslator;

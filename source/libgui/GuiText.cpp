@@ -36,6 +36,10 @@ GuiText::GuiText(const char * t, int s, PixelColor c)
 	textScrollPos = 0;
 	textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
 	textScrollDelay = TEXT_SCROLL_DELAY;
+	measuredW = measuredH = 0;
+	measuredSize = fullWidthSize = -1;
+	measuredGen = fullWidthGen = 0;
+	fullWidth = 0;
 
 	alignmentHor = ALIGN_H::CENTRE;
 	alignmentVert = ALIGN_V::MIDDLE;
@@ -68,6 +72,10 @@ GuiText::GuiText(const char * t)
 	textScrollPos = 0;
 	textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
 	textScrollDelay = TEXT_SCROLL_DELAY;
+	measuredW = measuredH = 0;
+	measuredSize = fullWidthSize = -1;
+	measuredGen = fullWidthGen = 0;
+	fullWidth = 0;
 
 	alignmentHor = presetAlignmentHor;
 	alignmentVert = presetAlignmentVert;
@@ -123,6 +131,7 @@ void GuiText::setText(const char * t)
 	textDynNum = 0;
 	textScrollPos = 0;
 	textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
+	this->forgetMeasurements();
 
 	if(t)
 	{
@@ -150,6 +159,7 @@ void GuiText::setWText(wchar_t * t)
 	textDynNum = 0;
 	textScrollPos = 0;
 	textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
+	this->forgetMeasurements();
 
 	if(t)
 		text = wcsdup(t);
@@ -178,6 +188,37 @@ void GuiText::setFontSize(int s)
 	size = s;
 }
 
+//! Measures the text at `size` unless that has already been done for this text, size and font
+void GuiText::measure()
+{
+	if(measuredSize == size && measuredGen == GuiTextRenderer::getMetricsGeneration())
+		return;
+
+	fontSystem->setPixelSize(size);
+	measuredW = fontSystem->getWidth(text);
+	measuredH = fontSystem->getHeight(text);
+	measuredSize = size;
+	measuredGen = GuiTextRenderer::getMetricsGeneration();
+}
+
+void GuiText::forgetMeasurements()
+{
+	measuredSize = -1;
+	fullWidthSize = -1;
+}
+
+//! The width of the whole text at a font size, measured on the first ask. The font must be at that size.
+int GuiText::getFullWidth(int atSize)
+{
+	if(fullWidthSize != atSize || fullWidthGen != GuiTextRenderer::getMetricsGeneration())
+	{
+		fullWidth = fontSystem->getWidth(text);
+		fullWidthSize = atSize;
+		fullWidthGen = GuiTextRenderer::getMetricsGeneration();
+	}
+	return fullWidth;
+}
+
 void GuiText::setMaxWidth(int width)
 {
 	maxWidth = width;
@@ -199,8 +240,8 @@ int GuiText::getTextWidth()
 	if(!text)
 		return 0;
 
-	fontSystem->setPixelSize(size);
-	return fontSystem->getWidth(text);
+	this->measure();
+	return measuredW;
 }
 
 void GuiText::setWrap(bool w, int width)
@@ -294,6 +335,7 @@ void GuiText::resetText()
 		delete[] text;
 
 	text = getText(origText);
+	this->forgetMeasurements();
 
 	for(int i=0; i < textDynNum; i++)
 	{
@@ -419,15 +461,14 @@ void GuiText::draw()
 		{
 			textDynNum = 1;
 			textDyn[0] = wcsdup(text);
-			int len = wcslen(textDyn[0]);
 
-			while(fontSystem->getWidth(textDyn[0]) > maxWidth)
-				textDyn[0][--len] = 0;
+			// the longest start of the text that fits, found in one pass
+			textDyn[0][fontSystem->fitCount(textDyn[0], maxWidth)] = 0;
 		}
 
 		if(textScroll == SCROLL::HORIZONTAL)
 		{
-			if(fontSystem->getWidth(text) > maxWidth && scrollStepDue())
+			if(getFullWidth(newSize) > maxWidth && scrollStepDue())
 			{
 				if(textScrollInitialDelay)
 				{
@@ -490,9 +531,9 @@ void GuiText::getNaturalSize(int& w, int& h)
 		return;
 	}
 
-	fontSystem->setPixelSize(size);
-	w = fontSystem->getWidth(text);
-	h = fontSystem->getHeight(text);
+	this->measure();
+	w = measuredW;
+	h = measuredH;
 	if(maxWidth > 0 && w > maxWidth)
 		w = maxWidth;
 }

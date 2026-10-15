@@ -132,6 +132,24 @@ void GuiLayout::remove(GuiElement* e)
 //and drop entries whose child was removed some other way
 void GuiLayout::syncEntries()
 {
+	// Nearly always the entries are exactly the children, in order (gaps aside): confirm that in one
+	// pass and skip the searches below, which compare every entry with every child
+	size_t next = 0;
+	bool inSync = true;
+	for(const Entry& en : entries)
+	{
+		if(!en.e)
+			continue;
+		if(next >= _elements.size() || _elements[next] != en.e)
+		{
+			inSync = false;
+			break;
+		}
+		next++;
+	}
+	if(inSync && next == _elements.size())
+		return;
+
 	for(size_t i = 0; i < entries.size();)
 	{
 		if(entries[i].e && !this->find(entries[i].e))
@@ -162,7 +180,8 @@ void GuiLayout::layout()
 			en.e->layout();
 	this->syncEntries();
 
-	std::vector<Entry*> visible;
+	std::vector<Entry*>& visible = visibleScratch;
+	visible.clear();
 	bool changed = dirty;
 	for(Entry& en : entries)
 	{

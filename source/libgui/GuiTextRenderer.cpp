@@ -15,6 +15,9 @@
 
 GuiTextRenderer* fontSystem;
 
+GlyphData GuiTextRenderer::missingGlyph;
+uint32_t GuiTextRenderer::metricsGeneration = 0;
+
 // FT_Init_FreeType() registers every font driver and renderer FreeType was
 // built with, and because those are reached through function-pointer tables the
 // linker has to keep all of them (about 600 KB) even though only one font is
@@ -66,8 +69,9 @@ namespace {
 }
 
 GuiTextRenderer::GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, GlyphRenderer* glyphRenderer, float uiScale_)
-    : currentPixelSize(0), renderer(glyphRenderer), uiScale(uiScale_)
+    : currentPixelSize(0), current(nullptr), renderer(glyphRenderer), uiScale(uiScale_)
 {
+	++metricsGeneration;
 	ftLibrary = createFreeTypeLibrary();
 	FT_New_Memory_Face(ftLibrary, (FT_Byte*)fontBuffer, bufferSize, 0, &ftFace);
 	ftKerningEnabled = FT_HAS_KERNING(ftFace);
@@ -89,11 +93,14 @@ void GuiTextRenderer::unloadFont() {
 		}
 	}
 	fontData.clear();
+	current = nullptr;
+	++metricsGeneration;
 }
 
 void GuiTextRenderer::setPixelSize(int16_t pixelSize) {
 	if (currentPixelSize != pixelSize) {
 		currentPixelSize = pixelSize;
+		current = nullptr;
 		// currentPixelSize (and every size callers pass in/read back) stays
 		// in design pixels - FreeType itself is asked to rasterize at
 		// uiScale x that.
@@ -107,7 +114,8 @@ GlyphData* GuiTextRenderer::cacheGlyphData(wchar_t charCode, int16_t pixelSize) 
 	ftData* data = &fontData[pixelSize];
 
 	// Initialize metrics on first run for this size
-	if (data->charMap.empty()) {
+	if (!data->metricsReady) {
+		data->metricsReady = true;
 		setPixelSize(pixelSize);
 		data->align.ascender = ToDesignPixels(ftFace->size->metrics.ascender >> 6, uiScale);
 		data->align.descender = ToDesignPixels(ftFace->size->metrics.descender >> 6, uiScale);
@@ -115,8 +123,11 @@ GlyphData* GuiTextRenderer::cacheGlyphData(wchar_t charCode, int16_t pixelSize) 
 		data->align.min = 0;
 	}
 
+	const bool inFastRange = (uint32_t)charCode < 256;
+
 	auto it = data->charMap.find(charCode);
 	if (it != data->charMap.end()) {
+		if (inFastRange) data->fast[charCode] = &it->second;
 		return &it->second; // Already cached
 	}
 
@@ -152,10 +163,22 @@ GlyphData* GuiTextRenderer::cacheGlyphData(wchar_t charCode, int16_t pixelSize) 
 				renderer->loadTextureData(charData.texture, glyphBitmap);
 			}
 
+			if (inFastRange) data->fast[charCode] = &charData;
 			return &charData;
 		}
 	}
+	if (inFastRange) data->fast[charCode] = &missingGlyph;
 	return nullptr;
+}
+
+GlyphData* GuiTextRenderer::glyph(wchar_t charCode) {
+	if (!current) current = &fontData[currentPixelSize];
+
+	if ((uint32_t)charCode < 256) {
+		GlyphData* g = current->fast[charCode];
+		if (g) return g == &missingGlyph ? nullptr : g;
+	}
+	return cacheGlyphData(charCode, currentPixelSize);
 }
 
 // --- Layout & Styling Engine ---
@@ -185,7 +208,7 @@ void GuiTextRenderer::getOffset(const wchar_t* text, FontOffset* offset) {
 
 	int i = 0;
 	while (text[i]) {
-		GlyphData* glyphData = cacheGlyphData(text[i], currentPixelSize);
+		GlyphData* glyphData = glyph(text[i]);
 		if (glyphData) {
 			strMax = glyphData->renderOffsetMax > strMax ? glyphData->renderOffsetMax : strMax;
 			strMin = glyphData->renderOffsetMin < strMin ? glyphData->renderOffsetMin : strMin;
@@ -204,20 +227,41 @@ void GuiTextRenderer::getOffset(const wchar_t* text, FontOffset* offset) {
 uint16_t GuiTextRenderer::getWidth(const wchar_t* text) {
 	uint16_t strWidth = 0;
 	FT_Vector pairDelta;
+	GlyphData* prev = nullptr;
 
-	int i = 0;
-	while (text[i]) {
-		GlyphData* glyphData = cacheGlyphData(text[i], currentPixelSize);
+	for (int i = 0; text[i]; ++i) {
+		GlyphData* glyphData = glyph(text[i]);
 		if (glyphData) {
-			if (ftKerningEnabled && i > 0) {
-				FT_Get_Kerning(ftFace, fontData[currentPixelSize].charMap[text[i - 1]].glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
+			if (ftKerningEnabled && prev) {
+				FT_Get_Kerning(ftFace, prev->glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
 				strWidth += ToDesignPixels(pairDelta.x >> 6, uiScale);
 			}
 			strWidth += glyphData->glyphAdvanceX;
 		}
-		++i;
+		prev = glyphData;
 	}
 	return strWidth;
+}
+
+int GuiTextRenderer::fitCount(const wchar_t* text, int maxWidth) {
+	uint16_t strWidth = 0;
+	FT_Vector pairDelta;
+	GlyphData* prev = nullptr;
+	int best = 0;
+
+	for (int i = 0; text[i]; ++i) {
+		GlyphData* glyphData = glyph(text[i]);
+		if (glyphData) {
+			if (ftKerningEnabled && prev) {
+				FT_Get_Kerning(ftFace, prev->glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
+				strWidth += ToDesignPixels(pairDelta.x >> 6, uiScale);
+			}
+			strWidth += glyphData->glyphAdvanceX;
+		}
+		prev = glyphData;
+		if ((int)strWidth <= maxWidth) best = i + 1;
+	}
+	return best;
 }
 
 uint16_t GuiTextRenderer::getHeight(const wchar_t* text) {
@@ -236,23 +280,33 @@ uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, Pi
 	FT_Vector pairDelta;
 	FontOffset offset;
 
-	// Layout Alignment Calculations
-	if (renderFlags & GUI_TEXT_JUSTIFY_MASK) {
+	// Layout Alignment Calculations. Left-justified text needs no width, and only the glyph-based
+	// vertical alignments need the extents of the text itself (the others use the font's own metrics),
+	// so the text is measured only when the answer is used.
+	if ((renderFlags & GUI_TEXT_JUSTIFY_MASK) && !(renderFlags & GUI_TEXT_JUSTIFY_LEFT)) {
 		x_offset = getStyleOffsetWidth(getWidth(text), renderFlags);
 	}
 	if (renderFlags & GUI_TEXT_ALIGN_MASK) {
-		getOffset(text, &offset);
+		const uint32_t vertical = renderFlags & GUI_TEXT_ALIGN_MASK;
+		if (vertical == GUI_TEXT_ALIGN_GLYPH_TOP || vertical == GUI_TEXT_ALIGN_GLYPH_MIDDLE || vertical == GUI_TEXT_ALIGN_GLYPH_BOTTOM) {
+			getOffset(text, &offset);
+		} else {
+			offset.ascender = ToDesignPixels(ftFace->size->metrics.ascender >> 6, uiScale);
+			offset.descender = ToDesignPixels(ftFace->size->metrics.descender >> 6, uiScale);
+			offset.max = 0;
+			offset.min = 0;
+		}
 		y_offset = getStyleOffsetHeight(&offset, renderFlags);
 	}
 
-	int i = 0;
-	while (text[i]) {
-		GlyphData* glyphData = cacheGlyphData(text[i], currentPixelSize);
+	GlyphData* prev = nullptr;
+	for (int i = 0; text[i]; ++i) {
+		GlyphData* glyphData = glyph(text[i]);
 
 		if (glyphData) {
 			// Kerning adjustments
-			if (ftKerningEnabled && i > 0) {
-				FT_Get_Kerning(ftFace, fontData[currentPixelSize].charMap[text[i - 1]].glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
+			if (ftKerningEnabled && prev) {
+				FT_Get_Kerning(ftFace, prev->glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
 				x_pos += ToDesignPixels(pairDelta.x >> 6, uiScale);
 			}
 
@@ -264,7 +318,7 @@ uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, Pi
 			x_pos += glyphData->glyphAdvanceX;
 			++printed;
 		}
-		++i;
+		prev = glyphData;
 	}
 
 	// Process additional layout features (Underlines/Strikethrough)
