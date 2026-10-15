@@ -6,8 +6,9 @@
  * controllerstatus.h
  *
  * The controller strip at the bottom left of the game menu: an icon for what
- * is connected on each of the four channels, with its battery below, and on
- * Wii U the GamePad on its own at the far left.
+ * is connected on each of the four channels, with its battery below, and the
+ * GamePad on its own at the far left: always on Wii U, and on Wii only while a
+ * GamePad is connected (the other columns close up when it isn't).
  *
  *   ControllerStatus status(trigA, &btnSoundOver, &btnSoundClick);
  *   status.appendTo(window);
@@ -39,25 +40,26 @@ class ControllerStatus
 			iconCharging(controller_charging_png),
 			screenW(platform->getVideo()->getScreenWidth()),
 			numBadges(0),
+			drcColumn(DRC_ALWAYS),
 			divider(nullptr)
 		{
-			int x = LEFT_MARGIN;
-			#ifdef __WIIU__
-			badge[numBadges++] = new Badge(x + PITCH / 2, 0, nullptr, screenW, trig, soundOver, soundClick);
-			x += PITCH + GAP;
-			divider = new GuiShape(1, DIVIDER_H);
-			divider->setPaint(GuiPaint().color(MenuRGBA(255, 255, 255, 80)));
-			divider->setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
-			divider->setPosition(x - GAP / 2 - screenW / 2, -DIVIDER_BOTTOM);
-			#endif
+			// badge[0] is the GamePad, badge[1..4] are P1-P4
+			badge[numBadges++] = new Badge(0, nullptr, screenW, trig, soundOver, soundClick);
 			for(int i = 0; i < SLOTS; i++)
 			{
 				char txt[3];
 				sprintf(txt, "P%d", i + 1);
-				badge[numBadges++] = new Badge(x + PITCH / 2 + i * PITCH, i, txt, screenW, trig, soundOver, soundClick);
+				badge[numBadges++] = new Badge(i, txt, screenW, trig, soundOver, soundClick);
 			}
+			divider = new GuiShape(1, DIVIDER_H);
+			divider->setPaint(GuiPaint().color(MenuRGBA(255, 255, 255, 80)));
+			divider->setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
+
+			layout(drcColumn);
 			for(int i = 0; i < numBadges; i++)
 				apply(*badge[i], NONE, -1, false);
+			if(!drcColumn)
+				hide(*badge[0]);
 		}
 
 		~ControllerStatus()
@@ -71,7 +73,7 @@ class ControllerStatus
 
 		void appendTo(GuiWindow& w)
 		{
-			if(divider) w.append(divider);
+			w.append(divider);
 			for(int i = 0; i < numBadges; i++)
 				badge[i]->appendTo(w);
 		}
@@ -79,7 +81,7 @@ class ControllerStatus
 		//!Applies an effect (slide in/out) to every part
 		void setEffect(int effect, int amount)
 		{
-			if(divider) divider->setEffect(effect, amount);
+			divider->setEffect(effect, amount);
 			for(int i = 0; i < numBadges; i++)
 				badge[i]->setEffect(effect, amount);
 		}
@@ -87,15 +89,18 @@ class ControllerStatus
 		//!Reads the controllers and updates what is shown. Cheap when nothing changed.
 		void update()
 		{
-			int b = 0;
-			#ifdef __WIIU__
-			{
-				// the GamePad is always channel 0's DRC profile; it has its own column
-				const InputPadData& pad = controller[0]->getPadData();
-				bool here = pad.hw_connected[INPUT_HW_DRC];
-				apply(*badge[b++], here ? GAMEPAD : NONE, here ? Segments(pad.hw_battery_level[INPUT_HW_DRC]) : -1, here && pad.hw_charging[INPUT_HW_DRC]);
-			}
-			#endif
+			// the GamePad is always channel 0's DRC profile; it has its own column
+			const InputPadData& drc = controller[0]->getPadData();
+			const bool here = drc.hw_connected[INPUT_HW_DRC];
+			const bool column = DRC_ALWAYS || here;
+			if(column != drcColumn)
+				layout(column);
+			if(column)
+				apply(*badge[0], here ? GAMEPAD : NONE, here ? Segments(drc.hw_battery_level[INPUT_HW_DRC]) : -1, here && drc.hw_charging[INPUT_HW_DRC]);
+			else
+				hide(*badge[0]);
+
+			int b = 1;
 			for(int i = 0; i < SLOTS; i++)
 			{
 				const InputPadData& pad = controller[i]->getPadData();
@@ -123,6 +128,7 @@ class ControllerStatus
 
 	private:
 		enum Kind { NONE, GAMEPAD, WIIMOTE, NUNCHUK, CLASSIC, PRO, GAMECUBE };
+		static const int HIDDEN = -2;			// Badge::key of a badge that is off screen
 
 		// Layout, in design-canvas pixels. Distances are from the bottom of the screen.
 		static const int LEFT_MARGIN = 26;		// left edge of the first column
@@ -134,10 +140,24 @@ class ControllerStatus
 		static const int LABEL_BOTTOM = 20;
 		static const int DIVIDER_H = 64;
 		static const int DIVIDER_BOTTOM = 22;
+
+		// Battery, drawn on whole pixels so nothing is anti-aliased into mush at this size. The casing is a 1px
+		// outline, with a 1px gap before the bars, so the bars sit exactly 2px in from the casing's outer edge:
+		//   width  = 1 + 1 + (4 bars * 4px + 3 gaps * 1px) + 1 + 1 = 23
+		//   height = 1 + 1 + 5px bar + 1 + 1 = 9
 		static const int BODY_W = 23, BODY_H = 9;
-		static const int NUB_W = 2, NUB_H = 4;
+		static const int BORDER = 1;
+		static const int NUB_W = 2, NUB_H = 3;	// the terminal: odd height, so it centers on the odd-height body
 		static const int SEG_W = 4, SEG_H = 5, SEG_STEP = 5;
-		static const int BODY_X = -1;			// battery body center, from the column center (nub makes up the difference)
+		static const int SEG_INSET = BORDER + 1;	// casing outer edge to the first bar, on both axes
+		static const int BATT_LEFT = -12;		// casing's left edge, from the column center (23 + nub 2 = 25 wide)
+		static const int BATT_BOTTOM = BATTERY_CY - BODY_H / 2;
+
+#ifdef __WIIU__
+		static const bool DRC_ALWAYS = true;		// the Wii U GamePad column is always there
+#else
+		static const bool DRC_ALWAYS = false;	// on Wii it only exists while a GamePad is connected
+#endif
 
 		static int Segments(uint32_t level)
 		{
@@ -163,8 +183,8 @@ class ControllerStatus
 			GuiShape * seg[4];
 			GuiText * label;
 
-			Badge(int centerX, int ch, const char * text, int sw, GuiTrigger * trig, GuiSound * over, GuiSound * click) :
-				cx(centerX), channel(ch), key(-1), hasLabel(text != nullptr), screenW(sw),
+			Badge(int ch, const char * text, int sw, GuiTrigger * trig, GuiSound * over, GuiSound * click) :
+				cx(0), channel(ch), key(-1), hasLabel(text != nullptr), screenW(sw),
 				hit(PITCH, 58), ring(9, 12), body(BODY_W, BODY_H), nub(NUB_W, NUB_H),
 				label(nullptr)
 			{
@@ -174,25 +194,11 @@ class ControllerStatus
 				hit.setTrigger(trig);
 				hit.setSoundOver(over);
 				hit.setSoundClick(click);
-				place(&hit, cx, 18);
-
 				ring.setShape(SHAPE::ELLIPSE);
 				ring.setPaint(GuiPaint().stroke(1.0f, White(90)));
-				place(&ring, cx, ICON_BOX_BOTTOM + ICON_BOX_H / 2 - 6);
-
-				body.setCorners(GuiCorners(1.5f));
-				nub.setCorners(GuiCorners(0.8f));
-				place(&body, cx + BODY_X, BATTERY_CY - BODY_H / 2);
-				place(&nub, cx + BODY_X + (BODY_W + NUB_W) / 2, BATTERY_CY - NUB_H / 2);
-				for(int i = 0; i < 4; i++)
-					place(seg[i], cx + BODY_X - BODY_W / 2 + 2 + SEG_W / 2 + i * SEG_STEP, BATTERY_CY - SEG_H / 2);
-				place(&bolt, cx, BATTERY_CY - 12);
 
 				if(hasLabel)
-				{
 					label = new GuiText(text, 15, White());
-					place(label, cx, LABEL_BOTTOM);
-				}
 			}
 			~Badge()
 			{
@@ -200,10 +206,34 @@ class ControllerStatus
 				delete label;
 			}
 
+			//!Centers an element on a column (odd widths round the left edge down)
 			void place(GuiElement * e, int centerX, int bottom)
 			{
 				e->setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
 				e->setPosition(centerX - screenW / 2, -bottom);
+			}
+
+			//!Puts an element's left/bottom edge on exact pixels
+			void placeAt(GuiElement * e, int left, int bottom)
+			{
+				e->setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
+				e->setPosition(left, -bottom);
+			}
+
+			//!Moves the badge to a column. The icon and bolt are placed by apply().
+			void setCenter(int centerX)
+			{
+				cx = centerX;
+				place(&hit, cx, 18);
+				place(&ring, cx, ICON_BOX_BOTTOM + ICON_BOX_H / 2 - 6);
+
+				const int left = cx + BATT_LEFT;
+				placeAt(&body, left, BATT_BOTTOM);
+				placeAt(&nub, left + BODY_W, BATT_BOTTOM + (BODY_H - NUB_H) / 2);
+				for(int i = 0; i < 4; i++)
+					placeAt(seg[i], left + SEG_INSET + i * SEG_STEP, BATT_BOTTOM + SEG_INSET);
+				if(label)
+					place(label, cx, LABEL_BOTTOM);
 			}
 
 			void appendTo(GuiWindow& w)
@@ -231,6 +261,39 @@ class ControllerStatus
 			}
 		};
 
+		//!Lays the columns out, with or without the GamePad column at the left
+		void layout(bool drc)
+		{
+			drcColumn = drc;
+			int x = LEFT_MARGIN;
+			badge[0]->setCenter(x + PITCH / 2);
+			if(drc)
+				x += PITCH + GAP;
+			for(int i = 0; i < SLOTS; i++)
+				badge[1 + i]->setCenter(x + PITCH / 2 + i * PITCH);
+			divider->setVisible(drc);
+			divider->setPosition(x - GAP / 2 - screenW / 2, -DIVIDER_BOTTOM);
+			for(int i = 0; i < numBadges; i++)	// everything moved: have apply() redo it all
+				badge[i]->key = -1;
+		}
+
+		//!Takes a badge off screen entirely (the GamePad column on a Wii with no GamePad)
+		void hide(Badge& b)
+		{
+			if(b.key == HIDDEN)
+				return;
+			b.key = HIDDEN;
+			b.hit.setState(STATE::DISABLED);
+			b.hit.setVisible(false);
+			b.ring.setVisible(false);
+			b.icon.setVisible(false);
+			b.body.setVisible(false);
+			b.nub.setVisible(false);
+			for(int i = 0; i < 4; i++) b.seg[i]->setVisible(false);
+			b.bolt.setVisible(false);
+			if(b.label) b.label->setVisible(false);
+		}
+
 		//!Shows `kind` with `segs` battery segments (-1 = no battery shown), or the charging look
 		void apply(Badge& b, Kind kind, int segs, bool charging)
 		{
@@ -240,11 +303,15 @@ class ControllerStatus
 			b.key = key;
 
 			const bool present = (kind != NONE);
+			b.hit.setVisible(true);
 			b.hit.setState(present ? STATE::DEFAULT : STATE::DISABLED);
 			b.ring.setVisible(!present);
 			b.icon.setVisible(present);
 			if(b.label)
+			{
+				b.label->setVisible(true);
 				b.label->setAlpha(present ? 255 : 90);
+			}
 
 			if(present)
 			{
@@ -269,7 +336,7 @@ class ControllerStatus
 			b.nub.setVisible(showBattery);
 			if(showBattery)
 			{
-				b.body.setPaint(GuiPaint().stroke(1.2f, tint));
+				b.body.setPaint(GuiPaint().stroke((float)BORDER, tint));
 				b.nub.setPaint(GuiPaint().color(tint));
 			}
 			for(int i = 0; i < 4; i++)
@@ -282,14 +349,16 @@ class ControllerStatus
 			if(showBattery && charging)
 			{
 				b.bolt.setImage(&iconCharging);
-				b.place(&b.bolt, b.cx + BODY_X, BATTERY_CY - b.bolt.getHeight() / 2);
+				// centered on the casing by whole pixels (it is taller than the casing, so it overhangs evenly)
+				b.placeAt(&b.bolt, b.cx + BATT_LEFT + (BODY_W - b.bolt.getWidth()) / 2, BATT_BOTTOM + (BODY_H - b.bolt.getHeight()) / 2);
 			}
 		}
 
 		GuiImageData iconGamepad, iconWiimote, iconNunchuk, iconClassic, iconPro, iconGameCube, iconCharging;
 		int screenW;
 		int numBadges;
-		Badge * badge[SLOTS + 1];	// the GamePad (Wii U only) first, then P1-P4
+		bool drcColumn;				// whether the GamePad column is laid out
+		Badge * badge[SLOTS + 1];	// the GamePad first, then P1-P4
 		GuiShape * divider;
 };
 
