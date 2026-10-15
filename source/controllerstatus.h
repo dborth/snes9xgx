@@ -7,8 +7,9 @@
  *
  * The controller strip at the bottom left of the game menu: an icon for what
  * is connected on each of the four channels, with its battery below, and the
- * GamePad on its own at the far left: always on Wii U, and on Wii only while a
- * GamePad is connected (the other columns close up when it isn't).
+ * GamePad or a USB controller on its own at the far left: always on Wii U, and on
+ * Wii only while there is something to show (the other columns close up when
+ * there isn't).
  *
  *   ControllerStatus status(trigA, &btnSoundOver, &btnSoundClick);
  *   status.appendTo(window);
@@ -18,7 +19,14 @@
  *
  * A Classic Controller, Pro Controller or Nunchuk is shown instead of the
  * Wiimote it rides on, with that Wiimote's battery below it. Controllers that
- * have no battery to report (GameCube pads) show the icon alone.
+ * have no battery to report (GameCube pads, USB controllers) show the icon alone.
+ *
+ * The left slot shows one of: GamePad, DualShock 4, Xbox 360, other USB
+ * controller, in that order; only one even if several are connected. A USB
+ * controller that has to be replugged gets a red x.
+ *
+ * P1 never sits empty while the left slot has something: if no Wiimote, Pro
+ * Controller or GameCube pad is on port 1, P1 shows the left slot's controller.
  ***************************************************************************/
 #pragma once
 #ifndef HW_DOL
@@ -38,12 +46,16 @@ class ControllerStatus
 			iconPro(controller_wiiupro_png),
 			iconGameCube(controller_gamecube_png),
 			iconCharging(controller_charging_png),
+			iconDs4(controller_ds4_png),
+			iconXbox360(controller_xbox360_png),
+			iconUsb(controller_usb_png),
+			iconReplug(controller_replug_png),
 			screenW(platform->getVideo()->getScreenWidth()),
 			numBadges(0),
-			drcColumn(DRC_ALWAYS),
+			leftColumn(LEFT_ALWAYS),
 			divider(nullptr)
 		{
-			// badge[0] is the GamePad, badge[1..4] are P1-P4
+			// badge[0] is the left slot (GamePad or USB controller), badge[1..4] are P1-P4
 			badge[numBadges++] = new Badge(0, nullptr, screenW, trig, soundOver, soundClick);
 			for(int i = 0; i < SLOTS; i++)
 			{
@@ -55,10 +67,10 @@ class ControllerStatus
 			divider->setPaint(GuiPaint().color(MenuRGBA(255, 255, 255, 80)));
 			divider->setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
 
-			layout(drcColumn);
+			layout(leftColumn);
 			for(int i = 0; i < numBadges; i++)
-				apply(*badge[i], NONE, -1, false);
-			if(!drcColumn)
+				apply(*badge[i], Slot());
+			if(!leftColumn)
 				hide(*badge[0]);
 		}
 
@@ -89,14 +101,36 @@ class ControllerStatus
 		//!Reads the controllers and updates what is shown. Cheap when nothing changed.
 		void update()
 		{
-			// the GamePad is always channel 0's DRC profile; it has its own column
+			// The left slot: the GamePad (channel 0's DRC profile), else a USB controller, else nothing
+			Slot left;
 			const InputPadData& drc = controller[0]->getPadData();
-			const bool here = drc.hw_connected[INPUT_HW_DRC];
-			const bool column = DRC_ALWAYS || here;
-			if(column != drcColumn)
+			if(drc.hw_connected[INPUT_HW_DRC])
+			{
+				left.kind = GAMEPAD;
+				left.segs = Segments(drc.hw_battery_level[INPUT_HW_DRC]);
+				left.charging = drc.hw_charging[INPUT_HW_DRC];
+			}
+			else
+			{
+				const InputUsbStatus usb = platform->getInput()->getUsbStatus();
+				left.kind = UsbKind(usb.device);
+				left.replug = usb.replugRequired;
+				// clicking it maps the channel it is playing on
+				for(int i = 0; i < SLOTS && left.kind != NONE; i++)
+				{
+					if(controller[i]->getPadData().usb_device == usb.device)
+					{
+						left.channel = i;
+						break;
+					}
+				}
+			}
+			const bool column = LEFT_ALWAYS || left.kind != NONE;
+			if(column != leftColumn)
 				layout(column);
+			badge[0]->channel = left.channel;
 			if(column)
-				apply(*badge[0], here ? GAMEPAD : NONE, here ? Segments(drc.hw_battery_level[INPUT_HW_DRC]) : -1, here && drc.hw_charging[INPUT_HW_DRC]);
+				apply(*badge[0], left);
 			else
 				hide(*badge[0]);
 
@@ -104,16 +138,28 @@ class ControllerStatus
 			for(int i = 0; i < SLOTS; i++)
 			{
 				const InputPadData& pad = controller[i]->getPadData();
-				Kind kind = NONE;
-				if(pad.hw_connected[INPUT_HW_WUPC]) kind = PRO;
-				else if(pad.hw_connected[INPUT_HW_CLASSIC]) kind = CLASSIC;
-				else if(pad.hw_connected[INPUT_HW_NUNCHUK]) kind = NUNCHUK;
-				else if(pad.hw_connected[INPUT_HW_WIIMOTE]) kind = WIIMOTE;
-				else if(pad.hw_connected[INPUT_HW_GAMECUBE]) kind = GAMECUBE;
+				Slot slot;
+				if(pad.hw_connected[INPUT_HW_WUPC]) slot.kind = PRO;
+				else if(pad.hw_connected[INPUT_HW_CLASSIC]) slot.kind = CLASSIC;
+				else if(pad.hw_connected[INPUT_HW_NUNCHUK]) slot.kind = NUNCHUK;
+				else if(pad.hw_connected[INPUT_HW_WIIMOTE]) slot.kind = WIIMOTE;
+				else if(pad.gc_native) slot.kind = GAMECUBE; // not the USB adapters that pose as one
 
 				// Every Wiimote-based controller reports the battery of the Wiimote it rides on
-				bool hasBattery = (kind != NONE && kind != GAMECUBE);
-				apply(*badge[b++], kind, hasBattery ? Segments(pad.hw_battery_level[INPUT_HW_WIIMOTE]) : -1, false);
+				if(slot.kind != NONE && slot.kind != GAMECUBE)
+					slot.segs = Segments(pad.hw_battery_level[INPUT_HW_WIIMOTE]);
+
+				// a USB controller playing on this channel
+				if(slot.kind == NONE)
+					slot.kind = UsbKind(pad.usb_device);
+
+				// P1 shows the left slot's controller rather than nothing
+				if(slot.kind == NONE && i == 0)
+				{
+					slot = left;
+					slot.channel = 0;
+				}
+				apply(*badge[b++], slot);
 			}
 		}
 
@@ -127,7 +173,28 @@ class ControllerStatus
 		}
 
 	private:
-		enum Kind { NONE, GAMEPAD, WIIMOTE, NUNCHUK, CLASSIC, PRO, GAMECUBE };
+		enum Kind { NONE, GAMEPAD, WIIMOTE, NUNCHUK, CLASSIC, PRO, GAMECUBE, DUALSHOCK4, XBOX_360, USB_PAD };
+
+		//!What one badge shows
+		struct Slot
+		{
+			Kind kind = NONE;
+			int segs = -1;			// battery segments, -1 = no battery
+			bool charging = false;
+			bool replug = false;	// a USB controller that has to be unplugged and plugged back in
+			int channel = 0;		// only used by the left slot
+		};
+
+		static Kind UsbKind(InputUsbDevice d)
+		{
+			switch(d)
+			{
+				case INPUT_USB_DS4: return DUALSHOCK4;
+				case INPUT_USB_XBOX360: return XBOX_360;
+				case INPUT_USB_GENERIC: return USB_PAD;
+				default: return NONE;
+			}
+		}
 		static const int HIDDEN = -2;			// Badge::key of a badge that is off screen
 
 		// Layout, in design-canvas pixels. Distances are from the bottom of the screen.
@@ -154,9 +221,9 @@ class ControllerStatus
 		static const int BATT_BOTTOM = BATTERY_CY - BODY_H / 2;
 
 #ifdef __WIIU__
-		static const bool DRC_ALWAYS = true;		// the Wii U GamePad column is always there
+		static const bool LEFT_ALWAYS = true;	// the Wii U GamePad column is always there
 #else
-		static const bool DRC_ALWAYS = false;	// on Wii it only exists while a GamePad is connected
+		static const bool LEFT_ALWAYS = false;	// on Wii it only exists while a GamePad or USB controller is connected
 #endif
 
 		static int Segments(uint32_t level)
@@ -178,6 +245,7 @@ class ControllerStatus
 			GuiButton hit;
 			GuiImage icon;
 			GuiImage bolt;
+			GuiImage replug;		// red x on a controller that needs replugging
 			GuiShape ring;			// placeholder for an empty slot
 			GuiShape body, nub;
 			GuiShape * seg[4];
@@ -245,6 +313,7 @@ class ControllerStatus
 				w.append(&nub);
 				for(int i = 0; i < 4; i++) w.append(seg[i]);
 				w.append(&bolt);
+				w.append(&replug);
 				if(label) w.append(label);
 			}
 
@@ -257,27 +326,28 @@ class ControllerStatus
 				nub.setEffect(effect, amount);
 				for(int i = 0; i < 4; i++) seg[i]->setEffect(effect, amount);
 				bolt.setEffect(effect, amount);
+				replug.setEffect(effect, amount);
 				if(label) label->setEffect(effect, amount);
 			}
 		};
 
-		//!Lays the columns out, with or without the GamePad column at the left
-		void layout(bool drc)
+		//!Lays the columns out, with or without the left slot's column
+		void layout(bool left)
 		{
-			drcColumn = drc;
+			leftColumn = left;
 			int x = LEFT_MARGIN;
 			badge[0]->setCenter(x + PITCH / 2);
-			if(drc)
+			if(left)
 				x += PITCH + GAP;
 			for(int i = 0; i < SLOTS; i++)
 				badge[1 + i]->setCenter(x + PITCH / 2 + i * PITCH);
-			divider->setVisible(drc);
+			divider->setVisible(left);
 			divider->setPosition(x - GAP / 2 - screenW / 2, -DIVIDER_BOTTOM);
 			for(int i = 0; i < numBadges; i++)	// everything moved: have apply() redo it all
 				badge[i]->key = -1;
 		}
 
-		//!Takes a badge off screen entirely (the GamePad column on a Wii with no GamePad)
+		//!Takes a badge off screen entirely (the left column on a Wii with nothing to show there)
 		void hide(Badge& b)
 		{
 			if(b.key == HIDDEN)
@@ -291,20 +361,25 @@ class ControllerStatus
 			b.nub.setVisible(false);
 			for(int i = 0; i < 4; i++) b.seg[i]->setVisible(false);
 			b.bolt.setVisible(false);
+			b.replug.setVisible(false);
 			if(b.label) b.label->setVisible(false);
 		}
 
-		//!Shows `kind` with `segs` battery segments (-1 = no battery shown), or the charging look
-		void apply(Badge& b, Kind kind, int segs, bool charging)
+		//!Shows a slot: its icon, and its battery (or the charging look) below
+		void apply(Badge& b, const Slot& slot)
 		{
-			const int key = kind | ((segs + 1) << 4) | (charging << 8);
+			const Kind kind = slot.kind;
+			const int segs = slot.segs;
+			const bool charging = slot.charging;
+			const bool replug = slot.replug && kind != NONE;
+			const int key = kind | ((segs + 1) << 4) | (charging << 8) | (replug << 9);
 			if(key == b.key)
 				return;
 			b.key = key;
 
 			const bool present = (kind != NONE);
 			b.hit.setVisible(true);
-			b.hit.setState(present ? STATE::DEFAULT : STATE::DISABLED);
+			b.hit.setState(present && !replug ? STATE::DEFAULT : STATE::DISABLED);
 			b.ring.setVisible(!present);
 			b.icon.setVisible(present);
 			if(b.label)
@@ -323,13 +398,25 @@ class ControllerStatus
 					case CLASSIC: data = &iconClassic; break;
 					case PRO: data = &iconPro; break;
 					case GAMECUBE: data = &iconGameCube; break;
+					case DUALSHOCK4: data = &iconDs4; break;
+					case XBOX_360: data = &iconXbox360; break;
+					case USB_PAD: data = &iconUsb; break;
 					default: break;
 				}
 				b.icon.setImage(data);
-				b.place(&b.icon, b.cx, ICON_BOX_BOTTOM + (ICON_BOX_H - b.icon.getHeight()) / 2);
+				const int iconBottom = ICON_BOX_BOTTOM + (ICON_BOX_H - b.icon.getHeight()) / 2;
+				b.place(&b.icon, b.cx, iconBottom);
+				b.icon.setAlpha(replug ? 130 : 255);
+				if(replug)
+				{
+					// the red x sits on the icon's top right corner
+					b.replug.setImage(&iconReplug);
+					b.place(&b.replug, b.cx + b.icon.getWidth() / 2 - 2, iconBottom + b.icon.getHeight() - 8);
+				}
 			}
+			b.replug.setVisible(present && replug);
 
-			const bool showBattery = present && (segs >= 0 || charging);
+			const bool showBattery = present && !replug && (segs >= 0 || charging);
 			const int lit = charging ? 4 : segs;
 			const PixelColor tint = (!charging && segs <= 1) ? Amber() : White(); // low or empty
 			b.body.setVisible(showBattery);
@@ -354,11 +441,11 @@ class ControllerStatus
 			}
 		}
 
-		GuiImageData iconGamepad, iconWiimote, iconNunchuk, iconClassic, iconPro, iconGameCube, iconCharging;
+		GuiImageData iconGamepad, iconWiimote, iconNunchuk, iconClassic, iconPro, iconGameCube, iconCharging, iconDs4, iconXbox360, iconUsb, iconReplug;
 		int screenW;
 		int numBadges;
-		bool drcColumn;				// whether the GamePad column is laid out
-		Badge * badge[SLOTS + 1];	// the GamePad first, then P1-P4
+		bool leftColumn;			// whether the left slot's column is laid out
+		Badge * badge[SLOTS + 1];	// the left slot (GamePad or USB controller) first, then P1-P4
 		GuiShape * divider;
 };
 
