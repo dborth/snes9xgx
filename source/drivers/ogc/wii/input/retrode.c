@@ -60,6 +60,9 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		return;
 	}
 
+	// a replug request only stands while a controller that needs it is plugged in
+	replugRequired = false;
+
 	// Retrode has two entries in USB_GetDeviceList(), one for gamepads and one for SNES mouse
 	for (int i = 0; i < dev_count; ++i)
 	{

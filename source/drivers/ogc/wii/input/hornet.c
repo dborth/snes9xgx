@@ -47,6 +47,9 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		return;
 	}
 
+	// a replug request only stands while a controller that needs it is plugged in
+	replugRequired = false;
+
 	for (int i = 0; i < dev_count; ++i)
 	{
 		if (!isHornetGamepad(dev_entry[i]))

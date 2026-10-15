@@ -86,6 +86,29 @@ void OgcInputDriver::shutdown() {
 	}
 }
 
+InputUsbStatus OgcInputDriver::getUsbStatus() {
+	InputUsbStatus status;
+	#ifdef HW_RVL
+	// Each driver reports "connected", "please replug" or "not found"
+	char ds4 = DS4_Status()[0];
+	char xbox = XBOX360_Status()[0];
+	char gen[4] = { Retrode_Status()[0], Hornet_Status()[0], Mayflash_Status()[0], 0 };
+	bool genConnected = false, genReplug = false;
+	for (int i = 0; i < 3; i++) {
+		genConnected |= (gen[i] == 'c');
+		genReplug |= (gen[i] == 'p');
+	}
+
+	if (ds4 == 'c') status.device = INPUT_USB_DS4;
+	else if (xbox == 'c') status.device = INPUT_USB_XBOX360;
+	else if (genConnected) status.device = INPUT_USB_GENERIC;
+	else if (ds4 == 'p') { status.device = INPUT_USB_DS4; status.replugRequired = true; }
+	else if (xbox == 'p') { status.device = INPUT_USB_XBOX360; status.replugRequired = true; }
+	else if (genReplug) { status.device = INPUT_USB_GENERIC; status.replugRequired = true; }
+	#endif
+	return status;
+}
+
 void OgcInputDriver::setRumble(int channel, bool rumble) {
 	if (channel >= 0 && channel < 4) {
 		rumbleRequest[channel] = rumble;
@@ -281,6 +304,7 @@ void OgcInputDriver::update() {
 			padHeld |= usbHeld;
 			#endif
 
+			padData.gc_native = (activeGamecubePads & (1 << i)) != 0;
 			padData.hw_connected[INPUT_HW_GAMECUBE] = true;
 			padData.hw_buttons_d[INPUT_HW_GAMECUBE] = MapPADToGeneric(padDown);
 			padData.hw_buttons_h[INPUT_HW_GAMECUBE] = MapPADToGeneric(padHeld);
@@ -368,6 +392,14 @@ void OgcInputDriver::update() {
 				controller[i]->setSideways(false);
 			}
 		}
+
+		#ifdef HW_RVL
+		// Which USB controller, if any, is on this channel. Generic adapters can't tell their
+		// ports apart, so they only claim channel 0.
+		if (DS4_Connected(i)) padData.usb_device = INPUT_USB_DS4;
+		else if (XBOX360_Connected(i)) padData.usb_device = INPUT_USB_XBOX360;
+		else if (i == 0 && (retrodeActive || hornetActive || mayflashActive)) padData.usb_device = INPUT_USB_GENERIC;
+		#endif
 
 		// Process Wii U Gamepad
 		if(i == 0 && WiiDRC_Inited() && WiiDRC_Connected()) {

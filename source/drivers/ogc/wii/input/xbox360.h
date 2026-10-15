@@ -10,6 +10,7 @@ extern "C" {
 void XBOX360_ScanPads(void);
 u32 XBOX360_ButtonsHeld(int chan);
 char* XBOX360_Status(void);
+bool XBOX360_Connected(int chan);
 
 #ifdef __cplusplus
 }

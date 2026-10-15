@@ -87,6 +87,7 @@
 #include "controller_usb_png.h"
 #include "controller_xbox360_png.h"
 #include "controller_charging_png.h"
+#include "controller_replug_png.h"
 #include "default_preview_png.h"
 #include "player1_point_png.h"
 #include "player2_point_png.h"

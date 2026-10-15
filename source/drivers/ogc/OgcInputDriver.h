@@ -16,6 +16,7 @@ public:
     void shutdown() override;
     void update() override;
     void setRumble(int channel, bool rumble) override;
+    InputUsbStatus getUsbStatus() override;
 
 private:
     bool rumbleRequest[4];
