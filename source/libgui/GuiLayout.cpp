@@ -14,7 +14,7 @@ static int roundi(float v)
 
 GuiLayout::GuiLayout() :
 	spacingX(0.0f), spacingY(0.0f), justify(LAYOUT_JUSTIFY::START), alignItems(LAYOUT_ALIGN::START),
-	userFixedW(0), userFixedH(0), assignedW(0), assignedH(0), naturalW(0), naturalH(0), dirty(true)
+	userFixedW(0), userFixedH(0), assignedW(0), assignedH(0), naturalW(0), naturalH(0), dirty(true), settled(false)
 {
 }
 
@@ -174,6 +174,8 @@ void GuiLayout::syncEntries()
 
 void GuiLayout::layout()
 {
+	settled = true;
+
 	// nested layouts settle first, so their sizes are right when measured below
 	for(Entry& en : entries)
 		if(en.e)
@@ -261,16 +263,23 @@ void GuiLayout::layout()
 	}
 }
 
+// A layout inside another layout is settled by its parent's layout() on the way down, which comes
+// just before the parent updates or draws it. Repeating that here would re-measure everything below
+// it once more for every level of nesting.
 void GuiLayout::draw()
 {
-	this->layout();
+	if(!settled)
+		this->layout();
 	GuiWindow::draw();
+	settled = false;
 }
 
 void GuiLayout::update(InputController * c)
 {
-	this->layout();
+	if(!settled)
+		this->layout();
 	GuiWindow::update(c);
+	settled = false;
 }
 
 void GuiLayout::getNaturalSize(int& w, int& h)

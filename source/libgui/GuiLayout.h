@@ -140,6 +140,7 @@ class GuiLayout : public GuiWindow
 		int assignedW, assignedH;
 		int naturalW, naturalH;
 		bool dirty;
+		bool settled;						//!< layout() has run since this was last updated or drawn, so doing it again is wasted work
 };
 
 //!Lays children out left to right.

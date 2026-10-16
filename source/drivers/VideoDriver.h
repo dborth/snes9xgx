@@ -131,6 +131,12 @@ class GlyphRenderer {
 		virtual void loadTextureData(void* texture, FT_Bitmap* bitmap) = 0;
 		virtual void destroyTexture(void* texture) = 0;
 
+		//! Bracket the drawQuad() calls for the glyphs of one string, so a renderer whose draws need state
+		//! set up (a texture shader, a blend mode) can set it once for the string rather than for every
+		//! glyph.
+		virtual void beginText() {}
+		virtual void endText() {}
+
 		virtual void drawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) = 0;
 		virtual void drawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) = 0;
 };

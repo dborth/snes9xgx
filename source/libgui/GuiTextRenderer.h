@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <map>
+#include <vector>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -91,6 +92,8 @@ private:
 
 	std::map<int16_t, ftData> fontData;
 	ftData* current;	// fontData[currentPixelSize], or null until it is needed (map nodes never move)
+	std::vector<uint16_t> widthScratch;	// scrollWindow()'s running widths, kept so it doesn't allocate
+	std::vector<wchar_t> lineScratch;
 	static GlyphData missingGlyph;
 	static uint32_t metricsGeneration;
 
@@ -130,6 +133,13 @@ public:
 	//! characters measure no wider than that), found in one pass. Same answer as trimming the string
 	//! one character at a time and calling getWidth() each time, without the repeated measuring.
 	int fitCount(const wchar_t* text, int maxWidth);
+
+	//! The part of a horizontally scrolling line that is shown at one scroll position: the text from
+	//! `pos` on, two spaces, then the start of the text again, cut to fit `maxWidth`. Measures the line
+	//! once rather than after every character added or removed, with the same result as doing that.
+	//! \param textlen Length of `text`
+	//! \param out Room for textlen + 1 characters
+	void scrollWindow(const wchar_t* text, uint32_t textlen, uint32_t pos, int maxWidth, wchar_t* out);
 
 	//! Changes whenever a measurement made earlier could now come out differently (a renderer was
 	//! made or its glyphs were thrown away). Anything that keeps text sizes can compare it.

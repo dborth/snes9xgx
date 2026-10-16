@@ -483,37 +483,7 @@ void GuiText::draw()
 						textScrollInitialDelay = TEXT_SCROLL_INITIAL_DELAY;
 					}
 
-					wcscpy(textDyn[0], &text[textScrollPos]);
-					uint32_t dynlen = wcslen(textDyn[0]);
-
-					if(dynlen+2 < textlen)
-					{
-						textDyn[0][dynlen] = ' ';
-						textDyn[0][dynlen+1] = ' ';
-						textDyn[0][dynlen+2] = 0;
-						dynlen += 2;
-					}
-
-					if(fontSystem->getWidth(textDyn[0]) > maxWidth)
-					{
-						while(fontSystem->getWidth(textDyn[0]) > maxWidth)
-							textDyn[0][--dynlen] = 0;
-					}
-					else
-					{
-						int i = 0;
-
-						while(fontSystem->getWidth(textDyn[0]) < maxWidth && dynlen+1 < textlen)
-						{
-							textDyn[0][dynlen] = text[i++];
-							textDyn[0][++dynlen] = 0;
-						}
-
-						if(fontSystem->getWidth(textDyn[0]) > maxWidth)
-							textDyn[0][dynlen-2] = 0;
-						else
-							textDyn[0][dynlen-1] = 0;
-					}
+					fontSystem->scrollWindow(text, textlen, textScrollPos, maxWidth, textDyn[0]);
 				}
 			}
 		}

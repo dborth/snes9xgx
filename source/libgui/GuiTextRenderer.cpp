@@ -69,7 +69,7 @@ namespace {
 }
 
 GuiTextRenderer::GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, GlyphRenderer* glyphRenderer, float uiScale_)
-    : currentPixelSize(0), current(nullptr), renderer(glyphRenderer), uiScale(uiScale_)
+    : currentPixelSize(0), renderer(glyphRenderer), current(nullptr), uiScale(uiScale_)
 {
 	++metricsGeneration;
 	ftLibrary = createFreeTypeLibrary();
@@ -264,6 +264,61 @@ int GuiTextRenderer::fitCount(const wchar_t* text, int maxWidth) {
 	return best;
 }
 
+void GuiTextRenderer::scrollWindow(const wchar_t* text, uint32_t textlen, uint32_t pos, int maxWidth, wchar_t* out) {
+	uint32_t dynlen = textlen > pos ? textlen - pos : 0;
+	const bool spaced = dynlen + 2 < textlen;
+	if (spaced) dynlen += 2;
+
+	// the longest line that could be wanted: the tail, then as much of the start as would still leave
+	// the line shorter than the text
+	const uint32_t extra = textlen > dynlen + 1 ? textlen - 1 - dynlen : 0;
+	const uint32_t total = dynlen + extra;
+
+	lineScratch.resize(total + 1);
+	wchar_t* line = lineScratch.data();
+	uint32_t n = 0;
+	for (uint32_t i = pos; i < textlen; ++i) line[n++] = text[i];
+	if (spaced) { line[n++] = L' '; line[n++] = L' '; }
+	for (uint32_t i = 0; i < extra; ++i) line[n++] = text[i];
+	line[n] = 0;
+
+	// the width of every start of the line, in one pass
+	widthScratch.resize(total + 1);
+	uint16_t* w = widthScratch.data();
+	uint16_t strWidth = 0;
+	FT_Vector pairDelta;
+	GlyphData* prev = nullptr;
+	w[0] = 0;
+	for (uint32_t i = 0; i < total; ++i) {
+		GlyphData* glyphData = glyph(line[i]);
+		if (glyphData) {
+			if (ftKerningEnabled && prev) {
+				FT_Get_Kerning(ftFace, prev->glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
+				strWidth += ToDesignPixels(pairDelta.x >> 6, uiScale);
+			}
+			strWidth += glyphData->glyphAdvanceX;
+		}
+		prev = glyphData;
+		w[i + 1] = strWidth;
+	}
+
+	uint32_t len;
+	if ((int)w[dynlen] > maxWidth) {
+		// too wide: shorten until it fits
+		len = dynlen;
+		while (len > 0 && (int)w[len] > maxWidth) --len;
+	} else {
+		// room to spare: take on characters from the start of the text until it is full
+		len = dynlen;
+		while ((int)w[len] < maxWidth && len + 1 < textlen) ++len;
+		// the last character added is dropped, and one more if it overfilled the line
+		const uint32_t drop = (int)w[len] > maxWidth ? 2 : 1;
+		len = len > drop ? len - drop : 0;
+	}
+	for (uint32_t i = 0; i < len; ++i) out[i] = line[i];
+	out[len] = 0;
+}
+
 uint16_t GuiTextRenderer::getHeight(const wchar_t* text) {
 	FontOffset offset;
 	getOffset(text, &offset);
@@ -300,6 +355,7 @@ uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, Pi
 	}
 
 	GlyphData* prev = nullptr;
+	renderer->beginText();
 	for (int i = 0; text[i]; ++i) {
 		GlyphData* glyphData = glyph(text[i]);
 
@@ -320,6 +376,7 @@ uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, Pi
 		}
 		prev = glyphData;
 	}
+	renderer->endText();
 
 	// Process additional layout features (Underlines/Strikethrough)
 	if (renderFlags & GUI_TEXT_STYLE_MASK) {

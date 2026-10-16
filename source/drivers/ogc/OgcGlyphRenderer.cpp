@@ -9,7 +9,7 @@
 
 #define ALIGN8(x) (((x) + 7) & ~7)
 
-OgcGlyphRenderer::OgcGlyphRenderer(uint8_t vtxFmtIndex)
+OgcGlyphRenderer::OgcGlyphRenderer(uint8_t vtxFmtIndex) : inText(false), textureCacheStale(true)
 {
 	setVertexFormat(vtxFmtIndex);
 }
@@ -35,6 +35,7 @@ void* OgcGlyphRenderer::createTexture(uint16_t width, uint16_t height) {
 	void* texture = memalign(32, glyphSize);
 	if (texture) {
 		memset(texture, 0x00, glyphSize);
+		textureCacheStale = true;
 	}
 
 	return texture;
@@ -81,12 +82,27 @@ void OgcGlyphRenderer::loadTextureData(void* texture, FT_Bitmap* bitmap) {
 
 	// Flush the CPU cache to ensure GPU reads valid data
 	DCFlushRange(texture, glyphSize);
+	textureCacheStale = true;
 }
 
 void OgcGlyphRenderer::destroyTexture(void* texture) {
 	if (texture) {
 		free(texture);
+		textureCacheStale = true;
 	}
+}
+
+// State for glyph quads, set once for a whole string rather than around every glyph
+void OgcGlyphRenderer::beginText() {
+	GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+	GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+	inText = true;
+}
+
+void OgcGlyphRenderer::endText() {
+	GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+	GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
+	inText = false;
 }
 
 void OgcGlyphRenderer::drawQuad(void* texture, int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) {
@@ -97,10 +113,18 @@ void OgcGlyphRenderer::drawQuad(void* texture, int16_t screenX, int16_t screenY,
 	// GX_CLAMP required to avoid wrapping artifacts on small font textures
 	GX_InitTexObj(&glyphTexture, texture, width, height, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
 	GX_LoadTexObj(&glyphTexture, GX_TEXMAP0);
-	GX_InvalidateTexAll();
 
-	GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
-	GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+	// The texture cache is keyed by address, so it only needs emptying when the memory behind a
+	// glyph texture has changed (one was made, filled or freed since the last time)
+	if (textureCacheStale) {
+		GX_InvalidateTexAll();
+		textureCacheStale = false;
+	}
+
+	if (!inText) {
+		GX_SetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+		GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+	}
 
 	GX_Begin(GX_QUADS, this->vertexIndex, 4);
 
@@ -126,8 +150,10 @@ void OgcGlyphRenderer::drawQuad(void* texture, int16_t screenX, int16_t screenY,
 
 	GX_End();
 
-	GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
-	GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
+	if (!inText) {
+		GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+		GX_SetVtxDesc(GX_VA_TEX0, GX_NONE);
+	}
 }
 
 void OgcGlyphRenderer::drawFeature(int16_t screenX, int16_t screenY, uint16_t width, uint16_t height, const PixelColor& color) {
