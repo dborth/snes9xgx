@@ -18,11 +18,14 @@ typedef struct _savelist {
 } SaveList;
 
 //!The screenshot of a save slot, or a gray rounded placeholder while there is none.
-//!A screenshot of another size is centered in the same box.
+//!The box is the size of a full screenshot; the placeholder is smaller and a screenshot
+//!of another size is centered in the same box.
 class GuiSavePreview : public GuiElement
 {
 	public:
-		GuiSavePreview(int w, int h);
+		//!\param w,h Box size, the size of a full screenshot
+		//!\param phW,phH Size of the placeholder drawn when there is no screenshot
+		GuiSavePreview(int w, int h, int phW, int phH);
 		//!\param img The screenshot, or nullptr for the placeholder
 		void setImage(GuiImageData * img);
 		void draw() override;

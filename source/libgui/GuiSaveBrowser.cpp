@@ -17,8 +17,11 @@
 #define SLOT_HEIGHT			72
 #define SLOT_PITCH_X		257
 #define SLOT_PITCH_Y		87
-#define PREVIEW_WIDTH		52
-#define PREVIEW_HEIGHT		44
+#define PREVIEW_WIDTH		64		// screenshot box - matches the 64x48 the screenshots are decoded to
+#define PREVIEW_HEIGHT		48
+#define PREVIEW_X			8		// box to card's left edge, equal to the gap before the text (at x=80)
+#define PLACEHOLDER_WIDTH	52		// the "No image" placeholder is smaller, centered in the box
+#define PLACEHOLDER_HEIGHT	44
 #define SB_WIDTH			22		// scrollbar column (arrow buttons)
 #define SB_INSET			12		// column to the browser's right edge
 #define SB_ARROW			22
@@ -27,8 +30,8 @@
 #define SB_THUMB_WIDTH		14
 #define SB_THUMB_MIN_HEIGHT	24
 
-GuiSavePreview::GuiSavePreview(int w, int h)
-	: placeholder(w, h), noImage("No image", 12, GuiTheme::current().textMuted), hasImage(false)
+GuiSavePreview::GuiSavePreview(int w, int h, int phW, int phH)
+	: placeholder(phW, phH), noImage("No image", 12, GuiTheme::current().textMuted), hasImage(false)
 {
 	width = w;
 	height = h;
@@ -174,9 +177,9 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 		saveBgImg[i] = new GuiShape(SLOT_WIDTH, SLOT_HEIGHT);
 		saveBgImg[i]->setCorners(GuiCorners(theme.radius));
 		saveBgImg[i]->setStyle(theme.cardStyle());
-		savePreviewImg[i] = new GuiSavePreview(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+		savePreviewImg[i] = new GuiSavePreview(PREVIEW_WIDTH, PREVIEW_HEIGHT, PLACEHOLDER_WIDTH, PLACEHOLDER_HEIGHT);
 		savePreviewImg[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-		savePreviewImg[i]->setPosition(5,0);
+		savePreviewImg[i]->setPosition(PREVIEW_X,0);
 
 		saveBtn[i] = new GuiButton(SLOT_WIDTH, SLOT_HEIGHT);
 		saveBtn[i]->setParent(this);
