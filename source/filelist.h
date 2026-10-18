@@ -33,13 +33,13 @@
 
 // Sounds
 #ifndef HW_DOL
-// exclude background music on GameCube
+// exclude all sounds on GameCube
 #include "bg_music_ogg.h"
 #include "enter_ogg.h"
 #include "exit_ogg.h"
-#endif
 #include "button_over_pcm.h"
 #include "button_click_pcm.h"
+#endif
 
 // Graphics
 #include "logo_png.h"

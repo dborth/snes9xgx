@@ -4852,9 +4852,11 @@ void MainMenu (int selection)
 		trigA->setPrimaryTrigger();
 
 		// the sounds every button plays; registered once, so pages don't build their own
+		#ifndef HW_DOL
 		static GuiSound buttonSoundOver(button_over_pcm, button_over_pcm_size, SOUND::PCM);
 		static GuiSound buttonSoundClick(button_click_pcm, button_click_pcm_size, SOUND::PCM);
 		GuiSound::setDefaultSounds(&buttonSoundOver, &buttonSoundClick);
+		#endif
 	}
 
 	if(selection == MENU_GAME)
