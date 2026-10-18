@@ -63,9 +63,6 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	trigHeldA = new GuiTrigger;
 	trigHeldA->setHeldTrigger(-1, INPUT_BTN_A);
 
-	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND::PCM);
-	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND::PCM);
-
 	// the card everything sits on
 	cardShape = new GuiShape(w, h);
 	cardShape->setParent(this);
@@ -129,8 +126,6 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	arrowUpBtn->setPosition(-OB_SB_INSET, OB_PAD);
 	arrowUpBtn->setSelectable(false);
 	arrowUpBtn->setTrigger(trigA);
-	arrowUpBtn->setSoundOver(btnSoundOver);
-	arrowUpBtn->setSoundClick(btnSoundClick);
 
 	arrowDownBtn = new GuiButton(OB_SB_WIDTH, OB_SB_ARROW);
 	arrowDownBtn->setParent(this);
@@ -140,8 +135,6 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	arrowDownBtn->setPosition(-OB_SB_INSET, -OB_PAD);
 	arrowDownBtn->setSelectable(false);
 	arrowDownBtn->setTrigger(trigA);
-	arrowDownBtn->setSoundOver(btnSoundOver);
-	arrowDownBtn->setSoundClick(btnSoundClick);
 
 	// The selected row is a rounded, tinted pill inset from the card edge, so it never
 	// touches the card's corners. It fades in and out as the selection moves.
@@ -170,7 +163,7 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 		optionBtn[i]->setImage(optionBg[i]);
 		optionBtn[i]->setPosition(OB_PAD, rowTop + OB_ROW_HEIGHT * i);
 		optionBtn[i]->setTrigger(trigA);
-		optionBtn[i]->setSoundClick(btnSoundClick);
+		optionBtn[i]->setSoundOver(nullptr); // rows click, but are silent on hover
 	}
 	updateColumns();
 }
@@ -191,8 +184,6 @@ GuiOptionBrowser::~GuiOptionBrowser()
 
 	delete trigA;
 	delete trigHeldA;
-	delete btnSoundOver;
-	delete btnSoundClick;
 
 	for(int i=0; i<OPTION_PAGESIZE; i++)
 	{

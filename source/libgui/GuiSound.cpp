@@ -10,6 +10,8 @@
 
 int GuiSound::defaultMusicVolume = 100;
 int GuiSound::defaultSfxVolume = 100;
+GuiSound* GuiSound::defaultOver = nullptr;
+GuiSound* GuiSound::defaultClick = nullptr;
 GuiSound* GuiSound::playingOGG = nullptr;
 GuiSound* GuiSound::activeMusic = nullptr;
 
@@ -166,6 +168,12 @@ void GuiSound::setVolume(int vol)
 void GuiSound::setLoop(bool l)
 {
 	loop = l;
+}
+
+void GuiSound::setDefaultSounds(GuiSound * over, GuiSound * click)
+{
+	defaultOver = over;
+	defaultClick = click;
 }
 
 void GuiSound::setDefaultVolume(VOLUME_TYPE t, int v)

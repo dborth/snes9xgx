@@ -71,9 +71,6 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	trigHeldA = new GuiTrigger;
 	trigHeldA->setHeldTrigger(-1, INPUT_BTN_A);
 
-	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND::PCM);
-	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND::PCM);
-
 	// the card everything sits on
 	cardShape = new GuiShape(w, h);
 	cardShape->setParent(this);
@@ -132,8 +129,6 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	arrowUpBtn->setClickable(false);
 	arrowUpBtn->setHoldable(true);
 	arrowUpBtn->setTrigger(trigHeldA);
-	arrowUpBtn->setSoundOver(btnSoundOver);
-	arrowUpBtn->setSoundClick(btnSoundClick);
 
 	arrowDownBtn = new GuiButton(SB_WIDTH, SB_ARROW);
 	arrowDownBtn->setParent(this);
@@ -145,8 +140,6 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	arrowDownBtn->setClickable(false);
 	arrowDownBtn->setHoldable(true);
 	arrowDownBtn->setTrigger(trigHeldA);
-	arrowDownBtn->setSoundOver(btnSoundOver);
-	arrowDownBtn->setSoundClick(btnSoundClick);
 
 	scrollbarBoxBtn = new GuiButton(SB_WIDTH, SB_THUMB_HEIGHT);
 	scrollbarBoxBtn->setParent(this);
@@ -185,7 +178,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 		fileList[i]->setImage(fileListBg[i]);
 		fileList[i]->setPosition(BROWSER_PAD, rowTop + ROW_HEIGHT*i);
 		fileList[i]->setTrigger(trigA);
-		fileList[i]->setSoundClick(btnSoundClick);
+		fileList[i]->setSoundOver(nullptr); // rows click, but are silent on hover
 	}
 }
 
@@ -209,8 +202,6 @@ GuiFileBrowser::~GuiFileBrowser()
 	delete iconDVD;
 	delete iconSMB;
 
-	delete btnSoundOver;
-	delete btnSoundClick;
 	delete trigHeldA;
 	delete trigA;
 

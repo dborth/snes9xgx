@@ -58,6 +58,18 @@ class GuiSound
 		//!\param v Volume (0-100)
 		static void setDefaultVolume(VOLUME_TYPE t, int v);
 
+		//!Registers the sounds every GuiButton and UiScope uses
+		//!Call it once at startup, so pages need no sound objects of their own. The app owns both
+		//!sounds and keeps them alive while such widgets exist. nullptr (the initial state) is
+		//!silence; a button can still override either with setSoundOver()/setSoundClick().
+		//!\param over Played when a button gets the selection
+		//!\param click Played when a button is clicked
+		static void setDefaultSounds(GuiSound * over, GuiSound * click);
+		//!\return the over sound registered by setDefaultSounds(), or nullptr
+		static GuiSound * getDefaultOver() { return defaultOver; }
+		//!\return the click sound registered by setDefaultSounds(), or nullptr
+		static GuiSound * getDefaultClick() { return defaultClick; }
+
 	protected:
 		const uint8_t * sound = nullptr; //!< Pointer to the sound data
 		SOUND type = SOUND::NONE; //!< Sound format type (PCM or OGG)
@@ -68,6 +80,8 @@ class GuiSound
 
 		static int defaultMusicVolume; //!< Global music volume (0-100) -- applies to any looping sound
 		static int defaultSfxVolume; //!< Global sound effects volume (0-100) -- applies to any non-looping sound
+		static GuiSound * defaultOver; //!< See setDefaultSounds()
+		static GuiSound * defaultClick; //!< See setDefaultSounds()
 
 		//!Pointer to the GuiSound instance currently occupying the single shared hardware OGG stream.
 		static GuiSound* playingOGG;

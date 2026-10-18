@@ -27,9 +27,9 @@ GuiButton::GuiButton(int w, int h)
 		labelClick[i] = nullptr;
 	}
 
-	soundOver = nullptr;
+	soundOver = GuiSound::getDefaultOver();
 	soundHold = nullptr;
-	soundClick = nullptr;
+	soundClick = GuiSound::getDefaultClick();
 	selectable = true;
 	holdable = false;
 	clickable = true;

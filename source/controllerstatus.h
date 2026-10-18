@@ -11,7 +11,7 @@
  * Wii only while there is something to show (the other columns close up when
  * there isn't).
  *
- *   ControllerStatus status(trigA, &btnSoundOver, &btnSoundClick);
+ *   ControllerStatus status(trigA);
  *   status.appendTo(window);
  *   ...
  *   status.update();                   // every frame
@@ -38,7 +38,7 @@ class ControllerStatus
 	public:
 		static const int SLOTS = 4;
 
-		ControllerStatus(GuiTrigger * trig, GuiSound * soundOver, GuiSound * soundClick) :
+		ControllerStatus(GuiTrigger * trig) :
 			iconGamepad(controller_gamepad_png),
 			iconWiimote(controller_wiimote_png),
 			iconNunchuk(controller_nunchuk_png),
@@ -56,12 +56,12 @@ class ControllerStatus
 			divider(nullptr)
 		{
 			// badge[0] is the left slot (GamePad or USB controller), badge[1..4] are P1-P4
-			badge[numBadges++] = new Badge(0, nullptr, screenW, trig, soundOver, soundClick);
+			badge[numBadges++] = new Badge(0, nullptr, screenW, trig);
 			for(int i = 0; i < SLOTS; i++)
 			{
 				char txt[3];
 				sprintf(txt, "P%d", i + 1);
-				badge[numBadges++] = new Badge(i, txt, screenW, trig, soundOver, soundClick);
+				badge[numBadges++] = new Badge(i, txt, screenW, trig);
 			}
 			divider = new GuiShape(1, DIVIDER_H);
 			divider->setPaint(GuiPaint().color(MenuRGBA(255, 255, 255, 80)));
@@ -251,7 +251,7 @@ class ControllerStatus
 			GuiShape * seg[4];
 			GuiText * label;
 
-			Badge(int ch, const char * text, int sw, GuiTrigger * trig, GuiSound * over, GuiSound * click) :
+			Badge(int ch, const char * text, int sw, GuiTrigger * trig) :
 				cx(0), channel(ch), key(-1), hasLabel(text != nullptr), screenW(sw),
 				hit(PITCH, 58), ring(9, 12), body(BODY_W, BODY_H), nub(NUB_W, NUB_H),
 				label(nullptr)
@@ -260,8 +260,6 @@ class ControllerStatus
 					seg[i] = new GuiShape(SEG_W, SEG_H);
 				hit.setSelectable(false);
 				hit.setTrigger(trig);
-				hit.setSoundOver(over);
-				hit.setSoundClick(click);
 				ring.setShape(SHAPE::ELLIPSE);
 				ring.setPaint(GuiPaint().stroke(1.0f, White(90)));
 

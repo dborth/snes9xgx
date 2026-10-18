@@ -95,9 +95,6 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	trigA = new GuiTrigger;
 	trigA->setPrimaryTrigger();
 
-	btnSoundOver = new GuiSound(button_over_pcm, button_over_pcm_size, SOUND::PCM);
-	btnSoundClick = new GuiSound(button_click_pcm, button_click_pcm_size, SOUND::PCM);
-
 	const GuiTheme& theme = GuiTheme::current();
 	trackHeight = h - 2 * SB_TRACK_Y;
 
@@ -146,8 +143,6 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	arrowUpBtn->setPosition(-SB_INSET, 0);
 	arrowUpBtn->setSelectable(false);
 	arrowUpBtn->setTrigger(trigA);
-	arrowUpBtn->setSoundOver(btnSoundOver);
-	arrowUpBtn->setSoundClick(btnSoundClick);
 
 	arrowDownBtn = new GuiButton(SB_WIDTH, SB_ARROW);
 	arrowDownBtn->setParent(this);
@@ -157,8 +152,6 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 	arrowDownBtn->setPosition(-SB_INSET, 0);
 	arrowDownBtn->setSelectable(false);
 	arrowDownBtn->setTrigger(trigA);
-	arrowDownBtn->setSoundOver(btnSoundOver);
-	arrowDownBtn->setSoundClick(btnSoundClick);
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
@@ -194,8 +187,6 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 		saveBtn[i]->setState(STATE::DISABLED);
 		saveBtn[i]->setEffectGrow(106);
 		saveBtn[i]->setVisible(false);
-		saveBtn[i]->setSoundOver(btnSoundOver);
-		saveBtn[i]->setSoundClick(btnSoundClick);
 		saveBtnLastOver[i] = false;
 	}
 	saveBtn[0]->setState(STATE::SELECTED, -1);
@@ -217,8 +208,6 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	delete arrowUpGlyph;
 	delete arrowDownGlyph;
 
-	delete btnSoundOver;
-	delete btnSoundClick;
 	delete trigA;
 
 	for(int i=0; i<SAVELISTSIZE; i++)

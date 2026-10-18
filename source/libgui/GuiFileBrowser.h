@@ -70,8 +70,6 @@ class GuiFileBrowser : public GuiElement
 		GuiImageData * iconDVD;
 		GuiImageData * iconSMB;
 
-		GuiSound * btnSoundOver;
-		GuiSound * btnSoundClick;
 		GuiTrigger * trigA;
 		GuiTrigger * trigHeldA;
 

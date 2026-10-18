@@ -66,7 +66,7 @@ class UiScope::Runner : public GuiElement
 		UiScope& scope;
 };
 
-UiScope::UiScope() : trig(&primary), soundOver(nullptr), soundClick(nullptr), runner(nullptr)
+UiScope::UiScope() : trig(&primary), soundOver(GuiSound::getDefaultOver()), soundClick(GuiSound::getDefaultClick()), runner(nullptr)
 {
 	primary.setPrimaryTrigger();
 }

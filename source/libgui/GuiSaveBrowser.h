@@ -73,8 +73,6 @@ class GuiSaveBrowser : public GuiElement
 		int trackHeight;
 		void updateThumb();
 
-		GuiSound * btnSoundOver;
-		GuiSound * btnSoundClick;
 		GuiTrigger * trigA;
 
 		bool saveBtnLastOver[SAVELISTSIZE];
