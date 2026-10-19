@@ -132,7 +132,7 @@ $(OUTPUT).wuhb: $(OUTPUT).rpx
 	@echo packaging $@ ...
 	@$(DEVKITPRO)/tools/bin/wuhbtool $< $@ \
 		--name="Snes9x GX" \
-		--short-name="snes9xgx" \
+		--short-name="Snes9x GX" \
 		--author="dborth" \
 		--icon=$(TOPDIR)/meta/icon.png \
 		--tv-image=$(TOPDIR)/meta/tv_splash.png \
