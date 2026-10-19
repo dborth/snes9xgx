@@ -8,6 +8,7 @@ All notable changes to Snes9x GX are recorded here, newest first. For the curren
 * Wii U: fix calculations for fixed pixel ratio
 * Wii U: fix garbled Japanese file and folder names in the game list and game menu. The Wii U returns non-ASCII names as Shift-JIS (CP932) rather than UTF-8, so they are now converted for display (file access still uses the original name)
 * Wii U: the menu now defaults to the Wii U system language
+* Wii - fixed some libsmb2 issues preventing network shares from working (thanks TeleTubby666!)
 * Fixed the default language not being applied at startup
 * Fixed a mode 7 core regression introduced in 5.0.3 from upstream Snes9x
 
