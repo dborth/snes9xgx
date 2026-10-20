@@ -53,6 +53,13 @@ void GuiShape::setPaint(const GuiPaint& p)
 	setStyle(GuiShapeStyle(p));
 }
 
+void GuiShape::setArrow(SHAPE dir, PixelColor rest, PixelColor lit)
+{
+	setShape(dir);
+	setStyle(GuiShapeStyle(GuiPaint().color(rest)).onFocus(GuiPaint().color(lit)));
+	setTransition(0.0f);
+}
+
 void GuiShape::setTransition(float seconds)
 {
 	transition = seconds < 0.0f ? 0.0f : seconds;

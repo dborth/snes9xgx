@@ -106,7 +106,8 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	arrowUpShape->setShape(SHAPE::ELLIPSE);
 	arrowUpShape->setStyle(controlStyle);
 	arrowUpShape->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	arrowUpGlyph = new GuiArrow(ARROW::UP, 10, 7, theme.textMuted, theme.textOnAccent);
+	arrowUpGlyph = new GuiShape(10, 7);
+	arrowUpGlyph->setArrow(SHAPE::TRIANGLE_UP, theme.textMuted, theme.textOnAccent);
 	arrowUpGlyph->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	arrowUpGlyph->setPosition(0, -1);
 
@@ -114,7 +115,8 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	arrowDownShape->setShape(SHAPE::ELLIPSE);
 	arrowDownShape->setStyle(controlStyle);
 	arrowDownShape->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	arrowDownGlyph = new GuiArrow(ARROW::DOWN, 10, 7, theme.textMuted, theme.textOnAccent);
+	arrowDownGlyph = new GuiShape(10, 7);
+	arrowDownGlyph->setArrow(SHAPE::TRIANGLE_DOWN, theme.textMuted, theme.textOnAccent);
 	arrowDownGlyph->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	arrowDownGlyph->setPosition(0, 1);
 

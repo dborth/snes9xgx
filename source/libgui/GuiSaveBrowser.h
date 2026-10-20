@@ -67,8 +67,8 @@ class GuiSaveBrowser : public GuiElement
 		GuiShape * thumbShape;		// shows which rows are on screen; not interactive
 		GuiShape * arrowUpShape;
 		GuiShape * arrowDownShape;
-		GuiArrow * arrowUpGlyph;
-		GuiArrow * arrowDownGlyph;
+		GuiShape * arrowUpGlyph;
+		GuiShape * arrowDownGlyph;
 
 		int trackHeight;
 		void updateThumb();

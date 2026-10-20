@@ -51,8 +51,8 @@ class GuiOptionBrowser : public GuiElement
 		GuiButton * thumbBtn;		// the thumb's hit area: drag it to scroll
 		GuiShape * arrowUpShape;
 		GuiShape * arrowDownShape;
-		GuiArrow * arrowUpGlyph;
-		GuiArrow * arrowDownGlyph;
+		GuiShape * arrowUpGlyph;
+		GuiShape * arrowDownGlyph;
 
 		int rowWidth;
 		int trackHeight;

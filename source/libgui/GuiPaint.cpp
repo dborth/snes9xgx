@@ -217,6 +217,24 @@ const GuiPaint& GuiShapeStyle::forState(SHAPE_STATE s) const
 
 void GuiAddPaintedShape(GuiMesh& mesh, SHAPE shape, const GuiRect& r, const GuiCorners& corners, const GuiPaint& paint)
 {
+	if(shape == SHAPE::TRIANGLE_UP || shape == SHAPE::TRIANGLE_DOWN || shape == SHAPE::TRIANGLE_LEFT || shape == SHAPE::TRIANGLE_RIGHT)
+	{
+		if(paint.hasFill)
+		{
+			const float x = r.x, y = r.y, w = r.w, h = r.h;
+			std::vector<GuiPoint> pts;
+			switch(shape)
+			{
+				case SHAPE::TRIANGLE_UP:   pts = { { x + w * 0.5f, y }, { x + w, y + h }, { x, y + h } }; break;
+				case SHAPE::TRIANGLE_DOWN: pts = { { x, y }, { x + w, y }, { x + w * 0.5f, y + h } }; break;
+				case SHAPE::TRIANGLE_LEFT: pts = { { x, y + h * 0.5f }, { x + w, y }, { x + w, y + h } }; break;
+				default:                   pts = { { x, y }, { x + w, y + h * 0.5f }, { x, y + h } }; break;
+			}
+			mesh.addPolygon(pts, paint.fill);
+		}
+		return;
+	}
+
 	const float half = 0.5f * std::min(r.w, r.h);
 	const GuiCorners outline = shape == SHAPE::ELLIPSE ? GuiCorners(half) : corners;
 
@@ -245,4 +263,9 @@ void GuiAddPaintedShape(GuiMesh& mesh, SHAPE shape, const GuiRect& r, const GuiC
 		else
 			mesh.strokeRoundRect(r, corners, paint.strokeWidth, paint.strokeAlign, paint.strokeFill);
 	}
+}
+
+PixelColor GuiMixColor(PixelColor a, PixelColor b, float t)
+{
+	return mixColor(a, b, clamp01(t));
 }

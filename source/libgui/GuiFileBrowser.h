@@ -12,7 +12,6 @@
 
 class GuiImage;
 class GuiShape;
-class GuiArrow;
 
 #define FILE_PAGESIZE 			9
 
@@ -60,8 +59,8 @@ class GuiFileBrowser : public GuiElement
 		GuiShape * trackShape;
 		GuiShape * arrowUpShape;
 		GuiShape * arrowDownShape;
-		GuiArrow * arrowUpGlyph;
-		GuiArrow * arrowDownGlyph;
+		GuiShape * arrowUpGlyph;
+		GuiShape * arrowDownGlyph;
 		GuiShape * thumbShape;
 
 		GuiImageData * iconFolder;

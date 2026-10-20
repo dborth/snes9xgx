@@ -33,6 +33,9 @@ class GuiShape : public GuiElement
 		void setStyle(const GuiShapeStyle& s);
 		//!Sets one look for every state
 		void setPaint(const GuiPaint& p);
+		//!Makes this a small arrow: a filled triangle pointing the way of `dir` (a SHAPE::TRIANGLE_*), in `rest`,
+		//!and in `lit` while the button it is the icon of is highlighted, held or clicked. Changes instantly.
+		void setArrow(SHAPE dir, PixelColor rest, PixelColor lit);
 		//!Sets how long a change of state takes to blend, in seconds (0 = instant)
 		void setTransition(float seconds);
 		//!Constantly called to draw the shape

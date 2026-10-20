@@ -16,7 +16,11 @@
 //!\ingroup grp_shapes
 enum class SHAPE {
 	RECTANGLE,	//!< Rectangle, with optional rounded corners (see GuiCorners)
-	ELLIPSE		//!< Ellipse inscribed in the rectangle (a circle when it is square)
+	ELLIPSE,	//!< Ellipse inscribed in the rectangle (a circle when it is square)
+	TRIANGLE_UP,	//!< A triangle pointing up, left or right, apex on the middle of one side and base along the opposite side
+	TRIANGLE_DOWN,	//!< (scroll arrows, the tail of a popover). Fill only: no outline or shadow, and corner radii are ignored
+	TRIANGLE_LEFT,
+	TRIANGLE_RIGHT
 };
 
 //!The look of a shape: an optional fill, an optional outline and an optional
@@ -60,6 +64,10 @@ struct GuiPaint {
 	//!\param t Blend amount, clamped to 0..1
 	static GuiPaint mix(const GuiPaint& a, const GuiPaint& b, float t);
 };
+
+//!Blends two colors per channel (alpha included): t = 0 gives a, t = 1 gives b.
+//!\ingroup grp_shapes
+PixelColor GuiMixColor(PixelColor a, PixelColor b, float t);
 
 //!The states a styled shape distinguishes.
 //!\ingroup grp_shapes
