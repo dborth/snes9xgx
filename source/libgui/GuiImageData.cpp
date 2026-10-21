@@ -7,9 +7,11 @@
 #include <png.h>
 #include <setjmp.h>
 #include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <memory>
 
 #include "Gui.h"
-#include "GuiImageDataCache.h"
 
 namespace {
 	uint8_t * scratchBuffer = nullptr;
@@ -97,15 +99,15 @@ void GuiImageData::clear()
 	width = 0;
 	height = 0;
 	ownsTexture = false;
-	cachedView = false;
 	capWidth = 0;
 	capHeight = 0;
 }
 
+//!Read cursor over an in-memory PNG, used as the libpng read callback's I/O pointer.
 struct PngMemoryData
 {
-	const uint8_t * data;
-	size_t offset;
+	const uint8_t * data; //!< Start of the PNG file in memory
+	size_t offset;        //!< Bytes consumed so far
 };
 
 static void ReadPngDataCb(png_structp png_ptr, png_bytep data, png_size_t length)
@@ -395,33 +397,6 @@ bool GuiImageData::loadClipped(const uint8_t * pngData, int boxW, int boxH, floa
 
 bool GuiImageData::decodeImage(const uint8_t * pngData, int * outWidth, int * outHeight, int maxw, int maxh)
 {
-	if(cachedView)
-	{
-		texture = nullptr;
-		width = 0;
-		height = 0;
-		cachedView = false;
-	}
-
-	GuiImageData * cached = (!texture || ownsTexture) ? GuiImageDataCache::tryGet(pngData, maxw, maxh) : nullptr;
-	if(cached && cached != this)
-	{
-		if(ownsTexture && texture)
-			platform->getVideo()->getImageRenderer()->destroyTexture(texture);
-
-		texture = cached->texture;
-		width = cached->width;
-		height = cached->height;
-		ownsTexture = false;
-		cachedView = true;
-		capWidth = 0;
-		capHeight = 0;
-
-		if(outWidth) *outWidth = width;
-		if(outHeight) *outHeight = height;
-		return true;
-	}
-
 	DecodedImage decoded = decodeToRgba(pngData, maxw, maxh);
 	if(!decoded.valid())
 		return false;

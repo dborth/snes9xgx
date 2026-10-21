@@ -12,6 +12,7 @@
 
 //!Decodes compressed image data (PNG) into a platform-native texture created
 //!from it. Currently designed for use only with PNG files.
+//!\ingroup grp_core
 class GuiImageData
 {
 	public:
@@ -61,11 +62,14 @@ class GuiImageData
 		//!\return image height
 		int getHeight() { return height; }
 		//!Sets the scratch buffer that every decode (the PNG-decoding
-		//!constructors, and reload()) will stage its raw, uncompressed pixel
+		//!constructors, reload(), decodeToRgba() and loadClipped()) will stage its raw, uncompressed pixel
 		//!rows into while it runs.
 		//!\param buffer Scratch buffer, owned and sized by the caller
 		//!\param size Size of buffer, in bytes
 		static void setDecodeScratch(void * buffer, unsigned int size);
+		//!\return the mutex guarding the shared decode scratch buffer set
+		//!by setDecodeScratch() - callers decoding from more than one
+		//!thread must hold this for the duration of a decode.
 		static Mutex & scratchLock();
 
 		//!CPU-only decode result from decodeToRgba(): raw RGBA8 pixel data
@@ -110,8 +114,7 @@ class GuiImageData
 		bool loadClipped(const uint8_t * pngData, int boxW, int boxH, float radius, float inset = 0.0f, float offsetX = 0.0f, float offsetY = 0.0f);
 		//!Releases any owned texture and resets this object to the same
 		//!(empty) state as a default-constructed GuiImageData. Useful for
-		//!explicitly freeing GPU memory (eg. an evicted cache entry)
-		//!before the object itself is destroyed.
+		//!explicitly freeing GPU memory before the object itself is destroyed.
 		void clear();
 	protected:
 		void * texture; //!< Attached platform-native texture
@@ -121,7 +124,6 @@ class GuiImageData
 		bool ownsTexture; //!< Whether this object may destroy/replace texture
 		int capWidth; //!< Width texture was allocated to hold, if ownsTexture (0 otherwise)
 		int capHeight; //!< Height texture was allocated to hold, if ownsTexture (0 otherwise)
-		bool cachedView = false; //!< texture is a shared GuiImageDataCache texture we merely borrow; never written to or freed
 		//!Decodes a PNG buffer, reusing the existing owned texture if it's
 		//!already large enough, otherwise (re)allocating one.
 		bool decodeImage(const uint8_t * pngData, int * width, int * height, int maxw, int maxh);
