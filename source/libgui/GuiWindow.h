@@ -6,6 +6,7 @@
 #pragma once
 
 //!Allows GuiElements to be grouped together into a "window"
+//!\ingroup grp_core
 class GuiWindow : public GuiElement
 {
 	public:
@@ -48,8 +49,9 @@ class GuiWindow : public GuiElement
 		void setVisible(bool v);
 		//!Resets the window's state to STATE::DEFAULT
 		void resetState();
-		//!Sets the window's state
+		//!Sets the window state, propagated to every child element
 		//!\param s State
+		//!\param c Controller channel number (-1 for any channel)
 		void setState(STATE s, int c = -1);
 		//!Gets the index of the GuiElement inside the window that is currently selected
 		//!\return index of selected GuiElement
@@ -89,4 +91,6 @@ class GuiWindow : public GuiElement
 		//!Moves the selection within a collected list by on-screen geometry
 		void moveSelectionIn(std::vector<GuiElement*>& list, NAV_DIR d);
 		std::vector<GuiElement*> _elements; //!< Contains all elements within the GuiWindow
+		//!Draws the dimming over a disabled screen: the one place that colour is set
+		void drawWash();
 };

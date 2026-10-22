@@ -278,7 +278,10 @@ void GuiLayout::update(InputController * c)
 {
 	if(!settled)
 		this->layout();
-	GuiWindow::update(c);
+	// A hidden layout is not drawn, so it must not take input either: its buttons would still answer the pointer
+	// (and any press) from where they sit under whatever is showing in their place.
+	if(this->isVisible())
+		GuiWindow::update(c);
 	settled = false;
 }
 
@@ -299,6 +302,8 @@ void GuiLayout::setLayoutSize(int w, int h)
 
 void GuiLayout::collectNavigable(std::vector<GuiElement*>& out)
 {
+	if(!this->isVisible())
+		return;	// nothing in a hidden layout can take the D-pad's selection
 	for(GuiElement* child : _elements)
 		child->collectNavigable(out);
 }

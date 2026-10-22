@@ -111,16 +111,35 @@ void GuiWindow::draw()
 	if(_elements.size() == 0 || !this->isVisible())
 		return;
 
+	// A disabled window (and everything inside it) is washed over, once: the wash goes on after the last of a run of
+	// disabled child windows, before whatever is drawn over them (a dialog opened above a disabled screen)
+	const bool washed = parentElement && state == STATE::DISABLED;
+	bool washPending = false;
 	uint32_t elemSize = _elements.size();
 	for (uint32_t i = 0; i < elemSize; ++i)
 	{
-		_elements.at(i)->draw();
+		GuiElement * e = _elements.at(i);
+		GuiWindow * child = dynamic_cast<GuiWindow *>(e);
+		const bool disabledChild = child && child->getState() == STATE::DISABLED && child->isVisible();
+		if(washPending && !disabledChild)
+		{
+			drawWash();
+			washPending = false;
+		}
+		e->draw();
+		if(disabledChild && !washed)
+			washPending = true;
 	}
+	if(washPending)
+		drawWash();
 
 	this->updateEffects();
+}
 
-	if(parentElement && state == STATE::DISABLED)
-		platform->getVideo()->getImageRenderer()->drawRectangle(0,0,platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight(), (PixelColor){0xbe, 0xca, 0xd5, 0x70});
+//!The one dimming drawn over a disabled screen
+void GuiWindow::drawWash()
+{
+	platform->getVideo()->getImageRenderer()->drawRectangle(0, 0, platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight(), (PixelColor){0xbe, 0xca, 0xd5, 0x70});
 }
 
 void GuiWindow::resetState()
@@ -288,7 +307,7 @@ void GuiWindow::moveSelectionIn(std::vector<GuiElement*>& list, NAV_DIR d)
 		items[i].r.y = (float)list[i]->getTop();
 		items[i].r.w = (float)list[i]->getWidth();
 		items[i].r.h = (float)list[i]->getHeight();
-		items[i].selectable = list[i]->isSelectable() && list[i]->getState() != STATE::DISABLED;
+		items[i].selectable = list[i]->isSelectable() && list[i]->isVisible() && list[i]->getState() != STATE::DISABLED;
 	}
 
 	int next = GuiNavigate(items, current, d);

@@ -28,6 +28,7 @@ struct GuiTheme {
 	PixelColor textOnAccent;	/*!< Text drawn over the accent color. */
 	PixelColor good;			/*!< Positive state (connected, charged). */
 	PixelColor highlight;		/*!< Selected row or list item (a light tint on a light theme). */
+	PixelColor mark;			/*!< What is being edited or pointed at (a control on a controller picture and the line to it). */
 	PixelColor shadow;			/*!< Drop shadow of a resting card; its alpha is the peak opacity. */
 
 	// metrics

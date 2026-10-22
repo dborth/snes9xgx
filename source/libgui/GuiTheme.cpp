@@ -26,6 +26,7 @@ GuiTheme::GuiTheme() :
 	textOnAccent(rgb(30, 20, 5)),
 	good(rgb(63, 208, 176)),
 	highlight(rgb(62, 74, 94)),
+	mark(rgb(255, 150, 40)),
 	shadow(rgb(0, 0, 0, 150)),
 	radius(12.0f),
 	strokeWidth(2.0f),

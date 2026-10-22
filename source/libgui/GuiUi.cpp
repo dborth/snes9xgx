@@ -231,6 +231,13 @@ GuiTextButton& GuiTextButton::size(int w, int h)
 	return *this;
 }
 
+GuiTextButton& GuiTextButton::fontSize(int px)
+{
+	text.fontSize(px);
+	textLit.fontSize(px);
+	return *this;
+}
+
 void GuiTextButton::setLayoutSize(int w, int h)
 {
 	GuiButton::setLayoutSize(w, h);
