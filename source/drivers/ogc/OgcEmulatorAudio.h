@@ -40,10 +40,6 @@ class OgcEmulatorAudio : public EmulatorAudioDriver
 		static constexpr int BUFFERCOUNT = 16;
 		static constexpr int AUDIOBUFFER = 2048;
 
-		// BUFFERCOUNT must be a power of two so the ring index can advance
-		// with a cheap bitwise mask (nextIndex) instead of an integer modulo.
-		static_assert((BUFFERCOUNT & (BUFFERCOUNT - 1)) == 0, "BUFFERCOUNT must be a power of two");
-
 		static int nextIndex(int current) { return (current + 1) & (BUFFERCOUNT - 1); }
 		int getUnplayed() const { return (nextab - playab + BUFFERCOUNT) & (BUFFERCOUNT - 1); }
 

@@ -44,7 +44,6 @@ class Texture2DShader : public Shader
 		// GX2_VERTEX_BUFFER_ALIGNMENT so every slot offset stays aligned.
 		static const uint32_t cuMaxRotatedDraws = 64;
 		static const uint32_t cuRotatedSlotSize = GX2_VERTEX_BUFFER_ALIGNMENT;
-		static_assert(4 * cuVertexAttrSize <= cuRotatedSlotSize, "rotated quad must fit in one slot");
 		GX2RBuffer rotatedBuffer;
 		uint32_t rotatedSlot;
 

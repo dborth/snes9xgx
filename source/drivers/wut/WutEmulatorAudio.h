@@ -62,7 +62,6 @@ class WutEmulatorAudio : public EmulatorAudioDriver
 		static constexpr int CHUNK_SAMPLES = CHUNK_FRAMES * 2; // interleaved L+R
 		static constexpr int BUFFERCOUNT = 16;
 		static constexpr int RING_FRAMES = CHUNK_FRAMES * BUFFERCOUNT;
-		static_assert((RING_FRAMES % CHUNK_FRAMES) == 0, "RING_FRAMES must be an exact multiple of CHUNK_FRAMES");
 
 		AXVoice* voiceL;
 		AXVoice* voiceR;

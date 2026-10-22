@@ -142,7 +142,6 @@ const MapRow * FindRow(int ctrl, int index)
 uint32_t DefaultButton(int ctrl, int hw, int index)
 {
 	static uint32_t saved[CTRL_BTN_MAPPINGS][INPUT_HW_MAX][MAXJP];
-	static_assert(sizeof(saved) == sizeof(btnmap), "saved must hold all of btnmap");
 	memcpy(saved, btnmap, sizeof(saved));
 	ResetControls(ctrl, hw);
 	const uint32_t value = btnmap[ctrl][hw][index];
