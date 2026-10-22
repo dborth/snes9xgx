@@ -16,6 +16,7 @@
 #include "mappingui.h"
 #include "mappingmodel.h"
 #include "mappingchooser.h"
+#include "controllerorder.h"
 #include "controllerview.h"
 #include "menupopover.h"
 #include "menustyle.h"
@@ -28,9 +29,11 @@ extern GuiTextTranslator * textTranslator;
 
 namespace {
 
-// What is being mapped, kept while the app runs so Button Mappings opens where it was left
+// What is being mapped. Coming from Game Settings starts from the device the game is set to and the controller in
+// use; coming back from General Mappings keeps what was picked.
 int mapSnesCtrl = CTRL_PAD;
 int mapHardware = -1;
+bool keepSelection = false;
 
 const int kSideW = 172;			// a column of rows beside the drawing
 const int kRowGap = 1;
@@ -73,16 +76,35 @@ std::vector<int> HardwareList(int ctrl)
 	return v;
 }
 
-// The hardware to start on: the one in use, else the pad in hand
+// The device the game is set to, as one of the four this screen lists (the two- and four-player settings and the
+// mouse in port 2 or both ports use the same buttons as the single ones)
+int KindForSetting(int setting)
+{
+	switch(setting)
+	{
+		case CTRL_SCOPE: return CTRL_SCOPE;
+		case CTRL_JUST: return CTRL_JUST;
+		case CTRL_MOUSE:
+		case CTRL_MOUSE_PORT2:
+		case CTRL_MOUSE_BOTH_PORTS: return CTRL_MOUSE;
+		default: return CTRL_PAD;
+	}
+}
+
+// The hardware to start on: the controller in use on channel 0, chosen the way the controller strip chooses its icon
+// (see controllerorder.h)
 int DefaultHardware(const std::vector<int>& list)
 {
 	const InputPadData * pad = PadData();
-	static const int priority[] = { INPUT_HW_DS4, INPUT_HW_XBOX360, INPUT_HW_GENERIC_USB, INPUT_HW_DRC,
-		INPUT_HW_WUPC, INPUT_HW_CLASSIC, INPUT_HW_NUNCHUK, INPUT_HW_WIIMOTE };
 	if(pad)
-		for(size_t i = 0; i < sizeof(priority) / sizeof(priority[0]); i++)
-			if(Contains(list, priority[i]) && pad->hw_connected[priority[i]])
-				return priority[i];
+	{
+		const int hw = ControllerOrder::InUse(*pad);
+		if(Contains(list, hw))
+			return hw;
+		// not one this device can use (a USB or Classic controller pointing the Super Scope): the Wiimote it rides on
+		if(Contains(list, INPUT_HW_WIIMOTE) && pad->hw_connected[INPUT_HW_WIIMOTE])
+			return INPUT_HW_WIIMOTE;
+	}
 	return list[0];
 }
 
@@ -441,6 +463,12 @@ std::vector<PickerItem> HardwareItems(const std::vector<int>& list)
 
 int MappingScreen()
 {
+	if(!keepSelection)
+	{
+		mapSnesCtrl = KindForSetting(EmuSettings.controller);
+		mapHardware = -1;
+	}
+	keepSelection = false;
 	ResolveHardware();
 
 	while(true)
@@ -458,7 +486,10 @@ int MappingScreen()
 				return MENU_GAMESETTINGS;
 
 			if(view.generalButton().getState() == STATE::CLICKED)
+			{
+				keepSelection = true;
 				return MENU_GAMESETTINGS_MAPPINGS_GENERAL;
+			}
 
 			if(view.resetButton().getState() == STATE::CLICKED)
 			{
