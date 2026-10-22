@@ -1211,8 +1211,6 @@ void SPC_DSP::init( void* ram_64k )
 
 void SPC_DSP::soft_reset_common()
 {
-	require( m.ram ); // init() must have been called already
-	
 	m.noise              = 0x4000;
 	m.echo_hist_pos      = m.echo_hist;
 	m.every_other_sample = 1;

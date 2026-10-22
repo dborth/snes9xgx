@@ -28,8 +28,6 @@ SPC_Filter::SPC_Filter()
 
 void SPC_Filter::run( short* io, int count )
 {
-	require( (count & 1) == 0 ); // must be even
-	
 	int const gain = this->gain;
 	int const bass = this->bass;
 	chan_t* c = &ch [2];
