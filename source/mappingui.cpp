@@ -11,11 +11,13 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <string.h>
 
 #include "libgui/Gui.h"
 #include "drivers/InputController.h"
 #include "mappingui.h"
 #include "mappingmodel.h"
+#include "mappingchooser.h"
 #include "controllerview.h"
 #include "menupopover.h"
 #include "menustyle.h"
@@ -118,6 +120,34 @@ GLYPH GlyphFor(MAP_ICON icon, const char *& letter)
 		case MAP_ICON::NONE: break;
 	}
 	return GLYPH::BUTTON;
+}
+
+// The row of a device that has this btnmap index
+const MapRow * FindRow(int ctrl, int index)
+{
+	const MapProfile& p = MappingProfile(ctrl);
+	for(int side = 0; side < 2; side++)
+	{
+		const std::vector<MapGroup>& groups = side ? p.right : p.left;
+		for(size_t g = 0; g < groups.size(); g++)
+			for(size_t i = 0; i < groups[g].rows.size(); i++)
+				if(groups[g].rows[i].index == index)
+					return &groups[g].rows[i];
+	}
+	return nullptr;
+}
+
+// What a row uses by default. Defaults are only set by ResetControls (all of a controller's rows at once, and for the
+// Wii U Pro controller and the GamePad together), so this has it set them and puts everything back.
+uint32_t DefaultButton(int ctrl, int hw, int index)
+{
+	static uint32_t saved[CTRL_BTN_MAPPINGS][INPUT_HW_MAX][MAXJP];
+	static_assert(sizeof(saved) == sizeof(btnmap), "saved must hold all of btnmap");
+	memcpy(saved, btnmap, sizeof(saved));
+	ResetControls(ctrl, hw);
+	const uint32_t value = btnmap[ctrl][hw][index];
+	memcpy(btnmap, saved, sizeof(saved));
+	return value;
 }
 
 // What a row says it is mapped to
@@ -355,9 +385,10 @@ MappingView::MappingView(int ctrl, int hw) :
 
 GuiPopover::Anchor MappingView::anchorForRow(int index)
 {
+	// the panel lines up with the side margin of the column the row is in, so it leaves the other side of the screen clear
 	for(size_t i = 0; i < rows.size(); i++)
 		if(rows[i].first == index)
-			return GuiPopover::Anchor(*rows[i].second);
+			return GuiPopover::Anchor(*rows[i].second, rowOnLeft[i] ? GuiPopover::Anchor::LEFT_MARGIN : GuiPopover::Anchor::RIGHT_MARGIN);
 	return GuiPopover::Anchor();
 }
 
@@ -436,8 +467,14 @@ int MappingScreen()
 			int row;
 			if(view.takeRow(row))
 			{
+				// a popover beside the row, over this screen, which stays drawn (dimmed) where it is
+				const GuiPopover::Anchor anchor = view.anchorForRow(row);
+				const MapRow * mapRow = FindRow(mapSnesCtrl, row);
 				uint32_t pressed = 0;
-				const bool chosen = MenuListenForButton(mapHardware, pressed);
+				screen.setEnabled(false);
+				const bool chosen = MappingChoose(mapRow ? mapRow->name : "", mapHardware, btnmap[mapSnesCtrl][mapHardware][row],
+					DefaultButton(mapSnesCtrl, mapHardware, row), anchor, pressed);
+				screen.setEnabled(true);
 				if(chosen)
 					btnmap[mapSnesCtrl][mapHardware][row] = pressed;
 				MenuMainWindow().changeFocus(&screen.window());

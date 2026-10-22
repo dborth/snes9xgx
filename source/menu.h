@@ -29,9 +29,6 @@ void ChangeLanguage();
 GuiWindow& MenuMainWindow();
 bool MenuUpdateGui();	//!< Runs one frame of the menu. False when the application is exiting.
 bool MenuConfirm(const char * title, const char * msg, const char * yes, const char * no);	//!< true if `yes` was chosen
-//!The "press a button" prompt for a piece of hardware (an INPUT_HW_* value). True when a choice was made: `pressed` is the
-//!button, or 0 to clear the mapping. False if it was cancelled or the application is exiting.
-bool MenuListenForButton(int hw, uint32_t & pressed);
 
 extern uint8_t * bg_music;
 extern uint32_t bg_music_size;

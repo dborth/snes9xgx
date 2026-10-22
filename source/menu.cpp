@@ -104,7 +104,6 @@ static char progressMsg[201];
 static int progressDone = 0;
 static int progressTotal = 0;
 static void (*progressCancelFn)(void) = nullptr; // protected by ProgressSync().mutex - non-null means the overlay offers a Cancel button
-static bool buttonMappingCancelled = false;
 
 static ThreadId mainThreadId;
 
@@ -2485,117 +2484,6 @@ static int MenuGameCheats()
 }
 
 /****************************************************************************
- * ButtonMappingWindow
- ***************************************************************************/
-static uint32_t ButtonMappingWindow(int hw)
-{
-	GuiWindow promptWindow(448,288);
-	promptWindow.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	promptWindow.setPosition(0, -10);
-
-	MenuDialogShape dialogBoxImg(MENU_DIALOG_W, MENU_DIALOG_H, MENU_DIALOG_HEADER_H);
-
-	GuiText titleTxt("Button Mapping", 26, (PixelColor){255, 255, 255, 255});
-	titleTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	titleTxt.setPosition(0, MENU_DIALOG_TITLE_Y);
-
-	char msg[200];
-
-	switch(hw)
-	{
-		case INPUT_HW_GAMECUBE:
-			sprintf(msg, "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping.");
-			break;
-		case INPUT_HW_WIIMOTE:
-			sprintf(msg, "Press any button on the Wiimote now. Press Home to clear the existing mapping.");
-			break;
-		case INPUT_HW_CLASSIC:
-			sprintf(msg, "Press any button on the Classic Controller now. Press Home to clear the existing mapping.");
-			break;
-		case INPUT_HW_WUPC:
-			sprintf(msg, "Press any button on the Wii U Pro Controller now. Press Home to clear the existing mapping.");
-			break;
-		case INPUT_HW_DRC:
-			sprintf(msg, "Press any button on the Wii U GamePad now. Press Home to clear the existing mapping.");
-			break;
-		case INPUT_HW_NUNCHUK:
-			sprintf(msg, "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping.");
-			break;
-		case INPUT_HW_DS4:
-			sprintf(msg, "Press any button on the DualShock 4 now. Press PS to clear the existing mapping.");
-			break;
-		default:
-			sprintf(msg, "Press any button to map. Press Home to clear.");
-			break;
-	}
-
-	GuiText msgTxt(msg, 26, (PixelColor){0, 0, 0, 255});
-	msgTxt.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	msgTxt.setPosition(0,-20);
-	msgTxt.setWrap(true, 430);
-
-	promptWindow.append(&dialogBoxImg);
-	promptWindow.append(&titleTxt);
-	promptWindow.append(&msgTxt);
-
-	menu->mainWindow.setState(STATE::DISABLED);
-	menu->mainWindow.appendWithAutoRemove(&promptWindow);
-	menu->mainWindow.changeFocus(&promptWindow);
-
-	uint32_t pressed = 0;
-	buttonMappingCancelled = false;
-
-	while(pressed == 0 && !buttonMappingCancelled)
-	{
-		if(!UpdateGui())
-		{
-			buttonMappingCancelled = true;
-			return 0;
-		}
-
-		if(!controller[0]) continue;
-
-		const InputPadData& pad = controller[0]->getPadData();
-
-		// Listen strictly to the specific hardware profile being mapped
-		pressed = pad.hw_buttons_d[hw];
-
-		// C-Stick clear for GameCube specifically
-		if(hw == INPUT_HW_GAMECUBE)
-		{
-			if(pad.hw_substickX[INPUT_HW_GAMECUBE] < -0.55f || pad.hw_substickX[INPUT_HW_GAMECUBE] > 0.55f ||
-			   pad.hw_substickY[INPUT_HW_GAMECUBE] < -0.55f || pad.hw_substickY[INPUT_HW_GAMECUBE] > 0.55f)
-			{
-				pressed = INPUT_BTN_HOME;
-			}
-		}
-
-		// Normalize Home button press to clear mapping
-		if (pressed & INPUT_BTN_HOME) {
-			pressed = INPUT_BTN_HOME;
-		}
-
-		// If no button was pressed on the target hardware, check if the user
-		// hit the generic "Cancel" button (B/1) on ANY controller to back out.
-		if(pressed == 0)
-		{
-			if(controller[0]->isSecondaryPressed()) {
-				buttonMappingCancelled = true;
-			}
-		}
-	}
-
-	// INPUT_BTN_HOME explicitly clears the mapped button
-	if(pressed == INPUT_BTN_HOME) {
-		pressed = 0;
-	}
-
-	menu->mainWindow.setState(STATE::DEFAULT);
-
-	return pressed;
-}
-
-/****************************************************************************
  * What screens built outside this file need of the menu (see menu.h)
  ***************************************************************************/
 GuiWindow& MenuMainWindow()
@@ -2611,12 +2499,6 @@ bool MenuUpdateGui()
 bool MenuConfirm(const char * title, const char * msg, const char * yes, const char * no)
 {
 	return WindowPrompt(title, msg, yes, no) == 1;
-}
-
-bool MenuListenForButton(int hw, uint32_t & pressed)
-{
-	pressed = ButtonMappingWindow(hw);
-	return !buttonMappingCancelled;
 }
 
 /****************************************************************************
