@@ -2745,7 +2745,7 @@ static void ScreenPositionWindow()
 	delete(settingText);
 }
 
-static int MenuSettingsOtherMappings()
+static int MenuSettingsGeneralMappings()
 {
 	int selection = MENU_NONE;
 	int ret;
@@ -2787,7 +2787,7 @@ static int MenuSettingsOtherMappings()
 
 	GuiOptionBrowser optionBrowser(MENU_OPTIONS_W, MENU_OPTIONS_H, &options);
 	optionBrowser.setPosition(0, MENU_LIST_Y);
-	optionBrowser.setCol2Position(200);
+	optionBrowser.setCol2Position(240);
 	optionBrowser.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 
 	GuiWindow w(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
@@ -4347,8 +4347,8 @@ void MainMenu (int selection)
 			case MENU_SETTINGS_NETWORK:
 				currentMenu = MenuSettingsNetwork();
 				break;
-			case MENU_GAMESETTINGS_MAPPINGS_OTHER:
-				currentMenu = MenuSettingsOtherMappings();
+			case MENU_GAMESETTINGS_MAPPINGS_GENERAL:
+				currentMenu = MenuSettingsGeneralMappings();
 				break;
 			default: // unrecognized menu
 				currentMenu = MenuGameSelection();

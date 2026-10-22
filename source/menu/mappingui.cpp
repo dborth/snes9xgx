@@ -460,7 +460,7 @@ int MappingScreen()
 				return MENU_GAMESETTINGS;
 
 			if(view.generalButton().getState() == STATE::CLICKED)
-				return MENU_GAMESETTINGS_MAPPINGS_OTHER;
+				return MENU_GAMESETTINGS_MAPPINGS_GENERAL;
 
 			if(view.resetButton().getState() == STATE::CLICKED)
 			{
