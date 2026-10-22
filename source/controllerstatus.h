@@ -113,12 +113,16 @@ class ControllerStatus
 			else
 			{
 				const InputUsbStatus usb = platform->getInput()->getUsbStatus();
-				left.kind = UsbKind(usb.device);
+				int n;
+				const UsbProfile * profiles = UsbProfiles(n);
+				for(int k = 0; k < n; k++)
+					if(profiles[k].hw == usb.profile)
+						left.kind = profiles[k].kind;
 				left.replug = usb.replugRequired;
 				// clicking it maps the channel it is playing on
 				for(int i = 0; i < SLOTS && left.kind != NONE; i++)
 				{
-					if(controller[i]->getPadData().usb_device == usb.device)
+					if(controller[i]->getPadData().hw_connected[usb.profile])
 					{
 						left.channel = i;
 						break;
@@ -143,15 +147,18 @@ class ControllerStatus
 				else if(pad.hw_connected[INPUT_HW_CLASSIC]) slot.kind = CLASSIC;
 				else if(pad.hw_connected[INPUT_HW_NUNCHUK]) slot.kind = NUNCHUK;
 				else if(pad.hw_connected[INPUT_HW_WIIMOTE]) slot.kind = WIIMOTE;
-				else if(pad.gc_native) slot.kind = GAMECUBE; // not the USB adapters that pose as one
+				else if(pad.hw_connected[INPUT_HW_GAMECUBE]) slot.kind = GAMECUBE;
 
 				// Every Wiimote-based controller reports the battery of the Wiimote it rides on
 				if(slot.kind != NONE && slot.kind != GAMECUBE)
 					slot.segs = Segments(pad.hw_battery_level[INPUT_HW_WIIMOTE]);
 
 				// a USB controller playing on this channel
-				if(slot.kind == NONE)
-					slot.kind = UsbKind(pad.usb_device);
+				int n;
+				const UsbProfile * profiles = UsbProfiles(n);
+				for(int k = 0; k < n && slot.kind == NONE; k++)
+					if(pad.hw_connected[profiles[k].hw])
+						slot.kind = profiles[k].kind;
 
 				// P1 shows the left slot's controller rather than nothing
 				if(slot.kind == NONE && i == 0)
@@ -185,15 +192,17 @@ class ControllerStatus
 			int channel = 0;		// only used by the left slot
 		};
 
-		static Kind UsbKind(InputUsbDevice d)
+		//!The USB controllers, in the order the strip prefers them
+		struct UsbProfile { GuiHardwareProfile hw; Kind kind; };
+		static const UsbProfile * UsbProfiles(int & count)
 		{
-			switch(d)
-			{
-				case INPUT_USB_DS4: return DUALSHOCK4;
-				case INPUT_USB_XBOX360: return XBOX_360;
-				case INPUT_USB_GENERIC: return USB_PAD;
-				default: return NONE;
-			}
+			static const UsbProfile profiles[] = {
+				{ INPUT_HW_DS4, DUALSHOCK4 },
+				{ INPUT_HW_XBOX360, XBOX_360 },
+				{ INPUT_HW_GENERIC_USB, USB_PAD },
+			};
+			count = sizeof(profiles) / sizeof(profiles[0]);
+			return profiles;
 		}
 		static const int HIDDEN = -2;			// Badge::key of a badge that is off screen
 

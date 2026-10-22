@@ -99,12 +99,12 @@ InputUsbStatus OgcInputDriver::getUsbStatus() {
 		genReplug |= (gen[i] == 'p');
 	}
 
-	if (ds4 == 'c') status.device = INPUT_USB_DS4;
-	else if (xbox == 'c') status.device = INPUT_USB_XBOX360;
-	else if (genConnected) status.device = INPUT_USB_GENERIC;
-	else if (ds4 == 'p') { status.device = INPUT_USB_DS4; status.replugRequired = true; }
-	else if (xbox == 'p') { status.device = INPUT_USB_XBOX360; status.replugRequired = true; }
-	else if (genReplug) { status.device = INPUT_USB_GENERIC; status.replugRequired = true; }
+	if (ds4 == 'c') status.profile = INPUT_HW_DS4;
+	else if (xbox == 'c') status.profile = INPUT_HW_XBOX360;
+	else if (genConnected) status.profile = INPUT_HW_GENERIC_USB;
+	else if (ds4 == 'p') { status.profile = INPUT_HW_DS4; status.replugRequired = true; }
+	else if (xbox == 'p') { status.profile = INPUT_HW_XBOX360; status.replugRequired = true; }
+	else if (genReplug) { status.profile = INPUT_HW_GENERIC_USB; status.replugRequired = true; }
 	#endif
 	return status;
 }
@@ -325,7 +325,6 @@ void OgcInputDriver::update() {
 		bool gamecubeActive = (activeGamecubePads & (1 << i)) != 0;
 
 		if(gamecubeActive) {
-			padData.gc_native = true;
 			padData.hw_connected[INPUT_HW_GAMECUBE] = true;
 			padData.hw_buttons_d[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsDown(i));
 			padData.hw_buttons_h[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsHeld(i));
@@ -447,14 +446,6 @@ void OgcInputDriver::update() {
 				controller[i]->setSideways(false);
 			}
 		}
-
-		#ifdef HW_RVL
-		// Which USB controller, if any, is on this channel. Generic adapters can't tell their
-		// ports apart, so they only claim channel 0.
-		if (DS4_Connected(i)) padData.usb_device = INPUT_USB_DS4;
-		else if (XBOX360_Connected(i)) padData.usb_device = INPUT_USB_XBOX360;
-		else if (i == 0 && (retrodeActive || hornetActive || mayflashActive)) padData.usb_device = INPUT_USB_GENERIC;
-		#endif
 
 		// Process Wii U Gamepad
 		if(i == 0 && WiiDRC_Inited() && WiiDRC_Connected()) {
