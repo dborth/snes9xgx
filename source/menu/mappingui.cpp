@@ -233,8 +233,8 @@ GuiCard& MappingView::bindingRow(const MapRow& r, bool onLeft, int width)
 	const int index = r.index;
 	const char * name = r.name;
 
-	GuiLabel& value = ui.label().fontSize(UI_FONT_SMALL + 1).accent().bind([ctrl, hw, index]{ return ValueText(ctrl, hw, index); });
-	GuiLabel& label = ui.label(Tr(name).c_str()).fontSize(UI_FONT_SMALL + 2);
+	GuiLabel& value = ui.label().fontSize(UI_FONT_SMALL + 1).nudgeY(2).accent().bind([ctrl, hw, index]{ return ValueText(ctrl, hw, index); });
+	GuiLabel& label = ui.label(Tr(name).c_str()).fontSize(UI_FONT_SMALL + 2).nudgeY(2);
 
 	GuiLayout& content = ui.row().size(width - 2 * padX, 0).gap(6).align(LAYOUT_ALIGN::CENTRE);
 	if(r.icon != MAP_ICON::NONE)
