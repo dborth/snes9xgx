@@ -362,10 +362,10 @@ MappingView::MappingView(int ctrl, int hw) :
 	body.add(panel);
 
 	// ---- footer: Back and Reset at the left (the logo is at the right)
-	GuiTextButton& back = ui.button(Tr("Go Back").c_str()).size(150, 44).fontSize(20).style(MenuBarButtonStyle());
+	GuiTextButton& back = ui.button(Tr("Go Back").c_str()).size(150, 44).fontSize(20).style(MenuBarButtonStyle()).litTextColor(MenuPaletteCurrent().text);
 	back.setTrigger(1, &cancel);
 	backBtn = &back;
-	GuiTextButton& reset = ui.button(Tr("Reset").c_str()).size(120, 44).fontSize(20).style(MenuBarButtonStyle())
+	GuiTextButton& reset = ui.button(Tr("Reset").c_str()).size(120, 44).fontSize(20).style(MenuBarButtonStyle()).litTextColor(MenuPaletteCurrent().text)
 		.onFocus([this]{ status = "A puts these buttons back to their defaults"; });
 	resetBtn = &reset;
 	GuiLayout& footer = ui.row().size(sw, MENU_BAR_BOTTOM_H).pad(margin, 0).gap(14).align(LAYOUT_ALIGN::CENTRE)

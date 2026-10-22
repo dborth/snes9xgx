@@ -25,7 +25,7 @@ GuiShape& MenuPopover_Divider(UiScope& ui, int w)
 GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& title, bool marked, bool withDotSlot)
 {
 	const int padX = 10, dotSlot = withDotSlot ? 14 : 0;
-	GuiLabel& name = ui.label(title.c_str()).fontSize(title.size() > 18 ? 14 : 16);
+	GuiLabel& name = ui.label(title.c_str()).fontSize(16);
 	name.setMaxWidth(width - 2 * padX - (withDotSlot ? dotSlot + 8 : 0));
 	GuiLayout& dotBox = ui.row().size(dotSlot, dotSlot).align(LAYOUT_ALIGN::CENTRE);
 	if(marked)

@@ -178,6 +178,27 @@ static inline void MenuApplyTheme()
 	t.shadowBlur = 14.0f;
 }
 
+//!The highlighted look shared by the button styles: a light, blue-tinged face, an accent outline
+//!and a pale glow that reads on the chrome as well as on the page. Labels stay dark on it.
+static inline GuiPaint MenuButtonLitPaint()
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	return GuiPaint()
+		.gradient(p.surfaceRaised, MenuMix(p.surfaceRaised, p.accentTint, 0.9f))
+		.stroke(3.0f, p.accent)
+		.glow(14.0f, p.glow, 1.0f);
+}
+
+//!The pressed look shared by the button styles
+static inline GuiPaint MenuButtonPressedPaint()
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	return GuiPaint()
+		.gradient(MenuMix(p.accentTint, p.outlineStrong, 0.25f), MenuMix(p.accentTint, p.outlineStrong, 0.5f))
+		.stroke(2.0f, p.chromeDark)
+		.shadow(4.0f, MenuRGBA(0, 0, 0, 80), 0.0f, 1.0f);
+}
+
 //!Resting, highlighted and pressed looks shared by the long and large buttons.
 //!Highlight: warmer face, accent outline and a pale glow that reads on the chrome
 //!as well as on the page.
@@ -190,17 +211,7 @@ static inline GuiShapeStyle MenuButtonStyle()
 		.stroke(2.0f, p.chromeDark)
 		.shadow(8.0f, MenuRGBA(0, 0, 0, 100), 0.0f, 2.0f);
 
-	GuiPaint lit = GuiPaint()
-		.gradient(p.surfaceRaised, MenuMix(p.surfaceRaised, p.accentTint, 0.9f))
-		.stroke(3.0f, p.accent)
-		.glow(14.0f, p.glow, 1.0f);
-
-	GuiPaint pressed = GuiPaint()
-		.gradient(MenuMix(p.accentTint, p.outlineStrong, 0.25f), MenuMix(p.accentTint, p.outlineStrong, 0.5f))
-		.stroke(2.0f, p.chromeDark)
-		.shadow(4.0f, MenuRGBA(0, 0, 0, 80), 0.0f, 1.0f);
-
-	return GuiShapeStyle(rest).onFocus(lit).onPress(pressed);
+	return GuiShapeStyle(rest).onFocus(MenuButtonLitPaint()).onPress(MenuButtonPressedPaint());
 }
 
 //!The header bar: light at the top darkening downward, a fine light edge and a soft
@@ -295,7 +306,8 @@ enum {
 };
 
 //!The one button look for the controller screens (and the bars): white and outlined at rest like the home
-//!screen's, a dark face with a white outline and a glow when highlighted (the label turns white with it).
+//!screen's, and the same light blue-tinged face, accent outline and glow as every other button when highlighted
+//!(the label stays dark; see GuiTextButton::litTextColor).
 //!`marked` outlines a resting button in the accent color: the choice a control has now.
 static inline GuiShapeStyle MenuBarButtonStyle(bool marked = false)
 {
@@ -306,16 +318,7 @@ static inline GuiShapeStyle MenuBarButtonStyle(bool marked = false)
 		.stroke(marked ? 3.5f : 2.0f, marked ? p.accent : p.chromeDark)
 		.shadow(6.0f, MenuRGBA(0, 0, 0, 110), 0.0f, 2.0f);
 
-	GuiPaint lit = GuiPaint()
-		.gradient(p.accent, p.accentDark)
-		.stroke(2.5f, p.surfaceRaised)
-		.glow(12.0f, p.glow, 1.0f);
-
-	GuiPaint pressed = GuiPaint()
-		.gradient(p.accentDark, p.accentDark)
-		.stroke(2.0f, p.outlineStrong);
-
-	return GuiShapeStyle(rest).onFocus(lit).onPress(pressed);
+	return GuiShapeStyle(rest).onFocus(MenuButtonLitPaint()).onPress(MenuButtonPressedPaint());
 }
 
 //!The one card behind a page's content: opaque, so the game picture never shows through the controls
