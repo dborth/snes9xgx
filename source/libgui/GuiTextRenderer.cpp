@@ -1,6 +1,6 @@
 /****************************************************************************
  * libgui
- * Daryl Borth 2009-2026
+ * Daryl Borth 2026
  * GuiTextRenderer.cpp
  ***************************************************************************/
 
@@ -74,7 +74,7 @@ GuiTextRenderer::GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, 
 	++metricsGeneration;
 	ftLibrary = createFreeTypeLibrary();
 	FT_New_Memory_Face(ftLibrary, (FT_Byte*)fontBuffer, bufferSize, 0, &ftFace);
-	ftKerningEnabled = FT_HAS_KERNING(ftFace);
+	ftKerningEnabled = ftFace && FT_HAS_KERNING(ftFace);
 }
 
 GuiTextRenderer::~GuiTextRenderer() {
@@ -323,6 +323,12 @@ uint16_t GuiTextRenderer::getHeight(const wchar_t* text) {
 	FontOffset offset;
 	getOffset(text, &offset);
 	return offset.max - offset.min;
+}
+
+uint16_t GuiTextRenderer::getLineHeight() {
+	const int ascender = ToDesignPixels(ftFace->size->metrics.ascender >> 6, uiScale);
+	const int descender = ToDesignPixels(ftFace->size->metrics.descender >> 6, uiScale);
+	return ascender - descender; // the descender is negative
 }
 
 // --- Drawing Pipeline ---

@@ -16,10 +16,14 @@ GuiGlyph::GuiGlyph(GLYPH k, const char * letter) : kind(k), text(nullptr), meshF
 	const bool takesLetter = kind == GLYPH::BUTTON || kind == GLYPH::BUMPER || kind == GLYPH::STICK;
 	if(takesLetter && letter && *letter)
 	{
-		const int px = (int)strlen(letter) > 1 ? 11 : 14;
-		text = new GuiText(letter, px, GuiTheme::current().background);
+		const int px = (int)strlen(letter) > 1 ? 10 : 13;
+		text = new GuiText(letter, px, GuiTheme::current().textOnAccent);
 		text->setParent(this);
 		text->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+		// capitals and digits have no descenders, so the font's line box centers them high; this puts the same
+		// padding above the letter as below it
+		// (the bumper pill is two pixels shorter than the round glyphs, so its single letter takes one less)
+		text->setNudgeY(kind == GLYPH::BUMPER && px >= 13 ? 1 : 2);
 	}
 }
 

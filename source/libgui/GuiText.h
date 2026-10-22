@@ -66,6 +66,10 @@ class GuiText : public GuiElement
 	//!\param hor Horizontal alignment (LEFT, RIGHT, CENTRE)
 	//!\param vert Vertical alignment (TOP, BOTTOM, MIDDLE)
 		void setAlignment(ALIGN_H hor, ALIGN_V vert);
+		//!Moves the drawn text down (or up, if negative) by this many design pixels, after it is
+		//!placed. The font's line box has more room below the baseline than above the capitals,
+		//!so capitals centered in a button read as sitting high; this evens the padding.
+		void setNudgeY(int n) { nudgeY = n; }
 		//!Updates the text to the selected language
 		void resetText();
 		//!Constantly called to draw the text
@@ -85,6 +89,7 @@ class GuiText : public GuiElement
 		uint32_t textScrollLastTick = 0; //!< Frame timer value at the last scroll step
 		uint16_t style; //!< GuiTextRenderer style attributes
 		bool wrap; //!< Wrapping toggle
+		int nudgeY = 0; //!< Extra vertical offset when drawing, in design pixels
 
 		// What measuring the text cost, kept so a layout pass that asks for the size every frame costs
 		// nothing. Measured at `size`, and valid while the text, the size and the font are unchanged.

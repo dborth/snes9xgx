@@ -47,6 +47,8 @@ class GuiLabel : public GuiText
 		GuiLabel& fontSize(int px);
 		//!Sets the text color
 		GuiLabel& textColor(PixelColor c);
+		//!Moves the text down by this many design pixels (negative: up); see GuiText::setNudgeY
+		GuiLabel& nudgeY(int n) { setNudgeY(n); return *this; }
 		//!Uses the theme's quiet text color
 		GuiLabel& muted();
 		//!Uses the theme's accent color
@@ -98,6 +100,8 @@ class GuiTextButton : public GuiButton
 		GuiTextButton& style(const GuiShapeStyle& s);
 		//!Squarer corners instead of a capsule
 		GuiTextButton& rounded(float radius);
+		//!Moves the label down by this many design pixels (negative: up), at rest and highlighted
+		GuiTextButton& textNudge(int n) { text.setNudgeY(n); textLit.setNudgeY(n); return *this; }
 		//!The text color while the button is highlighted (default: the theme's text-on-accent, for a dark highlight; a light highlight needs dark text)
 		GuiTextButton& litTextColor(PixelColor c) { textLit.textColor(c); return *this; }
 		//!Disables or enables the button (a disabled button cannot be selected or clicked)

@@ -196,7 +196,7 @@ void GuiText::measure()
 
 	fontSystem->setPixelSize(size);
 	measuredW = fontSystem->getWidth(text);
-	measuredH = fontSystem->getHeight(text);
+	measuredH = fontSystem->getLineHeight(); // a line's height, not the height of these glyphs
 	measuredSize = size;
 	measuredGen = GuiTextRenderer::getMetricsGeneration();
 }
@@ -388,7 +388,7 @@ void GuiText::draw()
 
 	if(maxWidth == 0)
 	{
-		fontSystem->drawText(this->getLeft(), this->getTop(), text, c, style);
+		fontSystem->drawText(this->getLeft(), this->getTop() + nudgeY, text, c, style);
 		this->updateEffects();
 		return;
 	}
@@ -450,7 +450,7 @@ void GuiText::draw()
 			voffset = (lineheight >> 1) * (1-textDynNum);
 
 		int left = this->getLeft();
-		int top  = this->getTop() + voffset;
+		int top  = this->getTop() + voffset + nudgeY;
 
 		for(int i=0; i < textDynNum; ++i)
 			fontSystem->drawText(left, top+i*lineheight, textDyn[i], c, style);
@@ -487,7 +487,7 @@ void GuiText::draw()
 				}
 			}
 		}
-		fontSystem->drawText(this->getLeft(), this->getTop(), textDyn[0], c, style);
+		fontSystem->drawText(this->getLeft(), this->getTop() + nudgeY, textDyn[0], c, style);
 	}
 	this->updateEffects();
 }
