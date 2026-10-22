@@ -237,7 +237,7 @@ Press **A** on the **Settings** box from the main menu to open the settings scre
 
 Configure the SNES Controller, Super Scope, SNES Mouse, and Justifier independently, each against whichever input devices you have connected (GameCube Controller, Wiimote, Nunchuk+Wiimote, Classic Controller, Wii U Pro Controller, Wii U GamePad). Pick a controller to configure, pick the input device, then click each button in turn — Snes9x GX will prompt you to press the physical button you want assigned to it. Sensible defaults are already set for every supported input device, so you generally only need this screen if you want something different (e.g. swapped face buttons, or a controller that maps its own devices differently).
 
-The **Other Mappings** screen (reached from Button Mappings) also lets you configure:
+The **General Mappings** screen (reached from Button Mappings) also lets you configure:
 
 | Option | What it does |
 |---|---|
@@ -348,7 +348,7 @@ Cheats load from `snes9xgx/cheats` in the Snes9x `.cht` file format, and must be
 
 ## Turbo Mode
 
-Turbo Mode roughly doubles playback speed while active. It's remappable — set which button or combo triggers it under **Settings → Button Mappings → Other Mappings → Turbo Mode Button** — and can be disabled entirely from the same screen. Hold the assigned button to run at double speed; release it to return to normal playback.
+Turbo Mode roughly doubles playback speed while active. It's remappable — set which button or combo triggers it under **Settings → Button Mappings → General Mappings → Turbo Mode Button** — and can be disabled entirely from the same screen. Hold the assigned button to run at double speed; release it to return to normal playback.
 
 ## Importing and Exporting SRAM
 

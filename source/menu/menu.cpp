@@ -2767,7 +2767,7 @@ static int MenuSettingsOtherMappings()
 	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 	titleTxt.setPosition(50,30);
 
-	GuiText subtitleTxt("Other Mappings", 20, (PixelColor){255, 255, 255, 255});
+	GuiText subtitleTxt("General Mappings", 20, (PixelColor){255, 255, 255, 255});
 	subtitleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 	subtitleTxt.setPosition(50,60);
 

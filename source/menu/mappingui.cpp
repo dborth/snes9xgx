@@ -189,6 +189,7 @@ class MappingView : public GuiOverlay
 
 		GuiTextButton& backButton() { return *backBtn; }
 		GuiTextButton& resetButton() { return *resetBtn; }
+		GuiTextButton& generalButton() { return *generalBtn; }
 		//!Whether a row was clicked since the last call; `index` is its btnmap index
 		bool takeRow(int& index)
 		{
@@ -216,6 +217,7 @@ class MappingView : public GuiOverlay
 		std::vector<bool> rowOnLeft;
 		GuiTextButton * backBtn;
 		GuiTextButton * resetBtn;
+		GuiTextButton * generalBtn;
 		GuiCard * emulatingChip;
 		GuiCard * usingChip;
 		bool rowRequested;
@@ -258,7 +260,7 @@ GuiCard& MappingView::bindingRow(const MapRow& r, bool onLeft, int width)
 
 MappingView::MappingView(int ctrl, int hw) :
 	snes(ctrl), hardware(hw), view(nullptr), status("Move over a button to see what it uses"),
-	backBtn(nullptr), resetBtn(nullptr), emulatingChip(nullptr), usingChip(nullptr),
+	backBtn(nullptr), resetBtn(nullptr), generalBtn(nullptr), emulatingChip(nullptr), usingChip(nullptr),
 	rowRequested(false), requestedRow(0), pickRequest(Pick::NONE)
 {
 	const int sw = platform->getVideo()->getScreenWidth();
@@ -354,22 +356,29 @@ MappingView::MappingView(int ctrl, int hw) :
 
 	GuiLayout& stage = ui.row().size(kContentW, stageH).gap(6).align(LAYOUT_ALIGN::CENTRE).justifyContent(LAYOUT_JUSTIFY::CENTRE)
 		.add(left).add(*view).add(right);
-	GuiLayout& content = ui.column().align(LAYOUT_ALIGN::CENTRE).add(stage);
+
+	GuiTextButton& reset = ui.button(Tr("Reset").c_str()).size(48, 22).fontSize(UI_FONT_SMALL - 1).style(MenuKeycapStyle())
+		.rounded(8.0f).litTextColor(MenuPaletteCurrent().text)
+		.onFocus([this]{ status = "A puts these buttons back to their defaults"; });
+	resetBtn = &reset;
+	GuiLayout& content = ui.overlay().size(kContentW, stageH);
+	content.add(stage, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
+	content.add(reset, GuiItem().at(LAYOUT_ALIGN::END, LAYOUT_ALIGN::END));
 	GuiCard& panel = ui.card().selectable(false).style(MenuPageCardStyle()).pad(kCardPad, kCardPad).size(kBodyW, 0);
 	panel.add(content);
 	GuiLayout& body = ui.column().size(sw, sh).pad(margin, MENU_BAR_TOP_H + 4, margin, MENU_BAR_BOTTOM_H + 4)
 		.align(LAYOUT_ALIGN::CENTRE).justifyContent(LAYOUT_JUSTIFY::CENTRE);
 	body.add(panel);
 
-	// ---- footer: Back and Reset at the left (the logo is at the right)
-	GuiTextButton& back = ui.button(Tr("Go Back").c_str()).size(150, 44).fontSize(20).style(MenuBarButtonStyle()).litTextColor(MenuPaletteCurrent().text);
+	// ---- footer: Back and the General Mappings page at the left (the logo is at the right)
+	GuiTextButton& back = ui.button(Tr("Go Back").c_str()).size(110, 44).fontSize(20).style(MenuBarButtonStyle()).litTextColor(MenuPaletteCurrent().text);
 	back.setTrigger(1, &cancel);
 	backBtn = &back;
-	GuiTextButton& reset = ui.button(Tr("Reset").c_str()).size(120, 44).fontSize(20).style(MenuBarButtonStyle()).litTextColor(MenuPaletteCurrent().text)
-		.onFocus([this]{ status = "A puts these buttons back to their defaults"; });
-	resetBtn = &reset;
+	GuiTextButton& general = ui.button(Tr("General Mappings").c_str()).size(180, 44).fontSize(20).style(MenuBarButtonStyle()).litTextColor(MenuPaletteCurrent().text)
+		.onFocus([this]{ status = "Turbo mode, the menu toggle and ABXY on the right stick"; });
+	generalBtn = &general;
 	GuiLayout& footer = ui.row().size(sw, MENU_BAR_BOTTOM_H).pad(margin, 0).gap(14).align(LAYOUT_ALIGN::CENTRE)
-		.add(back).add(reset);
+		.add(back).add(general);
 
 	add(body, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
 	add(header, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
@@ -414,12 +423,6 @@ std::vector<PickerItem> EmulatingItems()
 		it.current = kinds[i] == mapSnesCtrl;
 		items.push_back(it);
 	}
-	PickerItem other;
-	other.name = Tr("Other Mappings");
-	other.lines.push_back(Tr("Turbo mode, the menu toggle and ABXY on the right stick."));
-	other.current = false;
-	items.back().divider = true;
-	items.push_back(other);
 	return items;
 }
 
@@ -455,6 +458,9 @@ int MappingScreen()
 
 			if(view.backButton().getState() == STATE::CLICKED)
 				return MENU_GAMESETTINGS;
+
+			if(view.generalButton().getState() == STATE::CLICKED)
+				return MENU_GAMESETTINGS_MAPPINGS_OTHER;
 
 			if(view.resetButton().getState() == STATE::CLICKED)
 			{
@@ -505,8 +511,6 @@ int MappingScreen()
 					if(pick == MappingView::Pick::EMULATING)
 					{
 						static const int kinds[] = { CTRL_PAD, CTRL_SCOPE, CTRL_MOUSE, CTRL_JUST };
-						if(chosen >= (int)(sizeof(kinds) / sizeof(kinds[0])))
-							return MENU_GAMESETTINGS_MAPPINGS_OTHER;
 						mapSnesCtrl = kinds[chosen];
 						ResolveHardware();
 					}
