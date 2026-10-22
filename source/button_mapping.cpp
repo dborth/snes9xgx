@@ -18,11 +18,11 @@
  * and for displaying the name of said button
  ***************************************************************************/
 
-CtrlrMap ctrlr_def[7] = {
+CtrlrMap ctrlr_def[INPUT_HW_MAX] = {
 // Gamecube controller btn def
 {
 	INPUT_HW_GAMECUBE,
-	13,
+	12,
 	{
 		{INPUT_BTN_DOWN, "DOWN"},
 		{INPUT_BTN_UP, "UP"},
@@ -33,10 +33,10 @@ CtrlrMap ctrlr_def[7] = {
 		{INPUT_BTN_X, "X"},
 		{INPUT_BTN_Y, "Y"},
 		{INPUT_BTN_PLUS, "START"},
-		{INPUT_BTN_PLUS, "START"},
 		{INPUT_TRIGGER_L, "L"},
 		{INPUT_TRIGGER_R, "R"},
-		{INPUT_TRIGGER_ZL, "Z"},
+		{INPUT_TRIGGER_ZR, "Z"},
+		{INPUT_BTN_NONE, ""},
 		{INPUT_BTN_NONE, ""},
 		{INPUT_BTN_NONE, ""}
 	}
@@ -171,6 +171,50 @@ CtrlrMap ctrlr_def[7] = {
 		{INPUT_TRIGGER_R, "R1"},
 		{INPUT_TRIGGER_ZL, "L2"},
 		{INPUT_TRIGGER_ZR, "R2"}
+	}
+},
+// Xbox 360 btn def
+{
+	INPUT_HW_XBOX360,
+	14,
+	{
+		{INPUT_BTN_DOWN, "DOWN"},
+		{INPUT_BTN_UP, "UP"},
+		{INPUT_BTN_LEFT, "LEFT"},
+		{INPUT_BTN_RIGHT, "RIGHT"},
+		{INPUT_BTN_A, "B"},
+		{INPUT_BTN_B, "A"},
+		{INPUT_BTN_X, "Y"},
+		{INPUT_BTN_Y, "X"},
+		{INPUT_BTN_PLUS, "START"},
+		{INPUT_BTN_MINUS, "BACK"},
+		{INPUT_TRIGGER_L, "LB"},
+		{INPUT_TRIGGER_R, "RB"},
+		{INPUT_TRIGGER_ZL, "LT"},
+		{INPUT_TRIGGER_ZR, "RT"},
+		{INPUT_BTN_NONE, ""}
+	}
+},
+// Generic USB btn def (Retrode, Hornet, Mayflash): SNES-style pads
+{
+	INPUT_HW_GENERIC_USB,
+	12,
+	{
+		{INPUT_BTN_DOWN, "DOWN"},
+		{INPUT_BTN_UP, "UP"},
+		{INPUT_BTN_LEFT, "LEFT"},
+		{INPUT_BTN_RIGHT, "RIGHT"},
+		{INPUT_BTN_A, "A"},
+		{INPUT_BTN_B, "B"},
+		{INPUT_BTN_X, "X"},
+		{INPUT_BTN_Y, "Y"},
+		{INPUT_BTN_PLUS, "START"},
+		{INPUT_BTN_MINUS, "SELECT"},
+		{INPUT_TRIGGER_L, "L"},
+		{INPUT_TRIGGER_R, "R"},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""}
 	}
 }
 };

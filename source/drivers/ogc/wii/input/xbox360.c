@@ -7,6 +7,7 @@
 #define USB_CLASS_XBOX360 0xFF
 #define XBOX360_VID 0x045e
 #define XBOX360_PID 0x028e
+#define XBOX360_TRIGGER_THRESHOLD 128
 
 static bool replugRequired = false;
 static s32 deviceId = 0;
@@ -16,8 +17,16 @@ static u8 bMaxPacketSize = 20;
 static u8 bConfigurationValue = 1;
 static u8 ATTRIBUTE_ALIGN(32) buf[20];
 static bool isReading = false;
-static u32 jp = 0;
 static u8 player = 0;
+
+// Written from the USB read callback, latched once per frame by XBOX360_ScanPads()
+static volatile u32 reportButtons = 0;
+static volatile s16 reportSticks[4] = { 0, 0, 0, 0 };  // raw [-32768, 32767]: lx, ly, rx, ry
+
+static u32 held = 0;
+static u32 down = 0;
+static u32 up = 0;
+static s16 sticks[4] = { 0, 0, 0, 0 };  // -128..127: lx, ly, rx, ry
 static bool xboxButtonDown = false;
 static bool nextPlayer = false;
 
@@ -105,42 +114,34 @@ static int read_cb(int res, void *usrdata)
 
 	if (res == 20)
 	{
-		jp = 0;
-		jp |= ((buf[2] & 0x01) == 0x01) ? PAD_BUTTON_UP	: 0;
-		jp |= ((buf[2] & 0x02) == 0x02) ? PAD_BUTTON_DOWN  : 0;
-		jp |= ((buf[2] & 0x04) == 0x04) ? PAD_BUTTON_LEFT  : 0;
-		jp |= ((buf[2] & 0x08) == 0x08) ? PAD_BUTTON_RIGHT : 0;
+		u32 b = 0;
+		b |= (buf[2] & 0x01) ? XBOX360_BUTTON_UP    : 0;
+		b |= (buf[2] & 0x02) ? XBOX360_BUTTON_DOWN  : 0;
+		b |= (buf[2] & 0x04) ? XBOX360_BUTTON_LEFT  : 0;
+		b |= (buf[2] & 0x08) ? XBOX360_BUTTON_RIGHT : 0;
+		b |= (buf[2] & 0x10) ? XBOX360_BUTTON_START : 0;
+		b |= (buf[2] & 0x20) ? XBOX360_BUTTON_BACK  : 0;
+		b |= (buf[2] & 0x40) ? XBOX360_BUTTON_L3    : 0;
+		b |= (buf[2] & 0x80) ? XBOX360_BUTTON_R3    : 0;
 
-		jp |= ((buf[3] & 0x10) == 0x10) ? PAD_BUTTON_B : 0; // XBOX360 A button maps to B
-		jp |= ((buf[3] & 0x20) == 0x20) ? PAD_BUTTON_A : 0; // XBOX360 B button maps to A
-		jp |= ((buf[3] & 0x40) == 0x40) ? PAD_BUTTON_Y : 0; // XBOX360 X button maps to Y
-		jp |= ((buf[3] & 0x80) == 0x80) ? PAD_BUTTON_X : 0; // XBOX360 Y button maps to X
+		b |= (buf[3] & 0x01) ? XBOX360_BUTTON_LB : 0;
+		b |= (buf[3] & 0x02) ? XBOX360_BUTTON_RB : 0;
+		b |= (buf[3] & 0x10) ? XBOX360_BUTTON_A  : 0;
+		b |= (buf[3] & 0x20) ? XBOX360_BUTTON_B  : 0;
+		b |= (buf[3] & 0x40) ? XBOX360_BUTTON_X  : 0;
+		b |= (buf[3] & 0x80) ? XBOX360_BUTTON_Y  : 0;
 
-		jp |= ((buf[3] & 0x01) == 0x01) ? PAD_TRIGGER_L : 0;
-		jp |= ((buf[3] & 0x02) == 0x02) ? PAD_TRIGGER_R : 0;
+		// analog triggers, reported as buttons past a threshold
+		b |= (buf[4] > XBOX360_TRIGGER_THRESHOLD) ? XBOX360_BUTTON_LT : 0;
+		b |= (buf[5] > XBOX360_TRIGGER_THRESHOLD) ? XBOX360_BUTTON_RT : 0;
 
-		jp |= ((buf[2] & 0x10) == 0x10) ? PAD_BUTTON_START : 0;
-		jp |= ((buf[2] & 0x20) == 0x20) ? PAD_TRIGGER_Z	: 0; // XBOX360 back button maps to Z
+		reportButtons = b;
 
-		// triggers
-		jp |= (buf[4] > 128) ? PAD_TRIGGER_L : 0;
-		jp |= (buf[5] > 128) ? PAD_TRIGGER_R : 0;
-
-		// left stick
-		int16_t lx = (buf[7] << 8) | buf[6]; // [-32768, 32767]
-		int16_t ly = (buf[9] << 8) | buf[8]; // [-32768, 32767]
-		jp |= (ly >  16384) ? PAD_BUTTON_UP	: 0;
-		jp |= (ly < -16384) ? PAD_BUTTON_DOWN  : 0;
-		jp |= (lx < -16384) ? PAD_BUTTON_LEFT  : 0;
-		jp |= (lx >  16384) ? PAD_BUTTON_RIGHT : 0;
-
-		// right stick
-		int16_t rx = (buf[11] << 8) | buf[10]; // [-32768, 32767]
-		int16_t ry = (buf[13] << 8) | buf[12]; // [-32768, 32767]
-		jp |= (ry >  16384) ? PAD_BUTTON_UP	: 0;
-		jp |= (ry < -16384) ? PAD_BUTTON_DOWN  : 0;
-		jp |= (rx < -16384) ? PAD_BUTTON_LEFT  : 0;
-		jp |= (rx >  16384) ? PAD_BUTTON_RIGHT : 0;
+		// sticks stay analog: the caller turns them into directions where it wants that
+		reportSticks[0] = (int16_t)((buf[7]  << 8) | buf[6]);
+		reportSticks[1] = (int16_t)((buf[9]  << 8) | buf[8]);
+		reportSticks[2] = (int16_t)((buf[11] << 8) | buf[10]);
+		reportSticks[3] = (int16_t)((buf[13] << 8) | buf[12]);
 
 		// XBOX button to switch to next player, once per press (on the rising edge)
 		bool guideDown = (buf[3] & 0x04) == 0x04;
@@ -196,7 +197,13 @@ static int removal_cb(int result, void *usrdata)
 	{
 		stop_reading();
 		deviceId = 0;
-		jp = 0;
+		reportButtons = 0;
+		for (int i = 0; i < 4; i++)
+		{
+			reportSticks[i] = 0;
+			sticks[i] = 0;
+		}
+		held = down = up = 0;
 		xboxButtonDown = false;
 		nextPlayer = false;
 		UsbInput_DeferClose(fd);
@@ -322,20 +329,38 @@ void XBOX360_ScanPads(void)
 	}
 
 	start_reading(deviceId, endpoint_in, bMaxPacketSize);
+
+	u32 buttons = reportButtons;
+	down = buttons & ~held;
+	up = held & ~buttons;
+	held = buttons;
+
+	// raw 16-bit to -128..127, the same range as the other pads
+	for (int i = 0; i < 4; i++)
+	{
+		sticks[i] = reportSticks[i] >> 8;
+	}
 }
 
 u32 XBOX360_ButtonsHeld(int chan)
 {
-	if (deviceId == 0)
-	{
-		return 0;
-	}
-	if (chan != player)
-	{
-		return 0;
-	}
-	return jp;
+	return XBOX360_Connected(chan) ? held : 0;
 }
+
+u32 XBOX360_ButtonsDown(int chan)
+{
+	return XBOX360_Connected(chan) ? down : 0;
+}
+
+u32 XBOX360_ButtonsUp(int chan)
+{
+	return XBOX360_Connected(chan) ? up : 0;
+}
+
+s16 XBOX360_lStickX(int chan) { return XBOX360_Connected(chan) ? sticks[0] : 0; }
+s16 XBOX360_lStickY(int chan) { return XBOX360_Connected(chan) ? sticks[1] : 0; }
+s16 XBOX360_rStickX(int chan) { return XBOX360_Connected(chan) ? sticks[2] : 0; }
+s16 XBOX360_rStickY(int chan) { return XBOX360_Connected(chan) ? sticks[3] : 0; }
 
 bool XBOX360_Connected(int chan)
 {

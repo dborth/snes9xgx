@@ -213,6 +213,8 @@ preparePrefsData ()
 	createXMLController(btnmap[CTRL_PAD][INPUT_HW_DRC], "btnmapping_pad_wiidrc", "SNES Pad - Wii U Gamepad");
 	createXMLController(btnmap[CTRL_PAD][INPUT_HW_NUNCHUK], "btnmapping_pad_nunchuk", "SNES Pad - Nunchuk + Wiimote");
 	createXMLController(btnmap[CTRL_PAD][INPUT_HW_DS4], "btnmapping_pad_ds4", "SNES Pad - DualShock 4");
+	createXMLController(btnmap[CTRL_PAD][INPUT_HW_XBOX360], "btnmapping_pad_xbox360", "SNES Pad - Xbox 360 Controller");
+	createXMLController(btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB], "btnmapping_pad_genericusb", "SNES Pad - USB Controller");
 #endif
 	createXMLController(btnmap[CTRL_SCOPE][INPUT_HW_GAMECUBE], "btnmapping_scope_gcpad", "Superscope - GameCube Controller");
 #ifdef HW_RVL
@@ -404,6 +406,8 @@ decodePrefsData ()
 	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_DRC], "btnmapping_pad_wiidrc");
 	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_NUNCHUK], "btnmapping_pad_nunchuk");
 	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_DS4], "btnmapping_pad_ds4");
+	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_XBOX360], "btnmapping_pad_xbox360");
+	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB], "btnmapping_pad_genericusb");
 	loadXMLController(btnmap[CTRL_SCOPE][INPUT_HW_GAMECUBE], "btnmapping_scope_gcpad");
 	loadXMLController(btnmap[CTRL_SCOPE][INPUT_HW_WIIMOTE], "btnmapping_scope_wiimote");
 	loadXMLController(btnmap[CTRL_MOUSE][INPUT_HW_GAMECUBE], "btnmapping_mouse_gcpad");

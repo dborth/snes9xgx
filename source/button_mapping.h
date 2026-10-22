@@ -12,8 +12,10 @@
 #ifndef BTN_MAP_H
 #define BTN_MAP_H
 
-const char ctrlrName[7][32] =
-{ "GameCube Controller", "Wiimote", "Nunchuk + Wiimote", "Classic Controller", "Wii U Pro Controller", "Wii U Gamepad", "DualShock 4" };
+#include "drivers/InputData.h"
+
+const char ctrlrName[INPUT_HW_MAX][32] =
+{ "GameCube Controller", "Wiimote", "Nunchuk + Wiimote", "Classic Controller", "Wii U Pro Controller", "Wii U Gamepad", "DualShock 4", "Xbox 360 Controller", "USB Controller" };
 
 typedef struct _btn_map {
 	uint32_t btn;					// button 'id'
@@ -26,6 +28,6 @@ typedef struct _ctrlr_map {
 	BtnMap map[15];				// controller button map
 } CtrlrMap;
 
-extern CtrlrMap ctrlr_def[7];
+extern CtrlrMap ctrlr_def[INPUT_HW_MAX];
 
 #endif

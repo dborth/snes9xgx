@@ -151,6 +151,43 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_LEFT;
 		btnmap[CTRL_PAD][INPUT_HW_DS4][i++] = INPUT_BTN_RIGHT;
 	}
+
+	/*** Xbox 360 Padmap ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == INPUT_HW_XBOX360))
+	{
+		i=0;
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_BTN_A;      // Xbox B
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_BTN_B;      // Xbox A
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_BTN_X;      // Xbox Y
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_BTN_Y;      // Xbox X
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_TRIGGER_L;  // LB
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_TRIGGER_R;  // RB
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_BTN_PLUS;   // Start
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_BTN_MINUS;  // Back
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_BTN_UP;
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_BTN_DOWN;
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_BTN_LEFT;
+		btnmap[CTRL_PAD][INPUT_HW_XBOX360][i++] = INPUT_BTN_RIGHT;
+	}
+
+	/*** Generic USB (Retrode / Hornet / Mayflash) Padmap ***/
+	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == INPUT_HW_GENERIC_USB))
+	{
+		i=0;
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_A;
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_B;
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_X;
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_Y;
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_TRIGGER_L;
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_TRIGGER_R;
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_PLUS;   // Start
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_MINUS;  // Select
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_UP;
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_DOWN;
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_LEFT;
+		btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_RIGHT;
+	}
+
 		
 	/*** Nunchuk + Wiimote Padmap ***/
 	if(consoleCtrl == -1 || (consoleCtrl == CTRL_PAD && wiiCtrl == INPUT_HW_NUNCHUK))
@@ -214,6 +251,20 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_Y;
 		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_X;
 		btnmap[CTRL_SCOPE][INPUT_HW_DS4][i++] = INPUT_BTN_PLUS;
+		i=0;
+		btnmap[CTRL_SCOPE][INPUT_HW_XBOX360][i++] = INPUT_BTN_B;
+		btnmap[CTRL_SCOPE][INPUT_HW_XBOX360][i++] = INPUT_BTN_A;
+		btnmap[CTRL_SCOPE][INPUT_HW_XBOX360][i++] = INPUT_BTN_MINUS;
+		btnmap[CTRL_SCOPE][INPUT_HW_XBOX360][i++] = INPUT_BTN_Y;
+		btnmap[CTRL_SCOPE][INPUT_HW_XBOX360][i++] = INPUT_BTN_X;
+		btnmap[CTRL_SCOPE][INPUT_HW_XBOX360][i++] = INPUT_BTN_PLUS;
+		i=0;
+		btnmap[CTRL_SCOPE][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_A;
+		btnmap[CTRL_SCOPE][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_B;
+		btnmap[CTRL_SCOPE][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_MINUS;
+		btnmap[CTRL_SCOPE][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_Y;
+		btnmap[CTRL_SCOPE][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_X;
+		btnmap[CTRL_SCOPE][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_PLUS;
 	}
 
 	/*** Mouse & Justifier Mapping (Simplified identically to masks) ***/
@@ -230,6 +281,10 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
         btnmap[CTRL_MOUSE][INPUT_HW_DRC][1] = INPUT_BTN_B;
         btnmap[CTRL_MOUSE][INPUT_HW_DS4][0] = INPUT_BTN_A;
         btnmap[CTRL_MOUSE][INPUT_HW_DS4][1] = INPUT_BTN_B;
+        btnmap[CTRL_MOUSE][INPUT_HW_XBOX360][0] = INPUT_BTN_A;
+        btnmap[CTRL_MOUSE][INPUT_HW_XBOX360][1] = INPUT_BTN_B;
+        btnmap[CTRL_MOUSE][INPUT_HW_GENERIC_USB][0] = INPUT_BTN_A;
+        btnmap[CTRL_MOUSE][INPUT_HW_GENERIC_USB][1] = INPUT_BTN_B;
     }
 
     if (consoleCtrl == -1 || consoleCtrl == CTRL_JUST) {
@@ -251,6 +306,12 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
         btnmap[CTRL_JUST][INPUT_HW_DS4][0] = INPUT_BTN_B;
         btnmap[CTRL_JUST][INPUT_HW_DS4][1] = INPUT_BTN_A;
         btnmap[CTRL_JUST][INPUT_HW_DS4][2] = INPUT_BTN_PLUS;
+        btnmap[CTRL_JUST][INPUT_HW_XBOX360][0] = INPUT_BTN_B;
+        btnmap[CTRL_JUST][INPUT_HW_XBOX360][1] = INPUT_BTN_A;
+        btnmap[CTRL_JUST][INPUT_HW_XBOX360][2] = INPUT_BTN_PLUS;
+        btnmap[CTRL_JUST][INPUT_HW_GENERIC_USB][0] = INPUT_BTN_B;
+        btnmap[CTRL_JUST][INPUT_HW_GENERIC_USB][1] = INPUT_BTN_A;
+        btnmap[CTRL_JUST][INPUT_HW_GENERIC_USB][2] = INPUT_BTN_PLUS;
     }
 }
 
@@ -319,17 +380,6 @@ static uint32_t StickToVirtualButtons(float stickX, float stickY, float substick
 	return buttons;
 }
 
-static float StrongestAxisExcluding(const InputPadData& pad, const float axis[], uint32_t excludedHw)
-{
-	float strongest = 0.0f;
-	for (uint32_t hw = 0; hw < INPUT_HW_MAX; hw++)
-	{
-		if (hw == excludedHw || !pad.hw_connected[hw]) continue;
-		if (std::abs(axis[hw]) > std::abs(strongest)) strongest = axis[hw];
-	}
-	return strongest;
-}
-
 /****************************************************************************
  * decodepad
  *
@@ -342,20 +392,14 @@ static void decodepad (int chan, int emuChan)
 	const InputPadData& pad = controller[chan]->getPadData();
 	int i, offset;
 
-	// Inject virtual buttons translated from analog sticks
-	uint32_t virtual_jp = StickToVirtualButtons(pad.stickX, pad.stickY, pad.substickX, pad.substickY);
-	uint32_t ds4_virtual_jp = 0;
-
-	if (pad.hw_connected[INPUT_HW_DS4])
+	// Each connected piece of hardware turns its own sticks into directions (and, optionally, ABXY),
+	// which are then looked up in that hardware's own mapping. Using one merged stick for all of them
+	// would let, say, a Nunchuk stick press whatever the Wiimote's mapping has on that direction.
+	uint32_t virtual_jp[INPUT_HW_MAX];
+	for (uint32_t hw = 0; hw < INPUT_HW_MAX; hw++)
 	{
-		virtual_jp = StickToVirtualButtons(
-			StrongestAxisExcluding(pad, pad.hw_stickX, INPUT_HW_DS4),
-			StrongestAxisExcluding(pad, pad.hw_stickY, INPUT_HW_DS4),
-			StrongestAxisExcluding(pad, pad.hw_substickX, INPUT_HW_DS4),
-			StrongestAxisExcluding(pad, pad.hw_substickY, INPUT_HW_DS4));
-		ds4_virtual_jp = StickToVirtualButtons(
-			pad.hw_stickX[INPUT_HW_DS4], pad.hw_stickY[INPUT_HW_DS4],
-			pad.hw_substickX[INPUT_HW_DS4], pad.hw_substickY[INPUT_HW_DS4]);
+		virtual_jp[hw] = pad.hw_connected[hw] ? StickToVirtualButtons(
+			pad.hw_stickX[hw], pad.hw_stickY[hw], pad.hw_substickX[hw], pad.hw_substickY[hw]) : 0;
 	}
 
 	offset = ((emuChan + 1) << 4);
@@ -371,9 +415,7 @@ static void decodepad (int chan, int emuChan)
 			if (!pad.hw_connected[hw]) continue;
 			uint32_t mapped_btn = btnmap[CTRL_PAD][hw][i];
 
-			uint32_t hw_virtual_jp = (hw == INPUT_HW_DS4) ? ds4_virtual_jp : virtual_jp;
-
-			if ((pad.hw_buttons_h[hw] & mapped_btn) || (hw_virtual_jp & mapped_btn)) {
+			if ((pad.hw_buttons_h[hw] & mapped_btn) || (virtual_jp[hw] & mapped_btn)) {
 				button_pressed = true;
 				break;
 			}

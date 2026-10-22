@@ -42,7 +42,7 @@ OgcInputDriver::OgcInputDriver() {
 		rumbleRequest[i] = false;
 		menuRumbleFrames[i] = 0;
 		menuRumbleGapFrames[i] = 0;
-		prevUsbHeld[i] = 0;
+		prevGenericUsbHeld[i] = 0;
 	}
 }
 
@@ -236,6 +236,48 @@ static uint32_t MapDS4ToGeneric(uint32_t ds4_btns) {
 	return mask;
 }
 
+static uint32_t MapXbox360ToGeneric(uint32_t xbox_btns) {
+	uint32_t mask = INPUT_BTN_NONE;
+	// Face buttons keep their SNES position: Xbox B (right) = A, Xbox A (bottom) = B, etc.
+	if (xbox_btns & XBOX360_BUTTON_B) mask |= INPUT_BTN_A;
+	if (xbox_btns & XBOX360_BUTTON_A) mask |= INPUT_BTN_B;
+	if (xbox_btns & XBOX360_BUTTON_Y) mask |= INPUT_BTN_X;
+	if (xbox_btns & XBOX360_BUTTON_X) mask |= INPUT_BTN_Y;
+	if (xbox_btns & XBOX360_BUTTON_UP) mask |= INPUT_BTN_UP;
+	if (xbox_btns & XBOX360_BUTTON_DOWN) mask |= INPUT_BTN_DOWN;
+	if (xbox_btns & XBOX360_BUTTON_LEFT) mask |= INPUT_BTN_LEFT;
+	if (xbox_btns & XBOX360_BUTTON_RIGHT) mask |= INPUT_BTN_RIGHT;
+	if (xbox_btns & XBOX360_BUTTON_START) mask |= INPUT_BTN_PLUS;
+	if (xbox_btns & XBOX360_BUTTON_BACK) mask |= INPUT_BTN_MINUS;
+	if (xbox_btns & XBOX360_BUTTON_LB) mask |= INPUT_TRIGGER_L;
+	if (xbox_btns & XBOX360_BUTTON_RB) mask |= INPUT_TRIGGER_R;
+	if (xbox_btns & XBOX360_BUTTON_LT) mask |= INPUT_TRIGGER_ZL;
+	if (xbox_btns & XBOX360_BUTTON_RT) mask |= INPUT_TRIGGER_ZR;
+	if (xbox_btns & XBOX360_BUTTON_L3) mask |= INPUT_THUMB_L;
+	if (xbox_btns & XBOX360_BUTTON_R3) mask |= INPUT_THUMB_R;
+	return mask;
+}
+
+// Retrode, Hornet and Mayflash are SNES-layout pads, and their drivers report them in the PAD_*
+// bit layout (A B X Y L R Start, with Select on the Z bit). This is the only place those bits are
+// read as anything other than a real GameCube pad: Select goes to MINUS, not to the GC Z button.
+static uint32_t MapGenericUsbToGeneric(uint32_t pad_btns) {
+	uint32_t mask = INPUT_BTN_NONE;
+	if (pad_btns & PAD_BUTTON_A)      mask |= INPUT_BTN_A;
+	if (pad_btns & PAD_BUTTON_B)      mask |= INPUT_BTN_B;
+	if (pad_btns & PAD_BUTTON_X)      mask |= INPUT_BTN_X;
+	if (pad_btns & PAD_BUTTON_Y)      mask |= INPUT_BTN_Y;
+	if (pad_btns & PAD_BUTTON_UP)     mask |= INPUT_BTN_UP;
+	if (pad_btns & PAD_BUTTON_DOWN)   mask |= INPUT_BTN_DOWN;
+	if (pad_btns & PAD_BUTTON_LEFT)   mask |= INPUT_BTN_LEFT;
+	if (pad_btns & PAD_BUTTON_RIGHT)  mask |= INPUT_BTN_RIGHT;
+	if (pad_btns & PAD_BUTTON_START)  mask |= INPUT_BTN_PLUS;
+	if (pad_btns & PAD_TRIGGER_Z)     mask |= INPUT_BTN_MINUS;
+	if (pad_btns & PAD_TRIGGER_L)     mask |= INPUT_TRIGGER_L;
+	if (pad_btns & PAD_TRIGGER_R)     mask |= INPUT_TRIGGER_R;
+	return mask;
+}
+
 /****************************************************************************
  * Analog Normalization Helpers
  ***************************************************************************/
@@ -267,7 +309,6 @@ void OgcInputDriver::update() {
 	WPAD_ScanPads();
 	bool systemRumbleAllowed = (CONF_GetPadMotorMode() != 0);
 	bool retrodeActive  = (Retrode_Status()[0]  == 'c');
-	bool xboxActive     = (XBOX360_Status()[0]  == 'c');
 	bool hornetActive   = (Hornet_Status()[0]   == 'c');
 	bool mayflashActive = (Mayflash_Status()[0] == 'c');
 	#else
@@ -280,40 +321,54 @@ void OgcInputDriver::update() {
 	for(int i = 3; i >= 0; i--) {
 		InputPadData padData;
 
-		// Process GameCube Controller & Third Party USB Adaptors
+		// GameCube controller (real pads only: USB controllers have profiles of their own below)
 		bool gamecubeActive = (activeGamecubePads & (1 << i)) != 0;
 
-		#ifdef HW_RVL
-		if (retrodeActive) gamecubeActive = true;
-		if (xboxActive) gamecubeActive = true;
-		if (hornetActive && i == 0) gamecubeActive = true;
-		if (mayflashActive && i < 2)  gamecubeActive = true;
-		#endif
-
 		if(gamecubeActive) {
-			uint32_t padHeld = PAD_ButtonsHeld(i);
-			uint32_t padDown = PAD_ButtonsDown(i);
-			uint32_t padUp = PAD_ButtonsUp(i);
-			#ifdef HW_RVL
-			// Inject USB controllers into GameCube held state (since they emulate GC bitmasks).
-			// They only report held state, so derive the down/up edges here; menu triggers use them.
-			uint32_t usbHeld = Retrode_ButtonsHeld(i) | XBOX360_ButtonsHeld(i) | Hornet_ButtonsHeld(i) | Mayflash_ButtonsHeld(i);
-			padDown |= usbHeld & ~prevUsbHeld[i];
-			padUp |= prevUsbHeld[i] & ~usbHeld;
-			prevUsbHeld[i] = usbHeld;
-			padHeld |= usbHeld;
-			#endif
-
-			padData.gc_native = (activeGamecubePads & (1 << i)) != 0;
+			padData.gc_native = true;
 			padData.hw_connected[INPUT_HW_GAMECUBE] = true;
-			padData.hw_buttons_d[INPUT_HW_GAMECUBE] = MapPADToGeneric(padDown);
-			padData.hw_buttons_h[INPUT_HW_GAMECUBE] = MapPADToGeneric(padHeld);
-			padData.hw_buttons_r[INPUT_HW_GAMECUBE] = MapPADToGeneric(padUp);
+			padData.hw_buttons_d[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsDown(i));
+			padData.hw_buttons_h[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsHeld(i));
+			padData.hw_buttons_r[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsUp(i));
 			padData.hw_stickX[INPUT_HW_GAMECUBE] = clampf((float)PAD_StickX(i) / 128.0f, -1.0f, 1.0f);
 			padData.hw_stickY[INPUT_HW_GAMECUBE] = clampf((float)PAD_StickY(i) / 128.0f, -1.0f, 1.0f);
 			padData.hw_substickX[INPUT_HW_GAMECUBE] = clampf((float)PAD_SubStickX(i) / 128.0f, -1.0f, 1.0f);
 			padData.hw_substickY[INPUT_HW_GAMECUBE] = clampf((float)PAD_SubStickY(i) / 128.0f, -1.0f, 1.0f);
 		}
+
+		#ifdef HW_RVL
+		// Generic USB adapters (Retrode, Hornet, Mayflash). They report held state only, so the
+		// down/up edges are derived here; menu triggers and button mapping need them.
+		// Retrode has 4 ports (2 SNES, 2 Genesis), Hornet is one pad, Mayflash has 2 ports.
+		bool genericUsbActive = retrodeActive || (hornetActive && i == 0) || (mayflashActive && i < 2);
+
+		if(genericUsbActive) {
+			uint32_t usbHeld = Retrode_ButtonsHeld(i) | Hornet_ButtonsHeld(i) | Mayflash_ButtonsHeld(i);
+			uint32_t usbDown = usbHeld & ~prevGenericUsbHeld[i];
+			uint32_t usbUp = prevGenericUsbHeld[i] & ~usbHeld;
+			prevGenericUsbHeld[i] = usbHeld;
+
+			padData.hw_connected[INPUT_HW_GENERIC_USB] = true;
+			padData.hw_buttons_d[INPUT_HW_GENERIC_USB] = MapGenericUsbToGeneric(usbDown);
+			padData.hw_buttons_h[INPUT_HW_GENERIC_USB] = MapGenericUsbToGeneric(usbHeld);
+			padData.hw_buttons_r[INPUT_HW_GENERIC_USB] = MapGenericUsbToGeneric(usbUp);
+		}
+		else {
+			prevGenericUsbHeld[i] = 0;
+		}
+
+		// Xbox 360 controller (one at a time, on whichever channel it is currently assigned to)
+		if(XBOX360_Connected(i)) {
+			padData.hw_connected[INPUT_HW_XBOX360] = true;
+			padData.hw_buttons_d[INPUT_HW_XBOX360] = MapXbox360ToGeneric(XBOX360_ButtonsDown(i));
+			padData.hw_buttons_h[INPUT_HW_XBOX360] = MapXbox360ToGeneric(XBOX360_ButtonsHeld(i));
+			padData.hw_buttons_r[INPUT_HW_XBOX360] = MapXbox360ToGeneric(XBOX360_ButtonsUp(i));
+			padData.hw_stickX[INPUT_HW_XBOX360] = clampf((float)XBOX360_lStickX(i) / 128.0f, -1.0f, 1.0f);
+			padData.hw_stickY[INPUT_HW_XBOX360] = clampf((float)XBOX360_lStickY(i) / 128.0f, -1.0f, 1.0f);
+			padData.hw_substickX[INPUT_HW_XBOX360] = clampf((float)XBOX360_rStickX(i) / 128.0f, -1.0f, 1.0f);
+			padData.hw_substickY[INPUT_HW_XBOX360] = clampf((float)XBOX360_rStickY(i) / 128.0f, -1.0f, 1.0f);
+		}
+		#endif
 
 		#ifdef HW_RVL
 		// Process Wiimote and Extensions
