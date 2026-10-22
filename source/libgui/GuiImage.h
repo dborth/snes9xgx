@@ -68,5 +68,5 @@ class GuiImage : public GuiElement
 		float imageangle; //!< Angle to draw the image
 		int tile; //!< Number of times to draw (tile) the image horizontally
 		int stripe; //!< Alpha value (0-255) to apply a stripe effect to the texture
-		PixelColor baseColor; //!< Stored color for IMAGE::COLOR types
+		PixelColor baseColor = { 0, 0, 0, 0 }; //!< Stored color for IMAGE::COLOR types
 };

@@ -15,13 +15,13 @@
 //!keys can share one mesh.
 //!\ingroup grp_shapes
 struct GuiMeshKey {
-	SHAPE kind;				/*!< Rectangle or ellipse. */
-	int width;				/*!< Width in design-canvas pixels. */
-	int height;				/*!< Height in design-canvas pixels. */
+	SHAPE kind = SHAPE::RECTANGLE;	/*!< Rectangle or ellipse. */
+	int width = 0;			/*!< Width in design-canvas pixels. */
+	int height = 0;			/*!< Height in design-canvas pixels. */
 	GuiCorners corners;		/*!< Corner radii of a rectangle. */
 	GuiPaint paint;			/*!< Fill, outline and shadow. */
-	float feather;			/*!< Anti-aliasing fringe width, see GuiMesh. */
-	float tolerance;		/*!< Curve tolerance, see GuiMesh. */
+	float feather = 0.0f;	/*!< Anti-aliasing fringe width, see GuiMesh. */
+	float tolerance = 0.0f;	/*!< Curve tolerance, see GuiMesh. */
 
 	bool operator==(const GuiMeshKey& o) const;
 };
