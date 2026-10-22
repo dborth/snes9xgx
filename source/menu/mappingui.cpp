@@ -362,8 +362,8 @@ MappingView::MappingView(int ctrl, int hw) :
 		.onFocus([this]{ status = "A puts these buttons back to their defaults"; });
 	resetBtn = &reset;
 	GuiLayout& content = ui.overlay().size(kContentW, stageH);
-	content.add(stage, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
-	content.add(reset, GuiItem().at(LAYOUT_ALIGN::END, LAYOUT_ALIGN::END));
+	content.add(reset, GuiItem().at(LAYOUT_ALIGN::END, LAYOUT_ALIGN::START));
+	content.add(stage, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::END));
 	GuiCard& panel = ui.card().selectable(false).style(MenuPageCardStyle()).pad(kCardPad, kCardPad).size(kBodyW, 0);
 	panel.add(content);
 	GuiLayout& body = ui.column().size(sw, sh).pad(margin, MENU_BAR_TOP_H + 4, margin, MENU_BAR_BOTTOM_H + 4)
