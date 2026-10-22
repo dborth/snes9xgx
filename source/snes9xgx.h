@@ -150,7 +150,7 @@ const char ctrlName[CTRL_LENGTH][24] =
 	"SNES Controller", 
 	"Super Scope", 
 	"Justifier", 
-	"SNES Mouse (Port 1)", 
+	"SNES Mouse",
 	"SNES Mouse (Port 2)", 
 	"SNES Mouse (Both Ports)",
 	"SNES Controllers (2)", 
