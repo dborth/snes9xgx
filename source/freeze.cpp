@@ -16,7 +16,7 @@
 #include "snes9xgx.h"
 #include "fileop.h"
 #include "filebrowser.h"
-#include "menu.h"
+#include "menu/menu.h"
 #include "freeze.h"
 #include "video.h"
 

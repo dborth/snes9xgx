@@ -18,7 +18,7 @@
 #include "snes9x/port.h"
 #include "snes9xgx.h"
 #include "button_mapping.h"
-#include "menu.h"
+#include "menu/menu.h"
 #include "video.h"
 #include "input.h"
 #include "libgui/Gui.h"

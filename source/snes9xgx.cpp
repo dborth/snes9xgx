@@ -14,7 +14,7 @@
 #include "snes9xgx.h"
 #include "s9xsupport.h"
 #include "video.h"
-#include "menu.h"
+#include "menu/menu.h"
 #include "sram.h"
 #include "freeze.h"
 #include "preferences.h"

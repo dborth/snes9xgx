@@ -20,7 +20,7 @@ export	FREETYPE_LIBS		:=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config 
 TARGET		:=	snes9xgx-wii
 TARGETDIR	:=	executables
 BUILD		:=	build_wii
-SOURCES		:=	source source/libgui source/utils source/utils/sz \
+SOURCES		:=	source source/menu source/libgui source/utils source/utils/sz \
 				source/drivers source/drivers/ogc source/drivers/ogc/wii source/drivers/ogc/wii/input \
 				source/snes9x source/snes9x/apu
 DATA		:=	data/images data/sounds data/fonts data/lang

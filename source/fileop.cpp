@@ -17,7 +17,7 @@
 
 #include "snes9xgx.h"
 #include "fileop.h"
-#include "menu.h"
+#include "menu/menu.h"
 #include "memmanager.h"
 #include "filebrowser.h"
 #include "utils/decompress.h"

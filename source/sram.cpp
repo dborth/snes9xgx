@@ -15,7 +15,7 @@
 #include <string.h>
 
 #include "snes9xgx.h"
-#include "menu.h"
+#include "menu/menu.h"
 #include "sram.h"
 #include "fileop.h"
 #include "filebrowser.h"

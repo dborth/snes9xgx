@@ -26,7 +26,7 @@ TARGET		:=	snes9xgx-wiiu
 BUILD		:=	build_wiiu
 EXECUTABLES	:=	executables
 
-SOURCES		:=	source source/libgui source/utils source/utils/sz \
+SOURCES		:=	source source/menu source/libgui source/utils source/utils/sz \
 				source/drivers source/drivers/wut source/drivers/wut/shaders \
 				source/snes9x source/snes9x/apu
 INCLUDES	:=	source source/snes9x

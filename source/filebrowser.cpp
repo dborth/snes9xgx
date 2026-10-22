@@ -16,7 +16,7 @@
 #include "snes9x/port.h"
 #include "snes9xgx.h"
 #include "filebrowser.h"
-#include "menu.h"
+#include "menu/menu.h"
 #include "video.h"
 #include "fileop.h"
 #include "input.h"
