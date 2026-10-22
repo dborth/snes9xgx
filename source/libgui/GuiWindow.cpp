@@ -119,7 +119,7 @@ void GuiWindow::draw()
 	for (uint32_t i = 0; i < elemSize; ++i)
 	{
 		GuiElement * e = _elements.at(i);
-		GuiWindow * child = dynamic_cast<GuiWindow *>(e);
+		GuiWindow * child = e->getAsWindow();
 		const bool disabledChild = child && child->getState() == STATE::DISABLED && child->isVisible();
 		if(washPending && !disabledChild)
 		{

@@ -13,6 +13,7 @@
 typedef void (*UpdateCallback)(void * e);
 
 class GuiTrigger;
+class GuiWindow;
 class InputController;
 
 //!Vertical alignment of a GuiElement relative to its parent.
@@ -260,6 +261,9 @@ class GuiElement
 		virtual void update(InputController * c);
 		//!Called constantly to redraw the element
 		virtual void draw() = 0;
+		//!Attempts to cast this element as a GuiWindow (default implementation returns nullptr)
+		//!\return Pointer to GuiWindow if this element is a window, nullptr otherwise
+		virtual GuiWindow* getAsWindow() { return nullptr; }
 	protected:
 		GuiTrigger * trigger[MAX_TRIGGERS]; //!< GuiTriggers (input actions) that this element responds to
 		UpdateCallback updateCB; //!< Callback function to call when this element is updated

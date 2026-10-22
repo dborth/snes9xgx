@@ -83,6 +83,9 @@ class GuiWindow : public GuiElement
 		//!Allows the GuiWindow and all elements to respond to the input data specified
 		//!\param c Pointer to a InputController, containing the current input data
 		void update(InputController * c);
+		//!Returns this instance cast as a GuiWindow pointer
+		//!\return Pointer to this GuiWindow object
+		GuiWindow* getAsWindow() override { return this; }
 	protected:
 		//!Gathers the elements selection can move between, looking inside layout containers
 		//!\param out Receives the elements
