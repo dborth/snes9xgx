@@ -118,6 +118,8 @@ struct MenuPalette {
 	// the gray secondary: cards, outlines, resting controls
 	PixelColor surface, surfaceRaised, outline, outlineStrong;
 	PixelColor text, textMuted, textOnAccent;
+	// what is being edited or pointed at (the highlighted row, the control on the controller picture)
+	PixelColor mark;
 };
 
 //!Snes9x GX: blue chrome, gray secondary
@@ -140,6 +142,7 @@ static inline MenuPalette MenuPaletteDefault()
 	p.text           = MenuRGBA(30, 30, 30);
 	p.textMuted      = MenuRGBA(118, 118, 118);
 	p.textOnAccent   = MenuRGBA(255, 255, 255);
+	p.mark           = p.accent;
 	return p;
 }
 
@@ -168,6 +171,7 @@ static inline void MenuApplyTheme()
 	t.textMuted = p.textMuted;
 	t.textOnAccent = p.textOnAccent;
 	t.highlight = p.accentTint;
+	t.mark = p.mark;
 	t.shadow = MenuRGBA(0, 0, 0, 64);
 	t.radius = 14.0f;
 	t.strokeWidth = 1.5f;
@@ -280,3 +284,172 @@ static inline float MenuSpinnerDotSize(int level)
 //!Resting and lit colors of the page-turning arrows (gray, turning to the accent)
 static inline PixelColor MenuArrowRest() { return MenuPaletteCurrent().outlineStrong; }
 static inline PixelColor MenuArrowLit() { return MenuPaletteCurrent().accent; }
+
+// ---- the controller screens' looks (shared with the DOSBox Wii menu; they follow the palette)
+
+enum {
+	UI_FONT_TITLE = 26,
+	UI_FONT_HEADING = 20,
+	UI_FONT_BODY = 16,
+	UI_FONT_SMALL = 13
+};
+
+//!The one button look for the controller screens (and the bars): white and outlined at rest like the home
+//!screen's, a dark face with a white outline and a glow when highlighted (the label turns white with it).
+//!`marked` outlines a resting button in the accent color: the choice a control has now.
+static inline GuiShapeStyle MenuBarButtonStyle(bool marked = false)
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+
+	GuiPaint rest = GuiPaint()
+		.gradient(p.surfaceRaised, MenuMix(p.surface, p.outline, 0.45f))
+		.stroke(marked ? 3.5f : 2.0f, marked ? p.accent : p.chromeDark)
+		.shadow(6.0f, MenuRGBA(0, 0, 0, 110), 0.0f, 2.0f);
+
+	GuiPaint lit = GuiPaint()
+		.gradient(p.accent, p.accentDark)
+		.stroke(2.5f, p.surfaceRaised)
+		.glow(12.0f, p.glow, 1.0f);
+
+	GuiPaint pressed = GuiPaint()
+		.gradient(p.accentDark, p.accentDark)
+		.stroke(2.0f, p.outlineStrong);
+
+	return GuiShapeStyle(rest).onFocus(lit).onPress(pressed);
+}
+
+//!The one card behind a page's content: opaque, so the game picture never shows through the controls
+static inline GuiShapeStyle MenuPageCardStyle()
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	return GuiShapeStyle(GuiPaint()
+		.gradient(p.surfaceRaised, p.surface)
+		.stroke(1.5f, p.outline)
+		.shadow(14.0f, MenuRGBA(0, 0, 0, 140), 0.0f, 4.0f));
+}
+
+//!A popover: one flat light panel with a fine outline and a soft shadow, lifting it off the dimmed screen under it
+static inline GuiShapeStyle MenuPopoverStyle()
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	return GuiShapeStyle(GuiPaint()
+		.color(p.surfaceRaised)
+		.stroke(1.5f, p.outlineStrong)
+		.shadow(22.0f, MenuRGBA(0, 0, 0, 120), 0.0f, 6.0f));
+}
+
+//!A key on the key picker: a flat, light cap with a fine edge and a hint of a shadow, so a grid of them reads as a keyboard.
+//!The key in use has a darker edge; the one under the cursor takes the row highlight.
+static inline GuiShapeStyle MenuKeycapStyle(bool inUse = false)
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	GuiPaint rest = GuiPaint().color(p.surface).stroke(inUse ? 2.0f : 1.0f, inUse ? p.accent : p.outline)
+		.shadow(3.0f, MenuRGBA(0, 0, 0, 60), 0.0f, 1.5f);
+	GuiPaint lit = GuiPaint().color(MenuMix(p.surfaceRaised, p.mark, 0.14f)).stroke(2.0f, p.mark);
+	GuiPaint pressed = GuiPaint().color(MenuMix(p.surfaceRaised, p.mark, 0.30f)).stroke(2.0f, p.mark);
+	return GuiShapeStyle(rest).onFocus(lit).onPress(pressed);
+}
+
+//!A flat tinted area that groups things on a card (a player, a section of buttons)
+static inline GuiShapeStyle MenuSectionStyle()
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	return GuiShapeStyle(GuiPaint().color(MenuMix(p.surface, p.outline, 0.5f)));
+}
+
+//!A light tile on a section that can be selected (outline when highlighted)
+static inline GuiShapeStyle MenuTileStyle()
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	GuiPaint rest = GuiPaint().color(p.surfaceRaised).stroke(1.5f, p.outline);
+	GuiPaint lit = GuiPaint().color(p.surfaceRaised).stroke(3.0f, p.accent).glow(8.0f, p.glow, 0.6f);
+	GuiPaint pressed = GuiPaint().color(MenuMix(p.accentTint, p.surfaceRaised, 0.5f)).stroke(3.0f, p.accent);
+	return GuiShapeStyle(rest).onFocus(lit).onPress(pressed);
+}
+
+//!A selectable row on a section: no look at rest; highlighted, a warm tint with a slim outline in the same hue.
+//!The fill carries the selection (the outline alone read as a hairline box crowding its neighbours), so rows
+//!need a few pixels of air between them rather than a thick border.
+static inline GuiShapeStyle MenuRowHighlightStyle()
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	GuiPaint lit = GuiPaint().color(MenuMix(p.surfaceRaised, p.mark, 0.14f)).stroke(1.5f, MenuMix(p.surfaceRaised, p.mark, 0.8f));
+	GuiPaint pressed = GuiPaint().color(MenuMix(p.surfaceRaised, p.mark, 0.30f)).stroke(1.5f, p.mark);
+	return GuiShapeStyle(GuiPaint()).onFocus(lit).onPress(pressed);
+}
+
+//!The capsule a toggle pill's segments sit in (MenuToggle): a white, finely outlined track
+static inline GuiShapeStyle MenuToggleCapsuleStyle()
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	return GuiShapeStyle(GuiPaint().color(p.surfaceRaised).stroke(1.5f, p.outlineStrong).shadow(4.0f, MenuRGBA(0, 0, 0, 70), 0.0f, 1.5f));
+}
+
+//!One segment of a toggle pill: the one that is on has a dark face (its label is white); the others are bare until the cursor
+//!is on them, when they take the row highlight. A segment that is on keeps its dark face under the cursor, with an accent outline.
+static inline GuiShapeStyle MenuToggleSegmentStyle(bool on)
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	GuiShapeStyle s = MenuRowHighlightStyle();
+	if(on)
+	{
+		s.normal = GuiPaint().gradient(p.chromeLight, p.chromeDark);
+		s.focused = GuiPaint().gradient(p.chromeLight, p.chromeDark).stroke(2.5f, p.accent).glow(10.0f, p.glow, 1.0f);
+		s.pressed = GuiPaint().gradient(p.chromeDark, p.chromeDark).stroke(2.5f, p.accent);
+	}
+	return s;
+}
+
+//!A chip that opens a popover (Preset, In DOS, Setup): a flat light face with a fine edge, the row highlight when the cursor is on it
+static inline GuiShapeStyle MenuChipStyle()
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	GuiShapeStyle s = MenuRowHighlightStyle();
+	s.normal = GuiPaint().color(p.surfaceRaised).stroke(1.0f, p.outline).shadow(4.0f, MenuRGBA(0, 0, 0, 70), 0.0f, 1.5f);
+	return s;
+}
+
+//!The kind (or tab) that is showing in a popover: a flat light-gray fill at rest, the same highlight as any row when the cursor is on it
+static inline GuiShapeStyle MenuPopoverShownStyle()
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	GuiShapeStyle s = MenuRowHighlightStyle();
+	s.normal = GuiPaint().color(p.accentTint);
+	return s;
+}
+
+//!A device tile on the setup screen's rail. Light at every state so the dark icon always reads on it:
+//!the device being drawn has a tinted face and a dark outline; a highlighted tile gets the orange of a
+//!highlighted row (no glow, so it never spills onto the tile beside it).
+static inline GuiShapeStyle MenuRailTileStyle(bool showing)
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	GuiPaint rest = showing ?
+		GuiPaint().color(p.surfaceRaised).stroke(2.0f, p.chromeDark) :
+		GuiPaint().color(p.surface).stroke(1.5f, p.outline);
+	GuiPaint lit = GuiPaint().color(MenuMix(p.surfaceRaised, p.mark, 0.14f)).stroke(2.0f, p.mark);
+	GuiPaint pressed = GuiPaint().color(MenuMix(p.surfaceRaised, p.mark, 0.30f)).stroke(2.0f, p.mark);
+	return GuiShapeStyle(rest).onFocus(lit).onPress(pressed);
+}
+
+//!A small round-ish button on the bars (the player stepper): the shared bar look, but the highlight is a
+//!dark face with a slim white outline and no glow, so it never touches the button or the title next to it.
+static inline GuiShapeStyle MenuStepperStyle()
+{
+	const MenuPalette& p = MenuPaletteCurrent();
+	GuiPaint rest = GuiPaint()
+		.gradient(p.surfaceRaised, MenuMix(p.surface, p.outline, 0.45f))
+		.stroke(1.5f, p.chromeDark)
+		.shadow(4.0f, MenuRGBA(0, 0, 0, 110), 0.0f, 2.0f);
+	GuiPaint lit = GuiPaint().gradient(p.accent, p.accentDark).stroke(2.0f, p.surfaceRaised);
+	GuiPaint pressed = GuiPaint().color(p.accentDark).stroke(2.0f, p.outlineStrong);
+	return GuiShapeStyle(rest).onFocus(lit).onPress(pressed);
+}
+
+//!Arrow colors for a button in the bar look: dark on the white resting face, white on the dark highlighted one
+static inline PixelColor MenuBarArrowRest() { return MenuRGBA(56, 56, 56); }
+static inline PixelColor MenuBarArrowLit() { return MenuRGBA(255, 255, 255); }
+
+//!Text on the chrome bars (the page title and the hint line)
+static inline PixelColor MenuChromeText() { return MenuRGBA(255, 255, 255); }
+static inline PixelColor MenuChromeTextMuted() { return MenuRGBA(206, 206, 206); }
