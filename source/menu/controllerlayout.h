@@ -10,8 +10,7 @@
  * Control ids are the INPUT_BTN_* / INPUT_TRIGGER_* / INPUT_THUMB_* bits from
  * InputData.h, so an input state maps straight onto what lights up.
  ***************************************************************************/
-#ifndef _CONTROLLERLAYOUT_H_
-#define _CONTROLLERLAYOUT_H_
+#pragma once
 
 #include <cstddef>
 #include <vector>
@@ -77,5 +76,3 @@ const ControllerLayout& WiimoteNunchukControllerLayout();	//!< Nunchuk on the le
 const ControllerLayout& DS4ControllerLayout();			//!< DualShock 4
 const ControllerLayout& Xbox360ControllerLayout();		//!< Xbox 360 pad
 const ControllerLayout& UsbControllerLayout();			//!< Generic USB gamepad
-
-#endif

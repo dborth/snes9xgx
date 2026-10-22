@@ -1,8 +1,6 @@
 /****************************************************************************
  * Snes9x GX
- *
- * Daryl Borth 2008-2026
- *
+ * Daryl Borth 2026
  * mappingmodel.h
  *
  * What the button mapping screen shows, as data: for each emulated device the
@@ -13,8 +11,7 @@
  * btnmap[device][hardware][].
  ***************************************************************************/
 
-#ifndef _MAPPINGMODEL_H_
-#define _MAPPINGMODEL_H_
+#pragma once
 
 #include <stdint.h>
 #include <vector>
@@ -63,5 +60,3 @@ const char * MappingButtonName(int hw, uint32_t btn);
 
 //!The control on a drawing that a button is: its id, or 0 if the drawing has no such control
 int MappingSpotFor(const ControllerLayout& layout, uint32_t btn);
-
-#endif

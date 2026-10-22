@@ -1,6 +1,6 @@
 /****************************************************************************
  * Snes9x GX
- *
+ * Daryl Borth 2026
  * menuart.h
  *
  * Code-drawn bars and buttons

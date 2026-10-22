@@ -7,8 +7,7 @@
  * (BuildController*), and ControllerView, the element that shows it and what
  * is happening on it.
  ***************************************************************************/
-#ifndef _CONTROLLERVIEW_H_
-#define _CONTROLLERVIEW_H_
+#pragma once
 
 #include "libgui/Gui.h"
 #include "libgui/GuiPaint.h"
@@ -124,5 +123,3 @@ class ControllerView : public GuiElement
 		float originX, originY;
 		int alpha;
 };
-
-#endif

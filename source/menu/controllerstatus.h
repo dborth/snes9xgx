@@ -1,8 +1,6 @@
 /****************************************************************************
  * Snes9x GX
- *
  * Daryl Borth 2026
- *
  * controllerstatus.h
  *
  * The controller strip at the bottom left of the game menu: an icon for what

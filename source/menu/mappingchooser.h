@@ -1,8 +1,6 @@
 /****************************************************************************
  * Snes9x GX
- *
- * Daryl Borth 2008-2026
- *
+ * Daryl Borth 2026
  * mappingchooser.h
  *
  * Asks what a row of the mapping screen should use, in a popover beside the
@@ -12,8 +10,7 @@
  *
  ***************************************************************************/
 
-#ifndef _MAPPINGCHOOSER_H_
-#define _MAPPINGCHOOSER_H_
+#pragma once
 
 #include <stdint.h>
 #include "libgui/Gui.h"
@@ -30,5 +27,3 @@
  * @return true if a choice was made; false if it was closed or the application is exiting
  */
 bool MappingChoose(const char * rowName, int hw, uint32_t now, uint32_t defaultButton, const GuiPopover::Anchor& anchor, uint32_t & chosen);
-
-#endif

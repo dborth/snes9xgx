@@ -1,8 +1,6 @@
 /****************************************************************************
  * Snes9x GX
- *
  * Daryl Borth 2026
- *
  * mappingchooser.cpp
  *
  * See mappingchooser.h.

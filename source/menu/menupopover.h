@@ -1,22 +1,16 @@
 /****************************************************************************
  * Snes9x GX
- * Daryl Borth 2009-2026
+ * Daryl Borth 2026
  * menupopover.h
  *
  * The menu's popover look: the one light panel every question asked in place
  * uses (see GuiPopover.h for where it goes and how it closes). A row, a rule and
  * a close button to build a panel from, and PickerView, the list of choices.
  ***************************************************************************/
-#ifndef _MENUPOPOVER_H_
-#define _MENUPOPOVER_H_
+#pragma once
 
 #include "libgui/Gui.h"
 #include "menu.h"
-
-/** Space kept clear at each side of the screen, for TVs that crop the picture. */
-#ifndef MENU_PAGE_MARGIN
-#define MENU_PAGE_MARGIN	44
-#endif
 
 /**
  * A full-screen page on the menu's main window. It can be taken off the window while another screen runs on top (a
@@ -145,5 +139,3 @@ int MenuPopover_Pick(const char * title, const std::vector<PickerItem>& items, c
 
 /** A question with a few answers and a line of detail, as a popover (see MenuPopover_Pick). The index of the answer, or -1. */
 int MenuPopover_Ask(const char * title, const std::vector<std::string>& answers, const std::string& detail, const GuiPopover::Anchor& anchor);
-
-#endif

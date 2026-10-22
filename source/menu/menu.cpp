@@ -2763,13 +2763,16 @@ static int MenuSettingsGeneralMappings()
 	for(i=0; i < options.length; i++)
 		options.value[i][0] = 0;
 
-	GuiText titleTxt("Game Settings - Button Mappings", 26, (PixelColor){255, 255, 255, 255});
-	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-	titleTxt.setPosition(50,30);
-
-	GuiText subtitleTxt("General Mappings", 20, (PixelColor){255, 255, 255, 255});
-	subtitleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-	subtitleTxt.setPosition(50,60);
+	UiScope ui;
+	GuiLabel& title = ui.label("General Mappings").fontSize(UI_FONT_TITLE - 2).textColor(MenuChromeText());
+	GuiLabel& hint = ui.label("Turbo mode, the menu toggle and ABXY on the right stick").fontSize(UI_FONT_SMALL + 2).textColor(MenuChromeTextMuted());
+	hint.setMaxWidth(176);
+	hint.setScroll(SCROLL::HORIZONTAL);
+	GuiLayout& titleBlock = ui.column().gap(4).size(176, 0).add(title).add(hint);
+	GuiLayout& header = ui.row().size(platform->getVideo()->getScreenWidth(), MENU_BAR_TOP_H).pad(MENU_PAGE_MARGIN, 0)
+		.align(LAYOUT_ALIGN::CENTRE).add(titleBlock);
+	header.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+	header.setPosition(0, 0);
 
 	GuiTrigger trigB;
 	trigB.setSecondaryTrigger();
@@ -2794,8 +2797,7 @@ static int MenuSettingsGeneralMappings()
 	w.append(&backBtn);
 	menu->mainWindow.appendWithAutoRemove(&optionBrowser);
 	menu->mainWindow.appendWithAutoRemove(&w);
-	menu->mainWindow.appendWithAutoRemove(&titleTxt);
-	w.append(&subtitleTxt);
+	menu->mainWindow.appendWithAutoRemove(&header);
 
 	while(selection == MENU_NONE)
 	{

@@ -1,6 +1,6 @@
 /****************************************************************************
  * Snes9x GX
- * Daryl Borth 2009-2026
+ * Daryl Borth 2026
  * menupopover.cpp
  *
  * See menupopover.h.

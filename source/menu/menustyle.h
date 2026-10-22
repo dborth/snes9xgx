@@ -1,6 +1,6 @@
 /****************************************************************************
  * Snes9x GX
- *
+ * Daryl Borth 2026
  * menustyle.h
  *
  * The look of the menus, drawn in code: colors, metrics and shape styles for
@@ -24,6 +24,8 @@
 #define MENU_BTN_LARGE_H	92
 #define MENU_BAR_TOP_H		96
 #define MENU_BAR_BOTTOM_H	112
+// space kept clear at each side of the screen, for TVs that crop the picture
+#define MENU_PAGE_MARGIN	44
 // shapes that touch the screen edge are drawn this much larger than the screen,
 // so their outline and feathered edge are never visible
 #define MENU_BAR_BLEED		6

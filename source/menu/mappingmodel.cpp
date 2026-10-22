@@ -1,8 +1,6 @@
 /****************************************************************************
  * Snes9x GX
- *
- * Daryl Borth 2008-2026
- *
+ * Daryl Borth 2026
  * mappingmodel.cpp
  *
  * See mappingmodel.h.
