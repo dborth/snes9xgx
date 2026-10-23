@@ -27,6 +27,20 @@ GuiPopover::Position GuiPopover::place(const Anchor& a, int w, int h, int screen
 		p.x = (screenW - w) / 2;
 		p.y = (screenH - h) / 2;
 	}
+	else if(a.edge == Anchor::BESIDE)
+	{
+		// Level with the anchor, on the side with room (the right if both have), clear of the anchor itself. With
+		// room on neither side it goes against the margin of the roomier one, which is as close as it can get.
+		const int rightX = a.x + a.w + kGap, leftX = a.x - kGap - w;
+		const int rightRoom = screenW - insets.side - rightX, leftRoom = leftX - insets.side + w;
+		if(rightRoom >= w)
+			p.x = rightX;
+		else if(leftX >= insets.side)
+			p.x = leftX;
+		else
+			p.x = (rightRoom >= leftRoom) ? rightX : insets.side;
+		p.y = std::max(top, std::min(a.y + a.h / 2 - h / 2, bottom - h));
+	}
 	else
 	{
 		// Straight under its anchor if that fits above the footer bar, else straight over it; a chip in a bar

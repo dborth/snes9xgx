@@ -61,6 +61,8 @@ class GuiSaveBrowser : public GuiElement
 	public:
 		GuiSaveBrowser(int w, int h);
 		~GuiSaveBrowser();
+		//!One card per row (wide), or two (the default). Call before setEntries().
+		void setColumns(int columns);
 		//!Replaces the cards. \param select The card (by position) that gets the cursor.
 		void setEntries(const std::vector<SaveEntry>& list, int select = 0);
 		//!\return The position of the card that was chosen since the last call, or -1.
@@ -78,6 +80,8 @@ class GuiSaveBrowser : public GuiElement
 		std::vector<SaveEntry> entries;
 		int selectedItem;
 		int listOffset;
+		int cols;				//!< cards across: 1 or 2
+		int pageSize() const { return 2 * cols; }
 		GuiButton * saveBtn[SAVELISTSIZE];
 		GuiText * saveTitle[SAVELISTSIZE];
 		GuiText * saveSubtitle[SAVELISTSIZE];

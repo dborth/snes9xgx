@@ -38,8 +38,9 @@ class GuiPopover : public GuiOverlay
 		//!The control a popover opens beside, in canvas pixels.
 		struct Anchor
 		{
-			//!Which way the panel lines up: with the anchor's nearer edge (AUTO), or against a side margin to leave the other side of the screen clear
-			enum Edge { AUTO, LEFT_MARGIN, RIGHT_MARGIN };
+			//!Which way the panel lines up: with the anchor's nearer edge (AUTO), or against a side margin to leave the other side of the screen clear.
+			//!BESIDE puts it level with the anchor, to its right (or its left when there is no room), so the anchor itself stays visible; for a card in a list
+			enum Edge { AUTO, LEFT_MARGIN, RIGHT_MARGIN, BESIDE };
 			int x, y, w, h;
 			bool valid;		//!< false for a popover with no anchor: it is centered
 			Edge edge;

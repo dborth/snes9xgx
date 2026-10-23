@@ -16,6 +16,7 @@
 #define SLOT_HEIGHT			72
 #define SLOT_PITCH_X		257
 #define SLOT_PITCH_Y		84
+#define SLOT_WIDE_WIDTH		(SLOT_PITCH_X + SLOT_WIDTH)
 #define PREVIEW_WIDTH		64		// screenshot box - matches the 64x48 the screenshots are decoded to
 #define PREVIEW_HEIGHT		48
 #define PREVIEW_X			8		// box to card's left edge, equal to the gap before the text (at x=80)
@@ -88,6 +89,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h)
 
 	listOffset = 0;
 	selectedItem = 0;
+	cols = 2;
 	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
@@ -226,6 +228,19 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	}
 }
 
+void GuiSaveBrowser::setColumns(int columns)
+{
+	cols = (columns == 1) ? 1 : 2;
+
+	for(int i=0; i<SAVELISTSIZE; i++)
+	{
+		const int w = (cols == 1) ? SLOT_WIDE_WIDTH : SLOT_WIDTH;
+		saveBgImg[i]->setSize(w, SLOT_HEIGHT);
+		saveBtn[i]->setSize(w, SLOT_HEIGHT);
+		saveBtn[i]->setPosition(cols == 1 ? 0 : SLOT_PITCH_X*(i % 2), SLOT_PITCH_Y*(i / cols));
+	}
+}
+
 void GuiSaveBrowser::setEntries(const std::vector<SaveEntry>& list, int select)
 {
 	entries = list;
@@ -235,10 +250,10 @@ void GuiSaveBrowser::setEntries(const std::vector<SaveEntry>& list, int select)
 		select = 0;
 
 	// scroll so the card with the cursor is on the page: the first page, or with it on the last row
-	if(select < SAVELISTSIZE)
+	if(select < pageSize())
 		listOffset = 0;
 	else
-		listOffset = ((select / 2) - (SAVELISTSIZE / 2 - 1)) * 2;
+		listOffset = ((select / cols) - 1) * cols;
 	selectedItem = select - listOffset;
 
 	// the cards show what they are given on the next update()
@@ -263,7 +278,7 @@ int GuiSaveBrowser::getSelectedPosition() const
 GuiButton * GuiSaveBrowser::getEntryButton(int position)
 {
 	const int i = position - listOffset;
-	if(i < 0 || i >= SAVELISTSIZE || position >= (int)entries.size())
+	if(i < 0 || i >= pageSize() || position >= (int)entries.size())
 		return nullptr;
 	return saveBtn[i];
 }
@@ -327,7 +342,7 @@ void GuiSaveBrowser::draw()
 
 		// the tag goes over the card, so after it
 		const int pos = listOffset + i;
-		if(saveBtn[i]->isVisible() && pos < (int)entries.size() && entries[(size_t)pos].playing)
+		if(i < pageSize() && saveBtn[i]->isVisible() && pos < (int)entries.size() && entries[(size_t)pos].playing)
 		{
 			tagShape[i]->draw();
 			tagText[i]->draw();
@@ -359,14 +374,14 @@ void GuiSaveBrowser::update(InputController * controller)
 
 	if(selectedItem < 0) selectedItem = 0;
 
-	if(controller->right())
+	if(cols > 1 && controller->right())
 	{
-		if(selectedItem == SAVELISTSIZE-1)
+		if(selectedItem == pageSize()-1)
 		{
-			if(listOffset + SAVELISTSIZE < length)
+			if(listOffset + pageSize() < length)
 			{
 				// move list down by 1 row
-				listOffset += 2;
+				listOffset += cols;
 				selectedItem -= 1;
 			}
 		}
@@ -377,15 +392,15 @@ void GuiSaveBrowser::update(InputController * controller)
 			selectedItem += 1;
 		}
 	}
-	else if(controller->left())
+	else if(cols > 1 && controller->left())
 	{
 		if(selectedItem == 0)
 		{
-			if(listOffset - 2 >= 0)
+			if(listOffset - cols >= 0)
 			{
 				// move list up by 1
-				listOffset -= 2;
-				selectedItem = SAVELISTSIZE-1;
+				listOffset -= cols;
+				selectedItem = pageSize()-1;
 			}
 		}
 		else
@@ -398,40 +413,40 @@ void GuiSaveBrowser::update(InputController * controller)
 	}
 	else if(controller->down() || arrowDownBtn->getState() == STATE::CLICKED)
 	{
-		if(selectedItem >= SAVELISTSIZE-2)
+		if(selectedItem >= pageSize()-cols)
 		{
-			if(listOffset + SAVELISTSIZE + 1 < length)
+			if(listOffset + pageSize() + cols - 1 < length)
 			{
-				listOffset += 2;
+				listOffset += cols;
 			}
-			else if(listOffset + SAVELISTSIZE < length)
+			else if(listOffset + pageSize() < length)
 			{
-				listOffset += 2;
+				listOffset += cols;
 
-				if(selectedItem == SAVELISTSIZE-1)
+				if(selectedItem == pageSize()-1 && cols > 1)
 					selectedItem -= 1;
 			}
 		}
-		else if(saveBtn[selectedItem+2]->isVisible())
+		else if(saveBtn[selectedItem+cols]->isVisible())
 		{
-			selectedItem += 2;
+			selectedItem += cols;
 		}
 	}
 	else if(controller->up() || arrowUpBtn->getState() == STATE::CLICKED)
 	{
-		if(selectedItem < 2)
+		if(selectedItem < cols)
 		{
-			if(listOffset - 2 >= 0)
+			if(listOffset - cols >= 0)
 			{
 				// move list up by 1
-				listOffset -= 2;
+				listOffset -= cols;
 			}
 		}
 		else
 		{
-			if(saveBtn[selectedItem-2]->isVisible())
+			if(saveBtn[selectedItem-cols]->isVisible())
 			{
-				selectedItem -= 2;
+				selectedItem -= cols;
 			}
 		}
 	}
@@ -446,7 +461,7 @@ void GuiSaveBrowser::update(InputController * controller)
 
 	for(i=0; i<SAVELISTSIZE; i++)
 	{
-		if(listOffset+i < length)
+		if(i < pageSize() && listOffset+i < length)
 		{
 			const SaveEntry & e = entries[(size_t)(listOffset+i)];
 
@@ -500,9 +515,9 @@ void GuiSaveBrowser::update(InputController * controller)
 //! Sizes and places the scrollbar thumb for the rows currently shown
 void GuiSaveBrowser::updateThumb()
 {
-	const int pageRows = SAVELISTSIZE / 2;
-	const int totalRows = ((int)entries.size() + 1) / 2;
-	int firstRow = listOffset / 2;
+	const int pageRows = 2;
+	const int totalRows = ((int)entries.size() + cols - 1) / cols;
+	int firstRow = listOffset / cols;
 
 	if(totalRows <= pageRows)
 	{

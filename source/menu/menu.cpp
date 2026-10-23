@@ -1789,7 +1789,7 @@ static int MenuGame()
  * Determines the save file number of the given file name
  * Returns -1 if none is found
  ***************************************************************************/
-static int FindGameSaveNum(char * savefile)
+static int FindGameSaveNum(char * savefile, bool exactIsAuto = false)
 {
 	int n = -1;
 	int romlen = strlen(Memory.ROMFilename);
@@ -1799,6 +1799,11 @@ static int FindGameSaveNum(char * savefile)
 
 	if(strncmp(savefile, Memory.ROMFilename, romlen) != 0)
 		return -1;
+
+	// The auto slot has no "Auto" in its name when the setting for that is off, and a game's save file may have
+	// always been named that way. Only the caller knows whether that name is the auto slot.
+	if(diff == 0)
+		return exactIsAuto ? 0 : -1;
 
 	if(savefile[romlen] == ' ')
 	{
@@ -1852,7 +1857,7 @@ static int SaveListTask(void * arg)
 	{
 		len2 = strlen(browserList[i].filename);
 
-		if(len2 < 6 || len2-len < 5)
+		if(len2 < 6 || len2-len < 4)
 			continue;
 
 		if(strncmp(&browserList[i].filename[len2-4], ".srm", 4) == 0)
@@ -1864,7 +1869,7 @@ static int SaveListTask(void * arg)
 
 		strcpy(tmp, browserList[i].filename);
 		tmp[len2-4] = 0;
-		n = FindGameSaveNum(tmp);
+		n = FindGameSaveNum(tmp, type == FILE_SRAM || !EmuSettings.appendAuto);
 
 		if(n >= 0)
 		{
@@ -1989,9 +1994,13 @@ enum { SAVEACT_LOAD, SAVEACT_UPDATE, SAVEACT_DELETE, SAVEACT_SAVENOW, SAVEACT_BA
 
 #define SAVE_TAB_W		164
 #define SAVE_TAB_H		34
-#define SAVE_TAB_Y		104
-#define SAVE_LIST_Y		166
-#define SAVE_LIST_H		156
+#define SAVE_PANEL_Y	102
+#define SAVE_PANEL_W	584
+#define SAVE_PANEL_H	244
+#define SAVE_TAB_X		44
+#define SAVE_TAB_Y		112
+#define SAVE_LIST_Y		178
+#define SAVE_LIST_H		160
 #define SAVE_TOAST_W	240
 #define SAVE_TOAST_H	30
 #define SAVE_TOAST_FRAMES	120
@@ -2007,7 +2016,7 @@ struct SaveCard
 };
 
 // The slot number in a save file's name (0 for the auto slot), or -1
-static int SaveSlotOf(const char * filename)
+static int SaveSlotOf(const char * filename, int type)
 {
 	char tmp[MAXJOLIET+1];
 	const int len = strlen(filename);
@@ -2017,7 +2026,7 @@ static int SaveSlotOf(const char * filename)
 
 	snprintf(tmp, sizeof(tmp), "%s", filename);
 	tmp[len-4] = 0; // the extension
-	return FindGameSaveNum(tmp);
+	return FindGameSaveNum(tmp, type == FILE_SRAM || !EmuSettings.appendAuto);
 }
 
 static std::string SaveNumbered(const char * what, int slot)
@@ -2051,7 +2060,7 @@ static void BuildSaveCards(int tab, SaveList & saves, std::vector<SaveEntry> & e
 
 	for(int i = 0; i < saves.length; i++)
 	{
-		if(saves.type[i] != wantType || SaveSlotOf(saves.filename[i]) < 0)
+		if(saves.type[i] != wantType || SaveSlotOf(saves.filename[i], wantType) < 0)
 			continue;
 
 		if(snapshots && playing[0] && MakeFilePath(path, FILE_STATE, saves.filename[i]) && strcmp(path, playing) == 0)
@@ -2060,10 +2069,23 @@ static void BuildSaveCards(int tab, SaveList & saves, std::vector<SaveEntry> & e
 			found.push_back(i);
 	}
 
-	std::sort(found.begin(), found.end(), [&saves](int a, int b)
+	if(!snapshots)
 	{
-		const int sa = SaveSlotOf(saves.filename[a]);
-		const int sb = SaveSlotOf(saves.filename[b]);
+		const size_t romLen = strlen(Memory.ROMFilename);
+		bool legacy = false;
+		for(size_t k = 0; k < found.size(); k++)
+			legacy = legacy || (SaveSlotOf(saves.filename[found[k]], wantType) == 0 && strlen(saves.filename[found[k]]) - 4 == romLen);
+		if(legacy)
+			found.erase(std::remove_if(found.begin(), found.end(), [&saves, wantType, romLen](int i)
+			{
+				return SaveSlotOf(saves.filename[i], wantType) == 0 && strlen(saves.filename[i]) - 4 != romLen;
+			}), found.end());
+	}
+
+	std::sort(found.begin(), found.end(), [&saves, wantType](int a, int b)
+	{
+		const int sa = SaveSlotOf(saves.filename[a], wantType);
+		const int sb = SaveSlotOf(saves.filename[b], wantType);
 		if((sa == 0) != (sb == 0))
 			return sa == 0;
 		return sa > sb;
@@ -2075,7 +2097,7 @@ static void BuildSaveCards(int tab, SaveList & saves, std::vector<SaveEntry> & e
 		SaveCard c;
 		c.save = i;
 		c.type = wantType;
-		c.slot = SaveSlotOf(saves.filename[i]);
+		c.slot = SaveSlotOf(saves.filename[i], wantType);
 		c.main = !snapshots && c.slot == 0;
 		c.playing = isPlaying;
 		e.kind = SaveEntry::SAVE;
@@ -2112,7 +2134,7 @@ static void BuildSaveCards(int tab, SaveList & saves, std::vector<SaveEntry> & e
 	}
 	else
 	{
-		if(found.empty() || SaveSlotOf(saves.filename[found[0]]) != 0)
+		if(found.empty() || SaveSlotOf(saves.filename[found[0]], wantType) != 0)
 		{
 			// nothing written yet: a card to do it the first time
 			SaveEntry e;
@@ -2142,7 +2164,7 @@ static void SaveCardMenu(int tab, const SaveCard & card, std::vector<PickerItem>
 	{
 		PickerItem it;
 		it.name = name;
-		it.lines.push_back(about);
+		it.hint = about;
 		it.current = false;
 		it.preferred = preferred;
 		it.divider = divider;
@@ -2154,25 +2176,25 @@ static void SaveCardMenu(int tab, const SaveCard & card, std::vector<PickerItem>
 	{
 		if(card.playing)
 		{
-			add(SAVEACT_UPDATE, "Update", "Replace it with your progress right now. You started from this snapshot.", true, false);
-			add(SAVEACT_LOAD, "Load", "Jump back to this moment.", false, true);
+			add(SAVEACT_UPDATE, "Update", "Replace with your progress now", true, false);
+			add(SAVEACT_LOAD, "Load", "Jump back to this moment", false, true);
 		}
 		else
 		{
-			add(SAVEACT_LOAD, "Load", "Jump to this moment.", true, false);
-			add(SAVEACT_UPDATE, "Replace", "Overwrite it with your progress right now.", false, true);
+			add(SAVEACT_LOAD, "Load", "Jump to this moment", true, false);
+			add(SAVEACT_UPDATE, "Replace", "Overwrite with your progress", false, true);
 		}
-		add(SAVEACT_DELETE, "Delete", "Remove this snapshot for good.", false, false);
+		add(SAVEACT_DELETE, "Delete", "Remove this snapshot", false, false);
 	}
 	else if(card.main)
 	{
-		add(SAVEACT_SAVENOW, "Save Now", "Write the game's current save data to its file.", true, false);
-		add(SAVEACT_BACKUP, "Make Backup", "Keep a copy of the save data, handy before trying something risky.", false, false);
+		add(SAVEACT_SAVENOW, "Save Now", "Write the save to its file", true, false);
+		add(SAVEACT_BACKUP, "Make Backup", "Keep a copy, just in case", false, false);
 	}
 	else
 	{
-		add(SAVEACT_RESTORE, "Restore", "Put this backup back as the game's save data. Reset the game afterwards.", true, true);
-		add(SAVEACT_DELETE, "Delete", "Remove this backup for good.", false, false);
+		add(SAVEACT_RESTORE, "Restore", "Use this as the game's save", true, true);
+		add(SAVEACT_DELETE, "Delete", "Remove this backup", false, false);
 	}
 }
 
@@ -2243,11 +2265,11 @@ static int MenuGameSaves(int startTab)
 
 	GuiText titleTxt("Saves", 26, white);
 	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-	titleTxt.setPosition(50,28);
+	titleTxt.setPosition(50,24);
 
-	GuiText gameTxt(romTitle, 14, pal.glow);
+	GuiText gameTxt(romTitle, 20, white);
 	gameTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-	gameTxt.setPosition(50,64);
+	gameTxt.setPosition(50,60);
 
 	GuiTrigger trigHome;
 	GuiTrigger trigB;
@@ -2284,16 +2306,16 @@ static int MenuGameSaves(int startTab)
 	// absence is explained rather than the tab being mysteriously missing.
 	SaveTab tab0("Snapshots", (PixelColor){0, 0, 0, 255});
 	SaveTab tab1("In-Game Save", battery ? (PixelColor){0, 0, 0, 255} : theme.textMuted);
-	tab0.btn.setPosition(50, SAVE_TAB_Y);
+	tab0.btn.setPosition(SAVE_TAB_X, SAVE_TAB_Y);
 	tab0.btn.setTrigger(trigA);
 	tab0.btn.setTrigger(&trigL);
-	tab1.btn.setPosition(50 + SAVE_TAB_W + 8, SAVE_TAB_Y);
+	tab1.btn.setPosition(SAVE_TAB_X + SAVE_TAB_W + 8, SAVE_TAB_Y);
 	tab1.btn.setTrigger(trigA);
 	tab1.btn.setTrigger(&trigR);
 
-	GuiText hintTxt(nullptr, 14, theme.textMuted);
+	GuiText hintTxt(nullptr, 15, (PixelColor){60, 60, 60, 255});
 	hintTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-	hintTxt.setPosition(50, SAVE_TAB_Y + SAVE_TAB_H + 6);
+	hintTxt.setPosition(SAVE_TAB_X + 4, SAVE_TAB_Y + SAVE_TAB_H + 8);
 
 	// shown beside a lone "New Snapshot" card
 	GuiText emptyTitle("No snapshots yet", 18, theme.text);
@@ -2304,7 +2326,7 @@ static int MenuGameSaves(int startTab)
 	for(int k = 0; k < 4; k++)
 	{
 		emptyTexts[k]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-		emptyTexts[k]->setPosition(316, SAVE_LIST_Y + 8 + (k == 0 ? 0 : 22 + (k - 1) * 20));
+		emptyTexts[k]->setPosition(318, SAVE_LIST_Y + 8 + (k == 0 ? 0 : 22 + (k - 1) * 20));
 		emptyTexts[k]->setVisible(false);
 	}
 
@@ -2338,12 +2360,19 @@ static int MenuGameSaves(int startTab)
 	toastShape.setStyle(GuiShapeStyle(GuiPaint().gradient(pal.accent, pal.accentDark).stroke(2.0f, pal.glow)));
 	GuiButton toastBtn(SAVE_TOAST_W, SAVE_TOAST_H);
 	toastBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
-	toastBtn.setPosition(0, -(MENU_BAR_BOTTOM_H + 8));
+	toastBtn.setPosition(0, -(MENU_BAR_BOTTOM_H + 4));
 	toastBtn.setLabel(&toastTxt);
 	toastBtn.setImage(&toastShape);
 	toastBtn.setSelectable(false);
 	toastBtn.setVisible(false);
 	int toastFrames = 0;
+
+	// one solid card behind the tabs, the hint and the list, so none of it sits on the picture behind the menu
+	GuiShape panel(SAVE_PANEL_W, SAVE_PANEL_H);
+	panel.setCorners(GuiCorners(14.0f));
+	panel.setPaint(GuiPaint().color(MenuRGBA(226, 231, 238)).stroke(1.5f, pal.outlineStrong).shadow(14.0f, MenuRGBA(0, 0, 0, 90), 0.0f, 4.0f));
+	panel.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
+	panel.setPosition(0, SAVE_PANEL_Y);
 
 	GuiWindow w(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
 	w.append(&backBtn);
@@ -2354,6 +2383,7 @@ static int MenuGameSaves(int startTab)
 		w.append(&tab1.btn);
 	}
 	w.append(&gotoBtn);
+	menu->mainWindow.appendWithAutoRemove(&panel);
 	menu->mainWindow.appendWithAutoRemove(&w);
 	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 	menu->mainWindow.appendWithAutoRemove(&gameTxt);
@@ -2427,6 +2457,7 @@ static int MenuGameSaves(int startTab)
 		if(select < 0)
 			select = 0;
 
+		saveBrowser.setColumns(tab == SAVETAB_GAMEDATA ? 1 : 2);
 		saveBrowser.setEntries(entries, select);
 		saveBrowser.setVisible(!noBattery);
 		saveBrowser.setState(noBattery ? STATE::DISABLED : STATE::DEFAULT);
@@ -2521,7 +2552,7 @@ static int MenuGameSaves(int startTab)
 
 				// a popover beside the card, over this screen, which keeps the card highlighted but takes no input
 				GuiButton * from = saveBrowser.getEntryButton(pos);
-				const GuiPopover::Anchor anchor = from ? GuiPopover::Anchor(*from) : GuiPopover::Anchor();
+				const GuiPopover::Anchor anchor = from ? GuiPopover::Anchor(*from, GuiPopover::Anchor::BESIDE) : GuiPopover::Anchor();
 				w.setState(STATE::DISABLED);
 				saveBrowser.setState(STATE::DISABLED);
 				const int chosen = MenuPopover_Pick(entry.title.c_str(), items, anchor);
@@ -2604,7 +2635,8 @@ static int MenuGameSaves(int startTab)
 								break;
 							}
 						}
-						MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, slot);
+						if(act == SAVEACT_BACKUP || card.save < 0)	// Save Now on a file that exists writes that very file
+							MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, slot);
 
 						if(!RunSaveOp(SAVEOP_SAVE, FILE_SRAM, filepath, &result, true))
 							return MENU_EXIT;

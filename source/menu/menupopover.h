@@ -55,7 +55,7 @@ class MenuScreenWindow
 GuiPopover::Insets MenuPopover_Insets();
 
 /** One row of a popover list: the name on the left, a dot on the right when `marked` (the one in use). The caller adds onClick / onFocus. */
-GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& title, bool marked, bool dotSlot = true);
+GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& title, bool marked, bool dotSlot = true, const std::string& hint = std::string());
 
 /** A one pixel rule `w` wide, in the outline color. */
 GuiShape& MenuPopover_Divider(UiScope& ui, int w);
@@ -70,6 +70,7 @@ struct PickerRow {
 struct PickerItem {
 	std::string name;					/**< "Arrow keys" */
 	std::vector<std::string> lines;		/**< What it is, a few short lines (at most three are shown) */
+	std::string hint;					/**< A line under the name, on the row itself. When any item has one the list is "hinted": taller rows, and no caption under the list */
 	std::vector<PickerRow> rows;		/**< What it does for the buttons (at most seven are shown) */
 	bool current;						/**< The one in use now */
 	bool preferred = false;				/**< The cursor starts here when nothing is `current` (no dot is drawn) */

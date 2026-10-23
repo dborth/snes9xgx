@@ -22,11 +22,12 @@ GuiShape& MenuPopover_Divider(UiScope& ui, int w)
 	return line;
 }
 
-GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& title, bool marked, bool withDotSlot)
+GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& title, bool marked, bool withDotSlot, const std::string& hint)
 {
 	const int padX = 10, dotSlot = withDotSlot ? 14 : 0;
+	const int textW = width - 2 * padX - (withDotSlot ? dotSlot + 8 : 0);
 	GuiLabel& name = ui.label(title.c_str()).fontSize(16);
-	name.setMaxWidth(width - 2 * padX - (withDotSlot ? dotSlot + 8 : 0));
+	name.setMaxWidth(textW);
 	GuiLayout& dotBox = ui.row().size(dotSlot, dotSlot).align(LAYOUT_ALIGN::CENTRE);
 	if(marked)
 	{
@@ -35,7 +36,21 @@ GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& 
 		dot.setPaint(GuiPaint().color(MenuPaletteCurrent().accent));
 		dotBox.add(dot);
 	}
-	GuiLayout& content = ui.row().size(width - 2 * padX, height).gap(8).align(LAYOUT_ALIGN::CENTRE).add(name).addSpace();
+
+	GuiLayout& content = ui.row().size(width - 2 * padX, height).gap(8).align(LAYOUT_ALIGN::CENTRE);
+	if(hint.empty())
+		content.add(name);
+	else
+	{
+		// the name with a line of what it does under it, the two together centered in the row
+		GuiLabel& about = ui.label(hint.c_str()).fontSize(UI_FONT_SMALL).muted();
+		about.setMaxWidth(textW);
+		const int textH = 20 + 3 + 16;
+		GuiLayout& text = ui.column().size(textW, height).gap(3).pad(0, (height - textH) / 2);
+		text.add(name).add(about);
+		content.add(text);
+	}
+	content.addSpace();
 	if(withDotSlot)
 		content.add(dotBox);
 	GuiCard& row = ui.card();
@@ -49,6 +64,8 @@ GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& 
 namespace {
 
 const int kPopoverW = 280;
+const int kHintedPopoverW = 262;	// narrower, so beside a card it leaves the card showing
+const int kHintedRowH = 50;
 const int kPopoverPad = 10;
 const int kPopoverTitleH = 24;
 const int kPopoverCaptionLineH = 16;
@@ -88,6 +105,8 @@ void PickerView::onFocusChange(std::function<void(int)> fn)
 // The caption under the list: what the row under the cursor is
 void PickerView::refreshCaption()
 {
+	if(captionLines.empty())
+		return;	// a hinted list: each row says what it does itself
 	for(size_t i = 0; i < captionLines.size(); i++)
 		captionLines[i].clear();
 	if(items.empty() || focus < 0 || (size_t)focus >= items.size())
@@ -128,27 +147,35 @@ PickerView::PickerView(const char * title, const std::vector<PickerItem>& itemLi
 	focus = current;
 	inUse = current;
 
-	// Size: a short list gets roomy rows; a long one shrinks its rows (down to 28 px) to stay between the bars
+	// Size: a short list gets roomy rows; a long one shrinks its rows (down to 28 px) to stay between the bars.
+	// A hinted list (each row has a line saying what it does) has taller rows, a narrower panel, and no caption.
+	bool hinted = false;
+	for(size_t i = 0; i < items.size(); i++)
+		hinted = hinted || !items[i].hint.empty();
+	panelWidth = hinted ? kHintedPopoverW : kPopoverW;
 	const int n = (int)items.size();
 	int dividers = 0;
 	for(size_t i = 0; i < items.size(); i++)
 		dividers += items[i].divider ? 1 : 0;
-	const int captionLinesN = n <= 5 ? 3 : 2;
+	const int captionLinesN = hinted ? 0 : (n <= 5 ? 3 : 2);
 	captionLines.assign((size_t)captionLinesN, std::string());
-	const int captionH = captionLinesN * kPopoverCaptionLineH + 4;
-	const int fixedH = 2 * kPopoverPad + kPopoverTitleH + 7 + 8 + captionH;
+	const int captionH = hinted ? 0 : captionLinesN * kPopoverCaptionLineH + 4;
+	const int fixedH = 2 * kPopoverPad + kPopoverTitleH + 7 + (hinted ? 0 : 8) + captionH;
 	const int spare = maxPanelHeight() - fixedH - dividers * kPopoverDividerH - std::max(0, n - 1) * kPopoverRowGap;
-	rowHeight = std::max(28, std::min(36, n > 0 ? spare / n : 36));
+	if(hinted)
+		rowHeight = std::max(40, std::min(kHintedRowH, n > 0 ? spare / n : kHintedRowH));
+	else
+		rowHeight = std::max(28, std::min(36, n > 0 ? spare / n : 36));
 	const int listH = n * rowHeight + std::max(0, n - 1) * kPopoverRowGap + dividers * kPopoverDividerH;
 	panelHeight = fixedH + listH;
-	const int innerW = kPopoverW - 2 * kPopoverPad;
+	const int innerW = panelWidth - 2 * kPopoverPad;
 
 	// the list: plain rows, a dot on the one in use, the highlight tint on the one under the cursor
 	GuiLayout& list = ui.column().gap(kPopoverRowGap).size(innerW, listH);
 	for(size_t i = 0; i < items.size(); i++)
 	{
 		const int idx = (int)i;
-		GuiCard& row = MenuPopover_Row(ui, innerW, rowHeight, items[i].name, items[i].current);
+		GuiCard& row = MenuPopover_Row(ui, innerW, rowHeight, items[i].name, items[i].current, !hinted, items[i].hint);
 		row.onClick([this, idx]{ choose(idx); });
 		row.onFocus([this, idx]{ focusItem(idx); });
 		itemCards.push_back(&row);
@@ -159,21 +186,23 @@ PickerView::PickerView(const char * title, const std::vector<PickerItem>& itemLi
 
 	// what the popover is about, then a rule; the caption goes under the list
 	GuiLabel& heading = ui.label(title).fontSize(UI_FONT_SMALL).muted();
-	GuiLayout& captionColumn = ui.column().size(innerW, captionH).pad(0, 0);
-	for(int k = 0; k < captionLinesN; k++)
-	{
-		GuiLabel& line = ui.label().fontSize(UI_FONT_SMALL).muted().bind([this, k]{ return captionLines[(size_t)k]; });
-		captionColumn.add(ui.row().size(innerW, kPopoverCaptionLineH).align(LAYOUT_ALIGN::CENTRE).add(line));
-	}
 	GuiLayout& content = ui.column().size(innerW, panelHeight - 2 * kPopoverPad)
 		.add(ui.row().size(innerW, kPopoverTitleH).align(LAYOUT_ALIGN::CENTRE).add(heading))
 		.add(MenuPopover_Divider(ui, innerW))
 		.addGap(6)
-		.add(list)
-		.addGap(8)
-		.add(captionColumn);
+		.add(list);
+	if(!hinted)
+	{
+		GuiLayout& captionColumn = ui.column().size(innerW, captionH).pad(0, 0);
+		for(int k = 0; k < captionLinesN; k++)
+		{
+			GuiLabel& line = ui.label().fontSize(UI_FONT_SMALL).muted().bind([this, k]{ return captionLines[(size_t)k]; });
+			captionColumn.add(ui.row().size(innerW, kPopoverCaptionLineH).align(LAYOUT_ALIGN::CENTRE).add(line));
+		}
+		content.addGap(8).add(captionColumn);
+	}
 
-	GuiCard& panel = ui.card().selectable(false).style(MenuPopoverStyle()).corners(GuiCorners(12.0f)).pad(kPopoverPad, kPopoverPad).size(kPopoverW, panelHeight);
+	GuiCard& panel = ui.card().selectable(false).style(MenuPopoverStyle()).corners(GuiCorners(12.0f)).pad(kPopoverPad, kPopoverPad).size(panelWidth, panelHeight);
 	panel.add(content);
 
 	setPanel(panel, MenuPaletteCurrent().surfaceRaised);
