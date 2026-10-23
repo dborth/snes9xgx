@@ -8,7 +8,6 @@
  * GUI class definitions
  ***************************************************************************/
 
-#include "../filebrowser.h"
 #include "Gui.h"
 
 // Layout, in design pixels. Each slot is a card; the scrollbar column runs down the
@@ -16,7 +15,7 @@
 #define SLOT_WIDTH			244
 #define SLOT_HEIGHT			72
 #define SLOT_PITCH_X		257
-#define SLOT_PITCH_Y		87
+#define SLOT_PITCH_Y		84
 #define PREVIEW_WIDTH		64		// screenshot box - matches the 64x48 the screenshots are decoded to
 #define PREVIEW_HEIGHT		48
 #define PREVIEW_X			8		// box to card's left edge, equal to the gap before the text (at x=80)
@@ -26,9 +25,11 @@
 #define SB_INSET			12		// column to the browser's right edge
 #define SB_ARROW			22
 #define SB_TRACK_WIDTH		6
-#define SB_TRACK_Y			(SB_ARROW + 6)
+#define SB_TRACK_Y			(SB_ARROW + 4)
 #define SB_THUMB_WIDTH		14
 #define SB_THUMB_MIN_HEIGHT	24
+#define TAG_WIDTH			92		// the "Playing from" tag
+#define TAG_HEIGHT			20
 
 GuiSavePreview::GuiSavePreview(int w, int h, int phW, int phH)
 	: placeholder(phW, phH), noImage("No image", 12, GuiTheme::current().textMuted), hasImage(false)
@@ -55,6 +56,11 @@ void GuiSavePreview::setImage(GuiImageData * img)
 	hasImage = img != nullptr && img->getTexture() != nullptr;
 }
 
+void GuiSavePreview::setPlaceholderText(const char * text)
+{
+	noImage.setText(text);
+}
+
 void GuiSavePreview::draw()
 {
 	if(!this->isVisible())
@@ -74,21 +80,13 @@ void GuiSavePreview::draw()
 /**
  * Constructor for the GuiSaveBrowser class.
  */
-GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
+GuiSaveBrowser::GuiSaveBrowser(int w, int h)
 {
 	width = w;
 	height = h;
-	saves = s;
-	action = a;
 	selectable = true;
 
-	if(action == 0) // load
-		listOffset = 0;
-	else if(action == 2) // delete SRAM / State
-		listOffset = 0;
-	else
-		listOffset = -2; // save - reserve -2 & -1 for new slots
-
+	listOffset = 0;
 	selectedItem = 0;
 	focus = 0; // allow focus
 
@@ -157,16 +155,12 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
-		saveDate[i] = new GuiText(nullptr, 18, theme.text);
-		saveDate[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-		saveDate[i]->setPosition(80,5);
-		saveTime[i] = new GuiText(nullptr, 18, theme.text);
-		saveTime[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-		saveTime[i]->setPosition(80,27);
-
-		saveType[i] = new GuiText(nullptr, 18, theme.text);
-		saveType[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-		saveType[i]->setPosition(80,50);
+		saveTitle[i] = new GuiText(nullptr, 18, theme.text);
+		saveTitle[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+		saveTitle[i]->setPosition(80,12);
+		saveSubtitle[i] = new GuiText(nullptr, 14, theme.textMuted);
+		saveSubtitle[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+		saveSubtitle[i]->setPosition(80,40);
 
 		// each slot is a card, taking the accent outline and glow when highlighted
 		saveBgImg[i] = new GuiShape(SLOT_WIDTH, SLOT_HEIGHT);
@@ -178,9 +172,8 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 
 		saveBtn[i] = new GuiButton(SLOT_WIDTH, SLOT_HEIGHT);
 		saveBtn[i]->setParent(this);
-		saveBtn[i]->setLabel(saveDate[i], 0);
-		saveBtn[i]->setLabel(saveTime[i], 1);
-		saveBtn[i]->setLabel(saveType[i], 2);
+		saveBtn[i]->setLabel(saveTitle[i], 0);
+		saveBtn[i]->setLabel(saveSubtitle[i], 1);
 		saveBtn[i]->setImage(saveBgImg[i]);
 		saveBtn[i]->setIcon(savePreviewImg[i]);
 		saveBtn[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
@@ -190,9 +183,18 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h, SaveList * s, int a)
 		saveBtn[i]->setEffectGrow(106);
 		saveBtn[i]->setVisible(false);
 		saveBtnLastOver[i] = false;
+
+		// the tag sits half over the card's top edge, near its right end
+		tagShape[i] = new GuiShape(TAG_WIDTH, TAG_HEIGHT);
+		tagShape[i]->setParent(saveBtn[i]);
+		tagShape[i]->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+		tagShape[i]->setPosition(-12, -TAG_HEIGHT / 2 + 1);
+		tagShape[i]->setCapsule();
+		tagShape[i]->setPaint(GuiPaint().color(theme.accent));
+		tagText[i] = new GuiText("Playing from", 12, theme.textOnAccent);
+		tagText[i]->setParent(tagShape[i]);
+		tagText[i]->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	}
-	saveBtn[0]->setState(STATE::SELECTED, -1);
-	saveBtn[0]->setVisible(true);
 }
 
 /**
@@ -214,13 +216,61 @@ GuiSaveBrowser::~GuiSaveBrowser()
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
+		delete tagText[i];
+		delete tagShape[i];
 		delete saveBtn[i];
-		delete saveDate[i];
-		delete saveTime[i];
-		delete saveType[i];
+		delete saveTitle[i];
+		delete saveSubtitle[i];
 		delete saveBgImg[i];
 		delete savePreviewImg[i];
 	}
+}
+
+void GuiSaveBrowser::setEntries(const std::vector<SaveEntry>& list, int select)
+{
+	entries = list;
+	const int n = (int)entries.size();
+
+	if(select < 0 || select >= n)
+		select = 0;
+
+	// scroll so the card with the cursor is on the page: the first page, or with it on the last row
+	if(select < SAVELISTSIZE)
+		listOffset = 0;
+	else
+		listOffset = ((select / 2) - (SAVELISTSIZE / 2 - 1)) * 2;
+	selectedItem = select - listOffset;
+
+	// the cards show what they are given on the next update()
+	for(int i=0; i<SAVELISTSIZE; i++)
+	{
+		saveBtn[i]->resetState();
+		saveBtn[i]->setVisible(false);
+		saveBtn[i]->setState(STATE::DISABLED);
+		savePreviewImg[i]->setImage(nullptr);
+		saveBtnLastOver[i] = false;
+	}
+}
+
+int GuiSaveBrowser::getSelectedPosition() const
+{
+	if(entries.empty())
+		return -1;
+	const int p = listOffset + selectedItem;
+	return (p >= 0 && p < (int)entries.size()) ? p : -1;
+}
+
+GuiButton * GuiSaveBrowser::getEntryButton(int position)
+{
+	const int i = position - listOffset;
+	if(i < 0 || i >= SAVELISTSIZE || position >= (int)entries.size())
+		return nullptr;
+	return saveBtn[i];
+}
+
+const SaveEntry * GuiSaveBrowser::getEntry(int position) const
+{
+	return (position >= 0 && position < (int)entries.size()) ? &entries[(size_t)position] : nullptr;
 }
 
 void GuiSaveBrowser::setFocus(int f)
@@ -250,7 +300,7 @@ void GuiSaveBrowser::resetState()
 
 int GuiSaveBrowser::getClickedSave()
 {
-	int found = -3;
+	int found = -1;
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
 		if(saveBtn[i]->getState() == STATE::CLICKED)
@@ -272,7 +322,17 @@ void GuiSaveBrowser::draw()
 		return;
 
 	for(int i=0; i<SAVELISTSIZE; i++)
+	{
 		saveBtn[i]->draw();
+
+		// the tag goes over the card, so after it
+		const int pos = listOffset + i;
+		if(saveBtn[i]->isVisible() && pos < (int)entries.size() && entries[(size_t)pos].playing)
+		{
+			tagShape[i]->draw();
+			tagText[i]->draw();
+		}
+	}
 
 	trackShape->draw();
 	thumbShape->draw();
@@ -287,8 +347,8 @@ void GuiSaveBrowser::update(InputController * controller)
 	if(state == STATE::DISABLED || !controller)
 		return;
 
-	int i, len;
-	char savetext[50];
+	int i;
+	const int length = (int)entries.size();
 
 	arrowUpBtn->update(controller);
 	arrowDownBtn->update(controller);
@@ -303,7 +363,7 @@ void GuiSaveBrowser::update(InputController * controller)
 	{
 		if(selectedItem == SAVELISTSIZE-1)
 		{
-			if(listOffset + SAVELISTSIZE < saves->length)
+			if(listOffset + SAVELISTSIZE < length)
 			{
 				// move list down by 1 row
 				listOffset += 2;
@@ -321,9 +381,7 @@ void GuiSaveBrowser::update(InputController * controller)
 	{
 		if(selectedItem == 0)
 		{
-			if((listOffset - 2 >= 0 && action == 0) ||
-				(listOffset >= 0 && action == 1) ||
-				(listOffset - 2 >= 0 && action == 2))
+			if(listOffset - 2 >= 0)
 			{
 				// move list up by 1
 				listOffset -= 2;
@@ -342,11 +400,11 @@ void GuiSaveBrowser::update(InputController * controller)
 	{
 		if(selectedItem >= SAVELISTSIZE-2)
 		{
-			if(listOffset + SAVELISTSIZE + 1 < saves->length)
+			if(listOffset + SAVELISTSIZE + 1 < length)
 			{
 				listOffset += 2;
 			}
-			else if(listOffset + SAVELISTSIZE < saves->length)
+			else if(listOffset + SAVELISTSIZE < length)
 			{
 				listOffset += 2;
 
@@ -363,9 +421,7 @@ void GuiSaveBrowser::update(InputController * controller)
 	{
 		if(selectedItem < 2)
 		{
-			if((listOffset - 2 >= 0 && action == 0) ||
-				(listOffset >= 0 && action == 1) ||
-				(listOffset - 2 >= 0 && action == 2))
+			if(listOffset - 2 >= 0)
 			{
 				// move list up by 1
 				listOffset -= 2;
@@ -390,60 +446,22 @@ void GuiSaveBrowser::update(InputController * controller)
 
 	for(i=0; i<SAVELISTSIZE; i++)
 	{
-		if(listOffset+i < 0 && action == 1)
+		if(listOffset+i < length)
 		{
-			saveDate[0]->setText(nullptr);
-			saveTime[0]->setText("New");
-			saveType[0]->setText("State");
-			savePreviewImg[0]->setImage(nullptr);
-			saveBtn[0]->setVisible(true);
+			const SaveEntry & e = entries[(size_t)(listOffset+i)];
 
-			if(saveBtn[0]->getState() == STATE::DISABLED)
-				saveBtn[0]->setState(STATE::DEFAULT);
-
-			if (EmuSettings.hideSramSaving == 0)
-			{
-				saveDate[1]->setText(nullptr);
-				saveTime[1]->setText("New");
-				saveType[1]->setText("SRAM");
-				savePreviewImg[1]->setImage(nullptr);
-				saveBtn[1]->setVisible(true);
-
-				if(saveBtn[1]->getState() == STATE::DISABLED)
-					saveBtn[1]->setState(STATE::DEFAULT);
-			}
-		}
-		else if(listOffset+i < saves->length)
-		{
 			if(saveBtn[i]->getState() == STATE::DISABLED || !saveBtn[i]->isVisible())
 			{
 				saveBtn[i]->setVisible(true);
 				saveBtn[i]->setState(STATE::DEFAULT);
 			}
 
-			saveDate[i]->setText(saves->date[listOffset+i]);
-			saveTime[i]->setText(saves->time[listOffset+i]);
+			saveTitle[i]->setText(e.title.c_str());
+			saveSubtitle[i]->setText(e.subtitle.c_str());
+			savePreviewImg[i]->setPlaceholderText(e.placeholder.empty() ? "No image" : e.placeholder.c_str());
 
-			if(saves->type[listOffset+i] == FILE_SRAM)
-				sprintf(savetext, "SRAM");
-			else
-				sprintf(savetext, "State");
-
-			len = strlen(saves->filename[listOffset+i]);
-			if(len > 10 &&
-				((saves->filename[listOffset+i][len-8] == 'A' &&
-				saves->filename[listOffset+i][len-7] == 'u' &&
-				saves->filename[listOffset+i][len-6] == 't' &&
-				saves->filename[listOffset+i][len-5] == 'o') ||
-				saves->filename[listOffset+i][len-5] == '0')
-				)
-			{
-				strcat(savetext, " (Auto)");
-			}
-			saveType[i]->setText(savetext);
-
-			if(saves->previewImg[listOffset+i] != nullptr && saves->previewImg[listOffset+i]->getTexture() != nullptr)
-				savePreviewImg[i]->setImage(saves->previewImg[listOffset+i].get());
+			if(e.preview != nullptr && e.preview->getTexture() != nullptr)
+				savePreviewImg[i]->setImage(e.preview);
 			else
 				savePreviewImg[i]->setImage(nullptr);
 		}
@@ -482,11 +500,9 @@ void GuiSaveBrowser::update(InputController * controller)
 //! Sizes and places the scrollbar thumb for the rows currently shown
 void GuiSaveBrowser::updateThumb()
 {
-	// saving reserves two "new" slots (state and RAM) before the existing saves
-	const int reserved = (action == 1) ? 2 : 0;
 	const int pageRows = SAVELISTSIZE / 2;
-	const int totalRows = (saves->length + reserved + 1) / 2;
-	int firstRow = (listOffset + reserved) / 2;
+	const int totalRows = ((int)entries.size() + 1) / 2;
+	int firstRow = listOffset / 2;
 
 	if(totalRows <= pageRows)
 	{

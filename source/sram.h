@@ -15,6 +15,9 @@ bool SaveSRAMAuto (bool silent);
 bool LoadSRAM (char * filepath, bool silent);
 bool LoadSRAMAuto (bool silent);
 
+// Size in bytes of the SRAM this game saves: 0 when it has none (no battery save)
+int GetSRAMSaveSize ();
+
 // Deferred auto-save: SnapshotSRAMAuto() copies the SRAM and its destination right
 // now (call it from the thread that owns the emulator, while the game is still
 // loaded); WriteSRAMSnapshot() does the device I/O later, on any thread.

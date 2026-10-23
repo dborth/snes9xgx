@@ -26,6 +26,23 @@
 #include "snes9x/snapshot.h"
 #include "snes9x/language.h"
 
+static char playingFrom[MAXPATHLEN] = "";
+
+const char * GetPlayingFrom ()
+{
+	return playingFrom;
+}
+
+void ClearPlayingFrom ()
+{
+	playingFrom[0] = 0;
+}
+
+static void SetPlayingFrom (const char * filepath)
+{
+	snprintf(playingFrom, sizeof(playingFrom), "%s", filepath);
+}
+
 bool8 S9xOpenSnapshotFile(const char *, bool8, STREAM *)
 {
 	return FALSE;
@@ -69,6 +86,8 @@ SaveSnapshot (char * filepath, bool silent)
 
 	S9xFreezeToStream(fp);
 	CLOSE_STREAM(fp);
+
+	SetPlayingFrom(filepath);
 
 	if(!silent)
 		InfoPrompt("Save successful");
@@ -187,7 +206,10 @@ LoadSnapshot (char * filepath, bool silent)
 	CLOSE_STREAM(fp);
 
 	if (result == SUCCESS)
+	{
+		SetPlayingFrom(filepath);
 		return 1;
+	}
 
 	switch (result)
 	{

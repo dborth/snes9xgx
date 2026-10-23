@@ -72,6 +72,7 @@ struct PickerItem {
 	std::vector<std::string> lines;		/**< What it is, a few short lines (at most three are shown) */
 	std::vector<PickerRow> rows;		/**< What it does for the buttons (at most seven are shown) */
 	bool current;						/**< The one in use now */
+	bool preferred = false;				/**< The cursor starts here when nothing is `current` (no dot is drawn) */
 	bool divider = false;				/**< A rule is drawn after this item: what follows is a different kind of choice */
 };
 

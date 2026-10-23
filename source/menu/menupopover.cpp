@@ -118,9 +118,13 @@ PickerView::PickerView(const char * title, const std::vector<PickerItem>& itemLi
 	items(itemList), picked(-1), done(false), focus(0), inUse(0), panelWidth(kPopoverW), panelHeight(0), rowHeight(0)
 {
 	int current = 0;
+	bool found = false;
 	for(size_t i = 0; i < items.size(); i++)
-		if(items[i].current)
+		if(items[i].current || (items[i].preferred && !found))
+		{
 			current = (int)i;
+			found = found || items[i].current;
+		}
 	focus = current;
 	inUse = current;
 

@@ -105,7 +105,7 @@ bool LoadSRAMAuto (bool silent)
  * Save SRAM
  ***************************************************************************/
 // \return size in bytes of the SRAM to save - 0 if there is none
-static int GetSRAMSaveSize()
+int GetSRAMSaveSize()
 {
 	if (Settings.SuperFX && Memory.ROMType < 0x15) // doesn't have SRAM
 		return 0;

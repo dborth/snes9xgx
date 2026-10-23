@@ -645,6 +645,7 @@ int BrowserLoadFile()
 	else
 	{
 		platform->getAudio()->getEmulatorAudio()->resetAudio();
+		ClearPlayingFrom(); // a new game does not start from the last game's snapshot
 
 		// load SRAM or snapshot
 		if (EmuSettings.autoLoad == AUTOLOAD_SRAM)
