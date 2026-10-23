@@ -1621,6 +1621,8 @@ static int MenuGame()
 	w.append(&mainmenuBtn);
 	w.append(&closeBtn);
 
+	ui.attachTo(w);
+
 	menu->btnLogo.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
 	menu->btnLogo.setPosition(-50, -40);
 	menu->mainWindow.appendWithAutoRemove(&w);
