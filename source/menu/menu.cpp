@@ -1950,6 +1950,9 @@ enum { SAVEACT_LOAD, SAVEACT_UPDATE, SAVEACT_DELETE, SAVEACT_SAVENOW, SAVEACT_BA
 
 #define SAVE_LIST_Y		116		// the grid's top, under the header bar
 #define SAVE_LIST_W		540
+#define SAVE_CARD_W		250	// a card of the browser, and the pitch from one column to the next: both are the
+#define SAVE_CARD_H		72	// browser's, repeated here for the note that stands in the empty column
+#define SAVE_COL_PITCH	258
 #define SAVE_MAX_BACKUPS	6	// the most the Backups list shows: a popover doesn't scroll
 #define SAVE_TOAST_W	224
 #define SAVE_TOAST_H	30
@@ -2106,7 +2109,10 @@ static void BuildSaveCards(SaveList & saves, bool gameSave, std::vector<SaveEntr
 	e.pinned = true;
 	e.title = "Game Save File";
 	e.subtitle = haveMain ? "Saved " + SaveWhen(saves, sram[0]) : std::string("Not saved yet");
-	e.chip = "In-game save";
+	// Auto-save looks after this file when it is set to SRAM or both; set to snapshots only, or off, it does not
+	const bool autoSaved = EmuSettings.autoSave == AUTOSAVE_SRAM || EmuSettings.autoSave == AUTOSAVE_BOTH;
+	e.chip = autoSaved ? "Auto-save on" : "Auto-save off";
+	e.chipOn = autoSaved;
 	e.id = haveMain ? sram[0] : -1;
 	c.save = e.id; c.type = FILE_SRAM; c.slot = 0; c.main = true; c.playing = false;
 	entries.push_back(e);
@@ -2244,16 +2250,25 @@ static int MenuGameSaves()
 	closeBtn.setTrigger(&trigHome);
 	closeBtn.setEffectGrow();
 
-	// shown beside a lone "New Snapshot" card, in the grid's second column
-	GuiText emptyTitle("No snapshots yet", 18, white);
-	GuiText emptyLine0("A snapshot remembers the exact moment", 14, white);
-	GuiText emptyLine1("you are at, so you can jump back to it", 14, white);
-	GuiText emptyLine2("any time. Make as many as you like.", 14, white);
-	GuiText * emptyTexts[4] = { &emptyTitle, &emptyLine0, &emptyLine1, &emptyLine2 };
-	for(int k = 0; k < 4; k++)
+	// Shown beside a lone "New Snapshot" card, in the grid's second column. It is a card of its own - dark and
+	// translucent, the size of the cards, not clickable - so the words read over any picture, and it looks
+	// like a note next to the white cards you can choose.
+	const int emptyX = (platform->getVideo()->getScreenWidth() - SAVE_LIST_W) / 2 + SAVE_COL_PITCH;
+	GuiShape emptyCard(SAVE_CARD_W, SAVE_CARD_H);
+	emptyCard.setCorners(GuiCorners(GuiTheme::current().radius));
+	emptyCard.setPaint(GuiPaint().color(MenuRGBA(0, 0, 0, 150)).stroke(1.5f, MenuRGBA(255, 255, 255, 80)));
+	emptyCard.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+	emptyCard.setPosition(emptyX, SAVE_LIST_Y);
+	emptyCard.setVisible(false);
+	GuiText emptyTitle("No snapshots yet", 16, white);
+	GuiText emptyLine0("Remembers the exact moment, so you", 13, white);
+	GuiText emptyLine1("can jump back to it any time.", 13, white);
+	GuiText * emptyTexts[3] = { &emptyTitle, &emptyLine0, &emptyLine1 };
+	const int emptyTextY[3] = { 11, 35, 52 };
+	for(int k = 0; k < 3; k++)
 	{
 		emptyTexts[k]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-		emptyTexts[k]->setPosition(314, SAVE_LIST_Y + 8 + (k == 0 ? 0 : 29 + (k - 1) * 20));
+		emptyTexts[k]->setPosition(emptyX + 16, SAVE_LIST_Y + emptyTextY[k]);
 		emptyTexts[k]->setVisible(false);
 	}
 
@@ -2283,7 +2298,8 @@ static int MenuGameSaves()
 	menu->mainWindow.appendWithAutoRemove(&w);
 	menu->mainWindow.appendWithAutoRemove(&titleTxt);
 	menu->mainWindow.appendWithAutoRemove(&gameTxt);
-	for(int k = 0; k < 4; k++)
+	menu->mainWindow.appendWithAutoRemove(&emptyCard);
+	for(int k = 0; k < 3; k++)
 		menu->mainWindow.appendWithAutoRemove(emptyTexts[k]);
 
 	// two rows of snapshots with the save file under them, or three rows when there is no save file
@@ -2345,7 +2361,8 @@ static int MenuGameSaves()
 		saveBrowser.setEntries(entries, select);
 
 		const bool onlyNew = (gridCount == 1);
-		for(int k = 0; k < 4; k++)
+		emptyCard.setVisible(onlyNew);
+		for(int k = 0; k < 3; k++)
 			emptyTexts[k]->setVisible(onlyNew);
 
 		menu->mainWindow.changeFocus(&saveBrowser);

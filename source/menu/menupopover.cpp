@@ -45,8 +45,8 @@ GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& 
 		// the name with a line of what it does under it, the two together centered in the row
 		GuiLabel& about = ui.label(hint.c_str()).fontSize(UI_FONT_SMALL).muted();
 		about.setMaxWidth(textW);
-		const int textH = 20 + 3 + 16;
-		GuiLayout& text = ui.column().size(textW, height).gap(3).pad(0, (height - textH) / 2);
+		// no fixed size: the column is as tall as the two lines, and the row centers it
+		GuiLayout& text = ui.column().gap(3);
 		text.add(name).add(about);
 		content.add(text);
 	}

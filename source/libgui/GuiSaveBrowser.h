@@ -66,7 +66,8 @@ struct SaveEntry
 	GuiImageData * preview = nullptr;	//!< The screenshot, not owned; nullptr shows the placeholder
 	std::string placeholder;		//!< What the placeholder says (no screenshot)
 	bool pinned = false;			//!< Shown on its own in a wide card under the grid, with the save-file icon instead of a screenshot. At most one, and the last entry
-	std::string chip;				//!< A small label at the right of a pinned card ("In-game save")
+	std::string chip;				//!< A small label at the right of a pinned card ("Auto-save on")
+	bool chipOn = false;			//!< The label states something that is on: it gets a green dot and the accent color, and is gray otherwise
 	bool playing = false;			//!< Tagged "Playing from": the save the game was started from
 	int id = -1;					//!< Whatever the caller wants to find this card by (an index into its own list)
 };
@@ -117,7 +118,8 @@ class GuiSaveBrowser : public GuiElement
 		GuiButton * arrowDownBtn;
 
 		GuiShape * trackShape;
-		GuiShape * thumbShape;		// shows which rows are on screen; not interactive
+		GuiShape * thumbShape;		// the thumb: shows which rows are on screen
+		GuiButton * thumbBtn;		// the thumb's hit area: drag it to scroll
 		GuiShape * arrowUpShape;
 		GuiShape * arrowDownShape;
 		GuiShape * arrowUpGlyph;
@@ -129,15 +131,22 @@ class GuiSaveBrowser : public GuiElement
 		GuiText * pinnedTitle;
 		GuiText * pinnedSubtitle;
 		GuiShape * chipShape;
+		GuiShape * chipDot;
 		GuiText * chipText;
+		int chipState;				// what the chip is drawn as: -1 not yet, 0 off, 1 on
 		bool pinnedOn;				// the cursor is on the pinned card (the grid keeps its column in selectedItem)
 		bool pinnedLastOver;
 
 		int trackHeight;
+		int thumbHeight;			// current thumb size, in pixels
+		int thumbTravel;			// how far the thumb can move, in pixels
+		int dragPos;				// thumb offset while it is being dragged
+		bool dragging;				// the thumb is held and following the pointer
 		bool scrollable;			// more rows than fit: the scrollbar shows
 		void updateThumb();
 
 		GuiTrigger * trigA;
+		GuiTrigger * trigHeldA;
 
 		bool saveBtnLastOver[SAVELISTSIZE];
 };

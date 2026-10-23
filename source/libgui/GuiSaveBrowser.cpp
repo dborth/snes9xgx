@@ -17,6 +17,10 @@
 #define SLOT_PITCH_X		258
 #define SLOT_PITCH_Y		80
 #define SLOT_GAP_Y			(SLOT_PITCH_Y - SLOT_HEIGHT)
+// How much a card grows when highlighted. Both neighbors can be grown at once, so each may take half the gap
+// between cards on its side: a card must not reach into the next one.
+#define GRID_GROW			(100 + (SLOT_PITCH_X - SLOT_WIDTH) * 100 / SLOT_WIDTH)
+#define PINNED_GROW			102
 #define SLOT_WIDE_WIDTH		(SLOT_PITCH_X + SLOT_WIDTH)	// the pinned card spans both columns
 #define PREVIEW_WIDTH		64		// screenshot box - matches the 64x48 the screenshots are decoded to
 #define PREVIEW_HEIGHT		48
@@ -27,7 +31,7 @@
 #define PINNED_GAP			17		// grid's last row to the pinned card
 #define PINNED_ICON_X		16
 #define PINNED_TEXT_X		76
-#define CHIP_WIDTH			92		// the label at the pinned card's right end
+#define CHIP_WIDTH			110		// the label at the pinned card's right end
 #define CHIP_HEIGHT			22
 #define CHIP_INSET			16
 #define ICON_WIDTH			44		// the save-file icon
@@ -94,6 +98,38 @@ static PixelColor IconRGB(int r, int g, int b)
 	return c;
 }
 
+// A card of the browser: the theme's, with the focus made plain to see - a thick accent outline and a strong glow,
+// on top of the card growing - because the theme's thin outline is easy to lose on a TV.
+static GuiShapeStyle SaveCardStyle()
+{
+	const GuiTheme& theme = GuiTheme::current();
+	PixelColor glowColor = theme.accent;
+	glowColor.a = 210;
+	PixelColor heldGlow = theme.accent;
+	heldGlow.a = 140;
+	PixelColor offFill = theme.surface;
+	offFill.a = 140;
+	PixelColor offEdge = theme.outline;
+	offEdge.a = 140;
+
+	GuiPaint rest = GuiPaint()
+		.gradient(theme.surfaceRaised, theme.surface)
+		.stroke(theme.strokeWidth, theme.outline)
+		.shadow(theme.shadowBlur, theme.shadow, 0.0f, 4.0f);
+	GuiPaint lit = GuiPaint()
+		.gradient(theme.surfaceRaised, theme.surfaceRaised)
+		.stroke(4.0f, theme.accent)
+		.glow(theme.shadowBlur + 6.0f, glowColor, 3.0f);
+	GuiPaint pressed = GuiPaint()
+		.gradient(theme.surface, theme.surfaceRaised)
+		.stroke(4.0f, theme.accentDark)
+		.glow(theme.shadowBlur + 2.0f, heldGlow, 2.0f);
+	GuiPaint off = GuiPaint()
+		.color(offFill)
+		.stroke(theme.strokeWidth, offEdge);
+	return GuiShapeStyle(rest).onFocus(lit).onPress(pressed).onDisable(off);
+}
+
 GuiSaveFileIcon::GuiSaveFileIcon()
 	: body(ICON_WIDTH, ICON_HEIGHT), label(32, 20), battery(14, 8), nub(2, 4), slot(28, 9)
 {
@@ -156,10 +192,16 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 	pinnedOn = false;
 	pinnedLastOver = false;
 	scrollable = false;
+	thumbHeight = 0;
+	thumbTravel = 0;
+	dragPos = 0;
+	dragging = false;
 	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
 	trigA->setPrimaryTrigger();
+	trigHeldA = new GuiTrigger;
+	trigHeldA->setHeldTrigger(-1, INPUT_BTN_A);
 
 	const GuiTheme& theme = GuiTheme::current();
 	trackHeight = height - 2 * SB_TRACK_Y;
@@ -173,12 +215,24 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 	trackShape->setCapsule();
 	trackShape->setPaint(GuiPaint().color(theme.outline));
 
+	// the thumb is a button so it can be grabbed; it takes the accent color when the pointer is on it and a
+	// deeper one while held (as in GuiOptionBrowser and GuiFileBrowser)
 	thumbShape = new GuiShape(SB_THUMB_WIDTH, trackHeight);
-	thumbShape->setParent(this);
-	thumbShape->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
 	thumbShape->setCapsule();
-	thumbShape->setPaint(GuiPaint().color(theme.outlineStrong));
-	thumbShape->setVisible(false);
+	thumbShape->setStyle(GuiShapeStyle(GuiPaint().color(theme.outlineStrong))
+		.onFocus(GuiPaint().color(theme.accent)).onPress(GuiPaint().color(theme.accentDark)));
+	thumbShape->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+
+	thumbBtn = new GuiButton(SB_WIDTH, trackHeight);
+	thumbBtn->setParent(this);
+	thumbBtn->setImage(thumbShape);
+	thumbBtn->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
+	thumbBtn->setPosition(-SB_INSET, SB_TRACK_Y);
+	thumbBtn->setSelectable(false);
+	thumbBtn->setClickable(false);
+	thumbBtn->setHoldable(true);
+	thumbBtn->setTrigger(trigHeldA);
+	thumbBtn->setVisible(false);
 
 	const GuiPaint controlRest = GuiPaint().color(theme.surfaceRaised).stroke(1.5f, theme.outline);
 	const GuiPaint controlLit = GuiPaint().color(theme.accent).stroke(1.5f, theme.accent);
@@ -224,16 +278,17 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
 		saveTitle[i] = new GuiText(nullptr, 18, theme.text);
-		saveTitle[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-		saveTitle[i]->setPosition(80,12);
+		// the two lines are centered on the card as a block: one a little above the middle, one a little below
+		saveTitle[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+		saveTitle[i]->setPosition(80,-12);
 		saveSubtitle[i] = new GuiText(nullptr, 14, theme.textMuted);
-		saveSubtitle[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-		saveSubtitle[i]->setPosition(80,40);
+		saveSubtitle[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+		saveSubtitle[i]->setPosition(80,13);
 
 		// each slot is a card, taking the accent outline and glow when highlighted
 		saveBgImg[i] = new GuiShape(SLOT_WIDTH, SLOT_HEIGHT);
 		saveBgImg[i]->setCorners(GuiCorners(theme.radius));
-		saveBgImg[i]->setStyle(theme.cardStyle());
+		saveBgImg[i]->setStyle(SaveCardStyle());
 		savePreviewImg[i] = new GuiSavePreview(PREVIEW_WIDTH, PREVIEW_HEIGHT, PLACEHOLDER_WIDTH, PLACEHOLDER_HEIGHT);
 		savePreviewImg[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 		savePreviewImg[i]->setPosition(PREVIEW_X,0);
@@ -248,7 +303,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 		saveBtn[i]->setPosition(SLOT_PITCH_X*(i % COLS),SLOT_PITCH_Y*(i / COLS));
 		saveBtn[i]->setTrigger(trigA);
 		saveBtn[i]->setState(STATE::DISABLED);
-		saveBtn[i]->setEffectGrow(106);
+		saveBtn[i]->setEffectGrow(GRID_GROW);
 		saveBtn[i]->setVisible(false);
 		saveBtnLastOver[i] = false;
 
@@ -266,15 +321,15 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 
 	// the pinned card: as wide as the grid, under it, with the save-file icon and a label at its right end
 	pinnedTitle = new GuiText(nullptr, 18, theme.text);
-	pinnedTitle->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-	pinnedTitle->setPosition(PINNED_TEXT_X, 8);
+	pinnedTitle->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+	pinnedTitle->setPosition(PINNED_TEXT_X, -11);
 	pinnedSubtitle = new GuiText(nullptr, 14, theme.textMuted);
-	pinnedSubtitle->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-	pinnedSubtitle->setPosition(PINNED_TEXT_X, 34);
+	pinnedSubtitle->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+	pinnedSubtitle->setPosition(PINNED_TEXT_X, 12);
 
 	pinnedBg = new GuiShape(SLOT_WIDE_WIDTH, PINNED_HEIGHT);
 	pinnedBg->setCorners(GuiCorners(theme.radius));
-	pinnedBg->setStyle(theme.cardStyle());
+	pinnedBg->setStyle(SaveCardStyle());
 	pinnedIcon = new GuiSaveFileIcon();
 	pinnedIcon->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 	pinnedIcon->setPosition(PINNED_ICON_X, 0);
@@ -289,7 +344,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 	pinnedBtn->setPosition(0, height + PINNED_GAP);
 	pinnedBtn->setTrigger(trigA);
 	pinnedBtn->setState(STATE::DISABLED);
-	pinnedBtn->setEffectGrow(102);
+	pinnedBtn->setEffectGrow(PINNED_GROW);
 	pinnedBtn->setVisible(false);
 
 	chipShape = new GuiShape(CHIP_WIDTH, CHIP_HEIGHT);
@@ -297,10 +352,17 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 	chipShape->setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
 	chipShape->setPosition(-CHIP_INSET, 0);
 	chipShape->setCapsule();
-	chipShape->setPaint(GuiPaint().color(theme.highlight).stroke(1.0f, theme.accentLight));
-	chipText = new GuiText(nullptr, 13, theme.accent);
+	chipShape->setPaint(GuiPaint().color(theme.surface).stroke(1.0f, theme.outline));
+	chipText = new GuiText(nullptr, 13, theme.textMuted);
 	chipText->setParent(chipShape);
 	chipText->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+	chipDot = new GuiShape(8, 8);
+	chipDot->setParent(chipShape);
+	chipDot->setShape(SHAPE::ELLIPSE);
+	chipDot->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+	chipDot->setPosition(12, 0);
+	chipDot->setPaint(GuiPaint().color(theme.good));
+	chipState = -1;
 }
 
 /**
@@ -312,6 +374,7 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	delete arrowDownBtn;
 
 	delete trackShape;
+	delete thumbBtn;
 	delete thumbShape;
 	delete arrowUpShape;
 	delete arrowDownShape;
@@ -319,6 +382,7 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	delete arrowDownGlyph;
 
 	delete chipText;
+	delete chipDot;
 	delete chipShape;
 	delete pinnedBtn;
 	delete pinnedTitle;
@@ -327,6 +391,7 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	delete pinnedIcon;
 
 	delete trigA;
+	delete trigHeldA;
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
@@ -493,6 +558,8 @@ void GuiSaveBrowser::draw()
 	{
 		pinnedBtn->draw();
 		chipShape->draw();
+		if(chipState == 1)
+			chipDot->draw();
 		chipText->draw();
 	}
 
@@ -500,7 +567,7 @@ void GuiSaveBrowser::draw()
 	if(scrollable)
 	{
 		trackShape->draw();
-		thumbShape->draw();
+		thumbBtn->draw();
 		arrowUpBtn->draw();
 		arrowDownBtn->draw();
 	}
@@ -521,6 +588,33 @@ void GuiSaveBrowser::update(InputController * controller)
 	{
 		arrowUpBtn->update(controller);
 		arrowDownBtn->update(controller);
+		if(thumbBtn->isVisible())
+			thumbBtn->update(controller);
+	}
+
+	// drag the scrollbar thumb: the grid follows the pointer, the thumb's center under it
+	{
+		const auto dragPad = controller->getPadData();
+		dragging = scrollable && thumbBtn->isVisible() && thumbTravel > 0 &&
+			thumbBtn->getState() == STATE::HELD &&
+			thumbBtn->getStateChan() == controller->getChannel() &&
+			dragPad.validPointer;
+
+		if(dragging)
+		{
+			int pos = dragPad.cursor_y - (this->getTop() + SB_TRACK_Y + thumbHeight / 2);
+			if(pos < 0) pos = 0;
+			else if(pos > thumbTravel) pos = thumbTravel;
+			dragPos = pos;
+
+			// the row that leads the page for that thumb position
+			const int totalRows = (length + COLS - 1) / COLS;
+			listOffset = ((pos * (totalRows - rows) + thumbTravel / 2) / thumbTravel) * COLS;
+
+			// the cursor stays on a card that is there
+			if(!pinnedOn && listOffset + selectedItem >= length)
+				selectedItem = std::max(0, length - listOffset - 1);
+		}
 	}
 
 	// pad/joystick navigation
@@ -704,6 +798,25 @@ void GuiSaveBrowser::update(InputController * controller)
 		chipShape->setVisible(!e.chip.empty());
 		chipText->setVisible(!e.chip.empty());
 
+		// on: a green dot and the accent color on a light tint; off: plain gray
+		const int wantChip = e.chipOn ? 1 : 0;
+		if(chipState != wantChip)
+		{
+			const GuiTheme& theme = GuiTheme::current();
+			chipState = wantChip;
+			if(wantChip)
+			{
+				chipShape->setPaint(GuiPaint().color(theme.highlight).stroke(1.0f, theme.accentLight));
+				chipText->setPosition(8, 0);
+			}
+			else
+			{
+				chipShape->setPaint(GuiPaint().color(theme.surface).stroke(1.0f, theme.outline));
+				chipText->setPosition(0, 0);
+			}
+			chipText->setColor(wantChip ? theme.accent : theme.textMuted);
+		}
+
 		if(!pinnedOn && pinnedBtn->getState() == STATE::SELECTED)
 			pinnedBtn->resetState();
 		else if(focus && pinnedOn && pinnedBtn->getState() == STATE::DEFAULT)
@@ -740,16 +853,24 @@ void GuiSaveBrowser::updateThumb()
 	scrollable = totalRows > rows;
 	if(!scrollable)
 	{
-		thumbShape->setVisible(false);
+		thumbBtn->setVisible(false);
+		thumbTravel = 0;
 		return;
 	}
 	if(firstRow < 0) firstRow = 0;
 	if(firstRow > totalRows - rows) firstRow = totalRows - rows;
 
-	const int thumbHeight = std::max(SB_THUMB_MIN_HEIGHT, trackHeight * rows / totalRows);
-	const int travel = trackHeight - thumbHeight;
+	thumbHeight = std::max(SB_THUMB_MIN_HEIGHT, trackHeight * rows / totalRows);
+	thumbTravel = trackHeight - thumbHeight;
 
-	thumbShape->setVisible(true);
+	// while dragged the thumb follows the pointer exactly; otherwise it sits at the list position
+	int y = dragging ? dragPos : thumbTravel * firstRow / (totalRows - rows);
+	if(y > thumbTravel) y = thumbTravel;
+
+	thumbBtn->setVisible(true);
+	thumbBtn->setSize(SB_WIDTH, thumbHeight);
 	thumbShape->setSize(SB_THUMB_WIDTH, thumbHeight);
-	thumbShape->setPosition(-(SB_INSET + (SB_WIDTH - SB_THUMB_WIDTH) / 2), SB_TRACK_Y + travel * firstRow / (totalRows - rows));
+	thumbBtn->setMinY(0);
+	thumbBtn->setMaxY(thumbTravel);
+	thumbBtn->setPosition(-SB_INSET, SB_TRACK_Y + y);
 }
