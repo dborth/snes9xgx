@@ -36,6 +36,7 @@
 #include "menu.h"
 #include "mappingui.h"
 #include "menupopover.h"
+#include "controllerpicker.h"
 #include "filelist.h"
 #include "libgui/Gui.h"
 #include "menuart.h"
@@ -1398,89 +1399,6 @@ static int MenuGameSelection()
 	return selection;
 }
 
-/****************************************************************************
- * ControllerWindowUpdate
- *
- * Callback for controller window. Responds to clicks on window elements.
- ***************************************************************************/
-static void ControllerWindowUpdate(void * ptr, int dir)
-{
-	GuiButton * b = (GuiButton *)ptr;
-	if(b->getState() == STATE::CLICKED)
-	{
-		EmuSettings.controller += dir;
-
-		if(EmuSettings.controller > CTRL_PAD4)
-			EmuSettings.controller = CTRL_SCOPE;
-		if(EmuSettings.controller < CTRL_SCOPE)
-			EmuSettings.controller = CTRL_PAD4;
-
-		settingText->setText(ctrlName[EmuSettings.controller]);
-		b->resetState();
-	}
-}
-
-/****************************************************************************
- * ControllerWindowLeftClick / ControllerWindowRightsClick
- *
- * Callbacks for controller window arrows. Responds arrow clicks.
- ***************************************************************************/
-static void ControllerWindowLeftClick(void * ptr) { ControllerWindowUpdate(ptr, -1); }
-static void ControllerWindowRightClick(void * ptr) { ControllerWindowUpdate(ptr, +1); }
-
-/****************************************************************************
- * ControllerWindow
- *
- * Opens a window to allow the user to select the controller to be used.
- ***************************************************************************/
-static void ControllerWindow()
-{
-	GuiWindow * w = new GuiWindow(300,250);
-	w->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-
-	GuiTrigger trigLeft;
-	trigLeft.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_LEFT);
-
-	GuiTrigger trigRight;
-	trigRight.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_RIGHT);
-
-	MenuArrowImage arrowLeftImg(SHAPE::TRIANGLE_LEFT);
-	GuiButton arrowLeftBtn(MENU_ARROW_HIT_SHORT, MENU_ARROW_HIT_LONG);
-	arrowLeftBtn.setSoundOver(nullptr);
-	arrowLeftBtn.setSoundClick(nullptr);
-	arrowLeftBtn.setImage(&arrowLeftImg);
-	arrowLeftBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-	arrowLeftBtn.setTrigger(trigA);
-	arrowLeftBtn.setTrigger(&trigLeft);
-	arrowLeftBtn.setSelectable(false);
-	arrowLeftBtn.setUpdateCallback(ControllerWindowLeftClick);
-
-	MenuArrowImage arrowRightImg(SHAPE::TRIANGLE_RIGHT);
-	GuiButton arrowRightBtn(MENU_ARROW_HIT_SHORT, MENU_ARROW_HIT_LONG);
-	arrowRightBtn.setSoundOver(nullptr);
-	arrowRightBtn.setSoundClick(nullptr);
-	arrowRightBtn.setImage(&arrowRightImg);
-	arrowRightBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
-	arrowRightBtn.setTrigger(trigA);
-	arrowRightBtn.setTrigger(&trigRight);
-	arrowRightBtn.setSelectable(false);
-	arrowRightBtn.setUpdateCallback(ControllerWindowRightClick);
-
-	settingText = new GuiText(ctrlName[EmuSettings.controller], 22, (PixelColor){0, 0, 0, 255});
-
-	int currentController = EmuSettings.controller;
-
-	w->append(&arrowLeftBtn);
-	w->append(&arrowRightBtn);
-	w->append(settingText);
-
-	if(!SettingWindow("Controller",w))
-		EmuSettings.controller = currentController; // undo changes
-
-	delete(w);
-	delete(settingText);
-}
-
 #ifndef HW_DOL
 static int playerMappingChan = 0;
 
@@ -1594,7 +1512,7 @@ static int MenuGame()
 	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 	titleTxt.setPosition(50,40);
 
-	MenuIconData iconGameSettings(icon_game_settings_png);
+	MenuIconData iconMappings(icon_settings_mappings_png, -4.0f);
 	MenuIconData iconSave(icon_game_save_png);
 	MenuIconData iconReset(icon_game_reset_png);
 
@@ -1602,13 +1520,26 @@ static int MenuGame()
 	GuiTrigger trigB;
 	trigHome.setButtonOnlyTrigger(-1, INPUT_BTN_HOME);
 	trigB.setSecondaryTrigger();
+	
+	GuiText mappingBtnTxt("Button Mappings", 22, (PixelColor){0, 0, 0, 255});
+	mappingBtnTxt.setWrap(true, MENU_BTN_LARGE_W-30);
+	MenuButtonShape mappingBtnImg(MenuButtonShape::LARGE);
+	GuiImage mappingBtnIcon(&iconMappings);
+	GuiButton mappingBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
+	mappingBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
+	mappingBtn.setPosition(-200, 150);
+	mappingBtn.setLabel(&mappingBtnTxt);
+	mappingBtn.setImage(&mappingBtnImg);
+	mappingBtn.setIcon(&mappingBtnIcon);
+	mappingBtn.setTrigger(trigA);
+	mappingBtn.setEffectGrow();
 
 	GuiText saveBtnTxt("Saves", 22, (PixelColor){0, 0, 0, 255});
 	MenuButtonShape saveBtnImg(MenuButtonShape::LARGE);
 	GuiImage saveBtnIcon(&iconSave);
 	GuiButton saveBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
 	saveBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	saveBtn.setPosition(0, 120);
+	saveBtn.setPosition(0, 150);
 	saveBtn.setLabel(&saveBtnTxt);
 	saveBtn.setImage(&saveBtnImg);
 	saveBtn.setIcon(&saveBtnIcon);
@@ -1620,23 +1551,28 @@ static int MenuGame()
 	GuiImage resetBtnIcon(&iconReset);
 	GuiButton resetBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
 	resetBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	resetBtn.setPosition(125, 250);
+	resetBtn.setPosition(200, 150);
 	resetBtn.setLabel(&resetBtnTxt);
 	resetBtn.setImage(&resetBtnImg);
 	resetBtn.setIcon(&resetBtnIcon);
 	resetBtn.setTrigger(trigA);
 	resetBtn.setEffectGrow();
 
+	// Second row: the controller chip (a popover) and Game Settings, centred as a pair
+	UiScope ui;
+	bool controllerRequest = false;
+	GuiCard& controllerChip = MenuPopover_Chip(ui, MENU_BTN_NORMAL_W, "CONTROLLER", []{ return ControllerChipValue(); });
+	controllerChip.onClick([&controllerRequest]{ controllerRequest = true; });
+	controllerChip.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
+	controllerChip.setPosition(-120, 296);
+
 	GuiText gameSettingsBtnTxt("Game Settings", 22, (PixelColor){0, 0, 0, 255});
-	gameSettingsBtnTxt.setWrap(true, MENU_BTN_LARGE_W-30);
-	MenuButtonShape gameSettingsBtnImg(MenuButtonShape::LARGE);
-	GuiImage gameSettingsBtnIcon(&iconGameSettings);
-	GuiButton gameSettingsBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
+	MenuButtonShape gameSettingsBtnImg(MenuButtonShape::NORMAL);
+	GuiButton gameSettingsBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
 	gameSettingsBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	gameSettingsBtn.setPosition(-125, 250);
+	gameSettingsBtn.setPosition(120, 290);
 	gameSettingsBtn.setLabel(&gameSettingsBtnTxt);
 	gameSettingsBtn.setImage(&gameSettingsBtnImg);
-	gameSettingsBtn.setIcon(&gameSettingsBtnIcon);
 	gameSettingsBtn.setTrigger(trigA);
 	gameSettingsBtn.setEffectGrow();
 
@@ -1673,7 +1609,9 @@ static int MenuGame()
 	GuiWindow w(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
 	w.append(&titleTxt);
 	w.append(&saveBtn);
+	w.append(&mappingBtn);
 	w.append(&resetBtn);
+	w.append(&controllerChip);
 	w.append(&gameSettingsBtn);
 
 	#ifndef HW_DOL
@@ -1710,6 +1648,21 @@ static int MenuGame()
 		if(saveBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_GAME_SAVE;
+		}
+		else if(mappingBtn.getState() == STATE::CLICKED)
+		{
+			selection = MENU_GAMESETTINGS_MAPPINGS;
+		}
+		else if(controllerRequest)
+		{
+			controllerRequest = false;
+			// a popover beside the chip, over this screen, which stays drawn (dimmed) where it is
+			w.setState(STATE::DISABLED);
+			ChooseController(GuiPopover::Anchor(controllerChip));
+			w.setState(STATE::DEFAULT);
+			menu->mainWindow.changeFocus(&w);
+			w.resetState();
+			controllerChip.select();
 		}
 		else if(resetBtn.getState() == STATE::CLICKED)
 		{
@@ -2670,10 +2623,8 @@ static int MenuGameSettings()
 	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 	titleTxt.setPosition(50,50);
 
-	MenuIconData iconMappings(icon_settings_mappings_png, -4.0f);
 	MenuIconData iconVideo(icon_settings_video_png);
 	MenuIconData iconEmulation(icon_settings_emulation_png);
-	MenuIconData iconController(icon_game_controllers_png);
 	MenuIconData iconCheats(icon_game_cheats_png);
 	MenuIconData iconScreenshot(icon_settings_screenshot_png);
 
@@ -2682,26 +2633,13 @@ static int MenuGameSettings()
 	trigHome.setButtonOnlyTrigger(-1, INPUT_BTN_HOME);
 	trigB.setSecondaryTrigger();
 
-	GuiText mappingBtnTxt("Button Mappings", 22, (PixelColor){0, 0, 0, 255});
-	mappingBtnTxt.setWrap(true, MENU_BTN_LARGE_W-30);
-	MenuButtonShape mappingBtnImg(MenuButtonShape::LARGE);
-	GuiImage mappingBtnIcon(&iconMappings);
-	GuiButton mappingBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	mappingBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	mappingBtn.setPosition(-200, 120);
-	mappingBtn.setLabel(&mappingBtnTxt);
-	mappingBtn.setImage(&mappingBtnImg);
-	mappingBtn.setIcon(&mappingBtnIcon);
-	mappingBtn.setTrigger(trigA);
-	mappingBtn.setEffectGrow();
-	
 	GuiText emulationBtnTxt("Emulation", 22, (PixelColor){0, 0, 0, 255});
 	emulationBtnTxt.setWrap(true, MENU_BTN_LARGE_W-20);
 	MenuButtonShape emulationBtnImg(MenuButtonShape::LARGE);
 	GuiImage emulationBtnIcon(&iconEmulation);
 	GuiButton emulationBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
 	emulationBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	emulationBtn.setPosition(0, 120);
+	emulationBtn.setPosition(-100, 120);
 	emulationBtn.setLabel(&emulationBtnTxt);
 	emulationBtn.setImage(&emulationBtnImg);
 	emulationBtn.setIcon(&emulationBtnIcon);
@@ -2714,31 +2652,19 @@ static int MenuGameSettings()
 	GuiImage videoBtnIcon(&iconVideo);
 	GuiButton videoBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
 	videoBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	videoBtn.setPosition(200, 120);
+	videoBtn.setPosition(100, 120);
 	videoBtn.setLabel(&videoBtnTxt);
 	videoBtn.setImage(&videoBtnImg);
 	videoBtn.setIcon(&videoBtnIcon);
 	videoBtn.setTrigger(trigA);
 	videoBtn.setEffectGrow();
 
-	GuiText controllerBtnTxt("Controller", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape controllerBtnImg(MenuButtonShape::LARGE);
-	GuiImage controllerBtnIcon(&iconController);
-	GuiButton controllerBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	controllerBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	controllerBtn.setPosition(-200, 250);
-	controllerBtn.setLabel(&controllerBtnTxt);
-	controllerBtn.setImage(&controllerBtnImg);
-	controllerBtn.setIcon(&controllerBtnIcon);
-	controllerBtn.setTrigger(trigA);
-	controllerBtn.setEffectGrow();
-
 	GuiText screenshotBtnTxt("Screenshot", 22, (PixelColor){0, 0, 0, 255});
 	MenuButtonShape screenshotBtnImg(MenuButtonShape::LARGE);
 	GuiImage screenshotBtnIcon(&iconScreenshot);
 	GuiButton screenshotBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
 	screenshotBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	screenshotBtn.setPosition(0, 250);
+	screenshotBtn.setPosition(-100, 250);
 	screenshotBtn.setLabel(&screenshotBtnTxt);
 	screenshotBtn.setImage(&screenshotBtnImg);
 	screenshotBtn.setIcon(&screenshotBtnIcon);
@@ -2750,7 +2676,7 @@ static int MenuGameSettings()
 	GuiImage cheatsBtnIcon(&iconCheats);
 	GuiButton cheatsBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
 	cheatsBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	cheatsBtn.setPosition(200, 250);
+	cheatsBtn.setPosition(100, 250);
 	cheatsBtn.setLabel(&cheatsBtnTxt);
 	cheatsBtn.setImage(&cheatsBtnImg);
 	cheatsBtn.setIcon(&cheatsBtnIcon);
@@ -2781,10 +2707,8 @@ static int MenuGameSettings()
 
 	GuiWindow w(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
 	w.append(&titleTxt);
-	w.append(&mappingBtn);
 	w.append(&videoBtn);
 	w.append(&emulationBtn);
-	w.append(&controllerBtn);
 	w.append(&screenshotBtn);
 	w.append(&cheatsBtn);
 	w.append(&closeBtn);
@@ -2797,21 +2721,13 @@ static int MenuGameSettings()
 	{
 		if(!UpdateGui()) return MENU_EXIT;
 
-		if(mappingBtn.getState() == STATE::CLICKED)
-		{
-			selection = MENU_GAMESETTINGS_MAPPINGS;
-		}
-		else if(videoBtn.getState() == STATE::CLICKED)
+		if(videoBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_GAMESETTINGS_VIDEO;
 		}
 		else if(emulationBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_GAMESETTINGS_EMULATION;
-		}
-		else if(controllerBtn.getState() == STATE::CLICKED)
-		{
-			ControllerWindow();
 		}
 		else if(cheatsBtn.getState() == STATE::CLICKED)
 		{

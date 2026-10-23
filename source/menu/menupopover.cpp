@@ -262,6 +262,21 @@ void MenuPopover_Wrap(std::vector<std::string>& lines, const std::string& text, 
 
 // ---- running one on the menu's main window
 
+GuiCard& MenuPopover_Chip(UiScope& ui, int width, const char * what, std::function<std::string()> value)
+{
+	GuiLabel& caption = ui.label(what).fontSize(UI_FONT_SMALL - 3).muted();
+	GuiLabel& chosen = ui.label().fontSize(UI_FONT_SMALL + 1).bind(value);
+	chosen.setMaxWidth(width - 20 - 16);
+	GuiShape& arrow = ui.own<GuiShape>(10, 6);
+	arrow.setArrow(SHAPE::TRIANGLE_DOWN, MenuBarArrowRest(), MenuBarArrowRest());
+	GuiLayout& content = ui.row().size(width - 20, 0).gap(6).align(LAYOUT_ALIGN::CENTRE)
+		.add(ui.column().gap(1).add(caption).add(chosen)).addSpace().add(arrow);
+	GuiCard& chip = ui.card();
+	chip.size(width, 40).style(MenuChipStyle()).corners(GuiCorners(10.0f)).pad(10, 3);
+	chip.add(content);
+	return chip;
+}
+
 int MenuPopover_Pick(const char * title, const std::vector<PickerItem>& items, const GuiPopover::Anchor& anchor,
 	std::function<void(int)> preview, std::function<void()> perFrame)
 {

@@ -178,22 +178,6 @@ std::string ValueText(int ctrl, int hw, int index)
 	return name ? std::string(name) : Tr("None");
 }
 
-// A chip that opens a popover: what it chooses in small capitals, what is chosen under it, an arrow pointing the way it opens
-GuiCard& PickerChip(UiScope& ui, int width, const char * what, std::function<std::string()> value)
-{
-	GuiLabel& caption = ui.label(what).fontSize(UI_FONT_SMALL - 3).muted();
-	GuiLabel& chosen = ui.label().fontSize(UI_FONT_SMALL + 1).bind(value);
-	chosen.setMaxWidth(width - 20 - 16);
-	GuiShape& arrow = ui.own<GuiShape>(10, 6);
-	arrow.setArrow(SHAPE::TRIANGLE_DOWN, MenuBarArrowRest(), MenuBarArrowRest());
-	GuiLayout& content = ui.row().size(width - 20, 0).gap(6).align(LAYOUT_ALIGN::CENTRE)
-		.add(ui.column().gap(1).add(caption).add(chosen)).addSpace().add(arrow);
-	GuiCard& chip = ui.card();
-	chip.size(width, 40).style(MenuChipStyle()).corners(GuiCorners(10.0f)).pad(10, 3);
-	chip.add(content);
-	return chip;
-}
-
 } // namespace
 
 /****************************************************************************
@@ -302,12 +286,12 @@ MappingView::MappingView(int ctrl, int hw) :
 
 	const int s = snes;
 	const int h = hardware;
-	GuiCard& emulating = PickerChip(ui, 150, "EMULATING", [s]{ return Tr(ctrlName[s]); });
+	GuiCard& emulating = MenuPopover_Chip(ui, 150, "EMULATING", [s]{ return Tr(ctrlName[s]); });
 	emulating.onClick([this]{ pickRequest = Pick::EMULATING; });
 	emulating.onFocus([this]{ status = "A chooses the device being emulated"; });
 	emulatingChip = &emulating;
 
-	GuiCard& usingChipCard = PickerChip(ui, 196, "USING", [h]{ return Tr(ctrlrName[h]); });
+	GuiCard& usingChipCard = MenuPopover_Chip(ui, 196, "USING", [h]{ return Tr(ctrlrName[h]); });
 	usingChipCard.onClick([this]{ pickRequest = Pick::USING; });
 	usingChipCard.onFocus([this]{ status = "A chooses the controller to map"; });
 	usingChip = &usingChipCard;
@@ -485,7 +469,7 @@ int MappingScreen()
 				return MENU_EXIT;
 
 			if(view.backButton().getState() == STATE::CLICKED)
-				return MENU_GAMESETTINGS;
+				return MENU_GAME;
 
 			if(view.generalButton().getState() == STATE::CLICKED)
 			{

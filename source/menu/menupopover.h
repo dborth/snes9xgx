@@ -57,6 +57,9 @@ GuiPopover::Insets MenuPopover_Insets();
 /** One row of a popover list: the name on the left, a dot on the right when `marked` (the one in use), or a chevron when `chevron` (the row opens another list). The caller adds onClick / onFocus. */
 GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& title, bool marked, bool dotSlot = true, const std::string& hint = std::string(), bool chevron = false);
 
+/** A chip that opens a popover: what it chooses in small capitals, what is chosen under it, an arrow pointing the way it opens. The caller adds onClick / onFocus. */
+GuiCard& MenuPopover_Chip(UiScope& ui, int width, const char * what, std::function<std::string()> value);
+
 /** A one pixel rule `w` wide, in the outline color. */
 GuiShape& MenuPopover_Divider(UiScope& ui, int w);
 
