@@ -58,7 +58,9 @@ std::vector<int> HardwareList(int ctrl)
 {
 	(void)ctrl;	// only the pad has more than the GameCube pad and Wiimote (and on GameCube, only the GameCube pad)
 	std::vector<int> v;
+#ifndef __WIIU__
 	v.push_back(INPUT_HW_GAMECUBE);
+#endif
 #ifndef HW_DOL
 	v.push_back(INPUT_HW_WIIMOTE);
 	if(ctrl == CTRL_PAD)
