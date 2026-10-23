@@ -3,7 +3,7 @@
 All notable changes to Snes9x GX are recorded here, newest first. For the current features and setup instructions, see [README.md](README.md).
 
 ## Unreleased
-* **Redesigned Saves screen.** The Save, Load and Delete buttons are now a single **Saves** button with two tabs: **Snapshots** and **In-Game Save**
+* **Redesigned Saves screen.** The Save, Load and Delete buttons are now a single **Saves** button. Snapshots fill a grid, with the game's **Game Save File** (marked "In-game save", and shown only for games that have one) in its own card beneath. Choosing a card opens a small popover of what can be done with it; the save file's backups are listed from its popover
 
 ## 5.0.4 - October 20, 2026
 * **New menu look!** The menus have been rebuilt with a fresh, modern style: a deeper blue header and footer, cleaner rounded buttons with soft shadows, a redesigned game list with a slimmer scrollbar and a clear highlight on the selected entry, new prompt windows, and more. The menu graphics are now drawn procedurally by the renderer instead of being loaded from PNG images, so they stay sharp at any output resolution

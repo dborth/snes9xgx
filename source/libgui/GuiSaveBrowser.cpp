@@ -12,18 +12,28 @@
 
 // Layout, in design pixels. Each slot is a card; the scrollbar column runs down the
 // right side with round arrow buttons and a thumb showing which rows are on screen.
-#define SLOT_WIDTH			244
+#define SLOT_WIDTH			250
 #define SLOT_HEIGHT			72
-#define SLOT_PITCH_X		257
-#define SLOT_PITCH_Y		84
-#define SLOT_WIDE_WIDTH		(SLOT_PITCH_X + SLOT_WIDTH)
+#define SLOT_PITCH_X		258
+#define SLOT_PITCH_Y		80
+#define SLOT_GAP_Y			(SLOT_PITCH_Y - SLOT_HEIGHT)
+#define SLOT_WIDE_WIDTH		(SLOT_PITCH_X + SLOT_WIDTH)	// the pinned card spans both columns
 #define PREVIEW_WIDTH		64		// screenshot box - matches the 64x48 the screenshots are decoded to
 #define PREVIEW_HEIGHT		48
 #define PREVIEW_X			8		// box to card's left edge, equal to the gap before the text (at x=80)
 #define PLACEHOLDER_WIDTH	52		// the "No image" placeholder is smaller, centered in the box
 #define PLACEHOLDER_HEIGHT	44
+#define PINNED_HEIGHT		62		// the pinned card is a little shorter than the grid's
+#define PINNED_GAP			17		// grid's last row to the pinned card
+#define PINNED_ICON_X		16
+#define PINNED_TEXT_X		76
+#define CHIP_WIDTH			92		// the label at the pinned card's right end
+#define CHIP_HEIGHT			22
+#define CHIP_INSET			16
+#define ICON_WIDTH			44		// the save-file icon
+#define ICON_HEIGHT			48
 #define SB_WIDTH			22		// scrollbar column (arrow buttons)
-#define SB_INSET			12		// column to the browser's right edge
+#define SB_INSET			0		// column to the browser's right edge
 #define SB_ARROW			22
 #define SB_TRACK_WIDTH		6
 #define SB_TRACK_Y			(SB_ARROW + 4)
@@ -78,25 +88,81 @@ void GuiSavePreview::draw()
 	this->updateEffects();
 }
 
+static PixelColor IconRGB(int r, int g, int b)
+{
+	PixelColor c = { (uint8_t)r, (uint8_t)g, (uint8_t)b, 255 };
+	return c;
+}
+
+GuiSaveFileIcon::GuiSaveFileIcon()
+	: body(ICON_WIDTH, ICON_HEIGHT), label(32, 20), battery(14, 8), nub(2, 4), slot(28, 9)
+{
+	width = ICON_WIDTH;
+	height = ICON_HEIGHT;
+
+	GuiShape * parts[5] = { &body, &label, &battery, &nub, &slot };
+	for(int i = 0; i < 5; i++)
+	{
+		parts[i]->setParent(this);
+		parts[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+	}
+
+	body.setCorners(GuiCorners(7.0f));
+	body.setPaint(GuiPaint().gradient(IconRGB(122, 134, 152), IconRGB(90, 102, 122)).stroke(1.5f, IconRGB(52, 62, 80)));
+
+	label.setPosition(6, 6);
+	label.setCorners(GuiCorners(4.0f));
+	label.setPaint(GuiPaint().gradient(IconRGB(242, 245, 248), IconRGB(222, 228, 236)).stroke(1.0f, IconRGB(70, 80, 100)));
+
+	// the battery, centered in the label: the cell and the nub at its end
+	battery.setPosition(14, 12);
+	battery.setCorners(GuiCorners(2.0f));
+	battery.setPaint(GuiPaint().gradient(IconRGB(78, 196, 102), IconRGB(40, 150, 70)).stroke(1.0f, IconRGB(26, 100, 48)));
+	nub.setPosition(28, 14);
+	nub.setCorners(GuiCorners(1.0f));
+	nub.setPaint(GuiPaint().color(IconRGB(40, 150, 70)));
+
+	slot.setPosition(8, 34);
+	slot.setCorners(GuiCorners(3.0f));
+	slot.setPaint(GuiPaint().color(IconRGB(58, 68, 86)));
+}
+
+void GuiSaveFileIcon::draw()
+{
+	if(!this->isVisible())
+		return;
+
+	body.draw();
+	label.draw();
+	battery.draw();
+	nub.draw();
+	slot.draw();
+
+	this->updateEffects();
+}
+
 /**
  * Constructor for the GuiSaveBrowser class.
  */
-GuiSaveBrowser::GuiSaveBrowser(int w, int h)
+GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 {
+	rows = (r < 1) ? 1 : (r > SAVELISTSIZE / COLS ? SAVELISTSIZE / COLS : r);
 	width = w;
-	height = h;
+	height = rows * SLOT_PITCH_Y - SLOT_GAP_Y;
 	selectable = true;
 
 	listOffset = 0;
 	selectedItem = 0;
-	cols = 2;
+	pinnedOn = false;
+	pinnedLastOver = false;
+	scrollable = false;
 	focus = 0; // allow focus
 
 	trigA = new GuiTrigger;
 	trigA->setPrimaryTrigger();
 
 	const GuiTheme& theme = GuiTheme::current();
-	trackHeight = h - 2 * SB_TRACK_Y;
+	trackHeight = height - 2 * SB_TRACK_Y;
 
 	// scrollbar: a thin track with a thumb, and round arrow buttons that gray at rest
 	// and take the accent color when the pointer is on them
@@ -179,7 +245,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h)
 		saveBtn[i]->setImage(saveBgImg[i]);
 		saveBtn[i]->setIcon(savePreviewImg[i]);
 		saveBtn[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
-		saveBtn[i]->setPosition(SLOT_PITCH_X*(i % 2),SLOT_PITCH_Y*(i>>1));
+		saveBtn[i]->setPosition(SLOT_PITCH_X*(i % COLS),SLOT_PITCH_Y*(i / COLS));
 		saveBtn[i]->setTrigger(trigA);
 		saveBtn[i]->setState(STATE::DISABLED);
 		saveBtn[i]->setEffectGrow(106);
@@ -197,6 +263,44 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int h)
 		tagText[i]->setParent(tagShape[i]);
 		tagText[i]->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	}
+
+	// the pinned card: as wide as the grid, under it, with the save-file icon and a label at its right end
+	pinnedTitle = new GuiText(nullptr, 18, theme.text);
+	pinnedTitle->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+	pinnedTitle->setPosition(PINNED_TEXT_X, 8);
+	pinnedSubtitle = new GuiText(nullptr, 14, theme.textMuted);
+	pinnedSubtitle->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+	pinnedSubtitle->setPosition(PINNED_TEXT_X, 34);
+
+	pinnedBg = new GuiShape(SLOT_WIDE_WIDTH, PINNED_HEIGHT);
+	pinnedBg->setCorners(GuiCorners(theme.radius));
+	pinnedBg->setStyle(theme.cardStyle());
+	pinnedIcon = new GuiSaveFileIcon();
+	pinnedIcon->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+	pinnedIcon->setPosition(PINNED_ICON_X, 0);
+
+	pinnedBtn = new GuiButton(SLOT_WIDE_WIDTH, PINNED_HEIGHT);
+	pinnedBtn->setParent(this);
+	pinnedBtn->setLabel(pinnedTitle, 0);
+	pinnedBtn->setLabel(pinnedSubtitle, 1);
+	pinnedBtn->setImage(pinnedBg);
+	pinnedBtn->setIcon(pinnedIcon);
+	pinnedBtn->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+	pinnedBtn->setPosition(0, height + PINNED_GAP);
+	pinnedBtn->setTrigger(trigA);
+	pinnedBtn->setState(STATE::DISABLED);
+	pinnedBtn->setEffectGrow(102);
+	pinnedBtn->setVisible(false);
+
+	chipShape = new GuiShape(CHIP_WIDTH, CHIP_HEIGHT);
+	chipShape->setParent(pinnedBtn);
+	chipShape->setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
+	chipShape->setPosition(-CHIP_INSET, 0);
+	chipShape->setCapsule();
+	chipShape->setPaint(GuiPaint().color(theme.highlight).stroke(1.0f, theme.accentLight));
+	chipText = new GuiText(nullptr, 13, theme.accent);
+	chipText->setParent(chipShape);
+	chipText->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 }
 
 /**
@@ -214,6 +318,14 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	delete arrowUpGlyph;
 	delete arrowDownGlyph;
 
+	delete chipText;
+	delete chipShape;
+	delete pinnedBtn;
+	delete pinnedTitle;
+	delete pinnedSubtitle;
+	delete pinnedBg;
+	delete pinnedIcon;
+
 	delete trigA;
 
 	for(int i=0; i<SAVELISTSIZE; i++)
@@ -228,32 +340,26 @@ GuiSaveBrowser::~GuiSaveBrowser()
 	}
 }
 
-void GuiSaveBrowser::setColumns(int columns)
-{
-	cols = (columns == 1) ? 1 : 2;
-
-	for(int i=0; i<SAVELISTSIZE; i++)
-	{
-		const int w = (cols == 1) ? SLOT_WIDE_WIDTH : SLOT_WIDTH;
-		saveBgImg[i]->setSize(w, SLOT_HEIGHT);
-		saveBtn[i]->setSize(w, SLOT_HEIGHT);
-		saveBtn[i]->setPosition(cols == 1 ? 0 : SLOT_PITCH_X*(i % 2), SLOT_PITCH_Y*(i / cols));
-	}
-}
-
 void GuiSaveBrowser::setEntries(const std::vector<SaveEntry>& list, int select)
 {
 	entries = list;
 	const int n = (int)entries.size();
+	const int grid = gridCount();
 
 	if(select < 0 || select >= n)
+		select = 0;
+
+	// the cursor starts on the pinned card when that is what was asked for (or all there is); the grid then
+	// keeps its first card to come back to
+	pinnedOn = hasPinned() && (select == n - 1 || grid == 0);
+	if(pinnedOn)
 		select = 0;
 
 	// scroll so the card with the cursor is on the page: the first page, or with it on the last row
 	if(select < pageSize())
 		listOffset = 0;
 	else
-		listOffset = ((select / cols) - 1) * cols;
+		listOffset = ((select / COLS) - (rows - 1)) * COLS;
 	selectedItem = select - listOffset;
 
 	// the cards show what they are given on the next update()
@@ -265,27 +371,47 @@ void GuiSaveBrowser::setEntries(const std::vector<SaveEntry>& list, int select)
 		savePreviewImg[i]->setImage(nullptr);
 		saveBtnLastOver[i] = false;
 	}
+
+	pinnedBtn->resetState();
+	pinnedBtn->setVisible(false);
+	pinnedBtn->setState(STATE::DISABLED);
+	pinnedLastOver = false;
 }
 
 int GuiSaveBrowser::getSelectedPosition() const
 {
 	if(entries.empty())
 		return -1;
+	if(pinnedOn)
+		return (int)entries.size() - 1;
 	const int p = listOffset + selectedItem;
-	return (p >= 0 && p < (int)entries.size()) ? p : -1;
+	return (p >= 0 && p < gridCount()) ? p : -1;
 }
 
-GuiButton * GuiSaveBrowser::getEntryButton(int position)
+GuiPopover::Anchor GuiSaveBrowser::getEntryAnchor(int position)
 {
+	// the pinned card is wide, so a popover opens over its label rather than beside it
+	if(hasPinned() && position == (int)entries.size() - 1)
+		return GuiPopover::Anchor(chipShape->getLeft(), pinnedBtn->getTop(), chipShape->getWidth(), pinnedBtn->getHeight());
+
 	const int i = position - listOffset;
-	if(i < 0 || i >= pageSize() || position >= (int)entries.size())
-		return nullptr;
-	return saveBtn[i];
+	if(i < 0 || i >= pageSize() || position >= gridCount())
+		return GuiPopover::Anchor();
+	return GuiPopover::Anchor(*saveBtn[i], GuiPopover::Anchor::BESIDE);
 }
 
 const SaveEntry * GuiSaveBrowser::getEntry(int position) const
 {
 	return (position >= 0 && position < (int)entries.size()) ? &entries[(size_t)position] : nullptr;
+}
+
+//! The card to land on when the cursor comes back up from the pinned card: in the last row shown, in the column it left
+int GuiSaveBrowser::lastRowItem() const
+{
+	const int shown = std::max(1, std::min(pageSize(), gridCount() - listOffset));
+	const int row = (shown - 1) / COLS;
+	const int col = std::min(selectedItem % COLS, shown - 1 - row * COLS);
+	return row * COLS + col;
 }
 
 void GuiSaveBrowser::setFocus(int f)
@@ -294,9 +420,15 @@ void GuiSaveBrowser::setFocus(int f)
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 		saveBtn[i]->resetState();
+	pinnedBtn->resetState();
 
-	if(f == 1 && selectedItem >= 0)
-		saveBtn[selectedItem]->setState(STATE::SELECTED);
+	if(f == 1)
+	{
+		if(pinnedOn)
+			pinnedBtn->setState(STATE::SELECTED);
+		else if(selectedItem >= 0)
+			saveBtn[selectedItem]->setState(STATE::SELECTED);
+	}
 }
 
 void GuiSaveBrowser::resetState()
@@ -311,6 +443,7 @@ void GuiSaveBrowser::resetState()
 	{
 		saveBtn[i]->resetState();
 	}
+	pinnedBtn->resetState();
 }
 
 int GuiSaveBrowser::getClickedSave()
@@ -324,6 +457,13 @@ int GuiSaveBrowser::getClickedSave()
 			found = listOffset+i;
 			break;
 		}
+	}
+
+	if(found < 0 && pinnedBtn->getState() == STATE::CLICKED)
+	{
+		pinnedBtn->setState(STATE::SELECTED);
+		pinnedOn = true;
+		found = (int)entries.size() - 1;
 	}
 	return found;
 }
@@ -342,17 +482,28 @@ void GuiSaveBrowser::draw()
 
 		// the tag goes over the card, so after it
 		const int pos = listOffset + i;
-		if(i < pageSize() && saveBtn[i]->isVisible() && pos < (int)entries.size() && entries[(size_t)pos].playing)
+		if(i < pageSize() && saveBtn[i]->isVisible() && pos < gridCount() && entries[(size_t)pos].playing)
 		{
 			tagShape[i]->draw();
 			tagText[i]->draw();
 		}
 	}
 
-	trackShape->draw();
-	thumbShape->draw();
-	arrowUpBtn->draw();
-	arrowDownBtn->draw();
+	if(hasPinned() && pinnedBtn->isVisible())
+	{
+		pinnedBtn->draw();
+		chipShape->draw();
+		chipText->draw();
+	}
+
+	// the scrollbar is there only when there is something to scroll to
+	if(scrollable)
+	{
+		trackShape->draw();
+		thumbShape->draw();
+		arrowUpBtn->draw();
+		arrowDownBtn->draw();
+	}
 
 	this->updateEffects();
 }
@@ -363,10 +514,14 @@ void GuiSaveBrowser::update(InputController * controller)
 		return;
 
 	int i;
-	const int length = (int)entries.size();
+	const int length = gridCount();
+	bool toPinned = false;
 
-	arrowUpBtn->update(controller);
-	arrowDownBtn->update(controller);
+	if(scrollable)
+	{
+		arrowUpBtn->update(controller);
+		arrowDownBtn->update(controller);
+	}
 
 	// pad/joystick navigation
 	if(!focus)
@@ -374,14 +529,23 @@ void GuiSaveBrowser::update(InputController * controller)
 
 	if(selectedItem < 0) selectedItem = 0;
 
-	if(cols > 1 && controller->right())
+	if(pinnedOn)
+	{
+		// the way out of the pinned card is up, back to the grid
+		if(controller->up() || arrowUpBtn->getState() == STATE::CLICKED)
+		{
+			pinnedOn = false;
+			selectedItem = lastRowItem();
+		}
+	}
+	else if(controller->right())
 	{
 		if(selectedItem == pageSize()-1)
 		{
 			if(listOffset + pageSize() < length)
 			{
 				// move list down by 1 row
-				listOffset += cols;
+				listOffset += COLS;
 				selectedItem -= 1;
 			}
 		}
@@ -392,14 +556,14 @@ void GuiSaveBrowser::update(InputController * controller)
 			selectedItem += 1;
 		}
 	}
-	else if(cols > 1 && controller->left())
+	else if(controller->left())
 	{
 		if(selectedItem == 0)
 		{
-			if(listOffset - cols >= 0)
+			if(listOffset - COLS >= 0)
 			{
 				// move list up by 1
-				listOffset -= cols;
+				listOffset -= COLS;
 				selectedItem = pageSize()-1;
 			}
 		}
@@ -413,43 +577,57 @@ void GuiSaveBrowser::update(InputController * controller)
 	}
 	else if(controller->down() || arrowDownBtn->getState() == STATE::CLICKED)
 	{
-		if(selectedItem >= pageSize()-cols)
+		// only the pad goes on from the last row to the pinned card; the scrollbar's arrow just scrolls
+		const bool viaPad = controller->down();
+
+		if(selectedItem >= pageSize()-COLS)
 		{
-			if(listOffset + pageSize() + cols - 1 < length)
+			if(listOffset + pageSize() + COLS - 1 < length)
 			{
-				listOffset += cols;
+				listOffset += COLS;
 			}
 			else if(listOffset + pageSize() < length)
 			{
-				listOffset += cols;
+				listOffset += COLS;
 
-				if(selectedItem == pageSize()-1 && cols > 1)
+				if(selectedItem == pageSize()-1)
 					selectedItem -= 1;
 			}
+			else if(viaPad && hasPinned())
+			{
+				toPinned = true;
+			}
 		}
-		else if(saveBtn[selectedItem+cols]->isVisible())
+		else if(saveBtn[selectedItem+COLS]->isVisible())
 		{
-			selectedItem += cols;
+			selectedItem += COLS;
+		}
+		else if(viaPad && hasPinned())
+		{
+			toPinned = true;
 		}
 	}
 	else if(controller->up() || arrowUpBtn->getState() == STATE::CLICKED)
 	{
-		if(selectedItem < cols)
+		if(selectedItem < COLS)
 		{
-			if(listOffset - cols >= 0)
+			if(listOffset - COLS >= 0)
 			{
 				// move list up by 1
-				listOffset -= cols;
+				listOffset -= COLS;
 			}
 		}
 		else
 		{
-			if(saveBtn[selectedItem-cols]->isVisible())
+			if(saveBtn[selectedItem-COLS]->isVisible())
 			{
-				selectedItem -= cols;
+				selectedItem -= COLS;
 			}
 		}
 	}
+
+	if(toPinned)
+		pinnedOn = true;
 
 	endNavigation:
 
@@ -486,9 +664,10 @@ void GuiSaveBrowser::update(InputController * controller)
 			saveBtn[i]->setState(STATE::DISABLED);
 		}
 
-		if(i != selectedItem && saveBtn[i]->getState() == STATE::SELECTED)
+		// one card has the cursor: not one in the grid while it is on the pinned card
+		if((pinnedOn || i != selectedItem) && saveBtn[i]->getState() == STATE::SELECTED)
 			saveBtn[i]->resetState();
-		else if(focus && i == selectedItem && saveBtn[i]->getState() == STATE::DEFAULT)
+		else if(focus && !pinnedOn && i == selectedItem && saveBtn[i]->getState() == STATE::DEFAULT)
 			saveBtn[selectedItem]->setState(STATE::SELECTED, controller->getChannel());
 
 		auto pad = controller->getPadData();
@@ -503,7 +682,47 @@ void GuiSaveBrowser::update(InputController * controller)
 		saveBtn[i]->update(controller);
 
 		if(saveBtn[i]->getState() == STATE::SELECTED)
+		{
 			selectedItem = i;
+			pinnedOn = false;
+		}
+	}
+
+	if(hasPinned())
+	{
+		const SaveEntry & e = entries.back();
+
+		if(pinnedBtn->getState() == STATE::DISABLED || !pinnedBtn->isVisible())
+		{
+			pinnedBtn->setVisible(true);
+			pinnedBtn->setState(STATE::DEFAULT);
+		}
+
+		pinnedTitle->setText(e.title.c_str());
+		pinnedSubtitle->setText(e.subtitle.c_str());
+		chipText->setText(e.chip.c_str());
+		chipShape->setVisible(!e.chip.empty());
+		chipText->setVisible(!e.chip.empty());
+
+		if(!pinnedOn && pinnedBtn->getState() == STATE::SELECTED)
+			pinnedBtn->resetState();
+		else if(focus && pinnedOn && pinnedBtn->getState() == STATE::DEFAULT)
+			pinnedBtn->setState(STATE::SELECTED, controller->getChannel());
+
+		auto pad = controller->getPadData();
+
+		if(pad.validPointer)
+		{
+			if(!pinnedLastOver && pinnedBtn->isInside(pad.cursor_x, pad.cursor_y))
+				pinnedBtn->resetState();
+			pinnedLastOver = pinnedBtn->isInside(pad.cursor_x, pad.cursor_y);
+		}
+
+		pinnedBtn->update(controller);
+
+		// the pointer moved onto it
+		if(pinnedBtn->getState() == STATE::SELECTED)
+			pinnedOn = true;
 	}
 
 	updateThumb();
@@ -512,25 +731,25 @@ void GuiSaveBrowser::update(InputController * controller)
 		updateCB(this);
 }
 
-//! Sizes and places the scrollbar thumb for the rows currently shown
+//! Sizes and places the scrollbar thumb for the rows currently shown, and shows the scrollbar only when some rows are off screen
 void GuiSaveBrowser::updateThumb()
 {
-	const int pageRows = 2;
-	const int totalRows = ((int)entries.size() + cols - 1) / cols;
-	int firstRow = listOffset / cols;
+	const int totalRows = (gridCount() + COLS - 1) / COLS;
+	int firstRow = listOffset / COLS;
 
-	if(totalRows <= pageRows)
+	scrollable = totalRows > rows;
+	if(!scrollable)
 	{
 		thumbShape->setVisible(false);
 		return;
 	}
 	if(firstRow < 0) firstRow = 0;
-	if(firstRow > totalRows - pageRows) firstRow = totalRows - pageRows;
+	if(firstRow > totalRows - rows) firstRow = totalRows - rows;
 
-	const int thumbHeight = std::max(SB_THUMB_MIN_HEIGHT, trackHeight * pageRows / totalRows);
+	const int thumbHeight = std::max(SB_THUMB_MIN_HEIGHT, trackHeight * rows / totalRows);
 	const int travel = trackHeight - thumbHeight;
 
 	thumbShape->setVisible(true);
 	thumbShape->setSize(SB_THUMB_WIDTH, thumbHeight);
-	thumbShape->setPosition(-(SB_INSET + (SB_WIDTH - SB_THUMB_WIDTH) / 2), SB_TRACK_Y + travel * firstRow / (totalRows - pageRows));
+	thumbShape->setPosition(-(SB_INSET + (SB_WIDTH - SB_THUMB_WIDTH) / 2), SB_TRACK_Y + travel * firstRow / (totalRows - rows));
 }

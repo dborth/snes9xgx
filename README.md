@@ -334,10 +334,9 @@ The File Browser loads automatically on startup and lists the contents of your `
 
 ## Gameplay
 
-Press **Home** while playing to open the in-game menu (Save, Load, Reset, Controller, Cheats). Select **Main Menu** to return to the File Browser, or **Close** to resume play.
+Press **Home** while playing to open the in-game menu (Saves, Reset, Controller, Cheats). Select **Main Menu** to return to the File Browser, or **Close** to resume play.
 
-- **Save** offers **New SRAM** and **New Snapshot**; click either to create a save, or click an existing save to overwrite it.
-- **Load** loads a saved SRAM or Snapshot.
+- **Saves** shows your Snapshots in a grid, with the game's own **Game Save File** (SRAM) under them for games that have one. Click **New Snapshot** to save the moment you are at, or click a Snapshot to Load, Update or Delete it. Click the Game Save File to Save Now, Make a Backup, or open its Backups to Restore or Delete one.
 - **Reset** resets the current game.
 - **Controller** toggles which controller drives the game.
 - **Cheats** toggles your loaded cheat codes (below).

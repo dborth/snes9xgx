@@ -285,6 +285,59 @@ class MenuSpinner : public GuiElement
 		GuiShape dots[MENU_SPINNER_DOTS];
 };
 
+//!A check mark in a disc, for a note that says something was done. The mark is a line of small dots
+//!(there is no line shape), one every pixel.
+class MenuCheckIcon : public GuiElement
+{
+	public:
+		MenuCheckIcon(int size, PixelColor discColor, PixelColor markColor) : disc(size, size), count(0)
+		{
+			width = size;
+			height = size;
+			disc.setParent(this);
+			disc.setShape(SHAPE::ELLIPSE);
+			disc.setPaint(GuiPaint().color(discColor));
+			disc.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+
+			// the two strokes of the mark, drawn for a 20 pixel disc and scaled to this one
+			const float s = size / 20.0f;
+			const float pts[3][2] = { { -4.5f, 0.5f }, { -1.5f, 3.5f }, { 5.0f, -3.5f } };
+			for(int seg = 0; seg < 2; seg++)
+			{
+				const float x0 = pts[seg][0] * s, y0 = pts[seg][1] * s;
+				const float x1 = pts[seg + 1][0] * s, y1 = pts[seg + 1][1] * s;
+				const int steps = std::max(1, (int)(hypotf(x1 - x0, y1 - y0) + 0.5f));
+				for(int k = (seg == 0 ? 0 : 1); k <= steps && count < MAX_DOTS; k++, count++)
+				{
+					const float t = (float)k / steps;
+					GuiShape & dot = dots[count];
+					dot.setParent(this);
+					dot.setShape(SHAPE::ELLIPSE);
+					dot.setSize(3, 3);
+					dot.setPaint(GuiPaint().color(markColor));
+					dot.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+					dot.setPosition((int)lroundf(x0 + (x1 - x0) * t), (int)lroundf(y0 + (y1 - y0) * t));
+				}
+			}
+		}
+
+		void draw() override
+		{
+			if(!this->isVisible())
+				return;
+			disc.draw();
+			for(int i = 0; i < count; i++)
+				dots[i].draw();
+			this->updateEffects();
+		}
+
+	private:
+		enum { MAX_DOTS = 24 };
+		GuiShape disc;
+		GuiShape dots[MAX_DOTS];
+		int count;
+};
+
 //!The window behind the on-screen keyboard: a card with a chrome band holding the text
 //!field. Insert it as the keyboard's first element: keyboard.insert(&box, 0). It is
 //!wider than the keyboard itself so the keys keep a margin from the card's edge.

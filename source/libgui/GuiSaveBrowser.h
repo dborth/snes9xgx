@@ -7,7 +7,7 @@
 #include "Gui.h"
 
 #define MAX_SAVES 				100
-#define SAVELISTSIZE 			4
+#define SAVELISTSIZE 			6		// three rows of two: the most the grid ever shows
 
 typedef struct _savelist {
 	int length;
@@ -40,6 +40,21 @@ class GuiSavePreview : public GuiElement
 		bool hasImage;
 };
 
+//!The icon of a game's own save file, drawn in code: a small cartridge with a battery in its label. It stands
+//!where a snapshot's screenshot does, because a save file has no picture of its own.
+class GuiSaveFileIcon : public GuiElement
+{
+	public:
+		GuiSaveFileIcon();
+		void draw() override;
+	private:
+		GuiShape body;
+		GuiShape label;
+		GuiShape battery;
+		GuiShape nub;
+		GuiShape slot;
+};
+
 //!One card of the save browser. The browser only shows these: what a card means (a snapshot, a
 //!save file, a "new" slot) and what happens when it is chosen is up to the screen that built them.
 struct SaveEntry
@@ -50,27 +65,30 @@ struct SaveEntry
 	std::string subtitle;			//!< "Wed Oct 21, 9:02 PM", or a hint on a NEW card
 	GuiImageData * preview = nullptr;	//!< The screenshot, not owned; nullptr shows the placeholder
 	std::string placeholder;		//!< What the placeholder says (no screenshot)
+	bool pinned = false;			//!< Shown on its own in a wide card under the grid, with the save-file icon instead of a screenshot. At most one, and the last entry
+	std::string chip;				//!< A small label at the right of a pinned card ("In-game save")
 	bool playing = false;			//!< Tagged "Playing from": the save the game was started from
 	int id = -1;					//!< Whatever the caller wants to find this card by (an index into its own list)
 };
 
-//!A paged grid of save cards (two across), with a scrollbar. Choosing a card (A or a click) is reported
-//!through getClickedSave(); the browser itself changes nothing.
+//!A paged grid of save cards (two across), with a scrollbar that shows only when there is more than fits. A pinned
+//!entry is not part of the grid: it sits under it in a wide card, which the D-pad reaches by going down from the last
+//!row. Choosing a card (A or a click) is reported through getClickedSave(); the browser itself changes nothing.
 class GuiSaveBrowser : public GuiElement
 {
 	public:
-		GuiSaveBrowser(int w, int h);
+		//!\param w Width, including the scrollbar column
+		//!\param rows How many rows of cards the grid shows at once. A pinned card goes under them
+		GuiSaveBrowser(int w, int rows);
 		~GuiSaveBrowser();
-		//!One card per row (wide), or two (the default). Call before setEntries().
-		void setColumns(int columns);
 		//!Replaces the cards. \param select The card (by position) that gets the cursor.
 		void setEntries(const std::vector<SaveEntry>& list, int select = 0);
 		//!\return The position of the card that was chosen since the last call, or -1.
 		int getClickedSave();
 		//!\return The position of the card under the cursor, or -1 with no cards.
 		int getSelectedPosition() const;
-		//!\return The button showing the card at `position` (for a popover to open beside), or nullptr when it is scrolled out of view.
-		GuiButton * getEntryButton(int position);
+		//!\return Where a popover for the card at `position` opens: beside the card, or for the pinned card over its label. Not valid when the card is scrolled out of view.
+		GuiPopover::Anchor getEntryAnchor(int position);
 		const SaveEntry * getEntry(int position) const;
 		void resetState();
 		void setFocus(int f);
@@ -80,8 +98,12 @@ class GuiSaveBrowser : public GuiElement
 		std::vector<SaveEntry> entries;
 		int selectedItem;
 		int listOffset;
-		int cols;				//!< cards across: 1 or 2
-		int pageSize() const { return 2 * cols; }
+		enum { COLS = 2 };
+		int rows;				//!< rows of cards shown at once
+		int pageSize() const { return rows * COLS; }
+		bool hasPinned() const { return !entries.empty() && entries.back().pinned; }
+		int gridCount() const { return (int)entries.size() - (hasPinned() ? 1 : 0); }
+		int lastRowItem() const;
 		GuiButton * saveBtn[SAVELISTSIZE];
 		GuiText * saveTitle[SAVELISTSIZE];
 		GuiText * saveSubtitle[SAVELISTSIZE];
@@ -101,7 +123,18 @@ class GuiSaveBrowser : public GuiElement
 		GuiShape * arrowUpGlyph;
 		GuiShape * arrowDownGlyph;
 
+		GuiButton * pinnedBtn;		// the pinned card, under the grid
+		GuiShape * pinnedBg;
+		GuiSaveFileIcon * pinnedIcon;
+		GuiText * pinnedTitle;
+		GuiText * pinnedSubtitle;
+		GuiShape * chipShape;
+		GuiText * chipText;
+		bool pinnedOn;				// the cursor is on the pinned card (the grid keeps its column in selectedItem)
+		bool pinnedLastOver;
+
 		int trackHeight;
+		bool scrollable;			// more rows than fit: the scrollbar shows
 		void updateThumb();
 
 		GuiTrigger * trigA;
