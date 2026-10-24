@@ -1,6 +1,6 @@
 /****************************************************************************
  * libgui
- * Daryl Borth 2009-2026
+ * Daryl Borth 2026
  * GuiTextTranslator.h
  ***************************************************************************/
 #pragma once
@@ -35,9 +35,9 @@ class GuiTextTranslator
 	private:
 		struct MSG
 		{
-			uint32_t id;
-			char* msgstr;
-			MSG* next;
+			uint32_t id = 0;
+			char* msgstr = nullptr;
+			MSG* next = nullptr;
 		};
 
 		MSG* head;

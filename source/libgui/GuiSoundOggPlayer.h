@@ -70,26 +70,26 @@ class GuiSoundOggPlayer {
 		static long tellOgg(void *datasource);
 
 		struct MemFile {
-			const uint8_t *data;
-			int32_t size;
-			int32_t pos;
+			const uint8_t *data = nullptr;
+			int32_t size = 0;
+			int32_t pos = 0;
 		};
 
 		MemFile memFile;
-		OggVorbis_File vf;
+		OggVorbis_File vf = {};
 		bool vfOpen; //!< true between a successful ov_open_callbacks() and its ov_clear()
 		Thread decodeThread;
 
 		volatile bool threadRunning;
 		volatile bool streamPaused;
-		volatile bool streamLoop;
+		volatile bool streamLoop = false;
 
 		int sampleRate;
 		int channels;
 
 		static const int BUFFER_SIZE = 16384;
-		uint8_t *pcmBuffer[2];
-		int32_t pcmBufferSize[2];
+		uint8_t *pcmBuffer[2] = { nullptr, nullptr };
+		int32_t pcmBufferSize[2] = { 0, 0 };
 		volatile bool bufferReady[2];
 
 		volatile int decodeIndex;

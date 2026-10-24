@@ -8,6 +8,7 @@
 #define MAX_BTN_LABELS	3
 
 //!Display, manage, and manipulate buttons in the GUI. Buttons can have images, icons, text, and sound set (all of which are optional)
+//!\ingroup grp_core
 class GuiButton : public GuiElement
 {
 	public:

@@ -13,7 +13,7 @@
 #include "GuiTheme.h"
 
 //!Small control icons for lists and hints (the "A" in a circle, a bumper, a D-pad arrow).
-//!\ingroup grp_controller
+//!\ingroup grp_shapes
 enum class GLYPH {
 	BUTTON,		//!< A light circle (face buttons; the letter goes on it)
 	BUMPER,		//!< A light rounded rectangle (L, R, ZL, ZR)
@@ -33,7 +33,7 @@ class GuiText;
 //!A small control icon drawn from shapes: a light badge with a dark symbol or letter, for list rows and hint
 //!bars. Not selectable; it is placed by a layout like any element and sized by its kind.
 //!`ui.glyph(GLYPH::BUTTON, "A")`, `ui.glyph(GLYPH::UP)`
-//!\ingroup grp_controller
+//!\ingroup grp_shapes
 class GuiGlyph : public GuiElement
 {
 	public:
@@ -44,11 +44,11 @@ class GuiGlyph : public GuiElement
 		void draw() override;
 
 		//!Gets the natural size of a glyph.
-		//!\ingroup grp_controller
+		//!\ingroup grp_shapes
 		static void size(GLYPH kind, float& w, float& h);
 
 		//!Builds a glyph filling a w x h box at the origin, in the theme's light-on-dark colors. Letters are text and are not part of the mesh.
-		//!\ingroup grp_controller
+		//!\ingroup grp_shapes
 		static void build(GuiMesh& mesh, GLYPH kind, float w, float h);
 
 	private:
