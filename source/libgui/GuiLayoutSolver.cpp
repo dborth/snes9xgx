@@ -249,27 +249,42 @@ int GuiNavigate(const std::vector<GuiNavItem>& items, int current, NAV_DIR dir)
 	centreOf(items[current].r, ccx, ccy);
 	const GuiRect& cur = items[current].r;
 
-	// nearest item in the direction, preferring those that line up with the current one
+	// Nearest item in the direction, preferring those that line up with the current one. Two passes: first only items
+	// that lie wholly beyond the current item's edge in the direction of travel (so a key in the row below, or a tab's
+	// own keys, never count as "to the right" just because their centre is a pixel further along), then, only if none
+	// does, items that merely have a centre further along. Staggered rows (a keyboard) need the first pass.
 	int best = -1;
-	float bestScore = 0.0f;
-	for(int i = 0; i < n; i++)
+	for(int pass = 0; pass < 2 && best < 0; pass++)
 	{
-		if(i == current || !items[i].selectable)
-			continue;
-		float cx, cy;
-		centreOf(items[i].r, cx, cy);
-		const float along = horizontal ? (cx - ccx) * sign : (cy - ccy) * sign;
-		if(along <= 1.0f)
-			continue;
-		const GuiRect& r = items[i].r;
-		const float ov = horizontal ? overlapOrGap(cur.y, cur.y + cur.h, r.y, r.y + r.h) : overlapOrGap(cur.x, cur.x + cur.w, r.x, r.x + r.w);
-		const float across = ov > 0.0f ? 0.0f : -ov;
-		const float offAxis = fabsf(horizontal ? cy - ccy : cx - ccx);
-		const float score = along + 4.0f * across + 0.01f * offAxis;
-		if(best < 0 || score < bestScore)
+		if(pass == 1 && horizontal)
+			break;	// sideways with nothing in line: wrap to the next row below, rather than reach up or down
+		float bestScore = 0.0f;
+		for(int i = 0; i < n; i++)
 		{
-			best = i;
-			bestScore = score;
+			if(i == current || !items[i].selectable)
+				continue;
+			const GuiRect& r = items[i].r;
+			if(pass == 0)
+			{
+				const float gap = horizontal ? (sign > 0 ? r.x - (cur.x + cur.w) : cur.x - (r.x + r.w))
+											 : (sign > 0 ? r.y - (cur.y + cur.h) : cur.y - (r.y + r.h));
+				if(gap < -1.0f)
+					continue;
+			}
+			float cx, cy;
+			centreOf(r, cx, cy);
+			const float along = horizontal ? (cx - ccx) * sign : (cy - ccy) * sign;
+			if(along <= 1.0f)
+				continue;
+			const float ov = horizontal ? overlapOrGap(cur.y, cur.y + cur.h, r.y, r.y + r.h) : overlapOrGap(cur.x, cur.x + cur.w, r.x, r.x + r.w);
+			const float across = ov > 0.0f ? 0.0f : -ov;
+			const float offAxis = fabsf(horizontal ? cy - ccy : cx - ccx);
+			const float score = along + 4.0f * across + 0.01f * offAxis;
+			if(best < 0 || score < bestScore)
+			{
+				best = i;
+				bestScore = score;
+			}
 		}
 	}
 	if(best >= 0 || !horizontal)
