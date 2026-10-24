@@ -4,7 +4,9 @@
  * GuiFileBrowser.cpp
  ***************************************************************************/
 
-#include "Gui.h"
+#include "libgui/Gui.h"
+#include "GuiFileBrowser.h"
+#include "../filelist.h"
 #include "../filebrowser.h"
 
 // Layout of the browser, in design pixels. The browser is one rounded card: the rows

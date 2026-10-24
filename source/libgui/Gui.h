@@ -6,8 +6,7 @@
  * https://github.com/dborth/libgui
  *
  * Include this one header to get every core UI class (GuiElement, GuiWindow,
- * GuiButton, GuiImage, GuiText, GuiSound, GuiFileBrowser, GuiKeyboard,
- * GuiOptionBrowser, GuiSaveBrowser, ...), the alignment/state/scroll enums,
+ * GuiButton, GuiImage, GuiText, GuiSound, GuiUi, GuiPopover, ...), the alignment/state/scroll enums,
  * and the platform driver interfaces they are built on.
  *
  * Everything reachable from this header is platform-agnostic. All hardware
@@ -31,7 +30,6 @@
 #include <cwchar>
 #include <cmath>
 
-#include "../filelist.h"
 #include "../drivers/Platform.h"
 #include "../drivers/InputData.h"
 #include "../drivers/InputController.h"
@@ -61,9 +59,5 @@ enum class SCROLL {
 #include "GuiLayout.h"
 #include "GuiGlyph.h"
 #include "GuiButton.h"
-#include "GuiFileBrowser.h"
-#include "GuiKeyboard.h"
-#include "GuiOptionBrowser.h"
 #include "GuiUi.h"
 #include "GuiPopover.h"
-#include "GuiSaveBrowser.h"

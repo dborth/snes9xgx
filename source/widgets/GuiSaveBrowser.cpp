@@ -8,7 +8,8 @@
  * GUI class definitions
  ***************************************************************************/
 
-#include "Gui.h"
+#include "libgui/Gui.h"
+#include "GuiSaveBrowser.h"
 
 // Layout, in design pixels. Each slot is a card; the scrollbar column runs down the
 // right side with round arrow buttons and a thumb showing which rows are on screen.

@@ -5,6 +5,8 @@
  ***************************************************************************/
 #pragma once
 
+#include "libgui/Gui.h"
+
 #include <cstddef>
 #include <memory>
 

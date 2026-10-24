@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "Gui.h"
+#include "libgui/Gui.h"
 
 #define MAX_SAVES 				100
 #define SAVELISTSIZE 			6		// three rows of two: the most the grid ever shows

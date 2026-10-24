@@ -22,6 +22,7 @@
 #include "filebrowser.h"
 #include "utils/decompress.h"
 #include "libgui/Gui.h"
+#include "widgets/GuiWidgets.h"
 #include "drivers/Thread.h"
 #include "drivers/Mutex.h"
 #include "drivers/Time.h"

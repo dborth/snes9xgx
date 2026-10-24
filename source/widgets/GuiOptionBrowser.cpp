@@ -5,7 +5,8 @@
  * GuiOptionBrowser.cpp
  ***************************************************************************/
 
-#include "Gui.h"
+#include "libgui/Gui.h"
+#include "GuiOptionBrowser.h"
 
 // Layout of the browser, in design pixels: one rounded card, rows inset from its edge,
 // the scrollbar column down the right side. Matches GuiFileBrowser.

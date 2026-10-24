@@ -16,9 +16,11 @@
  ***************************************************************************/
 #pragma once
 
+#include "libgui/Gui.h"
+
 #include <memory>
 
-#include "GuiImageData.h"
+#include "libgui/GuiImageData.h"
 #include "../drivers/ThreadDriver.h"
 
 //! Max length (including nul) of a path passed to request()/prefetch().

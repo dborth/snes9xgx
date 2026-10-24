@@ -6,6 +6,8 @@
  ***************************************************************************/
 #pragma once
 
+#include "libgui/Gui.h"
+
 #define MAX_OPTIONS 			150
 #define OPTION_PAGESIZE 		8
 

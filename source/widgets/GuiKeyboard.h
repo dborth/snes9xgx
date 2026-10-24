@@ -6,6 +6,8 @@
  ***************************************************************************/
 #pragma once
 
+#include "libgui/Gui.h"
+
 constexpr int KB_ROWS = 4;
 constexpr int KB_COLUMNS = 11;
 
