@@ -48,7 +48,6 @@
 #include "icon_home_png.h"
 #include "icon_credits_png.h"
 #include "icon_game_cheats_png.h"
-#include "icon_game_controllers_png.h"
 #include "icon_game_save_png.h"
 #include "icon_game_reset_png.h"
 #include "icon_settings_file_png.h"
