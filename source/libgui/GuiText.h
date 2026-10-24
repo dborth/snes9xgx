@@ -70,6 +70,9 @@ class GuiText : public GuiElement
 		//!placed. The font's line box has more room below the baseline than above the capitals,
 		//!so capitals centered in a button read as sitting high; this evens the padding.
 		void setNudgeY(int n) { nudgeY = n; }
+		//!Sets the pixels added to the font size to get the distance between wrapped lines (default 6; less
+		//!for a tighter block, negative for tighter than the font size)
+		void setLineSpacing(int px) { lineSpacing = px; }
 		//!Updates the text to the selected language
 		void resetText();
 		//!Constantly called to draw the text
@@ -90,6 +93,7 @@ class GuiText : public GuiElement
 		uint16_t style; //!< GuiTextRenderer style attributes
 		bool wrap; //!< Wrapping toggle
 		int nudgeY = 0; //!< Extra vertical offset when drawing, in design pixels
+		int lineSpacing = 6; //!< Pixels added to the font size for the distance between wrapped lines
 
 		// What measuring the text cost, kept so a layout pass that asks for the size every frame costs
 		// nothing. Measured at `size`, and valid while the text, the size and the font are unchanged.

@@ -443,7 +443,7 @@ void GuiText::draw()
 			textDynNum = linenum;
 		}
 
-		int lineheight = newSize + 6;
+		int lineheight = newSize + lineSpacing;
 		int voffset = 0;
 
 		if(alignmentVert == ALIGN_V::MIDDLE)
