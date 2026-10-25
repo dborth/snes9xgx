@@ -1232,7 +1232,7 @@ static int MenuGameSelection()
 
 	DeviceCheckingScope deviceChecking;
 
-	GuiFileBrowser gameBrowser(MENU_LIST_W, MENU_LIST_H);
+	GuiGameBrowser gameBrowser(MENU_LIST_W, MENU_LIST_H);
 	gameBrowser.setPosition(MENU_LIST_X, MENU_LIST_Y);
 	ResetBrowser();
 

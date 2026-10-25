@@ -1,7 +1,7 @@
 /****************************************************************************
  * libgui
  * Daryl Borth 2009-2026
- * GuiFileBrowser.h
+ * GuiGameBrowser.h
  ***************************************************************************/
 #pragma once
 
@@ -21,17 +21,17 @@ class GuiShape;
 //!Return false (leaving outPath untouched) if entry index has no preview image.
 typedef bool (*GuiPreviewPathResolver)(void * context, int index, char * outPath, size_t outPathSize);
 
-//!Called whenever GuiFileBrowser actually changes what target (the
+//!Called whenever GuiGameBrowser actually changes what target (the
 //!GuiImage passed to setPreviewImage()) is showing. isDefault is true when it's the
 //!built-in default image rather than the selected entry's own preview.
 typedef void (*GuiPreviewImageChangedCB)(void * context, GuiImage * target, bool isDefault);
 
 //!Display a list of files
-class GuiFileBrowser : public GuiElement
+class GuiGameBrowser : public GuiElement
 {
 	public:
-		GuiFileBrowser(int w, int h);
-		~GuiFileBrowser();
+		GuiGameBrowser(int w, int h);
+		~GuiGameBrowser();
 		void resetState();
 		void setFocus(int f);
 		void draw() override;
@@ -40,7 +40,7 @@ class GuiFileBrowser : public GuiElement
 		GuiButton * fileList[FILE_PAGESIZE];
 
 		//!Enables an automatically-managed preview image for the currently selected/highlighted entry.
-		//!Each frame, GuiFileBrowser asks resolver for the source PNG path of the selected entry
+		//!Each frame, GuiGameBrowser asks resolver for the source PNG path of the selected entry
 		void setPreviewImage(GuiImage * target, GuiPreviewPathResolver resolver, void * resolverContext,
 		                     int capacity, int prefetchRadius, int maxImageWidth = 0, int maxImageHeight = 0,
 		                     GuiPreviewImageChangedCB changedCB = nullptr, void * changedCBContext = nullptr);

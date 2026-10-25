@@ -9,10 +9,10 @@
 #include "GuiOptionBrowser.h"
 
 // Layout of the browser, in design pixels: one rounded card, rows inset from its edge,
-// the scrollbar column down the right side. Matches GuiFileBrowser.
+// the scrollbar column down the right side. Matches GuiGameBrowser.
 #define OB_PAD				6		// card edge to rows, and top/bottom of the scrollbar column
 #define OB_ROW_HEIGHT		30		// the highlight pill is 2 shorter, leaving a gap between rows
-#define OB_ROW_TEXT_Y		2		// text sits this far below the row's middle (see GuiFileBrowser)
+#define OB_ROW_TEXT_Y		2		// text sits this far below the row's middle (see GuiGameBrowser)
 #define OB_ROW_GAP			6		// rows to scrollbar column
 #define OB_SB_WIDTH			22		// scrollbar column (arrow buttons)
 #define OB_SB_INSET			7		// column to card's right edge
@@ -80,7 +80,7 @@ GuiOptionBrowser::GuiOptionBrowser(int w, int h, OptionList * l)
 	trackShape->setPaint(GuiPaint().color(theme.outline));
 
 	// the thumb is a button so it can be grabbed; it takes the accent color when the
-	// pointer is on it and a deeper one while held (as in GuiFileBrowser)
+	// pointer is on it and a deeper one while held (as in GuiGameBrowser)
 	thumbShape = new GuiShape(OB_THUMB_WIDTH, trackHeight);
 	thumbShape->setCapsule();
 	thumbShape->setStyle(GuiShapeStyle(GuiPaint().color(theme.outlineStrong))

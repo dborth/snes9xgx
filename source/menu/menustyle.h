@@ -77,7 +77,7 @@
 #define MENU_SPINNER_SIZE		72
 #define MENU_SPINNER_DOTS		8
 
-// the two cards of the game list page (the list itself is drawn by GuiFileBrowser)
+// the two cards of the game list page (the list itself is drawn by GuiGameBrowser)
 #define MENU_LIST_X			20
 #define MENU_LIST_Y			107
 #define MENU_LIST_W			330

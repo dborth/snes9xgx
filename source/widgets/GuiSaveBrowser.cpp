@@ -217,7 +217,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 	trackShape->setPaint(GuiPaint().color(theme.outline));
 
 	// the thumb is a button so it can be grabbed; it takes the accent color when the pointer is on it and a
-	// deeper one while held (as in GuiOptionBrowser and GuiFileBrowser)
+	// deeper one while held (as in GuiOptionBrowser and GuiGameBrowser)
 	thumbShape = new GuiShape(SB_THUMB_WIDTH, trackHeight);
 	thumbShape->setCapsule();
 	thumbShape->setStyle(GuiShapeStyle(GuiPaint().color(theme.outlineStrong))

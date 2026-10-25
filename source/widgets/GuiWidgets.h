@@ -15,7 +15,7 @@
 #include "../libgui/Gui.h"
 
 #include "GuiImageAsyncCache.h"
-#include "GuiFileBrowser.h"
+#include "GuiGameBrowser.h"
 #include "GuiKeyboard.h"
 #include "GuiOptionBrowser.h"
 #include "GuiSaveBrowser.h"

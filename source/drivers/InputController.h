@@ -29,7 +29,7 @@ public:
 	int getChannel() const { return channel; }
 
 	//! Temporarily overrides the channel this controller reports via getChannel().
-	//! Used by list-based elements (e.g. GuiFileBrowser) to present a "no channel"
+	//! Used by list-based elements (e.g. GuiGameBrowser) to present a "no channel"
 	//! (-1) identity to items the cursor isn't currently over, so a stale
 	//! stateChan left on a reused slot can't block clicks from the real channel.
 	//! Callers MUST restore the original value (see getChannel()) after the

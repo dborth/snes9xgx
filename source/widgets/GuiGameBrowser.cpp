@@ -1,11 +1,11 @@
 /****************************************************************************
  * libgui
  * Daryl Borth 2009-2026
- * GuiFileBrowser.cpp
+ * GuiGameBrowser.cpp
  ***************************************************************************/
 
 #include "libgui/Gui.h"
-#include "GuiFileBrowser.h"
+#include "GuiGameBrowser.h"
 #include "../filelist.h"
 #include "../filebrowser.h"
 
@@ -50,7 +50,7 @@ static PixelColor rowPressColor(PixelColor tint, PixelColor accent)
 	return c;
 }
 
-GuiFileBrowser::GuiFileBrowser(int w, int h)
+GuiGameBrowser::GuiGameBrowser(int w, int h)
 	: previewDefaultImage(default_preview_png)
 {
 	width = w;
@@ -186,7 +186,7 @@ GuiFileBrowser::GuiFileBrowser(int w, int h)
 	}
 }
 
-GuiFileBrowser::~GuiFileBrowser()
+GuiGameBrowser::~GuiGameBrowser()
 {
 	delete arrowUpBtn;
 	delete arrowDownBtn;
@@ -220,7 +220,7 @@ GuiFileBrowser::~GuiFileBrowser()
 	}
 }
 
-void GuiFileBrowser::setFocus(int f)
+void GuiGameBrowser::setFocus(int f)
 {
 	focus = f;
 
@@ -231,7 +231,7 @@ void GuiFileBrowser::setFocus(int f)
 		fileList[selectedItem]->setState(STATE::SELECTED);
 }
 
-void GuiFileBrowser::resetState()
+void GuiGameBrowser::resetState()
 {
 	state = STATE::DEFAULT;
 	stateChan = -1;
@@ -252,7 +252,7 @@ void GuiFileBrowser::resetState()
 	}
 }
 
-void GuiFileBrowser::setPreviewImage(GuiImage * target, GuiPreviewPathResolver resolver, void * resolverContext,
+void GuiGameBrowser::setPreviewImage(GuiImage * target, GuiPreviewPathResolver resolver, void * resolverContext,
                                       int capacity, int prefetchRadius, int maxImageWidth, int maxImageHeight,
                                       GuiPreviewImageChangedCB changedCB, void * changedCBContext)
 {
@@ -281,7 +281,7 @@ void GuiFileBrowser::setPreviewImage(GuiImage * target, GuiPreviewPathResolver r
 	showPreview(&previewDefaultImage, true);
 }
 
-void GuiFileBrowser::showPreview(GuiImageData * img, bool isDefault)
+void GuiGameBrowser::showPreview(GuiImageData * img, bool isDefault)
 {
 	if(img == previewLastImage)
 		return;
@@ -293,7 +293,7 @@ void GuiFileBrowser::showPreview(GuiImageData * img, bool isDefault)
 		previewChangedCB(previewChangedCBContext, previewTarget, isDefault);
 }
 
-void GuiFileBrowser::refreshPreview()
+void GuiGameBrowser::refreshPreview()
 {
 	if(!previewCache)
 		return;
@@ -302,7 +302,7 @@ void GuiFileBrowser::refreshPreview()
 	previewRequestedIndex = -1;
 }
 
-void GuiFileBrowser::triggerUpdate()
+void GuiGameBrowser::triggerUpdate()
 {
 	int newIndex = browser.selIndex-browser.pageIndex;
 	
@@ -318,7 +318,7 @@ void GuiFileBrowser::triggerUpdate()
 /**
  * Draw the button on screen
  */
-void GuiFileBrowser::draw()
+void GuiGameBrowser::draw()
 {
 	if(!this->isVisible())
 		return;
@@ -338,7 +338,7 @@ void GuiFileBrowser::draw()
 	this->updateEffects();
 }
 
-void GuiFileBrowser::update(InputController * controller)
+void GuiGameBrowser::update(InputController * controller)
 {
 	if(state == STATE::DISABLED || !controller)
 		return;
