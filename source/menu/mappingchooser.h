@@ -4,8 +4,10 @@
  * mappingchooser.h
  *
  * Asks what a row of the mapping screen should use, in a popover beside the
- * row. It opens waiting for a button to be pressed on the hardware being
- * mapped; the other kinds are a list of the hardware's buttons and none.
+ * row. It opens on "Use pressed button", which says how it works and waits to be
+ * chosen: once it is, the other choices are greyed out and the next button
+ * pressed on the hardware being mapped is the answer. The other kinds are a list
+ * of the hardware's buttons, and None (choosing it closes the popover).
  * Whatever is chosen is a value for  btnmap[][][]: an INPUT_* button, or 0.
  *
  ***************************************************************************/

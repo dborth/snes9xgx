@@ -53,20 +53,25 @@ class ChooserView : public GuiPopover
 
 		bool chosen() const { return done; }
 		uint32_t result() const { return picked; }
-		bool listening() const { return shown == KIND_PRESS; }
+		//!Whether it is waiting for a button: only once the person has chosen to (it does not start out that way)
+		bool listening() const { return armed; }
 		//!Takes what was pressed on the hardware since the last frame as the answer (see below)
 		void poll();
 		//!Puts the selection on the kind that is showing
 		void selectKind();
 
 	private:
-		void showKind(int kind) { shown = kind; hintText = defaultHint(); }
+		void showKind(int kind) { shown = kind; if(!armed) hintText = defaultHint(); }
+		//!Starts waiting for a button. What was held to choose this is let go of first, so it is not taken as the answer
+		void arm() { armed = true; ready = false; hintText = Tr("Waiting for a button..."); }
 		std::string defaultHint() const { return Tr("Move over a kind to see its choices"); }
 		void choose(uint32_t btn) { picked = btn; done = true; }
 
 		int hardware;
 		uint32_t current;
 		int shown;
+		bool armed;		//!< waiting for a button on the hardware
+		bool ready;		//!< armed, and everything has been let go of since
 		bool done;
 		uint32_t picked;
 		std::string hintText;
@@ -74,7 +79,7 @@ class ChooserView : public GuiPopover
 		int panelWidth, panelHeight;
 };
 
-// While waiting for a button: the first one pressed on the hardware being mapped is the answer, whatever it is.
+// Once the person has chosen to listen: the first one pressed on the hardware being mapped is the answer, whatever it is.
 // Home on any of them, or the C-Stick on a GameCube pad, clears the mapping.
 void ChooserView::poll()
 {
@@ -82,6 +87,14 @@ void ChooserView::poll()
 		return;
 	const InputPadData& pad = controller[0]->getPadData();
 	uint32_t pressed = pad.hw_buttons_d[hardware];
+
+	// the A (or click) that chose to listen is still down: wait for it to be let go of, or it would be the answer
+	if(!ready)
+	{
+		if(pad.hw_buttons_h[hardware] == 0)
+			ready = true;
+		return;
+	}
 
 	if(hardware == INPUT_HW_GAMECUBE)
 	{
@@ -107,13 +120,22 @@ void ChooserView::selectKind()
 
 ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t defaultButton, const GuiPopover::Anchor& anchor) :
 	GuiPopover(anchor, MenuPopover_Insets()),
-	hardware(hw), current(now), shown(KIND_PRESS), done(false), picked(0), panelWidth(372), panelHeight(0)
+	hardware(hw), current(now), shown(KIND_PRESS), armed(false), ready(false), done(false), picked(0), panelWidth(372), panelHeight(0)
 {
 	hintText = defaultHint();
 
 	const int pad = 10, inner = panelWidth - 2 * pad;
 	const int leftW = 112, gap = 8, rightW = inner - leftW - gap;
 	const int rowH = 26, rowGap = 2, kindH = 30;
+
+	// a translucent veil over what cannot be used right now (shown only while it is listening)
+	auto washOut = [this](int w, int h, float radius) -> GuiShape& {
+		GuiShape& veil = ui.make<GuiShape>(w, h);
+		veil.setCorners(GuiCorners(radius));
+		veil.setPaint(GuiPaint().color(MenuRGBA(255, 255, 255, 170)));
+		ui.visibleWhen(veil, [this]{ return armed; });
+		return veil;
+	};
 
 	// the hardware's buttons, as many as it has
 	std::vector<uint32_t> buttons;
@@ -124,18 +146,28 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 
 	// ---- the kinds: what the right side shows for each
 
-	// Press a button: what the old prompt said, and how to clear
-	GuiLayout& press = ui.column().gap(3).size(rightW, 0);
+	// Use pressed button: says how it works until it is chosen, then asks for the button. Both say how to clear
+	GuiLayout& press = ui.overlay().size(rightW, 90);
 	{
-		std::vector<std::string> lines;
-		MenuPopover_Wrap(lines, GuiFormat("Press a button on the %s now.", Tr(ctrlrName[hw]).c_str()), 28);
-		for(size_t i = 0; i < lines.size() && i < 3; i++)
-			press.add(ui.label(lines[i].c_str()).fontSize(UI_FONT_SMALL + 1));
-		press.addGap(4);
-		std::vector<std::string> clear;
-		MenuPopover_Wrap(clear, Tr(ClearHint(hw)), 30);
-		for(size_t i = 0; i < clear.size() && i < 2; i++)
-			press.add(ui.label(clear[i].c_str()).fontSize(UI_FONT_SMALL).muted());
+		auto paneText = [&](GuiLayout& pane, const std::string& text) {
+			std::vector<std::string> lines;
+			MenuPopover_Wrap(lines, text, 28);
+			for(size_t i = 0; i < lines.size() && i < 3; i++)
+				pane.add(ui.label(lines[i].c_str()).fontSize(UI_FONT_SMALL + 1));
+			pane.addGap(4);
+			std::vector<std::string> clear;
+			MenuPopover_Wrap(clear, Tr(ClearHint(hw)), 30);
+			for(size_t i = 0; i < clear.size() && i < 2; i++)
+				pane.add(ui.label(clear[i].c_str()).fontSize(UI_FONT_SMALL).muted());
+		};
+		GuiLayout& idle = ui.column().gap(3).size(rightW, 0);
+		paneText(idle, GuiFormat(Tr("Choose Use pressed button, then press the button you want on the %s.").c_str(), Tr(ctrlrName[hw]).c_str()));
+		GuiLayout& waiting = ui.column().gap(3).size(rightW, 0);
+		paneText(waiting, GuiFormat(Tr("Press a button on the %s now.").c_str(), Tr(ctrlrName[hw]).c_str()));
+		press.add(idle, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
+		press.add(waiting, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
+		ui.visibleWhen(idle, [this]{ return !armed; });
+		ui.visibleWhen(waiting, [this]{ return armed; });
 	}
 
 	// Buttons: the hardware's buttons as keys, the one in use outlined
@@ -167,17 +199,20 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 	// None
 	GuiLayout& none = ui.column().gap(6).size(rightW, 0);
 	{
-		GuiCard& clear = MenuPopover_Row(ui, rightW, rowH + 2, Tr("Leave unassigned").c_str(), now == 0);
-		clear.onClick([this]{ choose(0); });
-		none.add(clear);
+		// just a line saying what None means; the button under it does the same as choosing None on the left
 		none.add(ui.label(GuiFormat(Tr("%s will do nothing.").c_str(), Tr(rowName).c_str()).c_str()).fontSize(UI_FONT_SMALL).muted());
+		GuiCard& clear = MenuPopover_Row(ui, rightW, rowH + 2, Tr("Unassign").c_str(), now == 0);
+		clear.onClick([this]{ choose(0); });
+		const std::string rowLabel = Tr(rowName);
+		clear.onFocus([this, rowLabel]{ hintText = GuiFormat(Tr("A leaves %s unassigned").c_str(), rowLabel.c_str()); });
+		none.add(clear);
 	}
 
 	struct Kind { const char * name; GuiLayout * layout; int height; };
 	const Kind kinds[KIND_COUNT] = {
-		{ "Press a button", &press, 90 },
+		{ "Use pressed button", &press, 90 },
 		{ "Buttons", &list, listH },
-		{ "None", &none, rowH + 2 + 6 + 18 }
+		{ "None", &none, 18 + 6 + rowH + 2 }
 	};
 
 	// one fixed size for every kind, so the panel does not jump as the cursor moves down the left
@@ -193,7 +228,20 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 	{
 		GuiCard& row = MenuPopover_Row(ui, leftW, kindH, Tr(kinds[i].name), false, false);
 		row.onFocus([this, i]{ showKind(i); });
-		row.onClick([this, i]{ showKind(i); });
+		// Use pressed button starts listening; None is the answer; Buttons shows its list to move into
+		row.onClick([this, i]{
+			showKind(i);
+			if(i == KIND_PRESS)
+				arm();
+			else if(i == KIND_NONE)
+				choose(0);
+		});
+		if(i != KIND_PRESS)
+		{
+			// while it listens, the other choices are out of reach (and washed out) so a press cannot go to them
+			row.enabledWhen([this]{ return !armed; });
+			row.add(washOut(leftW, kindH, 8.0f), GuiItem().background());
+		}
 		kindCards.push_back(&row);
 		kindColumn.add(row);
 	}
@@ -222,10 +270,14 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 	GuiLabel& hint = ui.label().fontSize(UI_FONT_SMALL).muted().bind([this]{ return hintText; });
 	hint.setMaxWidth(inner - 78);
 	const uint32_t def0 = defaultButton;
-	GuiTextButton& useDefault = ui.button(Tr("Default").c_str()).size(70, footH).fontSize(UI_FONT_SMALL).style(MenuKeycapStyle())
+	GuiTextButton& useDefaultButton = ui.button(Tr("Default").c_str()).size(70, footH).fontSize(UI_FONT_SMALL).style(MenuKeycapStyle())
 		.rounded(8.0f).litTextColor(MenuPaletteCurrent().text)
 		.onClick([this, def0]{ choose(def0); })
-		.onFocus([this, def0, hw]{ hintText = GuiFormat(Tr("A uses the default: %s").c_str(), ButtonText(hw, def0).c_str()); });
+		.onFocus([this, def0, hw]{ hintText = GuiFormat(Tr("A uses the default: %s").c_str(), ButtonText(hw, def0).c_str()); })
+		.enabledWhen([this]{ return !armed; });
+	GuiLayout& useDefault = ui.overlay().size(70, footH);
+	useDefault.add(useDefaultButton, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
+	useDefault.add(washOut(70, footH, 8.0f), GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
 
 	GuiLayout& content = ui.column().size(inner, panelHeight - 2 * pad)
 		.add(ui.row().size(inner, headH).align(LAYOUT_ALIGN::CENTRE).add(title).addSpace().add(nowLabel))

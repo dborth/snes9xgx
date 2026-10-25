@@ -585,6 +585,10 @@ void GuiSaveBrowser::update(InputController * controller)
 	const int length = gridCount();
 	bool toPinned = false;
 
+	const InputPadData & livePad = controller->getPadData();
+	const int currentChan = controller->getChannel();
+	const bool channelActive = livePad.validPointer || livePad.buttons_d != 0 || livePad.buttons_h != 0;
+
 	if(scrollable)
 	{
 		arrowUpBtn->update(controller);
@@ -763,7 +767,10 @@ void GuiSaveBrowser::update(InputController * controller)
 		if((pinnedOn || i != selectedItem) && saveBtn[i]->getState() == STATE::SELECTED)
 			saveBtn[i]->resetState();
 		else if(focus && !pinnedOn && i == selectedItem && saveBtn[i]->getState() == STATE::DEFAULT)
-			saveBtn[selectedItem]->setState(STATE::SELECTED, controller->getChannel());
+			saveBtn[selectedItem]->setState(STATE::SELECTED, channelActive ? currentChan : -1);	// -1: shows now, and any controller may click it
+		else if(focus && channelActive && !pinnedOn && i == selectedItem && saveBtn[i]->getState() == STATE::SELECTED &&
+			saveBtn[i]->getStateChan() != -1 && saveBtn[i]->getStateChan() != currentChan)
+			saveBtn[i]->resetState();	// claimed by a channel that is not in use: let this one claim it on the next card pass
 
 		auto pad = controller->getPadData();
 
@@ -821,7 +828,10 @@ void GuiSaveBrowser::update(InputController * controller)
 		if(!pinnedOn && pinnedBtn->getState() == STATE::SELECTED)
 			pinnedBtn->resetState();
 		else if(focus && pinnedOn && pinnedBtn->getState() == STATE::DEFAULT)
-			pinnedBtn->setState(STATE::SELECTED, controller->getChannel());
+			pinnedBtn->setState(STATE::SELECTED, channelActive ? currentChan : -1);
+		else if(focus && channelActive && pinnedOn && pinnedBtn->getState() == STATE::SELECTED &&
+			pinnedBtn->getStateChan() != -1 && pinnedBtn->getStateChan() != currentChan)
+			pinnedBtn->resetState();
 
 		auto pad = controller->getPadData();
 
