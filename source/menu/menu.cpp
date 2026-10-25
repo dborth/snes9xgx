@@ -2225,9 +2225,7 @@ static int MenuGameSaves()
 	gameTxt.setPosition(50,60);
 
 	GuiTrigger trigHome;
-	GuiTrigger trigB;
 	trigHome.setButtonOnlyTrigger(-1, INPUT_BTN_HOME);
-	trigB.setSecondaryTrigger();
 
 	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
 	MenuButtonShape backBtnImg(MenuButtonShape::NORMAL);
@@ -2237,7 +2235,6 @@ static int MenuGameSaves()
 	backBtn.setLabel(&backBtnTxt);
 	backBtn.setImage(&backBtnImg);
 	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(&trigB);
 	backBtn.setEffectGrow();
 
 	GuiText closeBtnTxt("Close", 20, (PixelColor){0, 0, 0, 255});
