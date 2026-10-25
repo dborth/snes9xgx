@@ -43,7 +43,7 @@ class GuiGlyph : public GuiElement
 		~GuiGlyph();
 		void draw() override;
 
-		//!Gets the natural size of a glyph.
+		//!Gets the natural size of a glyph, from the theme (glyphSize, glyphBumperWidth, glyphBumperHeight).
 		//!\ingroup grp_shapes
 		static void size(GLYPH kind, float& w, float& h);
 
@@ -61,10 +61,11 @@ class GuiGlyph : public GuiElement
 
 inline void GuiGlyph::size(GLYPH kind, float& w, float& h)
 {
+	const GuiTheme& theme = GuiTheme::current();
 	switch(kind)
 	{
-		case GLYPH::BUMPER: w = 27.0f; h = 18.0f; break;
-		default: w = 19.0f; h = 19.0f; break;
+		case GLYPH::BUMPER: w = theme.glyphBumperWidth; h = theme.glyphBumperHeight; break;
+		default: w = theme.glyphSize; h = theme.glyphSize; break;
 	}
 }
 
@@ -72,7 +73,7 @@ inline void GuiGlyph::build(GuiMesh& mesh, GLYPH kind, float w, float h)
 {
 	const GuiTheme& theme = GuiTheme::current();
 	const GuiFill light = GuiFill::solid(theme.text);
-	const GuiFill dark = GuiFill::solid(theme.textOnAccent); // the symbol on the badge: the colour that reads on theme.text
+	const GuiFill dark = GuiFill::solid(theme.textInverse); // the symbol on the badge: the ink that reads on theme.text
 	const GuiRect box = { 0.0f, 0.0f, w, h };
 	const float cx = w * 0.5f, cy = h * 0.5f, u = std::min(w, h) / 22.0f; // u = size relative to a 22-pixel glyph
 

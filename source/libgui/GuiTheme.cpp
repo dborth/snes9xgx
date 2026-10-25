@@ -2,42 +2,39 @@
  * libgui
  * Daryl Borth 2026
  * GuiTheme.cpp
+ *
+ * No colors or numbers that make up a look live here: they come from the
+ * application's GuiThemeInit().
  ***************************************************************************/
 
+#include <cstring>
 #include "GuiTheme.h"
 
-static PixelColor rgb(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255)
+static PixelColor withAlpha(PixelColor c, uint8_t a)
 {
-	PixelColor c = { r, g, b, a };
+	c.a = a;
 	return c;
 }
 
-GuiTheme::GuiTheme() :
-	background(rgb(18, 22, 29)),
-	surface(rgb(28, 35, 48)),
-	surfaceRaised(rgb(36, 46, 64)),
-	outline(rgb(43, 54, 71)),
-	outlineStrong(rgb(74, 90, 115)),
-	accent(rgb(255, 150, 40)),
-	accentLight(rgb(255, 200, 110)),
-	accentDark(rgb(200, 110, 20)),
-	text(rgb(232, 237, 244)),
-	textMuted(rgb(152, 164, 181)),
-	textOnAccent(rgb(30, 20, 5)),
-	good(rgb(63, 208, 176)),
-	highlight(rgb(62, 74, 94)),
-	mark(rgb(255, 150, 40)),
-	shadow(rgb(0, 0, 0, 150)),
-	radius(12.0f),
-	strokeWidth(2.0f),
-	padding(12.0f),
-	spacing(8.0f),
-	shadowBlur(14.0f)
-{}
+// the ends the lighten/darken mixes run toward
+static const PixelColor WHITE = { 255, 255, 255, 255 };
+static const PixelColor BLACK = { 0, 0, 0, 255 };
+
+GuiTheme::GuiTheme()
+{
+	memset(this, 0, sizeof(*this));
+}
+
+static GuiTheme& makeCurrent()
+{
+	static GuiTheme theme;
+	GuiThemeInit(theme);
+	return theme;
+}
 
 GuiTheme& GuiTheme::current()
 {
-	static GuiTheme theme;
+	static GuiTheme& theme = makeCurrent();
 	return theme;
 }
 
@@ -51,36 +48,37 @@ GuiShapeStyle GuiTheme::cardStyle() const
 	GuiPaint rest = GuiPaint()
 		.gradient(surfaceRaised, surface)
 		.stroke(strokeWidth, outline)
-		.shadow(shadowBlur, shadow, 0.0f, 4.0f);
+		.shadow(shadowBlur, shadow, 0.0f, shadowOffsetY);
 	GuiPaint lit = GuiPaint()
 		.gradient(surfaceRaised, surface)
 		.stroke(strokeWidth, accent)
-		.glow(shadowBlur + 2.0f, rgb(accent.r, accent.g, accent.b, 110), 2.0f);
+		.glow(shadowBlur + glowGrow, withAlpha(accent, focusGlowAlpha), glowGrow);
 	GuiPaint pressed = GuiPaint()
 		.gradient(surface, surfaceRaised)
 		.stroke(strokeWidth, accent)
-		.glow(shadowBlur, rgb(accent.r, accent.g, accent.b, 70));
+		.glow(shadowBlur, withAlpha(accent, pressGlowAlpha));
 	GuiPaint off = GuiPaint()
-		.color(rgb(surface.r, surface.g, surface.b, 140))
-		.stroke(strokeWidth, rgb(outline.r, outline.g, outline.b, 140));
+		.color(withAlpha(surface, cardDisabledAlpha))
+		.stroke(strokeWidth, withAlpha(outline, cardDisabledAlpha));
 	return GuiShapeStyle(rest).onFocus(lit).onPress(pressed).onDisable(off);
 }
 
 GuiShapeStyle GuiTheme::buttonStyle() const
 {
+	const PixelColor litStroke = GuiMixColor(accentLight, WHITE, buttonStrokeLight);
 	GuiPaint rest = GuiPaint()
 		.gradient(outlineStrong, outline)
 		.stroke(strokeWidth, outlineStrong);
 	GuiPaint lit = GuiPaint()
 		.gradient(accentLight, accent)
-		.stroke(strokeWidth, rgb(255, 220, 160))
-		.glow(10.0f, rgb(accent.r, accent.g, accent.b, 90));
+		.stroke(strokeWidth, litStroke)
+		.glow(buttonGlowBlur, withAlpha(accent, buttonGlowAlpha));
 	GuiPaint pressed = GuiPaint()
 		.gradient(accent, accentDark)
-		.stroke(strokeWidth, rgb(255, 220, 160));
+		.stroke(strokeWidth, litStroke);
 	GuiPaint off = GuiPaint()
-		.color(rgb(surface.r, surface.g, surface.b, 150))
-		.stroke(strokeWidth, rgb(outline.r, outline.g, outline.b, 150));
+		.color(withAlpha(surface, buttonDisabledAlpha))
+		.stroke(strokeWidth, withAlpha(outline, buttonDisabledAlpha));
 	return GuiShapeStyle(rest).onFocus(lit).onPress(pressed).onDisable(off);
 }
 
@@ -92,11 +90,11 @@ GuiShapeStyle GuiTheme::chipStyle() const
 GuiShapeStyle GuiTheme::rowStyle() const
 {
 	GuiPaint lit = GuiPaint().color(highlight);
-	GuiPaint pressed = GuiPaint().color(rgb(accent.r, accent.g, accent.b, 110));
+	GuiPaint pressed = GuiPaint().color(withAlpha(accent, rowPressAlpha));
 	return GuiShapeStyle(GuiPaint()).onFocus(lit).onPress(pressed);
 }
 
 GuiShapeStyle GuiTheme::barStyle() const
 {
-	return GuiShapeStyle(GuiPaint().color(rgb(8, 10, 14)));
+	return GuiShapeStyle(GuiPaint().color(GuiMixColor(background, BLACK, barDarken)));
 }
