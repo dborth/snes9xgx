@@ -3,11 +3,11 @@
 All notable changes to Snes9x GX are recorded here, newest first. For the current features and setup instructions, see [README.md](README.md).
 
 ## Unreleased
-* **Auto Save no longer asks first.** With Auto Save set to Snapshot (or both SRAM and Snapshot), returning to the menu used to ask whether to save every time. It now saves quietly in the background, into the game's auto snapshot, so it never overwrites a snapshot you saved yourself. Set Auto Save to Off if you don't want this
 * **Redesigned Button Mappings screen.** One screen now replaces the separate controller and button screens, showing each button on a drawing of the controller and letting you choose a button by pressing it or from a list.
 * **Redesigned Saves screen.** The Save, Load and Delete buttons are now a single **Saves** button. Snapshots fill a grid, with the game's **Game Save File** (shown only for games that have one) in its own card beneath. Choosing a card opens a small popover of what can be done with it; the save file's backups are listed from its popover
 * **Redesigned in-game menu.** **Button Mappings** and the **Controller** choice have moved from Game Settings to the in-game menu's front page. The controller is now chosen from a popover beside its chip
 * Xbox 360, DS4 and generic USB controllers (Retrode, Hornet, and Mayflash) all now have explicit mappings instead of using the GameCube controller mappings, and appear automatically in the Button Mappings area when connected
+* **Auto Save no longer asks first.** With Auto Save set to Snapshot (or both SRAM and Snapshot), returning to the menu used to ask whether to save every time. It now saves quietly in the background, into the game's auto snapshot, so it never overwrites a snapshot you saved yourself. Set Auto Save to Off if you don't want this
 
 ## 5.0.4 - October 20, 2026
 * **New menu look!** The menus have been rebuilt with a fresh, modern style: a deeper blue header and footer, cleaner rounded buttons with soft shadows, a redesigned game list with a slimmer scrollbar and a clear highlight on the selected entry, new prompt windows, and more. The menu graphics are now drawn procedurally by the renderer instead of being loaded from PNG images, so they stay sharp at any output resolution
