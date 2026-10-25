@@ -146,7 +146,7 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 
 	// ---- the kinds: what the right side shows for each
 
-	// Use pressed button: says how it works until it is chosen, then asks for the button. Both say how to clear
+	// Pressed button: says how it works until it is chosen, then asks for the button. Both say how to clear
 	GuiLayout& press = ui.overlay().size(rightW, 90);
 	{
 		auto paneText = [&](GuiLayout& pane, const std::string& text) {
@@ -161,7 +161,7 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 				pane.add(ui.label(clear[i].c_str()).fontSize(UI_FONT_SMALL).muted());
 		};
 		GuiLayout& idle = ui.column().gap(3).size(rightW, 0);
-		paneText(idle, GuiFormat(Tr("Choose Use pressed button, then press the button you want on the %s.").c_str(), Tr(ctrlrName[hw]).c_str()));
+		paneText(idle, GuiFormat(Tr("Choose 'Pressed button', then press the button you want on the %s.").c_str(), Tr(ctrlrName[hw]).c_str()));
 		GuiLayout& waiting = ui.column().gap(3).size(rightW, 0);
 		paneText(waiting, GuiFormat(Tr("Press a button on the %s now.").c_str(), Tr(ctrlrName[hw]).c_str()));
 		press.add(idle, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
@@ -210,7 +210,7 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 
 	struct Kind { const char * name; GuiLayout * layout; int height; };
 	const Kind kinds[KIND_COUNT] = {
-		{ "Use pressed button", &press, 90 },
+		{ "Pressed button", &press, 90 },
 		{ "Buttons", &list, listH },
 		{ "None", &none, 18 + 6 + rowH + 2 }
 	};
@@ -228,7 +228,7 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 	{
 		GuiCard& row = MenuPopover_Row(ui, leftW, kindH, Tr(kinds[i].name), false, false);
 		row.onFocus([this, i]{ showKind(i); });
-		// Use pressed button starts listening; None is the answer; Buttons shows its list to move into
+		// Pressed button starts listening; None is the answer; Buttons shows its list to move into
 		row.onClick([this, i]{
 			showKind(i);
 			if(i == KIND_PRESS)
