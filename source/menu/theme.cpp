@@ -10,8 +10,8 @@
  * is used.
  ***************************************************************************/
 
-#include "libgui/GuiTheme.h"
-#include "menu/menupalette.h"
+#include "../libgui/GuiTheme.h"
+#include "menupalette.h"
 
 void GuiThemeInit(GuiTheme& t)
 {
