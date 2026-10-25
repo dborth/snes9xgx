@@ -1087,11 +1087,14 @@ static bool WaitForQueuedTasks()
  *
  * Automatically saves SRAM/state when returning from in-game to the menu.
  *
- * Everything that has to happen while the game is still loaded - asking the
- * user (when set to prompt) and capturing the SRAM/state - is done right here
- * on the main thread. Writing it to the storage device is then queued as a
- * silent background task, so the menu never waits on the device and nothing
- * on screen is disabled or covered while it happens.
+ * Nothing is asked: the state goes to the game's auto slot (slot 0), never to
+ * a numbered snapshot, so it can't overwrite anything the user saved by hand.
+ *
+ * Everything that has to happen while the game is still loaded - capturing
+ * the SRAM/state - is done right here on the main thread. Writing it to the
+ * storage device is then queued as a silent background task, so the menu
+ * never waits on the device and nothing on screen is disabled or covered
+ * while it happens.
  * \return false if the app was asked to quit
  ***************************************************************************/
 struct AutoSaveJob
@@ -1118,28 +1121,8 @@ static int AutoSaveTask(void * arg)
 
 static bool AutoSave()
 {
-	bool saveSram = false;
-	bool saveState = false;
-
-	if (EmuSettings.autoSave == AUTOSAVE_SRAM)
-	{
-		saveSram = true;
-	}
-	else if (EmuSettings.autoSave == AUTOSAVE_STATE)
-	{
-		saveState = WindowPrompt("Save", "Save State?", "Save", "Don't Save");
-	}
-	else if (EmuSettings.autoSave == AUTOSAVE_BOTH)
-	{
-		if (WindowPrompt("Save", "Save SRAM and State?", "Save", "Don't Save") )
-		{
-			saveSram = true;
-			saveState = true;
-		}
-	}
-
-	if(guiExiting) // asked to quit while the prompt was up
-		return false;
+	const bool saveSram = EmuSettings.autoSave == AUTOSAVE_SRAM || EmuSettings.autoSave == AUTOSAVE_BOTH;
+	const bool saveState = EmuSettings.autoSave == AUTOSAVE_STATE || EmuSettings.autoSave == AUTOSAVE_BOTH;
 
 	if(!saveSram && !saveState)
 		return true; // nothing to save
