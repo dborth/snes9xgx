@@ -124,6 +124,9 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 {
 	hintText = defaultHint();
 
+	// the row being set ("X", "L Trigger"...), as the hints name it: "X uses B"
+	const std::string rowLabel = Tr(rowName);
+
 	const int pad = 10, inner = panelWidth - 2 * pad;
 	const int leftW = 112, gap = 8, rightW = inner - leftW - gap;
 	const int rowH = 26, rowGap = 2, kindH = 30;
@@ -190,7 +193,7 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 			cell.size(cellW, rowH).style(MenuKeycapStyle(btn == now)).corners(GuiCorners(7.0f)).pad(4, 0);
 			cell.add(name, GuiItem().at(LAYOUT_ALIGN::CENTRE, LAYOUT_ALIGN::CENTRE));
 			cell.onClick([this, btn]{ choose(btn); });
-			cell.onFocus([this, btn]{ hintText = GuiFormat(Tr("A uses %s").c_str(), ButtonText(hardware, btn).c_str()); });
+			cell.onFocus([this, btn, rowLabel]{ hintText = GuiFormat(Tr("%s uses %s").c_str(), rowLabel.c_str(), ButtonText(hardware, btn).c_str()); });
 			line->add(cell);
 		}
 	}
@@ -200,11 +203,11 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 	GuiLayout& none = ui.column().gap(6).size(rightW, 0);
 	{
 		// just a line saying what None means; the button under it does the same as choosing None on the left
-		none.add(ui.label(GuiFormat(Tr("%s will do nothing.").c_str(), Tr(rowName).c_str()).c_str()).fontSize(UI_FONT_SMALL).muted());
-		GuiCard& clear = MenuPopover_Row(ui, rightW, rowH + 2, Tr("Unassign").c_str(), now == 0);
-		clear.onClick([this]{ choose(0); });
-		const std::string rowLabel = Tr(rowName);
-		clear.onFocus([this, rowLabel]{ hintText = GuiFormat(Tr("A leaves %s unassigned").c_str(), rowLabel.c_str()); });
+		none.add(ui.label(GuiFormat(Tr("%s will do nothing.").c_str(), rowLabel.c_str()).c_str()).fontSize(UI_FONT_SMALL).muted());
+		GuiTextButton& clear = ui.button(Tr("Unassign").c_str()).size(96, rowH).fontSize(UI_FONT_SMALL).style(MenuKeycapStyle())
+			.rounded(8.0f).litTextColor(MenuPaletteCurrent().text)
+			.onClick([this]{ choose(0); })
+			.onFocus([this, rowLabel]{ hintText = GuiFormat(Tr("%s will do nothing").c_str(), rowLabel.c_str()); });
 		none.add(clear);
 	}
 
@@ -212,7 +215,7 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 	const Kind kinds[KIND_COUNT] = {
 		{ "Pressed button", &press, 90 },
 		{ "Buttons", &list, listH },
-		{ "None", &none, 18 + 6 + rowH + 2 }
+		{ "None", &none, 18 + 6 + rowH }
 	};
 
 	// one fixed size for every kind, so the panel does not jump as the cursor moves down the left
@@ -273,7 +276,7 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 	GuiTextButton& useDefaultButton = ui.button(Tr("Default").c_str()).size(70, footH).fontSize(UI_FONT_SMALL).style(MenuKeycapStyle())
 		.rounded(8.0f).litTextColor(MenuPaletteCurrent().text)
 		.onClick([this, def0]{ choose(def0); })
-		.onFocus([this, def0, hw]{ hintText = GuiFormat(Tr("A uses the default: %s").c_str(), ButtonText(hw, def0).c_str()); })
+		.onFocus([this, def0, hw, rowLabel]{ hintText = GuiFormat(Tr("%s uses the default: %s").c_str(), rowLabel.c_str(), ButtonText(hw, def0).c_str()); })
 		.enabledWhen([this]{ return !armed; });
 	GuiLayout& useDefault = ui.overlay().size(70, footH);
 	useDefault.add(useDefaultButton, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
