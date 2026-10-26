@@ -141,14 +141,12 @@ preparePrefsData ()
 
 	createXMLSection("File", "File Settings");
 
-	createXMLSetting("autoLoad", "Auto Load", toStr(EmuSettings.autoLoad));
-	createXMLSetting("autoSave", "Auto Save", toStr(EmuSettings.autoSave));
+	createXMLSetting("saveMode", "Save Mode", toStr(EmuSettings.saveMode));
 	createXMLSetting("loadDevice", "Load Device", toStr(EmuSettings.loadDevice));
 	createXMLSetting("saveDevice", "Save Device", toStr(EmuSettings.saveDevice));
 	createXMLSetting("loadFolder", "Load Folder", EmuSettings.loadFolder);
 	createXMLSetting("lastFileLoaded", "Last File Loaded", EmuSettings.lastFileLoaded);
 	createXMLSetting("saveFolder", "Save Folder", EmuSettings.saveFolder);
-	createXMLSetting("appendAuto", "Append Auto to .SAV Files", BtoStr(EmuSettings.appendAuto));
 	createXMLSetting("cheatFolder", "Cheats Folder", EmuSettings.cheatFolder);
 	createXMLSetting("screenshotsFolder", "Screenshots Folder", EmuSettings.screenshotsFolder);
 	createXMLSetting("coverFolder", "Covers Folder", EmuSettings.coverFolder);
@@ -195,7 +193,6 @@ preparePrefsData ()
 	createXMLSetting("rumble", "Rumble", BtoStr(EmuSettings.rumble));
 	createXMLSetting("language", "Language", toStr(EmuSettings.language));
 	createXMLSetting("previewImage", "Preview Image", toStr(EmuSettings.previewImage));
-	createXMLSetting("hideSramSaving", "Hide SRAM Saving", BtoStr(EmuSettings.hideSramSaving));
 	
 	createXMLSection("Controller", "Controller Settings");
 
@@ -313,6 +310,27 @@ static void loadXMLController(uint32_t controller[], const char * name)
 }
 
 void ApplySettings() {
+	// These are read when a game is loaded, which resets the core with them in place
+	switch (EmuSettings.sfxOverclock)
+	{
+		case 0: Settings.SuperFXSpeedPerLine = 5823405; break;
+		case 1: Settings.SuperFXSpeedPerLine = 0.417 * 20.5e6; break;
+		case 2: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
+		case 3: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
+		case 4: Settings.SuperFXSpeedPerLine = 0.417 * 80.5e6; break;
+		case 5: Settings.SuperFXSpeedPerLine = 0.417 * 100.5e6; break;
+		case 6: Settings.SuperFXSpeedPerLine = 0.417 * 120.5e6; break;
+	}
+
+	switch (EmuSettings.interpolation)
+	{
+		case 0: Settings.InterpolationMethod = DSP_INTERPOLATION_GAUSSIAN; break;
+		case 1: Settings.InterpolationMethod = DSP_INTERPOLATION_LINEAR; break;
+		case 2: Settings.InterpolationMethod = DSP_INTERPOLATION_CUBIC; break;
+		case 3: Settings.InterpolationMethod = DSP_INTERPOLATION_SINC; break;
+		case 4: Settings.InterpolationMethod = DSP_INTERPOLATION_NONE; break;
+	}
+
 	platform->getInput()->setWiimoteOrientation(EmuSettings.wiimoteOrientation);
 	platform->getInput()->setRumbleEnabled(EmuSettings.rumble);
 	GuiSound::setDefaultVolume(VOLUME_TYPE::MUSIC, EmuSettings.musicVolume);
@@ -338,14 +356,12 @@ decodePrefsData ()
 
 	// File Settings
 
-	loadXMLSetting(&EmuSettings.autoLoad, "autoLoad");
-	loadXMLSetting(&EmuSettings.autoSave, "autoSave");
+	loadXMLSetting(&EmuSettings.saveMode, "saveMode");
 	loadXMLSetting(&EmuSettings.loadDevice, "loadDevice");
 	loadXMLSetting(&EmuSettings.saveDevice, "saveDevice");
 	loadXMLSetting(EmuSettings.loadFolder, "loadFolder", sizeof(EmuSettings.loadFolder));
 	loadXMLSetting(EmuSettings.lastFileLoaded, "lastFileLoaded", sizeof(EmuSettings.lastFileLoaded));
 	loadXMLSetting(EmuSettings.saveFolder, "saveFolder", sizeof(EmuSettings.saveFolder));
-	loadXMLSetting(&EmuSettings.appendAuto, "appendAuto");
 	loadXMLSetting(EmuSettings.cheatFolder, "cheatFolder", sizeof(EmuSettings.cheatFolder));
 	loadXMLSetting(EmuSettings.screenshotsFolder, "screenshotsFolder", sizeof(EmuSettings.screenshotsFolder));
 	loadXMLSetting(EmuSettings.coverFolder, "coverFolder", sizeof(EmuSettings.coverFolder));
@@ -389,7 +405,6 @@ decodePrefsData ()
 	loadXMLSetting(&EmuSettings.rumble, "rumble");
 	loadXMLSetting(&EmuSettings.language, "language");
 	loadXMLSetting(&EmuSettings.previewImage, "previewImage");
-	loadXMLSetting(&EmuSettings.hideSramSaving, "hideSramSaving");
 
 	// Controller Settings
 
@@ -427,6 +442,8 @@ decodePrefsData ()
  ***************************************************************************/
 void FixInvalidSettings()
 {
+	if(EmuSettings.saveMode < SAVEMODE_SNAPSHOT || EmuSettings.saveMode >= SAVEMODE_LENGTH)
+		EmuSettings.saveMode = SAVEMODE_SNAPSHOT;
 	if(!isValidLoadDevice(EmuSettings.loadDevice))
 		EmuSettings.loadDevice = DEVICE_AUTO;
 	if(!isValidSaveDevice(EmuSettings.saveDevice))
@@ -530,8 +547,7 @@ void DefaultSettings()
 	sprintf (EmuSettings.screenshotsFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_SCREENSHOTS].name); // Path to screenshots files
 	sprintf (EmuSettings.coverFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_COVERS].name); // Path to cover files
 	sprintf (EmuSettings.artworkFolder, "%s/%s", APPFOLDER, loadFolder[LOADFOLDER_ARTWORK].name); // Path to artwork files
-	EmuSettings.autoLoad = true;
-	EmuSettings.autoSave = true;
+	EmuSettings.saveMode = SAVEMODE_SNAPSHOT;
 
 	EmuSettings.controller = CTRL_PAD2;
 
@@ -578,7 +594,6 @@ void DefaultSettings()
 	EmuSettings.sfxVolume = 40;
 	EmuSettings.rumble = true;
 	EmuSettings.previewImage = PREVIEWIMAGE_COVER;
-	EmuSettings.hideSramSaving = false;
 	
 #ifdef HW_RVL
 	EmuSettings.language = CONF_GetLanguage();

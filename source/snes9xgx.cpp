@@ -17,6 +17,7 @@
 #include "menu/menu.h"
 #include "sram.h"
 #include "freeze.h"
+#include "savemode.h"
 #include "preferences.h"
 #include "fileop.h"
 #include "filebrowser.h"
@@ -50,7 +51,6 @@ Platform* platform = &platformInstance;
 
 AppRequest appRequest = AppRequest::NONE;
 char appPath[1024] = { 0 };
-static bool firstRun = true;
 static bool autoboot = false;
 static void SaveAppDataBeforeRelease();
 
@@ -129,36 +129,9 @@ int main(int argc, char *argv[])
 
 		SwitchMemoryModeGame();
 
-		if (firstRun)
-		{
-			firstRun = false;
-			switch (EmuSettings.sfxOverclock)
-			{
-				case 0: Settings.SuperFXSpeedPerLine = 5823405; break;
-				case 1: Settings.SuperFXSpeedPerLine = 0.417 * 20.5e6; break;
-				case 2: Settings.SuperFXSpeedPerLine = 0.417 * 40.5e6; break;
-				case 3: Settings.SuperFXSpeedPerLine = 0.417 * 60.5e6; break;
-				case 4: Settings.SuperFXSpeedPerLine = 0.417 * 80.5e6; break;
-				case 5: Settings.SuperFXSpeedPerLine = 0.417 * 100.5e6; break;
-				case 6: Settings.SuperFXSpeedPerLine = 0.417 * 120.5e6; break;
-			}
-
-			if (EmuSettings.sfxOverclock > 0)
-				S9xResetSuperFX();
-			S9xReset();
-
-			switch (EmuSettings.interpolation)
-			{
-			case 0: Settings.InterpolationMethod = DSP_INTERPOLATION_GAUSSIAN; break;
-			case 1: Settings.InterpolationMethod = DSP_INTERPOLATION_LINEAR; break;
-			case 2: Settings.InterpolationMethod = DSP_INTERPOLATION_CUBIC; break;
-			case 3: Settings.InterpolationMethod = DSP_INTERPOLATION_SINC; break;
-			case 4: Settings.InterpolationMethod = DSP_INTERPOLATION_NONE; break;
-			}
-		}
-		
 		autoboot = false;		
 		appRequest = AppRequest::NONE;
+		MarkLiveStateChanged();
 		platform->getAudio()->startEmulatorAudio();
 
 		Settings.Mute = EmuSettings.muteAudio;
@@ -203,12 +176,12 @@ int main(int argc, char *argv[])
 }
 
 // Everything that has to reach storage before we can go away
-static void SaveAppData()
+// screenshotIsCurrent: the game isn't still running, so its last screenshot is up to date
+static void SaveAppData(bool screenshotIsCurrent)
 {
 	SavePrefsAndWait(); // exit is the one time we wait for settings to reach the device
 
-	if (SNESROMSize > 0 && appRequest != AppRequest::MENU && EmuSettings.autoSave == AUTOSAVE_SRAM)
-		SaveSRAMAuto(SILENT);
+	AutoSaveOnQuit(screenshotIsCurrent);
 }
 
 // Wii U: the OS is about to take the foreground away (HOME menu, power
@@ -218,14 +191,14 @@ static void SaveAppDataBeforeRelease()
 	if (platform->isExiting())
 		return; // ExitApp() has the foreground and saves for itself
 
-	SaveAppData();
+	SaveAppData(false); // the game may still be running
 }
 
 void ExitApp()
 {
 	// Closed by the OS from the background: SaveAppDataBeforeRelease() has saved, and we can't write any more
 	if (platform->getStatus() != Status::Closed)
-		SaveAppData();
+		SaveAppData(true);
 
 	// Generic safety net: stop and join every Thread still outstanding
 	// (device/parse/worker) before any driver it might touch gets torn

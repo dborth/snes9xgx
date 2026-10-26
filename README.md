@@ -20,7 +20,7 @@ Snes9x GX is homebrew — it isn't signed by Nintendo, so your console needs to 
   - [Button Mappings](#button-mappings)
   - [Video](#video)
   - [Emulation](#emulation)
-  - [Saving & Loading](#saving--loading)
+  - [Storage](#storage)
   - [Menu](#menu)
   - [Language & Custom Fonts](#language--custom-fonts)
   - [Artwork](#artwork)
@@ -29,7 +29,7 @@ Snes9x GX is homebrew — it isn't signed by Nintendo, so your console needs to 
 - [Gameplay](#gameplay)
 - [Cheats](#cheats)
 - [Turbo Mode](#turbo-mode)
-- [Importing and Exporting SRAM](#importing-and-exporting-sram)
+- [Importing and Exporting Game Save Files](#importing-and-exporting-game-save-files)
 - [Satellaview (BS-X)](#satellaview-bs-x)
 - [Building from Source](#building-from-source)
 - [Credits](#credits)
@@ -71,7 +71,7 @@ Every push builds automatically. Grab the latest continuous-integration build:
 - Cheat code support (`.cht` files)
 - Cover art / screenshot / artwork preview support
 - Satellaview (BS-X) support
-- Auto load/save of save states (Snapshots) and SRAM
+- Save Mode: automatically resume from a Snapshot, keep the Game Save File, or manage everything yourself
 - Fully customizable, per-controller button mappings
 - SD, USB, DVD, and SMB network share support (modern SMB2/3 via `libsmb2` — see [Network](#network)), plus ZIP/7z archive loading
 - Auto-detected PAL/NTSC, 16:9 widescreen correction
@@ -87,21 +87,21 @@ Every push builds automatically. Grab the latest continuous-integration build:
 
 ### All Platforms: SD Card & Folder Layout
 
-However you load Snes9x GX, it looks for its files in a `snes9xgx` folder at the root of your storage device. Format your SD card as **FAT32** — it's the most reliable, best-tested option across all three consoles, and the one this guide assumes throughout. USB drives, DVD, and SMB network shares are also supported (see [Saving & Loading](#saving--loading) and [Network](#network)), but SD is the simplest starting point and works identically on GameCube, Wii, and Wii U.
+However you load Snes9x GX, it looks for its files in a `snes9xgx` folder at the root of your storage device. Format your SD card as **FAT32** — it's the most reliable, best-tested option across all three consoles, and the one this guide assumes throughout. USB drives, DVD, and SMB network shares are also supported (see [Storage](#storage) and [Network](#network)), but SD is the simplest starting point and works identically on GameCube, Wii, and Wii U.
 
 Once you've placed the loader files for your console (below), also create these folders and drop your content in:
 
 ```text
 SD:/snes9xgx/
 ├── roms/          ← your SNES ROMs (.smc/.sfc, or zipped/.7z)
-├── saves/         ← SRAM and Snapshot save states
+├── saves/         ← Game Save Files and Snapshots
 ├── cheats/        ← .cht cheat files (see Cheats)
 ├── screenshots/   ← in-game screenshots and/or screenshot preview images
 ├── covers/        ← cover art preview images
 └── artwork/       ← artwork preview images
 ```
 
-Only `roms/` needs anything in it to get started — the rest are created automatically the first time they're needed. You can point the emulator at different load/save folders later from [Saving & Loading](#saving--loading).
+Only `roms/` needs anything in it to get started — the rest are created automatically the first time they're needed. You can point the emulator at different load/save folders later from [Storage](#storage).
 
 ### Wii
 
@@ -231,7 +231,7 @@ The first time you run Snes9x GX, it writes a new `settings.xml` next to the app
 
 ## Configuration
 
-Press **A** on the **Settings** box from the main menu to open the settings screen, which is split into Button Mappings, Video, Emulation, Saving & Loading, Menu, and Network. **Reset Settings** restores everything to defaults; **Go Back** returns to the ROM browser.
+Press **A** on the **Settings** box from the main menu to open the settings screen, which is split into Button Mappings, Video, Emulation, Storage, Menu, and Network. **Reset Settings** restores everything to defaults; **Go Back** returns to the ROM browser.
 
 ### Button Mappings
 
@@ -273,7 +273,7 @@ The **General Mappings** screen (reached from Button Mappings) also lets you con
 | **Show Framerate** | Displays an on-screen FPS counter. |
 | **Show Local Time** | Displays the console's clock on-screen. |
 
-### Saving & Loading
+### Storage
 
 | Option | Options |
 |---|---|
@@ -281,10 +281,17 @@ The **General Mappings** screen (reached from Button Mappings) also lets you con
 | **Load Folder** | Opens an on-screen keyboard to set a custom ROM folder |
 | **Save Method** | SD, USB, Network, Auto |
 | **Save Folder** | Opens an on-screen keyboard to set a custom save folder |
-| **Auto Load** | SRAM, Snapshot, Off |
-| **Auto Save** | SRAM, Snapshot, Off |
+| **Save Mode** | Snapshot, Game Save File, Manual |
 
-Snes9x GX has two kinds of saves: **SRAM**, the in-game battery save (only applicable to games that support it), and **Snapshots**, real-time save states that capture exactly where you are and let you resume later.
+Snes9x GX has two kinds of saves: the **Game Save File**, the game's own in-game save (only applicable to games that have one), and **Snapshots**, which capture exactly where you are and let you resume later.
+
+**Save Mode** decides what Snes9x GX saves and loads for you, without being asked:
+
+- **Snapshot** (default) — Picks up exactly where you left off, as if you never turned the console off. Leaving a game saves its *Auto Snapshot*, and opening the game loads it. Load an earlier Snapshot from the **Saves** screen and leave, and the game comes back there next time. If a game has no Auto Snapshot yet, its Game Save File is loaded instead.
+- **Game Save File** — Like a real console: the game's own save is kept for you, and the game starts fresh each time. Leaving a game saves its Game Save File (`.srm`), and opening the game loads it.
+- **Manual** — Nothing is saved or loaded unless you do it yourself from the **Saves** screen.
+
+Quitting Snes9x GX while a game is running (or while the console is shutting it down) saves the same way.
 
 ### Menu
 
@@ -293,7 +300,6 @@ Snes9x GX has two kinds of saves: **SRAM**, the in-game battery save (only appli
 | **Exit Action** | Return to Loader, Return to Wii Menu, Power Off |
 | **Wiimote Orientation** | Vertical, Horizontal |
 | **Music Volume** / **Sound Effects Volume** | |
-| **Hide SRAM Saving** | Hides the SRAM save option in the in-game save menu, for games where you only ever use Snapshots |
 | **Language** | See [Language & Custom Fonts](#language--custom-fonts) |
 | **Preview Image** | See [Artwork](#artwork) |
 | **Rumble** | Enabled/Disabled — on Wii U, the GamePad uses a shorter, reduced-amplitude pattern than the Wiimote |
@@ -330,13 +336,13 @@ Network Shares (SMB) uses `libsmb2` on all three platforms, with the SMB dialect
 
 ## File Browser
 
-The File Browser loads automatically on startup and lists the contents of your `snes9xgx/roms` folder (or wherever you've pointed Load Folder — see [Saving & Loading](#saving--loading)). Click a game — uncompressed, or zipped in a `.zip`/`.7z` archive — to load it, or click **Up One Level** to navigate.
+The File Browser loads automatically on startup and lists the contents of your `snes9xgx/roms` folder (or wherever you've pointed Load Folder — see [Storage](#storage)). Click a game — uncompressed, or zipped in a `.zip`/`.7z` archive — to load it, or click **Up One Level** to navigate.
 
 ## Gameplay
 
 Press **Home** while playing to open the in-game menu (Saves, Reset, Controller, Cheats). Select **Main Menu** to return to the File Browser, or **Close** to resume play.
 
-- **Saves** shows your Snapshots in a grid, with the game's own **Game Save File** (SRAM) under them for games that have one. Click **New Snapshot** to save the moment you are at, or click a Snapshot to Load, Update or Delete it. Click the Game Save File to Save Now, Make a Backup, or open its Backups to Restore or Delete one.
+- **Saves** shows your Snapshots in a grid, with the game's own **Game Save File** under them for games that have one. Click **New Snapshot** to save the moment you are at, or click a Snapshot to Load, Update or Delete it. Click the Game Save File to Save Now, Make a Backup, or open its Backups to Restore or Delete one.
 - **Reset** resets the current game.
 - **Controller** toggles which controller drives the game.
 - **Cheats** toggles your loaded cheat codes (below).
@@ -349,11 +355,11 @@ Cheats load from `snes9xgx/cheats` in the Snes9x `.cht` file format, and must be
 
 Turbo Mode roughly doubles playback speed while active. It's remappable — set which button or combo triggers it under **Settings → Button Mappings → General Mappings → Turbo Mode Button** — and can be disabled entirely from the same screen. Hold the assigned button to run at double speed; release it to return to normal playback.
 
-## Importing and Exporting SRAM
+## Importing and Exporting Game Save Files
 
-Snes9x GX can load SRAM saved by Snes9x on other platforms (Mac/PC/Linux/etc.), and vice versa.
+Snes9x GX can load Game Save Files saved by Snes9x on other platforms (Mac/PC/Linux/etc.), and vice versa.
 
-- **To import**, make sure the `.srm` file's name matches your ROM's filename (aside from the extension).
+- **To import**, make sure the `.srm` file's name matches your ROM's filename (aside from the extension). Older versions named a Game Save File with " Auto" on the end (`Game Auto.srm`); those are renamed to `Game.srm` the next time the game is opened.
 - **To export**, copy the save from your console's `snes9xgx/saves` folder over to the other platform — you may need to rename it to whatever that Snes9x build expects.
 
 ### Satellaview (BS-X)

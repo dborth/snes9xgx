@@ -7,7 +7,7 @@
  *
  * sram.cpp
  *
- * SRAM save/load/import/export handling
+ * Game Save File (battery-backed SRAM) save/load handling
  ***************************************************************************/
 
 #include <stdio.h>
@@ -17,6 +17,7 @@
 #include "snes9xgx.h"
 #include "menu/menu.h"
 #include "sram.h"
+#include "savemode.h"
 #include "fileop.h"
 #include "filebrowser.h"
 #include "input.h"
@@ -70,35 +71,23 @@ bool LoadSRAM (char * filepath, bool silent)
 		else if(!silent)
 		{
 			// if we reached here, nothing was done!
-			ErrorPrompt("SRAM file not found");
+			ErrorPrompt("Game Save File not found");
 		}
+		MarkLiveStateChanged();
 		S9xSoftReset();
 	}
 	return result;
 }
 
+// Loads the game's Game Save File ("<name>.srm")
 bool LoadSRAMAuto (bool silent)
 {
 	char filepath[MAXPATHLEN];
 
-	// look for Auto save file
 	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, 0))
 		return false;
 
-	if (LoadSRAM(filepath, silent))
-		return true;
-
-	if (!EmuSettings.appendAuto)
-		return false;
-
-	// look for file with no number or Auto appended
-	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, -1))
-		return false;
-
-	if(LoadSRAM(filepath, silent))
-		return true;
-
-	return false;
+	return LoadSRAM(filepath, silent);
 }
 
 /****************************************************************************
@@ -164,7 +153,7 @@ bool SaveSRAM (char * filepath, bool silent)
 	else
 	{
 		if(!silent)
-			ErrorPrompt("No SRAM data to save!");
+			ErrorPrompt("No Game Save File data to save!");
 	}
 	return retval;
 }
@@ -179,8 +168,7 @@ bool SaveSRAM (char * filepath, bool silent)
  ***************************************************************************/
 struct SRAMSnapshot
 {
-	char path[MAXPATHLEN];       // the Auto file
-	char legacyPath[MAXPATHLEN]; // file with no number or Auto appended - used if it exists
+	char path[MAXPATHLEN];       // the Game Save File
 	unsigned char * data;
 	int size;
 	bool hasRTC;
@@ -202,7 +190,6 @@ SRAMSnapshot * SnapshotSRAMAuto ()
 	snapshot->data = (unsigned char *)malloc(size);
 
 	if(!snapshot->data
-		|| !MakeFilePath(snapshot->legacyPath, FILE_SRAM, Memory.ROMFilename, -1)
 		|| !MakeFilePath(snapshot->path, FILE_SRAM, Memory.ROMFilename, 0))
 	{
 		FreeSRAMSnapshot(snapshot);
@@ -229,14 +216,7 @@ bool WriteSRAMSnapshot (SRAMSnapshot * snapshot, bool silent)
 	if(!snapshot || !snapshot->data)
 		return false;
 
-	// use the file with no number or Auto appended if there is one
-	snprintf(filepath, sizeof(filepath), "%s", snapshot->legacyPath);
-	FILE * fp = fopen (filepath, "rb");
-
-	if(fp) // file found
-		fclose (fp);
-	else
-		snprintf(filepath, sizeof(filepath), "%s", snapshot->path);
+	snprintf(filepath, sizeof(filepath), "%s", snapshot->path);
 
 	if(!FindDevice(filepath, &device))
 		return false;
@@ -268,21 +248,8 @@ bool SaveSRAMAuto (bool silent)
 {
 	char filepath[1024];
 
-	// look for file with no number or Auto appended
-	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, -1))
+	if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, 0))
 		return false;
-
-	FILE * fp = fopen (filepath, "rb");
-
-	if(fp) // file found
-	{
-		fclose (fp);
-	}	
-	else
-	{
-		if(!MakeFilePath(filepath, FILE_SRAM, Memory.ROMFilename, 0))
-			return false;
-	}
 
 	return SaveSRAM(filepath, silent);
 }

@@ -66,17 +66,12 @@ enum {
 	FILE_CHEAT
 };
 
+// What is saved and loaded without being asked (see savemode.h)
 enum {
-	AUTOLOAD_OFF = 0,
-	AUTOLOAD_SRAM,
-	AUTOLOAD_STATE
-};
-
-enum {
-	AUTOSAVE_OFF = 0,
-	AUTOSAVE_SRAM,
-	AUTOSAVE_STATE,
-	AUTOSAVE_BOTH
+	SAVEMODE_SNAPSHOT = 0,	// resume exactly where you left off
+	SAVEMODE_GAMESAVE,		// keep the game's own save file; every start is a fresh boot
+	SAVEMODE_MANUAL,		// nothing is saved or loaded unless asked
+	SAVEMODE_LENGTH
 };
 
 enum {
@@ -195,11 +190,9 @@ enum {
 };
 
 struct SEmuSettings{
-	int		autoLoad;
-	int		autoSave;
+	int		saveMode;
 	int		loadDevice;
 	int		saveDevice;
-	bool	appendAuto;
 	char	loadFolder[MAXPATHLEN];
 	char	lastFileLoaded[MAXPATHLEN];
 	char	saveFolder[MAXPATHLEN];
@@ -207,7 +200,6 @@ struct SEmuSettings{
 	char	screenshotsFolder[MAXPATHLEN];
 	char	coverFolder[MAXPATHLEN];
 	char	artworkFolder[MAXPATHLEN];
-	bool	hideSramSaving;
 	bool	autoloadGame;
 
 	SmbShareInfo smbShare;

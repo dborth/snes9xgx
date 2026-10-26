@@ -18,6 +18,7 @@
 #include "filebrowser.h"
 #include "menu/menu.h"
 #include "freeze.h"
+#include "savemode.h"
 #include "video.h"
 
 #include "snes9x/snes9x.h"
@@ -97,7 +98,7 @@ SaveSnapshot (char * filepath, bool silent)
 /****************************************************************************
  * Deferred auto-save
  *
- * SnapshotStateAuto() serializes the state and copies the screenshot, so it
+ * SnapshotStateAuto() serializes the Snapshot and copies the screenshot, so it
  * can be called from the main thread at the moment the game is left.
  * WriteStateSnapshot() then does the slow part - the device I/O - and can
  * run whenever, on any thread, even after another game has been loaded and
@@ -112,7 +113,7 @@ struct StateSnapshot
 	int pngSize;
 };
 
-StateSnapshot * SnapshotStateAuto ()
+StateSnapshot * SnapshotStateAuto (bool withScreenshot)
 {
 	StateSnapshot * snapshot = (StateSnapshot *)calloc(1, sizeof(StateSnapshot));
 
@@ -139,7 +140,7 @@ StateSnapshot * SnapshotStateAuto ()
 	S9xFreezeGameMem(snapshot->data, size);
 	snapshot->size = size;
 
-	if(gameScreenPng.size > 0 && gameScreenPng.buffer)
+	if(withScreenshot && gameScreenPng.size > 0 && gameScreenPng.buffer)
 	{
 		snapshot->png = (unsigned char *)malloc(gameScreenPng.size);
 
@@ -198,7 +199,7 @@ LoadSnapshot (char * filepath, bool silent)
 	if(!fp)
 	{
 		if(!silent)
-			ErrorPrompt("Unable to open state!");
+			ErrorPrompt("Unable to open snapshot!");
 		return 0;
 	}
 
@@ -208,35 +209,47 @@ LoadSnapshot (char * filepath, bool silent)
 	if (result == SUCCESS)
 	{
 		SetPlayingFrom(filepath);
+		MarkLiveStateChanged();
 		return 1;
 	}
 
-	switch (result)
+	if(!silent)
 	{
-		case WRONG_FORMAT:
-			ErrorPrompt(SAVE_ERR_WRONG_FORMAT);
-			break;
+		switch (result)
+		{
+			case WRONG_FORMAT:
+				ErrorPrompt(SAVE_ERR_WRONG_FORMAT);
+				break;
 
-		case WRONG_VERSION:
-			ErrorPrompt(SAVE_ERR_WRONG_VERSION);
-			break;
+			case WRONG_VERSION:
+				ErrorPrompt(SAVE_ERR_WRONG_VERSION);
+				break;
 
-		case SNAPSHOT_INCONSISTENT:
-			ErrorPrompt(MOVIE_ERR_SNAPSHOT_INCONSISTENT);
-			break;
+			case SNAPSHOT_INCONSISTENT:
+				ErrorPrompt(MOVIE_ERR_SNAPSHOT_INCONSISTENT);
+				break;
+		}
 	}
 	return 0;
 }
 
+// Loads the game's Auto Snapshot ("<name> Auto.frz")
+// \return 1 if it was loaded, 0 if there is none, -1 if there is one that couldn't be loaded
 int
 LoadSnapshotAuto (bool silent)
 {
 	char filepath[1024];
 
 	if(!MakeFilePath(filepath, FILE_STATE, Memory.ROMFilename, 0))
-		return false;
+		return 0;
 
-	return LoadSnapshot(filepath, silent);
+	FILE * fp = fopen(filepath, "rb");
+
+	if(!fp)
+		return 0;
+
+	fclose(fp);
+	return LoadSnapshot(filepath, silent) ? 1 : -1;
 }
 
 /****************************************************************************

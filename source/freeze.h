@@ -14,6 +14,7 @@
 
 int SaveSnapshot (char * filepath, bool silent);
 int LoadSnapshot (char * filepath, bool silent);
+// \return 1 if loaded, 0 if there is no Auto Snapshot, -1 if it exists but couldn't be loaded
 int LoadSnapshotAuto (bool silent);
 int SavePreviewImg (char * filepath, bool silent);
 
@@ -29,7 +30,7 @@ void ClearPlayingFrom ();
 // thread. SnapshotStateAuto() returns nullptr if nothing could be captured. The
 // snapshot must be freed with FreeStateSnapshot(), which accepts nullptr.
 struct StateSnapshot;
-StateSnapshot * SnapshotStateAuto ();
+StateSnapshot * SnapshotStateAuto (bool withScreenshot = true);
 bool WriteStateSnapshot (StateSnapshot * snapshot, bool silent);
 void FreeStateSnapshot (StateSnapshot * snapshot);
 #endif
