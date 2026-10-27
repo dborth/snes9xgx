@@ -1990,6 +1990,7 @@ enum { SAVEACT_LOAD, SAVEACT_UPDATE, SAVEACT_DELETE, SAVEACT_SAVENOW, SAVEACT_BA
 #define SAVE_CARD_W		250	// a card of the browser, and the pitch from one column to the next: both are the
 #define SAVE_CARD_H		72	// browser's, repeated here for the note that stands in the empty column
 #define SAVE_COL_PITCH	258
+#define SAVE_POPOVER_W	240	// the card popovers: the longest hint ("Make a copy of the save") needs about this
 #define SAVE_MAX_BACKUPS	6	// the most the Backups list shows: a popover doesn't scroll
 #define SAVE_TOAST_W	224
 #define SAVE_TOAST_H	30
@@ -2311,7 +2312,7 @@ static void SaveCardMenu(const SaveCard & card, int backupCount, std::vector<Pic
 			footnote = "Saved automatically when you leave the game.";
 
 		// Make Backup is inside, with the backups, so this list stays short enough to fit above the card
-		add(SAVEACT_BACKUPS, "Backups", backupCount > 0 ? GuiFormat("Make a copy, or restore one of %d", backupCount) : std::string("Make a copy of the save"), mode != SAVEMODE_MANUAL, false);
+		add(SAVEACT_BACKUPS, "Backups", backupCount > 0 ? GuiFormat("Copy, or restore one of %d", backupCount) : std::string("Make a copy of the save"), mode != SAVEMODE_MANUAL, false);
 		items.back().chevron = true;
 	}
 	else
@@ -2365,9 +2366,14 @@ static int MenuGameSaves()
 	GuiTrigger trigHome;
 	trigHome.setButtonOnlyTrigger(-1, INPUT_BTN_HOME);
 
+	// Go Back and Save Mode are narrower than the usual button: the longest text, "Cartridge Save", leaves room to spare,
+	// and full width the pair crowds the logo
+	const int backBtnW = 140;
+	const int modeBtnW = 176;
 	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
 	MenuButtonShape backBtnImg(MenuButtonShape::NORMAL);
-	GuiButton backBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
+	backBtnImg.setSize(backBtnW, MENU_BTN_NORMAL_H);
+	GuiButton backBtn(backBtnW, MENU_BTN_NORMAL_H);
 	backBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
 	backBtn.setPosition(50, -35);
 	backBtn.setLabel(&backBtnTxt);
@@ -2404,9 +2410,10 @@ static int MenuGameSaves()
 	modeChevron.setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
 	modeChevron.setPosition(-22, 0);
 	MenuButtonShape modeBtnImg(MenuButtonShape::NORMAL);
-	GuiButton modeBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
+	modeBtnImg.setSize(modeBtnW, MENU_BTN_NORMAL_H);
+	GuiButton modeBtn(modeBtnW, MENU_BTN_NORMAL_H);
 	modeBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	modeBtn.setPosition(50 + MENU_BTN_NORMAL_W + 16, -35);
+	modeBtn.setPosition(50 + backBtnW + 16, -35);
 	modeBtn.setLabel(&modeLabelTxt, 0);
 	modeBtn.setLabel(&modeValueTxt, 1);
 	modeBtn.setImage(&modeBtnImg);
@@ -2555,6 +2562,8 @@ static int MenuGameSaves()
 	// The action chosen (a SAVEACT_*), or -1.
 	auto askAction = [&](SaveCard & card, SaveEntry & entry, const GuiPopover::Anchor & anchor) -> int
 	{
+		PickerOptions narrow;
+		narrow.width = SAVE_POPOVER_W;
 		std::vector<PickerItem> items;
 		std::vector<int> acts;
 
@@ -2563,6 +2572,7 @@ static int MenuGameSaves()
 			std::string footnote;
 			SaveCardMenu(card, (int)backups.size(), items, acts, footnote);
 			PickerOptions note;
+			note.width = SAVE_POPOVER_W;
 			note.footnote = footnote;
 			const int chosen = MenuPopover_Pick("", items, anchor, nullptr, nullptr, &note);
 			if(chosen < 0 || (size_t)chosen >= acts.size())
@@ -2593,7 +2603,7 @@ static int MenuGameSaves()
 					list.push_back(it);
 				}
 
-				const int picked = MenuPopover_Pick("", list, anchor);
+				const int picked = MenuPopover_Pick("", list, anchor, nullptr, nullptr, &narrow);
 				if(picked < 0 || (size_t)picked > shown)
 					break;	// back to the save file's popover
 				if(picked == 0)
@@ -2604,7 +2614,7 @@ static int MenuGameSaves()
 				std::vector<int> whatActs;
 				std::string noNote;
 				SaveCardMenu(backup, 0, what, whatActs, noNote);
-				const int doing = MenuPopover_Pick("", what, anchor);
+				const int doing = MenuPopover_Pick("", what, anchor, nullptr, nullptr, &narrow);
 				if(doing < 0 || (size_t)doing >= whatActs.size())
 					continue;	// back to the list of backups
 
@@ -2809,7 +2819,7 @@ static int MenuGameSaves()
 				modes.push_back(it);
 			}
 			PickerOptions wide;
-			wide.width = 392;
+			wide.width = 340;	// the longest help wraps to two lines at this width
 
 			w.setState(STATE::DISABLED);
 			saveBrowser.setState(STATE::DISABLED);
