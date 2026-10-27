@@ -2316,7 +2316,7 @@ static void SaveCardMenu(const SaveCard & card, int backupCount, std::vector<Pic
 	}
 	else
 	{
-		add(SAVEACT_RESTORE, "Restore", "Use this as the game's save", true, true);
+		add(SAVEACT_RESTORE, "Restore", "Use this as the cartridge's save", true, true);
 		add(SAVEACT_DELETE, "Delete", "Remove this backup", false, false);
 		items.back().danger = true;
 	}
@@ -2578,7 +2578,7 @@ static int MenuGameSaves()
 				// Make Backup first, then the ones there are
 				PickerItem make;
 				make.name = "Make Backup";
-				make.hint = "Copy the game's save now";
+				make.hint = "Copy the cartridge's save now";
 				make.current = false;
 				make.preferred = true;
 				make.divider = shown > 0;
