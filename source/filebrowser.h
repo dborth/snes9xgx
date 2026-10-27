@@ -66,7 +66,7 @@ bool isValidSaveDevice(int device);
 int getNextLoadDevice(int device);
 int getNextSaveDevice(int device);
 // Moves the files an older version named differently to where they belong, for the game
-// that is loaded: an auto slot Snapshot, and a Game Save File that was named for Auto
+// that is loaded: an auto slot Snapshot, and a Cartridge Save that was named for Auto
 void MigrateSaveFileNames();
 bool MakeFilePath(char filepath[], int type, char * filename = nullptr, int filenum = -2);
 int UpdateDirName();

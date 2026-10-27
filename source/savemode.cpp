@@ -59,13 +59,13 @@ void AutoLoadOnGameOpen()
 				break;
 
 			// No Auto Snapshot yet (the first time, or the Save Mode was just
-			// changed), or one that can't be loaded: the Game Save File is what is left
+			// changed), or one that can't be loaded: the Cartridge Save is what is left
 			const bool gameSave = LoadSRAMAuto(SILENT);
 
 			if(snapshot < 0)
 			{
 				if(gameSave)
-					ErrorPrompt("The Auto Snapshot couldn't be loaded. The Game Save File was loaded instead.");
+					ErrorPrompt("The Auto Snapshot couldn't be loaded. The Cartridge Save was loaded instead.");
 				else
 					ErrorPrompt("The Auto Snapshot couldn't be loaded. The game starts from the beginning.");
 			}

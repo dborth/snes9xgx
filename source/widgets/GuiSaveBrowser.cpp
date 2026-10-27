@@ -32,7 +32,8 @@
 #define PINNED_GAP			17		// grid's last row to the pinned card
 #define PINNED_ICON_X		16
 #define PINNED_TEXT_X		76
-#define CHIP_WIDTH			110		// the label at the pinned card's right end
+#define CHIP_ON_WIDTH		96		// the label at the pinned card's right end: "Autosave", with its dot
+#define CHIP_OFF_WIDTH		140		// "Saves when you do"
 #define CHIP_HEIGHT			22
 #define CHIP_INSET			16
 #define ICON_WIDTH			44		// the save-file icon
@@ -44,7 +45,13 @@
 #define SB_TRACK_Y			(SB_ARROW + 4)
 #define SB_THUMB_WIDTH		14
 #define SB_THUMB_MIN_HEIGHT	24
-#define TAG_WIDTH			92		// the "Playing from" tag
+#define TAG_PLAYING_WIDTH	92		// the "Playing from" tag
+#define TAG_AUTO_WIDTH		84		// "Autosave", with a dot
+#define TAG_PAUSED_WIDTH	58
+#define BADGE_AUTO_WIDTH	40		// AUTO, a pill on the screenshot's corner
+#define BADGE_HEIGHT		16
+#define BADGE_NUM_SIZE		18		// a slot number, in a circle
+#define BADGE_INSET			3
 #define TAG_HEIGHT			20
 
 GuiSavePreview::GuiSavePreview(int w, int h, int phW, int phH)
@@ -99,6 +106,20 @@ static PixelColor IconRGB(int r, int g, int b)
 	return c;
 }
 
+static PixelColor Rgba(int r, int g, int b, int a)
+{
+	PixelColor c = { (uint8_t)r, (uint8_t)g, (uint8_t)b, (uint8_t)a };
+	return c;
+}
+
+// What is information, not a card to choose (the "Cartridge Save" note, an Auto Snapshot not made yet): the same dark
+// translucent card as the screen's "No snapshots yet", whatever is behind it
+static GuiShapeStyle SaveNoteStyle()
+{
+	GuiPaint note = GuiPaint().color(Rgba(0, 0, 0, 150)).stroke(1.5f, Rgba(255, 255, 255, 90));
+	return GuiShapeStyle(note).onDisable(note);
+}
+
 // A card of the browser: the theme's, with the focus made plain to see - a thick accent outline and a strong glow,
 // on top of the card growing - because the theme's thin outline is easy to lose on a TV.
 static GuiShapeStyle SaveCardStyle()
@@ -132,7 +153,7 @@ static GuiShapeStyle SaveCardStyle()
 }
 
 GuiSaveFileIcon::GuiSaveFileIcon()
-	: body(ICON_WIDTH, ICON_HEIGHT), label(32, 20), battery(14, 8), nub(2, 4), slot(28, 9)
+	: body(ICON_WIDTH, ICON_HEIGHT), label(32, 20), battery(14, 8), nub(2, 4), slot(28, 9), noBattery(false)
 {
 	width = ICON_WIDTH;
 	height = ICON_HEIGHT;
@@ -162,6 +183,25 @@ GuiSaveFileIcon::GuiSaveFileIcon()
 	slot.setPosition(8, 34);
 	slot.setCorners(GuiCorners(3.0f));
 	slot.setPaint(GuiPaint().color(IconRGB(58, 68, 86)));
+}
+
+void GuiSaveFileIcon::setNoBattery(bool none)
+{
+	if(none == noBattery)
+		return;
+	noBattery = none;
+
+	// an empty battery is a gray outline: nothing in it
+	if(none)
+	{
+		battery.setPaint(GuiPaint().color(IconRGB(222, 228, 236)).stroke(1.5f, IconRGB(150, 158, 170)));
+		nub.setPaint(GuiPaint().color(IconRGB(150, 158, 170)));
+	}
+	else
+	{
+		battery.setPaint(GuiPaint().gradient(IconRGB(78, 196, 102), IconRGB(40, 150, 70)).stroke(1.0f, IconRGB(26, 100, 48)));
+		nub.setPaint(GuiPaint().color(IconRGB(40, 150, 70)));
+	}
 }
 
 void GuiSaveFileIcon::draw()
@@ -309,7 +349,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 		saveBtnLastOver[i] = false;
 
 		// the tag sits half over the card's top edge, near its right end
-		tagShape[i] = new GuiShape(TAG_WIDTH, TAG_HEIGHT);
+		tagShape[i] = new GuiShape(TAG_PLAYING_WIDTH, TAG_HEIGHT);
 		tagShape[i]->setParent(saveBtn[i]);
 		tagShape[i]->setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
 		tagShape[i]->setPosition(-12, -TAG_HEIGHT / 2 + 1);
@@ -318,6 +358,43 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 		tagText[i] = new GuiText("Playing from", 12, theme.textOnAccent);
 		tagText[i]->setParent(tagShape[i]);
 		tagText[i]->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+		tagDot[i] = new GuiShape(8, 8);
+		tagDot[i]->setParent(tagShape[i]);
+		tagDot[i]->setShape(SHAPE::ELLIPSE);
+		tagDot[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+		tagDot[i]->setPosition(10, 0);
+		tagDot[i]->setPaint(GuiPaint().color(Rgba(110, 225, 140, 255)));
+		tagShown[i] = -1;
+
+		// the slot badge, on the screenshot's top-left corner: AUTO in a pill, or the slot's number in a circle
+		const int badgeY = (SLOT_HEIGHT - PREVIEW_HEIGHT) / 2 + BADGE_INSET;
+		badgeAutoShape[i] = new GuiShape(BADGE_AUTO_WIDTH, BADGE_HEIGHT);
+		badgeAutoShape[i]->setParent(saveBtn[i]);
+		badgeAutoShape[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+		badgeAutoShape[i]->setPosition(PREVIEW_X + BADGE_INSET, badgeY);
+		badgeAutoShape[i]->setCapsule();
+		badgeAutoShape[i]->setPaint(GuiPaint().color(theme.accent).stroke(1.0f, Rgba(255, 255, 255, 200)));
+		badgeAutoText[i] = new GuiText("AUTO", 11, theme.textOnAccent);
+		badgeAutoText[i]->setParent(badgeAutoShape[i]);
+		badgeAutoText[i]->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+		badgeNumShape[i] = new GuiShape(BADGE_NUM_SIZE, BADGE_NUM_SIZE);
+		badgeNumShape[i]->setParent(saveBtn[i]);
+		badgeNumShape[i]->setShape(SHAPE::ELLIPSE);
+		badgeNumShape[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+		badgeNumShape[i]->setPosition(PREVIEW_X + BADGE_INSET, badgeY);
+		badgeNumShape[i]->setPaint(GuiPaint().color(Rgba(0, 0, 0, 185)).stroke(1.0f, Rgba(255, 255, 255, 200)));
+		badgeNumText[i] = new GuiText(nullptr, 12, Rgba(255, 255, 255, 255));
+		badgeNumText[i]->setParent(badgeNumShape[i]);
+		badgeNumText[i]->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+		badgeShown[i] = -99;
+
+		// over a screenshot that is not changing
+		dimShape[i] = new GuiShape(PREVIEW_WIDTH, PREVIEW_HEIGHT);
+		dimShape[i]->setParent(saveBtn[i]);
+		dimShape[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
+		dimShape[i]->setPosition(PREVIEW_X, (SLOT_HEIGHT - PREVIEW_HEIGHT) / 2);
+		dimShape[i]->setPaint(GuiPaint().color(Rgba(40, 44, 52, 130)));
+		infoShown[i] = 0;
 	}
 
 	// the pinned card: as wide as the grid, under it, with the save-file icon and a label at its right end
@@ -348,7 +425,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 	pinnedBtn->setEffectGrow(PINNED_GROW);
 	pinnedBtn->setVisible(false);
 
-	chipShape = new GuiShape(CHIP_WIDTH, CHIP_HEIGHT);
+	chipShape = new GuiShape(CHIP_ON_WIDTH, CHIP_HEIGHT);
 	chipShape->setParent(pinnedBtn);
 	chipShape->setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
 	chipShape->setPosition(-CHIP_INSET, 0);
@@ -364,6 +441,7 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 	chipDot->setPosition(12, 0);
 	chipDot->setPaint(GuiPaint().color(theme.good));
 	chipState = -1;
+	pinnedInfoShown = -1;
 }
 
 /**
@@ -396,7 +474,13 @@ GuiSaveBrowser::~GuiSaveBrowser()
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
+		delete dimShape[i];
+		delete badgeNumText[i];
+		delete badgeNumShape[i];
+		delete badgeAutoText[i];
+		delete badgeAutoShape[i];
 		delete tagText[i];
+		delete tagDot[i];
 		delete tagShape[i];
 		delete saveBtn[i];
 		delete saveTitle[i];
@@ -404,6 +488,21 @@ GuiSaveBrowser::~GuiSaveBrowser()
 		delete saveBgImg[i];
 		delete savePreviewImg[i];
 	}
+}
+
+void GuiSaveBrowser::setRows(int r)
+{
+	r = (r < 1) ? 1 : (r > SAVELISTSIZE / COLS ? SAVELISTSIZE / COLS : r);
+	if(r == rows)
+		return;
+
+	rows = r;
+	height = rows * SLOT_PITCH_Y - SLOT_GAP_Y;
+	trackHeight = height - 2 * SB_TRACK_Y;
+	trackShape->setSize(SB_TRACK_WIDTH, trackHeight);
+	thumbBtn->setSize(SB_WIDTH, trackHeight);
+	thumbShape->setSize(SB_THUMB_WIDTH, trackHeight);
+	pinnedBtn->setPosition(0, height + PINNED_GAP);
 }
 
 void GuiSaveBrowser::setEntries(const std::vector<SaveEntry>& list, int select)
@@ -415,9 +514,20 @@ void GuiSaveBrowser::setEntries(const std::vector<SaveEntry>& list, int select)
 	if(select < 0 || select >= n)
 		select = 0;
 
+	// the cursor rests on a card to choose, never on a note: the first one, if it was asked to be on one
+	if(hasPinned() && !pinnedSelectable() && select == n - 1)
+		select = 0;
+	if(select < grid && isInfoAt(select))
+	{
+		int first = 0;
+		while(first < grid && isInfoAt(first))
+			first++;
+		select = (first < grid) ? first : (pinnedSelectable() ? n - 1 : 0);
+	}
+
 	// the cursor starts on the pinned card when that is what was asked for (or all there is); the grid then
 	// keeps its first card to come back to
-	pinnedOn = hasPinned() && (select == n - 1 || grid == 0);
+	pinnedOn = pinnedSelectable() && (select == n - 1 || grid == 0);
 	if(pinnedOn)
 		select = 0;
 
@@ -436,6 +546,8 @@ void GuiSaveBrowser::setEntries(const std::vector<SaveEntry>& list, int select)
 		saveBtn[i]->setState(STATE::DISABLED);
 		savePreviewImg[i]->setImage(nullptr);
 		saveBtnLastOver[i] = false;
+		tagShown[i] = -1;
+		badgeShown[i] = -99;
 	}
 
 	pinnedBtn->resetState();
@@ -548,10 +660,32 @@ void GuiSaveBrowser::draw()
 
 		// the tag goes over the card, so after it
 		const int pos = listOffset + i;
-		if(i < pageSize() && saveBtn[i]->isVisible() && pos < gridCount() && entries[(size_t)pos].playing)
+		if(i < pageSize() && saveBtn[i]->isVisible() && pos < gridCount())
 		{
-			tagShape[i]->draw();
-			tagText[i]->draw();
+			const SaveEntry & e = entries[(size_t)pos];
+
+			if(e.dimPreview)
+				dimShape[i]->draw();
+
+			if(e.badge == SaveEntry::BADGE_AUTO || e.badge == SaveEntry::BADGE_AUTO_PAUSED)
+			{
+				badgeAutoShape[i]->draw();
+				badgeAutoText[i]->draw();
+			}
+			else if(e.badge > 0)
+			{
+				badgeNumShape[i]->draw();
+				badgeNumText[i]->draw();
+			}
+
+			// the tag goes over the card's edge, so last
+			if(e.tag != SaveEntry::TAG_NONE)
+			{
+				tagShape[i]->draw();
+				if(e.tag == SaveEntry::TAG_AUTOSAVE)
+					tagDot[i]->draw();
+				tagText[i]->draw();
+			}
 		}
 	}
 
@@ -559,7 +693,7 @@ void GuiSaveBrowser::draw()
 	{
 		pinnedBtn->draw();
 		chipShape->draw();
-		if(chipState == 1)
+		if(chipState >= 1)
 			chipDot->draw();
 		chipText->draw();
 	}
@@ -621,6 +755,11 @@ void GuiSaveBrowser::update(InputController * controller)
 				selectedItem = std::max(0, length - listOffset - 1);
 		}
 	}
+
+	// where the cursor was, to go back to when a move would put it on a note
+	const int prevOffset = listOffset;
+	const int prevSelected = selectedItem;
+	const bool prevPinned = pinnedOn;
 
 	// pad/joystick navigation
 	if(!focus)
@@ -692,7 +831,7 @@ void GuiSaveBrowser::update(InputController * controller)
 				if(selectedItem == pageSize()-1)
 					selectedItem -= 1;
 			}
-			else if(viaPad && hasPinned())
+			else if(viaPad && pinnedSelectable())
 			{
 				toPinned = true;
 			}
@@ -701,7 +840,7 @@ void GuiSaveBrowser::update(InputController * controller)
 		{
 			selectedItem += COLS;
 		}
-		else if(viaPad && hasPinned())
+		else if(viaPad && pinnedSelectable())
 		{
 			toPinned = true;
 		}
@@ -728,6 +867,14 @@ void GuiSaveBrowser::update(InputController * controller)
 	if(toPinned)
 		pinnedOn = true;
 
+	// the cursor never rests on a note: a move onto one is no move
+	if(!pinnedOn && isInfoAt(listOffset + selectedItem))
+	{
+		listOffset = prevOffset;
+		selectedItem = prevSelected;
+		pinnedOn = prevPinned;
+	}
+
 	endNavigation:
 
 	if(arrowDownBtn->getState() == STATE::CLICKED)
@@ -741,11 +888,71 @@ void GuiSaveBrowser::update(InputController * controller)
 		if(i < pageSize() && listOffset+i < length)
 		{
 			const SaveEntry & e = entries[(size_t)(listOffset+i)];
+			const GuiTheme& theme = GuiTheme::current();
 
-			if(saveBtn[i]->getState() == STATE::DISABLED || !saveBtn[i]->isVisible())
+			if(e.info)
+			{
+				// a note: shown, with nothing to select or click
+				saveBtn[i]->setVisible(true);
+				saveBtn[i]->setState(STATE::DISABLED);
+			}
+			else if(saveBtn[i]->getState() == STATE::DISABLED || !saveBtn[i]->isVisible())
 			{
 				saveBtn[i]->setVisible(true);
 				saveBtn[i]->setState(STATE::DEFAULT);
+			}
+
+			// a note is dark with white words; a card is white
+			const int wantInfo = e.info ? 1 : 0;
+			if(infoShown[i] != wantInfo)
+			{
+				infoShown[i] = wantInfo;
+				saveBgImg[i]->setStyle(wantInfo ? SaveNoteStyle() : SaveCardStyle());
+				saveTitle[i]->setColor(wantInfo ? Rgba(255, 255, 255, 255) : theme.text);
+				saveSubtitle[i]->setColor(wantInfo ? Rgba(255, 255, 255, 255) : theme.textMuted);
+			}
+
+			// the slot badge: AUTO (live, or gray when paused) or the slot's number
+			if(badgeShown[i] != e.badge)
+			{
+				badgeShown[i] = e.badge;
+				if(e.badge == SaveEntry::BADGE_AUTO)
+					badgeAutoShape[i]->setPaint(GuiPaint().color(theme.accent).stroke(1.0f, Rgba(255, 255, 255, 200)));
+				else if(e.badge == SaveEntry::BADGE_AUTO_PAUSED)
+					badgeAutoShape[i]->setPaint(GuiPaint().color(Rgba(112, 118, 126, 255)).stroke(1.0f, Rgba(255, 255, 255, 170)));
+				else if(e.badge > 0)
+				{
+					char number[12];
+					snprintf(number, sizeof(number), "%d", e.badge);
+					badgeNumText[i]->setText(number);
+				}
+			}
+
+			// the tag on the card's edge
+			if(tagShown[i] != (int)e.tag)
+			{
+				tagShown[i] = (int)e.tag;
+				int tagW = TAG_PLAYING_WIDTH;
+				const char * words = "Playing from";
+				PixelColor fill = theme.accent;
+				int shift = 0;
+
+				if(e.tag == SaveEntry::TAG_AUTOSAVE)
+				{
+					tagW = TAG_AUTO_WIDTH;
+					words = "Autosave";
+					shift = 6;	// the dot takes the left end
+				}
+				else if(e.tag == SaveEntry::TAG_PAUSED)
+				{
+					tagW = TAG_PAUSED_WIDTH;
+					words = "Paused";
+					fill = Rgba(112, 118, 126, 255);
+				}
+				tagShape[i]->setSize(tagW, TAG_HEIGHT);
+				tagShape[i]->setPaint(GuiPaint().color(fill));
+				tagText[i]->setText(words);
+				tagText[i]->setPosition(shift, 0);
 			}
 
 			saveTitle[i]->setText(e.title.c_str());
@@ -794,11 +1001,29 @@ void GuiSaveBrowser::update(InputController * controller)
 	{
 		const SaveEntry & e = entries.back();
 
-		if(pinnedBtn->getState() == STATE::DISABLED || !pinnedBtn->isVisible())
+		if(e.info)
+		{
+			pinnedBtn->setVisible(true);
+			pinnedBtn->setState(STATE::DISABLED);	// a note: nothing to select or click
+		}
+		else if(pinnedBtn->getState() == STATE::DISABLED || !pinnedBtn->isVisible())
 		{
 			pinnedBtn->setVisible(true);
 			pinnedBtn->setState(STATE::DEFAULT);
 		}
+
+		// a note is dark with white words; a card is white
+		const int wantInfo = e.info ? 1 : 0;
+		if(pinnedInfoShown != wantInfo)
+		{
+			const GuiTheme& theme = GuiTheme::current();
+			pinnedInfoShown = wantInfo;
+			chipState = -1;
+			pinnedBg->setStyle(wantInfo ? SaveNoteStyle() : SaveCardStyle());
+			pinnedTitle->setColor(wantInfo ? Rgba(255, 255, 255, 255) : theme.text);
+			pinnedSubtitle->setColor(wantInfo ? Rgba(255, 255, 255, 255) : theme.textMuted);
+		}
+		pinnedIcon->setNoBattery(e.noBattery);
 
 		pinnedTitle->setText(e.title.c_str());
 		pinnedSubtitle->setText(e.subtitle.c_str());
@@ -806,23 +1031,31 @@ void GuiSaveBrowser::update(InputController * controller)
 		chipShape->setVisible(!e.chip.empty());
 		chipText->setVisible(!e.chip.empty());
 
-		// on: a green dot and the accent color on a light tint; off: plain gray
-		const int wantChip = e.chipOn ? 1 : 0;
+		// on: a green dot and the accent color on a light tint (or white on a note); off: plain gray
+		const int wantChip = e.chipOn ? (e.info ? 2 : 1) : 0;
 		if(chipState != wantChip)
 		{
 			const GuiTheme& theme = GuiTheme::current();
 			chipState = wantChip;
-			if(wantChip)
+			chipShape->setSize(wantChip ? CHIP_ON_WIDTH : CHIP_OFF_WIDTH, CHIP_HEIGHT);
+			if(wantChip == 1)
 			{
 				chipShape->setPaint(GuiPaint().color(theme.highlight).stroke(1.0f, theme.accentLight));
 				chipText->setPosition(8, 0);
+				chipText->setColor(theme.accent);
+			}
+			else if(wantChip == 2)
+			{
+				chipShape->setPaint(GuiPaint().color(Rgba(255, 255, 255, 26)).stroke(1.0f, Rgba(255, 255, 255, 150)));
+				chipText->setPosition(8, 0);
+				chipText->setColor(Rgba(255, 255, 255, 255));
 			}
 			else
 			{
 				chipShape->setPaint(GuiPaint().color(theme.surface).stroke(1.0f, theme.outline));
 				chipText->setPosition(0, 0);
+				chipText->setColor(theme.textMuted);
 			}
-			chipText->setColor(wantChip ? theme.accent : theme.textMuted);
 		}
 
 		if(!pinnedOn && pinnedBtn->getState() == STATE::SELECTED)

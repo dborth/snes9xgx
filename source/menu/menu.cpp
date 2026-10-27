@@ -1088,14 +1088,13 @@ static bool WaitForQueuedTasks()
  * AutoSave
  *
  * What the Save Mode saves when returning from in-game to the menu: the
- * Auto Snapshot (Snapshot), the Game Save File (Game Save File), or nothing
- * (Manual).
+ * Snapshot, Cartridge Save, or nothing
  *
  * Nothing is asked: a Snapshot goes to the game's auto slot (slot 0), never to
  * a numbered one, so it can't overwrite anything the user saved by hand.
  *
  * Everything that has to happen while the game is still loaded - capturing
- * the Game Save File or Snapshot - is done right here on the main thread. Writing it to the
+ * the Cartridge Save or Snapshot - is done right here on the main thread. Writing it to the
  * storage device is then queued as a silent background task, so the menu
  * never waits on the device and nothing on screen is disabled or covered
  * while it happens.
@@ -1941,7 +1940,7 @@ static int SaveOpTask(void * arg)
 				snprintf(deletepath, sizeof(deletepath), "%s", a->filepath);
 				deletepath[strlen(deletepath)-4] = 0;
 				strcat(deletepath, ".srm");
-				remove(deletepath); // Delete the *.srm file (Game Save File)
+				remove(deletepath); // Delete the *.srm file (Cartridge Save)
 			}
 			else if(a->type == FILE_STATE)
 			{
@@ -1976,7 +1975,7 @@ static bool RunSaveOp(int op, int type, const char * filepath, int * result, boo
  * MenuGameSaves
  *
  * One screen for everything saved: a grid of snapshots (the whole game at
- * one moment) and under it the game's own save, the Game Save File, which
+ * one moment) and under it the game's own save, the Cartridge Save, which
  * a game with no battery doesn't have. Choosing a card opens a popover
  * beside it with what can be done with that card, so the D-pad, the pointer
  * and touch all work the same way. The snapshot the game was started from
@@ -2004,6 +2003,7 @@ struct SaveCard
 	int slot;		// the number in the file's name; 0 is the auto slot; -1 for a new snapshot
 	bool main;		// the game's own save file (slot 0 of the save file kind)
 	bool playing;	// the snapshot the game was started from
+	bool autoSnap = false;	// the Auto Snapshot (slot 0), or the place it will be: never overwritten by hand
 };
 
 // The slot number in a save file's name (0 for the auto slot), or -1
@@ -2070,26 +2070,39 @@ static void FindSramFiles(SaveList & saves, std::vector<int> & found)
 	SortSaveFiles(saves, FILE_SRAM, found);
 }
 
-// The cards: the snapshot we started from, a New Snapshot card, the auto snapshot, then the numbered ones newest
-// first - and, when the game has a save of its own, its pinned card last. The backups of that save are not cards:
-// they are listed in `backups` (indexes into the SaveList), for its popover.
+// The cards. The Auto Snapshot is first, always: live (AUTO, tagged "Autosave") in Snapshot mode, and "Paused"
+// otherwise - or, in Snapshot mode before there is one, a note that it will be made. Then a New Snapshot card, the
+// snapshot we started from, and the numbered ones newest first. When the game has a save of its own, its pinned card
+// is last, and says how it is looked after: a card in Cartridge Save and Manual mode, a note in Snapshot mode (it is
+// inside the snapshots there, nothing to manage). A game without one gets a note, in Cartridge Save mode, that
+// nothing is saved on its own. The backups of the save file are not cards: they are listed in `backups` (indexes
+// into the SaveList), for its popover.
 static void BuildSaveCards(SaveList & saves, bool gameSave, std::vector<SaveEntry> & entries, std::vector<SaveCard> & cards, std::vector<int> & backups)
 {
 	entries.clear();
 	cards.clear();
 	backups.clear();
 
+	const int mode = EmuSettings.saveMode;
+	const bool autoLive = (mode == SAVEMODE_SNAPSHOT);
 	const char * playing = GetPlayingFrom();
 	char path[1024];
 	std::vector<int> found;
 	int playingIdx = -1;
+	int autoIdx = -1;
 
 	for(int i = 0; i < saves.length; i++)
 	{
-		if(saves.type[i] != FILE_STATE || SaveSlotOf(saves.filename[i], FILE_STATE) < 0)
+		if(saves.type[i] != FILE_STATE)
 			continue;
 
-		if(playing[0] && MakeFilePath(path, FILE_STATE, saves.filename[i]) && strcmp(path, playing) == 0)
+		const int slot = SaveSlotOf(saves.filename[i], FILE_STATE);
+		if(slot < 0)
+			continue;
+
+		if(slot == 0)
+			autoIdx = i;
+		else if(playing[0] && MakeFilePath(path, FILE_STATE, saves.filename[i]) && strcmp(path, playing) == 0)
 			playingIdx = i;
 		else
 			found.push_back(i);
@@ -2105,54 +2118,119 @@ static void BuildSaveCards(SaveList & saves, bool gameSave, std::vector<SaveEntr
 		c.slot = SaveSlotOf(saves.filename[i], FILE_STATE);
 		c.main = false;
 		c.playing = isPlaying;
+		c.autoSnap = (c.slot == 0);
 		e.kind = SaveEntry::SAVE;
-		e.title = c.slot == 0 ? std::string("Auto Snapshot") : SaveNumbered("Snapshot", c.slot);
 		e.subtitle = SaveWhen(saves, i);
 		e.preview = saves.previewImg[i].get();
 		e.placeholder = "No image";
-		e.playing = isPlaying;
 		e.id = i;
+		if(c.autoSnap)
+		{
+			e.title = "Auto Snapshot";
+			e.badge = autoLive ? SaveEntry::BADGE_AUTO : SaveEntry::BADGE_AUTO_PAUSED;
+			e.tag = autoLive ? SaveEntry::TAG_AUTOSAVE : SaveEntry::TAG_PAUSED;
+			e.dimPreview = !autoLive;	// nothing is updating it in this Save Mode
+		}
+		else
+		{
+			e.title = SaveNumbered("Snapshot", c.slot);
+			e.badge = c.slot;
+			e.tag = isPlaying ? SaveEntry::TAG_PLAYING : SaveEntry::TAG_NONE;
+		}
 		entries.push_back(e);
 		cards.push_back(c);
 	};
 
-	if(playingIdx >= 0)
-		addSnapshot(playingIdx, true);
-
+	if(autoIdx >= 0)
+		addSnapshot(autoIdx, false);
+	else if(autoLive)
 	{
+		// it will be made when you leave the game: say so, in a note
 		SaveEntry e;
 		SaveCard c;
 		e.kind = SaveEntry::NEW;
-		e.title = "New Snapshot";
-		e.subtitle = "Save this moment";
+		e.info = true;
+		e.title = "Auto Snapshot";
+		e.subtitle = "Empty until you play";
+		e.placeholder = "Empty";
+		e.badge = SaveEntry::BADGE_AUTO;
+		c.save = -1; c.type = FILE_STATE; c.slot = 0; c.main = false; c.playing = false; c.autoSnap = true;
+		entries.push_back(e);
+		cards.push_back(c);
+	}
+
+	{
+		// With Snapshot mode on you need do nothing: this is an extra, and says so
+		SaveEntry e;
+		SaveCard c;
+		e.kind = SaveEntry::NEW;
+		e.title = autoLive ? "Manual Snapshot" : "New Snapshot";
+		e.subtitle = autoLive ? "Optional save point" : "Save this moment";
 		e.placeholder = "New";
 		c.save = -1; c.type = FILE_STATE; c.slot = -1; c.main = false; c.playing = false;
 		entries.push_back(e);
 		cards.push_back(c);
 	}
 
+	if(playingIdx >= 0)
+		addSnapshot(playingIdx, true);
+
 	for(size_t k = 0; k < found.size(); k++)
 		addSnapshot(found[k], false);
 
+	SaveEntry e;
+	SaveCard c;
+	c.save = -1; c.type = FILE_SRAM; c.slot = 0; c.main = true; c.playing = false;
+	e.pinned = true;
+
 	if(!gameSave)
+	{
+		// no battery: there is no save file. Snapshots are all there is, and in Cartridge Save mode that needs saying
+		if(mode != SAVEMODE_GAMESAVE)
+			return;
+
+		e.kind = SaveEntry::NEW;
+		e.info = true;
+		e.noBattery = true;
+		e.title = "No game save file";
+		e.subtitle = "This game doesn't have its own save feature. Use snapshots to save.";
+		c.slot = -1;
+		entries.push_back(e);
+		cards.push_back(c);
 		return;
+	}
 
 	std::vector<int> sram;
 	FindSramFiles(saves, sram);
 	const bool haveMain = !sram.empty() && SaveSlotOf(saves.filename[sram[0]], FILE_SRAM) == 0;
 
-	SaveEntry e;
-	SaveCard c;
 	e.kind = haveMain ? SaveEntry::SAVE : SaveEntry::NEW;	// with no file yet it is a card for writing it the first time
-	e.pinned = true;
-	e.title = "Game Save File";
-	e.subtitle = haveMain ? "Saved " + SaveWhen(saves, sram[0]) : std::string("Not saved yet");
-	// The Save Mode looks after this file only when it is set to Game Save File
-	const bool autoSaved = EmuSettings.saveMode == SAVEMODE_GAMESAVE;
-	e.chip = autoSaved ? "Auto-save on" : "Auto-save off";
-	e.chipOn = autoSaved;
+	e.title = "Cartridge Save";
 	e.id = haveMain ? sram[0] : -1;
-	c.save = e.id; c.type = FILE_SRAM; c.slot = 0; c.main = true; c.playing = false;
+	c.save = e.id;
+
+	if(mode == SAVEMODE_SNAPSHOT)
+	{
+		// the save file is part of every snapshot: nothing to manage, so a note. (A file left on disk from another
+		// Save Mode is not mentioned: it is not being updated, and its date would only mislead.)
+		e.info = true;
+		e.subtitle = "Saved inside your snapshots";
+		e.chip = "Autosave";
+		e.chipOn = true;
+	}
+	else if(mode == SAVEMODE_GAMESAVE)
+	{
+		e.subtitle = haveMain ? "Saved " + SaveWhen(saves, sram[0]) : std::string("Empty until you play");
+		e.chip = "Autosave";
+		e.chipOn = true;
+	}
+	else
+	{
+		e.subtitle = haveMain ? "Saved " + SaveWhen(saves, sram[0]) : std::string("Not saved yet");
+		e.chip = "Saves when you do";
+		e.chipOn = false;
+	}
+
 	entries.push_back(e);
 	cards.push_back(c);
 
@@ -2171,12 +2249,17 @@ static SaveCard BackupCard(SaveList & saves, int index)
 	return c;
 }
 
-// What can be done with a card: the rows of its popover and, for each, the action it stands for. The row the
-// cursor starts on is the likeliest and never the destructive one - except Update on the snapshot we started from.
-static void SaveCardMenu(const SaveCard & card, int backupCount, std::vector<PickerItem> & items, std::vector<int> & acts)
+// What can be done with a card: the rows of its popover and, for each, the action it stands for - and a footnote
+// for what the rows leave out. The row the cursor starts on is the likeliest and never the destructive one, except
+// Update on the snapshot we started from. What is automatic cannot be overwritten by hand: the Auto Snapshot has no
+// Update, and the Cartridge Save has no Save Now while Cartridge Save mode saves it itself. The Cartridge Save can
+// never be deleted (it is small and harmless); its backups, and the Auto Snapshot, can.
+static void SaveCardMenu(const SaveCard & card, int backupCount, std::vector<PickerItem> & items, std::vector<int> & acts, std::string & footnote)
 {
 	items.clear();
 	acts.clear();
+	footnote.clear();
+	const int mode = EmuSettings.saveMode;
 
 	auto add = [&items, &acts](int act, const char * name, const std::string & about, bool preferred, bool divider)
 	{
@@ -2190,7 +2273,17 @@ static void SaveCardMenu(const SaveCard & card, int backupCount, std::vector<Pic
 		acts.push_back(act);
 	};
 
-	if(card.type == FILE_STATE)
+	if(card.type == FILE_STATE && card.autoSnap)
+	{
+		const bool live = (mode == SAVEMODE_SNAPSHOT);
+		add(SAVEACT_LOAD, "Load", live ? "Go back to where you left off" : "Jump to this moment", true, true);
+		add(SAVEACT_DELETE, "Delete", live ? "Start fresh next time" : "Remove this snapshot", false, false);
+		items.back().danger = true;
+		footnote = live ? "Updated automatically when you leave the game."
+			: (mode == SAVEMODE_GAMESAVE ? "Not updated while Save Mode is Cartridge Save."
+										: "Not updated while Save Mode is Manual.");
+	}
+	else if(card.type == FILE_STATE)
 	{
 		if(card.playing)
 		{
@@ -2203,21 +2296,29 @@ static void SaveCardMenu(const SaveCard & card, int backupCount, std::vector<Pic
 			add(SAVEACT_UPDATE, "Replace", "Overwrite with your progress", false, true);
 		}
 		add(SAVEACT_DELETE, "Delete", "Remove this snapshot", false, false);
+		items.back().danger = true;
 	}
 	else if(card.main)
 	{
-		add(SAVEACT_SAVENOW, "Save Now", "Write the save to its file", true, false);
-		add(SAVEACT_BACKUP, "Make Backup", "Keep a copy, just in case", false, backupCount > 0);
-		if(backupCount > 0)
+		if(mode == SAVEMODE_MANUAL)
 		{
-			add(SAVEACT_BACKUPS, "Backups", GuiFormat("%d saved", backupCount), false, false);
-			items.back().chevron = true;
+			add(SAVEACT_SAVENOW, "Save Now", "Write the save to its file", true, false);
+			if(card.save >= 0)
+				add(SAVEACT_LOAD, "Load", "Use the saved file in the game", false, false);
+			items.back().divider = true;
 		}
+		else
+			footnote = "Saved automatically when you leave the game.";
+
+		// Make Backup is inside, with the backups, so this list stays short enough to fit above the card
+		add(SAVEACT_BACKUPS, "Backups", backupCount > 0 ? GuiFormat("Make a copy, or restore one of %d", backupCount) : std::string("Make a copy of the save"), mode != SAVEMODE_MANUAL, false);
+		items.back().chevron = true;
 	}
 	else
 	{
 		add(SAVEACT_RESTORE, "Restore", "Use this as the game's save", true, true);
 		add(SAVEACT_DELETE, "Delete", "Remove this backup", false, false);
+		items.back().danger = true;
 	}
 }
 
@@ -2285,6 +2386,34 @@ static int MenuGameSaves()
 	closeBtn.setTrigger(&trigHome);
 	closeBtn.setEffectGrow();
 
+	// Save Mode: what is saved and loaded on its own. A button as tall as Go Back, beside it, that opens a list of
+	// the three modes. It says which one is on.
+	static const char * const modeNames[SAVEMODE_LENGTH] = { "Snapshot", "Cartridge Save", "Manual" };
+	static const char * const modeHelps[SAVEMODE_LENGTH] = {
+		"Picks up exactly where you left off, as if you never turned the console off.",
+		"Like a real console: the game's own save is kept for you, and the game starts fresh each time.",
+		"Nothing is saved or loaded unless you do it yourself." };
+	GuiText modeLabelTxt("Save Mode", 12, (PixelColor){90, 90, 90, 255});
+	modeLabelTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+	modeLabelTxt.setPosition(22, -11);
+	GuiText modeValueTxt(modeNames[EmuSettings.saveMode], 18, (PixelColor){0, 0, 0, 255});
+	modeValueTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
+	modeValueTxt.setPosition(22, 9);
+	GuiShape modeChevron(12, 8);
+	modeChevron.setArrow(SHAPE::TRIANGLE_UP, pal.accent, pal.accent);	// it opens upward
+	modeChevron.setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
+	modeChevron.setPosition(-22, 0);
+	MenuButtonShape modeBtnImg(MenuButtonShape::NORMAL);
+	GuiButton modeBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
+	modeBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
+	modeBtn.setPosition(50 + MENU_BTN_NORMAL_W + 16, -35);
+	modeBtn.setLabel(&modeLabelTxt, 0);
+	modeBtn.setLabel(&modeValueTxt, 1);
+	modeBtn.setImage(&modeBtnImg);
+	modeBtn.setIcon(&modeChevron);
+	modeBtn.setTrigger(trigA);
+	modeBtn.setEffectGrow();
+
 	// Shown beside a lone "New Snapshot" card, in the grid's second column. It is a card of its own - dark and
 	// translucent, the size of the cards, not clickable - so the words read over any picture, and it looks
 	// like a note next to the white cards you can choose.
@@ -2329,6 +2458,7 @@ static int MenuGameSaves()
 
 	GuiWindow w(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
 	w.append(&backBtn);
+	w.append(&modeBtn);
 	w.append(&closeBtn);
 	menu->mainWindow.appendWithAutoRemove(&w);
 	menu->mainWindow.appendWithAutoRemove(&titleTxt);
@@ -2337,8 +2467,8 @@ static int MenuGameSaves()
 	for(int k = 0; k < 3; k++)
 		menu->mainWindow.appendWithAutoRemove(emptyTexts[k]);
 
-	// two rows of snapshots with the save file under them, or three rows when there is no save file
-	GuiSaveBrowser saveBrowser(SAVE_LIST_W, gameSave ? 2 : 3);
+	// two rows of snapshots with the save file (or a note about it) under them, or three rows with nothing under them
+	GuiSaveBrowser saveBrowser(SAVE_LIST_W, 2);
 	saveBrowser.setPosition(0, SAVE_LIST_Y);
 	saveBrowser.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	menu->mainWindow.appendWithAutoRemove(&saveBrowser);
@@ -2380,6 +2510,7 @@ static int MenuGameSaves()
 	auto showCards = [&](int selType, int selSlot, int selPos)
 	{
 		BuildSaveCards(data->saves, gameSave, entries, cards, backups);
+		saveBrowser.setRows((!entries.empty() && entries.back().pinned) ? 2 : 3);
 
 		const int gridCount = (int)entries.size() - ((!entries.empty() && entries.back().pinned) ? 1 : 0);
 		int select = selPos;
@@ -2429,8 +2560,11 @@ static int MenuGameSaves()
 
 		while(true)
 		{
-			SaveCardMenu(card, (int)backups.size(), items, acts);
-			const int chosen = MenuPopover_Pick("", items, anchor);
+			std::string footnote;
+			SaveCardMenu(card, (int)backups.size(), items, acts, footnote);
+			PickerOptions note;
+			note.footnote = footnote;
+			const int chosen = MenuPopover_Pick("", items, anchor, nullptr, nullptr, &note);
 			if(chosen < 0 || (size_t)chosen >= acts.size())
 				return -1;
 			if(acts[(size_t)chosen] != SAVEACT_BACKUPS)
@@ -2440,6 +2574,16 @@ static int MenuGameSaves()
 			{
 				std::vector<PickerItem> list;
 				const size_t shown = std::min(backups.size(), (size_t)SAVE_MAX_BACKUPS);
+
+				// Make Backup first, then the ones there are
+				PickerItem make;
+				make.name = "Make Backup";
+				make.hint = "Copy the game's save now";
+				make.current = false;
+				make.preferred = true;
+				make.divider = shown > 0;
+				list.push_back(make);
+
 				for(size_t k = 0; k < shown; k++)
 				{
 					PickerItem it;
@@ -2450,13 +2594,16 @@ static int MenuGameSaves()
 				}
 
 				const int picked = MenuPopover_Pick("", list, anchor);
-				if(picked < 0 || (size_t)picked >= shown)
+				if(picked < 0 || (size_t)picked > shown)
 					break;	// back to the save file's popover
+				if(picked == 0)
+					return SAVEACT_BACKUP;
 
-				const SaveCard backup = BackupCard(data->saves, backups[(size_t)picked]);
+				const SaveCard backup = BackupCard(data->saves, backups[(size_t)picked - 1]);
 				std::vector<PickerItem> what;
 				std::vector<int> whatActs;
-				SaveCardMenu(backup, 0, what, whatActs);
+				std::string noNote;
+				SaveCardMenu(backup, 0, what, whatActs, noNote);
 				const int doing = MenuPopover_Pick("", what, anchor);
 				if(doing < 0 || (size_t)doing >= whatActs.size())
 					continue;	// back to the list of backups
@@ -2487,7 +2634,11 @@ static int MenuGameSaves()
 			SaveEntry entry = entries[(size_t)pos];
 			int act = -1;
 
-			if(card.type == FILE_STATE && card.save < 0)
+			if(entry.info)
+			{
+				// a note, not a card: the browser does not let it be chosen, so this is only a safeguard
+			}
+			else if(card.type == FILE_STATE && card.save < 0)
 			{
 				act = SAVEACT_UPDATE; // New Snapshot: it only ever adds one, so there is nothing to ask
 			}
@@ -2598,6 +2749,10 @@ static int MenuGameSaves()
 						std::string detail = "This can't be undone.";
 						if(card.playing)
 							detail = "This is the snapshot you started from. " + detail;
+						else if(card.autoSnap && EmuSettings.saveMode == SAVEMODE_SNAPSHOT)
+							detail = "Next time you open this game it starts from its Cartridge Save, or from the beginning. " + detail;
+						else if(card.autoSnap)
+							detail = "It is not being updated in the current Save Mode. " + detail;
 
 						if(!WindowPrompt(question.c_str(), detail.c_str(), "Delete", "Cancel"))
 							break;
@@ -2638,7 +2793,42 @@ static int MenuGameSaves()
 			}
 		}
 
-		if(backBtn.getState() == STATE::CLICKED)
+		if(modeBtn.getState() == STATE::CLICKED)
+		{
+			modeBtn.resetState();
+
+			std::vector<PickerItem> modes;
+			for(int k = 0; k < SAVEMODE_LENGTH; k++)
+			{
+				PickerItem it;
+				it.name = modeNames[k];
+				it.hint = modeHelps[k];
+				it.current = (k == EmuSettings.saveMode);
+				it.preferred = it.current;
+				it.divider = false;
+				modes.push_back(it);
+			}
+			PickerOptions wide;
+			wide.width = 392;
+
+			w.setState(STATE::DISABLED);
+			saveBrowser.setState(STATE::DISABLED);
+			const int chosen = MenuPopover_Pick("Save Mode", modes, GuiPopover::Anchor(modeBtn), nullptr, nullptr, &wide);
+			saveBrowser.setState(STATE::DEFAULT);
+			w.setState(STATE::DEFAULT);
+			saveBrowser.resetState();
+
+			if(chosen >= 0 && chosen < SAVEMODE_LENGTH && chosen != EmuSettings.saveMode)
+			{
+				EmuSettings.saveMode = chosen;
+				modeValueTxt.setText(modeNames[chosen]);
+				showCards(-1, -1, saveBrowser.getSelectedPosition());	// the cards re-tag themselves for the new mode
+				showToast(std::string("Save Mode: ") + modeNames[chosen]);
+			}
+			else
+				menu->mainWindow.changeFocus(&saveBrowser);
+		}
+		else if(backBtn.getState() == STATE::CLICKED)
 		{
 			selection = MENU_GAME;
 		}
@@ -3886,7 +4076,6 @@ static int MenuSettingsStorage()
 	sprintf(options.name[i++], "Screenshots Folder");
 	sprintf(options.name[i++], "Covers Folder");
 	sprintf(options.name[i++], "Artwork Folder");
-	sprintf(options.name[i++], "Save Mode");
 	options.length = i;
 
 	for(i=0; i < options.length; i++)
@@ -3960,12 +4149,6 @@ static int MenuSettingsStorage()
 			case 7:
 				OnScreenKeyboard(EmuSettings.artworkFolder, MAXPATHLEN);
 				break;
-				
-			case 8:
-				EmuSettings.saveMode++;
-				if (EmuSettings.saveMode >= SAVEMODE_LENGTH)
-					EmuSettings.saveMode = SAVEMODE_SNAPSHOT;
-				break;
 		}
 
 		if(ret >= 0 || firstRun)
@@ -3997,10 +4180,6 @@ static int MenuSettingsStorage()
 			snprintf (options.value[5], 35, "%s", EmuSettings.screenshotsFolder);
 			snprintf (options.value[6], 35, "%s", EmuSettings.coverFolder);
 			snprintf (options.value[7], 35, "%s", EmuSettings.artworkFolder);
-
-			if (EmuSettings.saveMode == SAVEMODE_SNAPSHOT) sprintf (options.value[8],"Snapshot");
-			else if (EmuSettings.saveMode == SAVEMODE_GAMESAVE) sprintf (options.value[8],"Game Save File");
-			else if (EmuSettings.saveMode == SAVEMODE_MANUAL) sprintf (options.value[8],"Manual");
 
 			optionBrowser.triggerUpdate();
 		}

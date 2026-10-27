@@ -7,7 +7,7 @@
  *
  * sram.cpp
  *
- * Game Save File (battery-backed SRAM) save/load handling
+ * Cartridge Save (battery-backed SRAM) save/load handling
  ***************************************************************************/
 
 #include <stdio.h>
@@ -71,7 +71,7 @@ bool LoadSRAM (char * filepath, bool silent)
 		else if(!silent)
 		{
 			// if we reached here, nothing was done!
-			ErrorPrompt("Game Save File not found");
+			ErrorPrompt("Cartridge Save not found");
 		}
 		MarkLiveStateChanged();
 		S9xSoftReset();
@@ -79,7 +79,7 @@ bool LoadSRAM (char * filepath, bool silent)
 	return result;
 }
 
-// Loads the game's Game Save File ("<name>.srm")
+// Loads the game's Cartridge Save ("<name>.srm")
 bool LoadSRAMAuto (bool silent)
 {
 	char filepath[MAXPATHLEN];
@@ -153,7 +153,7 @@ bool SaveSRAM (char * filepath, bool silent)
 	else
 	{
 		if(!silent)
-			ErrorPrompt("No Game Save File data to save!");
+			ErrorPrompt("No Cartridge Save data to save!");
 	}
 	return retval;
 }
@@ -168,7 +168,7 @@ bool SaveSRAM (char * filepath, bool silent)
  ***************************************************************************/
 struct SRAMSnapshot
 {
-	char path[MAXPATHLEN];       // the Game Save File
+	char path[MAXPATHLEN];       // the Cartridge Save
 	unsigned char * data;
 	int size;
 	bool hasRTC;

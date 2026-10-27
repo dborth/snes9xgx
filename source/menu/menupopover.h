@@ -55,10 +55,13 @@ class MenuScreenWindow
 GuiPopover::Insets MenuPopover_Insets();
 
 /** One row of a popover list: the name on the left, a dot on the right when `marked` (the one in use), or a chevron when `chevron` (the row opens another list). The caller adds onClick / onFocus. */
-GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& title, bool marked, bool dotSlot = true, const std::string& hint = std::string(), bool chevron = false);
+GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& title, bool marked, bool dotSlot = true, const std::string& hint = std::string(), bool chevron = false, bool danger = false);
 
 /** A chip that opens a popover: what it chooses in small capitals, what is chosen under it, an arrow pointing the way it opens. The caller adds onClick / onFocus. */
 GuiCard& MenuPopover_Chip(UiScope& ui, int width, const char * what, std::function<std::string()> value);
+
+/** How many characters of a hint (the small text under a row's name) fit `width` pixels, for wrapping it. */
+size_t MenuPopover_HintChars(int width);
 
 /** A one pixel rule `w` wide, in the outline color. */
 GuiShape& MenuPopover_Divider(UiScope& ui, int w);
@@ -79,6 +82,13 @@ struct PickerItem {
 	bool preferred = false;				/**< The cursor starts here when nothing is `current` (no dot is drawn) */
 	bool divider = false;				/**< A rule is drawn after this item: what follows is a different kind of choice */
 	bool chevron = false;				/**< A chevron at the row's end: choosing it opens another list (a hinted list only) */
+	bool danger = false;				/**< Removes something: the name is red */
+};
+
+/** How a picker differs from the usual: all optional. */
+struct PickerOptions {
+	int width = 0;						/**< Panel width in design pixels; 0 for the usual. Hints wrap to what is left of it */
+	std::string footnote;				/**< A few muted lines under the list, after a rule: not a choice, just what the list is about */
 };
 
 /**
@@ -90,7 +100,7 @@ class PickerView : public GuiPopover
 {
 	public:
 		/** `anchor` is the control it opens beside; with none it is centred. B or a click outside closes it (isDismissed()). An empty `title` leaves off the heading and the rule under it. */
-		PickerView(const char * title, const std::vector<PickerItem>& items, const GuiPopover::Anchor& anchor = GuiPopover::Anchor());
+		PickerView(const char * title, const std::vector<PickerItem>& items, const GuiPopover::Anchor& anchor = GuiPopover::Anchor(), const PickerOptions * options = nullptr);
 		/** Whether a choice was made (after any confirmation). */
 		bool chosen() const { return done; }
 		/** The index of the item chosen. */
@@ -141,7 +151,7 @@ void MenuPopover_Wrap(std::vector<std::string>& lines, const std::string& text, 
  * runs every frame (for what must be checked while it is open).
  */
 int MenuPopover_Pick(const char * title, const std::vector<PickerItem>& items, const GuiPopover::Anchor& anchor,
-	std::function<void(int)> preview = nullptr, std::function<void()> perFrame = nullptr);
+	std::function<void(int)> preview = nullptr, std::function<void()> perFrame = nullptr, const PickerOptions * options = nullptr);
 
 /** A question with a few answers and a line of detail, as a popover (see MenuPopover_Pick). The index of the answer, or -1. */
 int MenuPopover_Ask(const char * title, const std::vector<std::string>& answers, const std::string& detail, const GuiPopover::Anchor& anchor);

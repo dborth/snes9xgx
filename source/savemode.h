@@ -10,9 +10,9 @@
  *  Snapshot (default) - Picks up exactly where you left off, as if you never
  *      turned the console off. Leaving the game writes the Auto Snapshot (the
  *      game's slot 0), and opening the game loads it. If there is no Auto
- *      Snapshot, or it can't be loaded, the game's Game Save File is loaded
+ *      Snapshot, or it can't be loaded, the game's Cartridge Save is loaded
  *      instead.
- *  Game Save File - Like a real console: the game's own save is kept for you,
+ *  Cartridge Save - Like a real console: the game's own save is kept for you,
  *      and the game starts fresh each time. Leaving the game writes the Game
  *      Save File, and opening the game loads it.
  *  Manual - Nothing is saved or loaded unless you do it yourself.
@@ -30,7 +30,7 @@ void AutoLoadOnGameOpen();
 void AutoSaveOnQuit(bool screenshotIsCurrent);
 
 // Whether the emulated machine has changed since the Auto Snapshot was written
-// (it ran, or a Snapshot or Game Save File was loaded, or it was reset from the
+// (it ran, or a Snapshot or Cartridge Save was loaded, or it was reset from the
 // menu). Quitting from the menu only has anything to save if it has.
 void MarkLiveStateChanged();
 void ClearLiveStateChanged();

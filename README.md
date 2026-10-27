@@ -29,7 +29,7 @@ Snes9x GX is homebrew — it isn't signed by Nintendo, so your console needs to 
 - [Gameplay](#gameplay)
 - [Cheats](#cheats)
 - [Turbo Mode](#turbo-mode)
-- [Importing and Exporting Game Save Files](#importing-and-exporting-game-save-files)
+- [Importing and Exporting Cartridge Saves](#importing-and-exporting-game-save-files)
 - [Satellaview (BS-X)](#satellaview-bs-x)
 - [Building from Source](#building-from-source)
 - [Credits](#credits)
@@ -71,7 +71,7 @@ Every push builds automatically. Grab the latest continuous-integration build:
 - Cheat code support (`.cht` files)
 - Cover art / screenshot / artwork preview support
 - Satellaview (BS-X) support
-- Save Mode: automatically resume from a Snapshot, keep the Game Save File, or manage everything yourself
+- Save Mode: automatically resume from a Snapshot, keep the Cartridge Save, or manage everything yourself
 - Fully customizable, per-controller button mappings
 - SD, USB, DVD, and SMB network share support (modern SMB2/3 via `libsmb2` — see [Network](#network)), plus ZIP/7z archive loading
 - Auto-detected PAL/NTSC, 16:9 widescreen correction
@@ -94,7 +94,7 @@ Once you've placed the loader files for your console (below), also create these 
 ```text
 SD:/snes9xgx/
 ├── roms/          ← your SNES ROMs (.smc/.sfc, or zipped/.7z)
-├── saves/         ← Game Save Files and Snapshots
+├── saves/         ← Cartridge Saves and Snapshots
 ├── cheats/        ← .cht cheat files (see Cheats)
 ├── screenshots/   ← in-game screenshots and/or screenshot preview images
 ├── covers/        ← cover art preview images
@@ -281,14 +281,14 @@ The **General Mappings** screen (reached from Button Mappings) also lets you con
 | **Load Folder** | Opens an on-screen keyboard to set a custom ROM folder |
 | **Save Method** | SD, USB, Network, Auto |
 | **Save Folder** | Opens an on-screen keyboard to set a custom save folder |
-| **Save Mode** | Snapshot, Game Save File, Manual |
+| **Save Mode** | Snapshot, Cartridge Save, Manual |
 
-Snes9x GX has two kinds of saves: the **Game Save File**, the game's own in-game save (only applicable to games that have one), and **Snapshots**, which capture exactly where you are and let you resume later.
+Snes9x GX has two kinds of saves: the **Cartridge Save**, the game's own in-game save (only applicable to games that have one), and **Snapshots**, which capture exactly where you are and let you resume later.
 
 **Save Mode** decides what Snes9x GX saves and loads for you, without being asked:
 
-- **Snapshot** (default) — Picks up exactly where you left off, as if you never turned the console off. Leaving a game saves its *Auto Snapshot*, and opening the game loads it. Load an earlier Snapshot from the **Saves** screen and leave, and the game comes back there next time. If a game has no Auto Snapshot yet, its Game Save File is loaded instead.
-- **Game Save File** — Like a real console: the game's own save is kept for you, and the game starts fresh each time. Leaving a game saves its Game Save File (`.srm`), and opening the game loads it.
+- **Snapshot** (default) — Picks up exactly where you left off, as if you never turned the console off. Leaving a game saves its *Auto Snapshot*, and opening the game loads it. Load an earlier Snapshot from the **Saves** screen and leave, and the game comes back there next time. If a game has no Auto Snapshot yet, its Cartridge Save is loaded instead.
+- **Cartridge Save** — Like a real console: the game's own save is kept for you, and the game starts fresh each time. Leaving a game saves its Cartridge Save (`.srm`), and opening the game loads it.
 - **Manual** — Nothing is saved or loaded unless you do it yourself from the **Saves** screen.
 
 Quitting Snes9x GX while a game is running (or while the console is shutting it down) saves the same way.
@@ -342,7 +342,7 @@ The File Browser loads automatically on startup and lists the contents of your `
 
 Press **Home** while playing to open the in-game menu (Saves, Reset, Controller, Cheats). Select **Main Menu** to return to the File Browser, or **Close** to resume play.
 
-- **Saves** shows your Snapshots in a grid, with the game's own **Game Save File** under them for games that have one. Click **New Snapshot** to save the moment you are at, or click a Snapshot to Load, Update or Delete it. Click the Game Save File to Save Now, Make a Backup, or open its Backups to Restore or Delete one.
+- **Saves** shows your Snapshots in a grid, with the game's own **Cartridge Save** under them for games that have one. Click **New Snapshot** to save the moment you are at, or click a Snapshot to Load, Update or Delete it. Click the Cartridge Save to Save Now, Make a Backup, or open its Backups to Restore or Delete one.
 - **Reset** resets the current game.
 - **Controller** toggles which controller drives the game.
 - **Cheats** toggles your loaded cheat codes (below).
@@ -355,11 +355,11 @@ Cheats load from `snes9xgx/cheats` in the Snes9x `.cht` file format, and must be
 
 Turbo Mode roughly doubles playback speed while active. It's remappable — set which button or combo triggers it under **Settings → Button Mappings → General Mappings → Turbo Mode Button** — and can be disabled entirely from the same screen. Hold the assigned button to run at double speed; release it to return to normal playback.
 
-## Importing and Exporting Game Save Files
+## Importing and Exporting Cartridge Saves
 
-Snes9x GX can load Game Save Files saved by Snes9x on other platforms (Mac/PC/Linux/etc.), and vice versa.
+Snes9x GX can load Cartridge Saves saved by Snes9x on other platforms (Mac/PC/Linux/etc.), and vice versa.
 
-- **To import**, make sure the `.srm` file's name matches your ROM's filename (aside from the extension). Older versions named a Game Save File with " Auto" on the end (`Game Auto.srm`); those are renamed to `Game.srm` the next time the game is opened.
+- **To import**, make sure the `.srm` file's name matches your ROM's filename (aside from the extension). Older versions named a Cartridge Save with " Auto" on the end (`Game Auto.srm`); those are renamed to `Game.srm` the next time the game is opened.
 - **To export**, copy the save from your console's `snes9xgx/saves` folder over to the other platform — you may need to rename it to whatever that Snes9x build expects.
 
 ### Satellaview (BS-X)

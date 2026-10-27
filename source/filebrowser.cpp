@@ -404,7 +404,7 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 				if(type == FILE_SRAM) sprintf(ext, "srm");
 				else sprintf(ext, "frz");
 
-				// Slot 0 is the auto slot. A Snapshot's is "<name> Auto.frz". The Game Save File has the
+				// Slot 0 is the auto slot. A Snapshot's is "<name> Auto.frz". The Cartridge Save has the
 				// plain name the game is known by, "<name>.srm", and its other slots are its backups.
 				// -1 is the plain name, for either type.
 				if(filenum >= -1)
@@ -440,9 +440,9 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
  * gone. For the game that is loaded:
  *  - a Snapshot's auto slot may be "<name>.frz": it becomes "<name> Auto.frz"
  *    (with its screenshot)
- *  - a Game Save File may be "<name> Auto.srm", and have been kept up to
+ *  - a Cartridge Save may be "<name> Auto.srm", and have been kept up to
  *    date there, or beside a "<name>.srm" that was: the newer of the two is the
- *    Game Save File, and an older one is kept as a backup
+ *    Cartridge Save, and an older one is kept as a backup
  ***************************************************************************/
 static bool FileExists(const char * path)
 {
@@ -485,7 +485,7 @@ static void ChangeExtension(char * out, const char * path, const char * ext)
 	snprintf(out, MAXPATHLEN, "%.*s%s", len-3, path, ext);
 }
 
-// Renames a Game Save File, and the real time clock's file that goes along with it
+// Renames a Cartridge Save, and the real time clock's file that goes along with it
 static bool MoveGameSave(const char * from, const char * to)
 {
 	char rtcFrom[MAXPATHLEN];
@@ -523,7 +523,7 @@ void MigrateSaveFileNames()
 		}
 	}
 
-	// Game Save File
+	// Cartridge Save
 	if(!MakeFilePath(plain, FILE_SRAM, Memory.ROMFilename, 0))
 		return;
 
@@ -538,7 +538,7 @@ void MigrateSaveFileNames()
 		return;
 	}
 
-	// Both: the newer one is the Game Save File, and the older becomes a backup in the first free slot
+	// Both: the newer one is the Cartridge Save, and the older becomes a backup in the first free slot
 	const bool autoIsNewer = FileTime(autoNamed) > FileTime(plain);
 	char backup[MAXPATHLEN];
 
@@ -758,7 +758,7 @@ int BrowserLoadFile()
 	if(!IsValidROM())
 		goto done;
 
-	// store the filename (w/o ext) - used for Game Save File/Snapshot naming
+	// store the filename (w/o ext) - used for Cartridge Save/Snapshot naming
 	StripExt(Memory.ROMFilename, browserList[browser.selIndex].filename);
 	snprintf(EmuSettings.lastFileLoaded, MAXPATHLEN, "%s", browserList[browser.selIndex].filename);
 	strncpy(Memory.ROMFilePath, browser.dir, PATH_MAX);

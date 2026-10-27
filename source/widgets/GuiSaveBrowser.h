@@ -46,6 +46,8 @@ class GuiSaveFileIcon : public GuiElement
 {
 	public:
 		GuiSaveFileIcon();
+		//!A cartridge with an empty (gray) battery: a game that has no save file of its own
+		void setNoBattery(bool none);
 		void draw() override;
 	private:
 		GuiShape body;
@@ -53,6 +55,7 @@ class GuiSaveFileIcon : public GuiElement
 		GuiShape battery;
 		GuiShape nub;
 		GuiShape slot;
+		bool noBattery;
 };
 
 //!One card of the save browser. The browser only shows these: what a card means (a snapshot, a
@@ -65,10 +68,18 @@ struct SaveEntry
 	std::string subtitle;			//!< "Wed Oct 21, 9:02 PM", or a hint on a NEW card
 	GuiImageData * preview = nullptr;	//!< The screenshot, not owned; nullptr shows the placeholder
 	std::string placeholder;		//!< What the placeholder says (no screenshot)
+	//!What a slot badge, on the screenshot's corner, says
+	enum { BADGE_NONE = 0, BADGE_AUTO = -1, BADGE_AUTO_PAUSED = -2 };
+	//!The tag on a card's top edge
+	enum Tag { TAG_NONE, TAG_PLAYING, TAG_AUTOSAVE, TAG_PAUSED };
 	bool pinned = false;			//!< Shown on its own in a wide card under the grid, with the save-file icon instead of a screenshot. At most one, and the last entry
 	std::string chip;				//!< A small label at the right of a pinned card ("Auto-save on")
 	bool chipOn = false;			//!< The label states something that is on: it gets a green dot and the accent color, and is gray otherwise
-	bool playing = false;			//!< Tagged "Playing from": the save the game was started from
+	int badge = BADGE_NONE;			//!< A slot number (1 or more) in a circle, or BADGE_AUTO / BADGE_AUTO_PAUSED in a pill, on the screenshot
+	Tag tag = TAG_NONE;				//!< "Playing from" (the save the game was started from), "Autosave" (live), or "Paused" (an autosave nothing is updating)
+	bool dimPreview = false;		//!< The screenshot is dimmed: it is not changing
+	bool info = false;				//!< A note, not a card: dark, translucent, and the cursor skips it
+	bool noBattery = false;			//!< (pinned) The icon is a cartridge with an empty battery
 	int id = -1;					//!< Whatever the caller wants to find this card by (an index into its own list)
 };
 
@@ -82,6 +93,8 @@ class GuiSaveBrowser : public GuiElement
 		//!\param rows How many rows of cards the grid shows at once. A pinned card goes under them
 		GuiSaveBrowser(int w, int rows);
 		~GuiSaveBrowser();
+		//!How many rows of cards the grid shows at once (1 to 3). Call before setEntries() when it changes.
+		void setRows(int r);
 		//!Replaces the cards. \param select The card (by position) that gets the cursor.
 		void setEntries(const std::vector<SaveEntry>& list, int select = 0);
 		//!\return The position of the card that was chosen since the last call, or -1.
@@ -103,6 +116,9 @@ class GuiSaveBrowser : public GuiElement
 		int rows;				//!< rows of cards shown at once
 		int pageSize() const { return rows * COLS; }
 		bool hasPinned() const { return !entries.empty() && entries.back().pinned; }
+		//!The cursor can go to the pinned card: there is one, and it is not a note
+		bool pinnedSelectable() const { return hasPinned() && !entries.back().info; }
+		bool isInfoAt(int position) const { return position >= 0 && position < gridCount() && entries[(size_t)position].info; }
 		int gridCount() const { return (int)entries.size() - (hasPinned() ? 1 : 0); }
 		int lastRowItem() const;
 		GuiButton * saveBtn[SAVELISTSIZE];
@@ -111,8 +127,17 @@ class GuiSaveBrowser : public GuiElement
 
 		GuiShape * saveBgImg[SAVELISTSIZE];
 		GuiSavePreview * savePreviewImg[SAVELISTSIZE];
-		GuiShape * tagShape[SAVELISTSIZE];		// the "Playing from" tag, on the card's top edge
+		GuiShape * tagShape[SAVELISTSIZE];		// the tag on the card's top edge
+		GuiShape * tagDot[SAVELISTSIZE];		// the dot in the "Autosave" tag
 		GuiText * tagText[SAVELISTSIZE];
+		GuiShape * badgeAutoShape[SAVELISTSIZE];	// AUTO, on the screenshot's corner
+		GuiText * badgeAutoText[SAVELISTSIZE];
+		GuiShape * badgeNumShape[SAVELISTSIZE];	// a slot number, there
+		GuiText * badgeNumText[SAVELISTSIZE];
+		GuiShape * dimShape[SAVELISTSIZE];		// over a screenshot that is not changing
+		int tagShown[SAVELISTSIZE];				// what each card's tag is drawn as now, so it is restyled only when it changes
+		int badgeShown[SAVELISTSIZE];
+		int infoShown[SAVELISTSIZE];
 
 		GuiButton * arrowUpBtn;
 		GuiButton * arrowDownBtn;
@@ -133,7 +158,8 @@ class GuiSaveBrowser : public GuiElement
 		GuiShape * chipShape;
 		GuiShape * chipDot;
 		GuiText * chipText;
-		int chipState;				// what the chip is drawn as: -1 not yet, 0 off, 1 on
+		int chipState;				// what the chip is drawn as: -1 not yet, 0 off, 1 on, 2 on over a note
+		int pinnedInfoShown;		// the pinned card is drawn as: -1 not yet, 0 a card, 1 a note
 		bool pinnedOn;				// the cursor is on the pinned card (the grid keeps its column in selectedItem)
 		bool pinnedLastOver;
 
