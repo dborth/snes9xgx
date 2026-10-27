@@ -2832,7 +2832,11 @@ static int MenuGameSaves()
 			{
 				EmuSettings.saveMode = chosen;
 				modeValueTxt.setText(modeNames[chosen]);
-				showCards(-1, -1, saveBrowser.getSelectedPosition());	// the cards re-tag themselves for the new mode
+				const int was = saveBrowser.getSelectedPosition();
+				if(was >= 0 && was < (int)cards.size())
+					showCards(cards[(size_t)was].type, cards[(size_t)was].slot, 0);
+				else
+					showCards(-1, -1, 0);
 				showToast(std::string("Save Mode: ") + modeNames[chosen]);
 			}
 			else
