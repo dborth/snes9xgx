@@ -1085,13 +1085,20 @@ static bool WaitForQueuedTasks()
 }
 
 /****************************************************************************
- * AutoSave
+ * AutoSaveLeavingGame
  *
- * What the Save Mode saves when returning from in-game to the menu: the
- * Snapshot, Cartridge Save, or nothing
+ * What the Save Mode saves when the game is replaced by another: the
+ * Snapshot, Cartridge Save, or nothing. (Quitting is AutoSaveOnQuit's.)
+ *
+ * Returning from the game to the menu saves nothing: whoever dies and goes
+ * to the menu to load the Auto Snapshot wants the moment they started from,
+ * not the one they died at. The game is only left for good when another is
+ * chosen, or the app quits - or when the Saves screen is asked to update the
+ * autosave.
  *
  * Nothing is asked: a Snapshot goes to the game's auto slot (slot 0), never to
- * a numbered one, so it can't overwrite anything the user saved by hand.
+ * a numbered one, so it can't overwrite anything the user saved by hand. And
+ * nothing is written for a game that has not changed since it was last saved.
  *
  * Everything that has to happen while the game is still loaded - capturing
  * the Cartridge Save or Snapshot - is done right here on the main thread. Writing it to the
@@ -1122,10 +1129,11 @@ static int AutoSaveTask(void * arg)
 	return 0;
 }
 
-static bool AutoSave()
+static bool AutoSaveLeavingGame()
 {
-	if(EmuSettings.saveMode == SAVEMODE_MANUAL)
-		return true; // nothing to save
+	// no game loaded, nothing that saves on its own, or nothing changed since it was saved
+	if(SNESROMSize == 0 || EmuSettings.saveMode == SAVEMODE_MANUAL || !LiveStateChanged())
+		return true;
 
 	// Capture everything now - the worker may not get to it until the user has
 	// already loaded another game
@@ -1135,7 +1143,8 @@ static bool AutoSave()
 		return true;
 
 	job->sram = EmuSettings.saveMode == SAVEMODE_GAMESAVE ? SnapshotSRAMAuto() : nullptr;
-	job->state = EmuSettings.saveMode == SAVEMODE_SNAPSHOT ? SnapshotStateAuto() : nullptr;
+	// in the menu, the screenshot is right unless something was loaded or reset there
+	job->state = EmuSettings.saveMode == SAVEMODE_SNAPSHOT ? SnapshotStateAuto(ScreenshotIsCurrent()) : nullptr;
 
 	if(!job->sram && !job->state)
 	{
@@ -1143,7 +1152,11 @@ static bool AutoSave()
 		return true;
 	}
 
-	ClearLiveStateChanged(); // the Auto Snapshot is about to be up to date
+	// what is captured is what the file is about to hold
+	if(job->state)
+		AutoSnapshotWritten();
+	if(job->sram)
+		CartridgeSaveWritten();
 
 	if(QueueBackgroundTask(AutoSaveTask, job))
 		return true;
@@ -1343,7 +1356,9 @@ static int MenuGameSelection()
 				{
 					menu->mainWindow.setState(STATE::DISABLED);
 
-					if(!WaitForQueuedTasks()) return MENU_EXIT; // eg. auto-save of the last game
+					// the game being replaced is left for good: its autosave is written first
+					if(!AutoSaveLeavingGame()) return MENU_EXIT;
+					if(!WaitForQueuedTasks()) return MENU_EXIT; // for that write, and any other
 
 					deviceChecking.leave();
 
@@ -1509,17 +1524,12 @@ static int MenuGame()
 
 	if(lastMenu == MENU_NONE) // coming from the game
 	{
-		// Auto-save first, before the (slow) building of this screen below, so
-		// that a prompt appears right away. The menu frame slides in behind it.
 		enterSound->play();
 		menu->btnLogo.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
 		menu->btnLogo.setPosition(-50, -40);
 		menu->bgTopImg.setEffect(EFFECT::SLIDE_TOP | EFFECT::SLIDE_IN, 35);
 		menu->bgBottomImg.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
 		menu->btnLogo.setEffect(EFFECT::SLIDE_BOTTOM | EFFECT::SLIDE_IN, 35);
-
-		if(!AutoSave())
-			return MENU_EXIT;
 	}
 
 	char romTitle[512];
@@ -2091,6 +2101,7 @@ static void BuildSaveCards(SaveList & saves, bool gameSave, std::vector<SaveEntr
 	std::vector<int> found;
 	int playingIdx = -1;
 	int autoIdx = -1;
+	bool autoPlaying = false;	// the game was started from the Auto Snapshot (the usual case in Snapshot mode)
 
 	for(int i = 0; i < saves.length; i++)
 	{
@@ -2102,7 +2113,10 @@ static void BuildSaveCards(SaveList & saves, bool gameSave, std::vector<SaveEntr
 			continue;
 
 		if(slot == 0)
+		{
 			autoIdx = i;
+			autoPlaying = playing[0] && MakeFilePath(path, FILE_STATE, saves.filename[i]) && strcmp(path, playing) == 0;
+		}
 		else if(playing[0] && MakeFilePath(path, FILE_STATE, saves.filename[i]) && strcmp(path, playing) == 0)
 			playingIdx = i;
 		else
@@ -2143,7 +2157,7 @@ static void BuildSaveCards(SaveList & saves, bool gameSave, std::vector<SaveEntr
 	};
 
 	if(autoIdx >= 0)
-		addSnapshot(autoIdx, false);
+		addSnapshot(autoIdx, autoPlaying);
 	else if(autoLive)
 	{
 		// it will be made when you leave the game: say so, in a note
@@ -2274,30 +2288,43 @@ static void SaveCardMenu(const SaveCard & card, int backupCount, std::vector<Pic
 		acts.push_back(act);
 	};
 
-	if(card.type == FILE_STATE && card.autoSnap)
+	// The Auto Snapshot, while Snapshot mode keeps it, is written when the game is left for good - not when
+	// you go to the menu - so it can be updated on request: after getting past the hard part, say. Paused
+	// (the Save Mode is another), nothing is updating it, and nothing here should.
+	const bool autoLive = card.type == FILE_STATE && card.autoSnap && mode == SAVEMODE_SNAPSHOT;
+
+	if(card.type == FILE_STATE && card.autoSnap && !autoLive)
 	{
-		const bool live = (mode == SAVEMODE_SNAPSHOT);
-		add(SAVEACT_LOAD, "Load", live ? "Go back to where you left off" : "Jump to this moment", true, true);
-		add(SAVEACT_DELETE, "Delete", live ? "Start fresh next time" : "Remove this snapshot", false, false);
+		add(SAVEACT_LOAD, "Load", "Jump to this moment", true, true);
+		add(SAVEACT_DELETE, "Delete", "Remove this snapshot", false, false);
 		items.back().danger = true;
-		footnote = live ? "Updated automatically when you leave the game."
-			: (mode == SAVEMODE_GAMESAVE ? "Not updated while Save Mode is Cartridge Save."
-										: "Not updated while Save Mode is Manual.");
+		footnote = (mode == SAVEMODE_GAMESAVE ? "Not updated while Save Mode is Cartridge Save."
+											: "Not updated while Save Mode is Manual.");
 	}
 	else if(card.type == FILE_STATE)
 	{
-		if(card.playing)
+		// Update leads for the snapshot we started from - except the Auto Snapshot, whose likeliest use after a
+		// trip to the menu is to go back to it, and where Update, as the first row, would overwrite the place you
+		// started from with the one you died at
+		if(card.playing && !card.autoSnap)
 		{
 			add(SAVEACT_UPDATE, "Update", "Replace with your progress now", true, false);
 			add(SAVEACT_LOAD, "Load", "Jump back to this moment", false, true);
+		}
+		else if(card.playing)
+		{
+			add(SAVEACT_LOAD, "Load", "Go back to where you left off", true, false);
+			add(SAVEACT_UPDATE, "Update", "Replace with your progress now", false, true);
 		}
 		else
 		{
 			add(SAVEACT_LOAD, "Load", "Jump to this moment", true, false);
 			add(SAVEACT_UPDATE, "Replace", "Overwrite with your progress", false, true);
 		}
-		add(SAVEACT_DELETE, "Delete", "Remove this snapshot", false, false);
+		add(SAVEACT_DELETE, "Delete", autoLive ? "Start fresh next time" : "Remove this snapshot", false, false);
 		items.back().danger = true;
+		if(autoLive)
+			footnote = "Saved when you leave the game, or when you update it.";
 	}
 	else if(card.main)
 	{
@@ -2309,10 +2336,14 @@ static void SaveCardMenu(const SaveCard & card, int backupCount, std::vector<Pic
 			items.back().divider = true;
 		}
 		else
-			footnote = "Saved automatically when you leave the game.";
+		{
+			// saved when the game is left for good, not when you go to the menu: so it can be saved on request too
+			add(SAVEACT_SAVENOW, "Save Now", "Write the save to its file", true, true);
+			footnote = "Saved when you leave the game, or when you save it.";
+		}
 
 		// Make Backup is inside, with the backups, so this list stays short enough to fit above the card
-		add(SAVEACT_BACKUPS, "Backups", backupCount > 0 ? GuiFormat("Copy, or restore one of %d", backupCount) : std::string("Make a copy of the save"), mode != SAVEMODE_MANUAL, false);
+		add(SAVEACT_BACKUPS, "Backups", backupCount > 0 ? GuiFormat("Copy, or restore one of %d", backupCount) : std::string("Make a copy of the save"), false, false);
 		items.back().chevron = true;
 	}
 	else
@@ -2717,6 +2748,9 @@ static int MenuGameSaves()
 								newSlot = card.slot;
 								saved = "updated";
 							}
+
+							if(card.autoSnap)
+								AutoSnapshotWritten();	// asked for by hand, but it is the autosave all the same
 						}
 						else
 							ErrorPrompt("Save failed!");
@@ -2747,6 +2781,9 @@ static int MenuGameSaves()
 							changed = true;
 							newSlot = slot;
 							saved = (act == SAVEACT_BACKUP) ? "saved" : "updated";
+
+							if(act == SAVEACT_SAVENOW)
+								CartridgeSaveWritten();
 						}
 						else
 							ErrorPrompt("Save failed!");
@@ -2757,12 +2794,12 @@ static int MenuGameSaves()
 					{
 						std::string question = "Delete " + entry.title + "?";
 						std::string detail = "This can't be undone.";
-						if(card.playing)
-							detail = "This is the snapshot you started from. " + detail;
-						else if(card.autoSnap && EmuSettings.saveMode == SAVEMODE_SNAPSHOT)
+						if(card.autoSnap && EmuSettings.saveMode == SAVEMODE_SNAPSHOT)
 							detail = "Next time you open this game it starts from its Cartridge Save, or from the beginning. " + detail;
 						else if(card.autoSnap)
 							detail = "It is not being updated in the current Save Mode. " + detail;
+						else if(card.playing)
+							detail = "This is the snapshot you started from. " + detail;
 
 						if(!WindowPrompt(question.c_str(), detail.c_str(), "Delete", "Cancel"))
 							break;
@@ -2795,8 +2832,8 @@ static int MenuGameSaves()
 					if(saved)
 					{
 						std::string what = (card.type == FILE_SRAM)
-							? (newSlot == 0 ? std::string("Game save file") : SaveNumbered("Backup", newSlot))
-							: SaveNumbered("Snapshot", newSlot);
+							? (newSlot == 0 ? std::string("Cartridge Save") : SaveNumbered("Backup", newSlot))
+							: (newSlot == 0 ? std::string("Auto Snapshot") : SaveNumbered("Snapshot", newSlot));
 						showToast(what + " " + saved);
 					}
 				}

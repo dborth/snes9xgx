@@ -22,21 +22,59 @@
 #include "snes9x/snes9x.h"
 #include "snes9x/memmap.h"
 
-static bool liveStateChanged = false;
+// What is in storage is behind what is in the machine, for each of the two autosaves. They are kept apart
+// because they are written apart: the Save Mode can change in the menu, and either file can be updated on
+// request, which brings only that one up to date.
+static bool snapshotStale = false;
+static bool cartridgeStale = false;
+
+// The screenshot taken when the game was left no longer shows the machine
+static bool screenshotStale = false;
 
 void MarkLiveStateChanged()
 {
-	liveStateChanged = true;
+	snapshotStale = true;
+	cartridgeStale = true;
+	screenshotStale = true;
 }
 
 void ClearLiveStateChanged()
 {
-	liveStateChanged = false;
+	snapshotStale = false;
+	cartridgeStale = false;
 }
 
 bool LiveStateChanged()
 {
-	return liveStateChanged;
+	switch(EmuSettings.saveMode)
+	{
+		case SAVEMODE_SNAPSHOT:
+			return snapshotStale;
+		case SAVEMODE_GAMESAVE:
+			return cartridgeStale;
+		default:
+			return false;
+	}
+}
+
+void AutoSnapshotWritten()
+{
+	snapshotStale = false;
+}
+
+void CartridgeSaveWritten()
+{
+	cartridgeStale = false;
+}
+
+void MarkScreenshotCurrent()
+{
+	screenshotStale = false;
+}
+
+bool ScreenshotIsCurrent()
+{
+	return !screenshotStale;
 }
 
 /****************************************************************************
@@ -86,41 +124,48 @@ void AutoLoadOnGameOpen()
 
 /****************************************************************************
  * AutoSaveOnQuit
+ *
+ * Leaving the game for good. In the game, what it is doing now is written. In
+ * the menu, nothing was written when the game was left for it, so what the
+ * game was doing then - or what was loaded or reset since - is written now,
+ * if the autosave is behind it.
  ***************************************************************************/
 void AutoSaveOnQuit(bool screenshotIsCurrent)
 {
 	if(SNESROMSize == 0)
 		return;
 
-	// In the menu, the game was already saved when it was left
 	const bool inMenu = appRequest == AppRequest::MENU;
 
 	switch(EmuSettings.saveMode)
 	{
 		case SAVEMODE_SNAPSHOT:
 		{
-			// Something loaded or reset in the menu since then is what the game
-			// should come back to
-			if(inMenu && !LiveStateChanged())
+			if(inMenu && !snapshotStale)
 				break;
 
-			// The write from leaving the game may still be going to the same file
+			// A write to the same file may still be going
 			WaitForBackgroundTasks(15000);
 
-			StateSnapshot * snapshot = SnapshotStateAuto(!inMenu && screenshotIsCurrent);
+			// In the menu, the screenshot is right unless something was loaded or reset there
+			StateSnapshot * snapshot = SnapshotStateAuto(inMenu ? ScreenshotIsCurrent() : screenshotIsCurrent);
 
 			if(snapshot)
 			{
 				WriteStateSnapshot(snapshot, SILENT);
 				FreeStateSnapshot(snapshot);
 			}
-			ClearLiveStateChanged();
+			AutoSnapshotWritten();
 			break;
 		}
 
 		case SAVEMODE_GAMESAVE:
-			if(!inMenu)
-				SaveSRAMAuto(SILENT);
+			if(inMenu && !cartridgeStale)
+				break;
+
+			WaitForBackgroundTasks(15000);
+			SaveSRAMAuto(SILENT);
+			CartridgeSaveWritten();
 			break;
 
 		case SAVEMODE_MANUAL:

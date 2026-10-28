@@ -170,6 +170,7 @@ int main(int argc, char *argv[])
 		platform->getAudio()->stopEmulatorAudio();
 		SwitchMemoryModeMenu();
 		TakeScreenshot();
+		MarkScreenshotCurrent();
 		platform->getVideo()->startMenuVideo();
 	} // main loop
 	ExitApp();

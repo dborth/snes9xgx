@@ -347,17 +347,17 @@ Snes9x GX has two kinds of saves: the **Cartridge Save**, the game's own in-game
 
 **Save Mode** decides what Snes9x GX saves and loads for you, without being asked. It is the button beside **Go Back** at the bottom of the Saves screen: it shows the current mode, and clicking it opens the list of three. Your choice is remembered.
 
-- **Snapshot** (default) — Picks up exactly where you left off, as if you never turned the console off. Leaving a game saves its *Auto Snapshot*, and opening the game loads it. Load an earlier Snapshot from the **Saves** screen and leave, and the game comes back there next time. If a game has no Auto Snapshot yet, its Cartridge Save is loaded instead.
-- **Cartridge Save** — Like a real console: the game's own save is kept for you, and the game starts fresh each time. Leaving a game saves its Cartridge Save (`.srm`), and opening the game loads it.
+- **Snapshot** (default) — Picks up exactly where you left off, as if you never turned the console off. Opening the game loads its *Auto Snapshot*, which is saved when you leave the game for good. Load an earlier Snapshot from the **Saves** screen and quit, and the game comes back there next time. If a game has no Auto Snapshot yet, its Cartridge Save is loaded instead.
+- **Cartridge Save** — Like a real console: the game's own save is kept for you, and the game starts fresh each time. Opening the game loads its Cartridge Save (`.srm`), which is saved when you leave the game for good.
 - **Manual** — Nothing is saved or loaded unless you do it yourself from the **Saves** screen.
 
-Quitting Snes9x GX while a game is running (or while the console is shutting it down) saves the same way.
+**Leaving the game for good** means quitting Snes9x GX (from the game, or from the menu), the console shutting it down, or choosing another game. Only then is the autosave written. To keep your progress part-way through, **Update** the Auto Snapshot from the Saves screen (or **Save Now**, in Cartridge Save mode) and carry on playing.
 
 ### The Saves screen
 
 - **Snapshots** fill a grid. The **Auto Snapshot** comes first: tagged *Autosave* when Save Mode is Snapshot, and *Paused* in the other modes, where it isn't updated. Next is **New Snapshot** (called **Manual Snapshot** in Snapshot mode, where saving one is optional), then the Snapshot the game was started from (tagged *Playing from*), then the rest, newest first.
-- **Click a Snapshot** to Load it, replace it with your current progress, or Delete it. The Auto Snapshot can be loaded or deleted, but never overwritten by hand.
-- **The Cartridge Save** has its own card under the grid, for games that have one. In **Snapshot** mode it is only a note — the Cartridge Save is kept inside your Snapshots, so there is nothing to manage. In **Cartridge Save** mode it is tagged *Autosave*; click it to make a backup, or to restore or delete one. In **Manual** mode you can also **Save Now** to write it to its file, and **Load** it into the game.
+- **Click a Snapshot** to Load it, replace it with your current progress, or Delete it. The Auto Snapshot can also be updated with your progress (when Save Mode is Snapshot) or deleted; its popover says it is saved when you leave the game. The *Load* row comes first on it, so reloading after a bad moment is one click.
+- **The Cartridge Save** has its own card under the grid, for games that have one. In **Snapshot** mode it is only a note — the Cartridge Save is kept inside your Snapshots, so there is nothing to manage. In **Cartridge Save** mode it is tagged *Autosave*; click it to **Save Now** (write it to its file, ahead of leaving the game), or to make a backup, or to restore or delete one. In **Manual** mode you can also **Load** it into the game.
 - **Games without a Cartridge Save** show only Snapshots. In Cartridge Save mode the screen says so.
 
 ## Cheats
