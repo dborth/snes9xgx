@@ -102,6 +102,48 @@ static void createXMLController(uint32_t controller[], const char * name, const 
 	}
 }
 
+struct CtrlMapKind
+{
+	int ctrl;
+	const char * key;
+	const char * description;
+};
+
+static const CtrlMapKind ctrlMapKinds[] =
+{
+	{ CTRL_PAD,	"pad", "SNES Pad" },
+	{ CTRL_SCOPE, "scope", "Superscope" },
+	{ CTRL_MOUSE, "mouse", "Mouse" },
+	{ CTRL_JUST, "just", "Justifier" },
+};
+
+// indexed by GuiHardwareProfile; the description is ctrlrName[hw]
+static const char * const ctrlMapHardwareKeys[] =
+{
+	"gcpad", "wiimote", "nunchuk", "classic", "wupc", "wiidrc", "ds4", "xbox360", "genericusb"
+};
+
+static void ctrlMapName(char * name, size_t nameSize, char * description, size_t descriptionSize, const CtrlMapKind & kind, int hw)
+{
+	snprintf(name, nameSize, "btnmapping_%s_%s", kind.key, ctrlMapHardwareKeys[hw]);
+	snprintf(description, descriptionSize, "%s - %s", kind.description, ctrlrName[hw]);
+}
+
+static void createXMLControllers()
+{
+	char name[48];
+	char description[96];
+
+	for(const CtrlMapKind & kind : ctrlMapKinds)
+	{
+		for(int hw = 0; hw < INPUT_HW_MAX; hw++)
+		{
+			ctrlMapName(name, sizeof(name), description, sizeof(description), kind, hw);
+			createXMLController(btnmap[kind.ctrl][hw], name, description);
+		}
+	}
+}
+
 static const char * XMLSaveCallback(mxml_node_t *node, int where)
 {
 	const char *name;
@@ -184,7 +226,7 @@ preparePrefsData ()
 
 	createXMLSection("Menu", "Menu Settings");
 
-#ifdef HW_RVL
+#if defined(HW_RVL) || defined(__WIIU__)
 	createXMLSetting("wiimoteOrientation", "Wiimote Orientation", toStr(EmuSettings.wiimoteOrientation));
 #endif
 	createXMLSetting("exitAction", "Exit Action", toStr(EmuSettings.exitAction));
@@ -202,29 +244,8 @@ preparePrefsData ()
 	createXMLSetting("gamepadMenuToggle", "Gamepad Menu Toggle", toStr(EmuSettings.gamepadMenuToggle));
 	createXMLSetting("mapAbxyRightStick", "Map ABXY Right Stick", BtoStr(EmuSettings.mapAbxyRightStick));
 
-	createXMLController(btnmap[CTRL_PAD][INPUT_HW_GAMECUBE], "btnmapping_pad_gcpad", "SNES Pad - GameCube Controller");
-#ifdef HW_RVL
-	createXMLController(btnmap[CTRL_PAD][INPUT_HW_WIIMOTE], "btnmapping_pad_wiimote", "SNES Pad - Wiimote");
-	createXMLController(btnmap[CTRL_PAD][INPUT_HW_CLASSIC], "btnmapping_pad_classic", "SNES Pad - Classic Controller");
-	createXMLController(btnmap[CTRL_PAD][INPUT_HW_WUPC], "btnmapping_pad_wupc", "SNES Pad - Wii U Pro Controller");
-	createXMLController(btnmap[CTRL_PAD][INPUT_HW_DRC], "btnmapping_pad_wiidrc", "SNES Pad - Wii U Gamepad");
-	createXMLController(btnmap[CTRL_PAD][INPUT_HW_NUNCHUK], "btnmapping_pad_nunchuk", "SNES Pad - Nunchuk + Wiimote");
-	createXMLController(btnmap[CTRL_PAD][INPUT_HW_DS4], "btnmapping_pad_ds4", "SNES Pad - DualShock 4");
-	createXMLController(btnmap[CTRL_PAD][INPUT_HW_XBOX360], "btnmapping_pad_xbox360", "SNES Pad - Xbox 360 Controller");
-	createXMLController(btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB], "btnmapping_pad_genericusb", "SNES Pad - USB Controller");
-#endif
-	createXMLController(btnmap[CTRL_SCOPE][INPUT_HW_GAMECUBE], "btnmapping_scope_gcpad", "Superscope - GameCube Controller");
-#ifdef HW_RVL
-	createXMLController(btnmap[CTRL_SCOPE][INPUT_HW_WIIMOTE], "btnmapping_scope_wiimote", "Superscope - Wiimote");
-#endif
-	createXMLController(btnmap[CTRL_MOUSE][INPUT_HW_GAMECUBE], "btnmapping_mouse_gcpad", "Mouse - GameCube Controller");
-#ifdef HW_RVL
-	createXMLController(btnmap[CTRL_MOUSE][INPUT_HW_WIIMOTE], "btnmapping_mouse_wiimote", "Mouse - Wiimote");
-#endif
-	createXMLController(btnmap[CTRL_JUST][INPUT_HW_GAMECUBE], "btnmapping_just_gcpad", "Justifier - GameCube Controller");
-#ifdef HW_RVL
-	createXMLController(btnmap[CTRL_JUST][INPUT_HW_WIIMOTE], "btnmapping_just_wiimote", "Justifier - Wiimote");
-#endif
+	createXMLControllers();
+
 	int datasize = mxmlSaveString(xml, (char *)savebuffer, SAVEBUFFERSIZE, XMLSaveCallback);
 
 	mxmlDelete(xml);
@@ -305,6 +326,21 @@ static void loadXMLController(uint32_t controller[], const char * name)
 				if(tmp)
 					controller[i] = atoi(tmp);
 			}
+		}
+	}
+}
+
+static void loadXMLControllers()
+{
+	char name[48];
+	char description[96];
+
+	for(const CtrlMapKind & kind : ctrlMapKinds)
+	{
+		for(int hw = 0; hw < INPUT_HW_MAX; hw++)
+		{
+			ctrlMapName(name, sizeof(name), description, sizeof(description), kind, hw);
+			loadXMLController(btnmap[kind.ctrl][hw], name);
 		}
 	}
 }
@@ -414,21 +450,7 @@ decodePrefsData ()
 	loadXMLSetting(&EmuSettings.gamepadMenuToggle, "gamepadMenuToggle");
 	loadXMLSetting(&EmuSettings.mapAbxyRightStick, "mapAbxyRightStick");
 
-	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_GAMECUBE], "btnmapping_pad_gcpad");
-	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_WIIMOTE], "btnmapping_pad_wiimote");
-	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_CLASSIC], "btnmapping_pad_classic");
-	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_WUPC], "btnmapping_pad_wupc");
-	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_DRC], "btnmapping_pad_wiidrc");
-	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_NUNCHUK], "btnmapping_pad_nunchuk");
-	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_DS4], "btnmapping_pad_ds4");
-	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_XBOX360], "btnmapping_pad_xbox360");
-	loadXMLController(btnmap[CTRL_PAD][INPUT_HW_GENERIC_USB], "btnmapping_pad_genericusb");
-	loadXMLController(btnmap[CTRL_SCOPE][INPUT_HW_GAMECUBE], "btnmapping_scope_gcpad");
-	loadXMLController(btnmap[CTRL_SCOPE][INPUT_HW_WIIMOTE], "btnmapping_scope_wiimote");
-	loadXMLController(btnmap[CTRL_MOUSE][INPUT_HW_GAMECUBE], "btnmapping_mouse_gcpad");
-	loadXMLController(btnmap[CTRL_MOUSE][INPUT_HW_WIIMOTE], "btnmapping_mouse_wiimote");
-	loadXMLController(btnmap[CTRL_JUST][INPUT_HW_GAMECUBE], "btnmapping_just_gcpad");
-	loadXMLController(btnmap[CTRL_JUST][INPUT_HW_WIIMOTE], "btnmapping_just_wiimote");
+	loadXMLControllers();
 
 	mxmlDelete(xml);
 	return true;
