@@ -14,6 +14,7 @@
 #include "FileSystemDriver.h"
 #include "ThreadDriver.h"
 #include "Logger.h"
+#include "MouseDriver.h"
 
 class AudioDriver;
 class VideoDriver;
@@ -86,6 +87,11 @@ class Platform
 		virtual InputDriver* getInput() = 0;
 		virtual FileSystemDriver* getFileSystem() = 0;
 		virtual ThreadDriver* getThread() = 0;
+		//!The USB mouse. Never null: a platform without one (eg. GameCube)
+		//!keeps this default, a driver that is never connected and never has
+		//!an event. A platform that has one creates and init()s it in init(),
+		//!and shuts it down in shutdown().
+		virtual MouseDriver* getMouse() { static MouseDriver none; return &none; }
 		//!May return nullptr on a Platform that hasn't finished init()
 		//!yet - LogPrintf()/LOG_*() already guard against this, but code
 		//!calling platform->getLogger() directly should too.

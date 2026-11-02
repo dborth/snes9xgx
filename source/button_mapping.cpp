@@ -216,5 +216,27 @@ CtrlrMap ctrlr_def[INPUT_HW_MAX] = {
 		{INPUT_BTN_NONE, ""},
 		{INPUT_BTN_NONE, ""}
 	}
+},
+// USB mouse btn def
+{
+	INPUT_HW_USBMOUSE,
+	3,
+	{
+		{INPUT_BTN_A, "LEFT"},
+		{INPUT_BTN_B, "RIGHT"},
+		{INPUT_BTN_X, "MIDDLE"},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""},
+		{INPUT_BTN_NONE, ""}
+	}
 }
 };

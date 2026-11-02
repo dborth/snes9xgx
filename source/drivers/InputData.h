@@ -46,7 +46,8 @@ enum GuiHardwareProfile : uint32_t {
     INPUT_HW_DS4      = 6,
     INPUT_HW_XBOX360  = 7,
     INPUT_HW_GENERIC_USB = 8,   // Retrode, Hornet, Mayflash (SNES-style USB pads)
-    INPUT_HW_MAX      = 9
+    INPUT_HW_USBMOUSE = 9,      // USB mouse (Wii/WiiU): left/right/middle button, pointer comes through the cursor
+    INPUT_HW_MAX      = 10
 };
 
 /**

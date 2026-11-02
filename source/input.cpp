@@ -265,6 +265,14 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
 		btnmap[CTRL_SCOPE][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_Y;
 		btnmap[CTRL_SCOPE][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_X;
 		btnmap[CTRL_SCOPE][INPUT_HW_GENERIC_USB][i++] = INPUT_BTN_PLUS;
+		i=0;
+		// USB mouse: left fires, right aims off screen, middle pauses
+		btnmap[CTRL_SCOPE][INPUT_HW_USBMOUSE][i++] = INPUT_BTN_A;
+		btnmap[CTRL_SCOPE][INPUT_HW_USBMOUSE][i++] = INPUT_BTN_B;
+		btnmap[CTRL_SCOPE][INPUT_HW_USBMOUSE][i++] = INPUT_BTN_NONE;
+		btnmap[CTRL_SCOPE][INPUT_HW_USBMOUSE][i++] = INPUT_BTN_NONE;
+		btnmap[CTRL_SCOPE][INPUT_HW_USBMOUSE][i++] = INPUT_BTN_NONE;
+		btnmap[CTRL_SCOPE][INPUT_HW_USBMOUSE][i++] = INPUT_BTN_X;
 	}
 
 	/*** Mouse & Justifier Mapping (Simplified identically to masks) ***/
@@ -285,6 +293,8 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
         btnmap[CTRL_MOUSE][INPUT_HW_XBOX360][1] = INPUT_BTN_B;
         btnmap[CTRL_MOUSE][INPUT_HW_GENERIC_USB][0] = INPUT_BTN_A;
         btnmap[CTRL_MOUSE][INPUT_HW_GENERIC_USB][1] = INPUT_BTN_B;
+        btnmap[CTRL_MOUSE][INPUT_HW_USBMOUSE][0] = INPUT_BTN_A;
+        btnmap[CTRL_MOUSE][INPUT_HW_USBMOUSE][1] = INPUT_BTN_B;
     }
 
     if (consoleCtrl == -1 || consoleCtrl == CTRL_JUST) {
@@ -312,6 +322,9 @@ void ResetControls(int consoleCtrl, int wiiCtrl)
         btnmap[CTRL_JUST][INPUT_HW_GENERIC_USB][0] = INPUT_BTN_B;
         btnmap[CTRL_JUST][INPUT_HW_GENERIC_USB][1] = INPUT_BTN_A;
         btnmap[CTRL_JUST][INPUT_HW_GENERIC_USB][2] = INPUT_BTN_PLUS;
+        btnmap[CTRL_JUST][INPUT_HW_USBMOUSE][0] = INPUT_BTN_A;
+        btnmap[CTRL_JUST][INPUT_HW_USBMOUSE][1] = INPUT_BTN_B;
+        btnmap[CTRL_JUST][INPUT_HW_USBMOUSE][2] = INPUT_BTN_X;
     }
 }
 

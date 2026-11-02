@@ -13,6 +13,7 @@
 #include "../OgcThreadDriver.h"
 #include "WiiAudioDriver.h"
 #include "WiiFileSystemDriver.h"
+#include "WiiMouseDriver.h"
 #include "../OgcLoggerSysReport.h"
 #include "../OgcLoggerUdp.h"
 #include "../OgcLoggerUsbGecko.h"
@@ -62,6 +63,7 @@ class WiiPlatform : public Platform
 		VideoDriver* getVideo() override { return videoDriver; }
 		InputDriver* getInput() override { return inputDriver; }
 		FileSystemDriver* getFileSystem() override { return fileSystemDriver; }
+		MouseDriver* getMouse() override { return mouseDriver; }
 		ThreadDriver* getThread() override { return threadDriver; }
 		Logger* getLogger() override { return logger; }
 
@@ -74,6 +76,7 @@ class WiiPlatform : public Platform
 		OgcVideoDriver* videoDriver = nullptr;
 		OgcInputDriver* inputDriver = nullptr;
 		WiiFileSystemDriver* fileSystemDriver = nullptr;
+		WiiMouseDriver* mouseDriver = nullptr;
 		OgcThreadDriver* threadDriver = nullptr;
 		Logger* logger = nullptr;
 };

@@ -5,6 +5,7 @@
  ***************************************************************************/
 #pragma once
 #include "../InputDriver.h"
+#include "../MousePointer.h"
 
 class OgcInputDriver : public InputDriver
 {
@@ -23,4 +24,5 @@ private:
     int menuRumbleFrames[4];     // frames left in the current menu "tick" (0 = idle)
     int menuRumbleGapFrames[4];  // frames left in the enforced silent gap after a tick
     uint32_t prevGenericUsbHeld[4]; // previous-frame held state of the generic USB adapters, for down/up edges
+    MousePointer mousePointer;   // the USB mouse as a pointer on channel 0 (see Platform::getMouse())
 };
