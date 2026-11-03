@@ -9,7 +9,7 @@
 
 #include "../../Platform.h"
 #include "../OgcVideoDriver.h"
-#include "../OgcInputDriver.h"
+#include "WiiInputDriver.h"
 #include "../OgcThreadDriver.h"
 #include "WiiAudioDriver.h"
 #include "WiiFileSystemDriver.h"
@@ -74,7 +74,7 @@ class WiiPlatform : public Platform
 		Status status = Status::Running;
 		WiiAudioDriver* audioDriver = nullptr;
 		OgcVideoDriver* videoDriver = nullptr;
-		OgcInputDriver* inputDriver = nullptr;
+		WiiInputDriver* inputDriver = nullptr;
 		WiiFileSystemDriver* fileSystemDriver = nullptr;
 		WiiMouseDriver* mouseDriver = nullptr;
 		OgcThreadDriver* threadDriver = nullptr;

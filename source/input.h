@@ -26,8 +26,6 @@ void ClearButtonsReported ();
 void SetControllers ();
 void SetDefaultButtonMap ();
 bool isMenuRequested();
-#ifdef HW_RVL
-char* GetUSBControllerInfo();
-#endif
+const char* GetUSBControllerInfo();
 
 #endif

@@ -28,14 +28,6 @@
 #include "snes9x/controls.h"
 #include "snes9x/ppu.h"
 
-#ifdef HW_RVL
-#include "drivers/ogc/wii/input/retrode.h"
-#include "drivers/ogc/wii/input/xbox360.h"
-#include "drivers/ogc/wii/input/hornet.h"
-#include "drivers/ogc/wii/input/mayflash.h"
-#include "drivers/ogc/wii/input/ds4.h"
-#endif
-
 #define ANALOG_SENSITIVITY 30
 
 int playerMapping[4] = {0,1,2,3};
@@ -782,11 +774,7 @@ void SetDefaultButtonMap ()
 	SetControllers();
 }
 
-#ifdef HW_RVL
-char* GetUSBControllerInfo()
+const char* GetUSBControllerInfo()
 {
-    static char info[128];
-    snprintf(info, sizeof(info), "Retrode: %s, XBOX360: %s, Hornet: %s, Mayflash: %s, DS4: %s", Retrode_Status(), XBOX360_Status(), Hornet_Status(), Mayflash_Status(), DS4_Status());
-    return info;
+    return platform->getInput()->getUsbControllerInfo();
 }
-#endif

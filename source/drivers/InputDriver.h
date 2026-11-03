@@ -33,6 +33,9 @@ class InputDriver
 		//! The USB controller to show on the controller status strip (none on platforms without USB controllers)
 		virtual InputUsbStatus getUsbStatus() { return InputUsbStatus(); }
 
+		//! One line describing the state of each USB controller driver, for the credits screen (empty where there are none)
+		virtual const char * getUsbControllerInfo() { return ""; }
+
 		void setRumbleEnabled(bool enabled) { rumbleEnabled = enabled; }
 		bool isRumbleEnabled() const { return rumbleEnabled; }
 		void setWiimoteOrientation(int orientation) { wiimoteOrientation = orientation; }

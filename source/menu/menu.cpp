@@ -457,9 +457,7 @@ static void CreditsWindow()
 	snprintf(consoleDetails, sizeof(consoleDetails), "%s", platform->getConsoleDetails());
 	snprintf(memoryFreeInfo, sizeof(memoryFreeInfo), "%s", platform->getMemoryFreeInfo());
 
-#ifdef HW_RVL
 	snprintf(controllerInfo, sizeof(controllerInfo), "%s", GetUSBControllerInfo());
-#endif
 
 	txt[i] = new GuiText(consoleDetails, 14, (PixelColor){0, 0, 0, 255});
 	txt[i]->setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);

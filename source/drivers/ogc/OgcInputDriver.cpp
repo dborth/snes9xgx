@@ -3,46 +3,25 @@
  * Daryl Borth 2009-2026
  * OgcInputDriver.cpp
  *
- * Wii/GameCube controller management and normalization
+ * GameCube controller management and normalization, and the per-frame
+ * machinery shared with the Wii driver (see WiiInputDriver)
  ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdint.h>
 #include <cmath>
 #include <ogcsys.h>
-#include <unistd.h>
-#include <wiiuse/wpad.h>
+#include <ogc/pad.h>
 
 #include "OgcInputDriver.h"
+#include "OgcInputUtil.h"
 #include "../Platform.h"
-
-#ifdef HW_RVL
-#include "wii/WiiPlatform.h"
-#include "wii/input/wiidrc.h"
-#include "wii/input/retrode.h"
-#include "wii/input/xbox360.h"
-#include "wii/input/hornet.h"
-#include "wii/input/mayflash.h"
-#include "wii/input/ds4.h"
-#include "wii/input/usbinput.h"
-#endif
-
 #include "../InputController.h"
-
-extern "C" {
-s32 __STM_Close();
-s32 __STM_Init();
-}
-
-bool isWiiVC = false;
 
 OgcInputDriver::OgcInputDriver() {
 	for (int i = 0; i < 4; i++) {
 		rumbleRequest[i] = false;
 		menuRumbleFrames[i] = 0;
 		menuRumbleGapFrames[i] = 0;
-		prevGenericUsbHeld[i] = 0;
 	}
 }
 
@@ -50,35 +29,15 @@ OgcInputDriver::~OgcInputDriver() {
 	shutdown();
 }
 
-#ifdef HW_RVL
-static void WiimotePowerButtonCallback(s32) { NotifyWiiShutdownRequested(); }
-#endif
-
 void OgcInputDriver::init() {
 	PAD_Init();
-
-	#ifdef HW_RVL
-	// Wii Power/Reset buttons
-	__STM_Close();
-	__STM_Init();
-	SYS_SetPowerCallback(NotifyWiiShutdownRequested);
-
-	WiiDRC_Init();
-	isWiiVC = WiiDRC_Inited();
-	WPAD_Init();
-	WPAD_SetDataFormat(WPAD_CHAN_ALL, WPAD_FMT_BTNS_ACC_IR);
-	WPAD_SetVRes(WPAD_CHAN_ALL, platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
-	WPAD_SetPowerButtonCallback(WiimotePowerButtonCallback);
-	#endif
-
+	initHardware();
 	InitUserInputControllers();
 }
 
 void OgcInputDriver::shutdown() {
 	for (int i = 0; i < 4; i++) {
-		#ifdef HW_RVL
-		WPAD_Rumble(i, 0);
-		#endif
+		driveRumble(i, false);
 		PAD_ControlMotor(i, PAD_MOTOR_STOP);
 		rumbleRequest[i] = false;
 		menuRumbleFrames[i] = 0;
@@ -86,37 +45,10 @@ void OgcInputDriver::shutdown() {
 	}
 }
 
-InputUsbStatus OgcInputDriver::getUsbStatus() {
-	InputUsbStatus status;
-	#ifdef HW_RVL
-	// Each driver reports "connected", "please replug" or "not found"
-	char ds4 = DS4_Status()[0];
-	char xbox = XBOX360_Status()[0];
-	char gen[4] = { Retrode_Status()[0], Hornet_Status()[0], Mayflash_Status()[0], 0 };
-	bool genConnected = false, genReplug = false;
-	for (int i = 0; i < 3; i++) {
-		genConnected |= (gen[i] == 'c');
-		genReplug |= (gen[i] == 'p');
-	}
-
-	if (ds4 == 'c') status.profile = INPUT_HW_DS4;
-	else if (xbox == 'c') status.profile = INPUT_HW_XBOX360;
-	else if (genConnected) status.profile = INPUT_HW_GENERIC_USB;
-	else if (ds4 == 'p') { status.profile = INPUT_HW_DS4; status.replugRequired = true; }
-	else if (xbox == 'p') { status.profile = INPUT_HW_XBOX360; status.replugRequired = true; }
-	else if (genReplug) { status.profile = INPUT_HW_GENERIC_USB; status.replugRequired = true; }
-	#endif
-	return status;
-}
-
 void OgcInputDriver::setRumble(int channel, bool rumble) {
 	if (channel >= 0 && channel < 4) {
 		rumbleRequest[channel] = rumble;
 	}
-}
-
-static inline float clampf(float v, float lo, float hi) {
-    return (v < lo) ? lo : (v > hi) ? hi : v;
 }
 
 /****************************************************************************
@@ -140,188 +72,16 @@ static uint32_t MapPADToGeneric(uint32_t pad_btns) {
 	return mask;
 }
 
-#ifdef HW_RVL
-static uint32_t MapWiimoteToGeneric(uint32_t wpad_btns)
-{
-	uint32_t mask = INPUT_BTN_NONE;
-
-	if (wpad_btns & WPAD_BUTTON_A)     mask |= INPUT_BTN_A;
-	if (wpad_btns & WPAD_BUTTON_B)     mask |= INPUT_BTN_B;
-	if (wpad_btns & WPAD_BUTTON_1)     mask |= INPUT_BTN_1;
-	if (wpad_btns & WPAD_BUTTON_2)     mask |= INPUT_BTN_2;
-	if (wpad_btns & WPAD_BUTTON_UP)    mask |= INPUT_BTN_UP;
-	if (wpad_btns & WPAD_BUTTON_DOWN)  mask |= INPUT_BTN_DOWN;
-	if (wpad_btns & WPAD_BUTTON_LEFT)  mask |= INPUT_BTN_LEFT;
-	if (wpad_btns & WPAD_BUTTON_RIGHT) mask |= INPUT_BTN_RIGHT;
-	if (wpad_btns & WPAD_BUTTON_PLUS)  mask |= INPUT_BTN_PLUS;
-	if (wpad_btns & WPAD_BUTTON_MINUS) mask |= INPUT_BTN_MINUS;
-	if (wpad_btns & WPAD_BUTTON_HOME)  mask |= INPUT_BTN_HOME;
-
-	return mask;
-}
-
-static uint32_t MapNunchukToGeneric(uint32_t wpad_btns)
-{
-	uint32_t mask = INPUT_BTN_NONE;
-
-	if (wpad_btns & WPAD_NUNCHUK_BUTTON_Z) mask |= INPUT_TRIGGER_ZL;
-	if (wpad_btns & WPAD_NUNCHUK_BUTTON_C) mask |= INPUT_TRIGGER_L;
-
-	return mask;
-}
-
-static uint32_t MapClassicToGeneric(uint32_t wpad_btns)
-{
-	uint32_t mask = INPUT_BTN_NONE;
-
-	// Classic Controller inputs (upper 16 bits)
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_A) mask |= INPUT_BTN_A;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_B) mask |= INPUT_BTN_B;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_X) mask |= INPUT_BTN_X;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_Y) mask |= INPUT_BTN_Y;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_UP) mask |= INPUT_BTN_UP;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_DOWN) mask |= INPUT_BTN_DOWN;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_LEFT) mask |= INPUT_BTN_LEFT;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_RIGHT) mask |= INPUT_BTN_RIGHT;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_PLUS) mask |= INPUT_BTN_PLUS;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_MINUS) mask |= INPUT_BTN_MINUS;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_HOME) mask |= INPUT_BTN_HOME;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_FULL_L) mask |= INPUT_TRIGGER_L;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_FULL_R) mask |= INPUT_TRIGGER_R;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_ZL) mask |= INPUT_TRIGGER_ZL;
-	if (wpad_btns & WPAD_CLASSIC_BUTTON_ZR) mask |= INPUT_TRIGGER_ZR;
-
-	return mask;
-}
-
-static uint32_t MapWiiUGamepadToGeneric(uint32_t drc_btns) {
-	uint32_t mask = INPUT_BTN_NONE;
-	if (drc_btns & WIIDRC_BUTTON_A) mask |= INPUT_BTN_A;
-	if (drc_btns & WIIDRC_BUTTON_B) mask |= INPUT_BTN_B;
-	if (drc_btns & WIIDRC_BUTTON_X) mask |= INPUT_BTN_X;
-	if (drc_btns & WIIDRC_BUTTON_Y) mask |= INPUT_BTN_Y;
-	if (drc_btns & WIIDRC_BUTTON_UP) mask |= INPUT_BTN_UP;
-	if (drc_btns & WIIDRC_BUTTON_DOWN) mask |= INPUT_BTN_DOWN;
-	if (drc_btns & WIIDRC_BUTTON_LEFT) mask |= INPUT_BTN_LEFT;
-	if (drc_btns & WIIDRC_BUTTON_RIGHT) mask |= INPUT_BTN_RIGHT;
-	if (drc_btns & WIIDRC_BUTTON_PLUS) mask |= INPUT_BTN_PLUS;
-	if (drc_btns & WIIDRC_BUTTON_MINUS) mask |= INPUT_BTN_MINUS;
-	if (drc_btns & WIIDRC_BUTTON_HOME) mask |= INPUT_BTN_HOME;
-	if (drc_btns & WIIDRC_BUTTON_L) mask |= INPUT_TRIGGER_L;
-	if (drc_btns & WIIDRC_BUTTON_R) mask |= INPUT_TRIGGER_R;
-	if (drc_btns & WIIDRC_BUTTON_ZL) mask |= INPUT_TRIGGER_ZL;
-	if (drc_btns & WIIDRC_BUTTON_ZR) mask |= INPUT_TRIGGER_ZR;
-	return mask;
-}
-
-static uint32_t MapDS4ToGeneric(uint32_t ds4_btns) {
-	uint32_t mask = INPUT_BTN_NONE;
-	if (ds4_btns & DS4_BUTTON_CIRCLE) mask |= INPUT_BTN_A;
-	if (ds4_btns & DS4_BUTTON_CROSS) mask |= INPUT_BTN_B;
-	if (ds4_btns & DS4_BUTTON_TRIANGLE) mask |= INPUT_BTN_X;
-	if (ds4_btns & DS4_BUTTON_SQUARE) mask |= INPUT_BTN_Y;
-	if (ds4_btns & DS4_BUTTON_UP) mask |= INPUT_BTN_UP;
-	if (ds4_btns & DS4_BUTTON_DOWN) mask |= INPUT_BTN_DOWN;
-	if (ds4_btns & DS4_BUTTON_LEFT) mask |= INPUT_BTN_LEFT;
-	if (ds4_btns & DS4_BUTTON_RIGHT) mask |= INPUT_BTN_RIGHT;
-	if (ds4_btns & DS4_BUTTON_OPTIONS) mask |= INPUT_BTN_PLUS;
-	if (ds4_btns & DS4_BUTTON_SHARE) mask |= INPUT_BTN_MINUS;
-	if (ds4_btns & DS4_BUTTON_PS) mask |= INPUT_BTN_HOME;
-	if (ds4_btns & DS4_BUTTON_L1) mask |= INPUT_TRIGGER_L;
-	if (ds4_btns & DS4_BUTTON_R1) mask |= INPUT_TRIGGER_R;
-	if (ds4_btns & DS4_BUTTON_L2) mask |= INPUT_TRIGGER_ZL;
-	if (ds4_btns & DS4_BUTTON_R2) mask |= INPUT_TRIGGER_ZR;
-	if (ds4_btns & DS4_BUTTON_L3) mask |= INPUT_THUMB_L;
-	if (ds4_btns & DS4_BUTTON_R3) mask |= INPUT_THUMB_R;
-	return mask;
-}
-
-static uint32_t MapXbox360ToGeneric(uint32_t xbox_btns) {
-	uint32_t mask = INPUT_BTN_NONE;
-	// Face buttons keep their SNES position: Xbox B (right) = A, Xbox A (bottom) = B, etc.
-	if (xbox_btns & XBOX360_BUTTON_B) mask |= INPUT_BTN_A;
-	if (xbox_btns & XBOX360_BUTTON_A) mask |= INPUT_BTN_B;
-	if (xbox_btns & XBOX360_BUTTON_Y) mask |= INPUT_BTN_X;
-	if (xbox_btns & XBOX360_BUTTON_X) mask |= INPUT_BTN_Y;
-	if (xbox_btns & XBOX360_BUTTON_UP) mask |= INPUT_BTN_UP;
-	if (xbox_btns & XBOX360_BUTTON_DOWN) mask |= INPUT_BTN_DOWN;
-	if (xbox_btns & XBOX360_BUTTON_LEFT) mask |= INPUT_BTN_LEFT;
-	if (xbox_btns & XBOX360_BUTTON_RIGHT) mask |= INPUT_BTN_RIGHT;
-	if (xbox_btns & XBOX360_BUTTON_START) mask |= INPUT_BTN_PLUS;
-	if (xbox_btns & XBOX360_BUTTON_BACK) mask |= INPUT_BTN_MINUS;
-	if (xbox_btns & XBOX360_BUTTON_LB) mask |= INPUT_TRIGGER_L;
-	if (xbox_btns & XBOX360_BUTTON_RB) mask |= INPUT_TRIGGER_R;
-	if (xbox_btns & XBOX360_BUTTON_LT) mask |= INPUT_TRIGGER_ZL;
-	if (xbox_btns & XBOX360_BUTTON_RT) mask |= INPUT_TRIGGER_ZR;
-	if (xbox_btns & XBOX360_BUTTON_L3) mask |= INPUT_THUMB_L;
-	if (xbox_btns & XBOX360_BUTTON_R3) mask |= INPUT_THUMB_R;
-	return mask;
-}
-
-// Retrode, Hornet and Mayflash are SNES-layout pads, and their drivers report them in the PAD_*
-// bit layout (A B X Y L R Start, with Select on the Z bit). This is the only place those bits are
-// read as anything other than a real GameCube pad: Select goes to MINUS, not to the GC Z button.
-static uint32_t MapGenericUsbToGeneric(uint32_t pad_btns) {
-	uint32_t mask = INPUT_BTN_NONE;
-	if (pad_btns & PAD_BUTTON_A)      mask |= INPUT_BTN_A;
-	if (pad_btns & PAD_BUTTON_B)      mask |= INPUT_BTN_B;
-	if (pad_btns & PAD_BUTTON_X)      mask |= INPUT_BTN_X;
-	if (pad_btns & PAD_BUTTON_Y)      mask |= INPUT_BTN_Y;
-	if (pad_btns & PAD_BUTTON_UP)     mask |= INPUT_BTN_UP;
-	if (pad_btns & PAD_BUTTON_DOWN)   mask |= INPUT_BTN_DOWN;
-	if (pad_btns & PAD_BUTTON_LEFT)   mask |= INPUT_BTN_LEFT;
-	if (pad_btns & PAD_BUTTON_RIGHT)  mask |= INPUT_BTN_RIGHT;
-	if (pad_btns & PAD_BUTTON_START)  mask |= INPUT_BTN_PLUS;
-	if (pad_btns & PAD_TRIGGER_Z)     mask |= INPUT_BTN_MINUS;
-	if (pad_btns & PAD_TRIGGER_L)     mask |= INPUT_TRIGGER_L;
-	if (pad_btns & PAD_TRIGGER_R)     mask |= INPUT_TRIGGER_R;
-	return mask;
-}
-
-/****************************************************************************
- * Analog Normalization Helpers
- ***************************************************************************/
-static float NormalizeWPADAnalog(int pos, int min, int max, int center) {
-	if (min == max) return 0.0f;
-
-	// Handle broken 3rd party controller calibration data
-	if ((min >= center) || (max <= center)) {
-		min = 0; max = 64; center = 32; // Generic fallback
-	}
-	int offset = pos - center;
-	if (offset > 0) {
-		return clampf((float)offset / (float)(max - center), 0.0f, 1.0f);
-	} else {
-		return clampf((float)offset / (float)(center - min), -1.0f, 0.0f);
-	}
-}
-#endif
-
 void OgcInputDriver::update() {
-	#ifdef HW_RVL
-	UsbInput_Scan();
-	WiiDRC_ScanPads();
-	Retrode_ScanPads();
-	XBOX360_ScanPads();
-	Hornet_ScanPads();
-	Mayflash_ScanPads();
-	DS4_ScanPads();
-	WPAD_ScanPads();
-	bool systemRumbleAllowed = (CONF_GetPadMotorMode() != 0);
-	bool retrodeActive  = (Retrode_Status()[0]  == 'c');
-	bool hornetActive   = (Hornet_Status()[0]   == 'c');
-	bool mayflashActive = (Mayflash_Status()[0] == 'c');
-	#else
-	bool systemRumbleAllowed = true;
-	#endif
+	scanHardware();
 
 	u32 activeGamecubePads = PAD_ScanPads();
-	bool allowRumble = isRumbleEnabled() && systemRumbleAllowed;
+	bool allowRumble = isRumbleEnabled() && isSystemRumbleAllowed();
 
 	for(int i = 3; i >= 0; i--) {
 		InputPadData padData;
 
-		// GameCube controller (real pads only: USB controllers have profiles of their own below)
+		// GameCube controller (real pads only: USB controllers have profiles of their own)
 		bool gamecubeActive = (activeGamecubePads & (1 << i)) != 0;
 
 		if(gamecubeActive) {
@@ -329,147 +89,14 @@ void OgcInputDriver::update() {
 			padData.hw_buttons_d[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsDown(i));
 			padData.hw_buttons_h[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsHeld(i));
 			padData.hw_buttons_r[INPUT_HW_GAMECUBE] = MapPADToGeneric(PAD_ButtonsUp(i));
-			padData.hw_stickX[INPUT_HW_GAMECUBE] = clampf((float)PAD_StickX(i) / 128.0f, -1.0f, 1.0f);
-			padData.hw_stickY[INPUT_HW_GAMECUBE] = clampf((float)PAD_StickY(i) / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickX[INPUT_HW_GAMECUBE] = clampf((float)PAD_SubStickX(i) / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickY[INPUT_HW_GAMECUBE] = clampf((float)PAD_SubStickY(i) / 128.0f, -1.0f, 1.0f);
+			padData.hw_stickX[INPUT_HW_GAMECUBE] = OgcStickToFloat(PAD_StickX(i));
+			padData.hw_stickY[INPUT_HW_GAMECUBE] = OgcStickToFloat(PAD_StickY(i));
+			padData.hw_substickX[INPUT_HW_GAMECUBE] = OgcStickToFloat(PAD_SubStickX(i));
+			padData.hw_substickY[INPUT_HW_GAMECUBE] = OgcStickToFloat(PAD_SubStickY(i));
 		}
 
-		#ifdef HW_RVL
-		// Generic USB adapters (Retrode, Hornet, Mayflash). They report held state only, so the
-		// down/up edges are derived here; menu triggers and button mapping need them.
-		// Retrode has 4 ports (2 SNES, 2 Genesis), Hornet is one pad, Mayflash has 2 ports.
-		bool genericUsbActive = retrodeActive || (hornetActive && i == 0) || (mayflashActive && i < 2);
-
-		if(genericUsbActive) {
-			uint32_t usbHeld = Retrode_ButtonsHeld(i) | Hornet_ButtonsHeld(i) | Mayflash_ButtonsHeld(i);
-			uint32_t usbDown = usbHeld & ~prevGenericUsbHeld[i];
-			uint32_t usbUp = prevGenericUsbHeld[i] & ~usbHeld;
-			prevGenericUsbHeld[i] = usbHeld;
-
-			padData.hw_connected[INPUT_HW_GENERIC_USB] = true;
-			padData.hw_buttons_d[INPUT_HW_GENERIC_USB] = MapGenericUsbToGeneric(usbDown);
-			padData.hw_buttons_h[INPUT_HW_GENERIC_USB] = MapGenericUsbToGeneric(usbHeld);
-			padData.hw_buttons_r[INPUT_HW_GENERIC_USB] = MapGenericUsbToGeneric(usbUp);
-		}
-		else {
-			prevGenericUsbHeld[i] = 0;
-		}
-
-		// Xbox 360 controller (one at a time, on whichever channel it is currently assigned to)
-		if(XBOX360_Connected(i)) {
-			padData.hw_connected[INPUT_HW_XBOX360] = true;
-			padData.hw_buttons_d[INPUT_HW_XBOX360] = MapXbox360ToGeneric(XBOX360_ButtonsDown(i));
-			padData.hw_buttons_h[INPUT_HW_XBOX360] = MapXbox360ToGeneric(XBOX360_ButtonsHeld(i));
-			padData.hw_buttons_r[INPUT_HW_XBOX360] = MapXbox360ToGeneric(XBOX360_ButtonsUp(i));
-			padData.hw_stickX[INPUT_HW_XBOX360] = clampf((float)XBOX360_lStickX(i) / 128.0f, -1.0f, 1.0f);
-			padData.hw_stickY[INPUT_HW_XBOX360] = clampf((float)XBOX360_lStickY(i) / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickX[INPUT_HW_XBOX360] = clampf((float)XBOX360_rStickX(i) / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickY[INPUT_HW_XBOX360] = clampf((float)XBOX360_rStickY(i) / 128.0f, -1.0f, 1.0f);
-		}
-		#endif
-
-		#ifdef HW_RVL
-		// Process Wiimote and Extensions
-		uint32_t exp_type = WPAD_EXP_NONE;
-
-		if (WPAD_Probe(i, &exp_type) == WPAD_ERR_NONE) {
-			WPADData* wpad = WPAD_Data(i);
-
-			// Always process base Wiimote
-			padData.hw_connected[INPUT_HW_WIIMOTE] = true;
-			padData.battery_level = wpad->battery_level;
-			padData.hw_battery_level[INPUT_HW_WIIMOTE] = wpad->battery_level;
-			
-			padData.hw_gforceX[INPUT_HW_WIIMOTE] = wpad->gforce.x;
-			padData.hw_gforceY[INPUT_HW_WIIMOTE] = wpad->gforce.y;
-			padData.hw_gforceZ[INPUT_HW_WIIMOTE] = wpad->gforce.z;
-			padData.hw_pitch[INPUT_HW_WIIMOTE]   = wpad->orient.pitch;
-			padData.hw_roll[INPUT_HW_WIIMOTE]    = wpad->orient.roll;
-			padData.hw_yaw[INPUT_HW_WIIMOTE]     = wpad->orient.yaw;
-
-			// A Wii U Pro Controller reports as a Classic Controller, but is not plugged into the Wiimote
-			const bool isWUPC = (exp_type == WPAD_EXP_CLASSIC && wpad->exp.classic.type == 2);
-
-			if (!isWUPC) {
-				// The Wiimote itself: its buttons and IR pointer, whatever is plugged into it
-				padData.hw_buttons_d[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_d);
-				padData.hw_buttons_h[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_h);
-				padData.hw_buttons_r[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_u);
-
-				if (wpad->ir.valid) {
-					padData.validPointer = true;
-					padData.isTouch = false;
-					padData.cursor_x = wpad->ir.x;
-					padData.cursor_y = wpad->ir.y;
-					padData.cursor_angle = wpad->ir.angle;
-				}
-
-				// With anything plugged in it is held vertically, never sideways
-				controller[i]->setSideways(exp_type == WPAD_EXP_NONE && getWiimoteOrientation() == WIIMOTE_ORIENTATION_HORIZONTAL);
-			}
-			else {
-				controller[i]->setSideways(false);
-			}
-
-			if (exp_type == WPAD_EXP_NUNCHUK) {
-				padData.hw_connected[INPUT_HW_NUNCHUK] = true;
-				padData.hw_buttons_d[INPUT_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_d);
-				padData.hw_buttons_h[INPUT_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_h);
-				padData.hw_buttons_r[INPUT_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_u);
-				joystick_t* js = &wpad->exp.nunchuk.js;
-				padData.hw_stickX[INPUT_HW_NUNCHUK] = NormalizeWPADAnalog(js->pos.x, js->min.x, js->max.x, js->center.x);
-				padData.hw_stickY[INPUT_HW_NUNCHUK] = NormalizeWPADAnalog(js->pos.y, js->min.y, js->max.y, js->center.y);
-				
-				padData.hw_gforceX[INPUT_HW_NUNCHUK] = wpad->exp.nunchuk.gforce.x;
-				padData.hw_gforceY[INPUT_HW_NUNCHUK] = wpad->exp.nunchuk.gforce.y;
-				padData.hw_gforceZ[INPUT_HW_NUNCHUK] = wpad->exp.nunchuk.gforce.z;
-				padData.hw_pitch[INPUT_HW_NUNCHUK]   = wpad->exp.nunchuk.orient.pitch;
-				padData.hw_roll[INPUT_HW_NUNCHUK]    = wpad->exp.nunchuk.orient.roll;
-				padData.hw_yaw[INPUT_HW_NUNCHUK]     = wpad->exp.nunchuk.orient.yaw;
-				
-			}
-			else if (exp_type == WPAD_EXP_CLASSIC) {
-				int hw = isWUPC ? INPUT_HW_WUPC : INPUT_HW_CLASSIC;
-
-				padData.hw_connected[hw] = true;
-				padData.hw_buttons_d[hw] = MapClassicToGeneric(wpad->btns_d);
-				padData.hw_buttons_h[hw] = MapClassicToGeneric(wpad->btns_h);
-				padData.hw_buttons_r[hw] = MapClassicToGeneric(wpad->btns_u);
-
-				joystick_t* ljs = &wpad->exp.classic.ljs;
-				joystick_t* rjs = &wpad->exp.classic.rjs;
-				padData.hw_stickX[hw] = NormalizeWPADAnalog(ljs->pos.x, ljs->min.x, ljs->max.x, ljs->center.x);
-				padData.hw_stickY[hw] = NormalizeWPADAnalog(ljs->pos.y, ljs->min.y, ljs->max.y, ljs->center.y);
-				padData.hw_substickX[hw] = NormalizeWPADAnalog(rjs->pos.x, rjs->min.x, rjs->max.x, rjs->center.x);
-				padData.hw_substickY[hw] = NormalizeWPADAnalog(rjs->pos.y, rjs->min.y, rjs->max.y, rjs->center.y);
-			}
-		}
-
-		// Process Wii U Gamepad
-		if(i == 0 && WiiDRC_Inited() && WiiDRC_Connected()) {
-			padData.hw_connected[INPUT_HW_DRC] = true;
-			DrcBatteryFromRaw(WiiDRC_Data()->battery, padData.hw_battery_level[INPUT_HW_DRC], padData.hw_charging[INPUT_HW_DRC]);
-			padData.hw_buttons_d[INPUT_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsDown());
-			padData.hw_buttons_h[INPUT_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsHeld());
-			padData.hw_buttons_r[INPUT_HW_DRC] = MapWiiUGamepadToGeneric(WiiDRC_ButtonsUp());
-			padData.hw_stickX[INPUT_HW_DRC] = clampf((float)WiiDRC_lStickX() / 128.0f, -1.0f, 1.0f);
-			padData.hw_stickY[INPUT_HW_DRC] = clampf((float)WiiDRC_lStickY() / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickX[INPUT_HW_DRC] = clampf((float)WiiDRC_rStickX() / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickY[INPUT_HW_DRC] = clampf((float)WiiDRC_rStickY() / 128.0f, -1.0f, 1.0f);
-		}
-
-		if(DS4_Connected(i)) {
-			padData.hw_connected[INPUT_HW_DS4] = true;
-			padData.hw_buttons_d[INPUT_HW_DS4] = MapDS4ToGeneric(DS4_ButtonsDown());
-			padData.hw_buttons_h[INPUT_HW_DS4] = MapDS4ToGeneric(DS4_ButtonsHeld());
-			padData.hw_buttons_r[INPUT_HW_DS4] = MapDS4ToGeneric(DS4_ButtonsUp());
-			padData.hw_stickX[INPUT_HW_DS4] = clampf((float)DS4_lStickX() / 128.0f, -1.0f, 1.0f);
-			padData.hw_stickY[INPUT_HW_DS4] = clampf((float)DS4_lStickY() / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickX[INPUT_HW_DS4] = clampf((float)DS4_rStickX() / 128.0f, -1.0f, 1.0f);
-			padData.hw_substickY[INPUT_HW_DS4] = clampf((float)DS4_rStickY() / 128.0f, -1.0f, 1.0f);
-		}
-		#endif
+		// Whatever else this console has (Wiimotes, USB controllers, ...)
+		readChannel(i, padData);
 
 		// USB mouse, on channel 0: its own hardware profile for the buttons, and the pointer like the
 		// Wiimote IR's while it is being used. A platform without a mouse reports not connected.
@@ -522,9 +149,7 @@ void OgcInputDriver::update() {
 			menuRumbleGapFrames[i]--;
 		}
 
-		#ifdef HW_RVL
-		WPAD_Rumble(i, doRumble ? 1 : 0);
-		#endif
+		driveRumble(i, doRumble);
 
 		if (gamecubeActive || !doRumble) {
 			PAD_ControlMotor(i, doRumble ? PAD_MOTOR_RUMBLE : PAD_MOTOR_STOP);
