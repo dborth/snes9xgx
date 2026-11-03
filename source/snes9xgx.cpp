@@ -175,6 +175,11 @@ int main(int argc, char *argv[])
 		SwitchMemoryModeMenu();
 		TakeScreenshot();
 		MarkScreenshotCurrent();
+
+		// Left for the menu (not for good, which ExitApp() saves for): the first time, there is no Auto Snapshot yet
+		if(appRequest == AppRequest::MENU && !platform->isExiting())
+			AutoSnapshotOnFirstMenuReturn();
+
 		platform->getVideo()->startMenuVideo();
 	} // main loop
 	ExitApp();

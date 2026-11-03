@@ -1733,6 +1733,10 @@ static int MenuGame()
 		{
 			if (WindowPrompt("Quit Game", "Quit this game? Any unsaved progress will be lost.", "OK", "Cancel"))
 			{
+				// The game is left for good: its autosave is written now, with its screenshot - which is
+				// cleared just below, and would be gone by the time another game is chosen
+				if(!AutoSaveLeavingGame()) return MENU_EXIT;
+
 				menu->mainWindow.remove(gameScreenImg);
 				delete gameScreenImg;
 				if(gameScreenTexture != nullptr) {
@@ -2515,6 +2519,9 @@ static int MenuGameSaves()
 	std::unique_ptr<SaveScreenData> data;
 	auto loadSaves = [&data]() -> bool
 	{
+		// an autosave still being written (the first Auto Snapshot, say) has to be on the device before it is listed
+		if(!WaitForQueuedTasks()) return false;
+
 		std::unique_ptr<SaveScreenData> fresh(new SaveScreenData);
 
 		if(!RunWithGuiUpdates(SaveListTask, nullptr, fresh.get()))

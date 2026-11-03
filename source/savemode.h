@@ -16,9 +16,11 @@
  *  Manual - Nothing is saved or loaded unless you do it yourself.
  *
  * When the autosave (the Auto Snapshot, or the Cartridge Save) is written:
- * only when the game is left for good - quitting, powering off, or choosing
- * another game - or when the Saves screen is asked to update it. Returning to
- * the menu writes nothing: someone who dies, goes to the menu and loads the
+ * when the game is left for good - quitting it to the game list, quitting the
+ * app, powering off, or choosing another game - or when the Saves screen is
+ * asked to update it. Returning to the menu writes nothing, with one exception:
+ * the first time, if the game has no Auto Snapshot yet, so the Saves screen has
+ * something to show. Otherwise someone who dies, goes to the menu and loads the
  * Auto Snapshot wants the place they started from, not the place they died.
  ***************************************************************************/
 
@@ -44,6 +46,12 @@ bool LiveStateChanged();
 // game, or on request from the Saves screen): it is up to date again
 void AutoSnapshotWritten();
 void CartridgeSaveWritten();
+
+// Called when the game has just been left for the menu (the screenshot has been
+// taken): in Snapshot mode, writes the Auto Snapshot - and its image - if the
+// game doesn't have one yet. Does nothing once there is one, so later returns to
+// the menu write nothing. The write itself is queued in the background.
+void AutoSnapshotOnFirstMenuReturn();
 
 // The screenshot of the game, taken when the menu was entered, still shows what
 // the emulated machine is doing: nothing has been loaded or reset since. A

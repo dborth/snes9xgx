@@ -173,3 +173,57 @@ void AutoSaveOnQuit(bool screenshotIsCurrent)
 			break;
 	}
 }
+
+/****************************************************************************
+ * AutoSnapshotOnFirstMenuReturn
+ *
+ * The game has just been left for the menu. Returning to the menu doesn't
+ * write the Auto Snapshot (see savemode.h) - but with none at all, the Saves
+ * screen would say "Empty until you play" until the game was left for good.
+ * So the first time, with no Auto Snapshot on the device, it is written now
+ * (the screenshot has just been taken, so it is current).
+ *
+ * The state is captured here, on the thread that owns the emulator; writing
+ * it to the device is queued, so going to the menu doesn't wait on the device.
+ ***************************************************************************/
+static int FirstAutoSnapshotTask(void * arg)
+{
+	StateSnapshot * snapshot = (StateSnapshot *)arg;
+
+	WriteStateSnapshot(snapshot, SILENT);
+	FreeStateSnapshot(snapshot);
+	return 0;
+}
+
+void AutoSnapshotOnFirstMenuReturn()
+{
+	if(SNESROMSize == 0 || EmuSettings.saveMode != SAVEMODE_SNAPSHOT)
+		return;
+
+	char filepath[1024];
+
+	if(!MakeFilePath(filepath, FILE_STATE, Memory.ROMFilename, 0))
+		return;
+
+	FILE * fp = fopen(filepath, "rb");
+
+	if(fp)
+	{
+		fclose(fp); // there is one: leave it as it is
+		return;
+	}
+
+	StateSnapshot * snapshot = SnapshotStateAuto(ScreenshotIsCurrent());
+
+	if(!snapshot)
+		return;
+
+	AutoSnapshotWritten(); // what was captured is what the file is about to hold
+
+	if(QueueBackgroundTask(FirstAutoSnapshotTask, snapshot))
+		return;
+
+	// Worker unavailable or its queue is full (unlikely) - don't lose it
+	WriteStateSnapshot(snapshot, SILENT);
+	FreeStateSnapshot(snapshot);
+}
