@@ -181,7 +181,7 @@ void WutInputDriver::init() {
 	InitUserInputControllers();
 }
 
-void WutInputDriver::shutdown() {
+void WutInputDriver::stopAllRumble() {
 	for (int i = 0; i < 4; i++) {
 		WPADControlMotor((WPADChan)i, FALSE);
 		rumbleRequest[i] = false;
@@ -189,6 +189,10 @@ void WutInputDriver::shutdown() {
 		menuRumbleGapFrames[i] = 0;
 	}
 	VPADStopMotor(VPAD_CHAN_0);
+}
+
+void WutInputDriver::shutdown() {
+	stopAllRumble();
 
 	// Restore the system default before handing control back to the OS/loader.
 	OSEnableHomeButtonMenu(TRUE);

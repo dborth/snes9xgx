@@ -27,6 +27,9 @@ class WutInputDriver : public InputDriver {
 
 		void openHomeButtonOverlay();
 
+	protected:
+		void stopAllRumble() override;
+
 	private:
 		bool rumbleRequest[4];
 		int menuRumbleFrames[4];     // frames left in the current menu "tick" (0 = idle)

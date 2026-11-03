@@ -206,6 +206,8 @@ static void SaveAppDataBeforeRelease()
 
 void ExitApp()
 {
+	platform->getInput()->haltRumble();
+
 	// Closed by the OS from the background: SaveAppDataBeforeRelease() has saved, and we can't write any more
 	if (platform->getStatus() != Status::Closed)
 		SaveAppData(true);

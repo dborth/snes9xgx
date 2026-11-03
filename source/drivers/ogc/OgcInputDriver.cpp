@@ -35,7 +35,7 @@ void OgcInputDriver::init() {
 	InitUserInputControllers();
 }
 
-void OgcInputDriver::shutdown() {
+void OgcInputDriver::stopAllRumble() {
 	for (int i = 0; i < 4; i++) {
 		driveRumble(i, false);
 		PAD_ControlMotor(i, PAD_MOTOR_STOP);
@@ -43,6 +43,10 @@ void OgcInputDriver::shutdown() {
 		menuRumbleFrames[i] = 0;
 		menuRumbleGapFrames[i] = 0;
 	}
+}
+
+void OgcInputDriver::shutdown() {
+	stopAllRumble();
 }
 
 void OgcInputDriver::setRumble(int channel, bool rumble) {

@@ -15,38 +15,40 @@
 
 class OgcInputDriver : public InputDriver
 {
-public:
-    OgcInputDriver();
-    ~OgcInputDriver() override;
+	public:
+		OgcInputDriver();
+		~OgcInputDriver() override;
 
-    void init() override;
-    void shutdown() override;
-    void update() override;
-    void setRumble(int channel, bool rumble) override;
+		void init() override;
+		void shutdown() override;
+		void update() override;
+		void setRumble(int channel, bool rumble) override;
 
-protected:
-    //! Extension points for a console with more input hardware than GameCube pads.
-    //! The defaults do nothing, which is exactly a GameCube.
+	protected:
+		void stopAllRumble() override;
 
-    //! Called from init() after the GameCube pads are up
-    virtual void initHardware() {}
+		//! Extension points for a console with more input hardware than GameCube pads.
+		//! The defaults do nothing, which is exactly a GameCube.
 
-    //! Called once per frame before the channels are read: poll the extra hardware
-    virtual void scanHardware() {}
+		//! Called from init() after the GameCube pads are up
+		virtual void initHardware() {}
 
-    //! Called once per channel per frame: add the extra hardware's state for `channel`
-    //! to `pad` (each device in the slot of its own hardware profile)
-    virtual void readChannel(int channel, InputPadData & pad) { (void)channel; (void)pad; }
+		//! Called once per frame before the channels are read: poll the extra hardware
+		virtual void scanHardware() {}
 
-    //! False if the console's own settings disable controller rumble
-    virtual bool isSystemRumbleAllowed() const { return true; }
+		//! Called once per channel per frame: add the extra hardware's state for `channel`
+		//! to `pad` (each device in the slot of its own hardware profile)
+		virtual void readChannel(int channel, InputPadData & pad) { (void)channel; (void)pad; }
 
-    //! Drives the rumble motor of any controller other than the GameCube pad on
-    //! `channel`; called every frame (and with false on shutdown)
-    virtual void driveRumble(int channel, bool on) { (void)channel; (void)on; }
+		//! False if the console's own settings disable controller rumble
+		virtual bool isSystemRumbleAllowed() const { return true; }
 
-private:
-    bool rumbleRequest[4];
+		//! Drives the rumble motor of any controller other than the GameCube pad on
+		//! `channel`; called every frame (and with false on shutdown)
+		virtual void driveRumble(int channel, bool on) { (void)channel; (void)on; }
+
+	private:
+		bool rumbleRequest[4];
     int menuRumbleFrames[4];     // frames left in the current menu "tick" (0 = idle)
     int menuRumbleGapFrames[4];  // frames left in the enforced silent gap after a tick
     MousePointer mousePointer;   // the USB mouse as a pointer on channel 0 (see Platform::getMouse())
