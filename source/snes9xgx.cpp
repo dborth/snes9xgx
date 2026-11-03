@@ -113,10 +113,14 @@ int main(int argc, char *argv[])
 		if(!autoboot) {
 			platform->getAudio()->startMenuAudio();
 
+			SetStickPointerEnabled(true); // In the menu the left stick moves the pointer; in the game it does not
+
 			if(SNESROMSize == 0)
 				MainMenu(MENU_GAMESELECTION);
 			else
 				MainMenu(MENU_GAME);
+
+			SetStickPointerEnabled(false);
 		}
 
 		platform->getAudio()->stopMenuAudio();

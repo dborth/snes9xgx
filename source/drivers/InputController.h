@@ -28,6 +28,11 @@ public:
 	bool isSideways() const { return sideways; }
 	int getChannel() const { return channel; }
 
+	//! In the menu the left analog stick moves the pointer, like a mouse, instead of stepping
+	//! through the elements; the D-pad still does that. Off by default: the game reads the same
+	//! pad state, and must not see a stick-driven cursor. See SetStickPointerEnabled().
+	void setStickPointer(bool enabled);
+
 	//! Temporarily overrides the channel this controller reports via getChannel().
 	//! Used by list-based elements (e.g. GuiGameBrowser) to present a "no channel"
 	//! (-1) identity to items the cursor isn't currently over, so a stale
@@ -87,6 +92,19 @@ private:
 
 	StickDir resolveStickDir(float x, float y, StickDir current) const;
 
+	// Left stick as a pointer (see setStickPointer())
+	static constexpr float STICK_POINTER_DEADZONE = 0.15f;
+	static constexpr float STICK_POINTER_SPEED = 480.0f;  // pixels per second at full deflection (the canvas is 640 wide)
+	static constexpr float STICK_POINTER_IDLE_SECONDS = 3.0f; // how long it stays on screen once the stick is let go
+	void updateStickPointer(float deltaTime);
+
+	bool stickPointerEnabled;
+	bool stickPointerStarted;  // x/y hold a position
+	bool stickPointerActive;   // the stick has moved the pointer, and has not been idle for long
+	bool stickPointerHeld;     // the stick was pushed on the previous frame
+	float stickPointerX, stickPointerY;
+	float stickPointerIdle;
+
 	// Internal helper to process directional holds and repeats
 	bool processDirection(uint32_t logicalButtonMask, StickDir stickTarget) const;
 
@@ -101,3 +119,6 @@ private:
 extern InputController* controller[4];
 
 void InitUserInputControllers();
+
+//! Turns the left-stick pointer on (menu) or off (game) for every controller
+void SetStickPointerEnabled(bool enabled);

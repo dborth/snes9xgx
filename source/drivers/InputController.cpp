@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include "InputController.h"
+#include "Platform.h"
 
 InputController* controller[4] = {nullptr, nullptr, nullptr, nullptr};
 
@@ -27,8 +28,31 @@ InputController::InputController(int ch) :
 	prevStickDir(StickDir::None),
 	stickEdge(false),
 	internalScrollTimer(0.0f),
-	holdDuration(0.0f)
+	holdDuration(0.0f),
+	stickPointerEnabled(false),
+	stickPointerStarted(false),
+	stickPointerActive(false),
+	stickPointerHeld(false),
+	stickPointerX(0.0f),
+	stickPointerY(0.0f),
+	stickPointerIdle(0.0f)
 {}
+
+void SetStickPointerEnabled(bool enabled)
+{
+	for(int i = 0; i < 4; i++)
+		if(controller[i])
+			controller[i]->setStickPointer(enabled);
+}
+
+void InputController::setStickPointer(bool enabled)
+{
+	stickPointerEnabled = enabled;
+	stickPointerActive = false;
+	stickPointerHeld = false;
+	stickPointerStarted = false;
+	stickPointerIdle = 0.0f;
+}
 
 InputController::StickDir InputController::resolveStickDir(float x, float y, StickDir current) const {
 	const float ax = std::abs(x);
@@ -60,9 +84,72 @@ InputController::StickDir InputController::resolveStickDir(float x, float y, Sti
 	return (magnitude >= STICK_PRESS_THRESHOLD) ? candidate : StickDir::None;
 }
 
+//! Moves the pointer with the left stick. A pointer that something else is already showing (Wiimote IR,
+//! touch, a mouse) is taken over from where it is, and handed back once the stick is released.
+void InputController::updateStickPointer(float deltaTime) {
+	const float sx = currentData.stickX;
+	const float sy = currentData.stickY;
+	const float magnitude = std::sqrt(sx * sx + sy * sy);
+
+	VideoDriver* video = platform ? platform->getVideo() : nullptr;
+	const float width = video ? (float)video->getScreenWidth() : 640.0f;
+	const float height = video ? (float)video->getScreenHeight() : 480.0f;
+
+	if (magnitude > STICK_POINTER_DEADZONE) {
+		if (!stickPointerHeld) {
+			// Just pushed: start where the pointer is showing now, so it does not jump
+			if (currentData.validPointer) {
+				stickPointerX = currentData.cursor_x;
+				stickPointerY = currentData.cursor_y;
+			} else if (!stickPointerStarted) {
+				stickPointerX = width * 0.5f;
+				stickPointerY = height * 0.5f;
+			}
+			stickPointerStarted = true;
+		}
+
+		// Speed grows with the square of the deflection past the deadzone: slow and precise for a
+		// small push, fast for a full one
+		float scale = (magnitude - STICK_POINTER_DEADZONE) / (1.0f - STICK_POINTER_DEADZONE);
+		if (scale > 1.0f) scale = 1.0f;
+		const float speed = STICK_POINTER_SPEED * scale * scale;
+
+		stickPointerX += (sx / magnitude) * speed * deltaTime;
+		stickPointerY -= (sy / magnitude) * speed * deltaTime; // the stick's up is positive, the screen's is not
+
+		if (stickPointerX < 0.0f) stickPointerX = 0.0f;
+		if (stickPointerY < 0.0f) stickPointerY = 0.0f;
+		if (stickPointerX > width - 1.0f) stickPointerX = width - 1.0f;
+		if (stickPointerY > height - 1.0f) stickPointerY = height - 1.0f;
+
+		stickPointerActive = true;
+		stickPointerIdle = 0.0f;
+	} else if (stickPointerActive) {
+		stickPointerIdle += deltaTime;
+		if (stickPointerIdle >= STICK_POINTER_IDLE_SECONDS)
+			stickPointerActive = false;
+	}
+
+	const bool stickHeld = magnitude > STICK_POINTER_DEADZONE;
+	stickPointerHeld = stickHeld;
+
+	// Released: another pointer that is showing wins again. Otherwise the stick's pointer stays
+	// for a few seconds, then goes away so the D-pad selection shows.
+	if (stickPointerActive && (stickHeld || !currentData.validPointer)) {
+		currentData.validPointer = true;
+		currentData.isTouch = false;
+		currentData.cursor_x = stickPointerX;
+		currentData.cursor_y = stickPointerY;
+		currentData.cursor_angle = 0.0f;
+	}
+}
+
 void InputController::update(const InputPadData& data, float deltaTime) {
 	currentData = data;
 	lastDeltaTime = deltaTime;
+
+	if (stickPointerEnabled)
+		updateStickPointer(deltaTime);
 
 	// Advance the scroll timer
 	internalScrollTimer += deltaTime;
@@ -70,7 +157,8 @@ void InputController::update(const InputPadData& data, float deltaTime) {
 	// Turn the analog stick into a digital direction, remembering the edge so
 	// a fresh push fires immediately just like a D-pad press does.
 	prevStickDir = stickDir;
-	stickDir = resolveStickDir(currentData.stickX, currentData.stickY, stickDir);
+	// (When the stick is the pointer it does not also step through the elements)
+	stickDir = stickPointerEnabled ? StickDir::None : resolveStickDir(currentData.stickX, currentData.stickY, stickDir);
 	stickEdge = (stickDir != StickDir::None && stickDir != prevStickDir);
 
 	const uint32_t dirMask = INPUT_BTN_UP | INPUT_BTN_DOWN | INPUT_BTN_LEFT | INPUT_BTN_RIGHT;
