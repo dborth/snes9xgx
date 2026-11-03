@@ -23,14 +23,13 @@ namespace
 		void * arg = nullptr;
 	};
 
-	// OSThreadEntryPointFn is int(*)(int argc, const char ** argv). There is
-	// no generic void* userdata slot in OSCreateThread - by convention (as
-	// used throughout wut homebrew) the raw argv pointer itself, not *argv,
-	// is repurposed to carry a single opaque payload pointer.
-	int WutThreadTrampoline(int argc, const char ** argv)
+	// OSThreadEntryPointFn is int(*)(int argc, void * argv). OSCreateThread
+	// forwards argv untouched, so it doubles as the single opaque payload
+	// pointer for the thread
+	int WutThreadTrampoline(int argc, void * argv)
 	{
 		(void)argc;
-		WutThreadHandle * handle = reinterpret_cast<WutThreadHandle *>(argv);
+		WutThreadHandle * handle = static_cast<WutThreadHandle *>(argv);
 		handle->entry(handle->arg);
 		return 0;
 	}
@@ -90,7 +89,7 @@ bool WutThreadDriver::createThread(ThreadEntry entry, void * arg, uint32_t stack
 	uint8_t * stackTop = static_cast<uint8_t *>(handle->stack) + alignedStackSize;
 	int nativePriority = MapWutPriority(priority);
 
-	BOOL ok = OSCreateThread(handle->thread, WutThreadTrampoline, 0, reinterpret_cast<char *>(handle),
+	BOOL ok = OSCreateThread(handle->thread, WutThreadTrampoline, 0, handle,
 		stackTop, alignedStackSize, nativePriority, OS_THREAD_ATTRIB_AFFINITY_ANY);
 
 	if(!ok)
