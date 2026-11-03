@@ -69,6 +69,7 @@ Every push builds automatically. Grab the latest continuous-integration build:
 - Native Wii U version outputs up to **1080p**, with a **GX2 shader-based ScaleFX** upscaler built specifically for the Wii U's GPU
 - **Wii only:** Retrode, Xbox 360, DualShock 4 (wired), and Hornet USB controller support; Mayflash PC044 / MF105 SNES-to-USB adapter support
 - SNES Superscope, Mouse, and Justifier support, remappable per input device
+- **USB mouse** support on **Wii and Wii U** — it moves the pointer in the menus and aims the Super Scope, Justifier and SNES Mouse (left click is A, right click is B, middle click is X; the Super Scope's middle click pauses)
 - Cheat code support (`.cht` files)
 - Cover art / screenshot / artwork preview support
 - Satellaview (BS-X) support
@@ -290,7 +291,7 @@ Which saves are written and loaded for you automatically is set by the **Save Mo
 | Option | Options |
 |---|---|
 | **Exit Action** | Return to Loader, Return to Wii Menu, Power Off |
-| **Wiimote Orientation** | Vertical, Horizontal |
+| **Wiimote Orientation** | Vertical, Horizontal — only for a Wiimote with nothing plugged into it; with a Nunchuk, Classic Controller or other extension it is always vertical |
 | **Music Volume** / **Sound Effects Volume** | |
 | **Language** | See [Language & Custom Fonts](#language--custom-fonts) |
 | **Preview Image** | See [Artwork](#artwork) |

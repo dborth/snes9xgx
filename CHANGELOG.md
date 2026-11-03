@@ -3,6 +3,9 @@
 All notable changes to Snes9x GX are recorded here, newest first. For the current features and setup instructions, see [README.md](README.md).
 
 ## Unreleased
+* **USB mouse support** on Wii and Wii U. The mouse moves the pointer in the menus and aims the Super Scope, Justifier and SNES Mouse
+* **The left analog stick now moves the pointer in the menus**, on every controller, like a mouse. It no longer also steps through the buttons; the D-pad still does
+* **A Wiimote with anything plugged into it is now always vertical in the menus**, and its buttons and IR pointer work alongside the extension (a Nunchuk on Wii and a Classic Controller on both Wii and Wii U previously lost them)
 * **Redesigned Button Mappings screen.** One screen now replaces the separate controller and button screens, showing each button on a drawing of the controller and letting you choose a button by pressing it or from a list.
 * **Redesigned Saves screen.** The Save, Load and Delete buttons are now a single **Saves** button. Snapshots fill a grid, with the game's **Cartridge Save** (shown only for games that have one) in its own card beneath. Choosing a card opens a small popover of what can be done with it; the save file's backups are listed from its popover. The Auto Load, Auto Save and Append Auto settings are replaced by a single **Save Mode**: **Snapshot** (the default), **Cartridge Save**, or **Manual**.
 * **Redesigned in-game menu.** **Button Mappings** and the **Controller** choice have moved from Game Settings to the in-game menu's front page. The controller is now chosen from a popover beside its chip
