@@ -297,15 +297,6 @@ static float NormalizeWPADAnalog(int pos, int min, int max, int center) {
 }
 #endif
 
-//! A USB mouse's buttons (MouseButtons) as generic buttons: left is A (select, fire), right is B (back)
-static uint32_t MapMouseToGeneric(uint32_t mouse_btns) {
-	uint32_t generic = 0;
-	if (mouse_btns & MOUSE_BTN_LEFT)   generic |= INPUT_BTN_A;
-	if (mouse_btns & MOUSE_BTN_RIGHT)  generic |= INPUT_BTN_B;
-	if (mouse_btns & MOUSE_BTN_MIDDLE) generic |= INPUT_BTN_X;
-	return generic;
-}
-
 void OgcInputDriver::update() {
 	#ifdef HW_RVL
 	UsbInput_Scan();
@@ -397,7 +388,11 @@ void OgcInputDriver::update() {
 			padData.hw_roll[INPUT_HW_WIIMOTE]    = wpad->orient.roll;
 			padData.hw_yaw[INPUT_HW_WIIMOTE]     = wpad->orient.yaw;
 
-			if (exp_type == WPAD_EXP_NONE) {
+			// A Wii U Pro Controller reports as a Classic Controller, but is not plugged into the Wiimote
+			const bool isWUPC = (exp_type == WPAD_EXP_CLASSIC && wpad->exp.classic.type == 2);
+
+			if (!isWUPC) {
+				// The Wiimote itself: its buttons and IR pointer, whatever is plugged into it
 				padData.hw_buttons_d[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_d);
 				padData.hw_buttons_h[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_h);
 				padData.hw_buttons_r[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_u);
@@ -410,13 +405,14 @@ void OgcInputDriver::update() {
 					padData.cursor_angle = wpad->ir.angle;
 				}
 
-				controller[i]->setSideways(getWiimoteOrientation() == WIIMOTE_ORIENTATION_HORIZONTAL);
+				// With anything plugged in it is held vertically, never sideways
+				controller[i]->setSideways(exp_type == WPAD_EXP_NONE && getWiimoteOrientation() == WIIMOTE_ORIENTATION_HORIZONTAL);
 			}
-			else if (exp_type == WPAD_EXP_NUNCHUK) {
-				padData.hw_buttons_d[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_d);
-				padData.hw_buttons_h[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_h);
-				padData.hw_buttons_r[INPUT_HW_WIIMOTE] = MapWiimoteToGeneric(wpad->btns_u);
+			else {
+				controller[i]->setSideways(false);
+			}
 
+			if (exp_type == WPAD_EXP_NUNCHUK) {
 				padData.hw_connected[INPUT_HW_NUNCHUK] = true;
 				padData.hw_buttons_d[INPUT_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_d);
 				padData.hw_buttons_h[INPUT_HW_NUNCHUK] = MapNunchukToGeneric(wpad->btns_h);
@@ -432,10 +428,8 @@ void OgcInputDriver::update() {
 				padData.hw_roll[INPUT_HW_NUNCHUK]    = wpad->exp.nunchuk.orient.roll;
 				padData.hw_yaw[INPUT_HW_NUNCHUK]     = wpad->exp.nunchuk.orient.yaw;
 				
-				controller[i]->setSideways(false);
 			}
 			else if (exp_type == WPAD_EXP_CLASSIC) {
-				bool isWUPC = (wpad->exp.classic.type == 2);
 				int hw = isWUPC ? INPUT_HW_WUPC : INPUT_HW_CLASSIC;
 
 				padData.hw_connected[hw] = true;
@@ -449,10 +443,6 @@ void OgcInputDriver::update() {
 				padData.hw_stickY[hw] = NormalizeWPADAnalog(ljs->pos.y, ljs->min.y, ljs->max.y, ljs->center.y);
 				padData.hw_substickX[hw] = NormalizeWPADAnalog(rjs->pos.x, rjs->min.x, rjs->max.x, rjs->center.x);
 				padData.hw_substickY[hw] = NormalizeWPADAnalog(rjs->pos.y, rjs->min.y, rjs->max.y, rjs->center.y);
-				controller[i]->setSideways(false);
-			}
-			else {
-				controller[i]->setSideways(false);
 			}
 		}
 
@@ -482,28 +472,10 @@ void OgcInputDriver::update() {
 		#endif
 
 		// USB mouse, on channel 0: its own hardware profile for the buttons, and the pointer like the
-		// Wiimote IR's while it is being used (it gives it back when idle). No mouse, or a platform
-		// without one, reports not connected.
-		if (i == 0) {
-			MousePointer::State mouse;
-			mousePointer.update(platform->getMouse(), platform->getVideo()->getDeltaTime(),
-				platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight(), mouse);
-
-			if (mouse.connected) {
-				padData.hw_connected[INPUT_HW_USBMOUSE] = true;
-				padData.hw_buttons_d[INPUT_HW_USBMOUSE] = MapMouseToGeneric(mouse.down);
-				padData.hw_buttons_h[INPUT_HW_USBMOUSE] = MapMouseToGeneric(mouse.held);
-				padData.hw_buttons_r[INPUT_HW_USBMOUSE] = MapMouseToGeneric(mouse.up);
-
-				if (mouse.active) {
-					padData.validPointer = true;
-					padData.isTouch = false;
-					padData.cursor_x = mouse.x;
-					padData.cursor_y = mouse.y;
-					padData.cursor_angle = 0.0f;
-				}
-			}
-		}
+		// Wiimote IR's while it is being used. A platform without a mouse reports not connected.
+		if (i == 0)
+			mousePointer.apply(platform->getMouse(), platform->getVideo()->getDeltaTime(),
+				platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight(), padData);
 
 		// Merge into unified aggregate state for UI Elements
 		for (uint32_t hw = 0; hw < INPUT_HW_MAX; hw++) {

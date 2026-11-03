@@ -63,3 +63,35 @@ void MousePointer::update(MouseDriver* mouse, float dt, int width, int height, S
 	out.x = x;
 	out.y = y;
 }
+
+//! A USB mouse's buttons (MouseButtons) as generic buttons: left is A (select, fire), right is B (back)
+static uint32_t MouseToGeneric(uint32_t mouseButtons)
+{
+	uint32_t generic = 0;
+	if (mouseButtons & MOUSE_BTN_LEFT)   generic |= INPUT_BTN_A;
+	if (mouseButtons & MOUSE_BTN_RIGHT)  generic |= INPUT_BTN_B;
+	if (mouseButtons & MOUSE_BTN_MIDDLE) generic |= INPUT_BTN_X;
+	return generic;
+}
+
+void MousePointer::apply(MouseDriver* mouse, float dt, int width, int height, InputPadData & pad)
+{
+	State s;
+	update(mouse, dt, width, height, s);
+
+	if (!s.connected)
+		return;
+
+	pad.hw_connected[INPUT_HW_USBMOUSE] = true;
+	pad.hw_buttons_d[INPUT_HW_USBMOUSE] = MouseToGeneric(s.down);
+	pad.hw_buttons_h[INPUT_HW_USBMOUSE] = MouseToGeneric(s.held);
+	pad.hw_buttons_r[INPUT_HW_USBMOUSE] = MouseToGeneric(s.up);
+
+	if (s.active) {
+		pad.validPointer = true;
+		pad.isTouch = false;
+		pad.cursor_x = s.x;
+		pad.cursor_y = s.y;
+		pad.cursor_angle = 0.0f;
+	}
+}

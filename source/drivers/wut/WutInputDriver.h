@@ -6,6 +6,7 @@
 #pragma once
 
 #include "../InputDriver.h"
+#include "../MousePointer.h"
 #include "../InputData.h"
 #include "../OneEuroFilter.h"
 
@@ -43,6 +44,7 @@ class WutInputDriver : public InputDriver {
 		OneEuroFilter irFilterX[4];
 		OneEuroFilter irFilterY[4];
 		bool irSmoothInit[4];
+		MousePointer mousePointer; //!< the USB mouse as a pointer on channel 0 (see Platform::getMouse())
 
 		// VPADRead()/KPADReadEx() only report *new* wireless packets
 		// These caches hold the last known held/analog state per source so a

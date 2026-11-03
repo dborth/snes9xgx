@@ -11,6 +11,7 @@
 #include "WutVideoDriver.h"
 #include "WutInputDriver.h"
 #include "WutFileSystemDriver.h"
+#include "WutMouseDriver.h"
 #include "WutThreadDriver.h"
 #include "WutLoggerOSReport.h"
 #include "WutLoggerUdp.h"
@@ -39,6 +40,7 @@ class WutPlatform : public Platform
 		VideoDriver* getVideo() override { return videoDriver; }
 		InputDriver* getInput() override { return inputDriver; }
 		FileSystemDriver* getFileSystem() override { return fileSystemDriver; }
+		MouseDriver* getMouse() override { return mouseDriver; }
 		ThreadDriver* getThread() override { return threadDriver; }
 		Logger* getLogger() override { return logger; }
 
@@ -55,6 +57,7 @@ class WutPlatform : public Platform
 		WutVideoDriver* videoDriver = nullptr;
 		WutInputDriver* inputDriver = nullptr;
 		WutFileSystemDriver* fileSystemDriver = nullptr;
+		WutMouseDriver* mouseDriver = nullptr;
 		WutThreadDriver* threadDriver = nullptr;
 		Logger* logger = nullptr;
 };

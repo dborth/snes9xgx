@@ -40,6 +40,9 @@ void WutPlatform::init(const PlatformConfig& config)
 	this->fileSystemDriver = new WutFileSystemDriver();
 	this->fileSystemDriver->init();
 
+	this->mouseDriver = new WutMouseDriver();
+	this->mouseDriver->init();
+
 #if LOGGING_ENABLED
 	this->logger = new Logger();
 	this->logger->registerBackend(LOGGER_OSREPORT,	new WutLoggerOSReport());
@@ -66,6 +69,12 @@ void WutPlatform::shutdown()
 		logger->shutdown();
 		delete logger;
 		logger = nullptr;
+	}
+
+	if (mouseDriver) {
+		mouseDriver->shutdown();
+		delete mouseDriver;
+		mouseDriver = nullptr;
 	}
 
 	if(fileSystemDriver)

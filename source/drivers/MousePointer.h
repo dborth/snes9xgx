@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include "MouseDriver.h"
+#include "InputData.h"
 
 class MousePointer
 {
@@ -29,6 +30,11 @@ class MousePointer
 		//! Drains the mouse's pending events, once per frame. `dt` is the frame
 		//! time in seconds, `width`/`height` the screen the pointer stays on.
 		void update(MouseDriver* mouse, float dt, int width, int height, State & out);
+
+		//! The same, for a pad driver: reports the mouse into `pad` (channel 0): its own hardware
+		//! profile for the buttons, and the pointer (like the Wiimote IR) while it is being used.
+		//! Nothing is reported when no mouse is connected.
+		void apply(MouseDriver* mouse, float dt, int width, int height, InputPadData & pad);
 
 	private:
 		//! Counts of motion per pixel of pointer movement
