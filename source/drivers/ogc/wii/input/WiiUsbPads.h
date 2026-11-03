@@ -4,7 +4,7 @@
  * WiiUsbPads.h
  *
  * The third-party USB controllers (Retrode, Hornet, Mayflash, Xbox 360 and
- * DualShock 4) as one unit for WiiInputDriver. The device drivers themselves
+ * DualShock 4, and the pen tablet) as one unit for WiiInputDriver. The device drivers themselves
  * (retrode.c, xbox360.c, ... and the shared discovery in usbinput.c) stay
  * plain C; this is the only place that knows their APIs, and where each
  * device's native buttons are mapped to the generic input masks.
@@ -26,6 +26,11 @@ class WiiUsbPads
 		//! Adds the state of every USB controller assigned to `channel` to `pad`,
 		//! each in the slot of its own hardware profile.
 		void read(int channel, InputPadData & pad);
+
+		//! Adds the pen tablet (HAVE_TABLET) to `pad` on channel 0, in the USB mouse's profile, and
+		//! its pen as the pointer on a `width` x `height` screen while in range. Called after the
+		//! Wiimote, so the pen takes the pointer over from the IR.
+		void readPointer(int channel, int width, int height, InputPadData & pad);
 
 		//! The controller to show on the status strip (see InputUsbStatus)
 		InputUsbStatus getStatus() const;

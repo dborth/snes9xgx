@@ -159,6 +159,7 @@ static float NormalizeWPADAnalog(int pos, int min, int max, int center) {
 void WiiInputDriver::readChannel(int channel, InputPadData & pad) {
 	usbPads.read(channel, pad);
 	readWiimote(channel, pad);
+	usbPads.readPointer(channel, platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight(), pad);
 
 	// The GamePad is one controller, on channel 0
 	if (channel == 0)

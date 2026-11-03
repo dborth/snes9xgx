@@ -82,10 +82,11 @@ void MousePointer::apply(MouseDriver* mouse, float dt, int width, int height, In
 	if (!s.connected)
 		return;
 
+	// Added to, not set: a platform's pen tablet may share this profile
 	pad.hw_connected[INPUT_HW_USBMOUSE] = true;
-	pad.hw_buttons_d[INPUT_HW_USBMOUSE] = MouseToGeneric(s.down);
-	pad.hw_buttons_h[INPUT_HW_USBMOUSE] = MouseToGeneric(s.held);
-	pad.hw_buttons_r[INPUT_HW_USBMOUSE] = MouseToGeneric(s.up);
+	pad.hw_buttons_d[INPUT_HW_USBMOUSE] |= MouseToGeneric(s.down);
+	pad.hw_buttons_h[INPUT_HW_USBMOUSE] |= MouseToGeneric(s.held);
+	pad.hw_buttons_r[INPUT_HW_USBMOUSE] |= MouseToGeneric(s.up);
 
 	if (s.active) {
 		pad.validPointer = true;

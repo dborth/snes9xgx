@@ -14,6 +14,7 @@
 #include "hornet.h"
 #include "mayflash.h"
 #include "ds4.h"
+#include "tablet.h"
 #include "../../OgcInputUtil.h"
 
 /****************************************************************************
@@ -84,6 +85,16 @@ static uint32_t MapGenericUsbToGeneric(uint32_t pad_btns) {
 	return mask;
 }
 
+#ifdef HAVE_TABLET
+static uint32_t MapTabletToGeneric(uint32_t tablet_btns) {
+	uint32_t mask = INPUT_BTN_NONE;
+	if (tablet_btns & TABLET_BUTTON_TIP) mask |= INPUT_BTN_A;
+	if (tablet_btns & TABLET_BUTTON_BARREL) mask |= INPUT_BTN_B;
+	if (tablet_btns & TABLET_BUTTON_BARREL2) mask |= INPUT_BTN_X;
+	return mask;
+}
+#endif
+
 /****************************************************************************
  * Scan
  ***************************************************************************/
@@ -95,6 +106,9 @@ void WiiUsbPads::scan() {
 	Hornet_ScanPads();
 	Mayflash_ScanPads();
 	DS4_ScanPads();
+#ifdef HAVE_TABLET
+	Tablet_ScanPads();
+#endif
 
 	retrodeActive  = (Retrode_Status()[0]  == 'c');
 	hornetActive   = (Hornet_Status()[0]   == 'c');
@@ -156,6 +170,29 @@ void WiiUsbPads::read(int channel, InputPadData & pad) {
 	}
 }
 
+// USB pen tablet, on channel 0, in the USB mouse's hardware profile: the tip is the left button
+// (A), the lower and upper side switches the right (B) and middle (X) ones. While the pen is in
+// range it owns the pointer, the whole tablet mapped onto the screen.
+void WiiUsbPads::readPointer(int channel, int width, int height, InputPadData & pad) {
+#ifdef HAVE_TABLET
+	if (channel != 0 || !Tablet_Connected())
+		return;
+
+	pad.hw_connected[INPUT_HW_USBMOUSE] = true;
+	pad.hw_buttons_d[INPUT_HW_USBMOUSE] |= MapTabletToGeneric(Tablet_ButtonsDown());
+	pad.hw_buttons_h[INPUT_HW_USBMOUSE] |= MapTabletToGeneric(Tablet_ButtonsHeld());
+	pad.hw_buttons_r[INPUT_HW_USBMOUSE] |= MapTabletToGeneric(Tablet_ButtonsUp());
+
+	if (Tablet_InRange()) {
+		pad.validPointer = true;
+		pad.isTouch = false;
+		pad.cursor_x = Tablet_X() * (width - 1);
+		pad.cursor_y = Tablet_Y() * (height - 1);
+		pad.cursor_angle = 0.0f;
+	}
+#endif
+}
+
 /****************************************************************************
  * Status
  ***************************************************************************/
@@ -183,7 +220,12 @@ InputUsbStatus WiiUsbPads::getStatus() const {
 }
 
 const char * WiiUsbPads::getStatusText() {
+#ifdef HAVE_TABLET
+	snprintf(statusText, sizeof(statusText), "Retrode: %s, XBOX360: %s, Hornet: %s, Mayflash: %s, DS4: %s, Tablet: %s",
+		Retrode_Status(), XBOX360_Status(), Hornet_Status(), Mayflash_Status(), DS4_Status(), Tablet_Status());
+#else
 	snprintf(statusText, sizeof(statusText), "Retrode: %s, XBOX360: %s, Hornet: %s, Mayflash: %s, DS4: %s",
 		Retrode_Status(), XBOX360_Status(), Hornet_Status(), Mayflash_Status(), DS4_Status());
+#endif
 	return statusText;
 }
