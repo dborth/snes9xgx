@@ -234,9 +234,9 @@ void WutInputDriver::update() {
 				padData.hw_substickX[INPUT_HW_DRC] = clampf(vpadStatus.rightStick.x, -1.0f, 1.0f);
 				padData.hw_substickY[INPUT_HW_DRC] = clampf(vpadStatus.rightStick.y, -1.0f, 1.0f);
 
-				padData.hw_gforceX[INPUT_HW_DRC] = vpadStatus.accelorometer.acc.x;
-				padData.hw_gforceY[INPUT_HW_DRC] = vpadStatus.accelorometer.acc.y;
-				padData.hw_gforceZ[INPUT_HW_DRC] = vpadStatus.accelorometer.acc.z;
+				padData.hw_gforceX[INPUT_HW_DRC] = vpadStatus.accelerometer.acc.x;
+				padData.hw_gforceY[INPUT_HW_DRC] = vpadStatus.accelerometer.acc.y;
+				padData.hw_gforceZ[INPUT_HW_DRC] = vpadStatus.accelerometer.acc.z;
 				padData.hw_pitch[INPUT_HW_DRC] = vpadStatus.angle.x * 360.0f;
 				padData.hw_roll[INPUT_HW_DRC]  = vpadStatus.angle.y * 360.0f;
 				padData.hw_yaw[INPUT_HW_DRC]   = vpadStatus.angle.z * 360.0f;
