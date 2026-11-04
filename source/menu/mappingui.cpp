@@ -93,10 +93,41 @@ int KindForSetting(int setting)
 	}
 }
 
-// The hardware to start on: the controller in use on channel 0, chosen the way the controller strip chooses its icon
-// (see controllerorder.h)
+// The hardware that opened the screen (the controller whose A pressed Button Mappings), or -1 when not known
+int openedHardware = -1;
+
+// The controller being used on a channel: the one that is pressing buttons. A Wiimote's own buttons are shared by what is
+// plugged into it, so with a Nunchuk, Classic Controller or Pro Controller on it that is the one (see controllerorder.h).
+// -1 when nothing on the channel is pressing anything.
+int HardwareInUse(int channel)
+{
+	if(channel < 0 || channel >= 4 || !controller[channel])
+		channel = 0;
+	if(!controller[channel])
+		return -1;
+	const InputPadData& pad = controller[channel]->getPadData();
+	static const int pressing[] = { INPUT_HW_DS4, INPUT_HW_XBOX360, INPUT_HW_GENERIC_USB, INPUT_HW_DRC, INPUT_HW_WUPC, INPUT_HW_CLASSIC, INPUT_HW_GAMECUBE, INPUT_HW_WIIMOTE };
+	for(size_t i = 0; i < sizeof(pressing) / sizeof(pressing[0]); i++)
+	{
+		const int hw = pressing[i];
+		if(!pad.hw_connected[hw] || (pad.hw_buttons_d[hw] | pad.hw_buttons_h[hw] | pad.hw_buttons_r[hw]) == 0)
+			continue;
+		if(hw == INPUT_HW_WIIMOTE)
+		{
+			const int console = ControllerOrder::ConsoleHardware(pad);
+			return console == INPUT_HW_MAX ? hw : console;
+		}
+		return hw;
+	}
+	return -1;
+}
+
+// The hardware to start on: the controller that opened the screen; failing that, the controller in use on channel 0,
+// chosen the way the controller strip chooses its icon (see controllerorder.h)
 int DefaultHardware(const std::vector<int>& list)
 {
+	if(openedHardware >= 0 && Contains(list, openedHardware))
+		return openedHardware;
 	const InputPadData * pad = PadData();
 	if(pad)
 	{
@@ -447,6 +478,11 @@ std::vector<PickerItem> HardwareItems(const std::vector<int>& list)
 
 } // namespace
 
+void MappingScreenOpenedBy(int channel)
+{
+	openedHardware = HardwareInUse(channel);
+}
+
 int MappingScreen()
 {
 	if(!keepSelection)
@@ -456,6 +492,7 @@ int MappingScreen()
 	}
 	keepSelection = false;
 	ResolveHardware();
+	openedHardware = -1;
 
 	while(true)
 	{
