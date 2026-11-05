@@ -78,10 +78,6 @@ static GuiImage cursorImg[4];
 #endif
 
 static GuiTrigger * trigA = nullptr;
-
-#ifndef HW_DOL
-static GuiButton * batteryBtn[4];
-#endif
 static void * gameScreenTexture = nullptr;
 static GuiElement * gameScreenImg = nullptr; // blurred game screenshot, or the plain page background
 static GuiSound * bgMusic = nullptr;
