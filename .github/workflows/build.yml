@@ -105,6 +105,20 @@ jobs:
         path: |
           dist/Snes9xGX-WiiU/
 
+    - name: Collect debug info
+      if: always()
+      run: bash .github/scripts/collect-debug.sh ${{ matrix.image }} debug
+
+    # Not part of the release: ELF, link map, symbols and versions for diagnosing crash reports
+    - name: Upload debug info
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: debug-Snes9xGX-${{ matrix.image }}
+        path: debug/
+        retention-days: 90
+        if-no-files-found: warn
+
   release:
     name: Release
     runs-on: ubuntu-latest
@@ -120,6 +134,7 @@ jobs:
     - name: Download Artifacts
       uses: actions/download-artifact@v4
       with:
+        pattern: Snes9xGX-*
         path: dist
 
     - name: Re-zip artifacts
@@ -133,6 +148,29 @@ jobs:
         zip -r ../Snes9xGX-GameCube.zip *
         cd ../Snes9xGX-WiiU
         zip -r ../Snes9xGX-WiiU.zip *
+
+    # Maps the SHA-256 a reporter sees on the Pre-release page back to this commit and run
+    - name: Record release checksums
+      run: |
+        mkdir -p checksums
+        {
+          echo "commit $GITHUB_SHA"
+          echo "run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          echo "built $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo
+          echo "== release zips (the hash GitHub shows on the Pre-release page) =="
+          (cd dist && sha256sum *.zip)
+          echo
+          echo "== binaries inside the zips =="
+          (cd dist && find . -mindepth 2 -type f \( -name '*.dol' -o -name '*.wuhb' \) -exec sha256sum {} \;)
+        } | tee checksums/release-checksums.txt
+
+    - name: Upload release checksums
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-release-checksums
+        path: checksums/
+        retention-days: 90
 
     - name: Update Git Tag
       run: |

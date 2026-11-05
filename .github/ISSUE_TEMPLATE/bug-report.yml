@@ -77,6 +77,19 @@ body:
     validations:
       required: true
 
+  - type: input
+    id: build-sha256
+    attributes:
+      label: Build SHA-256
+      description: |
+        Lets us match your report to the exact build. The Pre-release is replaced in place, and a crash address only means something against the build that produced it.
+        On the **Pre-release** page, the SHA-256 of each zip is shown next to it under *Assets* (`sha256:` followed by 64 characters). Copy the one for the zip you downloaded.
+        **It must be for the file you actually ran.** If you downloaded it a while ago, the page may now show a newer build: download the latest, retest, and copy the hash then.
+        Built it yourself? Give the commit hash instead.
+      placeholder: "sha256:0123abcd... (or: built from source, commit 69ea40c)"
+    validations:
+      required: true
+
   - type: textarea
     id: credits-screen
     attributes:
@@ -322,7 +335,7 @@ body:
         - No, it's only on this one
         - Not applicable
     validations:
-      required: true	  
+      required: true
 
   - type: markdown
     attributes:
@@ -357,7 +370,7 @@ body:
       label: Logs and crash information
       description: |
         Paste anything useful. This will be formatted as code, so no backticks needed.
-        - **Crash screens:** the text or a photo of any exception/crash screen, including the register dump and addresses.
+        - **Crash screens:** the text or a photo of the **whole** exception/crash screen, not just the top. We need the registers, `LR`/`SRR0`/`DAR`, the **STACK DUMP** and the **CODE DUMP**. Without the matching build (see Build SHA-256) the addresses are meaningless, so if you downloaded it a while ago, update to the latest Pre-release and reproduce the crash again.
         - **Dolphin / Cemu:** the emulator's log, including any warnings or panic alerts.
         - **debug.log:** official Pre-release builds do **not** write one. Only attach it if you built from source with `-DLOGGING_ENABLED=1`; it is written to `debug.log` on the first mounted storage device.
       render: shell
