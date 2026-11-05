@@ -37,7 +37,7 @@
 // audio backend alive at a time.
 static WutEmulatorAudio* instance = nullptr;
 
-void S9xAudioCallback(void *data) {
+void S9xAudioCallback(void *) {
 	if (instance)
 		instance->audioCallback();
 }
