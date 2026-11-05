@@ -43,6 +43,10 @@ static u8 rejectedNext = 0;
 // may complete into it after the removal.
 static u8 ATTRIBUTE_ALIGN(32) buf[TABLET_REPORT_MAX];
 static bool isReading = false;
+// Bumped on every attach and removal, and given to each read as its usrdata.
+// IOS reuses file descriptors, so a tablet replugged quickly can get the same
+// deviceId as the one unplugged: the device id alone cannot tell their reads apart.
+static volatile u32 readGeneration = 0;
 
 static volatile s32 reportX = 0;
 static volatile s32 reportY = 0;
@@ -131,7 +135,7 @@ static int read_cb(int res, void *usrdata)
 {
 	// A read submitted for a tablet since unplugged may complete after a quick
 	// replug: it must not touch the new tablet's state or resubmit
-	if ((s32) usrdata != deviceId || !isReading)
+	if ((u32) usrdata != readGeneration || !isReading)
 	{
 		return 1;
 	}
@@ -154,7 +158,7 @@ static int read_cb(int res, void *usrdata)
 
 static int submitRead(void)
 {
-	return USB_ReadIntrMsgAsync(deviceId, endpoint, packetSize, buf, &read_cb, (void *) deviceId);
+	return USB_ReadIntrMsgAsync(deviceId, endpoint, packetSize, buf, &read_cb, (void *) readGeneration);
 }
 
 static void startReading()
@@ -192,6 +196,7 @@ static int removal_cb(int result, void *usrdata)
 	if (fd == deviceId)
 	{
 		stopReading();
+		++readGeneration;
 		deviceId = 0;
 		UsbInput_DeferClose(fd);
 		resetState();
@@ -364,6 +369,7 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		if (maxY <= 0) maxY = 1;
 
 		deviceId = fd;
+		++readGeneration;
 		replugRequired = false;
 		resetState();
 		setTabletMode(fd, interface);

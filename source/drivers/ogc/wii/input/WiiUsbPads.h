@@ -49,5 +49,5 @@ class WiiUsbPads
 		// The adapters report held state only: the previous frame's, for the down/up edges
 		uint32_t prevGenericHeld[4] = { 0, 0, 0, 0 };
 
-		char statusText[128] = { 0 };
+		char statusText[160] = { 0 };
 };
