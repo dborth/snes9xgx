@@ -188,6 +188,10 @@ bool WutFileSystemDriver::tryMountStorageSlot(int slotIdx)
 	if(!mochaReady)
 		return false;
 
+	// A readable device with nothing mountable on it: probing it again can't change that
+	if(slot.unmountable)
+		return false;
+
 	// Backing off after repeated failures against an unremoved device
 	if(slot.backoffPollsLeft > 0)
 	{
@@ -195,8 +199,10 @@ bool WutFileSystemDriver::tryMountStorageSlot(int slotIdx)
 		return false;
 	}
 
-	// dvmWutMountVolume() takes a non-const DISC_INTERFACE* but never mutates it
-	if(dvmWutMountVolume(slot.mountName, (DISC_INTERFACE *) slot.iface, cachePages, sectorsPerPage))
+	// dvmWutMountVolumeEx() takes a non-const DISC_INTERFACE* but never mutates it
+	const DvmWutMountResult result = dvmWutMountVolumeEx(slot.mountName, (DISC_INTERFACE *) slot.iface, cachePages, sectorsPerPage);
+
+	if(result == DVM_WUT_MOUNTED)
 	{
 		slot.failCount = 0;
 		dev.isPresent = true;
@@ -209,6 +215,19 @@ bool WutFileSystemDriver::tryMountStorageSlot(int slotIdx)
 
 	// Mount failed. Always leave the interface shutdown() here rather than leaving the fd open across attempts.
 	slot.iface->shutdown();
+
+	if(result == DVM_WUT_UNMOUNTABLE)
+	{
+		// The disc was read fine and nothing on it is recognised (no MBR/VBR - eg. a WFS drive - or no
+		// supported filesystem). Retrying can't help, so stop: cleared only by a hardware change.
+		slot.unmountable = true;
+		slot.failCount = 0;
+		slot.backoffPollsLeft = 0;
+		dev.isPresent = false;
+		dev.isMounted = false;
+		LOG_INFO("%s: device is readable but has nothing mountable (no MBR/VBR, or no FAT/exFAT/NTFS partition) - not retrying until the USB hardware changes", slot.mountName);
+		return false;
+	}
 
 	slot.failCount++;
 	if(slot.failCount < maxQuickRetries)
@@ -329,13 +348,22 @@ MountResult WutFileSystemDriver::mountStorageDevice(int deviceId)
 		return MountResult::Success;
 
 	// USB1/2/3 - backed by storageSlots[]
-	return tryMountStorageSlot(idx - slotUSB1) ? MountResult::Success : MountResult::DeviceNotFound;
+	const int slotIdx = idx - slotUSB1;
+	if(tryMountStorageSlot(slotIdx))
+		return MountResult::Success;
+
+	// Present, but there's nothing on it we can mount (never re-probed - see tryMountStorageSlot())
+	return storageSlots[slotIdx].unmountable ? MountResult::MountFailed : MountResult::DeviceNotFound;
 }
 
 const char * WutFileSystemDriver::mountResultMessage(int deviceId, MountResult result)
 {
 	if(result == MountResult::MountFailed)
+	{
+		if(deviceId == DEVICE_USB || deviceId == DEVICE_USB2 || deviceId == DEVICE_USB3)
+			return "Unsupported drive format. Use FAT32, exFAT or NTFS.";
 		return "Unable to mount device.";
+	}
 
 	if(deviceId == DEVICE_SD)
 		return "SD card not found!";
@@ -380,39 +408,74 @@ void WutFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 	// succeeded. On a change, a fresh insertion should be tried this same
 	// cycle.
 	UsbHardwareSignature currentHwSig;
-	ScanUsbHardwareSignature(currentHwSig);
+	const bool scanned = ScanUsbHardwareSignature(currentHwSig);
+	if(scanned)
+		usbScanWorked = true;
 
-	if(UsbHardwareSignatureChanged(currentHwSig, usbHwSignature))
+	// Do we know what is attached? Yes after any successful scan - a later failure just means no news.
+	const bool hwKnown = scanned || usbScanWorked;
+
+	if(!scanned)
 	{
-		// Only backoffPollsLeft, not failCount: a real hardware change
-		// anywhere is worth one fresh look at every USB slot right now
-		// (that's what backoffPollsLeft=0 buys), but a slot sitting on a
-		// permanently-unmountable device (eg. an unsupported filesystem)
-		// still needs to reach maxQuickRetries and back off properly.
+		// The scan itself failed. That says nothing about the hardware (an empty result here would read as
+		// "everything was unplugged"), so carry on with what we knew.
+		currentHwSig = usbHwSignature;
+	}
+	else if(UsbHardwareSignatureChanged(currentHwSig, usbHwSignature))
+	{
+		// A real hardware change anywhere is worth one fresh look at every USB slot right now: lift any
+		// backoff, and forget "unmountable" - the device that earned it may be gone or replaced. (failCount
+		// is kept, so a slot that keeps failing still reaches maxQuickRetries and backs off properly.)
 		for(int i = 0; i < storageSlotCount; i++)
+		{
 			storageSlots[i].backoffPollsLeft = 0;
+			storageSlots[i].unmountable = false;
+		}
 	}
 
 	usbHwSignature = currentHwSig;
+
+	// First: is everything we have mounted still there?
+	for(int slotIdx = 0; slotIdx < storageSlotCount; slotIdx++)
+	{
+		WutDeviceState & dev = devices[slotUSB1 + slotIdx];
+
+		if(dev.isMounted && !slotStillPresent(slotIdx))
+		{
+			unmountStorageSlot(slotIdx);
+
+			if(outRemovedCount < MAX_STORAGE_DEVICES)
+				removedIds[outRemovedCount++] = dev.id;
+			deviceListChanged = true;
+		}
+	}
+
+	// Then: look for devices we don't have an answer for yet. Every attached storage device is either
+	// mounted, or found unmountable. Only while there are more attached than that is there anything to
+	// look for - so with nothing attached (or everything accounted for) no mount attempt is made at all.
+	int accountedFor = 0;
+	for(int slotIdx = 0; slotIdx < storageSlotCount; slotIdx++)
+		if(devices[slotUSB1 + slotIdx].isMounted || storageSlots[slotIdx].unmountable)
+			accountedFor++;
 
 	for(int slotIdx = 0; slotIdx < storageSlotCount; slotIdx++)
 	{
 		WutDeviceState & dev = devices[slotUSB1 + slotIdx];
 
-		if(dev.isMounted)
-		{
-			if(!slotStillPresent(slotIdx))
-			{
-				unmountStorageSlot(slotIdx);
+		if(dev.isMounted || storageSlots[slotIdx].unmountable)
+			continue;
 
-				if(outRemovedCount < MAX_STORAGE_DEVICES)
-					removedIds[outRemovedCount++] = dev.id;
-				deviceListChanged = true;
-			}
-		}
-		else if(tryMountStorageSlot(slotIdx))
+		if(hwKnown && usbHwSignature.count <= accountedFor)
+			break; // everything attached is accounted for
+
+		if(tryMountStorageSlot(slotIdx))
 		{
 			deviceListChanged = true;
+			accountedFor++;
+		}
+		else if(storageSlots[slotIdx].unmountable)
+		{
+			accountedFor++; // a device, just not one we can use
 		}
 	}
 }

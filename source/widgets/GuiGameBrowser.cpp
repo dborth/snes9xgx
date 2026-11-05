@@ -186,8 +186,25 @@ GuiGameBrowser::GuiGameBrowser(int w, int h)
 	}
 }
 
+#define PREVIEW_CACHE_STOP_TIMEOUT_MS 1000
+
+void GuiGameBrowser::releasePreviewCache()
+{
+	if(!previewCache)
+		return;
+
+	// A thread stuck inside a storage read can't be stopped or waited for. Leak the cache - the thread is
+	// still using it, and exits on its own once that read returns - rather than freeze the screen change.
+	if(!previewCache->tryShutdown(PREVIEW_CACHE_STOP_TIMEOUT_MS))
+		(void)previewCache.release();
+
+	previewCache.reset();
+}
+
 GuiGameBrowser::~GuiGameBrowser()
 {
+	releasePreviewCache();
+
 	delete arrowUpBtn;
 	delete arrowDownBtn;
 	delete scrollbarBoxBtn;
@@ -259,7 +276,7 @@ void GuiGameBrowser::setPreviewImage(GuiImage * target, GuiPreviewPathResolver r
 	if(!target)
 	{
 		// disable - free the cache and its background thread
-		previewCache.reset();
+		releasePreviewCache();
 		previewTarget = nullptr;
 		previewLastImage = nullptr;
 		previewResolver = nullptr;
@@ -270,6 +287,7 @@ void GuiGameBrowser::setPreviewImage(GuiImage * target, GuiPreviewPathResolver r
 		return;
 	}
 
+	releasePreviewCache(); // a cache set earlier
 	previewCache.reset(new GuiImageAsyncCache(capacity, prefetchRadius, maxImageWidth, maxImageHeight));
 	previewTarget = target;
 	previewLastImage = nullptr;

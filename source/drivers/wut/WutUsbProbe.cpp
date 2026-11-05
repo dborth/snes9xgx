@@ -14,13 +14,14 @@
 
 #define MAX_PROFILES 4
 
-void ScanUsbHardwareSignature(UsbHardwareSignature & out)
+bool ScanUsbHardwareSignature(UsbHardwareSignature & out)
 {
 	out.count = 0;
+	bool queried = false;
 
 	void * cfgBuffer = memalign(0x40, UHS_CONFIG_BUFFER_SIZE);
 	if(!cfgBuffer)
-		return;
+		return false;
 
 	UhsConfig config;
 	memset(&config, 0, sizeof(config));
@@ -46,6 +47,7 @@ void ScanUsbHardwareSignature(UsbHardwareSignature & out)
 			// UhsQueryInterfaces()'s return value is the count of interfaces
 			// written into profiles. Use it directly as the loop bound.
 			int foundCount = (int)UhsQueryInterfaces(&handle, &filter, profiles, MAX_PROFILES);
+			queried = (foundCount >= 0);
 
 			for(int i = 0; i < foundCount; i++)
 			{
@@ -64,6 +66,7 @@ void ScanUsbHardwareSignature(UsbHardwareSignature & out)
 		UhsClientClose(&handle);
 	}
 	free(cfgBuffer);
+	return queried;
 }
 
 bool UsbHardwareSignatureChanged(const UsbHardwareSignature & a, const UsbHardwareSignature & b)

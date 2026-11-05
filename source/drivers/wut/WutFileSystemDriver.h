@@ -19,6 +19,8 @@ struct WutStorageSlot
 	const char * mountName;			//!< devoptab basename, eg. "usb1" - also the dvm_wut.c volume name
 	int failCount;					//!< consecutive mount failures since the last success or hardware change - see tryMountStorageSlot()
 	int backoffPollsLeft;			//!< polls left to skip before the next probe attempt (0 = probe now)
+	bool unmountable;				//!< the device on this slot reads fine but has nothing we can mount (eg. a WFS drive): never probed
+									//!< again until the set of attached USB storage devices changes - see tryMountStorageSlot()
 };
 
 //! State tracker for a single storage device slot.
@@ -45,17 +47,22 @@ struct WutDeviceState
 //! Mocha isn't present.
 //!
 //! Hotplug (insertion): Mocha_*_isInserted() only reports whether we
-//! already have the fd open - it doesn't re-probe hardware. While
-//! unmounted, pollStorageDevices() retries dvmWutMountVolume(). A
-//! read-only nsysuhs scan resets USB's backoff immediately on any real
-//! hardware-level change.
+//! already have the fd open - it doesn't re-probe hardware. A read-only
+//! nsysuhs scan counts the attached USB storage devices; only while that
+//! is more than the devices already accounted for (mounted, or found
+//! unmountable) does pollStorageDevices() try dvmWutMountVolumeEx() on
+//! the remaining slots - an idle console makes no mount attempts at all.
+//! Any real hardware-level change resets USB's backoff immediately.
 //!
 //! Hotplug (removal while mounted): dvmWutVolumeStillPresent() forces a
 //! real, uncached raw sector read through the mounted disc.
 //!
-//! Backoff: a slot that opens but won't mount (wrong/unrecognized format,
-//! or genuinely nothing there) gets a few quick immediate retries. The
-//! interface is always left shutdown() between attempts.
+//! Backoff: a slot where nothing could be read (not ready, or nothing
+//! there) gets a few quick immediate retries, then backs off. A slot whose
+//! device reads fine but has nothing mountable on it (no MBR/VBR - eg. a
+//! Wii U WFS drive - or no supported filesystem) is marked unmountable and
+//! is not probed again until the USB hardware changes. The interface is
+//! always left shutdown() between attempts.
 //!
 //! Volume labels (USB only): looked up once via libdvm
 //! (dvmWutGetVolumeLabel()) right after a successful mount, never
@@ -112,6 +119,11 @@ class WutFileSystemDriver : public FileSystemDriver
 		//! here means real hardware just appeared/disappeared.
 		UsbHardwareSignature usbHwSignature;
 
+		//! The nsysuhs scan has worked at least once. Until then (eg. nsysuhs unavailable) a scan says
+		//! nothing about what is attached, so mounting falls back to trying the free slots; after that, a
+		//! failed scan just means "no news" and the last known signature stands.
+		bool usbScanWorked = false;
+
 		WutSmbDriver       smbDriver;
 
 		int  findDeviceIndex(int deviceId) const;
@@ -122,7 +134,7 @@ class WutFileSystemDriver : public FileSystemDriver
 		void refreshSmbSlot();
 
 		//! The three below take an index into storageSlots[] (0..2 = USB1..3), not into devices[].
-		//! Single-slot attempt: handles the backoff check, then a real dvmWutMountVolume() probe if warranted
+		//! Single-slot attempt: handles the unmountable and backoff checks, then a real dvmWutMountVolumeEx() probe if warranted
 		bool tryMountStorageSlot(int slotIdx);
 		//! dvmWutUnmountVolume() on the slot, which shuts down its DISC_INTERFACE
 		void unmountStorageSlot(int slotIdx);

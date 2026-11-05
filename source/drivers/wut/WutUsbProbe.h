@@ -35,7 +35,9 @@ struct UsbHardwareSignature
 //! client-side to USBCLASS_STORAGE. No logging, no allocation beyond one
 //! small stack-sized UHS config buffer, never touches Mocha/FSA state -
 //! safe and cheap enough to call every pollStorageDevices() cycle.
-void ScanUsbHardwareSignature(UsbHardwareSignature & out);
+//!\return true if nsysuhs was actually queried (out is then exact, and may legitimately be empty);
+//! false if the scan itself failed - out.count is 0 then, but that says nothing about the hardware.
+bool ScanUsbHardwareSignature(UsbHardwareSignature & out);
 
 //! Unordered comparison by ifHandle - true if the set of attached
 //! storage interfaces differs between a and b (an insertion, a removal,

@@ -53,8 +53,11 @@ int selectLoadedFile = 0;
 static Thread deviceThread;
 static bool deviceCheckingArmed = false;    // ArmDeviceChecking() called, StopDeviceChecking() not yet
 static bool deviceCheckingRunning = false;  // the thread has actually been started
+static bool deviceCheckingAbandoned = false; // StopDeviceChecking() gave up waiting: the thread is stuck in the OS and exits on its own - see ReapDeviceThread()
+static volatile bool deviceThreadExited = false; // set by devicecallback as its very last act; accessed with __atomic_*
 static Ticks deviceCheckingArmedAt = 0;
 #define DEVICE_CHECK_ARM_DELAY_MS 5000 // let the browser's own boot work (mount/parse/preview) go first
+#define DEVICE_THREAD_STOP_TIMEOUT_MS 1000 // longest StopDeviceChecking() waits for the thread
 
 #define WORKER_THREAD_STACKSIZE (96 * 1024)
 #define DEVICE_THREAD_STACKSIZE (8 * 1024)
@@ -89,8 +92,26 @@ void ArmDeviceChecking()
 	deviceCheckingArmedAt = SystemTime::now();
 }
 
+/****************************************************************************
+ * ReapDeviceThread
+ *
+ * Collects a device thread that an earlier StopDeviceChecking() gave up on,
+ * once it has finally finished
+ ***************************************************************************/
+static void ReapDeviceThread()
+{
+	if(deviceCheckingAbandoned && __atomic_load_n(&deviceThreadExited, __ATOMIC_ACQUIRE))
+	{
+		deviceThread.join(); // returns at once - the thread has exited
+		deviceCheckingRunning = false;
+		deviceCheckingAbandoned = false;
+	}
+}
+
 void UpdateDeviceCheckingArm()
 {
+	ReapDeviceThread();
+
 	if(!deviceCheckingArmed || deviceCheckingRunning)
 		return;
 
@@ -99,6 +120,7 @@ void UpdateDeviceCheckingArm()
 
 	if(platform->getFileSystem()->hasRemovableStorageDevices())
 	{
+		__atomic_store_n(&deviceThreadExited, false, __ATOMIC_RELEASE);
 		deviceThread.start(devicecallback, nullptr, DEVICE_THREAD_STACKSIZE, ThreadPriority::Low);
 		deviceCheckingRunning = true;
 	}
@@ -110,12 +132,27 @@ void StopDeviceChecking()
 {
 	deviceCheckingArmed = false;
 
+	ReapDeviceThread();
+
 	if(!deviceCheckingRunning)
 		return;
 
 	deviceThread.requestStop();
-	deviceThread.join();
-	deviceCheckingRunning = false;
+
+	// A poll can get stuck inside the OS (USB). Normally the thread notices the stop within a poll or one
+	// 100 ms nap - but leaving the screen must never wait on it forever.
+	for(unsigned waited = 0; waited < DEVICE_THREAD_STOP_TIMEOUT_MS && !__atomic_load_n(&deviceThreadExited, __ATOMIC_ACQUIRE); waited += 5)
+		usleep(5000);
+
+	if(__atomic_load_n(&deviceThreadExited, __ATOMIC_ACQUIRE))
+	{
+		deviceThread.join();
+		deviceCheckingRunning = false;
+	}
+	else
+	{
+		deviceCheckingAbandoned = true; // still running: no new thread is started until ReapDeviceThread() collects this one
+	}
 }
 
 /****************************************************************************
@@ -175,6 +212,7 @@ static void * devicecallback(void *)
 		for(int i = 0; i < 30 && !deviceThread.stopRequested(); i++)
 			usleep(100000);
 	}
+	__atomic_store_n(&deviceThreadExited, true, __ATOMIC_RELEASE);
 	return nullptr;
 }
 

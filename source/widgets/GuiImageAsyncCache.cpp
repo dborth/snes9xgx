@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <algorithm>
+#include <unistd.h>
 
 #include "GuiImageAsyncCache.h"
 #include "../drivers/Platform.h"
@@ -63,6 +64,26 @@ void GuiImageAsyncCache::shutdown()
 	}
 
 	flush();
+}
+
+bool GuiImageAsyncCache::tryShutdown(unsigned timeoutMs)
+{
+	if(threadRunning)
+	{
+		thread.requestStop();
+		wake();
+
+		// Normally the thread is parked waiting for work, or finishing one short read + decode, and is gone
+		// almost at once. Only a read stuck inside the OS keeps it past the timeout.
+		for(unsigned waited = 0; waited < timeoutMs && !__atomic_load_n(&threadExited, __ATOMIC_ACQUIRE); waited += 2)
+			usleep(2000);
+
+		if(!__atomic_load_n(&threadExited, __ATOMIC_ACQUIRE))
+			return false; // stuck: touch nothing, the caller leaks this object
+	}
+
+	shutdown(); // the thread has exited, so its join() returns at once; this frees the rest
+	return true;
 }
 
 void GuiImageAsyncCache::flush()
@@ -273,7 +294,9 @@ static size_t ReadFileForDecode(const char * path, uint8_t * buffer, size_t buff
 
 void * GuiImageAsyncCache::threadTrampoline(void * arg)
 {
-	static_cast<GuiImageAsyncCache *>(arg)->threadLoop();
+	GuiImageAsyncCache * self = static_cast<GuiImageAsyncCache *>(arg);
+	self->threadLoop();
+	__atomic_store_n(&self->threadExited, true, __ATOMIC_RELEASE); // the very last touch of *self
 	return nullptr;
 }
 

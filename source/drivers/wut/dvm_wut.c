@@ -58,16 +58,21 @@ static DvmWutVolume * claimVolumeSlot(const char * name)
 
 bool dvmWutMountVolume(const char * name, DISC_INTERFACE * iface, unsigned cachePages, unsigned sectorsPerPage)
 {
+	return dvmWutMountVolumeEx(name, iface, cachePages, sectorsPerPage) == DVM_WUT_MOUNTED;
+}
+
+DvmWutMountResult dvmWutMountVolumeEx(const char * name, DISC_INTERFACE * iface, unsigned cachePages, unsigned sectorsPerPage)
+{
 	if(!driversRegistered || !name || !iface)
-		return false;
+		return DVM_WUT_ERROR;
 
 	DvmWutVolume * vol = claimVolumeSlot(name);
 	if(!vol || vol->isMounted)
-		return false;
+		return DVM_WUT_ERROR;
 
 	DvmDisc * disc = dvmDiscCreate(iface);
 	if(!disc)
-		return false;
+		return DVM_WUT_NO_DEVICE; // iface->startup() failed (or isInserted() said no)
 
 	if(cachePages)
 	{
@@ -82,19 +87,25 @@ bool dvmWutMountVolume(const char * name, DISC_INTERFACE * iface, unsigned cache
 		disc = cachedDisc;
 	}
 
+	// Can the disc actually be read? (A real, uncached read of sector 0.) This is what separates
+	// "nothing usable there (yet)" from "a perfectly readable disc we have no driver for" - both
+	// make dvmProbeMountDisc() return 0 below, but only the first is worth trying again.
+	alignas(LIBDVM_BUFFER_ALIGN) uint8_t scratch[512]; // libdvm's sector size on Wii U is always 512
+	const bool readable = dvmDiscProbePresence(disc, scratch);
+
 	// dvmProbeMountDisc() mounts every partition it recognizes, naming the
 	// first "name" and any further ones "name2", "name3"... (see
 	// dvm_prober.c).
-	unsigned mounted = dvmProbeMountDisc(name, disc);
+	unsigned mounted = readable ? dvmProbeMountDisc(name, disc) : 0;
 	if(!mounted)
 	{
 		disc->vt->destroy(disc);
-		return false;
+		return readable ? DVM_WUT_UNMOUNTABLE : DVM_WUT_NO_DEVICE;
 	}
 
 	vol->disc = disc;
 	vol->isMounted = true;
-	return true;
+	return DVM_WUT_MOUNTED;
 }
 
 void dvmWutUnmountVolume(const char * name)

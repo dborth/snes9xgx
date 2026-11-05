@@ -32,6 +32,18 @@ typedef struct
 //! startup before any dvmWutMountVolume() call. Safe to call more than once.
 bool dvmWutInit(void);
 
+//! Why a dvmWutMountVolumeEx() attempt did or didn't mount
+typedef enum
+{
+	DVM_WUT_MOUNTED,     //!< mounted: at least one partition is reachable as "name:/"
+	DVM_WUT_NO_DEVICE,   //!< the interface wouldn't start, or the disc couldn't be read: nothing there, or
+	                     //!< not ready yet (eg. a drive still spinning up) - worth trying again later
+	DVM_WUT_UNMOUNTABLE, //!< the disc reads fine but nothing on it is recognised - no MBR/VBR/GPT (a Wii U
+	                     //!< WFS drive, or an unformatted one) or no partition with a supported filesystem.
+	                     //!< Trying again changes nothing until the device itself changes.
+	DVM_WUT_ERROR        //!< bad arguments, libdvm not initialised, no volume slot left, or already mounted
+} DvmWutMountResult;
+
 //! Probes iface for a mountable partition and, if found, mounts it as
 //! "name:/" through libdvm (vfat or exfat or ntfs, whichever it actually turns
 //! out to be - see dvmProbeMountDisc()). Safe to call repeatedly, 
@@ -43,6 +55,11 @@ bool dvmWutInit(void);
 //! directly - not recommended for normal use, but works, and is exactly
 //! equivalent to what dvmWutVolumeStillPresent() forces on a cached mount).
 bool dvmWutMountVolume(const char * name, DISC_INTERFACE * iface, unsigned cachePages, unsigned sectorsPerPage);
+
+//! Same as dvmWutMountVolume(), but says why it didn't mount - in particular telling "nothing readable
+//! there" (DVM_WUT_NO_DEVICE) from "a readable disc with nothing mountable on it" (DVM_WUT_UNMOUNTABLE).
+//! The distinction costs nothing extra: a disc that can't be read is never handed to the partition prober.
+DvmWutMountResult dvmWutMountVolumeEx(const char * name, DISC_INTERFACE * iface, unsigned cachePages, unsigned sectorsPerPage);
 
 //! Unmounts "name:/" and releases the underlying DvmDisc, which shuts
 //! down iface once nothing else references it (see fat_driver.c's

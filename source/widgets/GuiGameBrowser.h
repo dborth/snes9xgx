@@ -86,6 +86,9 @@ class GuiGameBrowser : public GuiElement
 
 		// preview-image support
 		std::unique_ptr<GuiImageAsyncCache> previewCache;
+
+		//! Stops and frees previewCache without ever waiting on its thread indefinitely (see tryShutdown())
+		void releasePreviewCache();
 		GuiImage * previewTarget = nullptr;
 		GuiImageData * previewLastImage = nullptr; // last thing painted into previewTarget, so we only call setImage() on an actual change
 		GuiPreviewPathResolver previewResolver = nullptr;

@@ -54,6 +54,15 @@ class GuiImageAsyncCache
 		//!destructor happens to run) should call it explicitly.
 		void shutdown();
 
+		//!Like shutdown(), but never waits longer than timeoutMs for the background thread to stop. That
+		//!thread reads and decodes image files from storage, and a read can get stuck inside the OS (a USB
+		//!drive that has stopped answering) - leaving a screen must not wait on it forever.
+		//!\return true if the thread stopped and everything was released - destroy the object as usual.
+		//!false if the thread is stuck: nothing was released, and the object MUST NOT be destroyed, because
+		//!the thread is still using it. Leak it (eg. unique_ptr::release()); the thread has been told to stop
+		//!and exits by itself whenever its read returns.
+		bool tryShutdown(unsigned timeoutMs);
+
 		//!Drops every cached and in-flight entry (see class comment).
 		void flush();
 
@@ -144,5 +153,6 @@ class GuiImageAsyncCache
 
 		Thread thread;
 		bool threadRunning = false;
+		volatile bool threadExited = false; //!< set by the thread as its very last act; accessed with __atomic_*
 		uint8_t * rawFileBuffer = nullptr;
 };
