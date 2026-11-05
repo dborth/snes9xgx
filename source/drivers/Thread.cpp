@@ -24,17 +24,20 @@ bool Thread::start(ThreadEntry entry, void * arg, uint32_t stackSize, ThreadPrio
 	if(!platform || !platform->getThread())
 		return false;
 
+	// Before the thread exists: it can run (and read stopRequested()) as soon as
+	// createThread() returns, and the flag is still set from the last requestStop()
+	stopFlag = false;
+	wakeFn = wake;
+
 	// handle is passed by address so the driver can publish it before the
 	// new thread starts running - entry() may call back into this Thread
 	// (e.g. to suspend itself) as its first action. See ThreadDriver::createThread.
 	if(!platform->getThread()->createThread(entry, arg, stackSize, priority, &handle))
 	{
 		handle = nullptr;
+		wakeFn = nullptr;
 		return false;
 	}
-
-	stopFlag = false;
-	wakeFn = wake;
 
 	MutexLock guard(RegistryLock());
 	registryNext = registryHead;

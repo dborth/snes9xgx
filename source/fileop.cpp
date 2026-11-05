@@ -60,7 +60,11 @@ static Ticks deviceCheckingArmedAt = 0;
 #define DEVICE_THREAD_STOP_TIMEOUT_MS 1000 // longest StopDeviceChecking() waits for the thread
 
 #define WORKER_THREAD_STACKSIZE (96 * 1024)
+#ifdef __WIIU__
+#define DEVICE_THREAD_STACKSIZE (128 * 1024)
+#else
 #define DEVICE_THREAD_STACKSIZE (8 * 1024)
+#endif
 
 /****************************************************************************
  * Background worker thread
@@ -126,6 +130,22 @@ void UpdateDeviceCheckingArm()
 	}
 
 	deviceCheckingArmed = false; // armed once per StopDeviceChecking(); either started above, or nothing to check
+}
+
+/****************************************************************************
+ * RequestStopDeviceChecking
+ *
+ * First half of leaving the screen: asks the device thread to stop and returns at once, so it
+ * can finish whatever poll it is in the middle of (a USB mount can take seconds) while the
+ * caller does its own leaving work. StopDeviceChecking() is the second half, and by then the
+ * thread has normally already exited. Safe to call more than once, and when nothing is running.
+ ***************************************************************************/
+void RequestStopDeviceChecking()
+{
+	deviceCheckingArmed = false; // and don't start another one meanwhile
+
+	if(deviceCheckingRunning)
+		deviceThread.requestStop();
 }
 
 void StopDeviceChecking()

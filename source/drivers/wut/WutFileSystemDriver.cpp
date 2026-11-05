@@ -153,22 +153,16 @@ int WutFileSystemDriver::findDeviceIndex(int deviceId) const
 	return -1;
 }
 
-void WutFileSystemDriver::getVolumeLabel(WutDeviceState & dev, const char * dvmName)
+void WutFileSystemDriver::readVolumeLabel(const char * dvmName, char (&out)[16])
 {
-	// Only ever looked up once per mount
-	if(dev.labelFetched)
-		return;
-
-	dev.volumeLabel[0] = '\0';
+	out[0] = '\0';
 
 	if(dvmName) // null when there's no dvm volume behind the device - no label source then
 	{
 		char path[16];
 		snprintf(path, sizeof(path), "%s:", dvmName);
-		dvmWutGetVolumeLabel(path, dev.volumeLabel, sizeof(dev.volumeLabel));
+		dvmWutGetVolumeLabel(path, out, sizeof(out));
 	}
-
-	dev.labelFetched = true;
 }
 
 bool WutFileSystemDriver::tryMountStorageSlot(int slotIdx)
@@ -179,37 +173,57 @@ bool WutFileSystemDriver::tryMountStorageSlot(int slotIdx)
 	WutDeviceState & dev = devices[slotUSB1 + slotIdx];
 	WutStorageSlot & slot = storageSlots[slotIdx];
 
-	if(dev.isMounted)
-		return true;
+	bool needUnmount;
 
-	if(dev.unmountRequired)
+	{
+		MutexLock guard(stateLock);
+
+		if(dev.isMounted)
+			return true;
+
+		needUnmount = dev.unmountRequired;
+	}
+
+	// Takes the lock itself, and calls into libdvm without it
+	if(needUnmount)
 		unmountStorageSlot(slotIdx);
 
 	if(!mochaReady)
 		return false;
 
-	// A readable device with nothing mountable on it: probing it again can't change that
-	if(slot.unmountable)
-		return false;
-
-	// Backing off after repeated failures against an unremoved device
-	if(slot.backoffPollsLeft > 0)
 	{
-		slot.backoffPollsLeft--;
-		return false;
+		MutexLock guard(stateLock);
+
+		// A readable device with nothing mountable on it: probing it again can't change that
+		if(slot.unmountable)
+			return false;
+
+		// Backing off after repeated failures against an unremoved device
+		if(slot.backoffPollsLeft > 0)
+		{
+			slot.backoffPollsLeft--;
+			return false;
+		}
 	}
 
-	// dvmWutMountVolumeEx() takes a non-const DISC_INTERFACE* but never mutates it
+	// The mount and the label lookup below can take seconds (spin-up, probing
+	// every partition), so neither runs under stateLock. dvmWutMountVolumeEx()
+	// takes a non-const DISC_INTERFACE* but never mutates it.
 	const DvmWutMountResult result = dvmWutMountVolumeEx(slot.mountName, (DISC_INTERFACE *) slot.iface, cachePages, sectorsPerPage);
 
 	if(result == DVM_WUT_MOUNTED)
 	{
+		char label[16];
+		readVolumeLabel(slot.mountName, label);
+
+		MutexLock guard(stateLock);
 		slot.failCount = 0;
 		dev.isPresent = true;
-		dev.isMounted = true;
 		dev.unmountRequired = false;
 		snprintf(dev.prefix, sizeof(dev.prefix), "%s:/", slot.mountName);
-		getVolumeLabel(dev, slot.mountName);
+		memcpy(dev.volumeLabel, label, sizeof(dev.volumeLabel));
+		dev.labelFetched = true;
+		dev.isMounted = true;	// last: everything above is in place when a reader sees it
 		return true;
 	}
 
@@ -220,14 +234,22 @@ bool WutFileSystemDriver::tryMountStorageSlot(int slotIdx)
 	{
 		// The disc was read fine and nothing on it is recognised (no MBR/VBR - eg. a WFS drive - or no
 		// supported filesystem). Retrying can't help, so stop: cleared only by a hardware change.
-		slot.unmountable = true;
-		slot.failCount = 0;
-		slot.backoffPollsLeft = 0;
-		dev.isPresent = false;
-		dev.isMounted = false;
+		{
+			MutexLock guard(stateLock);
+
+			slot.unmountable = true;
+			slot.failCount = 0;
+			slot.backoffPollsLeft = 0;
+			dev.isPresent = false;
+			dev.isMounted = false;
+		}
+
+		// Not under the lock: the file logger does storage I/O
 		LOG_INFO("%s: device is readable but has nothing mountable (no MBR/VBR, or no FAT/exFAT/NTFS partition) - not retrying until the USB hardware changes", slot.mountName);
 		return false;
 	}
+
+	MutexLock guard(stateLock);
 
 	slot.failCount++;
 	if(slot.failCount < maxQuickRetries)
@@ -248,8 +270,18 @@ void WutFileSystemDriver::unmountStorageSlot(int slotIdx)
 	WutDeviceState & dev = devices[slotUSB1 + slotIdx];
 	WutStorageSlot & slot = storageSlots[slotIdx];
 
-	if(dev.isMounted)
+	bool wasMounted;
+
+	{
+		MutexLock guard(stateLock);
+		wasMounted = dev.isMounted;
+	}
+
+	// Flushes the cache and shuts the device down: not under the lock
+	if(wasMounted)
 		dvmWutUnmountVolume(slot.mountName);
+
+	MutexLock guard(stateLock);
 
 	slot.failCount = 0;
 	slot.backoffPollsLeft = 0;
@@ -266,9 +298,12 @@ bool WutFileSystemDriver::slotStillPresent(int slotIdx)
 	if(slotIdx < 0 || slotIdx >= storageSlotCount || !mochaReady)
 		return false;
 
-	WutDeviceState & dev = devices[slotUSB1 + slotIdx];
-	if(!dev.isMounted)
-		return false;
+	{
+		MutexLock guard(stateLock);
+
+		if(!devices[slotUSB1 + slotIdx].isMounted)
+			return false;
+	}
 
 	// Forces a genuine, uncached raw sector read through the mounted disc
 	return dvmWutVolumeStillPresent(storageSlots[slotIdx].mountName);
@@ -296,6 +331,8 @@ void WutFileSystemDriver::refreshSmbSlot()
 int WutFileSystemDriver::enumerateStorageDevices(StorageDevice outDevices[MAX_STORAGE_DEVICES])
 {
 	refreshSmbSlot();
+
+	MutexLock guard(stateLock);
 
 	int count = 0;
 	for(int i = 0; i < deviceCount && count < MAX_STORAGE_DEVICES; i++)
@@ -328,6 +365,8 @@ bool WutFileSystemDriver::isDevicePresent(int deviceId) const
 		return smbDriver.isConnected(); // informational only - SMB is alwaysListed
 
 	int idx = findDeviceIndex(deviceId);
+
+	MutexLock guard(stateLock);
 	return idx >= 0 && devices[idx].isPresent;
 }
 
@@ -353,7 +392,12 @@ MountResult WutFileSystemDriver::mountStorageDevice(int deviceId)
 		return MountResult::Success;
 
 	// Present, but there's nothing on it we can mount (never re-probed - see tryMountStorageSlot())
-	return storageSlots[slotIdx].unmountable ? MountResult::MountFailed : MountResult::DeviceNotFound;
+	bool unmountable;
+	{
+		MutexLock guard(stateLock);
+		unmountable = storageSlots[slotIdx].unmountable;
+	}
+	return unmountable ? MountResult::MountFailed : MountResult::DeviceNotFound;
 }
 
 const char * WutFileSystemDriver::mountResultMessage(int deviceId, MountResult result)
@@ -391,6 +435,8 @@ void WutFileSystemDriver::invalidateStorageDevice(int deviceId)
 	if(idx < 0)
 		return;
 
+	MutexLock guard(stateLock);
+
 	devices[idx].isMounted = false;
 	devices[idx].unmountRequired = true;
 	devices[idx].labelFetched = false;
@@ -426,6 +472,8 @@ void WutFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 		// A real hardware change anywhere is worth one fresh look at every USB slot right now: lift any
 		// backoff, and forget "unmountable" - the device that earned it may be gone or replaced. (failCount
 		// is kept, so a slot that keeps failing still reaches maxQuickRetries and backs off properly.)
+		MutexLock guard(stateLock);
+
 		for(int i = 0; i < storageSlotCount; i++)
 		{
 			storageSlots[i].backoffPollsLeft = 0;
@@ -439,8 +487,14 @@ void WutFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 	for(int slotIdx = 0; slotIdx < storageSlotCount; slotIdx++)
 	{
 		WutDeviceState & dev = devices[slotUSB1 + slotIdx];
+		bool mounted;
 
-		if(dev.isMounted && !slotStillPresent(slotIdx))
+		{
+			MutexLock guard(stateLock);
+			mounted = dev.isMounted;
+		}
+
+		if(mounted && !slotStillPresent(slotIdx))
 		{
 			unmountStorageSlot(slotIdx);
 
@@ -454,15 +508,24 @@ void WutFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 	// mounted, or found unmountable. Only while there are more attached than that is there anything to
 	// look for - so with nothing attached (or everything accounted for) no mount attempt is made at all.
 	int accountedFor = 0;
-	for(int slotIdx = 0; slotIdx < storageSlotCount; slotIdx++)
-		if(devices[slotUSB1 + slotIdx].isMounted || storageSlots[slotIdx].unmountable)
-			accountedFor++;
+	{
+		MutexLock guard(stateLock);
+
+		for(int slotIdx = 0; slotIdx < storageSlotCount; slotIdx++)
+			if(devices[slotUSB1 + slotIdx].isMounted || storageSlots[slotIdx].unmountable)
+				accountedFor++;
+	}
 
 	for(int slotIdx = 0; slotIdx < storageSlotCount; slotIdx++)
 	{
-		WutDeviceState & dev = devices[slotUSB1 + slotIdx];
+		bool accounted;
 
-		if(dev.isMounted || storageSlots[slotIdx].unmountable)
+		{
+			MutexLock guard(stateLock);
+			accounted = devices[slotUSB1 + slotIdx].isMounted || storageSlots[slotIdx].unmountable;
+		}
+
+		if(accounted)
 			continue;
 
 		if(hwKnown && usbHwSignature.count <= accountedFor)
@@ -472,11 +535,16 @@ void WutFileSystemDriver::pollStorageDevices(int removedIds[MAX_STORAGE_DEVICES]
 		{
 			deviceListChanged = true;
 			accountedFor++;
+			continue;
 		}
-		else if(storageSlots[slotIdx].unmountable)
+
+		bool nowUnmountable;
 		{
-			accountedFor++; // a device, just not one we can use
+			MutexLock guard(stateLock);
+			nowUnmountable = storageSlots[slotIdx].unmountable;
 		}
+		if(nowUnmountable)
+			accountedFor++; // a device, just not one we can use
 	}
 }
 
@@ -492,9 +560,20 @@ const char * WutFileSystemDriver::getMountPath(int device) const
 		const_cast<WutFileSystemDriver *>(this)->refreshSmbSlot();
 
 	int idx = findDeviceIndex(device);
-	if(idx < 0 || !devices[idx].isMounted || devices[idx].prefix[0] == '\0')
+	if(idx < 0)
 		return "";
-	return devices[idx].prefix;
+
+	{
+		MutexLock guard(stateLock);
+
+		if(!devices[idx].isMounted || devices[idx].prefix[0] == '\0')
+			return "";
+	}
+
+	// The caller keeps this pointer after the lock is gone. prefix[] is rewritten
+	// by every mount and unmount; stablePrefix[] is the same text, written once in init().
+	// SMB's prefix is only ever touched on the main thread (refreshSmbSlot()).
+	return device == DEVICE_SMB ? devices[idx].prefix : devices[idx].stablePrefix;
 }
 
 const int * WutFileSystemDriver::getValidLoadDevices(int & outCount) const

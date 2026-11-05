@@ -1355,6 +1355,7 @@ static int MenuGameSelection()
 					menu->mainWindow.setState(STATE::DISABLED);
 
 					// the game being replaced is left for good: its autosave is written first
+					deviceChecking.beginLeave(); // the device thread winds down while the auto-save below runs
 					if(!AutoSaveLeavingGame()) return MENU_EXIT;
 					if(!WaitForQueuedTasks()) return MENU_EXIT; // for that write, and any other
 
@@ -1385,6 +1386,7 @@ static int MenuGameSelection()
 		}
 		else if(exitBtn.getState() == STATE::CLICKED) {
 			platform->getInput()->haltRumble();
+			deviceChecking.beginLeave();
 			platform->triggerExit();
 		}
 

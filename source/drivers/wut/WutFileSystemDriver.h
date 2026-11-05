@@ -8,6 +8,7 @@
 #include "WutSmbDriver.h"
 #include <mocha/disc_interface.h>
 #include "WutUsbProbe.h"
+#include "../Mutex.h"
 
 //! One USB mass-storage slot as Cafe OS/Mocha actually exposes it: just a
 //! DISC_INTERFACE handed to libdvm (vfat/exfat/ntfs) via dvm_wut.c - see
@@ -34,7 +35,7 @@ struct WutDeviceState
 	bool isPresent;			//!< found on the last poll
 	bool isMounted;
 	bool unmountRequired;
-	bool labelFetched;		//!< volume label already looked up since the last mount/removal - see getVolumeLabel()
+	bool labelFetched;		//!< volume label already looked up since the last mount/removal - see readVolumeLabel()
 };
 
 //! SD: a plain WHBMountSdCard() FSA mount, done once in init(). From then on
@@ -66,7 +67,14 @@ struct WutDeviceState
 //!
 //! Volume labels (USB only): looked up once via libdvm
 //! (dvmWutGetVolumeLabel()) right after a successful mount, never
-//! repeated until the next unmount/remount cycle - see getVolumeLabel().
+//! repeated until the next unmount/remount cycle - see readVolumeLabel().
+//!
+//! Threading: pollStorageDevices() runs on the app's poll thread while the
+//! main thread reads the device table (enumerateStorageDevices(),
+//! getMountPath(), isDevicePresent()). stateLock guards devices[] and
+//! storageSlots[]. It is only ever held for a few field reads/writes, never
+//! across a Mocha/libdvm/nsysuhs call (those can block for seconds), so the
+//! main thread never waits on a mount.
 class WutFileSystemDriver : public FileSystemDriver
 {
 	public:
@@ -108,6 +116,9 @@ class WutFileSystemDriver : public FileSystemDriver
 		static const int maxQuickRetries = 3;
 		static const int backoffPolls    = 180;
 
+		//! Guards devices[] and storageSlots[] - see the class comment. Not recursive.
+		mutable Mutex      stateLock;
+
 		WutDeviceState     devices[slotCount];
 		int                deviceCount;
 		bool               mochaReady; //!< Mocha_InitLibrary() succeeded - USB unavailable entirely if not
@@ -129,7 +140,7 @@ class WutFileSystemDriver : public FileSystemDriver
 		int  findDeviceIndex(int deviceId) const;
 		//! dvmName is null when there's no dvm volume behind the device -
 		//! no label source then.
-		void getVolumeLabel(WutDeviceState & dev, const char * dvmName);
+		void readVolumeLabel(const char * dvmName, char (&out)[16]);
 
 		void refreshSmbSlot();
 
