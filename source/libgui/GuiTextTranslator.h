@@ -15,7 +15,10 @@
 class GuiTextTranslator
 {
 	public:
-		GuiTextTranslator();
+		//! constexpr on purpose: an instance defined at namespace scope is then constant-initialized
+		//! (it is laid out in the binary and no constructor runs at startup), so it is already valid
+		//! for any static initializer in any translation unit, whatever the link order.
+		constexpr GuiTextTranslator() : magic(MAGIC), head(nullptr) {}
 		~GuiTextTranslator();
 
 		//! Loads and parses a translation file from a memory buffer
@@ -33,6 +36,8 @@ class GuiTextTranslator
 		void clear();
 
 	private:
+		static constexpr uint32_t MAGIC = 0x47545254; // "GTRT": a live, intact translator
+
 		struct MSG
 		{
 			uint32_t id = 0;
@@ -40,6 +45,7 @@ class GuiTextTranslator
 			MSG* next = nullptr;
 		};
 
+		uint32_t magic; // MAGIC while alive; checked on lookup so a stomped object is caught early
 		MSG* head;
 
 		//! Internal helper methods
@@ -48,6 +54,13 @@ class GuiTextTranslator
 
 		//! Safely reads a line from a non-null-terminated memory buffer
 		const char* memFGets(char* dst, int maxlen, const char* src, const char* eof) const;
+
+		//! Stops the program at the first sign that the object or its message list has been overwritten
+		//! (see the definition for what the crash screen then shows). Never returns.
+		[[noreturn]] static void fatalCorruption(const GuiTextTranslator* self, const void* bad,
+				const void* from, uint32_t magicSeen);
+		//! Aborts through fatalCorruption() unless the object and the given list node look sane
+		void checkIntegrity(const MSG* node, const MSG* prev) const;
 
 		MSG* findMessage(uint32_t id) const;
 		MSG* setMessage(const char* msgid, const char* msgstr);

@@ -6,7 +6,17 @@
 
 #include "Gui.h"
 
-GuiTextTranslator* textTranslator = new GuiTextTranslator();
+// The one translator. Its constructor is constexpr, so this is constant-initialized: it is complete
+// before any dynamic initializer runs, and a static GuiText/GuiButton constructed in any translation
+// unit can resolve text through it without depending on link order. The union keeps it from ever being
+// destroyed: it lives until the process ends, so nothing can look up text in a list freed at exit.
+static union TranslatorStorage
+{
+	GuiTextTranslator translator;
+	constexpr TranslatorStorage() : translator() {}
+	~TranslatorStorage() {}
+} translatorStorage;
+GuiTextTranslator* textTranslator = &translatorStorage.translator;
 static PixelColor presetColor = (PixelColor){255, 255, 255, 255};
 static int currentSize = 0;
 static int presetSize = 0;

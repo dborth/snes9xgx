@@ -11,12 +11,36 @@
 
 #define HASHWORDBITS 32
 
-GuiTextTranslator::GuiTextTranslator() :
-		head(nullptr) {
-}
-
 GuiTextTranslator::~GuiTextTranslator() {
 	clear();
+	magic = 0; // a lookup after this point is a lifetime bug: it will stop in checkIntegrity()
+}
+
+/* Never returns. __builtin_trap() raises a Program exception, and its crash screen shows the
+ * registers as they are when it fires, because this function does nothing before trapping:
+ *   r3 = the translator          r4 = the bad pointer (the list head, or some node's next)
+ *   r5 = the node that held r4   (0 when r4 is the head itself)
+ *   r6 = the translator's magic as read (0x47545254 when the object itself is intact)
+ * With an intact magic the object survived and only the list was damaged; a wrong magic means
+ * the translator itself was overwritten. Pair this with the build's ELF (crash-lookup.sh). */
+#if defined(__GNUC__) && (__GNUC__ >= 8)
+#define GUI_OPAQUE_CALL __attribute__((noipa, cold))	/* no inlining, cloning or argument pruning: the registers stay as passed */
+#else
+#define GUI_OPAQUE_CALL __attribute__((noinline, noclone, cold))
+#endif
+
+[[noreturn]] GUI_OPAQUE_CALL
+void GuiTextTranslator::fatalCorruption(const GuiTextTranslator*, const void*, const void*, uint32_t) {
+	__builtin_trap();
+}
+
+void GuiTextTranslator::checkIntegrity(const MSG* node, const MSG* prev) const {
+	if (magic != MAGIC)
+		fatalCorruption(this, node, prev, magic);
+
+	// every MSG comes from operator new, so a node pointer that is not aligned for MSG is not one
+	if (reinterpret_cast<uintptr_t>(node) & (alignof(MSG) - 1))
+		fatalCorruption(this, node, prev, magic);
 }
 
 /* Defines the so-called `hashpjw' function by P.J. Weinberger */
@@ -128,7 +152,11 @@ char* GuiTextTranslator::expandEscape(const char *str) {
 }
 
 GuiTextTranslator::MSG* GuiTextTranslator::findMessage(uint32_t id) const {
-	for (MSG *msg = head; msg; msg = msg->next) {
+	checkIntegrity(head, nullptr);
+
+	const MSG *prev = nullptr;
+	for (MSG *msg = head; msg; prev = msg, msg = msg->next) {
+		checkIntegrity(msg, prev);
 		if (msg->id == id)
 			return msg;
 	}
@@ -159,7 +187,10 @@ GuiTextTranslator::MSG* GuiTextTranslator::setMessage(const char *msgid, const c
 }
 
 void GuiTextTranslator::clear() {
+	checkIntegrity(head, nullptr);
+
 	while (head) {
+		checkIntegrity(head, nullptr);
 		MSG *nextMsg = head->next;
 		if (head->msgstr)
 			free(head->msgstr);
