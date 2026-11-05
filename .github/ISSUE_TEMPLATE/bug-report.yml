@@ -90,6 +90,16 @@ body:
     validations:
       required: true
 
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: |
+        What language do you have the app set to (Settings > Menu > Language)?
+      placeholder: "English"
+    validations:
+      required: true
+
   - type: textarea
     id: credits-screen
     attributes:
