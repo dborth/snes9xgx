@@ -1010,7 +1010,7 @@ static void OnPreviewImageChanged(void * context, GuiImage * target, bool isDefa
 }
 
 static int BrowserLoadFileTask(void *) { return BrowserLoadFile(); }
-static int BrowserChangeFolderTask(void * arg) { return BrowserChangeFolder(); }
+static int BrowserChangeFolderTask(void *) { return BrowserChangeFolder(); }
 
 struct ChangeInterfaceArgs
 {
