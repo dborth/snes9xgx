@@ -1,29 +1,29 @@
-#if defined(HW_RVL) && defined(HAVE_TABLET)
+#ifdef HW_RVL
 #include <string.h>
-#include "hidparse.h"
+#include "tabletdesc.h"
 
 #define MAX_USAGES 64
 #define MAX_DEPTH  16
 #define MAX_PUSH   4
 
 // Standard usages
-#define HIDP_GD_X              0x00010030u
-#define HIDP_GD_Y              0x00010031u
-#define HIDP_DG_DIGITIZER      0x000D0001u
-#define HIDP_DG_PEN            0x000D0002u
-#define HIDP_DG_STYLUS         0x000D0020u
-#define HIDP_DG_TIP_PRESSURE   0x000D0030u
-#define HIDP_DG_IN_RANGE       0x000D0032u
-#define HIDP_DG_INVERT         0x000D003Cu
-#define HIDP_DG_TIP_SWITCH     0x000D0042u
-#define HIDP_DG_BARREL         0x000D0044u
-#define HIDP_DG_ERASER         0x000D0045u
-#define HIDP_DG_INPUT_MODE     0x000D0052u
-#define HIDP_DG_BARREL2        0x000D005Au
+#define TABLETDESC_GD_X              0x00010030u
+#define TABLETDESC_GD_Y              0x00010031u
+#define TABLETDESC_DG_DIGITIZER      0x000D0001u
+#define TABLETDESC_DG_PEN            0x000D0002u
+#define TABLETDESC_DG_STYLUS         0x000D0020u
+#define TABLETDESC_DG_TIP_PRESSURE   0x000D0030u
+#define TABLETDESC_DG_IN_RANGE       0x000D0032u
+#define TABLETDESC_DG_INVERT         0x000D003Cu
+#define TABLETDESC_DG_TIP_SWITCH     0x000D0042u
+#define TABLETDESC_DG_BARREL         0x000D0044u
+#define TABLETDESC_DG_ERASER         0x000D0045u
+#define TABLETDESC_DG_INPUT_MODE     0x000D0052u
+#define TABLETDESC_DG_BARREL2        0x000D005Au
 
 // Wacom's own usages that have no standard equivalent
-#define HIDP_WD_DISTANCE       0xFF0D0132u
-#define HIDP_WD_REPORT_VALID   0xFF0D01D0u
+#define TABLETDESC_WD_DISTANCE       0xFF0D0132u
+#define TABLETDESC_WD_REPORT_VALID   0xFF0D01D0u
 
 typedef struct
 {
@@ -48,10 +48,10 @@ static uint32_t equivalent(uint32_t usage)
 	if (subpage == 0x00040000u || subpage == 0x00090000u ||
 	    subpage == 0x000D0000u || subpage == 0x00100000u ||
 	    usage == 0xFF0D0036u || usage == 0xFF0D005Cu ||
-	    usage == 0xFF0D0077u || usage == HIDP_WD_DISTANCE ||
+	    usage == 0xFF0D0077u || usage == TABLETDESC_WD_DISTANCE ||
 	    usage == 0xFF0D0136u || usage == 0xFF0D0137u ||
 	    usage == 0xFF0D0138u || usage == 0xFF0D0139u ||
-	    usage == HIDP_WD_REPORT_VALID || usage == 0xFF0D005Du ||
+	    usage == TABLETDESC_WD_REPORT_VALID || usage == 0xFF0D005Du ||
 	    usage == 0xFF0D0220u)
 		return usage;
 
@@ -96,7 +96,7 @@ static int32_t logical_max(const globals *g)
 	return (int32_t)g->max_raw;
 }
 
-bool hidp_parse(const uint8_t *desc, uint32_t len, hidp_desc *out)
+bool TabletDesc_Parse(const uint8_t *desc, uint32_t len, tabletdesc_table *out)
 {
 	globals g, stack[MAX_PUSH];
 	int sp = 0;
@@ -194,7 +194,7 @@ bool hidp_parse(const uint8_t *desc, uint32_t len, hidp_desc *out)
 		{
 			case 0x8:   // Input
 			case 0xB: { // Feature
-				uint8_t kind = tag == 0x8 ? HIDP_INPUT : HIDP_FEATURE;
+				uint8_t kind = tag == 0x8 ? TABLETDESC_INPUT : TABLETDESC_FEATURE;
 				uint16_t *bits = &out->bits[kind][g.report_id];
 				uint32_t flags = item_u(data, size);
 				uint32_t count = g.report_count;
@@ -220,11 +220,11 @@ bool hidp_parse(const uint8_t *desc, uint32_t len, hidp_desc *out)
 
 						// Of the features, only the mode switch is used;
 						// tablets have dozens of others.
-						if (kind == HIDP_FEATURE && u != HIDP_DG_INPUT_MODE)
+						if (kind == TABLETDESC_FEATURE && u != TABLETDESC_DG_INPUT_MODE)
 							continue;
-						if (out->nfields >= HIDP_MAX_FIELDS)
+						if (out->nfields >= TABLETDESC_MAX_FIELDS)
 							break;
-						hidp_field *f = &out->fields[out->nfields++];
+						tabletdesc_field *f = &out->fields[out->nfields++];
 						f->usage = u;
 						f->app = depth > 0 ? apps[depth - 1] : 0;
 						f->type = kind;
@@ -263,11 +263,11 @@ bool hidp_parse(const uint8_t *desc, uint32_t len, hidp_desc *out)
 
 // The first field of a type with a usage, optionally in one report (-1 for
 // any), copied into `out`; left zeroed (bit_size 0) when there is none.
-static bool find(const hidp_desc *d, uint8_t type, uint32_t usage, int report_id, hidp_field *out)
+static bool find(const tabletdesc_table *d, uint8_t type, uint32_t usage, int report_id, tabletdesc_field *out)
 {
 	for (int i = 0; i < d->nfields; i++)
 	{
-		const hidp_field *f = &d->fields[i];
+		const tabletdesc_field *f = &d->fields[i];
 
 		if (f->type == type && f->usage == usage &&
 		    (report_id < 0 || f->report_id == report_id))
@@ -281,22 +281,22 @@ static bool find(const hidp_desc *d, uint8_t type, uint32_t usage, int report_id
 
 static bool pen_app(uint32_t app)
 {
-	return app == HIDP_DG_DIGITIZER || app == HIDP_DG_PEN || app == HIDP_DG_STYLUS;
+	return app == TABLETDESC_DG_DIGITIZER || app == TABLETDESC_DG_PEN || app == TABLETDESC_DG_STYLUS;
 }
 
-bool hidp_find_pen(const hidp_desc *d, hidp_pen *pen)
+bool TabletDesc_FindPen(const tabletdesc_table *d, tabletdesc_pen *pen)
 {
-	const hidp_field *x = NULL;
-	hidp_field unused;
+	const tabletdesc_field *x = NULL;
+	tabletdesc_field unused;
 
 	memset(pen, 0, sizeof(*pen));
 
 	for (int i = 0; i < d->nfields && !x; i++)
 	{
-		const hidp_field *f = &d->fields[i];
+		const tabletdesc_field *f = &d->fields[i];
 
-		if (f->type == HIDP_INPUT && f->usage == HIDP_GD_X && pen_app(f->app) &&
-		    find(d, HIDP_INPUT, HIDP_GD_Y, f->report_id, &unused))
+		if (f->type == TABLETDESC_INPUT && f->usage == TABLETDESC_GD_X && pen_app(f->app) &&
+		    find(d, TABLETDESC_INPUT, TABLETDESC_GD_Y, f->report_id, &unused))
 			x = f;
 	}
 	if (!x)
@@ -306,24 +306,24 @@ bool hidp_find_pen(const hidp_desc *d, hidp_pen *pen)
 	pen->uses_ids = d->uses_ids;
 	pen->report_id = x->report_id;
 	pen->x = *x;
-	find(d, HIDP_INPUT, HIDP_GD_Y, id, &pen->y);
-	find(d, HIDP_INPUT, HIDP_DG_TIP_PRESSURE, id, &pen->pressure);
-	find(d, HIDP_INPUT, HIDP_DG_TIP_SWITCH, id, &pen->tip);
-	find(d, HIDP_INPUT, HIDP_DG_BARREL, id, &pen->barrel);
-	find(d, HIDP_INPUT, HIDP_DG_BARREL2, id, &pen->barrel2);
-	find(d, HIDP_INPUT, HIDP_DG_ERASER, id, &pen->eraser);
-	find(d, HIDP_INPUT, HIDP_DG_INVERT, id, &pen->invert);
-	find(d, HIDP_INPUT, HIDP_DG_IN_RANGE, id, &pen->in_range);
-	find(d, HIDP_INPUT, HIDP_WD_REPORT_VALID, id, &pen->valid);
-	if (find(d, HIDP_FEATURE, HIDP_DG_INPUT_MODE, -1, &pen->input_mode))
+	find(d, TABLETDESC_INPUT, TABLETDESC_GD_Y, id, &pen->y);
+	find(d, TABLETDESC_INPUT, TABLETDESC_DG_TIP_PRESSURE, id, &pen->pressure);
+	find(d, TABLETDESC_INPUT, TABLETDESC_DG_TIP_SWITCH, id, &pen->tip);
+	find(d, TABLETDESC_INPUT, TABLETDESC_DG_BARREL, id, &pen->barrel);
+	find(d, TABLETDESC_INPUT, TABLETDESC_DG_BARREL2, id, &pen->barrel2);
+	find(d, TABLETDESC_INPUT, TABLETDESC_DG_ERASER, id, &pen->eraser);
+	find(d, TABLETDESC_INPUT, TABLETDESC_DG_INVERT, id, &pen->invert);
+	find(d, TABLETDESC_INPUT, TABLETDESC_DG_IN_RANGE, id, &pen->in_range);
+	find(d, TABLETDESC_INPUT, TABLETDESC_WD_REPORT_VALID, id, &pen->valid);
+	if (find(d, TABLETDESC_FEATURE, TABLETDESC_DG_INPUT_MODE, -1, &pen->input_mode))
 	{
-		pen->input_mode_bytes = (d->bits[HIDP_FEATURE][pen->input_mode.report_id] + 7u) / 8u +
+		pen->input_mode_bytes = (d->bits[TABLETDESC_FEATURE][pen->input_mode.report_id] + 7u) / 8u +
 			(d->uses_ids ? 1u : 0u);
 	}
 	return true;
 }
 
-int32_t hidp_get(const hidp_field *f, const uint8_t *data, uint32_t len)
+int32_t TabletDesc_Get(const tabletdesc_field *f, const uint8_t *data, uint32_t len)
 {
 	uint32_t v = 0;
 
@@ -342,7 +342,7 @@ int32_t hidp_get(const hidp_field *f, const uint8_t *data, uint32_t len)
 	return (int32_t)v;
 }
 
-void hidp_put(const hidp_field *f, uint8_t *data, uint32_t len, int32_t value)
+void TabletDesc_Put(const tabletdesc_field *f, uint8_t *data, uint32_t len, int32_t value)
 {
 	for (unsigned i = 0; i < f->bit_size; i++)
 	{

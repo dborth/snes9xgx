@@ -27,7 +27,7 @@ class WiiUsbPads
 		//! each in the slot of its own hardware profile.
 		void read(int channel, InputPadData & pad);
 
-		//! Adds the pen tablet (HAVE_TABLET) to `pad` on channel 0, in the USB mouse's profile, and
+		//! Adds the pen tablet to `pad` on channel 0, in the USB mouse's profile, and
 		//! its pen as the pointer on a `width` x `height` screen while in range. Called after the
 		//! Wiimote, so the pen takes the pointer over from the IR.
 		void readPointer(int channel, int width, int height, InputPadData & pad);

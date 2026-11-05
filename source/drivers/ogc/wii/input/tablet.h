@@ -8,7 +8,7 @@
  * HID report descriptor are supported.
  */
 
-#if defined(HW_RVL) && defined(HAVE_TABLET)
+#ifdef HW_RVL
 
 #include <gctypes.h>
 
@@ -36,5 +36,5 @@ char* Tablet_Status(void);
 }
 #endif
 
-#endif // HW_RVL && HAVE_TABLET
+#endif // HW_RVL
 #endif

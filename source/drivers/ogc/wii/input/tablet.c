@@ -1,15 +1,24 @@
-#if defined(HW_RVL) && defined(HAVE_TABLET)
+#ifdef HW_RVL
 #include <gccore.h>
 #include <malloc.h>
 #include <string.h>
 #include <ogc/usb.h>
 #include "tablet.h"
-#include "hidparse.h"
+#include "tabletdesc.h"
 #include "usbinput.h"
 
-// Pen tablet makers: Wacom, Huion and Gaomon, XP-Pen and UGEE, Veikk,
-// UC-Logic, Waltop. Nothing else is ever opened by this driver.
-static const u16 tabletVendors[] = { 0x056A, 0x256C, 0x28BD, 0x2FEB, 0x5543, 0x172F };
+// The pen tablet makers whose devices this driver opens, by USB vendor ID.
+// Nothing else is ever opened by it, and only tablets that describe their pen
+// in their HID report descriptor are used.
+static const u16 tabletVendors[] =
+{
+	0x056A, // Wacom (Intuos, One by Wacom, Bamboo, CTL/CTH series)
+	0x256C, // Huion, and Gaomon (Huion's brand, same vendor ID)
+	0x28BD, // XP-Pen, and UGEE (XP-Pen's parent, same vendor ID)
+	0x2FEB, // Veikk
+	0x5543, // UC-Logic (the tablets sold as Turcom, Monoprice, Parblo, ...)
+	0x172F, // Waltop (the tablets sold as Trust, Genius, Medion, ...)
+};
 
 #define TABLET_REPORT_MAX  64   // a full-speed interrupt packet
 #define TABLET_RDESC_MAX   2048 // larger than any tablet's report descriptor
@@ -22,7 +31,7 @@ static bool replugRequired = false;
 static s32 deviceId = 0;
 static u8 endpoint = 0;
 static u16 packetSize = 0;
-static hidp_pen *pen = NULL; // allocated on attach, freed on removal
+static tabletdesc_pen *pen = NULL; // allocated on attach, freed on removal
 static s32 maxX = 1, maxY = 1;
 
 // The interfaces of a tablet that are not its pen (its keys, its mouse), so
@@ -91,36 +100,38 @@ static void parseReport(const u8 *report, s32 len)
 	{
 		return;
 	}
-	if (pen->valid.bit_size && !hidp_get(&pen->valid, data, n))
+	if (pen->valid.bit_size && !TabletDesc_Get(&pen->valid, data, n))
 	{
 		return;
 	}
 
-	bool range = pen->in_range.bit_size ? hidp_get(&pen->in_range, data, n) != 0 : true;
+	bool range = pen->in_range.bit_size ? TabletDesc_Get(&pen->in_range, data, n) != 0 : true;
 	u32 buttons = 0;
 
 	if (range)
 	{
 		bool touching = pen->tip.bit_size
-			? (hidp_get(&pen->tip, data, n) || hidp_get(&pen->eraser, data, n))
-			: hidp_get(&pen->pressure, data, n) > 0;
+			? (TabletDesc_Get(&pen->tip, data, n) || TabletDesc_Get(&pen->eraser, data, n))
+			: TabletDesc_Get(&pen->pressure, data, n) > 0;
 		if (touching) buttons |= TABLET_BUTTON_TIP;
-		if (hidp_get(&pen->barrel, data, n)) buttons |= TABLET_BUTTON_BARREL;
-		if (hidp_get(&pen->barrel2, data, n)) buttons |= TABLET_BUTTON_BARREL2;
+		if (TabletDesc_Get(&pen->barrel, data, n)) buttons |= TABLET_BUTTON_BARREL;
+		if (TabletDesc_Get(&pen->barrel2, data, n)) buttons |= TABLET_BUTTON_BARREL2;
 
-		reportX = hidp_get(&pen->x, data, n) - pen->x.logical_min;
-		reportY = hidp_get(&pen->y, data, n) - pen->y.logical_min;
+		reportX = TabletDesc_Get(&pen->x, data, n) - pen->x.logical_min;
+		reportY = TabletDesc_Get(&pen->y, data, n) - pen->y.logical_min;
 	}
 
 	reportButtons = buttons;
 	reportInRange = range;
 }
 
-static int read();
+static int submitRead(void);
 
 static int read_cb(int res, void *usrdata)
 {
-	if (!isReading)
+	// A read submitted for a tablet since unplugged may complete after a quick
+	// replug: it must not touch the new tablet's state or resubmit
+	if ((s32) usrdata != deviceId || !isReading)
 	{
 		return 1;
 	}
@@ -133,7 +144,7 @@ static int read_cb(int res, void *usrdata)
 
 	parseReport(buf, res);
 
-	if (read() < 0)
+	if (submitRead() < 0)
 	{
 		isReading = false;
 	}
@@ -141,9 +152,9 @@ static int read_cb(int res, void *usrdata)
 	return 1;
 }
 
-static int read()
+static int submitRead(void)
 {
-	return USB_ReadIntrMsgAsync(deviceId, endpoint, packetSize, buf, &read_cb, NULL);
+	return USB_ReadIntrMsgAsync(deviceId, endpoint, packetSize, buf, &read_cb, (void *) deviceId);
 }
 
 static void startReading()
@@ -153,7 +164,7 @@ static void startReading()
 		return;
 	}
 	isReading = true;
-	if (read() < 0)
+	if (submitRead() < 0)
 	{
 		isReading = false;
 	}
@@ -176,6 +187,7 @@ static void resetState()
 
 static int removal_cb(int result, void *usrdata)
 {
+	(void) result;
 	s32 fd = (s32) usrdata;
 	if (fd == deviceId)
 	{
@@ -229,8 +241,8 @@ static u16 reportDescriptorLength(const usb_interfacedesc *inter)
 }
 
 // Reads and parses the interface's report descriptor into a newly allocated
-// hidp_pen. The parse table is only needed for this, and freed again.
-static hidp_pen *readPen(s32 fd, const usb_interfacedesc *inter)
+// tabletdesc_pen. The parse table is only needed for this, and freed again.
+static tabletdesc_pen *readPen(s32 fd, const usb_interfacedesc *inter)
 {
 	u16 len = reportDescriptorLength(inter);
 	if (len == 0 || len > TABLET_RDESC_MAX)
@@ -239,12 +251,12 @@ static hidp_pen *readPen(s32 fd, const usb_interfacedesc *inter)
 	}
 
 	u8 *rdesc = (u8 *) malloc(len);
-	hidp_desc *desc = (hidp_desc *) malloc(sizeof(hidp_desc));
-	hidp_pen *found = (hidp_pen *) malloc(sizeof(hidp_pen));
+	tabletdesc_table *desc = (tabletdesc_table *) malloc(sizeof(tabletdesc_table));
+	tabletdesc_pen *found = (tabletdesc_pen *) malloc(sizeof(tabletdesc_pen));
 
 	if (rdesc == NULL || desc == NULL || found == NULL ||
 			USB_GetGenericDescriptor(fd, USB_DT_REPORT, 0, inter->bInterfaceNumber, rdesc, len) < 0 ||
-			!hidp_parse(rdesc, len, desc) || !hidp_find_pen(desc, found))
+			!TabletDesc_Parse(rdesc, len, desc) || !TabletDesc_FindPen(desc, found))
 	{
 		free(found);
 		found = NULL;
@@ -269,7 +281,7 @@ static void setTabletMode(s32 fd, u8 interface)
 	u32 skip = pen->uses_ids ? 1 : 0;
 	memset(report, 0, sizeof(report));
 	report[0] = pen->input_mode.report_id;
-	hidp_put(&pen->input_mode, report + skip, len - skip, 2);
+	TabletDesc_Put(&pen->input_mode, report + skip, len - skip, 2);
 	USB_WriteCtrlMsg(fd, USB_REQTYPE_INTERFACE_SET, HID_REQ_SET_REPORT, (HID_REPORT_FEATURE << 8) | pen->input_mode.report_id, interface, len, report);
 }
 
@@ -325,7 +337,7 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 			}
 		}
 
-		hidp_pen *found = ep ? readPen(fd, inter) : NULL;
+		tabletdesc_pen *found = ep ? readPen(fd, inter) : NULL;
 		u8 interface = found ? inter->bInterfaceNumber : 0;
 		if (found)
 		{

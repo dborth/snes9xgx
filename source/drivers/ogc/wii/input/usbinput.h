@@ -3,8 +3,7 @@
 
 /*
  * Shared USB input discovery for the third-party USB controller drivers
- * (Retrode, Xbox 360, Hornet, Mayflash, DualShock 4, and the pen tablet when
- * built with HAVE_TABLET).
+ * (Retrode, Xbox 360, Hornet, Mayflash, DualShock 4, and the pen tablet).
  *
  * Discovery is done once here: a single USB_GetDeviceList() for every driver,
  * rate limited, and only acted on when the device list changed. Each driver
@@ -43,9 +42,7 @@ extern const UsbInputDriver XBOX360_UsbDriver;
 extern const UsbInputDriver Hornet_UsbDriver;
 extern const UsbInputDriver Mayflash_UsbDriver;
 extern const UsbInputDriver DS4_UsbDriver;
-#ifdef HAVE_TABLET
 extern const UsbInputDriver Tablet_UsbDriver;
-#endif
 
 // Call once per input update, before the drivers' *_ScanPads().
 void UsbInput_Scan(void);

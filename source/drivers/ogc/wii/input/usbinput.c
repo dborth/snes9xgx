@@ -15,9 +15,7 @@ static const UsbInputDriver * const drivers[] =
 	&Hornet_UsbDriver,
 	&Mayflash_UsbDriver,
 	&DS4_UsbDriver,
-#ifdef HAVE_TABLET
 	&Tablet_UsbDriver,
-#endif
 };
 #define NUM_DRIVERS ((int)(sizeof(drivers) / sizeof(drivers[0])))
 
