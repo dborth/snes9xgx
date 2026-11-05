@@ -14,8 +14,10 @@
 
 #include "drivers/InputData.h"
 
-const char ctrlrName[INPUT_HW_MAX][32] =
-{ "GameCube Controller", "Wiimote", "Nunchuk + Wiimote", "Classic Controller", "Wii U Pro Controller", "Wii U Gamepad", "DualShock 4", "Xbox 360 Controller", "USB Controller" };
+// indexed by GuiHardwareProfile. The size is deduced so the check below catches a profile without a name.
+const char ctrlrName[][32] =
+{ "GameCube Controller", "Wiimote", "Nunchuk + Wiimote", "Classic Controller", "Wii U Pro Controller", "Wii U Gamepad", "DualShock 4", "Xbox 360 Controller", "USB Controller", "USB Mouse" };
+static_assert(sizeof(ctrlrName) / sizeof(ctrlrName[0]) == INPUT_HW_MAX, "ctrlrName needs one entry per GuiHardwareProfile");
 
 typedef struct _btn_map {
 	uint32_t btn;					// button 'id'

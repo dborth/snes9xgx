@@ -120,10 +120,11 @@ static const CtrlMapKind ctrlMapKinds[] =
 // indexed by GuiHardwareProfile; the description is ctrlrName[hw]
 static const char * const ctrlMapHardwareKeys[] =
 {
-	"gcpad", "wiimote", "nunchuk", "classic", "wupc", "wiidrc", "ds4", "xbox360", "genericusb"
+	"gcpad", "wiimote", "nunchuk", "classic", "wupc", "wiidrc", "ds4", "xbox360", "genericusb", "usbmouse"
 };
+static_assert(sizeof(ctrlMapHardwareKeys) / sizeof(ctrlMapHardwareKeys[0]) == INPUT_HW_MAX, "ctrlMapHardwareKeys needs one entry per GuiHardwareProfile");
 
-static void ctrlMapName(char * name, size_t nameSize, char * description, size_t descriptionSize, const CtrlMapKind & kind, int hw)
+static void ctrlMapName(char * name, size_t nameSize, char * description, size_t descriptionSize, const CtrlMapKind & kind, uint32_t hw)
 {
 	snprintf(name, nameSize, "btnmapping_%s_%s", kind.key, ctrlMapHardwareKeys[hw]);
 	snprintf(description, descriptionSize, "%s - %s", kind.description, ctrlrName[hw]);
@@ -136,7 +137,7 @@ static void createXMLControllers()
 
 	for(const CtrlMapKind & kind : ctrlMapKinds)
 	{
-		for(int hw = 0; hw < INPUT_HW_MAX; hw++)
+		for(uint32_t hw = 0; hw < INPUT_HW_MAX; hw++)
 		{
 			ctrlMapName(name, sizeof(name), description, sizeof(description), kind, hw);
 			createXMLController(btnmap[kind.ctrl][hw], name, description);
@@ -337,7 +338,7 @@ static void loadXMLControllers()
 
 	for(const CtrlMapKind & kind : ctrlMapKinds)
 	{
-		for(int hw = 0; hw < INPUT_HW_MAX; hw++)
+		for(uint32_t hw = 0; hw < INPUT_HW_MAX; hw++)
 		{
 			ctrlMapName(name, sizeof(name), description, sizeof(description), kind, hw);
 			loadXMLController(btnmap[kind.ctrl][hw], name);

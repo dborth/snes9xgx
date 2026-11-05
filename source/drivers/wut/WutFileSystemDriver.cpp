@@ -66,9 +66,9 @@ void WutFileSystemDriver::init()
 	dvmWutInit();
 
 	// storageSlots[] is USB only: [0..2] = USB1..3, i.e. devices[slotUSB1 + i]
-	storageSlots[0] = { &Mocha_usb1_disc_interface, "usb1", 0, 0 };
-	storageSlots[1] = { &Mocha_usb2_disc_interface, "usb2", 0, 0 };
-	storageSlots[2] = { &Mocha_usb3_disc_interface, "usb3", 0, 0 };
+	storageSlots[0] = { &Mocha_usb1_disc_interface, "usb1", 0, 0, false };
+	storageSlots[1] = { &Mocha_usb2_disc_interface, "usb2", 0, 0, false };
+	storageSlots[2] = { &Mocha_usb3_disc_interface, "usb3", 0, 0, false };
 
 	// SD: plain FSA mount, attempted once
 	WutDeviceState & sd = devices[slotSD];

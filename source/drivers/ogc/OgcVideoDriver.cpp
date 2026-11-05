@@ -90,7 +90,7 @@ static inline void copy_to_xfb (u32 arg)
 		copynow = GX_FALSE;
 		LWP_ThreadSignal(render_queue); // Wake up the main thread if it is waiting for the copy
 	}
-	++systemFrameTimer;
+	systemFrameTimer = systemFrameTimer + 1;
 }
 
 uint32_t OgcVideoDriver::getFrameTimer()
@@ -119,7 +119,7 @@ void OgcVideoDriver::consumeFrameTick()
 	u32 level;
 	_CPU_ISR_Disable(level);
 	if(systemFrameTimer > 0)
-		--systemFrameTimer;
+		systemFrameTimer = systemFrameTimer - 1;
 	_CPU_ISR_Restore(level);
 }
 

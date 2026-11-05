@@ -27,15 +27,15 @@ InputController::InputController(int ch) :
 	stickDir(StickDir::None),
 	prevStickDir(StickDir::None),
 	stickEdge(false),
-	internalScrollTimer(0.0f),
-	holdDuration(0.0f),
 	stickPointerEnabled(false),
 	stickPointerStarted(false),
 	stickPointerActive(false),
 	stickPointerHeld(false),
 	stickPointerX(0.0f),
 	stickPointerY(0.0f),
-	stickPointerIdle(0.0f)
+	stickPointerIdle(0.0f),
+	internalScrollTimer(0.0f),
+	holdDuration(0.0f)
 {}
 
 void SetStickPointerEnabled(bool enabled)

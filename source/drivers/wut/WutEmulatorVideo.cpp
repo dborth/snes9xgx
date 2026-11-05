@@ -68,8 +68,8 @@ WutEmulatorVideo::WutEmulatorVideo()
 	: videoDriver(nullptr), texture(nullptr)
 	, vwidth(100), vheight(100), oldvwidth(0), oldvheight(0)
 	, checkVideo(0), prevRenderedFrameCount(0)
-	, quadX(0), quadY(0), quadWidth(0), quadHeight(0)
 	, placement{ {0, 0, 0, 0}, {0, 0, 0, 0} }
+	, quadX(0), quadY(0), quadWidth(0), quadHeight(0)
 {
 	GX2InitSampler(&sampler, GX2_TEX_CLAMP_MODE_CLAMP, GX2_TEX_XY_FILTER_MODE_LINEAR);
 }
