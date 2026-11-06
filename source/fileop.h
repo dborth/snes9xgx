@@ -53,7 +53,6 @@ struct DeviceCheckingScope
 };
 
 void HaltParseThread();
-void MountAllFAT();
 bool FindDevice(char * filepath, int * device);
 char * StripDevice(char * path);
 bool ChangeInterface(int device, bool silent);

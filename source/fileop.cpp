@@ -368,21 +368,6 @@ void InitFileOpThreads()
 	workerThread.start(workercallback, nullptr, WORKER_THREAD_STACKSIZE, ThreadPriority::High, WakeWorkerThread);
 }
 
-/****************************************************************************
- * MountAllFAT
- * Silently (pre-)mounts whatever devices the platform driver flags as
- * auto-mount-at-startup (eg. Wii's SD/USB). No-op on platforms with none.
- ***************************************************************************/
-void MountAllFAT()
-{
-	StorageDevice devices[MAX_STORAGE_DEVICES];
-	int count = platform->getFileSystem()->enumerateStorageDevices(devices);
-
-	for(int i = 0; i < count; i++)
-		if(devices[i].autoMountAtStartup)
-			ChangeInterface(devices[i].id, SILENT);
-}
-
 bool FindDevice(char * filepath, int * device)
 {
 	if(!filepath || filepath[0] == 0)
