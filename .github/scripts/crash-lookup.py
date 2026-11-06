@@ -121,19 +121,53 @@ def classify(v):
     return 'NOT MAPPED on GC/Wii'
 
 
+# Reports are often typed in from a photo. In a field that must be 8 hex digits, these letters are
+# almost always a misread digit (O/o -> 0, Z -> 2, I/l -> 1, S -> 5); read them that way and say so.
+OCR = str.maketrans('OoZIlS', '002115')
+TOKEN = r'[0-9A-Za-z]{8}'
+
+
+def fix_hex(tok, fixes):
+    if re.fullmatch(HEX8, tok):
+        return tok
+    fixed = tok.translate(OCR)
+    if re.fullmatch(HEX8, fixed):
+        fixes.append((tok, fixed))
+        return fixed
+    return None
+
+
 def parse_report(text):
     r = {}
+    fixes = r['fixes'] = []
+    # LR, SRR0, SRR1 and MSR share a line on some screens, so do not anchor to the start of a line
     for key in ('SRR0', 'LR', 'DAR', 'DSISR'):
-        m = re.search(r'^[ \t]*%s[ \t]+(%s)' % (key, HEX8), text, re.M)
+        m = re.search(r'\b%s[ \t]+(%s)' % (key, TOKEN), text)
         if m:
-            r[key] = int(m.group(1), 16)
-    r['gpr'] = {int(n): int(v, 16) for n, v in re.findall(r'GPR(\d\d)[ \t]+(%s)' % HEX8, text)}
+            v = fix_hex(m.group(1), fixes)
+            if v:
+                r[key] = int(v, 16)
+    r['gpr'] = {}
+    for n, v in re.findall(r'GPR(\d\d)[ \t]+(%s)' % TOKEN, text):
+        v = fix_hex(v, fixes)
+        if v:
+            r['gpr'][int(n)] = int(v, 16)
     m = re.search(r'STACK DUMP:(.*?)(?:\n\s*\n|CODE DUMP|\Z)', text, re.S)
-    r['stack'] = [int(a, 16) for a in re.findall(HEX8, m.group(1))] if m else []
+    stack = []
+    for tok in re.findall(TOKEN, m.group(1)) if m else []:
+        v = fix_hex(tok, fixes)
+        if v:
+            stack.append(int(v, 16))
+    r['stack'] = stack
     code = []
-    for a, words in re.findall(r'^[ \t]*(%s):((?:[ \t]+%s)+)' % (HEX8, HEX8), text, re.M):
+    for a, words in re.findall(r'^[ \t]*(%s):((?:[ \t]+%s)+)' % (TOKEN, TOKEN), text, re.M):
+        a = fix_hex(a, fixes)
+        if not a:
+            continue
         for i, w in enumerate(words.split()):
-            code.append((int(a, 16) + 4 * i, int(w, 16)))
+            w = fix_hex(w, fixes)
+            if w:
+                code.append((int(a, 16) + 4 * i, int(w, 16)))
     r['code'] = code
     return r
 
@@ -172,6 +206,11 @@ def main():
             add(a, a - 4, 'return address')
     for a in raw:
         add(a, a, 'address')
+
+    for rep in reports:
+        if rep['fixes']:
+            print('note: %d value(s) in the report are not hex and were read as a misread digit: %s\n' % (
+                len(rep['fixes']), ', '.join('%s->%s' % f for f in rep['fixes'])))
 
     # ---- is this the reporter's build? ---------------------------------------------------------
     for rep in reports:
