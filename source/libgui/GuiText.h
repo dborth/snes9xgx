@@ -115,3 +115,24 @@ class GuiText : public GuiElement
 };
 
 extern GuiTextTranslator* textTranslator;
+
+//! Translates a message ID to a std::string, for text that is put together at runtime.
+//! GuiText only translates the exact string it is given, so a message built with printf or
+//! operator+ has to have its parts translated first. Use TrFormat() for a message with values in it.
+//!\param msgid The English text/ID to translate
+//!\return The translated string, or msgid itself when there is no translation
+//!\ingroup grp_core
+std::string Tr(const char* msgid);
+
+//! printf for translated messages. msgid is both the lookup key and the English format string,
+//! so its conversions are checked against the arguments at compile time. If the translation does
+//! not have the same conversions in the same order (a typo in a .lang file) the English text is
+//! used instead, so a bad translation can never be run with the wrong arguments.
+//!\param msgid The English format string, e.g. "Player %d"
+//!\return The formatted, translated string
+//!\ingroup grp_core
+#if defined(__GNUC__)
+std::string TrFormat(const char* msgid, ...) __attribute__((format(printf, 1, 2)));
+#else
+std::string TrFormat(const char* msgid, ...);
+#endif

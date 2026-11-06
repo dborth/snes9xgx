@@ -18,14 +18,7 @@
 #include "mappingmodel.h"
 #include "drivers/InputController.h"
 
-extern GuiTextTranslator * textTranslator;
-
 namespace {
-
-std::string Tr(const char * s)
-{
-	return textTranslator ? std::string(textTranslator->getText(s)) : std::string(s);
-}
 
 std::string ButtonText(int hw, uint32_t btn)
 {

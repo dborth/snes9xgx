@@ -1415,10 +1415,7 @@ static void PlayerMappingWindowUpdate(void * ptr, int dir)
 		if(playerMapping[playerMappingChan] < 0)
 			playerMapping[playerMappingChan] = 3;
 
-		char playerNumber[20];
-		sprintf(playerNumber, "Player %d", playerMapping[playerMappingChan]+1);
-
-		settingText->setText(playerNumber);
+		settingText->setText(TrFormat("Player %d", playerMapping[playerMappingChan]+1).c_str());
 		b->resetState();
 	}
 }
@@ -1461,21 +1458,17 @@ static void PlayerMappingWindow(int chan)
 	arrowRightBtn.setSelectable(false);
 	arrowRightBtn.setUpdateCallback(PlayerMappingWindowRightClick);
 	
-	char playerNumber[20];
-	sprintf(playerNumber, "Player %d", playerMapping[playerMappingChan]+1);
-
-	settingText = new GuiText(playerNumber, 22, (PixelColor){0, 0, 0, 255});
+	settingText = new GuiText(TrFormat("Player %d", playerMapping[playerMappingChan]+1).c_str(), 22, (PixelColor){0, 0, 0, 255});
 
 	w->append(&arrowLeftBtn);
 	w->append(&arrowRightBtn);
 	w->append(settingText);
 
-	char title[50];
-	sprintf(title, "Player Mapping - Controller %d", chan+1);
+	const std::string title = TrFormat("Player Mapping - Controller %d", chan+1);
 
 	int previousPlayerMapping = playerMapping[playerMappingChan];
 
-	if(!SettingWindow(title,w))
+	if(!SettingWindow(title.c_str(),w))
 		playerMapping[playerMappingChan] = previousPlayerMapping; // undo changes
 
 	delete(w);
@@ -2041,13 +2034,6 @@ static int SaveSlotOf(const char * filename, int type)
 	return FindGameSaveNum(tmp, type == FILE_SRAM);
 }
 
-static std::string SaveNumbered(const char * what, int slot)
-{
-	char text[64];
-	snprintf(text, sizeof(text), "%s %d", what, slot);
-	return text;
-}
-
 static std::string SaveWhen(SaveList & saves, int i)
 {
 	std::string when = saves.date[i];
@@ -2158,7 +2144,7 @@ static void BuildSaveCards(SaveList & saves, bool gameSave, std::vector<SaveEntr
 		}
 		else
 		{
-			e.title = SaveNumbered("Snapshot", c.slot);
+			e.title = TrFormat("Snapshot %d", c.slot);
 			e.badge = c.slot;
 			e.tag = isPlaying ? SaveEntry::TAG_PLAYING : SaveEntry::TAG_NONE;
 		}
@@ -2245,13 +2231,13 @@ static void BuildSaveCards(SaveList & saves, bool gameSave, std::vector<SaveEntr
 	}
 	else if(mode == SAVEMODE_GAMESAVE)
 	{
-		e.subtitle = haveMain ? "Saved " + SaveWhen(saves, sram[0]) : std::string("Empty until you play");
+		e.subtitle = haveMain ? TrFormat("Saved %s", SaveWhen(saves, sram[0]).c_str()) : std::string("Empty until you play");
 		e.chip = "Autosave";
 		e.chipOn = true;
 	}
 	else
 	{
-		e.subtitle = haveMain ? "Saved " + SaveWhen(saves, sram[0]) : std::string("Not saved yet");
+		e.subtitle = haveMain ? TrFormat("Saved %s", SaveWhen(saves, sram[0]).c_str()) : std::string("Not saved yet");
 		e.chip = "Saves when you do";
 		e.chipOn = false;
 	}
@@ -2353,7 +2339,7 @@ static void SaveCardMenu(const SaveCard & card, int backupCount, std::vector<Pic
 		}
 
 		// Make Backup is inside, with the backups, so this list stays short enough to fit above the card
-		add(SAVEACT_BACKUPS, "Backups", backupCount > 0 ? GuiFormat("Copy, or restore one of %d", backupCount) : std::string("Make a copy of the save"), false, false);
+		add(SAVEACT_BACKUPS, "Backups", backupCount > 0 ? TrFormat("Copy, or restore one of %d", backupCount) : std::string("Make a copy of the save"), false, false);
 		items.back().chevron = true;
 	}
 	else
@@ -2641,7 +2627,7 @@ static int MenuGameSaves()
 				for(size_t k = 0; k < shown; k++)
 				{
 					PickerItem it;
-					it.name = SaveNumbered("Backup", SaveSlotOf(data->saves.filename[backups[k]], FILE_SRAM));
+					it.name = TrFormat("Backup %d", SaveSlotOf(data->saves.filename[backups[k]], FILE_SRAM));
 					it.hint = SaveWhen(data->saves, backups[k]);
 					it.current = false;
 					list.push_back(it);
@@ -2663,7 +2649,7 @@ static int MenuGameSaves()
 					continue;	// back to the list of backups
 
 				card = backup;
-				entry.title = SaveNumbered("Backup", backup.slot);
+				entry.title = TrFormat("Backup %d", backup.slot);
 				return whatActs[(size_t)doing];
 			}
 		}
@@ -2742,7 +2728,7 @@ static int MenuGameSaves()
 							}
 							MakeFilePath(filepath, FILE_STATE, Memory.ROMFilename, newSlot);
 						}
-						else if(!card.playing && !WindowPrompt(("Replace " + entry.title + "?").c_str(),
+						else if(!card.playing && !WindowPrompt(TrFormat("Replace %s?", Tr(entry.title.c_str()).c_str()).c_str(),
 							"It will be overwritten with your progress right now.", "Replace", "Cancel"))
 							break;
 
@@ -2754,12 +2740,12 @@ static int MenuGameSaves()
 							changed = true;
 							if(newSlot >= 0)
 							{
-								saved = "saved";
+								saved = "%s saved";
 							}
 							else
 							{
 								newSlot = card.slot;
-								saved = "updated";
+								saved = "%s updated";
 							}
 
 							if(card.autoSnap)
@@ -2779,7 +2765,7 @@ static int MenuGameSaves()
 							slot = freeSlot(FILE_SRAM);
 							if(slot < 0 || (int)backups.size() >= SAVE_MAX_BACKUPS)
 							{
-								ErrorPrompt(GuiFormat("All %d backup slots are in use. Delete one to make room.", SAVE_MAX_BACKUPS).c_str());
+								ErrorPrompt(TrFormat("All %d backup slots are in use. Delete one to make room.", SAVE_MAX_BACKUPS).c_str());
 								break;
 							}
 						}
@@ -2793,7 +2779,7 @@ static int MenuGameSaves()
 						{
 							changed = true;
 							newSlot = slot;
-							saved = (act == SAVEACT_BACKUP) ? "saved" : "updated";
+							saved = (act == SAVEACT_BACKUP) ? "%s saved" : "%s updated";
 
 							if(act == SAVEACT_SAVENOW)
 								CartridgeSaveWritten();
@@ -2805,16 +2791,16 @@ static int MenuGameSaves()
 
 					case SAVEACT_DELETE:
 					{
-						std::string question = "Delete " + entry.title + "?";
-						std::string detail = "This can't be undone.";
+						std::string question = TrFormat("Delete %s?", Tr(entry.title.c_str()).c_str());
+						const char * detail = "This can't be undone.";
 						if(card.autoSnap && EmuSettings.saveMode == SAVEMODE_SNAPSHOT)
-							detail = "Next time you open this game it starts from its Cartridge Save, or from the beginning. " + detail;
+							detail = "Next time you open this game it starts from its Cartridge Save, or from the beginning. This can't be undone.";
 						else if(card.autoSnap)
-							detail = "It is not being updated in the current Save Mode. " + detail;
+							detail = "It is not being updated in the current Save Mode. This can't be undone.";
 						else if(card.playing)
-							detail = "This is the snapshot you started from. " + detail;
+							detail = "This is the snapshot you started from. This can't be undone.";
 
-						if(!WindowPrompt(question.c_str(), detail.c_str(), "Delete", "Cancel"))
+						if(!WindowPrompt(question.c_str(), detail, "Delete", "Cancel"))
 							break;
 
 						if(!RunSaveOp(SAVEOP_DELETE, card.type, filepath, &result))
@@ -2845,9 +2831,9 @@ static int MenuGameSaves()
 					if(saved)
 					{
 						std::string what = (card.type == FILE_SRAM)
-							? (newSlot == 0 ? std::string("Cartridge Save") : SaveNumbered("Backup", newSlot))
-							: (newSlot == 0 ? std::string("Auto Snapshot") : SaveNumbered("Snapshot", newSlot));
-						showToast(what + " " + saved);
+							? (newSlot == 0 ? Tr("Cartridge Save") : TrFormat("Backup %d", newSlot))
+							: (newSlot == 0 ? Tr("Auto Snapshot") : TrFormat("Snapshot %d", newSlot));
+						showToast(TrFormat(saved, what.c_str()));
 					}
 				}
 			}
@@ -2887,7 +2873,7 @@ static int MenuGameSaves()
 					showCards(cards[(size_t)was].type, cards[(size_t)was].slot, 0);
 				else
 					showCards(-1, -1, 0);
-				showToast(std::string("Save Mode: ") + modeNames[chosen]);
+				showToast(TrFormat("Save Mode: %s", Tr(modeNames[chosen]).c_str()));
 			}
 			else
 				menu->mainWindow.changeFocus(&saveBrowser);

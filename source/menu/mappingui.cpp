@@ -25,8 +25,6 @@
 #include "button_mapping.h"
 #include "snes9xgx.h"
 
-extern GuiTextTranslator * textTranslator;
-
 namespace {
 
 // What is being mapped. Coming from Game Settings starts from the device the game is set to and the controller in
@@ -146,11 +144,6 @@ void ResolveHardware()
 	const std::vector<int> list = HardwareList(mapSnesCtrl);
 	if(mapHardware < 0 || !Contains(list, mapHardware))
 		mapHardware = DefaultHardware(list);
-}
-
-std::string Tr(const char * s)
-{
-	return textTranslator ? std::string(textTranslator->getText(s)) : std::string(s);
 }
 
 GLYPH GlyphFor(MAP_ICON icon, const char *& letter)
@@ -287,7 +280,7 @@ GuiCard& MappingView::bindingRow(const MapRow& r, bool onLeft, int width)
 
 	GuiCard& row = ui.card();
 	row.size(width, 0).style(MenuRowHighlightStyle()).pad(padX, 4).corners(GuiCorners(9.0f));
-	row.onFocus([this, name]{ status = GuiFormat("A changes what %s does", Tr(name).c_str()); });
+	row.onFocus([this, name]{ status = TrFormat("A changes what %s does", Tr(name).c_str()); });
 	row.onClick([this, index]{ requestedRow = index; rowRequested = true; });
 	row.add(content);
 	rows.push_back(std::make_pair(index, &row));

@@ -465,18 +465,16 @@ bool ConnectShare(bool silent)
 	{
 		if(!silent)
 		{
-			char msg[50];
-			char msg2[100];
+			const char * reason;
 
 			if(invalidShare && invalidIp)
-				sprintf(msg, "Check settings.xml.");
+				reason = "Check settings.xml.";
 			else if(invalidShare)
-				sprintf(msg, "Share name is blank.");
+				reason = "Share name is blank.";
 			else
-				sprintf(msg, "Share IP is blank.");
+				reason = "Share IP is blank.";
 
-			sprintf(msg2, "Invalid network settings - %s", msg);
-			ErrorPrompt(msg2);
+			ErrorPrompt(TrFormat("Invalid network settings - %s", Tr(reason).c_str()).c_str());
 		}
 		return false;
 	}

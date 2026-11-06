@@ -22,6 +22,7 @@
 #include "fileop.h"
 #include "filebrowser.h"
 #include "../menu/menu.h"
+#include "../libgui/Gui.h"
 #include "decompress.h"
 
 extern "C" {
@@ -273,7 +274,7 @@ typedef struct _SzFileInStream
 } SzFileInStream;
 
 // 7zip error list
-static char szerrormsg[][100] = {
+static const char * const szerrormsg[] = {
    "File is corrupt.", // 7z: Data error
    "Archive contains too many files.", // 7z: Out of memory
    "File is corrupt (CRC mismatch).", // 7z: CRC Error
@@ -320,9 +321,7 @@ Is7ZipFile (char *buffer)
 // display an error message
 static void SzDisplayError(SZ_RESULT res)
 {
-	char msg[1024];
-	sprintf(msg, "7z decompression failed: %s", szerrormsg[(res - 1)]);
-	ErrorPrompt(msg);
+	ErrorPrompt(TrFormat("7z decompression failed: %s", Tr(szerrormsg[(res - 1)]).c_str()).c_str());
 }
 
 // function used by the 7zip SDK to read data from SD/USB/DVD/SMB

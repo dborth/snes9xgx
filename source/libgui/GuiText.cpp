@@ -6,6 +6,9 @@
 
 #include "Gui.h"
 
+#include <cstdarg>
+#include <cstdio>
+
 // The one translator. Its constructor is constexpr, so this is constant-initialized: it is complete
 // before any dynamic initializer runs, and a static GuiText/GuiButton constructed in any translation
 // unit can resolve text through it without depending on link order. The union keeps it from ever being
@@ -17,6 +20,75 @@ static union TranslatorStorage
 	~TranslatorStorage() {}
 } translatorStorage;
 GuiTextTranslator* textTranslator = &translatorStorage.translator;
+
+std::string Tr(const char* msgid)
+{
+	const char* text = msgid ? textTranslator->getText(msgid) : nullptr;
+	return text ? std::string(text) : std::string();
+}
+
+// Reads the next printf conversion of s (from its '%' to its conversion letter, so "%-5.2f" is one) into
+// spec and returns where it ends, or nullptr when there are no more. "%%" is not a conversion.
+static const char* NextConversion(const char* s, std::string& spec)
+{
+	while(*s)
+	{
+		if(*s++ != '%')
+			continue;
+		if(*s == '%')
+		{
+			s++;
+			continue;
+		}
+		spec.clear();
+		while(*s && !strchr("diouxXeEfFgGaAcspn", *s))
+			spec += *s++;
+		if(*s)
+			spec += *s++;
+		return s;
+	}
+	return nullptr;
+}
+
+// true when a and b take the same arguments: the same conversions in the same order
+static bool SameConversions(const char* a, const char* b)
+{
+	std::string specA, specB;
+	for(;;)
+	{
+		a = NextConversion(a, specA);
+		b = NextConversion(b, specB);
+		if(!a || !b)
+			return !a && !b;
+		if(specA != specB)
+			return false;
+	}
+}
+
+std::string TrFormat(const char* msgid, ...)
+{
+	const char* fmt = textTranslator->getText(msgid);
+	if(!fmt || !SameConversions(fmt, msgid))
+		fmt = msgid;
+
+	va_list args;
+	va_start(args, msgid);
+	va_list copy;
+	va_copy(copy, args);
+	const int n = vsnprintf(nullptr, 0, fmt, copy);
+	va_end(copy);
+
+	std::string out;
+	if(n > 0)
+	{
+		out.resize((size_t)n + 1);
+		vsnprintf(&out[0], out.size(), fmt, args);
+		out.resize((size_t)n);
+	}
+	va_end(args);
+	return out;
+}
+
 static PixelColor presetColor = (PixelColor){255, 255, 255, 255};
 static int currentSize = 0;
 static int presetSize = 0;
