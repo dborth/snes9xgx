@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "SmbDriver.h"
+#include "safestr.h"
 
 #define MAX_STORAGE_DEVICES 16
 
@@ -103,31 +104,59 @@ class FileSystemDriver
 
 		//! Writes getMountPath(device) + suffix into out (bounds-checked to
 		//! sizeof(out) via the array-reference template parameter N).
+		//! Returns false, with out emptied, when the path does not fit: a
+		//! truncated path names a different file, so the caller must not use it.
 		template<size_t N>
-		void getPath(char (&out)[N], int device, const char * suffix) const
+		__attribute__((warn_unused_result))
+		bool getPath(char (&out)[N], int device, const char * suffix) const
 		{
-			getPath(out, N, device, suffix);
+			return getPath(out, N, device, suffix);
 		}
 
 		//! Joins a folder and a filename with '/' after the mount path.
+		//! Same contract as above.
 		template<size_t N>
-		void getPath(char (&out)[N], int device, const char * folder, const char * file) const
+		__attribute__((warn_unused_result))
+		bool getPath(char (&out)[N], int device, const char * folder, const char * file) const
 		{
-			getPath(out, N, device, folder, file);
+			return getPath(out, N, device, folder, file);
 		}
 
 		//! Explicit-size equivalents of the two templates above, for call
 		//! sites where the destination buffer arrives as a `char *`
 		//! function parameter rather than a fixed array.
-		void getPath(char * out, size_t outSize, int device, const char * suffix) const
+		__attribute__((warn_unused_result))
+		bool getPath(char * out, size_t outSize, int device, const char * suffix) const
 		{
-		    const char * mp = getMountPath(device);
-		    snprintf(out, outSize, "%s%s", mp ? mp : "", suffix ? suffix : "");
+			if(!out || outSize == 0)
+				return false;
+
+			const char * mp = getMountPath(device);
+			const int written = snprintf(out, outSize, "%s%s", mp ? mp : "", suffix ? suffix : "");
+
+			if(written < 0 || (size_t)written >= outSize)
+			{
+				out[0] = '\0';
+				return false;
+			}
+			return true;
 		}
 
-		void getPath(char * out, size_t outSize, int device, const char * folder, const char * file) const
+		__attribute__((warn_unused_result))
+		bool getPath(char * out, size_t outSize, int device, const char * folder, const char * file) const
 		{
-			snprintf(out, outSize, "%s%s/%s", getMountPath(device), folder ? folder : "", file ? file : "");
+			if(!out || outSize == 0)
+				return false;
+
+			const char * mp = getMountPath(device);
+			const int written = snprintf(out, outSize, "%s%s/%s", mp ? mp : "", folder ? folder : "", file ? file : "");
+
+			if(written < 0 || (size_t)written >= outSize)
+			{
+				out[0] = '\0';
+				return false;
+			}
+			return true;
 		}
 
 		virtual const int * getValidLoadDevices(int & outCount) const = 0;
@@ -137,9 +166,8 @@ class FileSystemDriver
 
 		virtual void nameToDisplay(const char * rawName, char * out, size_t outSize) const
 		{
-			if(outSize == 0)
-				return;
-			snprintf(out, outSize, "%s", rawName ? rawName : "");
+			// Display only, so a name that is too long is cut - on a character boundary
+			CopyString(out, outSize, rawName);
 		}
 };
 

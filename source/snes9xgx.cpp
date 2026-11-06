@@ -54,7 +54,11 @@ char appPath[1024] = { 0 };
 static bool autoboot = false;
 static void SaveAppDataBeforeRelease();
 
-int main(int argc, char *argv[])
+#ifdef HW_RVL
+int main(int argc, char *argv[]) // the Wii's loader passes the path and the game to start
+#else
+int main(int, char *[])
+#endif
 {
 	InitMemManager();
 

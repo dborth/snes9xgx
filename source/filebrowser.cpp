@@ -32,6 +32,7 @@
 #include "snes9x/cheats.h"
 #include "drivers/Platform.h"
 #include "drivers/FileSystemDriver.h"
+#include "drivers/safestr.h"
 
 extern "C" {
 extern char* strcasestr(const char *, const char *);
@@ -133,8 +134,7 @@ static int ScanForLoadDevice(bool tried[DEVICE_LENGTH], bool mounted[DEVICE_LENG
 		if (firstConnectedDevice == DEVICE_AUTO)
 			firstConnectedDevice = id;
 
-		MakeFilePathForFolderPath(fullPath, id, defaultFolderPath);
-		if (DirExists(fullPath))
+		if (MakeFilePathForFolderPath(fullPath, id, defaultFolderPath) && DirExists(fullPath))
 			return id;
 	}
 
@@ -168,8 +168,7 @@ static int ScanForSaveDevice(bool tried[DEVICE_LENGTH], bool mounted[DEVICE_LENG
 		if (firstConnectedDevice == DEVICE_AUTO)
 			firstConnectedDevice = id;
 
-		MakeFilePathForFolderPath(fullPath, id, defaultFolderPath);
-		if (DirExists(fullPath))
+		if (MakeFilePathForFolderPath(fullPath, id, defaultFolderPath) && DirExists(fullPath))
 			return id;
 	}
 
@@ -365,29 +364,26 @@ void GetDefaultFolderPath(char *folderPath, const char *folderName) {
     sprintf(folderPath, "%s/%s", APPFOLDER, folderName);
 }
 
-void MakeFilePathForFolderPath(char *fullPath, int device, const char *folder) {
-	platform->getFileSystem()->getPath(fullPath, MAXPATHLEN, device, folder);
+bool MakeFilePathForFolderPath(char *fullPath, int device, const char *folder) {
+	return platform->getFileSystem()->getPath(fullPath, MAXPATHLEN, device, folder);
 }
 
+//! Builds the full path of the file of this type. Returns false, with filepath emptied, when there
+//! is no such path - including when it would not fit. That is deliberate: a truncated path would
+//! name a different file, and a save written to it would overwrite whatever is there.
 bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 {
-	char file[512];
-	char folder[1024];
-	char ext[4];
+	char file[MAXPATHLEN];
 	char temppath[MAXPATHLEN];
+
+	filepath[0] = 0; // callers that do not look at the result must not be left with an older path
 
 	if(type == FILE_ROM)
 	{
-		// Check path length
-		if ((strlen(browser.dir)+1+strlen(browserList[browser.selIndex].filename)) >= MAXPATHLEN)
+		if(!FormatString(temppath, sizeof(temppath), "%s%s", browser.dir, browserList[browser.selIndex].filename))
 		{
 			ErrorPrompt("Maximum filepath length reached!");
-			filepath[0] = 0;
 			return false;
-		}
-		else
-		{
-			sprintf(temppath, "%s%s",browser.dir,browserList[browser.selIndex].filename);
 		}
 	}
 	else
@@ -395,14 +391,16 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 		if(EmuSettings.saveDevice == DEVICE_AUTO)
 			return false;
 
+		const char * folder;
+		bool nameFits;
+
 		switch(type)
 		{
 			case FILE_SRAM:
 			case FILE_STATE:
-				sprintf(folder, EmuSettings.saveFolder);
-
-				if(type == FILE_SRAM) sprintf(ext, "srm");
-				else sprintf(ext, "frz");
+			{
+				folder = EmuSettings.saveFolder;
+				const char * ext = (type == FILE_SRAM) ? "srm" : "frz";
 
 				// Slot 0 is the auto slot. A Snapshot's is "<name> Auto.frz". The Cartridge Save has the
 				// plain name the game is known by, "<name>.srm", and its other slots are its backups.
@@ -410,27 +408,31 @@ bool MakeFilePath(char filepath[], int type, char * filename, int filenum)
 				if(filenum >= -1)
 				{
 					if(filenum == -1 || (filenum == 0 && type == FILE_SRAM))
-						snprintf(file, sizeof(file), "%s.%s", filename, ext);
+						nameFits = FormatString(file, sizeof(file), "%s.%s", filename, ext);
 					else if(filenum == 0)
-						snprintf(file, sizeof(file), "%s Auto.%s", filename, ext);
+						nameFits = FormatString(file, sizeof(file), "%s Auto.%s", filename, ext);
 					else
-						snprintf(file, sizeof(file), "%s %i.%s", filename, filenum, ext);
+						nameFits = FormatString(file, sizeof(file), "%s %i.%s", filename, filenum, ext);
 				}
 				else
 				{
-					snprintf(file, sizeof(file), "%s", filename);
+					nameFits = FormatString(file, sizeof(file), "%s", filename);
 				}
 				break;
+			}
 			case FILE_CHEAT:
-				sprintf(folder, EmuSettings.cheatFolder);
-				snprintf(file, sizeof(file), "%s.cht", Memory.ROMFilename);
+				folder = EmuSettings.cheatFolder;
+				nameFits = FormatString(file, sizeof(file), "%s.cht", Memory.ROMFilename);
 				break;
+			default:
+				return false;
 		}
-		platform->getFileSystem()->getPath(temppath, EmuSettings.saveDevice, folder, file);
+
+		if(!nameFits || !platform->getFileSystem()->getPath(temppath, EmuSettings.saveDevice, folder, file))
+			return false;
 	}
 	CleanupPath(temppath); // cleanup path
-	snprintf(filepath, MAXPATHLEN, "%s", temppath);
-	return true;
+	return CopyString(filepath, MAXPATHLEN, temppath);
 }
 
 /****************************************************************************
@@ -679,13 +681,35 @@ void StripExt(char* returnstring, char * inputstring)
  ***************************************************************************/
 int BrowserLoadSz()
 {
-	memset(szpath, 0, MAXPATHLEN);
+	// browser.dir is the archive's path with a trailing '/': drop that to get the archive itself
 	size_t dirLen = strlen(browser.dir);
 	if(dirLen > 0)
-		strncpy(szpath, browser.dir, dirLen - 1);
-	
-	strncpy(szname, strrchr(szpath, '/') + 1, strrchr(szpath, '.') - strrchr(szpath, '/'));
-	*strrchr(szname, '.') = '\0';
+		dirLen--;
+
+	const char * slash = nullptr;
+	const char * dot = nullptr;
+
+	if(dirLen < sizeof(szpath))
+	{
+		memcpy(szpath, browser.dir, dirLen);
+		szpath[dirLen] = 0;
+		slash = strrchr(szpath, '/');
+		dot = strrchr(szpath, '.');
+	}
+
+	// szname is the archive's name without its extension
+	const size_t nameLen = (slash && dot && dot > slash) ? (size_t)(dot - (slash + 1)) : sizeof(szname);
+
+	if(nameLen >= sizeof(szname))
+	{
+		szpath[0] = 0;
+		szname[0] = 0;
+		ErrorPrompt("Error opening archive!");
+		return 0;
+	}
+
+	memcpy(szname, slash + 1, nameLen);
+	szname[nameLen] = 0;
 
 	int szfiles = SzParse(szpath);
 	if(szfiles)
@@ -732,8 +756,8 @@ int ROMLoader()
 	bsxBiosLoadFailed = false;
 
 	if(isBSX()) {
-		platform->getFileSystem()->getPath(filepath, EmuSettings.loadDevice, APPFOLDER, "BS-X.bin");
-		if(LoadFile ((char *)Memory.BIOSROM, filepath, 0, 0x100000, SILENT) == 0) {
+		if(!platform->getFileSystem()->getPath(filepath, EmuSettings.loadDevice, APPFOLDER, "BS-X.bin")
+			|| LoadFile ((char *)Memory.BIOSROM, filepath, 0, 0x100000, SILENT) == 0) {
 			bsxBiosLoadFailed = true;
 		}
 	}
@@ -921,16 +945,17 @@ int OpenGameList()
 {
 	int device = EmuSettings.loadDevice;
 
-	if(device > 0 && ChangeInterface(device, NOTSILENT)) {
-		// change current dir to roms directory
-		platform->getFileSystem()->getPath(browser.dir, device, EmuSettings.loadFolder, "");
+	// change current dir to roms directory
+	if(device > 0 && ChangeInterface(device, NOTSILENT)
+		&& platform->getFileSystem()->getPath(browser.dir, device, EmuSettings.loadFolder, "")) {
 		CleanupPath(browser.dir);
 
 		if(strlen(EmuSettings.loadFolder) > 0) {
 			DIR *dir = opendir(browser.dir);
 
 			if(dir == nullptr) {
-				platform->getFileSystem()->getPath(browser.dir, device, "");
+				if(!platform->getFileSystem()->getPath(browser.dir, device, ""))
+					browser.dir[0] = 0;
 			}
 			else {
 				closedir(dir);

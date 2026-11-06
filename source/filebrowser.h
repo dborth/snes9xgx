@@ -81,7 +81,8 @@ bool AddBrowserEntry();
 int AddDeviceListing();
 bool IsDeviceRoot(char * path);
 void GetDefaultFolderPath(char * fullPath, const char * folderName);
-void MakeFilePathForFolderPath(char * filepath, int device, const char * folder);
+//! false (with filepath emptied) when the path does not fit
+__attribute__((warn_unused_result)) bool MakeFilePathForFolderPath(char * filepath, int device, const char * folder);
 int BrowserLoadSz();
 int BrowserChangeFolder();
 int BrowserLoadFile();

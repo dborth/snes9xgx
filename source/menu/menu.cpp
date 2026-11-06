@@ -48,6 +48,7 @@
 #include "drivers/Thread.h"
 #include "drivers/Mutex.h"
 #include "drivers/Cond.h"
+#include "drivers/safestr.h"
 
 #if defined(HW_RVL) || defined(HW_DOL)
 #include "drivers/ogc/videofilters.h"
@@ -989,8 +990,8 @@ static bool ResolvePreviewImagePath(void *, int index, char * outPath, size_t ou
 
 	char imageFile[MAXJOLIET + 16];
 	snprintf(imageFile, sizeof(imageFile), "%s.png", imageBase);
-	platform->getFileSystem()->getPath(outPath, outPathSize, EmuSettings.loadDevice, getImageFolder(), imageFile);
-	return true;
+	// no image to show when the path to it does not fit
+	return platform->getFileSystem()->getPath(outPath, outPathSize, EmuSettings.loadDevice, getImageFolder(), imageFile);
 }
 
 // Fits the preview image inside its card (with a margin) and sizes the shadow behind it to match
@@ -1853,7 +1854,11 @@ static int SaveListTask(void * arg)
 
 	int len = strlen(Memory.ROMFilename);
 
-	platform->getFileSystem()->getPath(browser.dir, EmuSettings.saveDevice, EmuSettings.saveFolder);
+	if(!platform->getFileSystem()->getPath(browser.dir, EmuSettings.saveDevice, EmuSettings.saveFolder))
+	{
+		saves.length = 0; // the save folder's path does not fit: there is nothing to list
+		return 0;
+	}
 	ParseDirectory(true, false, Memory.ROMFilename); // only this game's files - the folder holds every game's saves
 
 	// find matching files
@@ -1887,14 +1892,15 @@ static int SaveListTask(void * arg)
 			{
 				char scrname[MAXJOLIET+1];
 				snprintf(scrname, sizeof(scrname), "%s.png", tmp);
-				platform->getFileSystem()->getPath(scrfile, EmuSettings.saveDevice, EmuSettings.saveFolder, scrname);
-
-				memset(savebuffer, 0, SAVEBUFFERSIZE);
-				if(LoadFile(scrfile, SILENT))
-					data->thumbs[j] = GuiImageData::decodeToRgba(savebuffer, 64, 48);
+				if(platform->getFileSystem()->getPath(scrfile, EmuSettings.saveDevice, EmuSettings.saveFolder, scrname))
+				{
+					memset(savebuffer, 0, SAVEBUFFERSIZE);
+					if(LoadFile(scrfile, SILENT))
+						data->thumbs[j] = GuiImageData::decodeToRgba(savebuffer, 64, 48);
+				}
 			}
-			platform->getFileSystem()->getPath(filepath, EmuSettings.saveDevice, EmuSettings.saveFolder, saves.filename[j]);
-			if (stat(filepath, &filestat) == 0)
+			if (platform->getFileSystem()->getPath(filepath, EmuSettings.saveDevice, EmuSettings.saveFolder, saves.filename[j])
+				&& stat(filepath, &filestat) == 0)
 			{
 				timeinfo = localtime(&filestat.st_mtime);
 				strftime(saves.date[j], 20, "%a %b %d", timeinfo);
@@ -3070,8 +3076,10 @@ static int MenuGameSettings()
 		{
 			if (WindowPrompt("Preview Screenshot", "Save a new Preview Screenshot? Current Screenshot image will be overwritten.", "OK", "Cancel"))
 			{
-				platform->getFileSystem()->getPath(filepath, EmuSettings.loadDevice, EmuSettings.screenshotsFolder, Memory.ROMFilename);
-				SavePreviewImg(filepath, NOTSILENT); 
+				if(platform->getFileSystem()->getPath(filepath, EmuSettings.loadDevice, EmuSettings.screenshotsFolder, Memory.ROMFilename))
+					SavePreviewImg(filepath, NOTSILENT);
+				else
+					ErrorPrompt("Maximum filepath length reached!");
 			}
 			SelectButton(w, screenshotBtn);
 		}
@@ -4232,12 +4240,12 @@ static int MenuSettingsStorage()
 			else if (EmuSettings.saveDevice == DEVICE_SD_PORT2) sprintf (options.value[1],"SD in SP2");
 			else if (EmuSettings.saveDevice == DEVICE_SD_GCLOADER) sprintf (options.value[1],"GC Loader");
 
-			snprintf (options.value[2], 35, "%s", EmuSettings.loadFolder);
-			snprintf (options.value[3], 35, "%s", EmuSettings.saveFolder);
-			snprintf (options.value[4], 35, "%s", EmuSettings.cheatFolder);
-			snprintf (options.value[5], 35, "%s", EmuSettings.screenshotsFolder);
-			snprintf (options.value[6], 35, "%s", EmuSettings.coverFolder);
-			snprintf (options.value[7], 35, "%s", EmuSettings.artworkFolder);
+			CopyString(options.value[2], 35, EmuSettings.loadFolder);
+			CopyString(options.value[3], 35, EmuSettings.saveFolder);
+			CopyString(options.value[4], 35, EmuSettings.cheatFolder);
+			CopyString(options.value[5], 35, EmuSettings.screenshotsFolder);
+			CopyString(options.value[6], 35, EmuSettings.coverFolder);
+			CopyString(options.value[7], 35, EmuSettings.artworkFolder);
 
 			optionBrowser.triggerUpdate();
 		}
@@ -4304,7 +4312,8 @@ static void GetFontFilePath(char *filepath, size_t size, const char *fontName)
 	for(const char * folder : folders)
 	{
 		char candidate[MAXPATHLEN];
-		platform->getFileSystem()->getPath(candidate, DEVICE_SD, folder, fontName);
+		if(!platform->getFileSystem()->getPath(candidate, DEVICE_SD, folder, fontName))
+			continue;
 
 		if(stat(candidate, &st) == 0)
 		{
@@ -4643,10 +4652,10 @@ static int MenuSettingsNetwork()
 		if(ret >= 0 || firstRun)
 		{
 			firstRun = false;
-			snprintf (options.value[0], 25, "%s", EmuSettings.smbShare.host);
-			snprintf (options.value[1], 19, "%s", EmuSettings.smbShare.share);
-			snprintf (options.value[2], 19, "%s", EmuSettings.smbShare.user);
-			snprintf (options.value[3], 19, "%s", EmuSettings.smbShare.password);
+			CopyString(options.value[0], 25, EmuSettings.smbShare.host);
+			CopyString(options.value[1], 19, EmuSettings.smbShare.share);
+			CopyString(options.value[2], 19, EmuSettings.smbShare.user);
+			CopyString(options.value[3], 19, EmuSettings.smbShare.password);
 			optionBrowser.triggerUpdate();
 		}
 
