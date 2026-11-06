@@ -12,8 +12,6 @@
  * per-device I/O (reading reports, rumble/LEDs, removal handling) themselves.
  */
 
-#ifdef HW_RVL
-
 #include <gccore.h>
 #include <ogc/usb.h>
 
@@ -60,5 +58,4 @@ void UsbInput_DeferClose(s32 fd);
 }
 #endif
 
-#endif // HW_RVL
 #endif

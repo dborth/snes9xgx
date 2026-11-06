@@ -1,4 +1,3 @@
-#ifdef HW_RVL
 #include <gccore.h>
 #include <string.h>
 #include "retrode.h"
@@ -193,5 +192,3 @@ char* Retrode_Status(void)
 		return "please replug";
 	return deviceId ? "connected" : "not found";
 }
-
-#endif

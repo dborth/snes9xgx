@@ -1,4 +1,3 @@
-#ifdef HW_RVL
 #include <gccore.h>
 #include <ogc/usb.h>
 #include "ds4.h"
@@ -377,5 +376,3 @@ char* DS4_Status()
 		return "please replug";
 	return deviceId ? "connected" : "not found";
 }
-
-#endif

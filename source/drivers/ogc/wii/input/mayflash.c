@@ -1,4 +1,3 @@
-#ifdef HW_RVL
 #include <gccore.h>
 #include "mayflash.h"
 #include "usbinput.h"
@@ -292,5 +291,3 @@ char* Mayflash_Status(void)
 		return "please replug";
 	return (deviceId || secondDeviceId) ? "connected" : "not found";
 }
-
-#endif

@@ -1,4 +1,3 @@
-#ifdef HW_RVL
 #include <gccore.h>
 #include <ogc/usb.h>
 #include "xbox360.h"
@@ -15,7 +14,7 @@ static u8 endpoint_in = 0x81;
 static u8 endpoint_out = 0x01; // some controllers require 0x02 (updated below)
 static u8 bMaxPacketSize = 20;
 static u8 bConfigurationValue = 1;
-static u8 ATTRIBUTE_ALIGN(32) buf[20];
+static u8 ATTRIBUTE_ALIGN(32) buf[32];
 static bool isReading = false;
 static u8 player = 0;
 
@@ -373,5 +372,3 @@ char* XBOX360_Status(void)
 		return "please replug";
 	return deviceId ? "connected" : "not found";
 }
-
-#endif

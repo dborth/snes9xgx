@@ -1,4 +1,3 @@
-#ifdef HW_RVL
 #include "usbinput.h"
 
 #define USBINPUT_MAX_ENTRIES      64   // libogc2 tracks up to 32 devices per host (HID + vendor)
@@ -205,5 +204,3 @@ void UsbInput_Scan(void)
 		retriesLeft--;
 	}
 }
-
-#endif
