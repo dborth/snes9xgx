@@ -2603,7 +2603,7 @@ static int MenuGameSaves()
 			SaveCardMenu(card, (int)backups.size(), items, acts, footnote);
 			PickerOptions note;
 			note.width = SAVE_POPOVER_W;
-			note.footnote = footnote;
+			note.footnote = Tr(footnote.c_str());
 			const int chosen = MenuPopover_Pick("", items, anchor, nullptr, nullptr, &note);
 			if(chosen < 0 || (size_t)chosen >= acts.size())
 				return -1;
@@ -2847,8 +2847,8 @@ static int MenuGameSaves()
 			for(int k = 0; k < SAVEMODE_LENGTH; k++)
 			{
 				PickerItem it;
-				it.name = modeNames[k];
-				it.hint = modeHelps[k];
+				it.name = Tr(modeNames[k]);
+				it.hint = Tr(modeHelps[k]);
 				it.current = (k == EmuSettings.saveMode);
 				it.preferred = it.current;
 				it.divider = false;
