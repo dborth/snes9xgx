@@ -450,3 +450,654 @@ msgstr ""
 
 msgid "Turbo Off"
 msgstr ""
+
+msgid " "
+msgstr ""
+
+msgid "%s uses %s"
+msgstr "%s usa %s"
+
+msgid "%s uses the default: %s"
+msgstr "%s usa il valore predefinito: %s"
+
+msgid "%s will do nothing"
+msgstr "%s non farà nulla"
+
+msgid "%s will do nothing."
+msgstr "%s non farà nulla."
+
+msgid "16:9 (Fixed Pixel Ratio)"
+msgstr "16:9 (rapporto pixel fisso)"
+
+msgid "2xBR"
+msgstr ""
+
+msgid "2xBR-lv1"
+msgstr ""
+
+msgid "40 MHz"
+msgstr ""
+
+msgid "60 MHz"
+msgstr ""
+
+msgid "A SNES Mouse in each controller port."
+msgstr "Un mouse SNES in ogni porta controller."
+
+msgid "A chooses the controller to map"
+msgstr "A sceglie il controller da mappare"
+
+msgid "A chooses the device being emulated"
+msgstr "A sceglie il dispositivo emulato"
+
+msgid "A puts these buttons back to their defaults"
+msgstr "A riporta questi pulsanti ai valori predefiniti"
+
+msgid "AIMING"
+msgstr "MIRA"
+
+msgid "AUTO"
+msgstr ""
+
+msgid "Additional improvements"
+msgstr "Miglioramenti aggiuntivi"
+
+msgid "All 99 snapshot slots are in use. Delete one to make room."
+msgstr "Tutti i 99 slot di snapshot sono occupati. Eliminane uno per fare spazio."
+
+msgid "Artwork"
+msgstr ""
+
+msgid "Artwork Folder"
+msgstr "Cartella Artwork"
+
+msgid "Aspect Ratio Correction"
+msgstr "Correzione proporzioni"
+
+msgid "Audio Interpolation"
+msgstr "Interpolazione audio"
+
+msgid "Auto Snapshot"
+msgstr "Snapshot automatico"
+
+msgid "Autosave"
+msgstr "Salvataggio automatico"
+
+msgid "Backups"
+msgstr "Backup"
+
+msgid "Bilinear Filtering"
+msgstr "Filtro bilineare"
+
+msgid "Brazilian Portuguese"
+msgstr "Portoghese brasiliano"
+
+msgid "Buttons"
+msgstr "Pulsanti"
+
+msgid "CONTROLLER"
+msgstr ""
+
+msgid "Cancelling..."
+msgstr "Annullamento..."
+
+msgid "Cartridge Save"
+msgstr "Salvataggio cartuccia"
+
+msgid "Cartridge Save not found"
+msgstr "Salvataggio cartuccia non trovato"
+
+msgid "Catalan"
+msgstr "Catalano"
+
+msgid "Cheats (none)"
+msgstr "Cheat (nessuno)"
+
+msgid "Chinese (Simplified)"
+msgstr "Cinese (semplificato)"
+
+msgid "Chinese (Traditional)"
+msgstr "Cinese (tradizionale)"
+
+msgid "Choose 'Pressed button', then press the button you want on the %s."
+msgstr "Scegli «Pulsante premuto», poi premi il pulsante desiderato (%s)."
+
+msgid "Copy the cartridge's save now"
+msgstr "Copia ora il salvataggio della cartuccia"
+
+msgid "Covers"
+msgstr "Copertine"
+
+msgid "Cubic"
+msgstr ""
+
+msgid "D-PAD"
+msgstr "CROCE DIR."
+
+msgid "DDT"
+msgstr ""
+
+msgid "DVD"
+msgstr ""
+
+msgid "Default (All Enabled)"
+msgstr "Predefinito (tutto attivo)"
+
+msgid "Default (Right Stick)"
+msgstr "Predefinito (stick destro)"
+
+msgid "Delete"
+msgstr "Elimina"
+
+msgid "Device not found!"
+msgstr "Dispositivo non trovato!"
+
+msgid "DualShock 4"
+msgstr ""
+
+msgid "EMULATING"
+msgstr "EMULA"
+
+msgid "Empty"
+msgstr "Vuoto"
+
+msgid "Empty until you play"
+msgstr "Vuoto finché non giochi"
+
+msgid "Emulation"
+msgstr ""
+
+msgid "Error loading font!"
+msgstr "Errore nel caricamento del font!"
+
+msgid "FACE BUTTONS"
+msgstr "PULSANTI FRONTALI"
+
+msgid "Font file is too large!"
+msgstr "Il file del font è troppo grande!"
+
+msgid "Font file not found!"
+msgstr "File del font non trovato!"
+
+msgid "Frame Skipping"
+msgstr "Salto fotogrammi"
+
+msgid "Game Settings - Emulation"
+msgstr "Impostazioni gioco - Emulazione"
+
+msgid "Gaussian (Accurate)"
+msgstr "Gaussiano (accurato)"
+
+msgid "General Mappings"
+msgstr "Mappature generali"
+
+msgid "Go back to where you left off"
+msgstr "Torna dove eri rimasto"
+
+msgid "HOME"
+msgstr ""
+
+msgid "Hardware Softening"
+msgstr "Ammorbidimento hardware"
+
+msgid "Home / Right Stick"
+msgstr "Home / stick destro"
+
+msgid "Home clears it."
+msgstr "Home la cancella."
+
+msgid "Home or the C-Stick clears it."
+msgstr "Home o lo stick C la cancella."
+
+msgid "Interpolation"
+msgstr ""
+
+msgid "It will be overwritten with your progress right now."
+msgstr "Verrà sovrascritto con i tuoi progressi attuali."
+
+msgid "Jump back to this moment"
+msgstr "Torna a questo momento"
+
+msgid "Jump to this moment"
+msgstr "Vai a questo momento"
+
+msgid "Justifier light gun."
+msgstr "Pistola ottica Justifier."
+
+msgid "L+R+Start / 1+2+Plus"
+msgstr ""
+
+msgid "Like a real console: the game's own save is kept for you, and the game starts fresh each time."
+msgstr "Come su una console vera: il salvataggio del gioco viene conservato e il gioco riparte da zero ogni volta."
+
+msgid "Linear"
+msgstr ""
+
+msgid "MOUSE"
+msgstr "MOUSE"
+
+msgid "Make Backup"
+msgstr "Crea backup"
+
+msgid "Make a copy of the save"
+msgstr "Crea una copia del salvataggio"
+
+msgid "Manual"
+msgstr "Manuale"
+
+msgid "Manual Snapshot"
+msgstr "Snapshot manuale"
+
+msgid "Map ABXY to Right Stick"
+msgstr "ABXY sullo stick destro"
+
+msgid "Maximum filepath length reached!"
+msgstr "Lunghezza massima del percorso raggiunta!"
+
+msgid "Menu Toggle"
+msgstr "Apri/chiudi menu"
+
+msgid "Minus"
+msgstr ""
+
+msgid "Move over a button to see what it uses"
+msgstr "Passa su un pulsante per vedere cosa usa"
+
+msgid "Move over a kind to see its choices"
+msgstr "Passa su un tipo per vedere le sue scelte"
+
+msgid "Multitap: up to four players."
+msgstr "Multitap: fino a quattro giocatori."
+
+msgid "Mute Game Audio"
+msgstr "Disattiva audio del gioco"
+
+msgid "Name"
+msgstr ""
+
+msgid "Network share not connected!"
+msgstr "Condivisione di rete non connessa!"
+
+msgid "No Cartridge Save data to save!"
+msgstr "Nessun dato di salvataggio cartuccia da salvare!"
+
+msgid "No game save file"
+msgstr "Nessun file di salvataggio del gioco"
+
+msgid "No image"
+msgstr "Nessuna immagine"
+
+msgid "No snapshots yet"
+msgstr "Ancora nessuno snapshot"
+
+msgid "Not saved yet"
+msgstr "Non ancora salvato"
+
+msgid "Not updated while Save Mode is Cartridge Save."
+msgstr "Non viene aggiornato finché la modalità di salvataggio è «Salvataggio cartuccia»."
+
+msgid "Not updated while Save Mode is Manual."
+msgstr "Non viene aggiornato finché la modalità di salvataggio è «Manuale»."
+
+msgid "Nothing is saved or loaded unless you do it yourself."
+msgstr "Niente viene salvato o caricato se non lo fai tu."
+
+msgid "Now: %s"
+msgstr "Ora: %s"
+
+msgid "Nunchuk + Wiimote"
+msgstr ""
+
+msgid "Optional save point"
+msgstr "Punto di salvataggio opzionale"
+
+msgid "Original (240p)"
+msgstr ""
+
+msgid "Output Mode"
+msgstr "Modalità di uscita"
+
+msgid "Overwrite with your progress"
+msgstr "Sovrascrivi con i tuoi progressi"
+
+msgid "PS clears it."
+msgstr "PS la cancella."
+
+msgid "Password"
+msgstr "Password"
+
+msgid "Paused"
+msgstr "In pausa"
+
+msgid "Picks up exactly where you left off, as if you never turned the console off."
+msgstr "Riprende esattamente da dove avevi lasciato, come se non avessi mai spento la console."
+
+msgid "Playing from"
+msgstr "In uso da"
+
+msgid "Plus"
+msgstr ""
+
+msgid "Power Off Wii"
+msgstr "Spegni Wii"
+
+msgid "Press a button on the %s now."
+msgstr "Premi ora un pulsante (%s)."
+
+msgid "Pressed button"
+msgstr "Pulsante premuto"
+
+msgid "Preview Image"
+msgstr "Immagine di anteprima"
+
+msgid "Preview Screenshot"
+msgstr "Screenshot di anteprima"
+
+msgid "Progressive (576p)"
+msgstr "Progressivo (576p)"
+
+msgid "Remembers the exact moment, so you"
+msgstr "Ricorda il momento esatto, così puoi"
+
+msgid "Remove this backup"
+msgstr "Rimuovi questo backup"
+
+msgid "Remove this snapshot"
+msgstr "Rimuovi questo snapshot"
+
+msgid "Replace"
+msgstr "Sostituisci"
+
+msgid "Replace with your progress now"
+msgstr "Sostituisci con i tuoi progressi attuali"
+
+msgid "Restore"
+msgstr "Ripristina"
+
+msgid "SD"
+msgstr ""
+
+msgid "SD Gecko Slot A"
+msgstr ""
+
+msgid "SD Gecko Slot B"
+msgstr ""
+
+msgid "SD in SP2"
+msgstr ""
+
+msgid "SHOULDER"
+msgstr "DORSALI"
+
+msgid "SNES Hi-Res Mode"
+msgstr "Modalità Hi-Res SNES"
+
+msgid "SNES Mouse (Both Ports)"
+msgstr "Mouse SNES (entrambe le porte)"
+
+msgid "SNES Mouse (Port 2)"
+msgstr "Mouse SNES (porta 2)"
+
+msgid "SNES Mouse in controller port 1."
+msgstr "Mouse SNES nella porta controller 1."
+
+msgid "SNES Mouse in controller port 2."
+msgstr "Mouse SNES nella porta controller 2."
+
+msgid "START"
+msgstr ""
+
+msgid "SYSTEM"
+msgstr "SISTEMA"
+
+msgid "Save Mode"
+msgstr "Modalità di salvataggio"
+
+msgid "Save Now"
+msgstr "Salva ora"
+
+msgid "Save a new Preview Screenshot? Current Screenshot image will be overwritten."
+msgstr "Salvare un nuovo screenshot di anteprima? L'immagine attuale verrà sovrascritta."
+
+msgid "Save this moment"
+msgstr "Salva questo momento"
+
+msgid "Saved inside your snapshots"
+msgstr "Salvato dentro i tuoi snapshot"
+
+msgid "Saved when you leave the game, or when you save it."
+msgstr "Salvato quando esci dal gioco o quando lo salvi."
+
+msgid "Saved when you leave the game, or when you update it."
+msgstr "Salvato quando esci dal gioco o quando lo aggiorni."
+
+msgid "Saves"
+msgstr "Salvataggi"
+
+msgid "Saves when you do"
+msgstr "Salva quando lo fai tu"
+
+msgid "Scale2x"
+msgstr ""
+
+msgid "Scanline Overlay"
+msgstr "Overlay scanline"
+
+msgid "Scanlines"
+msgstr ""
+
+msgid "Screenshot"
+msgstr ""
+
+msgid "Screenshots"
+msgstr ""
+
+msgid "Screenshots Folder"
+msgstr "Cartella Screenshot"
+
+msgid "Settings - Network Share"
+msgstr "Impostazioni - Condivisione Rete"
+
+msgid "Settings - Storage"
+msgstr "Impostazioni - Archiviazione"
+
+msgid "Sharp"
+msgstr "Nitido"
+
+msgid "Show Framerate"
+msgstr "Mostra frame rate"
+
+msgid "Show Local Time"
+msgstr "Mostra ora locale"
+
+msgid "Sinc"
+msgstr ""
+
+msgid "Snes9x GX GameCube"
+msgstr ""
+
+msgid "Soft"
+msgstr "Morbido"
+
+msgid "SoftDev, crunchy2,"
+msgstr ""
+
+msgid "Sprites Per-Line Limit"
+msgstr "Limite sprite per riga"
+
+msgid "Sprites per-line Limit"
+msgstr "Limite sprite per riga"
+
+msgid "Start fresh next time"
+msgstr "Ricomincia da zero la prossima volta"
+
+msgid "Storage"
+msgstr "Archiviazione"
+
+msgid "Storage device not found!"
+msgstr "Dispositivo di archiviazione non trovato!"
+
+msgid "Super Scope light gun."
+msgstr "Pistola ottica Super Scope."
+
+msgid "SuperFX Overclock"
+msgstr "Overclock SuperFX"
+
+msgid "Swedish"
+msgstr "Svedese"
+
+msgid "TURBO AND PAUSE"
+msgstr "TURBO E PAUSA"
+
+msgid "The Auto Snapshot couldn't be loaded. The Cartridge Save was loaded instead."
+msgstr "Impossibile caricare lo snapshot automatico. È stato caricato il salvataggio cartuccia."
+
+msgid "The Auto Snapshot couldn't be loaded. The game starts from the beginning."
+msgstr "Impossibile caricare lo snapshot automatico. Il gioco parte dall'inizio."
+
+msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
+msgstr "L'IOS attuale è stato alterato (fake-signed). Funzionalità e/o stabilità potrebbero risentirne."
+
+msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
+msgstr "L'IOS attuale non è supportato. Funzionalità e/o stabilità potrebbero risentirne."
+
+msgid "This can't be undone."
+msgstr "Questa azione non può essere annullata."
+
+msgid "This game doesn't have its own save feature. Use snapshots to save."
+msgstr "Questo gioco non ha una funzione di salvataggio propria. Usa gli snapshot per salvare."
+
+msgid "This software is open source and may be copied, distributed, or modified "
+msgstr "Questo software è open source e può essere copiato, distribuito o modificato "
+
+msgid "Turbo Mode"
+msgstr "Modalità turbo"
+
+msgid "Turbo Mode Button"
+msgstr "Pulsante modalità turbo"
+
+msgid "Turbo mode, the menu toggle and ABXY on the right stick"
+msgstr "Modalità turbo, apertura del menu e ABXY sullo stick destro"
+
+msgid "Turkish"
+msgstr "Turco"
+
+msgid "Two controllers, for one or two players."
+msgstr "Due controller, per uno o due giocatori."
+
+msgid "USB"
+msgstr ""
+
+msgid "USB Controller"
+msgstr "Controller USB"
+
+msgid "USB Mass Storage 2"
+msgstr "Memoria di Massa USB 2"
+
+msgid "USB Mass Storage 3"
+msgstr "Memoria di Massa USB 3"
+
+msgid "USB Mouse"
+msgstr "Mouse USB"
+
+msgid "USB Storage 1"
+msgstr "Archiviazione USB 1"
+
+msgid "USB Storage 2"
+msgstr "Archiviazione USB 2"
+
+msgid "USB Storage 3"
+msgstr "Archiviazione USB 3"
+
+msgid "USB drive 2 not found!"
+msgstr "Disco USB 2 non trovato!"
+
+msgid "USB drive 3 not found!"
+msgstr "Disco USB 3 non trovato!"
+
+msgid "USING"
+msgstr "USA"
+
+msgid "Unable to mount device."
+msgstr "Impossibile montare il dispositivo."
+
+msgid "Unassign"
+msgstr "Rimuovi"
+
+msgid "Unsupported drive format. Use FAT32, exFAT or NTFS."
+msgstr "Formato del disco non supportato. Usa FAT32, exFAT o NTFS."
+
+msgid "Unsupported format - FAT32 is recommended."
+msgstr "Formato non supportato - si consiglia FAT32."
+
+msgid "Unsupported format - please use FAT32/exFAT."
+msgstr "Formato non supportato - usa FAT32/exFAT."
+
+msgid "Unsupported format."
+msgstr "Formato non supportato."
+
+msgid "Unsupported language!"
+msgstr "Lingua non supportata!"
+
+msgid "Update"
+msgstr "Aggiorna"
+
+msgid "Upscaling"
+msgstr "Upscaling"
+
+msgid "Use the saved file in the game"
+msgstr "Usa il file salvato nel gioco"
+
+msgid "Use this as the cartridge's save"
+msgstr "Usa come salvataggio della cartuccia"
+
+msgid "Username"
+msgstr "Nome utente"
+
+msgid "Waiting for a button..."
+msgstr "In attesa di un pulsante..."
+
+msgid "What should %s use?"
+msgstr "Cosa deve usare %s?"
+
+msgid "Which controller is being emulated?"
+msgstr "Quale controller viene emulato?"
+
+msgid "Which controller is being mapped?"
+msgstr "Quale controller viene mappato?"
+
+msgid "Which device is being emulated?"
+msgstr "Quale dispositivo viene emulato?"
+
+msgid "Wii U Gamepad"
+msgstr ""
+
+msgid "Wii U Pro Controller"
+msgstr ""
+
+msgid "Write the save to its file"
+msgstr "Scrivi il salvataggio nel suo file"
+
+msgid "Xbox 360 Controller"
+msgstr ""
+
+msgid "can jump back to it any time."
+msgstr "tornarci in qualsiasi momento."
+
+msgid "eke-eke, others"
+msgstr "eke-eke e altri"
+
+msgid "hq2x"
+msgstr ""
+
+msgid "hq2x Bold"
+msgstr ""
+
+msgid "hq2x Soft"
+msgstr ""
+
+msgid "libogc / devkitPPC"
+msgstr ""
+
+msgid "under the terms of the GNU General Public License (GPL) Version 2."
+msgstr "secondo i termini della GNU General Public License (GPL) versione 2."
