@@ -1101,3 +1101,84 @@ msgstr "eke-eke y otros"
 
 msgid "libogc / devkitPPC"
 msgstr ""
+
+msgid "%s saved"
+msgstr "%s guardado"
+
+msgid "%s updated"
+msgstr "%s actualizado"
+
+msgid "7z decompression failed: %s"
+msgstr "Error de descompresión 7z: %s"
+
+msgid "A changes what %s does"
+msgstr "A cambia lo que hace %s"
+
+msgid "All %d backup slots are in use. Delete one to make room."
+msgstr "Los %d espacios de copias están ocupados. Elimine uno para hacer sitio."
+
+msgid "Archive contains too many files."
+msgstr "El archivo comprimido contiene demasiados archivos."
+
+msgid "Backup %d"
+msgstr "Copia %d"
+
+msgid "Check settings.xml."
+msgstr "Revise settings.xml."
+
+msgid "Copy, or restore one of %d"
+msgstr "Copiar, o restaurar una de las %d"
+
+msgid "Delete %s?"
+msgstr "¿Eliminar %s?"
+
+msgid "Failed to read file data."
+msgstr "No se pudieron leer los datos del archivo."
+
+msgid "File is corrupt (CRC mismatch)."
+msgstr "El archivo está dañado (error de CRC)."
+
+msgid "File is corrupt."
+msgstr "El archivo está dañado."
+
+msgid "File uses too high of compression settings (dictionary size is too large)."
+msgstr "El archivo usa ajustes de compresión demasiado altos (el tamaño del diccionario es demasiado grande)."
+
+msgid "File uses unsupported compression settings."
+msgstr "El archivo usa ajustes de compresión no compatibles."
+
+msgid "Invalid network settings - %s"
+msgstr "Configuración de red no válida - %s"
+
+msgid "It is not being updated in the current Save Mode. This can't be undone."
+msgstr "No se actualiza en el modo de guardado actual. Esta acción no se puede deshacer."
+
+msgid "Next time you open this game it starts from its Cartridge Save, or from the beginning. This can't be undone."
+msgstr "La próxima vez que abra este juego empezará desde su guardado del cartucho o desde el principio. Esta acción no se puede deshacer."
+
+msgid "Player %d"
+msgstr "Jugador %d"
+
+msgid "Player Mapping - Controller %d"
+msgstr "Asignación de jugadores - Mando %d"
+
+msgid "Replace %s?"
+msgstr "¿Reemplazar %s?"
+
+msgid "Save Mode: %s"
+msgstr "Modo de guardado: %s"
+
+msgid "Saved %s"
+msgstr "Guardado: %s"
+
+msgid "Share IP is blank."
+msgstr "La IP del recurso compartido está vacía."
+
+msgid "Share name is blank."
+msgstr "El nombre del recurso compartido está vacío."
+
+msgid "Snapshot %d"
+msgstr "Instantánea %d"
+
+msgid "This is the snapshot you started from. This can't be undone."
+msgstr "Esta es la instantánea desde la que empezó. Esta acción no se puede deshacer."

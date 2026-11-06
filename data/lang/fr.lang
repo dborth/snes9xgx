@@ -1101,3 +1101,84 @@ msgstr ""
 
 msgid "libogc / devkitPPC"
 msgstr ""
+
+msgid "%s saved"
+msgstr "%s enregistré"
+
+msgid "%s updated"
+msgstr "%s mis à jour"
+
+msgid "7z decompression failed: %s"
+msgstr "Échec de la décompression 7z : %s"
+
+msgid "A changes what %s does"
+msgstr "A modifie ce que fait %s"
+
+msgid "All %d backup slots are in use. Delete one to make room."
+msgstr "Les %d emplacements de copie sont utilisés. Supprimez-en un pour faire de la place."
+
+msgid "Archive contains too many files."
+msgstr "L'archive contient trop de fichiers."
+
+msgid "Backup %d"
+msgstr "Copie %d"
+
+msgid "Check settings.xml."
+msgstr "Vérifiez settings.xml."
+
+msgid "Copy, or restore one of %d"
+msgstr "Copier, ou restaurer l'une des %d"
+
+msgid "Delete %s?"
+msgstr "Supprimer %s ?"
+
+msgid "Failed to read file data."
+msgstr "Impossible de lire les données du fichier."
+
+msgid "File is corrupt (CRC mismatch)."
+msgstr "Le fichier est corrompu (CRC incorrect)."
+
+msgid "File is corrupt."
+msgstr "Le fichier est corrompu."
+
+msgid "File uses too high of compression settings (dictionary size is too large)."
+msgstr "Le fichier utilise des paramètres de compression trop élevés (taille du dictionnaire trop grande)."
+
+msgid "File uses unsupported compression settings."
+msgstr "Le fichier utilise des paramètres de compression non pris en charge."
+
+msgid "Invalid network settings - %s"
+msgstr "Paramètres réseau invalides - %s"
+
+msgid "It is not being updated in the current Save Mode. This can't be undone."
+msgstr "Elle n'est pas mise à jour dans le mode de sauvegarde actuel. Cette action est irréversible."
+
+msgid "Next time you open this game it starts from its Cartridge Save, or from the beginning. This can't be undone."
+msgstr "À la prochaine ouverture, le jeu démarrera depuis sa sauvegarde cartouche, ou depuis le début. Cette action est irréversible."
+
+msgid "Player %d"
+msgstr "Joueur %d"
+
+msgid "Player Mapping - Controller %d"
+msgstr "Attribution des joueurs - Manette %d"
+
+msgid "Replace %s?"
+msgstr "Remplacer %s ?"
+
+msgid "Save Mode: %s"
+msgstr "Mode de sauvegarde : %s"
+
+msgid "Saved %s"
+msgstr "Sauvegardé : %s"
+
+msgid "Share IP is blank."
+msgstr "L'IP du partage est vide."
+
+msgid "Share name is blank."
+msgstr "Le nom du partage est vide."
+
+msgid "Snapshot %d"
+msgstr "Sauvegarde d'état %d"
+
+msgid "This is the snapshot you started from. This can't be undone."
+msgstr "C'est la sauvegarde d'état de départ. Cette action est irréversible."

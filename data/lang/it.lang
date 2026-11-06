@@ -1101,3 +1101,84 @@ msgstr ""
 
 msgid "under the terms of the GNU General Public License (GPL) Version 2."
 msgstr "secondo i termini della GNU General Public License (GPL) versione 2."
+
+msgid "%s saved"
+msgstr "%s salvato"
+
+msgid "%s updated"
+msgstr "%s aggiornato"
+
+msgid "7z decompression failed: %s"
+msgstr "Decompressione 7z non riuscita: %s"
+
+msgid "A changes what %s does"
+msgstr "A cambia cosa fa %s"
+
+msgid "All %d backup slots are in use. Delete one to make room."
+msgstr "Tutti i %d slot di backup sono occupati. Eliminane uno per fare spazio."
+
+msgid "Archive contains too many files."
+msgstr "L'archivio contiene troppi file."
+
+msgid "Backup %d"
+msgstr "Backup %d"
+
+msgid "Check settings.xml."
+msgstr "Controlla settings.xml."
+
+msgid "Copy, or restore one of %d"
+msgstr "Copia, o ripristina uno dei %d"
+
+msgid "Delete %s?"
+msgstr "Eliminare %s?"
+
+msgid "Failed to read file data."
+msgstr "Impossibile leggere i dati del file."
+
+msgid "File is corrupt (CRC mismatch)."
+msgstr "Il file è danneggiato (CRC non corrispondente)."
+
+msgid "File is corrupt."
+msgstr "Il file è danneggiato."
+
+msgid "File uses too high of compression settings (dictionary size is too large)."
+msgstr "Il file usa impostazioni di compressione troppo elevate (dimensione del dizionario eccessiva)."
+
+msgid "File uses unsupported compression settings."
+msgstr "Il file usa impostazioni di compressione non supportate."
+
+msgid "Invalid network settings - %s"
+msgstr "Impostazioni di rete non valide - %s"
+
+msgid "It is not being updated in the current Save Mode. This can't be undone."
+msgstr "Non viene aggiornato nella modalità di salvataggio attuale. Questa azione non può essere annullata."
+
+msgid "Next time you open this game it starts from its Cartridge Save, or from the beginning. This can't be undone."
+msgstr "La prossima volta che apri questo gioco partirà dal suo salvataggio cartuccia o dall'inizio. Questa azione non può essere annullata."
+
+msgid "Player %d"
+msgstr "Giocatore %d"
+
+msgid "Player Mapping - Controller %d"
+msgstr "Assegnazione giocatori - Controller %d"
+
+msgid "Replace %s?"
+msgstr "Sostituire %s?"
+
+msgid "Save Mode: %s"
+msgstr "Modalità di salvataggio: %s"
+
+msgid "Saved %s"
+msgstr "Salvato: %s"
+
+msgid "Share IP is blank."
+msgstr "L'IP della condivisione è vuoto."
+
+msgid "Share name is blank."
+msgstr "Il nome della condivisione è vuoto."
+
+msgid "Snapshot %d"
+msgstr "Snapshot %d"
+
+msgid "This is the snapshot you started from. This can't be undone."
+msgstr "Questo è lo snapshot da cui sei partito. Questa azione non può essere annullata."
