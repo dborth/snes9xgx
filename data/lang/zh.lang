@@ -8,7 +8,7 @@ msgid "Are you sure that you want to reset this game? Any unsaved progress will 
 msgstr "确定重置游戏吗？未保存的进度将丢失。"
 
 msgid "Are you sure that you want to reset your mappings?"
-msgstr "确定要重置你的控制器设定吗？"
+msgstr "确定要重置按键映射吗？"
 
 msgid "Are you sure that you want to reset your settings?"
 msgstr "确定要重置你的设定吗？"
@@ -335,7 +335,7 @@ msgid "On"
 msgstr "开启"
 
 msgid "Original (240p)"
-msgstr "原生 240Pp"
+msgstr "原生 240p"
 
 msgid "General Mappings"
 msgstr "通用映射"
@@ -395,7 +395,7 @@ msgid "Reset Game"
 msgstr "重置游戏"
 
 msgid "Reset Mappings"
-msgstr "重置按键设定"
+msgstr "重置按键映射"
 
 msgid "Reset Settings"
 msgstr "重置设定"
@@ -542,7 +542,7 @@ msgid "The current IOS is unsupported. Functionality and/or stability may be adv
 msgstr "当前 IOS 不被支持，软件功能或稳定性可能会受到影响。"
 
 msgid "This software is open source and may be copied, distributed, or modified "
-msgstr "依据 GNU 通用公共许可证（GPL）第 2 版的条款，"
+msgstr "依据 GNU 通用公共许可证（GPL）第 2 版的条款， "
 
 msgid "Turbo Mode"
 msgstr "Turbo 模式"
@@ -606,3 +606,579 @@ msgstr "Wii 右手柄方向"
 
 msgid "Yes"
 msgstr "是"
+
+msgid " "
+msgstr ""
+
+msgid "%s saved"
+msgstr "%s 已保存"
+
+msgid "%s updated"
+msgstr "%s 已更新"
+
+msgid "%s uses %s"
+msgstr "%s 使用 %s"
+
+msgid "%s uses the default: %s"
+msgstr "%s 预设为：%s"
+
+msgid "%s will do nothing"
+msgstr "%s 将不执行任何操作"
+
+msgid "%s will do nothing."
+msgstr "%s 将不执行任何操作。"
+
+msgid "16:9 (Fixed Pixel Ratio)"
+msgstr "16:9（固定像素比例）"
+
+msgid "2xBR"
+msgstr ""
+
+msgid "2xBR-lv1"
+msgstr ""
+
+msgid "40 MHz"
+msgstr ""
+
+msgid "60 MHz"
+msgstr ""
+
+msgid "7z decompression failed: %s"
+msgstr "7z 解压缩失败：%s"
+
+msgid "A SNES Mouse in each controller port."
+msgstr "每个控制器接口各接一个超任鼠标。"
+
+msgid "A changes what %s does"
+msgstr "按 A 键更改 %s 的功能"
+
+msgid "A chooses the controller to map"
+msgstr "按 A 键选择要映射的控制器"
+
+msgid "A chooses the device being emulated"
+msgstr "按 A 键选择要模拟的设备"
+
+msgid "A puts these buttons back to their defaults"
+msgstr "按 A 键将这些按键恢复为预设值"
+
+msgid "AIMING"
+msgstr "瞄准"
+
+msgid "AUTO"
+msgstr "自动"
+
+msgid "All %d backup slots are in use. Delete one to make room."
+msgstr "全部 %d 个备份位置均已占用。请删除一个以腾出空间。"
+
+msgid "All 99 snapshot slots are in use. Delete one to make room."
+msgstr "全部 99 个快照位置均已占用。请删除一个以腾出空间。"
+
+msgid "Archive contains too many files."
+msgstr "压缩文件中的文件过多。"
+
+msgid "Aspect Ratio Correction"
+msgstr "宽高比例校正"
+
+msgid "Audio Interpolation"
+msgstr "音频插值"
+
+msgid "Auto Snapshot"
+msgstr "自动快照"
+
+msgid "Autosave"
+msgstr "自动存档"
+
+msgid "Backup %d"
+msgstr "备份 %d"
+
+msgid "Backups"
+msgstr "备份"
+
+msgid "Bilinear Filtering"
+msgstr "双线性过滤"
+
+msgid "Buttons"
+msgstr "按键"
+
+msgid "CONTROLLER"
+msgstr "控制器"
+
+msgid "Cancelling..."
+msgstr "正在取消…"
+
+msgid "Cartridge Save"
+msgstr "卡带存档"
+
+msgid "Cartridge Save not found"
+msgstr "找不到卡带存档"
+
+msgid "Cheats (none)"
+msgstr "金手指（无）"
+
+msgid "Check settings.xml."
+msgstr "请检查 settings.xml。"
+
+msgid "Choose 'Pressed button', then press the button you want on the %s."
+msgstr "选择“按下的按键”，然后在 %s 上按下你想要的按键。"
+
+msgid "Copy the cartridge's save now"
+msgstr "立即复制卡带存档"
+
+msgid "Copy, or restore one of %d"
+msgstr "复制，或从 %d 个备份中恢复一个"
+
+msgid "Cubic"
+msgstr "三次插值"
+
+msgid "D-PAD"
+msgstr "方向键"
+
+msgid "DDT"
+msgstr ""
+
+msgid "Delete %s?"
+msgstr "删除 %s？"
+
+msgid "Device not found!"
+msgstr "找不到设备！"
+
+msgid "DualShock 4"
+msgstr ""
+
+msgid "EMULATING"
+msgstr "模拟中"
+
+msgid "Empty"
+msgstr "空"
+
+msgid "Empty until you play"
+msgstr "开始游戏后才会有内容"
+
+msgid "Error loading font!"
+msgstr "读取字体时发生错误！"
+
+msgid "FACE BUTTONS"
+msgstr "正面按键"
+
+msgid "Failed to read file data."
+msgstr "无法读取文件数据。"
+
+msgid "File is corrupt (CRC mismatch)."
+msgstr "文件已损坏（CRC 不匹配）。"
+
+msgid "File is corrupt."
+msgstr "文件已损坏。"
+
+msgid "File uses too high of compression settings (dictionary size is too large)."
+msgstr "文件使用的压缩设置过高（字典大小过大）。"
+
+msgid "File uses unsupported compression settings."
+msgstr "文件使用了不支持的压缩设置。"
+
+msgid "Game Settings - Emulation"
+msgstr "游戏设定 - 模拟"
+
+msgid "Gaussian (Accurate)"
+msgstr "高斯（精确）"
+
+msgid "Go back to where you left off"
+msgstr "回到上次离开的地方"
+
+msgid "Hardware Softening"
+msgstr "硬件柔化"
+
+msgid "Home clears it."
+msgstr "按 HOME 键清除。"
+
+msgid "Home or the C-Stick clears it."
+msgstr "按 HOME 键或 C 摇杆清除。"
+
+msgid "Interpolation"
+msgstr "插值"
+
+msgid "Invalid network settings - %s"
+msgstr "无效的网络设置 - %s"
+
+msgid "It is not being updated in the current Save Mode. This can't be undone."
+msgstr "当前存档模式下不会更新它。此操作无法撤销。"
+
+msgid "It will be overwritten with your progress right now."
+msgstr "它将立即被你当前的进度覆盖。"
+
+msgid "Jump back to this moment"
+msgstr "跳回此时刻"
+
+msgid "Jump to this moment"
+msgstr "跳转到此时刻"
+
+msgid "Justifier light gun."
+msgstr "Justifier 光枪。"
+
+msgid "Like a real console: the game's own save is kept for you, and the game starts fresh each time."
+msgstr "就像真实的主机：游戏自带的存档会保留，且每次都从头开始游戏。"
+
+msgid "Linear"
+msgstr "线性"
+
+msgid "MOUSE"
+msgstr "鼠标"
+
+msgid "Make Backup"
+msgstr "创建备份"
+
+msgid "Make a copy of the save"
+msgstr "创建存档的副本"
+
+msgid "Manual"
+msgstr "手动"
+
+msgid "Manual Snapshot"
+msgstr "手动快照"
+
+msgid "Move over a button to see what it uses"
+msgstr "移到按键上即可查看其用途"
+
+msgid "Move over a kind to see its choices"
+msgstr "移到类别上即可查看其选项"
+
+msgid "Multitap: up to four players."
+msgstr "Multitap：最多四名玩家。"
+
+msgid "Mute Game Audio"
+msgstr "游戏静音"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "Network share not connected!"
+msgstr "网络共享未连接！"
+
+msgid "New Snapshot"
+msgstr "新快照"
+
+msgid "Next time you open this game it starts from its Cartridge Save, or from the beginning. This can't be undone."
+msgstr "下次打开此游戏时，将从其卡带存档开始，或从头开始。此操作无法撤销。"
+
+msgid "No Cartridge Save data to save!"
+msgstr "没有可保存的卡带存档数据！"
+
+msgid "No game save file"
+msgstr "无游戏存档文件"
+
+msgid "No image"
+msgstr "无图片"
+
+msgid "No snapshots yet"
+msgstr "暂无快照"
+
+msgid "Not saved yet"
+msgstr "尚未保存"
+
+msgid "Not updated while Save Mode is Cartridge Save."
+msgstr "存档模式为卡带存档时不会更新。"
+
+msgid "Not updated while Save Mode is Manual."
+msgstr "存档模式为手动时不会更新。"
+
+msgid "Nothing is saved or loaded unless you do it yourself."
+msgstr "除非你亲自操作，否则不会保存或读取任何内容。"
+
+msgid "Now: %s"
+msgstr "当前：%s"
+
+msgid "Nunchuk + Wiimote"
+msgstr "Wii 左手柄 + Wii 右手柄"
+
+msgid "Optional save point"
+msgstr "可选存档点"
+
+msgid "Output Mode"
+msgstr "输出模式"
+
+msgid "Overwrite with your progress"
+msgstr "用你的进度覆盖"
+
+msgid "PS clears it."
+msgstr "按 PS 键清除。"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Paused"
+msgstr "已暂停"
+
+msgid "Picks up exactly where you left off, as if you never turned the console off."
+msgstr "从你离开的地方原样继续，就像从未关闭过主机一样。"
+
+msgid "Player %d"
+msgstr "玩家 %d"
+
+msgid "Player Mapping - Controller %d"
+msgstr "玩家映射 - 控制器 %d"
+
+msgid "Playing from"
+msgstr "从此开始"
+
+msgid "Power Off Wii"
+msgstr "关闭 Wii 主机"
+
+msgid "Press a button on the %s now."
+msgstr "现在请在 %s 上按下一个按键。"
+
+msgid "Pressed button"
+msgstr "按下的按键"
+
+msgid "Remembers the exact moment, so you"
+msgstr "记住这一刻，"
+
+msgid "Remove this backup"
+msgstr "移除此备份"
+
+msgid "Remove this snapshot"
+msgstr "移除此快照"
+
+msgid "Replace"
+msgstr "替换"
+
+msgid "Replace %s?"
+msgstr "替换 %s？"
+
+msgid "Replace with your progress now"
+msgstr "现在用你的进度替换"
+
+msgid "Restore"
+msgstr "恢复"
+
+msgid "SD in SP2"
+msgstr ""
+
+msgid "SHOULDER"
+msgstr "肩键"
+
+msgid "SNES Mouse (Both Ports)"
+msgstr "超任鼠标（两个接口）"
+
+msgid "SNES Mouse (Port 2)"
+msgstr "超任鼠标（接口 2）"
+
+msgid "SNES Mouse in controller port 1."
+msgstr "控制器接口 1 上的超任鼠标。"
+
+msgid "SNES Mouse in controller port 2."
+msgstr "控制器接口 2 上的超任鼠标。"
+
+msgid "SYSTEM"
+msgstr "系统"
+
+msgid "Save Mode"
+msgstr "存档模式"
+
+msgid "Save Mode: %s"
+msgstr "存档模式：%s"
+
+msgid "Save Now"
+msgstr "立即保存"
+
+msgid "Save this moment"
+msgstr "保存此刻"
+
+msgid "Saved %s"
+msgstr "保存于 %s"
+
+msgid "Saved inside your snapshots"
+msgstr "保存在你的快照中"
+
+msgid "Saved when you leave the game, or when you save it."
+msgstr "离开游戏或保存时会保存。"
+
+msgid "Saved when you leave the game, or when you update it."
+msgstr "离开游戏或更新时会保存。"
+
+msgid "Saves"
+msgstr "存档"
+
+msgid "Saves when you do"
+msgstr "手动保存"
+
+msgid "Scale2x"
+msgstr ""
+
+msgid "Scanline Overlay"
+msgstr "扫描线叠加"
+
+msgid "Scanlines"
+msgstr "扫描线"
+
+msgid "Settings - Network Share"
+msgstr "设定 - 网络共享"
+
+msgid "Settings - Storage"
+msgstr "设定 - 存储"
+
+msgid "Share IP is blank."
+msgstr "共享 IP 为空。"
+
+msgid "Share name is blank."
+msgstr "共享名称为空。"
+
+msgid "Sharp"
+msgstr "锐利"
+
+msgid "Sinc"
+msgstr ""
+
+msgid "Snapshot"
+msgstr "快照"
+
+msgid "Snapshot %d"
+msgstr "快照 %d"
+
+msgid "Soft"
+msgstr "柔和"
+
+msgid "Sprites per-line Limit"
+msgstr "每行精灵限制"
+
+msgid "Start fresh next time"
+msgstr "下次重新开始"
+
+msgid "Storage"
+msgstr "存储"
+
+msgid "Storage device not found!"
+msgstr "找不到存储设备！"
+
+msgid "Super Scope light gun."
+msgstr "超任光枪。"
+
+msgid "Swedish"
+msgstr "瑞典语"
+
+msgid "TURBO AND PAUSE"
+msgstr "连发和暂停"
+
+msgid "The Auto Snapshot couldn't be loaded. The Cartridge Save was loaded instead."
+msgstr "无法读取自动快照，已改为读取卡带存档。"
+
+msgid "The Auto Snapshot couldn't be loaded. The game starts from the beginning."
+msgstr "无法读取自动快照，游戏将从头开始。"
+
+msgid "This can't be undone."
+msgstr "此操作无法撤销。"
+
+msgid "This game doesn't have its own save feature. Use snapshots to save."
+msgstr "此游戏没有自带的存档功能。请使用快照来保存。"
+
+msgid "This is the snapshot you started from. This can't be undone."
+msgstr "这是你开始游戏时使用的快照。此操作无法撤销。"
+
+msgid "Turbo mode, the menu toggle and ABXY on the right stick"
+msgstr "Turbo 模式、菜单开关和右摇杆上的 ABXY"
+
+msgid "Two controllers, for one or two players."
+msgstr "两个控制器，供一人或两人使用。"
+
+msgid "USB Controller"
+msgstr "USB 控制器"
+
+msgid "USB Mass Storage 2"
+msgstr "USB 大容量存储装置 2"
+
+msgid "USB Mass Storage 3"
+msgstr "USB 大容量存储装置 3"
+
+msgid "USB Mouse"
+msgstr "USB 鼠标"
+
+msgid "USB Storage 1"
+msgstr "USB 存储 1"
+
+msgid "USB Storage 2"
+msgstr "USB 存储 2"
+
+msgid "USB Storage 3"
+msgstr "USB 存储 3"
+
+msgid "USB drive 2 not found!"
+msgstr "找不到 USB 设备 2！"
+
+msgid "USB drive 3 not found!"
+msgstr "找不到 USB 设备 3！"
+
+msgid "USING"
+msgstr "使用中"
+
+msgid "Unable to mount device."
+msgstr "无法挂载设备。"
+
+msgid "Unable to open snapshot!"
+msgstr "无法打开快照！"
+
+msgid "Unassign"
+msgstr "取消指定"
+
+msgid "Unsupported drive format. Use FAT32, exFAT or NTFS."
+msgstr "不支持的驱动器格式。请使用 FAT32、exFAT 或 NTFS。"
+
+msgid "Unsupported format - FAT32 is recommended."
+msgstr "不支持的格式 - 建议使用 FAT32。"
+
+msgid "Unsupported format - please use FAT32/exFAT."
+msgstr "不支持的格式 - 请使用 FAT32/exFAT。"
+
+msgid "Unsupported format."
+msgstr "不支持的格式。"
+
+msgid "Unsupported language!"
+msgstr "不支持的语言！"
+
+msgid "Update"
+msgstr "更新"
+
+msgid "Upscaling"
+msgstr "放大算法"
+
+msgid "Use the saved file in the game"
+msgstr "在游戏中使用保存的文件"
+
+msgid "Use this as the cartridge's save"
+msgstr "将此用作卡带存档"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Waiting for a button..."
+msgstr "正在等待按键…"
+
+msgid "What should %s use?"
+msgstr "%s 要使用什么？"
+
+msgid "Which controller is being emulated?"
+msgstr "要模拟哪个控制器？"
+
+msgid "Which controller is being mapped?"
+msgstr "要映射哪个控制器？"
+
+msgid "Which device is being emulated?"
+msgstr "要模拟哪个设备？"
+
+msgid "Wii U Gamepad"
+msgstr ""
+
+msgid "Write the save to its file"
+msgstr "将存档写入其文件"
+
+msgid "Xbox 360 Controller"
+msgstr "Xbox 360 控制器"
+
+msgid "can jump back to it any time."
+msgstr "方便你随时跳回。"
+
+msgid "hq2x"
+msgstr ""
+
+msgid "hq2x Bold"
+msgstr ""
+
+msgid "hq2x Soft"
+msgstr ""

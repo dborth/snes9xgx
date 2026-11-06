@@ -32,7 +32,7 @@ msgid "Back"
 msgstr "뒤로"
 
 msgid "Brazilian Portuguese"
-msgstr "브라질 포루투갈어"
+msgstr "브라질 포르투갈어"
 
 msgid "Button Mappings"
 msgstr "버튼 매핑"
@@ -59,7 +59,7 @@ msgid "Chinese (Simplified)"
 msgstr "중국어 (간체)"
 
 msgid "Chinese (Traditional)"
-msgstr "중국어 (전통적인)"
+msgstr "중국어 (번체)"
 
 msgid "Choose Game"
 msgstr "게임 선택"
@@ -155,10 +155,10 @@ msgid "Failed to connect to network share."
 msgstr "네트워크 공유 접속에 실패하였습니다."
 
 msgid "Font file is too large!"
-msgstr "글꼴 파일 크기가 너무 큽니다!"
+msgstr "글꼴 파일이 너무 큽니다!"
 
 msgid "Font file not found!"
-msgstr "폰트 파일을 찾을 수 없습니다!"
+msgstr "글꼴 파일을 찾을 수 없습니다!"
 
 msgid "French"
 msgstr "프랑스어"
@@ -260,7 +260,7 @@ msgid "No disc inserted!"
 msgstr "삽입된 디스크가 없습니다!"
 
 msgid "NTSC (480i)"
-msgstr ""
+msgstr "NTSC(480i)"
 
 msgid "Nunchuk + Wiimote"
 msgstr "눈차크 + 위모트"
@@ -434,7 +434,7 @@ msgid "Up One Level"
 msgstr "한 레벨 위로"
 
 msgid "USB drive not found!"
-msgstr "USB 드라이버를 찾을 수 없습니다!"
+msgstr "USB 드라이브를 찾을 수 없습니다!"
 
 msgid "USB Mass Storage"
 msgstr "USB 대용량 저장 장치"
@@ -470,7 +470,7 @@ msgid "Coding & menu design"
 msgstr "코딩 & 메뉴 디자인"
 
 msgid "Crosshair"
-msgstr "십자 버튼"
+msgstr "조준선"
 
 msgid "Cursor"
 msgstr "커서"
@@ -485,7 +485,7 @@ msgid "hq2x"
 msgstr "고품질2배율"
 
 msgid "hq2x Bold"
-msgstr "고품질2배율 선명함"
+msgstr "고품질2배율 두꺼움"
 
 msgid "hq2x Soft"
 msgstr "고품질2배율 부드러움"
@@ -518,7 +518,7 @@ msgid "Scanlines"
 msgstr "스캔라인"
 
 msgid "Show Framerate"
-msgstr "프레임속도 보기"
+msgstr "프레임 속도 표시"
 
 msgid "Show Local Time"
 msgstr "현지 시간 표시"
@@ -542,7 +542,7 @@ msgid "SuperFX Overclock"
 msgstr "슈퍼FX 오버클럭"
 
 msgid "This software is open source and may be copied, distributed, or modified "
-msgstr "이 소프트웨어는 오픈 소스고 복사할 수 있습니다. distributed, or modified "
+msgstr "이 소프트웨어는 오픈 소스이며, "
 
 msgid "Turbo Off"
 msgstr "연사 끔"
@@ -551,7 +551,7 @@ msgid "Turbo On"
 msgstr "연사 켬"
 
 msgid "under the terms of the GNU General Public License (GPL) Version 2."
-msgstr "under the terms of the GNU 일반 공중 사용허가 (GPL) 버전 2."
+msgstr "GNU 일반 공중 사용 허가서(GPL) 버전 2의 조건에 따라 복사, 배포, 수정할 수 있습니다."
 
 msgid "Unknown file type!"
 msgstr "알 수 없는 파일 유형!"
@@ -660,3 +660,525 @@ msgstr "에뮬레이션"
 
 msgid "Audio Interpolation"
 msgstr "오디오 보간법"
+
+msgid " "
+msgstr ""
+
+msgid "%s saved"
+msgstr "%s 저장됨"
+
+msgid "%s updated"
+msgstr "%s 갱신됨"
+
+msgid "%s uses %s"
+msgstr "%s: %s 사용"
+
+msgid "%s uses the default: %s"
+msgstr "%s 기본값: %s"
+
+msgid "%s will do nothing"
+msgstr "%s: 동작 없음"
+
+msgid "%s will do nothing."
+msgstr "%s: 아무 동작도 하지 않습니다."
+
+msgid "7z decompression failed: %s"
+msgstr "7z 압축 해제 실패: %s"
+
+msgid "A SNES Mouse in each controller port."
+msgstr "각 컨트롤러 포트에 SNES 마우스 연결"
+
+msgid "A changes what %s does"
+msgstr "A 버튼으로 %s 동작 변경"
+
+msgid "A chooses the controller to map"
+msgstr "A로 매핑할 컨트롤러 선택"
+
+msgid "A chooses the device being emulated"
+msgstr "A로 에뮬레이션할 장치 선택"
+
+msgid "A puts these buttons back to their defaults"
+msgstr "A로 이 버튼들을 기본값으로 되돌림"
+
+msgid "AIMING"
+msgstr "조준"
+
+msgid "AUTO"
+msgstr "자동"
+
+msgid "All %d backup slots are in use. Delete one to make room."
+msgstr "백업 슬롯 %d개가 모두 사용 중입니다. 하나를 삭제해 공간을 확보하세요."
+
+msgid "All 99 snapshot slots are in use. Delete one to make room."
+msgstr "스냅샷 슬롯 99개가 모두 사용 중입니다. 하나를 삭제해 공간을 확보하세요."
+
+msgid "Archive contains too many files."
+msgstr "압축 파일에 파일이 너무 많습니다."
+
+msgid "Auto Snapshot"
+msgstr "자동 스냅샷"
+
+msgid "Autosave"
+msgstr "자동 저장"
+
+msgid "Backup %d"
+msgstr "백업 %d"
+
+msgid "Backups"
+msgstr "백업"
+
+msgid "Buttons"
+msgstr "버튼"
+
+msgid "CONTROLLER"
+msgstr "컨트롤러"
+
+msgid "Cancelling..."
+msgstr "취소하는 중..."
+
+msgid "Cartridge Save"
+msgstr "카트리지 저장"
+
+msgid "Cartridge Save not found"
+msgstr "카트리지 저장을 찾을 수 없음"
+
+msgid "Cheats (none)"
+msgstr "치트 (없음)"
+
+msgid "Check settings.xml."
+msgstr "settings.xml을 확인하세요."
+
+msgid "Choose 'Pressed button', then press the button you want on the %s."
+msgstr "‘누른 버튼’을 선택한 다음 %s에서 원하는 버튼을 누르세요."
+
+msgid "Copy the cartridge's save now"
+msgstr "카트리지 저장을 지금 복사"
+
+msgid "Copy, or restore one of %d"
+msgstr "복사하거나 %d개 중 하나 복원"
+
+msgid "D-PAD"
+msgstr "십자 버튼"
+
+msgid "DVD"
+msgstr ""
+
+msgid "Default (All Enabled)"
+msgstr "기본 (모두 활성화)"
+
+msgid "Delete %s?"
+msgstr "%s 삭제할까요?"
+
+msgid "Device not found!"
+msgstr "장치를 찾을 수 없습니다!"
+
+msgid "DualShock 4"
+msgstr "듀얼쇼크 4"
+
+msgid "EMULATING"
+msgstr "에뮬레이션 중"
+
+msgid "Empty"
+msgstr "비어 있음"
+
+msgid "Empty until you play"
+msgstr "플레이할 때까지 비어 있음"
+
+msgid "FACE BUTTONS"
+msgstr "앞면 버튼"
+
+msgid "Failed to read file data."
+msgstr "파일 데이터를 읽지 못했습니다."
+
+msgid "File is corrupt (CRC mismatch)."
+msgstr "파일이 손상되었습니다 (CRC 불일치)."
+
+msgid "File is corrupt."
+msgstr "파일이 손상되었습니다."
+
+msgid "File uses too high of compression settings (dictionary size is too large)."
+msgstr "파일이 너무 높은 압축 설정을 사용합니다 (사전 크기가 너무 큼)."
+
+msgid "File uses unsupported compression settings."
+msgstr "파일이 지원되지 않는 압축 설정을 사용합니다."
+
+msgid "Game Settings - Emulation"
+msgstr "게임 설정 - 에뮬레이션"
+
+msgid "Go back to where you left off"
+msgstr "마지막으로 하던 곳으로 돌아가기"
+
+msgid "HOME"
+msgstr "홈"
+
+msgid "Home / Right Stick"
+msgstr "홈 / 오른쪽 스틱"
+
+msgid "Home clears it."
+msgstr "홈 버튼으로 해제합니다."
+
+msgid "Home or the C-Stick clears it."
+msgstr "홈 또는 C 스틱으로 해제합니다."
+
+msgid "Invalid network settings - %s"
+msgstr "잘못된 네트워크 설정 - %s"
+
+msgid "It is not being updated in the current Save Mode. This can't be undone."
+msgstr "현재 저장 모드에서는 갱신되지 않습니다. 되돌릴 수 없습니다."
+
+msgid "It will be overwritten with your progress right now."
+msgstr "지금의 진행 상황으로 덮어씁니다."
+
+msgid "Jump back to this moment"
+msgstr "이 시점으로 되돌아가기"
+
+msgid "Jump to this moment"
+msgstr "이 시점으로 이동"
+
+msgid "Justifier light gun."
+msgstr "Justifier 광선총."
+
+msgid "L TRIG"
+msgstr "L 트리거"
+
+msgid "L+R+Start / 1+2+Plus"
+msgstr "L+R+스타트 / 1+2+플러스"
+
+msgid "Like a real console: the game's own save is kept for you, and the game starts fresh each time."
+msgstr "실제 콘솔처럼 게임 자체의 저장 데이터는 보관되고, 게임은 매번 처음부터 시작합니다."
+
+msgid "MOUSE"
+msgstr "마우스"
+
+msgid "Make Backup"
+msgstr "백업 만들기"
+
+msgid "Make a copy of the save"
+msgstr "저장 데이터 복사본 만들기"
+
+msgid "Manual"
+msgstr "수동"
+
+msgid "Manual Snapshot"
+msgstr "수동 스냅샷"
+
+msgid "Move over a button to see what it uses"
+msgstr "버튼 위로 이동하면 사용 중인 항목이 표시됩니다"
+
+msgid "Move over a kind to see its choices"
+msgstr "종류 위로 이동하면 선택지가 표시됩니다"
+
+msgid "Multitap: up to four players."
+msgstr "멀티탭: 최대 4명."
+
+msgid "Name"
+msgstr "이름"
+
+msgid "Network share not connected!"
+msgstr "네트워크 공유에 연결되지 않았습니다!"
+
+msgid "New Snapshot"
+msgstr "새 스냅샷"
+
+msgid "Next time you open this game it starts from its Cartridge Save, or from the beginning. This can't be undone."
+msgstr "다음에 이 게임을 열면 카트리지 저장 또는 처음부터 시작합니다. 되돌릴 수 없습니다."
+
+msgid "No Cartridge Save data to save!"
+msgstr "저장할 카트리지 저장 데이터가 없습니다!"
+
+msgid "No game save file"
+msgstr "게임 저장 파일 없음"
+
+msgid "No image"
+msgstr "이미지 없음"
+
+msgid "No snapshots yet"
+msgstr "아직 스냅샷 없음"
+
+msgid "Not saved yet"
+msgstr "아직 저장되지 않음"
+
+msgid "Not updated while Save Mode is Cartridge Save."
+msgstr "저장 모드가 카트리지 저장인 동안에는 갱신되지 않습니다."
+
+msgid "Not updated while Save Mode is Manual."
+msgstr "저장 모드가 수동인 동안에는 갱신되지 않습니다."
+
+msgid "Nothing is saved or loaded unless you do it yourself."
+msgstr "직접 하지 않는 한 아무것도 저장되거나 불러와지지 않습니다."
+
+msgid "Now: %s"
+msgstr "현재: %s"
+
+msgid "Optional save point"
+msgstr "선택적 저장 지점"
+
+msgid "Overwrite with your progress"
+msgstr "지금의 진행 상황으로 덮어쓰기"
+
+msgid "PS clears it."
+msgstr "PS 버튼으로 해제합니다."
+
+msgid "Password"
+msgstr "비밀번호"
+
+msgid "Paused"
+msgstr "일시정지됨"
+
+msgid "Picks up exactly where you left off, as if you never turned the console off."
+msgstr "콘솔을 끄지 않은 것처럼 마지막으로 하던 곳에서 그대로 이어서 합니다."
+
+msgid "Player %d"
+msgstr "플레이어 %d"
+
+msgid "Player Mapping - Controller %d"
+msgstr "플레이어 매핑 - 컨트롤러 %d"
+
+msgid "Playing from"
+msgstr "여기서 시작"
+
+msgid "Press a button on the %s now."
+msgstr "지금 %s에서 버튼을 누르세요."
+
+msgid "Pressed button"
+msgstr "누른 버튼"
+
+msgid "R TRIG"
+msgstr "R 트리거"
+
+msgid "Remembers the exact moment, so you"
+msgstr "정확한 순간을 기억해 두어"
+
+msgid "Remove this backup"
+msgstr "이 백업 제거"
+
+msgid "Remove this snapshot"
+msgstr "이 스냅샷 제거"
+
+msgid "Replace"
+msgstr "교체"
+
+msgid "Replace %s?"
+msgstr "%s 교체할까요?"
+
+msgid "Replace with your progress now"
+msgstr "지금의 진행 상황으로 교체"
+
+msgid "Restore"
+msgstr "복원"
+
+msgid "SD"
+msgstr ""
+
+msgid "SHOULDER"
+msgstr "숄더"
+
+msgid "SNES Mouse in controller port 1."
+msgstr "컨트롤러 포트 1에 SNES 마우스 연결"
+
+msgid "SNES Mouse in controller port 2."
+msgstr "컨트롤러 포트 2에 SNES 마우스 연결"
+
+msgid "SYSTEM"
+msgstr "시스템"
+
+msgid "Save Mode"
+msgstr "저장 모드"
+
+msgid "Save Mode: %s"
+msgstr "저장 모드: %s"
+
+msgid "Save Now"
+msgstr "지금 저장"
+
+msgid "Save this moment"
+msgstr "이 순간 저장"
+
+msgid "Saved %s"
+msgstr "저장됨: %s"
+
+msgid "Saved inside your snapshots"
+msgstr "스냅샷 안에 저장됨"
+
+msgid "Saved when you leave the game, or when you save it."
+msgstr "게임을 나가거나 저장할 때 저장됩니다."
+
+msgid "Saved when you leave the game, or when you update it."
+msgstr "게임을 나가거나 갱신할 때 저장됩니다."
+
+msgid "Saves"
+msgstr "저장"
+
+msgid "Saves when you do"
+msgstr "수동 저장"
+
+msgid "Settings - Network Share"
+msgstr "설정 - 네트워크 공유"
+
+msgid "Settings - Storage"
+msgstr "설정 - 저장소"
+
+msgid "Share IP is blank."
+msgstr "공유 IP가 비어 있습니다."
+
+msgid "Share name is blank."
+msgstr "공유 이름이 비어 있습니다."
+
+msgid "Snapshot"
+msgstr "스냅샷"
+
+msgid "Snapshot %d"
+msgstr "스냅샷 %d"
+
+msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2023"
+msgstr "Snes9x - 저작권 (c) Snes9x 팀 1996 - 2023"
+
+msgid "SoftDev, crunchy2,"
+msgstr ""
+
+msgid "Sprites per-line Limit"
+msgstr "라인당 스프라이트 제한"
+
+msgid "Start fresh next time"
+msgstr "다음에는 처음부터 시작"
+
+msgid "Storage"
+msgstr "저장소"
+
+msgid "Storage device not found!"
+msgstr "저장소 장치를 찾을 수 없습니다!"
+
+msgid "Super Scope light gun."
+msgstr "슈퍼 스코프 광선총."
+
+msgid "Superscope"
+msgstr "슈퍼 스코프"
+
+msgid "Swedish"
+msgstr "스웨덴어"
+
+msgid "TURBO AND PAUSE"
+msgstr "연사 및 일시정지"
+
+msgid "The Auto Snapshot couldn't be loaded. The Cartridge Save was loaded instead."
+msgstr "자동 스냅샷을 불러오지 못했습니다. 대신 카트리지 저장을 불러왔습니다."
+
+msgid "The Auto Snapshot couldn't be loaded. The game starts from the beginning."
+msgstr "자동 스냅샷을 불러오지 못했습니다. 게임이 처음부터 시작됩니다."
+
+msgid "This can't be undone."
+msgstr "되돌릴 수 없습니다."
+
+msgid "This game doesn't have its own save feature. Use snapshots to save."
+msgstr "이 게임에는 자체 저장 기능이 없습니다. 스냅샷으로 저장하세요."
+
+msgid "This is the snapshot you started from. This can't be undone."
+msgstr "처음 시작할 때 사용한 스냅샷입니다. 되돌릴 수 없습니다."
+
+msgid "Turbo mode, the menu toggle and ABXY on the right stick"
+msgstr "터보 모드, 메뉴 전환, 오른쪽 스틱의 ABXY"
+
+msgid "Two controllers, for one or two players."
+msgstr "컨트롤러 2개, 1인 또는 2인용."
+
+msgid "USB"
+msgstr ""
+
+msgid "USB Controller"
+msgstr "USB 컨트롤러"
+
+msgid "USB Mass Storage 2"
+msgstr "USB 대용량 저장 장치 2"
+
+msgid "USB Mass Storage 3"
+msgstr "USB 대용량 저장 장치 3"
+
+msgid "USB Mouse"
+msgstr "USB 마우스"
+
+msgid "USB Storage 1"
+msgstr "USB 저장소 1"
+
+msgid "USB Storage 2"
+msgstr "USB 저장소 2"
+
+msgid "USB Storage 3"
+msgstr "USB 저장소 3"
+
+msgid "USB drive 2 not found!"
+msgstr "USB 드라이브 2를 찾을 수 없습니다!"
+
+msgid "USB drive 3 not found!"
+msgstr "USB 드라이브 3을 찾을 수 없습니다!"
+
+msgid "USING"
+msgstr "사용 중"
+
+msgid "Unable to mount device."
+msgstr "장치를 마운트할 수 없습니다."
+
+msgid "Unable to open snapshot!"
+msgstr "스냅샷을 열 수 없습니다!"
+
+msgid "Unassign"
+msgstr "해제"
+
+msgid "Unsupported drive format. Use FAT32, exFAT or NTFS."
+msgstr "지원되지 않는 드라이브 형식입니다. FAT32, exFAT 또는 NTFS를 사용하세요."
+
+msgid "Unsupported format - FAT32 is recommended."
+msgstr "지원되지 않는 형식 - FAT32를 권장합니다."
+
+msgid "Unsupported format - please use FAT32/exFAT."
+msgstr "지원되지 않는 형식 - FAT32/exFAT를 사용하세요."
+
+msgid "Unsupported format."
+msgstr "지원되지 않는 형식입니다."
+
+msgid "Unsupported language!"
+msgstr "지원되지 않는 언어입니다!"
+
+msgid "Update"
+msgstr "갱신"
+
+msgid "Use the saved file in the game"
+msgstr "저장된 파일을 게임에서 사용"
+
+msgid "Use this as the cartridge's save"
+msgstr "이것을 카트리지 저장으로 사용"
+
+msgid "Username"
+msgstr "사용자"
+
+msgid "Waiting for a button..."
+msgstr "버튼을 기다리는 중..."
+
+msgid "What should %s use?"
+msgstr "%s에 무엇을 사용할까요?"
+
+msgid "Which controller is being emulated?"
+msgstr "에뮬레이션할 컨트롤러는 무엇입니까?"
+
+msgid "Which controller is being mapped?"
+msgstr "매핑할 컨트롤러는 무엇입니까?"
+
+msgid "Which device is being emulated?"
+msgstr "에뮬레이션할 장치는 무엇입니까?"
+
+msgid "Wii U Gamepad"
+msgstr "Wii U 게임패드"
+
+msgid "Write the save to its file"
+msgstr "저장 데이터를 파일에 기록"
+
+msgid "Xbox 360 Controller"
+msgstr "Xbox 360 컨트롤러"
+
+msgid "can jump back to it any time."
+msgstr "언제든지 되돌아갈 수 있습니다."
+
+msgid "eke-eke, others"
+msgstr "eke-eke 외"
+
+msgid "libogc / devkitPPC"
+msgstr ""

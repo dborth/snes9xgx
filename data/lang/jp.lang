@@ -5,7 +5,7 @@ msgid "Are you sure that you want to reset this game? Any unsaved progress will 
 msgstr "未保存のデータは失われます"
 
 msgid "Are you sure that you want to reset your mappings?"
-msgstr "設定を初期化しますか?"
+msgstr "ボタン設定を初期化しますか?"
 
 msgid "Are you sure that you want to reset your settings?"
 msgstr "設定を初期化しますか?"
@@ -65,7 +65,7 @@ msgid "Credits"
 msgstr "提供･協力"
 
 msgid "Crosshair"
-msgstr "十字ボタン"
+msgstr "十字カーソル"
 
 msgid "Cursor"
 msgstr "カーソル"
@@ -89,7 +89,7 @@ msgid "DOWN"
 msgstr "下"
 
 msgid "Dutch"
-msgstr "ドイツ語"
+msgstr "オランダ語"
 
 msgid "Enabled"
 msgstr "有効"
@@ -465,3 +465,720 @@ msgstr "このIOSには対応していないので不安定になる可能性が
 
 msgid "Turkish"
 msgstr "トルコ語"
+
+msgid " "
+msgstr ""
+
+msgid "%s saved"
+msgstr "%sをセーブしました"
+
+msgid "%s updated"
+msgstr "%sを更新しました"
+
+msgid "%s uses %s"
+msgstr "%sは%sを使用"
+
+msgid "%s uses the default: %s"
+msgstr "%sの初期値: %s"
+
+msgid "%s will do nothing"
+msgstr "%sは何もしません"
+
+msgid "%s will do nothing."
+msgstr "%sは何もしません。"
+
+msgid "16:9 (Fixed Pixel Ratio)"
+msgstr "16:9 (ピクセル比固定)"
+
+msgid "2xBR"
+msgstr ""
+
+msgid "2xBR-lv1"
+msgstr ""
+
+msgid "40 MHz"
+msgstr ""
+
+msgid "60 MHz"
+msgstr ""
+
+msgid "7z decompression failed: %s"
+msgstr "7zの解凍に失敗しました: %s"
+
+msgid "A SNES Mouse in each controller port."
+msgstr "各コントローラポートにSNESマウスを接続"
+
+msgid "A changes what %s does"
+msgstr "Aで%sの動作を変更"
+
+msgid "A chooses the controller to map"
+msgstr "Aで設定するコントローラを選択"
+
+msgid "A chooses the device being emulated"
+msgstr "Aでエミュレートする機器を選択"
+
+msgid "A puts these buttons back to their defaults"
+msgstr "Aでこれらのボタンを初期値に戻す"
+
+msgid "AIMING"
+msgstr "照準"
+
+msgid "AUTO"
+msgstr "自動"
+
+msgid "Additional improvements"
+msgstr "その他の改良"
+
+msgid "All %d backup slots are in use. Delete one to make room."
+msgstr "%d個のバックアップ枠がすべて使用中です。1つ削除して空きを作ってください"
+
+msgid "All 99 snapshot slots are in use. Delete one to make room."
+msgstr "99個の中断データ枠がすべて使用中です。1つ削除して空きを作ってください"
+
+msgid "Archive contains too many files."
+msgstr "アーカイブ内のファイルが多すぎます"
+
+msgid "Artwork"
+msgstr "アートワーク"
+
+msgid "Artwork Folder"
+msgstr "アートワークフォルダ"
+
+msgid "Aspect Ratio Correction"
+msgstr "アスペクト比補正"
+
+msgid "Audio Interpolation"
+msgstr "オーディオ補間"
+
+msgid "Auto Snapshot"
+msgstr "自動中断データ"
+
+msgid "Autosave"
+msgstr "自動セーブ"
+
+msgid "Backup %d"
+msgstr "バックアップ %d"
+
+msgid "Backups"
+msgstr "バックアップ"
+
+msgid "Bilinear Filtering"
+msgstr "バイリニアフィルタ"
+
+msgid "Buttons"
+msgstr "ボタン"
+
+msgid "CONTROLLER"
+msgstr "コントローラ"
+
+msgid "Cancelling..."
+msgstr "キャンセル中…"
+
+msgid "Cartridge Save"
+msgstr "カートリッジセーブ"
+
+msgid "Cartridge Save not found"
+msgstr "カートリッジセーブが見つかりません"
+
+msgid "Cheats (none)"
+msgstr "改造コード (なし)"
+
+msgid "Check settings.xml."
+msgstr "settings.xmlを確認してください"
+
+msgid "Chinese (Simplified)"
+msgstr "中国語(簡体字)"
+
+msgid "Chinese (Traditional)"
+msgstr "中国語(繁体字)"
+
+msgid "Choose 'Pressed button', then press the button you want on the %s."
+msgstr "「押したボタン」を選び、%sで割り当てたいボタンを押してください"
+
+msgid "Copy the cartridge's save now"
+msgstr "カートリッジセーブを今すぐコピー"
+
+msgid "Copy, or restore one of %d"
+msgstr "コピー、または%d個から復元"
+
+msgid "Covers"
+msgstr "カバー"
+
+msgid "Cubic"
+msgstr "キュービック"
+
+msgid "D-PAD"
+msgstr "十字ボタン"
+
+msgid "DDT"
+msgstr ""
+
+msgid "DVD"
+msgstr ""
+
+msgid "Default (All Enabled)"
+msgstr "初期値 (すべて有効)"
+
+msgid "Default (Right Stick)"
+msgstr "初期値 (右スティック)"
+
+msgid "Delete"
+msgstr "削除"
+
+msgid "Delete %s?"
+msgstr "%sを削除しますか?"
+
+msgid "Device not found!"
+msgstr "デバイスが見つかりません"
+
+msgid "DualShock 4"
+msgstr ""
+
+msgid "EMULATING"
+msgstr "エミュレート中"
+
+msgid "Empty"
+msgstr "空"
+
+msgid "Empty until you play"
+msgstr "プレイするまで空です"
+
+msgid "Emulation"
+msgstr "エミュレーション"
+
+msgid "Error loading font!"
+msgstr "フォントの読み込み中にエラーが発生しました"
+
+msgid "FACE BUTTONS"
+msgstr "フェイスボタン"
+
+msgid "Failed to read file data."
+msgstr "ファイルデータを読み込めませんでした"
+
+msgid "File is corrupt (CRC mismatch)."
+msgstr "ファイルが破損しています(CRC不一致)"
+
+msgid "File is corrupt."
+msgstr "ファイルが破損しています"
+
+msgid "File uses too high of compression settings (dictionary size is too large)."
+msgstr "ファイルの圧縮設定が高すぎます(辞書サイズが大きすぎます)"
+
+msgid "File uses unsupported compression settings."
+msgstr "ファイルは未対応の圧縮設定を使用しています"
+
+msgid "Font file is too large!"
+msgstr "フォントファイルが大きすぎます"
+
+msgid "Font file not found!"
+msgstr "フォントファイルが見つかりません"
+
+msgid "Frame Skipping"
+msgstr "フレームスキップ"
+
+msgid "Game Settings - Emulation"
+msgstr "ゲーム設定 - エミュレーション"
+
+msgid "Gaussian (Accurate)"
+msgstr "ガウシアン (高精度)"
+
+msgid "General Mappings"
+msgstr "共通ボタン設定"
+
+msgid "Go back to where you left off"
+msgstr "中断した場所に戻ります"
+
+msgid "HOME"
+msgstr ""
+
+msgid "Hardware Softening"
+msgstr "ハードウェア平滑化"
+
+msgid "Home / Right Stick"
+msgstr "HOME / 右スティック"
+
+msgid "Home clears it."
+msgstr "HOMEで解除します"
+
+msgid "Home or the C-Stick clears it."
+msgstr "HOMEまたはCスティックで解除します"
+
+msgid "Interpolation"
+msgstr "補間"
+
+msgid "Invalid network settings - %s"
+msgstr "ネットワーク設定が不正です - %s"
+
+msgid "It is not being updated in the current Save Mode. This can't be undone."
+msgstr "現在のセーブモードでは更新されません。この操作は取り消せません"
+
+msgid "It will be overwritten with your progress right now."
+msgstr "今の進行状況で上書きされます"
+
+msgid "Jump back to this moment"
+msgstr "この時点に戻る"
+
+msgid "Jump to this moment"
+msgstr "この時点に移動"
+
+msgid "Justifier light gun."
+msgstr "Justifier ライトガン"
+
+msgid "L+R+Start / 1+2+Plus"
+msgstr "L+R+スタート / 1+2+プラス"
+
+msgid "Like a real console: the game's own save is kept for you, and the game starts fresh each time."
+msgstr "実機のように、ゲーム本来のセーブを保持し、起動のたびに最初から始まります"
+
+msgid "Linear"
+msgstr "リニア"
+
+msgid "MOUSE"
+msgstr "マウス"
+
+msgid "Make Backup"
+msgstr "バックアップを作成"
+
+msgid "Make a copy of the save"
+msgstr "セーブのコピーを作成"
+
+msgid "Manual"
+msgstr "手動"
+
+msgid "Manual Snapshot"
+msgstr "手動中断データ"
+
+msgid "Map ABXY to Right Stick"
+msgstr "ABXYを右スティックに割り当て"
+
+msgid "Maximum filepath length reached!"
+msgstr "ファイルパスの最大長に達しました"
+
+msgid "Menu Toggle"
+msgstr "メニュー切り替え"
+
+msgid "Minus"
+msgstr "マイナス"
+
+msgid "Move over a button to see what it uses"
+msgstr "ボタンにカーソルを合わせると割り当てが表示されます"
+
+msgid "Move over a kind to see its choices"
+msgstr "種類にカーソルを合わせると選択肢が表示されます"
+
+msgid "Multitap: up to four players."
+msgstr "マルチタップ: 最大4人まで"
+
+msgid "Mute Game Audio"
+msgstr "ゲーム音声をミュート"
+
+msgid "Name"
+msgstr "名前"
+
+msgid "Network share not connected!"
+msgstr "ネットワーク共有に接続されていません"
+
+msgid "Next time you open this game it starts from its Cartridge Save, or from the beginning. This can't be undone."
+msgstr "次にこのゲームを開くと、カートリッジセーブ、またはゲームの最初から始まります。この操作は取り消せません"
+
+msgid "No Cartridge Save data to save!"
+msgstr "セーブするカートリッジセーブデータがありません"
+
+msgid "No game save file"
+msgstr "ゲームのセーブファイルなし"
+
+msgid "No image"
+msgstr "画像なし"
+
+msgid "No snapshots yet"
+msgstr "中断データはまだありません"
+
+msgid "Not saved yet"
+msgstr "まだセーブされていません"
+
+msgid "Not updated while Save Mode is Cartridge Save."
+msgstr "セーブモードがカートリッジセーブの間は更新されません"
+
+msgid "Not updated while Save Mode is Manual."
+msgstr "セーブモードが手動の間は更新されません"
+
+msgid "Nothing is saved or loaded unless you do it yourself."
+msgstr "自分で操作しない限り、セーブもロードも行われません"
+
+msgid "Now: %s"
+msgstr "現在: %s"
+
+msgid "Nunchuk + Wiimote"
+msgstr "ヌンチャク + Wiiリモコン"
+
+msgid "Optional save point"
+msgstr "任意のセーブポイント"
+
+msgid "Original (240p)"
+msgstr "オリジナル(240p)"
+
+msgid "Output Mode"
+msgstr "出力モード"
+
+msgid "Overwrite with your progress"
+msgstr "今の進行状況で上書き"
+
+msgid "PS clears it."
+msgstr "PSで解除します"
+
+msgid "Password"
+msgstr "パスワード"
+
+msgid "Paused"
+msgstr "一時停止中"
+
+msgid "Picks up exactly where you left off, as if you never turned the console off."
+msgstr "電源を切らなかったかのように、中断した場所からそのまま再開します"
+
+msgid "Player %d"
+msgstr "プレイヤー%d"
+
+msgid "Player Mapping - Controller %d"
+msgstr "プレイヤー割り当て - コントローラ%d"
+
+msgid "Playing from"
+msgstr "再開元"
+
+msgid "Plus"
+msgstr "プラス"
+
+msgid "Power Off Wii"
+msgstr "Wiiの電源を切る"
+
+msgid "Press a button on the %s now."
+msgstr "%sのボタンを押してください"
+
+msgid "Pressed button"
+msgstr "押したボタン"
+
+msgid "Preview Image"
+msgstr "プレビュー画像"
+
+msgid "Preview Screenshot"
+msgstr "プレビュースクリーンショット"
+
+msgid "Progressive (576p)"
+msgstr "プログレッシブ(576p)"
+
+msgid "Remembers the exact moment, so you"
+msgstr "この瞬間をそのまま記憶して、"
+
+msgid "Remove this backup"
+msgstr "このバックアップを削除"
+
+msgid "Remove this snapshot"
+msgstr "この中断データを削除"
+
+msgid "Replace"
+msgstr "置き換え"
+
+msgid "Replace %s?"
+msgstr "%sを置き換えますか?"
+
+msgid "Replace with your progress now"
+msgstr "今の進行状況で置き換え"
+
+msgid "Restore"
+msgstr "復元"
+
+msgid "SD"
+msgstr ""
+
+msgid "SD Gecko Slot A"
+msgstr ""
+
+msgid "SD Gecko Slot B"
+msgstr ""
+
+msgid "SD in SP2"
+msgstr ""
+
+msgid "SHOULDER"
+msgstr "ショルダー"
+
+msgid "SNES Hi-Res Mode"
+msgstr "SNESハイレゾモード"
+
+msgid "SNES Mouse (Both Ports)"
+msgstr "SNESマウス (両ポート)"
+
+msgid "SNES Mouse (Port 2)"
+msgstr "SNESマウス (ポート2)"
+
+msgid "SNES Mouse in controller port 1."
+msgstr "コントローラポート1にSNESマウスを接続"
+
+msgid "SNES Mouse in controller port 2."
+msgstr "コントローラポート2にSNESマウスを接続"
+
+msgid "START"
+msgstr "スタート"
+
+msgid "SYSTEM"
+msgstr "システム"
+
+msgid "Save Mode"
+msgstr "セーブモード"
+
+msgid "Save Mode: %s"
+msgstr "セーブモード: %s"
+
+msgid "Save Now"
+msgstr "今すぐセーブ"
+
+msgid "Save a new Preview Screenshot? Current Screenshot image will be overwritten."
+msgstr "新しいプレビュースクリーンショットをセーブしますか? 現在のスクリーンショット画像は上書きされます"
+
+msgid "Save this moment"
+msgstr "この瞬間をセーブ"
+
+msgid "Saved %s"
+msgstr "セーブ: %s"
+
+msgid "Saved inside your snapshots"
+msgstr "中断データの中にセーブされます"
+
+msgid "Saved when you leave the game, or when you save it."
+msgstr "ゲーム終了時、またはセーブ操作をしたときに記録されます"
+
+msgid "Saved when you leave the game, or when you update it."
+msgstr "ゲーム終了時、または更新したときに記録されます"
+
+msgid "Saves"
+msgstr "セーブ"
+
+msgid "Saves when you do"
+msgstr "手動でセーブ"
+
+msgid "Scale2x"
+msgstr ""
+
+msgid "Scanline Overlay"
+msgstr "スキャンラインオーバーレイ"
+
+msgid "Scanlines"
+msgstr "スキャンライン"
+
+msgid "Screenshot"
+msgstr "スクリーンショット"
+
+msgid "Screenshots"
+msgstr "スクリーンショット"
+
+msgid "Screenshots Folder"
+msgstr "スクリーンショットフォルダ"
+
+msgid "Settings - Network Share"
+msgstr "設定 - ネットワーク共有"
+
+msgid "Settings - Storage"
+msgstr "設定 - ストレージ"
+
+msgid "Share IP is blank."
+msgstr "共有のIPアドレスが空です"
+
+msgid "Share name is blank."
+msgstr "共有名が空です"
+
+msgid "Sharp"
+msgstr "シャープ"
+
+msgid "Show Framerate"
+msgstr "フレームレートを表示"
+
+msgid "Show Local Time"
+msgstr "現地時間を表示"
+
+msgid "Sinc"
+msgstr ""
+
+msgid "Snapshot %d"
+msgstr "中断データ %d"
+
+msgid "Snes9x GX GameCube"
+msgstr ""
+
+msgid "Soft"
+msgstr "ソフト"
+
+msgid "SoftDev, crunchy2,"
+msgstr ""
+
+msgid "Sprites Per-Line Limit"
+msgstr "ライン毎のスプライト制限"
+
+msgid "Sprites per-line Limit"
+msgstr "ライン毎のスプライト制限"
+
+msgid "Start fresh next time"
+msgstr "次回は最初から始める"
+
+msgid "Storage"
+msgstr "ストレージ"
+
+msgid "Storage device not found!"
+msgstr "ストレージデバイスが見つかりません"
+
+msgid "Super Scope light gun."
+msgstr "スーパースコープ ライトガン"
+
+msgid "SuperFX Overclock"
+msgstr "SuperFXオーバークロック"
+
+msgid "Swedish"
+msgstr "スウェーデン語"
+
+msgid "TURBO AND PAUSE"
+msgstr "連打と一時中断"
+
+msgid "The Auto Snapshot couldn't be loaded. The Cartridge Save was loaded instead."
+msgstr "自動中断データを読み込めませんでした。代わりにカートリッジセーブを読み込みました"
+
+msgid "The Auto Snapshot couldn't be loaded. The game starts from the beginning."
+msgstr "自動中断データを読み込めませんでした。ゲームは最初から始まります"
+
+msgid "This can't be undone."
+msgstr "この操作は取り消せません"
+
+msgid "This game doesn't have its own save feature. Use snapshots to save."
+msgstr "このゲームにはセーブ機能がありません。中断データでセーブしてください"
+
+msgid "This is the snapshot you started from. This can't be undone."
+msgstr "これは開始時に使った中断データです。この操作は取り消せません"
+
+msgid "This software is open source and may be copied, distributed, or modified "
+msgstr "このソフトウェアはオープンソースであり、 "
+
+msgid "Turbo Mode"
+msgstr "ターボモード"
+
+msgid "Turbo Mode Button"
+msgstr "ターボモードボタン"
+
+msgid "Turbo mode, the menu toggle and ABXY on the right stick"
+msgstr "ターボモード、メニュー切り替え、右スティックのABXY"
+
+msgid "Two controllers, for one or two players."
+msgstr "1人または2人用(コントローラ2台)"
+
+msgid "USB"
+msgstr ""
+
+msgid "USB Controller"
+msgstr "USBコントローラ"
+
+msgid "USB Mass Storage 2"
+msgstr "USBデバイス 2"
+
+msgid "USB Mass Storage 3"
+msgstr "USBデバイス 3"
+
+msgid "USB Mouse"
+msgstr "USBマウス"
+
+msgid "USB Storage 1"
+msgstr "USBストレージ 1"
+
+msgid "USB Storage 2"
+msgstr "USBストレージ 2"
+
+msgid "USB Storage 3"
+msgstr "USBストレージ 3"
+
+msgid "USB drive 2 not found!"
+msgstr "USBドライブ2が見つかりません"
+
+msgid "USB drive 3 not found!"
+msgstr "USBドライブ3が見つかりません"
+
+msgid "USING"
+msgstr "使用中"
+
+msgid "Unable to mount device."
+msgstr "デバイスをマウントできません"
+
+msgid "Unassign"
+msgstr "解除"
+
+msgid "Unsupported drive format. Use FAT32, exFAT or NTFS."
+msgstr "未対応のドライブ形式です。FAT32、exFAT、NTFSを使用してください"
+
+msgid "Unsupported format - FAT32 is recommended."
+msgstr "未対応の形式です - FAT32をおすすめします"
+
+msgid "Unsupported format - please use FAT32/exFAT."
+msgstr "未対応の形式です - FAT32/exFATを使用してください"
+
+msgid "Unsupported format."
+msgstr "未対応の形式です"
+
+msgid "Unsupported language!"
+msgstr "未対応の言語です"
+
+msgid "Update"
+msgstr "更新"
+
+msgid "Upscaling"
+msgstr "アップスケール"
+
+msgid "Use the saved file in the game"
+msgstr "セーブしたファイルをゲームで使用"
+
+msgid "Use this as the cartridge's save"
+msgstr "これをカートリッジセーブとして使用"
+
+msgid "Username"
+msgstr "ユーザー名"
+
+msgid "Waiting for a button..."
+msgstr "ボタン入力待ち…"
+
+msgid "What should %s use?"
+msgstr "%sに何を割り当てますか?"
+
+msgid "Which controller is being emulated?"
+msgstr "エミュレートするコントローラは?"
+
+msgid "Which controller is being mapped?"
+msgstr "設定するコントローラは?"
+
+msgid "Which device is being emulated?"
+msgstr "エミュレートする機器は?"
+
+msgid "Wii U Gamepad"
+msgstr ""
+
+msgid "Wii U Pro Controller"
+msgstr "Wii U PROコントローラ"
+
+msgid "Write the save to its file"
+msgstr "セーブをファイルに書き込む"
+
+msgid "Xbox 360 Controller"
+msgstr "Xbox 360コントローラ"
+
+msgid "can jump back to it any time."
+msgstr "いつでも戻れます"
+
+msgid "eke-eke, others"
+msgstr "eke-ekeほか"
+
+msgid "hq2x"
+msgstr ""
+
+msgid "hq2x Bold"
+msgstr ""
+
+msgid "hq2x Soft"
+msgstr ""
+
+msgid "libogc / devkitPPC"
+msgstr ""
+
+msgid "under the terms of the GNU General Public License (GPL) Version 2."
+msgstr "GNU一般公衆利用許諾契約書(GPL)バージョン2の条件のもとで複製・配布・改変できます"
