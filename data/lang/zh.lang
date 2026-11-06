@@ -1,44 +1,8 @@
-﻿msgid "&"
-msgstr ""
-
-msgid "16:9 Correction"
-msgstr "16:9 校正"
-
-msgid "7z decompression failed: Archive contains too many files"
-msgstr "7z 解压缩失败：压缩包内有很多文件"
-
-msgid "7z decompression failed: Failed to read file data"
-msgstr "7z 解压缩失败：读取文件失败"
-
-msgid "7z decompression failed: File is corrupt"
-msgstr "7z 解压缩失败：文件损坏了"
-
-msgid "7z decompression failed: File is corrupt (CRC mismatch)"
-msgstr "7z 解压缩失败：文件损坏了（CRC 不匹配）"
-
-msgid "7z decompression failed: File uses too high of compression settings (dictionary size is too large)"
-msgstr "7z 解压缩失败：压缩包原始文件过大"
-
-msgid "7z decompression failed: File uses unsupported compression settings"
-msgstr "7z 解压缩失败：使用了不支持的压缩设置"
-
-msgid "A (Rapid)"
-msgstr "A（连发）"
-
-msgid "Additional coding"
-msgstr "额外的编码"
-
 msgid "Additional improvements"
 msgstr "其他优化"
 
 msgid "Aim Offscreen"
 msgstr "不显示瞄准准星"
-
-msgid "An update is available!"
-msgstr "有一个新的版本！"
-
-msgid "Append Auto to .SAV Files"
-msgstr "自动添加到 .SAV 文件"
 
 msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
 msgstr "确定重置游戏吗？未保存的进度将丢失。"
@@ -55,50 +19,20 @@ msgstr "插图"
 msgid "Artwork Folder"
 msgstr "插图目录"
 
-msgid "AspiringSquire's Real palette"
-msgstr "AspiringSquire 的真实调色板"
-
-msgid "Attempting to determine load device..."
-msgstr "正在试图从设备中读取…"
-
-msgid "Attempting to determine save device..."
-msgstr "正在试图向设备中写入…"
-
-msgid "Audio"
-msgstr "音频"
-
 msgid "Auto"
 msgstr "自动"
 
 msgid "Auto Detect"
 msgstr "自动检测"
 
-msgid "Auto Load"
-msgstr "自动读取"
-
-msgid "Auto Save"
-msgstr "自动保存"
-
-msgid "Automatic"
-msgstr "自动"
-
 msgid "Automatic (Recommended)"
 msgstr "自动（推荐）"
-
-msgid "B (Rapid)"
-msgstr "B（连发）"
 
 msgid "Back"
 msgstr "返回"
 
-msgid "Both"
-msgstr "两者"
-
 msgid "Brazilian Portuguese"
 msgstr "巴西葡萄牙语"
-
-msgid "Button Mapping"
-msgstr "按键映射"
 
 msgid "Button Mappings"
 msgstr "按键映射"
@@ -130,35 +64,20 @@ msgstr "繁体中文"
 msgid "Choose Game"
 msgstr "选择游戏"
 
-msgid "Chris Covell's palette"
-msgstr "Chris Covell 的调色板"
-
 msgid "Classic Controller"
 msgstr "传统控制器"
 
 msgid "Close"
 msgstr "关闭"
 
-msgid "Coding"
-msgstr "编码"
-
 msgid "Coding & menu design"
 msgstr "编码 & 菜单设计"
-
-msgid "Compressed GBA files are not supported!"
-msgstr "不支持压缩的 GBA 文件！"
 
 msgid "Connecting to network share..."
 msgstr "正在连接网络共享文件…"
 
-msgid "Controles"
-msgstr "控制装置"
-
 msgid "Controller"
 msgstr "控制器"
-
-msgid "Cover View"
-msgstr "封面预览"
 
 msgid "Covers"
 msgstr "封面"
@@ -166,14 +85,8 @@ msgstr "封面"
 msgid "Covers Folder"
 msgstr "封面目录"
 
-msgid "CrashMan's palette"
-msgstr "CrashMan 的调色板"
-
 msgid "Credits"
 msgstr "作者信息"
-
-msgid "Cropping"
-msgstr "裁切"
 
 msgid "Crosshair"
 msgstr "十字准线"
@@ -196,38 +109,17 @@ msgstr "预设（右摇杆）"
 msgid "Delete"
 msgstr "删除"
 
-msgid "Delete File"
-msgstr "删除文件"
-
-msgid "Delete this save file? Deleted files can not be restored."
-msgstr "确定删除存档文件吗？已删除的文件无法恢复。"
-
 msgid "Directory name is too long!"
 msgstr "目录名过长！"
 
 msgid "Disabled"
 msgstr "关闭"
 
-msgid "DISABLED"
-msgstr "关闭"
-
-msgid "Display Virtual Memory"
-msgstr "显示虚拟内存"
-
-msgid "distributed, or modified under the terms of the"
-msgstr "在以下的条件下发布、修改"
-
-msgid "Don't Save"
-msgstr "不保存"
-
 msgid "Down"
 msgstr "下"
 
 msgid "DOWN"
 msgstr "下"
-
-msgid "Downloading..."
-msgstr "下载中…"
 
 msgid "Dutch"
 msgstr "荷兰语"
@@ -238,16 +130,10 @@ msgstr "DVD 光盘"
 msgid "eke-eke, others"
 msgstr "duxiuxing/snes9xgx-cn"
 
-msgid "Empty or invalid ZIP file!"
-msgstr "空或不正确的 ZIP 文件！"
-
 msgid "Emulation"
 msgstr "模拟设置"
 
 msgid "Enabled"
-msgstr "启动"
-
-msgid "ENABLED"
 msgstr "启动"
 
 msgid "English"
@@ -289,27 +175,6 @@ msgstr "离开后执行"
 msgid "Failed to connect to network share."
 msgstr "连接网络共享时失败了。"
 
-msgid "FCE Ultra GX GameCube"
-msgstr "GitHub 上的 FCE Ultra GX"
-
-msgid "FDS BIOS file is invalid!"
-msgstr "磁盘驱动器 BIOS 文件是无效的！"
-
-msgid "FDS BIOS file not found!"
-msgstr "磁盘驱动器 BIOS 文件没有找到！"
-
-msgid "Filtered"
-msgstr "已过滤"
-
-msgid "Filtered (Sharp)"
-msgstr "锐化过滤"
-
-msgid "Filtered (Soft)"
-msgstr "柔化过滤"
-
-msgid "Filtering"
-msgstr "滤镜"
-
 msgid "Fire"
 msgstr "开火"
 
@@ -325,26 +190,8 @@ msgstr "跳帧"
 msgid "French"
 msgstr "法语"
 
-msgid "Game Genie"
-msgstr "游戏金手指"
-
-msgid "Game Genie DISABLED"
-msgstr "游戏金手指关闭"
-
-msgid "Game Genie ENABLED"
-msgstr "游戏金手指启动"
-
-msgid "Game Genie ROM not found!"
-msgstr "找不到游戏金手指的 ROM！"
-
 msgid "Game Settings"
 msgstr "游戏设定"
-
-msgid "Game Settings - Audio"
-msgstr "游戏设定 - 音频"
-
-msgid "Game Settings - Button Mappings"
-msgstr "游戏设定 - 按键映射"
 
 msgid "Game Settings - Cheats"
 msgstr "游戏设定 - 金手指"
@@ -352,38 +199,14 @@ msgstr "游戏设定 - 金手指"
 msgid "Game Settings - Video"
 msgstr "游戏设定 - 视频"
 
-msgid "Game Timing"
-msgstr "游戏速度"
-
 msgid "GameCube Controller"
 msgstr "GameCube 控制器"
-
-msgid "GB Screen Palette"
-msgstr "GB 屏幕调色板"
-
-msgid "GBA Fixed Pixel Ratio"
-msgstr "GBA 固定像素比例"
-
-msgid "GBA Frameskip"
-msgstr "GBA 跳帧"
-
-msgid "GBA Screen Zoom"
-msgstr "GBA 画面缩放"
 
 msgid "German"
 msgstr "德语"
 
 msgid "Go Back"
 msgstr "返回"
-
-msgid "Hardware (GB/GBC)"
-msgstr "硬件（GB/GBC）"
-
-msgid "Hide RAM Saving"
-msgstr "隐藏 RAM 保存"
-
-msgid "Hide SRAM Saving"
-msgstr "隐藏 SRAM 保存"
 
 msgid "HOME"
 msgstr "HOME 键"
@@ -400,36 +223,6 @@ msgstr "信息"
 msgid "Initializing network..."
 msgstr "连接网络中…"
 
-msgid "Insert Coin"
-msgstr "投币"
-
-msgid "Insert Coin / Switch Disk"
-msgstr "投币 / 切换磁盘驱动器"
-
-msgid "Invalid file size!"
-msgstr "无效的文件大小！"
-
-msgid "Invalid game file!"
-msgstr "无效的游戏文件！"
-
-msgid "Invalid network settings - Check settings.xml."
-msgstr "无效的网络设定 - 检查 settings.xml。"
-
-msgid "Invalid network settings - Share IP is blank."
-msgstr "无效的网络设定 - 共享 IP 为空。"
-
-msgid "Invalid network settings - Share name is blank."
-msgstr "无效的网络设定 - 共享名为空。"
-
-msgid "Invalid save file"
-msgstr "无效的保存文件"
-
-msgid "Invalid state file"
-msgstr "无效的状态文件"
-
-msgid "IOS: %d"
-msgstr "IOS：%d"
-
 msgid "Italian"
 msgstr "意大利语"
 
@@ -438,12 +231,6 @@ msgstr "日本语"
 
 msgid "Justifier"
 msgstr "Justifier 光枪"
-
-msgid "Justifier - GameCube Controller"
-msgstr "Justifier 光枪 - GameCube 控制器"
-
-msgid "Justifier - Wiimote"
-msgstr "Justifier 光枪 - Wii 右手柄"
 
 msgid "Korean"
 msgstr "韩国语"
@@ -456,9 +243,6 @@ msgstr "L+R+开始键 / 1+2+加号键"
 
 msgid "Language"
 msgstr "语言"
-
-msgid "Languages Folder"
-msgstr "语言目录"
 
 msgid "Left"
 msgstr "左"
@@ -481,44 +265,17 @@ msgstr "读取设备"
 msgid "Load Folder"
 msgstr "读取目录"
 
-msgid "Load Game"
-msgstr "读取游戏"
-
-msgid "Loading"
-msgstr "读取"
-
 msgid "Loading DVD..."
 msgstr "从 DVD 读取中…"
-
-msgid "Loading patch..."
-msgstr "从 Patch 读取中…"
 
 msgid "Loading..."
 msgstr "读取中…"
 
-msgid "Logo"
-msgstr "图形标识"
-
-msgid "Loopy's palette"
-msgstr "Loopy 的调色板"
-
 msgid "Main Menu"
 msgstr "主菜单"
 
-msgid "Maintain Aspect Ratio"
-msgstr "保持宽高比例"
-
 msgid "Map ABXY to Right Stick"
 msgstr "ABXY 键对应右摇杆"
-
-msgid "Match GC Controls"
-msgstr "匹配 GC 控制器"
-
-msgid "Match Wii Controls"
-msgstr "匹配 Wii 控制器"
-
-msgid "Matthew Conte's palette"
-msgstr "Matthew Conte 的调色板"
 
 msgid "Maximum filepath length reached!"
 msgstr "文件路径长度达到最大！"
@@ -526,17 +283,11 @@ msgstr "文件路径长度达到最大！"
 msgid "Menu"
 msgstr "菜单"
 
-msgid "Menu artwork"
-msgstr "菜单图片"
-
 msgid "Menu sound"
 msgstr "菜单音乐"
 
 msgid "Menu Toggle"
 msgstr "菜单开关"
-
-msgid "MESS palette"
-msgstr "MESS 调色板"
 
 msgid "Minus"
 msgstr "减号键"
@@ -550,18 +301,6 @@ msgstr "音乐音量"
 msgid "Mute"
 msgstr "静音"
 
-msgid "NES Controller"
-msgstr "红白机控制器"
-
-msgid "NES Controllers (2)"
-msgstr "红白机控制器（2）"
-
-msgid "NES Controllers (4)"
-msgstr "红白机控制器（4）"
-
-msgid "NES Zapper"
-msgstr "红白机光枪"
-
 msgid "Network"
 msgstr "网络"
 
@@ -574,47 +313,20 @@ msgstr "新的"
 msgid "No"
 msgstr "否"
 
-msgid "No data to save!"
-msgstr "不存在保存的数据！"
-
 msgid "No disc inserted!"
 msgstr "没有插入光盘！"
-
-msgid "No game saves found."
-msgstr "不存在保存的游戏存档。"
-
-msgid "No SRAM data to save!"
-msgstr "不存在保存的 SRAM 数据！"
 
 msgid "None"
 msgstr "无"
 
-msgid "NTSC"
-msgstr "NTSC 制式"
-
 msgid "NTSC (480i)"
 msgstr "NTSC 制式（480i）"
-
-msgid "Nunchuk"
-msgstr "Wii 左手柄"
 
 msgid "Off"
 msgstr "关闭"
 
-msgid "OFF"
-msgstr "关闭"
-
-msgid "Official Site: https://github.com/dborth/fceugx"
-msgstr "官方网址：https://github.com/duxiuxing/fceugx-cn"
-
 msgid "Official Site: https://github.com/dborth/snes9xgx"
 msgstr "官方网址：https://github.com/duxiuxing/snes9xgx-cn"
-
-msgid "Official Site: https://github.com/dborth/vbagx"
-msgstr "官方网址：https://github.com/duxiuxing/vbagx-cn"
-
-msgid "Offset from UTC (hours)"
-msgstr "UTC 的时差（小时）"
 
 msgid "OK"
 msgstr "确定"
@@ -622,59 +334,20 @@ msgstr "确定"
 msgid "On"
 msgstr "开启"
 
-msgid "ON"
-msgstr "开启"
-
-msgid "Original"
-msgstr "原始"
-
-msgid "Original FCE"
-msgstr "最初版的 FCE"
-
 msgid "Original (240p)"
 msgstr "原生 240Pp"
 
 msgid "General Mappings"
 msgstr "通用映射"
 
-msgid "Out of memory!"
-msgstr "内存不足！"
-
 msgid "Out of memory: too many files!"
 msgstr "内存不足：文件过多！"
-
-msgid "P1"
-msgstr "P1"
-
-msgid "P2"
-msgstr "P2"
-
-msgid "P3"
-msgstr "P3"
-
-msgid "P4"
-msgstr "P4"
-
-msgid "PAL"
-msgstr "PAL 制式"
 
 msgid "PAL (50Hz)"
 msgstr "PAL 制式（50Hz）"
 
 msgid "PAL (60Hz)"
 msgstr "PAL 制式（60Hz）"
-
-msgid "Palette"
-msgstr "调色板"
-
-msgid "Palette saved"
-msgstr "调色板保存了"
-
-msgid "Partial Stretch"
-msgstr "部分拉伸"
-
-msgid "PasoFami/99 palette"
-msgstr "PasoFami/99 调色板"
 
 msgid "Pause"
 msgstr "暂停"
@@ -690,27 +363,6 @@ msgstr "+"
 
 msgid "Portuguese"
 msgstr "葡萄牙语"
-
-msgid "Power off Wii"
-msgstr "关闭 Wii 主机"
-
-msgid "Preferences saved"
-msgstr "设定保存了"
-
-msgid "Press any button on the Classic Controller now. Press Home to clear the existing mapping."
-msgstr "按下传统手柄任意键（按 HOME 键清空映射）"
-
-msgid "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping."
-msgstr "按下 GC 手柄任意键（按 HOME 键或 C 摇杆任意方向键清空映射）"
-
-msgid "Press any button on the GameCube Controller now. Press the C-Stick in any direction to clear the existing mapping."
-msgstr "按下 GC 手柄任意键（按 C 摇杆任意方向键清空映射）"
-
-msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
-msgstr "按下 Wii 右手柄任意键（按 HOME 键清空映射）"
-
-msgid "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping."
-msgstr "按下 Wii 左手柄或右手柄任意键（按 HOME 键清空映射）"
 
 msgid "Preview Image"
 msgstr "预览图片"
@@ -730,20 +382,11 @@ msgstr "退出游戏"
 msgid "Quit this game? Any unsaved progress will be lost."
 msgstr "退出游戏吗？未保存的进度将丢失。"
 
-msgid "Quor's palette"
-msgstr "Quor 的调色板"
-
 msgid "R TRIG"
 msgstr "R 扳机"
 
-msgid "RAM saving is not available for FDS games!"
-msgstr "磁盘驱动器游戏，不能以 RAM 保存！"
-
 msgid "Reboot"
 msgstr "重新启动"
-
-msgid "Rendering"
-msgstr "描绘"
 
 msgid "Reset"
 msgstr "重置"
@@ -756,9 +399,6 @@ msgstr "重置按键设定"
 
 msgid "Reset Settings"
 msgstr "重置设定"
-
-msgid "Reset this game? Any unsaved progress will be lost."
-msgstr "重置游戏吗？未保存的进度将丢失。"
 
 msgid "Retry"
 msgstr "重试"
@@ -781,9 +421,6 @@ msgstr "右按键"
 msgid "Rumble"
 msgstr "振动"
 
-msgid "Save"
-msgstr "保存"
-
 msgid "Save a new Preview Screenshot? Current Screenshot image will be overwritten."
 msgstr "保存一个新的预览截图吗？当前的截图将会被覆盖。"
 
@@ -793,38 +430,14 @@ msgstr "保存的设备"
 msgid "Save failed!"
 msgstr "保存失败！"
 
-msgid "Save file not found"
-msgstr "未找到保存的文件"
-
 msgid "Save Folder"
 msgstr "保存的目录"
-
-msgid "Save Game"
-msgstr "保存游戏"
-
-msgid "Save RAM and State?"
-msgstr "保存 RAM 和状态吗？"
-
-msgid "Save SRAM and State?"
-msgstr "保存 SRAM 和状态吗？"
-
-msgid "Save State?"
-msgstr "保存状态吗？"
 
 msgid "Save successful"
 msgstr "保存成功"
 
-msgid "Saving"
-msgstr "保存"
-
-msgid "Saving preferences..."
-msgstr "保存中…"
-
 msgid "Saving..."
 msgstr "保存中…"
-
-msgid "Scaling"
-msgstr "缩放"
 
 msgid "Screen Position"
 msgstr "画面位置"
@@ -856,9 +469,6 @@ msgstr "SD Gecko 金手指槽位 A"
 msgid "SD Gecko Slot B"
 msgstr "SD Gecko 金手指槽位 B"
 
-msgid "Seek error!"
-msgstr "读取错误！"
-
 msgid "Select"
 msgstr "选择键"
 
@@ -867,12 +477,6 @@ msgstr "设定"
 
 msgid "Settings - Menu"
 msgstr "设定 - 菜单"
-
-msgid "Settings - Network"
-msgstr "设定 - 网络"
-
-msgid "Settings - Saving & Loading"
-msgstr "设定 - 保存 & 读取"
 
 msgid "Shift"
 msgstr "Shift"
@@ -883,35 +487,8 @@ msgstr "显示帧率"
 msgid "Show Local Time"
 msgstr "显示本地时间"
 
-msgid "Simp_chinese"
-msgstr "简体中文"
-
-msgid "SMB Share IP"
-msgstr "SMB 共享 IP"
-
-msgid "SMB Share Name"
-msgstr "SMB 共享名"
-
-msgid "SMB Share Password"
-msgstr "SMB 共享密码"
-
-msgid "SMB Share Username"
-msgstr "SMB 共享用户名"
-
 msgid "SNES Controller"
 msgstr "超任控制器"
-
-msgid "SNES Controller - Classic Controller"
-msgstr "超任控制器 - 传统控制器"
-
-msgid "SNES Controller - GameCube Controller"
-msgstr "超任控制器 - GameCube 控制器"
-
-msgid "SNES Controller - Nunchuk + Wiimote"
-msgstr "超任控制器 - Wii 左右手柄"
-
-msgid "SNES Controller - Wiimote"
-msgstr "超任控制器 - Wii 右手柄"
 
 msgid "SNES Controllers (2)"
 msgstr "超任控制器（2）"
@@ -924,12 +501,6 @@ msgstr "超任 Hi-Res 模式"
 
 msgid "SNES Mouse"
 msgstr "超任鼠标"
-
-msgid "SNES Mouse - GameCube Controller"
-msgstr "超任鼠标 - GameCube 控制器"
-
-msgid "SNES Mouse - Wiimote"
-msgstr "超任鼠标 - Wii 右手柄"
 
 msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2023"
 msgstr "Snes9x - 版权（C）Snes9x 开发小组 1996 - 2023"
@@ -946,32 +517,14 @@ msgstr "效果音的音量"
 msgid "Spanish"
 msgstr "西班牙语"
 
-msgid "Sprite Limit"
-msgstr "画面限制"
-
 msgid "Sprites Per-Line Limit"
 msgstr "画面限制"
-
-msgid "SRAM file not found"
-msgstr "未找到 SRAM 文件"
 
 msgid "Start"
 msgstr "开始键"
 
 msgid "START"
 msgstr "START"
-
-msgid "State"
-msgstr "状态"
-
-msgid "State file not found"
-msgstr "未找到状态文件"
-
-msgid "Stretch to Fit"
-msgstr "适当的伸缩"
-
-msgid "Super Game Boy border"
-msgstr "GB 的边缘"
 
 msgid "Super Scope"
 msgstr "超任光枪"
@@ -982,12 +535,6 @@ msgstr "SuperFX 超频"
 msgid "Superscope"
 msgstr "超任光枪"
 
-msgid "Superscope - GameCube Controller"
-msgstr "超任光枪 - GameCube 控制器"
-
-msgid "Superscope - Wiimote"
-msgstr "超任光枪 - Wii 右手柄"
-
 msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
 msgstr "当前 IOS 已被篡改，软件功能或稳定性可能会受到影响。"
 
@@ -996,9 +543,6 @@ msgstr "当前 IOS 不被支持，软件功能或稳定性可能会受到影响�
 
 msgid "This software is open source and may be copied, distributed, or modified "
 msgstr "依据 GNU 通用公共许可证（GPL）第 2 版的条款，"
-
-msgid "Trad_chinese"
-msgstr "繁体中文"
 
 msgid "Turbo Mode"
 msgstr "Turbo 模式"
@@ -1018,29 +562,14 @@ msgstr "土耳其语"
 msgid "Unable to initialize network!"
 msgstr "无法初始化网络！"
 
-msgid "Unable to locate a load device!"
-msgstr "无法定位读取的设备！"
-
-msgid "Unable to locate a save device!"
-msgstr "无法定位保存的设备！"
-
-msgid "Unable to open state!"
-msgstr "无法打开状态！"
-
 msgid "under the terms of the GNU General Public License (GPL) Version 2."
 msgstr "本软件是开源的，可以进行复制、分发或修改。"
-
-msgid "Unfiltered"
-msgstr "没有过滤"
 
 msgid "Unknown file type!"
 msgstr "无法识别的文件类型！"
 
 msgid "Unrecognized DVD format."
 msgstr "无法识别的 DVD 格式。"
-
-msgid "Unrecognized file extension!"
-msgstr "无法识别的文件扩展名！"
 
 msgid "Up"
 msgstr "上"
@@ -1050,21 +579,6 @@ msgstr "上"
 
 msgid "Up One Level"
 msgstr "向上返回一层"
-
-msgid "Update Available"
-msgstr "有可用的更新"
-
-msgid "Update failed!"
-msgstr "更新失败！"
-
-msgid "Update later"
-msgstr "以后更新"
-
-msgid "Update now"
-msgstr "现在更新"
-
-msgid "Update successful!"
-msgstr "更新成功！"
 
 msgid "USB"
 msgstr "USB 装置"
@@ -1081,27 +595,6 @@ msgstr "垂直方向"
 msgid "Video"
 msgstr "图像"
 
-msgid "Video Mode"
-msgstr "图像模式"
-
-msgid "VM16: Unknown page type!"
-msgstr "VM16：未知的页面型态！"
-
-msgid "VM32: Unknown page type!"
-msgstr "VM32：未知的页面型态！"
-
-msgid "VM8: Unknown page type!"
-msgstr "VM8：未知的页面型态！"
-
-msgid "VS Castlevania palette"
-msgstr "VS Castlevania 调色板"
-
-msgid "VS Dr. Mario palette"
-msgstr "VS Dr. Mario 调色板"
-
-msgid "VS SMB/VS Ice Climber palette"
-msgstr "VS SMB/VS Ice Climber 调色板"
-
 msgid "Wii U Pro Controller"
 msgstr "Wii U Pro 控制器"
 
@@ -1111,20 +604,5 @@ msgstr "Wii 右手柄"
 msgid "Wiimote Orientation"
 msgstr "Wii 右手柄方向"
 
-msgid "WiiU Pro controller"
-msgstr "WiiU Pro 控制器"
-
 msgid "Yes"
 msgstr "是"
-
-msgid "Zaphod's VS Castlevania palette"
-msgstr "Zaphod's VS Castlevania 调色板"
-
-msgid "Zaphod's VS SMB palette"
-msgstr "Zaphod's VS SMB 调色板"
-
-msgid "Zapper"
-msgstr "光枪"
-
-msgid "Zapper Crosshair"
-msgstr "光枪十字准线"

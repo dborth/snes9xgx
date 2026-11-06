@@ -1,38 +1,5 @@
-msgid "&"
-msgstr ""
-
-msgid "16:9 Correction"
-msgstr "Correcção 16:9"
-
-msgid "7z decompression failed: Archive contains too many files"
-msgstr "Extracção 7z falhou: o ficheiro 7z contém demasiados ficheiros"
-
-msgid "7z decompression failed: Failed to read file data"
-msgstr "Extracção 7z falhou: erro na leitura do ficheiro"
-
-msgid "7z decompression failed: File is corrupt"
-msgstr "Extracção 7z falhou: ficheiro corrupto"
-
-msgid "7z decompression failed: File is corrupt (CRC mismatch)"
-msgstr "Extracção 7z falhou: ficheiro corrupto (erro de CRC)"
-
-msgid "7z decompression failed: File uses too high of compression settings (dictionary size is too large)"
-msgstr "Extracção 7z falhou: O ficheiro usa parâmetros de compressão muito altos (o tamanho de dicionário é muito grande)"
-
-msgid "7z decompression failed: File uses unsupported compression settings"
-msgstr "Extracção 7z falhou: O ficheiro usa parâmetros não suportados"
-
-msgid "A (Rapid)"
-msgstr "A (Rápido)"
-
-msgid "Additional coding"
-msgstr "Programação adicional"
-
 msgid "Aim Offscreen"
 msgstr "Mira fora do ecrã"
-
-msgid "An update is available!"
-msgstr "Actualização disponível!"
 
 msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
 msgstr "Quer mesmo reiniciar este jogo? Qualquer progresso não gravado será perdido."
@@ -43,44 +10,17 @@ msgstr "Quer mesmo repor os controlos mapeados?"
 msgid "Are you sure that you want to reset your settings?"
 msgstr "Quer mesmo repor as configurações?"
 
-msgid "Maintain Aspect Ratio"
-msgstr "Manter Proporções"
-
-msgid "Attempting to determine load device..."
-msgstr "A determinar dispositivo de carregamento..."
-
-msgid "Attempting to determine save device..."
-msgstr "A determinar dispositivo de gravação..."
-
 msgid "Auto"
 msgstr "Automático"
 
 msgid "Auto Detect"
 msgstr "Auto detectar"
 
-msgid "Auto Load"
-msgstr "Auto carregar"
-
-msgid "Auto Save"
-msgstr "Auto gravar"
-
-msgid "Automatic"
-msgstr "Automático"
-
 msgid "Automatic (Recommended)"
 msgstr "Automático (Recomendado)"
 
-msgid "B (Rapid)"
-msgstr "B (Rápido)"
-
 msgid "Back"
 msgstr "Voltar"
-
-msgid "Both"
-msgstr "Ambos"
-
-msgid "Controles"
-msgstr "Controlos"
 
 msgid "Button Mappings"
 msgstr "Mapear Botões"
@@ -109,14 +49,8 @@ msgstr "Comando Clássico"
 msgid "Close"
 msgstr "Fechar"
 
-msgid "Coding"
-msgstr "Programação"
-
 msgid "Coding & menu design"
 msgstr "Programação & desenho do menu"
-
-msgid "Compressed GBA files are not supported!"
-msgstr "Ficheiros GBA comprimidos não são suportados!"
 
 msgid "Connecting to network share..."
 msgstr "A ligar à partilha de rede..."
@@ -124,17 +58,11 @@ msgstr "A ligar à partilha de rede..."
 msgid "Controller"
 msgstr "Controlo"
 
-msgid "Cover View"
-msgstr "Visualização de Capas"
-
 msgid "Covers Folder"
 msgstr "Pasta de Capas"
 
 msgid "Credits"
 msgstr "Créditos"
-
-msgid "Cropping"
-msgstr "Cropping"
 
 msgid "Crosshair"
 msgstr "Mira"
@@ -154,35 +82,17 @@ msgstr "O nome da directoria é muito grande!"
 msgid "Disabled"
 msgstr "Desactivado"
 
-msgid "DISABLED"
-msgstr "DESACTIVADO"
-
-msgid "distributed, or modified under the terms of the"
-msgstr "distribuído, ou modificado sob os termos de"
-
-msgid "Don't Save"
-msgstr "Não gravar"
-
 msgid "Down"
 msgstr "Baixo"
 
 msgid "DOWN"
 msgstr "BAIXO"
 
-msgid "Downloading..."
-msgstr "A transferir..."
-
 msgid "Dutch"
 msgstr "Holandês"
 
-msgid "Empty or invalid ZIP file!"
-msgstr "Ficheiro ZIP vazio ou inválido"
-
 msgid "Enabled"
 msgstr "Activado"
-
-msgid "ENABLED"
-msgstr "ACTIVADO"
 
 msgid "English"
 msgstr "Inglês"
@@ -223,35 +133,14 @@ msgstr "Acção ao Sair"
 msgid "Failed to connect to network share."
 msgstr "Falha ao ligar-se à partilha de rede."
 
-msgid "FDS BIOS file is invalid!"
-msgstr "Ficheiro de BIOS do FDS (Famicom Disk System) inválido!"
-
-msgid "FDS BIOS file not found!"
-msgstr "Ficheiro de BIOS de FDS (Famicom Disk System) não encontrado!"
-
-msgid "Filtered"
-msgstr "Filtrado"
-
-msgid "Filtering"
-msgstr "Filtragem"
-
 msgid "Fire"
 msgstr "Fogo"
 
 msgid "French"
 msgstr "Francês"
 
-msgid "GBA Screen Zoom"
-msgstr "Zoom do ecrã GBA"
-
-msgid "Game Genie ROM not found!"
-msgstr "Não foi encontrada a ROM do Game Genie!"
-
 msgid "Game Settings"
 msgstr "Configurações"
-
-msgid "Game Settings - Button Mappings"
-msgstr "Configurações - Mapear Botões"
 
 msgid "Game Settings - Cheats"
 msgstr "Configurações - Truques"
@@ -259,23 +148,11 @@ msgstr "Configurações - Truques"
 msgid "Game Settings - Video"
 msgstr "Configurações - Vídeo"
 
-msgid "Game Timing"
-msgstr "Tempo de jogo"
-
-msgid "Game Genie DISABLED"
-msgstr "Game Genie DESACTIVADO"
-
-msgid "Game Genie ENABLED"
-msgstr "Game Genie ACTIVADO"
-
 msgid "GameCube Controller"
 msgstr "Comando GameCube"
 
 msgid "German"
 msgstr "Alemão"
-
-msgid "GNU General Public License (GPL) Version 2."
-msgstr "GNU Licença Pública Geral (GPL) Versão 2."
 
 msgid "Go Back"
 msgstr "Voltar"
@@ -289,33 +166,6 @@ msgstr "Informação"
 msgid "Initializing network..."
 msgstr "A iniciar ligação de rede..."
 
-msgid "Insert Coin"
-msgstr "Inserir Moeda"
-
-msgid "Insert Coin / Switch Disk"
-msgstr "Inserir Moeda / Trocar Disco"
-
-msgid "Invalid file size!"
-msgstr "Tamanho de ficheiro inválido!"
-
-msgid "Invalid game file!"
-msgstr "Ficheiro de jogo inválido!"
-
-msgid "Invalid network settings - Check settings.xml."
-msgstr "Configuração de rede inválida - Verifique o ficheiro settings.xml."
-
-msgid "Invalid network settings - Share IP is blank."
-msgstr "Configuração de rede inválida - IP vazio."
-
-msgid "Invalid network settings - Share name is blank."
-msgstr "Configuração de rede inválida - Nome vazio."
-
-msgid "Invalid save file"
-msgstr "Ficheiro gravado inválido"
-
-msgid "Invalid state file"
-msgstr "Ficheiro de estado inválido"
-
 msgid "Italian"
 msgstr "Italiano"
 
@@ -325,12 +175,6 @@ msgstr "Japonês"
 msgid "Justifier"
 msgstr "Justifier"
 
-msgid "Justifier - GameCube Controller"
-msgstr "Justifier - Comando GameCube"
-
-msgid "Justifier - Wiimote"
-msgstr "Justifier - Wii Remote"
-
 msgid "Korean"
 msgstr "Coreano"
 
@@ -339,9 +183,6 @@ msgstr "L"
 
 msgid "Language"
 msgstr "Idioma"
-
-msgid "Languages Folder"
-msgstr "Pasta de Idiomas"
 
 msgid "Left"
 msgstr "Esquerda"
@@ -361,17 +202,8 @@ msgstr "Carregar do Dispositivo"
 msgid "Load Folder"
 msgstr "Pasta de Jogos"
 
-msgid "Load Game"
-msgstr "Carregar Jogo"
-
-msgid "Loading"
-msgstr "A Carregar"
-
 msgid "Loading DVD..."
 msgstr "A Carregar DVD..."
-
-msgid "Loading patch..."
-msgstr "A Carregar patch..."
 
 msgid "Loading..."
 msgstr "A carregar..."
@@ -379,20 +211,8 @@ msgstr "A carregar..."
 msgid "Main Menu"
 msgstr "Menu Principal"
 
-msgid "Match GC Controls"
-msgstr "Coincidir Controlos GC"
-
-msgid "Match Wii Controls"
-msgstr "Coincidir Controlos Wii"
-
-msgid "Maximum filepath length reached!"
-msgid "Tamanho máximo do caminho do ficheiro alcançado!"
-
 msgid "Menu"
 msgstr "Menu"
-
-msgid "Menu artwork"
-msgstr "Arte do Menu"
 
 msgid "Menu sound"
 msgstr "Som do Menu"
@@ -406,18 +226,6 @@ msgstr "Volume da Música"
 msgid "Mute"
 msgstr "Mudo"
 
-msgid "NES Controller"
-msgstr "Comando NES"
-
-msgid "NES Controllers (2)"
-msgstr "Comando NES (2)"
-
-msgid "NES Controllers (4)"
-msgstr "Comando NES (4)"
-
-msgid "NES Zapper"
-msgstr "Nintendo Zapper"
-
 msgid "Network"
 msgstr "Rede"
 
@@ -430,23 +238,11 @@ msgstr "Novo"
 msgid "New Snapshot"
 msgstr "Novo Snapshot"
 
-msgid "New SRAM"
-msgstr "Nova SRAM"
-
 msgid "No"
 msgstr "Não"
 
-msgid "No data to save!"
-msgstr "Não há dados para gravar!"
-
 msgid "No disc inserted!"
 msgstr "Nenhum disco inserido!"
-
-msgid "No SRAM data to save!"
-msgstr "Não há dados de SRAM para gravar!"
-
-msgid "No game saves found."
-msgstr "Nenhum jogo gravado encontrado."
 
 msgid "None"
 msgstr "Nenhum"
@@ -454,20 +250,11 @@ msgstr "Nenhum"
 msgid "NTSC (480i)"
 msgstr "NTSC (480i)"
 
-msgid "Nunchuk"
-msgstr "Nunchuk"
-
 msgid "Off"
 msgstr "Desligado"
 
-msgid "Official Site: https://github.com/dborth/fceugx"
-msgstr "Site Oficial: https://github.com/dborth/fceugx"
-
 msgid "Official Site: https://github.com/dborth/snes9xgx"
 msgstr "Site Oficial: https://github.com/dborth/snes9xgx"
-
-msgid "Official Site: https://github.com/dborth/vbagx"
-msgstr "Site Oficial: https://github.com/dborth/vbagx"
 
 msgid "OK"
 msgstr "OK"
@@ -475,38 +262,14 @@ msgstr "OK"
 msgid "On"
 msgstr "Ligado"
 
-msgid "Original"
-msgstr "Original"
-
-msgid "Out of memory!"
-msgstr "Memória insuficiente!"
-
 msgid "Out of memory: too many files!"
 msgstr "Memória insuficiente: demasiados ficheiros!"
-
-msgid "P1"
-msgstr "J1"
-
-msgid "P2"
-msgstr "J2"
-
-msgid "P3"
-msgstr "J3"
-
-msgid "P4"
-msgstr "J4"
 
 msgid "PAL (50Hz)"
 msgstr "PAL (50Hz)"
 
 msgid "PAL (60Hz)"
 msgstr "PAL (60Hz)"
-
-msgid "Palette saved"
-msgstr "Paleta gravada"
-
-msgid "Partial Stretch"
-msgstr "Esticar Parcial"
 
 msgid "Pause"
 msgstr "Pausa"
@@ -523,27 +286,6 @@ msgstr "Português"
 msgid "Brazilian Portuguese"
 msgstr "Português (BR)"
 
-msgid "Power off Wii"
-msgstr "Desligar Wii"
-
-msgid "Preferences saved"
-msgstr "Preferências gravadas"
-
-msgid "Press any button on the Classic Controller now. Press Home to clear the existing mapping."
-msgstr "Pressione um botão no Comando Clássico. Pressione HOME para eliminar a configuração actual."
-
-msgid "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping."
-msgstr "Pressione um botão no Comando GameCube. Pressione HOME ou mova o Stick-C para eliminar a configuração actual."
-
-msgid "Press any button on the GameCube Controller now. Press the C-Stick in any direction to clear the existing mapping."
-msgstr "Pressione um botão no Comando GameCube. Mova o Stick-C para eliminar a configuração actual."
-
-msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
-msgstr "Pressione um botão no Wii Remote. Pressione HOME para eliminar a configuração actual."
-
-msgid "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping."
-msgstr "Pressione um botão no Wii Remote ou no Nunchuk. Pressione HOME para eliminar a configuração actual."
-
 msgid "Progressive (480p)"
 msgstr "Progressivo (480p)"
 
@@ -556,23 +298,14 @@ msgstr "Sair do Jogo? Qualquer progresso não gravado será perdido."
 msgid "R TRIG"
 msgstr "R"
 
-msgid "RAM saving is not available for FDS games!"
-msgstr "Gravar RAM não está disponível para jogos do FDS (Famicom Disk System)!"
-
 msgid "Reboot"
 msgstr "Reiniciar"
-
-msgid "Rendering"
-msgstr "Renderização"
 
 msgid "Reset"
 msgstr "Reiniciar"
 
 msgid "Reset Game"
 msgstr "Reiniciar Jogo"
-
-msgid "Reset this game? Any unsaved progress will be lost."
-msgstr "Reiniciar Jogo? Qualquer progresso não gravado será perdido."
 
 msgid "Reset Mappings"
 msgstr "Repor mapeamentos"
@@ -601,50 +334,20 @@ msgstr "Botão direito"
 msgid "Rumble"
 msgstr "Vibração"
 
-msgid "Save"
-msgstr "Gravar"
-
 msgid "Save Device"
 msgstr "Gravar no dispositivo"
 
 msgid "Save failed!"
 msgstr "Falha ao gravar!"
 
-msgid "Save file not found"
-msgstr "Ficheiro gravado não encontrado"
-
 msgid "Save Folder"
 msgstr "Pasta de gravar"
-
-msgid "Save Game"
-msgstr "Gravar Jogo"
-
-msgid "Save RAM and State?"
-msgstr "Gravar RAM e o estado?"
-
-msgid "Save Snapshot?"
-msgstr "Gravar Snapshot?"
-
-msgid "Save SRAM and Snapshot?"
-msgstr "Gravar SRAM e Snapshot?"
-
-msgid "Save State?"
-msgstr "Gravar estado?"
 
 msgid "Save successful"
 msgstr "Gravado com sucesso"
 
-msgid "Saving"
-msgstr "A gravar"
-
-msgid "Saving preferences..."
-msgstr "A gravar preferências..."
-
 msgid "Saving..."
 msgstr "A gravar..."
-
-msgid "Scaling"
-msgstr "Escala"
 
 msgid "Screen Position"
 msgstr "Posição do ecrã"
@@ -655,20 +358,11 @@ msgstr "Zoom do ecrã"
 msgid "Select"
 msgstr "Seleccionar"
 
-msgid "Seek error!"
-msgstr "Erro de posicionamento!"
-
 msgid "Settings"
 msgstr "Configurações"
 
 msgid "Settings - Menu"
 msgstr "Configurações - Menu"
-
-msgid "Settings - Network"
-msgstr "Configurações - Rede"
-
-msgid "Settings - Saving & Loading"
-msgstr "Configurações - Gravar & Carregar"
 
 msgid "SD Card"
 msgstr "Cartão SD"
@@ -679,26 +373,8 @@ msgstr "Cartão SD não encontrado!"
 msgid "Shift"
 msgstr "Shift"
 
-msgid "Simp_chinese"
-msgstr "Chinês Simp."
-
-msgid "SMB Share IP"
-msgstr "IP do SMB"
-
-msgid "SMB Share Name"
-msgstr "Nome do SMB"
-
-msgid "SMB Share Password"
-msgstr "Palavra-passe do SMB"
-
-msgid "SMB Share Username"
-msgstr "Nome de utilizador do SMB"
-
 msgid "Snapshot"
 msgstr "Snapshot"
-
-msgid "Snapshot (Auto)"
-msgstr "Snapshot (Auto)"
 
 msgid "SNES Controller"
 msgstr "Comando SNES"
@@ -709,26 +385,8 @@ msgstr "Comando SNES (2)"
 msgid "SNES Controllers (4)"
 msgstr "Comando SNES (4)"
 
-msgid "SNES Controller - Classic Controller"
-msgstr "Comando SNES - Comando Clássico"
-
-msgid "SNES Controller - GameCube Controller"
-msgstr "Comando SNES - Comando GameCube"
-
-msgid "SNES Controller - Nunchuk + Wiimote"
-msgstr "Comando SNES - Nunchuk + Wii Remote"
-
-msgid "SNES Controller - Wiimote"
-msgstr "Comando SNES - Wii Remote"
-
 msgid "SNES Mouse"
 msgstr "Rato SNES"
-
-msgid "SNES Mouse - GameCube Controller"
-msgstr "Rato SNES - Comando GameCube"
-
-msgid "SNES Mouse - Wiimote"
-msgstr "Rato SNES - Wii Remote"
 
 msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2023"
 msgstr "Snes9x - Direitos de autor (c) Equipa Snes9x 1996 - 2023"
@@ -739,62 +397,20 @@ msgstr "Volume de Efeitos Sonoros"
 msgid "Spanish"
 msgstr "Espanhol"
 
-msgid "Sprite Limit"
-msgstr "Limite de Sprites"
-
-msgid "SRAM file not found"
-msgstr "Ficheiro SRAM não encontrado"
-
-msgid "State"
-msgstr "Estado"
-
-msgid "State (Auto)"
-msgstr "Estado (Auto)"
-
-msgid "State file not found"
-msgstr "Ficheiro de estado não encontrado"
-
-msgid "Stretch to Fit"
-msgstr "Esticar para Caber"
-
 msgid "Superscope"
 msgstr "SuperScope"
-
-msgid "Superscope - GameCube Controller"
-msgstr "SuperScope - Comando GameCube"
-
-msgid "Superscope - Wiimote"
-msgstr "SuperScope - Wii Remote"
-
-msgid "This software is open source and may be copied,"
-msgstr "Este software é de código aberto e pode ser copiado,"
-
-msgid "Trad_chinese"
-msgstr "Chinês Trad."
 
 msgid "Unable to initialize network!"
 msgstr "Não foi possível iniciar ligação!"
 
-msgid "Unable to locate a load device!"
-msgstr "Dispositivo de carregamento não encontrado!"
-
-msgid "Unable to locate a save device!"
-msgstr "Dispositivo de gravar não encontrado!"
-
 msgid "Unable to open snapshot!"
 msgstr "Não foi possível abrir snapshot!"
-
-msgid "Unfiltered"
-msgstr "Sem filtro"
 
 msgid "Unknown file type!"
 msgstr "Tipo de ficheiro desconhecido!"
 
 msgid "Unrecognized DVD format."
 msgstr "Formato de DVD desconhecido."
-
-msgid "Unrecognized file extension!"
-msgstr "Extensão de ficheiro desconhecida!"
 
 msgid "Up"
 msgstr "Cima"
@@ -804,21 +420,6 @@ msgstr "CIMA"
 
 msgid "Up One Level"
 msgstr ".."
-
-msgid "Update Available"
-msgstr "Actualização Disponível"
-
-msgid "Update failed!"
-msgstr "A actualização falhou!"
-
-msgid "Update later"
-msgstr "Actualizar depois"
-
-msgid "Update now"
-msgstr "Actualizar agora"
-
-msgid "Update successful!"
-msgstr "Actualização bem sucedida!"
 
 msgid "USB drive not found!"
 msgstr "Drive USB não encontrado!"
@@ -832,18 +433,6 @@ msgstr "Vertical"
 msgid "Video"
 msgstr "Vídeo"
 
-msgid "Video Mode"
-msgstr "Modo de Vídeo"
-
-msgid "VM8: Unknown page type!"
-msgstr "VM8: Tipo de página desconhecida!"
-
-msgid "VM16: Unknown page type!"
-msgstr "VM16: Tipo de página desconhecida!"
-
-msgid "VM32: Unknown page type!"
-msgstr "VM32: Tipo de página desconhecida!"
-
 msgid "Wiimote"
 msgstr "Wii Remote"
 
@@ -852,12 +441,6 @@ msgstr "Orientação do Wii Remote"
 
 msgid "Yes"
 msgstr "Sim"
-
-msgid "Zapper"
-msgstr "Zapper"
-
-msgid "Zapper Crosshair"
-msgstr "Mira do Zapper"
 
 msgid "Catalan"
 msgstr "Catalão"

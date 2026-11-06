@@ -1,38 +1,5 @@
-msgid "&"
-msgstr ""
-
-msgid "16:9 Correction"
-msgstr "16:9-Korrektur"
-
-msgid "7z decompression failed: Archive contains too many files"
-msgstr "7z-Dekomprimierung fehlgeschlagen: Archiv enthält zu viele Dateien"
-
-msgid "7z decompression failed: Failed to read file data"
-msgstr "7z-Dekomprimierung fehlgeschlagen: Dateidaten konnten nicht gelesen werden"
-
-msgid "7z decompression failed: File is corrupt"
-msgstr "7z-Dekomprimierung fehlgeschlagen: Datei ist fehlerhaft"
-
-msgid "7z decompression failed: File is corrupt (CRC mismatch)"
-msgstr "7z-Dekomprimierung fehlgeschlagen: Datei ist fehlerhaft (CRC-Fehler)"
-
-msgid "7z decompression failed: File uses too high of compression settings (dictionary size is too large)"
-msgstr "7z-Dekomprimierung fehlgeschlagen: Datei benutzt zu hohe Komprimierungseinstellungen (Wörterbuch ist zu groß)"
-
-msgid "7z decompression failed: File uses unsupported compression settings"
-msgstr "7z-Dekomprimierung fehlgeschlagen: Datei benutzt nicht unterstüzte Komprimierungseinstellungen"
-
-msgid "A (Rapid)"
-msgstr "A (Turbo)"
-
-msgid "Additional coding"
-msgstr "Zusätzliche Programmierung"
-
 msgid "Aim Offscreen"
 msgstr "Neben Bildsch. zielen"
-
-msgid "An update is available!"
-msgstr "Ein Update ist verfügbar!"
 
 msgid "Are you sure that you want to reset this game? Any unsaved progress will be lost."
 msgstr "Bist du sicher das du das Spiel zurücksetzen willst? Ungespeicherter Fortschritt geht verloren."
@@ -43,41 +10,17 @@ msgstr "Bist du sicher das du deine Tastenbelegung zurücksetzten willst?"
 msgid "Are you sure that you want to reset your settings?"
 msgstr "Bist du sicher das du die Einstellungen zurücksetzten willst?"
 
-msgid "Maintain Aspect Ratio"
-msgstr "Bildschirmverhältnis"
-
-msgid "Attempting to determine load device..."
-msgstr "Versuche Ladegerät zu ermitteln..."
-
-msgid "Attempting to determine save device..."
-msgstr "Versuche Speichergerät zu ermitteln..."
-
 msgid "Auto"
 msgstr "Auto."
 
 msgid "Auto Detect"
 msgstr "Auto. feststellen"
 
-msgid "Auto Load"
-msgstr "Auto. laden"
-
-msgid "Auto Save"
-msgstr "Auto. speichern"
-
 msgid "Automatic (Recommended)"
 msgstr "Automatisch (Empfohlen)"
 
-msgid "B (Rapid)"
-msgstr "B (Turbo)"
-
 msgid "Back"
 msgstr "Zurück"
-
-msgid "Both"
-msgstr "Beide"
-
-msgid "Button Mapping"
-msgstr "Tastenbelegung"
 
 msgid "Button Mappings"
 msgstr "Tastenbelegungen"
@@ -106,14 +49,8 @@ msgstr ""
 msgid "Close"
 msgstr "Schließen"
 
-msgid "Coding"
-msgstr "Programmierung"
-
 msgid "Coding & menu design"
 msgstr "Programmierung & Menüdesign"
-
-msgid "Compressed GBA files are not supported!"
-msgstr "Komprimierte GBA Dateien werden nicht unterstützt!"
 
 msgid "Connecting to network share..."
 msgstr "Verbinde mit Netzwerk Share..."
@@ -121,17 +58,11 @@ msgstr "Verbinde mit Netzwerk Share..."
 msgid "Controller"
 msgstr ""
 
-msgid "Cover View"
-msgstr "Cover anzeigen"
-
 msgid "Covers Folder"
 msgstr "Ordner f. Cover"
 
 msgid "Credits"
 msgstr ""
-
-msgid "Cropping"
-msgstr "Pan & Scan"
 
 msgid "Crosshair"
 msgstr "Fadenkreuz"
@@ -151,35 +82,17 @@ msgstr "Verzeichnisname ist zu lang!"
 msgid "Disabled"
 msgstr "Deaktiviert"
 
-msgid "DISABLED"
-msgstr "DEAKTIVIERT"
-
-msgid "distributed, or modified under the terms of the"
-msgstr "veröffentlich, oder verändert unter den Bedingungen der"
-
-msgid "Don't Save"
-msgstr "Nicht speichern"
-
 msgid "Down"
 msgstr "Unten"
 
 msgid "DOWN"
 msgstr "UNTEN"
 
-msgid "Downloading..."
-msgstr "Lade herunter..."
-
 msgid "Dutch"
 msgstr "Niederländisch"
 
-msgid "Empty or invalid ZIP file!"
-msgstr "Leere order ungültige ZIP Datei!"
-
 msgid "Enabled"
 msgstr "Aktiviert"
-
-msgid "ENABLED"
-msgstr "AKTIVIERT"
 
 msgid "English"
 msgstr "Englisch"
@@ -220,35 +133,14 @@ msgstr "Aktion beim Beenden"
 msgid "Failed to connect to network share."
 msgstr "Verbinden mit Netzwerk Share ist fehlgeschlagen."
 
-msgid "FDS BIOS file is invalid!"
-msgstr "FDS BIOS Datei ist ungültig!"
-
-msgid "FDS BIOS file not found!"
-msgstr "FDS BIOS Datei nicht gefunden!"
-
-msgid "Filtered"
-msgstr "Gefiltert"
-
-msgid "Filtering"
-msgstr "Filter"
-
 msgid "Fire"
 msgstr "Schießen"
 
 msgid "French"
 msgstr "Französich"
 
-msgid "GBA Screen Zoom"
-msgstr "GBA Bildschirm Zoom"
-
-msgid "Game Genie ROM not found!"
-msgstr "Game Genie ROM nicht gefunden!"
-
 msgid "Game Settings"
 msgstr "Spiel Einstellungen"
-
-msgid "Game Settings - Button Mappings"
-msgstr "Spieleinstellungen - Tastenbelegung"
 
 msgid "Game Settings - Cheats"
 msgstr "Spieleinstellungen - Cheats"
@@ -256,23 +148,11 @@ msgstr "Spieleinstellungen - Cheats"
 msgid "Game Settings - Video"
 msgstr "Spieleinstellungen - Video"
 
-msgid "Game Timing"
-msgstr "Spiel Timing"
-
-msgid "Game Genie DISABLED"
-msgstr "Game Genie DEAKTIVIERT"
-
-msgid "Game Genie ENABLED"
-msgstr "Game Genie AKTIVIERT"
-
 msgid "GameCube Controller"
 msgstr ""
 
 msgid "German"
 msgstr "Deutsch"
-
-msgid "GNU General Public License (GPL) Version 2."
-msgstr ""
 
 msgid "Go Back"
 msgstr "Zurück"
@@ -286,33 +166,6 @@ msgstr ""
 msgid "Initializing network..."
 msgstr "Initialisiere Netzwerk..."
 
-msgid "Insert Coin"
-msgstr "Münze einwerfen"
-
-msgid "Insert Coin / Switch Disk"
-msgstr "Münze einwerfen / Disc wechseln"
-
-msgid "Invalid file size!"
-msgstr "Ungültige Dateigröße!"
-
-msgid "Invalid game file!"
-msgstr "Ungültige Spieldatei!"
-
-msgid "Invalid network settings - Check settings.xml."
-msgstr "Ungültige Netzwerkeinstellung - Prüfe die settings.xml."
-
-msgid "Invalid network settings - Share IP is blank."
-msgstr "Ungültige Netzwerkeinstellung - Share IP ist leer."
-
-msgid "Invalid network settings - Share name is blank."
-msgstr "Ungültige Netzwerkeinstellung - Share Name ist leer."
-
-msgid "Invalid save file"
-msgstr "Ungültige Speicherdatei"
-
-msgid "Invalid state file"
-msgstr "Ungültige Statusdatei"
-
 msgid "Italian"
 msgstr "Italienisch"
 
@@ -320,12 +173,6 @@ msgid "Japanese"
 msgstr "Japanisch"
 
 msgid "Justifier"
-msgstr ""
-
-msgid "Justifier - GameCube Controller"
-msgstr ""
-
-msgid "Justifier - Wiimote"
 msgstr ""
 
 msgid "Korean"
@@ -336,9 +183,6 @@ msgstr ""
 
 msgid "Language"
 msgstr "Sprache"
-
-msgid "Languages Folder"
-msgstr "Ordner f. Sprachen"
 
 msgid "Left"
 msgstr "Links"
@@ -358,17 +202,8 @@ msgstr "Startgerät"
 msgid "Load Folder"
 msgstr "Ordner f. ROMs"
 
-msgid "Load Game"
-msgstr "Spiel laden"
-
-msgid "Loading"
-msgstr "Laden"
-
 msgid "Loading DVD..."
 msgstr "Lade DVD..."
-
-msgid "Loading patch..."
-msgstr "Lade Patch..."
 
 msgid "Loading..."
 msgstr "Lade..."
@@ -376,20 +211,8 @@ msgstr "Lade..."
 msgid "Main Menu"
 msgstr "Hauptmenü"
 
-msgid "Match GC Controls"
-msgstr "GC Steuerung anpassen"
-
-msgid "Match Wii Controls"
-msgstr "Wii Steuerung anpassen"
-
-msgid "Maximum filepath length reached!"
-msgid "Maximale Länge für Dateipfade erreicht!"
-
 msgid "Menu"
 msgstr "Menü"
-
-msgid "Menu artwork"
-msgstr "Menü Artwork"
 
 msgid "Menu sound"
 msgstr "Menü Sound"
@@ -403,18 +226,6 @@ msgstr "Musik Lautstärke"
 msgid "Mute"
 msgstr "Stumm"
 
-msgid "NES Controller"
-msgstr ""
-
-msgid "NES Controllers (2)"
-msgstr ""
-
-msgid "NES Controllers (4)"
-msgstr ""
-
-msgid "NES Zapper"
-msgstr ""
-
 msgid "Network"
 msgstr "Netzwerk"
 
@@ -427,23 +238,11 @@ msgstr "Neu"
 msgid "New Snapshot"
 msgstr "Neuer Schnappschuss"
 
-msgid "New SRAM"
-msgstr "Neuer SRAM"
-
 msgid "No"
 msgstr "Nein"
 
-msgid "No data to save!"
-msgstr "Keine Daten gespeichert!"
-
 msgid "No disc inserted!"
 msgstr "Keine Disc eingelegt!"
-
-msgid "No SRAM data to save!"
-msgstr "Keine SRAM Daten zum speichern!"
-
-msgid "No game saves found."
-msgstr "Kein Spielstand gefunden."
 
 msgid "None"
 msgstr "Nichts"
@@ -451,20 +250,11 @@ msgstr "Nichts"
 msgid "NTSC (480i)"
 msgstr ""
 
-msgid "Nunchuk"
-msgstr ""
-
 msgid "Off"
 msgstr "Aus"
 
-msgid "Official Site: https://github.com/dborth/fceugx"
-msgstr "Offizielle Seite: https://github.com/dborth/fceugx"
-
 msgid "Official Site: https://github.com/dborth/snes9xgx"
 msgstr "Offizielle Seite: https://github.com/dborth/snes9xgx"
-
-msgid "Official Site: https://github.com/dborth/vbagx"
-msgstr "Offizielle Seite: https://github.com/dborth/vbagx"
 
 msgid "OK"
 msgstr "OK"
@@ -472,38 +262,14 @@ msgstr "OK"
 msgid "On"
 msgstr "An"
 
-msgid "Original"
-msgstr ""
-
-msgid "Out of memory!"
-msgstr "Nicht genug Speicher!"
-
 msgid "Out of memory: too many files!"
 msgstr "Nicht genug Speicher: Zu viele Dateien!"
-
-msgid "P1"
-msgstr "S1"
-
-msgid "P2"
-msgstr "S2"
-
-msgid "P3"
-msgstr "S3"
-
-msgid "P4"
-msgstr "S4"
 
 msgid "PAL (50Hz)"
 msgstr ""
 
 msgid "PAL (60Hz)"
 msgstr ""
-
-msgid "Palette saved"
-msgstr "Palette gespeichert"
-
-msgid "Partial Stretch"
-msgstr "Partiell gestreckt"
 
 msgid "Pause"
 msgstr ""
@@ -517,29 +283,8 @@ msgstr ""
 msgid "Portuguese"
 msgstr "Portugiesisch"
 
-msgid "Power off Wii"
-msgstr "Wii ausschalten"
-
-msgid "Preferences saved"
-msgstr "Einstellungen gespeichert"
-
-msgid "Press any button on the Classic Controller now. Press Home to clear the existing mapping."
-msgstr "Drücke jetzt eine Taste auf dem Classic Controller. Drücke HOME um die vorhandene Belegung zu löschen."
-
-msgid "Press any button on the GameCube Controller now. Press Home or the C-Stick in any direction to clear the existing mapping."
-msgstr "Drücke jetzt eine Taste auf dem GameCube Controller. Drücke HOME oder den C-Stick in eine beliebige Richtung um die vorhandene Belegung zu löschen."
-
-msgid "Press any button on the GameCube Controller now. Press the C-Stick in any direction to clear the existing mapping."
-msgstr "Drücke jetzt eine Taste auf dem GameCube Controller. Drücke den C-Stick in eine beliebige Richtung um die vorhandene Belegung zu löschen."
-
-msgid "Press any button on the Wiimote now. Press Home to clear the existing mapping."
-msgstr "Drücke jetzt eine Taste auf der Wiimote. Drücke HOME um die vorhandene Belegung zu löschen."
-
-msgid "Press any button on the Wiimote or Nunchuk now. Press Home to clear the existing mapping."
-msgstr "Drücke jetzt eine Taste auf der Wiimote oder dem Nunchuk. Drücke HOME um die vorhandene Belegung zu löschen."
-
 msgid "Progressive (480p)"
-msgstr ""
+msgstr "Progressiv (480p)"
 
 msgid "Quit Game"
 msgstr "Spiel beenden"
@@ -550,23 +295,14 @@ msgstr "Dieses Spiel beenden? Ungespeicherter Fortschritt geht verloren."
 msgid "R TRIG"
 msgstr ""
 
-msgid "RAM saving is not available for FDS games!"
-msgstr "RAM speichern ist für FDS Spiele nicht verfügbar!"
-
 msgid "Reboot"
 msgstr "Neustart"
-
-msgid "Rendering"
-msgstr "Darstellung"
 
 msgid "Reset"
 msgstr "Zurücksetzen"
 
 msgid "Reset Game"
 msgstr "Spiel zurücksetzen"
-
-msgid "Reset this game? Any unsaved progress will be lost."
-msgstr "Spiel zurücksetzen? Nicht gespeicherte Fortschritte gehen verloren."
 
 msgid "Reset Mappings"
 msgstr "Belegung zurücksetzen"
@@ -593,10 +329,7 @@ msgid "Right Button"
 msgstr "Rechte Taste"
 
 msgid "Rumble"
-msgstr ""
-
-msgid "Save"
-msgstr "Speichern"
+msgstr "Vibration"
 
 msgid "Save Device"
 msgstr "Speichergerät"
@@ -604,41 +337,14 @@ msgstr "Speichergerät"
 msgid "Save failed!"
 msgstr "Speichern fehlgeschlagen!"
 
-msgid "Save file not found"
-msgstr "Speicherdatei nicht gefunden"
-
 msgid "Save Folder"
 msgstr "Ordner f. Spielstände"
-
-msgid "Save Game"
-msgstr "Spiel speichern"
-
-msgid "Save RAM and State?"
-msgstr "RAM und Status speichern?"
-
-msgid "Save Snapshot?"
-msgstr "Schnappschuss speichern?"
-
-msgid "Save SRAM and Snapshot?"
-msgstr "SRAM und Schnappschuss speichern?"
-
-msgid "Save State?"
-msgstr "Status speichern?"
 
 msgid "Save successful"
 msgstr "Erfolgreich gespeichert"
 
-msgid "Saving"
-msgstr "Speichern"
-
-msgid "Saving preferences..."
-msgstr "Einstellungen werden gespeichert..."
-
 msgid "Saving..."
 msgstr "Speichern..."
-
-msgid "Scaling"
-msgstr "Auflösung"
 
 msgid "Screen Position"
 msgstr "Bildschirm Position"
@@ -649,20 +355,11 @@ msgstr "Bildschirm Zoom"
 msgid "Select"
 msgstr ""
 
-msgid "Seek error!"
-msgstr "Seekfehler!"
-
 msgid "Settings"
 msgstr "Einstellungen"
 
 msgid "Settings - Menu"
 msgstr "Einstellungen - Menü"
-
-msgid "Settings - Network"
-msgstr "Einstellungen - Netzwerk"
-
-msgid "Settings - Saving & Loading"
-msgstr "Einstellungen - Speichern & Laden"
 
 msgid "SD Card"
 msgstr "SD-Karte"
@@ -673,26 +370,8 @@ msgstr "SD-Karte nicht gefunden!"
 msgid "Shift"
 msgstr ""
 
-msgid "Simp_chinese"
-msgstr "Vereinfachtes Chinesisch"
-
-msgid "SMB Share IP"
-msgstr ""
-
-msgid "SMB Share Name"
-msgstr ""
-
-msgid "SMB Share Password"
-msgstr "SMB Share Passwort"
-
-msgid "SMB Share Username"
-msgstr "SMB Share Benutzername"
-
 msgid "Snapshot"
 msgstr "Schnappschuss"
-
-msgid "Snapshot (Auto)"
-msgstr "Schnappschuss (Auto)"
 
 msgid "SNES Controller"
 msgstr ""
@@ -703,26 +382,8 @@ msgstr ""
 msgid "SNES Controllers (4)"
 msgstr ""
 
-msgid "SNES Controller - Classic Controller"
-msgstr ""
-
-msgid "SNES Controller - GameCube Controller"
-msgstr ""
-
-msgid "SNES Controller - Nunchuk + Wiimote"
-msgstr ""
-
-msgid "SNES Controller - Wiimote"
-msgstr ""
-
 msgid "SNES Mouse"
 msgstr "SNES Maus"
-
-msgid "SNES Mouse - GameCube Controller"
-msgstr "SNES Maus - GameCube Controller"
-
-msgid "SNES Mouse - Wiimote"
-msgstr ""
 
 msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2023"
 msgstr ""
@@ -733,62 +394,20 @@ msgstr "SFX Lautstärke"
 msgid "Spanish"
 msgstr "Spanisch"
 
-msgid "Sprite Limit"
-msgstr ""
-
-msgid "SRAM file not found"
-msgstr "SRAM Datei nicht gefunden"
-
-msgid "State"
-msgstr "Status"
-
-msgid "State (Auto)"
-msgstr "Status (Auto)"
-
-msgid "State file not found"
-msgstr "Statusdatei nicht gefunden"
-
-msgid "Stretch to Fit"
-msgstr "Strecken zum Einpassen"
-
 msgid "Superscope"
 msgstr ""
-
-msgid "Superscope - GameCube Controller"
-msgstr ""
-
-msgid "Superscope - Wiimote"
-msgstr ""
-
-msgid "This software is open source and may be copied,"
-msgstr "Diese Software ist Open Source und evtl. kopiert,"
-
-msgid "Trad_chinese"
-msgstr "Traditionelles Chinesisch"
 
 msgid "Unable to initialize network!"
 msgstr "Netzwerk konnte nicht initialisiert werden!"
 
-msgid "Unable to locate a load device!"
-msgstr "Ladegerät konnte nicht gefunden werden!"
-
-msgid "Unable to locate a save device!"
-msgstr "Speichergerät konnte nicht gefunden werden!"
-
 msgid "Unable to open snapshot!"
 msgstr "Schnappschuss konnte nicht geöffnet werden!"
-
-msgid "Unfiltered"
-msgstr "Ungefiltert"
 
 msgid "Unknown file type!"
 msgstr "Unbekannter Dateityp!"
 
 msgid "Unrecognized DVD format."
 msgstr "Unbekanntes DVD Format."
-
-msgid "Unrecognized file extension!"
-msgstr "Unbekannte Dateiendung!"
 
 msgid "Up"
 msgstr "Oben"
@@ -798,21 +417,6 @@ msgstr "OBEN"
 
 msgid "Up One Level"
 msgstr "Eine Ebene nach oben"
-
-msgid "Update Available"
-msgstr "Update verfügbar"
-
-msgid "Update failed!"
-msgstr "Aktualisierung fehlgeschlagen!"
-
-msgid "Update later"
-msgstr "Später updaten"
-
-msgid "Update now"
-msgstr "Jetzt updaten"
-
-msgid "Update successful!"
-msgstr "Aktualisierung erfolgreich!"
 
 msgid "USB drive not found!"
 msgstr "USB Laufwerk nicht gefunden!"
@@ -826,18 +430,6 @@ msgstr "Vertikal"
 msgid "Video"
 msgstr "Bild"
 
-msgid "Video Mode"
-msgstr "Videomodus"
-
-msgid "VM8: Unknown page type!"
-msgstr "VM8: Unbekannter Seitentyp!"
-
-msgid "VM16: Unknown page type!"
-msgstr "VM16: Unbekannter Seitentyp!"
-
-msgid "VM32: Unknown page type!"
-msgstr "VM32: Unbekannter Seitentyp!"
-
 msgid "Wiimote"
 msgstr ""
 
@@ -847,8 +439,665 @@ msgstr "Wiimote-Ausrichtung"
 msgid "Yes"
 msgstr "Ja"
 
-msgid "Zapper"
+msgid " "
 msgstr ""
 
-msgid "Zapper Crosshair"
-msgstr "Zapper-Fadenkreuz"
+msgid "%s uses %s"
+msgstr "%s nutzt %s"
+
+msgid "%s uses the default: %s"
+msgstr "%s nutzt die Standardbelegung: %s"
+
+msgid "%s will do nothing"
+msgstr "%s hat keine Funktion"
+
+msgid "%s will do nothing."
+msgstr "%s hat keine Funktion."
+
+msgid "16:9 (Fixed Pixel Ratio)"
+msgstr "16:9 (Festes Pixelverhältnis)"
+
+msgid "2xBR"
+msgstr ""
+
+msgid "2xBR-lv1"
+msgstr ""
+
+msgid "40 MHz"
+msgstr ""
+
+msgid "60 MHz"
+msgstr ""
+
+msgid "A SNES Mouse in each controller port."
+msgstr "Eine SNES Maus an jedem Controller-Anschluss."
+
+msgid "A chooses the controller to map"
+msgstr "A wählt den zu belegenden Controller"
+
+msgid "A chooses the device being emulated"
+msgstr "A wählt das emulierte Gerät"
+
+msgid "A puts these buttons back to their defaults"
+msgstr "A setzt diese Tasten auf ihre Standardbelegung zurück"
+
+msgid "AIMING"
+msgstr "ZIELEN"
+
+msgid "AUTO"
+msgstr ""
+
+msgid "Additional improvements"
+msgstr "Weitere Verbesserungen"
+
+msgid "All 99 snapshot slots are in use. Delete one to make room."
+msgstr "Alle 99 Schnappschuss-Plätze sind belegt. Lösche einen, um Platz zu schaffen."
+
+msgid "Artwork"
+msgstr ""
+
+msgid "Artwork Folder"
+msgstr "Ordner f. Artwork"
+
+msgid "Aspect Ratio Correction"
+msgstr "Seitenverhältnis-Korrektur"
+
+msgid "Audio Interpolation"
+msgstr "Audio-Interpolation"
+
+msgid "Auto Snapshot"
+msgstr "Auto-Schnappschuss"
+
+msgid "Autosave"
+msgstr "Autospeicherung"
+
+msgid "Backups"
+msgstr "Sicherungen"
+
+msgid "Bilinear Filtering"
+msgstr "Bilineare Filterung"
+
+msgid "Brazilian Portuguese"
+msgstr "Brasilianisches Portugiesisch"
+
+msgid "Buttons"
+msgstr "Tasten"
+
+msgid "CONTROLLER"
+msgstr ""
+
+msgid "Cancelling..."
+msgstr "Wird abgebrochen..."
+
+msgid "Cartridge Save"
+msgstr "Modulspeicher"
+
+msgid "Cartridge Save not found"
+msgstr "Modulspeicher nicht gefunden"
+
+msgid "Catalan"
+msgstr "Katalanisch"
+
+msgid "Cheats (none)"
+msgstr "Cheats (keine)"
+
+msgid "Chinese (Simplified)"
+msgstr "Chinesisch (vereinfacht)"
+
+msgid "Chinese (Traditional)"
+msgstr "Chinesisch (traditionell)"
+
+msgid "Choose 'Pressed button', then press the button you want on the %s."
+msgstr "Wähle „Gedrückte Taste“ und drücke dann die gewünschte Taste (%s)."
+
+msgid "Copy the cartridge's save now"
+msgstr "Modulspeicher jetzt kopieren"
+
+msgid "Covers"
+msgstr "Cover"
+
+msgid "Cubic"
+msgstr ""
+
+msgid "D-PAD"
+msgstr "STEUERKREUZ"
+
+msgid "DDT"
+msgstr ""
+
+msgid "DVD"
+msgstr ""
+
+msgid "Default (All Enabled)"
+msgstr "Standard (alle aktiviert)"
+
+msgid "Default (Right Stick)"
+msgstr "Standard (rechter Stick)"
+
+msgid "Delete"
+msgstr "Löschen"
+
+msgid "Device not found!"
+msgstr "Gerät nicht gefunden!"
+
+msgid "DualShock 4"
+msgstr ""
+
+msgid "EMULATING"
+msgstr "EMULIERT"
+
+msgid "Empty"
+msgstr "Leer"
+
+msgid "Empty until you play"
+msgstr "Leer, bis du spielst"
+
+msgid "Emulation"
+msgstr ""
+
+msgid "Error loading font!"
+msgstr "Fehler beim Laden der Schriftart!"
+
+msgid "FACE BUTTONS"
+msgstr "FRONTTASTEN"
+
+msgid "Font file is too large!"
+msgstr "Schriftdatei ist zu groß!"
+
+msgid "Font file not found!"
+msgstr "Schriftdatei nicht gefunden!"
+
+msgid "Frame Skipping"
+msgstr "Bilder überspringen"
+
+msgid "Game Settings - Emulation"
+msgstr "Spieleinstellungen - Emulation"
+
+msgid "Gaussian (Accurate)"
+msgstr "Gauß (genau)"
+
+msgid "General Mappings"
+msgstr "Allgemeine Belegung"
+
+msgid "Go back to where you left off"
+msgstr "Dorthin zurück, wo du aufgehört hast"
+
+msgid "HOME"
+msgstr ""
+
+msgid "Hardware Softening"
+msgstr "Hardware-Glättung"
+
+msgid "Home / Right Stick"
+msgstr "Home / Rechter Stick"
+
+msgid "Home clears it."
+msgstr "Home löscht sie."
+
+msgid "Home or the C-Stick clears it."
+msgstr "Home oder der C-Stick löscht sie."
+
+msgid "Interpolation"
+msgstr ""
+
+msgid "It will be overwritten with your progress right now."
+msgstr "Er wird mit deinem aktuellen Fortschritt überschrieben."
+
+msgid "Jump back to this moment"
+msgstr "Zu diesem Moment zurückspringen"
+
+msgid "Jump to this moment"
+msgstr "Zu diesem Moment springen"
+
+msgid "Justifier light gun."
+msgstr "Justifier-Lichtpistole."
+
+msgid "L+R+Start / 1+2+Plus"
+msgstr ""
+
+msgid "Like a real console: the game's own save is kept for you, and the game starts fresh each time."
+msgstr "Wie bei einer echten Konsole: Der spieleigene Spielstand bleibt erhalten, und das Spiel startet jedes Mal neu."
+
+msgid "Linear"
+msgstr ""
+
+msgid "MOUSE"
+msgstr "MAUS"
+
+msgid "Make Backup"
+msgstr "Sicherung anlegen"
+
+msgid "Make a copy of the save"
+msgstr "Eine Kopie des Spielstands anlegen"
+
+msgid "Manual"
+msgstr "Manuell"
+
+msgid "Manual Snapshot"
+msgstr "Manueller Schnappschuss"
+
+msgid "Map ABXY to Right Stick"
+msgstr "ABXY auf rechten Stick legen"
+
+msgid "Maximum filepath length reached!"
+msgstr "Maximale Dateipfadlänge erreicht!"
+
+msgid "Menu Toggle"
+msgstr "Menü-Umschaltung"
+
+msgid "Minus"
+msgstr ""
+
+msgid "Move over a button to see what it uses"
+msgstr "Wähle eine Taste aus, um zu sehen, was sie nutzt"
+
+msgid "Move over a kind to see its choices"
+msgstr "Wähle eine Art aus, um die Möglichkeiten zu sehen"
+
+msgid "Multitap: up to four players."
+msgstr "Multitap: bis zu vier Spieler."
+
+msgid "Mute Game Audio"
+msgstr "Spielton stummschalten"
+
+msgid "Name"
+msgstr ""
+
+msgid "Network share not connected!"
+msgstr "Netzwerk Share nicht verbunden!"
+
+msgid "No Cartridge Save data to save!"
+msgstr "Keine Modulspeicherdaten zum Speichern!"
+
+msgid "No game save file"
+msgstr "Keine Spielstanddatei"
+
+msgid "No image"
+msgstr "Kein Bild"
+
+msgid "No snapshots yet"
+msgstr "Noch keine Schnappschüsse"
+
+msgid "Not saved yet"
+msgstr "Noch nicht gespeichert"
+
+msgid "Not updated while Save Mode is Cartridge Save."
+msgstr "Wird nicht aktualisiert, solange der Speichermodus „Modulspeicher“ ist."
+
+msgid "Not updated while Save Mode is Manual."
+msgstr "Wird nicht aktualisiert, solange der Speichermodus „Manuell“ ist."
+
+msgid "Nothing is saved or loaded unless you do it yourself."
+msgstr "Es wird nichts gespeichert oder geladen, außer du tust es selbst."
+
+msgid "Now: %s"
+msgstr "Aktuell: %s"
+
+msgid "Nunchuk + Wiimote"
+msgstr ""
+
+msgid "Optional save point"
+msgstr "Optionaler Speicherpunkt"
+
+msgid "Original (240p)"
+msgstr ""
+
+msgid "Output Mode"
+msgstr "Ausgabemodus"
+
+msgid "Overwrite with your progress"
+msgstr "Mit deinem Fortschritt überschreiben"
+
+msgid "PS clears it."
+msgstr "PS löscht sie."
+
+msgid "Password"
+msgstr "Passwort"
+
+msgid "Paused"
+msgstr "Pausiert"
+
+msgid "Picks up exactly where you left off, as if you never turned the console off."
+msgstr "Macht genau dort weiter, wo du aufgehört hast - als hättest du die Konsole nie ausgeschaltet."
+
+msgid "Playing from"
+msgstr "Spielt von hier"
+
+msgid "Plus"
+msgstr ""
+
+msgid "Power Off Wii"
+msgstr "Wii ausschalten"
+
+msgid "Press a button on the %s now."
+msgstr "Drücke jetzt eine Taste (%s)."
+
+msgid "Pressed button"
+msgstr "Gedrückte Taste"
+
+msgid "Preview Image"
+msgstr "Vorschaubild"
+
+msgid "Preview Screenshot"
+msgstr "Vorschau-Screenshot"
+
+msgid "Progressive (576p)"
+msgstr "Progressiv (576p)"
+
+msgid "Remembers the exact moment, so you"
+msgstr "Merkt sich genau diesen Moment, damit du"
+
+msgid "Remove this backup"
+msgstr "Diese Sicherung entfernen"
+
+msgid "Remove this snapshot"
+msgstr "Diesen Schnappschuss entfernen"
+
+msgid "Replace"
+msgstr "Ersetzen"
+
+msgid "Replace with your progress now"
+msgstr "Durch deinen aktuellen Fortschritt ersetzen"
+
+msgid "Restore"
+msgstr "Wiederherstellen"
+
+msgid "SD"
+msgstr ""
+
+msgid "SD Gecko Slot A"
+msgstr ""
+
+msgid "SD Gecko Slot B"
+msgstr ""
+
+msgid "SD in SP2"
+msgstr ""
+
+msgid "SHOULDER"
+msgstr "SCHULTERTASTEN"
+
+msgid "SNES Hi-Res Mode"
+msgstr "SNES Hi-Res-Modus"
+
+msgid "SNES Mouse (Both Ports)"
+msgstr "SNES Maus (beide Anschlüsse)"
+
+msgid "SNES Mouse (Port 2)"
+msgstr "SNES Maus (Anschluss 2)"
+
+msgid "SNES Mouse in controller port 1."
+msgstr "SNES Maus an Controller-Anschluss 1."
+
+msgid "SNES Mouse in controller port 2."
+msgstr "SNES Maus an Controller-Anschluss 2."
+
+msgid "START"
+msgstr ""
+
+msgid "SYSTEM"
+msgstr "SYSTEM"
+
+msgid "Save Mode"
+msgstr "Speichermodus"
+
+msgid "Save Now"
+msgstr "Jetzt speichern"
+
+msgid "Save a new Preview Screenshot? Current Screenshot image will be overwritten."
+msgstr "Neuen Vorschau-Screenshot speichern? Das aktuelle Screenshot-Bild wird überschrieben."
+
+msgid "Save this moment"
+msgstr "Diesen Moment speichern"
+
+msgid "Saved inside your snapshots"
+msgstr "In deinen Schnappschüssen gespeichert"
+
+msgid "Saved when you leave the game, or when you save it."
+msgstr "Wird gespeichert, wenn du das Spiel verlässt oder speicherst."
+
+msgid "Saved when you leave the game, or when you update it."
+msgstr "Wird gespeichert, wenn du das Spiel verlässt oder aktualisierst."
+
+msgid "Saves"
+msgstr "Spielstände"
+
+msgid "Saves when you do"
+msgstr "Speichert, wenn du es tust"
+
+msgid "Scale2x"
+msgstr ""
+
+msgid "Scanline Overlay"
+msgstr "Scanline-Overlay"
+
+msgid "Scanlines"
+msgstr ""
+
+msgid "Screenshot"
+msgstr ""
+
+msgid "Screenshots"
+msgstr ""
+
+msgid "Screenshots Folder"
+msgstr "Ordner f. Screenshots"
+
+msgid "Settings - Network Share"
+msgstr "Einstellungen - Netzwerk Share"
+
+msgid "Settings - Storage"
+msgstr "Einstellungen - Speicher"
+
+msgid "Sharp"
+msgstr "Scharf"
+
+msgid "Show Framerate"
+msgstr "Bildrate anzeigen"
+
+msgid "Show Local Time"
+msgstr "Ortszeit anzeigen"
+
+msgid "Sinc"
+msgstr ""
+
+msgid "Snes9x GX GameCube"
+msgstr ""
+
+msgid "Soft"
+msgstr "Weich"
+
+msgid "SoftDev, crunchy2,"
+msgstr ""
+
+msgid "Sprites Per-Line Limit"
+msgstr "Sprites-pro-Zeile-Limit"
+
+msgid "Sprites per-line Limit"
+msgstr "Sprites-pro-Zeile-Limit"
+
+msgid "Start"
+msgstr ""
+
+msgid "Start fresh next time"
+msgstr "Nächstes Mal neu starten"
+
+msgid "Storage"
+msgstr "Speicher"
+
+msgid "Storage device not found!"
+msgstr "Speichergerät nicht gefunden!"
+
+msgid "Super Scope"
+msgstr ""
+
+msgid "Super Scope light gun."
+msgstr "Super Scope Lichtpistole."
+
+msgid "SuperFX Overclock"
+msgstr "SuperFX Übertaktung"
+
+msgid "Swedish"
+msgstr "Schwedisch"
+
+msgid "TURBO AND PAUSE"
+msgstr "TURBO UND PAUSE"
+
+msgid "The Auto Snapshot couldn't be loaded. The Cartridge Save was loaded instead."
+msgstr "Der Auto-Schnappschuss konnte nicht geladen werden. Stattdessen wurde der Modulspeicher geladen."
+
+msgid "The Auto Snapshot couldn't be loaded. The game starts from the beginning."
+msgstr "Der Auto-Schnappschuss konnte nicht geladen werden. Das Spiel startet von vorn."
+
+msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
+msgstr "Das aktuelle IOS wurde verändert (Fake-Signatur). Funktionalität und/oder Stabilität können beeinträchtigt sein."
+
+msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
+msgstr "Das aktuelle IOS wird nicht unterstützt. Funktionalität und/oder Stabilität können beeinträchtigt sein."
+
+msgid "This can't be undone."
+msgstr "Das kann nicht rückgängig gemacht werden."
+
+msgid "This game doesn't have its own save feature. Use snapshots to save."
+msgstr "Dieses Spiel hat keine eigene Speicherfunktion. Speichere mit Schnappschüssen."
+
+msgid "This software is open source and may be copied, distributed, or modified "
+msgstr "Diese Software ist Open Source und darf kopiert, verbreitet oder verändert werden "
+
+msgid "Turbo Mode"
+msgstr "Turbo-Modus"
+
+msgid "Turbo Mode Button"
+msgstr "Turbo-Modus-Taste"
+
+msgid "Turbo Off"
+msgstr "Turbo aus"
+
+msgid "Turbo On"
+msgstr "Turbo an"
+
+msgid "Turbo mode, the menu toggle and ABXY on the right stick"
+msgstr "Turbo-Modus, Menü-Umschaltung und ABXY auf dem rechten Stick"
+
+msgid "Turkish"
+msgstr "Türkisch"
+
+msgid "Two controllers, for one or two players."
+msgstr "Zwei Controller für ein oder zwei Spieler."
+
+msgid "USB"
+msgstr ""
+
+msgid "USB Controller"
+msgstr "USB-Controller"
+
+msgid "USB Mass Storage 2"
+msgstr "USB Massenspeicher 2"
+
+msgid "USB Mass Storage 3"
+msgstr "USB Massenspeicher 3"
+
+msgid "USB Mouse"
+msgstr "USB-Maus"
+
+msgid "USB Storage 1"
+msgstr "USB Speicher 1"
+
+msgid "USB Storage 2"
+msgstr "USB Speicher 2"
+
+msgid "USB Storage 3"
+msgstr "USB Speicher 3"
+
+msgid "USB drive 2 not found!"
+msgstr "USB Laufwerk 2 nicht gefunden!"
+
+msgid "USB drive 3 not found!"
+msgstr "USB Laufwerk 3 nicht gefunden!"
+
+msgid "USING"
+msgstr "VERWENDET"
+
+msgid "Unable to mount device."
+msgstr "Gerät konnte nicht eingebunden werden."
+
+msgid "Unassign"
+msgstr "Entfernen"
+
+msgid "Unsupported drive format. Use FAT32, exFAT or NTFS."
+msgstr "Nicht unterstütztes Laufwerksformat. Verwende FAT32, exFAT oder NTFS."
+
+msgid "Unsupported format - FAT32 is recommended."
+msgstr "Nicht unterstütztes Format - FAT32 wird empfohlen."
+
+msgid "Unsupported format - please use FAT32/exFAT."
+msgstr "Nicht unterstütztes Format - bitte FAT32/exFAT verwenden."
+
+msgid "Unsupported format."
+msgstr "Nicht unterstütztes Format."
+
+msgid "Unsupported language!"
+msgstr "Sprache nicht unterstützt!"
+
+msgid "Update"
+msgstr "Aktualisieren"
+
+msgid "Upscaling"
+msgstr "Hochskalierung"
+
+msgid "Use the saved file in the game"
+msgstr "Die gespeicherte Datei im Spiel verwenden"
+
+msgid "Use this as the cartridge's save"
+msgstr "Als Modulspeicher verwenden"
+
+msgid "Username"
+msgstr "Benutzername"
+
+msgid "Waiting for a button..."
+msgstr "Warte auf eine Taste..."
+
+msgid "What should %s use?"
+msgstr "Was soll %s verwenden?"
+
+msgid "Which controller is being emulated?"
+msgstr "Welcher Controller wird emuliert?"
+
+msgid "Which controller is being mapped?"
+msgstr "Welcher Controller wird belegt?"
+
+msgid "Which device is being emulated?"
+msgstr "Welches Gerät wird emuliert?"
+
+msgid "Wii U Gamepad"
+msgstr ""
+
+msgid "Wii U Pro Controller"
+msgstr ""
+
+msgid "Write the save to its file"
+msgstr "Den Spielstand in seine Datei schreiben"
+
+msgid "Xbox 360 Controller"
+msgstr ""
+
+msgid "can jump back to it any time."
+msgstr "jederzeit dorthin zurückspringen kannst."
+
+msgid "eke-eke, others"
+msgstr "eke-eke u. a."
+
+msgid "hq2x"
+msgstr ""
+
+msgid "hq2x Bold"
+msgstr ""
+
+msgid "hq2x Soft"
+msgstr ""
+
+msgid "libogc / devkitPPC"
+msgstr ""
+
+msgid "under the terms of the GNU General Public License (GPL) Version 2."
+msgstr "unter den Bedingungen der GNU General Public License (GPL) Version 2."
