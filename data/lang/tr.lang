@@ -458,10 +458,727 @@ msgid "Catalan"
 msgstr "Katalonca"
 
 msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
-msgstr "Geçerli IOS değiştirilmiş (sahte-imzalı). Işlevsellik ve/veya stabilite olumsuz etkilenebilir."
+msgstr "Geçerli IOS değiştirilmiş (sahte-imzalı). İşlevsellik ve/veya stabilite olumsuz etkilenebilir."
 
 msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
-msgstr "Geçerli IOS desteklenmiyor. Işlevsellik ve/veya stabilite olumsuz etkilenebilir."
+msgstr "Geçerli IOS desteklenmiyor. İşlevsellik ve/veya stabilite olumsuz etkilenebilir."
 
 msgid "Turkish"
 msgstr "Türkçe"
+
+msgid " "
+msgstr ""
+
+msgid "%s saved"
+msgstr "%s kaydedildi"
+
+msgid "%s updated"
+msgstr "%s güncellendi"
+
+msgid "%s uses %s"
+msgstr "%s şunu kullanıyor: %s"
+
+msgid "%s uses the default: %s"
+msgstr "%s varsayılanı kullanıyor: %s"
+
+msgid "%s will do nothing"
+msgstr "%s hiçbir şey yapmayacak"
+
+msgid "%s will do nothing."
+msgstr "%s hiçbir şey yapmayacak."
+
+msgid "16:9 (Fixed Pixel Ratio)"
+msgstr "16:9 (Sabit Piksel Oranı)"
+
+msgid "2xBR"
+msgstr ""
+
+msgid "2xBR-lv1"
+msgstr ""
+
+msgid "40 MHz"
+msgstr ""
+
+msgid "60 MHz"
+msgstr ""
+
+msgid "7z decompression failed: %s"
+msgstr "7z açma başarısız: %s"
+
+msgid "A SNES Mouse in each controller port."
+msgstr "Her kumanda portunda bir SNES faresi."
+
+msgid "A changes what %s does"
+msgstr "A, %s işlevini değiştirir"
+
+msgid "A chooses the controller to map"
+msgstr "A, ayarlanacak kumandayı seçer"
+
+msgid "A chooses the device being emulated"
+msgstr "A, öykünülen aygıtı seçer"
+
+msgid "A puts these buttons back to their defaults"
+msgstr "A, bu butonları varsayılana döndürür"
+
+msgid "AIMING"
+msgstr "NİŞAN ALMA"
+
+msgid "AUTO"
+msgstr ""
+
+msgid "Additional improvements"
+msgstr "İlave iyileştirmeler"
+
+msgid "All %d backup slots are in use. Delete one to make room."
+msgstr "%d yedek yuvasının tümü dolu. Yer açmak için birini silin."
+
+msgid "All 99 snapshot slots are in use. Delete one to make room."
+msgstr "99 enstantane yuvasının tümü dolu. Yer açmak için birini silin."
+
+msgid "Archive contains too many files."
+msgstr "Arşivde çok fazla dosya var."
+
+msgid "Artwork"
+msgstr "Görseller"
+
+msgid "Artwork Folder"
+msgstr "Görsel Dizini"
+
+msgid "Aspect Ratio Correction"
+msgstr "En-Boy Oranı Düzeltmesi"
+
+msgid "Audio Interpolation"
+msgstr "Ses Enterpolasyonu"
+
+msgid "Auto Snapshot"
+msgstr "Otomatik Enstantane"
+
+msgid "Autosave"
+msgstr "Otomatik Kayıt"
+
+msgid "Backup %d"
+msgstr "Yedek %d"
+
+msgid "Backups"
+msgstr "Yedekler"
+
+msgid "Bilinear Filtering"
+msgstr "Bilinear Filtreleme"
+
+msgid "Buttons"
+msgstr "Butonlar"
+
+msgid "CONTROLLER"
+msgstr "KUMANDA"
+
+msgid "Cancelling..."
+msgstr "İptal ediliyor..."
+
+msgid "Cartridge Save"
+msgstr "Kartuş Kaydı"
+
+msgid "Cartridge Save not found"
+msgstr "Kartuş Kaydı bulunamadı"
+
+msgid "Cheats (none)"
+msgstr "Hile (yok)"
+
+msgid "Check settings.xml."
+msgstr "settings.xml dosyasını kontrol edin."
+
+msgid "Chinese (Simplified)"
+msgstr "Çince (Basitleştirilmiş)"
+
+msgid "Chinese (Traditional)"
+msgstr "Çince (Geleneksel)"
+
+msgid "Choose 'Pressed button', then press the button you want on the %s."
+msgstr "“Basılan buton” seçeneğini seçin, ardından istediğiniz butona basın (%s)."
+
+msgid "Copy the cartridge's save now"
+msgstr "Kartuş kaydını şimdi kopyala"
+
+msgid "Copy, or restore one of %d"
+msgstr "Kopyala veya %d taneden birini geri yükle"
+
+msgid "Covers"
+msgstr "Kapaklar"
+
+msgid "Cubic"
+msgstr ""
+
+msgid "D-PAD"
+msgstr "YÖN TUŞLARI"
+
+msgid "DDT"
+msgstr ""
+
+msgid "DVD"
+msgstr ""
+
+msgid "Default (All Enabled)"
+msgstr "Varsayılan (Tümü Açık)"
+
+msgid "Default (Right Stick)"
+msgstr "Varsayılan (Sağ Çubuk)"
+
+msgid "Delete"
+msgstr "Sil"
+
+msgid "Delete %s?"
+msgstr "%s silinsin mi?"
+
+msgid "Device not found!"
+msgstr "Aygıt bulunamadı!"
+
+msgid "DualShock 4"
+msgstr ""
+
+msgid "EMULATING"
+msgstr "ÖYKÜNÜLEN"
+
+msgid "Empty"
+msgstr "Boş"
+
+msgid "Empty until you play"
+msgstr "Oynayana kadar boş"
+
+msgid "Emulation"
+msgstr "Emülasyon"
+
+msgid "Error loading font!"
+msgstr "Yazı tipi yüklenemedi!"
+
+msgid "FACE BUTTONS"
+msgstr "ANA BUTONLAR"
+
+msgid "Failed to read file data."
+msgstr "Dosya verisi okunamadı."
+
+msgid "File is corrupt (CRC mismatch)."
+msgstr "Dosya bozuk (CRC uyuşmazlığı)."
+
+msgid "File is corrupt."
+msgstr "Dosya bozuk."
+
+msgid "File uses too high of compression settings (dictionary size is too large)."
+msgstr "Dosya çok yüksek sıkıştırma ayarları kullanıyor (sözlük boyutu çok büyük)."
+
+msgid "File uses unsupported compression settings."
+msgstr "Dosya desteklenmeyen sıkıştırma ayarları kullanıyor."
+
+msgid "Font file is too large!"
+msgstr "Yazı tipi dosyası çok büyük!"
+
+msgid "Font file not found!"
+msgstr "Yazı tipi dosyası bulunamadı!"
+
+msgid "Frame Skipping"
+msgstr "Kare Atlama"
+
+msgid "Game Settings - Emulation"
+msgstr "Oyun Ayarları - Emülasyon"
+
+msgid "Gaussian (Accurate)"
+msgstr "Gauss (Doğru)"
+
+msgid "General Mappings"
+msgstr "Genel Ayarlar"
+
+msgid "Go back to where you left off"
+msgstr "Kaldığınız yere geri dönün"
+
+msgid "HOME"
+msgstr ""
+
+msgid "Hardware Softening"
+msgstr "Donanımsal Yumuşatma"
+
+msgid "Home / Right Stick"
+msgstr "Home / Sağ Çubuk"
+
+msgid "Home clears it."
+msgstr "Home bunu temizler."
+
+msgid "Home or the C-Stick clears it."
+msgstr "Home veya C-Çubuğu bunu temizler."
+
+msgid "Interpolation"
+msgstr "Enterpolasyon"
+
+msgid "Invalid network settings - %s"
+msgstr "Geçersiz ağ ayarları - %s"
+
+msgid "It is not being updated in the current Save Mode. This can't be undone."
+msgstr "Geçerli Kayıt Modunda güncellenmiyor. Bu işlem geri alınamaz."
+
+msgid "It will be overwritten with your progress right now."
+msgstr "Şu anki ilerlemenizle üzerine yazılacak."
+
+msgid "Jump back to this moment"
+msgstr "Bu ana geri dön"
+
+msgid "Jump to this moment"
+msgstr "Bu ana git"
+
+msgid "Justifier light gun."
+msgstr "Justifier ışık tabancası."
+
+msgid "L+R+Start / 1+2+Plus"
+msgstr ""
+
+msgid "Like a real console: the game's own save is kept for you, and the game starts fresh each time."
+msgstr "Gerçek bir konsol gibi: oyunun kendi kaydı saklanır ve oyun her seferinde baştan başlar."
+
+msgid "Linear"
+msgstr "Doğrusal"
+
+msgid "MOUSE"
+msgstr "FARE"
+
+msgid "Make Backup"
+msgstr "Yedek Oluştur"
+
+msgid "Make a copy of the save"
+msgstr "Kaydın bir kopyasını oluştur"
+
+msgid "Manual"
+msgstr "Manuel"
+
+msgid "Manual Snapshot"
+msgstr "Manuel Enstantane"
+
+msgid "Map ABXY to Right Stick"
+msgstr "ABXY'yi Sağ Çubuğa Ata"
+
+msgid "Maximum filepath length reached!"
+msgstr "Azami dosya yolu uzunluğuna ulaşıldı!"
+
+msgid "Menu Toggle"
+msgstr "Menüyü Aç"
+
+msgid "Minus"
+msgstr ""
+
+msgid "Move over a button to see what it uses"
+msgstr "Neyi kullandığını görmek için bir butonun üzerine gelin"
+
+msgid "Move over a kind to see its choices"
+msgstr "Seçenekleri görmek için bir türün üzerine gelin"
+
+msgid "Multitap: up to four players."
+msgstr "Multitap: dört oyuncuya kadar."
+
+msgid "Mute Game Audio"
+msgstr "Oyun Sesini Kapat"
+
+msgid "Name"
+msgstr "Ad"
+
+msgid "Network share not connected!"
+msgstr "Ağ paylaşımı bağlı değil!"
+
+msgid "Next time you open this game it starts from its Cartridge Save, or from the beginning. This can't be undone."
+msgstr "Bu oyunu bir sonraki açışınızda Kartuş Kaydından veya baştan başlayacak. Bu işlem geri alınamaz."
+
+msgid "No Cartridge Save data to save!"
+msgstr "Kaydedilecek Kartuş Kaydı verisi yok!"
+
+msgid "No game save file"
+msgstr "Oyun kayıt dosyası yok"
+
+msgid "No image"
+msgstr "Görsel yok"
+
+msgid "No snapshots yet"
+msgstr "Henüz enstantane yok"
+
+msgid "Not saved yet"
+msgstr "Henüz kaydedilmedi"
+
+msgid "Not updated while Save Mode is Cartridge Save."
+msgstr "Kayıt Modu “Kartuş Kaydı” iken güncellenmez."
+
+msgid "Not updated while Save Mode is Manual."
+msgstr "Kayıt Modu “Manuel” iken güncellenmez."
+
+msgid "Nothing is saved or loaded unless you do it yourself."
+msgstr "Siz yapmadıkça hiçbir şey kaydedilmez veya yüklenmez."
+
+msgid "Now: %s"
+msgstr "Şimdi: %s"
+
+msgid "Nunchuk + Wiimote"
+msgstr ""
+
+msgid "Optional save point"
+msgstr "İsteğe bağlı kayıt noktası"
+
+msgid "Original (240p)"
+msgstr ""
+
+msgid "Output Mode"
+msgstr "Çıkış Modu"
+
+msgid "Overwrite with your progress"
+msgstr "İlerlemenizle üzerine yaz"
+
+msgid "PS clears it."
+msgstr "PS bunu temizler."
+
+msgid "Password"
+msgstr "Parola"
+
+msgid "Paused"
+msgstr "Duraklatıldı"
+
+msgid "Picks up exactly where you left off, as if you never turned the console off."
+msgstr "Konsolu hiç kapatmamış gibi, tam kaldığınız yerden devam eder."
+
+msgid "Player %d"
+msgstr "Oyuncu %d"
+
+msgid "Player Mapping - Controller %d"
+msgstr "Oyuncu Ayarı - Kumanda %d"
+
+msgid "Playing from"
+msgstr "Buradan oynuyor"
+
+msgid "Plus"
+msgstr ""
+
+msgid "Power Off Wii"
+msgstr "Wii'yi Kapat"
+
+msgid "Press a button on the %s now."
+msgstr "Şimdi bir butona basın (%s)."
+
+msgid "Pressed button"
+msgstr "Basılan buton"
+
+msgid "Preview Image"
+msgstr "Önizleme Görseli"
+
+msgid "Preview Screenshot"
+msgstr "Önizleme Ekran Görüntüsü"
+
+msgid "Progressive (576p)"
+msgstr "Progresif (576p)"
+
+msgid "Remembers the exact moment, so you"
+msgstr "Tam o anı hatırlar, böylece istediğiniz zaman"
+
+msgid "Remove this backup"
+msgstr "Bu yedeği kaldır"
+
+msgid "Remove this snapshot"
+msgstr "Bu enstantaneyi kaldır"
+
+msgid "Replace"
+msgstr "Değiştir"
+
+msgid "Replace %s?"
+msgstr "%s değiştirilsin mi?"
+
+msgid "Replace with your progress now"
+msgstr "Şimdiki ilerlemenizle değiştir"
+
+msgid "Restore"
+msgstr "Geri Yükle"
+
+msgid "SD"
+msgstr ""
+
+msgid "SD Gecko Slot A"
+msgstr ""
+
+msgid "SD Gecko Slot B"
+msgstr ""
+
+msgid "SD in SP2"
+msgstr ""
+
+msgid "SHOULDER"
+msgstr "OMUZ TUŞLARI"
+
+msgid "SNES Hi-Res Mode"
+msgstr "SNES Yüksek Çözünürlük Modu"
+
+msgid "SNES Mouse (Both Ports)"
+msgstr "SNES Faresi (Her İki Port)"
+
+msgid "SNES Mouse (Port 2)"
+msgstr "SNES Faresi (Port 2)"
+
+msgid "SNES Mouse in controller port 1."
+msgstr "Kumanda portu 1'de SNES faresi."
+
+msgid "SNES Mouse in controller port 2."
+msgstr "Kumanda portu 2'de SNES faresi."
+
+msgid "START"
+msgstr ""
+
+msgid "SYSTEM"
+msgstr "SİSTEM"
+
+msgid "Save Mode"
+msgstr "Kayıt Modu"
+
+msgid "Save Mode: %s"
+msgstr "Kayıt Modu: %s"
+
+msgid "Save Now"
+msgstr "Şimdi Kaydet"
+
+msgid "Save a new Preview Screenshot? Current Screenshot image will be overwritten."
+msgstr "Yeni bir Önizleme Ekran Görüntüsü kaydedilsin mi? Mevcut ekran görüntüsünün üzerine yazılacak."
+
+msgid "Save this moment"
+msgstr "Bu anı kaydet"
+
+msgid "Saved %s"
+msgstr "Kaydedildi: %s"
+
+msgid "Saved inside your snapshots"
+msgstr "Enstantanelerinizin içine kaydedildi"
+
+msgid "Saved when you leave the game, or when you save it."
+msgstr "Oyundan çıktığınızda veya kaydettiğinizde kaydedilir."
+
+msgid "Saved when you leave the game, or when you update it."
+msgstr "Oyundan çıktığınızda veya güncellediğinizde kaydedilir."
+
+msgid "Saves"
+msgstr "Kayıtlar"
+
+msgid "Saves when you do"
+msgstr "Siz yaptığınızda kaydeder"
+
+msgid "Scale2x"
+msgstr ""
+
+msgid "Scanline Overlay"
+msgstr "Tarama Çizgisi Kaplaması"
+
+msgid "Scanlines"
+msgstr ""
+
+msgid "Screenshot"
+msgstr "Ekran Görüntüsü"
+
+msgid "Screenshots"
+msgstr "Ekran Görüntüleri"
+
+msgid "Screenshots Folder"
+msgstr "Ekran Görüntüleri Dizini"
+
+msgid "Settings - Network Share"
+msgstr "Ayarlar - Ağ Paylaşımı"
+
+msgid "Settings - Storage"
+msgstr "Ayarlar - Depolama"
+
+msgid "Share IP is blank."
+msgstr "Paylaşımın IP adresi boş."
+
+msgid "Share name is blank."
+msgstr "Paylaşımın adı boş."
+
+msgid "Sharp"
+msgstr "Keskin"
+
+msgid "Show Framerate"
+msgstr "Kare Hızını Göster"
+
+msgid "Show Local Time"
+msgstr "Yerel Saati Göster"
+
+msgid "Sinc"
+msgstr ""
+
+msgid "Snapshot %d"
+msgstr "Enstantane %d"
+
+msgid "Snes9x GX GameCube"
+msgstr ""
+
+msgid "Soft"
+msgstr "Yumuşak"
+
+msgid "SoftDev, crunchy2,"
+msgstr ""
+
+msgid "Sprites Per-Line Limit"
+msgstr "Satır Başına Sprite Sınırı"
+
+msgid "Sprites per-line Limit"
+msgstr "Satır Başına Sprite Sınırı"
+
+msgid "Start fresh next time"
+msgstr "Bir dahaki sefere sıfırdan başla"
+
+msgid "Storage"
+msgstr "Depolama"
+
+msgid "Storage device not found!"
+msgstr "Depolama aygıtı bulunamadı!"
+
+msgid "Super Scope light gun."
+msgstr "Super Scope ışık tabancası."
+
+msgid "SuperFX Overclock"
+msgstr "SuperFX Hız Aşırtma"
+
+msgid "Swedish"
+msgstr "İsveççe"
+
+msgid "TURBO AND PAUSE"
+msgstr "TURBO VE DURAKLATMA"
+
+msgid "The Auto Snapshot couldn't be loaded. The Cartridge Save was loaded instead."
+msgstr "Otomatik Enstantane yüklenemedi. Bunun yerine Kartuş Kaydı yüklendi."
+
+msgid "The Auto Snapshot couldn't be loaded. The game starts from the beginning."
+msgstr "Otomatik Enstantane yüklenemedi. Oyun baştan başlıyor."
+
+msgid "This can't be undone."
+msgstr "Bu işlem geri alınamaz."
+
+msgid "This game doesn't have its own save feature. Use snapshots to save."
+msgstr "Bu oyunun kendi kayıt özelliği yok. Kaydetmek için enstantaneleri kullanın."
+
+msgid "This is the snapshot you started from. This can't be undone."
+msgstr "Bu, başladığınız enstantane. Bu işlem geri alınamaz."
+
+msgid "This software is open source and may be copied, distributed, or modified "
+msgstr "Bu yazılım açık kaynaklıdır ve kopyalanabilir, dağıtılabilir veya değiştirilebilir "
+
+msgid "Turbo Mode"
+msgstr "Turbo Modu"
+
+msgid "Turbo Mode Button"
+msgstr "Turbo Modu Butonu"
+
+msgid "Turbo mode, the menu toggle and ABXY on the right stick"
+msgstr "Turbo modu, menüyü açma ve sağ çubukta ABXY"
+
+msgid "Two controllers, for one or two players."
+msgstr "İki kumanda, bir veya iki oyuncu için."
+
+msgid "USB"
+msgstr ""
+
+msgid "USB Controller"
+msgstr "USB Kumanda"
+
+msgid "USB Mass Storage 2"
+msgstr "USB Yığın Depolama Aygıtı 2"
+
+msgid "USB Mass Storage 3"
+msgstr "USB Yığın Depolama Aygıtı 3"
+
+msgid "USB Mouse"
+msgstr "USB Faresi"
+
+msgid "USB Storage 1"
+msgstr "USB Depolama 1"
+
+msgid "USB Storage 2"
+msgstr "USB Depolama 2"
+
+msgid "USB Storage 3"
+msgstr "USB Depolama 3"
+
+msgid "USB drive 2 not found!"
+msgstr "USB aygıtı 2 bulunamadı!"
+
+msgid "USB drive 3 not found!"
+msgstr "USB aygıtı 3 bulunamadı!"
+
+msgid "USING"
+msgstr "KULLANILAN"
+
+msgid "Unable to mount device."
+msgstr "Aygıt bağlanamadı."
+
+msgid "Unassign"
+msgstr "Kaldır"
+
+msgid "Unsupported drive format. Use FAT32, exFAT or NTFS."
+msgstr "Desteklenmeyen sürücü formatı. FAT32, exFAT veya NTFS kullanın."
+
+msgid "Unsupported format - FAT32 is recommended."
+msgstr "Desteklenmeyen format - FAT32 önerilir."
+
+msgid "Unsupported format - please use FAT32/exFAT."
+msgstr "Desteklenmeyen format - lütfen FAT32/exFAT kullanın."
+
+msgid "Unsupported format."
+msgstr "Desteklenmeyen format."
+
+msgid "Unsupported language!"
+msgstr "Dil desteklenmiyor!"
+
+msgid "Update"
+msgstr "Güncelle"
+
+msgid "Upscaling"
+msgstr "Ölçek Büyütme"
+
+msgid "Use the saved file in the game"
+msgstr "Kayıtlı dosyayı oyunda kullan"
+
+msgid "Use this as the cartridge's save"
+msgstr "Bunu kartuşun kaydı olarak kullan"
+
+msgid "Username"
+msgstr "Kullanıcı Adı"
+
+msgid "Waiting for a button..."
+msgstr "Bir buton bekleniyor..."
+
+msgid "What should %s use?"
+msgstr "%s neyi kullansın?"
+
+msgid "Which controller is being emulated?"
+msgstr "Hangi kumanda öykünülüyor?"
+
+msgid "Which controller is being mapped?"
+msgstr "Hangi kumanda ayarlanıyor?"
+
+msgid "Which device is being emulated?"
+msgstr "Hangi aygıt öykünülüyor?"
+
+msgid "Wii U Gamepad"
+msgstr ""
+
+msgid "Wii U Pro Controller"
+msgstr ""
+
+msgid "Write the save to its file"
+msgstr "Kaydı dosyasına yaz"
+
+msgid "Xbox 360 Controller"
+msgstr ""
+
+msgid "can jump back to it any time."
+msgstr "o ana geri dönebilirsiniz."
+
+msgid "eke-eke, others"
+msgstr "eke-eke ve diğerleri"
+
+msgid "hq2x"
+msgstr ""
+
+msgid "hq2x Bold"
+msgstr ""
+
+msgid "hq2x Soft"
+msgstr ""
+
+msgid "libogc / devkitPPC"
+msgstr ""
+
+msgid "under the terms of the GNU General Public License (GPL) Version 2."
+msgstr "GNU General Public License (GPL) Sürüm 2 koşulları altında."

@@ -459,3 +459,726 @@ msgstr "Wiimote-orientering"
 
 msgid "Yes"
 msgstr "Ja"
+
+msgid " "
+msgstr ""
+
+msgid "%s saved"
+msgstr "%s sparad"
+
+msgid "%s updated"
+msgstr "%s uppdaterad"
+
+msgid "%s uses %s"
+msgstr "%s använder %s"
+
+msgid "%s uses the default: %s"
+msgstr "%s använder standardvärdet: %s"
+
+msgid "%s will do nothing"
+msgstr "%s gör ingenting"
+
+msgid "%s will do nothing."
+msgstr "%s gör ingenting."
+
+msgid "16:9 (Fixed Pixel Ratio)"
+msgstr "16:9 (fast pixelförhållande)"
+
+msgid "2xBR"
+msgstr ""
+
+msgid "2xBR-lv1"
+msgstr ""
+
+msgid "40 MHz"
+msgstr ""
+
+msgid "60 MHz"
+msgstr ""
+
+msgid "7z decompression failed: %s"
+msgstr "7z-uppackning misslyckades: %s"
+
+msgid "A SNES Mouse in each controller port."
+msgstr "En SNES-mus i varje kontrollport."
+
+msgid "A changes what %s does"
+msgstr "A ändrar vad %s gör"
+
+msgid "A chooses the controller to map"
+msgstr "A väljer styrenheten som ska mappas"
+
+msgid "A chooses the device being emulated"
+msgstr "A väljer den emulerade enheten"
+
+msgid "A puts these buttons back to their defaults"
+msgstr "A återställer de här knapparna till standard"
+
+msgid "AIMING"
+msgstr "SIKTE"
+
+msgid "AUTO"
+msgstr ""
+
+msgid "All %d backup slots are in use. Delete one to make room."
+msgstr "Alla %d platser för säkerhetskopior är upptagna. Radera en för att göra plats."
+
+msgid "All 99 snapshot slots are in use. Delete one to make room."
+msgstr "Alla 99 platser för ögonblicksbilder är upptagna. Radera en för att göra plats."
+
+msgid "Archive contains too many files."
+msgstr "Arkivet innehåller för många filer."
+
+msgid "Aspect Ratio Correction"
+msgstr "Korrigering av bildformat"
+
+msgid "Audio Interpolation"
+msgstr "Ljudinterpolering"
+
+msgid "Auto"
+msgstr "Auto"
+
+msgid "Auto Snapshot"
+msgstr "Automatisk ögonblicksbild"
+
+msgid "Autosave"
+msgstr "Autosparning"
+
+msgid "Backup %d"
+msgstr "Säkerhetskopia %d"
+
+msgid "Backups"
+msgstr "Säkerhetskopior"
+
+msgid "Bilinear Filtering"
+msgstr "Bilinjär filtrering"
+
+msgid "Buttons"
+msgstr "Knappar"
+
+msgid "CONTROLLER"
+msgstr ""
+
+msgid "Cancelling..."
+msgstr "Avbryter..."
+
+msgid "Cartridge Save"
+msgstr "Kassettsparning"
+
+msgid "Cartridge Save not found"
+msgstr "Kassettsparning hittades inte"
+
+msgid "Catalan"
+msgstr "Katalanska"
+
+msgid "Cheats (none)"
+msgstr "Fusk (inga)"
+
+msgid "Check settings.xml."
+msgstr "Kontrollera settings.xml."
+
+msgid "Chinese (Traditional)"
+msgstr "Kinesiska (traditionell)"
+
+msgid "Choose 'Pressed button', then press the button you want on the %s."
+msgstr "Välj ”Intryckt knapp” och tryck sedan på önskad knapp (%s)."
+
+msgid "Copy the cartridge's save now"
+msgstr "Kopiera kassettsparningen nu"
+
+msgid "Copy, or restore one of %d"
+msgstr "Kopiera, eller återställ en av %d"
+
+msgid "Cubic"
+msgstr ""
+
+msgid "D-PAD"
+msgstr "STYRKORS"
+
+msgid "DDT"
+msgstr ""
+
+msgid "DVD"
+msgstr ""
+
+msgid "Default (All Enabled)"
+msgstr "Standard (alla aktiverade)"
+
+msgid "Default (Right Stick)"
+msgstr "Standard (höger spak)"
+
+msgid "Delete %s?"
+msgstr "Radera %s?"
+
+msgid "Device not found!"
+msgstr "Enheten hittades inte!"
+
+msgid "DualShock 4"
+msgstr ""
+
+msgid "EMULATING"
+msgstr "EMULERAR"
+
+msgid "Empty"
+msgstr "Tom"
+
+msgid "Empty until you play"
+msgstr "Tom tills du spelar"
+
+msgid "Emulation"
+msgstr "Emulering"
+
+msgid "Error loading font!"
+msgstr "Det gick inte att ladda teckensnittet!"
+
+msgid "FACE BUTTONS"
+msgstr "HUVUDKNAPPAR"
+
+msgid "Failed to read file data."
+msgstr "Det gick inte att läsa fildata."
+
+msgid "File is corrupt (CRC mismatch)."
+msgstr "Filen är skadad (CRC-fel)."
+
+msgid "File is corrupt."
+msgstr "Filen är skadad."
+
+msgid "File uses too high of compression settings (dictionary size is too large)."
+msgstr "Filen använder för höga komprimeringsinställningar (ordboksstorleken är för stor)."
+
+msgid "File uses unsupported compression settings."
+msgstr "Filen använder komprimeringsinställningar som inte stöds."
+
+msgid "Font file is too large!"
+msgstr "Teckensnittsfilen är för stor!"
+
+msgid "Font file not found!"
+msgstr "Teckensnittsfilen hittades inte!"
+
+msgid "Frame Skipping"
+msgstr "Bildhoppning"
+
+msgid "Game Settings - Emulation"
+msgstr "Spelinställningar - Emulering"
+
+msgid "General Mappings"
+msgstr "Allmänna mappningar"
+
+msgid "Go back to where you left off"
+msgstr "Gå tillbaka dit du slutade"
+
+msgid "HOME"
+msgstr ""
+
+msgid "Hardware Softening"
+msgstr "Hårdvaruutjämning"
+
+msgid "Home / Right Stick"
+msgstr "Home / höger spak"
+
+msgid "Home clears it."
+msgstr "Home rensar den."
+
+msgid "Home or the C-Stick clears it."
+msgstr "Home eller C-spaken rensar den."
+
+msgid "Horizontal"
+msgstr "Horisontell"
+
+msgid "Information"
+msgstr "Information"
+
+msgid "Interpolation"
+msgstr "Interpolering"
+
+msgid "Invalid network settings - %s"
+msgstr "Ogiltiga nätverksinställningar - %s"
+
+msgid "It is not being updated in the current Save Mode. This can't be undone."
+msgstr "Den uppdateras inte i det aktuella sparläget. Det går inte att ångra."
+
+msgid "It will be overwritten with your progress right now."
+msgstr "Den skrivs över med dina framsteg just nu."
+
+msgid "Jump back to this moment"
+msgstr "Hoppa tillbaka till det här ögonblicket"
+
+msgid "Jump to this moment"
+msgstr "Hoppa till det här ögonblicket"
+
+msgid "Justifier light gun."
+msgstr "Justifier-ljuspistol."
+
+msgid "L+R+Start / 1+2+Plus"
+msgstr ""
+
+msgid "Like a real console: the game's own save is kept for you, and the game starts fresh each time."
+msgstr "Som på en riktig konsol: spelets egen sparning behålls och spelet startar om varje gång."
+
+msgid "MOUSE"
+msgstr "MUS"
+
+msgid "Make Backup"
+msgstr "Skapa säkerhetskopia"
+
+msgid "Make a copy of the save"
+msgstr "Gör en kopia av sparningen"
+
+msgid "Manual"
+msgstr "Manuell"
+
+msgid "Manual Snapshot"
+msgstr "Manuell ögonblicksbild"
+
+msgid "Map ABXY to Right Stick"
+msgstr "Mappa ABXY till höger spak"
+
+msgid "Menu"
+msgstr "Meny"
+
+msgid "Menu Toggle"
+msgstr "Öppna menyn"
+
+msgid "Minus"
+msgstr ""
+
+msgid "Move over a button to see what it uses"
+msgstr "Flytta markören över en knapp för att se vad den använder"
+
+msgid "Move over a kind to see its choices"
+msgstr "Flytta markören över en typ för att se alternativen"
+
+msgid "Multitap: up to four players."
+msgstr "Multitap: upp till fyra spelare."
+
+msgid "Mute Game Audio"
+msgstr "Stäng av spelljud"
+
+msgid "NTSC (480i)"
+msgstr ""
+
+msgid "Name"
+msgstr "Namn"
+
+msgid "Network share not connected!"
+msgstr "Nätverksutdelningen är inte ansluten!"
+
+msgid "Next time you open this game it starts from its Cartridge Save, or from the beginning. This can't be undone."
+msgstr "Nästa gång du öppnar det här spelet startar det från kassettsparningen eller från början. Det går inte att ångra."
+
+msgid "No Cartridge Save data to save!"
+msgstr "Inga kassettsparningsdata att spara!"
+
+msgid "No game save file"
+msgstr "Ingen sparfil för spelet"
+
+msgid "No image"
+msgstr "Ingen bild"
+
+msgid "No snapshots yet"
+msgstr "Inga ögonblicksbilder än"
+
+msgid "Not saved yet"
+msgstr "Inte sparad än"
+
+msgid "Not updated while Save Mode is Cartridge Save."
+msgstr "Uppdateras inte medan sparläget är ”Kassettsparning”."
+
+msgid "Not updated while Save Mode is Manual."
+msgstr "Uppdateras inte medan sparläget är ”Manuell”."
+
+msgid "Nothing is saved or loaded unless you do it yourself."
+msgstr "Inget sparas eller laddas om du inte gör det själv."
+
+msgid "Now: %s"
+msgstr "Nu: %s"
+
+msgid "Nunchuk + Wiimote"
+msgstr ""
+
+msgid "OK"
+msgstr ""
+
+msgid "Off"
+msgstr "Av"
+
+msgid "On"
+msgstr "På"
+
+msgid "Optional save point"
+msgstr "Valfri sparpunkt"
+
+msgid "Original (240p)"
+msgstr ""
+
+msgid "Output Mode"
+msgstr "Utdataläge"
+
+msgid "Overwrite with your progress"
+msgstr "Skriv över med dina framsteg"
+
+msgid "PAL (50Hz)"
+msgstr ""
+
+msgid "PAL (60Hz)"
+msgstr ""
+
+msgid "PLUS"
+msgstr ""
+
+msgid "PS clears it."
+msgstr "PS rensar den."
+
+msgid "Password"
+msgstr "Lösenord"
+
+msgid "Pause"
+msgstr "Paus"
+
+msgid "Paused"
+msgstr "Pausad"
+
+msgid "Picks up exactly where you left off, as if you never turned the console off."
+msgstr "Fortsätter precis där du slutade, som om du aldrig stängt av konsolen."
+
+msgid "Player %d"
+msgstr "Spelare %d"
+
+msgid "Player Mapping - Controller %d"
+msgstr "Spelarmappning - Styrenhet %d"
+
+msgid "Playing from"
+msgstr "Spelar från"
+
+msgid "Plus"
+msgstr ""
+
+msgid "Power Off Wii"
+msgstr "Stäng av Wii-konsolen"
+
+msgid "Press a button on the %s now."
+msgstr "Tryck på en knapp (%s) nu."
+
+msgid "Pressed button"
+msgstr "Intryckt knapp"
+
+msgid "Progressive (576p)"
+msgstr "Progressiv (576p)"
+
+msgid "Remembers the exact moment, so you"
+msgstr "Kommer ihåg exakt det här ögonblicket så att du"
+
+msgid "Remove this backup"
+msgstr "Ta bort den här säkerhetskopian"
+
+msgid "Remove this snapshot"
+msgstr "Ta bort den här ögonblicksbilden"
+
+msgid "Replace"
+msgstr "Ersätt"
+
+msgid "Replace %s?"
+msgstr "Ersätta %s?"
+
+msgid "Replace with your progress now"
+msgstr "Ersätt med dina framsteg nu"
+
+msgid "Restore"
+msgstr "Återställ"
+
+msgid "SD"
+msgstr ""
+
+msgid "SD Gecko Slot A"
+msgstr ""
+
+msgid "SD Gecko Slot B"
+msgstr ""
+
+msgid "SD in SP2"
+msgstr ""
+
+msgid "SHOULDER"
+msgstr "AXELKNAPPAR"
+
+msgid "SNES Hi-Res Mode"
+msgstr "SNES högupplöst läge"
+
+msgid "SNES Mouse (Both Ports)"
+msgstr "SNES-mus (båda portarna)"
+
+msgid "SNES Mouse (Port 2)"
+msgstr "SNES-mus (port 2)"
+
+msgid "SNES Mouse in controller port 1."
+msgstr "SNES-mus i kontrollport 1."
+
+msgid "SNES Mouse in controller port 2."
+msgstr "SNES-mus i kontrollport 2."
+
+msgid "START"
+msgstr ""
+
+msgid "SYSTEM"
+msgstr "SYSTEM"
+
+msgid "Save Mode"
+msgstr "Sparläge"
+
+msgid "Save Mode: %s"
+msgstr "Sparläge: %s"
+
+msgid "Save Now"
+msgstr "Spara nu"
+
+msgid "Save this moment"
+msgstr "Spara det här ögonblicket"
+
+msgid "Saved %s"
+msgstr "Sparad: %s"
+
+msgid "Saved inside your snapshots"
+msgstr "Sparad i dina ögonblicksbilder"
+
+msgid "Saved when you leave the game, or when you save it."
+msgstr "Sparas när du lämnar spelet eller när du sparar det."
+
+msgid "Saved when you leave the game, or when you update it."
+msgstr "Sparas när du lämnar spelet eller när du uppdaterar den."
+
+msgid "Saves"
+msgstr "Sparningar"
+
+msgid "Saves when you do"
+msgstr "Sparar när du gör det"
+
+msgid "Scale2x"
+msgstr ""
+
+msgid "Scanline Overlay"
+msgstr "Scanline-överlägg"
+
+msgid "Scanlines"
+msgstr ""
+
+msgid "Select"
+msgstr ""
+
+msgid "Settings - Network Share"
+msgstr "Inställningar - Nätverksutdelning"
+
+msgid "Settings - Storage"
+msgstr "Inställningar - Lagring"
+
+msgid "Share IP is blank."
+msgstr "Utdelningens IP-adress är tom."
+
+msgid "Share name is blank."
+msgstr "Utdelningens namn är tomt."
+
+msgid "Sharp"
+msgstr "Skarp"
+
+msgid "Sinc"
+msgstr ""
+
+msgid "Snapshot %d"
+msgstr "Ögonblicksbild %d"
+
+msgid "Snes9x - Copyright (c) Snes9x Team 1996 - 2023"
+msgstr ""
+
+msgid "Snes9x GX GameCube"
+msgstr ""
+
+msgid "Soft"
+msgstr "Mjuk"
+
+msgid "SoftDev, crunchy2,"
+msgstr ""
+
+msgid "Sprites Per-Line Limit"
+msgstr "Sprajtgräns per rad"
+
+msgid "Sprites per-line Limit"
+msgstr "Sprajtgräns per rad"
+
+msgid "Start"
+msgstr ""
+
+msgid "Start fresh next time"
+msgstr "Börja om nästa gång"
+
+msgid "Storage"
+msgstr "Lagring"
+
+msgid "Storage device not found!"
+msgstr "Lagringsenheten hittades inte!"
+
+msgid "Super Scope light gun."
+msgstr "Super Scope-ljuspistol."
+
+msgid "SuperFX Overclock"
+msgstr "SuperFX-överklockning"
+
+msgid "Superscope"
+msgstr ""
+
+msgid "Swedish"
+msgstr "Svenska"
+
+msgid "TURBO AND PAUSE"
+msgstr "TURBO OCH PAUS"
+
+msgid "The Auto Snapshot couldn't be loaded. The Cartridge Save was loaded instead."
+msgstr "Den automatiska ögonblicksbilden kunde inte laddas. Kassettsparningen laddades istället."
+
+msgid "The Auto Snapshot couldn't be loaded. The game starts from the beginning."
+msgstr "Den automatiska ögonblicksbilden kunde inte laddas. Spelet startar från början."
+
+msgid "This can't be undone."
+msgstr "Det går inte att ångra."
+
+msgid "This game doesn't have its own save feature. Use snapshots to save."
+msgstr "Det här spelet har ingen egen sparfunktion. Använd ögonblicksbilder för att spara."
+
+msgid "This is the snapshot you started from. This can't be undone."
+msgstr "Det här är ögonblicksbilden du startade från. Det går inte att ångra."
+
+msgid "Turbo Mode"
+msgstr "Turboläge"
+
+msgid "Turbo Mode Button"
+msgstr "Turboläge-knapp"
+
+msgid "Turbo Off"
+msgstr "Turbo av"
+
+msgid "Turbo On"
+msgstr "Turbo på"
+
+msgid "Turbo mode, the menu toggle and ABXY on the right stick"
+msgstr "Turboläge, menyöppning och ABXY på höger spak"
+
+msgid "Two controllers, for one or two players."
+msgstr "Två styrenheter, för en eller två spelare."
+
+msgid "USB"
+msgstr ""
+
+msgid "USB Controller"
+msgstr "USB-styrenhet"
+
+msgid "USB Mass Storage 2"
+msgstr "USB-masslagring 2"
+
+msgid "USB Mass Storage 3"
+msgstr "USB-masslagring 3"
+
+msgid "USB Mouse"
+msgstr "USB-mus"
+
+msgid "USB Storage 1"
+msgstr "USB-lagring 1"
+
+msgid "USB Storage 2"
+msgstr "USB-lagring 2"
+
+msgid "USB Storage 3"
+msgstr "USB-lagring 3"
+
+msgid "USB drive 2 not found!"
+msgstr "USB-enhet 2 hittades inte!"
+
+msgid "USB drive 3 not found!"
+msgstr "USB-enhet 3 hittades inte!"
+
+msgid "USING"
+msgstr "ANVÄNDER"
+
+msgid "Unable to mount device."
+msgstr "Det gick inte att montera enheten."
+
+msgid "Unassign"
+msgstr "Ta bort"
+
+msgid "Unsupported drive format. Use FAT32, exFAT or NTFS."
+msgstr "Enhetsformatet stöds inte. Använd FAT32, exFAT eller NTFS."
+
+msgid "Unsupported format - FAT32 is recommended."
+msgstr "Formatet stöds inte - FAT32 rekommenderas."
+
+msgid "Unsupported format - please use FAT32/exFAT."
+msgstr "Formatet stöds inte - använd FAT32/exFAT."
+
+msgid "Unsupported format."
+msgstr "Formatet stöds inte."
+
+msgid "Unsupported language!"
+msgstr "Språket stöds inte!"
+
+msgid "Update"
+msgstr "Uppdatera"
+
+msgid "Upscaling"
+msgstr "Uppskalning"
+
+msgid "Use the saved file in the game"
+msgstr "Använd den sparade filen i spelet"
+
+msgid "Use this as the cartridge's save"
+msgstr "Använd detta som kassettens sparning"
+
+msgid "Username"
+msgstr "Användarnamn"
+
+msgid "Vertical"
+msgstr "Vertikal"
+
+msgid "Waiting for a button..."
+msgstr "Väntar på en knapp..."
+
+msgid "What should %s use?"
+msgstr "Vad ska %s använda?"
+
+msgid "Which controller is being emulated?"
+msgstr "Vilken styrenhet emuleras?"
+
+msgid "Which controller is being mapped?"
+msgstr "Vilken styrenhet mappas?"
+
+msgid "Which device is being emulated?"
+msgstr "Vilken enhet emuleras?"
+
+msgid "Wii U Gamepad"
+msgstr ""
+
+msgid "Wii U Pro Controller"
+msgstr ""
+
+msgid "Wiimote"
+msgstr ""
+
+msgid "Write the save to its file"
+msgstr "Skriv sparningen till sin fil"
+
+msgid "Xbox 360 Controller"
+msgstr ""
+
+msgid "can jump back to it any time."
+msgstr "när som helst kan hoppa tillbaka till det."
+
+msgid "eke-eke, others"
+msgstr "eke-eke m.fl."
+
+msgid "hq2x"
+msgstr ""
+
+msgid "hq2x Bold"
+msgstr ""
+
+msgid "hq2x Soft"
+msgstr ""
+
+msgid "libogc / devkitPPC"
+msgstr ""

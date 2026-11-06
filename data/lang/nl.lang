@@ -5,7 +5,7 @@ msgid "Are you sure that you want to reset this game? Any unsaved progress will 
 msgstr "Weet je zeker dat je het spel wilt herstarten? Niet opgeslagen gegevens zullen verloren gaan."
 
 msgid "Are you sure that you want to reset your mappings?"
-msgstr "Weet je zeker dat je de controller instellingen wilt wissen?"
+msgstr "Weet je zeker dat je de knoppentoewijzing wilt resetten?"
 
 msgid "Are you sure that you want to reset your settings?"
 msgstr "Weet je zeker dat je de instellingen wilt wissen?"
@@ -23,7 +23,7 @@ msgid "Back"
 msgstr "Terug"
 
 msgid "Button Mappings"
-msgstr "Controller Instellingen"
+msgstr "Knoppentoewijzing"
 
 msgid "Cancel"
 msgstr "Annuleren"
@@ -236,7 +236,7 @@ msgid "New"
 msgstr "Nieuw"
 
 msgid "New Snapshot"
-msgstr "Nieuw Snapshot"
+msgstr "Nieuwe snapshot"
 
 msgid "No"
 msgstr "Nee"
@@ -305,7 +305,7 @@ msgid "Reset Game"
 msgstr "Herstart Spel"
 
 msgid "Reset Mappings"
-msgstr "Reset Controllers"
+msgstr "Toewijzing resetten"
 
 msgid "Reset Settings"
 msgstr "Reset Instellingen"
@@ -429,3 +429,756 @@ msgstr "Vertikaal"
 
 msgid "Video"
 msgstr "Video"
+
+msgid " "
+msgstr ""
+
+msgid "%s saved"
+msgstr "%s opgeslagen"
+
+msgid "%s updated"
+msgstr "%s bijgewerkt"
+
+msgid "%s uses %s"
+msgstr "%s gebruikt %s"
+
+msgid "%s uses the default: %s"
+msgstr "%s gebruikt de standaard: %s"
+
+msgid "%s will do nothing"
+msgstr "%s doet niets"
+
+msgid "%s will do nothing."
+msgstr "%s doet niets."
+
+msgid "16:9 (Fixed Pixel Ratio)"
+msgstr "16:9 (vaste pixelverhouding)"
+
+msgid "2xBR"
+msgstr ""
+
+msgid "2xBR-lv1"
+msgstr ""
+
+msgid "40 MHz"
+msgstr ""
+
+msgid "60 MHz"
+msgstr ""
+
+msgid "7z decompression failed: %s"
+msgstr "Uitpakken van 7z mislukt: %s"
+
+msgid "A SNES Mouse in each controller port."
+msgstr "Een SNES-muis in elke controllerpoort."
+
+msgid "A changes what %s does"
+msgstr "Met A wijzig je wat %s doet"
+
+msgid "A chooses the controller to map"
+msgstr "Met A kies je de controller om in te stellen"
+
+msgid "A chooses the device being emulated"
+msgstr "Met A kies je het geëmuleerde apparaat"
+
+msgid "A puts these buttons back to their defaults"
+msgstr "Met A zet je deze knoppen terug naar de standaard"
+
+msgid "AIMING"
+msgstr "RICHTEN"
+
+msgid "AUTO"
+msgstr ""
+
+msgid "Additional improvements"
+msgstr "Overige verbeteringen"
+
+msgid "All %d backup slots are in use. Delete one to make room."
+msgstr "Alle %d back-upplaatsen zijn in gebruik. Verwijder er een om ruimte te maken."
+
+msgid "All 99 snapshot slots are in use. Delete one to make room."
+msgstr "Alle 99 snapshotplaatsen zijn in gebruik. Verwijder er een om ruimte te maken."
+
+msgid "Archive contains too many files."
+msgstr "Het archief bevat te veel bestanden."
+
+msgid "Artwork"
+msgstr "Artwork"
+
+msgid "Artwork Folder"
+msgstr "Artwork-map"
+
+msgid "Aspect Ratio Correction"
+msgstr "Correctie beeldverhouding"
+
+msgid "Audio Interpolation"
+msgstr "Audio-interpolatie"
+
+msgid "Auto Snapshot"
+msgstr "Auto-snapshot"
+
+msgid "Autosave"
+msgstr "Auto-opslag"
+
+msgid "Backup %d"
+msgstr "Back-up %d"
+
+msgid "Backups"
+msgstr "Back-ups"
+
+msgid "Bilinear Filtering"
+msgstr "Bilineaire filtering"
+
+msgid "Brazilian Portuguese"
+msgstr "Braziliaans Portugees"
+
+msgid "Buttons"
+msgstr "Knoppen"
+
+msgid "CONTROLLER"
+msgstr ""
+
+msgid "Cancelling..."
+msgstr "Bezig met annuleren..."
+
+msgid "Cartridge Save"
+msgstr "Cartridge-opslag"
+
+msgid "Cartridge Save not found"
+msgstr "Cartridge-opslag niet gevonden"
+
+msgid "Catalan"
+msgstr "Catalaans"
+
+msgid "Cheats (none)"
+msgstr "Cheats (geen)"
+
+msgid "Check settings.xml."
+msgstr "Controleer settings.xml."
+
+msgid "Chinese (Simplified)"
+msgstr "Chinees (vereenvoudigd)"
+
+msgid "Chinese (Traditional)"
+msgstr "Chinees (traditioneel)"
+
+msgid "Choose 'Pressed button', then press the button you want on the %s."
+msgstr "Kies “Ingedrukte knop” en druk dan op de gewenste knop (%s)."
+
+msgid "Copy the cartridge's save now"
+msgstr "Cartridge-opslag nu kopiëren"
+
+msgid "Copy, or restore one of %d"
+msgstr "Kopieer of herstel een van de %d"
+
+msgid "Covers"
+msgstr "Omslagen"
+
+msgid "Cubic"
+msgstr ""
+
+msgid "D-PAD"
+msgstr ""
+
+msgid "DDT"
+msgstr ""
+
+msgid "DVD"
+msgstr ""
+
+msgid "Default (All Enabled)"
+msgstr "Standaard (alles ingeschakeld)"
+
+msgid "Default (Right Stick)"
+msgstr "Standaard (rechter stick)"
+
+msgid "Delete"
+msgstr "Verwijderen"
+
+msgid "Delete %s?"
+msgstr "%s verwijderen?"
+
+msgid "Device not found!"
+msgstr "Apparaat niet gevonden!"
+
+msgid "DualShock 4"
+msgstr ""
+
+msgid "EMULATING"
+msgstr "GEËMULEERD"
+
+msgid "Empty"
+msgstr "Leeg"
+
+msgid "Empty until you play"
+msgstr "Leeg totdat je speelt"
+
+msgid "Emulation"
+msgstr "Emulatie"
+
+msgid "Error loading font!"
+msgstr "Fout bij het laden van het lettertype!"
+
+msgid "FACE BUTTONS"
+msgstr "HOOFDKNOPPEN"
+
+msgid "Failed to read file data."
+msgstr "Bestandsgegevens konden niet worden gelezen."
+
+msgid "File is corrupt (CRC mismatch)."
+msgstr "Het bestand is beschadigd (CRC-fout)."
+
+msgid "File is corrupt."
+msgstr "Het bestand is beschadigd."
+
+msgid "File uses too high of compression settings (dictionary size is too large)."
+msgstr "Het bestand gebruikt te hoge compressie-instellingen (de woordenboekgrootte is te groot)."
+
+msgid "File uses unsupported compression settings."
+msgstr "Het bestand gebruikt niet-ondersteunde compressie-instellingen."
+
+msgid "Font file is too large!"
+msgstr "Lettertypebestand is te groot!"
+
+msgid "Font file not found!"
+msgstr "Lettertypebestand niet gevonden!"
+
+msgid "Frame Skipping"
+msgstr "Frames overslaan"
+
+msgid "Game Settings - Emulation"
+msgstr "Spelinstellingen - Emulatie"
+
+msgid "Gaussian (Accurate)"
+msgstr "Gauss (nauwkeurig)"
+
+msgid "General Mappings"
+msgstr "Algemene toewijzing"
+
+msgid "Go back to where you left off"
+msgstr "Ga terug naar waar je was gebleven"
+
+msgid "HOME"
+msgstr ""
+
+msgid "Hardware Softening"
+msgstr "Hardwarematig verzachten"
+
+msgid "Home / Right Stick"
+msgstr "Home / rechter stick"
+
+msgid "Home clears it."
+msgstr "Home wist het."
+
+msgid "Home or the C-Stick clears it."
+msgstr "Home of de C-stick wist het."
+
+msgid "Interpolation"
+msgstr "Interpolatie"
+
+msgid "Invalid network settings - %s"
+msgstr "Ongeldige netwerkinstellingen - %s"
+
+msgid "It is not being updated in the current Save Mode. This can't be undone."
+msgstr "Het wordt in de huidige opslagmodus niet bijgewerkt. Dit kan niet ongedaan worden gemaakt."
+
+msgid "It will be overwritten with your progress right now."
+msgstr "Het wordt overschreven met je huidige voortgang."
+
+msgid "Jump back to this moment"
+msgstr "Spring terug naar dit moment"
+
+msgid "Jump to this moment"
+msgstr "Spring naar dit moment"
+
+msgid "Justifier light gun."
+msgstr "Justifier-lichtpistool."
+
+msgid "L+R+Start / 1+2+Plus"
+msgstr ""
+
+msgid "Like a real console: the game's own save is kept for you, and the game starts fresh each time."
+msgstr "Zoals op een echte console: de eigen opslag van het spel blijft bewaard en het spel begint elke keer opnieuw."
+
+msgid "Linear"
+msgstr "Lineair"
+
+msgid "MOUSE"
+msgstr "MUIS"
+
+msgid "Make Backup"
+msgstr "Back-up maken"
+
+msgid "Make a copy of the save"
+msgstr "Een kopie van de opslag maken"
+
+msgid "Manual"
+msgstr "Handmatig"
+
+msgid "Manual Snapshot"
+msgstr "Handmatige snapshot"
+
+msgid "Map ABXY to Right Stick"
+msgstr "ABXY op de rechter stick zetten"
+
+msgid "Maximum filepath length reached!"
+msgstr "Maximale lengte van bestandspad bereikt!"
+
+msgid "Menu Toggle"
+msgstr "Menu openen"
+
+msgid "Minus"
+msgstr ""
+
+msgid "Move over a button to see what it uses"
+msgstr "Ga met de cursor over een knop om te zien wat die gebruikt"
+
+msgid "Move over a kind to see its choices"
+msgstr "Ga met de cursor over een soort om de keuzes te zien"
+
+msgid "Multitap: up to four players."
+msgstr "Multitap: tot vier spelers."
+
+msgid "Mute Game Audio"
+msgstr "Spelgeluid dempen"
+
+msgid "Name"
+msgstr "Naam"
+
+msgid "Network share not connected!"
+msgstr "Gedeelde map niet verbonden!"
+
+msgid "Next time you open this game it starts from its Cartridge Save, or from the beginning. This can't be undone."
+msgstr "De volgende keer dat je dit spel opent, begint het vanaf de cartridge-opslag of vanaf het begin. Dit kan niet ongedaan worden gemaakt."
+
+msgid "No Cartridge Save data to save!"
+msgstr "Geen cartridge-opslaggegevens om op te slaan!"
+
+msgid "No game save file"
+msgstr "Geen opslagbestand van het spel"
+
+msgid "No image"
+msgstr "Geen afbeelding"
+
+msgid "No snapshots yet"
+msgstr "Nog geen snapshots"
+
+msgid "Not saved yet"
+msgstr "Nog niet opgeslagen"
+
+msgid "Not updated while Save Mode is Cartridge Save."
+msgstr "Wordt niet bijgewerkt zolang de opslagmodus “Cartridge-opslag” is."
+
+msgid "Not updated while Save Mode is Manual."
+msgstr "Wordt niet bijgewerkt zolang de opslagmodus “Handmatig” is."
+
+msgid "Nothing is saved or loaded unless you do it yourself."
+msgstr "Er wordt niets opgeslagen of geladen tenzij je het zelf doet."
+
+msgid "Now: %s"
+msgstr "Nu: %s"
+
+msgid "Nunchuk + Wiimote"
+msgstr ""
+
+msgid "Optional save point"
+msgstr "Optioneel opslagpunt"
+
+msgid "Original (240p)"
+msgstr ""
+
+msgid "Output Mode"
+msgstr "Uitvoermodus"
+
+msgid "Overwrite with your progress"
+msgstr "Overschrijven met je voortgang"
+
+msgid "PS clears it."
+msgstr "PS wist het."
+
+msgid "Password"
+msgstr "Wachtwoord"
+
+msgid "Paused"
+msgstr "Gepauzeerd"
+
+msgid "Picks up exactly where you left off, as if you never turned the console off."
+msgstr "Gaat precies verder waar je gebleven was, alsof je de console nooit hebt uitgezet."
+
+msgid "Player %d"
+msgstr "Speler %d"
+
+msgid "Player Mapping - Controller %d"
+msgstr "Spelertoewijzing - Controller %d"
+
+msgid "Playing from"
+msgstr "Speelt vanaf"
+
+msgid "Plus"
+msgstr ""
+
+msgid "Power Off Wii"
+msgstr "Wii uitschakelen"
+
+msgid "Press a button on the %s now."
+msgstr "Druk nu op een knop (%s)."
+
+msgid "Pressed button"
+msgstr "Ingedrukte knop"
+
+msgid "Preview Image"
+msgstr "Voorbeeldafbeelding"
+
+msgid "Preview Screenshot"
+msgstr "Voorbeeldscreenshot"
+
+msgid "Progressive (576p)"
+msgstr "Progressief (576p)"
+
+msgid "Remembers the exact moment, so you"
+msgstr "Onthoudt precies dit moment, zodat je"
+
+msgid "Remove this backup"
+msgstr "Deze back-up verwijderen"
+
+msgid "Remove this snapshot"
+msgstr "Deze snapshot verwijderen"
+
+msgid "Replace"
+msgstr "Vervangen"
+
+msgid "Replace %s?"
+msgstr "%s vervangen?"
+
+msgid "Replace with your progress now"
+msgstr "Nu vervangen door je voortgang"
+
+msgid "Restore"
+msgstr "Herstellen"
+
+msgid "SD"
+msgstr ""
+
+msgid "SD Gecko Slot A"
+msgstr ""
+
+msgid "SD Gecko Slot B"
+msgstr ""
+
+msgid "SD in SP2"
+msgstr ""
+
+msgid "SHOULDER"
+msgstr "SCHOUDERKNOPPEN"
+
+msgid "SNES Hi-Res Mode"
+msgstr "SNES hi-res-modus"
+
+msgid "SNES Mouse (Both Ports)"
+msgstr "SNES-muis (beide poorten)"
+
+msgid "SNES Mouse (Port 2)"
+msgstr "SNES-muis (poort 2)"
+
+msgid "SNES Mouse in controller port 1."
+msgstr "SNES-muis in controllerpoort 1."
+
+msgid "SNES Mouse in controller port 2."
+msgstr "SNES-muis in controllerpoort 2."
+
+msgid "START"
+msgstr ""
+
+msgid "SYSTEM"
+msgstr "SYSTEEM"
+
+msgid "Save Mode"
+msgstr "Opslagmodus"
+
+msgid "Save Mode: %s"
+msgstr "Opslagmodus: %s"
+
+msgid "Save Now"
+msgstr "Nu opslaan"
+
+msgid "Save a new Preview Screenshot? Current Screenshot image will be overwritten."
+msgstr "Een nieuwe voorbeeldscreenshot opslaan? De huidige screenshot wordt overschreven."
+
+msgid "Save this moment"
+msgstr "Dit moment opslaan"
+
+msgid "Saved %s"
+msgstr "Opgeslagen: %s"
+
+msgid "Saved inside your snapshots"
+msgstr "Opgeslagen in je snapshots"
+
+msgid "Saved when you leave the game, or when you save it."
+msgstr "Wordt opgeslagen wanneer je het spel verlaat of het opslaat."
+
+msgid "Saved when you leave the game, or when you update it."
+msgstr "Wordt opgeslagen wanneer je het spel verlaat of het bijwerkt."
+
+msgid "Saves"
+msgstr "Opslagen"
+
+msgid "Saves when you do"
+msgstr "Slaat op wanneer jij dat doet"
+
+msgid "Scale2x"
+msgstr ""
+
+msgid "Scanline Overlay"
+msgstr "Scanline-overlay"
+
+msgid "Scanlines"
+msgstr ""
+
+msgid "Screenshot"
+msgstr ""
+
+msgid "Screenshots"
+msgstr ""
+
+msgid "Screenshots Folder"
+msgstr "Screenshotmap"
+
+msgid "Settings - Network Share"
+msgstr "Instellingen - Gedeelde map"
+
+msgid "Settings - Storage"
+msgstr "Instellingen - Opslag"
+
+msgid "Share IP is blank."
+msgstr "Het IP-adres van de gedeelde map is leeg."
+
+msgid "Share name is blank."
+msgstr "De naam van de gedeelde map is leeg."
+
+msgid "Sharp"
+msgstr "Scherp"
+
+msgid "Show Framerate"
+msgstr "Framerate tonen"
+
+msgid "Show Local Time"
+msgstr "Lokale tijd tonen"
+
+msgid "Sinc"
+msgstr ""
+
+msgid "Snapshot %d"
+msgstr "Snapshot %d"
+
+msgid "Snes9x GX GameCube"
+msgstr ""
+
+msgid "Soft"
+msgstr "Zacht"
+
+msgid "SoftDev, crunchy2,"
+msgstr ""
+
+msgid "Sprites Per-Line Limit"
+msgstr "Sprites-per-regel-limiet"
+
+msgid "Sprites per-line Limit"
+msgstr "Sprites-per-regel-limiet"
+
+msgid "Start"
+msgstr ""
+
+msgid "Start fresh next time"
+msgstr "Volgende keer opnieuw beginnen"
+
+msgid "Storage"
+msgstr "Opslag"
+
+msgid "Storage device not found!"
+msgstr "Opslagapparaat niet gevonden!"
+
+msgid "Super Scope"
+msgstr ""
+
+msgid "Super Scope light gun."
+msgstr "Super Scope-lichtpistool."
+
+msgid "SuperFX Overclock"
+msgstr "SuperFX-overklokken"
+
+msgid "Swedish"
+msgstr "Zweeds"
+
+msgid "TURBO AND PAUSE"
+msgstr "TURBO EN PAUZE"
+
+msgid "The Auto Snapshot couldn't be loaded. The Cartridge Save was loaded instead."
+msgstr "De auto-snapshot kon niet worden geladen. In plaats daarvan is de cartridge-opslag geladen."
+
+msgid "The Auto Snapshot couldn't be loaded. The game starts from the beginning."
+msgstr "De auto-snapshot kon niet worden geladen. Het spel begint vanaf het begin."
+
+msgid "The current IOS has been altered (fake-signed). Functionality and/or stability may be adversely affected."
+msgstr "De huidige IOS is gewijzigd (fake-signed). Functionaliteit en/of stabiliteit kunnen negatief worden beïnvloed."
+
+msgid "The current IOS is unsupported. Functionality and/or stability may be adversely affected."
+msgstr "De huidige IOS wordt niet ondersteund. Functionaliteit en/of stabiliteit kunnen negatief worden beïnvloed."
+
+msgid "This can't be undone."
+msgstr "Dit kan niet ongedaan worden gemaakt."
+
+msgid "This game doesn't have its own save feature. Use snapshots to save."
+msgstr "Dit spel heeft geen eigen opslagfunctie. Gebruik snapshots om op te slaan."
+
+msgid "This is the snapshot you started from. This can't be undone."
+msgstr "Dit is de snapshot waarmee je bent gestart. Dit kan niet ongedaan worden gemaakt."
+
+msgid "This software is open source and may be copied, distributed, or modified "
+msgstr "Deze software is open source en mag worden gekopieerd, verspreid of aangepast "
+
+msgid "Turbo Mode"
+msgstr "Turbomodus"
+
+msgid "Turbo Mode Button"
+msgstr "Turbomodus-knop"
+
+msgid "Turbo Off"
+msgstr "Turbo uit"
+
+msgid "Turbo On"
+msgstr "Turbo aan"
+
+msgid "Turbo mode, the menu toggle and ABXY on the right stick"
+msgstr "Turbomodus, menu openen en ABXY op de rechter stick"
+
+msgid "Turkish"
+msgstr "Turks"
+
+msgid "Two controllers, for one or two players."
+msgstr "Twee controllers, voor een of twee spelers."
+
+msgid "USB"
+msgstr ""
+
+msgid "USB Controller"
+msgstr "USB-controller"
+
+msgid "USB Mass Storage 2"
+msgstr ""
+
+msgid "USB Mass Storage 3"
+msgstr ""
+
+msgid "USB Mouse"
+msgstr "USB-muis"
+
+msgid "USB Storage 1"
+msgstr "USB-opslag 1"
+
+msgid "USB Storage 2"
+msgstr "USB-opslag 2"
+
+msgid "USB Storage 3"
+msgstr "USB-opslag 3"
+
+msgid "USB drive 2 not found!"
+msgstr "USB disk 2 niet gevonden!"
+
+msgid "USB drive 3 not found!"
+msgstr "USB disk 3 niet gevonden!"
+
+msgid "USING"
+msgstr "GEBRUIKT"
+
+msgid "Unable to mount device."
+msgstr "Kan apparaat niet koppelen."
+
+msgid "Unassign"
+msgstr "Verwijderen"
+
+msgid "Unsupported drive format. Use FAT32, exFAT or NTFS."
+msgstr "Niet-ondersteund schijfformaat. Gebruik FAT32, exFAT of NTFS."
+
+msgid "Unsupported format - FAT32 is recommended."
+msgstr "Niet-ondersteund formaat - FAT32 wordt aanbevolen."
+
+msgid "Unsupported format - please use FAT32/exFAT."
+msgstr "Niet-ondersteund formaat - gebruik FAT32/exFAT."
+
+msgid "Unsupported format."
+msgstr "Niet-ondersteund formaat."
+
+msgid "Unsupported language!"
+msgstr "Taal niet ondersteund!"
+
+msgid "Update"
+msgstr "Bijwerken"
+
+msgid "Upscaling"
+msgstr "Opschalen"
+
+msgid "Use the saved file in the game"
+msgstr "Gebruik het opgeslagen bestand in het spel"
+
+msgid "Use this as the cartridge's save"
+msgstr "Gebruik dit als cartridge-opslag"
+
+msgid "Username"
+msgstr "Gebruikersnaam"
+
+msgid "Waiting for a button..."
+msgstr "Wachten op een knop..."
+
+msgid "What should %s use?"
+msgstr "Wat moet %s gebruiken?"
+
+msgid "Which controller is being emulated?"
+msgstr "Welke controller wordt geëmuleerd?"
+
+msgid "Which controller is being mapped?"
+msgstr "Welke controller wordt ingesteld?"
+
+msgid "Which device is being emulated?"
+msgstr "Welk apparaat wordt geëmuleerd?"
+
+msgid "Wii U Gamepad"
+msgstr ""
+
+msgid "Wii U Pro Controller"
+msgstr ""
+
+msgid "Wiimote"
+msgstr ""
+
+msgid "Wiimote Orientation"
+msgstr "Wiimote-oriëntatie"
+
+msgid "Write the save to its file"
+msgstr "De opslag naar het bestand schrijven"
+
+msgid "Xbox 360 Controller"
+msgstr ""
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "can jump back to it any time."
+msgstr "er op elk moment naar terug kunt springen."
+
+msgid "eke-eke, others"
+msgstr "eke-eke e.a."
+
+msgid "hq2x"
+msgstr ""
+
+msgid "hq2x Bold"
+msgstr ""
+
+msgid "hq2x Soft"
+msgstr ""
+
+msgid "libogc / devkitPPC"
+msgstr ""
+
+msgid "under the terms of the GNU General Public License (GPL) Version 2."
+msgstr "onder de voorwaarden van de GNU General Public License (GPL) versie 2."
