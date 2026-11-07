@@ -13,7 +13,8 @@ static const UsbInputDriver * const drivers[] =
 	&XBOX360_UsbDriver,
 	&Hornet_UsbDriver,
 	&Mayflash_UsbDriver,
-	&DS4_UsbDriver
+	&DS4_UsbDriver,
+	&Tablet_UsbDriver,
 };
 #define NUM_DRIVERS ((int)(sizeof(drivers) / sizeof(drivers[0])))
 

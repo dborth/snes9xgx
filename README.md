@@ -70,6 +70,7 @@ Every push builds automatically. Grab the latest continuous-integration build:
 - **Wii only:** Retrode, Xbox 360, DualShock 4 (wired), and Hornet USB controller support; Mayflash PC044 / MF105 SNES-to-USB adapter support
 - SNES Superscope, Mouse, and Justifier support, remappable per input device
 - **USB mouse** support on **Wii and Wii U** — it moves the pointer in the menus and aims the Super Scope, Justifier and SNES Mouse (left click is A, right click is B, middle click is X; the Super Scope's middle click pauses)
+- **USB pen tablet** support on **Wii** (Wacom, XP-Pen, Huion and other tablets that describe their pen to the system) — the pen points like the mouse: the tip is A, the lower side switch B, the upper one X
 - Cheat code support (`.cht` files)
 - Cover art / screenshot / artwork preview support
 - Satellaview (BS-X) support
