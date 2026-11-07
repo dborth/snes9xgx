@@ -2,9 +2,12 @@
 
 All notable changes to Snes9x GX are recorded here, newest first. For the current features and setup instructions, see [README.md](README.md).
 
+## Unreleased
+
+* **USB pen tablet support** on Wii. The pen moves the pointer and aims the Super Scope, Justifier and SNES Mouse, using the USB mouse's button mapping
+
 ## 5.0.5 - November 3, 2026
 * **USB mouse support** on Wii and Wii U. The mouse moves the pointer in the menus and aims the Super Scope, Justifier and SNES Mouse
-* **USB pen tablet support** on Wii. The pen moves the pointer and aims the Super Scope, Justifier and SNES Mouse, using the USB mouse's button mapping
 * **The left analog stick now moves the pointer in the menus**, on every controller, like a mouse. It no longer also steps through the buttons; the D-pad still does
 * **A Wiimote with anything plugged into it is now always vertical in the menus**, and its buttons and IR pointer work alongside the extension (a Nunchuk on Wii and a Classic Controller on both Wii and Wii U previously lost them)
 * **Redesigned Button Mappings screen.** One screen now replaces the separate controller and button screens, showing each button on a drawing of the controller and letting you choose a button by pressing it or from a list.
