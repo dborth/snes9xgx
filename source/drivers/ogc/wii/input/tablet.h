@@ -8,8 +8,6 @@
  * HID report descriptor are supported.
  */
 
-#ifdef HW_RVL
-
 #include <gctypes.h>
 
 #ifdef __cplusplus
@@ -36,5 +34,4 @@ char* Tablet_Status(void);
 }
 #endif
 
-#endif // HW_RVL
 #endif

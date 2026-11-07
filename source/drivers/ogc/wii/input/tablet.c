@@ -1,4 +1,3 @@
-#ifdef HW_RVL
 #include <gccore.h>
 #include <malloc.h>
 #include <string.h>
@@ -460,5 +459,3 @@ char* Tablet_Status(void)
 		return "please replug";
 	return deviceId ? "connected" : "not found";
 }
-
-#endif

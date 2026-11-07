@@ -12,8 +12,6 @@
  * page onto the standard pages it mirrors (see equivalent()).
  */
 
-#ifdef HW_RVL
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -74,5 +72,4 @@ void TabletDesc_Put(const tabletdesc_field *f, uint8_t *data, uint32_t len, int3
 }
 #endif
 
-#endif // HW_RVL
 #endif

@@ -1,4 +1,3 @@
-#ifdef HW_RVL
 #include <string.h>
 #include "tabletdesc.h"
 
@@ -357,5 +356,3 @@ void TabletDesc_Put(const tabletdesc_field *f, uint8_t *data, uint32_t len, int3
 			data[bit >> 3] &= (uint8_t)~mask;
 	}
 }
-
-#endif
