@@ -44,11 +44,21 @@ class MenuScreenWindow
 			}
 		}
 		GuiWindow& window() { return w; }
-		// A disabled screen stays drawn, dimmed, and takes no input, so a modal put over it is the only thing the D-pad and pointer reach
-		void setEnabled(bool on) { w.setState(on ? STATE::DEFAULT : STATE::DISABLED); }
 	private:
 		GuiWindow w;
 		bool shown;
+};
+
+/**
+ * While a modal runs over the menu (a popover), everything on the main window is disabled: the page, its bars and the
+ * logo are all dimmed together and none of it answers the pointer. Make one before the modal's screen is added (the
+ * screen must come after it to stay enabled); the state the window had comes back when it goes out of scope.
+ */
+struct MenuPageDisabled
+{
+	STATE previous;
+	MenuPageDisabled() : previous(MenuMainWindow().getState()) { MenuMainWindow().setState(STATE::DISABLED); }
+	~MenuPageDisabled() { MenuMainWindow().setState(previous); }
 };
 
 /** The space the menu's popovers keep clear: the header and footer bars and the page margin. */

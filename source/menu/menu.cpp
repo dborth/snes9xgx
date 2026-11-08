@@ -1587,9 +1587,10 @@ static int MenuGame()
 		{
 			controllerRequest = false;
 			// a popover beside the chip, over this screen, which stays drawn (dimmed) where it is
-			w.setState(STATE::DISABLED);
-			ChooseController(GuiPopover::Anchor(controllerChip));
-			w.setState(STATE::DEFAULT);
+			{
+				MenuPageDisabled pageDisabled;
+				ChooseController(GuiPopover::Anchor(controllerChip));
+			}
 			menu->mainWindow.changeFocus(&w);
 			w.resetState();
 			controllerChip.select();
@@ -2259,15 +2260,6 @@ static void SaveCardMenu(const SaveCard & card, int backupCount, std::vector<Pic
 		items.back().danger = true;
 	}
 }
-
-// While a modal runs over the menu (a popover), everything on the main window is disabled: the page, its bars and the
-// logo are all dimmed together and none of it answers the pointer. The state it had comes back when this goes out of scope.
-struct MenuPageDisabled
-{
-	STATE previous;
-	MenuPageDisabled() : previous(menu->mainWindow.getState()) { menu->mainWindow.setState(STATE::DISABLED); }
-	~MenuPageDisabled() { menu->mainWindow.setState(previous); }
-};
 
 static int MenuGameSaves()
 {

@@ -521,10 +521,12 @@ int MappingScreen()
 				const GuiPopover::Anchor anchor = view.anchorForRow(row);
 				const MapRow * mapRow = FindRow(mapSnesCtrl, row);
 				uint32_t pressed = 0;
-				screen.setEnabled(false);
-				const bool chosen = MappingChoose(mapRow ? mapRow->name : "", mapHardware, btnmap[mapSnesCtrl][mapHardware][row],
-					DefaultButton(mapSnesCtrl, mapHardware, row), anchor, pressed);
-				screen.setEnabled(true);
+				bool chosen;
+				{
+					MenuPageDisabled pageDisabled;
+					chosen = MappingChoose(mapRow ? mapRow->name : "", mapHardware, btnmap[mapSnesCtrl][mapHardware][row],
+						DefaultButton(mapSnesCtrl, mapHardware, row), anchor, pressed);
+				}
 				if(chosen)
 					btnmap[mapSnesCtrl][mapHardware][row] = pressed;
 				MenuMainWindow().changeFocus(&screen.window());
@@ -537,17 +539,18 @@ int MappingScreen()
 			{
 				// a popover over this screen, which stays drawn (dimmed) where it is
 				const GuiPopover::Anchor anchor = view.anchorFor(pick);
-				screen.setEnabled(false);
 				int chosen = -1;
 				std::vector<int> list;
-				if(pick == MappingView::Pick::EMULATING)
-					chosen = MenuPopover_Pick(Tr("Which device is being emulated?").c_str(), EmulatingItems(), anchor);
-				else
 				{
-					list = HardwareList(mapSnesCtrl);
-					chosen = MenuPopover_Pick(Tr("Which controller is being mapped?").c_str(), HardwareItems(list), anchor);
+					MenuPageDisabled pageDisabled;
+					if(pick == MappingView::Pick::EMULATING)
+						chosen = MenuPopover_Pick(Tr("Which device is being emulated?").c_str(), EmulatingItems(), anchor);
+					else
+					{
+						list = HardwareList(mapSnesCtrl);
+						chosen = MenuPopover_Pick(Tr("Which controller is being mapped?").c_str(), HardwareItems(list), anchor);
+					}
 				}
-				screen.setEnabled(true);
 				MenuMainWindow().changeFocus(&screen.window());
 				screen.window().resetState();
 
