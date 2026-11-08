@@ -54,15 +54,13 @@ static const char* NextConversion(const char* s, std::string& spec)
 static bool SameConversions(const char* a, const char* b)
 {
 	std::string specA, specB;
-	for(;;)
+	do
 	{
 		a = NextConversion(a, specA);
 		b = NextConversion(b, specB);
-		if(!a || !b)
-			return !a && !b;
-		if(specA != specB)
-			return false;
-	}
+	} while(a && b && specA == specB);
+
+	return !a && !b; // Only equal if both ran out together; a mismatched spec leaves a and b non-null
 }
 
 std::string TrFormat(const char* msgid, ...)
@@ -315,6 +313,38 @@ void GuiText::setMaxWidth(int width)
 	}
 
 	textDynNum = 0;
+}
+
+int GuiText::getLongestWordWidth()
+{
+	if(!text)
+		return 0;
+
+	wchar_t * word = new wchar_t[wcslen(text) + 1];
+	int longest = 0;
+	size_t n = 0;
+
+	fontSystem->setPixelSize(size);
+	for(const wchar_t * p = text; ; p++)
+	{
+		if(*p == L' ' || *p == L'\n' || *p == 0)
+		{
+			if(n > 0)
+			{
+				word[n] = 0;
+				const int w = fontSystem->getWidth(word);
+				if(w > longest)
+					longest = w;
+				n = 0;
+			}
+			if(*p == 0)
+				break;
+		}
+		else
+			word[n++] = *p;
+	}
+	delete[] word;
+	return longest;
 }
 
 int GuiText::getTextWidth()

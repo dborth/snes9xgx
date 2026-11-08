@@ -71,6 +71,15 @@ class GuiButton : public GuiElement
 		void draw() override;
 		//!Resets the text for all contained elements
 		void resetText();
+		//!Turns stretching the button to fit its label off, or back on (it is on by default). The button stretches
+		//!when its image says how much room the label needs (GuiElement::getLabelInset()), the first time it is
+		//!drawn and again whenever the label changes. Its designed width is the least it gets. It grows towards the
+		//!side it is aligned away from (both sides if centered), as far as the label needs and no further than the
+		//!space that is free: the parent's edge, the middle of the parent for a button at the left or right, and
+		//!half of the gap to a neighbor in the same row, which may be stretching too. A label that still does not
+		//!fit is made to: one that wraps wraps within the width, any other has its font size reduced
+		//!(FIT_MIN_FONT_PERCENT of the original at the least) and is cut if it still does not fit.
+		void setAutoFit(bool on) { autoFit = on; }
 		//!Sets the state and mirrors it into the button's images and icons, so a
 		//!state-aware element such as GuiShape can restyle itself
 		void setState(STATE s, int c = -1) override;
@@ -80,6 +89,18 @@ class GuiButton : public GuiElement
 		//!\param c Pointer to a InputController, containing the current input data
 		void update(InputController * c);
 	protected:
+		enum
+		{
+			FIT_GAP = 12,				//!< Space kept clear between a stretching button and what is next to it
+			FIT_MIN_FONT_PERCENT = 75	//!< How far, as a percentage of its size, a label's font can shrink to fit
+		};
+		void fitToLabel();
+		int getFitRoom(int baseW);
+		bool autoFit = true;		//!< Whether to stretch to fit the label
+		int fitBaseW = -1;			//!< The designed width, noted at the first fit
+		int fitBaseFont = 0;		//!< The label's font size before any shrinking
+		int fitTextW = -1;			//!< The label's width (at the size it had) when last fitted
+		int fitTextFont = 0;
 		GuiElement * image; //!< Button image (default): a GuiImage, GuiShape or any element
 		GuiElement * imageOver; //!< Button image for STATE::SELECTED
 		GuiElement * imageHold; //!< Button image for STATE::HELD

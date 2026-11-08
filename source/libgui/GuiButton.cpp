@@ -4,6 +4,7 @@
  * GuiButton.cpp
  ***************************************************************************/
 
+#include <algorithm>
 #include "Gui.h"
 
 GuiButton::GuiButton(int w, int h)
@@ -137,10 +138,150 @@ void GuiButton::setSoundClick(GuiSound * snd)
 /**
  * Draw the button on screen
  */
+//! How far the button can widen from its designed width `baseW`, in total (see setAutoFit())
+int GuiButton::getFitRoom(int baseW)
+{
+	if(!parentElement)
+		return 0;
+
+	// where the button is at its designed width, however far it has been stretched
+	const ALIGN_H align = getAlignmentHor();
+	int left = getLeft();
+	int right = left + width;
+	if(align == ALIGN_H::LEFT)
+		right = left + baseW;
+	else if(align == ALIGN_H::RIGHT)
+		left = right - baseW;
+	else
+	{
+		left = (left + right) / 2 - baseW / 2;
+		right = left + baseW;
+	}
+
+	const int parentLeft = parentElement->getLeft();
+	const int parentRight = parentLeft + parentElement->getWidth();
+	const int middle = (parentLeft + parentRight) / 2;
+	int roomL = left - parentLeft;
+	int roomR = parentRight - right;
+	if(align == ALIGN_H::LEFT)
+		roomR = std::min(roomR, middle - FIT_GAP / 2 - right);
+	else if(align == ALIGN_H::RIGHT)
+		roomL = std::min(roomL, left - (middle + FIT_GAP / 2));
+
+	GuiWindow * window = parentElement->getAsWindow();
+	if(window)
+	{
+		const int top = getTop();
+		const int bottom = top + getHeight();
+
+		for(uint32_t i = 0; i < window->getSize(); i++)
+		{
+			GuiElement * e = window->getGuiElementAt(i);
+			if(!e || e == this || !e->isVisible() || !e->isSelectable())
+				continue;
+
+			const int eTop = e->getTop();
+			if(eTop >= bottom || eTop + e->getHeight() <= top)
+				continue; // not in the same row
+
+			const int eLeft = e->getLeft();
+			const int eRight = eLeft + e->getWidth();
+			if(eRight <= left)
+				roomL = std::min(roomL, (left - eRight - FIT_GAP) / 2);
+			else if(eLeft >= right)
+				roomR = std::min(roomR, (eLeft - right - FIT_GAP) / 2);
+		}
+	}
+
+	roomL = std::max(roomL, 0);
+	roomR = std::max(roomR, 0);
+	if(align == ALIGN_H::LEFT)
+		return roomR;
+	if(align == ALIGN_H::RIGHT)
+		return roomL;
+	return 2 * std::min(roomL, roomR);
+}
+
+//! Stretches the button to fit its label (see setAutoFit())
+void GuiButton::fitToLabel()
+{
+	GuiText * t = label[0];
+	if(!t || !image)
+		return;
+
+	int inset = image->getLabelInset();
+	if(inset < 0)
+		return;
+
+	// nothing to do until the label changes
+	if(fitBaseW >= 0 && t->getFontSize() == fitTextFont && t->getTextWidth() == fitTextW)
+		return;
+
+	if(fitBaseW < 0)
+	{
+		fitBaseW = width;
+		fitBaseFont = t->getFontSize();
+	}
+	else
+		t->setFontSize(fitBaseFont);
+
+	// The label is centered, so an icon beside it needs the same room at the right. An icon is beside the label when
+	// it is all in the left third of the button; a bigger one is a backdrop and the label is drawn over it.
+	if(icon)
+	{
+		const int iconRight = icon->getLeft() - getLeft() + icon->getWidth();
+		if(icon->getAlignmentHor() == ALIGN_H::LEFT && iconRight <= fitBaseW / 3)
+			inset = std::max(inset, iconRight + FIT_GAP / 2);
+	}
+	inset = std::min(inset, fitBaseW / 3); // always leave room for the label
+
+	const bool wrapped = t->isWrapped();
+	// wrapping is the way to fit more words, so a label that wraps widens the button only for a word that does not fit
+	const int need = (wrapped ? t->getLongestWordWidth() : t->getTextWidth()) + 2 * inset;
+	const int oldW = width;
+	int w = std::max(fitBaseW, need);
+	const int maxW = fitBaseW + getFitRoom(fitBaseW);
+
+	if(w > maxW)
+	{
+		w = maxW;
+		if(!wrapped)
+		{
+			const int minFont = fitBaseFont * FIT_MIN_FONT_PERCENT / 100;
+			int s = fitBaseFont;
+			while(s > minFont && t->getTextWidth() > w - 2 * inset)
+				t->setFontSize(--s);
+		}
+	}
+
+	const int inner = w - 2 * inset;
+	if(wrapped)
+		t->setWrap(true, inner);
+	else
+		t->setMaxWidth(t->getTextWidth() > inner ? inner : 0);
+
+	if(w != oldW)
+	{
+		GuiElement * images[] = { image, imageOver, imageHold, imageClick };
+		for(GuiElement * e : images)
+		{
+			if(e && e->getWidth() == oldW)
+				e->setSize(w, e->getHeight());
+		}
+		setSize(w, getHeight());
+	}
+
+	fitTextFont = t->getFontSize();
+	fitTextW = t->getTextWidth();
+}
+
 void GuiButton::draw()
 {
 	if(!this->isVisible())
 		return;
+
+	if(autoFit)
+		fitToLabel();
 
 	if(state == STATE::SELECTED || state == STATE::HELD)
 	{

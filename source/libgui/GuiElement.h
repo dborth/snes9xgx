@@ -83,6 +83,12 @@ class GuiElement
 		//!Considers vertical alignment, y offset, height, and parent element's GetTop() / GetHeight() values
 		//!\return top coordinate
 		int getTop();
+		//!Gets the horizontal alignment, respective to the parent element
+		ALIGN_H getAlignmentHor() { return alignmentHor; }
+		//!When this is a button's image: how far in from each end of it the button's label must stay clear. A button
+		//!whose image returns 0 or more stretches to fit its label (see GuiButton::setAutoFit()). The default, -1,
+		//!is an image that is not meant to be stretched.
+		virtual int getLabelInset() { return -1; }
 		//!Sets the minimum y offset of the element
 		//!\param y Y offset
 		void setMinY(int y);

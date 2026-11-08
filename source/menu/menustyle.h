@@ -37,6 +37,14 @@
 #define MENU_BTN_SHORT_RADIUS	26.0f
 #define MENU_BTN_SMALL_RADIUS	20.0f
 
+// how far in from each end of a button its label stays clear (a stretching button's label gets the rest, see
+// GuiButton::setAutoFit())
+#define MENU_BTN_LONG_LABEL_INSET	20
+#define MENU_BTN_LARGE_LABEL_INSET	15
+#define MENU_BTN_NORMAL_LABEL_INSET	20
+#define MENU_BTN_SHORT_LABEL_INSET	20
+#define MENU_BTN_SMALL_LABEL_INSET	16
+
 #define MENU_BTN_NORMAL_W	196
 #define MENU_BTN_NORMAL_H	52
 #define MENU_BTN_SHORT_W	160

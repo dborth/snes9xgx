@@ -2419,6 +2419,7 @@ static int MenuGameSaves()
 	MenuButtonShape backBtnImg(MenuButtonShape::NORMAL);
 	backBtnImg.setSize(backBtnW, MENU_BTN_NORMAL_H);
 	GuiButton backBtn(backBtnW, MENU_BTN_NORMAL_H);
+	backBtn.setAutoFit(false);	// sized above, with the buttons beside it placed from that
 	backBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
 	backBtn.setPosition(50, -35);
 	backBtn.setLabel(&backBtnTxt);
@@ -2431,6 +2432,7 @@ static int MenuGameSaves()
 	MenuButtonShape closeBtnImg(MenuButtonShape::SMALL);
 	closeBtnImg.setSize(closeBtnW, MENU_BTN_SMALL_H);
 	GuiButton closeBtn(closeBtnW, MENU_BTN_SMALL_H);
+	closeBtn.setAutoFit(false);	// sized above, with the buttons beside it placed from that
 	closeBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
 	closeBtn.setPosition(-50, 35);
 	closeBtn.setLabel(&closeBtnTxt);
@@ -2479,6 +2481,7 @@ static int MenuGameSaves()
 	MenuButtonShape modeBtnImg(MenuButtonShape::NORMAL);
 	modeBtnImg.setSize(modeBtnW, MENU_BTN_NORMAL_H);
 	GuiButton modeBtn(modeBtnW, MENU_BTN_NORMAL_H);
+	modeBtn.setAutoFit(false);	// sized above, with the buttons beside it placed from that
 	modeBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
 	modeBtn.setPosition(50 + backBtnW + 16, -35);
 	modeBtn.setLabel(&modeLabelTxt, 0);

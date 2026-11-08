@@ -45,6 +45,13 @@ class GuiText : public GuiElement
 		void setMaxWidth(int w);
 		//!Gets the width of the text when rendered
 		int getTextWidth();
+		//!Gets the width of the text's widest word (words are split at spaces and line breaks): the least width
+		//!that wrapping can fit the text in
+		int getLongestWordWidth();
+		//!The font size
+		int getFontSize() const { return size; }
+		//!Whether the text wraps onto more lines (see setWrap())
+		bool isWrapped() const { return wrap; }
 		//!Gets the text's size for layout: its rendered width and height on one line
 		//!(at most the maximum width, if one is set). A layout container places text by its
 		//!top-left corner: it calls setAlignment(LEFT, TOP), which anchors the text there.

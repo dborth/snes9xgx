@@ -27,13 +27,28 @@ class MenuButtonShape : public GuiShape
 		enum Kind { LONG, LARGE, NORMAL, SHORT, SMALL };
 
 		MenuButtonShape(Kind kind) :
-			GuiShape(widthOf(kind), heightOf(kind))
+			GuiShape(widthOf(kind), heightOf(kind)), kind(kind)
 		{
 			setCorners(GuiCorners(radiusOf(kind)));
 			setStyle(MenuButtonStyle());
 		}
 
+		//!A button with this shape stretches to fit its label (see GuiButton::setAutoFit())
+		int getLabelInset() override
+		{
+			switch(kind)
+			{
+				case LONG: return MENU_BTN_LONG_LABEL_INSET;
+				case LARGE: return MENU_BTN_LARGE_LABEL_INSET;
+				case SHORT: return MENU_BTN_SHORT_LABEL_INSET;
+				case SMALL: return MENU_BTN_SMALL_LABEL_INSET;
+				default: return MENU_BTN_NORMAL_LABEL_INSET;
+			}
+		}
+
 	private:
+		Kind kind;
+
 		static int widthOf(Kind k)
 		{
 			switch(k)
