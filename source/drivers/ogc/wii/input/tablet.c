@@ -26,10 +26,7 @@ static const u16 tabletVendors[] =
 #define HID_REQ_SET_REPORT  0x09
 #define HID_REPORT_FEATURE  0x03
 
-static bool replugRequired = false;
 static s32 deviceId = 0;
-static u8 endpoint = 0;
-static u16 packetSize = 0;
 static tabletdesc_pen *pen = NULL; // allocated on attach, freed on removal
 static s32 maxX = 1, maxY = 1;
 
@@ -38,23 +35,12 @@ static s32 maxX = 1, maxY = 1;
 static s32 rejected[TABLET_REJECT_MAX];
 static u8 rejectedNext = 0;
 
-// The DMA buffer stays static: a read still pending when the tablet goes away
-// may complete into it after the removal.
-static u8 ATTRIBUTE_ALIGN(32) buf[TABLET_REPORT_MAX];
-static bool isReading = false;
-// Bumped on every attach and removal, and given to each read as its usrdata.
-// IOS reuses file descriptors, so a tablet replugged quickly can get the same
-// deviceId as the one unplugged: the device id alone cannot tell their reads apart.
-static volatile u32 readGeneration = 0;
-
 static volatile s32 reportX = 0;
 static volatile s32 reportY = 0;
 static volatile u32 reportButtons = 0;
 static volatile bool reportInRange = false;
 
-static u32 held = 0;
-static u32 down = 0;
-static u32 up = 0;
+static UsbInputButtons padButtons;
 static bool inRange = false;
 static float posX = 0, posY = 0;
 
@@ -128,55 +114,10 @@ static void parseReport(const u8 *report, s32 len)
 	reportInRange = range;
 }
 
-static int submitRead(void);
-
-static int read_cb(int res, void *usrdata)
-{
-	// A read submitted for a tablet since unplugged may complete after a quick
-	// replug: it must not touch the new tablet's state or resubmit
-	if ((u32) usrdata != readGeneration || !isReading)
-	{
-		return 1;
-	}
-
-	if (res < 0)
-	{
-		isReading = false;
-		return 1;
-	}
-
-	parseReport(buf, res);
-
-	if (submitRead() < 0)
-	{
-		isReading = false;
-	}
-
-	return 1;
-}
-
-static int submitRead(void)
-{
-	return USB_ReadIntrMsgAsync(deviceId, endpoint, packetSize, buf, &read_cb, (void *) readGeneration);
-}
-
-static void startReading()
-{
-	if (isReading)
-	{
-		return;
-	}
-	isReading = true;
-	if (submitRead() < 0)
-	{
-		isReading = false;
-	}
-}
-
-static void stopReading()
-{
-	isReading = false;
-}
+// The DMA buffer stays static: a read still pending when the tablet goes away
+// may complete into it after the removal.
+static u8 ATTRIBUTE_ALIGN(32) buf[TABLET_REPORT_MAX];
+static UsbReader reader = { .buf = buf, .size = TABLET_REPORT_MAX, .onReport = &parseReport };
 
 static void resetState()
 {
@@ -184,7 +125,7 @@ static void resetState()
 	reportY = 0;
 	reportButtons = 0;
 	reportInRange = false;
-	held = down = up = 0;
+	UsbInputButtons_Clear(&padButtons);
 	inRange = false;
 }
 
@@ -194,8 +135,7 @@ static int removal_cb(int result, void *usrdata)
 	s32 fd = (s32) usrdata;
 	if (fd == deviceId)
 	{
-		stopReading();
-		++readGeneration;
+		UsbReader_Stop(&reader);
 		deviceId = 0;
 		UsbInput_DeferClose(fd);
 		resetState();
@@ -289,12 +229,9 @@ static void setTabletMode(s32 fd, u8 interface)
 	USB_WriteCtrlMsg(fd, USB_REQTYPE_INTERFACE_SET, HID_REQ_SET_REPORT, (HID_REPORT_FEATURE << 8) | pen->input_mode.report_id, interface, len, report);
 }
 
-static void attach(const usb_device_entry *dev_entry, u8 dev_count)
+static UsbAttachResult attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
-	if (deviceId != 0)
-	{
-		return;
-	}
+	bool replug = false;
 
 	// What a tablet removed since the last ScanPads() left behind
 	if (pen != NULL)
@@ -302,9 +239,6 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		free(pen);
 		pen = NULL;
 	}
-
-	// a replug request only stands while a tablet that needs it is plugged in
-	replugRequired = false;
 
 	// A tablet is listed once per interface (pen, keys, mouse...), each opened on its own
 	for (int i = 0; i < dev_count; ++i)
@@ -314,16 +248,11 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 			continue;
 		}
 		s32 fd;
-		if (USB_OpenDevice(dev_entry[i].device_id, dev_entry[i].vid, dev_entry[i].pid, &fd) < 0)
-		{
-			continue;
-		}
-
 		usb_devdesc devdesc;
-		if (USB_GetDescriptors(fd, &devdesc) < 0)
+		UsbOpenResult opened = UsbInput_OpenDevice(&dev_entry[i], &fd, &devdesc);
+		replug |= (opened == USBINPUT_OPEN_NEEDS_REPLUG);
+		if (opened != USBINPUT_OPEN_OK)
 		{
-			replugRequired = true;
-			USB_CloseDevice(&fd);
 			continue;
 		}
 
@@ -345,8 +274,8 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		u8 interface = found ? inter->bInterfaceNumber : 0;
 		if (found)
 		{
-			endpoint = ep->bEndpointAddress;
-			packetSize = ep->wMaxPacketSize > TABLET_REPORT_MAX ? TABLET_REPORT_MAX : ep->wMaxPacketSize;
+			reader.size = ep->wMaxPacketSize > TABLET_REPORT_MAX ? TABLET_REPORT_MAX : ep->wMaxPacketSize;
+			UsbReader_Bind(&reader, fd, ep->bEndpointAddress);
 		}
 		USB_FreeDescriptors(&devdesc);
 
@@ -368,13 +297,13 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		if (maxY <= 0) maxY = 1;
 
 		deviceId = fd;
-		++readGeneration;
-		replugRequired = false;
 		resetState();
 		setTabletMode(fd, interface);
 		USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
 		break;
 	}
+
+	return UsbInput_AttachResult(deviceId != 0, replug);
 }
 
 static bool matches(const usb_device_entry *dev)
@@ -387,7 +316,7 @@ static bool isAttached(void)
 	return deviceId != 0;
 }
 
-const UsbInputDriver Tablet_UsbDriver = { "Tablet", &matches, &attach, &isAttached };
+const UsbInputDriver Tablet_UsbDriver = { "Tablet", &matches, &attach, &isAttached, NULL };
 
 void Tablet_ScanPads(void)
 {
@@ -402,12 +331,9 @@ void Tablet_ScanPads(void)
 		return;
 	}
 
-	startReading();
+	UsbReader_Start(&reader);
 
-	u32 buttons = reportButtons;
-	down = buttons & ~held;
-	up = held & ~buttons;
-	held = buttons;
+	UsbInputButtons_Latch(&padButtons, reportButtons);
 
 	inRange = reportInRange;
 	if (inRange)
@@ -440,22 +366,15 @@ float Tablet_Y(void)
 
 u32 Tablet_ButtonsHeld(void)
 {
-	return held;
+	return padButtons.held;
 }
 
 u32 Tablet_ButtonsDown(void)
 {
-	return down;
+	return padButtons.down;
 }
 
 u32 Tablet_ButtonsUp(void)
 {
-	return up;
-}
-
-char* Tablet_Status(void)
-{
-	if (replugRequired)
-		return "please replug";
-	return deviceId ? "connected" : "not found";
+	return padButtons.up;
 }

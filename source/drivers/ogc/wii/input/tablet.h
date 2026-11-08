@@ -28,7 +28,6 @@ float Tablet_Y(void);
 u32 Tablet_ButtonsHeld(void);
 u32 Tablet_ButtonsDown(void);
 u32 Tablet_ButtonsUp(void);
-char* Tablet_Status(void);
 
 #ifdef __cplusplus
 }

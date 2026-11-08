@@ -9,7 +9,6 @@ extern "C" {
 
 void Retrode_ScanPads(void);
 u32 Retrode_ButtonsHeld(int chan);
-char* Retrode_Status(void);
 
 #ifdef __cplusplus
 }

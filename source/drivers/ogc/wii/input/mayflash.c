@@ -7,7 +7,6 @@
 #define MAYFLASH_MF105_VID 0x2F24
 #define MAYFLASH_MF105_PID 0x00F1
 
-static bool replugRequired = false;
 static s32 deviceId = 0; 
 static s32 secondDeviceId = 0; //Need to keep track of 2 device IDs, since MF105 enumerates as 2 devices
 static u8 endpoint = 0;
@@ -20,16 +19,6 @@ static bool isMayflashGamepad(usb_device_entry dev)
 {
 	return (dev.vid == MAYFLASH_PC044_VID && dev.pid == MAYFLASH_PC044_PID) || 
 	(dev.vid == MAYFLASH_MF105_VID && dev.pid == MAYFLASH_MF105_PID);
-}
-
-static u8 getEndpoint(usb_devdesc devdesc)
-{
-	if (devdesc.configurations == NULL || devdesc.configurations->interfaces == NULL ||
-			devdesc.configurations->interfaces->endpoints == NULL)
-	{
-		return -1;
-	}
-	return devdesc.configurations->interfaces->endpoints->bEndpointAddress;
 }
 
 static int removal_cb(int result, void *usrdata)
@@ -65,16 +54,10 @@ static int removal_cb(int result, void *usrdata)
 
 static bool isAttached(void);
 
-static void attach(const usb_device_entry *dev_entry, u8 dev_count)
+static UsbAttachResult attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
-// Opens the device gets the device Id(s), endpoint(s), packet size, etc
-	if (isAttached())
-	{
-		return;
-	}
-
-	// a replug request only stands while a controller that needs it is plugged in
-	replugRequired = false;
+	// Opens the device gets the device Id(s), endpoint(s), packet size, etc
+	bool replug = false;
 
 	for (int i = 0; i < dev_count; ++i)
 	{
@@ -90,25 +73,20 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		}
 
 		s32 fd;
-		if (USB_OpenDevice(dev_entry[i].device_id, dev_entry[i].vid, dev_entry[i].pid, &fd) < 0)
+		usb_devdesc devdesc;
+		UsbOpenResult opened = UsbInput_OpenDevice(&dev_entry[i], &fd, &devdesc);
+		replug |= (opened == USBINPUT_OPEN_NEEDS_REPLUG);
+		if (opened != USBINPUT_OPEN_OK)
 		{
 			continue;
 		}
 
-		usb_devdesc devdesc;
-		if (USB_GetDescriptors(fd, &devdesc) < 0)
-		{
-			// You have to replug the controller!
-			replugRequired = true;
-			USB_CloseDevice(&fd);
-			continue;
-		}
 		//set the device type to the given adapter
 		if (dev_entry[i].vid == MAYFLASH_PC044_VID && dev_entry[i].pid == MAYFLASH_PC044_PID)
 		{
 			mayflashDeviceType = 0;
 			deviceId = fd;
-			endpoint = getEndpoint(devdesc);
+			endpoint = UsbInput_FirstEndpoint(&devdesc);
 			bMaxPacketSize = devdesc.bMaxPacketSize0;
 		}
 		else
@@ -118,17 +96,16 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 			if (deviceId == 0)
 			{
 				deviceId = fd;
-				endpoint = getEndpoint(devdesc);
+				endpoint = UsbInput_FirstEndpoint(&devdesc);
 				bMaxPacketSize = devdesc.bMaxPacketSize0;
 			}
 			else
 			{
 				secondDeviceId = fd;
-				secondEndpoint = getEndpoint(devdesc);
+				secondEndpoint = UsbInput_FirstEndpoint(&devdesc);
 			}
 		}
 
-		replugRequired = false;
 		USB_FreeDescriptors(&devdesc);
 		USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
 
@@ -138,6 +115,8 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 			break;
 		}
 	}
+
+	return UsbInput_AttachResult(isAttached(), replug);
 }
 
 static bool matches(const usb_device_entry *dev)
@@ -155,7 +134,13 @@ static bool isAttached(void)
 	return deviceId != 0;
 }
 
-const UsbInputDriver Mayflash_UsbDriver = { "Mayflash", &matches, &attach, &isAttached };
+// Usable as soon as one port is open, though attached() waits for the second port of an MF105
+static bool isConnected(void)
+{
+	return deviceId != 0 || secondDeviceId != 0;
+}
+
+const UsbInputDriver Mayflash_UsbDriver = { "Mayflash", &matches, &attach, &isAttached, &isConnected };
 
 static u32 getButtonMappingPC044(const uint8_t *buf)
 {
@@ -283,11 +268,4 @@ u32 Mayflash_ButtonsHeld(int chan)
 		return 0;
 	}
 	return jpMayflash[chan];
-}
-
-char* Mayflash_Status(void)
-{
-	if (replugRequired)
-		return "please replug";
-	return (deviceId || secondDeviceId) ? "connected" : "not found";
 }

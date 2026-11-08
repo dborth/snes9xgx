@@ -93,6 +93,10 @@ static uint32_t MapTabletToGeneric(uint32_t tablet_btns) {
 	return mask;
 }
 
+static bool IsConnected(const UsbInputDriver & driver) {
+	return UsbInput_GetState(&driver) == USBINPUT_STATE_CONNECTED;
+}
+
 /****************************************************************************
  * Scan
  ***************************************************************************/
@@ -106,9 +110,9 @@ void WiiUsbPads::scan() {
 	DS4_ScanPads();
 	Tablet_ScanPads();
 
-	retrodeActive  = (Retrode_Status()[0]  == 'c');
-	hornetActive   = (Hornet_Status()[0]   == 'c');
-	mayflashActive = (Mayflash_Status()[0] == 'c');
+	retrodeActive  = IsConnected(Retrode_UsbDriver);
+	hornetActive   = IsConnected(Hornet_UsbDriver);
+	mayflashActive = IsConnected(Mayflash_UsbDriver);
 }
 
 /****************************************************************************
@@ -190,31 +194,78 @@ void WiiUsbPads::readPointer(int channel, int width, int height, InputPadData & 
 /****************************************************************************
  * Status
  ***************************************************************************/
+
+// The status strip shows one icon for the USB controllers, so the drivers are grouped by the
+// icon (hardware profile) they share. In priority order: DS4, Xbox 360, other.
+struct StatusGroup {
+	GuiHardwareProfile profile;
+	const UsbInputDriver * const * drivers;
+	int count;
+};
+
+static const UsbInputDriver * const ds4Drivers[] = { &DS4_UsbDriver };
+static const UsbInputDriver * const xboxDrivers[] = { &XBOX360_UsbDriver };
+static const UsbInputDriver * const genericDrivers[] = { &Retrode_UsbDriver, &Hornet_UsbDriver, &Mayflash_UsbDriver };
+
+static const StatusGroup statusGroups[] = {
+	{ INPUT_HW_DS4,         ds4Drivers,     sizeof(ds4Drivers) / sizeof(ds4Drivers[0]) },
+	{ INPUT_HW_XBOX360,     xboxDrivers,    sizeof(xboxDrivers) / sizeof(xboxDrivers[0]) },
+	{ INPUT_HW_GENERIC_USB, genericDrivers, sizeof(genericDrivers) / sizeof(genericDrivers[0]) },
+};
+
+static bool AnyInState(const StatusGroup & group, UsbInputState state) {
+	for (int i = 0; i < group.count; i++) {
+		if (UsbInput_GetState(group.drivers[i]) == state)
+			return true;
+	}
+	return false;
+}
+
 InputUsbStatus WiiUsbPads::getStatus() const {
 	InputUsbStatus status;
 
-	// Each driver reports "connected", "please replug" or "not found"
-	char ds4 = DS4_Status()[0];
-	char xbox = XBOX360_Status()[0];
-	char gen[3] = { Retrode_Status()[0], Hornet_Status()[0], Mayflash_Status()[0] };
-	bool genConnected = false, genReplug = false;
-	for (int i = 0; i < 3; i++) {
-		genConnected |= (gen[i] == 'c');
-		genReplug |= (gen[i] == 'p');
+	// A connected controller wins over one that only needs a replug, whatever its priority
+	const UsbInputState states[] = { USBINPUT_STATE_CONNECTED, USBINPUT_STATE_REPLUG_REQUIRED };
+	for (UsbInputState state : states) {
+		for (const StatusGroup & group : statusGroups) {
+			if (AnyInState(group, state)) {
+				status.profile = group.profile;
+				status.replugRequired = (state == USBINPUT_STATE_REPLUG_REQUIRED);
+				return status;
+			}
+		}
 	}
-
-	if (ds4 == 'c') status.profile = INPUT_HW_DS4;
-	else if (xbox == 'c') status.profile = INPUT_HW_XBOX360;
-	else if (genConnected) status.profile = INPUT_HW_GENERIC_USB;
-	else if (ds4 == 'p') { status.profile = INPUT_HW_DS4; status.replugRequired = true; }
-	else if (xbox == 'p') { status.profile = INPUT_HW_XBOX360; status.replugRequired = true; }
-	else if (genReplug) { status.profile = INPUT_HW_GENERIC_USB; status.replugRequired = true; }
 
 	return status;
 }
 
+static const char * StateLabel(UsbInputState state) {
+	switch (state) {
+		case USBINPUT_STATE_CONNECTED:       return "connected";
+		case USBINPUT_STATE_REPLUG_REQUIRED: return "please replug";
+		default:                             return "not found";
+	}
+}
+
+// Lists the drivers that have something plugged in; nothing at all when there is no USB controller
 const char * WiiUsbPads::getStatusText() {
-	snprintf(statusText, sizeof(statusText), "Retrode: %s, XBOX360: %s, Hornet: %s, Mayflash: %s, DS4: %s, Tablet: %s",
-		Retrode_Status(), XBOX360_Status(), Hornet_Status(), Mayflash_Status(), DS4_Status(), Tablet_Status());
+	size_t length = 0;
+	statusText[0] = 0;
+
+	for (int i = 0; i < UsbInput_DriverCount(); i++) {
+		const UsbInputDriver * driver = UsbInput_DriverAt(i);
+		UsbInputState state = UsbInput_GetState(driver);
+		if (state == USBINPUT_STATE_NOT_FOUND)
+			continue;
+
+		int written = snprintf(statusText + length, sizeof(statusText) - length, "%s%s: %s",
+			length ? ", " : "", driver->name, StateLabel(state));
+		if (written < 0 || (size_t)written >= sizeof(statusText) - length) {
+			statusText[length] = 0; // no room for this one: keep what fits whole
+			break;
+		}
+		length += written;
+	}
+
 	return statusText;
 }

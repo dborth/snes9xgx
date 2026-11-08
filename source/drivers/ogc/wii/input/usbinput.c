@@ -18,6 +18,10 @@ static const UsbInputDriver * const drivers[] =
 };
 #define NUM_DRIVERS ((int)(sizeof(drivers) / sizeof(drivers[0])))
 
+#define USBINPUT_MAX_READERS      4    // UsbReaders in use at once (the slot is 4 bits of the read's token)
+#define USBINPUT_TOKEN_GEN_MASK   0x0FFFFFFFu
+#define USBINPUT_TOKEN_SLOT_SHIFT 28
+
 static usb_device_entry entries[USBINPUT_MAX_ENTRIES];
 static bool usbReady = false;
 static bool haveSignature = false;
@@ -27,6 +31,10 @@ static u8 retriesLeft = 0;
 static volatile bool rescanRequested = true;
 static volatile s32 closeQueue[USBINPUT_CLOSE_QUEUE];
 static volatile u8 closeCount = 0;
+// Per driver: a matching device is plugged in that could not be described
+static bool replugRequired[NUM_DRIVERS];
+static UsbReader *readers[USBINPUT_MAX_READERS];
+static u8 readerCount = 0;
 
 void UsbInput_Rescan(void)
 {
@@ -185,12 +193,20 @@ void UsbInput_Scan(void)
 	for (int i = 0; i < NUM_DRIVERS; ++i)
 	{
 		const UsbInputDriver *d = drivers[i];
-		if (d->attached() || !anyMatch(d, entries, count))
+		if (!anyMatch(d, entries, count))
 		{
+			replugRequired[i] = false; // unplugged: nothing left to replug
 			continue;
 		}
-		d->attach(entries, count);
-		if (!d->attached())
+		if (d->attached())
+		{
+			replugRequired[i] = false;
+			continue;
+		}
+		UsbAttachResult result = d->attach(entries, count);
+		bool attached = d->attached();
+		replugRequired[i] = !attached && result == USBINPUT_ATTACH_REPLUG;
+		if (!attached)
 		{
 			unresolved = true;
 		}
@@ -204,4 +220,169 @@ void UsbInput_Scan(void)
 	{
 		retriesLeft--;
 	}
+}
+
+/****************************************************************************
+ * Driver state
+ ***************************************************************************/
+
+int UsbInput_DriverCount(void)
+{
+	return NUM_DRIVERS;
+}
+
+const UsbInputDriver *UsbInput_DriverAt(int index)
+{
+	return (index >= 0 && index < NUM_DRIVERS) ? drivers[index] : NULL;
+}
+
+UsbInputState UsbInput_GetState(const UsbInputDriver *driver)
+{
+	bool connected = driver->connected ? driver->connected() : driver->attached();
+	if (connected)
+	{
+		return USBINPUT_STATE_CONNECTED;
+	}
+
+	for (int i = 0; i < NUM_DRIVERS; ++i)
+	{
+		if (drivers[i] == driver)
+		{
+			return replugRequired[i] ? USBINPUT_STATE_REPLUG_REQUIRED : USBINPUT_STATE_NOT_FOUND;
+		}
+	}
+	return USBINPUT_STATE_NOT_FOUND;
+}
+
+/****************************************************************************
+ * Opening devices
+ ***************************************************************************/
+
+UsbOpenResult UsbInput_OpenDevice(const usb_device_entry *entry, s32 *fd, usb_devdesc *desc)
+{
+	if (USB_OpenDevice(entry->device_id, entry->vid, entry->pid, fd) < 0)
+	{
+		return USBINPUT_OPEN_FAILED;
+	}
+
+	if (USB_GetDescriptors(*fd, desc) < 0)
+	{
+		// Only unplugging the device resets this
+		USB_CloseDevice(fd);
+		return USBINPUT_OPEN_NEEDS_REPLUG;
+	}
+
+	return USBINPUT_OPEN_OK;
+}
+
+void UsbInput_Discard(s32 *fd, usb_devdesc *desc)
+{
+	USB_FreeDescriptors(desc);
+	USB_CloseDevice(fd);
+}
+
+u8 UsbInput_FirstEndpoint(const usb_devdesc *desc)
+{
+	if (desc->configurations == NULL || desc->configurations->interfaces == NULL ||
+		desc->configurations->interfaces->endpoints == NULL)
+	{
+		return USBINPUT_NO_ENDPOINT;
+	}
+	return desc->configurations->interfaces->endpoints->bEndpointAddress;
+}
+
+/****************************************************************************
+ * Asynchronous reading
+ ***************************************************************************/
+
+// What a read is tagged with: which reader, and the generation it was submitted in
+static void *readToken(const UsbReader *reader)
+{
+	return (void *) (((u32) reader->slot << USBINPUT_TOKEN_SLOT_SHIFT) | (reader->generation & USBINPUT_TOKEN_GEN_MASK));
+}
+
+static int readCallback(int res, void *usrdata);
+
+static int submitRead(UsbReader *reader)
+{
+	return USB_ReadIntrMsgAsync(reader->fd, reader->endpoint, reader->size, reader->buf, &readCallback, readToken(reader));
+}
+
+static int readCallback(int res, void *usrdata)
+{
+	u32 token = (u32) usrdata;
+	u32 slot = token >> USBINPUT_TOKEN_SLOT_SHIFT;
+	if (slot >= readerCount)
+	{
+		return 1;
+	}
+
+	UsbReader *reader = readers[slot];
+
+	// A read submitted for a device since unplugged may complete after a quick
+	// replug: it must not touch the new device's state or resubmit
+	if ((token & USBINPUT_TOKEN_GEN_MASK) != (reader->generation & USBINPUT_TOKEN_GEN_MASK) || !reader->reading)
+	{
+		return 1;
+	}
+
+	if (res < 0)
+	{
+		// No transfer is pending any more: UsbReader_Start() restarts the loop
+		reader->reading = false;
+		return 1;
+	}
+
+	reader->onReport(reader->buf, res);
+
+	if (submitRead(reader) < 0)
+	{
+		reader->reading = false;
+	}
+	return 1;
+}
+
+static bool registerReader(UsbReader *reader)
+{
+	if (reader->registered)
+	{
+		return true;
+	}
+	if (readerCount >= USBINPUT_MAX_READERS)
+	{
+		return false;
+	}
+	reader->slot = readerCount;
+	readers[readerCount++] = reader;
+	reader->registered = true;
+	return true;
+}
+
+void UsbReader_Bind(UsbReader *reader, s32 fd, u8 endpoint)
+{
+	reader->reading = false;
+	reader->generation++;
+	reader->fd = fd;
+	reader->endpoint = endpoint;
+}
+
+void UsbReader_Start(UsbReader *reader)
+{
+	if (reader->reading || !registerReader(reader))
+	{
+		return;
+	}
+
+	reader->reading = true;
+	if (submitRead(reader) < 0)
+	{
+		// Nothing is pending: the next call tries again
+		reader->reading = false;
+	}
+}
+
+void UsbReader_Stop(UsbReader *reader)
+{
+	reader->reading = false;
+	reader->generation++;
 }

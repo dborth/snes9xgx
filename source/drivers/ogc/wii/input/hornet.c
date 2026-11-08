@@ -5,7 +5,6 @@
 #define HORNET_VID 0x0079
 #define HORNET_PID 0x0011
 
-static bool replugRequired = false;
 static s32 deviceId = 0;
 static u8 endpoint = 0;
 static u8 bMaxPacketSize = 0;
@@ -14,16 +13,6 @@ static u32 jp;
 static bool isHornetGamepad(usb_device_entry dev)
 {
 	return dev.vid == HORNET_VID && dev.pid == HORNET_PID;
-}
-
-static u8 getEndpoint(usb_devdesc devdesc)
-{
-	if (devdesc.configurations == NULL || devdesc.configurations->interfaces == NULL ||
-			devdesc.configurations->interfaces->endpoints == NULL)
-	{
-		return -1;
-	}
-	return devdesc.configurations->interfaces->endpoints->bEndpointAddress;
 }
 
 static int removal_cb(int result, void *usrdata)
@@ -39,15 +28,9 @@ static int removal_cb(int result, void *usrdata)
 	return 1;
 }
 
-static void attach(const usb_device_entry *dev_entry, u8 dev_count)
+static UsbAttachResult attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
-	if (deviceId != 0)
-	{
-		return;
-	}
-
-	// a replug request only stands while a controller that needs it is plugged in
-	replugRequired = false;
+	bool replug = false;
 
 	for (int i = 0; i < dev_count; ++i)
 	{
@@ -55,29 +38,25 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		{
 			continue;
 		}
-		s32 fd;
-		if (USB_OpenDevice(dev_entry[i].device_id, dev_entry[i].vid, dev_entry[i].pid, &fd) < 0)
-		{
-			continue;
-		}
 
+		s32 fd;
 		usb_devdesc devdesc;
-		if (USB_GetDescriptors(fd, &devdesc) < 0)
+		UsbOpenResult opened = UsbInput_OpenDevice(&dev_entry[i], &fd, &devdesc);
+		replug |= (opened == USBINPUT_OPEN_NEEDS_REPLUG);
+		if (opened != USBINPUT_OPEN_OK)
 		{
-			// You have to replug the controller!
-			replugRequired = true;
-			USB_CloseDevice(&fd);
 			continue;
 		}
 
 		deviceId = fd;
-		replugRequired = false;
-		endpoint = getEndpoint(devdesc);
+		endpoint = UsbInput_FirstEndpoint(&devdesc);
 		bMaxPacketSize = devdesc.bMaxPacketSize0;
 		USB_FreeDescriptors(&devdesc);
 		USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
 		break;
 	}
+
+	return UsbInput_AttachResult(deviceId != 0, replug);
 }
 
 static bool matches(const usb_device_entry *dev)
@@ -90,7 +69,7 @@ static bool isAttached(void)
 	return deviceId != 0;
 }
 
-const UsbInputDriver Hornet_UsbDriver = { "Hornet", &matches, &attach, &isAttached };
+const UsbInputDriver Hornet_UsbDriver = { "Hornet", &matches, &attach, &isAttached, NULL };
 
 void Hornet_ScanPads(void)
 {
@@ -154,11 +133,4 @@ u32 Hornet_ButtonsHeld(int chan)
 		return 0;
 	}
 	return jp;
-}
-
-char* Hornet_Status(void)
-{
-	if (replugRequired)
-		return "please replug";
-	return deviceId ? "connected" : "not found";
 }

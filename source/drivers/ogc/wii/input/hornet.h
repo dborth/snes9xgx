@@ -9,7 +9,6 @@ extern "C" {
 
 void Hornet_ScanPads(void);
 u32 Hornet_ButtonsHeld(int chan);
-char* Hornet_Status(void);
 
 #ifdef __cplusplus
 }

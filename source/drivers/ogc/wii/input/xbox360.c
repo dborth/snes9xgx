@@ -8,36 +8,20 @@
 #define XBOX360_PID 0x028e
 #define XBOX360_TRIGGER_THRESHOLD 128
 
-static bool replugRequired = false;
 static s32 deviceId = 0;
 static u8 endpoint_in = 0x81;
 static u8 endpoint_out = 0x01; // some controllers require 0x02 (updated below)
-static u8 bMaxPacketSize = 20;
 static u8 bConfigurationValue = 1;
-static u8 ATTRIBUTE_ALIGN(32) buf[32];
-static bool isReading = false;
 static u8 player = 0;
 
 // Written from the USB read callback, latched once per frame by XBOX360_ScanPads()
 static volatile u32 reportButtons = 0;
 static volatile s16 reportSticks[4] = { 0, 0, 0, 0 };  // raw [-32768, 32767]: lx, ly, rx, ry
 
-static u32 held = 0;
-static u32 down = 0;
-static u32 up = 0;
+static UsbInputButtons padButtons;
 static s16 sticks[4] = { 0, 0, 0, 0 };  // -128..127: lx, ly, rx, ry
 static bool xboxButtonDown = false;
 static bool nextPlayer = false;
-
-static u8 getEndpoint(usb_devdesc devdesc)
-{
-	if (devdesc.configurations == NULL || devdesc.configurations->interfaces == NULL ||
-			devdesc.configurations->interfaces->endpoints == NULL)
-	{
-		return -1;
-	}
-	return devdesc.configurations->interfaces->endpoints->bEndpointAddress;
-}
 
 static bool isXBOX360(usb_device_entry dev)
 {
@@ -46,46 +30,11 @@ static bool isXBOX360(usb_device_entry dev)
 
 static bool isXBOX360Gamepad(usb_devdesc devdesc)
 {
-	return devdesc.idVendor == XBOX360_VID && devdesc.idProduct == XBOX360_PID && getEndpoint(devdesc) == endpoint_in;
+	return devdesc.idVendor == XBOX360_VID && devdesc.idProduct == XBOX360_PID && UsbInput_FirstEndpoint(&devdesc) == endpoint_in;
 }
 
-static int read(s32 device_id, u8 endpoint, u8 bMaxPacketSize0);
-
-static void start_reading(s32 device_id, u8 endpoint, u8 bMaxPacketSize0)
+static void onReport(const u8 *report, s32 length)
 {
-	if (isReading)
-	{
-		// already reading
-		return;
-	}
-	isReading = true;
-	if (read(deviceId, endpoint_in, bMaxPacketSize0) < 0)
-	{
-		// no transfer is pending, allow the next scan to try again
-		isReading = false;
-	}
-}
-
-static void stop_reading()
-{
-	isReading = false;
-}
-
-static int read_cb(int res, void *usrdata)
-{
-	if (!isReading)
-	{
-		// stop reading
-		return 1;
-	}
-
-	if (res < 0)
-	{
-		// transfer error: no transfer is pending any more, XBOX360_ScanPads() restarts reading
-		isReading = false;
-		return 1;
-	}
-
 	// NOTE: The four startup messages have res = 3 and can be ignored
 
 	// Button layout
@@ -111,61 +60,49 @@ static int read_cb(int res, void *usrdata)
 	// RStickX=10/11,FF
 	// RStickY=12/13,FF
 
-	if (res == 20)
+	if (length == 20)
 	{
 		u32 b = 0;
-		b |= (buf[2] & 0x01) ? XBOX360_BUTTON_UP    : 0;
-		b |= (buf[2] & 0x02) ? XBOX360_BUTTON_DOWN  : 0;
-		b |= (buf[2] & 0x04) ? XBOX360_BUTTON_LEFT  : 0;
-		b |= (buf[2] & 0x08) ? XBOX360_BUTTON_RIGHT : 0;
-		b |= (buf[2] & 0x10) ? XBOX360_BUTTON_START : 0;
-		b |= (buf[2] & 0x20) ? XBOX360_BUTTON_BACK  : 0;
-		b |= (buf[2] & 0x40) ? XBOX360_BUTTON_L3    : 0;
-		b |= (buf[2] & 0x80) ? XBOX360_BUTTON_R3    : 0;
+		b |= (report[2] & 0x01) ? XBOX360_BUTTON_UP    : 0;
+		b |= (report[2] & 0x02) ? XBOX360_BUTTON_DOWN  : 0;
+		b |= (report[2] & 0x04) ? XBOX360_BUTTON_LEFT  : 0;
+		b |= (report[2] & 0x08) ? XBOX360_BUTTON_RIGHT : 0;
+		b |= (report[2] & 0x10) ? XBOX360_BUTTON_START : 0;
+		b |= (report[2] & 0x20) ? XBOX360_BUTTON_BACK  : 0;
+		b |= (report[2] & 0x40) ? XBOX360_BUTTON_L3    : 0;
+		b |= (report[2] & 0x80) ? XBOX360_BUTTON_R3    : 0;
 
-		b |= (buf[3] & 0x01) ? XBOX360_BUTTON_LB : 0;
-		b |= (buf[3] & 0x02) ? XBOX360_BUTTON_RB : 0;
-		b |= (buf[3] & 0x10) ? XBOX360_BUTTON_A  : 0;
-		b |= (buf[3] & 0x20) ? XBOX360_BUTTON_B  : 0;
-		b |= (buf[3] & 0x40) ? XBOX360_BUTTON_X  : 0;
-		b |= (buf[3] & 0x80) ? XBOX360_BUTTON_Y  : 0;
+		b |= (report[3] & 0x01) ? XBOX360_BUTTON_LB : 0;
+		b |= (report[3] & 0x02) ? XBOX360_BUTTON_RB : 0;
+		b |= (report[3] & 0x10) ? XBOX360_BUTTON_A  : 0;
+		b |= (report[3] & 0x20) ? XBOX360_BUTTON_B  : 0;
+		b |= (report[3] & 0x40) ? XBOX360_BUTTON_X  : 0;
+		b |= (report[3] & 0x80) ? XBOX360_BUTTON_Y  : 0;
 
 		// analog triggers, reported as buttons past a threshold
-		b |= (buf[4] > XBOX360_TRIGGER_THRESHOLD) ? XBOX360_BUTTON_LT : 0;
-		b |= (buf[5] > XBOX360_TRIGGER_THRESHOLD) ? XBOX360_BUTTON_RT : 0;
+		b |= (report[4] > XBOX360_TRIGGER_THRESHOLD) ? XBOX360_BUTTON_LT : 0;
+		b |= (report[5] > XBOX360_TRIGGER_THRESHOLD) ? XBOX360_BUTTON_RT : 0;
 
 		reportButtons = b;
 
 		// sticks stay analog: the caller turns them into directions where it wants that
-		reportSticks[0] = (int16_t)((buf[7]  << 8) | buf[6]);
-		reportSticks[1] = (int16_t)((buf[9]  << 8) | buf[8]);
-		reportSticks[2] = (int16_t)((buf[11] << 8) | buf[10]);
-		reportSticks[3] = (int16_t)((buf[13] << 8) | buf[12]);
+		reportSticks[0] = (int16_t)((report[7]  << 8) | report[6]);
+		reportSticks[1] = (int16_t)((report[9]  << 8) | report[8]);
+		reportSticks[2] = (int16_t)((report[11] << 8) | report[10]);
+		reportSticks[3] = (int16_t)((report[13] << 8) | report[12]);
 
 		// XBOX button to switch to next player, once per press (on the rising edge)
-		bool guideDown = (buf[3] & 0x04) == 0x04;
+		bool guideDown = (report[3] & 0x04) == 0x04;
 		if (guideDown && !xboxButtonDown)
 		{
 			nextPlayer = true;
 		}
 		xboxButtonDown = guideDown;
 	}
-
-	// read again
-	if (read(deviceId, endpoint_in, bMaxPacketSize) < 0)
-	{
-		isReading = false;
-	}
-
-	return 1;
 }
 
-// never call directly
-static int read(s32 device_id, u8 endpoint, u8 bMaxPacketSize0)
-{
-	// need to use async, because USB_ReadIntrMsg() blocks until a button is pressed
-	return USB_ReadIntrMsgAsync(device_id, endpoint, sizeof(buf), buf, &read_cb, NULL);
-}
+static u8 ATTRIBUTE_ALIGN(32) buf[32];
+static UsbReader reader = { .buf = buf, .size = sizeof(buf), .onReport = &onReport };
 
 static void turnOnLED()
 {
@@ -194,7 +131,7 @@ static int removal_cb(int result, void *usrdata)
 	s32 fd = (s32) usrdata;
 	if (fd == deviceId)
 	{
-		stop_reading();
+		UsbReader_Stop(&reader);
 		deviceId = 0;
 		reportButtons = 0;
 		for (int i = 0; i < 4; i++)
@@ -202,7 +139,7 @@ static int removal_cb(int result, void *usrdata)
 			reportSticks[i] = 0;
 			sticks[i] = 0;
 		}
-		held = down = up = 0;
+		UsbInputButtons_Clear(&padButtons);
 		xboxButtonDown = false;
 		nextPlayer = false;
 		UsbInput_DeferClose(fd);
@@ -251,15 +188,9 @@ void wiiusb_get_description(const usb_device_entry *device, usb_devdesc *devdesc
    }
 }
 
-static void attach(const usb_device_entry *dev_entry, u8 dev_count)
+static UsbAttachResult attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
-	if (deviceId != 0)
-	{
-		return;
-	}
-
-	// a replug request only stands while a controller that needs it is plugged in
-	replugRequired = false;
+	bool replug = false;
 
 	for (int i = 0; i < dev_count; ++i)
 	{
@@ -267,37 +198,32 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		{
 			continue;
 		}
+
 		s32 fd;
-		if (USB_OpenDevice(dev_entry[i].device_id, dev_entry[i].vid, dev_entry[i].pid, &fd) < 0)
-		{
-			continue;
-		}
-
 		usb_devdesc devdesc;
-		if (USB_GetDescriptors(fd, &devdesc) < 0)
+		UsbOpenResult opened = UsbInput_OpenDevice(&dev_entry[i], &fd, &devdesc);
+		replug |= (opened == USBINPUT_OPEN_NEEDS_REPLUG);
+		if (opened != USBINPUT_OPEN_OK)
 		{
-			// You have to replug the XBOX360 controller!
-			replugRequired = true;
-			USB_CloseDevice(&fd);
 			continue;
 		}
 
-		if (isXBOX360Gamepad(devdesc) && USB_SetConfiguration(fd, bConfigurationValue) >= 0)
+		if (!isXBOX360Gamepad(devdesc) || USB_SetConfiguration(fd, bConfigurationValue) < 0)
 		{
-			deviceId = fd;
-			replugRequired = false;
-			wiiusb_get_description(&dev_entry[i], &devdesc);
-			USB_FreeDescriptors(&devdesc);
-			turnOnLED();
-			USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
-			break;
+			UsbInput_Discard(&fd, &devdesc);
+			continue;
 		}
-		else
-		{
-			USB_FreeDescriptors(&devdesc);
-			USB_CloseDevice(&fd);
-		}
+
+		deviceId = fd;
+		wiiusb_get_description(&dev_entry[i], &devdesc);
+		USB_FreeDescriptors(&devdesc);
+		UsbReader_Bind(&reader, fd, endpoint_in);
+		turnOnLED();
+		USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
+		break;
 	}
+
+	return UsbInput_AttachResult(deviceId != 0, replug);
 }
 
 static bool matches(const usb_device_entry *dev)
@@ -310,7 +236,7 @@ static bool isAttached(void)
 	return deviceId != 0;
 }
 
-const UsbInputDriver XBOX360_UsbDriver = { "XBOX360", &matches, &attach, &isAttached };
+const UsbInputDriver XBOX360_UsbDriver = { "XBOX360", &matches, &attach, &isAttached, NULL };
 
 void XBOX360_ScanPads(void)
 {
@@ -327,12 +253,9 @@ void XBOX360_ScanPads(void)
 		increasePlayer();
 	}
 
-	start_reading(deviceId, endpoint_in, bMaxPacketSize);
+	UsbReader_Start(&reader);
 
-	u32 buttons = reportButtons;
-	down = buttons & ~held;
-	up = held & ~buttons;
-	held = buttons;
+	UsbInputButtons_Latch(&padButtons, reportButtons);
 
 	// raw 16-bit to -128..127, the same range as the other pads
 	for (int i = 0; i < 4; i++)
@@ -343,17 +266,17 @@ void XBOX360_ScanPads(void)
 
 u32 XBOX360_ButtonsHeld(int chan)
 {
-	return XBOX360_Connected(chan) ? held : 0;
+	return XBOX360_Connected(chan) ? padButtons.held : 0;
 }
 
 u32 XBOX360_ButtonsDown(int chan)
 {
-	return XBOX360_Connected(chan) ? down : 0;
+	return XBOX360_Connected(chan) ? padButtons.down : 0;
 }
 
 u32 XBOX360_ButtonsUp(int chan)
 {
-	return XBOX360_Connected(chan) ? up : 0;
+	return XBOX360_Connected(chan) ? padButtons.up : 0;
 }
 
 s16 XBOX360_lStickX(int chan) { return XBOX360_Connected(chan) ? sticks[0] : 0; }
@@ -364,11 +287,4 @@ s16 XBOX360_rStickY(int chan) { return XBOX360_Connected(chan) ? sticks[3] : 0; 
 bool XBOX360_Connected(int chan)
 {
 	return deviceId != 0 && chan == player;
-}
-
-char* XBOX360_Status(void)
-{
-	if (replugRequired)
-		return "please replug";
-	return deviceId ? "connected" : "not found";
 }

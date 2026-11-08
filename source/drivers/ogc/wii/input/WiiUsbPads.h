@@ -9,8 +9,9 @@
  * plain C; this is the only place that knows their APIs, and where each
  * device's native buttons are mapped to the generic input masks.
  *
- * To add a controller: write its C driver (register it in usbinput.c), then
- * add its scan, read and status handling in WiiUsbPads.cpp.
+ * To add a controller: write its C driver and register it in usbinput.c (the
+ * checklist is at the top of usbinput.h), then add its scan and read here.
+ * Its state and its entry in the credits line come from the registry.
  ***************************************************************************/
 #pragma once
 
@@ -35,7 +36,8 @@ class WiiUsbPads
 		//! The controller to show on the status strip (see InputUsbStatus)
 		InputUsbStatus getStatus() const;
 
-		//! One line with the state of every driver, for the credits screen
+		//! One line for the credits screen with the state of every driver that has a controller
+		//! plugged in, e.g. "Retrode: connected, DS4: please replug". Empty if there are none.
 		const char * getStatusText();
 
 	private:

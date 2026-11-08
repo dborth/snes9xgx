@@ -35,7 +35,6 @@ s16 DS4_lStickX();
 s16 DS4_lStickY();
 s16 DS4_rStickX();
 s16 DS4_rStickY();
-char* DS4_Status();
 
 #ifdef __cplusplus
 }

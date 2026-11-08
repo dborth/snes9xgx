@@ -6,7 +6,6 @@
 #define RETRODE_VID 0x0403
 #define RETRODE_PID 0x97C1
 
-static bool replugRequired = false;
 static s32 deviceId = 0;
 static u8 endpoint = 0;
 static u8 bMaxPacketSize = 0;
@@ -29,16 +28,6 @@ static bool isRetrodeGamepad(usb_devdesc devdesc)
 	return devdesc.configurations->interfaces->bInterfaceSubClass == 0;
 }
 
-static u8 getEndpoint(usb_devdesc devdesc)
-{
-	if (devdesc.configurations == NULL || devdesc.configurations->interfaces == NULL ||
-			devdesc.configurations->interfaces->endpoints == NULL)
-	{
-		return -1;
-	}
-	return devdesc.configurations->interfaces->endpoints->bEndpointAddress;
-}
-
 static int removal_cb(int result, void *usrdata)
 {
 	s32 fd = (s32) usrdata;
@@ -52,15 +41,9 @@ static int removal_cb(int result, void *usrdata)
 	return 1;
 }
 
-static void attach(const usb_device_entry *dev_entry, u8 dev_count)
+static UsbAttachResult attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
-	if (deviceId != 0)
-	{
-		return;
-	}
-
-	// a replug request only stands while a controller that needs it is plugged in
-	replugRequired = false;
+	bool replug = false;
 
 	// Retrode has two entries in USB_GetDeviceList(), one for gamepads and one for SNES mouse
 	for (int i = 0; i < dev_count; ++i)
@@ -69,37 +52,31 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		{
 			continue;
 		}
+
 		s32 fd;
-		if (USB_OpenDevice(dev_entry[i].device_id, dev_entry[i].vid, dev_entry[i].pid, &fd) < 0)
-		{
-			continue;
-		}
-
 		usb_devdesc devdesc;
-		if (USB_GetDescriptors(fd, &devdesc) < 0)
+		UsbOpenResult opened = UsbInput_OpenDevice(&dev_entry[i], &fd, &devdesc);
+		replug |= (opened == USBINPUT_OPEN_NEEDS_REPLUG);
+		if (opened != USBINPUT_OPEN_OK)
 		{
-			// You have to replug the Retrode controller!
-			replugRequired = true;
-			USB_CloseDevice(&fd);
 			continue;
 		}
 
-		if (isRetrodeGamepad(devdesc))
+		if (!isRetrodeGamepad(devdesc))
 		{
-			deviceId = fd;
-			replugRequired = false;
-			endpoint = getEndpoint(devdesc);
-			bMaxPacketSize = devdesc.bMaxPacketSize0;
-			USB_FreeDescriptors(&devdesc);
-			USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
-			break;
+			UsbInput_Discard(&fd, &devdesc);
+			continue;
 		}
-		else
-		{
-			USB_FreeDescriptors(&devdesc);
-			USB_CloseDevice(&fd);
-		}
+
+		deviceId = fd;
+		endpoint = UsbInput_FirstEndpoint(&devdesc);
+		bMaxPacketSize = devdesc.bMaxPacketSize0;
+		USB_FreeDescriptors(&devdesc);
+		USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
+		break;
 	}
+
+	return UsbInput_AttachResult(deviceId != 0, replug);
 }
 
 static bool matches(const usb_device_entry *dev)
@@ -112,7 +89,7 @@ static bool isAttached(void)
 	return deviceId != 0;
 }
 
-const UsbInputDriver Retrode_UsbDriver = { "Retrode", &matches, &attach, &isAttached };
+const UsbInputDriver Retrode_UsbDriver = { "Retrode", &matches, &attach, &isAttached, NULL };
 
 void Retrode_ScanPads(void)
 {
@@ -184,11 +161,4 @@ u32 Retrode_ButtonsHeld(int chan)
 		return 0;
 	}
 	return jpRetrode[chan];
-}
-
-char* Retrode_Status(void)
-{
-	if (replugRequired)
-		return "please replug";
-	return deviceId ? "connected" : "not found";
 }

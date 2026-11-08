@@ -18,21 +18,15 @@
 #define DS4_MAX_PLAYERS 4
 #define DS4_PLAYER_SWITCH_HOLD_FRAMES 60
 
-static bool replugRequired = false;
 static s32 deviceId = 0;
-static u8 endpointIn = 0;
 static u8 endpointOut = 0;
-static u8 ATTRIBUTE_ALIGN(32) buf[64];
-static bool isReading = false;
 static u8 player = 0;
 static u32 touchpadHeldFrames = 0;
 
 static volatile u32 reportButtons = 0;
 static volatile u8 reportSticks[4] = { DS4_STICK_CENTER, DS4_STICK_CENTER, DS4_STICK_CENTER, DS4_STICK_CENTER };
 
-static u32 held = 0;
-static u32 down = 0;
-static u32 up = 0;
+static UsbInputButtons padButtons;
 static s16 sticks[4] = { 0, 0, 0, 0 };
 
 static const u32 hatDirections[DS4_HAT_NEUTRAL] = {
@@ -58,9 +52,9 @@ static bool isDS4(usb_device_entry dev)
 	return dev.vid == DS4_VID && (dev.pid == DS4_V1_PID || dev.pid == DS4_V2_PID);
 }
 
-static bool findEndpoints(const usb_devdesc *devdesc)
+static bool findEndpoints(const usb_devdesc *devdesc, u8 *endpointIn)
 {
-	endpointIn = 0;
+	*endpointIn = 0;
 	endpointOut = 0;
 
 	if (devdesc->configurations == NULL)
@@ -91,7 +85,7 @@ static bool findEndpoints(const usb_devdesc *devdesc)
 			}
 			if ((ep->bEndpointAddress & 0x80) == USB_ENDPOINT_IN)
 			{
-				endpointIn = ep->bEndpointAddress;
+				*endpointIn = ep->bEndpointAddress;
 			}
 			else
 			{
@@ -99,7 +93,7 @@ static bool findEndpoints(const usb_devdesc *devdesc)
 			}
 		}
 
-		if (endpointIn != 0)
+		if (*endpointIn != 0)
 		{
 			return true;
 		}
@@ -138,60 +132,20 @@ static u32 parseButtons(const u8 *report)
 	return buttons;
 }
 
-static int read();
-
-static int read_cb(int res, void *usrdata)
+static void onReport(const u8 *report, s32 length)
 {
-	if (!isReading)
-	{
-		return 1;
-	}
-
-	if (res < 0)
-	{
-		isReading = false;
-		return 1;
-	}
-
-	if (res >= DS4_INPUT_REPORT_MIN_SIZE && buf[0] == DS4_INPUT_REPORT_ID)
+	if (length >= DS4_INPUT_REPORT_MIN_SIZE && report[0] == DS4_INPUT_REPORT_ID)
 	{
 		for (int i = 0; i < 4; ++i)
 		{
-			reportSticks[i] = buf[1 + i];
+			reportSticks[i] = report[1 + i];
 		}
-		reportButtons = parseButtons(buf);
-	}
-
-	if (read() < 0)
-	{
-		isReading = false;
-	}
-
-	return 1;
-}
-
-static int read()
-{
-	return USB_ReadIntrMsgAsync(deviceId, endpointIn, sizeof(buf), buf, &read_cb, NULL);
-}
-
-static void startReading()
-{
-	if (isReading)
-	{
-		return;
-	}
-	isReading = true;
-	if (read() < 0)
-	{
-		isReading = false;
+		reportButtons = parseButtons(report);
 	}
 }
 
-static void stopReading()
-{
-	isReading = false;
-}
+static u8 ATTRIBUTE_ALIGN(32) buf[64];
+static UsbReader reader = { .buf = buf, .size = sizeof(buf), .onReport = &onReport };
 
 static void resetState()
 {
@@ -201,7 +155,7 @@ static void resetState()
 		reportSticks[i] = DS4_STICK_CENTER;
 		sticks[i] = 0;
 	}
-	held = down = up = 0;
+	UsbInputButtons_Clear(&padButtons);
 	touchpadHeldFrames = 0;
 }
 
@@ -232,7 +186,7 @@ static int removal_cb(int result, void *usrdata)
 	s32 fd = (s32) usrdata;
 	if (fd == deviceId)
 	{
-		stopReading();
+		UsbReader_Stop(&reader);
 		deviceId = 0;
 		UsbInput_DeferClose(fd);
 		resetState();
@@ -241,15 +195,9 @@ static int removal_cb(int result, void *usrdata)
 	return 1;
 }
 
-static void attach(const usb_device_entry *dev_entry, u8 dev_count)
+static UsbAttachResult attach(const usb_device_entry *dev_entry, u8 dev_count)
 {
-	if (deviceId != 0)
-	{
-		return;
-	}
-
-	// a replug request only stands while a controller that needs it is plugged in
-	replugRequired = false;
+	bool replug = false;
 
 	for (int i = 0; i < dev_count; ++i)
 	{
@@ -257,36 +205,34 @@ static void attach(const usb_device_entry *dev_entry, u8 dev_count)
 		{
 			continue;
 		}
+
 		s32 fd;
-		if (USB_OpenDevice(dev_entry[i].device_id, dev_entry[i].vid, dev_entry[i].pid, &fd) < 0)
-		{
-			continue;
-		}
-
 		usb_devdesc devdesc;
-		if (USB_GetDescriptors(fd, &devdesc) < 0)
+		UsbOpenResult opened = UsbInput_OpenDevice(&dev_entry[i], &fd, &devdesc);
+		replug |= (opened == USBINPUT_OPEN_NEEDS_REPLUG);
+		if (opened != USBINPUT_OPEN_OK)
 		{
-			replugRequired = true;
-			USB_CloseDevice(&fd);
 			continue;
 		}
 
-		bool hasEndpoints = findEndpoints(&devdesc);
-		USB_FreeDescriptors(&devdesc);
-
+		u8 endpointIn;
+		bool hasEndpoints = findEndpoints(&devdesc, &endpointIn);
 		if (!hasEndpoints)
 		{
-			USB_CloseDevice(&fd);
+			UsbInput_Discard(&fd, &devdesc);
 			continue;
 		}
+		USB_FreeDescriptors(&devdesc);
 
 		deviceId = fd;
-		replugRequired = false;
+		UsbReader_Bind(&reader, fd, endpointIn);
 		resetState();
 		updateLightbar();
 		USB_DeviceRemovalNotifyAsync(fd, &removal_cb, (void*) fd);
 		break;
 	}
+
+	return UsbInput_AttachResult(deviceId != 0, replug);
 }
 
 static bool matches(const usb_device_entry *dev)
@@ -299,7 +245,7 @@ static bool isAttached(void)
 	return deviceId != 0;
 }
 
-const UsbInputDriver DS4_UsbDriver = { "DS4", &matches, &attach, &isAttached };
+const UsbInputDriver DS4_UsbDriver = { "DS4", &matches, &attach, &isAttached, NULL };
 
 void DS4_ScanPads()
 {
@@ -308,19 +254,16 @@ void DS4_ScanPads()
 		return;
 	}
 
-	startReading();
+	UsbReader_Start(&reader);
 
-	u32 buttons = reportButtons;
-	down = buttons & ~held;
-	up = held & ~buttons;
-	held = buttons;
+	UsbInputButtons_Latch(&padButtons, reportButtons);
 
 	sticks[0] = (s16)reportSticks[0] - DS4_STICK_CENTER;
 	sticks[1] = DS4_STICK_CENTER - (s16)reportSticks[1];
 	sticks[2] = (s16)reportSticks[2] - DS4_STICK_CENTER;
 	sticks[3] = DS4_STICK_CENTER - (s16)reportSticks[3];
 
-	if ((held & DS4_BUTTON_TOUCHPAD) == 0)
+	if ((padButtons.held & DS4_BUTTON_TOUCHPAD) == 0)
 	{
 		touchpadHeldFrames = 0;
 	}
@@ -337,17 +280,17 @@ bool DS4_Connected(int chan)
 
 u32 DS4_ButtonsHeld()
 {
-	return held;
+	return padButtons.held;
 }
 
 u32 DS4_ButtonsDown()
 {
-	return down;
+	return padButtons.down;
 }
 
 u32 DS4_ButtonsUp()
 {
-	return up;
+	return padButtons.up;
 }
 
 s16 DS4_lStickX()
@@ -368,11 +311,4 @@ s16 DS4_rStickX()
 s16 DS4_rStickY()
 {
 	return sticks[3];
-}
-
-char* DS4_Status()
-{
-	if (replugRequired)
-		return "please replug";
-	return deviceId ? "connected" : "not found";
 }

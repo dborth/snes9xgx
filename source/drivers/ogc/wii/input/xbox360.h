@@ -27,7 +27,6 @@ extern "C" {
 
 void XBOX360_ScanPads(void);
 bool XBOX360_Connected(int chan);
-char* XBOX360_Status(void);
 
 // Button state, latched once per XBOX360_ScanPads(). All of these return 0 for any
 // channel other than the one the controller is currently assigned to.
