@@ -47,6 +47,7 @@ class MenuButtonShape : public GuiShape
 		}
 
 	private:
+		friend class MenuButton;
 		Kind kind;
 
 		static int widthOf(Kind k)
@@ -97,6 +98,122 @@ class MenuArrowImage : public GuiShape
 			setArrow(dir, MenuArrowRest(), MenuArrowLit());
 			setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 		}
+};
+
+//!The "A" trigger every menu button answers to. The menu sets it once, when it is created, so a MenuButton
+//!doesn't need it passed in
+inline GuiTrigger *& MenuPrimaryTrigger()
+{
+	static GuiTrigger * trigger = nullptr;
+	return trigger;
+}
+
+//!A standard menu button: a MenuButtonShape face with a black label, answering to the primary trigger (and to
+//!extra, if given) and growing when highlighted. It owns its label and face, so declaring one is the whole job:
+//!
+//!   MenuButton backBtn(MenuButtonShape::NORMAL, "Go Back", ALIGN_H::LEFT, ALIGN_V::BOTTOM, 30, -35, &trigB);
+//!
+//!The label stays reachable as labelTxt (setText(), setColor()) and the face as face.
+class MenuButton : public GuiButton
+{
+	public:
+		MenuButton(MenuButtonShape::Kind kind, const char * text, ALIGN_H h, ALIGN_V v, int x, int y,
+			GuiTrigger * extra = nullptr, int fontSize = 22) :
+			GuiButton(MenuButtonShape::widthOf(kind), MenuButtonShape::heightOf(kind)),
+			labelTxt(text, fontSize, (PixelColor){0, 0, 0, 255}), face(kind)
+		{
+			setAlignment(h, v);
+			setPosition(x, y);
+			setLabel(&labelTxt);
+			setImage(&face);
+			setTrigger(MenuPrimaryTrigger());
+			if(extra)
+				setTrigger(extra);
+			setEffectGrow();
+		}
+
+		//!The button points at its own label and face, so it can't be copied
+		MenuButton(const MenuButton&) = delete;
+		MenuButton& operator=(const MenuButton&) = delete;
+
+		GuiText labelTxt;
+		MenuButtonShape face;
+};
+
+//!A large tile button: icon above a wrapped label, centered at the top of its window, placed by x and y.
+//!wrapPad is how much narrower than the button the label wraps.
+//!
+//!   MenuLargeButton videoBtn("Video", &iconVideo, 100, 120);
+class MenuLargeButton : public GuiButton
+{
+	public:
+		MenuLargeButton(const char * text, GuiImageData * iconData, int x, int y, int wrapPad = 20) :
+			GuiButton(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H),
+			labelTxt(text, 22, (PixelColor){0, 0, 0, 255}), face(MenuButtonShape::LARGE), iconImg(iconData)
+		{
+			labelTxt.setWrap(true, MENU_BTN_LARGE_W - wrapPad);
+			setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
+			setPosition(x, y);
+			setLabel(&labelTxt);
+			setImage(&face);
+			setIcon(&iconImg);
+			setTrigger(MenuPrimaryTrigger());
+			setEffectGrow();
+		}
+
+		//!The button points at its own label, face and icon, so it can't be copied
+		MenuLargeButton(const MenuLargeButton&) = delete;
+		MenuLargeButton& operator=(const MenuLargeButton&) = delete;
+
+		GuiText labelTxt;
+		MenuButtonShape face;
+		GuiImage iconImg;
+};
+
+//!A page-turning arrow button. The arrow points in dir and the button answers to that direction on the pad
+//!whenever it has focus, as well as to a click; onClick runs when the button is updated. It plays no sounds
+//!and can't be selected.
+//!
+//!   MenuArrowButton arrowLeftBtn(SHAPE::TRIANGLE_LEFT, ALIGN_H::CENTRE, ALIGN_V::MIDDLE, 50, 0, ScreenZoomWindowLeftClick);
+class MenuArrowButton : public GuiButton
+{
+	public:
+		MenuArrowButton(SHAPE dir, ALIGN_H h, ALIGN_V v, int x, int y, UpdateCallback onClick) :
+			GuiButton(isHorizontal(dir) ? MENU_ARROW_HIT_SHORT : MENU_ARROW_HIT_LONG,
+				isHorizontal(dir) ? MENU_ARROW_HIT_LONG : MENU_ARROW_HIT_SHORT),
+			face(dir)
+		{
+			setSoundOver(nullptr);
+			setSoundClick(nullptr);
+			setImage(&face);
+			setAlignment(h, v);
+			setPosition(x, y);
+			setTrigger(MenuPrimaryTrigger());
+			key.setButtonOnlyInFocusTrigger(-1, padButton(dir));
+			setTrigger(&key);
+			setSelectable(false);
+			setUpdateCallback(onClick);
+		}
+
+		//!The button points at its own face and trigger, so it can't be copied
+		MenuArrowButton(const MenuArrowButton&) = delete;
+		MenuArrowButton& operator=(const MenuArrowButton&) = delete;
+
+	private:
+		static bool isHorizontal(SHAPE dir) { return dir == SHAPE::TRIANGLE_LEFT || dir == SHAPE::TRIANGLE_RIGHT; }
+		static int padButton(SHAPE dir)
+		{
+			switch(dir)
+			{
+				case SHAPE::TRIANGLE_LEFT: return INPUT_BTN_LEFT;
+				case SHAPE::TRIANGLE_RIGHT: return INPUT_BTN_RIGHT;
+				case SHAPE::TRIANGLE_UP: return INPUT_BTN_UP;
+				default: return INPUT_BTN_DOWN;
+			}
+		}
+
+		MenuArrowImage face;
+		GuiTrigger key;
 };
 
 class MenuIconData : public GuiImageData

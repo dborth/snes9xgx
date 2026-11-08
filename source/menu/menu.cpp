@@ -656,15 +656,7 @@ static int WindowPrompt(const char *title, const char *msg, const char *btn1Labe
 	btn1.setState(STATE::SELECTED);
 	btn1.setEffectGrow();
 
-	GuiText btn2Txt(btn2Label, 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape btn2Img(MenuButtonShape::NORMAL);
-	GuiButton btn2(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
-	btn2.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
-	btn2.setPosition(-20, -25);
-	btn2.setLabel(&btn2Txt);
-	btn2.setImage(&btn2Img);
-	btn2.setTrigger(trigA);
-	btn2.setEffectGrow();
+	MenuButton btn2(MenuButtonShape::NORMAL, btn2Label, ALIGN_H::RIGHT, ALIGN_V::BOTTOM, -20, -25);
 
 	promptWindow.append(&dialogBoxImg);
 	promptWindow.append(&titleTxt);
@@ -857,15 +849,7 @@ static void OnScreenKeyboard(char * var, uint32_t maxlen)
 	okBtn.setTrigger(trigA);
 	okBtn.setEffectGrow();
 
-	GuiText cancelBtnTxt("Cancel", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape cancelBtnImg(MenuButtonShape::NORMAL);
-	GuiButton cancelBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
-	cancelBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
-	cancelBtn.setPosition(-25, -25);
-	cancelBtn.setLabel(&cancelBtnTxt);
-	cancelBtn.setImage(&cancelBtnImg);
-	cancelBtn.setTrigger(trigA);
-	cancelBtn.setEffectGrow();
+	MenuButton cancelBtn(MenuButtonShape::NORMAL, "Cancel", ALIGN_H::RIGHT, ALIGN_V::BOTTOM, -25, -25);
 
 	MenuKeyboardBox keyboardBox;
 	keyboard.insert(&keyboardBox, 0);
@@ -926,15 +910,7 @@ SettingWindow(const char * title, GuiWindow * w)
 	okBtn.setTrigger(trigA);
 	okBtn.setEffectGrow();
 
-	GuiText cancelBtnTxt("Cancel", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape cancelBtnImg(MenuButtonShape::NORMAL);
-	GuiButton cancelBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
-	cancelBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
-	cancelBtn.setPosition(-20, -25);
-	cancelBtn.setLabel(&cancelBtnTxt);
-	cancelBtn.setImage(&cancelBtnImg);
-	cancelBtn.setTrigger(trigA);
-	cancelBtn.setEffectGrow();
+	MenuButton cancelBtn(MenuButtonShape::NORMAL, "Cancel", ALIGN_H::RIGHT, ALIGN_V::BOTTOM, -20, -25);
 
 	promptWindow.append(&dialogBoxImg);
 	promptWindow.append(&titleTxt);
@@ -1430,33 +1406,9 @@ static void PlayerMappingWindow(int chan)
 	GuiWindow * w = new GuiWindow(300,250);
 	w->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 
-	GuiTrigger trigLeft;
-	trigLeft.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_LEFT);
+	MenuArrowButton arrowLeftBtn(SHAPE::TRIANGLE_LEFT, ALIGN_H::LEFT, ALIGN_V::MIDDLE, 0, 0, PlayerMappingWindowLeftClick);
 
-	GuiTrigger trigRight;
-	trigRight.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_RIGHT);
-
-	MenuArrowImage arrowLeftImg(SHAPE::TRIANGLE_LEFT);
-	GuiButton arrowLeftBtn(MENU_ARROW_HIT_SHORT, MENU_ARROW_HIT_LONG);
-	arrowLeftBtn.setSoundOver(nullptr);
-	arrowLeftBtn.setSoundClick(nullptr);
-	arrowLeftBtn.setImage(&arrowLeftImg);
-	arrowLeftBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-	arrowLeftBtn.setTrigger(trigA);
-	arrowLeftBtn.setTrigger(&trigLeft);
-	arrowLeftBtn.setSelectable(false);
-	arrowLeftBtn.setUpdateCallback(PlayerMappingWindowLeftClick);
-
-	MenuArrowImage arrowRightImg(SHAPE::TRIANGLE_RIGHT);
-	GuiButton arrowRightBtn(MENU_ARROW_HIT_SHORT, MENU_ARROW_HIT_LONG);
-	arrowRightBtn.setSoundOver(nullptr);
-	arrowRightBtn.setSoundClick(nullptr);
-	arrowRightBtn.setImage(&arrowRightImg);
-	arrowRightBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
-	arrowRightBtn.setTrigger(trigA);
-	arrowRightBtn.setTrigger(&trigRight);
-	arrowRightBtn.setSelectable(false);
-	arrowRightBtn.setUpdateCallback(PlayerMappingWindowRightClick);
+	MenuArrowButton arrowRightBtn(SHAPE::TRIANGLE_RIGHT, ALIGN_H::RIGHT, ALIGN_V::MIDDLE, 0, 0, PlayerMappingWindowRightClick);
 	
 	settingText = new GuiText(TrFormat("Player %d", playerMapping[playerMappingChan]+1).c_str(), 22, (PixelColor){0, 0, 0, 255});
 
@@ -1540,42 +1492,11 @@ static int MenuGame()
 	trigHome.setButtonOnlyTrigger(-1, INPUT_BTN_HOME);
 	trigB.setSecondaryTrigger();
 	
-	GuiText mappingBtnTxt("Button Mappings", 22, (PixelColor){0, 0, 0, 255});
-	mappingBtnTxt.setWrap(true, MENU_BTN_LARGE_W-30);
-	MenuButtonShape mappingBtnImg(MenuButtonShape::LARGE);
-	GuiImage mappingBtnIcon(&iconMappings);
-	GuiButton mappingBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	mappingBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	mappingBtn.setPosition(-200, 150);
-	mappingBtn.setLabel(&mappingBtnTxt);
-	mappingBtn.setImage(&mappingBtnImg);
-	mappingBtn.setIcon(&mappingBtnIcon);
-	mappingBtn.setTrigger(trigA);
-	mappingBtn.setEffectGrow();
+	MenuLargeButton mappingBtn("Button Mappings", &iconMappings, -200, 150, 30);
 
-	GuiText saveBtnTxt("Saves", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape saveBtnImg(MenuButtonShape::LARGE);
-	GuiImage saveBtnIcon(&iconSave);
-	GuiButton saveBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	saveBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	saveBtn.setPosition(0, 150);
-	saveBtn.setLabel(&saveBtnTxt);
-	saveBtn.setImage(&saveBtnImg);
-	saveBtn.setIcon(&saveBtnIcon);
-	saveBtn.setTrigger(trigA);
-	saveBtn.setEffectGrow();
+	MenuLargeButton saveBtn("Saves", &iconSave, 0, 150);
 
-	GuiText resetBtnTxt("Reset", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape resetBtnImg(MenuButtonShape::LARGE);
-	GuiImage resetBtnIcon(&iconReset);
-	GuiButton resetBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	resetBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	resetBtn.setPosition(200, 150);
-	resetBtn.setLabel(&resetBtnTxt);
-	resetBtn.setImage(&resetBtnImg);
-	resetBtn.setIcon(&resetBtnIcon);
-	resetBtn.setTrigger(trigA);
-	resetBtn.setEffectGrow();
+	MenuLargeButton resetBtn("Reset", &iconReset, 200, 150);
 
 	// Second row: the controller chip (a popover) and Game Settings, centred as a pair
 	UiScope ui;
@@ -1585,40 +1506,12 @@ static int MenuGame()
 	controllerChip.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	controllerChip.setPosition(-120, 296);
 
-	GuiText gameSettingsBtnTxt("Game Settings", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape gameSettingsBtnImg(MenuButtonShape::NORMAL);
-	GuiButton gameSettingsBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
-	gameSettingsBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	gameSettingsBtn.setPosition(120, 290);
-	gameSettingsBtn.setLabel(&gameSettingsBtnTxt);
-	gameSettingsBtn.setImage(&gameSettingsBtnImg);
-	gameSettingsBtn.setTrigger(trigA);
-	gameSettingsBtn.setEffectGrow();
+	MenuButton gameSettingsBtn(MenuButtonShape::NORMAL, "Game Settings", ALIGN_H::CENTRE, ALIGN_V::TOP, 120, 290);
 
-	GuiText mainmenuBtnTxt("Main Menu", 22, (PixelColor){0, 0, 0, 255});
-	if(EmuSettings.autoloadGame) {
-		mainmenuBtnTxt.setText("Exit");
-	}
-	MenuButtonShape mainmenuBtnImg(MenuButtonShape::NORMAL);
-	GuiButton mainmenuBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
-	mainmenuBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
-	mainmenuBtn.setPosition(0, -35);
-	mainmenuBtn.setLabel(&mainmenuBtnTxt);
-	mainmenuBtn.setImage(&mainmenuBtnImg);
-	mainmenuBtn.setTrigger(trigA);
-	mainmenuBtn.setEffectGrow();
+	MenuButton mainmenuBtn(MenuButtonShape::NORMAL, EmuSettings.autoloadGame ? "Exit" : "Main Menu", ALIGN_H::CENTRE, ALIGN_V::BOTTOM, 0, -35);
 
-	GuiText closeBtnTxt("Close", 20, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape closeBtnImg(MenuButtonShape::SMALL);
-	GuiButton closeBtn(MENU_BTN_SMALL_W, MENU_BTN_SMALL_H);
-	closeBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
-	closeBtn.setPosition(-50, 35);
-	closeBtn.setLabel(&closeBtnTxt);
-	closeBtn.setImage(&closeBtnImg);
-	closeBtn.setTrigger(trigA);
-	closeBtn.setTrigger(&trigHome);
+	MenuButton closeBtn(MenuButtonShape::SMALL, "Close", ALIGN_H::RIGHT, ALIGN_V::TOP, -50, 35, &trigHome, 20);
 	closeBtn.setTrigger(&trigB);
-	closeBtn.setEffectGrow();
 
 	#ifndef HW_DOL
 	ControllerStatus controllerStatus(trigA);
@@ -2986,84 +2879,21 @@ static int MenuGameSettings()
 	trigHome.setButtonOnlyTrigger(-1, INPUT_BTN_HOME);
 	trigB.setSecondaryTrigger();
 
-	GuiText emulationBtnTxt("Emulation", 22, (PixelColor){0, 0, 0, 255});
-	emulationBtnTxt.setWrap(true, MENU_BTN_LARGE_W-20);
-	MenuButtonShape emulationBtnImg(MenuButtonShape::LARGE);
-	GuiImage emulationBtnIcon(&iconEmulation);
-	GuiButton emulationBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	emulationBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	emulationBtn.setPosition(-100, 120);
-	emulationBtn.setLabel(&emulationBtnTxt);
-	emulationBtn.setImage(&emulationBtnImg);
-	emulationBtn.setIcon(&emulationBtnIcon);
-	emulationBtn.setTrigger(trigA);
-	emulationBtn.setEffectGrow();
+	MenuLargeButton emulationBtn("Emulation", &iconEmulation, -100, 120);
 	
-	GuiText videoBtnTxt("Video", 22, (PixelColor){0, 0, 0, 255});
-	videoBtnTxt.setWrap(true, MENU_BTN_LARGE_W-20);
-	MenuButtonShape videoBtnImg(MenuButtonShape::LARGE);
-	GuiImage videoBtnIcon(&iconVideo);
-	GuiButton videoBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	videoBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	videoBtn.setPosition(100, 120);
-	videoBtn.setLabel(&videoBtnTxt);
-	videoBtn.setImage(&videoBtnImg);
-	videoBtn.setIcon(&videoBtnIcon);
-	videoBtn.setTrigger(trigA);
-	videoBtn.setEffectGrow();
+	MenuLargeButton videoBtn("Video", &iconVideo, 100, 120);
 
-	GuiText screenshotBtnTxt("Screenshot", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape screenshotBtnImg(MenuButtonShape::LARGE);
-	GuiImage screenshotBtnIcon(&iconScreenshot);
-	GuiButton screenshotBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	screenshotBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	screenshotBtn.setPosition(-100, 250);
-	screenshotBtn.setLabel(&screenshotBtnTxt);
-	screenshotBtn.setImage(&screenshotBtnImg);
-	screenshotBtn.setIcon(&screenshotBtnIcon);
-	screenshotBtn.setTrigger(trigA);
-	screenshotBtn.setEffectGrow();
+	MenuLargeButton screenshotBtn("Screenshot", &iconScreenshot, -100, 250);
 	
 	// With no cheats loaded the button says so (it can still be clicked, and explains)
 	const bool haveCheats = Cheat.g.size() > 0;
-	GuiText cheatsBtnTxt(haveCheats ? "Cheats" : "Cheats (none)", 22, (PixelColor){0, 0, 0, 255});
+	MenuLargeButton cheatsBtn(haveCheats ? "Cheats" : "Cheats (none)", &iconCheats, 100, 250);
 	if(!haveCheats)
-	{
-		cheatsBtnTxt.setWrap(true, MENU_BTN_LARGE_W-20);
-		cheatsBtnTxt.setColor((PixelColor){110, 110, 110, 255});
-	}
-	MenuButtonShape cheatsBtnImg(MenuButtonShape::LARGE);
-	GuiImage cheatsBtnIcon(&iconCheats);
-	GuiButton cheatsBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	cheatsBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	cheatsBtn.setPosition(100, 250);
-	cheatsBtn.setLabel(&cheatsBtnTxt);
-	cheatsBtn.setImage(&cheatsBtnImg);
-	cheatsBtn.setIcon(&cheatsBtnIcon);
-	cheatsBtn.setTrigger(trigA);
-	cheatsBtn.setEffectGrow();
+		cheatsBtn.labelTxt.setColor((PixelColor){110, 110, 110, 255});
 
-	GuiText closeBtnTxt("Close", 20, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape closeBtnImg(MenuButtonShape::SMALL);
-	GuiButton closeBtn(MENU_BTN_SMALL_W, MENU_BTN_SMALL_H);
-	closeBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
-	closeBtn.setPosition(-50, 35);
-	closeBtn.setLabel(&closeBtnTxt);
-	closeBtn.setImage(&closeBtnImg);
-	closeBtn.setTrigger(trigA);
-	closeBtn.setTrigger(&trigHome);
-	closeBtn.setEffectGrow();
+	MenuButton closeBtn(MenuButtonShape::SMALL, "Close", ALIGN_H::RIGHT, ALIGN_V::TOP, -50, 35, &trigHome, 20);
 
-	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape backBtnImg(MenuButtonShape::NORMAL);
-	GuiButton backBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
-	backBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	backBtn.setPosition(50, -35);
-	backBtn.setLabel(&backBtnTxt);
-	backBtn.setImage(&backBtnImg);
-	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(&trigB);
-	backBtn.setEffectGrow();
+	MenuButton backBtn(MenuButtonShape::NORMAL, "Go Back", ALIGN_H::LEFT, ALIGN_V::BOTTOM, 50, -35, &trigB);
 
 	GuiWindow w(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
 	w.append(&titleTxt);
@@ -3182,16 +3012,7 @@ static int MenuGameCheats()
 	GuiTrigger trigB;
 	trigB.setSecondaryTrigger();
 
-	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape backBtnImg(MenuButtonShape::NORMAL);
-	GuiButton backBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
-	backBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	backBtn.setPosition(50, -35);
-	backBtn.setLabel(&backBtnTxt);
-	backBtn.setImage(&backBtnImg);
-	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(&trigB);
-	backBtn.setEffectGrow();
+	MenuButton backBtn(MenuButtonShape::NORMAL, "Go Back", ALIGN_H::LEFT, ALIGN_V::BOTTOM, 50, -35, &trigB);
 
 	GuiOptionBrowser optionBrowser(MENU_OPTIONS_W, MENU_OPTIONS_H, &options);
 	optionBrowser.setPosition(0, MENU_LIST_Y);
@@ -3274,65 +3095,13 @@ static void ScreenZoomWindow()
 	GuiWindow * w = new GuiWindow(200,200);
 	w->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 
-	GuiTrigger trigLeft;
-	trigLeft.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_LEFT);
+	MenuArrowButton arrowLeftBtn(SHAPE::TRIANGLE_LEFT, ALIGN_H::CENTRE, ALIGN_V::MIDDLE, 50, 0, ScreenZoomWindowLeftClick);
 
-	GuiTrigger trigRight;
-	trigRight.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_RIGHT);
+	MenuArrowButton arrowRightBtn(SHAPE::TRIANGLE_RIGHT, ALIGN_H::CENTRE, ALIGN_V::MIDDLE, 164, 0, ScreenZoomWindowRightClick);
 
-	GuiTrigger trigUp;
-	trigUp.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_UP);
+	MenuArrowButton arrowUpBtn(SHAPE::TRIANGLE_UP, ALIGN_H::CENTRE, ALIGN_V::MIDDLE, -76, -27, ScreenZoomWindowUpClick);
 
-	GuiTrigger trigDown;
-	trigDown.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_DOWN);
-
-	MenuArrowImage arrowLeftImg(SHAPE::TRIANGLE_LEFT);
-	GuiButton arrowLeftBtn(MENU_ARROW_HIT_SHORT, MENU_ARROW_HIT_LONG);
-	arrowLeftBtn.setSoundOver(nullptr);
-	arrowLeftBtn.setSoundClick(nullptr);
-	arrowLeftBtn.setImage(&arrowLeftImg);
-	arrowLeftBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	arrowLeftBtn.setPosition(50, 0);
-	arrowLeftBtn.setTrigger(trigA);
-	arrowLeftBtn.setTrigger(&trigLeft);
-	arrowLeftBtn.setSelectable(false);
-	arrowLeftBtn.setUpdateCallback(ScreenZoomWindowLeftClick);
-
-	MenuArrowImage arrowRightImg(SHAPE::TRIANGLE_RIGHT);
-	GuiButton arrowRightBtn(MENU_ARROW_HIT_SHORT, MENU_ARROW_HIT_LONG);
-	arrowRightBtn.setSoundOver(nullptr);
-	arrowRightBtn.setSoundClick(nullptr);
-	arrowRightBtn.setImage(&arrowRightImg);
-	arrowRightBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	arrowRightBtn.setPosition(164, 0);
-	arrowRightBtn.setTrigger(trigA);
-	arrowRightBtn.setTrigger(&trigRight);
-	arrowRightBtn.setSelectable(false);
-	arrowRightBtn.setUpdateCallback(ScreenZoomWindowRightClick);
-
-	MenuArrowImage arrowUpImg(SHAPE::TRIANGLE_UP);
-	GuiButton arrowUpBtn(MENU_ARROW_HIT_LONG, MENU_ARROW_HIT_SHORT);
-	arrowUpBtn.setSoundOver(nullptr);
-	arrowUpBtn.setSoundClick(nullptr);
-	arrowUpBtn.setImage(&arrowUpImg);
-	arrowUpBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	arrowUpBtn.setPosition(-76, -27);
-	arrowUpBtn.setTrigger(trigA);
-	arrowUpBtn.setTrigger(&trigUp);
-	arrowUpBtn.setSelectable(false);
-	arrowUpBtn.setUpdateCallback(ScreenZoomWindowUpClick);
-
-	MenuArrowImage arrowDownImg(SHAPE::TRIANGLE_DOWN);
-	GuiButton arrowDownBtn(MENU_ARROW_HIT_LONG, MENU_ARROW_HIT_SHORT);
-	arrowDownBtn.setSoundOver(nullptr);
-	arrowDownBtn.setSoundClick(nullptr);
-	arrowDownBtn.setImage(&arrowDownImg);
-	arrowDownBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
-	arrowDownBtn.setPosition(-76, 27);
-	arrowDownBtn.setTrigger(trigA);
-	arrowDownBtn.setTrigger(&trigDown);
-	arrowDownBtn.setSelectable(false);
-	arrowDownBtn.setUpdateCallback(ScreenZoomWindowDownClick);
+	MenuArrowButton arrowDownBtn(SHAPE::TRIANGLE_DOWN, ALIGN_H::CENTRE, ALIGN_V::MIDDLE, -76, 27, ScreenZoomWindowDownClick);
 
 	MenuScreenShape screenPositionImg;
 	screenPositionImg.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
@@ -3402,61 +3171,13 @@ static void ScreenPositionWindow()
 	w->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
 	w->setPosition(0, -10);
 
-	GuiTrigger trigLeft;
-	trigLeft.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_LEFT);
+	MenuArrowButton arrowLeftBtn(SHAPE::TRIANGLE_LEFT, ALIGN_H::LEFT, ALIGN_V::MIDDLE, 0, 0, ScreenPositionWindowLeftClick);
 
-	GuiTrigger trigRight;
-	trigRight.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_RIGHT);
+	MenuArrowButton arrowRightBtn(SHAPE::TRIANGLE_RIGHT, ALIGN_H::RIGHT, ALIGN_V::MIDDLE, 0, 0, ScreenPositionWindowRightClick);
 
-	GuiTrigger trigUp;
-	trigUp.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_UP);
+	MenuArrowButton arrowUpBtn(SHAPE::TRIANGLE_UP, ALIGN_H::CENTRE, ALIGN_V::TOP, 0, 0, ScreenPositionWindowUpClick);
 
-	GuiTrigger trigDown;
-	trigDown.setButtonOnlyInFocusTrigger(-1, INPUT_BTN_DOWN);
-
-	MenuArrowImage arrowLeftImg(SHAPE::TRIANGLE_LEFT);
-	GuiButton arrowLeftBtn(MENU_ARROW_HIT_SHORT, MENU_ARROW_HIT_LONG);
-	arrowLeftBtn.setSoundOver(nullptr);
-	arrowLeftBtn.setSoundClick(nullptr);
-	arrowLeftBtn.setImage(&arrowLeftImg);
-	arrowLeftBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-	arrowLeftBtn.setTrigger(trigA);
-	arrowLeftBtn.setTrigger(&trigLeft);
-	arrowLeftBtn.setSelectable(false);
-	arrowLeftBtn.setUpdateCallback(ScreenPositionWindowLeftClick);
-
-	MenuArrowImage arrowRightImg(SHAPE::TRIANGLE_RIGHT);
-	GuiButton arrowRightBtn(MENU_ARROW_HIT_SHORT, MENU_ARROW_HIT_LONG);
-	arrowRightBtn.setSoundOver(nullptr);
-	arrowRightBtn.setSoundClick(nullptr);
-	arrowRightBtn.setImage(&arrowRightImg);
-	arrowRightBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
-	arrowRightBtn.setTrigger(trigA);
-	arrowRightBtn.setTrigger(&trigRight);
-	arrowRightBtn.setSelectable(false);
-	arrowRightBtn.setUpdateCallback(ScreenPositionWindowRightClick);
-
-	MenuArrowImage arrowUpImg(SHAPE::TRIANGLE_UP);
-	GuiButton arrowUpBtn(MENU_ARROW_HIT_LONG, MENU_ARROW_HIT_SHORT);
-	arrowUpBtn.setSoundOver(nullptr);
-	arrowUpBtn.setSoundClick(nullptr);
-	arrowUpBtn.setImage(&arrowUpImg);
-	arrowUpBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	arrowUpBtn.setTrigger(trigA);
-	arrowUpBtn.setTrigger(&trigUp);
-	arrowUpBtn.setSelectable(false);
-	arrowUpBtn.setUpdateCallback(ScreenPositionWindowUpClick);
-
-	MenuArrowImage arrowDownImg(SHAPE::TRIANGLE_DOWN);
-	GuiButton arrowDownBtn(MENU_ARROW_HIT_LONG, MENU_ARROW_HIT_SHORT);
-	arrowDownBtn.setSoundOver(nullptr);
-	arrowDownBtn.setSoundClick(nullptr);
-	arrowDownBtn.setImage(&arrowDownImg);
-	arrowDownBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
-	arrowDownBtn.setTrigger(trigA);
-	arrowDownBtn.setTrigger(&trigDown);
-	arrowDownBtn.setSelectable(false);
-	arrowDownBtn.setUpdateCallback(ScreenPositionWindowDownClick);
+	MenuArrowButton arrowDownBtn(SHAPE::TRIANGLE_DOWN, ALIGN_H::CENTRE, ALIGN_V::BOTTOM, 0, 0, ScreenPositionWindowDownClick);
 
 	MenuScreenShape screenPositionImg;
 	screenPositionImg.setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
@@ -3519,16 +3240,7 @@ static int MenuSettingsGeneralMappings()
 	GuiTrigger trigB;
 	trigB.setSecondaryTrigger();
 
-	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape backBtnImg(MenuButtonShape::NORMAL);
-	GuiButton backBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
-	backBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	backBtn.setPosition(50, -35);
-	backBtn.setLabel(&backBtnTxt);
-	backBtn.setImage(&backBtnImg);
-	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(&trigB);
-	backBtn.setEffectGrow();
+	MenuButton backBtn(MenuButtonShape::NORMAL, "Go Back", ALIGN_H::LEFT, ALIGN_V::BOTTOM, 50, -35, &trigB);
 
 	GuiOptionBrowser optionBrowser(MENU_OPTIONS_W, MENU_OPTIONS_H, &options);
 	optionBrowser.setPosition(0, MENU_LIST_Y);
@@ -3671,16 +3383,7 @@ static int MenuSettingsVideo()
 	GuiTrigger trigB;
 	trigB.setSecondaryTrigger();
 
-	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape backBtnImg(MenuButtonShape::NORMAL);
-	GuiButton backBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
-	backBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	backBtn.setPosition(50, -35);
-	backBtn.setLabel(&backBtnTxt);
-	backBtn.setImage(&backBtnImg);
-	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(&trigB);
-	backBtn.setEffectGrow();
+	MenuButton backBtn(MenuButtonShape::NORMAL, "Go Back", ALIGN_H::LEFT, ALIGN_V::BOTTOM, 50, -35, &trigB);
 
 	GuiOptionBrowser optionBrowser(MENU_OPTIONS_W, MENU_OPTIONS_H, &options);
 	optionBrowser.setPosition(0, MENU_LIST_Y);
@@ -3845,16 +3548,7 @@ static int MenuSettingsEmulation()
 	GuiTrigger trigB;
 	trigB.setSecondaryTrigger();
 
-	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape backBtnImg(MenuButtonShape::NORMAL);
-	GuiButton backBtn(MENU_BTN_NORMAL_W, MENU_BTN_NORMAL_H);
-	backBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	backBtn.setPosition(50, -35);
-	backBtn.setLabel(&backBtnTxt);
-	backBtn.setImage(&backBtnImg);
-	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(&trigB);
-	backBtn.setEffectGrow();
+	MenuButton backBtn(MenuButtonShape::NORMAL, "Go Back", ALIGN_H::LEFT, ALIGN_V::BOTTOM, 50, -35, &trigB);
 
 	GuiOptionBrowser optionBrowser(MENU_OPTIONS_W, MENU_OPTIONS_H, &options);
 	optionBrowser.setPosition(0, MENU_LIST_Y);
@@ -4019,78 +3713,17 @@ static int MenuSettings()
 	GuiTrigger trigB;
 	trigB.setSecondaryTrigger();
 
-	GuiText storageBtnTxt("Storage", 22, (PixelColor){0, 0, 0, 255});
-	storageBtnTxt.setWrap(true, MENU_BTN_LARGE_W-30);
-	MenuButtonShape storageBtnImg(MenuButtonShape::LARGE);
-	GuiImage fileBtnIcon(&iconFile);
-	GuiButton storageBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	storageBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	storageBtn.setPosition(-125, 120);
-	storageBtn.setLabel(&storageBtnTxt);
-	storageBtn.setImage(&storageBtnImg);
-	storageBtn.setIcon(&fileBtnIcon);
-	storageBtn.setTrigger(trigA);
-	storageBtn.setEffectGrow();
+	MenuLargeButton storageBtn("Storage", &iconFile, -125, 120, 30);
 
-	GuiText menuBtnTxt("Menu", 22, (PixelColor){0, 0, 0, 255});
-	menuBtnTxt.setWrap(true, MENU_BTN_LARGE_W-30);
-	MenuButtonShape menuBtnImg(MenuButtonShape::LARGE);
-	GuiImage menuBtnIcon(&iconMenu);
-	GuiButton menuBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	menuBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	menuBtn.setPosition(125, 120);
-	menuBtn.setLabel(&menuBtnTxt);
-	menuBtn.setImage(&menuBtnImg);
-	menuBtn.setIcon(&menuBtnIcon);
-	menuBtn.setTrigger(trigA);
-	menuBtn.setEffectGrow();
+	MenuLargeButton menuBtn("Menu", &iconMenu, 125, 120, 30);
 
-	GuiText networkBtnTxt("Network Share", 22, (PixelColor){0, 0, 0, 255});
-	networkBtnTxt.setWrap(true, MENU_BTN_LARGE_W-30);
-	MenuButtonShape networkBtnImg(MenuButtonShape::LARGE);
-	GuiImage networkBtnIcon(&iconNetwork);
-	GuiButton networkBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	networkBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	networkBtn.setPosition(-125, 250);
-	networkBtn.setLabel(&networkBtnTxt);
-	networkBtn.setImage(&networkBtnImg);
-	networkBtn.setIcon(&networkBtnIcon);
-	networkBtn.setTrigger(trigA);
-	networkBtn.setEffectGrow();
+	MenuLargeButton networkBtn("Network Share", &iconNetwork, -125, 250, 30);
 
-	GuiText creditsBtnTxt("Credits", 22, (PixelColor){0, 0, 0, 255});
-	creditsBtnTxt.setWrap(true, MENU_BTN_LARGE_W-20);
-	MenuButtonShape creditsBtnImg(MenuButtonShape::LARGE);
-	GuiImage creditsBtnIcon(&iconCredits);
-	GuiButton creditsBtn(MENU_BTN_LARGE_W, MENU_BTN_LARGE_H);
-	creditsBtn.setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
-	creditsBtn.setPosition(125, 250);
-	creditsBtn.setLabel(&creditsBtnTxt);
-	creditsBtn.setImage(&creditsBtnImg);
-	creditsBtn.setIcon(&creditsBtnIcon);
-	creditsBtn.setTrigger(trigA);
-	creditsBtn.setEffectGrow();
+	MenuLargeButton creditsBtn("Credits", &iconCredits, 125, 250);
 
-	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape backBtnImg(MenuButtonShape::LONG);
-	GuiButton backBtn(MENU_BTN_LONG_W, MENU_BTN_LONG_H);
-	backBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	backBtn.setPosition(90, -35);
-	backBtn.setLabel(&backBtnTxt);
-	backBtn.setImage(&backBtnImg);
-	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(&trigB);
-	backBtn.setEffectGrow();
+	MenuButton backBtn(MenuButtonShape::LONG, "Go Back", ALIGN_H::LEFT, ALIGN_V::BOTTOM, 90, -35, &trigB);
 
-	GuiText resetBtnTxt("Reset Settings", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape resetBtnImg(MenuButtonShape::LONG);
-	GuiButton resetBtn(MENU_BTN_LONG_W, MENU_BTN_LONG_H);
-	resetBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
-	resetBtn.setPosition(-90, -35);
-	resetBtn.setLabel(&resetBtnTxt);
-	resetBtn.setImage(&resetBtnImg);
-	resetBtn.setTrigger(trigA);
-	resetBtn.setEffectGrow();
+	MenuButton resetBtn(MenuButtonShape::LONG, "Reset Settings", ALIGN_H::RIGHT, ALIGN_V::BOTTOM, -90, -35);
 
 	GuiWindow w(platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight());
 	w.append(&titleTxt);
@@ -4197,16 +3830,7 @@ static int MenuSettingsStorage()
 	GuiTrigger trigB;
 	trigB.setSecondaryTrigger();
 
-	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape backBtnImg(MenuButtonShape::LONG);
-	GuiButton backBtn(MENU_BTN_LONG_W, MENU_BTN_LONG_H);
-	backBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	backBtn.setPosition(90, -35);
-	backBtn.setLabel(&backBtnTxt);
-	backBtn.setImage(&backBtnImg);
-	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(&trigB);
-	backBtn.setEffectGrow();
+	MenuButton backBtn(MenuButtonShape::LONG, "Go Back", ALIGN_H::LEFT, ALIGN_V::BOTTOM, 90, -35, &trigB);
 
 	GuiOptionBrowser optionBrowser(MENU_OPTIONS_W, MENU_OPTIONS_H, &options);
 	optionBrowser.setPosition(0, MENU_LIST_Y);
@@ -4453,16 +4077,7 @@ static int MenuSettingsMenu()
 	GuiTrigger trigB;
 	trigB.setSecondaryTrigger();
 
-	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape backBtnImg(MenuButtonShape::LONG);
-	GuiButton backBtn(MENU_BTN_LONG_W, MENU_BTN_LONG_H);
-	backBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	backBtn.setPosition(90, -35);
-	backBtn.setLabel(&backBtnTxt);
-	backBtn.setImage(&backBtnImg);
-	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(&trigB);
-	backBtn.setEffectGrow();
+	MenuButton backBtn(MenuButtonShape::LONG, "Go Back", ALIGN_H::LEFT, ALIGN_V::BOTTOM, 90, -35, &trigB);
 
 	GuiOptionBrowser optionBrowser(MENU_OPTIONS_W, MENU_OPTIONS_H, &options);
 	optionBrowser.setPosition(0, MENU_LIST_Y);
@@ -4645,16 +4260,7 @@ static int MenuSettingsNetwork()
 	GuiTrigger trigB;
 	trigB.setSecondaryTrigger();
 
-	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
-	MenuButtonShape backBtnImg(MenuButtonShape::LONG);
-	GuiButton backBtn(MENU_BTN_LONG_W, MENU_BTN_LONG_H);
-	backBtn.setAlignment(ALIGN_H::LEFT, ALIGN_V::BOTTOM);
-	backBtn.setPosition(90, -35);
-	backBtn.setLabel(&backBtnTxt);
-	backBtn.setImage(&backBtnImg);
-	backBtn.setTrigger(trigA);
-	backBtn.setTrigger(&trigB);
-	backBtn.setEffectGrow();
+	MenuButton backBtn(MenuButtonShape::LONG, "Go Back", ALIGN_H::LEFT, ALIGN_V::BOTTOM, 90, -35, &trigB);
 
 	GuiOptionBrowser optionBrowser(MENU_OPTIONS_W, MENU_OPTIONS_H, &options);
 	optionBrowser.setPosition(0, MENU_LIST_Y);
@@ -4959,6 +4565,7 @@ void MainMenu (int selection)
 
 		trigA = new GuiTrigger;
 		trigA->setPrimaryTrigger();
+		MenuPrimaryTrigger() = trigA;
 
 		// the sounds every button plays; registered once, so pages don't build their own
 		#ifndef HW_DOL
