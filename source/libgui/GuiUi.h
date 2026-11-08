@@ -92,6 +92,13 @@ class GuiTextButton : public GuiButton
 		GuiTextButton& size(int w, int h);
 		//!Sets the label's font size (default 20)
 		GuiTextButton& fontSize(int px);
+		//!Sizes the button from its text, so a longer translation gets a wider button instead of a cut-off label.
+		//!The width is the text plus padX on each side, at least minW and at most maxW (0 = no limit; past it the
+		//!text is cut to fit). It follows the text when that changes. The height is the one from size().
+		//!A layout reads the width every frame; outside a layout, read it with getNaturalSize().
+		GuiTextButton& fitText(int minW, int padX, int maxW = 0);
+		//!The width follows the text if fitText() was called
+		void getNaturalSize(int& w, int& h) override;
 		//!Called when the button is clicked. The button stays selected afterwards.
 		GuiTextButton& onClick(UiCallback fn);
 		//!Called when the button becomes selected (by the pointer or the D-pad)
@@ -125,6 +132,11 @@ class GuiTextButton : public GuiButton
 		UiCallback clickCb;
 		UiCallback focusCb;
 		bool wasSelected;
+		int fitMinW = 0;		//!< fitText(): 0 = not fitted
+		int fitPadX = 0;
+		int fitMaxW = 0;
+		int fitAppliedW = -1;	//!< the width last given to the button itself (a layout skips setLayoutSize() when the natural size is what it assigns)
+		int fitBudget = 0;		//!< the text's maximum width as last set (0 = none), so it is set only when it changes
 };
 
 //!The clickable, focusable surface behind a GuiCard (a button with a shape for an image).

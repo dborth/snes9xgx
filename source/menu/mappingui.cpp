@@ -387,7 +387,7 @@ MappingView::MappingView(int ctrl, int hw) :
 	GuiLayout& stage = ui.row().size(kContentW, stageH).gap(6).align(LAYOUT_ALIGN::CENTRE).justifyContent(LAYOUT_JUSTIFY::CENTRE)
 		.add(left).add(*view).add(right);
 
-	GuiTextButton& reset = ui.button(Tr("Reset").c_str()).size(48, 22).fontSize(UI_FONT_SMALL - 1).style(MenuKeycapStyle())
+	GuiTextButton& reset = ui.button(Tr("Reset").c_str()).size(48, 22).fitText(48, 9, 150).fontSize(UI_FONT_SMALL - 1).style(MenuKeycapStyle())
 		.rounded(8.0f).litTextColor(MenuPaletteCurrent().text)
 		.onFocus([this]{ status = "A puts these buttons back to their defaults"; });
 	resetBtn = &reset;

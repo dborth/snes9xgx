@@ -33,7 +33,6 @@
 #define PINNED_ICON_X		16
 #define PINNED_TEXT_X		76
 #define CHIP_ON_WIDTH		96		// the label at the pinned card's right end: "Autosave", with its dot
-#define CHIP_OFF_WIDTH		140		// "Saves when you do"
 #define CHIP_HEIGHT			22
 #define CHIP_INSET			16
 #define ICON_WIDTH			44		// the save-file icon
@@ -46,13 +45,42 @@
 #define SB_THUMB_WIDTH		14
 #define SB_THUMB_MIN_HEIGHT	24
 #define TAG_PLAYING_WIDTH	92		// the "Playing from" tag
-#define TAG_AUTO_WIDTH		84		// "Autosave", with a dot
-#define TAG_PAUSED_WIDTH	58
 #define BADGE_AUTO_WIDTH	40		// AUTO, a pill on the screenshot's corner
 #define BADGE_HEIGHT		16
 #define BADGE_NUM_SIZE		18		// a slot number, in a circle
 #define BADGE_INSET			3
 #define TAG_HEIGHT			20
+#define TAG_PAD_X			11		// a tag's edge to its words
+#define TAG_DOT_PAD			23		// the Autosave tag's left edge to its words: the dot is in between
+#define TAG_MIN_WIDTH		58
+#define TAG_MAX_WIDTH		(SLOT_WIDTH - 40)	// stays on its card; longer words are cut
+#define BADGE_PAD_X			7
+#define BADGE_AUTO_MAX_WIDTH	(PREVIEW_WIDTH - 2 * BADGE_INSET)	// stays on the screenshot
+#define CHIP_PAD_X			12
+#define CHIP_DOT_PAD		27		// the chip's left edge to its words when it has a dot
+#define CHIP_PLAIN_PAD		14		// either edge to the words when it has none
+#define CHIP_MAX_WIDTH		230
+#define PINNED_TEXT_GAP		12		// the pinned card's words to the chip
+
+// A pill's width from its words: `padL` before them and `padR` after, at least `minW`; past `maxW` it stops growing
+// and the words are cut to fit. `shift` is how far to move the words from the pill's center to keep them between the
+// two pads.
+static int FitPill(GuiText * words, int padL, int padR, int minW, int maxW, int & shift)
+{
+	int w = padL + words->getTextWidth() + padR;
+	if(w < minW)
+		w = minW;
+
+	int cut = 0;
+	if(w > maxW)
+	{
+		w = maxW;
+		cut = maxW - padL - padR;
+	}
+	words->setMaxWidth(cut);
+	shift = (padL - padR) / 2;
+	return w;
+}
 
 GuiSavePreview::GuiSavePreview(int w, int h, int phW, int phH)
 	: placeholder(phW, phH), noImage("No image", 12, GuiTheme::current().textMuted), hasImage(false)
@@ -377,6 +405,10 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 		badgeAutoText[i] = new GuiText("AUTO", 11, theme.textOnAccent);
 		badgeAutoText[i]->setParent(badgeAutoShape[i]);
 		badgeAutoText[i]->setAlignment(ALIGN_H::CENTRE, ALIGN_V::MIDDLE);
+		{
+			int shift;
+			badgeAutoShape[i]->setSize(FitPill(badgeAutoText[i], BADGE_PAD_X, BADGE_PAD_X, BADGE_AUTO_WIDTH, BADGE_AUTO_MAX_WIDTH, shift), BADGE_HEIGHT);
+		}
 		badgeNumShape[i] = new GuiShape(BADGE_NUM_SIZE, BADGE_NUM_SIZE);
 		badgeNumShape[i]->setParent(saveBtn[i]);
 		badgeNumShape[i]->setShape(SHAPE::ELLIPSE);
@@ -441,6 +473,8 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 	chipDot->setPosition(12, 0);
 	chipDot->setPaint(GuiPaint().color(theme.good));
 	chipState = -1;
+	chipW = CHIP_ON_WIDTH;
+	pinnedTextRoom = -1;
 	pinnedInfoShown = -1;
 }
 
@@ -932,26 +966,25 @@ void GuiSaveBrowser::update(InputController * controller)
 			if(tagShown[i] != (int)e.tag)
 			{
 				tagShown[i] = (int)e.tag;
-				int tagW = TAG_PLAYING_WIDTH;
 				const char * words = "Playing from";
 				PixelColor fill = theme.accent;
-				int shift = 0;
+				int padL = TAG_PAD_X;
 
 				if(e.tag == SaveEntry::TAG_AUTOSAVE)
 				{
-					tagW = TAG_AUTO_WIDTH;
 					words = "Autosave";
-					shift = 6;	// the dot takes the left end
+					padL = TAG_DOT_PAD;	// the dot takes the left end
 				}
 				else if(e.tag == SaveEntry::TAG_PAUSED)
 				{
-					tagW = TAG_PAUSED_WIDTH;
 					words = "Paused";
 					fill = Rgba(112, 118, 126, 255);
 				}
+				tagText[i]->setText(words);
+				int shift;
+				const int tagW = FitPill(tagText[i], padL, TAG_PAD_X, TAG_MIN_WIDTH, TAG_MAX_WIDTH, shift);
 				tagShape[i]->setSize(tagW, TAG_HEIGHT);
 				tagShape[i]->setPaint(GuiPaint().color(fill));
-				tagText[i]->setText(words);
 				tagText[i]->setPosition(shift, 0);
 			}
 
@@ -1027,35 +1060,48 @@ void GuiSaveBrowser::update(InputController * controller)
 
 		pinnedTitle->setText(e.title.c_str());
 		pinnedSubtitle->setText(e.subtitle.c_str());
-		chipText->setText(e.chip.c_str());
 		chipShape->setVisible(!e.chip.empty());
 		chipText->setVisible(!e.chip.empty());
 
 		// on: a green dot and the accent color on a light tint (or white on a note); off: plain gray
 		const int wantChip = e.chipOn ? (e.info ? 2 : 1) : 0;
-		if(chipState != wantChip)
+		if(chipState != wantChip || chipShown != e.chip)
 		{
 			const GuiTheme& theme = GuiTheme::current();
 			chipState = wantChip;
-			chipShape->setSize(wantChip ? CHIP_ON_WIDTH : CHIP_OFF_WIDTH, CHIP_HEIGHT);
+			chipShown = e.chip;
+			chipText->setText(e.chip.c_str());
+
+			// as wide as the words need; with a dot the words start further in
+			int shift;
+			chipW = FitPill(chipText, wantChip ? CHIP_DOT_PAD : CHIP_PLAIN_PAD, wantChip ? CHIP_PAD_X : CHIP_PLAIN_PAD,
+							CHIP_ON_WIDTH, CHIP_MAX_WIDTH, shift);
+			chipShape->setSize(chipW, CHIP_HEIGHT);
+			chipText->setPosition(shift, 0);
 			if(wantChip == 1)
 			{
 				chipShape->setPaint(GuiPaint().color(theme.highlight).stroke(1.0f, theme.accentLight));
-				chipText->setPosition(8, 0);
 				chipText->setColor(theme.accent);
 			}
 			else if(wantChip == 2)
 			{
 				chipShape->setPaint(GuiPaint().color(Rgba(255, 255, 255, 26)).stroke(1.0f, Rgba(255, 255, 255, 150)));
-				chipText->setPosition(8, 0);
 				chipText->setColor(Rgba(255, 255, 255, 255));
 			}
 			else
 			{
 				chipShape->setPaint(GuiPaint().color(theme.surface).stroke(1.0f, theme.outline));
-				chipText->setPosition(0, 0);
 				chipText->setColor(theme.textMuted);
 			}
+		}
+
+		// the card's own words stop short of the chip, however wide it has become
+		const int textRoom = SLOT_WIDE_WIDTH - PINNED_TEXT_X - (e.chip.empty() ? CHIP_INSET : chipW + CHIP_INSET + PINNED_TEXT_GAP);
+		if(pinnedTextRoom != textRoom)
+		{
+			pinnedTextRoom = textRoom;
+			pinnedTitle->setMaxWidth(textRoom);
+			pinnedSubtitle->setMaxWidth(textRoom);
 		}
 
 		if(!pinnedOn && pinnedBtn->getState() == STATE::SELECTED)

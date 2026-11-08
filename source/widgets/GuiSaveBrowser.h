@@ -159,6 +159,9 @@ class GuiSaveBrowser : public GuiElement
 		GuiShape * chipDot;
 		GuiText * chipText;
 		int chipState;				// what the chip is drawn as: -1 not yet, 0 off, 1 on, 2 on over a note
+		std::string chipShown;		// the chip's words as set now, so they are measured only when they change
+		int chipW;					// the chip's width, which follows its words
+		int pinnedTextRoom;			// the width the pinned card's own words get: -1 not yet
 		int pinnedInfoShown;		// the pinned card is drawn as: -1 not yet, 0 a card, 1 a note
 		bool pinnedOn;				// the cursor is on the pinned card (the grid keeps its column in selectedItem)
 		bool pinnedLastOver;

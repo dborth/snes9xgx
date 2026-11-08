@@ -1998,6 +1998,21 @@ static bool RunSaveOp(int op, int type, const char * filepath, int * result, boo
  ***************************************************************************/
 enum { SAVEACT_LOAD, SAVEACT_UPDATE, SAVEACT_DELETE, SAVEACT_SAVENOW, SAVEACT_BACKUP, SAVEACT_BACKUPS, SAVEACT_RESTORE };
 
+// A button's width from its label: the words with `padX` either side, at least `minW` (the width English gets), at most
+// `maxW` (past it the words are cut to fit), so a longer translation gets a wider button.
+static int FitButtonWidth(GuiText & label, int minW, int padX, int maxW)
+{
+	int w = label.getTextWidth() + 2 * padX;
+	if(w < minW)
+		w = minW;
+	if(w > maxW)
+	{
+		w = maxW;
+		label.setMaxWidth(maxW - 2 * padX);
+	}
+	return w;
+}
+
 #define SAVE_LIST_Y		116		// the grid's top, under the header bar
 #define SAVE_LIST_W		540
 #define SAVE_CARD_W		250	// a card of the browser, and the pitch from one column to the next: both are the
@@ -2007,6 +2022,8 @@ enum { SAVEACT_LOAD, SAVEACT_UPDATE, SAVEACT_DELETE, SAVEACT_SAVENOW, SAVEACT_BA
 #define SAVE_MAX_BACKUPS	6	// the most the Backups list shows: a popover doesn't scroll
 #define SAVE_TOAST_W	224
 #define SAVE_TOAST_H	30
+#define SAVE_TOAST_PAD_L	40	// the toast's left edge to its words: the check mark is in between
+#define SAVE_TOAST_PAD_R	16
 #define SAVE_TOAST_FRAMES	120
 
 // What a card stands for
@@ -2393,11 +2410,12 @@ static int MenuGameSaves()
 	GuiTrigger trigHome;
 	trigHome.setButtonOnlyTrigger(-1, INPUT_BTN_HOME);
 
-	// Go Back and Save Mode are narrower than the usual button: the longest text, "Cartridge Save", leaves room to spare,
-	// and full width the pair crowds the logo
-	const int backBtnW = 140;
-	const int modeBtnW = 176;
+	// Go Back, Save Mode and Close are as wide as their words need, so a longer translation gets a wider button rather
+	// than a cut-off label (English gets the usual widths). Go Back and Save Mode share the footer with the logo, so
+	// together they stop short of it.
+	const int footerRoom = 390;	// the left margin to the logo, less a gap
 	GuiText backBtnTxt("Go Back", 22, (PixelColor){0, 0, 0, 255});
+	const int backBtnW = FitButtonWidth(backBtnTxt, 140, 24, 200);
 	MenuButtonShape backBtnImg(MenuButtonShape::NORMAL);
 	backBtnImg.setSize(backBtnW, MENU_BTN_NORMAL_H);
 	GuiButton backBtn(backBtnW, MENU_BTN_NORMAL_H);
@@ -2409,8 +2427,10 @@ static int MenuGameSaves()
 	backBtn.setEffectGrow();
 
 	GuiText closeBtnTxt("Close", 20, (PixelColor){0, 0, 0, 255});
+	const int closeBtnW = FitButtonWidth(closeBtnTxt, MENU_BTN_SMALL_W, 22, 190);
 	MenuButtonShape closeBtnImg(MenuButtonShape::SMALL);
-	GuiButton closeBtn(MENU_BTN_SMALL_W, MENU_BTN_SMALL_H);
+	closeBtnImg.setSize(closeBtnW, MENU_BTN_SMALL_H);
+	GuiButton closeBtn(closeBtnW, MENU_BTN_SMALL_H);
 	closeBtn.setAlignment(ALIGN_H::RIGHT, ALIGN_V::TOP);
 	closeBtn.setPosition(-50, 35);
 	closeBtn.setLabel(&closeBtnTxt);
@@ -2432,6 +2452,26 @@ static int MenuGameSaves()
 	GuiText modeValueTxt(modeNames[EmuSettings.saveMode], 18, (PixelColor){0, 0, 0, 255});
 	modeValueTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 	modeValueTxt.setPosition(22, 9);
+
+	// wide enough for the label and the longest of the three values, so the button does not change size with the mode
+	// (the words, the chevron's gap and both edges take 70)
+	int modeTextW = modeLabelTxt.getTextWidth();
+	for(int k = 0; k < SAVEMODE_LENGTH; k++)
+	{
+		GuiText probe(modeNames[k], 18, (PixelColor){0, 0, 0, 255});
+		if(probe.getTextWidth() > modeTextW)
+			modeTextW = probe.getTextWidth();
+	}
+	const int modeBtnRoom = (footerRoom - 16 - backBtnW) > 120 ? (footerRoom - 16 - backBtnW) : 120;
+	int modeBtnW = modeTextW + 70;
+	if(modeBtnW < 176)
+		modeBtnW = 176;
+	if(modeBtnW > modeBtnRoom)
+	{
+		modeBtnW = modeBtnRoom;
+		modeLabelTxt.setMaxWidth(modeBtnW - 70);
+		modeValueTxt.setMaxWidth(modeBtnW - 70);
+	}
 	GuiShape modeChevron(12, 8);
 	modeChevron.setArrow(SHAPE::TRIANGLE_UP, pal.accent, pal.accent);	// it opens upward
 	modeChevron.setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
@@ -2573,7 +2613,21 @@ static int MenuGameSaves()
 
 	auto showToast = [&](const std::string & text)
 	{
+		// as wide as the words need (a translation can be much longer than English), within the screen's margins
+		toastTxt.setMaxWidth(0);
 		toastTxt.setText(text.c_str());
+		int toastW = toastTxt.getTextWidth() + SAVE_TOAST_PAD_L + SAVE_TOAST_PAD_R;
+		if(toastW < SAVE_TOAST_W)
+			toastW = SAVE_TOAST_W;
+		const int toastMaxW = platform->getVideo()->getScreenWidth() - 2 * MENU_PAGE_MARGIN;
+		if(toastW > toastMaxW)
+		{
+			toastW = toastMaxW;
+			toastTxt.setMaxWidth(toastMaxW - SAVE_TOAST_PAD_L - SAVE_TOAST_PAD_R);
+		}
+		toastShape.setSize(toastW, SAVE_TOAST_H);
+		toastBtn.setSize(toastW, SAVE_TOAST_H);
+		toastTxt.setPosition((SAVE_TOAST_PAD_L - SAVE_TOAST_PAD_R) / 2, 0);
 		toastBtn.setVisible(true);
 		toastFrames = SAVE_TOAST_FRAMES;
 	};

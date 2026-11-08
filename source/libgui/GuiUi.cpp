@@ -244,6 +244,46 @@ void GuiTextButton::setLayoutSize(int w, int h)
 	shape.setLayoutSize(w, h);
 }
 
+GuiTextButton& GuiTextButton::fitText(int minW, int padX, int maxW)
+{
+	fitMinW = minW > 0 ? minW : 1;
+	fitPadX = padX;
+	fitMaxW = maxW;
+	return *this;
+}
+
+void GuiTextButton::getNaturalSize(int& w, int& h)
+{
+	GuiButton::getNaturalSize(w, h);
+	if(fitMinW <= 0)
+		return;
+
+	w = text.getTextWidth() + 2 * fitPadX;
+	if(w < fitMinW)
+		w = fitMinW;
+
+	int budget = 0;
+	if(fitMaxW > 0 && w > fitMaxW)
+	{
+		w = fitMaxW;
+		budget = fitMaxW - 2 * fitPadX;
+	}
+	if(budget != fitBudget)
+	{
+		fitBudget = budget;
+		text.setMaxWidth(budget);
+		textLit.setMaxWidth(budget);
+	}
+
+	// A layout does not resize an element whose natural size is the size it assigns, so the button takes the width
+	// itself (and its shape with it) whenever the text changes it
+	if(w != fitAppliedW)
+	{
+		fitAppliedW = w;
+		setLayoutSize(w, h);
+	}
+}
+
 GuiTextButton& GuiTextButton::onClick(UiCallback fn)
 {
 	clickCb = fn;
