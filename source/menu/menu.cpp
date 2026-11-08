@@ -2260,6 +2260,15 @@ static void SaveCardMenu(const SaveCard & card, int backupCount, std::vector<Pic
 	}
 }
 
+// While a modal runs over the menu (a popover), everything on the main window is disabled: the page, its bars and the
+// logo are all dimmed together and none of it answers the pointer. The state it had comes back when this goes out of scope.
+struct MenuPageDisabled
+{
+	STATE previous;
+	MenuPageDisabled() : previous(menu->mainWindow.getState()) { menu->mainWindow.setState(STATE::DISABLED); }
+	~MenuPageDisabled() { menu->mainWindow.setState(previous); }
+};
+
 static int MenuGameSaves()
 {
 	int selection = MENU_NONE;
@@ -2635,11 +2644,10 @@ static int MenuGameSaves()
 			else
 			{
 				// popovers beside the card, over this screen, which keeps the card highlighted but takes no input
-				w.setState(STATE::DISABLED);
-				saveBrowser.setState(STATE::DISABLED);
-				act = askAction(card, entry, saveBrowser.getEntryAnchor(pos));
-				saveBrowser.setState(STATE::DEFAULT);
-				w.setState(STATE::DEFAULT);
+				{
+					MenuPageDisabled pageDisabled;
+					act = askAction(card, entry, saveBrowser.getEntryAnchor(pos));
+				}
 				saveBrowser.resetState();
 				menu->mainWindow.changeFocus(&saveBrowser);
 			}
@@ -2807,11 +2815,11 @@ static int MenuGameSaves()
 			PickerOptions wide;
 			wide.width = 340;	// the longest help wraps to two lines at this width
 
-			w.setState(STATE::DISABLED);
-			saveBrowser.setState(STATE::DISABLED);
-			const int chosen = MenuPopover_Pick("Save Mode", modes, GuiPopover::Anchor(modeBtn), nullptr, nullptr, &wide);
-			saveBrowser.setState(STATE::DEFAULT);
-			w.setState(STATE::DEFAULT);
+			int chosen;
+			{
+				MenuPageDisabled pageDisabled;
+				chosen = MenuPopover_Pick("Save Mode", modes, GuiPopover::Anchor(modeBtn), nullptr, nullptr, &wide);
+			}
 			saveBrowser.resetState();
 
 			if(chosen >= 0 && chosen < SAVEMODE_LENGTH && chosen != EmuSettings.saveMode)

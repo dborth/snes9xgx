@@ -114,13 +114,14 @@ void GuiWindow::draw()
 	// A disabled window (and everything inside it) is washed over, once: the wash goes on after the last of a run of
 	// disabled child windows, before whatever is drawn over them (a dialog opened above a disabled screen)
 	const bool washed = parentElement && state == STATE::DISABLED;
+	const bool rootDisabled = !parentElement && state == STATE::DISABLED;
 	bool washPending = false;
 	uint32_t elemSize = _elements.size();
 	for (uint32_t i = 0; i < elemSize; ++i)
 	{
 		GuiElement * e = _elements.at(i);
 		GuiWindow * child = e->getAsWindow();
-		const bool disabledChild = child && child->getState() == STATE::DISABLED && child->isVisible();
+		const bool disabledChild = e->isVisible() && e->getState() == STATE::DISABLED && (child || rootDisabled);
 		if(washPending && !disabledChild)
 		{
 			drawWash();
@@ -139,7 +140,7 @@ void GuiWindow::draw()
 //!The one dimming drawn over a disabled screen
 void GuiWindow::drawWash()
 {
-	platform->getVideo()->getImageRenderer()->drawRectangle(0, 0, platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight(), (PixelColor){0xbe, 0xca, 0xd5, 0x70});
+	platform->getVideo()->getImageRenderer()->drawRectangle(0, 0, platform->getVideo()->getScreenWidth(), platform->getVideo()->getScreenHeight(), (PixelColor){0x00, 0x00, 0x00, 0x80});
 }
 
 void GuiWindow::resetState()
