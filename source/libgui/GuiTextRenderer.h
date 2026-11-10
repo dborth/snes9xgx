@@ -7,9 +7,18 @@
 
 #include <stdint.h>
 #include <map>
-#include <vector>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+
+//!A piece of text given by length rather than by a terminating NUL: `len` characters starting at `text`.
+//!Text drawn or measured as a list of runs reads as one line, the runs joined end to end - so a wrapped
+//!line, a cut-off line with "..." after it, or a scrolling window made of the end and the start of a text
+//!can be handled in place, with no copy made of any of them. A NUL inside a run ends that run early.
+//!\ingroup grp_core
+struct GuiTextRun {
+	const wchar_t* text; //!< First character of the run
+	uint32_t len; //!< Number of characters in the run
+};
 
 #include "Gui.h"
 
@@ -101,12 +110,11 @@ private:
 
 	std::map<int16_t, ftData> fontData;
 	ftData* current;	// fontData[currentPixelSize], or null until it is needed (map nodes never move)
-	std::vector<uint16_t> widthScratch;	// scrollWindow()'s running widths, kept so it doesn't allocate
-	std::vector<wchar_t> lineScratch;
 	static GlyphData missingGlyph;
 	static uint32_t metricsGeneration;
 
 	// Internal Calculations
+	int16_t getKerning(const GlyphData* prev, const GlyphData* glyph);
 	int16_t getStyleOffsetWidth(uint16_t width, uint32_t format);
 	int16_t getStyleOffsetHeight(FontOffset* offset, uint32_t format);
 	void drawTextFeature(int16_t x, int16_t y, uint16_t width, FontOffset* offsetData, uint32_t format, const PixelColor& color);
@@ -134,7 +142,7 @@ public:
 	GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, GlyphRenderer* glyphRenderer, float uiScale = 1.0f);
 	~GuiTextRenderer();
 
-	//!Selects the pixel size subsequent drawText()/getWidth()/getHeight()
+	//!Selects the pixel size subsequent drawText()/getWidth()/getOffset()
 	//!calls use. Shaped glyphs are cached per size, so switching sizes
 	//!repeatedly doesn't re-shape glyphs already seen at that size.
 	void setPixelSize(int16_t pixelSize);
@@ -146,50 +154,42 @@ public:
 	//!Draws text at (x, y) using the current pixel size.
 	//!\param x Left edge, in pixels
 	//!\param y Top edge, in pixels
-	//!\param text Text to draw
+	//!\param runs The text, as runs joined end to end
+	//!\param runCount Number of runs
 	//!\param color Text color
 	//!\param renderFlags Bitmask of GUI_TEXT_JUSTIFY_*/GUI_TEXT_ALIGN_*/GUI_TEXT_STYLE_* flags
-	//!\return the drawn text's width in pixels
-	uint16_t drawText(int16_t x, int16_t y, const wchar_t* text, PixelColor color = black, uint32_t renderFlags = 0);
-	//!\overload
-	uint16_t drawText(int16_t x, int16_t y, const char* text, PixelColor color = black, uint32_t renderFlags = 0);
+	void drawText(int16_t x, int16_t y, const GuiTextRun* runs, int runCount, PixelColor color = black, uint32_t renderFlags = 0);
 
 	// Dimensions & Offsets
 	//!\return text width in pixels at the current pixel size
-	uint16_t getWidth(const wchar_t* text);
+	uint16_t getWidth(const GuiTextRun* runs, int runCount);
 
-	//! How many leading characters of `text` fit in `maxWidth` (the largest n for which the first n
-	//! characters measure no wider than that), found in one pass. Same answer as trimming the string
-	//! one character at a time and calling getWidth() each time, without the repeated measuring.
-	int fitCount(const wchar_t* text, int maxWidth);
+	//! How many leading characters of the text fit in `maxWidth` (the largest n for which the first n
+	//! characters measure no wider than that), found in one pass. Same answer as trimming the text one
+	//! character at a time and calling getWidth() each time, without the repeated measuring.
+	int fitCount(const GuiTextRun* runs, int runCount, int maxWidth);
 
-	//! The part of a horizontally scrolling line that is shown at one scroll position: the text from
-	//! `pos` on, two spaces, then the start of the text again, cut to fit `maxWidth`. Measures the line
-	//! once rather than after every character added or removed, with the same result as doing that.
-	//! \param textlen Length of `text`
-	//! \param out Room for textlen + 1 characters
-	void scrollWindow(const wchar_t* text, uint32_t textlen, uint32_t pos, int maxWidth, wchar_t* out);
-
-	//! Changes whenever a measurement made earlier could now come out differently (a renderer was
-	//! made or its glyphs were thrown away). Anything that keeps text sizes can compare it.
-	static uint32_t getMetricsGeneration() { return metricsGeneration; }
-	//!\overload
-	uint16_t getWidth(const char* text);
-	//!\return text height in pixels at the current pixel size
-	uint16_t getHeight(const wchar_t* text);
 	//!The height of a line of text at the current pixel size: from the top of the ascender to the bottom of the
 	//!descender, the same for every string.
 	uint16_t getLineHeight();
-	//!\overload
-	uint16_t getHeight(const char* text);
 
-	//!\param text Text to measure
-	//!\param offset Filled with the ascender/descender/max/min metrics for text at the current pixel size
-	void getOffset(const wchar_t* text, FontOffset* offset);
+	//!\param runs Text to measure
+	//!\param runCount Number of runs
+	//!\param offset Filled with the ascender/descender/max/min metrics for the text at the current pixel size
+	void getOffset(const GuiTextRun* runs, int runCount, FontOffset* offset);
+
+	//! Changes whenever a measurement made earlier could now come out differently (a renderer was
+	//! made or its glyphs were thrown away). Anything that keeps text sizes or line breaks can compare it.
+	static uint32_t getMetricsGeneration() { return metricsGeneration; }
 
 	// Utilities
-	//!\return a newly-allocated wide-char copy of a UTF-8 string p - caller owns the result (delete[])
-	static wchar_t* charToWideChar(const char* p);
+	//!Converts UTF-8 to wide characters without allocating, so it can be run once to size a buffer
+	//!and again to fill it. A malformed sequence becomes its lead byte read as Latin-1.
+	//!\param utf8 NUL-terminated UTF-8 (null is an empty string)
+	//!\param out Where to write the result and a terminating NUL, or null to only count
+	//!\param outCap Room in `out`, in characters, counting the NUL. The result is cut to fit.
+	//!\return the number of characters converted, not counting the NUL (what `out` would need, less one, when out is null)
+	static size_t utf8ToWide(const char* utf8, wchar_t* out, size_t outCap);
 };
 
 extern GuiTextRenderer *fontSystem;

@@ -20,14 +20,10 @@ class GuiText : public GuiElement
 		GuiText(const char * t);
 		//!Destructor
 		~GuiText();
-		//!Sets the text of the GuiText element
-		//!\param t Text
+		//!Sets the text of the GuiText element. The text is looked up for translation (see GuiTextTranslator),
+		//!and the result is kept in one allocation that later calls reuse whenever the new text fits in it.
+		//!\param t Text (UTF-8)
 		void setText(const char * t);
-		//!Sets the text of the GuiText element
-		//!\param t UTF-8 Text
-		void setWText(wchar_t * t);
-		//!Gets the translated text length of the GuiText element
-		int getLength();
 		//!Sets up preset values to be used by GuiText(t)
 		//!Useful when printing multiple text elements, all with the same attributes set
 		//!\param sz Font size
@@ -45,7 +41,9 @@ class GuiText : public GuiElement
 		void setMaxWidth(int w);
 		//!Gets the width of the text when rendered
 		int getTextWidth();
-		//!Gets the width of the text's widest word (words are split at spaces and line breaks): the least width
+		//!Gets the number of characters in the (translated) text
+		int getLength() { return textLen; }
+		//!Gets the width of the text's widest word (words are split at spaces): the least width
 		//!that wrapping can fit the text in
 		int getLongestWordWidth();
 		//!The font size
@@ -59,7 +57,8 @@ class GuiText : public GuiElement
 		//!Enables/disables text scrolling
 		//!\param s Scrolling on/off
 		void setScroll(SCROLL s);
-		//!Enables/disables text wrapping
+		//!Enables/disables text wrapping. Lines break at spaces; a word wider than the width gets a line to itself.
+		//!Text that needs more than MAX_WRAP_LINES lines is cut off with "..." at the end of the last one.
 		//!\param w Wrapping on/off
 		//!\param width Maximum width (0 to disable)
 		void setWrap(bool w, int width = 0);
@@ -85,22 +84,44 @@ class GuiText : public GuiElement
 		//!Constantly called to draw the text
 	void draw() override;
 	private:
+		//! Limits that keep the text, and the work done on it, bounded
+		enum {
+			MAX_WRAP_LINES = 8,		//!< Lines a wrapped text is kept in; what does not fit is replaced by "..."
+			MAX_TEXT_CHARS = 1023,	//!< Characters kept of the translated text
+			MAX_MSGID_BYTES = 1023	//!< Bytes kept of the original text (what resetText() translates again)
+		};
+
 		PixelColor color; //!< Font color
-		wchar_t* text; //!< Translated Unicode text value
-		wchar_t *textDyn[20]; //!< Text value, if max width, scrolling, or wrapping enabled
-		int textDynNum; //!< Number of text lines
-		char * origText; //!< Original text data (English)
+
+		// The text lives in one allocation: textCap + 1 wide characters, then msgCap + 1 bytes. `text` is its
+		// start (and what is freed); null when there is no text, or when the allocation failed.
+		wchar_t* text = nullptr; //!< Translated Unicode text, NUL-terminated
+		char* msgid = nullptr; //!< Original text as given (UTF-8, English), kept for resetText()
+		uint16_t textLen = 0; //!< Characters in text
+		uint16_t textCap = 0; //!< Most characters the allocation holds in text
+		uint16_t msgCap = 0; //!< Most bytes the allocation holds in msgid
+
 		int size; //!< Font size
 		int maxWidth; //!< Maximum width of the generated text object (for text wrapping)
 		SCROLL textScroll; //!< Scrolling toggle
-		int textScrollPos; //!< Current starting index of text string for scrolling
+		int textScrollPos; //!< Index of the character at the left edge when scrolling
 		int textScrollInitialDelay; //!< Delay to wait before starting to scroll
 		int textScrollDelay; //!< Scrolling speed (frame timer ticks per scroll step)
 		uint32_t textScrollLastTick = 0; //!< Frame timer value at the last scroll step
 		uint16_t style; //!< GuiTextRenderer style attributes
 		bool wrap; //!< Wrapping toggle
-		int nudgeY = 0; //!< Extra vertical offset when drawing, in design pixels
+		int nudgeY = 0; //!< Extra vertical offset when drawn, in design pixels
 		int lineSpacing = 6; //!< Pixels added to the font size for the distance between wrapped lines
+
+		// How the text is cut up when it has a maximum width. These are ranges of `text`, worked out when the
+		// text is first drawn after anything that changes them, and kept until then. Nothing is copied.
+		bool layoutValid = false; //!< false after anything that changes where lines break
+		uint32_t layoutGen = 0; //!< GuiTextRenderer::getMetricsGeneration() when laid out
+		uint8_t lineCount = 0; //!< Wrapped lines in use
+		bool lastLineCut = false; //!< The last wrapped line is followed by "..." because the text did not all fit
+		uint16_t lineStart[MAX_WRAP_LINES]; //!< Index in text of each wrapped line's first character
+		uint16_t lineLen[MAX_WRAP_LINES]; //!< Characters in each wrapped line (spaces at its end are not counted)
+		uint16_t shownLen = 0; //!< Characters shown when not wrapped: those that fit (see makeWindow())
 
 		// What measuring the text cost, kept so a layout pass that asks for the size every frame costs
 		// nothing. Measured at `size`, and valid while the text, the size and the font are unchanged.
@@ -114,7 +135,13 @@ class GuiText : public GuiElement
 		int fullWidthSize;			//!< -1 when stale
 		uint32_t fullWidthGen;
 
-		wchar_t* getText(const char *text) const;
+		void setup(const char * t, int s, PixelColor c, uint16_t st, int mw, ALIGN_H h, ALIGN_V v);
+		void assign(const char * id);
+		void release();
+		void buildLayout();
+		void breakLines();
+		int makeWindow(GuiTextRun * runs) const;
+		void updateWindow();
 		bool scrollStepDue();
 		void measure();
 		void forgetMeasurements();

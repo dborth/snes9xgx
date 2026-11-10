@@ -183,6 +183,42 @@ GlyphData* GuiTextRenderer::glyph(wchar_t charCode) {
 
 // --- Layout & Styling Engine ---
 
+namespace {
+	// Steps through the characters of a list of runs as if they were one string
+	struct RunCursor {
+		const GuiTextRun* runs;
+		int count;
+		int run = 0;
+		uint32_t index = 0;
+
+		RunCursor(const GuiTextRun* r, int n) : runs(r), count(r ? n : 0) {}
+
+		bool next(wchar_t& ch) {
+			while (run < count) {
+				const GuiTextRun& r = runs[run];
+				if (r.text && index < r.len && r.text[index]) {
+					ch = r.text[index++];
+					return true;
+				}
+				++run;
+				index = 0;
+			}
+			return false;
+		}
+	};
+
+	inline uint16_t ClampWidth(int w) {
+		return w < 0 ? 0 : (w > 0xFFFF ? 0xFFFF : (uint16_t)w);
+	}
+}
+
+int16_t GuiTextRenderer::getKerning(const GlyphData* prev, const GlyphData* glyph) {
+	if (!ftKerningEnabled || !prev || !glyph) return 0;
+	FT_Vector pairDelta;
+	FT_Get_Kerning(ftFace, prev->glyphIndex, glyph->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
+	return ToDesignPixels(pairDelta.x >> 6, uiScale);
+}
+
 int16_t GuiTextRenderer::getStyleOffsetWidth(uint16_t width, uint32_t format) {
 	if (format & GUI_TEXT_JUSTIFY_LEFT) return 0;
 	else if (format & GUI_TEXT_JUSTIFY_CENTER) return -(width >> 1);
@@ -203,17 +239,17 @@ int16_t GuiTextRenderer::getStyleOffsetHeight(FontOffset* offset, uint32_t forma
 	}
 }
 
-void GuiTextRenderer::getOffset(const wchar_t* text, FontOffset* offset) {
+void GuiTextRenderer::getOffset(const GuiTextRun* runs, int runCount, FontOffset* offset) {
 	int16_t strMax = 0, strMin = 9999;
 
-	int i = 0;
-	while (text[i]) {
-		GlyphData* glyphData = glyph(text[i]);
+	RunCursor cursor(runs, runCount);
+	wchar_t ch;
+	while (cursor.next(ch)) {
+		GlyphData* glyphData = glyph(ch);
 		if (glyphData) {
 			strMax = glyphData->renderOffsetMax > strMax ? glyphData->renderOffsetMax : strMax;
 			strMin = glyphData->renderOffsetMin < strMin ? glyphData->renderOffsetMin : strMin;
 		}
-		++i;
 	}
 
 	offset->ascender = ToDesignPixels(ftFace->size->metrics.ascender >> 6, uiScale);
@@ -224,105 +260,42 @@ void GuiTextRenderer::getOffset(const wchar_t* text, FontOffset* offset) {
 
 // --- Metrics ---
 
-uint16_t GuiTextRenderer::getWidth(const wchar_t* text) {
-	uint16_t strWidth = 0;
-	FT_Vector pairDelta;
+uint16_t GuiTextRenderer::getWidth(const GuiTextRun* runs, int runCount) {
+	int strWidth = 0;
 	GlyphData* prev = nullptr;
 
-	for (int i = 0; text[i]; ++i) {
-		GlyphData* glyphData = glyph(text[i]);
+	RunCursor cursor(runs, runCount);
+	wchar_t ch;
+	while (cursor.next(ch)) {
+		GlyphData* glyphData = glyph(ch);
 		if (glyphData) {
-			if (ftKerningEnabled && prev) {
-				FT_Get_Kerning(ftFace, prev->glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
-				strWidth += ToDesignPixels(pairDelta.x >> 6, uiScale);
-			}
+			strWidth += getKerning(prev, glyphData);
 			strWidth += glyphData->glyphAdvanceX;
 		}
 		prev = glyphData;
 	}
-	return strWidth;
+	return ClampWidth(strWidth);
 }
 
-int GuiTextRenderer::fitCount(const wchar_t* text, int maxWidth) {
-	uint16_t strWidth = 0;
-	FT_Vector pairDelta;
+int GuiTextRenderer::fitCount(const GuiTextRun* runs, int runCount, int maxWidth) {
+	int strWidth = 0;
 	GlyphData* prev = nullptr;
+	int count = 0;
 	int best = 0;
 
-	for (int i = 0; text[i]; ++i) {
-		GlyphData* glyphData = glyph(text[i]);
+	RunCursor cursor(runs, runCount);
+	wchar_t ch;
+	while (cursor.next(ch)) {
+		GlyphData* glyphData = glyph(ch);
 		if (glyphData) {
-			if (ftKerningEnabled && prev) {
-				FT_Get_Kerning(ftFace, prev->glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
-				strWidth += ToDesignPixels(pairDelta.x >> 6, uiScale);
-			}
+			strWidth += getKerning(prev, glyphData);
 			strWidth += glyphData->glyphAdvanceX;
 		}
 		prev = glyphData;
-		if ((int)strWidth <= maxWidth) best = i + 1;
+		++count;
+		if (strWidth <= maxWidth) best = count;
 	}
 	return best;
-}
-
-void GuiTextRenderer::scrollWindow(const wchar_t* text, uint32_t textlen, uint32_t pos, int maxWidth, wchar_t* out) {
-	uint32_t dynlen = textlen > pos ? textlen - pos : 0;
-	const bool spaced = dynlen + 2 < textlen;
-	if (spaced) dynlen += 2;
-
-	// the longest line that could be wanted: the tail, then as much of the start as would still leave
-	// the line shorter than the text
-	const uint32_t extra = textlen > dynlen + 1 ? textlen - 1 - dynlen : 0;
-	const uint32_t total = dynlen + extra;
-
-	lineScratch.resize(total + 1);
-	wchar_t* line = lineScratch.data();
-	uint32_t n = 0;
-	for (uint32_t i = pos; i < textlen; ++i) line[n++] = text[i];
-	if (spaced) { line[n++] = L' '; line[n++] = L' '; }
-	for (uint32_t i = 0; i < extra; ++i) line[n++] = text[i];
-	line[n] = 0;
-
-	// the width of every start of the line, in one pass
-	widthScratch.resize(total + 1);
-	uint16_t* w = widthScratch.data();
-	uint16_t strWidth = 0;
-	FT_Vector pairDelta;
-	GlyphData* prev = nullptr;
-	w[0] = 0;
-	for (uint32_t i = 0; i < total; ++i) {
-		GlyphData* glyphData = glyph(line[i]);
-		if (glyphData) {
-			if (ftKerningEnabled && prev) {
-				FT_Get_Kerning(ftFace, prev->glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
-				strWidth += ToDesignPixels(pairDelta.x >> 6, uiScale);
-			}
-			strWidth += glyphData->glyphAdvanceX;
-		}
-		prev = glyphData;
-		w[i + 1] = strWidth;
-	}
-
-	uint32_t len;
-	if ((int)w[dynlen] > maxWidth) {
-		// too wide: shorten until it fits
-		len = dynlen;
-		while (len > 0 && (int)w[len] > maxWidth) --len;
-	} else {
-		// room to spare: take on characters from the start of the text until it is full
-		len = dynlen;
-		while ((int)w[len] < maxWidth && len + 1 < textlen) ++len;
-		// the last character added is dropped, and one more if it overfilled the line
-		const uint32_t drop = (int)w[len] > maxWidth ? 2 : 1;
-		len = len > drop ? len - drop : 0;
-	}
-	for (uint32_t i = 0; i < len; ++i) out[i] = line[i];
-	out[len] = 0;
-}
-
-uint16_t GuiTextRenderer::getHeight(const wchar_t* text) {
-	FontOffset offset;
-	getOffset(text, &offset);
-	return offset.max - offset.min;
 }
 
 uint16_t GuiTextRenderer::getLineHeight() {
@@ -333,24 +306,23 @@ uint16_t GuiTextRenderer::getLineHeight() {
 
 // --- Drawing Pipeline ---
 
-uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, PixelColor color, uint32_t renderFlags) {
-	if (!text) return 0;
+void GuiTextRenderer::drawText(int16_t x, int16_t y, const GuiTextRun* runs, int runCount, PixelColor color, uint32_t renderFlags) {
+	if (!runs || runCount <= 0) return;
 
-	uint16_t x_pos = x, printed = 0;
+	uint16_t x_pos = x;
 	int16_t x_offset = 0, y_offset = 0;
-	FT_Vector pairDelta;
 	FontOffset offset;
 
 	// Layout Alignment Calculations. Left-justified text needs no width, and only the glyph-based
 	// vertical alignments need the extents of the text itself (the others use the font's own metrics),
 	// so the text is measured only when the answer is used.
 	if ((renderFlags & GUI_TEXT_JUSTIFY_MASK) && !(renderFlags & GUI_TEXT_JUSTIFY_LEFT)) {
-		x_offset = getStyleOffsetWidth(getWidth(text), renderFlags);
+		x_offset = getStyleOffsetWidth(getWidth(runs, runCount), renderFlags);
 	}
 	if (renderFlags & GUI_TEXT_ALIGN_MASK) {
 		const uint32_t vertical = renderFlags & GUI_TEXT_ALIGN_MASK;
 		if (vertical == GUI_TEXT_ALIGN_GLYPH_TOP || vertical == GUI_TEXT_ALIGN_GLYPH_MIDDLE || vertical == GUI_TEXT_ALIGN_GLYPH_BOTTOM) {
-			getOffset(text, &offset);
+			getOffset(runs, runCount, &offset);
 		} else {
 			offset.ascender = ToDesignPixels(ftFace->size->metrics.ascender >> 6, uiScale);
 			offset.descender = ToDesignPixels(ftFace->size->metrics.descender >> 6, uiScale);
@@ -362,15 +334,13 @@ uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, Pi
 
 	GlyphData* prev = nullptr;
 	renderer->beginText();
-	for (int i = 0; text[i]; ++i) {
-		GlyphData* glyphData = glyph(text[i]);
+	RunCursor cursor(runs, runCount);
+	wchar_t ch;
+	while (cursor.next(ch)) {
+		GlyphData* glyphData = glyph(ch);
 
 		if (glyphData) {
-			// Kerning adjustments
-			if (ftKerningEnabled && prev) {
-				FT_Get_Kerning(ftFace, prev->glyphIndex, glyphData->glyphIndex, FT_KERNING_DEFAULT, &pairDelta);
-				x_pos += ToDesignPixels(pairDelta.x >> 6, uiScale);
-			}
+			x_pos += getKerning(prev, glyphData);
 
 			// Draw current glyph via generic renderer
 			int16_t screenX = x_pos + glyphData->renderOffsetX + x_offset;
@@ -378,7 +348,6 @@ uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, Pi
 			renderer->drawQuad(glyphData->texture, screenX, screenY, glyphData->drawWidth, glyphData->drawHeight, color);
 
 			x_pos += glyphData->glyphAdvanceX;
-			++printed;
 		}
 		prev = glyphData;
 	}
@@ -386,11 +355,9 @@ uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const wchar_t* text, Pi
 
 	// Process additional layout features (Underlines/Strikethrough)
 	if (renderFlags & GUI_TEXT_STYLE_MASK) {
-		getOffset(text, &offset);
-		drawTextFeature(x + x_offset, y + y_offset, getWidth(text), &offset, renderFlags, color);
+		getOffset(runs, runCount, &offset);
+		drawTextFeature(x + x_offset, y + y_offset, getWidth(runs, runCount), &offset, renderFlags, color);
 	}
-
-	return printed;
 }
 
 void GuiTextRenderer::drawTextFeature(int16_t x, int16_t y, uint16_t width, FontOffset* offsetData, uint32_t format, const PixelColor& color) {
@@ -404,73 +371,58 @@ void GuiTextRenderer::drawTextFeature(int16_t x, int16_t y, uint16_t width, Font
 	}
 }
 
-// --- UTF-8 Wrapper Overloads ---
+// --- UTF-8 ---
 
-wchar_t* GuiTextRenderer::charToWideChar(const char* strChar) {
-	if (!strChar) return nullptr;
+size_t GuiTextRenderer::utf8ToWide(const char* strChar, wchar_t* out, size_t outCap) {
+	// how many characters may be written: all of them when only counting
+	const size_t limit = out ? (outCap ? outCap - 1 : 0) : (size_t)-1;
+	size_t count = 0;
 
-	const unsigned char* s = reinterpret_cast<const unsigned char*>(strChar);
-	wchar_t* strWChar = new wchar_t[strlen(strChar) + 1]; // never longer than the byte count
-	size_t out = 0;
+	if (strChar) {
+		const unsigned char* s = reinterpret_cast<const unsigned char*>(strChar);
 
-	while (*s) {
-		uint32_t cp = *s;
-		int extra = 0;
-		uint32_t minCp = 0;
+		while (*s && count < limit) {
+			uint32_t cp = *s;
+			int extra = 0;
+			uint32_t minCp = 0;
+			uint32_t result = 0;
+			size_t used = 1;
 
-		if (cp < 0x80) {
-			// ASCII
-		}
-		else if (cp >= 0xC2 && cp <= 0xDF) { extra = 1; cp &= 0x1F; minCp = 0x80; }
-		else if (cp >= 0xE0 && cp <= 0xEF) { extra = 2; cp &= 0x0F; minCp = 0x800; }
-		else if (cp >= 0xF0 && cp <= 0xF4) { extra = 3; cp &= 0x07; minCp = 0x10000; }
-		// else: stray continuation byte / invalid lead - handled below as Latin-1
+			if (cp < 0x80) {
+				// ASCII
+			}
+			else if (cp >= 0xC2 && cp <= 0xDF) { extra = 1; cp &= 0x1F; minCp = 0x80; }
+			else if (cp >= 0xE0 && cp <= 0xEF) { extra = 2; cp &= 0x0F; minCp = 0x800; }
+			else if (cp >= 0xF0 && cp <= 0xF4) { extra = 3; cp &= 0x07; minCp = 0x10000; }
+			// else: stray continuation byte / invalid lead - handled below as Latin-1
 
-		if (extra) {
-			int n = 0;
-			uint32_t v = cp;
-			while (n < extra && (s[1 + n] & 0xC0) == 0x80) {
-				v = (v << 6) | (s[1 + n] & 0x3F);
-				++n;
+			result = cp;
+			if (extra) {
+				int n = 0;
+				uint32_t v = cp;
+				while (n < extra && (s[1 + n] & 0xC0) == 0x80) {
+					v = (v << 6) | (s[1 + n] & 0x3F);
+					++n;
+				}
+
+				bool valid = (n == extra) && v >= minCp && v <= 0x10FFFF && !(v >= 0xD800 && v <= 0xDFFF);
+				if (valid && v > (uint32_t)WCHAR_MAX) valid = false; // can't represent in a 16-bit wchar_t
+				if (valid) {
+					result = v;
+					used = 1 + extra;
+				} else {
+					result = *s; // invalid sequence: keep the lead byte as Latin-1
+				}
 			}
 
-			bool valid = (n == extra) && v >= minCp && v <= 0x10FFFF && !(v >= 0xD800 && v <= 0xDFFF);
-			if (valid && v > (uint32_t)WCHAR_MAX) valid = false; // can't represent in a 16-bit wchar_t
-			if (valid) {
-				strWChar[out++] = (wchar_t)v;
-				s += 1 + extra;
-				continue;
-			}
-			cp = *s; // invalid sequence: keep the lead byte as Latin-1
+			if (out) out[count] = (wchar_t)result;
+			++count;
+			s += used;
 		}
-
-		strWChar[out++] = (wchar_t)cp;
-		++s;
 	}
 
-	strWChar[out] = L'\0';
-	return strWChar;
-}
-
-uint16_t GuiTextRenderer::drawText(int16_t x, int16_t y, const char* text, PixelColor color, uint32_t renderFlags) {
-	wchar_t* wText = charToWideChar(text);
-	uint16_t result = drawText(x, y, wText, color, renderFlags);
-	delete[] wText;
-	return result;
-}
-
-uint16_t GuiTextRenderer::getWidth(const char* text) {
-	wchar_t* wText = charToWideChar(text);
-	uint16_t result = getWidth(wText);
-	delete[] wText;
-	return result;
-}
-
-uint16_t GuiTextRenderer::getHeight(const char* text) {
-	wchar_t* wText = charToWideChar(text);
-	uint16_t result = getHeight(wText);
-	delete[] wText;
-	return result;
+	if (out && outCap) out[count] = L'\0';
+	return count;
 }
 
 // FreeType's sfnt module uses brotli decoder (~175 KB). WOFF2 support is not needed - so we override it here
