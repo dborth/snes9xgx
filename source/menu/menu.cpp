@@ -361,8 +361,23 @@ void ProgressOverlayState::update() {
 	}
 }
 
+// Held while a task runs on the worker thread: nothing on the page reacts to input, but the page is not dimmed
+static int guiInputBlocked = 0;
+
+struct GuiInputBlock
+{
+	GuiInputBlock() { guiInputBlocked++; }
+	~GuiInputBlock() { guiInputBlocked--; }
+	GuiInputBlock(const GuiInputBlock &) = delete;
+	GuiInputBlock & operator=(const GuiInputBlock &) = delete;
+};
+
 static void ProcessInputData() {
 	platform->getInput()->update();
+
+	// the progress overlay, once it is up, is the one thing that still reacts (its Cancel button)
+	if(guiInputBlocked > 0 && !menu->progressOverlayState.overlayShown)
+		return;
 
 	for(int i = 3; i >= 0; i--)
 		menu->mainWindow.update(controller[i]);
@@ -1015,7 +1030,7 @@ static int AutoDetectDevicesTask(void *) { AutoDetectDevices(); return 0; }
  ***************************************************************************/
 static bool RunWithGuiUpdates(BgTaskFn task, int * result = nullptr, void * arg = nullptr)
 {
-	menu->mainWindow.setState(STATE::DISABLED);
+	GuiInputBlock block;
 
 	int r;
 	if(RunOnWorkerThread(task, arg))
@@ -1030,8 +1045,6 @@ static bool RunWithGuiUpdates(BgTaskFn task, int * result = nullptr, void * arg 
 	{
 		r = task(arg);
 	}
-
-	menu->mainWindow.setState(STATE::DEFAULT);
 
 	if(result)
 		*result = r;
@@ -1048,6 +1061,8 @@ static bool RunWithGuiUpdates(BgTaskFn task, int * result = nullptr, void * arg 
  ***************************************************************************/
 static bool WaitForQueuedTasks()
 {
+	GuiInputBlock block;
+
 	while(!BackgroundTasksIdle())
 	{
 		if(!UpdateGui()) return false;
@@ -1877,7 +1892,6 @@ static int SaveOpTask(void * arg)
 // \return false if the app was asked to quit
 static bool RunSaveOp(int op, int type, const char * filepath, int * result, bool silent = false)
 {
-	menu->mainWindow.setState(STATE::DISABLED);
 	if(!WaitForQueuedTasks()) return false;
 
 	saveOpArgs.op = op;
