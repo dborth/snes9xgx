@@ -1458,6 +1458,9 @@ static void SelectButton(GuiWindow & page, GuiElement & button)
 	button.setState(STATE::SELECTED);
 }
 
+enum { SAVES_READY, SAVES_UNAVAILABLE, SAVES_QUIT };
+static int PrepareSaves();
+
 /****************************************************************************
  * MenuGame
  *
@@ -1576,7 +1579,13 @@ static int MenuGame()
 
 		if(saveBtn.getState() == STATE::CLICKED)
 		{
-			selection = MENU_GAME_SAVE;
+			const int prepared = PrepareSaves();
+			if(prepared == SAVES_QUIT)
+				return MENU_EXIT;
+			else if(prepared == SAVES_READY)
+				selection = MENU_GAME_SAVE;
+			else
+				SelectButton(w, saveBtn); // it could not be opened: the reason was shown, and this page carries on
 		}
 		else if(mappingBtn.getState() == STATE::CLICKED)
 		{
@@ -1876,6 +1885,59 @@ static bool RunSaveOp(int op, int type, const char * filepath, int * result, boo
 	saveOpArgs.silent = silent;
 	snprintf(saveOpArgs.filepath, sizeof(saveOpArgs.filepath), "%s", filepath);
 	return RunWithGuiUpdates(SaveOpTask, result, &saveOpArgs);
+}
+
+/****************************************************************************
+ * LoadSaveScreenData / PrepareSaves
+ *
+ * LoadSaveScreenData fetches what the Saves screen shows, on the worker thread, while the GUI keeps drawing
+ * whatever page is up. `out` is replaced only on success.
+ * \return false if the app was asked to quit while waiting.
+ ***************************************************************************/
+static bool LoadSaveScreenData(std::unique_ptr<SaveScreenData> & out)
+{
+	// an autosave still being written has to be on the device before it is listed
+	if(!WaitForQueuedTasks()) return false;
+
+	std::unique_ptr<SaveScreenData> fresh(new SaveScreenData);
+
+	if(!RunWithGuiUpdates(SaveListTask, nullptr, fresh.get()))
+	{
+		fresh.release(); // deliberately leaked - the worker may still be writing to it
+		return false;
+	}
+
+	// create the screenshot textures (main thread only)
+	for(int i = 0; i < fresh->saves.length; i++)
+	{
+		if(fresh->thumbs[i].valid())
+		{
+			auto thumb = std::make_unique<GuiImageData>();
+			if(thumb->uploadDecoded(std::move(fresh->thumbs[i])))
+				fresh->saves.previewImg[i] = std::move(thumb);
+		}
+	}
+	out = std::move(fresh);
+	return true;
+}
+
+static std::unique_ptr<SaveScreenData> preparedSaves;
+
+static int PrepareSaves()
+{
+	// static: the task may still be using it if the app is asked to quit
+	static ChangeInterfaceArgs ciArgs;
+	ciArgs.device = EmuSettings.saveDevice;
+	ciArgs.silent = NOTSILENT;
+
+	int changeOk = 0;
+	if(!RunWithGuiUpdates(ChangeInterfaceTask, &changeOk, &ciArgs))
+		return SAVES_QUIT;
+	if(!changeOk)
+		return SAVES_UNAVAILABLE;
+	if(!LoadSaveScreenData(preparedSaves))
+		return SAVES_QUIT;
+	return SAVES_READY;
 }
 
 /****************************************************************************
@@ -2428,35 +2490,8 @@ static int MenuGameSaves()
 	menu->mainWindow.appendWithAutoRemove(&saveBrowser);
 	menu->mainWindow.appendWithAutoRemove(&toastBtn);
 
-	// Look up the saves on the worker thread so the GUI keeps running. The data is on
-	// the heap because the task may still be using it if the app is asked to quit.
-	std::unique_ptr<SaveScreenData> data;
-	auto loadSaves = [&data]() -> bool
-	{
-		// an autosave still being written (the first Auto Snapshot, say) has to be on the device before it is listed
-		if(!WaitForQueuedTasks()) return false;
-
-		std::unique_ptr<SaveScreenData> fresh(new SaveScreenData);
-
-		if(!RunWithGuiUpdates(SaveListTask, nullptr, fresh.get()))
-		{
-			fresh.release(); // deliberately leaked - the worker may still be writing to it
-			return false;
-		}
-
-		// create the screenshot textures (main thread only)
-		for(int i = 0; i < fresh->saves.length; i++)
-		{
-			if(fresh->thumbs[i].valid())
-			{
-				auto thumb = std::make_unique<GuiImageData>();
-				if(thumb->uploadDecoded(std::move(fresh->thumbs[i])))
-					fresh->saves.previewImg[i] = std::move(thumb);
-			}
-		}
-		data = std::move(fresh);
-		return true;
-	};
+	std::unique_ptr<SaveScreenData> data = std::move(preparedSaves);
+	auto loadSaves = [&data]() -> bool { return LoadSaveScreenData(data); };
 
 	std::vector<SaveEntry> entries;
 	std::vector<SaveCard> cards;
@@ -2589,25 +2624,9 @@ static int MenuGameSaves()
 		}
 	};
 
-	static ChangeInterfaceArgs ciArgs;
-	ciArgs.device = EmuSettings.saveDevice;
-	ciArgs.silent = NOTSILENT;
-	bool changeOk = false;
+	if(!data)
+		return MENU_GAME; // not prepared: there is nothing to show
 
-	if(RunOnWorkerThread(ChangeInterfaceTask, &ciArgs))
-	{
-		while(!IsWorkerThreadFinished())
-		{
-			if(!UpdateGui()) return MENU_EXIT;
-		}
-		changeOk = GetWorkerThreadResult() != 0;
-	}
-
-	if(!changeOk)
-		return MENU_GAME;
-
-	if(!loadSaves())
-		return MENU_EXIT;
 	showCards(-1, -1, 0);
 
 	while(selection == MENU_NONE)
