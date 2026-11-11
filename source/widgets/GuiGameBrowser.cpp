@@ -520,7 +520,7 @@ void GuiGameBrowser::update(InputController * controller)
 
 				fileList[i]->setVisible(true);
 
-				fileListText[i]->setText(browserList[browser.pageIndex+i].displayname);
+				fileListText[i]->setRawText(browserList[browser.pageIndex+i].displayname);
 
 				if(fileListIcon[i])
 				{

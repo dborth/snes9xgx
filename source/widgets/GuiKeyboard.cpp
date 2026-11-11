@@ -128,7 +128,8 @@ GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 	keyTextboxShape->setPosition(0, KB_TEXTBOX_Y);
 	this->append(keyTextboxShape);
 
-	kbText = new GuiText(GetDisplayText(kbtextstr), KB_FONTSIZE, theme.text);
+	kbText = new GuiText(nullptr, KB_FONTSIZE, theme.text);
+	kbText->setRawText(GetDisplayText(kbtextstr));
 	kbText->setAlignment(ALIGN_H::CENTRE, ALIGN_V::TOP);
 	kbText->setPosition(0, KB_TEXT_Y);
 	this->append(kbText);
@@ -185,7 +186,8 @@ GuiKeyboard::GuiKeyboard(char * t, uint32_t max)
 			{
 				txt[0] = keys[i][j].ch;
 				keyImg[i][j] = newKeyShape(KB_KEY_WIDTH);
-				keyTxt[i][j] = new GuiText(txt, KB_FONTSIZE, theme.text);
+				keyTxt[i][j] = new GuiText(nullptr, KB_FONTSIZE, theme.text);
+				keyTxt[i][j]->setRawText(txt);
 				keyTxt[i][j]->setAlignment(ALIGN_H::CENTRE, ALIGN_V::BOTTOM);
 				keyTxt[i][j]->setPosition(0, -8);
 				keyBtn[i][j] = new GuiButton(KB_KEY_WIDTH, KB_KEY_HEIGHT);
@@ -250,7 +252,7 @@ void GuiKeyboard::update(InputController * c)
 		{
 			kbtextstr[len] = ' ';
 			kbtextstr[len+1] = '\0';
-			kbText->setText(kbtextstr);
+			kbText->setRawText(kbtextstr);
 		}
 		keySpace->setState(STATE::SELECTED, c->getChannel());
 	}
@@ -260,7 +262,7 @@ void GuiKeyboard::update(InputController * c)
 		if(len > 0)
 		{
 			kbtextstr[len-1] = '\0';
-			kbText->setText(GetDisplayText(kbtextstr));
+			kbText->setRawText(GetDisplayText(kbtextstr));
 		}
 		keyBack->setState(STATE::SELECTED, c->getChannel());
 	}
@@ -294,7 +296,7 @@ void GuiKeyboard::update(InputController * c)
 					else
 						txt[0] = keys[i][j].ch;
 
-					keyTxt[i][j]->setText(txt);
+					keyTxt[i][j]->setRawText(txt);
 				}
 
 				if(keyBtn[i][j]->getState() == STATE::CLICKED)
@@ -313,7 +315,7 @@ void GuiKeyboard::update(InputController * c)
 						}
 						kbtextstr[len+1] = '\0';
 					}
-					kbText->setText(GetDisplayText(kbtextstr));
+					kbText->setRawText(GetDisplayText(kbtextstr));
 					keyBtn[i][j]->setState(STATE::SELECTED, c->getChannel());
 
 					if(shift)

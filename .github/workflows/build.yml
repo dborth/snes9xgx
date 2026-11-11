@@ -17,6 +17,9 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Install gettext (msgfmt compiles the language files)
+      run: apt-get update && apt-get install -y gettext
+
     - name: Build and install libmocha
       if: ${{ matrix.image == 'WiiU' }}
       run: |

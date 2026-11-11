@@ -471,10 +471,12 @@ static void CreditsWindow()
 
 	snprintf(controllerInfo, sizeof(controllerInfo), "%s", GetUSBControllerInfo());
 
-	txt[i] = new GuiText(consoleDetails, 14, (PixelColor){0, 0, 0, 255});
+	txt[i] = new GuiText(nullptr, 14, (PixelColor){0, 0, 0, 255});
+	txt[i]->setRawText(consoleDetails);
 	txt[i]->setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
 	txt[i]->setPosition(-20,-90); i++;
-	txt[i] = new GuiText(memoryFreeInfo, 14, (PixelColor){0, 0, 0, 255});
+	txt[i] = new GuiText(nullptr, 14, (PixelColor){0, 0, 0, 255});
+	txt[i]->setRawText(memoryFreeInfo);
 	txt[i]->setAlignment(ALIGN_H::RIGHT, ALIGN_V::BOTTOM);
 	txt[i]->setPosition(-20,-76); i++;
 	txt[i] = new GuiText(controllerInfo, 14, (PixelColor){0, 0, 0, 255});
@@ -1251,7 +1253,10 @@ static int MenuGameSelection()
 	gameBrowser.resetState();
 	gameBrowser.fileList[0]->setState(STATE::SELECTED);
 	gameBrowser.triggerUpdate();
-	titleTxt.setText(inSz ? szname : "Choose Game");
+	if(inSz)
+		titleTxt.setRawText(szname);
+	else
+		titleTxt.setText("Choose Game");
 
 	while(selection == MENU_NONE)
 	{
@@ -1336,7 +1341,10 @@ static int MenuGameSelection()
 						break;
 					}
 
-					titleTxt.setText(inSz ? szname : "Choose Game");
+					if(inSz)
+						titleTxt.setRawText(szname);
+					else
+						titleTxt.setText("Choose Game");
 				}
 				else
 				{
@@ -1406,7 +1414,7 @@ static void PlayerMappingWindowUpdate(void * ptr, int dir)
 		if(playerMapping[playerMappingChan] < 0)
 			playerMapping[playerMappingChan] = 3;
 
-		settingText->setText(TrFormat("Player %d", playerMapping[playerMappingChan]+1).c_str());
+		settingText->setRawText(TrFormat("Player %d", playerMapping[playerMappingChan]+1).c_str());
 		b->resetState();
 	}
 }
@@ -1425,7 +1433,8 @@ static void PlayerMappingWindow(int chan)
 
 	MenuArrowButton arrowRightBtn(SHAPE::TRIANGLE_RIGHT, ALIGN_H::RIGHT, ALIGN_V::MIDDLE, 0, 0, PlayerMappingWindowRightClick);
 	
-	settingText = new GuiText(TrFormat("Player %d", playerMapping[playerMappingChan]+1).c_str(), 22, (PixelColor){0, 0, 0, 255});
+	settingText = new GuiText(nullptr, 22, (PixelColor){0, 0, 0, 255});
+	settingText->setRawText(TrFormat("Player %d", playerMapping[playerMappingChan]+1).c_str());
 
 	w->append(&arrowLeftBtn);
 	w->append(&arrowRightBtn);
@@ -1497,7 +1506,8 @@ static int MenuGame()
 
 	char romTitle[512];
 	platform->getFileSystem()->nameToDisplay(Memory.ROMFilename, romTitle, sizeof(romTitle)); // raw name -> UTF-8 for display only
-	GuiText titleTxt(romTitle, 22, (PixelColor){255, 255, 255, 255});
+	GuiText titleTxt(nullptr, 22, (PixelColor){255, 255, 255, 255});
+	titleTxt.setRawText(romTitle);
 	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 	titleTxt.setPosition(50,40);
 
@@ -2356,7 +2366,8 @@ static int MenuGameSaves()
 	titleTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 	titleTxt.setPosition(50,24);
 
-	GuiText gameTxt(romTitle, 20, white);
+	GuiText gameTxt(nullptr, 20, white);
+	gameTxt.setRawText(romTitle);
 	gameTxt.setAlignment(ALIGN_H::LEFT, ALIGN_V::TOP);
 	gameTxt.setPosition(50,60);
 
@@ -3111,9 +3122,9 @@ static void ScreenZoomWindowUpdate(void * ptr, float h, float v)
 
 		char zoom[10];
 		sprintf(zoom, "%.2f%%", EmuSettings.videoZoomHor*100);
-		settingText->setText(zoom);
+		settingText->setRawText(zoom);
 		sprintf(zoom, "%.2f%%", EmuSettings.videoZoomVert*100);
-		settingText2->setText(zoom);
+		settingText2->setRawText(zoom);
 		b->resetState();
 	}
 }
@@ -3144,10 +3155,10 @@ static void ScreenZoomWindow()
 	settingText2 = new GuiText(nullptr, 20, (PixelColor){0, 0, 0, 255});
 	char zoom[10];
 	sprintf(zoom, "%.2f%%", EmuSettings.videoZoomHor*100);
-	settingText->setText(zoom);
+	settingText->setRawText(zoom);
 	settingText->setPosition(108, 0);
 	sprintf(zoom, "%.2f%%", EmuSettings.videoZoomVert*100);
-	settingText2->setText(zoom);
+	settingText2->setRawText(zoom);
 	settingText2->setPosition(-76, 0);
 
 	float currentZoomHor = EmuSettings.videoZoomHor;
@@ -3188,7 +3199,7 @@ static void ScreenPositionWindowUpdate(void * ptr, int x, int y)
 
 		char shift[10];
 		sprintf(shift, "%hd, %hd", EmuSettings.videoXshift, EmuSettings.videoYshift);
-		settingText->setText(shift);
+		settingText->setRawText(shift);
 		b->resetState();
 	}
 }
@@ -3218,7 +3229,7 @@ static void ScreenPositionWindow()
 	settingText = new GuiText(nullptr, 20, (PixelColor){0, 0, 0, 255});
 	char shift[10];
 	sprintf(shift, "%i, %i", EmuSettings.videoXshift, EmuSettings.videoYshift);
-	settingText->setText(shift);
+	settingText->setRawText(shift);
 
 	int currentX = EmuSettings.videoXshift;
 	int currentY = EmuSettings.videoYshift;
@@ -3966,21 +3977,21 @@ static bool LoadLanguage()
 
 	switch(EmuSettings.language)
 	{
-		case LANG_JAPANESE: buffer = jp_lang; size = jp_lang_size; break;
-		case LANG_ENGLISH: buffer = en_lang; size = en_lang_size; break;
-		case LANG_GERMAN: buffer = de_lang; size = de_lang_size; break;
-		case LANG_FRENCH: buffer = fr_lang; size = fr_lang_size; break;
-		case LANG_SPANISH: buffer = es_lang; size = es_lang_size; break;
-		case LANG_ITALIAN: buffer = it_lang; size = it_lang_size; break;
-		case LANG_DUTCH: buffer = nl_lang; size = nl_lang_size; break;
+		case LANG_JAPANESE: buffer = jp_mo; size = jp_mo_size; break;
+		case LANG_ENGLISH: textTranslator->clear(); return true; // English is the text in the program
+		case LANG_GERMAN: buffer = de_mo; size = de_mo_size; break;
+		case LANG_FRENCH: buffer = fr_mo; size = fr_mo_size; break;
+		case LANG_SPANISH: buffer = es_mo; size = es_mo_size; break;
+		case LANG_ITALIAN: buffer = it_mo; size = it_mo_size; break;
+		case LANG_DUTCH: buffer = nl_mo; size = nl_mo_size; break;
 		case LANG_SIMP_CHINESE:
-		case LANG_TRAD_CHINESE: buffer = zh_lang; size = zh_lang_size; break;
-		case LANG_KOREAN: buffer = ko_lang; size = ko_lang_size; break;
-		case LANG_PORTUGUESE: buffer = pt_lang; size = pt_lang_size; break;
-		case LANG_BRAZILIAN_PORTUGUESE: buffer = pt_br_lang; size = pt_br_lang_size; break;
-		case LANG_CATALAN: buffer = ca_lang; size = ca_lang_size; break;
-		case LANG_TURKISH: buffer = tr_lang; size = tr_lang_size; break;
-		case LANG_SWEDISH: buffer = sv_lang; size = sv_lang_size; break;
+		case LANG_TRAD_CHINESE: buffer = zh_mo; size = zh_mo_size; break;
+		case LANG_KOREAN: buffer = ko_mo; size = ko_mo_size; break;
+		case LANG_PORTUGUESE: buffer = pt_mo; size = pt_mo_size; break;
+		case LANG_BRAZILIAN_PORTUGUESE: buffer = pt_br_mo; size = pt_br_mo_size; break;
+		case LANG_CATALAN: buffer = ca_mo; size = ca_mo_size; break;
+		case LANG_TURKISH: buffer = tr_mo; size = tr_mo_size; break;
+		case LANG_SWEDISH: buffer = sv_mo; size = sv_mo_size; break;
 		default: return false;
 	}
 

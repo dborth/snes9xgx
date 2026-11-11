@@ -16,20 +16,19 @@
 #include "font_ttf.h"
 
 // Languages
-#include "jp_lang.h"
-#include "en_lang.h"
-#include "de_lang.h"
-#include "fr_lang.h"
-#include "es_lang.h"
-#include "it_lang.h"
-#include "nl_lang.h"
-#include "zh_lang.h"
-#include "ko_lang.h"
-#include "pt_lang.h"
-#include "pt_br_lang.h"
-#include "ca_lang.h"
-#include "tr_lang.h"
-#include "sv_lang.h"
+#include "jp_mo.h"
+#include "de_mo.h"
+#include "fr_mo.h"
+#include "es_mo.h"
+#include "it_mo.h"
+#include "nl_mo.h"
+#include "zh_mo.h"
+#include "ko_mo.h"
+#include "pt_mo.h"
+#include "pt_br_mo.h"
+#include "ca_mo.h"
+#include "tr_mo.h"
+#include "sv_mo.h"
 
 // Sounds
 #ifndef HW_DOL

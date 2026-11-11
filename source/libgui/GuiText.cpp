@@ -6,87 +6,6 @@
 
 #include "Gui.h"
 
-#include <cstdarg>
-#include <cstdio>
-
-// The one translator. Its constructor is constexpr, so this is constant-initialized: it is complete
-// before any dynamic initializer runs, and a static GuiText/GuiButton constructed in any translation
-// unit can resolve text through it without depending on link order. The union keeps it from ever being
-// destroyed: it lives until the process ends, so nothing can look up text in a list freed at exit.
-static union TranslatorStorage
-{
-	GuiTextTranslator translator;
-	constexpr TranslatorStorage() : translator() {}
-	~TranslatorStorage() {}
-} translatorStorage;
-GuiTextTranslator* textTranslator = &translatorStorage.translator;
-
-std::string Tr(const char* msgid)
-{
-	const char* text = msgid ? textTranslator->getText(msgid) : nullptr;
-	return text ? std::string(text) : std::string();
-}
-
-// Reads the next printf conversion of s (from its '%' to its conversion letter, so "%-5.2f" is one) into
-// spec and returns where it ends, or nullptr when there are no more. "%%" is not a conversion.
-static const char* NextConversion(const char* s, std::string& spec)
-{
-	while(*s)
-	{
-		if(*s++ != '%')
-			continue;
-		if(*s == '%')
-		{
-			s++;
-			continue;
-		}
-		spec.clear();
-		while(*s && !strchr("diouxXeEfFgGaAcspn", *s))
-			spec += *s++;
-		if(*s)
-			spec += *s++;
-		return s;
-	}
-	return nullptr;
-}
-
-// true when a and b take the same arguments: the same conversions in the same order
-static bool SameConversions(const char* a, const char* b)
-{
-	std::string specA, specB;
-	do
-	{
-		a = NextConversion(a, specA);
-		b = NextConversion(b, specB);
-	} while(a && b && specA == specB);
-
-	return !a && !b; // Only equal if both ran out together; a mismatched spec leaves a and b non-null
-}
-
-std::string TrFormat(const char* msgid, ...)
-{
-	const char* fmt = textTranslator->getText(msgid);
-	if(!fmt || !SameConversions(fmt, msgid))
-		fmt = msgid;
-
-	va_list args;
-	va_start(args, msgid);
-	va_list copy;
-	va_copy(copy, args);
-	const int n = vsnprintf(nullptr, 0, fmt, copy);
-	va_end(copy);
-
-	std::string out;
-	if(n > 0)
-	{
-		out.resize((size_t)n + 1);
-		vsnprintf(&out[0], out.size(), fmt, args);
-		out.resize((size_t)n);
-	}
-	va_end(args);
-	return out;
-}
-
 static PixelColor presetColor = (PixelColor){255, 255, 255, 255};
 static int presetSize = 0;
 static int presetMaxWidth = 0;
@@ -136,7 +55,7 @@ void GuiText::setup(const char * t, int s, PixelColor c, uint16_t st, int mw, AL
 	alignmentHor = h;
 	alignmentVert = v;
 
-	assign(t);
+	assign(t, true);
 }
 
 /**
@@ -153,14 +72,18 @@ void GuiText::release()
 	text = nullptr;
 	msgid = nullptr;
 	textLen = textCap = msgCap = 0;
+	rawText = false;
 }
 
 /**
  * Takes a message ID: translates it, and keeps the translation and the ID itself (resetText() translates
  * it again) in one allocation. When the text already held is in an allocation big enough, that is reused.
  * `id` may point into the allocation that is held (resetText() passes the ID it keeps).
+ *
+ * With translate false the text is not a message ID but the text to show: it is shown as it is, no ID is kept (the
+ * allocation then holds just an empty one), and resetText() leaves it alone.
  */
-void GuiText::assign(const char * id)
+void GuiText::assign(const char * id, bool translate)
 {
 	layoutValid = false;
 	textScrollPos = 0;
@@ -173,7 +96,7 @@ void GuiText::assign(const char * id)
 		return;
 	}
 
-	const char * translated = textTranslator->getText(id);
+	const char * translated = translate ? textTranslator->getText(id) : id;
 	if(!translated)
 		translated = id;
 
@@ -182,7 +105,7 @@ void GuiText::assign(const char * id)
 	if(n > MAX_TEXT_CHARS)
 		n = MAX_TEXT_CHARS;
 
-	size_t m = strlen(id);
+	size_t m = translate ? strlen(id) : 0;
 	if(m > MAX_MSGID_BYTES)
 	{
 		m = MAX_MSGID_BYTES;
@@ -197,6 +120,7 @@ void GuiText::assign(const char * id)
 		if(id != msgid)
 			memmove(msgid, id, m);
 		msgid[m] = 0;
+		rawText = !translate;
 		return;
 	}
 
@@ -221,11 +145,17 @@ void GuiText::assign(const char * id)
 	textLen = (uint16_t)len;
 	textCap = (uint16_t)n;
 	msgCap = (uint16_t)m;
+	rawText = !translate;
 }
 
 void GuiText::setText(const char * t)
 {
-	assign(t);
+	assign(t, true);
+}
+
+void GuiText::setRawText(const char * t)
+{
+	assign(t, false);
 }
 
 int GuiText::getLongestWordWidth()
@@ -397,10 +327,10 @@ void GuiText::setAlignment(ALIGN_H hor, ALIGN_V vert)
 
 void GuiText::resetText()
 {
-	if(!msgid)
+	if(!msgid || rawText)
 		return;
 
-	assign(msgid);
+	assign(msgid, true);
 }
 
 /**

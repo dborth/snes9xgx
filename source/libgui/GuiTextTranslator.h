@@ -1,67 +1,123 @@
 /****************************************************************************
  * libgui
- * Daryl Borth 2026
+ * Daryl Borth 2009-2026
  * GuiTextTranslator.h
  ***************************************************************************/
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <cstddef>
+#include <string>
 
-//!Hashed msgid -> UTF-8 string table loaded from a single binary .lang
-//!blob (see loadLanguage()). GuiText and other classes call getText() to
-//!resolve a message ID to translated text.
+//!Looks up translated UTF-8 text by its English message ID.
+//!
+//!The translations are GNU gettext message catalogs (.mo), compiled from the .lang source files by the build
+//!(msgfmt) and embedded in the program. loadLanguage() checks a catalog once and then reads it where it lies: the
+//!translator never allocates, never copies a string and never parses text, and a lookup is a binary search of the
+//!catalog's sorted message IDs, compared exactly (there is no hashing, so two IDs can never be mistaken for each other).
+//!
+//!A catalog that is not entirely sound is not used at all, and a single translation that is not sound (empty, or not
+//!valid UTF-8) is not returned: in both cases the caller gets the English text back. There is no state to corrupt:
+//!all the translator holds is a pointer to the catalog and a few numbers read from its header.
+//!
+//!The catalog must stay where it is, unchanged, for the life of the program (embedded data always does): a lookup that
+//!began before a catalog was replaced may still be reading the old one.
+//!
+//!Any thread may look text up while a language is loaded or cleared. A lookup that overlaps the switch is not held up
+//!and does not guess: it returns the English text, once. Only one thread may load or clear at a time.
 //!\ingroup grp_core
 class GuiTextTranslator
 {
 	public:
-		//! constexpr on purpose: an instance defined at namespace scope is then constant-initialized
-		//! (it is laid out in the binary and no constructor runs at startup), so it is already valid
-		//! for any static initializer in any translation unit, whatever the link order.
-		constexpr GuiTextTranslator() : magic(MAGIC), head(nullptr) {}
-		~GuiTextTranslator();
+		//! constexpr, with nothing to destroy, on purpose: the instance (textTranslator) is then constant-initialized (it
+		//! is laid out in the binary and no constructor runs at startup), so it is already valid for any static initializer
+		//! in any translation unit, whatever the link order.
+		constexpr GuiTextTranslator() : sequence(0), base(nullptr), size(0), count(0), origOffset(0), transOffset(0), bigEndian(0) {}
 
-		//! Loads and parses a translation file from a memory buffer
-		//!\param buffer Pointer to the loaded file data
-		//!\param size Length of the buffer in bytes
-		//!\return true if successful, false otherwise
-		bool loadLanguage(const uint8_t* buffer, size_t size);
+		//! Checks a compiled message catalog and starts using it, replacing the one in use. A catalog that fails any
+		//! check (see the .cpp for the list) is not used at all: the translator is left with no catalog, so every
+		//! lookup returns the English text.
+		//!\param catalog The .mo file's data. It is not copied, so it must outlive its use here.
+		//!\param length Length of the data in bytes
+		//!\return true if the catalog was sound and is now in use, false otherwise
+		bool loadLanguage(const uint8_t* catalog, size_t length);
 
-		//! Retrieves the translated UTF-8 string for a given ASCII message ID
-		//!\param msgid The English text/ID to translate
-		//!\return The translated string, or the original msgid if not found
-		const char* getText(const char* msgid) const;
-
-		//! Clears the current translation dictionary and frees memory
+		//! Stops using the catalog. The English text is returned from then on, which is how English is selected.
 		void clear();
 
-	private:
-		static constexpr uint32_t MAGIC = 0x47545254; // "GTRT": a live, intact translator
+		//! Whether a catalog is in use
+		bool isLoaded() const { return getCount() != 0; }
 
-		struct MSG
+		//! The number of messages in the catalog in use (0 if none)
+		size_t getCount() const;
+
+		//! Finds the translation of a message ID
+		//!\param msgid The English text/ID
+		//!\return The translation, or nullptr if there is none or it is not sound. Points into the catalog.
+		const char* find(const char* msgid) const;
+
+		//! Retrieves the translated UTF-8 string for a message ID
+		//!\param msgid The English text/ID to translate
+		//!\return The translated string, or msgid itself if there is no translation (nullptr if msgid is nullptr)
+		const char* getText(const char* msgid) const;
+
+		//! Whether two printf formats take the same arguments: the same conversions, in the same order
+		static bool sameConversions(const char* a, const char* b);
+
+		//! The longest message ID or translation (in bytes) a catalog may hold
+		static constexpr uint32_t MAX_STRING_LENGTH = 1024;
+		//! The most messages a catalog may hold
+		static constexpr uint32_t MAX_MESSAGES = 16384;
+
+	private:
+		//! What a lookup needs to know about the catalog in use, read from its header when it was checked
+		struct Table
 		{
-			uint32_t id = 0;
-			char* msgstr = nullptr;
-			MSG* next = nullptr;
+			const uint8_t* base;	//!< The catalog (nullptr when there is none)
+			size_t size;			//!< Its length
+			uint32_t count;			//!< Number of messages
+			uint32_t origOffset;	//!< Offset of the table of message IDs (count entries of {length, offset})
+			uint32_t transOffset;	//!< Offset of the table of translations, in the same order
+			bool bigEndian;			//!< The catalog's words are big-endian
+
+			constexpr Table() : base(nullptr), size(0), count(0), origOffset(0), transOffset(0), bigEndian(false) {}
 		};
 
-		uint32_t magic; // MAGIC while alive; checked on lookup so a stomped object is caught early
-		MSG* head;
+		//! The table in use, as a seqlock: the loader makes `sequence` odd, changes the fields, and makes it even again; a
+		//! lookup copies the fields and keeps the copy only if `sequence` was even and unchanged. Each field is atomic (and
+		//! only ever accessed relaxed) so that a copy that is thrown away is not a data race.
+		std::atomic<uint32_t> sequence;
+		std::atomic<const uint8_t*> base;
+		std::atomic<size_t> size;
+		std::atomic<uint32_t> count, origOffset, transOffset, bigEndian;
 
-		//! Internal helper methods
-		static uint32_t hashString(const char* str);
-		static char* expandEscape(const char* str);
-
-		//! Safely reads a line from a non-null-terminated memory buffer
-		const char* memFGets(char* dst, int maxlen, const char* src, const char* eof) const;
-
-		//! Stops the program at the first sign that the object or its message list has been overwritten
-		//! (see the definition for what the crash screen then shows). Never returns.
-		[[noreturn]] static void fatalCorruption(const GuiTextTranslator* self, const void* bad,
-				const void* from, uint32_t magicSeen);
-		//! Aborts through fatalCorruption() unless the object and the given list node look sane
-		void checkIntegrity(const MSG* node, const MSG* prev) const;
-
-		MSG* findMessage(uint32_t id) const;
-		MSG* setMessage(const char* msgid, const char* msgstr);
+		void publish(const Table& table);
+		bool snapshot(Table& out) const;
+		static bool check(const uint8_t* catalog, size_t size, Table& out);
+		static bool isValidUtf8(const char* s, size_t length);
 };
+
+//! The one translator. Defined in GuiTextTranslator.cpp.
+extern GuiTextTranslator* textTranslator;
+
+//! Translates a message ID to a std::string, for text that is put together at runtime.
+//! GuiText only translates the exact string it is given, so a message built with printf or
+//! operator+ has to have its parts translated first. Use TrFormat() for a message with values in it.
+//!\param msgid The English text/ID to translate
+//!\return The translated string, or msgid itself when there is no translation (empty if msgid is nullptr)
+//!\ingroup grp_core
+std::string Tr(const char* msgid);
+
+//! printf for translated messages. msgid is both the lookup key and the English format string,
+//! so its conversions are checked against the arguments at compile time. If the translation does
+//! not have the same conversions in the same order (a typo in a .lang file) the English text is
+//! used instead, so a bad translation can never be run with the wrong arguments.
+//!\param msgid The English format string, e.g. "Player %d"
+//!\return The formatted, translated string
+//!\ingroup grp_core
+#if defined(__GNUC__)
+std::string TrFormat(const char* msgid, ...) __attribute__((format(printf, 1, 2)));
+#else
+std::string TrFormat(const char* msgid, ...);
+#endif
