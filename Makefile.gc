@@ -161,7 +161,7 @@ $(OFILES_SOURCES) : $(HFILES)
 %.mo : %.lang
 	@echo msgfmt $(notdir $<)
 	@command -v msgfmt >/dev/null 2>&1 || { echo "msgfmt (GNU gettext) is required to build the language files"; exit 1; }
-	@msgfmt --no-hash -o $@ $<
+	@{ grep -q 'charset=' $< || printf 'msgid ""\nmsgstr "Content-Type: text/plain; charset=UTF-8\\n"\n\n'; tr -d '\r' < $<; } | msgfmt --no-hash -o $@ -
 	@test -f $@ || { echo "$(notdir $<) has no translations, so there is nothing to compile: remove it"; exit 1; }
 
 %.mo.o %_mo.h : %.mo
