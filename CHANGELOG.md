@@ -5,6 +5,10 @@ All notable changes to Snes9x GX are recorded here, newest first. For the curren
 ## Unreleased
 
 * **USB pen tablet support** on Wii. The pen moves the pointer and aims the Super Scope, Justifier and SNES Mouse, using the USB mouse's button mapping
+* Fixed some potential startup crash causes
+* Updated translations
+* Wii U - ignore unmountable drives, improve handling of blocked threads
+* Other minor fixes and enhancements
 
 ## 5.0.5 - November 3, 2026
 * **USB mouse support** on Wii and Wii U. The mouse moves the pointer in the menus and aims the Super Scope, Justifier and SNES Mouse
