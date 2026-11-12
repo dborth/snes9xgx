@@ -84,7 +84,7 @@ class OgcFileSystemDriver : public FileSystemDriver
 		//! user-initiated mount attempt on deviceId, so the attempt sees
 		//! current hardware topology instead of whatever the last poll
 		//! cycle happened to observe.
-		virtual void prepareMount(int deviceId) {}
+		virtual void prepareMount(int) {}
 
 		//!Mounts the FAT filesystem on a slot with fatMountSimple(), unmounting first if unmountRequired is set.
 		MountResult mountFAT(int deviceId);
