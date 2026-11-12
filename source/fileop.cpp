@@ -459,7 +459,7 @@ bool ConnectShare(bool silent)
 			else
 				reason = "Share IP is blank.";
 
-			ErrorPrompt(TrFormat("Invalid network settings - %s", Tr(reason).c_str()).c_str());
+			ErrorPrompt(TrMessage<>("Invalid network settings - %s", Tr(reason)));
 		}
 		return false;
 	}

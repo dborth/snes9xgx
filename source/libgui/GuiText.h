@@ -30,6 +30,16 @@ class GuiText : public GuiElement
 		//!kept besides the one that is drawn.
 		//!\param t Text (UTF-8)
 		void setRawText(const char * t);
+		//!Sets the text to a translated, formatted message (see TrFormat()): the message is translated and printed
+		//!with the arguments, straight into this text, with no string made on the way. Like setRawText(), the result is
+		//!not translated again by resetText(), so a change of language shows up the next time this is called. A message
+		//!that comes to more than FORMAT_BYTES bytes is cut.
+		//!\param msgid The English format string, e.g. "Player %d"
+		void setFormat(const char * msgid, ...)
+#if defined(__GNUC__)
+			__attribute__((format(printf, 2, 3)))
+#endif
+			;
 		//!Sets up preset values to be used by GuiText(t)
 		//!Useful when printing multiple text elements, all with the same attributes set
 		//!\param sz Font size
@@ -94,7 +104,8 @@ class GuiText : public GuiElement
 		enum {
 			MAX_WRAP_LINES = 8,		//!< Lines a wrapped text is kept in; what does not fit is replaced by "..."
 			MAX_TEXT_CHARS = 1023,	//!< Characters kept of the translated text
-			MAX_MSGID_BYTES = 1023	//!< Bytes kept of the original text (what resetText() translates again)
+			MAX_MSGID_BYTES = 1023,	//!< Bytes kept of the original text (what resetText() translates again)
+			FORMAT_BYTES = 512		//!< Bytes a setFormat() message may come to (it is made on the stack)
 		};
 
 		PixelColor color; //!< Font color

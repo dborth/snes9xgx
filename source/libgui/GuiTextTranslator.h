@@ -6,6 +6,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstdarg>
 #include <cstdint>
 #include <cstddef>
 #include <string>
@@ -65,6 +66,25 @@ class GuiTextTranslator
 		//! Whether two printf formats take the same arguments: the same conversions, in the same order
 		static bool sameConversions(const char* a, const char* b);
 
+		//! Where to cut UTF-8 text that was cut short (by a buffer that was too small) so that it ends on a whole character
+		//!\param s UTF-8 text, of which only s[0..n) is read; need not be NUL-terminated
+		//!\param n Length of what was kept, in bytes
+		//!\return n, or less if the last character in s[0..n) is incomplete (so that it can be dropped)
+		static size_t utf8Trim(const char* s, size_t n)
+		{
+			size_t i = n, continuation = 0;
+			while(i > 0 && continuation < 3 && ((unsigned char)s[i - 1] & 0xC0) == 0x80)
+			{
+				i--;
+				continuation++;
+			}
+			if(i == 0)
+				return n; // nothing but continuation bytes: no character was cut, the text is just not valid
+			const unsigned char lead = (unsigned char)s[i - 1];
+			const size_t need = lead >= 0xF0 ? 4 : (lead >= 0xE0 ? 3 : (lead >= 0xC0 ? 2 : 1));
+			return need > continuation + 1 ? i - 1 : n;
+		}
+
 		//! The longest message ID or translation (in bytes) a catalog may hold
 		static constexpr uint32_t MAX_STRING_LENGTH = 1024;
 		//! The most messages a catalog may hold
@@ -101,18 +121,24 @@ class GuiTextTranslator
 //! The one translator. Defined in GuiTextTranslator.cpp.
 extern GuiTextTranslator* textTranslator;
 
-//! Translates a message ID to a std::string, for text that is put together at runtime.
-//! GuiText only translates the exact string it is given, so a message built with printf or
-//! operator+ has to have its parts translated first. Use TrFormat() for a message with values in it.
+//! Translates a message ID, for text that is put together at runtime. GuiText only translates the exact string it
+//! is given, so a message built with printf or operator+ has to have its parts translated first. Use TrFormat() for a
+//! message with values in it.
+//!
+//! Nothing is copied or allocated: this is the translation where it lies in the catalog, which stays valid for the
+//! life of the program. When there is no translation it is msgid itself, which is only as long-lived as msgid is.
 //!\param msgid The English text/ID to translate
-//!\return The translated string, or msgid itself when there is no translation (empty if msgid is nullptr)
+//!\return The translated string, or msgid itself when there is no translation (an empty string if msgid is nullptr)
 //!\ingroup grp_core
-std::string Tr(const char* msgid);
+const char* Tr(const char* msgid);
 
 //! printf for translated messages. msgid is both the lookup key and the English format string,
 //! so its conversions are checked against the arguments at compile time. If the translation does
 //! not have the same conversions in the same order (a typo in a .lang file) the English text is
 //! used instead, so a bad translation can never be run with the wrong arguments.
+//!
+//! This allocates a std::string (as does anything that holds the result as one). To show a message once, use
+//! TrMessage, or GuiText::setFormat() for a label; to keep it as a string, this is the one to use.
 //!\param msgid The English format string, e.g. "Player %d"
 //!\return The formatted, translated string
 //!\ingroup grp_core
@@ -121,3 +147,51 @@ std::string TrFormat(const char* msgid, ...) __attribute__((format(printf, 1, 2)
 #else
 std::string TrFormat(const char* msgid, ...);
 #endif
+
+//! TrFormat() into a buffer the caller owns, with no allocation. The result is always NUL-terminated and, if the
+//! buffer is too small, cut on a whole character.
+//!\param out Where to write
+//!\param size Size of out in bytes (nothing is written if it is 0)
+//!\param msgid The English format string
+//!\param args The arguments of the format
+//!\return The length of what was written, not counting the NUL
+//!\ingroup grp_core
+int TrFormatV(char* out, size_t size, const char* msgid, va_list args);
+
+//! TrFormatV() with the arguments written out
+//!\ingroup grp_core
+#if defined(__GNUC__)
+int TrFormatTo(char* out, size_t size, const char* msgid, ...) __attribute__((format(printf, 3, 4)));
+#else
+int TrFormatTo(char* out, size_t size, const char* msgid, ...);
+#endif
+
+//! A translated, formatted message held in the object itself (256 bytes unless N says otherwise, cut on a whole
+//! character if it does not fit), for a message that is used once and thrown away - as the argument of a call, say:
+//! `ErrorPrompt(TrMessage<>("Backup %d", slot))`. It converts to const char*, valid as long as the object is.
+//! No heap is used; use TrFormat() for a message that has to be kept as a std::string.
+//!\ingroup grp_core
+template <size_t N = 256>
+class TrMessage
+{
+	static_assert(N >= 2, "a message needs room for at least one character and the NUL");
+
+	public:
+#if defined(__GNUC__)
+		explicit TrMessage(const char* msgid, ...) __attribute__((format(printf, 2, 3)))
+#else
+		explicit TrMessage(const char* msgid, ...)
+#endif
+		{
+			va_list args;
+			va_start(args, msgid);
+			TrFormatV(text, N, msgid, args);
+			va_end(args);
+		}
+
+		const char* c_str() const { return text; }
+		operator const char*() const { return text; }
+
+	private:
+		char text[N];
+};

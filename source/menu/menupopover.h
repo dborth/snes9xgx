@@ -68,7 +68,7 @@ GuiPopover::Insets MenuPopover_Insets();
 GuiCard& MenuPopover_Row(UiScope& ui, int width, int height, const std::string& title, bool marked, bool dotSlot = true, const std::string& hint = std::string(), bool chevron = false, bool danger = false);
 
 /** A chip that opens a popover: what it chooses in small capitals, what is chosen under it, an arrow pointing the way it opens. The caller adds onClick / onFocus. */
-GuiCard& MenuPopover_Chip(UiScope& ui, int width, const char * what, std::function<std::string()> value);
+GuiCard& MenuPopover_Chip(UiScope& ui, int width, const char * what, std::function<void(UiText&)> value);
 
 /** How many characters of a hint (the small text under a row's name) fit `width` pixels, for wrapping it. */
 size_t MenuPopover_HintChars(int width);

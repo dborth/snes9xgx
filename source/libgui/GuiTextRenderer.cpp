@@ -10,6 +10,7 @@
 #include <cstring>
 #include <cstdint>
 #include <cwchar>
+#include <new>
 #include FT_MODULE_H
 #include FT_SYSTEM_H
 
@@ -69,7 +70,7 @@ namespace {
 }
 
 GuiTextRenderer::GuiTextRenderer(const uint8_t* fontBuffer, FT_Long bufferSize, GlyphRenderer* glyphRenderer, float uiScale_)
-    : currentPixelSize(0), renderer(glyphRenderer), current(nullptr), uiScale(uiScale_)
+    : currentPixelSize(0), renderer(glyphRenderer), uiScale(uiScale_)
 {
 	++metricsGeneration;
 	ftLibrary = createFreeTypeLibrary();
@@ -84,15 +85,11 @@ GuiTextRenderer::~GuiTextRenderer() {
 }
 
 void GuiTextRenderer::unloadFont() {
-	for (auto& sizePair : fontData) {
-		for (auto& charPair : sizePair.second.charMap) {
-			if (charPair.second.texture) {
-				renderer->destroyTexture(charPair.second.texture); // Delegate to injected renderer
-				charPair.second.texture = nullptr;
-			}
-		}
+	while (sizeTables) {
+		SizeTable* next = sizeTables->next;
+		freeSize(sizeTables);
+		sizeTables = next;
 	}
-	fontData.clear();
 	current = nullptr;
 	++metricsGeneration;
 }
@@ -110,75 +107,168 @@ void GuiTextRenderer::setPixelSize(int16_t pixelSize) {
 
 // --- Caching Engine ---
 
-GlyphData* GuiTextRenderer::cacheGlyphData(wchar_t charCode, int16_t pixelSize) {
-	ftData* data = &fontData[pixelSize];
+GuiTextRenderer::SizeTable* GuiTextRenderer::findSize(int16_t pixelSize) {
+	for (SizeTable* t = sizeTables; t; t = t->next)
+		if (t->pixelSize == pixelSize) return t;
 
-	// Initialize metrics on first run for this size
-	if (!data->metricsReady) {
-		data->metricsReady = true;
-		setPixelSize(pixelSize);
-		data->align.ascender = ToDesignPixels(ftFace->size->metrics.ascender >> 6, uiScale);
-		data->align.descender = ToDesignPixels(ftFace->size->metrics.descender >> 6, uiScale);
-		data->align.max = 0;
-		data->align.min = 0;
-	}
+	SizeTable* t = static_cast<SizeTable*>(std::calloc(1, sizeof(SizeTable))); // all zero: nothing cached yet
+	if (!t) return nullptr;
+	t->pixelSize = pixelSize;
+	t->next = sizeTables;
+	sizeTables = t;
+	return t;
+}
 
-	const bool inFastRange = (uint32_t)charCode < 256;
-
-	auto it = data->charMap.find(charCode);
-	if (it != data->charMap.end()) {
-		if (inFastRange) data->fast[charCode] = &it->second;
-		return &it->second; // Already cached
-	}
-
-	FT_UInt gIndex = FT_Get_Char_Index(ftFace, (FT_ULong)charCode);
-	bool loaded = gIndex != 0 && (FT_Load_Glyph(ftFace, gIndex, FT_LOAD_DEFAULT | FT_LOAD_RENDER | FT_LOAD_NO_BITMAP) == 0 ||
-	                              FT_Load_Glyph(ftFace, gIndex, FT_LOAD_DEFAULT | FT_LOAD_RENDER) == 0);
-	if (loaded) {
-		if (ftFace->glyph->format == FT_GLYPH_FORMAT_BITMAP && ftFace->glyph->bitmap.pixel_mode == FT_PIXEL_MODE_GRAY) {
-			FT_Bitmap* glyphBitmap = &ftFace->glyph->bitmap;
-
-			GlyphData& charData = data->charMap[charCode];
-			charData.renderOffsetX = ToDesignPixels(ftFace->glyph->bitmap_left, uiScale);
-			charData.glyphAdvanceX = (uint16_t)ToDesignPixels(ftFace->glyph->advance.x >> 6, uiScale);
-			charData.glyphAdvanceY = (uint16_t)ToDesignPixels(ftFace->glyph->advance.y >> 6, uiScale);
-			charData.glyphIndex = (uint32_t)gIndex;
-
-			// Physical (rasterized-at-uiScale) bitmap dims - what the
-			// texture is actually created/loaded at.
-			charData.textureWidth = glyphBitmap->width;
-			charData.textureHeight = glyphBitmap->rows;
-			// Design-pixel dims the quad is drawn at, so text lays out and
-			// sizes identically to uiScale 1.0 while the texture is crisper.
-			charData.drawWidth = (uint16_t)ToDesignPixels(glyphBitmap->width, uiScale);
-			charData.drawHeight = (uint16_t)ToDesignPixels(glyphBitmap->rows, uiScale);
-
-			charData.renderOffsetY = ToDesignPixels(ftFace->glyph->bitmap_top, uiScale);
-			charData.renderOffsetMax = charData.renderOffsetY;
-			charData.renderOffsetMin = ToDesignPixels((int)glyphBitmap->rows - ftFace->glyph->bitmap_top, uiScale);
-
-			// Delegate Texture creation and data loading to the active backend
-			charData.texture = renderer->createTexture(charData.textureWidth, charData.textureHeight);
-			if (charData.texture) {
-				renderer->loadTextureData(charData.texture, glyphBitmap);
-			}
-
-			if (inFastRange) data->fast[charCode] = &charData;
-			return &charData;
+void GuiTextRenderer::freeSize(SizeTable* table) {
+	bool newest = true;
+	while (GlyphChunk* chunk = table->chunks) {
+		table->chunks = chunk->next;
+		const int used = newest ? table->chunkUsed : (int)GLYPHS_PER_CHUNK;
+		newest = false;
+		for (int i = 0; i < used; ++i) {
+			GlyphData* g = chunk->at(i);
+			if (g->texture) renderer->destroyTexture(g->texture); // Delegate to injected renderer
 		}
+		std::free(chunk);
 	}
-	if (inFastRange) data->fast[charCode] = &missingGlyph;
+	std::free(table->wide);
+	std::free(table);
+}
+
+// The cached entry for a character: its record, &missingGlyph, or null if it has not been looked up yet
+GlyphData* GuiTextRenderer::find(SizeTable* table, wchar_t charCode) {
+	if ((uint32_t)charCode < 256) return table->fast[charCode];
+	if (!table->wide) return nullptr;
+
+	const uint32_t mask = table->wideCap - 1;
+	uint32_t i = (((uint32_t)charCode * 2654435761u) >> 16) & mask;
+	while (table->wide[i].glyph) {
+		if (table->wide[i].code == charCode) return table->wide[i].glyph;
+		i = (i + 1) & mask;
+	}
 	return nullptr;
 }
 
-GlyphData* GuiTextRenderer::glyph(wchar_t charCode) {
-	if (!current) current = &fontData[currentPixelSize];
+// Makes sure one more character above 255 can be stored (the table is kept at most half full)
+bool GuiTextRenderer::reserveWide(SizeTable* table) {
+	if (table->wide && (uint32_t)(table->wideCount + 1) * 2 <= table->wideCap) return true;
 
-	if ((uint32_t)charCode < 256) {
-		GlyphData* g = current->fast[charCode];
-		if (g) return g == &missingGlyph ? nullptr : g;
+	const uint32_t newCap = table->wide ? (uint32_t)table->wideCap * 2 : 32;
+	if (newCap > 0x8000) return false; // far more than any font here has; stop rather than overflow the counters
+	WideEntry* grown = static_cast<WideEntry*>(std::calloc(newCap, sizeof(WideEntry)));
+	if (!grown) return false;
+
+	const uint32_t mask = newCap - 1;
+	for (uint32_t k = 0; k < table->wideCap; ++k) {
+		if (!table->wide[k].glyph) continue;
+		uint32_t i = (((uint32_t)table->wide[k].code * 2654435761u) >> 16) & mask;
+		while (grown[i].glyph) i = (i + 1) & mask;
+		grown[i] = table->wide[k];
 	}
-	return cacheGlyphData(charCode, currentPixelSize);
+	std::free(table->wide);
+	table->wide = grown;
+	table->wideCap = (uint16_t)newCap;
+	return true;
+}
+
+// A new, empty record in the table's newest chunk (null if memory is out)
+GlyphData* GuiTextRenderer::newGlyph(SizeTable* table) {
+	if (!table->chunks || table->chunkUsed == GLYPHS_PER_CHUNK) {
+		GlyphChunk* chunk = static_cast<GlyphChunk*>(std::malloc(sizeof(GlyphChunk)));
+		if (!chunk) return nullptr;
+		chunk->next = table->chunks;
+		table->chunks = chunk;
+		table->chunkUsed = 0;
+	}
+	return new (table->chunks->at(table->chunkUsed++)) GlyphData();
+}
+
+// Remembers a character's record. For a character above 255, reserveWide() must have succeeded.
+void GuiTextRenderer::store(SizeTable* table, wchar_t charCode, GlyphData* glyph) {
+	if ((uint32_t)charCode < 256) {
+		table->fast[charCode] = glyph;
+		return;
+	}
+	const uint32_t mask = table->wideCap - 1;
+	uint32_t i = (((uint32_t)charCode * 2654435761u) >> 16) & mask;
+	while (table->wide[i].glyph) i = (i + 1) & mask;
+	table->wide[i].code = charCode;
+	table->wide[i].glyph = glyph;
+	table->wideCount++;
+}
+
+GlyphData* GuiTextRenderer::cacheGlyphData(wchar_t charCode) {
+	SizeTable* table = current;
+
+	// Metrics only: the glyph is loaded (hinted, so the advance is the one drawing uses) but not rendered
+	FT_UInt gIndex = FT_Get_Char_Index(ftFace, (FT_ULong)charCode);
+	bool loaded = gIndex != 0 && (FT_Load_Glyph(ftFace, gIndex, FT_LOAD_DEFAULT | FT_LOAD_NO_BITMAP) == 0 ||
+	                              FT_Load_Glyph(ftFace, gIndex, FT_LOAD_DEFAULT) == 0);
+	if (loaded) {
+		const FT_GlyphSlot slot = ftFace->glyph;
+		// what rendering would turn into an 8-bit bitmap: an outline, or an embedded 8-bit bitmap
+		if (slot->format == FT_GLYPH_FORMAT_OUTLINE || (slot->format == FT_GLYPH_FORMAT_BITMAP && slot->bitmap.pixel_mode == FT_PIXEL_MODE_GRAY)) {
+			// Room for the entry is made before the record, so that nothing can fail once a record exists
+			if ((uint32_t)charCode >= 256 && !reserveWide(table)) return nullptr; // out of memory: tried again next time
+			GlyphData* charData = newGlyph(table);
+			if (!charData) return nullptr;
+			charData->glyphAdvanceX = (uint16_t)ToDesignPixels(slot->advance.x >> 6, uiScale);
+			charData->glyphAdvanceY = (uint16_t)ToDesignPixels(slot->advance.y >> 6, uiScale);
+			charData->glyphIndex = (uint32_t)gIndex;
+
+			store(table, charCode, charData);
+			return charData;
+		}
+	}
+	// Only the first 256 characters remember that the font lacks them (that costs nothing). Above that, asking
+	// FreeType again is cheap, and a table of absent characters is memory for glyphs that will never be drawn.
+	if ((uint32_t)charCode < 256) table->fast[charCode] = &missingGlyph;
+	return nullptr;
+}
+
+void GuiTextRenderer::renderGlyph(GlyphData* charData) {
+	if (charData->rendered) return;
+	charData->rendered = true; // whatever happens below, it is not tried again
+
+	const FT_UInt gIndex = (FT_UInt)charData->glyphIndex;
+	bool loaded = FT_Load_Glyph(ftFace, gIndex, FT_LOAD_DEFAULT | FT_LOAD_RENDER | FT_LOAD_NO_BITMAP) == 0 ||
+	              FT_Load_Glyph(ftFace, gIndex, FT_LOAD_DEFAULT | FT_LOAD_RENDER) == 0;
+	if (!loaded || ftFace->glyph->format != FT_GLYPH_FORMAT_BITMAP || ftFace->glyph->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY)
+		return;
+
+	FT_Bitmap* glyphBitmap = &ftFace->glyph->bitmap;
+
+	charData->renderOffsetX = ToDesignPixels(ftFace->glyph->bitmap_left, uiScale);
+
+	// Physical (rasterized-at-uiScale) bitmap dims - what the
+	// texture is actually created/loaded at.
+	charData->textureWidth = glyphBitmap->width;
+	charData->textureHeight = glyphBitmap->rows;
+	// Design-pixel dims the quad is drawn at, so text lays out and
+	// sizes identically to uiScale 1.0 while the texture is crisper.
+	charData->drawWidth = (uint16_t)ToDesignPixels(glyphBitmap->width, uiScale);
+	charData->drawHeight = (uint16_t)ToDesignPixels(glyphBitmap->rows, uiScale);
+
+	charData->renderOffsetY = ToDesignPixels(ftFace->glyph->bitmap_top, uiScale);
+	charData->renderOffsetMax = charData->renderOffsetY;
+	charData->renderOffsetMin = ToDesignPixels((int)glyphBitmap->rows - ftFace->glyph->bitmap_top, uiScale);
+
+	// Delegate Texture creation and data loading to the active backend
+	charData->texture = renderer->createTexture(charData->textureWidth, charData->textureHeight);
+	if (charData->texture) {
+		renderer->loadTextureData(charData->texture, glyphBitmap);
+	}
+}
+
+GlyphData* GuiTextRenderer::glyph(wchar_t charCode) {
+	if (!current) {
+		current = findSize(currentPixelSize);
+		if (!current) return nullptr;
+	}
+
+	GlyphData* g = find(current, charCode);
+	if (g) return g == &missingGlyph ? nullptr : g;
+	return cacheGlyphData(charCode);
 }
 
 // --- Layout & Styling Engine ---
@@ -247,6 +337,7 @@ void GuiTextRenderer::getOffset(const GuiTextRun* runs, int runCount, FontOffset
 	while (cursor.next(ch)) {
 		GlyphData* glyphData = glyph(ch);
 		if (glyphData) {
+			renderGlyph(glyphData);
 			strMax = glyphData->renderOffsetMax > strMax ? glyphData->renderOffsetMax : strMax;
 			strMin = glyphData->renderOffsetMin < strMin ? glyphData->renderOffsetMin : strMin;
 		}
@@ -342,6 +433,7 @@ void GuiTextRenderer::drawText(int16_t x, int16_t y, const GuiTextRun* runs, int
 		if (glyphData) {
 			x_pos += getKerning(prev, glyphData);
 
+			renderGlyph(glyphData); // measuring never rasterizes: the first draw does
 			// Draw current glyph via generic renderer
 			int16_t screenX = x_pos + glyphData->renderOffsetX + x_offset;
 			int16_t screenY = y - glyphData->renderOffsetY + y_offset;

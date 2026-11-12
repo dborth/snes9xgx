@@ -157,9 +157,9 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 				pane.add(ui.label(clear[i].c_str()).fontSize(UI_FONT_SMALL).muted());
 		};
 		GuiLayout& idle = ui.column().gap(3).size(rightW, 0);
-		paneText(idle, GuiFormat(Tr("Choose 'Pressed button', then press the button you want on the %s.").c_str(), Tr(ctrlrName[hw]).c_str()));
+		paneText(idle, TrFormat("Choose 'Pressed button', then press the button you want on the %s.", Tr(ctrlrName[hw])));
 		GuiLayout& waiting = ui.column().gap(3).size(rightW, 0);
-		paneText(waiting, GuiFormat(Tr("Press a button on the %s now.").c_str(), Tr(ctrlrName[hw]).c_str()));
+		paneText(waiting, TrFormat("Press a button on the %s now.", Tr(ctrlrName[hw])));
 		press.add(idle, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
 		press.add(waiting, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));
 		ui.visibleWhen(idle, [this]{ return !armed; });
@@ -186,7 +186,7 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 			cell.size(cellW, rowH).style(MenuKeycapStyle(btn == now)).corners(GuiCorners(7.0f)).pad(4, 0);
 			cell.add(name, GuiItem().at(LAYOUT_ALIGN::CENTRE, LAYOUT_ALIGN::CENTRE));
 			cell.onClick([this, btn]{ choose(btn); });
-			cell.onFocus([this, btn, rowLabel]{ hintText = GuiFormat(Tr("%s uses %s").c_str(), rowLabel.c_str(), ButtonText(hardware, btn).c_str()); });
+			cell.onFocus([this, btn, rowLabel]{ hintText = TrFormat("%s uses %s", rowLabel.c_str(), ButtonText(hardware, btn).c_str()); });
 			line->add(cell);
 		}
 	}
@@ -196,11 +196,11 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 	GuiLayout& none = ui.column().gap(6).size(rightW, 0);
 	{
 		// just a line saying what None means; the button under it does the same as choosing None on the left
-		none.add(ui.label(GuiFormat(Tr("%s will do nothing.").c_str(), rowLabel.c_str()).c_str()).fontSize(UI_FONT_SMALL).muted());
-		GuiTextButton& clear = ui.button(Tr("Unassign").c_str()).size(96, rowH).fontSize(UI_FONT_SMALL).style(MenuKeycapStyle())
+		none.add(ui.label(TrMessage<>("%s will do nothing.", rowLabel.c_str())).fontSize(UI_FONT_SMALL).muted());
+		GuiTextButton& clear = ui.button(Tr("Unassign")).size(96, rowH).fontSize(UI_FONT_SMALL).style(MenuKeycapStyle())
 			.rounded(8.0f).litTextColor(MenuPaletteCurrent().text)
 			.onClick([this]{ choose(0); })
-			.onFocus([this, rowLabel]{ hintText = GuiFormat(Tr("%s will do nothing").c_str(), rowLabel.c_str()); });
+			.onFocus([this, rowLabel]{ hintText = TrFormat("%s will do nothing", rowLabel.c_str()); });
 		none.add(clear);
 	}
 
@@ -261,15 +261,15 @@ ChooserView::ChooserView(const char * rowName, int hw, uint32_t now, uint32_t de
 	}
 
 	// the head says what is being set and what it is now; the foot says what the cursor is on, and offers the default
-	GuiLabel& title = ui.label(GuiFormat(Tr("What should %s use?").c_str(), Tr(rowName).c_str()).c_str()).fontSize(UI_FONT_SMALL).muted();
-	GuiLabel& nowLabel = ui.label(GuiFormat(Tr("Now: %s").c_str(), ButtonText(hw, now).c_str()).c_str()).fontSize(UI_FONT_SMALL).muted();
-	GuiLabel& hint = ui.label().fontSize(UI_FONT_SMALL).muted().bind([this]{ return hintText; });
+	GuiLabel& title = ui.label(TrMessage<>("What should %s use?", Tr(rowName))).fontSize(UI_FONT_SMALL).muted();
+	GuiLabel& nowLabel = ui.label(TrMessage<>("Now: %s", ButtonText(hw, now).c_str())).fontSize(UI_FONT_SMALL).muted();
+	GuiLabel& hint = ui.label().fontSize(UI_FONT_SMALL).muted().bind([this](UiText& t){ t.set(hintText.c_str()); });
 	hint.setMaxWidth(inner - 78);
 	const uint32_t def0 = defaultButton;
-	GuiTextButton& useDefaultButton = ui.button(Tr("Default").c_str()).size(70, footH).fontSize(UI_FONT_SMALL).style(MenuKeycapStyle())
+	GuiTextButton& useDefaultButton = ui.button(Tr("Default")).size(70, footH).fontSize(UI_FONT_SMALL).style(MenuKeycapStyle())
 		.rounded(8.0f).litTextColor(MenuPaletteCurrent().text)
 		.onClick([this, def0]{ choose(def0); })
-		.onFocus([this, def0, hw, rowLabel]{ hintText = GuiFormat(Tr("%s uses the default: %s").c_str(), rowLabel.c_str(), ButtonText(hw, def0).c_str()); })
+		.onFocus([this, def0, hw, rowLabel]{ hintText = TrFormat("%s uses the default: %s", rowLabel.c_str(), ButtonText(hw, def0).c_str()); })
 		.enabledWhen([this]{ return !armed; });
 	GuiLayout& useDefault = ui.overlay().size(70, footH);
 	useDefault.add(useDefaultButton, GuiItem().at(LAYOUT_ALIGN::START, LAYOUT_ALIGN::START));

@@ -321,7 +321,7 @@ Is7ZipFile (char *buffer)
 // display an error message
 static void SzDisplayError(SZ_RESULT res)
 {
-	ErrorPrompt(TrFormat("7z decompression failed: %s", Tr(szerrormsg[(res - 1)]).c_str()).c_str());
+	ErrorPrompt(TrMessage<>("7z decompression failed: %s", Tr(szerrormsg[(res - 1)])));
 }
 
 // function used by the 7zip SDK to read data from SD/USB/DVD/SMB

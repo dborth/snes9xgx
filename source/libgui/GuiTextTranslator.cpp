@@ -334,9 +334,18 @@ bool GuiTextTranslator::sameConversions(const char* a, const char* b)
 	return !a && !b; // equal only if both ran out together; a mismatched conversion leaves a and b non-null
 }
 
-std::string Tr(const char* msgid)
+const char* Tr(const char* msgid)
 {
-	return msgid ? std::string(textTranslator->getText(msgid)) : std::string();
+	return msgid ? textTranslator->getText(msgid) : "";
+}
+
+//! The format to use for a message: its translation, unless that takes different arguments than the English text
+static const char* FormatFor(const char* msgid)
+{
+	const char* fmt = textTranslator->find(msgid);
+	if(!fmt || !GuiTextTranslator::sameConversions(fmt, msgid))
+		fmt = msgid;
+	return fmt;
 }
 
 std::string TrFormat(const char* msgid, ...)
@@ -344,9 +353,7 @@ std::string TrFormat(const char* msgid, ...)
 	if(!msgid)
 		return std::string();
 
-	const char* fmt = textTranslator->find(msgid);
-	if(!fmt || !GuiTextTranslator::sameConversions(fmt, msgid))
-		fmt = msgid;
+	const char* fmt = FormatFor(msgid);
 
 	va_list args;
 	va_start(args, msgid);
@@ -364,4 +371,35 @@ std::string TrFormat(const char* msgid, ...)
 	}
 	va_end(args);
 	return out;
+}
+
+int TrFormatV(char* out, size_t size, const char* msgid, va_list args)
+{
+	if(!out || size == 0)
+		return 0;
+
+	out[0] = 0;
+	if(!msgid)
+		return 0;
+
+	const int n = vsnprintf(out, size, FormatFor(msgid), args);
+	if(n < 0)
+	{
+		out[0] = 0;
+		return 0;
+	}
+
+	size_t length = (size_t)n < size ? (size_t)n : size - 1;
+	length = GuiTextTranslator::utf8Trim(out, length);
+	out[length] = 0;
+	return (int)length;
+}
+
+int TrFormatTo(char* out, size_t size, const char* msgid, ...)
+{
+	va_list args;
+	va_start(args, msgid);
+	const int n = TrFormatV(out, size, msgid, args);
+	va_end(args);
+	return n;
 }

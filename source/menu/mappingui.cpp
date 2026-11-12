@@ -196,10 +196,10 @@ uint32_t DefaultButton(int ctrl, int hw, int index)
 }
 
 // What a row says it is mapped to
-std::string ValueText(int ctrl, int hw, int index)
+const char * ValueText(int ctrl, int hw, int index)
 {
 	const char * name = MappingButtonName(hw, btnmap[ctrl][hw][index]);
-	return name ? std::string(name) : Tr("None");
+	return name ? name : Tr("None");
 }
 
 } // namespace
@@ -263,8 +263,8 @@ GuiCard& MappingView::bindingRow(const MapRow& r, bool onLeft, int width)
 	const int index = r.index;
 	const char * name = r.name;
 
-	GuiLabel& value = ui.label().fontSize(UI_FONT_SMALL + 1).nudgeY(2).accent().bind([ctrl, hw, index]{ return ValueText(ctrl, hw, index); });
-	GuiLabel& label = ui.label(Tr(name).c_str()).fontSize(UI_FONT_SMALL + 2).nudgeY(2);
+	GuiLabel& value = ui.label().fontSize(UI_FONT_SMALL + 1).nudgeY(2).accent().bind([ctrl, hw, index](UiText& t){ t.set(ValueText(ctrl, hw, index)); });
+	GuiLabel& label = ui.label(Tr(name)).fontSize(UI_FONT_SMALL + 2).nudgeY(2);
 
 	GuiLayout& content = ui.row().size(width - 2 * padX, 0).gap(6).align(LAYOUT_ALIGN::CENTRE);
 	if(r.icon != MAP_ICON::NONE)
@@ -280,7 +280,7 @@ GuiCard& MappingView::bindingRow(const MapRow& r, bool onLeft, int width)
 
 	GuiCard& row = ui.card();
 	row.size(width, 0).style(MenuRowHighlightStyle()).pad(padX, 4).corners(GuiCorners(9.0f));
-	row.onFocus([this, name]{ status = TrFormat("A changes what %s does", Tr(name).c_str()); });
+	row.onFocus([this, name]{ status = TrFormat("A changes what %s does", Tr(name)); });
 	row.onClick([this, index]{ requestedRow = index; rowRequested = true; });
 	row.add(content);
 	rows.push_back(std::make_pair(index, &row));
@@ -302,20 +302,20 @@ MappingView::MappingView(int ctrl, int hw) :
 	cancel.setSecondaryTrigger();
 
 	// ---- header: the page name with the hint under it, and the two chips
-	GuiLabel& title = ui.label(Tr("Button Mappings").c_str()).fontSize(UI_FONT_TITLE - 2).textColor(MenuChromeText());
-	GuiLabel& hint = ui.label().fontSize(UI_FONT_SMALL + 2).textColor(MenuChromeTextMuted()).bind([this]{ return status; });
+	GuiLabel& title = ui.label(Tr("Button Mappings")).fontSize(UI_FONT_TITLE - 2).textColor(MenuChromeText());
+	GuiLabel& hint = ui.label().fontSize(UI_FONT_SMALL + 2).textColor(MenuChromeTextMuted()).bind([this](UiText& t){ t.set(status.c_str()); });
 	hint.setMaxWidth(176);
 	hint.setScroll(SCROLL::HORIZONTAL);
 	GuiLayout& titleBlock = ui.column().gap(4).size(176, 0).add(title).add(hint);
 
 	const int s = snes;
 	const int h = hardware;
-	GuiCard& emulating = MenuPopover_Chip(ui, 150, "EMULATING", [s]{ return Tr(ctrlName[s]); });
+	GuiCard& emulating = MenuPopover_Chip(ui, 150, "EMULATING", [s](UiText& t){ t.set(Tr(ctrlName[s])); });
 	emulating.onClick([this]{ pickRequest = Pick::EMULATING; });
 	emulating.onFocus([this]{ status = "A chooses the device being emulated"; });
 	emulatingChip = &emulating;
 
-	GuiCard& usingChipCard = MenuPopover_Chip(ui, 196, "USING", [h]{ return Tr(ctrlrName[h]); });
+	GuiCard& usingChipCard = MenuPopover_Chip(ui, 196, "USING", [h](UiText& t){ t.set(Tr(ctrlrName[h])); });
 	usingChipCard.onClick([this]{ pickRequest = Pick::USING; });
 	usingChipCard.onFocus([this]{ status = "A chooses the controller to map"; });
 	usingChip = &usingChipCard;
@@ -345,7 +345,7 @@ MappingView::MappingView(int ctrl, int hw) :
 		for(size_t g = 0; g < groups.size(); g++)
 		{
 			GuiLayout& heading = ui.row().size(kSideW, 0).pad(8, 5, 0, 1)
-				.add(ui.label(Tr(groups[g].title).c_str()).fontSize(UI_FONT_SMALL - 2).muted());
+				.add(ui.label(Tr(groups[g].title)).fontSize(UI_FONT_SMALL - 2).muted());
 			col.add(heading);
 			for(size_t i = 0; i < groups[g].rows.size(); i++)
 				col.add(bindingRow(groups[g].rows[i], onLeft, kSideW));
@@ -387,7 +387,7 @@ MappingView::MappingView(int ctrl, int hw) :
 	GuiLayout& stage = ui.row().size(kContentW, stageH).gap(6).align(LAYOUT_ALIGN::CENTRE).justifyContent(LAYOUT_JUSTIFY::CENTRE)
 		.add(left).add(*view).add(right);
 
-	GuiTextButton& reset = ui.button(Tr("Reset").c_str()).size(48, 22).fitText(48, 9, 150).fontSize(UI_FONT_SMALL - 1).style(MenuKeycapStyle())
+	GuiTextButton& reset = ui.button(Tr("Reset")).size(48, 22).fitText(48, 9, 150).fontSize(UI_FONT_SMALL - 1).style(MenuKeycapStyle())
 		.rounded(8.0f).litTextColor(MenuPaletteCurrent().text)
 		.onFocus([this]{ status = "A puts these buttons back to their defaults"; });
 	resetBtn = &reset;
@@ -401,10 +401,10 @@ MappingView::MappingView(int ctrl, int hw) :
 	body.add(panel);
 
 	// ---- footer: Back and the General Mappings page at the left (the logo is at the right)
-	GuiTextButton& back = ui.button(Tr("Go Back").c_str()).size(110, 44).fontSize(20).style(MenuBarButtonStyle()).litTextColor(MenuPaletteCurrent().text);
+	GuiTextButton& back = ui.button(Tr("Go Back")).size(110, 44).fontSize(20).style(MenuBarButtonStyle()).litTextColor(MenuPaletteCurrent().text);
 	back.setTrigger(1, &cancel);
 	backBtn = &back;
-	GuiTextButton& general = ui.button(Tr("General Mappings").c_str()).size(180, 44).fontSize(20).style(MenuBarButtonStyle()).litTextColor(MenuPaletteCurrent().text)
+	GuiTextButton& general = ui.button(Tr("General Mappings")).size(180, 44).fontSize(20).style(MenuBarButtonStyle()).litTextColor(MenuPaletteCurrent().text)
 		.onFocus([this]{ status = "Turbo mode, the menu toggle and ABXY on the right stick"; });
 	generalBtn = &general;
 	GuiLayout& footer = ui.row().size(sw, MENU_BAR_BOTTOM_H).pad(margin, 0).gap(14).align(LAYOUT_ALIGN::CENTRE)
@@ -544,11 +544,11 @@ int MappingScreen()
 				{
 					MenuPageDisabled pageDisabled;
 					if(pick == MappingView::Pick::EMULATING)
-						chosen = MenuPopover_Pick(Tr("Which device is being emulated?").c_str(), EmulatingItems(), anchor);
+						chosen = MenuPopover_Pick(Tr("Which device is being emulated?"), EmulatingItems(), anchor);
 					else
 					{
 						list = HardwareList(mapSnesCtrl);
-						chosen = MenuPopover_Pick(Tr("Which controller is being mapped?").c_str(), HardwareItems(list), anchor);
+						chosen = MenuPopover_Pick(Tr("Which controller is being mapped?"), HardwareItems(list), anchor);
 					}
 				}
 				MenuMainWindow().changeFocus(&screen.window());

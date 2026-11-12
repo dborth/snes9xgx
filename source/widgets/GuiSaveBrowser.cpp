@@ -958,7 +958,7 @@ void GuiSaveBrowser::update(InputController * controller)
 				{
 					char number[12];
 					snprintf(number, sizeof(number), "%d", e.badge);
-					badgeNumText[i]->setText(number);
+					badgeNumText[i]->setRawText(number);
 				}
 			}
 

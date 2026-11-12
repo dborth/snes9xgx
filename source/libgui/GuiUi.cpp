@@ -7,6 +7,7 @@
 #include "Gui.h"
 #include <cstdarg>
 #include <cstdio>
+#include <cstring>
 
 std::string GuiFormat(const char * fmt, ...)
 {
@@ -26,6 +27,49 @@ std::string GuiFormat(const char * fmt, ...)
 	}
 	va_end(args);
 	return out;
+}
+
+// ---- UiText
+
+void UiText::set(const char * t)
+{
+	if(!t)
+	{
+		text[0] = 0;
+		return;
+	}
+
+	size_t n = strlen(t);
+	if(n >= SIZE)
+		n = GuiTextTranslator::utf8Trim(t, SIZE - 1);
+	memcpy(text, t, n);
+	text[n] = 0;
+}
+
+void UiText::tr(const char * msgid)
+{
+	set(Tr(msgid));
+}
+
+void UiText::format(const char * fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	const int n = vsnprintf(text, SIZE, fmt, args);
+	va_end(args);
+
+	if(n < 0)
+		text[0] = 0;
+	else if(n >= SIZE)
+		text[GuiTextTranslator::utf8Trim(text, SIZE - 1)] = 0;
+}
+
+void UiText::trFormat(const char * msgid, ...)
+{
+	va_list args;
+	va_start(args, msgid);
+	TrFormatV(text, SIZE, msgid, args);
+	va_end(args);
 }
 
 // An empty string is no text at all: GuiText skips drawing and the translator is not asked for "".
@@ -152,18 +196,29 @@ GuiLabel& GuiLabel::accent()
 	return textColor(GuiTheme::current().accent);
 }
 
-GuiLabel& GuiLabel::bind(std::function<std::string()> fn)
+GuiLabel& GuiLabel::bind(std::function<void(UiText&)> fn)
 {
-	GuiLabel * self = this;
-	std::string last = "\x01"; // matches no real text, so the first evaluation always sets it
-	ui.bind([self, fn, last]() mutable {
-		const std::string s = fn();
-		if(s != last)
+	// The text last set is kept here, so that a frame in which nothing changed is a comparison and nothing more
+	struct Binding
+	{
+		GuiLabel * label;
+		std::function<void(UiText&)> fn;
+		char last[UiText::SIZE];
+
+		void operator()()
 		{
-			self->setText(textOrNull(s.c_str()));
-			last = s;
+			UiText t;
+			fn(t);
+			if(strcmp(t.c_str(), last) != 0)
+			{
+				label->setRawText(textOrNull(t.c_str()));
+				strcpy(last, t.c_str());
+			}
 		}
-	});
+	};
+
+	Binding b = { this, fn, "\x01" }; // matches no real text, so the first evaluation always sets it
+	ui.bind(b);
 	return *this;
 }
 
@@ -189,7 +244,7 @@ GuiChip::GuiChip(UiScope& scope, const char * t) :
 	GuiLayout::add(&label);
 }
 
-GuiChip& GuiChip::bind(std::function<std::string()> fn)
+GuiChip& GuiChip::bind(std::function<void(UiText&)> fn)
 {
 	label.bind(fn);
 	return *this;
@@ -323,10 +378,30 @@ void GuiTextButton::setText(const char * t)
 	textLit.setText(textOrNull(t));
 }
 
-GuiTextButton& GuiTextButton::bind(std::function<std::string()> fn)
+GuiTextButton& GuiTextButton::bind(std::function<void(UiText&)> fn)
 {
-	text.bind(fn);
-	textLit.bind(fn);
+	// One function call and one comparison a frame for both labels (the resting one and the highlighted one)
+	struct Binding
+	{
+		GuiTextButton * button;
+		std::function<void(UiText&)> fn;
+		char last[UiText::SIZE];
+
+		void operator()()
+		{
+			UiText t;
+			fn(t);
+			if(strcmp(t.c_str(), last) != 0)
+			{
+				button->text.setRawText(textOrNull(t.c_str()));
+				button->textLit.setRawText(textOrNull(t.c_str()));
+				strcpy(last, t.c_str());
+			}
+		}
+	};
+
+	Binding b = { this, fn, "\x01" };
+	ui.bind(b);
 	return *this;
 }
 

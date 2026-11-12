@@ -5,6 +5,7 @@
  ***************************************************************************/
 
 #include "Gui.h"
+#include <cstdarg>
 
 static PixelColor presetColor = (PixelColor){255, 255, 255, 255};
 static int presetSize = 0;
@@ -156,6 +157,22 @@ void GuiText::setText(const char * t)
 void GuiText::setRawText(const char * t)
 {
 	assign(t, false);
+}
+
+void GuiText::setFormat(const char * msgid, ...)
+{
+	if(!msgid)
+	{
+		assign(nullptr, false);
+		return;
+	}
+
+	char message[FORMAT_BYTES];
+	va_list args;
+	va_start(args, msgid);
+	TrFormatV(message, sizeof(message), msgid, args);
+	va_end(args);
+	assign(message, false);
 }
 
 int GuiText::getLongestWordWidth()

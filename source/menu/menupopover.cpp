@@ -252,7 +252,7 @@ PickerView::PickerView(const char * title, const std::vector<PickerItem>& itemLi
 		GuiLayout& captionColumn = ui.column().size(innerW, captionH).pad(0, 0);
 		for(int k = 0; k < captionLinesN; k++)
 		{
-			GuiLabel& line = ui.label().fontSize(UI_FONT_SMALL).muted().bind([this, k]{ return captionLines[(size_t)k]; });
+			GuiLabel& line = ui.label().fontSize(UI_FONT_SMALL).muted().bind([this, k](UiText& t){ t.set(captionLines[(size_t)k].c_str()); });
 			captionColumn.add(ui.row().size(innerW, kPopoverCaptionLineH).align(LAYOUT_ALIGN::CENTRE).add(line));
 		}
 		content.addGap(8).add(captionColumn);
@@ -311,7 +311,7 @@ void MenuPopover_Wrap(std::vector<std::string>& lines, const std::string& text, 
 
 // ---- running one on the menu's main window
 
-GuiCard& MenuPopover_Chip(UiScope& ui, int width, const char * what, std::function<std::string()> value)
+GuiCard& MenuPopover_Chip(UiScope& ui, int width, const char * what, std::function<void(UiText&)> value)
 {
 	GuiLabel& caption = ui.label(what).fontSize(UI_FONT_SMALL - 3).muted();
 	GuiLabel& chosen = ui.label().fontSize(UI_FONT_SMALL + 1).bind(value);

@@ -6,7 +6,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <map>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -53,12 +52,13 @@ struct FontOffset {
 	int16_t min = 0; //!< Depth below the baseline of the lowest glyph in the measured string (see GuiTextRenderer::getOffset())
 };
 
-//!Cached per-glyph metrics and rasterized texture, keyed by (pixel size, char code) in GuiTextRenderer::fontData.
+//!Cached per-glyph metrics and rasterized texture, kept per (pixel size, char code) by GuiTextRenderer.
 //!\ingroup grp_core
 struct GlyphData {
 	int16_t renderOffsetX = 0; //!< Horizontal offset from the pen position to the bitmap's left edge
 	uint16_t glyphAdvanceX = 0; //!< Horizontal pen advance after this glyph
 	uint16_t glyphAdvanceY = 0; //!< Vertical pen advance after this glyph
+	bool rendered = false; //!< The bitmap and texture below exist (or failed to): they are made on first draw, not on first measure
 	uint32_t glyphIndex = 0; //!< FreeType glyph index
 
 	//!Pixel dims of the rasterized bitmap/texture, at uiScale - always
@@ -85,6 +85,9 @@ struct GlyphData {
 //!FreeType or a platform texture directly.
 //!\ingroup grp_core
 class GuiTextRenderer {
+#ifdef DIAG_BUILD
+	friend struct DiagAccess; // source/diag/diag.cpp: read-only peek at the FT_Face (issue #1153 harness)
+#endif
 private:
 	FT_Library ftLibrary = nullptr;
 	FT_Face ftFace = nullptr;
@@ -93,25 +96,44 @@ private:
 
 	GlyphRenderer* renderer;
 
-	struct ftData {
-		FontOffset align;
-		bool metricsReady;
-		std::map<wchar_t, GlyphData> charMap;
-
-		// Direct index for the first 256 characters, so the common lookup is one array read rather than
-		// two std::map searches. null: not looked up yet; &missingGlyph: the font has no such glyph.
+	// The glyph cache. Each pixel size used has one SizeTable (one allocation). Its glyph records are kept
+	// in chunks of GLYPHS_PER_CHUNK, so a glyph costs a share of a chunk rather than an allocation of its
+	// own, and a record never moves once made (callers hold pointers to them while drawing). The first 256
+	// characters are found through `fast` (which also remembers which ones the font lacks); above that a small
+	// open-addressing table of the glyphs the font has, grown by doubling, is used.
+	enum { GLYPHS_PER_CHUNK = 32 };
+	struct GlyphChunk {
+		GlyphChunk* next;
+		alignas(GlyphData) unsigned char storage[GLYPHS_PER_CHUNK * sizeof(GlyphData)];
+		GlyphData* at(int i) { return reinterpret_cast<GlyphData*>(storage) + i; }
+	};
+	struct WideEntry {
+		wchar_t code;
+		GlyphData* glyph; // null: this slot is empty
+	};
+	struct SizeTable {
+		SizeTable* next;
+		int16_t pixelSize;
+		GlyphChunk* chunks; // newest first; only the first is partly used
+		uint8_t chunkUsed; // records used in the first chunk
+		WideEntry* wide; // null until a character above 255 is looked up; wideCap is a power of two
+		uint16_t wideCap;
+		uint16_t wideCount;
+		// null: not looked up yet; &missingGlyph: the font has no such glyph.
 		GlyphData* fast[256];
-
-		ftData() : metricsReady(false) {
-			align.ascender = align.descender = align.max = align.min = 0;
-			for (int i = 0; i < 256; ++i) fast[i] = nullptr;
-		}
 	};
 
-	std::map<int16_t, ftData> fontData;
-	ftData* current;	// fontData[currentPixelSize], or null until it is needed (map nodes never move)
+	SizeTable* sizeTables = nullptr; // every pixel size used so far
+	SizeTable* current = nullptr; // the table for currentPixelSize, or null until it is needed
 	static GlyphData missingGlyph;
 	static uint32_t metricsGeneration;
+
+	SizeTable* findSize(int16_t pixelSize);
+	void freeSize(SizeTable* table);
+	GlyphData* find(SizeTable* table, wchar_t charCode);
+	bool reserveWide(SizeTable* table);
+	GlyphData* newGlyph(SizeTable* table);
+	void store(SizeTable* table, wchar_t charCode, GlyphData* glyph);
 
 	// Internal Calculations
 	int16_t getKerning(const GlyphData* prev, const GlyphData* glyph);
@@ -121,7 +143,12 @@ private:
 
 	// Font Management
 	void unloadFont();
-	GlyphData* cacheGlyphData(wchar_t charCode, int16_t pixelSize);
+	// Looks a character up at the current size and keeps what measuring needs: its advance and
+	// glyph index. No bitmap is rasterized and no texture made here (see renderGlyph()).
+	GlyphData* cacheGlyphData(wchar_t charCode);
+	// Rasterizes a glyph and makes its texture, once, at the current size. Needed to draw it and to know how
+	// far it reaches above and below the baseline. A glyph that cannot be rendered keeps its advance and draws nothing.
+	void renderGlyph(GlyphData* glyph);
 	// The glyph for a character at the current size: the fast table first, cacheGlyphData() on a miss.
 	// null if the font has none.
 	GlyphData* glyph(wchar_t charCode);
