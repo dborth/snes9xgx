@@ -85,9 +85,6 @@ struct GlyphData {
 //!FreeType or a platform texture directly.
 //!\ingroup grp_core
 class GuiTextRenderer {
-#ifdef DIAG_BUILD
-	friend struct DiagAccess; // source/diag/diag.cpp: read-only peek at the FT_Face (issue #1153 harness)
-#endif
 private:
 	FT_Library ftLibrary = nullptr;
 	FT_Face ftFace = nullptr;
