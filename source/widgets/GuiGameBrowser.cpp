@@ -182,7 +182,8 @@ GuiGameBrowser::GuiGameBrowser(int w, int h)
 		fileList[i]->setImage(fileListBg[i]);
 		fileList[i]->setPosition(BROWSER_PAD, rowTop + ROW_HEIGHT*i);
 		fileList[i]->setTrigger(trigA);
-		fileList[i]->setSoundOver(nullptr); // rows click, but are silent on hover
+		fileList[i]->setSoundClick(nullptr);
+		fileList[i]->setSoundOver(nullptr);
 	}
 }
 
