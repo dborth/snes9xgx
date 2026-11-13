@@ -50,10 +50,14 @@
 #include "drivers/Cond.h"
 #include "drivers/safestr.h"
 
+#ifdef HW_RVL
+#include "drivers/ogc/wii/WiiPlatform.h"
+#elif HW_DOL
+#include "drivers/ogc/gamecube/GameCubePlatform.h"
+#endif
+
 #if defined(HW_RVL) || defined(HW_DOL)
 #include "drivers/ogc/videofilters.h"
-#include "drivers/ogc/wii/WiiPlatform.h"
-#include "drivers/ogc/gamecube/GameCubePlatform.h"
 #endif
 
 #ifdef __WIIU__
