@@ -4156,17 +4156,15 @@ void CMemory::CheckForAnyPatch (const char *rom_filename, bool8 header, int32 &r
 
 #ifdef SNES9XGX
 	int patchtype;
-	char patchpath[3][512];
+	static const char * const patchExt[3] = { ".bps", ".ips", ".ups" };
+	char patchpath[sizeof(browser.dir) + sizeof(Memory.ROMFilename) + 4];
 	FSTREAM patchfile = NULL;
 	long offset = header ? 512 : 0;
 
-	sprintf(patchpath[0], "%s%s.bps", browser.dir, Memory.ROMFilename);
-	sprintf(patchpath[1], "%s%s.ips", browser.dir, Memory.ROMFilename);
-	sprintf(patchpath[2], "%s%s.ups", browser.dir, Memory.ROMFilename);
-
 	for(patchtype=0; patchtype<3; patchtype++)
 	{
-		if ((patchfile = OPEN_FSTREAM(patchpath[patchtype], "rb")) != NULL)
+		snprintf(patchpath, sizeof(patchpath), "%s%s%s", browser.dir, Memory.ROMFilename, patchExt[patchtype]);
+		if ((patchfile = OPEN_FSTREAM(patchpath, "rb")) != NULL)
 		{
 			switch(patchtype) {
 				case 0:

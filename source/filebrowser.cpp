@@ -658,20 +658,27 @@ bool IsSz()
 /****************************************************************************
  * StripExt
  *
- * Strips an extension from a filename
+ * Copies a filename to returnstring without its extension
  ***************************************************************************/
-void StripExt(char* returnstring, char * inputstring)
+void StripExt(char* returnstring, const char * inputstring)
 {
-	char* loc_dot;
-
-	snprintf (returnstring, MAXJOLIET, "%s", inputstring);
-
-	if(inputstring == nullptr || strlen(inputstring) < 4)
+	if(inputstring == nullptr)
+	{
+		returnstring[0] = 0;
 		return;
+	}
 
-	loc_dot = strrchr(returnstring,'.');
-	if (loc_dot != nullptr)
-		*loc_dot = 0; // strip file extension
+	size_t len = strlen(inputstring);
+
+	if(len >= 4)
+	{
+		const char * loc_dot = strrchr(inputstring, '.');
+		if(loc_dot != nullptr)
+			len = loc_dot - inputstring; // strip file extension
+	}
+
+	memcpy(returnstring, inputstring, len);
+	returnstring[len] = 0;
 }
 
 /****************************************************************************

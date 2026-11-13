@@ -74,7 +74,7 @@ int OpenGameList();
 void AutoDetectDevices();
 int autoSaveMethod();
 int FileSortCallback(const void *f1, const void *f2);
-void StripExt(char* returnstring, char * inputstring);
+void StripExt(char* returnstring, const char * inputstring);
 bool IsSz();
 void ResetBrowser();
 bool AddBrowserEntry();
