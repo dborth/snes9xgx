@@ -43,7 +43,7 @@ void AudioDMACallback() {
 		instance->dmaCallback();
 }
 
-void S9xAudioCallback(void *data) {
+void S9xAudioCallback(void *) {
 	if (instance)
 		instance->audioCallback();
 }

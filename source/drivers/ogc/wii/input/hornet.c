@@ -15,7 +15,7 @@ static bool isHornetGamepad(usb_device_entry dev)
 	return dev.vid == HORNET_VID && dev.pid == HORNET_PID;
 }
 
-static int removal_cb(int result, void *usrdata)
+static int removal_cb(int, void *usrdata)
 {
 	s32 fd = (s32) usrdata;
 	if (fd == deviceId)

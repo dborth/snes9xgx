@@ -120,13 +120,13 @@ static void increasePlayer()
 	turnOnLED();
 }
 
-void rumble(s32 device_id, u8 left, u8 right)
+void rumble(s32, u8 left, u8 right)
 {
 	uint8_t ATTRIBUTE_ALIGN(32) buf[] = { 0x00, 0x08, 0x00, left, right, 0x00, 0x00, 0x00 };
 	USB_WriteIntrMsg(deviceId, endpoint_out, sizeof(buf), buf);
 }
 
-static int removal_cb(int result, void *usrdata)
+static int removal_cb(int, void *usrdata)
 {
 	s32 fd = (s32) usrdata;
 	if (fd == deviceId)
@@ -149,7 +149,7 @@ static int removal_cb(int result, void *usrdata)
 }
 
 // adapted from RetroArch input/drivers_hid/wiiusb_hid.c#wiiusb_get_description()
-void wiiusb_get_description(const usb_device_entry *device, usb_devdesc *devdesc)
+void wiiusb_get_description(const usb_device_entry *, usb_devdesc *devdesc)
 {
    unsigned char c;
    unsigned i, k;

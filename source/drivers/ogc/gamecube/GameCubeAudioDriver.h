@@ -25,19 +25,19 @@ class GameCubeAudioDriver : public AudioDriver
 
 		OgcEmulatorAudio* getEmulatorAudio() override { return emulatorAudio; }
 
-		int32_t playVoice(const uint8_t* data, int32_t length, int volume) override { return -1; }
-		void stopVoice(int32_t voice) override {}
-		void pauseVoice(int32_t voice) override {}
-		void resumeVoice(int32_t voice) override {}
-		bool isVoicePlaying(int32_t voice) override { return false; }
-		void setVoiceVolume(int32_t voice, int volume) override {}
+		int32_t playVoice(const uint8_t*, int32_t, int) override { return -1; }
+		void stopVoice(int32_t) override {}
+		void pauseVoice(int32_t) override {}
+		void resumeVoice(int32_t) override {}
+		bool isVoicePlaying(int32_t) override { return false; }
+		void setVoiceVolume(int32_t, int) override {}
 
-		void playStream(const uint8_t* data, int32_t length, bool loop, int volume) override {}
+		void playStream(const uint8_t*, int32_t, bool, int) override {}
 		void stopStream() override {}
 		void pauseStream() override {}
 		void resumeStream() override {}
 		bool isStreamPlaying() override { return false; }
-		void setStreamVolume(int volume) override {}
+		void setStreamVolume(int) override {}
 
 	private:
 		OgcEmulatorAudio* emulatorAudio = nullptr;

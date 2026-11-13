@@ -21,7 +21,7 @@ static bool isMayflashGamepad(usb_device_entry dev)
 	(dev.vid == MAYFLASH_MF105_VID && dev.pid == MAYFLASH_MF105_PID);
 }
 
-static int removal_cb(int result, void *usrdata)
+static int removal_cb(int, void *usrdata)
 {
 	s32 fd = (s32) usrdata;
 	if (fd != deviceId && fd != secondDeviceId)

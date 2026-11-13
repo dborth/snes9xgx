@@ -181,7 +181,7 @@ static void increasePlayer()
 	updateLightbar();
 }
 
-static int removal_cb(int result, void *usrdata)
+static int removal_cb(int, void *usrdata)
 {
 	s32 fd = (s32) usrdata;
 	if (fd == deviceId)

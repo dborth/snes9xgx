@@ -126,7 +126,7 @@ SZ_RESULT SzExtract2(
     size_t *outBufferSize,
     size_t *offset,
     size_t *outSizeProcessed,
-    ISzAlloc *allocMain,
+    ISzAlloc *,
     ISzAlloc *allocTemp)
 {
   UInt32 folderIndex = db->FileIndexToFolderIndexMap[fileIndex];

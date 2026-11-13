@@ -28,7 +28,7 @@ static bool isRetrodeGamepad(usb_devdesc devdesc)
 	return devdesc.configurations->interfaces->bInterfaceSubClass == 0;
 }
 
-static int removal_cb(int result, void *usrdata)
+static int removal_cb(int, void *usrdata)
 {
 	s32 fd = (s32) usrdata;
 	if (fd == deviceId)
