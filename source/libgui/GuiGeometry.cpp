@@ -735,7 +735,7 @@ void GuiMesh::addShadow(const GuiRect& r, const GuiCorners& c, float blur, float
 	GuiPoint centre = { s.x + s.w * 0.5f, s.y + s.h * 0.5f };
 
 	std::vector<Ring> rings;
-	float alpha[maxSteps + 1];
+	float alpha[maxSteps + 1] = {};
 	for(int k = 0; k <= steps; k++)
 	{
 		float t = (float)k / (float)steps;
