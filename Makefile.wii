@@ -20,31 +20,34 @@ export	FREETYPE_LIBS		:=	`$(DEVKITPRO)/portlibs/ppc/bin/powerpc-eabi-pkg-config 
 TARGET		:=	snes9xgx-wii
 TARGETDIR	:=	executables
 BUILD		:=	build_wii
+CORE_SOURCES	:=	source/snes9x source/snes9x/apu
 SOURCES		:=	source source/menu source/libgui source/widgets source/utils source/utils/sz \
 				source/drivers source/drivers/ogc source/drivers/ogc/wii source/drivers/ogc/wii/input \
-				source/snes9x source/snes9x/apu
+				$(CORE_SOURCES)
 DATA		:=	data/images data/sounds data/fonts data/lang
 INCLUDES	:=	source source/snes9x
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-
-# -fno-strict-aliasing to prevent GCC 16 from breaking legacy type-punning.
-CFLAGS	= -g -O3 -Wall $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
-				-DSNES9XGX \
-				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
-				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
-				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
-				-fomit-frame-pointer -fno-strict-aliasing -ffunction-sections -fdata-sections \
+WARNFLAGS		:=	-Wall -Wextra
+CORE_WARNFLAGS	:=	-Wall \
 				-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable \
 				-Wno-format -Wno-format-overflow -Wno-stringop-truncation \
 				-Wno-stringop-overflow -Wno-format-truncation -Wno-narrowing -Wno-sign-compare \
 				-Wno-unused-function -Wno-write-strings -Wno-parentheses -Wno-uninitialized -Wno-infinite-recursion
+CORE_CXXFLAGS	:=	-Wno-register
+
+CFLAGS	= -g -O3 $(WARNFLAGS) $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
+				-DSNES9XGX \
+				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
+				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
+				-D_SZ_ONE_DIRECTORY -D_LZMA_IN_CB -D_LZMA_OUT_READ \
+				-fomit-frame-pointer -fno-strict-aliasing -ffunction-sections -fdata-sections
 
 # Isolated CXXFLAGS to strip out C++ runtime overhead (Exceptions/RTTI)
 # This saves instruction cache space, critical for the 750CL.
-CXXFLAGS	=	$(CFLAGS) -Wno-register -fno-exceptions -fno-rtti -fno-threadsafe-statics
+CXXFLAGS	=	$(CFLAGS) -fno-exceptions -fno-rtti -fno-threadsafe-statics
 
 LDFLAGS	=	-g -O3 $(MACHDEP) -Wl,-Map,$(notdir $@).map -Wl,--gc-sections
 LDFLAGS +=	-L../buildtools
@@ -97,6 +100,10 @@ export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
 export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
 export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
 
+# the objects built from CORE_SOURCES, which get CORE_WARNFLAGS (see the top of this file)
+export CORE_COFILES	:=	$(foreach dir,$(CORE_SOURCES),$(patsubst %.c,%.o,$(notdir $(wildcard $(dir)/*.c))))
+export CORE_CXXOFILES	:=	$(foreach dir,$(CORE_SOURCES),$(patsubst %.cpp,%.o,$(notdir $(wildcard $(dir)/*.cpp))))
+
 export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 #---------------------------------------------------------------------------------
@@ -139,6 +146,10 @@ reload:
 else
 
 DEPENDS	:=	$(OFILES:.o=.d)
+
+# the emulator core is built with CORE_WARNFLAGS rather than WARNFLAGS
+$(CORE_COFILES) $(CORE_CXXOFILES): WARNFLAGS := $(CORE_WARNFLAGS)
+$(CORE_CXXOFILES): CXXFLAGS += $(CORE_CXXFLAGS)
 
 #---------------------------------------------------------------------------------
 # main targets

@@ -26,18 +26,27 @@ TARGET		:=	snes9xgx-wiiu
 BUILD		:=	build_wiiu
 EXECUTABLES	:=	executables
 
+CORE_SOURCES	:=	source/snes9x source/snes9x/apu
 SOURCES		:=	source source/menu source/libgui source/widgets source/utils source/utils/sz \
 				source/drivers source/drivers/wut source/drivers/wut/shaders \
-				source/snes9x source/snes9x/apu
+				$(CORE_SOURCES)
 INCLUDES	:=	source source/snes9x
 DATA		:=	data/images_hd data/sounds data/fonts data/lang
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
+WARNFLAGS		:=	-Wall -Wextra
+CORE_WARNFLAGS	:=	-Wall \
+				-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable \
+				-Wno-format -Wno-format-overflow -Wno-stringop-truncation \
+				-Wno-stringop-overflow -Wno-format-truncation -Wno-narrowing -Wno-sign-compare \
+				-Wno-unused-function -Wno-write-strings -Wno-parentheses -Wno-uninitialized -Wno-infinite-recursion
+CORE_CXXFLAGS	:=	-Wno-register
+
 
 # Using -O3 for emulator performance
-CFLAGS		=	-g -O3 -Wall -Wextra $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
+CFLAGS		=	-g -O3 $(WARNFLAGS) $(MACHDEP) $(INCLUDE) $(FREETYPE_CFLAGS) \
 				-DSNES9XGX -D__WIIU__ -D__WUT__ \
 				-DHAVE_STDINT_H -DBLARGG_NONPORTABLE -DBLARGG_BIG_ENDIAN -DBLARGG_CPU_POWERPC \
 				-DZLIB -DRIGHTSHIFT_IS_SAR -DCPU_SHUTDOWN -DCORRECT_VRAM_READS \
@@ -92,6 +101,10 @@ export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES))
 export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
 export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
 
+# the objects built from CORE_SOURCES, which get CORE_WARNFLAGS (see the top of this file)
+export CORE_COFILES	:=	$(foreach dir,$(CORE_SOURCES),$(patsubst %.c,%.o,$(notdir $(wildcard $(dir)/*.c))))
+export CORE_CXXOFILES	:=	$(foreach dir,$(CORE_SOURCES),$(patsubst %.cpp,%.o,$(notdir $(wildcard $(dir)/*.cpp))))
+
 export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 #---------------------------------------------------------------------------------
@@ -124,6 +137,10 @@ clean:
 else
 
 DEPENDS	:=	$(OFILES:.o=.d)
+
+# the emulator core is built with CORE_WARNFLAGS rather than WARNFLAGS
+$(CORE_COFILES) $(CORE_CXXOFILES): WARNFLAGS := $(CORE_WARNFLAGS)
+$(CORE_CXXOFILES): CXXFLAGS += $(CORE_CXXFLAGS)
 
 #---------------------------------------------------------------------------------
 # main targets
