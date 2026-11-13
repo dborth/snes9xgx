@@ -389,6 +389,30 @@ void SzClose()
 }
 
 /****************************************************************************
+* SzBaseName
+*
+* Returns the last path component of a 7z entry name, treating both '/' and
+* '\\' (archives made on Windows) as separators.
+***************************************************************************/
+static const char * SzBaseName(const char * name)
+{
+	if(!name)
+		return nullptr;
+
+	const char * base = name;
+	for(const char * c = name; *c; c++)
+	{
+		if(*c == '/' || *c == '\\')
+			base = c + 1;
+	}
+
+	if(base[0] == 0 || strcmp(base, ".") == 0 || strcmp(base, "..") == 0)
+		return nullptr;
+
+	return base;
+}
+
+/****************************************************************************
 * SzParse
 *
 * Opens a 7z file, and parses it
@@ -476,6 +500,11 @@ int SzParse(char * filepath)
 				if (SzF->IsDirectory)
 					continue;
 
+				// only the base name is used - an entry name must not carry directory parts
+				const char * baseName = SzBaseName(SzF->Name);
+				if(!baseName)
+					continue;
+
 				if(!AddBrowserEntry())
 				{
 					ResetBrowser();
@@ -486,7 +515,7 @@ int SzParse(char * filepath)
 				}
 
 				// parse information about this file to the file list structure
-				snprintf(browserList[SzJ].filename, MAXJOLIET, "%s", SzF->Name);
+				snprintf(browserList[SzJ].filename, MAXJOLIET, "%s", baseName);
 				StripExt(browserList[SzJ].displayname, browserList[SzJ].filename);
 				char* strPos = strstr(browserList[SzJ].displayname, szname);
 				if(strPos)
