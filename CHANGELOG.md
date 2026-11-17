@@ -4,6 +4,7 @@ All notable changes to Snes9x GX are recorded here, newest first. For the curren
 
 ## Unreleased
 
+* Fixed games running about 3% slow on PAL (576i) 50Hz output when playing an NTSC game
 * **USB pen tablet support** on Wii. The pen moves the pointer and aims the Super Scope, Justifier and SNES Mouse, using the USB mouse's button mapping
 * Fixed some potential startup crash causes
 * Updated translations
