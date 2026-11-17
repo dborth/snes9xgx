@@ -27,6 +27,7 @@
 static int timerstyle = 0;
 static Ticks prev;
 static Ticks now;
+static int behindUs = 0; // microseconds emulation is behind real time, carried between frames (timerstyle 1)
 
 /****************************************************************************
  * setFrameTimerMethod()
@@ -120,6 +121,7 @@ void S9xInitSync()
 {
 	platform->getVideo()->setFrameTimer(0);
 	prev = SystemTime::now();
+	behindUs = 0;
 }
 
 /*** Synchronisation ***/
@@ -173,31 +175,47 @@ void S9xSyncSpeed () {
 	}
 	else /* use internal timer for PAL roms (or TV/ROM mismatches) */
 	{
-		const uint32_t timediffallowed = Settings.TurboMode ? 0 : Settings.FrameTime;
-
 		now = SystemTime::now();
 
-		if (SystemTime::diffMicrosecs(prev, now) < timediffallowed)
+		if (Settings.TurboMode)
+		{
+			/* no real-time limiting in turbo */
+			behindUs = 0;
+			prev = now;
+			S9xChooseFrameToRender(true, skipFrms);
+			return;
+		}
+
+		const int allowed = (int) Settings.FrameTime;
+
+		/* Lateness carries over, so it is paid back exactly once */
+		behindUs += (int) SystemTime::diffMicrosecs(prev, now) - allowed;
+		prev = now;
+
+		if (behindUs > 4 * allowed)
+			behindUs = 0; /* hopelessly behind: resync, don't skip for ages */
+
+		if (behindUs < 0)
 		{
 			/*** Ahead - so hold up until the frame's time budget elapses ***/
-			do
+			const uint32_t wait = (uint32_t) -behindUs;
+			while (SystemTime::diffMicrosecs(prev, now) < wait)
 			{
-				if ((timediffallowed - SystemTime::diffMicrosecs(prev, now)) > 50) {
+				if ((wait - SystemTime::diffMicrosecs(prev, now)) > 50)
 					usleep(50); // The GPU draws concurrently during this CPU sleep!
-				}
 				now = SystemTime::now();
-			} while (SystemTime::diffMicrosecs(prev, now) < timediffallowed);
+			}
+			prev = now;
+			behindUs = 0;
 
 			IPPU.RenderThisFrame = TRUE;
 			IPPU.SkippedFrames = 0;
 		}
 		else
 		{
-			/* Timer has already expired - we are behind, so consider skipping. */
-			S9xChooseFrameToRender(true, skipFrms);
+			/* A whole frame behind: consider dropping the next frame's render */
+			S9xChooseFrameToRender(behindUs >= allowed, skipFrms);
 		}
-
-		prev = now;
 	}
 }
 
