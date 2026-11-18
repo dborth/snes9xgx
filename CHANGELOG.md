@@ -2,7 +2,7 @@
 
 All notable changes to Snes9x GX are recorded here, newest first. For the current features and setup instructions, see [README.md](README.md).
 
-## Unreleased
+## 5.0.6 - November 18, 2026
 
 * Fixed games running about 3% slow on PAL (576i) 50Hz output when playing an NTSC game
 * **USB pen tablet support** on Wii. The pen moves the pointer and aims the Super Scope, Justifier and SNES Mouse, using the USB mouse's button mapping
