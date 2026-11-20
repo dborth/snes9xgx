@@ -32,6 +32,11 @@
 #define PINNED_GAP			17		// grid's last row to the pinned card
 #define PINNED_ICON_X		16
 #define PINNED_TEXT_X		76
+#define SLOT_TEXT_X			80		// a card's words, from its left edge
+#define SLOT_TEXT_ROOM		(SLOT_WIDTH - SLOT_TEXT_X - PREVIEW_X)	// to the same gap from the right edge as the screenshot has from the left
+#define SLOT_TITLE_SIZE		18
+#define SLOT_SUBTITLE_SIZE	14
+#define TEXT_MIN_FONT_PERCENT	75	// how far, as a percentage of its size, a card's words can shrink to fit
 #define CHIP_ON_WIDTH		96		// the label at the pinned card's right end: "Autosave", with its dot
 #define CHIP_HEIGHT			22
 #define CHIP_INSET			16
@@ -61,6 +66,21 @@
 #define CHIP_PLAIN_PAD		14		// either edge to the words when it has none
 #define CHIP_MAX_WIDTH		230
 #define PINNED_TEXT_GAP		12		// the pinned card's words to the chip
+
+// Fits a line of a card's words to the room they have. Words that fit keep their size, so the layout stays as it is;
+// others shrink (to TEXT_MIN_FONT_PERCENT of `size` at the least), and what still does not fit is cut.
+static void FitCardText(GuiText * words, int size, int room)
+{
+	words->setMaxWidth(0);
+	words->setFontSize(size);
+
+	const int least = size * TEXT_MIN_FONT_PERCENT / 100;
+	for(int s = size; s > least && words->getTextWidth() > room; )
+		words->setFontSize(--s);
+
+	if(words->getTextWidth() > room)
+		words->setMaxWidth(room);
+}
 
 // A pill's width from its words: `padL` before them and `padR` after, at least `minW`; past `maxW` it stops growing
 // and the words are cut to fit. `shift` is how far to move the words from the pill's center to keep them between the
@@ -346,13 +366,13 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 
 	for(int i=0; i<SAVELISTSIZE; i++)
 	{
-		saveTitle[i] = new GuiText(nullptr, 18, theme.text);
+		saveTitle[i] = new GuiText(nullptr, SLOT_TITLE_SIZE, theme.text);
 		// the two lines are centered on the card as a block: one a little above the middle, one a little below
 		saveTitle[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-		saveTitle[i]->setPosition(80,-12);
-		saveSubtitle[i] = new GuiText(nullptr, 14, theme.textMuted);
+		saveTitle[i]->setPosition(SLOT_TEXT_X, -12);
+		saveSubtitle[i] = new GuiText(nullptr, SLOT_SUBTITLE_SIZE, theme.textMuted);
 		saveSubtitle[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
-		saveSubtitle[i]->setPosition(80,13);
+		saveSubtitle[i]->setPosition(SLOT_TEXT_X, 13);
 
 		// each slot is a card, taking the accent outline and glow when highlighted
 		saveBgImg[i] = new GuiShape(SLOT_WIDTH, SLOT_HEIGHT);
@@ -430,10 +450,10 @@ GuiSaveBrowser::GuiSaveBrowser(int w, int r)
 	}
 
 	// the pinned card: as wide as the grid, under it, with the save-file icon and a label at its right end
-	pinnedTitle = new GuiText(nullptr, 18, theme.text);
+	pinnedTitle = new GuiText(nullptr, SLOT_TITLE_SIZE, theme.text);
 	pinnedTitle->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 	pinnedTitle->setPosition(PINNED_TEXT_X, -11);
-	pinnedSubtitle = new GuiText(nullptr, 14, theme.textMuted);
+	pinnedSubtitle = new GuiText(nullptr, SLOT_SUBTITLE_SIZE, theme.textMuted);
 	pinnedSubtitle->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 	pinnedSubtitle->setPosition(PINNED_TEXT_X, 12);
 
@@ -988,8 +1008,19 @@ void GuiSaveBrowser::update(InputController * controller)
 				tagText[i]->setPosition(shift, 0);
 			}
 
-			saveTitle[i]->setText(e.title.c_str());
-			saveSubtitle[i]->setText(e.subtitle.c_str());
+			// the words are set, and fitted to the card, only when they change
+			if(slotTitleShown[i] != e.title)
+			{
+				slotTitleShown[i] = e.title;
+				saveTitle[i]->setText(e.title.c_str());
+				FitCardText(saveTitle[i], SLOT_TITLE_SIZE, SLOT_TEXT_ROOM);
+			}
+			if(slotSubtitleShown[i] != e.subtitle)
+			{
+				slotSubtitleShown[i] = e.subtitle;
+				saveSubtitle[i]->setText(e.subtitle.c_str());
+				FitCardText(saveSubtitle[i], SLOT_SUBTITLE_SIZE, SLOT_TEXT_ROOM);
+			}
 			savePreviewImg[i]->setPlaceholderText(e.placeholder.empty() ? "No image" : e.placeholder.c_str());
 
 			if(e.preview != nullptr && e.preview->getTexture() != nullptr)
@@ -1058,8 +1089,18 @@ void GuiSaveBrowser::update(InputController * controller)
 		}
 		pinnedIcon->setNoBattery(e.noBattery);
 
-		pinnedTitle->setText(e.title.c_str());
-		pinnedSubtitle->setText(e.subtitle.c_str());
+		if(pinnedTitleShown != e.title)
+		{
+			pinnedTitleShown = e.title;
+			pinnedTitle->setText(e.title.c_str());
+			pinnedTextRoom = -1;	// fitted again below
+		}
+		if(pinnedSubtitleShown != e.subtitle)
+		{
+			pinnedSubtitleShown = e.subtitle;
+			pinnedSubtitle->setText(e.subtitle.c_str());
+			pinnedTextRoom = -1;
+		}
 		chipShape->setVisible(!e.chip.empty());
 		chipText->setVisible(!e.chip.empty());
 
@@ -1100,8 +1141,8 @@ void GuiSaveBrowser::update(InputController * controller)
 		if(pinnedTextRoom != textRoom)
 		{
 			pinnedTextRoom = textRoom;
-			pinnedTitle->setMaxWidth(textRoom);
-			pinnedSubtitle->setMaxWidth(textRoom);
+			FitCardText(pinnedTitle, SLOT_TITLE_SIZE, textRoom);
+			FitCardText(pinnedSubtitle, SLOT_SUBTITLE_SIZE, textRoom);
 		}
 
 		if(!pinnedOn && pinnedBtn->getState() == STATE::SELECTED)
