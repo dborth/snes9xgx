@@ -34,10 +34,6 @@
 #include "drivers/FileSystemDriver.h"
 #include "drivers/safestr.h"
 
-extern "C" {
-extern char* strcasestr(const char *, const char *);
-}
-
 BROWSERINFO browser;
 BROWSERENTRY * browserList = nullptr; // list of files/folders in browser
 bool browserDeviceListChanged = false;
