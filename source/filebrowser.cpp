@@ -608,7 +608,10 @@ static bool IsValidROM()
 				// we need to check the file extension of the first file in the archive
 				zippedFilename = GetFirstZipFilename ();
 
-				if(zippedFilename && strlen(zippedFilename) > 4)
+				if(!zippedFilename)
+					return false;
+
+				if(strlen(zippedFilename) > 4)
 					p = strrchr(zippedFilename, '.');
 				else
 					p = nullptr;
@@ -720,8 +723,6 @@ int BrowserLoadSz()
 		browser.numEntries = szfiles;
 		inSz = true;
 	}
-	else
-		ErrorPrompt("Error opening archive!");
 
 	return szfiles;
 }
@@ -756,6 +757,13 @@ int ROMLoader()
 		return 0;
 
 	SNESROMSize = Memory.HeaderRemove(size, Memory.ROM);
+
+	if(SNESROMSize <= 0)
+	{
+		ErrorPrompt("Unsupported file size!");
+		return 0;
+	}
+
 	bsxBiosLoadFailed = false;
 
 	if(isBSX()) {
@@ -779,7 +787,10 @@ int BrowserLoadFile()
 	int device;
 
 	if(!FindDevice(browser.dir, &device))
+	{
+		ErrorPrompt("Device not found!");
 		return 0;
+	}
 
 	// check that this is a valid ROM
 	if(!IsValidROM())
@@ -795,11 +806,7 @@ int BrowserLoadFile()
 	S9xDeleteCheats();
 	Memory.LoadROM("ROM");
 
-	if (SNESROMSize == 0)
-	{
-		ErrorPrompt("Error loading game!");
-	}
-	else
+	if (SNESROMSize != 0)
 	{
 		platform->getAudio()->getEmulatorAudio()->resetAudio();
 		ClearPlayingFrom(); // a new game does not start from the last game's snapshot

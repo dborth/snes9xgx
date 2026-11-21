@@ -907,6 +907,8 @@ size_t LoadSzFile(char * filepath, unsigned char * rbuffer)
 
 /****************************************************************************
  * LoadFile
+ *
+ * Returns the number of bytes loaded
  ***************************************************************************/
 size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersize, bool silent)
 {
@@ -944,6 +946,9 @@ size_t LoadFile (char * rbuffer, char *filepath, size_t length, size_t buffersiz
 		if(length > 0 && length <= 2048) // do a partial read (eg: to check file header)
 		{
 			size = fread (rbuffer, 1, length, fp);
+
+			if(!size && !silent)
+				ErrorPrompt("Error reading file!");
 		}
 		else // load whole file
 		{

@@ -358,8 +358,16 @@ GetFirstZipFilename ()
 		return nullptr;
 
 	// read start of ZIP
-	if(LoadFile (tempbuffer, filepath, ZIPCHUNK, ZIPCHUNK, NOTSILENT) < 35)
+	size_t startSize = LoadFile (tempbuffer, filepath, ZIPCHUNK, ZIPCHUNK, NOTSILENT);
+
+	if(startSize == 0)
 		return nullptr;
+
+	if(startSize < 35) // too short to hold a ZIP entry
+	{
+		ErrorPrompt("Empty or invalid ZIP file!");
+		return nullptr;
+	}
 
 	tempbuffer[28] = 0; // truncate - filename length is 2 bytes long (bytes 26-27)
 	int namelength = tempbuffer[26]; // filename length starts 26 bytes in
@@ -372,7 +380,12 @@ GetFirstZipFilename ()
 	
 	firstFilename = &tempbuffer[30]; // first filename of a ZIP starts 31 bytes in
 	firstFilename[namelength] = 0; // truncate at filename length
-	return strdup(firstFilename);
+	firstFilename = strdup(firstFilename);
+
+	if(!firstFilename)
+		ErrorPrompt("Out of memory!");
+
+	return firstFilename;
 }
 
 /****************************************************************************
@@ -543,11 +556,17 @@ int SzParse(char * filepath)
 	
 	struct stat filestat;
 	if(stat(filepath, &filestat) < 0)
+	{
+		ErrorPrompt("Error opening archive!");
 		return 0;
+	}
 	unsigned int filelen = filestat.st_size;
 	
 	if(!FindDevice(filepath, &device) || !filelen)
+	{
+		ErrorPrompt("Error opening archive!");
 		return 0;
+	}
 
 	int nbfiles = 0;
 	// setup archive stream
@@ -558,7 +577,10 @@ int SzParse(char * filepath)
 	// open file
 	FILE * fp = fopen (filepath, "rb");
 	if(!fp)
+	{
+		ErrorPrompt("Error opening archive!");
 		return 0;
+	}
 	SzArchiveStream.fp = fp;
 
 	// set szMethod to current chosen load device
@@ -648,6 +670,7 @@ int SzParse(char * filepath)
 		else
 		{
 			SzClose();
+			ErrorPrompt("Error opening archive!"); // no files in it
 		}
 	}
 
@@ -706,6 +729,11 @@ size_t SzExtractFile(FILE * fp, int i, unsigned char *buffer)
 	{
 		// display error message
 		SzDisplayError(SzRes);
+		return 0;
+	}
+	else if(SzOutSizeProcessed == 0) // nothing came out - not a usable file
+	{
+		SzDisplayError(SZE_DATA_ERROR);
 		return 0;
 	}
 	else
