@@ -40,51 +40,25 @@ extern "C" {
 #endif
 
 /*
- * Zip file header definition
+ * Zip files are stored little endian - read fields byte by byte so the
+ * parsing does not depend on the host's endianness or struct packing
  */
-typedef struct
-{
-  unsigned int zipid __attribute__ ((__packed__));	// 0x04034b50
-  unsigned short zipversion __attribute__ ((__packed__));
-  unsigned short zipflags __attribute__ ((__packed__));
-  unsigned short compressionMethod __attribute__ ((__packed__));
-  unsigned short lastmodtime __attribute__ ((__packed__));
-  unsigned short lastmoddate __attribute__ ((__packed__));
-  unsigned int crc32 __attribute__ ((__packed__));
-  unsigned int compressedSize __attribute__ ((__packed__));
-  unsigned int uncompressedSize __attribute__ ((__packed__));
-  unsigned short filenameLength __attribute__ ((__packed__));
-  unsigned short extraDataLength __attribute__ ((__packed__));
-}
-PKZIPHEADER;
-
-/*
- * Zip files are stored little endian
- * Support functions for short and int types
- */
-static uint32_t
-FLIP32 (uint32_t b)
-{
-	unsigned int c;
-
-	c = (b & 0xff000000) >> 24;
-	c |= (b & 0xff0000) >> 8;
-	c |= (b & 0xff00) << 8;
-	c |= (b & 0xff) << 24;
-
-	return c;
-}
-
 static uint16_t
-FLIP16 (uint16_t b)
+LE16 (const unsigned char * p)
 {
-	uint16_t c;
-
-	c = (b & 0xff00) >> 8;
-	c |= (b & 0xff) << 8;
-
-	return c;
+	return (uint16_t)(p[0] | (p[1] << 8));
 }
+
+static uint32_t
+LE32 (const unsigned char * p)
+{
+	return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+
+#define ZIP_LOCAL_HEADER_SIZE 30
+#define ZIP_FLAG_ENCRYPTED    0x0001
+#define ZIP_FLAG_DATA_DESC    0x0008 // sizes/CRC follow the data; the local header holds zeros
+#define ZIP_METHOD_DEFLATE    8
 
 /****************************************************************************
  * IsZipFile
@@ -103,53 +77,154 @@ IsZipFile (char *buffer)
 }
 
 /*****************************************************************************
+* ZipCentralDirUncompressedSize
+*
+* Returns the uncompressed size of the first entry according to the central
+* directory at the end of the file, or 0 if it can't be determined.
+* Archives written by streaming zippers set the "data descriptor" flag and
+* leave the sizes in the local header as zero; the central directory always
+* has the real values. Moves the file position - the caller must seek again.
+******************************************************************************/
+
+static uint32_t
+ZipCentralDirUncompressedSize (FILE * fp)
+{
+	const size_t TAIL_SIZE = 4096; // enough for the end record plus a typical archive comment
+	uint32_t result = 0;
+
+	if(fseeko(fp, 0, SEEK_END) != 0)
+		return 0;
+
+	off_t fileSize = ftello(fp);
+
+	if(fileSize < 22)
+		return 0;
+
+	size_t tailSize = ((uint64_t)fileSize < TAIL_SIZE) ? (size_t)fileSize : TAIL_SIZE;
+	unsigned char * tail = (unsigned char *)malloc(tailSize);
+
+	if(!tail)
+		return 0;
+
+	if(fseeko(fp, fileSize - tailSize, SEEK_SET) == 0 && fread(tail, 1, tailSize, fp) == tailSize)
+	{
+		// find the end of central directory record (PK\5\6), searching backwards
+		for(size_t i = tailSize - 22 + 1; i-- > 0; )
+		{
+			if(LE32(&tail[i]) != 0x06054b50)
+				continue;
+
+			uint16_t entries = LE16(&tail[i + 10]);
+			uint32_t cdOffset = LE32(&tail[i + 16]);
+			unsigned char cd[46];
+
+			if(entries > 0 && (off_t)cdOffset < fileSize
+				&& fseeko(fp, cdOffset, SEEK_SET) == 0
+				&& fread(cd, 1, sizeof(cd), fp) == sizeof(cd)
+				&& LE32(cd) == 0x02014b50)
+			{
+				result = LE32(&cd[24]); // uncompressed size
+				if(result == 0xFFFFFFFF) // ZIP64 marker - the real size lives in the extra field
+					result = 0;
+			}
+			break;
+		}
+	}
+
+	free(tail);
+	return result;
+}
+
+/*****************************************************************************
 * UnZipBuffer
 *
 * Inflates the first entry of the ZIP read from fp into outbuffer.
 * fp is owned by the caller (opened before, closed after); it is read from
 * the start of the file.
+*
+* Returns the number of bytes written to outbuffer, or 0 on failure. On
+* failure *errorMsg (if given) points to a message suitable for ErrorPrompt()
+* (a string literal - nothing to free). Nothing is displayed here.
 ******************************************************************************/
 
 size_t
-UnZipBuffer (FILE * fp, unsigned char *outbuffer, size_t buffersize)
+UnZipBuffer (FILE * fp, unsigned char *outbuffer, size_t buffersize, const char ** errorMsg)
 {
-	PKZIPHEADER pkzip;
 	size_t zipoffset = 0;
 	size_t zipchunk = 0;
 	char out[ZIPCHUNK];
 	z_stream zs;
-	int res;
+	int res = Z_ERRNO;
 	size_t bufferoffset = 0;
 	size_t have = 0;
 	size_t sizeread = 0;
+	uint64_t inputRead = 0;
+	off_t fileSize = 0;
+	uint16_t flags = 0;
+	uint16_t method = 0;
+	uint32_t knownSize = 0;
+	bool inflateStarted = false;
+	const char * error = nullptr;
 
 	// input buffer is on the heap - it can be far larger than the worker thread's stack allows
 	std::unique_ptr<char, decltype(&free)> readbufferOwner((char *)memalign(FILE_BUFFER_ALIGN, ZIP_READ_CHUNK), free);
-	char * readbuffer = readbufferOwner.get();
+	unsigned char * readbuffer = (unsigned char *)readbufferOwner.get();
+
+	if(errorMsg)
+		*errorMsg = nullptr;
 
 	if(!readbuffer)
-		return 0;
-
-	if(!fp)
-		return 0;
-
-	// Read Zip Header
-	fseek(fp, 0, SEEK_SET);
-	sizeread = fread (readbuffer, 1, ZIP_READ_CHUNK, fp);
-
-	if(sizeread < sizeof (PKZIPHEADER))
-		return 0;
-
-	/*** Copy PKZip header to local, used as info ***/
-	memcpy (&pkzip, readbuffer, sizeof (PKZIPHEADER));
-
-	pkzip.uncompressedSize = FLIP32 (pkzip.uncompressedSize);
-
-	if(pkzip.uncompressedSize > buffersize) {
-		return 0;
+	{
+		error = "Out of memory!";
+		goto done;
 	}
 
-	ShowProgress ("Loading...", 0, pkzip.uncompressedSize);
+	if(!fp)
+	{
+		error = "Error reading file!";
+		goto done;
+	}
+
+	// the file size lets us report progress on the compressed input, which is always known
+	if(fseeko(fp, 0, SEEK_END) == 0)
+		fileSize = ftello(fp);
+
+	// Read Zip Header
+	fseeko(fp, 0, SEEK_SET);
+	sizeread = fread (readbuffer, 1, ZIP_READ_CHUNK, fp);
+	inputRead = sizeread;
+
+	if(sizeread < ZIP_LOCAL_HEADER_SIZE || LE32(readbuffer) != 0x04034b50)
+	{
+		error = ferror(fp) ? "Error reading file!" : "Error - Invalid ZIP file!";
+		goto done;
+	}
+
+	flags = LE16(&readbuffer[6]);
+	method = LE16(&readbuffer[8]);
+	knownSize = LE32(&readbuffer[22]);
+	zipoffset = ZIP_LOCAL_HEADER_SIZE + LE16(&readbuffer[26]) + LE16(&readbuffer[28]);
+
+	if((flags & ZIP_FLAG_ENCRYPTED) || method != ZIP_METHOD_DEFLATE)
+	{
+		error = "File uses unsupported compression settings.";
+		goto done;
+	}
+
+	// Streamed archives have zeros (or the ZIP64 marker) here - ask the central directory. This is
+	// only used for an early "too large" check; the output is bounds-checked below whether or not
+	// it is known.
+	if((flags & ZIP_FLAG_DATA_DESC) || knownSize == 0 || knownSize == 0xFFFFFFFF)
+	{
+		knownSize = ZipCentralDirUncompressedSize(fp);
+		fseeko(fp, sizeread, SEEK_SET); // resume where the header read left off
+	}
+
+	if(knownSize > buffersize)
+	{
+		error = "Compressed ROM file is too large to decompress!";
+		goto done;
+	}
 
 	/*** Prepare the zip stream ***/
 	memset (&zs, 0, sizeof (z_stream));
@@ -161,20 +236,36 @@ UnZipBuffer (FILE * fp, unsigned char *outbuffer, size_t buffersize)
 	res = inflateInit2 (&zs, -MAX_WBITS);
 
 	if (res != Z_OK)
+	{
+		error = "Out of memory!";
 		goto done;
+	}
+	inflateStarted = true;
 
-	/*** Set ZipChunk for first pass ***/
-	zipoffset =
-	(sizeof (PKZIPHEADER) + FLIP16 (pkzip.filenameLength) +
-	FLIP16 (pkzip.extraDataLength));
+	/*** Skip the filename + extra field - they can be longer than the first read ***/
+	if(zipoffset >= sizeread)
+	{
+		if(fseeko(fp, zipoffset, SEEK_SET) != 0)
+		{
+			error = "Error - Invalid ZIP file!";
+			goto done;
+		}
 
-	if(zipoffset >= sizeread) // header claims more data than we read
-		goto done;
+		sizeread = fread (readbuffer, 1, ZIP_READ_CHUNK, fp);
+		inputRead = zipoffset + sizeread;
+		zipoffset = 0;
+
+		if(sizeread == 0)
+		{
+			error = ferror(fp) ? "Error reading file!" : "Error - Invalid ZIP file!";
+			goto done;
+		}
+	}
 
 	zipchunk = sizeread - zipoffset;
 
 	/*** Now do it! ***/
-	do
+	for(;;)
 	{
 		zs.avail_in = zipchunk;
 		zs.next_in = (Bytef *) & readbuffer[zipoffset];
@@ -187,42 +278,66 @@ UnZipBuffer (FILE * fp, unsigned char *outbuffer, size_t buffersize)
 
 			res = inflate (&zs, Z_NO_FLUSH);
 
-			if (res == Z_MEM_ERROR)
+			// Z_BUF_ERROR just means "needs more input" here
+			if (res != Z_OK && res != Z_STREAM_END && res != Z_BUF_ERROR)
 			{
+				error = (res == Z_MEM_ERROR) ? "Out of memory!" : "Error extracting ZIP file!";
 				goto done;
 			}
 
 			have = ZIPCHUNK - zs.avail_out;
 			if (have)
 			{
+				// the size is never taken from the file's own headers, so never trust it to fit
+				if (have > buffersize - bufferoffset)
+				{
+					error = "Compressed ROM file is too large to decompress!";
+					goto done;
+				}
+
 				/*** Copy to normal block buffer ***/
 				memcpy (&outbuffer[bufferoffset], &out, have);
 				bufferoffset += have;
 			}
 		}
-		while (zs.avail_out == 0);
+		while (res != Z_STREAM_END && zs.avail_out == 0);
+
+		if (res == Z_STREAM_END)
+			break;
 
 		// Readup the next block
 		zipoffset = 0;
 
 		sizeread = fread (readbuffer, 1, ZIP_READ_CHUNK, fp);
-		if(sizeread <= 0)
-			goto done; // read failure
-
+		if(sizeread == 0)
+		{
+			// the data ended before the deflate stream did
+			error = ferror(fp) ? "Error reading file!" : "Error extracting ZIP file!";
+			goto done;
+		}
 		zipchunk = sizeread;
+		inputRead += sizeread;
 
-		ShowProgress ("Loading...", bufferoffset, pkzip.uncompressedSize);
+		if(fileSize > 0)
+			ShowProgress ("Loading...", (int)inputRead, (int)fileSize);
 	}
-	while (res != Z_STREAM_END);
 
 done:
-	inflateEnd (&zs);
+	if(inflateStarted)
+		inflateEnd (&zs);
 	CancelAction();
 
-	if (res == Z_STREAM_END)
-		return pkzip.uncompressedSize;
-	else
+	if(!error && bufferoffset == 0)
+		error = "Empty or invalid ZIP file!";
+
+	if(error)
+	{
+		if(errorMsg)
+			*errorMsg = error;
 		return 0;
+	}
+
+	return bufferoffset;
 }
 
 /****************************************************************************

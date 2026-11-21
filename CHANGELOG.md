@@ -2,6 +2,9 @@
 
 All notable changes to Snes9x GX are recorded here, newest first. For the current features and setup instructions, see [README.md](README.md).
 
+## Unreleased
+* Fixed ZIP file loading failures (from archives created from some tools), and ZIP load errors are now reported consistently
+
 ## 5.0.6 - November 18, 2026
 
 * Fixed games running about 3% slow on PAL (576i) 50Hz output when playing an NTSC game
