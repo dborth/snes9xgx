@@ -4,6 +4,7 @@ All notable changes to Snes9x GX are recorded here, newest first. For the curren
 
 ## Unreleased
 * Fixed ZIP file loading failures (from archives created from some tools), and ZIP load errors are now reported consistently
+* Exiting no longer hangs if a background thread is stuck
 
 ## 5.0.6 - November 18, 2026
 

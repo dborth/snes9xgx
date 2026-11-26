@@ -10,6 +10,8 @@
 #include <ogcsys.h>
 #include <unistd.h>
 #include <ogc/cond.h>
+#include <errno.h>
+#include <time.h>
 
 #include "OgcThreadDriver.h"
 
@@ -84,6 +86,26 @@ void OgcThreadDriver::joinThread(void * thread)
 	OgcThreadHandle * handle = static_cast<OgcThreadHandle *>(thread);
 	LWP_JoinThread(handle->thread, nullptr);
 	delete handle;
+}
+
+bool OgcThreadDriver::joinThreadTimeout(void * thread, uint32_t timeoutMs)
+{
+	if(!thread)
+		return true;
+
+	OgcThreadHandle * handle = static_cast<OgcThreadHandle *>(thread);
+
+	struct timespec reltime;
+	reltime.tv_sec = timeoutMs / 1000;
+	reltime.tv_nsec = (long)(timeoutMs % 1000) * 1000000L;
+
+	// ETIMEDOUT: still running, and still joinable. Anything else (joined, or
+	// already gone) means there is nothing left to wait for
+	if(LWP_TimedJoinThread(handle->thread, nullptr, &reltime) == ETIMEDOUT)
+		return false;
+
+	delete handle;
+	return true;
 }
 
 void OgcThreadDriver::cancelThread(void * thread)

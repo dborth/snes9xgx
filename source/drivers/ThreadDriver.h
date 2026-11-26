@@ -44,6 +44,11 @@ class ThreadDriver
 		virtual bool createThread(ThreadEntry entry, void * arg, uint32_t stackSize, ThreadPriority priority, void ** outHandle) = 0;
 		//!Blocks until the thread exits, then releases the handle.
 		virtual void joinThread(void * thread) = 0;
+		//!Waits at most timeoutMs for the thread to exit. Returns true if it
+		//!did, the handle then released exactly as joinThread() does. Returns
+		//!false if it is still running, the handle untouched and still valid.
+		//!Pure: a backend that cannot really time out must not pretend to.
+		virtual bool joinThreadTimeout(void * thread, uint32_t timeoutMs) = 0;
 		//!Requests the thread stop running and releases the handle without
 		//!blocking on it. This is a best-effort operation - not every
 		//!backend can truly terminate a thread mid-flight (e.g. libogc/LWP

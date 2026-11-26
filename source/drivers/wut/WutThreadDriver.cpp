@@ -120,6 +120,27 @@ void WutThreadDriver::joinThread(void * thread)
 	delete handle;
 }
 
+bool WutThreadDriver::joinThreadTimeout(void * thread, uint32_t timeoutMs)
+{
+	if(!thread)
+		return true;
+
+	WutThreadHandle * handle = static_cast<WutThreadHandle *>(thread);
+
+	// OSJoinThread has no timeout: poll until the thread has terminated, and
+	// only then join, which returns at once
+	for(uint32_t waited = 0; !OSIsThreadTerminated(handle->thread); waited++)
+	{
+		if(waited >= timeoutMs)
+			return false;
+
+		OSSleepTicks(OSMillisecondsToTicks(1));
+	}
+
+	joinThread(thread);
+	return true;
+}
+
 void WutThreadDriver::cancelThread(void * thread)
 {
 	if(!thread)

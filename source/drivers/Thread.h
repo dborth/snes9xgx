@@ -61,6 +61,15 @@ class Thread
 		bool start(ThreadEntry entry, void * arg = nullptr, uint32_t stackSize = 8192, ThreadPriority priority = ThreadPriority::Normal, void (*wake)(void) = nullptr);
 		//!Blocks until the thread exits.
 		void join();
+		//!Waits at most timeoutMs for the thread to exit.
+		//!\return true if it exited (or there was none); false if it is
+		//!still running, in which case it stays joinable and registered.
+		bool join(uint32_t timeoutMs);
+		//!Lets go of a thread that will not stop: forgets it (unregistered,
+		//!isRunning() false) and leaks its handle, which it may still be
+		//!running on. Never cancels or suspends it: a thread stopped while
+		//!it holds a lock leaves that lock held for good. Only for app exit.
+		void abandon();
 		//!Requests the thread stop at its next safe point without
 		//!blocking. This is a best-effort operation and may leak backend
 		//!resources (see ThreadDriver::cancelThread) - prefer signalling
@@ -91,12 +100,16 @@ class Thread
 
 		//!Requests every currently-registered, still-running Thread stop
 		//!(per its own wake callback, if any) and joins each in turn.
-		//!Intended to be called once, late in app shutdown - after this
-		//!returns, no background thread started via Thread::start() can
-		//!still be touching platform/driver state.
-		static void JoinAll();
+		//!Intended to be called once, late in app shutdown. Waits at most
+		//!timeoutMs in all; a thread still running by then (stuck in an OS
+		//!or USB call, say) is abandoned and this returns anyway, so exit
+		//!never hangs on one. Such a thread may still be using the drivers.
+		static void JoinAll(uint32_t timeoutMs = 2000);
 
 	protected:
+		//!Removes this Thread from the JoinAll() registry (if it is in it)
+		void unregister();
+
 		void * handle = nullptr; //!< Backend-assigned thread handle
 		volatile bool stopFlag = false; //!< Set by requestStop(); polled by entry() via stopRequested()
 		void (*wakeFn)(void) = nullptr; //!< Optional callback to break entry() out of a wait; set by start()

@@ -6,6 +6,7 @@
  * Generic - Everything platform-specific lives behind platform->getThread().
  ***************************************************************************/
 #include "Platform.h"
+#include "Time.h"
 
 //!Guards the JoinAll() registry (registryHead / each Thread's registryNext).
 static Mutex & RegistryLock() { static Mutex m; return m; }
@@ -46,22 +47,25 @@ bool Thread::start(ThreadEntry entry, void * arg, uint32_t stackSize, ThreadPrio
 	return true;
 }
 
+void Thread::unregister()
+{
+	MutexLock guard(RegistryLock());
+	Thread ** link = &registryHead;
+	while(*link)
+	{
+		if(*link == this)
+		{
+			*link = registryNext;
+			registryNext = nullptr;
+			break;
+		}
+		link = &(*link)->registryNext;
+	}
+}
+
 void Thread::join()
 {
-	{
-		MutexLock guard(RegistryLock());
-		Thread ** link = &registryHead;
-		while(*link)
-		{
-			if(*link == this)
-			{
-				*link = registryNext;
-				registryNext = nullptr;
-				break;
-			}
-			link = &(*link)->registryNext;
-		}
-	}
+	unregister();
 
 	if(!handle)
 		return;
@@ -71,6 +75,25 @@ void Thread::join()
 	handle = nullptr;
 }
 
+bool Thread::join(uint32_t timeoutMs)
+{
+	if(handle && platform && platform->getThread())
+	{
+		if(!platform->getThread()->joinThreadTimeout(handle, timeoutMs))
+			return false;
+	}
+
+	unregister();
+	handle = nullptr;
+	return true;
+}
+
+void Thread::abandon()
+{
+	unregister();
+	handle = nullptr; // deliberately leaked: the thread may still be running on it
+}
+
 void Thread::requestStop()
 {
 	stopFlag = true;
@@ -78,8 +101,22 @@ void Thread::requestStop()
 		wakeFn();
 }
 
-void Thread::JoinAll()
+void Thread::JoinAll(uint32_t timeoutMs)
 {
+	const Ticks begin = SystemTime::now();
+
+	// Ask every thread to stop first, so they wind down during the one wait rather
+	// than one after another. Outside the lock: a wake callback may lock another mutex.
+	Thread * pending[32];
+	int count = 0;
+	{
+		MutexLock guard(RegistryLock());
+		for(Thread * t = registryHead; t && count < 32; t = t->registryNext)
+			pending[count++] = t;
+	}
+	for(int i = 0; i < count; i++)
+		pending[i]->requestStop();
+
 	while(true)
 	{
 		Thread * t;
@@ -91,11 +128,13 @@ void Thread::JoinAll()
 		if(!t)
 			break;
 
-		// requestStop() then join() outside the lock - entry() may itself
-		// touch other Threads (eg. a wake callback locking a different
-		// mutex), and join() blocks until entry() actually returns.
-		t->requestStop();
-		t->join(); // removes t from the registry on return
+		t->requestStop(); // a no-op for those asked above
+
+		const uint32_t elapsed = SystemTime::diffMillisecs(begin, SystemTime::now());
+		const uint32_t remaining = elapsed < timeoutMs ? timeoutMs - elapsed : 0;
+
+		if(!t->join(remaining))
+			t->abandon(); // unregisters t, so the loop moves on
 	}
 }
 
