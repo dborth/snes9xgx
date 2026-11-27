@@ -30,7 +30,8 @@
 #define RATE_NEUTRAL 1.0
 
 // Maximum allowed queued buffers (12 out of 16).
-// Leaves a mandatory 4-buffer (~85ms) safety zone before playab.
+// Leaves a mandatory 4-buffer safety zone before playab (each buffer is 512
+// stereo frames: ~10.7 ms at 48 kHz, so ~43 ms for 4).
 #define MAX_QUEUED_BUFFERS 12
 
 // The single OgcEmulatorAudio instance currently registered with the DMA and
@@ -49,10 +50,11 @@ void S9xAudioCallback(void *) {
 }
 
 OgcEmulatorAudio::OgcEmulatorAudio() :
-	playab(0), nextab(0), dma_started(false), turbo_drop(false), rateState(RATE_STATE_NEUTRAL)
+	playab(0), nextab(0), rebuffering(false), dma_started(false), turbo_drop(false), rateState(RATE_STATE_NEUTRAL)
 {
 	memset(soundbuffer, 0, sizeof(soundbuffer));
 	memset(dummy, 0, sizeof(dummy));
+	memset(silence, 0, sizeof(silence));
 	instance = this;
 }
 
@@ -62,10 +64,24 @@ OgcEmulatorAudio::~OgcEmulatorAudio() {
 }
 
 void OgcEmulatorAudio::init() {
+	DCFlushRange(silence, AUDIOBUFFER);	// the DMA engine reads RAM, not the cache
 	S9xSetSamplesAvailableCallback(S9xAudioCallback, NULL);
 }
 
+// Interrupt context: no locks, no allocation, no floating point.
 void OgcEmulatorAudio::dmaCallback() {
+	// Underrun, avoid wrapping - instead play silence and wait until the queue has been rebuilt
+	if (!rebuffering && playab == nextab)
+		rebuffering = true;
+
+	if (rebuffering) {
+		if (getUnplayed() < UNPLAYED_START_LEVEL) {
+			AUDIO_InitDMA((uint32_t) silence, AUDIOBUFFER);
+			return;
+		}
+		rebuffering = false;
+	}
+
 	AUDIO_InitDMA((uint32_t) soundbuffer[playab], AUDIOBUFFER);
 	playab = nextIndex(playab);
 }
@@ -73,6 +89,7 @@ void OgcEmulatorAudio::dmaCallback() {
 void OgcEmulatorAudio::resetAudio() {
 	nextab = 0;
 	playab = 0;
+	rebuffering = false;
 	dma_started = false;
 	turbo_drop = false;
 	rateState = RATE_STATE_NEUTRAL;
@@ -86,6 +103,7 @@ void OgcEmulatorAudio::resetAudio() {
  ***************************************************************************/
 void OgcEmulatorAudio::stopAudio() {
 	AUDIO_StopDMA();
+	rebuffering = false;
 	dma_started = false;
 }
 

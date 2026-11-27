@@ -45,11 +45,16 @@ class OgcEmulatorAudio : public EmulatorAudioDriver
 
 		uint8_t soundbuffer[BUFFERCOUNT][AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
 		uint8_t dummy[AUDIOBUFFER] __attribute__ ((__aligned__ (32)));
+		uint8_t silence[AUDIOBUFFER] __attribute__ ((__aligned__ (32)));  // always zero; played during an underrun
 
 		// Shared between audioCallback() and the DMA interrupt callback,
 		// so they must not be cached in registers across reads
 		volatile int playab;
 		volatile int nextab;
+		// Set and cleared only by dmaCallback() (interrupt context), apart from
+		// stopAudio()/resetAudio() which run with DMA stopped. While set, the
+		// hardware is fed silence until the queue has been rebuilt.
+		volatile bool rebuffering;
 		bool dma_started;
 		bool turbo_drop;
 
