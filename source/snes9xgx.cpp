@@ -30,6 +30,7 @@
 #include "snes9x/fxemu.h"
 #include "snes9x/memmap.h"
 #include "snes9x/apu/apu.h"
+#include "snes9x/msu1.h"
 
 #include "drivers/Platform.h"
 #include "drivers/Thread.h"
@@ -157,6 +158,8 @@ int main(int, char *[])
 		SelectFilterMethod(EmuSettings.videoUpscalingFilter); // Initialize / Re-evaluate active filter
 #endif
 
+		S9xMSU1Resume();
+
 		while (appRequest == AppRequest::NONE) // emulation loop
 		{
 			SystemEvent event = platform->getSystemEvent(); // poll exactly once per iteration
@@ -170,6 +173,8 @@ int main(int, char *[])
 			if(event == SystemEvent::ResetRequested)
 				S9xSoftReset (); // reset game
 		} // emulation loop
+
+		S9xMSU1Suspend();
 
 		platform->getAudio()->stopEmulatorAudio();
 		SwitchMemoryModeMenu();

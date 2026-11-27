@@ -53,5 +53,7 @@ void S9xMSU1WritePort(uint8 port, uint8 byte);
 size_t S9xMSU1Samples(void);
 void S9xMSU1SetOutput(int16 *out, size_t size);
 void S9xMSU1PostLoadState(void);
+void S9xMSU1Suspend(void);
+void S9xMSU1Resume(void);
 
 #endif

@@ -8,14 +8,30 @@
 #include "memmap.h"
 #include "display.h"
 #include "msu1.h"
+#include "msu1audio.h"
+#include "msu1prefetch.h"
 #include "apu/blargg_endian.h"
 #include <fstream>
 #include <sys/stat.h>
 
 STREAM dataStream = NULL;
-STREAM audioStream = NULL;
-uint32 audioLoopPos;
 size_t partial_frames;
+
+// Audio is served by a background prefetcher (see msu1prefetch.h). msu1.cpp only
+// pulls frames; the track format lives behind MSU1AudioDecoder (msu1audio.h).
+#ifndef MSU1_PREFETCH_BLOCKS
+#if defined(HW_DOL)
+#define MSU1_PREFETCH_BLOCKS 4	// 128 KB: GameCube has no spare MEM2
+#else
+#define MSU1_PREFETCH_BLOCKS 8	// 256 KB, ~1.5 s of audio; the worst stall measured on hardware was 123 ms
+#endif
+#endif
+
+static MSU1Prefetch audioPrefetch;
+static bool audioTrackOpen = false;	// a track's decoder has been handed to audioPrefetch
+
+// Menu transitions: files are closed while the menu runs and reopened on return.
+static bool msuSuspended = false, resumeData = false, resumeAudio = false;
 
 // Sample buffer
 int16 *bufPos, *bufBegin, *bufEnd;
@@ -102,12 +118,29 @@ STREAM S9xMSU1OpenFile(const char *msu_ext, bool skip_unpacked)
     return file;
 }
 
+//! The one place that decides which decoder serves a track. Add new formats here.
+MSU1AudioDecoder * S9xMSU1OpenAudioDecoder(uint16_t track)
+{
+	MSU1AudioDecoder * decoder = NULL;
+
+	if (!decoder)
+		decoder = S9xMSU1OpenPcmDecoder(track);
+
+	return decoder;
+}
+
+static inline uint32 PosToFrame(uint32 pos)	// MSU1_AUDIO_POS is a byte offset into a .pcm: 8-byte header, 4 bytes/frame
+{
+	return pos >= 8 ? (pos - 8) >> 2 : 0;
+}
+
+//! Drop the current track. The worker closes its file, not us (asynchronously: no waiting).
 static void AudioClose()
 {
-	if (audioStream)
+	if (audioTrackOpen)
 	{
-		CLOSE_STREAM(audioStream);
-		audioStream = NULL;
+		audioPrefetch.setSource(NULL, 0);
+		audioTrackOpen = false;
 	}
 }
 
@@ -117,33 +150,37 @@ static bool AudioOpen()
 
 	AudioClose();
 
-	char ext[_MAX_EXT];
-	snprintf(ext, _MAX_EXT, "-%d.pcm", MSU1.MSU1_CURRENT_TRACK);
+	MSU1AudioDecoder * decoder = S9xMSU1OpenAudioDecoder(MSU1.MSU1_CURRENT_TRACK);
+	if (!decoder)
+		return false;
 
-    audioStream = S9xMSU1OpenFile(ext);
-	if (audioStream)
+	if (!audioPrefetch.start(MSU1_PREFETCH_BLOCKS))
 	{
-		if (GETC_STREAM(audioStream) != 'M')
-			return false;
-		if (GETC_STREAM(audioStream) != 'S')
-			return false;
-		if (GETC_STREAM(audioStream) != 'U')
-			return false;
-		if (GETC_STREAM(audioStream) != '1')
-			return false;
-
-        READ_STREAM((char *)&audioLoopPos, 4, audioStream);
-		audioLoopPos = GET_LE32(&audioLoopPos);
-		audioLoopPos <<= 2;
-		audioLoopPos += 8;
-
-        MSU1.MSU1_AUDIO_POS = 8;
-
-		MSU1.MSU1_STATUS &= ~AudioError;
-		return true;
+		delete decoder;		// no memory for the ring: report an audio error
+		return false;
 	}
 
-	return false;
+	audioPrefetch.setSource(decoder, 0);
+	audioTrackOpen = true;
+
+	MSU1.MSU1_AUDIO_POS = 8;
+	MSU1.MSU1_STATUS &= ~AudioError;
+	return true;
+}
+
+//! Reopen the current track and continue from a byte position
+static void AudioReopenAt(uint32 savedPosition)
+{
+	if (AudioOpen())
+	{
+		MSU1.MSU1_AUDIO_POS = savedPosition;
+		audioPrefetch.seek(PosToFrame(savedPosition));
+	}
+	else
+	{
+		MSU1.MSU1_STATUS &= ~(AudioPlaying | AudioRepeating);
+		MSU1.MSU1_STATUS |= AudioError;
+	}
 }
 
 static void DataClose()
@@ -191,6 +228,8 @@ void S9xResetMSU(void)
 
 	AudioClose();
 
+	msuSuspended = resumeData = resumeAudio = false; // a new/reset game has nothing to resume
+
 	Settings.MSU1 = S9xMSU1ROMExists();
 }
 
@@ -203,6 +242,38 @@ void S9xMSU1DeInit(void)
 {
 	DataClose();
 	AudioClose();
+}
+
+//! Leaving emulation for the menu: close the files. Positions live in MSU1.* so nothing else needs saving.
+void S9xMSU1Suspend(void)
+{
+	if (msuSuspended)
+		return;
+
+	msuSuspended = true;
+	resumeData = (dataStream != NULL);
+	resumeAudio = audioTrackOpen;
+
+	DataClose();
+	audioPrefetch.detach();	// waits (at most one in-flight read) until the worker has closed the file
+	audioTrackOpen = false;
+	// The worker thread and the ring stay allocated, parked: nothing is created or freed per menu trip.
+}
+
+//! Back from the menu: reopen.
+void S9xMSU1Resume(void)
+{
+	if (!msuSuspended)
+		return;
+	msuSuspended = false;
+
+	if (resumeData && DataOpen())
+		REVERT_STREAM(dataStream, MSU1.MSU1_DATA_POS, 0);
+
+	if (resumeAudio)
+		AudioReopenAt(MSU1.MSU1_AUDIO_POS);
+
+	resumeData = resumeAudio = false;
 }
 
 bool S9xMSU1ROMExists(void)
@@ -237,50 +308,37 @@ void S9xMSU1Generate(size_t sample_count)
 {
 	partial_frames += 4410 * (sample_count / 2);
 
+	uint32 bufferingFrames = 0;
+	audioPrefetch.setRepeat((MSU1.MSU1_STATUS & AudioRepeating) != 0);
+
 	while ((bufPos < (bufEnd - 2)) && partial_frames >= 3204)
 	{
-		if (MSU1.MSU1_STATUS & AudioPlaying && audioStream)
+		if ((MSU1.MSU1_STATUS & AudioPlaying) && audioTrackOpen)
 		{
-			int32 sample;
-			int16* left = (int16*)&sample;
-			int16* right = left + 1;
+			int16 left, right;
 
-			int bytes_read = READ_STREAM((char *)&sample, 4, audioStream);
-			if (bytes_read == 4)
+			switch (audioPrefetch.pop(left, right))
 			{
-				*left = ((int32)(int16)GET_LE16(left) * MSU1.MSU1_VOLUME / 255);
-				*right = ((int32)(int16)GET_LE16(right) * MSU1.MSU1_VOLUME / 255);
+				case MSU1Prefetch::POP_FRAME:
+					*(bufPos++) = (int32)left * MSU1.MSU1_VOLUME / 255;
+					*(bufPos++) = (int32)right * MSU1.MSU1_VOLUME / 255;
+					MSU1.MSU1_AUDIO_POS = 8 + (audioPrefetch.position() << 2);
+					partial_frames -= 3204;
+					break;
 
+				case MSU1Prefetch::POP_BUFFERING:
+					// Read-ahead not ready: silence, and the position does not advance
+					*(bufPos++) = 0;
+					*(bufPos++) = 0;
+					partial_frames -= 3204;
+					bufferingFrames++;
+					break;
 
-				*(bufPos++) = *left;
-				*(bufPos++) = *right;
-				MSU1.MSU1_AUDIO_POS += 4;
-				partial_frames -= 3204;
-			}
-			else
-			if (bytes_read >= 0)
-			{
-				if (MSU1.MSU1_STATUS & AudioRepeating)
-				{
-					if (audioLoopPos < MSU1.MSU1_AUDIO_POS)
-					{
-						MSU1.MSU1_AUDIO_POS = audioLoopPos;
-					}
-					else // if the loop point is invalid, revert to start
-					{
-						MSU1.MSU1_AUDIO_POS = 8;
-					}
-					REVERT_STREAM(audioStream, MSU1.MSU1_AUDIO_POS, 0);
-				}
-				else
-				{
+				case MSU1Prefetch::POP_ENDED:
+					// End of a non-repeating track. The stream has already rewound to the start.
 					MSU1.MSU1_STATUS &= ~(AudioPlaying | AudioRepeating);
-					REVERT_STREAM(audioStream, 8, 0);
-				}
-			}
-			else
-			{
-				MSU1.MSU1_STATUS &= ~(AudioPlaying | AudioRepeating);
+					MSU1.MSU1_AUDIO_POS = 8;
+					break;
 			}
 		}
 		else
@@ -362,6 +420,7 @@ void S9xMSU1WritePort(uint8 port, uint8 byte)
 		MSU1.MSU1_TRACK_SEEK |= byte;
 		break;
 	case 5:
+	{
 		MSU1.MSU1_TRACK_SEEK &= 0x00FF;
 		MSU1.MSU1_TRACK_SEEK |= (byte << 8);
 		MSU1.MSU1_CURRENT_TRACK = MSU1.MSU1_TRACK_SEEK;
@@ -369,7 +428,8 @@ void S9xMSU1WritePort(uint8 port, uint8 byte)
 		MSU1.MSU1_STATUS &= ~AudioPlaying;
 		MSU1.MSU1_STATUS &= ~AudioRepeating;
 
-		if (AudioOpen())
+		bool audioOpened = AudioOpen();
+		if (audioOpened)
 		{
 			if (MSU1.MSU1_CURRENT_TRACK == MSU1.MSU1_RESUME_TRACK)
 			{
@@ -382,9 +442,10 @@ void S9xMSU1WritePort(uint8 port, uint8 byte)
 				MSU1.MSU1_AUDIO_POS = 8;
 			}
 
-            REVERT_STREAM(audioStream, MSU1.MSU1_AUDIO_POS, 0);
+			audioPrefetch.seek(PosToFrame(MSU1.MSU1_AUDIO_POS));
 		}
 		break;
+	}
 	case 6:
 		MSU1.MSU1_VOLUME = byte;
 		break;
@@ -393,6 +454,7 @@ void S9xMSU1WritePort(uint8 port, uint8 byte)
 			break;
 
 		MSU1.MSU1_STATUS = (MSU1.MSU1_STATUS & ~0x30) | ((byte & 0x03) << 4);
+		audioPrefetch.setRepeat((MSU1.MSU1_STATUS & AudioRepeating) != 0);
 
 		if ((byte & (Play | Resume)) == Resume)
 		{
@@ -416,31 +478,21 @@ void S9xMSU1SetOutput(int16 * out, size_t size)
 
 void S9xMSU1PostLoadState(void)
 {
-	if (DataOpen())
+	if (msuSuspended)
 	{
-        REVERT_STREAM(dataStream, MSU1.MSU1_DATA_POS, 0);
+		// Loaded from the menu: nothing is open. Reopen with the loaded positions when we resume.
+		resumeData = true;
+		resumeAudio = (MSU1.MSU1_STATUS & AudioPlaying) != 0;
 	}
-
-	if (MSU1.MSU1_STATUS & AudioPlaying)
+	else
 	{
-		uint32 savedPosition = MSU1.MSU1_AUDIO_POS;
-
-		if (AudioOpen())
+		if (DataOpen())
 		{
-            REVERT_STREAM(audioStream, 4, 0);
-            READ_STREAM((char *)&audioLoopPos, 4, audioStream);
-			audioLoopPos = GET_LE32(&audioLoopPos);
-			audioLoopPos <<= 2;
-			audioLoopPos += 8;
+			REVERT_STREAM(dataStream, MSU1.MSU1_DATA_POS, 0);
+		}
 
-			MSU1.MSU1_AUDIO_POS = savedPosition;
-            REVERT_STREAM(audioStream, MSU1.MSU1_AUDIO_POS, 0);
-		}
-		else
-		{
-			MSU1.MSU1_STATUS &= ~(AudioPlaying | AudioRepeating);
-			MSU1.MSU1_STATUS |= AudioError;
-		}
+		if (MSU1.MSU1_STATUS & AudioPlaying)
+			AudioReopenAt(MSU1.MSU1_AUDIO_POS);
 	}
 
 	bufPos = 0;
