@@ -70,6 +70,7 @@ class GuiGameBrowser : public GuiElement
 		GuiImageData * iconUSB;
 		GuiImageData * iconDVD;
 		GuiImageData * iconSMB;
+		GuiImageData * iconStar;
 
 		GuiTrigger * trigA;
 		GuiTrigger * trigHeldA;

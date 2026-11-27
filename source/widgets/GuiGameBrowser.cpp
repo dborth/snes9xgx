@@ -27,6 +27,8 @@
 #define ROW_TEXT_X			10
 #define ROW_TEXT_X_ICON		34
 #define ROW_TEXT_PAD		6		// room kept at the row's right end
+#define ROW_STAR_INSET		6		// favorite star: distance from the row's right edge
+#define ROW_STAR_LIFT		2		// favorite star: raised a little so it looks centered next to the text
 
 //! Step size (in rows) for one scroll action while the on-screen scrollbar
 //! arrow is held, based on how long it's been held continuously.
@@ -84,6 +86,7 @@ GuiGameBrowser::GuiGameBrowser(int w, int h)
 	iconUSB = new GuiImageData(icon_usb_png);
 	iconDVD = new GuiImageData(icon_dvd_png);
 	iconSMB = new GuiImageData(icon_smb_png);
+	iconStar = new GuiImageData(icon_star_png);
 
 	// scrollbar: a thin track, round arrow buttons and a pill thumb. They gray at rest
 	// and take the accent color when the pointer is on them or they are held.
@@ -223,6 +226,7 @@ GuiGameBrowser::~GuiGameBrowser()
 	delete iconUSB;
 	delete iconDVD;
 	delete iconSMB;
+	delete iconStar;
 
 	delete trigHeldA;
 	delete trigA;
@@ -548,9 +552,30 @@ void GuiGameBrowser::update(InputController * controller)
 					case ICON_SMB:
 						fileListIcon[i] = new GuiImage(iconSMB);
 						break;
+					case ICON_STAR:
+						fileListIcon[i] = new GuiImage(iconStar);
+						break;
 				}
+				// A favorite file gets a star at the right end of its row. It is on the right (not
+				// in the icon column on the left) so that names stay lined up with those of files
+				// that are not favorites. Files have no icon of their own; the "Favorites" folder
+				// and its entries use the left icon column instead.
+				bool starOnRight = false;
+				if(fileListIcon[i] == nullptr && browserList[browser.pageIndex+i].favorite)
+				{
+					fileListIcon[i] = new GuiImage(iconStar);
+					starOnRight = true;
+				}
+
 				fileList[i]->setIcon(fileListIcon[i]);
-				if(fileListIcon[i] != nullptr)
+				if(starOnRight)
+				{
+					fileListIcon[i]->setAlignment(ALIGN_H::RIGHT, ALIGN_V::MIDDLE);
+					fileListIcon[i]->setPosition(-ROW_STAR_INSET,ROW_ICON_Y - ROW_STAR_LIFT);
+					// a long name ends before the star instead of running under it
+					fileListText[i]->setMaxWidth(fileList[i]->getWidth() - ROW_TEXT_X - ROW_STAR_INSET - iconStar->getWidth() - ROW_TEXT_PAD);
+				}
+				else if(fileListIcon[i] != nullptr)
 				{
 					fileListIcon[i]->setAlignment(ALIGN_H::LEFT, ALIGN_V::MIDDLE);
 					fileListIcon[i]->setPosition(6,ROW_ICON_Y);

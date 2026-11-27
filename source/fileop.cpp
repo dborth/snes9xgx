@@ -20,6 +20,7 @@
 #include "menu/menu.h"
 #include "memmanager.h"
 #include "filebrowser.h"
+#include "favorites.h"
 #include "utils/decompress.h"
 #include "libgui/Gui.h"
 #include "widgets/GuiWidgets.h"
@@ -717,6 +718,10 @@ static bool ParseDirEntries(int batchSize)
 		else
 		{
 			StripExt(browserList[browser.numEntries+i].displayname, utf8Name); // hide file extension
+
+			// Remember once, here, whether the file is a favorite - the list only shows the flag
+			if(parseFilter)
+				browserList[browser.numEntries+i].favorite = IsFavoriteFile(browser.dir, entry->d_name) ? 1 : 0;
 		}
 		i++;
 	}

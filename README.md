@@ -71,6 +71,7 @@ Every push builds automatically. Grab the latest continuous-integration build:
 - SNES Superscope, Mouse, and Justifier support, remappable per input device
 - **USB mouse** support on **Wii and Wii U** — it moves the pointer in the menus and aims the Super Scope, Justifier and SNES Mouse (left click is A, right click is B, middle click is X; the Super Scope's middle click pauses)
 - **USB pen tablet** support on **Wii** (Wacom, XP-Pen, Huion and other tablets that describe their pen to the system) — the pen points like the mouse: the tip is A, the lower side switch B, the upper one X
+- **Favorites** — press **+** (**Start** on GameCube) on a game to mark it with a star. All favorites are collected in a **Favorites** folder on the device list, across SD, USB and SMB. The list is kept in `favorites.txt` next to `settings.xml`
 - Cheat code support (`.cht` files)
 - Cover art / screenshot / artwork preview support
 - Satellaview (BS-X) support
