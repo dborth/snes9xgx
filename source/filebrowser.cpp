@@ -24,6 +24,7 @@
 #include "utils/decompress.h"
 #include "freeze.h"
 #include "sram.h"
+#include "favorites.h"
 #include "savemode.h"
 #include "widgets/GuiSaveBrowser.h"
 
@@ -786,6 +787,9 @@ int BrowserLoadFile()
 	int loaded = 0;
 	int device;
 
+	if(InFavoritesView())
+		return BrowserLoadFavorite();
+
 	if(!FindDevice(browser.dir, &device))
 	{
 		ErrorPrompt("Device not found!");
@@ -879,6 +883,7 @@ int AddDeviceListing()
 		i++;
 	}
 
+	i += AddFavoritesListingEntry(i);
 	return i;
 }
 
@@ -889,6 +894,10 @@ int AddDeviceListing()
  ***************************************************************************/
 int BrowserChangeFolder()
 {
+	int favResult;
+	if(FavoritesChangeFolder(&favResult))
+		return favResult;
+
 	if(inSz && browser.selIndex == 0) // inside a 7z, requesting to leave
 	{
 		CloseSzIfOpen();

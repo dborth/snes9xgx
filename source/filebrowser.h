@@ -39,6 +39,7 @@ typedef struct
 	char displayname[MAXJOLIET + 1]; // name for browser display
 	int filenum; // file # (for 7z support)
 	int icon; // icon to display
+	int favorite; // 1 - file is in the favorites list (set while the folder is read, see favorites.cpp)
 } BROWSERENTRY;
 
 extern BROWSERINFO browser;
@@ -53,7 +54,8 @@ enum
 	ICON_SD,
 	ICON_USB,
 	ICON_DVD,
-	ICON_SMB
+	ICON_SMB,
+	ICON_STAR
 };
 
 extern unsigned long SNESROMSize;
@@ -84,6 +86,7 @@ void GetDefaultFolderPath(char * fullPath, const char * folderName);
 //! false (with filepath emptied) when the path does not fit
 __attribute__((warn_unused_result)) bool MakeFilePathForFolderPath(char * filepath, int device, const char * folder);
 int BrowserLoadSz();
+void CloseSzIfOpen();
 int BrowserChangeFolder();
 int BrowserLoadFile();
 bool AutoloadGame(char* filepath, char* filename);

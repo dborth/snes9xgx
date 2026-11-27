@@ -61,6 +61,7 @@
 #include "icon_usb_png.h"
 #include "icon_dvd_png.h"
 #include "icon_smb_png.h"
+#include "icon_star_png.h"
 #include "controller_gamepad_png.h"
 #include "controller_wiimote_png.h"
 #include "controller_nunchuk_png.h"

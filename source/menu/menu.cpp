@@ -26,6 +26,7 @@
 #include "memmanager.h"
 #include "video.h"
 #include "filebrowser.h"
+#include "favorites.h"
 #include "utils/decompress.h"
 #include "fileop.h"
 #include "sram.h"
@@ -76,6 +77,9 @@ extern SCheatData Cheat;
 extern void ToggleCheat(uint32);
 
 #define THREAD_SLEEP 100
+
+// Button that toggles "favorite" in the game list.
+#define FAVORITE_TOGGLE_BUTTON INPUT_BTN_PLUS
 
 #ifndef HW_DOL
 static GuiImageData * pointer[4];
@@ -975,6 +979,28 @@ static char* getImageFolder()
 
 static bool ResolvePreviewImagePath(void *, int index, char * outPath, size_t outPathSize)
 {
+	if(InFavoritesView())
+	{
+		// favorites live on different devices: each entry's filename is its full path
+		if(browser.numEntries <= 0 || index <= 0 || index >= browser.numEntries || browserList[index].isdir)
+			return false;
+
+		char full[MAXJOLIET + 1];
+		snprintf(full, sizeof(full), "%s", browserList[index].filename);
+
+		int device;
+		const char * slash = strrchr(full, '/');
+		if(slash == nullptr || !FindDevice(full, &device))
+			return false;
+
+		char imageBase[MAXJOLIET + 1];
+		StripExt(imageBase, slash + 1);
+
+		char imageFile[MAXJOLIET + 16];
+		snprintf(imageFile, sizeof(imageFile), "%s.png", imageBase);
+		return platform->getFileSystem()->getPath(outPath, outPathSize, device, getImageFolder(), imageFile);
+	}
+
 	if(browser.dir[0] == 0 || EmuSettings.loadDevice <= 0 ||
 	   browser.numEntries <= 0 || index <= 0 || index >= browser.numEntries)
 		return false;
@@ -1021,7 +1047,7 @@ static int ChangeInterfaceTask(void * arg) {
 	return ChangeInterface(a->device, a->silent) ? 1 : 0;
 }
 
-static int OpenGameListTask(void *) { return OpenGameList(); }
+static int OpenGameListTask(void *) { FavoritesLoadTask(nullptr); return OpenGameList(); }
 
 static int AutoDetectDevicesTask(void *) { AutoDetectDevices(); return 0; }
 
@@ -1211,6 +1237,15 @@ static int MenuGameSelection()
 	buttonWindow.append(&settingsBtn);
 	buttonWindow.append(&exitBtn);
 
+	GuiTrigger trigFavorite;
+	trigFavorite.setButtonOnlyTrigger(-1, FAVORITE_TOGGLE_BUTTON);
+	GuiButton favoriteBtn;
+	favoriteBtn.setSoundOver(nullptr);
+	favoriteBtn.setSoundClick(nullptr);
+	favoriteBtn.setTrigger(&trigFavorite);
+	favoriteBtn.setSelectable(false);
+	buttonWindow.append(&favoriteBtn);
+
 	#ifdef __WIIU__
 	GuiButton hiddenHomeBtn;
 	hiddenHomeBtn.setSoundOver(nullptr);
@@ -1260,7 +1295,7 @@ static int MenuGameSelection()
 	if(inSz)
 		titleTxt.setRawText(szname);
 	else
-		titleTxt.setText("Choose Game");
+		titleTxt.setText(InFavoritesView() ? "Favorites" : "Choose Game");
 
 	while(selection == MENU_NONE)
 	{
@@ -1348,7 +1383,7 @@ static int MenuGameSelection()
 					if(inSz)
 						titleTxt.setRawText(szname);
 					else
-						titleTxt.setText("Choose Game");
+						titleTxt.setText(InFavoritesView() ? "Favorites" : "Choose Game");
 				}
 				else
 				{
@@ -1379,6 +1414,41 @@ static int MenuGameSelection()
 					}
 				}
 			}
+		}
+
+		if(favoriteBtn.getState() == STATE::CLICKED)
+		{
+			favoriteBtn.resetState();
+
+			int favResult = ToggleFavoriteOnSelection();
+
+			if(favResult == FAVORITE_ADDED || favResult == FAVORITE_REMOVED)
+			{
+				int saved = 0;
+				if(!RunWithGuiUpdates(SaveFavoritesTask, &saved)) return MENU_EXIT;
+				if(!saved) favResult = FAVORITE_SAVE_ERROR;
+
+				// Removing inside the favorites view rebuilds the list: keep the selected row
+				// visible, and drop cached preview images (indices now mean other files).
+				if(InFavoritesView())
+				{
+					if(browser.selIndex < browser.pageIndex)
+						browser.pageIndex = browser.selIndex;
+					else if(browser.selIndex >= browser.pageIndex + FILE_PAGESIZE)
+						browser.pageIndex = browser.selIndex - FILE_PAGESIZE + 1;
+					gameBrowser.refreshPreview();
+				}
+
+				// re-reads the display names and the selection (browser.selIndex / pageIndex)
+				gameBrowser.triggerUpdate();
+			}
+
+			if(favResult == FAVORITE_LIST_FULL)
+				ErrorPrompt("Favorites list is full!");
+			else if(favResult == FAVORITE_NO_LOCATION)
+				ErrorPrompt("Favorites can't be used: settings location not available!");
+			else if(favResult == FAVORITE_SAVE_ERROR)
+				ErrorPrompt("Could not save favorites!");
 		}
 
 		if(settingsBtn.getState() == STATE::CLICKED) {

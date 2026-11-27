@@ -791,6 +791,20 @@ static uint32_t HashBytes(const void * data, size_t size)
 	return hash;
 }
 
+//! The folder settings.xml is kept in - other files that belong next to it
+//! (favorites.txt) use the same folder, so they follow it to whatever device
+//! it ended up on. False while that location isn't known yet (nothing has
+//! been loaded from or saved to a settings.xml so far).
+bool GetPrefsFolder(char * folder, size_t folderSize)
+{
+	const char * src = prefpath[0] != 0 ? prefpath : appPath;
+
+	if(src[0] == 0)
+		return false;
+
+	return FormatString(folder, folderSize, "%s", src);
+}
+
 static bool SavePrefsNow()
 {
 	char filepath[MAXPATHLEN];
@@ -1006,7 +1020,7 @@ static bool ParseUsbPath(const char * path, int * outDevice, const char ** outSu
 //! path on another currently-mounted USB device and, if found, rewrite
 //! path in place to point at it. No-op for any path that isn't on a
 //! USB1/2/3 device - SD/DVD/SMB/GameCube card paths are left alone.
-static void RemapUsbPathIfNeeded(char * path, size_t pathSize)
+void RemapUsbPathIfNeeded(char * path, size_t pathSize)
 {
 	int device;
 	const char * suffix;
