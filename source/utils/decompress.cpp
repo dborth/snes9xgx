@@ -655,7 +655,8 @@ int SzParse(char * filepath)
 				snprintf(browserList[SzJ].filename, MAXJOLIET, "%s", baseName);
 				StripExt(browserList[SzJ].displayname, browserList[SzJ].filename);
 				char* strPos = strstr(browserList[SzJ].displayname, szname);
-				if(strPos)
+				// (not when the file is named exactly like the archive: nothing would be left to show)
+				if(strPos && strPos[strlen(szname)] != 0)
 				{
 					snprintf(browserList[SzJ].displayname, MAXJOLIET, "%s", strPos + strlen(szname));
 				}
